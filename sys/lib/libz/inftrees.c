@@ -1,7 +1,7 @@
-/* $NetBSD: inftrees.c,v 1.4 2000/03/30 12:19:49 augustss Exp $ */
+/* $NetBSD: inftrees.c,v 1.4.4.1 2002/03/20 23:18:26 he Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
@@ -13,7 +13,7 @@
 #endif
 
 const char inflate_copyright[] =
-   " inflate 1.1.3 Copyright 1995-1998 Mark Adler ";
+   " inflate 1.1.4 Copyright 1995-2002 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot
@@ -27,7 +27,7 @@ struct internal_state  {int dummy;}; /* for buggy compilers */
 #define bits word.what.Bits
 
 
-local int huft_build OF((
+local int huft_build __P((
     uIntf *,            /* code lengths in bits */
     uInt,               /* number of codes */
     uInt,               /* number of "simple" codes */
@@ -106,8 +106,7 @@ uIntf *v;               /* working area: values in order of bit length */
 /* Given a list of code lengths and a maximum table size, make a set of
    tables to decode that set of codes.  Return Z_OK on success, Z_BUF_ERROR
    if the given code set is incomplete (the tables are still built in this
-   case), Z_DATA_ERROR if the input is invalid (an over-subscribed set of
-   lengths), or Z_MEM_ERROR if not enough memory. */
+   case), or Z_DATA_ERROR if the input is invalid. */
 {
 
   uInt a;                       /* counter for codes of length k */
@@ -115,16 +114,16 @@ uIntf *v;               /* working area: values in order of bit length */
   uInt f;                       /* i repeats in table every f entries */
   int g;                        /* maximum code length */
   int h;                        /* table level */
-  uInt i;	                /* counter, current code */
-  uInt j;       	        /* counter */
-  int k;               		/* number of bits in current code */
+  register uInt i;              /* counter, current code */
+  register uInt j;              /* counter */
+  register int k;               /* number of bits in current code */
   int l;                        /* bits per table (returned in m) */
   uInt mask;                    /* (1 << w) - 1, to avoid cc -O bug on HP */
-  uIntf *p;            		/* pointer into c[], b[], or v[] */
+  register uIntf *p;            /* pointer into c[], b[], or v[] */
   inflate_huft *q;              /* points to current table */
   struct inflate_huft_s r;      /* table entry for structure assignment */
   inflate_huft *u[BMAX];        /* table stack */
-  int w;               		/* bits before this table == (l * h) */
+  register int w;               /* bits before this table == (l * h) */
   uInt x[BMAX+1];               /* bit offsets, then code stack */
   uIntf *xp;                    /* pointer into x */
   int y;                        /* number of dummy codes added */
@@ -233,7 +232,7 @@ uIntf *v;               /* working area: values in order of bit length */
 
         /* allocate new table */
         if (*hn + z > MANY)     /* (note: doesn't matter for fixed) */
-          return Z_MEM_ERROR;   /* not enough memory */
+          return Z_DATA_ERROR;  /* overflow of MANY */
         u[h] = q = hp + *hn;
         *hn += z;
 
