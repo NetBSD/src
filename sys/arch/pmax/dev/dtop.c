@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.5 1994/10/26 21:08:58 cgd Exp $	*/
+/*	$NetBSD: dtop.c,v 1.6 1995/04/21 01:24:26 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -304,6 +304,14 @@ dtopwrite(dev, uio, flag)
 
 	tp = dtop_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+dtoptty(dev)
+        dev_t dev;
+{
+        struct tty *tp = dtop_tty[minor(dev)];
+        return (tp);
 }
 
 /*ARGSUSED*/

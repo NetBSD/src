@@ -1,5 +1,3 @@
-/*	$NetBSD: scc.c,v 1.7 1994/10/26 21:09:16 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scc.c	8.2 (Berkeley) 11/30/93
+ *	from: @(#)scc.c	8.2 (Berkeley) 11/30/93
+ *      $Id: scc.c,v 1.8 1995/04/21 01:24:30 mellon Exp $
  */
 
 /* 
@@ -96,6 +95,9 @@
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/maxine.h>
+#include <pmax/pmax/asic.h>
+#include <pmax/include/machConst.h>
 
 extern int pmax_boardtype;
 extern struct consdev cn_tab;
@@ -179,6 +181,9 @@ sccprobe(cp)
 	struct termios cterm;
 	int s;
 
+        volatile u_int *imaskp = (volatile u_int *)
+                MACH_PHYS_TO_UNCACHED(XINE_REG_IMSK);
+
 	if (cp->pmax_unit >= NSCC)
 		return (0);
 	if (badaddr(cp->pmax_addr, 2))
@@ -246,7 +251,7 @@ sccprobe(cp)
 	} else if (SCCUNIT(cn_tab.cn_dev) == cp->pmax_unit) {
 		s = spltty();
 		ctty.t_dev = cn_tab.cn_dev;
-		cterm.c_cflag = CS8;
+		cterm.c_cflag = CS8 | CLOCAL;
 		cterm.c_ospeed = cterm.c_ispeed = 9600;
 		(void) sccparam(&ctty, &cterm);
 		DELAY(1000);
@@ -364,6 +369,7 @@ sccopen(dev, flag, mode, p)
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	(void) sccmctl(dev, DML_DTR, DMSET);
+#ifdef FOO
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
@@ -373,6 +379,7 @@ sccopen(dev, flag, mode, p)
 			break;
 	}
 	splx(s);
+#endif
 	if (error)
 		return (error);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
@@ -419,6 +426,14 @@ sccwrite(dev, uio, flag)
 
 	tp = scc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+scctty(dev)
+        dev_t dev;
+{
+        struct tty *tp = scc_tty [minor (dev)];
+        return (tp);
 }
 
 /*ARGSUSED*/
@@ -813,8 +828,11 @@ sccstart(tp)
 		}
 		goto out;
 	}
+#ifdef FOO
 	if (tp->t_flags & (RAW|LITOUT))
+#endif
 		cc = ndqb(&tp->t_outq, 0);
+#ifdef FOO
 	else {
 		cc = ndqb(&tp->t_outq, 0200);
 		if (cc == 0) {
@@ -824,6 +842,7 @@ sccstart(tp)
 			goto out;
 		}
 	}
+#endif
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
