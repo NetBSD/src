@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.75 2003/12/26 23:39:23 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.75.2.1 2004/04/08 21:16:03 jdc Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.75 2003/12/26 23:39:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.75.2.1 2004/04/08 21:16:03 jdc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1144,9 +1144,12 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SPPPSETAUTHCFG:
+	case SPPPGETAUTHCFG:
 	case SPPPSETLCPCFG:
+	case SPPPGETLCPCFG:
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
+	case SPPPGETAUTHFAILURES:
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
 	{
@@ -1156,12 +1159,9 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 	}
 	/* FALLTHROUGH */
-	case SPPPGETAUTHCFG:
-	case SPPPGETLCPCFG:
 	case SPPPGETSTATUS:
 	case SPPPGETSTATUSNCP:
 	case SPPPGETIDLETO:
-	case SPPPGETAUTHFAILURES:
 	case SPPPGETDNSOPTS:
 	case SPPPGETDNSADDRS:
 	case SPPPGETKEEPALIVE:
