@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.4 1994/10/26 21:10:12 cgd Exp $	*/
+/*	$NetBSD: asic.h,v 1.5 1995/04/28 04:44:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -142,6 +142,7 @@
 #define	ASIC_SCSI_SCR		ASIC_SLOT_1_START+0x1b0
 #define	ASIC_SCSI_SDR0		ASIC_SLOT_1_START+0x1c0
 #define	ASIC_SCSI_SDR1		ASIC_SLOT_1_START+0x1d0
+#define	ASIC_CTR		ASIC_SLOT_1_START+0x1e0 /*5k/240,alpha only*/
 
 /* system Status and Control register (SSR) */
 
@@ -234,6 +235,7 @@
 #define	ASIC_REG_SCSI_SCR(base)		((base) + ASIC_SCSI_SCR)
 #define	ASIC_REG_SCSI_SDR0(base)	((base) + ASIC_SCSI_SDR0)
 #define	ASIC_REG_SCSI_SDR1(base)	((base) + ASIC_SCSI_SDR1)
+#define	ASIC_REG_CTR(base)		((base) + ASIC_CTR)
 
 /*
  * And slot assignments.
