@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.1 1996/06/22 01:50:56 chuck Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.2 1996/06/26 04:08:55 chuck Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -254,7 +254,8 @@ typedef caddr_t bus_mem_addr_t;
  * recv buffer desc. (1 u_int32_t at start of buffer)
  */
 
-#define MID_RBD_SIZE	4
+#define MID_RBD_SIZE	4			/* RBD size */
+#define MID_CHDR_SIZE	4			/* on aal0, cell header size */
 #define MID_RBD_ID(X)	((X) & 0xfe000000)	/* get ID */
 #define MID_RBD_STDID	0x36000000		/* standard ID */
 #define MID_RBD_CLP	0x01000000		/* CLP: cell loss priority */
