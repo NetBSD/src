@@ -110,8 +110,10 @@
 ./usr/share/man/cat4/i386/mem.0
 ./usr/share/man/cat4/i386/mms.0
 ./usr/share/man/cat4/i386/npx.0
+./usr/share/man/cat4/i386/olms.0
+./usr/share/man/cat4/i386/omms.0
+./usr/share/man/cat4/i386/opms.0
 ./usr/share/man/cat4/i386/pcvt.0
-./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -417,8 +419,10 @@
 ./usr/share/man/man4/i386/mem.4
 ./usr/share/man/man4/i386/mms.4
 ./usr/share/man/man4/i386/npx.4
+./usr/share/man/man4/i386/olms.4
+./usr/share/man/man4/i386/omms.4
+./usr/share/man/man4/i386/opms.4
 ./usr/share/man/man4/i386/pcvt.4
-./usr/share/man/man4/i386/pms.4
 ./usr/share/man/man4/i386/speaker.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
