@@ -1,5 +1,8 @@
-.\" Copyright (c) 1991, 1993
+.\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Berkeley Software Design, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,51 +32,41 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)setsid.2	8.1 (Berkeley) 6/4/93
+.\"	@(#)sigpending.2	8.3 (Berkeley) 1/12/94
 .\"
-.Dd "June 4, 1993"
-.Dt SETSID 2
+.Dd January 12, 1994
+.Dt SIGPENDING 2
 .Os
 .Sh NAME
-.Nm setsid
-.Nd create session and set process group ID
+.Nm sigpending
+.Nd get pending signals
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Ft pid_t
-.Fn setsid "void"
+.Fd #include <signal.h>
+.Ft int
+.Fn sigpending "sigset_t *set"
 .Sh DESCRIPTION
 The
-.Nm setsid
-function creates a new session.
-The calling process is the session leader of the new session, is the
-process group leader of a new process group and has no controlling
-terminal.
-The calling process is the only process in either the session or the
-process group.
-.Pp
-Upon successful completion, the
-.Nm setsid
-function returns the value of the process group ID of the new process
-group, which is the same as the process ID of the calling process.
-.Sh ERRORS
-If an error occurs,
-.Nm setsid
-returns -1 and the global variable
+.Nm sigpending
+function returns a mask of the signals pending for delivery
+to the calling process in the location indicated by
+.Fa set .
+Signals may be pending because they are currently masked,
+or transiently before delivery (although the latter case is not
+normally detectable).
+.Sh RETURN VALUES
+A 0 value indicated that the call succeeded.  A \-1 return value
+indicates an error occurred and
 .Va errno
-is set to indicate the error, as follows:
-.Bl -tag -width Er
-.It Bq Er EPERM
-The calling process is already a process group leader, or the process
-group ID of a process other than the calling process matches the process
-ID of the calling process.
-.El
+is set to indicated the reason.
+.Sh ERRORS
+The
+.Nm sigpending
+function does not currently detect any errors.
 .Sh SEE ALSO
-.Xr setpgid 3 ,
-.Xr tcgetpgrp 3 ,
-.Xr tcsetpgrp 3
+.Xr sigaction 2 ,
+.Xr sigprocmask 2
 .Sh STANDARDS
 The
-.Nm setsid
-function is expected to be compliant with the
-.St -p1003.1-88
-specification.
+.Nm sigpending
+function is defined by
+.St -p1003.1-88 .
