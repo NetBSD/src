@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.29 2004/03/15 05:25:37 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.30 2004/03/15 05:30:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -169,3 +169,8 @@ sys/kern/vfs_getcwd.c			hand patch
 
 	Fix LP64 bugs triggered by overflow.
 	[enami, ticket #1617]
+
+usr.bin/rpcgen/rpc_main.c		1.24
+
+	Remove special case handling for $CPP and use execvp() instead.
+	[martin, ticket #1619]
