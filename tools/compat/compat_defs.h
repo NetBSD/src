@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.7 2002/03/07 22:46:07 tv Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.8 2002/04/04 17:28:33 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -285,7 +285,7 @@ void *setmode(const char *);
 #define O_SHLOCK 0
 #endif
 
-/* <limits.h> */
+/* <limits.h> */
 
 #ifndef UID_MAX
 #define UID_MAX 32767
