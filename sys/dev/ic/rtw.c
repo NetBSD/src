@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.3 2004/12/12 06:37:59 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.4 2004/12/13 00:48:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.3 2004/12/12 06:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.4 2004/12/13 00:48:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h> 
 #include <sys/callout.h>
 #include <sys/mbuf.h>   
@@ -84,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.3 2004/12/12 06:37:59 dyoung Exp $");
 			panic __msg ;	\
 	} while (0)
 
+int rtw_rfprog_fallback = 0;
+int rtw_host_rfio = 0;
+int rtw_flush_rfio = 1;
+int rtw_rfio_delay = 0;
+
 #ifdef RTW_DEBUG
 int rtw_debug = 2;
 #endif /* RTW_DEBUG */
@@ -95,7 +101,128 @@ int rtw_debug = 2;
 
 int rtw_dwelltime = 1000;	/* milliseconds */
 
+static int rtw_sysctl_verify_rfio(SYSCTLFN_PROTO);
+static int rtw_sysctl_verify_rfio_delay(SYSCTLFN_PROTO);
+static int rtw_sysctl_verify_rfprog(SYSCTLFN_PROTO);
 #ifdef RTW_DEBUG
+static int rtw_sysctl_verify_debug(SYSCTLFN_PROTO);
+#endif /* RTW_DEBUG */
+
+/*
+ * Setup sysctl(3) MIB, hw.rtw.*
+ *
+ * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
+{
+	int rc;
+	struct sysctlnode *cnode, *rnode;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rtw",
+	    "Realtek RTL818x 802.11 controls",
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef RTW_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable RTL818x debugging output"),
+	    rtw_sysctl_verify_debug, 0, &rtw_debug, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif /* RTW_DEBUG */
+	/* set fallback RF programming method */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rfprog_fallback",
+	    SYSCTL_DESCR("Set fallback RF programming method"),
+	    rtw_sysctl_verify_rfprog, 0, &rtw_rfprog_fallback, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* force host to flush I/O by reading RTW_PHYADDR */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "flush_rfio", SYSCTL_DESCR("Enable RF I/O flushing"),
+	    rtw_sysctl_verify_rfio, 0, &rtw_flush_rfio, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* force host to control RF I/O bus */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "host_rfio", SYSCTL_DESCR("Enable host control of RF I/O"),
+	    rtw_sysctl_verify_rfio, 0, &rtw_host_rfio, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	/* control RF I/O delay */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rfio_delay", SYSCTL_DESCR("Set RF I/O delay"),
+	    rtw_sysctl_verify_rfio_delay, 0, &rtw_rfio_delay, 0,
+	    CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	return;
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
+}
+
+static int
+rtw_sysctl_verify(SYSCTLFN_ARGS, int lower, int upper)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < lower || t > upper)
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+static int
+rtw_sysctl_verify_rfio_delay(SYSCTLFN_ARGS)
+{
+	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 1000000);
+}
+
+static int
+rtw_sysctl_verify_rfprog(SYSCTLFN_ARGS)
+{
+	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0,
+	    MASK_AND_RSHIFT(RTW_CONFIG4_RFTYPE_MASK, RTW_CONFIG4_RFTYPE_MASK));
+}
+
+static int
+rtw_sysctl_verify_rfio(SYSCTLFN_ARGS)
+{
+	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 1);
+}
+
+#ifdef RTW_DEBUG
+static int
+rtw_sysctl_verify_debug(SYSCTLFN_ARGS)
+{
+	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 2);
+}
+
 static void
 rtw_print_regs(struct rtw_regs *regs, const char *dvname, const char *where)
 {
@@ -215,12 +342,8 @@ rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
 	RTW_WRITE(regs, RTW_TCR, tcr);
 	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
 	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
-	rtw_txdac_enable(regs, !enable);
-#if 0
-	/* XXX voodoo.  from linux. */
-	rtw_anaparm_enable(regs, 1);
-	rtw_anaparm_enable(regs, 0);
-#endif
+	rtw_txdac_enable(sc, !enable);
+	rtw_set_access(sc, RTW_ACCESS_ANAPARM);	/* XXX Voodoo from Linux. */
 	rtw_set_access(sc, RTW_ACCESS_NONE);
 }
 
@@ -334,9 +457,10 @@ rtw_anaparm_enable(struct rtw_regs *regs, int enable)
 
 /* requires rtw_anaparm_enable(, 1) */
 void
-rtw_txdac_enable(struct rtw_regs *regs, int enable)
+rtw_txdac_enable(struct rtw_softc *sc, int enable)
 {
 	u_int32_t anaparm;
+	struct rtw_regs *regs = &sc->sc_regs;
 
 	anaparm = RTW_READ(regs, RTW_ANAPARM);
 	if (enable)
@@ -417,7 +541,7 @@ static __inline int
 rtw_reset(struct rtw_softc *sc)
 {
 	int rc;
-	uint32_t config1;
+	uint8_t config1;
 
 	if ((rc = rtw_chip_reset(&sc->sc_regs, &sc->sc_dev.dv_xname)) != 0)
 		return rc;
@@ -425,8 +549,8 @@ rtw_reset(struct rtw_softc *sc)
 	if ((rc = rtw_recall_eeprom(&sc->sc_regs, &sc->sc_dev.dv_xname)) != 0)
 		;
 
-	config1 = RTW_READ(&sc->sc_regs, RTW_CONFIG1);
-	RTW_WRITE(&sc->sc_regs, RTW_CONFIG1, config1 & ~RTW_CONFIG1_PMEN);
+	config1 = RTW_READ8(&sc->sc_regs, RTW_CONFIG1);
+	RTW_WRITE8(&sc->sc_regs, RTW_CONFIG1, config1 & ~RTW_CONFIG1_PMEN);
 	/* TBD turn off maximum power saving? */
 
 	return 0;
@@ -693,6 +817,40 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	}
 #endif /* RTW_DEBUG */
 	return 0;
+}
+
+static void
+rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
+    const char *dvname)
+{
+	u_int8_t cfg4;
+	const char *method;
+
+	cfg4 = RTW_READ8(regs, RTW_CONFIG4) & ~RTW_CONFIG4_RFTYPE_MASK;
+
+	switch (rfchipid) {
+	default:
+		cfg4 |= LSHIFT(rtw_rfprog_fallback, RTW_CONFIG4_RFTYPE_MASK);
+		method = "fallback";
+		break;
+	case RTW_RFCHIPID_INTERSIL:
+		cfg4 |= RTW_CONFIG4_RFTYPE_INTERSIL;
+		method = "Intersil";
+		break;
+	case RTW_RFCHIPID_PHILIPS:
+		cfg4 |= RTW_CONFIG4_RFTYPE_PHILIPS;
+		method = "Philips";
+		break;
+	case RTW_RFCHIPID_RFMD:
+		cfg4 |= RTW_CONFIG4_RFTYPE_RFMD;
+		method = "RFMD";
+		break;
+	}
+
+	RTW_WRITE8(regs, RTW_CONFIG4, cfg4);
+
+	printf("%s: %s RF programming method, %#02x\n", dvname, method,
+	    RTW_READ8(regs, RTW_CONFIG4));
 }
 
 #if 0
@@ -1280,18 +1438,12 @@ rtw_suspend_ticks(struct rtw_softc *sc)
 static __inline void
 rtw_resume_ticks(struct rtw_softc *sc)
 {
-	int s;
-	struct timeval tv;
 	u_int32_t tsftrl0, tsftrl1, next_tick;
 
 	tsftrl0 = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
 
-	s = splclock();
-	timersub(&mono_time, &sc->sc_tick0, &tv);
-	splx(s);
-
 	tsftrl1 = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
-	next_tick = tsftrl1 + 1000000 * (1 + tv.tv_sec) - tv.tv_usec;
+	next_tick = tsftrl1 + 1000000;
 	RTW_WRITE(&sc->sc_regs, RTW_TINT, next_tick);
 
 	sc->sc_do_tick = 1;
@@ -1565,7 +1717,7 @@ rtw_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 
 	switch (power) {
 	case RTW_ON:
-		/* TBD */
+		/* TBD set LEDs */
 		break;
 	case RTW_SLEEP:
 		/* TBD */
@@ -1796,7 +1948,7 @@ rtw_init(struct ifnet *ifp)
 	struct rtw_softc *sc = (struct rtw_softc *)ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_regs *regs = &sc->sc_regs;
-	int rc = 0, s;
+	int rc = 0;
 
 	if ((rc = rtw_enable(sc)) != 0)
 		goto out;
@@ -1818,9 +1970,10 @@ rtw_init(struct ifnet *ifp)
 
 	rtw_set_access(sc, RTW_ACCESS_CONFIG);
 
-	RTW_WRITE(regs, RTW_MSR, 0x0);	/* no link */
+	RTW_WRITE8(regs, RTW_MSR, 0x0);	/* no link */
 
-	RTW_WRITE(regs, RTW_BRSR, 0x0);	/* long PLCP header, 1Mbps basic rate */
+	/* long PLCP header, 1Mbps basic rate */
+	RTW_WRITE16(regs, RTW_BRSR, 0x0);
 
 	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
 	rtw_set_access(sc, RTW_ACCESS_NONE);
@@ -1831,9 +1984,11 @@ rtw_init(struct ifnet *ifp)
 	/* XXX from reference sources */
 	RTW_WRITE(regs, RTW_FEMR, 0xffff);
 
-	RTW_WRITE(regs, RTW_PHYDELAY, sc->sc_phydelay);
+	rtw_set_rfprog(regs, sc->sc_rfchipid, sc->sc_dev.dv_xname);
+
+	RTW_WRITE8(regs, RTW_PHYDELAY, sc->sc_phydelay);
 	/* from Linux driver */
-	RTW_WRITE(regs, RTW_CRCOUNT, RTW_CRCOUNT_MAGIC);
+	RTW_WRITE8(regs, RTW_CRCOUNT, RTW_CRCOUNT_MAGIC);
 
 	rtw_enable_interrupts(sc);
 
@@ -1849,11 +2004,10 @@ rtw_init(struct ifnet *ifp)
 	RTW_WRITE16(regs, RTW_BSSID16, 0x0);
 	RTW_WRITE(regs, RTW_BSSID32, 0x0);
 
-	s = splclock();
-	sc->sc_tick0 = mono_time;
-	splx(s);
-
 	rtw_resume_ticks(sc);
+
+	/* I'm guessing that MSR is protected as CONFIG[0123] are. */
+	rtw_set_access(sc, RTW_ACCESS_CONFIG);
 
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_AHDEMO:
@@ -1862,15 +2016,23 @@ rtw_init(struct ifnet *ifp)
 		break;
 	case IEEE80211_M_HOSTAP:
 		RTW_WRITE8(regs, RTW_MSR, RTW_MSR_NETYPE_AP_OK);
+		break;
 	case IEEE80211_M_MONITOR:
 		/* XXX */
 		RTW_WRITE8(regs, RTW_MSR, RTW_MSR_NETYPE_NOLINK);
-		return ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+		break;
 	case IEEE80211_M_STA:
 		RTW_WRITE8(regs, RTW_MSR, RTW_MSR_NETYPE_INFRA_OK);
 		break;
 	}
-	return ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+
+	rtw_set_access(sc, RTW_ACCESS_NONE);
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	else
+		return ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+
 out:
 	return rc;
 }
@@ -2474,7 +2636,10 @@ rtw_attach(struct rtw_softc *sc)
 		break;
 	case RTW_TCR_HWVERID_D:
 		vers = 'D';
-		rf_write = rtw_rf_macwrite;
+		if (rtw_host_rfio)
+			rf_write = rtw_rf_hostwrite;
+		else
+			rf_write = rtw_rf_macwrite;
 		break;
 	default:
 		vers = '?';
