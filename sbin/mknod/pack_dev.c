@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.7 2004/01/30 19:06:55 ross Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.8 2004/05/11 17:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.7 2004/01/30 19:06:55 ross Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.8 2004/05/11 17:09:58 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,13 +65,13 @@ static	pack_t	pack_8_24;
 static	pack_t	pack_bsdos;
 static	int	compare_format(const void *, const void *);
 
-static char iMajorError[] = "invalid major number";
-static char iMinorError[] = "invalid minor number";
-static char tooManyFields[] = "too many fields for format";
+static const char iMajorError[] = "invalid major number";
+static const char iMinorError[] = "invalid minor number";
+static const char tooManyFields[] = "too many fields for format";
 
 	/* exported */
 portdev_t
-pack_native(int n, u_long numbers[], char **error)
+pack_native(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -88,7 +88,7 @@ pack_native(int n, u_long numbers[], char **error)
 
 
 static portdev_t
-pack_netbsd(int n, u_long numbers[], char **error)
+pack_netbsd(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -110,7 +110,7 @@ pack_netbsd(int n, u_long numbers[], char **error)
 					 (((y) << 0) & 0xffff00ff)))
 
 static portdev_t
-pack_freebsd(int n, u_long numbers[], char **error)
+pack_freebsd(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -132,7 +132,7 @@ pack_freebsd(int n, u_long numbers[], char **error)
 					 (((y) << 0) & 0x000000ff)))
 
 static portdev_t
-pack_8_8(int n, u_long numbers[], char **error)
+pack_8_8(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -154,7 +154,7 @@ pack_8_8(int n, u_long numbers[], char **error)
 					 (((y) <<  0) & 0x000fffff)))
 
 static portdev_t
-pack_12_20(int n, u_long numbers[], char **error)
+pack_12_20(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -176,7 +176,7 @@ pack_12_20(int n, u_long numbers[], char **error)
 					 (((y) <<  0) & 0x0003ffff)))
 
 static portdev_t
-pack_14_18(int n, u_long numbers[], char **error)
+pack_14_18(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -198,7 +198,7 @@ pack_14_18(int n, u_long numbers[], char **error)
 					 (((y) <<  0) & 0x00ffffff)))
 
 static portdev_t
-pack_8_24(int n, u_long numbers[], char **error)
+pack_8_24(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
@@ -222,7 +222,7 @@ pack_8_24(int n, u_long numbers[], char **error)
 					 (((z) <<  0) & 0x000000ff)))
 
 static portdev_t
-pack_bsdos(int n, u_long numbers[], char **error)
+pack_bsdos(int n, u_long numbers[], const char **error)
 {
 	portdev_t dev = 0;
 
