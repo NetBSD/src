@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.2 1997/10/21 05:54:31 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.3 1997/11/16 22:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -250,7 +250,8 @@ tl_pci_probe(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_COMPAQ)
+	if ((PCI_VENDORID(pa->pa_id) != PCI_VENDOR_COMPAQ) &&
+	    (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_TI))
 		return 0;
 	switch(PCI_CHIPID(pa->pa_id)) {
 	case PCI_PRODUCT_COMPAQ_N100TX:
@@ -261,6 +262,7 @@ tl_pci_probe(parent, match, aux)
 	case PCI_PRODUCT_COMPAQ_DP4000:
 	case PCI_PRODUCT_COMPAQ_NF3P_BNC:
 	case PCI_PRODUCT_COMPAQ_NF3P:
+	case PCI_PRODUCT_TI_TLAN:
 		return 1;
 	default:
 		return 0;
@@ -359,6 +361,10 @@ tl_pci_attach(parent, self, aux)
 		case PCI_PRODUCT_COMPAQ_NF3P:
 			model = "Compaq NetFlex 3/P";
 			sc->mii.adapter_id = COMPAQ_NETFLEX;
+			break;
+		case PCI_PRODUCT_TI_TLAN:
+			model = "Texas Instruments ThunderLAN";
+			sc->mii.adapter_id = TI_TLAN;
 			break;
 		default:
 			model = "unknown ThunderLAN board!\n";
