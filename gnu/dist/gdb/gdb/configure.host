@@ -169,5 +169,6 @@ vax-*-ultrix2*)		gdb_host=vaxult2 ;;
 vax-*-ultrix*)		gdb_host=vaxult ;;
 
 x86_64-*-linux*)	gdb_host=x86-64linux ;;
+x86_64-*-netbsd*)	gdb_host=x86-64nbsd ;;
 
 esac

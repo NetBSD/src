@@ -917,6 +917,10 @@ x86_64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
   int i, sum;
+  enum gdb_osabi osabi = GDB_OSABI_UNKNOWN;
+
+  if (info.abfd != NULL)
+    osabi = gdbarch_lookup_osabi (info.abfd);
 
   /* Find a candidate among the list of pre-declared architectures. */
   for (arches = gdbarch_list_lookup_by_info (arches, &info);
@@ -1030,8 +1034,6 @@ x86_64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_frameless_function_invocation (gdbarch,
 					     x86_64_frameless_function_invocation);
-  set_gdbarch_frame_saved_pc (gdbarch, x86_64_linux_frame_saved_pc);
-
   set_gdbarch_frame_args_address (gdbarch, default_frame_address);
   set_gdbarch_frame_locals_address (gdbarch, default_frame_address);
 
@@ -1104,8 +1106,6 @@ x86_64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, x86_64_skip_prologue);
 
-  set_gdbarch_saved_pc_after_call (gdbarch, x86_64_linux_saved_pc_after_call);
-
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
 
   set_gdbarch_breakpoint_from_pc (gdbarch,
@@ -1121,6 +1121,8 @@ x86_64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 /* Use dwarf2 debug frame informations.  */
   set_gdbarch_dwarf2_build_frame_info (gdbarch, dwarf2_build_frame_info);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, x86_64_dwarf2_reg_to_regnum);
+
+  gdbarch_init_osabi (info, gdbarch, osabi);
 
   return gdbarch;
 }

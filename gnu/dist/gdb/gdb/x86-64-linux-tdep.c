@@ -135,3 +135,18 @@ x86_64_linux_frame_saved_pc (struct frame_info *frame)
     return x86_64_linux_sigtramp_saved_pc (frame);
   return cfi_get_ra (frame);
 }
+
+/* NetBSD ELF.  */
+static void
+x86_64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  set_gdbarch_frame_saved_pc (gdbarch, x86_64_linux_frame_saved_pc);
+  set_gdbarch_saved_pc_after_call (gdbarch, x86_64_linux_saved_pc_after_call);
+}
+
+void
+_initialize_x86_64_linux_tdep (void)
+{
+  gdbarch_register_osabi (bfd_arch_i386, GDB_OSABI_LINUX,
+                          x86_64_linux_init_abi);
+}
