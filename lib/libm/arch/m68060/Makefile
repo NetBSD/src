@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1.1.1 1999/08/19 21:41:35 is Exp $
+# $NetBSD: Makefile,v 1.2 2000/04/14 20:24:40 is Exp $
 
 M060SP=		../../../../sys/arch/m68k/060sp
 ASM2GAS=	${M060SP}/asm2gas
-FPLSP_SA=	${M060SP}/fplsp.sa
+FPLSP_SA=	${M060SP}/dist/fplsp.sa
 
 all: fplsp.hex fplsp_wrap.S
 
