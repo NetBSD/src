@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.h 1.1 90/07/09
  *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.3 1993/08/01 19:25:06 mycroft Exp $
+ *	$Id: trap.h,v 1.4 1994/01/09 19:30:04 mycroft Exp $
  */
 
 /*
@@ -59,6 +59,7 @@
 #define T_COPERR	12
 #define T_ASTFLT	13
 #define T_TRAP15	15
+#define	T_BREAKPOINT	T_TRAP15
 
 #define	T_USER		0x80		/* user-mode flag or'ed with type */
 
