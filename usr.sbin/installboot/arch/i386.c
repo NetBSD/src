@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.12 2003/10/27 00:12:44 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.13 2003/10/27 22:29:59 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.12 2003/10/27 00:12:44 lukem Exp $");
-#endif /* __RCSID && !__lint */
+__RCSID("$NetBSD: i386.c,v 1.13 2003/10/27 22:29:59 lukem Exp $");
+#endif /* !__lint */
 
 #include <sys/param.h>
 
