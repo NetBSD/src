@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: accounting,v 1.3 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: accounting,v 1.4 2001/04/25 11:48:22 jdolecek Exp $
 #
 
 # PROVIDE: accounting
@@ -15,10 +15,12 @@ stop_cmd="accounting_stop"
 
 accounting_start()
 {
-	if [ -f /var/account/acct ]; then
-		echo "Turning on accounting."
-		/usr/sbin/accton /var/account/acct
+	if [ ! -f /var/account/acct ]; then
+		echo "Creating accouting file /var/account/acct"
+		>> /var/account/acct
 	fi
+	echo "Turning on accounting."
+	/usr/sbin/accton /var/account/acct
 }
 
 accounting_stop()
