@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.2 2001/01/30 22:24:31 thorpej Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.2.6.1 2001/09/18 19:13:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -89,7 +89,7 @@ void	sysmon_wdog_shutdown(void *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_wdog(dev_t dev, int flag, int mode, struct proc *p)
+sysmonopen_wdog(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 
 	simple_lock(&sysmon_wdog_list_slock);
@@ -111,7 +111,7 @@ sysmonopen_wdog(dev_t dev, int flag, int mode, struct proc *p)
  *	Close the system monitor device.
  */
 int
-sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
+sysmonclose_wdog(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct sysmon_wdog *smw;
 	int omode, s, error;
@@ -149,7 +149,8 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
  *	Perform a watchdog control request.
  */
 int
-sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sysmonioctl_wdog(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+		 struct proc *p)
 {
 	struct sysmon_wdog *smw;
 	int s, error = 0;

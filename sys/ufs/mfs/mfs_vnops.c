@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.8.1 2001/09/07 04:45:45 thorpej Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.8.2 2001/09/18 19:14:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,6 +122,7 @@ mfs_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode **a_vpp;
 	} */ *ap = v;
 
 	if (ap->a_vp->v_type != VBLK) {

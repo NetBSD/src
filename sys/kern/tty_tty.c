@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16.10.1 2001/09/07 04:45:38 thorpej Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.10.2 2001/09/18 19:13:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -52,10 +52,11 @@
 
 /*ARGSUSED*/
 int
-cttyopen(devvp, flag, mode, p)
+do_cttyopen(devvp, flag, mode, p, vpp)
 	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
+	struct vnode **vpp;
 {
 	struct vnode *ttyvp = cttyvp(p);
 	int error;
@@ -76,9 +77,19 @@ cttyopen(devvp, flag, mode, p)
 	  (flag&FREAD ? VREAD : 0) | (flag&FWRITE ? VWRITE : 0), p->p_ucred, p);
 	if (!error)
 #endif /* PARANOID */
-		error = VOP_OPEN(ttyvp, flag, NOCRED, p);
+		error = VOP_OPEN(ttyvp, flag, NOCRED, p, vpp);
 	VOP_UNLOCK(ttyvp, 0);
 	return (error);
+}
+
+int
+cttyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
+	int flag;
+	int mode;
+	struct proc *p;
+{
+	return do_cttyopen(devvp, flag, mode, p, NULL);
 }
 
 /*ARGSUSED*/

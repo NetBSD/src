@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.53.2.1 2001/09/07 04:45:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.53.2.2 2001/09/18 19:14:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -777,7 +777,7 @@ swap_on(p, sdp)
 	 * has already been opened when root was mounted (mountroot).
 	 */
 	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p, NULL)))
 			return (error);
 	}
 

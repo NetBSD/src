@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.37 2001/07/24 15:39:31 assar Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.37.2.1 2001/09/18 19:13:55 fvdl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.29 2001/07/24 15:39:31 assar Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
@@ -233,7 +233,7 @@ const struct vnodeop_desc vop_open_desc = {
 	"vop_open",
 	0,
 	vop_open_vp_offsets,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_open_args, a_vpp),
 	VOPARG_OFFSETOF(struct vop_open_args, a_cred),
 	VOPARG_OFFSETOF(struct vop_open_args, a_p),
 	VDESC_NO_OFFSET,
@@ -241,11 +241,12 @@ const struct vnodeop_desc vop_open_desc = {
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_OPEN(vp, mode, cred, p)
+VOP_OPEN(vp, mode, cred, p, vpp)
 	struct vnode *vp;
 	int mode;
 	struct ucred *cred;
 	struct proc *p;
+	struct vnode **vpp;
 {
 	struct vop_open_args a;
 	a.a_desc = VDESC(vop_open);
@@ -253,6 +254,7 @@ VOP_OPEN(vp, mode, cred, p)
 	a.a_mode = mode;
 	a.a_cred = cred;
 	a.a_p = p;
+	a.a_vpp = vpp;
 	return (VCALL(vp, VOFFSET(vop_open), &a));
 }
 #endif

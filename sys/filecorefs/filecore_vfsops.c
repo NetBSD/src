@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14 2001/05/30 11:42:13 mrg Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.4.1 2001/09/18 19:13:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -255,7 +255,7 @@ filecore_mountfs(devvp, mp, p, argp)
 	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return error;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.19 2001/06/14 20:32:41 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.19.4.1 2001/09/18 19:13:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -489,7 +489,7 @@ unionread:
 		}
 		
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p, NULL);
 			VOP_UNLOCK(lvp, 0);
 
 			if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46 2001/05/30 11:40:35 mrg Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.4.1 2001/09/18 19:13:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -193,7 +193,7 @@ adosfs_mountfs(devvp, mp, p)
 	/* 
 	 * open blkdev and read root block
 	 */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, p)) != 0)
+	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, p, NULL)) != 0)
 		return (error);
 	error = VOP_IOCTL(devvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p);
 	if (error)

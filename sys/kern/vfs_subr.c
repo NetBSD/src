@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.1 2001/09/07 04:45:39 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.2 2001/09/18 19:13:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/dirent.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
@@ -1085,7 +1086,7 @@ checkalias(nvp, nvp_rdev, mp)
 	struct mount *mp;
 {
 	struct proc *p = curproc;       /* XXX */
-	struct vnode *vp;
+	struct vnode *vp, *vq, *vx;
 	struct vnode **vpp;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
@@ -1112,7 +1113,8 @@ loop:
 		}
 		break;
 	}
-	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
+	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK ||
+	    iscloningvnode(vp)) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
 			sizeof(struct specinfo), M_VNODE, M_NOWAIT);
 		/* XXX Erg. */
@@ -1122,19 +1124,31 @@ loop:
 			goto loop;
 		}
 
+		memset(nvp->v_specinfo, 0, sizeof (struct specinfo));
+
+		if (vp != NULL) {
+			for (vq = vp; vq->v_specnext != NULL;
+			     vq = vq->v_specnext) {
+				vx = vq->v_specnext;
+				if (vx->v_rdev != nvp_rdev ||
+				    nvp->v_type != vx->v_type)
+					break;
+			}
+			nvp->v_specnext = vq->v_specnext;
+			nvp->v_flag |= VALIASED;
+			vq->v_specnext = nvp;
+			vq->v_flag |= VALIASED;
+		} else {
+			nvp->v_specnext = *vpp;
+			*vpp = nvp;
+		}
+
 		nvp->v_rdev = nvp_rdev;
 		nvp->v_hashchain = vpp;
-		nvp->v_specnext = *vpp;
-		nvp->v_specmountpoint = NULL;
 		simple_unlock(&spechash_slock);
-		nvp->v_speclockf = NULL;
-		*vpp = nvp;
-		if (vp != NULLVP) {
-			nvp->v_flag |= VALIASED;
-			vp->v_flag |= VALIASED;
+		if (vp != NULL)
 			vput(vp);
-		}
-		return (NULLVP);
+		return (NULL);
 	}
 	simple_unlock(&spechash_slock);
 	VOP_UNLOCK(vp, 0);
@@ -1568,7 +1582,7 @@ vclean(vp, flags, p)
 	 */
 	if (active) {
 		if (flags & DOCLOSE)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED, p);
 		VOP_INACTIVE(vp, p);
 	} else {
 		/*
@@ -1676,8 +1690,6 @@ vgonel(vp, p)
 	struct vnode *vp;
 	struct proc *p;
 {
-	struct vnode *vq;
-	struct vnode *vx;
 
 	/*
 	 * If a vgone (or vclean) is already in progress,
@@ -1703,40 +1715,7 @@ vgonel(vp, p)
 	 * if it is on one.
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
-		simple_lock(&spechash_slock);
-		if (vp->v_hashchain != NULL) {
-			if (*vp->v_hashchain == vp) {
-				*vp->v_hashchain = vp->v_specnext;
-			} else {
-				for (vq = *vp->v_hashchain; vq;
-							vq = vq->v_specnext) {
-					if (vq->v_specnext != vp)
-						continue;
-					vq->v_specnext = vp->v_specnext;
-					break;
-				}
-				if (vq == NULL)
-					panic("missing bdev");
-			}
-			if (vp->v_flag & VALIASED) {
-				vx = NULL;
-				for (vq = *vp->v_hashchain; vq;
-							vq = vq->v_specnext) {
-					if (vq->v_rdev != vp->v_rdev ||
-					    vq->v_type != vp->v_type)
-						continue;
-					if (vx)
-						break;
-					vx = vq;
-				}
-				if (vx == NULL)
-					panic("missing alias");
-				if (vq == NULL)
-					vx->v_flag &= ~VALIASED;
-				vp->v_flag &= ~VALIASED;
-			}
-		}
-		simple_unlock(&spechash_slock);
+		vdevremhash(vp);
 		FREE(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}
@@ -1806,6 +1785,97 @@ vdevgone(maj, minl, minh, type)
 	for (mn = minl; mn <= minh; mn++)
 		if (vfinddev(makedev(maj, mn), type, &vp))
 			VOP_REVOKE(vp, REVOKEALL);
+}
+
+void
+vdevinshash(vp, dev)
+	struct vnode *vp;
+	dev_t dev;
+{
+	struct vnode *vq, *vx, *vz, **vhead;
+
+	/*	
+	 * XXX probably can sleep here, actually.
+	 */
+	if (vp->v_specinfo == NULL) {
+loop:
+		MALLOC(vp->v_specinfo, struct specinfo *,
+			sizeof(struct specinfo), M_VNODE, M_NOWAIT);
+		if (vp->v_specinfo == NULL) {
+			uvm_wait("vdevins");
+			goto loop;
+		}
+		memset(vp->v_specinfo, 0, sizeof (struct specinfo));
+	}
+
+	vp->v_rdev = dev;
+
+	simple_lock(&spechash_slock);
+	vhead = &speclisth[SPECHASH(dev)];
+	vp->v_hashchain = vhead;
+	for (vq = *vhead; vq; vq = vq->v_specnext) {
+		if (vq->v_rdev != dev || vq->v_type != vp->v_type)
+			continue;
+		break;
+	}
+	if (vq != NULL) {
+		for (vx = vq; vx->v_specnext != NULL; vx = vx->v_specnext) {
+			vz = vq->v_specnext;
+			if (vz->v_rdev != dev || vp->v_type != vz->v_type)
+				break;
+		}
+		vp->v_specnext = vx->v_specnext;
+		vx->v_specnext = vp;
+		vp->v_flag |= VALIASED;
+		vx->v_flag |= VALIASED;
+	} else {
+		vp->v_specnext = *vhead;
+		*vhead = vp;
+	}
+	simple_unlock(&spechash_slock);
+}
+
+void
+vdevremhash(vp)
+	struct vnode *vp;
+{
+	struct vnode *vq;
+	struct vnode *vx;
+
+	simple_lock(&spechash_slock);
+	if (vp->v_hashchain != NULL) {
+		if (*vp->v_hashchain == vp) {
+			*vp->v_hashchain = vp->v_specnext;
+		} else {
+			for (vq = *vp->v_hashchain; vq;
+						vq = vq->v_specnext) {
+				if (vq->v_specnext != vp)
+					continue;
+				vq->v_specnext = vp->v_specnext;
+				break;
+			}
+			if (vq == NULL)
+				panic("missing bdev");
+		}
+		if (vp->v_flag & VALIASED) {
+			vx = NULL;
+			for (vq = *vp->v_hashchain; vq;
+						vq = vq->v_specnext) {
+				if (vq->v_rdev != vp->v_rdev ||
+				    vq->v_type != vp->v_type)
+					continue;
+				if (vx)
+					break;
+				vx = vq;
+			}
+			if (vx == NULL)
+				panic("missing alias");
+			if (vq == NULL)
+				vx->v_flag &= ~VALIASED;
+			vp->v_flag &= ~VALIASED;
+		}
+	}
+	simple_unlock(&spechash_slock);
 }
 
 /*

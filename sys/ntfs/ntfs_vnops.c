@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.36 2001/07/30 13:10:30 joda Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.36.2.1 2001/09/18 19:13:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -525,6 +525,7 @@ ntfs_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode **a_vpp;
 	} */ *ap;
 {
 #if NTFS_DEBUG

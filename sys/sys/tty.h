@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.52.4.1 2001/09/07 04:45:44 thorpej Exp $	*/
+/*	$NetBSD: tty.h,v 1.52.4.2 2001/09/18 19:14:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -251,6 +251,13 @@ u_char	*firstc __P((struct clist *clp, int *c));
 
 int	clalloc __P((struct clist *, int, int));
 void	clfree __P((struct clist *));
+
+/*
+ * XXXfvdl should not be here.
+ */
+int do_cttyopen(struct vnode *devvp, int flag, int mode, struct proc *p,
+		struct vnode **vpp);
+
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"

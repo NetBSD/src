@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56 2001/07/07 14:53:55 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.56.4.1 2001/09/18 19:13:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -318,7 +318,7 @@ iso_mountfs(devvp, mp, p, argp)
 	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return error;
 	needclose = 1;
