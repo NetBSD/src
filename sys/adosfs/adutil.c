@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.6 1994/12/28 08:52:01 chopps Exp $	*/
+/*	$NetBSD: adutil.c,v 1.7 1995/01/18 09:17:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -75,7 +75,7 @@ start_over:
  */
 void
 adosfs_ainshash(amp, ap)
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct anode *ap;
 {
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);
@@ -91,7 +91,7 @@ adosfs_aremhash(ap)
 
 int
 adosfs_getblktype(amp, bp)
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct buf *bp;
 {
 	if (adoscksum(bp, amp->nwords)) {

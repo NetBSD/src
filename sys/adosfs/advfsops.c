@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.9 1995/01/18 09:16:37 mycroft Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.10 1995/01/18 09:17:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -123,7 +123,7 @@ adosfs_mountfs(devvp, mp, p)
 {
 	struct disklabel dl;
 	struct partition *parp;
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct vnode *rvp;
 	int error, nl, part, i;
 
@@ -152,7 +152,7 @@ adosfs_mountfs(devvp, mp, p)
 		goto fail;
 
 	parp = &dl.d_partitions[part];
-	amp = malloc(sizeof(struct amount), M_ADOSFSMNT, M_WAITOK);
+	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
 	amp->mp = mp;
 	amp->startb = parp->p_offset;
 	amp->endb = parp->p_offset + parp->p_size;
@@ -206,7 +206,7 @@ adosfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	struct amount *amp;
+	struct adosfsmount *amp;
 	int error, flags;
 
 	flags = 0;
@@ -244,7 +244,7 @@ adosfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
-	struct amount *amp;
+	struct adosfsmount *amp;
 
 	amp = VFSTOADOSFS(mp);
 	sbp->f_type = 0;
@@ -274,7 +274,7 @@ adosfs_vget(mp, an, vpp)
 	ino_t an;
 	struct vnode **vpp;
 {
-	struct amount *amp;
+	struct adosfsmount *amp;
 	struct vnode *vp;
 	struct anode *ap;
 	struct buf *bp;
