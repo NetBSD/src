@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39 1999/08/23 22:29:41 ross Exp $ */
+/* $NetBSD: cpu.c,v 1.40 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 1999/08/23 22:29:41 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 1999/12/02 01:09:11 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 1999/08/23 22:29:41 ross Exp $");
 
 #include <vm/vm.h>
 
+#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/rpb.h>
@@ -512,7 +513,7 @@ cpu_iccb_send(cpu_id, msg)
 	 */
 	strcpy(pcsp->pcs_iccb.iccb_rxbuf, msg);
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
-	(void) alpha_atomic_testset_q(&hwrpb->rpb_rxrdy, cpumask);
+	alpha_atomic_setbits_q(&hwrpb->rpb_rxrdy, cpumask);
 
 	/* Wait for the message to be received. */
 	for (timeout = 10000; timeout != 0; timeout--) {
