@@ -1,0 +1,116 @@
+.\"	$NetBSD: leds.4,v 1.1 2001/08/17 01:11:10 fredette Exp $
+.\"
+.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by der Mouse and Jeremy Cooper.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 2, 1996
+.Dt LEDS 4 sun2
+.Os
+.Sh NAME
+.Nm leds
+.Nd sun2 diagnostic Light Emitting Diodes driver
+.Sh SYNOPSIS
+.nf
+.ft B
+#include <machine/leds.h>
+.ft R
+.fi
+.Sh DESCRIPTION
+All sun2 machines are equipped
+a diagnostic display of eight Light Emitting Diodes (LEDs), located
+on either the front (deskside chassis) or the back (desktop machine) 
+of the system unit.
+.Pp
+The kernel changes the display during periods of idle processor activity
+according to a stored sequential pattern list.
+The
+.Pa /dev/leds
+interface provides a way of manipulating the pattern list via simple file I/O.
+.Pp
+The structure of the file is as follows:
+.Bd -literal
+struct led_patterns {
+        u_char divisor;
+        u_char patlen;
+        u_char pat[256];
+};
+.Ed
+.Bl -tag -width divisor
+.It Sy divisor
+The number of idle periods to wait before switching to the next pattern in
+the array.
+.It Sy patlen
+The number of patterns stored in the array.
+.It Sy pat
+The array of patterns to display.
+.El
+.Pp
+When a clock interrupt occurs while the processor is idle, a pattern
+countdown timer is decremented.
+When the countdown timer reaches zero
+it is reset with the
+.Sy divisor
+value and the next pattern in the array is selected and displayed.
+.Pp
+Each 8-bit pattern describes the state of the diagnostic LEDs.
+A set bit in a pattern indicates that its
+corresponding LED should be be extinguished,
+while a reset bit indicates an LED to be illuminated.
+.Sh EXAMPLES
+The following example uses
+.Xr awk 1
+to display the repeating animation of a single lit LED scrolling from one end
+of the display to the other, using six clock ticks between each update.
+.Bd -ragged -offset -ident
+# echo 5 8 254 253 250 247 239 223 191 127 |
+  awk '{ for (i=1;i<=NF;i++) printf("%c",$i+0); }' > /dev/leds
+.Ed
+.Sh "ERRORS"
+An I/O transfer to
+.Pa /dev/leds
+will complete successfully unless:
+.Bl -tag -width Er
+.It Bq Er EIO
+A read or write starting beyond the end of the file was attempted.
+.El
+.Sh FILES
+.Bl -tag -width /dev/leds -compact
+.It Pa /dev/leds
+.El
+.Sh SEE ALSO
+.Xr ppt 6
+.Sh HISTORY
+.Pa /dev/leds
+first appeared in
+.Nx 1.2 .
