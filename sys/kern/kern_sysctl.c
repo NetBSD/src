@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.169.2.2 2004/04/07 04:54:13 jmc Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169.2.3 2004/04/28 05:32:25 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.2 2004/04/07 04:54:13 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.3 2004/04/28 05:32:25 jmc Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2709,54 +2709,14 @@ static int
 sysctl_cvt_in(struct lwp *l, int *vp, const void *i, size_t sz,
 	      struct sysctlnode *node)
 {
-	struct sysctlnode0 inode0;
 	int error, flags;
 
-	if (i == NULL) {
-		memset(node, 0, sizeof(*node));
-		*vp = SYSCTL_VERS_0;
-		return (0);
-	}
-
-	if (sz < sizeof(flags))
+	if (i == NULL || sz < sizeof(flags))
 		return (EINVAL);
 
 	error = sysctl_copyin(l, i, &flags, sizeof(flags));
 	if (error)
 		return (error);
-
-	if (sz == sizeof(inode0) &&
-	    SYSCTL_VERS(flags) == SYSCTL_VERS_0) {
-		error = sysctl_copyin(l, i, &inode0, sizeof(inode0));
-		if (error)
-			return (error);
-
-		node->sysctl_flags = inode0.sysctl0_flags;
-		node->sysctl_num = inode0.sysctl0_num;
-		memcpy(node->sysctl_name, inode0.sysctl0_name, SYSCTL_NAMELEN);
-		node->sysctl_ver = inode0.sysctl0_ver;
-		node->sysctl_csize = inode0.sysctl0_csize;
-		node->sysctl_clen = inode0.sysctl0_clen;
-		node->sysctl_child = NULL; /* inode.sysctl0_child; */
-		node->sysctl_data = inode0.sysctl0_data;
-		node->sysctl_offset = 0;
-		node->sysctl_alias = inode0.sysctl0_alias;
-		node->sysctl_idata = inode0.sysctl0_idata;
-		node->sysctl_qdata = inode0.sysctl0_qdata;
-		node->sysctl_size = inode0.sysctl0_size;
-		node->sysctl_func = inode0.sysctl0_func;
-		node->sysctl_parent = NULL; /* inode.sysctl0_parent; */
-		node->sysctl_desc = NULL;
-
-		node->sysctl_flags &= ~SYSCTL_VERS_MASK;
-		node->sysctl_flags |= SYSCTL_VERSION;
-		if (SYSCTL_TYPE(node->sysctl_flags) == CTLTYPE_NODE &&
-		    node->sysctl_size == sizeof(inode0))
-			node->sysctl_size = sizeof(*node);
-
-		*vp = SYSCTL_VERS_0;
-		return (0);
-	}
 
 #if (SYSCTL_VERSION != SYSCTL_VERS_1)
 #error sysctl_cvt_in: no support for SYSCTL_VERSION
@@ -2778,39 +2738,14 @@ static int
 sysctl_cvt_out(struct lwp *l, int v, const struct sysctlnode *i,
 	       void *ovp, size_t left, size_t *szp)
 {
-	struct sysctlnode0 onode0;
 	size_t sz = sizeof(*i);
 	const void *src = i;
 	int error;
 
 	switch (v) {
 	case SYSCTL_VERS_0:
-		sz = sizeof(onode0);
-		src = &onode0;
-		memset(&onode0, 0, sz);
-		onode0.sysctl0_flags = i->sysctl_flags;
-		onode0.sysctl0_num = i->sysctl_num;
-		onode0.sysctl0_size = i->sysctl_size;
-		memcpy(onode0.sysctl0_name, i->sysctl_name, SYSCTL_NAMELEN);
-		onode0.sysctl0_csize = i->sysctl_csize;
-		onode0.sysctl0_clen = i->sysctl_clen;
-		onode0.sysctl0_child = NULL; /* i->sysctl_child; */
-		onode0.sysctl0_alias = i->sysctl_alias;
-		onode0.sysctl0_data = i->sysctl_data;
-		onode0.sysctl0_idata = i->sysctl_idata;
-		onode0.sysctl0_qdata = i->sysctl_qdata;
-		onode0.sysctl0_func = i->sysctl_func;
-		onode0.sysctl0_parent = NULL; /* i->syctl_parent; */
-		onode0.sysctl0_ver = i->sysctl_ver;
+		return (EINVAL);
 
-		onode0.sysctl0_flags &= ~SYSCTL_VERS_MASK;
-		onode0.sysctl0_flags |= SYSCTL_VERS_0;
-		if (SYSCTL_TYPE(onode0.sysctl0_flags) == CTLTYPE_NODE &&
-		    onode0.sysctl0_size == sizeof(*i))
-			onode0.sysctl0_size = sizeof(onode0);
-
-		break;
-		
 #if (SYSCTL_VERSION != SYSCTL_VERS_1)
 #error sysctl_cvt_out: no support for SYSCTL_VERSION
 #endif /*  (SYSCTL_VERSION != SYSCTL_VERS_1) */
