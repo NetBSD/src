@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 1997/02/04 07:15:46 mark Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 1997/06/26 01:26:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -78,5 +78,10 @@ db_regs_t		ddb_regs;	/* register state */
 #define SOFTWARE_SSTEP
 
 u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
+
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
 
 #endif	/* _ARM32_DB_MACHDEP_H_ */

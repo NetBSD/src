@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 1997/03/20 12:02:37 matthias Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 1997/06/26 01:26:59 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -106,5 +106,10 @@ struct insn;
 int	db_dasm_ns32k __P((struct insn *insn, db_addr_t loc));
 
 #endif /* _KERNEL */
+
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
 
 #endif
