@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.41 2003/01/25 18:12:32 tron Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.42 2003/01/26 06:42:32 tsutsui Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.41 2003/01/25 18:12:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.42 2003/01/26 06:42:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1398,8 +1398,8 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 
 	if (bp == NULL) {
 		bp = softdep_setup_pagecache(ip, lbn, newsize);
-		UVMHIST_LOG(ubchist, "bp = %p, size = %d -> %d",
-		    bp, (int)oldsize, (int)newsize, 0);
+		UVMHIST_LOG(ubchist, "bp = %p, size = %ld -> %ld",
+		    bp, oldsize, newsize, 0);
 	}
 	ACQUIRE_LOCK(&lk);
 	(void) inodedep_lookup(ip->i_fs, ip->i_number, DEPALLOC, &inodedep);
@@ -1490,13 +1490,13 @@ allocdirect_merge(adphead, newadp, oldadp)
 	if (newadp->ad_oldblkno != oldadp->ad_newblkno ||
 	    newadp->ad_oldsize != oldadp->ad_newsize ||
 	    newadp->ad_lbn >= NDADDR)
-		panic("allocdirect_merge: ob %lld != nb %lld || "
-		      "lbn %d >= %d ||\nosize %lu != nsize %lu",
-		    (long long)newadp->ad_oldblkno,
-		    (long long)oldadp->ad_newblkno,
-		    (int)newadp->ad_lbn, NDADDR,
-		    (unsigned long)newadp->ad_oldsize,
-		    (unsigned long)oldadp->ad_newsize);
+		panic("allocdirect_merge: ob %" PRId64 " != nb %" PRId64 " || "
+		      "lbn %" PRId64 " >= %d ||\nosize %ld != nsize %ld",
+		    newadp->ad_oldblkno,
+		    oldadp->ad_newblkno,
+		    newadp->ad_lbn, NDADDR,
+		    newadp->ad_oldsize,
+		    oldadp->ad_newsize);
 	newadp->ad_oldblkno = oldadp->ad_oldblkno;
 	newadp->ad_oldsize = oldadp->ad_oldsize;
 	/*
@@ -3430,8 +3430,7 @@ initiate_write_inodeblock(inodedep, bp)
 			panic("%s: indirect pointer #%d mismatch %d != %" PRId64,
 			    "softdep_write_inodeblock",
 			    (int)(adp->ad_lbn - NDADDR),
-			    (int)ufs_rw32(dp->di_ib[adp->ad_lbn - NDADDR],
-				needswap),
+			    ufs_rw32(dp->di_ib[adp->ad_lbn - NDADDR], needswap),
 			    adp->ad_newblkno);
 		deplist |= 1 << adp->ad_lbn;
 		if ((adp->ad_state & ATTACHED) == 0)
@@ -3796,7 +3795,7 @@ handle_written_inodeblock(inodedep, bp)
 				    "handle_written_inodeblock",
 				    "direct pointer", (int)adp->ad_lbn,
 				    ufs_rw32(dp->di_db[adp->ad_lbn], needswap),
-				    (long long)adp->ad_oldblkno);
+				    adp->ad_oldblkno);
 			/* XXX ondisk32 */
 			dp->di_db[adp->ad_lbn] =
 			    ufs_rw32((int32_t)adp->ad_newblkno, needswap);
@@ -5292,8 +5291,8 @@ softdep_setup_pagecache(ip, lbn, size)
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
 	}
 	bp->b_bcount = bp->b_resid = size;
-	UVMHIST_LOG(ubchist, "vp = %p, lbn = %d, bp = %p, bcount = resid = %ld",
-	    vp, (int)lbn, bp, size);
+	UVMHIST_LOG(ubchist, "vp = %p, lbn = %" PRId64
+	    ", bp = %p, bcount = resid = %ld", vp, lbn, bp, size);
 	return bp;
 }
 
@@ -5439,19 +5438,18 @@ softdep_pageiodone1(bp)
 				continue;
 			}
 			UVMHIST_LOG(ubchist,
-			    "bcount %d resid %d vp %p lbn %ld",
-			    pcbp ? (int)pcbp->b_bcount : -1,
-			    pcbp ? (int)pcbp->b_resid : -1, vp, lbn);
+			    "bcount %ld resid %ld vp %p lbn %" PRId64,
+			    pcbp ? pcbp->b_bcount : -1,
+			    pcbp ? pcbp->b_resid : -1, vp, lbn);
 			UVMHIST_LOG(ubchist,
 			    "pcbp %p iosize %ld, size %d, asize %d",
 			    pcbp, iosize, size, asize);
 			pcbp->b_resid -= size;
 			if (pcbp->b_resid < 0) {
 				panic("softdep_pageiodone: "
-				    "resid < 0, vp %p lbn 0x%llx pcbp %p"
+				    "resid < 0, vp %p lbn 0x%" PRIx64 " pcbp %p"
 				    " iosize %ld, size %d, asize %d, bsize %d",
-				    vp, (long long)lbn, pcbp, iosize, size,
-				    asize, bsize);
+				    vp, lbn, pcbp, iosize, size, asize, bsize);
 			}
 			if (pcbp->b_resid > 0) {
 				continue;

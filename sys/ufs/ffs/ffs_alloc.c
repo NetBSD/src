@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.58 2003/01/24 21:55:21 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.59 2003/01/26 06:42:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.58 2003/01/24 21:55:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.59 2003/01/26 06:42:31 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -242,8 +242,8 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 		goto nospace;
 	/* XXX ondisk32 */
 	if ((bprev = ufs_rw32(ip->i_ffs_db[lbprev], UFS_FSNEEDSWAP(fs))) == 0) {
-		printf("dev = 0x%x, bsize = %d, bprev = %lld, fs = %s\n",
-		    ip->i_dev, fs->fs_bsize, (long long)bprev, fs->fs_fsmnt);
+		printf("dev = 0x%x, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
+		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
 	/*
@@ -1487,16 +1487,14 @@ ffs_blkfree(ip, bno, size)
 
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%x, bno = %lld bsize = %d, "
+		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
 		       "size = %ld, fs = %s\n",
-		    ip->i_dev, (long long)bno, fs->fs_bsize, size,
-		    fs->fs_fsmnt);
+		    ip->i_dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkfree: bad size");
 	}
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
-		printf("bad block %lld, ino %d\n", (long long)bno,
-		    ip->i_number);
+		printf("bad block %" PRId64 ", ino %d\n", bno, ip->i_number);
 		ffs_fserr(fs, ip->i_ffs_uid, "bad block");
 		return;
 	}
@@ -1516,8 +1514,8 @@ ffs_blkfree(ip, bno, size)
 	if (size == fs->fs_bsize) {
 		blkno = fragstoblks(fs, bno);
 		if (!ffs_isfreeblock(fs, cg_blksfree(cgp, needswap), blkno)) {
-			printf("dev = 0x%x, block = %lld, fs = %s\n",
-			    ip->i_dev, (long long)bno, fs->fs_fsmnt);
+			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
+			    ip->i_dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
 		ffs_setblock(fs, cg_blksfree(cgp, needswap), blkno);
@@ -1542,9 +1540,9 @@ ffs_blkfree(ip, bno, size)
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(cg_blksfree(cgp, needswap), bno + i)) {
-				printf("dev = 0x%x, block = %lld, fs = %s\n",
-				    ip->i_dev, (long long)(bno + i),
-				    fs->fs_fsmnt);
+				printf("dev = 0x%x, block = %" PRId64
+				       ", fs = %s\n",
+				    ip->i_dev, bno + i, fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
 			}
 			setbit(cg_blksfree(cgp, needswap), bno + i);
@@ -1787,7 +1785,7 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 			subfield <<= 1;
 		}
 	}
-	printf("bno = %lld, fs = %s\n", (long long)bno, fs->fs_fsmnt);
+	printf("bno = %" PRId64 ", fs = %s\n", bno, fs->fs_fsmnt);
 	panic("ffs_alloccg: block not in map");
 	/* return (-1); */
 }
