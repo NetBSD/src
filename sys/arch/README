@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.34 2004/03/11 21:44:08 cl Exp $
+$NetBSD: README,v 1.35 2004/10/13 23:28:35 gavan Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -26,6 +26,7 @@ hpcmips:	MIPS based handheld PCs (mips, 19990925)
 hpcsh:		Hitachi SuperH(TM) based handheld PCs (sh3, 20010117)
 i386:		Intel/AMD etc. x86 processor line (i386, 19930321)
 ibmnws:		IBM Network Station Thin Clients (powerpc, -)
+iyonix:		Castle Technology xscale based workstations (arm, 20040713)
 luna68k:	LUNA product line of OMRON Tateishi Electric (m68k, 20000105)
 mac68k:		Apple Macintosh (m68k, 19930929)
 macppc:		Apple Power Macintosh and clones (powerpc, 19980515)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2004/05/12 16:56:41 cl Exp $
+#	$NetBSD: Makefile,v 1.34 2004/10/13 23:28:35 gavan Exp $
 #
 
 .include <bsd.own.mk>
@@ -24,6 +24,7 @@ SUBDIR+= hp700
 SUBDIR+= hpcmips
 SUBDIR+= hpcsh
 SUBDIR+= i386
+# SUBDIR+= iyonix	# not yet
 SUBDIR+= mac68k
 SUBDIR+= macppc
 SUBDIR+= mmeye

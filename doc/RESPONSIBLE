@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.44 2004/09/25 12:50:26 tsutsui Exp $
+#	$NetBSD: RESPONSIBLE,v 1.45 2004/10/13 23:28:35 gavan Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -185,6 +185,7 @@ hpcarm		ichiro, toshii
 hpcmips		takemura
 hpcsh		uch
 i386		fvdl
+iyonix		gavan
 luna68k		nisimura
 mac68k		scottr
 macppc		tsubai
