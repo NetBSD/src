@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.14 1998/04/15 21:42:24 mjacob Exp $ */
+/* $NetBSD: pmap.h,v 1.15 1998/04/27 19:07:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,42 +215,48 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vm_offset_t));
-static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vm_offset_t));
+static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vm_offset_t, pt_entry_t *));
+static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vm_offset_t, pt_entry_t *));
 
 #define	pmap_l1pte(pmap, v)						\
 	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
 
 static __inline pt_entry_t *
-pmap_l2pte(pmap, v)
+pmap_l2pte(pmap, v, l1pte)
 	pmap_t pmap;
 	vm_offset_t v;
+	pt_entry_t *l1pte;
 {
-	pt_entry_t *l1pte, *lev2map;
+	pt_entry_t *lev2map;
 
-	l1pte = pmap_l1pte(pmap, v);
-	if (pmap_pte_v(l1pte) == 0)
-		return (NULL);
+	if (l1pte == NULL) {
+		l1pte = pmap_l1pte(pmap, v);
+		if (pmap_pte_v(l1pte) == 0)
+			return (NULL);
+	}
 
 	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
 	return (&lev2map[l2pte_index(v)]);
 }
 
 static __inline pt_entry_t *
-pmap_l3pte(pmap, v)
+pmap_l3pte(pmap, v, l2pte)
 	pmap_t pmap;
 	vm_offset_t v;
+	pt_entry_t *l2pte;
 {
-	pt_entry_t *l1pte, *lev2map, *l2pte, *lev3map;
+	pt_entry_t *l1pte, *lev2map, *lev3map;
 
-	l1pte = pmap_l1pte(pmap, v);
-	if (pmap_pte_v(l1pte) == 0)
-		return (NULL);
+	if (l2pte == NULL) {
+		l1pte = pmap_l1pte(pmap, v);
+		if (pmap_pte_v(l1pte) == 0)
+			return (NULL);
 
-	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
-	l2pte = &lev2map[l2pte_index(v)];
-	if (pmap_pte_v(l2pte) == 0)
-		return (NULL);
+		lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
+		l2pte = &lev2map[l2pte_index(v)];
+		if (pmap_pte_v(l2pte) == 0)
+			return (NULL);
+	}
 
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
 	return (&lev3map[l3pte_index(v)]);
