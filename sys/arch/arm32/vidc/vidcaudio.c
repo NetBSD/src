@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.6 1996/10/15 21:33:51 mark Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.7 1996/11/23 03:37:40 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -139,7 +139,7 @@ vidcaudio_probe(parent, match, aux)
 {
 	int id;
 
-	id = ReadByte(IOMD_ID0) | ReadByte(IOMD_ID1) << 8;
+	id = IOMD_ID;
 
 /* So far I only know about this IOMD */
 
@@ -210,7 +210,7 @@ vidcaudio_attach(parent, self, aux)
 	ag.intr = NULL;
 /*	ag.nextintr = NULL;*/
 
-	id = ReadByte(IOMD_ID0) | ReadByte(IOMD_ID1) << 8;
+	id = IOMD_ID;
 
 	switch (id) {
 #ifndef CPU_ARM7500
