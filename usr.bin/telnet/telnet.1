@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.28 2003/10/27 19:46:14 heas Exp $
+.\"	$NetBSD: telnet.1,v 1.29 2003/10/28 00:28:56 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd February 3, 1994
+.Dd October 28, 2003
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -624,11 +624,13 @@ Lines that begin
 without white space are the start of a machine entry.
 The first thing on such a line is a string identifying the machine
 that is being connected to.
-It may be the hostname or numeric address sepecified as the argument
+It may be the hostname or numeric address specified as the argument
 .Ar host ,
 the canonical name of that string as determined by
 .Xr getaddrinfo 3 ,
-or the string \*(LqDEFAULT\*(Rq indicating all hosts.
+or the string
+.Dq DEFAULT
+indicating all hosts.
 The rest of the line, and successive
 lines that begin with white space are assumed to be
 .Nm
