@@ -252,7 +252,7 @@ free download from the internet.  For more information
 on downloading @sc{cvs} and other @sc{cvs} topics, see:
 
 @example
-http://www.cyclic.com/
+http://www.cvshome.org/
 http://www.loria.fr/~molli/cvs-index.html
 @end example
 
@@ -2943,15 +2943,14 @@ original source directory.
 
 @example
 $ cd ..
-$ mv @var{dir} @var{dir}.orig
-$ cvs checkout yoyodyne/@var{dir}       # @r{Explanation below}
-$ diff -r @var{dir}.orig yoyodyne/@var{dir}
-$ rm -r @var{dir}.orig
+$ cvs checkout yoyodyne/@var{rdir}       # @r{Explanation below}
+$ diff -r @var{wdir} yoyodyne/@var{rdir}
+$ rm -r @var{wdir}
 @end example
 
 @noindent
 Erasing the original sources is a good idea, to make sure that you do
-not accidentally edit them in @var{dir}, bypassing @sc{cvs}.
+not accidentally edit them in @var{wdir}, bypassing @sc{cvs}.
 Of course, it would be wise to make sure that you have
 a backup of the sources before you remove them.
 
@@ -4837,9 +4836,11 @@ The way that you remove a directory is to remove all
 the files in it.  You don't remove the directory
 itself; there is no way to do that.
 Instead you specify the @samp{-P} option to
-@code{cvs update}, @code{cvs checkout}, or @code{cvs
-export}, which will cause @sc{cvs} to remove empty
-directories from working directories.  Probably the
+@code{cvs update} or @code{cvs checkout},
+which will cause @sc{cvs} to remove empty
+directories from working directories.
+(Note that @code{cvs export} always removes empty directories.)
+Probably the
 best way to do this is to always specify @samp{-P}; if
 you want an empty directory then put a dummy file (for
 example @file{.keepme}) in it to prevent @samp{-P} from
@@ -4852,7 +4853,7 @@ removing it.
 @c need for -P and so that a file can be a directory in
 @c one revision and a regular file in another.
 Note that @samp{-P} is implied by the @samp{-r} or @samp{-D}
-options of @code{checkout} and @code{export}.  This way
+options of @code{checkout}.  This way
 @sc{cvs} will be able to correctly create the directory
 or not depending on whether the particular version you
 are checking out contains any files in that directory.
@@ -5184,6 +5185,11 @@ You can use the history file (@pxref{history file}) to
 log various @sc{cvs} actions.  To retrieve the
 information from the history file, use the @code{cvs
 history} command (@pxref{history}).
+
+Note: you can control what is logged to this file by using the
+@samp{LogHistory} keyword in the @file{CVSROOT/config} file
+(@pxref{config}).
+
 @c
 @c The history database has many problems:
 @c * It is very unclear what field means what.  This
@@ -6253,11 +6259,14 @@ If @var{files} is omitted, it defaults to the current directory.
 
 Do not create @var{files} read-only on checkout; thus,
 developers will not be reminded to use @code{cvs edit}
-and @code{cvs unedit}.  CVS will check out @var{files}
+and @code{cvs unedit}.
+@ignore
+CVS will check out @var{files}
 read-write as usual, unless other permissions override
 due to the @code{PreservePermissions} option being
 enabled in the @file{config} administrative file
 (@pxref{Special Files}, @pxref{config})
+@end ignore
 
 The @var{files} and options are processed as for @code{cvs
 watch on}.
@@ -6340,7 +6349,7 @@ standard thing to put in the @code{notify} file is the
 single line:
 
 @example
-ALL mail %s -s \"CVS notification\"
+ALL mail %s -s "CVS notification"
 @end example
 
 This causes users to be notified by electronic mail.
@@ -6424,6 +6433,7 @@ receive notifications, she should specify @code{-a none}.
 The @var{files} and options are processed as for the @code{cvs
 watch} commands.
 
+@ignore
 @strong{Caution:} If the @code{PreservePermissions}
 option is enabled in the repository (@pxref{config}),
 CVS will not change the permissions on any of the
@@ -6431,6 +6441,7 @@ CVS will not change the permissions on any of the
 that using @samp{cvs edit} does not interfere with the
 ability to store file permissions in the CVS
 repository.
+@end ignore
 
 @end deffn
 
@@ -7338,6 +7349,7 @@ if the device file cannot be opened, CVS will refuse to
 handle it.  Files also lose their ownerships and
 permissions during repository transactions.
 
+@ignore
 If the configuration variable @code{PreservePermissions}
 (@pxref{config}) is set in the repository, CVS will
 save the following file characteristics in the
@@ -7416,6 +7428,7 @@ with client/server @sc{cvs}.  Another limitation is
 that hard links must be to other files within the same
 directory; hard links across directories are not
 supported.
+@end ignore
 
 @c ---------------------------------------------------------------------
 @node CVS commands
@@ -7757,8 +7770,11 @@ when you build @sc{cvs}.
 @item -z @var{gzip-level}
 @cindex Compression
 @cindex Gzip
-Set the compression level.  Only has an effect on the
-@sc{cvs} client.
+Set the compression level.
+Valid levels are 1 (high speed, low compression) to
+9 (low speed, high compression), or 0 to disable
+compression (the default).
+Only has an effect on the @sc{cvs} client.
 
 @end table
 
@@ -8431,13 +8447,7 @@ If @var{file} is omitted,
 obtain the text from standard input, terminated by
 end-of-file or by a line containing @samp{.} by itself.
 Prompt for the text if interaction is possible; see
-@samp{-I}.  Reading from standard input does not work
-for client/server @sc{cvs} and may change in a future
-release of @sc{cvs}.
-@c Changing it to doeditor() is the most obvious thing
-@c (but with a different syntax, as we would like to
-@c phase out optional arguments).  I don't know.  I'm
-@c tempted to say the whole concept is unnecessary.
+@samp{-I}.
 
 @item -t-@var{string}
 Similar to @samp{-t@var{file}}. Write descriptive text
@@ -9126,7 +9136,8 @@ the @sc{cvs} administrative directories.  For example, you
 might use @code{export} to prepare source for shipment
 off-site.  This command requires that you specify a
 date or tag (with @samp{-D} or @samp{-r}), so that you
-can count on reproducing the source you ship to others.
+can count on reproducing the source you ship to others
+(and thus it always prunes empty directories).
 
 One often would like to use @samp{-kv} with @code{cvs
 export}.  This causes any keywords to be
@@ -9257,7 +9268,7 @@ Report on a particular module.  (You can meaningfully
 use @samp{-m} more than once on the command line.)
 
 @item -o
-Report on checked-out modules.
+Report on checked-out modules.  This is the default report type.
 
 @item -T
 Report on all tags.
@@ -10322,17 +10333,14 @@ Make new working files read-write.  See @ref{Global
 options}.
 
 @item -x
-Encrypt all communication (client only).  See
-@ref{Global options}.
+Encrypt all communication (client only).
+See @ref{Global options}.
 
 @item -z @var{gzip-level}
 @cindex Compression
 @cindex Gzip
 Set the compression level (client only).
-@c FIXME: what are the valid values for gzip-level.
-@c And shouldn't this be documented in at least a
-@c little bit of detail somewhere?
-
+See @ref{Global options}.
 @end table
 
 Keyword expansion modes (@pxref{Substitution modes}):
@@ -11025,6 +11033,11 @@ Checkout revision @var{tag} (is sticky).  See @ref{Common options}.
 More wrappers.  See @ref{import options}.
 @end table
 
+@item version
+
+Display the version of @sc{cvs} being used.  If the repository
+is remote, display both the client and server versions.
+
 @item watch [on|off|add|remove] [@var{options}] [@var{files}@dots{}]
 
 on/off: turn on/off read-only checkouts of files.  See
@@ -11463,10 +11476,6 @@ value of the option `-i' set in the modules file, and similarly for
 the file CVS/Update.prog and `-u'. The program is always executed from
 the top level of the checked-out copy on the client. Again, the program
 is first searched for in the checked-out copy and then using the path.
-
-Note also that the commit and update programs work ONLY when using local
-repository access -- the files simply aren't created when sources are
-checked out from a pserver or other remote CVS.
 
 The programs are all run after the operation has effectively
 completed.
@@ -12495,6 +12504,9 @@ to specify this.
 @cindex USER, internal variable
 Username of the user running @sc{cvs} (on the @sc{cvs}
 server machine).
+When using pserver, this is the user specified in the repository
+specification which need not be the same as the username the
+server is running as (@pxref{Password authentication server}).
 @end table
 
 If you want to pass a value to the administrative files
@@ -12568,6 +12580,7 @@ pserver users must exist in @file{CVSROOT/passwd}.
 The default is @samp{yes}.  For more on pserver, see
 @ref{Password authenticated}.
 
+@ignore
 @cindex PreservePermissions, in CVSROOT/config
 @item PreservePermissions=@var{value}
 Enable support for saving special device files,
@@ -12575,6 +12588,7 @@ symbolic links, file permissions and ownerships in the
 repository.  The default value is @samp{no}.
 @xref{Special Files}, for the full implications of using
 this keyword.
+@end ignore
 
 @cindex TopLevelAdmin, in CVSROOT/config
 @item TopLevelAdmin=@var{value}
@@ -12615,6 +12629,14 @@ put them another place, and therefore the repository
 could become corrupted.  CVS 1.10 does not support
 LockDir but it will print a warning if run on a
 repository with LockDir enabled.
+
+@cindex LogHistory, in CVSROOT/config
+@item LogHistory=@var{value}
+Control what is logged to the @file{CVSROOT/history} file.
+Default of @samp{TOFEWGCMAR} (or simply @samp{all}) will log
+all transactions.  Any subset of the default is
+legal.  (For example, to only log transactions that modify the
+@file{*,v} files, use @samp{LogHistory=TMAR}.)
 @end table
 
 @c ---------------------------------------------------------------------
@@ -13166,8 +13188,9 @@ other than CVS.  If not, it indicates a CVS bug
 This message will be followed by a usage message for
 @sc{rcs}.  It means that you have an old version of
 @sc{rcs} (probably supplied with your operating
-system).  CVS only works with @sc{rcs} version 5 and
-later.
+system), as well as an old version of @sc{cvs}.
+@sc{cvs} 1.9.18 and earlier only work with @sc{rcs} version 5 and
+later; current versions of @sc{cvs} do not run @sc{rcs} programs.
 @c For more information on installing @sc{cvs}, see
 @c (FIXME: where?  it depends on whether you are
 @c getting binaries or sources or what).
@@ -13211,6 +13234,10 @@ find the log file which inetd writes
 your system).  For details, see @ref{Connection}, and
 @ref{Password authentication server}.
 
+@item cvs server: cannot open /root/.cvsignore: Permission denied
+@itemx cvs [server aborted]: can't chdir(/root): Permission denied
+See @ref{Connection}.
+
 @item cvs commit: Up-to-date check failed for `@var{file}'
 This means that someone else has committed a change to
 that file since the last time that you did a @code{cvs
@@ -13218,9 +13245,9 @@ update}.  So before proceeding with your @code{cvs
 commit} you need to @code{cvs update}.  CVS will merge
 the changes that you made and the changes that the
 other person made.  If it does not detect any conflicts
-it will report @samp{M cacErrCodes.h} and you are ready
+it will report @samp{M @var{file}} and you are ready
 to @code{cvs commit}.  If it detects conflicts it will
-print a message saying so, will report @samp{C cacErrCodes.h},
+print a message saying so, will report @samp{C @var{file}},
 and you need to manually resolve the
 conflict.  For more details on this process see
 @ref{Conflicts example}.
@@ -13358,6 +13385,15 @@ for programs being run by inetd.  In the latter case, you can either
 have inetd run a shell script that unsets @code{HOME} and then runs
 @sc{cvs}, or you can use @code{env} to run @sc{cvs} with a pristine
 environment.
+
+If you can connect successfully for a while but then can't,
+you've probably hit inetd's rate limit.
+(If inetd receives too many requests for the same service
+in a short period of time, it assumes that something is wrong
+and temporarily disables the service.)
+Check your inetd documentation to find out how to adjust the
+rate limit (some versions of inetd have a single rate limit,
+others allow you to set the limit for each service separately.)
 @end table
 
 @node Other problems
@@ -13457,7 +13493,6 @@ report, there are companies which will do that for a
 fee.  Two such companies are:
 
 @cindex Signum Support
-@cindex Cyclic Software
 @cindex Support, getting CVS support
 @example
 Signum Support AB
@@ -13469,10 +13504,6 @@ Phone: +46 (0)13 - 21 46 00
 Fax:   +46 (0)13 - 21 47 00
 http://www.signum.se/
 
-Cyclic Software
-United States of America
-http://www.cyclic.com/
-info@@cyclic.com
 @end example
 
 @item
@@ -13496,7 +13527,7 @@ There may be resources on the net which can help.  Two
 good places to start are:
 
 @example
-http://www.cyclic.com
+http://www.cvshome.org
 http://www.loria.fr/~molli/cvs-index.html
 @end example
 
