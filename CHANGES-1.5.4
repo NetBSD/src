@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.38 2002/09/05 04:35:12 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.39 2002/09/05 04:50:57 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1371,7 +1371,7 @@ sys/kern/tty.c					1.139
   Make sure repeated TIOCSCTTY doesn't corrupt session hold count.
   Fixes kern/17382 by David Laight.
 
-sys/uvm/uvm_amap_i.h				1.18
+sys/uvm/uvm_amap_i.h				1.18 via patch
   In amap_ref, only increment the amap's refcnt after we have established
   the ppref array.  Otherwise, the newly ref'ed pages will be doubly
   counted and thus never freed because the pprefcnt can't fall to 0.
