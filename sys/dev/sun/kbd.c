@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28.2.1 2002/01/10 19:58:32 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.2.2 2002/06/17 20:44:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28.2.1 2002/01/10 19:58:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28.2.2 2002/06/17 20:44:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -206,6 +206,16 @@ kbdpoll(dev, events, p)
 	return (ev_poll(&k->k_events, events, p));
 }
 
+int
+kbdkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&k->k_events, kn));
+}
 
 static int kbd_iockeymap __P((struct kbd_state *ks,
 	u_long cmd, struct kiockeymap *kio));

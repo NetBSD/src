@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.20.4.1 2002/01/10 19:58:34 thorpej Exp $	*/
+/*	$NetBSD: ms.c,v 1.20.4.2 2002/06/17 20:44:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20.4.1 2002/01/10 19:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.20.4.2 2002/06/17 20:44:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,16 @@ mspoll(dev, events, p)
 	return (ev_poll(&ms->ms_events, events, p));
 }
 
+int
+mskqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct ms_softc *ms;
+
+	ms = ms_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&ms->ms_events, kn));
+}
 
 /****************************************************************
  * Middle layer (translator)
