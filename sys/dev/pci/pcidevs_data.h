@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.212 2000/04/17 00:26:45 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.213 2000/04/18 16:38:13 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.207 2000/04/17 00:26:22 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.208 2000/04/18 16:37:00 cgd Exp 
  */
 
 /*
@@ -6871,6 +6871,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GEOCAST, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Geocast Network Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SIBYTE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "SiByte, Inc.",
 	    NULL,
 	},
 	{
