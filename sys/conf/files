@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.455 2001/09/01 23:50:43 thorpej Exp $
+#	$NetBSD: files,v 1.456 2001/09/09 11:01:00 tls Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -722,7 +722,10 @@ file	coda/coda_vnops.c		coda
 file	crypto/arc4/arc4.c		wlan
 file	crypto/des/des_ecb.c		ipsec & ipsec_esp
 file	crypto/des/des_setkey.c		ipsec & ipsec_esp
-file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp
+file	crypto/des/des_enc.c		ipsec & ipsec_esp & !crypto_md_des_enc
+#file    crypto/des/des_cbc.c		ipsec & ipsec_esp & !crypto_md_des_cbc
+file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp & !crypto_md_bf_enc
+#file	crypto/blowfish/bf_cbc.c	ipsec & ipsec_esp & !crypto_md_bf_cbc
 file	crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
 file	crypto/cast128/cast128.c	ipsec & ipsec_esp
 file	crypto/rijndael/rijndael-alg-fst.c ipsec & ipsec_esp
