@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.537 2003/02/15 21:11:47 jdolecek Exp $
+#	$NetBSD: mi,v 1.538 2003/02/26 22:31:13 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -606,6 +606,7 @@
 ./usr/include/protocols/talkd.h		comp-c-include
 ./usr/include/protocols/timed.h		comp-c-include
 ./usr/include/pthread.h			comp-c-include
+./usr/include/pthread_dbg.h		comp-c-include
 ./usr/include/pthread_queue.h		comp-c-include
 ./usr/include/pthread_types.h		comp-c-include
 ./usr/include/pwd.h			comp-c-include
@@ -986,6 +987,10 @@
 ./usr/lib/libpci_p.a		comp-c-proflib
 ./usr/lib/libposix.a		comp-c-lib
 ./usr/lib/libposix_p.a		comp-c-proflib
+./usr/lib/libpthread.a		comp-c-lib
+./usr/lib/libpthread_dbg.a	comp-c-lib
+./usr/lib/libpthread_p.a	comp-c-proflib
+./usr/lib/libpthread_dbg_p.a	comp-c-proflib
 ./usr/lib/libresolv.a		comp-c-lib
 ./usr/lib/libresolv_p.a		comp-c-proflib
 ./usr/lib/librmt.a		comp-c-lib
