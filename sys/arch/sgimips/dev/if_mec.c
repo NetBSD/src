@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.1 2000/06/14 16:13:57 soren Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.2 2000/06/29 07:44:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,7 +53,7 @@
 
 #include <machine/endian.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
  
 #include <net/if.h>
 #include <net/if_dl.h>

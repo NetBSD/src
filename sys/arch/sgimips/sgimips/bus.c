@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3 2000/06/26 14:20:56 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.4 2000/06/29 07:44:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,6 @@
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
