@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.20 1995/01/03 01:30:37 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.21 1995/01/29 07:37:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -54,7 +54,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/if_elreg.h>
+#include <dev/isa/if_elreg.h>
 
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
