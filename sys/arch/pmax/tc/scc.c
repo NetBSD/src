@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.68 2001/03/31 00:35:22 enami Exp $	*/
+/*	$NetBSD: scc.c,v 1.69 2001/05/02 10:32:19 scw Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.68 2001/03/31 00:35:22 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.69 2001/05/02 10:32:19 scw Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -735,6 +735,20 @@ sccwrite(dev, uio, flag)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+sccpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct scc_softc *sc;
+	struct tty *tp;
+
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
+	tp = sc->scc_tty[SCCLINE(dev)];
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
