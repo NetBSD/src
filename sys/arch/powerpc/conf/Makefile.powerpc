@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.14 2001/08/26 02:47:38 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.15 2001/08/26 10:59:26 simonb Exp $
 #
 # Makefile for NetBSD
 #
@@ -60,6 +60,10 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float ${CCPUOPTS}
 AFLAGS=		-D_LOCORE ${AOPTS}
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e __start
 STRIPFLAGS=	--strip-debug
+
+.if exists(${THISPPC}/conf/Makefile.${TARGET_MACHINE}.inc)
+.include "${THISPPC}/conf/Makefile.${TARGET_MACHINE}.inc"
+.endif
 
 %INCLUDES
 
