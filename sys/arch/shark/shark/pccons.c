@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.4 2002/03/31 00:38:21 thorpej Exp $       */
+/*      $NetBSD: pccons.c,v 1.5 2002/04/05 16:58:11 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -1694,11 +1694,11 @@ pcioctl(dev_t       dev,
 			((struct map_info *)data)->size = MAP_INFO_UNKNOWN;
 
 			((struct map_info *)data)->u.map_info_mmap.map_offset 
-			    = linearPhysAddr & PG_FRAME;
+			    = linearPhysAddr & L2_S_FRAME;
 			((struct map_info *)data)->u.map_info_mmap.map_size 
 			    = MAP_INFO_UNKNOWN;
 			((struct map_info *)data)->u.map_info_mmap.internal_offset 
-			    = linearPhysAddr & ~PG_FRAME;
+			    = linearPhysAddr & L2_S_OFFSET;
 			((struct map_info *)data)->u.map_info_mmap.internal_size 
 			    = MAP_INFO_UNKNOWN;
 		    }
@@ -1722,12 +1722,12 @@ pcioctl(dev_t       dev,
 			pam_io_data = vtophys(isa_io_data_vaddr());
 
 			((struct map_info *)data)->u.map_info_mmap.map_offset 
-			    = (pam_io_data + ioPhysAddr) & PG_FRAME;
+			    = (pam_io_data + ioPhysAddr) & L2_S_FRAME;
 			((struct map_info *)data)->u.map_info_mmap.internal_offset 
-			    = (pam_io_data + ioPhysAddr) & ~PG_FRAME;
+			    = (pam_io_data + ioPhysAddr) & L2_S_OFFSET;
 			((struct map_info *)data)->u.map_info_mmap.map_size 
 			    = (((struct map_info *)data)->u.map_info_mmap.internal_offset 
-			       + ioLength + PT_SIZE - 1) & PG_FRAME;
+			       + ioLength + L2_S_SIZE - 1) & L2_S_FRAME;
 			((struct map_info *)data)->u.map_info_mmap.internal_size 
 			    = ioLength;
 		    }
@@ -1751,12 +1751,12 @@ pcioctl(dev_t       dev,
 			    = VGA_BUF_LEN / sizeof(bus_size_t);
 
 			((struct map_info *)data)->u.map_info_mmap.map_offset 
-			    = (vtophys(vam_mem_data) + VGA_BUF) & PG_FRAME;
+			    = (vtophys(vam_mem_data) + VGA_BUF) & L2_S_FRAME;
 			((struct map_info *)data)->u.map_info_mmap.internal_offset 
-			    = (vtophys(vam_mem_data) + VGA_BUF) & ~PG_FRAME;
+			    = (vtophys(vam_mem_data) + VGA_BUF) & L2_S_OFFSET;
 			((struct map_info *)data)->u.map_info_mmap.map_size 
 			    = (((struct map_info *)data)->u.map_info_mmap.internal_offset 
-				+ VGA_BUF_LEN + PT_SIZE - 1) & PG_FRAME;
+				+ VGA_BUF_LEN + L2_S_SIZE - 1) & L2_S_FRAME;
 			((struct map_info *)data)->u.map_info_mmap.internal_size 
 			    = VGA_BUF_LEN;
 		    }
@@ -4005,7 +4005,7 @@ pcmmap(dev_t   dev,
     {
 	/* IO space - Should not allow addresses outside of the 
 	   VGA registers */
-	if(offset >= ((pam_io_data + displayInfo(ioBase)) & PG_FRAME) &&
+	if(offset >= ((pam_io_data + displayInfo(ioBase)) & L2_S_FRAME) &&
 	   offset <= pam_io_data + displayInfo(ioBase)
 	   + displayInfo(ioLen))
 	{
@@ -4016,7 +4016,7 @@ pcmmap(dev_t   dev,
     else if(offset >> 24 == vtophys(vam_mem_data) >> 24)
     {
 	/* Memory - Allow 0xA0000 to 0xBFFFF */
-	if(offset >= ((vtophys(vam_mem_data) + VGA_BUF) & PG_FRAME) &&
+	if(offset >= ((vtophys(vam_mem_data) + VGA_BUF) & L2_S_FRAME) &&
 	   offset <= vtophys(vam_mem_data) + VGA_BUF
 	   + VGA_BUF_LEN)
 	{

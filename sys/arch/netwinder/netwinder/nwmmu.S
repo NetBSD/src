@@ -1,4 +1,4 @@
-/*	$NetBSD: nwmmu.S,v 1.5 2002/04/03 02:06:33 thorpej Exp $	*/
+/*	$NetBSD: nwmmu.S,v 1.6 2002/04/05 16:58:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@ _C_LABEL(nwstart):
 	add	r0, pc, #(Ltable - . - 8)
 	ldr	r0, [r0]		/* r0 = &l1table */
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000		/* advance by 1MB */
 	mov	r1, #0x1000		/* 4096MB */
 1:
@@ -81,8 +81,8 @@ _C_LABEL(nwstart):
 	add	r0, pc, #(Ltable - . - 8)
 	ldr	r0, [r0]		/* r0 = &l1table */
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	add	r0, r0, #(0xf00 * 4)	/* offset to 0xf00xxxxx */
 	mov	r1, #0x40		/* 64MB */
 1:
@@ -97,8 +97,8 @@ _C_LABEL(nwstart):
 	add	r0, pc, #(Ltable - . - 8)
 	ldr	r0, [r0]		/* r0 = &l1table */
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	orr	r3, r3, #0x7c000000
 	add	r0, r0, #(0xfd0 * 4)	/* offset to 0xfd0xxxxx */
 	str	r3, [r0, #0x08]		/* -> 0xfd2xxxxx */
