@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.21 1996/11/28 00:46:35 thorpej Exp 
  */
 
 /*
@@ -455,7 +455,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CDC,
 	    0,
 	    "Intel",
-	    "82424ZX Cache and DRAM controller",
+	    "82424ZX (Saturn) Cache and DRAM controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SIO,
@@ -473,7 +473,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC,
 	    0,
 	    "Intel",
-	    "82434LX PCI, Cache, and Memory Controller",
+	    "82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA,
+	    0,
+	    "Intel",
+	    "82092AA IDE controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SAA7116,
@@ -482,22 +488,88 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SAA7116",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100,
+	    0,
+	    "Intel",
+	    "EE Pro 100 10/100 Fast Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100S,
+	    0,
+	    "Intel",
+	    "EE Pro 100 Smart 10/100 Fast Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
+	    0,
+	    "Intel",
+	    "82557 Fast Ethernet LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437,
 	    0,
 	    "Intel",
-	    "82437 Triton",
+	    "82437FX (Triton) PCI, Cache, and DRAM Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82471,
 	    0,
 	    "Intel",
-	    "82471 Triton",
+	    "82471FB (Triton) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82438,
 	    0,
 	    "Intel",
-	    "82438",
+	    "82438 (Triton) IDE controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439,
+	    0,
+	    "Intel",
+	    "82439 (Triton II) TXC Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB,
+	    0,
+	    "Intel",
+	    "82371SB (Triton II) PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371IDE,
+	    0,
+	    "Intel",
+	    "82371SB (Triton II) IDE controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371USB,
+	    0,
+	    "Intel",
+	    "82371SB (Triton II) USB Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82430VX,
+	    0,
+	    "Intel",
+	    "82430VX (Triton VX) Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440FX,
+	    0,
+	    "Intel",
+	    "82440FX (Natoma) PCI and Memory Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82450KX,
+	    0,
+	    "Intel",
+	    "82450KX (Orion) PCI Memory Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454GX,
+	    0,
+	    "Intel",
+	    "82454GX (Orion) Host-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
