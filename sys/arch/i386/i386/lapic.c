@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.5 2000/02/21 19:32:32 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.6 2000/02/21 20:02:22 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,8 +91,7 @@ lapic_map(lapic_base)
 	/*
 	 * Map local apic.
 	 */
-	pmap_enter(pmap_kernel(), va, lapic_base,
-	    VM_PROT_ALL, PMAP_WIRED|VM_PROT_ALL);
+	pmap_kenter_pa (va, lapic_base, VM_PROT_ALL);
 
 	/*
 	 * Mark page uncacheable.
