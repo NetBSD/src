@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8.2.2 1998/10/20 02:46:42 nisimura Exp $ */
+/*	$NetBSD: locore_machdep.S,v 1.8.2.3 1999/01/28 06:46:46 nisimura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  * DECstation specific locore routine collection.
  */
 #include <mips/asm.h>
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -74,7 +74,7 @@ LEAF(_splraise)
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
-	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+	and	v0, v0, MIPS_INT_MASK
 END(_splraise)
 
 LEAF(_spllower)
@@ -87,7 +87,7 @@ LEAF(_spllower)
 	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
-	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+	and	v0, v0, MIPS_INT_MASK
 END(_spllower)
 
 LEAF(_splset)
@@ -99,14 +99,14 @@ LEAF(_splset)
 	mtc0	v1, MIPS_COP_0_STATUS		# store back
 	nop
 	j	ra
-	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+	and	v0, v0, MIPS_INT_MASK
 END(_splset)
 
 LEAF(_splget)
 	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
 	nop
 	j	ra
-	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+	and	v0, v0, MIPS_INT_MASK
 END(_splget)
 
 LEAF(_setsoftintr)
