@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.12 1996/12/22 10:10:29 cgd Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.13 1997/02/20 05:04:05 mikel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,7 @@ umapfs_mount(mp, path, data, ndp, p)
 #endif
 
 	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
-	    2*sizeof(u_long)*args.nentries);
+	    2*sizeof(u_long)*args.gnentries);
 	if (error)
 		return (error);
 
