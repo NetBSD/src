@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.6 1998/10/03 16:24:09 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.7 1998/10/05 09:02:28 ross Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.6 1998/10/03 16:24:09 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.7 1998/10/05 09:02:28 ross Exp $");
 #endif
 #endif
 
@@ -57,7 +57,7 @@ dirname_of(const char *path)
 	    return "/";
 	}else{
 	    t=malloc(s-path+1);
-	    sprintf(t,"%.*s",s-path,path);
+	    sprintf(t,"%.*s",(int)(s-path),path);
 
 	    return t;
 	}
