@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.123 2004/07/15 21:06:45 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.124 2004/07/16 21:35:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,8 +119,8 @@ struct  tarstats {
 	int nskipped;
 } tarstats;
 
-static int extract_file(int, int, char *path);
-static int extract_dist(int);
+static int extract_file(int, int, int, char *path);
+static int extract_dist(int, int);
 int	distribution_sets_exist_p(const char *path);
 static int check_for(unsigned int mode, const char *pathname);
 
@@ -134,10 +134,6 @@ static int check_for(unsigned int mode, const char *pathname);
 unsigned int sets_valid = MD_SETS_VALID;
 unsigned int sets_selected = (MD_SETS_SELECTED) & (MD_SETS_VALID);
 unsigned int sets_installed = 0;
-
-/* Do we want a verbose extract? */
-static	int verbose = 0;
-
 
 int
 dir_exists_p(const char *path)
@@ -626,9 +622,10 @@ customise_sets(void)
 	free_menu(menu_no);
 }
 
-static void
+static int
 ask_verbose_dist(msg setup_done)
 {
+	int verbose = 0;
 
 	wclear(stdscr);
 	wrefresh(stdscr);
@@ -638,10 +635,12 @@ ask_verbose_dist(msg setup_done)
 	process_menu(MENU_extract, &verbose);
 	wclear(stdscr);
 	wrefresh(stdscr);
+
+	return verbose;
 }
 
 static int
-extract_file(int set, int update, char *path)
+extract_file(int set, int update, int verbose, char *path)
 {
 	char *owd;
 	int   tarexit;
@@ -670,11 +669,11 @@ extract_file(int set, int update, char *path)
 		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				    "progress -zf %s tar -xepf -", path);
 	else if (verbose == 1)
-		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
-				    "tar -zxvepf %s", path);
-	else
 		tarexit = run_program(RUN_DISPLAY, 
 				    "tar -zxepf %s", path);
+	else
+		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+				    "tar -zxvepf %s", path);
 
 	chdir(owd);
 	free(owd);
@@ -704,7 +703,7 @@ extract_file(int set, int update, char *path)
  */
 
 static int
-extract_dist(int update)
+extract_dist(int update, int verbose)
 {
 	char fname[STRSIZE];
 	distinfo *list;
@@ -728,7 +727,7 @@ extract_dist(int update)
 		    ext_dir, list->name, dist_postfix);
 
 		/* if extraction failed and user aborted, punt. */
-		extracted = extract_file(list->set, update, fname);
+		extracted = extract_file(list->set, update, verbose, fname);
 		if (extracted == 2)
 			sets_installed |= list->set;
 	}
@@ -761,6 +760,7 @@ int
 get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_msg)
 {
 	int got_dist;
+	int verbose;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -770,7 +770,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	/* Find out which files to "get" if we get files. */
 
 	/* ask user whether to do normal or verbose extraction */
-	ask_verbose_dist(setupdone_msg);
+	verbose = ask_verbose_dist(setupdone_msg);
 
    again:
 	/* Get the distribution files */
@@ -788,7 +788,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	}
 
 	/* Extract the distribution, retry from top on errors. */
-	if (extract_dist(update))
+	if (extract_dist(update, verbose))
 		goto again;
 
 	/* Configure the system */
