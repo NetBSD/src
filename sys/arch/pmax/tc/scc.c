@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.10 1996/03/17 01:47:12 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.11 1996/03/17 22:20:08 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -300,7 +300,7 @@ sccmatch(parent, match, aux)
 	struct confargs *ca = aux;
 	void *sccaddr;
 
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/* Make sure that we're looking for this type of device. */
 		if (!TC_BUS_MATCHNAME(ca, "scc"))
 			return (0);
