@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.4 2000/08/12 16:10:33 sommerfeld Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.5 2000/08/18 03:30:19 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ __cpu_simple_lock_init(lockp)
 
 #if defined (DEBUG) && defined(DDB)
 int spin_limit = 10000000;
+__cpu_simple_lock_t *wantlock[I386_MAXPROCS], *gotlock[I386_MAXPROCS];
 #endif
 
 void
@@ -75,6 +76,8 @@ __cpu_simple_lock(lockp)
 	int spincount = 0;
 	int cpu = cpu_number();
 	int limit = spin_limit * (cpu + 1);
+
+	wantlock[cpu] = lockp;
 #endif
 	
 	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
@@ -95,6 +98,10 @@ __cpu_simple_lock(lockp)
 		}
 #endif
 	}
+#if defined(DEBUG) && defined(DDB)
+	wantlock[cpu] = 0;
+	gotlock[cpu] = lockp;
+#endif
 }
 
 int
