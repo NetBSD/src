@@ -1,3 +1,5 @@
+/*	$NetBSD: lockf.c,v 1.4 2000/07/30 09:16:06 jdolecek Exp $	*/
+
 /*
  * lockf regression test:
  *
