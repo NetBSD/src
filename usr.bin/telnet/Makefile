@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2004/12/22 01:25:05 lha Exp $
+#	$NetBSD: Makefile,v 1.35 2005/01/10 02:58:59 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -52,7 +52,9 @@ CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 
+.if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
+.endif
 
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 

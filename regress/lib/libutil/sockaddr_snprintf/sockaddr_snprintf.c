@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.1 2004/11/19 21:38:25 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.2 2005/01/10 02:58:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ in(void)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
 
+#ifdef INET6
 static void
 in6(void)
 {
@@ -87,6 +88,7 @@ in6(void)
 	if (strcmp(res = "24 28 80 ff01::1", buf) != 0)
 		errx(1, "res='%s' != '%s'", buf, res);
 }
+#endif /* INET6 */
 
 static void
 un(void)
@@ -158,7 +160,9 @@ int
 main(int argc, char *argv[])
 {
 	in();
+#ifdef INET6
 	in6();
+#endif
 	un();
 	at();
 	dl();
