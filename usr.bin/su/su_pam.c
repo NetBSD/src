@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.6 2005/03/23 20:02:28 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.7 2005/03/30 01:16:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.6 2005/03/23 20:02:28 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.7 2005/03/30 01:16:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ int
 main(int argc, char **argv)
 {
 	extern char **environ;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	char *p;
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio, gohome, setwhat;
@@ -105,6 +105,7 @@ main(int argc, char **argv)
 	extern int _openpam_debug;
 	_openpam_debug = 1;
 #endif
+	char pwbuf[1024];
 
 	asme = asthem = fastlogin = 0;
 	gohome = 1;
@@ -136,7 +137,7 @@ main(int argc, char **argv)
 			(void)fprintf(stderr,
 			    "Usage: %s [%s] [login [shell arguments]]\n",
 			    getprogname(), ARGSTR);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	argv += optind;
 
@@ -152,14 +153,16 @@ main(int argc, char **argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
-	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
-	    pwd->pw_uid != ruid)
-		pwd = getpwuid(ruid);
+	if (username == NULL || 
+	    getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0 ||
+	    pwd->pw_uid != ruid) {
+		if (getpwuid_r(ruid, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+			pwd = NULL;
+	}
 	if (pwd == NULL)
-		errx(1, "who are you?");
+		errx(EXIT_FAILURE, "who are you?");
 	if ((username = strdup(pwd->pw_name)) == NULL)
-		err(1, "strdup");
-
+		err(EXIT_FAILURE, "strdup");
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
@@ -174,8 +177,8 @@ main(int argc, char **argv)
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv - 1;
 
-	if ((pwd = getpwnam(user)) == NULL)
-		errx(1, "unknown login %s", user);
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
+		errx(EXIT_FAILURE, "unknown login %s", user);
 
 	/*
 	 * PAM initialization
@@ -188,7 +191,7 @@ main(int argc, char **argv)
 		/* Things went really bad... */
 		syslog(LOG_ERR, "pam_start failed: %s",
 		    pam_strerror(pamh, pam_err));
-		errx(1, "pam_start failed");
+		errx(EXIT_FAILURE, "pam_start failed");
 	}
 
 #define PAM_END_ITEM(item)	PAM_END("pam_set_item(" # item ")")
@@ -213,7 +216,7 @@ main(int argc, char **argv)
 		syslog(LOG_WARNING, "BAD SU %s to %s%s: %s",
 		    username, user, ontty(), pam_strerror(pamh, pam_err));
 		pam_end(pamh, pam_err);
-		errx(1, "Sorry: %s", pam_strerror(pamh, pam_err));
+		errx(EXIT_FAILURE, "Sorry: %s", pam_strerror(pamh, pam_err));
 	}
 
 	/*
@@ -242,10 +245,10 @@ main(int argc, char **argv)
 		    "pam_get_item(PAM_USER): %s", pam_strerror(pamh, pam_err));
 	} else {
 		user = (char *)newuser;
-		if ((pwd = getpwnam(user)) == NULL) {	
+		if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 			pam_end(pamh, pam_err);
 			syslog(LOG_ERR, "unknown login: %s", username);
-			errx(1, "unknown login: %s", username);
+			errx(EXIT_FAILURE, "unknown login: %s", username);
 		}
 	}
 
@@ -262,18 +265,20 @@ main(int argc, char **argv)
 	/* force the usage of specified class */
 	if (class) {
 		if (ruid) 
-			ERRX_PAM_END((1, "Only root may use -c"));
+			ERRX_PAM_END((EXIT_FAILURE, "Only root may use -c"));
 
 		pwd->pw_class = class;
 	}
 
 	if ((lc = login_getclass(pwd->pw_class)) == NULL)
-		ERRX_PAM_END((1, "Unknown class %s\n", pwd->pw_class));
+		ERRX_PAM_END((EXIT_FAILURE,
+		    "Unknown class %s\n", pwd->pw_class));
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
 		if (!chshell(pwd->pw_shell) && ruid)
-			ERRX_PAM_END((1,"permission denied (shell)."));
+			ERRX_PAM_END((EXIT_FAILURE,
+			    "permission denied (shell)."));
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -297,7 +302,7 @@ main(int argc, char **argv)
 	 * we do setcred. Note, we don't relinguish our set-userid yet
 	 */
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) < 0)   
-		ERR_PAM_END((1, "setting user context"));
+		ERR_PAM_END((EXIT_FAILURE, "setting user context"));
 
 	if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS)
 		PAM_END("pam_setcred");
@@ -416,7 +421,7 @@ out:
 			 * Create an empty environment 
 			 */
 			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(1, NULL);
+				err(EXIT_FAILURE, NULL);
 			environ[0] = NULL;
 
 			/* 
@@ -442,11 +447,11 @@ out:
 			}
 
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
-				err(1, "setting user context");
+				err(EXIT_FAILURE, "setting user context");
 			if (p)
 				(void)setenv("TERM", p, 1);
 			if (gohome && chdir(pwd->pw_dir) < 0)
-				errx(1, "no directory");
+				errx(EXIT_FAILURE, "no directory");
 		} 
 
 		if (asthem || pwd->pw_uid)
@@ -497,14 +502,14 @@ out:
 		setwhat &= ~(LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
 
 	if (setusercontext(lc, pwd, pwd->pw_uid, setwhat) == -1)
-		err(1, "setusercontext");
+		err(EXIT_FAILURE, "setusercontext");
 
 	(void)execv(shell, np);
-	err(1, "%s", shell);
+	err(EXIT_FAILURE, "%s", shell);
 done:
 	logit("%s: %s", func, pam_strerror(pamh, pam_err));
 	pam_end(pamh, pam_err);
-	return 1;
+	return EXIT_FAILURE;
 }
 
 static void
