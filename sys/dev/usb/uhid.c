@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.4.1 2001/08/25 06:16:40 thorpej Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.4.2 2001/09/08 05:44:23 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ uhid_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		DPRINTFN(5, ("uhid_intr: waking %p\n", sc));
 		wakeup(&sc->sc_q);
 	}
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
 		psignal(sc->sc_async, SIGIO);
@@ -722,6 +722,60 @@ uhidpoll(dev_t dev, int events, struct proc *p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_uhidrdetach(struct knote *kn)
+{
+	struct uhid_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_uhidread(struct knote *kn, long hint)
+{
+	struct uhid_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops uhidread_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
+
+int
+uhidkqfilter(dev_t dev, struct knote *kn)
+{
+	struct uhid_softc *sc;
+	struct klist *klist;
+	int s;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &uhidread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 #if defined(__FreeBSD__)
