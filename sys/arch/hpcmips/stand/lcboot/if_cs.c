@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs.c,v 1.1 2003/08/09 08:01:48 igy Exp $ */
+/* $NetBSD: if_cs.c,v 1.2 2003/09/20 10:11:27 igy Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.1 2003/08/09 08:01:48 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.2 2003/09/20 10:11:27 igy Exp $");
 
 #include <sys/param.h>
 #include <netinet/in.h>
@@ -108,9 +108,41 @@ cs_probe(struct netif *nif, void *machdep_hint)
 }
 
 static void
+cs_get_eeprom(int offset, u_int16_t *result)
+{
+	int	timeo;
+
+	for (timeo = MAXLOOP; timeo > 0; timeo--) {
+		if (!(CS_READ_PACKET_PAGE(PKTPG_SELF_ST)
+		      & SELF_ST_SI_BUSY))
+			break;
+	}
+	if (timeo == 0)
+		goto eeprom_error;
+
+	CS_WRITE_PACKET_PAGE(PKTPG_EEPROM_CMD, offset | EEPROM_CMD_READ);
+
+	for (timeo = MAXLOOP; timeo > 0; timeo--) {
+		if (!(CS_READ_PACKET_PAGE(PKTPG_SELF_ST)
+		      & SELF_ST_SI_BUSY))
+			break;
+	}
+	if (timeo == 0)
+		goto eeprom_error;
+
+	*result = CS_READ_PACKET_PAGE(PKTPG_EEPROM_DATA);
+
+	return;
+
+eeprom_error:
+	panic("cannot read mac addr");
+}
+
+static void
 cs_init(struct iodesc *desc, void *machdep_hint)
 {
-	int	i;
+	int		i;
+	u_int16_t	*myea;
 
 	/* Issue a software reset command to the chip */
 	CS_WRITE_PACKET_PAGE(PKTPG_SELF_CTL, SELF_CTL_RESET);
@@ -135,19 +167,17 @@ cs_init(struct iodesc *desc, void *machdep_hint)
 		if ((s & SELF_ST_INIT_DONE) && !(s & SELF_ST_SI_BUSY))
 			break;
 	}
-
 	if (i == 0)
 		panic("cannot reset netif");
 
-	for (i = 0; i < 6; i += 2) {
-		u_int16_t	ea;
+	myea = (u_int16_t *) desc->myea;
 
-		ea = CS_READ_PACKET_PAGE(PKTPG_IND_ADDR + i);
+	cs_get_eeprom(EEPROM_IND_ADDR_H, &myea[0]);
+	cs_get_eeprom(EEPROM_IND_ADDR_M, &myea[1]);
+	cs_get_eeprom(EEPROM_IND_ADDR_L, &myea[2]);
 
-		/* assuming little endian */
-		desc->myea[i + 0] = (ea >> 0) & 0xff;
-		desc->myea[i + 1] = (ea >> 8) & 0xff;
-	}
+	for (i = 0; i < 3; i++)
+		CS_WRITE_PACKET_PAGE(PKTPG_IND_ADDR + (i << 1), myea[i]);
 
 	/*
 	 * Accepting frames:
