@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.11 2003/06/29 22:32:11 fvdl Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.12 2004/03/21 10:09:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -84,40 +84,7 @@ void m_dumpm(struct mbuf *m);
 #define	smb_sl_lock(mtx)		simple_lock(mtx)
 #define	smb_sl_unlock(mtx)		simple_unlock(mtx)
 
-
 #define SMB_STRFREE(p)	do { if (p) smb_strfree(p); } while(0)
-
-/*
- * The simple try/catch/finally interface.
- * With GCC it is possible to allow more than one try/finally block per
- * function, but we'll avoid it to maintain portability.
- */
-#define itry		{						\
-				int _tval;				\
-
-#define icatch(var)							\
-				goto _finlab;				\
-				_catchlab:				\
-				var = _tval;
-
-#define ifinally		_finlab:
-#define iendtry		}
-
-#define inocatch							\
-				goto _finlab;				\
-				_catchlab:				\
-
-#define ithrow(t)	do {						\
-				if ((_tval = (int)(t)) != 0)		\
-					goto _catchlab;			\
-			} while (/*CONSTCOND*/ 0)
-
-#define ierror(t,e)	do {						\
-				if (t) {				\
-					_tval = e;			\
-					goto _catchlab;			\
-				}					\
-			} while (/*CONSTCOND*/ 0)
 
 typedef u_int16_t	smb_unichar;
 typedef	smb_unichar	*smb_uniptr;
