@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: inet6.4,v 1.2 1999/07/01 10:50:48 itojun Exp $
+.\"	$Id: inet6.4,v 1.3 1999/07/03 05:19:45 itojun Exp $
 .\"
 .Dd January 29, 1999
 .Dt INET6 4
@@ -107,6 +107,40 @@ can be obtained by setting
 .Dv sin6_addr
 field into 0, or by using the address contained in variable
 .Dv in6addr_any .
+.Pp
+IPv6 defines scoped address such as link-local or site-local address.
+To manipulate link-local addresses properly from the userland,
+programs must use advanced API defined in RFC2292.
+Otherwise, the address is ambiguous to the kernel and error will be generated.
+Scoped address is not for daily use at this moment both from specification
+and implementation point of view.
+Most of normal userland program
+like
+.Xr telnet 1
+or
+.Xr telnetd 8
+cannot handle scoped address properly.
+Only special programs,
+like
+.Xr ping6 8 ,
+supports scoped address.
+For example,
+.Xr ping6 8
+has special option for specifying outgoing interface
+to disambiguate scoped addresses.
+.Pp
+Scoped addresses are handled specially in the kernel.
+Scoped addresses will have its interface index embedded into the address,
+in routing table or interface structure.
+Therefore,
+the address on some of the kernel structure is not the same as that on the wire.
+The embedded index will be visible on
+.Dv PF_ROUTE
+socket and results from
+.Xr ifconfig 8 ,
+HOWEVER, users should never use the embedded form.
+For details please consult
+.Pa sys/netinet6/IMPLEMENTATION .
 .Sh PROTOCOLS
 The
 .Nm
