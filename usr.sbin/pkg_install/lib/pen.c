@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.4 1997/10/17 14:54:46 lukem Exp $	*/
+/*	$NetBSD: pen.c,v 1.5 1997/10/19 09:39:53 mrg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.4 1997/10/17 14:54:46 lukem Exp $");
+__RCSID("$NetBSD: pen.c,v 1.5 1997/10/19 09:39:53 mrg Exp $");
 #endif
 #endif
 
@@ -68,8 +68,8 @@ find_play_pen(char *pen, size_t sz)
 	cleanup(0);
 	errx(2,
 "can't find enough temporary space to extract the files, please set your\n"
-"PKG_TMPDIR environment variable to a location with at least %d bytes\n"
-"free", sz);
+"PKG_TMPDIR environment variable to a location with at least %lu bytes\n"
+"free", (u_long)sz);
 	return NULL;
     }
     return pen;
@@ -95,7 +95,7 @@ make_playpen(char *pen, size_t sz)
     }
     if (Verbose) {
 	if (sz)
-	    fprintf(stderr, "Requested space: %d bytes, free space: %qd bytes in %s\n", (int)sz, min_free(pen), pen);
+	    fprintf(stderr, "Requested space: %lu bytes, free space: %qd bytes in %s\n", (u_long)sz, (long long)min_free(pen), pen);
     }
     if (min_free(pen) < sz) {
 	rmdir(pen);
