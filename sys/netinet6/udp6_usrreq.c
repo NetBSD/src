@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.17 2000/01/06 15:46:11 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.18 2000/01/31 10:39:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -192,6 +192,10 @@ udp6_input(mp, offp, proto)
 		udp6stat.udp6s_badlen++;
 		goto bad;
 	}
+
+	/* destination port of 0 is illegal, based on RFC768. */
+	if (uh->uh_dport == 0)
+		goto bad;
 
 	/* Be proactive about malicious use of IPv4 mapped address */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
