@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.3 2000/05/20 18:33:18 matt Exp $ */
+/*      $NetBSD: sgec.c,v 1.4 2000/05/27 04:26:32 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -310,6 +310,7 @@ zestart(ifp)
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
 	int idx, len, s, i, totlen, error;
+	int old_inq = sc->sc_inq;
 	short orword;
 
 	s = splimp();
@@ -392,7 +393,7 @@ zestart(ifp)
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
 
-out:	if (sc->sc_inq)
+out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
 	splx(s);
 }
@@ -429,9 +430,9 @@ sgec_intr(sc)
 			if (ifp->if_bpf) {
 				bpf_mtap(ifp->if_bpf, m);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				    ((eh->ether_dhost[0] & 1) == 0) &&
 				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
+				    ETHER_ADDR_LEN) != 0) {
 					m_freem(m);
 					continue;
 				}
@@ -460,18 +461,20 @@ sgec_intr(sc)
 			if (++sc->sc_lastack == TXDESCS)
 				sc->sc_lastack = 0;
 
-			/* XXX collect statistics */
-			ifp->if_opackets++;
 			if ((zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_DT) ==
 			    ZE_TDES1_DT_SETUP)
 				continue;
+			/* XXX collect statistics */
+			if (zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_LS)
+				ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
 			if (sc->sc_txmbuf[idx]) {
 				m_freem(sc->sc_txmbuf[idx]);
 				sc->sc_txmbuf[idx] = 0;
 			}
 		}
-		ifp->if_timer = 0;
+		if (sc->sc_inq == 0)
+			ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		zestart(ifp); /* Put in more in queue */
 	}
