@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.5 2003/07/24 14:14:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.24 2002/04/07 02:16:03 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-esp.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.5 2003/07/24 14:14:27 itojun Exp $");
 #endif
 #endif
 
@@ -274,7 +274,7 @@ esp_print(register const u_char *bp, register const u_char *bp2,
 #ifdef HAVE_LIBCRYPTO
 	    {
 		u_char iv[8];
-		des_key_schedule schedule;
+		DES_key_schedule schedule;
 
 		switch (ivlen) {
 		case 4:
@@ -293,12 +293,12 @@ esp_print(register const u_char *bp, register const u_char *bp2,
 			goto fail;
 		}
 
-		des_check_key = 0;
-		des_set_key((void *)secret, schedule);
+		DES_check_key = 0;
+		DES_set_key((void *)secret, &schedule);
 
 		p = ivoff + ivlen;
-		des_cbc_encrypt((void *)p, (void *)p,
-			(long)(ep - p), schedule, (void *)iv,
+		DES_cbc_encrypt((void *)p, (void *)p,
+			(long)(ep - p), &schedule, (void *)iv,
 			DES_DECRYPT);
 		advance = ivoff - (u_char *)esp + ivlen;
 		break;
@@ -362,26 +362,26 @@ esp_print(register const u_char *bp, register const u_char *bp2,
 	case DES3CBC:
 #if defined(HAVE_LIBCRYPTO)
 	    {
-		des_key_schedule s1, s2, s3;
+		DES_key_schedule s1, s2, s3;
 
-		des_check_key = 1;
-		des_set_odd_parity((void *)secret);
-		des_set_odd_parity((void *)(secret + 8));
-		des_set_odd_parity((void *)(secret + 16));
-		if(des_set_key((void *)secret, s1) != 0) {
+		DES_check_key = 1;
+		DES_set_odd_parity((void *)secret);
+		DES_set_odd_parity((void *)(secret + 8));
+		DES_set_odd_parity((void *)(secret + 16));
+		if(DES_set_key((void *)secret, &s1) != 0) {
 		  printf("failed to schedule key 1\n");
 		}
-		if(des_set_key((void *)(secret + 8), s2)!=0) {
+		if(DES_set_key((void *)(secret + 8), &s2)!=0) {
 		  printf("failed to schedule key 2\n");
 		}
-		if(des_set_key((void *)(secret + 16), s3)!=0) {
+		if(DES_set_key((void *)(secret + 16), &s3)!=0) {
 		  printf("failed to schedule key 3\n");
 		}
 
 		p = ivoff + ivlen;
-		des_ede3_cbc_encrypt((void *)p, (void *)p,
+		DES_ede3_cbc_encrypt((void *)p, (void *)p,
 				     (long)(ep - p),
-				     s1, s2, s3,
+				     &s1, &s2, &s3,
 				     (void *)ivoff, DES_DECRYPT);
 		advance = ivoff - (u_char *)esp + ivlen;
 		break;
