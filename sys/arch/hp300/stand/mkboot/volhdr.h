@@ -1,4 +1,4 @@
-/*	$NetBSD: volhdr.h,v 1.2 2003/08/07 16:27:43 agc Exp $	*/
+/*	$NetBSD: volhdr.h,v 1.3 2003/11/13 14:06:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,33 +77,33 @@
  */
 
 struct	lifvol {
-	short	vol_id;
+	int16_t	vol_id;
 	char	vol_label[6];
-	int	vol_addr;
-	short	vol_oct;
-	short	vol_dummy;
-	int	vol_dirsize;
-	short	vol_version;
-	short	vol_zero;
-	int	vol_huh1;
-	int	vol_huh2;
-	int	vol_length;
+	int32_t	vol_addr;
+	int16_t	vol_oct;
+	int16_t	vol_dummy;
+	int32_t	vol_dirsize;
+	int16_t	vol_version;
+	int16_t	vol_zero;
+	int32_t	vol_huh1;
+	int32_t	vol_huh2;
+	int32_t	vol_length;
 };
 
 struct	lifdir {
 	char	dir_name[10];
-	short	dir_type;
-	int	dir_addr;
-	int	dir_length;
+	uint16_t dir_type;
+	int32_t	dir_addr;
+	int32_t	dir_length;
 	char	dir_toc[6];
-	short	dir_flag;
-	int	dir_exec;
+	int16_t dir_flag;
+	int32_t	dir_exec;
 };
 
 /* load header for boot rom */
 struct load {
-	int address;
-	int count;
+	int32_t address;
+	int32_t count;
 };
 
 #define VOL_ID		-32768
