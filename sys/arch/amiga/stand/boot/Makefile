@@ -17,7 +17,7 @@ DIR_KERN_MD=	${S}/lib/libkern/arch/$(MACHINE_ARCH)
 
 SRCS=installboot.sh
 
-BOOTBLOCKS= xxboot # XXX fdboot is too big again. is.
+BOOTBLOCKS= xxboot fdboot
 
 COBJS = configure.o main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o
