@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.36 2000/06/04 23:03:27 tron Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.36.2.1 2001/03/30 22:33:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.36 2000/06/04 23:03:27 tron Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.36.2.1 2001/03/30 22:33:42 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1065,6 +1065,7 @@ kvm_doargv2(kd, pid, type, nchr)
 		return NULL;
 
 	bp = kd->argspc;
+	bp[kd->arglen-1] = '\0';	/* make sure the string ends with nul */
 	ap = kd->argv;
 	endp = bp + MIN(nchr, bufs);
 
