@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.133 2004/05/31 06:51:59 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.134 2004/07/13 15:42:03 seb Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -28,7 +28,7 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	times.c timezone.c toascii.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c \
-	vwarn.c vwarnx.c verr.c verrx.c
+	vwarn.c vwarnx.c verr.c verrx.c wordexp.c
  
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
@@ -63,7 +63,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
 	signal.3 signbit.3 sigrelse.3 sigset.3 sigsetops.3 sleep.3 \
 	stringlist.3 sysconf.3 sysctl.3 syslog.3 time.3 times.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
-	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
+	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3 \
+	wordexp.3
 
 MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \

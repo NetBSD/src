@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.713 2004/07/10 13:49:09 junyoung Exp $
+#	$NetBSD: mi,v 1.714 2004/07/13 15:42:03 seb Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1507,6 +1507,7 @@
 ./usr/include/vm/vnode_pager.h			comp-obsolete		obsolete
 ./usr/include/wchar.h				comp-c-include
 ./usr/include/wctype.h				comp-c-include
+./usr/include/wordexp.h				comp-c-include
 ./usr/include/zconf.h				comp-c-include
 ./usr/include/zlib.h				comp-c-include
 ./usr/lib/crt0.o				comp-c-lib
@@ -4510,6 +4511,7 @@
 ./usr/share/man/cat3/wmemset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wnoutrefresh.0		comp-c-catman		.cat
+./usr/share/man/cat3/wordexp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wrefresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wresize.0			comp-c-catman		.cat
@@ -8238,6 +8240,7 @@
 ./usr/share/man/man3/wmemset.3			comp-c-man		.man
 ./usr/share/man/man3/wmove.3			comp-c-man		.man
 ./usr/share/man/man3/wnoutrefresh.3		comp-c-man		.man
+./usr/share/man/man3/wordexp.3			comp-c-man		.man
 ./usr/share/man/man3/wprintw.3			comp-c-man		.man
 ./usr/share/man/man3/wrefresh.3			comp-c-man		.man
 ./usr/share/man/man3/wresize.3			comp-c-man		.man
