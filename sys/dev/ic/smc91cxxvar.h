@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.6 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.7 2000/02/02 16:04:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,3 +71,4 @@ int	smc91cxx_intr __P((void *));
 int	smc91cxx_enable __P((struct smc91cxx_softc *));
 void	smc91cxx_disable __P((struct smc91cxx_softc *));
 int	smc91cxx_activate __P((struct device *, enum devact));
+int	smc91cxx_detach __P((struct device *, int));
