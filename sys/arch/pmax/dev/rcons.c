@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.44 2000/11/02 00:42:39 eeh Exp $	*/
+/*	$NetBSD: rcons.c,v 1.45 2000/11/03 15:01:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -488,6 +488,6 @@ rcons_input (dev, ic)
 	if (!(tp -> t_state & TS_ISOPEN)) {
 		return;
 	}
-	(*linesw [tp -> t_line].l_rint)(ic, tp);
+	(*tp->t_linesw->l_rint)(ic, tp);
 }
 #endif /* NRASTERCONSOLE > 0 */
