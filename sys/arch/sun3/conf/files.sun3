@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.34 1997/02/19 23:36:38 gwr Exp $
+#	$NetBSD: files.sun3,v 1.35 1997/03/13 20:30:19 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -27,7 +27,6 @@ file arch/sun3/sun3/machdep.c
 file arch/sun3/sun3/mem.c
 file arch/sun3/sun3/pmap.c
 file arch/sun3/sun3/regdump.c
-file arch/sun3/sun3/sig_machdep.c
 file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sun3_startup.c
 file arch/sun3/sun3/sunmon.c
@@ -41,6 +40,7 @@ file arch/sun3/dev/idprom.c
 include "arch/m68k/fpe/files.fpe"
 
 file arch/m68k/m68k/copy.s
+file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 
 #
