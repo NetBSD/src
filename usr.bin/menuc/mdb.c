@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.13 1999/06/19 06:38:49 cgd Exp $	*/
+/*	$NetBSD: mdb.c,v 1.14 1999/06/20 02:07:18 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,6 +184,7 @@ write_menu_file (char *initcode)
 		"	menu_ent *opts;\n"
 		"	WINDOW   *mw;\n"
 		"	char     *helpstr;\n"
+		"	char     *exitstr;\n"
 		"	void    (*post_act)(void);\n"
 		"	void    (*exit_act)(void);\n"
 		"} menudesc ;\n"
@@ -347,6 +348,13 @@ write_menu_file (char *initcode)
 				}
 			(void) fprintf (out_file, "\"");
 		}
+		(void) fprintf (out_file, ",");
+		if (menus[i]->info->mopt & NOEXITOPT)
+			(void) fprintf (out_file, "NULL");
+		else if (menus[i]->info->exitstr != NULL)
+			(void) fprintf (out_file, menus[i]->info->exitstr);
+		else
+			(void) fprintf (out_file, "\"Exit\"");
 		if (strlen(menus[i]->info->postact.code))
 			(void) fprintf (out_file, ",menu_%d_postact", i);
 		else

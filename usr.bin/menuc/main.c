@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1998/02/03 03:51:49 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1999/06/20 02:07:18 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,6 +80,8 @@ main (int argc, char **argv)
 	/* The default menu */
 	default_menu.info = &default_info;
 	default_info.title = "\"\"";
+	default_info.helpstr = NULL;
+	default_info.exitstr = NULL;
 	default_info.mopt = 0;
 	default_info.x = 0;
 	default_info.y = 0;
