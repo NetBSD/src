@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.27 2003/01/18 07:40:44 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.28 2003/03/21 21:13:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.27 2003/01/18 07:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.28 2003/03/21 21:13:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ ibcs2_sys_ioctl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ctl)(struct file *, u_long, void *, struct proc *);
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL) {

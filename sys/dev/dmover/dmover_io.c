@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.7 2002/11/07 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.8 2003/03/21 21:13:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.7 2002/11/07 08:05:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.8 2003/03/21 21:13:55 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -513,7 +513,7 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
  *	Ioctl file op.
  */
 static int
-dmio_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
+dmio_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int error, s;
@@ -525,7 +525,7 @@ dmio_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	case DMIO_SETFUNC:
 	    {
-		struct dmio_setfunc *dsf = (void *) data;
+		struct dmio_setfunc *dsf = data;
 		struct dmover_session *dses;
 
 		s = splsoftclock();
@@ -573,7 +573,7 @@ dmio_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
  *	Fcntl file op.
  */
 static int
-dmio_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p)
+dmio_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 {
 
 	if (cmd == FNONBLOCK || cmd == FASYNC)

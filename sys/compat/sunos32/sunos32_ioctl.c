@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.10 2003/01/18 08:38:15 thorpej Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.11 2003/03/21 21:13:56 dsl Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.10 2003/01/18 08:38:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.11 2003/03/21 21:13:56 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -450,7 +450,7 @@ sunos32_sys_ioctl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ctl)(struct file *, u_long, void *, struct proc *);
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -469,7 +469,7 @@ sunos32_sys_ioctl(l, v, retval)
 	    {
 		int disc;
 
-		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&disc,
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), &disc,
 		    sizeof disc)) != 0)
 			return error;
 
@@ -480,53 +480,53 @@ sunos32_sys_ioctl(l, v, retval)
 		if (disc)
 			return ENXIO;
 
-		return (*ctl)(fp, TIOCSETD, (caddr_t)&disc, p);
+		return (*ctl)(fp, TIOCSETD, &disc, p);
 	    }
 	case _IOW('t', 101, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {
 		int x;	/* unused */
 
-		return copyin((caddr_t)&x, (caddr_t)(u_long)SCARG(uap, data), sizeof x);
+		return copyin((caddr_t)(u_long)SCARG(uap, data), &x, sizeof x);
 	    }
 	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {
 		int x = 0;
 
-		return copyout((caddr_t)&x, (caddr_t)(u_long)SCARG(uap, data), sizeof x);
+		return copyout(&x, (caddr_t)(u_long)SCARG(uap, data), sizeof x);
 	    }
 	case _IO('t', 36): 		/* sun TIOCCONS, no parameters */
 	    {
 		int on = 1;
-		return (*ctl)(fp, TIOCCONS, (caddr_t)&on, p);
+		return (*ctl)(fp, TIOCCONS, &on, p);
 	    }
 	case _IOW('t', 37, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
 
-		if ((error = (*ctl)(fp, TIOCGWINSZ, (caddr_t)&ws, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGWINSZ, &ws, p)) != 0)
 			return (error);
 
-		if ((error = copyin ((caddr_t)(u_long)SCARG(uap, data), &ss, sizeof (ss))) != 0)
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), &ss, sizeof (ss))) != 0)
 			return error;
 
 		ws.ws_row = ss.ts_row;
 		ws.ws_col = ss.ts_col;
 
-		return ((*ctl)(fp, TIOCSWINSZ, (caddr_t)&ws, p));
+		return ((*ctl)(fp, TIOCSWINSZ, &ws, p));
 	    }
 	case _IOW('t', 38, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
 
-		if ((error = (*ctl)(fp, TIOCGWINSZ, (caddr_t)&ws, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGWINSZ, &ws, p)) != 0)
 			return (error);
 
 		ss.ts_row = ws.ws_row;
 		ss.ts_col = ws.ws_col;
 
-		return copyout ((caddr_t)&ss, (caddr_t)(u_long)SCARG(uap, data), sizeof (ss));
+		return copyout(&ss, (caddr_t)(u_long)SCARG(uap, data), sizeof (ss));
 	    }
 	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
 		SCARG(uap, com) = TIOCSPGRP;
@@ -539,7 +539,7 @@ sunos32_sys_ioctl(l, v, retval)
 		 */
 		int pgrp;
 		struct vnode *vp;
-		error = (*ctl)(fp, TIOCGPGRP, (caddr_t)&pgrp, p);
+		error = (*ctl)(fp, TIOCGPGRP, &pgrp, p);
 		if (error) {
 			vp = (struct vnode *)fp->f_data;
 			if (error == EIO && vp != NULL &&
@@ -547,7 +547,7 @@ sunos32_sys_ioctl(l, v, retval)
 				error = ENOTTY;
 			return (error);
 		}
-		return copyout((caddr_t)&pgrp, (caddr_t)(u_long)SCARG(uap, data), sizeof(pgrp));
+		return copyout(&pgrp, (caddr_t)(u_long)SCARG(uap, data), sizeof(pgrp));
 	    }
 	case _IO('t', 132):
 		SCARG(uap, com) = TIOCSCTTY;
@@ -559,16 +559,16 @@ sunos32_sys_ioctl(l, v, retval)
 		struct sunos_termios sts;
 		struct sunos_termio st;
 
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, &bts, p)) != 0)
 			return error;
 
 		btios2stios (&bts, &sts);
 		if (SCARG(uap, com) == SUNOS_TCGETA) {
 			stios2stio (&sts, &st);
-			return copyout((caddr_t)&st, (caddr_t)(u_long)SCARG(uap, data),
+			return copyout(&st, (caddr_t)(u_long)SCARG(uap, data),
 			    sizeof (st));
 		} else
-			return copyout((caddr_t)&sts, (caddr_t)(u_long)SCARG(uap, data),
+			return copyout(&sts, (caddr_t)(u_long)SCARG(uap, data),
 			    sizeof (sts));
 		/*NOTREACHED*/
 	    }
@@ -580,12 +580,12 @@ sunos32_sys_ioctl(l, v, retval)
 		struct sunos_termios sts;
 		struct sunos_termio st;
 
-		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&st,
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), &st,
 		    sizeof (st))) != 0)
 			return error;
 
 		/* get full BSD termios so we don't lose information */
-		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
+		if ((error = (*ctl)(fp, TIOCGETA, &bts, p)) != 0)
 			return error;
 
 		/*
@@ -597,7 +597,7 @@ sunos32_sys_ioctl(l, v, retval)
 		stios2btios(&sts, &bts);
 
 		return (*ctl)(fp, SCARG(uap, com) - SUNOS_TCSETA + TIOCSETA,
-		    (caddr_t)&bts, p);
+		    &bts, p);
 	    }
 	case SUNOS_TCSETS:
 	case SUNOS_TCSETSW:
@@ -606,12 +606,12 @@ sunos32_sys_ioctl(l, v, retval)
 		struct termios bts;
 		struct sunos_termios sts;
 
-		if ((error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&sts,
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, data), &sts,
 		    sizeof (sts))) != 0)
 			return error;
 		stios2btios (&sts, &bts);
 		return (*ctl)(fp, SCARG(uap, com) - SUNOS_TCSETS + TIOCSETA,
-		    (caddr_t)&bts, p);
+		    &bts, p);
 	    }
 /*
  * Pseudo-tty ioctl translations.
@@ -619,18 +619,18 @@ sunos32_sys_ioctl(l, v, retval)
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
 		int error, on;
 
-		error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&on, sizeof (on));
+		error = copyin((caddr_t)(u_long)SCARG(uap, data), &on, sizeof (on));
 		if (error)
 			return error;
-		return (*ctl)(fp, TIOCUCNTL, (caddr_t)&on, p);
+		return (*ctl)(fp, TIOCUCNTL, &on, p);
 	}
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
 		int error, sig;
 
-		error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&sig, sizeof (sig));
+		error = copyin((caddr_t)(u_long)SCARG(uap, data), &sig, sizeof (sig));
 		if (error)
 			return error;
-		return (*ctl)(fp, TIOCSIG, (caddr_t)&sig, p);
+		return (*ctl)(fp, TIOCSIG, &sig, p);
 	}
 
 /*
@@ -638,19 +638,19 @@ sunos32_sys_ioctl(l, v, retval)
  */
 #define IFREQ_IN(a) { \
 	struct ifreq ifreq; \
-	error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq)); \
+	error = copyin((caddr_t)(u_long)SCARG(uap, data), &ifreq, sizeof (ifreq)); \
 	if (error) \
 		return error; \
-	return (*ctl)(fp, a, (caddr_t)&ifreq, p); \
+	return (*ctl)(fp, a, &ifreq, p); \
 }
 #define IFREQ_INOUT(a) { \
 	struct ifreq ifreq; \
-	error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq)); \
+	error = copyin((caddr_t)(u_long)SCARG(uap, data), &ifreq, sizeof (ifreq)); \
 	if (error) \
 		return error; \
-	if ((error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) != 0) \
+	if ((error = (*ctl)(fp, a, &ifreq, p)) != 0) \
 		return error; \
-	return copyout ((caddr_t)&ifreq, (caddr_t)(u_long)SCARG(uap, data), sizeof (ifreq)); \
+	return copyout(&ifreq, (caddr_t)(u_long)SCARG(uap, data), sizeof (ifreq)); \
 }
 
 	case _IOW('i', 12, struct ifreq):
@@ -733,14 +733,14 @@ sunos32_sys_ioctl(l, v, retval)
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&ifconf,
+		error = copyin((caddr_t)(u_long)SCARG(uap, data), &ifconf,
 		    sizeof (ifconf));
 		if (error)
 			return error;
-		error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p);
+		error = (*ctl)(fp, OSIOCGIFCONF, &ifconf, p);
 		if (error)
 			return error;
-		return copyout ((caddr_t)&ifconf, (caddr_t)(u_long)SCARG(uap, data),
+		return copyout(&ifconf, (caddr_t)(u_long)SCARG(uap, data),
 		    sizeof (ifconf));
 	    }
 
@@ -753,7 +753,7 @@ sunos32_sys_ioctl(l, v, retval)
 		struct audio_info aui;
 		struct sunos_audio_info sunos_aui;
 
-		error = (*ctl)(fp, AUDIO_GETINFO, (caddr_t)&aui, p);
+		error = (*ctl)(fp, AUDIO_GETINFO, &aui, p);
 		if (error)
 			return error;
 
@@ -775,7 +775,7 @@ sunos32_sys_ioctl(l, v, retval)
 		/*XXX*/sunos_aui.reserved[2] = 0;
 		/*XXX*/sunos_aui.reserved[3] = 0;
 
-		return copyout ((caddr_t)&sunos_aui, (caddr_t)(u_long)SCARG(uap, data),
+		return copyout(&sunos_aui, (caddr_t)(u_long)SCARG(uap, data),
 				sizeof (sunos_aui));
 	    }
 
@@ -784,7 +784,7 @@ sunos32_sys_ioctl(l, v, retval)
 		struct audio_info aui;
 		struct sunos_audio_info sunos_aui;
 
-		error = copyin ((caddr_t)(u_long)SCARG(uap, data), (caddr_t)&sunos_aui,
+		error = copyin((caddr_t)(u_long)SCARG(uap, data), &sunos_aui,
 		    sizeof (sunos_aui));
 		if (error)
 			return error;
@@ -816,18 +816,18 @@ sunos32_sys_ioctl(l, v, retval)
 			 sunos_aui.record.active != (u_char)~0)
 			aui.record.pause = 1;
 
-		error = (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p);
+		error = (*ctl)(fp, AUDIO_SETINFO, &aui, p);
 		if (error)
 			return error;
 		/* Return new state */
 		goto sunos_au_getinfo;
 	    }
 	case _IO('A', 3):	/* AUDIO_DRAIN */
-		return (*ctl)(fp, AUDIO_DRAIN, (void *)0, p);
+		return (*ctl)(fp, AUDIO_DRAIN, NULL, p);
 	case _IOR('A', 4, int):	/* AUDIO_GETDEV */
 	    {
 		int devtype = SUNOS_AUDIO_DEV_AMD;
-		return copyout ((caddr_t)&devtype, (caddr_t)(u_long)SCARG(uap, data),
+		return copyout(&devtype, (caddr_t)(u_long)SCARG(uap, data),
 				sizeof (devtype));
 	    }
 
@@ -851,7 +851,7 @@ sunos32_sys_ioctl(l, v, retval)
 		case SUNOS_S_FLUSHW:	tmp = FWRITE;
 		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
 		}
-                return (*ctl)(fp, TIOCFLUSH, (caddr_t)&tmp, p);
+                return (*ctl)(fp, TIOCFLUSH, &tmp, p);
 	    }
 	case _IO('S', 9):	/* I_SETSIG */
 	    {
@@ -860,7 +860,7 @@ sunos32_sys_ioctl(l, v, retval)
 			(SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
 		    SUNOS_S_HIPRI)
 			return EOPNOTSUPP;
-                return (*ctl)(fp, FIOASYNC, (caddr_t)&on, p);
+                return (*ctl)(fp, FIOASYNC, &on, p);
 	    }
 	/*
 	 * SunOS disk ioctls, taken from arch/sparc/sparc/disksubr.c
@@ -871,11 +871,12 @@ sunos32_sys_ioctl(l, v, retval)
             {
 		struct disklabel dl;
 
-		error = (*ctl)(fp, DIOCGDINFO, (caddr_t)&dl, p);
+		error = (*ctl)(fp, DIOCGDINFO, &dl, p);
 		if (error)
 			return (error);
 
 #define datageom	((struct sun_dkgeom *)(u_long)SCARG(uap, data))
+		/* XXX can't do memset() on a user address (dsl) */
 		memset((caddr_t)(u_long)SCARG(uap, data), 0, sizeof(*datageom));
 
 		datageom->sdkc_ncylinders = dl.d_ncylinders;
@@ -892,6 +893,7 @@ sunos32_sys_ioctl(l, v, retval)
 
 	case DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
+		/* XXX can't do memset() on a user address (dsl) */
 		memset((caddr_t)(u_long)SCARG(uap, data), 0, sizeof(struct sun_dkctlr));
 		break;
 
@@ -899,7 +901,7 @@ sunos32_sys_ioctl(l, v, retval)
             {
 		struct partinfo pi;
 
-		error = (*ctl)(fp, DIOCGPART, (caddr_t)&pi, p);
+		error = (*ctl)(fp, DIOCGPART, &pi, p);
 		if (error)
 			return (error);
 

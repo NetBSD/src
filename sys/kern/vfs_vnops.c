@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.66 2003/03/17 09:11:30 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.67 2003/03/21 21:13:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.66 2003/03/17 09:11:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.67 2003/03/21 21:13:52 dsl Exp $");
 
 #include "fs_union.h"
 
@@ -82,9 +82,9 @@ static int vn_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 static int vn_closefile(struct file *fp, struct proc *p);
 static int vn_poll(struct file *fp, int events, struct proc *p);
-static int vn_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p);
+static int vn_fcntl(struct file *fp, u_int com, void *data, struct proc *p);
 static int vn_statfile(struct file *fp, struct stat *sb, struct proc *p);
-static int vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
+static int vn_ioctl(struct file *fp, u_long com, void *data, struct proc *p);
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
@@ -622,7 +622,7 @@ static int
 vn_fcntl(fp, com, data, p)
 	struct file *fp;
 	u_int com;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	struct vnode *vp = ((struct vnode *)fp->f_data);
@@ -641,7 +641,7 @@ static int
 vn_ioctl(fp, com, data, p)
 	struct file *fp;
 	u_long com;
-	caddr_t data;
+	void *data;
 	struct proc *p;
 {
 	struct vnode *vp = ((struct vnode *)fp->f_data);
