@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 1994/10/26 08:02:18 cgd Exp $	*/
+/*      $NetBSD: param.h,v 1.4 1994/11/25 19:08:54 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,8 +40,8 @@
  *	@(#)param.h	5.8 (Berkeley) 6/28/91
  */
 
-#ifndef PARAM_H
-#define PARAM_H
+#ifndef _VAX_PARAM_H_
+#define _VAX_PARAM_H_
 
 #include "psl.h"
 
@@ -171,37 +171,27 @@
 
 #define DELAY(x)		kern_delay(x)
 
-/*
-#define _spl(s) \
-({ \
-        register int _spl_r; \
-\
-        asm __volatile ("mfpr $18,%0; mtpr $%1,$18; " : \
-                "&=r" (_spl_r) : "ir" (s)); \
-        _spl_r; \
+#define splx(reg)                                       \
+({                                                      \
+        register int val;                               \
+        asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
+                        : "=g" (val)                    \
+                        : "g" (reg));                   \
+        val;                                            \
 })
-*/
-
-/* spl0 requires checking for software interrupts */
 
 
-#define splsoftclock()  _spl(PSL2IPL(PSL_IPL08))
-#define splnet()        _spl(PSL2IPL(PSL_IPL0C))
-#define spl4()          _spl(PSL2IPL(PSL_IPL14))
-#define spltty()        _spl(PSL2IPL(PSL_IPL15))
-#define splbio()        _spl(PSL2IPL(PSL_IPL15))
-#define splimp()        _spl(PSL2IPL(PSL_IPL16))
-#define splclock()      _spl(PSL2IPL(PSL_IPL18))
-#define splhigh()       _spl(PSL2IPL(PSL_IPL1F))
+#define	spl0()		splx(0)		/* IPL0  */
+#define splsoftclock()  splx(8)		/* IPL08 */
+#define splnet()        splx(0xc)	/* IPL0C */
+#define spl4()          splx(0x14)	/* IPL14 */
+#define spltty()        splx(0x15)	/* IPL15 */
+#define splbio()        splx(0x15)	/* IPL15 */
+#define splimp()        splx(0x16)	/* IPL16 */
+#define splclock()      splx(0x18)	/* IPL18 */
+#define splhigh()       splx(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()
-/*
-#define splvm()         _spl(PSL2IPL(PSL_IPL14))
-#define splsched()      _spl(PSL2IPL(PSL_IPL14))
-*/
-
-/* watch out for side effects */
-#define splx(s)         (s ? _spl(s) : spl0())
 
 #define	ovbcopy(x,y,z)	bcopy(x,y,z)	/* This should work i hope... */
 
-#endif
+#endif /* _VAX_PARAM_H_ */

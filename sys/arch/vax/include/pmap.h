@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1994/10/26 08:02:20 cgd Exp $	*/
+/*      $NetBSD: pmap.h,v 1.5 1994/11/25 19:08:56 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,49 +46,28 @@
 #ifndef	PMAP_H
 #define	PMAP_H
 
+#include "machine/mtpr.h"
+
 
 #define VAX_PAGE_SIZE	NBPG
 #define VAX_SEG_SIZE	NBSEG
 
 /*
  *  Pmap structure
+ *
+ * p0br == PR_P0BR in user struct, p0br is also == SBR in kernel_pmap
+ * p1br is the same for stack space, stack is base of alloced pte mem
  */
 
-/* XXX Should reside in #include "include/pmap.h" */
 typedef struct pmap {
-  simple_lock_data_t       lock;        /* lock on pmap        */
-  int                      ref_count;   /* reference count     */
-  struct pmap_statistics   stats;       /* statistics          */
-  struct pmap             *next;        /* list for free pmaps */
-  struct pte	          *pm_ptab;	/* KVA of page table   */
+	vm_offset_t		 pm_stack; /* Base of alloced p1 pte space */
+	struct pcb		*pm_pcb; /* Pointer to PCB for this pmap */
+	int                      ref_count;   /* reference count        */
+	struct pmap_statistics   stats;       /* statistics             */
+	simple_lock_data_t       lock;        /* lock on pmap           */
 } *pmap_t;
 
-#if 0
-struct pmap {
-  struct pte	       *pm_ptab;	/* KVA of page table    */
-  short			pm_count;	/* pmap reference count */
-  simple_lock_data_t	pm_lock;	/* lock on pmap         */
-};
-#endif
-
-/*typedef struct pmap    *pmap_t;*/
-
 extern pmap_t		kernel_pmap;
-
-/*
- * Macros for speed
- */
-
-#define PMAP_ACTIVATE(pmapp, pcbp, iscurproc)                  \
-  if ((pmapp) != NULL && (pmapp)->pm_stchanged) {              \
-    (pcbp)->pcb_ustp =                                         \
-        vax_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
-    if (iscurproc)                                             \
-      loadustp((pcbp)->pcb_ustp);                              \
-    (pmapp)->pm_stchanged = FALSE;                             \
-  }
-
-#define PMAP_DEACTIVATE(pmapp, pcbp)
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -113,10 +92,16 @@ pv_entry_t	pv_table;		/* array of entries,
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
 
 #define	pmap_kernel()			(kernel_pmap)
-/* #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count) */
 
 extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL
+
+/* Routines that are best to define as macros */
+#define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
+#define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
+#define	pmap_pageable(a,b,c,d)		/* Dont do anything */
+#define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
+#define	pmap_pinit(pmap)	(pmap)->ref_count=1;
 
 #endif PMAP_H
