@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.10 1994/02/16 20:20:18 mycroft Exp $
+ *	$Id: if_le.c,v 1.11 1994/02/16 21:07:22 mycroft Exp $
  */
 
 #include "le.h"
@@ -133,7 +133,7 @@ struct	le_softc {
 	} while (((cntl)->ler0_status & LE_ACK) == 0);
 
 int leattach __P((struct hp_device *));
-void lesetladrf __P((struct le_softc *));
+void lesetladrf __P((struct arpcom *, u_long *));
 void ledrinit __P((struct lereg2 *));
 void lereset __P((struct le_softc *));
 void leinit __P((int));
@@ -339,7 +339,7 @@ lereset(sc)
 	ler2->ler2_padr[3] = sc->sc_addr[2];
 	ler2->ler2_padr[4] = sc->sc_addr[5];
 	ler2->ler2_padr[5] = sc->sc_addr[4];
-	lesetladrf(&sc->sc_arpcom, ler2->ler2_ladrf);
+	lesetladrf(&sc->sc_ac, ler2->ler2_ladrf);
 	ledrinit(ler2);
 	sc->sc_rmd = sc->sc_tmd = sc->sc_txcnt = 0;
 
