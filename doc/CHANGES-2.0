@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.244 2004/06/01 04:38:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.245 2004/06/01 04:40:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3438,3 +3438,9 @@ sys/arch/hp300/dev/ite.c			1.63
 
 	Handle CAPSLOCK correctly. PR#4689
 	[tsutsui, ticket #430]
+
+sbin/scsictl/scsictl.c				1.24
+
+	Increase the SCSI command timeout for device start & stop from 10
+	to 30 seconds. PR#25734
+	[fair, ticket #431]
