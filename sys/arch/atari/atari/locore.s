@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 1995/05/21 10:45:59 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 1995/05/28 19:17:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,38 +198,33 @@ Lstkadj:
  * FP exceptions.
  */
 _fpfline:
-#if defined(M68040)
+	tstl	_cpu040		|  an 040 FPU
+	jne	fpfline_not40	|  no, do 6888? emulation
 	cmpw	#0x202c,sp@(6)	|  format type 2?
 	jne	_illinst	|  no, not an FP emulation
 #ifdef FPSP
 	.globl fpsp_unimp
 	jmp	fpsp_unimp	|  yes, go handle it
-#else
+#endif
+fpfline_not40:
 	clrl	sp@-		|  stack adjust count
 	moveml	#0xFFFF,sp@-	|  save registers
 	moveq	#T_FPEMULI,d0	|  denote as FP emulation trap
 	jra	fault		|  do it
-#endif
-#else
-	jra	_illinst
-#endif
 
 _fpunsupp:
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	|  68040?
-	jne	_illinst		|  no, treat as illinst
+	tstl	_cpu040		|  an 040 FPU?
+	jne	fpunsupp_not40
 #ifdef FPSP
 	.globl	fpsp_unsupp
-	jmp	fpsp_unsupp		|  yes, go handle it
-#else
-	clrl	sp@-			|  stack adjust count
-	moveml	#0xFFFF,sp@-		|  save registers
-	moveq	#T_FPEMULD,d0		|  denote as FP emulation trap
-	jra	fault			|  do it
+	jmp	fpsp_unsupp	|  yes, go handle it
 #endif
-#else
-	jra	_illinst
-#endif
+fpunsupp_not40:
+	clrl	sp@-		|  stack adjust count
+	moveml	#0xFFFF,sp@-	|  save registers
+	moveq	#T_FPEMULD,d0	|  denote as FP emulation trap
+	jra	fault		|  do it
+
 /*
  * Handles all other FP coprocessor exceptions.
  * Note that since some FP exceptions generate mid-instruction frames
@@ -238,7 +233,6 @@ _fpunsupp:
  */
 	.globl	_fpfault
 _fpfault:
-#ifdef FPCOPROC
 	clrl	sp@-		|  stack adjust count
 	moveml	#0xFFFF,sp@-	|  save user registers
 	movl	usp,a0		|  and save
@@ -257,9 +251,6 @@ Lfptnull:
 	frestore a0@		|  restore state
 	movl	#T_FPERR,sp@-	|  push type arg
 	jra	Ltrapnstkadj	|  call trap and deal with stack cleanup
-#else
-	jra	_badtrap	|  treat as an unexpected trap
-#endif
 
 /*
  * Coprocessor and format errors can generate mid-instruction stack
@@ -509,9 +500,6 @@ _spurintr:
 	/* MFP timer A handler --- System clock --- */
 	/* Note: Reduce by factor 4 before handling  */
 mfp_tima:
-	subqw	#1,_clk_div		|  time for another clock tick?
-	jgt	clk_ret			|  no, return
-	movw	#4,_clk_div		|  reset divide counter
 	moveml	d0-d1/a0-a1,sp@-	|  save scratch registers
 	lea	sp@(16),a1		|  get pointer to PS
 	movl	a1,sp@-			|  push pointer to PS, PC
@@ -521,9 +509,6 @@ mfp_tima:
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei			|  all done
-clk_ret:
-	rte
-	
 	
 	/* MFP ACIA handler --- keyboard/midi --- */
 mfp_kbd:
@@ -820,12 +805,11 @@ Lstartnot040:
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
-#ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		|  ensure null FP context
 	pea	a1@(PCB_FPCTX)
 	jbsr	_m68881_restore		|  restore it (does not kill a1)
 	addql	#4,sp
-#endif
+
 	/* flush TLB and turn on caches */
 	jbsr	_TBIA			|  invalidate TLB
 	movl	#CACHE_ON,d0
@@ -1244,7 +1228,8 @@ Lsw2:
 	movl	usp,a2			|  grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		|  and save it
 	movl	_CMAP2,a1@(PCB_CMAP2)	|  save temporary map PTE
-#ifdef FPCOPROC
+	tstl	_fputype		|  do we have an FPU?
+	jeq	Lswnofpsave		|  no? don't attempt to save
 	lea	a1@(PCB_FPCTX),a2	|  pointer to FP save area
 	fsave	a2@			|  save FP state
 	tstb	a2@			|  null state frame?
@@ -1252,7 +1237,6 @@ Lsw2:
 	fmovem	fp0-fp7,a2@(216)	|  save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	|  save FP control registers
 Lswnofpsave:
-#endif
 
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
@@ -1308,7 +1292,8 @@ Lres5:
 	moveml	a1@(PCB_REGS),#0xFCFC	|  and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			|  and USP
-#ifdef FPCOPROC
+	tstl	_fputype		|  do we have an FPU?
+	jeq	Lresfprest		|  no, don't attempt to restore
 	lea	a1@(PCB_FPCTX),a0	|  pointer to FP save area
 	tstb	a0@			|  null state frame?
 	jeq	Lresfprest		|  yes, easy
@@ -1316,7 +1301,6 @@ Lres5:
 	fmovem	a0@(216),fp0-fp7	|  restore FP general registers
 Lresfprest:
 	frestore a0@			|  restore state
-#endif
 	movw	a1@(PCB_PS),sr		|  no, restore PS
 	moveq	#1,d0			|  return 1 (for alternate returns)
 	rts
@@ -1332,14 +1316,14 @@ ENTRY(savectx)
 	movl	a0,a1@(PCB_USP)		|  and save it 
 	moveml	#0xFCFC,a1@(PCB_REGS)	|  save non-scratch registers 
 	movl	_CMAP2,a1@(PCB_CMAP2)	|  save temporary map PTE 
-#ifdef FPCOPROC
+	tstl	_fputype		|  do we have an FPU?
+	jeq	Lsavedone		|  no, don't attempt to save
 	lea	a1@(PCB_FPCTX),a0	|  pointer to FP save area 
 	fsave	a0@			|  save FP state 
 	tstb	a0@			|  null state frame? 
 	jeq	Lsavedone		|  yes, all done 
 	fmovem	fp0-fp7,a0@(216)	|  save FP general registers 
 	fmovem	fpcr/fpsr/fpi,a0@(312)	|  save FP control registers 
-#endif
 Lsavedone:
 	moveq	#0,d0			|  return 0 
 	rts
@@ -1959,7 +1943,6 @@ Lffsdone:
 	addql	#1,d0
 	rts
 
-#ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
  * Pretty awful looking since our assembler does not
@@ -1984,7 +1967,6 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			|  restore state
 	rts
-#endif
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
@@ -2064,9 +2046,6 @@ _cold:
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0			|  KVA of proc0 u-area
-	.globl	_clk_div
-_clk_div:
-	.word	4			| Clock divisor
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:
