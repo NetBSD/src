@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.16 1999/03/23 17:14:34 mycroft Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.17 1999/03/24 01:51:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -166,6 +166,7 @@ do_cowfault:
 	mov	r0, r3
 	str	r5, [r4, #PCB_ONFAULT]
 	ldmfd	sp!, {r4-r7}
+	mov	pc, lr
 
 do_copyinout:
 	stmfd	sp!, {r4, r5}
