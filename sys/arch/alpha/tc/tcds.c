@@ -1,4 +1,41 @@
-/* $NetBSD: tcds.c,v 1.22 1998/01/12 10:21:20 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.23 1998/05/24 23:41:43 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,39 +66,55 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.22 1998/01/12 10:21:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.23 1998/05/24 23:41:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/pte.h>
 #include <machine/rpb.h>
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
+
+#include <machine/bus.h>
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsreg.h>
 #include <alpha/tc/tcdsvar.h>
 
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+
+#include <dev/ic/ncr53c9xvar.h>
+
+#include "locators.h"
+
 struct tcds_softc {
 	struct	device sc_dv;
-	tc_addr_t sc_base;
+
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+
 	void	*sc_cookie;
 
-	volatile u_int32_t *sc_cir;
-	volatile u_int32_t *sc_imer;
+	int	sc_flags;
 
 	struct tcds_slotconfig sc_slots[2];
 };
 
+/* sc_flags */
+#define	TCDSF_BASEBOARD		0x01	/* baseboard on DEC 3000 */
+#define	TCDSF_FASTSCSI		0x02	/* fast SCSI device */
+
 /* Definition of the driver for autoconfig. */
 int	tcdsmatch __P((struct device *, struct cfdata *, void *));
 void	tcdsattach __P((struct device *, struct device *, void *));
-int     tcdsprint(void *, const char *);
+int     tcdsprint __P((void *, const char *));
+int	tcdssubmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
@@ -70,6 +123,32 @@ struct cfattach tcds_ca = {
 /*static*/ int	tcds_intr __P((void *));
 /*static*/ int	tcds_intrnull __P((void *));
 
+struct tcds_device {
+	const char *td_name;
+	int td_flags;
+} tcds_devices[] = {
+	{ "PMAZ-DS ",	TCDSF_BASEBOARD },
+	{ "PMAZ-FS ",	TCDSF_BASEBOARD|TCDSF_FASTSCSI },
+	{ "PMAZB-AA",	0 },
+	{ "PMAZC-AA",	TCDSF_FASTSCSI },
+	{ NULL,		0 },
+};
+
+struct tcds_device *tcds_lookup __P((const char *));
+
+struct tcds_device *
+tcds_lookup(modname)
+	const char *modname;
+{
+	struct tcds_device *td;
+
+	for (td = tcds_devices; td->td_name != NULL; td++)
+		if (strncmp(td->td_name, modname, TC_ROM_LLEN) == 0)
+			return (td);
+
+	return (NULL);
+}
+
 int
 tcdsmatch(parent, cfdata, aux)
 	struct device *parent;
@@ -77,18 +156,8 @@ tcdsmatch(parent, cfdata, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-	extern int cputype;
 
-	/* Make sure that we're looking for this type of device. */
-	if (strncmp("PMAZ-DS ", ta->ta_modname, TC_ROM_LLEN))
-		return (0);
-	/* PMAZ-FS? */
-
-	/* Check that it can actually exist. */
-	if ((cputype != ST_DEC_3000_500) && (cputype != ST_DEC_3000_300))
-		panic("tcdsmatch: how did we get here?");
-
-	return (1);
+	return (tcds_lookup(ta->ta_modname) != NULL);
 }
 
 void
@@ -100,16 +169,47 @@ tcdsattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct tcdsdev_attach_args tcdsdev;
 	struct tcds_slotconfig *slotc;
+	struct tcds_device *td;
+	bus_space_handle_t sbsh[2];
 	int i;
 	extern int cputype;
 
+	td = tcds_lookup(ta->ta_modname);
+	if (td == NULL)
+		panic("\ntcdsattach: impossible");
+
+	printf(": TurboChannel Dual SCSI");
+	if (td->td_flags & TCDSF_BASEBOARD)
+		printf(", baseboard");
+	if (td->td_flags & TCDSF_FASTSCSI)
+		printf(", fast");
 	printf("\n");
 
-	sc->sc_base = ta->ta_addr;
-	sc->sc_cookie = ta->ta_cookie;
+	sc->sc_flags = td->td_flags;
 
-	sc->sc_cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-	sc->sc_imer = TCDS_REG(sc->sc_base, TCDS_IMER);
+	/*
+	 * Map the device.
+	 */
+	sc->sc_bst = ta->ta_memt;
+	if (bus_space_map(sc->sc_bst, ta->ta_addr,
+	    (TCDS_SCSI1_OFFSET + 0x100), 0, &sc->sc_bsh)) {
+		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		return;
+	}
+
+	/*
+	 * Now, slice off two subregions for the individual NCR SCSI chips.
+	 */
+	if (bus_space_subregion(sc->sc_bst, sc->sc_bsh, TCDS_SCSI0_OFFSET,
+	    0x100, &sbsh[0]) ||
+	    bus_space_subregion(sc->sc_bst, sc->sc_bsh, TCDS_SCSI1_OFFSET,
+	    0x100, &sbsh[1])) {
+		printf("%s: unable to subregion SCSI chip space\n",
+		    sc->sc_dv.dv_xname);
+		return;
+	}
+
+	sc->sc_cookie = ta->ta_cookie;
 
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO, tcds_intr, sc);
 
@@ -118,8 +218,7 @@ tcdsattach(parent, self, aux)
 	 * IMER apparently has some random (or, not so random, but still
 	 * not useful) bits set in it when the system boots.  Clear it.
 	 */
-	*sc->sc_imer = 0;
-	alpha_mb();
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_IMER, 0);
 
 	/* XXX Initial contents of CIR? */
 
@@ -134,7 +233,8 @@ tcdsattach(parent, self, aux)
 		bzero(slotc, sizeof *slotc);	/* clear everything */
 
 		slotc->sc_slot = i;
-		slotc->sc_tcds = sc;
+		slotc->sc_bst = sc->sc_bst;
+		slotc->sc_bsh = sc->sc_bsh;
 		slotc->sc_asc = NULL;
 		slotc->sc_intrhand = tcds_intrnull;
 		slotc->sc_intrarg = (void *)(long)i;
@@ -148,10 +248,10 @@ tcdsattach(parent, self, aux)
 	slotc->sc_intrbits = TCDS_CIR_SCSI0_INT;
 	slotc->sc_dmabits = TCDS_CIR_SCSI0_DMAENA;
 	slotc->sc_errorbits = 0;				/* XXX */
-	slotc->sc_sda = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_ADDR);
-	slotc->sc_dic = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_INTR);
-	slotc->sc_dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD0);
-	slotc->sc_dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD1);
+	slotc->sc_sda = TCDS_SCSI0_DMA_ADDR;
+	slotc->sc_dic = TCDS_SCSI0_DMA_INTR;
+	slotc->sc_dud0 = TCDS_SCSI0_DMA_DUD0;
+	slotc->sc_dud1 = TCDS_SCSI0_DMA_DUD1;
 
 	/* information for slot 1 */
 	slotc = &sc->sc_slots[1];
@@ -161,43 +261,52 @@ tcdsattach(parent, self, aux)
 	slotc->sc_intrbits = TCDS_CIR_SCSI1_INT;
 	slotc->sc_dmabits = TCDS_CIR_SCSI1_DMAENA;
 	slotc->sc_errorbits = 0;				/* XXX */
-	slotc->sc_sda = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_ADDR);
-	slotc->sc_dic = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_INTR);
-	slotc->sc_dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD0);
-	slotc->sc_dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD1);
+	slotc->sc_sda = TCDS_SCSI1_DMA_ADDR;
+	slotc->sc_dic = TCDS_SCSI1_DMA_INTR;
+	slotc->sc_dud0 = TCDS_SCSI1_DMA_DUD0;
+	slotc->sc_dud1 = TCDS_SCSI1_DMA_DUD1;
 
 	/* find the hardware attached to the TCDS ASIC */
-	strncpy(tcdsdev.tcdsda_modname, "PMAZ-AA ", TC_ROM_LLEN);
-	tcdsdev.tcdsda_slot = 0;
-	tcdsdev.tcdsda_offset = 0;
-	tcdsdev.tcdsda_addr = (tc_addr_t)
-	    TC_DENSE_TO_SPARSE(sc->sc_base + TCDS_SCSI0_OFFSET);
-	tcdsdev.tcdsda_cookie = (void *)(long)0;
-	tcdsdev.tcdsda_sc = &sc->sc_slots[0];
-	tcdsdev.tcdsda_id = 7;				/* XXX */
-	tcdsdev.tcdsda_freq = 25000000;			/* XXX */
-
-	tcds_scsi_reset(tcdsdev.tcdsda_sc);
-
-	config_found(self, &tcdsdev, tcdsprint);
-
-	/* the second SCSI chip isn't present on the 3000/300 series. */
-	if (cputype != ST_DEC_3000_300) {
-		strncpy(tcdsdev.tcdsda_modname, "PMAZ-AA ",
-		    TC_ROM_LLEN);
-		tcdsdev.tcdsda_slot = 1;
-		tcdsdev.tcdsda_offset = 0;
-		tcdsdev.tcdsda_addr = (tc_addr_t)
-		    TC_DENSE_TO_SPARSE(sc->sc_base + TCDS_SCSI1_OFFSET);
-		tcdsdev.tcdsda_cookie = (void *)(long)1;
-		tcdsdev.tcdsda_sc = &sc->sc_slots[1];
-		tcdsdev.tcdsda_id = 7;			/* XXX */
-		tcdsdev.tcdsda_freq = 25000000;		/* XXX */
+	for (i = 0; i < 2; i++) {
+		tcdsdev.tcdsda_bst = sc->sc_bst;
+		tcdsdev.tcdsda_bsh = sbsh[i];
+		tcdsdev.tcdsda_chip = i;
+		tcdsdev.tcdsda_sc = &sc->sc_slots[i];
+		tcdsdev.tcdsda_id = 7;				/* XXX */
+		tcdsdev.tcdsda_freq = 25000000;			/* XXX */
+		if (sc->sc_flags & TCDSF_FASTSCSI)
+			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C96;
+		else
+			tcdsdev.tcdsda_variant = NCR_VARIANT_NCR53C94;
 
 		tcds_scsi_reset(tcdsdev.tcdsda_sc);
 
-		config_found(self, &tcdsdev, tcdsprint);
+		config_found_sm(self, &tcdsdev, tcdsprint, tcdssubmatch);
+#ifdef __alpha__
+		/*
+		 * The second SCSI chip isn't present on the baseboard TCDS
+		 * on the DEC Alpha 3000/300 series.
+		 */
+		if (sc->sc_flags & TCDSF_BASEBOARD &&
+		    cputype == ST_DEC_3000_300)
+			break;
+#endif /* __alpha__ */
 	}
+}
+
+int
+tcdssubmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct tcdsdev_attach_args *tcdsdev = aux;
+
+	if (cf->cf_loc[TCDSCF_CHIP] != TCDSCF_CHIP_DEFAULT &&
+	    cf->cf_loc[TCDSCF_CHIP] != tcdsdev->tcdsda_chip)
+		return (0);
+
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 int
@@ -205,31 +314,28 @@ tcdsprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct tc_attach_args *ta = aux;
+	struct tcdsdev_attach_args *tcdsdev = aux;
 
+	/* Only ASCs can attach to TCDSs; easy. */
 	if (pnp)
-		printf("%s at %s", ta->ta_modname, pnp);
-	printf(" slot %d", ta->ta_slot);
+		printf("asc at %s", pnp);
+
+	printf(" chip %d", tcdsdev->tcdsda_chip);
+
 	return (UNCONF);
 }
 
 void
-tcds_intr_establish(tcds, cookie, level, func, arg)
+tcds_intr_establish(tcds, slot, func, arg)
 	struct device *tcds;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int slot;
 	int (*func) __P((void *));
+	void *arg;
 {
 	struct tcds_softc *sc = (struct tcds_softc *)tcds;
-	u_long slot;
-
-	slot = (u_long)cookie;
-#ifdef DIAGNOSTIC
-	/* XXX check cookie. */
-#endif
 
 	if (sc->sc_slots[slot].sc_intrhand != tcds_intrnull)
-		panic("tcds_intr_establish: cookie %d twice", slot);
+		panic("tcds_intr_establish: chip %d twice", slot);
 
 	sc->sc_slots[slot].sc_intrhand = func;
 	sc->sc_slots[slot].sc_intrarg = arg;
@@ -237,24 +343,18 @@ tcds_intr_establish(tcds, cookie, level, func, arg)
 }
 
 void
-tcds_intr_disestablish(tcds, cookie)
+tcds_intr_disestablish(tcds, slot)
 	struct device *tcds;
-	void *cookie;
+	int slot;
 {
 	struct tcds_softc *sc = (struct tcds_softc *)tcds;
-	u_long slot;
-
-	slot = (u_long)cookie;
-#ifdef DIAGNOSTIC
-	/* XXX check cookie. */
-#endif
 
 	if (sc->sc_slots[slot].sc_intrhand == tcds_intrnull)
-		panic("tcds_intr_disestablish: cookie %d missing intr",
+		panic("tcds_intr_disestablish: chip %d missing intr",
 		    slot);
 
 	sc->sc_slots[slot].sc_intrhand = tcds_intrnull;
-	sc->sc_slots[slot].sc_intrarg = (void *)slot;
+	sc->sc_slots[slot].sc_intrarg = (void *)(u_long)slot;
 
 	tcds_dma_enable(&sc->sc_slots[slot], 0);
 	tcds_scsi_enable(&sc->sc_slots[slot], 0);
@@ -265,7 +365,7 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("tcds_intrnull: uncaught TCDS intr for cookie %ld\n",
+	panic("tcds_intrnull: uncaught TCDS intr for chip %lu\n",
 	    (u_long)val);
 }
 
@@ -273,15 +373,20 @@ void
 tcds_scsi_reset(sc)
 	struct tcds_slotconfig *sc;
 {
+	u_int32_t cir;
 
 	tcds_dma_enable(sc, 0);
 	tcds_scsi_enable(sc, 0);
 
-	TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_resetbits);
-	alpha_mb();
+	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
+	TCDS_CIR_CLR(cir, sc->sc_resetbits);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, cir);
+
 	DELAY(1);
-	TCDS_CIR_SET(*sc->sc_tcds->sc_cir, sc->sc_resetbits);
-	alpha_mb();
+
+	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
+	TCDS_CIR_SET(cir, sc->sc_resetbits);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, cir);
 
 	tcds_scsi_enable(sc, 1);
 	tcds_dma_enable(sc, 1);
@@ -292,12 +397,16 @@ tcds_scsi_enable(sc, on)
 	struct tcds_slotconfig *sc;
 	int on;
 {
+	u_int32_t imer;
 
-	if (on) 
-		*sc->sc_tcds->sc_imer |= sc->sc_intrmaskbits;
+	imer = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_IMER);
+
+	if (on)
+		imer |= sc->sc_intrmaskbits;
 	else
-		*sc->sc_tcds->sc_imer &= ~sc->sc_intrmaskbits;
-	alpha_mb();
+		imer &= ~sc->sc_intrmaskbits;
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_IMER, imer);
 }
 
 void
@@ -305,13 +414,17 @@ tcds_dma_enable(sc, on)
 	struct tcds_slotconfig *sc;
 	int on;
 {
+	u_int32_t cir;
+
+	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
 	/* XXX Clear/set IOSLOT/PBS bits. */
 	if (on) 
-		TCDS_CIR_SET(*sc->sc_tcds->sc_cir, sc->sc_dmabits);
+		TCDS_CIR_SET(cir, sc->sc_dmabits);
 	else
-		TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_dmabits);
-	alpha_mb();
+		TCDS_CIR_CLR(cir, sc->sc_dmabits);
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, cir);
 }
 
 int
@@ -319,11 +432,15 @@ tcds_scsi_isintr(sc, clear)
 	struct tcds_slotconfig *sc;
 	int clear;
 {
+	u_int32_t cir;
 
-	if ((*sc->sc_tcds->sc_cir & sc->sc_intrbits) != 0) {
+	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
+
+	if ((cir & sc->sc_intrbits) != 0) {
 		if (clear) {
-			TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_intrbits);
-			alpha_mb();
+			TCDS_CIR_CLR(cir, sc->sc_intrbits);
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR,
+			    cir);
 		}
 		return (1);
 	} else
@@ -334,36 +451,38 @@ int
 tcds_scsi_iserr(sc)
 	struct tcds_slotconfig *sc;
 {
+	u_int32_t cir;
 
-	return ((*sc->sc_tcds->sc_cir & sc->sc_errorbits) != 0);
+	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
+	return ((cir & sc->sc_errorbits) != 0);
 }
 
 int
-tcds_intr(val)
-	void *val;
+tcds_intr(arg)
+	void *arg;
 {
-	struct tcds_softc *sc;
-	u_int32_t ir;
-
-	sc = val;
+	struct tcds_softc *sc = arg;
+	u_int32_t ir, ir0;
 
 	/*
 	 * XXX
 	 * Copy and clear (gag!) the interrupts.
 	 */
-	ir = *sc->sc_cir;
-	alpha_mb();
-	TCDS_CIR_CLR(*sc->sc_cir, TCDS_CIR_ALLINTR);
-	alpha_mb();
+	ir = ir0 = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
+	TCDS_CIR_CLR(ir0, TCDS_CIR_ALLINTR);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, ir0);
 	tc_syncbus();
-	alpha_mb();
 
+#ifdef __alpha__		/* XXX XXX XXX */
 #ifdef EVCNT_COUNTERS
 	/* No interrupt counting via evcnt counters */ 
 	XXX BREAK HERE XXX
 #else
 #define	INCRINTRCNT(slot)	intrcnt[INTRCNT_TCDS + slot]++
 #endif
+#else
+#define	INCRINTRCNT(slot)	/* nothing */
+#endif /* __alpha__ */
 
 #define	CHECKINTR(slot)							\
 	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
@@ -386,7 +505,7 @@ tcds_intr(val)
 	 */
 #define	PRINTINTR(msg, bits)						\
 	if (ir & bits)							\
-		printf(msg);
+		printf("%s: %s", sc->sc_dv.dv_xname, msg);
 	PRINTINTR("SCSI0 DREQ interrupt.\n", TCDS_CIR_SCSI0_DREQ);
 	PRINTINTR("SCSI1 DREQ interrupt.\n", TCDS_CIR_SCSI1_DREQ);
 	PRINTINTR("SCSI0 prefetch interrupt.\n", TCDS_CIR_SCSI0_PREFETCH);
