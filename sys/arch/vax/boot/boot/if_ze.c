@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.8 2000/05/09 20:53:52 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.9 2000/05/18 04:20:41 matt Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -68,8 +68,8 @@ struct netif_driver ze_driver = {
 	"ze", ze_match, ze_probe, ze_init, ze_get, ze_put, ze_end, ze_ifs, 1,
 };
 
-#define NRCV 8				/* allocate 5 receive descriptors */
-#define NXMT 5				/* and 5 transmit - must be >1 */
+#define NRCV 8				/* allocate 8 receive descriptors */
+#define NXMT 4				/* and 4 transmit - must be >1 */
 #define SETUP_FRAME_LEN 128		/* length of the setup frame */
 
 /* allocate a buffer on an octaword boundary */
