@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.25 2001/11/02 04:47:47 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.26 2001/11/08 19:34:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.25 2001/11/02 04:47:47 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.26 2001/11/08 19:34:41 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,9 +65,6 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
 
 	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
-#ifdef DEBUG
-	char *tty;
-#endif
 
 	if (el == NULL)
 		return (NULL);
