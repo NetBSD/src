@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.71 2000/03/30 13:25:02 augustss Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.72 2000/03/31 14:31:03 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -127,6 +127,10 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
+#endif
 
 #ifdef __vax__
 #include <machine/mtpr.h>
