@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1999/11/21 07:04:33 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2000/03/12 05:04:47 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -114,7 +114,7 @@ mbattach(parent, self, aux)
 #error misconfiguration
 #elif defined VR41X1
 	/* Attach frame buffer */
-	ma.ma_name = "fb";
+	ma.ma_name = "bivideo";
 	config_found(mb, &ma, mbprint);
 
 	/* Attach Vr41x1 integrated peripherals (if configured). */
