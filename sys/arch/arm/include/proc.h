@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2003/03/01 04:36:39 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2003/03/05 11:28:14 agc Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,6 +40,7 @@
  */
 
 struct trapframe;
+struct lwp;
 
 struct mdlwp {
 	int	md_dummy;		/* must have at least one member */
