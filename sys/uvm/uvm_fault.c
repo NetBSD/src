@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.8 1998/03/22 21:29:30 chuck Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.9 1998/03/26 21:50:14 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -51,6 +51,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -310,7 +311,12 @@ int uvmfault_anonget(ufi, amap, anon)
 	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 
 	result = 0;		/* XXX shut up gcc */
-	uvmexp.fltanget++;	/* XXXDCD should this go here or below? */
+	uvmexp.fltanget++;
+        /* bump rusage counters */
+	if (anon->u.an_page)
+		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+	else
+		curproc->p_addr->u_stats.p_ru.ru_majflt++;
 
 	/* 
 	 * loop until we get it, or fail.
@@ -1254,12 +1260,20 @@ Case2:
 	promote, (uobj == NULL), 0,0);
 
 	/*
+	 * if uobjpage is not null then we do not need to do I/O to get the
+	 * uobjpage.
+	 *
 	 * if uobjpage is null, then we need to unlock and ask the pager to 
 	 * get the data for us.   once we have the data, we need to reverify
 	 * the state the world.   we are currently not holding any resources.
 	 */
 
-	if (uobjpage == NULL) {
+	if (uobjpage) {
+		/* update rusage counters */
+		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+	} else {
+		/* update rusage counters */
+		curproc->p_addr->u_stats.p_ru.ru_majflt++;
 		
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);
