@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.24 1998/03/25 22:05:01 fair Exp $
+.\"	$NetBSD: ddb.4,v 1.25 1998/05/24 12:05:20 drochner Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -284,10 +284,12 @@ display as a machine instruction.
 display as a machine instruction, with possible alternative formats
 depending upon the machine:
 .Bl -tag -offset indent -width "sparc"
-.It i386
-don't round to the next long word boundary
-.It mips
-print register contents
+.It alpha
+print register operands
+.It m68k
+use Motorola syntax
+.It pc532
+print instruction bytes in hex
 .It vax
 don't assume that each external label is a procedure entry mask
 .El
