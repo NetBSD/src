@@ -1,3 +1,5 @@
+/*	$NetBSD: nameser.h,v 1.7 1994/10/26 00:56:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nameser.h	5.25 (Berkeley) 4/3/91
- *	$Id: nameser.h,v 1.6 1994/10/15 07:56:55 deraadt Exp $
+ *	@(#)nameser.h	5.25 (Berkeley) 4/3/91
  */
 
 #ifndef _NAMESER_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: routed.h,v 1.3 1994/10/26 00:56:50 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)routed.h	5.3 (Berkeley) 4/3/91
- *	$Id: routed.h,v 1.2 1993/08/01 18:46:09 mycroft Exp $
+ *	@(#)routed.h	5.3 (Berkeley) 4/3/91
  */
 
 #ifndef _ROUTED_H_

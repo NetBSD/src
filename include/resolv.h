@@ -1,3 +1,5 @@
+/*	$NetBSD: resolv.h,v 1.8 1994/10/26 00:56:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1987, 1989 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)resolv.h	5.15 (Berkeley) 4/3/91
- *	$Id: resolv.h,v 1.7 1994/10/19 03:46:42 cgd Exp $
+ *	@(#)resolv.h	5.15 (Berkeley) 4/3/91
  */
 
 #ifndef _RESOLV_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: ftp.h,v 1.3 1994/10/26 00:56:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ftp.h	5.6 (Berkeley) 4/3/91
- *	$Id: ftp.h,v 1.2 1993/08/01 18:46:23 mycroft Exp $
+ *	@(#)ftp.h	5.6 (Berkeley) 4/3/91
  */
 
 #ifndef _FTP_H_

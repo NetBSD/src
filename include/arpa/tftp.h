@@ -1,3 +1,5 @@
+/*	$NetBSD: tftp.h,v 1.3 1994/10/26 00:56:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tftp.h	5.4 (Berkeley) 4/3/91
- *	$Id: tftp.h,v 1.2 1993/08/01 18:46:18 mycroft Exp $
+ *	@(#)tftp.h	5.4 (Berkeley) 4/3/91
  */
 
 #ifndef _TFTP_H_

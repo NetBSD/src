@@ -1,3 +1,5 @@
+/*	$NetBSD: signal.h,v 1.3 1994/10/26 00:56:24 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

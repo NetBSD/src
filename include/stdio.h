@@ -1,3 +1,5 @@
+/*	$NetBSD: stdio.h,v 1.14 1994/10/26 00:56:28 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.13 1994/05/22 23:14:10 cgd Exp $
+ *	@(#)stdio.h	5.17 (Berkeley) 6/3/91
  */
 
 #ifndef	_STDIO_H_

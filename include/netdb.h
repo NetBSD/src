@@ -1,3 +1,5 @@
+/*	$NetBSD: netdb.h,v 1.4 1994/10/26 00:56:09 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1983, 1988 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)netdb.h	5.15 (Berkeley) 4/3/91
- *	$Id: netdb.h,v 1.3 1994/04/07 06:58:29 deraadt Exp $
+ *	@(#)netdb.h	5.15 (Berkeley) 4/3/91
  */
 
 #ifndef _NETDB_H_

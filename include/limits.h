@@ -1,3 +1,5 @@
+/*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)limits.h	5.9 (Berkeley) 4/3/91
- *	$Id: limits.h,v 1.6 1994/10/05 17:24:47 jtc Exp $
+ *	@(#)limits.h	5.9 (Berkeley) 4/3/91
  */
 
 #ifndef _LIMITS_H_

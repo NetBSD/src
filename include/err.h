@@ -1,3 +1,5 @@
+/*	$NetBSD: err.h,v 1.11 1994/10/26 00:55:52 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)err.h	8.1 (Berkeley) 6/2/93
- *	$Id: err.h,v 1.10 1994/10/19 03:44:57 cgd Exp $
+ *	@(#)err.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _ERR_H_

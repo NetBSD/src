@@ -1,3 +1,5 @@
+/*	$NetBSD: nl_types.h,v 1.2 1994/10/26 00:56:10 cgd Exp $	*/
+
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
 
