@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.20 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.21 1998/10/01 16:04:37 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -422,14 +422,28 @@ typedef struct {
 	Elf64_Half type;
 } Elf64_Note;
 
+#define ELF_NOTE_TYPE_OSVERSION		1
+
 /* "name" for NetBSD-specific notes. */
 #define	ELF_NOTE_NETBSD_NAME		"NetBSD"
 
 /* NetBSD-specific note type: OS Version.  desc is 4-byte NetBSD integer. */
-#define	ELF_NOTE_NETBSD_TYPE_OSVERSION	1
+#define	ELF_NOTE_NETBSD_TYPE_OSVERSION	ELF_NOTE_TYPE_OSVERSION
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
 #define	ELF_NOTE_NETBSD_TYPE_EMULNAME	2
+
+/* GNU-specific note name and description sizes */
+#define ELF_NOTE_GNU_NAMESZ		4
+#define ELF_NOTE_GNU_DESCSZ		4
+
+/* GNU-specific note name */
+#define ELF_NOTE_GNU_NAME		"GNU\0"
+
+/* GNU-specific OS/version value stuff */
+#define ELF_NOTE_GNU_OSMASK		(u_int32_t)0xff000000
+#define ELF_NOTE_GNU_OSLINUX		(u_int32_t)0x01000000
+#define ELF_NOTE_GNU_OSMACH		(u_int32_t)0x00000000
 
 
 #include <machine/elf_machdep.h>
@@ -476,9 +490,23 @@ typedef struct {
 
 #ifdef _KERNEL
 
+#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
+
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define ELF_NO_ADDR	ELF64_NO_ADDR
+#elif defined(ELFSIZE) && (ELFSIZE == 32)
+#define ELF_NO_ADDR	ELF32_NO_ADDR
+#endif
+
+#if defined(ELFSIZE)
+#define CONCAT(x,y)	__CONCAT(x,y)
+#define ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#endif
 
 struct elf_args {
         u_long  arg_entry;      /* program entry point */
