@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.11 1997/10/08 08:45:12 mrg Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.12 1998/04/01 15:02:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.11 1997/10/08 08:45:12 mrg Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.12 1998/04/01 15:02:47 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,6 @@ extern struct sysv sysv;
 #include <sys/resource.h>
 #include <sys/proc.h>
 #endif
-#include <sys/tty.h>
 #ifdef	t_erase
 #undef	t_erase
 #undef	t_kill
