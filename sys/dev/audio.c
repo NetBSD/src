@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.173 2003/01/31 02:15:57 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.174 2003/03/31 18:47:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.173 2003/01/31 02:15:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.174 2003/03/31 18:47:58 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -151,16 +151,16 @@ int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
 
 struct portname {
-	char	*name;
+	const char	*name;
 	int	mask;
 };
-static struct portname itable[] = {
+static const struct portname itable[] = {
 	{ AudioNmicrophone,	AUDIO_MICROPHONE },
 	{ AudioNline,		AUDIO_LINE_IN },
 	{ AudioNcd,		AUDIO_CD },
 	{ 0 }
 };
-static struct portname otable[] = {
+static const struct portname otable[] = {
 	{ AudioNspeaker,	AUDIO_SPEAKER },
 	{ AudioNheadphone,	AUDIO_HEADPHONE },
 	{ AudioNline,		AUDIO_LINE_OUT },
@@ -168,7 +168,7 @@ static struct portname otable[] = {
 };
 void	au_check_ports(struct audio_softc *, struct au_mixer_ports *,
 			    mixer_devinfo_t *, int, char *, char *,
-			    struct portname *);
+			    const struct portname *);
 int	au_set_gain(struct audio_softc *, struct au_mixer_ports *,
 			 int, int);
 void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
@@ -197,7 +197,7 @@ const struct cdevsw audio_cdevsw = {
 };
 
 /* The default audio mode: 8 kHz mono ulaw */
-struct audio_params audio_default =
+const struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
 CFATTACH_DECL(audio, sizeof(struct audio_softc),
@@ -411,7 +411,7 @@ au_portof(struct audio_softc *sc, char *name)
 void
 au_check_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 	       mixer_devinfo_t *mi, int cls, char *name, char *mname,
-	       struct portname *tbl)
+	       const struct portname *tbl)
 {
 	int i, j;
 
