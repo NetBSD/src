@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/04/14 01:41:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/04/14 06:18:13 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -32,13 +32,13 @@ ${IMAGE}.gz:	${IMAGE} ${PRIMARYBOOT}
 CLEANFILES+=	${IMAGE}.gz
 
 
-realall: ${KERNELS} ${IMAGE}.gz
+realall: ${KERNELDEPS} ${IMAGE}.gz
 
 
 DISKBINDIR=	${RELEASEDIR}/installation/diskimage
 KERNBINDIR=	${RELEASEDIR}/binary/kernel
 
-release: check_RELEASEDIR .WAIT ${IMAGE}.gz ${KERNELS}
+release: check_RELEASEDIR .WAIT ${IMAGE}.gz ${KERNELDEPS}
 	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
 	${RELINSTALL} ${IMAGE}.gz ${DISKBINDIR}
 	${RELINSTALL} ${KERNELS} ${KERNBINDIR}
