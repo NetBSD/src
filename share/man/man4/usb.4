@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.35 2001/03/28 18:56:42 ichiro Exp $
+.\" $NetBSD: usb.4,v 1.36 2001/06/10 15:51:33 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,10 +64,10 @@ The
 driver has three layers (like
 .Xr scsi 4
 and
-.Xr pcmcia 4 ):
+.Xr pcmcia 4 ) :
 the controller, the bus, and the device layer.
 The controller attaches to a physical bus (like
-.Xr pci 4 ).
+.Xr pci 4 ) .
 The
 .Tn USB
 bus attaches to the controller and the root hub attaches
@@ -247,7 +247,7 @@ driver can attach.
 .Sh USB CONTROLLER INTERFACE
 Use the following to get access to the
 .Tn USB
-specific structurs and defines.
+specific structures and defines.
 .Bd -literal
 #include <sys/dev/usb.h>
 .Ed
@@ -389,7 +389,7 @@ All
 .Tn USB
 events are reported via the
 .Pa /dev/usb
-device.  This devices can be opened for reading and each 
+device.  This devices can be opened for reading and each
 .Xr read 2
 will yield an event record (if something has happened).
 The
@@ -456,8 +456,8 @@ There should be a serial number locator, but
 .Nx
 does not have string valued locators.
 .Sh SEE ALSO
-The 
-.Tn USB 
+The
+.Tn USB
 specifications can be found at:
 .D1 http://www.usb.org/developers/docs.html
 .Pp
