@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.16 1996/10/09 07:28:52 matthias Exp $	*/
+/*	$NetBSD: psl.h,v 1.17 1996/11/24 13:34:45 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
  */
 #define SOFTINT		16
 #define	SIR_CLOCK	(SOFTINT+0)
-#define	SIR_CLOCKMASK	(1 << SIR_CLOCK)
+#define	SIR_CLOCKMASK	((1 << SIR_CLOCK) | (1 << IR_SOFT))
 #define	SIR_NET		(SOFTINT+1)
 #define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define SIR_ALLMASK	0xffff0000
@@ -94,17 +94,32 @@
  * Structure of the software interrupt table
  */
 struct iv {
-	void (*iv_vec)();
+	void (*iv_vec) __P((void *));
 	void *iv_arg;
 	int iv_cnt;
 	char *iv_use;
 };
 
-extern unsigned int imask[], Cur_pl, sirpending, astpending;
-extern void intr_init();
-extern void check_sir(int);
-extern int intr_establish(int, void (*)(), void *, char *, int, int);
 extern struct iv ivt[];
+extern unsigned int imask[], Cur_pl, sirpending, astpending;
+
+#if defined(NO_INLINE_SPLX) || defined(DEFINE_SPLX)
+# define PSL_STATIC
+#else
+# define PSL_STATIC static
+#endif
+#if defined(NO_INLINE_SPLX)
+# define PSL_INLINE
+#else
+# define PSL_INLINE __inline
+#endif
+
+void	intr_init __P((void));
+void	check_sir __P((void *));
+int	intr_establish __P((int, void (*)(void *), void *, char *, int, int));
+
+PSL_STATIC PSL_INLINE int splraise __P((unsigned int));
+PSL_STATIC PSL_INLINE int splx __P((unsigned int));
 
 /*
  * Disable/Enable CPU-Interrupts
@@ -117,13 +132,11 @@ extern struct iv ivt[];
  * Add a mask to Cur_pl, and return the old value of Cur_pl.
  */
 #if !defined(NO_INLINE_SPLX) || defined(DEFINE_SPLX)
-# ifndef NO_INLINE_SPLX
-static __inline
-# endif
-int
-splraise(register int ncpl)
+PSL_STATIC PSL_INLINE int
+splraise(ncpl)
+	register unsigned int ncpl;
 {
-	register int ocpl;
+	register unsigned int ocpl;
 	di();
 	ocpl = Cur_pl;
 	ncpl |= ocpl;
@@ -140,52 +153,18 @@ splraise(register int ncpl)
  * the benefit of some splsoftclock() callers.  This extra work is
  * usually optimized away by the compiler.
  */
-# ifndef DEFINE_SPLX
-static
-# endif
-# ifndef NO_INLINE_SPLX
-__inline
-# endif
-int
-splx(register int ncpl)
+PSL_STATIC PSL_INLINE int
+splx(ncpl)
+	register unsigned int ncpl;
 {
-	register int ocpl;
+	register unsigned int ocpl;
 	di();
 	ocpl = Cur_pl;
 	ICUW(IMSK) = ncpl;
 	Cur_pl = ncpl;
-	if (sirpending & ~ncpl) {
-		Cur_pl |= SIR_ALLMASK;	/* avoid reentering check_sir */
-		check_sir(~ncpl);
-		Cur_pl = ncpl;
-	}
 	ei();
 	return(ocpl);
 }
-
-/*
- * This special version of splx should be entered with cpu interrupts
- * disabled. It will return with interrupts disabled.
- * It checks for pending software interrupts *before* setting the
- * new processor priority. This is done to avoid kernelstack overflows
- * due to reentering device interrupts.
- * This routine should be used *only* by interrupt() in locore.s.
- */
-# ifdef DEFINE_SPLX
-int
-splx_di(register int ncpl)
-{
-	register int ocpl = Cur_pl;
-	if (sirpending & ~ncpl) {
-		Cur_pl |= SIR_ALLMASK;	/* avoid reentering check_sir */
-		check_sir(~ncpl);
-	}
-	di();
-	ICUW(IMSK) = ncpl;
-	Cur_pl = ncpl;
-	return(ocpl);
-}
-# endif
 #endif
 
 /*
@@ -204,7 +183,7 @@ splx_di(register int ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	splx(SIR_CLOCKMASK|imask[IPL_ZERO])
+#define	splsoftclock()	splx(SIR_CLOCKMASK | imask[IPL_ZERO])
 #define	splsoftnet()	splraise(SIR_NETMASK)
 
 /*
@@ -217,10 +196,13 @@ splx_di(register int ncpl)
 /*
  * Software interrupt registration
  */
-#define	softintr(n)	(sirpending |= (1 << (n)))
+#define	softintr(n)	((sirpending |= (1 << (n))), setsofticu(IR_SOFT))
 #define	setsoftast()	(astpending = 1)
 #define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
+
+#undef PSL_INLINE
+#undef PSL_STATIC
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
