@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.22.6.4 2002/08/01 03:28:18 nathanw Exp $
+.\"	$NetBSD: intro.2,v 1.22.6.5 2002/11/12 13:06:16 skrll Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd March 14, 2000
+.Dd November 12, 2002
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -456,6 +456,21 @@ A numerical result of the function was too large to be stored in the
 caller-provided space.
 .It Er 85 EILSEQ Em "Illegal byte sequence" .
 A wide character/multibyte character encoding error occurred.
+.It Er 86 ENOTSUP Em "Not supported" .
+An attempt was made to set or change a parameter to an unsupported
+value.
+.It Er 87 ECANCELED Em "Operation canceled" .
+The requested operation was canceled.
+.It Er 88 EBADMSG Em "Bad or corrupt message" .
+A message in the specified message catalog did not satisfy implementation
+defined criteria, or a STREAMS operation encountered an invalid message or
+a file descriptor at the STREAM head.
+.It Er 89 ENODATA Em "No message available" .
+No message is available on the STREAM head read queue
+.It Er 90 ENOSR Em "No STREAM resources" .
+Buffers could not be allocated due to insufficient STREAMs memory resources.
+.It Er 91 ENOSTR Em "Not a STREAM" .
+A STREAM is not associated with the specified file descriptor.
 .El
 .Sh DEFINITIONS
 .Bl -tag -width Ds

@@ -1,4 +1,4 @@
-/*	$NetBSD: __errlist14.c,v 1.3 2000/03/10 13:58:59 kleink Exp $	*/
+/*	$NetBSD: __errlist14.c,v 1.3.6.1 2002/11/12 13:06:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: __errlist14.c,v 1.3 2000/03/10 13:58:59 kleink Exp $");
+__RCSID("$NetBSD: __errlist14.c,v 1.3.6.1 2002/11/12 13:06:14 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,7 +152,21 @@ static const char *const __errlist14[] = {
 	"Value too large to be stored in data type",
 
 /* Wide/multibyte-character handling, ISO/IEC 9899/AMD1:1995 */
-	"Illegal byte sequence"			/* 85 - EILSEQ */
+	"Illegal byte sequence",		/* 85 - EILSEQ */
+
+/* Base, Realtime, Threads or Thread Priority Scheduling option errors */
+	"Not supported",			/* 86 - ENOTSUP */
+
+/* Realtime option errors */
+	"Operation Canceled",			/* 87 - ECANCELED */
+
+/* Realtime, XSI STREAMS option errors */
+	"Bad or Corrupt message",		/* 88 - EBADMSG */
+
+/* XSI STREAMS option errors  */
+	"No message available",			/* 89 - ENODATA */
+	"No STREAM resources",			/* 90 - ENOSR */
+	"Not a STREAM"				/* 91 - ENOSTR */
 };
 
 const int __sys_nerr14 = sizeof(__errlist14) / sizeof(__errlist14[0]);

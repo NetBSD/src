@@ -169,6 +169,18 @@ $ EOVERFLOW
 84 Hodnota je pro daný datový typ pøíli¹ velká
 $ EILSEQ
 85 Neplatná posloupnost bajtù
+$ ENOTSUP
+86 Nepodporováno
+$ ECANCELED
+87 Operace strornována
+$ EBADMSG
+88 ©patná nebo poru¹ená zpráva
+$ ENODATA
+89 ®ádná zpráva není dostupná
+$ ENOSR
+90 ®ádný prostøedek STREAM
+$ ENOSTR
+91 Není STREAM
 $set 2
 $ SIGHUP
 1 Terminál odpojen

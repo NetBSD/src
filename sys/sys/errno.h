@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.26.2.1 2002/04/01 07:49:10 nathanw Exp $	*/
+/*	$NetBSD: errno.h,v 1.26.2.2 2002/11/12 13:06:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -180,7 +180,22 @@
 /* Wide/multibyte-character handling, ISO/IEC 9899/AMD1:1995 */
 #define	EILSEQ		85		/* Illegal byte sequence */
 
-#define	ELAST		85		/* Must equal largest errno */
+/* From IEEE Std 1003.1-2001 */
+/* Base, Realtime, Threads or Thread Priority Scheduling option errors */
+#define ENOTSUP		86		/* Not supported */
+
+/* Realtime option errors */
+#define ECANCELED	87		/* Operation canceled */
+
+/* Realtime, XSI STREAMS option errors */
+#define EBADMSG		88		/* Bad or Corrupt message */
+
+/* XSI STREAMS option errors  */
+#define ENODATA		89		/* No message available */
+#define ENOSR		90		/* No STREAM resource */
+#define ENOSTR		91		/* Not a STREAM */
+
+#define	ELAST		91		/* Must equal largest errno */
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */
