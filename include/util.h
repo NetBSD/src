@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.33 2004/11/19 21:39:03 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.34 2005/01/12 03:33:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -88,6 +88,8 @@ int		pw_copyx(int, int, struct passwd *, struct passwd *,
 void		pw_edit(int, const char *);
 void		pw_error(const char *, int, int);
 void		pw_getconf(char *, size_t, const char *, const char *);
+void		pw_getpwconf(char *, size_t, const struct passwd *,
+			     const char *);
 const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
