@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.17 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.18 2005/02/19 03:08:23 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor.c,v 1.61 2004/07/17 05:31:41 dtucker Exp $");
-__RCSID("$NetBSD: monitor.c,v 1.17 2005/02/13 18:14:04 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.18 2005/02/19 03:08:23 christos Exp $");
 
 #include <openssl/dh.h>
 
@@ -211,14 +211,6 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_GSSUSEROK, MON_AUTH, mm_answer_gss_userok},
     {MONITOR_REQ_GSSCHECKMIC, MON_ISAUTH, mm_answer_gss_checkmic},
 #endif
-#ifdef USE_PAM
-    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
-    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
-    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
-    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
-    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
-    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
-#endif
     {0, 0, NULL}
 };
 
@@ -247,6 +239,20 @@ struct mon_table mon_dispatch_proto15[] = {
 #ifdef SKEY
     {MONITOR_REQ_SKEYQUERY, MON_ISAUTH, mm_answer_skeyquery},
     {MONITOR_REQ_SKEYRESPOND, MON_AUTH, mm_answer_skeyrespond},
+#endif
+#ifdef USE_PAM
+    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
+    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
+    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
+    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
+    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
+    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
+#endif
+#ifdef KRB4
+    {MONITOR_REQ_KRB4, MON_ONCE|MON_AUTH, mm_answer_krb4},
+#endif
+#ifdef KRB5
+    {MONITOR_REQ_KRB5, MON_ONCE|MON_AUTH, mm_answer_krb5},
 #endif
     {0, 0, NULL}
 };
