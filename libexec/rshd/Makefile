@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2005/02/20 05:45:55 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2005/03/04 20:41:09 he Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -17,8 +17,8 @@ CPPFLAGS+=-DINET6
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DUSE_PAM
-DPADD+= ${LIBPAM}
-LDADD+= -lpam
+DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
+LDADD+= -lpam ${PAM_STATIC_LDADD}
 .endif
 
 .include <bsd.prog.mk>
