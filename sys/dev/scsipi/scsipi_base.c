@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.87 2003/04/16 21:08:06 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.88 2003/04/19 19:12:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.87 2003/04/16 21:08:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.88 2003/04/19 19:12:59 fvdl Exp $");
 
 #include "opt_scsi.h"
 
@@ -1037,6 +1037,7 @@ scsipi_test_unit_ready(periph, flags)
 	struct scsipi_periph *periph;
 	int flags;
 {
+	int retries;
 	struct scsipi_test_unit_ready scsipi_cmd;
 
 	/* some ATAPI drives don't support TEST_UNIT_READY. Sigh */
@@ -1046,9 +1047,14 @@ scsipi_test_unit_ready(periph, flags)
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = TEST_UNIT_READY;
 
+	if (flags & XS_CTL_DISCOVERY)
+		retries = 0;
+	else
+		retries = SCSIPIRETRIES;
+
 	return (scsipi_command(periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, SCSIPIRETRIES, 10000, NULL, flags));
+	    0, 0, retries, 10000, NULL, flags));
 }
 
 /*
@@ -1062,6 +1068,7 @@ scsipi_inquire(periph, inqbuf, flags)
 	struct scsipi_inquiry_data *inqbuf;
 	int flags;
 {
+	int retries;
 	struct scsipi_inquiry scsipi_cmd;
 	int error;
 
@@ -1069,10 +1076,15 @@ scsipi_inquire(periph, inqbuf, flags)
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
+	if (flags & XS_CTL_DISCOVERY)
+		retries = 0;
+	else
+		retries = SCSIPIRETRIES;
+
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
-	    SCSIPIRETRIES, 10000, NULL, XS_CTL_DATA_IN | flags);
+	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
 	
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
