@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.29 1997/12/07 16:06:21 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.30 1998/01/12 18:59:19 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -43,10 +43,6 @@ struct spkr_softc {
 
 struct cfattach spkr_ca = {
 	sizeof(struct spkr_softc), spkrprobe, spkrattach
-};
-
-struct cfdriver spkr_cd = {
-	NULL, "spkr", DV_TTY
 };
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************

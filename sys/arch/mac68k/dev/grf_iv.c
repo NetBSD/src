@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.27 1997/11/08 23:22:38 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.28 1998/01/12 19:22:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -63,10 +63,6 @@ static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp));
 static int	grfiv_match __P((struct device *, struct cfdata *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
-
-struct cfdriver intvid_cd = {
-	NULL, "intvid", DV_DULL
-};
 
 struct cfattach intvid_ca = {
 	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach

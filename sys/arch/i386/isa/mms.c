@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.29 1997/10/19 20:31:32 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.30 1998/01/12 18:59:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -77,9 +77,7 @@ struct cfattach mms_ca = {
 	sizeof(struct mms_softc), mmsprobe, mmsattach
 };
 
-struct cfdriver mms_cd = {
-	NULL, "mms", DV_TTY
-};
+extern struct cfdriver mms_cd;
 
 #define	MMSUNIT(dev)	(minor(dev))
 

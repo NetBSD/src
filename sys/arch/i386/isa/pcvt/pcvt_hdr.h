@@ -910,9 +910,13 @@ struct cfattach vt_ca = {
 	sizeof(struct vt_softc), pcprobe, pcattach
 };
 
+#if PCVT_NETBSD < 132
 struct cfdriver vt_cd = {
 	NULL, "vt", DV_TTY
 };
+#else /* PCVT_NETBSD >= 132 */
+extern struct cfdriver vt_cd;
+#endif /* PCVT_NETBSD < 132 */
 #else /* !PCVT_NETBSD > 110 */
 #if PCVT_NETBSD > 101
 struct cfdriver vtcd = {
