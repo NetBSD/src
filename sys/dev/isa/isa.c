@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.101 1998/06/09 00:00:21 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.102 1998/06/11 08:29:33 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 
+#include "isadma.h"
+
 int isamatch __P((struct device *, struct cfdata *, void *));
 void isaattach __P((struct device *, struct device *, void *));
 int isaprint __P((void *, const char *));
@@ -84,10 +86,12 @@ isaattach(parent, self, aux)
 	sc->sc_dmat = iba->iba_dmat;
 	sc->sc_ic = iba->iba_ic;
 
+#if NISADMA > 0
 	/*
 	 * Initialize our DMA state.
 	 */
 	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
+#endif
 
 	TAILQ_INIT(&sc->sc_subdevs);
 
