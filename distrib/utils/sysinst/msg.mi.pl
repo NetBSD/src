@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.25 2003/07/11 15:29:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.26 2003/07/18 10:29:37 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -550,6 +550,10 @@ message nonet
 {Nie znalazlem zadnych interfejsow sieciowych do uzycia z NetBSD.
 Zostaniesz przeniesiony do glownego menu.
 }
+
+message netup	/* XXX translate */
+{The following network interfaces are active: %s
+Does one of them connect to the required server?}
 
 message asknetdev
 {Znalazlem nastepujace interfejsy sieciowe : %s
