@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.8 1994/10/26 05:45:09 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.9 1995/01/06 00:22:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -379,12 +379,10 @@ ufs_open(path, f)
 	ino_t inumber, parent_inumber;
 	struct file *fp;
 	struct fs *fs;
-	int rc;
+	int rc, nlinks = 0;
 	u_int buf_size;
-#if 0
-	int nlinks = 0;
 	char namebuf[MAXPATHLEN+1];
-#endif
+	char *buf = NULL;
 
 	/* allocate file system specific data structure */
 	fp = alloc(sizeof(struct file));
@@ -479,46 +477,51 @@ ufs_open(path, f)
 		if ((rc = read_inode(inumber, f)) != 0)
 			goto out;
 
-#if 0
 		/*
 		 * Check for symbolic link.
 		 */
-		if ((fp->i_mode & IFMT) == IFLNK) {
+		if ((fp->f_di.di_mode & IFMT) == IFLNK) {
 			int link_len = fp->f_di.di_size;
-			int len;
-
-			len = strlen(cp) + 1;
 
 			if (fp->f_di.di_size >= MAXPATHLEN - 1 ||
-			    ++nlinks > MAXSYMLINKS) {
+			     nlinks >= MAXSYMLINKS) {
 				rc = ENOENT;
 				goto out;
 			}
 
-			strcpy(&namebuf[link_len], cp);
+			strcpy(namebuf, ncp);
+#ifdef DEBUG
+			printf(" %s  ", namebuf);
+#endif
 
-			if ((fp->i_flags & IC_FASTLINK) != 0) {
-				bcopy(fp->i_symlink, namebuf, (unsigned) link_len);
+			if (link_len < fs->fs_maxsymlinklen) {
+				/*
+				 * Symbolic link data is in the inode.
+				 */
+				bcopy(fp->f_di.di_shortlink, namebuf,
+				      (unsigned)link_len);
 			} else {
 				/*
 				 * Read file for symbolic link
 				 */
-				char *buf;
-				u_int buf_size;
-				daddr_t	disk_block;
-				register struct fs *fs = fp->f_fs;
+				u_int buf_size = fs->fs_bsize;
+				daddr_t diskblock;
 
-				(void) block_map(f, (daddr_t)0, &disk_block);
-				rc = device_read(&fp->f_dev,
-						 fsbtodb(fs, disk_block),
-						 blksize(fs, fp, 0),
-						 &buf, &buf_size);
+				if (!buf)
+					buf = alloc(buf_size);
+				rc = block_map(f, 0, &diskblock);
+				if (rc)
+					goto out;
+
+				rc = (f->f_dev->dv_strategy)(f->f_devdata,
+					F_READ, fsbtodb(fs, diskblock),
+					fs->fs_bsize, buf, &buf_size);
 				if (rc)
 					goto out;
 
 				bcopy((char *)buf, namebuf, (unsigned)link_len);
-				free(buf, buf_size);
 			}
+			namebuf[link_len] = '\0';
 
 			/*
 			 * If relative pathname, restart at parent directory.
@@ -530,10 +533,12 @@ ufs_open(path, f)
 			else
 				inumber = (ino_t)ROOTINO;
 
-			if ((rc = read_inode(inumber, fp)) != 0)
+			if ((rc = read_inode(inumber, f)) != 0)
 				goto out;
-		}
+#ifdef DEBUG
+			printf(" -> ");
 #endif
+		}
 	}
 
 	/*
@@ -541,6 +546,9 @@ ufs_open(path, f)
 	 */
 	rc = 0;
 out:
+	printf("\n");
+	if (buf)
+		free(buf, fs->fs_bsize);
 	if (rc)
 		free(fp, sizeof(struct file));
 	return (rc);
