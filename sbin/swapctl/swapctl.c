@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.5 1997/07/11 03:36:27 mikel Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.6 1997/09/15 11:22:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -111,6 +111,7 @@ int	pri;		/* uses 0 as default pri */
 static	void change_priority __P((char *));
 static	void add_swap __P((char *));
 static	void del_swap __P((char *));
+	int  main __P((int, char *[]));
 static	void do_fstab __P((void));
 static	void usage __P((void));
 static	void swapon_command __P((int, char **));
