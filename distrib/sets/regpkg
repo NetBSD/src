@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.4 2003/06/23 09:25:34 dyoung Exp $
+# $NetBSD: regpkg,v 1.5 2004/01/16 10:05:10 dyoung Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -170,18 +170,22 @@ echo "$descr" > ${SYSPKGDIR}/+DESC
 printf "\nHomepage:\nhttp://www.NetBSD.org/\n" >> ${SYSPKGDIR}/+DESC
 
 # create the build information
-{
-echo "OPSYS=`uname -s`"
-echo "OS_VERSION=`uname -r`"
-make -f- all <<EOF
+if [ x${BUILD_INFO_CACHE} = x ]; then
+	{
+	echo "OPSYS=`uname -s`"
+	echo "OS_VERSION=`uname -r`"
+	make -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo OBJECT_FMT=${OBJECT_FMT}
 	@echo MACHINE_ARCH=${MACHINE_ARCH}
 	@echo MACHINE_GNU_ARCH=${MACHINE_GNU_ARCH}
 EOF
-echo "_PKGTOOLS_VER=`pkg_create -V`"
-} > ${SYSPKGDIR}/+BUILD_INFO
+	echo "_PKGTOOLS_VER=`pkg_create -V`"
+	} > ${SYSPKGDIR}/+BUILD_INFO
+else
+	cp ${BUILD_INFO_CACHE} ${SYSPKGDIR}/+BUILD_INFO
+fi
 
 # test for attributes
 args=""
@@ -199,7 +203,7 @@ pkg_create -v -c ${SYSPKGDIR}/+COMMENT \
 	-d ${SYSPKGDIR}/+DESC \
 	$args \
 	-f $PLIST -l -b /dev/null -B ${SYSPKGDIR}/+BUILD_INFO \
-	-s /dev/null -S /dev/null -O $pkg-$t \
+	-s /dev/null -S /dev/null -O $pkg-$t.tgz \
 		> ${SYSPKGDIR}/+CONTENTS
 
 rm $PLIST
