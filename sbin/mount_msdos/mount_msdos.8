@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.22 2001/11/16 11:26:56 wiz Exp $
+.\" $NetBSD: mount_msdos.8,v 1.23 2002/10/01 13:40:40 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -119,17 +119,21 @@ searches the root directory of the filesystem to
 be mounted for any existing Win'95 long filenames.
 If no such entries are found,
 .Fl s
-is the default. Otherwise
+is the default.
+Otherwise
 .Fl l
 is assumed.
 .It Fl 9
 Ignore the special Win'95 directory entries even
-if deleting or renaming a file. This forces
+if deleting or renaming a file.
+This forces
 .Fl s .
 .It Fl G
 This option causes the filesystem to be interpreted as an Atari-Gemdos
-filesystem. The differences to the msdos filesystem are minimal and
-limited to the boot block. This option enforces
+filesystem.
+The differences to the msdos filesystem are minimal and
+limited to the boot block.
+This option enforces
 .Fl s .
 .El
 .Sh SEE ALSO
@@ -163,6 +167,7 @@ The default handling for
 and
 .Fl l
 will result in empty filesystems to be populated
-with short filenames only. To generate long filenames
+with short filenames only.
+To generate long filenames
 on empty DOS filesystems use
 .Fl l .

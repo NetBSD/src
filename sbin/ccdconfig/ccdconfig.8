@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.20 2002/06/11 13:33:48 grant Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.21 2002/10/01 13:40:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,13 +72,15 @@
 .Sh DESCRIPTION
 .Nm
 is used to dynamically configure and unconfigure concatenated disk
-devices, or ccds.  For more information about the ccd, see
+devices, or ccds.
+For more information about the ccd, see
 .Xr ccd 4 .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl c
-Configure a ccd.  This is the default behavior of
+Configure a ccd.
+This is the default behavior of
 .Nm "" .
 .It Fl C
 Configure all ccd devices listed in the ccd configuration file.
@@ -88,9 +90,10 @@ When configuring or unconfiguring all devices, read the file
 instead of the default
 .Pa /etc/ccd.conf .
 .It Fl g
-Dump the current ccd configuration in a format suitable for use as the
-ccd configuration file.  If no arguments are specified, every configured
-ccd is dumped.  Otherwise, the configuration of each listed ccd is dumped.
+Dump the current ccd configuration in a format suitable
+for use as the ccd configuration file.
+If no arguments are specified, every configured ccd is dumped.
+Otherwise, the configuration of each listed ccd is dumped.
 .It Fl M Ar core
 Extract values associated with the name list from
 .Pa core
@@ -112,10 +115,10 @@ to be verbose.
 .El
 .Pp
 A ccd is described on the command line and in the ccd configuration
-file by the name of the ccd, the interleave factor, the ccd configuration
-flags, and a list of one or more devices.  The flags may be represented
-as a decimal number, a hexadecimal number, a comma-separated list
-of strings, or the word
+file by the name of the ccd, the interleave factor,
+the ccd configuration flags, and a list of one or more devices.
+The flags may be represented as a decimal number, a hexadecimal number,
+a comma-separated list of strings, or the word
 .Dq none .
 The flags are as follows:
 .Bd -unfilled -offset indent

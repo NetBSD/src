@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.17 2002/01/21 18:24:06 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.18 2002/10/01 13:40:46 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,8 @@ Before running
 .Nm
 the disk must be labeled using
 .Xr disklabel 8 ,
-the proper fstype is 4.4LFS.  Reasonable values for the
+the proper fstype is 4.4LFS.
+Reasonable values for the
 .Li fsize ,
 .Li bsize ,
 and
@@ -66,56 +67,66 @@ Attempt to compute the appropriate segment size using the formula
 The disk is tested for twenty seconds
 to discover its bandwidth and seek time.
 .It Fl B Ar logical-segment-size
-The logical segment size of the file system in bytes.  If not specified,
-the segment size is computed by left-shifting the partition label's block
-size by the amount indicated in the partition table's segshift.  If the
-disklabel indicates a zero block size or segment shift, a compile-time default
-segment size of 1M is used.
+The logical segment size of the file system in bytes.
+If not specified, the segment size is computed by left-shifting
+the partition label's block size by the amount indicated in the
+partition table's segshift.
+If the disklabel indicates a zero block size or segment shift,
+a compile-time default segment size of 1M is used.
 .It Fl b Ar block-size
-The block size of the file system in bytes.  If not specified, the block
-size is taken from the partition label, or if the partition label
-indicates 0, a compile-time default of 8K is used.
+The block size of the file system in bytes.
+If not specified, the block size is taken from the partition label,
+or if the partition label indicates 0,
+a compile-time default of 8K is used.
 .It Fl F
 Force creation of an LFS even on a partition labeled as another type.
 .Nm
 will use compile-time default values for block and fragment size, and segment
 shift, unless these are overridden by command-line flags.
 .It Fl f Ar fragment-size
-The fragment size of the file system in bytes.  If not specified,
-the fragment size is taken from the partition label, or if the partition
-label indicates 0, a compile-time default of 1K is used.
+The fragment size of the file system in bytes.
+If not specified, the fragment size is taken from the partition label,
+or if the partition label indicates 0,
+a compile-time default of 1K is used.
 .It Fl I Ar interleave
-Specify the interleave between segments.  The default is zero.
+Specify the interleave between segments.
+The default is zero.
 .It Fl i
-The size of an inode block, in bytes.  The default is to use the same
-size as a fragment, or in a v1 filesystem, the same size as a data block.
+The size of an inode block, in bytes.
+The default is to use the same size as a fragment,
+or in a v1 filesystem, the same size as a data block.
 .It Fl L
-Create a log-structured file system (LFS).  This is the default, and this
+Create a log-structured file system (LFS).
+This is the default, and this
 option is provided for compatibility only.
 .It Fl M Ar nsegs
 Reserve this many segments for use exclusively by the cleaner, instead
 of letting
 .Nm
-do the computation.  Do not use this option.
+do the computation.
+Do not use this option.
 .It Fl m Ar free space \&%
 The percentage of space reserved from normal users; the minimum
-free space threshold.  The default value used is 10%.
+free space threshold.
+The default value used is 10%.
 .It Fl N
 Do not actually create the filesystem.
 .It Fl O Ar offset
 Start the first segment this many sectors from the beginning of the
-partition.  The default is zero.
+partition.
+The default is zero.
 .It Fl r Ar ident
 For a v2 filesystem, specify the roll-forward identifier for the
-filesystem.  This identifier, a 32-bit numeric quantity,
+filesystem.
+This identifier, a 32-bit numeric quantity,
 should be different from that of any LFS that may previously
-have existed on the same disk.  By default the
-identifier is chosen at random.
+have existed on the same disk.
+By default the identifier is chosen at random.
 .It Fl s Ar size
 The size of the file system in sectors.
 .It Fl v Ar version
-Make a filesystem with the specified disk layout version.  Valid options
-are 1 or 2 (the default).
+Make a filesystem with the specified disk layout version.
+Valid options are 1 or 2 (the default).
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,

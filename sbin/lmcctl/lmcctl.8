@@ -1,4 +1,4 @@
-.\"     $NetBSD: lmcctl.8,v 1.8 2001/11/16 11:38:15 wiz Exp $
+.\"     $NetBSD: lmcctl.8,v 1.9 2002/10/01 13:40:35 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -47,9 +47,10 @@
 .Sh DESCRIPTION
 .Nm ""
 is the user-land control program for the Lan Media SSI,
-HSSI, and DS3 network interfaces.  The SSI is the LMC1000, and runs at
-various speeds up to 10Mbps.  The DS3 is the LMC5245 and runs at a speed of
-45Mbps.  The HSSI is the LMC5200, and has no internal clock generator.
+HSSI, and DS3 network interfaces.
+The SSI is the LMC1000, and runs at various speeds up to 10Mbps.
+The DS3 is the LMC5245 and runs at a speed of 45Mbps.
+The HSSI is the LMC5200, and has no internal clock generator.
 .Nm ""
 is used to configure various media and protocol options dealing with HDLC
 serial links and hardware configurations.
@@ -76,8 +77,9 @@ Set the interface to use external clocking.
 This is the default.
 .It Fl C
 (SSI, HSSI)
-Set the interface to use internal clocking.  On the SSI card this uses the
-internal baud rate generator.  On the HSSI card it uses the PCI bus clock.
+Set the interface to use internal clocking.
+On the SSI card this uses the internal baud rate generator.
+On the HSSI card it uses the PCI bus clock.
 .It Fl e
 Select 16-bit CRC.
 This is the default.
@@ -97,9 +99,10 @@ This is the default.
 Enable the DS3 scrambler function.
 .It Fl o
 (DS3)
-Program the card for cable lengths of less than 100 feet.  In this mode,
-the card uses lower power to transmit data for short cable runs, which might
-otherwise overdrive a receiver.  This is the default, and will work in most
+Program the card for cable lengths of less than 100 feet.
+In this mode, the card uses lower power to transmit data
+for short cable runs, which might otherwise overdrive a receiver.
+This is the default, and will work in most
 situations even with runs more than 100 feet.
 .It Fl O
 (DS3)

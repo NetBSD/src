@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.3 2002/07/01 18:49:57 yamt Exp $
+.\"	$NetBSD: dkctl.8,v 1.4 2002/10/01 13:40:29 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to manipulate and configure disks
-in various ways.  It is used by specifying a disk to manipulate, the command
+in various ways.
+It is used by specifying a disk to manipulate, the command
 to perform, and any arguments the command may require.
 .Sh COMMANDS
 The following commands are supported:
@@ -63,8 +64,8 @@ Get and display the cache enables for the specified device.
 .Ar none | r | w | rw
 .Op Ar save
 .Pp
-Set the cache enables for the specified device.  The enables are
-as follows:
+Set the cache enables for the specified device.
+The enables are as follows:
 .Bl -tag -width indent
 .It none
 Disable all caches on the disk.
@@ -83,7 +84,8 @@ enables in the disk's non-volatile parameter storage.
 .Op Ar force
 .Pp
 Causes the cache on the disk to be synchronized, flushing all dirty
-write cache blocks to the media.  If
+write cache blocks to the media.
+If
 .Ar force
 is specified, the cache synchronization command will be issued even
 if the kernel does not believe that there are any dirty cache blocks

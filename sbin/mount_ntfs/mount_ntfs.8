@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.10 2001/11/16 11:59:47 wiz Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.11 2002/10/01 13:40:41 wiz Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -93,10 +93,11 @@ foo[[:ATTRTYPE]:ATTRNAME]
 .Ed
 .Pp
 .Sq ATTRTYPE
-is one of identifier listed in $AttrDef file of
-volume. Default is $DATA.
+is one of identifier listed in $AttrDef file of volume.
+Default is $DATA.
 .Sq ATTRNAME
-is an attribute name. Default is none.
+is an attribute name.
+Default is none.
 .Pp
 .Sy Examples :
 .Pp
@@ -110,7 +111,8 @@ To read directory raw data:
 # cat /mnt/foodir:\\$INDEX_ROOT:\\$I30
 .Ed
 .Ss Limited support for writing
-There is limited writing ability for files. Limitations:
+There is limited writing ability for files.
+Limitations:
 .Bl -bullet -compact
 .It
 file must be nonresident
@@ -126,9 +128,9 @@ Note that that it's not currently possible to create or remove files
 on NTFS filesystem.
 .Pp
 .Sy Warning :
-do not mount NTFS filesystems read-write. The write support is
-not very useful and is not tested well. It's not safe to write to any file
-on NTFS, you might damage the filesystem.
+do not mount NTFS filesystems read-write.
+The write support is not very useful and is not tested well.
+It's not safe to write to any file on NTFS, you might damage the filesystem.
 Unless you want to debug NTFS filesystem code, mount the NTFS filesystem
 read-only.
 .Sh SEE ALSO
