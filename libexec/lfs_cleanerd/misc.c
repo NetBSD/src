@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,66 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)telnetd.h	8.1 (Berkeley) 6/4/93
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
+#endif /* not lint */
 
-#include "defs.h"
-#include "ext.h"
+#include <sys/types.h>
 
-#ifdef	DIAGNOSTICS
-#define	DIAG(a,b)	if (diagnostic & (a)) b
+#include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+extern char *special;
+
+#if __STDC__
+#include <stdarg.h>
 #else
-#define	DIAG(a,b)
+#include <varargs.h>
 #endif
 
-/* other external variables */
-extern	char **environ;
-extern	int errno;
+void
+#if __STDC__
+err(const int fatal, const char *fmt, ...)
+#else
+err(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "%s: ", special);
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	if (errno)
+		(void)fprintf(stderr, " %s", strerror(errno));
+	(void)fprintf(stderr, "\n");
+	if (fatal)
+		exit(1);
+}
 
+void
+get(fd, off, p, len)
+	int fd;
+	off_t off;
+	void *p;
+	size_t len;
+{
+	int rbytes;
+
+	if (lseek(fd, off, SEEK_SET) < 0)
+		err(1, "%s: %s", special, strerror(errno));
+	if ((rbytes = read(fd, p, len)) < 0)
+		err(1, "%s: %s", special, strerror(errno));
+	if (rbytes != len)
+		err(1, "%s: short read (%d, not %d)", special, rbytes, len);
+}

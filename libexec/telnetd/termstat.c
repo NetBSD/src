@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)termstat.c	5.10 (Berkeley) 3/22/91";
+static char sccsid[] = "@(#)termstat.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -75,6 +75,7 @@ int	newmap = 1;	/* nonzero if \n maps to ^M^J */
  *	handle real linemode, or if use of kludgeomatic linemode
  *	is preferred.  It will be set to one of the following:
  *		REAL_LINEMODE : use linemode option
+ *		NO_KLUDGE : don't initiate kludge linemode.
  *		KLUDGE_LINEMODE : use kludge linemode
  *		NO_LINEMODE : client is ignorant of linemode
  *
@@ -105,6 +106,7 @@ int	newmap = 1;	/* nonzero if \n maps to ^M^J */
  *	   then lmodetype is set to REAL_LINEMODE and all linemode
  *	   processing occurs in the context of the linemode option.
  *	2) If the attempt to negotiate the linemode option failed,
+ *	   and the "-k" (don't initiate kludge linemode) isn't set,
  *	   then we try to use kludge linemode.  We test for this
  *	   capability by sending "do Timing Mark".  If a positive
  *	   response comes back, then we assume that the client
@@ -163,14 +165,7 @@ localstat()
 	/*
 	 * Check for changes to flow control if client supports it.
 	 */
-	if (his_state_is_will(TELOPT_LFLOW)) {
-		if (tty_flowmode() != flowmode) {
-			flowmode = tty_flowmode();
-			(void) sprintf(nfrontp, "%c%c%c%c%c%c", IAC, SB,
-				TELOPT_LFLOW, flowmode, IAC, SE);
-			nfrontp += 6;
-		}
-	}
+	flowstat();
 
 	/*
 	 * Check linemode on/off state
@@ -186,7 +181,7 @@ localstat()
 		tty_setlinemode(uselinemode);
 	}
 
-#if	defined(ENCRYPT)
+#ifdef	ENCRYPTION
 	/*
 	 * If the terminal is not echoing, but editing is enabled,
 	 * something like password input is going to happen, so
@@ -204,7 +199,7 @@ localstat()
 			enc_passwd = 0;
 		}
 	}
-#endif
+#endif	/* ENCRYPTION */
 
 	/*
 	 * Do echo mode handling as soon as we know what the
@@ -229,6 +224,10 @@ localstat()
 			send_wont(TELOPT_ECHO, 1);
 		else
 			need_will_echo = 1;
+#ifdef	KLUDGELINEMODE
+		if (lmodetype == KLUDGE_OK)
+			lmodetype = KLUDGE_LINEMODE;
+#endif
 	}
 
 	/*
@@ -351,6 +350,34 @@ done:
 }  /* end of localstat */
 #endif	/* LINEMODE */
 
+/*
+ * flowstat
+ *
+ * Check for changes to flow control
+ */
+	void
+flowstat()
+{
+	if (his_state_is_will(TELOPT_LFLOW)) {
+		if (tty_flowmode() != flowmode) {
+			flowmode = tty_flowmode();
+			(void) sprintf(nfrontp, "%c%c%c%c%c%c",
+					IAC, SB, TELOPT_LFLOW,
+					flowmode ? LFLOW_ON : LFLOW_OFF,
+					IAC, SE);
+			nfrontp += 6;
+		}
+		if (tty_restartany() != restartany) {
+			restartany = tty_restartany();
+			(void) sprintf(nfrontp, "%c%c%c%c%c%c",
+					IAC, SB, TELOPT_LFLOW,
+					restartany ? LFLOW_RESTART_ANY
+						   : LFLOW_RESTART_XON,
+					IAC, SE);
+			nfrontp += 6;
+		}
+	}
+}
 
 /*
  * clientstat
@@ -432,6 +459,8 @@ clientstat(code, parm1, parm2)
 
 			linemode = uselinemode;
 
+			if (!linemode)
+				send_will(TELOPT_ECHO, 1);
 		}
 		break;
 	
@@ -625,7 +654,7 @@ defer_terminit()
 	int
 terminit()
 {
-	return _terminit;
+	return(_terminit);
 
 }  /* end of terminit */
 #endif	/* LINEMODE */

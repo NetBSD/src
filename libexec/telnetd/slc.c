@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)slc.c	5.7 (Berkeley) 3/1/91";
+static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -202,6 +202,7 @@ end_slc(bufp)
 			len = slcptr - slcbuf;
 			writenet(slcbuf, len);
 			netflush();  /* force it out immediately */
+			DIAG(TD_OPTIONS, printsub('>', slcbuf+2, len-2););
 		}
 	}
 	return (0);

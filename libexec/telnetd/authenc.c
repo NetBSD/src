@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,63 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)telnetd.h	8.1 (Berkeley) 6/4/93
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/4/93";
+#endif /* not lint */
 
-#include "defs.h"
-#include "ext.h"
+#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
+#include "telnetd.h"
+#include <libtelnet/misc.h>
 
-#ifdef	DIAGNOSTICS
-#define	DIAG(a,b)	if (diagnostic & (a)) b
-#else
-#define	DIAG(a,b)
-#endif
+	int
+net_write(str, len)
+	unsigned char *str;
+	int len;
+{
+	if (nfrontp + len < netobuf + BUFSIZ) {
+		bcopy((void *)str, (void *)nfrontp, len);
+		nfrontp += len;
+		return(len);
+	}
+	return(0);
+}
 
-/* other external variables */
-extern	char **environ;
-extern	int errno;
+	void
+net_encrypt()
+{
+#ifdef	ENCRYPTION
+	char *s = (nclearto > nbackp) ? nclearto : nbackp;
+	if (s < nfrontp && encrypt_output) {
+		(*encrypt_output)((unsigned char *)s, nfrontp - s);
+	}
+	nclearto = nfrontp;
+#endif /* ENCRYPTION */
+}
 
+	int
+telnet_spin()
+{
+	ttloop();
+	return(0);
+}
+
+	char *
+telnet_getenv(val)
+	char *val;
+{
+	extern char *getenv();
+	return(getenv(val));
+}
+
+	char *
+telnet_gets(prompt, result, length, echo)
+	char *prompt;
+	char *result;
+	int length;
+	int echo;
+{
+	return((char *)0);
+}
+#endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
