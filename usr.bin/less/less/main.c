@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1.1.5 2001/07/26 12:00:33 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
@@ -16,6 +14,9 @@
  */
 
 #include "less.h"
+#if MSDOS_COMPILER==WIN32C
+#include <windows.h>
+#endif
 
 public char *	every_first_cmd = NULL;
 public int	new_file;
@@ -44,8 +45,13 @@ public char *	editproto;
 #endif
 
 #if TAGS
+extern char *	tags;
 extern char *	tagoption;
 extern int	jump_sline;
+#endif
+
+#ifdef WIN32
+static char consoleTitle[256];
 #endif
 
 extern int	missing_cap;
@@ -95,6 +101,7 @@ main(argc, argv)
 			putenv(env);
 		}
 	}
+	GetConsoleTitle(consoleTitle, sizeof(consoleTitle)/sizeof(char));
 #endif /* WIN32 */
 
 	/*
@@ -155,7 +162,8 @@ main(argc, argv)
 		ifile = get_ifile(FAKE_HELPFILE, ifile);
 	while (argc-- > 0)
 	{
-#if (MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC) || OS2
+		char *filename;
+#if (MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC)
 		/*
 		 * Because the "shell" doesn't expand filename patterns,
 		 * treat each argument as a filename pattern rather than
@@ -164,7 +172,6 @@ main(argc, argv)
 		 */
 		struct textlist tlist;
 		char *gfilename;
-		char *filename;
 		
 		gfilename = lglob(*argv++);
 		init_textlist(&tlist, gfilename);
@@ -173,7 +180,11 @@ main(argc, argv)
 			ifile = get_ifile(filename, ifile);
 		free(gfilename);
 #else
-		ifile = get_ifile(*argv++, ifile);
+		filename = shell_quote(*argv);
+		if (filename == NULL)
+			filename = *argv;
+		argv++;
+		ifile = get_ifile(filename, ifile);
 #endif
 	}
 	/*
@@ -211,7 +222,7 @@ main(argc, argv)
 	 * Select the first file to examine.
 	 */
 #if TAGS
-	if (tagoption != NULL)
+	if (tagoption != NULL || strcmp(tags, "-") == 0)
 	{
 		/*
 		 * A -t option was given.
@@ -366,6 +377,9 @@ quit(status)
 	 * The same bug shows up if we use ^C^C to abort.
 	 */
 	close(2);
+#endif
+#if WIN32
+	SetConsoleTitle(consoleTitle);
 #endif
 	close_getchr();
 	exit(status);

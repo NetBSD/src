@@ -1,5 +1,3 @@
-/*	$NetBSD: regexp.c,v 1.1.1.5 2001/07/26 12:00:37 mrg Exp $	*/
-
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: option.h,v 1.1.1.5 2001/07/26 12:00:34 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
@@ -51,7 +49,7 @@ struct optname
 	struct optname *onext;  /* List of synonymous option names */
 };
 
-struct option
+struct loption
 {
 	char oletter;		/* The controlling letter (a-z) */
 	struct optname *onames; /* Long (GNU-style) option name */

@@ -1,5 +1,3 @@
-/*	$NetBSD: defines.h,v 1.1.1.5 2001/07/26 12:00:27 mrg Exp $	*/
-
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
 /* Unix definition file for less.  -*- C -*-
@@ -108,7 +106,7 @@
  * (in the HOME directory).
  */
 #define	LESSKEYFILE		".less"
-#define	LESSKEYFILE_SYS		SYSDIR "/.sysless"
+#define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
 
 
@@ -153,7 +151,7 @@
 /*
  * Default shell metacharacters and meta-escape character.
  */
-#define	DEF_METACHARS	"; \t\n'\"()<>|&^`\\"
+#define	DEF_METACHARS	"; *?\t\n'\"()<>|&^`#\\"
 #define	DEF_METAESCAPE	"\\"
 
 /* 
@@ -172,6 +170,7 @@
 #define	TERMBUF_SIZE	2048	/* Termcap buffer for tgetent */
 #define	TERMSBUF_SIZE	1024	/* Buffer to hold termcap strings */
 #define	TAGLINE_SIZE	512	/* Max size of line in tags file */
+#define	TABSTOP_MAX	32	/* Max number of custom tab stops */
 
 /* Settings automatically determined by configure.  */
 
@@ -255,6 +254,9 @@
 
 /* Define if you have the _setjmp function.  */
 #define HAVE__SETJMP 1
+
+/* Define if you have the fsync function.  */
+#define HAVE_FSYNC 1
 
 /* Define if you have the memcpy function.  */
 #define HAVE_MEMCPY 1
