@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.1.1.11 2001/11/07 06:20:42 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.1.1.12 2001/11/27 04:04:50 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.207 2001/10/24 08:41:41 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.212 2001/11/22 12:34:22 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -161,11 +161,11 @@ struct {
  * Flag indicating whether the RSA server key needs to be regenerated.
  * Is set in the SIGALRM handler and cleared when the key is regenerated.
  */
-int key_do_regen = 0;
+static volatile sig_atomic_t key_do_regen = 0;
 
 /* This is set to true when a signal is received. */
-int received_sighup = 0;
-int received_sigterm = 0;
+static volatile sig_atomic_t received_sighup = 0;
+static volatile sig_atomic_t received_sigterm = 0;
 
 /* session identifier, used by RSA-auth */
 u_char session_id[16];
@@ -176,6 +176,10 @@ int session_id2_len = 0;
 
 /* record remote hostname or ip */
 u_int utmp_len = MAXHOSTNAMELEN;
+
+/* options.max_startup sized array of fd ints */
+int *startup_pipes = NULL;
+int startup_pipe;		/* in child */
 
 /* Prototypes for various functions defined later in this file. */
 void destroy_sensitive_data(void);
@@ -195,6 +199,16 @@ close_listen_socks(void)
 	num_listen_socks = -1;
 }
 
+static void
+close_startup_pipes(void)
+{
+	int i;
+	if (startup_pipes)
+		for (i = 0; i < options.max_startups; i++)
+			if (startup_pipes[i] != -1)
+				close(startup_pipes[i]);
+}
+
 /*
  * Signal handler for SIGHUP.  Sshd execs itself when it receives SIGHUP;
  * the effect is to reread the configuration file (and to regenerate
@@ -203,8 +217,11 @@ close_listen_socks(void)
 static void
 sighup_handler(int sig)
 {
+	int save_errno = errno;
+
 	received_sighup = 1;
 	signal(SIGHUP, sighup_handler);
+	errno = save_errno;
 }
 
 /*
@@ -216,6 +233,7 @@ sighup_restart(void)
 {
 	log("Received SIGHUP; restarting.");
 	close_listen_socks();
+	close_startup_pipes();
 	execv(saved_argv[0], saved_argv);
 	log("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0], strerror(errno));
 	exit(1);
@@ -329,7 +347,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		/* Send our protocol version identification. */
 		if (atomicio(write, sock_out, server_version_string, strlen(server_version_string))
 		    != strlen(server_version_string)) {
-			log("Could not write ident string to %s.", get_remote_ipaddr());
+			log("Could not write ident string to %s", get_remote_ipaddr());
 			fatal_cleanup();
 		}
 
@@ -337,7 +355,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		memset(buf, 0, sizeof(buf));
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomicio(read, sock_in, &buf[i], 1) != 1) {
-				log("Did not receive identification string from %s.",
+				log("Did not receive identification string from %s",
 				    get_remote_ipaddr());
 				fatal_cleanup();
 			}
@@ -516,9 +534,6 @@ drop_connection(int startups)
 	debug("drop_connection: p %g, r %g", p, r);
 	return (r < p) ? 1 : 0;
 }
-
-int *startup_pipes = NULL;	/* options.max_startup sized array of fd ints */
-int startup_pipe;		/* in child */
 
 /*
  * Main program for the daemon.
@@ -1029,9 +1044,7 @@ main(int ac, char **av)
 						 * the connection.
 						 */
 						startup_pipe = startup_p[1];
-						for (j = 0; j < options.max_startups; j++)
-							if (startup_pipes[j] != -1)
-								close(startup_pipes[j]);
+						close_startup_pipes();
 						close_listen_socks();
 						sock_in = newsock;
 						sock_out = newsock;
@@ -1107,9 +1120,8 @@ main(int ac, char **av)
 	remote_port = get_remote_port();
 	remote_ip = get_remote_ipaddr();
 
-	/* Check whether logins are denied from this host. */
 #ifdef LIBWRAP
-	/* XXX LIBWRAP noes not know about IPv6 */
+	/* Check whether logins are denied from this host. */
 	{
 		struct request_info req;
 
@@ -1117,13 +1129,14 @@ main(int ac, char **av)
 		fromhost(&req);
 
 		if (!hosts_access(&req)) {
+			debug("Connection refused by tcp wrapper");
 			refuse(&req);
-			close(sock_in);
-			close(sock_out);
+			/* NOTREACHED */
+			fatal("libwrap refuse returns");
 		}
-/*XXX IPv6 verbose("Connection from %.500s port %d", eval_client(&req), remote_port); */
 	}
 #endif /* LIBWRAP */
+
 	/* Log the connection. */
 	verbose("Connection from %.500s port %d", remote_ip, remote_port);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.9 2001/11/07 06:19:53 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.1.1.10 2001/11/27 04:03:45 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.28 2001/10/03 10:01:20 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.30 2001/11/17 19:14:34 stevesk Exp $");
 
 #include <libgen.h>
 
@@ -157,7 +157,7 @@ auth_log(Authctxt *authctxt, int authenticated, char *method, char *info)
 	    authmsg,
 	    method,
 	    authctxt->valid ? "" : "illegal user ",
-	    authctxt->valid && authctxt->pw->pw_uid == 0 ? "ROOT" : authctxt->user,
+	    authctxt->user,
 	    get_remote_ipaddr(),
 	    get_remote_port(),
 	    info);
@@ -264,7 +264,7 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
 	Key *found;
 	char *user_hostfile;
 	struct stat st;
-	int host_status;
+	HostStatus host_status;
 
 	/* Check if we know the host and its host key. */
 	found = key_new(key->type);
