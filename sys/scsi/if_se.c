@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.2 1997/03/18 04:45:04 cgd Exp $	*/
+/*	$NetBSD: if_se.c,v 1.3 1997/03/24 00:04:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -132,20 +132,26 @@ int se_poll = 0; /* Delay in ticks set at attach time */
 int se_poll0 = 0;
 
 #define	PROTOCMD(p, d) \
-	bcopy(&(p), &(d), sizeof(struct scsi_ctron_ether_generic))
+	((d) = (p))
 
 #define	PROTOCMD_DECL(name, val) \
 	static const struct scsi_ctron_ether_generic name = val
 
+#define	PROTOCMD_DECL_SPECIAL(name, val) \
+	static const struct __CONCAT(scsi_,name) name = val
+
+/* Command initializers for commands using scsi_ctron_ether_generic */
 PROTOCMD_DECL(ctron_ether_send, {CTRON_ETHER_SEND});
-PROTOCMD_DECL(ctron_ether_recv, {CTRON_ETHER_RECV});
 PROTOCMD_DECL(ctron_ether_add_proto, {CTRON_ETHER_ADD_PROTO});
 PROTOCMD_DECL(ctron_ether_get_addr, {CTRON_ETHER_GET_ADDR});
 PROTOCMD_DECL(ctron_ether_set_media, {CTRON_ETHER_SET_MEDIA});
-PROTOCMD_DECL(ctron_ether_set_mode, {CTRON_ETHER_SET_MODE});
 PROTOCMD_DECL(ctron_ether_set_addr, {CTRON_ETHER_SET_ADDR});
 PROTOCMD_DECL(ctron_ether_set_multi, {CTRON_ETHER_SET_MULTI});
 PROTOCMD_DECL(ctron_ether_remove_multi, {CTRON_ETHER_REMOVE_MULTI});
+
+/* Command initializers for commands using their own structures */
+PROTOCMD_DECL_SPECIAL(ctron_ether_recv, {CTRON_ETHER_RECV});
+PROTOCMD_DECL_SPECIAL(ctron_ether_set_mode, {CTRON_ETHER_SET_MODE});
 
 struct se_softc {
 	struct device sc_dev;
