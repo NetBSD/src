@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.5 2002/03/10 17:31:25 junyoung Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.6 2002/03/10 18:39:42 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -236,7 +236,7 @@ capabilities.  It contains the following members:
 .Ed
 .It Fa struct wscons_syncops
 A structure passed to wscons by the display driver describing the
-interface for external screend switching/process synchronisation.
+interface for external screen switching/process synchronization.
 This structure is optional and only required by displays operating
 with terminal emulation and intending to support multiple screens.  It
 contains the following members:
@@ -259,7 +259,7 @@ and number of rows
 .Fa crows .
 The argument
 .Fa defattr
-specifies the default attribute (colour) for the console.
+specifies the default attribute (color) for the console.
 .It Fn wsemul_xxx_cnattach "type" "cookie" "ccol" "crow" "defattr"
 Attach this display as the console with terminal emulation described
 by the
@@ -270,7 +270,7 @@ and number of rows
 .Fa crows .
 The argument
 .Fa defattr
-specifies the default attribute (colour) for the console.  Different
+specifies the default attribute (color) for the console.  Different
 terminal emulations can be active at the same time on one display.
 .It Fn wsdisplaydevprint "aux" "pnp"
 The default wsdisplay printing routine used by
@@ -284,7 +284,7 @@ The default wsemul printing routine used by
 .Xr autoconf 9 ) .
 .El
 .Sh AUTOCONFIGURATION
-Display drivers which want to utilise the wsdisplay module must be a
+Display drivers which want to utilize the wsdisplay module must be a
 parent to the
 .Xr wsdisplay 4
 device and provide an attachment interface.  To attach the
@@ -296,7 +296,7 @@ structure with the supported operations and callbacks and call
 to perform the attach (see
 .Xr autoconf 9 ) .
 .Pp
-Display drivers which want to utilise the wscons terminal emulation
+Display drivers which want to utilize the wscons terminal emulation
 module must be a parent to the
 .Xr wsdisplay 4
 device and provide a
@@ -308,7 +308,7 @@ to
 to perform the attach.  If the display is not the console the
 attachment is the same as wsdisplaydev_attach_args.
 .Sh OPERATION
-If the display belongs to the system console, it must be describe the
+If the display belongs to the system console, it must describe the
 default screen by invoking
 .Fn wsdisplay_cnattach
 at console attach time.
@@ -334,7 +334,7 @@ structure.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or utilising the
+source tree where actual code implementing or utilizing the
 machine-independent wscons subsystem can be found.  All pathnames are
 relative to
 .Pa /usr/src .
