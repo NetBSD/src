@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.169 2001/05/22 10:38:56 augustss Exp $
+$NetBSD: usbdevs,v 1.170 2001/05/28 18:28:04 tshiozak Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -957,6 +957,7 @@ product YANO U640MO		0x0101	U640MO-03
 
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
+product	YAMAHA UX96		0x1008	UX96 MIDI I/F
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
