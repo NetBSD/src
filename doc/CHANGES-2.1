@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.18 2005/02/06 08:28:55 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.19 2005/02/06 08:32:05 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -577,3 +577,11 @@ sys/arch/alpha/conf/GENERIC			patch
 
 	Cleanup audio and add USB-2 devices
 	[reinoud, ticket #913]
+
+usr.bin/sed/compile.c				1.31
+
+	When adding text due to an a, c, or i command, don't eat the space(s) at
+	the beginning of the lines since the addition is supposed to be 
+	'verbatim'. Fix a comment for compile_text indicating it's also used 
+	for the 'c' command.
+	[matt, ticket #982]
