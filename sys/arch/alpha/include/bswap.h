@@ -1,21 +1,9 @@
-/*      $NetBSD: bswap.h,v 1.1 1999/01/15 13:31:22 bouyer Exp $      */
+/*      $NetBSD: bswap.h,v 1.2 1999/08/21 05:39:51 simonb Exp $      */
 
-/* Written by Manuel Bouyer. Public domain */
+#ifndef _MACHINE_BSWAP_H_
+#define	_MACHINE_BSWAP_H_
 
-#ifndef _ALPHA_BSWAP_H_
-#define _ALPHA_BSWAP_H_
+#define __BSWAP_RENAME
+#include <sys/bswap.h>
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-#ifdef _KERNEL
-u_int16_t       bswap16 __P((u_int16_t));
-u_int32_t       bswap32 __P((u_int32_t));
-#else
-u_int16_t       bswap16 __P((u_int16_t)) __RENAME(__bswap16);
-u_int32_t       bswap32 __P((u_int32_t)) __RENAME(__bswap32);
-#endif
-u_int64_t       bswap64 __P((u_int64_t));
-__END_DECLS
-
-#endif /* _ALPHA_BSWAP_H_ */
+#endif /* !_MACHINE_BSWAP_H_ */

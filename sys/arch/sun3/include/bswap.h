@@ -1,8 +1,8 @@
-/*     $NetBSD: bswap.h,v 1.1 1999/01/15 13:31:28 bouyer Exp $   */
+/*     $NetBSD: bswap.h,v 1.2 1999/08/21 05:39:55 simonb Exp $   */
 
 #ifndef _MACHINE_BSWAP_H_
-#define _MACHINE_BSWAP_H_
+#define	_MACHINE_BSWAP_H_
 
-#include <m68k/bswap.h>
+#include <sys/bswap.h>
 
-#endif
+#endif /* !_MACHINE_BSWAP_H_ */
