@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.23 2000/05/19 20:42:21 thorpej Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.24 2000/06/11 03:09:55 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -161,6 +161,14 @@ mfs_strategy(v)
 		biodone(bp);
 	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
+	} else if (doing_shutdown) {
+		/* 
+		 * bitbucket I/O during shutdown.
+		 * Note that reads should *not* happen here, but..
+		 */
+		if (bp->b_flags & B_READ)
+			printf("warning: mfs read during shutdown\n");
+		biodone(bp);
 	} else {
 		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
 		wakeup((caddr_t)vp);
