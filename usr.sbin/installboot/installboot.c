@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.11 2003/04/15 14:22:13 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.12 2003/04/29 09:39:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.11 2003/04/15 14:22:13 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.12 2003/04/29 09:39:23 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -297,7 +297,7 @@ parseoptions(ib_params *params, const char *option)
 	char *cp;
 	const struct option *opt;
 	int len;
-	ulong val;
+	unsigned long val;
 
 	assert(params != NULL);
 	assert(option != NULL);
