@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.367 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.368 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		options.  [thorpej 20040913]
 	heimdal: import version 0.6.3.  [lha 20040913]
 	file(1): update to 4.10.  [pooka 20040916]
+	mac68k: Support to build with soft-float enabled.  [jmmv 20040926]
