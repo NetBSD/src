@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.10 2003/04/30 10:29:51 dsl Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.11 2003/07/07 12:00:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -85,7 +85,7 @@ struct mbr_partition {
 	u_int8_t	mbrp_ecyl;	/* end cylinder */
 	u_int32_t	mbrp_start;	/* absolute starting sector number */
 	u_int32_t	mbrp_size;	/* partition size in sectors */
-};
+} __attribute__((__packed__));
 
 typedef struct mbr_bootsel mbr_bootsel_t;
 struct mbr_bootsel {
@@ -103,6 +103,10 @@ struct mbr_sector {
 	mbr_partition_t	mbr_parts[NMBRPART];
 	uint16_t	mbr_signature;
 } __attribute__((__packed__));
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+int xlat_mbr_fstype(int);
+#endif
 #endif
 
 /* Known MBR flags: */
