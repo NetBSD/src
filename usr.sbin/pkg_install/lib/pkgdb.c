@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.11 2003/01/05 21:49:59 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.12 2003/01/06 10:03:44 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.11 2003/01/05 21:49:59 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.12 2003/01/06 10:03:44 agc Exp $");
 #endif
 
 /*
@@ -85,7 +85,7 @@ void
 pkgdb_close(void)
 {
 	if (pkgdbp != NULL) {
-		(void) (pkgdbp->close) (pkgdbp);
+		(void) (*pkgdbp->close) (pkgdbp);
 		pkgdbp = NULL;
 	}
 }
@@ -113,7 +113,7 @@ pkgdb_store(const char *key, const char *val)
 	if (keyd.size > FILENAME_MAX || vald.size > FILENAME_MAX)
 		return -1;
 
-	return (pkgdbp->put) (pkgdbp, &keyd, &vald, R_NOOVERWRITE);
+	return (*pkgdbp->put) (pkgdbp, &keyd, &vald, R_NOOVERWRITE);
 }
 
 /*
@@ -137,7 +137,7 @@ pkgdb_retrieve(const char *key)
 
 	vald.data = (void *)NULL;
 	vald.size = 0;
-	status = (pkgdbp->get) (pkgdbp, &keyd, &vald, 0);
+	status = (*pkgdbp->get) (pkgdbp, &keyd, &vald, 0);
 	if (status) {
 		vald.data = NULL;
 		vald.size = 0;
@@ -157,7 +157,6 @@ int
 pkgdb_remove(const char *key)
 {
 	DBT     keyd;
-	int     status;
 
 	if (pkgdbp == NULL)
 		return -1;
@@ -167,15 +166,7 @@ pkgdb_remove(const char *key)
 	if (keyd.size > FILENAME_MAX)
 		return -1;
 
-	errno = 0;
-	status = (pkgdbp->del) (pkgdbp, &keyd, 0);
-	if (status) {
-		if (errno)
-			return -1;	/* error */
-		else
-			return 1;	/* key not present */
-	} else
-		return 0;	/* everything fine */
+	return (*pkgdbp->del) (pkgdbp, &keyd, 0);
 }
 
 /*
@@ -188,17 +179,17 @@ char   *
 pkgdb_iter(void)
 {
 	DBT     key, val;
-	int     status;
+	int	type;
 
 	if (pkgdb_iter_flag == 0) {
 		pkgdb_iter_flag = 1;
-
-		status = (pkgdbp->seq) (pkgdbp, &key, &val, R_FIRST);
+		type = R_FIRST;
 	} else
-		status = (pkgdbp->seq) (pkgdbp, &key, &val, R_NEXT);
+		type = R_NEXT;
 
-	if (status)
+	if ((*pkgdbp->seq)(pkgdbp, &key, &val, type) != 0) {
 		key.data = NULL;
+	}
 
 	return (char *) key.data;
 }
