@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.268 2005/02/20 21:06:46 wiz Exp $
+.\"	$NetBSD: options.4,v 1.269 2005/03/27 16:27:28 peter Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -851,7 +851,17 @@ In Coda, both the client and server are outside the kernel which makes
 them easier to experiment with.
 Coda is available for several UNIX and non-UNIX platforms.
 See http://www.coda.cs.cmu.edu for more details.
-NOTE: You also need to enable the pseudo-device, vcoda, for the Coda
+.Em NOTE :
+You also need to enable the pseudo-device, vcoda, for the Coda
+file system to work.
+.It Cd file-system SMBFS
+.Em [EXPERIMENTAL]
+Includes code for the SMB/CIFS file system.
+See
+.Xr mount_smbfs 8
+for details.
+.Em NOTE :
+You also need to enable the pseudo-device, nsmb, for the SMB
 file system to work.
 .El
 .Ss File System Options
