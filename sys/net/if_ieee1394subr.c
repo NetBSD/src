@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.7 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.8 2001/01/17 18:44:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -634,6 +634,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 {
 	struct ieee1394_hwaddr *baddr;
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
+	struct sockaddr_dl *sdl = ifp->if_sadl;
 
 	ifp->if_type = IFT_IEEE1394;
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
@@ -666,8 +667,6 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 void
 ieee1394_ifdetach(struct ifnet *ifp)
 {
-	struct sockaddr_dl *sdl = ifp->if_sadl;
-
 	ieee1394_drain(ifp);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
