@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1998/10/10 02:00:54 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1998/10/13 11:21:22 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,8 +105,8 @@ cdev_decl(grf);
 cdev_decl(tun);
 cdev_decl(vnd);
 cdev_decl(ccd);
-#include "adb.h"
-cdev_decl(adb);
+#include "aed.h"
+cdev_decl(aed);
 /*cdev_decl(wd);*/
 cdev_decl(ofc);
 cdev_decl(nvram);
@@ -143,7 +143,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NVND,vnd),	/* 25: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 26: concatenated disk driver */
 	cdev_disk_init(NMD,md),		/* 27: memory disk driver */
-	cdev_mouse_init(NADB,adb),	/* 28: ADB event interface */
+	cdev_mouse_init(NAED,aed),	/* 28: ADB event interface */
 	cdev_lkm_dummy(),		/* 29: */
 	cdev_notdef(),			/* 30: reserved for IDE disk driver */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
