@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/04/01 16:50:52 he Exp $
+#	$NetBSD: Makefile,v 1.32 2003/08/24 15:11:18 he Exp $
 
 ### what we need:
 
@@ -25,7 +25,7 @@ COBJS+=  divdi3.o moddi3.o qdivrem.o snprintf.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o memcmp.o strerror.o sprintf.o subr_prf.o
-SOBJS += libstubs.o memset.o strncmp.o
+SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
