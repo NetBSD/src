@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1995/01/21 00:12:56 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 1995/02/01 13:46:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -358,7 +358,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		if (type == T_MMUFLT)
 			return;
 		userret(p, fp->f_pc, sticks); 
-		reutrn;
+		return;
 	}
 #else /* use hacky 386bsd_code */
 	if (rv == KERN_SUCCESS) {
@@ -418,7 +418,7 @@ trap(type, code, v, frame)
 
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
-		if (kdb_trap(type, &frame))
+		if (kdb_trap(type, frame.f_regs))
 			return;
 	}
 #endif
@@ -628,7 +628,7 @@ trap(type, code, v, frame)
  * Proces a system call.
  */
 syscall(code, frame)
-	volatile int code;
+	u_int code;
 	struct frame frame;
 {
 	struct sysent *callp;
@@ -715,10 +715,11 @@ syscall(code, frame)
 		break;
 	}
 
-	if (code < 0 || code >= numsys)
-		callp = &systab[0];		/* indir (illegal) */
+	callp = systab;
+	if (code < numsys)
+		callp += code;
 	else
-		callp = &systab[code];
+		callp += SYS_syscall;	/* Illegal. */
 
 	i = callp->sy_argsize;
 	if (i != 0)
@@ -730,7 +731,7 @@ syscall(code, frame)
 #endif
 #ifdef SYSCALL_DEBUG
 	if (p->p_emul == EMUL_NETBSD) /* XXX */
-		scdebug_call(p, code, callp->sy_narg, i, args);
+		scdebug_call(p, code, args);
 #endif
 	if (error == 0) {
 		rval[0] = 0;
@@ -761,7 +762,7 @@ syscall(code, frame)
 	p = curproc;
 #ifdef SYSCALL_DEBUG
 	if (p->p_emul == EMUL_NETBSD)			 /* XXX */
-		scdebug_ret(p, code, error, rval[0]);
+		scdebug_ret(p, code, error, rval);
 #endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
