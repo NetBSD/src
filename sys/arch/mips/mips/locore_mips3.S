@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.17 2000/02/19 01:56:21 mycroft Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.18 2000/03/19 19:16:13 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -84,12 +84,14 @@
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
-#include <machine/cdefs.h>
-#include <machine/endian.h>
+#include "opt_ddb.h"
+
+#include <sys/cdefs.h>
+
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <machine/param.h>
-#include "opt_ddb.h"
+#include <machine/endian.h>
 
 #include "assym.h"
 
@@ -1689,7 +1691,6 @@ LEAF(mips3_FlushCache)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
-#if 1
 	lw	t2, mips_L2CacheSize
 	beq	t2, zero, 2f
 	nop
@@ -1704,8 +1705,6 @@ LEAF(mips3_FlushCache)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 2:
-#endif
-
 	j	ra
 	nop
 END(mips3_FlushCache)
@@ -1750,7 +1749,6 @@ LEAF(mips3_FlushICache)
 	nop
 END(mips3_FlushICache)
 
-#if 1
 /*----------------------------------------------------------------------------
  *
  * mips3_FlushDCache --
@@ -1796,7 +1794,6 @@ LEAF(mips3_FlushDCache)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
-#if 1
 	lw	a2, mips_L2CacheSize
 	beq	a2, zero, 2f	# no secondary cache
 	addiu	a2, -1
@@ -1812,82 +1809,10 @@ LEAF(mips3_FlushDCache)
 	bne	t1, zero, 1b
 	addu	a0, 128
 2:
-#endif
 
 	j	ra
 	nop
 END(mips3_FlushDCache)
-#endif
-
-/*----------------------------------------------------------------------------
- *
- * mips52xx_FlushDCache --
- *
- *	void mips52xx_FlushDCache(paddr_t addr, len)
- *
- *	Flush data cache for index range of addr to addr + len - 1.
- *	The address is reduced to a kseg0 index.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The contents of the cache is written back to primary memory.
- *	The cache line is invalidated.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(mips52xx_FlushDCache)
-	lw	a2, mips_L1DCacheSize
-	srl	a3, a2, 1	# Two way set associative cache
-	addiu	a2, a3, -1
-	move	t0, a0		# copy start address
-	and	a0, a0, a2	# get index into primary cache
-	addu	a1, 127		# Align
-	li	a2, 0x80000000
-	addu	a0, a0, a2
-	addu	a1, a1, a0
-	and	a0, a0, -128
-	addu	a3, a0, a3	# second set of two way cache
-	subu	a1, a1, a0
-	srl	a1, a1, 7	# Compute number of cache lines
-	move	t1, a1		# copy length
-1:
-	cache	1, 0(a0)
-	cache	1, 0(a3)	# Two way set-associative cache
-	cache	1, 32(a0)
-	cache	1, 32(a3)
-	cache	1, 64(a0)
-	cache	1, 64(a3)
-	cache	1, 96(a0)
-	cache	1, 96(a3)
-	addu	a1, -1
-	addu	a3, 128
-	bne	a1, zero, 1b
-	addu	a0, 128
-
-#if 0
-	lw	a2, mips_L2CacheSize
-	beq	a2, zero, 2f	# no secondary cache
-	addiu	a2, -1
-	and	t0,t0,a2	# secondary cache index
-	li	a0, 0x80000000
-	addu	a0, a0, t0	# reduce to kseg0 address
-1:
-	cache	3, 0(a0)
-	cache	3, 32(a0)
-	cache	3, 64(a0)
-	cache	3, 96(a0)
-	addu	t1, -1
-	bne	t1, zero, 1b
-	addu	a0, 128
-2:
-#endif
-
-	j	ra
-	nop
-END(mips52xx_FlushDCache)
-
 
 /*----------------------------------------------------------------------------
  *
@@ -1969,6 +1894,271 @@ LEAF(mips3_InvalidateDCache)
 	j	ra
 	nop
 END(mips3_InvalidateDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ *	QED R52xx cache flushing code.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+#define C_ICACHE	0
+#define C_DCACHE	1
+
+#define C_IINV		(0 << 2)
+#define C_IWBINV	(0 << 2)
+#define C_HINV		(4 << 2)
+#define C_HWBINV	(5 << 2)
+#define C_HWB		(6 << 2)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips5200_FlushCache -- (QED)
+ *
+ *	Flush the caches. Assumes a line size of 32 bytes for speed.
+ *	Does not currently support a second level cache.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the caches is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips5200_FlushCache)
+	lw	t1, mips_L1ICacheSize
+	lw	t2, mips_L1DCacheSize
+
+	/*
+	 * Flush the instruction cache.
+	 */
+	li	t0, MIPS_KSEG0_START
+	srl	t1, 1			# Two way set assoc
+	or	t3, t1, t0		# Second way address
+	addu	t1, t0, t1		# End address
+1:
+	cache	C_ICACHE|C_IINV,  0(t0)
+	cache	C_ICACHE|C_IINV,  0(t3)
+	cache	C_ICACHE|C_IINV, 32(t0)
+	cache	C_ICACHE|C_IINV, 32(t3)
+	cache	C_ICACHE|C_IINV, 64(t0)
+	cache	C_ICACHE|C_IINV, 64(t3)
+	cache	C_ICACHE|C_IINV, 96(t0)
+	addu	t0, t0, 128
+	cache	C_ICACHE|C_IINV, 96(t3)
+	bne	t0, t1, 1b
+	addu	t3, t3, 128		# Branch delay slot
+
+	/*
+	 * Flush the data cache.
+	 */
+	li	t0, MIPS_KSEG0_START
+	srl	t2, 1			# Two way set assoc
+	or	t3, t2, t0		# Second way address
+	addu	t1, t0, t2		# End address
+1:
+	cache	C_DCACHE|C_IWBINV,  0(t0)
+	cache	C_DCACHE|C_IWBINV,  0(t3)
+	cache	C_DCACHE|C_IWBINV, 32(t0)
+	cache	C_DCACHE|C_IWBINV, 32(t3)
+	cache	C_DCACHE|C_IWBINV, 64(t0)
+	cache	C_DCACHE|C_IWBINV, 64(t3)
+	cache	C_DCACHE|C_IWBINV, 96(t0)
+	addu	t0, t0, 128
+	cache	C_DCACHE|C_IWBINV, 96(t3)
+	bne	t0, t1, 1b
+	addu	t3, t3, 128		# Branch delay slot
+
+	j	ra
+	nop
+END(mips5200_FlushCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips5200_FlushICache -- (QED)
+ *
+ *	void mips5200_FlushICache(addr, len)
+ *		vaddr_t addr; vsize_t len;
+ *
+ *	Flush instruction cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *
+ *	Assumes a cache line size of 32 bytes for speed.
+ *	Does not currently support a second level cache.
+ *
+ *	Addr should be a KSEG0 address, but it can be called with a KUSEG
+ *	address.  To handle flushing both ways here we | in KSEG0 to avoid
+ *	invalid TLB misses.  With a virtually indexed cache this does the
+ *	correct thing.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *	Must not touch v0.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips5200_FlushICache)
+	lw	t0, mips_L1ICacheSize
+	li	t1, MIPS_KSEG0_START
+	addu	a1, 127		# Align (I $ inval of partials is ok)
+	srl	t0,1		# Two way set assoc offset
+	addiu	t2, t0, -1	# Cache index mask
+	and	a0, a0, t2	# Only keep index bits (avoid KSEG2, way 0)
+	or	a0, a0, t1	# Make KSEG0
+	srl	a1, a1, 7	# Number of unrolled loops
+	or	t0, t0, a0	# Way 1 index offset.
+1:
+	cache	C_ICACHE|C_IINV,   0(a0)
+	cache	C_ICACHE|C_IINV,   0(t0)	# other way
+	cache	C_ICACHE|C_IINV,  32(a0)
+	cache	C_ICACHE|C_IINV,  32(t0)	# other way
+	addu	a1, -1
+	cache	C_ICACHE|C_IINV,  64(a0)
+	cache	C_ICACHE|C_IINV,  64(t0)	# other way
+	cache	C_ICACHE|C_IINV,  96(a0)
+	addu	a0, 128
+	cache	C_ICACHE|C_IINV,  96(t0)	# other way
+	bgt	a1, zero, 1b
+	addu	t0, 128		# Branch delay slot
+
+	j	ra
+	nop
+END(mips5200_FlushICache)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips5200_FlushDCache --
+ *
+ *	void mips5200_FlushDCache(paddr_t addr, len)
+ *
+ *	Flush data cache for index range of addr to addr + len - 1.
+ *	The address is reduced to a kseg0 index.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is written back to primary memory.
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips5200_FlushDCache)
+	lw	a2, mips_L1DCacheSize
+	srl	a3, a2, 1	# two way set associative cache
+	addiu	a2, a3, -1	# offset mask
+	and	a0, a0, a2	# get index into primary cache
+	addu	a1, a1, a0	# add offset to length
+	and	a0, a0, -128	# block align address
+	subu	a1, a1, a0	# subtract aligned offset -> inc len by align
+	addu	a1, 127		# tail align length
+	li	a2, MIPS_KSEG0_START
+	addu	a0, a0, a2	# K0(vindex)
+	addu	a3, a0, a3	# second set of two way cache
+	srl	a1, a1, 7	# Compute number of cache blocks
+1:
+	cache	C_DCACHE|C_IWBINV, 0(a0)
+	cache	C_DCACHE|C_IWBINV, 0(a3)	# second way
+	cache	C_DCACHE|C_IWBINV, 32(a0)
+	cache	C_DCACHE|C_IWBINV, 32(a3)
+	addu	a1, -1
+	cache	C_DCACHE|C_IWBINV, 64(a0)
+	cache	C_DCACHE|C_IWBINV, 64(a3)
+	cache	C_DCACHE|C_IWBINV, 96(a0)
+	cache	C_DCACHE|C_IWBINV, 96(a3)
+	addu	a0, 128
+	bgtz	a1, 1b
+	addu	a3, 128		# Branch delay slot
+
+	/* no s$ support */
+
+	j	ra
+	nop
+END(mips5200_FlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips5200_HitFlushDCache -- (QED)
+ *
+ *	void mips5200_HitFlushDCache(addr, len)
+ *		vaddr_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid viritual address as long
+ *	as no TLB invalid traps occur. Only lines with matching
+ *	addr is flushed.
+ *
+ *	Assumes a cache line size of 32 bytes for speed.
+ *	Does not currently support a second level cache.
+ *
+ *	Other MIPS code does 128B per loop.  W/o a secondary
+ *	cache, I think it's better to just operate on what
+ *	cache lines were asked to be cleared in the hit case.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is written back to primary memory.
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips5200_HitFlushDCache)
+	beq	a1, zero, 2f
+	addu	a1, 31		# Branch delay slot; align length
+	and	a0, a0, -32
+	srl	a1, a1, 5	# Compute number of cache lines
+1:
+	addu	a1, -1
+	cache	C_DCACHE|C_HWBINV,0(a0)
+	bne	a1, zero, 1b
+	addu	a0, 32		# Branch delay slot
+
+2:
+	j	ra
+	nop
+END(mips5200_HitFlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * mips5200_InvalidateDCache -- (QED)
+ *
+ *	void mips5200_InvalidateDCache(addr, len)
+ *		vaddr_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid address as long as no TLB misses occur.
+ *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
+ *
+ *	Caller must be sure the whole cache line is to be invalidated, and
+ *	the call does not corrupt bordering data.
+ *
+ *	Does not currently support a second level cache.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(mips5200_InvalidateDCache)
+	addu	a1, a1, a0		# compute ending address
+1:
+	cache	C_DCACHE|C_HINV,0(a0)
+	addu	a0, a0, 32
+	bltu	a0, a1, 1b
+	nop				# Branch delay slot
+
+	j	ra
+	nop
+END(mips5200_InvalidateDCache)
 
 /*----------------------------------------------------------------------------
  *
@@ -2354,6 +2544,17 @@ LEAF(mips3_write_xcontext_upper)
 	nop
 END(mips3_write_xcontext_upper)
 
+/*
+ * Clear BEV bit if it was set.
+ */   
+LEAF(mips3_clearBEV)
+	mfc0	v0, MIPS_COP_0_STATUS 
+	or	v0, MIPS3_SR_DIAG_BEV
+	xor	v0, MIPS3_SR_DIAG_BEV
+	mtc0	v0, MIPS_COP_0_STATUS
+	j	ra
+	nop
+	END(mips3_clearBEV)
 
 LEAF(mips3_FetchIcache)
 	lw	t1, mips_L1ICacheSize

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.27 2000/03/07 01:05:48 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.28 2000/03/19 19:16:13 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,6 +197,7 @@
 #define MIPS3_SR_FR_32		0x04000000
 #define MIPS3_SR_RE		0x02000000
 
+#define MIPS3_SR_DIAG_BEV	0x00400000
 #define MIPS3_SR_SOFT_RESET	0x00100000
 #define MIPS3_SR_DIAG_CH	0x00040000
 #define MIPS3_SR_DIAG_CE	0x00020000

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.24 2000/01/28 15:08:36 takemura Exp $	*/
+/*	$NetBSD: locore.h,v 1.25 2000/03/19 19:16:13 soren Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -74,9 +74,6 @@ extern void mips1_cpu_switch_resume __P((void));
 extern void mips3_ConfigCache __P((void));
 extern void mips3_FlushCache  __P((void));
 extern void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
-#ifdef	MIPS3_L2CACHE_ABSENT
-extern void mips52xx_FlushDCache __P((vaddr_t addr, vaddr_t len));
-#endif
 extern void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
 extern void mips3_ForceCacheUpdate __P((void));
 extern void mips3_HitFlushDCache __P((vaddr_t, int));
@@ -98,12 +95,18 @@ extern void mips3_cpu_switch_resume __P((void));
 
 extern void mips3_SetWIRED __P((int));
 
+extern void mips5200_FlushCache  __P((void));
+extern void mips5200_FlushDCache __P((vaddr_t addr, vaddr_t len));
+extern void mips5200_HitFlushDCache __P((vaddr_t, int));  
+extern void mips5200_FlushICache __P((vaddr_t addr, vaddr_t len));
+
 extern u_int32_t mips3_cycle_count __P((void));
 extern u_int32_t mips3_write_count __P((u_int32_t));
 extern u_int32_t mips3_read_compare __P((void));
 extern u_int32_t mips3_read_config __P((void));
 extern void mips3_write_compare __P((u_int32_t));
 extern void mips3_write_xcontext_upper __P((u_int32_t));
+extern void mips3_clearBEV __P((void));
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent
@@ -144,17 +147,23 @@ extern mips_locore_jumpvec_t r2000_locore_vec;
 extern mips_locore_jumpvec_t r4000_locore_vec;
 
 #if defined(MIPS3) && !defined (MIPS1)
+#if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_5200)
+#define MachFlushCache		mips5200_FlushCache
+#define MachFlushDCache		mips5200_FlushDCache
+#define MachHitFlushDCache	mips5200_HitFlushDCache
+#define MachFlushICache		mips5200_FlushICache
+#else
 #define MachFlushCache		mips3_FlushCache
 #if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_4100)
 #define MachFlushDCache         mips3_FlushDCache		/* VR4100 */
-#elif	defined(MIPS3_L2CACHE_ABSENT) && !defined(MIPS3_L2CACHE_PRESENT)
-#define MachFlushDCache		mips52xx_FlushDCache		/* RM5200 */
 #elif	!defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_L2CACHE_PRESENT)
 #define MachFlushDCache		mips3_FlushDCache
 #else
 #define MachFlushDCache		(*(mips_locore_jumpvec.flushDCache))
 #endif
+#define MachHitFlushDCache	mips3_HitFlushDCache
 #define MachFlushICache		mips3_FlushICache
+#endif
 #define MachForceCacheUpdate	mips3_ForceCacheUpdate
 #define MachSetPID		mips3_SetPID
 #define MachTLBFlush()		mips3_TLBFlush(mips_num_tlb_entries)
