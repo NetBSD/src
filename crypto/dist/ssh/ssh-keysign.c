@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.1.1.1.2.3 2002/07/02 06:33:50 lukem Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.1.1.1.2.4 2002/07/03 11:49:17 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,9 +23,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.5 2002/06/26 22:27:32 markus Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.6 2002/07/03 09:55:38 markus Exp $");
 
 #include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
 
 #include "log.h"
 #include "key.h"
@@ -135,6 +137,7 @@ main(int argc, char **argv)
 	u_char *signature, *data;
 	char *host;
 	u_int slen, dlen;
+	u_int32_t rnd[256];
 
 	key_fd[0] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 	key_fd[1] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
@@ -154,6 +157,9 @@ main(int argc, char **argv)
 	pw = pwcopy(pw);
 
 	SSLeay_add_all_algorithms();
+	for (i = 0; i < 256; i++)
+		rnd[i] = arc4random();
+	RAND_seed(rnd, sizeof(rnd));
 
 	found = 0;
 	for (i = 0; i < 2; i++) {
@@ -163,6 +169,13 @@ main(int argc, char **argv)
 		keys[i] = key_load_private_pem(key_fd[i], KEY_UNSPEC,
 		    NULL, NULL);
 		close(key_fd[i]);
+		if (keys[i] != NULL && keys[i]->type == KEY_RSA) {
+			if (RSA_blinding_on(keys[i]->rsa, NULL) != 1) {
+				error("RSA_blinding_on failed");
+				key_free(keys[i]);
+				keys[i] = NULL;
+			}
+		}
 		if (keys[i] != NULL)
 			found = 1;
 	}
