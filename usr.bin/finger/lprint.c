@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$Id: lprint.c,v 1.2 1993/08/01 18:16:01 mycroft Exp $";
+static char rcsid[] = "$Id: lprint.c,v 1.3 1993/10/07 19:58:31 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -197,6 +197,23 @@ lprint(pn)
 			(void)printf(" from %s", w->host);
 		}
 		putchar('\n');
+	}
+	if (pn->mailrecv == -1)
+		printf("No Mail.\n");
+	else if (pn->mailrecv > pn->mailread) {
+		tp = localtime(&pn->mailrecv);
+		t = asctime(tp);
+		tzn = tp->tm_zone;
+		printf("New mail received %.16s %.4s (%s)\n", t, t + 20, tzn);
+		tp = localtime(&pn->mailread);
+		t = asctime(tp);
+		tzn = tp->tm_zone;
+		printf("     Unread since %.16s %.4s (%s)\n", t, t + 20, tzn);
+	} else {
+		tp = localtime(&pn->mailread);
+		t = asctime(tp);
+		tzn = tp->tm_zone;
+		printf("Mail last read %.16s %.4s (%s)\n", t, t + 20, tzn);
 	}
 }
 

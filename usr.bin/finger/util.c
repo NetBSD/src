@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$Id: util.c,v 1.2 1993/08/01 18:15:57 mycroft Exp $";
+static char rcsid[] = "$Id: util.c,v 1.3 1993/10/07 19:58:32 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$Id: util.c,v 1.2 1993/08/01 18:15:57 mycroft Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <paths.h>
+#include <errno.h>
 #include "finger.h"
 
 find_idle_and_ttywrite(w)
@@ -72,7 +73,10 @@ userinfo(pn, pw)
 	register PERSON *pn;
 	register struct passwd *pw;
 {
+	extern time_t now;
 	register char *p, *t;
+	struct stat sb;
+	extern int errno;
 	char *bp, name[1024];
 
 	pn->realname = pn->office = pn->officephone = pn->homephone = NULL;
@@ -106,6 +110,18 @@ userinfo(pn, pw)
 	    strdup(p) : NULL;
 	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
 	    strdup(p) : NULL;
+	(void)sprintf(tbuf, "%s/%s", _PATH_MAILSPOOL, pw->pw_name);
+	pn->mailrecv = -1;		/* -1 == not_valid */
+	if (stat(tbuf, &sb) < 0) {
+		if (errno != ENOENT) {
+			(void)fprintf(stderr,
+			    "finger: %s: %s\n", tbuf, strerror(errno));
+			return;
+		}
+	} else if (sb.st_size != 0) {
+		pn->mailrecv = sb.st_mtime;
+		pn->mailread = sb.st_atime;
+	}
 }
 
 match(pw, user)
@@ -319,14 +335,17 @@ prphone(num)
 		*p++ = *num++;
 		break;
 	case 5:				/* x0-1234 */
+	case 4:				/* x1234 */
 		*p++ = 'x';
 		*p++ = *num++;
 		break;
 	default:
 		return(num);
 	}
-	*p++ = '-';
-	*p++ = *num++;
+	if (len != 4) {
+		*p++ = '-';
+		*p++ = *num++;
+	}
 	*p++ = *num++;
 	*p++ = *num++;
 	*p++ = *num++;

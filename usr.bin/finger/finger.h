@@ -34,11 +34,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)finger.h	5.5 (Berkeley) 6/1/90
- *	$Id: finger.h,v 1.2 1993/08/01 18:16:03 mycroft Exp $
+ *	$Id: finger.h,v 1.3 1993/10/07 19:58:30 brezak Exp $
  */
 
 #include <pwd.h>
 #include <utmp.h>
+
+#define _PATH_MAILSPOOL "/var/mail"
 
 /*
  * All unique persons are linked in a list headed by "head" and linkd
@@ -56,6 +58,8 @@ typedef struct person {
 	char *officephone;		/* pointer to office phone no. */
 	char *realname;			/* pointer to full name */
 	char *shell;			/* user's shell */
+	time_t mailread;		/* last time mail was read */
+	time_t mailrecv;		/* last time mail was read */
 	struct where *whead, *wtail;	/* list of where he is or has been */
 } PERSON;
 

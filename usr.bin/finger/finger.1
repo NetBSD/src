@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)finger.1	6.14 (Berkeley) 7/27/91
-.\"	$Id: finger.1,v 1.2 1993/08/01 07:32:52 mycroft Exp $
+.\"	$Id: finger.1,v 1.3 1993/10/07 19:58:28 brezak Exp $
 .\"
 .Dd July 27, 1991
 .Dt FINGER 1
@@ -71,8 +71,7 @@ Produces a multi-line format displaying all of the information
 described for the
 .Fl s
 option as well as the user's home directory, home phone number, login
-shell, and the contents of the files
-.Dq Pa .forward ,
+shell, mail status, and the contents of the files
 .Dq Pa .plan
 and
 .Dq Pa .project
@@ -86,6 +85,7 @@ Phone numbers specified as eleven digits are printed as ``+N-NNN-NNN-NNNN''.
 Numbers specified as ten or seven digits are printed as the appropriate
 subset of that string.
 Numbers specified as five digits are printed as ``xN-NNNN''.
+Numbers specified as four digits are printed as ``xNNNN''.
 .Pp
 If write permission is denied to the device, the phrase ``(messages off)''
 is appended to the line containing the device name.
@@ -94,6 +94,11 @@ One entry per user is displayed with the
 option; if a user is logged on multiple times, terminal information
 is repeated once per login.
 .Pp
+Mail status is shown as ``No Mail.'' if there is no mail at all,
+``Mail last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked
+at their mailbox since new mail arriving, or ``New mail received ...'',
+``  Unread since ...'' if they have new mail.
+.Pp
 .It Fl p
 Prevents
 the
@@ -101,7 +106,6 @@ the
 option of
 .Nm finger
 from displaying the contents of the
-.Dq Pa .forward ,
 .Dq Pa .plan
 and
 .Dq Pa .project
