@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.68 2002/10/02 15:26:29 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.69 2002/10/25 21:00:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -1116,6 +1116,15 @@ Configures the
 .Xr wscons 4
 console driver, from the configuration file
 .Pa /etc/wscons.conf .
+.It Sy wsmoused
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr wsmoused 8 ,
+to provide copy and paste text support in wscons displays.
+Passes
+.Sy wsmoused_flags .
 .El
 .Sh FILES
 .Bl -tag -width /etc/defaults/rc.conf -compact
