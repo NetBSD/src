@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.58 1997/06/26 22:24:00 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.59 1997/06/30 20:20:31 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -780,7 +780,10 @@ msdosfs_remove(v)
 	struct denode *ddep = VTODE(ap->a_dvp);
 	int error;
 
-	error = removede(ddep, dep);
+	if (ap->a_vp->v_type == VDIR)
+		error = EPERM;
+	else
+		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_remove(), dep %08x, v_usecount %d\n", dep, ap->a_vp->v_usecount);
 #endif
