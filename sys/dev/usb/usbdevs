@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.345 2003/10/11 12:11:13 wiz Exp $
+$NetBSD: usbdevs,v 1.346 2003/10/13 17:15:03 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -862,6 +862,8 @@ product	IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
 product IOMEGA ZIP250		0x0030	Zip 250
+product IOMEGA ZIP250_2		0x0032	Zip 250
+product IOMEGA CDRW		0x0055	CDRW 9602
 
 /* JRC products */
 product JRC AH_J3001V_J3002V	0x0001	AirH\"PHONE AH-J3001V/J3002V
