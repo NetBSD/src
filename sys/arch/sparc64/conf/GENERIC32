@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.60 2003/03/22 06:39:43 nakayama Exp $
+# 	$NetBSD: GENERIC32,v 1.61 2003/04/05 13:36:15 tsutsui Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 maxusers	64
 
@@ -289,11 +289,11 @@ siop*	at pci? 			# 53C875 "glm" compatible
 # 	UT marks untested.
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 scsibus* at scsi?
@@ -420,8 +420,8 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[B] UT
-epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
@@ -431,8 +431,11 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
+# XXX cause uncorrectable DMA error
+#pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
+# XXX cause uncorrectable DMA error
+#sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
