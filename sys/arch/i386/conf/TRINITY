@@ -1,5 +1,5 @@
-#	$NetBSD: TRINITY,v 1.77 1999/02/16 17:46:18 abs Exp $
-#	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
+#	$NetBSD: TRINITY,v 1.78 1999/03/14 10:31:43 mycroft Exp $
+#	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	TRINITY -- Mycroft's laptop
 #
@@ -51,7 +51,7 @@ options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -143,6 +143,19 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_BG=WSCOL_RED
+options 	WS_KERNEL_FG=WSCOL_WHITE
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
@@ -207,13 +220,29 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # ISA console.  You can only configure one of these!
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-vt0	at isa? port 0x60 irq 1		# PCVT console driver
+#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
+
+# wscons
+pckbc0	at isa?			# pc keyboard controller
+pckbd*	at pckbc?		# PC keyboard
+# "opms" should not be enabled together with "pms" or "pmsi"
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+opms*		at pckbc?		# backwards compatible PS/2 mouse
+vga0		at isa?
+vga*		at pci?
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+#wsdisplay*	at pcdisplay? console ?
+wskbd*	at pckbd? console ?
+#wsmouse*	at pms?
+#wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -326,7 +355,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 
 # IDE and related devices
-# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx, ...).
+# PCI IDE controllers - see pciide(4) for suppored hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
@@ -400,6 +429,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -539,12 +569,19 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # Mice
 
 # ISA busmice
+#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#lms1	at isa? port 0x238 irq 5
+#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#mms1	at isa? port 0x238 irq 5
+#wsmouse*	at lms?
+#wsmouse*	at mms?
+# backwards compatible versions
 #olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-opms0	at vt? irq 12		# PS/2 auxiliary port mouse
+#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
@@ -583,6 +620,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		32	# pseudo-terminals
