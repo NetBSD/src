@@ -67,6 +67,8 @@ options		NS		# XNS
 options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
+				# if you enable the pseudo-device ipl).
 
 # Compatibility options
 
