@@ -1,3 +1,5 @@
+/*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -38,8 +40,10 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nohup.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nohup.c,v 1.5 1995/06/27 00:20:24 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
+#endif
+static char rcsid[] = "$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
