@@ -1,6 +1,6 @@
-/*	$NetBSD: consio.c,v 1.8 1997/06/08 17:49:18 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.9 1998/03/20 16:36:20 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,26 @@ int rom_getchar __P((void));
 
 static int rom_putc;		/* ROM-address of put-routine */
 static int rom_getc;		/* ROM-address of get-routine */
+
+/* Location of address of KA630 console page */
+#define NVR_ADRS        0x200B8024
+/* Definitions for various locations in the KA630 console page */
+#define KA630_PUTC_POLL 0x20
+#define KA630_PUTC      0x24
+#define KA630_GETC      0x1C
+#define KA630_ROW	0x4C
+#define KA630_MINROW	0x4D
+#define KA630_MAXROW	0x4E
+#define KA630_COL	0x50
+#define KA630_MINCOL    0x51
+#define KA630_MAXCOL	0x52
+/* Pointer to KA630 console page, initialized by ka630_consinit */
+unsigned char  *ka630_conspage; 
+/* Function that initializes things for KA630 ROM console I/O */
+void ka630_consinit __P((void));
+/* Functions that use KA630 ROM for console I/O */
+int ka630_rom_putchar __P((int c));
+int ka630_rom_getchar __P((void));
 
 putchar(c)
 	int c;
@@ -147,6 +167,11 @@ setup()
 		rom_putc = 0x20040058;		/* 537133144 */
 		rom_getc = 0x20040044;		/* 537133124 */
 		break;
+
+	case VAX_BTYP_630:
+	        ka630_consinit();
+	        break;
+
 #ifdef notdef
 	case VAX_BTYP_630:
 	case VAX_BTYP_650:
@@ -212,6 +237,66 @@ asm("
 
 _rtt()
 {
-	printf("rtt\n");
-bo:	goto bo;
+	asm("halt");
 }
+
+
+
+/*
+ * void ka630_rom_getchar (void)  ==> initialize KA630 ROM console I/O
+ */
+void ka630_consinit()
+{
+        register short *NVR;
+        register int i;
+
+        /* Find the console page */
+        NVR = (short *) NVR_ADRS;
+   
+        i = *NVR++ & 0xFF;
+        i |= (*NVR++ & 0xFF) << 8;
+        i |= (*NVR++ & 0xFF) << 16;
+        i |= (*NVR++ & 0xFF) << 24;
+
+        ka630_conspage = (char *) i;
+
+        /* Go to last row to minimize confusion */
+	ka630_conspage[KA630_ROW] = ka630_conspage[KA630_MAXROW];
+	ka630_conspage[KA630_COL] = ka630_conspage[KA630_MINCOL];
+
+        /* Use KA630 ROM console I/O routines */
+	put_fp = ka630_rom_putchar;
+	get_fp = ka630_rom_getchar;
+}
+   	
+
+/*
+ * int ka630_rom_getchar (void)	==> getchar() using ROM-routines on KA630
+ */
+asm("
+	.globl _ka630_rom_getchar
+	_ka630_rom_getchar:
+		.word 0x802		# save-mask: R1, R11
+		movl    _ka630_conspage,r11  # load location of console page
+        loop630g:		       	# do {
+		jsb	*0x1C(r11)	#   call the getc-routine (KA630_GETC)
+	        blbc    r0, loop630g    # } while (R0 == 0)
+		movl	r1, r0		# R1 holds char
+		ret			# we're done
+");
+
+/*
+ * int ka630_rom_putchar (int c) ==> putchar() using ROM-routines on KA630
+ */
+asm("
+	.globl _ka630_rom_putchar
+	_ka630_rom_putchar:
+		.word 0x802		# save-mask: R1, R11
+		movl    _ka630_conspage,r11  # load location of console page
+        loop630p:		       	# do {
+		jsb	*0x20(r11)	#   is rom ready? (KA630_PUTC_POLL)
+	        blbc    r0, loop630p    # } while (R0 == 0)
+		movl	4(ap), r1	# R1 holds char
+		jsb     *0x24(r11)      # output character (KA630_PUTC)
+		ret			# we're done
+");
