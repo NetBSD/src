@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.22 2003/10/28 23:33:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.22 2003/10/28 23:33:46 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ uvisor_activate(device_ptr_t self, enum devact act)
 	case DVACT_DEACTIVATE:
 		for (i = 0; i < sc->sc_numcon; i++)
 			if (sc->sc_subdevs[i] != NULL)
-				rv = config_deactivate(sc->sc_subdevs[i]);
+				rv |= config_deactivate(sc->sc_subdevs[i]);
 		sc->sc_dying = 1;
 		break;
 	}
