@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.25 1996/10/16 04:07:16 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.26 1996/10/16 05:07:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -379,7 +379,7 @@ scc_alphaintr(onoff)
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif
 	}
-	alpha_mb();
+	tc_mb();
 }
 #endif /* alpha */
 
@@ -948,10 +948,9 @@ cold_sccparam(tp, t, sc)
 	value = ZSWR9_MASTER_IE | ZSWR9_VECTOR_INCL_STAT;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	SCC_WRITE_REG(regs, line, SCC_WR1, sc->scc_wreg[line].wr1);
-#ifdef pmax
-	wbflush();
-#else
-	alpha_mb();
+	tc_mb();
+
+#ifdef alpha
 	scc_alphaintr(1);			/* XXX XXX XXX */
 #endif	/*alpha*/
 
@@ -998,7 +997,7 @@ sccintr(xxxsc)
 #ifdef pmax	/* Alpha handles the 1.6 msec settle time in hardware */
 			DELAY(2);
 #endif
-			alpha_mb();
+			tc_mb();
 		} else {
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
@@ -1019,7 +1018,7 @@ sccintr(xxxsc)
 				cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
 				SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
 				sc->scc_wreg[chan].wr1 = cc;
-				alpha_mb();
+				tc_mb();
 			}
 		}
 	    } else if (rr2 == SCC_RR2_A_RECV_DONE ||
@@ -1069,7 +1068,7 @@ sccintr(xxxsc)
 		 */
 		} else if (tp == scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
 		    sccMouseButtons) {
-#if 0
+#ifdef HAVE_RCONS
 			/*XXX*/
 			mouseInput(cc);
 #endif
@@ -1172,7 +1171,7 @@ sccstart(tp)
 		DELAY(2);
 #endif
 	}
-	alpha_mb();
+	tc_mb();
 out:
 	splx(s);
 }
@@ -1398,7 +1397,7 @@ sccPutc(dev, c)
 	 * Send the char.
 	 */
 	SCC_WRITE_DATA(regs, line, c);
-	alpha_mb();
+	tc_mb();
 	splx(s);
 
 	return;
