@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.96 1998/09/28 08:13:39 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.97 1998/11/07 07:10:19 jonathan Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -18,8 +18,7 @@ clean cleandir distclean: cleanprog
 CFLAGS+=	${COPTS}
 
 # ELF platforms depend on crtbegin.o and crtend.o
-.if (${MACHINE_ARCH} == "alpha")   || \
-    (${MACHINE_ARCH} == "powerpc")
+.if (${OBJECT_FMT} == "ELF")
 LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
 LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
 .else
