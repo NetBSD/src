@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.9 2002/06/07 00:06:21 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.10 2002/06/12 19:13:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,9 @@ IDTVEC(trap10)
 IDTVEC(trap11)
 	ZTRAP(T_ALIGNFLT)
 IDTVEC(trap12)
+	ZTRAP(T_MCA)
 IDTVEC(trap13)
+	ZTRAP(T_XMM)
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -142,7 +144,7 @@ IDTVEC(trap1c)
 IDTVEC(trap1d)
 IDTVEC(trap1e)
 IDTVEC(trap1f)
-	/* 18 - 31 reserved for future exp */
+	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
 IDTVEC(exceptions)

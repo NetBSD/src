@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 2002/05/28 23:11:39 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 2002/06/12 19:13:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ process_fpframe(p)
 	struct proc *p;
 {
 
-	return (&p->p_addr->u_pcb.pcb_savefpu);
+	return (&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave);
 }
 
 int

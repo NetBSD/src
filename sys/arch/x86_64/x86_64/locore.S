@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2002/06/03 18:23:17 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2002/06/12 19:13:27 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -546,7 +546,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * 1. Enable PAE (and SSE while here).
 	 */
 	movl	%cr4,%eax
-	orl	$(CR4_PAE|CR4_OSFXSR),%eax
+	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
 	movl	%eax,%cr4
 
 	/*
