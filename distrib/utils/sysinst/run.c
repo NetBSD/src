@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11.2.6 2000/01/23 12:57:12 he Exp $	*/
+/*	$NetBSD: run.c,v 1.11.2.7 2000/01/24 10:48:10 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,8 +66,6 @@
 #else
 #define Xsystem(y) system(y)
 #endif
-
-extern int errno;
 
 /*
  * local prototypes 
