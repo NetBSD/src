@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.4 1998/09/30 18:37:05 thorpej Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.5 1998/12/04 17:47:06 perry Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.4 1998/09/30 18:37:05 thorpej Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.5 1998/12/04 17:47:06 perry Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -246,7 +246,8 @@ main(argc, argv)
 
 	gettimeofday(&tv, NULL);
 	srandom(getpid() ^ ~getuid() ^ tv.tv_sec ^ tv.tv_usec);
-	shuffle = get_shuffle(nlines);
+	if (nlines > 0)
+		shuffle = get_shuffle(nlines);
 
 	if (pflag) {
 		if (pick > nlines)
