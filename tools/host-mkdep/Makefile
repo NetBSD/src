@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/12 19:54:16 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/03 15:41:19 christos Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/nbhost-mkdep
 
@@ -16,8 +16,7 @@ host-mkdep: configure host-mkdep.in
 install: ${TIMESTAMP}
 ${TIMESTAMP}: host-mkdep
 	if [ ! -d ${TOOLDIR}/bin ]; then \
-		mkdir ${TOOLDIR}; \
-		mkdir ${TOOLDIR}/bin; \
+		mkdir -p ${TOOLDIR}/bin; \
 	fi; cp host-mkdep $@
 	chmod +x $@
 
