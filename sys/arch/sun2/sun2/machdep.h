@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4.8.3 2002/04/01 07:43:21 nathanw Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.8.4 2002/10/05 07:11:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -101,7 +101,8 @@ void	g4_entry __P((void));
 
 void	swapconf __P((void));
 
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 
 void	zs_init __P((void));
 

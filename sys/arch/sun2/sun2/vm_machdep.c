@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.4.7 2002/07/12 01:39:51 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.4.8 2002/10/05 07:11:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -245,8 +245,8 @@ cpu_exit(l, proc)
  * Do any additional state-saving necessary before swapout.
  */
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(l)
+	struct lwp *l;
 {
 
 	/*
@@ -262,8 +262,8 @@ cpu_swapout(p)
  * reside in different physical pages.
  */
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(l)
+	struct lwp *l;
 {
 
 	/*

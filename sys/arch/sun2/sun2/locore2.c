@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.5.8.6 2002/08/13 02:18:58 nathanw Exp $	*/
+/*	$NetBSD: locore2.c,v 1.5.8.7 2002/10/05 07:11:56 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ _vm_init()
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
 	memset((caddr_t)proc0paddr, 0, USPACE);
-	lwp0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	/*
 	 * Now that lwp0 exists, make it the "current" one.
