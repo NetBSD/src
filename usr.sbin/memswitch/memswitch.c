@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.5 2001/02/01 00:51:22 minoura Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.6 2001/02/04 08:37:33 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -166,21 +166,22 @@ show_single(name)
 	const char *name;
 {
 	int i;
+	int n = 0;
 	char fullname[50];
 	char valuestr[MAXVALUELEN];
 
 	for (i = 0; i < number_of_props; i++) {
 		sprintf(fullname, "%s.%s",
 			properties[i].class, properties[i].node);
-		if (strcmp(name, fullname) == 0) {
+		if (strcmp(name, fullname) == 0 || strcmp(name, properties[i].class) == 0) {
 			properties[i].print (&properties[i], valuestr);
 			if (!nflag)
 				printf ("%s=%s\n", fullname, valuestr);
-			break;
+			n++;
 		}
 	}
-	if (i >= number_of_props) {
-		errx (1, "No such property: %s\n", name);
+	if (n == 0) {
+		errx (1, "No such %s: %s", strstr(name, ".")?"property":"class", name);
 	}
 
 	return;
@@ -226,7 +227,7 @@ modify_single(expr)
 		}
 	}
 	if (i >= n)
-		errx (1, "Invalid expression: %s\n", expr);
+		errx (1, "Invalid expression: %s", expr);
 
 	for ( ; i < n; i++) {
 		if (expr[i] == '=') {
@@ -239,7 +240,7 @@ modify_single(expr)
 		}
 	}
 	if (i >= n)
-		errx (1, "Invalid expression: %s\n", expr);
+		errx (1, "Invalid expression: %s", expr);
 
 	value = &(expr[++i]);
 
@@ -256,7 +257,7 @@ modify_single(expr)
 		}
 	}
 	if (i >= number_of_props) {
-		errx (1, "No such property: %s.%s\n", class, node);
+		errx (1, "No such property: %s.%s", class, node);
 	}
 
 	return;
@@ -283,7 +284,7 @@ help_single(name)
 		}
 	}
 	if (i >= number_of_props) {
-		errx (1, "No such property: %s\n", name);
+		errx (1, "No such property: %s", name);
 	}
 
 	return;
