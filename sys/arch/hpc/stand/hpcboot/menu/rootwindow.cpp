@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.9 2003/12/23 17:18:25 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.10 2003/12/23 17:22:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ RootWindow::create(LPCREATESTRUCT aux)
 	TCHAR *wc_name = reinterpret_cast <TCHAR *>
 	    (LoadString(inst, IDS_HPCMENU, 0, 0));
 	wsprintf(app_name, TEXT("%s Build %d"), wc_name, HPCBOOT_BUILD_NUMBER);
-    
+
 	_window = CreateWindow(wc_name, app_name, WS_VISIBLE,
 	    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 	    0, 0, inst, this);
@@ -181,7 +181,7 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 
 void
 RootWindow::WMPaint(HWND w, LPCREATESTRUCT aux)
-{ 
+{
 	PAINTSTRUCT ps;
 	BeginPaint(w, &ps);
 	EndPaint(w, &ps);
@@ -198,7 +198,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	CommandBar_AddAdornments(_app._cmdbar, 0, 0);
 	cmdbar_height = CommandBar_Height(_app._cmdbar);
 	_button_height = cmdbar_height;
-	
+
 	RECT rect;
 	GetClientRect(w, &rect);
 	rect.top += cmdbar_height;
@@ -226,7 +226,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	_main = _base->boot(IDC_BASE_MAIN);
 	_option = _base->boot(IDC_BASE_OPTION);
 	_console = _base->boot(IDC_BASE_CONSOLE);
-  
+
 	_main->show();
 
 	return;
@@ -234,7 +234,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 
 void
 RootWindow::disableTimer()
-{ 
+{
 	KillTimer(_window, IDD_TIMER);
 }
 
