@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.22 2001/04/05 13:30:02 wiz Exp $	*/
+/*	$NetBSD: common.c,v 1.23 2002/07/14 15:27:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.22 2001/04/05 13:30:02 wiz Exp $");
+__RCSID("$NetBSD: common.c,v 1.23 2002/07/14 15:27:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ int	remote;		/* true if sending files to a remote host */
 
 extern uid_t	uid, euid;
 
-static int compar __P((const void *, const void *));
+static int compar(const void *, const void *);
 
 /*
  * Create a TCP connection to host "rhost" at port "rport".
@@ -125,9 +125,7 @@ static int compar __P((const void *, const void *));
  * Most of this code comes from rcmd.c.
  */
 int
-getport(rhost, rport)
-	char *rhost;
-	int rport;
+getport(char *rhost, int rport)
 {
 	struct addrinfo hints, *res, *r;
 	u_int timo = 1;
@@ -196,8 +194,7 @@ retryport:
  * Returns 0 at EOF or the number of characters read.
  */
 int
-getline(cfp)
-	FILE *cfp;
+getline(FILE *cfp)
 {
 	int linel = 0, c;
 	char *lp = line;
@@ -225,8 +222,7 @@ getline(cfp)
  * Return the number of entries and a pointer to the list.
  */
 int
-getq(namelist)
-	struct queue *(*namelist[]);
+getq(struct queue **namelist[])
 {
 	struct dirent *d;
 	struct queue *q, **queue;
@@ -294,8 +290,7 @@ errdone:
  * Compare modification times.
  */
 static int
-compar(p1, p2)
-	const void *p1, *p2;
+compar(const void *p1, const void *p2)
 {
 	if ((*(struct queue **)p1)->q_time < (*(struct queue **)p2)->q_time)
 		return(-1);
@@ -309,7 +304,7 @@ compar(p1, p2)
  * as the remote machine (RM) entry (if it exists).
  */
 char *
-checkremote()
+checkremote(void)
 {
 	char lname[NI_MAXHOST], rname[NI_MAXHOST];
 	struct addrinfo hints, *res, *res0;
@@ -397,8 +392,7 @@ done:
 
 /* sleep n milliseconds */
 void
-delay(n)
-	int n;
+delay(int n)
 {
 	struct timeval tdelay;
 

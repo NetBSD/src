@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.h,v 1.3 1997/10/05 15:12:11 mrg Exp $	*/
+/*	$NetBSD: lpc.h,v 1.4 2002/07/14 15:27:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,6 +42,6 @@ struct	cmd {
 	char	*c_name;		/* command name */
 	char	*c_help;		/* help message */
 					/* routine to do the work */
-	void	(*c_handler) __P((int, char *[]));
+	void	(*c_handler)(int, char *[]);
 	int	c_priv;			/* privileged command */
 };

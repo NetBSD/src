@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.15 2000/07/16 21:33:26 jdolecek Exp $	*/
+/*	$NetBSD: pac.c,v 1.16 2002/07/14 15:28:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.15 2000/07/16 21:33:26 jdolecek Exp $");
+__RCSID("$NetBSD: pac.c,v 1.16 2002/07/14 15:28:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,21 +94,19 @@ struct hent {
 
 static struct	hent	*hashtab[HSHSIZE];	/* Hash table proper */
 
-static void	account __P((FILE *));
-static int	chkprinter __P((const char *));
-static void	dumpit __P((void));
-static int	hash __P((const char *));
-static struct	hent *enter __P((const char *));
-static struct	hent *lookup __P((const char *));
-static int	qucmp __P((const void *, const void *));
-static void	rewrite __P((void));
-static void	usage __P((void));
-int		main __P((int, char * const []));
+static void	account(FILE *);
+static int	chkprinter(const char *);
+static void	dumpit(void);
+static int	hash(const char *);
+static struct	hent *enter(const char *);
+static struct	hent *lookup(const char *);
+static int	qucmp(const void *, const void *);
+static void	rewrite(void);
+static void	usage(void);
+int		main(int, char * const []);
 
 int
-main(argc, argv)
-	int argc;
-	char * const argv[];
+main(int argc, char *const argv[])
 {
 	FILE *acct;
 	int opt;
@@ -212,8 +210,7 @@ main(argc, argv)
  * Host names are ignored if the -m flag is present.
  */
 static void
-account(acct)
-	FILE *acct;
+account(FILE *acct)
 {
 	char who[BUFSIZ];
 	char linebuf[BUFSIZ];
@@ -253,7 +250,7 @@ account(acct)
  * and print it all out.
  */
 static void
-dumpit()
+dumpit(void)
 {
 	struct hent **base;
 	struct hent *hp, **ap;
@@ -297,7 +294,7 @@ dumpit()
  * Rewrite the summary file with the summary information we have accumulated.
  */
 static void
-rewrite()
+rewrite(void)
 {
 	struct hent *hp;
 	int i;
@@ -337,8 +334,7 @@ rewrite()
  */
 
 static struct hent *
-enter(name)
-	const char *name;
+enter(const char *name)
 {
 	struct hent *hp;
 	int h;
@@ -366,8 +362,7 @@ enter(name)
  */
 
 static struct hent *
-lookup(name)
-	const char *name;
+lookup(const char *name)
 {
 	int h;
 	struct hent *hp;
@@ -384,8 +379,7 @@ lookup(name)
  * the hash table to begin the search.
  */
 static int
-hash(name)
-	const char *name;
+hash(const char *name)
 {
 	int h;
 	const char *cp;
@@ -401,8 +395,7 @@ hash(name)
  * or by feet of typesetter film, according to sort.
  */
 static int
-qucmp(a, b)
-	const void *a, *b;
+qucmp(const void *a, const void *b)
 {
 	struct hent *h1, *h2;
 	int r;
@@ -421,8 +414,7 @@ qucmp(a, b)
  * Perform lookup for printer name or abbreviation --
  */
 static int
-chkprinter(s)
-	const char *s;
+chkprinter(const char *s)
 {
 	int stat;
 
@@ -449,7 +441,7 @@ chkprinter(s)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	  "usage: pac [-Pprinter] [-pprice] [-s] [-c] [-r] [-m] [user ...]\n");

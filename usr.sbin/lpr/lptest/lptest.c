@@ -1,4 +1,4 @@
-/*	$NetBSD: lptest.c,v 1.7 1997/10/05 15:12:24 mrg Exp $	*/
+/*	$NetBSD: lptest.c,v 1.8 2002/07/14 15:28:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,22 +41,20 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lptest.c,v 1.7 1997/10/05 15:12:24 mrg Exp $");
+__RCSID("$NetBSD: lptest.c,v 1.8 2002/07/14 15:28:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <stdio.h>
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 /*
  * lptest -- line printer test program (and other devices).
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int len, count;
 	int i, j, fc, nc;

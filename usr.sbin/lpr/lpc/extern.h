@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1997/10/05 15:12:08 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2002/07/14 15:27:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,19 +41,19 @@
 
 
 __BEGIN_DECLS
-void	clean __P((int, char **));
-void	disable __P((int, char **));
-void	doabort __P((int, char **));
-void	down __P((int, char **));
-void	enable __P((int, char **));
-void	help __P((int, char **));
-void	quit __P((int, char **));
-void	restart __P((int, char **));
-void	startcmd __P((int, char **));
-void	status __P((int, char **));
-void	stop __P((int, char **));
-void	topq __P((int, char **));
-void	up __P((int, char **));
+void	clean(int, char **);
+void	disable(int, char **);
+void	doabort(int, char **);
+void	down(int, char **);
+void	enable(int, char **);
+void	help(int, char **);
+void	quit(int, char **);
+void	restart(int, char **);
+void	startcmd(int, char **);
+void	status(int, char **);
+void	stop(int, char **);
+void	topq(int, char **);
+void	up(int, char **);
 __END_DECLS
 
 extern int NCMDS;

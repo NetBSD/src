@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.13 2000/04/16 14:43:58 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.14 2002/07/14 15:27:59 wiz Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.13 2000/04/16 14:43:58 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.14 2002/07/14 15:27:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,28 +70,26 @@ __RCSID("$NetBSD: cmds.c,v 1.13 2000/04/16 14:43:58 mrg Exp $");
 
 extern uid_t	uid, euid;
 
-static void	abortpr __P((int));
-static void	cleanpr __P((void));
-static void	disablepr __P((void));
-static int	doarg __P((char *));
-static int	doselect __P((const struct dirent *));
-static void	enablepr __P((void));
-static void	prstat __P((void));
-static void	putmsg __P((int, char **));
-static int	sortq __P((const void *, const void *));
-static void	startpr __P((int));
-static void	stoppr __P((void));
-static int	touch __P((struct queue *));
-static void	unlinkf __P((char *));
-static void	upstat __P((char *));
+static void	abortpr(int);
+static void	cleanpr(void);
+static void	disablepr(void);
+static int	doarg(char *);
+static int	doselect(const struct dirent *);
+static void	enablepr(void);
+static void	prstat(void);
+static void	putmsg(int, char **);
+static int	sortq(const void *, const void *);
+static void	startpr(int);
+static void	stoppr(void);
+static int	touch(struct queue *);
+static void	unlinkf(char *);
+static void	upstat(char *);
 
 /*
  * kill an existing daemon and disable printing.
  */
 void
-doabort(argc, argv)
-	int argc;
-	char *argv[];
+doabort(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -129,8 +127,7 @@ doabort(argc, argv)
 }
 
 static void
-abortpr(dis)
-	int dis;
+abortpr(int dis)
 {
 	FILE *fp;
 	struct stat stbuf;
@@ -198,8 +195,7 @@ out:
  * Write a message into the status file.
  */
 static void
-upstat(msg)
-	char *msg;
+upstat(char *msg)
 {
 	int fd;
 	char statfile[MAXPATHLEN];
@@ -225,9 +221,7 @@ upstat(msg)
  * Remove all spool files and temporaries from the spooling area.
  */
 void
-clean(argc, argv)
-	int argc;
-	char *argv[];
+clean(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -266,8 +260,7 @@ clean(argc, argv)
 }
 
 static int
-doselect(d)
-	const struct dirent *d;
+doselect(const struct dirent *d)
 {
 	int c = d->d_name[0];
 
@@ -281,8 +274,7 @@ doselect(d)
  * by `cf', `tf', or `df', then by the sequence letter A-Z, a-z.
  */
 static int
-sortq(a, b)
-	const void *a, *b;
+sortq(const void *a, const void *b)
 {
 	const struct dirent **d1, **d2;
 	int c1, c2;
@@ -306,7 +298,7 @@ sortq(a, b)
  * Remove incomplete jobs from spooling area.
  */
 static void
-cleanpr()
+cleanpr(void)
 {
 	int i, n;
 	char *cp, *cp1, *lp;
@@ -363,8 +355,7 @@ cleanpr()
 }
  
 static void
-unlinkf(name)
-	char	*name;
+unlinkf(char *name)
 {
 	seteuid(euid);
 	if (unlink(name) < 0)
@@ -378,9 +369,7 @@ unlinkf(name)
  * Enable queuing to the printer (allow lpr's).
  */
 void
-enable(argc, argv)
-	int argc;
-	char *argv[];
+enable(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -419,7 +408,7 @@ enable(argc, argv)
 }
 
 static void
-enablepr()
+enablepr(void)
 {
 	struct stat stbuf;
 
@@ -447,9 +436,7 @@ enablepr()
  * Disable queuing.
  */
 void
-disable(argc, argv)
-	int argc;
-	char *argv[];
+disable(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -488,7 +475,7 @@ disable(argc, argv)
 }
 
 static void
-disablepr()
+disablepr(void)
 {
 	int fd;
 	struct stat stbuf;
@@ -525,9 +512,7 @@ disablepr()
  * (reason for being down).
  */
 void
-down(argc, argv)
-	int argc;
-	char *argv[];
+down(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -564,9 +549,7 @@ down(argc, argv)
 }
 
 static void
-putmsg(argc, argv)
-	int argc;
-	char **argv;
+putmsg(int argc, char **argv)
 {
 	int fd;
 	char *cp1, *cp2;
@@ -636,9 +619,7 @@ putmsg(argc, argv)
  * Exit lpc
  */
 void
-quit(argc, argv)
-	int argc;
-	char *argv[];
+quit(int argc, char *argv[])
 {
 	exit(0);
 }
@@ -647,9 +628,7 @@ quit(argc, argv)
  * Kill and restart the daemon.
  */
 void
-restart(argc, argv)
-	int argc;
-	char *argv[];
+restart(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -693,9 +672,7 @@ restart(argc, argv)
  * Enable printing on the specified printer and startup the daemon.
  */
 void
-startcmd(argc, argv)
-	int argc;
-	char *argv[];
+startcmd(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -734,8 +711,7 @@ startcmd(argc, argv)
 }
 
 static void
-startpr(enable)
-	int enable;
+startpr(int enable)
 {
 	struct stat stbuf;
 
@@ -767,9 +743,7 @@ startpr(enable)
  * Print the status of each queue listed or all the queues.
  */
 void
-status(argc, argv)
-	int argc;
-	char *argv[];
+status(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -807,7 +781,7 @@ status(argc, argv)
  * Print the status of the printer queue.
  */
 static void
-prstat()
+prstat(void)
 {
 	struct stat stbuf;
 	int fd, i;
@@ -873,9 +847,7 @@ prstat()
  * printing.
  */
 void
-stop(argc, argv)
-	int argc;
-	char *argv[];
+stop(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;
@@ -914,7 +886,7 @@ stop(argc, argv)
 }
 
 static void
-stoppr()
+stoppr(void)
 {
 	int fd;
 	struct stat stbuf;
@@ -958,9 +930,7 @@ time_t	mtime;
  * Put the specified jobs at the top of printer queue.
  */
 void
-topq(argc, argv)
-	int argc;
-	char *argv[];
+topq(int argc, char *argv[])
 {
 	int i;
 	struct stat stbuf;
@@ -1031,8 +1001,7 @@ out:
  * the control file.
  */
 static int
-touch(q)
-	struct queue *q;
+touch(struct queue *q)
 {
 	struct timeval tvp[2];
 	int ret;
@@ -1050,8 +1019,7 @@ touch(q)
  * Returns:  negative (-1) if argument name is not in the queue.
  */
 static int
-doarg(job)
-	char *job;
+doarg(char *job)
 {
 	struct queue **qq;
 	int jobnum, n;
@@ -1122,9 +1090,7 @@ doarg(job)
  * Enable everything and start printer (undo `down').
  */
 void
-up(argc, argv)
-	int argc;
-	char *argv[];
+up(int argc, char *argv[])
 {
 	int c, status;
 	char *cp1, *cp2;

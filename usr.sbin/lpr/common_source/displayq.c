@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.23 2002/06/08 23:37:47 itojun Exp $	*/
+/*	$NetBSD: displayq.c,v 1.24 2002/07/14 15:27:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.23 2002/06/08 23:37:47 itojun Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.24 2002/07/14 15:27:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ static long	totsize;	/* total print job size in bytes */
 static const char head0[] = "Rank   Owner      Job  Files";
 static const char head1[] = "Total Size\n";
 
-static	void	alarmer __P((int));
+static	void	alarmer(int);
 
 int wait_time = 300;	/* time out after 5 minutes by default */
 
@@ -95,8 +95,7 @@ int wait_time = 300;	/* time out after 5 minutes by default */
  * Display the current state of the queue. Format = 1 if long format.
  */
 void
-displayq(format)
-	int format;
+displayq(int format)
 {
 	struct queue *q;
 	int i, nitems, fd, ret;
@@ -289,8 +288,7 @@ displayq(format)
 }
 
 static void
-alarmer(s)
-	int s;
+alarmer(int s)
 {
 	/* nothing */
 }
@@ -299,7 +297,7 @@ alarmer(s)
  * Print a warning message if there is no daemon present.
  */
 void
-nodaemon()
+nodaemon(void)
 {
 	if (remote)
 		printf("\n%s: ", host);
@@ -311,7 +309,7 @@ nodaemon()
  * Print the header for the short listing format
  */
 void
-header()
+header(void)
 {
 	printf(head0);
 	col = strlen(head0)+1;
@@ -320,8 +318,7 @@ header()
 }
 
 void
-inform(cf)
-	char *cf;
+inform(char *cf)
 {
 	int j;
 	FILE *cfp;
@@ -385,8 +382,7 @@ inform(cf)
 }
 
 int
-inlist(name, file)
-	char *name, *file;
+inlist(char *name, char *file)
 {
 	int *r, n;
 	char **u, *cp;
@@ -411,9 +407,7 @@ inlist(name, file)
 }
 
 void
-show(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+show(char *nfile, char *file, int copies)
 {
 	if (strcmp(nfile, " ") == 0)
 		nfile = "(standard input)";
@@ -427,8 +421,7 @@ show(nfile, file, copies)
  * Fill the line with blanks to the specified column
  */
 void
-blankfill(n)
-	int n;
+blankfill(int n)
 {
 	while (col++ < n)
 		putchar(' ');
@@ -438,9 +431,7 @@ blankfill(n)
  * Give the abbreviated dump of the file names
  */
 void
-dump(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+dump(char *nfile, char *file, int copies)
 {
 	short n, fill;
 	struct stat lbuf;
@@ -473,9 +464,7 @@ dump(nfile, file, copies)
  * Print the long info about the file
  */
 void
-ldump(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+ldump(char *nfile, char *file, int copies)
 {
 	struct stat lbuf;
 
@@ -496,8 +485,7 @@ ldump(nfile, file, copies)
  *   update col for screen management
  */
 void
-prank(n)
-	int n;
+prank(int n)
 {
 	char rline[100];
 	static char *r[] = {
