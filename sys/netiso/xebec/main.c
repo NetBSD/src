@@ -1,4 +1,5 @@
-/* $Id: main.c,v 1.3 1994/03/29 10:16:52 glass Exp $ */
+/* $Id: main.c,v 1.4 1994/05/13 06:10:23 mycroft Exp $ */
+
 /*
  * TODO:
  * rewrite the command line stuff altogether - it's kludged beyond
@@ -87,7 +88,8 @@ register char *proto;
 	X = fopen(X/**/_name, "w");\
 	if((X)==(FILE *)0)\
 	{ fprintf(stderr,"Open failed: %s\n", "X"); Exit(-1); }\
-	fprintf(X, "/* %cId%c */\n",'$', '$' );
+	fprintf(X, "/* %cHeader%c */\n",'$', '$' );\
+	fprintf(X, "/* %cSource%c */\n",'$', '$' );
 
 	DOIT(eventfile_h);
 
@@ -313,7 +315,6 @@ char *argv[];
 	init_alloc();
 
 	(void) llparse();
-
 
 	/* {{ */
 	if( !FirstEventAttribute )

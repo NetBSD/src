@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_output.c	7.8 (Berkeley) 12/16/90
- *	$Id: ns_output.c,v 1.4 1994/01/20 18:17:02 deraadt Exp $
+ *	from: @(#)ns_output.c	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_output.c,v 1.5 1994/05/13 06:11:21 mycroft Exp $
  */
 
 #include <sys/param.h>
