@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.5 2000/12/29 08:12:08 sato Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6 2001/01/04 07:43:37 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -179,11 +179,18 @@ hpcapm_hook(ctx, type, id, msg)
 	struct apmhpc_softc *sc;
 	int s;
 	int charge;
+	int message;
 
 	sc = ctx;
 
 	if (type != CONFIG_HOOK_PMEVENT)
 		return 1; 
+
+	if (CONFIG_HOOK_VALUEP(msg))
+		message = (int)msg;
+	else
+		message = *(int *)msg;
+
 	s = splhigh();
 	switch (id) {
 	case CONFIG_HOOK_PMEVENT_STANDBYREQ:
@@ -202,7 +209,7 @@ hpcapm_hook(ctx, type, id, msg)
 		}
 		break;
 	case CONFIG_HOOK_PMEVENT_BATTERY: 
-		switch (*(int *)msg) {
+		switch (message) {
 		case CONFIG_HOOK_BATT_CRITICAL:
 			DPRINTF(("hpcapm: battery state critical\n"));
 			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
@@ -251,7 +258,7 @@ hpcapm_hook(ctx, type, id, msg)
 		}
 		break;
 	case CONFIG_HOOK_PMEVENT_AC:
-		switch (*(int *)msg) {
+		switch (message) {
 		case CONFIG_HOOK_AC_OFF:
 			DPRINTF(("hpcapm: ac not connect\n"));
 			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
