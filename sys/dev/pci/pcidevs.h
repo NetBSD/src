@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.622 2004/05/10 06:20:39 gendalia Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.623 2004/05/10 23:30:40 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.622 2004/05/10 06:18:53 gendalia Exp 
+ *	NetBSD: pcidevs,v 1.623 2004/05/10 23:29:40 lukem Exp 
  */
 
 /*
@@ -2100,6 +2100,7 @@
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800	0x0280		/* GeForce4 Ti 4800 */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X	0x0281		/* GeForce4 Ti 4200 (AGP8X) */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE	0x0282		/* GeForce4 Ti 4800 SE */
+#define	PCI_PRODUCT_NVIDIA_GF4_TI_4200_GO	0x0286		/* GeForce4 Ti 4200 Go AGP 8x */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL	0x0288		/* Quadro4 980 XGL */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL	0x0289		/* Quadro4 780 XGL */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U	0x0301		/* GeForce FX 5800 Ultra */
