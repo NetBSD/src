@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.18 2001/11/03 13:35:39 lukem Exp $ */
+/* $NetBSD: dir.c,v 1.18.2.1 2004/05/11 12:25:26 tron Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.18 2001/11/03 13:35:39 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.18.2.1 2004/05/11 12:25:26 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -684,7 +684,7 @@ dcanon(Char *cp, Char *p)
 	    *--sp = 0;		/* form the pathname for readlink */
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
-			       sizeof tlink)) >= 0) {
+			       sizeof(tlink) - 1)) >= 0) {
 		(void)Strcpy(slink, str2short(tlink));
 		slink[cc] = '\0';
 
@@ -767,7 +767,7 @@ dcanon(Char *cp, Char *p)
 
 	    if (sp != cp && adrof(STRchase_symlinks) &&
 		!adrof(STRignore_symlinks) &&
-		(cc = readlink(short2str(cp), tlink, sizeof(tlink))) >= 0) {
+		(cc = readlink(short2str(cp), tlink, sizeof(tlink)-1)) >= 0) {
 		(void)Strcpy(slink, str2short(tlink));
 		slink[cc] = '\0';
 
