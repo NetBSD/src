@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.3 1997/02/11 08:15:08 mrg Exp $	*/
+/*	$NetBSD: k5login.c,v 1.4 1997/08/16 13:50:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-static char rcsid[] = "$NetBSD: k5login.c,v 1.3 1997/02/11 08:15:08 mrg Exp $";
+__RCSID("$NetBSD: k5login.c,v 1.4 1997/08/16 13:50:44 lukem Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
