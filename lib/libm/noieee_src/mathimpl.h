@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.2 1997/10/20 14:11:35 ragge Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <math.h>
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 
 /* Deal with different ways to concatenate in cpp */
 #  ifdef __STDC__

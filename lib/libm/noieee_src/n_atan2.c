@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $        */
+/*      $NetBSD: n_atan2.c,v 1.2 1998/10/20 02:26:09 matt Exp $        */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -180,10 +180,10 @@ double  y,x;
 	double t,z,signy,signx,hi,lo;
 	int k,m;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
     /* if x or y is NAN */
 	if(x!=x) return(x); if(y!=y) return(y);
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 
     /* copy down the sign of y and x */
 	signy = copysign(one,y) ;  
