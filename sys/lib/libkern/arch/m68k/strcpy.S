@@ -1,5 +1,3 @@
-/*	$NetBSD: strcpy.S,v 1.2 1994/10/26 06:39:35 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,19 +37,17 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-#ifdef notdef
-	.asciz "@(#)strcpy.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$NetBSD: strcpy.S,v 1.2 1994/10/26 06:39:35 cgd Exp $"
+	/*.asciz "from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: strcpy.S,v 1.3 1995/02/08 18:35:54 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(strcpy)
-	movl	sp@(8),a0		/* a0 = fromaddr */
-	movl	sp@(4),d0		/* return value is toaddr */
-	movl	d0,a1			/* a1 = toaddr */
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(4),d0		| return value is toaddr
+	movl	d0,a1			| a1 = toaddr
 scloop:
-	movb	a0@+,a1@+		/* copy a byte */
-	jne	scloop			/* copied non-null, keep going */
+	movb	a0@+,a1@+		| copy a byte
+	bne	scloop			| copied non-null, keep going
 	rts

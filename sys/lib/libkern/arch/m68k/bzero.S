@@ -1,5 +1,3 @@
-/*	$NetBSD: bzero.S,v 1.2 1994/10/26 06:39:25 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,10 +37,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-#ifdef notdef
-	.asciz "@(#)bzero.s	5.1 (Berkeley) 5/12/90"
-#endif
-	.asciz "$NetBSD: bzero.S,v 1.2 1994/10/26 06:39:25 cgd Exp $"
+	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: bzero.S,v 1.3 1995/02/08 18:35:51 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -57,28 +53,28 @@
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
 ENTRY(bzero)
-	movl	sp@(4),a0	/* destination */
-	movl	sp@(8),d0	/* count */
-	jeq	bzdone		/* nothing to do */
+	movl	sp@(4),a0		| destination
+	movl	sp@(8),d0		| count
+	beq	bzdone			| nothing to do
 	movl	a0,d1
-	btst	#0,d1		/* address odd? */
-	jeq	bzeven		/* no, skip alignment */
-	clrb	a0@+		/* yes, clear a byte */
-	subql	#1,d0		/* adjust count */
-	jeq	bzdone		/* if zero, all done */
+	btst	#0,d1			| address odd?
+	beq	bzeven			| no, skip alignment
+	clrb	a0@+			| yes, clear a byte
+	subql	#1,d0			| adjust count
+	beq	bzdone			| if zero, all done
 bzeven:
 	movl	d0,d1
-	lsrl	#2,d1		/* convert to longword count */
-	jeq	bzbloop		/* no longwords, skip loop */
+	lsrl	#2,d1			| convert to longword count
+	beq	bzbloop			| no longwords, skip loop
 bzlloop:
-	clrl	a0@+		/* clear a longword */
-	subql	#1,d1		/* adjust count */
-	jne	bzlloop		/* still more, keep going */
-	andl	#3,d0		/* what remains */
-	jeq	bzdone		/* nothing, all done */
+	clrl	a0@+			| clear a longword
+	subql	#1,d1			| adjust count
+	bne	bzlloop			| still more, keep going
+	andl	#3,d0			| what remains
+	beq	bzdone			| nothing, all done
 bzbloop:
-	clrb	a0@+		/* clear a byte */
-	subql	#1,d0		/* adjust count */
-	jne	bzbloop		/* still more, keep going */
+	clrb	a0@+			| clear a byte
+	subql	#1,d0			| adjust count
+	bne	bzbloop			| still more, keep going
 bzdone:
 	rts
