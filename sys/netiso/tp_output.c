@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.19.6.1 2001/03/05 22:49:58 nathanw Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.19.6.2 2001/03/13 20:29:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -395,7 +395,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	struct socket  *so;
 	struct mbuf   **mp;
 {
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
 	int             s = splsoftnet();
 	caddr_t         value;

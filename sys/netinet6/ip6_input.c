@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.1 2001/03/05 22:49:57 nathanw Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.2 2001/03/13 20:29:50 nathanw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
 
 /*
@@ -979,7 +979,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 	int privileged;
 
 	privileged = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.1 2001/03/05 22:49:58 nathanw Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.2 2001/03/13 20:29:51 nathanw Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ rip6_output(m, va_alist)
 
 	priv = 0;
     {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
 
 	if (p && !suser(p->p_ucred, &p->p_acflag))
 		priv = 1;
