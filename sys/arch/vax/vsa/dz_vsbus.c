@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.29 2002/10/02 16:02:37 thorpej Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.30 2002/12/29 20:12:19 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -213,10 +213,11 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 int
 dzcngetc(dev_t dev)
 {
-	int c = 0;
+	int c = 0, s;
 	int mino = minor(dev);
 	u_short rbuf;
 
+	s = spltty();
 	do {
 		while ((dz->csr & 0x80) == 0)
 			; /* Wait for char */
@@ -225,6 +226,7 @@ dzcngetc(dev_t dev)
 			continue;
 		c = rbuf & 0x7f;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
+	splx(s);
 
 	if (c == 13)
 		c = 10;
@@ -287,11 +289,13 @@ dzcnputc(dev_t dev, int	ch)
 {
 	int timeout = 1<<15;            /* don't hang the machine! */
 	int mino = minor(dev);
+	int s;
 	u_short tcr;
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
 
+	s = spltty();
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
@@ -305,6 +309,7 @@ dzcnputc(dev_t dev, int	ch)
 			break;
 
 	dz->tcr = tcr;
+	splx(s);
 }
 
 void 
@@ -323,13 +328,17 @@ int
 dzgetc(struct dz_linestate *ls)
 {
 	int line = ls->dz_line;
+	int s;
 	u_short rbuf;
 
+	s = spltty();
 	for (;;) {
 		for(; (dz->csr & DZ_CSR_RX_DONE) == 0;);
 		rbuf = dz->rbuf;
-		if (((rbuf >> 8) & 3) == line)
+		if (((rbuf >> 8) & 3) == line) {
+			splx(s);
 			return (rbuf & 0xff);
+		}
 	}
 }
 

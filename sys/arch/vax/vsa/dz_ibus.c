@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.29 2002/10/02 16:02:36 thorpej Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.30 2002/12/29 20:12:19 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -151,10 +151,11 @@ int
 idzcngetc(dev) 
 	dev_t dev;
 {
-	int c = 0;
+	int c = 0, s;
 	int mino = minor(dev);
 	u_short rbuf;
 
+	s = spltty();
 	do {
 		while ((idz->csr & 0x80) == 0)
 			; /* Wait for char */
@@ -163,6 +164,7 @@ idzcngetc(dev)
 			continue;
 		c = rbuf & 0x7f;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
+	splx(s);
 
 	if (c == 13)
 		c = 10;
@@ -213,10 +215,12 @@ idzcnputc(dev,ch)
 	int timeout = 1<<15;		/* don't hang the machine! */
 	int mino = minor(dev);
 	u_short tcr;
+	int s;
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
 
+	s = spltty();
 	tcr = idz->tcr; /* remember which lines to scan */
 	idz->tcr = (1 << mino);
 
@@ -230,6 +234,7 @@ idzcnputc(dev,ch)
 			break;
 
 	idz->tcr = tcr;
+	splx(s);
 }
 
 void    
