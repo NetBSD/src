@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.1.2.2 2002/05/30 07:14:40 gehenna Exp $
+#	$NetBSD: majors.acorn32,v 1.1.2.3 2002/07/09 05:11:58 gehenna Exp $
 #
 # Device majors for acorn32
 #
@@ -65,3 +65,4 @@ device-major	isdnbchan	char 81			isdnbchan
 device-major	isdntrc		char 82			isdntrc
 device-major	isdntel		char 83			isdntel
 device-major	clockctl	char 84			clockctl
+device-major	systrace	char 85			systrace
