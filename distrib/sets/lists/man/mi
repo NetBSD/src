@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.178 1999/12/08 09:46:01 soren Exp $
+# $NetBSD: mi,v 1.179 1999/12/08 10:04:17 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1501,6 +1501,7 @@
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
+./usr/share/man/man5/newsyslog.conf.5
 ./usr/share/man/man5/nsswitch.conf.5
 ./usr/share/man/man5/passwd.5
 ./usr/share/man/man5/phones.5
