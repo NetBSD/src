@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.29 1993/08/17 17:00:39 mycroft Exp $
+#	$Id: bsd.prog.mk,v 1.30 1993/10/07 01:35:30 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -12,9 +12,7 @@ CFLAGS+=	${COPTS}
 LIBCRT0?=	/usr/lib/crt0.o
 LIBC?=		/usr/lib/libc.a
 LIBCOMPAT?=	/usr/lib/libcompat.a
-.ifndef EXPORTABLE_SYSTEM
 LIBCRYPT?=	/usr/lib/libcrypt.a
-.endif
 LIBCURSES?=	/usr/lib/libcurses.a
 LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
