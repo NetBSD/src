@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181 2001/10/09 05:19:04 enami Exp $
+#	$NetBSD: Makefile,v 1.182 2001/10/10 06:58:56 chs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -28,6 +28,7 @@
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
 #	INSTALL_DONE is set, it will not do a `make install.'
+#	if DISTRIBUTION_DONE is set, it will not do anything.
 #    distrib-dirs: creates an empty NetBSD directory tree in DESTDIR.
 #	Called by distribution.
 #    snapshot: calls distribution, above, and then tars up the files
@@ -152,6 +153,7 @@ snap_md_post: __warndestdir
 .endif
 .else
 distribution: distrib-dirs
+.if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	(cd ..; ${MAKE} _DISTRIB= includes)
 	(cd ..; ${MAKE} _DISTRIB= install)
@@ -269,6 +271,7 @@ distribution: distrib-dirs
 .endif
 .ifndef NO_SENDMAIL
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+.endif
 .endif
 
 distrib-dirs:
