@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.21 2000/08/25 04:48:56 hubertf Exp $
+.\"	$NetBSD: systat.1,v 1.22 2001/05/06 23:48:32 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,13 +66,13 @@ input and error messages.
 By default
 .Nm
 displays the processes getting the largest percentage of the processor
-in the lower window.  Other displays show more detailed process information, 
+in the lower window.  Other displays show more detailed process information,
 swap space usage, disk
 .Tn I/O
 statistics (a la
 .Xr iostat  8  ) ,
 virtual memory statistics (a la
-.Xr vmstat  8  ) ,
+.Xr vmstat  1  ) ,
 network ``mbuf'' utilization, and network connections (a la
 .Xr netstat  1  ) .
 .Pp
@@ -90,7 +90,7 @@ Extract values associated with the name list from
 instead of the default
 .Pa /dev/mem .
 .It Fl N Ar system
-Extracr the name list from
+Extract the name list from
 .Ar system
 instead of the default
 .Pa /netbsd .
@@ -208,7 +208,7 @@ option, number of refresh-turns can be changed with the
 option.
 .It Ic bufcache
 Display, in the lower window, statistics about the file system buffers.
-Statistics for each filesytem that has active buffers include the number
+Statistics for each filesystem that has active buffers include the number
 of buffers for that file system, the number of active kilobytes in those
 buffers and the total size of the buffers for that filesystem.
 .It Ic inet.icmp
@@ -218,7 +218,7 @@ Display IPv4 and UDP statistics.
 .It Ic inet.tcp
 Display TCP statistics.
 .It Ic inet.tcpsyn
-Display statistics about the 
+Display statistics about the
 .Tn TCP
 ``syncache''.
 .It Ic inet6.ip6
@@ -244,7 +244,7 @@ display; the minimum unambiguous prefix may be supplied.
 .Bl -tag -width Fl -compact
 .It Cm numbers
 Show the disk
-.Tn I/O 
+.Tn I/O
 statistics in numeric form.  Values are
 displayed in numeric columns which scroll downward.
 .It Cm bars
@@ -334,12 +334,12 @@ If
 is specified as `+', processes owned by any user are displayed (default).
 .El
 .It Ic swap
-Show information about swap space usage on all the 
+Show information about swap space usage on all the
 swap areas configured with
 .Xr swapctl 8 .
 The first column is the device name of the partition.
 The next column is the total space available in the partition.
-The 
+The
 .Ar Used
 column indicates the total blocks used so far;
 the graph shows the percentage of space in use on each partition.
@@ -349,7 +349,7 @@ Areas known to the kernel, but not in use are shown as not available.
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
-device interrupts, system name translation cacheing, disk
+device interrupts, system name translation caching, disk
 .Tn I/O
 etc.
 .Pp
@@ -512,9 +512,9 @@ uses is obtained from
 .Xr netstat 1 ,
 .Xr ps 1 ,
 .Xr top 1 ,
-.Xr iostat 8 , 
-.Xr pstat 8 ,
-.Xr vmstat 8
+.Xr vmstat 1 ,
+.Xr iostat 8 ,
+.Xr pstat 8
 .Sh HISTORY
 The
 .Nm

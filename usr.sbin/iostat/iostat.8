@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.14 1999/03/22 18:43:57 garbled Exp $
+.\"	$NetBSD: iostat.8,v 1.15 2001/05/06 23:48:33 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@ displays kernel
 statistics on terminal, disk and cpu operations.  By default,
 .Nm
 displays one line of statistics averaged over the machine's run time.
-The use of 
+The use of
 .Fl c
 presents successive lines averaged over the
 .Ar wait
@@ -116,7 +116,7 @@ Extract the name list from the specified system instead of the default
 Show tty statistics.  This is enabled by default unless the
 .Fl C ,
 .Fl d ,
-or 
+or
 .Fl D
 flags are used.
 .It Fl w
@@ -127,7 +127,7 @@ If no repeat
 .Ar count
 is specified, the default is infinity.
 .It Fl x
-Show extended disk statisics.
+Show extended disk statistics.
 Each disk is displayed on a line of its own with all available
 statistics.
 This option overrides all other display options, and all
@@ -146,7 +146,7 @@ characters read from terminals
 characters written to terminals
 .El
 .It disks
-Disk operations. 
+Disk operations.
 The header of the field is the disk name and unit number.
 If more than four disk drives are configured in the system,
 .Nm
@@ -201,8 +201,8 @@ Default memory file.
 .Xr nfsstat 1 ,
 .Xr \&ps 1 ,
 .Xr systat 1 ,
-.Xr pstat 8 ,
-.Xr vmstat 8
+.Xr vmstat 1 ,
+.Xr pstat 8
 .Pp
 The sections starting with ``Interpreting system activity'' in
 .%T "Installing and Operating 4.3BSD" .

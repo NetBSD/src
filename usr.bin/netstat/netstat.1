@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.28 2001/01/27 04:49:35 itojun Exp $
+.\"	$NetBSD: netstat.1,v 1.29 2001/05/06 23:48:32 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -114,7 +114,7 @@ With either interface display (option
 .Fl i
 or an interval, as described below),
 show the number of dropped packets.
-.It Fl f Ar address_family 
+.It Fl f Ar address_family
 Limit statistics or address control block reports to those
 of the specified
 .Ar address family  .
@@ -150,7 +150,7 @@ By default, show the IP Multicast virtual-interface and routing tables.
 If the
 .Fl s
 option is also present, show multicast routing statistics.
-.It Fl I Ar interface 
+.It Fl I Ar interface
 Show information about the specified interface;
 used with a
 .Ar wait
@@ -163,10 +163,10 @@ option) or the
 .Fl p Ar protocol
 option is present, show per-interface statistics on the
 .Ar interface
-for the specfied
+for the specified
 .Ar address_family
 or
-.Ar protocol,
+.Ar protocol ,
 respectively.
 .It Fl i
 Show the state of interfaces which have been auto-configured
@@ -185,10 +185,10 @@ option (with the
 option) or the
 .Fl p Ar protocol
 option is present, show per-interface statistics on all interfaces
-for the specfied
+for the specified
 .Ar address_family
 or
-.Ar protocol,
+.Ar protocol ,
 respectively.
 .It Fl L
 Don't show link-level routes (e.g., IPv4 ARP or IPv6 neighbour cache).
@@ -217,7 +217,7 @@ This address may be obtained using the
 flag.  The default protocol is TCP, but may be overridden using the
 .Fl p
 flag.
-.It Fl p Ar protocol 
+.It Fl p Ar protocol
 Show statistics about
 .Ar protocol  ,
 which is either a well-known name for a protocol or an alias for it.  Some
@@ -285,19 +285,19 @@ and
 manual pages.
 The mapping between letters and flags is:
 .Bl -column XXXX RTF_BLACKHOLE
-1	RTF_PROTO2	Protocol specific routing flag #1 
-2	RTF_PROTO1	Protocol specific routing flag #2 
-B	RTF_BLACKHOLE	Just discard pkts (during updates) 
-C	RTF_CLONING	Generate new routes on use 
+1	RTF_PROTO2	Protocol specific routing flag #1
+2	RTF_PROTO1	Protocol specific routing flag #2
+B	RTF_BLACKHOLE	Just discard pkts (during updates)
+C	RTF_CLONING	Generate new routes on use
 c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
-D	RTF_DYNAMIC	Created dynamically (by redirect) 
+D	RTF_DYNAMIC	Created dynamically (by redirect)
 G	RTF_GATEWAY	Destination requires forwarding by intermediary
-H	RTF_HOST	Host entry (net otherwise) 
+H	RTF_HOST	Host entry (net otherwise)
 L	RTF_LLINFO	Valid protocol to link address translation.
-M	RTF_MODIFIED	Modified dynamically (by redirect) 
-R	RTF_REJECT	Host or net unreachable 
-S	RTF_STATIC	Manually added 
-U	RTF_UP	Route usable 
+M	RTF_MODIFIED	Modified dynamically (by redirect)
+R	RTF_REJECT	Host or net unreachable
+S	RTF_STATIC	Manually added
+U	RTF_UP	Route usable
 X	RTF_XRESOLVE	External daemon translates proto to link address
 .El
 .Pp
@@ -312,7 +312,7 @@ to the same destination.
 The use field provides a count of the number of packets
 sent using that route.  The mtu entry shows the mtu associated with
 that route.  This mtu value is used as the basis for the TCP maximum
-segment size.  The 'L' flag appended to the mtu value indicates that 
+segment size.  The 'L' flag appended to the mtu value indicates that
 the value is locked, and that path mtu discovery is turned off for
 that route.
 A
@@ -343,14 +343,14 @@ accumulated over the preceding interval.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
+.Xr vmstat 1 ,
 .Xr hosts 5 ,
 .Xr networks 5 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
-.Xr trpt 8 ,
-.Xr trsp 8 ,
 .Xr iostat 8 ,
-.Xr vmstat 8
+.Xr trpt 8 ,
+.Xr trsp 8
 .Sh HISTORY
 The
 .Nm
