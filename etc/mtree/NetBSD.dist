@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.223 2003/04/04 07:53:12 jdolecek Exp $
+#	$NetBSD: NetBSD.dist,v 1.224 2003/04/09 20:17:06 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -696,6 +696,7 @@
 ./usr/share/nls
 ./usr/share/nls/C
 ./usr/share/nls/Pig
+./usr/share/nls/ca
 ./usr/share/nls/cs
 ./usr/share/nls/de
 ./usr/share/nls/es
