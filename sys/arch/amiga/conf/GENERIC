@@ -1,4 +1,4 @@
-#	$Id: GENERIC,v 1.1 1994/03/14 01:02:47 chopps Exp $
+#	$Id: GENERIC,v 1.2 1994/04/12 15:44:30 chopps Exp $
 
 machine		"amiga"
 #cpu		"M68020"
@@ -48,7 +48,7 @@ options		GRF_NTSC
 options		GRF_PAL
 options		"GRF_A2024"
 
-config		vmunix swap generic
+config		netbsd swap generic
 
 # scsi controllers.
 master		a3000scsi0	at manufacturer	1	product	1

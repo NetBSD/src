@@ -1,4 +1,4 @@
-#	$Id: ZEUSONLY,v 1.3 1994/03/09 21:21:44 ws Exp $
+#	$Id: ZEUSONLY,v 1.4 1994/04/12 15:44:33 chopps Exp $
 
 machine		"amiga"
 cpu		"M68040"
@@ -56,8 +56,8 @@ options		GENERIC
 #options		KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
 options		"PPP_OUTQ_SIZE=4096"
 
-#config		vmunix root on sd6a swap on sd6b
-config		vmunix swap generic
+#config		netbsd root on sd6a swap on sd6b
+config		netbsd swap generic
 
 # manufacturer 1 is a pseudo and stands for `builtin'
 #master		a3000scsi0	at manufacturer	1	product	1

@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.13 1994/03/28 07:55:57 chopps Exp $
+#	$Id: Makefile.amiga,v 1.14 1994/04/12 15:44:31 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -94,7 +94,7 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean:
-	rm -f eddep *vmunix tags *.o locore.i [a-z]*.s \
+	rm -f eddep *netbsd tags *.o locore.i [a-z]*.s \
 		Errs errs linterrs makelinks
 
 lint: /tmp param.c
