@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.9 1995/08/04 02:55:06 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.10 1995/08/11 17:48:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -54,6 +54,9 @@ extern int	grfiv_mode __P((struct grf_softc *sc, int cmd, void *arg));
 
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
+extern long		videorowbytes;
+extern long		videobitdepth;
+extern unsigned long	videosize;
 
 extern int
 grfiv_probe(sc, slotinfo)
@@ -93,14 +96,14 @@ grfiv_init(sc)
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
-	gm->psize = 1;
+	gm->psize = videobitdepth;
 	gm->ptype = 0;
-	gm->width = 640;	/* XXX */
-	gm->height = 480;	/* XXX */
-	gm->rowbytes = 80;	/* XXX Hack */
+	gm->width = videosize & 0xffff;
+	gm->height = (videosize >> 16) & 0xffff;
+	gm->rowbytes = videorowbytes;
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
-	gm->fbsize = gm->width * gm->height;
+	gm->fbsize = gm->rowbytes * gm->height;
 	gm->fbbase = (caddr_t) mac68k_vidlog;
 	gm->fboff = 0;
 
