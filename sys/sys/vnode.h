@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.114 2003/07/30 12:09:47 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.115 2003/07/30 12:10:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,7 +94,6 @@ struct vnode {
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
-	u_long		v_id;			/* capability identifier */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op) __P((void *));	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */

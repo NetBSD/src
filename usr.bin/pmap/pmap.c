@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2003/07/15 05:59:58 itojun Exp $ */
+/*	$NetBSD: pmap.c,v 1.18 2003/07/30 12:11:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.17 2003/07/15 05:59:58 itojun Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.18 2003/07/30 12:11:43 yamt Exp $");
 #endif
 
 #include <string.h>
@@ -790,28 +790,25 @@ search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 	char *o, *e;
 	struct cache_entry *ce;
 	struct kbit svp;
-	u_long cid;
 
 	if (nchashtbl == NULL)
 		load_name_cache(kd);
 
 	P(&svp) = P(vp);
 	S(&svp) = sizeof(struct vnode);
-	cid = D(vp, vnode)->v_id;
 
 	e = &buf[blen - 1];
 	o = e;
 	do {
 		LIST_FOREACH(ce, &lcache, ce_next)
-			if (ce->ce_vp == P(&svp) && ce->ce_cid == cid)
+			if (ce->ce_vp == P(&svp))
 				break;
-		if (ce && ce->ce_vp == P(&svp) && ce->ce_cid == cid) {
+		if (ce && ce->ce_vp == P(&svp)) {
 			if (o != e)
 				*(--o) = '/';
 			o -= ce->ce_nlen;
 			memcpy(o, ce->ce_name, (unsigned)ce->ce_nlen);
 			P(&svp) = ce->ce_pvp;
-			cid = ce->ce_pcid;
 		}
 		else
 			break;
