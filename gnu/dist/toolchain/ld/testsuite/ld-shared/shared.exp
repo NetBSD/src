@@ -1,5 +1,5 @@
 # Expect script for ld-shared tests
-#   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation
+#   Copyright (C) 1994, 1995, 1996, 1997, 1998, 2001 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,6 +48,8 @@ if { ![istarget i386-*-sysv4*] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-sunos4*] \
      && ![istarget sparc*-*-linux*] \
+     && ![istarget arm*-*-linux*] \
+     && ![istarget alpha*-*-linux*] \
      && ![istarget rs6000*-*-aix*] \
      && ![istarget powerpc*-*-aix*] } {
     return
@@ -204,6 +206,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	# the load address is not zero (which is the default).
 	setup_xfail "*-*-sunos4*"
 	setup_xfail "*-*-linux*libc1"
+	setup_xfail "powerpc-*-linux*"
 	shared_test shnp "shared (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o shared \
 		"-T $srcdir/$subdir/elf-offset.ld"

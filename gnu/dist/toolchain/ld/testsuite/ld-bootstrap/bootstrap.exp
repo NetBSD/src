@@ -31,12 +31,17 @@ if ![isnative] {
 # really test -r.  Use ld1 to link a fresh ld, ld2.  Use ld2 to link a
 # new ld, ld3.  ld2 and ld3 should be identical.
 
-foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
-    if {"$flags" != ""} { 
+foreach flags {"" "strip" "--static" "--traditional-format" "--no-keep-memory"} {
+    set do_strip "no"
+    if {"$flags" == "strip"} { 
+	set testname "bootstrap with $flags"
+        set flags ""
+	set do_strip "yes"
+    } else { if {"$flags" != ""} { 
 	set testname "bootstrap with $flags"
     } else {
 	set testname "bootstrap"
-    }
+    }}
 
     # This test can only be run if we have the ld build directory,
     # since we need the object files.
@@ -66,6 +71,14 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
 	}
     }
 
+    # On FreeBSD, running static ELF binaries requires that they have their
+    # EI_OSABI set to a supported value.  There is no longer a fallback
+    # interpretation.
+    if {"$flags" == "--static"} {
+	setup_xfail "*-*-freebsd4*"
+	setup_xfail "*-*-freebsd5*"
+    }
+
     # On Irix 5, linking with --static only works if all the files are
     # compiled using -non_shared.
     if {"$flags" == "--static"} {
@@ -75,6 +88,16 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
     if ![ld_link $ld tmpdir/ld1 "$flags tmpdir/ld-partial.o $BFDLIB $LIBIBERTY"] {
 	fail $testname
 	continue
+    }
+
+    if {"$do_strip" == "yes"} { 
+	verbose -log "$strip tmpdir/ld1"     
+	catch "exec $strip tmpdir/ld1" exec_output
+	if ![string match "" $exec_output] then {
+	    verbose -log "$exec_output"
+	    fail $testname
+	    continue
+	}
     }
 
     if ![ld_link tmpdir/ld1 tmpdir/ld2 "$flags $OFILES $BFDLIB $LIBIBERTY"] {

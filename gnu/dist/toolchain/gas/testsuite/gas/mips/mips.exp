@@ -3,9 +3,9 @@
 #
 if [istarget mips*-*-*] then {
     set no_mips16 0
-    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] ]
+    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] || [istarget *-*-linux*] ]
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
-    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*]]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
     set ilocks [istarget mipstx39*-*-*]
     set gpr_ilocks [expr [istarget mipstx39*-*-*]]
     set addr32 [expr [istarget mipstx39*-*-*]]
@@ -88,6 +88,8 @@ if [istarget mips*-*-*] then {
     run_dump_test "mips4100"
     run_dump_test "lineno"
     run_dump_test "sync"
+    run_dump_test "mips32"
+    run_dump_test "mips64"
 
     # Make sure that -mcpu=FOO and -mFOO are equivalent.  Assemble a file
     # containing 4650-specific instructions with -m4650 and -mcpu=4650,

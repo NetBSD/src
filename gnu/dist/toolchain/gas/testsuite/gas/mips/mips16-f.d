@@ -22,7 +22,7 @@ OFFSET           TYPE              VALUE
 
 
 Contents of section \.text:
- 0000 65006500                             .*
+ 0000 65006500 65006500 65006500 65006500  .*
 Contents of section \.data:
 Contents of section \.reginfo:
  0000 00000001 00000000 00000000 00000000  .*
@@ -30,4 +30,4 @@ Contents of section \.reginfo:
 Contents of section \.mdebug:
 #...
 Contents of section foo:
- 0000 00000003                             .*
+ 0000 00000003 00000000 00000000 00000000  .*
