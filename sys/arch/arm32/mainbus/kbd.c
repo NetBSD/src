@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.8 1996/05/06 00:35:05 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.9 1996/05/16 19:32:25 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -1032,7 +1032,7 @@ retry:
 			break;
 		if (c == KBR_RESEND)
 			goto retry;
-		delay(100);
+		delay(1000);
 	}
 	if (i == 0)
 		return(2);
