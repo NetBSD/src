@@ -5,12 +5,19 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#  This has been tested on HP-UX 8.07 on 7xx series.
+#	Based on a Makefile for Dell SVR4 Issue 2.2 from Kimmo Suominen
+#	<kim@grendel.lut.fi> -- I haven't tested this myself.  It may
+#	work on other SVR4 ports.
 #
 
+# make sure the shell constructs below use the right shell
+SHELL=	/bin/sh
+
 # use O=-O (usual) or O=-g (debugging)
-# +O is OK on 7xx, and 300xx at 9.0
-O=	+O1
+O=	-O
+
+CC=	gcc
+#DESTDIR=/usr/local/sendmail
 
 # define the database mechanism used for alias lookups:
 #	-DNDBM -- use new DBM
@@ -19,34 +26,33 @@ O=	+O1
 # The really old (V7) DBM library is no longer supported.
 # See READ_ME for a description of how these flags interact.
 #
-DBMDEF=	-DNDBM -DNEWDB -DNIS
+DBMDEF=	-DNEWDB -DNDBM
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=	
+ENVDEF=	-D__svr4__
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=-I/usr/sww/include/db
+INCDIRS=
 
 # library directories
-LIBDIRS=-L/usr/sww/lib
+LIBDIRS=
 
 # libraries required on your system
-LIBS=	-ldb -ldbm
+LIBS=	-ldb -ldbm -lresolv -lsocket -lnsl -lelf
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
-BINDIR=	${DESTDIR}/usr/lib
+BINDIR=	${DESTDIR}/usr/ucblib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
-STDIR=	${DESTDIR}/usr/lib
+STDIR=	${DESTDIR}/usr/ucblib
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/usr/lib
+HFDIR=	${DESTDIR}/usr/ucblib
 
 # additional .o files needed
 OBJADD=
-
 
 ###################  end of user configuration flags  ######################
 
@@ -58,10 +64,11 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
 	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/bin/newaliases ${DESTDIR}/usr/bin/mailq
+LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
 BINGRP=	mail
 BINMODE=6555
+INSTALL=/usr/ucb/install
 
 ALL=	sendmail aliases.0 newaliases.0 sendmail.0
 
@@ -82,10 +89,11 @@ sendmail.0: sendmail.8
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	cpset sendmail ${BINDIR} ${BINMODE} ${BINOWN} ${BINGRP}
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	cpset /dev/null ${STDIR}/sendmail.st 644 ${BINOWN} ${BINGRP}
-	cpset sendmail.hf ${HFDIR} 444 ${BINOWN} ${BINGRP}
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	    ${STDIR}/sendmail.st
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 newaliases.0 sendmail.0
