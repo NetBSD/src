@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.4 2000/11/01 21:02:08 jdolecek Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.5 2000/11/21 12:28:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,11 +38,13 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
 
@@ -52,8 +54,12 @@
 
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_emuldata.h>
+#include <compat/linux/common/linux_exec.h>	/* for emul_linux */
 
 #include <compat/linux/linux_syscallargs.h>
+
+#include <lib/libkern/libkern.h>	/* for offsetof() */
 
 struct linux_reg {
 	long ebx;
@@ -63,17 +69,57 @@ struct linux_reg {
 	long edi;
 	long ebp;
 	long eax;
-	int  xds;
-	int  xes;
+	long xds, xes;	// unsigned short ds, __ds, es, __es;
+	long __fs, __gs;	// unsigned short fs, __fs, gs, __gs;
 	long orig_eax;
 	long eip;
-	int  xcs;
+	long xcs;	// unsigned short cs, __cs;
 	long eflags;
 	long esp;
-	int  xss;
+	long xss;	// unsigned short ss, __ss 
 };
 
-#define ISSET(t, f)	((t) & (f))
+/* structure used for storing floating point context */
+struct linux_fpreg {
+  long cwd;
+  long swd;
+  long twd;
+  long fip;
+  long fcs;
+  long foo;
+  long fos;
+  long st_space [20];
+};
+
+/* user struct for linux process - this is used for Linux ptrace emulation */
+/* most of it is junk only used by gdb */
+struct linux_user {
+  struct linux_reg regs;	/* registers */
+  int u_fpvalid;		/* true if math co-processor being used. */
+  struct linux_fpreg i387;	/* Math Co-processor registers. */
+/* The rest of this junk is to help gdb figure out what goes where */
+#define lusr_startgdb	u_tsize
+  unsigned long int u_tsize;	/* Text segment size (pages). */
+  unsigned long int u_dsize;	/* Data segment size (pages). */
+  unsigned long int u_ssize;	/* Stack segment size (pages). */
+  unsigned long start_code;     /* Starting virtual address of text. */
+  unsigned long start_stack;	/* Starting virtual address of stack area.
+				   This is actually the bottom of the stack,
+				   the top of the stack is always found in the
+				   esp register.  */
+  long int __signal;  		/* Signal that caused the core dump. */
+  int __reserved;		/* unused */
+  void * u_ar0;			/* Used by gdb to help find the values for */
+				/* the registers. */
+  struct linux_fpreg* u_fpstate;/* Math Co-processor pointer. */
+  unsigned long __magic;	/* To uniquely identify a core file */
+  char u_comm[32];		/* User command that was responsible */
+  int u_debugreg[8];
+#define u_debugreg_end	u_debugreg[7]
+};
+
+#define LUSR_OFF(member)	offsetof(struct linux_user, member)
+#define ISSET(t, f)		((t) & (f))
 
 int
 linux_sys_ptrace_arch(p, v, retval)
@@ -89,12 +135,17 @@ linux_sys_ptrace_arch(p, v, retval)
 	} */ *uap = v;
 	int request, error;
 	struct proc *t;				/* target process */
-	struct reg regs;
-	struct linux_reg linux_regs;
+	struct reg *regs = NULL;
+	struct fpreg *fpregs = NULL;
+	struct linux_reg *linux_regs = NULL;
+	struct linux_fpreg *linux_fpregs = NULL;
+	int addr;
 
 	request = SCARG(uap, request);
 
-	if ((request != LINUX_PTRACE_GETREGS) &&
+	if ((request != LINUX_PTRACE_PEEKUSR) &&
+	    (request != LINUX_PTRACE_POKEUSR) &&
+	    (request != LINUX_PTRACE_GETREGS) &&
 	    (request != LINUX_PTRACE_SETREGS) &&
 	    (request != LINUX_PTRACE_GETFPREGS) &&
 	    (request != LINUX_PTRACE_SETFPREGS))
@@ -134,51 +185,186 @@ linux_sys_ptrace_arch(p, v, retval)
 
 	switch (request) {
 	case  LINUX_PTRACE_GETREGS:
-		error = process_read_regs(t, &regs);
+		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
+		MALLOC(linux_regs, struct linux_reg*, sizeof(struct linux_reg),
+			M_TEMP, M_WAITOK);
+
+		error = process_read_regs(t, regs);
 		if (error != 0)
-			return error;
+			goto out;
 
-		linux_regs.ebx = regs.r_ebx;
-		linux_regs.ecx = regs.r_ecx;
-		linux_regs.edx = regs.r_edx;
-		linux_regs.esi = regs.r_esi;
-		linux_regs.edi = regs.r_edi;
-		linux_regs.ebp = regs.r_ebp;
-		linux_regs.eax = regs.r_eax;
-		linux_regs.xds = regs.r_ds;
-		linux_regs.xes = regs.r_es;
-		linux_regs.orig_eax = regs.r_eax; /* XXX is this correct? */
-		linux_regs.eip = regs.r_eip;
-		linux_regs.xcs = regs.r_cs;
-		linux_regs.eflags = regs.r_eflags;
-		linux_regs.esp = regs.r_esp;
-		linux_regs.xss = regs.r_ss;
+		linux_regs->ebx = regs->r_ebx;
+		linux_regs->ecx = regs->r_ecx;
+		linux_regs->edx = regs->r_edx;
+		linux_regs->esi = regs->r_esi;
+		linux_regs->edi = regs->r_edi;
+		linux_regs->ebp = regs->r_ebp;
+		linux_regs->eax = regs->r_eax;
+		linux_regs->xds = regs->r_ds;
+		linux_regs->xes = regs->r_es;
+		linux_regs->orig_eax = regs->r_eax; /* XXX is this correct? */
+		linux_regs->eip = regs->r_cs + regs->r_eip;
+		linux_regs->xcs = regs->r_cs;
+		linux_regs->eflags = regs->r_eflags;
+		linux_regs->esp = regs->r_esp;
+		linux_regs->xss = regs->r_ss;
 
-		return copyout(&linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
 		    sizeof(struct linux_reg));
+		goto out;
+
 	case  LINUX_PTRACE_SETREGS:
-		error = copyin((caddr_t)SCARG(uap, data), &linux_regs,
+		MALLOC(regs, struct reg*, sizeof(struct reg), M_TEMP, M_WAITOK);
+		MALLOC(linux_regs, struct linux_reg *, sizeof(struct linux_reg),
+			M_TEMP, M_WAITOK);
+
+		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
 		    sizeof(struct linux_reg));
 		if (error != 0)
-			return error;
+			goto out;
 
-		regs.r_ebx = linux_regs.ebx;
-		regs.r_ecx = linux_regs.ecx;
-		regs.r_edx = linux_regs.edx;
-		regs.r_esi = linux_regs.esi;
-		regs.r_edi = linux_regs.edi;
-		regs.r_ebp = linux_regs.ebp;
-		regs.r_eax = linux_regs.eax;
-		regs.r_ds = linux_regs.xds;
-		regs.r_es = linux_regs.xes;
-		regs.r_eip = linux_regs.eip;
-		regs.r_cs = linux_regs.xcs;
-		regs.r_eflags = linux_regs.eflags;
-		regs.r_esp = linux_regs.esp;
-		regs.r_ss = linux_regs.xss;
+		regs->r_ebx = linux_regs->ebx;
+		regs->r_ecx = linux_regs->ecx;
+		regs->r_edx = linux_regs->edx;
+		regs->r_esi = linux_regs->esi;
+		regs->r_edi = linux_regs->edi;
+		regs->r_ebp = linux_regs->ebp;
+		regs->r_eax = linux_regs->eax;
+		regs->r_ds = linux_regs->xds;
+		regs->r_es = linux_regs->xes;
+		regs->r_eip = linux_regs->eip - linux_regs->xcs;
+		regs->r_cs = linux_regs->xcs;
+		regs->r_eflags = linux_regs->eflags;
+		regs->r_esp = linux_regs->esp;
+		regs->r_ss = linux_regs->xss;
 
-		return process_write_regs(t, &regs);
+		error = process_write_regs(t, regs);
+		goto out;
+
+	case  LINUX_PTRACE_GETFPREGS:
+		MALLOC(fpregs, struct fpreg *, sizeof(struct fpreg),
+			M_TEMP, M_WAITOK);
+		MALLOC(linux_fpregs, struct linux_fpreg *,
+			sizeof(struct linux_fpreg), M_TEMP, M_WAITOK);
+
+		error = process_read_fpregs(t, fpregs);
+		if (error != 0)
+			goto out;
+
+		/* zero the contents if NetBSD fpreg structure is smaller */
+		if (sizeof(struct fpreg) < sizeof(struct linux_fpreg))
+			memset(linux_fpregs, '\0', sizeof(struct linux_fpreg));
+
+		memcpy(linux_fpregs, fpregs,
+			min(sizeof(struct linux_fpreg), sizeof(struct fpreg)));
+		error = copyout(linux_fpregs, (caddr_t)SCARG(uap, data),
+		    sizeof(struct linux_fpreg));
+		goto out;
+
+	case  LINUX_PTRACE_SETFPREGS:
+		MALLOC(fpregs, struct fpreg *, sizeof(struct fpreg),
+			M_TEMP, M_WAITOK);
+		MALLOC(linux_fpregs, struct linux_fpreg *,
+			sizeof(struct linux_fpreg), M_TEMP, M_WAITOK);
+		error = copyin((caddr_t)SCARG(uap, data), linux_fpregs,
+		    sizeof(struct linux_fpreg));
+		if (error != 0)
+			goto out;
+
+		memset(fpregs, '\0', sizeof(struct fpreg));
+		memcpy(fpregs, linux_fpregs,
+			min(sizeof(struct linux_fpreg), sizeof(struct fpreg)));
+
+		error = process_write_regs(t, regs);
+		goto out;
+
+	case  LINUX_PTRACE_PEEKUSR:
+		addr = SCARG(uap, addr);
+
+		PHOLD(t);	/* need full process info */
+		error = 0;
+		if (addr < LUSR_OFF(lusr_startgdb)) {
+			/* XXX should provide appropriate register */
+			error = 1;
+		} else if (addr == LUSR_OFF(u_tsize))
+			*retval = p->p_vmspace->vm_tsize;
+		else if (addr == LUSR_OFF(u_dsize))
+			*retval = p->p_vmspace->vm_dsize;
+		else if (addr == LUSR_OFF(u_ssize))
+			*retval = p->p_vmspace->vm_ssize;
+		else if (addr == LUSR_OFF(start_code))
+			*retval = (register_t) p->p_vmspace->vm_taddr;
+		else if (addr == LUSR_OFF(start_stack))
+			*retval = (register_t) p->p_vmspace->vm_minsaddr;
+		else if (addr == LUSR_OFF(u_ar0))
+			*retval = LUSR_OFF(regs);
+		else if (addr >= LUSR_OFF(u_debugreg)
+			   && addr <= LUSR_OFF(u_debugreg_end)) {
+			int off = (addr - LUSR_OFF(u_debugreg)) / sizeof(int);
+
+			/* only do this for Linux processes */
+			if (t->p_emul != &emul_linux)
+				error = EINVAL;
+			else {
+				*retval = ((struct linux_emuldata *)
+						t->p_emuldata)->debugreg[off];
+			}
+		} else if (addr == LUSR_OFF(__signal)) {
+			error = 1;
+		} else if (addr == LUSR_OFF(__signal)) {
+			error = 1;
+		} else if (addr == LUSR_OFF(u_fpstate)) {
+			error = 1;
+		} else if (addr == LUSR_OFF(__magic)) {
+			error = 1;
+		} else if (addr == LUSR_OFF(u_comm)) {
+			error = 1;
+		} else {
+#ifdef DEBUG_LINUX
+			printf("linux_ptrace: unsupported address: %d\n", addr);
+#endif
+			error = 1;
+		}
+
+		PRELE(t);
+
+		if (!error)
+			return 0;
+
+	case  LINUX_PTRACE_POKEUSR:
+		/* we only support setting debugregs for now */
+		addr = SCARG(uap, addr);
+		if (addr >= LUSR_OFF(u_debugreg)
+			   && addr <= LUSR_OFF(u_debugreg_end)) {
+			int off = (addr - LUSR_OFF(u_debugreg)) / sizeof(int);
+			int data = SCARG(uap, data);
+
+			/* only do this for Linux processes */
+			if (t->p_emul != &emul_linux)
+				return EINVAL;
+
+			PHOLD(t);
+			((struct linux_emuldata *)t->p_emuldata)->debugreg[off] = data;
+			PRELE(t);
+			return (0);
+		}
+
+		break;
+	default:
+		/* never reached */
+		break;
 	}
 
 	return EIO;
+
+    out:
+	if (regs)
+		FREE(regs, M_TEMP);
+	if (fpregs)
+		FREE(fpregs, M_TEMP);
+	if (linux_regs)
+		FREE(linux_regs, M_TEMP);
+	if (linux_fpregs)
+		FREE(linux_fpregs, M_TEMP);
+	return (error);
 }
