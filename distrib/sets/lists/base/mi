@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114 1999/04/29 20:15:30 simonb Exp $
+# $NetBSD: mi,v 1.115 1999/05/11 20:13:50 veego Exp $
 .
 ./altroot
 ./bin
@@ -89,6 +89,7 @@
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
+./sbin/mount_ntfs
 ./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs
@@ -507,6 +508,7 @@
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
+./usr/sbin/catman
 ./usr/sbin/chat
 ./usr/sbin/chown
 ./usr/sbin/chroot
@@ -932,6 +934,7 @@
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/birthtoken
+./usr/share/misc/bsd-family-tree
 ./usr/share/misc/domains
 ./usr/share/misc/flowers
 ./usr/share/misc/inter.phone
