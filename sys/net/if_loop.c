@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.38 2001/04/13 23:30:14 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.39 2001/06/14 05:44:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -186,7 +186,6 @@ looutput(ifp, m, dst, rt)
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-	ifp->if_lastchange = time;
 #if NBPFILTER > 0
 	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK)) {
 		/*

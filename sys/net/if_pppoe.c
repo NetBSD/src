@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.1 2001/04/29 09:50:37 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.2 2001/06/14 05:44:24 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -943,7 +943,6 @@ pppoe_start(struct ifnet *ifp)
 	}
 
 	while ((m = sppp_dequeue(ifp)) != NULL) {
-		microtime(&ifp->if_lastchange);
 		len = m->m_pkthdr.len;
 		M_PREPEND(m, PPPOE_HEADERLEN, M_DONTWAIT);
 		if (m == NULL) {
