@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2000/06/08 23:03:17 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2000/06/18 07:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -307,21 +307,10 @@ pci_conf_read(pc, tag, reg)
 	if (confaddr_ok(sc, tag) == 0) {
 		val = (pcireg_t)~0;
 	} else {
-#if 0
-		u_int32_t data;
-
-		data = probeget(sc->sc_configaddr + tag + reg,
-				bus_type_asi[sc->sc_configtag->type], 4);
-		if (data == -1)
-			val = (pcireg_t)~0;
-		else
-			val = (pcireg_t)data;
-#else
 		membar_sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
 		    tag + reg);
 		membar_sync();
-#endif
 	}
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -346,15 +335,9 @@ pci_conf_write(pc, tag, reg, data)
 	if (confaddr_ok(sc, tag) == 0)
 		panic("pci_conf_write: bad addr");
 		
-#if 0
-	probeset(sc->sc_configaddr + tag + reg,
-		 bus_type_asi[sc->sc_configtag->type],
-		 4, data);
-#else
 	membar_sync();
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
 	membar_sync();
-#endif
 }
 
 /*
