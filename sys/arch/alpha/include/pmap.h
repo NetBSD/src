@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.45 2001/04/29 06:54:06 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.46 2001/04/29 22:44:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -132,8 +132,6 @@ typedef struct pmap	*pmap_t;
 
 extern u_long		kernel_pmap_store[];
 
-#define pmap_kernel()	((pmap_t) (&kernel_pmap_store[0]))
-
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
@@ -145,17 +143,6 @@ typedef struct pv_entry {
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
-/*
- * The head of the list of pv_entry_t's, also contains page attributes.
- */
-struct pv_head {
-	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
-	int pvh_attrs;				/* page attributes */
-	int pvh_usage;				/* page usage */
-	int pvh_refcnt;				/* special use ref count */
-};
-
 /* pvh_attrs */
 #define	PGA_MODIFIED		0x01		/* modified */
 #define	PGA_REFERENCED		0x02		/* referenced */
@@ -166,17 +153,6 @@ struct pv_head {
 #define	PGU_L1PT		2		/* level 1 page table */
 #define	PGU_L2PT		3		/* level 2 page table */
 #define	PGU_L3PT		4		/* level 3 page table */
-
-#define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
-
-#define	PGU_STRINGS							\
-{									\
-	"normal",							\
-	"pvent",							\
-	"l1pt",								\
-	"l2pt",								\
-	"l3pt",								\
-}
 
 #ifdef _KERNEL
 
@@ -213,11 +189,18 @@ void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
+
+#define pmap_kernel()	((pmap_t) (&kernel_pmap_store[0]))
  
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define	pmap_update()			/* nothing (yet) */
+
+#define	pmap_is_referenced(pg)						\
+	(((pg)->pvh_attrs & PGA_REFERENCED) != 0)
+#define	pmap_is_modified(pg)						\
+	(((pg)->pvh_attrs & PGA_MODIFIED) != 0)
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2001/02/27 22:40:08 pk Exp $ */
+/*	$NetBSD: vmparam.h,v 1.27 2001/04/29 22:44:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,10 @@
 #define PAGE_MASK	(NBPG-1)
 #endif
 #endif /* _LKM */
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
+#define	PMAP_PHYSSEG		/* XXX for now */
 
 /*
  * pmap specific data stored in the vm_physmem[] array
