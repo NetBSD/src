@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.13 1999/04/30 04:31:45 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.14 1999/05/01 02:57:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -43,6 +43,7 @@
 
 #include <sys/types.h>
 #include <compat/osf1/osf1_errno.h>
+#include <compat/osf1/osf1_signal.h>
 
 /*
  * type and structure definitions used by other structures

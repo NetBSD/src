@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt_errno.c,v 1.4 1999/05/01 02:16:01 cgd Exp $ */
+/* $NetBSD: osf1_cvt_errno.c,v 1.5 1999/05/01 02:57:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,6 +31,7 @@
  */
 
 #include <compat/osf1/osf1.h>
+#include <compat/osf1/osf1_cvt.h>
 
 /*
  * This table is used to translate NetBSD errnos to OSF/1 errnos
@@ -38,7 +39,8 @@
  *
  * It is up to date as of Digital UNIX V4.0 and NetBSD 1.4.
  */
-int netbsd_to_osf1_errno[] = {
+
+const int osf1_errno_rxlist[] = {
     0,
     OSF1_EPERM,			/* EPERM (1) -> 1 */
     OSF1_ENOENT,		/* ENOENT (2) -> 2 */

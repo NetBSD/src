@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.7 1999/04/30 23:02:06 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.8 1999/05/01 02:57:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -45,8 +45,9 @@
 #include <sys/stat.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_syscall.h>
+#include <compat/osf1/osf1_util.h>
+#include <compat/osf1/osf1_cvt.h>
 
 /* XXX BELONGS IN A 'PUBLIC' HEADER */
 int     osf1_exec_ecoff_hook(struct proc *p, struct exec_package *epp);
@@ -75,7 +76,7 @@ extern char osf1_sigcode[], osf1_esigcode[];
 
 struct emul emul_osf1 = {
 	"osf1",
-	netbsd_to_osf1_errno,
+	(int *)osf1_errno_rxlist,
 	sendsig,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
