@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.33 2000/04/13 00:44:19 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.34 2000/05/08 20:09:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ pr_enter(pp, file, line)
 	long line;
 {
 
-	if (pp->pr_entered_file != NULL) {
+	if (__predict_false(pp->pr_entered_file != NULL)) {
 		printf("pool %s: reentrancy at file %s line %ld\n",
 		    pp->pr_wchan, file, line);
 		printf("         previous entry at file %s line %ld\n",
@@ -232,7 +232,7 @@ pr_leave(pp)
 	struct pool *pp;
 {
 
-	if (pp->pr_entered_file == NULL) {
+	if (__predict_false(pp->pr_entered_file == NULL)) {
 		printf("pool %s not entered?\n", pp->pr_wchan);
 		panic("pr_leave");
 	}
@@ -582,13 +582,14 @@ _pool_get(pp, flags, file, line)
 	struct pool_item_header *ph;
 
 #ifdef DIAGNOSTIC
-	if ((pp->pr_roflags & PR_STATIC) && (flags & PR_MALLOCOK)) {
+	if (__predict_false((pp->pr_roflags & PR_STATIC) &&
+			    (flags & PR_MALLOCOK))) {
 		pr_printlog(pp, NULL, printf);
 		panic("pool_get: static");
 	}
 #endif
 
-	if (curproc == NULL && (flags & PR_WAITOK) != 0)
+	if (__predict_false(curproc == NULL && (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
 
 	simple_lock(&pp->pr_slock);
@@ -601,13 +602,13 @@ _pool_get(pp, flags, file, line)
 	 * the pool.
 	 */
 #ifdef DIAGNOSTIC
-	if (pp->pr_nout > pp->pr_hardlimit) {
+	if (__predict_false(pp->pr_nout > pp->pr_hardlimit)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		panic("pool_get: %s: crossed hard limit", pp->pr_wchan);
 	}
 #endif
-	if (pp->pr_nout == pp->pr_hardlimit) {
+	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
 			/*
 			 * XXX: A warning isn't logged in this case.  Should
@@ -717,13 +718,13 @@ _pool_get(pp, flags, file, line)
 		goto startover;
 	}
 
-	if ((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL) {
+	if (__predict_false((v = pi = TAILQ_FIRST(&ph->ph_itemlist)) == NULL)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		panic("pool_get: %s: page empty", pp->pr_wchan);
 	}
 #ifdef DIAGNOSTIC
-	if (pp->pr_nitems == 0) {
+	if (__predict_false(pp->pr_nitems == 0)) {
 		pr_leave(pp);
 		simple_unlock(&pp->pr_slock);
 		printf("pool_get: %s: items on itemlist, nitems %u\n",
@@ -734,7 +735,7 @@ _pool_get(pp, flags, file, line)
 	pr_log(pp, v, PRLOG_GET, file, line);
 
 #ifdef DIAGNOSTIC
-	if (pi->pi_magic != PI_MAGIC) {
+	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
 		       " item addr %p\n",
@@ -750,7 +751,7 @@ _pool_get(pp, flags, file, line)
 	pp->pr_nout++;
 	if (ph->ph_nmissing == 0) {
 #ifdef DIAGNOSTIC
-		if (pp->pr_nidle == 0)
+		if (__predict_false(pp->pr_nidle == 0))
 			panic("pool_get: nidle inconsistent");
 #endif
 		pp->pr_nidle--;
@@ -758,7 +759,7 @@ _pool_get(pp, flags, file, line)
 	ph->ph_nmissing++;
 	if (TAILQ_FIRST(&ph->ph_itemlist) == NULL) {
 #ifdef DIAGNOSTIC
-		if (ph->ph_nmissing != pp->pr_itemsperpage) {
+		if (__predict_false(ph->ph_nmissing != pp->pr_itemsperpage)) {
 			pr_leave(pp);
 			simple_unlock(&pp->pr_slock);
 			panic("pool_get: %s: nmissing inconsistent",
@@ -826,7 +827,7 @@ _pool_put(pp, v, file, line)
 	pr_enter(pp, file, line);
 
 #ifdef DIAGNOSTIC
-	if (pp->pr_nout == 0) {
+	if (__predict_false(pp->pr_nout == 0)) {
 		printf("pool %s: putting with none out\n",
 		    pp->pr_wchan);
 		panic("pool_put");
@@ -835,7 +836,7 @@ _pool_put(pp, v, file, line)
 
 	pr_log(pp, v, PRLOG_PUT, file, line);
 
-	if ((ph = pr_find_pagehead(pp, page)) == NULL) {
+	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
 		pr_printlog(pp, NULL, printf);
 		panic("pool_put: %s: page header missing", pp->pr_wchan);
 	}
@@ -961,7 +962,7 @@ pool_prime(pp, n, storage)
 	int newnitems, newpages;
 
 #ifdef DIAGNOSTIC
-	if (storage && !(pp->pr_roflags & PR_STATIC))
+	if (__predict_false(storage && !(pp->pr_roflags & PR_STATIC)))
 		panic("pool_prime: static");
 	/* !storage && static caught below */
 #endif
@@ -1121,7 +1122,7 @@ pool_catchup(pp)
 		simple_unlock(&pp->pr_slock);
 		cp = (*pp->pr_alloc)(pp->pr_pagesz, 0, pp->pr_mtype);
 		simple_lock(&pp->pr_slock);
-		if (cp == NULL) {
+		if (__predict_false(cp == NULL)) {
 			error = ENOMEM;
 			break;
 		}
