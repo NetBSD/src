@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.71 2000/11/02 23:15:10 eeh Exp $
+#       $NetBSD: Makefile,v 1.72 2001/02/10 02:52:17 briggs Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -7,8 +7,8 @@ MAN=	access.9 arp.9 audio.9 bitmask_snprintf.9 bus_dma.9 bus_space.9 \
 	dopowerhooks.9 doshutdownhooks.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 fork1.9 humanize_number.9 inittodr.9 \
 	intro.9 ioctl.9 kprintf.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
-	microtime.9 panic.9 pfil.9 physio.9 pool.9 \
-	powerhook_establish.9 ppsratecheck.9 psignal.9 \
+	microtime.9 panic.9 pci_configure_bus.9 pci_intr.9 pfil.9 physio.9 \
+	pool.9 powerhook_establish.9 ppsratecheck.9 psignal.9 \
 	ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	shutdownhook_establish.9 sleep.9 softintr.9 \
 	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 \
@@ -100,6 +100,7 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
+MLINKS+=pci_configure_bus.9 pci_conf_interrupt.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
 	pool.9 pool_setlowat.9
