@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.2 1994/04/18 22:24:20 cgd Exp $
+#	$Id: Makefile.kc,v 1.3 1994/04/21 18:57:19 cgd Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -8,7 +8,7 @@ VND_DEV=	/dev/vnd0a
 VND_RDEV=	/dev/rvnd0a
 .endif
 
-ROOTDIRLIST=	/ /bin /dev /mnt /sbin /usr
+ROOTDIRLIST=	/ /bin /dev /instbin /mnt /sbin /usr
 BINDIRLIST=	/usr/bin
 FLOPPYBINS=	echo fsck init mount reboot sh tar test umount
 
@@ -36,6 +36,12 @@ all:
 		( cd ${.CURDIR}/../sys/arch/i386/floppy/$$b ; \
 		    make DESTDIR=${MOUNT_POINT} install ) ; \
 	done
+	set -- `grep -v '^#' ${.CURDIR}/etc.i386/files.kc/list`; \
+	    while [ $$# -ge 2 ]; do \
+		from=$$1; shift; \
+		to=$$1; shift; \
+		cp ${.CURDIR}/etc.i386/files.kc/$$from ${MOUNT_POINT}/$$to; \
+	    done
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV} ${IMAGE}
 .endif
