@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:07 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/01 00:12:26 perry Exp $
 
 PROG=	postdrop
 
@@ -7,7 +7,7 @@ DIST=	${.CURDIR}/../../../dist/postfix/${PROG}
 
 BINDIR=	${PFIX_SBINDIR}
 BINGRP=	maildrop
-BINMODE=2755
+BINMODE=2555
 
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
