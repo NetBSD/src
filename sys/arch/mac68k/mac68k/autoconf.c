@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.7 1994/06/26 13:14:54 briggs Exp $
+ *	$Id: autoconf.c,v 1.8 1994/07/02 13:01:32 briggs Exp $
  */
 
 /*
@@ -192,7 +192,7 @@ mainbus_attach(parent, dev, aux)
 /*					{"clock",     1},	*/
 					{"nubus",     1},
 					{"ser",       0},
-					{"ncr",       0},
+					{"ncrscsi",   0},
 					{"ncr96scsi", 0},
 					{"audio",     0},
 					{"floppy",    0},
