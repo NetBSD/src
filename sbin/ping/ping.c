@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.47 1999/03/08 01:16:20 sommerfe Exp $	*/
+/*	$NetBSD: ping.c,v 1.47.2.1 1999/06/24 16:23:03 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.47 1999/03/08 01:16:20 sommerfe Exp $");
+__RCSID("$NetBSD: ping.c,v 1.47.2.1 1999/06/24 16:23:03 perry Exp $");
 #endif
 
 #include <stdio.h>
@@ -121,6 +121,7 @@ __RCSID("$NetBSD: ping.c,v 1.47 1999/03/08 01:16:20 sommerfe Exp $");
 #define F_ONCE		0x1000		/* exit(0) after receiving 1 reply */
 #define F_MCAST		0x2000		/* multicast target */
 #define F_MCAST_NOLOOP	0x4000		/* no multicast loopback */
+#define F_AUDIBLE	0x8000		/* audible output */
 
 
 /* MAX_DUP_CHK is the number of bits in received table, the
@@ -241,19 +242,15 @@ main(int argc, char *argv[])
 #endif
   
 
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	if (tcgetattr (0, &ts) != -1) {
-		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
-		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
-	}
-#endif
 #ifdef sgi
 	__progname = argv[0];
 #endif
 	while ((c = getopt(argc, argv,
-			   "c:dDfg:h:i:I:l:Lnop:PqQrRs:t:T:vw:")) != -1) {
+			   "ac:dDfg:h:i:I:l:Lnop:PqQrRs:t:T:vw:")) != -1) {
 		switch (c) {
+		case 'a':
+			pingflags |= F_AUDIBLE;
+			break;
 		case 'c':
 			npackets = strtol(optarg, &p, 0);
 			if (*p != '\0' || npackets <= 0)
@@ -365,6 +362,9 @@ main(int argc, char *argv[])
 		errx(1, "Must be superuser to use -l");
 #endif
 	sec_to_timeval(interval, &interval_tv);
+
+	if ((pingflags & (F_AUDIBLE|F_FLOOD)) == (F_AUDIBLE|F_FLOOD))
+		warnx("Sorry, no audible output for flood pings");
 
 	if (npackets != 0) {
 		npackets += preload;
@@ -499,6 +499,15 @@ main(int argc, char *argv[])
 			 (char*)&bufspace, sizeof(bufspace));
 
 	(void)signal(SIGINT, prefinish);
+
+#if defined(SIGINFO) && defined(NOKERNINFO)
+	if (tcgetattr (0, &ts) != -1) {
+		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
+		ts.c_lflag |= NOKERNINFO;
+		tcsetattr (0, TCSANOW, &ts);
+	}
+#endif
+
 #ifdef SIGINFO
 	(void)signal(SIGINFO, prtsig);
 #else
@@ -788,6 +797,13 @@ pr_pack_sub(int cc,
 	(void)printf(" ttl=%d", ttl);
 	if (pingflags & F_TIMING)
 		(void)printf(" time=%.3f ms", triptime*1000.0);
+
+	/*
+	 * Send beep to stderr, since that's more likely than stdout
+	 * to go to a terminal..
+	 */
+	if (pingflags & F_AUDIBLE && !dupflag)
+		(void)fprintf(stderr,"\a");
 }
 
 
