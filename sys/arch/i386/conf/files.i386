@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.28 1994/01/09 19:27:39 cgd Exp $
+#	$Id: files.i386,v 1.29 1994/01/25 04:23:07 hpeyerl Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
@@ -27,14 +27,12 @@ arch/i386/isa/com.c		optional com device-driver requires isa
 arch/i386/isa/cy.c		optional cy device-driver requires isa
 arch/i386/isa/dcfclk.c		optional dcfclk device-driver requires isa
 arch/i386/isa/fd.c		optional fd device-driver requires isa
-arch/i386/isa/if_ec.c		optional ec device-driver requires ether isa
 arch/i386/isa/if_ed.c		optional ed device-driver requires ether isa
 arch/i386/isa/if_ep.c		optional ep device-driver requires ether isa
 arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa
 arch/i386/isa/if_is.c		optional is device-driver requires ether isa 
 arch/i386/isa/if_ix.c		optional ix device-driver requires ether isa
 arch/i386/isa/if_ne.c		optional ne device-driver requires ether isa
-arch/i386/isa/if_we.c		optional we device-driver requires ether isa
 arch/i386/isa/isa.c		optional isa device-driver
 arch/i386/isa/lms.c		optional lms device-driver requires isa
 arch/i386/isa/lpa.c		optional lpa device-driver requires isa
