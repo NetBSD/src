@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.79 2003/04/09 18:38:03 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.80 2003/05/03 17:53:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.79 2003/04/09 18:38:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.80 2003/05/03 17:53:17 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -153,6 +153,43 @@ int sokvawaiters;
 #define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
+static size_t sodopendfree(struct socket *);
+
+vaddr_t
+sokvaalloc(vsize_t len, struct socket *so)
+{
+	vaddr_t lva;
+	int s;
+
+	while (socurkva + len > somaxkva) {
+		if (sodopendfree(so))
+			continue;
+		SOSEND_COUNTER_INCR(&sosend_kvalimit);
+		s = splvm();
+		sokvawaiters++;
+		(void) tsleep(&socurkva, PVM, "sokva", 0);
+		sokvawaiters--;
+		splx(s);
+	}
+
+	lva = uvm_km_valloc_wait(kernel_map, len);
+	if (lva == 0)
+		return (0);
+	socurkva += len;
+
+	return lva;
+}
+
+void
+sokvafree(vaddr_t sva, vsize_t len)
+{
+
+	uvm_km_free(kernel_map, sva, len);
+	socurkva -= len;
+	if (sokvawaiters)
+		wakeup(&socurkva);
+}
+
 static void
 sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 {
@@ -179,10 +216,7 @@ sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 	pmap_kremove(sva, len);
 	pmap_update(pmap_kernel());
 	uvm_unloan(pgs, npgs, UVM_LOAN_TOPAGE);
-	uvm_km_free(kernel_map, sva, len);
-	socurkva -= len;
-	if (sokvawaiters)
-		wakeup(&socurkva);
+	sokvafree(sva, len);
 }
 
 static size_t
@@ -228,7 +262,7 @@ sodopendfree(struct socket *so)
 	return (rv);
 }
 
-static void
+void
 soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	struct socket *so = arg;
@@ -254,7 +288,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vaddr_t sva, eva;
 	vsize_t len;
 	vaddr_t lva, va;
-	int npgs, s, i, error;
+	int npgs, i, error;
 
 	if (uio->uio_segflg != UIO_USERSPACE)
 		return (0);
@@ -272,27 +306,14 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	/* XXX KDASSERT */
 	KASSERT(npgs <= M_EXT_MAXPAGES);
 
-	while (socurkva + len > somaxkva) {
-		if (sodopendfree(so))
-			continue;
-		SOSEND_COUNTER_INCR(&sosend_kvalimit);
-		s = splvm();
-		sokvawaiters++;
-		(void) tsleep(&socurkva, PVM, "sokva", 0);
-		sokvawaiters--;
-		splx(s);
-	}
-
-	lva = uvm_km_valloc_wait(kernel_map, len);
+	lva = sokvaalloc(len, so);
 	if (lva == 0)
-		return (0);
-	socurkva += len;
+		return 0;
 
 	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, sva, len,
 	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
-		uvm_km_free(kernel_map, lva, len);
-		socurkva -= len;
+		sokvafree(lva, len);
 		return (0);
 	}
 
