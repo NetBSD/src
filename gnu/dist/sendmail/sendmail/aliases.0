@@ -1,5 +1,7 @@
-ALIASES(5)                                             ALIASES(5)
 
+
+
+ALIASES(5)                                             ALIASES(5)
 
 
 NNAAMMEE
@@ -57,6 +59,17 @@ DDEESSCCRRIIPPTTIIOONN
        since  no  message  will  be  sent to any person more than
        once.
 
+
+
+                   Date: 2000/12/14 23:09:46                 1
+
+
+
+
+
+ALIASES(5)                                             ALIASES(5)
+
+
        After aliasing has been done, local and  valid  recipients
        who  have a ``.forward'' file in their home directory have
        messages forwarded to the list of users  defined  in  that
@@ -88,4 +101,32 @@ HHIISSTTOORRYY
 
 
 
-                   Date: 2000/12/14 23:08:15        ALIASES(5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   Date: 2000/12/14 23:09:46                 2
+
+

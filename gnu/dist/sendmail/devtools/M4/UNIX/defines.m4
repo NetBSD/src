@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31.4.6 2001/02/14 04:07:22 gshapiro Exp
+#	Id: defines.m4,v 8.42 2001/04/30 23:49:55 ca Exp
 #
 divert(0)dnl
 
@@ -32,6 +32,10 @@ O=	ifdef(`confOPTIMIZE', `confOPTIMIZE', `-O')
 # Object archiver
 AR=     ifdef(`confAR', `confAR', `ar')
 AROPTS=	ifdef(`confAROPTS', `confAROPTS', `crv')
+
+# Remove command
+RM=     ifdef(`confRM', `confRM', `rm')
+RMOPTS=	ifdef(`confRMOPTS', `confRMOPTS', `-f')
 
 # Link command
 LN=     ifdef(`confLN', `confLN', `ln')
@@ -72,6 +76,9 @@ UBINDIR=ifdef(`confUBINDIR', `confUBINDIR', `/usr/bin')
 # location of "root" binaries (usually /usr/sbin or /usr/etc)
 SBINDIR=ifdef(`confSBINDIR', `confSBINDIR', `/usr/sbin')
 
+# location of "root" binaries (usually /usr/sbin or /usr/etc)
+MBINDIR=ifdef(`confMBINDIR', `confMBINDIR', `/usr/sbin')
+
 # location of "libexec" binaries (usually /usr/libexec or /usr/etc)
 EBINDIR=ifdef(`confEBINDIR', `confEBINDIR', `/usr/libexec')
 
@@ -102,7 +109,8 @@ BUILDBIN=confBUILDBIN
 COPTS=	-I. ${INCDIRS} ${ENVDEF} ${CCOPTS}
 CFLAGS=	$O ${COPTS} ifdef(`confMT', ifdef(`confMTCFLAGS', `confMTCFLAGS -DXP_MT', `-DXP_MT'), `')
 
-BEFORE=	confBEFORE
+
+BEFORE=	confBEFORE ifdef(`confREQUIRE_LIBSM',`sm_os.h')
 
 LINKS=ifdef(`bldLINK_SOURCES', `bldLINK_SOURCES', `')
 
@@ -130,6 +138,19 @@ UBINMODE=ifdef(`confUBINMODE', `confUBINMODE', `555')
 SBINOWN=ifdef(`confSBINOWN', `confSBINOWN', `root')
 SBINGRP=ifdef(`confSBINGRP', `confSBINGRP', `bin')
 SBINMODE=ifdef(`confSBINMODE', `confSBINMODE', `4555')
+
+# Setgid binary ownership/permissions
+GBINOWN=ifdef(`confGBINOWN', `confGBINOWN', `root')
+GBINGRP=ifdef(`confGBINGRP', `confGBINGRP', `smmsp')
+GBINMODE=ifdef(`confGBINMODE', `confGBINMODE', `2555')
+
+# owner of MSP queue
+MSPQOWN=ifdef(`confMSPQOWN', `confMSPQOWN', `smmsp')
+
+# MTA binary ownership/permissions
+MBINOWN=ifdef(`confMBINOWN', `confMBINOWN', `root')
+MBINGRP=ifdef(`confMBINGRP', `confMBINGRP', `bin')
+MBINMODE=ifdef(`confMBINMODE', `confMBINMODE', `550')
 
 # Library ownership/permissions
 LIBOWN=ifdef(`confLIBOWN', `confLIBOWN', `root')
