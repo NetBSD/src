@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1995/06/27 14:44:51 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1995/08/08 21:10:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1783,8 +1783,11 @@ pmap_remove_range_mmu(pmap, sva, eva)
 		(pmegp->pmeg_owner != pmap) ||
 		(pmegp->pmeg_version != pmap->pm_version))
 	{
-		printf("pmap_remove_range_mmu: wrong pmeg:\n");
+		printf("pmap_remove_range_mmu: wrong pmeg, sme=0x%x\n", sme);
+#ifdef	PMAP_DEBUG
 		pmeg_print(pmegp);
+		Debugger();	/* XXX */
+#endif
 		panic("bye");
 	}
 	if (pmegp->pmeg_vpages <= 0)
@@ -2849,8 +2852,11 @@ pmap_protect_range_mmu(pmap, sva, eva)
 		(pmegp->pmeg_owner != pmap) ||
 		(pmegp->pmeg_version != pmap->pm_version))
 	{
-		printf("pmap_protect_range_mmu: wrong pmeg:\n");
+		printf("pmap_protect_range_mmu: wrong pmeg, sme=0x%x\n", sme);
+#ifdef	PMAP_DEBUG
 		pmeg_print(pmegp);
+		Debugger();	/* XXX */
+#endif
 		panic("bye");
 	}
 	if (pmegp->pmeg_vpages <= 0)
