@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.19 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: iso.c,v 1.20 1998/05/11 19:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,9 +85,6 @@ SOFTWARE.
 #include <netiso/iso_pcb.h>
 #include <netiso/clnp.h>
 #include <netiso/argo_debug.h>
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 
 #ifdef ISO
 
@@ -489,11 +486,6 @@ iso_control(so, cmd, data, ifp, p)
 		if (ifp == 0)
 			panic("iso_control");
 		if (ia == 0) {
-#ifdef TUBA
-			/* XXXXXX can't be done in the proto init routines */
-			if (tuba_tree == 0)
-				tuba_table_init();
-#endif
 			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
 			       M_IFADDR, M_WAITOK);
 			if (ia == 0)

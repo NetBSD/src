@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.7 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.8 1998/05/11 19:58:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -83,9 +83,6 @@ SOFTWARE.
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
 #include <netiso/esis.h>
-#ifdef TUBA
-#include <netiso/tuba_table.h>
-#endif
 #include <netiso/idrp_var.h>
 #include <netiso/iso_pcb.h>
 #include <netiso/cltp_var.h>
@@ -153,14 +150,6 @@ struct protosw  isosw[] = {
 		tp_usrreq,
 		tp_init, tp_fasttimo, tp_slowtimo, tp_drain,
 	},
-
-#ifdef TUBA
-	{SOCK_STREAM, &isodomain, ISOPROTO_TCP, PR_CONNREQUIRED | PR_WANTRCVD,
-		tuba_tcpinput, 0, 0, tuba_ctloutput,
-		tuba_usrreq,
-		tuba_init, tuba_fasttimo, tuba_fasttimo, 0
-	},
-#endif
 
 #ifdef TPCONS
 	/* ISOPROTO_TP */

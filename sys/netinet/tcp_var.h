@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.49 1998/05/07 01:37:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.50 1998/05/11 19:57:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -173,8 +173,6 @@ struct tcpcb {
 	u_int32_t ts_recent_age;	/* when last updated */
 	tcp_seq	last_ack_sent;
 
-/* TUBA stuff */
-	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 /* SACK stuff */
 	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
 };
