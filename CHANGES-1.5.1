@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.68 2001/05/09 23:00:05 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.69 2001/05/10 08:44:29 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4803,3 +4803,7 @@ distrib/notes/common/main			patch
 sys/conf/osrelease.sh				patch
 
   We are not at NetBSD 1.5.1_BETA2.
+
+sys/dev/ic/ca.c					patch
+
+  Allow this to build on systems which do not define __HAVE_OLD_DISKLABEL.
