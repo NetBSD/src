@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.2 2001/03/20 00:03:10 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.3 2001/03/20 22:56:16 bjh21 Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: bus.c,v 1.2 2001/03/20 00:03:10 bjh21 Exp $");
+__RCSID("$NetBSD: bus.c,v 1.3 2001/03/20 22:56:16 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/memcreg.h>
@@ -44,7 +44,7 @@ bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
 
 	if (flags & BUS_SPACE_MAP_LINEAR)
 		return -1;
-	*bshp = (bus_space_handle_t)(addr);
+	*bshp = (bus_space_handle_t)(MEMC_IO_BASE + addr);
 	return 0;
 }
 
@@ -193,27 +193,27 @@ bus_space_set_region_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 }
 
 void
-bus_space_copy_1(bus_space_tag_t bst,
+bus_space_copy_region_1(bus_space_tag_t bst,
 		 bus_space_handle_t bsh1, bus_size_t offset1,
 		 bus_space_handle_t bsh2, bus_size_t offset2, bus_size_t count)
 {
 	int i;
 
 	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh2, offset2 + 1,
+		bus_space_write_1(bst, bsh2, offset2 + i,
 				  bus_space_read_1(bst, bsh1, offset1 + i));
 }
 
 void
-bus_space_copy_2(bus_space_tag_t bst,
+bus_space_copy_region_2(bus_space_tag_t bst,
 		 bus_space_handle_t bsh1, bus_size_t offset1,
 		 bus_space_handle_t bsh2, bus_size_t offset2, bus_size_t count)
 {
 	int i;
 
 	for (i = 0; i < count; i++)
-		bus_space_write_2(bst, bsh2, offset2 + 1,
-				  bus_space_read_1(bst, bsh1, offset1 + i));
+		bus_space_write_2(bst, bsh2, offset2 + i,
+				  bus_space_read_2(bst, bsh1, offset1 + i));
 }
 
 
