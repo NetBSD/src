@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.1 2000/09/21 22:25:08 eeh Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.2 2000/10/10 23:33:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ struct cfattach kbd_ca = {
 /*
  * sunkbd_match: how is this tty channel configured?
  */
-int 
+int
 sunkbd_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -115,7 +115,7 @@ sunkbd_match(parent, cf, aux)
 	return 0;
 }
 
-void 
+void
 sunkbd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -125,7 +125,6 @@ sunkbd_attach(parent, self, aux)
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
-	struct termios t;
 	struct cons_channel *cc;
 	int kbd_unit;
 
@@ -209,12 +208,16 @@ sunkbdiopen(dev, flags)
 	struct proc *p = curproc;
 	struct termios t;
 	int maj;
+	int error;
 
 	maj = major(tp->t_dev);
-	if (!p) p = &proc0;
+	if (p == NULL)
+		p = &proc0;
 
 	/* Open the lower device */
-	(*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags, 0/* ignored? */, p);
+	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
+					   0/* ignored? */, p)) != 0)
+		return (error);
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
@@ -223,6 +226,7 @@ sunkbdiopen(dev, flags)
 	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 
+	return (0);
 }
 
 /*
@@ -290,6 +294,7 @@ sunkbdstart(tp)
 	k->k_txflags &= ~K_TXBUSY;
 	kbd_start_tx(k);
 	ttstart(tp);
+	return (0);
 }
 /*
  * used by kbd_start_tx();
@@ -301,7 +306,7 @@ sunkbd_write_data(k, c)
 {
 	struct tty *tp = (struct tty *)k->k_priv;
 	int	s;
-	
+
 	s = spltty();
 	ttyoutput(c, tp);
 	ttstart(tp);
