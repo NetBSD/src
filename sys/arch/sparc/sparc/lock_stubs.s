@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.1 2002/03/18 16:36:52 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/18 17:23:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -137,6 +137,8 @@ _ENTRY(_C_LABEL(mutex_exit))
 OTYPE(_C_LABEL(_rwlock_hash))
 _C_LABEL(_rwlock_hash):
 	.space	1024
+
+	.text
 
 /*
  * INTERLOCK_ACQUIRE expects the lock address to be in %o0.  %o0,
