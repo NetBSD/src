@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.35 1997/12/18 16:49:10 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.36 1998/01/09 21:28:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles Hannum.
@@ -123,6 +123,8 @@ static __inline void pms_pit_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
 
 #define	PMS_DELAY \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
