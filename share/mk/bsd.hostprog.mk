@@ -1,4 +1,4 @@
-\#	$NetBSD: bsd.hostprog.mk,v 1.17 2001/11/02 05:21:50 tv Exp $
+\#	$NetBSD: bsd.hostprog.mk,v 1.18 2001/11/11 23:19:14 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -48,6 +48,10 @@ LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
 
 CFLAGS+=	${COPTS}
+
+.if defined(USE_NEW_TOOLCHAIN)
+OBJHOSTMACHINE=	# set
+.endif
 
 ##### Build rules
 .if defined(SHAREDSTRINGS)
