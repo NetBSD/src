@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/04/30 09:29:40 christos Exp $
+#	$NetBSD: Makefile,v 1.14 1999/05/03 18:59:08 pk Exp $
 
 STRIPFLAG=
 PROG=		boot
@@ -32,6 +32,6 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 # conjure up a magic header that is accepted by all Sun PROMS;
 # see installboot.c for details.
 ${FILES}: ${PROG}
-	(printf '\01\03\01\07\060\200\0\07'; cat ${.ALLSRC} ) > ${.TARGET}
+	(printf '\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'; cat ${.ALLSRC} ) > ${.TARGET}
 
 .include <bsd.prog.mk>
