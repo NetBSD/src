@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.8 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gspa.c,v 1.9 2002/05/27 21:11:41 wiz Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.8 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.9 2002/05/27 21:11:41 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -307,6 +307,6 @@ void
 usage()
 {
 	fprintf(stderr,
-		"Usage: gspa [infile] [-c c_array_name|+o|-o hex_file] [+l|-l list_file]\n");
+		"Usage: gspa [-c c_array_name] [-l list_file] [-o hex_file] [infile]\n");
 	exit(1);
 }
