@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77 2003/07/15 03:36:07 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.78 2003/07/29 23:31:32 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2003/07/15 03:36:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78 2003/07/29 23:31:32 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -580,8 +580,6 @@ mainbus_match(parent, cf, aux)
 	return (1);
 }
 
-int autoconf_nzs = 0;	/* must be global so obio.c can see it */
-
 /*
  * Attach the mainbus.
  *
@@ -834,8 +832,6 @@ PROM_getpropint(node, name, deflt)
 	int deflt;
 {
 	int intbuf;
-
-	
 
 	if (OF_getprop(node, name, &intbuf, sizeof(intbuf)) != sizeof(intbuf))
 		return (deflt);
