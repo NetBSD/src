@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.2 2000/02/19 09:48:47 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.3 2000/03/04 05:42:56 mhitch Exp $ */
 
 /*
  * Copyright (c) 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.2 2000/02/19 09:48:47 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.3 2000/03/04 05:42:56 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,11 +146,14 @@ asc_pmaz_attach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct asc_softc *asc = (struct asc_softc *)self;	
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
-#ifdef __pmax__
-	extern int slot_in_progress;	/* XXX TC slot being probed */
+/* XXX Hook into dk_establish() to determine boot device */
+	extern int booted_slot;		/* TC slot of boot device */
+	extern struct device *booted_controller;
 
-	slot_in_progress = ta->ta_slot; /* backdoor for dk_establish() */
-#endif
+	/* Is this the controller we booted from? */
+	if (booted_slot == ta->ta_slot)
+		booted_controller = self;
+/* XXX */
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
