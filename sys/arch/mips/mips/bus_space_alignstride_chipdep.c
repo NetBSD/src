@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.1 2002/03/23 14:19:18 simonb Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.2 2002/03/23 14:20:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,8 +65,7 @@
  */
 
 /*
- * Common PCI Chipset "bus I/O" functions, for chipsets which have to
- * deal with only a single PCI interface chip in a machine.
+ * Common Chipset "bus I/O" functions.
  *
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
