@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.30 2003/03/01 05:41:56 atatat Exp $	*/
+/*	$NetBSD: keyword.c,v 1.31 2003/03/03 23:13:21 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.30 2003/03/01 05:41:56 atatat Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.31 2003/03/03 23:13:21 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,9 +172,9 @@ VAR var[] = {
 	{"start", "STARTED", NULL, 0, started},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, LJUST, state},
-	GID("svgid", "SVGID", pvar, POFF(p_gid)),
+	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
 	{"svgroup", "SVGROUP", NULL, LJUST, svgname},
-	UID("svuid", "SVUID", pvar, POFF(p_uid)),
+	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
 	{"svuser", "SVUSER", NULL, LJUST, svuname},
 	{"tdev", "TDEV", NULL, 0, tdev},
 	{"time", "TIME", NULL, 0, cputime},
