@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.8 1993/07/07 06:04:14 cgd Exp $
+ *	$Id: vm_swap.c,v 1.9 1993/07/17 16:03:16 mycroft Exp $
  */
 
 #include "param.h"
@@ -167,12 +167,14 @@ swstrategy(bp)
  * which must be in the swdevsw.  Return EBUSY
  * if already swapping on this device.
  */
+struct swapon_args {
+	char	*name;
+};
+
 /* ARGSUSED */
 swapon(p, uap, retval)
 	struct proc *p;
-	struct args {
-		char	*name;
-	} *uap;
+	struct swapon_args *uap;
 	int *retval;
 {
 	register struct vnode *vp;
