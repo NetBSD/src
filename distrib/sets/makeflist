@@ -1,20 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.64 2003/09/21 19:33:59 tron Exp $
+# $NetBSD: makeflist,v 1.65 2003/11/25 07:19:46 dyoung Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
 # set defaults
-make="${MAKE:-make} -j 1 -f `dirname $0`/Makefile"
-machine=`${make} print_machine`
-machine_arch=`${make} print_machine_arch`
-machine_cpu=`${make} print_machine_cpu`
-object_fmt=`${make} print_object_fmt`
-toolchain_missing=`${make} print_toolchain_missing`
-use_tools_toolchain=`${make} print_use_tools_toolchain`
-x11_version=`${make} print_x11_version`
+. ./sets.defaults
+
 setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver xmisc"
@@ -32,8 +26,8 @@ while : ; do
 		lists=$xlists
 		;;
 	-a*)
-		machine_arch=`MACHINE_ARCH=${2} ${make} print_machine_arch`
-		machine_cpu=`MACHINE_ARCH=${2} ${make} print_machine_cpu`
+		machine_arch=${2}
+		machine_cpu=$(arch_to_cpu ${2})
 		shift
 		;;
 	-m*)

@@ -14,6 +14,8 @@ DB="db -q"
 #
 # set defaults and import setlist subroutines
 #
+. ./sets.defaults
+
 . ./sets.subr
 setd=$(pwd)
 prefix=/
@@ -35,8 +37,8 @@ exit 1
 while : ; do
 	case $1 in
 	-a*)
-		machine_arch=`MACHINE_ARCH=${2} ${make} print_machine_arch`
-		machine_cpu=`MACHINE_ARCH=${2} ${make} print_machine_cpu`
+		machine_arch=${2}
+		machine_cpu=$(arch_to_cpu ${2})
 		shift
 		;;
 	-m*)
