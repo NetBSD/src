@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.89 2004/10/03 07:59:02 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.90 2004/10/03 08:14:25 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.89 2004/10/03 07:59:02 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.90 2004/10/03 08:14:25 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1228,6 +1228,9 @@ genfs_putpages(void *v)
 			 */
 
 			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
+			if (!pagedaemon)
+				npages = MIN(npages,
+				    (off - startoff) >> PAGE_SHIFT);
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
@@ -1254,6 +1257,9 @@ genfs_putpages(void *v)
 			 */
 
 			npages = maxpages - nback - 1;
+			if (!pagedaemon)
+				npages = MIN(npages,
+				    ((endoff - off) >> PAGE_SHIFT) - 1);
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
@@ -1274,10 +1280,10 @@ genfs_putpages(void *v)
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
+			KASSERT(pagedaemon ||
+			    (startoff <= tpg->offset && tpg->offset < endoff));
 			if (by_list && tpg == TAILQ_NEXT(pg, listq))
 				pg = tpg;
-			if (tpg->offset < startoff || tpg->offset >= endoff)
-				continue;
 			if (flags & PGO_DEACTIVATE &&
 			    (tpg->pqflags & PQ_INACTIVE) == 0 &&
 			    tpg->wire_count == 0) {
