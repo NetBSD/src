@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_sysent.c,v 1.15 1998/02/19 03:34:19 thorpej Exp $	*/
+/*	$NetBSD: osf1_sysent.c,v 1.16 1998/05/20 16:35:21 chs Exp $	*/
 
 /*
  * System call switch table.
@@ -116,8 +116,8 @@ struct sysent osf1_sysent[] = {
 	    sys_getgid },			/* 47 = getgid */
 	{ 2, s(struct sys_sigprocmask_args),
 	    sys_sigprocmask },			/* 48 = sigprocmask */
-	{ 2, s(struct sys_getlogin_args),
-	    sys_getlogin },			/* 49 = getlogin */
+	{ 2, s(struct sys___getlogin_args),
+	    sys___getlogin },			/* 49 = __getlogin */
 	{ 1, s(struct sys_setlogin_args),
 	    sys_setlogin },			/* 50 = setlogin */
 	{ 1, s(struct sys_acct_args),
@@ -274,8 +274,8 @@ struct sysent osf1_sysent[] = {
 	    sys_nosys },			/* 126 = unimplemented setreuid */
 	{ 0, 0,
 	    sys_nosys },			/* 127 = unimplemented setregid */
-	{ 2, s(struct sys_posix___posix_rename_args),
-	    sys_posix___posix_rename },		/* 128 = posix___posix_rename */
+	{ 2, s(struct sys___posix_rename_args),
+	    sys___posix_rename },		/* 128 = __posix_rename */
 	{ 2, s(struct osf1_sys_truncate_args),
 	    osf1_sys_truncate },		/* 129 = truncate */
 	{ 2, s(struct osf1_sys_ftruncate_args),
