@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.42 1994/12/13 21:52:42 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.43 1994/12/14 16:30:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_syscalls.c	8.15 (Berkeley) 6/4/94
+ *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
 
 #include <sys/param.h>
@@ -84,13 +84,9 @@ mount(p, uap, retval)
 	int error, flag;
 	u_long fsindex;
 	char fstypename[MFSNAMELEN];
+	struct vattr va;
 	struct nameidata nd;
 
-	/*
-	 * Must be super user
-	 */
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
 	/*
 	 * Get vnode to be covered
 	 */
@@ -117,8 +113,49 @@ mount(p, uap, retval)
 		}
 		mp->mnt_flag |=
 		    SCARG(uap, flags) & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
+		/*
+		 * Only root, or the user that did the original mount is
+		 * permitted to update it.
+		 */
+		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
+		    (error = suser(p->p_ucred, &p->p_acflag))) {
+			vput(vp);
+			return (error);
+		}
+		/*
+		 * Do not allow NFS export by non-root users. Silently
+		 * enforce MNT_NOSUID and MNT_NODEV for non-root users.
+		 */
+		if (p->p_ucred->cr_uid != 0) {
+			if (SCARG(uap, flags) & MNT_EXPORTED) {
+				vput(vp);
+				return (EPERM);
+			}
+			SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
+		}
 		VOP_UNLOCK(vp);
 		goto update;
+	}
+	/*
+	 * If the user is not root, ensure that they own the directory
+	 * onto which we are attempting to mount.
+	 */
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) ||
+	    (va.va_uid != p->p_ucred->cr_uid &&
+	     (error = suser(p->p_ucred, &p->p_acflag)))) {
+		vput(vp);
+		return (error);
+	}
+	/*
+	 * Do not allow NFS export by non-root users. Silently
+	 * enforce MNT_NOSUID and MNT_NODEV for non-root users.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		if (SCARG(uap, flags) & MNT_EXPORTED) {
+			vput(vp);
+			return (EPERM);
+		}
+		SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
 	}
 	if (error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0))
 		return (error);
@@ -142,7 +179,7 @@ mount(p, uap, retval)
 	if (fsindex >= nvfssw) {
 #ifdef COMPAT_09
 check_num:
-		fsindex = (unsigned long)SCARG(uap, type);
+		fsindex = (u_long)SCARG(uap, type);
 		if (fsindex >= nvfssw || vfssw[fsindex] == NULL) {
 			vput(vp);
 			return (ENODEV);
@@ -151,6 +188,10 @@ check_num:
 		vput(vp);
 		return (ENODEV);
 #endif
+	}
+	if (vp->v_mountedhere != NULL) {
+		vput(vp);
+		return (EBUSY);
 	}
 
 	/*
@@ -165,16 +206,11 @@ check_num:
 		vput(vp);
 		return (error);
 	}
-	if (vp->v_mountedhere != NULL) {
-		vfs_unlock(mp);
-		free((caddr_t)mp, M_MOUNT);
-		vput(vp);
-		return (EBUSY);
-	}
 	/* Do this early in case we block later. */
 	vfssw[fsindex]->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
+	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 update:
 	/*
 	 * Set the mount level flags.
@@ -207,6 +243,7 @@ update:
 	cache_purge(vp);
 	if (!error) {
 		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+		checkdirs(vp);
 		VOP_UNLOCK(vp);
 		vfs_unlock(mp);
 		error = VFS_START(mp, 0, p);
@@ -218,6 +255,43 @@ update:
 		vput(vp);
 	}
 	return (error);
+}
+
+/*
+ * Scan all active processes to see if any of them have a current
+ * or root directory onto which the new filesystem has just been
+ * mounted. If so, replace them with the new mount point.
+ */
+checkdirs(olddp)
+	struct vnode *olddp;
+{
+	struct filedesc *fdp;
+	struct vnode *newdp;
+	struct proc *p;
+
+	if (olddp->v_usecount == 1)
+		return;
+	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
+		panic("mount: lost mount");
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+		fdp = p->p_fd;
+		if (fdp->fd_cdir == olddp) {
+			vrele(fdp->fd_cdir);
+			VREF(newdp);
+			fdp->fd_cdir = newdp;
+		}
+		if (fdp->fd_rdir == olddp) {
+			vrele(fdp->fd_rdir);
+			VREF(newdp);
+			fdp->fd_rdir = newdp;
+		}
+	}
+	if (rootvnode == olddp) {
+		vrele(rootvnode);
+		VREF(newdp);
+		rootvnode = newdp;
+	}
+	vput(newdp);
 }
 
 /*
@@ -245,12 +319,13 @@ unmount(p, uap, retval)
 	if (error = namei(&nd))
 		return (error);
 	vp = nd.ni_vp;
+	mp = vp->v_mount;
 
 	/*
-	 * Unless this is a user mount, then must
-	 * have suser privilege.
+	 * Only root, or the user that did the original mount is
+	 * permitted to unmount this filesystem.
 	 */
-	if (((vp->v_mount->mnt_flag & MNT_USER) == 0) &&
+	if ((mp->mnt_stat.f_owner != p->p_ucred->cr_uid) &&
 	    (error = suser(p->p_ucred, &p->p_acflag))) {
 		vput(vp);
 		return (error);
@@ -263,7 +338,6 @@ unmount(p, uap, retval)
 		vput(vp);
 		return (EINVAL);
 	}
-	mp = vp->v_mount;
 	vput(vp);
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
@@ -327,6 +401,10 @@ sync(p, uap, retval)
 	int asyncflag;
 
 	for (mp = mountlist.tqh_first; mp != NULL; mp = nmp) {
+		/*
+		 * Get the next pointer in case we hang on vfs_busy
+		 * while we are being unmounted.
+		 */
 		nmp = mp->mnt_list.tqe_next;
 		/*
 		 * The lock check below is to avoid races with mount
@@ -339,8 +417,12 @@ sync(p, uap, retval)
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
-			vfs_unbusy(mp);
+			/*
+			 * Get the next pointer again, as the next filesystem
+			 * might have been unmounted while we were sync'ing.
+			 */
 			nmp = mp->mnt_list.tqe_next;
+			vfs_unbusy(mp);
 		}
 	}
 #ifdef DEBUG
@@ -491,22 +573,36 @@ fchdir(p, uap, retval)
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
-	register struct vnode *vp;
+	struct vnode *vp, *tdp;
+	struct mount *mp;
 	struct file *fp;
 	int error;
 
 	if (error = getvnode(fdp, SCARG(uap, fd), &fp))
 		return (error);
 	vp = (struct vnode *)fp->f_data;
+	VREF(vp);
 	VOP_LOCK(vp);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
+	while (!error && (mp = vp->v_mountedhere) != NULL) {
+		if (mp->mnt_flag & MNT_MLOCK) {
+			mp->mnt_flag |= MNT_MWAIT;
+			sleep((caddr_t)mp, PVFS);
+			continue;
+		}
+		if (error = VFS_ROOT(mp, &tdp))
+			break;
+		vput(vp);
+		vp = tdp;
+	}
 	VOP_UNLOCK(vp);
-	if (error)
+	if (error) {
+		vrele(vp);
 		return (error);
-	VREF(vp);
+	}
 	vrele(fdp->fd_cdir);
 	fdp->fd_cdir = vp;
 	return (0);
@@ -696,12 +792,12 @@ compat_43_creat(p, uap, retval)
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ openuap;
+	} */ nuap;
 
-	SCARG(&openuap, path) = SCARG(uap, path);
-	SCARG(&openuap, mode) = SCARG(uap, mode);
-	SCARG(&openuap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	return (open(p, &openuap, retval));
+	SCARG(&nuap, path) = SCARG(uap, path);
+	SCARG(&nuap, mode) = SCARG(uap, mode);
+	SCARG(&nuap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
+	return (open(p, &nuap, retval));
 }
 #endif /* COMPAT_43 */
 
@@ -721,6 +817,7 @@ mknod(p, uap, retval)
 	register struct vnode *vp;
 	struct vattr vattr;
 	int error;
+	int whiteout;
 	struct nameidata nd;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
@@ -729,38 +826,52 @@ mknod(p, uap, retval)
 	if (error = namei(&nd))
 		return (error);
 	vp = nd.ni_vp;
-	if (vp != NULL) {
+	if (vp != NULL)
 		error = EEXIST;
-		goto bad;
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
-	vattr.va_rdev = SCARG(uap, dev);
+	else {
+		VATTR_NULL(&vattr);
+		vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_fd->fd_cmask;
+		vattr.va_rdev = SCARG(uap, dev);
+		whiteout = 0;
 
-	switch (SCARG(uap, mode) & S_IFMT) {
-	case S_IFMT:	/* used by badsect to flag bad sectors */
-		vattr.va_type = VBAD;
-		break;
-	case S_IFCHR:
-		vattr.va_type = VCHR;
-		break;
-	case S_IFBLK:
-		vattr.va_type = VBLK;
-		break;
-	default:
-		error = EINVAL;
-		goto bad;
+		switch (SCARG(uap, mode) & S_IFMT) {
+		case S_IFMT:	/* used by badsect to flag bad sectors */
+			vattr.va_type = VBAD;
+			break;
+		case S_IFCHR:
+			vattr.va_type = VCHR;
+			break;
+		case S_IFBLK:
+			vattr.va_type = VBLK;
+			break;
+		case S_IFWHT:
+			whiteout = 1;
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
 	}
-	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	return (VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr));
-bad:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (vp)
-		vrele(vp);
+	if (!error) {
+		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+		if (whiteout) {
+			error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, CREATE);
+			if (error)
+				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+			vput(nd.ni_dvp);
+		} else {
+			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
+						&nd.ni_cnd, &vattr);
+		}
+	} else {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (vp)
+			vrele(vp);
+	}
 	return (error);
 }
 
@@ -823,32 +934,30 @@ link(p, uap, retval)
 	if (error = namei(&nd))
 		return (error);
 	vp = nd.ni_vp;
-	if (vp->v_type == VDIR &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
-		goto bad1;
-	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT;
-	nd.ni_dirp = SCARG(uap, link);
-	if (error = namei(&nd))
-		goto bad1;
-	if (nd.ni_vp != NULL) {
-		error = EEXIST;
-		goto bad2;
+	if (vp->v_type != VDIR ||
+	    (error = suser(p->p_ucred, &p->p_acflag)) == 0) {
+		nd.ni_cnd.cn_nameiop = CREATE;
+		nd.ni_cnd.cn_flags = LOCKPARENT;
+		nd.ni_dirp = SCARG(uap, link);
+		if ((error = namei(&nd)) == 0) {
+			if (nd.ni_vp != NULL)
+				error = EEXIST;
+			if (!error) {
+				VOP_LEASE(nd.ni_dvp, p, p->p_ucred,
+				    LEASE_WRITE);
+				VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+				error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+			} else {
+				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+				if (nd.ni_dvp == nd.ni_vp)
+					vrele(nd.ni_dvp);
+				else
+					vput(nd.ni_dvp);
+				if (nd.ni_vp)
+					vrele(nd.ni_vp);
+			}
+		}
 	}
-	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
-	vrele(vp);
-	return (error);
-bad2:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == nd.ni_vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	if (nd.ni_vp)
-		vrele(nd.ni_vp);
-bad1:
 	vrele(vp);
 	return (error);
 }
@@ -872,10 +981,10 @@ symlink(p, uap, retval)
 
 	MALLOC(path, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
 	if (error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, (u_int*)0))
-		goto bad;
+		goto out;
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), p);
 	if (error = namei(&nd))
-		goto bad;
+		goto out;
 	if (nd.ni_vp) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
@@ -884,14 +993,52 @@ symlink(p, uap, retval)
 			vput(nd.ni_dvp);
 		vrele(nd.ni_vp);
 		error = EEXIST;
-		goto bad;
+		goto out;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
-bad:
+out:
 	FREE(path, M_NAMEI);
+	return (error);
+}
+
+/*
+ * Delete a whiteout from the filesystem.
+ */
+/* ARGSUSED */
+undelete(p, uap, retval)
+	struct proc *p;
+	register struct undelete_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
+{
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, DELETE, LOCKPARENT|DOWHITEOUT, UIO_USERSPACE,
+	    SCARG(uap, path), p);
+	error = namei(&nd);
+	if (error)
+		return (error);
+
+	if (nd.ni_vp != NULLVP || !(nd.ni_cnd.cn_flags & ISWHITEOUT)) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (nd.ni_vp)
+			vrele(nd.ni_vp);
+		return (EEXIST);
+	}
+
+	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	if (error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, DELETE))
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+	vput(nd.ni_dvp);
 	return (error);
 }
 
@@ -917,26 +1064,29 @@ unlink(p, uap, retval)
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 
-	if (vp->v_type == VDIR &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
-		goto bad;
-	/*
-	 * The root of a mounted filesystem cannot be deleted.
-	 */
-	if (vp->v_flag & VROOT) {
-		error = EBUSY;
-		goto bad;
+	if (vp->v_type != VDIR ||
+	    (error = suser(p->p_ucred, &p->p_acflag)) == 0) {
+		/*
+		 * The root of a mounted filesystem cannot be deleted.
+		 */
+		if (vp->v_flag & VROOT)
+			error = EBUSY;
+		else
+			(void)vnode_pager_uncache(vp);
 	}
-	(void)vnode_pager_uncache(vp);
-	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	return (VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd));
-bad:
-	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-	if (nd.ni_dvp == vp)
-		vrele(nd.ni_dvp);
-	else
-		vput(nd.ni_dvp);
-	vput(vp);
+
+	if (!error) {
+		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+		error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	} else {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		if (vp != NULLVP)
+			vput(vp);
+	}
 	return (error);
 }
 
@@ -1103,19 +1253,48 @@ compat_43_lstat(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct stat sb;
+	struct vnode *vp, *dvp;
+	struct stat sb, sb1;
 	struct ostat osb;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if (error = namei(&nd))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
-	vput(nd.ni_vp);
-	if (error)
-		return (error);
+	/*
+	 * For symbolic links, always return the attributes of its
+	 * containing directory, except for mode, size, and links.
+	 */
+	vp = nd.ni_vp;
+	dvp = nd.ni_dvp;
+	if (vp->v_type != VLNK) {
+		if (dvp == vp)
+			vrele(dvp);
+		else
+			vput(dvp);
+		error = vn_stat(vp, &sb, p);
+		vput(vp);
+		if (error)
+			return (error);
+	} else {
+		error = vn_stat(dvp, &sb, p);
+		vput(dvp);
+		if (error) {
+			vput(vp);
+			return (error);
+		}
+		error = vn_stat(vp, &sb1, p);
+		vput(vp);
+		if (error)
+			return (error);
+		sb.st_mode &= ~S_IFDIR;
+		sb.st_mode |= S_IFLNK;
+		sb.st_nlink = sb1.st_nlink;
+		sb.st_size = sb1.st_size;
+		sb.st_blocks = sb1.st_blocks;
+	}
 	cvtstat(&sb, &osb);
 	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
 	return (error);
@@ -1637,7 +1816,11 @@ compat_43_truncate(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct truncate_args nuap;
+	struct truncate_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) pad;
+		syscallarg(off_t) length;
+	} */ nuap;
 
 	SCARG(&nuap, path) = SCARG(uap, path);
 	SCARG(&nuap, length) = SCARG(uap, length);
@@ -1656,7 +1839,11 @@ compat_43_ftruncate(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct ftruncate_args nuap;
+	struct ftruncate_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) length;
+	} */ nuap;
 
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, length) = SCARG(uap, length);
@@ -1964,15 +2151,28 @@ unionread:
 #ifdef UNION
 {
 	extern int (**union_vnodeop_p)();
-	extern struct vnode *union_lowervp __P((struct vnode *));
+	extern struct vnode *union_dircache __P((struct vnode *));
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {
 		struct vnode *lvp;
 
-		lvp = union_lowervp(vp);
+		lvp = union_dircache(vp);
 		if (lvp != NULLVP) {
-			VOP_LOCK(lvp);
+			struct vattr va;
+
+			/*
+			 * If the directory is opaque,
+			 * then don't show lower entries
+			 */
+			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
+			if (va.va_flags & OPAQUE) {
+				vput(lvp);
+				lvp = NULL;
+			}
+		}
+		
+		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
 			VOP_UNLOCK(lvp);
 
@@ -2057,15 +2257,28 @@ unionread:
 #ifdef UNION
 {
 	extern int (**union_vnodeop_p)();
-	extern struct vnode *union_lowervp __P((struct vnode *));
+	extern struct vnode *union_dircache __P((struct vnode *));
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {
 		struct vnode *lvp;
 
-		lvp = union_lowervp(vp);
+		lvp = union_dircache(vp);
 		if (lvp != NULLVP) {
-			VOP_LOCK(lvp);
+			struct vattr va;
+
+			/*
+			 * If the directory is opaque,
+			 * then don't show lower entries
+			 */
+			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
+			if (va.va_flags & OPAQUE) {
+				vput(lvp);
+				lvp = NULL;
+			}
+		}
+		
+		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
 			VOP_UNLOCK(lvp);
 
