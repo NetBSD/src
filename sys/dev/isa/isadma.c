@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.36 1998/06/25 19:18:06 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.37 1998/06/28 06:59:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -67,11 +67,18 @@ static int dmapageport[2][4] = {
 	{0xf, 0xb, 0x9, 0xa}
 };
 
-static u_int8_t dmamode[4] = {
+static u_int8_t dmamode[] = {
+	/* write to device/read from device */
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
+
+	/* write to device/read from device - DMAMODE_LOOP */
 	DMA37MD_READ | DMA37MD_SINGLE | DMA37MD_LOOP,
-	DMA37MD_WRITE | DMA37MD_SINGLE | DMA37MD_LOOP
+	DMA37MD_WRITE | DMA37MD_SINGLE | DMA37MD_LOOP,
+
+	/* write to device/read from device - DMAMODE_LOOPDEMAND */
+	DMA37MD_READ | DMA37MD_DEMAND | DMA37MD_LOOP,
+	DMA37MD_WRITE | DMA37MD_DEMAND | DMA37MD_LOOP,
 };
 
 static inline void _isa_dmaunmask __P((struct isa_dma_state *, int));
@@ -309,6 +316,11 @@ _isa_dmastart(ids, chan, addr, nbytes, p, flags, busdmaflags)
 	    "flags 0x%x, dmaflags 0x%x\n",
 	    chan, addr, nbytes, p, flags, busdmaflags);
 #endif
+
+	/* Can't specify LOOP and LOOPDEMAND together. */
+	if ((flags & (DMAMODE_LOOP|DMAMODE_LOOPDEMAND)) ==
+	    (DMAMODE_LOOP|DMAMODE_LOOPDEMAND))
+		return (EINVAL);
 
 	if (chan & 4) {
 		if (nbytes > (1 << 17) || nbytes & 1 || (u_long)addr & 1) {
