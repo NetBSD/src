@@ -28,8 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.4 1995/04/24 13:26:26 cgd Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: usrdb.c,v 1.5 1997/10/18 03:57:33 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -37,6 +38,8 @@ static char rcsid[] = "$Id: usrdb.c,v 1.4 1995/04/24 13:26:26 cgd Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <stdio.h>
 #include <string.h>
 #include "extern.h"
 #include "pathnames.h"
@@ -121,7 +124,7 @@ usracct_add(ci)
 {
 	DBT key, data;
 	struct userinfo newui;
-	u_long uid;
+	uid_t uid;
 	int rv;
 
 	uid = ci->ci_uid;
@@ -172,7 +175,6 @@ usracct_update()
 	DB *saved_usracct_db;
 	DBT key, data;
 	BTREEINFO bti;
-	u_long uid;
 	int error, serr, nerr;
 
 	memset(&bti, 0, sizeof(bti));
@@ -212,7 +214,6 @@ usracct_update()
 		warn("syncing process accounting summary");
 		error = -1;
 	}
-out:
 	if (DB_CLOSE(saved_usracct_db) < 0) {
 		warn("closing process accounting summary");
 		error = -1;
@@ -243,7 +244,7 @@ usracct_print()
 		if (t < 0.0001)		/* kill divide by zero */
 			t = 0.0001;
 
-		printf("%12.2lf%s ", t / 60.0, "cpu");
+		printf("%12.2f%s ", t / 60.0, "cpu");
 
 		/* ui->ui_calls is always != 0 */
 		if (dflag)
@@ -253,7 +254,7 @@ usracct_print()
 
 		/* t is always >= 0.0001; see above */
 		if (kflag)
-			printf("%12qu%s", ui->ui_mem / t, "k");
+			printf("%12qu%s", (u_quad_t)(ui->ui_mem / t), "k");
 		else
 			printf("%12qu%s", ui->ui_mem, "k*sec");
 

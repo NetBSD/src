@@ -28,8 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.3 1995/03/22 15:56:31 mycroft Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pdb.c,v 1.4 1997/10/18 03:57:28 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -403,7 +404,7 @@ print_ci(cip, totalcip)
 		if (!uflow)
 			printf("%8.2fre/cp ", cip->ci_etime / (double) (cip->ci_utime + cip->ci_stime));
 		else
-			printf("%8 ", "*ignore*");
+			printf("%8s ", "*ignore*");
 
 	if (Dflag)
 		printf("%10qutio ", cip->ci_io);

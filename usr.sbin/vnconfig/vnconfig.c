@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.14 1997/09/29 06:43:14 enami Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.15 1997/10/18 03:54:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,8 +104,9 @@ int	verbose = 0;
 char	*tabname;
 
 int	config __P((char *, char *, char *, int));
-char	*rawdevice __P((char *));
 int	getgeom __P((struct vndgeom *, char *));
+int	main __P((int, char **));
+char   *rawdevice __P((char *));
 void	usage __P((void));
 
 int
