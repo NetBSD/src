@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.7 2002/01/24 08:24:15 martti Exp $
+.\"	$NetBSD: ipf.5,v 1.7.2.1 2002/10/24 09:33:44 lukem Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -63,7 +63,7 @@ host-num = digit [ digit [ digit ] ] .
 port-num = service-name | decnumber .
 
 withopt = [ "not" | "no" ] opttype [ withopt ] .
-opttype = "ipopts" | "short" | "frag" | "opt" ipopts  .
+opttype = "ipopts" | "short" | "frag" | "opt" optname  .
 optname	= ipopts [ "," optname ] .
 ipopts  = optlist | "sec-class" [ secname ] .
 secname	= seclvl [ "," secname ] .

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.19 2002/05/02 17:12:05 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.19.4.1 2002/10/24 09:34:04 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.19 2002/05/02 17:12:05 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.19.4.1 2002/10/24 09:34:04 lukem Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -133,7 +133,7 @@ extern	kcondvar_t	iplwait;
 # endif
 
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1], *ipll[IPL_LOGMAX+1];
-size_t	iplused[IPL_LOGMAX+1];
+int	iplused[IPL_LOGMAX+1];
 static fr_info_t	iplcrc[IPL_LOGMAX+1];
 
 
@@ -340,15 +340,15 @@ int *types, cnt;
 	ipl->ipl_dsize = len;
 # ifdef _KERNEL
 #  if SOLARIS || defined(sun)
-	uniqtime((struct timeval *)&ipl->ipl_sec);
+	uniqtime(&ipl->ipl_time);
 #  else
 #   if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
-	microtime((struct timeval *)&ipl->ipl_sec);
+	microtime(&ipl->ipl_time);
 #   endif
 #  endif
 # else
-	ipl->ipl_sec = 0;
-	ipl->ipl_usec = 0;
+	ipl->ipl_time.tv_sec = 0;
+	ipl->ipl_time.tv_usec = 0;
 # endif
 
 	/*
