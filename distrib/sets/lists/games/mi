@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2004/01/11 15:09:51 lukem Exp $
+# $NetBSD: mi,v 1.32 2004/01/12 03:08:06 lukem Exp $
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
 ./usr/games/atc					games-games-bin
@@ -84,94 +84,94 @@
 ./usr/games/wtf					games-utils-bin
 ./usr/games/wump				games-games-bin
 ./usr/share/games/atc/ATC_scores		games-obsolete		obsolete
-./usr/share/games/atc/Atlantis			games-games-share
-./usr/share/games/atc/Game_List			games-games-share
-./usr/share/games/atc/Killer			games-games-share
-./usr/share/games/atc/OHare			games-games-share
-./usr/share/games/atc/Tic-Tac-Toe		games-games-share
-./usr/share/games/atc/airports			games-games-share
-./usr/share/games/atc/box			games-games-share
-./usr/share/games/atc/crosshatch		games-games-share
-./usr/share/games/atc/crossover			games-games-share
-./usr/share/games/atc/default			games-games-share
-./usr/share/games/atc/easy			games-games-share
-./usr/share/games/atc/game_2			games-games-share
-./usr/share/games/atc/game_3			games-games-share
-./usr/share/games/atc/game_4			games-games-share
-./usr/share/games/atc/novice			games-games-share
-./usr/share/games/atc/two-corners		games-games-share
-./usr/share/games/boggle/dictindex		games-games-share
-./usr/share/games/boggle/dictionary		games-games-share
-./usr/share/games/boggle/helpfile		games-games-share
-./usr/share/games/cards.pck			games-games-share
-./usr/share/games/cribbage.instr		games-games-share
-./usr/share/games/fish.instr			games-games-share
-./usr/share/games/fortune/farber		games-utils-share
-./usr/share/games/fortune/farber.dat		games-utils-share
-./usr/share/games/fortune/fortunes		games-utils-share
-./usr/share/games/fortune/fortunes-o		games-utils-share
-./usr/share/games/fortune/fortunes-o.dat	games-utils-share
-./usr/share/games/fortune/fortunes.dat		games-utils-share
-./usr/share/games/fortune/fortunes2		games-utils-share
-./usr/share/games/fortune/fortunes2-o		games-utils-share
-./usr/share/games/fortune/fortunes2-o.dat	games-utils-share
-./usr/share/games/fortune/fortunes2.dat		games-utils-share
-./usr/share/games/fortune/limerick		games-utils-share
-./usr/share/games/fortune/limerick-o		games-utils-share
-./usr/share/games/fortune/limerick-o.dat	games-utils-share
-./usr/share/games/fortune/limerick.dat		games-utils-share
-./usr/share/games/fortune/netbsd		games-utils-share
-./usr/share/games/fortune/netbsd-o		games-utils-share
-./usr/share/games/fortune/netbsd-o.dat		games-utils-share
-./usr/share/games/fortune/netbsd.dat		games-utils-share
-./usr/share/games/fortune/startrek		games-utils-share
-./usr/share/games/fortune/startrek.dat		games-utils-share
+./usr/share/games/atc/Atlantis			games-games-share	share
+./usr/share/games/atc/Game_List			games-games-share	share
+./usr/share/games/atc/Killer			games-games-share	share
+./usr/share/games/atc/OHare			games-games-share	share
+./usr/share/games/atc/Tic-Tac-Toe		games-games-share	share
+./usr/share/games/atc/airports			games-games-share	share
+./usr/share/games/atc/box			games-games-share	share
+./usr/share/games/atc/crosshatch		games-games-share	share
+./usr/share/games/atc/crossover			games-games-share	share
+./usr/share/games/atc/default			games-games-share	share
+./usr/share/games/atc/easy			games-games-share	share
+./usr/share/games/atc/game_2			games-games-share	share
+./usr/share/games/atc/game_3			games-games-share	share
+./usr/share/games/atc/game_4			games-games-share	share
+./usr/share/games/atc/novice			games-games-share	share
+./usr/share/games/atc/two-corners		games-games-share	share
+./usr/share/games/boggle/dictindex		games-games-share	share
+./usr/share/games/boggle/dictionary		games-games-share	share
+./usr/share/games/boggle/helpfile		games-games-share	share
+./usr/share/games/cards.pck			games-games-share	share
+./usr/share/games/cribbage.instr		games-games-share	share
+./usr/share/games/fish.instr			games-games-share	share
+./usr/share/games/fortune/farber		games-utils-share	share
+./usr/share/games/fortune/farber.dat		games-utils-share	share
+./usr/share/games/fortune/fortunes		games-utils-share	share
+./usr/share/games/fortune/fortunes-o		games-utils-share	share
+./usr/share/games/fortune/fortunes-o.dat	games-utils-share	share
+./usr/share/games/fortune/fortunes.dat		games-utils-share	share
+./usr/share/games/fortune/fortunes2		games-utils-share	share
+./usr/share/games/fortune/fortunes2-o		games-utils-share	share
+./usr/share/games/fortune/fortunes2-o.dat	games-utils-share	share
+./usr/share/games/fortune/fortunes2.dat		games-utils-share	share
+./usr/share/games/fortune/limerick		games-utils-share	share
+./usr/share/games/fortune/limerick-o		games-utils-share	share
+./usr/share/games/fortune/limerick-o.dat	games-utils-share	share
+./usr/share/games/fortune/limerick.dat		games-utils-share	share
+./usr/share/games/fortune/netbsd		games-utils-share	share
+./usr/share/games/fortune/netbsd-o		games-utils-share	share
+./usr/share/games/fortune/netbsd-o.dat		games-utils-share	share
+./usr/share/games/fortune/netbsd.dat		games-utils-share	share
+./usr/share/games/fortune/startrek		games-utils-share	share
+./usr/share/games/fortune/startrek.dat		games-utils-share	share
 ./usr/share/games/fortune/unamerican		games-obsolete		obsolete
-./usr/share/games/fortune/unamerican-o		games-utils-share
-./usr/share/games/fortune/unamerican-o.dat	games-utils-share
+./usr/share/games/fortune/unamerican-o		games-utils-share	share
+./usr/share/games/fortune/unamerican-o.dat	games-utils-share	share
 ./usr/share/games/fortune/unamerican.dat	games-obsolete		obsolete
-./usr/share/games/fortune/zippy			games-utils-share
-./usr/share/games/fortune/zippy.dat		games-utils-share
+./usr/share/games/fortune/zippy			games-utils-share	share
+./usr/share/games/fortune/zippy.dat		games-utils-share	share
 ./usr/share/games/gnuchess.book			games-obsolete		obsolete
-./usr/share/games/larn/larn.help		games-games-share
-./usr/share/games/larn/larnmaze			games-games-share
-./usr/share/games/larn/larnopts			games-games-share
+./usr/share/games/larn/larn.help		games-games-share	share
+./usr/share/games/larn/larnmaze			games-games-share	share
+./usr/share/games/larn/larnopts			games-games-share	share
 ./usr/share/games/larn/lfortune			games-obsolete		obsolete
-./usr/share/games/quiz.db/africa		games-games-share
-./usr/share/games/quiz.db/america		games-games-share
-./usr/share/games/quiz.db/areas			games-games-share
-./usr/share/games/quiz.db/arith			games-games-share
-./usr/share/games/quiz.db/asia			games-games-share
-./usr/share/games/quiz.db/babies		games-games-share
-./usr/share/games/quiz.db/bard			games-games-share
-./usr/share/games/quiz.db/chinese		games-games-share
-./usr/share/games/quiz.db/collectives		games-games-share
-./usr/share/games/quiz.db/ed			games-games-share
-./usr/share/games/quiz.db/elements		games-games-share
-./usr/share/games/quiz.db/europe		games-games-share
-./usr/share/games/quiz.db/flowers		games-games-share
-./usr/share/games/quiz.db/greek			games-games-share
-./usr/share/games/quiz.db/inca			games-games-share
-./usr/share/games/quiz.db/index			games-games-share
-./usr/share/games/quiz.db/latin			games-games-share
-./usr/share/games/quiz.db/locomotive		games-games-share
-./usr/share/games/quiz.db/midearth		games-games-share
-./usr/share/games/quiz.db/morse			games-games-share
-./usr/share/games/quiz.db/mult			games-games-share
-./usr/share/games/quiz.db/murders		games-games-share
-./usr/share/games/quiz.db/poetry		games-games-share
-./usr/share/games/quiz.db/posneg		games-games-share
-./usr/share/games/quiz.db/pres			games-games-share
-./usr/share/games/quiz.db/province		games-games-share
-./usr/share/games/quiz.db/seq-easy		games-games-share
-./usr/share/games/quiz.db/seq-hard		games-games-share
-./usr/share/games/quiz.db/sexes			games-games-share
-./usr/share/games/quiz.db/sov			games-games-share
-./usr/share/games/quiz.db/spell			games-games-share
-./usr/share/games/quiz.db/state			games-games-share
-./usr/share/games/quiz.db/trek			games-games-share
-./usr/share/games/quiz.db/ucc			games-games-share
-./usr/share/games/wump.info			games-games-share
+./usr/share/games/quiz.db/africa		games-games-share	share
+./usr/share/games/quiz.db/america		games-games-share	share
+./usr/share/games/quiz.db/areas			games-games-share	share
+./usr/share/games/quiz.db/arith			games-games-share	share
+./usr/share/games/quiz.db/asia			games-games-share	share
+./usr/share/games/quiz.db/babies		games-games-share	share
+./usr/share/games/quiz.db/bard			games-games-share	share
+./usr/share/games/quiz.db/chinese		games-games-share	share
+./usr/share/games/quiz.db/collectives		games-games-share	share
+./usr/share/games/quiz.db/ed			games-games-share	share
+./usr/share/games/quiz.db/elements		games-games-share	share
+./usr/share/games/quiz.db/europe		games-games-share	share
+./usr/share/games/quiz.db/flowers		games-games-share	share
+./usr/share/games/quiz.db/greek			games-games-share	share
+./usr/share/games/quiz.db/inca			games-games-share	share
+./usr/share/games/quiz.db/index			games-games-share	share
+./usr/share/games/quiz.db/latin			games-games-share	share
+./usr/share/games/quiz.db/locomotive		games-games-share	share
+./usr/share/games/quiz.db/midearth		games-games-share	share
+./usr/share/games/quiz.db/morse			games-games-share	share
+./usr/share/games/quiz.db/mult			games-games-share	share
+./usr/share/games/quiz.db/murders		games-games-share	share
+./usr/share/games/quiz.db/poetry		games-games-share	share
+./usr/share/games/quiz.db/posneg		games-games-share	share
+./usr/share/games/quiz.db/pres			games-games-share	share
+./usr/share/games/quiz.db/province		games-games-share	share
+./usr/share/games/quiz.db/seq-easy		games-games-share	share
+./usr/share/games/quiz.db/seq-hard		games-games-share	share
+./usr/share/games/quiz.db/sexes			games-games-share	share
+./usr/share/games/quiz.db/sov			games-games-share	share
+./usr/share/games/quiz.db/spell			games-games-share	share
+./usr/share/games/quiz.db/state			games-games-share	share
+./usr/share/games/quiz.db/trek			games-games-share	share
+./usr/share/games/quiz.db/ucc			games-games-share	share
+./usr/share/games/wump.info			games-games-share	share
 ./usr/share/man/cat6/adventure.0		games-games-catman	.cat
 ./usr/share/man/cat6/arithmetic.0		games-games-catman	.cat
 ./usr/share/man/cat6/atc.0			games-games-catman	.cat
