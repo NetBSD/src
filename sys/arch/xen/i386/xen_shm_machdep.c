@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.2 2005/03/09 22:39:20 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.3 2005/03/10 17:02:20 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -125,6 +125,12 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
 	int remap_prot = PG_V | PG_RW | PG_U | PG_M;
 
+#ifdef DIAGNOSTIC
+	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
+		printf("xen_shm_map: %d entries\n", nentries);
+		panic("xen_shm_map");
+	}
+#endif
 	/*
 	 * if a driver is waiting for ressources, don't try to allocate
 	 * yet. This is to avoid a flood of small requests stalling large
@@ -166,8 +172,15 @@ void
 xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 {
 	multicall_entry_t mcl[XENSHM_MAX_PAGES_PER_REQUEST];
-	int i;
+	int i, s;
 	struct xen_shm_callback_entry *xshmc;
+
+#ifdef DIAGNOSTIC
+	if (nentries > XENSHM_MAX_PAGES_PER_REQUEST) {
+		printf("xen_shm_unmap: %d entries\n", nentries);
+		panic("xen_shm_unmap");
+	}
+#endif
 
 	va = va >> PAGE_SHIFT;
 	for (i = 0; i < nentries; i++) {
@@ -182,30 +195,44 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		panic("xen_shm_unmap");
 	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
 		panic("xen_shm_unmap: extent_free");
+	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
 	    != NULL)) {
+		/*
+		 * bouyer@: these printf("callback") should go away,
+		 * but I've not been able to trigger this code yet,
+		 * so leave them here until we're sure the code works
+		 */
+		printf("xen_shm_unmap: callback\n"); /* XXX */
 		if (xshmc->xshmc_callback(xshmc->xshmc_arg) == 0) {
 			/* callback succeeded */
 			SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
 			pool_put(&xen_shm_callback_pool, xshmc);
+			printf("xen_shm_unmap: callback cleared\n"); /* XXX */
 		} else {
 			/* callback failed, probably out of ressources */
+			splx(s);
 			return;
 		}
 	}
+	splx(s);
 }
 
 int
 xen_shm_callback(int (*callback)(void *), void *arg)
 {
 	struct xen_shm_callback_entry *xshmc;
+	int s;
+	printf("xen_shm_callback\n"); /* XXX */
 
 	xshmc = pool_get(&xen_shm_callback_pool, PR_NOWAIT);
 	if (xshmc == NULL)
 		return ENOMEM;
 	xshmc->xshmc_arg = arg;
 	xshmc->xshmc_callback = callback;
+	s = splvm();
 	SIMPLEQ_INSERT_TAIL(&xen_shm_callbacks, xshmc, xshmc_entries);
+	splx(s);
 	return 0;
 }
 
