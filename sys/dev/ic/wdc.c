@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.81 2000/03/23 07:01:33 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.82 2000/03/23 15:04:49 soren Exp $ */
 
 
 /*
@@ -931,7 +931,7 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bits data port", drv_dev->dv_xname);
+			printf("%s: 32-bit data port", drv_dev->dv_xname);
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
