@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.46 2003/10/23 05:25:29 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.47 2003/10/23 17:05:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.46 2003/10/23 05:25:29 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.47 2003/10/23 17:05:26 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,22 +472,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
 
-#if 0
-	/* Reset codec and AC'97 */
-	auich_reset_codec(sc);
-	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
-
-	/* Reset failure */
-	if (!sc->sc_ignore_codecready && !(status & ICH_PCR)) { 
-			/* It never return ICH_PCR in some cases */
-		if (d->quirks & QUIRK_IGNORE_CODEC_READY_MAYBE) {
-			sc->sc_ignore_codecready = TRUE;
-		} else {
-			return;
-		}
-	}
-#endif
-
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
 	sc->host_if.read = auich_read_codec;
@@ -582,21 +566,29 @@ auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
 	int i;
-	uint32_t control;
+	uint32_t control, status;
 
 	control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
 	control &= ~(ICH_ACLSO | ICH_PCM246_MASK);
 	control |= (control & ICH_CRESET) ? ICH_WRESET : ICH_CRESET;
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
 
-	for (i = 500000; i-- &&
-	       !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR);
-	     DELAY(1));					/*       or ICH_SCR? */
-#if 0
-	if (i <= 0)
-		printf("%s: auich_reset_codec: time out\n", 
-		    sc->sc_dev.dv_xname);
-#endif
+	for (i = 500000; i >= 0; i--) {
+		status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
+		if (status & ICH_PCR)
+			break;
+		DELAY(1);
+	}
+	if (i <= 0) {
+		printf("%s: auich_reset_codec: time out for the primary codec\n", 
+		       sc->sc_dev.dv_xname);
+		if (status & ICH_SCR)
+			printf("%s: auich_reset_codec: The 2nd codec is ready.\n",
+			       sc->sc_dev.dv_xname);
+		if (status & ICH_S2CR)
+			printf("%s: auich_reset_codec: The 3rd codec is ready.\n",
+			       sc->sc_dev.dv_xname);
+	}
 }
 
 int
