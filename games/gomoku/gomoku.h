@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.4 1997/10/10 13:36:03 lukem Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -275,11 +275,11 @@ void	bdisp_init __P((void));
 void	cursfini __P((void));
 void	cursinit __P((void));
 void	bdwho __P((int));
-void	panic __P((char *));
+void	panic __P((char *)) __attribute__((__noreturn__));
 void	log __P((char *));
 void	dlog __P((char *));
-void	quit __P((void));
-void	quitsig __P((int));
+void	quit __P((void)) __attribute__((__noreturn__));
+void	quitsig __P((int)) __attribute__((__noreturn__));
 void	whatsup __P((int));
 int	readinput __P((FILE *));
 char   *stoc __P((int));

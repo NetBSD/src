@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.10 1998/09/11 13:19:50 hubertf Exp $	*/
+/*	$NetBSD: canfield.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.10 1998/09/11 13:19:50 hubertf Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ time_t acctstart;
 int dbfd = -1;
 
 void	askquit __P((int));
-void	cleanup __P((int));
+void	cleanup __P((int)) __attribute__((__noreturn__));
 void	cleanupboard __P((void));
 void	clearabovemovebox __P((void));
 void	clearbelowmovebox __P((void));

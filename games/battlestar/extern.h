@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/03/29 04:49:06 mrg Exp $ */
+/*	$NetBSD: extern.h,v 1.9 1998/09/13 15:27:26 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -311,8 +311,8 @@ void chime __P((void));
 void convert __P((int));
 void crash __P((void));
 int cypher __P((void));
-void die __P((void));
-void diesig __P((int));
+void die __P((void)) __attribute__((__noreturn__));
+void diesig __P((int)) __attribute__((__noreturn__));
 void dig __P((void));
 int draw __P((void));
 void drink __P((void));
@@ -332,7 +332,7 @@ void kiss __P((void));
 int land __P((void));
 int launch __P((void));
 void light __P((void));
-void live __P((void));
+void live __P((void)) __attribute__((__noreturn__));
 void love __P((void));
 int move __P((int, int));
 void moveenemy __P((int));
