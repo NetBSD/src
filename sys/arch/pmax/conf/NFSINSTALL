@@ -1,4 +1,4 @@
-# 	$NetBSD: NFSINSTALL,v 1.7 1997/08/20 04:21:35 jonathan Exp $
+# 	$NetBSD: NFSINSTALL,v 1.8 1997/10/20 03:45:08 jonathan Exp $
 #
 # Distribution root-on-NFS  network install kernel (any  model)
 #    root on NFS  to boot diskless for installation,
@@ -11,6 +11,7 @@ include		"arch/pmax/conf/std.pmax"
 
 maxusers	8
 
+# CPU options
 options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000/R4400 support
 
@@ -49,6 +50,8 @@ options 	FIFO			# POSIX fifo support (in all filesystems)
 options 	INET		# Internet protocols
 options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 
+
+options 	COMPAT_12
 
 # pmax specific
 options 	"HZ=256"	# RTC rate required
