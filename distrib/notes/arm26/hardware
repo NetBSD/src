@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.5 2001/01/08 16:15:39 bjh21 Exp $
+.\"	$NetBSD: hardware,v 1.6 2001/02/23 00:29:36 bjh21 Exp $
 .
 .Nx*M
 \*V should support all common Acorn machines fitted with
@@ -11,8 +11,9 @@ the A5000, A4, A3010, A3020 and A4000.
 .(bullet -offset indent
 Memory
 .(bullet -compact
-8 MB of RAM.
-4 MB systems should work, but tend to run out of memory very easily.
+at least 8 MB of RAM.
+4 MB systems should work, but tend to run out of memory too easily to be
+of any use.
 .bullet)
 .It
 On-board video
