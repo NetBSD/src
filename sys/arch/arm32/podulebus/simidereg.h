@@ -1,4 +1,4 @@
-/*	$NetBSD: simidereg.h,v 1.1 1997/10/14 23:20:57 mark Exp $	*/
+/*	$NetBSD: simidereg.h,v 1.2 1998/09/22 00:40:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -49,6 +50,7 @@
 
 #define DRIVE_REGISTERS_SPACE			0x800
 #define DRIVE_REGISTER_BYTE_SPACING		128
+#define DRIVE_REGISTER_SPACING_SHIFT		7
 
 /* Other registers */
 
@@ -59,7 +61,7 @@
 #define	 CONTROL_IORDY				0x40
 #define  CONTROL_8_BIT				0x20
 #define	 CONTROL_IDE_ENABLE			0x10
-#define  CONTROL_SLOW_MODE			0x08
+#define  CONTROL_SLOW_MODE_OFF			0x08
 #define	 CONTROL_ROM_WRITE			0x04
 #define  CONTROL_SECONDARY_IRQ			0x02
 #define  CONTROL_PRIMARY_IRQ			0x01

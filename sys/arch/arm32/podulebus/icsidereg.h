@@ -1,4 +1,4 @@
-/*	$NetBSD: icsidereg.h,v 1.2 1997/03/15 18:09:35 is Exp $	*/
+/*	$NetBSD: icsidereg.h,v 1.3 1998/09/22 00:40:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -34,20 +35,31 @@
  * Registers and address offsets for the ICS IDE card.
  */
 
-/* IDE drive registers */
+/* ID register, read 4 consecutive words and extract ID from bit 0 */
+#define ID_REGISTER_OFFSET		0x2280	/* byte offset from fast base */
 
-#define DRIVE_REGISTERS_OFFSET		0x2800
-#define DRIVE_REGISTER_SPACING		64	/* Bytes */
-#define DRIVE_REGISTER_SPACE		0x200
-
-#define AUX_STATUS_REGISTER_OFFSET	0x2a80
-
-/* Other registers */
-
-#define ROM_PAGING_REGISTER_OFFSET	0x0000
-#define IRQ_STATUS_REGISTER_OFFSET	0x0000
+#define REGISTER_SPACING_SHIFT		6
+#define IDE_REGISTER_SPACE		0x200
+#define AUX_REGISTER_SPACE		4
+#define IRQ_REGISTER_SPACE		4
+#define ID_REGISTER_SPACE		4
 #define IRQ_STATUS_REGISTER_MASK	0x01
 
-/* Write to enable, Read to disable */
+/* IDE drive registers */
 
-#define IRQ_ENABLE_REGISTER_OFFSET	0x1004
+/* ARCIN V5 registers */
+#define V5_IDE_BASE			0x2800	/* byte offset from base */
+#define V5_AUX_BASE			0x2a80	/* byte offset from base */
+#define V5_IRQ_BASE			0x0004	/* byte offset from base */
+#define V5_IRQSTAT_BASE			0x0000	/* byte offset from base */
+
+/* ARCIN V6 registers */
+#define V6_P_IDE_BASE			0x2000	/* byte offset from base */
+#define V6_P_AUX_BASE			0x2380	/* byte offset from base */
+#define V6_P_IRQ_BASE			0x2200	/* byte offset from base */
+#define V6_P_IRQSTAT_BASE		0x2290	/* byte offset from base */
+
+#define V6_S_IDE_BASE			0x3000	/* byte offset from base */
+#define V6_S_AUX_BASE			0x3380	/* byte offset from base */
+#define V6_S_IRQ_BASE			0x3200	/* byte offset from base */
+#define V6_S_IRQSTAT_BASE		0x3290	/* byte offset from base */

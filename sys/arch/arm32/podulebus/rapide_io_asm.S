@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.5 1998/06/28 07:27:55 thorpej Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.6 1998/09/22 00:40:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -15,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -40,8 +41,6 @@
  *
  * These are optimised 32 bit transfer routines
  */
-
-	.text
 
 ENTRY(rapide_bs_rm_4)
 	add	r0, r1, r2
