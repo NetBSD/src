@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.4 1999/11/21 07:58:49 takemura Exp $	*/
+/*	$NetBSD: platid.def,v 1.5 1999/11/21 12:48:25 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -155,6 +155,14 @@ Victor {
   InterLink {
     MP {
       CPU=MIPS_TX_3922 MPC101
+    }
+  }
+}
+
+IBM {
+  WorkPad {
+    z50 {
+      CPU=MIPS_VR_4121 2601_1AU
     }
   }
 }
