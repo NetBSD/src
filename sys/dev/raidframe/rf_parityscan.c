@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.26 2004/03/05 03:58:21 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.27 2004/03/18 17:26:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.26 2004/03/05 03:58:21 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.27 2004/03/18 17:26:36 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -406,16 +406,10 @@ rf_MakeSimpleDAG(RF_Raid_t *raidPtr, int nNodes, int bytesPerSU, char *databuf,
 		 RF_RaidAccessFlags_t flags, int priority)
 {
 	RF_DagHeader_t *dag_h;
-	RF_DagNode_t *nodes, *termNode, *blockNode, *unblockNode;
+	RF_DagNode_t *nodes, *termNode, *blockNode, *unblockNode, *tmpNode;
 	int     i;
 
-	/* create the nodes, the block & unblock nodes, and the terminator
-	 * node */
-	RF_MallocAndAdd(nodes, (nNodes + 3) * sizeof(RF_DagNode_t), 
-			(RF_DagNode_t *), alloclist);
-	blockNode = &nodes[nNodes];
-	unblockNode = blockNode + 1;
-	termNode = unblockNode + 1;
+	/* grab a DAG header... */
 
 	dag_h = rf_AllocDAGHeader();
 	dag_h->raidPtr = (void *) raidPtr;
@@ -429,18 +423,42 @@ rf_MakeSimpleDAG(RF_Raid_t *raidPtr, int nNodes, int bytesPerSU, char *databuf,
 	dag_h->numCommitNodes = 1;
 	dag_h->numCommits = 0;
 
+	/* create the nodes, the block & unblock nodes, and the terminator
+	 * node */
+
+	for (i = 0; i < nNodes; i++) {
+		tmpNode = rf_AllocDAGNode();
+		tmpNode->list_next = dag_h->nodes;
+		dag_h->nodes = tmpNode;
+	}
+	nodes = dag_h->nodes;
+
+	blockNode = rf_AllocDAGNode();
+	blockNode->list_next = dag_h->nodes;
+	dag_h->nodes = blockNode;
+
+	unblockNode = rf_AllocDAGNode();
+	unblockNode->list_next = dag_h->nodes;
+	dag_h->nodes = unblockNode;
+
+	termNode = rf_AllocDAGNode();
+	termNode->list_next = dag_h->nodes;
+	dag_h->nodes = termNode;
+
 	dag_h->succedents[0] = blockNode;
 	rf_InitNode(blockNode, rf_wait, RF_FALSE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, nNodes, 0, 0, 0, dag_h, "Nil", alloclist);
 	rf_InitNode(unblockNode, rf_wait, RF_TRUE, rf_NullNodeFunc, rf_NullNodeUndoFunc, NULL, 1, nNodes, 0, 0, dag_h, "Nil", alloclist);
 	unblockNode->succedents[0] = termNode;
+	tmpNode = nodes;
 	for (i = 0; i < nNodes; i++) {
-		blockNode->succedents[i] = unblockNode->antecedents[i] = &nodes[i];
+		blockNode->succedents[i] = unblockNode->antecedents[i] = tmpNode;
 		unblockNode->antType[i] = rf_control;
-		rf_InitNode(&nodes[i], rf_wait, RF_FALSE, doFunc, undoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, name, alloclist);
-		nodes[i].succedents[0] = unblockNode;
-		nodes[i].antecedents[0] = blockNode;
-		nodes[i].antType[0] = rf_control;
-		nodes[i].params[1].p = (databuf + (i * bytesPerSU));
+		rf_InitNode(tmpNode, rf_wait, RF_FALSE, doFunc, undoFunc, rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, name, alloclist);
+		tmpNode->succedents[0] = unblockNode;
+		tmpNode->antecedents[0] = blockNode;
+		tmpNode->antType[0] = rf_control;
+		tmpNode->params[1].p = (databuf + (i * bytesPerSU));
+		tmpNode = tmpNode->list_next;
 	}
 	rf_InitNode(termNode, rf_wait, RF_FALSE, rf_TerminateFunc, rf_TerminateUndoFunc, NULL, 0, 1, 0, 0, dag_h, "Trm", alloclist);
 	termNode->antecedents[0] = unblockNode;
