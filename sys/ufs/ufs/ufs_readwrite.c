@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.47 2003/01/24 21:55:30 fvdl Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.48 2003/02/17 23:48:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.47 2003/01/24 21:55:30 fvdl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.48 2003/02/17 23:48:23 perseant Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -110,9 +110,13 @@ READ(void *v)
 		goto out;
 	}
 
-#ifndef LFS_READWRITE
+#ifdef LFS_READWRITE
+# ifdef LFS_UBC
+	usepc = (vp->v_type == VREG && ip->i_number != LFS_IFILE_INUM);
+# endif
+#else /* !LFS_READWRITE */
 	usepc = vp->v_type == VREG;
-#endif
+#endif /* !LFS_READWRITE */
 	if (usepc) {
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_ffs_size - uio->uio_offset,
@@ -278,9 +282,14 @@ WRITE(void *v)
 	bsize = fs->fs_bsize;
 	error = 0;
 
-#ifndef LFS_READWRITE
+#ifdef LFS_READWRITE
+# ifdef LFS_UBC
+	async = TRUE;
 	usepc = vp->v_type == VREG;
-#endif
+# endif
+#else /* !LFS_READWRITE */
+	usepc = vp->v_type == VREG;
+#endif /* !LFS_READWRITE */
 	if (!usepc) {
 		goto bcache;
 	}

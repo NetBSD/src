@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 2003/01/24 21:55:05 fvdl Exp $	*/
+/*	$NetBSD: print.c,v 1.14 2003/02/17 23:48:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.13 2003/01/24 21:55:05 fvdl Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 2003/02/17 23:48:08 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ dump_super(struct lfs *lfsp)
 
 	syslog(LOG_DEBUG, "Checkpoint Info\n");
 	syslog(LOG_DEBUG, "%s%d\t%s0x%X\t%s%d\n",
-		"free     ", lfsp->lfs_free,
+		"freehd   ", lfsp->lfs_freehd,
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
 	syslog(LOG_DEBUG, "%s%d\t%s%d\t%s%d\n",

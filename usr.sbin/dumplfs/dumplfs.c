@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.21 2003/01/28 07:44:54 mrg Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.22 2003/02/17 23:48:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.21 2003/01/28 07:44:54 mrg Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.22 2003/02/17 23:48:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -678,7 +678,7 @@ dump_super(struct lfs *lfsp)
  	
  	(void)printf("  Checkpoint Info\n");
  	(void)printf("    %s%-10d  %s0x%-8x  %s%-10d\n",
- 		     "free     ", lfsp->lfs_free,
+ 		     "freehd   ", lfsp->lfs_freehd,
  		     "idaddr   ", lfsp->lfs_idaddr,
  		     "ifile    ", lfsp->lfs_ifile);
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",

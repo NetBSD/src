@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.12 2003/01/24 21:55:10 fvdl Exp $	 */
+/* $NetBSD: pass0.c,v 1.13 2003/02/17 23:48:09 perseant Exp $	 */
 
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
@@ -86,7 +86,7 @@ pass0()
 	memset(visited, 0, maxino * sizeof(ino_t));
 
 	plastino = 0;
-	ino = sblock.lfs_free;
+	ino = sblock.lfs_freehd;
 	while (ino) {
 		if (ino >= maxino) {
 			printf("! Ino %d out of range (last was %d)\n", ino,
@@ -115,7 +115,7 @@ pass0()
 			       ino, (long long)daddr);
 			if (preen || reply("FIX") == 1) {
 				if (plastino == 0) {
-					sblock.lfs_free = nextino;
+					sblock.lfs_freehd = nextino;
 					sbdirty();
 				} else {
 					ifp = lfs_ientry(plastino, &bp);
@@ -145,8 +145,8 @@ pass0()
 
 		pwarn("! Ino %d free, but not on the free list\n", ino);
 		if (preen || reply("FIX") == 1) {
-			ifp->if_nextfree = sblock.lfs_free;
-			sblock.lfs_free = ino;
+			ifp->if_nextfree = sblock.lfs_freehd;
+			sblock.lfs_freehd = ino;
 			sbdirty();
 			dirty(bp);
 		}

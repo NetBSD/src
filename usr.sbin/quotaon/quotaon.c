@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.17 2002/07/20 08:40:20 grant Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.18 2003/02/17 23:48:25 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.17 2002/07/20 08:40:20 grant Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.18 2003/02/17 23:48:25 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,8 @@ main(argc, argv)
 	}
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
-		if (strcmp(fs->fs_vfstype, "ffs") ||
+		if ((strcmp(fs->fs_vfstype, "ffs") &&
+		     strcmp(fs->fs_vfstype, "lfs")) ||
 		    strcmp(fs->fs_type, FSTAB_RW))
 			continue;
 		if (aflag) {
