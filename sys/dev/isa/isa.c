@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.100 1998/05/05 21:41:18 drochner Exp $	*/
+/*	$NetBSD: isa.c,v 1.101 1998/06/09 00:00:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -85,14 +85,9 @@ isaattach(parent, self, aux)
 	sc->sc_ic = iba->iba_ic;
 
 	/*
-	 * Map the registers used by the ISA DMA controller.
+	 * Initialize our DMA state.
 	 */
-	if (bus_space_map(sc->sc_iot, IO_DMA1, DMA1_IOSIZE, 0, &sc->sc_dma1h))
-		panic("isaattach: can't map DMA controller #1");
-	if (bus_space_map(sc->sc_iot, IO_DMA2, DMA2_IOSIZE, 0, &sc->sc_dma2h))
-		panic("isaattach: can't map DMA controller #2");
-	if (bus_space_map(sc->sc_iot, IO_DMAPG, 0xf, 0, &sc->sc_dmapgh))
-		panic("isaattach: can't map DMA page registers");
+	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
 
 	TAILQ_INIT(&sc->sc_subdevs);
 

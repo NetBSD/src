@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.32 1998/04/15 01:44:23 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.33 1998/06/09 00:00:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -167,35 +167,7 @@ struct isa_softc {
 	bus_dma_tag_t sc_dmat;		/* isa DMA tag */
 
 	isa_chipset_tag_t sc_ic;
-
-	/*
-	 * Bitmap representing the DRQ channels available
-	 * for ISA.
-	 */
-	int	sc_drqmap;
-
-	bus_space_handle_t sc_dma1h;	/* i/o handle for DMA controller #1 */
-	bus_space_handle_t sc_dma2h;	/* i/o handle for DMA controller #2 */
-	bus_space_handle_t sc_dmapgh;	/* i/o handle for DMA page registers */
-
-	/*
-	 * DMA maps used for the 8 DMA channels.
-	 */
-	bus_dmamap_t	sc_dmamaps[8];
-	vm_size_t	sc_dmalength[8];
-
-	int	sc_dmareads;		/* state for isa_dmadone() */
-	int	sc_dmafinished;		/* DMA completion state */
 };
-
-#define	ISA_DRQ_ISFREE(isadev, drq) \
-	((((struct isa_softc *)(isadev))->sc_drqmap & (1 << (drq))) == 0)
-
-#define	ISA_DRQ_ALLOC(isadev, drq) \
-	((struct isa_softc *)(isadev))->sc_drqmap |= (1 << (drq))
-
-#define	ISA_DRQ_FREE(isadev, drq) \
-	((struct isa_softc *)(isadev))->sc_drqmap &= ~(1 << (drq))
 
 #define		cf_iobase		cf_loc[ISACF_PORT]
 #define		cf_iosize		cf_loc[ISACF_SIZE]
