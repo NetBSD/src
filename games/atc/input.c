@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.11 1998/11/10 13:43:31 hubertf Exp $	*/
+/*	$NetBSD: input.c,v 1.12 1999/07/17 19:57:03 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.11 1998/11/10 13:43:31 hubertf Exp $");
+__RCSID("$NetBSD: input.c,v 1.12 1999/07/17 19:57:03 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -316,7 +316,6 @@ gettoken()
 			{
 				char *shell, *base;
 
-				setuid(getuid()); /* turn off setuid bit */
 				done_screen();
 
 						 /* run user's favorite shell */
