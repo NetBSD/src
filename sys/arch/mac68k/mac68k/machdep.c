@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 1996/11/19 07:17:49 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 1997/01/09 07:20:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1392,23 +1392,109 @@ cpu_exec_aout_makecmds(p, epp)
 
 static char *envbuf = NULL;
 
-void	initenv __P((u_long, char *));
+/*
+ * getenvvars: Grab a few useful variables
+ */
+void		getenvvars __P((u_long, char *));
+static long	getenv __P((char *));
 
 void
-initenv(flag, buf)
+getenvvars(flag, buf)
 	u_long  flag;
 	char   *buf;
 {
+	extern u_long bootdev, videobitdepth, videosize;
+	extern u_long end, esym;
+	extern u_long macos_boottime, MacOSROMBase;
+	extern long macos_gmtbias;
+	int     root_scsi_id;
+
 	/*
          * If flag & 0x80000000 == 0, then we're booting with the old booter
          * and we should freak out.
          */
-
 	if ((flag & 0x80000000) == 0) {
 		/* Freak out; print something if that becomes available */
-	} else {
+	} else
 		envbuf = buf;
+
+	root_scsi_id = getenv("ROOT_SCSI_ID");
+	/*
+         * For now, we assume that the boot device is off the first controller.
+         */
+	if (bootdev == 0) {
+		bootdev = (root_scsi_id << 16) | 4;
 	}
+
+	if (boothowto == 0) {
+		boothowto = getenv("SINGLE_USER");
+	}
+
+	/* These next two should give us mapped video & serial */
+	/* We need these for pre-mapping graybars & echo, but probably */
+	/* only on MacII or LC.  --  XXX */
+	/* videoaddr = getenv("MACOS_VIDEO"); */
+	/* sccaddr = getenv("MACOS_SCC"); */
+
+	/*
+         * The following are not in a structure so that they can be
+         * accessed more quickly.
+         */
+	videoaddr = getenv("VIDEO_ADDR");
+	videorowbytes = getenv("ROW_BYTES");
+	videobitdepth = getenv("SCREEN_DEPTH");
+	videosize = getenv("DIMENSIONS");
+
+	/*
+         * More misc stuff from booter.
+         */
+	mac68k_machine.machineid = getenv("MACHINEID");
+	mac68k_machine.mach_processor = getenv("PROCESSOR");
+	mac68k_machine.mach_memsize = getenv("MEMSIZE");
+	mac68k_machine.do_graybars = getenv("GRAYBARS");
+	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
+	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
+
+	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
+	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
+	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
+	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
+	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
+	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
+	/* Should probably check this and fail if old */
+	mac68k_machine.booter_version = getenv("BOOTERVER");
+
+	/*
+         * Get end of symbols for kernel debugging
+         */
+	esym = getenv("END_SYM");
+#ifndef SYMTAB_SPACE
+	if (esym == 0)
+#endif
+		esym = (long) &end;
+
+	/* Get MacOS time */
+	macos_boottime = getenv("BOOTTIME");
+
+	/* Save GMT BIAS saved in Booter parameters dialog box */
+	macos_gmtbias = getenv("GMTBIAS");
+
+	/*
+         * Save globals stolen from MacOS
+         */
+
+	ROMBase = (caddr_t) getenv("ROMBASE");
+	if (ROMBase == (caddr_t) 0) {
+		ROMBase = (caddr_t) ROMBASE;
+	}
+	MacOSROMBase = (unsigned long) ROMBase;
+	TimeDBRA = getenv("TIMEDBRA");
+	ADBDelay = (u_short) getenv("ADBDELAY");
+	HwCfgFlags  = getenv("HWCFGFLAGS");
+	HwCfgFlags2 = getenv("HWCFGFLAG2");
+	HwCfgFlags3 = getenv("HWCFGFLAG3");
+ 	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
+ 	mrg_ADBIntrPtr = (caddr_t) getenv("ADBINTERRUPT");
 }
 
 static char	toupper __P((char));
@@ -1423,8 +1509,6 @@ toupper(c)
 		return c;
 	}
 }
-
-static long	getenv __P((char *));
 
 static long
 getenv(str)
@@ -2156,6 +2240,23 @@ struct cpu_model_info cpu_models[] = {
 	{0, NULL, NULL, 0, NULL},
 };				/* End of cpu_models[] initialization. */
 
+struct {
+	int	machineid;
+	caddr_t	fbbase;
+	u_long	fblen;
+} intvid_info[] =  {
+	{MACH_MACPB140,		(caddr_t) 0xfee00000,	32 * 1024},
+	{MACH_MACPB145,		(caddr_t) 0xfee00000,	32 * 1024},
+	{MACH_MACPB170,		(caddr_t) 0xfee00000,	32 * 1024},
+	{MACH_MACPB160,		(caddr_t) 0x60000000,	128 * 1024},
+	{MACH_MACPB165,		(caddr_t) 0x60000000,	128 * 1024},
+	{MACH_MACPB180,		(caddr_t) 0x60000000,	128 * 1024},
+	{MACH_MACPB165C,	(caddr_t) 0xfc040000,	512 * 1024},
+	{MACH_MACPB180C,	(caddr_t) 0xfc040000,	512 * 1024},
+	{MACH_MACPB500,		(caddr_t) 0x60000000,	512 * 1024},
+	{0,			(caddr_t) 0x0,		0},
+};				/* End of intvid_info[] initialization. */
+
 /*
  * Missing Mac Models:
  *	PowerMac 6100
@@ -2182,27 +2283,26 @@ mach_cputype()
 static void
 identifycpu()
 {
-	char   *proc;
+	char   *mpu;
 
-	switch (mac68k_machine.mach_processor) {
-	case MACH_68020:
-		proc = ("(68020)");
+	switch (cputype) {
+	case CPU_68020:
+		mpu = ("(68020)");
 		break;
-	case MACH_68030:
-		proc = ("(68030)");
+	case CPU_68030:
+		mpu = ("(68030)");
 		break;
-	case MACH_68040:
-		proc = ("(68040)");
+	case CPU_68040:
+		mpu = ("(68040)");
 		break;
-	case MACH_PENTIUM:
 	default:
-		proc = ("(unknown processor)");
+		mpu = ("(unknown processor)");
 		break;
 	}
 	sprintf(cpu_model, "Apple Macintosh %s%s %s",
 	    cpu_models[mac68k_machine.cpu_model_index].model_major,
 	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
-	    proc);
+	    mpu);
 	printf("%s\n", cpu_model);
 }
 
@@ -2213,113 +2313,14 @@ get_machine_info()
 {
 	int     i;
 
-	for (i = 0; cpu_models[i].model_major; i++) {
+	for (i = 0; cpu_models[i].model_major; i++)
 		if (mac68k_machine.machineid == cpu_models[i].machineid)
 			break;
-	}
 
 	if (cpu_models[i].model_major == NULL)
 		i--;
 
 	mac68k_machine.cpu_model_index = i;
-}
-
-/*
- * getenvvars: Grab a few useful variables
- */
-void	getenvvars __P((void));
-
-void
-getenvvars()
-{
-	extern u_long bootdev, videobitdepth, videosize;
-	extern u_long end, esym;
-	extern u_long macos_boottime, MacOSROMBase;
-	extern long macos_gmtbias;
-	int     root_scsi_id;
-
-	root_scsi_id = getenv("ROOT_SCSI_ID");
-	/*
-         * For now, we assume that the boot device is off the first controller.
-         */
-	if (bootdev == 0) {
-		bootdev = (root_scsi_id << 16) | 4;
-	}
-
-	if (boothowto == 0) {
-		boothowto = getenv("SINGLE_USER");
-	}
-
-	/* These next two should give us mapped video & serial */
-	/* We need these for pre-mapping graybars & echo, but probably */
-	/* only on MacII or LC.  --  XXX */
-	/* videoaddr = getenv("MACOS_VIDEO"); */
-	/* sccaddr = getenv("MACOS_SCC"); */
-
-	/*
-         * The following are not in a structure so that they can be
-         * accessed more quickly.
-         */
-	videoaddr = getenv("VIDEO_ADDR");
-	videorowbytes = getenv("ROW_BYTES");
-	videobitdepth = getenv("SCREEN_DEPTH");
-	videosize = getenv("DIMENSIONS");
-
-	/*
-         * More misc stuff from booter.
-         */
-	mac68k_machine.machineid = getenv("MACHINEID");
-	switch (mac68k_machine.mach_processor = getenv("PROCESSOR")) {
-	case MACH_68040:
-		mmutype = MMU_68040;
-		break;
-	default:;
-	}
-	mac68k_machine.mach_memsize = getenv("MEMSIZE");
-	mac68k_machine.do_graybars = getenv("GRAYBARS");
-	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
-	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
-
-	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
-	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
-	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
-	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
-	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
-	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
-	/* Should probably check this and fail if old */
-	mac68k_machine.booter_version = getenv("BOOTERVER");
-
-	/*
-         * Get end of symbols for kernel debugging
-         */
-	esym = getenv("END_SYM");
-#ifndef SYMTAB_SPACE
-	if (esym == 0)
-#endif
-		esym = (long) &end;
-
-	/* Get MacOS time */
-	macos_boottime = getenv("BOOTTIME");
-
-	/* Save GMT BIAS saved in Booter parameters dialog box */
-	macos_gmtbias = getenv("GMTBIAS");
-
-	/*
-         * Save globals stolen from MacOS
-         */
-
-	ROMBase = (caddr_t) getenv("ROMBASE");
-	if (ROMBase == (caddr_t) 0) {
-		ROMBase = (caddr_t) ROMBASE;
-	}
-	MacOSROMBase = (unsigned long) ROMBase;
-	TimeDBRA = getenv("TIMEDBRA");
-	ADBDelay = (u_short) getenv("ADBDELAY");
-	HwCfgFlags  = getenv("HWCFGFLAGS");
-	HwCfgFlags2 = getenv("HWCFGFLAG2");
-	HwCfgFlags3 = getenv("HWCFGFLAG3");
- 	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
- 	mrg_ADBIntrPtr = (caddr_t) getenv("ADBINTERRUPT");
 }
 
 struct cpu_model_info *current_mac_model;
@@ -2335,8 +2336,8 @@ setmachdep()
 {
 	static int firstpass = 1;
 	int setup_mrg_vectors = 0;
-	u_long phys;
 	struct cpu_model_info *cpui;
+	int i;
 
 	/*
 	 * First, set things that need to be set on the first pass only
@@ -2353,17 +2354,6 @@ setmachdep()
 
 	if (!firstpass)
 		return;
-
-	/*
-	 * Get the PA of the console framebuffer, iff we're on an 040.  
-	 * We can't call get_physical() on the 851/030 this early, but
-	 * neither can we call it later on the 040; by the time
-	 * we've figured out we have an 851 or 030, we've disabled the
-	 * 040 MMU.  XXX This sucks.
-	 */
-	if (mmutype == MMU_68040)
-		mac68k_vidphys = get_physical(videoaddr, &phys) ?
-		    phys : videoaddr;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2461,6 +2451,19 @@ setmachdep()
 	}
 
 	/*
+	 * Set `internal' framebuffer location and length, if we know 
+	 * what they are.
+	 */
+	for (i = 0; intvid_info[i].machineid; i++) {
+		if (mac68k_machine.machineid == intvid_info[i].machineid) {
+			mac68k_vidlog = mac68k_vidphys =
+			    (u_int32_t) intvid_info[i].fbbase;
+			mac68k_vidlen = (u_int32_t) intvid_info[i].fblen;
+			break;
+		}
+	}
+
+	/*
 	 * Set up current ROM Glue vectors.  Actually now all we do
 	 * is save the address of the ROM Glue Vector table. This gets
 	 * used later when we re-map the vectors from MacOS Address
@@ -2554,10 +2557,10 @@ gray_bar()
    	3) restore regs
 */
 
-	asm("movl a0, sp@-");
-	asm("movl a1, sp@-");
-	asm("movl d0, sp@-");
-	asm("movl d1, sp@-");
+	__asm __volatile ("	movl a0,sp@-;
+				movl a1,sp@-;
+				movl d0,sp@-;
+				movl d1,sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2568,15 +2571,16 @@ gray_bar()
 		for (i = 0; i < 2 * videorowbytes / 4; i++)
 			((u_long *) videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
-	asm("movl sp@+, d1");
-	asm("movl sp@+, d0");
-	asm("movl sp@+, a1");
-	asm("movl sp@+, a0");
+
+	__asm __volatile ("	movl sp@+,d1;
+				movl sp@+,d0;
+				movl sp@+,a1;
+				movl sp@+,a0");
 }
 #endif
 
 /* in locore */
-extern int ptest040 __P((u_int addr));
+extern u_long ptest040 __P((caddr_t addr, u_int fc));
 extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
 
 /*
@@ -2594,12 +2598,15 @@ get_physical(u_int addr, u_long * phys)
 	extern u_int macos_tc;
 
 	if (mmutype == MMU_68040) {
-		ph = ptest040(addr);
-		if (!(ph & MMU40_RES))
-			return 0;
+		ph = ptest040((caddr_t) addr, FC_SUPERD);
+		if ((ph & MMU40_RES) == 0) {
+			ph = ptest040((caddr_t) addr, FC_USERD);
+			if ((ph & MMU40_RES) == 0)
+				return 0;
+		}
 
-		*phys = ph;
-		mask = 0x00000fff;
+		mask = (macos_tc & 0x4000) ? 0x00001fff : 0x00000fff;
+		ph &= (~mask);
 	} else {
 		i = get_pte(addr, pte, &psr);
 
@@ -2633,7 +2640,7 @@ get_physical(u_int addr, u_long * phys)
 		 */
 		mask = (1 << (32 - numbits)) - 1;
 	}
-	*phys = (ph & ~mask) | (addr & mask);
+	*phys = ph + (addr & mask);
 
 	return 1;
 }
@@ -2811,6 +2818,12 @@ get_mapping(void)
 			 */
 			check_video("LC video (0x50f40000)",
 					512 * 1024, 512 * 1024);
+		} else if (0x50100100 <= videoaddr && videoaddr < 0x50400000) {
+			/*
+			 * Kludge for AV internal video
+			 */
+			check_video("AV video (0x50100100)", 1 * 1024 * 1024,
+						1 * 1024 * 1024);
 		} else {
 			printf( "  no internal video at address 0 -- "
 				"videoaddr is 0x%lx.\n", videoaddr);
@@ -2837,15 +2850,15 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	asm("movl a0, sp@-");
-	asm("movl a1, sp@-");
-	asm("movl d0, sp@-");
-	asm("movl d1, sp@-");
+	__asm __volatile ("	movl a0,sp@-;
+				movl a1,sp@-;
+				movl d0,sp@-;
+				movl d1,sp@-");
 
 	/* printf("*"); */
 
-	asm("movl sp@+, d1");
-	asm("movl sp@+, d0");
-	asm("movl sp@+, a1");
-	asm("movl sp@+, a0");
+	__asm __volatile ("	movl sp@+,d1;
+				movl sp@+,d0;
+				movl sp@+,a1;
+				movl sp@+,a0");
 }
