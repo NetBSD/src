@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.3 2003/07/05 18:43:11 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.3 2003/07/05 18:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ spc_mainbus_attach(parent, self, aux)
 	sc->sc_ioh = ma->ma_addr;
 	sc->sc_initiator = 7;
 
-	isrlink_autovec(spcintr, (void *)sc, ma->ma_ilvl, ISRPRI_BIO);
+	isrlink_autovec(spc_intr, (void *)sc, ma->ma_ilvl, ISRPRI_BIO);
 
-	spcattach(sc);
+	spc_attach(sc);
 }
