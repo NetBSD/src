@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.19 1998/10/23 03:22:59 erh Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.20 1998/10/23 19:45:59 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -64,6 +64,7 @@
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+#include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
