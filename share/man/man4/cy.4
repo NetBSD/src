@@ -1,5 +1,6 @@
-.\"	$NetBSD: cy.4,v 1.3 1997/02/23 22:20:27 jonathan Exp $
+.\"	$NetBSD: cy.4,v 1.4 1997/11/11 05:02:16 thorpej Exp $
 .\"
+.\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1993 Andrew Herbert.
 .\" All rights reserved.
 .\"
@@ -25,73 +26,66 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd 5 October, 1993
+.Dd November 10, 1997
 .Dt CY 4
+.Os NetBSD
 .Sh NAME
 .Nm cy
 .Nd
-Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver
+Cyclades Cyclom-{4, 8, 16, 32}Y asynchronous comms board device driver
 .Sh SYNOPSIS
-.\".Cd "cy0 at isa? tty irq 10 iomem 0xdc000 iosiz 8192 vector cyintr"
 .Cd "cy0 at isa? iomem 0xd4000 irq 12"
 .Cd "cy* at pci? dev ? function ?"
 .Sh DESCRIPTION
-This driver provides an interface to Cyclades Cyclom-4Y, Cyclom-8Y and
-Cyclom-16Y asynchronous multiport serial boards.  These boards are based
-around Cirrus Logic CD1400 communication controllers.
+This driver provides an interface to Cyclades Cyclom-4Y, Cyclom-8Y,
+Cyclom-16Y, and Cyclom-32Y asynchronous multiport serial boards.  These
+boards are based around Cirrus Logic CD1400 communication controllers.
 .Pp
 The device minor numbers for this driver are encoded as follows:
 .Pp
 .Bd -literal
-    c c x x u u u u	- bits in the minor device number
+    d c c p p p p p	- bits in the minor device number
 
     bits    meaning
     ----    -------
-    uuuu    physical serial line (i.e. unit) to use
-		0-7 on a cyclom-8Y, 0-15 on a cyclom-16Y
+    ppppp   physical serial line (i.e. port) to use:
+		0-3 on Cyclom-4Y
+		0-7 on Cyclom-8Y
+		0-15 on Cyclom-16Y
+		0-31 on Cyclom-32Y
 
-    xx      unused
+    cc      card unit number; note this limits the driver to
+	    four cards per system
 
-    cc      carrier control mode
-		00      complete hardware carrier control of the tty.
-			DCD must be high for the open(2) to complete.
-		01	reserved
-		10      carrier ignored until a high->low transition
-		11      carrier completed ignored
+    d       set to use as a dial-out line
 .Ed
+.Sh FLOW CONTROL
+The
+.Nm
+driver makes use of the CD1400's automatic CTS flow control.  In addition,
+the CD1400's automatic input flow control can be used.  This requires the
+kernel configuration option
+.Em CY_HW_RTS
+and a special cable that exchanges the RTS and DTR lines.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "cy%d: tty input queue overflow"
-Incoming characters have been discarded due to a buffer overflow.  This is
-caused by the process in control of the device not read(2)ing characters
-fast enough.
-.It "cy%d: receive fifo overrun"
-Incoming characters have been discarded due to a CD1400 channel overrun.  This
-is caused by interrupts not being serviced sufficiently quickly to prevent
-the 12 byte receive FIFO on a serial channel from overflowing.  Reducing
-the value of the \fIRxFifoThreshold\fR #define from 8 to something smaller may
-help slow machines avoid this problem.  The driver must have been compiled
-with the \fILogOverruns\fR option defined (the default) in order for this
-condition to be logged.
+.It "cy%d: port %d: can't allocate tty"
+There is not enough memory to allocate tty data structures.
+.It "cy%d: can't allocate input buffer"
+There is not enough memory to allocate the data input buffer.
+.El
+.Pp
+Additional debugging output can be enable with the kernel configuration
+option
+.Em CY_DEBUG .
+Diagnostic counters may be enabled with the kernel configuration option
+.Em CY_DEBUG1 .
+.Sh BUGS
+Support for the Cyclom-32Y has not been tested.
+.Sh AUTHOR
+The
+.Nm
+driver was written by Timmo Rossi.
 .Sh SEE ALSO
-.Xr com 4 ,
 .Xr termios 4 ,
 .Xr tty 4
-.Sh AUTHORS
-The driver was written by Andrew Herbert <andrew@werple.apana.org.au>, and
-is still under development (from time to time :-).
-.Sh HISTORY
-Some ideas for the architecture of this driver's two-layer processing model
-were derived from the fas 2.10 driver by Uwe Doering
-<gemini@geminix.in-berlin.de> and the high-performance com driver by Bruce
-Evans <bde@kralizec.zeta.org.au>.
-.Pp
-This work was made possible through the donation of a Cyclom-8Y board by the
-manufacturer, Cyclades Corporation.  However, neither Cyclades nor the author
-make any warranties regarding this software, nor guarantees of support.
-.Sh BUGS
-There is currently no BREAK handling - breaks are ignored.
-There is no support for bad-character reporting, except via PARMRK.
-The Cyclom-[48]Y boards do not listen to the RTS signal for receiver flow
-control.
-FIFO overruns are only logged when the termios IGNPAR setting is enabled.
