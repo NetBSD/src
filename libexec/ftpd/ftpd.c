@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.22 1997/05/23 22:09:53 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.22 1997/05/23 22:09:53 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.23 1997/05/29 10:31:48 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -615,10 +615,13 @@ skip:
 		 */
 		if (rval) {
 			reply(530, "Login incorrect.");
-			if (logging)
+			if (logging) {
 				syslog(LOG_NOTICE,
+				    "FTP LOGIN FAILED FROM %s", remotehost);
+				syslog(LOG_AUTHPRIV | LOG_NOTICE,
 				    "FTP LOGIN FAILED FROM %s, %s",
 				    remotehost, curname);
+			}
 			pw = NULL;
 			if (login_attempts++ >= 5) {
 				syslog(LOG_NOTICE,
@@ -1524,7 +1527,7 @@ passive()
 	char *p, *a;
 
 	pdata = socket(AF_INET, SOCK_STREAM, 0);
-	if (pdata < 0) {
+	if (pdata < 0 || !logged_in) {
 		perror_reply(425, "Can't open passive connection");
 		return;
 	}
