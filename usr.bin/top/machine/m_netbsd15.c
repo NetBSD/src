@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.13 2001/01/23 23:03:50 enami Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.14 2001/01/30 13:29:58 enami Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.13 2001/01/23 23:03:50 enami Exp $
+ * $Id: m_netbsd15.c,v 1.14 2001/01/30 13:29:58 enami Exp $
  */
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ char *cpustatenames[] = {
 int memory_stats[7];
 char *memorynames[] = {
 	"K Act, ", "K Inact, ", "K Wired, ", "K Free, ",
-	"K Swap, ", "K Swap free, ",
+	"K Swp, ", "K Swp free, ",
 	NULL
 };
 
