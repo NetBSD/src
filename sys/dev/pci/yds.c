@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3 2001/04/05 12:36:51 minoura Exp $	*/
+/*	$NetBSD: yds.c,v 1.4 2001/05/15 14:30:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -778,6 +778,7 @@ yds_attach(parent, self, aux)
 		if (ac97_id2 == 4)
 			ac97_id2 = -1;
 detected:
+		;
 	}
 
 	pci_conf_write(pc, pa->pa_tag, YDS_PCI_DSCTRL, reg | YDS_DSCTRL_CRST);
