@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.8 2000/01/25 15:29:43 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.9 2000/01/25 19:29:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -142,8 +142,6 @@ const struct tulip_cardbus_product {
 	  TULIP_CHIP_INVALID,		0 },
 };
 
-const char *tlp_cardbus_chip_names[] = TULIP_CHIP_NAMES;
-
 const struct tulip_cardbus_product *tlp_cardbus_lookup
     __P((const struct cardbus_attach_args *));
 
@@ -154,7 +152,7 @@ tlp_cardbus_lookup(ca)
 	const struct tulip_cardbus_product *tcp;
 
 	for (tcp = tlp_cardbus_products;
-	     tlp_cardbus_chip_names[tcp->tcp_chip] != NULL;
+	     tlp_chip_names[tcp->tcp_chip] != NULL;
 	     tcp++) {
 		if (PCI_VENDOR(ca->ca_id) == tcp->tcp_vendor &&
 		    PCI_PRODUCT(ca->ca_id) == tcp->tcp_product)
@@ -226,7 +224,7 @@ tlp_cardbus_attach(parent, self, aux)
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
-	    tlp_cardbus_chip_names[sc->sc_chip],
+	    tlp_chip_names[sc->sc_chip],
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*

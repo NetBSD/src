@@ -1,7 +1,7 @@
-/*	$NetBSD: tulipvar.h,v 1.23 1999/12/12 02:41:51 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.24 2000/01/25 19:29:17 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -147,6 +147,7 @@ typedef enum {
 	TULIP_CHIP_AL981     = 18,	/* ADMtek AL981 */
 	TULIP_CHIP_AX88140   = 19,	/* ASIX AX88140 */
 	TULIP_CHIP_AX88141   = 20,	/* ASIX AX88141 */
+	TULIP_CHIP_X3201_3   = 21,	/* Xircom X3201-3 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -172,6 +173,7 @@ typedef enum {
 	"ADMtek AL981",							\
 	"ASIX AX88140",							\
 	"ASIX AX88141",							\
+	"Xircom X3201-3",						\
 }
 
 struct tulip_softc;
@@ -487,6 +489,8 @@ do {									\
 #define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C(((u_int16_t *)(x))[(f)])
 
 #ifdef _KERNEL
+extern const char *tlp_chip_names[];
+
 extern const struct tulip_mediasw tlp_21040_mediasw;
 extern const struct tulip_mediasw tlp_21040_tp_mediasw;
 extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;

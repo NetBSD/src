@@ -1,7 +1,7 @@
-/*	$NetBSD: tulip.c,v 1.37 2000/01/25 03:14:12 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.38 2000/01/25 19:29:17 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -88,6 +88,8 @@
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
+
+const char *tlp_chip_names[] = TULIP_CHIP_NAMES;
 
 /*
  * The following tables compute the transmit threshold mode.  We start
