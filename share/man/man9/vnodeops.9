@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.1 2001/10/22 03:33:20 gmcgarry Exp $
+.\"     $NetBSD: vnodeops.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -362,18 +362,18 @@ are:
 .Pp
 .Bl  -tag -offset indent -width LOCKPARENT -compact
 .It LOCKLEAF
-lock inode on return 
+lock inode on return
 .It LOCKPARENT
-want parent vnode returned locked 
+want parent vnode returned locked
 .It WANTPARENT
-want parent vnode returned unlocked 
+want parent vnode returned unlocked
 .It NOCACHE
 name must not be left in name cache (see
 .Xr namecache 9 )
 .It FOLLOW
 follow symbolic links
 .It NOFOLLOW
-do not follow symbolic links (pseudo) 
+do not follow symbolic links (pseudo)
 .It MODMASK
 mask of operational modifiers
 .El
@@ -410,7 +410,7 @@ There are three types of lookups: ".", ".." (ISDOTDOT), and other.  If
 the pathname component being searched for is ".", then
 .Fa dvp
 has an extra reference added to it and it is returned in
-.Fa *vpp.
+.Fa *vpp .
 If the pathname component being search for is ".." (ISDOTDOT),
 .Fa dvp
 is unlocked, the ".." node is locked and then
@@ -1042,9 +1042,9 @@ is the vnode to print.  If the operation is successful zero is
 returned, otherwise an appropriate error code is returned.
 .It Fn VOP_PATHCONF "vp" "name" "retval"
 Implement POSIX
-.Xr pathconf 9
+.Xr pathconf 2
 and
-.Xr fpathconf 9
+.Xr fpathconf 2
 support.  The argument
 .Fa vp
 is the locked vnode to get information about.  The argument
@@ -1057,7 +1057,7 @@ Valid values for
 are:
 .Pp
 .Bl -tag -offset indent -width _PC_CHOWN_RESTRICTED -compact
-.It _PC_LINK_MAX 
+.It _PC_LINK_MAX
 return the maximum number of links to a file
 .It _PC_NAME_MAX
 return the maximum number of bytes in a file name
@@ -1129,7 +1129,7 @@ directory.
 Allocate file system type specific data a new file in the file
 system.  The argument
 .Fa pvp
-specifies the vnode of the directory to create the new file.  
+specifies the vnode of the directory to create the new file.
 The argument
 .Fa mode
 specifies file system type specific flags
