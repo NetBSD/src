@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.6 2002/12/26 07:52:25 tron Exp $
+# $NetBSD: mi,v 1.324.2.7 2003/02/10 06:05:42 jmc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -324,6 +324,7 @@
 ./usr/bin/pr		base-util-bin
 ./usr/bin/printenv	base-util-bin
 ./usr/bin/printf	base-util-bin
+./usr/bin/progress	base-util-bin
 ./usr/bin/purgestat	base-mailwrapper-bin
 ./usr/bin/quota		base-util-bin
 ./usr/bin/radioctl	base-audio-bin
