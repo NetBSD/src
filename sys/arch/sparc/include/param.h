@@ -42,7 +42,7 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.6 1994/07/04 21:35:33 deraadt Exp $
+ * $Id: param.h,v 1.7 1994/08/20 01:26:41 deraadt Exp $
  */
 
 /*
@@ -64,9 +64,38 @@
 #define	ALIGNBYTES	7
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 
+#define SUN4_PGSHIFT	13	/* for a sun4 machine */
+#define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
+
+#if defined(KERNEL) && !defined(LOCORE)
+extern int nbpg, pgofset, pgshift;
+#endif
+
+/*
+ * Three possible cases:
+ * 	sun4 only		8192 bytes/page
+ *	sun4c/sun4m only	4096 bytes/page
+ *	sun4/sun4c/sun4m	either of the above
+ * 
+ * In the later case NBPG, PGOFSET, and PGSHIFT are encoded in variables
+ * initialized early in locore.s.  Since they are variables, rather than
+ * simple constants, the kernel will not perform slighly worse.
+ */
+#if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
+#define	NBPG		8192		/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	PGSHIFT		SUN4_PGSHIFT	/* log2(NBPG) */
+#endif
+#if !defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		12		/* log2(NBPG) */
+#define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
+#endif
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#define	NBPG		nbpg		/* bytes/page */
+#define	PGOFSET		pgofset		/* byte offset into page */
+#define	PGSHIFT		pgshift		/* log2(NBPG) */
+#endif
 
 #define	KERNBASE	0xf8000000	/* start of kernel virtual space */
 #define	KERNTEXTOFF	0xf8004000	/* start of kernel text */
@@ -81,7 +110,8 @@
 
 /* NOTE: SSIZE and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
-#define	UPAGES		2		/* pages of u-area */
+#define	USPACE		8192
+#define	UPAGES		(USPACE/4096)	/* # 4K pages of u-area */
 
 /*
  * Constants related to network buffer management.
@@ -141,3 +171,13 @@
 #else
 #define	DELAY(n)	{ register volatile int N = (n); while (--N > 0); }
 #endif
+
+#ifdef KERNEL
+extern int cputyp;
+#endif
+/*
+ * Values for the cputyp variable.
+ */
+#define CPU_SUN4	0
+#define CPU_SUN4C	1
+#define CPU_SUN4M	2
