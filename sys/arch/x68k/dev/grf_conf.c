@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_conf.c,v 1.6 2003/08/07 16:30:23 agc Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.7 2004/01/25 13:17:00 minoura Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_conf.c,v 1.6 2003/08/07 16:30:23 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_conf.c,v 1.7 2004/01/25 13:17:00 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -90,81 +90,14 @@ __KERNEL_RCSID(0, "$NetBSD: grf_conf.c,v 1.6 2003/08/07 16:30:23 agc Exp $");
 
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
-/*#include <x68k/dev/grfreg.h>*/
 
-int cc_init __P((struct grf_softc *, caddr_t));
-int cc_mode __P((struct grf_softc *, u_long, caddr_t));
-int gv_init __P((struct grf_softc *, caddr_t));
-int gv_mode __P((struct grf_softc *, u_long, caddr_t));
-#if 0
-extern	int tc_init(), tc_mode();
-extern	int gb_init(), gb_mode();
-extern	int rb_init(), rb_mode();
-extern	int dv_init(), dv_mode();
-extern	int hy_init(), hy_mode();
-#endif
+int cc_init(struct grf_softc *, caddr_t);
+int cc_mode(struct grf_softc *, u_long, caddr_t);
+int gv_init(struct grf_softc *, caddr_t);
+int gv_mode(struct grf_softc *, u_long, caddr_t);
 
 struct grfsw grfsw[] = {
-	{GID_BUILTIN,	GRFBUILTIN,	"builtin",	  cc_init, cc_mode},
-	{GID_GVRAM,	GRFBUILTIN,	"graphic",	  gv_init, gv_mode},
-#if 0
-	{GID_TOPCAT,	GRFBOBCAT,	"topcat",	  tc_init, tc_mode},
-	{GID_GATORBOX,	GRFGATOR,	"gatorbox",	  gb_init, gb_mode},
-	{GID_RENAISSANCE,GRFRBOX,	"renaissance",	  rb_init, rb_mode},
-	{GID_LRCATSEYE,	GRFCATSEYE,	"lo-res catseye", tc_init, tc_mode,
-	{GID_HRCCATSEYE,GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode},
-	{GID_HRMCATSEYE,GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode},
-	{GID_DAVINCI,	GRFDAVINCI,	"davinci",	  dv_init, dv_mode},
-	{GID_HYPERION,	GRFHYPERION,	"hyperion",	  hy_init, hy_mode},
-#endif
+	{0 /* unused */, GRFBUILTIN,	"builtin",	  cc_init, cc_mode},
+	{0 /* unused */, GRFBUILTIN,	"graphic",	  gv_init, gv_mode},
 };
 int	ngrfsw = sizeof(grfsw) / sizeof(grfsw[0]);
-
-#if 0 /* XXX? */
-#include "ite.h"
-#if NITE > 0
-
-#include <x68k/dev/itevar.h>
-
-extern	u_char ite_readbyte();
-extern	int ite_writeglyph();
-extern	int topcat_scroll(), topcat_init(), topcat_deinit();
-extern	int topcat_clear(), topcat_putc(), topcat_cursor();
-extern	int gbox_scroll(), gbox_init(), gbox_deinit();
-extern	int gbox_clear(), gbox_putc(), gbox_cursor();
-extern	int rbox_scroll(), rbox_init(), rbox_deinit();
-extern	int rbox_clear(), rbox_putc(), rbox_cursor();
-extern	int dvbox_scroll(), dvbox_init(), dvbox_deinit();
-extern	int dvbox_clear(), dvbox_putc(), dvbox_cursor();
-extern	int hyper_scroll(), hyper_init(), hyper_deinit();
-extern	int hyper_clear(), hyper_putc(), hyper_cursor();
-
-struct itesw itesw[] = {
-	GID_TOPCAT,
-	topcat_init,	topcat_deinit,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_GATORBOX,
-	gbox_init,	gbox_deinit,	gbox_clear,	gbox_putc,
-	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_RENAISSANCE,
-	rbox_init,	rbox_deinit,	rbox_clear,	rbox_putc,
-	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_LRCATSEYE,
-	topcat_init,	topcat_deinit,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HRCCATSEYE,
-	topcat_init,	topcat_deinit,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HRMCATSEYE,
-	topcat_init,	topcat_deinit,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_DAVINCI,
-	dvbox_init,	dvbox_deinit,	dvbox_clear,	dvbox_putc,
-	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HYPERION,
-	hyper_init,	hyper_deinit,	hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph,
-};
-int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
-#endif
-#endif /* 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.4 2003/08/07 16:30:24 agc Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.5 2004/01/25 13:17:00 minoura Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -104,10 +104,6 @@ struct	grf_softc {
 	caddr_t	g_regkva;		/* KVA of registers */
 	caddr_t	g_fbkva;		/* KVA of framebuffer */
 	struct	grfinfo g_display;	/* hardware description (for ioctl) */
-	struct	grf_lockpage *g_lock;	/* lock page associated with device */
-	struct	proc *g_lockp;		/* process holding lock */
-	short	*g_pid;			/* array of pids with device open */
-	int	g_lockpslot;		/* g_pid entry of g_lockp */
 	caddr_t	g_data;			/* device dependent data */
 };
 
@@ -116,11 +112,6 @@ struct	grf_softc {
 #define GF_OPEN		0x02
 #define GF_EXCLUDE	0x04
 #define GF_WANTED	0x08
-#define GF_BSDOPEN	0x10
-#define GF_HPUXOPEN	0x20
-
-/* display types - indices into grfdev */
-#define GT_CUSTOMCHIPS	0
 
 /* requests to mode routine */
 #define GM_GRFON	1
@@ -141,9 +132,7 @@ struct	grf_softc {
 #define GM_GRFIOCTL	15
 
 /* minor device interpretation */
-#define GRFOVDEV	0x10	/* overlay planes */
-#define GRFIMDEV	0x20	/* images planes */
-#define GRFUNIT(d)	((d) & 0x7)
+#define GRFUNIT(d)	minor(d)
 
 #ifdef _KERNEL
 extern	struct grfsw grfsw[];
