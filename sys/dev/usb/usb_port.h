@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.13 1999/10/13 08:10:58 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.14 1999/10/14 01:18:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #define UHCI_DEBUG 1
 #define UHUB_DEBUG 1
 #define ULPT_DEBUG 1
+#define UAUDIO_DEBUG 1
 #endif
 
 typedef struct device *device_ptr_t;
