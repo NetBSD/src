@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.18 2001/11/16 10:25:42 wiz Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.19 2001/11/16 11:26:54 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,10 +156,12 @@ preceding any character (other than the end of line) prevents that
 character's special meaning from taking effect.
 .Pp
 See
-.Sx EXAMPLE
+.Sx EXAMPLES
 for an example of
 .Pa /etc/ccd.conf .
-.Sh EXAMPLE
+.Sh FILES
+/etc/ccd.conf - default ccd configuration file.
+.Sh EXAMPLES
 The following command, executed from the command line, would configure ccd0
 with 4 components (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e), and an
 interleave factor of 32 blocks.
@@ -178,8 +180,6 @@ An example
 # ccd           ileave  flags   component devices
 ccd0            16      none    /dev/sd2e /dev/sd3e
 .Ed
-.Sh FILES
-/etc/ccd.conf - default ccd configuration file.
 .Sh SEE ALSO
 .Xr ccd 4 ,
 .Xr rc 8
