@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.9 1997/03/31 07:32:19 scottr Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.10 1997/04/01 03:10:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -108,7 +108,10 @@ struct	dmareg {
  *		look at the 98620C status to get the extended bits.
  * DMA_ARM:	Load address, count and kick-off DMA.
  */
-#define	DMA_CLEAR(dc)	{ v_int dmaclr = (int) dc->dm_Bhwaddr->dmaB_addr; }
+#define	DMA_CLEAR(dc) do {					\
+		v_int dmaclr;					\
+		dmaclr = (int)dc->dm_Bhwaddr->dmaB_addr;	\
+	} while (0);
 #define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)
