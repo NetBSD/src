@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.56 2001/08/31 07:09:42 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.57 2001/09/02 13:11:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -714,8 +714,6 @@ static __inline u_int32_t _3ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline u_int32_t _4ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline void bswap __P((char *, int))
-	__attribute__ ((unused));
 
 static __inline void
 _lto2b(val, bytes)
@@ -853,17 +851,6 @@ _4ltol(bytes)
 	     (bytes[2] << 16) |
 	     (bytes[3] << 24);
 	return (rv);
-}
-
-static __inline void
-bswap (buf, len)
-	char *buf;
-	int len;
-{
-	u_int16_t *p = (u_int16_t *)(buf + len);
-
-	while (--p >= (u_int16_t *)buf)
-		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
 }
 
 #endif /* _DEV_SCSIPI_SCSIPICONF_H_ */
