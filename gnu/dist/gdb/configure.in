@@ -117,7 +117,7 @@ fi
 AC_ARG_ENABLE(sim-powerpc,
 [  --enable-sim-powerpc ],
 [case "${enableval}" in
-yes)	powerpc_sim=yes ;; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
+yes)	powerpc_sim=yes ; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
 no)	powerpc_sim=no ;;
 *)	AC_MSG_ERROR(bad value ${enableval} given for sim-powerpc option) ;;
 esac],[if test x"$GCC" != x""; then powerpc_sim=yes; else powerpc_sim=no; fi])
