@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.12 2003/06/24 00:09:26 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.13 2003/06/24 18:45:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.12 2003/06/24 00:09:26 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.13 2003/06/24 18:45:08 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 			if ((numlines = strtoull(optarg, &ep, 10)) <= 0 || *ep)
 				errx(1, "%s: illegal line count.", optarg);
 			break;
-		case 'a': /* Suffix length. */
+		case 'a':		/* Suffix length. */
 			if ((sfxlen = strtol(optarg, &ep, 10)) <= 0 || *ep)
 				errx(1, "%s: illegal suffix length.", optarg);
 			break;
@@ -170,11 +170,11 @@ main(int argc, char *argv[])
 	if (ifd == -1)				/* Stdin by default. */
 		ifd = 0;
 
-	if (bytecnt) {
+	if (bytecnt)
 		split1(bytecnt);
-	} else {
+	else
 		split2(numlines);
-	}
+
 	return 0;
 }
 
@@ -194,6 +194,7 @@ split1(unsigned long long bytecnt)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
 			exit(0);
+			/* NOTREACHED */
 		case -1:
 			err(1, "read");
 			/* NOTREACHED */
@@ -245,6 +246,7 @@ split2(unsigned long long numlines)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
 			exit(0);
+			/* NOTREACHED */
 		case -1:
 			err(1, "read");
 			/* NOTREACHED */
