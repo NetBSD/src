@@ -1,7 +1,0 @@
-include "arch/i386/conf/HYDRA"
-
-makeoptions	DEBUG="-g"	# compile full symbol table
-options 	DEBUG		# expensive debugging checks/support
-options		LOCKDEBUG
-options 	MPDEBUG
-options 	MPVERBOSE
