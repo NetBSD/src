@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.21 1997/05/22 10:38:11 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.22 1997/07/13 19:13:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.21 1997/05/22 10:38:11 lukem Exp $";
+__RCSID("$NetBSD: getpwent.c,v 1.22 1997/07/13 19:13:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,6 +89,7 @@ static int __has_yppw __P((void));
 static int __ypexclude_add __P((const char *));
 static int __ypexclude_is __P((const char *));
 static void __ypproto_set __P((void));
+static int __ypparse __P((struct passwd *, char *));
 
 static int
 __ypexclude_add(name)
@@ -271,7 +273,6 @@ getpwent()
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
 #ifdef YP
-	char *cp;
 	static char *name = (char *)NULL;
 	const char *user, *host, *dom;
 	int has_yppw;
@@ -378,6 +379,9 @@ again:
 				goto again;
 			}
 			break;
+		case YPMODE_NONE:
+			abort();	/* cannot happen */
+			break;
 		}
 
 		line[datalen] = '\0';
@@ -452,7 +456,6 @@ __has_yppw()
 {
 	DBT key, data;
 	DBT pkey, pdata;
-	int len;
 	char bf[MAXLOGNAME];
 
 	key.data = (u_char *)__yp_token;
