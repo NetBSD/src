@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.81 2003/06/03 11:54:52 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.82 2003/06/05 14:30:14 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@
 #include "endian.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+#include <sys/bootblock.h>
 
 #ifdef NO_LBA_READS		/* for testing */
 #undef BIFLAG_EXTINT13
@@ -210,24 +211,53 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	struct stat sb;
 	int ret;
+	int len;
+	int td, sd;
+	char bootxx[8192 + 4];
+#define bp (*(struct i386_boot_params *)(bootxx + 512 * 2 + 8))
 
-	/* boot blocks ... */
-	ret = stat("/usr/mdec/biosboot_com0_9600.sym", &sb);
-	if ((ret != -1) && (sb.st_mode & S_IFREG)) {
-		msg_display(MSG_getboottype);
-		process_menu(MENU_getboottype, NULL);
-	}
+	ret = run_prog(RUN_DISPLAY, NULL,
+			"/bin/cp /usr/mdec/biosboot /mnt/boot");
+	if (ret)
+		return ret;
+
+	msg_display(MSG_getboottype);
+	process_menu(MENU_getboottype, NULL);
 	msg_display(MSG_dobootblks, diskdev);
-	if (!strncmp(boottype, "serial", 6))
-	        return run_prog(RUN_DISPLAY, NULL,
-	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0_%s.sym /dev/r%sa",
-	            boottype + 6, diskdev);
-	else
-	        return run_prog(RUN_DISPLAY, NULL,
-	            "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
-	            diskdev);
+
+	/* Copy bootstrap in by hand - /sbin/installboot explodes ramdisks */
+	ret = 1;
+
+	snprintf(bootxx, sizeof bootxx, "/dev/r%sa", diskdev);
+	td = open(bootxx, O_RDWR);
+	sd = open("/usr/mdec/bootxx_ffsv1", O_RDONLY);
+	if (td == -1 || sd == -1)
+		goto bad_bootxx;
+	len = read(sd, bootxx, sizeof bootxx);
+	if (len < 2048 || len > 8192)
+		goto bad_bootxx;
+
+	if (*(uint32_t *)(bootxx + 512 * 2 + 4) != X86_BOOT_MAGIC_1)
+		goto bad_bootxx;
+
+	if (!strncmp(boottype, "serial", 6)) {
+		bp.bp_consdev = 1;	/* com0 */
+		bp.bp_conspeed = atoi(boottype + 6);
+	}
+
+	if (write(td, bootxx, 512) != 512)
+		goto bad_bootxx;
+	len -= 512 * 2;
+	if (pwrite(td, bootxx + 512 * 2, len, 512 * 2) != len)
+		goto bad_bootxx;
+	ret = 0;
+
+    bad_bootxx:
+	close(td);
+	close(sd);
+
+	return ret;
 }
 
 int
