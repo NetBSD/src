@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.32 2001/10/09 04:50:01 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.33 2001/10/17 01:19:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.32 2001/10/09 04:50:01 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.33 2001/10/17 01:19:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ NODE *
 spec(void)
 {
 	NODE *centry, *last, *pathparent, *cur;
-	char *p, *e;
+	char *p, *e, *next;
 	NODE ginfo, *root;
 	char *buf, *tname;
 	size_t tnamelen, plen;
@@ -131,16 +131,18 @@ spec(void)
 #ifdef DEBUG
 		(void)fprintf(stderr, "line %d: {%s}\n", lineno, p);
 #endif
-
 		/* Grab file name, "$", "set", or "unset". */
-		if ((p = strtok(p, "\n\t ")) == NULL)
+		next = buf;
+		while ((p = strsep(&next, " \t")) != NULL && *p == '\0')
+			continue;
+		if (p == NULL)
 			mtree_err("missing field");
 
 		if (p[0] == '/') {
 			if (strcmp(p + 1, "set") == 0)
-				set(NULL, &ginfo);
+				set(next, &ginfo);
 			else if (strcmp(p + 1, "unset") == 0)
-				unset(NULL, &ginfo);
+				unset(next, &ginfo);
 			else
 				mtree_err("invalid specification `%s'", p);
 			continue;
@@ -207,7 +209,7 @@ noparent:		mtree_err("no parent node");
 #define	MAGIC	"?*["
 		if (strpbrk(p, MAGIC))
 			centry->flags |= F_MAGIC;
-		set(NULL, centry);
+		set(next, centry);
 
 		if (root == NULL) {
 			last = root = centry;
@@ -353,12 +355,19 @@ set(char *t, NODE *ip)
 	void	*m;
 
 	val = NULL;
-	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
+	while ((kw = strsep(&t, "= \t")) != NULL) {
+		if (*kw == '\0')
+			continue;
 		if (strcmp(kw, "all") == 0)
 			mtree_err("invalid keyword `all'");
 		ip->flags |= type = parsekey(kw, &value);
-		if (value && (val = strtok(NULL, " \t\n")) == NULL)
-			mtree_err("missing value");
+		if (value) {
+			while ((val = strsep(&t, " \t")) != NULL &&
+			    *val == '\0')
+				continue;
+			if (val == NULL)
+				mtree_err("missing value");
+		}
 		switch(type) {
 		case F_CKSUM:
 			ip->cksum = strtoul(val, &ep, 10);
@@ -462,7 +471,9 @@ unset(char *t, NODE *ip)
 {
 	char *p;
 
-	while ((p = strtok(t, "\n\t ")) != NULL) {
+	while ((p = strsep(&t, " \t")) != NULL) {
+		if (*p == '\0')
+			continue;
 		if (strcmp(p, "all") == 0)
 			mtree_err("invalid keyword `all'");
 		ip->flags &= ~parsekey(p, NULL);
