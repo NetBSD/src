@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/08/19 13:17:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2000/08/20 14:46:03 mrg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -101,6 +101,17 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	@mkdir -p $(RELEASEDIR)/installation/ramdisk
+	gzip -c -9 < $(.OBJDIR)/ramdisk.fs \
+		> $(RELEASEDIR)/installation/ramdisk/ramdisk.fs.gz
+.endif	# RELEASEDIR check
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
