@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.7 1995/09/14 23:45:37 pk Exp $	*/
+/*	$NetBSD: rpc.c,v 1.8 1995/09/17 00:49:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -122,8 +122,8 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	struct auth_info *auth;
 	struct rpc_call *call;
 	struct rpc_reply *reply;
-	void *send_head, *send_tail;
-	void *recv_head, *recv_tail;
+	char *send_head, *send_tail;
+	char *recv_head, *recv_tail;
 	n_long x;
 
 #ifdef RPC_DEBUG
@@ -142,30 +142,30 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	send_tail = (char *)sdata + slen;
 
 	/* Auth verifier is always auth_null */
-	(char *)send_head -= sizeof(*auth);
-	auth = send_head;
+	send_head -= sizeof(*auth);
+	auth = (struct auth_info *)send_head;
 	auth->authtype = htonl(RPCAUTH_NULL);
 	auth->authlen = 0;
 
 #if 1
 	/* Auth credentials: always auth unix (as root) */
-	(char *)send_head -= sizeof(struct auth_unix);
+	send_head -= sizeof(struct auth_unix);
 	bzero(send_head, sizeof(struct auth_unix));
-	(char *)send_head -= sizeof(*auth);
-	auth = send_head;
+	send_head -= sizeof(*auth);
+	auth = (struct auth_info *)send_head;
 	auth->authtype = htonl(RPCAUTH_UNIX);
 	auth->authlen = htonl(sizeof(struct auth_unix));
 #else
 	/* Auth credentials: always auth_null (XXX OK?) */
-	(char *)send_head -= sizeof(*auth);
+	send_head -= sizeof(*auth);
 	auth = send_head;
 	auth->authtype = htonl(RPCAUTH_NULL);
 	auth->authlen = 0;
 #endif
 
 	/* RPC call structure. */
-	(char *)send_head -= sizeof(*call);
-	call = send_head;
+	send_head -= sizeof(*call);
+	call = (struct rpc_call *)send_head;
 	rpc_xid++;
 	call->rp_xid       = htonl(rpc_xid);
 	call->rp_direction = htonl(RPC_CALL);
@@ -177,7 +177,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	/* Make room for the rpc_reply header. */
 	recv_head = rdata;
 	recv_tail = (char *)rdata + rlen;
-	(char *)recv_head -= sizeof(*reply);
+	recv_head -= sizeof(*reply);
 
 	cc = sendrecv(d,
 	    sendudp, send_head, ((int)send_tail - (int)send_head),
@@ -194,13 +194,13 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 		return (-1);
 	}
 
-	recv_tail = (char *)recv_head + cc;
+	recv_tail = recv_head + cc;
 
 	/*
 	 * Check the RPC reply status.
 	 * The xid, dir, astatus were already checked.
 	 */
-	reply = recv_head;
+	reply = (struct rpc_reply *)recv_head;
 	auth = &reply->rp_u.rpu_rok.rok_auth;
 	x = ntohl(auth->authlen);
 	if (x != 0) {
@@ -208,14 +208,16 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 		if (debug)
 			printf("callrpc: reply auth != NULL\n");
 #endif
+		errno = EBADRPC;
 		return(-1);
 	}
 	x = ntohl(reply->rp_u.rpu_rok.rok_status);
 	if (x != 0) {
 		printf("callrpc: error = %d\n", x);
+		errno = EBADRPC;
 		return(-1);
 	}
-	(char *)recv_head += sizeof(*reply);
+	recv_head += sizeof(*reply);
 
 	return (ssize_t)((int)recv_tail - (int)recv_head);
 }
@@ -233,8 +235,8 @@ recvrpc(d, pkt, len, tleft)
 	time_t tleft;
 {
 	register struct rpc_reply *reply;
-	ssize_t n;
-	long x;
+	ssize_t	n;
+	long	x;
 
 	errno = 0;
 #ifdef RPC_DEBUG
@@ -244,7 +246,8 @@ recvrpc(d, pkt, len, tleft)
 
 	n = readudp(d, pkt, len, tleft);
 	if (n <= (4 * 4))
-		goto bad;
+		return -1;
+
 	reply = (struct rpc_reply *)pkt;
 
 	x = ntohl(reply->rp_xid);
@@ -253,7 +256,7 @@ recvrpc(d, pkt, len, tleft)
 		if (debug)
 			printf("recvrpc: rp_xid %d != xid %d\n", x, rpc_xid);
 #endif
-		goto bad;
+		return -1;
 	}
 
 	x = ntohl(reply->rp_direction);
@@ -262,21 +265,18 @@ recvrpc(d, pkt, len, tleft)
 		if (debug)
 			printf("recvrpc: rp_direction %d != REPLY\n", x);
 #endif
-		goto bad;
+		return -1;
 	}
 
 	x = ntohl(reply->rp_astatus);
 	if (x != RPC_MSGACCEPTED) {
 		errno = ntohl(reply->rp_u.rpu_errno);
 		printf("recvrpc: reject, astat=%d, errno=%d\n", x, errno);
-		goto bad;
+		return -1;
 	}
 
 	/* Return data count (thus indicating success) */
 	return (n);
-
-bad:
-	return (-1);
 }
 
 /*

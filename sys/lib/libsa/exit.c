@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.5 1995/04/22 13:51:19 cgd Exp $	*/
+/*	$NetBSD: exit.c,v 1.6 1995/09/17 00:49:40 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -65,7 +65,7 @@ panic(fmt /*, va_alist */)
     /*NOTREACHED*/
 }
 
-void volatile
+void
 exit()
 {
     panic("exit");

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.10 1995/09/14 23:45:40 pk Exp $	*/
+/*	$NetBSD: stand.h,v 1.11 1995/09/17 00:49:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -54,9 +54,9 @@ struct open_file;
 struct fs_ops {
 	int	(*open) __P((char *path, struct open_file *f));
 	int	(*close) __P((struct open_file *f));
-	ssize_t	(*read) __P((struct open_file *f, char *buf,
+	int	(*read) __P((struct open_file *f, void *buf,
 			     size_t size, size_t *resid));
-	ssize_t	(*write) __P((struct open_file *f, char *buf,
+	int	(*write) __P((struct open_file *f, void *buf,
 			     size_t size, size_t *resid));
 	off_t	(*seek) __P((struct open_file *f, off_t offset, int where));
 	int	(*stat) __P((struct open_file *f, struct stat *sb));
@@ -114,6 +114,7 @@ char	*getdisklabel __P((const char *, struct disklabel *));
 
 void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));
+void	twiddle __P((void));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...))
 			__attribute__((noreturn));

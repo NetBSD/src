@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.2 1995/09/14 23:45:24 pk Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.3 1995/09/17 00:49:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -356,11 +356,11 @@ xdr_string_encode(pkt, str, len)
 	int padlen = (len + 3) & ~3;	/* padded length */
 
 	lenp = *pkt;
-	*pkt += sizeof(*lenp);
+	*(char**)pkt += sizeof(*lenp);
 	*lenp = htonl(len);
 
 	datap = *pkt;
-	*pkt += padlen;
+	*(char**)pkt += padlen;
 	bcopy(str, datap, len);
 
 	return (0);
@@ -378,14 +378,14 @@ xdr_string_decode(pkt, str, len_p)
 	int plen;	/* padded length */
 
 	lenp = *pkt;
-	*pkt += sizeof(*lenp);
+	*(char**)pkt += sizeof(*lenp);
 	slen = ntohl(*lenp);
 	plen = (slen + 3) & ~3;
 
 	if (slen > *len_p)
 		slen = *len_p;
 	datap = *pkt;
-	*pkt += plen;
+	*(char**)pkt += plen;
 	bcopy(datap, str, slen);
 
 	str[slen] = '\0';
@@ -409,7 +409,7 @@ xdr_inaddr_encode(pkt, ia)
 	} uia;
 
 	xi = *pkt;
-	*pkt += sizeof(*xi);
+	*(char**)pkt += sizeof(*xi);
 	xi->atype = htonl(1);
 	uia.l = htonl(ia);
 	cp = uia.c;
@@ -436,7 +436,7 @@ xdr_inaddr_decode(pkt, ia)
 	} uia;
 
 	xi = *pkt;
-	*pkt += sizeof(*xi);
+	*(char**)pkt += sizeof(*xi);
 	if (xi->atype != htonl(1)) {
 #ifdef	RPC_DEBUG
 		printf("xdr_inaddr_decode: bad addrtype=%d\n",

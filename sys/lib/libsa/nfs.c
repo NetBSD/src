@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.9 1995/09/14 23:45:31 pk Exp $	*/
+/*	$NetBSD: nfs.c,v 1.10 1995/09/17 00:49:42 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -372,7 +372,7 @@ nfs_close(f)
 /*
  * read a portion of a file
  */
-ssize_t
+int
 nfs_read(f, buf, size, resid)
 	struct open_file *f;
 	void *buf;
@@ -396,7 +396,7 @@ nfs_read(f, buf, size, resid)
 			if (debug)
 				printf("nfs_read: read: %s", strerror(errno));
 #endif
-			return (-1);
+			return errno;
 		}
 		if (cc == 0) {
 			if (debug)
@@ -417,16 +417,14 @@ ret:
 /*
  * Not implemented.
  */
-ssize_t
+int
 nfs_write(f, buf, size, resid)
 	struct open_file *f;
 	void *buf;
 	size_t size;
 	size_t *resid;	/* out */
 {
-	errno = EROFS;
-	
-	return (-1);
+	return (EROFS);
 }
 
 off_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.11 1995/02/21 06:33:25 mycroft Exp $	*/
+/*	$NetBSD: ufs.c,v 1.12 1995/09/17 00:49:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -582,15 +582,16 @@ ufs_close(f)
 int
 ufs_read(f, start, size, resid)
 	struct open_file *f;
-	char *start;
-	u_int size;
-	u_int *resid;	/* out */
+	void *start;
+	size_t size;
+	size_t *resid;	/* out */
 {
 	register struct file *fp = (struct file *)f->f_fsdata;
-	register u_int csize;
+	register size_t csize;
 	char *buf;
 	u_int buf_size;
 	int rc = 0;
+	register char *addr = start;
 
 	while (size != 0) {
 		if (fp->f_seekp >= fp->f_di.di_size)
@@ -604,10 +605,10 @@ ufs_read(f, start, size, resid)
 		if (csize > buf_size)
 			csize = buf_size;
 
-		bcopy(buf, start, csize);
+		bcopy(buf, addr, csize);
 
 		fp->f_seekp += csize;
-		start += csize;
+		addr += csize;
 		size -= csize;
 	}
 	if (resid)
@@ -621,9 +622,9 @@ ufs_read(f, start, size, resid)
 int
 ufs_write(f, start, size, resid)
 	struct open_file *f;
-	char *start;
-	u_int size;
-	u_int *resid;	/* out */
+	void *start;
+	size_t size;
+	size_t *resid;	/* out */
 {
 
 	return (EROFS);
