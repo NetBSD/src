@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2003/11/24 02:51:35 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2004/03/12 11:44:13 jkunz Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2003/11/24 02:51:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/03/12 11:44:13 jkunz Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -321,6 +321,7 @@ struct prom_n2f {
 };
 static struct prom_n2f prom_dev_table[] = {
 	{ "ie",		net_find },
+	{ "iee",	net_find },
 	{ "sd",		scsi_find },
 	{ "st",		scsi_find },
 	{ "cd",		scsi_find },
@@ -344,7 +345,7 @@ cpu_rootconf(void)
 
 	/* Get the PROM boot path and take it apart. */
 	/* XXX fredette - need something real here: */
-	strcpy(promname, "ie");
+	strcpy(promname, "iee");
 	prom_ctlr = prom_unit = prom_part = 0;
 
 	/* Default to "unknown" */
