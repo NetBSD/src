@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.98 2000/02/27 01:29:48 wrstuden Exp $
+.\"	$NetBSD: options.4,v 1.99 2000/03/06 01:08:34 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -813,6 +813,16 @@ early in the boot process, it is not possible to meaningfully change
 in system initialization scripts.
 Changing this value currently may only be done at kernel compile
 time or by patching the kernel and rebooting).
+.Pp
+.Em NOTE :
+Unfortunately, in many cases where the hardware clock
+is kept in local time, it is adjusted for Daylight Savings
+Time; this means that attempting to use
+.Em RTC_OFFSET
+to let NetBSD coexist with such an operating system, like Windows,
+would necessitate changing
+.Em RTC_OFFSET
+twice a year. As such, this solution is imperfect.
 .It Cd options KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,
