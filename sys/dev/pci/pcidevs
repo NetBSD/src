@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.577 2003/09/21 14:12:09 nisimura Exp $
+$NetBSD: pcidevs,v 1.578 2003/09/21 14:23:21 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -521,7 +521,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor USR		0x12b9	US Robotics (3Com)
 vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
-vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS-Thomson Microelectrics
+vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS-Thomson Microelectronics
 vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
@@ -1970,7 +1970,7 @@ product NVIDIA	GEFORCE_FX5800	0x0302	GeForce FX 5800
 product NVIDIA	QUADRO_FX_2000	0x0308	Quadro FX 2000
 product NVIDIA	QUADRO_FX_1000	0x0309	Quadro FX 1000
 
-/* Nvidia Corporation & SGS Thomson Microelectric */
+/* Nvidia Corporation & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
 
 /* Oak Technologies products */
@@ -2140,7 +2140,7 @@ product SGI IOC3	0x0003	IOC3
 product SGI RAD1	0x0005	PsiTech RAD1
 product SGI TIGON	0x0009	Tigon Gigabit Ethernet
 
-/* SGS Thomson products */
+/* SGS-Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
 product SGSTHOMSON 1764	0x1746	STG 1764X
 
