@@ -1,49 +1,49 @@
-# $NetBSD: md.i386,v 1.74 2000/12/11 13:51:49 jdolecek Exp $
-./dev/audio
-./dev/audioctl
-./dev/bktr
-./dev/mixer
-./dev/sound
-./dev/tuner
-./dev/vbi
-./sbin/fdisk
-./sbin/ldconfig
-./usr/bin/fdformat
-./usr/bin/pmc
-./usr/lib/libi386.so
-./usr/lib/libi386.so.0
-./usr/lib/libi386.so.0.3
-./usr/lib/libm387.so
-./usr/lib/libm387.so.0
-./usr/lib/libm387.so.0.0
-./usr/libexec/ld.so
-./usr/lkm/adosfs.o
-./usr/lkm/cd9660.o
-./usr/lkm/coda.o
-./usr/lkm/compat_linux.o
-./usr/lkm/exec_linux_elf.o
-./usr/lkm/ext2fs.o
-./usr/lkm/fdesc.o
-./usr/lkm/if_ipl.o
-./usr/lkm/lfs.o
-./usr/lkm/kernfs.o
-./usr/lkm/mfs.o
-./usr/lkm/msdosfs.o
-./usr/lkm/ntfs.o
-./usr/lkm/nullfs.o
-./usr/lkm/overlay.o
-./usr/lkm/portal.o
-./usr/lkm/procfs.o
-./usr/lkm/umapfs.o
-./usr/mdec/biosboot.sym
-./usr/mdec/biosboot_com0.sym
-./usr/mdec/biosboot_ps2.sym
-./usr/mdec/biosboot_resetvideo.sym
-./usr/mdec/dosboot.com
-./usr/mdec/installboot
-./usr/mdec/mbr
-./usr/mdec/mbr_bootsel
-./usr/sbin/apm
-./usr/sbin/apmd
-./usr/sbin/bad144
-./usr/sbin/zzz
+# $NetBSD: md.i386,v 1.75 2001/01/24 09:39:38 jwise Exp $
+./dev/audio				base-sys-devlinks
+./dev/audioctl				base-sys-devlinks
+./dev/bktr				base-sys-devlinks
+./dev/mixer				base-sys-devlinks
+./dev/sound				base-sys-devlinks
+./dev/tuner				base-sys-devlinks
+./dev/vbi				base-sys-devlinks
+./sbin/fdisk				base-sysutil-root
+./sbin/ldconfig				base-sysutil-root
+./usr/bin/fdformat			base-util-bin
+./usr/bin/pmc				base-util-bin
+./usr/lib/libi386.so			base-sys-shlib
+./usr/lib/libi386.so.0			base-sys-shlib
+./usr/lib/libi386.so.0.3		base-sys-shlib
+./usr/lib/libm387.so			base-sys-shlib
+./usr/lib/libm387.so.0			base-sys-shlib
+./usr/lib/libm387.so.0.0		base-sys-shlib
+./usr/libexec/ld.so			base-sys-shlib
+./usr/lkm/adosfs.o			base-adosfs-lkm
+./usr/lkm/cd9660.o			base-sys-lkm
+./usr/lkm/coda.o			base-coda-lkm
+./usr/lkm/compat_linux.o		base-sys-lkm
+./usr/lkm/exec_linux_elf.o		base-sys-lkm
+./usr/lkm/ext2fs.o			base-ext2fs-lkm
+./usr/lkm/fdesc.o			base-miscfs-lkm
+./usr/lkm/if_ipl.o			base-ipf-lkm
+./usr/lkm/lfs.o				base-sys-lkm
+./usr/lkm/kernfs.o			base-sys-lkm
+./usr/lkm/mfs.o				base-sys-lkm
+./usr/lkm/msdosfs.o			base-sys-lkm
+./usr/lkm/ntfs.o			base-ntfs-lkm
+./usr/lkm/nullfs.o			base-miscfs-lkm
+./usr/lkm/overlay.o			base-miscfs-lkm
+./usr/lkm/portal.o			base-miscfs-lkm
+./usr/lkm/procfs.o			base-sys-lkm
+./usr/lkm/umapfs.o			base-miscfs-lkm
+./usr/mdec/biosboot.sym			base-sysutil-bin
+./usr/mdec/biosboot_com0.sym		base-sysutil-bin
+./usr/mdec/biosboot_ps2.sym		base-sysutil-bin
+./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
+./usr/mdec/dosboot.com			base-sysutil-bin
+./usr/mdec/installboot			base-sysutil-bin
+./usr/mdec/mbr				base-sysutil-bin
+./usr/mdec/mbr_bootsel			base-sysutil-bin
+./usr/sbin/apm				base-sysutil-bin
+./usr/sbin/apmd				base-sysutil-bin
+./usr/sbin/bad144			base-sysutil-bin
+./usr/sbin/zzz				base-sysutil-bin
