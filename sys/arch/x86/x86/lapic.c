@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.9 2004/06/30 14:46:07 kochi Exp $ */
+/* $NetBSD: lapic.c,v 1.10 2004/07/01 13:00:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,11 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.9 2004/06/30 14:46:07 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.10 2004/07/01 13:00:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -262,9 +263,22 @@ lapic_clockintr(void *arg, struct intrframe frame)
 	hardclock((struct clockframe *)&frame);
 }
 
+#ifdef NTP
+extern int fixtick;
+#endif /* NTP */
+
 void
 lapic_initclocks()
 {
+
+#ifdef NTP
+	/*
+	 * we'll actually get (lapic_per_second/lapic_tval) interrupts/sec.
+	 */
+	fixtick = 1000000 -
+	    ((int64_t)tick * lapic_per_second + lapic_tval / 2) / lapic_tval;
+#endif /* NTP */
+
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
 	 *
