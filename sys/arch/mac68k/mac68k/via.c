@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.65 1998/04/26 18:25:58 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.66 1998/07/01 18:57:36 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -269,7 +269,8 @@ via2_intr(fp)
 		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
 		mask <<= 1;
-	} while (intbits >= mask && ++bitnum);
+		++bitnum;
+	} while (intbits >= mask);
 }
 
 void
@@ -293,7 +294,8 @@ rbv_intr(fp)
 		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
 		mask <<= 1;
-	} while (intbits >= mask && ++bitnum);
+		++bitnum;
+	} while (intbits >= mask);
 }
 
 void
@@ -317,7 +319,8 @@ oss_intr(fp)
 			via2_reg(rIFR) = mask;
 		}
 		mask <<= 1;
-	} while (intbits >= mask && ++bitnum);
+		++bitnum;
+	} while (intbits >= mask);
 }
 
 static void
