@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.303 1998/05/28 16:56:26 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.304 1998/05/29 16:48:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2888,7 +2888,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 	int first;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	caddr_t vaddr = buf;
 	int seg;
 	pmap_t pmap;
@@ -2899,8 +2899,9 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		pmap = pmap_kernel();
 
 	lastaddr = *lastaddrp;
+	bmask  = ~(map->_dm_boundary - 1);
 
-	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -2912,6 +2913,12 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+		/* If needed, compute upper boundary line and adjust seg size */
+		if (map->_dm_boundary > 0) {
+			baddr = ((u_long)curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
 
 		/*
 		 * Insert chunk into a segment, coalescing with
@@ -2924,10 +2931,15 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz)
+			     map->_dm_maxsegsz &&
+			     (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				seg++;
+				if (seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
