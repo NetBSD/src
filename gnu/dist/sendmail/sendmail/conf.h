@@ -956,6 +956,9 @@ typedef int		pid_t;
 # if defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3))
 #   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 # endif /* defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3)) */
+# if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104170000
+#  define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+# endif
 # if defined(__FreeBSD__)
 #  define HASSETLOGIN	1	/* has setlogin(2) */
 #  if __FreeBSD_version >= 227001
