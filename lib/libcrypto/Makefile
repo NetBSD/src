@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/02/26 00:57:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/05/02 16:24:24 wiz Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -82,9 +82,6 @@ update_inc:
 	    -name Makefile.ssl | \
 	    perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc )
 
-DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-major
-DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-minor
-
 SYMLINKS+=	libcrypto.a ${LIBDIR}/libdes.a
 
 .if ${MKPROFILE} != "no"
@@ -92,6 +89,9 @@ SYMLINKS+=	libcrypto_p.a ${LIBDIR}/libdes_p.a
 .endif
 
 .if ${MKPIC} != "no"
+
+DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-major
+DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-minor
 
 .if ${MKPICINSTALL} != "no"
 SYMLINKS+=	libcrypto_pic.a ${LIBDIR}/libdes_pic.a
