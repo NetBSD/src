@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.16 2002/01/20 03:41:48 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.17 2002/01/25 19:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -770,7 +770,7 @@ initarm(void *arg)
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
-	cpu_cache_syncI();
+	cpu_icache_sync_all();
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the

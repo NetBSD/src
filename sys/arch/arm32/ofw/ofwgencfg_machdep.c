@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.20 2001/11/27 01:06:30 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.21 2002/01/25 19:19:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -202,7 +202,7 @@ initarm(ofw_handle)
 		}
 
 		/* Sync the first 16 words of memory */
-		cpu_cache_syncI_rng(0, 64);
+		cpu_icache_sync_range(0, 64);
 	}
 
 	data_abort_handler_address = (u_int)data_abort_handler;

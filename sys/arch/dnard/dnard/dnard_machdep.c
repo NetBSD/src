@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.8 2002/01/13 20:20:13 thorpej Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.9 2002/01/25 19:19:28 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -280,7 +280,7 @@ initarm(ofw_handle)
 		}
 
 		/* Sync the first 16 words of memory */
-		cpu_cache_syncI_rng(0, 64);
+		cpu_icache_sync_range(0, 64);
 	}
 
 	data_abort_handler_address = (u_int)data_abort_handler;

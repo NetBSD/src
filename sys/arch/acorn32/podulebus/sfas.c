@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.3 2001/11/27 00:53:12 thorpej Exp $	*/
+/*	$NetBSD: sfas.c,v 1.4 2002/01/25 19:19:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -209,7 +209,7 @@ sfasinitialize(dev)
 	pte = pmap_pte(pmap_kernel(), (vm_offset_t)dev->sc_bump_va);
 	*pte &= ~(PT_C | PT_B);
 	cpu_tlb_flushD();
-	cpu_cache_purgeD_rng((vm_offset_t)dev->sc_bump_va, NBPG);
+	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
@@ -798,7 +798,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 /* Flush the caches. */
 
 	if (len && !(mode & SFAS_SELECT_I))
-		cpu_cache_purgeD_rng((vm_offset_t)buf, len);
+		cpu_dcache_wbinv_range((vm_offset_t)buf, len);
 }
 
 int

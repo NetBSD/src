@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2001/11/29 17:12:22 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 2002/01/25 19:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -300,7 +300,7 @@ pagemove(from, to, size)
 	 * the 'from' area.
 	 */
 
-	cpu_cache_purgeD_rng((u_int)from, size);
+	cpu_dcache_wbinv_range((vaddr_t) from, size);
 
 	while (size > 0) {
 		*tpte++ = *fpte;

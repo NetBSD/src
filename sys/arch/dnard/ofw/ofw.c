@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.4 2001/11/27 01:10:13 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.5 2002/01/25 19:19:28 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -774,7 +774,7 @@ ofw_configmem(void)
 	/* First initialize our callback memory allocator. */
 	ofw_initallocator();
 
-	OF_set_callback((void(*)())ofw_callbackhandler);
+	OF_set_callback((void *) ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
 	setttb(proc0_ttbbase.pv_pa);
@@ -965,7 +965,7 @@ ofw_callbackhandler(args)
 		}
 
 		/* Write-back anything stuck in the cache. */
-		cache_clean();
+		cpu_idcache_wbinv_all();
 
 		/* Install new mappings. */
 		{
@@ -1007,7 +1007,7 @@ ofw_callbackhandler(args)
 		}
 
 		/* Write-back anything stuck in the cache. */
-		cache_clean();
+		cpu_idcache_wbinv_all();
 
 		/* Zero the mappings. */
 		{

@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.2 2001/12/20 16:12:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq.c,v 1.3 2002/01/25 19:19:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.2 2001/12/20 16:12:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.3 2002/01/25 19:19:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ fiq_installhandler(void *func, size_t size)
 
 #ifdef __PROG32
 	zero_page_readonly();
-	cpu_cache_syncI_rng((vaddr_t) fiqvector, size);
+	cpu_icache_sync_range((vaddr_t) fiqvector, size);
 #endif
 }
 
