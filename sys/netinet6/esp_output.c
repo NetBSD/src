@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.7 2000/08/29 11:32:21 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.29 2000/08/29 11:22:48 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.8 2000/09/26 08:37:38 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.33 2000/09/19 15:15:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -137,12 +137,12 @@ esp_hdrsiz(isr)
 	/*
 	 * ASSUMING:
 	 *	sizeof(struct newesp) > sizeof(struct esp).
-	 *	8 = ivlen for CBC mode (RFC2451).
+	 *	esp_max_ivlen() = max ivlen for CBC mode
 	 *	9 = (maximum padding length without random padding length)
 	 *	   + (Pad Length field) + (Next Header field).
 	 *	16 = maximum ICV we support.
 	 */
-	return sizeof(struct newesp) + 8 + 9 + 16;
+	return sizeof(struct newesp) + esp_max_ivlen() + 9 + 16;
 }
 
 /*
