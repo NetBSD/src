@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.21 2002/08/14 00:23:30 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.22 2002/09/11 02:46:43 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.21 2002/08/14 00:23:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.22 2002/09/11 02:46:43 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -177,7 +177,7 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 			hlen += 4;
 		/* We don't support routing fields (variable length) */
 		if (flags & GRE_RP)
-			return(0);
+			return (0);
 		if (flags & GRE_KP)
 			hlen += 4;
 		if (flags & GRE_SP)
@@ -202,12 +202,12 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 		case ETHERTYPE_IPV6:
 			/* FALLTHROUGH */
 		default:	   /* others not yet supported */
-			return(0);
+			return (0);
 		}
 		break;
 	default:
 		/* others not yet supported */
-		return(0);
+		return (0);
 	}
 
 	m->m_data += hlen;
@@ -238,7 +238,7 @@ gre_input2(struct mbuf *m ,int hlen, u_char proto)
 	}
 	splx(s);
 
-	return(1);	/* packet is done, no further processing needed */
+	return (1);	/* packet is done, no further processing needed */
 }
 
 /*

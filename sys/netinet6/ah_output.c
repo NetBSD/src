@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.18 2002/08/09 07:01:21 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.19 2002/09/11 02:46:44 itojun Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.18 2002/08/09 07:01:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.19 2002/09/11 02:46:44 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -345,7 +345,7 @@ ah_hdrlen(sav)
 		ahlen = plen + sizeof(struct newah);
 	}
 
-	return(ahlen);
+	return (ahlen);
 }
 
 #ifdef INET6
@@ -493,7 +493,7 @@ ah6_output(m, nexthdrp, md, isr)
 	}
 	ipsec6stat.out_ahhist[sav->alg_auth]++;
 
-	return(error);
+	return (error);
 }
 #endif
 
