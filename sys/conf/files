@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.406 2000/12/02 14:53:38 fvdl Exp $
+#	$NetBSD: files,v 1.407 2000/12/02 20:43:08 scw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -43,6 +43,7 @@ defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
 defopt	COMPAT_NETBSD32
 defopt	COMPAT_AOUT
+defopt	COMPAT_AOUT_M68K
 defopt	COMPAT_M68K4K
 defopt	COMPAT_VAX1K
 defopt	COMPAT_43
