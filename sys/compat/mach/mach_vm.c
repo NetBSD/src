@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.41 2003/12/03 18:19:12 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.42 2003/12/06 19:34:21 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.41 2003/12/03 18:19:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.42 2003/12/06 19:34:21 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.41 2003/12/03 18:19:12 manu Exp $");
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_extern.h>
 
-/* Too much debug output from here, but we might need it later...  */
-#undef DEBUG_MACH
- 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_clock.h> 
@@ -86,19 +83,19 @@ mach_vm_map(args)
 	int error, flags;
 	void *ret;
 
-	DPRINTF(("mach_vm_map(addr = %p, size = 0x%08x, obj = 0x%x, "
-	    "mask = 0x%08x, flags = 0x%x, offset = 0x%08llx, "
+#ifdef DEBUG_MACH_VM
+	printf("mach_vm_map(addr = %p, size = 0x%08lx, obj = 0x%x, "
+	    "mask = 0x%08lx, flags = 0x%x, offset = 0x%08llx, "
 	    "copy = %d, cur_prot = 0x%x, max_prot = 0x%x, inh = 0x%x);\n",
-	    (void *)req->req_address, req->req_size, req->req_object.name,
-	    req->req_mask, req->req_flags, (off_t)req->req_offset, req->req_copy,
-	    req->req_cur_protection, req->req_max_protection, 
-	    req->req_inherance));
+	    (void *)req->req_address, (long)req->req_size, req->req_object.name,
+	    (long)req->req_mask, req->req_flags, (off_t)req->req_offset, 
+	    req->req_copy, req->req_cur_protection, req->req_max_protection, 
+	    req->req_inherance);
+#endif
 
-#if 1
 	/* XXX Darwin fails on mapping a page at address 0 */
 	if (req->req_address == 0)
 		return mach_msg_error(args, ENOMEM);
-#endif
 
 	req->req_size = round_page(req->req_size);
 
@@ -182,8 +179,24 @@ mach_vm_allocate(args)
 	addr = req->req_address;
 	size = req->req_size;
 
-	DPRINTF(("mach_vm_allocate(addr = %p, size = 0x%08x);\n", 
-	    (void *)addr, size));
+#ifdef DEBUG_MACH_VM
+	printf("mach_vm_allocate(addr = %p, size = 0x%08x);\n", 
+	    (void *)addr, size);
+#endif
+
+	/* 
+	 * Avoid mappings at address zero: it should 
+	 * be a "red zone" with nothing mapped on it.
+	 */
+	if (addr == 0) {
+		if (req->req_flags & MACH_VM_FLAGS_ANYWHERE)
+			addr = 0x1000;
+		else
+			return mach_msg_error(args, EINVAL);
+#ifdef DEBUG_MACH_VM
+		printf("mach_vm_allocate: trying addr = %p\n", (void *)addr);
+#endif
+	}
 
 	size = round_page(size);
 	if (req->req_flags & MACH_VM_FLAGS_ANYWHERE)
@@ -209,7 +222,9 @@ mach_vm_allocate(args)
 
 	if ((error = sys_mmap(tl, &cup, &rep->rep_address)) != 0) 
 		return mach_msg_error(args, error);
-	DPRINTF(("vm_allocate: success at %p\n", (void *)rep->rep_address));
+#ifdef DEBUG_MACH_VM
+	printf("vm_allocate: success at %p\n", (void *)rep->rep_address);
+#endif
 
 out:
 	rep->rep_msgh.msgh_bits =
@@ -234,8 +249,10 @@ mach_vm_deallocate(args)
 	struct sys_munmap_args cup;
 	int error;
 
-	DPRINTF(("mach_vm_deallocate(addr = %p, size = 0x%08x);\n",
-	    (void *)req->req_address, req->req_size));
+#ifdef DEBUG_MACH_VM
+	printf("mach_vm_deallocate(addr = %p, size = 0x%08lx);\n",
+	    (void *)req->req_address, (long)req->req_size);
+#endif
 
 	SCARG(&cup, addr) = (caddr_t)req->req_address;
 	SCARG(&cup, len) = req->req_size;
@@ -270,8 +287,10 @@ mach_vm_wire(args)
 	register_t retval;
 	int error;
 
-	DPRINTF(("mach_vm_wire(addr = %p, size = 0x%08x, prot = 0x%x);\n",
-	    (void *)req->req_address, req->req_size, req->req_access));
+#ifdef DEBUG_MACH_VM
+	printf("mach_vm_wire(addr = %p, size = 0x%08x, prot = 0x%x);\n",
+	    (void *)req->req_address, req->req_size, req->req_access);
+#endif
 
 	bzero(&rep, sizeof(*rep));
 
@@ -388,7 +407,10 @@ mach_sys_map_fd(l, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vref(vp);
 
-	DPRINTF(("vm_map_fd: addr = %p len = 0x%08x\n", va, SCARG(uap, size)));
+#ifdef DEBUG_MACH_VM
+	printf("vm_map_fd: addr = %p len = 0x%08lx\n", 
+	    va, (long)SCARG(uap, size));
+#endif
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = (u_long)va;
 	evc.ev_len = SCARG(uap, size);
@@ -402,7 +424,9 @@ mach_sys_map_fd(l, v, retval)
 	if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
 		VOP_UNLOCK(vp, 0);
 
-		DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", va));
+#ifdef DEBUG_MACH_VM
+		printf("mach_sys_map_fd: mapping at %p failed\n", va);
+#endif
 
 		if (SCARG(uap, findspace) == 0)
 			goto bad2;
@@ -427,7 +451,9 @@ mach_sys_map_fd(l, v, retval)
 		evc.ev_offset = SCARG(uap, offset);
 		evc.ev_vp = vp;
 
-		DPRINTF(("mach_sys_map_fd: trying at %p\n", va));
+#ifdef DEBUG_MACH_VM
+		printf("mach_sys_map_fd: trying at %p\n", va);
+#endif
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = (*evc.ev_proc)(p, &evc)) != 0)
 			goto bad1;
@@ -435,7 +461,9 @@ mach_sys_map_fd(l, v, retval)
 
 	vput(vp);
 	FILE_UNUSE(fp, p);
-	DPRINTF(("mach_sys_map_fd: mapping at %p\n", (void *)evc.ev_addr));
+#ifdef DEBUG_MACH_VM
+	printf("mach_sys_map_fd: mapping at %p\n", (void *)evc.ev_addr);
+#endif
 
 	va = (mach_vm_offset_t *)evc.ev_addr;
 
@@ -449,8 +477,10 @@ bad1:
 bad2:	
 	vrele(vp);
 	FILE_UNUSE(fp, p);
-	DPRINTF(("mach_sys_map_fd: mapping at %p failed, error = %d\n", 
-	    (void *)evc.ev_addr, error));
+#ifdef DEBUG_MACH_VM
+	printf("mach_sys_map_fd: mapping at %p failed, error = %d\n", 
+	    (void *)evc.ev_addr, error);
+#endif
 	return error;
 }
  
@@ -714,9 +744,9 @@ mach_vm_copy(args)
 	int error;
 	caddr_t src, dst;
 
-#ifdef DEBUG_MACH
-	printf("mach_vm_copy: src = 0x%08x, size = 0x%08x, addr = 0x%08x\n",
-	    req->req_src, req->req_size, req->req_addr);
+#ifdef DEBUG_MACH_VM
+	printf("mach_vm_copy: src = 0x%08lx, size = 0x%08lx, addr = 0x%08lx\n",
+	    (long)req->req_src, (long)req->req_size, (long)req->req_addr);
 #endif
 	if ((req->req_src & (PAGE_SIZE - 1)) ||
 	    (req->req_addr & (PAGE_SIZE - 1)) ||
