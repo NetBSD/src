@@ -1,6 +1,6 @@
-.\"     $NetBSD: wsdisplay.9,v 1.13 2003/04/16 13:35:36 wiz Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.14 2004/07/30 15:17:26 jmmv Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2002
+.Dd July 30, 2004
 .Dt WSDISPLAY 9
 .Os
 .Sh NAME
@@ -121,6 +121,11 @@ It has the following members:
 	int	(*load_font)(void *, void *,
 			struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
+	int	(*getwschar)(void *, struct wsdisplay_char *);
+	int	(*putwschar)(void *, struct wsdisplay_char *);
+	void	(*scroll) __P((void *, void *, int));
+	u_int	(*getborder)(void *);
+	int	(*setborder)(void *, u_int);
 .Ed
 .Pp
 The
@@ -149,6 +154,23 @@ member defines a function for loading a new font into the display.
 The
 .Fa pollc
 member defines a function for polling the console.
+The
+.Fa getwschar
+member defines a function for retrieving a character from the display,
+given its position.
+The
+.Fa putwschar
+member defines a function for putting a character on the display,
+given its position and attributes.
+The
+.Fa scroll
+member defines a function for scrolling the contents of the display.
+The
+.Fa getborder
+member defines a function to get the current color of the screen border.
+The
+.Fa setborder
+member defines a function to set the color of the screen border.
 .Pp
 There is a
 .Fa void *
@@ -201,7 +223,47 @@ It has the following members:
 	void	(*eraserows)(void *c, int row, int nrows, long);
 	int	(*allocattr)(void *c, int fg, int bg, int flags,
 			long *);
+	void	(*replaceattr)(void *c, long oldattr,
+			long newattr);
 .Ed
+.Pp
+The
+.Fa cursor
+member defines a function for painting (or unpainting, depending on the
+.Va on
+parameter) the cursor at the specified position.
+The
+.Fa mapchar
+member defines a function for changing the character mapped at a given
+position in the character table.
+The
+.Fa putchar
+member defines a function for writting a character on the screen, given
+its position and attribute.
+The
+.Fa copycols
+member defines a function for copying a set of columns within the same
+line.
+The
+.Fa erasecols
+member defines a function for clearing a set of columns in a line,
+filling the space with the given attribute.
+The
+.Fa copyrows
+member defines a function for copying a set of complete rows.
+The
+.Fa eraserows
+member defines a function for clearing a set of complete rows,
+filling the space with the given attribute.
+The
+.Fa allocattr
+member defines a function for converting an attribute specification
+given by its foreground color, background color and flags, to the
+internal representation used by the underlying graphics driver.
+The
+.Fa replaceattr
+member defines a function for replacing an attribute by another one
+across the whole visible part of the screen; this function is optional.
 .Pp
 There is a
 .Fa void *
