@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.57 2002/09/24 20:23:12 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.58 2002/09/25 06:43:46 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -149,7 +149,7 @@ typedef struct Struct_Obj_Entry {
 	const Elf_Sym  *symtab;		/* Symbol table */
 	const char     *strtab;		/* String table */
 	unsigned long   strsize;	/* Size in bytes of string table */
-#if defined(__mips__)
+#ifdef __mips__
 	Elf_Word        local_gotno;	/* Number of local GOT entries */
 	Elf_Word        symtabno;	/* Number of dynamic symbols */
 	Elf_Word        gotsym;		/* First dynamic symbol in GOT */
