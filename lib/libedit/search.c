@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.5 1997/07/06 18:25:34 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.6 1998/09/02 21:33:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.5 1997/07/06 18:25:34 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.6 1998/09/02 21:33:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -471,8 +471,7 @@ cv_search(el, dir)
 	    (void)strncpy(tmpbuf, el->el_search.patbuf, sizeof(tmpbuf) - 1);
 	    el->el_search.patbuf[0] = '.';
 	    el->el_search.patbuf[1] = '*';
-	    (void)strncpy(&el->el_search.patbuf[2], tmpbuf,
-		sizeof(el->el_search.patbuf) - 3);
+	    (void)strncpy(&el->el_search.patbuf[2], tmpbuf, EL_BUFSIZ - 3);
 	    el->el_search.patlen++;
 	    el->el_search.patbuf[el->el_search.patlen++] = '.';
 	    el->el_search.patbuf[el->el_search.patlen++] = '*';
@@ -486,8 +485,7 @@ cv_search(el, dir)
 	tmpbuf[tmplen++] = '*';
 #endif
 	tmpbuf[tmplen] = '\0';
-	(void)strncpy(el->el_search.patbuf, tmpbuf,
-	    sizeof(el->el_search.patbuf) - 1);
+	(void)strncpy(el->el_search.patbuf, tmpbuf, EL_BUFSIZ - 1);
 	el->el_search.patlen = tmplen;
     }
     el->el_state.lastcmd = (el_action_t) dir; /* avoid c_setpat */
