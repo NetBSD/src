@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/10 18:32:28 mason Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/08 20:19:58 thorpej Exp $
 
-HOSTPROGNAME=	nbcat
+HOSTPROGNAME=	${_TOOL_PREFIX}cat
 HOST_SRCDIR=	bin/cat
 
 .include "${.CURDIR}/../Makefile.host"
