@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.8.2.1 2000/10/20 15:50:27 he Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.8.2.1 2000/10/20 15:50:27 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,6 @@ Field(buf, out, len)
 	register char *bp = buf;
 	int i, ibase, base16 = 0, base10 = 0, clen = 0;
 	int hb[6], *hp;
-	char *fmt;
 
 	/*
 	 * first try 2-273#2-852-151-014#socket
@@ -178,13 +177,11 @@ Field(buf, out, len)
 		*--bp = 0; /* Ends Loop */
 	}
 	if (base16) {
-		fmt = "%3x";
 		ibase = 4096;
 	} else if (base10 == 0 && *buf == '0') {
-		fmt = "%3o";
 		ibase = 512;
 	} else {
-		fmt = "%3d";
+		base10 = 1;
 		ibase = 1000;
 	}
 
@@ -195,13 +192,19 @@ Field(buf, out, len)
 	bp = clen + buf - 3;
 	hp = hb + i - 1;
 
-	while (hp > hb) {
-		(void)sscanf(bp, fmt, hp);
-		bp[0] = 0;
-		hp--;
-		bp -= 3;
+	while (hp >= hb) {
+		if (base16)
+			(void)sscanf(bp, "%3x", hp);
+		else if (base10)
+			(void)sscanf(bp, "%3d", hp);
+		else
+			(void)sscanf(bp, "%3o", hp);
+		if (hp > hb) {
+			bp[0] = 0;
+			hp--;
+			bp -= 3;
+		}
 	}
-	(void)sscanf(buf, fmt, hp);
 	cvtbase((long)ibase, 256, hb, i, out, len);
 }
 
