@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.2 1995/02/16 02:32:56 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.3 1995/06/28 00:58:49 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -88,15 +88,21 @@ void
 putchar(c)
 	int c;
 {
+	prom_return_t ret;
 	char cbuf;
 
 	if (c == '\r' || c == '\n') {
 		cbuf = '\r';
-		prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+		do {
+			ret.bits = prom_dispatch(PROM_R_PUTS, console,
+			    &cbuf, 1);
+		} while ((ret.u.retval & 1) == 0);
 		cbuf = '\n';
 	} else
 		cbuf = c;
-	prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+	do {
+		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+	} while ((ret.u.retval & 1) == 0);
 }
 
 int
