@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.151 2005/02/27 23:06:37 christos Exp $
+# $NetBSD: mi,v 1.152 2005/03/01 16:42:53 christos Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -101,6 +101,7 @@
 ./etc/pam.d/system				etc-sys-etc
 ./etc/pam.d/telnetd				etc-sys-etc
 ./etc/pam.d/xdm					etc-sys-etc
+./etc/pam.d/xserver				etc-sys-etc
 ./etc/passwd					etc-sys-etc
 ./etc/passwd.conf				etc-sys-etc
 ./etc/pf.conf					etc-net-etc		pf
