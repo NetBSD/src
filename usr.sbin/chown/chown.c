@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.21 2000/05/10 12:22:34 darrenr Exp $	*/
+/*	$NetBSD: chown.c,v 1.22 2000/08/04 07:44:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.21 2000/05/10 12:22:34 darrenr Exp $");
+__RCSID("$NetBSD: chown.c,v 1.22 2000/08/04 07:44:07 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static void	usage __P((void));
 
 static uid_t uid;
 static gid_t gid;
-static int Rflag, ischown, fflag;
+static int ischown;
 static char *myname;
 
 int
@@ -81,15 +81,15 @@ main(argc, argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
-	int Hflag, Lflag, ch, fts_options, hflag, rval;
+	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *cp;
 	int (*change_owner) __P((const char *, uid_t, gid_t));
-	
+
 	(void)setlocale(LC_ALL, "");
 
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = (myname[2] == 'o');
-	
+
 	Hflag = Lflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
 		switch (ch) {
@@ -152,7 +152,7 @@ main(argc, argv)
 		if ((cp = strchr(*argv, ':')) != NULL) {
 			*cp++ = '\0';
 			a_gid(cp);
-		} 
+		}
 #ifdef SUPPORT_DOT
 		else if ((cp = strrchr(*argv, '.')) != NULL) {
 			if (a_uid(*argv) == -1) {
@@ -162,7 +162,7 @@ main(argc, argv)
 		}
 #endif
 		(void) a_uid(*argv);
-	} else 
+	} else
 		a_gid(*argv);
 
 	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
@@ -258,6 +258,7 @@ id(name, type)
 static void
 usage()
 {
+
 	(void)fprintf(stderr,
 	    "usage: %s [-R [-H | -L | -P]] [-fh] %s file ...\n",
 	    myname, ischown ? "[owner][:group]" : "group");
