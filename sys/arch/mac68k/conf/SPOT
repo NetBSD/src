@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.26 1997/02/12 04:31:35 scottr Exp $
+#	$NetBSD: SPOT,v 1.27 1997/04/08 02:59:17 scottr Exp $
 #
 # SPOT
 
@@ -71,8 +71,9 @@ options 	M68030
 #options 	M68020		# Must have 68851 PMMU
 #options 	FPSP
 #options 	FPU_EMULATE
-options 	ZS_CONSOLE_ABORT
+#options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+#options 	MRG_ADB		# Use ROM-based ADB driver
 
 # SPOT-specific options
 options 	RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
@@ -88,7 +89,7 @@ macvid*		at nubus?			# NuBus video card
 grf*		at macvid?
 ite0		at grf?
 
-sbc0		at obio? flags 0x1		# MI SCSI NCR 5380
+sbc0		at obio? flags 0x5		# MI SCSI NCR 5380
 
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
