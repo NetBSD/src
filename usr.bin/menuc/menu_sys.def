@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.27 2001/12/06 16:38:30 christos Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.28 2001/12/08 01:10:37 ross Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,7 @@ struct keyseq _mc_key_seq[] = {
 int _mc_num_key_seq = sizeof(_mc_key_seq) / sizeof(struct keyseq);
 struct keyseq *pad_list = NULL;
 static char str_area [512];
-static int str_size = sizeof(str_area);
+static size_t str_size = sizeof str_area;
 static char *str_ptr = str_area;
 
 /* Macros */
