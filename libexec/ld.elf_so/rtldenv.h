@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.3 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.4 2002/09/13 19:50:00 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -60,7 +60,7 @@ const char *xstrerror __P((int));
 
 # define assert(cond)	((cond) \
 			 ? (void) 0 :\
-			 (xassert(__FILE__, __LINE__, #cond "\n"), abort()))
+			 (xassert(__FILE__, __LINE__, #cond), abort()))
 #else
 # include <assert.h>
 # include <stdio.h>
