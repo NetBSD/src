@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.114 1994/11/22 09:36:56 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.115 1994/11/22 10:20:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -134,6 +134,7 @@ struct wd_softc {
 #define	WDF_LOADED	0x04
 #define	WDF_BSDLABEL	0x08		/* has a BSD disk label */
 #define	WDF_WLABEL	0x10		/* label is writable */
+#define	WDF_32BIT	0x20		/* can do 32-bit transfer */
 	TAILQ_ENTRY(wd_softc) sc_drivechain;
 	struct buf sc_q;
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
@@ -342,7 +343,7 @@ wdattach(parent, self, aux)
 		wd->sc_mode = WDM_DMA;
 	} else if (wd->sc_params.wdp_maxmulti > 1) {
 		wd->sc_mode = WDM_PIOMULTI;
-		wd->sc_multiple = min(wd->sc_params.wdp_maxmulti, 8);
+		wd->sc_multiple = min(wd->sc_params.wdp_maxmulti, 16);
 	} else {
 		wd->sc_mode = WDM_PIOSINGLE;
 		wd->sc_multiple = 1;
@@ -351,8 +352,8 @@ wdattach(parent, self, aux)
 	if (wd->sc_mode == WDM_DMA)
 		printf("%s: using dma\n", wd->sc_dev.dv_xname);
 	else
-		printf("%s: using %d-sector pio\n", wd->sc_dev.dv_xname,
-		    wd->sc_multiple);
+		printf("%s: using %d-sector %d-bit pio\n", wd->sc_dev.dv_xname,
+		    wd->sc_multiple, (wd->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
 
 	wd->sc_dk.dk_driver = &wddkdriver;
 }
@@ -688,9 +689,14 @@ loop:
 		}
 
 		/* Then send it! */
-		outsw(wdc->sc_iobase+wd_data,
-		    bp->b_data + wd->sc_skip * DEV_BSIZE,
-		    nblks * DEV_BSIZE / sizeof(short));
+		if ((wd->sc_flags & WDF_32BIT) == 0)
+			outsw(wdc->sc_iobase+wd_data,
+			    bp->b_data + wd->sc_skip * DEV_BSIZE,
+			    nblks * DEV_BSIZE / sizeof(short));
+		else
+			outsl(wdc->sc_iobase+wd_data,
+			    bp->b_data + wd->sc_skip * DEV_BSIZE,
+			    nblks * DEV_BSIZE / sizeof(long));
 	}
 }
 
@@ -781,9 +787,14 @@ wdcintr(wdc)
 		}
 
 		/* Suck in data. */
-		insw(wdc->sc_iobase+wd_data,
-		    bp->b_data + wd->sc_skip * DEV_BSIZE, 
-		    nblks * DEV_BSIZE / sizeof(short));
+		if ((wd->sc_flags & WDF_32BIT) == 0)
+			insw(wdc->sc_iobase+wd_data,
+			    bp->b_data + wd->sc_skip * DEV_BSIZE, 
+			    nblks * DEV_BSIZE / sizeof(short));
+		else
+			insl(wdc->sc_iobase+wd_data,
+			    bp->b_data + wd->sc_skip * DEV_BSIZE, 
+			    nblks * DEV_BSIZE / sizeof(long));
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
