@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_lfs.8,v 1.16 2004/07/06 16:49:10 wiz Exp $
+.\"	$NetBSD: fsck_lfs.8,v 1.17 2004/07/06 16:51:18 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,9 +37,10 @@
 .Nd Log-structured File System consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm fsck_lfs
-.Op Fl dmnpy
+.Op Fl dnpy
 .\" .Op Fl f
-.Op Fl b Ar block#
+.Op Fl b Ar block
+.Op Fl m Ar mode
 .Ar filesystem
 .Ar ...
 .Sh DESCRIPTION
@@ -94,9 +95,10 @@ action.
 The following flags are interpreted by
 .Nm .
 .Bl -tag -width indent
-.It Fl b
-Use the block specified immediately after the flag as
-the super block for the filesystem.
+.It Fl b Ar block
+Use
+.Ar block
+as the super block for the filesystem.
 .It Fl d
 Print debugging output.
 .\" .It Fl f
@@ -108,9 +110,10 @@ Print debugging output.
 .\" will not check the file system.  This option forces
 .\" .Nm
 .\" to check the file system, regardless of the state of the clean flag.
-.It Fl m
-Use the mode specified in octal immediately after the flag as the
-permission bits to use when creating the
+.It Fl m Ar mode
+Use
+.Ar mode
+specified in octal as the permission bits to use when creating the
 .Pa lost+found
 directory rather than the default 1700.
 In particular, systems that do not wish to have lost files accessible
