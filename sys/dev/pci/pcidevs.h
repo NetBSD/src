@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.424 2002/04/18 20:36:30 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.425 2002/04/26 14:21:28 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.419 2002/04/18 20:35:39 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.420 2002/04/26 14:20:59 ad Exp 
  */
 
 /*
@@ -727,8 +727,10 @@
 #define	PCI_PRODUCT_ADP2_AIC7899F	0x00c5		/* AIC-7899F RAID */
 #define	PCI_PRODUCT_ADP2_AIC7899P	0x00cf		/* AIC-7899P U160 */
 #define	PCI_PRODUCT_ADP2_AAC2622	0x0282		/* AAC-2622 */
+#define	PCI_PRODUCT_ADP2_ASR2200S	0x0285		/* ASR-2200S */
+#define	PCI_PRODUCT_ADP2_ASR2120S	0x0286		/* ASR-2120S */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
-#define	PCI_PRODUCT_ADP2_AAC3642	0x0365		/* AAC-3642 */
+#define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
 /* XXX guess */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
