@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.70 2000/10/31 10:49:01 itojun Exp $
+#	$NetBSD: bsd.README,v 1.71 2000/12/30 04:11:34 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -109,6 +109,18 @@ MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKINFO=no MKMAN=no
 
 The include file <sys.mk> has the default rules for all makes, in the BSD
 environment or otherwise.  You probably don't want to touch this file.
+If you intend to run a cross build, you will need to supply the following
+host tools, and configure the following variables properly:
+
+OBJCOPY		objcopy - copy and translate object files
+
+STRIP		strip - Discard symbols from object files
+
+CONFIG		config - build kernel compilation directories
+
+RPCGEN		rpcgen - Remote Procedure Call (RPC) protocol compiler
+
+MKLOCALE	mklocale - make LC_CTYPE locale files
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
