@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.13 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.14 1999/02/01 19:56:18 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -1694,9 +1694,6 @@
 
 /* Define if you have the <sys/fs/ufs_mount.h> header file.  */
 /* #undef HAVE_SYS_FS_UFS_MOUNT_H */
-
-/* Define if you have the <ufs/ufs/ufsmount.h> header file.  */
-#define HAVE_UFS_UFS_UFSMOUNT_H
 
 /* Define if you have the <sys/fs/xfs_clnt.h> header file.  */
 /* #undef HAVE_SYS_FS_XFS_CLNT_H */

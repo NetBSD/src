@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.8 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.9 1999/02/01 19:56:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -1083,10 +1083,6 @@ extern char *nc_sperror(void);
 #ifdef HAVE_UFS_UFS_MOUNT_H
 # include <ufs/ufs_mount.h>
 #endif /* HAVE_UFS_UFS_MOUNT_H */
-
-#ifdef HAVE_UFS_UFS_UFSMOUNT_H
-# include <ufs/ufs/ufsmount.h>
-#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
 
 /*
  * Are S_ISDIR, S_ISREG, et al broken?  If not, include <sys/stat.h>.
