@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 1999/01/16 01:40:28 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.9 1999/02/26 12:01:36 tsubai Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -96,7 +96,7 @@ all)
 	;;
 
 floppy)
-	sh $0 std sd0 sd1 sd2 tty0 tty1 wscons
+	sh $0 std sd0 sd1 sd2 tty0 tty1 pty0 wscons
 	sh $0 st0 st1 cd0 cd1 wd0 wd1 md0
 	;;
 
