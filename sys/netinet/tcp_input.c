@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.149 2002/07/18 03:23:01 wrstuden Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.150 2002/08/14 00:23:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.149 2002/07/18 03:23:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.150 2002/08/14 00:23:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -853,7 +853,7 @@ tcp_input(m, va_alist)
 		}
 #endif
 		/* We do the checksum after PCB lookup... */
-		len = ip->ip_len;
+		len = ntohs(ip->ip_len);
 		tlen = len - toff;
 		break;
 #endif
@@ -3746,7 +3746,7 @@ syn_cache_respond(sc, m)
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		ip->ip_len = tlen;
+		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;

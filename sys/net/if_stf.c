@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.28 2002/08/06 04:58:57 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.29 2002/08/14 00:23:28 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.28 2002/08/06 04:58:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.29 2002/08/14 00:23:28 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -434,7 +434,7 @@ stf_output(ifp, m, dst, rt)
 	bcopy(in4, &ip->ip_dst, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
-	ip->ip_len = m->m_pkthdr.len;	/*host order*/
+	ip->ip_len = htons(m->m_pkthdr.len);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
 	else
