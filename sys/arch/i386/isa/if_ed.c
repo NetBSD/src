@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.12 1994/02/01 06:26:59 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.13 1994/02/02 07:30:43 mycroft Exp $
  */
 
 /*
@@ -1035,10 +1035,8 @@ edattach(parent, self, aux)
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
 	ifp->if_watchdog = ed_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-#ifdef MULTICAST
-	ifp->if_flags |= IFF_MULTICAST;
-#endif
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+			IFF_MULTICAST;
 
 	/*
 	 * Set default state for ALTPHYS flag (used to disable the tranceiver
@@ -1272,12 +1270,11 @@ ed_init(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
-#ifdef MULTICAST
 	/* set up multicast addresses and filter modes */
-	if (sc != 0 && (ifp->if_flags & IFF_MULTICAST) != 0) {
+	if ((ifp->if_flags & (IFF_MULTICAST | IFF_PROMISC)) != 0) {
 		u_long mcaf[2];
 
-		if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
+		if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 			mcaf[0] = 0xffffffff;
 			mcaf[1] = 0xffffffff;
 		} else
@@ -1289,7 +1286,6 @@ ed_init(sc)
 		for (i = 0; i < 8; i++)
 		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 	}
-#endif
 
 	/*
 	 * Set Current Page pointer to next_packet (initialized above)
@@ -1325,21 +1321,14 @@ ed_init(sc)
 	}
 
 	i = ED_RCR_AB;
-	if (sc != 0) {
-		if ((ifp->if_flags & IFF_PROMISC) != 0) {
-			/*
-			 * Set promiscuous mode.
-			 * Also reconfigure the multicast filter.
-			 */
-			int j;
-
-			i |= ED_RCR_PRO|ED_RCR_AM|ED_RCR_AR|ED_RCR_SEP;
-			for (j = 0; j < 8; j++)
-				outb(sc->nic_addr + ED_P1_MAR0 + j, 0xff);
-		}
-#ifdef MULTICAST
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/*
+		 * Set promiscuous mode.  Multicast filter was set earlier so
+		 * that we should receive all multicast packets.
+		 */
+		i |= ED_RCR_AM | ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
+	} else if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		i |= ED_RCR_AM;
-#endif
 	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
 
@@ -1995,7 +1984,6 @@ ed_ioctl(ifp, command, data)
 		 */
 		break;
 
-#ifdef MULTICAST
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/*
@@ -2015,7 +2003,6 @@ ed_ioctl(ifp, command, data)
 			error = 0;
 		}
 		break;
-#endif
 
 	default:
 		error = EINVAL;
@@ -2456,7 +2443,6 @@ ed_ring_to_mbuf(sc,src,dst,total_len)
 	return m;
 }
 
-#ifdef MULTICAST
 /*
  * Compute crc for ethernet address
  */
@@ -2513,4 +2499,3 @@ ds_getmcaf(sc, mcaf)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 }
-#endif
