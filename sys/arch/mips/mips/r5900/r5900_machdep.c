@@ -1,4 +1,4 @@
-/*	$NetBSD: r5900_machdep.c,v 1.1 2001/10/16 16:31:40 uch Exp $	*/
+/*	$NetBSD: r5900_machdep.c,v 1.1.2.1 2001/11/10 16:26:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,24 +41,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <mips/locore.h>
-#include <mips/r5900/locore.h>
+
 #include <mips/r5900/cpuregs.h>
+#include <mips/cache_r5900.h>
 
-mips_locore_jumpvec_t mips3_locore_vec =
-{
-	r5900_FlushCache,
-	r5900_FlushDCache,
-	r5900_FlushICache,
-	r5900_HitFlushDCache,
-	mips3_SetPID,
-	mips3_TBIAP,
-	mips3_TBIS,
-	mips3_TLBUpdate,
-	mips3_wbflush,
-};
+extern mips_locore_jumpvec_t mips3_locore_vec;
 
-static void r5900_config_cache(void);
-
+void r5900_vector_init(void);
 /*
  * R5900 exception vector
  *
@@ -66,7 +55,7 @@ static void r5900_config_cache(void);
  *	vector address is different from ordinaly MIPS3 derivative.
  */
 void
-r5900_init()
+r5900_vector_init()
 {
 	extern char mips3_exception[], mips3_exceptionEnd[];
 	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
@@ -84,34 +73,8 @@ r5900_init()
 	memcpy(&mips_locore_jumpvec, &mips3_locore_vec,
 	    sizeof(mips_locore_jumpvec_t));
 
-	r5900_config_cache();
-
-	r5900_FlushCache();
+	r5900_icache_sync_all_64();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
-}
-
-/*
- * R5900 cache
- *	I-cache 16KB/64B 2-way assoc.	 
- *	D-cache 8KB/64B 2-way assoc.
- *	No L2-cache.
- *	
- *	and sync.p/sync.l are needed after/before cache instruction.
- *	
- *    + don't have IB, DB bit.
- */	
-void
-r5900_config_cache()
-{
-	mips_L1ICacheSize	= R5900_C_SIZE_I;
-	mips_L1DCacheSize	= R5900_C_SIZE_D;
-	mips_L1ICacheLSize	= R5900_C_LSIZE_I;
-	mips_L1DCacheLSize	= R5900_C_LSIZE_D;
-	mips_L2CachePresent	= 0;
-	mips_L2CacheSize	= 0;
-
-	mips_CacheAliasMask = (mips_L1DCacheSize - 1) & ~(NBPG - 1);
-	mips_CachePreferMask = MAX(mips_L1DCacheSize,mips_L1ICacheSize) - 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r5900.S,v 1.1 2001/10/16 16:31:39 uch Exp $	*/
+/*	$NetBSD: locore_r5900.S,v 1.1.2.1 2001/11/10 16:26:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,182 +47,32 @@
 	.text
 	.align 6	/* align cache line size (64B) */
 
-LEAF(r5900_FlushCache)
-	di
-	li	t1, R5900_C_SIZE_I
-	li	t2, R5900_C_SIZE_D
-
-	/*
-	 * Flush the instruction cache.
-	 */
-	li	t0, MIPS_KSEG0_START
-	srl	t1, 1			# Two way set assoc
-	addu	t1, t0, t1		# End address
-	la	v0, 1f
-	or	v0, MIPS_KSEG1_START	# Run uncached.
-	j	v0
-	 nop
-1:	
-	sync.l
-	sync.p
-1:
-	#	[12:6]	... line
-	#	[0]	... way
-	# line +0
-	cache	R5900_C_IINV_I,  0(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,  1(t0);sync.l;sync.p	# way 1
-	# line +1	
-	cache	R5900_C_IINV_I, 64(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I, 65(t0);sync.l;sync.p	# way 1
-	# line +2
-	cache	R5900_C_IINV_I,128(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,129(t0);sync.l;sync.p	# way 1
-	# line +3	
-	cache	R5900_C_IINV_I,192(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,193(t0);sync.l;sync.p	# way 1
-	addu	t0, t0, 256	
-	bne	t0, t1, 1b
-	 nop
-	
-	la	v0, 1f			# Run cached.
-	j	v0
-	 nop
-1:		
-
-	/*
-	 * Flush the data cache.
-	 */
-	li	t0, MIPS_KSEG0_START
-	srl	t2, 1			# Two way set assoc
-	addu	t1, t0, t2		# End address
-	sync.l
-	sync.p
-1:
-	# line +0
-	cache	R5900_C_IWBINV_D,  0(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,  1(t0);sync.l;sync.p	# way 1
-	# line +1
-	cache	R5900_C_IWBINV_D, 64(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D, 65(t0);sync.l;sync.p	# way 1
-	# line +2
-	cache	R5900_C_IWBINV_D,128(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,129(t0);sync.l;sync.p	# way 1
-	# line +3
-	cache	R5900_C_IWBINV_D,192(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,193(t0);sync.l;sync.p	# way 1
-	addu	t0, t0, 256	
-	bne	t0, t1, 1b
-	 nop
-	j	ra
-	 ei
-END(r5900_FlushCache)
-	
-LEAF(r5900_FlushICache)
-	di
-	li	t0, R5900_C_SIZE_I
-	li	t1, MIPS_KSEG0_START
-	addu	a1, 255		# Align (I $ inval of partials is ok)
-	srl	t0, 1		# Two way set assoc offset
-	addu	t2, t0, -1	# Cache index mask
-	and	a0, a0, t2	# Only keep index bits (avoid KSEG2, way 0)
-	or	a0, a0, t1	# Make KSEG0
-	srl	a1, a1, 8	# Number of unrolled loops
-	
-	la	v0, 1f			# Run uncached.
-	or	v0, MIPS_KSEG1_START
-	j	v0
-	 nop
-1:	
-	sync.l
-	sync.p
-1:
-	cache	R5900_C_IINV_I,  0(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I,  1(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I, 64(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I, 65(a0);sync.l;sync.p
-	addu	a1, -1
-	cache	R5900_C_IINV_I,128(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I,129(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I,192(a0);sync.l;sync.p
-	cache	R5900_C_IINV_I,193(a0);sync.l;sync.p
-	bgt	a1, zero, 1b
-	 addu	a0, 256
-	
-	la	v0, 1f			# Run cached.
-	j	v0
-	 nop
-1:		
-	j	ra
-	ei
-END(r5900_FlushICache)
-
-LEAF(r5900_FlushDCache)
-	di
-	li	a2, R5900_C_SIZE_D
-	srl	a3, a2, 1	# two way set associative cache
-	addu	a2, a3, -1	# offset mask
-	and	a0, a0, a2	# get index into primary cache
-	addu	a1, a1, a0	# add offset to length
-	and	a0, a0, -256	# block align address
-	subu	a1, a1, a0	# subtract aligned offset -> inc len by align
-	addu	a1, 255		# tail align length
-	li	a2, MIPS_KSEG0_START
-	addu	a0, a0, a2	# K0(vindex)
-	srl	a1, a1, 8	# Compute number of cache blocks
-	sync.l	
-	sync.p	
-1:
-	cache	R5900_C_IWBINV_D,  0(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D,  1(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D, 64(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D, 65(a0);sync.l;sync.p
-	addu	a1, -1
-	cache	R5900_C_IWBINV_D,128(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D,129(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D,192(a0);sync.l;sync.p
-	cache	R5900_C_IWBINV_D,193(a0);sync.l;sync.p
-	bgtz	a1, 1b
-	 addu	a0, 256
-	j	ra
-	ei
-END(r5900_FlushDCache)
-	
-LEAF(r5900_HitFlushDCache)
-	di
-	beq	a1, zero, 2f
-	addu	a1, 63		# Branch delay slot; align length
-	and	a0, a0, -64
-	srl	a1, a1, 6	# Compute number of cache lines
-	sync.l
-	sync.p
-1:
-	addu	a1, -1
-	cache	R5900_C_HWBINV_D, 0(a0)
-	sync.l
-	sync.p
-	bne	a1, zero, 1b
-	 addu	a0, 64
-2:
-	j	ra
-	ei
-END(r5900_HitFlushDCache)
-	
-LEAF(r5900_InvalidateDCache)
-	di
-	addu	a1, a1, a0		# compute ending address
-	sync.l
-	sync.p
-1:
-	cache	R5900_C_HINV_D,0(a0)
-	sync.l
-	sync.p
+/*
+ * _intr_resume, _intr_suspend:	
+ *	 Fast interrupt locking functions.
+ */	
+LEAF_NOPROFILE(_intr_resume)
+	beqz	a0, 1f
 	nop
-	addu	a0, a0, 64
-	bltu	a0, a1, 1b
+	ei
+1:	
+	j	ra
+	 nop
+END(_intr_resume)
+
+LEAF_NOPROFILE(_intr_suspend)
+	mfc0	v0, MIPS_COP_0_STATUS_REG	
+	lui	t0, 0x1		/* EIE bit */
+	and	v0, v0, t0
+1:	di
+	sync.p
+	mfc0	t1, MIPS_COP_0_STATUS_REG
+	and	t2, t0, t1
+	beq	t2, t0, 1b
 	 nop
 	j	ra
-	ei
-END(r5900_InvalidateDCache)
+	 nop
+END(_intr_suspend)
 
 /*
  * R5900 don't have virtual coherency exceptions.

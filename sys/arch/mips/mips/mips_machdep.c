@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.119.2.1 2001/10/24 17:38:10 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.119.2.2 2001/11/10 16:26:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119.2.1 2001/10/24 17:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119.2.2 2001/11/10 16:26:16 uch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -85,10 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119.2.1 2001/10/24 17:38:10 thorp
 #include <mips/pte.h>
 #include <machine/cpu.h>		/* declaration of of cpu_id */
 
-#ifdef MIPS3_5900
-#include <mips/r5900/locore.h>
-#endif
-
 /* Internal routines. */
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
@@ -98,8 +94,12 @@ int	cpu_dump __P((void));
 static void	mips1_vector_init __P((void));
 #endif
 
-#if defined(MIPS3) && !defined(MIPS3_5900)
+#if defined(MIPS3)
+#if defined(MIPS3_5900)
+extern void	r5900_vector_init(void);
+#else
 static void	mips3_vector_init __P((void));
+#endif
 #endif
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
@@ -171,7 +171,7 @@ mips1_vector_init()
 }
 #endif /* MIPS1 */
 
-#if defined(MIPS3) && !defined(MIPS3_5900)
+#if defined(MIPS3)
 /*
  * MIPS III locore function vector
  */
@@ -184,6 +184,7 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_wbflush,
 };
 
+#ifndef MIPS3_5900
 static void
 mips3_vector_init(void)
 {
@@ -234,7 +235,8 @@ mips3_vector_init(void)
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
 }
-#endif	/* MIPS3 && !MIPS3_5900 */
+#endif /* !MIPS3_5900 */
+#endif	/* MIPS3 */
 
 /*
  * Do all the stuff that locore normally does before calling main(),
@@ -322,15 +324,13 @@ mips_vector_init()
 		cpu_arch = CPU_ARCH_MIPS4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		break;
-
-#if 0	/* not ready yet */
 #ifdef MIPS3_5900
 	case MIPS_R5900:
 		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
-		mips3_L1TwoWayCache = 1;		
 		break;
 #endif
+#if 0	/* not ready yet */
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
@@ -405,7 +405,7 @@ mips_vector_init()
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 #ifdef MIPS3_5900
-		r5900_init();
+		r5900_vector_init();
 #else
 		mips3_vector_init();
 #endif /* MIPS3_5900 */
