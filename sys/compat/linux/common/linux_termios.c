@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.9 2001/02/03 19:01:29 ross Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.10 2001/02/05 04:33:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -555,7 +555,7 @@ linux_ioctl_termios(p, uap, retval)
 			return error;
 		return 0;
 	case LINUX_TCFLSH:
-		switch((int)SCARG(uap, data)) {
+		switch((u_long)SCARG(uap, data)) {
 		case 0:
 			idat = FREAD;
 			break;
