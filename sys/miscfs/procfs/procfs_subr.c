@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.16 1996/10/25 21:52:02 cgd Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.17 1997/05/05 07:14:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -129,46 +129,38 @@ loop:
 
 	switch (pfs_type) {
 	case Proot:	/* /proc = dr-xr-xr-x */
-		pfs->pfs_mode = (VREAD|VEXEC) |
-				(VREAD|VEXEC) >> 3 |
-				(VREAD|VEXEC) >> 6;
+		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
 		vp->v_flag = VROOT;
 		break;
 
 	case Pcurproc:	/* /proc/curproc = lr--r--r-- */
-		pfs->pfs_mode = (VREAD) |
-				(VREAD >> 3) |
-				(VREAD >> 6);
+		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VLNK;
 		break;
 
-	case Pproc:
-		pfs->pfs_mode = (VREAD|VEXEC) |
-				(VREAD|VEXEC) >> 3 |
-				(VREAD|VEXEC) >> 6;
+	case Pproc:	/* /proc/N = dr-xr-xr-x */
+		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
 		break;
 
-	case Pfile:
-	case Pmem:
-	case Pregs:
-	case Pfpregs:
-		pfs->pfs_mode = (VREAD|VWRITE);
+	case Pfile:	/* /proc/N/file = -rw------- */
+	case Pmem:	/* /proc/N/mem = -rw------- */
+	case Pregs:	/* /proc/N/regs = -rw------- */
+	case Pfpregs:	/* /proc/N/fpregs = -rw------- */
+		pfs->pfs_mode = S_IRUSR|S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pctl:
-	case Pnote:
-	case Pnotepg:
-		pfs->pfs_mode = (VWRITE);
+	case Pctl:	/* /proc/N/ctl = --w------ */
+	case Pnote:	/* /proc/N/note = --w------ */
+	case Pnotepg:	/* /proc/N/notepg = --w------ */
+		pfs->pfs_mode = S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pstatus:
-		pfs->pfs_mode = (VREAD) |
-				(VREAD >> 3) |
-				(VREAD >> 6);
+	case Pstatus:	/* /proc/N/status = -r--r--r-- */
+		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
 
