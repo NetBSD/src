@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2000/03/08 00:50:05 cjs Exp $
+#	$NetBSD: Makefile,v 1.110 2000/03/11 00:10:20 jlam Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -29,7 +29,8 @@
 #	as well as having the effects listed in /usr/share/mk/bsd.README.
 #
 # Targets:
-#   build: builds a full release of netbsd in DESTDIR.
+#   build: builds a full release of netbsd in DESTDIR. If BUILD_DONE is
+#	set, this is an empty target.
 #   release: does a `make build,' and then tars up the DESTDIR files
 #	into RELEASEDIR, in release(7) format. (See etc/Makefile for
 #	more information on this.)
@@ -98,6 +99,10 @@ whatis.db:
 # wrt info/dir below:  It's safe to move this over top of /usr/share/info/dir,
 # as the build will automatically remove/replace the non-pkg entries there.
 
+.if defined(BUILD_DONE)
+build:
+	@echo "Build installed into ${DESTDIR}"
+.else
 build: buildmsg beforeinstall
 .if defined(FORCE_DOMESTIC)
 	@echo '*** CAPUTE!'
@@ -146,6 +151,7 @@ build: buildmsg beforeinstall
 	${MAKE} whatis.db
 	@echo -n "Build finished at: "
 	@date
+.endif
 
 release snapshot: build
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
