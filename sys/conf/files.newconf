@@ -150,6 +150,10 @@ file msdosfs/msdosfs_fat.c	msdosfs
 file msdosfs/msdosfs_lookup.c 	msdosfs
 file msdosfs/msdosfs_vfsops.c 	msdosfs
 file msdosfs/msdosfs_vnops.c 	msdosfs
+file adosfs/advnops.c		adosfs
+file adosfs/advfsops.c		adosfs
+file adosfs/adutil.c		adosfs
+file adosfs/adlookup.c		adosfs
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
 file net/if.c		
