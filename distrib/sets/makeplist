@@ -66,7 +66,7 @@ fi
 arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
 
 # Compute toolchain  used on target cpu.
-if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "sparc64" -o "$arch" = "i386" -o "$arch" = "arm26" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
+if [ "$arch" = "mips" -o "$machine" = "alpha" -o "$arch" = "powerpc" -o "$arch" = "sparc" -o "$arch" = "sparc64" -o "$arch" = "i386" -o "$arch" = "arm" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
 	shlib=elf
 else
 	if [ "$arch" = "sh3" ]; then

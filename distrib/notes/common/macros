@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.15 2001/12/03 22:05:28 jhawk Exp $
+.\"	$NetBSD: macros,v 1.16 2002/03/24 22:14:30 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,7 +370,7 @@
 .define_all \*[MACHINE_LIST]
 .
 .\" Supported CPUs:
-.\"	alpha arm26 arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
+.\"	alpha acorn26 arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
 .\" Define registers for MACHINE_ARCHs with multiple MACHINEs
 .
 .ds A \*M

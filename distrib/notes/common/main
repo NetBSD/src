@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.163 2002/03/14 13:19:15 uebayasi Exp $
+.\"	$NetBSD: main,v 1.164 2002/03/24 22:14:30 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
-.ds MACHINE_LIST algor alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
+.ds MACHINE_LIST algor alpha amiga amigappc arc acorn26 arm32 atari bebox cobalt
 .as MACHINE_LIST " dreamcast evbarm evbmips evbsh3 hp300 hpcmips hpcsh i386
 .as MACHINE_LIST " luna68k mac68k macppc mmeye mvme68k mvmeppc news68k newsmips
 .as MACHINE_LIST " next68k ofppc pc532 playstation2 pmax prep sbmips sgimips
@@ -1459,7 +1459,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Chris Gilbert Ta Mt chris@netbsd.org Ta Sy cats
 .It Ta Ross Harvey Ta Mt ross@netbsd.org Ta Sy alpha
 .It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@netbsd.org Ta Sy sh3
-.It Ta Ben Harris Ta Mt bjh21@netbsd.org Ta Sy arm26
+.It Ta Ben Harris Ta Mt bjh21@netbsd.org Ta Sy acorn26
 .It Ta Eduardo Horvath Ta Mt eeh@netbsd.org Ta Sy sparc64
 .It Ta Darrin Jewell Ta Mt dbj@netbsd.org Ta Sy next68k
 .It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy cobalt

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.6 2001/02/23 00:29:36 bjh21 Exp $
+.\"	$NetBSD: hardware,v 1.1 2002/03/24 22:14:24 bjh21 Exp $
 .
 .Nx*M
 \*V should support all common Acorn machines fitted with
