@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.7 1997/06/16 02:53:23 jonathan Exp $	*/
+/*	$NetBSD: bt459.c,v 1.8 1997/07/20 03:57:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -332,12 +332,12 @@ bt459PosCursor(fi, x, y)
 #ifdef MELLON
 	if (y < 0)
 	  y = 0;
-	else if (y > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
-	  y = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
+	else if (y > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
+	  y = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
 	if (x < 0)
 	  x = 0;
-	else if (x > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
-	  x = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
+	else if (x > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
+	  x = fi -> fi_type.fb_width - fi -> fi_cursor.width - 1;
 #else /* old-style pmax glass tty */
 
  	if (y < fbu->scrInfo.min_cur_y || y > fbu->scrInfo.max_cur_y)
@@ -345,7 +345,6 @@ bt459PosCursor(fi, x, y)
 	if (x < fbu->scrInfo.min_cur_x || x > fbu->scrInfo.max_cur_x)
 		x = fbu->scrInfo.max_cur_x;
 #endif
-
 
 	fi -> fi_cursor.x = x;
 	fi -> fi_cursor.y = y;
