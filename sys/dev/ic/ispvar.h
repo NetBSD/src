@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.27 1999/12/16 05:35:44 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.28 2000/01/06 03:00:11 mjacob Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -53,7 +53,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	11
+#define	ISP_CORE_VERSION_MINOR	12
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -447,11 +447,9 @@ typedef enum {
 	ISPCTL_RESET_DEV,		/* Reset Device */
 	ISPCTL_ABORT_CMD,		/* Abort Command */
 	ISPCTL_UPDATE_PARAMS,		/* Update Operating Parameters */
-#ifdef	ISP_TARGET_MODE
-	ISPCTL_ENABLE_LUN,		/* enable a LUN */
-	ISPCTL_MODIFY_LUN,		/* enable a LUN */
-#endif
-	ISPCTL_FCLINK_TEST		/* Test FC Link Status */
+	ISPCTL_FCLINK_TEST,		/* Test FC Link Status */
+	ISPCTL_PDB_SYNC,		/* Synchronize Port Database */
+	ISPCTL_TOGGLE_TMODE		/* toggle target mode */
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
 
@@ -472,8 +470,9 @@ typedef enum {
 	ISPASYNC_PDB_CHANGED,		/* FC Port Data Base Changed */
 	ISPASYNC_CHANGE_NOTIFY,		/* FC SNS Change Notification */
 	ISPASYNC_FABRIC_DEV,		/* FC New Fabric Device */
-	ISPASYNC_TARGET_CMD,		/* New target command */
-	ISPASYNC_TARGET_EVENT		/* New target event */
+	ISPASYNC_TARGET_MESSAGE,	/* target message */
+	ISPASYNC_TARGET_EVENT,		/* target asynchronous event */
+	ISPASYNC_TARGET_ACTION		/* other target command action */
 } ispasync_t;
 int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 
