@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.6 2001/01/07 15:56:02 bjh21 Exp $ */
+/* $NetBSD: irq.h,v 1.7 2001/01/07 17:01:59 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -74,4 +74,5 @@ extern char const *irq_string(struct irq_handler *);
 extern void irq_enable(struct irq_handler *);
 extern void irq_disable(struct irq_handler *);
 extern void irq_genmasks(void);
+extern void irq_stat(void (*)(const char *, ...));
 #endif
