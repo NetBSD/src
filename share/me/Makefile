@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.10 1997/03/26 23:11:15 thorpej Exp $
+#	$Id: Makefile,v 1.11 1997/05/07 16:06:00 mycroft Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -8,8 +8,6 @@ MESRCS=	acm.me chars.me deltext.me eqn.me float.me footnote.me \
 	tbl.me thesis.me
 TMSRCS=	tmac.e
 MAN=	me.7
-
-realinstall: proginstall
 
 .include <bsd.prog.mk>
 
