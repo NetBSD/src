@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.9 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: gbus.c,v 1.10 2001/07/19 20:34:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.9 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.10 2001/07/19 20:34:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,15 +98,17 @@ gbusmatch(parent, cf, aux)
 	void *aux;
 {
 	struct tlsb_dev_attach_args *ta = aux;
-	extern struct cfdriver tlsb_cd;
 
 	/*
-	 * Make sure we're looking for a Gbus.
-	 * Right now, only Gbus could be a
-	 * child of a TLSB CPU Node.
+	 * Make sure we're looking for a Gbus.  The Gbus only
+	 * "exists" on the CPU module that holds the primary CPU.
+	 *
+	 * Compute which node this should exist on by dividing the
+	 * primary CPU by 2 (since there are up to 2 CPUs per CPU
+	 * module).
 	 */
 	if (TLDEV_ISCPU(ta->ta_dtype) &&
-	    parent->dv_cfdata->cf_driver == &tlsb_cd)
+	    ta->ta_node == (hwrpb->rpb_primary_cpu_id / 2))
 		return (1);
 
 	return (0);
