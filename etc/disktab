@@ -1,4 +1,4 @@
-# $NetBSD: disktab,v 1.1 2002/12/19 20:03:46 jdolecek Exp $
+# $NetBSD: disktab,v 1.2 2003/01/25 18:28:44 jmmv Exp $
 #
 # See disktab(5) for format of this file, and /usr/share/examples/disktab/
 # for other examples.
@@ -6,6 +6,6 @@
 
 floppy|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
-	:pa#2880:oa#0:ba#4096:fa#512:\
+	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
