@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.17 1997/10/19 07:42:01 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -123,7 +123,7 @@ struct audio_softc {
 	struct	audio_params sc_pparams;	/* play encoding parameters */
 	struct	audio_params sc_rparams;	/* record encoding parameters */
 
-	int	sc_eof;		/* EOF, i.e. zero sixed write, counter */
+	int	sc_eof;		/* EOF, i.e. zero sized write, counter */
 	u_long	sc_wstamp;
 	u_long	sc_playdrop;
 
@@ -133,13 +133,13 @@ struct audio_softc {
 	int	sc_monitor_port;
 
 #ifdef AUDIO_INTR_TIME
-	u_long	sc_pfirstintr;	/* first time we saw a xmit interrupt */
+	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
 	int	sc_pnintr;	/* number of interrupts */
-	u_long	sc_plastintr;	/* last time we saw a xmit interrupt */
+	u_long	sc_plastintr;	/* last time we saw a play interrupt */
 	long	sc_pblktime;	/* nominal time between interrupts */
 	u_long	sc_rfirstintr;	/* first time we saw a rec interrupt */
 	int	sc_rnintr;	/* number of interrupts */
-	u_long	sc_rlastintr;	/* last time we saw a xrec interrupt */
+	u_long	sc_rlastintr;	/* last time we saw a rec interrupt */
 	long	sc_rblktime;	/* nominal time between interrupts */
 #endif
 };
