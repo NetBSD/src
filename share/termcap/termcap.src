@@ -732,7 +732,7 @@ att7300|unixpc|pc7300|3b1|s4|AT&T UNIX PC Model 7300:\
 
 # From: Stefan Stapelberg <stefan@rent-a-guru.de>, 24 Feb 1997
 # (iris-ansi: added rmam/smam based on init string -- esr)
-iris-ansi|IRIS emulating 40 line ANSI terminal (almost VT100):\
+iris-ansi|iris-ansi-net|IRIS emulating 40 line ANSI terminal (almost VT100):\
 	:am:\
 	:co#80:it#8:li#40:\
 	:!2=\E[218q:#2=\E[143q:#4=\E[158q:%9=\E[209q:%f=\E[210q:\
