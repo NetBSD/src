@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.92 2004/09/28 15:03:58 erh Exp $
+#	$NetBSD: security,v 1.93 2004/11/21 19:00:12 kim Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -581,6 +581,8 @@ if checkyesno check_nfs && [ -f /etc/exports ]; then
 		for (i = 2; i <= NF; ++i) {
 			if ($i ~ /-ro/)
 				readonly = 1;
+			else if ($i ~ /^-network=/)
+				next;
 			else if ($i !~ /^-/)
 				next;
 		}
