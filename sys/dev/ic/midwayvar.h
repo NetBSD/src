@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.2 1996/06/27 04:29:45 chuck Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.3 1996/06/29 20:00:44 chuck Exp $	*/
 
 /*
  *
@@ -113,7 +113,7 @@ struct en_softc {
 
   /* recv buf ctrl. (per recv slot) */
   struct {
-    struct socket *rxso;	/* socket if using direct delivery */
+    void *rxhand;		/* recv. handle if doing direct delivery */
     u_int32_t mode;		/* saved copy of mode info */
     u_int32_t start, stop;	/* ends of my buffer area */
     u_int32_t cur;		/* where I am at */
