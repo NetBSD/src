@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.22 2003/09/11 23:16:18 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.23 2003/11/01 00:32:44 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.22 2003/09/11 23:16:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.23 2003/11/01 00:32:44 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1079,14 +1079,28 @@ mach_io_registry_entry_get_parent_iterator(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+	mach_port_t mn;
 
 #ifdef DEBUG_MACH
 	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n", 
 	    req->req_plane);
 #endif
+	/* Sanity check req->req_count */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[req->req_count]))
+		return mach_msg_error(args, EINVAL);
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+		mid = (struct mach_iokit_devclass *)mr->mr_port->mp_data;
+		mp->mp_data = mid->mid_parent;
+	}
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
