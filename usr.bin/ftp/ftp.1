@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.83 2002/06/05 10:20:48 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.84 2002/07/04 06:39:28 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 18, 2002
+.Dd July 4, 2002
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1496,9 +1496,14 @@ if supplied, otherwise prompt the user for one.
 In order to be compliant with
 .Cm RFC 1738 ,
 .Nm
-strips the leading
+has the following behaviour for
+.Dq ftp://
+auto-fetches:
+.Bl -bullet
+.It
+The leading
 .Sq /
-from
+is stripped from
 .Ar path ,
 resulting in a transfer relative from the default login directory of
 the user.
@@ -1519,6 +1524,12 @@ with the password
 .Sq mypass ,
 use
 .Dq ftp://myname:mypass@localhost/%2fetc/motd
+.It
+You must have read access to each of the intermediate directories,
+as each sub-directory is
+.Ic cd Ns -ed
+to in order.
+.El
 .Pp
 If a suffix of
 .Sq ;type=A
