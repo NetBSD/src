@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.16 2002/04/29 13:42:42 martin Exp $ 
+ *	$Id: isic.c,v 1.17 2002/04/30 12:56:51 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.16 2002/04/29 13:42:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.17 2002/04/30 12:56:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -211,9 +211,16 @@ isicintr(void *arg)
 				break;
 		}
 
+#if 0
+		/*
+		 * This seems not to be necessary on IPACs - no idea why
+		 * it is here - but due to limit range of test cards, leave
+		 * it in for now, in case we have to resurrect it.
+		 */
 		IPAC_WRITE(IPAC_MASK, 0xff);
 		DELAY(50);
 		IPAC_WRITE(IPAC_MASK, 0xc0);
+#endif
 
 		return(was_ipac_irq);
 	}		
