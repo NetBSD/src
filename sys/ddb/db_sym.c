@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.25 2001/01/17 19:50:03 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,7 +59,7 @@ static db_forall_func_t db_sift;
 /*
  * Put the most picky symbol table formats at the top!
  */
-const db_symformat_t *db_symformats[] = {
+const db_symformat_t * const db_symformats[] = {
 #ifdef DB_ELF_SYMBOLS
 	&db_symformat_elf,
 #endif
@@ -94,7 +94,7 @@ ddb_init(symsize, vss, vse)
 	int symsize;
 	void *vss, *vse;
 {
-	const db_symformat_t **symf;
+	const db_symformat_t * const *symf;
 	const char *name = "netbsd";
 
 	if (symsize <= 0) {
