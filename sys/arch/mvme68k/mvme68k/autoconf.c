@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.4.1 2000/07/22 15:50:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,7 @@ cpu_configure()
 
 	booted_device = NULL;	/* set by device drivers (if found) */
 
-	init_sir();
+	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
