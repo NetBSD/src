@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.5 1999/08/04 00:14:08 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.6 1999/08/04 00:17:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -395,6 +395,8 @@ void
 fxp_mii_initmedia(sc)
 	struct fxp_softc *sc;
 {
+
+	sc->sc_flags |= FXPF_MII;
 
 	sc->sc_mii.mii_ifp = &sc->sc_ethercom.ec_if;
 	sc->sc_mii.mii_readreg = fxp_mdi_read;
@@ -983,8 +985,10 @@ fxp_tick(arg)
 		sp->rx_overrun_errors = 0;
 	}
 
-	/* Tick the MII clock. */
-	mii_tick(&sc->sc_mii);
+	if (sc->sc_flags & FXPF_MII) {
+		/* Tick the MII clock. */
+		mii_tick(&sc->sc_mii);
+	}
 
 	/*
 	 * If IFF_ALLMULTI state changed, we need to reinitialize the chip,
@@ -1252,10 +1256,12 @@ fxp_init(sc)
 	    sc->rfa_head->fr_dmamap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
-	/*
-	 * Set current media.
-	 */
-	mii_mediachg(&sc->sc_mii);
+	if (sc->sc_flags & FXPF_MII) {
+		/*
+		 * Set current media.
+		 */
+		mii_mediachg(&sc->sc_mii);
+	}
 
 	/*
 	 * ...all done!
