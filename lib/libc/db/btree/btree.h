@@ -1,3 +1,5 @@
+/*	$NetBSD: btree.h,v 1.8 1995/02/27 13:21:08 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
