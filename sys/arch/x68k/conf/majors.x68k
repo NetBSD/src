@@ -1,0 +1,48 @@
+#
+# Device majors for x68k
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 3
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	md		char 7   block 8	md
+device-major	sd		char 8   block 4	sd
+device-major	cd		char 9   block 7	cd
+device-major	grf		char 10			grf
+device-major	par		char 11			par
+device-major	zstty		char 12			zstty
+device-major	ite		char 13			ite
+device-major	kbd		char 14			kbd
+device-major	ms		char 15			ms
+device-major	xcom		char 16			xcom
+device-major	audio		char 17			audio
+device-major	fd		char 18  block 2	fd
+device-major	vnd		char 19  block 6	vnd
+device-major	st		char 20  block 5	st
+device-major	filedesc	char 21
+device-major	bpf		char 22			bpfilter
+device-major	sram		char 23			sram
+device-major	lkm		char 24			lkm
+
+device-major	tun		char 31			tun
+device-major	pow		char 32			pow
+device-major	bell		char 33			bell
+device-major	ccd		char 34  block 15	ccd
+device-major	ss		char 35			ss
+device-major	ch		char 36			ch
+device-major	uk		char 37			uk
+device-major	ipl		char 38			ipfilter
+device-major	rnd		char 39			rnd
+device-major	scsibus		char 40			scsibus
+device-major	raid		char 41  block 16	raid
+device-major	svr4_net	char 42			compat_svr4
+device-major	isdn		char 43			isdn
+device-major	isdnctl		char 44			isdnctl
+device-major	isdnbchan	char 45			isdnbchan
+device-major	isdntrc		char 46			isdntrc
+device-major	isdntel		char 47			isdntel
+device-major	clockctl	char 48			clockctl

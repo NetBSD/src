@@ -1,0 +1,23 @@
+#
+# Device majors for cesfic
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 0
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	ccd		char 7   block 1	ccd
+device-major	ipl		char 8			ipfilter
+device-major	vnd		char 9   block 2	vnd
+device-major	zstty		char 10			zstty
+device-major	filedesc	char 11
+device-major	bpf		char 12			bpfilter
+device-major	tun		char 13			tun
+device-major	lkm		char 14			lkm
+device-major	md		char 15  block 3	md
+
+device-major	rnd		char 21			rnd
+device-major	clockctl	char 22			clockctl

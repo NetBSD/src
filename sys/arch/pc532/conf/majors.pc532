@@ -1,0 +1,33 @@
+#
+# Device majors for pc532
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	sd		char 3   block 0	sd
+device-major	swap		char 4   block 1
+device-major	pts		char 5			pty
+device-major	ptc		char 6			pty
+device-major	log		char 7
+device-major	scn		char 8			scn
+device-major	md		char 9   block 3	md
+device-major	st		char 10  block 2	st
+device-major	filedesc	char 11
+device-major	cd		char 12  block 4	cd
+device-major	vnd		char 13  block 5	vnd
+device-major	bpf		char 14			bpfilter
+device-major	tun		char 15			tun
+device-major	ch		char 16			ch
+device-major	lpt		char 17			lpt
+device-major	ccd		char 18  block 6	ccd
+device-major	ss		char 19			ss
+device-major	uk		char 20			uk
+device-major	lkm		char 21			lkm
+device-major	se		char 22			se
+
+device-major	ipl		char 28			ipfilter
+device-major	rnd		char 29			rnd
+device-major	scsibus		char 30			scsibus
+device-major	raid		char 31  block 13	raid
+device-major	clockctl	char 32			clockctl

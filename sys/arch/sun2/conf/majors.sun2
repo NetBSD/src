@@ -1,0 +1,53 @@
+#
+# Device majors for sun2
+#
+
+device-major	cons		char 0
+device-major	kd		char 1			kbd | sunkbd
+device-major	ctty		char 2
+device-major	mem		char 3
+
+device-major	swap		char 7   block 4
+
+device-major	xy		char 9   block 3	xy
+
+device-major	zstty		char 12			zstty
+device-major	ms		char 13			ms | sunms
+
+device-major	log		char 16
+device-major	sd		char 17  block 7	sd
+device-major	st		char 18  block 11	st
+device-major	vnd		char 19  block 5	vnd
+device-major	pts		char 20			pty
+device-major	ptc		char 21			pty
+device-major	fb		char 22			fb
+device-major	filedesc	char 23
+device-major	tun		char 24			tun
+
+device-major	bwtwo		char 27			bwtwo
+
+device-major	kbd		char 29			kbd | sunkbd
+device-major	xt		char 30  block 8	xt
+
+device-major	ccd		char 33  block 9	ccd
+
+device-major	bpf		char 36			bpfilter
+
+device-major	xd		char 42  block 10	xd
+
+device-major	md		char 52  block 13	md
+
+device-major	cd		char 58  block 18	cd
+device-major	ch		char 59			ch
+device-major	ss		char 60			ss
+device-major	uk		char 61			uk
+
+device-major	lkm		char 72			lkm
+
+device-major	rnd		char 80			rnd
+device-major	scsibus		char 81			scsibus
+device-major	raid		char 82  block 25	raid
+device-major	svr4_net	char 83			compat_svr4
+
+device-major	pcons		char 88			pcons
+device-major	clockctl	char 89			clockctl

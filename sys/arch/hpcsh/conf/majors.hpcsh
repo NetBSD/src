@@ -1,0 +1,39 @@
+#
+# Device majors for hpcsh
+#
+
+device-major	mem		char 0
+device-major	swap		char 1   block 0
+device-major	cons		char 2
+device-major	ctty		char 3
+device-major	filedesc	char 4
+device-major	log		char 5
+device-major	ptc		char 6			pty
+device-major	pts		char 7			pty
+device-major	com		char 8			com
+
+device-major	wd		char 10  block 1	wd
+
+device-major	md		char 12  block 6	md
+device-major	ccd		char 13  block 7	ccd
+device-major	vnd		char 14  block 8	vnd
+device-major	raid		char 15  block 9	raid
+device-major	scsibus		char 16			scsibus
+device-major	sd		char 17  block 3	sd
+device-major	st		char 18  block 4	st
+device-major	cd		char 19  block 5	cd
+device-major	ch		char 20			ch
+device-major	uk		char 21			uk
+device-major	ss		char 22			ss
+device-major	ipl		char 23			ipfilter
+device-major	tun		char 24			tun
+device-major	bpf		char 25			bpfilter
+device-major	wsdisplay	char 26			wsdisplay
+device-major	wskbd		char 27			wskbd
+device-major	wsmouse		char 28			wsmouse
+device-major	wsmux		char 29			wsmux
+device-major	rnd		char 30			rnd
+device-major	scif		char 31			scif
+device-major	sci		char 32			sci
+device-major	biconsdev	char 33			biconsdev
+device-major	clockctl	char 34			clockctl

@@ -1,0 +1,38 @@
+#
+# Device majors for hp300
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 3
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	ct		char 7   block 0	ct
+device-major	sd		char 8   block 4	sd
+device-major	rd		char 9   block 2	rd
+device-major	grf		char 10			grf
+device-major	ppi		char 11			ppi
+device-major	dca		char 12			dca
+device-major	ite		char 13			ite
+device-major	hil		char 14
+device-major	dcm		char 15			dcm
+device-major	mt		char 16  block 1	mt
+device-major	ccd		char 17  block 5	ccd
+device-major	ipl		char 18			ipfilter
+device-major	vnd		char 19  block 6	vnd
+device-major	st		char 20  block 7	st
+device-major	filedesc	char 21
+device-major	bpf		char 22			bpfilter
+device-major	tun		char 23			tun
+device-major	lkm		char 24			lkm
+
+device-major	apci		char 31			apci
+device-major	md		char 32  block 14	md
+device-major	rnd		char 33			rnd
+device-major	scsibus		char 34			scsibus
+device-major	raid		char 35  block 15	raid
+device-major	svr4_net	char 36			compat_svr4
+
+device-major	clockctl	char 42			clockctl

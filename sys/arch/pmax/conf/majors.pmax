@@ -1,0 +1,49 @@
+#
+# Device majors for pmax
+#
+
+device-major	cons		char 0
+device-major	swap		char 1   block 4
+device-major	ctty		char 2
+device-major	mem		char 3
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	filedesc	char 7
+
+device-major	sd		char 9   block 19	sd
+
+device-major	vnd		char 11  block 2	vnd
+device-major	bpf		char 12			bpfilter
+
+device-major	dtop		char 15			dtop
+device-major	dc		char 16			dc
+device-major	scc		char 17			scc
+
+device-major	pts_ultrix	char 20			pty
+device-major	ptc_ultrix	char 21			pty
+
+device-major	mm_ultrix	char 43
+
+device-major	st		char 46  block 18	st
+device-major	cd		char 47  block 25	cd
+
+device-major	ss		char 53			ss
+device-major	ch		char 54			ch
+device-major	uk		char 55			uk
+device-major	rz		char 56  block 21	rz
+
+device-major	rcons		char 85			rasterconsole
+device-major	fb		char 86			fb
+device-major	ccd		char 87  block 24	ccd
+
+device-major	ipl		char 91			ipfilter
+device-major	rnd		char 92			rnd
+device-major	tun		char 93			tun
+device-major	lkm		char 94			lkm
+device-major	scsibus		char 95			scsibus
+device-major	raid		char 96  block 32	raid
+device-major	md		char 97  block 17	md
+device-major	px		char 98			px
+device-major	audio		char 99			audio
+device-major	clockctl	char 100		clockctl

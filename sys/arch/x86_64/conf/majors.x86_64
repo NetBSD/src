@@ -1,0 +1,75 @@
+#
+# Device majors for x86_64
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	wd		char 3   block 0	wd
+device-major	swap		char 4   block 1
+device-major	pts		char 5			pty
+device-major	ptc		char 6			pty
+device-major	log		char 7
+device-major	com		char 8			com
+device-major	fd		char 9   block 2	fdc
+device-major	wt		char 10  block 3	wt
+device-major	scd		char 11  block 15	scd
+device-major	pc		char 12			pc
+device-major	sd		char 13  block 4	sd
+device-major	st		char 14  block 5	st
+device-major	cd		char 15  block 6	cd
+device-major	lpt		char 16			lpt
+device-major	ch		char 17			ch
+device-major	ccd		char 18  block 16	ccd
+device-major	ss		char 19			ss
+device-major	uk		char 20			uk
+
+device-major	filedesc	char 22
+device-major	bpf		char 23			bpfilter
+device-major	md		char 24  block 17	md
+
+device-major	spkr		char 27			spkr
+device-major	lkm		char 28			lkm
+
+device-major	cy		char 38			cy
+device-major	mcd		char 39  block 7	mcd
+device-major	tun		char 40			tun
+device-major	vnd		char 41  block 14	vnd
+device-major	audio		char 42			audio
+device-major	svr4_net	char 43			compat_svr4
+device-major	ipl		char 44			ipfilter
+device-major	satlink		char 45			satlink
+device-major	rnd		char 46			rnd
+device-major	wsdisplay	char 47			wsdisplay
+device-major	wskbd		char 48			wskbd
+device-major	wsmouse		char 49			wsmouse
+device-major	isdn		char 50			isdn
+device-major	isdnctl		char 51			isdnctl
+device-major	isdnbchan	char 52			isdnbchan
+device-major	isdntrc		char 53			isdntrc
+device-major	isdntel		char 54			isdntel
+device-major	usb		char 55			usb
+device-major	uhid		char 56			uhid
+device-major	ulpt		char 57			ulpt
+device-major	midi		char 58			midi
+device-major	sequencer	char 59			sequencer
+device-major	vcoda		char 60			vcoda
+device-major	scsibus		char 61			scsibus
+device-major	raid		char 62  block 18	raid
+device-major	esh		char 63			esh
+device-major	ugen		char 64			ugen
+device-major	wsmux		char 65			wsmux
+device-major	ucom		char 66			ucom
+device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog
+
+device-major	ld		char 69  block 19	ld
+device-major	urio		char 70			urio
+device-major	bktr		char 71			bktr
+
+device-major	cz		char 73			cz
+device-major	ses		char 74			ses
+device-major	uscanner	char 75			uscanner
+device-major	iop		char 76			iop
+device-major	altq		char 77			altq
+device-major	mlx		char 78			mlx
+device-major	clockctl	char 79			clockctl

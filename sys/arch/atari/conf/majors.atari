@@ -1,0 +1,52 @@
+#
+# Device majors for atari
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 3
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	zs		char 7			zs
+device-major	sd		char 8   block 4	sd
+device-major	cd		char 9   block 6	cd
+device-major	st		char 10  block 5	st
+device-major	grf		char 11			grfcc | grfet
+device-major	ite		char 12			ite
+device-major	view		char 13			view
+device-major	kbd		char 14			kbd
+device-major	ms		char 15			mouse
+device-major	fd		char 16  block 2	fd | fdisa | hdfd
+device-major	vnd		char 17  block 0	vnd
+device-major	filedesc	char 18
+device-major	bpf		char 19			bpfilter
+device-major	lkm		char 20			lkm
+
+device-major	ccd		char 27  block 13	ccd
+device-major	tun		char 28			tun
+device-major	lp		char 29			lp
+device-major	ch		char 30			ch
+device-major	uk		char 31			uk
+device-major	ss		char 32			ss
+device-major	rtc		char 33
+device-major	wd		char 34  block 14	wd
+device-major	ser		char 35			ser
+device-major	ipl		char 36			ipfilter
+device-major	md		char 37  block 1	md
+device-major	rnd		char 38			rnd
+device-major	leo		char 39			leo
+device-major	et		char 40			et
+device-major	wsdisplay	char 41			wsdisplay
+device-major	audio		char 42			audio
+
+device-major	isdn		char 44			isdn
+device-major	isdnctl		char 45			isdnctl
+device-major	isdnbchan	char 46			isdnbchan
+device-major	isdntrc		char 47			isdntrc
+device-major	isdntel		char 48			isdntel
+device-major	scsibus		char 49			scsibus
+device-major	raid		char 50  block 15	raid
+device-major	svr4_net	char 51			compat_svr4
+device-major	clockctl	char 52			clockctl
