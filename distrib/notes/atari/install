@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.5 1998/01/09 18:46:08 perry Exp $	
+	$NetBSD: install,v 1.6 1998/01/14 06:50:27 scottr Exp $	
 
 Installing NetBSD is a relatively complex process, but, if you have
 this document in hand and are careful to read and remember the
@@ -143,21 +143,20 @@ begin again from scratch.
 
     9. Installing the distribution sets
     ===================================
-	Your are finally at the point where some real data will be put on
-	your freshly made filesystems. Select the device type you whish
+	You are finally at the point where some real data will be put on
+	your freshly-made filesystems. Select the device type you whish
 	to install from and off you go....
 	Some notes:
 	    - If you want to install from tape, please read the section
 	      about how to create such a tape.
 	      The tape device name will be "nrst0" for the first tape
 	      drive, "nrst1" for the second, etc.
-	    - If you want to install from a gemdos filesystem, you should
-	      rename the distribution sets because of the nameing limitations
-	      on gemdos. Move all 'xxx.tar.gz' sets to 'xxx.tgz'. The
-	      installer will handle the rest.
 	    - Install at least the base and etc sets.
 	    - If you have to specify a path relative to the mount-point and
 	      you need the mount-point itself, enter '.'.
+	    - For previous NetBSD users:  If you want to install from a
+	      GEMDOS filesystem, you don't need to rename the distribution
+	      sets as you may have done in previous versions of NetBSD.
 
     10. Timezone selection and device-node building
     ===============================================
