@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.16 2004/05/18 04:09:21 cube Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.17 2004/09/10 05:34:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.16 2004/05/18 04:09:21 cube Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.17 2004/09/10 05:34:54 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -114,7 +114,7 @@ get_shuffle(size_t t)
 	 */
 
 	for (j = t - 1; j > 0; j--) {
-		k = random() % (j + 1);
+		k = arc4random() % (j + 1);
 		temp = shuffle[j];
 		shuffle[j] = shuffle[k];
 		shuffle[k] = temp;
@@ -202,7 +202,6 @@ main(int argc, char *argv[])
 	int i, nflag = 0, pflag = 0, ch;
 	char *fname = NULL;
 	size_t *shuffle = NULL;
-	struct timeval tv;
 	char **lines = NULL;
 	size_t nlines = 0, pick = 0;
 	char sep = '\n';
@@ -241,8 +240,6 @@ main(int argc, char *argv[])
 		nlines = argc;
 	}
 
-	gettimeofday(&tv, NULL);
-	srandom(getpid() ^ ~getuid() ^ tv.tv_sec ^ tv.tv_usec);
 	if (nlines > 0)
 		shuffle = get_shuffle(nlines);
 
