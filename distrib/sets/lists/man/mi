@@ -1,7 +1,7 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/alias.0
-./usr/share/man/cat1/amq.0
+./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
 ./usr/share/man/cat1/at.0
 ./usr/share/man/cat1/atq.0
@@ -16,6 +16,8 @@
 ./usr/share/man/cat1/calendar.0
 ./usr/share/man/cat1/cap_mkdb.0
 ./usr/share/man/cat1/cat.0
+./usr/share/man/cat1/cd.0
+./usr/share/man/cat1/chflags.0
 ./usr/share/man/cat1/chfn.0
 ./usr/share/man/cat1/chgrp.0
 ./usr/share/man/cat1/chmod.0
@@ -41,6 +43,7 @@
 ./usr/share/man/cat1/cu.0
 ./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/date.0
+./usr/share/man/cat1/dc.0
 ./usr/share/man/cat1/dd.0
 ./usr/share/man/cat1/df.0
 ./usr/share/man/cat1/diff.0
@@ -92,9 +95,11 @@
 ./usr/share/man/cat1/ipcs.0
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
+./usr/share/man/cat1/jot.0
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/ktrace.0
+./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
 ./usr/share/man/cat1/lastcomm.0
 ./usr/share/man/cat1/ldd.0
@@ -147,7 +152,6 @@
 ./usr/share/man/cat1/printenv.0
 ./usr/share/man/cat1/printf.0
 ./usr/share/man/cat1/ps.0
-./usr/share/man/cat1/pstat.0
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
@@ -167,7 +171,6 @@
 ./usr/share/man/cat1/rlogin.0
 ./usr/share/man/cat1/rm.0
 ./usr/share/man/cat1/rmdir.0
-./usr/share/man/cat1/rpc.rquotad.0
 ./usr/share/man/cat1/rsh.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
@@ -193,7 +196,9 @@
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
 ./usr/share/man/cat1/su.0
+./usr/share/man/cat1/sum.0
 ./usr/share/man/cat1/suspend.0
+./usr/share/man/cat1/systat.0
 ./usr/share/man/cat1/tail.0
 ./usr/share/man/cat1/talk.0
 ./usr/share/man/cat1/tar.0
@@ -212,7 +217,6 @@
 ./usr/share/man/cat1/tset.0
 ./usr/share/man/cat1/tsort.0
 ./usr/share/man/cat1/tty.0
-./usr/share/man/cat1/ttyflags.0
 ./usr/share/man/cat1/ul.0
 ./usr/share/man/cat1/uname.0
 ./usr/share/man/cat1/uncompress.0
@@ -233,6 +237,7 @@
 ./usr/share/man/cat1/view.0
 ./usr/share/man/cat1/vis.0
 ./usr/share/man/cat1/w.0
+./usr/share/man/cat1/wait.0
 ./usr/share/man/cat1/wall.0
 ./usr/share/man/cat1/wc.0
 ./usr/share/man/cat1/what.0
@@ -248,10 +253,12 @@
 ./usr/share/man/cat1/yes.0
 ./usr/share/man/cat1/ypcat.0
 ./usr/share/man/cat1/ypmatch.0
+./usr/share/man/cat1/yppasswd.0
 ./usr/share/man/cat1/ypwhich.0
 ./usr/share/man/cat1/zcat.0
 ./usr/share/man/cat1/zdiff.0
 ./usr/share/man/cat1/zforce.0
+./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
 ./usr/share/man/cat4/arp.0
@@ -279,16 +286,21 @@
 ./usr/share/man/cat4/pty.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/spp.0
+./usr/share/man/cat4/stderr.0
+./usr/share/man/cat4/stdin.0
+./usr/share/man/cat4/stdout.0
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
 ./usr/share/man/cat4/tp.0
+./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/ar.0
+./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
@@ -311,10 +323,10 @@
 ./usr/share/man/cat5/magic.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
+./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/passwd.0
-./usr/share/man/cat5/pcfs.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
@@ -341,15 +353,18 @@
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
 ./usr/share/man/cat7/mailaddr.0
-./usr/share/man/cat7/miscellaneous.0
+./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/re_format.0
+./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/adduser.0
 ./usr/share/man/cat8/amd.0
+./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atrun.0
 ./usr/share/man/cat8/badsect.0
+./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bootpd.0
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
@@ -358,6 +373,7 @@
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/clri.0
+./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
@@ -418,7 +434,9 @@
 ./usr/share/man/cat8/mountd.0
 ./usr/share/man/cat8/mrouted.0
 ./usr/share/man/cat8/mtree.0
+./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
+./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newlfs.0
 ./usr/share/man/cat8/newsyslog.0
@@ -430,6 +448,7 @@
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
+./usr/share/man/cat8/pstat.0
 ./usr/share/man/cat8/pwd_mkdb.0
 ./usr/share/man/cat8/quot.0
 ./usr/share/man/cat8/quotacheck.0
@@ -450,6 +469,7 @@
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
+./usr/share/man/cat8/rpc.rquotad.0
 ./usr/share/man/cat8/rpc.rstatd.0
 ./usr/share/man/cat8/rpc.rusersd.0
 ./usr/share/man/cat8/rpc.rwalld.0
@@ -481,6 +501,7 @@
 ./usr/share/man/cat8/traceroute.0
 ./usr/share/man/cat8/trpt.0
 ./usr/share/man/cat8/trsp.0
+./usr/share/man/cat8/ttyflags.0
 ./usr/share/man/cat8/tunefs.0
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/update.0
@@ -490,5 +511,6 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/yp.0
+./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/yppoll.0
-./usr/share/man/cat8/zic.0
+./usr/share/man/cat8/ypset.0
