@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: bcopy.S,v 1.1 1993/11/25 23:38:26 paulus Exp $"
+	.asciz "$Id: bcopy.S,v 1.2 1993/12/06 22:12:04 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -52,11 +52,24 @@
  *	- longword align when possible (only on the 68020)
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
+#ifdef MEMCOPY
+ENTRY(memcpy)
+#else
+#ifdef MOMMOVE
+ENTRY(memmove)
+#else
 ENTRY(bcopy)
+#endif
+#endif
 	movl	sp@(12),d1	/* check count */
 	jle	bcdone		/* <= 0, don't do anything */
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	sp@(4),a1	/* dest address */
+	movl	sp@(8),a0	/* src address */
+#else
 	movl	sp@(4),a0	/* src address */
 	movl	sp@(8),a1	/* dest address */
+#endif
 	cmpl	a1,a0		/* src after dest? */
 	jlt	bcback		/* yes, must copy backwards */
 	movl	a0,d0
@@ -83,6 +96,9 @@ bcfbloop:
 	subql	#1,d1		/* adjust count */
 	jne	bcfbloop	/* still more, keep going */
 bcdone:
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	sp@(4),d0	/* dest address */
+#endif
 	rts
 bcback:
 	addl	d1,a0		/* src pointer to end */
@@ -110,5 +126,8 @@ bcbbloop:
 	movb	a0@-,a1@-	/* copy a byte */
 	subql	#1,d1		/* adjust count */
 	jne	bcbbloop	/* still more, keep going */
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	sp@(4),d0	/* dest address */
+#endif
 	rts
 
