@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi_ieee.h,v 1.1 1999/07/14 22:24:09 sommerfeld Exp $
+ * $FreeBSD: src/sys/i386/include/if_wavelan_ieee.h,v 1.4 1999/12/29 04:33:01 peter Exp $
  */
 
 #ifndef _IF_WAVELAN_IEEE_H
@@ -87,6 +87,10 @@ struct wi_req {
  */
 #define WI_RID_IFACE_STATS	0x0100
 #define WI_RID_MGMT_XMIT	0x0200
+#ifdef WICACHE
+#define WI_RID_ZERO_CACHE	0x0300
+#define WI_RID_READ_CACHE	0x0400
+#endif
 
 struct wi_80211_hdr {
 	u_int16_t		frame_ctl;
@@ -134,6 +138,27 @@ struct wi_mgmt_hdr {
 	u_int8_t		bssid[6];
 	u_int16_t		seq_ctl;
 };
+
+/* 
+ * Lucent/wavelan IEEE signal strength cache
+ *
+ * driver keeps cache of last
+ * MAXWICACHE packets to arrive including signal strength info.
+ * daemons may read this via ioctl
+ *
+ * Each entry in the wi_sigcache has a unique macsrc.
+ */
+#ifdef WICACHE
+#define	MAXWICACHE	10
+
+struct wi_sigcache {
+	char	macsrc[6];	/* unique MAC address for entry */
+	int	ipsrc;		/* ip address associated with packet */
+	int	signal;		/* signal strength of the packet */
+	int	noise;		/* noise value */
+	int	quality;	/* quality of the packet */
+};
+#endif
 
 #ifndef _KERNEL
 struct wi_counters {
