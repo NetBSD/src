@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: tar.c,v 1.6 1993/08/07 07:42:54 cgd Exp $";
+static char rcsid[] = "$Id: tar.c,v 1.7 1996/03/21 18:35:51 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -194,7 +194,7 @@ struct option long_options[] =
 /*
  * Main routine for tar.
  */
-void
+int
 main (argc, argv)
      int argc;
      char **argv;
