@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.38 2001/07/07 16:40:24 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.39 2001/07/07 16:46:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -962,7 +962,7 @@ static void ti_free_rx_ring_std(sc)
 			bus_dmamap_destroy(sc->sc_dmat, sc->std_dmamap[i]);
 			sc->std_dmamap[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_std_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_std_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -996,7 +996,7 @@ static void ti_free_rx_ring_jumbo(sc)
 			m_freem(sc->ti_cdata.ti_rx_jumbo_chain[i]);
 			sc->ti_cdata.ti_rx_jumbo_chain[i] = NULL;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_jumbo_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -1033,7 +1033,7 @@ static void ti_free_rx_ring_mini(sc)
 			bus_dmamap_destroy(sc->sc_dmat, sc->mini_dmamap[i]);
 			sc->mini_dmamap[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_rx_mini_ring[i],
+		memset((char *)&sc->ti_rdata->ti_rx_mini_ring[i], 0,
 		    sizeof(struct ti_rx_desc));
 	}
 
@@ -1059,7 +1059,7 @@ static void ti_free_tx_ring(sc)
 					    link);
 			sc->txdma[i] = 0;
 		}
-		bzero((char *)&sc->ti_rdata->ti_tx_ring[i],
+		memset((char *)&sc->ti_rdata->ti_tx_ring[i], 0,
 		    sizeof(struct ti_tx_desc));
 	}
 
@@ -1552,7 +1552,7 @@ static int ti_gibinit(sc)
 		sc->ti_tx_ring_nic =
 		    (struct ti_tx_desc *)(sc->ti_vhandle + TI_WINDOW);
 	}
-	bzero((char *)sc->ti_rdata->ti_tx_ring,
+	memset((char *)sc->ti_rdata->ti_tx_ring, 0,
 	    TI_TX_RING_CNT * sizeof(struct ti_tx_desc));
 	rcb = &sc->ti_rdata->ti_info.ti_tx_rcb;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
@@ -1815,7 +1815,7 @@ static void ti_attach(parent, self, aux)
 
 	sc->info_dmaaddr = sc->info_dmamap->dm_segs[0].ds_addr;
 
-	bzero(sc->ti_rdata, sizeof(struct ti_ring_data));
+	memset(sc->ti_rdata, 0, sizeof(struct ti_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (ti_alloc_jumbo_mem(sc)) {

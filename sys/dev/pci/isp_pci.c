@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.69 2001/06/14 19:54:07 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.70 2001/07/07 16:46:35 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -361,7 +361,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
+		memset(isp->isp_param, 0, sizeof (sdparam));
 	}
 #endif
 #ifndef	ISP_DISABLE_1080_SUPPORT
@@ -373,7 +373,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
+		memset(isp->isp_param, 0, sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -386,7 +386,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, 2 * sizeof (sdparam));
+		memset(isp->isp_param, 0, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -399,7 +399,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, 2 * sizeof (sdparam));
+		memset(isp->isp_param, 0, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -414,7 +414,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, 2 * sizeof (sdparam));
+		memset(isp->isp_param, 0, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -428,7 +428,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (fcparam));
+		memset(isp->isp_param, 0, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
 		if (rev < 3) {
@@ -451,7 +451,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem, isp->isp_name);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (fcparam));
+		memset(isp->isp_param, 0, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
@@ -720,7 +720,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
-	bzero(isp->isp_xflist, len);
+	memset(isp->isp_xflist, 0, len);
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
 	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
 	if (pcs->pci_xfer_dmap == NULL) {
@@ -911,7 +911,7 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 			return (CMD_EAGAIN);
 		}
 		rq->req_header.rqs_entry_count++;
-		bzero((void *)crq, sizeof (*crq));
+		memset((void *)crq, 0, sizeof (*crq));
 		crq->req_header.rqs_entry_count = 1;
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;
 

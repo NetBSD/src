@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.100 2001/07/07 16:40:23 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.101 2001/07/07 16:46:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3193,7 +3193,7 @@ tulip_addr_filter(
 	 * go into hash perfect mode (512 bit multicast
 	 * hash and one perfect hardware).
 	 */
-	bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
+	memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
 	ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
@@ -5325,7 +5325,7 @@ tulip_initring(
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
-    bzero((caddr_t) ri->ri_first, sizeof(ri->ri_first[0]) * ri->ri_max);
+    memset((caddr_t) ri->ri_first, 0, sizeof(ri->ri_first[0]) * ri->ri_max);
     ri->ri_last[-1].d_flag = TULIP_DFLAG_ENDRING;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.11 2001/07/07 16:37:38 thorpej Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.12 2001/07/07 16:46:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -1435,6 +1435,6 @@ lmc_initring(lmc_softc_t * const sc, lmc_ringinfo_t * const ri,
 	ri->ri_max = ndescs;
 	ri->ri_first = descs;
 	ri->ri_last = ri->ri_first + ri->ri_max;
-	bzero((caddr_t) ri->ri_first, sizeof(ri->ri_first[0]) * ri->ri_max);
+	memset((caddr_t) ri->ri_first, 0, sizeof(ri->ri_first[0]) * ri->ri_max);
 	ri->ri_last[-1].d_flag = TULIP_DFLAG_ENDRING;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.32 2001/06/24 01:11:08 elric Exp $ */
+/* $NetBSD: tga.c,v 1.33 2001/07/07 16:46:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -376,7 +376,7 @@ tgaattach(parent, self, aux)
 	} else {
 		sc->sc_dc = (struct tga_devconfig *)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
-		bzero(sc->sc_dc, sizeof(struct tga_devconfig));
+		memset(sc->sc_dc, 0, sizeof(struct tga_devconfig));
 		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag,
 		    sc->sc_dc);
 	}
