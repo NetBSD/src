@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.54 1999/10/28 08:12:14 jun Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.55 1999/10/28 09:22:57 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.52 1999/10/28 07:21:28 jun Exp 
+ *	NetBSD: pcmciadevs,v 1.54 1999/10/28 09:21:46 jun Exp 
  */
 
 /*-
@@ -302,6 +302,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications Dual RS232"	},
+	},
+	{
+	    PCMCIA_VENDOR_SOCEKT, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
+	    PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+	    0,
+	    "",
+	    "Socket Communications Low Power Ethernet CF"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
