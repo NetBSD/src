@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.8 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l2if.c,v 1.9 2004/05/06 21:11:04 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.8 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.9 2004/05/06 21:11:04 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -388,6 +388,11 @@ i4b_l3_tx_setup(call_desc_t *cd)
 	u_char *ptr;
 	int slen = strlen(cd->src_telno);
 	int dlen = strlen(cd->dst_telno);
+	int msglen = I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
+			    (cd->bprot == BPROT_NONE ? 1 : 0);
+
+	if (slen == 0) 
+		msglen -= IEI_CALLINGPN_LEN+2;	/* whole IE not send */
 
 	/*
 	 * there is one additional octet if cd->bprot == BPROT_NONE
@@ -398,8 +403,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 
 	NDBGL3(L3_PRIM, "isdnif %d, cr = 0x%02x", cd->isdnif, cd->cr);
 	
-	if((m = i4b_Dgetmbuf(I_FRAME_HDRLEN + MSG_SETUP_LEN + slen + dlen +
-			    (cd->bprot == BPROT_NONE ? 1 : 0))) == NULL)
+	if((m = i4b_Dgetmbuf(msglen)) == NULL)
 	{
 		panic("i4b_l3_tx_setup: can't allocate mbuf");
 	}
@@ -462,11 +466,13 @@ i4b_l3_tx_setup(call_desc_t *cd)
 			break;
 	}
 
-	*ptr++ = IEI_CALLINGPN;		/* calling party no */
-	*ptr++ = IEI_CALLINGPN_LEN+slen;/* calling party no length */
-	*ptr++ = NUMBER_TYPEPLAN;	/* type of number, number plan id */
-	strncpy(ptr, cd->src_telno, slen);
-	ptr += slen;
+	if (slen) {
+		*ptr++ = IEI_CALLINGPN;		/* calling party no */
+		*ptr++ = IEI_CALLINGPN_LEN+slen;/* calling party no length */
+		*ptr++ = NUMBER_TYPEPLAN;	/* type of number, number plan id */
+		strncpy(ptr, cd->src_telno, slen);
+		ptr += slen;
+	}
 
 	*ptr++ = IEI_CALLEDPN;		/* called party no */
 	*ptr++ = IEI_CALLEDPN_LEN+dlen;	/* called party no length */
