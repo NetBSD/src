@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.8 2001/11/13 07:11:16 lukem Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.9 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.8 2001/11/13 07:11:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.9 2004/01/10 00:56:28 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -110,7 +110,7 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
   (_node_).params[0].p = _p_ ; \
   (_node_).params[1].p = (_p_)->bufPtr; \
   (_node_).params[2].v = parityStripeID; \
-  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru)
+  (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
 #define DISK_NODE_PDA(node)  ((node)->params[0].p)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.12 2004/01/10 00:53:08 oster Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.13 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.12 2004/01/10 00:53:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.13 2004/01/10 00:56:28 oster Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -141,7 +141,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 				rodNodes[nodeNum].params[0].p = pda;
 				rodNodes[nodeNum].params[1].p = pda->bufPtr;
 				rodNodes[nodeNum].params[2].v = parityStripeID;
-				rodNodes[nodeNum].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+				rodNodes[nodeNum].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 				nodeNum++;
 				pda = pda->next;
 			}
@@ -157,7 +157,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
 		wndNodes[i].params[0].p = pda;
 		wndNodes[i].params[1].p = pda->bufPtr;
 		wndNodes[i].params[2].v = parityStripeID;
-		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wndNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
 	}
 
@@ -409,7 +409,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
 												 * data */
 		readDataNodes[i].params[2].v = parityStripeID;
-		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
 		readDataNodes[i].propList[0] = NULL;
 		readDataNodes[i].propList[1] = NULL;
@@ -425,7 +425,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
 													 * parity */
 		readParityNodes[i].params[2].v = parityStripeID;
-		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		readParityNodes[i].propList[0] = NULL;
 		pda = pda->next;
 	}
@@ -440,7 +440,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		writeDataNodes[i].params[1].p = pda->bufPtr;	/* buffer holding new
 								 * data to be written */
 		writeDataNodes[i].params[2].v = parityStripeID;
-		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		writeDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
 		pda = pda->next;
 	}

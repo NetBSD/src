@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.16 2004/01/02 21:41:08 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.17 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.16 2004/01/02 21:41:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.17 2004/01/10 00:56:28 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -332,7 +332,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		blockNode->succedents[i]->params[0].p = pda;
 		blockNode->succedents[i]->params[1].p = buf1;
 		blockNode->succedents[i]->params[2].v = psID;
-		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		buf1 += nbytes;
 	}
 	RF_ASSERT(pda == NULL);
@@ -353,7 +353,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		blockNode->succedents[i]->params[0].p = pda;
 		blockNode->succedents[i]->params[1].p = buf1;
 		blockNode->succedents[i]->params[2].v = psID;
-		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		buf1 += nbytes;
 	}
 	RF_ASSERT(pda == NULL);
@@ -471,7 +471,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 			wrBlock->succedents[i]->params[0].p = pda;
 			wrBlock->succedents[i]->params[1].p = pda->bufPtr;
 			wrBlock->succedents[i]->params[2].v = psID;
-			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
