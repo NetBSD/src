@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.2 2002/04/28 17:10:34 uch Exp $	*/
+/*	$NetBSD: exception.h,v 1.3 2002/05/09 12:24:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,8 +35,12 @@
 
 #ifndef _SH3_EXCEPTION_H_
 #define	_SH3_EXCEPTION_H_
+/*
+ * SH3/SH4 Exception handling.
+ */
 #include <sh3/devreg.h>
 
+#ifdef _KERNEL
 #define	SH3_TRA			0xffffffd0	/* 32bit */
 #define	SH3_EXPEVT		0xffffffd4	/* 32bit */
 #define	SH3_INTEVT		0xffffffd8	/* 32bit */
@@ -46,6 +50,39 @@
 #define	SH4_EXPEVT		0xff000024	/* 32bit */
 #define	SH4_INTEVT		0xff000028	/* 32bit */
 
+/*
+ * EXPEVT
+ */
+/* Reset exception */
+#define	EXPEVT_RESET_POWER	0x000	/* Power-On reset */
+#define	EXPEVT_RESET_MANUAL	0x020	/* Manual reset */
+#define	EXPEVT_RESET_TLB_MULTI_HIT	0x140	/* SH4 only */
+
+/* General exception */
+#define	EXPEVT_TLB_MISS_LD	0x040	/* TLB miss (load) */
+#define	EXPEVT_TLB_MISS_ST	0x060	/* TLB miss (store) */
+#define	EXPEVT_TLB_MOD		0x080	/* Initial page write */
+#define	EXPEVT_TLB_PROT_LD	0x0a0	/* Protection violation (load) */
+#define	EXPEVT_TLB_PROT_ST	0x0c0	/* Protection violation (store)*/
+#define	EXPEVT_ADDR_ERR_LD	0x0e0	/* Address error (load) */
+#define	EXPEVT_ADDR_ERR_ST	0x100	/* Address error (store) */
+#define	EXPEVT_FPU		0x120	/* FPU exception */
+#define	EXPEVT_TRAPA		0x160	/* Unconditional trap (TRAPA) */
+#define	EXPEVT_RES_INST		0x180	/* Illegal instruction */
+#define	EXPEVT_SLOT_INST	0x1a0	/* Illegal slot instruction */
+#define	EXPEVT_BREAK		0x1e0	/* User break */
+#define	EXPEVT_FPU_DISABLE	0x800	/* FPU disabled */
+#define	EXPEVT_FPU_SLOT_DISABLE	0x820	/* Slot FPU disabled */
+
+/* Software bit */
+#define	EXP_USER		0x001	/* exception from user-mode */
+
+#define	_SH_TRA_BREAK		0xc3	/* magic number for debugger */
+
+/*
+ * INTEVT/INTEVT2
+ */
+/* External interrupt */
 #define	SH_INTEVT_NMI		0x1c0
 
 #define	SH_INTEVT_TMU0_TUNI0	0x400
@@ -83,4 +120,5 @@ extern u_int32_t __sh_EXPEVT;
 extern u_int32_t __sh_INTEVT;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
+#endif /* _KERNEL */
 #endif /* !_SH3_EXCEPTION_H_ */
