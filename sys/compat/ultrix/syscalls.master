@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 1997/06/13 19:15:18 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.22 1997/10/16 23:55:50 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -80,10 +80,10 @@
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
 38	STD		{ int ultrix_sys_stat(char *path, \
-			    struct ostat *ub); } ostat
+			    struct stat43 *ub); } stat43
 39	OBSOL		v7 setpgrp
 40	STD		{ int ultrix_sys_lstat(char *path, \
-			    struct ostat *ub); } olstat
+			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	OBSOL		v7 times
@@ -107,7 +107,7 @@
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int compat_43_sys_fstat(int fd, struct ostat *sb); }
+62	NOARGS		{ int compat_43_sys_fstat(int fd, struct stat43 *sb); }
 63	UNIMPL
 64	NOARGS		{ int compat_43_sys_getpagesize(void); }
 65	UNIMPL		mremap
