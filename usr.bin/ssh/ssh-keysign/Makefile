@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2002/06/26 16:54:51 tv Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2002/07/03 23:01:48 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh-keysign
 
-SRCS=	ssh-keysign.c
+SRCS=	ssh-keysign.c readconf.c
 
 BINOWN=	root
 BINMODE=4555
