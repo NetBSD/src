@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.16 1996/06/25 16:40:06 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.17 1996/09/18 22:47:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.16 1996/06/25 16:40:06 christos Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.17 1996/09/18 22:47:48 thorpej Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -258,7 +259,7 @@ getpwd()
 	 */
 #if defined(__NetBSD__) || defined(__svr4__)
 	if (getcwd(buf, sizeof(buf)) == NULL)
-		error("getcwd() failed");
+		error("getcwd() failed: %s", strerror(errno));
 	curdir = savestr(buf);
 #else
 	{
