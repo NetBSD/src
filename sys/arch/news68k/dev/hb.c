@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.2 1999/12/21 08:37:36 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.3 2000/02/08 16:17:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <news68k/news68k/isr.h>
 #include <news68k/dev/hbvar.h>
@@ -52,9 +53,12 @@ hb_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	char *ma_name = aux;
+	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma_name, hb_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, hb_cd.cd_name) != 0)
+		return 0;
+
+	if (ma->ma_systype != -1 && ma->ma_systype != systype)
 		return 0;
 
 	return 1;

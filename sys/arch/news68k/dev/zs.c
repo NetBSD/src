@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1999/12/29 05:01:13 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 2000/02/08 16:17:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,9 +88,18 @@ int zs_def_cflag = (CREAD | CS8 | HUPCL);
 int zs_major = 1;
 
 /*
- * The news1700 seems to provide a 3.9936 MHz clock to the ZS chips.
+ * The news68k machines use three different clocks for the ZS chips.
  */
-#define PCLK	(9600 * 416) 	/* PCLK pin input clock rate */
+#define NPCLK	3
+#define PCLK0	(9600 * 416)	/*  news1700: 3.9936MHz */
+#define PCLK1	(9600 * 512)	/*  news1200: 4.9152MHz */
+#define PCLK2	(9600 * 384)	/*  external: 3.6864MHz */
+
+static const u_int pclk[NPCLK] = {
+	PCLK0,
+	PCLK1,
+	PCLK2,
+};
 
 /*
  * Define interrupt levels.
@@ -133,7 +142,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	((PCLK0/32)/9600)-2,	/*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
@@ -189,7 +198,7 @@ zs_match(parent, cf, aux)
 	void *aux;
 {
 	struct hb_attach_args *ha = aux;
-	int addr;
+	u_int addr;
 
 	if (strcmp(ha->ha_name, "zsc"))
 		return 0;
@@ -219,14 +228,19 @@ zs_attach(parent, self, aux)
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *) self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct hb_attach_args *ha = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zs_unit, channel;
+	int s, zs_unit, channel, clk;
 
 	zs_unit = zsc->zsc_dev.dv_unit;
 	zsaddr[zs_unit] = (void *)IIOV(ha->ha_address);
+
+	clk = cf->cf_flags;
+	if (clk < 0 || clk >= NPCLK)
+		clk = 0;
 
 	printf("\n");
 
@@ -242,7 +256,7 @@ zs_attach(parent, self, aux)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		cs->cs_brg_clk = PCLK / 16;
+		cs->cs_brg_clk = pclk[clk] / 16;
 
 		zc = zs_get_chan_addr(zs_unit, channel);
 		cs->cs_reg_csr  = &zc->zc_csr;
@@ -494,7 +508,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -504,7 +519,8 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
+void
+zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -512,7 +528,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -522,7 +539,8 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -603,30 +621,32 @@ struct consdev consdev_zs = {
 	nullcnpollc
 };
 
-void
+static void
 zscnprobe(cn)
 	struct consdev *cn;
 {
 }
 
-void
+static void
 zscninit(cn)
 	struct consdev *cn;
 {
+	extern volatile u_char *sccport0a;
+
 	cn->cn_dev = makedev(zs_major, 0);
 	cn->cn_pri = CN_REMOTE;
 	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
-	zs_conschan = (void *)SCCPORT0A; /* XXX */
+	zs_conschan = (void *)sccport0a; /* XXX */
 }
 
-int
+static int
 zscngetc(dev)
 	dev_t dev;
 {
 	return zs_getc(zs_conschan);
 }
 
-void
+static void
 zscnputc(dev, c)
 	dev_t dev;
 	int c;

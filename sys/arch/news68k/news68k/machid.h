@@ -1,4 +1,4 @@
-/*	$NetBSD: machid.h,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: machid.h,v 1.2 2000/02/08 16:17:34 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,67 +90,8 @@
 #define	NWB235A	236
 #define	NWXRES	255
 
-#ifdef mips
-#define	MACHID_MODEL(X)		(((X)>>18)&0x1f)
-#define	MACHID_SERIAL(X)	((X)&0x3ffff)
-#else /* mips */
-#define	MACHID_MODEL(X)		(((X)>>16)&0xff)
-#define	MACHID_SERIAL(X)	((X)&0xffff)
-#endif /* mips */
-
-#ifndef LOCORE
-
-/*
- * MPU board id number definition.
- */
-#define MPU0 0				/* not used */
-#define MPU1 1				/* ICKI */
-#define MPU2 2				/* 799/801/810/811/820/821 */
-#define MPU3 3				/* 802/830/841/911/921 */
-#define MPU4 4				/* 711 */
-#define MPU5 5				/* 1830/1850/1860/1930/1960 */
-#define MPU6 6				/* 712/721 */
-#define MPU7 7				/* 14XX/15XX */
-#define MPU8 8				/* 16XX/17XX */
-#define MPU9 9				/*  */
-
-struct machid {
-/*00*/	u_short	m_pwb;			/* MPU board number */
-/*02*/	u_short	m_model;		/* MPU dependent model code */
-/*04*/	u_int	m_serial;		/* machine serial number */
-/*08*/	u_int	m_reserve0;
-/*0c*/	u_int	m_reserve1;
-/*10*/
-};
-
-union omachid {
-/*00*/	struct om_field {
-		u_int	fi_reserve:2,
-			fi_pwb:7,	/* MPU (printed wired) board number */
-			fi_model:5,	/* MPU dependent model code */
-			fi_serial:18;	/* machine serial number */
-	} om_fi;
-/*00*/	u_int	om_data;
-/*04*/
-};
-
-struct machine_type {
-/*00*/	int	m_model_id;
-/*04*/	char	*m_model_name;
-/*08*/	char	*m_machine_name;
-/*0c*/	char	*m_maincpu;
-/*10*/	char	*m_subcpu;
-/*14*/	char	*m_fpa;
-/*18*/	int	m_board_id;
-/*1c*/	int	m_cachecntl;
-/*20*/	int	m_maxusers;		/* not used */
-/*24*/	int	m_dcachesize;		/* not used */
-/*28*/	int	m_icachesize;		/* not used */
-/*2c*/
-};
-
 #if defined(news700) || defined(news800) || defined(news1700) || defined(news1800)
-struct idrom {
+struct oidrom {
 /*00*/	unsigned char	id_model;
 /*01*/	unsigned char	id_serial[2];
 /*03*/	unsigned char	id_lot;
@@ -185,7 +126,5 @@ struct idrom {
 /*80*/
 };
 #endif /* news1200 || news3400 || news3800 */
-
-#endif /* !LOCORE */
 
 #endif /* __MACHID__ */

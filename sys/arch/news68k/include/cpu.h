@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1999/12/09 14:53:10 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2000/02/08 16:17:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #ifndef _NEWS68K_CPU_H_
-#define	_NEWS68K_CPU_H_
+#define _NEWS68K_CPU_H_
 
 /*
  * Exported definitions unique to news68k cpu support.
@@ -54,6 +54,7 @@
  */
 #include <m68k/cpu.h>
 
+#ifdef news1700
 /*
  * XXX news1700 L2 cache would be corrupted with DC_BE and IC_BE...
  * XXX Should these be defined in machine/cpu.h?
@@ -67,25 +68,21 @@
 #define IC_CLEAR	(DC_WA|DC_ENABLE|IC_CLR|IC_ENABLE)
 #define DC_CLEAR	(DC_WA|DC_CLR|DC_ENABLE|IC_ENABLE)
 
+#endif
+
 /*
  * Get interrupt glue.
  */
 #include <machine/intr.h>
 
-#define	M68K_MMU_MOTOROLA
-
-#if defined(news1700)
-#define	CACHE_HAVE_PAC
-#endif
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_wait(p)			/* nothing */
-#define	cpu_swapout(p)			/* nothing */
-#define	cpu_number()			0
+#define cpu_swapin(p)			/* nothing */
+#define cpu_wait(p)			/* nothing */
+#define cpu_swapout(p)			/* nothing */
+#define cpu_number()			0
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -98,15 +95,15 @@ struct clockframe {
 	u_short	vo;		/* vector offset (4-word frame) */
 };
 
-#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
+#define CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
+#define CLKF_PC(framep)		((framep)->pc)
 #if 0
 /* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#define CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
-#define	CLKF_INTR(framep)	(0)	/* XXX */
+#define CLKF_INTR(framep)	(0)	/* XXX */
 #endif
 
 
@@ -115,20 +112,20 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched()	{ want_resched++; aston(); }
+#define need_resched()	{ want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define signotify(p)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
@@ -136,8 +133,8 @@ extern int astpending;		/* need to trap before returning to user mode */
 /*
  * CTL_MACHDEP definitions.
  */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define CPU_MAXID		2	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -146,85 +143,97 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 
-#if defined(news1700) && !defined(M68030)
+#if defined(news1700) || defined(news1200)
+#ifndef M68030
 #define M68030
+#endif
+#define M68K_MMU_MOTOROLA
+#endif
+
+#if defined(news1700)
+#define CACHE_HAVE_PAC
 #endif
 
 #endif
 
 #ifdef _KERNEL
-extern	int machineid;
-extern	int cpuspeed;
-extern	char *intiobase, *intiolimit;
-extern	u_int intiobase_phys, intiotop_phys;
-extern	u_int extiobase_phys, extiotop_phys;
-extern	u_int intrcnt[];
+extern int systype;
+#define NEWS1700	0
+#define NEWS1200	1
 
-extern	void (*vectab[]) __P((void));
+extern int cpuspeed;
+extern char *intiobase, *intiolimit;
+extern u_int intiobase_phys, intiotop_phys;
+extern u_int extiobase_phys, extiotop_phys;
+extern u_int intrcnt[];
+
+extern void (*vectab[]) __P((void));
 
 struct frame;
 struct fpframe;
 struct pcb;
 
 /* locore.s functions */
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
+void m68881_save __P((struct fpframe *));
+void m68881_restore __P((struct fpframe *));
+void DCIA __P((void));
+void DCIS __P((void));
+void DCIU __P((void));
+void ICIA __P((void));
+void ICPA __P((void));
+void PCIA __P((void));
+void TBIA __P((void));
+void TBIS __P((vaddr_t));
+void TBIAS __P((void));
+void TBIAU __P((void));
 
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
-void	badtrap __P((void));
-void	intrhand_vectored __P((void));
-int	getsr __P((void));
+int suline __P((caddr_t, caddr_t));
+void savectx __P((struct pcb *));
+void switch_exit __P((struct proc *));
+void proc_trampoline __P((void));
+void loadustp __P((int));
+void badtrap __P((void));
+void intrhand_vectored __P((void));
+int getsr __P((void));
 
 
-void	doboot __P((int))
+void doboot __P((int))
 	__attribute__((__noreturn__));
-void	nmihand __P((struct frame *));
-void	ecacheon __P((void));
-void	ecacheoff __P((void));
-
-/* clock.c functions */
-#if 0 /* XXX not yet */
-void	news68k_calibrate_delay __P((void));
-#endif
+void nmihand __P((struct frame *));
+void ecacheon __P((void));
+void ecacheoff __P((void));
 
 /* machdep.c functions */
-int	badaddr __P((caddr_t, int));
-int	badbaddr __P((caddr_t));
+int badaddr __P((caddr_t, int));
+int badbaddr __P((caddr_t));
 
 /* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void physaccess __P((caddr_t, caddr_t, int, int));
+void physunaccess __P((caddr_t, int));
+int kvtop __P((caddr_t));
 
 /* trap.c functions */
-void	child_return __P((void *));
+void child_return __P((void *));
 
 #endif
 
 /* physical memory sections */
-#define	ROMBASE		(0xe0000000)
-#define	INTIOBASE1700	(0xe0c00000)
+#define ROMBASE		(0xe0000000)
+
+#define INTIOBASE1700	(0xe0c00000)
 #define INTIOTOP1700	(0xe1d00000) /* XXX */
-#define	EXTIOBASE1700	(0xf0f00000)
+#define EXTIOBASE1700	(0xf0f00000)
 #define EXTIOTOP1700	(0xf1000000) /* XXX */
-#define	MAXADDR		(0xfffff000)
+
+#define INTIOBASE1200	(0xe1000000)
+#define INTIOTOP1200	(0xe1d00000) /* XXX */
+#define EXTIOBASE1200	(0xe4000000)
+#define EXTIOTOP1200	(0xe4020000) /* XXX */
+
+#define MAXADDR		(0xfffff000)
 
 /*
  * Internal IO space:
@@ -233,10 +242,12 @@ void	child_return __P((void *));
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
-#define	ISIIOVA(va) \
+#define ISIIOVA(va) \
 	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
-#define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
-#define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
+#define IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
+#define ISIIOPA(pa) \
+	((u_int)(pa) >= intiobase_phys && (u_int)(pa) < intiotop_phys)
+#define IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
+#define IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
 
 #endif /* !_NEWS68K_CPU_H_ */
