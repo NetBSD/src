@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.44 1998/02/09 00:47:23 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.45 1998/02/13 15:16:43 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1929,8 +1929,8 @@ ${PLIST}: ${PLIST_SRC}
 .if defined(MANZ)
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
-			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
-			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
+			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/' \
+			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/' \
 			-e 's/<\$$ARCH>/'${ARCH}'/g' \
 			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
@@ -1938,8 +1938,8 @@ ${PLIST}: ${PLIST_SRC}
 .else   # !MANZ
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
-			-e '/man\/man/s/\.gz$$//g' \
-			-e '/man\/cat/s/\.gz$$//g' \
+			-e '/man\/man/s/\.gz$$//' \
+			-e '/man\/cat/s/\.gz$$//' \
 			-e 's/<\$$ARCH>/'${ARCH}'/g' \
 			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
