@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga.newconf,v 1.9 1994/06/05 07:43:37 chopps Exp $
+#	$Id: files.amiga.newconf,v 1.10 1994/06/15 19:04:28 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -55,7 +55,7 @@ file	arch/amiga/dev/kf_custom.c	kfont_custom
 
 # custom chips grf
 device	grfcc at mainbus: grfbus
-file	arch/amiga/dev/grf_cc.c		grfcc
+file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc ite
 
 pseudo-device	view
@@ -66,7 +66,7 @@ file	arch/amiga/dev/grfabs_ccglb.c	grfcc view
 
 # retina grf
 device	grfrt at ztwobus: grfbus
-file	arch/amiga/dev/grf_rt.c		grfrt
+file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
 file	arch/amiga/dev/ite_rt.c		grfrt ite
 
 # zorro III expansion bus.
@@ -75,7 +75,7 @@ file	arch/amiga/dev/zthreebus.c	zthreebus
 
 # retina ZIII grf
 device	grfrh at zthreebus: grfbus
-file	arch/amiga/dev/grf_rh.c		grfrh
+file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
 file	arch/amiga/dev/ite_rh.c		grfrh ite
   
 # handle gvp's odd autoconf info..

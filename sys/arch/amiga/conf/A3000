@@ -1,25 +1,24 @@
 #
 # Minimal AMIGA 3000
 #
-# $Id: A3000,v 1.3 1994/06/05 07:43:34 chopps Exp $
+# $Id: A3000,v 1.4 1994/06/15 19:04:20 chopps Exp $
 #
 # Author: Stephen Roznowski (sjr@zombie.ncsc.mil)
 #
 # This configuration file is for a multiple disk/multiple tape A3000.
 #
 
-#
-# processors this kernel should support
-#
-options		"M68030"		# support for 030
-
 include "std.amiga"
-
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
 #
 maxusers	16
+
+#
+# processors this kernel should support
+#
+options		"M68030"	# support for 030
 
 options		TIMEZONE=300	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
@@ -65,7 +64,7 @@ options		"GRF_A2024"		# Support for the A2024
 #
 # Support for System V IPC facilities.
 #
-#options		SYSVSHM		# System V shared memory
+options		SYSVSHM		# System V shared memory
 options		SYSVMSG		# System V messages
 options		SYSVSEM		# System V semaphores
 
@@ -108,7 +107,4 @@ st0	at scsibus? target ? lun 0
 
 grfcc0		at mainbus0
 grf0		at grfcc0
-ite*		at grf?
-
-#fdc		at mainbus0
-#fd0		at fdc
+ite0		at grf0
