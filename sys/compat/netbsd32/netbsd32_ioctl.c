@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.4 1999/10/11 01:36:23 eeh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.5 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -374,6 +374,18 @@ netbsd32_ioctl(p, v, retval)
 	 * we need to translate some commands (_IOW) before calling sys_ioctl,
 	 * some after (_IOR), and some both (_IOWR). 
 	 */
+#if 0
+	{
+char *dirs[8] = { "NONE!", "VOID", "OUT", "VOID|OUT!", "IN", "VOID|IN!",
+		"INOUT", "VOID|IN|OUT!" };
+
+printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
+       SCARG(uap, fd), SCARG(uap, com), SCARG(uap, data),
+       dirs[((SCARG(uap, com) & IOC_DIRMASK)>>29)],
+       IOCGROUP(SCARG(uap, com)), IOCBASECMD(SCARG(uap, com)),
+       IOCPARM_LEN(SCARG(uap, com)));
+	}
+#endif
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(type)	\

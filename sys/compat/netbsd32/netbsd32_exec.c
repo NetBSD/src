@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.16 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.17 1999/12/30 15:40:45 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -32,6 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	ELFSIZE		32
+
 #include "opt_compat_sunos.h"
 
 #include <sys/param.h>
@@ -40,6 +42,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -61,8 +64,10 @@ extern char *netbsd32_syscallnames[];
 #endif
 void *netbsd32_copyargs __P((struct exec_package *, struct ps_strings *,
 	void *, void *));
-int netbsd32_copyinargs __P((struct ps_strings *, void *, size_t,
-			      const void *, const void *));
+void *netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+	void *, void *));
+int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *, 
+			     void *, size_t, const void *, const void *));
 
 static int netbsd32_exec_aout_prep_zmagic __P((struct proc *,
 	struct exec_package *));
@@ -71,10 +76,11 @@ static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
 static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
 	struct exec_package *));
 
+#ifdef EXEC_AOUT
 struct emul emul_netbsd32 = {
 	"netbsd32",
 	NULL,
-	netbsd32_sendsig,	/* XXX needs to be written */
+	netbsd32_sendsig,
 	netbsd32_SYS_syscall,
 	netbsd32_SYS_MAXSYSCALL,
 	netbsd32_sysent,
@@ -84,15 +90,67 @@ struct emul emul_netbsd32 = {
 	NULL,
 #endif
 	0,
-#if FIXED
-	netbsd32_copyinargs,
-#endif
 	netbsd32_copyargs,
-	netbsd32_setregs,	/* XXX needs to be written?? */
+	netbsd32_setregs,
+	netbsd32_sigcode,
+	netbsd32_esigcode,
+};
+#endif /* EXEC_AOUT */
+
+#ifdef EXEC_ELF32
+/* Elf emul structure */
+struct emul ELFNAMEEND(emul_netbsd32) = {
+	"netbsd32",
+	NULL,
+	netbsd32_sendsig,
+	netbsd32_SYS_syscall,
+	netbsd32_SYS_MAXSYSCALL,
+	netbsd32_sysent,
+#ifdef SYSCALL_DEBUG
+	netbsd32_syscallnames,
+#else
+	NULL,
+#endif
+	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof(Elf_Addr)),
+	netbsd32_elf32_copyargs,
+	netbsd32_setregs,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
 };
 
+extern int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
+    Elf_Ehdr *));
+int
+ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+	char *itp;
+	Elf_Addr *pos;
+{
+	int error;
+	size_t i;
+	const char *bp;
+
+	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
+		return error;
+
+	if (itp[0]) {
+		if ((error = emul_find(p, NULL, netbsd32_emul_path,
+		    itp, &bp, 0)))
+			return error;
+		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)
+			return error;
+		free((void *)bp, M_TEMP);
+	}
+	epp->ep_emul = &ELFNAMEEND(emul_netbsd32);
+	epp->ep_flags |= EXEC_32;
+	*pos = ELFDEFNNAME(NO_ADDR);
+	return 0;
+}
+#endif
+
+#ifdef EXEC_AOUT
 /*
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
  * executable.
@@ -144,6 +202,7 @@ exec_netbsd32_makecmds(p, epp)
 	if (error == 0) {
 		/* set up our emulation information */
 		epp->ep_emul = &emul_netbsd32;
+		epp->ep_flags |= EXEC_32;
 	} else
 		kill_vmcmds(&epp->ep_vmcmds);
 
@@ -289,6 +348,8 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 
+#endif
+
 /*
  * We need to copy out all pointers as 32-bit values.
  */
@@ -314,97 +375,101 @@ netbsd32_copyargs(pack, arginfo, stack, argp)
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = (caddr_t)(u_long)cpp; /* remember location of argv for later */
+	arginfo->ps_argvstr = (char **)(u_long)cpp; /* remember location of argv for later */
 
-	for (; --argc >= 0; sp += len, dp += len)
+	for (; --argc >= 0; sp += len, dp += len) {
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
 			return NULL;
-
+	}
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
-	arginfo->ps_envstr = (caddr_t)(u_long)cpp; /* remember location of envp for later */
+	arginfo->ps_envstr = (char **)(u_long)cpp; /* remember location of envp for later */
 
-	for (; --envc >= 0; sp += len, dp += len)
+	for (; --envc >= 0; sp += len, dp += len) {
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
 			return NULL;
-
+	}
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
 	return cpp;
 }
 
+/* round up and down to page boundaries. */
+#define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
+#define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
+
 /*
- * Copy in args and env passed in by the exec syscall.
- *
- * Since this is a 32-bit emulation, pointers are 32-bits wide so this
- * routine needs to copyin 32-bit pointers and convert them.
+ * Copy arguments onto the stack in the normal way, but add some
+ * extra information in case of dynamic binding.
  */
-int
-netbsd32_copyinargs(arginfo, destp, len, argp, envp)
+void *
+netbsd32_elf32_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *destp;
-	size_t len;
-	const void *argp;
-	const void *envp;
+	void *stack;
+	void *argp;
 {
-	char * const *cpp;
-	char *dp;
-	u_int32_t sp;
-	long argc, envc;
-	size_t l;
-	int error = 0;
+	size_t len;
+	AuxInfo ai[ELF_AUX_ENTRIES], *a;
+	struct elf_args *ap;
 
-	dp = *(char **)destp;
-	argc = 0;
-	if ((cpp = argp) == NULL)
-		return EINVAL;
+	stack = netbsd32_copyargs(pack, arginfo, stack, argp);
+	if (!stack)
+		return NULL;
 
-	while (1) {
-		l = len;
-		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
-			return (error);
-		if (!sp)
-			break;
-		if ((error = copyinstr((char *)(u_long)sp, dp, l, &l)) != 0) {
-			if (error == ENAMETOOLONG)
-				error = E2BIG;
-			return (error);
-		}
-		dp += l;
-		len -= l;
-		cpp++;
-		argc++;
+	a = ai;
+
+	/*
+	 * Push extra arguments on the stack needed by dynamically
+	 * linked binaries
+	 */
+	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
+
+		a->a_type = AT_PHDR;
+		a->a_v = ap->arg_phaddr;
+		a++;
+
+		a->a_type = AT_PHENT;
+		a->a_v = ap->arg_phentsize;
+		a++;
+
+		a->a_type = AT_PHNUM;
+		a->a_v = ap->arg_phnum;
+		a++;
+
+		a->a_type = AT_PAGESZ;
+		a->a_v = NBPG;
+		a++;
+
+		a->a_type = AT_BASE;
+		a->a_v = ap->arg_interp;
+		a++;
+
+		a->a_type = AT_FLAGS;
+		a->a_v = 0;
+		a++;
+
+		a->a_type = AT_ENTRY;
+		a->a_v = ap->arg_entry;
+		a++;
+
+		free((char *)ap, M_TEMP);
+		pack->ep_emul_arg = NULL;
 	}
 
-	envc = 0;
-	/* environment need not be there */
-	if ((cpp = envp) != NULL ) {
-		while (1) {
-			l = len;
-			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
-				return (error);
-			if (!sp)
-				break;
-			if ((error = copyinstr((char *)(u_long)sp, dp, l, &l)) != 0) {
-				if (error == ENAMETOOLONG)
-					error = E2BIG;
-				return (error);
-			}
-			dp += l;
-			len -= l;
-			cpp++;
-			envc++;
-		}
-	}
+	a->a_type = AT_NULL;
+	a->a_v = 0;
+	a++;
 
-	/* adjust "active stack depth" for process VSZ */
-	*(char**)destp = dp;
-	arginfo->ps_nargvstr = argc;
-	arginfo->ps_nenvstr = envc;
+	len = (a - ai) * sizeof(AuxInfo);
+	if (copyout(ai, stack, len))
+		return NULL;
+	stack = (caddr_t)stack + len;
 
-	return (error);
+	return stack;
 }
+

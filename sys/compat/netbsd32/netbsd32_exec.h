@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.3 1999/03/25 16:58:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.4 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -50,6 +50,12 @@ struct netbsd32_exec {
 	netbsd32_u_long	a_drsize;	/* data relocation size */
 };
 
+#ifdef EXEC_AOUT
 int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
+#endif
+#ifdef EXEC_ELF32
+int netbsd32_elf32_probe __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
+    char *, Elf32_Addr *));
+#endif /* EXEC_ELF32 */
 
 #endif /* !_NETBSD32_EXEC_H_ */

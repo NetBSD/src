@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.4 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.5 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -70,4 +70,46 @@ compat_13_netbsd32_sigaltstack13(p, v, retval)
 	s32oss13->ss_flags = oss13.ss_flags;
 
 	return (rv);
+}
+
+
+int
+compat_13_netbsd32_sigprocmask(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_netbsd32_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(int) mask;
+	} */ *uap = v;
+	sigset13_t ness, oess;
+	sigset_t nbss, obss;
+	int error;
+
+	ness = SCARG(uap, mask);
+	native_sigset13_to_sigset(&ness, &nbss);
+	error = sigprocmask1(p, SCARG(uap, how), &nbss, &obss);
+	if (error)
+		return (error);
+	native_sigset_to_sigset13(&obss, &oess);
+	*retval = oess;
+	return (0);
+}
+
+int
+compat_13_netbsd32_sigsuspend(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_netbsd32_sigsuspend_args /* {
+		syscallarg(sigset13_t) mask;
+	} */ *uap = v;
+	sigset13_t ess;
+	sigset_t bss;
+
+	ess = SCARG(uap, mask);
+	native_sigset13_to_sigset(&ess, &bss);
+	return (sigsuspend1(p, &bss));
 }

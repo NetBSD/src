@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.1 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.2 1999/12/30 15:40:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -127,7 +127,7 @@ native_to_netbsd32_msqid_ds14(msqbuf, omsqbuf)
 }
 
 int
-compat_14_netbsd32_sys_msgctl(p, v, retval)
+compat_14_netbsd32_msgctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -193,7 +193,7 @@ native_to_netbsd32_semid_ds14(sembuf, osembuf)
 }
 
 int
-compat_14_netbsd32_sys___semctl(p, v, retval)
+compat_14_netbsd32___semctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -250,12 +250,12 @@ compat_14_netbsd32_sys___semctl(p, v, retval)
 
 
 void
-shmid_ds14_to_native(oshmbuf, shmbuf)
+netbsd32_shmid_ds14_to_native(oshmbuf, shmbuf)
 	struct shmid_ds14 *oshmbuf;
 	struct shmid_ds *shmbuf;
 {
 
-	ipc_perm14_to_native(&oshmbuf->shm_perm, &shmbuf->shm_perm);
+	netbsd32_ipc_perm14_to_native(&oshmbuf->shm_perm, &shmbuf->shm_perm);
 
 #define	CVT(x)	shmbuf->x = oshmbuf->x
 	CVT(shm_segsz);
@@ -269,7 +269,7 @@ shmid_ds14_to_native(oshmbuf, shmbuf)
 }
 
 void
-native_to_shmid_ds14(shmbuf, oshmbuf)
+native_to_netbsd32_shmid_ds14(shmbuf, oshmbuf)
 	struct shmid_ds *shmbuf;
 	struct shmid_ds14 *oshmbuf;
 {
@@ -288,7 +288,7 @@ native_to_shmid_ds14(shmbuf, oshmbuf)
 }
 
 int
-compat_14_netbsd32_sys_shmctl(p, v, retval)
+compat_14_netbsd32_shmctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -308,14 +308,14 @@ compat_14_netbsd32_sys_shmctl(p, v, retval)
 		error = copyin(SCARG(uap, buf), &oshmbuf, sizeof(oshmbuf));
 		if (error) 
 			return (error);
-		shmid_ds14_to_native(&oshmbuf, &shmbuf);
+		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
 
 	error = shmctl1(p, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_shmid_ds14(&shmbuf, &oshmbuf);     
+		native_to_netbsd32_shmid_ds14(&shmbuf, &oshmbuf);     
 		error = copyout(&oshmbuf, SCARG(uap, buf), sizeof(oshmbuf));
 	}
 
