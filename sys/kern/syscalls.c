@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.120 2001/04/10 11:06:20 kleink Exp $ */
+/* $NetBSD: syscalls.c,v 1.121 2001/05/30 11:48:07 mrg Exp $ */
 
 /*
  * System call names.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.109 2001/04/10 11:03:56 kleink Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -21,7 +21,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const syscallnames[] = {
 	"syscall",			/* 0 = syscall */
