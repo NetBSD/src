@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.9 1995/12/25 21:41:14 mycroft Exp $	*/
+/*	$NetBSD: varargs.h,v 1.10 1995/12/25 22:22:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,6 @@
 
 #undef va_start
 #define	va_start(ap) \
-	ap = (char *)&va_alist
+	((ap) = (va_list)&va_alist)
 
 #endif /* !_PC532_VARARGS_H_ */
