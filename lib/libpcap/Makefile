@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/03 16:40:56 christos Exp $	
+#	$NetBSD: Makefile,v 1.14 1997/10/09 12:43:57 lukem Exp $	
 
-WARNS?=	1
 LIB=	pcap
 MAN=	pcap.3 
 
@@ -23,5 +22,9 @@ INCS=	pcap-namedb.h pcap.h
 INCSDIR=/usr/include
 
 CLEANFILES+= y.tab.h
+
+scanner.c:	y.tab.h
+
+y.tab.c y.tab.h: grammar.c
 
 .include <bsd.lib.mk>
