@@ -206,61 +206,6 @@ _kvm_initvtop(kd)
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
 /*
- * Translate a user virtual address to a physical address.
- */
-int
-_kvm_uvatop(kd, p, va, pa)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long va;
-	u_long *pa;
-{
-	int kva, pte;
-	register int off, frame;
-	register struct vmspace *vms = p->p_vmspace;
-	struct usegmap *usp;
-
-	_kvm_mustinit(kd);
-
-	if ((u_long)vms < KERNBASE) {
-		_kvm_err(kd, kd->program, "_kvm_uvatop: corrupt proc");
-		return (0);
-	}
-	if (va >= KERNBASE)
-		return (0);
-	/*
-	 * Get the PTE.  This takes two steps.  We read the
-	 * base address of the table, then we index it.
-	 * Note that the index pte table is indexed by
-	 * virtual segment rather than physical segment.
-	 */
-	kva = (u_long)&vms->vm_pmap.pm_segstore;
-	if (kvm_read(kd, kva, (char *)&usp, 4) != 4)
-		goto invalid;
-	kva = (u_long)&usp->us_pte[VA_VSEG(va)];
-	if (kvm_read(kd, kva, (char *)&kva, 4) != 4 || kva == 0)
-		goto invalid;
-	kva += sizeof(usp->us_pte[0]) * VA_VPG(va);
-	if (kvm_read(kd, kva, (char *)&pte, 4) == 4 && (pte & PG_V)) {
-		off = VA_OFF(va);
-		/*
-		 * /dev/mem adheres to the hardware model of physical memory
-		 * (with holes in the address space), while crashdumps
-		 * adhere to the contiguous software model.
-		 */
-		if (ISALIVE(kd))
-			frame = pte & PG_PFNUM;
-		else
-			frame = HWTOSW(kd->vmst->pmap_stod, pte & PG_PFNUM);
-		*pa = (frame << pgshift) | off;		
-		return (kd->nbpg - off);
-	}
-invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
-	return (0);
-}
-
-/*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
  * the number of bytes that are contiguously available from this 
