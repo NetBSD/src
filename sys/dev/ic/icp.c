@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.8 2003/05/13 15:42:33 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.9 2003/05/17 15:34:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.8 2003/05/13 15:42:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.9 2003/05/17 15:34:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,6 +886,8 @@ icp_ccb_enqueue(struct icp_softc *icp, struct icp_ccb *ic)
 			 */
 			if (icp->icp_ucmd_ccb != NULL)
 				break;
+			if ((*icp->icp_test_busy)(icp))
+				break;
 			icp->icp_ucmd_ccb = ic;
 
 			if (iu->iu_cnt != 0) {
@@ -897,10 +899,14 @@ icp_ccb_enqueue(struct icp_softc *icp, struct icp_ccb *ic)
 				    BUS_DMASYNC_PREREAD |
 				    BUS_DMASYNC_PREWRITE);
 			}
-		} else if ((ic = SIMPLEQ_FIRST(&icp->icp_ccb_queue)) == NULL)
+		} else if (__predict_true((ic =
+				SIMPLEQ_FIRST(&icp->icp_ccb_queue)) != NULL)) {
+			if ((*icp->icp_test_busy)(icp))
+				break;
+		} else {
+			/* no command found */
 			break;
-		if ((*icp->icp_test_busy)(icp))
-			break;
+		}
 		icp_ccb_submit(icp, ic);
 		if (__predict_false((ic->ic_flags & IC_UCMD) != 0))
 			SIMPLEQ_REMOVE_HEAD(&icp->icp_ucmd_queue, ic_chain);
