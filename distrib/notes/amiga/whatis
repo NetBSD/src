@@ -1,5 +1,5 @@
 
-This is the third public release of NetBSD for the Amiga line of
+This is the fourth public release of NetBSD for the Amiga line of
 computers. Several additional graphics, network and SCSI boards are
 now supported, as well as the 68060 CPU. IBM encoded floppy disks can
 now be read and written (raw, Berkeley FFS and MSDOS file system;
@@ -7,7 +7,7 @@ however, we still can't write the ADOS file system).
 
 This release should also work on early DraCo models, which still have
 a CIA timer. Note, however, that only on-board keyboard, on-board SCSI,
-the Altais graphics board, and non-DMA Zorro-II devices are supported
-on these machines; no parallel or serial port (especially no mouse) and 
-no floppy drives yet.
+on-board serial, the Altais graphics board, and non-DMA Zorro-II
+devices are supported on these machines; no parallel device and no
+floppy drives yet.
 
