@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2000/05/31 05:28:30 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.165 2000/05/31 11:23:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3403,8 +3403,8 @@ pmap_globalize_boot_cpuinfo(cpi)
 	vaddr_t va;
 	vsize_t off;
 
-	for (va = (vaddr_t)cpi, sz = sizeof(*cpi);
-	     off < sizeof(*cpi); va += NBPG, off += NBPG) {
+	off = 0;
+	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
 		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ|VM_PROT_WRITE,
