@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.61 2004/07/27 07:59:51 he Exp $ */
+/* $NetBSD: if_ti.c,v 1.62 2004/09/21 21:57:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.61 2004/07/27 07:59:51 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.62 2004/09/21 21:57:30 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -906,6 +906,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 		/* Attach the buffer to the mbuf. */
 		MEXTADD(m_new, (void *)buf, ETHER_MAX_LEN_JUMBO,
 		    M_DEVBUF, ti_jfree, sc);
+		m_new->m_flags |= M_EXT_RW;
 		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
 	} else {
 		m_new = m;

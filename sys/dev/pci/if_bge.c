@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.73 2004/05/25 04:38:36 atatat Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.74 2004/09/21 21:57:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.73 2004/05/25 04:38:36 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.74 2004/09/21 21:57:30 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -955,6 +955,7 @@ bge_newbuf_jumbo(sc, i, m)
 		m_new->m_len = m_new->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
 		MEXTADD(m_new, buf, BGE_JUMBO_FRAMELEN, M_DEVBUF,
 		    bge_jfree, sc);
+		m_new->m_flags |= M_EXT_RW;
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
