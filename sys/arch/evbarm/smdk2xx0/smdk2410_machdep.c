@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.2 2003/08/01 01:01:37 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.3 2003/08/04 12:37:43 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.2 2003/08/01 01:01:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.3 2003/08/04 12:37:43 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -441,7 +441,9 @@ initarm(void *arg)
 	s3c24x0_clock_freq(s3c2xx0_softc);
 
 	consinit();
+#ifdef VERBOSE_INIT_ARM
 	printf("consinit done\n");
+#endif
 
 #ifdef KGDB
 	LEDSTEP();
@@ -449,9 +451,10 @@ initarm(void *arg)
 #endif
 	LEDSTEP();
 
+#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (SMDK2410) booting ...\n");
-
+#endif
 	/*
 	 * Ok we have the following memory map
 	 *
@@ -768,7 +771,9 @@ initarm(void *arg)
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("init subsystems: stacks ");
+#endif
 
 	set_stackptr(PSR_IRQ32_MODE,
 	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
@@ -796,7 +801,9 @@ initarm(void *arg)
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
 	/* Initialise the undefined instruction handlers */
+#ifdef VERBOSE_INIT_ARM
 	printf("undefined ");
+#endif
 	undefined_init();
 
 	LEDSTEP();
@@ -826,7 +833,9 @@ initarm(void *arg)
 #endif
 	/* XXX irq_init(); */
 
+#ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
+#endif
 
 #ifdef BOOTHOWTO
 	boothowto |= BOOTHOWTO;
