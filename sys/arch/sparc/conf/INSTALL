@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.24 2000/10/30 23:23:15 pk Exp $
+#	$NetBSD: INSTALL,v 1.25 2000/11/01 14:34:22 pk Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -30,7 +30,7 @@ options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-options 	SUN4_MMU3L	# 3-level MMU on sun4/400; (incomplete)
+options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 
 ## System options specific to the sparc machine type
 
