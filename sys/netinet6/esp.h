@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.20 2002/08/09 06:38:12 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.21 2003/07/20 03:24:03 itojun Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct esp_algorithm {
 	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	int (*schedlen) __P((const struct esp_algorithm *));
+	size_t (*schedlen) __P((const struct esp_algorithm *));
 	const char *name;
 	int (*ivlen) __P((const struct esp_algorithm *, struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
