@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	8.1 (Berkeley) 6/2/93
- *	$Id: dirent.h,v 1.5 1994/05/23 01:14:59 cgd Exp $
+ *	$Id: dirent.h,v 1.6 1994/06/08 11:38:34 mycroft Exp $
  */
 
 /*
@@ -48,12 +48,8 @@
 struct dirent {
 	unsigned long	d_fileno;	/* file number of entry */
 	unsigned short	d_reclen;	/* length of this record */
-#ifdef notdef
 	unsigned char	d_type; 	/* file type, see below */
 	unsigned char	d_namlen;	/* length of string in d_name */
-#else
-	unsigned short	d_namlen;	/* length of string in d_name */
-#endif
 #ifdef _POSIX_SOURCE
 	char	d_name[255 + 1];	/* name must be no longer than this */
 #else
@@ -62,7 +58,6 @@ struct dirent {
 #endif
 };
 
-#ifdef notyet
 /*
  * File types
  */
@@ -80,4 +75,3 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
-#endif
