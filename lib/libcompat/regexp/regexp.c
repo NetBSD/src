@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: regexp.c,v 1.4 1995/06/05 19:42:32 pk Exp $";
+static char *rcsid = "$Id: regexp.c,v 1.5 1995/06/07 03:55:49 cgd Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -858,19 +858,19 @@ const char *string;
 	register char **sp;
 	register char **ep;
 
-	reginput = (char *)string;
-	regstartp = prog->startp;
-	regendp = prog->endp;
+	reginput = (char *)string;				/* XXX */
+	regstartp = (char **)prog->startp;			/* XXX */
+	regendp = (char **)prog->endp;				/* XXX */
 
-	sp = prog->startp;
-	ep = prog->endp;
+	sp = (char **)prog->startp;				/* XXX */
+	ep = (char **)prog->endp;				/* XXX */
 	for (i = NSUBEXP; i > 0; i--) {
 		*sp++ = NULL;
 		*ep++ = NULL;
 	}
-	if (regmatch(prog->program + 1)) {
-		((regexp *)prog)->startp[0] = (char *)string;
-		((regexp *)prog)->endp[0] = reginput;
+	if (regmatch((char *)prog->program + 1)) {		/* XXX */
+		((regexp *)prog)->startp[0] = (char *)string;	/* XXX */
+		((regexp *)prog)->endp[0] = reginput;		/* XXX */
 		return(1);
 	} else
 		return(0);
