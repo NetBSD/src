@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2 2001/02/20 23:55:12 cgd Exp $	*/
+/*	$NetBSD: pmc.c,v 1.3 2001/12/31 18:38:32 thorpej Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 const struct pmc_name2val {
