@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.8 1998/05/25 10:36:51 leo Exp $	*/
+/*	$NetBSD: if_we.c,v 1.9 1998/06/25 19:21:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,6 +101,12 @@
 
 #include <dev/isa/if_wereg.h>
 
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define	bus_space_read_region_stream_2	bus_space_read_region_2
+#define	bus_space_write_stream_2	bus_space_write_2
+#define	bus_space_write_region_stream_2	bus_space_write_region_2
+#endif
+
 struct we_softc {
 	struct dp8390_softc sc_dp8390;
 
@@ -140,7 +146,6 @@ int	we_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
 void	we_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
 int	we_test_mem __P((struct dp8390_softc *));
 
-__inline void we_writemem __P((struct we_softc *, u_int8_t *, int, int));
 __inline void we_readmem __P((struct we_softc *, int, u_int8_t *, int));
 
 static const int we_584_irq[] = {
@@ -595,36 +600,11 @@ we_test_mem(sc)
 	return (1);
 }
 
-__inline void
-we_writemem(wsc, from, to, len)
-	struct we_softc *wsc;
-	u_int8_t *from;
-	int to, len;
-{
-	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;
-	bus_space_handle_t memh = wsc->sc_dp8390.sc_bufh;
-
-#ifdef __BUS_SPACE_HAS_STREAM_METHODS
-	if (wsc->sc_16bitp) {
-		bus_space_write_region_stream_2(memt, memh, to,
-				(u_int16_t *)from, len >> 1);
-		if (len & 1)
-			bus_space_write_2(memt, memh, to + (len & ~1),
-				(u_int16_t)(*(from + (len & ~1))));
-	} else
-		bus_space_write_region_stream_1(memt, memh, to, from, len);
-#else
-	if (wsc->sc_16bitp) {
-		bus_space_write_region_2(memt, memh, to, (u_int16_t *)from,
-		    len >> 1);
-		if (len & 1)
-			bus_space_write_2(memt, memh, to + (len & ~1),
-			    (u_int16_t)(*(from + (len & ~1))));
-	} else
-		bus_space_write_region_1(memt, memh, to, from, len);
-#endif
-}
-
+/*
+ * Given a NIC memory source address and a host memory destination address,
+ * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
+ * up to a word - ok as long as mbufs are word-sized.
+ */
 __inline void
 we_readmem(wsc, from, to, len)
 	struct we_softc *wsc;
@@ -635,25 +615,15 @@ we_readmem(wsc, from, to, len)
 	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;
 	bus_space_handle_t memh = wsc->sc_dp8390.sc_bufh;
 
-#ifdef __BUS_SPACE_HAS_STREAM_METHODS
-	if (wsc->sc_16bitp) {
+	if (len & 1)
+		++len;
+
+	if (wsc->sc_16bitp)
 		bus_space_read_region_stream_2(memt, memh, from,
-				(u_int16_t *)to, len >> 1);
-		if (len & 1)
-			*(to + (len & ~1)) = bus_space_read_2(memt,
-			    memh, from + (len & ~1)) & 0xff;
-	} else
-		bus_space_read_region_stream_1(memt, memh, from, to, len);
-#else
-	if (wsc->sc_16bitp) {
-		bus_space_read_region_2(memt, memh, from, (u_int16_t *)to,
-		    len >> 1);
-		if (len & 1)
-			*(to + (len & ~1)) = bus_space_read_2(memt,
-			    memh, from + (len & ~1)) & 0xff;
-	} else
-		bus_space_read_region_1(memt, memh, from, to, len);
-#endif
+		    (u_int16_t *)to, len >> 1);
+	else
+		bus_space_read_region_1(memt, memh, from,
+		    to, len);
 }
 
 int
@@ -663,15 +633,91 @@ we_write_mbuf(sc, m, buf)
 	int buf;
 {
 	struct we_softc *wsc = (struct we_softc *)sc;
-	int savelen;
+	bus_space_tag_t memt = wsc->sc_dp8390.sc_buft;
+	bus_space_handle_t memh = wsc->sc_dp8390.sc_bufh;
+	u_int8_t *data, savebyte[2];
+	int savelen, len, leftover;
+#ifdef DIAGNOSTIC
+	u_int8_t *lim;
+#endif
 
 	savelen = m->m_pkthdr.len;
 
 	WE_MEM_ENABLE(wsc);
 
-	for (; m != NULL; buf += m->m_len, m = m->m_next)
-		we_writemem(wsc, mtod(m, u_int8_t *), buf, m->m_len);
+	/*
+	 * 8-bit boards are simple; no alignment tricks are necessary.
+	 */
+	if (wsc->sc_16bitp == 0) {
+		for (; m != NULL; buf += m->m_len, m = m->m_next)
+			bus_space_write_region_1(memt, memh,
+			    buf, mtod(m, u_int8_t *), m->m_len);
+		goto out;
+	}
 
+	/* Start out with no leftover data. */
+	leftover = 0;
+	savebyte[0] = savebyte[1] = 0;
+
+	for (; m != NULL; m = m->m_next) {
+		len = m->m_len;
+		if (len == 0)
+			continue;
+		data = mtod(m, u_int8_t *);
+#ifdef DIAGNOSTIC
+		lim = data + len;
+#endif
+		while (len > 0) {
+			if (leftover) {
+				/*
+				 * Data left over (from mbuf or realignment).
+				 * Buffer the next byte, and write it and
+				 * the leftover data out.
+				 */
+				savebyte[1] = *data++;
+				len--;
+				bus_space_write_stream_2(memt, memh, buf,
+				    *(u_int16_t *)savebyte);
+				buf += 2;
+				leftover = 0;
+			} else if (ALIGNED_POINTER(data, u_int16_t) == 0) {
+				/*
+				 * Unaligned dta; buffer the next byte.
+				 */
+				savebyte[0] = *data++;
+				len--;
+				leftover = 1;
+			} else {
+				/*
+				 * Aligned data; output contiguous words as
+				 * much as we can, then buffer the remaining
+				 * byte, if any.
+				 */
+				leftover = len & 1;
+				len &= ~1;
+				bus_space_write_region_stream_2(memt, memh,
+				    buf, (u_int16_t *)data, len >> 1);
+				data += len;
+				buf += len;
+				if (leftover)
+					savebyte[0] = *data++;
+				len = 0;
+			}
+		}
+		if (len < 0)
+			panic("we_write_mbuf: negative len");
+#ifdef DIAGNOSTIC
+		if (data != lim)
+			panic("we_write_mbuf: data != lim");
+#endif
+	}
+	if (leftover) {
+		savebyte[1] = 0;
+		bus_space_write_stream_2(memt, memh, buf,
+		    *(u_int16_t *)savebyte);
+	}
+
+ out:
 	WE_MEM_DISABLE(wsc);
 
 	return (savelen);
