@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.14 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.15 2001/09/09 22:18:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -80,7 +80,6 @@ as below:
 .br
 .It # cp -p /usr/share/examples/emul/ultrix/etc/*	./
 .El
-.Pp
 .Ss /etc/resolv.conf
 The Ultrix resolver library only understands
 .Sy domain
@@ -95,7 +94,6 @@ containing only those commands and put it in
 Note that the
 domain search order used by Ultrix executables may not be the same as
 native binaries; there is no good way around this.
-.Pp
 .Ss /etc/svc.conf
 Ultrix uses
 .Pa /etc/svc.conf
