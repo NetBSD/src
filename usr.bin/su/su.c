@@ -64,6 +64,12 @@ int use_kerberos = 1;
 #define	ARGSTR	"-flm"
 #endif
 
+#ifdef DES
+extern char *crypt();
+#else
+# define crypt(a,b) (a)
+#endif
+
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -76,12 +82,10 @@ main(argc, argv)
 	uid_t ruid, getuid();
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *username, *cleanenv[2], *nargv[4], **np;
+	char *user, *shell, *username, *cleanenv[2], **np;
 	char shellbuf[MAXPATHLEN];
-	char *crypt(), *getpass(), *getenv(), *getlogin(), *ontty();
+	char *getpass(), *getenv(), *getlogin(), *ontty();
 
-	np = &nargv[3];
-	*np-- = NULL;
 	asme = asthem = fastlogin = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
 		switch((char)ch) {
@@ -138,6 +142,8 @@ main(argc, argv)
 
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
+	np = *argv ? argv : argv-1;
+
 	if ((pwd = getpwnam(user)) == NULL) {
 		fprintf(stderr, "su: unknown login %s\n", user);
 		exit(1);
@@ -163,11 +169,7 @@ main(argc, argv)
 		/* if target requires a password, verify it */
 		if (*pwd->pw_passwd) {
 			p = getpass("Password:");
-#ifdef DES
 			if (strcmp(pwd->pw_passwd, crypt(p, pwd->pw_passwd))) {
-#else
-			if (strcmp(pwd->pw_passwd, p)) {
-#endif
 				fprintf(stderr, "Sorry\n");
 				syslog(LOG_AUTH|LOG_WARNING,
 					"BAD SU %s to %s%s", username,
