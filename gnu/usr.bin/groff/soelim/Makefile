@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/18 05:59:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/25 10:12:24 lukem Exp $
 
 PROG=		soelim
 SRCS=		soelim.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/22 12:57:07 is Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/25 10:11:15 lukem Exp $
 
 LIB=	objc
 INCSDIR=/usr/include/objc
@@ -9,9 +9,9 @@ NOPIC=
 
 .SUFFIXES: .o .m
 
-.m.o: ;	${CC} -c ${CFLAGS} -o ${.TARGET} ${.IMPSRC}
+.m.o: ;	${CC} -c ${CPPFLAGS} -o ${.TARGET} ${.IMPSRC}
 
-CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
+CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
 
 

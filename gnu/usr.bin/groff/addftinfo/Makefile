@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/18 05:58:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/25 10:11:29 lukem Exp $
 
 PROG=		addftinfo
 SRCS=		addftinfo.cc guess.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
