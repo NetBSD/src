@@ -252,7 +252,7 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 	    VSTRING_ADDCH(vp, ')');
 	    break;
 	case TOK822_COMMENT_TEXT:
-	    tok822_copy_quoted(vp, vstring_str(tp->vstr), "()\\\r\n");
+	    tok822_copy_quoted(vp, vstring_str(tp->vstr), "()\\");
 	    break;
 	case TOK822_QSTRING:
 	    VSTRING_ADDCH(vp, '"');
