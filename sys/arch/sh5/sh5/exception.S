@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.10 2002/09/02 08:41:56 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.11 2002/09/02 14:00:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -142,15 +142,19 @@
  * --->>>> README <<<<---
  * The number of instructions in this has become fairly critical.
  * DO NOT add any more instructions without first checking there is space
- * for them in the exception handlers. At least one of them has space for
- * TWO more instructions only ...
+ * for them in the exception handlers.
  */
 #define	_EXCEPTION_ENTRY(sz)						       \
 	getcon	usr, r24		/* Stash USR somewhere safe for now */;\
 	putcon	r24, kcr1						      ;\
 	getcon	kcr0, r24						      ;\
-	st.q	r24, ES(ES_CRITICAL), r24 /* We're in critical sect */	      ;\
-	st.q	r24, ES(ES_R0), r0	/* Save r0-r2 and r15 temporarily */  ;\
+	st.q	r24, ES(ES_R0), r0	/* Save r0 and tr0 temporarily */     ;\
+	gettr	tr0, r0							      ;\
+	st.q	r24, ES(ES_TR0), r0					      ;\
+	pta/u	Lsh5_critical_fault, tr0				      ;\
+	ld.q	r24, ES(ES_CRITICAL), r0				      ;\
+	bne/u	r0, r63, tr0						      ;\
+	st.q	r24, ES(ES_CRITICAL), r24				      ;\
 	st.q	r24, ES(ES_R1), r1					      ;\
 	st.q	r24, ES(ES_R2), r2					      ;\
 	st.q	r24, ES(ES_R15), r15					      ;\
@@ -182,21 +186,21 @@
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0 /* But don't allow IRQs */    ;\
 	or	r24, r63, r2		/* Drop use of r24 now */	      ;\
 	putcon	r0, sr			/* Now safe to touch kernel stack */  ;\
+	ld.q	r2, ES(ES_R0), r0					      ;\
+	st.q	r15, IFO(IF_R0,sz), r0	/* Save original r0 */		      ;\
 	ld.q	r2, ES(ES_SSR), r0					      ;\
 	st.q	r15, SFO(SF_SSR,sz), r0	/* Save SSR */			      ;\
 	ld.q	r2, ES(ES_SPC), r0					      ;\
 	st.q	r15, SFO(SF_SPC,sz), r0	/* Save SPC */			      ;\
 	ld.q	r2, ES(ES_USR), r0					      ;\
 	st.q	r15, SFO(SF_USR,sz), r0	/* Save USR */			      ;\
-	ld.q	r2, ES(ES_R0), r0					      ;\
-	st.q	r15, IFO(IF_R0,sz), r0	/* Save original r0 */		      ;\
 	ld.q	r2, ES(ES_R1), r0					      ;\
 	st.q	r15, IFO(IF_R1,sz), r0	/* Save original r1 */		      ;\
 	ld.q	r2, ES(ES_R2), r0					      ;\
 	st.q	r15, IFO(IF_R2,sz), r0	/* Save original r2 */		      ;\
 	ld.q	r2, ES(ES_R15), r0					      ;\
 	st.q	r15, IFO(IF_R15,sz), r0	/* Save original r15 */		      ;\
-	gettr	tr0, r0							      ;\
+	ld.q	r2, ES(ES_TR0), r0					      ;\
 	st.q	r15, IFO(IF_TR0,sz), r0	/* Save tr0 */
 
 /*
@@ -211,7 +215,7 @@
 	ori	r0, SH5_CONREG_SR_IMASK_ALL, r0 /* No IRQs please */	      ;\
 	putcon	r0, sr							      ;\
 	getcon	kcr0, r1						      ;\
-	st.q	r1, ES(ES_CRITICAL), r1	/* We're in critical sect */	      ;\
+	st.q	r1, ES(ES_CRITICAL), r1	/* Entering critical section */	      ;\
 	ld.q	r15, SFO(SF_SSR,sz), r0					      ;\
 	st.q	r1, ES(ES_SSR), r0					      ;\
 	ld.q	r15, SFO(SF_SPC,sz), r0					      ;\
@@ -239,11 +243,11 @@
 	ld.q	r24, ES(ES_USR), r24					      ;\
 	putcon	r24, usr						      ;\
 	synco								      ;\
-	rte
-	nop
-	nop
-	nop
-	nop
+	rte								      ;\
+	nop								      ;\
+	nop								      ;\
+	nop								      ;\
+	nop								      ;\
 	nop
 
 
@@ -362,7 +366,7 @@
 	ld.q	r15, IFO(IF_TR3,sz), r0					      ;\
 	ptabs/u	r0, tr3							      ;\
 	ld.q	r15, IFO(IF_TR4,sz), r0					      ;\
-	ptabs/u	r0, tr4							      ;\
+	ptabs/u	r0, tr4
 
 
 /*
@@ -504,15 +508,6 @@ Lsh5_vector_panic:
  */
 Lsh5_vector_general:
 	_EXCEPTION_ENTRY(SZ_TRAPFRAME)
-Lsh5_vector_general2:
-	ld.q	r2, ES(ES_EXPEVT), r0	/* Fetch contingent data */
-	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0 /* Save in stateframe */
-	ld.q	r2, ES(ES_TEA), r0
-	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0
-	ld.q	r2, ES(ES_TRA), r0
-	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0
-	st.q	r2, ES(ES_CRITICAL), r63 /* Left the critical section */
-	putcon	r1, sr			/* Can safely take interrupts now */
 	pta/l	Lsh5_event_sync, tr0
 	blink	tr0, r63
 
@@ -539,9 +534,7 @@ Lsh5_vector_debugint:
 	pta/l	Lsh5_event_interrupt, tr0
 	blink	tr0, r63
 
-	.balign 0x100
-	nop
-	.balign 0x100
+	.balign 0x200
 
 
 /******************************************************************************
@@ -693,7 +686,7 @@ Ltlbmiss_updaterm:
 	synco
 	rte				/* #174: Return to previous context */
 
-	.balign 0x100
+	.balign 0x200
 
 
 /******************************************************************************
@@ -783,6 +776,14 @@ Lsh5_event_panic:
  *     detect when the full context is required.
  */
 Lsh5_event_sync:
+	ld.q	r2, ES(ES_EXPEVT), r0	/* Fetch contingent data */
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0 /* Save in stateframe */
+	ld.q	r2, ES(ES_TEA), r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0
+	ld.q	r2, ES(ES_TRA), r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0
+	st.q	r2, ES(ES_CRITICAL), r63 /* Left the critical section */
+	putcon	r1, sr			/* Can safely take interrupts now */
 	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
 	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
 
@@ -1153,30 +1154,12 @@ Ltlbmiss_nomatch:
 	 *
 	 * For all cases, we have to defer the fault to the regular exception
 	 * handler.
-	 *
-	 * However, if this fault happened in the middle of the critical
-	 * section of another exception, we're heading down the brown creek
-	 * in a barbed-wire canoe, and the paddle just went overboard.
-	 * Basically, we've either blown the kernel stack or the SP value
-	 * has gone off into orbit. Heck, we can't even call panic() ;-)
-	 *
-	 * All we can do is sit and spin.
-	 *
-	 * XXX: Maybe jump to a port-specific assembly code routine which
-	 * can frob some LEDs or manually spit a message out on the console.
 	 */
 Ltlbmiss_dotrap:
-	getcon	kcr0, r0		/* Get cpu_info */
-	ld.q	r0, ES(ES_CRITICAL), r0	/* Fetch critical section flag */
-	pta/u	1f, tr0
-1:	nop				/* Buzz loop if necessary */
-	bne/u	r0, r63, tr0
-
 	/*
-	 * Set things up to take a normal synchronouse exception, which means
+	 * Set things up to take a normal synchronous exception, which means
 	 * we have to restore all registers to their pre-TLB miss state.
 	 */
-
 	getcon	kcr0, r15
 	ld.q	r15, TS(TS_TR0), r0
 	ptabs/u	r0, tr0
@@ -1209,9 +1192,63 @@ Ltlbmiss_dotrap:
 
 	/* Handle it using the normal exception code. */
 
-	pta/l	Lsh5_vector_general2, tr0
+	pta/l	Lsh5_event_sync, tr0
 	blink	tr0, r63
 
+
+/******************************************************************************
+ *
+ * Critical Fault Handler.
+ *
+ * If we take a synchronous exception while in the critical section of
+ * some other event handler, we arrive here.
+ *
+ * This is likely to happen if the kernel stack pointer is misaligned, or
+ * has gone off into orbit somewhere.
+ *
+ * Get onto a known good stack and save as much as possible of the machine
+ * state so it can be printed to the console.
+ *
+ * Note: Due to the nature of this fault, not all machine state can be
+ * saved. R0 is likely to be lost, and USR is definately lost..
+ */
+Lsh5_critical_fault:
+	putcon	r15, kcr1		/* Save original (faulty?) stack ptr */
+	LEA(_C_LABEL(sh5_panic_stack), r15)
+	movi	USPACE - SZ_TRAPFRAME, r0
+	add	r15, r0, r15
+	getcon	expevt, r0
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
+	getcon	intevt, r0
+	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0
+	getcon	tea, r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0
+	getcon	tra, r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0
+	getcon	spc, r0
+	st.q	r15, SFO(SF_SPC, SZ_TRAPFRAME), r0
+	getcon	ssr, r0
+	st.q	r15, SFO(SF_SSR, SZ_TRAPFRAME), r0
+	ld.q	r24, ES(ES_R0), r0
+	st.q	r15, IFO(IF_R0, SZ_TRAPFRAME), r0
+	st.q	r15, IFO(IF_R1, SZ_TRAPFRAME), r1
+	st.q	r15, IFO(IF_R2, SZ_TRAPFRAME), r2
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R15, SZ_TRAPFRAME), r0
+	ld.q	r24, ES(ES_TR0), r0
+	st.q	r15, IFO(IF_TR0, SZ_TRAPFRAME), r0
+	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
+	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+
+	/*
+	 * Call panic_critical_fault(trapframe, exc_scratch_frame)
+	 */
+	LEAF(_C_LABEL(panic_critical_fault), r0)
+	ptabs/l	r0, tr0
+	or	r15, r63, r2
+	or	r24, r63, r3
+	blink	tr0, r63
+	/*NOTREACHED*/
 
 
 /******************************************************************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2002/09/01 11:40:54 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2002/09/02 14:00:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -187,6 +187,7 @@ struct exc_scratch_frame {
 	register_t	es_usr;		/* Saved user status register */
 	register_t	es_r[3];	/* Saved r0-r2 */
 	register_t	es_r15;		/* Saved r15 */
+	register_t	es_tr0;		/* Saved tr0 */
 	register_t	es_expevt;	/* Saved expevt */
 	register_t	es_intevt;	/* Saved intevt */
 	register_t	es_tea;		/* Saved tea */

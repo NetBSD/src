@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2002/09/01 11:40:54 scw Exp $
+#	$NetBSD: genassym.cf,v 1.7 2002/09/02 14:00:25 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -216,6 +216,7 @@ define	ES_R0			offsetof(struct exc_scratch_frame, es_r[0])
 define	ES_R1			offsetof(struct exc_scratch_frame, es_r[1])
 define	ES_R2			offsetof(struct exc_scratch_frame, es_r[2])
 define	ES_R15			offsetof(struct exc_scratch_frame, es_r15)
+define	ES_TR0			offsetof(struct exc_scratch_frame, es_tr0)
 define	ES_EXPEVT		offsetof(struct exc_scratch_frame, es_expevt)
 define	ES_INTEVT		offsetof(struct exc_scratch_frame, es_intevt)
 define	ES_TEA			offsetof(struct exc_scratch_frame, es_tea)
