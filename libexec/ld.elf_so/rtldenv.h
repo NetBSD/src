@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.4 2002/09/13 19:50:00 mycroft Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.5 2002/09/24 13:06:07 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -58,9 +58,11 @@ void xerrx __P((int, const char *, ...))
 void     xassert __P((const char *, int, const char *));
 const char *xstrerror __P((int));
 
-# define assert(cond)	((cond) \
-			 ? (void) 0 :\
-			 (xassert(__FILE__, __LINE__, #cond), abort()))
+# ifdef DEBUG
+#  define assert(cond)	((cond) ? (void) 0 : xassert(__FILE__, __LINE__, #cond))
+# else
+#  define assert(cond)	(void) 0
+# endif
 #else
 # include <assert.h>
 # include <stdio.h>
