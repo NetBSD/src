@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.3 1999/03/05 04:50:28 tsubai Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.4 1999/04/17 21:16:46 ws Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -98,7 +98,7 @@ _rtld_reloc_powerpc_plt(
 		/* b	pltresolve   */
 		where[0] = 0x39600000 | index;
 		where[1] = 0x48000000 | (distance & 0x03fffffc);
-		/* syncicache(where, 8); */
+		/* __syncicache(where, 8); */
 	}
 	return 0;
 }
@@ -133,7 +133,7 @@ _rtld_bind_pltgot(obj, rela)
 	if (abs(distance) < 32*1024*1024) {		/* inside 32MB? */
 		/* b	targ_addr	# branch directly */
 		*where = 0x48000000 | (distance & 0x03fffffc);
-		syncicache(where, 4);
+		__syncicache(where, 4);
 	} else {
 		Elf_Addr *pltcall, *jmptab;
 		int N = obj->pltrelalim - obj->pltrela;
@@ -153,7 +153,7 @@ _rtld_bind_pltgot(obj, rela)
 		/* b	pltcall		# use pltcall routine */
 		where[0] = 0x39600000 | reloff;
 		where[1] = 0x48000000 | (distance & 0x03fffffc);
-		syncicache(where, 8);
+		__syncicache(where, 8);
 	}
 
 	return targ_addr;
@@ -189,5 +189,5 @@ _rtld_setup_powerpc_plt(obj)
 	pltresolve[3] |= ha(obj);
 	pltresolve[4] |= l(obj);
 
-	syncicache(pltcall, 72 + N * 8);
+	__syncicache(pltcall, 72 + N * 8);
 }
