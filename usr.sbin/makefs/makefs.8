@@ -1,6 +1,6 @@
-.\"	$NetBSD: makefs.8,v 1.4 2001/11/25 23:30:46 wiz Exp $
+.\"	$NetBSD: makefs.8,v 1.5 2002/01/24 03:21:07 lukem Exp $
 .\"
-.\" Copyright (c) 2001 Wasabi Systems, Inc.
+.\" Copyright (c) 2001-2002 Wasabi Systems, Inc.
 .\" All rights reserved.
 .\"
 .\" Written by Luke Mewburn for Wasabi Systems, Inc.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 25, 2001
+.Dd January 24, 2002
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -73,6 +73,9 @@
 .Ek
 .Bk -words
 .Op Fl F Ar specfile
+.Ek
+.Bk -words
+.Op Fl N Ar userdb-dir
 .Ek
 .Ar image-file
 .Ar directory
@@ -187,6 +190,18 @@ isn't provided, the current time will be used.
 If
 .Sy flags
 isn't provided, the current file flags will be used.
+.It Fl N Ar dbdir
+Use the user database text file
+.Pa master.passwd
+and group database text file
+.Pa group
+from
+.Ar dbdir ,
+rather than using the results from the system's
+.Xr getpwnam 3
+and
+.Xr getgrnam 3
+(and related) library calls.
 .El
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.
