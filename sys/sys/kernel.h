@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.21 2003/09/30 19:20:05 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.22 2003/10/02 12:14:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@
 #ifndef _SYS_KERNEL_H_
 #define _SYS_KERNEL_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 /* Global variables for the kernel. */
 
 extern long hostid;
