@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 1997/11/19 23:03:49 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.56 1997/12/03 22:32:05 mjacob Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
+#include "kbd.h"
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -723,7 +724,10 @@ clockintr(cap)
 {
 	register volatile int discard;
 	int s;
+#if	NKBD	> 0
+	extern int cnrom __P((void));
 	extern int rom_console_input;
+#endif
 
 	/*
 	 * Protect the clearing of the clock interrupt.  If we don't
@@ -755,8 +759,10 @@ forward:
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
+#if	NKBD > 0
 	if (rom_console_input && cnrom())
 		setsoftint();
+#endif
 
 	return (1);
 }
