@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.37 2000/03/06 02:48:51 mhitch Exp $	*/
+/*	$NetBSD: device.h,v 1.38 2000/06/01 00:03:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,6 +170,7 @@ struct pdevinit {
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
+extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
