@@ -33,7 +33,7 @@
 
 #include "hprop.h"
 
-RCSID("$Id: hprop.c,v 1.1.1.5 2001/09/17 12:24:57 assar Exp $");
+RCSID("$Id: hprop.c,v 1.2 2001/09/18 03:11:22 thorpej Exp $");
 
 static int version_flag;
 static int help_flag;
@@ -334,10 +334,10 @@ read_block(krb5_context context, int fd, int32_t pos, void *buf, size_t len)
 	krb5_err(context, 1, errno, "lseek(%u)", 64 + pos);
     ret = read(fd, buf, len);
     if(ret < 0)
-	krb5_err(context, 1, errno, "read(%u)", len);
+	krb5_err(context, 1, errno, "read(%lu)", (unsigned long) len);
 #endif
     if(ret != len)
-	krb5_errx(context, 1, "read(%u) = %u", len, ret);
+	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long) len, ret);
 }
 
 static int
