@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.25 2002/06/11 09:58:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.25 2002/06/11 09:58:50 tron Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -164,7 +164,7 @@ main(int argc, char *const *argv)
 	 * if man.conf not available.
 	 */
 	config(conffile);
-	if ((tp = getlist("_whatdb")) == NULL) {
+	if ((tp = getlist("_whatdb", 0)) == NULL) {
 		manpath = default_manpath;
 		goto mkwhatis;
 	}
