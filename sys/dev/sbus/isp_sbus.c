@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.50 2002/03/11 16:00:57 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.51 2002/03/21 00:16:15 eeh Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.50 2002/03/11 16:00:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.51 2002/03/21 00:16:15 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,12 +164,12 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		sbc->sbus_pri = sa->sa_pri;
 	sbc->sbus_mdvec = mdvec;
 
-	if (sa->sa_npromvaddrs != 0) {
-		sbc->sbus_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
+	if (sa->sa_npromvaddrs) {
+		sbus_promaddr_to_handle(sa->sa_bustag,
+			sa->sa_promvaddrs[0], &sbc->sbus_reg);
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_slot, sa->sa_offset, sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR, &sbc->sbus_reg) != 0) {
+		if (sbus_bus_map(sa->sa_bustag,	sa->sa_slot, sa->sa_offset,
+			sa->sa_size, 0, &sbc->sbus_reg) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
