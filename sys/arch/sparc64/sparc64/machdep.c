@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2002/09/27 15:36:51 provos Exp $ */
+/*	$NetBSD: machdep.c,v 1.130 2002/09/29 09:07:45 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1817,7 +1817,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		if (pm_flags & PMAP_LITTLE)
 			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		else
-		hp->_asi = ASI_PHYS_NON_CACHED;
+			hp->_asi = ASI_PHYS_NON_CACHED;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
 		return (0);
 	}
