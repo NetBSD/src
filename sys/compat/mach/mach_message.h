@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.2 2001/07/29 19:30:57 christos Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.1 2001/07/29 19:30:56 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,29 +36,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_TYPES_H_
-#define	_MACH_TYPES_H_
+#ifndef	_MACH_MESSAGE_H_
+#define	_MACH_MESSAGE_H_
 
-typedef int mach_port_t;
-typedef int mach_port_name_t;
-typedef int mach_kern_return_t;
-typedef int mach_clock_res_t;
-typedef int mach_boolean_t;
-typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
-typedef int mach_absolute_time_t;
-typedef unsigned int mach_vm_size_t;
-typedef unsigned long mach_vm_offset_t;
+typedef u_int32_t mach_msg_bits_t;
+typedef u_int32_t mach_msg_size_t;
+typedef u_int32_t mach_msg_id_t;
+typedef u_int32_t mach_msg_timeout_t;
+typedef u_int32_t mach_msg_option_t;
 
-typedef struct {
-	u_int32_t	numer;
-	u_int32_t	denom;
-} mach_timebase_info_t;
+/*
+ * Options
+ */
+#define MACH_MSG_OPTION_NONE	0x00000000
+#define	MACH_SEND_MSG		0x00000001
+#define	MACH_RCV_MSG		0x00000002
+#define MACH_RCV_LARGE		0x00000004
+#define MACH_SEND_TIMEOUT	0x00000010
+#define MACH_SEND_INTERRUPT	0x00000040
+#define MACH_SEND_CANCEL	0x00000080
+#define MACH_RCV_TIMEOUT	0x00000100
+#define MACH_RCV_NOTIFY		0x00000200
+#define MACH_RCV_INTERRUPT	0x00000400
+#define MACH_RCV_OVERWRITE	0x00001000
+#define MACH_SEND_ALWAYS	0x00010000
+#define MACH_SEND_TRAILER	0x00020000	
 
-#ifdef DEBUG_MACH
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif /* DEBUG_MACH */
+typedef	struct {
+	mach_msg_bits_t	msgh_bits;
+	mach_msg_size_t	msgh_size;
+	mach_port_t	msgh_remote_port;
+	mach_port_t	msgh_local_port;
+	mach_msg_size_t msgh_reserved;
+	mach_msg_id_t	msgh_id;
+} mach_msg_header_t;
 
-#endif /* !_MACH_TYPES_H_ */
+#endif /* !_MACH_MESSAGE_H_ */

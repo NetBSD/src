@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2001/07/14 02:11:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.2 2001/07/29 19:30:57 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -45,6 +45,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
 #include <compat/mach/mach_syscallargs.h>
 %%
 
@@ -82,7 +83,15 @@
 30	UNIMPL	
 31	UNIMPL	
 32	STD		{ mach_kern_return_t	mach_sys_msg_overwrite_trap( \
-			    void); }
+			    mach_msg_header_t	*msg, \
+			    mach_msg_option_t	option, \
+			    mach_msg_size_t	send_size, \
+			    mach_msg_size_t	rcv_size, \
+			    mach_port_name_t	rcv_name, \
+			    mach_msg_timeout_t	timeout, \
+			    mach_port_name_t	notify, \
+			    mach_msg_header_t	*rcv_msg, \
+			    mach_msg_size_t	scatter_list_size); }
 33	STD		{ mach_kern_return_t \
 			    mach_sys_semaphore_signal_trap( \
 			    mach_port_name_t signal_name); }
