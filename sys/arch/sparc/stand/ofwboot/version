@@ -1,0 +1,8 @@
+$NetBSD: version,v 1.1 2000/08/20 14:58:42 mrg Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.1:
+1.2:	get it to work with non-start-of-disk partitions
