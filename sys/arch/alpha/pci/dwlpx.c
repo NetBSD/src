@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.7 1997/06/08 07:03:18 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.8 1997/06/08 07:59:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.7 1997/06/08 07:03:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.8 1997/06/08 07:59:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,10 @@ dwlpxattach(parent, self, aux)
 {
 	static int once = 0;
 	struct dwlpx_softc *sc = (struct dwlpx_softc *)self;
+	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	struct kft_dev_attach_args *ka = aux;
 	struct pcibus_attach_args pba;
+	u_int32_t pcia_present;
 
 	sc->dwlpx_node = ka->ka_node;
 	sc->dwlpx_dtype = ka->ka_dtype;
@@ -119,7 +121,45 @@ dwlpxattach(parent, self, aux)
 	}
 
 	dwlpx_init(sc);
-	printf("\n");
+
+	/* XXX Need to detect DWLPA vs. DWLPB here. */
+	pcia_present = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
+
+	printf(": PCIA rev. %d, STD I/O %spresent\n",
+	    (pcia_present >> PCIA_PRESENT_REVSHIFT) & PCIA_PRESENT_REVMASK,
+	    (pcia_present & PCIA_PRESENT_STDIO) == 0 ? "not " : "");
+
+#if 0
+	{
+		int hpc, slot, slotval;
+		const char *str;
+
+		for (hpc = 0; hpc < sc->dwlpx_nhpc; hpc++) {
+			for (slot = 0; slot < 4; slot++) {
+				slotval = (pcia_present >>
+				    PCIA_PRESENT_SLOTSHIFT(hpc, slot)) &
+				    PCIA_PRESENT_SLOT_MASK;
+				if (slotval == PCIA_PRESENT_SLOT_NONE)
+					continue;
+				switch (slotval) {
+				case PCIA_PRESENT_SLOT_25W:
+					str = "25";
+					break;
+				case PCIA_PRESENT_SLOT_15W:
+					str = "15";
+					break;
+				case PCIA_PRESENT_SLOW_7W:
+				default:		/* XXX gcc */
+					str = "7.5";
+					break;
+				}
+				printf("%s: hpc %d slot %d: %s watt module\n",
+				    sc->dwlpx_dev.dv_xname, hpc, slot, str);
+			}
+		}
+	}
+#endif
+
 	if (once == 0) {
 		/*
 		 * Set up interrupts
