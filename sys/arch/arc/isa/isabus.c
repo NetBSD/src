@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.22 2003/06/14 19:13:42 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.23 2003/06/15 05:58:45 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -97,6 +97,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -113,6 +114,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static int beeping;
 static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
+
+static long isa_mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static long isa_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 
 #define	IRQ_SLAVE	2
 
@@ -157,6 +161,11 @@ isabrattach(sc)
 	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
+
+	arc_bus_space_init_extent(&arc_bus_mem, (caddr_t)isa_mem_ex_storage,
+	    sizeof(isa_mem_ex_storage));
+	arc_bus_space_init_extent(&arc_bus_io, (caddr_t)isa_io_ex_storage,
+	    sizeof(isa_io_ex_storage));
 
 	iba.iba_busname = "isa";
 	iba.iba_iot = &arc_bus_io;
