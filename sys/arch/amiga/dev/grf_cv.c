@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.23 1997/07/29 17:44:20 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.24 1997/07/30 11:05:55 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -1236,7 +1236,7 @@ cv_load_mon(gp, md)
 	int cr50, sr15, sr18, clock_mode, test;
 	int m, n;	/* For calc'ing display FIFO */
 	int tfillm, temptym;	/* FIFO fill and empty mclk's */
-	int hmul, vmul;	/* Multiplier for hor./vert. Values */
+	int hmul;	/* Multiplier for hor. Values */
 	unsigned char hvsync_pulse;
 	char TEXT, CONSOLE;
 
@@ -1315,18 +1315,14 @@ cv_load_mon(gp, md)
 
 	/* adjustments */
 
-	vmul = 2;
-	if (gv->disp_flags & GRF_FLAGS_LACE)
-		vmul = 1;
-	if (gv->disp_flags & GRF_FLAGS_DBLSCAN) /* XXX */
-		vmul = 4;
-
-	VDE = VDE * vmul / 2;
-	VBS = VBS * vmul / 2;
-	VSS = VSS * vmul / 2;
-	VSE = VSE * vmul / 2;
-	VBE = VBE * vmul / 2;
-	VT  = VT * vmul / 2;
+	if (gv->disp_flags & GRF_FLAGS_LACE) {
+		VDE = VDE / 2;
+		VBS = VBS / 2;
+		VSS = VSS / 2;
+		VSE = VSE / 2;
+		VBE = VBE / 2;
+		VT  = VT / 2;
+	}
 
 	/* Horizontal/Vertical Sync Pulse */
 	/*
