@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.6 2002/06/12 19:13:28 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7 2002/06/14 18:28:20 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,6 +58,9 @@
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+/* Provide a the name of the architecture we're emulating */
+char	machine_arch32[] = "i386";	
 
 int process_read_fpregs32(struct proc *, struct fpreg32 *);
 int process_read_regs32(struct proc *, struct reg32 *);
