@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.1.1.1 1999/09/16 12:23:30 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -59,16 +59,16 @@ BOOL VirtualCopy(LPVOID, LPVOID, DWORD, DWORD);
  *  structure declarations
  */
 struct map_s {
-  caddr_t entry;
-  caddr_t base;
-  int pagesize;
-  int leafsize;
-  int nleaves;
-  caddr_t arg0;
-  caddr_t arg1;
-  caddr_t arg2;
-  caddr_t arg3;
-  caddr_t *leaf[32];
+	caddr_t entry;
+	caddr_t base;
+	int pagesize;
+	int leafsize;
+	int nleaves;
+	caddr_t arg0;
+	caddr_t arg1;
+	caddr_t arg2;
+	caddr_t arg3;
+	caddr_t *leaf[32];
 };
 
 struct preference_s {

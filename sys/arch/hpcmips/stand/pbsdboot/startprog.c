@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: startprog.c,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -43,97 +43,97 @@ extern void asm_code_end();
 #if 0
 static void clear_screen() 
 {
-  unsigned char* mem;
+	unsigned char* mem;
 
-  /*
-   *  clear screen
-   */
-  mem = (unsigned char*)VirtualAlloc(
-    0,
-    0x4b00,
-    MEM_RESERVE,
-    PAGE_NOACCESS);
-  VirtualCopy(
-    (LPVOID)mem,
-    (LPVOID)(0xaa000000 >> 8),
-    0x4b00,
+	/*
+	 *  clear screen
+	 */
+	mem = (unsigned char*)VirtualAlloc(
+		0,
+		0x4b00,
+		MEM_RESERVE,
+		PAGE_NOACCESS);
+	VirtualCopy(
+		(LPVOID)mem,
+		(LPVOID)(0xaa000000 >> 8),
+		0x4b00,
 //    PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
-    PAGE_READWRITE | PAGE_PHYSICAL);
-  memset(mem, 0, 0x4b00);
-  VirtualFree(mem, 0, MEM_RELEASE);
+		PAGE_READWRITE | PAGE_PHYSICAL);
+	memset(mem, 0, 0x4b00);
+	VirtualFree(mem, 0, MEM_RELEASE);
 }
 
 static void flush_data() 
 {
-  unsigned char* mem;
-  mem = (unsigned char*)malloc(0x4000);
-  memset(mem, 0, 0x4000);
-  free(mem);
+	unsigned char* mem;
+	mem = (unsigned char*)malloc(0x4000);
+	memset(mem, 0, 0x4000);
+	free(mem);
 }
 #endif
 
 int
 startprog(caddr_t map)
 {
-  int i;
-  unsigned char *mem;
-  unsigned long jump_instruction, phys_mem;
-  unsigned char *codep = (unsigned char*)asm_code;
-  int code_len = (unsigned char*)asm_code_end - codep;
+	int i;
+	unsigned char *mem;
+	unsigned long jump_instruction, phys_mem;
+	unsigned char *codep = (unsigned char*)asm_code;
+	int code_len = (unsigned char*)asm_code_end - codep;
 
 #if 0
-  clear_screen();
-  //flush_data();
+	clear_screen();
+	//flush_data();
 #endif
 
-  /*
-   *  allocate physical memory
-   */
-  if ((mem = (unsigned char*)vmem_alloc()) == NULL) {
-    debug_printf(TEXT("can't allocate final page.\n"));
- 	msg_printf(MSG_ERROR, whoami, TEXT("can't allocate root page.\n"));
-    return (-1);
-  }
+	/*
+	 *  allocate physical memory
+	 */
+	if ((mem = (unsigned char*)vmem_alloc()) == NULL) {
+		debug_printf(TEXT("can't allocate final page.\n"));
+		msg_printf(MSG_ERROR, whoami, TEXT("can't allocate root page.\n"));
+		return (-1);
+	}
 
-  /*
-   *  copy startup program code
-   */
-  for (i = 0; i < code_len; i++) {
-    mem[i] = *codep++;
-  }
+	/*
+	 *  copy startup program code
+	 */
+	for (i = 0; i < code_len; i++) {
+		mem[i] = *codep++;
+	}
   
-  /*
-   *  set map address
-   */
-  *(unsigned short*)&mem[0] = (unsigned short)(((long)map) >> 16);
-  *(unsigned short*)&mem[4] = (unsigned short)map;
+	/*
+	 *  set map address
+	 */
+	*(unsigned short*)&mem[0] = (unsigned short)(((long)map) >> 16);
+	*(unsigned short*)&mem[4] = (unsigned short)map;
 
-  /*
-   *  construct start instruction
-   */
-  phys_mem = (unsigned long)vtophysaddr(mem);
-  jump_instruction = (0x08000000 | ((phys_mem >> 2) & 0x03ffffff));
+	/*
+	 *  construct start instruction
+	 */
+	phys_mem = (unsigned long)vtophysaddr(mem);
+	jump_instruction = (0x08000000 | ((phys_mem >> 2) & 0x03ffffff));
 
-  /*
-   *  map interrupt vector
-   */
-  mem = (unsigned char*)VirtualAlloc(
-    0,
-    0x400,
-    MEM_RESERVE,
-    PAGE_NOACCESS);
-  VirtualCopy(
-    (LPVOID)mem,
-    (LPVOID)(0x80000000 >> 8),
-    0x400,
-    PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
+	/*
+	 *  map interrupt vector
+	 */
+	mem = (unsigned char*)VirtualAlloc(
+		0,
+		0x400,
+		MEM_RESERVE,
+		PAGE_NOACCESS);
+	VirtualCopy(
+		(LPVOID)mem,
+		(LPVOID)(0x80000000 >> 8),
+		0x400,
+		PAGE_READWRITE | PAGE_NOCACHE | PAGE_PHYSICAL);
 
-  /*
-   *  GO !
-   */
-  *(unsigned long*)&mem[0x0] = jump_instruction;
+	/*
+	 *  GO !
+	 */
+	*(unsigned long*)&mem[0x0] = jump_instruction;
 
-  return (0); /* not reachable */
+	return (0); /* not reachable */
 }
 
 void
@@ -171,10 +171,14 @@ asm_code_holder()
  *   int pagesize;	+8
  *   int leafsize;	+12
  *   int nleaves;	+16
- *   caddr_t arg0;	+20
- *   caddr_t arg1;  +24
- *   caddr_t arg2;	+28
- *   caddr_t arg3;	+32
+ *   caddr_t arg0;	+20
+
+ *   caddr_t arg1;  +24
+
+ *   caddr_t arg2;	+28
+
+ *   caddr_t arg3;	+32
+
  *   caddr_t *leaf[32];	+36
  *
  */

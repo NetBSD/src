@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: print.c,v 1.2 1999/09/22 12:49:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -40,28 +40,28 @@
 int 
 debug_printf(LPWSTR lpszFmt, ...)
 {
-  int count;
-  va_list ap;
-  wchar_t buffer[1024];
+	int count;
+	va_list ap;
+	wchar_t buffer[1024];
 
-  va_start(ap, lpszFmt);
-  count = wvsprintf(buffer, lpszFmt, ap);
-  va_end(ap);
-  if (count > 0) {
-	  OutputDebugStringW(buffer);
-  }
-  return count;
+	va_start(ap, lpszFmt);
+	count = wvsprintf(buffer, lpszFmt, ap);
+	va_end(ap);
+	if (count > 0) {
+		OutputDebugStringW(buffer);
+	}
+	return count;
 }
 
 int 
 msg_printf(UINT type, LPWSTR caption, LPWSTR lpszFmt, ...)
 {
-  int count;
-  va_list ap;
-  TCHAR buffer[1024];
+	int count;
+	va_list ap;
+	TCHAR buffer[1024];
 
-  va_start(ap, lpszFmt);
-  count = wvsprintf(buffer, lpszFmt, ap);
-  va_end(ap);
-  return MessageBox(hWndMain, buffer, caption, type);
+	va_start(ap, lpszFmt);
+	count = wvsprintf(buffer, lpszFmt, ap);
+	va_end(ap);
+	return MessageBox(hWndMain, buffer, caption, type);
 }

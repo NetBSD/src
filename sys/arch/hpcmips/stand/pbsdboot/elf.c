@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.1.1.1 1999/09/16 12:23:30 takemura Exp $	*/
+/*	$NetBSD: elf.c,v 1.2 1999/09/22 12:49:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
