@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_iu.h,v 1.2 2003/04/19 19:21:35 fvdl Exp $	*/
+
 /*
  * This file is in the public domain.
  * $FreeBSD: src/sys/cam/scsi/scsi_iu.h,v 1.2 2003/01/20 18:05:46 gibbs Exp $
