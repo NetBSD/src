@@ -1,11 +1,11 @@
-/*	$NetBSD: exec.c,v 1.4 1997/10/17 14:54:26 lukem Exp $	*/
+/*	$NetBSD: exec.c,v 1.4.2.1 1998/11/06 20:41:20 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: exec.c,v 1.6 1997/10/08 07:47:50 charnier Exp";
 #else
-__RCSID("$NetBSD: exec.c,v 1.4 1997/10/17 14:54:26 lukem Exp $");
+__RCSID("$NetBSD: exec.c,v 1.4.2.1 1998/11/06 20:41:20 cgd Exp $");
 #endif
 #endif
 
@@ -40,29 +40,29 @@ __RCSID("$NetBSD: exec.c,v 1.4 1997/10/17 14:54:26 lukem Exp $");
 int
 vsystem(const char *fmt, ...)
 {
-    va_list args;
-    char *cmd;
-    int ret, maxargs;
+	va_list	args;
+	char	*cmd;
+	size_t	maxargs;
+	int	ret;
 
-    maxargs = sysconf(_SC_ARG_MAX);
-    maxargs -= 32;			/* some slop for the sh -c */
-    cmd = malloc(maxargs);
-    if (!cmd) {
-	warnx("vsystem can't alloc arg space");
-	return 1;
-    }
+	maxargs = (size_t) sysconf(_SC_ARG_MAX);
+	maxargs -= 32;			/* some slop for the sh -c */
+	if ((cmd = (char *) malloc(maxargs)) == (char *) NULL) {
+		warnx("vsystem can't alloc arg space");
+		return 1;
+	}
 
-    va_start(args, fmt);
-    if (vsnprintf(cmd, maxargs, fmt, args) > maxargs) {
-	warnx("vsystem args are too long");
-	return 1;
-    }
+	va_start(args, fmt);
+	if (vsnprintf(cmd, maxargs, fmt, args) > maxargs) {
+		warnx("vsystem args are too long");
+		return 1;
+	}
 #ifdef DEBUG
-printf("Executing %s\n", cmd);
+	printf("Executing %s\n", cmd);
 #endif
-    ret = system(cmd);
-    va_end(args);
-    free(cmd);
-    return ret;
+	ret = system(cmd);
+	va_end(args);
+	free(cmd);
+	return ret;
 }
 
