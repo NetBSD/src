@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.34.2.2 2000/12/31 20:14:46 jhawk Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.34.2.3 2001/03/20 17:25:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,16 +218,14 @@ ex_config(sc)
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
 
-	if (sc->intr_ack != NULL) { /* CardBus card specific */
-	    GO_WINDOW(2);
-	    if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
-		    bus_space_write_2(sc->sc_iot, ioh, 12,
-			0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
-	    }
-	    if (sc->ex_conf & EX_CONF_PHY_POWER) {
-		    bus_space_write_2(sc->sc_iot, ioh, 12,
-			0x4000|bus_space_read_2(sc->sc_iot, ioh, 12));
-	    }
+	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY|EX_CONF_PHY_POWER)) {
+		GO_WINDOW(2);
+		val = bus_space_read_2(iot, ioh, ELINK_W2_RESET_OPTIONS);
+		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY)
+			val |= ELINK_RESET_OPT_LEDPOLAR;
+		if (sc->ex_conf & EX_CONF_PHY_POWER)
+			val |= ELINK_RESET_OPT_PHYPOWER;
+		bus_space_write_2(iot, ioh, ELINK_W2_RESET_OPTIONS, val);
 	}
 
 	attach_stage = 0;
@@ -1466,7 +1464,11 @@ void
 ex_reset(sc)
 	struct ex_softc *sc;
 {
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, GLOBAL_RESET);
+	u_int16_t val = GLOBAL_RESET;
+
+	if (sc->ex_conf & EX_CONF_RESETHACK)
+		val |= 0xff;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, val);
 	delay(400);
 	ex_waitcmd(sc);
 }
@@ -1663,21 +1665,17 @@ ex_read_eeprom(sc, offset)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t data = 0;
+	u_int16_t data = 0, cmd = READ_EEPROM;
+	int off;
+
+	off = sc->ex_conf & EX_CONF_EEPROM_OFF ? 0x30 : 0;
+	cmd = sc->ex_conf & EX_CONF_EEPROM_8BIT ? READ_EEPROM8 : READ_EEPROM;
 
 	GO_WINDOW(0);
 	if (ex_eeprom_busy(sc))
 		goto out;
-	switch (sc->ex_bustype) {
-	case EX_BUS_PCI:
-		bus_space_write_1(iot, ioh, ELINK_W0_EEPROM_COMMAND,
- 		    READ_EEPROM | (offset & 0x3f));
-		break;
-	case EX_BUS_CARDBUS:
-		bus_space_write_2(iot, ioh, ELINK_W0_EEPROM_COMMAND,
-		    0x230 + (offset & 0x3f));
-		break;
-	}
+	bus_space_write_2(iot, ioh, ELINK_W0_EEPROM_COMMAND,
+	    cmd | (off + (offset & 0x3f)));
 	if (ex_eeprom_busy(sc))
 		goto out;
 	data = bus_space_read_2(iot, ioh, ELINK_W0_EEPROM_DATA);
