@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1996/05/09 20:30:43 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 1996/05/10 14:31:03 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1127,9 +1127,10 @@ int m68060_pcr_init = 0x21;
 void
 initcpu()
 {
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060)
 	extern caddr_t vectab[256];
 
-#if defined(M68060)
 	extern u_int8_t I_CALL_TOP[];
 	extern u_int8_t FP_CALL_TOP[];
 	extern u_int8_t illinst;

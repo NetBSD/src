@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1996/05/09 20:30:33 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1996/05/10 14:30:59 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,8 +165,6 @@ void
 config_console()
 {	
 	struct cfdata *cf;
-
-	int i;
 
 	/*
 	 * we need mainbus' cfdata.
