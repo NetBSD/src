@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.1 2001/10/19 02:21:03 tv Exp $
+#  $NetBSD: build.sh,v 1.2 2001/10/19 02:25:48 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -50,7 +50,8 @@ getarch () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-nr] [-m machine] [-D destdir] [-T tooldir]"
+	echo "$0 [-nr] [-j njobs] [-m machine] [-D destdir] [-T tooldir]"
+	echo "    -j: set NBUILDJOBS to njobs"
 	echo "    -m: set target MACHINE to machine"
 	echo "    -n: do not build a release (just install to DESTDIR)"
 	echo "    -r: remove TOOLDIR and DESTDIR before the build"
@@ -59,7 +60,9 @@ usage () {
 	exit 1
 }
 
-while getopts m:nrD:T: opt; do case $opt in
+while getopts j:m:nrD:T: opt; do case $opt in
+	j)	buildjobs="NBUILDJOBS=$OPTARG";;
+
 	m)	MACHINE=$OPTARG; getarch;; # getarch overrides MACHINE_ARCH
 
 	n)	buildtarget=build;;
@@ -110,7 +113,8 @@ if ${rebuildmake-false}; then
 
 	${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
 		-o $TOOLDIR/bin/bmake -I$srcdir/usr.bin/make \
-		$srcdir/usr.bin/make/*.c $srcdir/usr.bin/make/lst.lib/*.c
+		$srcdir/usr.bin/make/*.c $srcdir/usr.bin/make/lst.lib/*.c \
+		|| bomb "build of bmake failed"
 
 	# Clean up.
 	rm -f *.o
@@ -122,4 +126,4 @@ fi
 
 $TOOLDIR/bin/bmake ${buildtarget-release} -m `pwd`/share/mk \
 	MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH
+	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH $buildjobs
