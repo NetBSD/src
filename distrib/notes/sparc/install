@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.35 2000/11/04 13:44:05 pk Exp $
+.\"	$NetBSD: install,v 1.36 2000/11/04 14:06:25 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -381,8 +381,8 @@ the
 .Ic mountd
 process.  Otherwise, you need to run:
 .Pp
-.Dl # Ic "/sbin/mountd"
-.Dl # Ic "/sbin/nfsd -tun 4"
+.Dl # Ic "/usr/sbin/mountd"
+.Dl # Ic "/usr/sbin/nfsd -tun 4"
 .Pp
 Now, you need to place the files your netboot client will need.
 As noted above in the section
