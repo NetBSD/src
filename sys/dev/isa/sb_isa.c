@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.14 1997/08/28 00:02:12 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.14.4.1 1997/12/17 23:28:16 mellon Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -58,7 +58,11 @@
 
 static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sb_isa_match __P((struct device *, void *, void *));
+#else
+int	sb_isa_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	sb_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sb_isa_ca = {
