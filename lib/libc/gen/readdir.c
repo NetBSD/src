@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)readdir.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: readdir.c,v 1.2 1994/07/27 14:39:48 jtc Exp $";
+static char rcsid[] = "$Id: readdir.c,v 1.3 1994/10/19 03:13:42 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ readdir(dirp)
 			continue;
 		}
 		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((int)dp & 03)	/* bogus pointer check */
+		if ((long)dp & 03)	/* bogus pointer check */
 			return NULL;
 		if (dp->d_reclen <= 0 ||
 		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
