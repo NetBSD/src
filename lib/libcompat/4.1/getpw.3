@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getpw.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: getpw.3,v 1.4 1998/02/05 18:51:18 perry Exp $
+.\"	$NetBSD: getpw.3,v 1.5 1999/07/02 15:16:40 simonb Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETPW 3
@@ -44,7 +44,7 @@
 .Fn getpw uid "char *buf"
 .Sh DESCRIPTION
 .Bf -symbolic
-The getpw function is made obsolete by 
+The getpw function is made obsolete by
 .Xr getpwuid 3 .
 It is available from the compatibility library, libcompat.
 .Ef
@@ -65,7 +65,7 @@ character.
 .Sh RETURN VALUES
 The
 .Fn getpw
-function returns the zero if successful, otherwise 
+function returns the zero if successful, otherwise
 a non-zero if the entry does not exist.
 .Sh FILES
 .Bl -tag -width /etc/passwd - compact

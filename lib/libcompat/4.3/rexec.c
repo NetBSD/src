@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.10 1999/05/09 12:28:15 mycroft Exp $	*/
+/*	$NetBSD: rexec.c,v 1.11 1999/07/02 15:16:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.10 1999/05/09 12:28:15 mycroft Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.11 1999/07/02 15:16:41 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,7 +114,7 @@ retry:
 		int s2;
 		struct sockaddr_in sin2;
 		socklen_t sin2len;
-		
+
 		s2 = socket(AF_INET, SOCK_STREAM, 0);
 		if (s2 == -1) {
 			warn("Error creating socket");

@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.4 1998/07/29 02:26:01 lukem Exp $	*/
+/*	$NetBSD: prompt.c,v 1.5 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.4 1998/07/29 02:26:01 lukem Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.5 1999/07/02 15:21:26 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -90,7 +90,7 @@ prompt_print(el)
 /* prompt_init():
  *	Initialize the prompt stuff
  */
-protected int 
+protected int
 prompt_init(el)
     EditLine *el;
 {
@@ -105,7 +105,7 @@ prompt_init(el)
  *	Clean up the prompt stuff
  */
 protected void
-/*ARGSUSED*/ 
+/*ARGSUSED*/
 prompt_end(el)
     EditLine *el;
 {
@@ -115,7 +115,7 @@ prompt_end(el)
 /* prompt_set():
  *	Install a prompt printing function
  */
-protected int 
+protected int
 prompt_set(el, prf)
     EditLine *el;
     el_pfunc_t prf;
@@ -133,7 +133,7 @@ prompt_set(el, prf)
 /* prompt_get():
  *	Retrieve the prompt printing function
  */
-protected int 
+protected int
 prompt_get(el, prf)
     EditLine *el;
     el_pfunc_t *prf;

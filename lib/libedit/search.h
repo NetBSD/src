@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.3 1998/12/12 20:08:23 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.4 1999/07/02 15:21:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,8 +41,8 @@
 /*
  * el.search.h: Line and history searching utilities
  */
-#ifndef _h_el_search 
-#define _h_el_search 
+#ifndef _h_el_search
+#define _h_el_search
 
 #include "histedit.h"
 

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)stty.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: stty.3,v 1.5 1999/03/22 19:45:13 garbled Exp $
+.\"	$NetBSD: stty.3,v 1.6 1999/07/02 15:16:40 simonb Exp $
 .\"
 .Dd June 4, 1993
 .Dt STTY 3
@@ -47,7 +47,7 @@
 .Fn gtty "int fd" "struct sgttyb *buf"
 .Sh DESCRIPTION
 .Bf -symbolic
-These interfaces are obsoleted by 
+These interfaces are obsoleted by
 .Xr ioctl 2 .
 They are available from the compatibility library, libcompat.
 .Ef
@@ -75,7 +75,7 @@ the
 .Fn gtty
 call is
 .Ql ioctl(fd, TIOCGETP, buf) .
-See 
+See
 .Xr ioctl 2
 and
 .Xr tty 4
@@ -93,5 +93,5 @@ The
 .Fn stty
 and
 .Fn gtty
-functions appeared in 
+functions appeared in
 .Bx 4.2 .
