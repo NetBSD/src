@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1997/11/06 00:57:02 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1998/01/21 22:55:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,6 +60,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/msgbuf.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
@@ -150,11 +151,12 @@ int cold = 1;
 
 /* Prototypes */
 
-void consinit			__P((void));
+void consinit		__P((void));
 
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
@@ -169,6 +171,9 @@ extern void configure		__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void pmap_postinit	__P((void));
 extern void dumpsys	__P((void));
+#ifdef PMAP_DEBUG
+extern void pmap_debug	__P((int level));
+#endif	/* PMAP_DEBUG */
 
 /*
  * Debug function just to park the CPU
@@ -435,7 +440,7 @@ cpu_startup()
 
 
 	bufsize = MAXBSIZE * nbuf;
-	printf("cpu_startup: buffer VM size = %d\n", bufsize);
+	printf("cpu_startup: buffer VM size = %ld\n", bufsize);
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, bufsize, TRUE);
 	minaddr = (vm_offset_t)buffers;
