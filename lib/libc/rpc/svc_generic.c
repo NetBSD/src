@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.6 2003/05/13 11:57:21 yamt Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.7 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,9 +35,12 @@
 
 /* #ident	"@(#)svc_generic.c	1.19	94/04/24 SMI" */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-#if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
+#else
+__RCSID("$NetBSD: svc_generic.c,v 1.7 2003/09/09 03:56:40 itojun Exp $");
 #endif
 #endif
 
