@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.10 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.11 2005/03/08 16:51:44 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.10 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.11 2005/03/08 16:51:44 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -256,16 +256,6 @@ static int
 bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
     int cacheable, bus_space_handle_t * bshp);
 static void copy_io_area_map(pd_entry_t * new_pd);
-extern int	s3c24x0_calc_fclk(unsigned int pllcon);
-
-/* A load of console goo. */
-#include "vga.h"
-#if NVGA > 0
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
 
 #include "com.h"
 #if NCOM > 0
