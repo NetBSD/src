@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.10 2003/10/10 21:21:27 jdolecek Exp $
+#	$NetBSD: majors.sh5,v 1.11 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for sh5
 #
@@ -47,8 +47,6 @@ device-major	systrace	char 53			systrace
 device-major	pci		char 54			pci
 device-major	cgd		char 55  block 19	cgd
 device-major	ksyms		char 56			ksyms
-device-major	pf		char 57			pf
-device-major	crypto		char 58			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
