@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 2001/04/09 21:15:42 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 2001/04/25 02:33:08 simonb Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7686,7 +7686,7 @@ Lcopyfault:
 	 nop
 	restore
 	.data
-1:	.asciz	"copyfault: fault occured\n"
+1:	.asciz	"copyfault: fault occurred\n"
 	_ALIGN
 	.text
 #endif
