@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.50 1996/06/12 12:46:21 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.51 1996/06/12 19:12:19 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -240,6 +240,7 @@ espattach(parent, self, aux)
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
+			/* ESPCFG2_FE enables > 64K transfers */
 			sc->sc_cfg2 |= ESPCFG2_FE;
 			sc->sc_cfg3 = 0;
 			ESP_WRITE_REG(sc, ESP_CFG3, sc->sc_cfg3);
@@ -1290,7 +1291,7 @@ esp_msgout(sc)
 	/* Program the SCSI counter */
 	ESP_WRITE_REG(sc, ESP_TCL, size);
 	ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
-	if (sc->sc_rev > ESP100A) {
+	if (sc->sc_cfg2 & ESPCFG2_FE) {
 		ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
 	}
 	/* load the count in */
@@ -1863,7 +1864,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			/* Program the SCSI counter */
 			ESP_WRITE_REG(sc, ESP_TCL, size);
 			ESP_WRITE_REG(sc, ESP_TCM, size >> 8);
-			if (sc->sc_rev > ESP100A) {
+			if (sc->sc_cfg2 & ESPCFG2_FE) {
 				ESP_WRITE_REG(sc, ESP_TCH, size >> 16);
 			}
 			/* load the count in */
