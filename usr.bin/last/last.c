@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.25 2004/11/19 21:41:25 christos Exp $	*/
+/*	$NetBSD: last.c,v 1.26 2005/03/04 17:16:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.25 2004/11/19 21:41:25 christos Exp $");
+__RCSID("$NetBSD: last.c,v 1.26 2005/03/04 17:16:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,6 +112,7 @@ static TTY	*ttylist;		/* head of linked list */
 static time_t	currentout;		/* current logout value */
 static long	maxrec;			/* records to display */
 static int	fulltime = 0;		/* Display seconds? */
+static int	xflag;			/* Assume file is wtmpx format */
 
 int	 main(int, char *[]);
 
@@ -131,7 +132,7 @@ static void	 usage(void);
 static
 void usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-#%s] [-nT] [-f file]"
+	(void)fprintf(stderr, "usage: %s [-#%s] [-nTx] [-f file]"
 	    " [-H hostsize] [-h host] [-L linesize]\n"
 	    "\t    [-N namesize] [-t tty] [user ...]\n", getprogname(),
 #ifdef NOTYET_SUPPORT_UTMPX
@@ -156,7 +157,7 @@ main(int argc, char *argv[])
 
 	maxrec = -1;
 
-	while ((ch = getopt(argc, argv, "0123456789f:H:h:L:nN:Tt:")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789f:H:h:L:nN:Tt:x")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -199,6 +200,9 @@ main(int argc, char *argv[])
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));
 			break;
+		case 'x':
+			xflag = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -238,7 +242,7 @@ main(int argc, char *argv[])
 #endif
 	}
 #if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
-	if (file[strlen(file) - 1] == 'x')
+	if (file[strlen(file) - 1] == 'x' || xflag)
 		wtmpx(file, namesize, linesize, hostsize, numeric);
 	else
 		wtmp(file, namesize, linesize, hostsize, numeric);
