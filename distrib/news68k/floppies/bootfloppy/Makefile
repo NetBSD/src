@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/17 18:37:43 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2001/01/07 08:39:33 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,9 +6,7 @@ TOP=		${.CURDIR}/..
 .include <bsd.subdir.mk>
 
 IMAGE=		boot.fs
-.if !make(print-objdir)
-KERNDIR!=	cd ${.CURDIR}/../ramdisk-kernel && ${MAKE} print-objdir
-.endif
+KERNDIR!=	cd ${.CURDIR}/../ramdisk-kernel && ${PRINTOBJDIR}
 KERN=		${KERNDIR}/netbsd.INSTALL.gz
 
 MOUNT_POINT?=	/mnt
