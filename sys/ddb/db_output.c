@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.10 1996/02/05 01:57:08 christos Exp $	*/
+/*	$NetBSD: db_output.c,v 1.11 1996/03/30 22:28:45 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -204,9 +204,7 @@ void
 db_printf(const char *fmt, ...)
 #else
 db_printf(fmt, va_alist)
-/*###207 [cc] warning: type of `va_alist' defaults to `int'%%%*/
 	const char *fmt;
-/*###208 [cc] parse error before `va_dcl'%%%*/
 	va_dcl
 #endif
 {
@@ -343,6 +341,10 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 				width = -width;
 			}
 			goto reswitch;
+		case ':':
+			p = va_arg(ap, char *);
+			db_printf_guts (p, va_arg(ap, va_list));
+			break;
 		case 'c':
 			db_putchar(va_arg(ap, int));
 			break;
@@ -441,4 +443,3 @@ number:			p = (char *)db_ksprintn(ul, base, &tmp);
 		}
 	}
 }
-
