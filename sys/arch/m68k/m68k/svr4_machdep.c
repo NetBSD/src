@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.12 2003/07/15 02:43:14 lukem Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.13 2003/09/22 14:47:35 cl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.12 2003/07/15 02:43:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.13 2003/09/22 14:47:35 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,30 +248,17 @@ svr4_getsiginfo(sip, sig, code, addr)
 }
 
 void
-svr4_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	unsigned long code;
+svr4_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
+	u_long code = ksi->ksi_trap;
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct frame *frame;
-	struct svr4_sigframe *sfp, sf;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	int onstack;
+	struct svr4_sigframe *sfp = getframe(l, sig, &onstack), sf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)l->l_md.md_regs;
-
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		sfp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-	else
-		sfp = (struct svr4_sigframe *)frame->f_regs[SP];
 	sfp--;
 
 	svr4_getcontext(l, &sf.sf_uc);
@@ -298,9 +285,7 @@ svr4_sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/* Set up the registers to return to sigcode. */
-	frame->f_regs[SP] = (int)sfp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	buildcontext(l, p->p_sigctx.ps_sigcode, sfp);
 
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
