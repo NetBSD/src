@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.2 1998/09/05 23:57:26 eeh Exp $ */
+/*	$NetBSD: cache.h,v 1.3 2000/08/01 00:28:02 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -135,12 +135,16 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
  * Routines for dealing with the cache.
  */
 void	cache_enable __P((void));		/* turn it on */
-int 	cache_flush_page __P((vaddr_t va));	/* flush page from E$ */
-int	cache_flush __P((caddr_t, size_t));	/* flush region */
+int 	cache_flush_page __P((paddr_t));	/* flush page from E$ */
+int	cache_flush __P((vaddr_t, vsize_t));	/* flush region */
 
 /* The following two are for I$ and D$ flushes and are in locore.s */
-void 	dcache_flush_page __P((vaddr_t va));	/* flush page from D$ */
+void 	dcache_flush_page __P((paddr_t));	/* flush page from D$ */
 void 	blast_vcache __P((void));		/* Clear entire contents of I$ and D$ */
+
+/* The following flush a range from the D$ and I$ but not E$. */
+void	cache_flush_virt __P((vaddr_t, vsize_t));
+void	cache_flush_phys __P((paddr_t, psize_t, int));
 
 /*
  * Cache control information.
