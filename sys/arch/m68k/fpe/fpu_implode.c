@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.2 1996/04/30 11:52:30 briggs Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.3 1997/07/19 22:28:50 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,11 +294,13 @@ fpu_ftos(fe, fp)
 	 * rounding.
 	 */
 	if ((exp = fp->fp_exp + SNG_EXP_BIAS) <= 0) {	/* subnormal */
+		fe->fe_fpsr |= FPSR_UNFL;
 		/* -NG for g,r; -SNG_FRACBITS-exp for fraction */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - SNG_FRACBITS - exp);
 		if (round(fe, fp) && fp->fp_mant[3] == SNG_EXP(1))
 			return (sign | SNG_EXP(1) | 0);
 		if (fe->fe_fpsr & FPSR_INEX2)
+			fe->fe_fpsr |= FPSR_UNFL
 			/* mc68881/2 don't underflow when converting */;
 		return (sign | SNG_EXP(0) | fp->fp_mant[3]);
 	}
@@ -312,7 +314,7 @@ fpu_ftos(fe, fp)
 		exp++;
 	if (exp >= SNG_EXP_INFNAN) {
 		/* overflow to inf or to max single */
-		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2;
+		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
 		if (toinf(fe, sign))
 			return (sign | SNG_EXP(SNG_EXP_INFNAN));
 		return (sign | SNG_EXP(SNG_EXP_INFNAN - 1) | SNG_MASK);
@@ -356,12 +358,14 @@ fpu_ftod(fe, fp, res)
 	}
 
 	if ((exp = fp->fp_exp + DBL_EXP_BIAS) <= 0) {
+		fe->fe_fpsr |= FPSR_UNFL;
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - DBL_FRACBITS - exp);
 		if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(1)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(1) | 0);
 		}
 		if (fe->fe_fpsr & FPSR_INEX2)
+                        fe->fe_fpsr |= FPSR_UNFL
 			/* mc68881/2 don't underflow when converting */;
 		exp = 0;
 		goto done;
@@ -370,7 +374,7 @@ fpu_ftod(fe, fp, res)
 	if (round(fe, fp) && fp->fp_mant[2] == DBL_EXP(2))
 		exp++;
 	if (exp >= DBL_EXP_INFNAN) {
-		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2;
+		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
 		if (toinf(fe, sign)) {
 			res[1] = 0;
 			return (sign | DBL_EXP(DBL_EXP_INFNAN) | 0);
@@ -418,6 +422,7 @@ fpu_ftox(fe, fp, res)
 	}
 
 	if ((exp = fp->fp_exp + EXT_EXP_BIAS) <= 0) {
+		fe->fe_fpsr |= FPSR_UNFL;
 		/* I'm not sure about this <=... exp==0 doesn't mean
 		   it's a denormal in extended format */
 		(void) fpu_shr(fp, FP_NMANT - FP_NG - EXT_FRACBITS - exp);
@@ -426,6 +431,7 @@ fpu_ftox(fe, fp, res)
 			return (sign | EXT_EXP(1) | 0);
 		}
 		if (fe->fe_fpsr & FPSR_INEX2)
+                        fe->fe_fpsr |= FPSR_UNFL
 			/* mc68881/2 don't underflow */;
 		exp = 0;
 		goto done;
@@ -434,7 +440,7 @@ fpu_ftox(fe, fp, res)
 	if (round(fe, fp) && fp->fp_mant[2] == EXT_EXP(2))
 		exp++;
 	if (exp >= EXT_EXP_INFNAN) {
-		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2;
+		fe->fe_fpsr |= FPSR_OPERR | FPSR_INEX2 | FPSR_OVFL;
 		if (toinf(fe, sign)) {
 			res[1] = res[2] = 0;
 			return (sign | EXT_EXP(EXT_EXP_INFNAN) | 0);
@@ -458,7 +464,7 @@ fpu_implode(fe, fp, type, space)
 	int type;
 	register u_int *space;
 {
-	fe->fe_fpsr &= ~FPSR_EXCP;
+	/* XXX Dont delete exceptions set here: fe->fe_fpsr &= ~FPSR_EXCP; */
 
 	switch (type) {
 	case FTYPE_LNG:

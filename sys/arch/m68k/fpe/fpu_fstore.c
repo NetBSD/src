@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fstore.c,v 1.5 1996/10/13 03:19:17 christos Exp $	*/
+/*	$NetBSD: fpu_fstore.c,v 1.6 1997/07/19 22:28:49 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -84,6 +84,8 @@ fpu_emul_fstore(fe, insn)
 	printf("  fpu_emul_fstore: format %d, size %d\n",
 	       format, insn->is_datasize);
     }
+
+    fe->fe_fpsr &= ~FPSR_EXCP;
 
     /* Get effective address. (modreg=opcode&077) */
     sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);

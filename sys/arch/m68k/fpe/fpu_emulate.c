@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.15 1997/07/17 06:27:08 veego Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.16 1997/07/19 22:28:48 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -603,6 +603,8 @@ fpu_emul_arith(fe, insn)
     u_int buf[3];
     int flags;
     char regname;
+
+    fe->fe_fpsr &= ~FPSR_EXCP;
 
     DUMP_INSN(insn);
 
