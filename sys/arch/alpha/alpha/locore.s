@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1996/02/02 20:05:08 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 1996/04/12 02:05:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -1617,5 +1617,13 @@ EXPORT(intrcnt)
 #endif
 EXPORT(eintrcnt)
 	.text
+
+/**************************************************************************/
+
+	.text
+LEAF(rpcc,1)
+	rpcc	v0
+	RET
+	END(pal_mtpr_mces)
 
 /**************************************************************************/
