@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.26 1997/10/15 08:12:48 fair Exp $
+#	$NetBSD: services,v 1.26.2.1 1999/02/02 05:03:13 cgd Exp $
 #
 # Network services, Internet style
 #
@@ -119,6 +119,8 @@ ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
 nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
 nip		376/udp				# Amiga Envoy Net Inquiry Prot.
+ldap	389/tcp				# Lightweight Directory Access Protocol
+ldap	389/udp				# Lightweight Directory Access Protocol
 
 #
 # UNIX specific services
@@ -141,7 +143,12 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 rdist		541/tcp		rdistd		# rdist daemon
+afpovertcp	548/tcp				# AppleshareIP protocol
+afpovertcp	548/udp				# AppleshareIP protocol
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
+#
+ldaps		636/tcp			# ldap protocol over TLS/SSL (was sldap)
+ldaps		636/udp			# ldap protocol over TLS/SSL (was sldap)
 #
 webster		765/tcp				# Network dictionary
 webster		765/udp
@@ -165,6 +172,8 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
+cvspserver	2401/tcp
+cvspserver	2401/udp
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 
