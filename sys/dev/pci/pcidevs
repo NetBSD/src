@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.391 2002/01/22 02:35:46 junyoung Exp $
+$NetBSD: pcidevs,v 1.392 2002/01/22 08:32:08 junyoung Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -809,7 +809,7 @@ product ATI MACH64_GI		0x4749	Mach64 GI
 product ATI RAGEXLAGP2X		0x474d	Rage XL AGP 2x
 product ATI MACH64_GP		0x4750	Mach64 GP
 product ATI MACH64_GQ		0x4751	Mach64 GQ
-product ATI RAGEXL		0x4752	Rage XL (PCI)
+product ATI MACH64_GR		0x4752	Mach64 GR
 product ATI MACH64_GS		0x4753	Mach64 GS
 product ATI MACH64_GT		0x4754	Mach64 GT
 product ATI MACH64_GU		0x4755	Mach64 GU
