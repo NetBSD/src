@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2002/05/07 12:46:19 pk Exp $
+#	$NetBSD: list,v 1.24.2.1 2002/05/28 05:15:31 lukem Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -16,6 +16,9 @@ PROG	usr/bin/vi
 PROG	usr/bin/less usr/bin/more
 PROG	usr/bin/file
 PROG	usr/sbin/installboot
+
+# usr/bin/file needs libz
+LIBS	-lz
 
 # crunchgen source directory specials
 SPECIAL	vi	srcdir usr.bin/vi/build
