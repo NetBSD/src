@@ -401,12 +401,12 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 171 = unimplemented lwp_cond_signal */
 	{ 0, 0,
 	    sys_nosys },			/* 172 = unimplemented lwp_cond_broadcast */
-	{ 0, 0,
-	    sys_nosys },			/* 173 = unimplemented pread */
-	{ 0, 0,
-	    sys_nosys },			/* 174 = unimplemented pwrite */
-	{ 0, 0,
-	    sys_nosys },			/* 175 = unimplemented llseek */
+	{ 4, s(struct svr4_sys_pread_args),
+	    svr4_sys_pread },			/* 173 = pread */
+	{ 4, s(struct svr4_sys_pwrite_args),
+	    svr4_sys_pwrite },			/* 174 = pwrite */
+	{ 4, s(struct svr4_sys_llseek_args),
+	    svr4_sys_llseek },			/* 175 = llseek */
 	{ 0, 0,
 	    sys_nosys },			/* 176 = unimplemented inst_sync */
 	{ 0, 0,
@@ -464,13 +464,13 @@ struct sysent svr4_sysent[] = {
 	{ 2, s(struct sys_setregid_args),
 	    sys_setregid },			/* 203 = setregid */
 	{ 0, 0,
-	    sys_nosys },			/* 204 = unimplemented */
+	    sys_nosys },			/* 204 = unimplemented install_utrap */
 	{ 0, 0,
-	    sys_nosys },			/* 205 = unimplemented */
+	    sys_nosys },			/* 205 = unimplemented signotify */
 	{ 0, 0,
-	    sys_nosys },			/* 206 = unimplemented */
+	    sys_nosys },			/* 206 = unimplemented schedctl */
 	{ 0, 0,
-	    sys_nosys },			/* 207 = unimplemented */
+	    sys_nosys },			/* 207 = unimplemented pset */
 	{ 0, 0,
 	    sys_nosys },			/* 208 = unimplemented */
 	{ 0, 0,
@@ -481,5 +481,79 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 211 = unimplemented lwp_sigredirect */
 	{ 0, 0,
 	    sys_nosys },			/* 212 = unimplemented lwp_alarm */
+	{ 3, s(struct svr4_sys_getdents64_args),
+	    svr4_sys_getdents64 },		/* 213 = getdents64 */
+	{ 6, s(struct svr4_sys_mmap64_args),
+	    svr4_sys_mmap64 },			/* 214 = mmap64 */
+	{ 2, s(struct svr4_sys_stat64_args),
+	    svr4_sys_stat64 },			/* 215 = stat64 */
+	{ 2, s(struct svr4_sys_lstat64_args),
+	    svr4_sys_lstat64 },			/* 216 = lstat64 */
+	{ 2, s(struct svr4_sys_fstat64_args),
+	    svr4_sys_fstat64 },			/* 217 = fstat64 */
+	{ 2, s(struct svr4_sys_statvfs64_args),
+	    svr4_sys_statvfs64 },		/* 218 = statvfs64 */
+	{ 2, s(struct svr4_sys_fstatvfs64_args),
+	    svr4_sys_fstatvfs64 },		/* 219 = fstatvfs64 */
+	{ 2, s(struct svr4_sys_setrlimit64_args),
+	    svr4_sys_setrlimit64 },		/* 220 = setrlimit64 */
+	{ 2, s(struct svr4_sys_getrlimit64_args),
+	    svr4_sys_getrlimit64 },		/* 221 = getrlimit64 */
+	{ 4, s(struct svr4_sys_pread64_args),
+	    svr4_sys_pread64 },			/* 222 = pread64 */
+	{ 4, s(struct svr4_sys_pwrite64_args),
+	    svr4_sys_pwrite64 },		/* 223 = pwrite64 */
+	{ 2, s(struct svr4_sys_creat64_args),
+	    svr4_sys_creat64 },			/* 224 = creat64 */
+	{ 3, s(struct svr4_sys_open64_args),
+	    svr4_sys_open64 },			/* 225 = open64 */
+	{ 0, 0,
+	    sys_nosys },			/* 226 = unimplemented rpcsys */
+	{ 0, 0,
+	    sys_nosys },			/* 227 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 228 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 229 = unimplemented */
+	{ 3, s(struct svr4_sys_socket_args),
+	    svr4_sys_socket },			/* 230 = socket */
+	{ 4, s(struct sys_socketpair_args),
+	    sys_socketpair },			/* 231 = socketpair */
+	{ 3, s(struct sys_bind_args),
+	    sys_bind },				/* 232 = bind */
+	{ 2, s(struct sys_listen_args),
+	    sys_listen },			/* 233 = listen */
+	{ 3, s(struct compat_43_sys_accept_args),
+	    compat_43_sys_accept },		/* 234 = accept */
+	{ 3, s(struct sys_connect_args),
+	    sys_connect },			/* 235 = connect */
+	{ 2, s(struct sys_shutdown_args),
+	    sys_shutdown },			/* 236 = shutdown */
+	{ 4, s(struct compat_43_sys_recv_args),
+	    compat_43_sys_recv },		/* 237 = recv */
+	{ 6, s(struct compat_43_sys_recvfrom_args),
+	    compat_43_sys_recvfrom },		/* 238 = recvfrom */
+	{ 3, s(struct compat_43_sys_recvmsg_args),
+	    compat_43_sys_recvmsg },		/* 239 = recvmsg */
+	{ 4, s(struct compat_43_sys_send_args),
+	    compat_43_sys_send },		/* 240 = send */
+	{ 3, s(struct compat_43_sys_sendmsg_args),
+	    compat_43_sys_sendmsg },		/* 241 = sendmsg */
+	{ 6, s(struct sys_sendto_args),
+	    sys_sendto },			/* 242 = sendto */
+	{ 3, s(struct compat_43_sys_getpeername_args),
+	    compat_43_sys_getpeername },	/* 243 = getpeername */
+	{ 3, s(struct compat_43_sys_getsockname_args),
+	    compat_43_sys_getsockname },	/* 244 = getsockname */
+	{ 5, s(struct sys_getsockopt_args),
+	    sys_getsockopt },			/* 245 = getsockopt */
+	{ 5, s(struct sys_setsockopt_args),
+	    sys_setsockopt },			/* 246 = setsockopt */
+	{ 0, 0,
+	    sys_nosys },			/* 247 = unimplemented sockconfig */
+	{ 1, s(struct sys_ntp_gettime_args),
+	    sys_ntp_gettime },			/* 248 = ntp_gettime */
+	{ 1, s(struct sys_ntp_adjtime_args),
+	    sys_ntp_adjtime },			/* 249 = ntp_adjtime */
 };
 

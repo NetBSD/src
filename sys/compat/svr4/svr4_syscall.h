@@ -321,6 +321,15 @@
 /* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
 #define	SVR4_SYS_setitimer	158
 
+/* syscall: "pread" ret: "ssize_t" args: "int" "void *" "size_t" "svr4_off_t" */
+#define	SVR4_SYS_pread	173
+
+/* syscall: "pwrite" ret: "ssize_t" args: "int" "const void *" "size_t" "svr4_off_t" */
+#define	SVR4_SYS_pwrite	174
+
+/* syscall: "llseek" ret: "svr4_off64_t" args: "int" "long" "long" "int" */
+#define	SVR4_SYS_llseek	175
+
 /* syscall: "acl" ret: "int" args: "char *" "int" "int" "struct svr4_aclent *" */
 #define	SVR4_SYS_acl	185
 
@@ -333,4 +342,100 @@
 /* syscall: "setregid" ret: "int" args: "int" "int" */
 #define	SVR4_SYS_setregid	203
 
-#define	SVR4_SYS_MAXSYSCALL	213
+/* syscall: "getdents64" ret: "int" args: "int" "struct svr4_dirent64 *" "int" */
+#define	SVR4_SYS_getdents64	213
+
+/* syscall: "mmap64" ret: "int" args: "svr4_caddr_t" "svr4_size_t" "int" "int" "int" "svr4_off64_t" */
+#define	SVR4_SYS_mmap64	214
+
+/* syscall: "stat64" ret: "int" args: "char *" "struct svr4_stat64 *" */
+#define	SVR4_SYS_stat64	215
+
+/* syscall: "lstat64" ret: "int" args: "char *" "struct svr4_stat64 *" */
+#define	SVR4_SYS_lstat64	216
+
+/* syscall: "fstat64" ret: "int" args: "int" "struct svr4_stat64 *" */
+#define	SVR4_SYS_fstat64	217
+
+/* syscall: "statvfs64" ret: "int" args: "char *" "struct svr4_statvfs64 *" */
+#define	SVR4_SYS_statvfs64	218
+
+/* syscall: "fstatvfs64" ret: "int" args: "int" "struct svr4_statvfs64 *" */
+#define	SVR4_SYS_fstatvfs64	219
+
+/* syscall: "setrlimit64" ret: "int" args: "int" "struct rlimit *" */
+#define	SVR4_SYS_setrlimit64	220
+
+/* syscall: "getrlimit64" ret: "int" args: "int" "struct rlimit *" */
+#define	SVR4_SYS_getrlimit64	221
+
+/* syscall: "pread64" ret: "ssize_t" args: "int" "void *" "size_t" "svr4_off64_t" */
+#define	SVR4_SYS_pread64	222
+
+/* syscall: "pwrite64" ret: "ssize_t" args: "int" "const void *" "size_t" "svr4_off64_t" */
+#define	SVR4_SYS_pwrite64	223
+
+/* syscall: "creat64" ret: "int" args: "char *" "int" */
+#define	SVR4_SYS_creat64	224
+
+/* syscall: "open64" ret: "int" args: "char *" "int" "int" */
+#define	SVR4_SYS_open64	225
+
+/* syscall: "socket" ret: "int" args: "int" "int" "int" */
+#define	SVR4_SYS_socket	230
+
+/* syscall: "socketpair" ret: "int" args: "int" "int" "int" "int *" */
+#define	SVR4_SYS_socketpair	231
+
+/* syscall: "bind" ret: "int" args: "int" "const struct sockaddr *" "int" */
+#define	SVR4_SYS_bind	232
+
+/* syscall: "listen" ret: "int" args: "int" "int" */
+#define	SVR4_SYS_listen	233
+
+/* syscall: "accept" ret: "int" args: "int" "struct sockaddr *" "int *" */
+#define	SVR4_SYS_accept	234
+
+/* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "int" */
+#define	SVR4_SYS_connect	235
+
+/* syscall: "shutdown" ret: "int" args: "int" "int" */
+#define	SVR4_SYS_shutdown	236
+
+/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+#define	SVR4_SYS_recv	237
+
+/* syscall: "recvfrom" ret: "ssize_t" args: "int" "void *" "size_t" "int" "struct sockaddr *" "int *" */
+#define	SVR4_SYS_recvfrom	238
+
+/* syscall: "recvmsg" ret: "ssize_t" args: "int" "struct msghdr *" "int" */
+#define	SVR4_SYS_recvmsg	239
+
+/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+#define	SVR4_SYS_send	240
+
+/* syscall: "sendmsg" ret: "ssize_t" args: "int" "const struct msghdr *" "int" */
+#define	SVR4_SYS_sendmsg	241
+
+/* syscall: "sendto" ret: "ssize_t" args: "int" "const void *" "size_t" "int" "const struct sockaddr *" "int" */
+#define	SVR4_SYS_sendto	242
+
+/* syscall: "getpeername" ret: "int" args: "int" "struct sockaddr *" "int *" */
+#define	SVR4_SYS_getpeername	243
+
+/* syscall: "getsockname" ret: "int" args: "int" "struct sockaddr *" "int *" */
+#define	SVR4_SYS_getsockname	244
+
+/* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "int *" */
+#define	SVR4_SYS_getsockopt	245
+
+/* syscall: "setsockopt" ret: "int" args: "int" "int" "int" "const void *" "int" */
+#define	SVR4_SYS_setsockopt	246
+
+/* syscall: "ntp_gettime" ret: "int" args: "struct ntptimeval *" */
+#define	SVR4_SYS_ntp_gettime	248
+
+/* syscall: "ntp_adjtime" ret: "int" args: "struct timex *" */
+#define	SVR4_SYS_ntp_adjtime	249
+
+#define	SVR4_SYS_MAXSYSCALL	250

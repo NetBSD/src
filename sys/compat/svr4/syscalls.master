@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1997/06/27 05:29:38 kleink Exp $
+	$NetBSD: syscalls.master,v 1.23 1997/07/21 23:02:47 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -147,7 +147,8 @@
 78	UNIMPL		rfsys
 79	NOARGS		{ int sys_rmdir(char *path); }
 80	NOARGS		{ int sys_mkdir(char *path, int mode); }
-81	STD		{ int svr4_sys_getdents(int fd, char *buf, int nbytes); }
+81	STD		{ int svr4_sys_getdents(int fd, char *buf, \
+			    int nbytes); }
 82	OBSOL		libattach
 83	OBSOL		libdetach
 84	UNIMPL		sysfs
@@ -168,7 +169,8 @@
 95	STD		{ int svr4_sys_sigprocmask(int how, \
 			    svr4_sigset_t *set, svr4_sigset_t *oset); }
 96	STD		{ int svr4_sys_sigsuspend(svr4_sigset_t *ss); }
-97	STD		{ int svr4_sys_sigaltstack(struct svr4_sigaltstack *nss, \
+97	STD		{ int svr4_sys_sigaltstack( \
+			    struct svr4_sigaltstack *nss, \
 			    struct svr4_sigaltstack *oss); }
 98	STD		{ int svr4_sys_sigaction(int signum, \
 			    struct svr4_sigaction *nsa, \
@@ -270,9 +272,12 @@
 170	UNIMPL		lwp_cond_wait
 171	UNIMPL		lwp_cond_signal
 172	UNIMPL		lwp_cond_broadcast
-173	UNIMPL		pread
-174	UNIMPL		pwrite
-175	UNIMPL		llseek
+173	STD		{ ssize_t svr4_sys_pread(int fd, void *buf, \
+			    size_t nbyte, svr4_off_t off); }
+174	STD		{ ssize_t svr4_sys_pwrite(int fd, const void *buf, \
+			    size_t nbyte, svr4_off_t off); }
+175	STD		{ svr4_off64_t svr4_sys_llseek(int fd, \
+			    long offset1, long offset2, int whence); }
 176	UNIMPL		inst_sync
 177	UNIMPL
 178	UNIMPL		kaio
@@ -303,12 +308,80 @@
 201	UNIMPL		door
 202	NOARGS		{ int sys_setreuid(int ruid, int euid); }
 203	NOARGS		{ int sys_setregid(int rgid, int egid); }
-204	UNIMPL
-205	UNIMPL
-206	UNIMPL
-207	UNIMPL
+204	UNIMPL		install_utrap
+205	UNIMPL		signotify
+206	UNIMPL		schedctl
+207	UNIMPL		pset
 208	UNIMPL
 209	UNIMPL
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
+213	STD		{ int svr4_sys_getdents64(int fd, \
+			    struct svr4_dirent64 *dp, \
+			    int nbytes); }
+214	STD		{ int svr4_sys_mmap64(svr4_caddr_t addr, \
+			    svr4_size_t len, int prot, int flags, int fd, \
+			    svr4_off64_t pos); }
+215	STD		{ int svr4_sys_stat64(char* path, \
+			    struct svr4_stat64 *sb); }
+216	STD		{ int svr4_sys_lstat64(char* path, \
+			    struct svr4_stat64 *sb); }
+217	STD		{ int svr4_sys_fstat64(int fd, \
+			    struct svr4_stat64 *sb); }
+218	STD		{ int svr4_sys_statvfs64(char *path, \
+			    struct svr4_statvfs64 *fs); }
+219	STD		{ int svr4_sys_fstatvfs64(int fd, \
+			    struct svr4_statvfs64 *fs); }
+220	STD		{ int svr4_sys_setrlimit64(int which, \
+			    struct rlimit *rlp); }
+221	STD		{ int svr4_sys_getrlimit64(int which, \
+			    struct rlimit *rlp); }
+222	STD		{ ssize_t svr4_sys_pread64(int fd, void *buf, \
+			    size_t nbyte, svr4_off64_t off); }
+223	STD		{ ssize_t svr4_sys_pwrite64(int fd, \
+			    const void *buf, size_t nbyte, svr4_off64_t off); }
+224	STD		{ int svr4_sys_creat64(char *path, int mode); }
+225	STD		{ int svr4_sys_open64(char *path, int flags, \
+			    int mode); }
+226	UNIMPL		rpcsys
+227	UNIMPL
+228	UNIMPL
+229	UNIMPL
+230	STD		{ int svr4_sys_socket(int domain, int type, \
+			    int protocol); }
+231	NOARGS		{ int sys_socketpair(int domain, int type, \
+			    int protocol, int *rsv); }
+232	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
+			    int namelen); }
+233	NOARGS		{ int sys_listen(int s, int backlog); }
+234	NOARGS		{ int compat_43_sys_accept(int s, \
+			    struct sockaddr *name, int *anamelen); }
+235	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
+			    int namelen); }
+236	NOARGS		{ int sys_shutdown(int s, int how); }
+237	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+			    int flags); }
+238	NOARGS		{ ssize_t compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, struct sockaddr *from, \
+			    int *fromlenaddr); }
+239	NOARGS		{ ssize_t compat_43_sys_recvmsg(int s, \
+			    struct msghdr *msg, int flags); }
+240	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+			    int flags); }
+241	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
+			    const struct msghdr *msg, int flags); }
+242	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
+			    size_t len, int flags, const struct sockaddr *to, \
+			    int tolen); }
+243	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
+			    struct sockaddr *asa, int *alen); }
+244	NOARGS		{ int compat_43_sys_getsockname(int fdes, \
+			    struct sockaddr *asa, int *alen); }
+245	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+			    void *val, int *avalsize); }
+246	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
+			    const void *val, int valsize); }
+247	UNIMPL		sockconfig
+248	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
