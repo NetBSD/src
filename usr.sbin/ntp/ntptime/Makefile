@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/29 13:47:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2000/03/29 13:54:45 simonb Exp $
 
 PROG=	ntptime
+MAN=	ntptime.8
 SRCS=	ntptime.c
 
 SRCS+=	version.c

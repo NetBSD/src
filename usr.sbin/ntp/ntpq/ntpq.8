@@ -1,0 +1,492 @@
+.\"	$NetBSD: ntpq.8,v 1.1 2000/03/29 13:54:45 simonb Exp $
+.\" Converted from HTML to mandoc by html-to-mdoc.pl
+.\"
+.Dd Mar 29, 2000
+.Dt PQ 8
+.Os
+.Sh NAME
+.Nm pq
+.Nd standard NTP query program
+.Sh SYNOPSIS
+.Nm
+.Op Fl ntpq Ar [-inp]
+.Op Fl command] Ar [host]
+.Sh DESCRIPTION
+.Pa ntpq
+is used to query NTP servers which implement the recommended
+NTP mode 6 control message format about current state and to request changes
+in that state. The program may be run either in interactive mode or controlled
+using command line arguments. Requests to read and write arbitrary variables
+can be assembled, with raw and pretty-printed output options being available.
+.Pa ntpq
+can also obtain and print a list of peers in a common format
+by sending multiple queries to the server.
+.Pp
+If one or more request options is included on the command line when
+.Pa ntpq
+is executed, each of the requests will be sent to the NTP
+servers running on each of the hosts given as command line arguments, or
+on localhost by default. If no request options are given, 
+.Pa ntpq
+will attempt to read commands from the standard input and execute these
+on the NTP server running on the first host given on the command line,
+again defaulting to localhost when no other host is specified. 
+.Pa ntpq
+will prompt for commands if the standard input is a terminal device.
+.Pp
+.Pa ntpq
+uses NTP mode 6 packets to communicate with the NTP server,
+and hence can be used to query any compatable server on the network which
+permits it. Note that since NTP is a UDP protocol this communication will
+be somewhat unreliable, especially over large distances in terms of network
+topology. 
+.Pa ntpq
+makes one attempt to retransmit requests, and will
+time requests out if the remote host is not heard from within a suitable
+timeout time.
+.Pp
+Command line options are described following. Specifying a command line
+option other than -i or -n will cause the specified query (queries) to
+be sent to the indicated host(s) immediately. Otherwise, 
+.Pa ntpq
+will attempt to read interactive format commands from the standard input.
+.Bl -tag -width indent
+.It Fl c
+The following argument is interpreted as an interactive format command
+and is added to the list of commands to be executed on the specified host(s).
+Multiple -c options may be given.
+.It Fl i
+Force 
+.Pa ntpq
+to operate in interactive mode. Prompts will be written
+to the standard output and commands read from the standard input.
+.It Fl n
+Output all host addresses in dotted-quad numeric format rather than converting
+to the canonical host names.
+.It Fl p
+Print a list of the peers known to the server as well as a summary of their
+state. This is equivalent to the 
+.Pa peers
+interactive command.
+.El
+.Sh INTERNAL COMMANDS
+Interactive format commands consist of a keyword followed by zero to four
+arguments. Only enough characters of the full keyword to uniquely identify
+the command need be typed. The output of a command is normally sent to
+the standard output, but optionally the output of individual commands may
+be sent to a file by appending a "<", followed by a file name, to the
+command line. A number of interactive format commands are executed entirely
+within the 
+.Pa ntpq
+program itself and do not result in NTP mode 6
+requests being sent to a server. These are described following.
+.Bl -tag -width indent
+.It Fl  Ar ? [command_keyword]
+<BR><TT>helpl [ 
+.Ar command_keyword
+]</TT>
+A 
+.Pa "?"
+by itself will print a list of all the command keywords
+known to this incarnation of 
+.Pa ntpq .
+A 
+.Pa "?"
+followed by
+a command keyword will print funcation and usage information about the
+command. This command is probably a better source of information about
+.Pa ntpq
+than this manual page.
+.It Fl  Ar addvars variable_name [ = value] [...]
+<BR><TT>rmvars 
+.Ar variable_name
+[...]</TT>
+<BR>
+.Pa clearvars
+The data carried by NTP mode 6 messages consists of a list of items of
+the form <TT>
+.Ar variable_name
+= 
+.Ar value
+</TT>, where the <TT>"
+= 
+.Ar value
+"</TT> is ignored, and can be omitted, in requests to the
+server to read variables. 
+.Pa ntpq
+maintains an internal list in which
+data to be included in control messages can be assembled, and sent using
+the readlist and writelist commands described below. The addvars command
+allows variables and their optional values to be added to the list. If
+more than one variable is to be added, the list should be comma-separated
+and not contain white space. The rmvars command can be used to remove individual
+variables from the list, while the clearlist command removes all variables
+from the list.
+.It Fl  Ar authenticate yes | no
+Normally 
+.Pa ntpq
+does not authenticate requests unless they are write
+requests. The command authenticate yes causes 
+.Pa ntpq
+to send authentication
+with all requests it makes. Authenticated requests causes some servers
+to handle requests slightly differently, and can occasionally melt the
+CPU in fuzzballs if you turn authentication on before doing a peer display.
+.It Fl  Ar cooked
+Causes output from query commands to be 
+.Pa "cooked" .
+Variables which
+are recognized by the server will have their values reformatted for human
+consumption. Variables which 
+.Pa ntpq
+thinks should have a decodeable
+value but didn't are marked with a trailing 
+.Pa "?"
+.
+.It Fl  Ar debug more | less | off
+Turns internal query program debugging on and off.
+.It Fl  Ar delay milliseconds
+Specify a time interval to be added to timestamps included in requests
+which require authentication. This is used to enable (unreliable) server
+reconfiguration over long delay network paths or between machines whose
+clocks are unsynchronized. Actually the server does not now require timestamps
+in authenticated requests, so this command may be obsolete.
+.It Fl  Ar host hostname
+Set the host to which future queries will be sent. Hostname may be either
+a host name or a numeric address.
+.It Fl  Ar hostnames [yes | no]
+If 
+.Pa "yes"
+is specified, host names are printed in information displays.
+If 
+.Pa "no"
+is specified, numeric addresses are printed instead. The
+default is <TT>"yes", unless modified using the command line 
+.Fl n
+switch.
+.It Fl  Ar keyid keyid
+This command allows the specification of a key number to be used to authenticate
+configuration requests. This must correspond to a key number the server
+has been configured to use for this purpose.
+.It Fl  Ar ntpversion 1 | 2 | 3 | 4
+Sets the NTP version number which 
+.Pa ntpq
+claims in packets. Defaults
+to 3, Note that mode 6 control messages (and modes, for that matter) didn't
+exist in NTP version 1. There appear to be no servers left which demand
+version 1.
+.It Fl  Ar quit
+Exit 
+.Pa ntpq
+.
+.It Fl  Ar passwd
+This command prompts you to type in a password (which will not be echoed)
+which will be used to authenticate configuration requests. The password
+must correspond to the key configured for use by the NTP server for this
+purpose if such requests are to be successful.
+.It Fl  Ar raw
+Causes all output from query commands is printed as received from the remote
+server. The only formating/intepretation done on the data is to transform
+nonascii data into a printable (but barely understandable) form.
+.It Fl  Ar timeout millseconds
+Specify a timeout period for responses to server queries. The default is
+about 5000 milliseconds. Note that since 
+.Pa ntpq
+retries each query
+once after a timeout, the total waiting time for a timeout will be twice
+the timeout value set.
+.El
+.Sh CONTROL MESSAGE COMMANDS
+Each peer known to an NTP server has a 16 bit integer association identifier
+assigned to it. NTP control messages which carry peer variables must identify
+the peer the values correspond to by including its association ID. An association
+ID of 0 is special, and indicates the variables are system variables, whose
+names are drawn from a separate name space.
+.Pp
+Control message commands result in one or more NTP mode 6 messages being
+sent to the server, and cause the data returned to be printed in some format.
+Most commands currently implemented send a single message and expect a
+single response. The current exceptions are the peers command, which will
+send a preprogrammed series of messages to obtain the data it needs, and
+the mreadlist and mreadvar commands, which will iterate over a range of
+associations.
+.Bl -tag -width indent
+.It Fl  Ar associations
+Obtains and prints a list of association identifiers and peer statuses
+for in-spec peers of the server being queried. The list is printed in columns.
+The first of these is an index numbering the associations from 1 for internal
+use, the second the actual association identifier returned by the server
+and the third the status word for the peer. This is followed by a number
+of columns containing data decoded from the status word See the peers command
+for a decode of the 
+.Pa condition
+field. Note that the data returned
+by the 
+.Pa "associations"
+command is cached internally in 
+.Pa ntpq
+.
+The index is then of use when dealing with stupid servers which use association
+identifiers which are hard for humans to type, in that for any subsequent
+commands which require an association identifier as an argument, the form
+and index may be used as an alternative.
+.It Fl  Ar clockvar [assocID] [variable_name [ = value [...] ] [...]
+.It Fl  Ar cv [assocID] [variable_name [ = value [...] ] [...]
+Requests that a list of the server's clock variables be sent. Servers which
+have a radio clock or other external synchronization will respond positively
+to this. If the association identifier is omitted or zero the request is
+for the variables of the 
+.Pa "system clock"
+and will generally get
+a positive response from all servers with a clock. If the server treats
+clocks as pseudo-peers, and hence can possibly have more than one clock
+connected at once, referencing the appropriate peer association ID will
+show the variables of a particular clock. Omitting the variable list will
+cause the server to return a default variable display.
+.It Fl  Ar lassocations
+Obtains and prints a list of association identifiers and peer statuses
+for all associations for which the server is maintaining state. This command
+differs from the 
+.Pa "associations"
+command only for servers which
+retain state for out-of-spec client associations (i.e., fuzzballs). Such
+associations are normally omitted from the display when the 
+.Pa "associations"
+command is used, but are included in the output of 
+.Pa "lassociations"
+.
+.It Fl  Ar lpassociations
+Print data for all associations, including out-of-spec client associations,
+from the internally cached list of associations. This command differs from
+.Pa "passociations"
+only when dealing with fuzzballs.
+.It Fl  Ar lpeers
+Like R peers, except a summary of all associations for which the server
+is maintaining state is printed. This can produce a much longer list of
+peers from fuzzball servers.
+.It Fl  Ar mreadlist assocID assocID
+<BR><TT>mrl 
+.Ar assocID
+.Ar assocID
+</TT>
+Like the 
+.Pa readlist
+command, except the query is done for each of
+a range of (nonzero) association IDs. This range is determined from the
+association list cached by the most recent 
+.Pa associations
+command.
+.It Fl  Ar mreadvar assocID assocID [ variable_name [ = value [ ... ]
+<BR><TT>mrv 
+.Ar assocID
+.Ar assocID
+[ 
+.Ar variable_name
+[ = 
+.Ar value
+[ ... ]</TT>
+Like the 
+.Pa readvar
+command, except the query is done for each of
+a range of (nonzero) association IDs. This range is determined from the
+association list cached by the most recent 
+.Pa associations
+command.
+.It Fl  Ar opeers
+An old form of the 
+.Pa peers
+command with the reference ID replaced
+by the local interface address.
+.It Fl  Ar passociations
+Prints association data concerning in-spec peers from the internally cached
+list of associations. This command performs identically to the 
+.Pa "associations"
+except that it displays the internally stored data rather than making a
+new query.
+.It Fl  Ar peers
+Obtains a current list peers of the server, along with a summary of each
+peer's state. Summary information includes the address of the remote peer,
+the reference ID (0.0.0.0 if this is unknown), the stratum of the remote
+peer, the type of the peer (local, unicast, multicast or broadcast), when
+the last packet was received, the polling interval, in seconds, the reachability
+register, in octal, and the current estimated delay, offset and dispersion
+of the peer, all in milliseconds.
+The character in the left margin indicates the fate of this peer in the
+clock selection process. Folowing is a list of these characters, the pidgeon
+used in the 
+.Pa rv
+command, and a short explanation of the condition
+revealed.
+.Pa space reject
+.Bl -tag -width indent
+The peer is discarded as unreachable, synchronized to this server (synch
+loop) or outrageous synchronization distance.
+.El
+.Pa x     falsetick
+.Bl -tag -width indent
+The peer is discarded by the intersection algorithm as a falseticker.
+.El
+.Pa .     excess
+.Bl -tag -width indent
+The peer is discarded as not among the first ten peers sorted by synchronization
+distance and so is probably a poor candidate for further consideration.
+.El
+.Fl      outlyer
+.Bl -tag -width indent
+The peer is discarded by the clustering algorithm as an outlyer.
+.El
+.Pa +     candidat
+.Bl -tag -width indent
+The peer is a survivor and a candidate for the combining algorithm.
+.El
+.Pa #     selected
+.Bl -tag -width indent
+The peer is a survivor, but not among the first six peers sorted by synchronization
+distance. If the assocation is ephemeral, it may be demobilized to conserve
+resources.
+.El
+.Pa *     sys.peer
+.Bl -tag -width indent
+The peer has been declared the system peer and lends its variables to the
+system variables.
+.El
+.Pa  
+.Pa o     pps.peer
+.Bl -tag -width indent
+The peer has been declared the system peer and lends its variables to the
+system variables. However, the actual system synchronization is derived
+from a pulse-per-second (PPS) signal, either indirectly via the PPS reference
+clock driver or directly via kernel interface.
+.El
+The 
+.Pa flash
+variable is not defined in the NTP specification, but
+is included as a valuable debugging aid. It displays the results of the
+packet sanity checks defined in the NTP specification 
+.Pa TEST1
+through
+.Pa TEST9
+. The bits for each test read in increasing sequency from
+the least significant bit and are defined as follows.
+The following 
+.Pa TEST1
+through 
+.Pa TEST4
+enumerate procedure
+errors. The packet timestamps may or may not be believed, but the remaining
+header data are ignored.
+.Bl -tag -width indent
+.El
+.Pa TEST1
+.Bl -tag -width indent
+Duplicate packet. A copy from somewhere.
+.El
+.Bl -tag -width indent
+.El
+.Pa TEST2
+.Bl -tag -width indent
+Bogus packet. It is not a reply to a message previously sent. This can
+happen when the NTP daemon is restarted and before a peer notices.
+.El
+.Pa TEST3
+.Bl -tag -width indent
+Unsynchronized. One or more timestamp fields are missing. This normally
+happens when the first packet from a peer is received.
+.El
+.Pa TEST4
+.Bl -tag -width indent
+Either peer delay or peer dispersion is greater than one second. Ya gotta
+be kidding.
+.El
+The following 
+.Pa TEST5
+through 
+.Pa TEST10
+ennumerate errors
+in the packet header. The packet is discarded without inspecting its contents.
+.Bl -tag -width indent
+.El
+.Pa TEST5
+.Bl -tag -width indent
+Cryptographic authentication fails. See the For
+.%T "Authentication Options" ,
+refer to
+.Pa /usr/share/doc/ntp/authopt.htm .
+.Pp
+page.
+.El
+.Pa TEST6
+.Bl -tag -width indent
+Peer is unsynchronized. Wind up its clock first.
+.El
+.Pa TEST7
+.Bl -tag -width indent
+Peer stratum is greater than 15. The peer is probably unsynchronized.
+.El
+.Pa TEST8
+.Bl -tag -width indent
+Either root delay or root dispersion is greater than one second. Too far
+from home.
+.El
+.Bl -tag -width indent
+.El
+.Pa TEST9
+.Bl -tag -width indent
+Peer cryptographic authentication fails. Either the key identifier or key
+is wrong or somebody trashed our packet.
+.El
+.Pa TEST10
+.Bl -tag -width indent
+Access is denied. See the For
+.%T "Access Control Options" ,
+refer to
+.Pa /usr/share/doc/ntp/accopt.htm .
+.Pp
+page.
+.El
+.It Fl  Ar pstatus assocID
+Sends a read status request to the server for the given association. The
+names and values of the peer variables returned will be printed. Note that
+the status word from the header is displayed preceding the variables, both
+in hexidecimal and in pidgeon English.
+.It Fl  Ar readlist [ assocID ]
+<BR><TT>rl [ 
+.Ar assocID
+]</TT>
+Requests that the values of the variables in the internal variable list
+be returned by the server. If the association ID is omitted or is 0 the
+variables are assumed to be system variables. Otherwise they are treated
+as peer variables. If the internal variable list is empty a request is
+sent without data, which should induce the remote server to return a default
+display.
+.It Fl  Ar readvar assocID variable_name [ = value ] [ ... ]
+<BR><TT>rv 
+.Ar assocID
+[ 
+.Ar variable_name
+[ = 
+.Ar value
+] [ ...
+]</TT>
+Requests that the values of the specified variables be returned by the
+server by sending a read variables request. If the association ID is omitted
+or is given as zero the variables are system variables, otherwise they
+are peer variables and the values returned will be those of the corresponding
+peer. Omitting the variable list will send a request with no data which
+should induce the server to return a default display.
+.It Fl  Ar writevar assocID variable_name [ = value [ ... ]
+Like the readvar request, except the specified variables are written instead
+of read.
+.It Fl  Ar writelist [ assocID ]
+Like the readlist request, except the internal list variables are written
+instead of read.
+.El
+.Sh BUGS
+The peers command is non-atomic and may occasionally result in spurious
+error messages about invalid associations occurring and terminating the
+command. The timeout time is a fixed constant, which means you wait a long
+time for timeouts since it assumes sort of a worst case. The program should
+improve the timeout estimate as it sends queries to a particular host,
+but doesn't. 
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
