@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.3 2003/04/07 21:04:20 kleink Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.4 2003/05/30 07:23:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_mcontext.__gregs[_REG_EIP] = (uintptr_t)start;
 	
 	/* Align to a word */
+	/* LINTED uintptr_t is safe */
 	sp = (void **) ((uintptr_t)(stack_base + stack_size) & ~0x3);
 	
 	*--sp = arg;
