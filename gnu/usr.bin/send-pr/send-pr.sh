@@ -38,7 +38,8 @@ GNATS_ADDR=xGNATS_ADDRx
 DATADIR=xDATADIRx
 
 # If we've been moved around, try using GCC_EXEC_PREFIX.
-[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && DATADIR=${GCC_EXEC_PREFIX}..
+[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && 
+  DATADIR=${GCC_EXEC_PREFIX}../../../lib
 
 # The default release for this host.
 DEFAULT_RELEASE="xDEFAULT_RELEASEx"
@@ -74,7 +75,13 @@ fi
 
 #
 
-[ -z "$TMPDIR" ] && TMPDIR=/tmp
+if [ -z "$TMPDIR" ]; then
+  TMPDIR=/tmp
+else
+  if [ "`echo $TMPDIR | grep '/$'" != "" ]; then
+    TMPDIR="`echo $TMPDIR | sed -e 's,/$,,'`"
+  fi
+fi
 
 TEMP=$TMPDIR/p$$
 BAD=$TMPDIR/pbad$$
@@ -85,7 +92,9 @@ if [ -z "$LOGNAME" -a -n "$USER" ]; then
 fi
 
 FROM="$LOGNAME"
-REPLY_TO="$LOGNAME"
+if [ -z "$REPLYTO" ]; then
+  REPLYTO="$LOGNAME"
+fi
 
 # Find out the name of the originator of this PR.
 if [ -n "$NAME" ]; then
@@ -95,7 +104,7 @@ elif [ -f $HOME/.fullname ]; then
 else
   # Must use temp file due to incompatibilities in quoting behavior
   # and to protect shell metacharacters in the expansion of $LOGNAME
-  $PASSWD | grep "^$LOGNAME:" | cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
+  $PASSWD | grep "^$LOGNAME:" | awk -F: '{print $5}' | sed -e 's/,.*//' > $TEMP
   ORIGINATOR="`cat $TEMP`"
   rm -f $TEMP
 fi
@@ -306,14 +315,14 @@ __EOF__
 To: $GNATS_ADDR
 Subject: 
 From: $FROM
-Reply-To: $REPLY_TO
+Reply-To: $REPLYTO
 X-send-pr-version: $VERSION
 
 
 >Submitter-Id:	$SUBMITTER
 >Originator:	$ORIGINATOR
 >Organization:
-${ORGANIZATION-"	$ORGANIZATION_C"}
+${ORGANIZATION-	$ORGANIZATION_C}
 >Confidential:	$CONFIDENTIAL_C
 >Synopsis:	$SYNOPSIS_C
 >Severity:	$SEVERITY_C
