@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 1999/07/29 19:24:38 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.35 1999/08/16 22:27:11 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -133,6 +133,7 @@ usbs)
 	sh $0 usb0 usb1 
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1 
+	sh $0 umodem0 umodem1
 	;;
 
 std)
@@ -495,6 +496,20 @@ ulpt*)
 	mknod $ulpt c $major $unit
 	chown root.wheel $ulpt
 	chmod 600 $ulpt
+	;;
+
+umodem*)
+	unit=${i#umodem}
+	umodem=umodem$unit
+	udmodem=udmodem$unit
+	ucmodem=ucmodem$unit
+	major=74
+	rm -f $umodem $udmodem $ucmodem
+	mknod $umodem  c $major $(($unit + $dialin  ))
+	mknod $udmodem c $major $(($unit + $dialout ))
+	mknod $ucmodem c $major $(($unit + $callunit))
+	chown uucp.wheel $umodem $udmodem $ucmodem
+	chmod 600 $umodem $udmodem $ucmodem
 	;;
 
 ugen*)

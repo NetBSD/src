@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.40 1999/07/29 19:14:35 augustss Exp $ */
+/* $NetBSD: conf.c,v 1.41 1999/08/16 22:27:12 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.40 1999/07/29 19:14:35 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.41 1999/08/16 22:27:12 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
+#include "umodem.h"
+cdev_decl(umodem);
 
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
@@ -316,6 +318,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 55 */
 #endif
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
+	cdev_tty_init(NUMODEM, umodem),	/* 57: USB modem */
 	
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -415,6 +418,7 @@ static int chrtoblktbl[] = {
 	/* 54 */	NODEV,
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
+	/* 57 */	NODEV,
 };
 
 /*
