@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.17 1997/09/19 13:52:41 leo Exp $ */
+/* $NetBSD: mem.c,v 1.18 1997/09/19 14:48:59 mjacob Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 1997/09/19 13:52:41 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 1997/09/19 14:48:59 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,6 +66,7 @@ cdev_decl(mm);
 
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
+extern caddr_t msgbufaddr;
 
 /*ARGSUSED*/
 int
