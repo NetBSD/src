@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.24 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.25 2005/01/01 03:25:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2003/11/26 08:36:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.25 2005/01/01 03:25:46 simonb Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -145,7 +145,7 @@ process_write_fpregs(struct lwp *l, struct fpreg *regs)
 
 	/* to load FPA contents next time when FP insn is executed */
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = (struct lwp *)0;
+		fpcurlwp = NULL;
 	memcpy(&l->l_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }

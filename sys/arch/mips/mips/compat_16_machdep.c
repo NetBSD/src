@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/11/26 08:36:49 he Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2005/01/01 03:25:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/11/26 08:36:49 he Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2005/01/01 03:25:46 simonb Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -254,9 +254,8 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
-		if (l == fpcurlwp) {
-			fpcurlwp = (struct lwp *)0;
-		}
+		if (l == fpcurlwp)
+			fpcurlwp = NULL;
 		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	}
 #else
