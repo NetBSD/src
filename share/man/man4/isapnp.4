@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.2 1997/04/27 11:58:46 jonathan Exp $
+.\"	$NetBSD: isapnp.4,v 1.3 1997/10/31 08:24:45 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -68,9 +68,9 @@ PCnet-PnP ethernet interfaces basd on the successor to the AMD LANCE chip.
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
 .It sb
-Soundblaster, Soundblaster 16, and Soundblaster Pro soundcards.
-.\" .It gus
-.\" Gravis Ultrasound PnP sound cars
+Soundblaster, Soundblaster 16, and Soundblaster Pro sound cards.
+.It guspnp
+Gravis Ultrasound PnP sound cards.
 .El
 .Pp
 ISA Plug-and-Play devices also have alternate ISA drivers with
@@ -95,7 +95,8 @@ the supported front-ends for other buses.
 .Xr ep 4 ,
 .Xr isa 4 ,
 .Xr le 4 ,
-.Xr sb 4 .
+.Xr sb 4 ,
+.Xr guspnp 4 .
 .Sh HISTORY
 The
 .Nm
