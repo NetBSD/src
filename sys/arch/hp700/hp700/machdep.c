@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.6.1 2005/01/31 12:25:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.6.1 2005/01/31 12:25:33 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -887,7 +887,8 @@ cpu_startup(void)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
+	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 }
 
 /*
