@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.1 2002/08/12 02:06:22 simonb Exp $ */
+/* $NetBSD: pbus.c,v 1.2 2002/08/13 05:43:25 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _GALAXY_BUS_DMA_PRIVATE
+#define _IBM4XX_BUS_DMA_PRIVATE
 #include <arch/walnut/dev/pbusvar.h>
 #include <machine/bus.h>
 #include <machine/walnut.h>
@@ -141,7 +141,7 @@ pbus_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 #if NPCKBC > 0
 	bus_space_handle_t ioh_fpga;
-	bus_space_tag_t iot_fpga = galaxy_make_bus_space_tag(0, 0);
+	bus_space_tag_t iot_fpga = ibm4xx_make_bus_space_tag(0, 0);
 	uint8_t fpga_reg;
 #endif
 
@@ -151,8 +151,8 @@ pbus_attach(struct device *parent, struct device *self, void *aux)
 		pba.pb_name = pbus_devs[i].name;
 		pba.pb_addr = pbus_devs[i].addr;
 		pba.pb_irq = pbus_devs[i].irq;
-		pba.pb_bt = galaxy_make_bus_space_tag(0, 0);
-		pba.pb_dmat = &galaxy_default_bus_dma_tag;
+		pba.pb_bt = ibm4xx_make_bus_space_tag(0, 0);
+		pba.pb_dmat = &ibm4xx_default_bus_dma_tag;
 
 		(void) config_found_sm(self, &pba, pbus_print, pbus_submatch);
 	}
