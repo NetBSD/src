@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.6 2000/05/13 15:22:19 mycroft Exp $
+.\" $NetBSD: wskbd.4,v 1.7 2000/10/03 15:18:07 bjh21 Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSKBD 4
@@ -35,8 +35,7 @@ The common keyboard support consists of:
 .It
 Mapping from keycodes (defined by the specific keyboard driver) to
 keysyms (hardware independent, defined in
-.Pa /usr/include/dev/wscons/wsksymdef.h
-).
+.Pa /usr/include/dev/wscons/wsksymdef.h Ns ).
 .It
 Handling of
 .Dq compose
@@ -53,9 +52,8 @@ modifier into an
 .Dq ESC
 prefix.
 .It
-Automatic key repetition (
-.Dq typematic
-).
+Automatic key repetition
+.Pq Dq typematic .
 .It
 Parameter handling for
 .Dq keyboard bells .
