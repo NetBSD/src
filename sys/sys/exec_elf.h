@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.72 2003/08/08 18:54:16 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.73 2003/10/31 13:54:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -768,12 +768,16 @@ struct netbsd_elfcore_procinfo {
 
 #define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
+#define ELF64_LINK_ADDR	((Elf64_Addr)-2) /* advises to use link address */
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
 #define ELF_NO_ADDR	ELF64_NO_ADDR
+#define ELF_LINK_ADDR	ELF64_LINK_ADDR
 #elif defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_NO_ADDR	ELF32_NO_ADDR
+#define ELF_LINK_ADDR	ELF32_LINK_ADDR
 #endif
 
 #ifndef ELF32_EHDR_FLAGS_OK
