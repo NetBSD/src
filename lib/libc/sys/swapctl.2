@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.9 1998/08/29 15:53:11 mrg Exp $
+.\"	$NetBSD: swapctl.2,v 1.10 1998/08/29 17:11:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -40,7 +40,7 @@
 .Nd modify swap configuration
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Fd #include <vm/vm_swap.h>
+.Fd #include <sys/swap.h>
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
 .Sh DESCRIPTION
@@ -222,4 +222,6 @@ The
 member was added to
 .Va struct swapent
 in
-.Nx 1.4 .
+.Nx 1.4 ,
+when the header file was also moved from
+.Pa <vm/vm_swap.h> .
