@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.83 2004/04/04 18:54:01 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.84 2004/04/13 14:55:48 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.83 2004/04/04 18:54:01 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.84 2004/04/13 14:55:48 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -233,16 +233,7 @@ hypersparc_cache_enable()
 	 * Enable instruction cache and, on single-processor machines,
 	 * disable `Unimplemented Flush Traps'.
 	 */
-#if defined(MULTIPROCESSOR)
-#ifdef __HYPERSPARC_SMP_ICE_BUG_FIXED
-	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
-#else
-	/* For now, disable cache (if ncpu > 1) and flush fault trap */
-	v = HYPERSPARC_ICCR_FTD | (ncpu == 1 ? HYPERSPARC_ICCR_ICE : 0);
-#endif
-#else
-	v = HYPERSPARC_ICCR_ICE | HYPERSPARC_ICCR_FTD;
-#endif
+	v = HYPERSPARC_ICCR_ICE | (ncpu <= 1 ? HYPERSPARC_ICCR_FTD : 0);
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 }
 
