@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.65 2001/11/23 05:19:02 atatat Exp $
+#	$NetBSD: Makefile.vax,v 1.66 2001/11/23 15:44:15 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -57,6 +57,7 @@ subr.o: ${VAX}/vax/subr.s assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	80000000
+ENTRYPOINT=	_start
 LINKFORMAT=	-N
 LINKFLAGS_DEBUG=	-X
 LINKFLAGS_NORMAL=	-S
