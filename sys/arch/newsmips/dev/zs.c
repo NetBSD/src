@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1999/12/17 03:21:12 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct cfattach zsc_ca = {
 
 extern struct cfdriver zsc_cd;
 
-static void zshard __P((void *));
+static int zshard __P((void *));
 static void zssoft __P((void *));
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -297,10 +297,8 @@ zs_attach(parent, self, aux)
 	 */
 	if (!didintr) {
 		didintr = 1;
-#if 0
-		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
-		isr_add_autovect(zshard, NULL, ca->ca_intpri);
-#endif
+
+		hb_intr_establish(1, IPL_SERIAL, zshard, NULL);
 	}
 	/* XXX; evcnt_attach() ? */
 
@@ -339,12 +337,14 @@ static volatile int zssoftpending;
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
-static void
+static int
 zshard(arg)
 	void *arg;
 {
 	register struct zsc_softc *zsc;
 	register int unit, rval, softreq;
+
+	(void) *(volatile u_char *)SCCVECT;
 
 	rval = softreq = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
@@ -361,7 +361,7 @@ zshard(arg)
 		zssoftpending = 1;
 		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
 	}
-	return;
+	return rval;
 }
 
 /*
@@ -669,16 +669,4 @@ zscnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
-}
-
-/*
- * ZS vector interrupt service routine.
- */
-void
-zs_intr()
-{
-	int vec;
-
-	vec = *(volatile u_char *)SCCVECT;
-	zshard((void *)vec);		/* XXX vec is not used */
 }
