@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/09/09 18:10:21 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/09/09 19:01:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 	.align	4
 .LLGETPC0:
 	retl
-	add	%o7,%l7,%l7
+	 add	%o7,%l7,%l7
 
 	.section	".text"
 	.align	4
@@ -55,7 +55,7 @@ _rtld_start:
 
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
 	call	.LLGETPC0
-	add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
+	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
 	ld	[%l7+_GOT_END_], %o0
 	ld	[%l7+_GLOBAL_OFFSET_TABLE_], %o1
 	mov	%l7, %o2
