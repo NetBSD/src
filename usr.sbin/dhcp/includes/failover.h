@@ -161,7 +161,10 @@ typedef struct {
 /* Failover server flags. */
 #define FTF_STARTUP	1
 
-typedef struct {
+typedef struct failover_message {
+	int refcnt;
+	struct failover_message *next;
+
 	u_int8_t type;
 
 	u_int8_t binding_status;
@@ -303,6 +306,13 @@ typedef struct _dhcp_failover_state {
 					   lease, send an UPDDONE message. */
 	int cur_unacked_updates;	/* Number of updates we've sent
 					   that have not yet been acked. */
+
+					/* List of messages which we haven't
+					   acked yet. */
+	failover_message_t *toack_queue_head;
+	failover_message_t *toack_queue_tail;
+	int pending_acks;		/* Number of messages in the toack
+					   queue. */
 } dhcp_failover_state_t;
 
 #define DHCP_FAILOVER_VERSION		1
