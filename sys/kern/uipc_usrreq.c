@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.63 2003/07/23 19:24:48 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.64 2003/07/23 21:42:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.63 2003/07/23 19:24:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.64 2003/07/23 21:42:31 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,8 +932,10 @@ unp_internalize(control, p)
 	 * massage the messages in the compat code, since it involves
 	 * allocating stuff on the stack, copying in and out etc.
 	 */
+#define LINUX_SOL_SOCKET	1
 	if (cm->cmsg_type != SCM_RIGHTS ||
-	    (cm->cmsg_level != SOL_SOCKET && cm->cmsg_level != 1) ||
+	    (cm->cmsg_level != SOL_SOCKET &&
+	     cm->cmsg_level != LINUX_SOL_SOCKET) ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
 
