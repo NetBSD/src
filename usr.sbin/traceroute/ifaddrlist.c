@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.3 1999/02/24 21:21:24 explorer Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.4 2000/04/13 07:53:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.3 1999/02/24 21:21:24 explorer Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.4 2000/04/13 07:53:29 itojun Exp $");
 #endif
 #endif
 
@@ -68,6 +68,9 @@ struct rtentry;
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
@@ -79,10 +82,18 @@ struct rtentry;
 
 
 /* Not all systems have IFF_LOOPBACK */
+#ifdef HAVE_IFADDRS_H
+#ifdef IFF_LOOPBACK
+#define ISLOOPBACK(p) ((p)->ifa_flags & IFF_LOOPBACK)
+#else
+#define ISLOOPBACK(p) (strcmp((p)->ifa_name, "lo0") == 0)
+#endif
+#else
 #ifdef IFF_LOOPBACK
 #define ISLOOPBACK(p) ((p)->ifr_flags & IFF_LOOPBACK)
 #else
 #define ISLOOPBACK(p) (strcmp((p)->ifr_name, "lo0") == 0)
+#endif
 #endif
 
 #define MAX_IPADDR 256
@@ -93,6 +104,47 @@ struct rtentry;
 int
 ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 {
+#ifdef HAVE_IFADDRS_H
+	int nipaddr;
+	struct sockaddr_in *sin;
+	struct ifaddrs *ifap, *ifa;
+	struct ifaddrlist *al;
+	static struct ifaddrlist ifaddrlist[MAX_IPADDR];
+
+	al = ifaddrlist;
+	nipaddr = 0;
+
+	if (getifaddrs(&ifap) != 0) {
+		(void)snprintf(errbuf, buflen, "getifaddrs: %s",
+		    strerror(errno));
+		return (-1);
+	}
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+
+		/* Must be up */
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+
+		/*
+		 * Must not be a loopback address (127/8)
+		 */
+		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		if (ISLOOPBACK(ifa))
+			if (ntohl(sin->sin_addr.s_addr) == INADDR_LOOPBACK)
+				continue;
+
+		al->addr = sin->sin_addr.s_addr;
+		al->device = savestr(ifa->ifa_name);
+		++al;
+		++nipaddr;
+	}
+	*ipaddrp = ifaddrlist;
+	freeifaddrs(ifap);
+	return (nipaddr);
+#else
 	int fd, nipaddr;
 #ifdef HAVE_SOCKADDR_SA_LEN
 	int n;
@@ -178,4 +230,5 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 
 	*ipaddrp = ifaddrlist;
 	return (nipaddr);
+#endif
 }
