@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.20 2000/12/09 00:50:21 assar Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.21 2001/01/10 02:51:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.20 2000/12/09 00:50:21 assar Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.21 2001/01/10 02:51:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2168,7 +2168,8 @@ cleantmp(wtp)
 
 	utp = getutid(wtp);
 	if (utp == 0) {
-		syslog(LOG_ERR, "Can't get /etc/utmp entry to clean TMPDIR");
+		syslog(LOG_WARNING,
+		    "Can't get /etc/utmp entry to clean TMPDIR");
 		return(-1);
 	}
 	/*
@@ -2234,7 +2235,8 @@ jobend(jid, path, user)
 		utp = jid_getutid(pty_saved_jid);
 
 		if (utp == 0) {
-			syslog(LOG_ERR, "Can't get /etc/utmp entry to clean TMPDIR");
+			syslog(LOG_WARNING,
+			    "Can't get /etc/utmp entry to clean TMPDIR");
 			return(-1);
 		}
 
@@ -2256,13 +2258,13 @@ cleantmpdir(jid, tpath, user)
 {
 	switch(fork()) {
 	case -1:
-		syslog(LOG_ERR, "TMPDIR cleanup(%s): fork() failed: %m\n",
-							tpath);
+		syslog(LOG_WARNING, "TMPDIR cleanup(%s): fork() failed: %m\n",
+		    tpath);
 		break;
 	case 0:
 		execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, 0);
 		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m\n",
-							tpath, CLEANTMPCMD);
+		    tpath, CLEANTMPCMD);
 		exit(1);
 	default:
 		/*
@@ -2327,7 +2329,7 @@ rmut()
 		(void) fstat(f, &statbf);
 		utmp = (struct utmp *)malloc((unsigned)statbf.st_size);
 		if (!utmp)
-			syslog(LOG_ERR, "utmp malloc failed");
+			syslog(LOG_WARNING, "utmp malloc failed");
 		if (statbf.st_size && utmp) {
 			nutmp = read(f, (char *)utmp, (int)statbf.st_size);
 			nutmp /= sizeof(struct utmp);
