@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
+/*	$NetBSD: ttyflags.c,v 1.9 1997/09/15 11:24:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,14 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
-	All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
+	All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $";
+__RCSID("$NetBSD: ttyflags.c,v 1.9 1997/09/15 11:24:41 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $";
 int change_all __P((void));
 int change_ttyflags __P((struct ttyent *));
 int change_ttys __P((char **));
+int main __P((int, char *[]));
 void usage __P((void));
 
 int nflag, vflag;
@@ -75,7 +76,7 @@ main(argc, argv)
 	int aflag, ch, rval;
 
 	aflag = nflag = vflag = 0;
-	while ((ch = getopt(argc, argv, "anv")) != EOF)
+	while ((ch = getopt(argc, argv, "anv")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
