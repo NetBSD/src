@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.8 2002/12/03 22:15:22 gmcgarry Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.9 2002/12/03 22:18:34 gmcgarry Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -42,6 +42,8 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -65,7 +67,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.8 2002/12/03 22:15:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.9 2002/12/03 22:18:34 gmcgarry Exp $");
 
 void
 child_return(void *arg)
