@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.110 2002/02/22 20:11:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.110.2.1 2004/03/26 22:52:55 jmc Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
-SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
+SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
 	disklabel.c err.c errx.c __errlist14.c errlist.c errno.c execl.c \
 	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
@@ -37,7 +37,7 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 .include "${ARCHDIR}/gen/Makefile.inc"
 
-MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
+MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 fmtcheck.3 \
 	fmtmsg.3 fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 getbsize.3 \
 	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
