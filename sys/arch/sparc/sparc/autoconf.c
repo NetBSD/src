@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100 1998/09/26 18:15:34 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.101 1998/09/26 20:15:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -168,7 +168,7 @@ str2hex(str, vp)
 
 #ifdef SUN4
 struct promvec promvecdat;
-void **promvec_synchookdat;
+void *promvec_synchookdat;
 struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 #endif
 
