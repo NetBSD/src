@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_time.h,v 1.2 1994/10/26 05:27:59 cgd Exp $	*/
+/*	$NetBSD: svr4_time.h,v 1.3 1994/10/29 00:43:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas

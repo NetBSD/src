@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.6 1994/10/26 11:58:25 christos Exp $	*/
+/*	$NetBSD: svr4_ioctl.c,v 1.7 1994/10/29 00:43:21 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -56,43 +56,43 @@
  */
 static void
 svr4_decode_cmd(cmd, dir, c, num, argsiz)
-    int cmd;
-    char **dir, *c;
-    int *num, *argsiz;
+	int		  cmd;
+	char		**dir, *c;
+	int		 *num, *argsiz;
 {
-    *dir = "";
-    if (cmd & SVR4_IOC_VOID)
-	*dir = "V";
-    if (cmd & SVR4_IOC_INOUT)
-	*dir = "RW";
-    if (cmd & SVR4_IOC_OUT)
-	*dir = "W";
-    if (cmd & SVR4_IOC_IN)
-	*dir = "R";
-    if (cmd & (SVR4_IOC_INOUT|SVR4_IOC_VOID))
-	*argsiz = (cmd >> 16) & 0xff;
-    else
-	*argsiz = -1;
+	*dir = "";
+	if (cmd & SVR4_IOC_VOID)
+		*dir = "V";
+	if (cmd & SVR4_IOC_INOUT)
+		*dir = "RW";
+	if (cmd & SVR4_IOC_OUT)
+		*dir = "W";
+	if (cmd & SVR4_IOC_IN)
+		*dir = "R";
+	if (cmd & (SVR4_IOC_INOUT | SVR4_IOC_VOID))
+		*argsiz = (cmd >> 16) & 0xff;
+	else
+		*argsiz = -1;
 
-    *c = (cmd >> 8) & 0xff;
-    *num = cmd & 0xff;
+	*c = (cmd >> 8) & 0xff;
+	*num = cmd & 0xff;
 }
 #endif
 
 int
 svr4_ioctl(p, uap, retval)
-    register struct proc *p;
-    register struct svr4_ioctl_args *uap;
-    register_t *retval;
+	register struct proc		*p;
+	register struct svr4_ioctl_args	*uap;
+	register_t			*retval;
 {
-    char *dir;
-    char c;
-    int  num;
-    int  argsiz;
+	char		*dir;
+	char		 c;
+	int		 num;
+	int		 argsiz;
 #ifdef DEBUG_SVR4
-    svr4_decode_cmd(SCARG(uap, com), &dir, &c, &num, &argsiz);
-    printf("svr4_ioctl(%d, _IO%s(%c, %d, %d))\n", SCARG(uap, fd),
-	   dir, c, num, argsiz);
+	svr4_decode_cmd(SCARG(uap, com), &dir, &c, &num, &argsiz);
+	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d))\n", SCARG(uap, fd),
+	       dir, c, num, argsiz);
 #endif
-    return 0;
+	return 0;
 }

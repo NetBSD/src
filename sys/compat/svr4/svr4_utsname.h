@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_utsname.h,v 1.2 1994/10/26 05:28:07 cgd Exp $	*/
+/*	$NetBSD: svr4_utsname.h,v 1.3 1994/10/29 00:43:33 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -34,11 +34,11 @@
 #include <sys/utsname.h>
 
 struct svr4_utsname {
-    char    sysname[257];
-    char    nodename[257];
-    char    release[257];
-    char    version[257];
-    char    machine[257];
+	char	sysname[257];
+	char	nodename[257];
+	char	release[257];
+	char	version[257];
+	char	machine[257];
 };
 
 #endif /* !_SVR4_UTSNAME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.c,v 1.3 1994/10/26 11:58:31 christos Exp $	*/
+/*	$NetBSD: svr4_util.c,v 1.4 1994/10/29 00:43:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -40,72 +40,67 @@
 
 #include <compat/svr4/svr4_util.h>
 
-/* For stackgap allocation */
-caddr_t svr4_edata;
-
-const char svr4_emul_path[] = "/emul/svr4";
+const char      svr4_emul_path[] = "/emul/svr4";
 
 int
-svr4_emul_find(p, loc, prefix, path, pbuf)
-    struct proc *p;
-    int loc;
-    const char *prefix;
-    char *path;
-    char **pbuf;
+svr4_emul_find(p, sgp, prefix, path, pbuf)
+	struct proc	 *p;
+	caddr_t		 *sgp;		/* Pointer to stackgap memory */
+	const char	 *prefix;
+	char		 *path;
+	char		**pbuf;
 {
-    struct nameidata nd;
-    int error;
-    char *ptr, *buf;
-    size_t sz;
-    size_t len;
+	struct nameidata	 nd;
+	int			 error;
+	char			*ptr, *buf;
+	size_t			 sz, len;
 
-    buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-    *pbuf = path;
+	buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	*pbuf = path;
 
-    for (ptr = buf; (*ptr = *prefix) != '\0'; ptr++, prefix++)
-	continue;
+	for (ptr = buf; (*ptr = *prefix) != '\0'; ptr++, prefix++)
+		continue;
 
-    sz = MAXPATHLEN - (ptr - buf);
+	sz = MAXPATHLEN - (ptr - buf);
 
-    if (loc == UIO_SYSSPACE)
-	error = copystr(path, ptr, sz, &len);
-    else
-	error = copyinstr(path, ptr, sz, &len);
+	/* 
+	 * If sgp is not given then the path is already in kernel space
+	 */
+	if (sgp == NULL)
+		error = copystr(path, ptr, sz, &len);
+	else
+		error = copyinstr(path, ptr, sz, &len);
 
-    if (error) {
-	DPRINTF(("copy failed %d\n", error));
-	free(buf, M_TEMP);
+	if (error) {
+		DPRINTF(("copy failed %d\n", error));
+		free(buf, M_TEMP);
+		return error;
+	}
+	DPRINTF(("looking for %s [%d, %d]: ", buf, sz, len));
+
+	if (*ptr != '/') {
+		DPRINTF(("no slash\n"));
+		free(buf, M_TEMP);
+		return EINVAL;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
+
+	if ((error = namei(&nd)) != 0) {
+		DPRINTF(("not found\n"));
+		free(buf, M_TEMP);
+		return error;
+	}
+	if (sgp == NULL)
+		*pbuf = buf;
+	else {
+		sz = &ptr[len] - buf;
+		*pbuf = stackgap_alloc(sgp, sz + 1);
+		error = copyout(buf, *pbuf, sz);
+		free(buf, M_TEMP);
+	}
+
+	DPRINTF(("ok\n"));
+
+	vrele(nd.ni_vp);
 	return error;
-    }
-
-    DPRINTF(("looking for %s [%d, %d]: ", buf, sz, len));
-
-    if (*ptr != '/') {
-	DPRINTF(("no slash\n"));
-	free(buf, M_TEMP);
-	return EINVAL;
-    }
-
-    NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
-
-    if ((error = namei(&nd)) != 0) {
-	DPRINTF(("not found\n"));
-	free(buf, M_TEMP);
-	return error;
-    }
-
-
-    if (loc == UIO_SYSSPACE)
-	*pbuf = buf;
-    else {
-	sz = &ptr[len] - buf;
-	*pbuf = stackgap_alloc(sz + 1);
-	error = copyout(buf, *pbuf, sz);
-	free(buf, M_TEMP);
-    }
-
-    DPRINTF(("ok\n"));
-
-    vrele(nd.ni_vp);
-    return error;
 }
