@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.37 1998/01/24 12:42:24 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.38 1998/01/24 12:45:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -61,6 +61,7 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_ioctl.h>
+#include <compat/linux/linux_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
