@@ -34,17 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.6 1994/03/31 18:31:23 mycroft Exp $
+ *	$Id: SYS.h,v 1.7 1994/10/26 19:49:42 mycroft Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; LCALL(7,0); jc 2b
+#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
 #define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; LCALL(7,0); ret
+#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
 #define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
-/* gas fucks up offset -- although we don't currently need it, do for BCS */
-#define	LCALL(x,y)	.byte 0x9a; .long y; .word x
 
 	.globl	cerror

@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigsuspend.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigsuspend.S,v 1.5 1994/01/27 06:35:11 mycroft Exp $
+ *	$Id: sigsuspend.S,v 1.6 1994/10/26 19:49:51 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sigsuspend.S,v 1.5 1994/01/27 06:35:11 mycroft Exp $"
+	.asciz "$Id: sigsuspend.S,v 1.6 1994/10/26 19:49:51 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,7 +49,7 @@ ENTRY(sigsuspend)
 	movl	(%eax),%eax		# indirect to mask arg
 	movl	%eax,4(%esp)
 	movl	$(SYS_sigsuspend),%eax
-	LCALL(0x7,0)
+	int	$0x80
 	jc	err
 	xorl	%eax,%eax		# shouldn t happen
 	ret
