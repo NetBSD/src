@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-keygen.1,v 1.11 2001/11/27 04:10:25 itojun Exp $
-.\"	$OpenBSD: ssh-keygen.1,v 1.51 2001/11/21 18:49:14 stevesk Exp $
+.\"	$NetBSD: ssh-keygen.1,v 1.12 2002/03/08 02:00:55 itojun Exp $
+.\"	$OpenBSD: ssh-keygen.1,v 1.53 2002/02/16 14:53:37 stevesk Exp $
 .\"
 .\"  -*- nroff -*-
 .\"
@@ -48,7 +48,7 @@
 .Nm ssh-keygen
 .Op Fl q
 .Op Fl b Ar bits
-.Op Fl t Ar type
+.Fl t Ar type
 .Op Fl N Ar new_passphrase
 .Op Fl C Ar comment
 .Op Fl f Ar output_keyfile
@@ -87,10 +87,11 @@
 generates, manages and converts authentication keys for
 .Xr ssh 1 .
 .Nm
-defaults to generating a RSA1 key for use by SSH protocol version 1.
-Specifying the
+can create RSA keys for use by SSH protocol version 1 and RSA or DSA 
+keys for use by SSH protocol version 2. The type of key to be generated
+is specified with the
 .Fl t
-option instead creates a key for use by SSH protocol version 2.
+option.
 .Pp
 Normally each user wishing to use SSH
 with RSA or DSA authentication runs this once to create the authentication
@@ -203,8 +204,6 @@ for protocol version 1 and
 or
 .Dq dsa
 for protocol version 2.
-The default is
-.Dq rsa1 .
 .It Fl B
 Show the bubblebabble digest of specified private or public key file.
 .It Fl C Ar comment

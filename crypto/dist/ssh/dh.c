@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.7 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: dh.c,v 1.8 2002/03/08 02:00:52 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: dh.c,v 1.17 2001/06/23 15:12:18 itojun Exp $");
+RCSID("$OpenBSD: dh.c,v 1.21 2002/03/06 00:23:27 markus Exp $");
 
 #include "xmalloc.h"
 
@@ -79,8 +79,10 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	if (cp != NULL || *prime == '\0')
 		goto fail;
 
-	dhg->g = BN_new();
-	dhg->p = BN_new();
+	if ((dhg->g = BN_new()) == NULL)
+		fatal("parse_prime: BN_new failed");
+	if ((dhg->p = BN_new()) == NULL)
+		fatal("parse_prime: BN_new failed");
 	if (BN_hex2bn(&dhg->g, gen) == 0)
 		goto failclean;
 
@@ -93,8 +95,8 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	return (1);
 
  failclean:
-	BN_free(dhg->g);
-	BN_free(dhg->p);
+	BN_clear_free(dhg->g);
+	BN_clear_free(dhg->p);
  fail:
 	error("Bad prime description in line %d", linenum);
 	return (0);
@@ -121,8 +123,8 @@ choose_dh(int min, int wantbits, int max)
 		linenum++;
 		if (!parse_prime(linenum, line, &dhg))
 			continue;
-		BN_free(dhg.g);
-		BN_free(dhg.p);
+		BN_clear_free(dhg.g);
+		BN_clear_free(dhg.p);
 
 		if (dhg.size > max || dhg.size < min)
 			continue;
@@ -151,8 +153,8 @@ choose_dh(int min, int wantbits, int max)
 		if ((dhg.size > max || dhg.size < min) ||
 		    dhg.size != best ||
 		    linenum++ != which) {
-			BN_free(dhg.g);
-			BN_free(dhg.p);
+			BN_clear_free(dhg.g);
+			BN_clear_free(dhg.p);
 			continue;
 		}
 		break;
@@ -202,9 +204,8 @@ dh_gen_key(DH *dh, int need)
 		    BN_num_bits(dh->p), 2*need);
 	do {
 		if (dh->priv_key != NULL)
-			BN_free(dh->priv_key);
-		dh->priv_key = BN_new();
-		if (dh->priv_key == NULL)
+			BN_clear_free(dh->priv_key);
+		if ((dh->priv_key = BN_new()) == NULL)
 			fatal("dh_gen_key: BN_new failed");
 		/* generate a 2*need bits random private exponent */
 		if (!BN_rand(dh->priv_key, 2*need, 0, 0))
@@ -226,9 +227,8 @@ dh_new_group_asc(const char *gen, const char *modulus)
 {
 	DH *dh;
 
-	dh = DH_new();
-	if (dh == NULL)
-		fatal("DH_new");
+	if ((dh = DH_new()) == NULL)
+		fatal("dh_new_group_asc: DH_new");
 
 	if (BN_hex2bn(&dh->p, modulus) == 0)
 		fatal("BN_hex2bn p");
@@ -248,9 +248,8 @@ dh_new_group(BIGNUM *gen, BIGNUM *modulus)
 {
 	DH *dh;
 
-	dh = DH_new();
-	if (dh == NULL)
-		fatal("DH_new");
+	if ((dh = DH_new()) == NULL)
+		fatal("dh_new_group: DH_new");
 	dh->p = modulus;
 	dh->g = gen;
 
