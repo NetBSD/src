@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.72 2000/01/25 15:44:21 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.73 2000/01/25 21:58:23 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp 
  */
 
 /*-
@@ -73,6 +73,7 @@
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
+#define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
@@ -188,6 +189,11 @@
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLATE	0x2216
 #define	PCMCIA_STR_IODATA_PCLATE	"I-O DATA PCLA/TE"
+
+/* Lexar Media */
+#define	PCMCIA_CIS_LEXARMEDIA_COMPATFLASH	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH	0x0100
+#define	PCMCIA_STR_LEXARMEDIA_COMPATFLASH	"Lexar Media CompactFlash"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
