@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 09:49:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/21 10:01:27 rtr Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../Makefile.servermod"
 
 LIB=		lbx
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/lbx
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/lbx
 SRCS=		lbxcmap.c lbxdix.c lbxexts.c lbxgfx.c lbxmain.c lbxopts.c \
 		lbxprop.c lbxsquish.c lbxswap.c lbxtables.c lbxtags.c \
 		lbxzerorep.c

@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.8.4.1 2004/11/15 09:12:43 rtr Exp $
+#	$NetBSD: Makefile,v 1.8.4.2 2004/11/21 10:01:27 rtr Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../Makefile.servermod"
 
 LIB=		mi
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
 SRCS=		miarc.c mibank.c mibitblt.c mibstore.c miclipn.c \
 		micmap.c micursor.c midash.c midispcur.c mieq.c \
 		miexpose.c mifillarc.c mifillrct.c mifpolycon.c \

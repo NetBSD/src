@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2004/11/15 09:12:43 rtr Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2004/11/21 10:01:27 rtr Exp $
 
 .include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
 
 LIB=	xf86_os
 

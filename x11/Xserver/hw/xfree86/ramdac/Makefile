@@ -1,12 +1,13 @@
-# $NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:42 rtr Exp $
+# $NetBSD: Makefile,v 1.3.4.2 2004/11/21 10:01:27 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
 
 LIB=	ramdac
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 SRCS=	BT.c IBM.c TI.c xf86BitOrder.c xf86Cursor.c xf86HWCurs.c \
 	xf86RamDac.c xf86RamDacCmap.c xf86RamDacMod.c
 
@@ -24,7 +25,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
-CPPFLAGS.xf86BitOrder.c=	-DXAAReverseBitOrder=xf86ReverseBitOrder -DRAMDAC_MODULE
+CPPFLAGS.xf86BitOrder.c=	-DXAAReverseBitOrder=xf86ReverseBitOrder \
+				-DRAMDAC_MODULE
 
 BUILDSYMLINKS=	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xaa/xaaBitOrder.c xf86BitOrder.c
 

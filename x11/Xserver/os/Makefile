@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2004/11/15 09:12:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2004/11/21 10:01:28 rtr Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../Makefile.servermod"
 
 LIB=	os
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/os
 .PATH:	${X11SRCDIR.xc}/lib/xtrans
 SRCS=	WaitFor.c access.c connection.c io.c oscolor.c osinit.c \
