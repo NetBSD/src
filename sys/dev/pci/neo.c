@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.18 2003/02/22 04:57:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.18 2003/02/22 04:57:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $");
  * passes that location while playing, it signals an interrupt.
  * 
  * The ring buffer size is currently 16k. That is about 100ms of audio
- * at 44.1khz/stero/16 bit. However, to keep the buffer full, interrupts
+ * at 44.1kHz/stero/16 bit. However, to keep the buffer full, interrupts
  * are generated more often than that, so 20-40 interrupts per second
  * should not be unexpected. Increasing BUFFSIZE should help minimize
  * of glitches due to drivers that spend to much time looping at high
