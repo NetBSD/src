@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.8 2000/05/27 04:52:33 thorpej Exp $	*/
+/*	$NetBSD: crl.c,v 1.9 2000/06/02 21:51:46 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -128,7 +128,7 @@ crlrw(dev, uio, flag)
 
 	if (uio->uio_resid == 0) 
 		return (0);
-	s = spl4();
+	s = splconsmedia();
 	while (crltab.crl_state & CRL_BUSY)
 		(void) tsleep(&crltab, PRIBIO, "crlbusy", 0);
 	crltab.crl_state |= CRL_BUSY;
@@ -148,7 +148,7 @@ crlrw(dev, uio, flag)
 				break;
 		}
 		bp->b_flags = uio->uio_rw == UIO_WRITE ? B_WRITE : B_READ;
-		s = spl4(); 
+		s = splconsmedia(); 
 		crlstart();
 		while ((bp->b_flags & B_DONE) == 0)
 			(void) tsleep(bp, PRIBIO, "crlrw", 0);
