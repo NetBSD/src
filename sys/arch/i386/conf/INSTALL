@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.211 2003/02/06 04:51:51 grant Exp $
+#	$NetBSD: INSTALL,v 1.212 2003/02/16 17:35:16 augustss Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -617,6 +617,7 @@ umass*	at uhub? port ? configuration ? interface ?
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices

@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.23 2002/10/01 12:56:38 fvdl Exp $
+#	$NetBSD: DELPHI,v 1.24 2003/02/16 17:35:15 augustss Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.23 $"
+ident 		"DELPHI-$Revision: 1.24 $"
 
 maxusers	64		# estimated number of users
 
@@ -600,6 +600,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#uax*	at uhub? port ?		# ASIX AX88172 based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Generic driver
 #ugen*	at uhub? port ?
