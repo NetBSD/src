@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.2 2003/05/12 07:49:10 bsh Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.3 2003/05/13 06:29:53 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -63,10 +63,6 @@
 #include <arm/s3c2xx0/sscom_var.h>
 #include <sys/termios.h>
 
-#ifndef SSCOM_FREQ
-#define SSCOM_FREQ 50000000
-#endif
-
 static int sscom_match(struct device *, struct cfdata *, void *);
 static void sscom_attach(struct device *, struct device *, void *);
 
@@ -93,7 +89,7 @@ const struct sscom_uart_info s3c2800_uart_config[] = {
 };
 
 static int
-sscom_match(struct device * parent, struct cfdata * cf, void *aux)
+sscom_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = aux;
 	int unit = sa->sa_index;
@@ -101,7 +97,6 @@ sscom_match(struct device * parent, struct cfdata * cf, void *aux)
 	return unit == 0 || unit == 1;
 }
 
-#if 0
 int tx_int(void *);
 int rx_int(void *);
 int err_int(void *);
@@ -123,39 +118,38 @@ err_int(void *arg)
 {
 	return sscomintr(arg);
 }
-#endif
+
 
 static void
-sscom_attach(struct device * parent, struct device * self, void *aux)
+sscom_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sscom_softc *sc = (struct sscom_softc *) self;
+	struct sscom_softc *sc = (struct sscom_softc *)self;
 	struct s3c2xx0_attach_args *sa = aux;
 	int unit = sa->sa_index;
 	bus_addr_t iobase = s3c2800_uart_config[unit].iobase;
 
-
-	printf(": UART%d addr=%lx", sa->sa_index, iobase);
+	printf( ": UART%d addr=%lx", sa->sa_index, iobase );
 
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
-	sc->sc_frequency = SSCOM_FREQ;
+	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
 
 	sc->sc_rx_irqno = S3C2800_INT_RXD0 + sa->sa_index;
 	sc->sc_tx_irqno = S3C2800_INT_TXD0 + sa->sa_index;
 
 	if (bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
-		printf(": failed to map registers\n");
+		printf( ": failed to map registers\n" );
 		return;
 	}
+
 	printf("\n");
 
 	s3c2800_intr_establish(s3c2800_uart_config[unit].tx_int,
-	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
+	    IPL_SERIAL, IST_LEVEL, tx_int, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].rx_int,
-	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
+	    IPL_SERIAL, IST_LEVEL, rx_int, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].err_int,
-	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
-
+	    IPL_SERIAL, IST_LEVEL, err_int, sc);
 	sscom_disable_txrxint(sc);
 
 	sscom_attach_subr(sc);
@@ -170,12 +164,13 @@ s3c2800_sscom_cnattach(bus_space_tag_t iot, int unit, int rate,
 	return sscom_cnattach(iot, s3c2800_uart_config + unit,
 	    rate, frequency, cflag);
 }
+
 #ifdef KGDB
 int
 s3c2800_sscom_kgdb_attach(bus_space_tag_t iot, int unit, int rate,
-			  int frequency, tcflag_t cflag)
+    int frequency, tcflag_t cflag)
 {
 	return sscom_kgdb_attach(iot, s3c2800_uart_config + unit,
 	    rate, frequency, cflag);
 }
-#endif				/* KGDB */
+#endif /* KGDB */
