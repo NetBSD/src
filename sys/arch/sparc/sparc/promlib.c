@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.25 2004/03/15 23:46:40 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.26 2004/03/16 22:45:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.25 2004/03/15 23:46:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.26 2004/03/16 22:45:18 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -433,9 +433,44 @@ prom_node_has_property(node, prop)
 	const char *prop;
 {
 
-	return (PROM_getproplen(node, (caddr_t)prop) != -1);
+	return (PROM_getproplen(node, (char *)prop) != -1);
 }
 
+/*
+ * Get the global "options" node Id.
+ */
+int prom_getoptionsnode()
+{
+static	int optionsnode;
+
+	if (optionsnode == 0) {
+		optionsnode = prom_findnode(prom_firstchild(prom_findroot()),
+					    "options");
+	}
+	return optionsnode;
+}
+
+/*
+ * Return a property string value from the global "options" node.
+ */
+int prom_getoption(const char *name, char *buf, int buflen)
+{
+	int node = prom_getoptionsnode();
+	int error, len;
+
+	if (buflen == 0)
+		return (EINVAL);
+
+	if (node == 0)
+		return (ENOENT);
+
+	len = buflen - 1;
+	if ((error = PROM_getprop(node, (char *)name, 1, &len, &buf)) != 0)
+		return error;
+
+	buf[len] = '\0';
+	return (0);
+}
 
 void
 prom_halt()
@@ -654,11 +689,16 @@ obp_v2_getbootargs()
 	return (parse_bootargs(*ba->v2_bootargs));
 }
 
+/*
+ * Static storage shared by parse_bootfile() and getbootfile().
+ * Overwritten on each call!
+ */
+static	char storage[128];
+
 char *
 parse_bootfile(args)
 	char *args;
 {
-static	char storage[128];
 	char *cp, *dp;
 
 	cp = args;
@@ -690,7 +730,7 @@ obp_v2_getbootfile()
 {
 	struct v2bootargs *ba = promops.po_bootcookie;
 	char *kernel = parse_bootfile(*ba->v2_bootargs);
-	int diagmode, optionsnode;
+	char buf[4+1], *prop;
 
 	if (kernel[0] != '\0')
 		return kernel;
@@ -702,14 +742,16 @@ obp_v2_getbootfile()
 	 * then get the `boot-file' value (if any) ourselves.
 	 * If the `diag-switch?' PROM variable is set to true, we use
 	 * `diag-file' instead.
-	 *
-	 * Note: PROM_getpropstring() imposes a 31 char size limit.
 	 */
-	optionsnode = findnode(firstchild(findroot()), "options");
-	diagmode = strcmp(PROM_getpropstring(optionsnode, "diag-switch?"),
-			  "true") == 0;
-	return PROM_getpropstring(optionsnode,
-				  diagmode ? "diag-file" : "boot-file");
+	prop = (prom_getoption("diag-switch?", buf, sizeof buf) != 0 ||
+		strcmp(buf, "true") != 0)
+		? "diag-file"
+		: "boot-file";
+
+	if (prom_getoption(prop, storage, sizeof storage) != 0)
+		return (NULL);
+
+	return (storage);
 }
 
 void
@@ -922,7 +964,6 @@ prom_makememarr(ap, max, which)
 	return (n);
 }
 
-
 static struct idprom idprom;
 #ifdef _STANDALONE
 long hostid;
@@ -981,7 +1022,6 @@ void prom_getether(node, cp)
 	u_char *cp;
 {
 	struct idprom *idp = prom_getidprom();
-	int optionsnode;
 	char buf[6+1], *bp;
 	int nitem;
 
@@ -1009,9 +1049,8 @@ void prom_getether(node, cp)
 	 * if we should try to extract the node's "local-mac-address"
 	 * property.
 	 */
-	optionsnode = findnode(firstchild(findroot()), "options");
-	if (strcmp(PROM_getpropstring(optionsnode, "local-mac-address?"),
-			  "true") != 0)
+	if (prom_getoption("local-mac-address?", buf, sizeof buf) != 0 ||
+	    strcmp(buf, "true") != 0)
 		goto read_idprom;
 
 	/* Retrieve the node's "local-mac-address" property, if any */

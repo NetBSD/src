@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.201 2003/08/27 15:59:52 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.202 2004/03/16 22:45:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.201 2003/08/27 15:59:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.202 2004/03/16 22:45:18 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.201 2003/08/27 15:59:52 mrg Exp $");
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	optionsnode;	/* node ID of ROM's options */
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
@@ -843,8 +842,7 @@ crazymap(prop, map)
 	int *map;
 {
 	int i;
-	char *propval;
-	char buf[32];
+	char propval[8+1];
 
 	if (!CPU_ISSUN4 && prom_version() < 2) {
 		/*
@@ -852,8 +850,8 @@ crazymap(prop, map)
 		 * which contains the mapping for us to use. v2 proms do not
 		 * require remapping.
 		 */
-		propval = PROM_getpropstringA(optionsnode, prop, buf, sizeof(buf));
-		if (propval == NULL || strlen(propval) != 8) {
+		if (prom_getoption(prop, propval, sizeof propval) != 0 ||
+		    propval[0] == '\0' || strlen(propval) != 8) {
  build_default_map:
 			printf("WARNING: %s map is bogus, using default\n",
 				prop);
@@ -1232,9 +1230,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	else
 		openboot_special = openboot_special4c;
 
-	node = findroot();
+	node0 = firstchild(findroot());
 
-	/* the first early device to be configured is the cpu */
+	/* The first early device to be configured is the cpu */
 	if (CPU_ISSUN4M) {
 		const char *cp;
 		int mid, bootnode = 0;
@@ -1244,7 +1242,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		 * Make sure to configure the boot CPU as cpu0.
 		 */
 	rescan:
-		for (node = firstchild(node); node; node = nextsibling(node)) {
+		for (node = node0; node; node = nextsibling(node)) {
 			cp = PROM_getpropstringA(node, "device_type",
 					    namebuf, sizeof namebuf);
 			if (strcmp(cp, "cpu") != 0)
@@ -1269,7 +1267,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			config_found(dev, (void *)&ma, mbprint);
 			if (node == bootnode && bootmid != 0) {
 				/* Re-enter loop to find all remaining CPUs */
-				node = findroot();
 				goto rescan;
 			}
 		}
@@ -1277,19 +1274,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		bzero(&ma, sizeof(ma));
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_node = node;
+		ma.ma_node = findroot();
 		ma.ma_name = "cpu";
 		config_found(dev, (void *)&ma, mbprint);
 	}
-
-
-	node = findroot();	/* re-init root node */
-
-	/* Find the "options" node */
-	node0 = firstchild(node);
-	optionsnode = findnode(node0, "options");
-	if (optionsnode == 0)
-		panic("no options in OPENPROM");
 
 	for (ssp = openboot_special; *(sp = *ssp) != 0; ssp++) {
 		struct openprom_addr romreg;
