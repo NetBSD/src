@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.9 2001/03/15 06:10:56 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.10 2001/03/17 04:01:02 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -288,7 +288,7 @@ again:
 		goto again;
 	}
 	if (error) {
-		return EIO;
+		return error;
 	}
 	if (npages == 0) {
 		return 0;
