@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1996/03/26 15:16:39 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1996/04/04 06:26:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -71,7 +71,7 @@ void configure()
 	int root_found;
 
 	/* General device autoconfiguration. */
-	root_found = config_rootfound("mainbus", NULL);
+	root_found = (config_rootfound("mainbus", NULL) != NULL);
 	if (!root_found)
 		panic("configure: mainbus not found");
 

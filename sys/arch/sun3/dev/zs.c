@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35 1996/03/26 15:16:24 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.36 1996/04/04 06:26:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -296,7 +296,7 @@ zsc_attach(parent, self, aux)
 		 */
 		zsc_args.channel = channel;
 		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
-		if (!config_found(self, (void *) &zsc_args, zsc_print)) {
+		if (config_found(self, (void *)&zsc_args, zsc_print) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;

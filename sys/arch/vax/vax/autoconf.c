@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.10 1996/03/17 22:56:25 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.11 1996/04/04 06:26:23 cgd Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -166,7 +166,7 @@ configure()
 	extern int boothowto;
 
 
-	if (!config_rootfound("backplane", NULL))
+	if (config_rootfound("backplane", NULL) == NULL)
 		panic("backplane not configured");
 
 #if GENERIC

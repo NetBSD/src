@@ -24,6 +24,6 @@ mainbus_attach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		;
 }

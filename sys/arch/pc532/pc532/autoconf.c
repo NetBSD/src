@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1996/03/17 01:39:07 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1996/04/04 06:25:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@ configure()
 	startrtclock();
 
 	/* Find out what the hardware configuration looks like! */
-	if (config_rootfound("membus", "membus") == 0)
+	if (config_rootfound("membus", "membus") == NULL)
 		panic ("No mem bus found!");
 
 	for (i = 0; i < NIPL; i++)
@@ -227,6 +227,6 @@ membusattach(parent, self, args)
  	void *args;
 {
 	printf ("\n");
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, NULL, NULL) != NULL)
 		;
 }
