@@ -35,7 +35,6 @@
 .Op Fl k Ar keep-symbol
 .Op Ar object-file ...
 .Sh DESCRIPTION
-
 .Nm Crunchide
 hides the global symbols of
 .Ar object-file
@@ -51,7 +50,6 @@ must contain a list of symbols to keep visible, one symbol per line.
 Note that the C compiler prepends an underscore in front of
 symbols, so to keep the C function ``foo'' visible, the option
 \&``-k _foo'' must be used.
-
 .Pp
 .Nm Crunchide
 is designed as a companion program for 
