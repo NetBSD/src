@@ -1,4 +1,4 @@
-.\"	$NetBSD: edahdi.1,v 1.7 2001/09/11 00:10:15 wiz Exp $
+.\"	$NetBSD: edahdi.1,v 1.8 2001/09/11 00:36:44 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
 .\" All rights reserved.
@@ -132,6 +132,14 @@ habit of assigning a predefined meaning to the partitions
 .Em a/b
 and
 .Em c .
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr installboot 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.2 .
 .Sh BUGS
 The changes made to the AHDI partitions will become active on the next
 .Em first open
@@ -145,11 +153,3 @@ as shown in the example above.
 .Pp
 As soon as a disk contains at least one NBD partition, you are allowed to
 write disklabels and install bootstraps.
-.Sh SEE ALSO
-.Xr disklabel 8
-.Xr installboot 8
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 1.2 .
