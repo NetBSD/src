@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.98 2001/06/15 18:49:37 nonaka Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.99 2001/10/19 01:16:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.98 2001/06/15 18:49:37 nonaka Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.99 2001/10/19 01:16:37 lukem Exp $");
 #endif
 #endif	/* not lint */
 
@@ -847,7 +847,7 @@ readlabel(int f)
 	struct disklabel *lp;
 
 	if (rflag || Iflag) {
-		char	*msg;
+		const char *msg;
 		off_t	 sectoffset;
 
 		msg = NULL;
@@ -1212,7 +1212,7 @@ static int
 editit(void)
 {
 	int pid, xpid;
-	int stat;
+	int status;
 	sigset_t sigset, osigset;
 
 	sigemptyset(&sigset);
@@ -1247,11 +1247,11 @@ editit(void)
 			perror(ed);
 		exit(retval);
 	}
-	while ((xpid = wait(&stat)) >= 0)
+	while ((xpid = wait(&status)) >= 0)
 		if (xpid == pid)
 			break;
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
-	return (!stat);
+	return (!status);
 }
 
 static char *
@@ -1291,8 +1291,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 {
 	const char *const *cpp, *s;
 	struct partition *pp;
-	char	*cp;
-	char	*tp, line[BUFSIZ];
+	char	*cp, *tp, line[BUFSIZ], tbuf[15];
 	int	 v, lineno, errors;
 
 	lineno = 0;
@@ -1314,8 +1313,10 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		}
 		*tp++ = '\0', tp = skip(tp);
 		if (!strcmp(cp, "type")) {
-			if (tp == NULL)
-				tp = "unknown";
+			if (tp == NULL) {
+				strlcpy(tbuf, "unknown", sizeof(tbuf));
+				tp = tbuf;
+			}
 			cpp = dktypenames;
 			for (; cpp < &dktypenames[DKMAXTYPES]; cpp++)
 				if ((s = *cpp) && !strcasecmp(s, tp)) {
@@ -1365,8 +1366,10 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				lp->d_npartitions = v;
 			continue;
 		}
-		if (tp == NULL)
-			tp = "";
+		if (tp == NULL) {
+			tbuf[0] = '\0';
+			tp = tbuf;
+		}
 		if (!strcmp(cp, "disk")) {
 			strncpy(lp->d_typename, tp, sizeof(lp->d_typename));
 			continue;
@@ -1774,8 +1777,8 @@ static void
 usage(void)
 {
 	static const struct {
-		char *name;
-		char *expn;
+		const char *name;
+		const char *expn;
 	} usages[] = {
 	{ "[-rt] [-C] disk",
 	    "(to read label)" },

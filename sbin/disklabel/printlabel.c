@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.2 2001/05/26 19:48:32 christos Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.3 2001/10/19 01:16:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.2 2001/05/26 19:48:32 christos Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.3 2001/10/19 01:16:38 lukem Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -53,11 +53,11 @@ __RCSID("$NetBSD: printlabel.c,v 1.2 2001/05/26 19:48:32 christos Exp $");
 
 
 void
-showinfo(FILE *f, struct disklabel *lp, const char *specname)
+showinfo(FILE *f, struct disklabel *lp, const char *specialname)
 {
 	int	i, j;
 
-	(void)fprintf(f, "# %s:\n", specname);
+	(void)fprintf(f, "# %s:\n", specialname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		(void)fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
