@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.8 1997/10/18 22:27:46 cjs Exp $ */
+/* $NetBSD: loadfile.c,v 1.9 1998/02/28 10:38:55 ross Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -255,10 +255,10 @@ elf_exec(fd, elf, entryp)
 		}
 		first = 0;
 	}
-
 	/*
 	 * Copy the ELF and section headers.
 	 */
+	ffp_save = roundup(ffp_save, sizeof(long));
 	ssym = ffp_save;
 	bcopy(elf, (void *)ffp_save, sizeof(Elf_Ehdr));
 	ffp_save += sizeof(Elf_Ehdr);
