@@ -1,4 +1,5 @@
-/*	$NetBSD: sunos32_dirent.h,v 1.1 2001/02/06 13:13:42 mrg Exp $	 */
+/*	$NetBSD: sunos32_dirent.h,v 1.2 2001/02/06 15:39:38 mrg Exp $	*/
+/* from: NetBSD: sunos_dirent.h,v 1.2 1998/09/05 14:50:26 christos Exp	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
