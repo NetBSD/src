@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.633 2004/07/17 20:05:02 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.634 2004/07/21 16:39:51 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.632 2004/07/17 20:04:32 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.633 2004/07/21 16:39:38 mycroft Exp 
  */
 
 /*
@@ -2402,6 +2402,7 @@
 #define	PCI_PRODUCT_SIS_733	0x0733		/* SiS 733 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
 #define	PCI_PRODUCT_SIS_740	0x0740		/* SiS 740 Host Bridge */
+#define	PCI_PRODUCT_SIS_741	0x0741		/* SiS 741 Host Bridge */
 #define	PCI_PRODUCT_SIS_745	0x0745		/* SiS 745 Host Bridge */
 #define	PCI_PRODUCT_SIS_746	0x0746		/* SiS 746 Host Bridge */
 #define	PCI_PRODUCT_SIS_748	0x0748		/* SiS 748 Host Bridge */
