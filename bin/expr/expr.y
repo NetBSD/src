@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.29 2003/02/14 16:17:30 grant Exp $ */
+/* $NetBSD: expr.y,v 1.30 2004/03/20 08:45:05 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.29 2003/02/14 16:17:30 grant Exp $");
+__RCSID("$NetBSD: expr.y,v 1.30 2004/03/20 08:45:05 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ expr:	item { $$ = $1; }
 		int eval;
 
 		/* compile regular expression */
-		if ((eval = regcomp(&rp, $3, 0)) != 0) {
+		if ((eval = regcomp(&rp, $3, REG_BASIC)) != 0) {
 			char errbuf[256];
 			(void)regerror(eval, &rp, errbuf, sizeof(errbuf));
 			yyerror("%s", errbuf);
