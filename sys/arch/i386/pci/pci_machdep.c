@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 1994/11/03 22:27:17 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 1994/11/04 18:38:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -339,7 +339,6 @@ pci_map_int(tag, ih)
 {
 	pcireg_t data;
 	int pin, line;
-	u_short irq;
 
 	data = pci_conf_read(tag, PCI_INTERRUPT_REG);
 
@@ -381,13 +380,12 @@ pci_map_int(tag, ih)
 			printf("pci_map_int: changed line 2 to line 9\n");
 			line = 9;
 		}
-		irq = 1 << line;
 	}
 
 #if 1
-	printf("pci_map_int: pin %c mapped to irq %d\n", '@' + pin, ffs(irq) - 1);
+	printf("pci_map_int: pin %c mapped to line %d\n", '@' + pin, line);
 #endif
 
-	intr_establish(irq, ih);
+	intr_establish(line, ih);
 	return 0;
 }

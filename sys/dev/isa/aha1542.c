@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.35 1994/11/03 23:08:27 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.36 1994/11/04 18:34:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -551,8 +551,7 @@ ahaprobe(parent, match, aux)
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != aha->aha_int) {
 			printf("aha%d: irq mismatch; kernel configured %d != board configured %d\n",
-				aha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				ffs(aha->aha_int) - 1);
+			    aha->sc_dev.dv_unit, ia->ia_irq, aha->aha_int);
 			return 0;
 		}
 	} else
@@ -561,7 +560,7 @@ ahaprobe(parent, match, aux)
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != aha->aha_dma) {
 			printf("aha%d: drq mismatch; kernel configured %d != board configured %d\n",
-				aha->sc_dev.dv_unit, ia->ia_drq, aha->aha_dma);
+			    aha->sc_dev.dv_unit, ia->ia_drq, aha->aha_dma);
 			return 0;
 		}
 	} else
@@ -953,22 +952,22 @@ noinquire:
 
 	switch (conf.intr) {
 	case INT9:
-		aha->aha_int = IRQ9;
+		aha->aha_int = 9;
 		break;
 	case INT10:
-		aha->aha_int = IRQ10;
+		aha->aha_int = 10;
 		break;
 	case INT11:
-		aha->aha_int = IRQ11;
+		aha->aha_int = 11;
 		break;
 	case INT12:
-		aha->aha_int = IRQ12;
+		aha->aha_int = 12;
 		break;
 	case INT14:
-		aha->aha_int = IRQ14;
+		aha->aha_int = 14;
 		break;
 	case INT15:
-		aha->aha_int = IRQ15;
+		aha->aha_int = 15;
 		break;
 	default:
 		printf("illegal int setting %x\n", conf.intr);

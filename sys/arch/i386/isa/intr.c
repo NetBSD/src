@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 1994/10/27 04:17:44 cgd Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 1994/11/04 18:35:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -220,15 +220,15 @@ fakeintr(arg)
  * Set up an interrupt handler to start being called.
  */
 void
-intr_establish(mask, ih)
-	int mask;
+intr_establish(irq, ih)
+	int irq;
 	struct intrhand *ih;
 {
-	int irq;
+	int mask;
 	struct intrhand **p, *q;
 	static struct intrhand fakehand = {fakeintr};
 
-	irq = ffs(mask) - 1;
+	mask = 1 << irq;
 
 	if (irq < 0 || irq > ICU_LEN)
 		panic("intr_establish: bogus irq");
@@ -265,14 +265,14 @@ intr_establish(mask, ih)
  * Deregister an interrupt handler.
  */
 void
-intr_disestablish(mask, ih)
-	int mask;
+intr_disestablish(irq, ih)
+	int irq;
 	struct intrhand *ih;
 {
-	int irq;
+	int mask;
 	struct intrhand **p, *q;
 
-	irq = ffs(mask) - 1;
+	mask = 1 << irq;
 
 	if (irq < 0 || irq > ICU_LEN)
 		panic("intr_disestablish: bogus irq");

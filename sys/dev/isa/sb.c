@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.11 1994/11/03 23:21:28 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.12 1994/11/04 18:35:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -152,7 +152,7 @@ sbprobe(parent, match, aux)
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		int irq = ffs(ia->ia_irq) - 1;
+		int irq = ia->ia_irq;
 		printf("sb: configured irq %d invalid\n", irq);
 		return 0;
 	}

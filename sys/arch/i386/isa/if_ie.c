@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.17 1994/11/03 23:14:59 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.18 1994/11/04 18:35:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -463,9 +463,9 @@ el_probe(sc, ia)
 
 	c = inb(PORT + IE507_IRQ) & 0x0f;
 
-	if (ia->ia_irq != (1 << c)) {
+	if (ia->ia_irq != c) {
 		printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-		    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1, c);
+		    sc->sc_dev.dv_xname, ia->ia_irq, c);
 		return 0;
 	}
 
