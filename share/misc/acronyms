@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.23 1999/07/21 01:14:49 lukem Exp $
+$NetBSD: acronyms,v 1.24 1999/07/22 23:56:25 hubertf Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -14,8 +14,10 @@ DNDK	don't know, don't care
 DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
+EG	evil grin
 FWIW	for what it's worth
 FYI	for your information
+G	grin
 IIRC	if I recall correctly
 IMO	in my opinion
 IMHO	in my humble opinion
@@ -38,6 +40,7 @@ SOL	shit out [of] luck
 TIA	thanks in advance
 TTFN	ta ta for now
 UTSL	use the source, Luke
+VEG	very evil grin
 WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
 YKWIM	you know what I mean
