@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.1.1 1997/03/13 16:27:28 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1997/10/13 22:18:52 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,8 +60,9 @@ main()
 
 	printf(">> NetBSD netboot [%s]\n", version);
 	prom_get_boot_info();
-	file = defname;
+	idprom_init();
 
+	file = defname;
 	cp = prom_bootfile;
 	if (cp && *cp)
 		file = cp;
