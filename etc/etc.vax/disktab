@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.3 1998/11/14 10:33:27 ragge Exp $
+#	$NetBSD: disktab,v 1.4 2000/03/04 16:11:35 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -466,26 +466,26 @@ qdeagle|qd-eagle|Fujitsu 2351A eagle on QD33 (Microvax):\
 rx02|RX02|DEC RX02:\
 	:ty=removable:ns#13:nt#1:nc#77:\
 	:dt=floppy:\
-	:pa#1001:oa#0:ba#4096:fa#512:
+	:pa#1001:oa#0:ba#4096:fa#512:pt=4.2BSD:
 
 # RX50 is a common 5 1/4" floppy on MV2/MV2000, ca 400k
 rx50|RX50|DEC RX50:\
 	:ty=removable:ns#10:nt#1:nc#80:\
-	:pa#800:ba#4096:fa#512:\
+	:pa#800:ba#4096:fa#512:pt=4.2BSD:\
 	:pc#800:bc#4096:fc#512:\
 	:dt=floppy:
 
 # RX33 is the 1.2MB version of RX50.
 rx33|RX33|DEC RX33:\
 	:ty=removable:ns#15:nt#2:nc#80:\
-	:pa#2400:ba#4096:fa#512:\
+	:pa#2400:ba#4096:fa#512:pt=4.2BSD:\
 	:pc#2400:bc#4096:fc#512:\
 	:dt=floppy:
 
 # RX23 is a normal 1.44MB 3 1/2" floppy.
 rx23|RX23|DEC RX23:\
 	:ty=removable:ns#18:nt#2:nc#80:\
-	:pa#2880:ba#4096:fa#512:\
+	:pa#2880:ba#4096:fa#512:pt=4.2BSD:\
 	:pc#2880:bc#4096:fc#512:\
 	:dt=floppy:
 
@@ -513,15 +513,17 @@ ncc2|nec2363|1Gb NEC:\
 #
 # Special disktab entries used when creating distributions.
 #
+ramdisk|fake-type used for in kernel ramdisk:\
+	:ty=fake:nt#1:ns#2112:nc#1:\
+	:pa#2112:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#2112:bc#4096:fc#512:
+
 bootroot|fake-type used in install boot:\
-	:ty=fake:se#512:nt#1:rm#10:ns#512:nc#1:\
-	:pa#512:oa#0:ba#4096:fa#512:\
-	:pb#512:ob#0:bb#4096:fb#512:\
-	:pc#512:oc#0:bc#4096:fc#512:
+	:ty=fake:nt#1:ns#208:nc#1:\
+	:pa#192:ba#8192:fa#1024:ta=4.2BSD:\
+	:pc#192:bc#8192:fc#1024:
 
 miniroot|fake-type used when installation:\
-	:ty=fake:se#512:nt#1:rm#3600:ns#2048:nc#1:\
-	:pa#4096:oa#0:ba#4096:fa#512:\
-	:pb#4096:ob#0:bb#4096:fb#512:\
-	:pc#4096:oc#0:bc#4096:fc#512:
-
+	:ty=fake:nt#1:ns#2000:nc#1:\
+	:pa#2000:ba#4096:fa#512:ta=4.2BSD:\
+	:pc#2000:bc#4096:fc#512:
