@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.23 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: func.c,v 1.24 2002/05/28 22:12:25 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.23 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: func.c,v 1.24 2002/05/28 22:12:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1071,7 +1071,7 @@ doumask(Char **v, struct command *t)
     (void)umask(i);
 }
 
-typedef quad_t RLIM_TYPE;
+typedef rlim_t RLIM_TYPE;
 
 static const struct limits {
     int     limconst;
