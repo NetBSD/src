@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.16 1996/12/06 02:06:50 lukem Exp $      */
+/*      $NetBSD: ftp.c,v 1.17 1996/12/06 04:33:45 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.16 1996/12/06 02:06:50 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.17 1996/12/06 04:33:45 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -1276,7 +1276,7 @@ progressmeter(flag)
 	off_t cursize, abbrevsize;
 	double elapsed;
 	int ratio, barlength, i, remaining;
-	char prefixes[] = "bKMGTP";	/* 2 ^ 64 == 16384 Petabytes */
+	char prefixes[] = " KMGTP";	/* `P' because 2^64 = 16384 Petabytes */
 
 	if (!progress || filesize < 0)
 		return;
@@ -1314,9 +1314,9 @@ progressmeter(flag)
 		i++;
 		abbrevsize >>= 10;
 	}
-	printf(" %5qd %c", abbrevsize, prefixes[i]);
+	printf(" %5qd %c%c  ", abbrevsize, prefixes[i],
+	    prefixes[i] == ' ' ? ' ' : 'B');
 
-	printf("  ETA: ");
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	if (bytes <= 0 || elapsed <= 0.0) {
@@ -1326,12 +1326,13 @@ progressmeter(flag)
 				  (bytes / elapsed) - elapsed);
 		i = remaining / 3600;
 		if (i)
-			printf("%.02d:", i);
+			printf("%2d:", i);
 		else
 			printf("   ");
 		i = remaining % 3600;
 		printf("%02d:%02d", i / 60, i % 60);
 	}
+	printf(" ETA");
 
 	if (flag > 0)
 		(void) putchar('\n');
