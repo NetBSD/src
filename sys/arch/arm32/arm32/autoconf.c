@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1999/01/03 02:24:56 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1999/01/03 20:13:45 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -77,8 +77,10 @@ extern int cold;
 void dumpconf __P((void));
 void isa_intr_init __P((void));
 
+#ifndef MEMORY_DISK_IS_ROOT
 static void get_device __P((char *name, struct device **devpp, int *partp));
 static void set_root_device __P((void));
+#endif
 
 /* Table major numbers for the device names, NULL terminated */
 
@@ -91,6 +93,7 @@ struct devnametobdevmaj arm32_nam2blk[] = {
 	{ NULL,		0 },
 };
 
+#ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
 
 static void
@@ -141,7 +144,6 @@ get_device(name, devpp, partp)
 
 /* Set the rootdev variable from the root specifier in the boot args */
 
-#ifndef MEMORY_DISK_IS_ROOT
 static void
 set_root_device()
 {
