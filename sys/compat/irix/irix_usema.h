@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.2 2002/05/22 05:14:03 manu Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.3 2002/05/26 21:37:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,6 +73,10 @@ int	irix_usema_ioctl	__P((void *));
 int	irix_usema_poll		__P((void *));
 int	irix_usema_inactive	__P((void *));
 
+#ifdef DEBUG_IRIX
+void	irix_usema_debug	__P((void));
+#endif
+
 #define IRIX_USEMADEV_MINOR	1
 #define IRIX_USEMACLNDEV_MINOR	0
 
@@ -83,7 +87,7 @@ struct irix_semaphore {
 	int is_uk2;	/* metric, debug or history pointer ? */
 	int is_uk3;	/* unknown, usually equal to 0 */
 	int is_uk4;	/* unknown, usually equal to 0 */
-	int is_uk5;	/* unknown, usually two 16 bits small integers < 200 */
+	int is_shid;	/* unique ID for the shared arena ? */
 	int is_oid;	/* owned id? usually equal to -1 */
 	int is_uk7;	/* unknown, usually equal to -1 */
 	int is_uk8;	/* unknown, usually equal to 0 */
@@ -99,12 +103,21 @@ struct irix_usema_idaddr {
 	int *iui_oidp;	/* pointer to is_oid field in struct irix_semaphore */
 };
 
-/* File descriptor vs sempahore address list */
+/* waigint processes list */
+struct irix_waiting_proc_rec {
+	TAILQ_ENTRY(irix_waiting_proc_rec) iwpr_list;
+	struct proc *iwpr_p;
+};
+
+/* semaphore list, their vnode counterparts, and waiting processes lists */
 struct irix_usema_rec {
-	LIST_ENTRY(irix_usema_rec)	iur_list;
+	LIST_ENTRY(irix_usema_rec) iur_list;
 	struct vnode *iur_vn;
 	struct irix_semaphore *iur_sem;
-	int iur_wakeup;
+	int iur_shid;
+	struct proc *iur_p;
+	int iur_waiting_count;
+	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
 };
 
 /* From IRIX's <sys/usioctl.h> */
@@ -155,5 +168,24 @@ struct irix_ussemastate_s {
 };
 typedef struct irix_ussemastate_s irix_ussemastate_t;
 typedef struct irix_ussematidstate_s irix_ussematidstate_t;
+
+
+/* usync_fcntl() commands, undocumented in IRIX */
+#define IRIX_USYNC_BLOCK		1
+#define IRIX_USYNC_INTR_BLOCK		2
+#define IRIX_USYNC_UNBLOCK_ALL		3
+#define IRIX_USYNC_UNBLOCK		4
+#define IRIX_USYNC_NOTIFY_REGISTER	5
+#define IRIX_USYNC_NOTIFY		6
+#define IRIX_USYNC_NOTIFY_DELETE	7
+#define IRIX_USYNC_NOTIFY_CLEAR		8
+#define IRIX_USYNC_GET_STATE		11
+
+struct irix_usync_arg {
+	int iua_uk0;	/* unknown, usually small integer around 1000 */
+	int iua_uk1;	/* unknown, usually pointer to code in libc */
+	int iua_uk2;	/* unknown, usually null */
+	struct irix_semaphore *iua_sem;	/* semaphore address */
+};
 
 #endif /* _IRIX_USEMA_H_ */
