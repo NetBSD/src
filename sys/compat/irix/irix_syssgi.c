@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.10 2001/12/26 22:18:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.10 2001/12/26 22:18:25 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $")
 #include <sys/filedesc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/sysctl.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
@@ -71,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $")
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 #include <compat/irix/irix_syssgi.h>
+
+/* In sys/kern/exec_elf32.c */
+void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
+	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
     struct proc *, register_t *));
@@ -172,7 +176,6 @@ irix_sys_syssgi(p, v, retval)
 	return 0;
 }
 
-#define INSANE_DEBUG_IRIX
 static int
 irix_syssgi_mapelf(fd, ph, count, p, retval)
 	int fd;
@@ -188,18 +191,16 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	int prot;
 	int flags;
 	u_long size;
-	u_long uaddr, msize, psize, rm, rf;
-	long diff, offset;
+	Elf_Addr uaddr;
 	struct file *fp;
 	struct filedesc *fdp;
 	struct exec_vmcmd_set vcset;
 	struct exec_vmcmd *base_vcp = NULL;
 	struct vnode *vp;
 
-#ifdef INSANE_DEBUG_IRIX 
-	printf("irix_syssgi_mapelf(): fd = %d, *ph = %p, count = %d\n",
-	    fd, ph, count);
-#endif
+	vcset.evs_cnt = 0;
+	vcset.evs_used = 0;
+
 	/* Check that the program header array is readable by the process */
 	if (!uvm_useracc((caddr_t)ph, sizeof(Elf_Phdr) * count, B_READ))
 		return EACCES;
@@ -228,109 +229,42 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		error = EBADF;
 		goto bad;
 	}
+	FILE_USE(fp);
 	vp = (struct vnode *)fp->f_data;
 
-	/* Map each sections. Borrowed from sys/kern/exec_elf32.c */
-	FILE_USE(fp);
 	pht = kph;
 	for (i = 0; i < count; i++) {
-#ifdef INSANE_DEBUG_IRIX
-		printf("i = %d\n", i);
-#endif
-		vcset.evs_cnt = 0;
-		vcset.evs_used = 0;
+		uaddr = ELFDEFNNAME(NO_ADDR);
+		size = 0;
+		prot = 0;
+		flags = VMCMD_BASE;
 
-		if (pht->p_align > 1)
-			uaddr = ELF_TRUNC(pht->p_vaddr, pht->p_align);
-		else
-			uaddr = pht->p_vaddr;
-		diff = pht->p_vaddr - uaddr;
+		ELFNAME(load_psection)(&vcset, vp, pht, &uaddr, 
+		    &size, &prot, flags);
 
-		prot |= (pht->p_flags & PF_R) ? VM_PROT_READ : 0;
-		prot |= (pht->p_flags & PF_W) ? VM_PROT_WRITE : 0;
-		prot |= (pht->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
-
-		offset = pht->p_offset - diff;
-		size = pht->p_filesz + diff;
-		msize = pht->p_memsz + diff;
-
-		if (pht->p_align >= PAGE_SIZE) {
-			if ((pht->p_flags & PF_W) != 0) {
-				/*
-				 * Because the pagedvn pager can't handle zero 
-				 * fill of the last data page if it's not 
-				 * page aligned we map the last page readvn.
-				 */
-				psize = trunc_page(size);
-			} else {
-				psize = round_page(size);
-			}
-		} else {
-			psize = size;
-		}
-
-		if (psize > 0) {
-#ifdef INSANE_DEBUG_IRIX 
-			printf("irix_mapelf(): psize > 0; NEW_VMCMD2\n");
-			printf("psize = 0x%lx, uaddr = 0x%lx\n", psize, uaddr);
-			printf("vp = %p, offset = 0x%lx\n", vp, offset);
-			printf("pht->p_align = 0x%lx\n", (long)pht->p_align);
-#endif
-			NEW_VMCMD2(&vcset, pht->p_align < PAGE_SIZE ?
-			    vmcmd_map_readvn : vmcmd_map_pagedvn, psize,
-			    uaddr, vp, offset, prot, flags);
-		}
-		if (psize < size) {
-#ifdef INSANE_DEBUG_IRIX 
-			printf("irix_mapelf(): psize < size; NEW_VMCMD2\n");
-#endif
-			NEW_VMCMD2(&vcset, vmcmd_map_readvn, size - psize,
-			    uaddr + psize, vp, offset + psize, prot,
-			    psize > 0 ? flags & VMCMD_RELATIVE : flags);
-		}
-
-		/*
-		 * Check if we need to extend the size of the segment
-		 */
-		rm = round_page(uaddr + msize);
-		rf = round_page(uaddr + size);
-
-		if (rm != rf) {
-#ifdef INSANE_DEBUG_IRIX 
-			printf("irix_mapelf(): rm != rf; NEW_VMCMD2\n");
-#endif
-			NEW_VMCMD2(&vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
-			    0, prot, flags & VMCMD_RELATIVE);
-			size = msize;
-		}
-
-		/* 
-		 * Run the vmcmds
-		 */
-		for (j = 0; j < vcset.evs_used && !error; j++) {
-			struct exec_vmcmd *vcp;
-
-			vcp = &vcset.evs_cmds[j];
-			if (vcp->ev_flags & VMCMD_RELATIVE) {
-				vcp->ev_addr += base_vcp->ev_addr;
-			}
-#ifdef INSANE_DEBUG_IRIX
-	printf("irix_syssgi_mapelf(): mapping i = %d, j = %d, *pht = %p\n",
-	    i, j, pht);
-	printf("uaddr = 0x%lx, size = 0x%lx, msize = 0x%lx\n",
-	    uaddr, size, msize);
-	printf("psize = 0x%lx, rm = 0x%lx, rf = 0x%lx\n",
-	    psize, rm, rf);
-#endif
-			/* Sleeping here seems to trigger some bugs */
-			/* (void)tsleep ((void *)&vcp, 0, NULL, 10); */
-
-			error = (*vcp->ev_proc)(p, vcp);
-			if (vcp->ev_flags & VMCMD_BASE)
-			base_vcp = vcp;
-		}
 		pht++;
-		kill_vmcmds(&vcset);
+	}
+		    
+	/* 
+	 * Run the vmcmds
+	 */
+	for (j = 0; j < vcset.evs_used && !error; j++) {
+		struct exec_vmcmd *vcp;
+		vcp = &vcset.evs_cmds[j];
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+			if (base_vcp == NULL)
+				panic("irix_syssgi_mapelf: bad vmcmd base\n");
+				   
+			vcp->ev_addr += base_vcp->ev_addr;
+		}
+#ifdef DEBUG_IRIX
+	printf("irix_syssgi_mapelf(): mapping j = %d\n", j);
+	printf("uaddr = 0x%08lx, size = 0x%08lx, prot = 0x%08x ", 
+	    (unsigned long)uaddr, size, prot);
+#endif
+		error = (*vcp->ev_proc)(p, vcp);
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
 	}
 
 	FILE_UNUSE(fp, p);
