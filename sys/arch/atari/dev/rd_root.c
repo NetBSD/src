@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1 1996/03/14 21:41:51 leo Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.2 1996/03/27 10:13:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -97,17 +97,6 @@ static int  rd_compressed __P((caddr_t, int, struct read_info *));
 /*
  * This is called during autoconfig.
  */
-int
-rd_match_hook(parent, self, aux)
-	struct device	*parent;
-	void	*self;
-	void	*aux;
-{
-	if(strcmp("rd", aux) && strcmp("*", aux))
-		return(0);
-	return(1);
-}
-
 void
 rd_attach_hook(unit, rd)
 int		unit;
@@ -116,7 +105,7 @@ struct rd_conf	*rd;
 	extern int	atari_realconfig;
 
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
-		printf (":%sauto-load on open. Size %d bytes.", 
+		printf ("rd%d:%sauto-load on open. Size %ld bytes.\n", unit,
 		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
 		    rd_info[unit].ramd_size);
 		rd->rd_type = RD_UNCONFIGURED; /* Paranoia... */
@@ -129,8 +118,6 @@ int		unit;
 struct rd_conf	*rd;
 {
 	struct ramd_info *ri;
-	int		 s;
-	int		 error = 0;
 
 	if(unit >= RAMD_NDEV)
 		return;
