@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1996/03/17 02:01:34 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.45 1996/03/17 21:40:11 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,8 +115,6 @@ void	sync_crash __P((void));
 int	findnode __P((int, const char *));
 int	mainbus_match __P((struct device *, void *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
-volatile void romhalt __P((void));
-volatile void romboot __P((char *));
 
 struct	bootpath bootpath[8];
 static	void bootpath_build __P((void));
@@ -1354,7 +1352,7 @@ romgetcursoraddr(rowp, colp)
 }
 #endif
 
-volatile void
+void
 romhalt()
 {
 
@@ -1362,7 +1360,7 @@ romhalt()
 	panic("PROM exit failed");
 }
 
-volatile void
+void
 romboot(str)
 	char *str;
 {
