@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 2003/01/23 15:03:44 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 2003/01/27 05:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -365,6 +365,7 @@ struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
+struct	hashtab *devitab;	/* device instance lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
