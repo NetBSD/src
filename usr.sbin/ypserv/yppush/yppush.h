@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.h,v 1.2 2002/07/06 00:46:12 wiz Exp $	*/
+/*	$NetBSD: yppush.h,v 1.3 2003/11/12 13:31:08 grant Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 /*
  * This file was originally generated with rpcgen, then cleaned up
- * by Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * by Jason R. Thorpe <thorpej@NetBSD.org>.
  */
 
 #define YPPUSH_XFRRESPPROG ((unsigned long)0x40000000)

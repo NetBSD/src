@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.20 2003/11/06 07:09:40 martti Exp $
+# $NetBSD: etcupdate,v 1.21 2003/11/12 13:31:07 grant Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@
 # see the modifications and either install the new version or merge the
 # changes in to your current configuration files.
 #
-# This script was written by Martti Kuparinen <martti@netbsd.org> and
+# This script was written by Martti Kuparinen <martti@NetBSD.org> and
 # improved by several other NetBSD users.
 #
 # The idea for this script (including code fragments, variable names etc.)
