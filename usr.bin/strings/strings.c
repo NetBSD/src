@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1987 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,24 +32,25 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1987 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)strings.c	5.10 (Berkeley) 5/23/91";
+static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
+
 #include <a.out.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define DEF_LEN		4		/* default minimum string length */
 #define ISSTR(ch)	(isascii(ch) && (isprint(ch) || ch == '\t'))
@@ -84,8 +85,8 @@ main(argc, argv)
 	 */
 	asdata = exitcode = fflg = oflg = 0;
 	minlen = -1;
-	while ((ch = getopt(argc, argv, "-0123456789anof")) != EOF)
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, "-0123456789an:of")) != EOF)
+		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			/*
@@ -122,6 +123,10 @@ main(argc, argv)
 
 	if (minlen == -1)
 		minlen = DEF_LEN;
+	else {
+		(void)fprintf(stderr, "strings: length less than 1\n");
+		exit (1);
+	}
 
 	if (!(bfr = malloc((u_int)minlen))) {
 		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
