@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.143 2000/05/08 13:49:47 augustss Exp $
+#	$NetBSD: INSTALL,v 1.144 2000/05/09 00:28:22 hubertf Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -75,7 +75,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-options 	DDB_ONPANIC=0	# do not by default automatically drop to ddb
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
