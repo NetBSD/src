@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.14 2000/01/25 08:12:58 augustss Exp $
+#	$NetBSD: files.usb,v 1.15 2000/01/25 13:56:23 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -35,7 +35,7 @@ file	dev/usb/uaudio.c		uaudio
 # Modem and com serial port
 device	ucom
 attach	ucom at ucombus
-file	dev/usb/ucom.c			ucom		needs-flag
+file	dev/usb/ucom.c			ucom | ucombus	needs-flag
 
 # Generic devices
 device	ugen

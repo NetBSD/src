@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.12 2000/01/25 08:12:58 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.13 2000/01/25 13:56:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@
 #include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/ucomvar.h>
+
+#include "ucom.h"
+
+#if NUCOM > 0
 
 #ifdef UCOM_DEBUG
 #define DPRINTFN(n, x)	if (ucomdebug > (n)) logprintf x
@@ -958,6 +962,8 @@ ucom_cleanup(sc)
 	usbd_free_xfer(sc->sc_ixfer);
 	usbd_free_xfer(sc->sc_oxfer);
 }
+
+#endif /* NUCOM > 0 */
 
 int
 ucomprint(aux, pnp)
