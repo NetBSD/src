@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_acosh.c,v 1.8 1995/05/10 20:44:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_acosh.c,v 1.9 1995/05/12 04:57:18 jtc Exp $";
 #endif
 
 /* __ieee754_acosh(x)
@@ -61,7 +61,7 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 	    return 0.0;			/* acosh(1) = 0 */
 	} else if (hx > 0x40000000) {	/* 2**28 > x > 2 */
 	    t=x*x;
-	    return __ieee754_log(2.0*x-one/(x+sqrt(t-one)));
+	    return __ieee754_log(2.0*x-one/(x+__ieee754_sqrt(t-one)));
 	} else {			/* 1<x<2 */
 	    t = x-one;
 	    return log1p(t+sqrt(2.0*t+t*t));
