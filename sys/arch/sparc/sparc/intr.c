@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56 2001/10/18 12:32:25 uwe Exp $ */
+/*	$NetBSD: intr.c,v 1.57 2001/11/21 19:14:28 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,7 +167,7 @@ nmi_hard()
 	/*
 	 * Increase nmi_hard_wait.  If we aren't the master, loop while this
 	 * variable is non-zero.  If we are the master, loop while this
-	 * variable is less then the number of cpus.
+	 * variable is less than the number of cpus.
 	 */
 	simple_lock(&nmihard_lock);
 	nmi_hard_wait++;

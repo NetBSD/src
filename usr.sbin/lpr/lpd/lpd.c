@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.31 2001/10/09 02:15:37 mjl Exp $	*/
+/*	$NetBSD: lpd.c,v 1.32 2001/11/21 19:14:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.31 2001/10/09 02:15:37 mjl Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.32 2001/11/21 19:14:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 	struct sockaddr_storage frominet;
 	sigset_t nmask, omask;
 	int lfd, errs, i, f, funix, *finet;
-	int child_max = 32;	/* more then enough to hose the system */
+	int child_max = 32;	/* more than enough to hose the system */
 	int options = 0, check_options = 0;
 	struct servent *sp;
 	const char *port = "printer";
