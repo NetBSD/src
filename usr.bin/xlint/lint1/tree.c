@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.23 2002/01/31 19:36:54 tv Exp $	*/
+/*	$NetBSD: tree.c,v 1.24 2002/01/31 22:30:20 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.23 2002/01/31 19:36:54 tv Exp $");
+__RCSID("$NetBSD: tree.c,v 1.24 2002/01/31 22:30:20 tv Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2886,7 +2886,7 @@ foldflt(tnode_t *tn)
 
 	if (isnan((double)v->v_ldbl))
 		lerror("foldflt() 5");
-	if (isinf((double)v->v_ldbl) ||
+	if (!finite((double)v->v_ldbl) ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
