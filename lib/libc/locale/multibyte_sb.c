@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_sb.c,v 1.2 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: multibyte_sb.c,v 1.3 2003/03/05 20:18:16 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte_sb.c,v 1.2 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: multibyte_sb.c,v 1.3 2003/03/05 20:18:16 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -248,4 +248,22 @@ wcstombs(s, pwcs, n)
 	/* pwcs may be NULL */
 
 	return wcsrtombs(s, &pwcs, n, NULL);
+}
+
+wint_t
+btowc(c)
+	int c;
+{
+	if (c == EOF || c & ~0xFF)
+		return WEOF;
+	return (wint_t)c;
+}
+
+int
+wctob(c)
+	wint_t c;
+{
+	if (c == WEOF || c & ~0xFF)
+		return EOF;
+	return (int)c;
 }

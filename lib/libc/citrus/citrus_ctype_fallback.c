@@ -1,4 +1,4 @@
-/*	$NetBSD: btowc.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.c,v 1.1 2003/03/05 20:18:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,34 +28,75 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: btowc.c,v 1.3 2003/03/04 10:35:31 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.1 2003/03/05 20:18:15 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <sys/types.h>
 #include <assert.h>
 #include <wchar.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+
+#include "citrus_module.h"
+#include "citrus_ctype.h"
+#include "citrus_ctype_fallback.h"
 
 /*
- * convert a single byte character to a corresponding wide character.
- */
-wint_t
-btowc(c)
-	int c;
+ * for ABI version >= 0x00000002
+ */ 
+
+int
+_citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
+			     int c, wint_t * __restrict wcresult)
 {
 	char mb;
-	mbstate_t mbs;
+	mbstate_t state;
 	wchar_t wc;
+	size_t nr;
+	int err;
 
-	if (c==EOF)
-		return (WEOF);
+	_DIAGASSERT(cc != NULL && cc->cc_closure != NULL);
 
-	mb = (unsigned char)c;
-	memset(&mbs, 0, sizeof(mbs));
-	if (mbrtowc(&wc, &mb, 1, &mbs) != 1)
-		return (WEOF);
+	if (c == EOF) {
+		*wcresult = WEOF;
+		return 0;
+	}
 
-	return ((wint_t)wc);
+	memset(&state, 0, sizeof(state));
+	mb = (char)(unsigned)c;
+	err = _citrus_ctype_mbrtowc(cc, &wc, &mb, 1, (void *)&state, &nr);
+	if (!err && (nr == 0 || nr == 1))
+		*wcresult = wc;
+	else
+		*wcresult = WEOF;
+
+	return 0;
+}
+
+int
+_citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
+			     wint_t wc, int * __restrict cresult)
+{
+	mbstate_t state;
+	char buf[MB_LEN_MAX];
+	size_t nr;
+	int err;
+
+	_DIAGASSERT(cc != NULL && cc->cc_closure != NULL);
+
+	if (wc == WEOF) {
+		*cresult = EOF;
+		return 0;
+	}
+	memset(&state, 0, sizeof(state));
+	err = _citrus_ctype_wcrtomb(cc, buf, (wchar_t)wc, (void *)&state, &nr);
+	if (!err && nr == 1)
+		*cresult = buf[0];
+	else
+		*cresult = EOF;
+
+	return 0;
 }
