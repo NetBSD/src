@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.6 1994/12/04 01:15:32 cgd Exp $	*/
+/*	$NetBSD: svc.h,v 1.7 1995/01/04 02:57:47 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -264,6 +264,7 @@ extern fd_set svc_fdset;
 #define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
 #else
 extern int svc_fds;
+extern int svc_maxfd;
 #endif /* def FD_SETSIZE */
 
 /*
