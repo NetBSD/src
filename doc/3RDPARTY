@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.214 2004/05/04 02:45:47 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.215 2004/05/08 13:27:59 lha Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -293,8 +293,8 @@ Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
 for import.
 
 Package:	heimdal
-Version:	0.6.1
-Current Vers:	0.6.1
+Version:	0.6.2
+Current Vers:	0.6.2
 Maintainer:	Heimdal <heimdal@pdc.kth.se>
 Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
 Mailing List:	heimdal-discuss@pdc.kth.se
