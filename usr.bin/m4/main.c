@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2002/01/31 19:36:47 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2002/03/04 13:16:03 lukem Exp $	*/
 /*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2002/01/31 19:36:47 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2002/03/04 13:16:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -561,20 +561,20 @@ inspect(c, tp)
 static void
 initkwds()
 {
-	size_t i;
+	size_t i, klen;
 	unsigned int h;
 	ndptr p;
-	char *k;
+	char *k, *newk;
 
 	for (i = 0; i < MAXKEYS; i++) {
 		k = (char *)keywrds[i].knam;
 		if (m4prefix) {
-			size_t klen = strlen(k);
-			char *newk = malloc(klen + 4);
-
+			klen = strlen(k) + 4;
+			newk = malloc(klen);
 			if (snprintf(newk, klen, "m4_%s", k) == -1)
 				err(1, "snprintf");
 			keywrds[i].knam = newk;
+			k = newk;
 		}
 		h = hash(k);
 		p = (ndptr) xalloc(sizeof(struct ndblock));
