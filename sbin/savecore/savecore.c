@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.40 1999/08/02 00:33:01 mycroft Exp $	*/
+/*	$NetBSD: savecore.c,v 1.41 2000/08/01 16:46:27 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.40 1999/08/02 00:33:01 mycroft Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.41 2000/08/01 16:46:27 eeh Exp $");
 #endif
 #endif /* not lint */
 
@@ -584,13 +584,15 @@ rawname(s)
 int
 get_crashtime()
 {
+	struct timeval time;
 	time_t dumptime;			/* Time the dump was taken. */
 
-	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime) != 0) {
+	if (KREAD(kd_dump, dump_nl[X_TIME].n_value, &time) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
 		return (0);
 	}
+	dumptime = time.tv_sec;
 	if (dumptime == 0) {
 		if (verbose)
 			syslog(LOG_ERR, "dump time is zero");
