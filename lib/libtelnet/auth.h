@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)auth.h	8.1 (Berkeley) 6/4/93
- *	$Id: auth.h,v 1.3 1994/02/25 02:52:53 cgd Exp $
+ *	$Id: auth.h,v 1.4 1995/06/05 19:46:56 pk Exp $
  */
 
 /*
@@ -63,23 +63,15 @@
 #define	AUTH_USER	3	/* We know he name */
 #define	AUTH_VALID	4	/* We know him, and he needs no password */
 
-#if	!defined(P)
-#ifdef	__STDC__
-#define P(x)	x
-#else
-#define P(x)	()
-#endif
-#endif
-
 typedef struct XauthP {
 	int	type;
 	int	way;
-	int	(*init) P((struct XauthP *, int));
-	int	(*send) P((struct XauthP *));
-	void	(*is) P((struct XauthP *, unsigned char *, int));
-	void	(*reply) P((struct XauthP *, unsigned char *, int));
-	int	(*status) P((struct XauthP *, char *, int));
-	void	(*printsub) P((unsigned char *, int, unsigned char *, int));
+	int	(*init) __P((struct XauthP *, int));
+	int	(*send) __P((struct XauthP *));
+	void	(*is) __P((struct XauthP *, unsigned char *, int));
+	void	(*reply) __P((struct XauthP *, unsigned char *, int));
+	int	(*status) __P((struct XauthP *, char *, int));
+	void	(*printsub) __P((unsigned char *, int, unsigned char *, int));
 } Authenticator;
 
 #include "auth-proto.h"

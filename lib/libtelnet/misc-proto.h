@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc-proto.h	8.1 (Berkeley) 6/4/93
- *	$Id: misc-proto.h,v 1.3 1994/02/25 02:53:02 cgd Exp $
+ *	$Id: misc-proto.h,v 1.4 1995/06/05 19:47:02 pk Exp $
  */
 
 /*
@@ -57,24 +57,19 @@
 #ifndef	__MISC_PROTO__
 #define	__MISC_PROTO__
 
-#if	!defined(P)
-#ifdef	__STDC__
-#define	P(x)	x
-#else
-#define	P(x)	()
-#endif
-#endif
+#include <sys/cdefs.h>
 
-void auth_encrypt_init P((char *, char *, char *, int));
-void auth_encrypt_connect P((int));
-void printd P((unsigned char *, int));
+void auth_encrypt_init __P((char *, char *, char *, int));
+void auth_encrypt_user __P((char *));
+void auth_encrypt_connect __P((int));
+void printd __P((unsigned char *, int));
 
 /*
  * These functions are imported from the application
  */
-int net_write P((unsigned char *, int));
-void net_encrypt P((void));
-int telnet_spin P((void));
-char *telnet_getenv P((char *));
-char *telnet_gets P((char *, char *, int, int));
+int net_write __P((unsigned char *, int));
+void net_encrypt __P((void));
+int telnet_spin __P((void));
+char *telnet_getenv __P((char *));
+char *telnet_gets __P((char *, char *, int, int));
 #endif

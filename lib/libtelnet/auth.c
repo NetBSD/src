@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)auth.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: auth.c,v 1.3 1994/02/25 02:52:51 cgd Exp $";
+static char *rcsid = "$Id: auth.c,v 1.4 1995/06/05 19:46:53 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -245,14 +245,14 @@ getauthmask(type, maskp)
 
 	int
 auth_enable(type)
-	int type;
+	char *type;
 {
 	return(auth_onoff(type, 1));
 }
 
 	int
 auth_disable(type)
-	int type;
+	char *type;
 {
 	return(auth_onoff(type, 0));
 }
