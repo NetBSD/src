@@ -14,6 +14,13 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#ifdef HAVE_KERBEROS
+# error kerberos is not supported with the IPv6 patch
+#endif
+#ifdef HAVE_GSSAPI
+# error gssapi is not supported with the IPv6 patch
+#endif
+
 #include <assert.h>
 #include "cvs.h"
 #include "getline.h"
@@ -3763,21 +3770,39 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     int tofd, fromfd;
 #endif
     int port_number;
-    struct sockaddr_in client_sai;
-    struct hostent *hostinfo;
     char no_passwd = 0;   /* gets set if no password found */
+    struct addrinfo hints, *res, *res0;
+    char pbuf[10];
+    int e;
 
-    sock = socket (AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
-    {
-	error (1, 0, "cannot create socket: %s", SOCK_STRERROR (SOCK_ERRNO));
-    }
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
     port_number = auth_server_port_number ();
-    hostinfo = init_sockaddr (&client_sai, CVSroot_hostname, port_number);
-    if (connect (sock, (struct sockaddr *) &client_sai, sizeof (client_sai))
-	< 0)
-	error (1, 0, "connect to %s:%d failed: %s", CVSroot_hostname,
-	       port_number, SOCK_STRERROR (SOCK_ERRNO));
+    snprintf(pbuf, sizeof(pbuf), "%d", port_number);
+    e = getaddrinfo(CVSroot_hostname, pbuf, &hints, &res0);
+    if (e)
+    {
+	error (1, 0, "%s", gai_strerror(e));
+    }
+    sock = -1;
+    for (res = res0; res; res = res->ai_next) {
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0)
+	    continue;
+
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	break;
+    }
+    if (sock < 0)
+    {
+	error (1, 0, "connect to %s:%s failed: %s", CVSroot_hostname,
+	       pbuf, SOCK_STRERROR (SOCK_ERRNO));
+    }
 
     /* Run the authorization mini-protocol before anything else. */
     if (do_gssapi)
