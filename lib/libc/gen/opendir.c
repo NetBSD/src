@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.15 1997/10/10 02:18:18 fvdl Exp $	*/
+/*	$NetBSD: opendir.c,v 1.16 1998/02/27 18:21:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.15 1997/10/10 02:18:18 fvdl Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.16 1998/02/27 18:21:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,8 +125,8 @@ __opendir2(name, flags)
 	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS, MFSNAMELEN));
 
 	if (unionstack || nfsdir) {
-		int len;
-		int space;
+		size_t len;
+		size_t space;
 		char *buf;
 		char *ddptr;
 		char *ddeptr;
@@ -169,7 +169,7 @@ retry:
 				ddptr = buf + (len - space);
 			}
 
-			dirp->dd_seek = lseek(fd, 0, SEEK_CUR);
+			dirp->dd_seek = lseek(fd, (off_t)0, SEEK_CUR);
 			n = getdents(fd, ddptr, space);
 			/*
 			 * For NFS: EINVAL means a bad cookie error
@@ -179,7 +179,7 @@ retry:
 			 */
 			if (n == -1 && errno == EINVAL && nfsdir) {
 				free(buf);
-				lseek(fd, 0, SEEK_SET);
+				lseek(fd, (off_t)0, SEEK_SET);
 				goto retry;
 			}
 			if (n > 0) {
@@ -245,7 +245,7 @@ retry:
 					/*
 					 * This sort must be stable.
 					 */
-					mergesort(dpv, n, sizeof(*dpv),
+					mergesort(dpv, (size_t)n, sizeof(*dpv),
 					    alphasort);
 
 					dpv[n] = NULL;
@@ -284,7 +284,7 @@ retry:
 		dirp->dd_size = ddptr - dirp->dd_buf;
 	} else {
 		dirp->dd_len = incr;
-		dirp->dd_buf = malloc(dirp->dd_len);
+		dirp->dd_buf = malloc((size_t)dirp->dd_len);
 		if (dirp->dd_buf == NULL) {
 			free(dirp);
 			close (fd);
