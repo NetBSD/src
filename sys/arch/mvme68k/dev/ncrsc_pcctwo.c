@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.9 2001/04/30 09:05:59 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.10 2001/05/03 19:03:53 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,8 +122,6 @@ ncrsc_pcctwo_attach(parent, self, args)
 		clk = cpuspeed * 2;
 		ctest7 = OSIOP_CTEST7_SC0;
 	}
-
-	printf(": %dMHz ncr53C710 SCSI I/O Processor\n", clk);
 
 	sc->sc_bst = pa->pa_bust;
 	sc->sc_dmat = pa->pa_dmat;
