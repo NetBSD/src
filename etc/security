@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.65 2001/10/03 15:41:25 lukem Exp $
+#	$NetBSD: security,v 1.66 2001/10/05 01:06:17 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -90,8 +90,8 @@ if checkyesno check_passwd; then
 			printf "Login %s has more than "len" characters.\n", $1;
 		if ($2 == "")
 			printf "Login %s has no password.\n", $1;
-		if (length($2) != 13 && 
-		    length($2) != 20 && 
+		if (length($2) != 13 &&
+		    length($2) != 20 &&
 		    length($2) != 34 &&
 		    $2 != "" &&
 		    $2 !~ /^\*[A-z-]+$/ &&
@@ -203,7 +203,7 @@ if checkyesno check_rootdotfiles; then
 			# both the 020 and 002 bits are set.
 			# We handle this in decimal initially to extract the
 			# digits, and then extract the `2' bit of each digit.
-			# This is made especially painful because 
+			# This is made especially painful because
 			# bitwise operations were left out of awk.
 			egrep '^[ \t]*umask[ \t]+[0-7]+' $i |
 			awk '{
