@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.3 1996/12/22 11:31:10 cgd Exp $	*/
+/*	$NetBSD: read.c,v 1.4 1997/11/03 22:37:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: read.c,v 1.3 1996/12/22 11:31:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: read.c,v 1.4 1997/11/03 22:37:09 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -79,6 +79,8 @@ static	thtab_t	**thtab;		/* hash table */
 type_t	**tlst;				/* array for indexed access */
 static	size_t	tlstlen;		/* length of tlst */
 
+static	hte_t **renametab;
+
 /* index of current C source file (as spezified at the command line) */
 static	int	csrcfile;
 
@@ -117,6 +119,8 @@ readfile(name)
 		tlst = xcalloc(tlstlen = 256, sizeof (type_t *));
 	if (thtab == NULL)
 		thtab = xcalloc(THSHSIZ2, sizeof (thtab_t));
+
+	_inithash(&renametab);
 
 	srcfile = getfnidx(name);
 
@@ -194,6 +198,8 @@ readfile(name)
 
 	}
 
+	_destroyhash(renametab);
+
 	if (ferror(inp))
 		err(1, "read error on %s", name);
 
@@ -259,6 +265,7 @@ funccall(posp, cp)
 	int	rused, rdisc;
 	hte_t	*hte;
 	fcall_t	*fcall;
+	const char *name;
 
 	fcall = xalloc(sizeof (fcall_t));
 	STRUCT_ASSIGN(fcall->f_pos, *posp);
@@ -312,7 +319,14 @@ funccall(posp, cp)
 	fcall->f_rdisc = rdisc;
 
 	/* read name of function */
-	hte = hsearch(inpname(cp, &cp), 1);
+	name = inpname(cp, &cp);
+
+	/* first look it up in the renaming table, then in the normal table */
+	hte = _hsearch(renametab, name, 0);
+	if (hte != NULL)
+		hte = hte->h_hte;
+	else
+		hte = hsearch(name, 1);
 	hte->h_used = 1;
 
 	fcall->f_type = inptype(cp, &cp);
@@ -333,9 +347,10 @@ decldef(posp, cp)
 	const	char *cp;
 {
 	sym_t	*symp, sym;
-	char	c, *ep;
-	int	used;
-	hte_t	*hte;
+	char	c, *ep, *pos1;
+	int	used, renamed;
+	hte_t	*hte, *renamehte;
+	const char *name, *rename;
 
 	(void)memset(&sym, 0, sizeof (sym));
 	STRUCT_ASSIGN(sym.s_pos, *posp);
@@ -413,8 +428,35 @@ decldef(posp, cp)
 		}
 	}
 
-	/* read symbol name */
-	hte = hsearch(inpname(cp, &cp), 1);
+	/* read symbol name, doing renaming if necessary */
+	name = inpname(cp, &cp);
+	renamed = 0;
+	if (*cp == 'r') {
+		cp++;
+		name = xstrdup(name);
+		rename = inpname(cp, &cp);
+
+		/* enter it and see if it's already been renamed */
+		renamehte = _hsearch(renametab, name, 1);
+		if (renamehte->h_hte == NULL) {
+			hte = hsearch(rename, 1);
+			renamehte->h_hte = hte;
+			renamed = 1;
+		} else if (strcmp((hte = renamehte->h_hte)->h_name, rename)) {
+			pos1 = xstrdup(mkpos(&renamehte->h_syms->s_pos));
+			/* %s renamed multiple times\t%s  ::  %s */
+			msg(18, name, pos1, mkpos(&sym.s_pos));
+			free(pos1);
+		}
+		free((char *)name);
+	} else {
+		/* it might be a previously-done rename */
+		hte = _hsearch(renametab, name, 0);
+		if (hte != NULL)
+			hte = hte->h_hte;
+		else
+			hte = hsearch(name, 1);
+	}
 	hte->h_used |= used;
 	if (sym.s_def == DEF || sym.s_def == TDEF)
 		hte->h_def = 1;
@@ -450,6 +492,10 @@ decldef(posp, cp)
 		}
 		*hte->h_lsym = symp;
 		hte->h_lsym = &symp->s_nxt;
+
+		/* XXX hack so we can remember where a symbol was renamed */
+		if (renamed)
+			renamehte->h_syms = symp;
 	}
 
 	if (*cp != '\0')
@@ -466,6 +512,7 @@ usedsym(posp, cp)
 {
 	usym_t	*usym;
 	hte_t	*hte;
+	const char *name;
 
 	usym = xalloc(sizeof (usym_t));
 	STRUCT_ASSIGN(usym->u_pos, *posp);
@@ -474,7 +521,12 @@ usedsym(posp, cp)
 	if (*cp++ != 'x')
 		inperr();
 
-	hte = hsearch(inpname(cp, &cp), 1);
+	name = inpname(cp, &cp);
+	hte = _hsearch(renametab, name, 0);
+	if (hte != NULL)
+		hte = hte->h_hte;
+	else
+		hte = hsearch(name, 1);
 	hte->h_used = 1;
 
 	*hte->h_lusym = usym;
@@ -1097,7 +1149,7 @@ mkstatic(hte)
 	 * avoid to process the same symbol twice.
 	 */
 	for (nhte = hte; nhte->h_link != NULL; nhte = nhte->h_link) ;
-	nhte->h_link = xalloc(sizeof (hte_t));
+	nhte->h_link = xmalloc(sizeof (hte_t));
 	nhte = nhte->h_link;
 	nhte->h_name = hte->h_name;
 	nhte->h_static = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: emit1.c,v 1.5 1996/12/22 11:31:06 cgd Exp $	*/
+/*	$NetBSD: emit1.c,v 1.6 1997/11/03 22:36:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: emit1.c,v 1.5 1996/12/22 11:31:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: emit1.c,v 1.6 1997/11/03 22:36:38 cgd Exp $";
 #endif
 
 #include <ctype.h>
@@ -276,6 +276,12 @@ outsym(sym, sc, def)
 	/* name of the symbol */
 	outname(sym->s_name);
 
+	/* renamed name of symbol, if necessary */
+	if (sym->s_rename) {
+		outchar('r');
+		outname(sym->s_rename);
+	}
+
 	/* type of the symbol */
 	outtype(sym->s_type);
 }
@@ -361,6 +367,12 @@ outfdef(fsym, posp, rval, osdef, args)
 
 	/* name of function */
 	outname(fsym->s_name);
+
+	/* renamed name of function, if necessary */
+	if (fsym->s_rename) {
+		outchar('r');
+		outname(fsym->s_rename);
+	}
 
 	/* argument types and return value */
 	if (osdef) {

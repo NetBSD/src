@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.9 1996/12/22 11:31:24 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.10 1997/11/03 22:36:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.9 1996/12/22 11:31:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.10 1997/11/03 22:36:50 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -216,6 +216,7 @@ static	struct	kwtab {
 	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
 	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
 	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0 },
+	{ "__symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0, 0 },
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0 },
 	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0 },
 	{ "return",	T_RETURN,	0,	0,	0,	  0, 0 },
