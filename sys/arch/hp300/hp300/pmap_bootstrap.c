@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.25.6.3 2005/02/27 02:57:17 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.25.6.4 2005/02/28 12:08:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25.6.3 2005/02/27 02:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.25.6.4 2005/02/28 12:08:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -466,7 +466,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	/*
-	 * Kernel page/segment table allocated in locore,
+	 * Kernel page/segment table allocated above,
 	 * just initialize pointers.
 	 */
 	{
