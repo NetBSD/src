@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.69 2001/02/06 19:38:31 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.70 2001/04/05 23:04:10 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -115,6 +115,7 @@
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
 #	mlx*	Mylex DAC960 control interface
+#	altq	ALTQ control device
 
 dialin=0
 dialout=524288
@@ -141,6 +142,7 @@ all)
 	sh $0 usbs wscons isdn
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 ttyCZ0 ttyCY0
+	sh $0 altq
 	;;
 
 minimal)
@@ -508,6 +510,19 @@ mlx*)
 	rm -f mlx$unit
 	mknod mlx$unit c 65 $unit
 	chmod 600 mlx$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 64 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 wskbd*)
