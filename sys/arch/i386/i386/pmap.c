@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.3 1993/09/29 15:35:46 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.4 1993/10/10 08:43:39 mycroft Exp $
  */
 
 /*
@@ -88,6 +88,7 @@
 #include "vm/vm_page.h"
 
 #include "machine/cpu.h"
+#include "machine/cpufunc.h"
 #include "isa.h"
 #include "i386/isa/isa.h"
 
@@ -296,7 +297,7 @@ pmap_bootstrap(virtual_start)
 #endif
 
 	*(int *)PTD = 0;
-	load_cr3(rcr3());
+	lcr3(rcr3());
 
 }
 
@@ -623,7 +624,7 @@ pmap_remove(pmap, sva, eva)
 		/* are we current address space or kernel? */
 		/*if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
 			|| pmap == kernel_pmap)
-		load_cr3(curpcb->pcb_ptd);*/
+		lcr3(curpcb->pcb_ptd);*/
 		tlbflush();
 
 #ifdef needednotdone
@@ -1038,11 +1039,8 @@ validate:
 		va += I386_PAGE_SIZE;
 	} while (++ix != i386pagesperpage);
 	pte--;
-#ifdef DEBUGx
-cache, tlb flushes
-#endif
-/*pads(pmap);*/
-	/*load_cr3(((struct pcb *)curproc->p_addr)->pcb_ptd);*/
+	/*pads(pmap);*/
+	/*lcr3(((struct pcb *)curproc->p_addr)->pcb_ptd);*/
 	tlbflush();
 }
 
