@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.57 2004/08/10 18:43:49 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.58 2004/08/10 22:49:12 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.57 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.58 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,6 @@ struct wi_pcmcia_softc {
 
 	struct pcmcia_function *sc_pf;		/* PCMCIA function */
 	int sc_state;
-#define	WI_PCMCIA_ATTACH1	1
-#define	WI_PCMCIA_ATTACH2	2
 #define	WI_PCMCIA_ATTACHED	3
 };
 
@@ -253,11 +251,6 @@ wi_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	if (psc->sc_state == WI_PCMCIA_ATTACH1) {
-		psc->sc_state = WI_PCMCIA_ATTACH2;
-		return (0);
-	}
-
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, wi_intr, sc);
 	if (!sc->sc_ih)
@@ -270,7 +263,6 @@ wi_pcmcia_enable(sc)
 		return (EIO);
 	}
 
-	DELAY(1000);
 	if (psc->sc_symbol_cf) {
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
@@ -281,6 +273,8 @@ wi_pcmcia_enable(sc)
 			return (EIO);
 		}
 	}
+	DELAY(1000);
+
 	return (0);
 }
 
@@ -355,18 +349,16 @@ wi_pcmcia_attach(parent, self, aux)
 
 	printf("%s:", self->dv_xname);
 
-	psc->sc_state = WI_PCMCIA_ATTACH1;
 	haveaddr = pa->pf->pf_funce_lan_nidlen == IEEE80211_ADDR_LEN;
 	if (wi_attach(sc, haveaddr ? pa->pf->pf_funce_lan_nid : 0) != 0) {
 		aprint_error("%s: failed to attach controller\n", self->dv_xname);
 		goto fail2;
 	}
-	if (psc->sc_state == WI_PCMCIA_ATTACH1)
-		wi_pcmcia_disable(sc);
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
 	psc->sc_powerhook = powerhook_establish(wi_pcmcia_powerhook, psc);
 
+	wi_pcmcia_disable(sc);
 	psc->sc_state = WI_PCMCIA_ATTACHED;
 	return;
 

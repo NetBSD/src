@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.82 2004/08/10 18:43:50 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.83 2004/08/10 22:49:12 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.82 2004/08/10 18:43:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.83 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,11 +280,10 @@ wdc_pcmcia_attach(parent, self, aux)
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
+	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_refcnt = 1;
 
-	sc->sc_state = WDC_PCMCIA_ATTACH1;
 	wdcattach(&sc->wdc_channel);
-	if (sc->sc_state == WDC_PCMCIA_ATTACH1)
-		wdc_pcmcia_enable(self, 0);
+	wdc_delref(&sc->wdc_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 
@@ -322,28 +321,17 @@ wdc_pcmcia_enable(self, onoff)
 	int error;
 
 	if (onoff) {
-		/*
-		 * If the WDC_PCMCIA_ATTACH flag is set, we've already
-		 * enabled the card in the attach routine, so don't
-		 * re-enable it here (to save power cycle time).  Clear
-		 * the flag, though, so that the next disable/enable
-		 * will do the right thing.
-		 */
-		if (sc->sc_state == WDC_PCMCIA_ATTACH1) {
-			sc->sc_state = WDC_PCMCIA_ATTACH2;
-		} else {
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    wdcintr, &sc->wdc_channel);
-			if (!sc->sc_ih)
-				return (EIO);
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    wdcintr, &sc->wdc_channel);
+		if (!sc->sc_ih)
+			return (EIO);
 
-			error = pcmcia_function_enable(sc->sc_pf);
-			if (error) {
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				sc->sc_ih = 0;
-				return (error);
-			}
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
