@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.9 2001/11/20 12:46:15 lukem Exp $
+# $NetBSD: YEAH-BABY,v 1.10 2001/12/28 17:37:02 augustss Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -340,16 +340,19 @@ usb*	at	ohci?
 uhub*	at	usb?
 uhub*	at	uhub? port ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB mice
-#ums*	at	uhub? port ?
+#ums*	at	uhidev? reportid ?
 #wsmouse* at	ums?
 
 # USB keyboards
-#ukbd*	at	uhub? port ?
+#ukbd*	at	uhidev? reportid ?
 #wskbd*	at	ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at	uhub? port ?
+uhid*	at	uhidev? reportid ?
 
 # USB Printers
 ulpt*	at	uhub? port ?

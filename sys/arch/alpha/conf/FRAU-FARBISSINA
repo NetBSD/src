@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.10 2001/11/20 12:56:19 lukem Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.11 2001/12/28 17:37:02 augustss Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.10 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.11 $"
 
 maxusers 64
 
@@ -355,16 +355,19 @@ fd*	at	fdc? drive ?
 #uhub*	at usb?
 #uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-#ums*	at uhub? port ? configuration ? interface ?
+#ums*	at uhidev? reportid ?
 #wsmouse*	at ums?
 
 # USB Keyboards
-#ukbd*	at uhub? port ? configuration ? interface ?
+#ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 2001/11/20 12:56:23 lukem Exp $
+#	$NetBSD: INSTALL,v 1.9 2001/12/28 17:37:02 augustss Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -287,16 +287,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?

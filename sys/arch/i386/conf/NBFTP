@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.33 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: NBFTP,v 1.34 2001/12/28 17:37:04 augustss Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -496,16 +496,19 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #uhub*	at usb?
 #uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-#ums*	at uhub? port ? configuration ? interface ?
+#ums*	at uhidev? reportid ?
 #wsmouse*	at ums?
 
 # USB Keyboards
-#ukbd*	at uhub? port ? configuration ? interface ?
+#ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?

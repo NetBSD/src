@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2001/12/28 12:21:57 martin Exp $
+# $NetBSD: GENERIC,v 1.118 2001/12/28 17:37:04 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	32
 
@@ -269,13 +269,16 @@ usb*	at ohci?					# USB bus support
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
 
-ums*	at uhub? port ? configuration ? interface ?	# USB Mice
+uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
+
+ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
-ukbd*	at uhub? port ? configuration ? interface ?	# USB Keyboards
+ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
 
-uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
+uhid*	at uhidev? reportid ?				# USB Generic HID
+
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
 umodem*	at uhub? port ? configuration ?			# USB Modem
