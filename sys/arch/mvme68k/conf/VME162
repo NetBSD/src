@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.8 2001/07/08 16:32:21 abs Exp $
+#	$NetBSD: VME162,v 1.9 2001/07/27 18:40:27 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -63,7 +63,6 @@ pseudo-device	rnd
 mainbus0	at root
 
 pcctwo0		at mainbus0
-memc*		at pcctwo? ipl 6
 clock0		at pcctwo? ipl 5
 zsc*		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
@@ -77,6 +76,9 @@ vme0 		at vmetwo0
 
 # Example VMEbus device
 #foo0 		at vme0 addr 0x10001000 am 0x0d irq 3 vect 0x80
+
+# Memory Controller Support (MCECC and MEMC040)
+memc*		at mainbus0
 
 # SCSI Bus Support
 scsibus*	at osiop?
