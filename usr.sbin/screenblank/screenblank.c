@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.3 1996/06/23 22:08:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -158,8 +158,9 @@ main(argc, argv)
 	 * killed.
 	 */
 	sa.sa_handler = sighandler;
-	sa.sa_mask = 0;
 	sa.sa_flags = SA_NOCLDSTOP;
+	if (sigemptyset(&sa.sa_mask))
+		err(1, "sigemptyset");
 	if (sigaction(SIGINT, &sa, NULL) || sigaction(SIGTERM, &sa, NULL) ||
 	    sigaction(SIGHUP, &sa, NULL))
 		err(1, "sigaction");
