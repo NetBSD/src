@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: md.c,v 1.2 1996/08/21 18:43:29 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank
