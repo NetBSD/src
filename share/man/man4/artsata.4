@@ -1,4 +1,4 @@
-.\"	$NetBSD: artsata.4,v 1.1 2003/12/14 01:38:04 thorpej Exp $
+.\"	$NetBSD: artsata.4,v 1.2 2003/12/14 09:21:53 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -61,5 +61,6 @@ problems where the SATA controller is wired up to the system incorrectly.
 .Sh BUGS
 The Intel i31244 Serial ATA controller revision 0 has a bug affecting
 DMA data transfers.
-The PCIIDE_I31244_ENABLEDMA option can be used to force DMA on the
-buggy revisions.
+The
+.Dv PCIIDE_I31244_ENABLEDMA
+option can be used to force DMA on the buggy revisions.
