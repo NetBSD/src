@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.10 2002/03/27 08:01:23 onoe Exp $	*/
+/*	$NetBSD: wivar.h,v 1.11 2002/03/30 16:44:59 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -52,7 +52,8 @@ struct wi_softc	{
 #define	WI_LUCENT	0
 #define	WI_INTERSIL	1
 #define	WI_SYMBOL	2
-	int sc_firmware_ver;
+	int sc_pri_firmware_ver;	/* Primary firmware version */
+	int sc_sta_firmware_ver;	/* Station firmware version */
 	int sc_pci;			/* attach to PCI-Bus */
 
 	bus_space_tag_t		sc_iot;	/* bus cookie */
