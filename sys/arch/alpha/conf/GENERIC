@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 1998/05/01 22:26:54 augustss Exp $
+# $NetBSD: GENERIC,v 1.85 1998/05/13 22:03:08 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -96,7 +96,7 @@ tlsbmem* at	tlsb? node ? offset ?
 kft*	at	tlsb? node ? offset ?
 
 # Gbus Devices
-mcclock* at	gbus? offset 0x20000000
+mcclock* at	gbus? offset ?
 
 # MCBUS bus support
 mcbus*	at	mainbus0
