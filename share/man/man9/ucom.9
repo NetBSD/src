@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.6 2001/11/28 16:49:02 wiz Exp $
+.\"	$NetBSD: ucom.9,v 1.7 2001/12/26 01:08:41 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@ struct ucom_attach_args {
 	void *arg;
 };
 .Ed
-
+.Pp
 .Bl -tag -width indent
 .It Dv int portno
 identifies the port if the devices should have more than one
@@ -111,7 +111,6 @@ driver should use for further communication with the driver.
 .It void *arg
 the value that should be passed as first argument to each method.
 .El
-
 .Sh METHODS
 The
 .Dv ucom_methods
@@ -142,7 +141,7 @@ struct ucom_methods {
 			   u_char *from, u_int32_t *count);
 };
 .Ed
-
+.Pp
 .Bl -tag -width indent
 .It Fn "void (*ucom_get_status)" "void *sc, int portno, u_char *lsr, u_char *msr"
 get the status of port
@@ -207,7 +206,6 @@ Apart from these methods there is a function
 .El
 .Pp
 which should be called by the driver whenever it notices a status change.
-
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr uftdi 4 ,
