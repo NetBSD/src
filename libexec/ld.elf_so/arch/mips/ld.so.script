@@ -1,11 +1,10 @@
-/*	$NetBSD: ld.so.script,v 1.1 1998/03/25 04:12:32 mhitch Exp $ */
+/*	$NetBSD: ld.so.script,v 1.2 2000/03/26 21:55:55 mycroft Exp $ */
 
 /*  ldscript for MIPS ld.elf_so */
 OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
 	      "elf32-littlemips")
 OUTPUT_ARCH(mips)
 ENTRY(_start)
-SEARCH_DIR(/lib); SEARCH_DIR(/usr/lib); SEARCH_DIR(/usr/local/lib); SEARCH_DIR(/usr/local/mips-dec-netbsd/lib);
 /* Do we need any of these for elf?
    __DYNAMIC = 0;    */
 SECTIONS
