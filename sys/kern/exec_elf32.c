@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.4 1996/01/16 23:07:18 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.5 1996/02/09 13:25:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -491,6 +491,14 @@ exec_elf_makecmds(p, epp)
 			break;
 		}
 	}
+
+	/*
+	 * If no position to load the interpreter was set by a probe
+	 * function, pick the same address that a non-fixed mmap(0, ..)
+	 * would (i.e. something safely out of the way).
+	 */
+	if (pos == ELF32_NO_ADDR)
+		pos = round_page(epp->ep_daddr + MAXDSIZ);
 
 	/*
          * Check if we found a dynamically linked binary and arrange to load
