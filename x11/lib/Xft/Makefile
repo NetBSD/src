@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/08 04:45:12 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/09 05:58:24 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -25,8 +25,8 @@ FILESOWN_xft-config=	${BINOWN}
 FILESGRP_xft-config=	${BINGRP}
 FILESMODE_xft-config=	${BINMODE}
 
-.PHONY:		xft.pc xft-config
-all dependall:	xft.pc xft-config
+CLEANFILES+=${FILES}
+realall: ${FILES}
 
 XFTDIR=		${X11SRCDIR.xc}/lib/Xft
 CONFIG_SUBST=	${HOST_SH} ${XFTDIR}/config/config-subst \
