@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.5 2002/05/20 16:05:26 lukem Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.6 2002/05/21 16:49:19 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.5 2002/05/20 16:05:26 lukem Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.6 2002/05/21 16:49:19 tsutsui Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -185,6 +185,8 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 #define HOSTTOTARGET32(x) ((bbparams->endian == BBINFO_LITTLE_ENDIAN) \
+			    ? htole32((x)) : htobe32((x)))
+#define TARGET32TOHOST(x) ((bbparams->endian == BBINFO_LITTLE_ENDIAN) \
 			    ? le32toh((x)) : be32toh((x)))
 
 		/* Look for the bbinfo structure. */
@@ -199,7 +201,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		    params->machine->name, params->stage1);
 		goto done;
 	}
-	maxblk = HOSTTOTARGET32(bbinfop->bbi_block_count);
+	maxblk = TARGET32TOHOST(bbinfop->bbi_block_count);
 	if (maxblk == 0 || maxblk > (bbparams->maxsize / sizeof(uint32_t))) {
 		warnx("%s bbinfo structure in `%s' has preposterous size `%u'",
 		    params->machine->name, params->stage1, maxblk);
