@@ -1,3 +1,4 @@
+/* NetBSD $Id: vndioctl.h,v 1.2 1994/06/27 19:49:50 cgd Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993

@@ -1,5 +1,5 @@
-#	from: @(#)files.newconf	7.5 (Berkeley) 5/10/93
-#	$Id: files.newconf,v 1.30 1994/06/21 03:56:22 chopps Exp $
+# NetBSD $Id: files.newconf,v 1.31 1994/06/27 19:44:04 cgd Exp $
+#	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # generic attributes
 define	disk

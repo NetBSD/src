@@ -1,3 +1,4 @@
+/* NetBSD $Id: cd9660_rrip.c,v 1.3 1994/06/27 19:41:06 cgd Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cd9660_rrip.c	8.2 (Berkeley) 1/23/94
- *	$Id: cd9660_rrip.c,v 1.2 1994/06/14 23:55:25 mycroft Exp $
+ *	@(#)cd9660_rrip.c	8.2 (Berkeley) 1/23/94
  */
 
 #include <sys/param.h>

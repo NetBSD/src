@@ -1,5 +1,4 @@
-#	$Id: files.oldconf,v 1.53 1994/06/24 14:00:22 hpeyerl Exp $
-#
+# NetBSD $Id: files.oldconf,v 1.54 1994/06/27 19:44:02 cgd Exp $
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
 adosfs/advfsops.c	optional adosfs

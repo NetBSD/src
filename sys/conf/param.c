@@ -1,3 +1,4 @@
+/* NetBSD $Id: param.c,v 1.10 1994/06/27 19:44:07 cgd Exp $ */
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
  * All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)param.c	7.20 (Berkeley) 6/27/91
- *	$Id: param.c,v 1.9 1994/06/08 11:20:27 mycroft Exp $
+ *	@(#)param.c	7.20 (Berkeley) 6/27/91
  */
 
 #include <sys/param.h>

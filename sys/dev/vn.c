@@ -1,3 +1,4 @@
+/* NetBSD $Id: vn.c,v 1.10 1994/06/27 19:49:48 cgd Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
