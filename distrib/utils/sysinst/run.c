@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.4 1997/11/03 02:38:50 jonathan Exp $	*/
+/*	$NetBSD: run.c,v 1.5 1998/06/20 13:05:50 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,14 +56,14 @@
 /*
  * local prototypes 
  */
-int do_system(const char *cmdstr);
-char* va_prog_cmdstr(char *cmd, va_list ap);
+int do_system __P((const char *cmdstr));
+char* va_prog_cmdstr __P((char *cmd, va_list ap));
 
 
 #define BUFSIZE 4096
 
 int
-collect (int kind, char **buffer, const char *name, ...)
+collect(int kind, char **buffer, const char *name, ...)
 {
 	size_t nbytes;		/* Number of bytes in buffer. */
 	size_t fbytes;		/* Number of bytes in file. */
@@ -73,34 +73,31 @@ collect (int kind, char **buffer, const char *name, ...)
 	char fileorcmd [STRSIZE];
 	va_list ap;
 
-
-	va_start (ap, name);
-	vsnprintf (fileorcmd, STRSIZE, name, ap);
-	va_end (ap);
+	va_start(ap, name);
+	vsnprintf(fileorcmd, STRSIZE, name, ap);
+	va_end(ap);
 
 	if (kind == T_FILE) {
 		/* Get the file information. */
-		if (stat (fileorcmd, &st)) {
+		if (stat(fileorcmd, &st)) {
 			*buffer = NULL;
 			return -1;
 		}
 		fbytes = (size_t)st.st_size;
 
 		/* Open the file. */
-		f = fopen (fileorcmd, "r");
+		f = fopen(fileorcmd, "r");
 		if (f == NULL) {
 			*buffer = NULL;
 			return -1;
 		}
-
 	} else {
 		/* Open the program. */
-		f = popen (fileorcmd, "r");
+		f = popen(fileorcmd, "r");
 		if (f == NULL) {
 			*buffer = NULL;
 			return -1;
 		}
-		
 		fbytes = BUFSIZE;
 	}
 
@@ -108,7 +105,7 @@ collect (int kind, char **buffer, const char *name, ...)
 		fbytes = BUFSIZE;
 	
 	/* Allocate the buffer size. */
-	*buffer = (char *) malloc (fbytes + 1);
+	*buffer = (char *)malloc(fbytes + 1);
 	if (!*buffer) 
 		return -1;
 
@@ -131,15 +128,19 @@ collect (int kind, char **buffer, const char *name, ...)
 /*
  * system(3), but with a debug wrapper.
  */
-int do_system(const char *execstr)
+int
+do_system(execstr)
+	const char *execstr;
 {
 	register int ret;
 
-	/* The following may be more than one function call.  Can't just
-	   "return Xsystem (command);" */
+	/*
+	 * The following may be more than one function call.  Can't just
+	 * "return Xsystem (command);"
+	 */
 
-	ret = Xsystem (execstr);
-	return ret;
+	ret = Xsystem(execstr);
+	return (ret);
 
 }
 
@@ -147,26 +148,30 @@ int do_system(const char *execstr)
  *  build command tring for do_system() from anonymous args.
  *  XXX return result is in a static buffer.
  */
-char* va_prog_cmdstr(char *cmd, va_list ap)
+char *
+va_prog_cmdstr(char *cmd, va_list ap)
 {
-	static char command [STRSIZE];
+	static char command[STRSIZE];
 
 	bzero(command, STRSIZE);
-	(void) vsnprintf (command, STRSIZE, cmd, ap);
-	return command;
+	(void)vsnprintf(command, STRSIZE, cmd, ap);
+	return (command);
 }
   
 
-/*  run a program.  The caller handles any and all errors. */
-int run_prog (char *cmd, ...)
+/*
+ * run a program.  The caller handles any and all errors.
+ */
+int
+run_prog (char *cmd, ...)
 {
 	va_list ap;
 	int ret;
 
-    	va_start (ap, cmd);
+    	va_start(ap, cmd);
 	ret = do_system(va_prog_cmdstr(cmd, ap));
 	va_end(ap);
-	return ret;
+	return (ret);
 }
 
 /*
@@ -177,23 +182,23 @@ int run_prog (char *cmd, ...)
  * Use stderr/stdin since we want the user to see any messages 
  * from the command before we  go back into curses.
  */
-int run_prog_or_continue (char *cmd, ...)
+int
+run_prog_or_continue(char *cmd, ...)
 {
 	va_list ap;
 	int ret;
 	const char *execstr;
 
-
-	va_start (ap, cmd);
+	va_start(ap, cmd);
 	execstr = va_prog_cmdstr(cmd, ap);
 	ret = do_system(execstr);
-	va_end (ap);
+	va_end(ap);
 
 	/* Warn copiously about any errors. */
 	if (ret) {
-	  /* XXX use messages instead */ 
-	  printf(msg_string(MSG_anonprogfailed), execstr, strerror(ret));
-	  fgetc(stdin);
+		/* XXX use messages instead */ 
+		printf(msg_string(MSG_anonprogfailed), execstr, strerror(ret));
+		fgetc(stdin);
 	}
 	return ret;
 }
@@ -208,13 +213,13 @@ void run_prog_or_die (char *cmd, ...)
 	int ret;
 	const char *execstr;
 
-	va_start (ap, cmd);
+	va_start(ap, cmd);
 	execstr = va_prog_cmdstr(cmd, ap);
 	ret = do_system(execstr);
 
 	if (ret) {
-	  printf(msg_string(MSG_progdie), execstr, strerror(ret));
-	  exit(ret);
+		printf(msg_string(MSG_progdie), execstr, strerror(ret));
+		exit(ret);
 	}
 }
   
