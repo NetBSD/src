@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2004/03/28 09:01:27 martti Exp $
+#	$NetBSD: Makefile,v 1.17 2004/03/29 04:40:01 lukem Exp $
+
+NOGCCERROR=	# defined
 
 PROG=		ipfstat
 SRCS=		ipfstat.c
 MAN=		ipfstat.8
 DPADD+=  	${LIBCURSES} ${LIBKVM}
-LDADD+=  	-lcurses -lkvm -lipf
-
-NOGCCERROR=	# defined
+LDADD+=  	-lcurses -lkvm
 
 .include <bsd.prog.mk>
