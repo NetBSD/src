@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.31 2001/06/30 14:47:23 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.32 2001/06/30 14:56:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -154,7 +154,8 @@ static const struct ti_type *ti_type_match __P((struct pci_attach_args *));
 static int ti_probe	__P((struct device *, struct cfdata *, void *));
 static void ti_attach	__P((struct device *, struct device *, void *));
 static void ti_shutdown __P((void *));
-static void ti_txeof		__P((struct ti_softc *));
+static void ti_txeof_tigon1	__P((struct ti_softc *));
+static void ti_txeof_tigon2	__P((struct ti_softc *));
 static void ti_rxeof		__P((struct ti_softc *));
 
 static void ti_stats_update	__P((struct ti_softc *));
@@ -1736,6 +1737,7 @@ static void ti_attach(parent, self, aux)
 	switch (sc->ti_hwrev) {
 	case TI_HWREV_TIGON:
 		sc->sc_tx_encap = ti_encap_tigon1;
+		sc->sc_tx_eof = ti_txeof_tigon1;
 		if (nolinear == 1)
 			printf("%s: memory space not mapped linear\n",
 			    self->dv_xname);
@@ -1743,6 +1745,7 @@ static void ti_attach(parent, self, aux)
 
 	case TI_HWREV_TIGON_II:
 		sc->sc_tx_encap = ti_encap_tigon2;
+		sc->sc_tx_eof = ti_txeof_tigon2;
 		break;
 
 	default:
@@ -2099,7 +2102,7 @@ static void ti_rxeof(sc)
 	return;
 }
 
-static void ti_txeof(sc)
+static void ti_txeof_tigon1(sc)
 	struct ti_softc		*sc;
 {
 	struct ti_tx_desc	*cur_tx = NULL;
@@ -2116,22 +2119,63 @@ static void ti_txeof(sc)
 		u_int32_t		idx = 0;
 
 		idx = sc->ti_tx_saved_considx;
-		if (sc->ti_hwrev == TI_HWREV_TIGON) {
-			if (idx > 383)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 6144);
-			else if (idx > 255)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 4096);
-			else if (idx > 127)
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE + 2048);
-			else
-				CSR_WRITE_4(sc, TI_WINBASE,
-				    TI_TX_RING_BASE);
-			cur_tx = &sc->ti_tx_ring_nic[idx % 128];
-		} else
-			cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
+		if (idx > 383)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 6144);
+		else if (idx > 255)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 4096);
+		else if (idx > 127)
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE + 2048);
+		else
+			CSR_WRITE_4(sc, TI_WINBASE,
+			    TI_TX_RING_BASE);
+		cur_tx = &sc->ti_tx_ring_nic[idx % 128];
+		if (cur_tx->ti_flags & TI_BDFLAG_END)
+			ifp->if_opackets++;
+		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
+			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
+			sc->ti_cdata.ti_tx_chain[idx] = NULL;
+
+			dma = sc->txdma[idx];
+			KDASSERT(dma != NULL);
+			bus_dmamap_sync(sc->sc_dmat, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, dma->dmamap);
+
+			SIMPLEQ_INSERT_HEAD(&sc->txdma_list, dma, link);
+			sc->txdma[idx] = NULL;
+		}
+		sc->ti_txcnt--;
+		TI_INC(sc->ti_tx_saved_considx, TI_TX_RING_CNT);
+		ifp->if_timer = 0;
+	}
+
+	if (cur_tx != NULL)
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+	return;
+}
+
+static void ti_txeof_tigon2(sc)
+	struct ti_softc		*sc;
+{
+	struct ti_tx_desc	*cur_tx = NULL;
+	struct ifnet		*ifp;
+	struct txdmamap_pool_entry *dma;
+
+	ifp = &sc->ethercom.ec_if;
+
+	/*
+	 * Go through our tx ring and free mbufs for those
+	 * frames that have been sent.
+	 */
+	while (sc->ti_tx_saved_considx != sc->ti_tx_considx.ti_idx) {
+		u_int32_t		idx = 0;
+
+		idx = sc->ti_tx_saved_considx;
+		cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
 		if (cur_tx->ti_flags & TI_BDFLAG_END)
 			ifp->if_opackets++;
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
@@ -2182,7 +2226,7 @@ static int ti_intr(xsc)
 		ti_rxeof(sc);
 
 		/* Check TX ring producer/consumer */
-		ti_txeof(sc);
+		(*sc->sc_tx_eof)(sc);
 	}
 
 	ti_handle_events(sc);
