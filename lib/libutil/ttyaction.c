@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.10 1998/12/09 14:35:03 christos Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.11 1999/01/11 23:31:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ ttyaction(tty, act, user)
 	char *p1, *p2;
 	char *argv[4];
 	char *envp[8];
+	char *lastp;
 	char line[1024];
 	char env_tty[64];
 	char env_act[64];
@@ -114,10 +115,10 @@ ttyaction(tty, act, user)
 		if (line[0] == '#')
 			continue;
 
-		p1 = strtok(line, " \t");
-		p2 = strtok(NULL, " \t");
+		p1 = strtok_r(line, " \t", &lastp);
+		p2 = strtok_r(NULL, " \t", &lastp);
 		/* This arg goes to end of line. */
-		argv[2] = strtok(NULL, "\n");
+		argv[2] = strtok_r(NULL, "\n", &lastp);
 		if (!p1 || !p2 || !argv[2]) {
 			warnx("%s: line %d format error", actfile, linenum);
 			continue;
