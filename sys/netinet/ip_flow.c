@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.6 1998/06/10 00:47:57 sommerfe Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.7 1998/10/08 01:41:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -63,6 +64,8 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+
+struct pool ipflow_pool;
 
 LIST_HEAD(ipflowhead, ipflow);
 
@@ -121,6 +124,19 @@ ipflow_lookup(
 		ipf = LIST_NEXT(ipf, ipf_hash);
 	}
 	return ipf;
+}
+
+void
+ipflow_init()
+{
+	int i;
+
+	pool_init(&ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl",
+	    0, NULL, NULL, M_IPFLOW);
+
+	LIST_INIT(&ipflowlist);
+	for (i = 0; i < IPFLOW_HASHSIZE; i++)
+		LIST_INIT(&ipflowtable[i]);
 }
 
 int
@@ -240,7 +256,7 @@ ipflow_free(
 	ipflow_addstats(ipf);
 	RTFREE(ipf->ipf_ro.ro_rt);
 	ipflow_inuse--;
-	FREE(ipf, M_IPFLOW);
+	pool_put(&ipflow_pool, ipf);
 }
 
 struct ipflow *
@@ -285,7 +301,7 @@ ipflow_reap(
 		RTFREE(ipf->ipf_ro.ro_rt);
 		if (just_one)
 			return ipf;
-		FREE(ipf, M_IPFLOW);
+		pool_put(&ipflow_pool, ipf);
 		ipflow_inuse--;
 	}
 	return NULL;
@@ -338,8 +354,7 @@ ipflow_create(
 		if (ipflow_inuse >= ip_maxflows) {
 			ipf = ipflow_reap(1);
 		} else {
-			ipf = (struct ipflow *) malloc(sizeof(*ipf), M_IPFLOW,
-						       M_NOWAIT);
+			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
 			if (ipf == NULL)
 				return;
 			ipflow_inuse++;

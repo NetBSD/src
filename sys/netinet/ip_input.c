@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.72 1998/10/08 01:19:25 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.73 1998/10/08 01:41:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -217,6 +217,9 @@ ip_init()
 	if (ip_mtudisc != 0)
 		ip_mtudisc_timeout_q = 
 		    rt_timer_queue_create(ip_mtudisc_timeout);
+#ifdef GATEWAY
+	ipflow_init();
+#endif
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
