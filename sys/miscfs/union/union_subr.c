@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.30 1999/03/24 05:53:59 sommerfe Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.30.2.1 1999/10/18 05:05:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -694,11 +694,13 @@ union_copyup(un, docopy, cred, p)
 	if (error == 0) {
 		int i;
 
+		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 		for (i = 0; i < un->un_openl; i++) {
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
 			(void) VOP_OPEN(uvp, FREAD, cred, p);
 		}
 		un->un_openl = 0;
+		VOP_UNLOCK(lvp, 0);
 	}
 
 	return (error);
