@@ -39,13 +39,14 @@
  */
 #define DP_CTL		0xffd00000	/* base for control registers */
 #define DP_DMA		0xffe00000	/* base for data registers */
-#define DP_DMA_EOP	(DP_DMA | 0xf0000) /* SCSI DMA with EOP asserted */
+#define DP_DMA_EOP	0xffeff000	/* SCSI DMA with EOP asserted */
 #define DP_CURDATA	(DP_CTL+0)
 #define DP_OUTDATA	(DP_CTL+0)
 #define DP_ICMD		(DP_CTL+1)
 #define DP_MODE		(DP_CTL+2)
 #define DP_TCMD		(DP_CTL+3)
 #define DP_STAT1	(DP_CTL+4)
+#define DP_SER		(DP_CTL+4)
 #define DP_STAT2	(DP_CTL+5)
 #define DP_START_SEND	(DP_CTL+5)
 #define DP_INDATA	(DP_CTL+6)

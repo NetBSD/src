@@ -3,7 +3,7 @@
  *
  *	dp.c:  A NCR DP8490 driver for the pc532.
  *
- *	$Id: dp.c,v 1.2 1993/10/01 22:59:31 phil Exp $
+ *	dp.c,v 1.2 1993/10/01 22:59:31 phil Exp
  */
 
 /*
@@ -176,7 +176,7 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	x = splhigh();
 	dvr_state = dp_dvr_state;
 	if (dvr_state == DP_DVR_READY)
-	  dp_dvr_state = DP_DVR_STARTED;
+	  dvr_state = dp_dvr_state = DP_DVR_STARTED;
 	splx(x);
 
 	if (dvr_state != DP_DVR_STARTED)
@@ -187,20 +187,20 @@ int dp_scsi_cmd(struct scsi_xfer *xs)
 	/* Some initial checks. */
 	flags = xs->flags;
 	if (!(flags & INUSE)) {
-		printf("dp xs not in use!");
+		printf("dp xs not in use!\n");
 		xs->flags |= INUSE;
 	}
 	if (flags & ITSDONE) {
-		printf("dp xs already done!");
+		printf("dp xs already done!\n");
 		xs->flags &= ~ITSDONE;
 	}
 
 	if (dp_needs_reset)
 		dp_reset();
 
-/* info ... */
-printf ("flags=0x%x, targ=%d, lu=%d, cmdlen=%d, cmd=%x\n", xs->flags,
-xs->targ, xs->lu, xs->cmdlen, xs->cmd->opcode);
+	/* info ... */
+	printf ("\nscsi_cmd: flags=0x%x, targ=%d, lu=%d, cmdlen=%d, cmd=%x\n",
+		xs->flags, xs->targ, xs->lu, xs->cmdlen, xs->cmd->opcode);
 
 	retval = dp_start_cmd (xs);
 
@@ -243,6 +243,8 @@ void dp_intr (void)
     u_char isr;
     u_char new_phase;
     u_char status;
+    u_char stat1;
+    u_char stat2;
     u_char message;
     int ret;
 
@@ -261,15 +263,18 @@ void dp_intr (void)
 		return;
 	}
 
-	new_phase = (RD_ADR(u_char, DP_STAT1) >> 2) & 7;
+	stat1 = RD_ADR(u_char, DP_STAT1);
+	new_phase = (stat1 >> 2) & 7;
 
-printf ("dp_intr isr=0x%x new_phase = 0x%x\n", isr, new_phase);
+printf ("dp_intr dvr_state %d isr=0x%x new_phase = 0x%x stat1 = 0x%x\n",
+	dp_dvr_state, isr, new_phase, stat1);
 
 	switch (dp_dvr_state) {
 
 	case DP_DVR_ARB: 	/* Next comes the command phase! */
 		if (new_phase != DP_PHASE_CMD) {
-printf ("Phase mismatch cmd!\n");
+		    printf ("Phase mismatch cmd!\n");
+		    goto phase_mismatch;
 		}
 		dp_dvr_state = DP_DVR_CMD;
 		ret = dp_pdma_out (cur_xs->cmd, cur_xs->cmdlen, DP_PHASE_CMD);
@@ -277,22 +282,34 @@ printf ("Phase mismatch cmd!\n");
 		break;
 		
 	case DP_DVR_CMD:	/* Next comes the data i/o phase if needed. */
+		/*
+		 * This state can potentially accept data in, data out,
+		 * or status for new_phase. data in or data out could
+		 * be skipped (new_phase is status) if an error was detected
+		 * in the command.
+		 */
 		if (cur_xs->flags & SCSI_DATA_UIO) {
 		   /* UIO work. */
 		   panic ("scsi uio");
-		} else if (cur_xs->flags & SCSI_DATA_IN) {
-		    if (new_phase != DP_PHASE_DATAI) {
-printf ("Phase mismatch in. \n");
+		}
+		if (new_phase == DP_PHASE_DATAI) {
+		    if (!(cur_xs->flags & SCSI_DATA_IN)) {
+			printf ("Phase mismatch in.\n");
+			goto phase_mismatch;
 		    }
+		    /* expect STAT phase next */
 		    dp_dvr_state = DP_DVR_DATA;
 		    ret = dp_pdma_in (cur_xs->data, cur_xs->datalen,
 		    			 DP_PHASE_DATAI);
 		    dp_clear_isr();
 		    break;
-		}  else if (cur_xs->flags & SCSI_DATA_OUT) {
-		    if (new_phase != DP_PHASE_DATAO) {
-printf ("Phase mismatch out. \n");
+		}
+		else if (new_phase == DP_PHASE_DATAO) {
+		    if (!(cur_xs->flags & SCSI_DATA_OUT)) {
+			printf ("Phase mismatch out.\n");
+			goto phase_mismatch;
 		    }
+		    /* expect STAT phase next */
 		    dp_dvr_state = DP_DVR_DATA;
 		    ret = dp_pdma_out (cur_xs->data, cur_xs->datalen,
 		    			 DP_PHASE_DATAO);
@@ -302,28 +319,33 @@ printf ("Phase mismatch out. \n");
 		/* Fall through to next phase. */
 	case DP_DVR_DATA:	/* Next comes the stat phase */
 		if (new_phase != DP_PHASE_STATUS) {
-printf ("Phase mismatch stat. \n");
+		    printf ("Phase mismatch stat.\n");
+		    goto phase_mismatch;
 		}
 		dp_dvr_state = DP_DVR_STAT;
 		dp_pdma_in (&status, 1, DP_PHASE_STATUS);
 		dp_clear_isr();
-		while (!(RD_ADR(u_char, DP_STAT2) & DP_S_IRQ)) /* wait */;
-		new_phase = (RD_ADR(u_char, DP_STAT1) >> 2) & 7;
+		while (!((stat2 = RD_ADR(u_char, DP_STAT2)) & DP_S_IRQ))
+			;
+		stat1 = RD_ADR(u_char, DP_STAT1);
+		new_phase = (stat1 >> 2) & 7;
 		if (new_phase != DP_PHASE_MSGI) {
 			printf ("msgi phase mismatch\n");
 		}
 		dp_pdma_in (&message, 1, DP_PHASE_MSGI);
 		dp_clear_isr();
-		while (!(RD_ADR(u_char, DP_STAT2) & DP_S_IRQ)) /* wait */;
+		while (!((stat2 = RD_ADR(u_char, DP_STAT2)) & DP_S_IRQ))
+			;
 		dp_clear_isr();
 printf ("status = 0x%x, message = 0x%x\n", status, message);
 		if (status != SCSI_OK && dp_try_count < cur_xs->retries) {
-printf ("dp_try_count = %d\n", dp_try_count);
+printf ("dp_intr: retry: dp_try_count = %d\n", dp_try_count);
 		    dp_restart_cmd();
 		}
 		break;
 
 	default:
+phase_mismatch:
 		/* TEMP error generation!!! */
 		dp_reset();
 		dp_dvr_state = DP_DVR_READY;
@@ -354,6 +376,7 @@ printf ("dvr_stat: dp_try_count = %d\n", dp_try_count);
 	dp_dvr_state = DP_DVR_READY;
 	/* If this true interrupt code, call the done routine. */
 	if (cur_xs->when_done) {
+printf("dp_intr: calling when_done\n");
 	  (*(cur_xs->when_done))(cur_xs->done_arg, cur_xs->done_arg2);
 	}
     }
@@ -367,12 +390,13 @@ printf ("exit dp_intr.\n");
 
 dp_initialize()
 {
+printf("dp_initialize()\n");
 	scsi_select_ctlr (DP8490);
 	WR_ADR (u_char, DP_ICMD, DP_EMODE);	/* Set Enhanced mode */
 	WR_ADR (u_char, DP_MODE, 0);		/* Disable everything. */
 	WR_ADR (u_char, DP_EMR_ISR, DP_EF_RESETIP);
 	WR_ADR (u_char, DP_EMR_ISR, DP_EF_NOP);
-	WR_ADR (u_char, DP_STAT2, 0x80); 	/* scsi adr 7. */
+	WR_ADR (u_char, DP_SER, 0x80); 	/* scsi adr 7. */
 	dp_scsi_phase = DP_PHASE_NONE;
 }
 
@@ -414,16 +438,24 @@ int
 dp_wait_bus_free()
 {
   int i;
+  u_char stat1;
   volatile int j;
 
+  /* get into a harmless state */
+  WR_ADR (u_char, DP_TCMD, 0);
+  WR_ADR (u_char, DP_MODE, 0);		/* return to initiator mode */
+  WR_ADR (u_char, DP_ICMD, DP_EMODE);	/* clear SEL, disable data out */
   i = WAIT_MUL * 2000;
   while (i--) {
     /* Must be clear for 2 usec, so read twice */
-    if (RD_ADR (u_char, DP_STAT1) & (DP_S_BSY | DP_S_SEL)) continue;
+    stat1 = RD_ADR (u_char, DP_STAT1);
+    if (stat1 & (DP_S_BSY | DP_S_SEL)) continue;
     for (j = 5; j; j--);
-    if (RD_ADR (u_char, DP_STAT1) & (DP_S_BSY | DP_S_SEL)) continue;
+    stat1 = RD_ADR (u_char, DP_STAT1);
+    if (stat1 & (DP_S_BSY | DP_S_SEL)) continue;
     return OK;
   }
+  printf("wait bus free failed, stat1 = 0x%x\n", stat1);
   dp_needs_reset = 1;
   return NOT_OK;
 }
@@ -439,14 +471,21 @@ long adr;
 {
   int i, stat1;
 
+printf("dp_select(0x%x)\n", adr);
+  WR_ADR (u_char, DP_TCMD, 0);		/* get to harmless state */
+  WR_ADR (u_char, DP_MODE, 0);		/* get to harmless state */
   WR_ADR (u_char, DP_OUTDATA, adr);	/* SCSI bus address */
   WR_ADR (u_char, DP_ICMD, DP_A_SEL | DP_ENABLE_DB | DP_EMODE);
-  WR_ADR (u_char, DP_STAT2, 0x80); 	/* scsi adr 7. */
   for (i = 0;; ++i) {			/* wait for target to assert SEL */
     stat1 = RD_ADR (u_char, DP_STAT1);
     if (stat1 & DP_S_BSY) break;	/* select successful */
-    if (i > WAIT_MUL * 2000) {			/* timeout */
+    if (i > WAIT_MUL * 2000) {		/* timeout */
+      u_char isr;
+      WR_ADR(u_char, DP_EMR_ISR, DP_EF_ISR_NEXT);
+      isr = RD_ADR (u_char, DP_EMR_ISR);
       printf ("SCSI: SELECT timeout adr %d\n", adr);
+      printf("STAT1 = 0x%x ICMD = 0x%x isr = 0x%x\n", stat1,
+	RD_ADR(u_char, DP_ICMD), isr);
       dp_reset();
       return NOT_OK;
     }
