@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.8 2000/12/22 22:58:56 jdolecek Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.9 2001/06/07 17:49:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -28,7 +28,9 @@
  * SUCH DAMAGE.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
