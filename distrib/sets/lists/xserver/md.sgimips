@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.4 2004/03/28 09:35:37 jmc Exp $
+# $NetBSD: md.sgimips,v 1.4.2.1 2004/04/06 03:57:28 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
@@ -6,6 +6,7 @@
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/kbd_mode
 ./usr/X11R6/bin/mmapr
+./usr/X11R6/bin/mmapw
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/scanpci
 ./usr/X11R6/bin/xf86cfg
