@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.8 1998/07/13 12:04:29 hpeyerl Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.9 1998/08/05 16:29:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -142,6 +142,8 @@ cd_atapibus_attach(parent, self, aux)
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
+
+	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
 	cdattach(parent, cd, sc_link, &cd_atapibus_ops);
 

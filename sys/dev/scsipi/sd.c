@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.130 1998/07/31 00:42:31 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.131 1998/08/05 16:29:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -792,11 +792,19 @@ sdgetdefaultlabel(sd, lp)
 	lp->d_ncylinders = sd->params.cyls;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	if (sd->type == T_OPTICAL)
-		strncpy(lp->d_typename, "SCSI optical", 16);
-	else
-		strncpy(lp->d_typename, "SCSI disk", 16);
-	lp->d_type = DTYPE_SCSI;
+	switch (sd->sc_link->type) {
+#if NSD_SCSIBUS > 0
+	    case BUS_SCSI:
+		lp->d_type = DTYPE_SCSI;
+		break;
+#endif
+#if NSD_ATAPIBUS > 0
+	    case BUS_ATAPI:
+		lp->d_type = DTYPE_ATAPI;
+		break;
+#endif
+	}
+	strncpy(lp->d_typename, sd->name, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;

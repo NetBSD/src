@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.2 1998/06/10 22:17:39 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.3 1998/08/05 16:29:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -144,6 +144,7 @@ sd_scsibus_attach(parent, self, aux)
 	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
+	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().

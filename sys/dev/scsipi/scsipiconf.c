@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.4 1997/10/03 02:04:20 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.5 1998/08/05 16:29:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -166,33 +166,41 @@ scsipi_dtype(type)
 }
 
 void
-scsipi_strvis(dst, src, len)
+scsipi_strvis(dst, dlen, src, slen)
 	u_char *dst, *src;
-	int len;
+	int dlen, slen;
 {
 
 	/* Trim leading and trailing blanks and NULs. */
-	while (len > 0 && (src[0] == ' ' || src[0] == '\0'))
-		++src, --len;
-	while (len > 0 && (src[len-1] == ' ' || src[len-1] == '\0'))
-		--len;
+	while (slen > 0 && (src[0] == ' ' || src[0] == '\0'))
+		++src, --slen;
+	while (slen > 0 && (src[slen-1] == ' ' || src[slen-1] == '\0'))
+		--slen;
 
-	while (len > 0) {
+	while (slen > 0) {
 		if (*src < 0x20 || *src >= 0x80) {
 			/* non-printable characters */
+			dlen -= 4;
+			if (dlen < 1)
+				break;
 			*dst++ = '\\';
 			*dst++ = ((*src & 0300) >> 6) + '0';
 			*dst++ = ((*src & 0070) >> 3) + '0';
 			*dst++ = ((*src & 0007) >> 0) + '0';
 		} else if (*src == '\\') {
 			/* quote characters */
+			dlen -= 2;
+			if (dlen < 1)
+				break;
 			*dst++ = '\\';
 			*dst++ = '\\';
 		} else {
 			/* normal characters */
+			if (--dlen < 1)
+				break;
 			*dst++ = *src;
 		}
-		++src, --len;
+		++src, --slen;
 	}
 
 	*dst++ = 0;

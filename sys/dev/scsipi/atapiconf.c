@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.10 1998/07/31 03:00:51 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.11 1998/08/05 16:29:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -286,9 +286,9 @@ atapi_probedev(atapi, target)
 		    T_REMOV : T_FIXED;
 		if (sa.sa_inqbuf.removable)
 			sc_link->flags |= SDEV_REMOVABLE;
-		scsipi_strvis(model, id->model, 40);
-		scsipi_strvis(serial_number, id->serial_number, 20);
-		scsipi_strvis(firmware_revision, id->firmware_revision, 8);
+		scsipi_strvis(model, 40, id->model, 40);
+		scsipi_strvis(serial_number, 20, id->serial_number, 20);
+		scsipi_strvis(firmware_revision, 8, id->firmware_revision, 8);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;

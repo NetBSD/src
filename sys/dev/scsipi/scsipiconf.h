@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.10 1998/07/31 03:00:51 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.11 1998/08/05 16:29:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -341,7 +341,7 @@ void	scsipi_init __P((void));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
 char	*scsipi_dtype __P((int));
-void	scsipi_strvis __P((u_char *, u_char *, int));
+void	scsipi_strvis __P((u_char *, int, u_char *, int));
 int	scsipi_execute_xs __P((struct scsipi_xfer *));
 u_long	scsipi_size __P((struct scsipi_link *, int));
 int	scsipi_test_unit_ready __P((struct scsipi_link *, int));

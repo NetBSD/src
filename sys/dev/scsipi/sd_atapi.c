@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.1 1998/01/15 02:21:39 cgd Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.2 1998/08/05 16:29:06 drochner Exp $	*/
 
 /*
  * Copyright 1998
@@ -124,8 +124,8 @@ sd_atapibus_attach(parent, self, aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sd_atapi_attach: "));
 
-	sd->sc_link = sc_link;
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
+	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
 
 	sdattach(parent, sd, sc_link, &sd_atapibus_ops);
 }
