@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsiconf.h,v 1.6 1994/03/29 04:29:39 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.7 1994/04/11 02:23:45 mycroft Exp $
  */
 
 /*
@@ -261,8 +261,7 @@ int scsi_test_unit_ready __P((struct scsi_link *, u_int32));
 int scsi_change_def __P((struct scsi_link *, u_int32));
 int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, u_int32));
 int scsi_prevent __P((struct scsi_link *, u_int32, u_int32));
-int scsi_start_unit __P((struct scsi_link *, u_int32));
-int scsi_stop_unit __P((struct scsi_link *, u_int32, u_int32));
+int scsi_start __P((struct scsi_link *, u_int32, u_int32));
 void scsi_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 cmdlen, u_char *data_addr,

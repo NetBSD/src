@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.27 1994/04/06 00:43:57 mycroft Exp $
+ *      $Id: sd.c,v 1.28 1994/04/11 02:23:48 mycroft Exp $
  */
 
 /* 
@@ -237,7 +237,7 @@ sdopen(dev)
 	 * In case it is a funny one, tell it to start
 	 * not needed for most hard drives (ignore failure)
 	 */
-	scsi_start_unit(sc_link, SCSI_ERR_OK | SCSI_SILENT);
+	scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
 
 	/*
 	 * Check that it is still responding and ok.
