@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.31 1999/09/06 19:52:28 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.32 1999/11/15 19:18:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.31 1999/09/06 19:52:28 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.32 1999/11/15 19:18:24 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: inode.c,v 1.31 1999/09/06 19:52:28 christos Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #ifndef SMALL
 #include <err.h>
@@ -411,16 +412,13 @@ cacheino(dp, inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
-	unsigned int blks, extra;
+	unsigned int blks;
 
 	blks = howmany(iswap64(dp->di_size), sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	if (blks > 0)
-		extra =  (blks - 1) * sizeof(ufs_daddr_t);
-	else
-		extra = 0;
-	inp = (struct inoinfo *) malloc(sizeof(*inp) + extra);
+	inp = (struct inoinfo *)
+		malloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -611,6 +609,8 @@ allocino(request, type)
 	ino_t ino;
 	struct dinode *dp;
 	time_t t;
+	struct cg *cgp = cgrp;
+	int cg;
 
 	if (request == 0)
 		request = ROOTINO;
@@ -621,9 +621,21 @@ allocino(request, type)
 			break;
 	if (ino == maxino)
 		return (0);
+	cg = ino_to_cg(sblock, ino);
+	getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
+	memcpy(cgp, cgblk.b_un.b_cg, sblock->fs_cgsize);
+	if ((doswap && !needswap) || (!doswap && needswap))
+		swap_cg(cgblk.b_un.b_cg, cgp);
+	if (!cg_chkmagic(cgp, 0))
+		pfatal("CG %d: ALLOCINO: BAD MAGIC NUMBER\n", cg);
+	if (doswap)
+		cgdirty();
+	setbit(cg_inosused(cgp, 0), ino % sblock->fs_ipg);
+	cgp->cg_cs.cs_nifree--;
 	switch (type & IFMT) {
 	case IFDIR:
 		statemap[ino] = DSTATE;
+		cgp->cg_cs.cs_ndir++;
 		break;
 	case IFREG:
 	case IFLNK:
@@ -632,6 +644,7 @@ allocino(request, type)
 	default:
 		return (0);
 	}
+	cgdirty();
 	dp = ginode(ino);
 	dp->di_db[0] = iswap32(allocblk((long)1));
 	if (dp->di_db[0] == 0) {
@@ -639,6 +652,7 @@ allocino(request, type)
 		return (0);
 	}
 	dp->di_mode = iswap16(type);
+	dp->di_flags = 0;
 	(void)time(&t);
 	dp->di_atime = iswap32(t);
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
