@@ -1,10 +1,10 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1 2000/06/14 19:39:43 thorpej Exp $	*/
-/*	$KAME: esp_input.c,v 1.22 2000/03/21 05:14:49 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.1 2000/07/25 04:24:47 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.26 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -103,7 +103,7 @@ esp4_input(m, va_alist)
 	struct secasvar *sav = NULL;
 	size_t taillen;
 	u_int16_t nxt;
-	struct esp_algorithm *algo;
+	const struct esp_algorithm *algo;
 	int ivlen;
 	size_t hlen;
 	size_t esplen;
@@ -164,15 +164,14 @@ esp4_input(m, va_alist)
 		ipsecstat.in_badspi++;
 		goto bad;
 	}
-	if (sav->alg_enc == SADB_EALG_NONE) {
+	algo = esp_algorithm_lookup(sav->alg_enc);
+	if (!algo) {
 		ipseclog((LOG_DEBUG, "IPv4 ESP input: "
-		    "unspecified encryption algorithm for spi %u\n",
+		    "unsupported encryption algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
 		ipsecstat.in_badspi++;
 		goto bad;
 	}
-
-	algo = &esp_algorithms[sav->alg_enc];	/*XXX*/
 
 	/* check if we have proper ivlen information */
 	ivlen = sav->ivlen;
@@ -187,7 +186,8 @@ esp4_input(m, va_alist)
 	 && (sav->alg_auth && sav->key_auth)))
 		goto noreplaycheck;
 
-	if (sav->alg_auth == SADB_AALG_NULL)
+	if (sav->alg_auth == SADB_X_AALG_NULL ||
+	    sav->alg_auth == SADB_AALG_NONE)
 		goto noreplaycheck;
 
 	/*
@@ -207,10 +207,12 @@ esp4_input(m, va_alist)
     {
 	u_char sum0[AH_MAXSUMSIZE];
 	u_char sum[AH_MAXSUMSIZE];
-	struct ah_algorithm *sumalgo;
+	const struct ah_algorithm *sumalgo;
 	size_t siz;
 
-	sumalgo = &ah_algorithms[sav->alg_auth];
+	sumalgo = ah_algorithm_lookup(sav->alg_auth);
+	if (!sumalgo)
+		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
@@ -452,7 +454,7 @@ esp6_input(mp, offp, proto)
 	struct secasvar *sav = NULL;
 	size_t taillen;
 	u_int16_t nxt;
-	struct esp_algorithm *algo;
+	const struct esp_algorithm *algo;
 	int ivlen;
 	size_t esplen;
 	int s;
@@ -506,15 +508,14 @@ esp6_input(mp, offp, proto)
 		ipsec6stat.in_badspi++;
 		goto bad;
 	}
-	if (sav->alg_enc == SADB_EALG_NONE) {
+	algo = esp_algorithm_lookup(sav->alg_enc);
+	if (!algo) {
 		ipseclog((LOG_DEBUG, "IPv6 ESP input: "
-		    "unspecified encryption algorithm for spi %u\n",
+		    "unsupported encryption algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
 		ipsec6stat.in_badspi++;
 		goto bad;
 	}
-
-	algo = &esp_algorithms[sav->alg_enc];	/*XXX*/
 
 	/* check if we have proper ivlen information */
 	ivlen = sav->ivlen;
@@ -529,7 +530,8 @@ esp6_input(mp, offp, proto)
 	 && (sav->alg_auth && sav->key_auth)))
 		goto noreplaycheck;
 
-	if (sav->alg_auth == SADB_AALG_NULL)
+	if (sav->alg_auth == SADB_X_AALG_NULL ||
+	    sav->alg_auth == SADB_AALG_NONE)
 		goto noreplaycheck;
 
 	/*
@@ -549,10 +551,12 @@ esp6_input(mp, offp, proto)
     {
 	u_char sum0[AH_MAXSUMSIZE];
 	u_char sum[AH_MAXSUMSIZE];
-	struct ah_algorithm *sumalgo;
+	const struct ah_algorithm *sumalgo;
 	size_t siz;
 
-	sumalgo = &ah_algorithms[sav->alg_auth];
+	sumalgo = ah_algorithm_lookup(sav->alg_auth);
+	if (!sumalgo)
+		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
 	if (AH_MAXSUMSIZE < siz) {
 		ipseclog((LOG_DEBUG,
@@ -751,7 +755,7 @@ noreplaycheck:
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
 		} else {
-			/* 
+			/*
 			 * this comes with no copy if the boundary is on
 			 * cluster
 			 */
