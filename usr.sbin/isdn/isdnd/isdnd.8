@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.8,v 1.3 2001/09/03 01:22:54 wiz Exp $
+.\" $NetBSD: isdnd.8,v 1.4 2002/01/19 03:16:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.8,v 1.3 2001/09/03 01:22:54 wiz Exp $
+.\"	$Id: isdnd.8,v 1.4 2002/01/19 03:16:41 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -197,7 +197,6 @@ this option disables all monitoring access. It overrides the config
 file option
 .Em monitor-allowed .
 .El
-.Pp
 .Sh INTERACTION WITH THE KERNEL
 .Nm
 communicates with the kernel part of isdn4bsd by receiving status and
@@ -263,7 +262,6 @@ Accounting information from a network driver.
 .It Ar MSG_CHARGING_IND
 Charging information from the kernel.
 .El
-.Pp
 .Ss OUTGOING CALLS
 Currently the only possibility to trigger an outgoing call is that an
 isdn4bsd network driver
@@ -296,7 +294,6 @@ ioctl message, both events are signaled to the
 by the kernel sending the
 .Em I4B_DISCONNECT_IND
 message and the CDID corresponding to the call is no longer valid.
-.Pp
 .Ss INCOMING CALLS
 Incoming calls are signaled to
 .Nm
@@ -331,7 +328,7 @@ Sending a HUP signal to
 causes all open connections to be terminated and the configuration file is
 reread. In case aliasfile handling was enabled, the aliasfile is also
 reread.
-
+.Pp
 Sending a USR1 signal to
 .Nm
 causes the accounting file and the logfile (if logging to a file is used
@@ -405,8 +402,6 @@ Exit status is 0 on success, 1 on error.
 .Xr isdntel 8 ,
 .Xr isdntrace 8 ,
 .Xr syslogd 8
-.Sh BUGS
-Still one or more left.
 .Sh AUTHORS
 The
 .Nm
