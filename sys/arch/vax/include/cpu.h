@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.45 2000/05/26 21:20:26 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.46 2000/05/27 03:23:22 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -43,6 +43,7 @@
 #include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/lock.h>
+#include <sys/sched.h>
 
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
