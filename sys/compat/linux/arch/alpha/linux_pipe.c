@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.3 2000/06/26 14:38:58 mrg Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.4 2000/06/29 02:40:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/mount.h> 
   
 #include <sys/syscallargs.h> 
- 
-#include <vm/vm.h>
  
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>

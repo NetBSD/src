@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.39 2000/06/26 14:38:57 mrg Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.40 2000/06/29 02:40:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
