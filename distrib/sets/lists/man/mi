@@ -845,7 +845,7 @@
 ./usr/share/man/cat9/fddi_delmulti.0
 ./usr/share/man/cat9/fddi_ifattach.0
 ./usr/share/man/cat9/fetch.0
-./usr/share/man/can9/fork1.0
+./usr/share/man/cat9/fork1.0
 ./usr/share/man/cat9/free.0
 ./usr/share/man/cat9/fubyte.0
 ./usr/share/man/cat9/fuibyte.0
@@ -886,6 +886,7 @@
 ./usr/share/man/cat9/pfil_remove_hook.0
 ./usr/share/man/cat9/pgsignal.0
 ./usr/share/man/cat9/physio.0
+./usr/share/man/cat9/pool.0
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
@@ -1818,6 +1819,7 @@
 ./usr/share/man/man9/pfil_remove_hook.9
 ./usr/share/man/man9/pgsignal.9
 ./usr/share/man/man9/physio.9
+./usr/share/man/man9/pool.9
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
 ./usr/share/man/man9/resettodr.9

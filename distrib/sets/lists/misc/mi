@@ -131,6 +131,10 @@
 ./usr/share/doc/smm/08.sendmailop/op.me
 ./usr/share/doc/smm/09.sendmail/Makefile
 ./usr/share/doc/smm/09.sendmail/intro.me
+./usr/share/doc/smm/11.timedop/Makefile
+./usr/share/doc/smm/11.timedop/timed.ms
+./usr/share/doc/smm/12.timed/Makefile
+./usr/share/doc/smm/12.timed/timed.ms
 ./usr/share/doc/smm/18.net/0.t
 ./usr/share/doc/smm/18.net/1.t
 ./usr/share/doc/smm/18.net/2.t
@@ -197,6 +201,8 @@
 ./usr/share/doc/usd/31.trek/trek.me
 ./usr/share/doc/usd/Makefile
 ./usr/share/doc/usd/Title
+./usr/share/examples/amd/master
+./usr/share/examples/amd/net
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV
 ./usr/share/examples/emul/svr4/etc/netconfig
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf
