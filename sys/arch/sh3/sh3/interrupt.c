@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2003/10/18 23:21:35 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2003/11/01 02:24:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2003/10/18 23:21:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2003/11/01 02:24:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -213,7 +213,7 @@ intc_intr_priority(int evtcode, int level)
 			SH4_IPR(_ipr, _pos);				\
 	} while (/*CONSTCOND*/0)
 
-
+	iprreg = 0;
 	pos = -1;
 
 	switch (evtcode) {
