@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.12 2002/09/27 15:36:04 provos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.13 2002/10/05 17:12:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -51,6 +51,10 @@
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+
+void	dumpsys(void);
+void	set_spl_masks(void);
+int	ipl_to_spl(int);
 
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
@@ -276,6 +280,8 @@ ipl_to_spl(ipl)
 }
 
 #ifdef DIAGNOSTIC
+void	dump_spl_masks(void);
+
 void
 dump_spl_masks()
 {
