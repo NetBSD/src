@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2002/07/30 16:16:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2002/07/31 00:20:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2002/07/30 16:16:39 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2002/07/31 00:20:52 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -293,9 +293,7 @@ static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
 __inline static void pmap_clearbit __P((struct vm_page *, unsigned int));
 
 extern paddr_t physical_start;
-extern paddr_t physical_freestart;
 extern paddr_t physical_end;
-extern paddr_t physical_freeend;
 extern unsigned int free_pages;
 extern int max_processes;
 
@@ -424,7 +422,7 @@ int pmap_isa_dma_nranges;
  * return the page-rounded intersection if it does.  The intersection
  * will be placed on a lower-priority free list.
  */
-static boolean_t
+boolean_t
 pmap_isa_dma_range_intersect(paddr_t pa, psize_t size, paddr_t *pap,
     psize_t *sizep)
 {
@@ -973,8 +971,6 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
  * to zero physical pages of memory.
  * It also initialises the start and end address of the kernel data space.
  */
-extern paddr_t physical_freestart;
-extern paddr_t physical_freeend;
 
 char *boot_head;
 
@@ -982,12 +978,6 @@ void
 pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 {
 	pt_entry_t *pte;
-	int loop;
-	paddr_t start, end;
-#if NISADMA > 0
-	paddr_t istart;
-	psize_t isize;
-#endif
 
 	pmap_kernel()->pm_pdir = kernel_l1pt;
 	pmap_kernel()->pm_pptpt = kernel_ptpt.pv_pa;
@@ -997,72 +987,6 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 	TAILQ_INIT(&(pmap_kernel()->pm_obj.memq));
 	pmap_kernel()->pm_obj.uo_npages = 0;
 	pmap_kernel()->pm_obj.uo_refs = 1;
-
-	loop = 0;
-	while (loop < bootconfig.dramblocks) {
-		start = (paddr_t)bootconfig.dram[loop].address;
-		end = start + (bootconfig.dram[loop].pages * NBPG);
-		if (start < physical_freestart)
-			start = physical_freestart;
-		if (end > physical_freeend)
-			end = physical_freeend;
-#if 0
-		printf("%d: %lx -> %lx\n", loop, start, end - 1);
-#endif
-#if NISADMA > 0
-		if (pmap_isa_dma_range_intersect(start, end - start,
-		    &istart, &isize)) {
-			/*
-			 * Place the pages that intersect with the
-			 * ISA DMA range onto the ISA DMA free list.
-			 */
-#if 0
-			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
-			    istart + isize - 1);
-#endif
-			uvm_page_physload(atop(istart),
-			    atop(istart + isize), atop(istart),
-			    atop(istart + isize), VM_FREELIST_ISADMA);
-
-			/*
-			 * Load the pieces that come before
-			 * the intersection into the default
-			 * free list.
-			 */
-			if (start < istart) {
-#if 0
-				printf("    BEFORE 0x%lx -> 0x%lx\n",
-				    start, istart - 1);
-#endif
-				uvm_page_physload(atop(start),
-				    atop(istart), atop(start),
-				    atop(istart), VM_FREELIST_DEFAULT);
-			}
-
-			/*
-			 * Load the pieces that come after
-			 * the intersection into the default
-			 * free list.
-			 */
-			if ((istart + isize) < end) {
-#if 0
-				printf("     AFTER 0x%lx -> 0x%lx\n",
-				    (istart + isize), end - 1);
-#endif
-				uvm_page_physload(atop(istart + isize),
-				    atop(end), atop(istart + isize),
-				    atop(end), VM_FREELIST_DEFAULT);
-			}
-		} else {
-			uvm_page_physload(atop(start), atop(end),
-			    atop(start), atop(end), VM_FREELIST_DEFAULT);
-		}
-#else	/* NISADMA > 0 */
-		uvm_page_physload(atop(start), atop(end),
-		    atop(start), atop(end), VM_FREELIST_DEFAULT);
-#endif /* NISADMA > 0 */
-		++loop;
-	}
 
 	virtual_avail = KERNEL_VM_BASE;
 	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;

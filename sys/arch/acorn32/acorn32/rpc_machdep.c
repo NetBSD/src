@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.37 2002/07/30 16:16:38 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.38 2002/07/31 00:20:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.37 2002/07/30 16:16:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.38 2002/07/31 00:20:51 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -936,11 +936,30 @@ initarm(void *cookie)
 	undefined_init();
 	console_flush();
 
+	/* Load memory into UVM. */
+#ifdef VERBOSE_INIT_ARM
+	printf("page ");
+#endif
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+		/* XXX Consider DMA range intersection checking. */
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+	}
+
 	/* Boot strap pmap telling it where the kernel page table is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 	console_flush();
 

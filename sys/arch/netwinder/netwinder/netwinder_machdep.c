@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.32 2002/07/30 16:16:44 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.33 2002/07/31 00:20:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -41,6 +41,8 @@
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
+
+#include "isadma.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -718,9 +720,81 @@ initarm(void)
 	printf("undefined ");
 	undefined_init();
 
+	/* Load memory into UVM. */
+	printf("page ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+
+	/* XXX Always one RAM block -- nuke the loop. */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+#if NISADMA > 0
+		paddr_t istart, isize;
+#endif
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+#if 0
+		printf("%d: %lx -> %lx\n", loop, start, end - 1);
+#endif
+
+#if NISADMA > 0
+		if (pmap_isa_dma_range_intersect(start, end - start,
+						 &istart, &isize)) {
+			/*
+			 * Place the pages that intersect with the
+			 * ISA DMA range onto the ISA DMA free list.
+			 */
+#if 0
+			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
+			    istart + isize - 1);
+#endif
+			uvm_page_physload(atop(istart),
+			    atop(istart + isize), atop(istart),
+			    atop(istart + isize), VM_FREELIST_ISADMA);
+
+			/*
+			 * Load the pieces that come before the
+			 * intersection onto the default free list.
+			 */
+			if (start < istart) {
+#if 0
+				printf("    BEFORE 0x%lx -> 0x%lx\n",
+				    start, istart - 1);
+#endif
+				uvm_page_physload(atop(start),
+				    atop(istart), atop(start),
+				    atop(istart), VM_FREELIST_DEFAULT);
+			}
+
+			/*
+			 * Load the pieces that come after the
+			 * intersection onto the default free list.
+			 */
+			if ((istart + isize) < end) {
+#if 0
+				printf("     AFTER 0x%lx -> 0x%lx\n",
+				    (istart + isize), end - 1);
+#endif
+				uvm_page_physload(atop(istart + isize),
+				    atop(end), atop(istart + isize),
+				    atop(end), VM_FREELIST_DEFAULT);
+			}
+		} else {
+			uvm_page_physload(atop(start), atop(end),
+			    atop(start), atop(end), VM_FREELIST_DEFAULT);
+		}
+#else /* NISADMA > 0 */
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+#endif /* NISADMA > 0 */
+	}
+
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */

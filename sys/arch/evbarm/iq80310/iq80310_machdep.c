@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.41 2002/07/30 16:16:42 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.42 2002/07/31 00:20:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -774,9 +774,15 @@ initarm(void *arg)
 	printf("undefined ");
 	undefined_init();
 
+	/* Load memory into UVM. */
+	printf("page ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
+	    atop(physical_freestart), atop(physical_freeend),
+	    VM_FREELIST_DEFAULT);
+
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */

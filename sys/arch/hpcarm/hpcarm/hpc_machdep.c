@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.50 2002/07/30 16:16:43 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.51 2002/07/31 00:20:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -685,8 +685,22 @@ initarm(argc, argv, bi)
 	printf("MMU enabled. control=%08x\n", cpu_get_control());
 #endif
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Load memory into UVM. */
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
+		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+	}
+
+	/* Boot strap pmap telling it where the kernel page table is */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 
