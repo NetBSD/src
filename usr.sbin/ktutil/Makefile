@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/06/16 23:59:32 thorpej Exp $
-DIST=		${.CURDIR}/../../dist
+# $NetBSD: Makefile,v 1.2 2000/06/17 00:04:38 thorpej Exp $
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/admin
 
 WARNS?=  1
