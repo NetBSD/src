@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.38 1994/08/21 21:24:33 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.39 1994/08/23 22:13:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -210,7 +210,7 @@ ptrace(p, uap, retval)
 		 * almost worthless.  Additionally, we _always_ require
 		 * that the address be int-aligned.
 		 */
-		if ((u_long)uap->addr > (ctob(UPAGES) - sizeof(int)) ||
+		if ((u_long)uap->addr > USPACE - sizeof(int) ||
 		    ((u_long)uap->addr & (sizeof(int) - 1)) != 0)
 			return (EINVAL);
 
@@ -231,7 +231,7 @@ ptrace(p, uap, retval)
 		 * reading it.  Don't bother filling in the eproc, because
 		 * it won't be used for anything anyway.
 		 */
-		if ((u_long)uap->addr > (ctob(UPAGES) - sizeof(int)) ||
+		if ((u_long)uap->addr > USPACE - sizeof(int) ||
 		    ((u_long)uap->addr & (sizeof(int) - 1)) != 0)
 			return (EINVAL);
 
