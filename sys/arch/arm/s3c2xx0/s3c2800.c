@@ -1,8 +1,8 @@
-/*	$NetBSD: s3c2800.c,v 1.6 2003/08/01 00:41:42 bsh Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.7 2003/08/04 12:09:19 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.6 2003/08/01 00:41:42 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.7 2003/08/04 12:09:19 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,11 +146,10 @@ s3c2800_attach(struct device *parent, struct device *self, void *aux)
 
 	/* calculate current clock frequency */
 	s3c2800_clock_freq(&sc->sc_sx);
-	printf("fclk %d MHz hclk %d MHz pclk %d MHz\n",
+	aprint_normal(": fclk %d MHz hclk %d MHz pclk %d MHz\n",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
-
-	printf("\n");
+	aprint_naive("\n");
 
 	/*
 	 *  Attach devices.
