@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1996/03/27 10:03:01 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1996/08/11 22:35:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -58,6 +58,7 @@
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
+#include <mips/locore.h>
 #include <pica/dev/fdreg.h>
 #include <pica/dev/dma.h>
 
@@ -878,7 +879,8 @@ loop:
 #endif
 		 }}
 #endif
-		MachFlushDCache(bp->b_data + fd->sc_skip, fd->sc_nbytes);
+		MachFlushDCache((vm_offset_t) (bp->b_data + fd->sc_skip),
+				(vm_offset_t) fd->sc_nbytes);
 		read = bp->b_flags & B_READ ? DMA_FROM_DEV : DMA_TO_DEV;
 		DMA_START(fdc->dma, bp->b_data + fd->sc_skip, fd->sc_nbytes, read);
 		outb(iobase + fdctl, type->rate);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1996/03/28 12:26:31 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1996/08/11 22:36:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,6 +160,7 @@ delay(n)
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
+void
 cpu_initclocks()
 {
 	extern int tickadj;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.5 1996/07/16 23:24:13 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.6 1996/08/11 22:35:55 jonathan Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -59,12 +59,11 @@
 #define SONICDW 32
 typedef unsigned char uchar;
 
+#include <mips/cpuregs.h>	/* XXX */
 #include <pica/dev/if_sn.h>
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
 
-#include <machine/machConst.h>
-#define wbflush() 	MachEmptyWriteBuffer()
 
 /*
  * Statistics collected over time

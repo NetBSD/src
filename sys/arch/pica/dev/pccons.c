@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.3 1996/03/27 10:02:56 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.4 1996/08/11 22:35:59 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -72,7 +72,9 @@
 #include <machine/pccons.h>
 #include <pica/pica/pica.h>
 
+#ifdef notyet
 #include <dev/isa/isavar.h>
+#endif
 #include <machine/kbdreg.h>
 
 #define	XFREE86_BUG_COMPAT
@@ -1867,7 +1869,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.3 1996/03/27 10:02:56 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.4 1996/08/11 22:35:59 jonathan Exp $	*/
 
 #include <machine/mouse.h>
 

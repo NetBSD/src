@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.3 1996/03/31 04:38:46 jonathan Exp $	*/
+/*	$NetBSD: dma.c,v 1.4 1996/08/11 22:35:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#include <mips/locore.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/pte.h>

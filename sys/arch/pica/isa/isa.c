@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.1.1.1 1996/03/13 04:58:09 jonathan Exp $	*/
+/*	$NetBSD: isa.c,v 1.2 1996/08/11 22:36:05 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -99,7 +99,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <pica/pica/pica.h>
 
 #include <dev/isa/isareg.h>
+#ifdef notyet
 #include <dev/isa/isavar.h>
+#endif
 #include <pica/isa/timerreg.h>
 #include <pica/isa/spkrreg.h>
 
