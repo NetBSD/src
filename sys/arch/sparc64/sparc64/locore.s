@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2002/03/16 15:15:33 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 2002/03/21 06:56:31 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -4678,13 +4678,6 @@ return_from_trap:
 	wr	%g4, 0, %y
 	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
-
-#ifdef DEBUG
-	tst	%g2
-	tz	1		! tpc NULL? Panic
-	tst	%i6
-	tz	1		! %fp NULL? Panic
-#endif
 
 #ifdef NOTDEF_DEBUG
 	ldub	[%sp + CC64FSZ + STKB + TF_PIL], %g5		! restore %pil
