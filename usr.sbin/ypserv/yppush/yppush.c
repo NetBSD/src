@@ -1,7 +1,8 @@
-/*	$NetBSD: yppush.c,v 1.7 1997/10/19 19:58:30 mycroft Exp $	*/
+/*	$NetBSD: yppush.c,v 1.7.2.1 1997/11/28 09:44:29 mellon Exp $	*/
 
 /*
- * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
+ *
+ * Copyright (c) 1997 Charles D. Cranor
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,371 +13,456 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Mats O Jansson
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: yppush.c,v 1.7 1997/10/19 19:58:30 mycroft Exp $");
-#endif
-
+/*
+ * yppush
+ * author: Chuck Cranor <chuck@ccrc.wustl.edu>
+ * date: 05-Nov-97
+ *
+ * notes: this is a full rewrite of Mats O Jansson <moj@stacken.kth.se>'s
+ * yppush.c.   i have restructured and cleaned up the entire file.
+ */
 #include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/resource.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
-#include <errno.h>
 #include <err.h>
 #include <fcntl.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <signal.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
-#include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-#include "protos.h"
-#include "yplib_host.h"
-#include "ypdef.h"
 #include "ypdb.h"
+#include "ypdef.h"
+#include "yplib_host.h"
 #include "yppush.h"
 
-extern	char *__progname;		/* from crt0.o */
+/*
+ * yppush: push a new YP map out YP servers
+ *
+ * usage:
+ *   yppush [-d domain] [-h host] [-v] mapname
+ *
+ *   -d: the domainname the map lives in [if different from default]
+ *   -h: push only to this host [otherwise, push to all hosts]
+ *   -v: verbose
+ */
+
+/*
+ * structures
+ */
+
+struct yppush_info {
+	char   *ourdomain;	/* domain of interest */
+	char   *map;		/* map we are pushing */
+	char   *owner;		/* owner of map */
+	int     order;		/* order number of map (version) */
+};
+/*
+ * global vars
+ */
+
+extern char *__progname;	/* from crt0.o */
+int     verbo = 0;		/* verbose */
+
+/*
+ * prototypes
+ */
 
 int	main __P((int, char *[]));
 int	pushit __P((int, char *, int, char *, int, char *));
-void	push __P((int, char *));
-void	req_xfr __P((pid_t, u_int, SVCXPRT *, char *, CLIENT *));
+void	push __P((char *, int, struct yppush_info *));
 void	_svc_run __P((void));
-void	cleanup __P((void));
 void	usage __P((void));
 
-int	Verbose = 0;
-u_int	OrderNum;
 
-char	Domain[YPMAXDOMAIN];
-char	Map[YPMAXMAP];
-char	LocalHost[YPMAXPEER];
-
-static	DBM *yp_databas;
+/*
+ * main
+ */
 
 int
 main(argc, argv)
-	int  argc;
-	char *argv[];
+	int     argc;
+	char   *argv[];
+
 {
-	struct ypall_callback ypcb;
-	char *master, *domain, *map, *hostname;
-	int c, r, i;
-	datum o;
-	char *ypmap = "ypservers";
-	CLIENT *client;
-	struct stat finfo;
-	char order_key[YP_LAST_LEN] = YP_LAST_KEY;
-	static char map_path[MAXPATHLEN];
+	char   *targhost = NULL;
+	struct yppush_info ypi = {NULL, NULL, NULL, 0};
+	int     c, rv;
+	const char *cp;
+	char   *master;
+	DBM    *ypdb;
+	datum   datum;
+	CLIENT *ypserv;
+	struct timeval tv;
+	enum clnt_stat retval;
+	struct ypall_callback ypallcb;
 
-	if (atexit(cleanup))
-		err(1, "can't register cleanup function");
-
-	domain = NULL;
-	hostname = NULL;
-
+	/*
+         * parse command line
+         */
 	while ((c = getopt(argc, argv, "d:h:v")) != -1) {
-		switch(c) {
+		switch (c) {
 		case 'd':
-			domain = optarg;
+			ypi.ourdomain = optarg;
 			break;
-
 		case 'h':
-			hostname = optarg;
+			targhost = optarg;
 			break;
-
-                case 'v':
-			Verbose = 1;
+		case 'v':
+			verbo = 1;
 			break;
-
 		default:
-                        usage();
-                        /*NOTREACHED*/
+			usage();
+			/* NOTREACHED */
 		}
 	}
-	argv += optind; argc -= optind;
-
+	argc -= optind;
+	argv += optind;
 	if (argc != 1)
 		usage();
+	ypi.map = argv[0];
+	if (strlen(ypi.map) > YPMAXMAP)
+		errx(1, "%s: map name too long (limit %d)", ypi.map, YPMAXMAP);
 
-	map = argv[0];
-
-	if (domain == NULL)
-		if ((c = yp_get_default_domain(&domain)))
-			errx(1, "can't get YP domain name.  Reason: %s",
+	/*
+         * ensure we have a domain
+         */
+	if (ypi.ourdomain == NULL) {
+		c = yp_get_default_domain(&ypi.ourdomain);
+		if (ypi.ourdomain == NULL)
+			errx(1, "unable to get default domain: %s",
 			    yperr_string(c));
-
-	memset(Domain, 0, sizeof(Domain));
-	snprintf(Domain, sizeof(Domain), "%s", domain);
-	memset(Map, 0, sizeof(Map));
-	snprintf(Map, sizeof(Map), "%s", map);
-
-	/* Set up the hostname to be used for the xfr */
-	localhostname(LocalHost, sizeof(LocalHost));
-
-	/* Check domain */
-	sprintf(map_path,"%s/%s",YP_DB_PATH,domain);
-	if (stat(map_path, &finfo) != 0 || !S_ISDIR(finfo.st_mode)) {
-	  	fprintf(stderr,"yppush: Map does not exists.\n");
-		exit(1);
 	}
-		
-	/* Check map */
-	memset(map_path, 0, sizeof(map_path));
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s%s", YP_DB_PATH,
-	    Domain, Map, YPDB_SUFFIX);
-	if (stat(map_path, &finfo) != 0)
-		errx(1, "map does not exist");
+	/*
+         * verify that the domain and specified database exsists
+         *
+         * XXXCDC: this effectively prevents us from pushing from any
+         * host but the master.   an alternate plan is to find the master
+         * host for a map, clear it, ask for the order number, and then
+         * send xfr requests.   if that was used we would not need local
+         * file access.
+         */
+	if (chdir(YP_DB_PATH) < 0)
+		err(1, "%s", YP_DB_PATH);
+	if (chdir(ypi.ourdomain) < 0)
+		err(1, "%s/%s", YP_DB_PATH, ypi.ourdomain);
 
-	/* Open the database */
-	memset(map_path, 0, sizeof(map_path));
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH,
-	    Domain, Map);
-	yp_databas = ypdb_open(map_path, 0, O_RDONLY);
-	OrderNum=0xffffffff;
-	if (yp_databas == NULL)
-		err(1, "%s%s: cannot open database", map_path, YPDB_SUFFIX);
-	else {
-		o.dptr = (char *) &order_key;
-		o.dsize = YP_LAST_LEN;
-		o = ypdb_fetch(yp_databas, o);
-		if (o.dptr == NULL)
-			errx(1, "%s: cannot determine order number", Map);
-		else {
-			OrderNum = 0;
-			for (i = 0; i < o.dsize - 1; i++)
-				if (!isdigit(o.dptr[i]))
-					OrderNum=0xffffffff;
-
-			if (OrderNum != 0)
-				errx(1, "%s: invalid order number `%s'",
-				    Map, o.dptr);
-			else
-				OrderNum = atoi(o.dptr);
-		}
-        }
-
-	/* No longer need YP map. */
-	ypdb_close(yp_databas);
-	yp_databas = NULL;
-
-	r = yp_bind(Domain);
-	if (r != 0)
-		errx(1, "%s", yperr_string(r));
-
-	if (hostname != NULL)
-		push(strlen(hostname), hostname);
-	else {
-		r = yp_master(Domain, ypmap, &master);
-		if (r != 0)
-			errx(1, "%s (map = %s)", yperr_string(r), ypmap);
-
-		if (Verbose)
-			printf("Contacting master for ypservers (%s).\n",
-			    master);
-
-		client = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
-
-		ypcb.foreach = pushit;
-		ypcb.data = NULL;
-
-		r = yp_all_host(client, Domain, ypmap, &ypcb);
-		if (r != 0)
-			errx(1, "%s (map = %s)", yperr_string(r), ypmap);
+	/*
+         * now open the database so we can extract "order number"
+         * (i.e. timestamp) of the map.
+         */
+	ypdb = ypdb_open(ypi.map, 0, O_RDONLY);
+	if (ypdb == NULL)
+		err(1, "ypdb_open %s/%s/%s", YP_DB_PATH, ypi.ourdomain,
+		    ypi.map);
+	datum.dptr = YP_LAST_KEY;
+	datum.dsize = YP_LAST_LEN;
+	datum = ypdb_fetch(ypdb, datum);
+	ypdb_close(ypdb);
+	if (datum.dptr == NULL)
+		errx(1,
+		    "unable to fetch %s key: check database with 'makedbm -u'",
+		    YP_LAST_KEY);
+	ypi.order = 0;
+	cp = datum.dptr;
+	while (cp < datum.dptr + datum.dsize) {
+		if (!isdigit(*cp))
+			errx(1,
+		    "invalid order number: check database with 'makedbm -u'");
+		ypi.order = (ypi.order * 10) + *cp - '0';
+		cp++;
 	}
-	exit (0);
+
+	if (verbo)
+		printf("pushing %s [order=%d] in domain %s\n", ypi.map,
+		    ypi.order, ypi.ourdomain);
+
+	/*
+         * ok, we are ready to do it.   first we send a clear_2 request
+         * to the local server [should be the master] to make sure it has
+         * the correct database open.
+         *
+         * XXXCDC: note that yp_bind_local exits on failure so ypserv can't
+         * be null.   this makes it difficult to print a useful error message.
+         * [it will print "clntudp_create: no contact with localhost"]
+         */
+	tv.tv_sec = 10;
+	tv.tv_usec = 0;
+	ypserv = yp_bind_local(YPPROG, YPVERS);
+	retval = clnt_call(ypserv, YPPROC_CLEAR, xdr_void, 0, xdr_void, 0, tv);
+	if (retval != RPC_SUCCESS)
+		errx(1, "clnt_call CLEAR to local ypserv: %s",
+		    clnt_sperrno(retval));
+	clnt_destroy(ypserv);
+
+	/*
+         * now use normal yplib functions to bind to the domain.
+         */
+	rv = yp_bind(ypi.ourdomain);
+	if (rv)
+		errx(1, "error binding to %s: %s", ypi.ourdomain,
+		    yperr_string(rv));
+
+	/*
+         * find 'owner' of the map (see pushit for usage)
+         */
+	rv = yp_master(ypi.ourdomain, ypi.map, &ypi.owner);
+	if (rv)
+		errx(1, "error finding master for %s in %s: %s", ypi.map,
+		    ypi.ourdomain, yperr_string(rv));
+
+	/*
+         * inform user of our progress
+         */
+	if (verbo) {
+		printf("pushing map %s in %s: order=%d, owner=%s\n", ypi.map,
+		    ypi.ourdomain, ypi.order, ypi.owner);
+		printf("pushing to %s\n",
+		    (targhost) ? targhost : "<all ypservs>");
+	}
+
+	/*
+         * finally, do it.
+         */
+	if (targhost) {
+		push(targhost, strlen(targhost), &ypi);
+	} else {
+
+		/*
+	         * no host specified, do all hosts the master knows about via
+	         * the ypservers map.
+	         */
+		rv = yp_master(ypi.ourdomain, "ypservers", &master);
+		if (rv)
+			errx(1, "error finding master for ypservers in %s: %s",
+			    ypi.ourdomain, yperr_string(rv));
+
+		if (verbo)
+			printf(
+		"contacting ypservers %s master on %s for list of ypservs...\n",
+			    ypi.ourdomain, master);
+
+		ypserv = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
+
+		ypallcb.foreach = pushit;	/* callback function */
+		ypallcb.data = (char *) &ypi;	/* data to pass into callback */
+
+		rv = yp_all_host(ypserv, ypi.ourdomain, "ypservers", &ypallcb);
+		if (rv)
+			errx(1, "pushing %s in %s failed: %s", ypi.map,
+			    ypi.ourdomain, yperr_string(rv));
+	}
+	exit(0);
 }
 
+/*
+ * usage: print usage and exit
+ */
 void
 usage()
 {
-
-	fprintf(stderr, "usage: %s [-d domainname] [-h host] [-v] mapname\n",
+	fprintf(stderr, "usage: %s [-d domain] [-h host] [-v] map\n",
 	    __progname);
 	exit(1);
 }
 
+/*
+ * pushit: called from yp_all_host to push a specific host.
+ * the key/value pairs are from the ypservers map.
+ */
+int
+pushit(instatus, inkey, inkeylen, inval, invallen, indata)
+	int     instatus, inkeylen, invallen;
+	char   *inkey, *inval, *indata;
+{
+	struct yppush_info *ypi = (struct yppush_info *) indata;
+
+	if (instatus != YP_TRUE)		/* failure? */
+		return (instatus);
+
+	push(inkey, inkeylen, ypi);		/* do it! */
+	return (0);
+}
+
+/*
+ * push: push a specific map on a specific host
+ */
+void
+push(host, hostlen, ypi)
+	char   *host;
+	int     hostlen;
+	struct yppush_info *ypi;
+{
+	char    target[YPMAXPEER];
+	CLIENT *ypserv;
+	SVCXPRT *transp;
+	int     prog, pid, rv;
+	struct timeval tv;
+	struct ypreq_xfr req;
+
+	/*
+         * get our target host in a null terminated string
+         */
+	snprintf(target, sizeof(target), "%*.*s", hostlen, hostlen, host);
+
+	/*
+         * XXXCDC: arg!  we would like to use yp_bind_host here, except that
+         * it exits on failure and we don't want to give up just because
+         * one host fails.  thus, we have to do it the hard way.
+         */
+	ypserv = clnt_create(target, YPPROG, YPVERS, "tcp");
+	if (ypserv == NULL) {
+		clnt_pcreateerror(target);
+		return;
+	}
+
+	/*
+         * our XFR rpc request to the client just starts the transfer.
+         * when the client is done, it wants to call a procedure that
+         * we are serving to tell us that it is done.   so we must create
+         * and register a procedure for us for it to call.
+         */
+	transp = svcudp_create(RPC_ANYSOCK);
+	if (transp == NULL) {
+		warnx("callback svcudp_create failed");
+		goto error;
+	}
+
+	/* register it with portmap */
+	for (prog = 0x40000000; prog < 0x5fffffff; prog++) {
+		if (svc_register(transp, prog, 1, yppush_xfrrespprog_1,
+		    IPPROTO_UDP))
+			break;
+	}
+	if (prog >= 0x5fffffff) {
+		warnx("unable to register callback");
+		goto error;
+	}
+
+	/*
+         * now fork off a server to catch our reply
+         */
+	pid = fork();
+	if (pid == -1) {
+		svc_unregister(prog, 1);	/* drop our mapping with
+						 * portmap */
+		warn("fork failed");
+		goto error;
+	}
+
+	/*
+         * child process becomes the server
+         */
+	if (pid == 0) {
+		_svc_run();
+		exit(0);
+	}
+
+	/*
+         * we are the parent process: send XFR request to server.
+         * the "owner" field isn't used by ypserv (and shouldn't be, since
+         * the ypserv has no idea if we are a legitimate yppush or not).
+         * instead, the owner of the map is determined by the master value
+         * currently cached on the slave server.
+         */
+	close(transp->xp_sock);	/* close child's socket, we don't need it */
+	/* don't wait for anything here, we will wait for child's exit */
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	req.map_parms.domain = ypi->ourdomain;
+	req.map_parms.map = ypi->map;
+	req.map_parms.owner = ypi->owner;	/* NOT USED */
+	req.map_parms.ordernum = ypi->order;
+	req.transid = (u_int) pid;
+	req.proto = prog;
+	req.port = transp->xp_port;
+
+	if (verbo)
+		printf("asking host %s to transfer map (xid=%d)\n", target,
+		    req.transid);
+
+	rv = clnt_call(ypserv, YPPROC_XFR, xdr_ypreq_xfr, &req,
+	    		xdr_void, NULL, tv);			/* do it! */
+
+	if (rv != RPC_SUCCESS && rv != RPC_TIMEDOUT) {
+		warnx("unable to xfr to host %s: %s", target, clnt_sperrno(rv));
+		kill(pid, SIGTERM);
+	}
+
+	/*
+         * now wait for child to get the reply and exit
+         */
+	wait4(pid, NULL, 0, NULL);
+	svc_unregister(prog, 1);
+
+	/*
+         * ... and we are done.   fall through
+         */
+
+error:
+	if (transp)
+		svc_destroy(transp);
+	clnt_destroy(ypserv);
+	return;
+}
+
+/*
+ * _svc_run: this is the main loop for the RPC server that we fork off
+ * to await the reply from ypxfr.
+ */
 void
 _svc_run()
 {
-	fd_set readfds;
-	struct timeval timeout;
+	fd_set  readfds;
+	struct timeval tv;
+	int     rv, nfds;
 
-	timeout.tv_sec = 60;
-	timeout.tv_usec = 0;
+	nfds = sysconf(_SC_OPEN_MAX);
+	while (1) {
 
-	for(;;) {
-		readfds = svc_fdset;
+		readfds = svc_fdset;	/* structure copy from global var */
+		tv.tv_sec = 60;
+		tv.tv_usec = 0;
 
-		switch (select(sysconf(_SC_OPEN_MAX), &readfds, NULL, NULL,
-		    &timeout)) {
+		rv = select(nfds, &readfds, NULL, NULL, &tv);
 
-		case -1:
+		if (rv < 0) {
 			if (errno == EINTR)
 				continue;
-
-			warnx("_svc_run: select failed");
+			warn("_svc_run: select failed");
 			return;
-
-		case 0:
-			errx(0, "Callback timed out.");
-
-		default:
-			svc_getreqset(&readfds);
 		}
+		if (rv == 0)
+			errx(0, "_svc_run: callback timed out");
+
+		/*
+	         * got something
+	         */
+		svc_getreqset(&readfds);
+
 	}
-}
-
-void
-req_xfr(pid, prog, transp, host, client)
-	pid_t pid;
-	u_int prog;
-	SVCXPRT *transp;
-	char *host;
-	CLIENT *client;
-{
-	struct ypreq_xfr request;
-	struct timeval tv;
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
-	request.map_parms.domain = &Domain[0];
-	request.map_parms.map = &Map[0];
-	request.map_parms.owner = &LocalHost[0];
-	request.map_parms.ordernum = OrderNum;
-	request.transid = (u_int)pid;
-	request.proto = prog;
-	request.port = transp->xp_port;
-
-	if (Verbose)
-		printf("%d: %s(%d@%s) -> %s@%s\n", request.transid,
-		    request.map_parms.map, request.map_parms.ordernum,
-		    host, request.map_parms.owner, request.map_parms.domain);
-
-	switch (clnt_call(client, YPPROC_XFR, xdr_ypreq_xfr, &request,
-	    xdr_void, NULL, tv)) {
-	case RPC_SUCCESS:
-	case RPC_TIMEDOUT:
-		break;
-
-	default:
-		clnt_perror(client, "yppush: Cannot call YPPROC_XFR");
-		kill(pid, SIGTERM);
-	}
-}
-
-void
-push(inlen, indata)
-	int inlen;
-	char *indata;
-{
-	char host[YPMAXPEER];
-	CLIENT *client;
-	SVCXPRT *transp;
-	int sock = RPC_ANYSOCK;
-	u_int prog;
-	bool_t sts;
-	pid_t pid;
-	int status;
-	struct rusage res;
-
-	memset(host, 0, sizeof(host));
-	snprintf(host, sizeof(host), "%*.*s", inlen, inlen, indata);
-
-	client = clnt_create(host, YPPROG, YPVERS, "tcp");
-	if (client == NULL) {
-		if (Verbose)
-			fprintf(stderr, "Target host: %s\n", host);
-		clnt_pcreateerror("yppush: cannot create client");
-		return;
-	}
-
-	transp = svcudp_create(sock);
-	if (transp == NULL) {
-		warnx("cannot create callback transport");
-		return;
-	}
-
-	for (prog = 0x40000000; prog < 0x5fffffff; prog++) {
-		if ((sts = svc_register(transp, prog, 1,
-		    yppush_xfrrespprog_1, IPPROTO_UDP)))
-			break;
-	}
-
-	if (sts == FALSE) {
-		warnx("cannot register callback");
-		return;
-	}
-
-	switch ((pid = fork())) {
-	case -1:
-		err(1, "fork failed");
-
-	case 0:
-		_svc_run();
-		exit(0);
-
-	default:
-		close(transp->xp_sock);
-		req_xfr(pid, prog, transp, host, client);
-		wait4(pid, &status, 0, &res);
-		svc_unregister(prog, 1);
-		if (client != NULL)
-		  	clnt_destroy(client);
-	}
-}
-
-int
-pushit(instatus, inkey, inkeylen, inval, invallen, indata)
-	int instatus;
-	char *inkey;
-	int inkeylen;
-	char *inval;
-	int invallen;
-	char *indata;
-{
-
-	if (instatus != YP_TRUE)
-		return instatus;
-
-	push(inkeylen, inkey);
-	return 0;
-}
-
-void
-cleanup()
-{
-
-	/* Make sure the map file is closed. */
-	if (yp_databas != NULL)
-		ypdb_close(yp_databas);
 }
