@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/12/11 22:37:27 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2004/01/02 11:58:32 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,8 +9,8 @@ LIB=		gcc
 
 .cc: # disable .cc->NULL transform
 
-.if exists(${.CURDIR}/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/${MACHINE_ARCH}.mk"
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 GNUHOSTDIST=	${DIST}
@@ -31,7 +31,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS} \
 		${G_LIB2FUNCS_EXTRA}
 
-DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
+DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} cs-tconfig.h tconfig.h
 
 # XXX
