@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.87.2.1 1999/10/19 17:50:18 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.87.2.2 1999/10/20 20:43:20 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1516,7 +1516,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.87.2.1 1999/10/19 17:50:18 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.87.2.2 1999/10/20 20:43:20 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4464,9 +4464,6 @@ static void ncr_start(struct scsipi_xfer *xp)
 
 	flags = xp->xs_control;
 
-	if (xp->bp)
-		flags |= (XS_CTL_NOSLEEP); /* just to be sure */
-
 	/*---------------------------------------------------
 	**
 	**	Assign a ccb / bind xp
@@ -7214,14 +7211,8 @@ static	ccb_p ncr_get_ccb
 	if (!cp) cp = np->ccb;
 
 	/*
-	**	Wait until available.
+	**	Check to see if it's available.
 	*/
-
-	while (cp->magic) {
-		if (flags & XS_CTL_NOSLEEP) break;
-		if (tsleep ((caddr_t)cp, PRIBIO|PCATCH, "ncr", 0))
-			break;
-	};
 
 	if (cp->magic) {
 		splx(oldspl);
