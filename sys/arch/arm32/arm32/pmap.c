@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11.8.2 1997/09/22 06:30:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11.8.3 1997/10/14 08:42:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -1069,7 +1069,7 @@ pmap_activate(pmap, pcbp)
 		printf("pmap_activate: pagedir = P%08x\n", pcbp->pcb_pagedir);
 #endif
 
-		if (pmap == &curproc->p_vmspace->vm_pmap) {
+		if (pmap == curproc->p_vmspace->vm_map.pmap) {
 			printf("pmap: Setting TTB\n");
 			setttb((u_int)pcbp->pcb_pagedir);
 		}

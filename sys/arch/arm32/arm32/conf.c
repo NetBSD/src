@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1997/01/28 05:00:03 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.19.8.1 1997/10/14 08:42:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -142,6 +142,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "iic.h"
 #include "rtc.h"
 #include "ipfilter.h"
+#include "rnd.h"
 
 /* Character devices */
 
@@ -196,6 +197,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 47: */
 	cdev_lkm_dummy(),		/* 48: */
 	cdev_lkm_dummy(),		/* 49: */
+	cdev_rnd_init(NRND,rnd),	/* 50: random source pseudo-device */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -287,6 +289,7 @@ static int chrtoblktbl[] = {
     /* 47 */        NODEV,
     /* 48 */        NODEV,
     /* 49 */        NODEV,
+    /* 50 */        NODEV,
 };
 
 /*
