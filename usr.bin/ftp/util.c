@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 1998/01/18 22:09:43 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.21 1998/01/20 04:39:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.20 1998/01/18 22:09:43 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.21 1998/01/20 04:39:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -570,6 +570,7 @@ updateprogressmeter(dummy)
  * - After the transfer, call with flag = 1
  */
 static struct timeval start;
+static struct timeval lastupdate;
 
 void
 progressmeter(flag)
@@ -582,7 +583,6 @@ progressmeter(flag)
 	 */
 	static const char prefixes[] = " KMGTP";
 
-	static struct timeval lastupdate;
 	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
@@ -692,7 +692,7 @@ ptransfer(siginfo)
 	int siginfo;
 {
 #ifndef	SMALL
-	struct timeval now, td;
+	struct timeval now, td, wait;
 	double elapsed;
 	off_t bs;
 	int meg, remaining, hh, len;
@@ -710,20 +710,44 @@ ptransfer(siginfo)
 		meg = 1;
 	len = 0;
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
-	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
+	    "%qd byte%s %s in ", (long long)bytes, bytes == 1 ? "" : "s",
+	    direction);
+	remaining = (int)elapsed;
+	if (remaining > SECSPERDAY) {
+		int days;
+
+		days = remaining / SECSPERDAY;
+		remaining %= SECSPERDAY;
+		len += snprintf(buf + len, sizeof(buf) - len,
+		    "%d day%s ", days, days == 1 ? "" : "s");
+	}
+	hh = remaining / SECSPERHOUR;
+	remaining %= SECSPERHOUR;
+	if (hh)
+		len += snprintf(buf + len, sizeof(buf) - len, "%2d:", hh);
+	len += snprintf(buf + len, sizeof(buf) - len,
+	    "%02d:%02d (%.2f %sB/s)", remaining / 60, remaining % 60,
+	    bs / (1024.0 * (meg ? 1024.0 : 1.0)),
+	    meg ? "M" : "K");
+
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
 	    && bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / SECSPERHOUR;
 		remaining %= SECSPERHOUR;
-		len--;	 		/* decrement len to overwrite \n */
+		len += snprintf(buf + len, sizeof(buf) - len, "  ETA: ");
+		if (hh)
+			len += snprintf(buf + len, sizeof(buf) - len, "%2d:",
+			    hh);
 		len += snprintf(buf + len, sizeof(buf) - len,
-		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
-		    remaining % 60);
+		    "%02d:%02d", remaining / 60, remaining % 60);
+		timersub(&now, &lastupdate, &wait);
+		if (wait.tv_sec >= STALLTIME)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    "  (stalled)");
 	}
+	len += snprintf(buf + len, sizeof(buf) - len, "\n");
 	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, len);
 #endif	/* SMALL */
 }
