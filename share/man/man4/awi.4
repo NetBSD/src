@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.16 2001/12/18 13:33:18 ad Exp $
+.\"     $NetBSD: awi.4,v 1.17 2003/01/04 01:09:37 wiz Exp $
 .\"
 .Dd September 18, 2001
 .Dt AWI 4
@@ -23,7 +23,7 @@ The
 .Nm
 driver encapsulates all IP and ARP traffic as 802.11 frames.
 .Pp
-The driver works both in infrastructure mode and in adhoc (independent
+The driver works both in infrastructure mode and in ad-hoc (independent
 BSS) mode.
 .Pp
 In infrastructure mode, it communicates with an Access Point
@@ -31,21 +31,21 @@ which serves as a link-layer bridge between an Ethernet and
 the wireless network.  An access point also provides roaming capability
 which allows wireless node to move between access points.
 .Pp
-In adhoc mode, it communicates peer to peer.
+In ad-hoc mode, it communicates peer to peer.
 Though it is more efficient to communicate between wireless nodes,
 the coverage is limited spatially due to lack of roaming capability.
 .Pp
 In addition to these two mode in IEEE 802.11 specification, the
 .Nm
-driver also supports a variant of adhoc mode out of spec for DS radio cards,
-which makes possible to communicate with WaveLAN adhoc mode of
+driver also supports a variant of ad-hoc mode out of spec for DS radio cards,
+which makes possible to communicate with WaveLAN ad-hoc mode of
 .Xr wi 4
 driver.  The NWID doesn't affect in this mode.
 .Pp
 Another mode added to the
 .Nm
 driver can be used with old Melco access point with 2Mbps card,
-which actually use IEEE 802.11 adhoc mode with encapsulation of
+which actually use IEEE 802.11 ad-hoc mode with encapsulation of
 raw Ethernet packet including header in 802.11 frames.
 .Pp
 For more information on configuring this device, see
@@ -95,7 +95,7 @@ media types, while the FH cards support
 .Em FH1
 media type.  For each media type,
 .Em adhoc
-mediaopt can be used to indicate the driver to operate in adhoc mode.
+mediaopt can be used to indicate the driver to operate in ad-hoc mode.
 The
 .Em flag0
 mediaopt
@@ -104,7 +104,7 @@ For DS radio cards,
 .Em adhoc,flag0
 mediaopt can be used for
 .Xr wi 4
-compatible WaveLAN adhoc mode.
+compatible WaveLAN ad-hoc mode.
 .Pp
 To configure more detailed parameters for the
 .Nm
@@ -174,5 +174,5 @@ driver was written by
 Then the
 .Nm
 driver module completely rewritten to support cards with DS phy and
-to support adhoc mode by
+to support ad-hoc mode by
 .An Atsushi Onoe Aq onoe@netbsd.org .
