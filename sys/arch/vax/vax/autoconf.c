@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2000/06/05 03:45:23 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 2000/06/11 10:40:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -354,7 +354,7 @@ booted_ra(struct device *dev, void *aux)
 	struct mscp_softc *pdev = (void *)dev->dv_parent;
 	paddr_t ioaddr;
 
-	if (jmfr("ra", dev, BDEV_UDA) && jmfr("ra", dev, BDEV_KDB))
+	if (jmfr("ra", dev, BDEV_UDA))
 		return 0;
 
 	if (da->da_mp->mscp_unit != rpb.unit)
@@ -364,8 +364,6 @@ booted_ra(struct device *dev, void *aux)
 	if (rpb.devtyp == BDEV_UDA && rpb.csrphy == ioaddr)
 		return 1; /* Did match CSR */
 
-	if (rpb.devtyp == BDEV_KDB && 0) /* XXX - fix this */
-		return 0;
 	return 0;
 }
 #endif
