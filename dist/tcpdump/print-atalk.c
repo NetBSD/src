@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.1.1.1 2001/06/25 19:26:33 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,9 +23,14 @@
  * Format and print AppleTalk packets.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.66 2001/06/18 08:52:53 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-atalk.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

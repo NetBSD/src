@@ -1,4 +1,4 @@
-/*	$NetBSD: print-netbios.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-netbios.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -24,9 +24,14 @@
  * Contributed by Brad Parker (brad@fcr.com).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-netbios.c,v 1.17 2000/09/29 04:58:43 guy Exp";
+#else
+__RCSID("$NetBSD: print-netbios.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

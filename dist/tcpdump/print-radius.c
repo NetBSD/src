@@ -1,4 +1,4 @@
-/*	$NetBSD: print-radius.c,v 1.1.1.1 2001/06/25 19:26:38 itojun Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
 
 /*
  * Radius printer routines as specified on:
@@ -23,9 +23,14 @@
  * TODO: Among other things to print ok MacIntosh and Vendor values 
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "Id: print-radius.c,v 1.7 2001/06/18 09:16:28 guy Exp";
+#else
+__RCSID("$NetBSD: print-radius.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

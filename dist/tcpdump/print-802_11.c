@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.1.1.1 2001/06/25 19:26:33 itojun Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -22,9 +22,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.4 2001/06/15 07:39:43 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-802_11.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

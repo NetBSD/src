@@ -1,4 +1,4 @@
-/*	$NetBSD: print-null.c,v 1.1.1.1 2001/06/25 19:26:37 itojun Exp $	*/
+/*	$NetBSD: print-null.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-null.c,v 1.40 2000/12/16 22:00:50 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-null.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
