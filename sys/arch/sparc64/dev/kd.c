@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.7 2000/03/19 13:29:15 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.8 2000/03/19 14:41:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,8 +75,6 @@
 #include <sparc64/dev/cons.h>
 
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
-int cnrom __P((void));
-void cnrint __P((void));
 
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
@@ -102,19 +100,7 @@ static void kdstart(struct tty *);
 static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
 
-int	rom_console_input;	/* when set, hardclock calls cnrom() */
 int	cons_ocount;		/* output byte count */
-
-/* Now talking directly to the zs, so this is not needed. */
-int
-cnrom()
-{
-  return (0);
-}
-void
-cnrint()
-{
-}
 
 /*
  * This is called by kbd_attach() 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2000/03/14 00:04:19 soren Exp $ */
+/*	$NetBSD: clock.c,v 1.18 2000/03/19 14:41:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
-
-#include "kbd.h"
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -612,10 +610,6 @@ clockintr(cap)
 	void *cap;
 {
 	int s;
-#if	NKBD	> 0
-	extern int cnrom __P((void));
-	extern int rom_console_input;
-#endif
 
 #if 1
 	/* Let locore.s clear the interrupt for us. */
@@ -637,11 +631,6 @@ clockintr(cap)
 #endif
 
 	hardclock((struct clockframe *)cap);
-#if	NKBD > 0
-	if (rom_console_input && cnrom())
-		setsoftint();
-#endif
-
 	return (1);
 }
 
