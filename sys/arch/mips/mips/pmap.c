@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2002/03/08 20:48:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2002/03/20 02:50:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2002/03/08 20:48:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2002/03/20 02:50:19 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -909,6 +909,8 @@ pmap_protect(pmap, sva, eva, prot)
 			entry = pte->pt_entry;
 			if (!mips_pg_v(entry))
 				continue;
+			if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+				mips_dcache_wb_range(sva, PAGE_SIZE);
 			entry &= ~(mips_pg_m_bit() | mips_pg_ro_bit());
 			entry |= p;
 			pte->pt_entry = entry;
@@ -953,6 +955,8 @@ pmap_protect(pmap, sva, eva, prot)
 			entry = pte->pt_entry;
 			if (!mips_pg_v(entry))
 				continue;
+			if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+				mips_dcache_wbinv_range_index(sva, PAGE_SIZE);
 			entry = (entry & ~(mips_pg_m_bit() |
 			    mips_pg_ro_bit())) | p;
 			pte->pt_entry = entry;
