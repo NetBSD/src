@@ -1,7 +1,7 @@
 #
 # KICKME -- 486Cx-33 development machine.
 #
-#	$Id: KICKME,v 1.3 1994/03/09 21:22:39 ws Exp $
+#	$Id: KICKME,v 1.4 1994/03/13 09:43:47 cgd Exp $
 #
 
 machine		"i386"
@@ -12,7 +12,7 @@ maxusers	10
 maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
-options		INET,ISOFS,NFSCLIENT
+options		INET,ISOFS,NFSSERVER,NFSCLIENT
 options		"COMPAT_43"
 options		MSDOSFS
 options		SCSI
