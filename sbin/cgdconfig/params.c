@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.3 2002/11/30 03:10:53 lukem Exp $ */
+/* $NetBSD: params.c,v 1.4 2002/12/04 05:02:29 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -299,6 +299,18 @@ params_setkeygen_salt_b64(struct params *p, const char *in)
 }
 
 int
+params_setkeygen_iterations(struct params *p, int in)
+{
+
+	if (in < 1) {
+		fprintf(stderr, "keygen_iterations < 1 not permitted\n");
+		return -1;
+	}
+	p->keygen_iterations = in;
+	return 0;
+}
+
+int
 params_setverify_method(struct params *p, int in)
 {
 
@@ -392,6 +404,8 @@ take_action(struct params *c, FILE *f, const char *key, char *val)
 			fprintf(stderr, "keygen_salt improperly encoded\n");
 			return -1;
 		}
+	} else if (!strcmp(key, "keygen_iterations")) {
+		return params_setkeygen_iterations(c, atoi(val));
 	} else if (!strcmp(key, "xor_key")) {
 		ret = params_setxor_key_b64(c, val);
 		if (ret < 0) {
@@ -471,7 +485,7 @@ print_kvpair_str(FILE *f, const char *key, const char *val)
 {
 
 	if (key && val)
-		fprintf(f, "%-15.15s%s\n", key, val);
+		fprintf(f, "%-25.25s%s\n", key, val);
 }
 
 static void
@@ -479,7 +493,7 @@ print_kvpair_int(FILE *f, const char *key, int val)
 {
 
 	if (key && val != -1)
-		fprintf(f, "%-15.15s%d\n", key, val);
+		fprintf(f, "%-25.25s%d\n", key, val);
 }
 
 /*
@@ -516,12 +530,12 @@ print_kvpair_b64(FILE *f, const char *key, const char *val, int vallen)
 	len = __b64_ntop(tmp, len, out, len * 2);
 	free(tmp);
 
-	fprintf(f, "%-15.15s", key);
+	fprintf(f, "%-25.25s", key);
 	col = 0;
 	for (i=0; i < len; i++) {
 		fputc(out[i], f);
-		if (col++ > 50) {
-			fprintf(f, " \\\n%-15.15s", "");
+		if (col++ > 40) {
+			fprintf(f, " \\\n%-25.25s", "");
 			col = 0;
 		}
 	}
@@ -557,6 +571,7 @@ params_fput(struct params *p, FILE *f)
 		print_kvpair_str(f, "keygen_method", "pkcs5_pbkdf2");
 		print_kvpair_b64(f, "keygen_salt", p->keygen_salt,
 		    p->keygen_saltlen);
+		print_kvpair_int(f, "keygen_iterations", p->keygen_iterations);
 		print_kvpair_b64(f, "xor_key", p->xor_key, p->xor_keylen);
 		print_kvpair_b64(f, "key_hash", p->key_hash, p->key_hashlen);
 		break;
