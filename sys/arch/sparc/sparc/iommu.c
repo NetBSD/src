@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.21 1998/08/21 14:13:54 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.22 1998/08/23 09:53:47 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -241,7 +241,7 @@ iommu_attach(parent, self, aux)
 	 * changes.
 	 */
 	kvm_uncache((caddr_t)sc->sc_ptes,
-		(((0 - DVMA4M_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
+	    (((0 - IOMMU_DVMA_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
 
 	/*
 	 * Ok. We've got to read in the original table using MMU bypass,
@@ -257,14 +257,14 @@ iommu_attach(parent, self, aux)
 		    ((mmupcrsave = lda(SRMMU_PCR, ASI_SRMMU)) | VIKING_PCR_AC));
 	}
 
-	for (tpte_p = &sc->sc_ptes[((0 - DVMA4M_BASE)/NBPG) - 1],
+	for (tpte_p = &sc->sc_ptes[((0 - IOMMU_DVMA_BASE)/NBPG) - 1],
 	     pa = (u_int)pbase - sizeof(iopte_t) +
 		   ((u_int)sc->sc_range/NBPG)*sizeof(iopte_t);
 	     tpte_p >= &sc->sc_ptes[0] && pa >= (u_int)pbase;
 	     tpte_p--, pa -= sizeof(iopte_t)) {
 
 		IOMMU_FLUSHPAGE(sc,
-			        (tpte_p - &sc->sc_ptes[0])*NBPG + DVMA4M_BASE);
+			     (tpte_p - &sc->sc_ptes[0])*NBPG + IOMMU_DVMA_BASE);
 		*tpte_p = lda(pa, ASI_BYPASS);
 	}
 	if (cpuinfo.cpu_impl == 4 && cpuinfo.mxcc) {
@@ -275,8 +275,8 @@ iommu_attach(parent, self, aux)
 	/*
 	 * Now we can install our new pagetable into the IOMMU
 	 */
-	sc->sc_range = 0 - DVMA4M_BASE;
-	sc->sc_dvmabase = DVMA4M_BASE;
+	sc->sc_range = 0 - IOMMU_DVMA_BASE;
+	sc->sc_dvmabase = IOMMU_DVMA_BASE;
 
 	/* calculate log2(sc->sc_range/16MB) */
 	i = ffs(sc->sc_range/(1 << 24)) - 1;
@@ -305,8 +305,11 @@ iommu_attach(parent, self, aux)
 	else
 		bp = NULL;
 
-	iommu_dvmamap = extent_create("iommudvma", DVMA4M_BASE, DVMA4M_END,
+	iommu_dvmamap = extent_create("iommudvma",
+					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
 					M_DEVBUF, 0, 0, EX_NOWAIT);
+	if (iommu_dvmamap == NULL)
+		panic("iommu: unable to allocate DVMA map");
 
 	/*
 	 * Loop through ROM children (expect Sbus among them).
