@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.3 1996/11/14 04:51:09 thorpej Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -64,8 +64,6 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
-#ifdef NTP
-
 /*
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
@@ -103,13 +101,13 @@ extern long pps_stbcnt;		/* stability limit exceeded */
  * ntp_gettime() - NTP user application interface
  */
 int
-ntp_gettime(p, v, retval)
+sys_ntp_gettime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 
 {
-	struct ntp_gettime_args /* {
+	struct sys_ntp_gettime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timeval atv;
@@ -190,12 +188,12 @@ ntp_gettime(p, v, retval)
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-ntp_adjtime(p, v, retval)
+sys_ntp_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct ntp_adjtime_args /* {
+	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timex ntv;
@@ -368,41 +366,3 @@ sysctl_ntptime(where, sizep)
 #endif /* notyet */
 	return (sysctl_rdstruct(where, sizep, NULL, &ntv, sizeof(ntv)));
 }
-
-#else /* !NTP */
-
-/*
- * For kernels configured without the NTP option, emulate the behavior
- * of a kernel with no NTP support (i.e., sys_nosys()). On systems
- * where kernel  NTP support appears present when xntpd is compiled,
- * (e.g., sys/timex.h is present),  xntpd relies on getting a SIGSYS
- * signal in response to an ntp_adjtime() syscal, to inform xntpd that
- * NTP support is not really present, and xntpd should fall back to
- * using a user-level phase-locked loop to discipline the clock.
- */
-int
-ntp_gettime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(ENOSYS);
-}
-
-int
-ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(sys_nosys(p, v, retval));
-}
-
-int
-sysctl_ntptime(where, sizep)
-	register char *where;
-	size_t *sizep;
-{
-	return (ENOSYS);
-}
-#endif /* NTP */
