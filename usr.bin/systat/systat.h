@@ -1,3 +1,5 @@
+/*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

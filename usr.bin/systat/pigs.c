@@ -1,3 +1,5 @@
+/*	$NetBSD: pigs.c,v 1.2 1995/01/20 08:52:08 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,10 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
+#endif
+static char rcsid[] = "$NetBSD: pigs.c,v 1.2 1995/01/20 08:52:08 jtc Exp $";
 #endif /* not lint */
 
 /*
