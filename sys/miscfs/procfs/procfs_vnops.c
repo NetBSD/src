@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.100 2003/04/17 20:33:17 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.101 2003/04/17 20:50:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.100 2003/04/17 20:33:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.101 2003/04/17 20:50:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -910,6 +910,14 @@ procfs_lookup(v)
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
 			fvp = (struct vnode *)fp->f_data;
+
+			/* Don't show directories */
+			if (fvp->v_type == VDIR) {
+				FILE_UNUSE(fp, p);
+				error = ENOENT;
+				break;
+			}
+
 			VREF(fvp);
 			FILE_UNUSE(fp, p);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY | 
@@ -1100,6 +1108,11 @@ procfs_readdir(v)
 			 */
 			switch(fp->f_type) {
 			case DTYPE_VNODE:
+				/* Don't show directories */
+				if (((struct vnode *)fp->f_data)->v_type==VDIR){
+					FILE_UNUSE(fp, p);
+					continue;
+				}
 			case DTYPE_PIPE:
 			case DTYPE_SOCKET:
 				FILE_UNUSE(fp, p);
