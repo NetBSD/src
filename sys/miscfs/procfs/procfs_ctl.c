@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.16 1997/04/28 04:49:34 mycroft Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.16.16.1 2002/01/14 15:20:07 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -106,10 +106,16 @@ procfs_control(curp, p, op, sig)
 	int error;
 
 	/*
+	 * You cannot do anything to the process if it is currently exec'ing
+	 */
+	if (ISSET(p->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	switch (op) {
+	/*
 	 * Attach - attaches the target process for debugging
 	 * by the calling process.
 	 */
-	switch (op) {
 	case PROCFS_CTL_ATTACH:
 		/* 
 		 * You can't attach to a process if:
