@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.5 1997/10/20 06:13:29 phil Exp $	*/
+/*	$NetBSD: install.c,v 1.6 1997/11/02 09:41:59 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,35 +97,6 @@ void do_install(void)
 	puts (CL); /* just to make sure */
 	wrefresh(stdscr);
 
-	/* Get the distribution files */
-	process_menu (MENU_distmedium);
-	if (nodist)
-		return;
-
-	if (got_dist) {
-		/* Extract the distribution */
-		extract_dist ();
-
-		/* Configure the system */
-		run_makedev ();
-
-		/* Other configuration. */
-		mnt_net_config();
-		
-		/* Clean up ... */
-		if (clean_dist_dir)
-			run_prog ("/bin/rm -rf %s", dist_dir);
-
-		/* Mounted dist dir? */
-		if (mnt2_mounted)
-			run_prog ("/sbin/umount /mnt2");
-		
-		/* Install complete ... reboot */
-		msg_display (MSG_instcomplete);
-		process_menu (MENU_ok);
-	} else {
-		msg_display (MSG_abortinst);
-		process_menu (MENU_ok);
-	}
+	/* Unpack the distribution. */
+	get_and_unpack_sets(MSG_instcomplete, MSG_abortinst);
 }
-
