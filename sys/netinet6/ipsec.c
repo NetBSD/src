@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.56 2002/06/14 14:17:55 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.57 2002/06/14 14:47:24 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.56 2002/06/14 14:17:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.57 2002/06/14 14:47:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -176,6 +176,7 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:
+	case IPSEC_DIR_ANY:
 		break;
 	default:
 		return NULL;
@@ -201,7 +202,8 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
 		if (bcmp(&pcbsp->cacheidx[dir], &spidx, sizeof(spidx))) {
-			if (pcbsp->cache[dir]->spidx &&
+			if (pcbsp->cache[dir]->policy == IPSEC_POLICY_IPSEC &&
+			    pcbsp->cache[dir]->spidx &&
 			    !key_cmpspidx_withmask(pcbsp->cache[dir]->spidx,
 			    &spidx))
 				return NULL;
