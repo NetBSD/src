@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.26 1997/03/15 18:09:23 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.27 1997/03/16 23:27:18 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -63,6 +63,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_arc.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -70,7 +71,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#include <netinet/if_arc.h>
 #endif
 
 #if NBPFILTER > 0
