@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -92,7 +92,7 @@ struct pcib_softc {
 	bus_space_handle_t sc_ioh_icu2;
 	bus_space_handle_t sc_ioh_elcr;
 
-	struct evbmips_isa_chipset sc_ic;
+	struct mips_isa_chipset sc_ic;
 
 	struct pcib_intrhead sc_intrtab[ICU_LEN];
 
@@ -111,7 +111,7 @@ struct pcib_softc {
  *	called from other interrupt handling code.
  */
 static struct pcib_softc *my_sc;
-struct evbmips_isa_chipset *pcib_ic;
+struct mips_isa_chipset *pcib_ic;
 
 static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
