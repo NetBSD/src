@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.12 2002/09/17 21:12:51 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.13 2002/10/05 01:11:40 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.12 2002/09/17 21:12:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.13 2002/10/05 01:11:40 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
