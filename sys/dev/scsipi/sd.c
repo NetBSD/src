@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.147 1999/09/11 21:42:58 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.148 1999/09/21 03:10:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
+#define	SDMINOR(unit, part)		DISKMINOR(unit, part)
 #define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
@@ -277,7 +278,7 @@ sddetach(self, flags)
 	splx(s);
 
 	/* Nuke the the vnodes for any open instances */
-	mn = self->dv_unit;
+	mn = SDMINOR(self->dv_unit, 0);
 	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
 	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
 
