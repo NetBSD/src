@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.11 1997/10/18 13:04:27 lukem Exp $	*/
+/*	$NetBSD: comm.c,v 1.12 1999/02/11 00:53:24 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.11 1997/10/18 13:04:27 lukem Exp $");
+__RCSID("$NetBSD: comm.c,v 1.12 1999/02/11 00:53:24 hubertf Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -76,12 +76,14 @@ main(argc, argv)
 	FILE *fp1, *fp2;
 	char *col1, *col2, *col3;
 	char **p, line1[MAXLINELEN], line2[MAXLINELEN];
+	int (*compare)(const char*,const char*);
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	file1done = file2done = 0;
 	flag1 = flag2 = flag3 = 1;
-	while ((ch = getopt(argc, argv, "123")) != -1)
+	compare = strcoll;
+	while ((ch = getopt(argc, argv, "123f")) != -1)
 		switch(ch) {
 		case '1':
 			flag1 = 0;
@@ -91,6 +93,9 @@ main(argc, argv)
 			break;
 		case '3':
 			flag3 = 0;
+			break;
+		case 'f':
+			compare = strcasecmp;
 			break;
 		case '?':
 		default:
@@ -135,7 +140,7 @@ main(argc, argv)
 		}
 
 		/* lines are the same */
-		if (!(comp = strcoll(line1, line2))) {
+		if (!(comp = compare(line1, line2))) {
 			read1 = read2 = 1;
 			if (col3)
 				if (printf("%s%s", col3, line1) < 0)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: comm.1,v 1.5 1997/10/18 13:04:19 lukem Exp $
+.\"	$NetBSD: comm.1,v 1.6 1999/02/11 00:53:24 hubertf Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd select or reject lines common to two files
 .Sh SYNOPSIS
 .Nm
-.Op Fl 123
+.Op Fl 123f
 .Ar file1 file2
 .Sh DESCRIPTION
 The
@@ -71,6 +71,8 @@ Suppress printing of column 1.
 Suppress printing of column 2.
 .It Fl 3
 Suppress printing of column 3.
+.It Fl f
+Fold case in line comparisons.
 .El
 .Pp
 Each column will have a number of tab characters prepended to it
