@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/03/06 02:13:45 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2002/07/11 13:36:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,6 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-#define	MCLOFSET	(MCLBYTES - 1)
 
 #ifndef NMBCLUSTERS
 #if defined(_KERNEL_OPT)
