@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.100 1997/10/07 10:39:56 augustss Exp $
+#	$NetBSD: GENERIC,v 1.101 1997/10/08 09:32:37 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,10 +12,13 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# Virtual 8086 emulation
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#options 	BIOSEXTMEM=...	# size of extended memory
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less that 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=...	# size of base memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE

@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.89 1997/08/19 23:49:50 augustss Exp $
+#	$NetBSD: SUN_LAMP,v 1.90 1997/10/08 09:32:40 mycroft Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -11,10 +11,13 @@ options 	I486_CPU
 #options 	I686_CPU
 #options 	MATH_EMULATE	# floating point emulation
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#options 	BIOSEXTMEM=... # size of extended memory
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less that 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=...	# size of base memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE
