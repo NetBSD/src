@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.23 1999/10/31 19:45:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.24 1999/12/20 22:11:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -450,6 +450,8 @@ ntfs_ntput(ip)
 	}
 #endif
 
+	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
+
 	if (ip->i_usecount == 0) {
 		dprintf(("ntfs_ntput: deallocating ntnode: %d\n",
 			ip->i_number));
@@ -465,8 +467,6 @@ ntfs_ntput(ip)
 			ntfs_freentvattr(vap);
 		}
 		FREE(ip, M_NTFSNTNODE);
-	} else {
-		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
 	}
 }
 
