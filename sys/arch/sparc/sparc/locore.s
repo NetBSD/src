@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188 2003/04/08 01:51:46 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.189 2003/10/05 21:13:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4314,7 +4314,7 @@ _C_LABEL(sigcode):
 	RESTORE_STATE
 
 	! get registers back & set syscall #
-	restore	%g0, SYS___sigreturn14, %g1
+	restore	%g0, SYS_compat_16___sigreturn14, %g1
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
