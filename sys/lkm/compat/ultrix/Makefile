@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/21 14:38:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/10 07:27:52 gmcgarry Exp $
 
 .include "../Makefile.inc"
 
@@ -18,7 +18,7 @@ SRCS+=	lkminit_emul.c
 SRCS+=	ultrix_fs.c ultrix_ioctl.c ultrix_misc.c ultrix_pathname.c \
 	ultrix_syscalls.c ultrix_sysent.c
 
-.if ${MACHINE_ARCH} == "mips"
+.if ${MACHINE_CPU} == "mips"
 CPPFLAGS+=	-DMIPS1 -DMIPS3
 .endif
 
