@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.140 2001/10/01 12:02:07 martti Exp $
+.\"	$NetBSD: main,v 1.141 2001/10/07 12:58:21 isaki Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1555,6 +1555,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Martin Husemann Ta Mt martin@netbsd.org
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta Bernardo Innocenti Ta Mt bernie@netbsd.org
+.It Ta Tetsuya Isaki Ta Mt isaki@netbsd.org
 .It Ta ITOH Yasufumi Ta Mt itohy@netbsd.org
 .It Ta IWAMOTO Toshihiro Ta Mt toshii@netbsd.org
 .It Ta Matthew Jacob Ta Mt mjacob@netbsd.org
