@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.13 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.14 2001/01/16 15:46:52 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.13 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.14 2001/01/16 15:46:52 lukem Exp $");
 #endif
 #endif
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: auth_none.c,v 1.13 2000/01/22 22:19:17 mycroft Exp $");
 __weak_alias(authnone_create,_authnone_create)
 #endif
 
-#define MAX_MARSHEL_SIZE 20
+#define MAX_MARSHAL_SIZE 20
 
 /*
  * Authenticator operations routines
@@ -82,7 +82,7 @@ static const struct auth_ops ops = {
 
 static struct authnone_private {
 	AUTH	no_client;
-	char	marshalled_client[MAX_MARSHEL_SIZE];
+	char	marshalled_client[MAX_MARSHAL_SIZE];
 	u_int	mcnt;
 } *authnone_private;
 
@@ -104,7 +104,7 @@ authnone_create()
 		ap->no_client.ah_ops = &ops;
 		xdrs = &xdr_stream;
 		xdrmem_create(xdrs, ap->marshalled_client,
-		    (u_int)MAX_MARSHEL_SIZE, XDR_ENCODE);
+		    (u_int)MAX_MARSHAL_SIZE, XDR_ENCODE);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_cred);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_verf);
 		ap->mcnt = XDR_GETPOS(xdrs);
