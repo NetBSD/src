@@ -1,8 +1,0 @@
-#	$NetBSD: list,v 1.4 1999/05/23 07:31:20 tron Exp $
-
-# and the upgrade tools
-COPY	${CURDIR}/dot.profile		.profile
-COPY	${CURDIR}/dot.upgrutils		.upgrutils
-COPY	${CURDIR}/upgrade.sh		upgrade
-COPY	${CURDIR}/dot.hdprofile		tmp/.hdprofile
-SPECIAL	chmod 755 upgrade

@@ -1,9 +1,0 @@
-#
-# kernel config file for memory(RAM) disk
-#
-# 	$NetBSD: RAMDISK,v 1.9 1999/11/23 05:08:25 shin Exp $
-#
-
-include		"arch/hpcmips/conf/GENERIC"
-
-pseudo-device	md		1	# memory disk

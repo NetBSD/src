@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.12 1999/06/23 03:26:02 christos Exp $	*/
+/*	$NetBSD: newwin.c,v 1.12.6.1 2000/01/09 20:43:20 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.12 1999/06/23 03:26:02 christos Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.12.6.1 2000/01/09 20:43:20 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -222,8 +222,10 @@ __makenew(nl, nc, by, bx, sub)
 	win->begy = by;
 	win->begx = bx;
 	win->flags = 0;
+	win->wattr = 0;
 	__swflags(win);
 #ifdef DEBUG
+	__CTRACE("makenew: win->wattr = %0.2o\n", win->wattr);
 	__CTRACE("makenew: win->flags = %0.2o\n", win->flags);
 	__CTRACE("makenew: win->maxy = %d\n", win->maxy);
 	__CTRACE("makenew: win->maxx = %d\n", win->maxx);

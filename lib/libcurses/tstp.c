@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.13 1999/04/13 14:08:19 mrg Exp $	*/
+/*	$NetBSD: tstp.c,v 1.13.6.1 2000/01/09 20:43:22 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.13 1999/04/13 14:08:19 mrg Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.13.6.1 2000/01/09 20:43:22 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,27 +127,27 @@ __stopwin()
 	__restore_stophandler();
 
 	if (curscr != NULL) {
-		if (curscr->flags & __WSTANDOUT) {
+		if (curscr->wattr & __STANDOUT && SE != NULL) {
 			tputs(SE, 0, __cputchar);
-			curscr->flags &= ~__WSTANDOUT;
-			if (*SE == *UE) {
-				curscr->flags &= ~__WUNDERSCORE;
+			curscr->wattr &= ~__STANDOUT;
+			if (UE != NULL && !strcmp(SE, UE)) {
+				curscr->wattr &= ~__UNDERSCORE;
 			}
-			if (*SE == *ME) {
-				curscr->flags &= ~__WATTRIBUTES;
+			if (ME != NULL && !strcmp(SE, ME)) {
+				curscr->wattr &= ~__TERMATTR;
 			}
 
 		}
-		if (curscr->flags & __WUNDERSCORE) {
-			tputs(SE, 0, __cputchar);
-			curscr->flags &= ~__WUNDERSCORE;
-			if (*UE == *ME) {
-				curscr->flags &= ~__WATTRIBUTES;
+		if (curscr->wattr & __UNDERSCORE && UE != NULL) {
+			tputs(UE, 0, __cputchar);
+			curscr->wattr &= ~__UNDERSCORE;
+			if (ME != NULL && !strcmp(UE, ME)) {
+				curscr->wattr &= ~__TERMATTR;
 			}
 		}
-		if (curscr->flags & __WATTRIBUTES) {
+		if (curscr->wattr & __TERMATTR && ME != NULL) {
 			tputs(SE, 0, __cputchar);
-			curscr->flags &= ~__WATTRIBUTES;
+			curscr->wattr &= ~__TERMATTR;
 		}
 		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
 	}
@@ -156,7 +156,7 @@ __stopwin()
 	(void) tputs(VE, 0, __cputchar);
 	(void) tputs(TE, 0, __cputchar);
 	(void) fflush(stdout);
-	(void) setvbuf(stdout, NULL, _IOLBF, 0);
+	(void) setvbuf(stdout, NULL, _IOLBF, (size_t) 0);
 
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);

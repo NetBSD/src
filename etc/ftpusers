@@ -1,8 +1,0 @@
-#	$NetBSD: ftpusers,v 1.4 1997/09/08 02:51:58 mikel Exp $
-#
-# list of users denied (or allowed) ftp access
-# read by ftpd(8).
-root	deny
-toor	deny
-uucp	deny
-*	allow

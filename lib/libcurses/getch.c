@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.15 1999/12/07 03:53:11 simonb Exp $	*/
+/*	$NetBSD: getch.c,v 1.15.2.1 2000/01/09 20:43:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.15 1999/12/07 03:53:11 simonb Exp $");
+__RCSID("$NetBSD: getch.c,v 1.15.2.1 2000/01/09 20:43:19 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -70,7 +70,7 @@ struct key_entry {
 	short   type;		/* type of key this is */
 	union {
 		keymap_t *next;	/* next keymap is key is multi-key sequence */
-		int     symbol;	/* key symbol if key is a leaf entry */
+		wchar_t   symbol;	/* key symbol if key is a leaf entry */
 	} value;
 };
 /* Types of key structures we can have */
@@ -91,7 +91,7 @@ struct keymap {
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
 				 * longest multi-key sequence */
-static char    inbuf[INBUF_SZ];
+static wchar_t  inbuf[INBUF_SZ];
 static int     start, end, working; /* pointers for manipulating inbuf data */
 
 #define INC_POINTER(ptr)  do {	\
@@ -109,7 +109,7 @@ static short	state;		/* state of the inkey function */
 /* The termcap data we are interested in and the symbols they map to */
 struct tcdata {
 	char	*name;		/* name of termcap entry */
-	int	symbol;		/* the symbol associated with it */
+	wchar_t	symbol;		/* the symbol associated with it */
 };
 
 static const struct tcdata tc[] = {
@@ -160,7 +160,7 @@ static keymap_t *base_keymap;
 /* prototypes for private functions */
 static keymap_t		*new_keymap(void);	/* create a new keymap */
 static key_entry_t	*new_key(void);		/* create a new key entry */
-static unsigned		inkey(int, int);
+static wchar_t		inkey(int, int);
 
 /*
  * Init_getch - initialise all the pointers & structures needed to make
@@ -187,7 +187,7 @@ static	char termcap[1024];
 	start = end = working = 0;
 
 	/* now do the termcap snarfing ... */
-	strncpy(termname, sp, 1022);
+	(void) strncpy(termname, sp, (size_t) 1022);
 	termname[1023] = 0;
 
 	if (tgetent(termcap, termname) <= 0)
@@ -200,7 +200,7 @@ static	char termcap[1024];
 			continue;
 
 		current = base_keymap;	/* always start with base keymap. */
-		length = strlen(entry);
+		length = (int) strlen(entry);
 
 		for (j = 0; j < length - 1; j++) {
 			if (current->mapping[(unsigned) entry[j]] < 0) {
@@ -315,12 +315,13 @@ new_key(void)
  *
  */
 
-unsigned
+wchar_t
 inkey(to, delay)
 	int     to, delay;
 {
-	int     k, nchar;
-	char    c;
+	wchar_t  k;
+	ssize_t  nchar;
+	char     c;
 	keymap_t *current = base_keymap;
 
 	for (;;) {		/* loop until we get a complete key sequence */
@@ -335,7 +336,7 @@ reread:
 			if (nchar == 0)
 				return ERR;	/* just in case we are nodelay
 						 * mode */
-			k = (unsigned int) c;
+			k = (wchar_t) c;
 #ifdef DEBUG
 			__CTRACE("inkey (state normal) got '%s'\n", unctrl(k));
 #endif
@@ -372,7 +373,7 @@ reread:
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
-			k = (unsigned int) c;
+			k = (wchar_t) c;
 #ifdef DEBUG
 			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
@@ -447,7 +448,7 @@ wgetch(win)
 	WINDOW *win;
 {
 	int     inp, weset;
-	int	nchar;
+	ssize_t	nchar;
 	char    c;
 
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
@@ -511,10 +512,10 @@ wgetch(win)
 	}
 #ifdef DEBUG
 	if (inp > 255)
-		  /* we have a key symbol - treat it differently */
-		  /* XXXX perhaps __unctrl should be expanded to include
-		   * XXXX the keysyms in the table....
-		   */
+		/* we have a key symbol - treat it differently */
+		/* XXXX perhaps __unctrl should be expanded to include
+	 	 * XXXX the keysyms in the table....
+		 */
 		__CTRACE("wgetch assembled keysym 0x%x\n", inp);
 	else
 		__CTRACE("wgetch got '%s'\n", unctrl(inp));
@@ -529,8 +530,8 @@ wgetch(win)
 	__restore_termios();
 	if (__echoit) {
 		mvwaddch(curscr,
-		    (int) (win->cury + win->begy), (int) (win->curx + win->begx), inp);
-		waddch(win, inp);
+		    (int) (win->cury + win->begy), (int) (win->curx + win->begx), (chtype) inp);
+		waddch(win, (chtype) inp);
 	}
 	if (weset)
 		nocbreak();

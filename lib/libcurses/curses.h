@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.29 1999/12/07 03:22:10 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.29.2.1 2000/01/09 20:43:18 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -40,9 +40,25 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <wchar.h>
 
 #include <stdio.h>
 #include <termcap.h>
+
+/*
+ * attr_t must be the same type as wchar_t (see <wchar.h>) to avoid padding
+ * in __LDATA
+ */
+typedef wchar_t	chtype;
+typedef wchar_t	attr_t;
+typedef	char	bool;
+
+#ifndef TRUE
+#define	TRUE	(/*CONSTCOND*/1)
+#endif
+#ifndef FALSE
+#define	FALSE	(/*CONSTCOND*/0)
+#endif
 
 /*
  * The following #defines and #includes are present for backward
@@ -51,17 +67,6 @@
  * START BACKWARD COMPATIBILITY ONLY.
  */
 #ifndef _CURSES_PRIVATE
-#ifndef __cplusplus
-#define	bool	char
-#define	reg	register
-#endif
-
-#ifndef TRUE
-#define	TRUE	(/*CONSTCOND*/1)
-#endif
-#ifndef FALSE
-#define	FALSE	(/*CONSTCOND*/0)
-#endif
 
 #define	_puts(s)	tputs(s, 0, __cputchar)
 #define	_putchar(c)	__cputchar(c)
@@ -221,22 +226,27 @@ extern char	 __unctrllen[256];	/* Control strings length. */
  *  __LDATA structures.  This is to enable consistent use of memcmp, and memcpy
  * for comparing and copying arrays.
  */
-typedef struct {
-	int	ch;			/* the actual character */
 
-#define	__NORMAL	0x00  		/* Added characters are normal. */
-#define	__STANDOUT	0x01  		/* Added characters are standout. */
-#define	__UNDERSCORE	0x02  		/* Added characters are underscored. */
-#define	__REVERSE	0x04  		/* Added characters are reverse \
-						video. */
-#define	__BLINK		0x08  		/* Added characters are blinking. */
-#define	__DIM		0x10  		/* Added characters are dim. */
-#define	__BOLD		0x20  		/* Added characters are bold. */
-#define	__BLANK		0x40  		/* Added characters are blanked. */
-#define	__PROTECT	0x80  		/* Added characters are protected. */
-#define	__ATTRIBUTES	0xfe  		/* All character attributes
-						(excluding standout). */
-	int	attr;			/* attributes of character */
+typedef struct {
+#define __CHARTEXT	0x000000ff	/* bits for 8-bit characters */
+	wchar_t	ch;			/* Character */
+#define __NORMAL	0x00000000	/* Added characters are normal. */
+#define __STANDOUT	0x00010000	/* Added characters are standout. */
+#define __UNDERSCORE	0x00020000	/* Added characters are underscored. */
+#define __REVERSE	0x00040000	/* Added characters are reverse
+					   video. */
+#define __BLINK		0x00080000	/* Added characters are blinking. */
+#define __DIM		0x00100000	/* Added characters are dim. */
+#define __BOLD		0x00200000	/* Added characters are bold. */
+#define __BLANK		0x00400000	/* Added characters are blanked. */
+#define __PROTECT	0x00800000	/* Added characters are protected. */
+#define __ALTCHARSET	0x01000000	/* Added characters are ACS */
+#define __COLOR		0xee000000	/* Color bits */
+#define __ATTRIBUTES	0xefff0000	/* All 8-bit attribute bits */
+#define __TERMATTR	0x00fc0000	/* Termcap attribute modes
+					   (reverse, blinking, dim, bold,
+					   blanked & protected */
+	attr_t	attr;			/* Attributes */
 } __LDATA;
 
 #define __LDATASIZE	(sizeof(__LDATA))
@@ -247,45 +257,95 @@ typedef struct {
 #define __FORCEPAINT	0x04		/* Force a repaint of the line */
 	unsigned int flags;
 	unsigned int hash;		/* Hash value for the line. */
-	size_t *firstchp, *lastchp;	/* First and last chngd columns ptrs */
-	size_t firstch, lastch;		/* First and last changed columns. */
+	int *firstchp, *lastchp;	/* First and last chngd columns ptrs */
+	int firstch, lastch;		/* First and last changed columns. */
 	__LDATA *line;			/* Pointer to the line text. */
 } __LINE;
 
 typedef struct __window {		/* Window structure. */
 	struct __window	*nextp, *orig;	/* Subwindows list and parent. */
-	size_t begy, begx;		/* Window home. */
-	size_t cury, curx;		/* Current x, y coordinates. */
-	size_t maxy, maxx;		/* Maximum values for curx, cury. */
+	int begy, begx;			/* Window home. */
+	int cury, curx;			/* Current x, y coordinates. */
+	int maxy, maxx;			/* Maximum values for curx, cury. */
 	short ch_off;			/* x offset for firstch/lastch. */
 	__LINE **lines;			/* Array of pointers to the lines */
 	__LINE  *lspace;		/* line space (for cleanup) */
 	__LDATA *wspace;		/* window space (for cleanup) */
 
-#define	__ENDLINE	0x00001		/* End of screen. */
-#define	__FLUSH		0x00002		/* Fflush(stdout) after refresh. */
-#define	__FULLWIN	0x00004		/* Window is a screen. */
-#define	__IDLINE	0x00008		/* Insert/delete sequences. */
-#define	__SCROLLWIN	0x00010		/* Last char will scroll window. */
-#define	__SCROLLOK	0x00020		/* Scrolling ok. */
-#define	__CLEAROK	0x00040		/* Clear on next refresh. */
-#define	__WSTANDOUT	0x00080		/* Standout window */
-#define	__LEAVEOK	0x00100		/* If curser left */
-#define	__WUNDERSCORE	0x00200 	/* Underscored window */
-#define	__WREVERSE	0x00400		/* Reverse video window */
-#define	__WBLINK	0x00800		/* Blinking window */
-#define	__WDIM		0x01000		/* Dim window */
-#define	__WBOLD		0x02000		/* Bold window */
-#define	__WBLANK	0x04000		/* Blanked window */
-#define	__WPROTECT	0x08000		/* Protected window */
-#define	__WATTRIBUTES	0x0fc00		/* All character attributes
-						(excluding standout). */
-#define	__KEYPAD	0x10000		/* If interpreting keypad codes */
-#define	__NOTIMEOUT	0x20000		/* Wait indefinitely for func keys */
+#define	__ENDLINE	0x00000001	/* End of screen. */
+#define	__FLUSH		0x00000002	/* Fflush(stdout) after refresh. */
+#define	__FULLWIN	0x00000004	/* Window is a screen. */
+#define	__IDLINE	0x00000008	/* Insert/delete sequences. */
+#define	__SCROLLWIN	0x00000010	/* Last char will scroll window. */
+#define	__SCROLLOK	0x00000020	/* Scrolling ok. */
+#define	__CLEAROK	0x00000040	/* Clear on next refresh. */
+#define	__LEAVEOK	0x00000100	/* If cursor left */
+#define	__KEYPAD	0x00010000	/* If interpreting keypad codes */
+#define	__NOTIMEOUT	0x00020000	/* Wait indefinitely for func keys */
 	unsigned int flags;
-
 	int	delay;			/* delay for getch() */
+	attr_t	wattr;			/* Character attributes */
 } WINDOW;
+
+/*
+ * Attribute definitions
+ */
+#define A_NORMAL	__NORMAL
+#define	A_STANDOUT	__STANDOUT
+#define	A_UNDERLINE	__UNDERSCORE
+#define	A_REVERSE	__REVERSE
+#define	A_BLINK		__BLINK
+#define	A_DIM		__DIM
+#define	A_BOLD		__BOLD
+#define	A_BLANK		__BLANK
+#define	A_PROTECT	__PROTECT
+#define A_ALTCHARSET	__ALTCHARSET
+#define A_ATTRIBUTES	__ATTRIBUTES
+#define A_CHARTEXT	__CHARTEXT
+#define A_COLOR		__COLOR
+
+/*
+ * Alternate character set definitions
+ */
+#define ACS_RARROW	_acs_char['+']
+#define ACS_LARROW	_acs_char[',']
+#define ACS_UARROW	_acs_char['-']
+#define ACS_DARROW	_acs_char['.']
+#define ACS_BLOCK	_acs_char['0']
+#define ACS_DIAMOND	_acs_char['`']
+#define ACS_CKBOARD	_acs_char['a']
+#define ACS_DEGREE	_acs_char['f']
+#define ACS_PLMINUS	_acs_char['g']
+#define ACS_BOARD	_acs_char['h']
+#define ACS_LANTERN	_acs_char['i']
+#define ACS_LRCORNER	_acs_char['j']
+#define ACS_URCORNER	_acs_char['k']
+#define ACS_ULCORNER	_acs_char['l']
+#define ACS_LLCORNER	_acs_char['m']
+#define ACS_PLUS	_acs_char['n']
+#define ACS_HLINE	_acs_char['q']
+#define ACS_S1		_acs_char['o']
+#define ACS_S9		_acs_char['s']
+#define ACS_LTEE	_acs_char['t']
+#define ACS_RTEE	_acs_char['u']
+#define ACS_BTEE	_acs_char['v']
+#define ACS_TTEE	_acs_char['w']
+#define ACS_VLINE	_acs_char['x']
+#define ACS_BULLET	_acs_char['~']
+
+/*
+ * Color definitions
+ */
+
+#define COLOR_BLACK	0x00
+#define COLOR_WHITE	0x01
+#define COLOR_RED	0x02
+#define COLOR_GREEN	0x03
+#define COLOR_BLUE	0x04
+#define COLOR_CYAN	0x05
+#define COLOR_MAGENTA	0x06
+#define COLOR_YELLOW	0x07
+
 
 /* Curses external declarations. */
 extern WINDOW	*curscr;		/* Current screen. */
@@ -332,18 +392,6 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	waddbytes(w, s, n)		__waddbytes(w, s, n, 0)
 #define	waddstr(w, s)			waddnstr(w, s, -1)
 
-/* Attributes */
-#define A_NORMAL	__NORMAL
-#define	A_STANDOUT	__UNDERSCORE
-#define	A_UNDERLINE	__UNDERSCORE
-#define	A_REVERSE	__REVERSE
-#define	A_BLINK		__BLINK
-#define	A_DIM		__DIM
-#define	A_BOLD		__BOLD
-#define	A_BLANK		__BLANK
-#define	A_PROTECT	__PROTECT
-#define A_ATTRIBUTES	__ATTRIBUTES
-
 /* Standard screen plus movement pseudo functions. */
 #define	mvaddbytes(y, x, s, n)		mvwaddbytes(stdscr, y, x, s, n)
 #define	mvaddch(y, x, ch)		mvwaddch(stdscr, y, x, ch)
@@ -373,19 +421,6 @@ extern char	*ttytype;		/* Full name of current terminal. */
 #define	mvwinsch(w, y, x, c) \
 	(wmove(w, y, x) == ERR ? ERR : winsch(w, c))
 
-
-/* Psuedo functions. */
-#define	clearok(w, bf) \
-((/* CONSTCOND */ bf) ? ((w)->flags |= __CLEAROK) : ((w)->flags &= ~__CLEAROK))
-#define	flushok(w, bf) \
-	((bf) ? ((w)->flags |= __FLUSH) : ((w)->flags &= ~__FLUSH))
-#define	leaveok(w, bf) \
-	((bf) ? ((w)->flags |= __LEAVEOK) : ((w)->flags &= ~__LEAVEOK))
-#define	scrollok(w, bf) \
-	((bf) ? ((w)->flags |= __SCROLLOK) : ((w)->flags &= ~__SCROLLOK))
-#define	winch(w) \
-	((w)->lines[(w)->cury]->line[(w)->curx].ch & 0177)
-
 #define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
 #define getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
 #define getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
@@ -399,53 +434,56 @@ extern char	*ttytype;		/* Full name of current terminal. */
 /* Public function prototypes. */
 __BEGIN_DECLS
 int	 beep __P((void));
-int	 box __P((WINDOW *, int, int));
+int	 box __P((WINDOW *, chtype, chtype));
 int	 cbreak __P((void));
+int	 clearok __P((WINDOW *, bool));
 int	 delwin __P((WINDOW *));
 int	 echo __P((void));
 int	 endwin __P((void));
 int	 flash __P((void));
 int	 flushinp __P((void));
+int	 flushok __P((WINDOW *, bool));
 char	*fullname __P((char *, char *));
 char	*getcap __P((char *));
 int	 gettmode __P((void));
-void	 idlok __P((WINDOW *, int));
+int	 idlok __P((WINDOW *, bool));
 WINDOW	*initscr __P((void));
-int	 isendwin __P((void));
-void	 keypad __P((WINDOW *, int));
-char	*longname __P((char *, char *));
+bool	 isendwin __P((void));
+void	 keypad __P((WINDOW *, bool));
+int	 leaveok __P((WINDOW *, bool));
+char	*longname __P((void));
 int	 mvcur __P((int, int, int, int));
-int	 mvprintw __P((int, int, const char *, ...));
-int	 mvscanw __P((int, int, const char *, ...));
+int	 mvprintw __P((int, int, char *, ...));
+int	 mvscanw __P((int, int, char *, ...));
 int	 mvwin __P((WINDOW *, int, int));
-int	 mvwprintw __P((WINDOW *, int, int, const char *, ...));
-int	 mvwscanw __P((WINDOW *, int, int, const char *, ...));
+int	 mvwprintw __P((WINDOW *, int, int, char *, ...));
+int	 mvwscanw __P((WINDOW *, int, int, char *, ...));
 WINDOW	*newwin __P((int, int, int, int));
 int	 nl __P((void));
 int	 nocbreak __P((void));
-void     nodelay __P((WINDOW *, int));
+void	 nodelay __P((WINDOW *, bool));
 int	 noecho __P((void));
 int	 nonl __P((void));
 int	 noraw __P((void));
-void     notimeout __P((WINDOW *, int));
-int	 overlay __P((WINDOW *, WINDOW *));
+int	 notimeout __P((WINDOW *, bool));
+int	 overlay __P((const WINDOW *, WINDOW *));
 int	 overwrite __P((WINDOW *, WINDOW *));
-int	 printw __P((const char *, ...));
+int	 printw __P((char *, ...));
 int	 raw __P((void));
 int	 resetty __P((void));
 int	 savetty __P((void));
-int	 scanw __P((const char *, ...));
+int	 scanw __P((char *, ...));
 int	 scroll __P((WINDOW *));
+int	 scrollok __P((WINDOW *, bool));
 int	 setterm __P((char *));
-int	 sscans __P((WINDOW *, const char *, ...));
 WINDOW	*subwin __P((WINDOW *, int, int, int, int));
 int	 suspendwin __P((void));
-int	 touchline __P((WINDOW *, int, int, int));
+int	 touchline __P((WINDOW *, int, int));
 int	 touchoverlap __P((WINDOW *, WINDOW *));
 int	 touchwin __P((WINDOW *));
-int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
-int	 vwscanw __P((WINDOW *, const char *, _BSD_VA_LIST_));
-int	 waddch __P((WINDOW *, int));
+int	 vwprintw __P((WINDOW *, char *, _BSD_VA_LIST_));
+int	 vwscanw __P((WINDOW *, char *, _BSD_VA_LIST_));
+int	 waddch __P((WINDOW *, const chtype));
 int	 waddnstr __P((WINDOW *, const char *, int));
 int	 wattron __P((WINDOW *, int));
 int	 wattroff __P((WINDOW *, int));
@@ -458,22 +496,22 @@ int	 wdeleteln __P((WINDOW *));
 int	 werase __P((WINDOW *));
 int	 wgetch __P((WINDOW *));
 int	 wgetstr __P((WINDOW *, char *));
-int	 winsch __P((WINDOW *, int));
+chtype	 winch __P((WINDOW *));
+int	 winsch __P((WINDOW *, chtype));
 int	 winsertln __P((WINDOW *));
 int	 wmove __P((WINDOW *, int, int));
-int	 wprintw __P((WINDOW *, const char *, ...));
+int	 wprintw __P((WINDOW *, char *, ...));
 int	 wrefresh __P((WINDOW *));
-int	 wscanw __P((WINDOW *, const char *, ...));
+int	 wscanw __P((WINDOW *, char *, ...));
 int	 wstandend __P((WINDOW *));
 int	 wstandout __P((WINDOW *));
 void	 wtimeout __P((WINDOW *, int));
 int	 wunderscore __P((WINDOW *));
 int	 wunderend __P((WINDOW *));
-int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar __P((int));
-int	 __waddbytes __P((WINDOW *, const char *, int, int));
+int	 __waddbytes __P((WINDOW *, const char *, int, attr_t));
 __END_DECLS
 
 /* Private functions. */
@@ -484,7 +522,8 @@ void	 __CTRACE __P((const char *, ...));
 int	 __delay __P((void));
 unsigned int __hash __P((char *, int));
 void	 __id_subwins __P((WINDOW *));
-void     __init_getch __P((char *));
+void	 __init_getch __P((char *));
+char	*__longname __P((char *, char *));	/* Original BSD version */
 int	 __mvcur __P((int, int, int, int, int));
 int	 __nodelay __P((void));
 int	 __notimeout __P((void));

@@ -1,8 +1,0 @@
-# List of files which containing translatable strings.
-
-src/dfa.c
-src/getopt.c
-src/getopt1.c
-src/grep.c
-src/kwset.c
-src/obstack.c
