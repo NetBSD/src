@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $	*/
+/*	$NetBSD: deattack.c,v 1.2 2000/10/30 18:58:37 mason Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: deattack.c,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $");
+__RCSID("$NetBSD: deattack.c,v 1.2 2000/10/30 18:58:37 mason Exp $");
 #endif
 
 #include "includes.h"
@@ -92,7 +92,7 @@ int
 detect_attack(unsigned char *buf, u_int32_t len, unsigned char *IV)
 {
 	static u_int16_t *h = (u_int16_t *) NULL;
-	static u_int16_t n = HASH_MINSIZE / HASH_ENTRYSIZE;
+	static u_int32_t n = HASH_MINSIZE / HASH_ENTRYSIZE;
 	register u_int32_t i, j;
 	u_int32_t l;
 	register unsigned char *c;
