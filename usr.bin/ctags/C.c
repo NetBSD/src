@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.4 1997/10/18 13:18:15 lukem Exp $	*/
+/*	$NetBSD: C.c,v 1.5 1998/07/24 07:30:08 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.4 1997/10/18 13:18:15 lukem Exp $");
+__RCSID("$NetBSD: C.c,v 1.5 1998/07/24 07:30:08 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,9 @@ func_entry()
 {
 	int	c;			/* current character */
 	int	level = 0;		/* for matching '()' */
+	static char attribute[] = "__attribute__";
+	char	maybe_attribute[sizeof attribute + 1],
+		*anext;
 
 	/*
 	 * Find the end of the assumed function declaration.
@@ -288,10 +291,37 @@ fnd:
 	 * is a token character if it's a function and a non-token
 	 * character if it's a declaration.  Comments don't count...
 	 */
-	for (;;) {
+	for (anext = maybe_attribute;;) {
 		while (GETC(!=, EOF) && iswhite(c))
 			if (c == '\n')
 				SETLINE;
+		if (c == EOF)
+			return NO;
+		/*
+		 * Recognize the gnu __attribute__ extension, which would
+		 * otherwise make the heuristic test DTWT
+		 */
+		if (anext == maybe_attribute) {
+			if (intoken(c)) {
+				*anext++ = c;
+				continue;
+			}
+		} else {
+			if (intoken(c)) {
+				if (anext - maybe_attribute 
+				 < sizeof attribute - 1)
+					*anext++ = c;
+				else	break;
+				continue;
+			} else {
+				*anext++ = '\0';
+				if (strcmp(maybe_attribute, attribute) == 0) {
+					(void)ungetc(c, inf);
+					return NO;
+				}
+				break;
+			}
+		}
 		if (intoken(c) || c == '{')
 			break;
 		if (c == '/' && GETC(==, '*'))
