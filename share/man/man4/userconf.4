@@ -1,4 +1,4 @@
-.\"     $NetBSD: userconf.4,v 1.1 2001/07/01 02:56:21 gmcgarry Exp $
+.\"     $NetBSD: userconf.4,v 1.2 2001/07/04 05:13:18 itojun Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,11 +44,11 @@
 .Cd options USERCONF
 .Sh DESCRIPTION
 .Nm
-is the in-kernel device configuration manager.  It is used to alter
-the kernel autoconfiguration framework at runtime.
+is the in-kernel device configuration manager.
+It is used to alter the kernel autoconfiguration framework at runtime.
 .Nm
 is activated from the boot loader by passing the
--c
+.Fl c
 option to the kernel.
 .Sh COMMAND SYNTAX
 The general command syntax is:
@@ -142,9 +142,10 @@ The
 framework was written by
 .An Mats O Jansson
 .Aq moj@stacken.kth.se .
-
 .Sh HISTORY
 The
 .Nm
-framework appeared in
+framework first appeared in
+.Ox 2.0 ,
+and then integrated into
 .Nx 1.6 .
