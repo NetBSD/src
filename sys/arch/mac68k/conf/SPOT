@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.19 1996/11/19 00:38:07 scottr Exp $
+#	$NetBSD: SPOT,v 1.20 1996/12/17 07:33:01 scottr Exp $
 #
 # SPOT
 
@@ -6,7 +6,7 @@ include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoptions CC="cc -m68030"
+makeoptions	COPTS="-m68030 -O"
 
 # Standard system options
 options 	DIAGNOSTIC		# DEBUG for extra kernel debugging
@@ -24,10 +24,10 @@ options 	QUOTA		# fast filesystem with user and group quotas
 options 	MFS		# memory-based filesystem
 options 	NFSSERVER	# Sun NFS-compatible filesystem
 options 	NFSCLIENT	# Sun NFS-compatible filesystem
-options  	CD9660		# ISO-9660 w/ RockRidge
-options	 	KERNFS		# kernel data-structure filesystem
-options	 	FDESC		# user file descriptor filesystem
-options	 	PROCFS		# Process filesystem
+options 	CD9660		# ISO-9660 w/ RockRidge
+options 	KERNFS		# kernel data-structure filesystem
+options 	FDESC		# user file descriptor filesystem
+options 	PROCFS		# Process filesystem
 
 options 	SCSI
 
