@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.12 1996/12/10 22:54:48 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -202,8 +202,8 @@ cgeightattach(parent, self, args)
 	}
 
 	/* Map the pfour register. */
-	fb->fb_pfour = (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
-	    sizeof(u_int32_t), ca->ca_bustype);
+	fb->fb_pfour = (volatile u_int32_t *)
+	    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
 
@@ -247,13 +247,14 @@ cgeightattach(parent, self, args)
 	if (isconsole) {
 		/* XXX this is kind of a waste */
 		fb->fb_pixels = mapiodev(ca->ca_ra.ra_reg,
-		    PFOUR_COLOR_OFF_OVERLAY, ramsize, ca->ca_bustype);
+					 PFOUR_COLOR_OFF_OVERLAY, ramsize);
 	}
 #endif
 
 	/* Map the Brooktree. */
-	sc->sc_fbc = (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
-	    PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol), ca->ca_bustype);
+	sc->sc_fbc = (volatile struct fbcontrol *)
+	    mapiodev(ca->ca_ra.ra_reg,
+		     PFOUR_COLOR_OFF_CMAP, sizeof(struct fbcontrol));
 
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
@@ -467,7 +468,7 @@ cgeightmmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, poff) | PMAP_NC);
 }
 
 #if defined(SUN4)
