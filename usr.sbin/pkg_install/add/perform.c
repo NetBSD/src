@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.9 1998/04/20 08:27:45 frueauf Exp $	*/
+/*	$NetBSD: perform.c,v 1.10 1998/05/06 15:05:29 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.9 1998/04/20 08:27:45 frueauf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.10 1998/05/06 15:05:29 agc Exp $");
 #endif
 #endif
 
@@ -477,9 +477,15 @@ sanity_check(char *pkg)
 void
 cleanup(int signo)
 {
-    if (signo)
-	printf("Signal %d received, cleaning up..\n", signo);
-    if (!Fake && LogDir[0])
-	vsystem("%s -rf %s", REMOVE_CMD, LogDir);
-    leave_playpen(Home);
+    static int	alreadyCleaning;
+
+    if (!alreadyCleaning) {
+    	alreadyCleaning = 1;
+	if (signo)
+		printf("Signal %d received, cleaning up..\n", signo);
+	if (!Fake && LogDir[0])
+		vsystem("%s -rf %s", REMOVE_CMD, LogDir);
+	leave_playpen(Home);
+    }
+    exit(1);
 }
