@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.31 2000/10/16 05:13:13 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.32 2000/10/17 17:40:11 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -234,10 +234,7 @@ isp_sbus_attach(parent, self, aux)
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0;
-#endif
-#ifdef	DIAGNOSTIC
-	isp->isp_dblev |= ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGINFO;
 #endif
 #endif
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
