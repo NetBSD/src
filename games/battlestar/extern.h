@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1999/07/21 03:56:53 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.12 1999/07/28 01:45:42 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -303,6 +303,8 @@ struct objs {
 extern const struct objs dayobjs[];
 extern const struct objs nightobjs[];
 
+#define DEFAULT_SAVE_FILE	".Bstar"
+
 void blast __P((void));
 void bury __P((void));
 int card __P((const char *, int));
@@ -325,7 +327,7 @@ int follow __P((void));
 void getutmp __P((char *));
 int give __P((void));
 int hash __P((const char *));
-void initialize __P((char));
+void initialize __P((const char *));
 void install __P((struct wlist *));
 int jump __P((void));
 void kiss __P((void));
@@ -347,9 +349,10 @@ void printobjs __P((void));
 int put __P((void));
 int puton __P((void));
 void ravage __P((void));
-void restore __P((void));
+void restore __P((const char *));
 int ride __P((void));
-void save __P((void));
+void save __P((const char *));
+char *save_file_name __P((const char *, size_t));
 void screen __P((void));
 int shoot __P((void));
 void succumb __P((int));
