@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1996/04/21 21:07:04 veego Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 1996/05/02 02:08:33 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1784,6 +1784,14 @@ Ldoreset:
  */
 	.globl	_kernel_reload
 _kernel_reload:
+	lea	Lreload_copy,a0		| cursory validity check of new kernel
+	movl	a0@,d0			|  to see if the kernel reload code
+	addl	sp@(4),a0		|  in new image matches running kernel
+	cmpl	a0@,d0
+	jeq	Lreload_ok
+	rts				| It doesn't match - can't reload
+Lreload_ok:
+	jsr	_bootsync
 	CUSTOMADDR(a5)
 
 	movew	#(1<<9),a5@(0x096)	| disable DMA (before clobbering chipmem)
