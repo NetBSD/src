@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.5 1995/01/18 06:19:53 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.6 1995/01/18 09:44:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -188,13 +188,11 @@ lfs_mount(mp, path, data, ndp, p)
 #ifdef NOTLFS							/* LFS */
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-	    MNAMELEN);
+	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 #else
 	(void)copyinstr(path, fs->lfs_fsmnt, sizeof(fs->lfs_fsmnt) - 1, &size);
 	bzero(fs->lfs_fsmnt + size, sizeof(fs->lfs_fsmnt) - size);
-	bcopy((caddr_t)fs->lfs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-	    MNAMELEN);
+	bcopy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 #endif
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
@@ -415,12 +413,10 @@ lfs_statfs(mp, sbp, p)
 	sbp->f_files = fs->lfs_nfiles;
 	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
 	if (sbp != &mp->mnt_stat) {
-		bcopy((caddr_t)mp->mnt_stat.f_mntonname,
-			(caddr_t)&sbp->f_mntonname[0], MNAMELEN);
-		bcopy((caddr_t)mp->mnt_stat.f_mntfromname,
-			(caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
