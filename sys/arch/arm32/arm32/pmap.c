@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1999/03/29 10:02:19 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 1999/03/30 10:10:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2648,10 +2648,9 @@ pmap_modified_emulation(pmap, va)
 	if (*pte == 0)
 		return(0);
 
-#ifdef DIAGNOSTIC
+	/* This can happen if user code tries to access kernel memory. */
 	if ((*pte & PT_AP(AP_W)) != 0)
-		panic("pmap_modified_emulation: bogus write fault");
-#endif
+		return (0);
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
@@ -2709,10 +2708,9 @@ pmap_handled_emulation(pmap, va)
 	if (*pte == 0)
 		return(0);
 
-#ifdef DIAGNOSTIC
+	/* This can happen if user code tries to access kernel memory. */
 	if ((*pte & L2_MASK) != L2_INVAL)
-		panic("pmap_handled_emulation: bogus read fault");
-#endif
+		return (0);
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
