@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)reboot_sparc.8	5.4 (Berkeley) 7/23/91
-.\"	$Id: reboot_sparc.8,v 1.1 1994/02/13 21:21:08 deraadt Exp $
+.\"	$Id: reboot_sparc.8,v 1.2 1994/02/14 21:34:46 cgd Exp $
 .\"
 .Dd July 23, 1991
 .Dt REBOOT 8
@@ -42,7 +42,7 @@
 .Sh NAME
 .Nm reboot
 .Nd
-.Tn UNIX
+.Tn NetBSD
 bootstrapping procedures
 .Sh SYNOPSIS
 .Nm reboot
@@ -51,8 +51,9 @@ bootstrapping procedures
 .Op Fl q
 .Op Fl s
 .Sh DESCRIPTION
-.Tn UNIX
-is started by placing it at the beginning of physical memory
+The
+.Tn NetBSD
+kernel is started by placing it at the beginning of physical memory
 and transferring to the entry point.
 Since the system is not reenterable,
 it is necessary to read it in from disk or tape
@@ -60,8 +61,8 @@ each time it is to be bootstrapped.
 .Pp
 .Sy Rebooting a running system .
 When a
-.Tn UNIX
-is running and a reboot is desired,
+.Tn NetBSD
+kernel is running and a reboot is desired,
 .Xr shutdown 8
 is normally used.
 If there are no users then

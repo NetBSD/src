@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)reboot_i386.8	1.2 (Berkeley) 4/25/91
-.\"	$Id: reboot_i386.8,v 1.6 1994/01/14 02:06:24 jtc Exp $
+.\"	$Id: reboot_i386.8,v 1.7 1994/02/14 21:34:43 cgd Exp $
 .\"
 .Dd April 25, 1991
 .Dt REBOOT 8
@@ -41,15 +41,16 @@
 .Sh NAME
 .Nm reboot
 .Nd
-.Tn UNIX
+.Tn NetBSD
 bootstrapping procedures
 .Sh SYNOPSIS
 .Nm reboot
 .Op Fl n
 .Op Fl q
 .Sh DESCRIPTION
-.Tn UNIX ,
-an ordinary executable file,
+The
+.Tn NetBSD
+kernel, an ordinary executable file,
 is placed into memory by bootstrap at location absolute zero, and
 entered at the executable's entry point
 .Pq Va a_entry .
@@ -61,8 +62,8 @@ a disk file.
 .Pp
 .Sy Rebooting a running system .
 When a
-.Tn UNIX
-is running and a reboot is desired,
+.Tn NetBSD
+kernel is running and a reboot is desired,
 .Xr shutdown 8
 is normally used.
 If there are no users then
@@ -161,17 +162,12 @@ of unit 0 of an IDE disk, type
 to the boot prompt;
 .Dq Li fd(0,a)/netbsd
 would specify a 3 1/2" floppy drive 0 .
-.Pp
-In an emergency, the bootstrap methods described in the paper
-.%T "Installing and Operating 4.3 BSD-Reno UNIX on the AT/386"
-can be used
-to boot from a distribution tape.
 .Sh FILES
 .Bl -tag -width /netbsd -compact
 .It Pa /netbsd
 system code
-.It Pa /boot
-system bootstrap
+.\".It Pa /boot
+.\"system bootstrap
 .El
 .Sh SEE ALSO
 .Xr crash 8 ,
@@ -182,8 +178,3 @@ system bootstrap
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
-.Sh BUGS
-The disklabel format used by this version of
-.Bx
-is quite
-different from that of other architectures.

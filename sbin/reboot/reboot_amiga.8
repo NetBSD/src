@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)reboot_i386.8	1.2 (Berkeley) 4/25/91
-.\"	$Id: reboot_amiga.8,v 1.1 1994/02/08 13:04:30 chopps Exp $
+.\"	$Id: reboot_amiga.8,v 1.2 1994/02/14 21:34:39 cgd Exp $
 .\"
 .Dd April 25, 1991
 .Dt REBOOT 8
@@ -41,15 +41,16 @@
 .Sh NAME
 .Nm reboot
 .Nd
-.Tn UNIX
+.Tn NetBSD
 bootstrapping procedures
 .Sh SYNOPSIS
 .Nm reboot
 .Op Fl n
 .Op Fl q
 .Sh DESCRIPTION
-.Tn UNIX ,
-an ordinary executable file,
+The
+.Tn NetBSD 
+kernel, an ordinary executable file,
 is placed into chip memory by bootstrap.
 Upon startup, the system reorganizes memory to suit the needs of
 the hardware configuration found and copies itself to virtual memory,
@@ -60,8 +61,8 @@ a disk file.
 .Pp
 .Sy Rebooting a running system .
 When a
-.Tn UNIX
-is running and a reboot is desired,
+.Tn NetBSD
+kernel is running and a reboot is desired,
 .Xr shutdown 8
 is normally used.
 If there are no users then
@@ -95,7 +96,7 @@ options are present.
 .Sy Cold  starts .
 The
 .Tn "Amiga"
-currently does not attempt to boot unix on power up.
+currently does not attempt to boot NetBSD on power up.
 .Sh SEE ALSO
 .Xr crash 8 ,
 .Xr halt 8 ,
