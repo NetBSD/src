@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.18 2003/05/17 00:44:49 itojun Exp $	*/
+/*	$NetBSD: mapper.c,v 1.19 2003/05/17 00:46:04 itojun Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -93,7 +93,7 @@ void			ask2(u_int32_t dst);
 int			retry_requests(Node *node);
 char *			inet_name(u_int32_t addr);
 void			print_map(Node *node);
-char *			graph_name(u_int32_t addr, char *buf);
+char *			graph_name(u_int32_t addr, char *buf, size_t);
 void			graph_edges(Node *node);
 void			elide_aliases(Node *node);
 void			graph_map(void);
@@ -672,12 +672,12 @@ void print_map(Node *node)
 }
 
 
-char *graph_name(u_int32_t addr, char *buf)
+char *graph_name(u_int32_t addr, char *buf, size_t l)
 {
     char *name;
 
-    if (show_names  &&  (name = inet_name(addr)))
-	strcpy(buf, name);
+    if (show_names && (name = inet_name(addr)))
+	strlcpy(buf, name, l);
     else
 	inet_fmt(addr);
 
@@ -697,7 +697,7 @@ void graph_edges(Node *node)
 	    printf("  %d {$ NP %d0 %d0 $} \"%s%s\" \n",
 		   (int) node->addr,
 		   node->addr & 0xFF, (node->addr >> 8) & 0xFF,
-		   graph_name(node->addr, name),
+		   graph_name(node->addr, name, sizeof(name)),
 		   node->u.interfaces ? "" : "*");
 	    for (ifc = node->u.interfaces; ifc; ifc = ifc->next)
 		for (nb = ifc->neighbors; nb; nb = nb->next) {
