@@ -42,7 +42,7 @@
 #endif
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__sh__ -Dunix -Dsh3 -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sh) -Amachine(sh)"
+#define CPP_PREDEFINES "-D__sh__ -D__sh3__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(sh) -Amachine(sh)"
 
 /* XXX -fpic -fPIC? (msaitoh) */
 #undef ASM_SPEC
