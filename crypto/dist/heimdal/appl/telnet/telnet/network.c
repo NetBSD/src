@@ -30,10 +30,13 @@
 #include "telnet_locl.h"
 
 __RCSID("$Heimdal: network.c,v 1.11 2000/10/08 13:28:21 assar Exp $"
-        "$NetBSD: network.c,v 1.2 2003/08/07 09:15:27 agc Exp $");
+        "$NetBSD: network.c,v 1.3 2004/09/14 08:08:20 lha Exp $");
 
 Ring		netoring, netiring;
-unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
+size_t		netobufsize = 64*1024;
+size_t		netibufsize = 64*1024;
+
+
 
 /*
  * Initialize internal network data structures.
@@ -42,10 +45,17 @@ unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
 void
 init_network(void)
 {
-    if (ring_init(&netoring, netobuf, sizeof netobuf) != 1) {
+    void *obuf, *ibuf;
+    
+    if ((obuf = malloc(netobufsize)) == NULL)
+	exit(1);
+    if ((ibuf = malloc(netibufsize)) == NULL)
+	exit(1);
+
+    if (ring_init(&netoring, obuf, netobufsize) != 1) {
 	exit(1);
     }
-    if (ring_init(&netiring, netibuf, sizeof netibuf) != 1) {
+    if (ring_init(&netiring, ibuf, netibufsize) != 1) {
 	exit(1);
     }
     NetTrace = stdout;

@@ -325,7 +325,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_GLOB 1
 
 /* Define to 1 if you have the `grantpt' function. */
-/* #undef HAVE_GRANTPT */
+#define HAVE_GRANTPT 1
 
 /* Define to 1 if you have the <grp.h> header file. */
 #define HAVE_GRP_H 1
@@ -547,7 +547,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_PTHREAD_H 1
 
 /* Define to 1 if you have the `ptsname' function. */
-/* #undef HAVE_PTSNAME */
+#define HAVE_PTSNAME 1
 
 /* Define to 1 if you have the <pty.h> header file. */
 /* #undef HAVE_PTY_H */
@@ -1012,7 +1012,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `unlockpt' function. */
-/* #undef HAVE_UNLOCKPT */
+#define HAVE_UNLOCKPT 1
 
 /* Define if you have the function `unsetenv'. */
 #define HAVE_UNSETENV 1
@@ -1265,13 +1265,13 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 0.6.1"
+#define PACKAGE_STRING "Heimdal 0.6.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.6.1"
+#define PACKAGE_VERSION "0.6.3"
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 /* #undef POSIX_GETLOGIN */
@@ -1339,7 +1339,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 /* #undef inline */
+#endif
 
 /* Define this to what the type mode_t should be. */
 /* #undef mode_t */
