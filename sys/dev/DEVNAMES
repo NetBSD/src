@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.16 2000/11/05 17:17:14 onoe Exp $
+#	$NetBSD: DEVNAMES,v 1.17 2000/11/07 15:33:53 tsutsui Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -221,6 +221,7 @@ dl			MI
 dma			MI		
 dma			sun3
 dmac			x68k
+dmac			newsmips
 dmf			vax
 dmphy			MI		
 dmz			vax
@@ -394,6 +395,7 @@ hb			newsmips
 hd64570			MI		Attribute
 hdc			vax
 hdfd			atari
+hifn			MI
 hippi			MI		Attribute
 hme			MI		
 hp			vax
@@ -427,6 +429,7 @@ iic			arm32
 ik			vax
 imc			sgimips
 inphy			MI		
+intersil7170		MI		Attribute
 interwave		MI		Attribute
 intio			hp300
 intio			next68k
@@ -561,6 +564,7 @@ mbe			MI
 mbpp			MI		
 mc			mac68k
 mc			macppc
+mca			i386
 mcbus			alpha
 mcclock			alpha
 mcclock			pmax
@@ -594,7 +598,7 @@ midisyn			MI		Attribute
 mii			MI		Attribute
 mii_bitbang		MI		Attribute
 mii_phy			MI		Attribute
-mk48txx			MI
+mk48txx			MI		Attribute
 mkclock			newsmips
 mlhsc			amiga
 mlhsc			amigappc
@@ -621,6 +625,7 @@ mtty			MI
 mu			vax
 mulaw			MI		Attribute
 necpb			arc
+neo			MI
 nca			MI		
 ncr			MI		
 ncr			pc532
@@ -859,6 +864,7 @@ simide			arm32
 sio			alpha
 sio			luna68k
 siop			MI
+siop_common		MI		Attribute
 siopng			amiga		Attribute
 siotty			luna68k
 sip			MI		
@@ -875,6 +881,7 @@ sparcvme		sparc
 spc			luna68k
 spc			x68k
 spckbd			arm32		Attribute
+spifi			newsmips
 spkr			MI		
 sppp			MI		Attribute
 sqphy			MI		
@@ -889,6 +896,8 @@ sw			sparc
 sysbeep			arm32
 sysbeep			i386
 sysmon			MI
+sysmon_envsys		MI		Attribute
+sysmon_wdog		MI		Attribute
 tc			MI		
 tc5165buf		hpcmips
 tcasic			alpha
@@ -1045,6 +1054,7 @@ wss			MI
 wstsc			amiga
 wstsc			amigappc
 wt			MI		
+xafb			newsmips
 xasc			pmax
 xb			alpha
 xbox			MI		
