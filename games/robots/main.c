@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2001/02/05 01:02:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,13 +43,16 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2001/02/05 01:02:45 christos Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
 
 int main __P((int, char **));
+
+extern const char	*Scorefile;
+extern int	Max_per_uid;
 
 int
 main(ac, av)
@@ -59,8 +62,6 @@ main(ac, av)
 	const char	*sp;
 	bool	bad_arg;
 	bool	show_only;
-	extern const char	*Scorefile;
-	extern int	Max_per_uid;
 	int		score_wfd; /* high score writable file descriptor */
 	int		score_err = 0; /* hold errno from score file open */
 
