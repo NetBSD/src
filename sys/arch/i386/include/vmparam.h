@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 1997/06/12 15:09:29 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 1997/07/12 16:19:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,6 +111,10 @@
  * $30/mb or about $0.75.
  * { wfj 6/16/89: Retail AT memory expansion $800/megabyte, loan of $17
  *   on disk costing $7/mb or $0.18 (in memory still 100:1 in cost!) }
+ * Update: memory prices have changed recently (9/96). At the current    
+ * value of $6 per megabyte, we lend each swapped in process memory worth
+ * $0.15, or just admit that we don't consider it worthwhile and swap it out
+ * to disk which costs $0.20/MB, or just under half a cent. 
  */
 #define	SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
