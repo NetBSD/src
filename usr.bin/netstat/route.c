@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";*/
-static char *rcsid = "$Id: route.c,v 1.12 1995/07/03 03:25:24 mycroft Exp $";
+static char *rcsid = "$Id: route.c,v 1.13 1995/08/10 06:24:54 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,10 +192,10 @@ pr_rthdr()
 
 	if (Aflag)
 		printf("%-8.8s ","Address");
-	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s  %s\n",
+	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s %6.6s  %s\n",
 		WID_DST, WID_DST, "Destination",
 		WID_GW, WID_GW, "Gateway",
-		"Flags", "Refs", "Use", "Interface");
+		"Flags", "Refs", "Use", "Mtu", "Interface");
 }
 
 static struct sockaddr *
@@ -450,6 +450,10 @@ p_rtentry(rt)
 	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
+	if (rt->rt_rmx.rmx_mtu)
+		printf("%6d ", rt->rt_rmx.rmx_mtu);
+	else
+		printf("%6s ", "-");
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
 			kget(rt->rt_ifp, ifnet);
