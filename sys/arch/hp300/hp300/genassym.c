@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.20 1996/09/11 00:32:16 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.21 1996/10/05 07:11:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -252,6 +252,7 @@ main()
 	off("FR_SP", struct frame, f_regs[15]);
 	off("FR_HW", struct frame, f_sr);
 	off("FR_ADJ", struct frame, f_stackadj);
+	def("FR_SIZE", sizeof(struct trapframe));
 
 	/* system calls */
 	def("SYS_exit", SYS_exit);
