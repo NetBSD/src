@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.270 2000/09/28 22:25:29 thorpej Exp $
+# $NetBSD: mi,v 1.271 2000/10/04 05:58:17 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -32,6 +32,7 @@
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
+./usr/share/man/cat1/asn1parse.0
 ./usr/share/man/cat1/at.0
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
@@ -50,6 +51,7 @@
 ./usr/share/man/cat1/bzcat.0
 ./usr/share/man/cat1/bzip2.0
 ./usr/share/man/cat1/bzip2recover.0
+./usr/share/man/cat1/ca.0
 ./usr/share/man/cat1/cal.0
 ./usr/share/man/cat1/calendar.0
 ./usr/share/man/cat1/cap_mkdb.0
@@ -64,6 +66,7 @@
 ./usr/share/man/cat1/chpass.0
 ./usr/share/man/cat1/chsh.0
 ./usr/share/man/cat1/ci.0
+./usr/share/man/cat1/ciphers.0
 ./usr/share/man/cat1/cksum.0
 ./usr/share/man/cat1/clear.0
 ./usr/share/man/cat1/cmp.0
@@ -77,6 +80,8 @@
 ./usr/share/man/cat1/cp.0
 ./usr/share/man/cat1/cpio.0
 ./usr/share/man/cat1/cpp.0
+./usr/share/man/cat1/crl.0
+./usr/share/man/cat1/crl2pkcs7.0
 ./usr/share/man/cat1/crontab.0
 ./usr/share/man/cat1/csh.0
 ./usr/share/man/cat1/ctags.0
@@ -86,6 +91,8 @@
 ./usr/share/man/cat1/dc.0
 ./usr/share/man/cat1/dd.0
 ./usr/share/man/cat1/df.0
+./usr/share/man/cat1/dgst.0
+./usr/share/man/cat1/dhparam.0
 ./usr/share/man/cat1/diff.0
 ./usr/share/man/cat1/diff3.0
 ./usr/share/man/cat1/dig.0
@@ -94,11 +101,14 @@
 ./usr/share/man/cat1/dnskeygen.0
 ./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
+./usr/share/man/cat1/dsa.0
+./usr/share/man/cat1/dsaparam.0
 ./usr/share/man/cat1/du.0
 ./usr/share/man/cat1/echo.0
 ./usr/share/man/cat1/ed.0
 ./usr/share/man/cat1/egrep.0
 ./usr/share/man/cat1/eject.0
+./usr/share/man/cat1/enc.0
 ./usr/share/man/cat1/env.0
 ./usr/share/man/cat1/error.0
 ./usr/share/man/cat1/ex.0
@@ -122,6 +132,8 @@
 ./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gcpp.0
 ./usr/share/man/cat1/gencat.0
+./usr/share/man/cat1/gendsa.0
+./usr/share/man/cat1/genrsa.0
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/grep.0
@@ -215,15 +227,21 @@
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nl.0
 ./usr/share/man/cat1/nohup.0
+./usr/share/man/cat1/nseq.0
 ./usr/share/man/cat1/od.0
+./usr/share/man/cat1/openssl.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
+./usr/share/man/cat1/passwd.0
 ./usr/share/man/cat1/passwd.0
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pawd.0
 ./usr/share/man/cat1/pax.0
 ./usr/share/man/cat1/pim6stat.0
+./usr/share/man/cat1/pkcs12.0
+./usr/share/man/cat1/pkcs7.0
+./usr/share/man/cat1/pkcs8.0
 ./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_admin.0
 ./usr/share/man/cat1/pkg_create.0
@@ -247,6 +265,7 @@
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
+./usr/share/man/cat1/rand.0
 ./usr/share/man/cat1/rcmd.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
@@ -259,6 +278,7 @@
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rehash.0
 ./usr/share/man/cat1/repeat.0
+./usr/share/man/cat1/req.0
 ./usr/share/man/cat1/reset.0
 ./usr/share/man/cat1/rev.0
 ./usr/share/man/cat1/rlog.0
@@ -266,18 +286,22 @@
 ./usr/share/man/cat1/rm.0
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
+./usr/share/man/cat1/rsa.0
 ./usr/share/man/cat1/rsh.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
 ./usr/share/man/cat1/rwall.0
 ./usr/share/man/cat1/rwho.0
+./usr/share/man/cat1/s_client.0
+./usr/share/man/cat1/s_server.0
 ./usr/share/man/cat1/scp.0
 ./usr/share/man/cat1/screenblank.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
 ./usr/share/man/cat1/send-pr.0
+./usr/share/man/cat1/sess_id.0
 ./usr/share/man/cat1/sh.0
 ./usr/share/man/cat1/shar.0
 ./usr/share/man/cat1/shlock.0
@@ -288,13 +312,16 @@
 ./usr/share/man/cat1/skeyinit.0
 ./usr/share/man/cat1/sleep.0
 ./usr/share/man/cat1/slogin.0
+./usr/share/man/cat1/smime.0
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
+./usr/share/man/cat1/speed.0
+./usr/share/man/cat1/spkac.0
 ./usr/share/man/cat1/split.0
-./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/ssh-add.0
-./usr/share/man/cat1/ssh-keygen.0
 ./usr/share/man/cat1/ssh-agent.0
+./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/stty.0
 ./usr/share/man/cat1/su.0
@@ -337,6 +364,8 @@
 ./usr/share/man/cat1/uustat.0
 ./usr/share/man/cat1/uux.0
 ./usr/share/man/cat1/vacation.0
+./usr/share/man/cat1/verify.0
+./usr/share/man/cat1/version.0
 ./usr/share/man/cat1/vi.0
 ./usr/share/man/cat1/view.0
 ./usr/share/man/cat1/vis.0
@@ -353,6 +382,7 @@
 ./usr/share/man/cat1/whois.0
 ./usr/share/man/cat1/window.0
 ./usr/share/man/cat1/write.0
+./usr/share/man/cat1/x509.0
 ./usr/share/man/cat1/xargs.0
 ./usr/share/man/cat1/yes.0
 ./usr/share/man/cat1/ypcat.0
@@ -407,6 +437,7 @@
 ./usr/share/man/cat4/cmpci.0
 ./usr/share/man/cat4/cms.0
 ./usr/share/man/cat4/cnw.0
+./usr/share/man/cat4/crypto.0
 ./usr/share/man/cat4/cs.0
 ./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
@@ -506,6 +537,7 @@
 ./usr/share/man/cat4/null.0
 ./usr/share/man/cat4/ofisa.0
 ./usr/share/man/cat4/ohci.0
+./usr/share/man/cat4/openssl.0
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pas.0
@@ -554,6 +586,7 @@
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
+./usr/share/man/cat4/ssl.0
 ./usr/share/man/cat4/st.0
 ./usr/share/man/cat4/stderr.0
 ./usr/share/man/cat4/stdin.0
@@ -600,8 +633,8 @@
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/viaenv.0
-./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/viapm.0
+./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/wd.0
@@ -689,6 +722,7 @@
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/nsswitch.conf.0
+./usr/share/man/cat5/openssl.cnf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/phones.0
@@ -724,6 +758,7 @@
 ./usr/share/man/cat5/wscons.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat7/ascii.0
+./usr/share/man/cat7/des_modes.0
 ./usr/share/man/cat7/environ.0
 ./usr/share/man/cat7/hier.0
 ./usr/share/man/cat7/hostname.0
@@ -1083,6 +1118,7 @@
 ./usr/share/man/man1/alias.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
+./usr/share/man/man1/asn1parse.1
 ./usr/share/man/man1/at.1
 ./usr/share/man/man1/atq.1
 ./usr/share/man/man1/atrm.1
@@ -1101,6 +1137,7 @@
 ./usr/share/man/man1/bzcat.1
 ./usr/share/man/man1/bzip2.1
 ./usr/share/man/man1/bzip2recover.1
+./usr/share/man/man1/ca.1
 ./usr/share/man/man1/cal.1
 ./usr/share/man/man1/calendar.1
 ./usr/share/man/man1/cap_mkdb.1
@@ -1115,6 +1152,7 @@
 ./usr/share/man/man1/chpass.1
 ./usr/share/man/man1/chsh.1
 ./usr/share/man/man1/ci.1
+./usr/share/man/man1/ciphers.1
 ./usr/share/man/man1/cksum.1
 ./usr/share/man/man1/clear.1
 ./usr/share/man/man1/cmp.1
@@ -1128,6 +1166,8 @@
 ./usr/share/man/man1/cp.1
 ./usr/share/man/man1/cpio.1
 ./usr/share/man/man1/cpp.1
+./usr/share/man/man1/crl.1
+./usr/share/man/man1/crl2pkcs7.1
 ./usr/share/man/man1/crontab.1
 ./usr/share/man/man1/csh.1
 ./usr/share/man/man1/ctags.1
@@ -1137,6 +1177,8 @@
 ./usr/share/man/man1/dc.1
 ./usr/share/man/man1/dd.1
 ./usr/share/man/man1/df.1
+./usr/share/man/man1/dgst.1
+./usr/share/man/man1/dhparam.1
 ./usr/share/man/man1/diff.1
 ./usr/share/man/man1/diff3.1
 ./usr/share/man/man1/dig.1
@@ -1145,11 +1187,14 @@
 ./usr/share/man/man1/dnskeygen.1
 ./usr/share/man/man1/dnsquery.1
 ./usr/share/man/man1/domainname.1
+./usr/share/man/man1/dsa.1
+./usr/share/man/man1/dsaparam.1
 ./usr/share/man/man1/du.1
 ./usr/share/man/man1/echo.1
 ./usr/share/man/man1/ed.1
 ./usr/share/man/man1/egrep.1
 ./usr/share/man/man1/eject.1
+./usr/share/man/man1/enc.1
 ./usr/share/man/man1/env.1
 ./usr/share/man/man1/error.1
 ./usr/share/man/man1/ex.1
@@ -1173,6 +1218,8 @@
 ./usr/share/man/man1/g77.1
 ./usr/share/man/man1/gcpp.1
 ./usr/share/man/man1/gencat.1
+./usr/share/man/man1/gendsa.1
+./usr/share/man/man1/genrsa.1
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getopt.1
 ./usr/share/man/man1/grep.1
@@ -1266,15 +1313,21 @@
 ./usr/share/man/man1/nice.1
 ./usr/share/man/man1/nl.1
 ./usr/share/man/man1/nohup.1
+./usr/share/man/man1/nseq.1
 ./usr/share/man/man1/od.1
+./usr/share/man/man1/openssl.1
 ./usr/share/man/man1/page.1
 ./usr/share/man/man1/pagesize.1
+./usr/share/man/man1/passwd.1
 ./usr/share/man/man1/passwd.1
 ./usr/share/man/man1/paste.1
 ./usr/share/man/man1/patch.1
 ./usr/share/man/man1/pawd.1
 ./usr/share/man/man1/pax.1
 ./usr/share/man/man1/pim6stat.1
+./usr/share/man/man1/pkcs12.1
+./usr/share/man/man1/pkcs7.1
+./usr/share/man/man1/pkcs8.1
 ./usr/share/man/man1/pkg_add.1
 ./usr/share/man/man1/pkg_admin.1
 ./usr/share/man/man1/pkg_create.1
@@ -1298,6 +1351,7 @@
 ./usr/share/man/man1/pushd.1
 ./usr/share/man/man1/pwd.1
 ./usr/share/man/man1/quota.1
+./usr/share/man/man1/rand.1
 ./usr/share/man/man1/rcmd.1
 ./usr/share/man/man1/rcp.1
 ./usr/share/man/man1/rcs.1
@@ -1310,6 +1364,7 @@
 ./usr/share/man/man1/rdist.1
 ./usr/share/man/man1/rehash.1
 ./usr/share/man/man1/repeat.1
+./usr/share/man/man1/req.1
 ./usr/share/man/man1/reset.1
 ./usr/share/man/man1/rev.1
 ./usr/share/man/man1/rlog.1
@@ -1317,18 +1372,22 @@
 ./usr/share/man/man1/rm.1
 ./usr/share/man/man1/rmdir.1
 ./usr/share/man/man1/rs.1
+./usr/share/man/man1/rsa.1
 ./usr/share/man/man1/rsh.1
 ./usr/share/man/man1/rup.1
 ./usr/share/man/man1/ruptime.1
 ./usr/share/man/man1/rusers.1
 ./usr/share/man/man1/rwall.1
 ./usr/share/man/man1/rwho.1
+./usr/share/man/man1/s_client.1
+./usr/share/man/man1/s_server.1
 ./usr/share/man/man1/scp.1
 ./usr/share/man/man1/screenblank.1
 ./usr/share/man/man1/script.1
 ./usr/share/man/man1/sdiff.1
 ./usr/share/man/man1/sed.1
 ./usr/share/man/man1/send-pr.1
+./usr/share/man/man1/sess_id.1
 ./usr/share/man/man1/sh.1
 ./usr/share/man/man1/shar.1
 ./usr/share/man/man1/shlock.1
@@ -1339,13 +1398,16 @@
 ./usr/share/man/man1/skeyinit.1
 ./usr/share/man/man1/sleep.1
 ./usr/share/man/man1/slogin.1
+./usr/share/man/man1/smime.1
 ./usr/share/man/man1/sort.1
 ./usr/share/man/man1/source.1
+./usr/share/man/man1/speed.1
+./usr/share/man/man1/spkac.1
 ./usr/share/man/man1/split.1
-./usr/share/man/man1/ssh.1
 ./usr/share/man/man1/ssh-add.1
-./usr/share/man/man1/ssh-keygen.1
 ./usr/share/man/man1/ssh-agent.1
+./usr/share/man/man1/ssh-keygen.1
+./usr/share/man/man1/ssh.1
 ./usr/share/man/man1/stop.1
 ./usr/share/man/man1/stty.1
 ./usr/share/man/man1/su.1
@@ -1388,6 +1450,8 @@
 ./usr/share/man/man1/uustat.1
 ./usr/share/man/man1/uux.1
 ./usr/share/man/man1/vacation.1
+./usr/share/man/man1/verify.1
+./usr/share/man/man1/version.1
 ./usr/share/man/man1/vi.1
 ./usr/share/man/man1/view.1
 ./usr/share/man/man1/vis.1
@@ -1404,6 +1468,7 @@
 ./usr/share/man/man1/whois.1
 ./usr/share/man/man1/window.1
 ./usr/share/man/man1/write.1
+./usr/share/man/man1/x509.1
 ./usr/share/man/man1/xargs.1
 ./usr/share/man/man1/yes.1
 ./usr/share/man/man1/ypcat.1
@@ -1458,6 +1523,7 @@
 ./usr/share/man/man4/cmpci.4
 ./usr/share/man/man4/cms.4
 ./usr/share/man/man4/cnw.4
+./usr/share/man/man4/crypto.4
 ./usr/share/man/man4/cs.4
 ./usr/share/man/man4/cue.4
 ./usr/share/man/man4/cy.4
@@ -1557,6 +1623,7 @@
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/ofisa.4
 ./usr/share/man/man4/ohci.4
+./usr/share/man/man4/openssl.4
 ./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/pas.4
@@ -1605,6 +1672,7 @@
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
+./usr/share/man/man4/ssl.4
 ./usr/share/man/man4/st.4
 ./usr/share/man/man4/stderr.4
 ./usr/share/man/man4/stdin.4
@@ -1651,8 +1719,8 @@
 ./usr/share/man/man4/uvisor.4
 ./usr/share/man/man4/vga.4
 ./usr/share/man/man4/viaenv.4
-./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/viapm.4
+./usr/share/man/man4/vlan.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/vr.4
 ./usr/share/man/man4/wd.4
@@ -1740,6 +1808,7 @@
 ./usr/share/man/man5/networks.5
 ./usr/share/man/man5/newsyslog.conf.5
 ./usr/share/man/man5/nsswitch.conf.5
+./usr/share/man/man5/openssl.cnf.5
 ./usr/share/man/man5/passwd.5
 ./usr/share/man/man5/passwd.conf.5
 ./usr/share/man/man5/phones.5
@@ -1775,6 +1844,7 @@
 ./usr/share/man/man5/wscons.conf.5
 ./usr/share/man/man5/wtmp.5
 ./usr/share/man/man7/ascii.7
+./usr/share/man/man7/des_modes.7
 ./usr/share/man/man7/environ.7
 ./usr/share/man/man7/hier.7
 ./usr/share/man/man7/hostname.7
