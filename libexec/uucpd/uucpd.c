@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.10 1998/07/01 19:29:22 tron Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.11 1998/07/02 07:46:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.10 1998/07/01 19:29:22 tron Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.11 1998/07/02 07:46:45 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,39 +172,38 @@ doit(sinp)
 	struct sockaddr_in *sinp;
 {
 	char user[64], passwd[64];
-	char *xpasswd;
+	char *xpasswd = NULL;	/* XXX gcc */
 	struct passwd *pw;
 
-        alarm(60);
-        do {
-                printf("login: "); fflush(stdout);
-                if (readline(user, sizeof user) < 0) {
-                        fprintf(stderr, "user read\n");
-                        return;
-                }
-        } while (user[0] == '\0');
-        /* truncate username to 8 characters */
+	alarm(60);
+	do {
+		printf("login: ");
+		fflush(stdout);
+		if (readline(user, sizeof user) < 0) {
+			fprintf(stderr, "user read\n");
+			return;
+		}
+	} while (user[0] == '\0');
+	/* truncate username to 8 characters */
 	user[8] = '\0';
 	pw = getpwnam(user);
-	if (pw == NULL) {
-		(void) crypt("dummy password", "PA");	/* must always crypt */
-		fprintf(stderr, "Login incorrect.");
-		return;
-	}
-	if (pw->pw_passwd && *pw->pw_passwd != '\0') {
-		printf("Password: "); fflush(stdout);
+	if (pw == NULL || (pw->pw_passwd && *pw->pw_passwd != '\0')) {
+		printf("Password: ");
+		fflush(stdout);
 		if (readline(passwd, sizeof passwd) < 0) {
 			fprintf(stderr, "passwd read\n");
 			return;
 		}
-		xpasswd = crypt(passwd, pw->pw_passwd);
-		if (strcmp(xpasswd, pw->pw_passwd)) {
-			fprintf(stderr, "Login incorrect.");
+		if (pw != NULL)
+			xpasswd = crypt(passwd, pw->pw_passwd);
+
+		if (pw == NULL || strcmp(xpasswd, pw->pw_passwd)) {
+			fprintf(stderr, "Login incorrect.\n");
 			return;
 		}
 	}
 	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
-		fprintf(stderr, "Login incorrect.");
+		fprintf(stderr, "Login incorrect.\n");
 		return;
 	}
 	alarm(0);
@@ -276,8 +275,8 @@ dologin(pw, sin)
 	struct passwd *pw;
 	struct sockaddr_in *sin;
 {
-	char line[UT_LINESIZE];
-	char remotehost[UT_HOSTSIZE];
+	char line[UT_LINESIZE+1];
+	char remotehost[UT_HOSTSIZE+1];
 	int wtmp, f;
 	struct hostent *hp = gethostbyaddr((char *)&sin->sin_addr,
 		sizeof (struct in_addr), AF_INET);
@@ -288,11 +287,10 @@ dologin(pw, sin)
 	} else
 		strncpy(remotehost, inet_ntoa(sin->sin_addr),
 		    sizeof (remotehost));
-	remotehost[sizeof (remotehost) - 1] = 0;
 	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 	if (wtmp >= 0) {
 		/* hack, but must be unique and no tty line */
-		sprintf(line, "uu%.4d", getpid());
+		sprintf(line, "uucp%.4d", getpid());
 		SCPYN(utmp.ut_line, line);
 		SCPYN(utmp.ut_name, pw->pw_name);
 		SCPYN(utmp.ut_host, remotehost);
