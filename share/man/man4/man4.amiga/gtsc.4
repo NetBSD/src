@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: gtsc.4,v 1.7 2001/04/25 02:19:50 simonb Exp $
+.\"	$NetBSD: gtsc.4,v 1.8 2001/06/13 23:38:30 wiz Exp $
 .\"
 .Dd August 31, 1994
 .Os
@@ -41,7 +41,7 @@
 The
 .Tn Amiga
 architecture uses a common machine independent scsi sub-system
-provided in the kernel source.  The machine independent 
+provided in the kernel source.  The machine independent
 drivers that use this code access the hardware through a
 common interface. (see
 .Xr scsibus 4 )
@@ -51,11 +51,11 @@ such as
 which then handles the hardware specific issues.
 .Pp
 The
-.Nm 
+.Nm
 interface handles things such as DMA and interrupts as well as
 actually sending commands, negotiating synchronous or asynchronous
 transfers and handling disconnect/reconnect of SCSI targets.
-The hardware that 
+The hardware that
 .Nm
 uses is based on the WD33c93 SCSI chip.
 .Sh DIAGNOSTICS
@@ -65,7 +65,7 @@ The 33c93 code (sbic) has been waiting too long for a SCSI chip
 operation to complete. %d is the line in the source file
 .Pa amiga/dev/sbic.c
 at which the SCSI chip timed-out.  Asr and csr are status registers
-withing the SCSI chip.
+within the SCSI chip.
 .It gtsc%d: abort %s: csr = 0x%02x, asr = 0x%02x
 A SCSI operation %s was aborted due to an error.
 .It gtsc%d: csr == 0x%02i
@@ -74,17 +74,17 @@ A error has occurred within the SCSI chip code.
 The target described by
 .Sq from %d
 has taken the SCSI bus into a phase which is not
-expected durring polled IO.
+expected during polled IO.
 .It gtsc%d: unexpected phase %d in icmd from %d
 The target described by
 .Sq from %d
 has taken the SCSI bus into a phase which is not
-expected durring DMA IO setup.
+expected during DMA IO setup.
 .El
 .Sh SEE ALSO
 .Xr scsibus 4
 .Sh HISTORY
 The
-.Nm 
+.Nm
 interface first appeared in
 .Nx 1.0
