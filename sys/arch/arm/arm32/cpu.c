@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2001/11/24 01:26:24 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2001/11/29 02:24:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -311,6 +311,25 @@ const struct cpu_classtab cpu_classes[] = {
  * The remaining fields in the cpu structure are filled in appropriately.
  */
 
+static const char *wtnames[] = {
+	"write-through",
+	"write-back",
+	"write-back",
+	"**unknown 3**",
+	"**unknown 4**",
+	"write-back-locking",		/* XXX XScale-specific? */
+	"write-back-locking-A",
+	"write-back-locking-B",
+	"**unknown 8**",
+	"**unknown 9**",
+	"**unknown 10**",
+	"**unknown 11**",
+	"**unknown 12**",
+	"**unknown 13**",
+	"**unknown 14**",
+	"**unknown 15**",
+};
+
 void
 identify_arm_cpu(dv, cpu_number)
 	struct device *dv;
@@ -377,8 +396,28 @@ identify_arm_cpu(dv, cpu_number)
 		strcat(cpu->cpu_model, " branch prediction enabled");
 
 	/* Print the info */
-
 	printf(": %s\n", cpu->cpu_model);
+
+	/* Print cache info. */
+	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
+		goto skip_pcache;
+
+	if (arm_pcache_unified) {
+		printf("%s: %dKB/%dB %d-way %s unified cache\n",
+		    dv->dv_xname, arm_pdcache_size / 1024,
+		    arm_pdcache_line_size, arm_pdcache_ways,
+		    wtnames[arm_pcache_type]);
+	} else {
+		printf("%s: %dKB/%dB %d-way Instruction cache\n",
+		    dv->dv_xname, arm_picache_size / 1024,
+		    arm_picache_line_size, arm_picache_ways);
+		printf("%s: %dKB/%dB %d-way %s Data cache\n",
+		    dv->dv_xname, arm_pdcache_size / 1024, 
+		    arm_pdcache_line_size, arm_pdcache_ways,
+		    wtnames[arm_pcache_type]);
+	}
+
+ skip_pcache:
 
 	switch (cpu->cpu_class) {
 #ifdef CPU_ARM2
