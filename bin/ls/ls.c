@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.37 1999/05/04 11:55:22 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.38 1999/05/17 12:16:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.37 1999/05/04 11:55:22 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.38 1999/05/17 12:16:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,6 @@ __RCSID("$NetBSD: ls.c,v 1.37 1999/05/04 11:55:22 simonb Exp $");
 
 #include "ls.h"
 #include "extern.h"
-
-int	main __P((int, char *[]));
 
 static void	 display __P((FTSENT *, FTSENT *));
 static int	 mastercmp __P((const FTSENT **, const FTSENT **));
@@ -111,7 +109,7 @@ int f_typedir;			/* add type character for directories */
 int f_whiteout;			/* show whiteout entries */
 
 int
-main(argc, argv)
+ls_main(argc, argv)
 	int argc;
 	char *argv[];
 {
