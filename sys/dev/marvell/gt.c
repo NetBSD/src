@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.5 2003/07/14 15:47:16 lukem Exp $	*/
+/*	$NetBSD: gt.c,v 1.6 2004/03/20 01:55:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.5 2003/07/14 15:47:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.6 2004/03/20 01:55:00 matt Exp $");
 
 #include "opt_marvell.h"
 
@@ -82,6 +82,7 @@ static void	gt_devbus_intr_enb(struct gt_softc *);
 #ifdef GT_ECC
 static void	gt_ecc_intr_enb(struct gt_softc *);
 #endif
+
 
 void gt_init_hostid (struct gt_softc *);
 void gt_init_interrupt (struct gt_softc *);
@@ -1008,3 +1009,17 @@ gt_mii_write (
 #endif
 }
 
+/*
+ * Since the memory and pci spaces are mapped 1:1 we just need
+ * to return unity here
+ */
+bus_addr_t
+gt_dma_phys_to_bus_mem(bus_dma_tag_t t, bus_addr_t a)
+{
+	return a;
+}
+bus_addr_t
+gt_dma_bus_mem_to_phys(bus_dma_tag_t t, bus_addr_t a)
+{
+	return a;
+}

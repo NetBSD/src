@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.4 2003/06/12 19:18:49 scw Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.5 2004/03/20 01:55:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -125,6 +125,8 @@ int	gt_mii_read(struct device *, struct device *, int, int);
 void	gt_mii_write(struct device *, struct device *, int, int, int);
 int	gtget_macaddr(struct gt_softc *,int, char *);
 void	gt_watchdog_service(void);
+bus_addr_t gt_dma_phys_to_bus_mem(bus_dma_tag_t, bus_addr_t);
+bus_addr_t gt_dma_bus_mem_to_phys(bus_dma_tag_t, bus_addr_t);
 
 #define	gt_read(gt,o) \
 	bus_space_read_4((gt)->gt_memt, (gt)->gt_memh, (o))

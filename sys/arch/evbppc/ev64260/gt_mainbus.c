@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.10 2004/03/13 07:22:21 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.11 2004/03/20 01:55:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.10 2004/03/13 07:22:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.11 2004/03/20 01:55:00 matt Exp $");
 
 #include "opt_ev64260.h"
 
@@ -80,6 +80,8 @@ struct powerpc_bus_dma_tag gt_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	gt_dma_phys_to_bus_mem,
+	gt_dma_bus_mem_to_phys,
 };
 
 const int gtpci_skipmask[2] = {
