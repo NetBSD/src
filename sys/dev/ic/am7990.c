@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.13 1996/03/26 14:54:56 gwr Exp $	*/
+/*	$NetBSD: am7990.c,v 1.14 1996/03/26 17:06:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -423,8 +423,7 @@ leread(sc, boff, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
-		{
+		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) {
 			m_freem(m);
 			return;
 		}
@@ -441,8 +440,7 @@ leread(sc, boff, len)
 	 * Of course, this precludes multicast support...
 	 */
 	if (ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr) &&
-	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr) )
-	{
+	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr)) {
 		m_freem(m);
 		return;
 	}
