@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.83 2003/08/11 16:33:31 pk Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.83 2003/08/11 16:33:31 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1159,8 +1159,7 @@ ReFault:
 				uvm_anfree(anon);
 			}
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL || uvm_swapisfull()) {
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1224,8 +1223,7 @@ ReFault:
 		if (anon != oanon)
 			simple_unlock(&anon->an_lock);
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
@@ -1529,8 +1527,7 @@ Case2:
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL || uvm_swapisfull()) {
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1639,8 +1636,7 @@ Case2:
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, anon);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */

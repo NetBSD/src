@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.83 2003/08/07 16:34:48 agc Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.84 2003/08/11 16:33:30 pk Exp $	*/
 
 /*
  *
@@ -279,6 +279,7 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
+	int swpgavail;	/* number of swap pages currently available */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
