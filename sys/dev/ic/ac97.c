@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.11.2.4 2002/01/24 22:34:47 he Exp $ */
+/*      $NetBSD: ac97.c,v 1.11.2.5 2002/02/09 18:19:50 he Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -318,11 +318,11 @@ static const struct ac97_codecid {
 static const char * const ac97enhancement[] = {
 	"no 3D stereo",
 	"Analog Devices Phat Stereo",
-	"Creative"
+	"Creative",
 	"National Semi 3D",
 	"Yamaha Ymersion",
 	"BBE 3D",
-	"Crystal Semi 3D"
+	"Crystal Semi 3D",
 	"Qsound QXpander",
 	"Spatializer 3D",
 	"SRS 3D",
