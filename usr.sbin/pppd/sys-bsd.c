@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.16 1997/03/12 20:18:24 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.17 1997/03/15 18:37:35 is Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.27 1997/03/04 03:43:53 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.16 1997/03/12 20:18:24 christos Exp $";
+static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.17 1997/03/15 18:37:35 is Exp $";
 #endif
 #endif
 
@@ -61,7 +61,12 @@ static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.16 1997/03/12 20:18:24 christos Ex
 #include <netinet/in.h>
 
 #if RTM_VERSION >= 3
+#include <sys/param.h>
+#if defined(NetBSD) && (NetBSD >= 199703)
+#include <netinet/if_inarp.h>
+#else	/* NetBSD 1.2D or later */
 #include <netinet/if_ether.h>
+#endif
 #endif
 
 #include "pppd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp.c,v 1.3 1995/03/06 19:11:13 mycroft Exp $	*/
+/*	$NetBSD: print-icmp.c,v 1.4 1997/03/15 18:37:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -34,7 +34,11 @@ static char rcsid[] =
 #include <net/if.h>
 
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
