@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.19 2004/05/25 20:42:40 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.20 2004/08/14 15:08:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.19 2004/05/25 20:42:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.20 2004/08/14 15:08:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.19 2004/05/25 20:42:40 thorpej Exp $");
 
 struct simide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
+	struct ata_channel	*sc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_ctl_reg;		/* Global ctl reg */
@@ -88,11 +88,12 @@ struct simide_softc {
 	bus_space_handle_t	sc_ctlioh;		/* control handle */
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct simide_channel {
-		struct wdc_channel wdc_channel;	/* generic part */
-		struct ata_queue wdc_chqueue;		/* channel queue */
+		struct ata_channel sc_channel;	/* generic part */
+		struct ata_queue sc_chqueue;		/* channel queue */
 		irqhandler_t	sc_ih;			/* interrupt handler */
 		int		sc_irqmask;	/* IRQ mask for this channel */
 	} simide_channels[2];
+	struct wdc_regs sc_wdc_regs[2];
 };
 
 int	simide_probe	__P((struct device *, struct cfdata *, void *));
@@ -164,7 +165,8 @@ simide_attach(parent, self, aux)
 	u_int iobase;
 	int channel, i;
 	struct simide_channel *scp;
-	struct wdc_channel *cp;
+	struct ata_channel *cp;
+	struct wdc_regs *wdr;
 	irqhandler_t *ihp;
 
 	/* Note the podule number and validate */
@@ -174,6 +176,8 @@ simide_attach(parent, self, aux)
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
+
+	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
@@ -246,34 +250,35 @@ simide_attach(parent, self, aux)
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.channels = sc->sc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		scp = &sc->simide_channels[channel];
-		sc->wdc_chanarray[channel] = &scp->wdc_channel;
-		cp = &scp->wdc_channel;
+		sc->sc_chanarray[channel] = &scp->sc_channel;
+		cp = &scp->sc_channel;
+		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
 		cp->ch_wdc = &sc->sc_wdcdev;
-		cp->ch_queue = &scp->wdc_chqueue;
-		cp->cmd_iot = cp->ctl_iot = &sc->sc_tag;
+		cp->ch_queue = &scp->sc_chqueue;
+		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;
-		if (bus_space_map(cp->cmd_iot, iobase +
+		if (bus_space_map(wdr->cmd_iot, iobase +
 		    simide_info[channel].drive_registers,
-		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh)) 
+		    DRIVE_REGISTERS_SPACE, 0, &wdr->cmd_baseioh)) 
 			continue;
 		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
-			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
-				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0) {
-				bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
+			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
+				bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 				    DRIVE_REGISTERS_SPACE);
 				continue;
 			}
 		}
 		wdc_init_shadow_regs(cp);
-		if (bus_space_map(cp->ctl_iot, iobase +
-		    simide_info[channel].aux_register, 4, 0, &cp->ctl_ioh)) {
-			bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
+		if (bus_space_map(wdr->ctl_iot, iobase +
+		    simide_info[channel].aux_register, 4, 0, &wdr->ctl_ioh)) {
+			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    DRIVE_REGISTERS_SPACE);
 			continue;
 		}
@@ -335,7 +340,7 @@ simide_intr(arg)
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
 	if ((*intraddr) & ihp->ih_maskbits)
-		wdcintr(&scp->wdc_channel);
+		wdcintr(&scp->sc_channel);
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.3 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.4 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.3 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.4 2004/08/14 15:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.3 2004/08/13 03:12:59 thorpej Exp $")
 
 static void geodeide_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
-static void geodeide_setup_channel(struct wdc_channel *);
+static void geodeide_setup_channel(struct ata_channel *);
 
 static int  geodeide_match(struct device *, struct cfdata *, void *);
 static void geodeide_attach(struct device *, struct device *, void *);
@@ -144,6 +144,8 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_dma_maxsegsz -= PAGE_SIZE;
 	}
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		/* controller is compat-only */
@@ -154,11 +156,11 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-geodeide_setup_channel(struct wdc_channel *chp)
+geodeide_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	int channel = chp->ch_channel;
 	int drive;
 	u_int32_t dma_timing;
