@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 2001/02/03 16:25:26 bjh21 Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 2001/02/18 23:01:39 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -68,7 +68,7 @@ Lps_strings:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 2001/02/03 16:25:26 bjh21 Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.3 2001/02/18 23:01:39 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -85,7 +85,7 @@ __start(int argc, char **argv, char **envp)
 			++__progname;
 
 #ifdef	DYNAMIC
-	/* ld(1) convention: if DYNAMIC = 0 then staticly linked */
+	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
 #ifdef	stupid_gcc
 	if (&_DYNAMIC)
 #else
