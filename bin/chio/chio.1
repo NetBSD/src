@@ -1,4 +1,4 @@
-.\"	$NetBSD: chio.1,v 1.7 1999/03/22 18:30:42 garbled Exp $
+.\"	$NetBSD: chio.1,v 1.8 1999/08/05 02:47:09 hubertf Exp $
 .\"
 .\" Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
 .\" All rights reserved.
@@ -213,7 +213,7 @@ Aborts any pending load or unload operation.
 .El
 .Pp
 .Sh EXAMPLES
-.Dl chio move slot 3 drive 0
+.Dl chio -f /dev/ch0 move slot 3 drive 0
 .Pp
 Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Pp
@@ -224,6 +224,10 @@ Configures the changer to use picker 2 (third picker) for operations.
 .Dl chio -f /dev/cd0a cdlu load 1
 .Pp
 Loads the media from slot (second slot) into the CD-ROM drive.
+.Pp
+.Dl chio -f /dev/ch1 status
+.Pp
+Returns status of all elements in the second changer. 
 .Pp
 .Sh FILES
 /dev/ch0 - default changer device

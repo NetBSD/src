@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.2 1999/08/05 02:47:10 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -40,6 +40,7 @@ struct element_type {
 struct changer_command {
 	char	*cc_name;	/* command name */
 				/* command handler */
+	char    *cc_args;	/* usage string */
 	int	(*cc_handler) __P((char *, int, char **));
 };
 
