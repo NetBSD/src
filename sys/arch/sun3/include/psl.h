@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 2001/01/14 02:00:42 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 2001/02/22 07:11:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ _getsr(void)
 {
 	register int rv;
 
-	__asm __volatile ("clrl %0; movew sr,%0" : "&=d" (rv));
+	__asm __volatile ("clrl %0; movew %%sr,%0" : "&=d" (rv));
 	return (rv);
 }
 

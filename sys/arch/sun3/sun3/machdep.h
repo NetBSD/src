@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.24 2001/02/04 01:31:56 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.25 2001/02/22 07:11:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -62,6 +62,7 @@ struct proc;
 struct reg;
 struct trapframe;
 struct uio;
+struct mmu_rootptr;
 
 extern label_t *nofault;
 
@@ -90,6 +91,7 @@ int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
 #define getsr	_getsr
 
 void**	getvbr __P((void));
+int	getcrp __P((struct mmu_rootptr *));
 
 void	initfpu __P((void));
 void	intreg_init __P((void));
