@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.146 1998/08/15 17:47:16 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.147 1998/09/09 05:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -480,12 +480,18 @@ com_attach_subr(sc)
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_hwiflow = comhwiflow;
-	tty_attach(tp);
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_rbuf == NULL) {
+		printf("%s: unable to allocate ring buffer\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 	sc->sc_ebuf = sc->sc_rbuf + (com_rbuf_size << 1);
-	
+
+	tty_attach(tp);
+
 	if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
 		SET(sc->sc_mcr, MCR_IENABLE);
 
@@ -662,7 +668,8 @@ comopen(dev, flag, mode, p)
 	if (unit >= com_cd.cd_ndevs)
 		return (ENXIO);
 	sc = com_cd.cd_devs[unit];
-	if (sc == 0 || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
+	if (sc == 0 || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
+	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
 #ifdef KGDB
