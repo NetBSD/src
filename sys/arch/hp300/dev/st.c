@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.10 1995/08/04 08:12:58 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.11 1995/08/04 08:17:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -337,7 +337,8 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		sc->sc_datalen[CMD_INQUIRY] = 52;
 		sc->sc_datalen[CMD_MODE_SELECT] = 17;
 		sc->sc_datalen[CMD_MODE_SENSE] = 17;
-	} else if (bcmp("VIPER 150", &idstr[8], 9) == 0) {
+	} else if (bcmp("VIPER 150", &idstr[8], 9) == 0 ||
+		   bcmp("VIPER 60", &idstr[8], 8) == 0) {
 		sc->sc_tapeid = MT_ISVIPER1;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
 		sc->sc_datalen[CMD_INQUIRY] = 36;
