@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.54 1998/11/13 00:31:02 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.55 1998/11/13 00:35:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -152,8 +152,8 @@ static	void ccdinterleave __P((struct ccd_softc *, int));
 static	void ccdintr __P((struct ccd_softc *, struct buf *));
 static	int ccdinit __P((struct ccddevice *, char **, struct proc *));
 static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
-static	void ccdbuffer __P((struct ccd_softc *, struct buf *,
-		daddr_t, caddr_t, long, struct ccdbuf **));
+static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
+		daddr_t, caddr_t, long));
 static	void ccdgetdefaultlabel __P((struct ccd_softc *, struct disklabel *));
 static	void ccdgetdisklabel __P((dev_t));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
@@ -636,7 +636,7 @@ ccdstart(cs, bp)
 	register struct buf *bp;
 {
 	register long bcount, rcount;
-	struct ccdbuf *cbp[4];
+	struct ccdbuf *cbp;
 	caddr_t addr;
 	daddr_t bn;
 	struct partition *pp;
@@ -663,11 +663,11 @@ ccdstart(cs, bp)
 	 */
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
-		ccdbuffer(cs, bp, bn, addr, bcount, cbp);
-		rcount = cbp[0]->cb_buf.b_bcount;
-		if ((cbp[0]->cb_buf.b_flags & B_READ) == 0)
-			cbp[0]->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp[0]->cb_buf);
+		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
+		rcount = cbp->cb_buf.b_bcount;
+		if ((cbp->cb_buf.b_flags & B_READ) == 0)
+			cbp->cb_buf.b_vp->v_numoutput++;
+		VOP_STRATEGY(&cbp->cb_buf);
 		bn += btodb(rcount);
 		addr += rcount;
 	}
@@ -676,14 +676,13 @@ ccdstart(cs, bp)
 /*
  * Build a component buffer header.
  */
-static void
-ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
+static struct ccdbuf *
+ccdbuffer(cs, bp, bn, addr, bcount)
 	register struct ccd_softc *cs;
 	struct buf *bp;
 	daddr_t bn;
 	caddr_t addr;
 	long bcount;
-	struct ccdbuf **cbpp;
 {
 	register struct ccdcinfo *ci;
 	register struct ccdbuf *cbp;
@@ -744,6 +743,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	 * Fill in the component buf structure.
 	 */
 	cbp = CCD_GETBUF(cs);
+	if (cbp == NULL)
+		return (NULL);
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
@@ -764,15 +765,14 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	cbp->cb_unit = cs->sc_unit;
 	cbp->cb_comp = ccdisk;
 
-	/* First buffer is dealt with. */
-	cbpp[0] = cbp;
-
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
 		printf(" dev 0x%x(u%d): cbp %p bn %d addr %p bcnt %ld\n",
 		    ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
 		    cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
 #endif
+
+	return (cbp);
 }
 
 static void
