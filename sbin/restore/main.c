@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 1997/07/06 08:51:30 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1997/09/15 08:04:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.14 1997/07/06 08:51:30 lukem Exp $";
+__RCSID("$NetBSD: main.c,v 1.15 1997/09/15 08:04:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,9 +70,9 @@ extern char *__progname;	/* from crt0.o */
 int	bflag = 0, cvtflag = 0, dflag = 0, vflag = 0, yflag = 0;
 int	hflag = 1, mflag = 1, Nflag = 0;
 char	command = '\0';
-long	dumpnum = 1;
-long	volno = 0;
-long	ntrec;
+int32_t	dumpnum = 1;
+int32_t	volno = 0;
+int32_t	ntrec;
 char	*dumpmap;
 char	*usedinomap;
 ino_t	maxino;
@@ -81,8 +81,9 @@ time_t	dumpdate;
 FILE 	*terminal;
 char	*tmpdir;
 
-static void obsolete __P((int *, char **[]));
-static void usage __P((void));
+int	main __P((int, char *[]));
+static	void obsolete __P((int *, char **[]));
+static	void usage __P((void));
 
 int
 main(argc, argv)
@@ -103,7 +104,7 @@ main(argc, argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != EOF)
+	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tvxy")) != -1)
 		switch(ch) {
 		case 'b':
 			/* Change default tape blocksize. */
@@ -330,7 +331,7 @@ obsolete(argcp, argvp)
 	/* Allocate space for new arguments. */
 	if ((*argvp = nargv = malloc((argc + 1) * sizeof(char *))) == NULL ||
 	    (p = flagsp = malloc(strlen(ap) + 2)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	*nargv++ = *argv;
 	argv += 2;
@@ -345,7 +346,7 @@ obsolete(argcp, argvp)
 				usage();
 			}
 			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
-				err(1, NULL);
+				err(1, "%s", "");
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
 			(void)strcpy(&nargv[0][2], *argv);
