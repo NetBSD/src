@@ -1,6 +1,9 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.6 1997/05/24 10:26:30 jonathan Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.7 1997/05/25 21:22:19 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone
+ * All rights reserved.
+ *
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
  *
@@ -47,3 +50,47 @@
 
 extern void	cpu_exec_ecoff_setregs __P((
     struct proc *, struct exec_package *, u_long, register_t *));
+
+
+/*
+ * ECOFF symbol definitions for 32-bit mips.
+ * XXX 64-bit (mips3?) may be different.
+ */
+struct ecoff_symhdr {
+	int16_t		magic;
+	int16_t		vstamp;
+	int32_t		lineMax;
+	int32_t		densenumMax;
+	int32_t		procMax;
+	int32_t		lsymMax;
+	int32_t		optsymMax;
+	int32_t		auxsymMax;
+	int32_t		lstrMax;
+	int32_t		estrMax;
+	int32_t		fdMax;
+	int32_t		rfdMax;
+	int32_t		esymMax;
+	long		linesize;
+	long		cbLineOffset;
+	long		cbDnOffset;
+	long		cbPdOffset;
+	long		cbSymOffset;
+	long		cbOptOffset;
+	long		cbAuxOffset;
+	long		cbSsOffset;
+	long		cbSsExtOffset;
+	long		cbFdOffset;
+	long		cbRfdOffset;
+	long		cbExtOffset;
+};
+
+struct ecoff_extsym {
+	int32_t		es_strindex;
+	int32_t		es_value;
+	unsigned	es_type:6;
+	unsigned	es_class:5;
+	unsigned	:1;
+	unsigned	es_symauxindex:20;
+};
+
+
