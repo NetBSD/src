@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.364 2000/04/21 17:57:01 bouyer Exp $
+#	$NetBSD: files,v 1.365 2000/04/25 06:08:31 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -822,7 +822,7 @@ file netinet/ip_frag.c			ipfilter
 file netinet/ip_gre.c			inet
 file netinet/ip_icmp.c			inet
 file netinet/ip_input.c			inet
-file netinet/ip_ipip.c			ipip			needs-flag
+file netinet/ip_ipip.c			ipip			needs-count
 file netinet/ip_log.c			ipfilter & ipfilter_log
 file netinet/ip_mroute.c		inet & mrouting
 file netinet/ip_nat.c			ipfilter
