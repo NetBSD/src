@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1998/05/22 02:40:27 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/05/28 20:52:26 cgd Exp $
 
 PROG=	c++filt
 SRCS=	cplus-dem.c underscore.c
 
 CPPFLAGS+=-DMAIN -DVERSION='"${VERSION}"'
 
-CLEANFILES+=underscore.c
+CLEANFILES+=underscore.c ${PROG}.1
 
 underscore.c: .PHONY
 	sh ${.CURDIR}/mkunderscore.sh ${TARGET_ARCH}-unknown-netbsd ${TOP}/dist/bfd/config.bfd > \
