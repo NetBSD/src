@@ -25,14 +25,15 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: gnuchess.c,v 1.3 1995/12/21 09:00:24 mycroft Exp $";
+static char rcsid[] = "$Id: gnuchess.c,v 1.3.2.1 1998/05/08 05:34:09 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef MSDOS
-#include <stdlib.h>
 #include <time.h>
 #include <alloc.h>
 #define ttblsz 4096
