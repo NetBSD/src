@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.8 1997/04/01 11:42:34 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1997/04/01 15:25:52 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 SUBDIR=	boggle mkdict mkindex
 
 MKDICT!=cd $(.CURDIR)/mkdict; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkdict\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkdict\n" | \
+	${MAKE} -r -s -f - xxx | grep mkdict
 MKINDEX!=cd $(.CURDIR)/mkindex; \
-	printf "xxx:\n\techo \$${.OBJDIR}/mkindex\n" | ${MAKE} -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/mkindex\n" | \
+	${MAKE} -r -s -f - xxx | grep mkindex
 WORDS=${.CURDIR}/../../share/dict/web2a
 FILES=dictionary dictindex
 FILESDIR=/usr/share/games/boggle
@@ -14,14 +16,18 @@ CLEANFILES+=${FILES}
 
 all: ${FILES}
 
-${MKDICT} ${MKINDEX}: ${SUBDIR}
+${MKDICT}:
+	@cd ${.CURDIR}/mkdict && ${MAKE}
+
+${MKINDEX}:
+	@cd ${.CURDIR}/mkindex && ${MAKE}
 	
 
-dictionary: ${WORDS}
+dictionary: ${WORDS} ${MKDICT}
 	rm -f ${.TARGET}
 	${MKDICT} < ${WORDS} > ${.TARGET}
 
-dictindex: dictionary
+dictindex: dictionary ${MKINDEX}
 	rm -f ${.TARGET}
 	${MKINDEX} < dictionary > ${.TARGET}
 
