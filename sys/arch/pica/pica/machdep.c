@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1996/10/10 23:45:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1996/10/13 03:31:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -371,7 +371,7 @@ mips_init(argc, argv, code)
 		break;
 
 	default:
-		kprintf("kernel not configured for systype 0x%x\n", i);
+		printf("kernel not configured for systype 0x%x\n", i);
 		boot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -536,8 +536,8 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	kprintf(version);
-	kprintf("real mem = %d\n", ctob(physmem));
+	printf(version);
+	printf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -601,8 +601,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	kprintf("avail mem = %d\n", ptoa(cnt.v_free_count));
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -735,7 +735,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
 	/*
@@ -789,7 +789,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sendsig(%d): sig %d returns\n",
+		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 }
@@ -821,7 +821,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
 	/*
@@ -832,10 +832,10 @@ sys_sigreturn(p, v, retval)
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
-			kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
-		kprintf("  old sp %x ra %x pc %x\n",
+			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("  old sp %x ra %x pc %x\n",
 			regs[SP], regs[RA], regs[PC]);
-		kprintf("  new sp %x ra %x pc %x err %d z %x\n",
+		printf("  new sp %x ra %x pc %x err %d z %x\n",
 			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
 			error, ksc.sc_regs[ZERO]);
 #endif
@@ -893,11 +893,11 @@ boot(howto, bootstr)
 	}
 	(void) splhigh();		/* extreme priority */
 	if (howto & RB_HALT)
-		kprintf("System halted.\n");
+		printf("System halted.\n");
 	else {
 		if (howto & RB_DUMP)
 			dumpsys();
-		kprintf("System restart.\n");
+		printf("System restart.\n");
 	}
 	while(1); /* Forever */
 	/*NOTREACHED*/
@@ -947,32 +947,32 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	kprintf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	kprintf("dump ");
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("dump ");
 	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
 
 	case ENXIO:
-		kprintf("device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		kprintf("device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		kprintf("area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		kprintf("i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	default:
-		kprintf("error %d\n", error);
+		printf("error %d\n", error);
 		break;
 
 	case 0:
-		kprintf("succeeded\n");
+		printf("succeeded\n");
 	}
 }
 

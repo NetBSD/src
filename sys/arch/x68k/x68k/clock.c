@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1996/10/11 00:39:41 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1996/10/13 03:35:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -470,18 +470,18 @@ inittodr(base)
 	u_long timbuf = base;	/* assume no battery clock exists */
   
 	if (!gettod)
-		kprintf ("WARNING: no battery clock\n");
+		printf ("WARNING: no battery clock\n");
 	else
 		timbuf = gettod();
   
 	if (timbuf < base) {
-		kprintf ("WARNING: bad date in battery clock\n");
+		printf ("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
 	if (base < 5*SECYR) {
-		kprintf("WARNING: preposterous time in file system");
+		printf("WARNING: preposterous time in file system");
 		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		kprintf(" -- CHECK AND RESET THE DATE!\n");
+		printf(" -- CHECK AND RESET THE DATE!\n");
 	}
 
 	/* Battery clock does not store usec's, so forget about it. */
@@ -493,5 +493,5 @@ resettodr()
 {
 	if (settod)
 		if (settod (time.tv_sec) != 1)
-			kprintf("Cannot set battery backed clock\n");
+			printf("Cannot set battery backed clock\n");
 }

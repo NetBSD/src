@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.2 1996/10/10 23:45:25 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.3 1996/10/13 03:31:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Ted Lemon
@@ -66,7 +66,7 @@ pmax_elf_makecmds (p, epp)
 	if (epp -> ep_hdrvalid < sizeof (struct ehdr)) {
 #ifdef DIAGNOSTIC
 	    if (epp -> ep_hdrlen < sizeof (struct ehdr))
-		kprintf ("pmax_elf_makecmds: execsw hdrsize too short!\n");
+		printf ("pmax_elf_makecmds: execsw hdrsize too short!\n");
 #endif
 	    return ENOEXEC;
 	}

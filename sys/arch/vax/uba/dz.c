@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.3 1996/10/11 01:50:48 christos Exp $	*/
+/*	$NetBSD: dz.c,v 1.4 1996/10/13 03:35:15 christos Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -228,7 +228,7 @@ dz_attach (parent, self, aux)
 		timeout(dzscan, (void *)0, hz);
 	}
 
-	kprintf("\n");
+	printf("\n");
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1996/10/11 00:41:50 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ trap(frame)
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:		/* Temporarily!					XXX */
-		kprintf("TRC: %x\n", frame->srr0);
+		printf("TRC: %x\n", frame->srr0);
 		break;
 	case EXC_DSI:
 		{
@@ -240,7 +240,7 @@ syscall_bad:
 
 	default:
 brain_damage:
-		kprintf("trap type %x at %x\n", type, frame->srr0);
+		printf("trap type %x at %x\n", type, frame->srr0);
 		panic("trap");
 
 	case EXC_AST|EXC_USER:

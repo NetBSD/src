@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.14 1996/10/11 00:41:00 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.15 1996/10/13 03:30:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -258,7 +258,7 @@ lptattach(parent, self, aux)
 #endif
 	intr_establish(sc->sc_irq, lptintr, sc, sc->sc_dev.dv_xname,
 			IPL_NONE, FALLING_EDGE);
-	kprintf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
+	printf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
 }
 
 /*
@@ -501,7 +501,7 @@ plipattach(sc, unit)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_ifbuf = NULL;
-	ksprintf(ifp->if_xname, "plip%d", unit);
+	sprintf(ifp->if_xname, "plip%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_start = plipstart;
 	ifp->if_ioctl = plipioctl;

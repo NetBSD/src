@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.3 1996/10/11 01:51:54 christos Exp $ */
+/*	$NetBSD: vsbus.c,v 1.4 1996/10/13 03:36:17 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -147,7 +147,7 @@ vsbus_print(aux, name)
 	trace(("vsbus_print(%x, %s)\n", ca->ca_name, name));
 
 	if (name) {
-		kprintf ("device %s at %s", ca->ca_name, name);
+		printf ("device %s at %s", ca->ca_name, name);
 		return (UNSUPP);
 	}
 	return (UNCONF); 
@@ -204,9 +204,9 @@ int
 ka410_consRecv_intr(p)
 	void *p;
 {
-  /* kprintf("ka410_consRecv_intr: hc-count=%d\n", hardclock_count); */
+  /* printf("ka410_consRecv_intr: hc-count=%d\n", hardclock_count); */
   dzcnrint();
-  /* kprintf("gencnrint() returned.\n"); */
+  /* printf("gencnrint() returned.\n"); */
   return(0);
 }
 
@@ -214,9 +214,9 @@ int
 ka410_consXmit_intr(p)
 	void *p;
 {
-  /* kprintf("ka410_consXmit_intr: hc-count=%d\n", hardclock_count); */
+  /* printf("ka410_consXmit_intr: hc-count=%d\n", hardclock_count); */
   dzcntint();
-  /* kprintf("gencntint() returned.\n"); */
+  /* printf("gencntint() returned.\n"); */
   return(0);
 }
 #endif	/*------------------------------------------------------------*/
@@ -229,10 +229,10 @@ vsbus_attach(parent, self, aux)
 	struct confargs *ca;
 	int i;
 
-	kprintf("\n");
+	printf("\n");
 	trace (("vsbus_attach()\n"));
 
-	kprintf("vsbus_attach: boardtype = %x\n", vax_boardtype);
+	printf("vsbus_attach: boardtype = %x\n", vax_boardtype);
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -247,7 +247,7 @@ vsbus_attach(parent, self, aux)
 		break;
 
 	default:
-		kprintf ("unsupported boardtype 0x%x in vsbus_attach()\n",
+		printf ("unsupported boardtype 0x%x in vsbus_attach()\n",
 			vax_boardtype);
 		return;
 	}
@@ -324,7 +324,7 @@ vsbus_intr_setup()
 		ka410_intr_setup();
 		return(0);
 	default:
-		kprintf("unsupported board-type 0x%x in vsbus_intr_setup()\n",
+		printf("unsupported board-type 0x%x in vsbus_intr_setup()\n",
 			vax_boardtype);
 		return(1);
 	}
@@ -357,7 +357,7 @@ vsbus_intr_enable(ca)
 
 	/* XXX check for valid handler etc. !!! */
 	if (ip->handler == NULL) {
-		kprintf("interrupts for \"%s\"(%d) not enabled: null-handler\n",
+		printf("interrupts for \"%s\"(%d) not enabled: null-handler\n",
 		      ca->ca_name, ca->ca_intslot);
 		return;
 	}
@@ -408,12 +408,12 @@ vsbus_intr_dispatch(i)
 	}
 
 	if (i < 0 || i >= VSBUS_MAX_INTR) {
-		kprintf ("stray interrupt %d on vsbus.\n", i);
+		printf ("stray interrupt %d on vsbus.\n", i);
 		return;
 	}
 
 	if (!ip->handler) {
-		kprintf ("unhandled interrupt %d on vsbus.\n", i);
+		printf ("unhandled interrupt %d on vsbus.\n", i);
 		return;
 	}
 }
@@ -517,7 +517,7 @@ vsbus_lockDMA(ca)
 
 #ifdef DEBUG
 	if ((++dmalock.dl_count % 1000) == 0)
-		kprintf("%d locks, owner: %s\n", dmalock.dl_count, ca->ca_name);
+		printf("%d locks, owner: %s\n", dmalock.dl_count, ca->ca_name);
 #endif
 	return (0);
 }
@@ -527,7 +527,7 @@ vsbus_unlockDMA(ca)
 	struct confargs *ca;
 {
 	if (dmalock.dl_locked != 1 || dmalock.dl_owner != ca) {
-		kprintf("locking-problem: %d, %s\n", dmalock.dl_locked,
+		printf("locking-problem: %d, %s\n", dmalock.dl_locked,
 		       (dmalock.dl_owner ? dmalock.dl_owner : "null"));
 		dmalock.dl_locked = 0;
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1996/10/11 00:39:40 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1996/10/13 03:35:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -231,7 +231,7 @@ setroot()
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
-	kprintf("root on %c%c%d%c\n",
+	printf("root on %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
@@ -311,7 +311,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	kprintf ("\n");
+	printf ("\n");
 	config_found(dp, "clock"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "par"    , simple_devprint);
@@ -331,6 +331,6 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		kprintf("%s at %s", (char *)auxp, pnp);
+		printf("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }

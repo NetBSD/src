@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 1996/10/11 00:39:38 christos Exp $ */
+/*	$NetBSD: zs.c,v 1.6 1996/10/13 03:35:10 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -252,7 +252,7 @@ zsattach(parent, dev, aux)
 
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = findzs(zs);
-	kprintf(" (%s)\n", zs ? "external" : "onboard");
+	printf(" (%s)\n", zs ? "external" : "onboard");
 	zi = (struct zs_softc *)dev;
 	zi->zi_zs = addr;
 	unit = zs * 2;
@@ -464,7 +464,7 @@ zs_checkcons(zi, unit, cs)
 	if (o) {
 		tp->t_oproc = zsstart;
 	}
-	kprintf("%s%c: console %s\n",
+	printf("%s%c: console %s\n",
 	    zi->zi_dev.dv_xname, (unit & 1) + 'a', i ? (o ? "i/o" : i) : o);
 	cs->cs_consio = 1;
 	cs->cs_brkabort = 1;
@@ -949,7 +949,7 @@ zsabort()
 #ifdef DDB
 	Debugger();
 #else
-	kprintf("stopping on keyboard abort\n");
+	printf("stopping on keyboard abort\n");
 #ifndef x68k
 	callrom();
 #endif
@@ -966,7 +966,7 @@ zskgdb(unit)
 	int unit;
 {
 
-	kprintf("zs%d%c: kgdb interrupt\n", unit >> 1, (unit & 1) + 'a');
+	printf("zs%d%c: kgdb interrupt\n", unit >> 1, (unit & 1) + 'a');
 	kgdb_connect(1);
 }
 #endif
@@ -1471,7 +1471,7 @@ zshwiflow(tp, flag)
 	int s;
 
 #if 0
-       kprintf ("zshwiflow %d\n", flag);
+       printf ("zshwiflow %d\n", flag);
 #endif
 	s = splzs();
 	if (flag) {
@@ -1587,7 +1587,7 @@ zs_kgdb_init()
 	unit &= 1;
 	zc = unit == 0 ? &addr->zs_chan[ZS_CHAN_A] : &addr->zs_chan[ZS_CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
-	kprintf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
+	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
 	    zs, unit + 'a', kgdb_rate);
 	zs_reset(zc, 1, kgdb_rate);
 	kgdb_attach(zs_kgdb_getc, zs_kgdb_putc, (void *)zc);
