@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.56 1997/06/13 00:44:13 thorpej Exp $
+# $NetBSD: ALPHA,v 1.57 1997/07/13 21:24:15 hpeyerl Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -196,6 +196,7 @@ bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
 
 # EISA devices
 ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
