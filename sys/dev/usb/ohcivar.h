@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.21 2000/03/29 01:46:27 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.22 2000/04/25 09:20:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_size_t sc_size;
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;
