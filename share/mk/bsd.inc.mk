@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.20 2001/11/02 05:21:50 tv Exp $
+#	$NetBSD: bsd.inc.mk,v 1.21 2001/11/28 20:19:08 tv Exp $
 
 ##### Basic targets
 .PHONY:		incinstall
@@ -23,7 +23,7 @@ _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 ${_F}:		${F} __incinstall			# install rule
 incinstall::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
+.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .endfor
 
 .undef _FDIR

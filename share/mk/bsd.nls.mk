@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.34 2001/11/06 16:20:16 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.35 2001/11/28 20:19:08 tv Exp $
 
 .include <bsd.init.mk>
 
@@ -43,7 +43,7 @@ _F:=		${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat # installed path
 ${_F}:		${F} __nlsinstall			# install rule
 nlsinstall::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:U${_F}}			# noclobber install
+.PHONY:		${UPDATE:D:U${_F}}			# noclobber install
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif

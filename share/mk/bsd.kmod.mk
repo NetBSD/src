@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.44 2001/11/14 22:01:40 tv Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.45 2001/11/28 20:19:08 tv Exp $
 
 .include <bsd.init.mk>
 
@@ -48,7 +48,7 @@ ${_PROG}: ${PROG}					# install rule
 
 kmodinstall::	${_PROG}
 .PRECIOUS:	${_PROG}				# keep if install fails
-.PHONY:		${UPDATE:U${_PROG}}			# clobber unless UPDATE
+.PHONY:		${UPDATE:D:U${_PROG}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${_PROG}:	.MADE					# no build at install
 .endif
