@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+
 #define __PSARGS_C__
 
 #include "acpi.h"

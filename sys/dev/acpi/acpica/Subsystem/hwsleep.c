@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+
 #include "acpi.h"
 #include "acnamesp.h"
 #include "achware.h"

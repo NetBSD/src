@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.2 2001/11/13 13:01:59 lukem Exp $");
+
 #define __DSWEXEC_C__
 
 #include "acpi.h"

@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.2 2001/11/13 13:02:00 lukem Exp $");
+
 #define __EXCREATE_C__
 
 #include "acpi.h"

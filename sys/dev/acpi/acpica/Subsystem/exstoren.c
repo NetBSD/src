@@ -116,6 +116,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.2 2001/11/13 13:02:00 lukem Exp $");
+
 #define __EXSTOREN_C__
 
 #include "acpi.h"
