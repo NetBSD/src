@@ -1,6 +1,5 @@
-#	$Id: files.m68k,v 1.8 1994/07/03 10:24:21 mycroft Exp $
+#	$Id: files.m68k,v 1.9 1994/07/05 17:12:45 mycroft Exp $
 #
-arch/m68k/fpsp/fpsp.U			optional fpsp compile-with "uudecode $S/arch/m68k/fpsp/fpsp.U"
 arch/m68k/m68k/db_disasm.c		optional ddb
 arch/m68k/m68k/db_interface.c		optional ddb
 arch/m68k/m68k/db_trace.c		optional ddb
