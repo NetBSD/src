@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.4 2003/06/26 16:48:18 drochner Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.5 2003/08/09 08:58:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include <machine/gdt.h>
 
 #define GDTE(a,b)               .byte   0xff,0xff,0x0,0x0,0x0,a,b,0x0
-#define _RELOC(x)       ((x) - KERNBASE)
+#define _RELOC(x)       ((x) - KERNBASE_LOCORE)
 #define RELOC(x)        _RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
