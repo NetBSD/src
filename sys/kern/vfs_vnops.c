@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.30 1998/07/28 18:37:48 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.31 1998/08/02 18:39:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -355,14 +355,17 @@ vn_read(fp, offset, uio, cred, flags)
 	int flags;
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error;
+	int count, error, ioflag = 0;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
+	if (fp->f_flag & FNONBLOCK)
+		ioflag |= IO_NDELAY;
+	if ((fp->f_flag & (FFSYNC | FRSYNC)) == (FFSYNC | FRSYNC))
+		ioflag |= IO_SYNC;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
-	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
-		cred);
+	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
 		*offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0);
@@ -390,6 +393,8 @@ vn_write(fp, offset, uio, cred, flags)
 	if (fp->f_flag & FFSYNC ||
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
+	else if (fp->f_flag & FDSYNC)
+		ioflag |= IO_DSYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
