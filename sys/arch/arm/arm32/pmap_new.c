@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.2 2003/04/18 11:55:26 scw Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.3 2003/04/18 23:46:12 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.2 2003/04/18 11:55:26 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.3 2003/04/18 23:46:12 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4370,8 +4370,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 
 	while (resid > 0) {
 		/* See if we can use a section mapping. */
-		if (((pa | va) & L1_S_OFFSET) == 0 &&
-		    resid >= L1_S_SIZE) {
+		if (L1_S_MAPPABLE_P(va, pa, resid)) {
 #ifdef VERBOSE_INIT_ARM
 			printf("S");
 #endif
@@ -4405,8 +4404,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			    "0x%08lx", va);
 
 		/* See if we can use a L2 large page mapping. */
-		if (((pa | va) & L2_L_OFFSET) == 0 &&
-		    resid >= L2_L_SIZE) {
+		if (L2_L_MAPPABLE_P(va, pa, resid)) {
 #ifdef VERBOSE_INIT_ARM
 			printf("L");
 #endif
