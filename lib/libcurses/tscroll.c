@@ -1,3 +1,5 @@
+/*	$NetBSD: tscroll.c,v 1.4 1997/07/22 07:37:08 mikel Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
+#else
+__RCSID("$NetBSD: tscroll.c,v 1.4 1997/07/22 07:37:08 mikel Exp $");
+#endif
 #endif /* not lint */
 
 #include "curses.h"
