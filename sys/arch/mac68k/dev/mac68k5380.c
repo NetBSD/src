@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.8 1995/09/16 11:45:18 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.9 1995/09/16 18:22:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -389,9 +389,9 @@ transfer_pdma(phasep, data, count)
 	scsi_idisable();
 
 	/*
- 	 * Don't bother with PDMA for short transfers or if we can't sleep.
+ 	 * Don't bother with PDMA if we can't sleep.
  	 */
-	if ((reqp->dr_flag & DRIVER_NOINT) || (*count < 128)) {
+	if (reqp->dr_flag & DRIVER_NOINT) {
 #if DEBUG
 		pdma_5380_state = "using transfer_pio.";
 #endif
