@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.22 2004/12/21 02:39:00 ginsbach Exp $
+.\"	$NetBSD: rlogin.1,v 1.23 2005/03/11 03:19:31 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,13 @@
 .Nd remote login
 .Sh SYNOPSIS
 .Nm
-.Op Fl 8ELd
+.Op Fl 468ELd
 .Op Fl e Ar char
 .Op Fl l Ar username
 .Op Fl p Ar port
 .Ar host
 .Nm
-.Op Fl 8Ed
+.Op Fl 468Ed
 .Op Fl e Ar char
 .Op Fl p Ar port
 .Ar username@host
@@ -58,6 +58,10 @@ first attempts to use the standard Berkeley
 authorization mechanism.
 The options are as follows:
 .Bl -tag -width XlXusernameX
+.It Fl 4
+Use IPv4 addresses only.
+.It Fl 6
+Use IPv6 addresses only.
 .It Fl 8
 The
 .Fl 8
