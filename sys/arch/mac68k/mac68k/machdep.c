@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 1997/04/14 16:56:30 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 1997/04/16 07:16:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -460,7 +460,8 @@ again:
 	configure();
 }
 
-void doboot __P((void));
+void doboot __P((void))
+	__attribute__((__noreturn__));
 void via_shutdown __P((void));
 
 /*
@@ -495,24 +496,29 @@ struct pcb dumppcb;
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 	extern u_long MacOSROMBase;
+	extern int cold;
 
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+	(void)&howto;
+#endif
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
-		savectx((struct pcb *) curproc->p_addr);
+	if (curproc && curproc->p_addr)
+		savectx(&curproc->p_addr->u_pcb);
+
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-
-		/*
-		 * Release inodes, sync and unmount the filesystems.
-		 */
 		vfs_shutdown();
-
 #ifdef notyet
 		/*
 		 * If we've been adjusting the clock, the todr
@@ -526,9 +532,22 @@ cpu_reboot(howto, bootstr)
 # endif
 #endif
 	}
-	splhigh();		/* extreme priority */
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP) {
+		savectx(&dumppcb);	/* XXX this goes away soon */
+		dumpsys();
+	}
+
+ haltsys:
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
+		printf("System halted.\n\n");
 		via_shutdown();
 #ifndef MRG_ADB
 		/*
@@ -538,28 +557,23 @@ cpu_reboot(howto, bootstr)
 		 */
 		adb_poweroff();
 #endif
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb);
-			dumpsys();
-		}
-
-		/* run any shutdown hooks */
-		doshutdownhooks();
-
-		/*
-		 * Map ROM where the MacOS likes it, so we can reboot,
-		 * hopefully.
-		 */
-		pmap_map(MacOSROMBase, MacOSROMBase,
-			 MacOSROMBase + 4 * 1024 * 1024,
-			 VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		doboot();
-		/* NOTREACHED */
+		printf("You may turn the machine off,");
+		printf(" or hit any key to reboot.\n");
+		(void)cngetc();
 	}
-	printf("            The system is down.\n");
-	printf("You may reboot or turn the machine off, now.\n");
-	for (;;);		/* Foil the compiler... */
+
+	/*
+	 * Map ROM where the MacOS likes it, so we can reboot,
+	 * hopefully.
+	 */
+	pmap_map(MacOSROMBase, MacOSROMBase,
+		 MacOSROMBase + 4 * 1024 * 1024,
+		 VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+
+	
+	printf("rebooting...\n");
+	DELAY(1000000);
+	doboot();
 	/* NOTREACHED */
 }
 
