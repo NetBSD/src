@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.5 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: named,v 1.5.4.1 2000/10/02 01:09:51 lukem Exp $
 #
 
 # PROVIDE: named
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="named"
+rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 

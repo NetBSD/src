@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: inetd,v 1.4.4.1 2000/08/09 19:09:40 lukem Exp $
+# $NetBSD: inetd,v 1.4.4.2 2000/10/02 01:09:50 lukem Exp $
 #
 
 # PROVIDE: inetd
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="inetd"
+rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/${name}.conf"
