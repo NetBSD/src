@@ -1,4 +1,4 @@
-.\" $NetBSD: bktr.4,v 1.5 2001/09/11 00:08:25 wiz Exp $
+.\" $NetBSD: bktr.4,v 1.6 2001/09/11 17:54:20 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Thomas Klausner
 .\" 	All rights reserved.
@@ -43,7 +43,6 @@
 .\" The following options have no effect:
 .\" .Cd options BKTR_430_FX_MODE
 .\" .Cd options BKTR_SIS_VIA_MODE
-.Pp
 .Sh DESCRIPTION
 This driver supports video capture (frame grabber) and TV tuner cards
 based on the
@@ -196,6 +195,13 @@ teletext interface device
 .Xr pci 4 ,
 .Pa pkgsrc/audio/xmradio ,
 .Pa pkgsrc/graphics/fxtv
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Fx 2.2
+and
+.Nx 1.5 .
 .Sh AUTHORS
 The
 .Nm
@@ -205,10 +211,3 @@ and is now maintained by Roger Hardiman.
 .Nx
 porting was done by Bernd Ernesti, Berndt Josef Wulf, Matthias
 Scheler, and Thomas Klausner.
-.Sh HISTORY
-The
-.Nm
-driver appeared in
-.Fx 2.2
-and
-.Nx 1.5 .

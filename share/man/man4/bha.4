@@ -1,4 +1,4 @@
-.\"	$NetBSD: bha.4,v 1.10 1999/12/17 16:23:21 abs Exp $
+.\"	$NetBSD: bha.4,v 1.11 2001/09/11 17:54:20 wiz Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -44,9 +44,24 @@ adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn Buslogic ISA BT-445
-.It Tn Buslogic EISA BT-74x 
+.It Tn Buslogic EISA BT-74x
 .It Tn Buslogic PCI BT-9[45][68]
 .El
+.Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr st 4
+.Sh HISTORY
+In
+.Nx 1.2
+and earlier, this driver was named
+.Nm bt
+but was renamed to
+.Nm bha
+in later releases.
 .Sh BUGS
 The
 .Tn Buslogic
@@ -58,18 +73,3 @@ BT-445S has a problem in early hardware and firmware revisions
 which prevents proper operation on a system with more than 16MB of RAM.
 Hardware revision D and firmware revision 3.37 should be considered minimum
 requirements for using this board on systems configured in this manner.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr scsi 4 ,
-.Xr sd 4 ,
-.Xr st 4 ,
-.Xr cd 4 ,
-.Xr ch 4  
-.Sh HISTORY
-In
-.Nx 1.2
-and earlier, this driver was named
-.Nm bt
-but was renamed to
-.Nm bha
-in later releases.

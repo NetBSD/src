@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.14 2001/05/19 17:23:39 jdolecek Exp $
+.\"	$NetBSD: bpf.4,v 1.15 2001/09/11 17:54:20 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -362,7 +362,7 @@ instruction.
 Each instruction performs some action on the pseudo-machine state,
 which consists of an accumulator, index register, scratch memory store,
 and implicit program counter.
-
+.Pp
 The following structure defines the instruction format:
 .Bd -literal -offset indent
 struct bpf_insn {
@@ -412,25 +412,25 @@ These instructions copy a value into the accumulator.  The type of the
 source operand is specified by an
 .Dq addressing mode
 and can be a constant
-.No ( Ns Sy BBPF_IMM Ns ),
+.No ( Ns Sy BBPF_IMM Ns ) ,
 packet data at a fixed offset
-.No ( Ns Sy BPF_ABS Ns ),
+.No ( Ns Sy BPF_ABS Ns ) ,
 packet data at a variable offset
-.No ( Ns Sy BPF_IND Ns ),
+.No ( Ns Sy BPF_IND Ns ) ,
 the packet length
-.No ( Ns Sy BPF_LEN Ns ),
+.No ( Ns Sy BPF_LEN Ns ) ,
 or a word in the scratch memory store
-.No ( Ns Sy BPF_MEM Ns ).
+.No ( Ns Sy BPF_MEM Ns ) .
 For
 .Sy BPF_IND
 and
 .Sy BPF_ABS ,
 the data size must be specified as a word
-.No ( Ns Sy BPF_W Ns ),
+.No ( Ns Sy BPF_W Ns ) ,
 halfword
-.No ( Ns Sy BPF_H Ns ),
+.No ( Ns Sy BPF_H Ns ) ,
 or byte
-.No ( Ns Sy BPF_B Ns ).
+.No ( Ns Sy BPF_B Ns ) .
 The semantics of all the recognized BPF_LD instructions follow.
 .Bl -column "BPF_LD+BPF_W+BPF_ABS" "A <- P[k:4]" -width -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A <- P[k:4]
@@ -473,7 +473,7 @@ index register or constant, and store the result back in the accumulator.
 For binary operations, a source mode is required
 .No ( Ns Sy BPF_K
 or
-.Sy BPF_X Ns ).
+.Sy BPF_X Ns ) .
 .Bl -column "BPF_ALU+BPF_ADD+BPF_K" "A <- A + k" -width -offset indent
 .It Sy BPF_ALU+BPF_ADD+BPF_K Ta A <- A + k
 .It Li Sy BPF_ALU+BPF_SUB+BPF_K Ta A <- A - k
@@ -498,7 +498,7 @@ The jump instructions alter flow of control.  Conditional jumps
 compare the accumulator against a constant
 .No ( Ns Sy BPF_K Ns )
 or the index register
-.No ( Ns Sy BPF_X Ns ).
+.No ( Ns Sy BPF_X Ns ) .
 If the result is true (or non-zero),
 the true branch is taken, otherwise the false branch is taken.
 Jump offsets are encoded in 8 bits so the longest jump is 256 instructions.
@@ -526,7 +526,7 @@ value of zero indicates that the packet should be ignored.
 The return value is either a constant
 .No ( Ns Sy BPF_K Ns )
 or the accumulator
-.No ( Ns Sy BPF_A Ns ).
+.No ( Ns Sy BPF_A Ns ) .
 .Bl -column "BPF_RET+BPF_A" "accept A bytes" -width -offset indent
 .It Sy BPF_RET+BPF_A Ta accept A bytes
 .It Li Sy BPF_RET+BPF_K Ta accept k bytes
@@ -548,7 +548,8 @@ array initializers:
 .Sy BPF_STMT Ns (opcode, operand)
 .Sy BPF_JUMP Ns (opcode, operand, true_offset, false_offset)
 .Ed
-.Pp
+.Sh FILES
+/dev/bpf0, /dev/bpf1, ...
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP Daemon.  It accepts
 only Reverse ARP requests.
@@ -611,13 +612,22 @@ struct bpf_insn insns[] = {
 .Xr signal 3 ,
 .Xr tcpdump 8
 .Rs
-.%T "The BSD Packet Filter: A New Architecture for User-level Packet Capture".
-.%A McCanne, S. and Jacobson V.
+.%T "The BSD Packet Filter: A New Architecture for User-level Packet Capture"
+.%A S. McCanne
+.%A V. Jacobson
 .%J Proceedings of the 1993 Winter USENIX
-.%C Technical Conference, San Diego, CA.
+.%C Technical Conference, San Diego, CA
 .Re
-.Sh FILES
-/dev/bpf0, /dev/bpf1, ...
+.Sh HISTORY
+The Enet packet filter was created in 1980 by Mike Accetta and
+Rick Rashid at Carnegie-Mellon University.  Jeffrey Mogul, at
+Stanford, ported the code to BSD and continued its development from
+1983 on.  Since then, it has evolved into the Ultrix Packet Filter
+at DEC, a STREAMS NIT module under SunOS 4.1, and BPF.
+.Sh AUTHORS
+Steven McCanne, of Lawrence Berkeley Laboratory, implemented BPF in
+Summer 1990.  The design was in collaboration with Van Jacobson,
+also of Lawrence Berkeley Laboratory.
 .Sh BUGS
 The read buffer must be of a fixed size (returned by the
 .Dv BIOCGBLEN
@@ -642,13 +652,3 @@ and the
 are misguided features.
 This functionality can be emulated with non-blocking mode and
 .Xr select 2 .
-.Sh HISTORY
-The Enet packet filter was created in 1980 by Mike Accetta and
-Rick Rashid at Carnegie-Mellon University.  Jeffrey Mogul, at
-Stanford, ported the code to BSD and continued its development from
-1983 on.  Since then, it has evolved into the Ultrix Packet Filter
-at DEC, a STREAMS NIT module under SunOS 4.1, and BPF.
-.Sh AUTHORS
-Steven McCanne, of Lawrence Berkeley Laboratory, implemented BPF in
-Summer 1990.  The design was in collaboration with Van Jacobson,
-also of Lawrence Berkeley Laboratory.
