@@ -39,21 +39,23 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.4 1994/04/06 02:55:54 briggs Exp $
+ *	$Id: vm_machdep.c,v 1.5 1994/04/21 23:25:41 briggs Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/user.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "machine/pte.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <machine/pte.h>
+
+extern int	cpu040;
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -174,7 +176,10 @@ physaccess(vaddr, paddr, size, prot)
 {
 	register struct pte *pte;
 	register u_int page;
+	extern u_int	cache_copyback;
 
+	if (cpu040 && (prot & PG_CI) == 0)	/* if cache not inhibited */
+		prot |= cache_copyback;		/*   set cacheable, copyback */
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
