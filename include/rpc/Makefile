@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/07/25 06:29:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 2000/09/10 23:21:49 erh Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -6,9 +6,15 @@ INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
 	rpc_msg.h rpcb_clnt.h rpcb_prot.h rpcent.h \
 	svc.h svc_auth.h svc_soc.h types.h xdr.h
 
+.ifnmake getrpcgen
+XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
+.endif
 
-rpcb_prot.h: rpcb_prot.x
-	${RPCGEN} -h ${.ALLSRC} -o ${.TARGET}
+getrpcgen:
+	@set -- X `type ${RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
+
+rpcb_prot.h:: rpcb_prot.x ${XRPCGEN}
+	${RPCGEN} -h ${.CURDIR}/rpcb_prot.x -o ${.TARGET}
 
 CLEANFILES+=	rpcb_prot.h
 
