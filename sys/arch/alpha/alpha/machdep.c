@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1995/06/28 02:45:07 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1995/08/03 01:04:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -71,6 +71,16 @@
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
+
+#ifdef DEC_3000_500
+#include <alpha/alpha/dec_3000_500.h>
+#endif
+#ifdef DEC_3000_300
+#include <alpha/alpha/dec_3000_300.h>
+#endif
+#ifdef DEC_2100_A50
+#include <alpha/alpha/dec_2100_a50.h>
+#endif
 
 #include <net/netisr.h>
 #include "ether.h"
@@ -152,6 +162,14 @@ extern int XentInt(), XentArith(), XentMM(), XentIF(), XentUna(), XentSys();
 
 /* number of cpus in the box.  really! */
 int		ncpus;
+
+/* various CPU-specific functions. */
+char		*(*cpu_modelname) __P((void));
+void		(*cpu_consinit) __P((char *));
+dev_t		(*cpu_bootdev) __P((char *));
+char		*cpu_iobus;
+
+char *boot_file, *boot_flags, *boot_console, *boot_dev;
 
 int
 alpha_init(pfn, ptb, argc, argv, envp)
@@ -326,155 +344,50 @@ alpha_init(pfn, ptb, argc, argv, envp)
 
 	/*
 	 * Find out what hardware we're on, and remember its type name.
-	 * XXX and start dealing with config?
 	 */
 	cputype = hwrpb->rpb_type;
 	switch (cputype) {
-#ifdef ADU
-	case ST_ADU:
-		THIS SYSTEM NOT SUPPORTED
-#endif
-
-#ifdef DEC_4000
-	case ST_DEC_4000:
-		THIS SYSTEM NOT SUPPORTED
-#endif
-
-#ifdef DEC_7000
-	case ST_DEC_7000:
-		THIS SYSTEM NOT SUPPORTED
-#endif
-
 #ifdef DEC_3000_500				/* and 400, [6-9]00 */
 	case ST_DEC_3000_500:
-		switch (hwrpb->rpb_variation & SV_ST_MASK) {
-		case SV_ST_SANDPIPER:
-systype_sandpiper:
-			cpu_model = "DEC 3000/400 (\"Sandpiper\")";
-			break;
-
-		case SV_ST_FLAMINGO:
-systype_flamingo:
-			cpu_model = "DEC 3000/500 (\"Flamingo\")";
-			break;
-
-		case SV_ST_HOTPINK:
-			cpu_model = "DEC 3000/500X (\"Hot Pink\")";
-			break;
-
-		case SV_ST_FLAMINGOPLUS:
-		case SV_ST_ULTRA:
-			cpu_model = "DEC 3000/800 (\"Flamingo+\")";
-			break;
-
-		case SV_ST_SANDPLUS:
-			cpu_model = "DEC 3000/600 (\"Sandpiper+\")";
-			break;
-
-		case SV_ST_SANDPIPER45:
-			cpu_model = "DEC 3000/700 (\"Sandpiper45\")";
-			break;
-
-		case SV_ST_FLAMINGO45:
-			cpu_model = "DEC 3000/900 (\"Flamingo45\")";
-			break;
-
-		case SV_ST_RESERVED: /* this is how things used to be done */
-			if (hwrpb->rpb_variation & SV_GRAPHICS)
-				goto systype_flamingo;
-			else
-				goto systype_sandpiper;
-			/* NOTREACHED */
-
-		default:
-			printf("unknown system variation %lx\n",
-			    hwrpb->rpb_variation & SV_ST_MASK);
-		}
-		break;
-#endif
-
-#ifdef DEC_2000_300
-	case ST_DEC_2000_300:
-		/* XXX XXX XXX */
+		cpu_modelname = dec_3000_500_modelname;
+		cpu_consinit = dec_3000_500_consinit;
+		cpu_bootdev = dec_3000_500_bootdev;
+		cpu_iobus = "tc";
 		break;
 #endif
 
 #ifdef DEC_3000_300
 	case ST_DEC_3000_300:
-		switch (hwrpb->rpb_variation & SV_ST_MASK) {
-		case SV_ST_PELICAN:
-			cpu_model = "DEC 3000/300 (\"Pelican\")";
-			break;
-
-		case SV_ST_PELICA:
-			cpu_model = "DEC 3000/300L (\"Pelica\")";
-			break;
-
-		case SV_ST_PELICANPLUS:
-			cpu_model = "DEC 3000/300X (\"Pelican+\")";
-			break;
-
-		case SV_ST_PELICAPLUS:
-			cpu_model = "DEC 3000/300LX (\"Pelica+\")";
-			break;
-
-		default:
-			printf("unknown system variation %lx\n",
-			    hwrpb->rpb_variation & SV_ST_MASK);
-		}
+		cpu_modelname = dec_3000_300_modelname;
+		cpu_consinit = dec_3000_300_consinit;
+		cpu_bootdev = dec_3000_300_bootdev;
+		cpu_iobus = "tc";
 		break;
-#endif
-
-#ifdef DEC_2100_A500
-	case ST_DEC_2100_A500:
-		THIS SYSTEM NOT SUPPORTED
-#endif
-
-#ifdef DEC_AXPVME_64
-	case ST_DEC_AXPVME_64:
-		THIS SYSTEM NOT SUPPORTED
-#endif
-
-#ifdef DEC_AXPPCI_33
-	case ST_DEC_AXPPCI_33:
-		THIS SYSTEM NOT SUPPORTED
 #endif
 
 #ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
-		switch (hwrpb->rpb_variation & SV_ST_MASK) {
-		case SV_ST_AVANTI:
-		case SV_ST_AVANTI_XXX:		/* XXX apparently the same? */
-			cpu_model = "AlphaStation 400 4/233 (\"Avanti\")";
-			break;
-
-		case SV_ST_MUSTANG2_4_166:
-			cpu_model = "AlphaStation 200 4/166 (\"Mustang II\")";
-			break;
-
-		case SV_ST_MUSTANG2_4_233:
-			cpu_model = "AlphaStation 200 4/233 (\"Mustang II\")";
-			break;
-
-		case SV_ST_MUSTANG2_4_100:
-			cpu_model = "AlphaStation 200 4/100 (\"Mustang II\")";
-			break;
-
-		default:
-			printf("unknown system variation %lx\n",
-			    hwrpb->rpb_variation & SV_ST_MASK);
-		}
+		cpu_modelname = dec_2100_a50_modelname;
+		cpu_consinit = dec_2100_a50_consinit;
+		cpu_bootdev = dec_2100_a50_bootdev;
+		cpu_iobus = "apecs";
 		break;
 #endif
 
-#ifdef DEC_MUSTANG
-	case ST_DEC_MUSTANG:
-		THIS SYSTEM NOT SUPPORTED
+#ifdef DEC_2000_300
+	case ST_DEC_2000_300:
+		cpu_modelname = dec_2000_300_modelname;
+		cpu_consinit = dec_2000_300_consinit;
+		cpu_bootdev = dec_2000_300_bootdev;
+		cpu_iobus = "ibus";
+	XXX DEC 2000/300 NOT SUPPORTED
 #endif
 
-#ifdef DEC_1000
-	case ST_DEC_1000:
-		THIS SYSTEM NOT SUPPORTED
+#if defined(ADU) || defined(DEC_4000) || defined(DEC_7000) || \
+    defined(DEC_2100_A500) || defined(DEC_AXPVME_64) || \
+    defined(DEC_AXPPCI_33) || defined(DEC_MUSTANG) || \
+    defined(DEC_1000)
+	THIS SYSTEM NOT SUPPORTED
 #endif
 
 	default:
@@ -484,6 +397,8 @@ systype_flamingo:
 			panic("Support for %s system type not in kernel.",
 			    model_names[cputype]);
 	}
+
+	cpu_model = (*cpu_modelname)();
 	if (cpu_model == NULL)
 		cpu_model = model_names[cputype];
 
@@ -604,59 +519,70 @@ systype_flamingo:
 	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_ksp;
 
 	/*
-	 * Look at arguments and compute bootdev.
-	 *
-	 * XXX
-	 * Boot currently doesn't pass any arguments concerning booting
-	 * or the root device.
+	 * figure out what arguments we have
 	 */
-	{ extern dev_t bootdev;
-	bootdev = MAKEBOOTDEV(8, 0, 0, 0, 0);	/* sd0a. XXX */
+	switch (argc) {
+	default:
+		printf("weird number of arguments from boot: %d\n", argc);
+		if (argc < 1)
+			break;
+		/* FALLTHRU */
+	case 4:
+		boot_dev = argv[3];
+		/* FALLTHRU */
+	case 3:
+		boot_console = argv[2];
+		/* FALLTHRU */
+	case 2:
+		boot_flags = argv[1];
+		/* FALLTHRU */
+	case 1:
+		boot_file = argv[0];
+		/* FALLTHRU */
 	}
+
+	/*
+	 * Look at arguments and compute bootdev.
+	 * XXX NOT HERE.
+	 */
+#if 0
+	{							/* XXX */
+		extern dev_t bootdev;				/* XXX */
+		bootdev = (*cpu_bootdev)(boot_dev);
+	}							/* XXX */
+#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-#ifdef GENERIC
-	boothowto = RB_SINGLE | RB_ASKNAME;
-#else
 	boothowto = RB_SINGLE;
+#ifdef GENERIC
+	boothowto |= RB_ASKNAME;
 #endif
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
+	for (p = boot_flags; p && *p != '\0'; p++) {
+		switch (*p) {
+		case 'a': /* autoboot */
+		case 'A': /* DEC's notion of autoboot */
+			boothowto &= ~RB_SINGLE;
+			break;
 
-#if 0
-	printf("argc = %d\n", argc);
-	printf("argv = %lx\n", argv);
-	for (i = 0; i < argc; i++)
-		printf("argv[%d] = (%lx) \"%s\"\n", i, argv[i], argv[i]);
-#endif
+		case 'd': /* use compiled in default root */
+			boothowto |= RB_DFLTROOT;
+			break;
 
-	if (argc > 1) {
-		/* we have arguments. argv[1] is the flags. */
-		for (p = argv[1]; *p != '\0'; p++) {
-			switch (*p) {
-			case 'a': /* autoboot */
-			case 'A': /* DEC's notion of autoboot */
-				boothowto &= ~RB_SINGLE;
-				break;
+		case 'm': /* mini root present in memory */
+			boothowto |= RB_MINIROOT;
+			break;
 
-			case 'd': /* use compiled in default root */
-				boothowto |= RB_DFLTROOT;
-				break;
+		case 'n': /* ask for names */
+			boothowto |= RB_ASKNAME;
+			break;
 
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
-			case 'n': /* ask for names */
-				boothowto |= RB_ASKNAME;
-				break;
-
-			case 'N': /* don't ask for names */
-				boothowto &= ~RB_ASKNAME;
-			}
+		case 'N': /* don't ask for names */
+			boothowto &= ~RB_ASKNAME;
 		}
 	}
 
@@ -676,19 +602,10 @@ systype_flamingo:
 	return (0);
 }
 
-/* for cons.c */
-struct  consdev constab[] = {
-	{ 0 },
-};
-
 consinit()
 {
-	/* XXX SET UP THE CONSOLE TAB TO HAVE REASONABLE ENTRIES */
-	/* XXX */
 
-	/* XXX PICK A NEW CONSOLE DEVICE */
-	/* cninit(); */
-
+	cpu_consinit(boot_console);
 	pmap_unmap_prom();
 }
 
@@ -1373,6 +1290,12 @@ netintr()
 		ccittintr();
 	}
 #endif
+#ifdef PPP
+	if (netisr & (1 << NETISR_PPP)) {
+		netisr &= ~(1 << NETISR_CCITT);
+		pppintr();
+	}
+#endif
 }
 
 void
@@ -1490,7 +1413,7 @@ microtime(tvp)
 	splx(s);
 }
 
-#ifdef COMPAT_OSF1
+#if defined(COMPAT_OSF1) || 1		/* XXX */
 void
 cpu_exec_ecoff_setregs(p, pack, stack, retval)
 	struct proc *p;
