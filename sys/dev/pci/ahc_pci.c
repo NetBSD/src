@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.26 2000/09/04 20:21:30 soren Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.27 2000/09/24 12:37:03 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -64,12 +65,6 @@
 #include <dev/ic/smc93cx6var.h>
 
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
-
-#ifdef DEBUG
-#define bootverbose 1
-#else
-#define bootverbose 1
-#endif
 
 struct ahc_pci_busdata {
 	pci_chipset_tag_t pc;
