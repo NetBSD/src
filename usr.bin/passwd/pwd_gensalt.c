@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.10 2003/07/14 11:54:06 itojun Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.11 2004/07/02 00:05:23 sjg Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pwd_gensalt.c,v 1.10 2003/07/14 11:54:06 itojun Exp $");
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.11 2004/07/02 00:05:23 sjg Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -50,12 +50,8 @@ __RCSID("$NetBSD: pwd_gensalt.c,v 1.10 2003/07/14 11:54:06 itojun Exp $");
 #include <time.h>
 #include <pwd.h>
 
+#include <crypt.h>
 #include "extern.h"
-
-static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
-	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-void to64(char *s, long v, int n);
 
 int
 pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
@@ -93,7 +89,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 	if (strcmp(now, "old") == 0) {
 		if (max < 3)
 			return (0);
-		to64(&salt[0], arc4random(), 2);
+		__crypt_to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (strcmp(now, "newsalt") == 0) {
 		rounds = atol(next);
@@ -105,8 +101,8 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		else if (rounds > 0xffffff)
 		        rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
-		to64(&salt[1], (u_int32_t)rounds, 4);
-		to64(&salt[5], arc4random(), 4);
+		__crypt_to64(&salt[1], (u_int32_t)rounds, 4);
+		__crypt_to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (strcmp(now, "md5") == 0) {
 		if (max < 13)  /* $1$8salt$\0 */
@@ -114,10 +110,26 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		salt[0] = _PASSWORD_NONDES;
 		salt[1] = '1';
 		salt[2] = '$';
-		to64(&salt[3], arc4random(), 4);
-		to64(&salt[7], arc4random(), 4);
+		__crypt_to64(&salt[3], arc4random(), 4);
+		__crypt_to64(&salt[7], arc4random(), 4);
 		salt[11] = '$';
 		salt[12] = '\0';
+	} else if (strcmp(now, "sha1") == 0) {
+		int n;
+
+		rounds = atoi(next);	/* a hint only, 0 is ok */
+		n = snprintf(salt, max, "%s%u$", SHA1_MAGIC,
+			     __crypt_sha1_iterations(rounds));
+		/*
+		 * The salt can be up to 64 bytes, but 8
+		 * is considered enough for now.
+		 */
+		if (n + 9 >= max)
+			return 0;
+		__crypt_to64(&salt[n], arc4random(), 4);
+		__crypt_to64(&salt[n + 4], arc4random(), 4);
+		salt[n + 8] = '$';
+		salt[n + 9] = '\0';
 	} else if (strcmp(now, "blowfish") == 0) {
 		rounds = atoi(next);
 		if (rounds < 4)
@@ -129,14 +141,4 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 	}
 
 	return (1);
-}
-
-void
-to64(char *s, long v, int n)
-{
-
-	while (--n >= 0) {
-		*s++ = itoa64[v & 0x3f];
-		v >>= 6;
-	}
 }
