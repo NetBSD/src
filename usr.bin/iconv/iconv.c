@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.2 2003/06/27 15:42:12 tshiozak Exp $	*/
+/*	$NetBSD: iconv.c,v 1.3 2003/07/23 13:18:59 wiz Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.2 2003/06/27 15:42:12 tshiozak Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.3 2003/07/23 13:18:59 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -82,7 +82,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 		flags |= __ICONV_F_HIDE_INVALID;
 	cd = iconv_open(to, from);
 	if (cd == (iconv_t)-1)
-		err(EXIT_FAILURE, "iconv_open()");
+		err(EXIT_FAILURE, "iconv_open(%s, %s)", to, from);
 
 	invalids = 0;
 	while ((inbytes = fread(inbuf, 1, INBUFSIZE, fp)) > 0) {
