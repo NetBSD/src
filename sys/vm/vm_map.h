@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.h,v 1.6 1994/01/08 05:26:14 mycroft Exp $
+ *	$Id: vm_map.h,v 1.7 1994/03/17 02:52:11 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,12 +63,12 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_MAP_H_
-#define _VM_VM_MAP_H_
-
 /*
  *	Virtual memory map module definitions.
  */
+
+#ifndef	_VM_MAP_
+#define	_VM_MAP_
 
 /*
  *	Types defined:
@@ -89,8 +89,6 @@ union vm_map_object {
 	struct vm_map		*share_map;	/* share map */
 	struct vm_map		*sub_map;	/* belongs to another map */
 };
-
-typedef union vm_map_object	vm_map_object_t;
 
 /*
  *	Address map entries consist of start and end addresses,
@@ -117,8 +115,6 @@ struct vm_map_entry {
 	int			wired_count;	/* can be paged if = 0 */
 };
 
-typedef struct vm_map_entry	*vm_map_entry_t;
-
 /*
  *	Maps are doubly-linked lists of map entries, kept sorted
  *	by address.  A single hint is provided to start
@@ -143,8 +139,6 @@ struct vm_map {
 #define max_offset		header.end
 };
 
-typedef	struct vm_map	*vm_map_t;
-
 /*
  *	Map versions are used to validate a previous lookup attempt.
  *
@@ -161,66 +155,71 @@ typedef struct {
 } vm_map_version_t;
 
 /*
- *	Exported procedures that operate on vm_map_t.
+ *	Macros:		vm_map_lock, etc.
+ *	Function:
+ *		Perform locking on the data portion of a map.
  */
-boolean_t	vm_map_check_protection
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_prot_t));
-int		vm_map_copy
-		   __P((vm_map_t, vm_map_t, vm_offset_t, vm_size_t,
-			vm_offset_t, boolean_t, boolean_t));
-vm_map_t	vm_map_create
-		   __P((pmap_t, vm_offset_t, vm_offset_t, boolean_t));
-void		vm_map_deallocate __P((vm_map_t));
-int		vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
-int		vm_map_find
-		   __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t *,
-			vm_size_t, boolean_t));
-int		vm_map_inherit
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_inherit_t));
-void		vm_map_init
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
-int		vm_map_insert
-		   __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t,
-			vm_offset_t));
-int		vm_map_lookup
-		   __P((vm_map_t *, vm_offset_t, vm_prot_t, vm_map_entry_t *,
-			vm_object_t *, vm_offset_t *, vm_prot_t *,
-			boolean_t *, boolean_t *));
-void		vm_map_lookup_done __P((vm_map_t, vm_map_entry_t));
-boolean_t	vm_map_lookup_entry
-		   __P((vm_map_t, vm_offset_t, vm_map_entry_t *));
-int		vm_map_pageable
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
-void		vm_map_print __P((vm_map_t, boolean_t));
-void		_vm_map_print __P((vm_map_t, boolean_t, int (*)()));
-int		vm_map_protect
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_prot_t,
-			boolean_t));
-int		vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
-void		vm_map_simplify __P((vm_map_t, vm_offset_t));
-void		vm_map_startup __P((void));
-int		vm_map_submap
-		   __P((vm_map_t, vm_offset_t, vm_offset_t, vm_map_t));
+
+#define	vm_map_lock(map) { \
+	lock_write(&(map)->lock); \
+	(map)->timestamp++; \
+}
+#define	vm_map_unlock(map)	lock_write_done(&(map)->lock)
+#define	vm_map_lock_read(map)	lock_read(&(map)->lock)
+#define	vm_map_unlock_read(map)	lock_read_done(&(map)->lock)
 
 /*
  *	Functions implemented as macros
  */
-#define		vm_map_lock(map)	{ lock_write(&(map)->lock); (map)->timestamp++; }
-#define		vm_map_unlock(map)	lock_write_done(&(map)->lock)
-#define		vm_map_lock_read(map)	lock_read(&(map)->lock)
-#define		vm_map_unlock_read(map)	lock_read_done(&(map)->lock)
-
 #define		vm_map_min(map)		((map)->min_offset)
 #define		vm_map_max(map)		((map)->max_offset)
 #define		vm_map_pmap(map)	((map)->pmap)
 
 /* XXX: number of kernel maps and entries to statically allocate */
-#define MAX_KMAP	10
+#define	MAX_KMAP	10
+#define	MAX_KMAPENT     1000	/* XXX 250 */
 
-#ifdef OMIT
-#define MAX_KMAPENT     500
-#else   /* !OMIT*/
-#define MAX_KMAPENT     1000	/* 15 Aug 92*/
-#endif  /* !OMIT*/
-
-#endif /* !_VM_VM_MAP_H_ */
+#ifdef KERNEL
+boolean_t	 vm_map_check_protection __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t));
+int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,
+		    vm_size_t, vm_offset_t, boolean_t, boolean_t));
+/* XXX vm_map_copy_entry */
+struct pmap;
+vm_map_t	 vm_map_create __P((struct pmap *,
+		    vm_offset_t, vm_offset_t, boolean_t));
+void		 vm_map_deallocate __P((vm_map_t));
+int		 vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
+/* XXX vm_map_entry_* */
+int		 vm_map_find __P((vm_map_t, vm_object_t,
+		    vm_offset_t, vm_offset_t *, vm_size_t, boolean_t));
+/* XXX vm_map_findspace */
+int		 vm_map_inherit __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, vm_inherit_t));
+void		 vm_map_init __P((struct vm_map *,
+		    vm_offset_t, vm_offset_t, boolean_t));
+int		 vm_map_insert __P((vm_map_t,
+		    vm_object_t, vm_offset_t, vm_offset_t, vm_offset_t));
+int		 vm_map_lookup __P((vm_map_t *, vm_offset_t, vm_prot_t,
+		    vm_map_entry_t *, vm_object_t *, vm_offset_t *, vm_prot_t *,
+		    boolean_t *, boolean_t *));
+void		 vm_map_lookup_done __P((vm_map_t, vm_map_entry_t));
+boolean_t	 vm_map_lookup_entry __P((vm_map_t,
+		    vm_offset_t, vm_map_entry_t *));
+int		 vm_map_pageable __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, boolean_t));
+/* XXX vm_map_clean */
+void		 vm_map_print __P((vm_map_t, boolean_t));
+/* XXX what the hell is this? */
+void		 _vm_map_print __P((vm_map_t, boolean_t, int (*)()));
+int		 vm_map_protect __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+/* XXX vm_map_reference */
+int		 vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
+void		 vm_map_simplify __P((vm_map_t, vm_offset_t));
+/* XXX vm_map_simplify_entry */
+void		 vm_map_startup __P((void));
+int		 vm_map_submap __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, vm_map_t));
+#endif
+#endif /* _VM_MAP_ */
