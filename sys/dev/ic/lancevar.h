@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.4 2001/06/18 11:06:26 jdolecek Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.5 2003/06/29 14:42:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct lance_softc {
 	 * Media-supported by this interface.  If this is NULL,
 	 * the only supported media is assumed to be "manual".
 	 */
-	int	*sc_supmedia;
+	const int	*sc_supmedia;
 	int	sc_nsupmedia;
 	int	sc_defaultmedia;
 
