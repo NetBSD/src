@@ -4,9 +4,9 @@ sed \
 -e 's/\!empty//' \
 -e 's/"//g' \
 -e 's/\$(\([_A-Z]*\)) == /\1 == /' \
--e 's/== IP/== /' -e 's/#[^ie].*//' \
+-e 's/== *IP/== /g' -e 's/)=/) =/g' -e 's/#[^ie].*//' \
+-e 's/\$(CPUBOARD)/CPUBOARD/g' \
 -e 's/^#$//' /var/sysgen/Makefile.kernio | \
-egrep -v '^$|^ROOT|^include' | \
 /usr/lib/cpp -DCPUBOARD=${CPUNUM} | \
-egrep -v '^$|^#.*'
+egrep -v '^$|^#.*|^$|^ROOT=|^include'
 exit 0
