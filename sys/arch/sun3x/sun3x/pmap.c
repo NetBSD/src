@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1997/03/26 23:27:12 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1997/04/01 02:15:33 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2941,6 +2941,8 @@ void
 pmap_clear_modify(pa)
 	vm_offset_t pa;
 {
+	if (!is_managed(pa))
+		return;
 	pmap_clear_pv(pa, PV_FLAGS_MDFY);
 }
 
@@ -2953,6 +2955,8 @@ void
 pmap_clear_reference(pa)
 	vm_offset_t pa;
 {
+	if (!is_managed(pa))
+		return;
 	pmap_clear_pv(pa, PV_FLAGS_USED);
 }
 	
