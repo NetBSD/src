@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.26 2004/12/30 23:18:09 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.27 2004/12/31 22:32:34 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.26 2004/12/30 23:18:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.27 2004/12/31 22:32:34 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -852,12 +852,11 @@ sq_intr(void * arg)
 
 	stat = sq_hpc_read(sc, sc->hpc_regs->enetr_reset);
 
-	if ((stat & 2) == 0) {
-		printf("%s: Unexpected interrupt!\n", sc->sc_dev.dv_xname);
-		return 0;
-	}
-
-	sq_hpc_write(sc, sc->hpc_regs->enetr_reset, (stat | 2));
+	if ((stat & 2) == 0)
+		SQ_DPRINTF(("%s: Unexpected interrupt!\n",
+		    sc->sc_dev.dv_xname));
+	else
+		sq_hpc_write(sc, sc->hpc_regs->enetr_reset, (stat | 2));
 
 	/*
 	 * If the interface isn't running, the interrupt couldn't
