@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.27 2001/04/04 09:55:48 wiz Exp $
+.\"	$NetBSD: gettytab.5,v 1.28 2002/01/15 02:21:49 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -378,13 +378,18 @@ This can be used to handle incoming
 .Tn PPP
 calls.
 .Sh SEE ALSO
-.Xr gethostname 3 ,
-.Xr getty 8 ,
 .Xr login 1 ,
-.Xr pppd 8 ,
+.Xr gethostname 3 ,
+.Xr uname 3 ,
 .Xr termcap 5 ,
 .Xr ttys 5 ,
-.Xr uname 3
+.Xr getty 8 ,
+.Xr pppd 8
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Bx 4.2 .
 .Sh BUGS
 The special characters (erase, kill, etc.) are reset to system defaults
 by
@@ -407,8 +412,3 @@ The
 .Xr termcap 5
 format is horrid, something more rational should
 have been chosen.
-.Sh HISTORY
-The
-.Nm
-file format appeared in
-.Bx 4.2 .
