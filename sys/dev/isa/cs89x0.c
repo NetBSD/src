@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.20 2001/11/13 08:01:11 lukem Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.21 2001/11/24 20:18:55 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.20 2001/11/13 08:01:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.21 2001/11/24 20:18:55 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -310,7 +310,7 @@ int cs_default_media[] = {
 };
 int cs_default_nmedia = sizeof(cs_default_media) / sizeof(cs_default_media[0]);
 
-void 
+int 
 cs_attach(sc, enaddr, media, nmedia, defmedia)
 	struct cs_softc *sc;
 	u_int8_t *enaddr;
@@ -321,7 +321,22 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	u_int16_t reg;
 	int i;
 
-	reg = CS_READ_PACKET_PAGE_IO(sc->sc_iot, sc->sc_ioh, PKTPG_PRODUCT_ID);
+	/* Start out in IO mode */
+	sc->sc_memorymode = FALSE;
+
+	/* make sure we're right */
+	for (i = 0; i < 10000; i++) {
+		reg = CS_READ_PACKET_PAGE(sc, PKTPG_EISA_NUM);
+		if (reg == EISA_NUM_CRYSTAL) {
+			break;
+		}
+	}
+	if (i == 10000) {
+		printf("%s: wrong id(0x%x)\n", sc->sc_dev.dv_xname, reg);
+		return 1; /* XXX should panic? */
+	}
+
+	reg = CS_READ_PACKET_PAGE(sc, PKTPG_PRODUCT_ID);
 	sc->sc_prodid = reg & PROD_ID_MASK;
 	sc->sc_prodrev = (reg & PROD_REV_MASK) >> 8;
 
@@ -348,11 +363,8 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	if (MCLBYTES < ETHER_MAX_LEN) {
 		printf("%s: MCLBYTES too small for Ethernet frame\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		return 1;
 	}
-
-	/* Start out in IO mode */
-	sc->sc_memorymode = FALSE;
 
 	/* Start out not transmitting */
 	sc->sc_txbusy = FALSE;
@@ -390,7 +402,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 		if (cs_get_params(sc) == CS_ERROR) {
 			printf("%s: unable to get settings from EEPROM\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			return 1;
 		}
 	}
 
@@ -401,11 +413,11 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 		if (cs_get_enaddr(sc) == CS_ERROR) {
 			printf("%s: unable to read Ethernet address\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			return 1;
 		}
 	} else {
 		printf("%s: no Ethernet address!\n", sc->sc_dev.dv_xname);
-		return;
+		return 1;
 	}
 
 	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
@@ -427,16 +439,6 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	printf("%s: %s rev. %c, address %s, media %s\n", sc->sc_dev.dv_xname,
 	    chipname, sc->sc_prodrev + 'A', ether_sprintf(sc->sc_enaddr),
 	    medname);
-
-	/*
-	 * XXX Driver only supports memory-mode and dma-mode operation for now.
-	 * XXX FIXME!!
-	 */
-	if ((sc->sc_cfgflags & CFGFLG_MEM_MODE) == 0) {
-		printf("%s: driver only supports memory mode\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	if (sc->sc_drq == ISACF_DRQ_DEFAULT)
 		printf("%s: DMA channel unspecified, not using DMA\n",
@@ -480,6 +482,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 
 		sc->sc_dmasize = CS8900_DMASIZE;
 		sc->sc_cfgflags |= CFGFLG_DMA_MODE;
+		sc->sc_dmaaddr = dma_addr;
 	}
  after_dma_block:
 
@@ -487,7 +490,8 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	if (sc->sc_sh == NULL) {
 		printf("%s: unable to establish shutdownhook\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		cs_detach(sc);
+		return 1;
 	}
 
 	/* Attach the interface. */
@@ -498,10 +502,49 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
 #endif
+	sc->sc_cfgflags |= CFGFLG_ATTACHED;
 
 	/* Reset the chip */
-	if (cs_reset_chip(sc) == CS_ERROR)
+	if (cs_reset_chip(sc) == CS_ERROR) {
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
+		cs_detach(sc);
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+cs_detach(sc)
+	struct cs_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	if (sc->sc_cfgflags & CFGFLG_ATTACHED) {
+#if NRND > 0
+		rnd_detach_source(&sc->rnd_source);
+#endif
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+		sc->sc_cfgflags &= ~CFGFLG_ATTACHED;
+	}
+	
+	if (sc->sc_sh != NULL)
+		shutdownhook_disestablish(sc->sc_sh);
+
+#if 0
+	/*
+	 * XXX not necessary
+	 */
+	if (sc->sc_cfgflags & CFGFLG_DMA_MODE) {
+		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_dmabase, sc->sc_dmasize);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, sc->sc_dmaaddr, sc->sc_dmasize);
+		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq);
+		sc->sc_cfgflags &= ~CFGFLG_DMA_MODE;
+	}
+#endif
+
+	return 0;
 }
 
 void
@@ -818,6 +861,10 @@ cs_initChip(sc)
 		}
 	}
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, selfCtl);
+	
+	/* enable normal link pulse */
+	if (sc->sc_prodid == PROD_ID_CS8920 || sc->sc_prodid == PROD_ID_CS8920M)
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_AUTONEG_CTL, AUTOCTL_NLP_ENABLE);
 
 	/* Enable full-duplex, if appropriate */
 	if (sc->sc_media.ifm_cur->ifm_media & IFM_FDX)
@@ -952,11 +999,18 @@ cs_initChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, myea[1]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
 
-	/* Set the interrupt level in the chip */
-	if (sc->sc_irq == 5) {
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, 3);
-	} else {
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, (sc->sc_irq) - 10);
+	if (sc->sc_irq != -1) {
+		/* Set the interrupt level in the chip */
+		if (sc->sc_prodid == PROD_ID_CS8900) {
+			if (sc->sc_irq == 5) {
+				CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, 3);
+			} else {
+				CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, (sc->sc_irq) - 10);
+			}
+		}
+		else { /* CS8920 */
+			CS_WRITE_PACKET_PAGE(sc, PKTPG_8920_INT_NUM, sc->sc_irq);
+		}
 	}
 
 	/* write the multicast mask to the address filter register */
@@ -1288,9 +1342,12 @@ cs_intr(arg)
 	}
 
 	/* Read an event from the Interrupt Status Queue */
-	Event = CS_READ_PACKET_PAGE(sc, PKTPG_ISQ);
+	if (sc->sc_memorymode)
+		Event = CS_READ_PACKET_PAGE(sc, PKTPG_ISQ);
+	else
+		Event = CS_READ_PORT(sc, PORT_ISQ);
 
-	if ((Event & REG_NUM_MASK) == 0)
+	if ((Event & REG_NUM_MASK) == 0 || Event == 0xffff)
 		return 0;	/* not ours */
 
 #if NRND > 0
@@ -1298,7 +1355,7 @@ cs_intr(arg)
 #endif
 
 	/* Process all the events in the Interrupt Status Queue */
-	while (Event != 0) {
+	while ((Event & REG_NUM_MASK) != 0 && Event != 0xffff) {
 		/* Dispatch to an event handler based on the register number */
 		switch (Event & REG_NUM_MASK) {
 		case REG_NUM_RX_EVENT:
@@ -1321,7 +1378,10 @@ cs_intr(arg)
 		}
 
 		/* Read another event from the Interrupt Status Queue */
-		Event = CS_READ_PACKET_PAGE(sc, PKTPG_ISQ);
+		if (sc->sc_memorymode)
+			Event = CS_READ_PACKET_PAGE(sc, PKTPG_ISQ);
+		else
+			Event = CS_READ_PORT(sc, PORT_ISQ);
 	}
 
 	/* have handled the interupt */
@@ -1586,7 +1646,7 @@ cs_process_receive(sc)
 	struct mbuf *m;
 	int totlen;
 	int len;
-	volatile u_int16_t *pBuff, *pBuffLimit;
+	u_int16_t *pBuff, *pBuffLimit;
 	int pad;
 	unsigned int frameOffset;
 
@@ -1599,12 +1659,21 @@ cs_process_receive(sc)
 	/* Received a packet; carrier is up. */
 	sc->sc_carrier = 1;
 
-	/* Initialize the frame offset */
-	frameOffset = PKTPG_RX_LENGTH;
+	if (sc->sc_memorymode) {
+		/* Initialize the frame offset */
+		frameOffset = PKTPG_RX_LENGTH;
 
-	/* Get the length of the received frame */
-	totlen = bus_space_read_2(sc->sc_memt, sc->sc_memh, frameOffset);
-	frameOffset += 2;
+		/* Get the length of the received frame */
+		totlen = CS_READ_PACKET_PAGE(sc, frameOffset);
+		frameOffset += 2;
+	}
+	else {
+		/* drop status */
+		CS_READ_PORT(sc, PORT_RXTX_DATA);
+
+		/* Get the length of the received frame */
+		totlen = CS_READ_PORT(sc, PORT_RXTX_DATA);
+	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
@@ -1647,16 +1716,22 @@ cs_process_receive(sc)
 	/* align ip header on word boundary for ipintr */
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
+	len -= pad + 1;
 
 	m->m_len = len = min(totlen, len);
 	pBuff = mtod(m, u_int16_t *);
-	pBuffLimit = pBuff + (len + 1) / 2;	/* don't want to go over */
 
 	/* now read the data from the chip */
-	while (pBuff < pBuffLimit) {
-		*pBuff++ = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-		    frameOffset);
-		frameOffset += 2;
+	if (sc->sc_memorymode) {
+		pBuffLimit = pBuff + (len + 1) / 2;	/* don't want to go over */
+		while (pBuff < pBuffLimit) {
+			*pBuff++ = CS_READ_PACKET_PAGE(sc, frameOffset);
+			frameOffset += 2;
+		}
+	}
+	else {
+		bus_space_read_multi_2(sc->sc_iot, sc->sc_ioh, PORT_RXTX_DATA,
+			pBuff, (len + 1)>>1);
 	}
 
 	cs_ether_input(sc, m);
@@ -1945,18 +2020,15 @@ cs_process_rx_early(sc)
 	 * frame
 	 */
 	oldFrameCount = 0;
-	frameCount = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-	    PKTPG_FRAME_BYTE_COUNT);
+	frameCount = CS_READ_PACKET_PAGE(sc, PKTPG_FRAME_BYTE_COUNT);
 	while ((frameCount != 0) && (frameCount < MCLBYTES)) {
 		for (; oldFrameCount < frameCount; oldFrameCount += 2) {
-			*pBuff++ = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-			    frameOffset);
+			*pBuff++ = CS_READ_PACKET_PAGE(sc, frameOffset);
 			frameOffset += 2;
 		}
 
 		/* read the new count from the chip */
-		frameCount = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-		    PKTPG_FRAME_BYTE_COUNT);
+		frameCount = CS_READ_PACKET_PAGE(sc, PKTPG_FRAME_BYTE_COUNT);
 	}
 
 	/* update the mbuf counts */
@@ -1971,10 +2043,8 @@ cs_process_rx_early(sc)
 		 * do an implied skip, it seems to be more reliable than a
 		 * forced skip.
 		 */
-		rxEvent = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-		    PKTPG_RX_STATUS);
-		rxEvent = bus_space_read_2(sc->sc_memt, sc->sc_memh,
-		    PKTPG_RX_LENGTH);
+		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_STATUS);
+		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_LENGTH);
 
 		/*
 		 * now read the RX_EVENT register to perform an implied skip.
@@ -2050,9 +2120,16 @@ cs_start_output(ifp)
 			 * bus is too slow. Or possibly the copy routine is
 			 * not streamlined enough.
 			 */
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CMD,
-			    cs_xmit_early_table[sc->sc_xe_ent].txcmd);
-			CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_LENGTH, Length);
+			if (sc->sc_memorymode) {
+				CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CMD,
+					cs_xmit_early_table[sc->sc_xe_ent].txcmd);
+				CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_LENGTH, Length);
+			}
+			else {
+				CS_WRITE_PORT(sc, PORT_TX_CMD,
+					cs_xmit_early_table[sc->sc_xe_ent].txcmd);
+				CS_WRITE_PORT(sc, PORT_TX_LENGTH, Length);
+			}
 
 			/*
 			 * Adjust early-transmit machinery.
@@ -2140,8 +2217,6 @@ cs_copy_tx_frame(sc, m0)
 	struct cs_softc *sc;
 	struct mbuf *m0;
 {
-	bus_space_tag_t memt = sc->sc_memt;
-	bus_space_handle_t memh = sc->sc_memh;
 	struct mbuf *m;
 	int len, leftover, frameoff;
 	u_int16_t dbuf;
@@ -2177,8 +2252,13 @@ cs_copy_tx_frame(sc, m0)
 				 */
 				dbuf |= *p++ << 8;
 				len--;
-				bus_space_write_2(memt, memh, frameoff, dbuf);
-				frameoff += 2;
+				if (sc->sc_memorymode) {
+					CS_WRITE_PACKET_PAGE(sc, frameoff, dbuf);
+					frameoff += 2;
+				}
+				else {
+					CS_WRITE_PORT(sc, PORT_RXTX_DATA, dbuf);
+				}
 				leftover = 0;
 			} else if ((long) p & 1) {
 				/*
@@ -2196,10 +2276,16 @@ cs_copy_tx_frame(sc, m0)
 				 */
 				leftover = len & 1;
 				len &= ~1;
-				bus_space_write_region_2(memt, memh, frameoff,
-				    (u_int16_t *) p, len >> 1);
+				if (sc->sc_memorymode) {
+					bus_space_write_region_2(sc->sc_memt, sc->sc_memh, frameoff,
+						(u_int16_t *) p, len >> 1);
+					frameoff += len;
+				}
+				else {
+					bus_space_write_multi_2(sc->sc_iot, sc->sc_ioh,
+						PORT_RXTX_DATA, (u_int16_t *)p, len >> 1);
+				}
 				p += len;
-				frameoff += len;
 
 				if (leftover)
 					dbuf = *p++;
@@ -2213,6 +2299,12 @@ cs_copy_tx_frame(sc, m0)
 			panic("cs_copy_tx_frame: p != lim");
 #endif
 	}
-	if (leftover)
-		bus_space_write_2(memt, memh, frameoff, dbuf);
+	if (leftover) {
+		if (sc->sc_memorymode) {
+			CS_WRITE_PACKET_PAGE(sc, frameoff, dbuf);
+		}
+		else {
+			CS_WRITE_PORT(sc, PORT_RXTX_DATA, dbuf);
+		}
+	}
 }

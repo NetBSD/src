@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.9 2000/09/28 10:37:21 tsutsui Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.10 2001/11/24 20:18:55 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -89,6 +89,7 @@ struct cs_softc {
 	bus_addr_t sc_pktpgaddr;	/* PacketPage bus memory address */
 
 	bus_size_t sc_dmasize;		/* DMA size (16k or 64k) */
+	bus_addr_t sc_dmaaddr;		/* DMA address */
 	caddr_t	sc_dmabase;		/* base DMA address (KVA) */
 	caddr_t	sc_dmacur;		/* current DMA address (KVA) */
 
@@ -110,9 +111,57 @@ struct cs_softc {
 #endif
 };
 
+
+/* Config Flags in cs_softc */
+
+#define CFGFLG_MEM_MODE     0x0001
+#define CFGFLG_USE_SA       0x0002
+#define CFGFLG_IOCHRDY      0x0004
+#define CFGFLG_DCDC_POL     0x0008
+#define CFGFLG_DMA_MODE	    0x0020
+#define CFGFLG_ATTACHED     0x0040 /* XXX should not be here? */
+#define CFGFLG_CARDBUS_HACK 0x0080
+#define CFGFLG_NOT_EEPROM   0x8000
+
+
 /*
  * Inlines for reading/writing the packet page area.
  */
+
+static __inline__ u_int16_t _cs_read_port(struct cs_softc *, int);
+
+static __inline__ u_int16_t
+_cs_read_port(struct cs_softc *sc, int off)
+{
+	u_int16_t result;
+
+	if (sc->sc_cfgflags & CFGFLG_CARDBUS_HACK) {
+	    /*
+		 * hack for EtherJet PCMCIA and cardbus (obtained from freebsd)
+		 *
+	     * EtherJet PCMCIA don't work with cardbus bridges
+	     * (at least TI1250) without this hack.
+	     */
+	    result = (bus_space_read_1(sc->sc_iot, sc->sc_ioh, off) & 0xff);
+	    result |= ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, off+1) & 0xff) << 8);
+	}
+	else {
+	    result = bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
+	}
+
+	return result;
+}
+
+static __inline__ u_int16_t _CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
+
+static __inline__ u_int16_t
+_CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
+{
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR, offset);
+	return (_cs_read_port(sc, PORT_PKTPG_DATA));
+}
+
 static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO __P((bus_space_tag_t,
 	bus_space_handle_t, int));
 
@@ -133,7 +182,7 @@ CS_READ_PACKET_PAGE_IO(iot, ioh, offset)
 #define	CS_READ_PACKET_PAGE(sc, offset)					\
 	((sc)->sc_memorymode ? CS_READ_PACKET_PAGE_MEM((sc)->sc_memt,	\
 			       (sc)->sc_memh, (offset)) :		\
-	 CS_READ_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh, (offset)))
+	 _CS_READ_PACKET_PAGE_IO((sc), (offset)))
 
 #define	CS_WRITE_PACKET_PAGE_IO(iot, ioh, offset, val)			\
 do {									\
@@ -154,19 +203,17 @@ do {									\
 		    (offset), (val));					\
 } while (0)
 
+#define CS_READ_PORT(sc, off)\
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (off))
+
+#define CS_WRITE_PORT(sc, off, val)\
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (off), (val))
+
+
 /* Return Status */
 #define	CS_ERROR   -1
 #define CS_OK       1
 		
-/* Config Flags in cs_softc */
-
-#define CFGFLG_MEM_MODE     0x0001
-#define CFGFLG_USE_SA       0x0002
-#define CFGFLG_IOCHRDY      0x0004
-#define CFGFLG_DCDC_POL     0x0008
-#define CFGFLG_DMA_MODE	    0x0020
-#define CFGFLG_NOT_EEPROM   0x8000
-
 
 /* Media Type in cs_softc */
 
@@ -179,8 +226,9 @@ do {									\
 
 #define MAXLOOP            0x8888
 
-void	cs_attach __P((struct cs_softc *sc, u_int8_t *enaddr,
+int	cs_attach __P((struct cs_softc *sc, u_int8_t *enaddr,
 	    int *media, int nmedia, int defmedia));
+int	cs_detach __P((struct cs_softc *sc));
 int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
 int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
 	    u_int16_t *));
