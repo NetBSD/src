@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.11 2004/06/10 15:57:18 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.12 2004/06/12 12:09:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,13 +157,13 @@ ElfLoader::load()
 			DPRINTF((TEXT("[%d] vaddr 0x%08x file size 0x%x mem size 0x%x\n"),
 			    i, kv, filesz, memsz));
 			_load_segment(kv, memsz, fileofs, filesz);
-			kv += memsz;
+			kv += ROUND4(memsz);
 		}
 	}
 
 	load_symbol_block(kv);
 
-	// tag chain still opening 
+	// tag chain still opening
 
 	return _load_success();
 }
