@@ -1,4 +1,4 @@
-.\"	$NetBSD: trpt.8,v 1.7 1997/07/23 06:31:44 mikel Exp $
+.\"	$NetBSD: trpt.8,v 1.8 1997/07/23 08:20:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,9 +47,8 @@
 .Op Fl p Ar hex-address
 .Op Fl s
 .Op Fl t
-.Oo
-.Ar system Op Ar core
-.Oc
+.Op Fl N Ar system
+.Op Fl M Ar core
 .Sh DESCRIPTION
 .Nm Trpt
 interrogates the buffer of
@@ -93,6 +92,16 @@ sequencing information.
 in addition to the normal output,
 print the values for all timers at each
 point in the trace.
+.It Fl M Ar core
+Extract values associated with the name list from
+.Pa core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from
+.Pa system
+instead of the default
+.Pa /netbsd .
 .El
 .Pp
 The recommended use of
