@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.6 2003/03/17 16:54:16 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.7 2003/04/09 15:44:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ int intrdebug = 0;
 #endif
 
 #define ILLEGAL_IRQ(x) (((x) < 0) || ((x) >= NIRQ) || \
-		 ((1<<((x)&IMASK_BITMASK)) & imres[(x)>>IMASK_WORDSHIFT]))
+		 ((1<<((x)&IMASK_BITMASK)) & imres.bits[(x)>>IMASK_WORDSHIFT]))
 
 extern struct powerpc_bus_space gt_mem_bs_tag; 
 extern bus_space_handle_t gt_memh; 
@@ -200,11 +200,11 @@ ext_intr_hist_t ext_intr_hist[NIRQ][EXT_INTR_STAT_HISTSZ];
 /*
  * ipending and imen HW IRQs require MSR[EE]=0 protection
  */
-volatile imask_t ipending    __attribute__ ((aligned(CACHELINESIZE))) = { 0 };
-volatile imask_t imen        __attribute__ ((aligned(CACHELINESIZE))) = { 0 };
-imask_t          imask[NIPL] __attribute__ ((aligned(CACHELINESIZE))) = {{0},};
-const imask_t    imres       __attribute__ ((aligned(CACHELINESIZE))) = \
-	 { (IML_RES|IML_SUM), (IMH_RES|IMH_GPP_SUM), GPP_RES, SIR_RES };
+volatile imask_t ipending    __attribute__ ((aligned(CACHELINESIZE)));
+volatile imask_t imen        __attribute__ ((aligned(CACHELINESIZE)));
+imask_t          imask[NIPL] __attribute__ ((aligned(CACHELINESIZE)));
+const imask_t    imres       = 
+	 { { (IML_RES|IML_SUM), (IMH_RES|IMH_GPP_SUM), GPP_RES, SIR_RES } };
 
 #ifdef DEBUG
 struct intrframe *intrframe = 0; 
@@ -235,20 +235,20 @@ u_int32_t gpp_intrtype_level_mask = 0;
 
 STATIC void	softintr_init(void);
 STATIC void	write_intr_mask(volatile imask_t *);
-STATIC void	intr_calculatemasks __P((void));
+STATIC void	intr_calculatemasks(void);
 STATIC int	ext_intr_cause(volatile imask_t *, volatile imask_t *,
 				const imask_t *);
-STATIC int	cause_irq(imask_t *, imask_t *);
+STATIC int	cause_irq(const imask_t *, const imask_t *);
 
 static __inline void
 imask_print(char *str, volatile imask_t *imp)
 {
 	DPRINTF(("%s: %#10x %#10x %#10x %#10x\n",
 		str,
-		(*imp)[IMASK_ICU_LO],
-		(*imp)[IMASK_ICU_HI],
-		(*imp)[IMASK_ICU_GPP],
-		(*imp)[IMASK_SOFTINT]));
+		imp->bits[IMASK_ICU_LO],
+		imp->bits[IMASK_ICU_HI],
+		imp->bits[IMASK_ICU_GPP],
+		imp->bits[IMASK_SOFTINT]));
 }
 
 /*
@@ -473,9 +473,9 @@ write_intr_mask(volatile imask_t *imp)
 
 	imask_andnot_icu_vv(imp, &ipending);
 
-	lo  = (*imp)[IMASK_ICU_LO];
-	hi  = (*imp)[IMASK_ICU_HI];
-	gpp = (*imp)[IMASK_ICU_GPP];
+	lo  = imp->bits[IMASK_ICU_LO];
+	hi  = imp->bits[IMASK_ICU_HI];
+	gpp = imp->bits[IMASK_ICU_GPP];
 
 	lo |= IML_SUM;
 	hi |= IMH_GPP_SUM;
@@ -565,27 +565,27 @@ ext_intr_cause(
 	u_int32_t gpp_v;
 
 	lo = bus_space_read_4(&gt_mem_bs_tag, gt_memh, ICR_MIC_LO);
-	lo &= ~((*imresp)[IMASK_ICU_LO] | (*impendp)[IMASK_ICU_LO]);
-	(*imenp)[IMASK_ICU_LO] &= ~lo;
+	lo &= ~(imresp->bits[IMASK_ICU_LO] | impendp->bits[IMASK_ICU_LO]);
+	imenp->bits[IMASK_ICU_LO] &= ~lo;
 
 	hi = bus_space_read_4(&gt_mem_bs_tag, gt_memh, ICR_MIC_HI);
 
 	if (hi & IMH_GPP_SUM) {
 		gpp = bus_space_read_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Interrupt_Cause);
-		gpp &= ~(*imresp)[IMASK_ICU_GPP];
+		gpp &= ~imresp->bits[IMASK_ICU_GPP];
 		bus_space_write_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Interrupt_Cause, ~gpp);
 	}
 
 	gpp_v = bus_space_read_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Value);
-	KASSERT((gpp_intrtype_level_mask & (*imresp)[IMASK_ICU_GPP]) == 0);
-	gpp_v &= (gpp_intrtype_level_mask & (*imenp)[IMASK_ICU_GPP]);
+	KASSERT((gpp_intrtype_level_mask & imresp->bits[IMASK_ICU_GPP]) == 0);
+	gpp_v &= (gpp_intrtype_level_mask & imenp->bits[IMASK_ICU_GPP]);
 
 	gpp |= gpp_v;
-	gpp &= ~(*impendp)[IMASK_ICU_GPP];
-	(*imenp)[IMASK_ICU_GPP] &= ~gpp;
+	gpp &= ~impendp->bits[IMASK_ICU_GPP];
+	imenp->bits[IMASK_ICU_GPP] &= ~gpp;
 
-	hi &= ~((*imresp)[IMASK_ICU_HI] | (*impendp)[IMASK_ICU_HI]);
-	(*imenp)[IMASK_ICU_HI] &= ~hi;
+	hi &= ~(imresp->bits[IMASK_ICU_HI] | impendp->bits[IMASK_ICU_HI]);
+	imenp->bits[IMASK_ICU_HI] &= ~hi;
 
 	write_intr_mask(imenp);
 
@@ -598,9 +598,9 @@ ext_intr_cause(
 	/*
 	 * post pending IRQs in caller's imask
 	 */
-	(*impendp)[IMASK_ICU_LO] |= lo;
-	(*impendp)[IMASK_ICU_HI] |= hi;
-	(*impendp)[IMASK_ICU_GPP] |= gpp;
+	impendp->bits[IMASK_ICU_LO] |= lo;
+	impendp->bits[IMASK_ICU_HI] |= hi;
+	impendp->bits[IMASK_ICU_GPP] |= gpp;
 	EXT_INTR_STATS_PEND(lo, hi, gpp, 0);
 
 	return 1;
@@ -617,16 +617,16 @@ ext_intr_cause(
  * return -1 if no qualified interrupts are pending.
  */
 STATIC int
-cause_irq(imask_t *cause, imask_t *mask)
+cause_irq(const imask_t *cause, const imask_t *mask)
 {
-	u_int32_t clo  = (*cause)[IMASK_ICU_LO];
-	u_int32_t chi  = (*cause)[IMASK_ICU_HI];
-	u_int32_t cgpp = (*cause)[IMASK_ICU_GPP];
-	u_int32_t csft = (*cause)[IMASK_SOFTINT];
-	u_int32_t mlo  = (*mask)[IMASK_ICU_LO];
-	u_int32_t mhi  = (*mask)[IMASK_ICU_HI];
-	u_int32_t mgpp = (*mask)[IMASK_ICU_GPP];
-	u_int32_t msft = (*mask)[IMASK_SOFTINT];
+	u_int32_t clo  = cause->bits[IMASK_ICU_LO];
+	u_int32_t chi  = cause->bits[IMASK_ICU_HI];
+	u_int32_t cgpp = cause->bits[IMASK_ICU_GPP];
+	u_int32_t csft = cause->bits[IMASK_SOFTINT];
+	u_int32_t mlo  = mask->bits[IMASK_ICU_LO];
+	u_int32_t mhi  = mask->bits[IMASK_ICU_HI];
+	u_int32_t mgpp = mask->bits[IMASK_ICU_GPP];
+	u_int32_t msft = mask->bits[IMASK_SOFTINT];
 	int irq;
 
 	clo  &= mlo;
@@ -722,8 +722,8 @@ loop:
 	imask_dup_v(&imdisp, &ipending);
 	imask_and(&imdisp, &imask[ocpl]);
 
-	imdisp[IMASK_SOFTINT] &= imen[IMASK_SOFTINT];
-	imen[IMASK_SOFTINT] &= ~imdisp[IMASK_SOFTINT];
+	imdisp.bits[IMASK_SOFTINT] &= imen.bits[IMASK_SOFTINT];
+	imen.bits[IMASK_SOFTINT] &= ~imdisp.bits[IMASK_SOFTINT];
 
 	if (imask_empty(&imdisp)) {
 		ci->ci_cpl = ocpl;
@@ -811,7 +811,7 @@ softintr_schedule(void *vih)
 
 	omsr = extintr_disable();
 	ih->ih_flags |= IH_ACTIVE;
-	ipending[IMASK_SOFTINT] |= ih->ih_softimask;
+	ipending.bits[IMASK_SOFTINT] |= ih->ih_softimask;
 	extintr_restore(omsr);
 }
 
