@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.8 2001/05/26 10:22:32 pk Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.9 2001/06/30 20:17:47 mrg Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,6 +88,7 @@
  */
 
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #ifdef KGDB
 
@@ -131,6 +132,61 @@ kgdb_zero(ptr, len)
 }
 
 /*
+ * Deal with KGDB in a MP environment. XXX need to have "mach cpu" equiv.
+ */
+#ifdef MULTIPROCESSOR
+
+#define NOCPU -1
+
+static int kgdb_suspend_others(void);
+static void kgdb_resume_others(void);
+static void kgdb_suspend(void);
+
+__cpu_simple_lock_t kgdb_lock;
+int kgdb_cpu = NOCPU;
+
+static int
+kgdb_suspend_others(void)
+{
+	int cpu_me = cpu_number();
+	int win;
+
+	if (cpus == NULL)
+		return 1;
+
+	__cpu_simple_lock(&kgdb_lock);
+	if (kgdb_cpu == NOCPU)
+		kgdb_cpu = cpu_me;
+	win = (kgdb_cpu == cpu_me);
+	__cpu_simple_unlock(&kgdb_lock);
+
+	if (win)
+		mp_pause_cpus();
+
+	return win;
+}
+
+static void
+kgdb_resume_others(void)
+{
+
+	mp_resume_cpus();
+
+	__cpu_simple_lock(&kgdb_lock);
+	kgdb_cpu = NOCPU;
+	__cpu_simple_unlock(&kgdb_lock);
+}
+
+static void
+kgdb_suspend()
+{
+
+	while (cpuinfo.flags & CPUFLG_PAUSED)
+		cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+}
+#endif
+
+/*
  * Trap into kgdb to wait for debugger to connect,
  * noting on the console why nothing else is going on.
  */
@@ -144,17 +200,23 @@ kgdb_connect(verbose)
 #if NFB > 0
 	fb_unblank();
 #endif
+#ifdef MULTIPROCESSOR
 	/* While we're in the debugger, pause all other CPUs */
-	mp_pause_cpus();
+	if (!kgdb_suspend_others()) {
+		kgdb_suspend();
+	} else {
+#endif
+		if (verbose)
+			printf("kgdb waiting...");
+		__asm("ta %0" :: "n" (T_KGDB_EXEC));	/* trap into kgdb */
 
-	if (verbose)
-		printf("kgdb waiting...");
-	__asm("ta %0" :: "n" (T_KGDB_EXEC));	/* trap into kgdb */
+		kgdb_debug_panic = 1;
 
-	kgdb_debug_panic = 1;
-
-	/* Other CPUs can continue now */
-	mp_resume_cpus();
+#ifdef MULTIPROCESSOR
+		/* Other CPUs can continue now */
+		kgdb_resume_others();
+	}
+#endif
 }
 
 /*
