@@ -1,4 +1,4 @@
-.\"	$NetBSD: ix.4,v 1.4 1997/10/19 13:00:53 mrg Exp $
+.\"	$NetBSD: ix.4,v 1.5 1998/04/28 06:00:54 fair Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,11 +87,13 @@ flag with an
 .Bl -diag
 .It "ix%d: Req failed, cmd %x, stat %x, ust error %x,%x."
 The firmware in the controller refused to honor a request from
-.Tn UNIX
+.Ux
 in initializing packet level communications.
 The board may need to be reset and reloaded.
 Or, you may not have allowed enough time between loading the board
-and issuing the request to begin unix network operation.
+and issuing the request to begin
+.Ux
+network operation.
 .Pp
 .It ix%d: can't initialize.
 The interface was unable to obtain unibus resources required for operation.
@@ -117,7 +119,9 @@ This will result if an
 .Xr ifconfig 8
 request is made at an inopportune time, such as not allowing
 enough time after loading the firmware.
-After 100 such errors are logged, the unix network driver will
+After 100 such errors are logged, the
+.Ux
+network driver will
 shut itself down, saying:
 .Pp
 .It ixrint: shutting down unix dla.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
+.\"	$NetBSD: bind.2,v 1.9 1998/04/28 06:00:53 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,9 @@ requests that
 .Fa name
 be assigned to the socket.
 .Sh NOTES
-Binding a name in the UNIX domain creates a socket in the file
+Binding a name in the
+.Ux
+domain creates a socket in the file
 system that must be deleted by the caller when it is no longer
 needed (using
 .Xr unlink 2 ) .
@@ -96,7 +98,9 @@ parameter is not in a valid part of the user
 address space.
 .El
 .Pp
-The following errors are specific to binding names in the UNIX domain.
+The following errors are specific to binding names in the
+.Ux
+domain.
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.20 1998/02/06 06:02:01 perry Exp $
+.\"	$NetBSD: ping.8,v 1.21 1998/04/28 06:00:54 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -340,8 +340,9 @@ uses 30,
 .Bx 4.2
 used 15).
 .Pp
-The maximum possible value of this field is 255, and most Unix systems set
-the
+The maximum possible value of this field is 255, and most
+.Ux
+systems set the
 .Tn TTL
 field of
 .Tn ICMP ECHO_REQUEST
@@ -359,7 +360,9 @@ with the
 field in its response:
 .Bl -bullet
 .It
-Not change it; this is what Berkeley Unix systems did before the
+Not change it; this is what Berkeley
+.Ux
+systems did before the
 .Bx 4.3 tahoe
 release.
 In this case the
@@ -367,7 +370,9 @@ In this case the
 value in the received packet will be 255 minus the
 number of routers in the round-trip path.
 .It
-Set it to 255; this is what current Berkeley Unix systems do.
+Set it to 255; this is what current Berkeley
+.Ux
+systems do.
 In this case the
 .Tn TTL
 value in the received packet will be 255 minus the
