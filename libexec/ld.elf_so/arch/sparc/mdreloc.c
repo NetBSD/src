@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.1 1999/02/24 18:25:41 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.2 1999/02/26 22:13:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ static int reloc_target_flags[] = {
 				_RF_SZ(32) | _RF_RS(0),		/* COPY */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
 				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
-	      _RF_A|		_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
+	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
 
 	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
@@ -130,6 +130,7 @@ static const char *reloc_names[] = {
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
+#define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
@@ -173,6 +174,10 @@ _rtld_relocate_nonplt_object(
 	if (type == R_TYPE(NONE))
 		return (0);
 
+	/* We do JMP_SLOTs in relocate_plt_objject() below */
+	if (type == R_TYPE(JMP_SLOT))
+		return (0);
+
 	/*
 	 * We use the fact that relocation types are an `enum'
 	 * Note: R_SPARC_6 is currently numerically largest.
@@ -185,8 +190,8 @@ _rtld_relocate_nonplt_object(
 	 * be able to access globals yet
 	 */
 	if (!dodebug && type == R_TYPE(RELATIVE)) {
-	    *where += (Elf_Addr) obj->relocbase;
-	    return 0;
+		*where += (Elf_Addr) obj->relocbase;
+		return (0);
 	}
 
 	value = rela->r_addend;
@@ -204,6 +209,10 @@ _rtld_relocate_nonplt_object(
 
 	if (RELOC_PC_RELATIVE(type)) {
 		value -= (Elf_Word)where;
+	}
+
+	if (RELOC_BASE_RELATIVE(type)) {
+		value += (Elf_Word)obj->relocbase;
 	}
 
 	mask = RELOC_VALUE_BITMASK(type);
