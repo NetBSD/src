@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.24 1999/12/04 13:57:35 drochner Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.25 1999/12/16 13:27:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.24 1999/12/04 13:57:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.25 1999/12/16 13:27:24 ad Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -669,7 +669,7 @@ rasops_unpack_attr(attr, fg, bg, underline)
 	
 	*fg = ((u_int)attr >> 24) & 15;
 	*bg = ((u_int)attr >> 16) & 15;
-	if (underline)
+	if (underline != NULL)
 		*underline = (u_int)attr & 1;
 }
 
