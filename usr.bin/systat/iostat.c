@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.24 2002/12/06 03:13:14 thorpej Exp $	*/
+/*	$NetBSD: iostat.c,v 1.25 2002/12/29 19:03:56 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.24 2002/12/06 03:13:14 thorpej Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.25 2002/12/29 19:03:56 kristerw Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -254,12 +254,12 @@ stats(int row, int col, int dn)
 	wwords = cur.dk_wbytes[dn] / 1024.0;
 	if (numbers) {
 		if (read_write)
-			mvwprintw(wnd, row, col, " %3.0f%4.0f%5.1f %3.0f%4.0f",
+			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f %3.0f%4.0f",
 			    rwords / etime, cur.dk_rxfer[dn] / etime,
 			    atime / etime,
 			    wwords / etime, cur.dk_wxfer[dn] / etime);
 		else
-			mvwprintw(wnd, row, col, " %3.0f%4.0f%5.1f",
+			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f",
 			    (rwords + wwords) / etime,
 			    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime,
 			    atime / etime);
