@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.29 1999/01/08 13:23:56 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.30 1999/01/22 09:12:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -524,7 +524,9 @@ displays pids in decimal; prefix
 .Ar pid
 with
 .Sq 0t
-to force it to be interpreted as decimal.
+to force it to be interpreted as decimal (see
+.Sx VARIABLES
+section for radix)
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
@@ -667,6 +669,11 @@ command.
 .Xc
 Send a signal to the process specified by the
 .Ar pid .
+Note that
+.Ar pid
+is interpreted using the current radix (see
+.Cm trace/t
+command for details).
 If
 .Ar signal_number
 isn't specified, the SIGTERM signal is sent.
