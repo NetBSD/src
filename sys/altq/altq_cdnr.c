@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.4 2001/11/12 23:14:21 lukem Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.5 2003/09/05 22:43:02 itojun Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.4 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.5 2003/09/05 22:43:02 itojun Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -846,7 +846,7 @@ tswtcm_input(cb, pktinfo)
 	 * marker
 	 */
 	if (avg_rate > tsw->cmtd_rate) {
-		u_int32_t randval = random() % avg_rate;
+		u_int32_t randval = arc4random() % avg_rate;
 		
 		if (avg_rate > tsw->peak_rate) {
 			if (randval < avg_rate - tsw->peak_rate) {
