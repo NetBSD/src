@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.10 1995/08/25 21:20:57 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.11 1995/09/24 14:13:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -62,6 +62,7 @@
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define   NUBUS_DRSW_ASANTE	0x0104
+#define   NUBUS_DRSW_TECHWORKS	0x0109
 #define    NUBUS_DRHW_SONIC	0x0110
 #define   NUBUS_DRSW_FARALLON	0x010C
 
