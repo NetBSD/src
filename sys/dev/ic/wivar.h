@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.38 2003/10/16 10:38:08 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.39 2003/11/16 09:02:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,6 +31,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* Radio capture format for Prism. */
+
+#define WI_RX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
+				 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL) | \
+				 (1 << IEEE80211_RADIOTAP_DB_ANTNOISE))
+
+struct wi_rx_radiotap_header {
+	struct ieee80211_radiotap_header	wr_ihdr;
+	u_int8_t				wr_flags;
+	u_int8_t				wr_rate;
+	u_int16_t				wr_chan_freq;
+	u_int16_t				wr_chan_flags;
+	int8_t					wr_antsignal;
+	int8_t					wr_antnoise;
+} __attribute__((__packed__));
+
+#define WI_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct wi_tx_radiotap_header {
+	struct ieee80211_radiotap_header	wt_ihdr;
+	u_int8_t				wt_flags;
+	u_int8_t				wt_rate;
+	u_int16_t				wt_chan_freq;
+	u_int16_t				wt_chan_flags;
+} __attribute__((__packed__));
 
 /*
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
@@ -103,8 +133,19 @@ struct wi_softc	{
 
 	int			sc_false_syns;
 
+	union {
+		struct wi_rx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_rxtapu;
+	union {
+		struct wi_tx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_txtapu;
 	u_int16_t		sc_txbuf[IEEE80211_MAX_LEN/2];
 };
+
+#define sc_rxtap	sc_rxtapu.tap
+#define sc_txtap	sc_txtapu.tap
 
 #define	sc_if			sc_ic.ic_if
 

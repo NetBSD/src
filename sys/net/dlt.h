@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.6 2003/08/07 16:32:48 agc Exp $	*/
+/*	$NetBSD: dlt.h,v 1.7 2003/11/16 09:02:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -69,6 +69,7 @@
 #define DLT_ECONET		115	/* Acorn Econet */
 #define DLT_PRISM_HEADER	119	/* 802.11 header plus Prism II info. */
 #define DLT_AIRONET_HEADER 	120	/* 802.11 header plus Aironet info. */
+#define DLT_IEEE802_11_RADIO 	127	/* 802.11 header plus radio info. */
 
 /*
  * NetBSD-specific generic "raw" link type.  The upper 16-bits indicate
