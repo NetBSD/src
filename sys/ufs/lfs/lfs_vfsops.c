@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.13 1997/06/11 10:10:04 bouyer Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.14 1997/10/16 18:29:20 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -417,8 +417,9 @@ lfs_statfs(mp, sbp, p)
 	sbp->f_iosize = fs->lfs_bsize;
 	sbp->f_blocks = dbtofsb(fs,fs->lfs_dsize);
 	sbp->f_bfree = dbtofsb(fs, fs->lfs_bfree);
-	sbp->f_bavail = (fs->lfs_dsize * (100 - fs->lfs_minfree) / 100) -
-		(fs->lfs_dsize - fs->lfs_bfree);
+        sbp->f_bavail = (long) (((u_int64_t) fs->lfs_dsize * (u_int64_t)
+		(100 - fs->lfs_minfree) / (u_int64_t) 100) -
+		(u_int64_t) (fs->lfs_dsize - sbp->f_bfree));
 	sbp->f_bavail = dbtofsb(fs, sbp->f_bavail);
 	sbp->f_files = fs->lfs_nfiles;
 	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
