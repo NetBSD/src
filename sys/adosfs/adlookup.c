@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.23 1999/07/08 01:05:58 wrstuden Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.24 1999/09/05 14:26:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -109,47 +109,12 @@ adosfs_lookup(v)
 		return (EROFS);
 
 	/*
-	 * cache lookup algorithm borrowed from ufs_lookup()
-	 * its not consistent with otherthings in this function..
+	 * Before tediously performing a linear scan of the directory,
+	 * check the name cache to see if the directory/name pair
+	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		if (error == ENOENT)
-			return (error);
-
-		vpid = (*vpp)->v_id;
-		if (vdp == *vpp) {
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(vdp, 0);	/* race */
-			cnp->cn_flags |= PDIRUNLOCK;
-			error = vget(*vpp, LK_EXCLUSIVE);
-			if (error == 0 && lockp && last) {
-				if ((error = vn_lock(vdp, LK_EXCLUSIVE)))
-					cnp->cn_flags &= ~PDIRUNLOCK;
-			}
-		} else {
-			error = vget(*vpp, LK_EXCLUSIVE);
-			/* if (lockp == 0 || error || last) */
-			if (lockp == 0 || error || last == 0) {
-				VOP_UNLOCK(vdp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-		}
-		if (error == 0) {
-			if (vpid == vdp->v_id)
-				return (0);
-			vput(*vpp);
-			if (lockp && vdp != *vpp && last) {
-				VOP_UNLOCK(vdp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-		}
-		*vpp = NULL;
-		if ((error = vn_lock(vdp, LK_EXCLUSIVE)) != 0)
-			return (error);
-		cnp->cn_flags &= ~PDIRUNLOCK;
-	}
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
 	/*
 	 * fake a '.'
