@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.254 2004/06/05 04:58:40 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.255 2004/06/05 04:59:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3492,3 +3492,9 @@ dist/ipf/tools/ipf_y.y				1.7
 
 	ipfilter 4.1.1 does not behave according to rules in ipf.conf. PR#24989
 	[christos, ticket #440]
+
+sys/dev/pci/twe.c				1.58
+
+	twe_ccb_map(): Remove the DEBUG panic case of "unknown" S/G list
+	offset.
+	[thorpej, ticket #441]
