@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.11 1994/12/27 18:36:27 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.12 1995/04/07 17:37:08 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -115,13 +115,6 @@ msdosfs_hashins(dep)
 	dep->de_next = deq;
 	dep->de_prev = depp;
 	*depp = dep;
-	if (dep->de_flag & DE_LOCKED)
-		panic("msdosfs_hashins: already locked");
-	if (curproc)
-		dep->de_lockholder = curproc->p_pid;
-	else
-		dep->de_lockholder = -1;
-	dep->de_flag |= DE_LOCKED;
 }
 
 static void
@@ -227,6 +220,7 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
+	VOP_LOCK(nvp);
 	msdosfs_hashins(ldep);
 
 	/*
@@ -525,7 +519,7 @@ deextend(dep, length, cred)
 	 * Is this really important?
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY) {
-		if (error = suser(cred, NULL))
+		if (error = suser(cred, (u_short *)0))
 			return (error);
 	}
 
@@ -571,22 +565,8 @@ reinsert(dep)
 	 */
 	if (dep->de_Attributes & ATTR_DIRECTORY)
 		return;
-#if 0
 	msdosfs_hashrem(dep);
 	msdosfs_hashins(dep);
-#else
-	if ((dep->de_flag & DE_LOCKED) == 0)
-		panic("reinsert: not locked");
-	if (deq = dep->de_next)
-		deq->de_prev = dep->de_prev;
-	*dep->de_prev = deq;
-	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust + dep->de_diroffset)];
-	if (deq = *depp)
-		deq->de_prev = &dep->de_next;
-	dep->de_next = deq;
-	dep->de_prev = depp;
-	*depp = dep;
-#endif
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.31 1995/01/04 06:32:23 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.32 1995/04/07 17:37:10 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -1718,12 +1718,14 @@ msdosfs_print(ap)
 	printf(" dev %d, %d, %s\n",
 	       major(dep->de_dev), minor(dep->de_dev),
 	       dep->de_flag & DE_LOCKED ? "(LOCKED)" : "");
+#ifdef DIAGNOSTIC
 	if (dep->de_lockholder) {
 		printf("    owner pid %d", dep->de_lockholder);
 		if (dep->de_lockwaiter)
 			printf(" waiting pid %d", dep->de_lockwaiter);
 		printf("\n");
 	}
+#endif
 }
 
 int
