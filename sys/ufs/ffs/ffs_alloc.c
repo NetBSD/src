@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.73 2004/01/09 19:10:22 dbj Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.74 2004/01/13 13:38:18 soren Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.73 2004/01/09 19:10:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.74 2004/01/13 13:38:18 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -763,7 +763,8 @@ ffs_dirpref(pip)
 	struct inode *pip;
 {
 	register struct fs *fs;
-	int cg, prefcg, dirsize, cgsize;
+	int cg, prefcg;
+	int64_t dirsize, cgsize;
 	int avgifree, avgbfree, avgndir, curdirsize;
 	int minifree, minbfree, maxndir;
 	int mincg, minndir;
