@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/04/12 03:26:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/04/13 04:14:21 tv Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -17,7 +17,7 @@ IMAGEENDIAN=	be
 MAKEDEVTARGETS=	raminst
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
-		${DISTRIBDIR}/miniroot/termcap \
+		${DISTRIBDIR}/mac68k/miniroot/termcap \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
