@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.23 2002/03/03 14:34:00 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.24 2002/03/24 18:14:27 uch Exp $
 #
 maxpartitions 8
 
@@ -63,10 +63,11 @@ major	{md = 6}
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
-#
-# SH3 bus
-#
-include	"arch/hpcsh/conf/files.shbus"
+device cpu
+attach cpu at mainbus
+file	arch/sh3/sh3/cpu.c			cpu
+
+include	"arch/sh3/conf/files.shb"
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus
