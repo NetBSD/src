@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.15 1996/10/10 22:59:55 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.16 1996/10/13 02:11:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -146,7 +146,7 @@ rtfree(rt)
 			panic ("rtfree 2");
 		rttrash--;
 		if (rt->rt_refcnt < 0) {
-			kprintf("rtfree: %p not freed (neg refs)\n", rt);
+			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
 		ifa = rt->rt_ifa;
@@ -522,7 +522,7 @@ rtinit(ifa, cmd, flags)
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt)) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
-			kprintf("rtinit: wrong ifa (%p) was (%p)\n",
+			printf("rtinit: wrong ifa (%p) was (%p)\n",
 			    ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));

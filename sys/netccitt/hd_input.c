@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.10 1996/10/10 23:02:21 christos Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.11 1996/10/13 02:10:03 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -85,7 +85,7 @@ hdintr()
 		if (m == 0)
 			break;
 		if (m->m_len < HDHEADERLN) {
-			kprintf("hdintr: packet too short (len=%d)\n",
+			printf("hdintr: packet too short (len=%d)\n",
 			       m->m_len);
 			m_freem(m);
 			continue;
@@ -105,7 +105,7 @@ hdintr()
 				if (hdp->hd_ifp == ifp)
 					break;
 			if (hdp == 0) {
-				kprintf("hdintr: unknown interface %p\n", ifp);
+				printf("hdintr: unknown interface %p\n", ifp);
 				m_freem(m);
 				continue;
 			}
@@ -670,7 +670,7 @@ free_iframes(hdp, nr, finalbit)
 	if ((hdp->hd_condition & TIMER_RECOVERY_CONDITION) && *nr == hdp->hd_xx && finalbit == 0) {
 		*nr = (*nr - 1 + 8) % MODULUS;
 #if 0
-		kprintf ("QUIRK\n");
+		printf ("QUIRK\n");
 #endif
 	}
 	k = (*nr - hdp->hd_lastrxnr + 8) % MODULUS;

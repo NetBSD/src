@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.34 1996/10/10 22:59:48 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.35 1996/10/13 02:11:03 christos Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -182,7 +182,7 @@ pppattach()
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
-	ksprintf(sc->sc_if.if_xname, "ppp%d", i++);
+	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = PPP_MTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
@@ -414,7 +414,7 @@ pppioctl(sc, cmd, data, flag, p)
 		    sc->sc_xc_state = (*cp)->comp_alloc(ccp_option, nb);
 		    if (sc->sc_xc_state == NULL) {
 			if (sc->sc_flags & SC_DEBUG)
-			    kprintf("%s: comp_alloc failed\n",
+			    printf("%s: comp_alloc failed\n",
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
@@ -429,7 +429,7 @@ pppioctl(sc, cmd, data, flag, p)
 		    sc->sc_rc_state = (*cp)->decomp_alloc(ccp_option, nb);
 		    if (sc->sc_rc_state == NULL) {
 			if (sc->sc_flags & SC_DEBUG)
-			    kprintf("%s: decomp_alloc failed\n",
+			    printf("%s: decomp_alloc failed\n",
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
@@ -440,7 +440,7 @@ pppioctl(sc, cmd, data, flag, p)
 		return (error);
 	    }
 	if (sc->sc_flags & SC_DEBUG)
-	    kprintf("%s: no compressor for [%x %x %x], %x\n",
+	    printf("%s: no compressor for [%x %x %x], %x\n",
 		sc->sc_if.if_xname, ccp_option[0], ccp_option[1],
 		ccp_option[2], nb);
 	return (EINVAL);	/* no handler found */
@@ -665,7 +665,7 @@ pppoutput(ifp, m0, dst, rtp)
 	mode = NPMODE_PASS;
 	break;
     default:
-	kprintf("%s: af%d not supported\n", ifp->if_xname, dst->sa_family);
+	printf("%s: af%d not supported\n", ifp->if_xname, dst->sa_family);
 	error = EAFNOSUPPORT;
 	goto bad;
     }
@@ -708,7 +708,7 @@ pppoutput(ifp, m0, dst, rtp)
 	len += m->m_len;
 
     if (sc->sc_flags & SC_LOG_OUTPKT) {
-	kprintf("%s output: ", ifp->if_xname);
+	printf("%s output: ", ifp->if_xname);
 	pppdumpm(m0);
     }
 
@@ -1049,7 +1049,7 @@ ppp_ccp(sc, m, rcvd)
     slen = CCP_LENGTH(dp);
     if (dp + slen > ep) {
 	if (sc->sc_flags & SC_DEBUG)
-	    kprintf("if_ppp/ccp: not enough data in mbuf (%p+%x > %p+%x)\n",
+	    printf("if_ppp/ccp: not enough data in mbuf (%p+%x > %p+%x)\n",
 		dp, slen, mtod(mp, u_char *), mp->m_len);
 	return;
     }
@@ -1179,7 +1179,7 @@ ppp_inproc(sc, m)
 	ilen = 0;
 	for (mp = m; mp != NULL; mp = mp->m_next)
 	    ilen += mp->m_len;
-	kprintf("%s: got %d bytes\n", ifp->if_xname, ilen);
+	printf("%s: got %d bytes\n", ifp->if_xname, ilen);
 	pppdumpm(m);
     }
 
@@ -1221,7 +1221,7 @@ ppp_inproc(sc, m)
 	     * CCP down or issue a Reset-Req.
 	     */
 	    if (sc->sc_flags & SC_DEBUG)
-		kprintf("%s: decompress failed %d\n", ifp->if_xname, rv);
+		printf("%s: decompress failed %d\n", ifp->if_xname, rv);
 	    s = splhigh();
 	    sc->sc_flags |= SC_VJ_RESET;
 	    if (rv == DECOMP_ERROR)
@@ -1271,7 +1271,7 @@ ppp_inproc(sc, m)
 
 	if (xlen <= 0) {
 	    if (sc->sc_flags & SC_DEBUG)
-		kprintf("%s: VJ uncompress failed on type comp\n",
+		printf("%s: VJ uncompress failed on type comp\n",
 		    ifp->if_xname);
 	    goto bad;
 	}
@@ -1323,7 +1323,7 @@ ppp_inproc(sc, m)
 
 	if (xlen < 0) {
 	    if (sc->sc_flags & SC_DEBUG)
-		kprintf("%s: VJ uncompress failed on type uncomp\n",
+		printf("%s: VJ uncompress failed on type uncomp\n",
 		    ifp->if_xname);
 	    goto bad;
 	}
@@ -1414,7 +1414,7 @@ ppp_inproc(sc, m)
 	IF_DROP(inq);
 	splx(s);
 	if (sc->sc_flags & SC_DEBUG)
-	    kprintf("%s: input queue full\n", ifp->if_xname);
+	    printf("%s: input queue full\n", ifp->if_xname);
 	ifp->if_iqdrops++;
 	goto bad;
     }
@@ -1468,7 +1468,7 @@ done:
     if (m)
 	*bp++ = '>';
     *bp = 0;
-    kprintf("%s\n", buf);
+    printf("%s\n", buf);
 }
 
 #endif	/* NPPP > 0 */

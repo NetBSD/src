@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.14 1996/10/10 23:02:29 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.15 1996/10/13 02:10:14 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -709,7 +709,7 @@ to_bcd(b, sa, xcp)
 		char            dnicname[sizeof(long) * NBBY / 3 + 2];
 		register char  *p = dnicname;
 
-		ksprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
+		sprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
 		for (; *p; p++)	/* *p == 0 means dnic matched */
 			if ((*p ^ *x++) & 0x0f)
 				break;
@@ -1144,16 +1144,16 @@ pk_message(lcn, xcp, fmt, va_alist)
 
 	if (lcn)
 		if (!PQEMPTY)
-			kprintf("X.25(%s): lcn %d: ", format_ntn(xcp), lcn);
+			printf("X.25(%s): lcn %d: ", format_ntn(xcp), lcn);
 		else
-			kprintf("X.25: lcn %d: ", lcn);
+			printf("X.25: lcn %d: ", lcn);
 	else if (!PQEMPTY)
-		kprintf("X.25(%s): ", format_ntn(xcp));
+		printf("X.25(%s): ", format_ntn(xcp));
 	else
-		kprintf("X.25: ");
+		printf("X.25: ");
 
 	va_start(ap, fmt);
-	kprintf("%:\n", fmt, ap);
+	printf("%:\n", fmt, ap);
 	va_end(ap);
 }
 

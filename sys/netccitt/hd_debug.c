@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_debug.c,v 1.7 1996/10/10 23:02:20 christos Exp $	*/
+/*	$NetBSD: hd_debug.c,v 1.8 1996/10/13 02:10:01 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -84,11 +84,11 @@ hd_trace(hdp, direction, frame)
 #endif
 	if (hdp->hd_xcp->xc_ltrace) {
 		if (direction == RX)
-			kprintf("F-In:  ");
+			printf("F-In:  ");
 		else if (direction == 2)
-			kprintf("F-Xmt: ");
+			printf("F-Xmt: ");
 		else
-			kprintf("F-Out:   ");
+			printf("F-Out:   ");
 
 		nr = iframe->nr;
 		pf = iframe->pf;
@@ -96,45 +96,45 @@ hd_trace(hdp, direction, frame)
 
 		switch (hd_decode(hdp, frame)) {
 		case SABM:
-			kprintf("SABM   : PF=%d\n", pf);
+			printf("SABM   : PF=%d\n", pf);
 			break;
 
 		case DISC:
-			kprintf("DISC   : PF=%d\n", pf);
+			printf("DISC   : PF=%d\n", pf);
 			break;
 
 		case DM:
-			kprintf("DM     : PF=%d\n", pf);
+			printf("DM     : PF=%d\n", pf);
 			break;
 
 		case FRMR:
 			{
 				register struct Frmr_frame *f = (struct Frmr_frame *) frame;
 
-				kprintf("FRMR   : PF=%d, TEXT=", pf);
+				printf("FRMR   : PF=%d, TEXT=", pf);
 				for (s = (char *) frame, i = 0; i < 5; ++i, ++s)
-					kprintf("%x ", (int) *s & 0xff);
-				kprintf("\n");
-				kprintf("control=%x v(s)=%d v(r)=%d w%d x%d y%d z%d\n",
+					printf("%x ", (int) *s & 0xff);
+				printf("\n");
+				printf("control=%x v(s)=%d v(r)=%d w%d x%d y%d z%d\n",
 				    f->frmr_control, f->frmr_ns, f->frmr_nr,
 				f->frmr_w, f->frmr_x, f->frmr_y, f->frmr_z);
 				break;
 			}
 
 		case UA:
-			kprintf("UA     : PF=%d\n", pf);
+			printf("UA     : PF=%d\n", pf);
 			break;
 
 		case RR:
-			kprintf("RR     : N(R)=%d, PF=%d\n", nr, pf);
+			printf("RR     : N(R)=%d, PF=%d\n", nr, pf);
 			break;
 
 		case RNR:
-			kprintf("RNR    : N(R)=%d, PF=%d\n", nr, pf);
+			printf("RNR    : N(R)=%d, PF=%d\n", nr, pf);
 			break;
 
 		case REJ:
-			kprintf("REJ    : N(R)=%d, PF=%d\n", nr, pf);
+			printf("REJ    : N(R)=%d, PF=%d\n", nr, pf);
 			break;
 
 		case IFRAME:
@@ -145,19 +145,19 @@ hd_trace(hdp, direction, frame)
 				for (m = dtom(frame); m; m = m->m_next)
 					len += m->m_len;
 				len -= HDHEADERLN;
-				kprintf("IFRAME : N(R)=%d, PF=%d, N(S)=%d, DATA(%d)=",
+				printf("IFRAME : N(R)=%d, PF=%d, N(S)=%d, DATA(%d)=",
 				       nr, pf, ns, len);
 				for (s = (char *) iframe->i_field, i = 0; i < 3; ++i, ++s)
-					kprintf("%x ", (int) *s & 0xff);
-				kprintf("\n");
+					printf("%x ", (int) *s & 0xff);
+				printf("\n");
 				break;
 			}
 
 		default:
-			kprintf("ILLEGAL: ");
+			printf("ILLEGAL: ");
 			for (s = (char *) frame, i = 0; i < 5; ++i, ++s)
-				kprintf("%x ", (int) *s & 0xff);
-			kprintf("\n");
+				printf("%x ", (int) *s & 0xff);
+			printf("\n");
 		}
 
 	}
@@ -195,17 +195,17 @@ hd_dumptrace(hdp)
 
 	freezetrace = 1;
 	hd_status(hdp);
-	kprintf("retransmit queue:");
+	printf("retransmit queue:");
 	for (i = 0; i < 8; i++)
-		kprintf(" %x", hdp->hd_retxq[i]);
-	kprintf("\n");
+		printf(" %x", hdp->hd_retxq[i]);
+	printf("\n");
 	ltrace = hdp->hd_xcp->xc_ltrace;
 	hdp->hd_xcp->xc_ltrace = 1;
 	for (i = 0; i < NTRACE; i++) {
 		htp = &hdtrace[(lasttracelogged + i) % NTRACE];
 		if (htp->ht_hdp != hdp || htp->ht_frame == 0)
 			continue;
-		kprintf("%d/%d	", htp->ht_time.tv_sec & 0xff,
+		printf("%d/%d	", htp->ht_time.tv_sec & 0xff,
 		       htp->ht_time.tv_usec / 10000);
 		hd_trace(htp->ht_hdp, htp->ht_dir,
 			 mtod(htp->ht_frame, struct Hdlc_frame *));
