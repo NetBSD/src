@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.kmod.mk,v 1.3 1996/08/27 22:15:52 explorer Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.4 1996/08/27 23:31:47 explorer Exp $
 
-S!=	cd ..;pwd
+S!=	cd ${.CURDIR}/..;pwd
 
 KERN=	$S/kern
 
@@ -13,6 +13,8 @@ KERN=	$S/kern
 .include <bsd.own.mk>
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I${.CURDIR} -I$S -I$S/arch
+
+CLEANFILES+=	machine ${MACHINE}
 
 DPSRCS+= ${SRCS:M*.h}
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
