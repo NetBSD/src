@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.1 2002/05/07 13:55:41 isaki Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.2 2002/05/07 14:08:32 isaki Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,7 +7,7 @@
 
 # TOP is assumed to be defined by Makefile including this one.
 
-COMMONDIR=	${TOP}/bootfloppy-common
+COMMONDIR=	${TOP}/common
 
 
 IMAGE?=		xxx-${DISTRIBREV}.fs
@@ -20,13 +20,9 @@ BOOTNAME?=	USTAR.volsize.4540
 BASENAME?=	boot
 IMAGE1?=	${BASENAME}1.fs
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
 MDEC=		${DESTDIR}/usr/mdec
 FSTMP=		ustar.fs
 
-DISKTYPE?=	floppy5
 DISKSIZE?=	2400
 BLOCK8K?=	149
 
@@ -38,13 +34,8 @@ realall: netbsd ${BOOTNAME}
 	@echo
 	@echo Making disk number one
 	-mv -f ${IMAGE1} ${IMAGE1}.tmp
-	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE1}.tmp
-	disklabel -rw ${VND} ${DISKTYPE}
-	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_RDEV}
-	@echo "installing new bootblocks"
-	${MDEC}/installboot.new -v ${MDEC}/fdboot_ustar ${VND_RDEV}
-	vnconfig -u ${VND}
+	cat ${MDEC}/fdboot_ustar /dev/zero | dd of=${IMAGE1}.tmp bs=1k count=8
+	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${IMAGE1}.tmp
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -78,9 +69,6 @@ realall: netbsd ${BOOTNAME}
 	)
 	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
-unconfig:
-	-vnconfig -u ${VND}
-
 ${BOOTNAME}:
 	cp -fp ${MDEC}/boot ${BOOTNAME}
 
@@ -91,9 +79,9 @@ release: check_RELEASEDIR
 	${RELEASE_INSTALL} ${BASENAME}*.fs ${RELEASEDIR}/installation/floppy
 	# XXX: do we want this?
 	for f in ${RELEASEDIR}/installation/floppy/${BASENAME}*.fs; do \
-		gzip <$$f >$$f.gz; \
+		gzip -9v <$$f >$$f.gz; \
 	done
 
-CLEANFILES+=	${IMAGE1}.tmp ${BASENAME}?.fs
+CLEANFILES+=	${IMAGE1} ${IMAGE1}.tmp ${BASENAME}?.fs
 
 .include <bsd.prog.mk>

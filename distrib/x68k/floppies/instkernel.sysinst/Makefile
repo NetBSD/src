@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/07 06:57:50 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2002/05/07 14:08:33 isaki Exp $
 
 TOP=		${.CURDIR}/..
 
-.include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
 KERNDIR=	${KERNOBJDIR}/INSTALL
 KERN=		${KERNDIR}/netbsd
 KERNNAME=	netbsd.INSTALL
-RAMDISKDIR=	$(.CURDIR)/../ramdisk.sysinst/
+RAMDISKDIR=	${TOP}/ramdisk.sysinst/
 
-.include "${TOP}/instkernel-common/Makefile.inc"
+.include "${TOP}/common/Makefile.instkernel"
