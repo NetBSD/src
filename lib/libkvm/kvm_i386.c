@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_i386.c,v 1.1.1.1 1994/05/09 03:15:54 cgd Exp $";
+static char *rcsid = "$Id: kvm_i386.c,v 1.2 1994/05/09 07:01:14 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -154,6 +154,7 @@ _kvm_uvatop(kd, p, va, pa)
 	u_long va;
 	u_long *pa;
 {
+#ifdef notdef
 	struct vmspace *vms = p->p_vmspace;
 	struct pde pde, *pdeloc;
 	struct pte pte, *pteloc;
@@ -185,6 +186,7 @@ _kvm_uvatop(kd, p, va, pa)
 	offset = va & PGOFSET;
 	*pa = pte.pg_pfnum + offset;
 	return (NBPG - offset);
+#endif
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
