@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112.2.2 1999/04/04 10:27:38 fair Exp $
+#	$NetBSD: Makefile,v 1.112.2.3 1999/04/08 08:28:08 fair Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -273,8 +273,8 @@ snap_kern:
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/GENERIC && ${MAKE} clean 
 .endif
+	cd ${KERNOBJDIR}/GENERIC && ${MAKE} depend && ${MAKE} ${_J}
 	cd ${KERNOBJDIR}/GENERIC &&	\
-		${MAKE} depend && ${MAKE} ${_J} &&	\
 		tar cf - `awk '$$1=="config" {print $$2}'  \
 			${KERNCONFDIR}/GENERIC` |\
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
@@ -284,8 +284,8 @@ snap_kern:
 .ifndef UPDATE
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
 .endif
+	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
 	cd ${KERNOBJDIR}/${configfile} &&	\
-		${MAKE} depend && ${MAKE} ${_J} &&	\
 		for kernel in `awk '$$1=="config" {print $$2}' \
 			${KERNCONFDIR}/${configfile}` ; {   \
 		gzip -c -9 < $${kernel} > \
