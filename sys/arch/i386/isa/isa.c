@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.3 1993/09/30 20:21:17 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.4 1993/10/06 12:09:12 mycroft Exp $
  */
 
 /*
@@ -223,8 +223,7 @@ isaprint(aux, isaname)
 		printf("-0x%x", ia->ia_iobase + ia->ia_iosize - 1);
 #ifdef DIAGNOSTIC
 	if (ia->ia_irq == IRQUNK)
-		printf(" XXX");
-	else
+		printf(" THIS IS A BUG ->");
 #endif
 	if (ia->ia_irq != IRQNONE)
 		printf(" irq %d", ffs(ia->ia_irq) - 1);
