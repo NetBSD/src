@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.19 1999/06/18 05:58:48 is Exp $
+# $NetBSD: AMIGA,v 1.20 1999/07/28 05:56:07 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
+#$ NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
