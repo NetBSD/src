@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 2002/02/24 01:04:25 matt Exp $ */
+/*	$NetBSD: srt0.S,v 1.2 2002/03/31 00:11:14 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -73,7 +73,7 @@ ENTRY(machdep_start, 0)
 	movl	4(%ap), %r6
 	movl	20(%ap), %r9	# end of symbol table
 	pushl	8(%ap)		# number of symbols
-	pushl	12(%ap)		# start of symbols
+	pushl	16(%ap)		# start of symbols
 	movab	_C_LABEL(bootrpb),%r10	# get RPB address
 	pushl	%r10		# argument for new boot
 	ashl	$9,76(%r10),%r8	# memory size (COMPAT)
