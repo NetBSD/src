@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.4 2000/03/19 16:28:04 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.5 2000/03/25 15:27:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,6 +178,8 @@ si_attach(parent, self, aux)
 	ncr_sc->sci_r5 = addr + 5;
 	ncr_sc->sci_r6 = addr + 6;
 	ncr_sc->sci_r7 = addr + 7;
+
+	ncr_sc->sc_rev = NCR_VARIANT_CXD1180;
 
 	ncr_sc->sc_pio_in  = ncr5380_pio_in;
 	ncr_sc->sc_pio_out = ncr5380_pio_out;

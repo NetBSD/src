@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.6 2000/03/18 16:16:12 mycroft Exp $	*/
+/*	$NetBSD: csa.c,v 1.7 2000/03/25 15:27:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,8 @@ csa_attach(parent, self, aux)
 	sc->sc_ncr5380.sci_r5 = iobase + 20;
 	sc->sc_ncr5380.sci_r6 = iobase + 24;
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
+
+	sc->sc_ncr5380.sc_rev = NCR_VARIANT_NCR5380;
 
 	sc->sc_ctrl = (u_char *)pa->pa_podule->slow_base + CSA_CTRL_OFFSET;
 	sc->sc_status = (u_char *)pa->pa_podule->slow_base + CSA_STAT_OFFSET;

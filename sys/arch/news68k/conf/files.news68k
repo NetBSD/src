@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.4 2000/03/15 17:08:40 soren Exp $
+#	$NetBSD: files.news68k,v 1.5 2000/03/25 15:27:55 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -112,11 +112,8 @@ major { cd = 16 }
 major { st = 17 }
 
 # Sony CXD1180 SCSI controller
-# XXX should use MI driver...
-#device si: scsi, ncr5380sbc
-device si: scsi
+device si: scsi, ncr5380sbc
 file arch/news68k/dev/si.c			si needs-flag
-file arch/news68k/dev/ncr5380sbc.c		si
 attach si at hb
 
 # memory disk
