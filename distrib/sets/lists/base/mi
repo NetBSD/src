@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.5 2002/09/17 13:34:30 lukem Exp $
+# $NetBSD: mi,v 1.324.2.6 2002/12/26 07:52:25 tron Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -772,6 +772,7 @@
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
 ./usr/sbin/stdhosts		base-nis-bin
+./usr/sbin/sunlabel		base-sysutil-bin
 ./usr/sbin/sup			base-sup-bin
 ./usr/sbin/supfilesrv		base-sup-bin
 ./usr/sbin/supscan		base-sup-bin
