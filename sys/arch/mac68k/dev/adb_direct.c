@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.36 1999/12/25 08:16:34 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.37 2000/02/21 01:20:55 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1842,7 +1842,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 		break;
 
 	case ADB_HW_IOP:
-#if 0
+#ifdef __notyet__
 		result = send_adb_iop((int)command, (u_char *)buffer,
 		    (void *)compRout, (void *)data);
 		if (result == 0)
@@ -1926,9 +1926,11 @@ adb_hw_setup(void)
 		break;
 
 	case ADB_HW_IOP:
-		/* adbActionState = ADB_ACTION_RUNNING; */
 		via_reg(VIA1, vIER) = 0x84;
 		via_reg(VIA1, vIFR) = 0x04;
+#ifdef __notyet__
+		adbActionState = ADB_ACTION_RUNNING;
+#endif
 		break;
 
 	case ADB_HW_IISI:
