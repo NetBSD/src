@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1997/06/12 15:46:50 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1997/09/11 23:02:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -387,11 +387,10 @@ cpu_startup()
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
 
@@ -401,9 +400,9 @@ setregs(p, pack, stack, retval)
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype) {
+	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-	}
+
 	p->p_md.md_flags = 0;
 	/* XXX - HPUX sigcode hack would go here... */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.50 1997/07/06 12:32:39 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.51 1997/09/11 23:02:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -89,7 +89,7 @@ struct	emul {
 				    void *, void *));
 					/* Set registers before execution */
 	void	(*e_setregs) __P((struct proc *, struct exec_package *,
-				  u_long, register_t *));
+				  u_long));
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 };
