@@ -5207,6 +5207,8 @@ do
     tic30_aout_vec)		tb="$tb aout-tic30.lo" ;;
     tic30_coff_vec)		tb="$tb coff-tic30.lo" ;;
     tic80coff_vec)		tb="$tb coff-tic80.lo cofflink.lo" ;;
+    vaxcoff_vec)		tb="$tb coff-vax.lo" ;;
+    vaxnetbsd_vec)		tb="$tb vaxnetbsd.lo aout32.lo" ;;
     versados_vec)		tb="$tb versados.lo" ;;
     vms_alpha_vec)		tb="$tb vms.lo vms-hdr.lo vms-gsd.lo vms-tir.lo vms-misc.lo"
  				target64=true ;;
