@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2002/12/05 02:05:57 fvdl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.1 2003/04/26 19:02:52 fvdl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
