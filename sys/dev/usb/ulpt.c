@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.11 1999/01/10 11:13:36 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.12 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #if defined(__NetBSD__)
 #include <sys/device.h>
@@ -56,6 +55,7 @@
 #endif
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #include <sys/syslog.h>
 
 #include <dev/usb/usb.h>
@@ -104,6 +104,9 @@ struct ulpt_softc {
 	u_char sc_flags;
 #define	ULPT_NOPRIME	0x40	/* don't prime on open */
 	u_char sc_laststatus;
+
+	int sc_refcnt;
+	u_char sc_dying;
 };
 
 int ulptopen __P((dev_t, int, int, struct proc *));
@@ -112,6 +115,7 @@ int ulptwrite __P((dev_t, struct uio *uio, int));
 int ulptioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 void ulpt_disco __P((void *));
 
+int ulpt_do_write __P((struct ulpt_softc *, struct uio *uio, int));
 int ulpt_status __P((struct ulpt_softc *));
 void ulpt_reset __P((struct ulpt_softc *));
 int ulpt_statusmsg __P((u_char, struct ulpt_softc *));
@@ -178,8 +182,10 @@ USB_ATTACH(ulpt)
 
 	sc->sc_iface = iface;
 	r = usbd_interface2device_handle(iface, &sc->sc_udev);
-	if (r != USBD_NORMAL_COMPLETION)
+	if (r != USBD_NORMAL_COMPLETION) {
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
+	}
 	sc->sc_ifaceno = id->bInterfaceNumber;
 
 #if 0
@@ -208,7 +214,51 @@ is unknown.  usbd_do_request() returns error on a short transfer.
 
  nobulk:
 	printf("%s: could not find bulk endpoint\n", USBDEVNAME(sc->sc_dev));
+	sc->sc_dying = 1;
 	USB_ATTACH_ERROR_RETURN;
+}
+
+int
+ulpt_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	return (0);
+}
+
+int
+ulpt_detach(self, flags)
+	struct device  *self;
+	int flags;
+{
+	struct ulpt_softc *sc = (struct ulpt_softc *)self;
+	int maj, mn;
+	int s;
+
+	DPRINTF(("ulpt_detach: sc=%p flags=%d\n", sc, flags));
+
+	sc->sc_dying = 1;
+	if (sc->sc_bulkpipe)
+		usbd_abort_pipe(sc->sc_bulkpipe);
+
+	s = splusb();
+	if (--sc->sc_refcnt >= 0) {
+		/* There is noone to wake, aborting the pipe is enough */
+		/* Wait for processes to go away. */
+		usb_detach_wait(&sc->sc_dev);
+	}
+	splx(s);
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == ulptopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close). */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	return (0);
 }
 
 int
@@ -262,7 +312,7 @@ ulptopen(dev, flag, mode, p)
 	int spin, error;
 	USB_GET_SC_OPEN(ulpt, ULPTUNIT(dev), sc);
 
-	if (!sc || !sc->sc_iface)
+	if (!sc || !sc->sc_iface || sc->sc_dying)
 		return ENXIO;
 
 	if (sc->sc_state)
@@ -332,6 +382,7 @@ ulptclose(dev, flag, mode, p)
 	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
 
 	usbd_close_pipe(sc->sc_bulkpipe);
+	sc->sc_bulkpipe = 0;
 
 	sc->sc_state = 0;
 
@@ -340,8 +391,8 @@ ulptclose(dev, flag, mode, p)
 }
 
 int
-ulptwrite(dev, uio, flags)
-	dev_t dev;
+ulpt_do_write(sc, uio, flags)
+	struct ulpt_softc *sc;
 	struct uio *uio;
 	int flags;
 {
@@ -350,7 +401,6 @@ ulptwrite(dev, uio, flags)
 	char buf[ULPT_BSIZE];
 	usbd_request_handle reqh;
 	usbd_status r;
-	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
 
 	DPRINTF(("ulptwrite\n"));
 	reqh = usbd_alloc_request();
@@ -378,6 +428,23 @@ ulptwrite(dev, uio, flags)
 		}
 	}
 	usbd_free_request(reqh);
+
+	return (error);
+}
+
+int
+ulptwrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+	USB_GET_SC(ulpt, ULPTUNIT(dev), sc);
+	int error;
+
+	sc->sc_refcnt++;
+	error = ulpt_do_write(sc, uio, flags);
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(&sc->sc_dev);
 	return (error);
 }
 
@@ -400,18 +467,5 @@ ulptioctl(dev, cmd, data, flag, p)
 }
 
 #if defined(__FreeBSD__)
-static int
-ulpt_detach(device_t self)
-{       
-        struct ulpt_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-	}
-	return 0;
-}
-
 DRIVER_MODULE(ulpt, usb, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
 #endif

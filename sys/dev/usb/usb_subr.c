@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.33 1999/06/14 17:09:57 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.34 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -663,8 +663,7 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	p->refcnt = 1;
 	p->intrreqh = 0;
 	p->running = 0;
-	p->disco = 0;
-	p->discoarg = 0;
+	p->repeat = 0;
 	SIMPLEQ_INIT(&p->queue);
 	r = dev->bus->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
@@ -711,6 +710,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int r, found, i, confi, nifaces;
+	struct device *dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
@@ -739,8 +739,15 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.release = UGETW(dd->bcdDevice);
 
 	/* First try with device specific drivers. */
-	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
+	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
+	if (dv) {
+		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
+		if (dev->subdevs == 0)
+			return (USBD_NOMEM);
+		dev->subdevs[0] = dv;
+		dev->subdevs[1] = 0;
 		return (USBD_NORMAL_COMPLETION);
+	}
 
 	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
 
@@ -769,22 +776,30 @@ usbd_probe_and_attach(parent, dev, port, addr)
 			ifaces[i] = &dev->ifaces[i];
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
+		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
+		if (dev->subdevs == 0)
+			return (USBD_NOMEM);
 		for (found = i = 0; i < nifaces; i++) {
 			if (!ifaces[i])
 				continue; /* interface already claimed */
 			uaa.iface = ifaces[i];
 			uaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, 
-					  usbd_submatch)) {
-				found++;
+			dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print,
+					   usbd_submatch);
+			if (dv) {
+				dev->subdevs[found++] = dv;
+				dev->subdevs[found] = 0;
 				ifaces[i] = 0; /* consumed */
 			}
 		}
 		if (found != 0)
 			return (USBD_NORMAL_COMPLETION);
+		free(dev->subdevs, M_USB);
+		dev->subdevs = 0;
 	}
 	/* No interfaces were attached in any of the configurations. */
-	if (dd->bNumConfigurations > 1)/* don't change if only 1 config */
+
+	if (dd->bNumConfigurations > 1) /* don't change if only 1 config */
 		usbd_set_config_index(dev, 0, 0);
 
 	DPRINTF(("usbd_probe_and_attach: no interface drivers found\n"));
@@ -797,8 +812,15 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.vendor = UHUB_UNK_VENDOR;
 	uaa.product = UHUB_UNK_PRODUCT;
 	uaa.release = UHUB_UNK_RELEASE;
-	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
+	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
+	if (dv) {
+		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
+		if (dev->subdevs == 0)
+			return (USBD_NOMEM);
+		dev->subdevs[0] = dv;
+		dev->subdevs[1] = 0;
 		return (USBD_NORMAL_COMPLETION);
+	}
 
 	/* 
 	 * The generic attach failed, but leave the device as it is.
@@ -1143,4 +1165,25 @@ usbd_fill_deviceinfo(dev, di)
 		di->nports = dev->hub->hubdesc.bNbrPorts;
 	} else
 		di->nports = 0;
+}
+
+void
+usb_free_device(dev)
+	usbd_device_handle dev;
+{
+	int ifcidx, nifc;
+
+	if (dev->default_pipe)
+		usbd_kill_pipe(dev->default_pipe);
+	if (dev->ifaces) {
+		nifc = dev->cdesc->bNumInterface;
+		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
+			usbd_free_iface_data(dev, ifcidx);
+		free(dev->ifaces, M_USB);
+	}
+	if (dev->cdesc)
+		free(dev->cdesc, M_USB);
+	if (dev->subdevs)
+		free(dev->subdevs, M_USB);
+	free(dev, M_USB);
 }

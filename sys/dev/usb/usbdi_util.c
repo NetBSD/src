@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.13 1999/01/08 11:58:26 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.14 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 #if defined(__FreeBSD__)
 #include <sys/bus.h>
 #endif
@@ -508,3 +509,21 @@ usbd_bulk_transfer(reqh, pipe, flags, buf, size, lbl)
 	return (r);
 }
 
+void
+usb_detach_wait(dv)
+	bdevice *dv;
+{
+	DPRINTF(("usb_detach_wait: waiting for %s\n", USBDEVNAME(*dv)));
+	if (tsleep(dv, PZERO, "usbdet", hz * 60))
+		printf("usb_detach_wait: %s didn't detach\n",
+		        USBDEVNAME(*dv));
+	DPRINTF(("usb_detach_wait: %s done\n", USBDEVNAME(*dv)));
+}       
+
+void
+usb_detach_wakeup(dv)
+	bdevice *dv;
+{
+	DPRINTF(("usb_detach_wakeup: for %s\n", USBDEVNAME(*dv)));
+	wakeup(dv);
+}       

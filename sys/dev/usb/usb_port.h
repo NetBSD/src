@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.6 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,13 +59,17 @@ typedef struct device bdevice;			/* base device */
 #define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
 int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
 void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
+int __CONCAT(dname,_detach) __P((struct device *, int)); \
+int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
 struct cfattach __CONCAT(dname,_ca) = { \
 	sizeof(struct __CONCAT(dname,_softc)), \
 	__CONCAT(dname,_match), \
-	__CONCAT(dname,_attach) \
+	__CONCAT(dname,_attach), \
+	__CONCAT(dname,_detach), \
+	__CONCAT(dname,_activate), \
 }
 
 #define USB_MATCH(dname) \
@@ -108,7 +112,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 	struct __CONCAT(dname,_softc) *sc = __CONCAT(dname,_cd).cd_devs[unit]
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
-	((dev)->softc = config_found_sm(parent, args, print, sub))
+	(config_found_sm(parent, args, print, sub))
 
 
 
@@ -220,3 +224,4 @@ __CONCAT(dname,_attach)(device_t self)
 	USB_DECLARE_DRIVER_NAME_INIT(#dname, dname, NONE )
 
 #undef NONE
+

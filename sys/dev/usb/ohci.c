@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.32 1999/06/09 22:57:16 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.33 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ void		ohci_free_sed __P((ohci_softc_t *, ohci_soft_ed_t *));
 ohci_soft_td_t *ohci_alloc_std __P((ohci_softc_t *));
 void		ohci_free_std __P((ohci_softc_t *, ohci_soft_td_t *));
 
+void		ohci_power __P((int, void *));
 usbd_status	ohci_open __P((usbd_pipe_handle));
 void		ohci_poll __P((struct usbd_bus *));
 void		ohci_waitintr __P((ohci_softc_t *, usbd_request_handle));
@@ -250,13 +251,13 @@ ohci_alloc_sed(sc)
 	if (!sc->sc_freeeds) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
 		sed = malloc(sizeof(ohci_soft_ed_t) * OHCI_ED_CHUNK, 
-			     M_USBDEV, M_NOWAIT);
+			     M_USBHC, M_NOWAIT);
 		if (!sed)
 			return 0;
 		r = usb_allocmem(sc->sc_dmatag, OHCI_ED_SIZE * OHCI_ED_CHUNK,
 				 OHCI_ED_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
-			free(sed, M_USBDEV);
+			free(sed, M_USBHC);
 			return 0;
 		}
 		for(i = 0; i < OHCI_ED_CHUNK; i++, sed++) {
@@ -296,13 +297,13 @@ ohci_alloc_std(sc)
 	if (!sc->sc_freetds) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
 		std = malloc(sizeof(ohci_soft_td_t) * OHCI_TD_CHUNK, 
-			     M_USBDEV, M_NOWAIT);
+			     M_USBHC, M_NOWAIT);
 		if (!std)
 			return 0;
 		r = usb_allocmem(sc->sc_dmatag, OHCI_TD_SIZE * OHCI_TD_CHUNK,
 				 OHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
-			free(std, M_USBDEV);
+			free(std, M_USBHC);
 			return 0;
 		}
 		for(i = 0; i < OHCI_TD_CHUNK; i++, std++) {
@@ -504,6 +505,8 @@ ohci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 	sc->sc_bus.do_poll = ohci_poll;
 
+	(void)powerhook_establish(ohci_power, sc);
+
 	return (USBD_NORMAL_COMPLETION);
 
  bad3:
@@ -513,6 +516,20 @@ ohci_init(sc)
  bad1:
 	usb_freemem(sc->sc_dmatag, &sc->sc_hccadma);
 	return (r);
+}
+
+void
+ohci_power(why, v)
+	int why;
+	void *v;
+{
+#ifdef USB_DEBUG
+	ohci_softc_t *sc = v;
+
+	printf("ohci_power: sc=%p, why=%d\n", sc, why);
+	/* XXX should suspend/resume */
+	ohci_dumpregs(sc);
+#endif
 }
 
 #ifdef USB_DEBUG
@@ -609,6 +626,7 @@ ohci_intr(p)
 		intrs &= ~OHCI_WDH;
 	}
 	if (eintrs & OHCI_RD) {
+		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
 		/* XXX process resume detect */
 	}
 	if (eintrs & OHCI_UE) {
@@ -825,7 +843,7 @@ ohci_intr_done(sc, reqh)
 	dma = &opipe->u.intr.datadma;
 	memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
 
-	if (reqh->pipe->intrreqh == reqh) {
+	if (reqh->pipe->repeat) {
 		xfer = opipe->tail;
 		tail = ohci_alloc_std(sc); /* XXX should reuse TD */
 		if (!tail) {
@@ -914,7 +932,7 @@ ohci_rhsc(sc, reqh)
 	reqh->status = USBD_NORMAL_COMPLETION;
 	reqh->xfercb(reqh);
 
-	if (reqh->pipe->intrreqh != reqh) {
+	if (!reqh->pipe->repeat) {
 		sc->sc_intrreqh = 0;
 		usb_freemem(sc->sc_dmatag, &opipe->u.intr.datadma);
 		usb_start_next(reqh->pipe);
@@ -2124,9 +2142,9 @@ ohci_device_intr_abort(reqh)
 {
 	/* XXX inactivate */
 	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
-	if (reqh->pipe->intrreqh == reqh) {
+	if (reqh->pipe->repeat) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
-		reqh->pipe->intrreqh = 0;
+		reqh->pipe->repeat = 0;
 		ohci_intr_done((ohci_softc_t *)reqh->pipe->device->bus, reqh);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.17 1999/06/14 16:59:47 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.18 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 #include <sys/proc.h>
 
 #include <dev/usb/usb.h>
-
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
@@ -78,17 +77,16 @@ struct uhub_softc {
 };
 
 usbd_status uhub_init_port __P((struct usbd_port *));
-void uhub_disconnect __P((struct usbd_port *up));
+void uhub_disconnect_port __P((struct usbd_port *up));
 usbd_status uhub_explore __P((usbd_device_handle hub));
 void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
-
-/*void uhub_disco __P((void *));*/
 
 USB_DECLARE_DRIVER_NAME(usb, uhub);
 
 #if defined(__NetBSD__)
 struct cfattach uhub_uhub_ca = {
-	sizeof(struct uhub_softc), uhub_match, uhub_attach
+	sizeof(struct uhub_softc), uhub_match, uhub_attach,
+	uhub_detach, uhub_activate
 };
 #endif
 
@@ -167,7 +165,7 @@ USB_ATTACH(uhub)
 	
 
 	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
-		     M_USB, M_NOWAIT);
+		     M_USBDEV, M_NOWAIT);
 	if (hub == 0)
 		USB_ATTACH_ERROR_RETURN;
 	dev->hub = hub;
@@ -185,23 +183,23 @@ USB_ATTACH(uhub)
 		printf("%s: bus powered hub connected to bus powered hub, "
 		       "ignored\n",
 		       USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		goto bad;
 	}
 
 	/* Set up interrupt pipe. */
 	r = usbd_device2interface_handle(dev, 0, &iface);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: no interface handle\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		goto bad;
 	}
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == 0) {
 		printf("%s: no endpoint descriptor\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		goto bad;
 	}
 	if ((ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
 		printf("%s: bad interrupt endpoint\n", USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		goto bad;
 	}
 
 	r = usbd_open_pipe_intr(iface, ed->bEndpointAddress,USBD_SHORT_XFER_OK,
@@ -211,7 +209,7 @@ USB_ATTACH(uhub)
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: cannot open interrupt pipe\n", 
 		       USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		goto bad;
 	}
 
 	/* Wait with power off for a while. */
@@ -230,27 +228,12 @@ USB_ATTACH(uhub)
 	sc->sc_running = 1;
 
 	USB_ATTACH_SUCCESS_RETURN;
+
+ bad:
+	free(hub, M_USBDEV);
+	dev->hub = 0;
+	USB_ATTACH_ERROR_RETURN;
 }
-
-#if defined(__FreeBSD__)
-static int
-uhub_detach(device_t self)
-{
-	struct uhub_softc *sc = device_get_softc(self);
-	int nports = sc->sc_hub->hub->hubdesc.bNbrPorts;
-	int p;
-
-	for (p = 0; p < nports; p++) {
-		struct usbd_port *up = &sc->sc_hub->hub->ports[p];
-		if (up->device)
-			uhub_disconnect(up);
-	}
-
-	free(sc->sc_hub->hub, M_USB);
-
-	return 0;
-}
-#endif
 
 usbd_status
 uhub_init_port(up)
@@ -378,7 +361,7 @@ uhub_explore(dev)
 			DPRINTF(("uhub_explore: device %d disappeared "
 				 "on port %d\n", 
 				 up->device->address, port));
-			uhub_disconnect(up);
+			uhub_disconnect_port(up);
 			usbd_clear_port_feature(dev, port, 
 						UHF_C_PORT_CONNECTION);
 		}
@@ -433,22 +416,33 @@ uhub_explore(dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+/*
+ * The general mechanism for detaching drivers works as follows: Each
+ * driver is responsible for maintaining a reference count on the
+ * number of outstanding references to its softc (e.g.  from
+ * processing hanging in a read or write).  The detach method of the
+ * driver decrements this counter and flags in the softc that the
+ * driver is dying and then wakes any sleepers.  It then sleeps on the
+ * softc.  Each place that can sleep must maintain the reference
+ * count.  When the reference count drops to -1 (0 is the normal value
+ * of the reference count) the a wakeup on the softc is performed
+ * signaling to the detach waiter that all references are gone.
+ */
+
+/*
+ * Called from process context when we discover that a port has
+ * been disconnected.
+ */
 void
-uhub_disconnect(up)
+uhub_disconnect_port(up)
 	struct usbd_port *up;
 {
 	usbd_device_handle dev = up->device;
-	usbd_pipe_handle p, n;
+	char *hubname;
 	int i;
-	struct softc { bdevice sc_dev; }; /* all softc begin like this */
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
 		    up, dev, up->portno));
-
-	printf("%s: at %s port %d (addr %d) disconnected\n",
-	       USBDEVNAME(((struct softc *)dev->softc)->sc_dev),
-	       USBDEVNAME(((struct uhub_softc *)up->parent->softc)->sc_dev),
-	       up->portno, dev->address);
 
 	if (!dev->cdesc) {
 		/* Partially attached device, just drop it. */
@@ -457,33 +451,18 @@ uhub_disconnect(up)
 		return;
 	}
 
-	for (i = 0; i < dev->cdesc->bNumInterface; i++) {
-		for (p = LIST_FIRST(&dev->ifaces[i].pipes); p; p = n) {
-			n = LIST_NEXT(p, next);
-			if (p->disco)
-				p->disco(p->discoarg);
-			usbd_abort_pipe(p);
-			usbd_close_pipe(p);
-		}
-	}
-
-	/* XXX Free all data structures and disable further I/O. */
-	if (dev->hub) {
-		struct usbd_port *rup;
-		int p, nports;
-
-		DPRINTFN(3,("usb_disconnect: hub, recursing\n"));
-		nports = dev->hub->hubdesc.bNbrPorts;
-		for(p = 0; p < nports; p++) {
-			rup = &dev->hub->ports[p];
-			if (rup->device)
-				uhub_disconnect(rup);
-		}
+	hubname = USBDEVNAME(*up->parent->subdevs[0]);
+	for (i = 0; dev->subdevs[i]; i++) {
+		printf("%s: at %s port %d (addr %d) disconnected\n",
+		       USBDEVNAME(*dev->subdevs[i]), hubname,
+		       up->portno, dev->address);
+		config_detach(dev->subdevs[i], DETACH_FORCE);
 	}
 
 	dev->bus->devices[dev->address] = 0;
 	up->device = 0;
-	/* XXX free */
+	usb_free_device(dev);
+
 #if defined(__FreeBSD__)
       device_delete_child(
 	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
@@ -491,6 +470,57 @@ uhub_disconnect(up)
 #endif
 }
 
+int
+uhub_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	return (0);
+}
+
+/*
+ * Called from process context when the hub is gone.
+ * Detach all devices on active ports.
+ */
+int
+uhub_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct uhub_softc *sc = (struct uhub_softc *)self;
+	usbd_device_handle dev = sc->sc_hub;
+	struct usbd_port *rup;
+	int p, nports;
+
+	DPRINTF(("uhub_detach: sc=%p flags=%d\n", sc, flags));
+
+	if (!dev->hub) {
+		/* Must be partially working */
+		return (0);
+	}
+
+	usbd_abort_pipe(sc->sc_ipipe);
+	usbd_close_pipe(sc->sc_ipipe);
+
+	nports = dev->hub->hubdesc.bNbrPorts;
+	for(p = 0; p < nports; p++) {
+		rup = &dev->hub->ports[p];
+		if (rup->device)
+			uhub_disconnect_port(rup);
+	}
+	
+	free(dev->hub, M_USBDEV);
+	dev->hub = 0;
+
+	return (0);
+}
+
+/*
+ * Hub interrupt.
+ * This an indication that some port has changed status.
+ * Notify the bus event handler thread that we need
+ * to be explored again.
+ */
 void
 uhub_intr(reqh, addr, status)
 	usbd_request_handle reqh;
@@ -502,8 +532,8 @@ uhub_intr(reqh, addr, status)
 	DPRINTFN(5,("uhub_intr: sc=%p\n", sc));
 	if (status != USBD_NORMAL_COMPLETION)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
-	else
-		usb_needs_explore(sc->sc_hub->bus);
+
+	usb_needs_explore(sc->sc_hub->bus);
 }
 
 #if defined(__FreeBSD__)
