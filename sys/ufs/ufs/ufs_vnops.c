@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.53 1998/12/01 23:18:48 kenh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.54 1999/02/26 07:30:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -863,6 +863,11 @@ abortit:
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
+	if ((nlink_t) ip->i_ffs_nlink >= LINK_MAX) {
+		VOP_UNLOCK(fvp, 0);
+		error = EMLINK;
+		goto abortit;
+	}
 	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
 		(dp->i_ffs_flags & APPEND)) {
 		VOP_UNLOCK(fvp, 0);
