@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.4 2002/02/27 16:28:23 tv Exp $
+#	$NetBSD: mknative,v 1.5 2002/02/27 16:45:11 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -47,7 +47,7 @@ writefile () {
 	# Compare new file, sans "generated from" comments and RCS Id, to
 	# old file.  If they match, don't change anything.
 	rm -f $_TMPDIR/.1 $_TMPDIR/.2
-	grep -v 'Generated from:' $_TOP/$1 >$_TMPDIR/.1
+	grep -v 'Generated from:' $_TOP/$1 >$_TMPDIR/.1 2>/dev/null
 	grep -v 'Generated from:' $_TOP/$1.tmp >$_TMPDIR/.2
 
 	# will not overwrite a file that has the same content
@@ -251,6 +251,8 @@ get_gcc () {
 ##### gnu/usr.bin/gdb #####
 
 get_gdb () {
+	(cd $_TMPDIR/gdb && $MAKE init.c version.c)
+
 	mkdir -p $_TOP/gnu/usr.bin/gdb/arch/$MACHINE_ARCH
 
 	{
@@ -303,7 +305,7 @@ libgcc)	# .mk and .h files for libgcc bootstrap (from host build)
 all)	# everything (uses "canadian cross" temp environment)
 	get_binutils
 	get_gcc
-	get_gdb
+	[ -f $_TMPDIR/gdb/config.h ] && get_gdb
 	get_libbfd
 	get_libg2c
 	get_libgcc
