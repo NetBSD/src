@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.4 2002/05/12 07:41:23 takemura Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.5 2004/12/12 21:03:06 abs Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -184,7 +184,7 @@ config_hook_call_reverse(int type, long id, void *msg)
 #define CONFIG_HOOK_NTYPES 		6
 
 /*
- * nicknames for including from configration file.
+ * nicknames for including from configuration file.
  */
 #ifdef CONFIG_HOOK_DEFINE_NICKNAME
 /* type nicknames */
