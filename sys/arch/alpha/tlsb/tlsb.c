@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.9 1998/05/13 23:23:23 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.10 1998/05/14 00:01:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.9 1998/05/13 23:23:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.10 1998/05/14 00:01:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,10 @@ tlsbmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure we're looking for a TurboLaser. */
-	if (strcmp(ca->ca_name, tlsb_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, tlsb_cd.cd_name) != 0)
 		return (0);
 
 	/*

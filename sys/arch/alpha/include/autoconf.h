@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.15 1998/05/13 23:38:27 thorpej Exp $ */
+/* $NetBSD: autoconf.h,v 1.16 1998/05/14 00:01:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,14 +31,10 @@
  * Machine-dependent structures of autoconfiguration
  */
 
-struct confargs;
-
-typedef int (*intr_handler_t) __P((void *));
-
-struct confargs {
-	char	*ca_name;		/* Device name. */
-	int	ca_slot;		/* Device slot. */
-	int	ca_offset;		/* Offset into slot. */
+struct mainbus_attach_args {
+	const char *ma_name;		/* device name */
+	int	    ma_slot;		/* CPU "slot" number; only meaningful
+					   when attaching CPUs */
 };
 
 struct bootdev_data {

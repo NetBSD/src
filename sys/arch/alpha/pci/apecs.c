@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.30 1998/04/29 00:24:59 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.31 1998/05/14 00:01:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.30 1998/04/29 00:24:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.31 1998/05/14 00:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,10 @@ apecsmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure that we're looking for an APECS. */
-	if (strcmp(ca->ca_name, apecs_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, apecs_cd.cd_name) != 0)
 		return (0);
 
 	if (apecsfound)

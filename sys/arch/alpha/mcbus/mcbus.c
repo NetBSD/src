@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.2 1998/04/15 20:37:39 mjacob Exp $ */
+/* $NetBSD: mcbus.c,v 1.3 1998/05/14 00:01:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.2 1998/04/15 20:37:39 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.3 1998/05/14 00:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,10 @@ mcbusmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure we're looking for a MCBUS. */
-	if (strcmp(ca->ca_name, mcbus_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, mcbus_cd.cd_name) != 0)
 		return (0);
 
 	/*
