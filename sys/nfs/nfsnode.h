@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.6 1993/12/22 13:00:36 cgd Exp $
+ *	$Id: nfsnode.h,v 1.7 1994/02/15 21:07:15 pk Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -64,6 +64,8 @@ struct nfsnode {
 	pid_t	n_lockholder;	/* holder of nfsnode lock */
 	pid_t	n_lockwaiter;	/* most recent waiter for nfsnode lock */
 	u_long	n_direofoffset;	/* Dir. EOF offset cache */
+	struct timeval n_delayed_atime;	/* Non-urgent access/modified time */
+	struct timeval n_delayed_mtime;	/* updates are stored here. */
 };
 
 #define	n_forw		n_chain[0]
@@ -226,5 +228,34 @@ int	nfs_advlock __P((
 		int op,
 		struct flock *fl,
 		int flags));
-
+int	nfsspec_close __P((
+		struct vnode *vp,
+		int fflag,
+		struct ucred *cred,
+		struct proc *p));
+int	nfsspec_read __P((
+		struct vnode *vp,
+		struct uio *uio,
+		int ioflag,
+		struct ucred *cred));
+int	nfsspec_write __P((
+		struct vnode *vp,
+		struct uio *uio,
+		int ioflag,
+		struct ucred *cred));
+int	nfsfifo_close __P((
+		struct vnode *vp,
+		int fflag,
+		struct ucred *cred,
+		struct proc *p));
+int	nfsfifo_read __P((
+		struct vnode *vp,
+		struct uio *uio,
+		int ioflag,
+		struct ucred *cred));
+int	nfsfifo_write __P((
+		struct vnode *vp,
+		struct uio *uio,
+		int ioflag,
+		struct ucred *cred));
 #endif /* !_NFS_NFSNODE_H_ */
