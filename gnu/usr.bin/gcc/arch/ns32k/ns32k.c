@@ -30,10 +30,31 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-flags.h"
 #include "output.h"
 #include "insn-attr.h"
+#include "expr.h"
+#include "flags.h"
 
 #ifdef OSF_OS
 int ns32k_num_files = 0;
 #endif
+
+/* This duplicates reg_class_contens in reg_class.c, but maybe that isn't
+   initialized in time. Also this is more convenient as an array of ints.
+   We know that HARD_REG_SET fits in an unsigned int */
+
+unsigned int ns32k_reg_class_contents[N_REG_CLASSES] = REG_CLASS_CONTENTS;
+
+enum reg_class regclass_map[FIRST_PSEUDO_REGISTER] =
+{
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  FLOAT_REG0, LONG_FLOAT_REG0, FLOAT_REGS, FLOAT_REGS,
+  FLOAT_REGS, FLOAT_REGS, FLOAT_REGS, FLOAT_REGS,
+  FP_REGS, FP_REGS, FP_REGS, FP_REGS,
+  FP_REGS, FP_REGS, FP_REGS, FP_REGS,
+  FRAME_POINTER_REG, STACK_POINTER_REG
+};
+
+char *ns32k_out_reg_names[] = OUTPUT_REGISTER_NAMES;
 
 void
 trace (s, s1, s2)
@@ -42,77 +63,74 @@ trace (s, s1, s2)
   fprintf (stderr, s, s1, s2);
 }
 
-/* Value is 1 if hard register REGNO can hold a value of machine-mode MODE. */ 
 
+/* Value is 1 if hard register REGNO can hold a value of machine-mode MODE. */ 
 int
 hard_regno_mode_ok (regno, mode)
      int regno;
      enum machine_mode mode;
 {
-  switch (mode)
+  int size = GET_MODE_UNIT_SIZE(mode);
+
+  if (FLOAT_MODE_P(mode))
     {
-    case QImode:
-    case HImode:
-    case PSImode:
-    case SImode:
-    case PDImode:
-    case VOIDmode:
-    case BLKmode:
-      if (regno < 8 || regno == 16 || regno == 17)
+#if 0
+      /* This test should not be necessary. General registers, paired
+       * if necessary, can *always* hold a float. But in practice it causes
+       * problems with spill registers
+       */
+      if (TARGET_32081 && regno < F0_REGNUM)
+	return 0;
+#endif
+      if (size == UNITS_PER_WORD && regno < L1_REGNUM)
 	return 1;
-      else
-	return 0;
-
-    case DImode:
-      if (regno < 8 && (regno & 1) == 0)
+      if (size == UNITS_PER_WORD * 2
+	  && (((regno & 1) == 0 && regno < FRAME_POINTER_REGNUM)))
 	return 1;
-      else
-	return 0;
-
-    case SFmode:
-    case SCmode:
-      if (TARGET_32081)
-	{
-	  if (regno < 16)
-	    return 1;
-	  else
-	    return 0;
-	}
-      else
-	{
-	  if (regno < 8)
-	    return 1;
-	  else 
-	    return 0;
-	}
-
-    case DFmode:
-    case DCmode:
-      if ((regno & 1) == 0)
-	{	
-	  if (TARGET_32081)
-	    {
-	      if (regno < 16)
-		return 1;
-	      else
-		return 0;
-	    }
-	  else
-	    {
-	      if (regno < 8)
-		return 1;
-	      else
-		return 0;
-	    }
-	}
-      else
-	return 0;
+      return 0;
     }
-
-  /* Used to abort here, but simply saying "no" handles TImode
-     much better.  */
+  if (size == UNITS_PER_WORD * 2
+      && (regno & 1) == 0 && regno < F0_REGNUM)
+    return 1;
+  if (size <= UNITS_PER_WORD
+      && (regno < F0_REGNUM || regno == FRAME_POINTER_REGNUM
+	  || regno == STACK_POINTER_REGNUM))
+    return 1;
   return 0;
 }
+
+int register_move_cost(CLASS1, CLASS2)
+     enum reg_class CLASS1;
+     enum reg_class CLASS2;
+{
+  if (CLASS1 == NO_REGS || CLASS2 == NO_REGS)
+    return 2;
+  if((SUBSET_P(CLASS1, FP_REGS) && !SUBSET_P(CLASS2, FP_REGS))
+   || (!SUBSET_P(CLASS1, FP_REGS) && SUBSET_P(CLASS2, FP_REGS)))
+    return 8;
+  if (((CLASS1) == STACK_POINTER_REG && !SUBSET_P(CLASS2,GENERAL_REGS))
+      || ((CLASS2) == STACK_POINTER_REG && !SUBSET_P(CLASS1,GENERAL_REGS)))
+    return 6;
+  if (((CLASS1) == FRAME_POINTER_REG && !SUBSET_P(CLASS2,GENERAL_REGS))
+      || ((CLASS2) == FRAME_POINTER_REG && !SUBSET_P(CLASS1,GENERAL_REGS)))
+    return 6;
+  return 2;
+}
+
+#if 0
+/* We made the insn definitions copy from floating point to general
+  registers via the stack. */
+int secondary_memory_needed(CLASS1, CLASS2, M)
+     enum reg_class CLASS1;
+     enum reg_class CLASS2;
+     enum machine_mode M;
+{
+  int ret = ((SUBSET_P(CLASS1, FP_REGS) && !SUBSET_P(CLASS2, FP_REGS))
+   || (!SUBSET_P(CLASS1, FP_REGS) && SUBSET_P(CLASS2, FP_REGS)));
+  return ret;
+}
+#endif
+    
 
 /* ADDRESS_COST calls this.  This function is not optimal
    for the 32032 & 32332, but it probably is better than
@@ -174,30 +192,18 @@ secondary_reload_class (class, mode, in)
   if (regno >= FIRST_PSEUDO_REGISTER)
     regno = -1;
 
-  /* We can place anything into GENERAL_REGS and can put GENERAL_REGS
-     into anything.  */
-  if (class == GENERAL_REGS || (regno >= 0 && regno < 8))
+  if ((class == FRAME_POINTER_REG && regno == STACK_POINTER_REGNUM)
+      || ( class == STACK_POINTER_REG && regno == FRAME_POINTER_REGNUM))
+    return GENERAL_REGS;
+  else
     return NO_REGS;
-
-  /* Constants, memory, and FP registers can go into FP registers.  */
-  if ((regno == -1 || (regno >= 8 && regno < 16)) && (class == FLOAT_REGS))
-    return NO_REGS;
-
-#if 0 /* This isn't strictly true (can't move fp to sp or vice versa),
-	 so it's cleaner to use PREFERRED_RELOAD_CLASS
-	 to make the right things happen.  */
-  if (regno >= 16 && class == GEN_AND_MEM_REGS)
-    return NO_REGS;
-#endif
-
-  /* Otherwise, we need GENERAL_REGS. */
-  return GENERAL_REGS;
 }
+
 /* Generate the rtx that comes from an address expression in the md file */
 /* The expression to be build is BASE[INDEX:SCALE].  To recognize this,
    scale must be converted from an exponent (from ASHIFT) to a
    multiplier (for MULT). */
-rtx
+static rtx
 gen_indexed_expr (base, index, scale)
      rtx base, index, scale;
 {
@@ -225,6 +231,40 @@ reg_or_mem_operand (op, mode)
 	  && (GET_CODE (op) == REG
 	      || GET_CODE (op) == SUBREG
 	      || GET_CODE (op) == MEM));
+}
+
+
+/* Split one or more DImode RTL references into pairs of SImode
+   references.  The RTL can be REG, offsettable MEM, integer constant, or
+   CONST_DOUBLE.  "operands" is a pointer to an array of DImode RTL to
+   split and "num" is its length.  lo_half and hi_half are output arrays
+   that parallel "operands". */
+
+void
+split_di (operands, num, lo_half, hi_half)
+     rtx operands[];
+     int num;
+     rtx lo_half[], hi_half[];
+{
+  while (num--)
+    {
+      if (GET_CODE (operands[num]) == REG)
+	{
+	  lo_half[num] = gen_rtx (REG, SImode, REGNO (operands[num]));
+	  hi_half[num] = gen_rtx (REG, SImode, REGNO (operands[num]) + 1);
+	}
+      else if (CONSTANT_P (operands[num]))
+	{
+	  split_double (operands[num], &lo_half[num], &hi_half[num]);
+	}
+      else if (offsettable_memref_p (operands[num]))
+	{
+	  lo_half[num] = operands[num];
+	  hi_half[num] = adj_offsettable_operand (operands[num], 4);
+	}
+      else
+	abort();
+    }
 }
 
 /* Return the best assembler insn template
@@ -371,6 +411,174 @@ output_move_double (operands)
   return singlemove_string (operands);
 }
 
+
+#define MAX_UNALIGNED_COPY (32)
+/* Expand string/block move operations.
+
+   operands[0] is the pointer to the destination.
+   operands[1] is the pointer to the source.
+   operands[2] is the number of bytes to move.
+   operands[3] is the alignment.  */
+
+static void
+move_tail(operands, bytes, offset)
+     rtx operands[];
+     int bytes;
+     int offset;
+{
+  if (bytes & 2)
+    {
+      rtx src, dest;
+      dest = change_address(operands[0], HImode,
+			    plus_constant(XEXP(operands[0], 0), offset));
+      src = change_address(operands[1], HImode,
+			   plus_constant(XEXP(operands[1], 0), offset));
+      emit_move_insn(dest, src);
+      offset += 2;
+    }
+  if (bytes & 1)
+    {
+      rtx src, dest;
+      dest = change_address(operands[0], QImode,
+			    plus_constant(XEXP(operands[0], 0), offset));
+      src = change_address(operands[1], QImode,
+			   plus_constant(XEXP(operands[1], 0), offset));
+      emit_move_insn(dest, src);
+    }
+}
+
+void
+expand_block_move (operands)
+     rtx operands[];
+{
+  rtx bytes_rtx	= operands[2];
+  rtx align_rtx = operands[3];
+  int constp	= (GET_CODE (bytes_rtx) == CONST_INT);
+  int bytes	= (constp ? INTVAL (bytes_rtx) : 0);
+  int align	= INTVAL (align_rtx);
+  rtx src_reg = gen_rtx(REG, Pmode, 1);
+  rtx dest_reg = gen_rtx(REG, Pmode, 2);
+  rtx count_reg = gen_rtx(REG, SImode, 0);
+  rtx insn;
+
+  if (constp && bytes <= 0)
+    return;
+
+  if (constp && bytes < 20)
+    {
+      int words = bytes >> 2;
+      if (words)
+	if (words < 3 || flag_unroll_loops)
+	  {
+	    int offset = 0;
+	    for (; words; words--, offset += 4)
+	      {
+		rtx src, dest;
+		dest = change_address(operands[0], SImode,
+				      plus_constant(XEXP(operands[0], 0), offset));
+		src = change_address(operands[1], SImode,
+				     plus_constant(XEXP(operands[1], 0), offset));
+		emit_move_insn(dest, src);
+	      }
+	  }
+	else
+	  {
+	    /* Use movmd. It is slower than multiple movd's but more
+	       compact. It is also slower than movsd for large copies
+	       but causes less registers reloading so is better than movsd
+	       for small copies. */
+	    rtx src, dest;
+	    dest = copy_addr_to_reg (XEXP(operands[0], 0));
+	    src = copy_addr_to_reg (XEXP(operands[1], 0));
+	    
+	    emit_insn(gen_movstrsi2(dest, src, GEN_INT(words)));
+	  }
+      move_tail(operands, bytes & 3, bytes & ~3);
+      return;
+    }
+
+  if (align > UNITS_PER_WORD)
+    align = UNITS_PER_WORD;
+
+  /* Move the address into scratch registers.  */
+  emit_insn(gen_rtx(CLOBBER, VOIDmode, dest_reg));
+  emit_move_insn(dest_reg, XEXP (operands[0], 0));
+  emit_insn(gen_rtx(CLOBBER, VOIDmode, src_reg));
+  emit_move_insn(src_reg, XEXP (operands[1], 0));
+  emit_insn(gen_rtx(CLOBBER, VOIDmode, count_reg));
+
+  if (constp && (align == UNITS_PER_WORD || bytes < MAX_UNALIGNED_COPY))
+    {
+      rtx  bytes_reg;
+
+      /* constant no of bytes and aligned or small enough copy to not bother
+       * aligning. Emit insns to copy by words.
+       */
+      if (bytes >> 2)
+	{
+	  emit_move_insn(count_reg, GEN_INT(bytes >> 2));
+	  emit_insn(gen_movstrsi1 (GEN_INT(4)));
+	}
+      /* insns to copy rest */
+#if 1
+      move_tail(operands, bytes & 3, bytes & ~3);
+#else
+      if (bytes & 3)
+	{
+	  emit_move_insn(count_reg, GEN_INT(bytes &3));
+	  emit_insn(gen_movstrsi1 (const1_rtx));
+	}
+#endif
+    }
+  else if (align == UNITS_PER_WORD)
+    {
+      /* insns to copy by words */
+      emit_insn(gen_lshrsi3 (count_reg, bytes_rtx, GEN_INT(2)));
+      emit_insn(gen_movstrsi1 (GEN_INT(4)));
+      /* insns to copy rest */
+      emit_insn(gen_andsi3 (count_reg, bytes_rtx, GEN_INT(3)));
+      emit_insn(gen_movstrsi1 (const1_rtx));
+    }
+  else
+    {
+      /* Not aligned and we may have a lot to copy so it is worth
+       * aligning.
+       */
+      rtx aligned_label = gen_label_rtx ();
+      rtx bytes_reg;
+
+      bytes_reg = copy_to_mode_reg(SImode, bytes_rtx);
+      if (!constp)
+	{
+	  /* Emit insns to test and skip over the alignment if it is
+	   * not worth it. This doubles as a test to ensure that the alignment
+	   * operation can't copy too many bytes
+	   */
+	  emit_insn(gen_cmpsi (bytes_reg, GEN_INT(MAX_UNALIGNED_COPY)));
+	  emit_jump_insn (gen_blt (aligned_label));
+	}
+
+      /* Emit insns to do alignment at run time */
+      emit_insn(gen_negsi2 (count_reg, src_reg));
+      emit_insn(gen_andsi3 (count_reg, count_reg, GEN_INT(3)));
+      emit_insn(gen_subsi3 (bytes_reg, bytes_reg, count_reg));
+      emit_insn(gen_movstrsi1 (const1_rtx));
+      if (!constp)
+	emit_label (aligned_label);
+
+      /* insns to copy by words */
+      emit_insn (gen_lshrsi3 (count_reg, bytes_reg, GEN_INT(2)));
+      emit_insn(gen_movstrsi1 (GEN_INT(4)));
+
+      /* insns to copy rest */
+      emit_insn (gen_andsi3 (count_reg, bytes_reg, GEN_INT(3)));
+      emit_insn(gen_movstrsi1 (const1_rtx));    
+    }
+}
+
+
+
+#if 0 /* not used ? */
 int
 check_reg (oper, reg)
      rtx oper;
@@ -392,6 +600,7 @@ check_reg (oper, reg)
     }
   return 0;
 }
+#endif
 
 /* Returns 1 if OP contains a global symbol reference */
 
@@ -433,10 +642,41 @@ global_symbolic_reference_mentioned_p (op, f)
 }
 
 
+/* Returns 1 if OP contains a symbol reference */
+
+int
+symbolic_reference_mentioned_p (op)
+     rtx op;
+{
+  register char *fmt;
+  register int i;
+
+  if (GET_CODE (op) == SYMBOL_REF || GET_CODE (op) == LABEL_REF)
+    return 1;
+
+  fmt = GET_RTX_FORMAT (GET_CODE (op));
+  for (i = GET_RTX_LENGTH (GET_CODE (op)) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'E')
+	{
+	  register int j;
+
+	  for (j = XVECLEN (op, i) - 1; j >= 0; j--)
+	    if (symbolic_reference_mentioned_p (XVECEXP (op, i, j)))
+	      return 1;
+	}
+      else if (fmt[i] == 'e' && symbolic_reference_mentioned_p (XEXP (op, i)))
+	return 1;
+    }
+
+  return 0;
+}
+
 /* PRINT_OPERAND is defined to call this function,
    which is easier to debug than putting all the code in
    a macro definition in ns32k.h.  */
 
+/* XXX time 12% of cpu time is in fprintf for non optimizing */
 void
 print_operand (file, x, code)
      FILE *file;
@@ -448,7 +688,7 @@ print_operand (file, x, code)
   else if (code == '?')
     PUT_EXTERNAL_PREFIX (file);
   else if (GET_CODE (x) == REG)
-    fprintf (file, "%s", reg_names[REGNO (x)]);
+    fprintf (file, "%s", ns32k_out_reg_names[REGNO (x)]);
   else if (GET_CODE (x) == MEM)
     {
       rtx tmp = XEXP (x, 0);
@@ -495,11 +735,30 @@ print_operand (file, x, code)
     }
   else
     {
+      if (flag_pic
+          && GET_CODE (x) == CONST
+          && symbolic_reference_mentioned_p (x))
+        {
+	  fprintf(stderr, "illegal constant for pic-mode: \n");
+	  print_rtl(stderr, x);
+          fprintf(stderr, "\nGET_CODE (x) == %d, CONST == %d, symbolic_reference_mentioned_p (x) == %d\n",
+		  GET_CODE (x), CONST, symbolic_reference_mentioned_p(x));
+	  abort ();
+	}
+      else if (flag_pic
+               && (GET_CODE (x) == SYMBOL_REF || GET_CODE (x) == LABEL_REF))
+	{
+	  output_addr_const (file, x);
+	  fprintf (file, "(sb)");
+	}
+      else
+        {
 #ifdef NO_IMMEDIATE_PREFIX_IF_SYMBOLIC
-      if (GET_CODE (x) == CONST_INT)
+          if (GET_CODE (x) == CONST_INT)
 #endif
-	PUT_IMMEDIATE_PREFIX (file);
-      output_addr_const (file, x);
+	    PUT_IMMEDIATE_PREFIX (file);
+          output_addr_const (file, x);
+	}
     }
 }
 
@@ -512,6 +771,7 @@ print_operand (file, x, code)
    figure out how it worked.
    90-11-25 Tatu Yl|nen <ylo@cs.hut.fi> */
 
+void
 print_operand_address (file, addr)
      register FILE *file;
      register rtx addr;
@@ -564,7 +824,7 @@ print_operand_address (file, addr)
 	    base = tmp;
 	  break;
 	case REG:
-	  if (REGNO (tmp) < 8)
+	  if (REGNO (tmp) < F0_REGNUM)
 	    if (base)
 	      {
 		indexexp = tmp;
@@ -695,7 +955,7 @@ print_operand_address (file, addr)
 	   (disp(sb)) (MEM ...)
 	   */
       case REG:
-	fprintf (file, "(%s)", reg_names[REGNO (base)]);
+	fprintf (file, "(%s)", ns32k_out_reg_names[REGNO (base)]);
 	break;
       case SYMBOL_REF:
 	if (! flag_pic)
@@ -752,7 +1012,7 @@ print_operand_address (file, addr)
 	fprintf (file, "(");
 	output_addr_const (file, offset);
 	if (base)
-	  fprintf (file, "(%s)", reg_names[REGNO (base)]);
+	  fprintf (file, "(%s)", ns32k_out_reg_names[REGNO (base)]);
 	else if (TARGET_SB)
 	  fprintf (file, "(sb)");
 	else
@@ -783,16 +1043,16 @@ print_operand_address (file, addr)
 	}
       else
 	scale = 0;
-      if (GET_CODE (indexexp) != REG || REGNO (indexexp) >= 8)
+      if (GET_CODE (indexexp) != REG || REGNO (indexexp) >= F0_REGNUM)
 	abort ();
 
 #ifdef UTEK_ASM
       fprintf (file, "[%c`%s]",
 	       scales[scale],
-	       reg_names[REGNO (indexexp)]);
+	       ns32k_out_reg_names[REGNO (indexexp)]);
 #else
       fprintf (file, "[%s:%c]",
-	       reg_names[REGNO (indexexp)],
+	       ns32k_out_reg_names[REGNO (indexexp)],
 	       scales[scale]);
 #endif
     }
