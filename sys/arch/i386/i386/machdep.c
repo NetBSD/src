@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.416 2000/11/16 09:06:17 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.417 2000/11/16 10:19:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -280,6 +280,17 @@ const struct i386_cache_info {
 };
 
 const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+
+/*
+ * Map Brand ID from cpuid instruction to brand name.
+ * Source: Intel Processor Identification and the CPUID Instruction, AP-485
+ */
+const char * const i386_p3_brand[] = {
+	NULL,		/* Unsupported */
+	"Celeron",	/* Intel (R) Celeron (TM) processor */
+	"",		/* Intel (R) Pentium (R) III processor */	
+	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
+};
 
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
@@ -863,7 +874,8 @@ identifycpu()
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
-	const char *name, *modifier, *vendorname;
+	extern int cpu_brand_id;
+	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	struct cpu_cpuid_nameclass *cpup = NULL;
@@ -929,10 +941,19 @@ identifycpu()
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
+
+			/*
+			 * Intel processors family >= 6, model 8 allow to
+			 * recognize brand by Brand ID value.
+			 */
+			if (vendor == CPUVENDOR_INTEL && family >= 6
+			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
+				brand = i386_p3_brand[cpu_brand_id];
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
+	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
+		(brand && *brand) ? " " : "", brand,
 		classnames[class]);
 
 	cpu_class = class;
