@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.697 2005/03/15 16:08:33 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.698 2005/03/15 16:18:34 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.698 2005/03/15 16:06:38 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.699 2005/03/15 16:16:59 xtraeme Exp
  */
 
 /*
@@ -9528,12 +9528,20 @@ const struct pci_product pci_products[] = {
 	    "VT8377 Apollo KT400 CPU to PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378,
+	    "VT8378 Apollo KM400 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237,
 	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG,
+	    "VT8378 KM400 UniChrome Integrated Graphics",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
@@ -9581,7 +9589,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
-	    "VT8377CE CPU-AGP Bridge (KT600)",
+	    "VT8377CE CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
@@ -10048,4 +10056,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1933;
+const int pci_nproducts = 1935;
