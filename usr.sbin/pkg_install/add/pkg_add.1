@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.43 2003/09/02 07:34:51 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.44 2003/09/08 07:01:30 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -251,6 +251,9 @@ The default
 .Ar viewbase
 directory is set by
 .Xr pkg_view 1 .
+This value also may be set from the
+.Ev LOCALBASE
+environment variable.
 .It Fl w Ar view
 Set the
 .Ar view
@@ -259,6 +262,9 @@ The default
 .Ar view
 is set by
 .Xr pkg_view 1 .
+This value also may be set from the
+.Ev PKG_VIEW
+environment variable.
 .El
 .Pp
 One or more
@@ -466,6 +472,14 @@ flag to
 .Cm pkg_add .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
+.It Ev LOCALBASE
+This is the location of the
+.Ar viewbase
+directory in which all the views are managed.
+The default
+.Ar viewbase
+directory is
+.Pa /usr/pkg .
 .It Ev PKG_DBDIR
 If the
 .Fl K
@@ -489,6 +503,10 @@ FTP URLs may not end with a slash.
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
+.It Ev PKG_VIEW
+The default view can be specified in the
+.Ev PKG_VIEW
+environment variable.
 .El
 .Sh EXAMPLES
 In all cases,
