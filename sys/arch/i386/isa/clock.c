@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.21 1994/04/24 01:34:05 mycroft Exp $
+ *	$Id: clock.c,v 1.22 1994/05/03 08:23:57 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -116,8 +116,8 @@ startrtclock()
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb (IO_TIMER1, TIMER_DIV(hz)%256);
-	outb (IO_TIMER1, TIMER_DIV(hz)/256);
+	outb(IO_TIMER1, TIMER_DIV(hz)%256);
+	outb(IO_TIMER1, TIMER_DIV(hz)/256);
 
         /* Check diagnostic status */
         outb (IO_RTC, RTC_DIAG);
@@ -211,6 +211,41 @@ delay(n)
 			n -= otick - tick;
 		otick = tick;
 	}
+}
+
+static int beeping;
+
+void
+sysbeepstop(arg)
+	void *arg;
+{
+
+	/* disable counter 2 */
+	disable_intr();
+	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
+	enable_intr();
+	beeping = 0;
+}
+
+void
+sysbeep(pitch, period)
+	int pitch, period;
+{
+	static int last_pitch, last_period;
+
+	if (beeping)
+		untimeout(sysbeepstop, 0);
+	if (!beeping || last_pitch != pitch) {
+		disable_intr();
+		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch)%256);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch)/256);
+		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
+		enable_intr();
+	}
+	last_pitch = pitch;
+	beeping = last_period = period;
+	timeout(sysbeepstop, 0, period);
 }
 
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
