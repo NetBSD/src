@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.33 2000/02/01 22:39:51 chopps Exp $	*/
+/*	$NetBSD: i82365.c,v 1.34 2000/02/02 04:45:21 chopps Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1331,12 +1331,16 @@ pcic_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	int cardtype, reg, win;
+	int cardtype, win, intr;
+#if defined(DIAGNOSTIC) || defined(PCIC_DEBUG)
+	int reg;
+#endif
 
-	/* this bit is mostly stolen from pcic_attach_card */
+	/* disable interrupts and put in a known state for power down */
+	intr = 0;
+	pcic_write(h, PCIC_INTR, intr);
 
 	/* power down the socket to reset it, clear the card reset pin */
-
 	pcic_write(h, PCIC_PWRCTL, 0);
 
 	/* 
@@ -1356,7 +1360,6 @@ pcic_chip_socket_enable(pch)
 #endif
 	
 	/* power up the socket */
-
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV
 			   | PCIC_PWRCTL_PWR_ENABLE);
 
@@ -1371,8 +1374,6 @@ pcic_chip_socket_enable(pch)
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
 			   | PCIC_PWRCTL_PWR_ENABLE);
-	pcic_write(h, PCIC_INTR, 0);
-
 	/*
 	 * hold RESET at least 10us.
 	 */
@@ -1381,8 +1382,8 @@ pcic_chip_socket_enable(pch)
 	delay(20*1000);		/* XXX: TI1130 requires it. */
 
 	/* clear the reset flag */
-
-	pcic_write(h, PCIC_INTR, PCIC_INTR_RESET);
+	intr |= PCIC_INTR_RESET;
+	pcic_write(h, PCIC_INTR, intr);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 
@@ -1400,20 +1401,14 @@ pcic_chip_socket_enable(pch)
 	pcic_wait_ready(h);
 
 	/* zero out the address windows */
-
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* set the card type */
-
+	/* set the card type and enable the interrupt */
 	cardtype = pcmcia_card_gettype(h->pcmcia);
-
-	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~(PCIC_INTR_CARDTYPE_MASK | PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
-	reg |= ((cardtype == PCMCIA_IFTYPE_IO) ?
+	intr |= ((cardtype == PCMCIA_IFTYPE_IO) ?
 		PCIC_INTR_CARDTYPE_IO :
 		PCIC_INTR_CARDTYPE_MEM);
-	reg |= h->ih_irq;
-	pcic_write(h, PCIC_INTR, reg);
+	pcic_write(h, PCIC_INTR, intr);
 
 	DPRINTF(("%s: pcic_chip_socket_enable %02x cardtype %s %02x\n",
 		 h->ph_parent->dv_xname, h->sock,
@@ -1428,6 +1423,10 @@ pcic_chip_socket_enable(pch)
 	for (win = 0; win < PCIC_IO_WINS; win++)
 		if (h->ioalloc & (1 << win))
 			pcic_chip_do_io_map(h, win);
+
+	/* finally enable the interrupt */
+	intr |= h->ih_irq;
+	pcic_write(h, PCIC_INTR, intr);
 }
 
 void
