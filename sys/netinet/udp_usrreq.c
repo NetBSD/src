@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.42 1997/07/28 22:19:53 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.43 1997/09/12 10:58:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -199,8 +199,10 @@ udp_input(m, va_alist)
 		udpsrc.sin_port = uh->uh_sport;
 		bzero((caddr_t)udpsrc.sin_zero, sizeof(udpsrc.sin_zero));
 
-		m->m_len -= sizeof (struct udpiphdr);
-		m->m_data += sizeof (struct udpiphdr);
+		iphlen += sizeof(struct udphdr);
+		m->m_len -= iphlen;
+		m->m_pkthdr.len -= iphlen;
+		m->m_data += iphlen;
 		/*
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
