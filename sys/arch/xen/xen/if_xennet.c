@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.8 2004/04/24 19:32:37 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.9 2004/04/26 22:05:05 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.8 2004/04/24 19:32:37 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.9 2004/04/26 22:05:05 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -623,7 +623,7 @@ xennet_start(struct ifnet *ifp)
 		idx = sc->sc_net_idx->tx_req_prod;
 		sc->sc_net_ring->tx_ring[idx].req.id = bufid;
 		sc->sc_net_ring->tx_ring[idx].req.addr =
-			(xpmap_ptom(pa) & PG_FRAME) | (pa & ~PG_FRAME);
+			xpmap_ptom_masked(pa) | (pa & ~PG_FRAME);
 		sc->sc_net_ring->tx_ring[idx].req.size = m->m_pkthdr.len;
 		sc->sc_net_idx->tx_req_prod = TX_RING_INC(idx);
 		sc->sc_tx_entries++; /* XXX atomic */
