@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)slattach.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: slattach.8,v 1.8 1994/04/01 03:45:41 cgd Exp $
+.\"	$Id: slattach.8,v 1.8.2.1 1994/08/13 09:01:28 mycroft Exp $
 .\"
 .Dd April 4, 1993
 .Dt SLATTACH 8
@@ -70,6 +70,25 @@ or
 .Ql /dev/ttyXX .
 .El
 .Pp
+In addition, the following flags to
+.Xr ifconfig 8
+control various properties of the link:
+.Bl -tag -width Ar
+.It Ar link0
+Turn on Van Jacobsen header compression.
+.It Ar -link0
+Turn off Van Jacobsen header compression.
+.It Ar link1
+Don't pass through ICMP packets.
+.It Ar -link1
+Do pass through ICMP packets.
+.It Ar link2
+If a packet with a compressed header is received, automatically enable
+compression of transmitted packets.
+.It Ar -link2
+Don't auto-enable compression.
+.El
+.Pp
 Only the super-user may attach a network interface.
 .Pp
 To detach the interface, use
@@ -79,7 +98,7 @@ after killing off the
 process.
 .Ar Interface-name
 is the name that is shown by
-.Xr netstat 1
+.Xr netstat 1 .
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
 slattach ttyh8
