@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.4 1996/03/11 04:58:24 thorpej Exp $
+#	$NetBSD: libg++2netbsd,v 1.5 1996/04/04 23:33:45 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -22,7 +22,7 @@ $targetdir = "libg++";
 # definitions ...
 
 @subdirs = ("include", "include/gen", "libg++", "libg++/genclass",
-	    "libg++/src", "libio", "libiostream", "libstdc++",
+	    "libg++/src", "libio", "libiostream", "librx", "libstdc++",
 	    "libstdc++/std", "libstdc++/stl");
 
 @gf = ("ACG.cc", "AllocRing.cc", "Binomial.cc", "BitSet.cc",
@@ -139,6 +139,10 @@ $targetdir = "libg++";
 	   "queue", "set", "stack", "stddef", "stdexcept", "stl.h",
 	   "string", "typeinfo", "utility", "vector", "cinst.cc",
 	   "sinst.cc" );
+
+@rxf = ("rx.c");
+
+@rxof = ("rx.h");
 
 @stdf = ("bastring.cc",  "complext.cc");
 
@@ -329,6 +333,9 @@ print "Populating $targetdir/libio\n";
 print "Populating $targetdir/include/gen\n";
 &copyfiles ("$srcdir/libg++/src/gen", "$targetdir/include/gen", @genf);
 
+print "Populating $targetdir/librx\n";
+&copyfiles ("$srcdir/librx", "$targetdir/librx", @rxf, @rxof);
+
 print "Populating $targetdir/libstdc++\n";
 &copyfiles ("$srcdir/libstdc++", "$targetdir/libstdc++", @lstdcf, @lstdcof);
 
@@ -372,7 +379,7 @@ while ($line = <DATA>) {
 	    } elsif ($cmd[2] eq "io") {
 		&dumpsrcs (@iof);
 	    } elsif ($cmd[2] eq "stdc++") {
-		&dumpsrcs (@iosf, @lstdcf, @lstdcf2, @stlf);
+		&dumpsrcs (@iosf, @lstdcf, @lstdcf2, @stlf, @rxf);
 	    } else {
 		die "Unknown SRCS command";
 	    }
@@ -532,7 +539,7 @@ CXXFLAGS+=  -nostdinc++
 CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=	    noman
 
-.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl
+.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
 .include <bsd.lib.mk>
 
