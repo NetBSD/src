@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.161 2003/01/14 17:30:55 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.162 2003/01/16 14:49:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -716,8 +716,8 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	i = 10000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
-			printf("xcall(cpu%d,%p): couldn't ping cpus:",
-			    cpuinfo.ci_cpuid, func);
+			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
+			    cpu_number(), func);
 			break;
 		}
 
@@ -789,6 +789,28 @@ mp_resume_cpus()
 
 		/* tell it to continue */
 		cpi->flags &= ~CPUFLG_PAUSED;
+	}
+}
+
+void
+mp_halt_cpus()
+{
+	int n;
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		/* tell it to hurry back into the prom */
+		printf("cpu%d halted\n", cpi->ci_cpuid);
+
+		/*
+		 * This PROM utility will put the OPENPROM_MBX_STOP
+		 * message (0xfb) in the CPU's mailbox and then send
+		 * it a level 15 soft interrupt.
+		 */
+		prom_cpustop(cpi->node);
 	}
 }
 #endif /* MULTIPROCESSOR */
