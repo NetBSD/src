@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.13 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: xfer,v 1.13.2.1 1999/04/12 11:50:05 is Exp $	
 .Pp
 Installation is supported from several media types, including:
 .Bl -bullet
@@ -45,7 +45,7 @@ To prepare for installing from CD-ROM:
 To install NetBSD from a CD-ROM drive, make sure it is a SCSI
 CD-ROM on a SCSI bus currently supported by NetBSD (refer to the
 supported hardware list). If it is an ATAPI CD-ROM, or a
-SCSI CD-ROM on a non-supported SCSI bus like CyberSCSI Mk.3,
+SCSI CD-ROM on a non-supported SCSI bus like 
 Blizzard-3 SCSI, Apollo SCSI) you must first copy the distribution
 sets to an AmigaDOS partition like described above.
 .Pp
