@@ -33,7 +33,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/pk.c,v 1.10 2002/08/22 06:19:07 nsayer Exp $");
 #else
-__RCSID("$NetBSD: pk.c,v 1.1 2005/02/19 21:55:52 christos Exp $");
+__RCSID("$NetBSD: pk.c,v 1.2 2005/02/19 22:47:10 christos Exp $");
 #endif
 
 /* public key routines */
@@ -48,13 +48,13 @@ __RCSID("$NetBSD: pk.c,v 1.1 2005/02/19 21:55:52 christos Exp $");
  */
 
 #include <sys/time.h>
-#include <openssl/des.h>
+#include <des.h>
+#include <openssl/bn.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mp.h"
 #include "pk.h"
  
 static void adjust(char keyout[HEXKEYBYTES+1], char *keyin);
@@ -63,28 +63,33 @@ static void adjust(char keyout[HEXKEYBYTES+1], char *keyin);
  * Choose top 128 bits of the common key to use as our idea key.
  */
 static void
-extractideakey(MINT *ck, IdeaData *ideakey)
+extractideakey(BIGNUM *ck, IdeaData *ideakey)
 {
-        MINT *a;
-        MINT *z;
-        short r;
+        BIGNUM *a = BN_new();
+        BIGNUM *z = BN_new();
+	BIGNUM *base = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
         int i;
-        short base = (1 << 8);
         char *k;
 
-        z = itom(0);
-        a = itom(0);
-        madd(ck, z, a);
-        for (i = 0; i < ((KEYSIZE - 128) / 8); i++) {
-                sdiv(a, base, a, &r);
-        }
+        (void)BN_zero(a);
+	(void)BN_zero(z);
+	(void)BN_set_word(base, 1 << 8);
+	BN_add(a, ck, z);
+
+        for (i = 0; i < ((KEYSIZE - 128) / 8); i++)
+		BN_div(a, z, a, base, ctx);
+
         k = (char *)ideakey;
         for (i = 0; i < 16; i++) {
-                sdiv(a, base, a, &r);
-                *k++ = r;
+		BN_div(a, z, a, base, ctx);
+                *k++ = (char)BN_get_word(z);
         }
-	mfree(z);
-        mfree(a);
+
+	BN_CTX_free(ctx);
+	BN_free(base);
+	BN_free(z);
+        BN_free(a);
 }
 
 /*
@@ -92,28 +97,33 @@ extractideakey(MINT *ck, IdeaData *ideakey)
  * overwriting the lower order bits by setting parity. 
  */
 static void
-extractdeskey(MINT *ck, DesData *deskey)
+extractdeskey(BIGNUM *ck, DesData *deskey)
 {
-        MINT *a;
-        MINT *z;
-        short r;
+        BIGNUM *a = BN_new();
+        BIGNUM *z = BN_new();
+        BIGNUM *base = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
         int i;
-        short base = (1 << 8);
         char *k;
 
-        z = itom(0);
-        a = itom(0);
-        madd(ck, z, a);
-        for (i = 0; i < ((KEYSIZE - 64) / 2) / 8; i++) {
-                sdiv(a, base, a, &r);
-        }
+        (void)BN_zero(z);
+        (void)BN_zero(a);
+	(void)BN_set_word(base, 1 << 8);
+	BN_add(a, ck, z);
+
+        for (i = 0; i < ((KEYSIZE - 64) / 2) / 8; i++)
+		BN_div(a, z, a, base, ctx);
+
         k = (char *)deskey;
         for (i = 0; i < 8; i++) {
-                sdiv(a, base, a, &r);
-                *k++ = r;
+		BN_div(a, z, a, base, ctx);
+                *k++ = (char)BN_get_word(z);
         }
-	mfree(z);
-        mfree(a);
+
+	BN_CTX_free(ctx);
+	BN_free(base);
+	BN_free(z);
+        BN_free(a);
 }
 
 /*
@@ -122,22 +132,27 @@ extractdeskey(MINT *ck, DesData *deskey)
 void
 common_key(char *xsecret, char *xpublic, IdeaData *ideakey, DesData *deskey)
 {
-        MINT *public;
-        MINT *secret;
-        MINT *common;
-	MINT *modulus = xtom(HEXMODULUS);
+        BIGNUM *public = BN_new();
+        BIGNUM *secret = BN_new();
+        BIGNUM *common = BN_new();
+	BIGNUM *modulus  = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
 
-        public = xtom(xpublic);
-        secret = xtom(xsecret);
-        common = itom(0);
-        pow(public, secret, modulus, common);
+	(void)BN_hex2bn(&modulus, HEXMODULUS);
+        (void)BN_hex2bn(&public, xpublic);
+        (void)BN_hex2bn(&secret, xsecret);
+        (void)BN_zero(common);
+
+        BN_mod_exp(common, public, secret, modulus, ctx);
         extractdeskey(common, deskey);
         extractideakey(common, ideakey);
 	des_set_odd_parity(deskey);
-        mfree(common);
-        mfree(secret);
-        mfree(public);
-	mfree(modulus);
+
+	BN_CTX_free(ctx);
+        BN_free(common);
+        BN_free(secret);
+        BN_free(public);
+	BN_free(modulus);
 }
 
 /*
@@ -148,10 +163,8 @@ getseed(char *seed, int seedsize)
 {
 	int i;
 
-	srandomdev();
-	for (i = 0; i < seedsize; i++) {
-		seed[i] = random() & 0xff;
-	}
+	for (i = 0; i < seedsize; i++)
+		seed[i] = arc4random() & 0xff;
 }
 
 /*
@@ -165,37 +178,47 @@ genkeys(char *public, char *secret)
 #       define BASEBITS (8*sizeof(short) - 1)
 #       define BASE (1 << BASEBITS)
  
-        MINT *pk = itom(0);
-        MINT *sk = itom(0);
-        MINT *tmp;
-        MINT *base = itom(BASE);
-        MINT *root = itom(PROOT);
-        MINT *modulus = xtom(HEXMODULUS);
+        BIGNUM *pk = BN_new();
+        BIGNUM *sk = BN_new();
+        BIGNUM *tmp = BN_new();
+        BIGNUM *base = BN_new();
+        BIGNUM *root = BN_new();
+        BIGNUM *modulus = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
         short r;
         unsigned short seed[KEYSIZE/BASEBITS + 1];
         char *xkey;
 
+	(void)BN_zero(pk);
+	(void)BN_zero(sk);
+	(void)BN_set_word(base, BASE);
+	(void)BN_set_word(root, PROOT);
+	(void)BN_hex2bn(&modulus, HEXMODULUS);
+
         getseed((char *)seed, sizeof(seed));    
         for (i = 0; i < KEYSIZE/BASEBITS + 1; i++) {
                 r = seed[i] % BASE;
-                tmp = itom(r);
-                mult(sk, base, sk);
-                madd(sk, tmp, sk);
-                mfree(tmp);  
+		(void)BN_set_word(tmp, r);
+		BN_mul(sk, tmp, sk, ctx);
+		BN_add(sk, tmp, sk);
         }
-        tmp = itom(0);
-        mdiv(sk, modulus, tmp, sk);
-        mfree(tmp);
-        pow(root, sk, modulus, pk); 
-        xkey = mtox(sk);   
+
+        (void)BN_zero(tmp);
+	BN_div(tmp, sk, sk, modulus, ctx);
+        BN_mod_exp(pk, root, sk, modulus, ctx);
+
+        xkey = BN_bn2hex(sk);   
         adjust(secret, xkey);
-        xkey = mtox(pk);
+        xkey = BN_bn2hex(pk);
         adjust(public, xkey);
-        mfree(sk);
-        mfree(base);
-        mfree(pk);
-        mfree(root);
-        mfree(modulus);
+
+	BN_CTX_free(ctx);
+        BN_free(sk);
+        BN_free(base);
+        BN_free(pk);
+        BN_free(tmp);
+        BN_free(root);
+        BN_free(modulus);
 } 
 
 /*
