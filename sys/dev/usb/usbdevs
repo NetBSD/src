@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.186 2001/10/08 03:37:53 augustss Exp $
+$NetBSD: usbdevs,v 1.187 2001/10/11 12:05:10 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -548,6 +548,7 @@ product EPSON 1600		0x0107	Expression 1600 scanner
 product EPSON 1640		0x010a	Perfection 1640SU scanner
 product EPSON 1240		0x010b	Perfection 1240U / 1240Photo scanner
 product EPSON 640U		0x010c	Perfection 640U scanner
+product EPSON 1650		0x0110	Perfection 1650 scanner
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
