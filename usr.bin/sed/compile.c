@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.26 2004/06/12 04:29:22 minskim Exp $	*/
+/*	$NetBSD: compile.c,v 1.27 2004/06/13 08:31:30 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.26 2004/06/12 04:29:22 minskim Exp $");
+__RCSID("$NetBSD: compile.c,v 1.27 2004/06/13 08:31:30 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -591,6 +591,7 @@ compile_flags(char *p, struct s_subst *s)
 			gn = 1;
 			/* XXX Check for overflow */
 			s->n = (int)strtol(p, &p, 10);
+			p--;
 			break;
 		case 'w':
 			p++;
