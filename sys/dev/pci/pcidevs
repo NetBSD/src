@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.324 2001/05/21 22:11:06 thorpej Exp $
+$NetBSD: pcidevs,v 1.325 2001/05/31 01:10:34 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1119,6 +1119,8 @@ product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
+product IDT RC32334	0x0204	RC32334 System Controller
+product IDT RC32332	0x0205	RC32332 System Controller
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	PCI-WDT50x Watchdog Timer
