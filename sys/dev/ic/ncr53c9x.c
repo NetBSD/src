@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.42 2000/03/18 22:09:32 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.43 2000/03/18 22:18:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,6 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 					    struct ncr53c9x_ecb *));
 /*static*/ int ncr53c9x_reselect	__P((struct ncr53c9x_softc *, int));
 /*static*/ void	ncr53c9x_scsi_reset	__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_init		__P((struct ncr53c9x_softc *, int));
 /*static*/ int	ncr53c9x_poll		__P((struct ncr53c9x_softc *,
 					    struct scsipi_xfer *, int));
 /*static*/ void	ncr53c9x_sched		__P((struct ncr53c9x_softc *));
