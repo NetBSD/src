@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.18 2002/04/12 18:50:31 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.18.4.1 2002/10/01 23:50:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -511,9 +511,11 @@ copyfault:
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
 		pcb->pcb_onfault = onfault;
-		if (rv == 0)
+		if (rv == 0) {
+			if (user != 0) /* Record any stack growth... */
+				uvm_grow(p, trunc_page(va));
 			goto out;
-
+		}
 		if (user == 0) {
 			if (pcb->pcb_onfault)
 				goto copyfault;
