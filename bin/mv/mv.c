@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.15 1997/10/19 02:17:37 mikel Exp $	*/
+/*	$NetBSD: mv.c,v 1.16 1997/10/19 12:55:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.15 1997/10/19 02:17:37 mikel Exp $");
+__RCSID("$NetBSD: mv.c,v 1.16 1997/10/19 12:55:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,17 +276,17 @@ err:		if (unlink(to))
 	}
 	(void)close(from_fd);
 
-	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
+	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tval[1], &sbp->st_mtimespec);
+	if (futimes(to_fd, tval))
+		warn("%s: set times", to);
+	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {
 		if (errno != EPERM)
 			warn("%s: set owner/group", to);
+		sbp->st_mode &= ~(S_ISUID | S_ISGID);
+	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
-
-	tval[0].tv_sec = sbp->st_atime;
-	tval[1].tv_sec = sbp->st_mtime;
-	tval[0].tv_usec = tval[1].tv_usec = 0;
-	if (utimes(to, tval))
-		warn("%s: set times", to);
 
 	if (close(to_fd)) {
 		warn("%s", to);
