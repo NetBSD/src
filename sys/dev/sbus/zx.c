@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.11 2003/10/28 14:18:39 ad Exp $	*/
+/*	$NetBSD: zx.c,v 1.12 2003/10/28 15:25:27 chs Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.11 2003/10/28 14:18:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.12 2003/10/28 15:25:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,7 +558,7 @@ int
 zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 {
 	volatile struct zx_cross *zx;
-	u_int tmp;
+	u_int tmp = 0;
 
 	zx = sc->sc_zx;
 	SETREG(zx->zx_type, ZX_CROSS_TYPE_WID);
