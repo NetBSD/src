@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.35 2003/07/10 10:34:42 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.36 2003/08/18 00:15:41 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -162,7 +162,7 @@ LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
 DEBUG?=
-.if ${DEBUG} == "-g"
+.if ${DEBUG} == "-g" || ${DEBUG} == "-gstabs" || ${DEBUG} == "-gstabs+"
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
