@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.119 2003/08/07 16:34:31 agc Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.120 2003/09/13 13:47:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.119 2003/08/07 16:34:31 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.120 2003/09/13 13:47:04 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -964,28 +964,8 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		return;
 
 	/*
-	 * If not yet done, update fs_flags location and value of fs_sblockloc.
-	 */
-	if ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
-		fs->fs_flags = fs->fs_old_flags;
-		fs->fs_old_flags |= FS_FLAGS_UPDATED;
-		fs->fs_sblockloc = sblockloc;
-	}
-
-	/*
-	 * If the new fields haven't been set yet, or if the filesystem
-	 * was mounted and modified by an old kernel, use the old csum
-	 * totals.
-	 */
-	if (fs->fs_maxbsize != fs->fs_bsize || fs->fs_time < fs->fs_old_time) {
-		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
-		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
-		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
-		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
-	}
-
-	/*
-	 * If not yet done, update UFS1 superblock with new wider fields.
+	 * If not yet done, update UFS1 superblock with new wider fields,
+	 * and  update fs_flags location and value of fs_sblockloc.
 	 */
 	if (fs->fs_maxbsize != fs->fs_bsize) {
 		fs->fs_maxbsize = fs->fs_bsize;
@@ -993,7 +973,23 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 		fs->fs_size = fs->fs_old_size;
 		fs->fs_dsize = fs->fs_old_dsize;
 		fs->fs_csaddr = fs->fs_old_csaddr;
+		fs->fs_sblockloc = sblockloc;
+		fs->fs_flags = fs->fs_old_flags;
+		fs->fs_old_flags |= FS_FLAGS_UPDATED;
 	}
+	/*
+	 * If the new fields haven't been set yet, or if the filesystem
+	 * was mounted and modified by an old kernel, use the old csum
+	 * totals, and update the flags
+	 */
+	if (fs->fs_maxbsize != fs->fs_bsize || fs->fs_time < fs->fs_old_time) {
+		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
+		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
+		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
+		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
+		fs->fs_flags |= (fs->fs_old_flags & ~FS_FLAGS_UPDATED);
+	}
+
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
 		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
@@ -1034,6 +1030,12 @@ ffs_oldfscompat_write(fs, ump)
 	if (fs->fs_magic != FS_UFS1_MAGIC)
 		return;
 
+	/*
+	 * if none of the newer flags are used, copy back fs_flags
+	 * to fs_old_flags
+	 */
+	if ((fs->fs_flags & ~(FS_UNCLEAN|FS_DOSOFTDEP)) == 0)
+		fs->fs_old_flags = fs->fs_flags & (FS_UNCLEAN|FS_DOSOFTDEP);
 	/*
 	 * OS X somehow still seems to use this field and panic.
 	 * Just set it to zero.
@@ -1560,16 +1562,14 @@ ffs_sbupdate(mp, waitfor)
 	    (int)fs->fs_sbsize, 0, 0);
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
-
-	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_sblockloc != SBLOCK_UFS1 &&
-	    (fs->fs_flags & FS_FLAGS_UPDATED) == 0) {
+	
+	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_sblockloc != SBLOCK_UFS1) {
 		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
 		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS1);
 		fs->fs_sblockloc = SBLOCK_UFS1;
 	}
 
-	if (fs->fs_magic == FS_UFS2_MAGIC && fs->fs_sblockloc != SBLOCK_UFS2 &&
-	    (fs->fs_flags & FS_FLAGS_UPDATED) == 0) {
+	if (fs->fs_magic == FS_UFS2_MAGIC && fs->fs_sblockloc != SBLOCK_UFS2) {
 		printf("%s: correcting fs_sblockloc from %" PRId64 " to %d\n",
 		    fs->fs_fsmnt, fs->fs_sblockloc, SBLOCK_UFS2);
 		fs->fs_sblockloc = SBLOCK_UFS2;
