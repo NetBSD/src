@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2001/05/14 18:23:13 drochner Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2001/05/16 18:50:52 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -94,7 +94,7 @@ typedef struct pmap	*pmap_t;
 #define	PMAP_ACTIVATE(pmap, loadhw)					\
 {									\
 	if ((loadhw))							\
-		loadustp(m68k_btop((vm_offset_t)(pmap)->pm_stpa));	\
+		loadustp(m68k_btop((paddr_t)(pmap)->pm_stpa));	\
 }
 
 /*
@@ -104,7 +104,7 @@ typedef struct pmap	*pmap_t;
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vm_offset_t	pv_va;		/* virtual address for mapping */
+	vaddr_t	pv_va;		/* virtual address for mapping */
 	st_entry_t	*pv_ptste;	/* non-zero if VA maps a PT page */
 	struct pmap	*pv_ptpmap;	/* if pv_ptste, pmap for PT page */
 	int		pv_flags;	/* flags */
@@ -143,7 +143,9 @@ extern struct pmap	kernel_pmap_store;
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
+#if 0
 #define pmap_page_index(pa)		atop(pa - vm_first_phys)
+#endif
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -152,9 +154,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 
-void _pmap_set_page_cacheable __P((struct pmap *, vaddr_t));
-void _pmap_set_page_cacheinhibit __P((struct pmap *, vaddr_t));
-vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
 #define	PMAP_NEED_PROCWR
 #if 1
