@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.79 2000/03/23 07:01:46 thorpej Exp $	*/
+/*	$NetBSD: ohci.c,v 1.80 2000/03/24 22:03:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1173,7 +1173,7 @@ ohci_softintr(bus)
 			continue;
 		}
 		cc = OHCI_TD_GET_CC(le32toh(std->td.td_flags));
-		usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
+		usb_uncallout(xfer->timo_handle, ohci_timeout, xfer);
 		if (xfer->status == USBD_CANCELLED ||
 		    xfer->status == USBD_TIMEOUT) {
 			DPRINTF(("ohci_process_done: cancel/timeout %p\n",
@@ -1498,8 +1498,8 @@ ohci_device_request(xfer)
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_timeout(ohci_timeout, xfer,
-			    MS_TO_TICKS(xfer->timeout), xfer->timo_handle);
+                usb_callout(xfer->timo_handle, MS_TO_TICKS(xfer->timeout),
+			    ohci_timeout, xfer);
 	}
 	splx(s);
 
@@ -1840,7 +1840,7 @@ ohci_abort_xfer(xfer, status)
 
 	xfer->status = status;
 
-	usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
+	usb_uncallout(xfer->timo_handle, ohci_timeout, xfer);
 
 	sed = opipe->sed;
 	DPRINTFN(1,("ohci_abort_xfer: stop ed=%p\n", sed));
@@ -1849,7 +1849,7 @@ ohci_abort_xfer(xfer, status)
 #if 1
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		usb_callout(xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
 		    ohci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
@@ -2543,8 +2543,8 @@ ohci_device_bulk_start(xfer)
 	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_timeout(ohci_timeout, xfer,
-			    MS_TO_TICKS(xfer->timeout), xfer->timo_handle);
+                usb_callout(xfer->timo_handle, MS_TO_TICKS(xfer->timeout),
+			    ohci_timeout, xfer);
 	}
 
 #if 0

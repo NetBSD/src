@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.90 2000/03/23 18:59:10 thorpej Exp $	*/
+/*	$NetBSD: uhci.c,v 1.91 2000/03/24 22:03:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -590,8 +590,8 @@ uhci_power(why, v)
 			uhci_dumpregs(sc);
 #endif
 		if (sc->sc_has_timo != NULL)
-			usb_untimeout(uhci_timo, sc->sc_has_timo, 
-				      sc->sc_has_timo->timo_handle);
+			usb_uncallout(sc->sc_has_timo->timo_handle,
+				      uhci_timo, sc->sc_has_timo);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
 
@@ -628,8 +628,8 @@ uhci_power(why, v)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 		sc->sc_bus.use_polling--;
 		if (sc->sc_has_timo != NULL)
-			usb_timeout(uhci_timo, sc->sc_has_timo, 
-				    sc->sc_ival, sc->sc_has_timo->timo_handle);
+			usb_callout(sc->sc_has_timo->timo_handle, sc->sc_ival,
+				    uhci_timo, sc->sc_has_timo);
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
@@ -776,7 +776,7 @@ uhci_timo(addr)
 
 	DPRINTFN(20, ("uhci_timo\n"));
 
-	usb_timeout(uhci_timo, xfer, sc->sc_ival, xfer->timo_handle);
+	usb_callout(xfer->timo_handle, sc->sc_ival, uhci_timo, xfer);
 
 	p = KERNADDR(&xfer->dmabuf);
 	p[0] = 0;
@@ -853,12 +853,7 @@ uhci_alloc_intr_info(sc)
 		ii = malloc(sizeof(uhci_intr_info_t), M_USBHC, M_NOWAIT);
 	}
 	ii->sc = sc;
-#if defined(__NetBSD__)
-	callout_init(&ii->timeout_handle);
-#endif
-#if defined(__FreeBSD__)
-	callout_handle_init(&ii->timeout_handle);
-#endif
+	usb_callout_init(ii->timeout_handle);
 
 	return ii;
 }
@@ -1106,7 +1101,7 @@ uhci_check_intr(sc, ii)
 	}
  done:
 	DPRINTFN(15, ("uhci_check_intr: ii=%p done\n", ii));
-	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
+	usb_uncallout(ii->timeout_handle, uhci_timeout, ii);
 	uhci_idone(ii);
 }
 
@@ -1626,9 +1621,7 @@ uhci_device_bulk_start(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = data;
 	ii->stdend = dataend;
-#if defined(__FreeBSD__)
-	callout_handle_init(&ii->timeout_handle);
-#endif
+	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_bulk_transfer: not done, ii=%p\n", ii);
@@ -1645,8 +1638,8 @@ uhci_device_bulk_start(xfer)
 	LIST_INSERT_HEAD(&sc->sc_intrhead, ii, list);
 
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_timeout(uhci_timeout, ii, MS_TO_TICKS(xfer->timeout),
-			    ii->timeout_handle);
+		usb_callout(ii->timeout_handle, MS_TO_TICKS(xfer->timeout),
+			    uhci_timeout, ii);
 	}
 	splx(s);
 
@@ -1687,7 +1680,7 @@ uhci_abort_xfer(xfer, status)
 	xfer->status = status;
 
 	/* don't timeout, */
-	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
+	usb_uncallout(ii->timeout_handle, uhci_timeout, ii);
 
 	/* make hardware ignore it, */
 	for (std = ii->stdstart; std != 0; std = std->link.std)
@@ -1699,7 +1692,7 @@ uhci_abort_xfer(xfer, status)
 	/* Make sure hardware has completed. */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		usb_callout(xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
 		    uhci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
@@ -1843,9 +1836,7 @@ uhci_device_intr_start(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = data;
 	ii->stdend = dataend;
-#if defined(__FreeBSD__)
-	callout_handle_init(&ii->timeout_handle);
-#endif
+	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_intr_transfer: not done, ii=%p\n", ii);
@@ -2020,9 +2011,7 @@ uhci_device_request(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = setup;
 	ii->stdend = stat;
-#if defined(__FreeBSD__)
-	callout_handle_init(&ii->timeout_handle);
-#endif
+	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_request: not done, ii=%p\n", ii);
@@ -2065,8 +2054,8 @@ uhci_device_request(xfer)
 	}
 #endif
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_timeout(uhci_timeout, ii,
-                            MS_TO_TICKS(xfer->timeout), ii->timeout_handle);
+		usb_callout(ii->timeout_handle, MS_TO_TICKS(xfer->timeout),
+			    uhci_timeout, ii);
 	}
 	splx(s);
 
@@ -2200,9 +2189,7 @@ uhci_device_isoc_start(xfer)
 	ii->xfer = xfer;
 	ii->stdstart = end;
 	ii->stdend = end;
-#if defined(__FreeBSD__)
-	callout_handle_init(&ii->timeout_handle);
-#endif
+	usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 	if (!ii->isdone) {
 		printf("uhci_device_isoc_start: not done, ii=%p\n", ii);
@@ -2244,7 +2231,7 @@ uhci_device_isoc_abort(xfer)
 	/* make sure hardware has completed, */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		usb_callout(xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
 		    uhci_abort_xfer_end, xfer);
 	} else {
 		usb_delay_ms(xfer->pipe->device->bus, 1);
@@ -2407,9 +2394,7 @@ uhci_device_intr_done(xfer)
 
 		ii->stdstart = data;
 		ii->stdend = dataend;
-#if defined(__FreeBSD__)
-		callout_handle_init(&ii->timeout_handle);
-#endif
+		usb_callout_init(ii->timeout_handle);
 #ifdef DIAGNOSTIC
 		if (!ii->isdone) {
 			printf("uhci_device_intr_done: not done, ii=%p\n", ii);
@@ -3116,7 +3101,7 @@ uhci_root_intr_abort(xfer)
 {
 	uhci_softc_t *sc = (uhci_softc_t *)xfer->pipe->device->bus;
 
-	usb_untimeout(uhci_timo, xfer, xfer->timo_handle);
+	usb_uncallout(xfer->timo_handle, uhci_timo, xfer);
 	sc->sc_has_timo = NULL;
 
 	if (xfer->pipe->intrxfer == xfer) {
@@ -3159,7 +3144,7 @@ uhci_root_intr_start(xfer)
 		return (USBD_IOERROR);
 
 	sc->sc_ival = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
-	usb_timeout(uhci_timo, xfer, sc->sc_ival, xfer->timo_handle);
+	usb_callout(xfer->timo_handle, sc->sc_ival, uhci_timo, xfer);
 	sc->sc_has_timo = xfer;
 	return (USBD_IN_PROGRESS);
 }
@@ -3171,7 +3156,7 @@ uhci_root_intr_close(pipe)
 {
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
-	usb_untimeout(uhci_timo, pipe->intrxfer, pipe->intrxfer->timo_handle);
+	usb_uncallout(pipe->intrxfer->timo_handle, uhci_timo, pipe->intrxfer);
 	sc->sc_has_timo = NULL;
 	DPRINTF(("uhci_root_intr_close\n"));
 }

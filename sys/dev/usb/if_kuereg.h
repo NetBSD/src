@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.7 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.8 2000/03/24 22:03:30 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -164,11 +164,9 @@ struct kue_softc {
 
 #if defined(__FreeBSD__)
 	struct arpcom		arpcom;
-	struct callout_handle	kue_stat_ch;
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #elif defined(__NetBSD__)
 	struct ethercom		kue_ec;
-	struct callout		kue_stat_ch;
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
