@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.1.1.4.2.1 2002/05/30 18:49:50 tv Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -126,11 +126,13 @@ char *strchr(), *strrchr(), *strdup();
 /*
  * Big-endian or little-endian?
  */
-#ifdef WORDS_BIGENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 # define ARCH_ENDIAN "big"
-#else /* not WORDS_BIGENDIAN */
+# define WORDS_BIGENDIAN
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
 # define ARCH_ENDIAN "little"
-#endif /* not WORDS_BIGENDIAN */
+#endif
 
 /*
  * Actions to take if HAVE_SYS_TYPES_H is defined.
