@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.8 2003/10/20 14:50:18 fvdl Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.9 2003/11/08 21:46:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,11 +102,11 @@
  */
 
 #define STACK_SWITCH			  \
-	movq	PT_TRAPUC(%r13), %r11	; \
-	cmpq	$0, %r11		; \
+	movq	PT_TRAPUC(%r13), %r15	; \
+	cmpq	$0, %r15		; \
 	jne	1f			; \
-	movq	PT_UC(%r13), %r11	; \
-1:	leaq	(-STACKSPACE)(%r11), %rsp ; \
+	movq	PT_UC(%r13), %r15	; \
+1:	leaq	(-STACKSPACE)(%r15), %rsp ; \
 	movq	$0, PT_TRAPUC(%r13)
 
 
@@ -122,6 +122,7 @@ ENTRY(pthread__switch)
 	pushq	%r12
 	pushq	%r13
 	pushq	%r14
+	pushq	%r15
 	movq	%rdi,%r12
 	movq	%rsi,%r13
 	/* r12 (eax) holds the current thread	     */
@@ -135,17 +136,18 @@ ENTRY(pthread__switch)
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
-	leaq	pthread__switch_return_point(%rip), %r11
-	movq	%r11, UC_RIP(%r14)
+	leaq	pthread__switch_return_point(%rip), %r15
+	movq	%r15, UC_RIP(%r14)
 	movq	%r14, PT_UC(%r12)
 	
 	STACK_SWITCH
 
-	movq	%r11, %rdi		/* ucontext_t *ucp */
+	movq	%r15, %rdi		/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 NENTRY(pthread__switch_return_point)
 	/* We're back on the original stack. */
 	addq	$CONTEXTSIZE+8, %rsp
+	popq	%r15
 	popq	%r14
 	popq	%r13
 	popq	%r12
@@ -166,7 +168,7 @@ pthread__switch_away:
 	 * to let us know, and we decrement it once we're no longer using
 	 * the old stack.
 	 */ 
-	cmpl	$0, %r10d
+	cmpl	$0, %ebx
 	jle pthread__switch_no_decrement
 	decl	PT_SPINLOCKS(%r12)
 
@@ -187,23 +189,24 @@ ENTRY(pthread__locked_switch)
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
+	pushq	%rbx
 
 	movq	%rdi, %r12
 	movq	%rsi, %r13
-	movq	%rdx, %r14
+	movq	%rdx, %rbx
 	incl	PT_SPINLOCKS(%r13)	/* Make sure we get continued	     */
 	subq	$CONTEXTSIZE+8, %rsp	/* Allocate space for the ucontext_t */
-	leaq	8(%rsp), %r15
-	andq	$~(0xf), %r15		/* 16-byte-align the ucontext_t area */
-	movq	%r15, %rdi
+	leaq	8(%rsp), %r14
+	andq	$~(0xf), %r14		/* 16-byte-align the ucontext_t area */
+	movq	%r14, %rdi
 	call	PIC_PLT(_C_LABEL(_getcontext_u))
 	/*
 	 * Edit the context so that it continues as if returning from
 	 * the _setcontext_u below.  
 	 */
-	leaq	locked_return_point(%rip), %r11
-	movq	%r11, UC_RIP(%r15)
-	movq	%r15, PT_UC(%r12)
+	leaq	locked_return_point(%rip), %r15
+	movq	%r15, UC_RIP(%r14)
+	movq	%r14, PT_UC(%r12)
 	
 	STACK_SWITCH
 	
@@ -224,15 +227,15 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	movq	%r11, PT_SWITCHTOUC(%r12)
+	movq	%r15, PT_SWITCHTOUC(%r12)
 	movq	%r13, PT_SWITCHTO(%r12)
-	movq	%r14, PT_HELDLOCK(%r12)
+	movq	%rbx, PT_HELDLOCK(%r12)
 	decl	PT_SPINLOCKS(%r12)
 
-	movq	PT_NEXT(%r12), %r11
+	movq	PT_NEXT(%r12), %rbx
 	movq	%r13, %r12
-	movq	%r11, %r13
-	movl	$1, %r10d
+	movq	%rbx, %r13
+	movl	$1, %ebx
 	jmp	pthread__switch_away
 	NOTREACHED
 
@@ -243,27 +246,28 @@ locked_no_old_preempt:
 	 */
 	decl	PT_SPINLOCKS(%r12)
 	/* We happen to know that this is the right way to release a lock. */
-	movl	$0, 0(%r14)
+	movl	$0, 0(%rbx)
 
 	decl	PT_SPINLOCKS(%r13)
 	/* Check if we were preempted while holding the fake lock. */
 	cmpq	$0, PT_NEXT(%r13)
 	je	locked_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movq	%r11, PT_SWITCHTOUC(%r13)
+	movq	%r15, PT_SWITCHTOUC(%r13)
 	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r13, %r12
 	movq	PT_NEXT(%r13), %r13
-	movl	$-2, %r10d
+	movl	$-2, %ebx
 	jmp	pthread__switch_away
 	NOTREACHED
 	
 locked_no_new_preempt:		
-	movq	%r11, %rdi		/* ucontext_t *ucp */
+	movq	%r15, %rdi		/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
 	addq	$CONTEXTSIZE+8, %rsp
+	popq	%rbx
 	popq	%r15
 	popq	%r14
 	popq	%r13
@@ -285,39 +289,39 @@ ENTRY(pthread__upcall_switch)
 	STACK_SWITCH
 	
 	/* Check if the upcall was preempted and continued. */
-	cmpl	$0, PT_NEXT(%r12)
+	cmpq	$0, PT_NEXT(%r12)
 	je	upcall_no_old_preempt
 	/*
 	 * Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
-	movq	%r11, PT_SWITCHTOUC(%r12)
+	movq	%r15, PT_SWITCHTOUC(%r12)
 	movq	%r13, PT_SWITCHTO(%r12)
-	movq	PT_NEXT(%r12), %r10
+	movq	PT_NEXT(%r12), %rbx
 	movq	%r13, %r12
-	movq	%r10, %r13
-	movl	$1, %r10d
+	movq	%rbx, %r13
+	movl	$1, %ebx
 	jmp	pthread__switch_away
 	NOTREACHED
 	
 upcall_no_old_preempt:		
 	movq	%r12,%rdi
-	movq	%r11,%r14
+	movq	%r13,%rsi
 	call    PIC_PLT(_C_LABEL(pthread__sa_recycle))
 	decl	PT_SPINLOCKS(%r13)
 	/* Check if we were preempted while holding the fake lock. */
 	cmpq	$0, PT_NEXT(%r13)
 	je	upcall_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movq	%r14, PT_SWITCHTOUC(%r13)
+	movq	%r15, PT_SWITCHTOUC(%r13)
 	movq	%r13, PT_SWITCHTO(%r13)
 	movq	%r13, %r12
 	movq	PT_NEXT(%r13), %r13
-	movl	$-1, %r10d
+	movl	$-1, %ebx
 	jmp	pthread__switch_away
 	NOTREACHED
 	
 upcall_no_new_preempt:		
-	movq	%r14, %rdi
+	movq	%r15, %rdi
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
