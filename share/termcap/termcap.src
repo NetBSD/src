@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.75 2003/02/02 17:34:19 jdc Exp $
+#	$NetBSD: termcap.src,v 1.76 2003/02/06 04:25:03 rafal Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -748,13 +748,13 @@ iris-ansi|iris-ansi-net|IRIS emulating 40 line ANSI terminal (almost VT100):\
 	:k7=\E[007q:k8=\E[008q:k9=\EOP:k;=\EOQ:kB=\E[Z:kD=\177:\
 	:kI=\E[139q:kM=\E[146q:kN=\E[154q:kP=\E[150q:kb=^H:\
 	:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:le=\E[D:md=\E[1m:\
-	:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:pk=\EP101;%d.y%s\E\:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:pk=\EP101;%d.y%s\E\\:\
 	:rc=\E8:sc=\E7:se=\E[m:sf=\ED:so=\E[1;7m:sr=\EM:st=\EH:\
 	:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:ve=\E[9/y\E[12/y\E[=6l:\
 	:vs=\E[10/y\E[=1h\E[=2l\E[=6h:
 iris-ansi-ap|IRIS ANSI in application-keypad mode:\
-	:F1=\E[011q:F2=\E[012q:is=\E[?1l\E>\E[?7h:k;=\E[010q:\
-	:ke=\E>:ks=\E=:\
+	:@8=\EOM:F1=\E[011q:F2=\E[012q:is=\E[?1l\E=\E[?7h:\
+	:k9=\E[009q:k;=\E[010q:ke=\E>:ks=\E=:\
 	:tc=iris-ansi:
 
 # The following is a version of the ibm-pc entry distributed with PC/IX,
