@@ -709,7 +709,7 @@ static format_char_info print_char_table[] = {
   { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
   { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	"-w"		},
   { "n",	1,	T_I,	T_S,	T_L,	T_LL,	NULL,	""		},
-  { "b",	0,	T_I,	NULL,	NULL,	NULL,	NULL,	""		},
+  { "b",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	""		},
   { NULL }
 };
 
@@ -766,7 +766,7 @@ init_function_format_info ()
    false indicates printf-style format checking.  FORMAT_NUM is the number
    of the argument which is the format control string (starting from 1).
    FIRST_ARG_NUM is the number of the first actual argument to check
-   against teh format string, or zero if no checking is not be done
+   against the format string, or zero if no checking is not be done
    (e.g. for varargs such as vfprintf).  */
 
 void
@@ -1035,16 +1035,19 @@ check_format_info (info, params)
 		  cur_type = TREE_TYPE (cur_param);
 		  params = TREE_CHAIN (params);
 		  ++arg_num;
-		  if (TREE_CODE (cur_type) != POINTER_TYPE ||
-		      (TYPE_MAIN_VARIANT (TREE_TYPE (cur_type)) != char_type_node))
+		  /*
+		   * `%b' takes two arguments:
+		   *	an unsigned int (the bits), type-checked here
+		   *	a string (the bit names), checked for in mainstream
+		   *	code below (see `%b' entry in print_char_table[])
+		   */
+		  if ((TYPE_MAIN_VARIANT (cur_type) != unsigned_type_node))
 		    {
-		      sprintf (message, "%s format, %s arg (arg %d)",
-			    IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (char_type_node))),
-			    IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (cur_type))),
-			    arg_num);
+		      sprintf (message,
+			       "bitfield is not type unsigned int (arg %d)",
+			       arg_num);
 		      warning (message);
 		    }
-		  cur_type = TREE_TYPE (cur_type);
 		}
 	    }
 	  else
