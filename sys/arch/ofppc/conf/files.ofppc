@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.20 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.ofppc,v 1.21 2002/10/30 06:26:43 manu Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -28,19 +28,6 @@ file	dev/cninit.c
 # CPU specific OpenFirmware code
 #
 include "arch/powerpc/conf/files.ofw"
-
-#
-# Compatibility modules
-#
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # Generic OpenFirmware device support

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.4 2002/10/26 13:50:36 jdolecek Exp $
+#	$NetBSD: files.mvmeppc,v 1.5 2002/10/30 06:26:43 manu Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -35,16 +35,6 @@ include "dev/scsipi/files.scsipi"
 # Memory Disk for install floppy
 #
 file dev/md_root.c	memory_disk_hooks
-
-#
-# Compatibility modules
-#
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # System bus types
