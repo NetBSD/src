@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.52 1998/12/03 18:24:30 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.53 1998/12/08 13:29:31 bouyer Exp $ */
 
 
 /*
@@ -954,6 +954,7 @@ __wdccommand_start(chp, xfer)
 	    wdc_c->timeout) != 0) {
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
+		return;
 	}
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
