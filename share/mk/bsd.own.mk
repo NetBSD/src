@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.67 1998/05/05 01:15:05 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.68 1998/05/10 14:58:09 kleink Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -113,7 +113,8 @@ UVM=yes
 
 # all machines on which we are okay should be added here until we can
 # get rid of the whole "NOLINT by default" thing.
-.if (${MACHINE} == "i386")
+.if (${MACHINE} == "i386") || \
+    (${MACHINE} == "sparc")
 NONOLINT=1
 .endif
 
