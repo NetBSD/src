@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.100.4.1 1999/06/07 04:25:31 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.100.4.2 1999/07/04 01:41:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -934,7 +934,7 @@ vput(vp)
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
 		vprint("vput: bad ref count", vp);
-		panic("vput: ref cnt");
+		panic("vput: ref cnt vp %p", vp);
 	}
 #endif
 	/*
@@ -970,7 +970,7 @@ vrele(vp)
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
 		vprint("vrele: bad ref count", vp);
-		panic("vrele: ref cnt");
+		panic("vrele: ref cnt vp %p", vp);
 	}
 #endif
 
@@ -1008,7 +1008,7 @@ holdrele(vp)
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_holdcnt <= 0)
-		panic("holdrele: holdcnt");
+		panic("holdrele: holdcnt vp %p", vp);
 	vp->v_holdcnt--;
 	simple_unlock(&vp->v_interlock);
 }
@@ -1545,8 +1545,8 @@ vfs_buf_print(bp, full, pr)
 
 
 const char vnode_flagbits[] =
-	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5XLOCK\6XWANT\7BWAIT\10ALIASED"
-	"\11DIROP\13DIRTY";
+	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\11XLOCK\12XWANT\13BWAIT\14ALIASED"
+	"\15DIROP\17DIRTY";
 
 const char *vnode_types[] = {
 	"VNON",
