@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 2003/11/15 23:47:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2003/08/07 16:29:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2003/11/15 23:47:58 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -134,7 +134,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	KDASSERT(!(l1 != curlwp && l1 != &lwp0));
+	KDASSERT(l1 == curlwp || l1 == &lwp0);
 
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
