@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2003/03/27 19:42:30 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2003/03/29 07:58:16 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -123,6 +123,7 @@
 
 #include "opt_pmap_debug.h"
 #include "opt_ddb.h"
+#include "opt_cpuoptions.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,7 +144,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2003/03/27 19:42:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2003/03/29 07:58:16 bsh Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -3998,6 +3999,7 @@ void
 pmap_pte_init_xscale(void)
 {
 	uint32_t auxctl;
+	int	write_through = 0;
 
 	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_xscale;
@@ -4039,10 +4041,38 @@ pmap_pte_init_xscale(void)
 	 *
 	 * However, we give you the option to be slow-but-correct.
 	 */
-	pte_l1_s_cache_mode = L1_S_C;
-	pte_l2_l_cache_mode = L2_C;
-	pte_l2_s_cache_mode = L2_C;
+	write_through = 1;
+#elif defined(XSCALE_CACHE_WRITE_BACK)
+	/* force to use write back cache */
+	write_through = 0;
+#elif defined(CPU_XSCALE_PXA2X0)
+	/*
+	 * Intel PXA2[15]0 processors are known to have a bug in
+	 * write-back cache on revision 4 and earlier (stepping
+	 * A[01] and B[012]).  Fixed for C0 and later.
+	 */
+	{
+		uint32_t id , type;
+
+		id = cpufunc_id();
+		type = id & ~(CPU_ID_XSCALE_COREREV_MASK|CPU_ID_REVISION_MASK);
+
+		if (type == CPU_ID_PXA250 || type == CPU_ID_PXA210) {
+
+			if ((id & CPU_ID_REVISION_MASK) < 5) {
+				/* write through for stepping A0-1 and B0-2 */
+				write_through = 1;
+			}
+		}
+	}
 #endif /* XSCALE_CACHE_WRITE_THROUGH */
+
+
+	if (write_through) {
+		pte_l1_s_cache_mode = L1_S_C;
+		pte_l2_l_cache_mode = L2_C;
+		pte_l2_s_cache_mode = L2_C;
+	}
 
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
