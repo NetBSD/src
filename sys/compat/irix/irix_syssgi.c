@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.32 2002/10/13 22:13:47 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.33 2002/11/30 12:28:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.32 2002/10/13 22:13:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.33 2002/11/30 12:28:26 jdolecek Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
+#endif
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
