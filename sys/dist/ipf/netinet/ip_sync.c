@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.1 2004/12/31 11:30:48 martti Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.1.1.2 2005/02/08 06:53:30 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -98,7 +98,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.1 2004/03/22 12:21:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.2 2004/10/31 18:45:58 darrenr Exp";
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -120,6 +120,7 @@ u_int		sl_idx = 0,	/* next available sync log entry */
 		su_idx = 0,	/* next available sync update entry */
 		sl_tail = 0,	/* next sync log entry to read */
 		su_tail = 0;	/* next sync update entry to read */
+int		ipf_sync_debug = 0;
 
 
 # if !defined(sparc) && !defined(__hppa)
@@ -263,6 +264,7 @@ ipstate_t *ips;
 #  define	ipfsync_storder(x,y)
 # endif /* !defined(sparc) && !defined(__hppa) */
 
+/* enable this for debugging */
 
 # ifdef _KERNEL
 /* ------------------------------------------------------------------------ */
@@ -277,37 +279,129 @@ int ipfsync_write(uio)
 struct uio *uio;
 {
 	synchdr_t sh;
+
+	/* 
+	 * THIS MUST BE SUFFICIENT LARGE TO STORE
+	 * ANY POSSIBLE DATA TYPE 
+	 */
+	char data[2048]; 
+
 	int err = 0;
 
-	/*
-	 * All writes will be in multiples of 4 and at least 8 bytes.
-	 */
-	if ((uio->uio_resid & 3) || (uio->uio_resid < 8))
-		return EINVAL;
+#  if (BSD >= 199306) || defined(__FreeBSD__) || defined(__osf__)
+	uio->uio_rw = UIO_WRITE;
+#  endif
 
-	while ((uio->uio_resid > 0) &&
-	       UIOMOVE((caddr_t)&sh, sizeof(sh), UIO_WRITE, uio) == 0) {
-		sh.sm_num = ntohl(sh.sm_num);
-		if (sh.sm_v != 4 && sh.sm_v != 6)
-			continue;
+	/* Try to get bytes */
+	while (uio->uio_resid > 0) {
 
-		if ((sh.sm_cmd > SMC_MAXCMD) || (sh.sm_table > SMC_MAXTBL))
-			continue;
+		if (uio->uio_resid >= sizeof(sh)) {
+
+			err = UIOMOVE((caddr_t)&sh, sizeof(sh), UIO_WRITE, uio);
+
+			if (err) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(header) failed: %d\n",
+						err);
+				return err;
+			}
+
+			/* convert to host order */
+			sh.sm_magic = ntohl(sh.sm_magic);
+			sh.sm_len = ntohl(sh.sm_len);
+			sh.sm_num = ntohl(sh.sm_num);
+
+			if (ipf_sync_debug > 8)
+				printf("[%d] Read v:%d p:%d cmd:%d table:%d rev:%d len:%d magic:%x\n",
+					sh.sm_num, sh.sm_v, sh.sm_p, sh.sm_cmd,
+					sh.sm_table, sh.sm_rev, sh.sm_len,
+					sh.sm_magic);
+
+			if (sh.sm_magic != SYNHDRMAGIC) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(header) invalud %x\n",
+						"magic");
+				return EINVAL;
+			}
+
+			if (sh.sm_v != 4 && sh.sm_v != 6) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(header) invalid %s\n",
+						"protocol");
+				return EINVAL;
+			}
+
+			if (sh.sm_cmd > SMC_MAXCMD) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(header) invalid %s\n",
+						"command");
+				return EINVAL;
+			}
+
+
+			if (sh.sm_table > SMC_MAXTBL) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(header) invalid %s\n",
+						"table");
+				return EINVAL;
+			}
+
+		} else {
+			/* unsufficient data, wait until next call */
+			if (ipf_sync_debug > 2)
+				printf("uiomove(header) insufficient data");
+			return EAGAIN;
+	 	}
+
 
 		/*
-		 * We currently only synchronise state information and NAT
-		 * information - and even then, the NAT information is not
-		 * yet sync'd for proxied connections.
+		 * We have a header, so try to read the amount of data 
+		 * needed for the request
 		 */
-		if (sh.sm_table == SMC_STATE)
-			err = ipfsync_state(&sh, uio);
-		else if (sh.sm_table == SMC_NAT)
-			err = ipfsync_nat(&sh, uio);
-		if (err)
-			break;
-	}
 
-	return err;
+		/* not supported */
+		if (sh.sm_len == 0) {
+			if (ipf_sync_debug > 2)
+				printf("uiomove(data zero length %s\n",
+					"not supported");
+			return EINVAL;
+		}
+
+		if (uio->uio_resid >= sh.sm_len) {
+
+			err = UIOMOVE((caddr_t)data, sh.sm_len, UIO_WRITE, uio);
+
+			if (err) {
+				if (ipf_sync_debug > 2)
+					printf("uiomove(data) failed: %d\n",
+						err);
+				return err;
+			}
+
+			if (ipf_sync_debug > 7)
+				printf("uiomove(data) %d bytes read\n",
+					sh.sm_len);
+
+			if (sh.sm_table == SMC_STATE)
+				err = ipfsync_state(&sh, data);
+			else if (sh.sm_table == SMC_NAT)
+				err = ipfsync_nat(&sh, data);
+			if (ipf_sync_debug > 7)
+				printf("[%d] Finished with error %d\n",
+					sh.sm_num, err);
+
+		} else {
+			/* insufficient data, wait until next call */
+			if (ipf_sync_debug > 2)
+				printf("uiomove(data) %s %d bytes, got %d\n",
+					"insufficient data, need",
+					sh.sm_len, uio->uio_resid);
+			return EAGAIN;
+		}
+	}	 
+
+	/* no more data */
+	return 0;
 }
 
 
@@ -408,28 +502,24 @@ struct uio *uio;
 /* create a new state entry or update one.  Deletion is left to the state   */
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
-int ipfsync_state(sp, uio)
+int ipfsync_state(sp, data)
 synchdr_t *sp;
-struct uio *uio;
+void *data;
 {
 	synctcp_update_t su;
 	ipstate_t *is, sn;
 	synclist_t *sl;
 	frentry_t *fr;
 	u_int hv;
-	int err;
+	int err = 0;
 
-#  if (BSD >= 199306) || defined(__FreeBSD__) || defined(__osf__)
-	uio->uio_rw = UIO_WRITE;
-#  endif
 	hv = sp->sm_num & (SYNC_STATETABSZ - 1);
 
 	switch (sp->sm_cmd)
 	{
 	case SMC_CREATE :
-		err = UIOMOVE((caddr_t)&sn, sizeof(sn), UIO_WRITE, uio);
-		if (err != 0)
-			break;
+
+		bcopy(data, &sn, sizeof(sn));
 		KMALLOC(is, ipstate_t *);
 		if (is == NULL) {
 			err = ENOMEM;
@@ -462,12 +552,15 @@ struct uio *uio;
 		}
 		RWLOCK_EXIT(&ipf_mutex);
 
+		if (ipf_sync_debug > 4)
+			printf("[%d] Filter rules = %p\n", sp->sm_num, fr);
+
 		is->is_rule = fr;
 		is->is_sync = sl;
 
 		sl->sl_idx = -1;
 		sl->sl_ips = is;
-		sl->sl_num = ntohl(sp->sm_num);
+		bcopy(sp, &sl->sl_hdr, sizeof(struct synchdr));
 
 		WRITE_ENTER(&ipf_syncstate);
 		WRITE_ENTER(&ipf_state);
@@ -486,19 +579,25 @@ struct uio *uio;
 		 *
 		 * Put this state entry on its timeout queue.
 		 */
-		fr_setstatequeue(is, sp->sm_rev);
+		/*fr_setstatequeue(is, sp->sm_rev);*/
 		break;
 
 	case SMC_UPDATE :
-		err = UIOMOVE((caddr_t)&su, sizeof(su), UIO_WRITE, uio);
-		if (err != 0)
-			break;
+		bcopy(data, &su, sizeof(su));
+
+		if (ipf_sync_debug > 4)
+			printf("[%d] Update age %lu state %d/%d \n",
+				sp->sm_num, su.stu_age, su.stu_state[0],
+				su.stu_state[1]);
 
 		READ_ENTER(&ipf_syncstate);
 		for (sl = syncstatetab[hv]; (sl != NULL); sl = sl->sl_next)
 			if (sl->sl_hdr.sm_num == sp->sm_num)
 				break;
 		if (sl == NULL) {
+			if (ipf_sync_debug > 1)
+				printf("[%d] State not found - can't update\n",
+					sp->sm_num);
 			RWLOCK_EXIT(&ipf_syncstate);
 			err = ENOENT;
 			break;
@@ -506,12 +605,19 @@ struct uio *uio;
 
 		READ_ENTER(&ipf_state);
 
+		if (ipf_sync_debug > 6)
+			printf("[%d] Data from state v:%d p:%d cmd:%d table:%d rev:%d\n", 
+				sp->sm_num, sl->sl_hdr.sm_v, sl->sl_hdr.sm_p, 
+				sl->sl_hdr.sm_cmd, sl->sl_hdr.sm_table,
+				sl->sl_hdr.sm_rev);
+
 		is = sl->sl_ips;
 
 		MUTEX_ENTER(&is->is_lock);
 		switch (sp->sm_p)
 		{
 		case IPPROTO_TCP :
+			/* XXX FV --- shouldn't we do ntohl/htonl???? XXX */
 			is->is_send = su.stu_data[0].td_end;
 			is->is_maxsend = su.stu_data[0].td_maxend;
 			is->is_maxswin = su.stu_data[0].td_maxwin;
@@ -524,7 +630,12 @@ struct uio *uio;
 		default :
 			break;
 		}
+
+		if (ipf_sync_debug > 6)
+			printf("[%d] Setting timers for state\n", sp->sm_num);
+
 		fr_setstatequeue(is, sp->sm_rev);
+
 		MUTEX_EXIT(&is->is_lock);
 		break;
 
@@ -537,6 +648,11 @@ struct uio *uio;
 		RWLOCK_EXIT(&ipf_state);
 		RWLOCK_EXIT(&ipf_syncstate);
 	}
+
+	if (ipf_sync_debug > 6)
+		printf("[%d] Update completed with error %d\n",
+			sp->sm_num, err);
+
 	return err;
 }
 # endif /* _KERNEL */
@@ -575,9 +691,9 @@ synclist_t *sl;
 /* create a new NAT entry or update one.  Deletion is left to the NAT       */
 /* structures being timed out correctly.                                    */
 /* ------------------------------------------------------------------------ */
-int ipfsync_nat(sp, uio)
+int ipfsync_nat(sp, data)
 synchdr_t *sp;
-struct uio *uio;
+void *data;
 {
 	synclogent_t sle;
 	syncupdent_t su;
@@ -586,18 +702,12 @@ struct uio *uio;
 	u_int hv = 0;
 	int err;
 
-#  if (BSD >= 199306) || defined(__FreeBSD__) || defined(__osf__)
-	uio->uio_rw = UIO_WRITE;
-#  endif
-
 	READ_ENTER(&ipf_syncstate);
 
 	switch (sp->sm_cmd)
 	{
 	case SMC_CREATE :
-		err = UIOMOVE((caddr_t)&sle, sizeof(sle), UIO_WRITE, uio);
-		if (err != 0)
-			break;
+		bcopy(data, &sle, sizeof(sle));
 
 		KMALLOC(n, nat_t *);
 		if (n == NULL) {
@@ -634,9 +744,7 @@ struct uio *uio;
 		break;
 
 	case SMC_UPDATE :
-		err = UIOMOVE((caddr_t)&su, sizeof(su), UIO_WRITE, uio);
-		if (err != 0)
-			break;
+		bcopy(data, &su, sizeof(su));
 
 		READ_ENTER(&ipf_syncstate);
 		for (sl = syncstatetab[hv]; (sl != NULL); sl = sl->sl_next)
@@ -731,6 +839,7 @@ void *ptr;
 	sl->sl_num = ipf_syncnum;
 	MUTEX_EXIT(&ipf_syncadd);
 
+	sl->sl_magic = htonl(SYNHDRMAGIC);
 	sl->sl_v = fin->fin_v;
 	sl->sl_p = fin->fin_p;
 	sl->sl_cmd = SMC_CREATE;
@@ -747,6 +856,7 @@ void *ptr;
 		ptr = NULL;
 		sz = 0;
 	}
+	sl->sl_len = sz;
 
 	/*
 	 * Create the log entry to be read by a user daemon.  When it has been
@@ -757,6 +867,7 @@ void *ptr;
 	bcopy((char *)&sl->sl_hdr, (char *)&sle->sle_hdr,
 	      sizeof(sle->sle_hdr));
 	sle->sle_hdr.sm_num = htonl(sle->sle_hdr.sm_num);
+	sle->sle_hdr.sm_len = htonl(sle->sle_hdr.sm_len);
 	if (ptr != NULL) {
 		bcopy((char *)ptr, (char *)&sle->sle_un, sz);
 		if (tab == SMC_STATE) {
@@ -813,10 +924,12 @@ synclist_t *sl;
 		sl->sl_idx = su_idx++;
 		bcopy((char *)&sl->sl_hdr, (char *)&slu->sup_hdr,
 		      sizeof(slu->sup_hdr));
+		slu->sup_hdr.sm_magic = htonl(SYNHDRMAGIC);
 		slu->sup_hdr.sm_sl = sl;
 		slu->sup_hdr.sm_cmd = SMC_UPDATE;
 		slu->sup_hdr.sm_table = tab;
 		slu->sup_hdr.sm_num = htonl(sl->sl_num);
+		slu->sup_hdr.sm_len = htonl(sizeof(struct synctcp_update));
 		slu->sup_hdr.sm_rev = fin->fin_rev;
 # if 0
 		if (fin->fin_p == IPPROTO_TCP) {
