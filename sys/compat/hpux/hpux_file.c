@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.25 2003/08/07 16:30:42 agc Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.25.2.1 2004/11/12 06:56:05 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.25 2003/08/07 16:30:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.25.2.1 2004/11/12 06:56:05 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,8 @@ hpux_sys_fcntl(l, v, retval)
 
 	if ((fp = fd_getfile(p->p_fd, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-
+	
+	/* This array dereference is validated by fd_getfile */
 	pop = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 	arg = SCARG(uap, arg);
 
