@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.46 1999/07/04 21:32:48 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.47 1999/07/04 21:39:33 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -274,7 +274,7 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, int, const char *, const char *, ...));
+int	run_prog __P((int, int, msg, const char *, ...));
 void	do_logging __P((void));
 int	do_system __P((const char *));
 

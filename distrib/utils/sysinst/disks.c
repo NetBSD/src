@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.28 1999/07/04 08:01:39 cgd Exp $ */
+/*	$NetBSD: disks.c,v 1.29 1999/07/04 21:39:33 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -232,7 +232,7 @@ int write_disklabel (void)
 
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	return run_prog(0, 1, msg_string(MSG_cmdfail),
+	return run_prog(0, 1, MSG_cmdfail,
 	    "%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 #endif
 	return 0;
@@ -271,7 +271,7 @@ do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 	char devname[STRSIZE];
 	int error;
 
-	error = run_prog(0, 1, msg_string(MSG_cmdfail), 
+	error = run_prog(0, 1, MSG_cmdfail,
 	    "/sbin/newfs /dev/r%s", partname);
 	if (*mountpoint && error == 0) { 
 		snprintf(devname, STRSIZE, "/dev/%s", partname);
