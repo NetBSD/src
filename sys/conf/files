@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.348 2000/02/11 19:22:53 thorpej Exp $
+#	$NetBSD: files,v 1.349 2000/02/14 21:42:50 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -616,7 +616,6 @@ file netinet/in_gif.c			gif & inet
 file netinet6/in6_gif.c			gif & inet6
 file netinet6/in6.c			inet6
 file netinet6/in6_ifattach.c		inet6
-file netinet/in4_cksum.c
 file netinet6/in6_cksum.c		inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6_prefix.c		inet6
