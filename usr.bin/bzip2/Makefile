@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/09/18 14:00:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2004/06/06 06:39:43 christos Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -9,6 +9,9 @@ DPADD+=	   ${LIBBZ2}
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
+.endif
+.ifdef	SMALLPROG
+CPPFLAGS+=	-DSMALL
 .endif
 
 DIST=	   ${NETBSDSRCDIR}/dist/bzip2
