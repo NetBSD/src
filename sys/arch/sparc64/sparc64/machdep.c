@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1998/06/25 23:41:51 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.3 1998/07/07 03:05:04 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -864,6 +864,18 @@ sys_sigreturn(p, v, retval)
 #endif
 #endif
 #ifdef DEBUG
+	/* Need to sync tf locals and ins with stack to prevent panic */
+	{
+		int i;
+
+		kstack = (struct rwindow32 *)tf->tf_out[6];
+		for (i=0; i<8; i++) {
+			tf->tf_local[i] = fuword(&kstack->rw_local[i]);
+			tf->tf_in[i] = fuword(&kstack->rw_in[i]);
+		}
+	}
+#endif
+#ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
 		       (int)tf->tf_pc, (int)tf->tf_out[6], (int)tf->tf_tstate);
@@ -889,9 +901,10 @@ cpu_reboot(howto, user_boot_string)
 	static char str[128];
 	extern int cold;
 
+	/* If system is cold, just halt. */
 	if (cold) {
-		printf("halted\n\n");
-		romhalt();
+		howto |= RB_HALT;
+		goto haltsys;
 	}
 
 #if NFB > 0
@@ -914,15 +927,30 @@ cpu_reboot(howto, user_boot_string)
 		resettodr();
 	}
 	(void) splhigh();		/* ??? */
-	if (howto & RB_HALT) {
-		doshutdownhooks();
-		printf("halted\n\n");
-		romhalt();
-	}
+
+	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)
 		dumpsys();
 
+haltsys:
+	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	/* If powerdown was requested, do it. */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Let the OBP do the work. */
+		OF_poweroff();
+		printf("WARNING: powerdown failed!\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
+	}
+
+	if (howto & RB_HALT) {
+		printf("halted\n\n");
+		romhalt();
+	}
+
 	printf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
@@ -1385,6 +1413,10 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	void *mapstore;
 	size_t mapsize;
 
+#ifdef DIAGNOSTIC
+	if (nsegments != 1) 
+		printf("_bus_dmamap_create(): sparc only supports one segment!\n");
+#endif
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
@@ -1409,7 +1441,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_WRITE|BUS_DMA_CACHE);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -1445,7 +1477,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t dvmaddr;
-	caddr_t vaddr = buf;
+	vm_offset_t vaddr = (vm_offset_t)buf;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -1453,7 +1485,15 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
+#ifdef DEBUG
+	{ 
+		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		Debugger();
 		return (EINVAL);
+	}		
+#else	
+		return (EINVAL);
+#endif
 
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
@@ -1461,7 +1501,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
 	dvmaddr = dvmamap_alloc(sgsize, flags);
-	if (dvmaddr != 0)
+#ifdef DEBUG
+	if (dvmaddr == (bus_addr_t)-1)	
+	{ 
+		printf("_bus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
+		Debugger();
+	}		
+#endif	
+	if (dvmaddr == (bus_addr_t)-1)
 		return (ENOMEM);
 
 	/*
@@ -1469,8 +1516,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr;
-	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr&PGOFSET);
+	map->dm_segs[0].ds_len = sgsize;
 
 	/* Mapping is bus dependent */
 	return (0);
@@ -2023,6 +2070,7 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
+	UPA_BUS_SPACE,			/* type (ASI) */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */

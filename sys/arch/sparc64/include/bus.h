@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,8 +72,21 @@
 #define _SPARC_BUS_H_
 
 #include <machine/types.h>
+#include <machine/ctlreg.h>
 
-#define	SPARC_BUS_SPACE	0
+/*
+ * UPA and SBUS spaces are non-cached and big endian
+ * (except for RAM and PROM)
+ *
+ * PCI spaces are non-cached and little endian
+ */
+#define UPA_BUS_SPACE	ASI_PHYS_NON_CACHED
+#define	SBUS_BUS_SPACE	ASI_PHYS_NON_CACHED
+#define PCI_CONFIG_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
+#define PCI_IO_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
+#define PCI_MEMORY_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
+/* For backwards compatibility */
+#define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
 /*
  * Bus address and size types
@@ -91,6 +104,7 @@ typedef struct sparc_bus_space_tag	*bus_space_tag_t;
 struct sparc_bus_space_tag {
 	void		*cookie;
 	bus_space_tag_t	parent;
+	int		type;
 
 	int	(*sparc_bus_map) __P((
 				bus_space_tag_t,
@@ -337,16 +351,16 @@ int bus_space_probe __P((
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	    (*(volatile u_int8_t *)((h) + (o)))
+	    lduba((h) + (o), (t)->type)
 
 #define	bus_space_read_2(t, h, o)					\
-	    (*(volatile u_int16_t *)((h) + (o)))
+	    lduha((h) + (o), (t)->type)
 
 #define	bus_space_read_4(t, h, o)					\
-	    (*(volatile u_int32_t *)((h) + (o)))
+	    lda((h) + (o), (t)->type)
 
 #define	bus_space_read_8(t, h, o)					\
-	    (*(volatile u_int64_t *)((h) + (o)))
+	    ldxa((h) + (o), (t)->type)
 
 /*
  *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
@@ -394,21 +408,17 @@ int bus_space_probe __P((
  * described by tag/handle/offset.
  */
 
-#define	bus_space_write_1(t, h, o, v)	do {				\
-	((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));		\
-} while (0)
+#define	bus_space_write_1(t, h, o, v)					\
+	((void)(stba((h) + (o), (t)->type, (v))))
 
-#define	bus_space_write_2(t, h, o, v)	do {				\
-	((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));		\
-} while (0)
+#define	bus_space_write_2(t, h, o, v)					\
+	((void)(stha((h) + (o), (t)->type, (v))))
 
-#define	bus_space_write_4(t, h, o, v)	do {				\
-	((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));		\
-} while (0)
+#define	bus_space_write_4(t, h, o, v)					\
+	((void)(sta((h) + (o), (t)->type, (v))))
 
-#define	bus_space_write_8(t, h, o, v)	do {				\
-	((void)(*(volatile u_int64_t *)((h) + (o)) = (v)));		\
-} while (0)
+#define	bus_space_write_8(t, h, o, v)					\
+	((void)(stxa((h) + (o), (t)->type, (v))))
 
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.1.1.1 1998/06/20 04:58:50 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.2 1998/07/07 03:05:02 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -103,12 +103,14 @@ file	arch/sparc64/dev/lebuffer.c	lebuffer
 
 device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
-file	arch/sparc64/dev/esp.c		esp
+device fas: scsi, ncr53c9x
+attach fas at sbus, dma, obio
+file	arch/sparc64/dev/esp.c		esp | fas
 
-device audioamd: audio
-attach audioamd at mainbus, obio, sbus
-file	arch/sparc64/dev/amd7930.c		audio
-file	arch/sparc64/sparc64/amd7930intr.s		audio
+#device audioamd: audio
+#attach audioamd at mainbus, obio, sbus
+#file	arch/sparc64/dev/amd7930.c		audio
+#file	arch/sparc64/sparc64/amd7930intr.s		audio
 
 # Brooktree DAC attribute
 define bt_dac

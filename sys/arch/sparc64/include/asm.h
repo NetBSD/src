@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.2 1998/07/07 03:05:03 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -43,9 +43,16 @@
 
 #ifndef _ASM_H_
 #define _ASM_H_
-#include <machine/cdefs.h>
-#include <sys/cdefs.h>
 
+#ifdef __ELF__
+#define	_C_LABEL(name)		name
+#else
+#ifdef __STDC__
+#define _C_LABEL(name)		_ ## name
+#else
+#define _C_LABEL(name)		_/**/name
+#endif
+#endif
 #define	_ASM_LABEL(name)	name
 
 #ifdef PIC
@@ -57,8 +64,8 @@
  */
 #define PIC_PROLOGUE(dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
-	sethi %hi(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
-	or dest,%lo(__GLOBAL_OFFSET_TABLE_-(3b-.)),dest; \
+	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
+	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add dest,%o7,dest; mov tmp,%o7
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1998/07/07 03:05:02 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ leattach_ledma(parent, self, aux)
 	}
 	error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
 			       (caddr_t *)&sc->sc_mem,
-			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_WRITE|BUS_DMA_CACHE);
 	if (error) {
 		printf("%s @ ledma: DMA buffer map error %d\n",
 			self->dv_xname, error);
@@ -652,19 +652,19 @@ leattach(lesc, pri)
 	extern void myetheraddr __P((u_char *));
 
 	if (sc->sc_mem == 0) {
-#if 0
+#ifdef BUS_DMA
 		bus_dma_segment_t seg;
 		int rseg, error;
 
-		error = bus_dmamem_alloc(lesc->sc_dmat, MEMSIZE, NBPG, 0,
+		error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
 					 &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("if_le: DMA buffer alloc error %d\n", error);
 			return;
 		}
-		error = bus_dmamem_map(lesc->sc_dmat, &seg, rseg, MEMSIZE,
+		error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
 				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_WRITE|BUS_DMA_CACHE);
 		if (error) {
 			printf("if_le: DMA buffer map error %d\n", error);
 			return;

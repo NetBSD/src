@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.2 1998/07/07 03:05:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,65 +63,72 @@
 /* load byte from alternate address space */
 #define	lduba(loc, asi) ({ \
 	register int _lduba_v; \
-	__asm __volatile("lduba [%1]%2,%0" : "=r" (_lduba_v) : \
-	    "r" ((long long)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
+	    "r" ((long long)(loc)), "r" (asi)); \
 	_lduba_v; \
 })
 
 /* load half-word from alternate address space */
 #define	lduha(loc, asi) ({ \
 	register int _lduha_v; \
-	__asm __volatile("lduha [%1]%2,%0" : "=r" (_lduha_v) : \
-	    "r" ((long long)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
+	    "r" ((long long)(loc)), "r" (asi)); \
 	_lduha_v; \
 })
 
 /* load int from alternate address space */
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
-	__asm __volatile("lda [%1]%2,%0" : "=r" (_lda_v) : \
-	    "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
+	    "r" ((int)(loc)), "r" (asi)); \
+	_lda_v; \
+})
+
+#define	ldswa(loc, asi) ({ \
+	register int _lda_v; \
+	__asm __volatile("wr %2,%%g0,%%asi; ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
+	    "r" ((int)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 
 /* store byte to alternate address space */
 #define	stba(loc, asi, value) ({ \
-	__asm __volatile("stba %0,[%1]%2; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; stba %0,[%1]%%asi; membar #Sync" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
 /* store half-word to alternate address space */
 #define	stha(loc, asi, value) ({ \
-	__asm __volatile("stha %0,[%1]%2; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; stha %0,[%1]%%asi; membar #Sync" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
 /* store int to alternate address space */
 #define	sta(loc, asi, value) ({ \
-	__asm __volatile("sta %0,[%1]%2; membar #Sync" : : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; sta %0,[%1]%%asi; membar #Sync" : : \
+	    "r" ((int)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
 /* load 64-bit int from alternate address space */
 #define	ldda(loc, asi) ({ \
 	register long long _lda_v; \
-	__asm __volatile("ldda [%1]%2,%0" : "=r" (_lda_v) : \
-	    "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
+	    "r" ((int)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 
 /* store 64-bit int to alternate address space */
 #define	stda(loc, asi, value) ({ \
-	__asm __volatile("stda %0,[%1]%2; membar #Sync" : : \
-	    "r" ((long long)(value)), "r" ((int)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; stda %0,[%1]%%asi; membar #Sync" : : \
+	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (asi)); \
 })
 
 #ifdef notyet
 /* native load 64-bit int from alternate address space w/64-bit compiler*/
 #define	ldxa(loc, asi) ({ \
 	register long _lda_v; \
-	__asm __volatile("ldxa [%1]%2,%0" : "=r" (_lda_v) : \
-	    "r" ((long)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
+	    "r" ((long)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 #else
@@ -130,8 +137,8 @@
 	volatile register long _ldxa_tmp = 0; \
 	volatile int64_t _ldxa_v; \
 	volatile int64_t *_ldxa_a = &_ldxa_v; \
-	__asm __volatile("ldxa [%1]%2,%1; stx %1,[%3]; membar #Sync" : "=r" (_ldxa_tmp) : \
-	    "r" ((long)(loc)), "n" (asi), "r" ((long)(_ldxa_a))); \
+	__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%1; stx %1,[%3]; membar #Sync" : "=r" (_ldxa_tmp) : \
+	    "r" ((long)(loc)), "r" (asi), "r" ((long)(_ldxa_a))); \
 	_ldxa_v; \
 })
 #endif
@@ -139,8 +146,8 @@
 #ifdef notyet
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
-	__asm __volatile("stxa %0,[%1]%2; membar #Sync" : : \
-	    "r" ((long)(value)), "r" ((long)(loc)), "n" (asi)); \
+	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi; membar #Sync" : : \
+	    "r" ((long)(value)), "r" ((long)(loc)), "r" (asi)); \
 })
 #else
 /* native store 64-bit int to alternate address space w/32-bit compiler*/
@@ -148,8 +155,8 @@
 	int64_t _stxa_v; \
 	int64_t *_stxa_a = &_stxa_v; \
 	_stxa_v = value; \
-	__asm __volatile("ldx [%0],%3; stxa %3,[%1]%2; membar #Sync" : : \
-	    "r" ((long)(_stxa_a)), "r" ((long)(loc)), "n" (asi), "r" ((long)(_stxa_v))); \
+	__asm __volatile("wr %2,%%g0,%%asi; ldx [%0],%3; stxa %3,[%1]%%asi; membar #Sync" : : \
+	    "r" ((long)(_stxa_a)), "r" ((long)(loc)), "r" (asi), "r" ((long)(_stxa_v))); \
 })
 #endif
 
