@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.20 1998/08/29 03:17:27 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.21 1998/08/29 03:53:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -128,7 +128,8 @@ pv_addr_t kernelstack;
 pv_addr_t hydrascratch;
 #endif	/* NHYDRABUS */
 
-char *boot_args;
+char *boot_args = NULL;
+char *boot_file = NULL;
 
 vm_offset_t msgbufphys;
 
