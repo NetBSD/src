@@ -35,6 +35,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
+#	rd*	"memory" pseudo-disks
 #	ccd*	concatenated disk driver
 #
 # Terminal ports:
@@ -51,6 +52,9 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	ss*	SCSI scanner
+#	uk*	SCSI unknown
+#	ch*	SCSI changer
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -60,11 +64,11 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd sd0 sd1 sd2 st0 st1 cd0 cd1
-	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
-	sh MAKEDEV pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
-	sh MAKEDEV tun0 tun1 tun2 lkm
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh $0 std fd sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $0 tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
+	sh $0 pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
+	sh $0 tun0 tun1 tun2 lkm ccd0 ccd1 ccd2 ccd3
+	sh $0 rd0 ss0 ch0 uk0 uk1 lpt0 lpt1 rtc
 	;;
 
 floppy)
@@ -99,51 +103,64 @@ fd)
 	;;
 
 rd*)
-	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
-	mknod rd${unit} b 3 $unit
-	mknod rrd${unit} c 9 $unit
-	chgrp operator rd${unit} rrd${unit}
-	chmod 640 rd${unit} rrd${unit}
-	umask 77
-	;;
-	
-sd*|vnd*|ccd*)
-	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
-	sd*) name=sd; blk=0; chr=3;;
-	vnd*) name=vnd; blk=5; chr=13;;
-	ccd*) name=ccd; blk=6; chr=18;;
+	rd*) name=rd;	unit=${i#rd};	chr=9;	blk=3;;
+	esac
+	rm -f $name$unit r$name$unit
+	mknod $name$unit	b $blk $(($unit +  0))
+	mknod r$name$unit	c $chr $(($unit + 16))
+	chgrp operator $name$unit r$name$unit
+	chmod 640 $name$unit r$name$unit
+	;;
+
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=19;;
+	esac
+	rm -f $name$unit n$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	chgrp operator $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit
+	;;
+
+sd*|vnd*|ccd*)
+	case $i in
+	ccd*) name=ccd;	unit=${i#ccd};	blk=6;	chr=18;;
+	sd*) name=sd;	unit=${i#sd};	blk=0;	chr=3;;
+	vnd*) name=vnd;	unit=${i#vnd};	blk=5;	chr=13;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-	mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-	mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-	mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-	mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-	mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-	umask 77
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
 tty*)
-	unit=`expr $i : '...\(.*\)'`
+	unit=${i#tty}
+	rm -f tty0$unit
 	mknod tty0$unit c 8 $unit
-	chown uucp.wheel tty0$unit
+	mknod cu0$unit c 8 $(($unit + 128))
+	chown uucp.wheel tty0$unit cu0$unit
 	;;
 
 pty*)
-	class=`expr $i : 'pty\(.*\)'`
+	class=${i#pty}
 	case $class in
 	0) offset=0 name=p;;
 	1) offset=16 name=q;;
@@ -167,75 +184,78 @@ pty*)
 	;;
 
 st*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	st*) name=st;  chr=10; blk=2;;
+	st*) name=st;	unit=${i#st};	chr=10;	blk=2;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
-		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
-	umask 77
+	mknod $name$unit	b $blk $(($unit * 16 + 0))
+	mknod n$name$unit	b $blk $(($unit * 16 + 1))
+	mknod e$name$unit	b $blk $(($unit * 16 + 2))
+	mknod en$name$unit	b $blk $(($unit * 16 + 3))
+	mknod r$name$unit	c $chr $(($unit * 16 + 0))
+	mknod nr$name$unit	c $chr $(($unit * 16 + 1))
+	mknod er$name$unit	c $chr $(($unit * 16 + 2))
+	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	;;
+
+ch*|uk*)
+	case $i in
+	ch*) name=ch;	unit=${i#ch};	chr=16;;
+	uk*) name=uk;	unit=${i#uk};	chr=20;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
 	;;
 
 cd*)
-	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
-        cd*) name=cd; blk=4; chr=12;;
+	cd*) name=cd;	unit=${i#cd};	chr=4;	blk=12;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-	umask 77
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
 lpt*)
-	unit=`expr $i : 'lpt\(.*\)'`
+	unit=${i#lpt}
 	rm -f lpt${unit} lpt${unit}p
-	mknod lpt${unit}  c 17 `expr $unit + 64`
+	mknod lpt${unit}  c 17 $(($unit + 64))
 	mknod lpt${unit}p c 17 $unit
 	chmod 0220 lpt${unit} lpt${unit}p
 	chown root.wheel lpt$unit
 	;;
 
-bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
-	rm -f bpf$unit
-	mknod bpf$unit c 14 $unit
-	chown root.wheel bpf$unit
-	;;
-
-tun*)
-	unit=`expr $i : 'tun\(.*\)'`
-	rm -f tun$unit
-	mknod tun$unit c 15 $unit
-	chmod 600 tun$unit
-	chown root.wheel tun$unit
+bpf*|tun*)
+	case $i in
+	bpf*) name=bpf;	unit=${i#bpf};	chr=14;;
+	tun*) name=tun;	unit=${i#tun};	chr=15;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chown root.wheel $name$unit
 	;;
 
 lkm)
 	rm -f lkm
-	mknod lkm c 18 0
+	mknod lkm c 21 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+rtc)
+	mknod rtc c 2 3
+	chmod 644 rtc
 	;;
 
 local)
