@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $	*/
+/*	$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $");
+__RCSID("$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,8 @@ getport(rhost, rport)
 	struct hostent *hp;
 	struct servent *sp;
 	struct sockaddr_in sin;
-	int s, timo = 1, lport = IPPORT_RESERVED - 1;
+	u_int timo = 1;
+	int s, lport = IPPORT_RESERVED - 1;
 	int err;
 
 	/*
@@ -146,14 +147,14 @@ getport(rhost, rport)
 	 */
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
-	memset((char *)&sin, 0, sizeof(sin));
+	memset(&sin, 0, sizeof(sin));
 	if (inet_aton(rhost, &sin.sin_addr) == 1)
 		sin.sin_family = AF_INET;
 	else {
 		hp = gethostbyname(rhost);
 		if (hp == NULL)
 			fatal("unknown host %s", rhost);
-		memmove((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
+		memmove(&sin.sin_addr, hp->h_addr, (size_t)hp->h_length);
 		sin.sin_family = hp->h_addrtype;
 	}
 	if (rport == 0) {
@@ -173,7 +174,7 @@ retry:
 	seteuid(uid);
 	if (s < 0)
 		return(-1);
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	if (connect(s, (const struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		err = errno;
 		(void)close(s);
 		errno = err;
@@ -233,7 +234,7 @@ getq(namelist)
 	struct queue *q, **queue;
 	struct stat stbuf;
 	DIR *dirp;
-	int nitems, arraysz;
+	u_int nitems, arraysz;
 
 	seteuid(euid);
 	if ((dirp = opendir(SD)) == NULL)
@@ -246,7 +247,7 @@ getq(namelist)
 	 * Estimate the array size by taking the size of the directory file
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
-	arraysz = (stbuf.st_size / 24);
+	arraysz = (int)(stbuf.st_size / 24);
 	queue = (struct queue **)malloc(arraysz * sizeof(struct queue *));
 	if (queue == NULL)
 		goto errdone;
@@ -270,7 +271,7 @@ getq(namelist)
 		 */
 		if (++nitems > arraysz) {
 			arraysz *= 2;
-			queue = (struct queue **)realloc((char *)queue,
+			queue = (struct queue **)realloc(queue,
 				arraysz * sizeof(struct queue *));
 			if (queue == NULL)
 				goto errdone;
@@ -309,24 +310,24 @@ compar(p1, p2)
 char *
 checkremote()
 {
-	char name[MAXHOSTNAMELEN + 1];
+	char hname[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
 	static char errbuf[128];
 
 	remote = 0;	/* assume printer is local */
 	if (RM != NULL) {
 		/* get the official name of the local host */
-		gethostname(name, sizeof(name));
-		name[sizeof(name)-1] = '\0';
-		hp = gethostbyname(name);
+		gethostname(hname, sizeof(hname));
+		hname[sizeof(hname)-1] = '\0';
+		hp = gethostbyname(hname);
 		if (hp == (struct hostent *) NULL) {
 		    (void)snprintf(errbuf, sizeof(errbuf),
 			"unable to get official name for local machine %s",
-			name);
+			hname);
 		    return errbuf;
 		} else {
-			(void)strncpy(name, hp->h_name, sizeof(name) - 1);
-			name[sizeof(name) - 1] = '\0';
+			(void)strncpy(hname, hp->h_name, sizeof(hname) - 1);
+			hname[sizeof(hname) - 1] = '\0';
 		}
 
 		/* get the official name of RM */
@@ -342,7 +343,7 @@ checkremote()
 		 * if the two hosts are not the same,
 		 * then the printer must be remote.
 		 */
-		if (strcasecmp(name, hp->h_name) != 0)
+		if (strcasecmp(hname, hp->h_name) != 0)
 			remote = 1;
 	}
 	return NULL;
