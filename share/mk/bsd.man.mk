@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.70 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.man.mk,v 1.71 2001/11/28 23:32:16 jmc Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -14,8 +14,6 @@ TMACDEPDIR?=	${TOOLDIR}/share/groff/tmac
 .else
 TMACDEPDIR?=	${DESTDIR}/usr/share/tmac
 .endif
-
-TMACDIR?=	${DESTDIR}/usr/share/tmac
 
 HTMLDIR?=	${DESTDIR}/usr/share/man
 CATDEPS?=	${TMACDEPDIR}/tmac.andoc \
