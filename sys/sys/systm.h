@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.142 2002/03/17 22:19:22 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.143 2002/03/26 23:17:09 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -396,6 +396,8 @@ void	cpu_Debugger __P((void));
  */
 extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #define console_debugger() if (db_fromconsole) Debugger()
+#elif defined(Debugger)
+#define console_debugger() Debugger()
 #else
 #define console_debugger() do {} while (/* CONSTCOND */ 0) /* NOP */
 #endif
