@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.62 2005/03/19 21:59:56 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.63 2005/03/23 12:00:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.62 2005/03/19 21:59:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.63 2005/03/23 12:00:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +234,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
 	  PCMCIA_CIS_ASUSTEK_WL_100 },
+
+	{ PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	  PCMCIA_CIS_PROXIM_RANGELANDS_8430 },
 };
 static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
