@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/10/24 00:42:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 2001/10/24 01:12:45 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ LDADD+=	-ll
 DPADD+=	${LIBL}
 YHEADER=1
 
-CPPFLAGS+=-I${.CURDIR} -I. -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=-I${.CURDIR} -I.
 .if ${OBJECT_FMT} == "a.out"
 CPPFLAGS+=-DTARGET_OBJFMT_AOUT
 .elif ${OBJECT_FMT} == "COFF"
