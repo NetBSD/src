@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/07/04 01:59:20 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2003/07/04 02:21:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,8 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <dev/ic/comreg.h>	/* For COM_FREQ */
 
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
@@ -91,4 +93,17 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *parent = dev->dv_parent;
+
+	if (strcmp(dev->dv_cfdata->cf_name, "com") == 0 &&
+	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+		/* Set the frequency of the on-chip UART. */
+		int freq = COM_FREQ * 6;
+
+		if (prop_set(dev_propdb, dev, "frequency",
+			     &freq, sizeof(freq), PROP_INT, 0) != 0)
+			printf("WARNING: unable to set frequency "
+			    "property for %s\n", dev->dv_xname);
+		return;
+	}
 }
