@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.4 1994/08/24 18:14:44 gwr Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.5 1994/12/23 16:52:31 cgd Exp $";
 #endif
 
 /*
@@ -481,11 +481,11 @@ main(argc, argv)
 	/*
 	 * Set up signals to read or dump the table.
 	 */
-	if ((int) signal(SIGHUP, catcher) < 0) {
+	if ((long) signal(SIGHUP, catcher) < 0) {
 		report(LOG_ERR, "signal: %s", get_errmsg());
 		exit(1);
 	}
-	if ((int) signal(SIGUSR1, catcher) < 0) {
+	if ((long) signal(SIGUSR1, catcher) < 0) {
 		report(LOG_ERR, "signal: %s", get_errmsg());
 		exit(1);
 	}
