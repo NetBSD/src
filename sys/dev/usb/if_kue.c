@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.20 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.21 2000/03/24 22:03:30 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -84,7 +84,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>

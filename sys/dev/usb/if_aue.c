@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.32 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.33 2000/03/24 22:03:28 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -854,14 +854,11 @@ USB_ATTACH(aue)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	callout_handle_init(&sc->aue_stat_ch);
 	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 
 	usb_register_netisr();
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-
-	callout_init(&sc->aue_stat_ch);
 
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->aue_dev),
 	    ether_sprintf(eaddr));
@@ -905,6 +902,8 @@ USB_ATTACH(aue)
 
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
+	usb_callout_init(sc->aue_stat_ch);
+
 	sc->aue_attached = 1;
 	splx(s);
 
@@ -924,7 +923,7 @@ USB_DETACH(aue)
 
 	s = splusb();
 
-	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
+	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
 
 	if (!sc->aue_attached) {
 		/* Detached before attached finished, so just bail out. */
@@ -1379,7 +1378,7 @@ aue_tick(xsc)
 		}
 	}
 
-	usb_timeout(aue_tick, sc, hz, sc->aue_stat_ch);
+	usb_callout(sc->aue_stat_ch, hz, aue_tick, sc);
 
 	splx(s);
 }
@@ -1554,8 +1553,7 @@ aue_init(xsc)
 
 	splx(s);
 
-	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
-	usb_timeout(aue_tick, sc, hz, sc->aue_stat_ch);
+	usb_callout(sc->aue_stat_ch, hz, aue_tick, sc);
 }
 
 static int
@@ -1799,7 +1797,7 @@ aue_stop(sc)
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
-	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
+	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
 
 	/* Stop transfers. */
 	if (sc->aue_ep[AUE_ENDPT_RX] != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.15 2000/03/24 13:08:28 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.16 2000/03/24 22:03:29 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -681,13 +681,10 @@ USB_ATTACH(cue)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-	callout_handle_init(&sc->cue_stat_ch);
 	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 	usb_register_netisr();
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-
-	callout_init(&sc->cue_stat_ch);
 
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->cue_dev),
 	    ether_sprintf(eaddr));
@@ -717,6 +714,8 @@ USB_ATTACH(cue)
 
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
+	usb_callout_init(sc->cue_stat_ch);
+
 	sc->cue_attached = 1;
 	splx(s);
 
@@ -736,7 +735,7 @@ USB_DETACH(cue)
 
 	s = splusb();
 
-	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
+	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */
@@ -1125,7 +1124,7 @@ cue_tick(xsc)
 	if (cue_csr_read_2(sc, CUE_RX_FRAMEERR))
 		ifp->if_ierrors++;
 
-	usb_timeout(cue_tick, sc, hz, sc->cue_stat_ch);
+	usb_callout(sc->cue_stat_ch, hz, cue_tick, sc);
 
 	splx(s);
 }
@@ -1304,7 +1303,7 @@ cue_init(xsc)
 
 	splx(s);
 
-	usb_timeout(cue_tick, sc, hz, sc->cue_stat_ch);
+	usb_callout(sc->cue_stat_ch, hz, cue_tick, sc);
 }
 
 static int
@@ -1491,7 +1490,7 @@ cue_stop(sc)
 
 	cue_csr_write_1(sc, CUE_ETHCTL, 0);
 	cue_reset(sc);
-	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
+	usb_uncallout(sc->cue_stat_ch, cue_tick, sc);
 
 	/* Stop transfers. */
 	if (sc->cue_ep[CUE_ENDPT_RX] != NULL) {

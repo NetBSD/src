@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.66 2000/03/23 18:59:10 thorpej Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.67 2000/03/24 22:03:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -384,10 +384,8 @@ usbd_alloc_xfer(dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
-#if defined(__NetBSD__)
-	callout_init(&xfer->timo_handle);
-	callout_init(&xfer->abort_handle);
-#endif
+	usb_callout_init(xfer->timo_handle);
+	usb_callout_init(xfer->abort_handle);
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
 }
