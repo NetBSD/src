@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.181 2004/07/22 21:56:58 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.182 2004/07/23 08:34:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.181 2004/07/22 21:56:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.182 2004/07/23 08:34:11 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -177,6 +177,7 @@ STATIC void wi_sync_bssid(struct wi_softc *, u_int8_t new_bssid[]);
 
 STATIC void wi_rx_intr(struct wi_softc *);
 STATIC void wi_txalloc_intr(struct wi_softc *);
+STATIC void wi_cmd_intr(struct wi_softc *);
 STATIC void wi_tx_intr(struct wi_softc *);
 STATIC void wi_tx_ex_intr(struct wi_softc *);
 STATIC void wi_info_intr(struct wi_softc *);
@@ -192,6 +193,7 @@ STATIC int  wi_alloc_fid(struct wi_softc *, int, int *);
 STATIC void wi_read_nicid(struct wi_softc *);
 STATIC int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
 
+STATIC int  wi_sendcmd(struct wi_softc *, int, int);
 STATIC int  wi_cmd(struct wi_softc *, int, int, int, int);
 STATIC int  wi_seek_bap(struct wi_softc *, int, int);
 STATIC int  wi_read_bap(struct wi_softc *, int, int, void *, int);
@@ -234,7 +236,7 @@ int wi_debug = 0;
 #endif
 
 #define WI_INTRS	(WI_EV_RX | WI_EV_ALLOC | WI_EV_INFO | \
-			 WI_EV_TX | WI_EV_TX_EXC)
+			 WI_EV_TX | WI_EV_TX_EXC | WI_EV_CMD)
 
 struct wi_card_ident
 wi_card_ident[] = {
@@ -608,6 +610,9 @@ wi_intr(void *arg)
 			wi_info_intr(sc);
 
 		CSR_WRITE_2(sc, WI_EVENT_ACK, status);
+
+		if (status & WI_EV_CMD)
+			wi_cmd_intr(sc);
 
 		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
 		    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0 &&
@@ -1687,8 +1692,6 @@ out:
 STATIC void
 wi_txalloc_intr(struct wi_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	int fid, cur;
 
 	fid = CSR_READ_2(sc, WI_ALLOC_FID);
@@ -1712,9 +1715,23 @@ wi_txalloc_intr(struct wi_softc *sc)
 	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
 	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
 #endif
+}
+
+STATIC void
+wi_cmd_intr(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+
 	if (--sc->sc_txqueued == 0) {
 		sc->sc_tx_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
+#ifdef WI_RING_DEBUG
+	printf("%s: cmd       , alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
 	} else
 		wi_push_packet(sc);
 }
@@ -1728,7 +1745,7 @@ wi_push_packet(struct wi_softc *sc)
 
 	cur = sc->sc_txstart;
 	fid = sc->sc_txd[cur].d_fid;
-	if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
+	if (wi_sendcmd(sc, WI_CMD_TX | WI_RECLAIM, fid)) {
 		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
 		/* XXX ring might have a hole */
 	}
@@ -2391,7 +2408,7 @@ wi_write_wep(struct wi_softc *sc)
 
 	switch (sc->sc_firmware_type) {
 	case WI_LUCENT:
-		val = (ic->ic_flags & IEEE80211_F_WEPON) ? 1 : 0;
+		val = (ic->ic_flags & IEEE80211_F_PRIVACY) ? 1 : 0;
 		error = wi_write_val(sc, WI_RID_ENCRYPTION, val);
 		if (error)
 			break;
@@ -2411,7 +2428,7 @@ wi_write_wep(struct wi_softc *sc)
 
 	case WI_INTERSIL:
 	case WI_SYMBOL:
-		if (ic->ic_flags & IEEE80211_F_WEPON) {
+		if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 			/*
 			 * ONLY HWB3163 EVAL-CARD Firmware version
 			 * less than 0.8 variant2
@@ -2470,6 +2487,48 @@ wi_write_wep(struct wi_softc *sc)
 }
 
 /* Must be called at proper protection level! */
+STATIC int
+wi_sendcmd(struct wi_softc *sc, int cmd, int val0)
+{
+#ifdef WI_HISTOGRAM
+	static int hist3[11];
+	static int hist3count;
+#endif
+	int i;
+
+	/* wait for the busy bit to clear */
+	for (i = 500; i > 0; i--) {	/* 5s */
+		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
+			break;
+		DELAY(1000);	/* 1 m sec */
+	}
+	if (i == 0) {
+		printf("%s: wi_sendcmd: busy bit won't clear.\n",
+		    sc->sc_dev.dv_xname);
+		return(ETIMEDOUT);
+  	}
+#ifdef WI_HISTOGRAM
+	if (i > 490)
+		hist3[500 - i]++;
+	else
+		hist3[10]++;
+	if (++hist3count == 1000) {
+		hist3count = 0;
+		printf("%s: hist3: %d %d %d %d %d %d %d %d %d %d %d\n",
+		    sc->sc_dev.dv_xname,
+		    hist3[0], hist3[1], hist3[2], hist3[3], hist3[4],
+		    hist3[5], hist3[6], hist3[7], hist3[8], hist3[9],
+		    hist3[10]);
+	}
+#endif
+	CSR_WRITE_2(sc, WI_PARAM0, val0);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
+	CSR_WRITE_2(sc, WI_COMMAND, cmd);
+
+	return 0;
+}
+
 STATIC int
 wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
@@ -2845,7 +2904,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    ieee80211_chan2mode(ic, ni->ni_chan)];
 			ni->ni_intval = ic->ic_lintval;
 			ni->ni_capinfo = IEEE80211_CAPINFO_ESS;
-			if (ic->ic_flags & IEEE80211_F_WEPON)
+			if (ic->ic_flags & IEEE80211_F_PRIVACY)
 				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		} else {
 			buflen = sizeof(ssid);
