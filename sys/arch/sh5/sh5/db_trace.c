@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2002/09/19 13:04:02 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 2002/09/19 15:47:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -275,15 +275,20 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			    (long)tf->if_state.sf_ssr,
 			    (long)tf->if_state.sf_intevt);
 		} else
-		if (prev_frame(fp, pc, &nextfp, &nextpc) == 0) {
+		/*
+		 * Looks like we have to grovel the current function's
+		 * prologue to find out the next PC and FP. Start the
+		 * search from "PC - 4" to ensure we catch the actual
+		 * "blink" instruction which made the call. Without this,
+		 * we can fall foul of tail-calls and functions with
+		 * the "__noreturn__" attribute (depending on alignment,
+		 * we could pick up the symbol for the *next* function
+		 * and, hence, get the wrong prologue).
+		 */
+		if (prev_frame(fp, pc - 4, &nextfp, &nextpc) == 0) {
 			(*pr)("Can't find caller's stack frame.\n");
 			break;
 		} else {
-			/*
-			 * Otherwise, we were able to determine the caller's
-			 * details by grovelling the current function's
-			 * stack frame.
-			 */
 			fp = nextfp;
 			pc = nextpc & ~1;
 		}
