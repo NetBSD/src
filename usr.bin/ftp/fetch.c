@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.20 1998/05/20 00:54:26 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.21 1998/06/03 15:50:34 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.20 1998/05/20 00:54:26 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.21 1998/06/03 15:50:34 tv Exp $");
 #endif /* not lint */
 
 /*
@@ -231,12 +231,15 @@ url_get(origline, proxyenv)
 	 * Construct and send the request.  We're expecting a return
 	 * status of "200". Proxy requests don't want leading /.
 	 */
-	if (!proxy)
+	if (!proxy) {
 		printf("Requesting %s\n", origline);
-	else
+		len = snprintf(buf, sizeof(buf),
+		    "GET /%s HTTP/1.1\r\nHost: %s\r\n\r\n", path, host);
+	} else {
 		printf("Requesting %s (via %s)\n", origline, proxyenv);
-	len = snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
-	    proxy ? "" : "/", path);
+		len = snprintf(buf, sizeof(buf), "GET %s HTTP/1.0\r\n\r\n",
+		    path);
+	}
 	if (write(s, buf, len) < len) {
 		warn("Writing HTTP request");
 		goto cleanup_url_get;
