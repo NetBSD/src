@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.13 1998/03/16 04:17:23 mycroft Exp $	*/
+/*	$NetBSD: cdio.h,v 1.14 1998/07/13 12:01:50 hpeyerl Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -185,5 +185,14 @@ struct ioc_play_msf {
 	u_char	end_f;
 };
 #define	CDIOCPLAYMSF	_IOW('c', 25, struct ioc_play_msf)
+
+struct ioc_load_unload {
+	u_char options;
+#define		CD_LU_ABORT	0x1	/* NOTE: These are the same as the ATAPI */
+#define		CD_LU_UNLOAD	0x2	/* op values for the LOAD_UNLOAD command */
+#define		CD_LU_LOAD	0x3
+	u_char slot;
+};
+#define		CDIOCLOADUNLOAD	_IOW('c', 26, struct ioc_load_unload)
 
 #endif /* !_SYS_CDIO_H_ */
