@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.6 1997/10/19 05:03:41 lukem Exp $	*/
+/*	$NetBSD: names.c,v 1.7 1997/11/25 17:58:18 bad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.6 1997/10/19 05:03:41 lukem Exp $");
+__RCSID("$NetBSD: names.c,v 1.7 1997/11/25 17:58:18 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,8 +273,12 @@ outof(names, fo, hp)
 			rewind(fo);
 			(void) putc('\n', fout);
 			(void) fflush(fout);
-			if (ferror(fout))
+			if (ferror(fout)) {
 				perror(tempEdit);
+				senderr++;
+				(void) Fclose(fout);
+				goto cant;
+			}
 			(void) Fclose(fout);
 		}
 
@@ -330,8 +334,13 @@ outof(names, fo, hp)
 			rewind(fin);
 			while ((c = getc(fin)) != EOF)
 				(void) putc(c, fout);
-			if (ferror(fout))
-				senderr++, perror(fname);
+			if (ferror(fout)) {
+				perror(fname);
+				senderr++;
+				(void) Fclose(fout);
+				(void) Fclose(fin);
+				goto cant;
+			}
 			(void) Fclose(fout);
 			(void) Fclose(fin);
 		}
