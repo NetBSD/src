@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2000/04/14 06:03:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -74,8 +74,6 @@ main(argc, argv)
 {
 	int ch;
 	int ret = 0;
-	extern char *optarg;
-	extern int optind;
 #ifndef DEBUG_IFILE
         char *optstring = "b:C:dm:npy";
 #else
