@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.3 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.4 1998/06/20 19:11:04 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_dumb.c,v 1.3 1998/06/15 17:48:33 drochner Exp $";
+    "$NetBSD: wsemul_dumb.c,v 1.4 1998/06/20 19:11:04 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			edp->ccol += n;
 			break;
 
-		case ASCII_NP:
+		case ASCII_FF:
 			(*edp->emulops->eraserows)(edp->emulcookie, 0,
 			    edp->nrows, edp->defattr);
 			edp->ccol = 0;
