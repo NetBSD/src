@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.167 1999/11/01 20:43:51 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.168 1999/11/04 09:39:18 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp 
+ *	NetBSD: pcidevs,v 1.163 1999/11/04 09:38:38 joda Exp 
  */
 
 /*
@@ -3500,6 +3500,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
