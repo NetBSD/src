@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.12 1994/06/26 13:02:45 briggs Exp $
+ * $Id: console.c,v 1.13 1994/07/02 13:00:37 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -177,6 +177,7 @@ void
 NewScreenAddress(void)
 {
   int	i;
+  sccaddr = sccA + 2;
   for(i=0;i<NCON;i++)
   {
 	  vt[i].screen = (unsigned char *)videoaddr;
@@ -1815,10 +1816,6 @@ macinit(struct consdev *cntab)
 
 	conattach(NCON);
 	screen_is_cool = 1;
-
-macwritestr("initted.\n\r");
-strprintf("vt[0].numgrows", (int) vt[0].numgrows);
-strprintf("vt[0].linelen", (int) vt[0].linelen);
 
 /*	macserinit(cntab); */
 }
