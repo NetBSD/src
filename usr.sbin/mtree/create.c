@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)create.c	5.16 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: create.c,v 1.3 1993/08/06 03:48:28 deraadt Exp $";
+static char rcsid[] = "$Id: create.c,v 1.4 1993/10/01 01:06:39 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ cwalk()
 		case FTS_ERR:
 		case FTS_NS:
 			(void)fprintf(stderr, "mtree: %s: %s.\n",
-			    p->fts_path, strerror(errno));
+			    p->fts_path, strerror(p->fts_errno));
 			continue;
 		default:
 			if (dflag)
