@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.111 1999/01/14 13:08:24 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.112 1999/02/08 00:13:42 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -981,9 +981,11 @@ int autoconf_nzs = 0;	/* must be global so obio.c can see it */
  * only get the first item in case the property value is an array.
  * Drivers that "need to know it all" can call getprop() directly.
  */
+#if defined(SUN4C) || defined(SUN4M)
 static int	getprop_reg1 __P((int, struct openprom_addr *));
 static int	getprop_intr1 __P((int, int *));
 static int	getprop_address1 __P((int, void **));
+#endif
 
 /*
  * Attach the mainbus.
@@ -1441,6 +1443,7 @@ overflow:
 #endif
 }
 
+#if defined(SUN4C) || defined(SUN4M)
 int
 getprop_reg1(node, rrp)
 	int node;
@@ -1512,6 +1515,7 @@ getprop_address1(node, vpp)
 	free(vp, M_DEVBUF);
 	return (0);
 }
+#endif
 
 #ifdef RASTERCONSOLE
 /*
