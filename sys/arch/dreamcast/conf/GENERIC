@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 2001/02/03 23:24:30 marcus Exp $
+#	$NetBSD: GENERIC,v 1.9 2001/02/14 04:57:44 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -149,6 +149,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS
