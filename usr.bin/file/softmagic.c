@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.29 2002/07/09 14:59:55 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.30 2003/02/26 18:31:21 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.51 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.29 2002/07/09 14:59:55 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.30 2003/02/26 18:31:21 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -112,7 +112,8 @@ match(struct magic *magic, uint32_t nmagic, unsigned char *s, int nbytes)
 	int firstline = 1; /* a flag to print X\n  X\n- X */
 
 	if (tmpoff == NULL)
-		if ((tmpoff = (int32_t *) malloc(tmplen = 20)) == NULL)
+		if ((tmpoff = (int32_t *) malloc((tmplen = 20) *
+		    sizeof(*tmpoff)) == NULL)
 			error("out of memory\n");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
@@ -144,7 +145,7 @@ match(struct magic *magic, uint32_t nmagic, unsigned char *s, int nbytes)
 		/* and any continuations that match */
 		if (++cont_level >= tmplen)
 			if ((tmpoff = (int32_t *) realloc(tmpoff,
-						       tmplen += 20)) == NULL)
+			    (tmplen += 20) * sizeof(*tmpoff))) == NULL)
 				error("out of memory\n");
 		while (magic[magindex+1].cont_level != 0 && 
 		       ++magindex < nmagic) {
@@ -191,7 +192,8 @@ match(struct magic *magic, uint32_t nmagic, unsigned char *s, int nbytes)
 					if (++cont_level >= tmplen)
 						if ((tmpoff = 
 						    (int32_t *) realloc(tmpoff,
-						    tmplen += 20)) == NULL)
+						    (tmplen += 20) *
+						    sizeof(*tmpoff))) == NULL)
 							error("out of memory\n");
 				}
 				if (magic[magindex].flag & OFFADD) {
