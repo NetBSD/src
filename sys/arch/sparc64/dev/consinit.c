@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.8 2000/09/28 15:23:06 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -51,6 +51,7 @@
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
+#include <machine/sparc64.h>
 
 #include <dev/cons.h>
 
