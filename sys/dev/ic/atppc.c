@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.10 2004/01/28 20:08:35 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.11 2004/02/03 18:54:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.10 2004/01/28 20:08:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.11 2004/02/03 18:54:59 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -942,7 +942,7 @@ atppc_setmode(struct device *dev, int mode)
 	/* If ECP capable, configure ecr register */
 	if (atppc->sc_has & ATPPC_HAS_ECP) {
 		/* Read ECR with mode masked out */
-		ecr = (atppc_r_ecr(atppc) & (unsigned)0x1f);
+		ecr = (atppc_r_ecr(atppc) & 0x1f);
 		atppc_barrier_r(atppc);
 
 		switch (mode) {
@@ -1514,21 +1514,15 @@ atppc_read_ivar(struct device *dev, int index, unsigned int *val)
 			*val = PPBUS_EPP_1_9;
 		else if (atppc->sc_epp == ATPPC_EPP_1_7)
 			*val = PPBUS_EPP_1_7;
+		/* XXX what if not using EPP ? */
 		break;
 
 	case PPBUS_IVAR_INTR:
-		if (atppc->sc_use & ATPPC_USE_INTR)
-			*val = 1;
-		else
-			*val = 0;
+		*val = ((atppc->sc_use & ATPPC_USE_INTR) != 0);
 		break;
 
 	case PPBUS_IVAR_DMA:
-		if (atppc->sc_use & ATPPC_USE_DMA)
-			*val = 1;
-		else
-			*val = 0;
-		break;
+		*val = ((atppc->sc_use & ATPPC_USE_DMA) != 0);
 		break;
 
 	default:
