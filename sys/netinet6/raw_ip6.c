@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.41 2001/12/20 07:26:37 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.42 2002/03/19 01:21:19 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.41 2001/12/20 07:26:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.42 2002/03/19 01:21:19 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -853,8 +853,18 @@ rip6_usrreq(so, req, m, nam, control, p)
 				error = ENOTCONN;
 				break;
 			}
+			if (nam->m_len != sizeof(tmp)) {
+				error = EINVAL;
+				break;
+			}
+
 			tmp = *mtod(nam, struct sockaddr_in6 *);
 			dst = &tmp;
+
+			if (dst->sin6_family != AF_INET6) {
+				error = EAFNOSUPPORT;
+				break;
+			}
 		}
 #ifdef ENABLE_DEFAULT_SCOPE
 		if (dst->sin6_scope_id == 0) {
