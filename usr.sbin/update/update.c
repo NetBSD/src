@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.4 1997/03/12 19:10:54 mycroft Exp $";
+static char rcsid[] = "$NetBSD: update.c,v 1.5 1997/04/16 17:45:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char rcsid[] = "$NetBSD: update.c,v 1.4 1997/03/12 19:10:54 mycroft Exp $
 #include <stdlib.h>
 #include <unistd.h>
 
-void mysync __P((void));
+void mysync __P((int));
 void usage __P((void));
 
 int
@@ -108,7 +108,8 @@ main(argc, argv)
 }
 
 void
-mysync()
+mysync(n)
+	int n;
 {
 
 	(void)sync();
