@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.15.4.1 1997/07/30 07:05:36 marc Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.15.4.2 1997/09/27 02:00:17 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -300,6 +300,10 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
+
+	sc->enable = NULL;
+	sc->disable = NULL;
+	sc->enabled = 1;
 
 	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {

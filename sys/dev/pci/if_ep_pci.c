@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.23.4.1 1997/07/30 07:05:38 marc Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.23.4.2 1997/09/27 02:00:28 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -172,6 +172,10 @@ ep_pci_attach(parent, self, aux)
 	}
 
 	printf(": %s\n", model);
+
+	sc->enable = NULL;
+	sc->disable = NULL;
+	sc->enabled = 1;
 
 	epconfig(sc, EP_CHIPSET_VORTEX, NULL);
 
