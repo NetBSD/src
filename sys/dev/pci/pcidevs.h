@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.217 2000/04/22 18:07:19 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.218 2000/04/26 17:30:59 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp 
+ *	NetBSD: pcidevs,v 1.211 2000/04/26 17:30:35 thorpej Exp 
  */
 
 /*
@@ -1208,6 +1208,9 @@
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
+
+/* PLX Technology products */
+#define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
 
 /* ProLAN products - XXX better descriptions */
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
