@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.198 1998/11/03 00:12:45 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.199 1998/11/03 23:52:50 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -424,6 +424,7 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
 # USB Controller and Devices
