@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.249 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: bsd.lib.mk,v 1.250 2004/02/23 21:12:13 skrll Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -125,14 +125,6 @@ CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC -DBIGPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?= -KPIC
-
-.elif ${MACHINE_ARCH} == "hppa"
-
-FPICFLAGS ?= -fPIC
-CPICFLAGS?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS?= -k
 
 .elif ${MACHINE_ARCH} == "ns32k"
 
