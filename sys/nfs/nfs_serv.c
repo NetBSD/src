@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.38 1997/10/10 01:53:22 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.39 1997/12/22 00:09:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2499,6 +2499,10 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
+	if (!error && vp->v_type != VDIR) {
+		error = ENOTDIR;
+		vput(vp);
+	}
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
@@ -2769,6 +2773,10 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	fullsiz = siz;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
+	if (!error && vp->v_type != VDIR) {
+		error = ENOTDIR;
+		vput(vp);
+	}
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
 		nfsm_srvpostop_attr(getret, &at);
