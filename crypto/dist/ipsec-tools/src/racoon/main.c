@@ -1,4 +1,6 @@
-/* $Id: main.c,v 1.2 2005/02/18 06:28:52 thorpej Exp $ */
+/*	$NetBSD: main.c,v 1.3 2005/02/23 15:17:51 manu Exp $	*/
+
+/* Id: main.c,v 1.14.2.2 2005/02/23 12:18:40 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -170,12 +172,6 @@ main(ac, av)
 	initrmconf();
 	oakley_dhinit();
 	compute_vendorids();
-#ifdef HAVE_LIBRADIUS
-	if (xauth_radius_init() != 0) {
-		errx(1, "could not initialize libradius");
-		/* NOTREACHED*/
-	}
-#endif
 
 	parse(ac, av);
 
@@ -201,6 +197,13 @@ main(ac, av)
 	if (error != 0)
 		errx(1, "failed to parse configuration file.");
 	restore_params();
+
+#ifdef HAVE_LIBRADIUS
+	if (xauth_radius_init() != 0) {
+		errx(1, "could not initialize libradius");
+		/* NOTREACHED*/
+	}
+#endif
 
 	if (dump_config)
 		dumprmconf ();
