@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.58 2000/12/18 18:54:47 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.59 2000/12/18 19:25:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -272,6 +272,7 @@ struct ifnet {				/* and the entries */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 	void	*if_bridge;		/* bridge glue */
+	int	if_dlt;			/* data link type (<net/dlt.h>) */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
