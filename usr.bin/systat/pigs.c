@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.13 1999/02/21 21:48:07 jwise Exp $	*/
+/*	$NetBSD: pigs.c,v 1.14 1999/04/24 23:36:36 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.13 1999/02/21 21:48:07 jwise Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.14 1999/04/24 23:36:36 ross Exp $");
 #endif /* not lint */
 
 /*
@@ -176,8 +176,8 @@ initpigs()
 	}
 	KREAD(NPTR(X_CPTIME), stime, sizeof (stime));
 	KREAD(NPTR(X_PHYSMEM), &mempages, sizeof (mempages));
-	NREAD(X_CCPU, &ccpu, LONG);
-	NREAD(X_FSCALE,  &fscale, LONG);
+	NREAD(X_CCPU, &ccpu, sizeof ccpu);
+	NREAD(X_FSCALE,  &fscale, sizeof fscale);
 	lccpu = log((double) ccpu / fscale);
 
 	return(1);

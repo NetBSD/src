@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.4 1998/07/12 05:59:00 mrg Exp $	*/
+/*	$NetBSD: fetch.c,v 1.5 1999/04/24 23:36:36 ross Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,17 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fetch.c,v 1.4 1998/07/12 05:59:00 mrg Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.5 1999/04/24 23:36:36 ross Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include "systat.h"
 #include "extern.h"
 
-int
+ssize_t
 kvm_ckread(a, b, l)
 	void *a, *b;
-	int l;
+	size_t l;
 {
 	if (kvm_read(kd, (u_long)a, b, l) != l) {
 		if (verbose)
