@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.5 1998/08/21 01:03:49 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.6 1998/08/26 15:32:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -35,23 +35,24 @@
 
 	.text
 	.globl	_binder, _binder_entry
-	.globl	_GLOBAL_OFFSET_TABLE_
 
 /*
  *	_rtl(int version, struct crt_ldso *crtp)
  */
 
+	.align	1
 _rtl:					/* crt0 calls us here */
 	.word	0			/* no registers to save */
-	movl	4(sp),r0		/* load crtp into r0 */
+	movl	8(ap),r0		/* load crtp into r0 */
 					/* setup arguments for rtld() */
+	/* movab	_binder_entry, __PROCEDURE_LINKAGE_TABLE_+4 */
 	/*
 	 * Add the 1st entry in the GOT (e.g. __DYNAMIC) to the base
 	 * address of ld.so and pushd that onto the stack.
 	 */
 	addl3	__GLOBAL_OFFSET_TABLE_,(r0),-(sp)
 	pushl	r0			/* 2nd arg == crtp */
-	pushl	(ap)			/* 1st arg == version */
+	pushl	4(ap)			/* 1st arg == version */
 	calls	$3,_rtld		/* _rtld(version, crtp, DYNAMIC) */
 	ret
 
@@ -62,7 +63,7 @@ _rtl:					/* crt0 calls us here */
  * pushd the address again for _binder.  Save R0 on the stack that
  * the JSB used.  Call the actual function and return.
  */
-
+	.align	1
 _binder_entry:
 	pushr	$0x3f		/* save r0 to r5 */
 	pushl	24(sp)
