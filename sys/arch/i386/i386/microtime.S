@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.S,v 1.1 2002/11/22 15:01:17 fvdl Exp $	*/
+/*	$NetBSD: microtime.S,v 1.2 2003/03/01 16:35:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,6 +37,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
 
+#include "assym.h"
+
 /* LINTSTUB: include <sys/time.h> */
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
@@ -62,8 +64,13 @@ ENTRY(i8254_microtime)
 	movb	%al,%dl				# %dl has LSB
 	inb	$IO_TIMER1+TIMER_CNTR0,%al	# %al has MSB
 
+	/*
+	 * XXX this assumes that irq 0 is slot 0 on the primary CPU.
+	 *     Currently always true, and not likely to change, but
+	 *     still not a beauty.
+	 */
 	# save state of IIR in ICU, and of ipending, for later perusal
-	movb	_C_LABEL(ipending) + IRQ_BYTE(0),%cl # %cl is interrupt pending
+	movb	CPUVAR(IPENDING) + IRQ_BYTE(0),%cl # %cl is interrupt pending
 	
 	# save the current value of _time
 	movl	_C_LABEL(time),%edi	# get time.tv_sec
