@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.47 1998/07/26 11:24:14 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.48 1998/10/06 01:17:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -239,7 +239,7 @@ static const char *const dktypenames[] = {
 #define	FS_BOOT		13		/* partition contains bootstrap */
 #define	FS_ADOS		14		/* AmigaDOS fast file system */
 #define	FS_HFS		15		/* Macintosh HFS */
-#define	FS_ADFS		16		/* Acorn Disk Filing System */
+#define	FS_FILECORE	16		/* Acorn Filecore Filing System */
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 
 #ifdef	DKTYPENAMES
@@ -260,7 +260,7 @@ static const char *const fstypenames[] = {
 	"boot",
 	"ADOS",
 	"HFS",
-	"ADFS",
+	"FILECORE",
 	"Linux Ext2",
 	NULL
 };
@@ -283,7 +283,7 @@ static const char *const fscknames[] = {
 	NULL,		/* boot */
 	NULL,		/* ADOS */
 	NULL,		/* HFS */
-	NULL,		/* ADFS */
+	NULL,		/* FILECORE */
 	"ext2fs",	/* Linux Ext2 */
 	NULL		/* NULL */
 };
