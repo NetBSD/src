@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.13 2001/11/18 14:33:10 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.14 2001/12/16 04:18:12 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.13 2001/11/18 14:33:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.14 2001/12/16 04:18:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,12 +414,11 @@ iha_attach(sc)
 	}
 
 	sc->sc_scb = malloc(sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_scb == NULL) {
 		printf(": cannot allocate SCB\n");
 		return;
 	}
-	memset(sc->sc_scb, 0, sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB);
 
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;

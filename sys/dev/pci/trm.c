@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.5 2001/11/18 13:02:30 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.6 2001/12/16 04:18:42 tsutsui Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.5 2001/11/18 13:02:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.6 2001/12/16 04:18:42 tsutsui Exp $");
 
 /* #define TRM_DEBUG */
 
@@ -2624,12 +2624,11 @@ trm_link_srb(sc)
 	int i;
 
 	sc->sc_srb = malloc(sizeof(struct trm_srb) * TRM_MAX_SRB,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_srb == NULL) {
 		printf("%s: can not allocate SRB\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(sc->sc_srb, 0, sizeof(struct trm_srb) * TRM_MAX_SRB);
 
 	for (i = 0, srb = sc->sc_srb; i < TRM_MAX_SRB; i++, srb++) {
 		srb->sgentry = sc->sc_sglist + TRM_MAX_SG_ENTRIES * i;

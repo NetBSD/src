@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.7 2001/11/18 14:50:11 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.8 2001/12/16 04:18:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.7 2001/11/18 14:50:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.8 2001/12/16 04:18:13 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -267,12 +267,12 @@ osiop_attach(sc)
 		return;
 	}
 
-	acb = malloc(sizeof(struct osiop_acb) * OSIOP_NACB, M_DEVBUF, M_NOWAIT);
+	acb = malloc(sizeof(struct osiop_acb) * OSIOP_NACB,
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (acb == NULL) {
 		printf(": can't allocate memory for acb\n");
 		return;
 	}
-	memset(acb, 0, sizeof(struct osiop_acb) * OSIOP_NACB);
 	sc->sc_acb = acb;
 	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
 	sc->sc_nexus = NULL;
