@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.save.c,v 1.3 1994/03/28 11:19:09 cgd Exp $";
+static char rcsid[] = "$Id: hack.save.c,v 1.4 1994/03/28 11:21:12 cgd Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -137,7 +137,7 @@ register fd;
 		savelev(nfd,tmp);
 		(void) close(nfd);
 	}
-	(void) lseek(fd, 0L, 0);
+	(void) lseek(fd, 0, 0);
 	getlev(fd, 0, 0);
 	(void) close(fd);
 	(void) unlink(SAVEF);
