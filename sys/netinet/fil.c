@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.61 2004/03/28 09:01:26 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.62 2004/04/01 21:54:41 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61 2004/03/28 09:01:26 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.62 2004/04/01 21:54:41 martin Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
@@ -4360,8 +4360,7 @@ void *data;
 {
 	ipfunc_resolve_t res, *ft;
 
-	if (COPYIN(data, &res, sizeof(res)) != 0)
-		return EFAULT;
+	BCOPYIN(data, &res, sizeof(res));
 
 	if (res.ipfu_addr == NULL && res.ipfu_name[0] != '\0') {
 		for (ft = fr_availfuncs; ft->ipfu_addr != NULL; ft++)
