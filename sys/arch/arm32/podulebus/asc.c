@@ -1,6 +1,31 @@
-/*	$NetBSD: asc.c,v 1.35 2001/08/14 22:58:17 rearnsha Exp $	*/
+/*	$NetBSD: asc.c,v 1.36 2001/08/15 22:28:15 rearnsha Exp $	*/
 
 /*
+ * Copyright (c) 2001 Richard Earnshaw
+ * All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ *
  * Copyright (c) 1996 Mark Brinicombe
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,39 +62,43 @@
  */
 
 /*
- * Driver for the Acorn SCSI card using the SBIC (WD3393) generic driver
+ * Driver for the Acorn SCSI card using the SBIC (WD33C93A) generic driver
  *
  * Thanks to Acorn for supplying programming information on this card.
  */
 
-/*
- * Ok this driver is not wonderful yet. It only supports POLLING mode
- * The Acorn SCSI card (or any WD3393 based card) does not support
- * DMA so the DMA section of this driver and the sbic driver needs
- * to be rewritten.
- */
+/* #define ASC_DMAMAP_DEBUG */
+/* #define DEBUG */
 
 #include "opt_ddb.h"
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <machine/bus.h>
+#include <machine/irqhandler.h>
+#include <machine/bootconfig.h>		/* asc_poll */
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <machine/bootconfig.h>
-#include <machine/io.h>
-#include <machine/irqhandler.h>
+
 #include <machine/katelib.h>
+
+#include <dev/podulebus/podules.h>
+#include <dev/podulebus/powerromreg.h>
+
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/sbicreg.h>
 #include <arm32/podulebus/sbicvar.h>
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
-#include <dev/podulebus/podules.h>
-#include <dev/podulebus/powerromreg.h>
 
 void ascattach		(struct device *, struct device *, void *);
 int  ascmatch		(struct device *, struct cfdata *, void *);
@@ -110,12 +139,12 @@ ascmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
-/* Look for the card */
+	/* Look for the card */
 
 	/* Standard ROM, skipping the MCS card that used the same ID. */
 	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) &&
 	    strncmp(pa->pa_podule->description, "MCS", 3) != 0)
-		return(1);
+		return 1;
 
 	/* PowerROM */
         if (pa->pa_product == PODULE_ALSYSTEMS_SCSI &&
@@ -129,7 +158,7 @@ ascmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 void
 ascattach(struct device *pdp, struct device *dp, void *auxp)
 {
-/*	volatile struct sdmac *rp;*/
+	/* volatile struct sdmac *rp;*/
 	struct asc_softc *sc;
 	struct sbic_softc *sbic;
 	struct podule_attach_args *pa;
@@ -205,7 +234,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 
 	sbicinit(sbic);
 
-/* If we are polling only then we don't need a interrupt handler */
+	/* If we are polling only, we don't need a interrupt handler.  */
 
 #ifdef ASC_POLL
 	if (!asc_poll)
@@ -230,15 +259,7 @@ void
 asc_enintr(struct sbic_softc *sbicsc)
 {
 	struct asc_softc *sc = (struct asc_softc *)sbicsc;
-/*	printf("asc_enintr\n");*/
-/*
-	volatile struct sdmac *sdp;
 
-	sdp = dev->sc_cregs;
-
-	dev->sc_flags |= SBICF_INTR;
-	sdp->CNTR = CNTR_PDMD | CNTR_INTEN;
-*/
 	sbicsc->sc_flags |= SBICF_INTR;
 	WriteByte(sc->sc_pagereg, 0x40);
 }
@@ -294,7 +315,7 @@ asc_dmaintr(dev)
 }
 
 void
-asc_dump()
+asc_dump(void)
 {
 	int i;
 
@@ -313,8 +334,9 @@ asc_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 
-		/* ensure command is polling for the moment */
 #if ASC_POLL > 0
+		/* ensure command is polling for the moment */
+
 		if (asc_poll)
 			xs->xs_control |= XS_CTL_POLL;
 #endif
@@ -335,23 +357,21 @@ asc_intr(void *arg)
 	struct asc_softc *sc = arg;
 	int intr;
 	
-/*	printf("ascintr:");*/
+	/* printf("ascintr:");*/
        	intr = ReadByte(sc->sc_intstat);
-/*	printf("%02x\n", intr);*/
+	/* printf("%02x\n", intr);*/
 
 	if (intr & IS_SBIC_IRQ)
 		sbicintr((struct sbic_softc *)sc);
 
-	return(0);	/* Pass interrupt on down the chain */
+	return 0;	/* Pass interrupt on down the chain */
 }
-
 
 /*
  * limit the transfer as required.
  */
 void
-asc_minphys(bp)
-	struct buf *bp;
+asc_minphys(struct buf *bp)
 {
 #if 0
 	/*
