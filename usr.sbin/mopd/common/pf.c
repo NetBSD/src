@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pf.c,v 1.1.1.1 1997/03/16 22:23:37 cjs Exp $";
+static char rcsid[] = "$Id: pf.c,v 1.2 1997/03/17 10:39:53 veego Exp $";
 #endif
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$Id: pf.c,v 1.1.1.1 1997/03/16 22:23:37 cjs Exp $";
 #include <sys/errno.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #include <netdb.h>
 #include <ctype.h>
