@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.5 2002/02/21 06:33:05 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.6 2002/02/21 21:58:03 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1398,19 +1398,19 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	/* Construct the proc0 L1 pagetable. */
 	L1pagetable = proc0_pagedir.pv_va;
 
-	pmap_link_l2pt(L1pagetable, 0x0, proc0_pt_sys.pv_pa);
-	pmap_link_l2pt(L1pagetable, KERNEL_BASE, proc0_pt_kernel.pv_pa);
+	pmap_link_l2pt(L1pagetable, 0x0, &proc0_pt_sys);
+	pmap_link_l2pt(L1pagetable, KERNEL_BASE, &proc0_pt_kernel);
 	pmap_link_l2pt(L1pagetable, PROCESS_PAGE_TBLS_BASE,
-	    proc0_pt_pte.pv_pa);
+	    &proc0_pt_pte);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
-		    proc0_pt_vmdata[i].pv_pa);
+		    &proc0_pt_vmdata[i]);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		pmap_link_l2pt(L1pagetable, OFW_VIRT_BASE + i * 0x00400000,
-		    proc0_pt_ofw[i].pv_pa);
+		    &proc0_pt_ofw[i]);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		pmap_link_l2pt(L1pagetable, IO_VIRT_BASE + i * 0x00400000,
-		    proc0_pt_io[i].pv_pa);
+		    &proc0_pt_io[i]);
 
 	/* 
          * gross hack for the sake of not thrashing the TLB and making
