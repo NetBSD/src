@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.75 2003/05/29 15:18:14 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.76 2003/06/09 13:10:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.75 2003/05/29 15:18:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.76 2003/06/09 13:10:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,7 +484,8 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, i, tlen, len, getret;
+	int error = 0, rdonly, cache, i, padlen, getret;
+	uint32_t len;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mp2 = NULL, *mp3 = NULL, *mreq;
@@ -555,11 +556,10 @@ out:
 		if (error)
 			return (0);
 	}
-	if (uiop->uio_resid > 0) {
-		len -= uiop->uio_resid;
-		tlen = nfsm_rndup(len);
-		nfsm_adj(mp3, NFS_MAXPATHLEN-tlen, tlen-len);
-	}
+	len -= uiop->uio_resid;
+	padlen = nfsm_padlen(len);
+	if (uiop->uio_resid || padlen)
+		nfs_zeropad(mp3, uiop->uio_resid, padlen);
 	nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(len);
 	mb->m_next = mp3;
@@ -595,7 +595,8 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	caddr_t bpos;
 	int error = 0, rdonly, cache, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
-	uint32_t reqlen, len, cnt, left, tlen;
+	uint32_t reqlen, len, cnt, left;
+	int padlen;
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	struct vnode *vp;
@@ -648,7 +649,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	if (off >= va.va_size)
 		cnt = 0;
 	else if ((off + reqlen) > va.va_size)
-		cnt = nfsm_rndup(va.va_size - off);
+		cnt = va.va_size - off;
 	else
 		cnt = reqlen;
 	nfsm_reply(NFSX_POSTOPORFATTR(v3) + 3 * NFSX_UNSIGNED+nfsm_rndup(cnt));
@@ -817,9 +818,9 @@ read_error:
 	vput(vp);
 	nfsm_srvfillattr(&va, fp);
 	len -= uiop->uio_resid;
-	tlen = nfsm_rndup(len);
-	if (cnt != tlen || tlen != len)
-		nfsm_adj(mb, (int)cnt - tlen, tlen - len);
+	padlen = nfsm_padlen(len);
+	if (uiop->uio_resid || padlen)
+		nfs_zeropad(mb, uiop->uio_resid, padlen);
 	if (v3) {
 		*tl++ = txdr_unsigned(len);
 		if (len < reqlen)
