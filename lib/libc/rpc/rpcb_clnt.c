@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.2 2000/06/07 21:46:01 fvdl Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.3 2000/06/11 16:26:53 assar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -67,6 +67,7 @@ static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <syslog.h>
 
 #include "rpc_com.h"
 
@@ -458,6 +459,7 @@ try_nconf:
 		nc_handle = setnetconfig();
 		if (nc_handle == NULL) {
 			/* fails to open netconfig file */
+			syslog (LOG_ERR, "rpc: failed to open " NETCONFIG);
 			rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 			mutex_unlock(&loopnconf_lock);
 			return (NULL);
