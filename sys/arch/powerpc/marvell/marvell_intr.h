@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.6 2003/09/03 21:33:36 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.6.2.1 2004/06/04 03:40:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -476,6 +476,10 @@ spllower(int ncpl)
 #define	splsoftnet()		splraise(IPL_SOFTNET)
 #define	splsoftserial()		splraise(IPL_SOFTSERIAL)
 
+struct intrhand;
+extern struct intrhand *softnet_handlers[];
+#define	schednetisr(an_isr)	softintr_schedule(softnet_handlers[(an_isr)])
+
 #define __HAVE_GENERIC_SOFT_INTERRUPTS	/* should be in <machine/types.h> */
 void *softintr_establish(int level, void (*fun)(void *), void *arg);
 void softintr_disestablish(void *cookie);
@@ -511,18 +515,6 @@ void	ext_intr(struct intrframe *);
 void	softserial(void);
 #endif
 void	strayintr(int);
-
-#define	schednetisr(isr)  do {			\
-	__asm __volatile(			\
-		"1:	lwarx	0,0,%1\n"	\
-		"	or	0,0,%0\n"	\
-		"	stwcx.	0,0,%1\n"	\
-		"	bne-	1b"		\
-	   :					\
-	   : "r"(1 << (isr)), "b"(&netisr)	\
-	   : "cr0", "r0");			\
-	softintr_schedule(softnet_si);		\
-} while (/*CONSTCOND*/ 0)
 
 /*
  * defines for indexing intrcnt
