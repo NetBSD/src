@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.29 1996/09/29 03:02:19 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.30 1996/10/10 20:25:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -540,7 +540,7 @@ ascattach(asc, dmabufsize, bus_speed)
 	/* Hack for old-sytle SCSI-device probe */
 	(void) pmax_add_scsi(&ascdriver, unit);
 
-	printf(": target %d\n", id);
+	kprintf(": target %d\n", id);
 
 
 #ifdef USE_NEW_SCSI
@@ -592,7 +592,7 @@ asc_start(scsicmd)
 	 * separate LUNs.
 	 */
 	if (asc->cmd[sdp->sd_drive]) {
-		printf("asc %d: device %s busy at start\n",
+		kprintf("asc %d: device %s busy at start\n",
 			sdp->sd_ctlr,	/*XXX*/
 			sdp->sd_driver->d_name);
 		(*sdp->sd_driver->d_done)(scsicmd->unit, EBUSY,
@@ -709,16 +709,16 @@ asc_startcmd(asc, target)
 
 #ifdef DEBUG
 	if (asc_debug > 1) {
-		printf("asc_startcmd: %s target %d cmd %x len %d\n",
-			scsicmd->sd->sd_driver->d_name, target,
-			scsicmd->cmd[0], scsicmd->buflen);
+		kprintf("asc_startcmd: %s target %d cmd %x len %d\n",
+		    scsicmd->sd->sd_driver->d_name, target,
+		    scsicmd->cmd[0], scsicmd->buflen);
 	}
 #endif
 
 	/* Try to avoid reselect collisions */
 	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
 	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
-/*		printf("asc_startcmd: possible reselect in progress\n"); */
+/*		kprintf("asc_startcmd: possible reselect in progress\n"); */
 		return;
 	}
 
@@ -794,7 +794,7 @@ asc_startcmd(asc, target)
 	/* Try to avoid reselect collisions */
 	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
 	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
-/*		printf("asc_startcmd: reselect in progress (before select)\n");*/
+/*		kprintf("asc_startcmd: reselect in progress (before select)\n");*/
 		return;
 	}
 
@@ -807,7 +807,7 @@ asc_startcmd(asc, target)
 	/* Try to avoid reselect collisions */
 	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
 	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
-/*		printf("asc_startcmd: reselect in progress after select\n");*/
+/*		kprintf("asc_startcmd: reselect in progress after select\n");*/
 		return;
 	} else {
 		/*
@@ -819,7 +819,7 @@ asc_startcmd(asc, target)
 		    	if ((regs->asc_status & ASC_CSR_INT) == 0) {
 		    		delay(250);
 		    		if (regs->asc_status == SCSI_PHASE_MSG_IN) {
-		    			printf("asc_startcmd: reselect failed to interrupt?\n");
+		    			kprintf("asc_startcmd: reselect failed to interrupt?\n");
 		    			/* XXXX THIS NEEDS FIXING */
 		    		}
 		    	}
@@ -871,7 +871,7 @@ again:
 	if (++asc_logp >= &asc_log[NLOG])
 		asc_logp = asc_log;
 	if (asc_debug > 2)
-		printf("asc_intr: status %x ss %x ir %x cond %d:%x\n",
+		kprintf("asc_intr: status %x ss %x ir %x cond %d:%x\n",
 			status, ss, ir, scpt - asc_scripts, scpt->condition);
 #endif
 
@@ -900,7 +900,7 @@ again:
 	 * to request the device for a MSG_OUT phase.
 	 */
 	if (status & ASC_CSR_PE) {
-		printf("%s: SCSI device %d: incomming parity error seen\n",
+		kprintf("%s: SCSI device %d: incomming parity error seen\n",
 			asc->sc_dev.dv_xname, asc->target);
 		asc->st[asc->target].flags |= PARITY_ERR;
 	}
@@ -910,7 +910,7 @@ again:
 	 * Probably a bug in a device driver.
 	 */
 	if (status & ASC_CSR_GE) {
-		printf("%s: SCSI device %d: gross error\n",
+		kprintf("%s: SCSI device %d: gross error\n",
 			asc->sc_dev.dv_xname, asc->target);
 		goto abort;
 	}
@@ -932,15 +932,15 @@ again:
 			    	 */
 				ASC_TC_GET(regs, len);
 				fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
-			    	printf("asc_intr: ignoring strange interrupt");
-			    	printf(" tc %d fifo residue %d\n", len, fifo);
+			    	kprintf("asc_intr: ignoring strange interrupt");
+			    	kprintf(" tc %d fifo residue %d\n", len, fifo);
 			    	goto done;
 			}
 			/* FALLTHROUGH */
 		case SCSI_PHASE_DATAO:
 			ASC_TC_GET(regs, len);
 			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
-			printf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
+			kprintf("asc_intr: data overrun: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo);
 			goto abort;
 
@@ -985,14 +985,14 @@ again:
 		/* flush any data in the FIFO */
 		if (fifo) {
 			if (state->flags & DMA_OUT) {
-	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
+	kprintf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
 					fifo, len, state->flags);
 				len += fifo;
 			} else if (state->flags & DMA_IN) {
-				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
+				kprintf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			} else
-				printf("asc_intr: dmalen %d len %d fifo %d\n",
+				kprintf("asc_intr: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			regs->asc_cmd = ASC_CMD_FLUSH;
 			tc_mb();
@@ -1021,7 +1021,7 @@ again:
 				 * and resume DMA at the start address.
 				 */
 				if (len & 1) {
-					printf("asc_intr: msg in len %d (fifo %d)\n",
+					kprintf("asc_intr: msg in len %d (fifo %d)\n",
 						len, fifo); /* XXX */
 					len = state->dmalen - len;
 					goto do_in;
@@ -1036,7 +1036,7 @@ again:
 		} else if (state->flags & DMA_IN) {
 			if (len) {
 #ifdef DEBUG
-				printf("asc_intr: 1: bn %d len %d (fifo %d)\n",
+				kprintf("asc_intr: 1: bn %d len %d (fifo %d)\n",
 					asc_debug_bn, len, fifo); /* XXX */
 #endif
 				goto abort;
@@ -1060,7 +1060,7 @@ again:
 		} else if (state->flags & DMA_OUT) {
 			if (len) {
 #ifdef DEBUG
-				printf("asc_intr: 2: len %d (fifo %d)\n", len,
+				kprintf("asc_intr: 2: len %d (fifo %d)\n", len,
 					fifo); /* XXX */
 #endif
 			}
@@ -1098,7 +1098,7 @@ again:
 	if (ir & ASC_INT_RESET) {
 		register int i;
 
-		printf("%s: SCSI bus reset!!\n", asc->sc_dev.dv_xname);
+		kprintf("%s: SCSI bus reset!!\n", asc->sc_dev.dv_xname);
 		/* need to flush any pending commands */
 		for (i = 0; i < ASC_NCMD; i++) {
 			if (!asc->cmd[i])
@@ -1153,7 +1153,7 @@ again:
 			/* FALLTHROUGH */
 
 		default:
-			printf("%s: SCSI device %d: unexpected disconnect\n",
+			kprintf("%s: SCSI device %d: unexpected disconnect\n",
 				asc->sc_dev.dv_xname, asc->target);
 #ifdef DEBUG
 			asc_DumpLog("asc_disc");
@@ -1175,7 +1175,7 @@ again:
 
 	/* mhitch - debug - check select/reselect collision */
 	if ((ir & ASC_INT_ILL) && (regs->asc_cmd & ASC_CMD_SEL_ATN)) {
-		printf("asc_intr: Illegal command status %x ir %x\n",
+		kprintf("asc_intr: Illegal command status %x ir %x\n",
 		    status, ir);
 		/* Should process reselect? */
 	}
@@ -1271,7 +1271,7 @@ asc_get_status(asc, status, ss, ir)
 	 * Get the last two bytes in the FIFO.
 	 */
 	if ((data = regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 2) {
-		printf("asc_get_status: cmdreg %x, fifo cnt %d\n",
+		kprintf("asc_get_status: cmdreg %x, fifo cnt %d\n",
 		       regs->asc_cmd, data); /* XXX */
 #ifdef DEBUG
 		asc_DumpLog("get_status"); /* XXX */
@@ -1300,7 +1300,7 @@ asc_get_status(asc, status, ss, ir)
 		return (1);
 
 #ifdef DEBUG
-	printf("asc_get_status: status %x cmd %x\n",
+	kprintf("asc_get_status: status %x cmd %x\n",
 		asc->st[asc->target].statusByte, data);
 	asc_DumpLog("asc_get_status");
 #endif
@@ -1327,7 +1327,7 @@ asc_end(asc, status, ss, ir)
 
 #ifdef DEBUG
 	if (asc_debug > 1) {
-		printf("asc_end: %s target %d cmd %x err %d resid %d\n",
+		kprintf("asc_end: %s target %d cmd %x err %d resid %d\n",
 			scsicmd->sd->sd_driver->d_name, target,
 			scsicmd->cmd[0], state->error, state->buflen);
 	}
@@ -1434,13 +1434,13 @@ asc_dma_in(asc, status, ss, ir)
 		 if (state->sync_offset == 0)
 			async_fifo_junk = regs->asc_fifo;
 #ifdef DEBUG
-		printf("%s: asc_dma_in: FIFO count %x flags %x sync_offset %d",
+		kprintf("%s: asc_dma_in: FIFO count %x flags %x sync_offset %d",
 		    asc->sc_dev.dv_xname, regs->asc_flags,
 		       state->flags, state->sync_offset);
 		if (state->sync_offset != 0)
-			printf("\n");
+			kprintf("\n");
 		else
-			printf(" unexpected fifo data %x\n", async_fifo_junk);
+			kprintf(" unexpected fifo data %x\n", async_fifo_junk);
 #ifdef DIAGNOSTIC
 		asc_DumpLog("asc_dma_in");
 #endif	/* DIAGNOSTIC */
@@ -1462,7 +1462,7 @@ asc_dma_in(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_dma_in: buflen %d, len %d\n", state->buflen, len);
+		kprintf("asc_dma_in: buflen %d, len %d\n", state->buflen, len);
 #endif
 
 	/* check for next chunk */
@@ -1492,7 +1492,7 @@ asc_last_dma_in(asc, status, ss, ir)
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_last_dma_in: buflen %d dmalen %d tc %d fifo %d\n",
+		kprintf("asc_last_dma_in: buflen %d dmalen %d tc %d fifo %d\n",
 			state->buflen, state->dmalen, len, fifo);
 #endif
 	if (fifo) {
@@ -1533,7 +1533,7 @@ asc_resume_in(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_resume_in: buflen %d, len %d\n", state->buflen,
+		kprintf("asc_resume_in: buflen %d, len %d\n", state->buflen,
 			len);
 #endif
 
@@ -1562,7 +1562,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 	len = state->dmaresid;
 	off = state->dmalen - len;
 	if ((off & 1) && state->sync_offset) {
-		printf("asc_resume_dma_in: odd xfer dmalen %d len %d off %d\n",
+		kprintf("asc_resume_dma_in: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
 		regs->asc_res_fifo = state->dmaBufAddr[off];
 	}
@@ -1576,7 +1576,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_resume_dma_in: buflen %d dmalen %d len %d off %d\n",
+		kprintf("asc_resume_dma_in: buflen %d dmalen %d len %d off %d\n",
 			state->dmalen, state->buflen, len, off);
 #endif
 
@@ -1606,7 +1606,7 @@ asc_dma_out(asc, status, ss, ir)
 		ASC_TC_GET(regs, len);
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 		if (len || fifo)
-			printf("asc_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
+			kprintf("asc_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
 				state->buflen, state->dmalen, len, fifo); /* XXX */
 		len += fifo;
 		len = state->dmalen - len;
@@ -1639,7 +1639,7 @@ asc_dma_out(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_dma_out: buflen %d, len %d\n", state->buflen, len);
+		kprintf("asc_dma_out: buflen %d, len %d\n", state->buflen, len);
 #endif
 
 	/* check for next chunk */
@@ -1667,14 +1667,14 @@ asc_last_dma_out(asc, status, ss, ir)
 	fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
+		kprintf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
 			state->buflen, state->dmalen, len, fifo);
 #endif
 	if (fifo) {
 		len += fifo;
 		regs->asc_cmd = ASC_CMD_FLUSH;
 		readback(regs->asc_cmd);
-		printf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
+		kprintf("asc_last_dma_out: buflen %d dmalen %d tc %d fifo %d\n",
 			state->buflen, state->dmalen, len, fifo);
 	}
 	state->flags &= ~DMA_IN_PROGRESS;
@@ -1709,7 +1709,7 @@ asc_resume_out(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_resume_out: buflen %d, len %d\n", state->buflen,
+		kprintf("asc_resume_out: buflen %d, len %d\n", state->buflen,
 			len);
 #endif
 
@@ -1738,7 +1738,7 @@ asc_resume_dma_out(asc, status, ss, ir)
 	len = state->dmaresid;
 	off = state->dmalen - len;
 	if (off & 1) {
-		printf("asc_resume_dma_out: odd xfer dmalen %d len %d off %d\n",
+		kprintf("asc_resume_dma_out: odd xfer dmalen %d len %d off %d\n",
 			state->dmalen, len, off); /* XXX */
 		regs->asc_fifo = state->dmaBufAddr[off];
 		off++;
@@ -1754,7 +1754,7 @@ asc_resume_dma_out(asc, status, ss, ir)
 	ASC_TC_PUT(regs, len);
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_resume_dma_out: buflen %d dmalen %d len %d off %d\n",
+		kprintf("asc_resume_dma_out: buflen %d dmalen %d len %d off %d\n",
 			state->dmalen, state->buflen, len, off);
 #endif
 
@@ -1805,7 +1805,7 @@ asc_replysync(asc, status, ss, ir)
 
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_replysync: %x %x\n",
+		kprintf("asc_replysync: %x %x\n",
 			asc_to_scsi_period[state->sync_period] * asc->tb_ticks,
 			state->sync_offset);
 #endif
@@ -1872,7 +1872,7 @@ asc_msg_in(asc, status, ss, ir)
 		/* process an extended message */
 #ifdef DEBUG
 		if (asc_debug > 2)
-			printf("asc_msg_in: msg %x %x %x\n",
+			kprintf("asc_msg_in: msg %x %x %x\n",
 				state->msg_in[0],
 				state->msg_in[1],
 				state->msg_in[2]);
@@ -1888,7 +1888,7 @@ asc_msg_in(asc, status, ss, ir)
 				i = asc->min_period;
 			else if (i >= asc->max_period) {
 				/* can't do sync transfer, period too long */
-				printf("%s: SCSI device %d: sync xfer period too long (%d)\n",
+				kprintf("%s: SCSI device %d: sync xfer period too long (%d)\n",
 					asc->sc_dev.dv_xname, asc->target, i);
 				i = asc->max_period;
 				state->sync_offset = 0;
@@ -1928,7 +1928,7 @@ asc_msg_in(asc, status, ss, ir)
 			goto done;
 
 		default:
-			printf("%s: SCSI device %d: rejecting extended message 0x%x\n",
+			kprintf("%s: SCSI device %d: rejecting extended message 0x%x\n",
 				asc->sc_dev.dv_xname, asc->target,
 				state->msg_in[0]);
 			goto reject;
@@ -1938,12 +1938,12 @@ asc_msg_in(asc, status, ss, ir)
 	/* process first byte of a message */
 #ifdef DEBUG
 	if (asc_debug > 2)
-		printf("asc_msg_in: msg %x\n", msg);
+		kprintf("asc_msg_in: msg %x\n", msg);
 #endif
 	switch (msg) {
 #if 0
 	case SCSI_MESSAGE_REJECT:
-		printf(" did not like SYNCH xfer "); /* XXX */
+		kprintf(" did not like SYNCH xfer "); /* XXX */
 		state->flags |= DID_SYNC;
 		regs->asc_cmd = ASC_CMD_MSG_ACPT;
 		readback(regs->asc_cmd);
@@ -1995,7 +1995,7 @@ asc_msg_in(asc, status, ss, ir)
 		return (0);
 
 	default:
-		printf("%s: SCSI device %d: rejecting message 0x%x\n",
+		kprintf("%s: SCSI device %d: rejecting message 0x%x\n",
 			asc->sc_dev.dv_xname, asc->target, msg);
 	reject:
 		/* request a message out before acknowledging this message */
@@ -2033,7 +2033,7 @@ asc_disconnect(asc, status, ss, ir)
 
 #ifdef DIAGNOSTIC
 	if (!(state->flags & DISCONN)) {
-		printf("asc_disconnect: device %d: DISCONN not set!\n",
+		kprintf("asc_disconnect: device %d: DISCONN not set!\n",
 			asc->target);
 	}
 #endif /*DIAGNOSTIC*/
@@ -2050,7 +2050,7 @@ asc_timeout(arg)
 	int s = splbio();
 	ScsiCmd *scsicmd = (ScsiCmd *) arg;
 
-	printf("asc_timeout: cmd %p drive %d\n", scsicmd, scsicmd->sd->sd_drive);
+	kprintf("asc_timeout: cmd %p drive %d\n", scsicmd, scsicmd->sd->sd_drive);
 #ifdef DEBUG
 	asc_DumpLog("asc_timeout");
 #endif
@@ -2070,12 +2070,12 @@ asc_DumpLog(str)
 	register struct asc_log *lp;
 	register u_int status;
 
-	printf("asc: %s: cmd %x bn %d cnt %d\n", str, asc_debug_cmd,
+	kprintf("asc: %s: cmd %x bn %d cnt %d\n", str, asc_debug_cmd,
 		asc_debug_bn, asc_debug_sz);
 	lp = asc_logp;
 	do {
 		status = lp->status;
-		printf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x resid %d\n",
+		kprintf("asc%d tgt %d status %x ss %x ir %x cond %d:%x msg %x resid %d\n",
 			status >> 24,
 			lp->target,
 			(status >> 16) & 0xFF,
