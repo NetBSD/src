@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.59 1998/07/08 17:30:45 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.60 1998/08/04 22:40:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 1998/07/08 17:30:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 1998/08/04 22:40:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,8 @@ vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
+
+u_long		pmap_pages_stolen;	/* instrumentation */
 
 /*
  * Storage for physical->virtual entries and page attributes.
@@ -931,6 +933,7 @@ pmap_steal_memory(size, vstartp, vendp)
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
 		bzero((caddr_t)va, size);
+		pmap_pages_stolen += npgs;
 		return (va);
 	}
 
