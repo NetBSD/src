@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.16 1999/02/19 21:49:43 abs Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.17 1999/09/28 17:57:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,9 +119,6 @@ struct sm_pcmcia_product {
 } sm_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
 	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK },
-
-	{ PCMCIA_VENDOR_MEGAHERTZ,	PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
-	  0,				PCMCIA_STR_MEGAHERTZ_XJEM3336 },
 
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
