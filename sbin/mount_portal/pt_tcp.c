@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.15 2001/01/10 03:33:16 lukem Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.16 2003/07/13 07:41:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.15 2001/01/10 03:33:16 lukem Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.16 2003/07/13 07:41:48 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -97,15 +97,15 @@ portal_tcp(pcr, key, v, kso, fdp)
 	if (q == 0 || q - p >= sizeof(host))
 		return (EINVAL);
 	*q = '\0';
-	strcpy(host, p);
+	if (strlcpy(host, p, sizeof(host)) >= sizeof(host))
+		return (EINVAL);
 	p = q + 1;
 
 	q = strchr(p, '/');
 	if (q)
 		*q = '\0';
-	if (strlen(p) >= sizeof(port))
+	if (strlcpy(port, p, sizeof(port)) >= sizeof(port))
 		return (EINVAL);
-	strcpy(port, p);
 	if (q) {
 		p = q + 1;
 		if (strcmp(p, "priv") == 0) {

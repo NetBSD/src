@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.27 2003/04/02 10:39:31 fvdl Exp $	*/
+/*	$NetBSD: lfs.c,v 1.28 2003/07/13 07:39:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.27 2003/04/02 10:39:31 fvdl Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.28 2003/07/13 07:39:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -904,8 +904,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		seg_addr = lfsp->lfs_sboffs[i];
 
-		sprintf(tbuf, "%lld%s ", (long long)fsbtodb(lfsp, seg_addr),
-			(i == LFS_MAXNUMSB - 1 ? "" : ","));
+		snprintf(tbuf, sizeof(tbuf), "%lld%s ",
+		    (long long)fsbtodb(lfsp, seg_addr),
+		    (i == LFS_MAXNUMSB - 1 ? "" : ","));
 		ww = strlen(tbuf);
 		curw += ww;
 		if (curw + ww > 78) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.13 2001/01/10 03:33:16 lukem Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.14 2003/07/13 07:41:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.13 2001/01/10 03:33:16 lukem Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.14 2003/07/13 07:41:48 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -148,7 +148,7 @@ portal_file(pcr, key, v, so, fdp)
 	origuid = getuid();
 	origgid = getgid();
 	pbuf[0] = '/';
-	strcpy(pbuf + 1, key + (v[1] ? strlen(v[1]) : 0));
+	strlcpy(pbuf + 1, key + (v[1] ? strlen(v[1]) : 0), sizeof(pbuf) - 1);
 	DEBUG_SYSLOG(LOG_DEBUG, "path = %s, uid = %d, gid = %d",
 	    pbuf, pcr->pcr_uid, pcr->pcr_gid);
 

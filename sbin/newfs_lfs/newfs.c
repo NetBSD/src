@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.10 2002/12/12 11:45:17 scw Exp $	*/
+/*	$NetBSD: newfs.c,v 1.11 2003/07/13 07:39:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.10 2002/12/12 11:45:17 scw Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.11 2003/07/13 07:39:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -408,7 +408,7 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 		/*
 		 * Make name for 'c' partition.
 		 */
-		strcpy(specname, s);
+		strlcpy(specname, s, sizeof(specname));
 		cp = specname + strlen(specname) - 1;
 		if (!isdigit(*cp))
 			*cp = 'c';

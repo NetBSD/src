@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.23 2003/03/22 11:15:54 jdolecek Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.24 2003/07/13 07:41:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.23 2003/03/22 11:15:54 jdolecek Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.24 2003/07/13 07:41:47 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ main(argc, argv)
 	 * Construct the listening socket
 	 */
 	un.sun_family = AF_LOCAL;
-	strcpy(tmpdir, _PATH_TMPPORTAL);
+	strlcpy(tmpdir, _PATH_TMPPORTAL, sizeof(tmpdir));
 	mkdtemp(tmpdir);
 	un.sun_len = snprintf(un.sun_path, sizeof(un.sun_path),
 			"%s/%s", tmpdir, _PATH_PORTAL_FILE);
@@ -206,7 +206,7 @@ main(argc, argv)
 	daemon(0, 1);
 
 	args.pa_socket = so;
-	sprintf(tag, "portal:%d", getpid());
+	snprintf(tag, sizeof(tag), "portal:%d", getpid());
 	args.pa_config = tag;
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
