@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.211 1999/08/23 08:24:37 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.212 1999/09/08 09:16:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2400,6 +2400,7 @@ IDTVEC(svr4_fasttrap)
 1:	INTRFASTEXIT
 #endif /* COMPAT_SVR4 */
 
+#if NNPX > 0
 /*
  * Special interrupt handlers.  Someday intr0-intr15 will be used to count
  * interrupts.  We'll still need a special exception 16 handler.  The busy
@@ -2435,6 +2436,7 @@ NENTRY(npx586bug1)
 	fistpl	(%esp)
 	popl	%eax
 	ret
+#endif /* NNPX > 0 */
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
