@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.113 2000/05/26 08:36:48 enami Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.114 2000/06/27 17:52:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,6 @@
 #include <sys/lockf.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.54 2000/03/30 12:51:15 augustss Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.55 2000/06/27 17:52:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,8 +72,6 @@
 #include <sys/stat.h>
 #include <sys/kernel.h>
 #include <ufs/ufs/dir.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
