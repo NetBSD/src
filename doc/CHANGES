@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.100 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.101 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -282,3 +282,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		The chip supports 10/100 and USB 2.0.  [augustss 20030216]
 	bridge(4), brconfig(8): add ipf support.  [perseant 20030216]
 	kernel: SMBFS support, ported from FreeBSD.  [jdolecek 20030218]
+	kernel: Top down memory management option added, initially for
+		i386, but others are following.  [atatat 20030220]
