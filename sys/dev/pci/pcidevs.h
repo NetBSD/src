@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.681 2005/01/13 18:25:49 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.682 2005/01/13 20:52:20 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.680 2005/01/13 18:25:19 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.681 2005/01/13 20:51:49 jdolecek Exp 
  */
 
 /*
@@ -2158,6 +2158,13 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AP	0x006b		/* nForce2 MCP-T Audio Processing Unit */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PPB	0x006c		/* nForce2 PCI-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_FW	0x006e		/* nForce2 Firewire Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_PCIB	0x0080		/* nForce2 PCI-ISA bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS	0x0084		/* nForce2 400 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133	0x0085		/* nForce2 400 ATA133 IDE */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI	0x0087		/* nForce2 400 USB Host Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI	0x0088		/* nForce2 400 USB2 Host Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB	0x008b		/* nForce2 PCI-PCI bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA	0x008e		/* nForce2 400 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 Host-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PCIB	0x00d0		/* nForce3 PCI-ISA bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS	0x00d4		/* nForce3 SMBus controller */
