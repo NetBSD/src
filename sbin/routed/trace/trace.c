@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.7 1995/03/18 15:00:57 cgd Exp $	*/
+/*	$NetBSD: trace.c,v 1.8 1995/05/21 14:22:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: trace.c,v 1.7 1995/03/18 15:00:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.8 1995/05/21 14:22:27 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,8 +113,7 @@ usage:
 	router.sin_port = sp->s_port;
 	while (argc > 0) {
 		router.sin_family = AF_INET;
-		router.sin_addr.s_addr = inet_addr(*argv);
-		if (router.sin_addr.s_addr == -1) {
+		if (inet_aton(*argv, &router.sin_addr) == 0) {
 			hp = gethostbyname(*argv);
 			if (hp == NULL) {
 				fprintf(stderr, "trace: %s: ", *argv);
