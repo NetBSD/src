@@ -78,7 +78,7 @@ copies:
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
 	mkdir ${DESTDIR}/usr/include/machine
-	cd ../sys/${MACHINE}/include; \
+	cd ../sys/arch/${MACHINE}/include; \
 	tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -); \
 
 symlinks:
@@ -88,6 +88,6 @@ symlinks:
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
-	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
+	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
 
 .include <bsd.prog.mk>
