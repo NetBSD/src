@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader_machdep.c,v 1.3 2003/07/15 02:29:32 lukem Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.4 2004/07/06 13:28:39 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2003/07/15 02:29:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.4 2004/07/06 13:28:39 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,16 +43,15 @@ __KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2003/07/15 02:29:32 lukem Ex
 #include <machine/sysconf.h>
 #include <machine/kloader.h>
 
-void kloader_mips_jump(kloader_bootfunc_t *, vaddr_t,
-    struct kloader_bootinfo *, struct kloader_page_tag *);
-void kloader_mips_reset(void);
-extern kloader_bootfunc_t kloader_vr_boot;
-extern kloader_bootfunc_t kloader_tx_boot;
+kloader_jumpfunc_t kloader_hpcmips_jump;
+kloader_bootfunc_t kloader_vr_boot;
+kloader_bootfunc_t kloader_tx_boot;
+void kloader_hpcmips_reset(void);
 
 struct kloader_ops kloader_mips_ops = {
-	.jump = kloader_mips_jump,
+	.jump = kloader_hpcmips_jump,
 	.boot = 0,
-	.reset = kloader_mips_reset
+	.reset = kloader_hpcmips_reset
 };
 
 void
@@ -65,7 +64,7 @@ kloader_reboot_setup(const char *filename)
 }
 
 void
-kloader_mips_jump(kloader_bootfunc_t func, vaddr_t sp,
+kloader_hpcmips_jump(kloader_bootfunc_t func, vaddr_t sp,
     struct kloader_bootinfo *info, struct kloader_page_tag *tag)
 {
 
@@ -76,7 +75,7 @@ kloader_mips_jump(kloader_bootfunc_t func, vaddr_t sp,
 }
 
 void
-kloader_mips_reset()
+kloader_hpcmips_reset()
 {
 
 	(*platform.reboot)(0, 0);
