@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.9 1999/07/17 19:57:03 hubertf Exp $	*/
+/*	$NetBSD: log.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.9 1999/07/17 19:57:03 hubertf Exp $");
+__RCSID("$NetBSD: log.c,v 1.10 1999/07/25 00:24:39 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -292,7 +292,7 @@ log_score(list_em)
 
 void
 log_score_quit(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	(void)log_score(0);
 	exit(0);
