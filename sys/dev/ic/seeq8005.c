@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.13 2001/03/25 01:06:59 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.14 2001/03/27 18:03:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.13 2001/03/25 01:06:59 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.14 2001/03/27 18:03:04 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -555,9 +555,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
 		panic("%s: unaligned writebuf", sc->sc_dev.dv_xname);
-#endif
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
 		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
+#endif
 
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
@@ -600,11 +600,11 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		 bus_space_read_2(iot, ioh, SEEQ_STATUS), addr, len));
 
 #ifdef DIAGNOSTIC
-	if (!ALIGNED_POINTER(buf, u_int16_t))
+	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
 		panic("%s: unaligned readbuf", sc->sc_dev.dv_xname);
+	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
+		panic("%s: readbuf out of range", sc->sc_dev.dv_xname);
 #endif
-	if (addr >= SEEQ_MAX_BUFFER_SIZE)
-		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
 
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
@@ -782,8 +782,11 @@ ea_start(struct ifnet *ifp)
 	dprintf(("ea_start()...\n"));
 #endif
 
-	/* Don't do anything if output is active. */
-
+	/*
+	 * Don't do anything if output is active.  seeq8005intr() will call
+	 * us (actually eatxpacket()) back when the card's ready for more
+	 * frames.
+	 */
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
