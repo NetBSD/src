@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.22 2000/05/08 13:51:36 augustss Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.23 2000/07/28 19:17:02 drochner Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -297,7 +297,7 @@ pcmcia_print(arg, pnp)
 
 	if (pnp) {
 		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
-		printf("%s", devinfo);
+		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" function %d", pa->pf->number);
 
