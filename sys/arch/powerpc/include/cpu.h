@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 2003/03/11 10:40:16 hannken Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 2003/03/13 17:30:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -117,7 +117,7 @@ cpu_number(void)
 {
 	int pir;
 
-	asm ("mfspr %0,1023" : "=r"(pir));
+	__asm ("mfspr %0,1023" : "=r"(pir));
 	return pir;
 }
 
@@ -146,7 +146,7 @@ curcpu(void)
 {
 	struct cpu_info *ci;
 
-	asm volatile ("mfsprg %0,0" : "=r"(ci));
+	__asm __volatile ("mfsprg %0,0" : "=r"(ci));
 	return ci;
 }
 
@@ -159,7 +159,7 @@ mfmsr(void)
 {
 	register_t msr;
 
-	asm volatile ("mfmsr %0" : "=r"(msr));
+	__asm __volatile ("mfmsr %0" : "=r"(msr));
 	return msr;
 }
 
@@ -167,7 +167,7 @@ static __inline void
 mtmsr(register_t msr)
 {
 
-	asm volatile ("mtmsr %0" : : "r"(msr));
+	__asm __volatile ("mtmsr %0" : : "r"(msr));
 }
 
 static __inline uint32_t
@@ -175,7 +175,7 @@ mftbl(void)
 {
 	uint32_t tbl;
 
-	asm volatile (
+	__asm __volatile (
 #ifdef PPC_IBM403
 "	mftblo %0	\n"
 #else
@@ -192,7 +192,7 @@ mftb(void)
 	uint64_t tb;
 	int tmp;
 
-	asm volatile (
+	__asm __volatile (
 #ifdef PPC_IBM403
 "1:	mftbhi %0	\n"
 "	mftblo %0+1	\n"
@@ -214,7 +214,7 @@ mfrtcl(void)
 {
 	uint32_t rtcl;
 
-	asm volatile ("mfrtcl %0" : "=r"(rtcl));
+	__asm __volatile ("mfrtcl %0" : "=r"(rtcl));
 	return rtcl;
 }
 
@@ -223,7 +223,7 @@ mfrtc(uint32_t *rtcp)
 {
 	uint32_t tmp;
 
-	asm volatile (
+	__asm __volatile (
 "1:	mfrtcu	%0	\n"
 "	mfrtcl	%1	\n"
 "	mfrtcu	%2	\n"
@@ -237,7 +237,7 @@ mfpvr(void)
 {
 	uint32_t pvr;
 
-	asm volatile ("mfpvr %0" : "=r"(pvr));
+	__asm __volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
 
