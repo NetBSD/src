@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.4 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.5 2003/04/11 17:11:11 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -328,6 +328,11 @@ void dhcpdiscover (packet, ms_nulltp)
 
 	/* If we didn't find a lease, try to allocate one... */
 	if (!lease) {
+		if (!packet -> shared_network -> pools) {
+			log_info ("%s: network %s: no address pool",
+				  msgbuf, packet -> shared_network -> name);
+			return;
+		}
 		if (!allocate_lease (&lease, packet,
 				     packet -> shared_network -> pools, 
 				     &peer_has_leases)) {
