@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 1998/08/25 21:53:37 mark Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 1998/08/29 03:19:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #define	MAXSLP		20
 
 /*
- *Address space constants
+ * Address space constants
  */
 
 /*
@@ -97,13 +97,10 @@
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
+#define	ALT_PAGE_TBLS_BASE	0xf0c00000
 #define	KERNEL_VM_BASE		0xf1000000
-#define	KERNEL_VM_SIZE		0x01ffffff
-#define	PAGE_DIRS_BASE		0xf3000000
-#define	ALT_PAGE_TBLS_BASE	0xf3c00000
-#define	CURRENT_PAGEDIR_HOLE	0xf5000000
+#define	KERNEL_VM_SIZE		0x03000000
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
-#define	CURRENT_PAGEDIR_BASE	(PAGE_TABLE_SPACE_START + (CURRENT_PAGEDIR_HOLE >> PGSHIFT) * sizeof(pt_entry_t))
 
 /*
  * Mach derived constants
@@ -114,7 +111,7 @@
 #define	VM_MAX_ADDRESS		((vm_offset_t)(PAGE_TABLE_SPACE_START + (KERNEL_SPACE_START >> PGSHIFT) * sizeof(pt_entry_t)))
 
 #define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNEL_TEXT_BASE)
-#define	VM_MAXKERN_ADDRESS	((vm_offset_t)PAGE_DIRS_BASE)
+#define	VM_MAXKERN_ADDRESS	((vm_offset_t)(KERNEL_VM_BASE + KERNEL_VM_SIZE))
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffff)
 
 /*
@@ -126,7 +123,7 @@
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE /*VM_MIN_KERNEL_ADDRESS*/) / 4)
+	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE) * 4 / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
