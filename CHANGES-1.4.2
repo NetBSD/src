@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.133 2000/03/01 00:38:35 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.134 2000/03/01 14:11:25 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3687,11 +3687,71 @@ sys/arch/sparc/conf/INSTALL			patch
   increase size of ramdisk while removing dependency on /etc/disktab,
   and notifying kernel.
 
-distrib/sun3/miniroot/Makefile
-distrib/sun3/ramdisk/Makefile
+distrib/sun3/miniroot/Makefile			patch
+distrib/sun3/ramdisk/Makefile			patch
 
   Convert sun3 miniroot/ramdisk build process to use vnd devices
   instead of requiring a scratch partition on some local disk. Also
   remove dependency on /etc/disktab entry.  Support recursive
   ``depend'' makes (do nothing though).
 
+distrib/utils/sysinst/arch/vax/md.c		patch
+distrib/utils/sysinst/arch/vax/md.h		patch
+distrib/vax/Makefile				patch
+distrib/vax/bootfs/Makefile			patch (new)
+distrib/vax/bootfs/list				patch (new)
+distrib/vax/ramdisk/Makefile			patch
+distrib/vax/ramdisk/disktab.preinstall		patch
+distrib/vax/ramdisk/list			patch
+distrib/vax/ramdisk/ramdiskbin.conf		patch
+sys/arch/vax/boot/Makefile.inc			patch
+sys/arch/vax/boot/boot/Makefile			patch
+sys/arch/vax/boot/boot/boot.c			patch
+sys/arch/vax/boot/boot/conf.c			patch
+sys/arch/vax/boot/conf.c			patch
+sys/arch/vax/conf/INSTALL			patch
+
+  Finish porting sysinst to vax, and build various bootable installers
+  in new directory distrib/vax/bootfs.
+
+sys/arch/vax/conf/POSTAGE_STAMP			patch (new)
+sys/arch/vax/conf/SMIDGEN			patch (new)
+
+  Provide minimal kernels for VaxStation 2000 (POSTAGE_STAMP) and
+  MicroVax II (SMIDGEN).
+
+sys/arch/vax/vax/locore.c			patch
+sys/arch/vax/vax/pmap.c				patch
+sys/arch/vax/vsa/ncr.c				patch
+
+  Fix bugs in support for VaxStation 2000 and 3100, vax pmap, and
+  the NCR scsi driver.
+
+sys/arch/macppc/conf/GENERIC_MD			patch
+
+  Bump miniroot size to 1.6MB here too.
+
+usr.bin/rwho/Makefile				patch
+
+  Avoid optimizer bug in egcs for i386, works around PR#8364.
+
+distrib/sets/lists/base/md.sparc		patch
+
+  Distribute alternate sparc boot loaders which run at various
+  addresses.
+
+dist/bind/bin/named/ns_main.c			1.5
+dist/bind/include/port_before.h			1.3
+dist/bind/include/resolv.h			1.3
+dist/bind/include/netdb.h 			1.1-1.3 (new)
+dist/bind/lib/irs/gen.c				1.2
+dist/bind/lib/resolv/res_data.c			1.3
+usr.sbin/bind/Makefile.inc			1.6
+usr.sbin/bind/lib/Makefile			1.8
+usr.sbin/bind/include/namespace.h		delete
+
+  Make BIND8 not use the BIND4 code in libc.
+
+distrib/notes/common/contents			patch
+
+  Update distribution set sizes for pmax.
