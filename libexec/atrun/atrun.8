@@ -1,4 +1,4 @@
-.\"	$NetBSD: atrun.8,v 1.5 1997/03/18 14:31:15 perry Exp $
+.\"	$NetBSD: atrun.8,v 1.6 1997/10/20 02:26:44 enami Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,10 +36,10 @@
 .Nd run jobs queued for later execution
 .\"
 .Sh SYNOPSIS
-.Nm atrun
+.Nm
 .Sh DESCRIPTION
 The
-.Nm atrun
+.Nm
 utility runs commands queued by
 .Xr at 1 .
 It is usually invoked by
@@ -55,20 +55,20 @@ Directory containing output spool files
 Job-creation lock file.
 .El
 .Sh SEE ALSO
-.Xr cron 8 ,
-.Xr at 1
+.Xr at 1 ,
+.Xr cron 8
 .Sh AUTHOR
 .Bl -tag
 Thomas Koenig, ig25@rz.uni-karlsruhe.de
 .El
 .Sh BUGS
 The functionality of
-.Nm atrun
+.Nm
 should arguaby be merged into
 .Xr cron 8 .
 .Sh CAVEATS
 Since the default configuration causes
-.Nm atrun
+.Nm
 to be invoked every ten minutes,
 commands queued by
 .Xr at 1
