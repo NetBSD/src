@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.602 2004/01/06 19:44:38 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.603 2004/01/19 11:57:47 ragge Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4376,6 +4376,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX,
+	    0,
+	    "Intel",
+	    "PRO/10GbE LR Server Adapter",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
