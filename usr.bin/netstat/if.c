@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.22 1997/04/07 03:04:24 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.23 1997/04/07 06:58:18 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.22 1997/04/07 03:04:24 christos Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.23 1997/04/07 06:58:18 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ intpr(interval, ifnetaddr)
 		printf("%-5.5s %-5ld ", name, ifnet.if_mtu);
 		if (ifaddraddr == 0) {
 			printf("%-13.13s ", "none");
-			printf("%-15.15s ", "none");
+			printf("%-17.17s ", "none");
 		} else {
 			char hexsep = '.';		/* for hexprint */
 			const char *hexfmt = "%x%c";	/* for hexprint */
@@ -183,7 +183,7 @@ intpr(interval, ifnetaddr)
 					while (multiaddr != 0) {
 						kread(multiaddr, (char *)&inm,
 						    sizeof inm);
-						printf("\n%23s %-15.15s ", "",
+						printf("\n%25s %-17.17s ", "",
 						    routename(inm.inm_addr.s_addr));
 						multiaddr = (u_long)inm.inm_list.le_next;
 					}
@@ -204,8 +204,8 @@ intpr(interval, ifnetaddr)
 				*(union ns_net *) &net = sns->sns_addr.x_net;
 				sprintf(netnum, "%xH", (u_int32_t) ntohl(net));
 				upHex(netnum);
-				printf("ns:%-8s ", netnum);
-				printf("%-17s ",
+				printf("ns:%-10s ", netnum);
+				printf("%-17.17s ",
 				    ns_phost((struct sockaddr *)sns));
 				}
 				break;
