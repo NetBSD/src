@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.20 1994/05/05 05:36:48 cgd Exp $
+ *	$Id: npx.c,v 1.21 1994/06/28 07:55:25 deraadt Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -339,9 +339,9 @@ npxattach(parent, self, aux)
 	} else {
 #ifdef MATH_EMULATE
 		if (npx_exists)
-			printf("error reporting broken; using emulator\n");
+			printf(": error reporting broken; using emulator\n");
 		else
-			printf("emulator\n");
+			printf(": using emulator\n");
 #else
 		panic("npxattach: no math emulator in kernel!");
 #endif
