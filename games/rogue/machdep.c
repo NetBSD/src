@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1997/10/12 11:45:19 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1998/07/21 07:01:54 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.6 1997/10/12 11:45:19 lukem Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.7 1998/07/21 07:01:54 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,10 @@ md_malloc(n)
 int
 md_gseed()
 {
-	return(getpid());
+	time_t seconds;
+
+	time(&seconds);
+	return((int) seconds);
 }
 
 /* md_exit():
