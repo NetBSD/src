@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.31 2004/03/30 09:42:58 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.32 2004/03/30 11:42:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.31 2004/03/30 09:42:58 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.32 2004/03/30 11:42:04 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -133,6 +133,7 @@ static	void	maybe_err(int rv, const char *fmt, ...);
 static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
+static	enum filetype file_gettype(u_char *);
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
 static	off_t	file_compress(char *);
@@ -537,6 +538,29 @@ copymodes(const char *file, struct stat *sbp)
 }
 #endif
 
+/* what sort of file is this? */
+static enum filetype
+file_gettype(u_char *buf)
+{
+
+	if (buf[0] == GZIP_MAGIC0 &&
+	    (buf[1] == GZIP_MAGIC1 || buf[1] == GZIP_OMAGIC1))
+		return FT_GZIP;
+	else
+#ifndef NO_BZIP2_SUPPORT
+	if (memcmp(buf, BZIP2_MAGIC, 3) == 0 &&
+	    buf[3] >= '0' && buf[3] <= '9')
+		return FT_BZIP2;
+	else
+#endif
+#ifndef NO_COMPRESS_SUPPORT
+	if (memcmp(buf, Z_MAGIC, 2) == 0)
+		return FT_Z;
+	else
+#endif
+		return FT_UNKNOWN;
+}
+
 /*
  * compress the given file: create a corresponding .gz file and remove the
  * original.
@@ -664,34 +688,21 @@ file_uncompress(char *file)
 		maybe_err(1, "can't read %s", file);
 	}
 
-	if (header1[0] == GZIP_MAGIC0 &&
-	    (header1[1] == GZIP_MAGIC1 || header1[1] == GZIP_OMAGIC1))
-		method = FT_GZIP;
-	else
-
-#ifndef NO_BZIP2_SUPPORT
-	if (memcmp(header1, BZIP2_MAGIC, 3) == 0 &&
-	    header1[3] >= '0' && header1[3] <= '9') {
-# ifndef SMALL
-		if (Sflag == NULL)
-			suffix = BZ2_SUFFIX;
-		method = FT_BZIP2;
-# endif
-	} else
-#endif
-
-#ifndef NO_COMPRESS_SUPPORT
-	if (memcmp(header1, Z_MAGIC, 2) == 0) {
-# ifndef SMALL
-		if (Sflag == NULL)
-			suffix = Z_SUFFIX;
-# endif
-		method = FT_Z;
-	} else
-#endif
-		method = FT_UNKNOWN;
+	method = file_gettype(header1);
 
 #ifndef SMALL
+	if (Sflag == NULL) {
+# ifndef NO_BZIP2_SUPPORT
+		if (method == FT_BZIP2)
+			suffix = BZ2_SUFFIX;
+		else
+# endif
+# ifndef NO_COMPRESS_SUPPORT
+		if (method == FT_Z)
+			suffix = Z_SUFFIX;
+# endif
+	}
+
 	if (fflag == 0 && method == FT_UNKNOWN)
 		maybe_errx(1, "%s: not in gzip format", file);
 #endif
