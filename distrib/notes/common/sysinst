@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.12 2001/08/17 14:26:33 tv Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.13 2002/01/05 18:30:08 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,13 +193,13 @@ in order to enter
 .Ic write
 command to alter the variable values:
 .Pp
-.Dl db> Ic "write pcic_isa_intr_alloc_mask 0x0a00"
+.Dl db\*> Ic "write pcic_isa_intr_alloc_mask 0x0a00"
 .Dl "pcic_isa_intr_alloc_mask            0xff5f = 0xa00"
-.Dl db> Ic "write pcic_isa_alloc_iobase 0x330"
+.Dl db\*> Ic "write pcic_isa_alloc_iobase 0x330"
 .Dl "pcic_isa_alloc_iobase               0x400 = 0x330"
-.Dl db> Ic "write pcic_isa_alloc_iosize 0x0bf"
+.Dl db\*> Ic "write pcic_isa_alloc_iosize 0x0bf"
 .Dl "pcic_isa_alloc_iosize               0xbff = 0xbf"
-.Dl db> Ic "continue"
+.Dl db\*> Ic "continue"
 .Pp
 Note that, since some floppy images may not have symbol information in
 the kernel, you may have to consult the matching
@@ -212,7 +212,7 @@ example (if
 .Va pcic_isa_intr_alloc_mask
 is equal to c0513e3c):
 .Pp
-.Dl db> Ic "write 0xc0513e3c 0x0a00"
+.Dl db\*> Ic "write 0xc0513e3c 0x0a00"
 .Pp
 
 After installation, this value can be permanently written to the kernel image
@@ -395,7 +395,7 @@ The main menu will be displayed.
   .***********************************************.
   * NetBSD-1.5.2 Install System                   *
   *                                               *
-  *>a: Install NetBSD to hard disk                *
+  *\*>a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
   * c: Re-install sets or install additional sets *
   * d: Reboot the computer                        *
@@ -725,7 +725,7 @@ and
 .Pa swap No ),
 for example:
 .Dl # Ic "mkdir /mnt/etc"
-.Dl # Ic "cat > /mnt/etc/fstab"
+.Dl # Ic "cat \*> /mnt/etc/fstab"
 .Dl "/dev/wd0a / ffs rw 1 1"
 .Dl "/dev/wd0b none swap sw 0 0"
 .Dl "/dev/wd0g /usr ffs rw 1 2"
