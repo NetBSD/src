@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/05/11 19:14:50 drochner Exp $
+# $NetBSD: Makefile,v 1.2 2000/06/06 17:30:41 thorpej Exp $
 
 PROG= extest
 NOMAN=
@@ -7,6 +7,8 @@ NOMAN=
 SRCS= extest.c subr_extent.c
 
 CPPFLAGS+= -D_EXTENT_TESTING -D__POOL_EXPOSE
+
+WARNS?=	1
 
 regress: $(PROG)
 	$(.OBJDIR)/$(PROG) >extest.out
