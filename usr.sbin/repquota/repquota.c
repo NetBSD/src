@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.12 1997/10/18 11:23:55 lukem Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.13 1997/10/23 04:53:03 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ hasquota(fs, type, qfnamep)
 	char **qfnamep;
 {
 	char *opt;
-	char *cp;
+	char *cp = NULL;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
