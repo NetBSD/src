@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_powf.c,v 1.5 1995/05/10 20:45:59 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_powf.c,v 1.6 1995/05/12 04:57:35 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -111,7 +111,7 @@ ivln2_l  =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 	if(hy==0x40000000) return x*x; /* y is  2 */
 	if(hy==0x3f000000) {	/* y is  0.5 */
 	    if(hx>=0)	/* x >= +0 */
-	    return sqrtf(x);	
+	    return __ieee754_sqrtf(x);	
 	}
 
 	ax   = fabsf(x);
