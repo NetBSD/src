@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.61 2000/10/06 04:49:53 onoe Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.62 2000/10/26 01:26:15 wiz Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -392,7 +392,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    return (error);
 	mru = *(int *)data;
-	if (mru >= PPP_MRU && mru <= PPP_MAXMRU)
+	if (mru >= PPP_MINMRU && mru <= PPP_MAXMRU)
 	    sc->sc_mru = mru;
 	break;
 
