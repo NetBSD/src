@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.7 1994/02/02 19:17:25 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.8 1994/02/02 19:21:34 mycroft Exp $
  */
 
 /*
@@ -120,7 +120,7 @@ struct bt_cmd_buf {
 
 /*
  * Mail box defs  etc.
- * these could be bigger but we need the bt_data to fit on a single page..
+ * these could be bigger but we need the bt_softc to fit on a single page..
  */
 #define BT_MBX_SIZE	16	/* mail box size  (MAX 255 MBxs) */
 				/* don't need that many really */
@@ -306,7 +306,7 @@ struct bt_config {
 
 #define KVTOPHYS(x)	vtophys(x)
 
-struct bt_data {
+struct bt_softc {
         struct device sc_dev;
         struct isadev sc_id;
         struct intrhand sc_ih;
@@ -332,23 +332,23 @@ int     bt_debug = 0;
 int bt_cmd();	/* XXX must be varargs to prototype */
 int btprobe __P((struct device *, struct device *, void *));
 void btattach __P((struct device *, struct device *, void *));
-u_int bt_adapter_info __P((struct bt_data *));
+u_int bt_adapter_info __P((struct bt_softc *));
 int btintr __P((void *));
-void bt_free_ccb __P((struct bt_data *, struct bt_ccb *, int));
-struct bt_ccb *bt_get_ccb __P((struct bt_data *, int));
-struct bt_ccb *bt_ccb_phys_kv __P((struct bt_data *, physaddr));
-BT_MBO *bt_send_mbo __P((struct bt_data *, int, int, struct bt_ccb *));
-void bt_done __P((struct bt_data *, struct bt_ccb *));
-int bt_find __P((struct bt_data *));
-void bt_init __P((struct bt_data *));
-void bt_inquire_setup_information __P((struct bt_data *));
+void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
+struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
+struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, physaddr));
+BT_MBO *bt_send_mbo __P((struct bt_softc *, int, int, struct bt_ccb *));
+void bt_done __P((struct bt_softc *, struct bt_ccb *));
+int bt_find __P((struct bt_softc *));
+void bt_init __P((struct bt_softc *));
+void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
 int bt_scsi_cmd __P((struct scsi_xfer *));
-int bt_poll __P((struct bt_data *, struct scsi_xfer *, struct bt_ccb *));
+int bt_poll __P((struct bt_softc *, struct scsi_xfer *, struct bt_ccb *));
 void bt_timeout __P((caddr_t));
 #ifdef UTEST
 void bt_print_ccb __P((struct bt_ccb *));
-void bt_print_active_ccbs __P((struct bt_data *));
+void bt_print_active_ccbs __P((struct bt_softc *));
 #endif
 
 struct scsi_adapter bt_switch =
@@ -379,7 +379,7 @@ struct cfdriver btcd =
 	btprobe,
 	btattach,
 	DV_DULL,
-	sizeof(struct bt_data)
+	sizeof(struct bt_softc)
 };
 
 #define BT_RESET_TIMEOUT 1000
@@ -401,7 +401,7 @@ struct cfdriver btcd =
  */
 int
 bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	int icnt, ocnt, wait;
 	u_char *retval;
 	unsigned opcode;
@@ -521,7 +521,7 @@ btprobe(parent, self, aux)
         void *aux;
 {
         register struct isa_attach_args *ia = aux;
-	struct bt_data *bt = (void *)self;
+	struct bt_softc *bt = (void *)self;
 
         if (ia->ia_iobase == IOBASEUNK)
                 return 0;
@@ -578,7 +578,7 @@ btattach(parent, self, aux)
         void *aux;
 {
         struct isa_attach_args *ia = aux;
-	struct bt_data *bt = (void *)self;
+	struct bt_softc *bt = (void *)self;
 
 	bt_init(bt);
 
@@ -610,7 +610,7 @@ btattach(parent, self, aux)
  */
 u_int
 bt_adapter_info(bt)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 {
 
 	return 2;	/* 2 outstanding requests at a time per device */
@@ -623,7 +623,7 @@ int
 btintr(arg)
 	void *arg;
 {
-	struct bt_data *bt = arg;
+	struct bt_softc *bt = arg;
 	BT_MBI *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;
@@ -752,7 +752,7 @@ btintr(arg)
  */
 void
 bt_free_ccb(bt, ccb, flags)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	struct bt_ccb *ccb;
 	int flags;
 {
@@ -783,7 +783,7 @@ bt_free_ccb(bt, ccb, flags)
  */
 struct bt_ccb *
 bt_get_ccb(bt, flags)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	int flags;
 {
 	int opri;
@@ -844,7 +844,7 @@ bt_get_ccb(bt, flags)
  */
 struct bt_ccb *
 bt_ccb_phys_kv(bt, ccb_phys)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	physaddr ccb_phys;
 {
 	int hashnum = CCB_HASH(ccb_phys);
@@ -863,7 +863,7 @@ bt_ccb_phys_kv(bt, ccb_phys)
  */
 BT_MBO *
 bt_send_mbo(bt, flags, cmd, ccb)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	int flags, cmd;
 	struct bt_ccb *ccb;
 {
@@ -926,7 +926,7 @@ bt_send_mbo(bt, flags, cmd, ccb)
  */
 void
 bt_done(bt, ccb)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	struct bt_ccb *ccb;
 {
 	struct scsi_sense_data *s1, *s2;
@@ -986,7 +986,7 @@ bt_done(bt, ccb)
  */
 int
 bt_find(bt)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 {
 	u_char ad[4];
 	volatile int i, sts;
@@ -1082,7 +1082,7 @@ bt_find(bt)
  */
 void
 bt_init(bt)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 {
 	u_char ad[4];
 	volatile int i;
@@ -1123,7 +1123,7 @@ bt_init(bt)
 
 void
 bt_inquire_setup_information(bt)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 {
 	struct bt_setup setup;
 	struct bt_boardID bID;
@@ -1178,7 +1178,7 @@ bt_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct bt_data *bt = sc_link->adapter_softc;
+	struct bt_softc *bt = sc_link->adapter_softc;
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -1354,7 +1354,7 @@ bt_scsi_cmd(xs)
  */
 int 
 bt_poll(bt, xs, ccb)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 	struct scsi_xfer *xs;
 	struct bt_ccb *ccb;
 {
@@ -1421,7 +1421,7 @@ bt_timeout(arg)
 {
 	int s = splbio();
 	struct bt_ccb *ccb = (void *)arg;
-	struct bt_data *bt;
+	struct bt_softc *bt;
 
 	bt = ccb->xfer->sc_link->adapter_softc;
 	sc_print_addr(ccb->xfer->sc_link);
@@ -1475,7 +1475,7 @@ bt_print_ccb(ccb)
 
 void
 bt_print_active_ccbs(bt)
-	struct bt_data *bt;
+	struct bt_softc *bt;
 {
 	struct bt_ccb *ccb;
 	int i = 0;

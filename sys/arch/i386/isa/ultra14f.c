@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.9 1994/02/02 19:13:27 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.10 1994/02/02 19:21:38 mycroft Exp $
  */
 
 #include "uha.h"
@@ -211,7 +211,7 @@ struct mscp {
 	long hashkey;
 };
 
-struct uha_data {
+struct uha_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
 	struct intrhand sc_ih;
@@ -227,25 +227,25 @@ struct uha_data {
 	struct scsi_link sc_link;
 };
 
-void uha_send_mbox __P((struct uha_data *, struct mscp *));
-int uha_abort __P((struct uha_data *, struct mscp *));
-int uha_poll __P((struct uha_data *, int));
+void uha_send_mbox __P((struct uha_softc *, struct mscp *));
+int uha_abort __P((struct uha_softc *, struct mscp *));
+int uha_poll __P((struct uha_softc *, int));
 int uhaprobe __P((struct device *, struct device *, void *));
 void uhaattach __P((struct device *, struct device *, void *));
-u_int uha_adapter_info __P((struct uha_data *));
+u_int uha_adapter_info __P((struct uha_softc *));
 int uhaintr __P((void *));
-void uha_done __P((struct uha_data *, struct mscp *));
-void uha_free_mscp __P((struct uha_data *, struct mscp *, int flags));
-struct mscp *uha_get_mscp __P((struct uha_data *, int));
-struct mscp *uha_mscp_phys_kv __P((struct uha_data *, u_long));
-int uha_find __P((struct uha_data *));
-void uha_init __P((struct uha_data *));
+void uha_done __P((struct uha_softc *, struct mscp *));
+void uha_free_mscp __P((struct uha_softc *, struct mscp *, int flags));
+struct mscp *uha_get_mscp __P((struct uha_softc *, int));
+struct mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
+int uha_find __P((struct uha_softc *));
+void uha_init __P((struct uha_softc *));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
 void uha_timeout __P((caddr_t));
 #ifdef UHADEBUG
 void uha_print_mscp __P((struct mscp *));
-void uha_print_active_mscp __P((struct uha_data *));
+void uha_print_active_mscp __P((struct uha_softc *));
 #endif
 
 u_long	scratch;
@@ -260,7 +260,7 @@ struct cfdriver uhacd = {
 	uhaprobe,
 	uhaattach,
 	DV_DULL,
-	sizeof(struct uha_data)
+	sizeof(struct uha_softc)
 };
 
 struct scsi_adapter uha_switch =
@@ -289,7 +289,7 @@ struct scsi_device uha_dev =
  */
 void
 uha_send_mbox(uha, mscp)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	struct mscp *mscp;
 {
 	u_short iobase = uha->sc_iobase;
@@ -318,7 +318,7 @@ uha_send_mbox(uha, mscp)
  */
 int
 uha_abort(uha, mscp)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	struct mscp *mscp;
 {
 	u_short iobase = uha->sc_iobase;
@@ -369,7 +369,7 @@ uha_abort(uha, mscp)
  */
 int
 uha_poll(uha, wait)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	int wait;
 {
 	u_short iobase = uha->sc_iobase;
@@ -400,7 +400,7 @@ uhaprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct uha_data *uha = (void *)self;
+	struct uha_softc *uha = (void *)self;
 
 	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
@@ -420,7 +420,7 @@ uhaprobe(parent, self, aux)
 		if (ia->ia_irq != (1 << uha->vect)) {
 			printf("uha%d: irq mismatch, %x != %x\n",
 				uha->sc_dev.dv_unit, ia->ia_irq,
-				(1 << uha->vect));
+				1 << uha->vect);
 			return 0;
 		}
 	}
@@ -454,7 +454,7 @@ uhaattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct uha_data *uha = (void *)self;
+	struct uha_softc *uha = (void *)self;
 
 	uha_init(uha);
 
@@ -486,7 +486,7 @@ uhaattach(parent, self, aux)
  */
 u_int
 uha_adapter_info(uha)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 {
 
 	return 2;	/* 2 outstanding requests at a time per device */
@@ -499,7 +499,7 @@ int
 uhaintr(arg)
 	void *arg;
 {
-	struct uha_data *uha = arg;
+	struct uha_softc *uha = arg;
 	struct mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
@@ -547,7 +547,7 @@ uhaintr(arg)
  */
 void
 uha_done(uha, mscp)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	struct mscp *mscp;
 {
 	struct scsi_sense_data *s1, *s2;
@@ -615,7 +615,7 @@ uha_done(uha, mscp)
  */
 void
 uha_free_mscp(uha, mscp, flags)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	struct mscp *mscp;
 	int flags;
 {
@@ -647,7 +647,7 @@ uha_free_mscp(uha, mscp, flags)
  */
 struct mscp *
 uha_get_mscp(uha, flags)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	int flags;
 {
 	int opri;
@@ -706,7 +706,7 @@ uha_get_mscp(uha, flags)
  */
 struct mscp *
 uha_mscp_phys_kv(uha, mscp_phys)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 	u_long mscp_phys;
 {
 	int hashnum = MSCP_HASH(mscp_phys);
@@ -725,7 +725,7 @@ uha_mscp_phys_kv(uha, mscp_phys)
  */
 int
 uha_find(uha)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 {
 	u_char ad[4];
 	volatile u_char model;
@@ -807,7 +807,7 @@ uha_find(uha)
 
 void
 uha_init(uha)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 {
 	u_short iobase = uha->sc_iobase;
 
@@ -832,7 +832,7 @@ uha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct uha_data *uha = sc_link->adapter_softc;
+	struct uha_softc *uha = sc_link->adapter_softc;
 	struct mscp *mscp;
 	struct uha_dma_seg *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -1066,7 +1066,7 @@ uha_timeout(arg)
 {
 	int s = splbio();
 	struct mscp *mscp = (void *)arg;
-	struct uha_data *uha = mscp->xs->sc_link->adapter_softc;
+	struct uha_softc *uha = mscp->xs->sc_link->adapter_softc;
 
 	sc_print_addr(mscp->xs->sc_link);
 	printf("timed out");
@@ -1103,7 +1103,7 @@ uha_print_mscp(mscp)
 
 void
 uha_print_active_mscp(uha)
-	struct uha_data *uha;
+	struct uha_softc *uha;
 {
 	struct mscp *mscp;
 	int i = 0;

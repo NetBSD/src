@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.9 1994/02/02 11:14:50 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.10 1994/02/02 19:21:26 mycroft Exp $
  */
 
 /*
@@ -275,7 +275,7 @@ u_char  aha_scratch_buf[256];
 int	aha_debug = 1;
 #endif /*AHADEBUG */
 
-struct aha_data {
+struct aha_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
 	struct intrhand sc_ih;
@@ -300,18 +300,18 @@ struct aha_data {
 int aha_cmd();	/* XXX must be varargs to prototype */
 int ahaprobe __P((struct device *, struct device *, void *));
 void ahaattach __P((struct device *, struct device *, void *));
-u_int aha_adapter_info __P((struct aha_data *));
+u_int aha_adapter_info __P((struct aha_softc *));
 int ahaintr __P((void *));
-void aha_free_ccb __P((struct aha_data *, struct aha_ccb *, int));
-struct aha_ccb *aha_get_ccb __P((struct aha_data *, int));
-void aha_done __P((struct aha_data *, struct aha_ccb *));
-int aha_find __P((struct aha_data *));
-void aha_init __P((struct aha_data *));
+void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *, int));
+struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
+void aha_done __P((struct aha_softc *, struct aha_ccb *));
+int aha_find __P((struct aha_softc *));
+void aha_init __P((struct aha_softc *));
 void ahaminphys __P((struct buf *));
 int aha_scsi_cmd __P((struct scsi_xfer *));
-int aha_poll __P((struct aha_data *, struct scsi_xfer *, struct aha_ccb *));
-int aha_set_bus_speed __P((struct aha_data *));
-int aha_bus_speed_check __P((struct aha_data *, int));
+int aha_poll __P((struct aha_softc *, struct scsi_xfer *, struct aha_ccb *));
+int aha_set_bus_speed __P((struct aha_softc *));
+int aha_bus_speed_check __P((struct aha_softc *, int));
 void aha_timeout __P((caddr_t));
 
 struct scsi_adapter aha_switch =
@@ -342,10 +342,10 @@ struct cfdriver ahacd =
 	ahaprobe,
 	ahaattach,
 	DV_DULL,
-	sizeof(struct aha_data)
+	sizeof(struct aha_softc)
 };
 
-void aha_init __P((struct aha_data *));
+void aha_init __P((struct aha_softc *));
 
 #define aha_abortmbx(mbx) \
 	(mbx)->cmd = AHA_MBO_ABORT; \
@@ -373,7 +373,7 @@ void aha_init __P((struct aha_data *));
  */
 int
 aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	int icnt, ocnt, wait;
 	u_char *retval;
 	unsigned opcode;
@@ -494,7 +494,7 @@ ahaprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct aha_data *aha = (void *)self;
+	struct aha_softc *aha = (void *)self;
 
 	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
@@ -566,7 +566,7 @@ ahaattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct aha_data *aha = (void *)self;
+	struct aha_softc *aha = (void *)self;
 
 	/* need to recalculate */
 	aha->kv_phys_xor = (long int) aha ^ (KVTOPHYS(aha));
@@ -601,7 +601,7 @@ ahaattach(parent, self, aux)
  */
 u_int 
 aha_adapter_info(aha)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 {
 
 	return 2;	/* 2 outstanding requests at a time per device */
@@ -614,7 +614,7 @@ int
 ahaintr(arg)
 	void *arg;
 {
-	struct aha_data *aha = arg;
+	struct aha_softc *aha = arg;
 	struct aha_ccb *ccb;
 	u_char stat;
 	register i;
@@ -696,7 +696,7 @@ ahaintr(arg)
  */
 void
 aha_free_ccb(aha, ccb, flags)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	struct aha_ccb *ccb;
 	int flags;
 {
@@ -724,7 +724,7 @@ aha_free_ccb(aha, ccb, flags)
  */
 struct aha_ccb *
 aha_get_ccb(aha, flags)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	int flags;
 {
 	int opri;
@@ -754,7 +754,7 @@ aha_get_ccb(aha, flags)
  */
 void
 aha_done(aha, ccb)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	struct aha_ccb *ccb;
 {
 	struct scsi_sense_data *s1, *s2;
@@ -823,7 +823,7 @@ aha_done(aha, ccb)
  */
 int
 aha_find(aha)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 {
 	u_char ad[3];
 	volatile int i, sts;
@@ -975,7 +975,7 @@ aha_find(aha)
  */
 void
 aha_init(aha)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 {
 	u_char ad[4];
 	volatile int i;
@@ -1022,7 +1022,7 @@ aha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct aha_data *aha = sc_link->adapter_softc;
+	struct aha_softc *aha = sc_link->adapter_softc;
 	struct aha_ccb *ccb;
 	struct aha_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -1195,7 +1195,7 @@ aha_scsi_cmd(xs)
  */
 int 
 aha_poll(aha, xs, ccb)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	struct scsi_xfer *xs;
 	struct aha_ccb *ccb;
 {
@@ -1285,7 +1285,7 @@ static	struct bus_speed
 
 int	
 aha_set_bus_speed(aha)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 {
 	int	speed;
 	int	lastworking;
@@ -1330,7 +1330,7 @@ static char aha_test_string[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijk
 
 int 
 aha_bus_speed_check(aha, speed)
-	struct aha_data *aha;
+	struct aha_softc *aha;
 	int speed;
 {
 	int numspeeds = sizeof(aha_bus_speeds) / sizeof(struct bus_speed);
@@ -1386,7 +1386,7 @@ aha_timeout(arg)
 {
 	int s = splbio();
 	struct aha_ccb *ccb = (void *)arg;
-	struct aha_data *aha;
+	struct aha_softc *aha;
 
 	aha = ccb->xfer->sc_link->adapter_softc;
 	sc_print_addr(ccb->xfer->sc_link);
