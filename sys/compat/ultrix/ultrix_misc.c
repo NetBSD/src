@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.6 1994/08/01 14:15:08 glass Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.7 1994/10/20 04:47:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ struct ultrix_waitpid_args {
 ultrix_waitpid(p, uap, retval)
 	struct proc *p;
 	struct ultrix_waitpid_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	uap->rusage = 0;
@@ -163,7 +163,7 @@ struct sun_wait4_args {
 sun_wait4(p, uap, retval)
 	struct proc *p;
 	struct sun_wait4_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	if (uap->pid == 0)
@@ -180,7 +180,7 @@ struct sun_wait3_args {
 sun_wait3(p, uap, retval)
 	struct proc *p;
 	struct sun_wait3_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct sun_wait4_args ua;
 
@@ -201,7 +201,7 @@ struct sun_creat_args {
 sun_creat(p, uap, retval)
 	struct proc *p;
 	struct sun_creat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct args {
 		char	*fname;
@@ -223,7 +223,7 @@ struct sun_execv_args {
 sun_execv(p, uap, retval)
 	struct proc *p;
 	struct sun_execv_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	uap->envp = NULL;
@@ -238,7 +238,7 @@ struct sun_omsync_args {
 sun_omsync(p, uap, retval)
 	struct proc *p;
 	struct sun_omsync_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	if (uap->flags)
@@ -253,7 +253,7 @@ struct sun_unmount_args {
 sun_unmount(p, uap, retval)
 	struct proc *p;
 	struct sun_unmount_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	uap->flags = 0;
@@ -295,7 +295,7 @@ struct sun_mount_args {
 sun_mount(p, uap, retval)
 	struct proc *p;
 	struct sun_mount_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int oflags = uap->flags, nflags, error;
 	extern char sigcode[], esigcode[];
@@ -359,7 +359,7 @@ sun_mount(p, uap, retval)
 async_daemon(p, uap, retval)
       struct proc *p;
       void *uap;
-      int *retval;
+      register_t *retval;
 {
       struct nfssvc_args {
               int flag;
@@ -377,7 +377,7 @@ struct sun_sigpending_args {
 sun_sigpending(p, uap, retval)
 	struct proc *p;
 	struct sun_sigpending_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int mask = p->p_siglist & p->p_sigmask;
 
@@ -422,7 +422,7 @@ struct sun_getdents_args {
 sun_getdents(p, uap, retval)
 	struct proc *p;
 	register struct sun_getdents_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
@@ -530,7 +530,7 @@ struct sun_mmap_args {
 sun_mmap(p, uap, retval)
 	register struct proc *p;
 	register struct sun_mmap_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct filedesc *fdp;
 	register struct file *fp;
@@ -584,7 +584,7 @@ struct sun_mctl_args {
 sun_mctl(p, uap, retval)
 	register struct proc *p;
 	register struct sun_mctl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 
 	switch (uap->func) {
@@ -610,7 +610,7 @@ struct sun_setsockopt_args {
 sun_setsockopt(p, uap, retval)
 	struct proc *p;
 	register struct sun_setsockopt_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mbuf *m = NULL;
@@ -651,7 +651,7 @@ struct sun_fchroot_args {
 sun_fchroot(p, uap, retval)
 	register struct proc *p;
 	register struct sun_fchroot_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct vnode *vp;
@@ -701,7 +701,7 @@ struct sun_uname_args {
 sun_uname(p, uap, retval)
 	struct proc *p;
 	struct sun_uname_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct sun_utsname sut;
 	extern char ostype[], machine[], osrelease[];
@@ -726,7 +726,7 @@ int
 sun_setpgid(p, uap, retval)
 	struct proc *p;
 	struct sun_setpgid_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	/*
 	 * difference to our setpgid call is to include backwards
@@ -748,7 +748,7 @@ struct sun_open_args {
 sun_open(p, uap, retval)
 	struct proc *p;
 	struct sun_open_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int l, r;
 	int noctty = uap->fmode & 0x8000;
@@ -790,7 +790,7 @@ struct sun_nfssvc_args {
 sun_nfssvc(p, uap, retval)
 	struct proc *p;
 	struct sun_nfssvc_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct nfssvc_args outuap;
 	struct sockaddr sa;
@@ -827,7 +827,7 @@ struct sun_ustat_args {
 sun_ustat(p, uap, retval)
 	struct proc *p;
 	struct sun_ustat_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct sun_ustat us;
 	int error;
@@ -853,7 +853,7 @@ struct sun_quotactl_args {
 sun_quotactl(p, uap, retval)
 	struct proc *p;
 	struct sun_quotactl_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	return EINVAL;
 }
@@ -861,7 +861,7 @@ sun_quotactl(p, uap, retval)
 sun_vhangup(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int *retval;
+	register_t *retval;
 {
 	return 0;
 }
@@ -903,7 +903,7 @@ struct sun_statfs_args {
 sun_statfs(p, uap, retval)
 	struct proc *p;
 	struct sun_statfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct mount *mp;
 	register struct statfs *sp;
@@ -929,7 +929,7 @@ struct sun_fstatfs_args {
 sun_fstatfs(p, uap, retval)
 	struct proc *p;
 	struct sun_fstatfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	struct file *fp;
 	struct mount *mp;
@@ -953,7 +953,7 @@ struct sun_exportfs_args {
 sun_exportfs(p, uap, retval)
 	struct proc *p;
 	struct sun_exportfs_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	/*
 	 * XXX: should perhaps translate into a mount(2)
@@ -971,7 +971,7 @@ struct sun_mknod_args {
 sun_mknod(p, uap, retval)
 	struct proc *p;
 	struct sun_mknod_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (S_ISFIFO(uap->fmode))
 		return mkfifo(p, uap, retval);
@@ -995,7 +995,7 @@ struct sun_sysconf_args {
 sun_sysconf(p, uap, retval)
 	struct proc *p;
 	struct sun_sysconf_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	extern int maxfiles;
 
@@ -1045,7 +1045,7 @@ struct sun_getrlimit_args {
 sun_getrlimit(p, uap, retval)
 	struct proc *p;
 	struct sun_getrlimit_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (uap->which >= SUN_RLIM_NLIMITS)
 		return EINVAL;
@@ -1064,7 +1064,7 @@ struct sun_setrlimit_args {
 sun_setrlimit(p, uap, retval)
 	struct proc *p;
 	struct sun_getrlimit_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	if (uap->which >= SUN_RLIM_NLIMITS)
 		return EINVAL;
