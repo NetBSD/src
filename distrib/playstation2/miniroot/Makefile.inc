@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/10/17 02:05:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2003/02/01 05:03:42 tsutsui Exp $
 
-DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
+DBG=		-Os
 
 IMAGESIZE=	5m
 MAKEFS_FLAGS=	-o density=2k
