@@ -1,5 +1,5 @@
-.\"	$NetBSD: prep,v 1.8 1999/05/04 20:07:02 fvdl Exp $	
-
+.\"	$NetBSD: prep,v 1.9 2000/10/04 00:34:35 lukem Exp $	
+.\"
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
 of any data on your hard disk that you
@@ -92,7 +92,7 @@ the geometry that
 uses is the
 .Em real geometry .
 .Pp
-.Li Sysinst
+.Li sysinst
 will try to discover both the real geometry and
 .Tn BIOS
 geometry.
