@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.6 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.7 2002/09/14 17:53:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.6 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.7 2002/09/14 17:53:59 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -71,8 +71,7 @@ rf_ConfigureCallback(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__,__LINE__, rc);
 		rf_ShutdownCallback(NULL);
 		return (rc);
 	}

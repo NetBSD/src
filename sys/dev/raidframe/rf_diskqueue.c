@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.17 2002/08/02 04:01:51 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.18 2002/09/14 17:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.17 2002/08/02 04:01:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.18 2002/09/14 17:53:57 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -204,14 +204,12 @@ rf_ConfigureDiskQueue(
 	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[r][c];
 	rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_create_managed_cond(listp, &diskqueue->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	return (0);
@@ -236,8 +234,7 @@ rf_ConfigureDiskQueueSystem(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_ShutdownDiskQueueSystem(NULL);
 		return (rc);
 	}

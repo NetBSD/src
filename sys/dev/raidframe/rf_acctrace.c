@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.7 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.8 2002/09/14 17:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.7 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.8 2002/09/14 17:53:57 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -86,13 +86,11 @@ rf_ConfigureAccessTrace(listp)
 	numTracesSoFar = 0;
 	rc = rf_mutex_init(&rf_tracing_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		if (rf_accessTraceBufSize) {
 			RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
 			rf_mutex_destroy(&rf_tracing_mutex);

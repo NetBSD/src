@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.5 2001/11/13 07:11:16 lukem Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.6 2002/09/14 17:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.5 2001/11/13 07:11:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.6 2002/09/14 17:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -121,15 +121,13 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	rc = rf_mutex_init(&reconCtrlPtr->eq_mutex);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	rc = rf_cond_init(&reconCtrlPtr->eq_cond);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->eventQueue = NULL;
@@ -139,8 +137,7 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 	rc = rf_mutex_init(&reconCtrlPtr->rb_mutex);
 	if (rc) {
 		/* XXX deallocate, cleanup */
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (NULL);
 	}
 	reconCtrlPtr->fullBufferList = NULL;
