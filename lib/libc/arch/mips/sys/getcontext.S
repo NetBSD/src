@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1.2.2 2001/11/21 08:52:42 wdk Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.1.2.3 2001/11/24 02:22:29 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: getcontext.S,v 1.1.2.2 2001/11/21 08:52:42 wdk Exp $")
+	ASMSTR("$NetBSD: getcontext.S,v 1.1.2.3 2001/11/24 02:22:29 wdk Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -48,7 +48,6 @@ WEAK_ALIAS(getcontext, _getcontext)
 #endif
 
 LEAF(_getcontext)
-	PIC_PROLOGUE(_getcontext, t9)
 	SYSTRAP(getcontext)
 	bne	a3, zero, 1f
 	REG_PROLOGUE
