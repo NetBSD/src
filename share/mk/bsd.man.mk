@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.49 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.man.mk,v 1.50 2000/01/22 19:31:02 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -150,9 +150,9 @@ manlinks: manpages
 
 .if defined(CATPAGES)
 .if ${MKCATPAGES} != "no" && ${MKMAN} != "no"
-all: ${CATPAGES}
+realall: ${CATPAGES}
 .else
-all:
+realall:
 .endif
 
 cleanman:

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.106 2000/01/16 03:34:27 assar Exp $
+#	$NetBSD: bsd.prog.mk,v 1.107 2000/01/22 19:31:02 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -119,7 +119,7 @@ MAN=	${PROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(PROG)
 
-all: ${PROG} ${SCRIPTS}
+realall: ${PROG} ${SCRIPTS}
 
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \

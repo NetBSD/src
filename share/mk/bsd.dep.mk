@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.29 1999/11/16 13:15:09 tron Exp $
+#	$NetBSD: bsd.dep.mk,v 1.30 2000/01/22 19:31:00 mycroft Exp $
 
 .PHONY:		cleandepend
 cleandir distclean: cleandepend
@@ -6,10 +6,9 @@ cleandir distclean: cleandepend
 MKDEP?=		mkdep
 
 # some of the rules involve .h sources, so remove them from mkdep line
-depend: beforedepend
+realdepend: beforedepend
 .if defined(SRCS)
-depend: .depend
-	@true # hack to prevent "make depend" from using implicit rules
+realdepend: .depend
 .NOPATH: .depend
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
@@ -47,7 +46,7 @@ cleandepend:
 .else
 cleandepend:
 .endif
-depend: afterdepend
+realdepend: afterdepend
 
 beforedepend:
 afterdepend:

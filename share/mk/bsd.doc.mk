@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.43 1999/09/04 21:48:33 fredb Exp $
+#	$NetBSD: bsd.doc.mk,v 1.44 2000/01/22 19:31:01 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -29,9 +29,9 @@ TBL?=		tbl
 
 .if !target(all)
 .if ${MKSHARE} != "no"
-all: paper.ps
+realall: paper.ps
 .else
-all:
+realall:
 .endif
 .endif
 
