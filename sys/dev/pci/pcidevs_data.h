@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.347 2001/08/20 03:48:30 gehenna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.348 2001/08/20 19:29:59 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.344 2001/08/20 03:45:55 gehenna Exp 
+ *	NetBSD: pcidevs,v 1.345 2001/08/20 19:29:08 fvdl Exp 
  */
 
 /*
@@ -802,10 +802,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD756 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD762 NorthBridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD762 AGP Bridge",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
 	    0,
 	    "Advanced Micro Devices",
-	    "AMD766 PCI-to-ISA Bridge",
+	    "AMD766 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE,
