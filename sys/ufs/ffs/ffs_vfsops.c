@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.67.2.7 2001/11/25 20:00:26 he Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.67.2.8 2003/10/06 09:25:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -431,8 +431,9 @@ ffs_reload(mountp, cred, p)
 	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
 	    newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp);
@@ -631,8 +632,9 @@ ffs_mountfs(devvp, mp, p)
 	if (needswap) {
 		ffs_sb_swap((struct fs*)bp->b_data, fs);
 		fs->fs_flags |= FS_SWAPPED;
-	}
+	} else
 #endif
+		fs->fs_flags &= ~FS_SWAPPED;
 	ffs_oldfscompat(fs);
 
 	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
