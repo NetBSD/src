@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.26 1995/03/22 09:14:34 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.27 1995/03/22 23:48:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.26 1995/03/22 09:14:34 mycroft Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.27 1995/03/22 23:48:49 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -446,6 +446,22 @@ writelabel(f, boot, lp)
 		writeable = 1;
 		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 			perror("ioctl DIOCWLABEL");
+#ifdef __alpha__
+		/*
+		 * The Alpha requires that the boot block be checksummed.
+		 * The first 63 8-byte quantites are summed into the 64th.
+		 */
+		{
+			int i;
+			u_int64_t *dp, sum;
+
+			dp = (u_int64_t *)boot;
+			sum = 0;
+			for (i = 0; i < 63; i++)
+				sum += dp[i];
+			dp[63] = sum;
+		}
+#endif
 		if (write(f, boot, lp->d_bbsize) != lp->d_bbsize) {
 			perror("write");
 			return (1);
