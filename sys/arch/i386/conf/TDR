@@ -1,10 +1,10 @@
 #
-# GENERICISA -- Generic ISA machine -- distribution floppy
+# Theo Deraadt's 386
 #
-#	$Id: TDR,v 1.7 1993/05/07 08:33:39 cgd Exp $
+#	$Id: TDR,v 1.8 1993/05/20 14:32:40 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
 ident		TDR
 timezone	7 dst
 maxusers	10
@@ -13,6 +13,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		SCSI,ISOFS
 options 	DDB
+options		"MATH_EMULATE"
 
 config		netbsd	root on wd0 swap on wd0
 

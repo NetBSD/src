@@ -1,10 +1,10 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.13 1993/05/07 08:33:04 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.14 1993/05/20 14:32:20 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
 ident		BOAT_ANCHOR
 timezone	8 dst
 maxusers	10

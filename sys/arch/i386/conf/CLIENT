@@ -1,10 +1,11 @@
 #
 #	CLIENT -- an NFS client machine
 #
-#	$Id: CLIENT,v 1.6 1993/05/07 08:33:08 cgd Exp $
+#	$Id: CLIENT,v 1.7 1993/05/20 14:32:23 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		CLIENT
 timezone	8 dst
 maxusers	10
@@ -14,6 +15,7 @@ options		"TCP_COMPAT_42"
 options		"i387"
 options		XSERVER,UCONSOLE
 options		KERNFS,FDESC,DDB
+options		"MATH_EMULATE"
 
 config		netbsd	root on wd0 swap on wd0 and as0
 

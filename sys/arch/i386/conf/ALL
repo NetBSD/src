@@ -1,10 +1,11 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.7 1993/05/07 08:32:23 cgd Exp $
+#	$Id: ALL,v 1.8 1993/05/20 14:32:19 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		ALL
 timezone	8 dst
 maxusers	30
@@ -28,6 +29,7 @@ options DDB
 options FDESC
 options KERNFS
 options SCSI
+options	"MATH_EMULATE"
 
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

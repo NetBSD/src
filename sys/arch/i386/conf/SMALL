@@ -1,16 +1,18 @@
 #
 # Distribution Floppy
 #
-#	$Id: SMALL,v 1.6 1993/05/07 08:33:33 cgd Exp $
+#	$Id: SMALL,v 1.7 1993/05/20 14:32:37 cgd Exp $
 #
 machine		"i386"
-cpu		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
 ident		SMALL
 timezone	8 dst
 maxusers	2
 options		INET
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"MATH_EMULATE"
 
 config		netbsd	root on dk0 swap on dk0
 
