@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.18 2001/03/19 16:59:19 tsutsui Exp $
+# 	$NetBSD: GENERIC,v 1.19 2001/06/30 11:00:35 darcy Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.18 $"
+#ident 		"GENERIC-$Revision: 1.19 $"
 
 maxusers	8
 
@@ -18,6 +18,10 @@ options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
