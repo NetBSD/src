@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.6 2002/04/12 20:50:27 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.6.4.1 2002/11/21 20:17:27 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -598,7 +598,7 @@ initarm(void *arg)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the Mini-Data cache clean area. */
 	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
