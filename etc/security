@@ -18,8 +18,8 @@ echo "checking setuid files and devices:"
 # note that one of the original problem, the possibility of overrunning
 # the args to ls, is still here...
 
-ls -lgT `find / -fstype local -a \
-    \( ! \( -fstype fdesc -o -fstype kernfs \) -o -prune \) \
+ls -lgT `find / \( \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
+    -a -prune \) \
     \( -perm -u+s -or -perm -g+s \) | \
 	sed -e "/\/dev\//d" -e "s;//;/;g" | sort` > $TMP
 
