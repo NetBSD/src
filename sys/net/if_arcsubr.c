@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.2 1995/04/11 04:32:09 mycroft Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.3 1995/04/14 17:06:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -44,6 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/errno.h>
 
 #include <machine/cpu.h>
@@ -189,15 +190,15 @@ bad:
 
 /*
  * Process a received Arcnet packet;
- * the packet is in the mbuf chain m without
- * the ARCnet header, which is provided separately.
+ * the packet is in the mbuf chain m with
+ * the ARCnet header.
  */
 void
-arc_input(ifp, ah, m)
+arc_input(ifp, m)
 	struct ifnet *ifp;
-	register struct arc_header *ah;
 	struct mbuf *m;
 {
+	register struct arc_header *ah;
 	register struct ifqueue *inq;
 	u_char atype;
 	int s;
@@ -206,8 +207,10 @@ arc_input(ifp, ah, m)
 		m_freem(m);
 		return;
 	}
+	ah = mtod(m,struct arc_header *);
+
 	ifp->if_lastchange = time;
-	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*ah);
+	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (arcbroadcastaddr == ah->arc_dhost) {
 		m->m_flags |= M_BCAST;
@@ -218,6 +221,7 @@ arc_input(ifp, ah, m)
 	switch (atype) {
 #ifdef INET
 	case ARCTYPE_IP_OLD:
+		m_adj(m,ARC_HDRLEN);
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
 		break;
@@ -267,6 +271,11 @@ arc_ifattach(ifp)
 	ifp->if_addrlen = 1;
 	ifp->if_hdrlen = ARC_HDRLEN;
 	ifp->if_mtu = ARCMTU;
+	if (((struct arccom *)ifp)->ac_anaddr == 0) {
+		log(LOG_ERR,"%s%d: link address 0 reserved for broadcasts.\n\
+Please change it and ifconfig %s%d down up\n",
+		   ifp->if_name,ifp->if_unit,ifp->if_name,ifp->if_unit); 
+	}
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
