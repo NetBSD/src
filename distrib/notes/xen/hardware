@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: hardware,v 1.3 2004/05/13 11:14:46 wiz Exp $
 .
 .Nx*M
 runs on the Xen Virtual Machine Monitor (VMM) on 386-family processors.
@@ -27,7 +27,7 @@ runs on version 1.2 of the Xen VMM.
 Every hardware block device recognized by the Xen VMM is exported as a
 virtual block device to the virtual machines.
 Depending on the type of the actual hardware block device, the device
-is accessible as a wd, sd or cd device inside the
+is accessible as a wd, sd, or cd device inside the
 .Nx*M -domain.
 .It
 .Te 2 "Network device."
