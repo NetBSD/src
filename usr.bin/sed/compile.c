@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.27 2004/06/13 08:31:30 grant Exp $	*/
+/*	$NetBSD: compile.c,v 1.28 2004/06/13 08:34:31 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.27 2004/06/13 08:31:30 grant Exp $");
+__RCSID("$NetBSD: compile.c,v 1.28 2004/06/13 08:34:31 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ compile_tr(char *p, char **transtab)
 		return (NULL);
 	}
 	/* We assume characters are 8 bits */
-	lt = xmalloc(UCHAR_MAX);
+	lt = xmalloc(UCHAR_MAX+1);
 	for (i = 0; i <= UCHAR_MAX; i++)
 		lt[i] = (char)i;
 	for (op = old, np = new; *op; op++, np++)
