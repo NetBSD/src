@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2001/02/27 00:16:48 reinoud Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2001/02/27 15:39:57 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -146,6 +146,8 @@ extern struct cpu_info cpu_info_store;
 
 #define signotify(p)            setsoftast()
 
+#define cpu_wait(p)	/* nothing */
+#define cpu_number(p)	0
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int current_intr_depth;
