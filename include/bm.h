@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bm.h	8.6 (Berkeley) 6/21/94
+ *	from: @(#)bm.h	8.6 (Berkeley) 6/21/94
+ *	$Id: bm.h,v 1.2 1994/06/22 00:22:01 cgd Exp $
  */
 
 #ifndef _BM_H_
