@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.27 1999/04/01 09:12:21 ross Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.27.2.1 2000/10/10 22:24:37 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.27 1999/04/01 09:12:21 ross Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.27.2.1 2000/10/10 22:24:37 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -652,7 +652,8 @@ print_ccd_info(cs, kd)
 			warnx(kvm_geterr(kd));
 			goto done;
 		}
-		printf((i + 1 < cs->sc_nccdisks) ? "%s " : "%s\n", path);
+		fputs(path, stdout);
+		fputc((i + 1 < cs->sc_nccdisks) ? ' ' : '\n', stdout);
 		fflush(stdout);
 	}
 
