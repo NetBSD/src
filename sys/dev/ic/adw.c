@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.26 2000/11/14 18:21:00 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.27 2001/02/11 23:40:03 hpeyerl Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -871,7 +871,7 @@ adw_build_sglist(ccb, scsiqp, sg_block)
 
 			if (--sg_elem_cnt == 0) {
 				/* last entry, get out */
-				sg_block->sg_cnt = i + i;
+				sg_block->sg_cnt = i + 1;
 				sg_block->sg_ptr = NULL; /* next link = NULL */
 				return;
 			}
