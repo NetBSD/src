@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.h,v 1.1.1.5 2001/04/10 07:13:54 itojun Exp $	*/
+/*	$NetBSD: crc32.h,v 1.1.1.6 2001/09/27 02:00:42 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1992 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,15 +12,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: crc32.h,v 1.10 2001/03/02 18:54:31 deraadt Exp $"); */
+/* RCSID("$OpenBSD: crc32.h,v 1.12 2001/06/26 17:27:23 markus Exp $"); */
 
 #ifndef CRC32_H
 #define CRC32_H
 
-/*
- * This computes a 32 bit CRC of the data in the buffer, and returns the CRC.
- * The polynomial used is 0xedb88320.
- */
-u_int ssh_crc32(const u_char *buf, u_int len);
+u_int	 ssh_crc32(const u_char *, u_int);
 
 #endif				/* CRC32_H */
