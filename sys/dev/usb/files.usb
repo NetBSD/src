@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.35 2001/12/24 13:43:25 augustss Exp $
+#	$NetBSD: files.usb,v 1.36 2001/12/28 17:32:36 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -26,6 +26,9 @@ attach	uhub at uhub with uhub_uhub
 
 # Modem and com serial port "bus"
 define	ucombus {[ portno = -1 ]}
+
+# HID "bus"
+define	uhidbus {[ reportid = -1 ]}
 
 # EZ-USB firmware loader
 define	ezload
@@ -55,20 +58,25 @@ file	dev/usb/ugen.c			ugen			needs-flag
 
 
 # HID
+# HID root device for multiple report IDs
+device	uhidev: uhidbus
+attach	uhidev at uhub
+file	dev/usb/uhidev.c		uhidev
+
 # Generic HID devices
 device	uhid
-attach	uhid at uhub
+attach	uhid at uhidbus
 file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
 device	ukbd: wskbddev
-attach	ukbd at uhub
+attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
 file	dev/usb/ukbdmap.c		ukbd
 
 # Mice
 device	ums: wsmousedev
-attach	ums at uhub
+attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 
 
@@ -152,6 +160,7 @@ file	dev/usb/uplcom.c		uplcom
 device	umct: ucombus
 attach	umct at uhub
 file	dev/usb/umct.c			umct
+
 
 # Scanners
 # Generic scanner support
