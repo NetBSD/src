@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.103 2004/06/27 03:15:18 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.104 2004/06/29 17:09:01 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.103 2004/06/27 03:15:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.104 2004/06/29 17:09:01 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -658,18 +658,7 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 		    (long) bufPtr);
 	}
 #endif
-	if (raidAddress + numBlocks > raidPtr->totalSectors) {
 
-		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
-		    (u_long) raidAddress, (u_long) numBlocks, (u_long) raidPtr->totalSectors);
-
-
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		bp->b_error = ENOSPC;
-		biodone(bp);
-		return (ENOSPC);
-	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
 	    numBlocks, lbufPtr, bp, flags, raidPtr->Layout.map->states);
 
