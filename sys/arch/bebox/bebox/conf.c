@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1998/03/26 23:43:43 sakamoto Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1998/04/15 21:52:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -96,12 +96,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-/* open, close, write, ioctl */
-#define	cdev_spkr_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
 /* open, close, read, ioctl */
 #define cdev_joy_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -123,12 +117,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, ioctl, stop, tty, poll, mmap */
-#define cdev_wsdisplay_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-        dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-        dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 cdev_decl(cn);
 cdev_decl(ctty);
