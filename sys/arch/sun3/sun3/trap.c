@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.17 1994/05/06 07:47:13 gwr Exp $
+ *	$Id: trap.c,v 1.18 1994/05/09 00:47:22 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -180,14 +180,15 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
+	register struct proc *p;
 	register int i = 0;
 	unsigned ucode = 0;
-	register struct proc *p = curproc;
 	u_quad_t sticks;
 	unsigned ncode;
 	int s;
 
 	cnt.v_trap++;
+	p = curproc;
 	if ((p = curproc) == NULL)
 		p = &proc0;
 	sticks = p->p_sticks;
@@ -195,6 +196,14 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		p->p_md.md_regs = frame.f_regs;
 	}
+
+#ifdef DDB
+	if (type == T_TRACE || type == T_BREAKPOINT) {
+		if (kdb_trap(type, &frame))
+			return;
+	}
+#endif
+
 	switch (type) {
 	default:
 dopanic:
