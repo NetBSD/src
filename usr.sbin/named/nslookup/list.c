@@ -1,7 +1,11 @@
+/*	$NetBSD: list.c,v 1.1 1996/02/02 15:30:09 mrg Exp $	*/
+
 /*
- * Copyright (c) 1985,1989 Regents of the University of California.
- * All rights reserved.
- *
+ * ++Copyright++ 1985, 1989
+ * -
+ * Copyright (c) 1985, 1989
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +16,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,11 +33,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)list.c	5.23 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: list.c,v 1.2 1993/08/01 17:58:13 mycroft Exp $";
+static char sccsid[] = "@(#)list.c	5.23 (Berkeley) 3/21/91";
+static char rcsid[] = "$Id: list.c,v 8.3 1994/12/19 08:35:16 vixie Exp ";
 #endif /* not lint */
 
 /*
@@ -56,21 +80,18 @@ static char rcsid[] = "$Id: list.c,v 1.2 1993/08/01 17:58:13 mycroft Exp $";
 #include <resolv.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 #include "res.h"
+#include "conf/portability.h"
 
-/*
- *  Imported from res_debug.c
- */
-extern char *_res_resultcodes[];
-
-extern int errno;
+extern char *_res_resultcodes[];	/* res_debug.c */
+extern char *pager;
 
 typedef union {
     HEADER qb1;
-    char qb2[PACKETSZ];
+    u_char qb2[PACKETSZ];
 } querybuf;
 
 extern HostInfo	*defaultPtr;
@@ -80,7 +101,7 @@ extern int	queryType;
 extern int	queryClass;
 
 static int sockFD = -1;
-static int ListSubr();
+int ListSubr();
 
 /*
  *  During a listing to a file, hash marks are printed
@@ -142,7 +163,7 @@ ListHostsByType(string, putToFile)
 	    i--;
 	}
 	if (i == 2) {
-	    qtype = StringToType(option, -1);
+	    qtype = StringToType(option, -1, stderr);
 	    if (qtype == -1)
 		return;
 	    namePtr = name;
@@ -184,6 +205,8 @@ ListHosts(string, putToFile)
 		qtype = T_HINFO;
 	    } else if (strcmp("-m", option) == 0) {
 		qtype = T_MX;
+	    } else if (strcmp("-p", option) == 0) {
+		qtype = T_PX;
 	    } else if (strcmp("-s", option) == 0) {
 		qtype = T_WKS;
 	    } else if (strcmp("-d", option) == 0) {
@@ -205,7 +228,7 @@ ListHosts(string, putToFile)
 			namePtr, DecodeError(result));
 }
 
-static int
+int
 ListSubr(qtype, domain, cmd)
 	int qtype;
 	char *domain;
@@ -221,24 +244,23 @@ ListSubr(qtype, domain, cmd)
 	int			result;
 	int			soacnt = 0;
 	u_short			len;
-	char			*cp, *nmp;
+	u_char			*cp, *nmp;
 	char			dname[2][NAME_LEN];
 	char			file[NAME_LEN];
-	static char		*answer = NULL;
+	static u_char		*answer = NULL;
 	static int		answerLen = 0;
 	enum {
 	    NO_ERRORS,
 	    ERR_READING_LEN,
 	    ERR_READING_MSG,
-	    ERR_PRINTING,
+	    ERR_PRINTING
 	} error = NO_ERRORS;
 
 	/*
 	 *  Create a query packet for the requested domain name.
 	 */
 	msglen = res_mkquery(QUERY, domain, queryClass, T_AXFR,
-				(char *)0, 0, 0,
-				(char *) &buf, sizeof(buf));
+			     NULL, 0, 0, buf.qb2, sizeof buf);
 	if (msglen < 0) {
 	    if (_res.options & RES_DEBUG) {
 		fprintf(stderr, "*** ls: res_mkquery failed\n");
@@ -287,9 +309,9 @@ ListSubr(qtype, domain, cmd)
 	 * Send length & message for zone transfer
 	 */
 
-        len = htons(msglen);
+	__putshort(msglen, (u_char *)&len);
 
-        if (write(sockFD, (char *)&len, sizeof(len)) != sizeof(len) ||
+        if (write(sockFD, (char *)&len, INT16SZ) != INT16SZ ||
             write(sockFD, (char *) &buf, msglen) != msglen) {
 		perror("ls: write");
 		(void) close(sockFD);
@@ -338,6 +360,18 @@ ListSubr(qtype, domain, cmd)
 	    case T_MX:
 		    fprintf(filePtr, " %-30s\n", "Metric & Host");
 		    break;
+	    case T_PX:
+		    fprintf(filePtr, " %-30s\n", "Mapping information");
+		    break;
+	    case T_AFSDB:
+		    fprintf(filePtr, " %-30s\n", "Subtype & Host");
+		    break;
+		case T_X25:
+			fprintf(filePtr, " %-30s\n", "X25 Address");
+			break
+		case T_ISDN:
+			fprintf(filePtr, " %-30s\n", "ISDN Address");
+			break
 	    case T_WKS:
 		    fprintf(filePtr, " %-4s %s\n", "Protocol", "Services");
 		    break;
@@ -365,6 +399,18 @@ ListSubr(qtype, domain, cmd)
 	    case T_TXT:
 		    fprintf(filePtr, " %-30s\n", "Text");
 		    break;
+	    case T_RP:
+		    fprintf(filePtr, " %-30s\n", "Responsible Person");
+		    break;
+	    case T_RT:
+		    fprintf(filePtr, " %-30s\n", "Router");
+		    break;
+	    case T_NSAP:
+		    fprintf(filePtr, " %-30s\n", "NSAP address");
+		    break;
+	    case T_NSAP_PTR:
+		    fprintf(filePtr, " %-30s\n", "NSAP pointer");
+		    break;
 	    case T_NS:
 		    fprintf(filePtr, " %-30s\n", "Name Servers");
 		    break;
@@ -389,18 +435,19 @@ ListSubr(qtype, domain, cmd)
 	     * Read the length of the response.
 	     */
 
-	    cp = (char *) &tmp;
-	    amtToRead = sizeof(u_short);
-	    while (amtToRead > 0 && (numRead=read(sockFD, cp, amtToRead)) > 0) {
-		cp	  += numRead;
-		amtToRead -= numRead;
+	    cp = (u_char *)&tmp;
+	    amtToRead = INT16SZ;
+	    while ((numRead = read(sockFD, cp, amtToRead)) > 0) {
+		cp += numRead;
+		if ((amtToRead -= numRead) <= 0)
+			break;
 	    }
 	    if (numRead <= 0) {
 		error = ERR_READING_LEN;
 		break;
 	    }
 
-	    if ((len = htons(tmp)) == 0) {
+	    if ((len = _getshort((u_char*)&tmp)) == 0) {
 		break;	/* nothing left to read */
 	    }
 
@@ -408,12 +455,12 @@ ListSubr(qtype, domain, cmd)
 	     * The server sent too much data to fit the existing buffer --
 	     * allocate a new one.
 	     */
-	    if (len > answerLen) {
+	    if (len > (u_int)answerLen) {
 		if (answerLen != 0) {
 		    free(answer);
 		}
 		answerLen = len;
-		answer = Malloc(answerLen);
+		answer = (u_char *)Malloc(answerLen);
 	    }
 
 	    /*
@@ -442,16 +489,15 @@ ListSubr(qtype, domain, cmd)
 		fprintf(stdout, "#");
 		fflush(stdout);
 	    }
-	    cp = answer + sizeof(HEADER);
+	    cp = answer + HFIXEDSZ;
 	    if (ntohs(((HEADER* )answer)->qdcount) > 0)
 		cp += dn_skipname((u_char *)cp,
 		    (u_char *)answer + len) + QFIXEDSZ;
 	    nmp = cp;
 	    cp += dn_skipname((u_char *)cp, (u_char *)answer + len);
-	    if ((_getshort(cp) == T_SOA)) {
-		dn_expand((u_char *)answer, (u_char *)answer + len,
-		    (u_char *)nmp, (u_char *)dname[soacnt],
-			sizeof(dname[0]));
+	    if ((_getshort((u_char*)cp) == T_SOA)) {
+		(void) dn_expand(answer, answer + len, nmp,
+				 dname[soacnt], sizeof dname[0]);
 	        if (soacnt) {
 		    if (strcmp(dname[0], dname[1]) == 0)
 			break;
@@ -547,7 +593,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
     register u_char	*cp;
     HEADER		*headerPtr;
     int			type, class, dlen, nameLen;
-    u_long		ttl;
+    u_int32_t		ttl;
     int			n, pref;
     struct in_addr	inaddr;
     char		name[NAME_LEN];
@@ -558,7 +604,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
      * Read the header fields.
      */
     headerPtr = (HEADER *)msg;
-    cp = msg + sizeof(HEADER);
+    cp = msg + HFIXEDSZ;
     if (headerPtr->rcode != NOERROR) {
 	return(headerPtr->rcode);
     }
@@ -578,24 +624,24 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		return (ERROR);
 	    cp += nameLen + QFIXEDSZ;
 	}
-	if ((nameLen =
-	    dn_expand(msg, eom, cp, (u_char *)name, sizeof(name))) < 0)
+	nameLen = dn_expand(msg, eom, cp, name, sizeof name);
+	if (nameLen < 0)
 	    return (ERROR);
 	cp += nameLen;
 
-	type = _getshort(cp);
-	cp += sizeof(u_short);
+	type = _getshort((u_char*)cp);
+	cp += INT16SZ;
 
 	if (!(type == qtype || qtype == T_ANY) &&
 	    !((type == T_NS || type == T_PTR) && qtype == T_A))
 		return(SUCCESS);
 
-	class = _getshort(cp);
-	cp += sizeof(u_short);
-	ttl = _getlong(cp);
-	cp += sizeof(u_long);
-	dlen = _getshort(cp);
-	cp += sizeof(u_short);
+	class = _getshort((u_char*)cp);
+	cp += INT16SZ;
+	ttl = _getlong((u_char*)cp);
+	cp += INT32SZ;
+	dlen = _getshort((u_char*)cp);
+	cp += INT16SZ;
 
 	if (name[0] == 0)
 		strcpy(name, "(root)");
@@ -625,7 +671,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 	switch (type) {
 	    case T_A:
 		if (class == C_IN) {
-		    bcopy(cp, (char *)&inaddr, sizeof(inaddr));
+		    bcopy(cp, (char *)&inaddr, INADDRSZ);
 		    if (dlen == 4) {
 			fprintf(file," %s", inet_ntoa(inaddr));
 		    } else if (dlen == 7) {
@@ -640,8 +686,8 @@ PrintListInfo(file, msg, eom, qtype, domain)
 	    case T_MB:
 	    case T_MG:
 	    case T_MR:
-		if ((nameLen = dn_expand(msg, eom,
-		    cp, (u_char *)name2, sizeof(name2))) < 0) {
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
 		    fprintf(file, " ***\n");
 		    return (ERROR);
 		}
@@ -650,6 +696,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 
 	    case T_NS:
 	    case T_PTR:
+	    case T_NSAP_PTR:
 		putc(' ', file);
 		if (qtype != T_ANY)
 		    fprintf(file,"%s = ", type == T_PTR ? "host" : "server");
@@ -657,57 +704,85 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		break;
 
 	    case T_HINFO:
-		if (n = *cp++) {
-		    (void)sprintf(name,"%.*s", n, cp);
-		    fprintf(file," %-10s", name);
-		    cp += n;
-		} else {
-		    fprintf(file," %-10s", " ");
-		}
-		if (n = *cp++) {
-		    fprintf(file,"  %.*s", n, cp);
-		    cp += n;
+		case T_ISDN:
+		{
+		    u_char *cp2 = cp + dlen;
+		    if (n = *cp++) {
+			(void)sprintf(name,"%.*s", n, cp);
+			fprintf(file," %-10s", name);
+			cp += n;
+		    } else {
+			fprintf(file," %-10s", " ");
+		    }
+		    if (cp == cp2)
+			break;
+		    if (n = *cp++) {
+			fprintf(file,"  %.*s", n, cp);
+			cp += n;
+		    }
 		}
 		break;
 
 	    case T_SOA:
-		if ((nameLen = dn_expand(msg,
-		    eom, cp, (u_char *)name2, sizeof(name2))) < 0) {
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
 		    fprintf(file, " ***\n");
 		    return (ERROR);
 		}
 		cp += nameLen;
 		fprintf(file, " %s", name2);
-		if ((nameLen = dn_expand(msg,
-		    eom, cp, (u_char *)name2, sizeof(name2))) < 0) {
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
 		    fprintf(file, " ***\n");
 		    return (ERROR);
 		}
 		cp += nameLen;
 		fprintf(file, " %s. (", name2);
 		for (n = 0; n < 5; n++) {
-		    u_long u;
+		    u_int32_t u;
 
-		    u = _getlong(cp);
-		    cp += sizeof(u_long);
+		    u = _getlong((u_char*)cp);
+		    cp += INT32SZ;
 		    fprintf(file,"%s%lu", n? " " : "", u);
 		}
 		fprintf(file, ")");
 		break;
 
 	    case T_MX:
-		pref = _getshort(cp);
-		cp += sizeof(u_short);
+	    case T_AFSDB:
+		case T_RT:
+		pref = _getshort((u_char*)cp);
+		cp += INT16SZ;
 		fprintf(file," %-3d ",pref);
-		if ((nameLen = dn_expand(msg,
-		    eom, cp, (u_char *)name2, sizeof(name2))) < 0) {
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
 		    fprintf(file, " ***\n");
 		    return (ERROR);
 		}
 		fprintf(file, " %s", name2);
 		break;
 
+	    case T_PX:
+		pref = _getshort((u_char*)cp);
+		cp += INT16SZ;
+		fprintf(file," %-3d ",pref);
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
+			fprintf(file, " ***\n");
+			return (ERROR);
+		}
+		fprintf(file, " %s", name2);
+		cp += strlen((char *)cp) + 1;
+		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
+		if (nameLen < 0) {
+              	fprintf(file, " ***\n");
+              	return (ERROR);
+              }
+		fprintf(file, " %s", name2);
+		break;
+
 	    case T_TXT:
+		case T_X25:
 		{
 		    u_char *cp2 = cp + dlen;
 		    int c;
@@ -716,7 +791,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		    while (cp < cp2) {
 			    if (n = (unsigned char) *cp++) {
 				    for (c = n; c > 0 && cp < cp2; c--)
-					    if (*cp == '\n') {
+					    if ((*cp == '\n') || (*cp == '"')) {
 						(void) putc('\\', file);
 						(void) putc(*cp++, file);
 					    } else
@@ -727,7 +802,12 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		}
 		break;
 
+	    case T_NSAP:
+		fprintf(file, " %s", inet_nsap_ntoa(dlen, cp, NULL));
+		break;
+
 	    case T_MINFO:
+	    case T_RP:
 		(void) putc(' ', file);
 		cp = (u_char *)Print_cdname(cp, msg, eom, file);
 		fprintf(file, "  ");
@@ -740,7 +820,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 
 	    case T_UID:
 	    case T_GID:
-		fprintf(file, " %lu", _getlong(cp));
+		fprintf(file, " %lu", _getlong((u_char*)cp));
 		break;
 
 	    case T_WKS:
@@ -802,11 +882,11 @@ PrintListInfo(file, msg, eom, qtype, domain)
 ViewList(string)
     char *string;
 {
-    char file[NAME_LEN];
-    char command[NAME_LEN];
+    char file[PATH_MAX];
+    char command[PATH_MAX];
 
     sscanf(string, " view %s", file);
-    (void)sprintf(command, "grep \"^ \" %s | sort | more", file);
+    (void)sprintf(command, "grep \"^ \" %s | sort | %s", file, pager);
     system(command);
 }
 
@@ -907,6 +987,7 @@ Finger(string, putToFile)
 	write(sockFD, name, strlen(name));
 	write(sockFD, "\r\n", 2);
 	f = fdopen(sockFD, "r");
+	lastc = '\n';
 	while ((c = getc(f)) != EOF) {
 	    switch (c) {
 		case 0210:
