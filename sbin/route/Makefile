@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1995/03/18 15:00:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1995/04/19 09:08:28 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	route
@@ -19,6 +19,6 @@ keywords.h: keywords
 	    > ${.TARGET}
 	rm -f _keywords.tmp
 
-route .depend lint tags: keywords.h
+route.o .depend lint tags: keywords.h
 
 .include <bsd.prog.mk>
