@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39power.c,v 1.3 1999/12/12 17:06:22 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.4 2000/01/03 18:24:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,8 @@ tx39power_attach(parent, self, aux)
 	txreg_t reg;
 	
 	tc = sc->sc_tc = ta->ta_tc;
+	tx_conf_register_power(tc, self);
+
 	printf("\n");
 #ifdef TX39POWERDEBUG
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
