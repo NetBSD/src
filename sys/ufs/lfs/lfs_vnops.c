@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.55 2001/09/15 20:36:43 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.56 2001/09/22 22:35:20 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -254,6 +254,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
