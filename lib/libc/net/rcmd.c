@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.37 2000/01/27 05:33:06 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.38 2000/01/31 10:23:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.37 2000/01/27 05:33:06 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.38 2000/01/31 10:23:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -242,8 +242,13 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 				warnx("rcmd: socket: All ports in use");
 			else
 				warn("rcmd: socket");
-			(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-			return (-1);
+			if (r->ai_next) {
+				r = r->ai_next;
+				continue;
+			} else {
+				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
+				return (-1);
+			}
 		}
 		fcntl(s, F_SETOWN, pid);
 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
