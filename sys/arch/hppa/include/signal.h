@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2003/09/20 22:26:16 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2004/03/26 14:11:01 drochner Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -35,6 +35,8 @@
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
+
+#define __HAVE_SIGINFO
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <machine/trap.h>	/* codes for SIGILL, SIGFPE */

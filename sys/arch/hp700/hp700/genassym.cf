@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2003/08/31 01:26:31 chs Exp $
+#	$NetBSD: genassym.cf,v 1.6 2004/03/26 14:11:01 drochner Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -205,4 +205,4 @@ member	U_PCB		u_pcb
 export	SYSCALLGATE
 export	SYS_exit
 export	SYS_execve
-export	SYS___sigreturn14
+export	SYS_compat_16___sigreturn14

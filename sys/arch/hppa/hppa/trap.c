@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 2004/03/26 14:11:01 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2004/03/26 14:11:01 drochner Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -175,6 +175,9 @@ volatile int astpending;
 
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
+
+/* XXX */
+void hppa_trapsignal_hack(struct lwp *, int, u_long);
 
 #ifdef USERTRACE
 /*
@@ -618,7 +621,7 @@ trap(int type, struct trapframe *frame)
 		 * We don't have FPU emulation, so signal the
 		 * process with a SIGFPE.
 		 */
-		trapsignal(l, SIGFPE, frame->tf_iioq_head);
+		hppa_trapsignal_hack(l, SIGFPE, frame->tf_iioq_head);
 #endif /* !FPEMUL */
 		break;
 
@@ -641,7 +644,7 @@ trap(int type, struct trapframe *frame)
 #ifdef DEBUG
 			user_backtrace(frame, l, type);
 #endif
-			trapsignal(l, SIGILL, frame->tf_iioq_head);
+			hppa_trapsignal_hack(l, SIGILL, frame->tf_iioq_head);
 			break;
 		}
 		if (trap_kdebug(type, va, frame))
@@ -658,11 +661,11 @@ trap(int type, struct trapframe *frame)
 		break;
 
 	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
-		trapsignal(l, SIGFPE, va);
+		hppa_trapsignal_hack(l, SIGFPE, va);
 		break;
 
 	case T_OVERFLOW | T_USER:
-		trapsignal(l, SIGFPE, va);
+		hppa_trapsignal_hack(l, SIGFPE, va);
 		break;
 		
 	case T_CONDITION | T_USER:
@@ -672,32 +675,32 @@ trap(int type, struct trapframe *frame)
 #ifdef DEBUG
 		user_backtrace(frame, l, type);
 #endif
-		trapsignal(l, SIGILL, va);
+		hppa_trapsignal_hack(l, SIGILL, va);
 		break;
 
 	case T_PRIV_OP | T_USER:
 #ifdef DEBUG
 		user_backtrace(frame, l, type);
 #endif
-		trapsignal(l, SIGILL, va);
+		hppa_trapsignal_hack(l, SIGILL, va);
 		break;
 
 	case T_PRIV_REG | T_USER:
 #ifdef DEBUG
 		user_backtrace(frame, l, type);
 #endif
-		trapsignal(l, SIGILL, va);
+		hppa_trapsignal_hack(l, SIGILL, va);
 		break;
 
 		/* these should never got here */
 	case T_HIGHERPL | T_USER:
 	case T_LOWERPL | T_USER:
-		trapsignal(l, SIGSEGV, va);
+		hppa_trapsignal_hack(l, SIGSEGV, va);
 		break;
 
 	case T_IPROT | T_USER:
 	case T_DPROT | T_USER:
-		trapsignal(l, SIGSEGV, va);
+		hppa_trapsignal_hack(l, SIGSEGV, va);
 		break;
 
 	case T_DATACC:   	case T_USER | T_DATACC:
@@ -774,7 +777,7 @@ printf("trapsignal: uvm_fault(%p, %x, %d, %d)=%d\n",
 #ifdef DEBUG
 				user_backtrace(frame, l, type);
 #endif
-				trapsignal(l, SIGSEGV, frame->tf_ior);
+				hppa_trapsignal_hack(l, SIGSEGV, frame->tf_ior);
 			} else {
 				if (l && l->l_addr->u_pcb.pcb_onfault) {
 #ifdef PMAPDEBUG
@@ -802,7 +805,7 @@ if (trap_kdebug (type, va, frame))
 #ifdef DEBUG
 		user_backtrace(frame, l, type);
 #endif
-		trapsignal(l, SIGBUS, va);
+		hppa_trapsignal_hack(l, SIGBUS, va);
 		break;
 
 	case T_INTERRUPT:
@@ -1166,4 +1169,18 @@ void
 upcallret(struct lwp *l)
 {
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+}
+
+/*
+ * XXX for transition to SIGINFO
+ */
+void
+hppa_trapsignal_hack(struct lwp *l, int signum, u_long code)
+{
+        ksiginfo_t ksi;
+
+        KSI_INIT_TRAP(&ksi);
+        ksi.ksi_signo = signum;
+        ksi.ksi_trap = (int)code;
+        trapsignal(l, &ksi);
 }
