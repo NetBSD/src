@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 1996/04/01 04:30:23 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 1996/05/05 06:18:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,6 +107,11 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -234,8 +239,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern struct map	*useriomap;
-	extern long		Usrptsize;
 	register caddr_t	v, firstaddr;
 	register unsigned	i;
 	int     	vers;
@@ -423,7 +426,7 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * CLBYTES);
 
@@ -437,6 +440,12 @@ again:
 	 */
 	configure();
 }
+
+void doboot __P((void));
+void savectx __P((struct pcb *));
+void via_shutdown __P((void));
+void m68881_save __P((struct fpframe *));
+void m68881_restore __P((struct fpframe *));
 
 /*
  * Set registers on exec.
@@ -782,7 +791,7 @@ boot(howto)
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr);
+		savectx((struct pcb *) curproc->p_addr);
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
@@ -842,6 +851,8 @@ u_long  dumpmag = 0x8fca0101;	/* magic number */
 int     dumpsize = 0;		/* pages */
 long    dumplo = 0;		/* blocks */
 
+static int	get_max_page __P((void));
+
 static int
 get_max_page()
 {
@@ -900,6 +911,10 @@ dumpconf()
 #define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
+vm_offset_t	reserve_dumppages __P((vm_offset_t));
+static int	find_range __P((vm_offset_t));
+static int	find_next_range __P((vm_offset_t));
+
 vm_offset_t
 reserve_dumppages(p)
 	vm_offset_t p;
@@ -912,7 +927,7 @@ static int
 find_range(pa)
 	vm_offset_t pa;
 {
-	int     i, max = 0;
+	int     i;
 
 	for (i = 0; i < numranges; i++) {
 		if (low[i] <= pa && pa < high[i])
@@ -952,7 +967,6 @@ dumpsys()
 	daddr_t blkno;
 	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int     error = 0;
-	int     c;
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
@@ -966,7 +980,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
 	printf("dump ");
@@ -1078,6 +1092,9 @@ microtime(tvp)
 	splx(s);
 }
 
+void straytrap __P((int, int));
+
+void
 straytrap(pc, evec)
 	int     pc;
 	int     evec;
@@ -1088,6 +1105,9 @@ straytrap(pc, evec)
 
 int    *nofault;
 
+int badaddr __P((caddr_t));
+
+int
 badaddr(addr)
 	register caddr_t addr;
 {
@@ -1109,6 +1129,7 @@ badaddr(addr)
 	return (0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
@@ -1125,11 +1146,63 @@ badbaddr(addr)
 		nofault = (int *) 0;
 		return (1);
 	}
-	i = *(volatile char *) addr;
+	i = *(volatile u_int8_t *) addr;
 	nofault = (int *) 0;
 	return (0);
 }
 
+int
+badwaddr(addr)
+	register caddr_t addr;
+{
+	register int i;
+	label_t faultbuf;
+
+#ifdef lint
+	i = *addr;
+	if (i)
+		return (0);
+#endif
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
+		return (1);
+	}
+	i = *(volatile u_int16_t *) addr;
+	nofault = (int *) 0;
+	return (0);
+}
+
+int
+badladdr(addr)
+	register caddr_t addr;
+{
+	register int i;
+	label_t faultbuf;
+
+#ifdef lint
+	i = *addr;
+	if (i)
+		return (0);
+#endif
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
+		return (1);
+	}
+	i = *(volatile u_int32_t *) addr;
+	nofault = (int *) 0;
+	return (0);
+}
+
+void arpintr __P((void));
+void ipintr __P((void));
+void nsintr __P((void));
+void clnlintr __P((void));
+void pppintr __P((void));
+void netintr __P((void));
+
+void
 netintr()
 {
 #ifdef INET
@@ -1183,6 +1256,8 @@ candbtimer()
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
+void	nmihand __P((struct frame));
+
 void
 nmihand(frame)
 	struct frame frame;
@@ -1200,6 +1275,11 @@ nmihand(frame)
 	nmihanddeep = 0;
 }
 
+void	dumpmem __P((u_int *, int));
+u_int	getsfc __P((void));
+u_int	getdfc __P((void));
+
+void
 regdump(frame, sbytes)
 	struct frame *frame;
 	int     sbytes;
@@ -1239,11 +1319,14 @@ regdump(frame, sbytes)
 	splx(s);
 }
 
+void	dumpmem __P((u_int *, int));
+
+void
 dumpmem(ptr, sz)
 	register u_int *ptr;
 	int     sz;
 {
-	register int i, val, same;
+	register int i;
 
 	sz /= 4;
 	for (i = 0; i < sz; i++) {
@@ -1262,19 +1345,18 @@ dumpmem(ptr, sz)
  * for RAM to be aliased across all memory--or for it to appear that
  * there is more RAM than there really is.
  */
+int	get_top_of_ram __P((void));
+
 int
 get_top_of_ram()
 {
-	u_long  search = 0xb00bfade;
-	u_long  i, found, store;
-	char   *p, *zero;
-
 	return ((mac68k_machine.mach_memsize * (1024 * 1024)) - 4096);
 }
 
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int    *name;
 	u_int   namelen;
@@ -1304,6 +1386,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+int	cpu_exec_prep_oldzmagic __P((struct proc *, struct exec_package *));
+
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -1334,7 +1419,6 @@ cpu_exec_prep_oldzmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
@@ -1376,6 +1460,8 @@ cpu_exec_prep_oldzmagic(p, epp)
 
 static char *envbuf = NULL;
 
+void	initenv __P((u_long, char *));
+
 void
 initenv(flag, buf)
 	u_long  flag;
@@ -1393,6 +1479,8 @@ initenv(flag, buf)
 	}
 }
 
+static char	toupper __P((char));
+
 static char
 toupper(c)
 	char    c;
@@ -1403,6 +1491,8 @@ toupper(c)
 		return c;
 	}
 }
+
+static long	getenv __P((char *));
 
 static long
 getenv(str)
@@ -1417,7 +1507,7 @@ getenv(str)
          * without an "=val".
          */
 
-	char   *s, *s1, *s2;
+	char   *s, *s1;
 	int     val, base;
 
 	s = envbuf;
@@ -1875,6 +1965,8 @@ struct cpu_model_info cpu_models[] = {
 
 char    cpu_model[120];		/* for sysctl() */
 
+int	mach_cputype __P((void));
+
 int
 mach_cputype()
 {
@@ -1908,10 +2000,11 @@ identifycpu()
 	printf("%s\n", cpu_model);
 }
 
+static void	get_machine_info __P((void));
+
 static void
 get_machine_info()
 {
-	char   *proc;
 	int     i;
 
 	for (i = 0; cpu_models[i].model_major; i++) {
@@ -1928,7 +2021,9 @@ get_machine_info()
 /*
  * getenvvars: Grab a few useful variables
  */
-extern void
+void	getenvvars __P((void));
+
+void
 getenvvars()
 {
 	extern u_long bootdev, videobitdepth, videosize;
@@ -2019,6 +2114,8 @@ struct cpu_model_info *current_mac_model;
 /*
  * Sets a bunch of machine-specific variables
  */
+void	setmachdep __P((void));
+
 void
 setmachdep()
 {
@@ -2227,7 +2324,7 @@ gray_bar()
 #endif
 
 /* in locore */
-extern int get_pte(u_int addr, u_long pte[2], u_short * psr);
+extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
 
 /*
  * LAK (7/24/94): given a logical address, puts the physical address
@@ -2235,7 +2332,9 @@ extern int get_pte(u_int addr, u_long pte[2], u_short * psr);
  *  to look through MacOS page tables.
  */
 
-u_long
+static u_long	get_physical __P((u_int, u_long *));
+
+static u_long
 get_physical(u_int addr, u_long * phys)
 {
 	u_long  pte[2], ph;
@@ -2283,7 +2382,9 @@ get_physical(u_int addr, u_long * phys)
 	return 1;
 }
 
-void
+static void	check_video __P((char *, u_long, u_long));
+
+static void
 check_video(id, limit, maxm)
 	char    *id;
 	u_long  limit, maxm;
@@ -2305,7 +2406,7 @@ check_video(id, limit, maxm)
 				printf("mapping: %s.  Does it never end?\n",
 				    id);
 				printf("               Forcing VRAM size ");
-				printf("to a conservative %dK.\n", maxm / 1024);
+				printf("to a conservative %ldK.\n", maxm/1024);
 				mac68k_vidlen = maxm;
 				break;
 			}
@@ -2323,6 +2424,7 @@ check_video(id, limit, maxm)
  * Returns the address of logical 0 so that locore can map the kernel
  * properly.
  */
+u_int	get_mapping __P((void));
 u_int
 get_mapping(void)
 {
@@ -2350,9 +2452,9 @@ get_mapping(void)
 		}
 	}
 #if 1
-	printf("System RAM: %d bytes in %d pages.\n", addr, addr / NBPG);
+	printf("System RAM: %ld bytes in %ld pages.\n", addr, addr / NBPG);
 	for (i = 0; i < numranges; i++) {
-		printf("     Low = 0x%x, high = 0x%x\n", low[i], high[i]);
+		printf("     Low = 0x%lx, high = 0x%lx\n", low[i], high[i]);
 	}
 #endif
 
@@ -2417,7 +2519,7 @@ get_mapping(void)
 #if 1
 	printf("Non-system RAM (nubus, etc.):\n");
 	for (i = 0; i < nbnumranges; i++) {
-		printf("     Log = 0x%x, Phys = 0x%x, Len = 0x%x (%ud)\n",
+		printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
 		    nblog[i], nbphys[i], nblen[i], nblen[i]);
 	}
 #endif
@@ -2459,11 +2561,12 @@ get_mapping(void)
 			check_video("NuBus Super kludge",
 				    4 * 1024 * 1024, 1 * 1024 * 1024);
 		} else {
+			mac68k_vidphys = videoaddr;
 			printf( "  no internal video at address 0 -- "
-				"videoaddr is 0x%x.\n", videoaddr);
+				"videoaddr is 0x%lx.\n", videoaddr);
 		}
 	} else {
-		printf("  Video address = 0x%x\n", videoaddr);
+		printf("  Video address = 0x%lx\n", videoaddr);
 		printf("  Int video starts at 0x%x\n",
 		    mac68k_vidlog);
 		printf("  Length = 0x%x (%d) bytes\n",
@@ -2476,6 +2579,7 @@ get_mapping(void)
 /*
  * Debugging code for locore page-traversal routine.
  */
+void printstar __P((void));
 void
 printstar(void)
 {

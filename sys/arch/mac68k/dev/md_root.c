@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2 1996/03/07 10:26:01 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.3 1996/05/05 06:17:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -46,18 +46,6 @@ extern int boothowto;
  */
 int rd_root_size = ROOTBYTES;
 char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
-
-/*
- * This is called during autoconfig.
- */
-int
-rd_match_hook(parent, self, aux)
-	struct device	*parent;
-	void	*self;
-	void	*aux;
-{
-	return (1);
-}
 
 void
 rd_attach_hook(unit, rd)

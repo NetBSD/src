@@ -1,4 +1,4 @@
-#	$NetBSD: OCELOT,v 1.7 1996/03/12 21:06:23 scottr Exp $
+#	$NetBSD: OCELOT,v 1.8 1996/05/05 06:16:02 briggs Exp $
 #
 # OCELOT
 
@@ -49,8 +49,11 @@ options		MACHINE_NONCONTIG
 
 config		netbsd	swap generic
 
-ae0	at nubus0	slot -1   id ?   claimed 0
-ae1	at nubus0	slot -1   id ?   claimed 0
+nubus0		at mainbus?
+
+ae*	at nubus?
+grf0	at nubus?
+grf*	at nubus?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 1996/02/02 18:06:47 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.9 1996/05/05 06:18:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,12 @@ vdoualarm(arg)
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
+int	cachectl __P((int, caddr_t, int));
+void	DCIU __P((void));
+void	ICIA __P((void));
+
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -182,10 +187,12 @@ int sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sysarch_args /* {
 		syscallarg(int) op; 
 		syscallarg(char *) parms;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.16 1996/03/29 02:06:41 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.17 1996/05/05 06:16:22 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/adbsys.h>
 #include <machine/viareg.h>
 
@@ -101,7 +102,6 @@ extdms_init()
 	int adbindex, adbaddr;
 	short cmd;
 	char buffer[9];
-	void extdms_complete();
 
 	totaladbs = CountADBs();
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
@@ -135,12 +135,10 @@ adb_init()
 {
 	ADBDataBlock adbdata;
 	ADBSetInfoBlock adbinfo;
-	int i, s;
 	int totaladbs;
 	int adbindex, adbaddr;
 	int error;
 	char buffer[9];
-	void extdms_complete();
 
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
@@ -161,7 +159,7 @@ adb_init()
 
 	/* Initialize ADB */
 #if defined(MRG_DEBUG)
-	printf("adb: calling ADBAlternateInit\n");
+	printf("adb: calling ADBAlternateInit.\n");
 #endif
 
 	ADBAlternateInit();
