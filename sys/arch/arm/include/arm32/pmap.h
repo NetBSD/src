@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.67 2003/04/18 22:44:54 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.68 2003/04/18 23:45:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -630,7 +630,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 	((((va) | (pa)) & L1_S_OFFSET) == 0 && (size) >= L1_S_SIZE)
 
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
-	((((va) | (pa)) & L2_S_OFFSET) == 0 && (size) >= L2_L_SIZE)
+	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
 
 /*
  * Hooks for the pool allocator.
