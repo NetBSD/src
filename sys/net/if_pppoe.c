@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.20 2002/02/01 13:50:00 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.21 2002/02/10 15:13:43 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.20 2002/02/01 13:50:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.21 2002/02/10 15:13:43 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -1037,7 +1037,7 @@ pppoe_start(struct ifnet *ifp)
 	if (sppp_isempty(ifp))
 		return;
 
-	/* are we read to proccess data yet? */
+	/* are we ready to proccess data yet? */
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
 		sppp_flush(&sc->sc_sppp.pp_if);
 		return;
