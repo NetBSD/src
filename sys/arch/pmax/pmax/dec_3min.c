@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.25 1999/11/16 02:16:04 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.26 1999/11/25 01:40:22 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.25 1999/11/16 02:16:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.26 1999/11/25 01:40:22 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -141,6 +141,7 @@ dec_3min_init()
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
+	platform.memsize = memsize_scan;
 	platform.clkread = kn02ba_clkread;
 
 	/* clear any memory errors */

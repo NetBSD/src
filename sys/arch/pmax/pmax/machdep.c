@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.152 1999/11/15 09:50:22 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.153 1999/11/25 01:40:22 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 1999/11/15 09:50:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 1999/11/25 01:40:22 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -148,6 +148,7 @@ void	unimpl_bus_reset __P((void));
 void	unimpl_cons_init __P((void));
 void	unimpl_device_register __P((struct device *, void *));
 int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+int	unimpl_memsize __P((caddr_t));
 unsigned nullwork __P((void));
 
 
@@ -157,6 +158,7 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
+	unimpl_memsize,
 	(void *)nullwork,
 };
 
@@ -361,36 +363,11 @@ mach_init(argc, argv, code, cv, bim, bip)
 		platform_not_supported();
 		/* NOTREACHED */
 	}
-	(*sysinit[systype].init)();
 
-	/*
-	 * Find out how much memory is available.
-	 * Be careful to save and restore the original contents for msgbuf.
-	 */
-	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
-	while (cp < (char *)physmem_boardmax) {
-	  	int j;
-		if (badaddr(cp, 4))
-			break;
-		i = *(int *)cp;
-		j = ((int *)cp)[4];
-		*(int *)cp = 0xa5a5a5a5;
-		/*
-		 * Data will persist on the bus if we read it right away.
-		 * Have to be tricky here.
-		 */
-		((int *)cp)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(int *)cp != 0xa5a5a5a5)
-			break;
-		*(int *)cp = i;
-		((int *)cp)[4] = j;
-		cp += NBPG;
-		physmem++;
-	}
-	/* clear any memory error conditions possibly caused by probe */
-	(*platform.bus_reset)();
+	/* Machine specific initialisation */
+	(*sysinit[systype].init)();
+	/* Find out how much memory is available. */
+	physmem = (*platform.memsize)(kernend);
 
 	maxmem = physmem;
 
@@ -727,6 +704,57 @@ delay(n)
 }
 
 /*
+ * Find out how much memory is available by testing memory.
+ * Be careful to save and restore the original contents for msgbuf.
+ */
+int
+memsize_scan(first)
+	caddr_t first;
+{
+	int i, mem;
+	char *cp;
+
+	mem = btoc((paddr_t)first - MIPS_KSEG0_START);
+	cp = (char *)MIPS_PHYS_TO_KSEG1(mem << PGSHIFT);
+	while (cp < (char *)physmem_boardmax) {
+	  	int j;
+		if (badaddr(cp, 4))
+			break;
+		i = *(int *)cp;
+		j = ((int *)cp)[4];
+		*(int *)cp = 0xa5a5a5a5;
+		/*
+		 * Data will persist on the bus if we read it right away.
+		 * Have to be tricky here.
+		 */
+		((int *)cp)[4] = 0x5a5a5a5a;
+		wbflush();
+		if (*(int *)cp != 0xa5a5a5a5)
+			break;
+		*(int *)cp = i;
+		((int *)cp)[4] = j;
+		cp += NBPG;
+		mem++;
+	}
+
+	/* clear any memory error conditions possibly caused by probe */
+	(*platform.bus_reset)();
+
+	return mem;
+}
+
+/*
+ * Find out how much memory is available by using the PROM bitmap.
+ */
+int
+memsize_bitmap(first)
+	caddr_t first;
+{
+	panic("memsize_bitmap not implemented");
+}
+
+
+/*
  *  Ensure all platform vectors are always initialized.
  */
 void
@@ -758,6 +786,13 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 	u_int causereg;
 {
 	panic("sysconf.init didnt set intr");
+}
+
+int
+unimpl_memsize(first)
+	caddr_t first;
+{
+	panic("sysconf.init didnt set memsize");
 }
 
 unsigned
