@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.3 1994/06/29 06:47:02 cgd Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.4 1994/08/21 03:15:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -80,9 +80,9 @@ struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
  * -1/errno is return on error.
  */
 struct lfs_markv_args {
-	fsid_t *fsidp;		/* file system */
-	BLOCK_INFO *blkiov;	/* block array */
-	int blkcnt;		/* count of block array entries */
+	fsid_t *fsidp;			/* file system */
+	struct block_info *blkiov;	/* block array */
+	int blkcnt;			/* count of block array entries */
 };
 int
 lfs_markv(p, uap, retval)
@@ -257,9 +257,9 @@ err1:
  * -1/errno is return on error.
  */
 struct lfs_bmapv_args {
-	fsid_t *fsidp;		/* file system */
-	BLOCK_INFO *blkiov;	/* block array */
-	int blkcnt;		/* count of block array entries */
+	fsid_t *fsidp;			/* file system */
+	struct block_info *blkiov;	/* block array */
+	int blkcnt;			/* count of block array entries */
 };
 int
 lfs_bmapv(p, uap, retval)
