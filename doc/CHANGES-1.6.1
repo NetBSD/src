@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.58 2002/12/01 12:34:49 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.59 2002/12/01 22:51:40 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1896,3 +1896,103 @@ share/mk/bsd.own.mk				1.309
 	the host tool is patched to use the working shell as the
 	interpreter.
 	[thorpej, ticket #827]
+
+tools/host-mkdep/configure.ac			1.2
+tools/host-mkdep/configure			1.2
+tools/host-mkdep/host-mkdep.in			1.4
+
+	Patch host-mkdep with the working host shell.
+	[thorpej, ticket #828]
+
+lib/libc/gen/__fts13.c				1.40
+tools/compat/config.h.in			1.22
+tools/compat/configure.ac			1.24
+tools/compat/configure				1.24
+tools/compat/fts.h				1.1 (new)
+
+	Always NetBSD's own fts(3) in compat builds.  Some systems
+	(among them RedHat 7.3) do not have fts(3) implementations
+	which work correctly with -D_FILE_OFFSET_BITS=64.
+	[thorpej, ticket #834]
+
+usr.bin/file/config.h				1.11-1.12
+
+	Allow cross-compile on 1.5.x, don't include <stdint.h>
+	there.  Also HAVE_STDINT_H if defined(__linux__).
+	[thorpej, ticket #835]
+
+sys/lib/libsa/tftp.c				1.11
+
+	Do not #include "/usr/incloude/arpa/tftp.h" directly.
+	Fixes problem for cross-compiling.
+	[thorpej, ticket #836]
+
+sys/dev/pci/tga.c				1.43-1.45
+
+	Simplify blitting code slightly, fix fenceposts.
+	Copy forward when moving to the right if no overlap.
+	Force GPSR to 0 before a blit, so text doesn't shift right.
+	Fixes a few problems causing occasional corruption with
+	TGA/TGA2 consoles.
+	[mycroft, ticket #837]
+
+usr.bin/find/find.1				1.34
+
+	-path is an extension, so document it as such.
+	[thorpej, ticket #838]
+
+distrib/sets/checkflist				1.17
+
+	Do not use the -path extension to find.  Instead, filter
+	out the metalog file using a separate loop in the pipeline.
+	[thorpej, ticket #839]
+
+gnu/dist/toolchain/gcc/config/arm/arm.h		1.10
+
+	Define __XSCALE__ and __ARM_ARCH_5TE__ for -march=xscale
+	as well, the way GCC 3.x does.
+	[thorpej, ticket #850]
+
+gnu/dist/toolchain/gcc/config/arm/arm.h		1.11
+
+	Define __STRONGARM__ for -mcpu=strongarm*.
+	[thorpej, ticket #851]
+
+lib/libcrypto/mdc2.inc				1.5
+lib/libcrypto/mdc2dgst_dummy.c			1.1 (new)
+lib/libcrypto_mdc2/Makefile			1.1 (new)
+lib/Makefile					1.78
+usr.bin/openssl/Makefile			1.16
+share/mk/bsd.README				1.99,1.105
+share/mk/bsd.own.mk				1.312
+share/mk/bsd.prog.mk				1.158
+
+	MDC2 is a patented algorithm, so don't ship it in the
+	default libcrypto.  Defining MKCRYPTO_MDC2 will build a
+	separate library, libcrypto_mdc2.
+	[itojun, ticket #861]
+
+sys/arch/sparc64/sparc64/clock.c		1.50
+
+	Fix the rtc clock on Netra X1 machines; fixes PR#15611
+	and PR#16816.
+	[martin, ticket #868]
+
+sys/arch/sparc64/dev/iommu.c			1.59
+
+	Fix broken timeval comparison.  Fixes PR#18453.
+	[martin, ticket #874]
+
+sys/conf/Makefile.kern.inc			1.23
+
+	Replace COPTS?= with COPTS+=, so that setting COPTS in
+	/etc/mk.conf (common on sparc systems) does not cause the
+	-O2 in DEFCOPTS to be lost, resulting an an unloadable
+	kernel on sparc.
+	[sjg, ticket #877]
+
+sys/arch/vax/vax/trap.c				1.73
+
+	Record stack growth, done inline to avoid another function
+	call on every user page fault.
+	[thorpej, ticket #878]
