@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.51 1997/08/29 16:02:42 gwr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.52 1997/10/17 21:20:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -1242,6 +1242,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	extern int subnetsarelocal;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -1272,6 +1274,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_ALLOWSRCRT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_allowsrcrt));
+	case IPCTL_SUBNETSARELOCAL:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &subnetsarelocal));
 	default:
 		return (EOPNOTSUPP);
 	}
