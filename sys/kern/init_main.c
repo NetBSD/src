@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.102 1997/09/11 23:02:33 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.103 1997/10/09 23:17:37 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,8 @@
  *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
  */
 
+#include "opt_devrandom.h"
+
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>
@@ -76,6 +78,9 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#ifdef DEVRANDOM
+#include <sys/rnd.h>
+#endif
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -185,6 +190,9 @@ main(framep)
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
+#ifdef DEVRANDOM
+	rnd_init();
+#endif
 	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
