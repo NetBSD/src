@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1995/03/25 18:13:27 glass Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1998/10/24 00:21:49 cgd Exp $
 
 PROG=	at
-SRCS=	at.c panic.c parsetime.c
+SRCS=	at.c panic.c parsetime.c perm.c
 LINKS=	${BINDIR}/at ${BINDIR}/atq \
 	${BINDIR}/at ${BINDIR}/atrm \
 	${BINDIR}/at ${BINDIR}/batch
