@@ -1,4 +1,4 @@
-#	$Id: files.netipsec,v 1.1 2003/09/12 11:20:58 itojun Exp $
+#	$Id: files.netipsec,v 1.2 2003/09/20 05:14:42 itojun Exp $
 #
 #
 defflag opt_ipsec.h	FAST_IPSEC
@@ -12,3 +12,7 @@ file	netipsec/xform_esp.c		fast_ipsec
 file	netipsec/xform_ipcomp.c		fast_ipsec
 file	netipsec/xform_ipip.c		fast_ipsec
 file	netipsec/ipsec_netbsd.c		fast_ipsec
+
+file	netipsec/key.c			fast_ipsec
+file	netipsec/key_debug.c		fast_ipsec
+file	netipsec/keysock.c		fast_ipsec
