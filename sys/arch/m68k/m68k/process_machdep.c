@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: process_machdep.c,v 1.2 1994/01/21 04:21:06 briggs Exp $
+ *	$Id: process_machdep.c,v 1.3 1994/01/22 13:37:50 briggs Exp $
  */
 
 /*
@@ -127,8 +127,9 @@ process_write_regs(p, regs)
 }
 
 int
-process_sstep(p)
+process_sstep(p, sstep)
 	struct proc *p;
+	int	    sstep;
 {
 	int error;
 	struct reg r;
