@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.3 1998/01/05 07:02:58 perry Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.4 2000/01/20 15:22:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -211,7 +211,7 @@ cominit_d(combase)
 	outb(combase + com_dlbl, rate);
 	outb(combase + com_dlbh, rate >> 8);
 	outb(combase + com_cfcr, LCR_8BITS);
-	outb(combase + com_mcr, 0);
+	outb(combase + com_mcr, MCR_DTR | MCR_RTS);
 	outb(combase + com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	outb(combase + com_ier, 0);
