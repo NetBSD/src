@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/22 03:23:00 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/22 03:31:41 simonb Exp $
 
 PROG=	mdsetimage
 MAN=	mdsetimage.8
@@ -7,8 +7,8 @@ MAN=	mdsetimage.8
 # LDADD+= -lbfd
 # DPADD+= ${LIBBFD}
 
-.ifdef USE_NEW_TOOLCHAIN
 .include <bsd.own.mk>
+.ifdef USE_NEW_TOOLCHAIN
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 
@@ -28,7 +28,6 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .else # !USE_NEW_TOOLCHAIN
-.include <bsd.own.mk>
 DIST=		${.CURDIR}/../../dist
 BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 
