@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.4 1999/11/06 16:43:53 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.5 1999/11/08 13:24:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -210,6 +210,8 @@ void awi_set_timer __P((struct awi_softc *));
 void awi_restart_scan __P((struct awi_softc *));
 
 static const u_int8_t snap_magic[] = { 0xaa, 0xaa, 3, 0, 0, 0 };
+
+int awi_scan_keepalive = 10;
 
 /* 
  * attach (called by bus-specific front end)
@@ -678,11 +680,11 @@ awi_send_authreq (sc)
 	 */
 
 	/* 
-	   auth alg number.  2 bytes.  = 0
-	   auth txn seq number = 2 bytes = 1
-	   status code	       = 2 bytes = 0
-	   challenge text	(not present)
-	*/
+	 * auth alg number.  2 bytes.  = 0
+	 * auth txn seq number = 2 bytes = 1
+	 *  status code	       = 2 bytes = 0
+	 *  challenge text	(not present)
+	 */
 
 	if (m == 0)
 		return;		/* we'll try again later.. */
@@ -809,7 +811,7 @@ awi_rcv_data (sc, m)
 	u_int8_t *to, *from;
 	struct awi_mac_header *amhp;
 	
-	sc->sc_scan_timer = 2;	/* user data is as good
+	sc->sc_scan_timer = awi_scan_keepalive;	/* user data is as good
 				   as a beacon as a keepalive.. */
 
 	amhp = mtod(m, struct awi_mac_header *);
@@ -962,6 +964,10 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 
 		break;
 		
+	case IEEEWL_SUBTYPE_PROBEREQ:
+		/* discard */
+		break;
+
 	case IEEEWL_SUBTYPE_PROBERESP:
 		/*
 		 * 8 bytes timestamp.
@@ -1031,7 +1037,7 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		if ((sc->sc_state >= AWI_ST_SYNCED) &&
 		    (memcmp (addr2, sc->sc_active_bss.bss_id,
 			ETHER_ADDR_LEN) == 0)) {
-			sc->sc_scan_timer = 2;
+			sc->sc_scan_timer = awi_scan_keepalive;
 			awi_set_timer(sc);
 		}
 		
@@ -1236,7 +1242,8 @@ awi_dump_rxchain (sc, what, descr)
 							/* Get next mbuf.. */
 							MGET(m1, M_DONTWAIT, MT_DATA);
 							if (m1 == NULL) {
-								panic("awi mget"); /* XXX */
+								m_freem(top);
+								top = NULL;
 							}
 							m->m_next = m1;
 							m = m1;
@@ -1672,7 +1679,7 @@ awi_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->sc_ec.ec_if, ifa);
+			arp_ifinit(sc->sc_ifp, ifa);
 			break;
 #endif
 		default:
@@ -2245,7 +2252,7 @@ void awi_init_5 (sc, status)
 void awi_restart_scan (sc)
 	struct awi_softc *sc;
 {
-	sc->sc_scan_timer = 1;
+	sc->sc_scan_timer = 2;
 	sc->sc_mgt_timer = 0;
 	awi_set_timer(sc);
 
@@ -2345,7 +2352,7 @@ awi_try_sync (sc)
 	if (bp == NULL) {
 		return;
 	}
-	sc->sc_scan_timer = 2;
+	sc->sc_scan_timer = awi_scan_keepalive;
 	
 	bp = &sc->sc_bindings[best];
 	memcpy(&sc->sc_active_bss, bp, sizeof(*bp));
