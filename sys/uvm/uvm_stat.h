@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.4 1998/02/07 11:09:43 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.5 1998/02/08 14:19:21 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -87,10 +87,6 @@ extern struct uvm_cnt *uvm_cnt_head;
 /*
  * history/tracing
  */
-
-#if !defined(UVM_NOHIST)
-#define UVMHIST
-#endif
 
 struct uvm_history_ent {
   struct timeval tv; 		/* time stamp */
