@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.24 2004/08/21 11:14:07 rearnsha Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.25 2004/12/17 10:53:27 mycroft Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -130,7 +130,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				tmp = *where + (Elf_Addr)defobj->relocbase +
 				    def->st_value;
 				/* Set the Thumb bit, if needed.  */
-				if (ELF32_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
+				if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
 				    tmp |= 1;
 				*where = tmp;
 			} else {
@@ -138,7 +138,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				    (Elf_Addr)defobj->relocbase +
 				    def->st_value;
 				/* Set the Thumb bit, if needed.  */
-				if (ELF32_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
+				if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
 				    tmp |= 1;
 				store_ptr(where, tmp);
 			}
@@ -229,7 +229,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	/* Set the Thumb bit, if needed.  */
-	if (ELF32_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
+	if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
 		new_value |= 1;
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
@@ -258,7 +258,7 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 			return -1;
 		target = (Elf_Addr)(defobj->relocbase + def->st_value);
 		/* Set the Thumb bit, if needed.  */
-		if (ELF32_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
+		if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
 			target |= 1;
 
 		rdbg(("bind now/fixup in %s --> old=%p new=%p",
