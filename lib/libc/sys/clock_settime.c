@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.1 2001/09/16 07:41:57 manu Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.2 2001/09/17 23:32:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -32,13 +32,16 @@
  */
 
 #include "namespace.h"
-#include <fcntl.h>
-#include <paths.h>
-#include <unistd.h>
-#include <time.h>
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
+
+#include <fcntl.h>
+#include <paths.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <sys/clockctl.h>
  
