@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.2 2002/06/13 15:27:23 augustss Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.3 2002/07/30 15:01:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -201,7 +201,6 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	memext = extent_create("pcimem", CPC_PCI_MEM_BASE, CPC_PCI_MEM_END,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	printf("WARNING: PCI_NETBSD_CONFIGURE is broken\n");
 	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 
 	extent_destroy(ioext);
