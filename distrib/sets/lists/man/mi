@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.191 2000/01/16 10:46:56 augustss Exp $
+# $NetBSD: mi,v 1.192 2000/01/19 06:10:11 mycroft Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -447,6 +447,8 @@
 ./usr/share/man/cat4/ns.0
 ./usr/share/man/cat4/nsip.0
 ./usr/share/man/cat4/nsphy.0
+./usr/share/man/cat4/ntwo.0
+./usr/share/man/cat4/ntwoc.0
 ./usr/share/man/cat4/null.0
 ./usr/share/man/cat4/ohci.0
 ./usr/share/man/cat4/opl.0
@@ -586,6 +588,7 @@
 ./usr/share/man/cat5/ld.so.conf.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/lkm.conf.0
+./usr/share/man/cat5/login.conf.0
 ./usr/share/man/cat5/magic.0
 ./usr/share/man/cat5/mailer.conf.0
 ./usr/share/man/cat5/man.conf.0
@@ -1328,6 +1331,7 @@
 ./usr/share/man/man4/gus.4
 ./usr/share/man/man4/guspnp.4
 ./usr/share/man/man4/icmp.4
+./usr/share/man/man4/icmp6.4
 ./usr/share/man/man4/icsphy.4
 ./usr/share/man/man4/idp.4
 ./usr/share/man/man4/ifmedia.4
@@ -1336,6 +1340,7 @@
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/iophy.4
 ./usr/share/man/man4/ip.4
+./usr/share/man/man4/ip6.4
 ./usr/share/man/man4/ipf.4
 ./usr/share/man/man4/ipfilter.4
 ./usr/share/man/man4/ipip.4
@@ -1510,6 +1515,7 @@
 ./usr/share/man/man5/ld.so.conf.5
 ./usr/share/man/man5/link.5
 ./usr/share/man/man5/lkm.conf.5
+./usr/share/man/man5/login.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
 ./usr/share/man/man5/man.conf.5
