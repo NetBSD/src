@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.12 1996/08/16 20:47:31 explorer Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.13 1996/08/16 21:36:18 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.12 1996/08/16 20:47:31 explorer Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.13 1996/08/16 21:36:18 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -500,8 +500,7 @@ main(argc, argv)
 				 * an additional termination check.
 				 */
 				if (t2.tv_sec - t1.tv_sec > waittime) {
-					Printf(" *");
-					(void) fflush(stdout);
+					cc = 0;
 					break;
 				}
 				if ((i = packet_ok(packet, cc, &from, seq))) {
