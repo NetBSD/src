@@ -27,8 +27,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
- *	$NetBSD: parioctl.h,v 1.2 2003/08/07 16:30:27 agc Exp $
+ *	$NetBSD: parioctl.h,v 1.3 2004/05/08 08:40:08 minoura Exp $
  */
+
+#ifndef _X68K_PARIOCTL_H_
+#define _X68K_PARIOCTL_H_
 
 #ifndef _IOCTL_
 #include <sys/ioctl.h>
@@ -56,3 +59,5 @@ struct parparam {
 
 #define PARIOCSPARAM	_IOW('P', 0x1, struct parparam)
 #define PARIOCGPARAM	_IOR('P', 0x2, struct parparam)
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: sram.h,v 1.2 2004/05/08 08:40:08 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _X68K_SRAM_H_
+#define _X68K_SRAM_H_
+
 /* This is sram device driver. */
 
 #define SRAM_SIZE 16*1024	/* Sram size is 16K bytes. */
@@ -42,3 +45,5 @@ struct sram_io {
 
 #define SIOPSRAM	_IOW('V', 0x0, struct sram_io)
 #define SIOGSRAM	_IOWR('V', 0x1, struct sram_io)
+
+#endif
