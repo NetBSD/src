@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.18 1995/06/19 21:41:37 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.19 1995/06/19 21:57:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,7 +102,9 @@ struct	if_data {
  *
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
-struct ifnet {
+TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
+
+struct ifnet {				/* and the entries */
 	char	*if_name;		/* name, e.g. ``en'' or ``lo'' */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
@@ -316,7 +318,7 @@ struct	ifconf {
 	else \
 		(ifa)->ifa_refcnt--;
 
-TAILQ_HEAD(ifnet_head, ifnet) ifnet;
+struct ifnet_head ifnet;
 
 void	ether_ifattach __P((struct ifnet *));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
