@@ -30,6 +30,7 @@ char	*version = "version 20001115";
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <locale.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -60,6 +61,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s [-f programfile | 'program'] [-Ffieldsep] [-v var=value] [files]\n", cmdname);
 		exit(1);
 	}
+
+	(void) setlocale(LC_ALL, "");
+
 	signal(SIGFPE, fpecatch);
 	yyin = NULL;
 	symtab = makesymtab(NSYMTAB);
