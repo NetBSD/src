@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.53 2004/05/07 00:04:38 ross Exp $	*/
+/*	$NetBSD: compat.c,v 1.54 2004/05/07 08:12:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.53 2004/05/07 00:04:38 ross Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.54 2004/05/07 08:12:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.53 2004/05/07 00:04:38 ross Exp $");
+__RCSID("$NetBSD: compat.c,v 1.54 2004/05/07 08:12:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -122,8 +122,23 @@ static char 	    meta[256];
 static GNode	    *curTarg = NILGNODE;
 static GNode	    *ENDNode;
 static void CompatInterrupt(int);
-static int CompatRunCommand(ClientData, ClientData);
 static int CompatMake(ClientData, ClientData);
+
+static void
+Compat_Init(void)
+{
+    const char *cp;
+
+    Shell_Init();		/* setup default shell */
+    
+    for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++) {
+	meta[(unsigned char) *cp] = 1;
+    }
+    /*
+     * The null character serves as a sentinel in the string.
+     */
+    meta[0] = 1;
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -187,12 +202,13 @@ CompatInterrupt(int signo)
  *
  *-----------------------------------------------------------------------
  */
-static int
+int
 CompatRunCommand(ClientData cmdp, ClientData gnp)
 {
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
     Boolean 	  silent,   	/* Don't print command */
+	    	  doIt,		/* Execute even if -n */
 		  errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
@@ -217,7 +233,8 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 #endif
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
-
+    doIt = FALSE;
+    
     cmdNode = Lst_Member (gn->commands, (ClientData)cmd);
     cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
 
@@ -245,11 +262,19 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	return(0);
     }
 
-    while ((*cmd == '@') || (*cmd == '-')) {
-	if (*cmd == '@') {
+    while ((*cmd == '@') || (*cmd == '-') || (*cmd == '+')) {
+	switch (*cmd) {
+	case '@':
 	    silent = TRUE;
-	} else {
+	    break;
+	case '-':
 	    errCheck = FALSE;
+	    break;
+	case '+':
+	    doIt = TRUE;
+	    if (!meta[0])		/* we came here from jobs */
+		Compat_Init();
+	    break;
 	}
 	cmd++;
     }
@@ -279,16 +304,14 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
      * If we're not supposed to execute any commands, this is as far as
      * we go...
      */
-    if (NoExecute(gn)) {
+    if (!doIt && NoExecute(gn)) {
 	return (0);
     }
 
     if (*cp != '\0') {
 	/*
 	 * If *cp isn't the null character, we hit a "meta" character and
-	 * need to pass the command off to the shell. We give the shell the
-	 * -e flag as well as -c if it's supposed to exit when it hits an
-	 * error.
+	 * need to pass the command off to the shell. 
 	 */
 	static const char *shargv[4];
 
@@ -297,9 +320,9 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	 * The following work for any of the builtin shell specs.
 	 */
 	if (DEBUG(SHELL))
-		shargv[1] = (errCheck ? "-exc" : "-xc");
+		shargv[1] = "-xc";
 	else
-		shargv[1] = (errCheck ? "-ec" : "-c");
+		shargv[1] = "-c";
 	shargv[2] = cmd;
 	shargv[3] = (char *)NULL;
 	av = shargv;
@@ -596,11 +619,10 @@ cohorts:
 void
 Compat_Run(Lst targs)
 {
-    const char    *cp;	    /* Pointer to string of shell meta-characters */
     GNode   	  *gn = NULL;/* Current root target */
     int	    	  errors;   /* Number of targets not remade due to errors */
 
-    Shell_Init();		/* setup default shell */
+    Compat_Init();
 
     if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
 	signal(SIGINT, CompatInterrupt);
@@ -614,14 +636,6 @@ Compat_Run(Lst targs)
     if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
 	signal(SIGQUIT, CompatInterrupt);
     }
-
-    for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++) {
-	meta[(unsigned char) *cp] = 1;
-    }
-    /*
-     * The null character serves as a sentinel in the string.
-     */
-    meta[0] = 1;
 
     ENDNode = Targ_FindNode(".END", TARG_CREATE);
     /*
