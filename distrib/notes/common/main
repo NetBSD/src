@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.54 2000/05/03 10:56:45 itojun Exp $
+.\" $NetBSD: main,v 1.55 2000/05/03 17:09:13 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -586,11 +586,7 @@ are moved to
 .Pa /etc/mail/sendmail.cf
 and
 .Pa /etc/mail/aliases .
-You may need to move files from the prior location to the latter,
-and/or modify configuration files like
-.Xr /etc/rc.conf 5 .
-.Pa /etc/rc.d/sendmail
-tries to cope with the situation and raises warnings when necessary.
+You will need to move files from the prior location to the latter.
 .El
 .
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.7 2000/04/14 10:17:44 jhawk Exp $
+.\"	$NetBSD: postinstall,v 1.8 2000/05/03 17:09:14 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -218,7 +218,7 @@ to forward root mail to the right place (run
 afterwards.)
 .It
 The
-.Pa /etc/sendmail.cf
+.Pa /etc/mail/sendmail.cf
 file will almost definitely need to be adjusted;
 files aiding in this can be found in
 .Pa /usr/share/sendmail .
