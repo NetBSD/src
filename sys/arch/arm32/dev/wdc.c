@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.3 1998/01/17 20:00:59 mark Exp $	*/
+/*	$NetBSD: wdc.c,v 1.4 1998/02/22 02:36:22 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -295,13 +295,16 @@ wdcattach_internal(wdc, iot, ioh, aux_ioh, data_ioh, data32_ioh, drq)
 		}
 		/* controller active while autoconf */
 		wdc->sc_flags |= WDCF_ACTIVE;
+		if (wdc->sc_inten) wdc->sc_inten(wdc, 1);
 
 		if (wdccommandshort(wdc, drive, WDCC_RECAL) != 0 ||
             	    wait_for_ready(wdc) != 0) {
 			wdc->d_link[drive] = NULL;
 			wdc->sc_flags &= ~WDCF_ACTIVE;
+			if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 		} else {
 			wdc->sc_flags &= ~WDCF_ACTIVE;
+			if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 			wdc->d_link[drive] = malloc(sizeof(struct wd_link),
 			    M_DEVBUF, M_NOWAIT);
 			if (wdc->d_link[drive] == NULL) {
@@ -368,6 +371,7 @@ wdcstart(wdc)
 		return;
 	}
 	wdc->sc_flags |= WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 1);
 #ifdef ATAPI_DEBUG2
 		printf("wdcstart: drive %d\n", (int)xfer->d_link->drive);
 #endif
@@ -760,6 +764,7 @@ wdc_ata_done(wdc, xfer)
 	s = splbio();
 	TAILQ_REMOVE(&wdc->sc_xfer, xfer, c_xferchain);
 	wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR | WDCF_ACTIVE);
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 	wdc->sc_errors = 0;
 	if (bp) {
 		if (xfer->c_flags & C_ERROR) {
@@ -813,6 +818,7 @@ wdc_get_parms(wdc, d_link)
 	}
 
 	wdc->sc_flags |= WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 1);
 
 	if (wdccommandshort(wdc, d_link->drive, WDCC_IDENTIFY) != 0 ||
 	    wait_for_drq(wdc) != 0) {
@@ -863,6 +869,7 @@ wdc_get_parms(wdc, d_link)
 	WDDEBUG_PRINT(("wdcstart from wdc_get_parms flags 0x%x\n",
 	    wdc->sc_flags));
 	wdc->sc_flags &= ~WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 	wdcstart(wdc);
 
 	splx(s);
@@ -1090,6 +1097,7 @@ wdcunwedge(wdc)
 	/* Wake up in a little bit and restart the operation. */
 	WDDEBUG_PRINT(("wdcrestart from wdcunwedge\n"));
 	wdc->sc_flags &= ~WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 	timeout(wdcrestart, wdc, RECOVERYTIME);
 }
 
@@ -1518,6 +1526,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	}
 
 	wdc->sc_flags |= WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 1);
 	error = 1;
 	(void)wdcreset(wdc, VERBOSE);
 	if ((status = wdccommand(wdc, (struct wd_link*)(&(ab_link->scsipi_atapi)),
@@ -1573,6 +1582,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	WDDEBUG_PRINT(("wdcstart from wdc_atapi_get_parms flags 0x%x\n",
 	    wdc->sc_flags));
 	wdc->sc_flags &= ~WDCF_ACTIVE;
+	if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 	wdcstart(wdc);
 	splx(s);
 	return error;
@@ -1910,6 +1920,7 @@ wdc_atapi_done(wdc, xfer)
 		untimeout(wdctimeout, wdc);
 		TAILQ_REMOVE(&wdc->sc_xfer, xfer, c_xferchain);
 		wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR | WDCF_ACTIVE);
+		if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
 		wdc_free_xfer(xfer);
 		sc_xfer->flags |= ITSDONE;
 		if (need_done) {
@@ -1924,9 +1935,11 @@ wdc_atapi_done(wdc, xfer)
 #endif
 		wdcstart(wdc);
 	    splx(s);
-	} else
+	} else {
 		wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR | WDCF_ACTIVE);
-
+		sc_xfer->flags |= ITSDONE;
+		if (wdc->sc_inten) wdc->sc_inten(wdc, 0);
+	}
 }
 
 #endif /* NATAPIBUS > 0 */
