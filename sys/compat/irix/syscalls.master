@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 2002/03/04 22:19:02 manu Exp $
+	$NetBSD: syscalls.master,v 1.27 2002/03/10 21:56:24 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -49,6 +49,7 @@
 #include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_types.h>
@@ -301,8 +302,10 @@
 171	UNIMPL		sigstack
 172	UNIMPL		sigaltstack
 173	UNIMPL		sigsendset
-174	UNIMPL		statvfs
-175	UNIMPL		fstatvfs
+174	NOARGS		{ int svr4_sys_statvfs(const char *path, \
+			    struct svr4_statvfs *fs); }
+175	NOARGS		{ int svr4_sys_fstatvfs(int fd, \
+			    struct svr4_statvfs *fs); }
 176	UNIMPL		getpmsg
 177	UNIMPL		putpmsg
 178	UNIMPL		lchown
