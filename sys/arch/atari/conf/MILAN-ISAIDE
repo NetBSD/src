@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.16 2002/09/18 02:20:50 lukem Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.17 2002/10/06 03:02:04 provos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
-#		NetBSD: GENERIC.in,v 1.23 2002/09/18 02:19:19 lukem Exp $
+#		NetBSD: GENERIC.in,v 1.26 2002/10/06 02:58:21 provos Exp $
 
 #This configuration file is for a generic Milan
 
@@ -62,7 +62,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -130,6 +130,7 @@ options 	SYSVSEM			# System V semaphores
 #Support for various kernel options
 
 options 	KTRACE			# Add kernel tracing system call
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
