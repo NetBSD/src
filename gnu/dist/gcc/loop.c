@@ -321,7 +321,7 @@ static rtx express_from PROTO((struct induction *, struct induction *));
 #endif
 static int combine_givs_p PROTO((struct induction *, struct induction *));
 #ifdef GIV_SORT_CRITERION
-static int giv_sort PROTO((struct induction **, struct induction **));
+static int giv_sort PROTO((const void *, const void *));
 #endif
 static void combine_givs PROTO((struct iv_class *));
 static int product_cheap_p PROTO((rtx, rtx));
@@ -5879,9 +5879,11 @@ combine_givs_p (g1, g2)
 
 static int
 giv_sort (x, y)
-     struct induction **x, **y;
+     const void *x, *y;
 {
-  GIV_SORT_CRITERION (*x, *y);
+     const struct induction **xx = (const struct induction **)x;
+     const struct induction **yy = (const struct induction **)y;
+  GIV_SORT_CRITERION (*xx, *yy);
 
   return 0;
 }
