@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.59 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.59.2.1 2004/10/08 03:25:21 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.59.2.1 2004/10/08 03:25:21 jmc Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -197,7 +197,7 @@ uvmpd_tune(void)
 void
 uvm_pageout(void *arg)
 {
-	int npages = 0;
+	int bufcnt, npages = 0;
 	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
@@ -226,13 +226,6 @@ uvm_pageout(void *arg)
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
 		/*
-		 * The metadata cache drainer knows about uvmexp.free
-		 * and uvmexp.freetarg.  We call it _before_ scanning
-		 * so that it sees the amount we really want.
-		 */
-		buf_drain(0);
-
-		/*
 		 * now lock page queues and recompute inactive count
 		 */
 
@@ -246,6 +239,14 @@ uvm_pageout(void *arg)
 		if (uvmexp.inactarg <= uvmexp.freetarg) {
 			uvmexp.inactarg = uvmexp.freetarg + 1;
 		}
+
+		/*
+		 * Estimate a hint.  Note that bufmem are returned to
+		 * system only when entire pool page is empty.
+		 */
+		bufcnt = uvmexp.freetarg - uvmexp.free;
+		if (bufcnt < 0)
+			bufcnt = 0;
 
 		UVMHIST_LOG(pdhist,"  free/ftarg=%d/%d, inact/itarg=%d/%d",
 		    uvmexp.free, uvmexp.freetarg, uvmexp.inactive,
@@ -275,6 +276,8 @@ uvm_pageout(void *arg)
 		 */
 
 		uvm_unlock_pageq();
+
+		buf_drain(bufcnt << PAGE_SHIFT);
 
 		/*
 		 * drain pool resources now that we're not holding any locks
