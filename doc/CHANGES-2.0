@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.200 2004/05/11 15:49:13 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.201 2004/05/12 05:00:51 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2328,3 +2328,8 @@ lib/libc/stdio/fileno.c				1.12
 	_REENTRANT we can no longer use the macro version from <stdio.h>.
 	[kleink, ticket #311]
 
+
+lib/libc/sys/readlink.2				patch
+
+	Add an example code piece.
+	[kleink, ticket #312]
