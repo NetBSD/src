@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/05/07 07:15:47 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/06/12 23:11:46 cgd Exp $
 
-LIB_SA_DIR=${S}/arch/${MACHINE}/stand/libsa
+LIB_SA_DIR=${S}/arch/mvme68k/stand/libsa
 
 LIBSA_DIR!=cd ${LIB_SA_DIR}; \
      printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
