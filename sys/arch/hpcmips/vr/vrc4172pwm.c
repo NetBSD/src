@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.13 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.14 2001/09/24 14:29:30 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -247,7 +247,7 @@ vrc4172pwm_getparam()
 {
 	struct platid_data *p;
 
-	if ((p = platid_search(&platid, vrc4172pwm_platid_param_table)))
+	if ((p = platid_search_data(&platid, vrc4172pwm_platid_param_table)))
 		return (p->data);
 
 	return (NULL);
