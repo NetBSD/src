@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/08/03 22:56:30 assar Exp $
+#	$NetBSD: Makefile,v 1.24 2000/10/18 00:24:19 simonb Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -8,7 +8,6 @@ DPADD+=	${LIBCRYPT}
 LDADD+=	-lcrypt -lutil
 BINOWN=	root
 BINMODE=4555
-INSTALLFLAGS=-fschg
 CPPFLAGS+=-DLOGIN_CAP
 
 # Uncomment the following line to change the group that may su root to "sugroup"

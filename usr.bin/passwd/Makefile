@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2000/08/03 22:56:29 assar Exp $
+#	$NetBSD: Makefile,v 1.30 2000/10/18 00:24:19 simonb Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -14,9 +14,6 @@ MLINKS=	passwd.1 yppasswd.1
 
 BINOWN=	root
 BINMODE=4555
-.if defined(notyet)
-INSTALLFLAGS=-fschg
-.endif
 
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
