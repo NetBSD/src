@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
+/*	$NetBSD: lpr.c,v 1.20 2001/06/25 16:40:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.20 2001/06/25 16:40:50 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,8 +442,8 @@ copy(f, n)
 			nc -= sizeof buf;
 			nr++;
 			if (MX > 0 && nr > MX) {
-				printf("%s: %s: copy file is too large\n",
-				    name, n);
+				printf("%s: %s: copy file is too large "
+				    "(check :mx:?)\n", name, n);
 				break;
 			}
 		}
