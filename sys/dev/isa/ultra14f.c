@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.53 1995/08/12 23:00:51 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.54 1995/09/14 20:43:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -324,8 +324,9 @@ struct scsi_device uha_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int uhaprobe __P((struct device *, void *, void *));
-void uhaattach __P((struct device *, struct device *, void *));
+int	uhaprobe __P((struct device *, void *, void *));
+void	uhaattach __P((struct device *, struct device *, void *));
+int	uhaprint __P((void *, char *));
 
 struct cfdriver uhacd = {
 	NULL, "uha", uhaprobe, uhaattach, DV_DULL, sizeof(struct uha_softc)
@@ -568,9 +569,14 @@ uhaprobe(parent, match, aux)
 	return 1;
 }
 
-uhaprint()
+int
+uhaprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	if (name != NULL)       
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
