@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1996/03/14 21:28:46 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1996/05/05 06:18:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -244,6 +244,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t	dev;
 {
@@ -288,6 +289,7 @@ static int chrtoblktab[] = {
 	/* 31 */	NODEV,
 };
 
+dev_t
 chrtoblk(dev)
 	dev_t	dev;
 {

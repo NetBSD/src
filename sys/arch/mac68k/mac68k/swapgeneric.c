@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.8 1996/03/18 06:52:54 scottr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/05/05 06:18:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -43,6 +43,10 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 
+#include <dev/cons.h>
+
+#include <ufs/ffs/ffs_extern.h>
+
 #include <machine/pte.h>
 
 #include "sd.h"
@@ -77,9 +81,12 @@ struct	genericconf {
 	{ 0 }
 };
 
-extern int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+void	setconf __P((void));
+void	doboot __P((void));
+void	gets __P((char *));
+int (*mountroot) __P((void)) = ffs_mountroot;
 
+void
 setconf()
 {
 	register struct genericconf *gc = NULL;
@@ -136,7 +143,7 @@ verybad:
 		printf("\n");
 		goto doswap;
 	}
-	printf(" -- hit any key to reboot\n", root_swap);
+	printf(" -- hit any key to reboot\n");
 	cngetc();
 	doboot();
 	printf("      Automatic reboot failed.\n");
@@ -160,6 +167,7 @@ doswap:
 	 	rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {

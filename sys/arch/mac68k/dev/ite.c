@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.18 1996/03/29 02:06:35 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.19 1996/05/05 06:16:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,11 @@
 #include <machine/adbsys.h>
 #include <machine/iteioctl.h>
 
+#include "../mac68k/macrom.h"
+
+#include "ascvar.h"
+#include "itevar.h"
+
 #include "6x10.h"
 #define CHARWIDTH	6
 #define CHARHEIGHT	10
@@ -121,7 +126,6 @@ static int polledkey;
 extern int adb_polling;
 
 /* Misc */
-void    itestart();
 static void ite_putchar(char ch);
 
 /* VT100 tab stops & scroll region */
@@ -316,7 +320,7 @@ static void
 scrollup(void)
 {
 	unsigned long *from, *to;
-	int     i, linelongs, tocopy, copying;
+	int     linelongs, tocopy, copying;
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
 	to = (unsigned long *) videoaddr + ((scrreg_top-1) * linelongs);
@@ -362,6 +366,7 @@ clear_screen(int which)
 	linelongs = videorowbytes * CHARHEIGHT / 4;
 
 	switch (which) {
+	default:
 	case 0:		/* To end of screen	 */
 		p += y * linelongs;
 		i = (scrrows - y) * linelongs;
@@ -390,6 +395,7 @@ clear_line(int which)
 	 */
 
 	switch (which) {
+	default:
 	case 0:		/* To end of line	 */
 		start = x;
 		end = scrcols;
@@ -421,7 +427,7 @@ reset_tabs(void)
 static void
 vt100_reset(void)
 {
-	reset_tabs;
+	reset_tabs();
 	scrreg_top    = 1;
 	scrreg_bottom = scrrows;
 	attr = ATTR_NONE;
@@ -446,7 +452,8 @@ putc_normal(char ch)
 	case '\t':		/* Tab			 */
 		do {
 			ite_putchar(' ');
-		} while (tab_stops[x] = 0);
+			x++;
+		} while ((tab_stops[x] == 0) && (x < scrcols));
 		break;
 	case '\n':		/* Line feed		 */
 		if (y == scrreg_bottom - 1) {
@@ -697,15 +704,6 @@ ite_putchar(char ch)
  */
 
 static int 
-ite_dopollkey(int key)
-{
-	polledkey = key;
-
-	return 0;
-}
-
-
-static int 
 ite_pollforchar(void)
 {
 	int     s;
@@ -739,17 +737,27 @@ ite_pollforchar(void)
 /*
  * Tty handling functions
  */
+static int	itematch __P((struct device *, void *, void *));
+static void	iteattach __P((struct device *, struct device *, void *));
+
+static int
+itematch(pdp, match, auxp)
+	struct device	*pdp;
+	void	*match, *auxp;
+{
+	return 1;
+}
 
 static void 
-iteattach(struct device * parent, struct device * dev, void *aux)
+iteattach(parent, dev, aux)
+	struct device *parent, *dev;
+	void	*aux;
 {
 	printf(" (minimal console)\n");
 }
 
-extern int matchbyname();
-
 struct cfattach ite_ca = {
-	sizeof(struct device), matchbyname, iteattach
+	sizeof(struct device), itematch, iteattach
 };
 
 struct cfdriver ite_cd = {
@@ -761,7 +769,6 @@ iteopen(dev_t dev, int mode, int devtype, struct proc * p)
 {
 	register struct tty *tp;
 	register int error;
-	int     first = 0;
 
 	dprintf("iteopen(): enter(0x%x)\n", (int) dev);
 	if (ite_tty == NULL)
@@ -871,7 +878,6 @@ void
 itestart(register struct tty * tp)
 {
 	register int cc, s;
-	int     hiwat = 0, hadcursor = 0;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
@@ -920,10 +926,10 @@ ite_intr(adb_event_t * event)
 
 	if (val == ADBK_SHIFT) {
 		shift = press;
-	} else
+	} else {
 		if (val == ADBK_CONTROL) {
 			control = press;
-		} else
+		} else {
 			if (press) {
 				switch (val) {
 				case ADBK_UP:
@@ -970,6 +976,9 @@ ite_intr(adb_event_t * event)
 					}
 				}
 			}
+		}
+	}
+	return 0;
 }
 /*
  * Console functions
@@ -995,6 +1004,8 @@ itecnprobe(struct consdev * cp)
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, unit);
 	cp->cn_pri = CN_INTERNAL;
+
+	return 0;
 }
 
 int
@@ -1027,7 +1038,7 @@ itecninit(struct consdev * cp)
 		break;
 	}
 
-	iteon(cp->cn_dev, 0);
+	return iteon(cp->cn_dev, 0);
 }
 
 int
@@ -1036,6 +1047,7 @@ iteon(dev_t dev, int flags)
 	erasecursor();
 	clear_screen(2);
 	drawcursor();
+	return 0;
 }
 
 int
@@ -1043,6 +1055,7 @@ iteoff(dev_t dev, int flags)
 {
 	erasecursor();
 	clear_screen(2);
+	return 0;
 }
 
 int
@@ -1056,10 +1069,8 @@ itecngetc(dev_t dev)
 int
 itecnputc(dev_t dev, int c)
 {
-	extern dev_t mac68k_serdev;
-	int     s;
-
-/* 	s = splhigh (); */
+	extern dev_t	mac68k_serdev;
+	extern int	sercnputc __P((dev_t dev, int c));
 
 	erasecursor();
 	ite_putchar(c);
@@ -1067,5 +1078,5 @@ itecnputc(dev_t dev, int c)
 	if (mac68k_machine.serial_boot_echo)
 		sercnputc(mac68k_serdev, c);
 
-/* 	splx (s); */
+	return c;
 }

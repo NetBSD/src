@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 1996/02/27 03:23:42 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 1996/05/05 06:17:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,8 +69,8 @@
    but there isn't time to do anything about that right now...
  */
 
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_	1
+#ifndef _CPU_MACHINE_
+#define _CPU_MACHINE_
 
 /*
  * definitions of cpu-dependent requirements
@@ -79,6 +79,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
+void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 /*
  * Arguments to hardclock, softclock and gatherstats
@@ -347,4 +348,4 @@ extern	unsigned long		load_addr;
 #define CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
 #define CACHE4_OFF	0x00000000
 
-#endif	/* !_MACHINE_CPU_H_ */
+#endif	/* _CPU_MACHINE_ */

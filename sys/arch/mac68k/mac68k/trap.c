@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1996/03/14 16:42:44 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1996/05/05 06:19:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,10 +56,13 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <machine/db_machdep.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <m68k/fpe/fpu_emulate.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -123,6 +126,25 @@ int mmupid = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_ISPID(p)	(p) == mmupid
+#endif
+
+/* trap() and syscall() only called from locore */
+void	trap __P((int, unsigned, register unsigned, struct frame));
+void	syscall __P((register_t, struct frame));
+
+static inline void userret __P((register struct proc *,
+				register struct frame *,
+				u_quad_t, u_int, int));
+
+void DCFL __P((vm_offset_t));
+int suline __P((caddr_t, caddr_t));
+int susword __P((caddr_t, u_int));
+
+#if defined(M68040)
+static int	writeback __P((struct frame *, int));
+#if DEBUG
+static int	dumpssw __P((register u_short));
+#endif
 #endif
 
 /*
@@ -194,7 +216,7 @@ again:
 		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
 #endif
-		} else if (sig = writeback(fp, fromtrap)) {
+		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
 			trapsignal(p, sig, faultaddr);
@@ -211,6 +233,7 @@ again:
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
@@ -223,9 +246,8 @@ trap(type, code, v, frame)
 #endif
 	register struct proc *p;
 	register int i;
-	u_int ncode, ucode;
+	u_int ucode;
 	u_quad_t sticks;
-	int s;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -242,7 +264,7 @@ trap(type, code, v, frame)
 dopanic:
 		printf("trap type %d, code = %x, v= %x\n", type, code, v);
 #ifdef DDB
-		if (kdb_trap(type, &frame))
+		if (kdb_trap(type, (db_regs_t *) &frame))
 			return;
 #endif
 		regdump(&frame, 128);
@@ -384,7 +406,7 @@ copyfault:
 		     (caddr_t) frame.f_pc != trap12 &&
 		     (caddr_t) frame.f_pc != trap15 &&
 		     (caddr_t) frame.f_pc != illinst)) {
-			if (kdb_trap(type, &frame))
+			if (kdb_trap(type, (db_regs_t *) &frame))
 				return;
 		}
 #endif
@@ -429,16 +451,19 @@ copyfault:
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_SERIAL) {
+			void zssoft __P((int));
 			siroff(SIR_SERIAL);
 			cnt.v_soft++;
 			zssoft(0);
 		}
 		if (ssir & SIR_NET) {
+			void netintr __P((void));
 			siroff(SIR_NET);
 			cnt.v_soft++;
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
+			void softclock __P((void));
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
 			softclock();
@@ -542,7 +567,7 @@ copyfault:
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-				map, va, ftype, rv);
+				(unsigned) map, (unsigned) va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 				type, code);
 			goto dopanic;
@@ -577,6 +602,7 @@ char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
+static int
 writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
@@ -823,6 +849,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
+static int
 dumpssw(ssw)
 	register u_short ssw;
 {
@@ -849,6 +876,7 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
+int
 dumpwb(num, s, a, d)
 	int num;
 	u_short s;
@@ -874,6 +902,7 @@ dumpwb(num, s, a, d)
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;
@@ -1017,6 +1046,8 @@ syscall(code, frame)
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 }
+
+void	child_return __P((struct proc *, struct frame));
 
 /*
  * Process the tail end of a fork() for the child.

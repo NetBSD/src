@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 1996/03/17 01:33:46 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13 1996/05/05 06:18:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -48,17 +48,25 @@
 extern int fpu_type;
 extern int *nofault;
 
-extern int  matchbyname __P((struct device *, void *, void *));
+static int  fpu_match __P((struct device *, void *, void *));
 static void fpu_attach __P((struct device *, struct device *, void *));
 static int  fpu_probe __P((void));
 
 struct cfattach fpu_ca = {
-	sizeof(struct device), matchbyname, fpu_attach
+	sizeof(struct device), fpu_match, fpu_attach
 };
 
 struct cfdriver fpu_cd = {
 	NULL, "fpu", DV_DULL, 0
 };
+
+static int
+fpu_match(pdp, match, auxp)
+	struct device	*pdp;
+	void	*match, *auxp;
+{
+	return 1;
+}
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -78,7 +86,6 @@ fpu_attach(parent, self, args)
 	void *args;
 {
 	char *descr;
-	int enab_reg;
 
 	fpu_type = fpu_probe();
 	if ((0 <= fpu_type) && (fpu_type <= 2))
@@ -99,6 +106,7 @@ fpu_probe()
 	int	fpframe[60 / sizeof(int)];
 	label_t	faultbuf;
 	u_char	b;
+	void	m68881_restore __P((int []));
 
 	nofault = (int *) &faultbuf;
 	if (setjmp(&faultbuf)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.7 1995/08/24 04:27:16 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.8 1996/05/05 06:16:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -40,18 +40,29 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <machine/grfioctl.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
+#include <machine/viareg.h>
 
 #include "nubus.h"
 #include "grfvar.h"
 
-extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *slot));
-extern int	grfmv_init __P((struct grf_softc *gp));
-extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+static void	load_image_data __P((caddr_t data, struct image_data *image));
+static void	grfmv_intr __P((void *vsc, int slot));
+static int	get_vrsrcid __P((nubus_slot *slot));
 
 static char zero = 0;
+
+static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static int	grfmv_match __P((struct device *, void *, void *));
+static void	grfmv_attach __P((struct device *, struct device *, void *));
+
+struct cfattach grf_mv_ca = {
+	sizeof(struct grf_softc), grfmv_match, grfmv_attach
+};
 
 static void
 load_image_data(data, image)
@@ -77,12 +88,12 @@ load_image_data(data, image)
 	bcopy(data + 42, &image->planeBytes, 4);
 }
 
+/*ARGSUSED*/
 static void
-grfmv_intr(sc, slot)
-	struct	grf_softc *sc;
+grfmv_intr(vsc, slot)
+	void	*vsc;
 	int	slot;
 {
-	struct grf_softc *gp;
 	caddr_t		 slotbase;
 
 	slotbase = (caddr_t) NUBUS_SLOT_TO_BASE(slot);
@@ -94,7 +105,6 @@ get_vrsrcid(slot)
 	nubus_slot	*slot;
 {
 extern	u_short	mac68k_vrsrc_vec[];
-extern	int	mac68k_vrsrc_cnt;
 	int	i;
 
 	for (i = 0 ; i < 6 ; i++)
@@ -103,16 +113,19 @@ extern	int	mac68k_vrsrc_cnt;
 	return 0x80;
 }
 
-extern int
-grfmv_probe(sc, slot)
-	struct	grf_softc *sc;
-	nubus_slot	*slot;
+static int
+grfmv_match(pdp, match, aux)
+	struct device *pdp;
+	void *match, *aux;
 {
-	nubus_dir	dir, *dirp, dir2, *dirp2;
+	struct grf_softc	*sc;
+	nubus_slot	*slot = (nubus_slot *) aux;
+	nubus_dir	dir, *dirp, *dirp2;
 	nubus_dirent	dirent, *direntp;
 	nubus_type	slottype;
 	int		vrsrc;
 
+	sc = (struct grf_softc *) match;
 	dirp = &dir;
 	direntp = &dirent;
 	nubus_get_main_dir(slot, dirp);
@@ -159,28 +172,42 @@ grfmv_probe(sc, slot)
 	return 1;
 }
 
-extern int
-grfmv_init(sc)
-	struct grf_softc *sc;
+static void
+grfmv_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct grf_softc	*sc;
 	struct image_data image_store, image;
 	nubus_dirent	dirent;
 	nubus_dir	mode_dir;
 	int		mode;
 	u_long		base;
 
+	sc = (struct grf_softc *) self;
+
+	sc->g_mode = grfmv_mode;
+	sc->g_phys = grfmv_phys;
+
 	mode = NUBUS_RSRC_FIRSTMODE;
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0)
-		return 0;
+	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
+		printf("grf probe failed to get board rsrc.\n");
+		return;
+	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &mode_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent) <= 0)
-		return 0;
+	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
+	    <= 0) {
+		printf("grf probe failed to get mode dir.\n");
+		return;
+	}
 
 	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t) &image_store,
-				sizeof(struct image_data)) <= 0)
-		return 0;
+				sizeof(struct image_data)) <= 0) {
+		printf("grf probe failed to get indirect mode data.\n");
+		return;
+	}
 
 	load_image_data((caddr_t) &image_store, &image);
 
@@ -205,10 +232,19 @@ grfmv_init(sc)
 
 	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
 
-	return 1;
+	sc->g_flags = GF_ALIVE;
+
+	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
+
+	if (sc->curr_mode.psize == 1)
+		printf("monochrome");
+	else
+		printf("%d color", 1 << sc->curr_mode.psize);
+
+	printf(" %s display\n", sc->card_name);
 }
 
-extern int
+static int
 grfmv_mode(gp, cmd, arg)
 	struct grf_softc *gp;
 	int cmd;
@@ -228,10 +264,11 @@ grfmv_mode(gp, cmd, arg)
 	return EINVAL;
 }
 
-extern caddr_t
+static caddr_t
 grfmv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;
 {
-	return (caddr_t) NUBUS_VIRT_TO_PHYS(addr);
+	return (caddr_t) (NUBUS_SLOT_TO_PADDR(gp->sc_slot.slot) +
+				(addr - gp->sc_slot.virtual_base));
 }

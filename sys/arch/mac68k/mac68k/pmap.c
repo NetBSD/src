@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1995/12/03 13:52:50 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1996/05/05 06:18:47 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -506,7 +506,10 @@ pmap_init()
 	pmap_initialized = TRUE;
 }
 
-struct pv_entry *
+static struct pv_entry *pmap_alloc_pv __P((void));
+static void	pmap_free_pv __P((struct pv_entry *));
+
+static struct pv_entry *
 pmap_alloc_pv()
 {
 	struct pv_page	*pvp;
@@ -540,12 +543,11 @@ pmap_alloc_pv()
 	return pv;
 }
 
-void
+static void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
 {
 	register struct pv_page *pvp;
-	register int i;
 
 	pvp = (struct pv_page *) trunc_page(pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
@@ -563,6 +565,8 @@ pmap_free_pv(pv)
 		break;
 	}
 }
+
+void	pmap_collect_pv __P((void));
 
 void
 pmap_collect_pv()
@@ -797,6 +801,9 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+void	loadustp __P((vm_offset_t));
+void	pmap_activate __P((register pmap_t, struct pcb *));
+
 void
 pmap_activate(pmap, pcbp)
 	register pmap_t pmap;
@@ -814,12 +821,19 @@ pmap_activate(pmap, pcbp)
 	PMAP_ACTIVATE(pmap, pcbp, pmap == curproc->p_vmspace->vm_map.pmap);
 }
 
+void	pmap_deactivate __P((register pmap_t, struct pcb *));
+
 void
 pmap_deactivate(pmap, pcb)
 	register pmap_t pmap;
 	struct pcb *pcb;
 {
 }
+
+void TBIA __P((void));
+void TBIS __P((vm_offset_t));
+void DCFP __P((vm_offset_t));
+void ICPP __P((vm_offset_t));
 
 /*
  *	Remove the given range of addresses from the specified map.
@@ -1111,6 +1125,21 @@ pmap_protect(pmap, sva, eva, prot)
 			DCIU();
 	}
 #endif
+}
+
+void
+mac68k_set_pte(va, pge)
+	vm_offset_t va;
+	vm_offset_t pge;
+{
+extern	vm_offset_t tmp_vpages[];
+	register pt_entry_t *pte;
+
+	if (va != tmp_vpages[0])
+		return;
+
+	pte = pmap_pte(pmap_kernel(), va);
+	*pte = (pt_entry_t) pge;
 }
 
 /*
@@ -1623,6 +1652,7 @@ void
 pmap_copy_page(src, dst)
 	vm_offset_t src, dst;
 {
+void copypage __P((caddr_t, caddr_t));
 	register vm_offset_t skva, dkva;
 	extern caddr_t CADDR1, CADDR2;
 
@@ -2189,7 +2219,7 @@ pmap_changebit(pa, bit, setem)
 				 * flushed (but only once).
 				 */
 				if (firstpage && mmutype == MMU_68040 &&
-				    (bit == PG_RO && setem ||
+				    ((bit == PG_RO && setem) ||
 				     (bit & PG_CMASK))) {
 					firstpage = FALSE;
 					DCFP(pa);
@@ -2382,7 +2412,7 @@ pmap_enter_ptpage(pmap, va)
 #endif
 		s = vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE);
 		if (s != KERN_SUCCESS) {
-			printf("vm_fault(pt_map, %x, RW, 0) -> %d\n", va, s);
+			printf("vm_fault(pt_map, 0x%lx, RW, 0) -> %d\n",va,s);
 			panic("pmap_enter: vm_fault failed");
 		}
 		ptpa = pmap_extract(pmap_kernel(), va);
@@ -2405,8 +2435,8 @@ pmap_enter_ptpage(pmap, va)
 	if (dowriteback && dokwriteback)
 #endif
 	if (mmutype == MMU_68040) {
-		pt_entry_t *pte = pmap_pte(pmap_kernel(), va);
 #ifdef DEBUG
+		pt_entry_t *pte = pmap_pte(pmap_kernel(), va);
 		if ((pmapdebug & PDB_PARANOIA) && (*pte & PG_CCB) == 0)
 			printf("%s PT no CCB: kva=%x ptpa=%x pte@%x=%x\n",
 				pmap == pmap_kernel() ? "Kernel" : "User",
@@ -2427,7 +2457,7 @@ pmap_enter_ptpage(pmap, va)
 		do {
 			if (pv->pv_pmap == pmap_kernel() && pv->pv_va == va)
 				break;
-		} while (pv = pv->pv_next);
+		} while ((pv = pv->pv_next) != NULL);
 	}
 #ifdef DEBUG
 	if (pv == NULL)

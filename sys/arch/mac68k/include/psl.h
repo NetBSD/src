@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1996/02/17 14:50:42 briggs Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 1996/05/05 06:17:57 briggs Exp $	*/
 
 #ifndef PSL_C
 #include <m68k/psl.h>
@@ -36,18 +36,19 @@
  */
 #define splsoftclock()  spl1()	/* disallow softclock */
 #define splsoftnet()    spl1()	/* disallow network */
-#define splclock()      spl1()	/* disallow clock interrupt */
 #define spltty()        spl1()	/* disallow tty (softserial&adb) interrupts */
 #define splbio()        spl2()	/* disallow block I/O */
 #define splnet()        spl2()	/* disallow network */
 #define splimp()        spl2()	/* disallow imput */
+#define splclock()      spl2()	/* disallow clock & other interrupts */
+#define splstatclock()  spl2()	/* ditto */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */
 
-#define splstatclock()  spl2()	/* This should be splclock... */
-
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+int	spl0 __P((void));
 
 #endif /* _KERNEL && !_LOCORE */
 

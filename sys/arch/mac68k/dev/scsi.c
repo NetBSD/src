@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.19 1995/09/03 03:39:38 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.20 1996/05/05 06:17:16 briggs Exp $	*/
 
 /*
  * This driver is obsolete as of 2 September 1995.  mac68k5380.c should
@@ -161,7 +161,6 @@ struct scsi_device ncr5380_dev = {
 	NULL,			/* Use default "done" routine.	    */
 };
 
-extern int matchbyname();
 static int ncrprobe();
 static void ncrattach();
 
@@ -191,9 +190,6 @@ ncrprobe(parent, match, aux)
 	}
 	ncr5380 = (struct ncr5380_softc *) match;
 
-	if (strcmp(*((char **) aux), ncr5380->sc_dev.dv_xname)) {
-		return 0;
-	}
 	if (!probed) {
 		/*
 		 * Adjust values based on SCSIBase.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.4 1996/04/30 18:11:38 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.5 1996/05/05 06:17:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -222,8 +222,6 @@ sbc_match(parent, match, args)
 	struct device   *self = match;	/* XXX mainbus is "indirect" */
 	struct confargs *ca = args;
 
-	if (matchbyname(parent, match, ca) == 0)
-		return 0;
 	if (!mac68k_machine.scsi80)
 		return 0;
 	if (self->dv_cfdata->cf_unit != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.21 1996/04/01 04:30:34 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.22 1996/05/05 06:18:36 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,6 +46,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/queue.h>
 
 #include <vm/vm_prot.h>
@@ -97,13 +98,11 @@ u_int32_t nr_of_rsrcs;
  * bother to implement them.
  */
 
-
 int
 mrg_Delay()
 {
 #define TICK_DURATION 16625
 
-	int result = noErr;
 	u_int32_t ticks;
 
 	asm("	movl	a0, %0"		/* get arguments */
@@ -255,7 +254,6 @@ w_get_ind_resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 	}
 }
 
-
 void
 mrg_VBLQueue()
 {
@@ -316,7 +314,6 @@ mrg_VBLQueue()
 	    vbltask = (caddr_t) *((u_int32_t *)(vbltask + qLink));
 	} /* while */
 }
-
 
 void
 mrg_init_stub_1()
@@ -443,7 +440,6 @@ myowntrap()
 	return(50);
 }
 
-
 int
 mrg_NewPtr()
 {
@@ -509,7 +505,6 @@ mrg_DisposPtr()
 int
 mrg_GetPtrSize()
 {
-	int result = noErr;
 	caddr_t ptr;
 
 	asm("	movl	a0, %0" : "=g" (ptr));
@@ -527,7 +522,6 @@ mrg_GetPtrSize()
 int
 mrg_SetPtrSize()
 {
-	int result = noErr;
 	caddr_t ptr;
 	int newbytes;
 
@@ -772,7 +766,7 @@ mrg_setvectors(rom)
 
 	if (0 != mrg_ADBIntrPtr) {
 		mrg_romadbintr = mrg_ADBIntrPtr;
-		printf("mrg_setvectors: using ADBIntrPtr from booter: 0x%08x\n",
+		printf("mrg_setvectors: using ADBIntrPtr from booter: %p\n",
 			mrg_ADBIntrPtr);
 	} else
  		mrg_romadbintr = rom->adbintr;
@@ -843,10 +837,6 @@ mrg_init()
 {
 	int i;
 	char *findername = "MacBSD FakeFinder";
-	caddr_t ptr;
-	caddr_t *handle;
-	int sizeptr;
-	extern short mrg_ResErr;
 	
 	w_build_resource_list(ROMBase, 0x00100000);	/* search one MB */
 	
@@ -925,14 +915,15 @@ mrg_init()
 		Lvl1DT[i] = mrg_lvl1dtpanic;
 	for(i = 0; i < 8; i++) /* Set up fake Lvl2DT */
 		Lvl2DT[i] = mrg_lvl2dtpanic;
-	Lvl1DT[0] = (void (*)())mrg_1sec_timer_tick;
-	Lvl1DT[2] = (void (*)())mrg_romadbintr;
-	Lvl1DT[4] = (void (*)())mrg_rompmintr;
+	Lvl1DT[0] = (void (*)(void))mrg_1sec_timer_tick;
+	Lvl1DT[2] = (void (*)(void))mrg_romadbintr;
+	Lvl1DT[4] = (void (*)(void))mrg_rompmintr;
 	JADBProc = mrg_jadbprocpanic; /* Fake JADBProc for the time being */
 	jSwapMMU = mrg_jswapmmupanic; /* Fake jSwapMMU for the time being */
 	JKybdTask = mrg_jkybdtaskpanic; /* Fake jSwapMMU for the time being */
 
-	jADBOp = (void (*)())mrg_OStraps[0x7c];	/* probably very dangerous */
+	jADBOp = (void (*)(void))
+			mrg_OStraps[0x7c]; /* probably very dangerous */
 	mrg_VIA2 = (caddr_t)(Via1Base + VIA2 * 0x2000);	/* see via.h */
 	SCCRd = (caddr_t)(IOBase + sccA);   /* ser.c ; we run before serinit */
 
@@ -1010,7 +1001,9 @@ mrg_init()
 	}
 }
 
-void
+static void	setup_egret __P((void));
+
+static void
 setup_egret(void)
 {
 	if (0 != mrg_InitEgret){
@@ -1028,19 +1021,18 @@ setup_egret(void)
 	}
 	else printf("Help ...  No vector for InitEgret!!\n");
 	
-	printf("mrg: ADBIntrVector: 0x%8x,  mrg_ADBIntrVector: 0x%8x\n",
+#if defined(MRG_DEBUG)
+	printf("mrg: ADBIntrVector: 0x%8lx,  mrg_ADBIntrVector: 0x%8lx\n",
 			(long) mrg_romadbintr,
 			*((long *) 0x19a));
-	printf("mrg: EgretOSTrap: 0x%8x\n",
+	printf("mrg: EgretOSTrap: 0x%8lx\n",
 			(long) mrg_OStraps[0x92]);
-
+#endif
 }
 
 void
 mrg_initadbintr()
 {
-	int i;
-
 	if (mac68k_machine.do_graybars)
 		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
 				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);

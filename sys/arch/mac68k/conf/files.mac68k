@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.44 1996/04/29 21:36:17 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.45 1996/05/05 06:16:10 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -10,57 +10,62 @@ maxusers 2 8 64
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
-device	nubus { slot = -1, id = -1, claimed = 0 }
+device	obio {}
+attach	obio at mainbus
+file	arch/mac68k/dev/obio.c		obio
+
+device	nubus {}
 attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
 device	adb
-attach	adb at mainbus
+attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
 
 device	asc
-attach	asc at mainbus
+attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc
 
 device	grf
-attach	grf at nubus
-file	arch/mac68k/dev/grf.c		grf needs-count
-file	arch/mac68k/dev/grf_mv.c	grf
-file	arch/mac68k/dev/grf_iv.c	grf
+attach	grf at nubus with grf_mv
+attach	grf at obio with grf_iv
+file	arch/mac68k/dev/grf.c		grf needs-flag
+file	arch/mac68k/dev/grf_mv.c	grf_mv
+file	arch/mac68k/dev/grf_iv.c	grf_iv
 
 device	ae: ifnet, ether
 attach	ae at nubus
 file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
 device	ite
-attach	ite at mainbus
+attach	ite at obio
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
 include "../../../scsi/files.scsi"
 
 # Option 1 for ncr5380 support
 device	ncrscsi: scsi
-attach	ncrscsi at mainbus
+attach	ncrscsi at obio
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
 # Option 2 for ncr5380 support
 device	sbc: scsi, ncr5380sbc
-attach	sbc at mainbus
+attach	sbc at obio
 file	arch/mac68k/dev/ncr_sbc.c	sbc
 
 device	ncr96scsi: scsi
-attach	ncr96scsi at mainbus
+attach	ncr96scsi at obio
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
 device	ser: tty
-attach	ser at mainbus
+attach	ser at obio
 file	arch/mac68k/dev/ser.c		ser needs-flag
 
 # This one is out of alphabetical order
 device	fpu
-attach	fpu at mainbus
+attach	fpu at obio
 file	arch/mac68k/mac68k/fpu.c	fpu
 
 file	arch/m68k/m68k/copy.s

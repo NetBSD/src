@@ -1,7 +1,8 @@
-/*	$NetBSD: disklabel.h,v 1.2 1996/05/05 06:17:38 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.1 1996/05/05 06:17:07 briggs Exp $	*/
 
 /*
- * Copyright (c) 1994 Christopher G. Demetriou
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,14 +15,14 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *	This product includes software developed by Adam Glass and Gordon Ross.
+ * 4. The name of the authors may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -30,17 +31,43 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DISKLABEL_MACHINE_
-#define _DISKLABEL_MACHINE_
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
+#include <machine/autoconf.h>
+#include <machine/pte.h>
 
-/* Just a dummy */
-struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
+static int  obio_match __P((struct device *, void *, void *));
+static void obio_attach __P((struct device *, struct device *, void *));
+
+struct cfattach obio_ca = {
+	sizeof(struct device), obio_match, obio_attach
 };
 
-#endif /* _DISKLABEL_MACHINE_ */
+struct cfdriver obio_cd = {
+	NULL, "obio", DV_DULL
+};
+
+static int
+obio_match(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct confargs *ca = aux;
+
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+	return(1);
+}
+
+static void
+obio_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	printf("\n");
+
+	(void) config_search(bus_scan, self, aux);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.26 1996/03/30 21:06:23 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.27 1996/05/05 06:16:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -108,8 +108,7 @@ static SC_REQ	*free_head = NULL;	/* Free request structures	*/
 /*
  * Determine the size of a SCSI command.
  */
-extern __inline__ int command_size(opcode)
-u_char	opcode;
+extern __inline__ int command_size(u_char opcode)
 {
 	switch ((opcode >> 4) & 0xf) {
 		case 0:
@@ -471,6 +470,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("(%d:%d:%d)-RESET-\n",
 		    xs->sc_link->scsibus,xs->sc_link->target, xs->sc_link->lun);
 	}
+	return 0;
 }
 
 /*
@@ -686,7 +686,6 @@ ncr_ctrl_intr(sc)
 struct ncr_softc *sc;
 {
 	int	itype;
-	int	dma_done;
 
 	while (scsi_ipending()) {
 		scsi_idisable();
@@ -727,7 +726,6 @@ static int
 scsi_select(reqp, code)
 SC_REQ	*reqp;
 {
-	u_long			timeout;
 	u_char			tmp[1];
 	u_char			phase;
 	u_long			cnt;
@@ -1023,6 +1021,19 @@ struct ncr_softc *sc;
 		reqp->phase = phase;
 		DBG_INFPRINT(show_phase, reqp, phase);
 	}
+	else {
+		/*
+		 * Same data-phase. If same error give up
+		 */
+		if ((reqp->msgout == MSG_ABORT)
+		     && ((phase == PH_DATAOUT) || (phase == PH_DATAIN))) {
+			busy     &= ~(1 << reqp->targ_id);
+			connected = NULL;
+			finish_req(reqp);
+			scsi_reset_verbose(sc, "Failure to abort command");
+			return (0);
+		}
+	}
 
 	switch (phase) {
 	    case PH_DATAOUT:
@@ -1042,6 +1053,17 @@ struct ncr_softc *sc;
 		}
 
 	   case PH_DATAIN:
+		if (reqp->xdata_len <= 0) {
+			/*
+			 * Target keeps requesting data. Try to get into
+			 * message-out phase by feeding/taking 100 byte.
+			 */
+			ncr_tprint(reqp, "Target requests too much data\n");
+			reqp->msgout = MSG_ABORT;
+			SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+			reach_msg_out(sc, 100);
+			return (-1);
+		}
 #ifdef REAL_DMA
 		if (reqp->dr_flag & DRIVER_DMAOK) {
 			int poll = REAL_DMA_POLL|(reqp->dr_flag & DRIVER_NOINT);
@@ -1078,7 +1100,8 @@ struct ncr_softc *sc;
 		if (reqp->msgout == MSG_ABORT) {
 			busy     &= ~(1 << reqp->targ_id);
 			connected = NULL;
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+			if (!reqp->xs->error)
+				reqp->xs->error = XS_DRIVER_STUFFUP;
 			finish_req(reqp);
 			PID("info_transf4");
 			return (0);
@@ -1301,6 +1324,7 @@ struct ncr_softc *sc;
 	if (len || !MSG_ISIDENTIFY(msg)) {
 		ncr_aprint(sc, "Expecting IDENTIFY, got 0x%x\n", msg);
 		abort = 1;
+		tmp = NULL;
 	}
 	else {
 	    /*
@@ -1534,9 +1558,10 @@ dma_ready()
 	else reqp->dm_cur->dm_addr += bytes_done;
 
 	if (PH_IN(reqp->phase) && (dmstat & SC_PAR_ERR)) {
-		if (!(ncr5380_no_parchk & (1 << reqp->targ_id)))
-			/* XXX: Should be parity error ???? */
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+		if (!(ncr5380_no_parchk & (1 << reqp->targ_id))) {
+			ncr_tprint(reqp, "parity error in data-phase\n");
+			reqp->xs->error = XS_TIMEOUT;
+		}
 	}
 
 	/*
@@ -1564,7 +1589,7 @@ dma_ready()
 
 		if (dmstat & SC_BSY_ERR) {
 			if (!reqp->xs->error)
-				reqp->xs->error = XS_BUSY;
+				reqp->xs->error = XS_TIMEOUT;
 			finish_req(reqp);
 			PID("dma_ready1");
 			return (1);
@@ -1655,6 +1680,7 @@ u_long		 len;
 {
 	u_char	phase;
 	u_char	data;
+	u_long	n = len;
 
 	ncr_aprint(sc, "Trying to reach Message-out phase\n");
 	if ((phase = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ)
@@ -1682,12 +1708,13 @@ u_long		 len;
 		if (!wait_req_false())
 			break;
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-	} while (--len);
+	} while (--n);
 
 	if ((phase = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ) {
 		phase = (phase >> 2) & 7;
 		if (phase == PH_MSGOUT) {
-			ncr_aprint(sc, "Message-out phase reached.\n");
+			ncr_aprint(sc, "Message-out phase reached after "
+					"%ld bytes.\n", len - n);
 			return (0);
 		}
 	}
@@ -1728,7 +1755,7 @@ scsi_reset()
 	 * doing REAL-DMA. In that case 'dma_ready()' should correctly finish
 	 * the job because it detects BSY-loss.
 	 */
-	if (tmp = connected) {
+	if ((tmp = connected) != NULL) {
 		if (tmp->dr_flag & DRIVER_IN_DMA) {
 			tmp->xs->error = XS_DRIVER_STUFFUP;
 #ifdef REAL_DMA
@@ -1751,9 +1778,6 @@ scsi_reset_verbose(sc, why)
 struct ncr_softc *sc;
 const char	 *why;
 {
-	SC_REQ	*tmp, *next;
-	int	sps;
-
 	ncr_aprint(sc, "Resetting SCSI-bus (%s)\n", why);
 
 	scsi_reset();
@@ -1937,8 +1961,7 @@ ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
  *		Start Debugging Functions				    *
  ****************************************************************************/
 static void
-show_data_sense(xs)
-struct scsi_xfer	*xs;
+show_data_sense(struct scsi_xfer *xs)
 {
 	u_char	*p1, *p2;
 	int	i;
@@ -1962,7 +1985,7 @@ show_request(reqp, qtxt)
 SC_REQ	*reqp;
 char	*qtxt;
 {
-	printf("REQ-%s: %d %x[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
+	printf("REQ-%s: %d %p[%ld] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
 			reqp->xs->error, reqp->xs->resid, reqp->dr_flag,
@@ -1981,7 +2004,7 @@ show_signals(dmstat, idstat)
 u_char	dmstat, idstat;
 {
 	u_short	tmp, mask;
-	int	i, j, need_pipe;
+	int	j, need_pipe;
 
 	tmp = idstat | ((dmstat & 3) << 8);
 	printf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
@@ -1997,6 +2020,7 @@ u_char	dmstat, idstat;
 	printf("\n");
 }
 
+void
 scsi_show()
 {
 	SC_REQ	*tmp;
@@ -2004,7 +2028,7 @@ scsi_show()
 	u_char	idstat, dmstat;
 	int	i;
 
-	printf("scsi_show: main_running is%s running\n",
+	printf("scsi_show: scsi_main is%s running\n",
 		main_running?"":" not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");

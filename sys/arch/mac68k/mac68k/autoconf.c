@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1996/04/04 06:25:36 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1996/05/05 06:18:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,6 +104,12 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
+
+#include <machine/adbsys.h>
+#include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/param.h>
 #include <machine/cpu.h>
@@ -124,9 +130,8 @@ int	cold;		    /* if 1 (locore.s), still working on cold-start */
 int	acdebug = 0;
 #endif
 
-static int	mbprint __P((void *aux, char *name));
-static int	root_matchbyname __P((struct device *parent,
-					void *cf, void *aux));
+static void	findbootdev __P((void));
+static int	mainbus_match __P((struct device *, void *, void *));
 static void	mainbus_attach __P((struct device *parent,
 					struct device *self, void *aux));
 static void	setroot __P((void));
@@ -142,11 +147,9 @@ configure(void)
 
 	mrg_init();		/* Init Mac ROM Glue */
 
-	startrtclock();		/* swapped with adb_init (WRU) */
+	startrtclock();		/* start before adb_init() */
 	
 	adb_init();		/* ADB device subsystem & driver */
-
-     /*	startrtclock(); 	   swapped with adb_init (WRU) */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No main device!");
@@ -264,7 +267,7 @@ findblkmajor(register struct disk *dv)
 /*
  * Yanked from i386/i386/autoconf.c
  */
-void
+static void
 findbootdev(void)
 {
 	register struct device *dv;
@@ -362,91 +365,201 @@ setroot(void)
 		dumpdev = swdevt[0].sw_dev;
 }
 
-struct newconf_S {
-	char	*name;
-	int	req;
-};
-
-static int
-mbprint(aux, name)
-	void	*aux;
-	char	*name;
+/*
+ * Generic "bus" support functions.  From NetBSD/sun3.
+ *
+ * bus_scan:
+ * This function is passed to config_search() by the attach function
+ * for each of the "bus" drivers (obio, nubus).
+ * The purpose of this function is to copy the "locators" into our
+ * confargs structure, so child drivers may use the confargs both
+ * as match parameters and as temporary storage for the defaulted
+ * locator values determined in the child_match and preserved for
+ * the child_attach function.  If the bus attach functions just
+ * used config_found, then we would not have an opportunity to
+ * setup the confargs for each child match and attach call.
+ *
+ * bus_print:
+ * Just prints out the final (non-default) locators.
+ */
+int
+bus_scan(parent, child, aux)
+	struct device *parent;
+	void *child, *aux;
 {
-	struct newconf_S	*c = (struct newconf_S *) aux;
+	struct cfdata *cf = child;
+	struct confargs *ca = aux;
+	cfmatch_t mf;
+
+#ifdef	DIAGNOSTIC
+	if (parent->dv_cfdata->cf_driver->cd_indirect)
+		panic("bus_scan: indirect?");
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("bus_scan: FSTATE_STAR");
+#endif
+
+	/* ca->ca_bustype set by parent */
+
+	/*
+	 * Note that this allows the match function to save
+	 * defaulted locators in the confargs that will be
+	 * preserved for the related attach call.
+	 */
+	mf = cf->cf_attach->ca_match;
+	if ((*mf)(parent, cf, ca) > 0) {
+		config_attach(parent, cf, ca, bus_print);
+	}
+	return (0);
+}
+
+/*
+ * From NetBSD/sun3.
+ * Print out the confargs.  The parent name is non-NULL
+ * when there was no match found by config_found().
+ */
+int
+bus_print(args, name)
+	void *args;
+	char *name;
+{
+/*	struct confargs *ca = args; */
 
 	if (name)
-		printf("%s at %s", c->name, name);
+		printf("%s:", name);
+
 	return(UNCONF);
 }
 
+vm_offset_t tmp_vpages[1];
+
+/*
+ * Read addr with size len (1,2,4) into val.
+ * If this generates a bus error, return -1
+ *
+ *	Create a temporary mapping,
+ *	Try the access using peek_*
+ *	Clean up temp. mapping
+ */
+int
+bus_peek(bustype, paddr, sz)
+	int bustype;
+	vm_offset_t paddr;
+	int sz;
+{
+	int off, pte, rv;
+	vm_offset_t pgva;
+	caddr_t va;
+
+	if (bustype != BUS_NUBUS)
+		return -1;
+
+	off = paddr & PGOFSET;
+	paddr -= off;
+	pte = (paddr & PG_FRAME) | (PG_V | PG_W | PG_CI);
+
+	pgva = tmp_vpages[0];
+	va = (caddr_t)pgva + off;
+
+	mac68k_set_pte(pgva, pte);
+
+	/*
+	 * OK, try the access using one of the assembly routines
+	 * that will set pcb_onfault and catch any bus errors.
+	 */
+	rv = -1;
+	switch (sz) {
+	case 1:
+		if (!badbaddr(va))
+			rv = *((u_char *) va);
+		break;
+	case 2:
+		if (!badwaddr(va))
+			rv = *((u_int16_t *) va);
+		break;
+	case 4:
+		if (!badladdr(va))
+			rv = *((u_int32_t *) va);
+		break;
+	default:
+		printf("bus_peek: invalid size=%d\n", sz);
+		rv = -1;
+	}
+
+	mac68k_set_pte(pgva, PG_NV);
+
+	return rv;
+}
+
+char *
+bus_mapin(bustype, paddr, sz)
+	int bustype, paddr, sz;
+{
+	int off, pa, pmt;
+	vm_offset_t va, retval;
+
+	if (bustype != BUS_NUBUS)
+		return (NULL);
+
+	off = paddr & PGOFSET;
+	pa = paddr - off;
+	sz += off;
+	sz = mac68k_round_page(sz);
+
+	/* Get some kernel virtual address space. */
+	va = kmem_alloc_wait(kernel_map, sz);
+	if (va == 0)
+		panic("bus_mapin");
+	retval = va + off;
+
+	/* Map it to the specified bus. */
+#if 0	/* XXX */
+	/* This has a problem with wrap-around... */
+	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+#else
+	do {
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		va += NBPG;
+		pa += NBPG;
+	} while ((sz -= NBPG) > 0);
+#endif
+
+	return ((char*)retval);
+}	
+
 static int
-root_matchbyname(parent, cfv, aux)
+mainbus_match(parent, match, aux)
 	struct device	*parent;
-	void		*cfv;
-	void		*aux;
+	void		*match, *aux;
 {
-	struct cfdata	*cf = (struct cfdata *) cfv;
-
-	return (strcmp(cf->cf_driver->cd_name, (char *)aux) == 0);
+	return 1;
 }
 
-extern int
-matchbyname(parent, match, aux)
-	struct device	*parent;
-	void		*match;
-	void		*aux;
-{
-	struct newconf_S	*c = (struct newconf_S *) aux;
-	struct device		*dv = (struct device *) match;
-
-/*	printf("matchbyname: (%s) and (%s).\n", dv->dv_xname, c->name);
-*/
-
-	return (strcmp(dv->dv_xname, c->name) == 0);
-}
+static int bus_order[] = {
+	BUS_OBIO,	/* For On-board I/O */
+	BUS_NUBUS
+};
+#define BUS_ORDER_SZ (sizeof(bus_order)/sizeof(bus_order[0]))
 
 static void
 mainbus_attach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
-	struct newconf_S	conf_data[] = {
-					{"ite0",       1},
-					{"adb0",       1},
-					{"ser0",       0},
-					{"nubus0",     1},
-					{"ncrscsi0",   0},
-					{"ncr96scsi0", 0},
-					{"sbc0",       0},
-					{"asc0",       0},
-					{"fpu0",       0},
-					{"floppy0",    0},
-					{NULL,         0}
-			 	};
-	struct newconf_S	*c;
-	int			fail=0, warn=0;
+	struct confargs	ca;
+	int	i;
 
 	printf("\n");
-	for (c=conf_data ; c->name ; c++) {
-		if (config_found(self, c, mbprint) != NULL) {
-		} else {
-			if (c->req) {
-				fail++;
-			}
-			warn++;
-		}
-	}
 
-	if (fail) {
-		printf("Failed to find %d required devices.\n", fail);
-		panic("Can't continue.");
+	for (i = 0; i < BUS_ORDER_SZ; i++) {
+		ca.ca_bustype = bus_order[i];
+		(void) config_found(self, &ca, NULL);
 	}
 }
 
 struct cfattach mainbus_ca = {
-	sizeof(struct device), root_matchbyname, mainbus_attach
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 1, 0
+	NULL, "mainbus", DV_DULL
 };

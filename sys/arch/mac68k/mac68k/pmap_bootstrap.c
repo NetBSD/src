@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.19 1996/02/27 03:25:47 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.20 1996/05/05 06:18:51 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,14 +40,21 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
+
+#include <vm/vm.h>
+
 #include <machine/pte.h>
 #include <mac68k/mac68k/clockreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/pmap.h>
 
-#include <vm/vm.h>
+#include <ufs/mfs/mfs_extern.h>
+
+#include "macrom.h"
 
 #define PA2VA(v, t)	(t)((u_int)(v) - firstpa)
 
@@ -168,7 +175,7 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += USPACE;
 
 	if (nextpa > high[0]) {
-		printf("Failure in BSD boot.  nextpa=0x%x, high[0]=0x%x.\n",
+		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
 		printf("You're hosed!  Try booting with 32-bit addressing ");
 		printf("enabled in the memory control panel.\n");
@@ -534,13 +541,16 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = virtual_avail;
+		extern vm_offset_t	tmp_vpages[];
+		vm_offset_t	va = virtual_avail;
 
 		CADDR1 = (caddr_t)va;
 		va += NBPG;
 		CADDR2 = (caddr_t)va;
 		va += NBPG;
 		vmmap = (caddr_t)va;
+		va += NBPG;
+		tmp_vpages[0] = va;
 		va += NBPG;
 		msgbufp = (struct msgbuf *)va;
 		va += NBPG;
@@ -552,11 +562,12 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
+	u_int get_mapping __P((void));
+	extern u_long	videoaddr;
 	extern caddr_t	esym;
-	extern u_long	videoaddr, boothowto;
-	u_long		newvideoaddr = 0;
 	vm_offset_t	nextpa;
 	caddr_t		oldROMBase;
+	u_long		newvideoaddr;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");
@@ -567,7 +578,7 @@ bootstrap_mac68k(tc)
 
 		if (mac68k_machine.do_graybars)
 			printf("Getting mapping from MMU.\n");
-		get_mapping();
+		(void) get_mapping();
 		if (mac68k_machine.do_graybars)
 			printf("Done.\n");
 	} else {
@@ -577,16 +588,16 @@ bootstrap_mac68k(tc)
 		low[0] = 0;
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 		if (mac68k_machine.do_graybars)
-			printf("Faked range to byte 0x%x.\n", high[0]);
+			printf("Faked range to byte 0x%lx.\n", high[0]);
 	}
-	nextpa = load_addr + ((int)esym + NBPG - 1) & PG_FRAME;
+	nextpa = load_addr + (((int)esym + NBPG - 1) & PG_FRAME);
 
 #if MFS
 	if (boothowto & RB_MINIROOT) {
 		int	v;
 		boothowto |= RB_DFLTROOT;
 		nextpa = mac68k_round_page(nextpa);
-		if ((v = mfs_initminiroot(nextpa-load_addr)) == 0) {
+		if ((v = mfs_initminiroot((caddr_t) nextpa-load_addr)) == 0) {
 			printf("Error loading miniroot.\n");
 		}
 		printf("Loaded %d byte miniroot.\n", v);
@@ -612,13 +623,13 @@ bootstrap_mac68k(tc)
 	}
 
 	if (mac68k_machine.do_graybars)
-		printf("Moving ROMBase from 0x%x to 0x%x.\n",
+		printf("Moving ROMBase from %p to %p.\n",
 			oldROMBase, ROMBase);
 
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
-		printf("Video address 0x%x -> 0x%x.\n",
+		printf("Video address 0x%lx -> 0x%lx.\n",
 			videoaddr, newvideoaddr);
 
 	mac68k_set_io_offsets(IOBase);

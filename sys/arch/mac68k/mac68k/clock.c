@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1996/03/29 02:00:44 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 1996/05/05 06:18:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,10 +77,12 @@
  *	@(#)clock.c   7.6 (Berkeley) 5/7/91
  */
 
-#if !defined(STANDALONE)
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/limits.h>
@@ -89,16 +91,10 @@
 #include <sys/gprof.h>
 #endif
 
-#else				/* STANDALONE */
-#include "stand.h"
-#endif				/* STANDALONE */
-
+#include "pram.h"
 #include "clockreg.h"
 #include <machine/viareg.h>
 
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
 #define	DIFF19702010	1261440000
@@ -285,6 +281,9 @@ profclock(pclk)
 #endif
 #endif
 
+static u_long	ugmt_2_pramt __P((u_long));
+static u_long	pramt_2_ugmt __P((u_long));
+
 /*
  * Convert GMT to Mac PRAM time, using global timezone
  * GMT bias adjustment is done elsewhere.
@@ -337,14 +336,13 @@ inittodr(base)
 	time_t base;
 {
 	u_long timbuf;
-	u_long pramtime;
 
 	timbuf = pramt_2_ugmt(pram_readtime());
 	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
 #if DIAGNOSTIC
 		printf(
 		    "PRAM time does not appear to have been read correctly.\n");
-		printf("PRAM: 0x%x, macos_boottime: 0x%x.\n",
+		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
 		    timbuf, macos_boottime + 60 * tz.tz_minuteswest);
 #endif
 		timbuf = macos_boottime;
@@ -352,7 +350,7 @@ inittodr(base)
 	}
 #ifdef DIAGNOSTIC
 	else
-		printf("PRAM: 0x%x, macos_boottime: 0x%x.\n",
+		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
 		    timbuf, macos_boottime);
 #endif
 
@@ -442,6 +440,7 @@ delay(usec)
 	while ((cycles-- > 0) && delay_flag);
 }
 
+static unsigned	dummy_delay __P((unsigned));
 /*
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
@@ -462,8 +461,11 @@ dummy_delay(usec)
 	return ((delay_factor >> 7) - cycles);
 }
 
+static void	delay_timer1_irq __P((void *));
+
 static void
-delay_timer1_irq()
+delay_timer1_irq(dummy)
+	void *dummy;
 {
 	delay_flag = 0;
 }

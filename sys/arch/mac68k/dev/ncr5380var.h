@@ -1,8 +1,7 @@
-/*	$NetBSD: disklabel.h,v 1.2 1996/05/05 06:17:38 briggs Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.1 1996/05/05 06:17:00 briggs Exp $	*/
 
 /*
- * Copyright (c) 1994 Christopher G. Demetriou
- * All rights reserved.
+ * Copyright (c) 1995 Allen Briggs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +13,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *	This product includes software developed by Allen Briggs.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,17 +29,31 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DISKLABEL_MACHINE_
-#define _DISKLABEL_MACHINE_
+static volatile u_char	*scsi_enable		= NULL;
 
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
+static __inline__ void
+scsi_ienable __P((void))
+{
+	int	s;
 
-/* Just a dummy */
-struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
-};
+	s = splhigh();
+	*scsi_enable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+	splx(s);
+}
 
-#endif /* _DISKLABEL_MACHINE_ */
+static __inline__ void
+scsi_idisable __P((void))
+{
+	int	s;
+
+	s = splhigh();
+	*scsi_enable = V2IF_SCSIIRQ | V2IF_SCSIDRQ;
+	splx(s);
+}
+
+void	pdma_stat __P((void));
+void	pdma_cleanup __P((void));
+void	ncr5380_irq_intr __P((void *p));
+void	ncr5380_drq_intr __P((void *p));
+void	scsi_show __P((void));
+

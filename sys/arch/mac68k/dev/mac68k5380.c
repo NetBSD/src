@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.22 1996/03/29 02:06:04 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.23 1996/05/05 06:16:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -47,10 +47,12 @@
 /*
  * Include the driver definitions
  */
-#include <mac68k/dev/ncr5380reg.h>
+#include "ncr5380reg.h"
 
 #include <machine/stdarg.h>
 #include <machine/viareg.h>
+
+#include "ncr5380var.h"
 
 /*
  * Set the various driver options
@@ -121,8 +123,6 @@ static volatile u_char	*ncr		= (volatile u_char *) 0x10000;
 static volatile u_char	*ncr_5380_with_drq	= (volatile u_char *)  0x6000;
 static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 
-static volatile u_char	*scsi_enable		= NULL;
-
 #define SCSI_5380		((struct scsi_5380 *) ncr)
 #define GET_5380_REG(rnum)	SCSI_5380->scsi_5380[((rnum)<<4)]
 #define SET_5380_REG(rnum,val)	(SCSI_5380->scsi_5380[((rnum)<<4)] = (val))
@@ -130,32 +130,20 @@ static volatile u_char	*scsi_enable		= NULL;
 void	ncr5380_irq_intr(void *);
 void	ncr5380_drq_intr(void *);
 
+static __inline__ void	scsi_clr_ipend __P((void));
+static		  void	scsi_mach_init __P((struct ncr_softc *sc));
+static		  int	machine_match __P((struct device *pdp, void *match,
+					   void *auxp, struct cfdriver *cd));
+static __inline__ int	pdma_ready __P((void));
+static		  int	transfer_pdma __P((u_char *phasep, u_char *data,
+					u_long *count));
+
 static __inline__ void
 scsi_clr_ipend()
 {
 	int	tmp;
 
 	tmp = GET_5380_REG(NCR5380_IRCV);
-}
-
-extern __inline__ void
-scsi_ienable()
-{
-	int	s;
-
-	s = splhigh();
-	*scsi_enable = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
-	splx(s);
-}
-
-extern __inline__ void
-scsi_idisable()
-{
-	int	s;
-
-	s = splhigh();
-	*scsi_enable = V2IF_SCSIIRQ | V2IF_SCSIDRQ;
-	splx(s);
 }
 
 static void
@@ -189,13 +177,7 @@ machine_match(pdp, match, auxp, cd)
 	void		*match, *auxp;
 	struct cfdriver	*cd;
 {
-	struct device *self = match;	/* XXX mainbus is "indirect" */
-
-	if (matchbyname(pdp, match, auxp) == 0)
-		return 0;
 	if (!mac68k_machine.scsi80)
-		return 0;
-	if (self->dv_cfdata->cf_unit != 0)
 		return 0;
 	return 1;
 }
@@ -219,7 +201,7 @@ pdma_stat()
 		pdma_5380_sends, pdma_5380_bytes);
 	printf("pdma_5380_dir = %d\t",
 		pdma_5380_dir);
-	printf("datap = 0x%x, remainder = %d.\n",
+	printf("datap = %p, remainder = %ld.\n",
 		pending_5380_data, pending_5380_count);
 	scsi_show();
 }
@@ -229,7 +211,7 @@ void
 pdma_cleanup(void)
 {
 	SC_REQ	*reqp = connected;
-	int	bytes, s;
+	int	s;
 
 	s = splbio();
 	PID("pdma_cleanup0");
@@ -342,8 +324,6 @@ void
 ncr5380_irq_intr(p)
 	void	*p;
 {
-	struct ncr_softc	*sc = p;
-
 	PID("irq");
 #if USE_PDMA
 	if (pdma_ready()) {
@@ -377,7 +357,6 @@ ncr5380_drq_intr(p)
 {
 #if USE_PDMA
 extern	int			*nofault, mac68k_buserr_addr;
-	struct ncr_softc	*sc = p;
 	label_t			faultbuf;
 	register int		count;
 	volatile u_int32_t	*long_drq;
@@ -432,8 +411,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
-			printf("pdma %s: count = %d (0x%x) (pending "
-				"count %d)\n",
+			printf("pdma %s: cnt = %d (0x%x) (pending cnt %ld)\n",
 				(pdma_5380_dir == 2) ? "in" : "out",
 				count, count, pending_5380_count);
 			panic("something is wrong");
@@ -591,8 +569,7 @@ transfer_pdma(phasep, data, count)
 	u_long	*count;
 {
 	SC_REQ	*reqp = connected;
-	int	len = *count, i, scsi_timeout = SCSI_TIMEOUT_VAL;
-	int	s, err;
+	int	len = *count, s, scsi_timeout = SCSI_TIMEOUT_VAL;
 
 	if (pdma_5380_dir) {
 		panic("ncrscsi: transfer_pdma called when operation already "
