@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.10 1997/05/01 22:16:24 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.11 1997/06/26 00:27:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -1421,8 +1421,16 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 			if (NCRDMA_ISACTIVE(sc))
 				return 1;
 
+			/*
+			 * Note that this can happen during normal operation
+			 * if we are reselected while using DMA to select
+			 * a target.  If this is the case, don't issue the
+			 * warning.
+			 */
 			if (sc->sc_dleft == 0 &&
-			    (sc->sc_espstat & NCRSTAT_TC) == 0)
+			    (sc->sc_espstat & NCRSTAT_TC) == 0 &&
+			    !((sc->sc_espintr & NCRINTR_RESEL) &&
+			      sc->sc_state == NCR_SELECTING))
 				printf("%s: !TC [intr %x, stat %x, step %d]"
 				       " prevphase %x, resid %x\n",
 					sc->sc_dev.dv_xname,
