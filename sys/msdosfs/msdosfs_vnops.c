@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.59 1997/06/30 20:20:31 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.60 1997/07/30 03:47:12 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1681,8 +1681,6 @@ start:
 	dep->de_lockwaiter = 0;
 	if (dep->de_lockholder != 0)
 		panic("lockholder (%d) != 0", dep->de_lockholder);
-	if (p && p->p_pid == 0)
-		printf("locking by process 0\n");
 	if (p)
 		dep->de_lockholder = p->p_pid;
 	else
