@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.9 2003/07/15 02:43:37 lukem Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.10 2004/12/13 08:39:21 sekiya Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.9 2003/07/15 02:43:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.10 2004/12/13 08:39:21 sekiya Exp $");
 
 #include <sys/param.h>
 
@@ -603,20 +603,22 @@ __asm(".set mips3");
 void
 r5k_sdcache_wbinv_all(void)
 {
-	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_sdcache_size;
 
-	while (va < eva) {
-		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
-		va += (128 * 32);
-	}
+	r5k_sdcache_wbinv_range(MIPS_PHYS_TO_KSEG0(0), mips_sdcache_size);
 }
 
-/* XXX: want wbinv_range_index here instead? */
 void
-r5k_sdcache_wbinv_rangeall(vaddr_t va, vsize_t size)
+r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
-	r5k_sdcache_wbinv_all();
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+	r5k_sdcache_wbinv_range(va, size);
 }
 
 #define	round_page(x)		(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
@@ -625,13 +627,30 @@ r5k_sdcache_wbinv_rangeall(vaddr_t va, vsize_t size)
 void
 r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 {
+	uint32_t ostatus, taglo;
 	vaddr_t eva = round_page(va + size);
+
 	va = trunc_page(va);
+
+	__asm __volatile(
+		".set noreorder		\n\t"
+		".set noat		\n\t"
+		"mfc0 %0, $12		\n\t"
+		"mtc0 $0, $12		\n\t"
+		".set reorder		\n\t"
+		".set at"
+		: "=r"(ostatus));
+
+	__asm __volatile("mfc0 %0, $28" : "=r"(taglo));
+	__asm __volatile("mtc0 $0, $28");
 
 	while (va < eva) {
 		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
 		va += (128 * 32);
 	}
+
+	__asm __volatile("mtc0 %0, $12; nop" :: "r"(ostatus));
+	__asm __volatile("mtc0 %0, $28; nop" :: "r"(taglo));
 }
 
 void
