@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.14 2004/07/09 11:41:26 wiz Exp $	*/
+/*	$NetBSD: checknr.c,v 1.15 2005/02/02 17:14:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.14 2004/07/09 11:41:26 wiz Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.15 2005/02/02 17:14:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ char *knowncmds[MAXCMDS] = {
 "Ev", "FA", "FD", "FE", "FG", "FJ", "FK", "FL", "FN", "FO", "FQ",
 "FS", "FV", "FX", "Fa", "Fc", "Fd", "Fl", "Fn", "Fo", "Ft", "Fx",
 "H" , "HC", "HD", "HM", "HO", "HU", "I" , "ID", "IE", "IH", "IM",
-"IP", "IX", "IZ", "Ic", "It", "KD", "KE", "KF", "KQ", "KS", "LB",
+"IP", "IX", "IZ", "Ic", "In", "It", "KD", "KE", "KF", "KQ", "KS", "LB",
 "LC", "LD", "LE", "LG", "LI", "LP", "Lb", "Li", "MC", "ME", "MF",
 "MH", "ML", "MR", "MT", "ND", "NE", "NH", "NL", "NP", "NS", "Nd",
 "Nm", "No", "Ns", "Nx", "OF", "OH", "OK", "OP", "Oc", "Oo", "Op",
