@@ -1,5 +1,5 @@
-.\"	$NetBSD: altq.9,v 1.1 2001/07/12 12:35:16 itojun Exp $
-.\"	$OpenBSD: altq.9,v 1.2 2001/07/12 12:33:28 itojun Exp $
+.\"	$NetBSD: altq.9,v 1.2 2001/07/12 12:43:21 itojun Exp $
+.\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -335,10 +335,10 @@ could be costly for a complex scheduling algorithm since
 .Fn IFQ_POLL
 needs to run the scheduling algorithm to select the next packet.
 On the other hand,
-.Fn IFQ_EMPTY
+.Fn IFQ_IS_EMPTY
 checks only if there is any packet stored in the queue.
 Another difference is that even when
-.Fn IFQ_EMPTY
+.Fn IFQ_IS_EMPTY
 is
 .Dv FALSE ,
 .Fn IFQ_DEQUEUE
@@ -377,7 +377,7 @@ If the code polls the packet at the head of the queue and actually uses
 the packet before dequeueing it, use
 .Fn IFQ_POLL
 and
-IFQ_DEQUEUE .
+.Fn IFQ_DEQUEUE .
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
@@ -399,12 +399,10 @@ It is guaranteed that
 immediately after
 .Fn IFQ_POLL
 returns the same packet.
-.Po
-They need to be guarded by 
+Note that they need to be guarded by
 .Fn splimp
 if called from outside of
-.Fn if_start
-.Pc .
+.Fn if_start .
 .Ss Eliminating IF_PREPEND
 If the code uses
 .Fn IF_PREPEND ,
