@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_as2201.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_as2201.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
 
 /*
  * refclock_as2201 - clock driver for the Austron 2201A GPS
@@ -10,15 +10,14 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_AS2201)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * This driver supports the Austron 2200A/2201A GPS Receiver with
@@ -302,12 +301,13 @@ as2201_receive(
 	/*
 	 * Timecode format: "yy:ddd:hh:mm:ss.mmm"
 	 */
-	if (sscanf(pp->a_lastcode, "%2d:%3d:%2d:%2d:%2d.%3d", &pp->year,
-		   &pp->day, &pp->hour, &pp->minute, &pp->second, &pp->msec)
+	if (sscanf(pp->a_lastcode, "%2d:%3d:%2d:%2d:%2d.%3ld", &pp->year,
+		   &pp->day, &pp->hour, &pp->minute, &pp->second, &pp->nsec)
 	    != 6) {
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
 	}
+	pp->nsec *= 1000000;
 
 	/*
 	 * Test for synchronization (this is a temporary crock).

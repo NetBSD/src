@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syscall.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_syscall.h,v 1.1.1.2 2003/12/04 16:05:22 drochner Exp $	*/
 
 /*
  * ntp_syscall.h - various ways to perform the ntp_adjtime() and ntp_gettime()
@@ -16,6 +16,7 @@
 # include <sys/timex.h>
 #endif
 
+#ifndef NTP_SYSCALLS_LIBC
 #ifdef NTP_SYSCALLS_STD
 # define ntp_adjtime(t)		syscall(SYS_ntp_adjtime, (t))
 # define ntp_gettime(t)		syscall(SYS_ntp_gettime, (t))
@@ -38,6 +39,11 @@ ntp_gettime(
 	ntv->time = tntx.time;
 	ntv->maxerror = tntx.maxerror;
 	ntv->esterror = tntx.esterror;
+#ifdef NTP_API
+# if NTP_API > 3
+	ntv->tai = tntx.tai;
+# endif
+#endif
 	return(result);
 }
 # else /* !HAVE__ADJTIMEX */
@@ -46,5 +52,6 @@ ntp_gettime(
 #  endif
 # endif /* !HAVE_ADJTIMEX */
 #endif /* !NTP_SYSCALLS_STD */
+#endif /* !NTP_SYSCALLS_LIBC */
 
 #endif /* NTP_SYSCALL_H */

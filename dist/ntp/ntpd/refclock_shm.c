@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory 
@@ -15,12 +15,6 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_SHM)
 
-#undef fileno   
-#include <ctype.h>
-#undef fileno   
-#include <sys/time.h>
-#undef fileno   
-
 #include "ntpd.h"
 #undef fileno   
 #include "ntp_io.h"
@@ -31,15 +25,16 @@
 #undef fileno   
 #include "ntp_stdlib.h"
 
+#undef fileno   
+#include <ctype.h>
+#undef fileno   
+
 #ifndef SYS_WINNT
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <assert.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
+# include <sys/ipc.h>
+# include <sys/shm.h>
+# include <assert.h>
+# include <unistd.h>
+# include <stdio.h>
 #endif
 
 /*
@@ -94,37 +89,24 @@ struct shmTime {
 	int    valid;
 	int    dummy[10]; 
 };
+
+struct shmTime *getShmTime(int);
+
 struct shmTime *getShmTime (int unit) {
 #ifndef SYS_WINNT
-	extern char *sys_errlist[ ];
-	extern int sys_nerr;
 	int shmid=0;
 
 	assert (unit<10); /* MAXUNIT is 4, so should never happen */
 	shmid=shmget (0x4e545030+unit, sizeof (struct shmTime), 
 		      IPC_CREAT|(unit<2?0700:0777));
 	if (shmid==-1) { /*error */
-		char buf[20];
-		char *pe=buf;
-		if (errno<sys_nerr)
-		    pe=sys_errlist[errno];
-		else {
-			sprintf (buf,"errno=%d",errno);
-		}
-		msyslog(LOG_ERR,"SHM shmget (unit %d): %s",unit,pe);
+		msyslog(LOG_ERR,"SHM shmget (unit %d): %s",unit,strerror(errno));
 		return 0;
 	}
 	else { /* no error  */
 		struct shmTime *p=(struct shmTime *)shmat (shmid, 0, 0);
 		if ((int)(long)p==-1) { /* error */
-			char buf[20];
-			char *pe=buf;
-			if (errno<sys_nerr)
-			    pe=sys_errlist[errno];
-			else {
-				sprintf (buf,"errno=%d",errno);
-			}
-			msyslog(LOG_ERR,"SHM shmat (unit %d): %s",unit,pe);
+			msyslog(LOG_ERR,"SHM shmat (unit %d): %s",unit,strerror(errno));
 			return 0;
 		}
 		return p;
@@ -172,7 +154,6 @@ struct shmTime *getShmTime (int unit) {
 		return p;
 	}
 #endif
-	return 0;
 }
 /*
  * shm_start - attach to shared memory
@@ -224,7 +205,8 @@ shm_shutdown(
 	pp = peer->procptr;
 	up = (struct shmTime *)pp->unitptr;
 #ifndef SYS_WINNT
-	shmdt (up);
+	/* HMS: shmdt()wants char* or const void * */
+	(void) shmdt (up);
 #else
 	UnmapViewOfFile (up);
 #endif
@@ -287,6 +269,7 @@ shm_poll(
 		up->valid=0;
 		if (ok) {
 			TVTOTS(&tvr,&pp->lastrec);
+			pp->lastrec.l_ui += JAN_1970;
 			/* pp->lasttime = current_time; */
 			pp->polls++;
 			t=gmtime (&tvt.tv_sec);
@@ -294,8 +277,7 @@ shm_poll(
 			pp->hour=t->tm_hour;
 			pp->minute=t->tm_min;
 			pp->second=t->tm_sec;
-			pp->msec=0;
-			pp->usec=tvt.tv_usec;
+			pp->nsec=tvt.tv_usec * 1000;
 			peer->precision=up->precision;
 			pp->leap=up->leap;
 		} 
@@ -307,13 +289,16 @@ shm_poll(
 	}
 	else {
 		refclock_report(peer, CEVNT_TIMEOUT);
+		/*
 		msyslog (LOG_NOTICE, "SHM: no new value found in shared memory");
+		*/
 		return;
 	}
 	if (!refclock_process(pp)) {
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
 	}
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
 }
 

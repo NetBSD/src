@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arbiter.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_arbiter.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
 
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite
@@ -11,14 +11,13 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_ARBITER)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * This driver supports the Arbiter 1088A/B Satellite Controlled Clock.
@@ -422,8 +421,9 @@ arb_poll(
 		refclock_report(peer, CEVNT_TIMEOUT);
 		return;
 	}
-	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 }
 
 #else

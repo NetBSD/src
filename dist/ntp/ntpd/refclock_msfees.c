@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_msfees.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_msfees.c,v 1.1.1.2 2003/12/04 16:05:28 drochner Exp $	*/
 
 /* refclock_ees - clock driver for the EES M201 receiver */
 
@@ -13,16 +13,13 @@
  * (hence probably didn't work).  Still in RCS file at cl.cam.ac.uk
  */
 
-#include <ctype.h>
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_calendar.h"
+
+#include <ctype.h>
 #if defined(HAVE_BSD_TTYS)
 #include <sgtty.h>
 #endif /* HAVE_BSD_TTYS */
@@ -104,7 +101,7 @@
  * On the next minute it steps forward again :-(
  * This is typically 16.5uS/S then 3975uS at the 4min re-sync,
  * or 9.5uS/S then 3990.5uS at a 7min re-sync,
- * at which point it may loose the "00" second time stamp.
+ * at which point it may lose the "00" second time stamp.
  * I assume that the most accurate time is just AFTER the re-sync.
  * Hence remember the last cycle interval,
  *
@@ -725,7 +722,7 @@ ees_receive(
 			/* Incomplete.  Wait for more. */
 			if (debug & DB_LOG_AWAITMORE)
 			    msyslog(LOG_INFO,
-				    "I: ees clock %d: %x == %x: await more",
+				    "I: ees clock %d: %p == %p: await more",
 				    ees->unit, dpt, dpend);
 			return;
 		}
@@ -1289,7 +1286,7 @@ ees_process(
 	if (ees->dump_vals) dump_buf(coffs, 0, samples, "Raw  data  is:");
 
 	/* Sort the offsets, trim off the extremes, then choose one. */
-	qsort((char *) coffs, (u_int)samples, sizeof(l_fp), offcompare);
+	qsort((char *) coffs, (size_t)samples, sizeof(l_fp), offcompare);
 
 	noff = samples;
 	i = 0;

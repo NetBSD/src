@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tpro.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_tpro.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_tpro - clock driver for the KSI/Odetics TPRO-S IRIG-B reader
@@ -10,16 +10,15 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_TPRO)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "sys/tpro.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /*
  * This driver supports the KSI/Odetecs TPRO-S IRIG-B reader and TPRO-
@@ -167,6 +166,11 @@ tpro_poll(
 	 * can't use the sec/usec conversion produced by the driver,
 	 * since the year may be suspect. All format error checking is
 	 * done by the sprintf() and sscanf() routines.
+	 *
+	 * Note that the refclockproc usec member has now become nsec.
+	 * We could either multiply the read-in usec value by 1000 or
+	 * we could pad the written string appropriately and read the
+	 * resulting value in already scaled.
 	 */
 	sprintf(pp->a_lastcode,
 	    "%1x%1x%1x %1x%1x:%1x%1x:%1x%1x.%1x%1x%1x%1x%1x%1x %1x",
@@ -182,11 +186,12 @@ tpro_poll(
 		   pp->a_lastcode);
 #endif
 	if (sscanf(pp->a_lastcode, "%3d %2d:%2d:%2d.%6ld", &pp->day,
-	    &pp->hour, &pp->minute, &pp->second, &pp->usec)
+	    &pp->hour, &pp->minute, &pp->second, &pp->nsec)
 	    != 5) {
 		refclock_report(peer, CEVNT_BADTIME);
 		return;
 	}
+	pp->nsec *= 1000;	/* Convert usec to nsec */
 	if (!tp->status & 0x3)
 		pp->leap = LEAP_NOTINSYNC;
 	else
@@ -201,6 +206,8 @@ tpro_poll(
 		refclock_report(peer, CEVNT_TIMEOUT);
 		return;
 	}
+	refclock_receive(peer);
+	pp->lastref = pp->lastrec;
 	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer);
 	peer->burst = NSTAGE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dolfptoa.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: dolfptoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * dolfptoa - do the grunge work of converting an l_fp number to decimal
@@ -15,7 +15,7 @@ dolfptoa(
 	u_long fpi,
 	u_long fpv,
 	int neg,
-	int ndec,
+	short ndec,
 	int msec
 	)
 {
@@ -61,8 +61,8 @@ dolfptoa(
 
 		do {
 			stmp = swork;
-			swork /= sten;
-			stmp -= (swork<<3) + (swork<<1);
+			swork = (u_short) (swork/sten);
+			stmp = (u_short)(stmp - ((swork<<3) + (swork<<1)));
 			*--cp = (u_char)stmp;
 		} while (swork != 0);
 	}
