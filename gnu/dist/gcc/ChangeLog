@@ -1,3 +1,27 @@
+2003-10-16  Release Manager
+
+	* GCC 3.3.2 Released.
+
+2003-09-09  Alan Modra  <amodra@bigpond.net.au>
+
+	* libtool.m4 (LD): Correct powerpc64 host match.
+
+2003-08-30  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* MAINTAINERS: Update my e-mail address.
+
+2003-08-20  Bernardo Innocenti  <bernie@develer.com>
+
+	* MAINTAINERS (Write After Approval): Add myself.
+
+2003-08-15  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	* MAINTAINERS (Write After Approval): Add myself.
+
+2003-08-08  Kean Johnston  <jkj@sco.com>
+
+	* configure.in (sco3.2v5*): Enable building of libgcj
+
 2003-08-04  Release Manager
 
 	* GCC 3.3.1 Released.
