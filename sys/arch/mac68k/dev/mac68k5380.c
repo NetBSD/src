@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.9 1995/09/16 18:22:33 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.10 1995/09/23 01:11:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/dkstat.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
 #include <scsi/scsi_all.h>
@@ -71,6 +72,7 @@
 #define claimed_dma()		1
 #define reconsider_dma()
 #define	USE_PDMA	1	/* Use special pdma-transfer function	*/
+#define MIN_PHYS	0x2000	/* pdma space w/ /DSACK is only 0x2000  */
 
 #define	ENABLE_NCR5380(sc)	cur_softc = sc;
 
@@ -174,6 +176,7 @@ u_char	*pending_5380_data;
 u_long	pending_5380_count;
 
 /* #define DEBUG 1 	Maybe we try with this off eventually. */
+
 #if DEBUG
 int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
@@ -183,7 +186,7 @@ char	*pdma_5380_state="";
 void
 pdma_stat()
 {
-	printf("PDMA SCSI: %d xfers completed for %d bytes, pending = %d.\n",
+	printf("PDMA SCSI: %d xfers completed for %d bytes.\n",
 		pdma_5380_sends, pdma_5380_bytes);
 	printf("pdma_5380_dir = %d.\n",
 		pdma_5380_dir);
@@ -220,6 +223,11 @@ pdma_cleanup(void)
 	 * Reset DMA mode.
 	 */
 	SET_5380_REG(NCR5380_MODE, GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
+
+	/*
+	 * Clear any pending interrupts.
+	 */
+	scsi_clr_ipend();
 
 	/*
 	 * Tell interrupt functions that DMA has ended.
@@ -286,81 +294,217 @@ ncr5380_irq_intr(p)
 	}
 }
 
-#if USE_PDMA
 /*
- * Macroed for readability.
+ * This is the meat of the PDMA transfer.
+ * When we get here, we shove data as fast as the mac can take it.
+ * We depend on several things:
+ *   * All macs after the Mac Plus that have a 5380 chip should have a general
+ *     logic IC that handshakes data for blind transfers.
+ *   * If the SCSI controller finishes sending/receiving data before we do,
+ *     the same general logic IC will generate a /BERR for us in short order.
+ *   * The fault address for said /BERR minus the base address for the
+ *     transfer will be the amount of data that was actually written.
+ *
+ * We use the nofault flag and the setjmp/longjmp in locore.s so we can
+ * detect and handle the bus error for early termination of a command.
+ * This is usually caused by a disconnecting target.
  */
-#define DONE   (   (GET_5380_REG(NCR5380_DMSTAT) & SC_ACK_STAT) \
-		|| (GET_5380_REG(NCR5380_IDSTAT) &    SC_S_REQ) )
-#endif
-
 void
 ncr5380_drq_intr(p)
 	void	*p;
 {
-	struct ncr_softc	*sc = p;
 #if USE_PDMA
+extern	int			*nofault, mac68k_buserr_addr;
+	struct ncr_softc	*sc = p;
+	label_t			faultbuf;
+	register int		count;
+	volatile u_int32_t	*long_drq;
+	u_int32_t		*long_data;
+	volatile u_int8_t	*drq;
+	u_int8_t		*data;
+
+	/*
+	 * If we're not ready to xfer data, just return.
+	 */
+	if (   !(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
+	    || !pdma_5380_dir)
+		return;
 
 #if DEBUG
 	pdma_5380_state = "got drq interrupt.";
 #endif
-	if (pdma_5380_dir == 2) { /* Data In */
-		/*
-		 * Can we "unroll" this any?  I don't think so--in fact, I
-		 * question the safety of using long word transfers.  The
-		 * device could theoretically disconnect at any time.
-		 * The long word xfer is controlled by the Mac's circuitry,
-		 * and we can't know how much it transferred if the device
-		 * decides to disconnect on us.
-		 * If it does disconnect in the middle of a long xfer, it
-		 * should get a bus error--we might be able to derive from
-		 * that bus error where the transaction stopped, but I
-		 * don't want to think about that...
-		 */
-		while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-			if (pending_5380_count) {
-				*pending_5380_data++ = *ncr_5380_with_drq;
-				pending_5380_count --;
-			} else {
+
+	/*
+	 * Setup for a possible bus error caused by SCSI controller
+	 * switching out of DATA-IN/OUT before we're done with the
+	 * current transfer.
+	 */
+	nofault = (int *) &faultbuf;
+
+	if (setjmp((label_t *) nofault)) {
+		nofault = (int *) 0;
 #if DEBUG
-				pdma_5380_state = "done in xfer in.";
+		pdma_5380_state = "buserr in xfer.";
 #endif
-				SET_5380_REG(NCR5380_MODE,
-				    GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
+		count = (  (u_long) mac68k_buserr_addr
+			 - (u_long) ncr_5380_with_drq);
+		if ((count < 0) || (count > pending_5380_count)) {
+			printf("pdma in: count = %d (0x%x) (pending "
+				"count %d)\n", count, count,
+				pending_5380_count);
+			panic("something is wrong");
+		}
+
+		pending_5380_data += count;
+		pending_5380_count -= count;
+
+#if DEBUG
+		pdma_5380_state = "handled bus error in xfer.";
+#endif
+		mac68k_buserr_addr = 0;
+		return;
+	}
+
+	if (pdma_5380_dir == 2) { /* Data In */
+		int	resid;
+
+		/*
+		 * Get the dest address aligned.
+		 */
+		resid = count = 4 - (((int) pending_5380_data) & 0x3);
+		if (count < 4) {
+			data = (u_int8_t *) pending_5380_data;
+			drq = (u_int8_t *) ncr_5380_with_drq;
+			while (count) {
+#define R1	*data++ = *drq++
+				R1; count--;
+#undef R1
+			}
+			pending_5380_data += resid;
+			pending_5380_count -= resid;
+		}
+
+		/*
+		 * Get ready to start the transfer.
+		 */
+		count = pending_5380_count;
+		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
+		long_data = (u_int32_t *) pending_5380_data;
+
+#define R4	*long_data++ = *long_drq++
+		while ( count >= 512 ) {
+			if (!(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)) {
+				nofault = (int *) 0;
+
+				pending_5380_data += (pending_5380_count-count);
+				pending_5380_count = count;
+#if DEBUG
+				pdma_5380_state = "drq low";
+#endif
 				return;
 			}
-#if DEBUG
-		pdma_5380_state = "handled drq interrupt.";
-#endif
-		return;
-	} else if (pdma_5380_dir == 1) {
-		/*
-		 * See comment on pdma_xfer_in(), above.
-		 */
-		while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-			if (pending_5380_count) {
-				*ncr_5380_with_drq = *pending_5380_data++;
-				pending_5380_count --;
-			} else {
-#if DEBUG
-				pdma_5380_state = "done in xfer out--waiting.";
-#endif
-				while (!DONE);
-#if DEBUG
-				pdma_5380_state = "really done in xfer out.";
-#endif
-				pdma_cleanup();
-				return;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;	/* 64 */
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;	/* 128 */
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;	/* 256 */
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;
+			R4; R4; R4; R4; R4; R4; R4; R4;	/* 512 */
+			count -= 512;
 		}
-#if DEBUG
+		while (count >= 4) {
+			R4; count -= 4;
+		}
+#undef R4
+		data = (u_int8_t *) long_data;
+		drq = (u_int8_t *) long_drq;
+		while (count) {
+#define R1	*data++ = *drq++
+			R1; count--;
+#undef R1
+		}
 	} else {
-		pdma_5380_state = "drq when out of phase.";
-		return;
-#endif
+		int	resid;
+
+		/*
+		 * Get the source address aligned.
+		 */
+		resid = count = 4 - (((int) pending_5380_data) & 0x3);
+		if (count < 4) {
+			data = (u_int8_t *) pending_5380_data;
+			drq = (u_int8_t *) ncr_5380_with_drq;
+			while (count) {
+#define W1	*drq++ = *data++
+				W1; count--;
+#undef W1
+			}
+			pending_5380_data += resid;
+			pending_5380_count -= resid;
+		}
+
+		/*
+		 * Get ready to start the transfer.
+		 */
+		count = pending_5380_count;
+		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
+		long_data = (u_int32_t *) pending_5380_data;
+
+#define W4	*long_drq++ = *long_data++
+		while ( count >= 64 ) {
+			W4; W4; W4; W4; W4; W4; W4; W4;
+			W4; W4; W4; W4; W4; W4; W4; W4;
+			count -= 64;
+		}
+		while (count >= 4) {
+			W4; count -= 4;
+		}
+#undef W4
+		data = (u_int8_t *) long_data;
+		drq = (u_int8_t *) long_drq;
+		while (count) {
+#define W1	*drq++ = *data++
+			W1; count--;
+		}
+#undef W1
 	}
+
+	/*
+	 * OK.  No bus error occurred above.  Clear the nofault flag
+	 * so we no longer short-circuit bus errors.
+	 */
+	nofault = (int *) 0;
+
 #if DEBUG
-	pdma_5380_state = "handled drq interrupt.";
+	pdma_5380_state = "done in xfer--waiting.";
 #endif
+
+	/*
+	 * Is this necessary?
+	 */
+	while (!(   (GET_5380_REG(NCR5380_DMSTAT) & SC_ACK_STAT)
+		 || (GET_5380_REG(NCR5380_IDSTAT) &    SC_S_REQ) ));
+
+	/*
+	 * Update pointers for pdma_cleanup().
+	 */
+	pending_5380_data += pending_5380_count;
+	pending_5380_count = 0;
+
+#if DEBUG
+	pdma_5380_state = "done in xfer.";
+#endif
+
+	pdma_cleanup();
+	return;
 #endif	/* if USE_PDMA */
 }
 
@@ -386,29 +530,29 @@ transfer_pdma(phasep, data, count)
 	pdma_5380_state = "in transfer_pdma.";
 #endif
 
-	scsi_idisable();
-
 	/*
- 	 * Don't bother with PDMA if we can't sleep.
+ 	 * Don't bother with PDMA if we can't sleep or for small transfers.
  	 */
 	if (reqp->dr_flag & DRIVER_NOINT) {
 #if DEBUG
-		pdma_5380_state = "using transfer_pio.";
+		pdma_5380_state = "pdma, actually using transfer_pio.";
 #endif
 		transfer_pio(phasep, data, count, 0);
 		return -1;
 	}
 
 	/*
-	 * Match phases with target.
-	 */
-	SET_5380_REG(NCR5380_TCOM, *phasep);
-
-	/*
 	 * We are probably already at spl2(), so this is likely a no-op.
 	 * Paranoia.
 	 */
 	s = splbio();
+
+	scsi_idisable();
+
+	/*
+	 * Match phases with target.
+	 */
+	SET_5380_REG(NCR5380_TCOM, *phasep);
 
 	/*
 	 * Clear pending interrupts.
@@ -418,14 +562,12 @@ transfer_pdma(phasep, data, count)
 	/*
 	 * Wait until target asserts BSY.
 	 */
-	while ( ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) == 0) &&
-		((GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) == 0) &&
-		((GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) == 0) &&
-		 (--scsi_timeout) );
+	while (    ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY) == 0)
+		&& (--scsi_timeout) );
 	if (!scsi_timeout) {
 #if DIAGNOSTIC
 		printf("scsi timeout: waiting for BSY in %s.\n",
-			(pdma_5380_dir == 1) ? "pdma_out" : "pdma_in");
+			(*phasep == PH_DATAOUT) ? "pdma_out" : "pdma_in");
 #endif
 		goto scsi_timeout_error;
 	}
@@ -460,19 +602,12 @@ transfer_pdma(phasep, data, count)
 		panic("Unexpected phase in transfer_pdma.\n");
 	case PH_DATAOUT:
 		pdma_5380_dir = 1;
+		SET_5380_REG(NCR5380_DMSTAT, 0);
 		break;
 	case PH_DATAIN:
 		pdma_5380_dir = 2;
-		break;
-	}
-
-	/*
-	 * Initiate the DMA transaction--sending or receiving.
-	 */
-	if (pdma_5380_dir == 1) {
-		SET_5380_REG(NCR5380_DMSTAT, 0);
-	} else {
 		SET_5380_REG(NCR5380_IRCV, 0);
+		break;
 	}
 
 	/*
