@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/03/01 13:09:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,9 +14,15 @@ SRCS=		${G_OBJS:Nitbl-[pl]*:Nm68k-parse.o:.o=.c} \
 		${G_OBJS:Mm68k-parse.o:.o=.y}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${DIST}/gas -I${DIST}/gas/config
+CPPFLAGS+=	-I${DIST}
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
+
+OPCODESOBJ!=	cd ${TOP}/lib/libopcodes && ${PRINTOBJDIR}
+LDADD+=		-L${OPCODESOBJ} -lopcodes
+DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
 
 BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/09/17 23:18:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2003/03/01 13:08:56 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -16,6 +16,7 @@ SHLIB_MINOR=	0
 SUBDIR=		include io config
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
+GNUHOSTDIST=	${DIST}
 
 SRCS=		${G_OBJS:.o=.cc} ${G_LIBIBERTY_OBJS:.o=.c}
 INCS=		_G_config.h
