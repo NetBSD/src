@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.8 1998/08/01 20:11:39 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.9 1998/10/01 19:10:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,8 +50,6 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
-
-#include <machine/mouse.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
