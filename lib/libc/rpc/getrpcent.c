@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.17 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.18 2001/01/04 14:57:17 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.17 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.18 2001/01/04 14:57:17 lukem Exp $");
 #endif
 #endif
 
@@ -170,7 +170,7 @@ getrpcent()
 		return(NULL);
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
-        if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
+	if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
 		return (NULL);
 	return (interpret(d->line, strlen(d->line)));
 }
