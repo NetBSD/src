@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11 2004/12/06 13:28:34 wiz Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11.2.1 2004/12/29 17:53:48 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,27 +38,27 @@
 
 #ifndef _SYS_DEV_AUCONV_H_
 #define _SYS_DEV_AUCONV_H_
+#include <dev/audio_if.h>
+
+/* common routines for stream_filter_t */
+extern void stream_filter_set_fetcher(stream_filter_t *, stream_fetcher_t *);
+extern void stream_filter_set_inputbuffer(stream_filter_t *, audio_stream_t *);
+extern stream_filter_t *auconv_nocontext_filter_factory
+	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+extern void auconv_nocontext_filter_dtor(struct stream_filter *);
+extern u_int auconv_normalize_encoding(u_int, u_int);
 
 /* Convert between signed and unsigned. */
-extern void change_sign8(void *, u_char *, int);
-extern void change_sign16_le(void *, u_char *, int);
-extern void change_sign16_be(void *, u_char *, int);
+extern stream_filter_factory_t change_sign8;
+extern stream_filter_factory_t change_sign16;
 /* Convert between little and big endian. */
-extern void swap_bytes(void *, u_char *, int);
-extern void swap_bytes_change_sign16_le(void *, u_char *, int);
-extern void swap_bytes_change_sign16_be(void *, u_char *, int);
-extern void change_sign16_swap_bytes_le(void *, u_char *, int);
-extern void change_sign16_swap_bytes_be(void *, u_char *, int);
+extern stream_filter_factory_t swap_bytes;
+extern stream_filter_factory_t swap_bytes_change_sign16;
 /* Byte expansion/contraction */
-extern void linear8_to_linear16_le(void *, u_char *, int);
-extern void linear8_to_linear16_be(void *, u_char *, int);
-extern void linear16_to_linear8_le(void *, u_char *, int);
-extern void linear16_to_linear8_be(void *, u_char *, int);
-/* Byte expansion/contraction with sign change */
-extern void ulinear8_to_slinear16_le(void *, u_char *, int);
-extern void ulinear8_to_slinear16_be(void *, u_char *, int);
-extern void slinear16_to_ulinear8_le(void *, u_char *, int);
-extern void slinear16_to_ulinear8_be(void *, u_char *, int);
+extern stream_filter_factory_t linear8_to_linear16;
+extern stream_filter_factory_t linear16_to_linear8;
+/* sampling rate conversion (aurateconv.c) */
+extern stream_filter_factory_t aurateconv;
 
 struct audio_format {
 	/**
@@ -140,7 +140,6 @@ struct audio_format {
 #define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
 struct audio_encoding_set;
-struct audio_params;
 extern int auconv_set_converter(const struct audio_format *, int,
 				int, struct audio_params *, int);
 extern int auconv_create_encodings(const struct audio_format *, int,
