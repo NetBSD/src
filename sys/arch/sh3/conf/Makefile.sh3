@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.8 2001/01/03 18:14:47 itojun Exp $
+#	$NetBSD: Makefile.sh3,v 1.9 2001/01/04 07:55:32 itojun Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,9 @@ STRIP?=	strip
 TSORT?=	tsort -q
 OBJCOPY?=objcopy
 
-COPTS?=	-O2
+# pkgsrc/cross/sh* dies with -O2, use -O1 for now
+#COPTS?=	-O2
+COPTS?=	-O1
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
