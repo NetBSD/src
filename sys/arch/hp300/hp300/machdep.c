@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 1996/04/27 00:39:59 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 1996/05/17 15:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,6 +134,61 @@ int	convasize;		/* size of mapped console device */
 int	conforced;		/* console has been forced */
 
 /*
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * XXX At the moment, delay_divisor is based on cpuspeed,
+ * XXX which is set according to CPU model.  Eventually,
+ * XXX we should calibrate delay_divisor, and calculate
+ * XXX the actual CPU speed.
+ */
+int	cpuspeed = 0;		/* relative cpu speed -- can be patched */
+int	delay_divisor = 40;	/* default to 50MHz CPU */
+
+void	hp300_calibrate_delay __P((void));
+
+/*
+ * Calibrate delay_divisor.  Right now, this is just based on CPU
+ * speeds of known models.
+ */
+void
+hp300_calibrate_delay()
+{
+
+	/*
+	 * XXX The 16MHz CPUs are actually 16.67 ... should we round
+	 * XXX these up to 17?
+	 */
+
+	if (cpuspeed == 0) {
+		switch (machineid) {
+		case HP_320:
+		case HP_330:
+		case HP_340:
+			cpuspeed = 16;
+			break;
+		case HP_350:
+		case HP_360:
+		case HP_380:
+			cpuspeed = 25;
+			break;
+		case HP_370:
+		case HP_433:
+			cpuspeed = 33;
+			break;
+		case HP_375:
+			cpuspeed = 50;
+			break;
+		default:	/* assume the fastest */
+			cpuspeed = 50;
+			break;
+		}
+	}
+
+	delay_divisor = 2048 / cpuspeed;
+}
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -150,38 +205,6 @@ consinit()
 	convasize = 0;
 	conforced = 0;
 	conscode = 1024;		/* invalid */
-
-	/*
-	 * Set cpuspeed immediately since hp300_cninit() called routines
-	 * might use delay.  Note that we only set it if a custom value
-	 * has not already been specified.
-	 */
-	if (cpuspeed == 0) {
-		switch (machineid) {
-		case HP_320:
-		case HP_330:
-		case HP_340:
-			cpuspeed = MHZ_16;
-			break;
-		case HP_350:
-		case HP_360:
-		case HP_380:
-			cpuspeed = MHZ_25;
-			break;
-		case HP_370:
-		case HP_433:
-			cpuspeed = MHZ_33;
-			break;
-		case HP_375:
-			cpuspeed = MHZ_50;
-			break;
-		default:	/* assume the fastest */
-			cpuspeed = MHZ_50;
-			break;
-		}
-		if (mmutype == MMU_68040)
-			cpuspeed *= 2;	/* XXX */
-	}
 
 	/*
 	 * Initialize the DIO resource map.
@@ -594,6 +617,7 @@ identifycpu()
 	}
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
+	printf("delay constant for %dMHz cpu: %d\n", cpuspeed, delay_divisor);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
