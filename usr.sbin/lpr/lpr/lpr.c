@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.11 1996/08/10 20:09:19 explorer Exp $	*/
+/*	$NetBSD: lpr.c,v 1.12 1996/10/25 22:07:53 explorer Exp $	*/
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -294,7 +294,7 @@ main(argc, argv)
 	/*
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
-	(void) sprintf(buf, "%s/%s", SD, LO);
+	(void) snprintf(buf, BUFSIZ, "%s/%s", SD, LO);
 	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		fatal2("Printer queue is disabled");
 	/*
@@ -339,7 +339,8 @@ main(argc, argv)
 			continue;	/* file unreasonable */
 
 		if (sflag && (cp = linked(arg)) != NULL) {
-			(void) sprintf(buf, "%d %d", statb.st_dev, statb.st_ino);
+			(void) snprintf(buf, BUFSIZ,
+					"%d %d", statb.st_dev, statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
 				card('T', title ? title : arg);
@@ -497,6 +498,9 @@ card(c, p2)
 	char buf[BUFSIZ];
 	register char *p1 = buf;
 	register int len = 2;
+
+	if (strlen(p2) > BUFSIZ - 2)
+	  errx(1, "Internal error:  String longer than %d", BUFSIZ);
 
 	*p1++ = c;
 	while ((c = *p2++) != '\0') {
@@ -693,7 +697,7 @@ mktemps()
 	char buf[BUFSIZ];
 	char *lmktemp();
 
-	(void) sprintf(buf, "%s/.seq", SD);
+	(void) snprintf(buf, BUFSIZ, "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0) {
 		printf("%s: cannot create %s\n", name, buf);
@@ -719,7 +723,7 @@ mktemps()
 	inchar = strlen(SD) + 3;
 	n = (n + 1) % 1000;
 	(void) lseek(fd, (off_t)0, 0);
-	sprintf(buf, "%03d\n", n);
+	snprintf(buf, BUFSIZ, "%03d\n", n);
 	(void) write(fd, buf, strlen(buf));
 	(void) close(fd);	/* unlocks as well */
 }
@@ -736,7 +740,7 @@ lmktemp(id, num, len)
 
 	if ((s = malloc(len)) == NULL)
 		fatal2("out of memory");
-	(void) sprintf(s, "%s/%sA%03d%s", SD, id, num, host);
+	(void) snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
 	return(s);
 }
 
