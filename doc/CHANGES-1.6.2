@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.22 2003/06/16 13:38:11 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.23 2003/06/16 13:42:18 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -359,3 +359,9 @@ usr.bin/window/wwiomux.c			1.8
 	The visual effect under vi(1) was even more impressive. ;-)
 	This bug was actually introduced inadvertantly in 1995 in rev 1.4.
 	[aymeric, ticket #1252]
+
+lib/libkvm/kvm.c				1.65.4.2
+
+	Set the close-on-exec bit on all file descriptors we open. Inspired
+	by a FreeBSD security advisory.
+	[david, ticket #1255]
