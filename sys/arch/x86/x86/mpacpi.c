@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.23 2004/04/25 11:25:35 tron Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.24 2004/05/21 16:15:03 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.23 2004/04/25 11:25:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.24 2004/05/21 16:15:03 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -88,25 +88,21 @@ struct mpacpi_walk_status {
 	struct acpi_softc *mpw_acpi;
 };
 
-TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
+static TAILQ_HEAD(, mpacpi_pcibus) mpacpi_pcibusses;
 
 #endif
 
-int mpacpi_print(void *, const char *);
-int mpacpi_match(struct device *, struct cfdata *, void *);
+static int mpacpi_print(void *, const char *);
+static int mpacpi_match(struct device *, struct cfdata *, void *);
 
-/*
- * acpi_madt_walk callbacks
- */
+/* acpi_madt_walk callbacks */
 static ACPI_STATUS mpacpi_count(APIC_HEADER *, void *);
 static ACPI_STATUS mpacpi_config_cpu(APIC_HEADER *, void *);
 static ACPI_STATUS mpacpi_config_ioapic(APIC_HEADER *, void *);
 static ACPI_STATUS mpacpi_nonpci_intr(APIC_HEADER *, void *);
 
 #if NPCI > 0
-/*
- * Callbacks for the device namespace walk.
- */
+/* Callbacks for the ACPI namespace walk */
 static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, UINT32, void *, void **);
 static int mpacpi_pcircount(struct mpacpi_pcibus *);
 static int mpacpi_pciroute(struct mpacpi_pcibus *);
@@ -121,9 +117,9 @@ static void mpacpi_config_irouting(struct acpi_softc *);
 static void mpacpi_print_intr(struct mp_intr_map *);
 static void mpacpi_print_isa_intr(int);
 
-int mpacpi_nioapic;
-int mpacpi_ncpu;
-int mpacpi_nintsrc;
+int mpacpi_nioapic;			/* number of ioapics */
+int mpacpi_ncpu;			/* number of cpus */
+int mpacpi_nintsrc;			/* number of non-device interrupts */
 
 #if NPCI > 0
 int mpacpi_npci;
@@ -136,7 +132,7 @@ static int mpacpi_npciknown;
 static int mpacpi_intr_index;
 static paddr_t mpacpi_lapic_base = LAPIC_BASE;
 
-int
+static int
 mpacpi_print(void *aux, const char *pnp)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
@@ -145,7 +141,7 @@ mpacpi_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 mpacpi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
@@ -303,7 +299,6 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 			caa.cpu_func = &mp_cpu_funcs;
 			config_found_sm(parent, &caa, mpacpi_print,
 			    mpacpi_match);
-
 		}
 	}
 	return AE_OK;
@@ -628,8 +623,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 #endif
 
 /*
- * Set up the interrupt config lists, in the same format as the mpbios
- * does.
+ * Set up the interrupt config lists, in the same format as the mpbios does.
  */
 static void
 mpacpi_config_irouting(struct acpi_softc *acpi)
@@ -826,7 +820,7 @@ mpacpi_find_interrupts(void *self)
 {
 	ACPI_OBJECT_LIST arglist;
 	ACPI_OBJECT arg;
-	ACPI_STATUS ret;
+	ACPI_STATUS rv;
 	struct acpi_softc *acpi = self;
 	int i;
 
@@ -852,8 +846,8 @@ mpacpi_find_interrupts(void *self)
 	arglist.Pointer = &arg;
 	arg.Type = ACPI_TYPE_INTEGER;
 	arg.Integer.Value = 1;	/* I/O APIC mode (0 = PIC, 2 = IOSAPIC) */
-	ret = AcpiEvaluateObject(NULL, "\\_PIC", &arglist, NULL);
-	if (ACPI_FAILURE(ret)) {
+	rv = AcpiEvaluateObject(NULL, "\\_PIC", &arglist, NULL);
+	if (ACPI_FAILURE(rv)) {
 		if (mp_verbose)
 			printf("mpacpi: switch to APIC mode failed\n");
 		return 0;
