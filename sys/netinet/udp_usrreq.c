@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.107 2003/08/22 21:53:06 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.108 2003/08/22 22:00:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.107 2003/08/22 21:53:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.108 2003/08/22 22:00:38 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -905,13 +905,6 @@ udp_output(m, va_alist)
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	udpstat.udps_opackets++;
-
-#ifdef IPSEC
-	if (ipsec_setsocket(m, inp->inp_socket) != 0) {
-		error = ENOBUFS;
-		goto release;
-	}
-#endif /*IPSEC*/
 
 	return (ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),

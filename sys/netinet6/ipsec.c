@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.72 2003/08/22 06:22:21 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.73 2003/08/22 22:00:40 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.72 2003/08/22 06:22:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.73 2003/08/22 22:00:40 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3413,44 +3413,6 @@ ipsec_optaux(m, mtag)
 	aux = (struct ipsecaux *)(mtag + 1);
 	if (!aux->so && !aux->sp)
 		ipsec_delaux(m);
-}
-
-int
-ipsec_setsocket(m, so)
-	struct mbuf *m;
-	struct socket *so;
-{
-	struct m_tag *mtag;
-	struct ipsecaux *aux;
-
-	/* if so == NULL, don't insist on getting the aux mbuf */
-	if (so) {
-		mtag = ipsec_addaux(m);
-		if (mtag == NULL)
-			return ENOBUFS;
-	} else
-		mtag = ipsec_findaux(m);
-	if (mtag != NULL) {
-		aux = (struct ipsecaux *)(mtag + 1);
-		aux->so = so;
-	}
-	ipsec_optaux(m, mtag);
-	return 0;
-}
-
-struct socket *
-ipsec_getsocket(m)
-	struct mbuf *m;
-{
-	struct m_tag *mtag;
-	struct ipsecaux *aux;
-
-	mtag = ipsec_findaux(m);
-	if (mtag != NULL) {
-		aux = (struct ipsecaux *)(mtag + 1);
-		return aux->so;
-	} else
-		return NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.34 2003/08/22 06:22:23 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.35 2003/08/22 22:00:40 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -413,8 +413,6 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
 extern void ipsec_delaux __P((struct mbuf *));
-extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
-extern struct socket *ipsec_getsocket __P((struct mbuf *));
 extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t));
 extern int ipsec_getnhist __P((struct mbuf *));
 extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.77 2003/08/22 21:53:03 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.78 2003/08/22 22:00:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.77 2003/08/22 21:53:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.78 2003/08/22 22:00:36 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -872,10 +872,6 @@ icmp_send(m, opts)
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
-#endif
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
 #endif
 	(void) ip_output(m, opts, NULL, 0, 
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);

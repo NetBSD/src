@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.78 2003/08/22 21:53:04 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.79 2003/08/22 22:00:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.78 2003/08/22 21:53:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.79 2003/08/22 22:00:37 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1847,10 +1847,6 @@ tbf_send_packet(vifp, m)
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* If tunnel options */
-#ifdef IPSEC
-		/* Don't lookup socket in forwading case */
-		(void)ipsec_setsocket(m, NULL);
-#endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
 		    IP_FORWARDING, (struct ip_moptions *)NULL,
 		    (struct socket *)NULL);
@@ -1865,10 +1861,6 @@ tbf_send_packet(vifp, m)
 		imo.imo_multicast_vif = -1;
 #endif
 
-#ifdef IPSEC
-		/* Don't lookup socket in forwading case */
-		(void)ipsec_setsocket(m, NULL);
-#endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
 		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
 		    (struct socket *)NULL);

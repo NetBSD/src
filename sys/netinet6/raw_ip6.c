@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.57 2003/08/22 21:53:10 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.58 2003/08/22 22:00:41 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.57 2003/08/22 21:53:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.58 2003/08/22 22:00:41 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -500,13 +500,6 @@ rip6_output(m, va_alist)
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
 		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
 	}
-
-#ifdef IPSEC
-	if (ipsec_setsocket(m, so) != 0) {
-		error = ENOBUFS;
-		goto bad;
-	}
-#endif /* IPSEC */
 
 	flags = 0;
 #ifdef IN6P_MINMTU

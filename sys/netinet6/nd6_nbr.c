@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.49 2003/08/22 21:53:09 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.50 2003/08/22 22:00:40 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.49 2003/08/22 21:53:09 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.50 2003/08/22 22:00:40 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -503,10 +503,6 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif
 	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, 
 	    &im6o, (struct socket *)NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
@@ -972,10 +968,6 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	nd_na->nd_na_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif
 	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
