@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.146 2005/01/10 00:18:18 christos Exp $
+# $NetBSD: mi,v 1.147 2005/01/11 12:23:17 lukem Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -83,22 +83,22 @@
 ./etc/obsolete/man				etc-obsolete		obsolete
 ./etc/obsolete/misc				etc-obsolete		obsolete
 ./etc/obsolete/text				etc-obsolete		obsolete
-./etc/pam.d/README				etc-sys-etc		pam
-./etc/pam.d/ftpd				etc-sys-etc		pam
-./etc/pam.d/gdm					etc-sys-etc		pam
-./etc/pam.d/imap				etc-sys-etc		pam
-./etc/pam.d/kde					etc-sys-etc		pam
-./etc/pam.d/login				etc-sys-etc		pam
-./etc/pam.d/other				etc-sys-etc		pam
-./etc/pam.d/passwd				etc-sys-etc		pam
-./etc/pam.d/pop3				etc-sys-etc		pam
-./etc/pam.d/rexecd				etc-sys-etc		pam
-./etc/pam.d/rsh					etc-sys-etc		pam
-./etc/pam.d/sshd				etc-sys-etc		pam
-./etc/pam.d/su					etc-sys-etc		pam
-./etc/pam.d/system				etc-sys-etc		pam
-./etc/pam.d/telnetd				etc-sys-etc		pam
-./etc/pam.d/xdm					etc-sys-etc		pam
+./etc/pam.d/README				etc-sys-etc
+./etc/pam.d/ftpd				etc-sys-etc
+./etc/pam.d/gdm					etc-sys-etc
+./etc/pam.d/imap				etc-sys-etc
+./etc/pam.d/kde					etc-sys-etc
+./etc/pam.d/login				etc-sys-etc
+./etc/pam.d/other				etc-sys-etc
+./etc/pam.d/passwd				etc-sys-etc
+./etc/pam.d/pop3				etc-sys-etc
+./etc/pam.d/rexecd				etc-sys-etc
+./etc/pam.d/rsh					etc-sys-etc
+./etc/pam.d/sshd				etc-sys-etc
+./etc/pam.d/su					etc-sys-etc
+./etc/pam.d/system				etc-sys-etc
+./etc/pam.d/telnetd				etc-sys-etc
+./etc/pam.d/xdm					etc-sys-etc
 ./etc/passwd					etc-sys-etc
 ./etc/passwd.conf				etc-sys-etc
 ./etc/pf.conf					etc-net-etc
