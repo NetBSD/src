@@ -1,4 +1,4 @@
-/*	$NetBSD: l4check.c,v 1.1.1.1 2000/05/03 10:57:06 veego Exp $	*/
+/*	$NetBSD: l4check.c,v 1.1.1.2 2002/05/02 16:57:24 martti Exp $	*/
 
 /*
  * (C)Copyright March, 2000 - Darren Reed.
@@ -143,7 +143,8 @@ void closel4(l4, dead)
 l4cfg_t *l4;
 int dead;
 {
-	close(l4->l4_fd);
+	if (l4->l4_fd != -1)
+		close(l4->l4_fd);
 	l4->l4_fd = -1;
 	l4->l4_rw = -1;
 	if (dead && l4->l4_alive) {
@@ -309,7 +310,7 @@ int runconfig()
 					if (opts & OPT_VERBOSE)
 						fprintf(stderr, "failed\n");
 					perror("connect");
-					close(fd);
+					closel4(l4, 1);
 					fd = -1;
 				} else {
 					if (opts & OPT_VERBOSE)
