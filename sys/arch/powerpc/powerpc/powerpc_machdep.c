@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.10 2002/03/13 00:38:14 eeh Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.11 2002/03/18 04:50:32 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,7 +60,7 @@ setregs(p, pack, stack)
 	 * XXX Machine-independent code has already copied arguments and
 	 * XXX environment to userland.  Get them back here.
 	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof (arginfo));
+	(void)copyin((char *)p->p_psstr, &arginfo, sizeof (arginfo));
 
 	/*
 	 * Set up arguments for _start():
@@ -81,7 +81,7 @@ setregs(p, pack, stack)
 	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->fixreg[6] = 0;			/* auxillary vector */
 	tf->fixreg[7] = 0;			/* termination vector */
-	tf->fixreg[8] = (register_t)PS_STRINGS;	/* NetBSD extension */
+	tf->fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
 
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
