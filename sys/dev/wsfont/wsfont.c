@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.11 2000/01/05 18:44:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.11 2000/01/05 18:44:26 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -96,37 +96,35 @@ struct font {
 	u_short	lockcount;
 	u_short	cookie;
 	u_short	flg;
-	u_char	bitorder;	/* XXX move to wsdisplay_font */
-	u_char	byteorder;	/* XXX move to wsdisplay_font */
 };	
 
 /* Our list of built-in fonts */
 static struct font *list, builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
-	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN  },
 #endif
 #ifdef FONT_ISO8x16
-	{ NULL, NULL, &iso8x16, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &iso8x16, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_COURIER11x18
-	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_GALLANT12x22
-	{ NULL, NULL, &gallant12x22, 0, 4, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &gallant12x22, 0, 4, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_LUCIDA16x29
-	{ NULL, NULL, &lucida16x29, 0, 5, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &lucida16x29, 0, 5, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_QVSS8x15
-	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_R2L, WSFONT_L2R },
+	{ NULL, NULL, &qvss8x15, 0, 6, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220L8x8
-	{ NULL, NULL, &vt220l8x8, 0, 7, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &vt220l8x8, 0, 7, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220L8x10
-	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, &vt220l8x10, 0, 8, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-	{ NULL, NULL, NULL, 0, WSFONT_L2R, WSFONT_L2R },
+	{ NULL, NULL, NULL, 0 },
 };
 
 /* Reverse the bit order in a byte */
@@ -420,18 +418,18 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 	s = splhigh();
 	
 	if ((ent = wsfont_find0(cookie)) != NULL) {
-		if (bitorder && bitorder != ent->bitorder) {
+		if (bitorder && bitorder != ent->font->bitorder) {
 			if (ent->lockcount)
 				return (-1);
 			wsfont_revbit(ent->font);
-			ent->bitorder = bitorder;
+			ent->font->bitorder = bitorder;
 		}
 
-		if (byteorder && byteorder != ent->byteorder) {
+		if (byteorder && byteorder != ent->font->byteorder) {
 			if (ent->lockcount)
 				return (-1);
 			wsfont_revbyte(ent->font);
-			ent->byteorder = byteorder;
+			ent->font->byteorder = byteorder;
 		}
 		
 		lc = ++ent->lockcount;
