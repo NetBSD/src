@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.4 2002/03/04 03:07:27 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.5 2002/03/05 19:25:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.4 2002/03/04 03:07:27 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.5 2002/03/05 19:25:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -585,19 +585,6 @@ charcount(char *str, int c)
 		if (*cp == c)
 			i++;
 	return(i);
-}
-
-/*
- * Are any of the characters in the two strings the same?
- */
-int
-anyof(char *s1, char *s2)
-{
-
-	while (*s1)
-		if (strchr(s2, *s1++))
-			return 1;
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.17 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.18 2002/03/05 19:25:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.17 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.18 2002/03/05 19:25:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,7 +368,7 @@ expand(char *name)
 		snprintf(xname, PATHSIZE, "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
-	if (!anyof(name, "~{[*?$`'\"\\"))
+	if (strpbrk(name, "~{[*?$`'\"\\") == NULL)
 		return name;
 	if (pipe(pivec) < 0) {
 		perror("pipe");
