@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_subr.c,v 1.8 2003/03/09 01:38:39 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.9 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_subr.c,v 1.13 2002/12/27 22:43:48 ezk Exp
+ * Id: amq_subr.c,v 1.18 2004/01/06 03:56:20 ezk Exp
  *
  */
 /*
@@ -75,7 +75,7 @@ amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp)
   static am_node *mp;
 
   mp = find_ap(*(char **) argp);
-  return (void *) &mp;
+  return (amq_mount_tree_p *) ((void *)&mp);
 }
 
 
@@ -101,7 +101,7 @@ amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp)
 amq_mount_stats *
 amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp)
 {
-  return (void *) &amd_stats;
+  return (amq_mount_stats *) ((void *)&amd_stats);
 }
 
 
@@ -112,8 +112,10 @@ amq_mount_tree_list *
 amqproc_export_1_svc(voidp argp, struct svc_req *rqstp)
 {
   static amq_mount_tree_list aml;
+  static am_node *mp;
 
-  aml.amq_mount_tree_list_val = (amq_mount_tree_p *) &exported_ap[0];
+  mp = get_exported_ap(0);
+  aml.amq_mount_tree_list_val = (amq_mount_tree_p *) ((void *) &mp);
   aml.amq_mount_tree_list_len = 1;	/* XXX */
 
   return &aml;
@@ -167,7 +169,7 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
 amq_mount_info_list *
 amqproc_getmntfs_1_svc(voidp argp, struct svc_req *rqstp)
 {
-  return (void *) &mfhead;	/* XXX */
+  return (amq_mount_info_list *) ((void *)&mfhead);	/* XXX */
 }
 
 
@@ -279,12 +281,12 @@ bool_t
 xdr_amq_mount_tree(XDR *xdrs, amq_mount_tree *objp)
 {
   am_node *mp = (am_node *) objp;
-  am_node *mnil = 0;
+  am_node *mnil = NULL;
 
   if (!xdr_amq_mount_tree_node(xdrs, objp)) {
     return (FALSE);
   }
-  if (!xdr_pointer(xdrs, (void *) &mnil, sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
+  if (!xdr_pointer(xdrs, (char **) ((void *)&mnil), sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
     return (FALSE);
   }
   if (!xdr_pointer(xdrs, (char **) &mp->am_child, sizeof(amq_mount_tree), (XDRPROC_T_TYPE) xdr_amq_mount_subtree)) {
@@ -385,20 +387,12 @@ xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
     if (!xdr_int(xdrs, &mf->mf_refc)) {
       return (FALSE);
     }
-    if (mf->mf_server->fs_flags & FSF_ERROR)
+    if (FSRV_ERROR(mf->mf_server) || FSRV_ISDOWN(mf->mf_server))
       up = 0;
+    else if (FSRV_ISUP(mf->mf_server))
+      up = 1;
     else
-      switch (mf->mf_server->fs_flags & (FSF_DOWN | FSF_VALID)) {
-      case FSF_DOWN | FSF_VALID:
-	up = 0;
-	break;
-      case FSF_VALID:
-	up = 1;
-	break;
-      default:
-	up = -1;
-	break;
-      }
+      up = -1;
     if (!xdr_int(xdrs, &up)) {
       return (FALSE);
     }

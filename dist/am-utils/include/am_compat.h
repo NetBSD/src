@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.2 2003/07/29 12:11:29 markd Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.3 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
  * am_compat.h:
@@ -60,6 +60,10 @@
 #if defined(MNT2_NFS_OPT_PGTHRESH) && !defined(MNTTAB_OPT_PGTHRESH)
 # define MNTTAB_OPT_PGTHRESH "pgthresh"
 #endif /* defined(MNT2_NFS_OPT_PGTHRESH) && !defined(MNTTAB_OPT_PGTHRESH) */
+
+#if defined(MNT2_NFS_OPT_PRIVATE) && !defined(MNTTAB_OPT_PRIVATE)
+# define MNTTAB_OPT_PRIVATE "private"
+#endif /* defined(MNT2_NFS_OPT_PRIVATE) && !defined(MNTTAB_OPT_PRIVATE) */
 
 #if defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS)
 # define MNTTAB_OPT_RETRANS "retrans"
@@ -194,6 +198,10 @@
 #ifndef MNTTAB_OPT_PORT
 # define MNTTAB_OPT_PORT "port"
 #endif /* not MNTTAB_OPT_PORT */
+
+#ifndef MNTTAB_OPT_PUBLIC
+# define MNTTAB_OPT_PUBLIC "public"
+#endif /* not MNTTAB_OPT_PUBLIC */
 
 #ifndef MNTTAB_OPT_RETRANS
 # define MNTTAB_OPT_RETRANS "retrans"

@@ -1,8 +1,8 @@
-/*	$NetBSD: fsi_lex.l,v 1.5 2003/03/09 01:38:45 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.6 2004/11/27 01:24:36 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_lex.l,v 1.9 2002/12/27 22:44:07 ezk Exp
+ * Id: fsi_lex.l,v 1.13 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -49,8 +49,9 @@
  * TODO: Needs rewriting.
  */
 
+static int ayylineno;
+
 #ifdef FLEX_SCANNER
-static int yylineno;
 # define INIT_STATE {				\
 		switch ((yy_start - 1) / 2) {	\
 		case 0:				\
@@ -160,6 +161,13 @@ struct r {
 
 %}
 
+/* This option causes Solaris lex to fail.  Use flex.  See BUGS file */
+/* no need to use yyunput() */
+%option nounput
+
+/* allocate more output slots so lex scanners don't run out of mem */
+%o 1024
+
 %start F Q
 
 %%
@@ -167,22 +175,22 @@ struct r {
 
 <F>[^ \t\n"={}]+	{ return find_resword(yytext); } /* dummy " */
 <F>[ \t]		;
-<F>"\n"			{ yylineno++; }
+<F>"\n"			{ ayylineno++; }
 <F>[={}]		{ return *yytext; }
 
 <F>\"			{ BEGIN Q; optr = ostr; quoted = 1; }
-<Q>\n			{ yylineno++; yyerror("\" expected"); BEGIN F; }
+<Q>\n			{ ayylineno++; yyerror("\" expected"); BEGIN F; }
 <Q>\\b			{ *optr++ = '\b'; /* escape */ }
 <Q>\\t			{ *optr++ = '\t'; /* escape */ }
 <Q>\\\"			{ *optr++ = '\"'; /* escape */ }
 <Q>\\\\			{ *optr++ = '\\'; /* escape */ }
-<Q>\\\n			{ yylineno++; /* continue */ }
+<Q>\\\n			{ ayylineno++; /* continue */ }
 <Q>\\r			{ *optr++ = '\r'; /* escape */ }
 <Q>\\n			{ *optr++ = '\n'; /* escape */ }
 <Q>\\f			{ *optr++ = '\f'; /* escape */ }
 <Q>"\\ "		{ *optr++ = ' '; /* force space */ }
 <Q>\\.			{ yyerror("Unknown \\ sequence"); }
-<Q>([ \t]|"\\\n"){2,}	{ char *p = (char *) yytext-1; while ((p = strchr(p+1, '\n'))) yylineno++; }
+<Q>([ \t]|"\\\n"){2,}	{ char *p = (char *) yytext-1; while ((p = strchr(p+1, '\n'))) ayylineno++; }
 <Q>\"			{ BEGIN F; quoted = 0;
 				*optr = '\0';
 				yylval.s = strdup(ostr);
@@ -236,12 +244,11 @@ yyerror(char *fmt, ...)
 
   va_start(ap, fmt);
   col_cleanup(0);
-  fprintf(stderr, "%s:%d: ", fsi_filename ? fsi_filename : "/dev/stdin", yylineno);
+  fprintf(stderr, "%s:%d: ", fsi_filename ? fsi_filename : "/dev/stdin", ayylineno);
   vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   parse_errors++;
   va_end(ap);
-  if (0) unput(0);/* dummy to shut gcc up: "unput defined but not used" */
   return 0;
 }
 
@@ -250,7 +257,7 @@ ioloc *
 current_location(void)
 {
   ioloc *ip = CALLOC(struct ioloc);
-  ip->i_line = yylineno;
+  ip->i_line = ayylineno;
   ip->i_file = fsi_filename;
   return ip;
 }

@@ -1,7 +1,7 @@
-.\"	$NetBSD: amd.conf.5,v 1.8 2003/04/06 20:51:20 wiz Exp $
+.\"	$NetBSD: amd.conf.5,v 1.9 2004/11/27 01:24:36 christos Exp $
 .\"
 .\"
-.\" Copyright (c) 1997-2003 Erez Zadok
+.\" Copyright (c) 1997-2004 Erez Zadok
 .\" Copyright (c) 1990 Jan-Simon Pendry
 .\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 .\"
 .\"	%W% (Berkeley) %G%
 .\"
-.\" Id: amd.conf.5,v 1.17 2002/12/27 22:44:12 ezk Exp
+.\" Id: amd.conf.5,v 1.27 2004/01/22 05:01:06 ezk Exp
 .\"
 .TH AMD.CONF 5 "7 August 1997"
 .SH NAME
@@ -129,6 +129,12 @@ mount
 entry in that map.  This is often called a ``mount storm''.
 
 .TP
+.BR map_defaults " (string, default to empty)"
+This option sets a string to be used as the map's /defaults entry,
+overriding any /defaults specified in the map.  This allows local users to
+override map defaults without modifying maps globally.
+
+.TP
 .BR map_options " (string, default no options)"
 This option is the same as specifying map options on the command line to
 amd, such as "cache:=all".
@@ -156,6 +162,14 @@ used.  Possible values are
 All amd mount types default to NFS.  That is, amd is an NFS server on the
 map mount points, for the local host it is running on.  If "autofs" is
 specified, amd will be an autofs server for those mount points.
+
+.TP
+.BR autofs_use_lofs " (string, default=yes)"
+When set to "yes" and using Autofs, Amd will use lofs-type (loopback) mounts
+for type:=link mounts.  This has the advantage of mounting in place, and
+users get to the see the same pathname that they chdir'ed into.  If this
+option is set to "no", then Amd will use symlinks instead: that code is more
+tested, but negates autofs's big advantage of in-place mounts.
 
 .TP
 .BR search_path " (string, default no search path)"
@@ -295,6 +309,14 @@ the domain name is determined from the hostname, by removing the first
 component of the fully-qualified host name.
 
 .TP
+.BR localhost_address " (string, default to localhost or 127.0.0.1)"
+Specify the name or IP address for amd to use when connecting the sockets
+for the local NFS server and the RPC server.  This defaults to 127.0.0.1 or
+whatever the host reports as its local address.  This parameter is useful on
+hosts with multiple addresses where you want to force amd to connect to a
+specific address.
+
+.TP
 .BR log_file " (string, default=/dev/stderr)"
 Same as the
 .B \-l
@@ -346,6 +368,18 @@ have changed at their source (NIS servers, LDAP servers, files, etc.).  Amd
 will reload only those maps that have changed.
 
 .TP
+.BR nfs_allow_insecure_port " (string, default=no).
+Normally amd will refuse requests coming from unprivileged ports (i.e.
+ports >= 1024 on Unix systems), so that only privileged users and the kernel
+can send NFS requests to it. However, some kernels (certain versions of
+Darwin, MacOS X, and Linux) have bugs that cause them to use unprivileged
+ports in certain situations, which causes amd to stop dead in its
+tracks. This parameter allows amd to operate normally even on such systems,
+at the expense of a slight decrease in the security of its operations. If
+you see messages like "ignoring request from foo:1234, port not reserved"
+in your amd log, try enabling this parameter and give it another go.
+
+.TP
 .BR nfs_proto " (string, default to trying version tcp then udp)"
 By default, amd tries TCP and then UDP.  This option forces the overall NFS
 protocol used to TCP or UDP.  It overrides what is in the amd maps, and is
@@ -358,7 +392,7 @@ desired again.
 .BR nfs_retransmit_counter " (numeric, default=11)"
 Same as the
 .I retransmit
-part of the 
+part of the
 .BI \-t " timeout.retransmit"
 option to amd.
 Specifies the number of NFS retransmissions that the kernel will use to
@@ -368,7 +402,7 @@ communicate with amd.
 .BR nfs_retry_interval " (numeric, default=8)"
 Same as the
 .I timeout
-part of the 
+part of the
 .BI \-t " timeout.retransmit"
 option to amd.  Specifies the NFS timeout interval, in
 .I tenths
@@ -525,6 +559,12 @@ unless the restart_mounts option or
 flag are used.
 
 .TP
+.BR use_tcpwrappers " (boolean), default=yes)"
+If "yes", then amd will use the tcpd/librwap tcpwrappers library
+(if available) to control
+access to amd via the /etc/hosts.allow and /etc/hosts.deny files.
+
+.TP
 .BR vendor " (string, default to compiled in value)"
 The name of the vendor of the operating system.  Overrides the compiled-in
 vendor name.  Useful when the compiled-in name is not desired.  For example,
@@ -574,31 +614,43 @@ browsable_dirs =         yes
 # DEFINE AN AMD MOUNT POINT
 [ /u ]
 map_name =               amd.u
-			 
-[ /proj ]		 
+
+[ /proj ]
 map_name =               amd.proj
-			 
-[ /src ]		 
+
+[ /src ]
 map_name =               amd.src
-			 
-[ /misc ]		 
+
+[ /misc ]
 map_name =               amd.misc
-			 
-[ /import ]		 
+
+[ /import ]
 map_name =               amd.import
-			 
-[ /tftpboot/.amd ]	 
+
+[ /tftpboot/.amd ]
 tag =                    tftpboot
 map_name =               amd.tftpboot
 .fi
 .\" **************************************************************************
 .SH "SEE ALSO"
 .BR amd (8),
-.BR amq (8)
-.\" .BR ctl-amd (8)
+.BR amq (8),
+.\" .BR ctl-amd (8),
+.BR hosts_access (5).
+.LP
+``am-utils''
+.BR info (1)
+entry.
+.LP
+.I "Linux NFS and Automounter Administration"
+by Erez Zadok, ISBN 0-7821-2739-8, (Sybex, 2001).
+.LP
+.I http://www.am-utils.org
+.LP
+.I "Amd \- The 4.4 BSD Automounter"
 .SH AUTHORS
-Erez Zadok <ezk@cs.columbia.edu>, Department of Computer Science, Columbia
-University, New York, USA.
+Erez Zadok <ezk@cs.sunysb.edu>, Computer Science Department, Stony Brook
+University, Stony Brook, New York, USA.
 .P
 Other authors and contributors to am-utils are listed in the
 .B AUTHORS

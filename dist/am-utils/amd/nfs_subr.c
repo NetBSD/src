@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_subr.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_subr.c,v 1.17 2002/12/27 22:43:50 ezk Exp
+ * Id: nfs_subr.c,v 1.20 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -59,18 +59,21 @@
 #endif /* nfs_error */
 
 /* forward declarations */
+/* converting am-filehandles to mount-points */
+static am_node *fh_to_mp3(am_nfs_fh *fhp, int *rp, int vop);
+static am_node *fh_to_mp(am_nfs_fh *fhp);
 static void count_map_entries(const am_node *mp, u_int *out_blocks, u_int *out_bfree, u_int *out_bavail);
 
 
 static char *
-do_readlink(am_node *mp, int *error_return, nfsattrstat **attrpp)
+do_readlink(am_node *mp, int *error_return)
 {
   char *ln;
 
   /*
-   * If there is a readlink method, then use
-   * that, otherwise if a link exists use
-   * that, otherwise use the mount point.
+   * If there is a readlink method then use it,
+   * otherwise if a link exists use that,
+   * otherwise use the mount point.
    */
   if (mp->am_mnt->mf_ops->readlink) {
     int retry = 0;
@@ -87,8 +90,6 @@ do_readlink(am_node *mp, int *error_return, nfsattrstat **attrpp)
   } else {
     ln = mp->am_mnt->mf_mount;
   }
-  if (attrpp)
-    *attrpp = &mp->am_attr;
 
   return ln;
 }
@@ -114,9 +115,8 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "getattr:");
 
-  mp = fh_to_mp2(argp, &retry);
+  mp = fh_to_mp3(argp, &retry, VLOOK_CREATE);
   if (mp == 0) {
-
     if (amuDebug(D_TRACE))
       plog(XLOG_DEBUG, "\tretry=%d", retry);
 
@@ -125,24 +125,22 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
       return 0;
     }
     res.ns_status = nfs_error(retry);
-  } else {
-    nfsattrstat *attrp = &mp->am_attr;
-
-    if (amuDebug(D_TRACE))
-      plog(XLOG_DEBUG, "\tstat(%s), size = %d, mtime=%ld",
-	   mp->am_path,
-	   (int) attrp->ns_u.ns_attr_u.na_size,
-	   (long) attrp->ns_u.ns_attr_u.na_mtime.nt_seconds);
-
-    /* Delay unmount of what was looked up */
-    if (mp->am_timeo_w < 4 * gopt.am_timeo_w)
-      mp->am_timeo_w += gopt.am_timeo_w;
-    mp->am_ttl = now + mp->am_timeo_w;
-
-    mp->am_stats.s_getattr++;
-    return attrp;
+    return &res;
   }
 
+  res = mp->am_attr;
+  if (amuDebug(D_TRACE))
+    plog(XLOG_DEBUG, "\tstat(%s), size = %d, mtime=%ld",
+	 mp->am_path,
+	 (int) res.ns_u.ns_attr_u.na_size,
+	 (long) res.ns_u.ns_attr_u.na_mtime.nt_seconds);
+
+  /* Delay unmount of what was looked up */
+  if (mp->am_timeo_w < 4 * gopt.am_timeo_w)
+    mp->am_timeo_w += gopt.am_timeo_w;
+  mp->am_ttl = now + mp->am_timeo_w;
+
+  mp->am_stats.s_getattr++;
   return &res;
 }
 
@@ -188,7 +186,7 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
   snprintf(opt_uid, sizeof(12), "%d", (int) uid); /* 12 = sizeof(uid_str) */
   snprintf(opt_gid, sizeof(12), "%d", (int) gid); /* 12 = sizeof(gid_str) */
 
-  mp = fh_to_mp2(&argp->da_fhandle, &retry);
+  mp = fh_to_mp3(&argp->da_fhandle, &retry, VLOOK_CREATE);
   if (mp == 0) {
     if (retry < 0) {
       amd_stats.d_drops++;
@@ -281,7 +279,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "readlink:");
 
-  mp = fh_to_mp2(argp, &retry);
+  mp = fh_to_mp3(argp, &retry, VLOOK_CREATE);
   if (mp == 0) {
   readlink_retry:
     if (retry < 0) {
@@ -290,7 +288,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     }
     res.rlr_status = nfs_error(retry);
   } else {
-    char *ln = do_readlink(mp, &retry, (nfsattrstat **) 0);
+    char *ln = do_readlink(mp, &retry);
     if (ln == 0)
       goto readlink_retry;
     res.rlr_status = NFS_OK;
@@ -490,7 +488,7 @@ nfsproc_readdir_2_svc(nfsreaddirargs *argp, struct svc_req *rqstp)
   if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "readdir:");
 
-  mp = fh_to_mp2(&argp->rda_fhandle, &retry);
+  mp = fh_to_mp3(&argp->rda_fhandle, &retry, VLOOK_CREATE);
   if (mp == 0) {
     if (retry < 0) {
       amd_stats.d_drops++;
@@ -521,7 +519,7 @@ nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "statfs:");
 
-  mp = fh_to_mp2(argp, &retry);
+  mp = fh_to_mp3(argp, &retry, VLOOK_CREATE);
   if (mp == 0) {
     if (retry < 0) {
       amd_stats.d_drops++;
@@ -604,4 +602,176 @@ out:
   *out_blocks = blocks;
   *out_bfree = bfree;
   *out_bavail = bavail;
+}
+
+
+/*
+ * Convert from file handle to automount node.
+ */
+static am_node *
+fh_to_mp3(am_nfs_fh *fhp, int *rp, int vop)
+{
+  struct am_fh *fp = (struct am_fh *) fhp;
+  am_node *ap = 0;
+
+  /*
+   * Check process id matches
+   * If it doesn't then it is probably
+   * from an old kernel cached filehandle
+   * which is now out of date.
+   */
+  if (fp->fhh_pid != am_mypid)
+    goto drop;
+
+  /*
+   * Get hold of the supposed mount node
+   */
+  ap = get_exported_ap(fp->fhh_id);
+
+  /*
+   * If it doesn't exists then drop the request
+   */
+  if (!ap)
+    goto drop;
+
+  /*
+   * Check the generation number in the node
+   * matches the one from the kernel.  If not
+   * then the old node has been timed out and
+   * a new one allocated.
+   */
+  if (ap->am_gen != fp->fhh_gen) {
+    ap = 0;
+    goto drop;
+  }
+
+#if 0
+  /*
+   * If the node is hung then locate a new node
+   * for it.  This implements the replicated filesystem
+   * retries.
+   */
+  if (ap->am_mnt && FSRV_ISDOWN(ap->am_mnt->mf_server) && ap->am_parent) {
+    int error;
+    am_node *orig_ap = ap;
+
+    dlog("fh_to_mp3: %s (%s) is hung: lookup alternative file server",
+	 orig_ap->am_path, orig_ap->am_mnt->mf_info);
+
+    /*
+     * Update modify time of parent node.
+     * With any luck the kernel will re-stat
+     * the child node and get new information.
+     */
+    orig_ap->am_fattr.na_mtime.nt_seconds = clocktime();
+
+    /*
+     * Call the parent's lookup routine for an object
+     * with the same name.  This may return -1 in error
+     * if a mount is in progress.  In any case, if no
+     * mount node is returned the error code is propagated
+     * to the caller.
+     */
+    if (vop == VLOOK_CREATE) {
+      ap = orig_ap->am_parent->am_mnt->mf_ops->lookup_child(orig_ap->am_parent, orig_ap->am_name, &error, vop);
+      if (ap && error < 0)
+	ap = orig_ap->am_parent->am_mnt->mf_ops->mount_child(ap, &error);
+    } else {
+      ap = 0;
+      error = ESTALE;
+    }
+    if (ap == 0) {
+      if (error < 0 && amd_state == Finishing)
+	error = ENOENT;
+      *rp = error;
+      return 0;
+    }
+
+    /*
+     * Update last access to original node.  This
+     * avoids timing it out and so sending ESTALE
+     * back to the kernel.
+     * XXX - Not sure we need this anymore (jsp, 90/10/6).
+     */
+    new_ttl(orig_ap);
+
+  }
+#endif
+
+  /*
+   * Disallow references to objects being unmounted, unless
+   * they are automount points.
+   */
+  if (ap->am_mnt && (ap->am_mnt->mf_flags & MFF_UNMOUNTING) &&
+      !(ap->am_flags & AMF_ROOT)) {
+    if (amd_state == Finishing)
+      *rp = ENOENT;
+    else
+      *rp = -1;
+    return 0;
+  }
+  new_ttl(ap);
+
+drop:
+  if (!ap || !ap->am_mnt) {
+    /*
+     * If we are shutting down then it is likely
+     * that this node has disappeared because of
+     * a fast timeout.  To avoid things thrashing
+     * just pretend it doesn't exist at all.  If
+     * ESTALE is returned, some NFS clients just
+     * keep retrying (stupid or what - if it's
+     * stale now, what's it going to be in 5 minutes?)
+     */
+    if (amd_state == Finishing)
+      *rp = ENOENT;
+    else
+      *rp = ESTALE;
+    amd_stats.d_stale++;
+  }
+
+  return ap;
+}
+
+
+static am_node *
+fh_to_mp(am_nfs_fh *fhp)
+{
+  int dummy;
+
+  return fh_to_mp3(fhp, &dummy, VLOOK_CREATE);
+}
+
+
+/*
+ * Convert from automount node to file handle.
+ */
+void
+mp_to_fh(am_node *mp, am_nfs_fh *fhp)
+{
+  struct am_fh *fp = (struct am_fh *) fhp;
+
+  memset((char *) fhp, 0, sizeof(am_nfs_fh));
+
+  /*
+   * Take the process id
+   */
+  fp->fhh_pid = am_mypid;
+
+  /*
+   * ... the map number
+   */
+  fp->fhh_id = mp->am_mapno;
+
+  /*
+   * ... and the generation number
+   */
+  fp->fhh_gen = mp->am_gen;
+
+  /*
+   * ... to make a "unique" triple that will never
+   * be reallocated except across reboots (which doesn't matter)
+   * or if we are unlucky enough to be given the same
+   * pid as a previous amd (very unlikely).
+   */
 }

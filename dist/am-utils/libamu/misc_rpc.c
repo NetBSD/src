@@ -1,7 +1,7 @@
-/*	$NetBSD: misc_rpc.c,v 1.3 2003/03/09 01:38:49 christos Exp $	*/
+/*	$NetBSD: misc_rpc.c,v 1.4 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: misc_rpc.c,v 1.10 2002/12/29 00:46:31 ib42 Exp
+ * Id: misc_rpc.c,v 1.12 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -94,7 +94,7 @@ pickup_rpc_reply(voidp pkt, int len, voidp where, XDRPROC_T_TYPE where_xdr)
   memset((voidp) &reply_msg, 0, sizeof(reply_msg));
   memset((voidp) &reply_xdr, 0, sizeof(reply_xdr));
 
-  reply_msg.acpted_rply.ar_results.where = (caddr_t) where;
+  reply_msg.acpted_rply.ar_results.where = where;
   reply_msg.acpted_rply.ar_results.proc = where_xdr;
 
   xdrmem_create(&reply_xdr, pkt, len, XDR_DECODE);

@@ -1,7 +1,7 @@
-/*	$NetBSD: map.c,v 1.3 2003/03/09 01:38:39 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: map.c,v 1.36 2002/12/27 22:43:50 ezk Exp
+ * Id: map.c,v 1.49 2004/04/28 04:22:13 ib42 Exp
  *
  */
 
@@ -70,11 +70,11 @@
 static u_int am_gen = 2;	/* Initial generation number */
 static int timeout_mp_id;	/* Id from last call to timeout */
 
-am_node *root_node;		/* The root of the mount tree */
-am_node **exported_ap = (am_node **) 0;
-int exported_ap_size = 0;
-int first_free_map = 0;		/* First available free slot */
-int last_used_map = -1;		/* Last unavailable used slot */
+static am_node *root_node;	/* The root of the mount tree */
+static am_node **exported_ap = (am_node **) 0;
+static int exported_ap_size = 0;
+static int first_free_map = 0;	/* First available free slot */
+static int last_used_map = -1;	/* Last unavailable used slot */
 
 
 /*
@@ -103,10 +103,46 @@ static nfsfattr gen_fattr =
 };
 
 /* forward declarations */
-static int unmount_node(am_node *mp);
+static int unmount_node(opaque_t arg);
 static void exported_ap_free(am_node *mp);
 static void remove_am(am_node *mp);
-static am_node *get_root_ap(char *dir, int path);
+static am_node *get_root_ap(char *dir);
+
+
+/*
+ * Iterator functions for exported_ap[]
+ */
+am_node *
+get_first_exported_ap(int *index)
+{
+  *index = -1;
+  return get_next_exported_ap(index);
+}
+
+
+am_node *
+get_next_exported_ap(int *index)
+{
+  (*index)++;
+  while (exported_ap[*index] == NULL) {
+    if (*index >= exported_ap_size)
+      return NULL;
+    (*index)++;
+  }
+  return exported_ap[*index];
+}
+
+
+/*
+ * Get exported_ap by index
+ */
+am_node *
+get_exported_ap(int index)
+{
+  if (index < 0 || index >= exported_ap_size)
+    return 0;
+  return exported_ap[index];
+}
 
 
 /*
@@ -271,7 +307,7 @@ insert_am(am_node *mp, am_node *p_mp)
     mp->am_osib->am_ysib = mp;
   p_mp->am_child = mp;
 #ifdef HAVE_FS_AUTOFS
-  if (p_mp->am_mnt->mf_flags & MFF_AUTOFS)
+  if (p_mp->am_mnt->mf_flags & MFF_IS_AUTOFS)
     mp->am_flags |= AMF_AUTOFS;
 #endif /* HAVE_FS_AUTOFS */
 }
@@ -320,20 +356,20 @@ new_ttl(am_node *mp)
 
 
 void
-mk_fattr(am_node *mp, nfsftype vntype)
+mk_fattr(nfsfattr *fattr, nfsftype vntype)
 {
   switch (vntype) {
   case NFDIR:
-    mp->am_fattr.na_type = NFDIR;
-    mp->am_fattr.na_mode = NFSMODE_DIR | 0555;
-    mp->am_fattr.na_nlink = 2;
-    mp->am_fattr.na_size = 512;
+    fattr->na_type = NFDIR;
+    fattr->na_mode = NFSMODE_DIR | 0555;
+    fattr->na_nlink = 2;
+    fattr->na_size = 512;
     break;
   case NFLNK:
-    mp->am_fattr.na_type = NFLNK;
-    mp->am_fattr.na_mode = NFSMODE_LNK | 0777;
-    mp->am_fattr.na_nlink = 1;
-    mp->am_fattr.na_size = 0;
+    fattr->na_type = NFLNK;
+    fattr->na_mode = NFSMODE_LNK | 0777;
+    fattr->na_nlink = 1;
+    fattr->na_size = 0;
     break;
   default:
     plog(XLOG_FATAL, "Unknown fattr type %d - ignored", vntype);
@@ -361,7 +397,7 @@ init_map(am_node *mp, char *dir)
   mp->am_path = strdup(dir);
   mp->am_gen = new_gen();
 #ifdef HAVE_FS_AUTOFS
-  mp->am_autofs_data = 0;
+  mp->am_autofs_fh = 0;
 #endif /* HAVE_FS_AUTOFS */
 
   mp->am_timeo = gopt.am_timeo;
@@ -387,7 +423,6 @@ init_map(am_node *mp, char *dir)
 void
 free_map(am_node *mp)
 {
-
   remove_am(mp);
 
   if (mp->am_link)
@@ -412,188 +447,11 @@ free_map(am_node *mp)
   }
 
 #ifdef HAVE_FS_AUTOFS
-  if (mp->am_autofs_data)
-    mp->am_autofs_free_data(mp->am_autofs_data);
+  if (mp->am_autofs_fh)
+    autofs_release_fh(mp);
 #endif /* HAVE_FS_AUTOFS */
 
   exported_ap_free(mp);
-}
-
-
-/*
- * Convert from file handle to automount node.
- */
-am_node *
-fh_to_mp3(am_nfs_fh *fhp, int *rp, int c_or_d)
-{
-  struct am_fh *fp = (struct am_fh *) fhp;
-  am_node *ap = 0;
-
-  /*
-   * Check process id matches
-   * If it doesn't then it is probably
-   * from an old kernel cached filehandle
-   * which is now out of date.
-   */
-  if (fp->fhh_pid != am_mypid)
-    goto drop;
-
-  /*
-   * Make sure the index is valid before
-   * exported_ap is referenced.
-   */
-  if (fp->fhh_id < 0 || fp->fhh_id >= exported_ap_size)
-    goto drop;
-
-  /*
-   * Get hold of the supposed mount node
-   */
-  ap = exported_ap[fp->fhh_id];
-
-  /*
-   * If it exists then maybe...
-   */
-  if (ap) {
-    /*
-     * Check the generation number in the node
-     * matches the one from the kernel.  If not
-     * then the old node has been timed out and
-     * a new one allocated.
-     */
-    if (ap->am_gen != fp->fhh_gen) {
-      ap = 0;
-      goto drop;
-    }
-#if 0
-    /*
-     * If the node is hung then locate a new node
-     * for it.  This implements the replicated filesystem
-     * retries.
-     */
-    if (ap->am_mnt && FSRV_ISDOWN(ap->am_mnt->mf_server) && ap->am_parent) {
-      int error;
-      am_node *orig_ap = ap;
-
-      dlog("fh_to_mp3: %s (%s) is hung: lookup alternative file server",
-	   orig_ap->am_path, orig_ap->am_mnt->mf_info);
-
-      /*
-       * Update modify time of parent node.
-       * With any luck the kernel will re-stat
-       * the child node and get new information.
-       */
-      orig_ap->am_fattr.na_mtime.nt_seconds = clocktime();
-
-      /*
-       * Call the parent's lookup routine for an object
-       * with the same name.  This may return -1 in error
-       * if a mount is in progress.  In any case, if no
-       * mount node is returned the error code is propagated
-       * to the caller.
-       */
-      if (c_or_d == VLOOK_CREATE) {
-	ap = orig_ap->am_parent->am_mnt->mf_ops->lookup_child(orig_ap->am_parent, orig_ap->am_name, &error, c_or_d);
-	if (ap && error < 0)
-	  ap = orig_ap->am_parent->am_mnt->mf_ops->mount_child(ap, &error);
-      } else {
-	ap = 0;
-	error = ESTALE;
-      }
-      if (ap == 0) {
-	if (error < 0 && amd_state == Finishing)
-	  error = ENOENT;
-	*rp = error;
-	return 0;
-      }
-
-      /*
-       * Update last access to original node.  This
-       * avoids timing it out and so sending ESTALE
-       * back to the kernel.
-       * XXX - Not sure we need this anymore (jsp, 90/10/6).
-       */
-      new_ttl(orig_ap);
-
-    }
-#endif
-
-    /*
-     * Disallow references to objects being unmounted, unless
-     * they are automount points.
-     */
-    if (ap->am_mnt && (ap->am_mnt->mf_flags & MFF_UNMOUNTING) &&
-	!(ap->am_flags & AMF_ROOT)) {
-      if (amd_state == Finishing)
-	*rp = ENOENT;
-      else
-	*rp = -1;
-      return 0;
-    }
-    new_ttl(ap);
-  }
-
-drop:
-  if (!ap || !ap->am_mnt) {
-    /*
-     * If we are shutting down then it is likely
-     * that this node has disappeared because of
-     * a fast timeout.  To avoid things thrashing
-     * just pretend it doesn't exist at all.  If
-     * ESTALE is returned, some NFS clients just
-     * keep retrying (stupid or what - if it's
-     * stale now, what's it going to be in 5 minutes?)
-     */
-    if (amd_state == Finishing)
-      *rp = ENOENT;
-    else
-      *rp = ESTALE;
-    amd_stats.d_stale++;
-  }
-
-  return ap;
-}
-
-
-am_node *
-fh_to_mp(am_nfs_fh *fhp)
-{
-  int dummy;
-
-  return fh_to_mp2(fhp, &dummy);
-}
-
-
-/*
- * Convert from automount node to file handle.
- */
-void
-mp_to_fh(am_node *mp, am_nfs_fh *fhp)
-{
-  struct am_fh *fp = (struct am_fh *) fhp;
-
-  memset((char *) fhp, 0, sizeof(am_nfs_fh));
-
-  /*
-   * Take the process id
-   */
-  fp->fhh_pid = am_mypid;
-
-  /*
-   * ... the map number
-   */
-  fp->fhh_id = mp->am_mapno;
-
-  /*
-   * ... and the generation number
-   */
-  fp->fhh_gen = mp->am_gen;
-
-  /*
-   * ... to make a "unique" triple that will never
-   * be reallocated except across reboots (which doesn't matter)
-   * or if we are unlucky enough to be given the same
-   * pid as a previous amd (very unlikely).
-   */
 }
 
 
@@ -670,7 +528,7 @@ am_nfs_fh *
 get_root_nfs_fh(char *dir)
 {
   static am_nfs_fh nfh;
-  am_node *mp = get_root_ap(dir, TRUE);
+  am_node *mp = get_root_ap(dir);
   if (mp) {
     mp_to_fh(mp, &nfh);
     /*
@@ -694,7 +552,7 @@ get_root_nfs_fh(char *dir)
 
 
 static am_node *
-get_root_ap(char *dir, int path)
+get_root_ap(char *dir)
 {
   am_node *mp = find_ap(dir);
 
@@ -735,7 +593,7 @@ map_flush_srvr(fserver *fs)
  * automount node to be automounted.
  */
 int
-mount_auto_node(char *dir, voidp arg)
+mount_auto_node(char *dir, opaque_t arg)
 {
   int error = 0;
   am_node *mp = (am_node *) arg;
@@ -745,12 +603,12 @@ mount_auto_node(char *dir, voidp arg)
    * this should be:
    * mp->am_mnt->mf_opts->lookup_child(.....);
    *
-   * as it is, it uses amfs_auto's lookup_child method regardless
+   * as it is, it uses the generic methods regardless
    * of the parent filesystem's type
    */
-  am = amfs_auto_lookup_child(mp, dir, &error, VLOOK_CREATE);
+  am = amfs_generic_lookup_child(mp, dir, &error, VLOOK_CREATE);
   if (am && error < 0)
-    am = amfs_auto_mount_child(am, &error);
+    am = amfs_generic_mount_child(am, &error);
   if (error > 0) {
     errno = error;		/* XXX */
     plog(XLOG_ERROR, "Could not mount %s: %m", dir);
@@ -769,7 +627,7 @@ mount_exported(void)
   /*
    * Iterate over all the nodes to be started
    */
-  return root_keyiter((void (*)P((char *, voidp))) mount_auto_node, root_node);
+  return root_keyiter(mount_auto_node, root_node);
 }
 
 
@@ -808,7 +666,7 @@ make_root_node(void)
   /*
    * Mount the root
    */
-  root_mnt->mf_error = (*root_mnt->mf_ops->mount_fs) (root_node, root_mnt);
+  root_mnt->mf_error = root_mnt->mf_ops->mount_fs(root_node, root_mnt);
 }
 
 
@@ -823,78 +681,116 @@ umount_exported(void)
 
   for (i = last_used_map; i >= 0; --i) {
     am_node *mp = exported_ap[i];
+    mntfs *mf;
 
-    if (mp) {
-      mntfs *mf = mp->am_mnt;
-      if (mf->mf_flags & MFF_UNMOUNTING) {
-	/*
-	 * If this node is being unmounted then just ignore it.  However,
-	 * this could prevent amd from finishing if the unmount gets blocked
-	 * since the am_node will never be free'd.  am_unmounted needs
-	 * telling about this possibility. - XXX
-	 */
-	continue;
+    if (!mp)
+      continue;
+
+    mf = mp->am_mnt;
+    if (mf->mf_flags & MFF_UNMOUNTING) {
+      /*
+       * If this node is being unmounted then just ignore it.  However,
+       * this could prevent amd from finishing if the unmount gets blocked
+       * since the am_node will never be free'd.  am_unmounted needs
+       * telling about this possibility. - XXX
+       */
+      continue;
+    }
+
+    if (!(mf->mf_fsflags & FS_DIRECTORY))
+      /*
+       * When shutting down this had better
+       * look like a directory, otherwise it
+       * can't be unmounted!
+       */
+      mk_fattr(&mp->am_fattr, NFDIR);
+
+    if ((--immediate_abort < 0 &&
+	 !(mp->am_flags & AMF_ROOT) && mp->am_parent) ||
+	(mf->mf_flags & MFF_RESTART)) {
+
+      /*
+       * Just throw this node away without bothering to unmount it.  If
+       * the server is not known to be up then don't discard the mounted
+       * on directory or Amd might hang...
+       */
+      if (mf->mf_server &&
+	  (mf->mf_server->fs_flags & (FSF_DOWN | FSF_VALID)) != FSF_VALID)
+	mf->mf_flags &= ~MFF_MKMNT;
+      if (gopt.flags & CFM_UNMOUNT_ON_EXIT || mp->am_flags & AMF_AUTOFS) {
+	plog(XLOG_INFO, "on-exit attempt to unmount %s", mf->mf_mount);
+#ifdef HAVE_FS_AUTOFS
+	if (mf->mf_flags & MFF_IS_AUTOFS)
+	  autofs_release_mp(mp);
+#endif /* HAVE_FS_AUTOFS */
+	unmount_node((opaque_t) mp);
       }
-
-      if (mf && !(mf->mf_fsflags & FS_DIRECTORY)) {
-	/*
-	 * When shutting down this had better
-	 * look like a directory, otherwise it
-	 * can't be unmounted!
-	 */
-	mk_fattr(mp, NFDIR);
-      }
-
-      if ((--immediate_abort < 0 &&
-	   !(mp->am_flags & AMF_ROOT) && mp->am_parent) ||
-	  (mf->mf_flags & MFF_RESTART)) {
-
-	/*
-	 * Just throw this node away without bothering to unmount it.  If
-	 * the server is not known to be up then don't discard the mounted
-	 * on directory or Amd might hang...
-	 */
-	if (mf->mf_server &&
-	    (mf->mf_server->fs_flags & (FSF_DOWN | FSF_VALID)) != FSF_VALID)
-	  mf->mf_flags &= ~MFF_MKMNT;
-	if (gopt.flags & CFM_UNMOUNT_ON_EXIT || mp->am_flags & AMF_AUTOFS) {
-	  plog(XLOG_INFO, "on-exit attempt to unmount %s", mf->mf_mount);
-	  unmount_node(mp);
-	}
-	am_unmounted(mp);
-
-      } else {
-	/*
-	 * Any other node gets forcibly timed out.
-	 */
-	mp->am_flags &= ~AMF_NOTIMEOUT;
-	mp->am_mnt->mf_flags &= ~MFF_RSTKEEP;
-	mp->am_ttl = 0;
-	mp->am_timeo = 1;
-	mp->am_timeo_w = 0;
-      }
+      am_unmounted(mp);
+      exported_ap[i] = 0;
+    } else {
+      /*
+       * Any other node gets forcibly timed out.
+       */
+      mp->am_flags &= ~AMF_NOTIMEOUT;
+      mp->am_mnt->mf_flags &= ~MFF_RSTKEEP;
+      mp->am_ttl = 0;
+      mp->am_timeo = 1;
+      mp->am_timeo_w = 0;
     }
   }
 }
 
 
-static int
-unmount_node(am_node *mp)
+/*
+ * Try to mount a file system.  Can be called directly or in a sub-process by run_task.
+ *
+ * Warning: this function might be running in a child process context.
+ * Don't expect any changes made here to survive in the parent amd process.
+ */
+int
+mount_node(opaque_t arg)
 {
+  am_node *mp = (am_node *) arg;
   mntfs *mf = mp->am_mnt;
-  int error;
+  int error = 0;
 
-  if ((mf->mf_flags & MFF_ERROR) || mf->mf_refc > 1) {
+#ifdef HAVE_FS_AUTOFS
+  if (mp->am_flags & AMF_AUTOFS)
+    error = autofs_mount_fs(mp, mf);
+  else
+#endif /* HAVE_FS_AUTOFS */
+    if (!(mf->mf_flags & MFF_MOUNTED))
+      error = mf->mf_ops->mount_fs(mp, mf);
+
+  if (error > 0)
+    dlog("mount_node: call to mf_ops->mount_fs(%s) failed: %s",
+	 mp->am_path, strerror(error));
+  return error;
+}
+
+
+static int
+unmount_node(opaque_t arg)
+{
+  am_node *mp = (am_node *) arg;
+  mntfs *mf = mp->am_mnt;
+  int error = 0;
+
+  if (mf->mf_flags & MFF_ERROR) {
     /*
      * Just unlink
      */
-    if (mf->mf_flags & MFF_ERROR)
-      dlog("No-op unmount of error node %s", mf->mf_info);
-    error = 0;
+    dlog("No-op unmount of error node %s", mf->mf_info);
   } else {
     dlog("Unmounting <%s> <%s> (%s) flags %x",
 	 mp->am_path, mf->mf_mount, mf->mf_info, mf->mf_flags);
-    error = (*mf->mf_ops->umount_fs) (mp, mf);
+#ifdef HAVE_FS_AUTOFS
+    if (mp->am_flags & AMF_AUTOFS)
+      error = autofs_umount_fs(mp, mf);
+    else
+#endif /* HAVE_FS_AUTOFS */
+      if (mf->mf_refc == 1)
+	error = mf->mf_ops->umount_fs(mp, mf);
   }
 
   /* do this again, it might have changed */
@@ -908,55 +804,12 @@ unmount_node(am_node *mp)
 }
 
 
-static int
-unmount_node_wrap(voidp vp)
-{
-  return unmount_node((am_node *) vp);
-
-  /*
-   * Below is the comment left from the old code
-   * that was dependent on the macro FLUSH_KERNEL_NAME_CACHE
-   */
-  /*
-   * This code should just say:
-   * return unmount_node((am_node *) vp);
-   *
-   * However...
-   * The kernel keeps a cached copy of filehandles,
-   * and doesn't ever uncache them (apparently).  So
-   * when Amd times out a node the kernel will have a
-   * stale filehandle.  When the kernel next uses the
-   * filehandle it gets ESTALE.
-   *
-   * The workaround:
-   * Arrange that when a node is removed an unlink or
-   * rmdir is done on that path so that the kernel
-   * cache is done.  Yes - yuck.
-   *
-   * This can all be removed (and the background
-   * unmount flag in amfs_link_ops) if/when the kernel does
-   * something smarter.
-   *
-   * If the unlink or rmdir failed then just log a warning,
-   * don't fail the unmount.  This can occur if the kernel
-   * client code decides that the object is still referenced
-   * and should be renamed rather than discarded.
-   *
-   * There is still a race condition here...
-   * if another process is trying to access the same
-   * filesystem at the time we get here, then
-   * it will block, since the MFF_UNMOUNTING flag will
-   * be set.  That may, or may not, cause the entire
-   * system to deadlock.  Hmmm...
-   */
-}
-
-
 static void
-free_map_if_success(int rc, int term, voidp closure)
+free_map_if_success(int rc, int term, opaque_t arg)
 {
-  am_node *mp = (am_node *) closure;
+  am_node *mp = (am_node *) arg;
   mntfs *mf = mp->am_mnt;
+  wchan_t wchan = get_mntfs_wchan(mf);
 
   /*
    * Not unmounting any more
@@ -993,6 +846,8 @@ free_map_if_success(int rc, int term, voidp closure)
     else
       plog(XLOG_ERROR, "%s: unmount: %s", mp->am_path, strerror(rc));
 #ifdef HAVE_FS_AUTOFS
+    if (mf->mf_flags & MFF_IS_AUTOFS)
+      autofs_get_mp(mp);
     if (mp->am_flags & AMF_AUTOFS)
       autofs_umount_failed(mp);
 #endif /* HAVE_FS_AUTOFS */
@@ -1004,7 +859,7 @@ free_map_if_success(int rc, int term, voidp closure)
   /*
    * Wakeup anything waiting for this unmount
    */
-  wakeup((voidp) mf);
+  wakeup(wchan);
 }
 
 
@@ -1045,24 +900,23 @@ unmount_mp(am_node *mp)
     return 0;
   }
 
-#ifdef HAVE_FS_AUTOFS
-  if (mf->mf_flags & MFF_AUTOFS) {
-    autofs_release_fh(mf->mf_autofs_fh);
-    mf->mf_autofs_fh = 0;
-  }
-#endif /* HAVE_FS_AUTOFS */
-
   dlog("\"%s\" on %s timed out", mp->am_path, mp->am_mnt->mf_mount);
   mf->mf_flags |= MFF_UNMOUNTING;
+
+#ifdef HAVE_FS_AUTOFS
+  if (mf->mf_flags & MFF_IS_AUTOFS)
+    autofs_release_mp(mp);
+#endif /* HAVE_FS_AUTOFS */
+
   if ((mf->mf_fsflags & FS_UBACKGROUND) &&
       (mf->mf_flags & MFF_MOUNTED)) {
     dlog("Trying unmount in background");
-    run_task(unmount_node_wrap, (voidp) mp,
-	     free_map_if_success, (voidp) mp);
+    run_task(unmount_node, (opaque_t) mp,
+	     free_map_if_success, (opaque_t) mp);
     was_backgrounded = 1;
   } else {
     dlog("Trying unmount in foreground");
-    free_map_if_success(unmount_node(mp), 0, (voidp) mp);
+    free_map_if_success(unmount_node((opaque_t) mp), 0, (opaque_t) mp);
     dlog("unmount attempt done");
   }
 
@@ -1071,12 +925,12 @@ unmount_mp(am_node *mp)
 
 
 void
-timeout_mp(voidp v)
+timeout_mp(opaque_t v)				/* argument not used?! */
 {
   int i;
   time_t t = NEVER;
   time_t now = clocktime();
-  int backoff = NumChild / 4;
+  int backoff = NumChildren / 4;
 
   dlog("Timing out automount points...");
 
@@ -1098,10 +952,10 @@ timeout_mp(voidp v)
       continue;
 
 #ifdef HAVE_FS_AUTOFS
-    if (mf->mf_flags & MFF_AUTOFS) {
-      if (now >= mp->am_ttl)
+    if (mf->mf_flags & MFF_IS_AUTOFS && mp->am_autofs_ttl != NEVER) {
+      if (now >= mp->am_autofs_ttl)
 	autofs_timeout_mp(mp);
-      t = smallest_t(t, mp->am_ttl);
+      t = smallest_t(t, mp->am_autofs_ttl);
     }
 #endif /* HAVE_FS_AUTOFS */
 

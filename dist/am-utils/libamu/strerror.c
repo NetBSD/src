@@ -1,8 +1,8 @@
-/*	$NetBSD: strerror.c,v 1.2 2003/07/15 09:01:20 itojun Exp $	*/
+/*	$NetBSD: strerror.c,v 1.3 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 2002-2003 Ion Badulescu
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 2002-2004 Ion Badulescu
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strerror.c,v 1.3 2002/12/27 22:44:11 ezk Exp
+ * Id: strerror.c,v 1.4 2004/01/06 03:56:20 ezk Exp
  *
  */
 

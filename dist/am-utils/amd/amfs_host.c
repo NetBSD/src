@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_host.c,v 1.3 2003/07/15 09:01:15 itojun Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_host.c,v 1.18 2002/12/27 22:43:47 ezk Exp
+ * Id: amfs_host.c,v 1.28 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -58,9 +58,9 @@
 #include <amd.h>
 
 static char *amfs_host_match(am_opts *fo);
+static int amfs_host_init(mntfs *mf);
 static int amfs_host_mount(am_node *am, mntfs *mf);
 static int amfs_host_umount(am_node *am, mntfs *mf);
-static int amfs_host_init(mntfs *mf);
 static void amfs_host_umounted(mntfs *mf);
 
 /*
@@ -80,7 +80,8 @@ am_ops amfs_host_ops =
   0,				/* amfs_host_mounted */
   amfs_host_umounted,
   find_nfs_srvr,
-  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO | FS_AUTOFS,
+  0,				/* amfs_host_get_wchan */
+  FS_MKMNT | FS_BACKGROUND | FS_AMQINFO,
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_HOST_FS_FLAGS,
 #endif /* HAVE_FS_AUTOFS */
@@ -137,8 +138,7 @@ amfs_host_match(am_opts *fo)
 static int
 amfs_host_init(mntfs *mf)
 {
-  fserver *fs;
-  u_short port;
+  u_short mountd_port;
 
   if (strchr(mf->mf_info, ':') == 0)
     return ENOENT;
@@ -155,39 +155,39 @@ amfs_host_init(mntfs *mf)
    */
   /*
    * First, we find the fileserver for this mntfs and then call
-   * nfs_srvr_port with our mntfs passed as the wait channel.
-   * nfs_srvr_port will check some things and then schedule
+   * get_mountd_port with our mntfs passed as the wait channel.
+   * get_mountd_port will check some things and then schedule
    * it so that when the fileserver is ready, a wakeup is done
-   * on this mntfs.   amfs_auto_cont() is already sleeping on this mntfs
-   * so as soon as that wakeup happens amfs_auto_cont() is called and
+   * on this mntfs.   amfs_cont() is already sleeping on this mntfs
+   * so as soon as that wakeup happens amfs_cont() is called and
    * this mount is retried.
    */
-  if ((fs = mf->mf_server))
+  if (mf->mf_server)
     /*
      * We don't really care if there's an error returned.
      * Since this is just to help speed things along, the
      * error will get handled properly elsewhere.
      */
-    (void) nfs_srvr_port(fs, &port, (voidp) mf);
+    get_mountd_port(mf->mf_server, &mountd_port, get_mntfs_wchan(mf));
 
   return 0;
 }
 
 
 static int
-do_mount(am_nfs_handle_t *fhp, char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs, mntfs *mf)
+do_mount(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
 {
   struct stat stb;
 
   dlog("amfs_host: mounting fs %s on %s\n", fs_name, mntdir);
 
-  (void) mkdirs(real_mntdir, 0555);
-  if (stat(real_mntdir, &stb) < 0 || (stb.st_mode & S_IFMT) != S_IFDIR) {
+  (void) mkdirs(mntdir, 0555);
+  if (stat(mntdir, &stb) < 0 || (stb.st_mode & S_IFMT) != S_IFDIR) {
     plog(XLOG_ERROR, "No mount point for %s - skipping", mntdir);
     return ENOENT;
   }
 
-  return mount_nfs_fh(fhp, mntdir, real_mntdir, fs_name, opts, on_autofs, mf);
+  return mount_nfs_fh(fhp, mntdir, fs_name, mf);
 }
 
 
@@ -209,6 +209,10 @@ fetch_fhandle(CLIENT *client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versio
 {
   struct timeval tv;
   enum clnt_stat clnt_stat;
+  struct fhstatus res;
+#ifdef HAVE_FS_NFS3
+  struct am_mountres3 res3;
+#endif /* HAVE_FS_NFS3 */
 
   /*
    * Pick a number, any number...
@@ -226,23 +230,28 @@ fetch_fhandle(CLIENT *client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versio
   plog(XLOG_INFO, "fetch_fhandle: NFS version %d", (int) nfs_version);
 #ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3) {
-    memset((char *) &fhp->v3, 0, sizeof(fhp->v3));
+    memset((char *) &res3, 0, sizeof(res3));
     clnt_stat = clnt_call(client,
 			  MOUNTPROC_MNT,
 			  (XDRPROC_T_TYPE) xdr_dirpath,
 			  (SVC_IN_ARG_TYPE) &dir,
-			  (XDRPROC_T_TYPE) xdr_mountres3,
-			  (SVC_IN_ARG_TYPE) &fhp->v3,
+			  (XDRPROC_T_TYPE) xdr_am_mountres3,
+			  (SVC_IN_ARG_TYPE) &res3,
 			  tv);
     if (clnt_stat != RPC_SUCCESS) {
       plog(XLOG_ERROR, "mountd rpc failed: %s", clnt_sperrno(clnt_stat));
       return EIO;
     }
     /* Check the status of the filehandle */
-    if ((errno = fhp->v3.fhs_status)) {
+    if ((errno = res3.fhs_status)) {
       dlog("fhandle fetch for mount version 3 failed: %m");
       return errno;
     }
+    memset((voidp) &fhp->v3, 0, sizeof(am_nfs_fh3));
+    fhp->v3.am_fh3_length = res3.mountres3_u.mountinfo.fhandle.fhandle3_len;
+    memmove(fhp->v3.am_fh3_data,
+	    res3.mountres3_u.mountinfo.fhandle.fhandle3_val,
+	    fhp->v3.am_fh3_length);
   } else {			/* not NFS_VERSION3 mount */
 #endif /* HAVE_FS_NFS3 */
     clnt_stat = clnt_call(client,
@@ -250,18 +259,19 @@ fetch_fhandle(CLIENT *client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versio
 			  (XDRPROC_T_TYPE) xdr_dirpath,
 			  (SVC_IN_ARG_TYPE) &dir,
 			  (XDRPROC_T_TYPE) xdr_fhstatus,
-			  (SVC_IN_ARG_TYPE) &fhp->v2,
+			  (SVC_IN_ARG_TYPE) &res,
 			  tv);
     if (clnt_stat != RPC_SUCCESS) {
       plog(XLOG_ERROR, "mountd rpc failed: %s", clnt_sperrno(clnt_stat));
       return EIO;
     }
     /* Check status of filehandle */
-    if (fhp->v2.fhs_status) {
-      errno = fhp->v2.fhs_status;
+    if (res.fhs_status) {
+      errno = res.fhs_status;
       dlog("fhandle fetch for mount version 1 failed: %m");
       return errno;
     }
+    memmove(&fhp->v2, &res.fhs_fh, NFS_FHSIZE);
 #ifdef HAVE_FS_NFS3
   } /* end of "if (nfs_version == NFS_VERSION3)" statement */
 #endif /* HAVE_FS_NFS3 */
@@ -304,9 +314,17 @@ amfs_host_mount(am_node *am, mntfs *mf)
   int ok = FALSE;
   mntlist *mlist;
   char fs_name[MAXPATHLEN], *rfs_dir;
-  char mntpt[MAXPATHLEN], real_mntpt[MAXPATHLEN];
+  char mntpt[MAXPATHLEN];
   struct timeval tv;
   u_long mnt_version;
+
+  /*
+   * WebNFS servers don't necessarily run mountd.
+   */
+  if (mf->mf_flags & MFF_WEBNFS) {
+    plog(XLOG_ERROR, "amfs_host_mount: cannot support WebNFS");
+    return EIO;
+  }
 
   /*
    * Read the mount list
@@ -329,7 +347,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
   plog(XLOG_INFO, "amfs_host_mount: NFS version %d", (int) mf->mf_server->fs_version);
 #ifdef HAVE_FS_NFS3
   if (mf->mf_server->fs_version == NFS_VERSION3)
-    mnt_version = MOUNTVERS3;
+    mnt_version = AM_MOUNTVERS3;
   else
 #endif /* HAVE_FS_NFS3 */
     mnt_version = MOUNTVERS;
@@ -461,7 +479,6 @@ amfs_host_mount(am_node *am, mntfs *mf)
     if (ex) {
       strlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
       make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
-      make_mntpt(real_mntpt, sizeof(real_mntpt), ex, mf->mf_real_mount);
       if (do_mount(&fp[j], mntpt, real_mntpt, fs_name, mf->mf_mopts,
 		   am->am_flags & AMF_AUTOFS, mf) == 0)
 	ok = TRUE;
@@ -515,6 +532,7 @@ static int
 amfs_host_umount(am_node *am, mntfs *mf)
 {
   mntlist *ml, *mprev;
+  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
   int xerror = 0;
 
   /*
@@ -553,7 +571,7 @@ amfs_host_umount(am_node *am, mntfs *mf)
       /*
        * Unmount "dir"
        */
-      error = UMOUNT_FS(dir, dir, mnttab_file_name);
+      error = UMOUNT_FS(dir, mnttab_file_name, on_autofs);
       /*
        * Keep track of errors
        */
@@ -613,6 +631,14 @@ amfs_host_umounted(mntfs *mf)
     return;
 
   /*
+   * WebNFS servers shouldn't ever get here.
+   */
+  if (mf->mf_flags & MFF_WEBNFS) {
+    plog(XLOG_ERROR, "amfs_host_umounted: cannot support WebNFS");
+    return;
+  }
+
+  /*
    * Take a copy of the server hostname, address, and NFS version
    * to mount version conversion.
    */
@@ -621,7 +647,7 @@ amfs_host_umounted(mntfs *mf)
   plog(XLOG_INFO, "amfs_host_umounted: NFS version %d", (int) mf->mf_server->fs_version);
 #ifdef HAVE_FS_NFS3
   if (mf->mf_server->fs_version == NFS_VERSION3)
-    mnt_version = MOUNTVERS3;
+    mnt_version = AM_MOUNTVERS3;
   else
 #endif /* HAVE_FS_NFS3 */
     mnt_version = MOUNTVERS;

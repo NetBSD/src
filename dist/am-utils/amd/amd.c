@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.6 2003/07/15 09:01:15 itojun Exp $	*/
+/*	$NetBSD: amd.c,v 1.7 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.c,v 1.23 2002/12/27 22:43:46 ezk Exp
+ * Id: amd.c,v 1.27 2004/04/28 04:22:13 ib42 Exp
  *
  */
 
@@ -148,6 +148,7 @@ daemon_mode(void)
 #ifdef HAVE_SIGACTION
   struct sigaction sa, osa;
 
+  memset(&sa, 0, sizeof(sa));
   sa.sa_handler = parent_exit;
   sa.sa_flags = 0;
   sigemptyset(&(sa.sa_mask));
@@ -279,10 +280,9 @@ init_global_options(void)
   gopt.map_reload_interval = ONE_HOUR;
 
   /*
-   * various CFM_* flags.
-   * by default, only the "plock" option is on (if available).
+   * various CFM_* flags that are on by default.
    */
-  gopt.flags = CFM_PROCESS_LOCK;
+  gopt.flags = CFM_DEFAULT_FLAGS;
 
 #ifdef HAVE_MAP_HESIOD
   /* Hesiod rhs zone */
@@ -397,6 +397,7 @@ main(int argc, char *argv[])
    * Trap interrupts for shutdowns.
    */
 #ifdef HAVE_SIGACTION
+  memset(&sa, 0, sizeof(sa));
   sa.sa_handler = sigterm;
   sa.sa_flags = 0;
   sigemptyset(&(sa.sa_mask));
@@ -485,10 +486,11 @@ main(int argc, char *argv[])
   }
 
   /*
-   * Get our own IP address so that we
-   * can mount the automounter.
+   * Get our own IP address so that we can mount the automounter.  We pass
+   * localhost_address which could be used as the default localhost
+   * name/address in amu_get_myaddress().
    */
-  amu_get_myaddress(&myipaddr);
+  amu_get_myaddress(&myipaddr, gopt.localhost_address);
   plog(XLOG_INFO, "My ip addr is %s", inet_ntoa(myipaddr));
 
   /* avoid hanging on other NFS servers if started elsewhere */

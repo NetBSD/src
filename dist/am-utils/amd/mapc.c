@@ -1,7 +1,7 @@
-/*	$NetBSD: mapc.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
+/*	$NetBSD: mapc.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mapc.c,v 1.16 2002/12/27 22:43:50 ezk Exp
+ * Id: mapc.c,v 1.20 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -85,8 +85,6 @@
 #define	MREC_FULL	2
 #define	MREC_PART	1
 #define	MREC_NONE	0
-
-#define MAX_CHAIN	2048
 
 static struct opt_tab mapc_opt[] =
 {
@@ -656,6 +654,8 @@ mapc_create(char *map, char *opt, const char *type)
   m->refc = 1;
   m->wildcard = 0;
   m->reloads = 0;
+  /* Unfortunately with current code structure, this cannot be initialized here */
+  m->cfm = NULL;
 
   /*
    * synchronize cache with reality
@@ -734,9 +734,9 @@ mapc_find(char *map, char *opt, const char *maptype)
  * Free a map.
  */
 void
-mapc_free(voidp v)
+mapc_free(opaque_t arg)
 {
-  mnt_map *m = v;
+  mnt_map *m = (mnt_map *) arg;
 
   /*
    * Decrement the reference count.
@@ -1025,7 +1025,7 @@ root_newmap(const char *dir, const char *opts, const char *map, const cf_map_t *
 
 
 int
-mapc_keyiter(mnt_map *m, void (*fn) (char *, voidp), voidp arg)
+mapc_keyiter(mnt_map *m, key_fun *fn, opaque_t arg)
 {
   int i;
   int c = 0;
@@ -1048,7 +1048,7 @@ mapc_keyiter(mnt_map *m, void (*fn) (char *, voidp), voidp arg)
  * Finally throw away the root map.
  */
 int
-root_keyiter(void (*fn)(char *, voidp), voidp arg)
+root_keyiter(key_fun *fn, opaque_t arg)
 {
   if (root_map) {
     int c = mapc_keyiter(root_map, fn, arg);
@@ -1056,132 +1056,6 @@ root_keyiter(void (*fn)(char *, voidp), voidp arg)
   }
 
   return 0;
-}
-
-
-/*
- * Was: NEW_TOPLVL_READDIR
- * Search a chain for an entry with some name.
- * -Erez Zadok <ezk@cs.columbia.edu>
- */
-static int
-key_already_in_chain(char *keyname, const nfsentry *chain)
-{
-  const nfsentry *tmpchain = chain;
-
-  while (tmpchain) {
-    if (keyname && tmpchain->ne_name && STREQ(keyname, tmpchain->ne_name))
-        return 1;
-    tmpchain = tmpchain->ne_nextentry;
-  }
-
-  return 0;
-}
-
-
-/*
- * Create a chain of entries which are not linked.
- * -Erez Zadok <ezk@cs.columbia.edu>
- */
-nfsentry *
-make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable)
-{
-  static u_int last_cookie = (u_int) 2;	/* monotonically increasing */
-  static nfsentry chain[MAX_CHAIN];
-  static int max_entries = MAX_CHAIN;
-  char *key;
-  int num_entries = 0, preflen = 0, i;
-  nfsentry *retval = (nfsentry *) NULL;
-  mntfs *mf;
-  mnt_map *mmp;
-
-  if (!mp) {
-    plog(XLOG_DEBUG, "make_entry_chain: mp is (NULL)");
-    return retval;
-  }
-  mf = mp->am_mnt;
-  if (!mf) {
-    plog(XLOG_DEBUG, "make_entry_chain: mp->am_mnt is (NULL)");
-    return retval;
-  }
-  mmp = (mnt_map *) mf->mf_private;
-  if (!mmp) {
-    plog(XLOG_DEBUG, "make_entry_chain: mp->am_mnt->mf_private is (NULL)");
-    return retval;
-  }
-
-  if (mp->am_pref)
-    preflen = strlen(mp->am_pref);
-
-  /* iterate over keys */
-  for (i = 0; i < NKVHASH; i++) {
-    kv *k;
-    for (k = mmp->kvhash[i]; k ; k = k->next) {
-
-      /*
-       * Skip unwanted entries which are either not real entries or
-       * very difficult to interpret (wildcards...)  This test needs
-       * lots of improvement.  Any takers?
-       */
-      key = k->key;
-      if (!key)
-	continue;
-
-      /* Skip '*' */
-      if (!fully_browsable && strchr(key, '*'))
-	continue;
-
-      /*
-       * If the map has a prefix-string then check if the key starts with
-       * this string, and if it does, skip over this prefix.  If it has a
-       * prefix and it doesn't match the start of the key, skip it.
-       */
-      if (preflen && (preflen <= (strlen(key)))) {
-	if (!NSTREQ(key, mp->am_pref, preflen))
-	  continue;
-	key += preflen;
-      } else if (preflen) {
-	  continue;
-      }
-
-      /* no more '/' are allowed, unless browsable_dirs=full was used */
-      if (!fully_browsable && strchr(key, '/'))
-	continue;
-
-      /* no duplicates allowed */
-      if (key_already_in_chain(key, current_chain))
-	continue;
-
-      /* fill in a cell and link the entry */
-      if (num_entries >= max_entries) {
-	/* out of space */
-	plog(XLOG_DEBUG, "make_entry_chain: no more space in chain");
-	if (num_entries > 0) {
-	  chain[num_entries - 1].ne_nextentry = 0;
-	  retval = &chain[0];
-	}
-	return retval;
-      }
-
-      /* we have space.  put entry in next cell */
-      ++last_cookie;
-      chain[num_entries].ne_fileid = (u_int) last_cookie;
-      *(u_int *) chain[num_entries].ne_cookie = (u_int) last_cookie;
-      chain[num_entries].ne_name = key;
-      if (num_entries < max_entries - 1) {	/* link to next one */
-	chain[num_entries].ne_nextentry = &chain[num_entries + 1];
-      }
-      ++num_entries;
-    } /* end of "while (k)" */
-  } /* end of "for (i ... NKVHASH ..." */
-
-  /* terminate chain */
-  if (num_entries > 0) {
-    chain[num_entries - 1].ne_nextentry = 0;
-    retval = &chain[0];
-  }
-
-  return retval;
 }
 
 

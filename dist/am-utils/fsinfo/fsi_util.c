@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_util.c,v 1.8 2003/07/15 09:01:18 itojun Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.9 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_util.c,v 1.8 2002/12/27 22:44:07 ezk Exp
+ * Id: fsi_util.c,v 1.11 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -171,7 +171,7 @@ fatal(char *fmt, ...)
  * Debug log
  */
 void
-logit(char *fmt, ...)
+fsi_log(char *fmt, ...)
 {
   va_list ap;
 
@@ -278,7 +278,7 @@ pref_open(char *pref, char *hn, void (*hdr) (FILE *, char *), char *arg)
   FILE *ef;
 
   snprintf(p, sizeof(p), "%s%s", pref, hn);
-  logit("Writing %s info for %s to %s", pref, hn, p);
+  fsi_log("Writing %s info for %s to %s", pref, hn, p);
   ef = fopen(p, "w");
   if (ef) {
     (*hdr) (ef, arg);
@@ -305,17 +305,6 @@ void
 compute_automount_point(char *buf, host *hp, char *vn)
 {
   sprintf(buf, "%s/%s%s", autodir, hp->h_lochost, vn);
-}
-
-
-char *
-xcalloc(int i, int s)
-{
-  char *p = (char *) calloc(i, (unsigned) s);
-
-  if (!p)
-    fatal("Out of memory");
-  return p;
 }
 
 

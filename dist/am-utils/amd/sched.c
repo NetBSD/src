@@ -1,7 +1,7 @@
-/*	$NetBSD: sched.c,v 1.5 2003/03/09 01:38:40 christos Exp $	*/
+/*	$NetBSD: sched.c,v 1.6 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: sched.c,v 1.11 2002/12/27 22:43:52 ezk Exp
+ * Id: sched.c,v 1.16 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -57,12 +57,12 @@
 typedef struct pjob pjob;
 
 struct pjob {
-  qelem hdr;			/* Linked list */
-  int pid;			/* Process ID of job */
-  cb_fun cb_fun;		/* Callback function */
-  voidp cb_closure;		/* Closure for callback */
+  qelem hdr;		/* Linked list */
+  int pid;		/* Process ID of job */
+  cb_fun *cb_fun;	/* Callback function */
+  opaque_t cb_arg;	/* Argument for callback */
   int w;		/* everyone these days uses int, not a "union wait" */
-  voidp wchan;			/* Wait channel */
+  wchan_t wchan;	/* Wait channel */
 };
 
 /* globals */
@@ -95,12 +95,12 @@ rem_que(qelem *elem)
 
 
 static pjob *
-sched_job(cb_fun cf, voidp ca)
+sched_job(cb_fun *cf, opaque_t ca)
 {
   pjob *p = ALLOC(struct pjob);
 
   p->cb_fun = cf;
-  p->cb_closure = ca;
+  p->cb_arg = ca;
 
   /*
    * Now place on wait queue
@@ -116,7 +116,7 @@ sched_job(cb_fun cf, voidp ca)
  * cf: Continuation function (ca is its arguments)
  */
 void
-run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
+run_task(task_fun *tf, opaque_t ta, cb_fun *cf, opaque_t ca)
 {
   pjob *p = sched_job(cf, ca);
 #ifdef HAVE_SIGACTION
@@ -125,7 +125,7 @@ run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
   int mask;
 #endif /* not HAVE_SIGACTION */
 
-  p->wchan = (voidp) p;
+  p->wchan = (wchan_t) p;
 
 #ifdef HAVE_SIGACTION
   sigemptyset(&new);		/* initialize signal set we wish to block */
@@ -156,14 +156,14 @@ run_task(task_fun tf, voidp ta, cb_fun cf, voidp ca)
  * Schedule a task to be run when woken up
  */
 void
-sched_task(cb_fun cf, voidp ca, voidp wchan)
+sched_task(cb_fun *cf, opaque_t ca, wchan_t wchan)
 {
   /*
    * Allocate a new task
    */
   pjob *p = sched_job(cf, ca);
 
-  dlog("SLEEP on %#lx", (unsigned long) wchan);
+  dlog("SLEEP on %p", wchan);
   p->wchan = wchan;
   p->pid = 0;
   memset((voidp) &p->w, 0, sizeof(p->w));
@@ -180,7 +180,7 @@ wakeupjob(pjob *p)
 
 
 void
-wakeup(voidp wchan)
+wakeup(wchan_t wchan)
 {
   pjob *p, *p2;
 
@@ -202,9 +202,20 @@ wakeup(voidp wchan)
 
 
 void
-wakeup_task(int rc, int term, voidp cl)
+wakeup_task(int rc, int term, wchan_t wchan)
 {
-  wakeup(cl);
+  wakeup(wchan);
+}
+
+
+wchan_t
+get_mntfs_wchan(mntfs *mf)
+{
+  if (mf &&
+      mf->mf_ops &&
+      mf->mf_ops->get_wchan)
+    return mf->mf_ops->get_wchan(mf);
+  return mf;
 }
 
 
@@ -235,9 +246,9 @@ do_task_notify(void)
      */
     if (p->cb_fun) {
       /* these two trigraphs will ensure compatibility with strict POSIX.1 */
-      (*p->cb_fun) (WIFEXITED(p->w)   ? WEXITSTATUS(p->w) : 0,
-		    WIFSIGNALED(p->w) ? WTERMSIG(p->w)	  : 0,
-		    p->cb_closure);
+      p->cb_fun(WIFEXITED(p->w)   ? WEXITSTATUS(p->w) : 0,
+		WIFSIGNALED(p->w) ? WTERMSIG(p->w)    : 0,
+		p->cb_arg);
     }
     XFREE(p);
   }
@@ -279,11 +290,11 @@ sigchld(int sig)
 
     /*
      * Must count down children inside the while loop, otherwise we won't
-     * count them all, and NumChild (and later backoff) will be set
+     * count them all, and NumChildren (and later backoff) will be set
      * incorrectly. SH/RUNIT 940519.
      */
-    if (--NumChild < 0)
-      NumChild = 0;
+    if (--NumChildren < 0)
+      NumChildren = 0;
   } /* end of "while wait..." loop */
 
 #ifdef REINSTALL_SIGNAL_HANDLER
