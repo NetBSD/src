@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.16 2000/02/02 17:09:48 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.17 2000/03/26 10:53:40 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -780,7 +780,10 @@ struct tulip_desc {
 #define	SIAGEN_LV2		0x00008000	/* LED 2 value (21041) */
 #define	SIAGEN_HCKR		0x00008000	/* hacker (21143) */
 #define	SIAGEN_MD		0x000f0000	/* general purpose mode/data */
-#define	SIAGEN_LGS		0x00f00000	/* LED/GEP select */
+#define	SIAGEN_LGS0		0x00100000	/* LED/GEP 0 select */
+#define	SIAGEN_LGS1		0x00200000	/* LED/GEP 1 select */
+#define	SIAGEN_LGS2		0x00400000	/* LED/GEP 2 select */
+#define	SIAGEN_LGS3		0x00800000	/* LED/GEP 3 select */
 #define	SIAGEN_GEI0		0x01000000	/* GEP pin 0 intr enable */
 #define	SIAGEN_GEI1		0x02000000	/* GEP pin 1 intr enable */
 #define	SIAGEN_RME		0x04000000	/* receive match enable */
