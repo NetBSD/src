@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/14 20:11:24 wiz Exp $
+#	$NetBSD: Makefile,v 1.4 2004/06/13 11:47:41 lukem Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -24,7 +24,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/x68k \
 CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT
 
-CPPFLAGS.x68kConfig.c=	 -DX11_LIBDIR=\"$(X11LIBDIR)\"
+CPPFLAGS.x68kConfig.c=	 -DX11_LIBDIR=\"${X11ETCDIR}\"
 
 BUILDSYMLINKS=	../../../mi/miinitext.c x68kInEx.c
 
