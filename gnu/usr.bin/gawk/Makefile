@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2003/11/08 17:17:59 ragge Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ LDADD+=		-lintl -lm
 CLEANFILES+=	${PROG}.1 ${PROG}.texi
 
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
-COPTS+=		-O1
+COPTS+=		-O0
 .endif
 
 BUILDSYMLINKS+=	gawk.1 ${PROG}.1
