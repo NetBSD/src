@@ -1,4 +1,4 @@
-/*	$NetBSD: kstream-des.c,v 1.1.1.1 2000/06/17 06:24:28 thorpej Exp $	*/
+/*	$NetBSD: kstream-des.c,v 1.2 2000/06/17 06:39:32 thorpej Exp $	*/
 
 /* DES-encrypted-stream implementation for MIT Kerberos.
    Written by Ken Raeburn (Raeburn@Cygnus.COM), based on algorithms
@@ -73,10 +73,7 @@ static kstream_ptr losing_realloc (old_ptr, new_size)
    between 8 and 16 is an annoyance, but rlogin actually relies on being
    able to send 12 bytes in one chunk.  Bleah!  */
 static void
-do_encrypt (out, inp, p)
-     ksdb *out;
-     ksdb *inp;
-     priv *p;
+do_encrypt (ksdb *out, ksdb *inp, priv *p)
 {
   union {
     char buf[16];
@@ -134,16 +131,13 @@ do_encrypt (out, inp, p)
     if (x)
       abort ();
   }
-  des_pcbc_encrypt ((des_cblock *)in.ptr, (des_cblock *)ptr, in.length,
-		    p->x.u.sched, (des_cblock *)p->x.ivec, ENCRYPT);
+  des_pcbc_encrypt (in.ptr, ptr, in.length,
+		    p->x.u.sched, (des_cblock *)p->x.ivec, 1);
   out->ptr = ptr + ((in.length + 7) & ~7);
 }
 
 static int
-encrypt (outp, inp, k)
-     ksdb *outp;
-     ksdb *inp;
-     kstream k;
+encrypt (ksdb *outp, ksdb *inp, kstream k)
 {
   const int small_block_size = 16;
   priv *p = (priv *) k->data;
@@ -184,10 +178,7 @@ encrypt (outp, inp, k)
 int _kstream_des_debug_OOB = 0;
 
 static int
-decrypt (outp, inp, k)
-     ksdb *outp;
-     ksdb *inp;
-     kstream k;
+decrypt (ksdb *outp, ksdb *inp, kstream k)
 {
   char *ptr = inp->ptr;
   unsigned long x = 0;
@@ -202,7 +193,7 @@ decrypt (outp, inp, k)
        and we still lose... */
     x = *ptr & 0xff;		/* get the first char */
     while (x) { 
-      if(_kstream_des_debug_OOB) fprintf(stderr,"BAD BYTE %02x\n\r", x); 
+      if(_kstream_des_debug_OOB) fprintf(stderr,"BAD BYTE %02lx\n\r", x); 
       error_count++;		/* count the bad byte */
       ptr++;			/* and skip it */
       if(inp->length == error_count) {
@@ -239,8 +230,8 @@ decrypt (outp, inp, k)
   assert (p->buf1 != 0 || sz == 0);
   outp->ptr = p->buf1;
   outp->length = x;
-  pcbc_encrypt ((des_cblock *)ptr, (des_cblock *)outp->ptr, sz, p->x.u.sched,
-                (des_cblock *)p->x.ivec, DECRYPT);
+  pcbc_encrypt (ptr, outp->ptr, sz, p->x.u.sched,
+                (des_cblock *)p->x.ivec, 0);
   if (p->no_right_justify == 0
       && x < 8)
     outp->ptr = p->buf1 + 8 - x;
@@ -248,9 +239,7 @@ decrypt (outp, inp, k)
 }
 
 static int
-init (k, data)
-     kstream k;
-     void *data;
+init (kstream k, void *data)
 {
   priv *p;
 
@@ -267,9 +256,7 @@ init (k, data)
 }
 
 static int
-rcp_init (k, data)
-     kstream k;
-     void *data;
+rcp_init (kstream k, void *data)
 {
   int x = init (k, data);
   ((priv *)(k->data))->no_right_justify = 1;
@@ -277,9 +264,7 @@ rcp_init (k, data)
 }
 
 static int
-rlogin_init (k, data)
-     kstream k;
-     void *data;
+rlogin_init (kstream k, void *data)
 {
   int x = init (k, data);
   ((priv *)(k->data))->protect_rlogin_oob = 1;
@@ -287,8 +272,7 @@ rlogin_init (k, data)
 }
 
 static void
-destroy (k)
-     kstream k;
+destroy (kstream k)
 {
   priv *p = (priv *) k->data;
   if (p->buf1)
@@ -307,10 +291,8 @@ static const struct kstream_crypt_ctl_block kstream_des_rcp_ccb = {
 };
 
 kstream
-kstream_create_rlogin_from_fd (fd, P_sched, ivec)
-     int fd;
-     kstream_ptr P_sched;
-     des_cblock (*ivec);
+kstream_create_rlogin_from_fd (int fd, kstream_ptr P_sched,
+  des_cblock (*ivec))
 {
   Key_schedule *sched = (Key_schedule *) P_sched;
   kstream_des_init_block x;
@@ -323,10 +305,8 @@ kstream_create_rlogin_from_fd (fd, P_sched, ivec)
 }
 
 kstream
-kstream_create_rcp_from_fd (fd, P_sched, ivec)
-     int fd;
-     kstream_ptr P_sched;
-     des_cblock (*ivec);
+kstream_create_rcp_from_fd (int fd, kstream_ptr P_sched,
+  des_cblock (*ivec))
 {
   Key_schedule *sched = (Key_schedule *) P_sched;
   kstream_des_init_block x;
