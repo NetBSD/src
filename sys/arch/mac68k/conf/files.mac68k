@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.87 1998/12/15 19:37:04 itohy Exp $
+#	$NetBSD: files.mac68k,v 1.88 1999/02/18 07:33:44 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -84,6 +84,15 @@ attach	sn at nubus with sn_nubus
 file	arch/mac68k/dev/if_sn.c		sn
 file	arch/mac68k/obio/if_sn_obio.c	sn_obio
 file	arch/mac68k/nubus/if_sn_nubus.c	sn_nubus
+
+# Sony floppy disk controller
+device	iwm { drive = -1 }
+attach	iwm at obio_norm
+
+device	fd: disk
+attach	fd at iwm
+file	arch/mac68k/obio/iwm_fd.c	fd needs-flag
+file	arch/mac68k/obio/iwm.s		fd needs-flag
 
 include "dev/scsipi/files.scsipi"
 
