@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1999/03/30 21:01:42 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 1999/05/13 21:58:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -106,9 +106,11 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
  */
 
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1;
 	struct proc *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -165,8 +167,14 @@ cpu_fork(p1, p2)
 #endif	/* ARMFPE */
 
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
-
 	*tf = *p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_usr_sp = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_spl = _SPL_0;
 	sf->sf_r4 = (u_int)child_return;

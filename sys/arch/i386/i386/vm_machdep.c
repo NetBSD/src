@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 1999/05/12 19:28:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.78 1999/05/13 21:58:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -86,8 +86,10 @@ void	setredzone __P((u_short *, caddr_t));
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -145,6 +147,13 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_esp = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
 	sf->sf_esi = (int)child_return;
