@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1996/06/03 20:18:48 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1996/06/11 21:16:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -58,6 +58,9 @@ struct alpha_bus_chipset {
 			    bus_io_size_t size, bus_io_handle_t *iohp));
 	void		(*bc_i_unmap) __P((void *v, bus_io_handle_t ioh,
 			    bus_io_size_t size));
+	int		(*bc_i_subregion) __P((void *v, bus_io_handle_t ioh,
+			    bus_io_size_t offset, bus_io_size_t size,
+			    bus_io_handle_t *nioh));
 
 	/* I/O-space read functions */
 	u_int8_t	(*bc_ir1) __P((void *v, bus_io_handle_t ioh,
@@ -116,6 +119,9 @@ struct alpha_bus_chipset {
 			    bus_mem_handle_t *mhp));
 	void		(*bc_m_unmap) __P((void *v, bus_mem_handle_t mh,
 			    bus_mem_size_t size));
+	int		(*bc_m_subregion) __P((void *v, bus_mem_handle_t memh,
+			    bus_mem_size_t offset, bus_mem_size_t size,
+			    bus_mem_handle_t *nmemh));
 
 	/* Mem-space read functions */
 	u_int8_t	(*bc_mr1) __P((void *v, bus_mem_handle_t memh,
@@ -155,6 +161,8 @@ struct alpha_bus_chipset {
     (*(t)->bc_i_map)((t)->bc_i_v, (port), (size), (iohp))
 #define bus_io_unmap(t, ioh, size)					\
     (*(t)->bc_i_unmap)((t)->bc_i_v, (ioh), (size))
+#define bus_io_subregion(t, ioh, offset, size, nioh)			\
+    (*(t)->bc_i_unmap)((t)->bc_i_v, (ioh), (offset), (size), (nioh))
 
 #define	__bc_io_multi(t, h, o, a, s, dir, sz)				\
     (*(t)->__bc_ABCD(bc_i,dir,m,sz))((t)->bc_i_v, h, o, a, s)
@@ -191,6 +199,8 @@ struct alpha_bus_chipset {
     (*(t)->bc_m_map)((t)->bc_m_v, (bpa), (size), (cacheable), (mhp))
 #define bus_mem_unmap(t, memh, size)					\
     (*(t)->bc_m_unmap)((t)->bc_m_v, (memh), (size))
+#define bus_mem_subregion(t, memh, offset, size, nmemh)			\
+    (*(t)->bc_m_unmap)((t)->bc_i_v, (memh), (offset), (size), (nmemh))
 
 #define	bus_mem_read_1(t, h, o)		__bc_rd((t),(h),(o),1,m)
 #define	bus_mem_read_2(t, h, o)		__bc_rd((t),(h),(o),2,m)

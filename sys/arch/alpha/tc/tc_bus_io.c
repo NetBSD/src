@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_io.c,v 1.1 1996/05/17 23:59:31 cgd Exp $	*/
+/*	$NetBSD: tc_bus_io.c,v 1.2 1996/06/11 21:16:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@ int		tc_io_map __P((void *, bus_io_addr_t, bus_io_size_t,
 		    bus_io_handle_t *));
 void		tc_io_unmap __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
+int		tc_io_subregion __P((void *, bus_io_handle_t, bus_io_size_t,
+		    bus_io_size_t, bus_io_handle_t *));
 u_int8_t	tc_io_read_1 __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
 u_int16_t	tc_io_read_2 __P((void *, bus_io_handle_t,
@@ -87,6 +89,7 @@ tc_bus_io_init(bc, iov)
 
 	bc->bc_i_map = tc_io_map;
 	bc->bc_i_unmap = tc_io_unmap;
+	bc->bc_i_subregion = tc_io_subregion;
 
 	bc->bc_ir1 = tc_io_read_1;
 	bc->bc_ir2 = tc_io_read_2;
@@ -130,6 +133,16 @@ tc_io_unmap(v, ioh, iosize)
 {
 
 	panic(tc_bus_io_panicstr, "unmap");
+}
+
+int
+tc_io_subregion(v, ioh, offset, size, nioh)
+	void *v;
+	bus_io_handle_t ioh, *nioh;
+	bus_io_size_t offset, size;
+{
+
+	panic(tc_bus_io_panicstr, "subregion");
 }
 
 u_int8_t
