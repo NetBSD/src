@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/04/26 15:50:49 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2002/04/29 04:40:00 sommerfeld Exp $
 #
 # Makefile for install
 
@@ -57,4 +57,6 @@ menus.def: menus.mi.${SYSINSTLANG} menus.md.${SYSINSTLANG} msgtouch
 
 menu_defs.c: msg_defs.h
 
-disks.o install.o main.o net.o upgrade.o util.o: msg_defs.h menu_defs.h
+XOBJS:=${SRCS:M*.c:R:O:S/$/.o/g}
+
+${XOBJS}: msg_defs.h menu_defs.h
