@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.280 2004/06/22 19:20:56 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.281 2004/07/31 21:26:43 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.280 2004/06/22 19:20:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.281 2004/07/31 21:26:43 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -742,6 +742,9 @@ wddone(void *v)
 	case TIMEOUT:
 		errmsg = "device timeout";
 		goto retry;
+	case ERR_RESET:
+		errmsg = "channel reset";
+		goto retry2;
 	case ERROR:
 		/* Don't care about media change bits */
 		if (wd->sc_wdc_bio.r_error != 0 &&
@@ -751,6 +754,7 @@ wddone(void *v)
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
 		wd->atabus->ata_reset_channel(wd->drvp, 0);
+retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries < WDIORETRIES)
@@ -1449,6 +1453,7 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	if (wddumprecalibrated == 0) {
 		wddumpmulti = wd->sc_multi;
 		wddumprecalibrated = 1;
+		wd->atabus->ata_reset_channel(wd->drvp, AT_POLL | AT_RST_EMERG);
 		wd->drvp->state = RESET;
 	}
 

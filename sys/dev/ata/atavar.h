@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.43 2004/06/01 19:32:30 mycroft Exp $	*/
+/*	$NetBSD: atavar.h,v 1.44 2004/07/31 21:26:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -58,13 +58,18 @@ struct ata_xfer {
 	/* Low-level protocol handlers. */
 	void	(*c_start)(struct wdc_channel *, struct ata_xfer *);
 	int	(*c_intr)(struct wdc_channel *, struct ata_xfer *, int);
-	void	(*c_kill_xfer)(struct wdc_channel *, struct ata_xfer *);
+	void	(*c_kill_xfer)(struct wdc_channel *, struct ata_xfer *, int);
 };
 
+/* vlags in c_flags */
 #define	C_ATAPI		0x0001		/* xfer is ATAPI request */
 #define	C_TIMEOU	0x0002		/* xfer processing timed out */
 #define	C_POLL		0x0004		/* command is polled */
 #define	C_DMA		0x0008		/* command uses DMA */
+
+/* reasons for c_kill_xfer() */
+#define KILL_GONE 1 /* device is gone */
+#define KILL_RESET 2 /* xfer was reset */
 
 /* Per-channel queue of ata_xfers.  May be shared by multiple channels. */
 struct ata_queue {
@@ -192,6 +197,7 @@ struct ata_bio {
 #define	ERR_DMA		3	/* DMA error */
 #define	TIMEOUT		4	/* device timed out */
 #define	ERR_NODEV	5	/* device has been gone */
+#define ERR_RESET	6	/* command was terminated by channel reset */
 	u_int8_t	r_error;/* copy of error register */
 	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
 };
@@ -232,7 +238,9 @@ struct wdc_command {
 #define AT_ERROR    0x0080 /* command is done with error */
 #define AT_TIMEOU   0x0100 /* command timed out */
 #define AT_DF       0x0200 /* Drive fault */
-#define AT_READREG  0x0400 /* Read registers on completion */
+#define AT_RESET    0x0400 /* command terminated by channel reset */
+#define AT_GONE     0x0800 /* command terminated because device is gone */
+#define AT_READREG  0x1000 /* Read registers on completion */
 
 	int timeout;		/* timeout (in ms) */
 	void *data;		/* Data buffer address */
@@ -249,6 +257,10 @@ struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
 	void	(*ata_reset_channel)(struct ata_drive_datas *, int);
+/* extra flags for ata_reset_channel(), in addition to AT_* */
+#define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
+#define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
+
 	int	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct wdc_command *);
 
