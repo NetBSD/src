@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.8 2004/09/25 08:27:47 heas Exp $	*/
+/*	$NetBSD: twereg.h,v 1.9 2004/10/05 23:31:32 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@
 #define TWE_OP_READVERIFY		0x04
 #define TWE_OP_VERIFY			0x05
 #define TWE_OP_PROBE			0x06
+#define TWE_OP_PROBEUNIT		0x07
 #define TWE_OP_ZEROUNIT			0x08
 #define TWE_OP_REPLACEUNIT		0x09
 #define TWE_OP_HOTSWAP			0x0a
