@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.6 1993/12/23 07:36:06 cgd Exp $ */
+/* $Id: if_ppp.c,v 1.7 1994/01/25 05:56:06 deraadt Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -206,7 +206,7 @@ pppattach()
 	sc->sc_if.if_mtu = PPP_MTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT;
 	sc->sc_if.if_type = IFT_PPP;
-	sc->sc_if.if_hdrlen = PPP_HEADER_LEN;
+	sc->sc_if.if_hdrlen = PPP_HDRLEN;
 	sc->sc_if.if_ioctl = pppioctl;
 	sc->sc_if.if_output = pppoutput;
 	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
@@ -214,7 +214,7 @@ pppattach()
 	sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HEADER_LEN);
+	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
     }
 }
@@ -392,8 +392,8 @@ pppwrite(tp, uio, flag)
 	return (EIO);
     if (tp->t_line != PPPDISC)
 	return (EINVAL);
-    if (uio->uio_resid > sc->sc_if.if_mtu + PPP_HEADER_LEN ||
-	uio->uio_resid < PPP_HEADER_LEN)
+    if (uio->uio_resid > sc->sc_if.if_mtu + PPP_HDRLEN ||
+	uio->uio_resid < PPP_HDRLEN)
 	return (EMSGSIZE);
     for (mp = &m0; uio->uio_resid; mp = &m->m_next) {
 	MGET(m, M_WAIT, MT_DATA);
@@ -414,8 +414,8 @@ pppwrite(tp, uio, flag)
     ph1 = (struct ppp_header *) &dst.sa_data;
     ph2 = mtod(m0, struct ppp_header *);
     *ph1 = *ph2;
-    m0->m_data += PPP_HEADER_LEN;
-    m0->m_len -= PPP_HEADER_LEN;
+    m0->m_data += PPP_HDRLEN;
+    m0->m_len -= PPP_HDRLEN;
     return (pppoutput(&sc->sc_if, m0, &dst));
 }
 
@@ -630,22 +630,22 @@ pppoutput(ifp, m0, dst)
      * Add PPP header.  If no space in first mbuf, allocate another.
      * (This assumes M_LEADINGSPACE is always 0 for a cluster mbuf.)
      */
-    if (M_LEADINGSPACE(m0) < PPP_HEADER_LEN) {
-	m0 = m_prepend(m0, PPP_HEADER_LEN, M_DONTWAIT);
+    if (M_LEADINGSPACE(m0) < PPP_HDRLEN) {
+	m0 = m_prepend(m0, PPP_HDRLEN, M_DONTWAIT);
 	if (m0 == 0) {
 	    error = ENOBUFS;
 	    goto bad;
 	}
 	m0->m_len = 0;
     } else
-	m0->m_data -= PPP_HEADER_LEN;
+	m0->m_data -= PPP_HDRLEN;
 
     cp = mtod(m0, u_char *);
     *cp++ = address;
     *cp++ = control;
     *cp++ = protocol >> 8;
     *cp++ = protocol & 0xff;
-    m0->m_len += PPP_HEADER_LEN;
+    m0->m_len += PPP_HDRLEN;
 
     if (ppp_async_out_debug) {
 	printf("ppp%d output: ", ifp->if_unit);
@@ -745,8 +745,8 @@ pppstart(tp)
 	    control = *cp++;
 	    protocol = *cp++;
 	    protocol = (protocol << 8) + *cp++;
-	    m->m_data += PPP_HEADER_LEN;
-	    m->m_len -= PPP_HEADER_LEN;
+	    m->m_data += PPP_HDRLEN;
+	    m->m_len -= PPP_HDRLEN;
 
 #ifdef VJC
 	    /*
@@ -948,7 +948,7 @@ pppinit(sc)
     register struct ppp_softc *sc;
 {
     struct mbuf *m, **mp;
-    int len = HDROFF + sc->sc_mru + PPP_HEADER_LEN + PPP_FCS_LEN;
+    int len = HDROFF + sc->sc_mru + PPP_HDRLEN + PPP_FCS_LEN;
     int s;
 
     s = splimp();
@@ -1092,7 +1092,7 @@ pppinput(c, tp)
 	    return;
 	}
 
-	if (ilen < PPP_HEADER_LEN + PPP_FCS_LEN) {
+	if (ilen < PPP_HDRLEN + PPP_FCS_LEN) {
 	    if (ilen) {
 		if (ppp_debug)
 		    printf("ppp%d: too short (%d)\n", sc->sc_if.if_unit, ilen);
@@ -1138,9 +1138,9 @@ pppinput(c, tp)
 		return;
 	    }
 
-	    m->m_data += PPP_HEADER_LEN;
-	    m->m_len -= PPP_HEADER_LEN;
-	    ilen -= PPP_HEADER_LEN;
+	    m->m_data += PPP_HDRLEN;
+	    m->m_len -= PPP_HDRLEN;
+	    ilen -= PPP_HDRLEN;
 	    xlen = sl_uncompress_tcp_part((u_char **)(&m->m_data),
 					  m->m_len, ilen,
 					  COMPTYPE(proto), &sc->sc_comp);
@@ -1154,10 +1154,10 @@ pppinput(c, tp)
 	    }
 
 	    /* adjust the first mbuf by the decompressed amt */
-	    xlen += PPP_HEADER_LEN;
+	    xlen += PPP_HDRLEN;
 	    m->m_len += xlen - ilen;
 	    ilen = xlen;
-	    m->m_data -= PPP_HEADER_LEN;
+	    m->m_data -= PPP_HDRLEN;
 	    proto = PPP_IP;
 
 #if NBPFILTER > 0
@@ -1194,9 +1194,9 @@ pppinput(c, tp)
 		sc->sc_if.if_ierrors++;
 		return;
 	    }
-	    m->m_pkthdr.len -= PPP_HEADER_LEN;
-	    m->m_data += PPP_HEADER_LEN;
-	    m->m_len -= PPP_HEADER_LEN;
+	    m->m_pkthdr.len -= PPP_HDRLEN;
+	    m->m_data += PPP_HDRLEN;
+	    m->m_len -= PPP_HDRLEN;
 	    schednetisr(NETISR_IP);
 	    inq = &ipintrq;
 	    break;
@@ -1294,7 +1294,7 @@ pppinput(c, tp)
     }
 
     /* packet beyond configured mru? */
-    if (++sc->sc_ilen > sc->sc_mru + PPP_HEADER_LEN + PPP_FCS_LEN) {
+    if (++sc->sc_ilen > sc->sc_mru + PPP_HDRLEN + PPP_FCS_LEN) {
 	if (ppp_debug)
 	    printf("ppp%d: packet too big\n", sc->sc_if.if_unit);
 	goto flush;
