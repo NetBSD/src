@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.18 2001/02/19 23:03:48 cgd Exp $	*/
+/*	$NetBSD: ldd.c,v 1.19 2003/12/19 19:57:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,8 @@ void
 usage()
 {
 
-	fprintf(stderr, "Usage: %s <filename> ...\n", getprogname());
+	fprintf(stderr, "Usage: %s [-f <format 1>] [-f <format 2>] <filename>"
+		" ...\n", getprogname());
 	exit(1);
 }
 
