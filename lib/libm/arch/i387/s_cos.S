@@ -1,5 +1,5 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_cos.S,v 1.7 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_cos.S,v 1.8 2003/07/26 19:25:01 salo Exp $")
 
 ENTRY(cos)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE

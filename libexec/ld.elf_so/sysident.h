@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.11 2003/02/28 23:05:24 christos Exp $ */
+/* $NetBSD: sysident.h,v 1.12 2003/07/26 19:32:08 salo Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.

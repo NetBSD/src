@@ -1,11 +1,11 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_isinff.c,v 1.5 2002/05/26 22:01:56 wiz Exp $");
+__RCSID("$NetBSD: s_isinff.c,v 1.6 2003/07/26 19:25:06 salo Exp $");
 #endif
 
 /*

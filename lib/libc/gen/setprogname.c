@@ -1,4 +1,4 @@
-/* $NetBSD: setprogname.c,v 1.2 2001/07/09 00:58:22 simonb Exp $ */
+/* $NetBSD: setprogname.c,v 1.3 2003/07/26 19:24:44 salo Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setprogname.c,v 1.2 2001/07/09 00:58:22 simonb Exp $");
+__RCSID("$NetBSD: setprogname.c,v 1.3 2003/07/26 19:24:44 salo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* In NetBSD, the program name is set by crt0.  It can't be overridden. */
