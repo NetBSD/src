@@ -201,6 +201,7 @@
 ./usr/share/doc/usd/31.trek/trek.me
 ./usr/share/doc/usd/Makefile
 ./usr/share/doc/usd/Title
+./usr/share/examples/amd/cd
 ./usr/share/examples/amd/master
 ./usr/share/examples/amd/net
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV
