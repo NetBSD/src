@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp 
+ *	NetBSD: pcidevs,v 1.16 1996/09/24 17:47:14 christos Exp 
  */
 
 /*
@@ -864,6 +864,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Zeinet",
 	    "1221",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
+	    0,
+	    "Cyclades",
+	    "Cyclom-Y below 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_2,
+	    0,
+	    "Cyclades",
+	    "Cyclom-Y above 1M",
 	},
 	{
 	    PCI_VENDOR_OLDNCR, 0,
@@ -2969,6 +2981,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TEKRAM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tekram Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CYCLADES, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Cyclades",
 	    NULL,
 	},
 	{
