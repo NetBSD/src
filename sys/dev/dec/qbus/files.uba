@@ -1,0 +1,8 @@
+#	$NetBSD: files.uba,v 1.1 1999/05/24 20:12:57 ragge Exp $
+#
+# Config file and device description for machine-independent
+# code for devices Digital Equipment Corp. Unibus and Q22 bus.
+# Included by ports that need it.
+device	uba { csr }
+
+file	dev/dec/uba/uba.c	uba & new_uba
