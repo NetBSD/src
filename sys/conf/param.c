@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.29 1999/04/26 21:53:59 thorpej Exp $	*/
+/*	$NetBSD: param.c,v 1.30 1999/05/20 05:35:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -180,11 +180,8 @@ int	nbuf, nswbuf;
  * (if they've been externed everywhere else; hah!).
  */
 struct 	callout *callout;
-struct	cblock *cfree;
-struct	buf *buf, *swbuf;
+struct	buf *buf;
 char	*buffers;
-
-struct	utsname utsname;
 
 /*
  * These control when and to what priority a process gets after a certain
