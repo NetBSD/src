@@ -1176,14 +1176,14 @@ wdgetctlr(int u, struct disk *du)
 		strncpy(du->dk_dd.d_typename, "ST506", sizeof du->dk_dd.d_typename);
 		for(i=0; i<sizeof(wp->wdp_model); i++)
 			wp->wdp_model[i] = ' ';
-		strncpy(du->dk_params.wdp_model, "KrUsTy DiSk",
+		strncpy(du->dk_params.wdp_model, "Unknown Type",
 			sizeof du->dk_params.wdp_model);
 		du->dk_dd.d_type = DTYPE_ST506;
 	} else {
 		strncpy(du->dk_dd.d_typename, "ESDI/IDE", sizeof du->dk_dd.d_typename);
 		du->dk_dd.d_type = DTYPE_ESDI;
+		bcopy(wp->wdp_model+20, du->dk_dd.d_packname, 14-1);
 	}
-	bcopy(wp->wdp_model+20, du->dk_dd.d_packname, 14-1);
 	/* better ... */
 	du->dk_dd.d_subtype |= DSTYPE_GEOMETRY;
     
