@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 1998/02/08 04:56:37 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 1998/02/19 22:21:28 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -410,6 +410,7 @@ static void pmeg_clean_free __P((void));
 static void pmap_common_init __P((pmap_t pmap));
 static void pmap_kernel_init __P((pmap_t pmap));
 static void pmap_user_init __P((pmap_t pmap));
+static void pmap_page_upload __P((void));
 
 static void pmap_enter_kernel __P((vm_offset_t va,
 	int new_pte, boolean_t wired));
@@ -1822,6 +1823,10 @@ pmap_bootstrap(nextva)
 	context_init();
 
 	pmeg_clean_free();
+
+#if defined(MACHINE_NEW_NONCONTIG)
+	pmap_page_upload();
+#endif
 }
 
 /*
@@ -1866,7 +1871,36 @@ pmap_virtual_space(v_start, v_end)
 	*v_end   = virtual_end;
 }
 
-#if !defined(MACHINE_NEW_NONCONTIG)
+#if defined(MACHINE_NEW_NONCONTIG)
+
+/* Provide memory to the VM system. */
+static void
+pmap_page_upload()
+{
+	int a, b, c, d;
+
+	if (hole_size) {
+		/*
+		 * Supply the memory in two segments so the
+		 * reserved memory (3/50 video ram at 1MB)
+		 * can be carved from the front of the 2nd.
+		 */
+		a = atop(avail_start);
+		b = atop(hole_start);
+		vm_page_physload(a, b, a, b);
+		c = atop(hole_start + hole_size);
+		d = atop(avail_end);
+		vm_page_physload(b, d, c, d);
+	} else {
+		a = atop(avail_start);
+		d = atop(avail_end);
+		vm_page_physload(a, d, a, d);
+	}
+}
+
+#undef	vm_page_physload
+#else	/* MACHINE_NEW_NONCONTIG */
+
 /*
  * Return the number of page indices in the range of
  * possible return values for pmap_page_index() for
