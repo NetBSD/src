@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.1 1995/09/01 03:43:49 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.2 1995/09/02 03:19:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -51,9 +51,6 @@
 #include <machine/stdarg.h>
 
 #include "../mac68k/via.h"
-
-#undef splbio()
-#define splbio()	splhigh()
 
 /*
  * Set the various driver options
@@ -165,23 +162,23 @@ machine_match(pdp, cdp, auxp, cd)
 
 #if USE_PDMA
 int		pdma_5380_dir = 0;
-int		(*pdma_xfer_fun)(void) = NULL;
-int		pdma_5380_sleeping = 0;
+void		(*pdma_xfer_fun)(void) = NULL;
 
 volatile int	pdma_5380_pending = 0;
 volatile u_char	*pending_5380_data;
 volatile u_long	pending_5380_count;
 
-#define DEBUG 1	/* Maybe we try with this off eventually. */
+#define DEBUG 1 /* 	Maybe we try with this off eventually. */
 #if DEBUG
 int		pdma_5380_sends = 0;
+int		pdma_5380_bytes = 0;
 
 volatile char	*pdma_5380_state="";
 void
 pdma_stat()
 {
-	printf("PDMA SCSI: %d xfers completed, pending = %d.\n",
-		pdma_5380_sends, pdma_5380_pending);
+	printf("PDMA SCSI: %d xfers completed for %d bytes, pending = %d.\n",
+		pdma_5380_sends, pdma_5380_bytes, pdma_5380_pending);
 	printf("xfer fun = 0x%x, pdma_5380_dir = %d.\n",
 		pdma_xfer_fun, pdma_5380_dir);
 	printf("datap = 0x%x, remainder = %d.\n",
@@ -190,6 +187,50 @@ pdma_stat()
 }
 #endif
 #endif
+
+void
+pdma_cleanup(void)
+{
+	SC_REQ	*reqp = connected;
+	int	bytes, s;
+
+	s = splbio();
+
+	pdma_5380_pending = 0;
+	pdma_xfer_fun = NULL;
+
+#if DEBUG
+	pdma_5380_state = "in pdma_cleanup().";
+	pdma_5380_sends++;
+	pdma_5380_bytes+=(reqp->xdata_len - pending_5380_count);
+#endif
+
+	/*
+	 * Update pointers.
+	 */
+	reqp->xdata_ptr += reqp->xdata_len - pending_5380_count;
+	reqp->xdata_len  = pending_5380_count;
+
+	/*
+	 * Reset DMA mode.
+	 */
+	SET_5380_REG(NCR5380_MODE, GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
+
+	/*
+	 * Tell interrupt functions that DMA has ended.
+	 */
+	reqp->dr_flag &= ~DRIVER_IN_DMA;
+
+	SET_5380_REG(NCR5380_MODE, IMODE_BASE);
+	SET_5380_REG(NCR5380_ICOM, 0);
+
+	splx(s);
+
+	/*
+	 * Back for more punishment.
+	 */
+	run_main(cur_softc);
+}
 
 void
 ncr5380_irq_intr(void)
@@ -215,14 +256,12 @@ ncr5380_irq_intr(void)
 		if (   ((GET_5380_REG(NCR5380_DMSTAT) & (0xff & ~SC_ATN_STAT))
 			== SC_IRQ_SET)
 		    && (GET_5380_REG(NCR5380_IDSTAT) & (SC_S_BSY|SC_S_REQ))) {
-			scsi_idisable();
-			scsi_clr_ipend();
-			pdma_5380_pending = 0;
-			if (pdma_5380_sleeping) wakeup(pdma_xfer_fun);
+			pdma_cleanup();
 			return;
+		} else {
+			scsi_show();
+			panic("Spurious interrupt during PDMA xfer.\n");
 		}
-		scsi_show();
-		panic("Spurious interrupt during PDMA xfer.\n");
 	}
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
@@ -238,16 +277,13 @@ ncr5380_drq_intr(void)
 #if DEBUG
 		pdma_5380_state = "got drq interrupt.";
 #endif
-		if (pdma_xfer_fun())
-#if DEBUG
-		pdma_5380_state = "handled drq interrupt.";
-#endif
+		pdma_xfer_fun();
 	}
 #endif
 }
 
 #if USE_PDMA
-static int
+static void
 pdma_xfer_in()
 {
 	/*
@@ -258,11 +294,11 @@ pdma_xfer_in()
 	 * and we can't know how much it transferred if the device
 	 * decides to disconnect on us.
 	 * If it does disconnect in the middle of a long xfer, it
-	 * should get a bus error--lovely.
+	 * should get a bus error--we might be able to derive from
+	 * that bus error where the transaction stopped, but I
+	 * don't want to think about that...
 	 */
-	while (   (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-	       && (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-	       && (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ) )
+	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
 		if (pending_5380_count) {
 			*((u_char *) pending_5380_data)++ = *ncr_5380_with_drq;
 			pending_5380_count --;
@@ -272,9 +308,11 @@ pdma_xfer_in()
 #endif
 			SET_5380_REG(NCR5380_MODE,
 				     GET_5380_REG(NCR5380_MODE) & ~SC_M_DMA);
-			return 0;
+			return;
 		}
-	return 1;
+#if DEBUG
+	pdma_5380_state = "handled drq interrupt.";
+#endif
 }
 
 /*
@@ -283,20 +321,17 @@ pdma_xfer_in()
 #define DONE   (   (GET_5380_REG(NCR5380_DMSTAT) & SC_ACK_STAT) \
 		|| (GET_5380_REG(NCR5380_IDSTAT) &    SC_S_REQ) )
 
-static int
+static void
 pdma_xfer_out()
 {
 	/*
 	 * See comment on pdma_xfer_in(), above.
 	 */
-	while (   (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-	       && (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
-	       && (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ) )
+	while (GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
 		if (pending_5380_count) {
 			*ncr_5380_with_drq = *((u_char *) pending_5380_data)++;
 			pending_5380_count --;
 		} else {
-			scsi_idisable();
 #if DEBUG
 			pdma_5380_state = "done in xfer out--waiting.";
 #endif
@@ -304,11 +339,12 @@ pdma_xfer_out()
 #if DEBUG
 			pdma_5380_state = "done in xfer out--really done.";
 #endif
-			pdma_5380_pending = 0;
-			if (pdma_5380_sleeping) wakeup(pdma_xfer_fun);
-			return 0;
+			pdma_cleanup();
+			return;
 		}
-	return 1;
+#if DEBUG
+	pdma_5380_state = "handled drq interrupt.";
+#endif
 }
 
 #define SCSI_TIMEOUT_VAL	10000000
@@ -333,11 +369,15 @@ transfer_pdma(phasep, data, count)
 
 	scsi_idisable();
 
-	if (*count < 128) {	/* Don't bother with PDMA for short xfers. */
+	/*
+ 	 * Don't bother with PDMA for short transfers or if we can't sleep.
+ 	 */
+	if ((reqp->dr_flag & DRIVER_NOINT) || (*count < 128)) {
 #if DEBUG
 		pdma_5380_state = "using transfer_pio.";
 #endif
-		return transfer_pio(phasep, data, count);
+		transfer_pio(phasep, data, count);
+		return -1;
 	}
 
 	switch (*phasep) {
@@ -355,6 +395,16 @@ transfer_pdma(phasep, data, count)
 	 * Match phases with target.
 	 */
 	SET_5380_REG(NCR5380_TCOM, *phasep);
+
+	/*
+	 * We are probably already at spl2(), so this is likely a no-op.
+	 * Paranoia.
+	 */
+	s = splbio();
+
+	/*
+	 * Clear pending interrupts.
+	 */
 	scsi_clr_ipend();
 
 	/*
@@ -371,6 +421,11 @@ transfer_pdma(phasep, data, count)
 #endif
 		goto scsi_timeout_error;
 	}
+
+	/*
+	 * Tell the driver that we're in DMA mode.
+	 */
+	reqp->dr_flag |= DRIVER_IN_DMA;
 
 	/*
 	 * Set DMA mode and assert data bus.
@@ -390,8 +445,10 @@ transfer_pdma(phasep, data, count)
 
 	/*
 	 * Set the transfer function to be called on DRQ interrupts.
+	 * And note that we're waiting.
 	 */
 	pdma_xfer_fun = (pdma_5380_dir == 1) ? pdma_xfer_out : pdma_xfer_in;
+	pdma_5380_pending = 1;
 
 	/*
 	 * Initiate the DMA transaction--sending or receiving.
@@ -402,40 +459,13 @@ transfer_pdma(phasep, data, count)
 		SET_5380_REG(NCR5380_IRCV, 0);
 	}
 
-	pdma_5380_pending = 1;
-
 	/*
 	 * Now that we're set up, enable interrupts and drop processor
-	 * priority.  We've been running at spl2 because that's what the
-	 * VIA2/RBV interrupts are on and we're responding to a selection
-	 * interrupt, here.
+	 * priority back down.
 	 */
 	scsi_ienable();
-	s = spl1();	/* Allow lev 2 and above interrupts--we */
-			/* were probably called from spl2(). */
-	if (reqp->xs->flags & SCSI_NOSLEEP) {
-		while (pdma_5380_pending);
-	} else {
-		pdma_5380_sleeping = 1;
-		if ((err = tsleep(pdma_xfer_fun, PRIBIO,
-			(pdma_5380_dir == 1) ? "pdma_out" : "pdma_in", 0))) {
-			log(LOG_ERR, "pdma_xfer--error %d.\n", err);
-		}
-		pdma_5380_sleeping = 0;
-	}
 	splx(s);
-	scsi_idisable();
-	pdma_xfer_fun = NULL;
-
-#if DEBUG
-	pdma_5380_state = "back from xfer.";
-	pdma_5380_sends++;
-#endif
-
-	/*
-	 * Send remainder back to m.i. code.
-	 */
-	*count = pending_5380_count;
+	return 0;
 
 scsi_timeout_error:
 	/*
