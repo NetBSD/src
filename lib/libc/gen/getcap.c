@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.39 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: getcap.c,v 1.40 2004/04/23 14:47:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.39 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.40 2004/04/23 14:47:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,9 +87,10 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int	cdbget __P((DB *, char **, const char *));
-static int 	getent __P((char **, size_t *, char **, int, const char *, int, char *));
-static int	nfcmp __P((char *, char *));
+static int	cdbget(DB *, char **, const char *);
+static int 	getent(char **, size_t *, const char * const *, int,
+    const char *, int, char *);
+static int	nfcmp(char *, char *);
 
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
@@ -97,8 +98,7 @@ static int	nfcmp __P((char *, char *));
  * virtual database. 0 is returned on success, -1 on failure.
  */
 int
-cgetset(ent)
-	const char *ent;
+cgetset(const char *ent)
 {
 	const char *source, *check;
 	char *dest;
@@ -208,9 +208,7 @@ cgetcap(buf, cap, type)
  * reference loop is detected.
  */
 int
-cgetent(buf, db_array, name)
-	char **buf, **db_array;
-	const char *name;
+cgetent(char **buf, const char * const *db_array, const char *name)
 {
 	size_t dummy;
 
@@ -240,14 +238,12 @@ cgetent(buf, db_array, name)
  *	  MAX_RECURSION.
  */
 static int
-getent(cap, len, db_array, fd, name, depth, nfield)
-	char **cap, **db_array, *nfield;
-	const char *name;
-	size_t *len;
-	int fd, depth;
+getent(char **cap, size_t *len, const char * const *db_array, int fd,
+    const char *name, int depth, char *nfield)
 {
 	DB *capdbp;
-	char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
+	char *r_end, *rp = NULL;	/* pacify gcc */
+	const char * const *db_p;
 	int myfd = 0, eof, foundit, retval;
 	size_t clen;
 	char *record, *cbuf, *newrecord;
@@ -637,10 +633,7 @@ tc_exp:	{
 }	
 
 static int
-cdbget(capdbp, bp, name)
-	DB *capdbp;
-	char **bp;
-	const char *name;
+cdbget(DB *capdbp, char **bp, const char *name)
 {
 	DBT key;
 	DBT data;
@@ -679,8 +672,7 @@ cdbget(capdbp, bp, name)
  * record buf, -1 if not.
  */
 int
-cgetmatch(buf, name)
-	const char *buf, *name;
+cgetmatch(const char *buf, const char *name)
 {
 	const char *np, *bp;
 
@@ -723,8 +715,7 @@ cgetmatch(buf, name)
 }
 
 int
-cgetfirst(buf, db_array)
-	char **buf, **db_array;
+cgetfirst(char **buf, const char * const *db_array)
 {
 
 	_DIAGASSERT(buf != NULL);
@@ -736,10 +727,10 @@ cgetfirst(buf, db_array)
 
 static FILE *pfp;
 static int slash;
-static char **dbp;
+static const char * const *dbp;
 
 int
-cgetclose()
+cgetclose(void)
 {
 	if (pfp != NULL) {
 		(void)fclose(pfp);
@@ -757,9 +748,7 @@ cgetclose()
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-cgetnext(bp, db_array)
-        char **bp;
-	char **db_array;
+cgetnext(char **bp, const char * const *db_array)
 {
 	size_t len;
 	int status, done;
@@ -893,10 +882,7 @@ cgetnext(bp, db_array)
  * allocation failure).
  */
 int
-cgetstr(buf, cap, str)
-	char *buf;
-	const char *cap;
-	char **str;
+cgetstr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	const char *bp;
@@ -1031,10 +1017,7 @@ cgetstr(buf, cap, str)
  * error was encountered (storage allocation failure).
  */
 int
-cgetustr(buf, cap, str)
-	char *buf;
-	const char *cap;
-	char **str;
+cgetustr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	const char *bp;
@@ -1114,10 +1097,7 @@ cgetustr(buf, cap, str)
  * numeric capability couldn't be found.
  */
 int
-cgetnum(buf, cap, num)
-	char *buf;
-	const char *cap;
-	long *num;
+cgetnum(char *buf, const char *cap, long *num)
 {
 	long n;
 	int base, digit;
@@ -1183,8 +1163,7 @@ cgetnum(buf, cap, num)
  * Compare name field of record.
  */
 static int
-nfcmp(nf, rec)
-	char *nf, *rec;
+nfcmp(char *nf, char *rec)
 {
 	char *cp, tmp;
 	int ret;
