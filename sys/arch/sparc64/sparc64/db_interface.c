@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 1999/11/06 20:18:13 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.25 1999/12/30 16:34:02 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -232,7 +232,7 @@ kdb_trap(type, tf)
 	for (i=0; i<tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
 		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
-		       (void*)ts[i].tpc, (void*)ts[i].tnpc);
+		       (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
 	}
 	db_trap(type, 0/*code*/);
 	restoretstate(tl,ts);
@@ -386,10 +386,10 @@ struct pmap* pm;
 	
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)(u_long)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			db_printf("pdir %ld at %lx:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					db_printf("\tptable %ld:%ld at %lx:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
@@ -754,8 +754,8 @@ db_watch(addr, have_addr, count, modif)
 #define WATCH_VW	(1L<<21)
 #define WATCH_PR	(1L<<24)
 #define WATCH_PW	(1L<<23)
-#define WATCH_PM	(0xffffL<<33)
-#define WATCH_VM	(0xffffL<<25)
+#define WATCH_PM	(((u_int64_t)0xffffL)<<33)
+#define WATCH_VM	(((u_int64_t)0xffffL)<<25)
 
 	{
 		register char c, *cp = modif;
