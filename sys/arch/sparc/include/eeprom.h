@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.1 1995/05/29 23:56:27 pk Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.2 1995/08/29 22:11:58 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -177,6 +177,7 @@ struct eeprom {
 #define EEPROM_SIZE		0x500
 
 #ifdef	_KERNEL
+extern	char *eeprom_va;
 int	eeprom_uio __P((struct uio *));
 #endif	/* _KERNEL */
 
