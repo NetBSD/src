@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2003/08/07 16:29:31 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -194,7 +194,6 @@ curcpu(void)
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
 #define	cpu_proc_fork(p1, p2)		/* nothing */
 

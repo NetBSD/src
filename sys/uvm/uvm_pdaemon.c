@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.56 2003/12/30 12:33:24 pk Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.57 2004/01/04 11:33:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.56 2003/12/30 12:33:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.57 2004/01/04 11:33:32 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -275,6 +275,12 @@ uvm_pageout(void *arg)
 
 		buf_drain(0);
 		pool_drain(0);
+
+		/*
+		 * free any cached u-areas we don't need
+		 */
+		uvm_uarea_drain(TRUE);
+
 	}
 	/*NOTREACHED*/
 }

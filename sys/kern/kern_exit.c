@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.132 2004/01/03 19:43:55 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.133 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.132 2004/01/03 19:43:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.133 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -245,8 +245,14 @@ exit1(struct lwp *l, int rv)
 	p->p_sigctx.ps_sigcheck = 0;
 	timers_free(p, TIMERS_ALL);
 
-	if (sa || (p->p_nlwps > 1))
+	if (sa || (p->p_nlwps > 1)) {
 		exit_lwps(l);
+
+		/*
+		 * Collect thread u-areas.
+		 */
+		uvm_uarea_drain(FALSE);
+	}
 
 #if defined(__HAVE_RAS)
 	ras_purgeall(p);
@@ -367,6 +373,38 @@ exit1(struct lwp *l, int rv)
 	proclist_unlock_write(s);
 
 	/*
+	 * Deactivate the address space before the vmspace is
+	 * freed.  Note that we will continue to run on this
+	 * vmspace's context until the switch to the idle process.
+	 */
+	pmap_deactivate(l);
+
+	/*
+	 * Free the VM resources we're still holding on to.
+	 * We must do this from a valid thread because doing
+	 * so may block. This frees vmspace, which we don't
+	 * need anymore. The only remaining lwp is the one
+	 * we run at this moment, nothing runs in userland
+	 * anymore.
+	 */
+	uvm_proc_exit(p);
+
+	/*
+	 * Give machine-dependent code a chance to free any
+	 * MD LWP resources while we can still block. This must be done
+	 * before uvm_lwp_exit(), in case these resources are in the 
+	 * PCB.
+	 * THIS IS LAST BLOCKING OPERATION.
+	 */
+#ifndef __NO_CPU_LWP_FREE
+	cpu_lwp_free(l, 1);
+#endif
+
+	/*
+	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
+	 */
+
+	/*
 	 * Save exit status and final rusage info, adding in child rusage
 	 * info and self times.
 	 * In order to pick up the time for the current execution, we must
@@ -378,24 +416,33 @@ exit1(struct lwp *l, int rv)
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	/*
-	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
-	 */
-
-	/*
-	 * Move proc from allproc to zombproc, but do not yet
-	 * wake up the reaper.  We will put the proc on the
-	 * deadproc list later (using the p_dead member), and
-	 * wake up the reaper when we do.
-	 * Changing the state to SDEAD stops it being found by pfind().
+	 * Move proc from allproc to zombproc, it's now ready
+	 * to be collected by parent. Remaining lwp resources
+	 * will be freed in lwp_exit2() once we'd switch to idle
+	 * context.
+	 * Changing the state to SZOMB stops it being found by pfind().
 	 */
 	s = proclist_lock_write();
-	p->p_stat = SDEAD;
-	p->p_nrlwps--;
-	l->l_stat = LSDEAD;
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	p->p_stat = SZOMB;
+
 	LIST_REMOVE(l, l_list);
-	l->l_flag |= L_DETACHED;
+	l->l_flag |= L_DETACHED|L_PROCEXIT;	/* detached from proc too */
+	l->l_stat = LSDEAD;
+
+	p->p_nrlwps--;
+	p->p_nlwps--;
+
+	/* Put in front of parent's sibling list for parent to collect it */
+	q = p->p_pptr;
+	q->p_nstopchild++;
+	if (LIST_FIRST(&q->p_children) != p) {
+		/* Put child where it can be found quickly */
+		LIST_REMOVE(p, p_sibling);
+		LIST_INSERT_HEAD(&q->p_children, p, p_sibling);
+	}
+
 	proclist_unlock_write(s);
 
 	/*
@@ -422,6 +469,7 @@ exit1(struct lwp *l, int rv)
 	if (p->p_pptr->p_flag & P_NOCLDWAIT) {
 		struct proc *pp = p->p_pptr;
 		proc_reparent(p, initproc);
+
 		/*
 		 * If this was the last child of our parent, notify
 		 * parent, so in case he was wait(2)ing, he will
@@ -430,6 +478,11 @@ exit1(struct lwp *l, int rv)
 		if (LIST_FIRST(&pp->p_children) == NULL)
 			wakeup(pp);
 	}
+
+	/* Wake up the parent so it can get exit status. */
+	if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
+		exit_psignal(p, p->p_pptr);
+	wakeup(p->p_pptr);
 
 	/*
 	 * Release the process's signal state.
@@ -454,18 +507,23 @@ exit1(struct lwp *l, int rv)
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
 
+#ifdef DEBUG
+	/* Nothing should use the process link anymore */
+	l->l_proc = NULL;
+#endif
+
 	/*
 	 * Finally, call machine-dependent code to switch to a new
 	 * context (possibly the idle context).  Once we are no longer
-	 * using the dead process's vmspace and stack, exit2() will be
-	 * called to schedule those resources to be released by the
-	 * reaper thread.
+	 * using the dead lwp's stack, lwp_exit2() will be called
+	 * to arrange for the resources to be released.
 	 *
 	 * Note that cpu_exit() will end with a call equivalent to
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
 
-	cpu_exit(l, 1);
+	uvmexp.swtch++;
+	cpu_exit(l);
 }
 
 void
@@ -548,123 +606,6 @@ lwp_exit_hook(struct lwp *l, void *arg)
 	lwp_exit(l);
 }
 
-/*
- * We are called from cpu_exit() once it is safe to schedule the
- * dead process's resources to be freed (i.e., once we've switched to
- * the idle PCB for the current CPU).
- *
- * NOTE: One must be careful with locking in this routine.  It's
- * called from a critical section in machine-dependent code, so
- * we should refrain from changing any interrupt state.
- *
- * We lock the deadproc list (a spin lock), place the proc on that
- * list (using the p_dead member), and wake up the reaper.
- */
-void
-exit2(struct lwp *l)
-{
-	struct proc *p = l->l_proc;
-
-	simple_lock(&deadproc_slock);
-	SLIST_INSERT_HEAD(&deadprocs, p, p_dead);
-	simple_unlock(&deadproc_slock);
-
-	/* lwp_exit2() will wake up deadproc for us. */
-	lwp_exit2(l);
-}
-
-/*
- * Process reaper.  This is run by a kernel thread to free the resources
- * of a dead process.  Once the resources are free, the process becomes
- * a zombie, and the parent is allowed to read the undead's status.
- */
-void
-reaper(void *arg)
-{
-	struct proc *p, *parent;
-	struct lwp *l;
-
-	KERNEL_PROC_UNLOCK(curlwp);
-
-	for (;;) {
-		simple_lock(&deadproc_slock);
-		p = SLIST_FIRST(&deadprocs);
-		l = LIST_FIRST(&deadlwp);
-		if (p == NULL && l == NULL) {
-			/* No work for us; go to sleep until someone exits. */
-			(void) ltsleep(&deadprocs, PVM|PNORELOCK,
-			    "reaper", 0, &deadproc_slock);
-			continue;
-		}
-
-		if (l != NULL ) {
-			p = l->l_proc;
-
-			/* Remove lwp from the deadlwp list. */
-			LIST_REMOVE(l, l_list);
-			simple_unlock(&deadproc_slock);
-			KERNEL_PROC_LOCK(curlwp);
-			
-			/*
-			 * Give machine-dependent code a chance to free any
-			 * resources it couldn't free while still running on
-			 * that process's context.  This must be done before
-			 * uvm_lwp_exit(), in case these resources are in the 
-			 * PCB.
-			 */
-			cpu_wait(l);
-
-			/*
-			 * Free the VM resources we're still holding on to.
-			 */
-			uvm_lwp_exit(l);
-
-			l->l_stat = LSZOMB;
-			if (l->l_flag & L_DETACHED) {
-				/* Nobody waits for detached LWPs. */
-				LIST_REMOVE(l, l_sibling);
-				p->p_nlwps--;
-				pool_put(&lwp_pool, l);
-			} else {
-				p->p_nzlwps++;
-				wakeup(&p->p_nlwps);
-			}
-			/* XXXNJW where should this be with respect to 
-			 * the wakeup() above? */
-			KERNEL_PROC_UNLOCK(curlwp);
-		} else {
-			/* Remove proc from the deadproc list. */
-			SLIST_REMOVE_HEAD(&deadprocs, p_dead);
-			simple_unlock(&deadproc_slock);
-			KERNEL_PROC_LOCK(curlwp);
-
-			/*
-			 * Free the VM resources we're still holding on to.
-			 * We must do this from a valid thread because doing
-			 * so may block.
-			 */
-			uvm_proc_exit(p);
-			
-			/* Process is now a true zombie. */
-			p->p_stat = SZOMB;
-			parent = p->p_pptr;
-			parent->p_nstopchild++;
-			if (LIST_FIRST(&parent->p_children) != p) {
-				/* Put child where it can be found quickly */
-				LIST_REMOVE(p, p_sibling);
-				LIST_INSERT_HEAD(&parent->p_children,
-						p, p_sibling);
-			}
-			
-			/* Wake up the parent so it can get exit status. */
-			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
-				exit_psignal(p, p->p_pptr);
-			KERNEL_PROC_UNLOCK(curlwp);
-			wakeup(p->p_pptr);
-		}
-	}
-}
-
 int
 sys_wait4(struct lwp *l, void *v, register_t *retval)
 {
@@ -692,6 +633,11 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		*retval = 0;
 		return 0;
 	}
+
+	/*
+	 * Collect child u-areas.
+	 */
+	uvm_uarea_drain(FALSE);
 
 	retval[0] = child->p_pid;
 
