@@ -603,7 +603,7 @@ extern const bfd_target sco_core_vec;
 extern const bfd_target trad_core_vec;
 extern const bfd_target ptrace_core_vec;
 
-const bfd_target * const bfd_target_vector[] = {
+static const bfd_target * const _bfd_target_vector[] = {
 
 #ifdef SELECT_VECS
 
@@ -824,6 +824,7 @@ const bfd_target * const bfd_target_vector[] = {
 
 	NULL /* end of list marker */
 };
+const bfd_target * const *bfd_target_vector = _bfd_target_vector;
 
 /* bfd_default_vector[0] contains either the address of the default vector,
    if there is one, or zero if there isn't.  */
