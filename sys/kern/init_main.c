@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.222 2003/07/30 18:45:32 jonathan Exp $	*/
+/*	$NetBSD: init_main.c,v 1.223 2003/08/06 20:30:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,10 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.222 2003/07/30 18:45:32 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.223 2003/08/06 20:30:38 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
+#include "opt_ipsec.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
@@ -84,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.222 2003/07/30 18:45:32 jonathan Exp
 #include <sys/user.h>
 #include <sys/sysctl.h>
 #include <sys/event.h>
+#ifdef	FAST_IPSEC
+#include <netipsec/ipsec.h>
+#endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -397,6 +401,11 @@ main(void)
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		(*pdev->pdev_attach)(pdev->pdev_count);
+
+#ifdef	FAST_IPSEC
+	/* Attach network crypto subsystem */
+	ipsec_attach();
+#endif
 
 	/*
 	 * Initialize protocols.  Block reception of incoming packets
