@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.67 2002/01/31 22:43:59 tv Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.68 2002/02/28 00:22:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.67 2002/01/31 22:43:59 tv Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.68 2002/02/28 00:22:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,15 +412,19 @@ void
 makelink(char *from_name, char *to_name)
 {
 	char	src[MAXPATHLEN], dst[MAXPATHLEN], lnk[MAXPATHLEN];
+	struct stat	to_sb;
 
 	/* Try hard links first */
 	if (dolink & (LN_HARD|LN_MIXED)) {
 		if (do_link(from_name, to_name) == -1) {
 			if ((dolink & LN_HARD) || errno != EXDEV)
 				err(1, "link %s -> %s", from_name, to_name);
-		}
-		else {
-			metadata_log(to_name, "hlink", NULL, from_name);
+		} else {
+			if (stat(to_name, &to_sb))
+				err(1, "%s: stat", to_name);
+			if (S_ISREG(to_sb.st_mode))
+				metadata_log(to_name, "file", NULL, NULL);
+					/* XXX: only metalog hardlinked files */
 			return;
 		}
 	}
