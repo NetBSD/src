@@ -1,7 +1,8 @@
-#	$Id: list,v 1.4 1996/09/28 18:06:00 chopps Exp $
+#	$Id: list,v 1.5 1997/05/14 22:19:52 is Exp $
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/amiga/compile/GENERIC/netbsd	netbsd
+#COPY	${CURDIR}/../../../../sys/arch/amiga/compile/GENERIC/netbsd	netbsd
+COPY	/netbsd				netbsd
 
 # and the upgrade tools
 COPY	dot.profile			.profile
