@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1 1999/02/14 12:23:04 pk Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.2 2000/11/15 16:13:10 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,9 +41,6 @@ typedef u_int32_t cell_t;
 #define HDL2CELL(x)	(cell_t)(x)
 #define ADR2CELL(x)	(cell_t)(x)
 
-int  OF_getproplen __P((int handle, char* prop));
-int  OF_setprop __P((int handle, char *prop, void *buf, int buflen));
-int  OF_nextprop __P(( int handle, char *prop, void *buf));
 void OF_poweroff __P((void)) __attribute__((__noreturn__));
 int  OF_test __P((char* service));
 int  OF_test_method __P((int handle, char* method));
