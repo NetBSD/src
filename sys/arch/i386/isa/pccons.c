@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.5 1993/04/11 07:09:29 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.6 1993/04/11 10:16:54 deraadt Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -273,7 +273,7 @@ struct isa_device *dev;
 		}
 	}
 
-	return (8);
+	return (16);
 }
 
 pcattach(dev)
