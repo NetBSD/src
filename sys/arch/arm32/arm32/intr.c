@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 1998/06/02 20:41:48 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 1998/06/04 17:45:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,8 +40,8 @@
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/socket.h>
 #include <vm/vm.h>
-#include <net/netisr.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -50,19 +50,47 @@
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
 
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include "arp.h"
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif	/* NARP > 0 */
+#include <netinet/ip_var.h>
+#endif 	/* INET */
+#ifdef NS
+#include <netns/ns_var.h>
+#endif	/* NS */
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif	/* ISO */
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif	/* CCITT */
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif	/* NATM */
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif	/* NETATALK */
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif	/* NPPP > 0 */
+
 extern int current_intr_depth;
 extern u_int spl_mask;
 extern u_int soft_interrupts;
 #ifdef IRQSTATS
 extern u_int intrcnt[];
 #endif	/* IRQSTATS */
-
-/* Prototypes */
-
-extern void arpintr	__P((void));
-extern void ipintr	__P((void));
-extern void atintr	__P((void));
-extern void pppintr	__P((void));
 
 /* Eventually this will become macros */
 
@@ -151,7 +179,6 @@ dosoftints()
 		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
 
 #ifdef INET
-#include "arp.h"
 #if NARP > 0
 		if (netisr & (1 << NETISR_ARP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_ARP));
@@ -193,7 +220,12 @@ dosoftints()
 			ccittintr();
 		}
 #endif
-#include "ppp.h"
+#ifdef NATM
+		if (netisr & (1 << NETISR_NATM)) {
+			atomic_clear_bit(&netisr, (1 << NETISR_NATM));
+			natmintr();
+		}
+#endif
 #if NPPP > 0
 		if (netisr & (1 << NETISR_PPP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
