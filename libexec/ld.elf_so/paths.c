@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.15 2001/05/24 17:41:42 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.16 2002/09/12 21:06:38 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -147,17 +147,17 @@ struct list {
 };
 
 #ifdef CTL_MACHDEP_NAMES
-static struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
+static const struct sysctldesc ctl_machdep[] = CTL_MACHDEP_NAMES;
 #endif
-static struct sysctldesc ctl_toplvl[] = CTL_NAMES;
+static const struct sysctldesc ctl_toplvl[] = CTL_NAMES;
 
-struct list toplevel[] = {
+const struct list toplevel[] = {
 	{ 0, 0 },
 	{ ctl_toplvl, CTL_MAXID },
 	{ 0, -1 },
 };
 
-struct list secondlevel[] = {
+const struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_UNSPEC */
 	{ 0, KERN_MAXID },		/* CTL_KERN */
 	{ 0, VM_MAXID },		/* CTL_VM */
@@ -176,7 +176,7 @@ struct list secondlevel[] = {
 	{ 0, -1 },
 };
 
-struct list *lists[] = {
+const struct list *lists[] = {
 	toplevel,
 	secondlevel,
 	0
