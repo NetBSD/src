@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 1996/06/03 21:28:59 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.7 1996/06/12 19:42:23 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -272,8 +272,8 @@ configure()
 {
 
 /*
- * Loop round all the root devices configuring them. Configure failure
- * is not expected for the root devices
+ * Configure all the roots.
+ * We have to have a mainbus
  */
 
 	config_rootfound("mainbus", NULL);
@@ -283,9 +283,9 @@ configure()
 
 /* Debugging information */
 
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x ipl_none=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP]);
+	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP], irqmasks[IPL_NONE]);
 
 /* Time to start taking interrupts so lets open the flood gates .... */
          
