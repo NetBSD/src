@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.14 2004/02/16 02:43:53 thorpej Exp $
+# $NetBSD: INSTALL,v 1.15 2004/05/11 17:36:43 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.14 $"
+#ident 		"INSTALL-$Revision: 1.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -229,8 +229,8 @@ sysbeep0	at pcppi?
 
 # PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
-cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
-cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+#cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+#cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 # PCMCIA serial interfaces
 #com*	at pcmcia? function ?		# Modems and serial cards
