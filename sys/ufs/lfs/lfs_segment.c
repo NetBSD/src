@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.85 2002/12/14 11:54:47 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.86 2002/12/17 14:28:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.85 2002/12/14 11:54:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.86 2002/12/17 14:28:54 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2085,7 +2085,7 @@ lfs_match_data(struct lfs *fs, struct buf *bp)
 int
 lfs_match_indir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 0);
@@ -2094,7 +2094,7 @@ lfs_match_indir(struct lfs *fs, struct buf *bp)
 int
 lfs_match_dindir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 1);
@@ -2103,7 +2103,7 @@ lfs_match_dindir(struct lfs *fs, struct buf *bp)
 int
 lfs_match_tindir(struct lfs *fs, struct buf *bp)
 {
-	int lbn;
+	ufs_daddr_t lbn;
 
 	lbn = bp->b_lblkno;
 	return (lbn < 0 && (-lbn - NDADDR) % NINDIR(fs) == 2);
