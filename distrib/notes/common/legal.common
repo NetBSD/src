@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.11 2000/09/01 22:27:38 msaitoh Exp $	
+.\"	$NetBSD: legal.common,v 1.12 2000/09/11 13:34:48 tsutsui Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,10 +62,18 @@ Foundation, Inc. and its contributors.
 This product includes software developed by Adam Glass
 and Charles Hannum.
 
+This product includes software developed by Adam Glass
+and Charles M. Hannum.
+
 This product includes software developed by Adam Glass.
+
+This product includes software developed by Amancio Hasty and
+Roger Hardiman.
 
 This product includes software developed by Berkeley Software
 Design, Inc.
+
+This product includes software developed by Bill Paul.
 
 This product includes software developed by Charles D. Cranor
 and Washington University.
@@ -101,6 +109,8 @@ This product includes software developed by Eric S. Hvozda.
 
 This product includes software developed by Ezra Story.
 
+This product includes software developed by Gardner Buchanan.
+
 This product includes software developed by Gordon Ross.
 
 This product includes software developed by Gordon W. Ross
@@ -108,10 +118,20 @@ and Leo Weppelman.
 
 This product includes software developed by Gordon W. Ross.
 
+This product includes software developed by HAYAKAWA Koichi.
+
+This product includes software developed by
+Hellmuth Michaelis and Joerg Wunsch.
+
 This product includes software developed by Herb Peyerl.
+
+This product includes software developed by Holger Veit and Brian Moore
+for use with "386BSD" and similar operating systems.
 
 This product includes software developed by Hubert Feyrer for
 the NetBSD Project.
+
+This product includes software developed by Iain Hibbert.
 
 This product includes software developed by Ian W. Dall.
 
@@ -146,7 +166,11 @@ This product includes software developed by Lloyd Parkes.
 
 This product includes software developed by Manuel Bouyer.
 
+This product includes software developed by Marc Horowitz.
+
 This product includes software developed by Mark Brinicombe.
+
+This product includes software developed by Mark Tinguely and Jim Lowe.
 
 This product includes software developed by Markus Wild.
 
@@ -160,6 +184,8 @@ This product includes software developed by Mats O Jansson.
 
 This product includes software developed by Matthias Pfaller.
 
+This product includes software developed by Michael L. Hitch.
+
 This product includes software developed by Niels Provos.
 
 This product includes software developed by Paul Kranenburg.
@@ -172,9 +198,16 @@ This product includes software developed by Philip A. Nelson.
 
 This product includes software developed by Rodney W. Grimes.
 
+This product includes software developed by Roland C. Dowdeswell.
+
+This product includes software developed by Rolf Grossmann.
+
 This product includes software developed by Scott Bartram.
 
 This product includes software developed by SigmaSoft, Th. Lockert.
+
+This product includes software developed by Tatoku Ogaito
+for the NetBSD Project.
 
 This product includes software developed by Terrence R. Lambert.
 
@@ -183,9 +216,14 @@ and John Brezak.
 
 This product includes software developed by Theo de Raadt.
 
+This product includes software developed by Tohru Nishimura
+for the NetBSD Project.
+
 This product includes software developed by TooLs GmbH.
 
 This product includes software developed by Winning Strategies, Inc.
+
+This product includes software developed by Zembu Labs, Inc.
 
 This product includes software developed by the Center for
 Software Science at the University of Utah.
