@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.24 2004/03/24 15:34:52 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.25 2004/04/08 03:35:10 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.24 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.25 2004/04/08 03:35:10 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1696,6 +1696,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 			error = ENOMEM;
 			break;
 		}
+		memset(&kd, 0, sizeof(kd));
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
