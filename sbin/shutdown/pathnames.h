@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 2003/08/07 10:04:39 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 2004/08/19 22:30:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,12 @@
 #include <paths.h>
 
 #define	_PATH_FASTBOOT	"/fastboot"
+#ifdef RESCUEDIR
+#define	_PATH_HALT	RESCUEDIR "/halt"
+#define	_PATH_REBOOT	RESCUEDIR "/reboot"
+#else
 #define	_PATH_HALT	"/sbin/halt"
 #define	_PATH_REBOOT	"/sbin/reboot"
+#endif
 #define	_PATH_WALL	"/usr/bin/wall"
 #define _PATH_RCSHUTDOWN	"/etc/rc.shutdown"
