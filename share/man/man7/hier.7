@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.67 2004/11/21 09:15:19 jmmv Exp $
+.\"	$NetBSD: hier.7,v 1.68 2004/11/21 09:17:13 jmmv Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -504,10 +504,10 @@ build descriptions ("packages") for the
 .Nx
 packages system.
 .Pp
-.Bl -tag -width "distfiles" -compact
-.It Sy distfiles
+.Bl -tag -width "distfilesX" -compact
+.It Sy distfiles/
 Where unchanged source archives are fetched to/stored
-.It Sy packages
+.It Sy packages/
 Where compiled binary packages are stored
 .El
 .Pp
@@ -885,7 +885,7 @@ NTFS filesystem support; see
 .It Sy ptyfs/
 pseudo-terminal device filesystem; see
 .Xr mount_ptyfs 8
-.It Sy smbfs
+.It Sy smbfs/
 SMB/CIFS filesystem support; see
 .Xr mount_smbfs 8
 .It Sy union/
