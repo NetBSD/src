@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.3.4.3 2002/10/18 02:39:38 nathanw Exp $	*/
+/*	$NetBSD: imc.c,v 1.3.4.4 2003/01/03 16:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -197,7 +197,7 @@ imc_print(aux, name)
 	struct imc_attach_args* iaa = aux;
 
 	if (name)
-		printf("%s at %s", iaa->iaa_name, name);
+		aprint_normal("%s at %s", iaa->iaa_name, name);
 
 	return UNCONF;
 }

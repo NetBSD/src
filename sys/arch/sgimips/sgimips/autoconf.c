@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.4.5 2002/10/18 02:39:42 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.4.6 2003/01/03 16:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,6 +33,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +49,9 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include <sgimips/dev/crimereg.h>
+#include <sgimips/dev/macereg.h>
 
 struct device	*booted_device = NULL;
 static struct device *booted_controller = NULL;
@@ -75,6 +79,23 @@ cpu_configure()
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
 	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);
+
+	if (mach_type == MACH_SGI_IP32) {
+	   u_int64_t mask;
+
+	    mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK);
+	    aprint_debug("MACE_ISA_MASK was %llx\n", mask);
+	    mask |= ((1UL << 20) | (1UL << 26));
+	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = mask;
+	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_FLUSH_W) = 0xffffffff;
+	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0x300710ULL;
+
+	    aprint_debug("CRM_MASK: %llx, MACEISA_MASK (%x) %llx\n", 
+	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK),
+	      MACE_ISA_INT_MASK,
+	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK));
+
+	}
 
 	_splnone();
 }
@@ -174,21 +195,16 @@ device_register(dev, aux)
 	}
 
 	/*
-	 * Check for WDC controller
-	 */
-	if (scsiboot && strcmp(name, "wdsc") == 0) {
-		/* 
-		 * XXX: this fails if the controllers were attached 
-		 * in an order other than the ARCS-imposed order.
+	 * Handle SCSI boot device definitions
+	 * wdsc -- IP22/24
+	 * ahc -- IP32
 		 */
+	if ( (scsiboot && strcmp(name, "wdsc") == 0) ||
+	     (scsiboot && strcmp(name, "ahc") == 0) ) {
 		if (dev->dv_unit == booted_slot)
 			booted_controller = dev;
 		return;
 	}
-
-	/*
-	 * Other SCSI controllers ??
-	 */
 
 	/*
 	 * If we found the boot controller, if check disk/tape/cdrom device

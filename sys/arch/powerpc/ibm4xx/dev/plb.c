@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.1.2.4 2002/10/18 02:39:30 nathanw Exp $ */
+/* $NetBSD: plb.c,v 1.1.2.5 2003/01/03 16:50:08 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -151,9 +151,9 @@ plb_print(void *aux, const char *pnp)
 	struct plb_attach_args *paa = aux;
 
 	if (pnp)
-		printf("%s at %s", paa->plb_name, pnp);
+		aprint_normal("%s at %s", paa->plb_name, pnp);
 	if (paa->plb_irq != PLBCF_IRQ_DEFAULT)
-		printf(" irq %d", paa->plb_irq);
+		aprint_normal(" irq %d", paa->plb_irq);
 
 	return (UNCONF);
 }
