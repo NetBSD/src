@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.7 2000/06/12 10:40:50 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.1 2000/06/13 15:15:27 itojun Exp $	*/
 /*	$KAME: setkey.c,v 1.14 2000/06/10 06:47:09 sakane Exp $	*/
 
 /*
