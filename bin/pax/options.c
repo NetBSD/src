@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.10 1998/03/06 09:13:02 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.11 1998/06/09 10:53:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.10 1998/03/06 09:13:02 mrg Exp $");
+__RCSID("$NetBSD: options.c,v 1.11 1998/06/09 10:53:55 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1024,8 +1024,6 @@ cpio_options(argc, argv)
 			break;
 		}
 	}
-	argc -= optind;
-	argv += optind;
 
 	/*
 	 * figure out the operation mode of cpio. check that we have not been
