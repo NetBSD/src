@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.3 2003/11/08 23:59:13 uwe Exp $ */
+/*	$NetBSD: memmove.S,v 1.4 2003/11/09 01:03:56 uwe Exp $ */
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,25 +29,20 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memmove.S,v 1.3 2003/11/08 23:59:13 uwe Exp $")
+#if defined(LIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: memmove.S,v 1.4 2003/11/09 01:03:56 uwe Exp $")
 #endif
 
 
 #define	REG_DST0	r3
-#define	REG_SRC		r4
-#define	REG_DST		r5
+#define	REG_SRC		r5
+#define	REG_DST		r4
 #define	REG_LEN		r6
 
 ENTRY(memmove)
 ALTENTRY(memcpy)
-				/* memcpy(dst,src,len) -> bcopy(src,dst,len) */
-	mov	r4,r3		/* dst0 = dst */
-	mov	r5,r4		/* dst = src */
-	mov	r3,r5		/* src = dst0 */
-	/* fall through */
+	mov	REG_DST,REG_DST0
 
-/* ALTENTRY(bcopy) */
 	cmp/eq	REG_DST,REG_SRC	/* if ( src == dst ) return; */
 	bt/s	bcopy_return
 	cmp/hi	REG_DST,REG_SRC
