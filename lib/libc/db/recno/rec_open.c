@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.9 1997/07/21 14:06:45 jtc Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.10 1998/02/20 09:27:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: rec_open.c,v 1.9 1997/07/21 14:06:45 jtc Exp $");
+__RCSID("$NetBSD: rec_open.c,v 1.10 1998/02/20 09:27:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -177,7 +177,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 				 */
 				t->bt_msize = sb.st_size;
 				if ((t->bt_smap = mmap(NULL, t->bt_msize,
-				    PROT_READ, MAP_PRIVATE, rfd,
+				    PROT_READ, MAP_FILE | MAP_PRIVATE, rfd,
 				    (off_t)0)) == (caddr_t)-1)
 					goto slow;
 				t->bt_cmap = t->bt_smap;

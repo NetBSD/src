@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.18 1997/08/26 19:29:57 thorpej Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.19 1998/02/20 09:27:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -483,7 +483,7 @@ readhints()
 	}
 
 	msize = PAGSIZ;
-	addr = mmap(0, msize, PROT_READ, MAP_COPY, fd, 0);
+	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
 
 	if (addr == (caddr_t)-1) {
 		warn("%s", _PATH_LD_HINTS);
@@ -504,7 +504,7 @@ readhints()
 
 	if (hdr->hh_ehints > msize) {
 		if (mmap(addr+msize, hdr->hh_ehints - msize,
-				PROT_READ, MAP_COPY|MAP_FIXED,
+				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
 				fd, msize) != (caddr_t)(addr+msize)) {
 
 			warn("%s", _PATH_LD_HINTS);
