@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/01/11 13:15:06 enami Exp $
+#	$NetBSD: Makefile,v 1.9 2001/02/11 01:33:59 lukem Exp $
 
 .include "../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/bin/named-xfer ${BIND_DIST_DIR}/bin/named \
@@ -13,6 +13,7 @@ LDADD=	${LIBRARY}
 CLEANFILES+=	tmp_version.c
 MAN=	${PROG}.8
 BINDIR=	/usr/libexec
+LDSTATIC?=-static
 
 tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
