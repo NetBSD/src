@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.21 2004/05/21 02:30:03 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.22 2004/05/23 16:54:13 christos Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.21 2004/05/21 02:30:03 christos Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.22 2004/05/23 16:54:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -427,13 +427,10 @@ get_txt_records(qclass, name)
 	int		 ancount, qdcount, i, j, n, skip, type, class, len;
 	res_state	 res = __res_get_state();
 
-	_DIAGASSERT(name != NULL);
-
-	/* Make sure the resolver is initialized. */
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		__res_put_state(res);
+	if (res == NULL)
 		return NULL;
-	}
+
+	_DIAGASSERT(name != NULL);
 
 	/* Construct the query. */
 	n = res_nmkquery(res, QUERY, name, qclass, T_TXT, NULL, 0,
