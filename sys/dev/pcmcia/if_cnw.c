@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.14 2000/10/01 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.15 2000/10/16 10:26:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -539,15 +539,15 @@ cnw_attach(parent, self, aux)
 	sc->sc_ioh = sc->sc_pcioh.ioh;
 	sc->sc_resource |= CNW_RES_IO;
 #endif
-	if (pcmcia_mem_alloc(sc->sc_pf, CNW_MEM_SIZE, &sc->sc_pcmemh) != 0) {
-		printf(": can't allocate memory\n");
-		goto fail;
-	}
 #ifndef MEMORY_MAPPED
 	memsize = CNW_MEM_SIZE;
 #else
 	memsize = CNW_MEM_SIZE + CNW_IOM_SIZE;
 #endif
+	if (pcmcia_mem_alloc(sc->sc_pf, memsize, &sc->sc_pcmemh) != 0) {
+		printf(": can't allocate memory\n");
+		goto fail;
+	}
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
 	    CNW_MEM_ADDR, memsize, &sc->sc_pcmemh, &sc->sc_memoff,
 	    &sc->sc_memwin) != 0) {
