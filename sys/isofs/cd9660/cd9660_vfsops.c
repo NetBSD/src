@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40 1999/10/16 23:53:27 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.4.1 1999/10/19 12:50:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -409,7 +409,7 @@ iso_mountfs(devvp, mp, p, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 	
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 	
 	/* Check the Rock Ridge Extention support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
@@ -509,8 +509,8 @@ cd9660_unmount(mp, mntflags, p)
 	if (isomp->iso_ftype == ISO_FTYPE_RRIP)
 		iso_dunmap(isomp->im_dev);
 #endif
-	
-	isomp->im_devvp->v_specflags &= ~SI_MOUNTEDON;
+
+	isomp->im_devvp->v_specmountpoint = NULL;
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
