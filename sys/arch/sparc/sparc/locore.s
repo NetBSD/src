@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.155 2002/06/09 20:02:41 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.156 2002/06/10 01:58:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6098,13 +6098,12 @@ ENTRY(microtime)
 	add	%o3, %o4, %o3			! add timer to time.tv_usec
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
-	bl	4f
-	 nop
+	bl,a	4f
+	 st	%o2, [%o0]
 	inc	%o2				! overflow into tv_sec
 	sub	%o3, %g5, %o3
-4:
 	st	%o2, [%o0]
-	retl
+4:	retl
 	 st	%o3, [%o0 + 4]
 #endif /* MSIIEP */
 
