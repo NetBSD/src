@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.25 1996/10/14 07:14:19 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.26 1997/01/07 09:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -489,7 +489,7 @@ rdopen(dev, flags, mode, p)
 {
 	register int unit = rdunit(dev);
 	register struct rd_softc *rs = &rd_softc[unit];
-	int error, mask;
+	int error, mask, part;
 
 	if (unit >= NRD || (rs->sc_flags & RDF_ALIVE) == 0)
 		return(ENXIO);
@@ -514,12 +514,27 @@ rdopen(dev, flags, mode, p)
 			return(error);
 	}
 
-	mask = 1 << rdpart(dev);
-	if (mode == S_IFCHR)
+	part = rdpart(dev);
+	mask = 1 << part;
+
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    (part > rs->sc_dkdev.dk_label->d_npartitions ||
+	     rs->sc_dkdev.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+		return (ENXIO);
+
+	/* Ensure only one open at a time. */
+	switch (mode) {
+	case S_IFCHR:
 		rs->sc_dkdev.dk_copenmask |= mask;
-	else
+		break;
+	case S_IFBLK:
 		rs->sc_dkdev.dk_bopenmask |= mask;
-	rs->sc_dkdev.dk_openmask |= mask;
+		break;
+	}
+	rs->sc_dkdev.dk_openmask =
+	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
+
 	return(0);
 }
 
@@ -571,6 +586,7 @@ rdstrategy(bp)
 	register struct partition *pinfo;
 	register daddr_t bn;
 	register int sz, s;
+	int offset;
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
@@ -581,30 +597,41 @@ rdstrategy(bp)
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	pinfo = &rs->sc_dkdev.dk_label->d_partitions[rdpart(bp->b_dev)];
-	if (bn < 0 || bn + sz > pinfo->p_size) {
-		sz = pinfo->p_size - bn;
-		if (sz == 0) {
-			bp->b_resid = bp->b_bcount;
-			goto done;
+
+	/* Don't perform partition translation on RAW_PART. */
+	offset = (rdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
+
+	if (rdpart(bp->b_dev) != RAW_PART) {
+		/*
+		 * XXX This block of code belongs in
+		 * XXX bounds_check_with_label()
+		 */
+
+		if (bn < 0 || bn + sz > pinfo->p_size) {
+			sz = pinfo->p_size - bn;
+			if (sz == 0) {
+				bp->b_resid = bp->b_bcount;
+				goto done;
+			}
+			if (sz < 0) {
+				bp->b_error = EINVAL;
+				goto bad;
+			}
+			bp->b_bcount = dbtob(sz);
 		}
-		if (sz < 0) {
-			bp->b_error = EINVAL;
+		/*
+		 * Check for write to write protected label
+		 */
+		if (bn + offset <= LABELSECTOR &&
+#if LABELSECTOR != 0
+		    bn + offset + sz > LABELSECTOR &&
+#endif
+		    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
+			bp->b_error = EROFS;
 			goto bad;
 		}
-		bp->b_bcount = dbtob(sz);
 	}
-	/*
-	 * Check for write to write protected label
-	 */
-	if (bn + pinfo->p_offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-	    bn + pinfo->p_offset + sz > LABELSECTOR &&
-#endif
-	    !(bp->b_flags & B_READ) && !(rs->sc_flags & RDF_WLABEL)) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-	bp->b_cylin = bn + pinfo->p_offset;
+	bp->b_cylin = bn + offset;
 	s = splbio();
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
