@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.6 1997/06/06 23:54:28 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.7 1997/06/08 07:03:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.6 1997/06/06 23:54:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.7 1997/06/08 07:03:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ dwlpxattach(parent, self, aux)
 	}
 
 	dwlpx_init(sc);
-	printf(", hose %d\n", sc->dwlpx_hosenum);
+	printf("\n");
 	if (once == 0) {
 		/*
 		 * Set up interrupts
