@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.26 2001/11/17 01:12:47 perry Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.27 2001/12/06 16:38:30 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,6 +90,7 @@ struct keyseq _mc_key_seq[] = {
 int _mc_num_key_seq = sizeof(_mc_key_seq) / sizeof(struct keyseq);
 struct keyseq *pad_list = NULL;
 static char str_area [512];
+static int str_size = sizeof(str_area);
 static char *str_ptr = str_area;
 
 /* Macros */
@@ -118,7 +119,6 @@ static char opt_ch (int op_no);
 static void post_menu (struct menudesc *m);
 static void process_help (struct menudesc *m, int num);
 static void process_req (struct menudesc *m, int num, int req);
-static void mbeep (void);
 static int menucmd (WINDOW *w);
 
 #ifndef NULL
@@ -126,12 +126,7 @@ static int menucmd (WINDOW *w);
 #endif
 
 /* menu system processing routines */
-
-static void
-mbeep (void)
-{
-	fprintf (stderr,"\a");
-}
+#define mbeep() (void)fputc('\a', stderr)
 
 static void
 ins_keyseq (struct keyseq **seq, struct keyseq *ins)
@@ -147,27 +142,35 @@ ins_keyseq (struct keyseq **seq, struct keyseq *ins)
 }
 
 static void
-init_keyseq (void)
+init_keyseq(void)
 {
 	/*
 	 * XXX XXX XXX THIS SHOULD BE NUKED FROM ORBIT!  DO THIS
 	 * XXX XXX XXX WITH NORMAL CURSES FACILITIES!
 	 */
-	extern struct tinfo *_cursesi_genbuf;
-
+	struct tinfo *ti;
+	char *term = getenv("TERM");
 	int i;
 
-	for (i=0; i<_mc_num_key_seq; i++) {
-		if (_mc_key_seq[i].termcap_name)
-			_mc_key_seq[i].chars =
-				t_getstr (_cursesi_genbuf,
-				      _mc_key_seq[i].termcap_name,
-				      &str_ptr, NULL);
+	if (term == NULL || term[0] == '\0')
+		return;
+
+	if (t_getent(&ti, term) < 0)
+		return;
+
+	for (i = 0; i < _mc_num_key_seq; i++) {
+		if (_mc_key_seq[i].termcap_name == NULL)
+			continue;
+
+		_mc_key_seq[i].chars = t_getstr(ti, _mc_key_seq[i].termcap_name,
+		     &str_ptr, &str_size);
+
 		if (_mc_key_seq[i].chars != NULL &&
 		    (_mc_key_seq[i].numchars = strlen(_mc_key_seq[i].chars))
 		    > 0)
-			ins_keyseq (&pad_list,&_mc_key_seq[i]);
+			ins_keyseq(&pad_list, &_mc_key_seq[i]);
 	}
+	t_freent(ti);
 }
 
 static int
