@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sigreturn.S,v 1.2 1994/03/07 23:20:52 phil Exp $
+ *	$Id: sigreturn.S,v 1.3 1994/05/03 20:40:39 phil Exp $
  */
 
 #include "SYS.h"
@@ -26,15 +26,16 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-#if 0
-               This cause problems,  LB not defined ... need to fix it  
 #ifdef PROF
 #undef ENTRY
 #define	ENTRY(x) \
-	.globl EX(x); .align ALIGN; EX(x): save [r0,r1,r2]; \
-	.data; LB(sigr,1):; .long 0; .text; addr @LBb(sigr,1),r1; bsr mcount; restore [r0,r1,r2]
+	.globl EX(x); \
+	.align ALIGN; \
+	EX(x): save [r0,r1,r2]; \
+	.data; 1:; .long 0; \
+	.text; addr 1b(pc),tos; bsr mcount; \
+	restore [r0,r1,r2]
 #endif PROF
-#endif
 
 SYSCALL(sigreturn)
 	ret	0

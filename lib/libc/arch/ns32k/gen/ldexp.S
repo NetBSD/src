@@ -18,7 +18,7 @@
  * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: ldexp.S,v 1.1 1993/10/07 00:20:21 cgd Exp $
+ *	$Id: ldexp.S,v 1.2 1994/05/03 20:40:14 phil Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
 
 #define ERANGE 34
 
-	.globl  EX(errno)
+	.globl  _errno
 
 ENTRY(ldexp)
 	enter	[],8
@@ -64,7 +64,9 @@ ENTRY(ldexp)
 	ret	0		/* neither */
 ldexp_underflow:
 	movdl	0d0e0,f0	/* if underflow return 0, set errno */
-	movd	ERANGE,@EX(errno)
+	PIC_PROLOGUE
+	movd	ERANGE,PIC_GOT(_errno)	/* set errno */
+	PIC_EPILOGUE
 	exit	[]
 	ret	0
 ldexp_overflow:
@@ -74,7 +76,9 @@ ldexp_overflow:
 	bgt	ldexp_positive
 	negl	f0,f0		/* if negative, return -HUGE */
 ldexp_positive:
-	movd	ERANGE,@EX(errno)	/* set errno */
+	PIC_PROLOGUE
+	movd	ERANGE,PIC_GOT(_errno)	/* set errno */
+	PIC_EPILOGUE
 	exit	[]
 	ret	0
 	

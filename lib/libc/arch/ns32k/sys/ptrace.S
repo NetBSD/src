@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: ptrace.S,v 1.2 1994/03/07 23:20:45 phil Exp $
+ *	$Id: ptrace.S,v 1.3 1994/05/03 20:40:36 phil Exp $
  */
 
 /* 
@@ -27,11 +27,13 @@
 
 #include "SYS.h"
 
-	.globl	EX(errno)
+	.globl	_errno
 	.globl	cerror
 
 ENTRY(ptrace)
-	movqd	0, EX(errno)
+	PIC_PROLOGUE
+	movqd	0, PIC_GOT(_errno)
+	PIC_EPILOGUE
 	movd	SYS_ptrace, r0
 	SVC
 	bcs	cerror

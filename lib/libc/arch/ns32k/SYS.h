@@ -35,37 +35,33 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.3 1994/03/04 21:10:12 phil Exp $
+ *	$Id: SYS.h,v 1.4 1994/05/03 20:39:55 phil Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
  */
 
+#include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifdef PROF
-#define	ENTRY(x)	.globl _/**/x; \
-			.data; 1:; .long 0; .text; .align 1; _/**/x: \
-			addr $1b,tos; bsr mcount
-#else
-#define	ENTRY(x)	.globl _/**/x; .text; .align 1; _/**/x: 
-#endif PROF
+#define	SYSCALL(x) \
+	ENTRY(x); \
+	movd CAT(SYS_,x),r0; \
+	SVC; \
+	bcs cerror
 
-#define EX(x)  		_/**/x
+#define	RSYSCALL(x) \
+	SYSCALL(x); \
+	ret 0
 
-#define	SYSCALL(x)	ENTRY(x); movd SYS_/**/x, r0; svc; bcs cerror
-#define	RSYSCALL(x)	SYSCALL(x); ret 0
-#define	PSEUDO(x,y)	ENTRY(x); movd SYS_/**/y, r0; svc; ret 0
-#define	CALL(x,y)	bsr _/**/y; adjspd -4*x
+#define	PSEUDO(x,y) \
+	ENTRY(x); \
+	movd CAT(SYS_,y),r0; \
+	SVC; \
+	ret 0
 
-#define	ASMSTR		.asciz
+#define	CALL(x,y) \
+	bsr CAT(_,y); \
+	adjspd -4*x
 
 	.globl	cerror
-
-#define SVC	svc
-
-#define S_ARG0	4(sp)
-#define S_ARG1	8(sp)
-#define S_ARG2	12(sp)
-#define S_ARG3	16(sp)
-

@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: cerror.S,v 1.2 1994/04/04 06:54:15 phil Exp $
+ *	$Id: cerror.S,v 1.3 1994/05/03 20:40:35 phil Exp $
  */
 
 #include "SYS.h"
@@ -27,7 +27,8 @@
 	.globl	_errno
 
 cerror:
-	movd	r0,_errno(pc)
-	movqd	-1,r0
-	movqd	-1,r1
+	PIC_PROLOGUE
+	movd	r0, PIC_GOT(_errno)
+	PIC_EPILOGUE
+	movqd	-1, r0
 	ret	0

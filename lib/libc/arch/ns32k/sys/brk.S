@@ -18,7 +18,7 @@
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: brk.S,v 1.2 1994/03/07 23:20:41 phil Exp $
+ *	$Id: brk.S,v 1.3 1994/05/03 20:40:33 phil Exp $
  */
 
 #include "SYS.h"
@@ -27,16 +27,21 @@
 	.globl	_minbrk
 
 ENTRY(_brk)
-	br	ok
+	br	ok2
 
 ENTRY(brk)
-	cmpd	S_ARG0, _minbrk(pc)
-	bge	ok
-	movd	_minbrk(pc), S_ARG0
-ok:
-	movd	SYS_break,r0
+	PIC_PROLOGUE
+	cmpd	PIC_S_ARG0, PIC_GOT(_minbrk)
+	bge	ok1
+	movd	PIC_GOT(_minbrk), PIC_S_ARG0
+ok1:
+	PIC_EPILOGUE
+ok2:
+	movd	SYS_break, r0
 	SVC
 	bcs	cerror
-	movd	S_ARG0, _curbrk(pc)
+	PIC_PROLOGUE
+	movd	PIC_S_ARG0, PIC_GOT(_curbrk)
 	movqd	0, r0
+	PIC_EPILOGUE
 	ret	0
