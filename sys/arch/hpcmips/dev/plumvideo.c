@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.4 2000/03/13 18:49:17 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.5 2000/03/25 15:08:26 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -25,7 +25,6 @@
  * SUCH DAMAGE.
  *
  */
-
 #include "opt_tx39_debug.h"
 #include "hpcfb.h"
 
@@ -83,7 +82,7 @@ struct fb_attach_args {
 	const char *fba_name;
 };
 
-void	plumvideo_bootinforefil __P((struct plumvideo_softc*));
+int	plumvideo_init __P((struct plumvideo_softc*));
 #ifdef PLUMVIDEODEBUG
 void	plumvideo_dump __P((struct plumvideo_softc*));
 #endif
@@ -114,18 +113,14 @@ plumvideo_attach(parent, self, aux)
 	sc->sc_regt	= pa->pa_regt;
 	sc->sc_iot	= pa->pa_iot;
 
+	/*
+	 * map register area
+	 */
 	if (bus_space_map(sc->sc_regt, PLUM_VIDEO_REGBASE, 
 			  PLUM_VIDEO_REGSIZE, 0, &sc->sc_regh)) {
 		printf(": register map failed\n");
 		return;
 	}
-	if (bus_space_map(sc->sc_iot, PLUM_VIDEO_VRAM_IOBASE,
-			  PLUM_VIDEO_VRAM_IOSIZE, 0, &sc->sc_ioh)) {
-		printf(": V-RAM map failed\n");
-		return;
-	}
-
-	printf("\n");
 
 	/*
 	 * Power control
@@ -156,9 +151,15 @@ plumvideo_attach(parent, self, aux)
 	}
 
 	/* 
-	 *  reinstall bootinfo 
+	 *  Initialize LCD controller
+	 *	map V-RAM area.
+	 *	reinstall bootinfo structure.
+	 *	some OHCI shared-buffer hack. XXX
 	 */
-	plumvideo_bootinforefil(sc);
+	if (plumvideo_init(sc) != 0)
+		return;
+
+	printf("\n");
 
 #ifdef PLUMVIDEODEBUG
 	if (plumvideo_debug)
@@ -179,34 +180,90 @@ int
 plumvideo_print(aux, pnp)
 	void *aux;
 	const char *pnp;
-{
+{ 
 	return pnp ? QUIET : UNCONF;
 }
 
-void
-plumvideo_bootinforefil(sc)
+int
+plumvideo_init(sc)
 	struct plumvideo_softc *sc;
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	bus_space_handle_t ioh = sc->sc_ioh;
 	plumreg_t reg;
+	size_t vram_size;
+	int bpp, vram_pitch;
 
 	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
 	switch (reg & PLUM_VIDEO_PLGMD_MASK) {
+	case PLUM_VIDEO_PLGMD_16BPP:		
+#ifdef PLUM_BIG_OHCI_BUFFER
+		printf("(16bpp disabled) ");
+		/* FALLTHROUGH */
+#else /* PLUM_BIG_OHCI_BUFFER */
+		bpp = 16;
+		break;
+#endif /* PLUM_BIG_OHCI_BUFFER */
 	default:
-		reg |= PLUM_VIDEO_PLGMD_8BPP; /* XXX */
+		bootinfo->fb_type = BIFB_D8_FF; /* over ride */
+		reg &= ~PLUM_VIDEO_PLGMD_MASK;
+		reg |= PLUM_VIDEO_PLGMD_8BPP;
 		plum_conf_write(regt, regh, PLUM_VIDEO_PLGMD_REG, reg);
 		/* FALLTHROUGH */
 	case PLUM_VIDEO_PLGMD_8BPP:
-		bootinfo->fb_line_bytes = bootinfo->fb_width * 8 / 8;
+		bpp = 8;
+		break;
+	}
+
+	/*
+	 * set line byte length to bootinfo and LCD controller.
+	 */
+	bootinfo->fb_line_bytes = (bootinfo->fb_width * bpp) / 8;
+
+	vram_pitch = bootinfo->fb_width / (8 / bpp);
+	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT1_REG, vram_pitch);
+	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT2_REG,
+			vram_pitch & PLUM_VIDEO_PLPIT2_MASK);
+	plum_conf_write(regt, regh, PLUM_VIDEO_PLOFS_REG, vram_pitch);
+
+	/*
+	 * boot messages.
+	 */
+	printf("display mode: ");
+	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
+	switch (reg & PLUM_VIDEO_PLGMD_MASK) {	
+	case PLUM_VIDEO_PLGMD_DISABLE:
+		printf("disabled ");
+		break;
+	case PLUM_VIDEO_PLGMD_8BPP:
+		printf("8bpp ");
 		break;
 	case PLUM_VIDEO_PLGMD_16BPP:
-		bootinfo->fb_line_bytes = bootinfo->fb_width * 16 / 8;
+		printf("16bpp ");
 		break;
 	}
 	
-	bootinfo->fb_addr = (unsigned char *)ioh;
+	/*
+	 * calcurate frame buffer size.
+	 */
+	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
+	vram_size = (bootinfo->fb_width * bootinfo->fb_height * 
+		     (((reg & PLUM_VIDEO_PLGMD_MASK) == PLUM_VIDEO_PLGMD_16BPP)
+		      ? 16 : 8)) / 8;
+	vram_size = mips_round_page(vram_size);
+
+	/*
+	 * map V-RAM area.
+	 */
+	if (bus_space_map(sc->sc_iot, PLUM_VIDEO_VRAM_IOBASE,
+			  vram_size, 0, &sc->sc_ioh)) {
+		printf(": V-RAM map failed\n");
+		return (1);
+	}
+
+	bootinfo->fb_addr = (unsigned char *)sc->sc_ioh;
+
+	return (0);
 }
 
 #ifdef PLUMVIDEODEBUG
@@ -220,7 +277,7 @@ plumvideo_dump(sc)
 	plumreg_t reg;
 	int i;
 
-	for (i = 0; i < 0x160; i+=4) {
+	for (i = 0; i < 0x160; i += 4) {
 		reg = plum_conf_read(regt, regh, i);
 		printf("0x%03x %08x", i, reg);
 		bitdisp(reg);
