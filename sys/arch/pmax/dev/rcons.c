@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.12 1996/10/13 03:39:37 christos Exp $	*/
+/*	$NetBSD: rcons.c,v 1.13 1996/10/13 12:47:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -357,14 +357,14 @@ rconsreset(tp, rw)
 
 }
 
-/*ARGSUSED*/
+
 int
-rconsselect(dev, which, p)
+rconspoll(dev, events, p)
 	dev_t dev;
-	int which;
+	int events;
 	struct proc *p;
 {
-	return (ttselect(dev, which, p));
+	return (ttpoll(dev, events, p));
 }
 
 /*ARGSUSED*/
