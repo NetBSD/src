@@ -99,6 +99,7 @@
 ./usr/share/man/cat1/gzexe.0
 ./usr/share/man/cat1/gzip.0
 ./usr/share/man/cat1/head.0
+./usr/share/man/cat1/hesinfo.0
 ./usr/share/man/cat1/hexdump.0
 ./usr/share/man/cat1/history.0
 ./usr/share/man/cat1/host.0
@@ -1175,6 +1176,7 @@
 ./usr/share/man/man1/gzexe.1
 ./usr/share/man/man1/gzip.1
 ./usr/share/man/man1/head.1
+./usr/share/man/man1/hesinfo.1
 ./usr/share/man/man1/hexdump.1
 ./usr/share/man/man1/history.1
 ./usr/share/man/man1/host.1

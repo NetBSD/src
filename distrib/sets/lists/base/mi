@@ -195,6 +195,7 @@
 ./usr/bin/gzexe
 ./usr/bin/gzip
 ./usr/bin/head
+./usr/bin/hesinfo
 ./usr/bin/hexdump
 ./usr/bin/id
 ./usr/bin/ident
