@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.17 1998/01/12 20:32:19 thorpej Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.17.2.1 1998/01/27 19:18:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,21 +53,23 @@
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/obio.h>
+#include <machine/idprom.h>
 #include <machine/eeprom.h>
-#include <machine/machdep.h>
 
 #define HZ 100	/* XXX */
 
-#ifndef OBIO_EEPROM_SIZE
-#define OBIO_EEPROM_SIZE sizeof(struct eeprom)
+#ifndef EEPROM_SIZE
+#define EEPROM_SIZE 0x800
 #endif
+
+struct eeprom *eeprom_copy; 	/* soft copy. */
 
 static int ee_update(int off, int cnt);
 
-static char *eeprom_va;
-static char *ee_rambuf;
-static int ee_busy, ee_want;
+static char *eeprom_va; /* mapping to actual device */
+static int ee_size;     /* size of usable part. */
+
+static int ee_busy, ee_want; /* serialization */
 
 static int  eeprom_match __P((struct device *, struct cfdata *, void *));
 static void eeprom_attach __P((struct device *, struct device *, void *));
@@ -88,10 +90,6 @@ eeprom_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
@@ -108,22 +106,42 @@ eeprom_attach(parent, self, args)
 	char *src, *dst, *lim;
 
 	printf("\n");
+#ifdef	DIAGNOSTIC
+	if (sizeof(struct eeprom) != EEPROM_SIZE)
+		panic("eeprom struct wrong");
+#endif
 
-	eeprom_va = obio_mapin(ca->ca_paddr, OBIO_EEPROM_SIZE);
+	ee_size = EEPROM_SIZE;
+	eeprom_va = bus_mapin(ca->ca_bustype, ca->ca_paddr, ee_size);
 	if (!eeprom_va)
 		panic("eeprom_attach");
 
 	/* Keep a "soft" copy of the EEPROM to make access simpler. */
-	ee_rambuf = malloc(sizeof(struct eeprom), M_DEVBUF, M_NOWAIT);
-	if (ee_rambuf == 0)
-		panic("eeprom_attach: malloc ee_rambuf");
+	eeprom_copy = malloc(ee_size, M_DEVBUF, M_NOWAIT);
+	if (eeprom_copy == 0)
+		panic("eeprom_attach: malloc eeprom_copy");
+
+	/*
+	 * On the 3/80, do not touch the last 40 bytes!
+	 * Writes there are ignored, reads show zero.
+	 * Reduce ee_size and clear the last part of the
+	 * soft copy.  Note: ee_update obeys ee_size.
+	 */
+	if (cpu_machine_id == SUN3X_MACH_80)
+		ee_size -= 40;
 
 	/* Do only byte access in the EEPROM. */
 	src = eeprom_va;
-	dst = ee_rambuf;
-	lim = ee_rambuf + sizeof(struct eeprom);
+	dst = (char*) eeprom_copy;
+	lim = dst + ee_size;
+
 	do *dst++ = *src++;
 	while (dst < lim);
+
+	if (ee_size < EEPROM_SIZE) {
+		/* Clear out the last part. */
+		bzero(dst, (EEPROM_SIZE - ee_size));
+	}
 }
 
 
@@ -164,18 +182,18 @@ eeprom_uio(struct uio *uio)
 	int off;	/* NOT off_t */
 	caddr_t va;
 
-	if (ee_rambuf == NULL)
+	if (eeprom_copy == NULL)
 		return (ENXIO);
 
 	off = uio->uio_offset;
-	if ((off < 0) || (off > OBIO_EEPROM_SIZE))
+	if ((off < 0) || (off > EEPROM_SIZE))
 		return (EFAULT);
 
-	cnt = min(uio->uio_resid, (OBIO_EEPROM_SIZE - off));
+	cnt = min(uio->uio_resid, (EEPROM_SIZE - off));
 	if (cnt == 0)
 		return (0);	/* EOF */
 
-	va = ee_rambuf + off;
+	va = ((char*)eeprom_copy) + off;
 	error = uiomove(va, (int)cnt, uio);
 
 	/* If we wrote the rambuf, update the H/W. */
@@ -204,7 +222,15 @@ ee_update(int off, int cnt)
 	if (eeprom_va == NULL)
 		return (ENXIO);
 
-	bp = ee_rambuf + off;
+	/*
+	 * This check is NOT redundant with the one in
+	 * eeprom_uio above if we are on a 3/80 where
+	 * ee_size < EEPROM_SIZE
+	 */
+	if (cnt > (ee_size - off))
+		cnt = (ee_size - off);
+
+	bp = ((char*)eeprom_copy) + off;
 	ep = eeprom_va + off;
 	errcnt = 0;
 
