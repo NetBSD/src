@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7 1994/12/11 16:20:52 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.8 1995/01/11 20:59:50 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -23,6 +23,7 @@ options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
 options		DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
 options		DIAGNOSTIC	# internally consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
@@ -84,8 +85,10 @@ com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
 #com*	at ast? slave ? flags 1
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 
