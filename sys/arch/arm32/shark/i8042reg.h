@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.1.1.1 1998/05/01 21:08:55 cgd Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.2 1998/05/01 21:14:46 cgd Exp $     */
 
 /*
  * Copyright 1997
@@ -177,7 +177,7 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_GETAUX_DATA(iot, ioh, status, value) \
 { \
-   if ((status) = i8042_wait_input((iot), (ioh), I8042_AUX_DATA)) \
+   if (((status) = i8042_wait_input((iot), (ioh), I8042_AUX_DATA)) != 0) \
    { \
         (value) = bus_space_read_1(iot, ioh, KBOUTPO); \
         I8042_DELAY; \
@@ -197,7 +197,7 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_GETKBD_DATA(iot, ioh, status, value) \
 { \
-   if ((status) = i8042_wait_input((iot), (ioh), I8042_KBD_DATA)) \
+   if (((status) = i8042_wait_input((iot), (ioh), I8042_KBD_DATA)) != 0) \
    { \
         (value) = bus_space_read_1(iot, ioh, KBOUTPO); \
 	I8042_DELAY; \
@@ -240,10 +240,10 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_READCCB(iot, ioh, status, value)  \
 { \
-    if ( (status) = i8042_cmd((iot), (ioh), I8042_CMD, \
-                                I8042_NO_RESPONSE, NULL, K_RDCMDBYTE) ) \
+    if ( ((status) = i8042_cmd((iot), (ioh), I8042_CMD, \
+                                I8042_NO_RESPONSE, NULL, K_RDCMDBYTE)) != 0 ) \
     { \
-        if ((status) = i8042_wait_input((iot),(ioh),I8042_ANY_DATA)) \
+        if (((status) = i8042_wait_input((iot),(ioh),I8042_ANY_DATA)) != 0) \
         { \
              (value) = bus_space_read_1((iot), (ioh), KBDATAPO); \
         } \
@@ -266,11 +266,11 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_KBDRESET(iot, ioh, status)  \
 { \
-   if ( (status) = i8042_cmd((iot), (ioh), I8042_KBD_CMD, \
+   if ( ((status) = i8042_cmd((iot), (ioh), I8042_KBD_CMD, \
                                  I8042_CHECK_RESPONSE, \
-                                 KBR_ACK, KBC_RESET) ) \
+                                 KBR_ACK, KBC_RESET)) != 0 ) \
    { \
-        if ((status) = i8042_wait_input((iot),(ioh),I8042_ANY_DATA)) \
+        if (((status) = i8042_wait_input((iot),(ioh),I8042_ANY_DATA)) != 0) \
         { \
 	     (status) = bus_space_read_1((iot), (ioh), KBDATAPO); \
 	     if ((status) != KBR_RSTDONE) \

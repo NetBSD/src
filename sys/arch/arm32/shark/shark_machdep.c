@@ -127,8 +127,10 @@ extern void pmap_debug	__P((int level));
 #ifdef	DDB
 extern void db_machine_init     __P((void));
 #endif
-extern char *strstr		__P((char *s1, char *s2));
 extern u_long strtoul		__P((const char *s, char **ptr, int base));
+int	ofbus_match __P((struct device *, struct cfdata *, void *));
+void	ofbus_attach __P((struct device *, struct device *, void *));
+
 
 /*
  *  Exported variables
@@ -146,6 +148,20 @@ u_int memory_disc_size;
 vm_offset_t cache_clean_vms[2] = {0, 0}; /* vms = plural of vm, not VMS! :-) */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
+
+/*
+ * Address to call from cpu_reset() to reset the machine.
+ * This is machine architecture dependant as it varies depending
+ * on where the ROM appears when you turn the MMU off.
+ *
+ * XXX not actually _used_ on shark!
+ */
+
+u_int cpu_reset_address = 0;
+
+struct cfattach ofbus_root_ca = {
+	sizeof(struct device), ofbus_match, ofbus_attach
+};
 
 
 /*
@@ -351,7 +367,7 @@ void
 process_kernel_args(void)
 {
 
-#ifdef BOOT_QUIETLY
+#if defined(RB_QUIET) && defined(BOOT_QUIETLY)
     boothowto |= RB_QUIET;
 #endif
 
@@ -391,31 +407,31 @@ process_kernel_args(void)
     {
 	char *args = boot_args, *ptr;
 
-	if (ptr = strstr(args, "nocache")) {
+	if ((ptr = strstr(args, "nocache")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[7] == ' ' || ptr[7] == '\0'))
 		    cpu_cache &= ~1;
 	}
 
-	if (ptr = strstr(args, "nowritebuf")) {
+	if ((ptr = strstr(args, "nowritebuf")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[10] == ' ' || ptr[10] == '\0'))
 		    cpu_cache &= ~2;
 	}
 
-	if (ptr = strstr(args, "fpaclk2")) {
+	if ((ptr = strstr(args, "fpaclk2")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[7] == ' ' || ptr[7] == '\0'))
 		    cpu_cache |= 4;
 	}
 
-	if (ptr = strstr(args, "icache")) {
+	if ((ptr = strstr(args, "icache")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[6] == ' ' || ptr[6] == '\0'))
 		    cpu_cache |= 8;
 	}
 
-	if (ptr = strstr(args, "dcache")) {
+	if ((ptr = strstr(args, "dcache")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[6] == ' ' || ptr[6] == '\0'))
 		    cpu_cache |= 16;
@@ -445,13 +461,13 @@ process_kernel_args(void)
 	}
 #endif
 
-	if (ptr = strstr(args, "single")) {
+	if ((ptr = strstr(args, "single")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[6] == ' ' || ptr[6] == '\0'))
 		    boothowto |= RB_SINGLE;
 	}
 
-	if (ptr = strstr(args, "kdb")) {
+	if ((ptr = strstr(args, "kdb")) != NULL) {
 	    if((ptr > boot_args || ptr[-1] == ' ') &&
 	       (ptr[3] == ' ' || ptr[3] == '\0'))
 		    boothowto |= RB_KDB;
@@ -470,10 +486,12 @@ process_kernel_args(void)
 	if (ptr && (ptr > boot_args || ptr[-1] == ' '))
 	    bufpages = (int)strtoul(ptr + 5, NULL, 10);
 
+#ifdef RB_QUIET
 	if (strstr(args, "noquiet"))
 	    boothowto &= ~RB_QUIET;
 	else if (strstr(args, "quiet"))
 	    boothowto |= RB_QUIET;
+#endif
     }
 
     /* Check for ofwgencfg-specific args. */
@@ -492,11 +510,12 @@ void
 ofrootfound(void)
 {
     int node;
-    struct ofprobe probe;
+    struct ofbus_attach_args aa;
 
     if (!(node = OF_peer(0)))
 	panic("No OFW root");
-    probe.phandle = node;
-    if (!config_rootfound("ofroot", &probe))
-	panic("ofroot not configured");
+    aa.oba_busname = "ofw";
+    aa.oba_phandle = node;
+    if (!config_rootfound("ofbus", &aa))
+	panic("ofw root ofbus not configured");
 }
