@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 1997/07/23 07:16:15 mikel Exp $
+#	$NetBSD: Makefile,v 1.45 1997/10/13 03:57:51 explorer Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,8 +6,8 @@
 
 SUBDIR=	badsect bim ccdconfig disklabel dmesg edlabel fastboot fdisk fsck \
 	fsirand ifconfig init mknod modload modunload mount nologin ping \
-	reboot route routed savecore shutdown slattach swapctl ttyflags \
-	umount
+	reboot rndctl route routed savecore shutdown slattach swapctl \
+	ttyflags umount
 
 # support for various file systems
 SUBDIR+= mount_ados
