@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.11 2000/10/19 07:20:16 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.12 2000/10/23 14:53:53 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -35,11 +35,10 @@ ABSOLUTE t_id = 24;
 ABSOLUTE t_msg_in = 32;
 ABSOLUTE t_ext_msg_in = 40;
 ABSOLUTE t_ext_msg_data = 48;
-ABSOLUTE t_msg_tag = 56;
-ABSOLUTE t_msg_out = 64;
-ABSOLUTE t_cmd = 72;
-ABSOLUTE t_status = 80;
-ABSOLUTE t_data = 88;
+ABSOLUTE t_msg_out = 56;
+ABSOLUTE t_cmd = 64;
+ABSOLUTE t_status = 72;
+ABSOLUTE t_data = 80;
 
 ;; interrupt codes
 ; interrupts that need a valid DSA
@@ -77,10 +76,12 @@ ENTRY reselect;
 ENTRY reselected;
 ENTRY selected;
 ENTRY script_sched;
+ENTRY script_sched_slot0;
 ENTRY get_extmsgdata;
 ENTRY resel_targ0;
 ENTRY msgin_space;
 ENTRY lunsw_return;
+EXTERN abs_script_sched_slot0;
 EXTERN abs_targ0;
 EXTERN abs_msgin;
 
@@ -88,31 +89,27 @@ EXTERN abs_msgin;
 ENTRY lun_switch_entry;
 ENTRY resel_lun0;
 ENTRY restore_scntl3;
-EXTERN abs_lun0;
 EXTERN abs_lunsw_return;
+
+; tag switch symbols
+ENTRY tag_switch_entry;
+ENTRY resel_tag0;
+EXTERN abs_tag0;
 
 ; command reselect script symbols
 ENTRY rdsa0;
 ENTRY rdsa1;
 ENTRY rdsa2;
 ENTRY rdsa3;
-ENTRY reload_dsa;
+ENTRY ldsa_reload_dsa;
+ENTRY ldsa_select;
+ENTRY ldsa_data;
 
-EXTERN resel_abs_reselected;
-
-; command scheduler symbols
-ENTRY slot;
-ENTRY slotdata;
-ENTRY nextslot;
-
-EXTERN script_abs_sched;
-EXTERN slot_nextp;
-EXTERN slot_sched_addrsrc;
-EXTERN slot_abs_reselect;
-EXTERN slot_abs_selected;
-EXTERN slot_abs_loaddsa;
-
-EXTERN endslot_abs_reselect;
+EXTERN ldsa_abs_reselected;
+EXTERN ldsa_abs_reselect;
+EXTERN ldsa_abs_selected;
+EXTERN ldsa_abs_data;
+EXTERN ldsa_abs_slot;
 
 ; main script
 
@@ -123,7 +120,7 @@ reselected:
 	MOVE 0 to SCRATCHA0	; flags
 	MOVE 0 to SCRATCHA1	; DSA offset (for S/G save data pointer)
 	MOVE SCRATCHA3 to SFBR  ; pending message ?
-	JUMP REL(handle_msgin), IF not 0x08;
+	JUMP REL(handle_msgin), IF not 0x20;
 waitphase:
 	JUMP REL(msgout), WHEN MSG_OUT;
 	JUMP REL(msgin), WHEN MSG_IN;
@@ -131,17 +128,75 @@ waitphase:
 	JUMP REL(datain), WHEN DATA_IN;
 	JUMP REL(cmdout), WHEN CMD;
 	JUMP REL(status), WHEN STATUS;
-err:
 	INT int_err;
 
+reselect_fail:
+	; check that host asserted SIGP, this'll clear SIGP in ISTAT
+	MOVE CTEST2 & 0x40 TO SFBR;
+	INT int_resfail,  IF 0x00;
+script_sched:
+	; Clear DSA and init status
+	MOVE 0xff to DSA0;
+	MOVE 0xff to DSA1;
+	MOVE 0xff to DSA2;
+	MOVE 0xff to DSA3;
+	MOVE 0 to SCRATCHA0	; flags
+	MOVE 0 to SCRATCHA1	; DSA offset (for S/G save data pointer)
+; the script scheduler: siop_start() we set the absolute jump addr, and then 
+; changes the FALSE to TRUE. The select script will change it back to false
+; once the target is selected.
+; The RAM could hold 370 slot entry, we limit it to 40. Should be more than
+; enouth.
+script_sched_slot0:
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+	JUMP abs_script_sched_slot0, IF FALSE;
+; Nothing to do, wait for reselect
 reselect:
 	; Clear DSA and init status
 	MOVE 0xff to DSA0;
 	MOVE 0xff to DSA1;
 	MOVE 0xff to DSA2;
 	MOVE 0xff to DSA3;
-	MOVE 0xff to SCRATCHA2; no tag
-	MOVE 0x08 to SCRATCHA3; NOP message
+	MOVE 0x00 to SCRATCHA2; no tag
+	MOVE 0x20 to SCRATCHA3; simple tag msg, ignored by reselected:
 	WAIT RESELECT REL(reselect_fail)
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
@@ -164,36 +219,18 @@ resel_targ0:
 	JUMP abs_targ0, IF 0xff;
 	INT int_reseltarg;
 lunsw_return:
-	INT int_err, WHEN NOT MSG_IN;
 	MOVE 1, abs_msgin, WHEN MSG_IN;
 	MOVE SFBR & 0x07 to SCRATCHA1; save LUN
 	CLEAR ACK;
 	RETURN, WHEN NOT MSG_IN; If no more message, jump to lun sw
 	MOVE 1, abs_msgin, WHEN MSG_IN;
 	CLEAR ACK;
-	JUMP REL(gettag), IF 0x20; simple tag message ?
 	MOVE SFBR  to SCRATCHA3; save message
-	RETURN; jump to lun sw and handle message
-gettag:
-	INT int_err, WHEN NOT MSG_IN;
+	RETURN, IF NOT 0x20; jump to lun sw if not simple tag msg
 	MOVE 1, abs_msgin, WHEN MSG_IN; get tag
 	CLEAR ACK;
 	MOVE SFBR  to SCRATCHA2; save tag
 	RETURN; jump to lun sw
-
-reselect_fail:
-	; check that host asserted SIGP, this'll clear SIGP in ISTAT
-	MOVE CTEST2 & 0x40 TO SFBR;
-	INT int_resfail,  IF 0x00;
-script_sched:
-	; Clear DSA and init status
-	MOVE 0xff to DSA0;
-	MOVE 0xff to DSA1;
-	MOVE 0xff to DSA2;
-	MOVE 0xff to DSA3;
-	MOVE 0 to SCRATCHA0	; flags
-	MOVE 0 to SCRATCHA1	; DSA offset (for S/G save data pointer)
-	JUMP script_abs_sched;
 
 handle_sdp:
 	CLEAR ACK;
@@ -203,11 +240,18 @@ msgin:
 	CLEAR ATN
 	MOVE FROM t_msg_in, WHEN MSG_IN;
 handle_msgin:
-	JUMP REL(handle_dis), IF 0x04         ; disconnect message
 	JUMP REL(handle_cmpl), IF 0x00        ; command complete message
 	JUMP REL(handle_sdp), IF 0x02	      ; save data pointer message
 	JUMP REL(handle_extin), IF 0x01	      ; extended message
-	INT int_msgin;
+	INT int_msgin, IF not 0x04;
+	CALL REL(disconnect)                  ; disconnect message;
+; if we didn't get sdp, or if offset is 0, no need to interrupt
+	MOVE SCRATCHA0 & flag_sdp TO SFBR;
+	JUMP REL(script_sched), if 0x00; 
+	MOVE SCRATCHA1 TO SFBR;
+	JUMP REL(script_sched), if 0x00; 
+; Ok, we need to save data pointers
+	INT int_disc;
 msgin_ack:
 selected:
 	CLEAR ACK;
@@ -286,60 +330,24 @@ disconnect:
 	WAIT DISCONNECT;
 	RETURN;
 
-handle_dis:
-	CALL REL(disconnect);
-; if we didn't get sdp, or if offset is 0, no need to interrupt
-	MOVE SCRATCHA0 & flag_sdp TO SFBR;
-	JUMP REL(script_sched), if 0x00; 
-	MOVE SCRATCHA1 TO SFBR;
-	JUMP REL(script_sched), if 0x00; 
-; Ok, we need to save data pointers
-	INT int_disc;
-
 handle_cmpl:
 	CALL REL(disconnect);
 	INT int_done;
 
 handle_extin:
 	CLEAR ACK;
-	INT int_err, IF NOT MSG_IN;
 	MOVE FROM t_ext_msg_in, WHEN MSG_IN;
 	INT int_extmsgin; /* let host fill in t_ext_msg_data */
 get_extmsgdata:
 	CLEAR ACK;
-	INT int_err, IF NOT MSG_IN;
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
 	INT int_extmsgdata;
 msgin_space:
 	NOP; space to store msgin when reselect
 
 
-; script used for the scheduler: when a slot is free the JUMP points to
-; the next slot so that instructions for this slot are not run.
-; once the CPU has set up the slot variables (DSA address) it changes
-; the JUMP address to 0 (so that it'll jump to the next instruction) and
-; this command will be processed next time the scheduler is executed.
-; When the target has been successfully selected the script changes the jump
-; addr back to the next slot, so that it's ignored the next time.
-;
-
-PROC  slot_script:
-slot:
-        JUMP REL(nextslot);
-	CALL slot_abs_loaddsa;
-	SELECT ATN FROM t_id, slot_abs_reselect;
-	MOVE MEMORY 4, slot_sched_addrsrc, slot_nextp;
-	JUMP slot_abs_selected;  
-slotdata:
-	NOP; slot variables: jumppatchp
-nextslot:
-	NOP; /* will be changed to the next slot entry
-
-PROC  endslot_script:
-	JUMP endslot_abs_reselect;
-
 ;; per-target switch script for LUNs
-; hack: we first to a call to the target-specific code, so that a return
+; hack: we first do a call to the target-specific code, so that a return
 ; in the main switch will jump to the lun switch.
 PROC lun_switch:
 restore_scntl3:
@@ -350,17 +358,32 @@ lun_switch_entry:
 	CALL REL(restore_scntl3);
 	MOVE SCRATCHA1 TO SFBR;
 resel_lun0:
-	JUMP abs_lun0, IF 0x00;
-	JUMP abs_lun0, IF 0x01;
-	JUMP abs_lun0, IF 0x02;
-	JUMP abs_lun0, IF 0x03;
-	JUMP abs_lun0, IF 0x04;
-	JUMP abs_lun0, IF 0x05;
-	JUMP abs_lun0, IF 0x06;
-	JUMP abs_lun0, IF 0x07;
 	INT int_resellun;
 
-;; script used to load the DSA after a reselect.
+;; Per-device switch script for tag
+PROC tag_switch:
+tag_switch_entry:
+	MOVE SCRATCHA2 TO SFBR; restore tag
+resel_tag0:
+	JUMP abs_tag0, IF 0x00;
+	JUMP abs_tag0, IF 0x01;
+	JUMP abs_tag0, IF 0x02;
+	JUMP abs_tag0, IF 0x03;
+	JUMP abs_tag0, IF 0x04;
+	JUMP abs_tag0, IF 0x05;
+	JUMP abs_tag0, IF 0x06;
+	JUMP abs_tag0, IF 0x07;
+	JUMP abs_tag0, IF 0x08;
+	JUMP abs_tag0, IF 0x09;
+	JUMP abs_tag0, IF 0x0a;
+	JUMP abs_tag0, IF 0x0b;
+	JUMP abs_tag0, IF 0x0c;
+	JUMP abs_tag0, IF 0x0d;
+	JUMP abs_tag0, IF 0x0e;
+	JUMP abs_tag0, IF 0x0f;
+	INT int_reseltag;
+
+;; per-command script: select, and called after a reselect to load DSA
 
 PROC load_dsa:
 ; Can't use MOVE MEMORY to load DSA, doesn't work I/O mapped
@@ -373,6 +396,13 @@ rdsa2:
 rdsa3:
 	MOVE 0xf3 to DSA3;
 	RETURN;
-reload_dsa:
+ldsa_reload_dsa:
 	CALL REL(rdsa0);
-	JUMP resel_abs_reselected;
+	JUMP ldsa_abs_reselected;
+ldsa_select:
+	CALL REL(rdsa0);
+	SELECT ATN FROM t_id, ldsa_abs_reselect;
+	MOVE MEMORY 4, ldsa_abs_data, ldsa_abs_slot;
+	JUMP ldsa_abs_selected;
+ldsa_data:
+	NOP; contains data used by the MOVE MEMORY
