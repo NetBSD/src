@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.40 2000/04/02 17:25:53 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.41 2000/05/29 20:13:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ struct scsipi_link {
 #define SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
 #define SDEV_NOSTARTUNIT	0x0080	/* Do not issue START UNIT requests */
 #define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
-#define ADEV_CDROM		0x0200	/* device is a CD-ROM */
+#define SDEV_CDROM		0x0200	/* device is a CD-ROM */
 #define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */
 #define ADEV_NOCAPACITY		0x0800	/* no READ_CD_CAPACITY command */
 #define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
