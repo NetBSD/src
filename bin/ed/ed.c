@@ -60,17 +60,25 @@ static char sccsid[] = "@(#)ed.c	5.5 (Berkeley) 3/28/93";
 
 /*
  * ED -- ED line editor
- * options:
+ * Syntax:
+ *	ed [-p prompt] [-sx] [-] [name]
+ * Options:
  *	-p key	use key as the command prompt
  *	-s	run a script
  *	-	same as -s (though deprecated)
  *	-x	use crypt on file i/o
  *
- * Author: Andrew Moore
- *	   Talke Studio
- *	   485 Redwood Avenue, #5
- *	   Redwood City, CA 94061
- * Email:  alm@netcom.com
+ *	If name is prefixed with a bang (!), then name is interpreted as a
+ *	shell command, otherwise name is a file.  Use a backslash to
+ *	force name to be interpreted as a file.
+ *
+ *
+ *
+ * Author:  Andrew Moore
+ *	    Talke Studio
+ *	    485 Redwood Avenue, #5
+ *	    Redwood City, CA 94061
+ * Email:   alm@netcom.com
  *
  * Credits: The buf.c algorithm is attributed to Rodney Ruddock of
  *	    the University of Guelph, Guelph, Ontario.
@@ -112,7 +120,7 @@ char *prompt;			/* command-line prompt */
 char *defprompt = "*";		/* default prompt */
 int lineno;			/* script line number */
 struct winsize ws;		/* window size structure */
-int rows = 22;			/* scroll length: ws_row - 2 */
+long rows = 22;			/* scroll length: ws_row - 2 */
 int cols = 72;			/* wrap column: ws_col - 8 */
 
 
@@ -154,7 +162,7 @@ main(argc, argv)
 			break;
 
 		default:
-			fprintf(stderr, "usage: ed [-p prompt] [-sx] [-] [file]\n");
+			fprintf(stderr, "usage: ed [-p prompt] [-sx] [-] [name]\n");
 			exit(1);
 		}
 	argv += optind;
@@ -165,10 +173,9 @@ main(argc, argv)
 		argv++;
 	}
 	requeue(&line0, &line0);
-	if (sbopen() < 0 || argc && doread(0, strcpy(fnp, *argv)) < 0) {
-		fprintf(stderr, "%s\n?\n", errmsg);
+	if (sbopen() < 0 || argc
+	 && doread(0, (**argv != '!') ? strcpy(fnp, *argv) : *argv) < 0)
 		if (!isatty(0)) quit(2);
-	}
 	dowinch(SIGWINCH);
 	/* assert: reliable signals! */
 	if (isatty(0))
@@ -293,7 +300,11 @@ getone()
 	return num;
 }
 
-long	mark['z'-'a'+1];
+
+#define MAXMARK 26			/* max number of marks */
+
+line_t	*mark[MAXMARK];			/* line markers */
+int markno;				/* line marker count */
 
 /* getnum:  return a relative line number from the command buffer */
 long
@@ -326,7 +337,7 @@ getnum(first)
 		return first ? curln : 1;
 	case '\'':
 		ibufp++;
-		return (islower(*ibufp) && first) ? mark[*ibufp++ - 'a'] : ERR;
+		return (first && islower(*ibufp)) ? getaddr(mark[*ibufp++ - 'a']) : ERR;
 	case '%':
 	case ',':
 	case ';':
@@ -378,7 +389,7 @@ getnum(first)
 
 int Gflag = 0;			/* interactive global command suffix */
 
-/* ckglob:  mark lines matching a pattern in the command buffer; return
+/* ckglob:  set lines matching a pattern in the command buffer; return
    global status  */
 ckglob()
 {
@@ -538,7 +549,7 @@ docmd(glob)
 	skipblanks();
 	switch(*ibufp++) {
 	case '\n':
-		if (deflt(curln + !glob, curln + !glob) < 0
+		if (deflt(line1 = 1, curln + !glob) < 0
 		 || doprnt(line2, line2, 0) < 0)
 			return ERR;
 		break;
@@ -546,8 +557,7 @@ docmd(glob)
 		if (nlines > 0) {
 			sprintf(errmsg, "unexpected address");
 			return ERR;
-		}
-		if (*ibufp == '!') {
+		} else if (*ibufp == '!') {
 			subflags++;
 			ibufp++;
 		} else {
@@ -608,7 +618,7 @@ docmd(glob)
 		if (!glob) ureset();
 		if (del(line1, line2) < 0)
 			return ERR;
-		if (nextln(curln, lastln) != 0)
+		else if (nextln(curln, lastln) != 0)
 			curln = nextln(curln, lastln);
 		modified = TRUE;
 		break;
@@ -623,22 +633,18 @@ docmd(glob)
 		} else if (!isspace(*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
-		}
-		if ((fptr = getfn()) == NULL)
+		} else if ((fptr = getfn()) == NULL)
 			return ERR;
 		VRFYCMD();
+		bzero(mark, sizeof mark);
 		del(1, lastln);
 		ureset();
-		sbclose();
-		if (sbopen() < 0)
+		if (sbclose() < 0 || sbopen() < 0)
 			return ERR;
 		if (*fptr && *fptr != '!') strcpy(fnp, fptr);
-		if (doread(0, *fptr ? fptr : fnp) < 0) {
-			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
+		if (doread(0, *fptr ? fptr : fnp) < 0)
 			return ERR;
-		}
 		ureset();
-		bzero(mark, sizeof mark);
 		modified = FALSE;
 		break;
 	case 'f':
@@ -648,8 +654,7 @@ docmd(glob)
 		} else if (!isspace(*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
-		}
-		if ((fptr = getfn()) == NULL)
+		} else if ((fptr = getfn()) == NULL)
 			return ERR;
 		VRFYCMD();
 		if (*fptr) strcpy(fnp, fptr);
@@ -673,6 +678,10 @@ docmd(glob)
 		if (*errmsg) fprintf(stderr, "%s\n", errmsg);
 		break;
 	case 'i':
+		if (line2 == 0) {
+			sprintf(errmsg, "invalid address");
+			return ERR;
+		}
 		VRFYCMD();
 		if (!glob) ureset();
 		if (append(prevln(line2, lastln), glob) < 0)
@@ -687,12 +696,16 @@ docmd(glob)
 			return ERR;
 		break;
 	case 'k':
-		if (!islower(c = *ibufp++)) {
+		if (line2 == 0) {
+			sprintf(errmsg, "invalid address");
+			return ERR;
+		} else if (!islower(c = *ibufp++)) {
 			sprintf(errmsg, "invalid mark character");
 			return ERR;
 		}
 		VRFYCMD();
-		mark[c-'a'] = line2;
+		if (!mark[c - 'a']) markno++;
+		mark[c - 'a'] = getptr(line2);
 		break;
 	case 'l':
 		if (deflt(curln, curln) < 0)
@@ -770,17 +783,15 @@ docmd(glob)
 		if (!isspace(*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
-		}
-		if (!nlines) line2 = lastln;
+		} else if (nlines == 0)
+			line2 = lastln;
 		if ((fptr = getfn()) == NULL)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
 		if (*fnp == '\0' && *fptr != '!') strcpy(fnp, fptr);
-		if ((num = doread(line2, *fptr ? fptr : fnp)) < 0) {
-			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
+		if ((num = doread(line2, *fptr ? fptr : fnp)) < 0)
 			return ERR;
-		}
 		else if (num != lastln)
 			modified = TRUE;
 		break;
@@ -813,7 +824,7 @@ docmd(glob)
 		if ((!subflags || (subflags & SGR))
 		 && (tpat = optpat()) == NULL)
 			return ERR;
-		if (tpat != subpat) {
+		else if (tpat != subpat) {
 			if (subpat) {
 				 regfree(subpat);
 				 free(subpat);
@@ -880,11 +891,11 @@ docmd(glob)
 		if (*ibufp == 'q') {
 			gflag = EOF;
 			ibufp++;
-		} else if (!isspace(*ibufp)) {
+		}
+		if (!isspace(*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
-		}
-		if ((fptr = getfn()) == NULL)
+		} else if ((fptr = getfn()) == NULL)
 			return ERR;
 		if (nlines == 0 && !lastln)
 			line1 = line2 = 0;
@@ -892,10 +903,8 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (*fnp == '\0' && *fptr != '!') strcpy(fnp, fptr);
-		if (dowrite(line1, line2, *fptr ? fptr : fnp, c == 'W' ? "a" : "w") < 0) {
-			if (!garrulous) fprintf(stderr, "%s\n", errmsg);
+		if (dowrite(line1, line2, *fptr ? fptr : fnp, c == 'W' ? "a" : "w") < 0)
 			return ERR;
-		}
 		modified = FALSE;
 		break;
 	case 'x':
@@ -912,12 +921,12 @@ docmd(glob)
 #endif
 		break;
 	case 'z':
-		if (deflt(curln + 1, curln + 1) < 0)
+		if (deflt(line1 = 1, curln + !glob) < 0)
 			return ERR;
-		if (isdigit(*ibufp))
+		else if ('0' < *ibufp && *ibufp <= '9')
 			rows = strtol(ibufp, &ibufp, 10);
 		VRFYCMD();
-		if (doprnt(line1, min(lastln, line1 + rows - 1), gflag) < 0)
+		if (doprnt(line2, min(lastln, line2 + rows - 1), gflag) < 0)
 			return ERR;
 		gflag = 0;
 		break;
@@ -956,11 +965,11 @@ find(pat, dir)
 	long n = curln;
 
 	do {
-		n = dir ? nextln(n, lastln) : prevln(n, lastln);
-		if ((s = gettxt(getptr(n))) == (char *) ERR)
-			return ERR;
-		else if (s && !regexec(pat, s, 0, NULL, 0))
-			return n;
+		if (n = dir ? nextln(n, lastln) : prevln(n, lastln))
+			if ((s = gettxt(getptr(n))) == (char *) ERR)
+				return ERR;
+			else if (!regexec(pat, s, 0, NULL, 0))
+				return n;
 	} while (n != curln);
 	sprintf(errmsg, "no match");
 	return  ERR;
@@ -1348,13 +1357,16 @@ del(from, to)
 	long from, to;
 {
 	line_t *before, *after;
+	long range = to - from + 1;
+	long n;
+	int i;
 
 	spl1();
 	getuptr(UDEL, from, to);
 	after = getptr(nextln(to, lastln));
 	before = getptr(prevln(from, lastln));	/* this getptr last! */
 	requeue(before, after);
-	lastln -= to - from + 1;
+	lastln -= range;
 	curln = prevln(from, lastln);
 	spl0();
 	return 0;
@@ -1498,7 +1510,8 @@ doread(n, fn)
 
 	nullchar = newline_added = 0;
 	if ((fp = (*fn == '!') ? popen(fn + 1, "r") : desopen(esctos(fn), "r")) == NULL) {
-		sprintf(errmsg, "cannot open file");
+		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
+		sprintf(errmsg, "cannot open input file");
 		return ERR;
 	}
 	for (curln = n; (len = sgetline(buf, MAXLINE, fp)) > 0; size += len) {
@@ -1512,7 +1525,11 @@ doread(n, fn)
 		else	up = getuptr(UADD, curln, curln);
 		spl0();
 	}
-	(*fn == '!') ?  pclose(fp) : fclose(fp);
+	if (ferror(fp) || ((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
+		sprintf(errmsg, "cannot close input file");
+		return ERR;
+	}
 	if (nullchar)
 		fputs("null(s) discarded\n", stderr);
 	if (newline_added)
@@ -1537,7 +1554,8 @@ dowrite(n, m, fn, mode)
 	line_t *lp;
 
 	if ((fp = ((*fn == '!') ? popen(fn + 1, "w") : desopen(esctos(fn), mode))) == NULL) {
-		sprintf(errmsg, "cannot open file");
+		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
+		sprintf(errmsg, "cannot open output file");
 		return ERR;
 	}
 	if (n && !des)
@@ -1545,6 +1563,7 @@ dowrite(n, m, fn, mode)
 			if ((s = gettxt(lp)) == (char *) ERR)
 				return ERR;
 			else if (fputs(strcat(s, "\n"), fp) < 0) {
+				fprintf(stderr, "%s: %s\n", fn, strerror(errno));
 				sprintf(errmsg, "cannot write file");
 				return ERR;
 			}
@@ -1556,10 +1575,12 @@ dowrite(n, m, fn, mode)
 				return ERR;
 			while (*s)
 				if (desputc(*s++, fp) < 0) {
+					fprintf(stderr, "%s: %s\n", fn, strerror(errno));
 					sprintf(errmsg, "cannot write file");
 					return ERR;
 				}
 			if (desputc('\n', fp) < 0) {
+				fprintf(stderr, "%s: %s\n", fn, strerror(errno));
 				sprintf(errmsg, "cannot write file");
 				return ERR;
 			}
@@ -1569,7 +1590,11 @@ dowrite(n, m, fn, mode)
 		desputc(EOF, fp);			/* flush buffer */
 		size += 8 - size % 8;			/* adjust DES size */
 	}
-	(*fn == '!') ?  pclose(fp) : fclose(fp);
+	if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+		fprintf(stderr, "%s: %s\n", fn, strerror(errno));
+		sprintf(errmsg, "cannot close output file");
+		return ERR;
+	}
 	fprintf(stderr, verbose ? "%lu\n" : "", size);
 	return  n ? m - n + 1 : 0;
 }
@@ -1593,8 +1618,11 @@ getuptr(type, from, to)
 
 #if defined(sun) || defined(NO_REALLOC_NULL)
 	if (ustack == NULL
-	 && (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL)
+	 && (ustack = (undo_t *) malloc((usize = USIZE) * sizeof(undo_t))) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		sprintf(errmsg, "out of memory");
 		return NULL;
+	}
 #endif
 	t = ustack;
 	if (u_p < usize
@@ -1606,6 +1634,8 @@ getuptr(type, from, to)
 		return ustack + u_p++;
 	}
 	/* out of memory - release undo stack */
+	fprintf(stderr, "%s\n", strerror(errno));
+	sprintf(errmsg, "out of memory");
 	ureset();
 	free(ustack);
 	ustack = NULL;
@@ -1656,11 +1686,18 @@ void
 ureset()
 {
 	line_t *lp, *ep, *tl;
+	int i;
 
 	while (u_p--)
 		if ((ustack[u_p].type ^ usw) == UDEL) {
 			ep = ustack[u_p].t->next;
 			for (lp = ustack[u_p].h; lp != ep; lp = tl) {
+				if (markno)
+					for (i = 0; i < MAXMARK; i++)
+						if (mark[i] == lp) {
+							mark[i] = NULL;
+							markno--;
+						}
 				tl = lp->next;
 				free(lp);
 			}
@@ -1831,6 +1868,7 @@ getcmdv()
 	char *t;
 
 	if ((gbuf = (char *) malloc(m)) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
@@ -1843,6 +1881,7 @@ getcmdv()
 		if ((n = getline(ibuf, m)) == 0  || ibuf[n - 1] != '\n'
 		 || (l += n) >= m
 		 && (t = realloc(gbuf, m += sizeof ibuf)) == NULL) {
+			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "out of memory");
 			freecmdv();
 			return NULL;
@@ -1865,6 +1904,7 @@ lpdup(lp)
 	line_t *np;
 
 	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
@@ -1986,5 +2026,3 @@ esctos(s)
 		s++;
 	return file;
 }
-
-

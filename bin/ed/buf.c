@@ -72,12 +72,14 @@ gettxt(lp)
 	if (sfseek != lp->seek) {
 		sfseek = lp->seek;
 		if (fseek(sfp, sfseek, SEEK_SET) < 0) {
+			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "cannot seek temp file");
 			return (char *) ERR;
 		}
 	}
 	len = lp->len & ~ACTV;
 	if ((ct = fread(txtbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot read temp file");
 		return (char *) ERR;
 	}
@@ -101,6 +103,7 @@ puttxt(cs)
 	char *s;
 
 	if ((lp = (line_t *) malloc(sizeof(line_t))) == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "out of memory");
 		return (char *) ERR;
 	}
@@ -111,6 +114,7 @@ puttxt(cs)
 	/* out of position */
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
+			fprintf(stderr, "%s\n", strerror(errno));
 			sprintf(errmsg, "cannot seek temp file");
 			return (char *) ERR;
 		}
@@ -120,6 +124,7 @@ puttxt(cs)
 	/* assert: spl1() */
 	if ((ct = fwrite(cs, sizeof(char), len, sfp)) < 0 || ct != len) {
 		sfseek = -1;
+		fprintf(stderr, "%s\n", strerror(errno));
 		sprintf(errmsg, "cannot write temp file");
 		return (char *) ERR;
 	}
@@ -142,6 +147,20 @@ lpqueue(lp)
 	insqueue(lp, cp);
 	lastln++;
 	curln++;
+}
+
+
+/* getaddr: return line number of pointer */
+long
+getaddr(lp)
+	line_t *lp;
+{
+	line_t *cp = &line0;
+	long n = 0;
+
+	while (cp != lp && (cp = cp->next) != &line0)
+		n++;
+	return (cp != &line0) ? n : 0;
 }
 
 
@@ -187,6 +206,7 @@ sbopen()
 {
 	strcpy(sfn, "/tmp/ed.XXXXXX");
 	if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
+		fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
 		sprintf(errmsg, "cannot open temp file");
 		return ERR;
 	}
@@ -198,7 +218,11 @@ sbopen()
 sbclose()
 {
 	if (sfp) {
-		fclose(sfp);
+		if (fclose(sfp) < 0) {
+			fprintf(stderr, "%s: %s\n", sfn, strerror(errno));
+			sprintf(errmsg, "cannot close temp file");
+			return ERR;
+		}
 		sfp = NULL;
 		unlink(sfn);
 	}
