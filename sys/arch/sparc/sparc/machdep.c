@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 1997/07/29 09:42:06 fair Exp $ */
+/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -954,9 +954,9 @@ oldmon_w_trace(va)
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
 
-	printf("\nstack trace with sp = %lx\n", va);
+	printf("\nstack trace with sp = 0x%lx\n", va);
 	stop = round_up(va);
-	printf("stop at %lx\n", stop);
+	printf("stop at 0x%lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
 		printf("  0x%x(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp %p\n", fp->fr_pc,

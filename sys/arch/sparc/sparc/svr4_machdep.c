@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.23 1997/07/29 09:42:13 fair Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.24 1997/07/29 10:04:45 fair Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -102,7 +102,7 @@ svr4_printcontext(fun, uc)
 	printf("Signal Stack: sp %p, size %d, flags 0x%x\n",
 	    s->ss_sp, s->ss_size, s->ss_flags);
 
-	printf("Flags: %lx\n", uc->uc_flags);
+	printf("Flags: 0x%lx\n", uc->uc_flags);
 }
 #endif
 
