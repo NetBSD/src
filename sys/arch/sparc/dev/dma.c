@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.21 1996/03/26 00:40:59 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.22 1996/03/26 01:28:50 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -335,13 +335,13 @@ dmaintr(sc)
 	csr = DMACSR(sc);
 
 	ESP_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
-		 DMADDR(sc), csr, DMACSRBITS));
+		 DMADDR(sc), (u_int)csr, DMACSRBITS));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
-			csr, DMACSRBITS);
+			(u_int)csr, DMACSRBITS);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.11 1996/03/26 00:35:25 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.12 1996/03/26 01:30:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@ struct cfdriver memreg_cd = {
 	0, "memreg", DV_DULL
 };
 
-void memerr __P((int, int, int, int, int));
+void memerr __P((int, u_int, u_int, u_int, u_int));
 
 /*
  * The OPENPROM calls this "memory-error".
@@ -101,8 +101,8 @@ memregattach(parent, self, aux)
 			panic("memregattach");
 		ra->ra_vaddr = (caddr_t)par_err_reg;
 	} else {
-		par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
-		    (volatile int *)mapiodev(ra->ra_reg, 0, sizeof(int),
+		par_err_reg = ra->ra_vaddr ? (volatile u_int *)ra->ra_vaddr :
+		    (volatile u_int *)mapiodev(ra->ra_reg, 0, sizeof(int),
 					     ca->ca_bustype);
 	}
 	printf("\n");
@@ -116,7 +116,8 @@ memregattach(parent, self, aux)
  */
 void
 memerr(issync, ser, sva, aer, ava)
-	int issync, ser, sva, aer, ava;
+	int issync;
+	u_int ser, sva, aer, ava;
 {
 	if (cputyp == CPU_SUN4) {
 		if (par_err_reg) {
