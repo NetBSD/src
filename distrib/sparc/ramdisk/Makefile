@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/01/10 15:17:32 pk Exp $
+#	$NetBSD: Makefile,v 1.16 2000/01/14 13:46:06 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -20,9 +20,9 @@ IMAGE?=		ramdisk.fs
 LISTS=		list
 MTREE=		mtree.conf
 
-SIZE=		1656k
+SIZE=		1800k
 DISKTYPE=	instfs
-GEOM=		512/18/2/92
+GEOM=		512/18/2/100
 INO_BYTES=	4096
 
 all: ${CBIN}
