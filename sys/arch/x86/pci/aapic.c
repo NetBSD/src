@@ -1,7 +1,7 @@
-/* 	$NetBSD: aapic.c,v 1.2 2004/04/23 21:13:06 itojun Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.2 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -13,6 +13,12 @@ __KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.2 2004/04/23 21:13:06 itojun Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <arch/x86/pci/amd8131reg.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+extern int nioapics;
+#endif
 
 static int	aapic_match __P((struct device *, struct cfdata *, void *));
 static void	aapic_attach __P((struct device *, struct device *, void *));
@@ -54,21 +60,21 @@ aapic_attach(parent, self, aux)
 	rev = PCI_REVISION(pa->pa_class);
 	printf(": %s (rev. 0x%02x)\n", devinfo, rev);
 
+#if NIOAPIC > 0
+	if (nioapics == 0)
+		return;
+#else
+	return;
+#endif
+	
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMD8131_IOAPIC_CTL);
-	if ((reg & AMD8131_IOAEN) == 0) {
-		reg |= AMD8131_IOAEN;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, AMD8131_IOAPIC_CTL, reg);
-	}
+	reg |= AMD8131_IOAEN;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, AMD8131_IOAPIC_CTL, reg);
 
-	/*
-	 * Work around erratum #22 for A0 and B0 revisions.
-	 */
-	if (rev == 0x01 || rev == 0x11) {
-		pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
-		func = 0;
-		tag = pci_make_tag(pa->pa_pc, bus, dev, func);
-		reg = pci_conf_read(pa->pa_pc, tag, AMD8131_PCIX_MISC);
-		reg &= ~0x00000001;
-		pci_conf_write(pa->pa_pc, tag, AMD8131_PCIX_MISC, reg);
-	}
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
+	func = 0;
+	tag = pci_make_tag(pa->pa_pc, bus, dev, func);
+	reg = pci_conf_read(pa->pa_pc, tag, AMD8131_PCIX_MISC);
+	reg &= ~AMD8131_NIOAMODE;
+	pci_conf_write(pa->pa_pc, tag, AMD8131_PCIX_MISC, reg);
 }
