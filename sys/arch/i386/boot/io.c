@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.14 1995/01/18 02:54:26 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.15 1995/01/18 03:13:37 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -162,15 +162,6 @@ strcmp(s1, s2)
 		s2++;
 	}
 	return 1;
-}
-
-strlen(s)
-	char *s;
-{
-	int n;
-
-	for (n = 0; *s++; n++);
-	return n;
 }
 
 bcopy(from, to, len)
