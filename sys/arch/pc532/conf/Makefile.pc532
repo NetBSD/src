@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.19 1996/02/02 20:09:27 mycroft Exp $
+#	$NetBSD: Makefile.pc532,v 1.20 1996/02/03 00:44:14 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -66,8 +66,8 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
