@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.2 1993/03/28 17:24:47 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.3 1993/04/22 03:45:05 mycroft Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -32,6 +32,9 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.2 19
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
 #if defined(ATT)
 # include <fcntl.h>
 #endif
@@ -44,8 +47,6 @@ char *
 savestr(str)
 	char	*str;
 {
-	extern	int	strlen();
-	extern	char	*malloc(), *strcpy();
 	/**/	char	*temp;
 
 	temp = malloc((unsigned) (strlen(str) + 1));
@@ -532,9 +533,6 @@ log_it(username, pid, event, detail)
 	char	*detail;
 {
 #if defined(LOG_FILE)
-	extern struct tm	*localtime();
-	extern long		time();
-	extern char		*malloc();
 	auto char		*msg;
 	auto long		now = time((long *) 0);
 	register struct tm	*t = localtime(&now);
@@ -689,7 +687,6 @@ mkprints(src, len)
 	register unsigned char *src;
 	register unsigned int len;
 {
-	extern char *malloc();
 	register char *dst = malloc(len*4 + 1);
 
 	mkprint(dst, src, len);
