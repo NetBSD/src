@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.47 2002/03/15 05:45:23 gmcgarry Exp $	*/
+/*	$NetBSD: hil.c,v 1.48 2002/03/17 05:44:49 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.47 2002/03/15 05:45:23 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.48 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -140,7 +140,7 @@ hilmatch(parent, match, aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp("hil     ", ia->ia_modname) != 0)
+	if (strcmp("hil", ia->ia_modname) != 0)
 		return (0);
 
 	return (1);

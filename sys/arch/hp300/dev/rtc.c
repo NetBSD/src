@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.3 2002/03/15 05:52:54 gmcgarry Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4 2002/03/17 05:44:49 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.3 2002/03/15 05:52:54 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4 2002/03/17 05:44:49 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ rtcmatch(parent, match, aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp("rtc     ", ia->ia_modname) != 0)
+	if (strcmp("rtc", ia->ia_modname) != 0)
 		return (0);
 
 	return (1);
