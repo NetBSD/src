@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.32 2003/12/14 05:03:28 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.33 2003/12/14 05:10:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -33,6 +33,8 @@
 #define	_DEV_ATA_ATAVAR_H_
 
 /* High-level functions and structures used by both ATA and ATAPI devices */
+
+struct ataparams;
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
@@ -176,6 +178,33 @@ struct wdc_command {
 	void (*callback)(void *); /* command to call once command completed */
 	void *callback_arg;	/* argument passed to *callback() */
 };
+
+/*
+ * ata_bustype.  The first field must be compatible with scsipi_bustype,
+ * as it's used for autoconfig by both ata and atapi drivers.
+ */
+struct ata_bustype {
+	int	bustype_type;	/* symbolic name of type */
+	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
+	void	(*ata_reset_channel)(struct ata_drive_datas *, int);
+	int	(*ata_exec_command)(struct ata_drive_datas *,
+				    struct wdc_command *);
+
+#define	WDC_COMPLETE	0x01
+#define	WDC_QUEUED	0x02
+#define	WDC_TRY_AGAIN	0x03
+
+	int	(*ata_get_params)(struct ata_drive_datas *, u_int8_t,
+				  struct ataparams *);
+	int	(*ata_addref)(struct ata_drive_datas *);
+	void	(*ata_delref)(struct ata_drive_datas *);
+	void	(*ata_killpending)(struct ata_drive_datas *);
+};
+
+/* bustype_type */	/* XXX XXX XXX */
+/* #define SCSIPI_BUSTYPE_SCSI	0 */
+/* #define SCSIPI_BUSTYPE_ATAPI	1 */
+#define	SCSIPI_BUSTYPE_ATA	2
 
 /*
  * If WDSM_ATTR_ADVISORY, device exceeded intended design life period.
