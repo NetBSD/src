@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.160 2003/01/13 15:50:50 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.161 2003/01/14 17:30:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -663,7 +663,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	}
 
 	/* prevent interrupts that grab the kernel lock */
-	s = splclock();
+	s = splsched();
 #ifdef DEBUG
 	if (!cold) {
 		u_int pc, lvl = ((u_int)s & PSR_PIL) >> 8;
