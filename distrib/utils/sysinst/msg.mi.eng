@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.5 1997/10/15 04:35:54 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.6 1997/10/17 22:17:28 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,7 +341,7 @@ message realdir
 message ftperror
 {Ftp could not retreive a file.  Do you want to try again?}
 
-message netdir
+message distdir
 {What directory shall I use for %s? }
 
 message verboseextract
@@ -355,6 +355,10 @@ message badls
 
 message endtar
 {All your files have now been extracted.  Please hit CR to continue.}
+
+message abort
+{Your choices have made it impossible to install NetBSD.  Install aborted.
+}
 
 message abortinst
 {The distribution was not successfully loaded.  You will need to proceed
@@ -397,3 +401,19 @@ using only NetBSD on these file systems, it is recommended that
 they are upgraded.  Do you want this file system upgraded?
 }
 
+message fddev
+{What floppy device do you want to use? }
+
+message fdload
+{Do you want to load the distribution set "%s"? }
+
+message fdmount
+{Please load the floppy containing the file named "%s/%s". }
+
+message fdremount
+{The floppy was not mounted successfully.  You may:
+
+    Try again and put in the floppy containing the file named "%s/%s".
+
+    Not load any more files from floppy and abort the process.
+}

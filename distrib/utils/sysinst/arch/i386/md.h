@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 1997/10/15 04:36:42 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.3 1997/10/17 22:18:06 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,13 +55,20 @@ EXTERN int usefull;
 
 /* Definition of files to retreive from ftp. */
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
-EXTERN char ftp_postfix[STRSIZE] INIT(".tar.gz");
-EXTERN char *ftp_list[]
+EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
+EXTERN char *dist_list[]
 #ifdef MAIN
 = { "kern%s%s", "base%s%s", "comp%s%s", "etc%s%s", "games%s%s", "man%s%s",
     "misc%s%s", "text%s%s", "CKSUMS", NULL }
 #endif
 ;
+EXTERN char *fd_last[]
+#ifdef MAIN
+= { "ab", "ab", "ab", "ab", "ab", "ab", "ab", "ab", NULL}
+#endif
+;
+
+EXTERN char *fdtype INIT("msdos");
 
 /* prototypes */
 

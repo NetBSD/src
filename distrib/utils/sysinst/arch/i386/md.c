@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1997/10/15 04:36:34 phil Exp $ */
+/*	$NetBSD: md.c,v 1.4 1997/10/17 22:17:56 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 
 /* prototypes */
 
-void md_get_info()
+int md_get_info()
 {
 	int i, j;
 	get_fdisk_info ();
@@ -95,7 +95,7 @@ void md_get_info()
 			process_menu (MENU_noyes);
 			if (!yesno) {
 				endwin();
-				return;
+				return 0;
 			}
 		}
 		/* Set the partition information for full disk usage. */
@@ -127,6 +127,7 @@ void md_get_info()
 			numbsd = 0;
 			bsdpart = -1;
 			overlap = 0;
+			yesno = 0;
 			for (i=0; i<4; i++) {
 				if (part[i][ID] == 165) {
 					bsdpart = i;
@@ -138,9 +139,20 @@ void md_get_info()
 			}
 			if (overlap || numbsd != 1) {
 				msg_display (MSG_reeditpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_yesno);
 			}
-		} while (numbsd != 1 || overlap);
+		} while (yesno && (numbsd != 1 || overlap));
+
+		if (numbsd == 0) {
+			msg_display (MSG_nobsdpart);
+			process_menu (MENU_ok);
+			return 0;
+		}
+			
+		if (numbsd > 1) {
+			msg_display (MSG_multbsdpart, bsdpart);
+			process_menu (MENU_ok);
+		}
 			
 		ptstart = part[bsdpart][START];
 		ptsize = part[bsdpart][SIZE];
@@ -159,6 +171,8 @@ void md_get_info()
 
 	if (usefull) 
 	  swapadj = bsec;
+
+	return 1;
 }
 
 void md_pre_disklabel()
