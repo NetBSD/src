@@ -35,7 +35,7 @@
 static char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-static char rcsid[] = "$Id: ftpd.c,v 1.10 1994/12/23 14:29:31 cgd Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.11 1995/03/08 19:50:54 brezak Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -87,7 +87,7 @@ static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 6.00";
+static char version[] = "Version 6.01";
 
 extern	off_t restart_point;
 extern	char cbuf[];
@@ -125,6 +125,8 @@ int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
+static  char    ttyline[20];
+char    *tty = ttyline;  /* for klogin */
 
 #if defined(KERBEROS)
 int notickets = 1;
@@ -226,6 +228,9 @@ main(argc, argv, envp)
 #endif
 	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
 	debug = 0;
+
+	/* set this here so klogin can use it... */
+	(void)sprintf(ttyline, "ftp%d", getpid());
 
 	while ((ch = getopt(argc, argv, "dlt:T:u:v")) != EOF) {
 		switch (ch) {
@@ -336,8 +341,6 @@ lostconn(signo)
 		syslog(LOG_DEBUG, "lost connection");
 	dologout(-1);
 }
-
-static char ttyline[20];
 
 /*
  * Helper function for sgetpwnam().
@@ -588,7 +591,6 @@ skip:
 	(void) initgroups(pw->pw_name, pw->pw_gid);
 
 	/* open wtmp before chroot */
-	(void)sprintf(ttyline, "ftp%d", getpid());
 	logwtmp(ttyline, pw->pw_name, remotehost);
 	logged_in = 1;
 
