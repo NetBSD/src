@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.53 2002/03/06 21:37:22 he Exp $
+.\"	$NetBSD: main,v 1.61.2.54 2002/03/06 21:48:23 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -471,6 +471,11 @@ OpenSSH has been upgraded to version 3.0.2.
 .It
 A security issue arising from a race between set-uid execution and
 use of ptrace has been fixed (SA2002-001).
+.It
+The package tools has been extended to provide for optional digital
+signatures on binary packages.
+Additionally, binary package version number handling has been
+rewritten.
 .It
 A driver for Creative Labs SBLive! EMU10000 has been added; see
 .Xr emuxki 4 .
