@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.31 2000/10/18 17:06:52 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.32 2000/10/18 20:06:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -132,6 +132,16 @@ siop_sched_sync(sc, ops)
 	int ops;
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scheddma, 0, NBPG, ops);
+}
+
+static __inline__ void siop_script_sync __P((struct siop_softc *, int));
+static __inline__ void
+siop_script_sync(sc, ops)
+	struct siop_softc *sc;
+	int ops;
+{
+	if ((sc->features & SF_CHIP_RAM) != 0)
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG, ops);
 }
 
 static __inline__ u_int32_t siop_script_read __P((struct siop_softc *, int));
@@ -1062,6 +1072,7 @@ end:
 			 */
 			siop_script_write(sc, siop_cmd->siop_target->reseloff,
 			    0x800c00ff);
+			siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 			TAILQ_INSERT_TAIL(&sc->lunsw_list,
 			    sc->targets[xs->sc_link->scsipi_scsi.target]->lunsw,
 			    next);
@@ -1556,6 +1567,7 @@ end:
 		return;
 	/* make sure SCRIPT processor will read valid data */
 	siop_sched_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 	/* Signal script it has some work to do */
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_SIGP);
 	/* and wait for IRQ */
@@ -1803,6 +1815,7 @@ siop_get_lunsw(sc)
 	if (sc->ram_free > 1024)
 		printf("%s: ram_free (%d) > 1024\n", sc->sc_dev.dv_xname,
 		    sc->ram_free);
+	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 	return lunsw;
 }
 
@@ -1813,7 +1826,10 @@ siop_add_reselsw(sc, target)
 {
 	int i;
 	struct siop_lun *siop_lun;
-	/* add an entry to resel switch */
+	/*
+	 * add an entry to resel switch
+	 */
+	siop_script_sync(sc, BUS_DMASYNC_POSTWRITE);
 	for (i = 0; i < 15; i++) {
 		sc->targets[target]->reseloff = Ent_resel_targ0 / 4 + i * 2;
 		if ((siop_script_read(sc, sc->targets[target]->reseloff) & 0xff)
@@ -1841,6 +1857,7 @@ siop_add_reselsw(sc, target)
 			(Ent_resel_lun0 / 4) + (i * 2);
 	}
 	siop_update_scntl3(sc, sc->targets[target]);
+	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -1856,6 +1873,7 @@ siop_update_scntl3(sc, siop_target)
 	siop_script_write(sc,
 	    siop_target->lunsw->lunsw_off + (Ent_restore_scntl3 / 4) + 2,
 	    0x78050000 | (siop_target->id & 0x0000ff00));
+	siop_script_sync(sc, BUS_DMASYNC_PREWRITE);
 }
 
 #ifdef SIOP_STATS
