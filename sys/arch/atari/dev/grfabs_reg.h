@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.3 1995/05/21 10:55:57 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.4 1995/08/20 18:17:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -128,15 +128,40 @@ enum colormap_type {
 /*
  * Create a colormap entry
  */
-#define	MAKE_COLOR_ENTRY(r,g,b)	(((r & 0xff)<<16)|((g & 0xff)<<8)|(b & 0xf))
+#define	MAKE_COLOR_ENTRY(r,g,b)	(((r & 0xff)<<16)|((g & 0xff)<<8)|(b & 0xff))
 #define MAKE_MONO_ENTRY(x)	((x) ? 1 : 0)
 #define MAKE_GREY_ENTRY(l)	(l & 0xff)
 
-#define CM_LTOW(v) \
-    (((0x000f0000 & (v)) >> 8) | ((0x00000f00 & (v)) >> 4) | (0xf & (v)))
-#define CM_WTOL(v) \
-    (((0xf00 & (v)) << 8) | ((0x0f0 & (v)) << 4) | (0xf & (v)))
+#define CM_L2TT(v) \
+    (((0x00f00000 & (v)) >> 12) | ((0x0000f000 & (v)) >> 8) |\
+      (0x000000f0 & (v)) >> 4)
+#define CM_TT2L(v) \
+    ((((0x00000f00 & (v)) * 0xff / 0xf) << 8) |\
+     (((0x000000f0 & (v)) * 0xff / 0xf) << 4) |\
+       (0x0000000f & (v)) * 0xff / 0xf)
+#define CM_L2FAL(v) \
+    (((0x00fc0000 & (v)) << 8) | ((0x0000fc00 & (v)) << 8) |\
+      (0x000000fc & (v)))
+#define CM_FAL2L(v) \
+    (((((0xfc000000 & (v)) >> 10) * 0xff / 0x3f) & 0x00ff0000) |\
+     ((((0x00fc0000 & (v)) >> 10) * 0xff / 0x3f) & 0x0000ff00) |\
+       ((0x000000fc & (v)) >>  2) * 0xff / 0x3f)
+#define CM_L2ST(v) \
+    (((0x00e00000 & (v)) >> 13) | ((0x0000e000 & (v)) >> 9) |\
+      (0x000000e0 & (v)) >> 5)
+#define CM_ST2L(v) \
+    (((((0x00000700 & (v)) * 0xff / 0x7) << 8) & 0x00ff0000) |\
+     ((((0x00000070 & (v)) * 0xff / 0x7) << 4) & 0x0000ff00) |\
+        (0x00000007 & (v)) * 0xff / 0x7)
 
+struct grfabs_sw {
+	void	 (*display_view) __P((view_t*));
+	view_t	* (*alloc_view) __P((dmode_t *, dimen_t *, u_char));
+	void	 (*free_view) __P((view_t *));
+	void	 (*remove_view) __P((view_t *));
+	int 	 (*use_colormap) __P((view_t *, colormap_t *));
+};
+	
 /* display mode */
 struct display_mode {
     LIST_ENTRY(display_mode)	link;
@@ -144,8 +169,14 @@ struct display_mode {
     dimen_t			size;		/* screen size		  */
     u_char			depth;		/* screen depth		  */
     u_short			vm_reg;		/* video mode register	  */
+    struct grfabs_sw		*grfabs_funcs;	/* hardware switch table  */
     view_t			*current_view;	/* view displaying me	  */
 };
+
+/*
+ * Definition of available graphic mode list.
+ */
+typedef LIST_HEAD(modelist, display_mode) MODES;
 
 /*
  * Misc draw related macros.
@@ -158,9 +189,25 @@ struct display_mode {
 		(b)->height = hh;					\
 	} while(0)
 
+
+/*
+ * Common variables
+ */
+extern view_t		gra_con_view;
+extern colormap_t	gra_con_cmap;
+extern long		gra_con_colors[MAX_CENTRIES];
+extern u_long		gra_def_color16[16];
+
 /*
  * Prototypes:
  */
+#ifdef FALCON_VIDEO
+void	falcon_probe_video __P((MODES *));
+#endif /* FALCON_VIDEO */
+#ifdef TT_VIDEO
+void	tt_probe_video __P((MODES *));
+#endif /* TT_VIDEO */
+
 view_t	*grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
 dmode_t	*grf_get_best_mode __P((dimen_t *dim, u_char depth));
 void	grf_display_view __P((view_t *v));

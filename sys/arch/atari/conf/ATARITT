@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.4 1995/08/11 20:01:15 leo Exp $
+#	$NetBSD: ATARITT,v 1.5 1995/08/20 18:17:09 leo Exp $
 #
 # ATARI-TT
 #
@@ -78,6 +78,7 @@ options		GENERIC			# Mini-root boot support
 # Atari specific kernel options:
 #
 options		TT_SCSI			# SCSI-support for TT only
+options		TT_VIDEO		# Graphics support for TT only
 
 #
 # Build one kernel that can boot from any disk.
