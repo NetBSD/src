@@ -1,4 +1,4 @@
-.\" $NetBSD: i4b.4,v 1.5 2001/09/11 00:08:27 wiz Exp $
+.\" $NetBSD: isdn.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,32 +23,32 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4b.4,v 1.5 2001/09/11 00:08:27 wiz Exp $
+.\"	$Id: isdn.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
 .\"	last edit-date: [Mon Dec 13 23:09:12 1999]
 .\"
 .Dd February 3, 1998
-.Dt I4B 4
+.Dt ISDN 4
 .Os
 .Sh NAME
-.Nm i4b
-.Nd isdn4bsd call control ISDN driver
+.Nm isdn
+.Nd isdn kernel to userland master device
 .Sh SYNOPSIS
-.Cd "pseudo-device i4b"
+.Cd "pseudo-device isdn"
 .Sh DESCRIPTION
 The
 .Nm
 device driver is used by the
 .Xr isdnd 8
-daemon to exchange messages with the isdn4bsd kernel part for the purpose
+daemon to exchange messages with the isdn kernel part for the purpose
 of call establishment, control and disconnection and to access various
 control and status informations.
 .Pp
 The messages and message parameters are documented in the include
 file
-.Pa /usr/include/machine/i4b_ioctl.h .
+.Pa /usr/include/netisdn/i4b_ioctl.h .
 .Pp
 The available ioctl's are:
 .Pp

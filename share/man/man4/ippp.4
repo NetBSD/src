@@ -1,6 +1,6 @@
-.\" $NetBSD: i4bipr.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\" $NetBSD: ippp.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
-.\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
+.\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,38 +23,39 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: i4bipr.4,v 1.4 2001/05/12 13:21:45 wiz Exp $
+.\"	$Id: ippp.4,v 1.1 2002/03/16 17:57:39 martin Exp $
 .\"
 .\" $FreeBSD$
 .\"
-.\"	last edit-date: [Mon Dec 13 23:10:25 1999]
+.\"	last edit-date: [Thu Aug 31 10:40:17 2000]
 .\"
-.Dd July 6, 1998
-.Dt I4BIPR 4
+.Dd August 31, 2000
+.Dt IPPP 4
 .Os
 .Sh NAME
-.Nm i4bipr
-.Nd isdn4bsd IP over ISDN B-channel network driver
+.Nm ippp
+.Nd isdn synchronous PPP network driver
 .Sh SYNOPSIS
-.Cd "pseudo-device i4bipr" Ar count
+.Cd "pseudo-device ippp" Ar count
 .Sh DESCRIPTION
 The
 .Nm
 driver interfaces the IP subsystem of the operating system with the
-isdn4bsd package so that transport of IP packets over an ISDN link
+isdn layer so that a transport of IP packets over an ISDN link
 is possible.
 .Pp
-The driver just packs IP packets without anything appended or prepended
-into raw HDLC packets on the B channel and transfers them to a remote site.
-IP packets received from the remote site are queued into the local IP
-protocol stack.
+For configuration of the
+.Nm
+driver, either the
+.Xr ipppctl 8
+utility is used or it is configured via
+.Xr isdnd 8
+and its associated
+.Xr isdnd.rc 5
+file.
 .Pp
-The format of the resulting packet on the B channel is:
-.Pp
-.Dl (HDLC opening flag) (IP-packet) (CRC) (HDLC closing flag)
-.Pp
-In the case where an IP packet for a remote site arrives in the driver and no
-connection has been established yet, the driver communicates with the
+In case an IP packet for a remote side arrives in the driver and no
+connection is established yet, the driver communicates with the
 .Xr isdnd 8
 daemon to establish a connection.
 .Pp
@@ -63,37 +64,57 @@ The driver has support for interfacing to the
 subsystem for using
 .Xr tcpdump 8
 with the
-.Nm ipr
+.Nm
 interfaces.
 .Pp
-The driver optionally (when compiled with the IPR_VJ option) provides Van
-Jacobsen header compression, under control of the link0 and link1 options to
-.Xr ifconfig 8 :
+The
+.Xr ipppctl 8
+utility is used to configure all aspects of PPP required to connect to a
+remote site.
+.Sh LINK0 and LINK1
+The
+.Em link0
+and
+.Em link1
+flags given as parameters to
+.Xr ifconfig 8
+have the following meaning for the
+.Nm
+devices:
+.Bl -tag -width link0 -compact
 .Pp
-.Bl -tag -width 15n -offset indent -compact
-.It link0
-Apply VJ compression to outgoing packets on this interface, and assume that
-incoming packets require decompression.
-.It link1
-Check incoming packets for Van Jacobsen compression; if they appear to be
-compressed, automatically set link0.
+.It Li link0
+wait passively for connection
+.Pp
+.It Li link1
+auto-dial on output
 .El
 .Pp
-The default values are
-.Em on
-for
-.Em link1
+The
+.Em link0
 and
+.Em link1
+flags are set to
 .Em off
-for
-.Em link0 .
+by default.
+.Pp
+See
+.Xr sppp 4
+for a more detailed discussion of the flags,
 .Sh SEE ALSO
 .Xr bpf 4 ,
+.Xr sppp 4 ,
 .Xr isdnd.rc 5 ,
 .Xr isdnd 8 ,
+.Xr ipppctl 8 ,
 .Xr tcpdump 8
 .Sh AUTHORS
 The
 .Nm
-device driver and this manpage were written by
+device driver was written by
+.An Joerg Wunsch Aq joerg@freebsd.org
+and then added to ISDN4BSD by
+.An Gary Jennejohn Aq gary@freebsd.org .
+.Pp
+This manpage was written by
 .An Hellmuth Michaelis Aq hm@kts.org .
