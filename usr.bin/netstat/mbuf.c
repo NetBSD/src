@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.11 1997/04/03 04:46:49 christos Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: mbuf.c,v 1.11 1997/04/03 04:46:49 christos Exp $";
+__RCSID("$NetBSD: mbuf.c,v 1.12 1997/10/19 05:50:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,9 +80,9 @@ mbpr(mbaddr, msizeaddr, mclbaddr)
 	u_long mbaddr;
 	u_long msizeaddr, mclbaddr;
 {
-	register int totmem, totfree, totmbufs;
-	register int i;
-	register struct mbtypes *mp;
+	int totmem, totfree, totmbufs;
+	int i;
+	struct mbtypes *mp;
 
 	int	mclbytes,	msize;
 

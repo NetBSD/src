@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.24 1997/05/22 17:21:27 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.25 1997/10/19 05:49:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.24 1997/05/22 17:21:27 christos Exp $";
+__RCSID("$NetBSD: if.c,v 1.25 1997/10/19 05:49:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,18 +122,18 @@ intpr(interval, ifnetaddr)
 	ifaddraddr = 0;
 	while (ifnetaddr || ifaddraddr) {
 		struct sockaddr_in *sin;
-		register char *cp;
+		char *cp;
 		int n, m;
 
 		if (ifaddraddr == 0) {
 			if (kread(ifnetaddr, (char *)&ifnet, sizeof ifnet))
 				return;
-			bcopy(ifnet.if_xname, name, IFNAMSIZ);
+			memmove(name, ifnet.if_xname, IFNAMSIZ);
 			name[IFNAMSIZ - 1] = '\0';	/* sanity */
 			ifnetaddr = (u_long)ifnet.if_list.tqe_next;
 			if (interface != 0 && strcmp(name, interface) != 0)
 				continue;
-			cp = index(name, '\0');
+			cp = strchr(name, '\0');
 			if ((ifnet.if_flags & IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
@@ -276,8 +277,8 @@ sidewaysintpr(interval, off)
 {
 	struct ifnet ifnet;
 	u_long firstifnet;
-	register struct iftot *ip, *total;
-	register int line;
+	struct iftot *ip, *total;
+	int line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	int oldmask;
@@ -298,7 +299,7 @@ sidewaysintpr(interval, off)
 	for (off = firstifnet, ip = iftot; off;) {
 		if (kread(off, (char *)&ifnet, sizeof ifnet))
 			break;
-		bzero(ip->ift_name, sizeof(ip->ift_name));
+		memset(ip->ift_name, 0, sizeof(ip->ift_name));
 		snprintf(ip->ift_name, IFNAMSIZ, "(%s)", ifnet.if_xname);
 		if (interface && strcmp(ifnet.if_xname, interface) == 0)
 			interesting = ip;
