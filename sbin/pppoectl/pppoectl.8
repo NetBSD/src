@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.17 2002/12/19 14:49:03 wiz Exp $
+.\"	$NetBSD: pppoectl.8,v 1.18 2003/03/22 14:38:15 mrg Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.17 2002/12/19 14:49:03 wiz Exp $
+.\" $Id: pppoectl.8,v 1.18 2003/03/22 14:38:15 mrg Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -57,6 +57,11 @@
 .Op Fl d
 .Op Fl n Ar 1 \&| 2
 .Ar ifname
+.Pp
+.Nm pppoectl
+.Fl f Ar config-file
+.Ar ifname
+.Op Ar ...
 .Sh DESCRIPTION
 There are two basic modes of operation: configuring security related
 parameters and attaching a PPPoE interface to its ethernet interface,
@@ -82,6 +87,13 @@ print the IP address of the primary or secondary DNS name server for this
 PPP connection.
 This is only available if DNS query is enabled, see
 .Ar query-dns .
+.It Fl f
+parse
+.Ar config-file
+ignoring lines starting with a # for
+.Ar parameter Ns Op \&= Ns Ar value
+pairs, one per line, as if they had been specified on the command line.
+This allows the password to be not passed as a command line argument.
 .El
 .Pp
 Typically, not both the access concentrator name and the service name are

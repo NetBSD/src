@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.10 2002/09/01 11:28:07 martin Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.11 2003/03/22 14:38:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -54,35 +54,39 @@ static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 const char *phase_name(int phase);
 const char *proto_name(int proto);
 const char *authflags(int flags);
+static void pppoectl_argument(char *arg);
 
 int hz = 0;
+
+int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
+    clear_auth_failure_count;
+struct spppauthcfg spr;
+struct sppplcpcfg lcp;
+struct spppstatus status;
+struct spppidletimeout timeout;
+struct spppauthfailurestats authfailstats;
+struct spppauthfailuresettings authfailset;
+struct spppdnssettings dnssettings;
 
 int
 main(int argc, char **argv)
 {
+	FILE *fp;
 	int s, c;
 	int errs = 0, verbose = 0, dump = 0, dns1 = 0, dns2 = 0;
-	size_t off, len;
-	const char *ifname, *cp;
+	size_t len;
 	const char *eth_if_name, *access_concentrator, *service;
-	struct spppauthcfg spr;
-	struct sppplcpcfg lcp;
-	struct spppstatus status;
-	struct spppidletimeout timeout;
-	struct spppauthfailurestats authfailstats;
-	struct spppauthfailuresettings authfailset;
-	struct spppdnssettings dnssettings;
+	const char *ifname, *configname;
+	char *line;
 	int mib[2];
-	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0,
-	    set_dns = 0, clear_auth_failure_count = 0;
 	struct clockinfo clockinfo;
-
 	setprogname(argv[0]);
 
 	eth_if_name = NULL;
 	access_concentrator = NULL;
 	service = NULL;
-	while ((c = getopt(argc, argv, "vde:s:a:n:")) != -1)
+	configname = NULL;
+	while ((c = getopt(argc, argv, "vde:f:s:a:n:")) != -1)
 		switch (c) {
 		case 'v':
 			verbose++;
@@ -94,6 +98,10 @@ main(int argc, char **argv)
 
 		case 'e':
 			eth_if_name = optarg;
+			break;
+
+		case 'f':
+			configname = optarg;
 			break;
 
 		case 's':
@@ -238,7 +246,7 @@ main(int argc, char **argv)
 
 	hz = clockinfo.hz;
 		
-	if (argc == 0 && !(dns1||dns2)) {
+	if (argc == 0 && !(dns1||dns2) && !configname) {
 		/* list only mode */
 
 		/* first pass, get name lenghts */
@@ -268,94 +276,14 @@ main(int argc, char **argv)
 		if (spr.myname) free(spr.myname);
 		return 0;
 	}
-                                
-#define startswith(s) strncmp(argv[0], s, (off = strlen(s))) == 0
 
+	/* first load the config file, then parse command line args */
+	if (configname && (fp = fopen(configname, "r")))
+		while ((line = fparseln(fp, NULL, NULL, NULL, 0)))
+			pppoectl_argument(line);
+       
 	while (argc > 0) {
-		if (startswith("authproto=")) {
-			cp = argv[0] + off;
-			if (strcmp(cp, "pap") == 0)
-				spr.myauth =
-					spr.hisauth = SPPP_AUTHPROTO_PAP;
-			else if (strcmp(cp, "chap") == 0)
-				spr.myauth = spr.hisauth = SPPP_AUTHPROTO_CHAP;
-			else if (strcmp(cp, "none") == 0)
-				spr.myauth = spr.hisauth = SPPP_AUTHPROTO_NONE;
-			else
-				errx(EX_DATAERR, "bad auth proto: %s", cp);
-			set_auth = 1;
-		} else if (startswith("myauthproto=")) {
-			cp = argv[0] + off;
-			if (strcmp(cp, "pap") == 0)
-				spr.myauth = SPPP_AUTHPROTO_PAP;
-			else if (strcmp(cp, "chap") == 0)
-				spr.myauth = SPPP_AUTHPROTO_CHAP;
-			else if (strcmp(cp, "none") == 0)
-				spr.myauth = SPPP_AUTHPROTO_NONE;
-			else
-				errx(EX_DATAERR, "bad auth proto: %s", cp);
-			set_auth = 1;
-		} else if (startswith("myauthname=")) {
-			spr.myname = argv[0] + off;
-			spr.myname_length = strlen(spr.myname)+1;
-			set_auth = 1;
-		} else if (startswith("myauthsecret=") || startswith("myauthkey=")) {
-			spr.mysecret = argv[0] + off;
-			spr.mysecret_length = strlen(spr.mysecret)+1;
-			set_auth = 1;
-		} else if (startswith("hisauthproto=")) {
-			cp = argv[0] + off;
-			if (strcmp(cp, "pap") == 0)
-				spr.hisauth = SPPP_AUTHPROTO_PAP;
-			else if (strcmp(cp, "chap") == 0)
-				spr.hisauth = SPPP_AUTHPROTO_CHAP;
-			else if (strcmp(cp, "none") == 0)
-				spr.hisauth = SPPP_AUTHPROTO_NONE;
-			else
-				errx(EX_DATAERR, "bad auth proto: %s", cp);
-			set_auth = 1;
-		} else if (startswith("hisauthname=")) {
-			spr.hisname = argv[0] + off;
-			spr.hisname_length = strlen(spr.hisname)+1;
-			set_auth = 1;
-		} else if (startswith("hisauthsecret=") || startswith("hisauthkey=")) {
-			spr.hissecret = argv[0] + off;
-			spr.hissecret_length = strlen(spr.hissecret)+1;
-			set_auth = 1;
-		} else if (strcmp(argv[0], "callin") == 0)
-			spr.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
-		else if (strcmp(argv[0], "always") == 0)
-			spr.hisauthflags &= ~SPPP_AUTHFLAG_NOCALLOUT;
-		else if (strcmp(argv[0], "norechallenge") == 0)
-			spr.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
-		else if (strcmp(argv[0], "rechallenge") == 0)
-			spr.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
-#ifndef __NetBSD__
-		else if (strcmp(argv[0], "enable-vj") == 0)
-			spr.defs.enable_vj = 1;
-		else if (strcmp(argv[0], "disable-vj") == 0)
-			spr.defs.enable_vj = 0;
-#endif
-		else if (startswith("lcp-timeout=")) {
-			int timeout_arg = atoi(argv[0]+off);
-			if ((timeout_arg > 20000) || (timeout_arg <= 0))
-				errx(EX_DATAERR, "bad lcp timeout value: %s",
-				     argv[0]+off);
-			lcp.lcp_timeout = timeout_arg * hz / 1000;
-			set_lcp = 1;
-		} else if (startswith("idle-timeout=")) {
-			timeout.idle_seconds = (time_t)atol(argv[0]+off);
-			set_idle_to = 1;
-		} else if (startswith("max-auth-failure=")) {
-			authfailset.max_failures = atoi(argv[0]+off);
-			set_auth_failure = 1;
-		} else if (strcmp(argv[0], "clear-auth-failure") == 0) {
-			clear_auth_failure_count = 1;
-		} else if (startswith("query-dns=")) {
-			dnssettings.query_dns = atoi(argv[0]+off);
-			set_dns = 1;
-		} else
-			errx(EX_DATAERR, "bad parameter: \"%s\"", argv[0]);
+		pppoectl_argument(argv[0]);
 
 		argv++;
 		argc--;
@@ -404,11 +332,105 @@ main(int argc, char **argv)
 }
 
 static void
+pppoectl_argument(char *arg)
+{
+	size_t off;
+	const char *cp;
+
+#define startswith(a,s) strncmp(a, s, (off = strlen(s))) == 0
+	if (startswith(arg, "authproto=")) {
+		cp = arg + off;
+		if (strcmp(cp, "pap") == 0)
+			spr.myauth =
+				spr.hisauth = SPPP_AUTHPROTO_PAP;
+		else if (strcmp(cp, "chap") == 0)
+			spr.myauth = spr.hisauth = SPPP_AUTHPROTO_CHAP;
+		else if (strcmp(cp, "none") == 0)
+			spr.myauth = spr.hisauth = SPPP_AUTHPROTO_NONE;
+		else
+			errx(EX_DATAERR, "bad auth proto: %s", cp);
+		set_auth = 1;
+	} else if (startswith(arg, "myauthproto=")) {
+		cp = arg + off;
+		if (strcmp(cp, "pap") == 0)
+			spr.myauth = SPPP_AUTHPROTO_PAP;
+		else if (strcmp(cp, "chap") == 0)
+			spr.myauth = SPPP_AUTHPROTO_CHAP;
+		else if (strcmp(cp, "none") == 0)
+			spr.myauth = SPPP_AUTHPROTO_NONE;
+		else
+			errx(EX_DATAERR, "bad auth proto: %s", cp);
+		set_auth = 1;
+	} else if (startswith(arg, "myauthname=")) {
+		spr.myname = arg + off;
+		spr.myname_length = strlen(spr.myname)+1;
+		set_auth = 1;
+	} else if (startswith(arg, "myauthsecret=") || startswith(arg, "myauthkey=")) {
+		spr.mysecret = arg + off;
+		spr.mysecret_length = strlen(spr.mysecret)+1;
+		set_auth = 1;
+	} else if (startswith(arg, "hisauthproto=")) {
+		cp = arg + off;
+		if (strcmp(cp, "pap") == 0)
+			spr.hisauth = SPPP_AUTHPROTO_PAP;
+		else if (strcmp(cp, "chap") == 0)
+			spr.hisauth = SPPP_AUTHPROTO_CHAP;
+		else if (strcmp(cp, "none") == 0)
+			spr.hisauth = SPPP_AUTHPROTO_NONE;
+		else
+			errx(EX_DATAERR, "bad auth proto: %s", cp);
+		set_auth = 1;
+	} else if (startswith(arg, "hisauthname=")) {
+		spr.hisname = arg + off;
+		spr.hisname_length = strlen(spr.hisname)+1;
+		set_auth = 1;
+	} else if (startswith(arg, "hisauthsecret=") || startswith(arg, "hisauthkey=")) {
+		spr.hissecret = arg + off;
+		spr.hissecret_length = strlen(spr.hissecret)+1;
+		set_auth = 1;
+	} else if (strcmp(arg, "callin") == 0)
+		spr.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
+	else if (strcmp(arg, "always") == 0)
+		spr.hisauthflags &= ~SPPP_AUTHFLAG_NOCALLOUT;
+	else if (strcmp(arg, "norechallenge") == 0)
+		spr.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
+	else if (strcmp(arg, "rechallenge") == 0)
+		spr.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
+#ifndef __NetBSD__
+	else if (strcmp(arg, "enable-vj") == 0)
+		spr.defs.enable_vj = 1;
+	else if (strcmp(arg, "disable-vj") == 0)
+		spr.defs.enable_vj = 0;
+#endif
+	else if (startswith(arg, "lcp-timeout=")) {
+		int timeout_arg = atoi(arg+off);
+		if ((timeout_arg > 20000) || (timeout_arg <= 0))
+			errx(EX_DATAERR, "bad lcp timeout value: %s",
+			     arg+off);
+		lcp.lcp_timeout = timeout_arg * hz / 1000;
+		set_lcp = 1;
+	} else if (startswith(arg, "idle-timeout=")) {
+		timeout.idle_seconds = (time_t)atol(arg+off);
+		set_idle_to = 1;
+	} else if (startswith(arg, "max-auth-failure=")) {
+		authfailset.max_failures = atoi(arg+off);
+		set_auth_failure = 1;
+	} else if (strcmp(arg, "clear-auth-failure") == 0) {
+		clear_auth_failure_count = 1;
+	} else if (startswith(arg, "query-dns=")) {
+		dnssettings.query_dns = atoi(arg+off);
+		set_dns = 1;
+	} else
+		errx(EX_DATAERR, "bad parameter: \"%s\"", arg);
+}
+
+static void
 usage(void)
 {
 	const char * prog = getprogname();
 	fprintf(stderr,
 	    "usage:\n"
+	    "       %s [-f config] ifname [...]\n"
 	    "       %s [-v] ifname [{my|his}auth{proto|name|secret}=...] \\\n"
             "                      [callin] [always] [{no}rechallenge]\n"
             "                      [query-dns=3]\n"
@@ -426,7 +448,7 @@ usage(void)
 	    "           to dump the current PPPoE session state\n"
 	    "       %s -n (1|2) ifname\n"
 	    "           to print DNS addresses retrieved via query-dns\n"
-	    , prog, prog, prog, prog, prog, prog);
+	    , prog, prog, prog, prog, prog, prog, prog);
 	exit(EX_USAGE);
 }
 
