@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.91 2001/05/20 23:47:08 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.92 2001/05/21 00:01:10 jhawk Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -50,7 +50,7 @@ VIA Technologies VT82C586, VT82C586A, VT82C596A and VT82C686A IDE Controllers
 .Pp
 Most of these controllers are only available in multifunction PCI chips.
 Other PCI IDE controllers are supported, but performance may not be optimal.
-ISA, ISA plug and play and PCMCIA IDE controllers are supported as well.
+ISA, ISA Plug and Play and PCMCIA IDE controllers are supported as well.
 .It
 SCSI host adapters
 .(bullet -compact
