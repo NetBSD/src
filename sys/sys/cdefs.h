@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.10 1994/06/29 06:43:40 cgd Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.11 1994/07/20 22:12:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -119,6 +119,24 @@
 #ifndef __dead
 #define	__dead
 #define	__pure
+#endif
+
+
+/* 
+ * The __warn_references macro is used to instruct the linker to print 
+ * warning message "msg" if symbol "sym" is referenced.
+ */
+#ifdef __GNUC__
+#ifdef __STDC__
+#define __warn_references(sym,msg)	\
+__asm__(".stabs \"" msg "\",30,0,0,0\n.stabs \"_" #sym "\",1,0,0,0")
+#else
+#define __warn_references(sym,msg)	\
+__asm__(".stabs msg,30,0,0,0\n.stabs \"_/**/sym\",1,0,0,0")
+#endif
+#else
+#define __warn_references(sym,msg)
+#endif
 #endif
 
 #endif /* !_CDEFS_H_ */
