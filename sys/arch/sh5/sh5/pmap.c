@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2005/01/29 11:20:09 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2005/01/29 11:21:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2005/01/29 11:20:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2005/01/29 11:21:47 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -384,7 +384,7 @@ static struct pool_allocator pmap_pool_uallocator = {
 
 volatile pte_t *pmap_pte_spill(u_int, vsid_t, vaddr_t);
 
-static int pmap_copyzero_page_dpurge(paddr_t, struct evcnt *);
+static void pmap_copyzero_page_dpurge(paddr_t, struct evcnt *);
 static volatile pte_t * pmap_pvo_to_pte(const struct pvo_entry *, int);
 static struct pvo_entry * pmap_pvo_find_va(pmap_t, vaddr_t, int *);
 static void pmap_pinit(pmap_t);
@@ -1520,24 +1520,22 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	(void) pmap_pa_unmap_kva(pmap_copy_page_dst_kva, NULL);
 }
 
-static int
+static void
 pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 {
 	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo;
-	int i;
 
 	if ((pvo_head = pa_to_pvoh(pa, NULL)) == NULL ||
 	    (pvo = LIST_FIRST(pvo_head)) == NULL ||
 	    !SH5_PTEL_CACHEABLE(pvo->pvo_ptel))
-		return (0);
+		return;
 
 	/*
 	 * One or more cacheable mappings already exist for this
 	 * physical page. We now have to take preventative measures
 	 * to purge all dirty data back to the page.
 	 */
-	i = 0;
 	LIST_FOREACH(pvo, pvo_head, pvo_vlink) {
 		KDASSERT((paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK) == pa);
 
@@ -1550,7 +1548,6 @@ pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 
 		cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, PAGE_SIZE);
 		ev->ev_count++;
-		i = 1;
 #if 0
 		/*
 		 * If we find a writable mapping, we don't need to purge the
@@ -1560,8 +1557,6 @@ pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 			break;
 #endif
 	}
-
-	return (i);
 }
 
 /*
