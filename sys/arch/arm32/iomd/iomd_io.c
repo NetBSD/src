@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.1 1997/10/14 10:58:50 mark Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.2 1998/06/28 07:27:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -53,70 +53,70 @@ struct bus_space iomd_bs_tag = {
 	NULL,
 
 	/* mapping/unmapping */
-	iomd_map,
-	iomd_unmap,
-	iomd_subregion,
+	iomd_bs_map,
+	iomd_bs_unmap,
+	iomd_bs_subregion,
 
 	/* allocation/deallocation */
-	iomd_alloc,
-	iomd_free,
+	iomd_bs_alloc,
+	iomd_bs_free,
 
 	/* barrier */
-	iomd_barrier,
+	iomd_bs_barrier,
 
 	/* read (single) */
-	iomd_r_1,
-	iomd_r_2,
-	iomd_r_4,
-	bs_notimpl_r_8,
+	iomd_bs_r_1,
+	iomd_bs_r_2,
+	iomd_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_rm_1,
-	iomd_rm_2,
-	bs_notimpl_rm_4,
-	bs_notimpl_rm_8,
+	bs_notimpl_bs_rm_1,
+	iomd_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_rr_1,
-	bs_notimpl_rr_2,
-	bs_notimpl_rr_4,
-	bs_notimpl_rr_8,
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	iomd_w_1,
-	iomd_w_2,
-	iomd_w_4,
-	bs_notimpl_w_8,
+	iomd_bs_w_1,
+	iomd_bs_w_2,
+	iomd_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	bs_notimpl_wm_1,
-	iomd_wm_2,
-	bs_notimpl_wm_4,
-	bs_notimpl_wm_8,
+	bs_notimpl_bs_wm_1,
+	iomd_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_wr_1,
-	bs_notimpl_wr_2,
-	bs_notimpl_wr_4,
-	bs_notimpl_wr_8,
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */

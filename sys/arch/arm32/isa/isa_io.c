@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.1 1998/06/08 17:49:44 tv Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.2 1998/06/28 07:27:52 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -61,70 +61,70 @@ struct bus_space isa_io_bs_tag = {
 	NULL, /* initialized below */
 
 	/* mapping/unmapping */
-	isa_map,
-	isa_unmap,
-	isa_subregion,
+	isa_bs_map,
+	isa_bs_unmap,
+	isa_bs_subregion,
 
 	/* allocation/deallocation */
-	isa_alloc,
-	isa_free,
+	isa_bs_alloc,
+	isa_bs_free,
 
 	/* barrier */
-	isa_barrier,
+	isa_bs_barrier,
 
 	/* read (single) */
-	isa_r_1,
-	isa_r_2,
-	isa_r_4,
-	bs_notimpl_r_8,
+	isa_bs_r_1,
+	isa_bs_r_2,
+	isa_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	isa_rm_1,
-	isa_rm_2,
-	isa_rm_4,
-	bs_notimpl_rm_8,
+	isa_bs_rm_1,
+	isa_bs_rm_2,
+	isa_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	isa_rr_1,
-	isa_rr_2,
-	isa_rr_4,
-	bs_notimpl_rr_8,
+	isa_bs_rr_1,
+	isa_bs_rr_2,
+	isa_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	isa_w_1,
-	isa_w_2,
-	isa_w_4,
-	bs_notimpl_w_8,
+	isa_bs_w_1,
+	isa_bs_w_2,
+	isa_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	isa_wm_1,
-	isa_wm_2,
-	isa_wm_4,
-	bs_notimpl_wm_8,
+	isa_bs_wm_1,
+	isa_bs_wm_2,
+	isa_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	isa_wr_1,
-	isa_wr_2,
-	isa_wr_4,
-	bs_notimpl_wr_8,
+	isa_bs_wr_1,
+	isa_bs_wr_2,
+	isa_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /*
@@ -136,70 +136,70 @@ struct bus_space isa_mem_bs_tag = {
         NULL, /* initialized below */
 
 	/* mapping/unmapping */
-	isa_map,
-	isa_unmap,
-	isa_subregion,
+	isa_bs_map,
+	isa_bs_unmap,
+	isa_bs_subregion,
 
 	/* allocation/deallocation */
-	isa_alloc,
-	isa_free,
+	isa_bs_alloc,
+	isa_bs_free,
 
 	/* barrier */
-	isa_barrier,
+	isa_bs_barrier,
 
 	/* read (single) */
-	isa_r_1,
-	isa_r_2,
-	isa_r_4,
-	bs_notimpl_r_8,
+	isa_bs_r_1,
+	isa_bs_r_2,
+	isa_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	isa_rm_1,
-	isa_rm_2,
-	isa_rm_4,
-	bs_notimpl_rm_8,
+	isa_bs_rm_1,
+	isa_bs_rm_2,
+	isa_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	isa_rr_1,
-	isa_rr_2,
-	isa_rr_4,
-	bs_notimpl_rr_8,
+	isa_bs_rr_1,
+	isa_bs_rr_2,
+	isa_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	isa_w_1,
-	isa_w_2,
-	isa_w_4,
-	bs_notimpl_w_8,
+	isa_bs_w_1,
+	isa_bs_w_2,
+	isa_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	isa_wm_1,
-	isa_wm_2,
-	isa_wm_4,
-	bs_notimpl_wm_8,
+	isa_bs_wm_1,
+	isa_bs_wm_2,
+	isa_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	isa_wr_1,
-	isa_wr_2,
-	isa_wr_4,
-	bs_notimpl_wr_8,
+	isa_bs_wr_1,
+	isa_bs_wr_2,
+	isa_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */
@@ -227,7 +227,7 @@ isa_mem_data_vaddr()
 }
 
 int
-isa_map(t, bpa, size, cacheable, bshp)
+isa_bs_map(t, bpa, size, cacheable, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -239,7 +239,7 @@ isa_map(t, bpa, size, cacheable, bshp)
 }
 
 void
-isa_unmap(t, bsh, size)
+isa_bs_unmap(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -248,7 +248,7 @@ isa_unmap(t, bsh, size)
 }
 
 int
-isa_subregion(t, bsh, offset, size, nbshp)
+isa_bs_subregion(t, bsh, offset, size, nbshp)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
@@ -258,7 +258,7 @@ isa_subregion(t, bsh, offset, size, nbshp)
 }
 
 int
-isa_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
@@ -271,7 +271,7 @@ isa_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 }
 
 void    
-isa_free(t, bsh, size)
+isa_bs_free(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -280,7 +280,7 @@ isa_free(t, bsh, size)
 }
 
 void
-isa_barrier(t, bsh, offset, len, flags)
+isa_bs_barrier(t, bsh, offset, len, flags)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, len;
