@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.23 1996/12/07 23:00:20 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.24 1996/12/07 23:31:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.23 1996/12/07 23:00:20 mycroft Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.24 1996/12/07 23:31:07 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -105,12 +105,11 @@ ___syscall:
 	popl	%eax
 	pushl	%ecx
 	int	$0x80
-	pushl	%ecx
 	jc	1f
-	ret
+	jmp	%ecx
 1:
 	movl	$-1,%eax
-	ret
+	jmp	%ecx
 ");
 #endif /* DYNAMIC */
 
