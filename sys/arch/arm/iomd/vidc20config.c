@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.10 2002/06/16 13:38:12 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.11 2002/06/16 14:02:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.10 2002/06/16 13:38:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.11 2002/06/16 14:02:04 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -566,7 +566,7 @@ vidcvideo_init(void)
 	vidcvideo_setmode(vidc_currentmode);
 	vidcvideo_blank(0);			/* display on */
 
-	vidcvideo_stdpalette();
+	vidcvideo_textpalette();
 
 	if (cold_init == 0) {
 		vidcvideo_write(VIDC_CP1, 0x0);
@@ -682,6 +682,29 @@ vidcvideo_enablecursor(on)
 	return;
 }
 
+
+int         
+vidcvideo_textpalette()
+{
+	vidcvideo_write(VIDC_PALREG, 0x00000000);
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0,   0));  
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0,   0));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255,   0));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255,   0));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0,   0, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255,   0, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(  0, 255, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 128));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 128));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 255, 128));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 128));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(128, 128, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 128, 255));
+	vidcvideo_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+
+	return 0;
+}
 
 int
 vidcvideo_blank(video_off)
