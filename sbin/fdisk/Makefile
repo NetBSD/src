@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.29 2004/10/13 23:28:35 gavan Exp $
+#	$NetBSD: Makefile,v 1.30 2005/01/20 16:01:02 xtraeme Exp $
 
 SUBDIR=	mbr
+
+WARNS=	2
 
 .if (${MACHINE} == "i386" || \
      ${MACHINE} == "bebox" || \
