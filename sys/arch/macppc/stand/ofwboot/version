@@ -1,5 +1,4 @@
-$NetBSD: version,v 1.1 1998/05/15 10:16:00 tsubai Exp $
+$NetBSD: version,v 1.2 1999/04/29 03:16:21 tsubai Exp $
 
-1.1:		Boot program for OpenFirmware; initial revision
-1.2:		Boot program rearrangement
-1.3:		Added support for loading ELF kernels
+1.1:		Initial revision from NetBSD/powerpc.
+1.2:		Use MI loadfile().
