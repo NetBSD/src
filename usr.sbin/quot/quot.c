@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.9 1996/05/24 12:51:23 ws Exp $	*/
+/*	$NetBSD: quot.c,v 1.10 1996/12/12 00:43:28 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: quot.c,v 1.9 1996/05/24 12:51:23 ws Exp $";
+static char rcsid[] = "$NetBSD: quot.c,v 1.10 1996/12/12 00:43:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,9 +100,9 @@ get_inode(fd, super, ino)
 		}
 		last = (ino / INOCNT(super)) * INOCNT(super);
 		if (lseek(fd,
-			  (off_t)ino_to_fsba(super, last) << super->fs_fshift,
-			  0) < 0
-		    || read(fd, ip, INOSZ(super)) != INOSZ(super)) {
+		    (off_t)ino_to_fsba(super, last) << super->fs_fshift,
+		    0) < 0 ||
+		    read(fd, ip, INOSZ(super)) != INOSZ(super)) {
 			perror("read inodes");
 			exit(1);
 		}
@@ -397,8 +397,8 @@ dofsizes(fd, super, name)
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
 				printf("%d\t%d\t%d\n",
-				       fp->fsz_first + i, fp->fsz_count[i],
-				       SIZE(sz += fp->fsz_sz[i]));
+				    fp->fsz_first + i, fp->fsz_count[i],
+				    SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -419,10 +419,8 @@ douser(fd, super, name)
 		errno = 0;
 		if ((ip = get_inode(fd, super, inode))
 		    && !isfree(ip))
-			uses(ip->di_uid,
-			     estimate ? virtualblocks(super, ip)
-				: actualblocks(super, ip),
-			     ip->di_atime);
+			uses(ip->di_uid, estimate ? virtualblocks(super, ip) :
+			    actualblocks(super, ip), ip->di_atime);
 		else if (errno) {
 			perror(name);
 			exit(1);
@@ -441,9 +439,8 @@ douser(fd, super, name)
 		printf("\t%-8s", usr->name);
 		if (unused)
 			printf("\t%5d\t%5d\t%5d",
-			       SIZE(usr->spc30),
-			       SIZE(usr->spc60),
-			       SIZE(usr->spc90));
+			    SIZE(usr->spc30), SIZE(usr->spc60),
+			    SIZE(usr->spc90));
 		printf("\n");
 	}
 	free(usrs);
