@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.1 1998/05/19 23:58:54 pk Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.2 1998/06/07 21:14:17 pk Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -159,27 +159,28 @@ struct mtty_softc {
 	struct mtty_port ms_port[MAGMA_MAX_TTY];
 };
 
-#define MBPP_TXBUF_SIZE	(CD1400_PAR_FIFO_SIZE * 10)
+#define MBPP_RX_FIFO_THRESHOLD	25
 
 struct mbpp_port {
 	struct cd1400 *mp_cd1400;	/* for LC2+1Sp card */
 	struct cd1190 *mp_cd1190;	/* all the others   */
 
-	int mp_flags;
+	int	mp_flags;
 
-	int mp_read_strobe;	/* strobe width in ns */
-	int mp_read_timeout;	/* timeout after this many seconds */
+	struct mbpp_param mp_param;
+#define mp_burst	mp_param.bp_burst
+#define mp_timeout	mp_param.bp_timeout
+#define mp_delay	mp_param.bp_delay
 
-	int mp_write_strobe;	/* strobe width in ns */
-	int mp_write_timeout;	/* timeout after this many seconds */
-
-	u_char *mp_txbuf;	/* transmit buffer */
-	u_char *mp_txp;		/* transmit pointer */
-	int mp_txc;		/* transmit counter */
+	u_char	*mp_ptr;		/* pointer to I/O data */
+	int	mp_cnt;			/* count of I/O chars */
 };
 
 #define MBPPF_OPEN	(1<<0)
-#define MBPPF_DONE	(1<<1)
+#define MBPPF_TIMEOUT	(1<<1)
+#define MBPPF_UIO	(1<<2)
+#define MBPPF_DELAY	(1<<3)
+#define MBPPF_WAKEUP	(1<<4)
 
 struct mbpp_softc {
 	struct device ms_dev;		/* device info */
@@ -193,7 +194,6 @@ struct mbpp_softc {
 #define SET(t, f)	((t) |= (f))
 #define CLR(t, f)	((t) &= ~(f))
 #define ISSET(t, f)	((t) & (f))
-#define MIN(a, b)	((a) < (b) ? (a) : (b))
 
 /* internal function prototypes */
 
@@ -216,3 +216,10 @@ void mtty_start __P((struct tty *));
 
 int mbpp_match __P((struct device *, struct cfdata *, void *));
 void mbpp_attach __P((struct device *, struct device *, void *));
+int mbpp_rw __P((dev_t, struct uio *));
+void mbpp_timeout __P((void *));
+void mbpp_start __P((void *));
+int mbpp_send __P((struct mbpp_port *, caddr_t, int));
+int mbpp_recv __P((struct mbpp_port *, caddr_t, int));
+int mbpp_hztoms __P((int));
+int mbpp_mstohz __P((int));
