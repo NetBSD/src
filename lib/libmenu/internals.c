@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.10 2002/07/29 13:03:51 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.11 2002/11/27 11:53:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -386,7 +386,7 @@ _menui_draw_item(MENU *menu, int item)
 	
 	wmove(menu->scrwin,
 	      menu->items[item]->row - menu->top_row,
-	      menu->items[item]->col * menu->col_width);
+	      menu->items[item]->col * (menu->col_width + 1));
 
 	if (menu->cur_item == item)
 		wattrset(menu->scrwin, menu->fore);
@@ -441,21 +441,22 @@ _menui_draw_item(MENU *menu, int item)
 	}
 	menu->items[item]->visible = 1;
 	
+	  /* kill any special attributes... */
+	wattrset(menu->scrwin, menu->back);
+
 	  /*
 	   * Fill in the spacing between items, annoying but it looks
 	   * odd if the menu items are inverse because the spacings do not
 	   * have the same attributes as the items.
 	   */
-	if (menu->items[item]->col > 0) {
+	if ((menu->items[item]->col > 0) &&
+	    (menu->items[item]->col < (menu->item_cols - 1))) {
 		wmove(menu->scrwin,
 		      menu->items[item]->row - menu->top_row,
-		      menu->items[item]->col * menu->col_width - 1);
+		      menu->items[item]->col * (menu->col_width + 1) - 1);
 		waddch(menu->scrwin, ' ');
 	}
 	
-	  /* kill any special attributes... */
-	wattrset(menu->scrwin, menu->back);
-
 	  /* and position the cursor nicely */
 	pos_menu_cursor(menu);
 }
@@ -507,7 +508,7 @@ _menui_draw_menu(MENU *menu)
 				}
 			}
 			wmove(menu->scrwin, row,
-			      col * menu->col_width);
+			      col * (menu->col_width + 1));
 			for (j = 0; j < menu->col_width; j++)
 				waddch(menu->scrwin, ' ');
 		} else {
