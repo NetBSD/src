@@ -855,6 +855,7 @@
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
+./usr/share/man/cat8/wiconfig.0
 ./usr/share/man/cat8/wire-test.0
 ./usr/share/man/cat8/wsconscfg.0
 ./usr/share/man/cat8/wsconsctl.0
@@ -1986,6 +1987,7 @@
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
+./usr/share/man/man8/wiconfig.8
 ./usr/share/man/man8/wire-test.8
 ./usr/share/man/man8/wsconscfg.8
 ./usr/share/man/man8/wsconsctl.8
