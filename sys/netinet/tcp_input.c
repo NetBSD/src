@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.97 1999/12/08 16:22:20 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.98 1999/12/11 09:55:14 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -158,6 +158,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -187,6 +188,21 @@ int	tcp_log_refused;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+
+/*
+ * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
+ */
+#ifdef INET6
+#define ND6_HINT(tp) \
+do { \
+	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 \
+	 && tp->t_in6pcb->in6p_route.ro_rt) { \
+		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL); \
+	} \
+} while (0)
+#else
+#define ND6_HINT(tp)
+#endif
 
 /*
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
@@ -459,6 +475,7 @@ present:
 
 	tp->rcv_nxt += q->ipqe_len;
 	pkt_flags = q->ipqe_flags & TH_FIN;
+	ND6_HINT(tp);
 
 	LIST_REMOVE(q, ipqe_q);
 	LIST_REMOVE(q, ipqe_timeq);
@@ -494,13 +511,17 @@ tcp6_input(mp, offp, proto)
 	 * better place to put this in?
 	 */
 	if (m->m_flags & M_ANYCAST6) {
-		if (m->m_len >= sizeof(struct ip6_hdr)) {
-			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-			icmp6_error(m, ICMP6_DST_UNREACH,
-				ICMP6_DST_UNREACH_ADDR,
-				(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
-		} else
-			m_freem(m);
+		struct ip6_hdr *ip6;
+		if (m->m_len < sizeof(struct ip6_hdr)) {
+			if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+				tcpstat.tcps_rcvshort++;
+				return IPPROTO_DONE;
+			}
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+		icmp6_error(m, ICMP6_DST_UNREACH,
+			ICMP6_DST_UNREACH_ADDR,
+			(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
 		return IPPROTO_DONE;
 	}
 
@@ -1109,6 +1130,7 @@ after_listen:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
+				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
 				/*
 				 * We want snd_recover to track snd_una to
@@ -1153,6 +1175,7 @@ after_listen:
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
+			ND6_HINT(tp);
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
@@ -1677,6 +1700,7 @@ after_listen:
 			tp->snd_cwnd = min(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
 		}
+		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -1874,6 +1898,7 @@ dodata:							/* XXX */
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
+			ND6_HINT(tp);
 			m_adj(m, hdroptlen);
 			sbappend(&(so)->so_rcv, m);
 			sorwakeup(so);
