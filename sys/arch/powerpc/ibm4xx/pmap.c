@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.10 2002/12/11 06:11:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.11 2003/01/07 21:13:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -728,7 +728,9 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 for (npv = pv; npv; npv = npv->pv_next)
 if (npv->pv_va == va && npv->pv_pm == pm) {
 printf("Duplicate pv: va %lx pm %p\n", va, pm);
+#ifdef DDB
 Debugger();
+#endif
 return (1);
 }
 
@@ -1399,7 +1401,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 			return 1;
 		}
 	} else {
-		/* Create a 16MB writeable mapping. */
+		/* Create a 16MB writable mapping. */
 #ifdef PPC_4XX_NOCACHE
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_I | TTE_WR;
 #else
