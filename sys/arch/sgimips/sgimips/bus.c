@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.27 2004/01/18 04:06:43 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.28 2004/03/25 15:06:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.27 2004/01/18 04:06:43 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.28 2004/03/25 15:06:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,7 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 	}
 }
 
+#ifdef MIPS3
 u_int64_t
 bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 {
@@ -288,6 +289,7 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			break;
 	}
 }
+#endif /* MIPS3 */
 
 int
 bus_space_map(t, bpa, size, flags, bshp)
