@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1995/02/27 16:36:24 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1995/03/08 02:40:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -328,7 +328,7 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(3, 0);
+dev_t	swapdev = makedev(1, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
