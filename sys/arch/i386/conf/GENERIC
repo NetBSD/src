@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.339 2000/05/19 10:23:36 veego Exp $
+#	$NetBSD: GENERIC,v 1.340 2000/05/20 21:34:48 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.339 $"
+#ident 		"GENERIC-$Revision: 1.340 $"
 
 maxusers	32		# estimated number of users
 
@@ -512,8 +512,10 @@ esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
@@ -522,8 +524,6 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -582,8 +582,8 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # CardBus network cards
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -602,15 +602,15 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
 # USB bus support
-usb*	at uhci?
 usb*	at ohci?
+usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
