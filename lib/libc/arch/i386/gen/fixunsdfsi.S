@@ -34,14 +34,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.2 1993/10/21 01:40:00 jtc Exp $
+ *	$Id: fixunsdfsi.S,v 1.3 1993/10/21 01:48:14 jtc Exp $
  */
 
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.2 1993/10/21 01:40:00 jtc Exp $"
+	.asciz "$Id: fixunsdfsi.S,v 1.3 1993/10/21 01:48:14 jtc Exp $"
 #endif
 
 	.globl ___fixunsdfsi
@@ -59,12 +59,12 @@ ___fixunsdfsi:
 	fstsw	%ax
 	sahf
 	jnb	1f
-	
+
 	fistpl	4(%esp)
 	movl	4(%esp),%eax
 	ret
 
-1:	
+1:
 #ifdef PIC
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax

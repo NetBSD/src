@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strrchr.s,v 1.2 1993/10/21 01:40:43 jtc Exp $
+ *	$Id: strrchr.s,v 1.3 1993/10/21 01:48:37 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strrchr.s,v 1.2 1993/10/21 01:40:43 jtc Exp $"
+	.asciz "$Id: strrchr.s,v 1.3 1993/10/21 01:48:37 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -62,7 +62,7 @@ L1:
 	cmpb	%bl,%cl
 	jne	L2
 	movl	%edx,%eax
-L2:	
+L2:
 	incl	%edx
 	testb	%bl,%bl			/* null terminator??? */
 	jne	L1

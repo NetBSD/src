@@ -34,26 +34,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"
- *	$Id: sigsetjmp.S,v 1.3 1993/10/21 01:40:03 jtc Exp $
+ *	$Id: sigsetjmp.S,v 1.4 1993/10/21 01:48:17 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: sigsetjmp.S,v 1.3 1993/10/21 01:40:03 jtc Exp $"
+	.asciz "$Id: sigsetjmp.S,v 1.4 1993/10/21 01:48:17 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 ENTRY(sigsetjmp)
 	movl	8(%esp),%eax
-	movl	4(%esp),%ecx 
+	movl	4(%esp),%ecx
 	movl	%eax,24(%ecx)
 	testl	%eax,%eax
 	jz	1f
 	pushl	$0
 	call	_sigblock
 	addl	$4,%esp
-	movl	4(%esp),%ecx 
+	movl	4(%esp),%ecx
 	movl	%eax,28(%ecx)
 1:	movl	0(%esp),%edx
 	movl	%edx, 0(%ecx)

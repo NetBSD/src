@@ -27,21 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcmp.S,v 1.3 1993/10/21 01:40:39 jtc Exp $
+ *	$Id: strcmp.S,v 1.4 1993/10/21 01:48:35 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcmp.S,v 1.3 1993/10/21 01:40:39 jtc Exp $"
+	.asciz "$Id: strcmp.S,v 1.4 1993/10/21 01:48:35 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 /*
  * strcmp(s1, s2)
- *	return an integer greater than, equal to, or less than 0, 
+ *	return an integer greater than, equal to, or less than 0,
  *	according as string s1 is greater than, equal to, or less
- *	than the string s2.  
+ *	than the string s2.
  *
  * %eax - pointer to s1
  * %edx - pointer to s2
@@ -57,13 +57,13 @@
  */
 
 ENTRY(strcmp)
-	movl	0x04(%esp),%eax	
-	movl	0x08(%esp),%edx	
+	movl	0x04(%esp),%eax
+	movl	0x08(%esp),%edx
 	jmp	L2			/* Jump into the loop! */
 
 	.align	2,0x90
 L1:	incl	%eax
-	incl	%edx			
+	incl	%edx
 L2:	movb	(%eax),%cl
 	testb	%cl,%cl			/* null terminator??? */
 	je	L3
