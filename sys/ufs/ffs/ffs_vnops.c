@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.33 2000/09/19 22:04:10 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.34 2000/10/24 14:43:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -277,8 +277,6 @@ loop:
 		goto loop;
 	}
 
-	splx(s);
-
 	/*
 	 * Then, flush possibly unwritten indirect blocks. Without softdeps,
 	 * these should be the only ones left.
@@ -287,7 +285,6 @@ loop:
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error != 0)
 			return error;
-		s = splbio();
 		for (i = 0; i < num; i++) {
 			ibp = incore(vp, ia[i].in_lbn);
 			if (ibp != NULL && !(ibp->b_flags & B_BUSY) &&
@@ -298,7 +295,6 @@ loop:
 				s = splbio();
 			}
 		}
-		splx(s);
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
@@ -308,6 +304,8 @@ loop:
 			    "fsync_range", 0);
 		}
 	}
+
+	splx(s);
 
 	return (VOP_UPDATE(vp, NULL, NULL,
 	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
