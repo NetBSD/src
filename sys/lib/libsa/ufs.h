@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.h,v 1.3 1995/09/17 00:49:50 pk Exp $	*/
+/*	$NetBSD: ufs.h,v 1.4 1995/10/20 00:54:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,8 +38,8 @@
 int	ufs_open __P((char *path, struct open_file *f));
 int	ufs_close __P((struct open_file *f));
 int	ufs_read __P((struct open_file *f, void *buf,
-		u_int size, u_int *resid));
+		u_int size, size_t *resid));
 int	ufs_write __P((struct open_file *f, void *buf,
-		u_int size, u_int *resid));
+		u_int size, size_t *resid));
 off_t	ufs_seek __P((struct open_file *f, off_t offset, int where));
 int	ufs_stat __P((struct open_file *f, struct stat *sb));
