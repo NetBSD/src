@@ -15,7 +15,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: values.h,v 1.3 1993/08/02 17:22:22 mycroft Exp $
+	$Id: values.h,v 1.4 1995/12/16 01:03:33 thorpej Exp $
 */
 
 #ifndef _values_h
@@ -153,7 +153,9 @@ extern float _maxfloat, _minfloat;
 #define MAXDOUBLE   1.701411834604692293e+38
 #define MINDOUBLE   (2.938735877055718770e-39)
 
+#ifndef __NetBSD__	/* XXX */
 #define MAXFLOAT    1.7014117331926443e+38
+#endif /* ! __NetBSD__ */
 #define MINFLOAT    2.9387358770557188e-39
 
 #define _IEEE       0
