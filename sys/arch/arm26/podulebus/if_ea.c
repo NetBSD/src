@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.16 2000/08/12 17:03:44 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.17 2000/08/12 18:18:52 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -54,7 +54,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.16 2000/08/12 17:03:44 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.17 2000/08/12 18:18:52 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -149,6 +149,8 @@ static void ea_ramtest(struct ea_softc *);
 static int ea_stoptx(struct ea_softc *);
 static int ea_stoprx(struct ea_softc *);
 static void ea_stop(struct ea_softc *);
+static void ea_await_fifo_empty(struct ea_softc *);
+static void ea_await_fifo_full(struct ea_softc *);
 static void ea_writebuf(struct ea_softc *, u_char *, u_int, size_t);
 static void ea_readbuf(struct ea_softc *, u_char *, u_int, size_t);
 static void earead(struct ea_softc *, int, int);
@@ -677,10 +679,48 @@ ea_hardreset(struct ea_softc *sc)
 
 
 /*
+ * If the DMA FIFO's in write mode, wait for it to empty.  Needed when
+ * switching the FIFO from write to read.  We also use it when changing
+ * the address for writes.
+ */
+static void
+ea_await_fifo_empty(struct ea_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int timeout;
+	
+	timeout = 20000;
+	if ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
+	     EA_STATUS_FIFO_DIR) != 0)
+		return; /* FIFO is reading anyway. */
+	while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
+		EA_STATUS_FIFO_EMPTY) == 0 &&
+	       --timeout > 0)
+		continue;
+}
+
+/*
+ * Wait for the DMA FIFO to fill before reading from it.
+ */
+static void
+ea_await_fifo_full(struct ea_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int timeout;
+
+	timeout = 20000;
+	while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
+		EA_STATUS_FIFO_FULL) == 0 &&
+	       --timeout > 0)
+		continue;
+}
+
+/*
  * write to the buffer memory on the interface
  *
- * If addr is within range for the interface buffer then the buffer
- * address is set to addr.
+ * The buffer address is set to ADDR.
  * If len != 0 then data is copied from the address starting at buf
  * to the interface buffer.
  * BUF must be usable as a u_int16_t *.
@@ -692,51 +732,40 @@ ea_writebuf(struct ea_softc *sc, u_char *buf, u_int addr, size_t len)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int timeout;
 
 	dprintf(("writebuf: st=%04x\n",
 		 bus_space_read_2(iot, ioh, EA_8005_STATUS)));
 
-#ifdef DIAGNOSTIC*/
-	if (!ALIGNED_POINTER(buf, u_int16_t))
+#ifdef DIAGNOSTIC
+	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
 		panic("%s: unaligned writebuf", sc->sc_dev.dv_xname);
 #endif
+	if (__predict_false(addr >= EA_BUFFER_SIZE))
+		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
+
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
 		len++;
 
-	/*
-	 * If we have a valid buffer address set the buffer pointer and
-	 * direction.
-	 */
-	if (addr < EA_BUFFER_SIZE) {
-		bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-				  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				  sc->sc_command | EA_CMD_FIFO_WRITE);
+	ea_await_fifo_empty(sc);
 
-		/* Should wait here of FIFO empty flag */
-
-		timeout = 20000;
-		while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-			EA_STATUS_FIFO_EMPTY) == 0 &&
-		       --timeout > 0)
-			continue;
-
-		bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
-	}
+	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
+			  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
+	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
+			  sc->sc_command | EA_CMD_FIFO_WRITE);
+       	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
 
 	if (len > 0)
 		bus_space_write_multi_2(iot, ioh, EA_8005_BUFWIN,
 					(u_int16_t *)buf, len / 2);
+	/* Leave FIFO to empty in the background */
 }
 
 
 /*
  * read from the buffer memory on the interface
  *
- * If addr is within range for the interface buffer then the buffer
- * address is set to addr.
+ * The buffer address is set to ADDR.
  * If len != 0 then data is copied from the interface buffer to the
  * address starting at buf.
  * BUF must be usable as a u_int16_t *.
@@ -749,58 +778,30 @@ ea_readbuf(struct ea_softc *sc, u_char *buf, u_int addr, size_t len)
 
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int timeout;
 
 	dprintf(("readbuf: st=%04x addr=%04x len=%d\n",
 		 bus_space_read_2(iot, ioh, EA_8005_STATUS), addr, len));
 
-#ifdef DIAGNOSTIC*/
+#ifdef DIAGNOSTIC
 	if (!ALIGNED_POINTER(buf, u_int16_t))
 		panic("%s: unaligned readbuf", sc->sc_dev.dv_xname);
 #endif
+	if (addr >= EA_BUFFER_SIZE)
+		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
+
 	/* Assume that copying too much is safe. */
 	if (len % 2 != 0)
 		len++;
 
-	/*
-	 * If we have a valid buffer address set the buffer pointer and
-	 * direction.
-	 */
-	if (addr < EA_BUFFER_SIZE) {
-		if ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-		     EA_STATUS_FIFO_DIR) == 0) {
-			/* Should wait here of FIFO empty flag */
+	ea_await_fifo_empty(sc);
+	bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
+			  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
 
-			timeout = 20000;
-			while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-				EA_STATUS_FIFO_EMPTY) == 0 &&
-			       --timeout > 0)
-				continue;
-		}
-		bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
-				  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				  sc->sc_command | EA_CMD_FIFO_WRITE);
+	bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
+	bus_space_write_2(iot, ioh, EA_8005_COMMAND,
+			  sc->sc_command | EA_CMD_FIFO_READ);
 
-		/* Should wait here of FIFO empty flag */
-
-		timeout = 20000;
-		while ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
-			EA_STATUS_FIFO_EMPTY) == 0 &&
-		       --timeout > 0)
-			continue;
-
-		bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
-		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
-				  sc->sc_command | EA_CMD_FIFO_READ);
-
-		/* Should wait here of FIFO full flag */
-
-		timeout = 20000;
-		while ((bus_space_read_2(iot, ioh, + EA_8005_STATUS) &
-			EA_STATUS_FIFO_FULL) == 0 && --timeout > 0)
-			continue;
-	}
+	ea_await_fifo_full(sc);
 
 	if (len > 0)
 		bus_space_read_multi_2(iot, ioh, EA_8005_BUFWIN,
