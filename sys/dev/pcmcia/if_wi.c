@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $
+ *	$Id: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $
  */
 
 /*
@@ -117,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.16 2000/03/27 07:04:21 enami Exp $";
+	"$Id: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $";
 #endif
 
 #ifdef foo
@@ -911,8 +911,9 @@ static void wi_setmulti(sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		bzero((char *)&mcast, sizeof(mcast));
 		mcast.wi_type = WI_RID_MCAST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
@@ -940,6 +941,7 @@ allmulti:
 		ETHER_NEXT_MULTI(estep, enm);
 	}
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
 	mcast.wi_type = WI_RID_MCAST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * i) + 1;
 	wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
