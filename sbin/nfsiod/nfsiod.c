@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)nfsiod.c	5.4 (Berkeley) 6/29/90";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsiod/Attic/nfsiod.c,v 1.3 1993/03/23 00:29:39 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsiod/Attic/nfsiod.c,v 1.4 1993/04/10 20:16:13 glass Exp $";
 #endif not lint
 
 #include <stdio.h>
@@ -58,6 +58,7 @@ int debug = 1;
 int debug = 0;
 #endif
 
+void not_nfsclient()
 /*
  * Nfsiod does asynchronous buffered I/O on behalf of the NFS client.
  * It does not have to be running for correct operation, but will improve
@@ -70,6 +71,7 @@ main(argc, argv)
 	register int i;
 	int cnt;
 
+	signal(SIGSYS, not_nfsclient);
 	if (debug == 0) {
 		daemon(0, 0);
 		signal(SIGINT, SIG_IGN);
@@ -84,4 +86,10 @@ main(argc, argv)
 			break;
 	async_daemon();		/* Never returns */
 	exit(1);
+}
+
+void not_nfsclient()
+{
+    (void) fprintf(stderr, "nfsd: not configured as NFS client\n");
+    exit(1);
 }
