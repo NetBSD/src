@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.70 2001/01/18 20:28:19 jdolecek Exp $	*/
+/*	$NetBSD: gus.c,v 1.71 2001/07/18 20:52:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -1139,7 +1139,7 @@ gus_deinterleave(sc, buf, size)
 		 * copied to the staging area (But we don't need to!).
 		 * Copy the remainder of the original stream into place.
 		 */
-		bcopy(dei, &sbuf[size/2], i * sizeof(short));
+		memcpy(&sbuf[size/2], dei, i * sizeof(short));
 	} else {
 		u_char *dei = sc->sc_deintr_buf;
 		u_char *sbuf = buf;
@@ -1147,7 +1147,7 @@ gus_deinterleave(sc, buf, size)
 			dei[i] = sbuf[i*2+1];
 			sbuf[i+1] = sbuf[i*2+2];
 		}
-		bcopy(dei, &sbuf[size/2], i);
+		memcpy(&sbuf[size/2], dei, i);
 	}
 }
 

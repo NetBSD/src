@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.31 2001/07/18 20:42:54 thorpej Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.32 2001/07/18 20:52:48 thorpej Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -923,7 +923,7 @@ hpget(buf, totlen, off0, ifp)
 			} else
 				len = m->m_len;
 		}
-		bcopy(cp, mtod(m, caddr_t), (unsigned) len);
+		memcpy(mtod(m, caddr_t), cp, (unsigned) len);
 		cp += len;
 		*mp = m;
 		mp = &m->m_next;
@@ -975,8 +975,9 @@ hpioctl(ifp, cmd, data)
 							 * so reset everything
 							 */
 					ifp->if_flags &= ~IFF_RUNNING;
-					bcopy((caddr_t) ina->x_host.c_host,
-					    (caddr_t) ns->ns_addrp, sizeof(ns->ns_addrp));
+					memcpy((caddr_t) ns->ns_addrp,
+					    (caddr_t) ina->x_host.c_host,
+					    sizeof(ns->ns_addrp));
 				}
 				hpinit(ifp->if_unit);	/* does hp_setaddr() */
 				break;
@@ -1006,7 +1007,7 @@ hpioctl(ifp, cmd, data)
 
 #ifdef notdef
 	case SIOCGHWADDR:
-		bcopy((caddr_t) ns->ns_addrp, (caddr_t) & ifr->ifr_data,
+		memcpy((caddr_t) & ifr->ifr_data, (caddr_t) ns->ns_addrp,
 		    sizeof(ns->ns_addrp));
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.26 2001/03/31 00:30:22 jdolecek Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.27 2001/07/18 20:52:48 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -318,7 +318,7 @@ ate_detect(iot, ioh, enaddr)
 
 	/* Get our station address from EEPROM. */
 	ate_read_eeprom(iot, ioh, eeprom);
-	bcopy(eeprom + FE_ATI_EEP_ADDR, enaddr, ETHER_ADDR_LEN);
+	memcpy(enaddr, eeprom + FE_ATI_EEP_ADDR, ETHER_ADDR_LEN);
 
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
