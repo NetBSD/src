@@ -1,5 +1,5 @@
-.\"$Header: /cvsroot/src/share/doc/iso/wisc/Attic/parts.nr,v 1.1.1.1 1994/06/19 00:07:17 cgd Exp $
-.\"$Source: /cvsroot/src/share/doc/iso/wisc/Attic/parts.nr,v $
+.\"WISC: Header: parts.nr,v 1.1 88/12/05 18:10:50 nhall Exp $
+.\"WISC: Source: /usr/argo/doc/kernel/RCS/parts.nr,v $
 .\"
 .\"
 .\" LOOK FOR ALL CASES OF 'writing' (as in, "at this writing")
