@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.25 1996/05/19 16:44:33 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.26 1996/07/20 18:02:47 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,6 +56,7 @@
 #include <machine/pcb.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/sid.h>
 
 #include <sys/syscallargs.h>
 
@@ -562,3 +563,60 @@ cpu_swapin(p)
 	*j = 0; /* Set kernel stack red zone */
 #endif
 }
+
+#if VAX410 || VAX43
+/*
+ * vmapbuf()/vunmapbuf() only used on some vaxstations without
+ * any busadapter with MMU.
+ * XXX - This must be reworked to be effective.
+ */
+void
+vmapbuf(bp, len)
+        struct buf *bp;
+        vm_size_t len;
+{
+        vm_offset_t faddr, taddr, off, pa;
+        pmap_t fmap, tmap;
+
+	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
+		return;
+        faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+        off = (vm_offset_t)bp->b_data - faddr;
+        len = round_page(off + len);
+        taddr = kmem_alloc_wait(phys_map, len);
+        bp->b_data = (caddr_t)(taddr + off);
+        fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+        tmap = vm_map_pmap(phys_map);
+        len = len >> PGSHIFT;
+        while (len--) {
+                pa = pmap_extract(fmap, faddr);
+                if (pa == 0)
+                        panic("vmapbuf: null page frame for %x", faddr);
+                pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
+                           VM_PROT_READ|VM_PROT_WRITE, TRUE);
+                faddr += NBPG;
+                taddr += NBPG;
+        }
+}
+
+/*
+ * Free the io map PTEs associated with this IO operation.
+ * We also invalidate the TLB entries and restore the original b_addr.
+ */
+void
+vunmapbuf(bp, len)
+        struct buf *bp;
+        vm_size_t len;
+{
+        vm_offset_t addr, off;
+
+	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
+		return;
+        addr = trunc_page(bp->b_data);
+        off = (vm_offset_t)bp->b_data - addr;
+        len = round_page(off + len);
+        kmem_free_wakeup(phys_map, addr, len);
+        bp->b_data = bp->b_saveaddr;
+        bp->b_saveaddr = 0;
+}
+#endif
