@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 2001/05/30 15:24:38 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 2001/06/27 03:25:31 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -87,9 +87,9 @@ ASGLOBAL(start)
 | old-school "g0" and "g4" commands from the monitor.  (I.e., 
 | they need to be reachable using 16-bit displacements from PCs 
 | 0 and 4).
-L_g0_entry:
+ENTRY(g0_entry)
 	jra	_C_LABEL(g0_handler)
-L_g4_entry:
+ENTRY(g4_entry)
 	jra	_C_LABEL(g4_handler)
 	
 L_high_code:
@@ -105,16 +105,6 @@ L_high_code:
 	movsw	%d0, SYSTEM_ENAB	| disable all interrupts
 	movw	%d0, _C_LABEL(enable_reg_soft)
 
-| Set up our g0 and g4 handlers.  The 2 and the 6 adjust
-| the offsets to be PC-relative.
-	movl	#0, %a0
-	movw	#0x6000, %a0@+			| braw
-	movl	#(L_g0_entry-2), %d0
-	movw	%d0, %a0@+			| L_g0_entry
-	movw	#0x6000, %a0@+			| braw
-	movl	#(L_g4_entry-6), %d0
-	movw	%d0, %a0@+			| L_g4_entry
-	
 | Do bootstrap stuff needed before main() gets called.
 | Make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
@@ -922,6 +912,11 @@ ENTRY(enable_reg_or)
 	bne	1b				| install it again if the soft value changed
 	movc	%a1,%dfc		| restore dfc
 	rts
+
+/*
+ * Use common m68k 16-bit aligned copy routines.
+ */
+#include <m68k/m68k/w16copy.s>
 
 | Define some addresses, mostly so DDB can print useful info.
 | Not using _C_LABEL() here because these symbols are never
