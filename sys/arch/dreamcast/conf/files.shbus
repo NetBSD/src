@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.2 2001/04/24 19:43:25 marcus Exp $
+#	$NetBSD: files.shbus,v 1.3 2001/08/22 13:32:45 msaitoh Exp $
 #
 # Config file and device description for machine-independent SHBus code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -27,12 +27,12 @@ file	arch/sh3/dev/wdog.c		wdog	needs-flag
 #
 
 defopt	opt_sci.h	SCICONSOLE SCICN_SPEED
-device	sci
+device	sci: tty
 attach	sci at shb
 file	arch/sh3/dev/sci.c		sci needs-flag
 
 defopt	opt_scif.h	SCIFCONSOLE SCIFCN_SPEED
-device	scif
+device	scif: tty
 attach	scif at shb
 file	arch/sh3/dev/scif.c		scif needs-flag
 
