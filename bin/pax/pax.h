@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.5 1998/03/26 02:14:00 mycroft Exp $	*/
+/*	$NetBSD: pax.h,v 1.5.2.1 1999/07/07 00:00:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -244,3 +244,9 @@ typedef struct oplist {
 #define HEX	16
 #define OCT	8
 #define _PAX_	1
+
+/*
+ * Pathname base component of the temporary file template, to be created in
+ * ${TMPDIR} or, as a fall-back, _PATH_TMP.
+ */
+#define TMPFILE	"paxXXXXXX"
