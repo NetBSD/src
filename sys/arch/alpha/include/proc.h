@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.7 2000/12/14 00:38:20 mycroft Exp $ */
+/* $NetBSD: proc.h,v 1.8 2000/12/14 00:41:50 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,10 +27,12 @@
  * rights to redistribute these changes.
  */
 
-#ifdef _KERNEL
+#include <machine/frame.h>
+
 /*
  * Machine-dependent part of the proc struct for the Alpha.
  */
+struct proc;
 struct mdproc {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */
@@ -39,4 +41,3 @@ struct mdproc {
 };
 
 #define	MDP_FPUSED	0x0001		/* Process used the FPU */
-#endif
