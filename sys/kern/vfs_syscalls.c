@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.113 1998/03/01 02:22:36 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.114 1998/03/10 11:49:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1761,22 +1761,14 @@ change_owner(vp, uid, gid, p, posix_semantics)
 		goto out;
 
 #define CHANGED(x) ((x) != -1)
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller must be superuser or the call fails.
-	 */
-	if ((p->p_ucred->cr_uid != vattr.va_uid || 
-	     (CHANGED(uid) && uid != vattr.va_uid) ||
-	     (CHANGED(gid) && !groupmember(gid, p->p_ucred))) &&
-	    ((error = suser(p->p_ucred, &p->p_acflag)) != 0))
-		goto out;
-
 	newmode = vattr.va_mode;
 	if (posix_semantics) {
 		/*
-		 * POSIX/XPG semantics: clear set-user-id and set-group-id
-		 * bits, unless the caller is the super-user.
+		 * POSIX/XPG semantics: if the caller is not the super-user,
+		 * clear set-user-id and set-group-id bits.  Both POSIX and
+		 * the XPG consider the behaviour for calls by the super-user
+		 * implementation-defined; we leave the set-user-id and set-
+		 * group-id settings intact in that case.
 		 */
 		if (suser(p->p_ucred, NULL) != 0)
 			newmode &= ~(S_ISUID | S_ISGID);
