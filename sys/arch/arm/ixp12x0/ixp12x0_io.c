@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.3 2002/12/08 13:21:44 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.4 2002/12/22 11:24:07 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -123,7 +123,7 @@ struct bus_space ixp12x0_bs_tag = {
 	/* set region */
 	bs_notimpl_bs_sr_1,
 	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	generic_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
