@@ -18,10 +18,9 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: pipe.S,v 1.1 1993/10/07 00:20:57 cgd Exp $
+ *	$Id: pipe.S,v 1.2 1994/03/07 23:20:44 phil Exp $
  */
 
-#include <sys/syscall.h>
 #include <SYS.h>
 
 SYSCALL(pipe)

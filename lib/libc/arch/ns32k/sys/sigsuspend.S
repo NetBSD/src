@@ -18,10 +18,9 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sigsuspend.S,v 1.1 1993/10/07 00:21:06 cgd Exp $
+ *	$Id: sigsuspend.S,v 1.2 1994/03/07 23:20:53 phil Exp $
  */
 
-#include <sys/syscall.h>
 #include "SYS.h"
 
 ENTRY(sigsuspend)
