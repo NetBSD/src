@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2003/03/15 07:25:20 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2003/03/16 05:37:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -428,8 +428,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	const int dcache_line_size = curcpu()->ci_ci.dcache_line_size;
-	int nsegs = map->dm_nsegs;
-	bus_dma_segment_t *ds = map->dm_segs;
+	const bus_dma_segment_t *ds = map->dm_segs;
 
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
@@ -446,19 +445,20 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	while (offset >= ds->ds_len) {
 		offset -= ds->ds_len;
 		ds++;
-		nsegs--;
 	}
 	__asm __volatile("eieio");
-	for (; len > 0 && nsegs-- > 0; ds++) {
-		bus_size_t seglen = len - offset;
+	for (; len > 0; ds++) {
+		bus_size_t seglen = ds->ds_len - offset;
+		bus_addr_t addr = ds->ds_addr + offset;
 		if (seglen > len)
 			seglen = len;
+		KASSERT(ds < &map->dm_segs[map->dm_nsegs]);
 		switch (ops) {
 		case BUS_DMASYNC_PREWRITE:
 			/*
 			 * Make sure cache contents are in memory for the DMA.
 			 */
-			dcbst(ds->ds_addr, seglen, dcache_line_size);
+			dcbst(addr, seglen, dcache_line_size);
 			break;
 		case BUS_DMASYNC_PREREAD:
 			/*
@@ -466,15 +466,15 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			 * cacheline boundary, store that cacheline so we
 			 * preserve the leading content.
 			 */
-			if (ds->ds_addr & (dcache_line_size-1))
-				dcbst(ds->ds_addr, 1, 1);
+			if (addr & (dcache_line_size-1))
+				dcbst(addr, 1, 1);
 			/*
 			 * If the byte after the region to be invalidated
 			 * doesn't fall on cacheline boundary, store that
 			 * cacheline so we preserve the trailing content.
 			 */
-			if ((ds->ds_addr + seglen) & (dcache_line_size-1))
-				dcbst(ds->ds_addr + seglen, 1, 1);
+			if ((addr + seglen) & (dcache_line_size-1))
+				dcbst(addr + seglen, 1, 1);
 			__asm __volatile("sync; eieio"); /* is this needed? */
 			/* FALLTHROUGH */
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
@@ -483,7 +483,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			 * The contents will have changed, make sure to remove
 			 * them from the cache.
 			 */
-			dcbi(ds->ds_addr, seglen, dcache_line_size);
+			dcbi(addr, seglen, dcache_line_size);
 			break;
 		case BUS_DMASYNC_POSTWRITE:
 			/*
@@ -494,10 +494,11 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			/*
 			 * Force it to memory and remove from cache.
 			 */
-			dcbf(ds->ds_addr, seglen, dcache_line_size);
+			dcbf(addr, seglen, dcache_line_size);
 			break;
 		}
 		len -= seglen;
+		offset = 0;
 	}
 	__asm __volatile("sync");
 }
@@ -604,7 +605,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE |
 			    PMAP_WIRED |
-			    (flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0);
+			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0));
 		}
 	}
 
