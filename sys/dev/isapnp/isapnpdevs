@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.52 2003/03/05 13:08:27 itohy Exp $
+$NetBSD: isapnpdevs,v 1.53 2003/06/10 19:39:00 christos Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ devlogic	com	OZO8039		0	Zoom 56k flex
 devlogic	com	BRI1400		0	Boca 33.6 PnP
 devlogic	com	BRIB400		0	Boca 56k PnP
 devlogic	com	ROK0010		0	Rockwell ?
+devlogic	com	ROK3360		0	Rockwell 33.6k PnP
 devlogic	com	USR0004		0	USR Sportster 14.4k
 devlogic	com	USR0006		0	USR Sportster 33.6k
 devlogic	com	USR0009		0	USR Courier V.Everything
