@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.5 1995/04/29 00:06:43 mycroft Exp $	*/
+/*	$NetBSD: snake.h,v 1.6 1995/04/29 01:17:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -62,7 +62,7 @@ char	tbuf[1024], tcapbuf[128];
 char	*tgetstr(), *tgoto();
 int	Klength;	/* length of KX strings */
 int	chunk;		/* amount of money given at a time */
-short	ospeed;
+speed_t	ospeed;
 #ifdef	debug
 #define	cashvalue	(loot-penalty)/25
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 1995/04/29 00:06:37 mycroft Exp $	*/
+/*	$NetBSD: move.c,v 1.11 1995/04/29 01:17:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.10 1995/04/29 00:06:37 mycroft Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.11 1995/04/29 01:17:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ int CMlength;
 int NDlength;
 int BSlength;
 int delaystr[10];
-short ospeed;
+speed_t ospeed;
 
 static char str[80];
 
@@ -515,7 +515,7 @@ int t;
 {
 	int k,j;
 
-	k = ospeed * t / 300;
+	k = (ospeed * t + 100) / 200;
 	for(j=0;j<k;j++){
 		putchar(PC);
 	}
