@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.7 2001/11/13 13:14:35 lukem Exp $ */
+/* $NetBSD: bt485.c,v 1.8 2001/12/12 07:47:46 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.7 2001/11/13 13:14:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.8 2001/12/12 07:47:46 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ struct ramdac_funcs bt485_funcsstruct = {
 	NULL,			/* check_curcmap; not needed */
 	NULL,			/* set_curcmap; not needed */
 	NULL,			/* get_curcmap; not needed */
+	NULL,			/* no dot clock to set */
 };
 
 /*
