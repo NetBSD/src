@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.4 1997/10/15 05:56:13 explorer Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.5 1998/11/17 20:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,3 +68,5 @@ struct smc91cxx_softc {
 
 void	smc91cxx_attach __P((struct smc91cxx_softc *, u_int8_t *));
 int	smc91cxx_intr __P((void *));
+int	smc91cxx_enable __P((struct smc91cxx_softc *));
+void	smc91cxx_disable __P((struct smc91cxx_softc *));
