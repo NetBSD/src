@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sysent.c,v 1.30 1999/08/25 04:51:06 thorpej Exp $	*/
+/* $NetBSD: hpux_sysent.c,v 1.31 2000/08/18 19:35:18 cgd Exp $ */
 
 /*
  * System call switch table.

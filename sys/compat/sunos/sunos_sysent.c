@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sysent.c,v 1.52 2000/04/09 06:49:17 mrg Exp $	*/
+/* $NetBSD: sunos_sysent.c,v 1.53 2000/08/18 19:35:23 cgd Exp $ */
 
 /*
  * System call switch table.
