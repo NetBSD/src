@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.14 1999/12/10 19:13:00 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.15 1999/12/28 01:39:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -1597,7 +1597,7 @@ eso_mappage(hdl, addr, offs, prot)
 
 	if (offs < 0)
 		return (-1);
-	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) == addr;
+	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != addr;
 	     ed = ed->ed_next)
 		;
 	if (ed == NULL)
