@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitovar.h,v 1.1 2001/06/22 03:58:33 thorpej Exp $	*/
+/*	$NetBSD: bonitovar.h,v 1.2 2002/01/09 00:43:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@ struct bonito_config {
 
 #ifdef _KERNEL
 void	bonito_pci_init(pci_chipset_tag_t, struct bonito_config *);
+
+void	bonito_iobc_wbinv_range(paddr_t, psize_t);
+void	bonito_iobc_inv_range(paddr_t, psize_t);
 #endif /* _KERNEL */
 
 #endif /* _MIPS_BONITO_BONITOVAR_H_ */
