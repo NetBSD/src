@@ -160,6 +160,7 @@ int	getfh();
 #endif
 int	getdomainname();
 int	setdomainname();
+int	uname();
 #ifdef SYSVSHM
 int	shmsys();
 #else
@@ -404,7 +405,7 @@ struct sysent sysent[] = {
 #endif
 	2, getdomainname,			/* 162 = getdomainname */
 	2, setdomainname,			/* 163 = setdomainname */
-	0, nosys,			/* 164 = nosys */
+	1, uname,			/* 164 = uname */
 	0, nosys,			/* 165 = nosys */
 	0, nosys,			/* 166 = nosys */
 	0, nosys,			/* 167 = nosys */

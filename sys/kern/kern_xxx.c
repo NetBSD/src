@@ -38,6 +38,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include "reboot.h"
+#include "utsname.h"
 
 /* ARGSUSED */
 gethostid(p, uap, retval)
@@ -135,6 +136,19 @@ setdomainname(p, uap, retval)
 	error = copyin((caddr_t)uap->domainname, domainname, uap->len);
 	domainname[domainnamelen] = 0;
 	return (error);
+}
+
+/* ARGSUSED */
+uname(p, uap, retval)
+	struct proc *p;
+	struct args {
+		struct utsname	*name;
+	} *uap;
+	int *retval;
+{
+	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
+	utsname.nodename[sizeof(utsname.nodename)-1] = '\0';
+	return (copyout((caddr_t)&utsname, (caddr_t)uap->name, sizeof(struct utsname)));
 }
 
 /* ARGSUSED */

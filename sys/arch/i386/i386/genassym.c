@@ -35,7 +35,7 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/genassym.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/genassym.c,v 1.2 1993/05/06 10:48:11 cgd Exp $";
 
 #ifndef lint
 static char sccsid[] = "@(#)genassym.c	5.11 (Berkeley) 5/10/91";
@@ -160,5 +160,7 @@ main()
 	printf("#define\tENOENT %d\n", ENOENT);
 	printf("#define\tEFAULT %d\n", EFAULT);
 	printf("#define\tENAMETOOLONG %d\n", ENAMETOOLONG);
+	printf("#define\tCPU_386 %d\n", CPU_386);
+	printf("#define\tCPU_486 %d\n", CPU_486);
 	exit(0);
 }

@@ -28,7 +28,7 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	shutdown.o sigaction.o sigstack.o socket.o socketpair.o stat.o \
 	statfs.o swapon.o symlink.o sync.o truncate.o umask.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o getdomainname.o \
-	setdomainname.o
+	setdomainname.o uname.o
 
 PSEUDO=	_exit.o _getlogin.o
 
@@ -81,7 +81,7 @@ MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
 	shutdown.0 sigaction.0 sigprocmask.0 sigreturn.0 sigstack.0 \
 	sigsuspend.0 socket.0 socketpair.0 stat.0 statfs.0 swapon.0 \
 	symlink.0 sync.0 syscall.0 truncate.0 umask.0 unlink.0 utimes.0 \
-	vfork.0 wait.0 write.0 getdomainname.0
+	vfork.0 wait.0 write.0 getdomainname.0 uname.0
 
 MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
