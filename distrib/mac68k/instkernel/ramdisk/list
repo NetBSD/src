@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2002/04/13 04:14:22 tv Exp $
+#	$NetBSD: list,v 1.12 2002/04/13 12:55:50 lukem Exp $
 
 SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
 
@@ -19,7 +19,7 @@ PROG	bin/rm
 PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
-PROG	bin/test	bin/[
+
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -41,17 +41,20 @@ PROG	sbin/shutdown
 PROG	sbin/slattach
 PROG	sbin/swapctl	sbin/swapon
 PROG	sbin/umount
-PROG	usr/bin/gzip	usr/bin/gzcat	usr/bin/gunzip
+
 PROG	usr/bin/ftp
+PROG	usr/bin/gzip	usr/bin/gzcat	usr/bin/gunzip
 PROG	usr/bin/sed
 PROG	usr/bin/tset
-PROG	usr/bin/more
-PROG	usr/bin/less
+PROG	usr/bin/more	usr/bin/less
 #PROG	usr/bin/strings
 PROG	usr/bin/tip
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
+
+# init invokes the shell as -sh
+ARGVLN	sh	-sh
 
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
@@ -64,10 +67,6 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 
 LIBS    libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
-#LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lcrypt -ll -lm
-
-# init invokes the shell as -sh
-ARGVLN	sh	-sh
 
 # various files that we need in /etc for the install
 COPY	${_SRC_TOP_}/etc/group		etc/group
