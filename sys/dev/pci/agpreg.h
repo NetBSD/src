@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.4 2003/06/14 11:40:20 ichiro Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.5 2003/06/25 20:34:00 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -61,7 +61,7 @@
 
 /* i82443LX/BX/GX */
 #define AGP_INTEL_NBXCFG	0x50
-# define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessEN */
+# define NBXCFG_APAE		(1U << 10) /* AGPtoPCI AccessDIS */
 # define NBXCFG_AAGN		(1U << 9)  /* Aperture AccessEN */
 
 /* Error Status for i8XX Chipset */
