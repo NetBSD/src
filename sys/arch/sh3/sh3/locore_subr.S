@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.17 2003/11/24 04:59:24 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.18 2004/01/18 04:59:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,17 +46,17 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.17 2003/11/24 04:59:24 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.18 2004/01/18 04:59:52 uwe Exp $")
 
 
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * void cpu_switch(struct lwp *):
- *	Find a runnable process and switch to it.  Wait if necessary.
+ * void cpu_switch(struct lwp *)
+ *	Find a runnable lwp and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
-	/* Save current process's context to switchframe */
+	/* Save current lwp's context to switchframe */
 	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
@@ -73,15 +73,15 @@ ENTRY(cpu_switch)
 	mov.l	r14,	@-r1
 	mov.l	r15,	@-r1
 
-	/* Search next process. cpu_switch_search may or may not sleep. */
+	/* Search next lwp. cpu_switch_search may or may not sleep. */
 	mov.l	_L.cpu_switch_search, r0
 	jsr	@r0
-	 mov	r4,	r8	/* save old proc */
+	 mov	r4,	r8	/* save old lwp */
 
-	/* Skip context switch if same process. */
+	/* Skip context switch if same lwp. */
 	cmp/eq	r8,	r0
 	bt/s	1f
-	 mov	r0,	r4	/* new proc */
+	 mov	r0,	r4	/* new lwp */
 
 _L.doswitch:
 	/* Setup kernel stack */
@@ -100,7 +100,7 @@ _L.doswitch:
 	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 mov	r4,	r8	/* save new proc */
+	 mov	r4,	r8	/* save new lwp */
 	mov	r8,	r4
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
@@ -112,7 +112,7 @@ _L.doswitch:
 1:	/* Return 0 indicating "didn't switch". */
 	mov	#0, r2
 
-	/* Restore new process's context from switchframe */
+	/* Restore new lwp's context from switchframe */
 	/* NOTE: r2 has return value! */
 2:	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
@@ -141,7 +141,7 @@ FUNC_SYMBOL(switch_resume)
  *	Switch to the specified next LWP.
  */
 ENTRY(cpu_switchto)
-	/* Save current process's context to switchframe. */
+	/* Save current lwp's context to switchframe. */
 	mov.l	_L.SFp,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
@@ -186,7 +186,7 @@ _L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 
 #ifdef SH3
 /*
- * void sh3_switch_resume(sturct proc *p)
+ * void sh3_switch_resume(sturct lwp *l)
  *	Set current u-area PTE array to curupte.
  *	No need to flush any entries. it is depended on u-area mapping is
  *	wired, and its mapping never cause modified/reference fault.
@@ -209,16 +209,16 @@ _L.curupte:		.long	_C_LABEL(curupte)
 
 #ifdef SH4
 /*
- * void sh4_switch_resume(sturct proc *p)
+ * void sh4_switch_resume(sturct lwp *l)
  *	Wire u-area. invalidate TLB entry for kernel stack to prevent
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
 	mov.l	_L.UPTE,r0
-	add	r0,	r4	/* p->p_md.md_upte */
+	add	r0,	r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
 	mov	#1,	r2
-	mov.l	@r4,	r0	/* if (p->p_md.md_upte[0].addr == 0) return; */
+	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
 	tst	r0,	r0
 	bt	2f
 
