@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14 2002/01/29 10:20:36 tv Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.1 2002/05/16 13:00:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -328,6 +328,63 @@ fixobjects(void)
 	}
 	return (err);
 }     
+
+/*
+ * We have finished reading everything.  Tack the devsw down: calculate
+ * selection.
+ */
+int
+fixdevm(void)
+{
+	struct devm *dm;
+	char mstr[16];
+
+	for (dm = alldevms ; dm != NULL ; dm = dm->dm_next) {
+		if (dm->dm_opts != NULL &&
+		    !expr_eval(dm->dm_opts, fixsel, NULL))
+			continue;
+		if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
+			xerror(dm->dm_srcfile, dm->dm_srcline,
+			       "device-major of character device '%s' is "
+			       "already defined", dm->dm_name);
+			return (1);
+		}
+		(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
+		if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
+			xerror(dm->dm_srcfile, dm->dm_srcline,
+			       "device-major of character major '%d' "
+			       "is already defined", dm->dm_cmajor);
+			return (1);
+		}
+		if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
+		    ht_insert(cdevmtab, intern(mstr), dm)) {
+			panic("fixdevm: %s character major %d",
+			      dm->dm_name, dm->dm_cmajor);
+                }
+		if (dm->dm_bmajor != -1) {
+			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major of block device '%s' "
+				       "is already defined", dm->dm_name);
+				return (1);
+			}
+			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
+			if (ht_lookup(bdevmtab, intern(mstr)) != NULL) {
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major of block major '%d' "
+				       "is already defined", dm->dm_bmajor);
+				return (1);
+			}
+			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) ||
+			    ht_insert(bdevmtab, intern(mstr), dm)) {
+				panic("fixdevm: %s block major %d",
+				      dm->dm_name, dm->dm_bmajor);
+			}
+		}
+	}
+
+	return (0);
+}
 
 /*
  * Called when evaluating a needs-count expression.  Make sure the
