@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.28 2004/01/08 02:48:43 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.29 2004/06/25 14:52:36 wiz Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -674,7 +674,7 @@ usage(char *progname)
 		fprintf(stderr, "usage: rtsol [-dD] interfaces...\n");
 		fprintf(stderr, "usage: rtsol [-dD] -a\n");
 	} else {
-		fprintf(stderr, "usage: rtsold [-adDfm1] interfaces...\n");
+		fprintf(stderr, "usage: rtsold [-dDfm1] interfaces...\n");
 		fprintf(stderr, "usage: rtsold [-dDfm1] -a\n");
 	}
 	exit(1);
