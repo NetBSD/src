@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.119 2000/10/08 21:26:26 augustss Exp $
+$NetBSD: usbdevs,v 1.120 2000/10/08 23:56:53 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM GmbH
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROCKFIRE		0x0583	Rockfire
+vendor ZYXEL		0x0586	ZyXEL Communication Co.
 vendor ALCOR		0x058f	Alcor Micro, Inc.
 vendor IOMEGA		0x059b	Iomega Corp.
 vendor ATREND		0x059c	A-Trend Technology Co., Ltd.
@@ -238,6 +239,7 @@ vendor EXTENDED		0x08e9	Extended Systems, Inc.
 vendor AUTHENTEC	0x08ff	AuthenTec, Inc.
 vendor ALATION		0x0910	Alation Systems, Inc.
 vendor BIOMETRIC	0x0929	American Biometric Company
+vendor YANO		0x094f	Yano
 vendor BLUEWATER	0x0956	BlueWater Systems, Inc.
 vendor AGILENT		0x0957	Agilent Technologies, Inc.
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
@@ -261,7 +263,7 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor BELKIN2		0x1293	Belkin Components (2nd)
-vendor UMAX		0x1606	UMAX
+vendor UMAX		0x1606	UMAX Data Systems, Inc.
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics, Inc.
@@ -751,5 +753,11 @@ product WACOM INTUOSA5		0x0021	Intuos A5
 /* Y-E Data products */
 product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
+/* Yano products */
+product YANO U640MO		0x0101	U640MO-03
+
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
+
+/* ZyXEL Communication Co. products */
+product ZYXEL 980N		0x2011	Scorpion-980N keyboard
