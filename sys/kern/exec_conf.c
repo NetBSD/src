@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.11 1995/03/08 01:20:19 cgd Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.12 1995/06/11 20:22:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -86,7 +86,7 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_LINUX
 	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
-	/* linux elf should be inserted here */
+	{ ELF_HDR_SIZE, exec_linux_elf_makecmds, },	/* linux elf */
 #endif
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
