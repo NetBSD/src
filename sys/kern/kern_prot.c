@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.51 1998/12/10 15:09:18 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.52 1998/12/18 14:10:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -47,6 +47,7 @@
 #include "opt_compat_freebsd.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_sunos.h"
+#include "opt_compat_linux.h"
 #include "opt_compat_43.h"
 
 #include <sys/param.h>
@@ -71,7 +72,7 @@ sys_getpid(p, v, retval)
 
 	*retval = p->p_pid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(alpha))
+    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(__alpha__))
 	retval[1] = p->p_pptr->p_pid;
 #endif
 	return (0);
@@ -153,7 +154,7 @@ sys_getuid(p, v, retval)
 
 	*retval = p->p_cred->p_ruid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(alpha))
+    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(__alpha__))
 	retval[1] = p->p_ucred->cr_uid;
 #endif
 	return (0);
