@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.50 2003/10/23 20:55:08 mycroft Exp $	*/
+/*	$NetBSD: in_var.h,v 1.51 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
 extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern	int	in_ifaddrentries;		/* total number of addrs */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
-extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
+extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
 extern	u_long in_multihash;			/* size of hash table - 1 */
 extern	int	in_multientries;		/* total number of addrs */
