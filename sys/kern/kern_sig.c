@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.75 1998/06/28 21:34:58 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.76 1998/07/28 18:17:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1126,14 +1126,14 @@ coredump(p)
 		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
 		    (int)core.c_dsize,
 		    (off_t)core.c_cpusize, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
 		    core.c_ssize,
 		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	} else {
 		/*
 		 * vm_coredump() spits out all appropriate segments.
@@ -1148,7 +1148,7 @@ coredump(p)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
 		    (int)core.c_hdrsize, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	}
 out:
 	VOP_UNLOCK(vp, 0);
