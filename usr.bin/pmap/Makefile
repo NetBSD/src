@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/31 19:09:30 atatat Exp $
+#	$NetBSD: Makefile,v 1.1 2002/09/01 20:32:44 atatat Exp $
 
 PROG=		pmap
 BINGRP=		kmem
