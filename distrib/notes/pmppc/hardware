@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.3 2003/07/26 17:07:17 salo Exp $
+.\"$NetBSD: hardware,v 1.4 2004/02/13 10:00:55 wiz Exp $
 .
 Currently,
 .Nx*M
@@ -39,7 +39,7 @@ SMC 83c170
 Intel EtherExpress PRO/10+ PCI LAN Adapter
 .Pq Em fxp
 .It
-RealTek 8029 Ethernet
+Realtek 8029 Ethernet
 .Pq Em ne
 .It
 VIA Technologies VT86C926
@@ -48,7 +48,7 @@ VIA Technologies VT86C926
 D-Link DFE-530TX+
 .Pq Em rtk
 .It
-RealTek 8139
+Realtek 8139
 .Pq Em rtk
 .It
 Netgear FA-311
@@ -71,7 +71,7 @@ Intel
 .Pq Em fxp ,
 NE2000-compatible
 .Pq Em ne ,
-and RealTek
+and Realtek
 .Pq Em rtk
 .bullet)
 .It

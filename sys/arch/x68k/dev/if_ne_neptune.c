@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.8 2003/07/15 01:44:51 lukem Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.9 2004/02/13 10:05:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.8 2003/07/15 01:44:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.9 2004/02/13 10:05:49 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -184,7 +184,7 @@ ne_neptune_attach(parent, self, aux)
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
 		/*
-		 * Check for a RealTek 8019.
+		 * Check for a Realtek 8019.
 		 */
 		bus_space_write_1(nict, nich, ED_P0_CR,
 		    ED_CR_PAGE_0 | ED_CR_STP);
