@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.27 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.28 2001/08/02 22:40:59 assar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT|LOCKLEAF,
+	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args.umap_target, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
@@ -122,8 +122,6 @@ umapfs_mount(mp, path, data, ndp, p)
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif
-	vrele(ndp->ni_dvp);
-	ndp->ni_dvp = 0;
 
 	if (lowerrootvp->v_type != VDIR) {
 		vput(lowerrootvp);
