@@ -1,10 +1,6 @@
-/*	$NetBSD: specialreg.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.3 2003/02/26 21:29:36 fvdl Exp $	*/
 
-#ifdef _KERNEL
-#include <i386/include/specialreg.h>
-#else
-#include <i386/specialreg.h>
-#endif
+#include <x86/specialreg.h>
 
 /*
  * Extended Feature Enable Register of the x86-64

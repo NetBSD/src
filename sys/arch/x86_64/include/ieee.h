@@ -1,7 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: ieee.h,v 1.2 2003/02/26 21:29:35 fvdl Exp $	*/
 
-#ifdef _KERNEL
-#include <i386/include/ieee.h>
-#else
-#include <i386/ieee.h>
-#endif
+#include <x86/ieee.h>

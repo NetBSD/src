@@ -1,12 +1,3 @@
-/*	$NetBSD: bios32.h,v 1.1 2001/06/19 00:20:09 fvdl Exp $	*/
+/*	$NetBSD: bios32.h,v 1.2 2003/02/26 21:29:34 fvdl Exp $	*/
 
-/*
- * XXXfvdl paddr_t, etc, isn't right in bios32 structures, use explicit
- * sizes
- */
-
-#ifdef _KERNEL
-#include <i386/include/bios32.h>
-#else
-#include <i386/bios32.h>
-#endif
+#include <x86/bios32.h>

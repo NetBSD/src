@@ -1,7 +1,3 @@
-/*	$NetBSD: psl.h,v 1.1 2001/06/19 00:20:12 fvdl Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 2003/02/26 21:29:36 fvdl Exp $	*/
 
-#ifdef _KERNEL
-#include <i386/include/psl.h>
-#else
-#include <i386/psl.h>
-#endif
+#include <x86/psl.h>

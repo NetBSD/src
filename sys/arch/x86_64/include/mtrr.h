@@ -1,7 +1,3 @@
-/*      $NetBSD: mtrr.h,v 1.1 2002/06/18 08:31:42 fvdl Exp $	*/
+/*	$NetBSD: mtrr.h,v 1.2 2003/02/26 21:29:35 fvdl Exp $	*/
 
-#ifdef _KERNEL
-#include <i386/include/mtrr.h>
-#else
-#include <i386/mtrr.h>
-#endif
+#include <x86/mtrr.h>
