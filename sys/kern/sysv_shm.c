@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.65 2003/01/18 10:06:36 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.66 2003/01/30 20:03:46 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.65 2003/01/18 10:06:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.66 2003/01/30 20:03:46 atatat Exp $");
 
 #define SYSVSHM
 
@@ -302,7 +302,7 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 		else
 			return EINVAL;
 	} else {
-		/* This is just a hint to vm_mmap() about where to put it. */
+		/* This is just a hint to uvm_mmap() about where to put it. */
 		attach_va =
 		    round_page((vaddr_t)p->p_vmspace->vm_taddr +
 			MAXTSIZ + MAXDSIZ);
