@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 2003/06/14 12:58:47 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.18 2003/06/16 10:42:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,8 +56,6 @@
 
 mbr_sector_t mbr;
 
-static void md_upgrade_mbrtype (void);
-
 /* prototypes */
 
 
@@ -82,7 +80,6 @@ md_pre_disklabel(void)
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
-	md_upgrade_mbrtype();
 	return 0;
 }
 
@@ -90,7 +87,7 @@ int
 md_post_disklabel(void)
 {
 	if (rammb <= 32)
-		set_swap(diskdev, bsdlabel, 1);
+		set_swap(diskdev, bsdlabel);
 
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
@@ -132,7 +129,7 @@ int
 md_pre_update(void)
 {
 	if (rammb <= 8)
-		set_swap(diskdev, NULL, 1);
+		set_swap(diskdev, NULL);
 	return 1;
 }
 
@@ -144,39 +141,12 @@ md_update(void)
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
-	md_upgrade_mbrtype();
 	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
 	return 1;
 }
-
-void
-md_upgrade_mbrtype(void)
-{
-	struct mbr_partition *mbrp;
-	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
-
-	if (read_mbr(diskdev, &mbr) < 0)
-		return;
-
-	mbrp = &mbr.mbr_parts[0];
-
-	for (i = 0; i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
-			oldbsdpart = i;
-			oldbsdcount++;
-		} else if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
-			netbsdpart = i;
-	}
-
-	if (netbsdpart == -1 && oldbsdcount == 1) {
-		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, &mbr, 0);
-	}
-}
-
 
 
 void

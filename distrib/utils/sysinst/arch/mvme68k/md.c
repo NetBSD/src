@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2003/06/13 11:57:32 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2003/06/16 10:42:51 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,7 +126,7 @@ md_post_disklabel(void)
 {
 
 	if (rammb < 6)
-		set_swap(diskdev, bsdlabel, 1);
+		set_swap(diskdev, bsdlabel);
 
 	return (0);
 }
@@ -250,7 +250,7 @@ md_pre_update()
 {
 
 	if (rammb < 6)
-		set_swap(diskdev, NULL, 1);
+		set_swap(diskdev, NULL);
 	return (1);
 }
 
