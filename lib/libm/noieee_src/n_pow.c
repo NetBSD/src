@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.5 2000/07/14 04:51:01 matt Exp $ */
+/*      $NetBSD: n_pow.c,v 1.5.2.1 2002/06/18 13:40:57 lukem Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -122,18 +122,18 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 #define infnan(x)	0.0
 #endif		/* __vax__ or tahoe */
 
-const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
+static const double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
-static double pow_P __P((double, double));
+static double pow_P (double, double);
 
-float powf(x,y)
-float x,y;
+float
+powf(float x, float y)
 {
    return pow((double) x, (double) (y));
 }
 
-double pow(x,y)
-double x,y;
+double
+pow(double x, double y)
 {
 	double t;
 	if (y==zero)
@@ -174,13 +174,10 @@ double x,y;
 	else
 		return (infnan(EDOM));
 }
+
 /* kernel function for x >= 0 */
 static double
-#ifdef _ANSI_SOURCE
 pow_P(double x, double y)
-#else
-pow_P(x, y) double x, y;
-#endif
 {
 	struct Double s, t;
 	double  huge = 1e300, tiny = 1e-300;
