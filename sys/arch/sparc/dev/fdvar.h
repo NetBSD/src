@@ -1,5 +1,5 @@
 /*
- *	$NetBSD: fdvar.h,v 1.5 1996/12/08 23:40:34 pk Exp $
+ *	$NetBSD: fdvar.h,v 1.6 1997/10/19 22:29:23 pk Exp $
  *
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -31,7 +31,7 @@
  *
  */
 
-#define	FDC_BSIZE	512
+#define	FD_BSIZE(fd)	(128 * (1 << fd->sc_type->secsize))
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
 
 #define FDC_NSTATUS	10
