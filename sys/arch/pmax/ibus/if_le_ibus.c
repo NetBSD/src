@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.1.2.2 1999/03/19 08:19:20 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 /*
- * LANCE on Decstation kn01/kn230 baseboard.
+ * LANCE on DECstation 3100 and DECsystem 5100 baseboard.
  */
 #include "opt_inet.h"
 
@@ -42,8 +42,6 @@
 #include <dev/ic/am7990var.h>
 
 #include <dev/tc/if_levar.h>
-#include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
 
@@ -52,20 +50,7 @@ extern void le_dec_copytobuf_gap2 __P((struct lance_softc *, void *,
 extern void le_dec_copyfrombuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_ddb.h"
-#endif
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-hide void le_dec_zerobuf_gap2 __P((struct lance_softc *, int, int));
-
+void le_dec_zerobuf_gap2 __P((struct lance_softc *, int, int));
 
 int	le_pmax_match __P((struct device *, struct cfdata *, void *));
 void	le_pmax_attach __P((struct device *, struct device *, void *));
@@ -96,17 +81,17 @@ le_pmax_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (void *)self;
-	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	register u_char *cp;
-	register struct ibus_attach_args *ia = aux;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	u_char *cp;
+	struct ibus_attach_args *ia = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
-/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
-/*XXX*/	cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
+/*XXX*/	sc->sc_mem = (void *)MIPS_PHYS_TO_KSEG1(0x19000000);
+/*XXX*/	cp = (u_char *)(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK) + 1);
 
 	sc->sc_copytodesc = le_dec_copytobuf_gap2;
 	sc->sc_copyfromdesc = le_dec_copyfrombuf_gap2;
