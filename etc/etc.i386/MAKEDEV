@@ -65,7 +65,7 @@
 #	lkm	loadable kernel modules interface
 #
 
-PATH=/sbin:/bin/:/usr/bin
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 for i
 do
