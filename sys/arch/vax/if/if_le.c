@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1996/10/11 01:50:29 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1996/10/13 03:34:53 christos Exp $	*/
 
 #define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -228,7 +228,7 @@ lewritereg(regptr, val)
 		*regptr = val;
 		wbflush();
 		if (++i > 10000) {
-			kprintf("le: Reg did not settle (to x%x): x%x\n", val,
+			printf("le: Reg did not settle (to x%x): x%x\n", val,
 			    *regptr);
 			return;
 		}

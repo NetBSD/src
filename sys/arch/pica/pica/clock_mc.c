@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.2 1996/10/10 23:45:21 christos Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.3 1996/10/13 03:31:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,7 +96,7 @@ mcclock_attach(parent, self, aux)
 	register volatile struct chiptime *c;
 	struct confargs *ca = aux;
 
-	kprintf(": mc146818 or compatible");
+	printf(": mc146818 or compatible");
 
 	csc->sc_init = mcclock_init;
 	csc->sc_get = mcclock_get;
@@ -114,7 +114,7 @@ mcclock_attach(parent, self, aux)
 		break;
 
 	default:
-		kprintf("\n");
+		printf("\n");
 		panic("don't know how to set up for other system types.");
 	}
 

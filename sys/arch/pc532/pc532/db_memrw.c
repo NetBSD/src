@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1996/10/11 00:41:14 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1996/10/13 03:30:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -131,7 +131,7 @@ db_write_text(addr, size, data)
 		firstpage:
 			oldpte = *(pt_entry_t *)pmap_pte(pmap_kernel(), pgva);
 			if ((oldpte & PG_V) == 0) {
-				kprintf(" address 0x%x not a valid page\n", dst);
+				printf(" address 0x%x not a valid page\n", dst);
 				return;
 			}
 			tmppte = oldpte | PG_RW;

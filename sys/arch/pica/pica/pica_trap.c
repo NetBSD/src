@@ -1,4 +1,4 @@
-/*	$NetBSD: pica_trap.c,v 1.3 1996/10/10 23:45:38 christos Exp $	*/
+/*	$NetBSD: pica_trap.c,v 1.4 1996/10/13 03:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,7 +166,7 @@ pica_errintr()
 	csr = *sysCSRPtr;
 
 	if (csr & KN01_CSR_MERR) {
-		kprintf("Memory error at 0x%x\n",
+		printf("Memory error at 0x%x\n",
 			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1996/10/10 23:45:33 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1996/10/13 03:31:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -88,7 +88,7 @@ mbattach(parent, self, aux)
 	struct confargs nca;
 	extern int cputype, ncpus;
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_MAIN;

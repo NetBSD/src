@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.3 1996/10/11 01:51:49 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.4 1996/10/13 03:36:11 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -238,7 +238,7 @@ hdcmatch(parent, match, aux)
 	 * only(?) VS2000/KA410 has exactly one HDC9224 controller
 	 */
 	if (vax_boardtype != VAX_BTYP_410) {
-		kprintf ("unexpected boardtype 0x%x in hdcmatch()\n", 
+		printf ("unexpected boardtype 0x%x in hdcmatch()\n", 
 			vax_boardtype);
 		return (0);
 	}
@@ -262,7 +262,7 @@ rdprint(aux, name)
 	trace(("rdprint(%d, %s)\n", ha->ha_drive, name));
 
 	if (!name)
-		kprintf (" drive %d", ha->ha_drive);
+		printf (" drive %d", ha->ha_drive);
 	return (QUIET);
 }
 
@@ -280,7 +280,7 @@ hdcattach(parent, self, aux)
 
 	trace(("hdcattach(0x%x, 0x%x, %s)\n", parent, self, ca->ca_name));
 
-	kprintf ("\n");
+	printf ("\n");
 	/*
 	 * first reset/initialize the controller
 	 */
@@ -302,7 +302,7 @@ hdcattach(parent, self, aux)
 	if (hdc_reset(sc) != 0) {
 		delay(500*1000);	/* wait .5 seconds */
 		if (hdc_reset(sc) != 0)
-			kprintf ("problems with hdc_reset()...\n");
+			printf ("problems with hdc_reset()...\n");
 	}
 
 	/*
@@ -346,7 +346,7 @@ rdmatch(parent, match, aux)
 		res = hdc_select(hdc, drive);
 		break;
 	default:
-		kprintf ("rdmatch: invalid unit-number %d\n", drive);
+		printf ("rdmatch: invalid unit-number %d\n", drive);
 		return (0);
 	}
 
@@ -381,13 +381,13 @@ rdattach(parent, self, aux)
 	 * if it's not a floppy then evaluate the on-disk geometry.
 	 * if neccessary correct the label...
 	 */
-	kprintf("\n%s: ", rd->sc_dev.dv_xname);
+	printf("\n%s: ", rd->sc_dev.dv_xname);
 	if (rd->sc_drive == 2) {
-		kprintf("floppy (RX33)\n");
+		printf("floppy (RX33)\n");
 	}
 	else {
 		hdc_getdata(hdc, rd, rd->sc_drive);
-		kprintf("%s, %d MB, %d LBN, %d cyl, %d head, %d sect/track\n",
+		printf("%s, %d MB, %d LBN, %d cyl, %d head, %d sect/track\n",
 		       rp->diskname, rp->diskblks/2048, rp->disklbns, 
 		       rp->cylinders, rp->heads, rp->sectors);
 	}
@@ -591,15 +591,15 @@ hdc_printgeom(p)
 	char dname[8];
 	hdc_mid2str(p->media_id, dname);
 
-	kprintf ("**DiskData**	 XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
+	printf ("**DiskData**	 XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
 		p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);
-	kprintf ("sec/track: %d, tracks: %d, cyl: %d, precomp/reduced: %d/%d\n",
+	printf ("sec/track: %d, tracks: %d, cyl: %d, precomp/reduced: %d/%d\n",
 		p->nspt, p->ntracks, p->ncylinders, p->precomp, p->reduced);
-	kprintf ("seek-rate: %d, crc/eec: %s, RCT: %d, RCT-copies: %d\n",
+	printf ("seek-rate: %d, crc/eec: %s, RCT: %d, RCT-copies: %d\n",
 		p->seek_rate, p->crc_eec?"EEC":"CRC", p->rct, p->rct_ncopies);
-	kprintf ("media-ID: %s, interleave: %d, headskew: %d, cylskew: %d\n",
+	printf ("media-ID: %s, interleave: %d, headskew: %d, cylskew: %d\n",
 		dname, p->interleave, p->headskew, p->cylskew);
-	kprintf ("gap0: %d, gap1: %d, gap2: %d, gap3: %d, sync-value: %d\n",
+	printf ("gap0: %d, gap1: %d, gap2: %d, gap3: %d, sync-value: %d\n",
 		p->gap0_size, p->gap1_size, p->gap2_size, p->gap3_size, 
 		p->sync_value);
 }
@@ -624,7 +624,7 @@ hdc_mid2str(media_id, name)
 
 #define MIDCHR(x)	(x ? x + '@' : ' ')
 
-	ksprintf (name, "%c%c%d", MIDCHR(p->a0), MIDCHR(p->a1), p->mt);
+	sprintf (name, "%c%c%d", MIDCHR(p->a0), MIDCHR(p->a1), p->mt);
 }
 
 int
@@ -688,7 +688,7 @@ hdc_getlabel(hdc, rd, unit)
 	trace (("hdc_getlabel(%d)\n", unit));
 
 #define LBL_CHECK(x)	if (xp->x != lp->x) {			\
-			  kprintf ("%d-->%d\n", xp->x, lp->x);	\
+			  printf ("%d-->%d\n", xp->x, lp->x);	\
 			  xp->x = lp->x;			\
 			}
 	res = hdc_strategy(hdc, rd, unit, F_READ, 0, DEV_BSIZE, hdc_iobuf);
@@ -747,12 +747,12 @@ hdcopen (dev, flag, fmt)
 	trace (("hdcopen(0x%x = %d/%d)\n", dev, unit, part));
 
 	if (unit >= rd_cd.cd_ndevs) {
-		kprintf ("hdcopen: invalid unit %d\n", unit);
+		printf ("hdcopen: invalid unit %d\n", unit);
 		return ENXIO;
 	}
 	rd = rd_cd.cd_devs[unit];
 	if (!rd) {
-		kprintf("hdcopen: null-pointer in rdsoftc.\n");
+		printf("hdcopen: null-pointer in rdsoftc.\n");
 		return (ENXIO);
 	}
 	hdc = (void *)rd->sc_dev.dv_parent;
@@ -860,7 +860,7 @@ hdcioctl(dev, cmd, data, flag, p)
 	default:
 		if (HDCPART(dev) != RAW_PART)
 			return ENOTTY;
-		kprintf ("IOCTL %x not implemented.\n", cmd);
+		printf ("IOCTL %x not implemented.\n", cmd);
 		return (-1);
 	}
 }
@@ -973,7 +973,7 @@ hdc_command(sc, cmd)
 			break;
 	}
 	if ((c & INTR_DC) == 0) {
-		kprintf ("hdc_command: timeout in command 0x%x\n", cmd);
+		printf ("hdc_command: timeout in command 0x%x\n", cmd);
 	}
 	hdc_readregs(sc);		/* read the status registers */
 	sc->sc_status = sc->sc_dkc->dkc_stat;
@@ -984,7 +984,7 @@ hdc_command(sc, cmd)
 	}
 
 	if (sc->sc_status != DKC_ST_DONE|DKC_TC_SUCCESS) {
-		kprintf ("command 0x%x completed with status 0x%x\n",
+		printf ("command 0x%x completed with status 0x%x\n",
 			cmd, sc->sc_status);
 		return (-1);
 	}
@@ -1006,7 +1006,7 @@ hdc_reset(sc)
 	hdc_readregs(sc);			/* read the status registers */
 	sc->sc_status = sc->sc_dkc->dkc_stat;
 	if (sc->sc_status != DKC_ST_DONE|DKC_TC_SUCCESS) {
-		kprintf ("RESET command completed with status 0x%x\n",
+		printf ("RESET command completed with status 0x%x\n",
 			sc->sc_status);
 		return (-1);
 	}
@@ -1044,12 +1044,12 @@ hdc_rxselect(sc, unit)
 	error = hdc_command (sc, DKC_CMD_DRSEL_RX33 | unit);
 
 	if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
-	  kprintf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
+	  printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
 	  p->udc_rtcnt &= ~UDC_RC_INVRDY;	/* clear INVRDY-flag */
 	  error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
 	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
-	    kprintf("diskette not ready(1): %x/%x\n", error, q->udc_dstat);
-	    kprintf("floppy-drive offline?\n");
+	    printf("diskette not ready(1): %x/%x\n", error, q->udc_dstat);
+	    printf("floppy-drive offline?\n");
 	    return (-1);
 	  }
 
@@ -1059,19 +1059,19 @@ hdc_rxselect(sc, unit)
 	    error = hdc_command(sc, DKC_CMD_STEPOUT_FDD);  /* step outwards */
 
 	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 1)) {
-	    kprintf("diskette not ready(2): %x/%x\n", error, q->udc_dstat);
-	    kprintf("No floppy inserted or drive offline\n");
+	    printf("diskette not ready(2): %x/%x\n", error, q->udc_dstat);
+	    printf("No floppy inserted or drive offline\n");
 	    /* return (-1); */
 	  }
 
 	  p->udc_rtcnt |= UDC_RC_INVRDY;
 	  error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
 	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
-	    kprintf("diskette not ready(3): %x/%x\n", error, q->udc_dstat);
-	    kprintf("no floppy inserted or floppy-door open\n");
+	    printf("diskette not ready(3): %x/%x\n", error, q->udc_dstat);
+	    printf("no floppy inserted or floppy-door open\n");
 	    return(-1);
 	  }
-	  kprintf("floppy-drive reselected.\n");
+	  printf("floppy-drive reselected.\n");
 	}
 	if (error)
 		error = hdc_command (sc, DKC_CMD_DRSEL_RX33 | unit);
@@ -1134,7 +1134,7 @@ hdc_select(sc, unit)
 		/* bertram: delay ??? XXX */
 		break;
 	default:
-		kprintf("invalid unit %d in hdc_select()\n", unit);
+		printf("invalid unit %d in hdc_select()\n", unit);
 		error = -1;
 	}
 

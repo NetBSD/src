@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.4 1996/10/11 01:50:41 christos Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.5 1996/10/13 03:35:07 christos Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -158,7 +158,7 @@ mscp_attach(parent, self, aux)
 	mi->mi_actb = (void *)&mi->mi_actf;
 
 	if (mscp_init(mi)) {
-		kprintf("%s: can't init, controller hung\n",
+		printf("%s: can't init, controller hung\n",
 		    mi->mi_dev.dv_xname);
 		return;
 	}
@@ -199,7 +199,7 @@ findunit:
 		if (mp->mscp_opcode)
 			goto gotit;
 	}
-	kprintf("%s: no response to Get Unit Status request\n",
+	printf("%s: no response to Get Unit Status request\n",
 	    mi->mi_dev.dv_xname);
 	return;
 
@@ -246,7 +246,7 @@ gotit:	/*
                         /*
                          * In service, or something else equally unusable.
                          */
-                        kprintf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
+                        printf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
                                 mp->mscp_unit);
                         mscp_printevent((struct mscp *)mp);
 			next++;
@@ -255,7 +255,7 @@ gotit:	/*
                 break;
 
         default:
-                kprintf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
+                printf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
                 mscp_printevent((struct mscp *)mp);
                 return;
         }
@@ -330,12 +330,12 @@ mscp_init(mi)
                 return 1;
         }
 	i = *mi->mi_sa & 0377;
-	kprintf(": version %d model %d\n", i & 15, i >> 4);
+	printf(": version %d model %d\n", i & 15, i >> 4);
 
 #define	BURST 4	/* XXX */
 	if (mi->mi_type & MSCPBUS_UDA) {
 		*mi->mi_sw = MP_GO | (BURST - 1) << 2;
-		kprintf("%s: DMA burst size set to %d\n", 
+		printf("%s: DMA burst size set to %d\n", 
 		    mi->mi_dev.dv_xname, BURST);
 	}
 	*mi->mi_sw = MP_GO;
@@ -371,7 +371,7 @@ mscp_init(mi)
         }
 	if (count == DELAYTEN) {
 out:
-		kprintf("%s: couldn't set ctlr characteristics, sa=%x\n", 
+		printf("%s: couldn't set ctlr characteristics, sa=%x\n", 
 		    mi->mi_dev.dv_xname, j);
 		return 1;
 	}
@@ -475,7 +475,7 @@ mscp_strategy(bp, dp, usc)
 	 */
 	if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 		if (mi->mi_credits > MSCP_MINCREDITS)
-			kprintf("%s: command ring too small, can't handle\n",
+			printf("%s: command ring too small, can't handle\n",
 			    mi->mi_dev.dv_parent->dv_xname);
 			panic("mscp_strategy");
 	}
@@ -489,7 +489,7 @@ mscp_strategy(bp, dp, usc)
 
 	j = (*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent);
 	if (j == 0) {
-		kprintf("Lacking uba resources, fix mscp driver\n");
+		printf("Lacking uba resources, fix mscp driver\n");
 		panic("mscp_strategy");
 	}
 
@@ -544,8 +544,8 @@ mscp_hexdump(mp)
 		i = 256;
 	i /= sizeof (*p);	/* ASSUMES MULTIPLE OF sizeof(long) */
 	while (--i >= 0)
-		kprintf("0x%x ", (int)*p++);
-	kprintf("\n");
+		printf("0x%x ", (int)*p++);
+	printf("\n");
 }
 
 
@@ -754,7 +754,7 @@ mscp_printevent(mp)
 		else
 			scm = cdc->cdc_submsgs[sc];
 	}
-	kprintf(" %s (%s) (code %d, subcode %d)\n", cm, scm, c, sc);
+	printf(" %s (%s) (code %d, subcode %d)\n", cm, scm, c, sc);
 }
 
 static char *codemsg[16] = {
@@ -793,7 +793,7 @@ mscp_decodeerror(name, mp, mi)
 #define BADCODE(h)	(codemsg[(unsigned)(h) >> 28])
 #define BADLBN(h)	((h) & 0xfffffff)
 
-	kprintf("%s: drive %d %s error datagram%s:", name, mp->mscp_unit,
+	printf("%s: drive %d %s error datagram%s:", name, mp->mscp_unit,
 		issoft ? "soft" : "hard",
 		mp->mscp_flags & M_LF_CONT ? " (continuing)" : "");
 	switch (mp->mscp_format & 0377) {
@@ -802,11 +802,11 @@ mscp_decodeerror(name, mp, mi)
 		break;
 
 	case M_FM_BUSADDR:	/* host memory access error */
-		kprintf(" memory addr 0x%x:", (int)mp->mscp_erd.erd_busaddr);
+		printf(" memory addr 0x%x:", (int)mp->mscp_erd.erd_busaddr);
 		break;
 
 	case M_FM_DISKTRN:
-		kprintf(" unit %d: level %d retry %d, %s %d:",
+		printf(" unit %d: level %d retry %d, %s %d:",
 			mp->mscp_unit,
 			mp->mscp_erd.erd_level, mp->mscp_erd.erd_retry,
 			BADCODE(mp->mscp_erd.erd_hdr),
@@ -814,28 +814,28 @@ mscp_decodeerror(name, mp, mi)
 		break;
 
 	case M_FM_SDI:
-		kprintf(" unit %d: %s %d:", mp->mscp_unit,
+		printf(" unit %d: %s %d:", mp->mscp_unit,
 			BADCODE(mp->mscp_erd.erd_hdr),
 			(int)BADLBN(mp->mscp_erd.erd_hdr));
 		break;
 
 	case M_FM_SMLDSK:
-		kprintf(" unit %d: small disk error, cyl %d:",
+		printf(" unit %d: small disk error, cyl %d:",
 			mp->mscp_unit, mp->mscp_erd.erd_sdecyl);
 		break;
 
 	case M_FM_TAPETRN:
-		kprintf(" unit %d: tape transfer error, grp 0x%x event 0%o:",
+		printf(" unit %d: tape transfer error, grp 0x%x event 0%o:",
 		    mp->mscp_unit, mp->mscp_erd.erd_sdecyl, mp->mscp_event);
 		break;
 
 	case M_FM_STIERR:
-		kprintf(" unit %d: STI error, event 0%o:", mp->mscp_unit,
+		printf(" unit %d: STI error, event 0%o:", mp->mscp_unit,
 		    mp->mscp_event);
 		break;
 
 	default:
-		kprintf(" unit %d: unknown error, format 0x%x:",
+		printf(" unit %d: unknown error, format 0x%x:",
 			mp->mscp_unit, mp->mscp_format);
 	}
 	mscp_printevent(mp);
@@ -851,9 +851,9 @@ void
 mscp_printtype(unit, type)
 	int unit, type;
 {
-	kprintf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
+	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
 	    MSCP_MID_CHAR(1, type));
 	if (MSCP_MID_ECH(0, type))
-		kprintf("%c", MSCP_MID_CHAR(0, type));
-	kprintf("%d\n", MSCP_MID_NUM(type));
+		printf("%c", MSCP_MID_CHAR(0, type));
+	printf("%d\n", MSCP_MID_NUM(type));
 }

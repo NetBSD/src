@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.3 1996/10/11 01:50:24 christos Exp $ */
+/*	$NetBSD: kdb.c,v 1.4 1996/10/13 03:34:47 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -109,7 +109,7 @@ kdbprint(aux, name)
 	const char	*name;
 {
 	if (name)
-		kprintf("%s: mscpbus", name);
+		printf("%s: mscpbus", name);
 	return UNCONF;
 }
 
@@ -144,7 +144,7 @@ kdbattach(parent, self, aux)
 	extern  struct ivec_dsp idsptch;
 	volatile int i = 10000;
 
-	kprintf("\n");
+	printf("\n");
 	bcopy(&idsptch, &sc->sc_ivec, sizeof(struct ivec_dsp));
 	scb->scb_nexvec[1][ba->ba_nodenr] = &sc->sc_ivec;
 	sc->sc_ivec.hoppaddr = kdbintr;
@@ -252,7 +252,7 @@ kdbsaerror(usc, doreset)
 
 	if ((code & MP_ERR) == 0)
 		return;
-	kprintf("%s: controller error, sa=0x%x\n", sc->sc_dev.dv_xname, code);
+	printf("%s: controller error, sa=0x%x\n", sc->sc_dev.dv_xname, code);
 	/* What to do now??? */
 }
 
@@ -288,7 +288,7 @@ kdbreset(ctlr)
 	register struct kdb_softc *sc;
 
 	sc = kdb_cd.cd_devs[ctlr];
-	kprintf(" kdb%d", ctlr);
+	printf(" kdb%d", ctlr);
 
 
 	/* reset queues and requeue pending transfers */
@@ -301,7 +301,7 @@ kdbreset(ctlr)
 	 * initialisation.
 	 */
 	if (kdbinit(sc))
-		kprintf(" (hung)");
+		printf(" (hung)");
 }
 #endif
 

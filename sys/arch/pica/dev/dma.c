@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.5 1996/10/10 23:44:54 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.6 1996/10/13 03:31:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -331,7 +331,7 @@ picaDmaNull(dma_softc_t *sc)
 {
 	pDmaReg regs = sc->dma_reg;
 
-	kprintf("picaDmaNull called\n");
+	printf("picaDmaNull called\n");
 }
 
 /*
@@ -342,7 +342,7 @@ picaEnIntrNull(dma_softc_t *sc)
 {
 	pDmaReg regs = sc->dma_reg;
 
-	kprintf("picaEnIntrNull called\n");
+	printf("picaEnIntrNull called\n");
 }
 
 

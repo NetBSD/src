@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1996/10/10 23:41:29 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1996/10/13 03:30:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,7 +135,7 @@ mainbus_attach(parent, self, args)
 	char **devices;
 	int i;
 
-	kprintf("\n");
+	printf("\n");
 
 	/*
 	 * Attach children appropriate for this CPU.
@@ -177,7 +177,7 @@ mainbus_print(aux, cp)
 	char *devname = aux;
 
 	if (cp)
-		kprintf("%s at %s", devname, cp);
+		printf("%s at %s", devname, cp);
 
 	return (UNCONF);
 }
@@ -255,17 +255,17 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		kprintf("use one of:");
+		printf("use one of:");
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
-				kprintf(" %s[a-h]", dv->dv_xname);
+				printf(" %s[a-h]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				kprintf(" %s", dv->dv_xname);
+				printf(" %s", dv->dv_xname);
 #endif
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 	return (dv);
 }
@@ -340,18 +340,18 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
-	kprintf("boot device: %s\n",
+	printf("boot device: %s\n",
 		(bootdv) ? bootdv->dv_xname : "<unknown>");
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			kprintf("root device ");
+			printf("root device ");
 			if (bootdv != NULL)
-				kprintf("(default %s%c)",
+				printf("(default %s%c)",
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK
 						? 'a' : ' ');
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
@@ -381,12 +381,12 @@ setroot()
 			goto gotswap;
 		}
 		for (;;) {
-			kprintf("swap device ");
+			printf("swap device ");
 			if (bootdv != NULL)
-				kprintf("(default %s%c)",
+				printf("(default %s%c)",
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
@@ -468,12 +468,12 @@ gotswap:
 		mountroot = ffs_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
-		kprintf("root on %s%c\n", bootdv->dv_xname,
+		printf("root on %s%c\n", bootdv->dv_xname,
 		    (mindev & PARTITIONMASK) + 'a');
 		break;
 #endif
 	default:
-		kprintf("can't figure root, hope your kernel is right\n");
+		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
 
@@ -518,7 +518,7 @@ getstr(cp, size)
 		switch (c) {
 		case '\n':
 		case '\r':
-			kprintf("\n");
+			printf("\n");
 			*lp++ = '\0';
 			return (len);
 		case '\b':
@@ -527,21 +527,21 @@ getstr(cp, size)
 			if (len) {
 				--len;
 				--lp;
-				kprintf("\b \b");
+				printf("\b \b");
 			}
 			continue;
 		case '@':
 		case 'u'&037:
 			len = 0;
 			lp = cp;
-			kprintf("\n");
+			printf("\n");
 			continue;
 		default:
 			if (len + 1 >= size || c < ' ') {
-				kprintf("\007");
+				printf("\007");
 				continue;
 			}
-			kprintf("%c", c);
+			printf("%c", c);
 			++len;
 			*lp++ = c;
 		}
@@ -562,7 +562,7 @@ getdevunit(name, unit)
 	int lunit;
 
 	/* compute length of name and decimal expansion of unit number */
-	ksprintf(num, "%d", unit);
+	sprintf(num, "%d", unit);
 	lunit = strlen(num);
 	if (strlen(name) + lunit >= sizeof(fullname) - 1)
 		panic("config_attach: device name too long");

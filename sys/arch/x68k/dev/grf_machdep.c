@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.4 1996/10/11 00:39:26 christos Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.5 1996/10/13 03:34:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -123,7 +123,7 @@ grfbusattach(pdp, dp, auxp)
 		i = 0;
 		x68k_config_found(cfdata_gbus, NULL, (void*)&i, grfbusprint);
 	} else {
-		kprintf("\n");
+		printf("\n");
 		config_scan(grfbusscan, dp);
 	}
 }
@@ -202,13 +202,13 @@ grfattach(parent, dp, aux)
 		return;
 	}
 	gp = (struct grf_softc *)dp;
-	kprintf(": %d x %d ", gp->g_display.gd_dwidth,
+	printf(": %d x %d ", gp->g_display.gd_dwidth,
 	    gp->g_display.gd_dheight);
 	if (gp->g_display.gd_colors == 2)
-		kprintf("monochrome");
+		printf("monochrome");
 	else
-		kprintf("%d colors", gp->g_display.gd_colors);
-	kprintf(" %s display\n", gp->g_sw->gd_desc);
+		printf("%d colors", gp->g_display.gd_colors);
+	printf(" %s display\n", gp->g_sw->gd_desc);
 
 	/*
 	 * try and attach an ite
@@ -222,7 +222,7 @@ void *auxp;
 const char *pnp;
 {
 	if(pnp)
-		kprintf("ite at %s", pnp);
+		printf("ite at %s", pnp);
 	return(UNCONF);
 }
 

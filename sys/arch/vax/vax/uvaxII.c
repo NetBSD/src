@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.9 1996/10/11 01:51:37 christos Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Gordon W. Ross 
@@ -94,7 +94,7 @@ uvaxII_conf(parent, self, aux)
 		strcpy(cpu_model, "MicroVAX 78032/78132");
 		break;
 	};
-	kprintf(": %s\n", cpu_model);
+	printf(": %s\n", cpu_model);
 }
 
 int
@@ -108,7 +108,7 @@ uvaxII_clock()
 void
 uvaxII_memerr()
 {
-	kprintf("memory err!\n");
+	printf("memory err!\n");
 }
 
 #define NMC78032 10
@@ -134,19 +134,19 @@ uvaxII_mchk(cmcf)
 	register struct mc78032frame *mcf = (struct mc78032frame *)cmcf;
 	register u_int type = mcf->mc63_summary;
 
-	kprintf("machine check %x", type);
+	printf("machine check %x", type);
 	if (type < NMC78032 && mc78032[type])
-		kprintf(": %s", mc78032[type]);
-	kprintf("\n\tvap %x istate %x pc %x psl %x\n",
+		printf(": %s", mc78032[type]);
+	printf("\n\tvap %x istate %x pc %x psl %x\n",
 	    mcf->mc63_mrvaddr, mcf->mc63_istate,
 	    mcf->mc63_pc, mcf->mc63_psl);
 	if (uvaxIIcpu_ptr && uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_MERR) {
-		kprintf("\tmser=0x%x ", (int)uvaxIIcpu_ptr->uvaxII_mser);
+		printf("\tmser=0x%x ", (int)uvaxIIcpu_ptr->uvaxII_mser);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_CPUE)
-			kprintf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_cear);
+			printf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_cear);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_DQPE)
-			kprintf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_dear);
-		kprintf("\n");
+			printf("page=%d", (int)uvaxIIcpu_ptr->uvaxII_dear);
+		printf("\n");
 	}
 	return (-1);
 }
@@ -219,7 +219,7 @@ ka630_clkread(stopped_flag)
 		/* simple sanity checks */
 		if (wt.wat_month < 1 || wt.wat_month > 12 ||
 		    wt.wat_day < 1 || wt.wat_day > 31) {
-			kprintf("WARNING: preposterous clock chip time.\n");
+			printf("WARNING: preposterous clock chip time.\n");
 			year_secs = 0;
 		} else
 			wat_to_gmt (&wt, &year_secs);
@@ -230,7 +230,7 @@ ka630_clkread(stopped_flag)
 		return (year_secs);
 	}
 
-	kprintf("WARNING: TOY clock invalid.\n");
+	printf("WARNING: TOY clock invalid.\n");
 	return (0);
 }
 

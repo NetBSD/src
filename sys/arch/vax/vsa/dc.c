@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.3 1996/10/11 01:51:46 christos Exp $	*/
+/*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -234,7 +234,7 @@ dcmatch(parent, match, aux)
 	 * old config is completely gone.  Don't  over-run softc.
 	 */
 	if (nunits > NDC) {
-		kprintf("dc: too many units for old config\n");
+		printf("dc: too many units for old config\n");
 		return (0);
 	}
 	nunits++;
@@ -260,7 +260,7 @@ dcattach(parent, self, aux)
 	vsbus_intr_register(ca, dcintr, self);
 	vsbus_intr_enable(ca);
 #endif
-	kprintf("\n");
+	printf("\n");
 }
 
 /*
@@ -965,7 +965,7 @@ dcPutc(dev, c)
 		while (!(dcaddr->dc_csr & CSR_TRDY) && timeout > 0)
 			timeout--;
 		if (timeout == 0) {
-			kprintf("dcPutc: timeout waiting for CSR_TRDY\n");
+			printf("dcPutc: timeout waiting for CSR_TRDY\n");
 			break;
 		}
 		line = (dcaddr->dc_csr >> 8) & 3;

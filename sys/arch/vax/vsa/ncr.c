@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.4 1996/10/11 01:51:52 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.5 1996/10/13 03:36:14 christos Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -287,7 +287,7 @@ dk_establish(p,q)
 	struct device *q;
 {
 #if 0
-	kprintf ("faking dk_establish()...\n");
+	printf ("faking dk_establish()...\n");
 #endif
 }
 
@@ -329,21 +329,21 @@ si_set_portid(pid,port)
 	int *ip;
 	ip = (void*)uvax_phys2virt(KA410_SCSIPORT);
 	p = (void*)uvax_phys2virt(KA410_SCSIPORT);
-	kprintf("scsi-id: (%x/%d) %d / %d\n", *ip, *ip, p->id0, p->id1);
+	printf("scsi-id: (%x/%d) %d / %d\n", *ip, *ip, p->id0, p->id1);
 #endif
 
 	p = (void*)uvax_phys2virt(KA410_SCSIPORT);
 	switch (port) {
 	case 0:
 		p->id0 = pid;
-		kprintf(": scsi-id %d\n", p->id0);
+		printf(": scsi-id %d\n", p->id0);
 		break;
 	case 1:
 		p->id1 = pid;
-		kprintf(": scsi-id %d\n", p->id1);
+		printf(": scsi-id %d\n", p->id1);
 		break;
 	default:
-		kprintf("invalid port-number %d\n", port);
+		printf("invalid port-number %d\n", port);
 	}
 }
 
@@ -442,7 +442,7 @@ si_attach(parent, self, aux)
 	
 #ifdef	DEBUG
 	if (si_debug)
-		kprintf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -470,7 +470,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			kprintf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
 			Debugger();
 		}
 #endif
@@ -505,7 +505,7 @@ si_intr(arg)
 	 * it might be save to ignore these...
 	 */
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
-		kprintf("spurious(%d): %x, %d, status=%b\n", count,
+		printf("spurious(%d): %x, %d, status=%b\n", count,
 		       sc->sc_dflags, ncr_sc->sc_ncmds,
 		       *ncr_sc->sci_csr, NCR5380_CSRBITS);
 	}
@@ -547,7 +547,7 @@ si_intr(arg)
 		else {
 #ifdef DEBUG
 			int csr = *ncr_sc->sci_csr;
-			kprintf("DMA incomplete (%d/%d) status = %b\n",
+			printf("DMA incomplete (%d/%d) status = %b\n",
 			       ntrans, resid, csr, NCR5380_CSRBITS);
 			if(csr != lastCSR) {
 				int k = (csr & ~lastCSR) | (~csr & lastCSR);
@@ -556,19 +556,19 @@ si_intr(arg)
 				lastCSR = csr & 0xFF;
 			}
 #endif
-			kprintf("DMA incomplete: ntrans=%d/%d, lock=%x\n", 
+			printf("DMA incomplete: ntrans=%d/%d, lock=%x\n", 
 			       ntrans, dh->dh_xlen, sc->sc_dflags);
 			ncr_sc->sc_state |= NCR_ABORTING;
 		}
 
 		if ((sc->sc_dflags & VSDMA_BLOCKED) == 0) {
-			kprintf("not blocked during DMA.\n");
+			printf("not blocked during DMA.\n");
 		}
 		sc->sc_dflags &= ~VSDMA_BLOCKED;
 		si_dmaReleaseBus(ncr_sc, VSDMA_DMABUSY);
 	}
 	if ((sc->sc_dflags & VSDMA_BLOCKED) != 0) {
-		kprintf("blocked while not doing DMA.\n");
+		printf("blocked while not doing DMA.\n");
 		sc->sc_dflags &= ~VSDMA_BLOCKED;
 	}
 
@@ -578,7 +578,7 @@ si_intr(arg)
 	claimed = ncr5380_intr(ncr_sc);
 #ifdef	DEBUG
 	if (!claimed) {
-		kprintf("si_intr: spurious from SBC\n");
+		printf("si_intr: spurious from SBC\n");
 		if (si_debug & 4) {
 			Debugger();	/* XXX */
 		}
@@ -598,7 +598,7 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		kprintf("si_reset_adapter\n");
+		printf("si_reset_adapter\n");
 	}
 #endif
 	SCI_CLR_INTR(ncr_sc);
@@ -648,7 +648,7 @@ si_dma_alloc(ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
-		kprintf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
+		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
 		Debugger();
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
@@ -688,12 +688,12 @@ found:
 #endif
 	
 	if (!bp) {
-		kprintf("ncr.c: struct buf *bp is null-pointer.\n");
+		printf("ncr.c: struct buf *bp is null-pointer.\n");
 		dh->dh_flags = 0;
 		return;
 	}
 	if (bp->b_bcount < 0 || bp->b_bcount > MAX_DMA_LEN) {
-		kprintf("ncr.c: invalid bcount %d (0x%x)\n", 
+		printf("ncr.c: invalid bcount %d (0x%x)\n", 
 		       bp->b_bcount, bp->b_bcount);
 		dh->dh_flags = 0;
 		return;
@@ -753,12 +753,12 @@ si_dma_free(ncr_sc)
 		debug(("bp->b_flags=0x%x\n", bp->b_flags));
 		if (bp->b_flags & B_PHYS) {
 #ifdef USE_VMAPBUF
-			kprintf("not unmapping(%x/%x %x/%x %d/%d)...\n", 
+			printf("not unmapping(%x/%x %x/%x %d/%d)...\n", 
 			       dh->dh_addr, dh->dh_dvma,
 			       bp->b_saveaddr, bp->b_data,
 			       bp->b_bcount, dh->dh_maplen);
 			/* vunmapbuf(bp, dh->dh_maplen); */
-			kprintf("done.\n");
+			printf("done.\n");
 #endif
 			dh->dh_dvma = 0;
 		}
@@ -793,13 +793,13 @@ si_dmaLockBus(ncr_sc, lt)
 #endif
 
 	if ((ncr_sc->sc_current != NULL) && (lt == VSDMA_REGBUSY)) {
-		kprintf("trying to use regs while sc_current is set.\n");
-		kprintf("lt=%x, fl=%x, cur=%x\n", 
+		printf("trying to use regs while sc_current is set.\n");
+		printf("lt=%x, fl=%x, cur=%x\n", 
 		       lt, sc->sc_dflags, ncr_sc->sc_current);
 	}
 	if ((ncr_sc->sc_current == NULL) && (lt != VSDMA_REGBUSY)) {
-		kprintf("trying to use/prepare DMA without current.\n");
-		kprintf("lt=%x, fl=%x, cur=%x\n", 
+		printf("trying to use/prepare DMA without current.\n");
+		printf("lt=%x, fl=%x, cur=%x\n", 
 		       lt, sc->sc_dflags, ncr_sc->sc_current);
 	}
 
@@ -815,7 +815,7 @@ si_dmaLockBus(ncr_sc, lt)
 	while ((sc->sc_dflags & VSDMA_LCKTYPE) != lt) {
 		debug(("busy wait(1)...\n"));
 		if (--timeout == 0) {
-			kprintf("timeout in busy-wait(%x %x)\n",
+			printf("timeout in busy-wait(%x %x)\n",
 			       lt, sc->sc_dflags);
 			sc->sc_dflags &= ~VSDMA_LCKTYPE;
 			break;
@@ -835,7 +835,7 @@ si_dmaLockBus(ncr_sc, lt)
 			while (sc->sc_dflags & 
 			       (VSDMA_WRBUF | VSDMA_DMABUSY)) {
 				if (--timeout == 0) {
-					kprintf("timeout in busy-wait(1)\n");
+					printf("timeout in busy-wait(1)\n");
 					sc->sc_dflags &= ~VSDMA_WRBUF;
 					sc->sc_dflags &= ~VSDMA_DMABUSY;
 				}
@@ -852,7 +852,7 @@ si_dmaLockBus(ncr_sc, lt)
 			while (sc->sc_dflags & 
 			       (VSDMA_RDBUF | VSDMA_DMABUSY)) {
 				if (--timeout == 0) {
-					kprintf("timeout in busy-wait(2)\n");
+					printf("timeout in busy-wait(2)\n");
 					sc->sc_dflags &= ~VSDMA_RDBUF;
 					sc->sc_dflags &= ~VSDMA_DMABUSY;
 				}
@@ -869,7 +869,7 @@ si_dmaLockBus(ncr_sc, lt)
 			while (sc->sc_dflags & 
 			       (VSDMA_RDBUF | VSDMA_WRBUF)) {
 				if (--timeout == 0) {
-					kprintf("timeout in busy-wait(3)\n");
+					printf("timeout in busy-wait(3)\n");
 					sc->sc_dflags &= ~VSDMA_RDBUF;
 					sc->sc_dflags &= ~VSDMA_WRBUF;
 				}
@@ -886,7 +886,7 @@ si_dmaLockBus(ncr_sc, lt)
 			while (sc->sc_dflags & 
 			       (VSDMA_RDBUF | VSDMA_WRBUF | VSDMA_DMABUSY)) {
 				if (--timeout == 0) {
-					kprintf("timeout in busy-wait(4)\n");
+					printf("timeout in busy-wait(4)\n");
 					sc->sc_dflags &= ~VSDMA_RDBUF;
 					sc->sc_dflags &= ~VSDMA_WRBUF;
 					sc->sc_dflags &= ~VSDMA_DMABUSY;
@@ -899,16 +899,16 @@ si_dmaLockBus(ncr_sc, lt)
 			break;
 
 		default:
-			kprintf("illegal lockType %x in si_dmaLockBus()\n");
+			printf("illegal lockType %x in si_dmaLockBus()\n");
 		}
 	}
 	else
-		kprintf("already locked. (%x/%x)\n", lt, sc->sc_dflags);
+		printf("already locked. (%x/%x)\n", lt, sc->sc_dflags);
 #endif
 	if (sc->sc_dflags & lt) /* successfully locked for this type */
 		return (0);
 
-	kprintf("spurious %x in si_dmaLockBus(%x)\n", lt, sc->sc_dflags);
+	printf("spurious %x in si_dmaLockBus(%x)\n", lt, sc->sc_dflags);
 }
 
 /*
@@ -934,7 +934,7 @@ si_dmaReleaseBus(ncr_sc, lt)
 		sc->sc_dflags &= ~lt;
 	}
 	else
-		kprintf("trying to release %x while flags = %x\n", lt,
+		printf("trying to release %x while flags = %x\n", lt,
 		       sc->sc_dflags);
 
 	if (sc->sc_dflags == VSDMA_LOCKED) {	/* no longer needed */
@@ -967,7 +967,7 @@ si_dmaToggleLock(ncr_sc, lt1, lt2)
 		sc->sc_dflags &= ~lt1;
 		return (0);
 	}
-	kprintf("cannot toggle locking from %x to %x (current = %x)\n",
+	printf("cannot toggle locking from %x to %x (current = %x)\n",
 	       lt1, lt2, sc->sc_dflags);
 }
 
@@ -1088,7 +1088,7 @@ si_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d, creg=0x%x\n",
+		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d, creg=0x%x\n",
 			   dh, data_pa, xlen, *sc->sc_dcreg);
 	}
 #endif
@@ -1122,14 +1122,14 @@ si_dma_start(ncr_sc)
 	}
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 	/*
-	 * having a delay (eg. kprintf) here, seems to solve the problem.
+	 * having a delay (eg. printf) here, seems to solve the problem.
 	 * Isn't that strange ????
 	 * Maybe the higher-level driver accesses one of the registers of
 	 * the controller while DMA is in progress. Having a long enough
 	 * delay here might prevent/delay this access until DMA bus is
 	 * free again...
 	 *
-	 * The instruction ++++ kprintf("DMA started.\n"); ++++ 
+	 * The instruction ++++ printf("DMA started.\n"); ++++ 
 	 * is long/slow enough, to make the SSCI driver work. Thus we
 	 * try to find a delay() long/slow enough to do the same. The
 	 * argument to this delay is relative to the transfer-count.
@@ -1138,7 +1138,7 @@ si_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_start: started, flags=0x%x\n",
+		printf("si_dma_start: started, flags=0x%x\n",
 			   ncr_sc->sc_state);
 	}
 #endif
@@ -1169,7 +1169,7 @@ si_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		kprintf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: dma not running\n");
 #endif
 		return;
 	}
@@ -1177,7 +1177,7 @@ si_dma_stop(ncr_sc)
 
 	/* Note that timeout may have set the error flag. */
 	if (ncr_sc->sc_state & NCR_ABORTING) {
-		kprintf("si_dma_stop: timeout?\n");
+		printf("si_dma_stop: timeout?\n");
 		goto out;
 	}
 
@@ -1195,18 +1195,18 @@ si_dma_stop(ncr_sc)
 	}
 	ntrans = dh->dh_xlen + resid;
 	if (resid != 0) 
-		kprintf("resid=%d, xlen=%d, ntrans=%d\n", 
+		printf("resid=%d, xlen=%d, ntrans=%d\n", 
 		       resid, dh->dh_xlen, ntrans);
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		kprintf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
+		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
 		       resid, ntrans);
 	}
 #endif
 
 	if (ntrans < MIN_DMA_LEN) {
-		kprintf("si: fifo count: 0x%x\n", resid);
+		printf("si: fifo count: 0x%x\n", resid);
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}
@@ -1219,7 +1219,7 @@ si_dma_stop(ncr_sc)
 	 */
 	if ((dh->dh_flags & SIDH_OUT) == 0 &&
 	    (dh->dh_flags & SIDH_DONE) == 0) {
-		kprintf("DMA buffer not yet copied.\n");
+		printf("DMA buffer not yet copied.\n");
 		si_dmaToggleLock(ncr_sc, VSDMA_REGBUSY, VSDMA_RDBUF);
 		bcopy(sc->sc_dbase, dh->dh_dvma, ntrans);
 		si_dmaToggleLock(ncr_sc, VSDMA_RDBUF, VSDMA_REGBUSY);
@@ -1255,7 +1255,7 @@ si_dma_poll(ncr_sc)
 	int i, timeout;
 
 	if (! cold) 
-		kprintf("spurious call of DMA-poll ???");
+		printf("spurious call of DMA-poll ???");
 
 #ifdef POLL_MODE
 
@@ -1274,7 +1274,7 @@ si_dma_poll(ncr_sc)
 		delay(100);
 	}
 	if ((*sc->intreq & sc->intbit) == 0) {
-		kprintf("si: DMA timeout (while polling)\n");
+		printf("si: DMA timeout (while polling)\n");
 		/* Indicate timeout as MI code would. */
 		sr->sr_flags |= SR_OVERDUE;
 	}

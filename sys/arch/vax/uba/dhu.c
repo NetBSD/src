@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.7 1996/10/11 01:50:45 christos Exp $	*/
+/*	$NetBSD: dhu.c,v 1.8 1996/10/13 03:35:12 christos Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -204,20 +204,20 @@ dhu_attach(parent, self, aux)
 	/* Process the 8 bytes of diagnostic info put into */
 	/* the FIFO following the master reset operation. */
 
-	kprintf("\n%s:", self->dv_xname);
+	printf("\n%s:", self->dv_xname);
 	for (n = 0; n < 8; n++) {
 		c = dhuaddr->dhu_rbuf;
 
 		if ((c&DHU_DIAG_CODE) == DHU_DIAG_CODE) {
 			if ((c&0200) == 0000)
-				kprintf(" rom(%d) version %d",
+				printf(" rom(%d) version %d",
 					((c>>1)&01), ((c>>2)&037));
 			else if (((c>>2)&07) != 0)
-				kprintf(" diag-error(proc%d)=%x",
+				printf(" diag-error(proc%d)=%x",
 					((c>>1)&01), ((c>>2)&07));
 		}
 	}
-	kprintf("\n");
+	printf("\n");
 
 	c = dhuaddr->dhu_stat;	/* get flag to distinguish DHU from DHV */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.4 1996/10/11 01:50:39 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.5 1996/10/13 03:35:05 christos Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -227,15 +227,15 @@ ra_putonline(ra)
 	    dl->d_secperunit;
 	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
 
-	kprintf("%s", ra->ra_dev.dv_xname);
+	printf("%s", ra->ra_dev.dv_xname);
 	if ((msg = readdisklabel(raminor(ra->ra_dev.dv_unit, 0),
 	    rastrategy, dl, NULL)) != NULL)
-		kprintf(": %s", msg);
+		printf(": %s", msg);
 	else
 		ra->ra_havelabel = 1;
 	ra->ra_state = RA_ONLINE;
 
-	kprintf(": size %d sectors\n", dl->d_secperunit);
+	printf(": size %d sectors\n", dl->d_secperunit);
 
 	return MSCP_DONE;
 }
@@ -452,7 +452,7 @@ radgram(usc, mp, mi)
 	 * drive type and are printed purely for field service information.
 	 */
 	if (mp->mscp_format == M_FM_SDI)
-		kprintf("\tsdi uproc error code 0x%x, front panel code 0x%x\n",
+		printf("\tsdi uproc error code 0x%x, front panel code 0x%x\n",
 			mp->mscp_erd.erd_sdistat[10],
 			mp->mscp_erd.erd_sdistat[11]);
 }
@@ -473,7 +473,7 @@ raonline(usc, mp)
 
 	wakeup((caddr_t)&ra->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		kprintf("%s: attempt to bring on line failed: ", 
+		printf("%s: attempt to bring on line failed: ", 
 		    ra->ra_dev.dv_xname);
 		mscp_printevent(mp);
 		ra->ra_state = RA_OFFLINE;
@@ -523,7 +523,7 @@ ragotstatus(usc, mp)
 	register struct mscp *mp;
 {
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		kprintf("%s: attempt to get status failed: ", usc->dv_xname);
+		printf("%s: attempt to get status failed: ", usc->dv_xname);
 		mscp_printevent(mp);
 		return (MSCP_FAILED);
 	}
@@ -545,7 +545,7 @@ raioerror(usc, mp, bp)
 	register struct mscp *mp;
 	struct buf *bp;
 {
-kprintf("raioerror\n");
+printf("raioerror\n");
 #if 0
 	if (mp->mscp_flags & M_EF_BBLKR) {
 		/*
@@ -769,7 +769,7 @@ radump(dev, blkno, va, size)
 	 * space provided.
 	 */
 	start = 0;
-	kprintf("Dumpar {r inte implementerade {n :) \n");
+	printf("Dumpar {r inte implementerade {n :) \n");
 	asm("halt");
 /*	num = maxfree; */
 	if (dumplo + num >= maxsz)
@@ -816,11 +816,11 @@ udadumpwait(udaddr, bits)
 
 	while ((udaddr->udasa & bits) == 0) {
 		if (udaddr->udasa & UDA_ERR) {
-			kprintf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
+			printf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
 			return (1);
 		}
 		if (todr() >= timo) {
-			kprintf("timeout\ndump ");
+			printf("timeout\ndump ");
 			return (1);
 		}
 	}
@@ -848,14 +848,14 @@ udadumpcmd(op, ud, ui)
 	ud->uda1_ca.ca_rspdsc |= MSCP_OWN | MSCP_INT;
 	ud->uda1_ca.ca_cmddsc |= MSCP_OWN | MSCP_INT;
 	if (udaddr->udasa & UDA_ERR) {
-		kprintf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
+		printf("udasa=%b\ndump ", udaddr->udasa, udasr_bits);
 		return (1);
 	}
 	n = udaddr->udaip;
 	n = todr() + 1000;
 	for (;;) {
 		if (todr() > n) {
-			kprintf("timeout\ndump ");
+			printf("timeout\ndump ");
 			return (1);
 		}
 		if (ud->uda1_ca.ca_cmdint)
@@ -865,36 +865,36 @@ udadumpcmd(op, ud, ui)
 		ud->uda1_ca.ca_rspint = 0;
 		if (mp->mscp_opcode == (op | M_OP_END))
 			break;
-		kprintf("\n");
+		printf("\n");
 		switch (MSCP_MSGTYPE(mp->mscp_msgtc)) {
 
 		case MSCPT_SEQ:
-			kprintf("sequential");
+			printf("sequential");
 			break;
 
 		case MSCPT_DATAGRAM:
 			mscp_decodeerror("uda", ui->ui_ctlr, mp);
-			kprintf("datagram");
+			printf("datagram");
 			break;
 
 		case MSCPT_CREDITS:
-			kprintf("credits");
+			printf("credits");
 			break;
 
 		case MSCPT_MAINTENANCE:
-			kprintf("maintenance");
+			printf("maintenance");
 			break;
 
 		default:
-			kprintf("unknown (type 0x%x)",
+			printf("unknown (type 0x%x)",
 				MSCP_MSGTYPE(mp->mscp_msgtc));
 			break;
 		}
-		kprintf(" ignored\ndump ");
+		printf(" ignored\ndump ");
 		ud->uda1_ca.ca_rspdsc |= MSCP_OWN | MSCP_INT;
 	}
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		kprintf("error: op 0x%x => 0x%x status 0x%x\ndump ", op,
+		printf("error: op 0x%x => 0x%x status 0x%x\ndump ", op,
 			mp->mscp_opcode, mp->mscp_status);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.c,v 1.4 1996/10/10 23:45:36 christos Exp $	*/
+/*	$NetBSD: pica.c,v 1.5 1996/10/13 03:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -165,7 +165,7 @@ picaattach(parent, self, aux)
 	struct confargs *nca;
 	int i;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* keep our CPU device description handy */
 	sc->sc_devs = pica_cpu_devs[cputype];
@@ -204,8 +204,8 @@ picaprint(aux, pnp)
 	struct confargs *ca = aux;
 
         if (pnp)
-                kprintf("%s at %s", ca->ca_name, pnp);
-        kprintf(" slot %ld offset 0x%lx", ca->ca_slot, ca->ca_offset);
+                printf("%s at %s", ca->ca_name, pnp);
+        printf(" slot %ld offset 0x%lx", ca->ca_slot, ca->ca_offset);
         return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.3 1996/10/11 00:39:34 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.4 1996/10/13 03:35:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -99,7 +99,7 @@ bellattach(num)
 	size = num * sizeof(struct bell_softc);
 	mem = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {
-		kprintf("WARNING: no memory for opm bell\n");
+		printf("WARNING: no memory for opm bell\n");
 		return;
 	}
 	bzero(mem, size);
@@ -118,7 +118,7 @@ bellattach(num)
 		bcopy(&bell_voice, &vtab[unit], sizeof(bell_voice));
 		opm_set_voice(sc->ch, &vtab[unit]);
 
-		kprintf("bell%d: YM2151 OPM bell emulation.\n", unit);
+		printf("bell%d: YM2151 OPM bell emulation.\n", unit);
 	}
 }
 

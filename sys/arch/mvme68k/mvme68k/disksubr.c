@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1996/10/10 23:41:37 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 1996/10/13 03:30:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -499,18 +499,18 @@ printlp(lp, str)
 {
 	int i;
 
-	kprintf("%s\n", str);
-	kprintf("magic1 %x\n", lp->d_magic);
-	kprintf("magic2 %x\n", lp->d_magic2);
-	kprintf("typename %s\n", lp->d_typename);
-	kprintf("secsize %x nsect %x ntrack %x ncylinders %x\n",
+	printf("%s\n", str);
+	printf("magic1 %x\n", lp->d_magic);
+	printf("magic2 %x\n", lp->d_magic2);
+	printf("typename %s\n", lp->d_typename);
+	printf("secsize %x nsect %x ntrack %x ncylinders %x\n",
 	    lp->d_secsize, lp->d_nsectors, lp->d_ntracks, lp->d_ncylinders);
-	kprintf("Num partitions %x\n", lp->d_npartitions);
+	printf("Num partitions %x\n", lp->d_npartitions);
 	for (i = 0; i < lp->d_npartitions; i++) {
 		struct partition *part = &lp->d_partitions[i];
 		char *fstyp = fstypenames[part->p_fstype];
 		
-		kprintf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
+		printf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
 		    'a' + i, part->p_size, part->p_offset, fstyp,
 		    part->p_frag, part->p_cpg);
 	}
@@ -523,13 +523,13 @@ printclp(clp, str)
 {
 	int max, i;
 
-	kprintf("%s\n", str);
-	kprintf("magic1 %x\n", clp->magic1);
-	kprintf("magic2 %x\n", clp->magic2);
-	kprintf("typename %s\n", clp->vid_vd);
-	kprintf("secsize %x nsect %x ntrack %x ncylinders %x\n",
+	printf("%s\n", str);
+	printf("magic1 %x\n", clp->magic1);
+	printf("magic2 %x\n", clp->magic2);
+	printf("typename %s\n", clp->vid_vd);
+	printf("secsize %x nsect %x ntrack %x ncylinders %x\n",
 	    clp->cfg_psm, clp->cfg_spt, clp->cfg_hds, clp->cfg_trk);
-	kprintf("Num partitions %x\n", clp->partitions);
+	printf("Num partitions %x\n", clp->partitions);
 	max = clp->partitions < 16 ? clp->partitions : 16;
 	for (i = 0; i < max; i++) {
 		struct partition *part;
@@ -545,7 +545,7 @@ printclp(clp, str)
 
 		fstyp = fstypenames[part->p_fstype];
 		
-		kprintf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
+		printf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
 		    'a' + i, part->p_size, part->p_offset, fstyp,
 		    part->p_frag, part->p_cpg);
 	}

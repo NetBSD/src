@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.3 1996/10/11 01:50:21 christos Exp $ */
+/*	$NetBSD: bi.c,v 1.4 1996/10/13 03:34:44 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -92,15 +92,15 @@ bi_print(aux, name)
 	if (name) {
 		for (bl = &bi_list[0]; bl->bl_nr; bl++)
 			if (bl->bl_nr == ba->ba_node->biic.bi_dtype) {
-				kprintf(bl->bl_name);
+				printf(bl->bl_name);
 				break;
 			}
 		if (bl->bl_nr == 0)
-			kprintf("unknown device 0x%x",
+			printf("unknown device 0x%x",
 			    ba->ba_node->biic.bi_dtype);
-		kprintf(" at %s", name);
+		printf(" at %s", name);
 	}
-	kprintf(" node %d", ba->ba_nodenr);
+	printf(" node %d", ba->ba_nodenr);
 	return bl->bl_havedriver ? UNCONF : UNSUPP;
 }
 
@@ -127,7 +127,7 @@ bi_attach(parent, self, aux)
 	struct bi_attach_args ba;
 	int nodenr;
 
-	kprintf("\n");
+	printf("\n");
 	binode = bi->bi_base = (struct bi_node *)bp->bp_addr;
 
 	ba.ba_intcpu = 1 << mastercpu;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.2 1996/10/11 00:39:22 christos Exp $	*/
+/*	$NetBSD: bsd_audio.c,v 1.3 1996/10/13 03:34:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -74,7 +74,7 @@ int	uiomove __P((caddr_t cp, int n, struct uio *uio));
 #include <machine/bsd_audioio.h>
 #include <x68k/x68k/iodevice.h>
 
-#define AUDIODEBUG	if (audiodebug) kprintf
+#define AUDIODEBUG	if (audiodebug) printf
 int	audiodebug = 0;
 
 #define dma3	(IODEVbase->io_dma[3])
@@ -248,7 +248,7 @@ audioattach(parent, self, aux)
 	sc->sc_rbus = 0;
 	sc->sc_pbus = 0;
 
-	/*kprintf("audio0: MSM6258V ADPCM chip.\n");*/
+	/*printf("audio0: MSM6258V ADPCM chip.\n");*/
 }
 
 int
@@ -545,7 +545,7 @@ audioread(dev, uio, ioflag)
 			break;
 		}
 		if (error) {
-			kprintf("audio: uiomove failed\n");
+			printf("audio: uiomove failed\n");
 			break;
 		}
 		hp += blocksize;
@@ -605,7 +605,7 @@ audiowrite(dev, uio, ioflag)
 			if (ioflag & IO_NDELAY) {
 				splx(s);
 				error = EWOULDBLOCK;
-				kprintf("audiowrite: ioflag=%x\n", ioflag);
+				printf("audiowrite: ioflag=%x\n", ioflag);
 				return (error);
 			}
 			error = audio_sleep(&sc->sc_wchan);
@@ -624,7 +624,7 @@ audiowrite(dev, uio, ioflag)
 			if (cc < blocksize*2) {
 				error = uiomove((u_char *)transbuf2, cc, uio);
 				if (error){
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 				AUDIODEBUG("audiowrite: zero suppress(%x,%x,%d)\n",transbuf, cc, blocksize*4 - cc);
@@ -632,7 +632,7 @@ audiowrite(dev, uio, ioflag)
 			} else {
 				error = uiomove((u_char *)transbuf2, blocksize*2, uio);
 				if (error) {
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 			}
@@ -641,14 +641,14 @@ audiowrite(dev, uio, ioflag)
 			if (cc < blocksize) {
 				error = uiomove(tp, cc, uio);
 				if (error){
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 				bcopy((char *)auzero, tp + cc, blocksize - cc);
 			} else {
 				error = uiomove(tp, blocksize, uio);
 				if (error) {
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 			}
@@ -657,7 +657,7 @@ audiowrite(dev, uio, ioflag)
 			if (cc < blocksize*4) {
 				error = uiomove((u_char *)transbuf, cc, uio);
 				if (error){
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 				AUDIODEBUG("audiowrite: zero suppress(%x,%x,%d)\n",transbuf, cc, blocksize*4 - cc);
@@ -665,7 +665,7 @@ audiowrite(dev, uio, ioflag)
 			} else {
 				error = uiomove((u_char *)transbuf, blocksize*4, uio);
 				if (error) {
-					kprintf("audio: uiomove failed\n");
+					printf("audio: uiomove failed\n");
 					break;
 				      }
 			}
@@ -893,7 +893,7 @@ audiointr()
 	} else if (sc->sc_rbus == 1){
 		audio_rint(sc);
 	} else {
-		kprintf("audiointr: sc_pbus == sc_rbus == 0. Why interrupt?\n");
+		printf("audiointr: sc_pbus == sc_rbus == 0. Why interrupt?\n");
 	}
 	if (sc->sc_open == 0) {
 		audio_wakeup(&sc->sc_ochan);
@@ -905,7 +905,7 @@ audioerrintr()
 {
 	register struct audio_softc *sc = &audio_softc[0];
 
-	kprintf("audioerrintr: software abort?\ncsr=%x, cer=%x\n          pbus = %d, rbus = %d\n", dma3.csr, dma3.cer, sc->sc_pbus, sc->sc_rbus);
+	printf("audioerrintr: software abort?\ncsr=%x, cer=%x\n          pbus = %d, rbus = %d\n", dma3.csr, dma3.cer, sc->sc_pbus, sc->sc_rbus);
 
 	dma3.csr = 0xff;
 	if (sc->sc_pbus == 1){
@@ -913,7 +913,7 @@ audioerrintr()
 	} else if (sc->sc_rbus == 1){
 		audio_rint(sc);
 	} else {
-		kprintf("audioerrintr: sc_pbus == sc_rbus == 0. Why interrupt?\n");
+		printf("audioerrintr: sc_pbus == sc_rbus == 0. Why interrupt?\n");
 	}
 	if (sc->sc_open == 0) {
 		audio_wakeup(&sc->sc_ochan);
@@ -1029,7 +1029,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		p->sample_rate = adpcm_round_sr(p->sample_rate);
-	kprintf("audiosetinfo: rate=%d\n", p->sample_rate);
+	printf("audiosetinfo: rate=%d\n", p->sample_rate);
 		sc->sc_orate = p->sample_rate;
 		if (sc->sc_mode == AUMODE_PLAY)
 			(void)adpcm_set_sr(sc->sc_orate);

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.12 1996/10/11 01:51:33 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.13 1996/10/13 03:36:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -121,7 +121,7 @@ setconf()
 	if (boothowto & RB_ASKNAME) {
 nretry:
 		swaponroot = 0;
-		kprintf("root device? ");
+		printf("root device? ");
 		gets(name);
 		if (name[strlen(name) - 1] == '*')
 			name[strlen(name) - 1] = swaponroot++;
@@ -132,10 +132,10 @@ nretry:
 				    (nc->ng_cf->cd_devs[i]))->dv_xname) == 0)
 					goto ngotit;
 
-		kprintf("Use one of ");
+		printf("Use one of ");
 		for (nc = ngcconf; nc->ng_cf; nc++)
-			kprintf("%s%%d ", nc->ng_cf->cd_name);
-		kprintf("\n");
+			printf("%s%%d ", nc->ng_cf->cd_name);
+		printf("\n");
 
 		goto nretry;
 ngotit:
@@ -146,7 +146,7 @@ ngotit:
 		for (nc = ngcconf; nc->ng_cf; nc++)
 			for (i = 0; i < nc->ng_cf->cd_ndevs; i++)
 				if (nc->ng_cf->cd_devs[i]) {
-					kprintf("root on %s%d\n",
+					printf("root on %s%d\n",
 					    nc->ng_cf->cd_name, i);
 					rootdev = makedev(major(nc->ng_root),
 					    i * 8);
@@ -155,7 +155,7 @@ ngotit:
 
 	}
 
-	kprintf("no suitable root\n");
+	printf("no suitable root\n");
 	asm("halt");
 
 doswap:

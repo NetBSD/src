@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.2 1996/10/11 01:51:14 christos Exp $ */
+/*	$NetBSD: ka43.c,v 1.3 1996/10/13 03:35:43 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -96,15 +96,15 @@ ka43_memerr()
 	int mapen;
 	int *ch2reg;
 
-	kprintf("memory error!\n");
-	kprintf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
+	printf("memory error!\n");
+	printf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
 
 	mapen = mfpr(PR_MAPEN);
 	if (mapen) 
 		ch2reg = (void*)uvax_phys2virt(KA43_CH2_CREG);
 	else 
 		ch2reg = (void*)KA43_CH2_CREG;
-	kprintf("secondary cache status: %b\n", *ch2reg, CH2_BITS);
+	printf("secondary cache status: %b\n", *ch2reg, CH2_BITS);
 }
 
 static char *mcc43[] = {
@@ -146,12 +146,12 @@ ka43_mchk(addr)
 	  int psl;	/* processor status longword */
 	} *p = (void*)addr;
 
-	kprintf("machine check: 0x%x\n", p->mcc);
-	kprintf("reason: %s\n", mcc43[p->mcc & 0xff]);
+	printf("machine check: 0x%x\n", p->mcc);
+	printf("reason: %s\n", mcc43[p->mcc & 0xff]);
 
-	kprintf("bcount:0x%x, check-code:0x%x, virtaddr:0x%x\n",
+	printf("bcount:0x%x, check-code:0x%x, virtaddr:0x%x\n",
 	       p->bcount, p->mcc, p->mrva);
-	kprintf("pc:0x%x, psl:0x%x, viba: %x, state: %x\n",
+	printf("pc:0x%x, psl:0x%x, viba: %x, state: %x\n",
 	       p->pc, p->psl, p->viba, p->isd);
 
 	return (-1);
@@ -203,7 +203,7 @@ ka43_discache()
 #else
 	i = mfpr(PR_PCSTS);
 	mtpr((i & ~2), PR_PCSTS);
-	kprintf("pcsts: %x --> %x\n", i, mfpr(PR_PCSTS));
+	printf("pcsts: %x --> %x\n", i, mfpr(PR_PCSTS));
 #endif
 	/*
 	 * now secondary cache
@@ -218,7 +218,7 @@ ka43_discache()
 	}
 	i = *creg;
 	*creg = (i & ~1);
-	kprintf("creg: %x --> %x\n", i, *creg);
+	printf("creg: %x --> %x\n", i, *creg);
 	
 	xtrace(("ka43_discache() done.\n"));
 }
@@ -237,17 +237,17 @@ ka43_encache()
 	/*
 	 * first enable primary cache
 	 */
-	kprintf("P-0");
+	printf("P-0");
 	i = mfpr(PR_PCSTS);
 	mtpr((i & ~2), PR_PCSTS);
 	mtpr(0, PR_PCSTS);
-	kprintf("P-1");
+	printf("P-1");
 #if 1
 	mtpr(KA43_PCS_ENABLE | KA43_PCS_FLUSH | KA43_PCS_REFRESH, PR_PCSTS);
 #else
 	mtpr(KA43_PCS_ENABLE, PR_PCSTS);
 #endif
-	kprintf("P-2");
+	printf("P-2");
 
 	/*
 	 * now secondary cache
@@ -260,29 +260,29 @@ ka43_encache()
 		ctag = (void*)KA43_CT2_BASE;
 		creg = (void*)KA43_CH2_CREG;
 	}
-	kprintf("ctag: %x, creg: %x\n", ctag, creg);
-	kprintf("S-1");
+	printf("ctag: %x, creg: %x\n", ctag, creg);
+	printf("S-1");
 	i = *creg;
-	kprintf("creg=[%x] ", *creg);
+	printf("creg=[%x] ", *creg);
 #if 0
 	*creg = (i & ~1);
-	kprintf("creg=[%x] ", *creg);
-	kprintf("S-2");
+	printf("creg=[%x] ", *creg);
+	printf("S-2");
 	for (i = 0; i < KA43_CT2_SIZE; i += 4)		/* Quadword entries */
 		ctag[i/4] = 0;				/* reset lower half */
-	kprintf("S-3");
+	printf("S-3");
 	i = *creg;
-	kprintf("creg=[%x] ", *creg);
+	printf("creg=[%x] ", *creg);
 	*creg = (i & ~1);
-	kprintf("creg=[%x] ", *creg);
-	kprintf("S-4");
+	printf("creg=[%x] ", *creg);
+	printf("S-4");
 	/* *creg = 1; */
-	kprintf("S-5");
+	printf("S-5");
 #endif
 	xtrace(("ka43_encache() done.\n"));
 
-	kprintf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
-	kprintf("secondary cache status: %b\n", *creg, CH2_BITS);
+	printf("primary cache status: %b\n", mfpr(PR_PCSTS), CH1_BITS);
+	printf("secondary cache status: %b\n", *creg, CH2_BITS);
 }
 
 void
@@ -300,7 +300,7 @@ ka43_conf(parent, self, aux)
 	else
 		strcpy(cpu_model, "unknown KA43 board");
 
-	kprintf(": %s\n", cpu_model);
+	printf(": %s\n", cpu_model);
 
 	ka43_encache();
 }
@@ -331,35 +331,35 @@ ka43_steal_pages()
 	ka43_encache();
 
 	pctl = (void*)KA43_PARCTL;
-	kprintf("parctl: 0x%x\n", *pctl);
+	printf("parctl: 0x%x\n", *pctl);
 #if 0
 	*pctl = KA43_PCTL_DPEN | KA43_PCTL_CPEN;
 #else
 	*pctl = KA43_PCTL_CPEN;
 #endif
-	kprintf("new value for parctl: ");
+	printf("new value for parctl: ");
 	gets(line);
 	*pctl = *line - '0';
-	kprintf("parctl: 0x%x\n", *pctl);
+	printf("parctl: 0x%x\n", *pctl);
 
 	srp = NULL;
 	p = (void*)KA43_SCR;
 	for (i=0; i<4; i++) {
-	  kprintf("p[%d] = %x, ", i, p[i].data);
+	  printf("p[%d] = %x, ", i, p[i].data);
 	  q[i]  = p[i].data;
 	}
 	p = (void*)KA43_SCRLEN;
-	kprintf("\nlen = %d\n", p->data);
-	kprintf("srp = 0x%x\n", srp);
+	printf("\nlen = %d\n", p->data);
+	printf("srp = 0x%x\n", srp);
 
 	for (i=0; i<0x2; i++) {
-	  kprintf("%x:0x%x ", i*4, srp[i]);
+	  printf("%x:0x%x ", i*4, srp[i]);
 	  if ((i & 0x07) == 0x07)
-	    kprintf("\n");
+	    printf("\n");
  	}
-	kprintf("\n");
+	printf("\n");
 
-	kprintf ("ka43_steal_pages: avail_end=0x%x\n", avail_end);
+	printf ("ka43_steal_pages: avail_end=0x%x\n", avail_end);
 
 	/* 
 	 * SCB is already copied/initialized at addr avail_start
@@ -399,7 +399,7 @@ ka43_steal_pages()
 		le_ioaddr &= 0xffffff;
 		*pctl |= KA43_PCTL_DMA;
 	}
-	kprintf("le_iomem: %x, le_ioaddr: %x, parctl:%x\n",
+	printf("le_iomem: %x, le_ioaddr: %x, parctl:%x\n",
 	       le_iomem, le_ioaddr, *pctl);
 
 	/*
@@ -425,7 +425,7 @@ ka43_steal_pages()
 	ka43_cpuptr = (void*)uvax_phys2virt(KA43_CPU_BASE);
 	ka43_clkptr = (void*)uvax_phys2virt(KA43_WAT_BASE);
 
-	kprintf ("steal_pages done.\n");
+	printf ("steal_pages done.\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.13 1996/10/11 01:51:30 christos Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,7 +122,7 @@ setroot()
         if (rootdev == orootdev)
                 return;
 
-        kprintf("Changing root device to %s%c\n", uname, part + 'a');
+        printf("Changing root device to %s%c\n", uname, part + 'a');
 
 #ifdef DOSWAP
         mindev &= ~PARTITIONMASK;
