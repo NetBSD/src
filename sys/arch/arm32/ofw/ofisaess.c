@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisaess.c,v 1.3 1998/05/01 21:18:42 cgd Exp $	*/
+/*	$NetBSD: ofisaess.c,v 1.4 1998/06/29 13:53:00 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <sys/socket.h>
 
 #include <machine/intr.h>
@@ -46,8 +47,12 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/essreg.h>
 
+#if 0
+#include <dev/isa/essreg.h>
+#else
+#include <arch/arm32/isa/essreg.h>
+#endif
 
 int ofisaessprobe __P((struct device *, struct cfdata *, void *));
 void ofisaessattach __P((struct device *, struct device *, void *));
@@ -68,21 +73,21 @@ ofisaessprobe(parent, cf, aux)
     struct cfdata *cf;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     char type[64];
     char name[64];
     char model[64];
     char compatible[64];
 
     /* At a minimum, must match type and name properties. */
-    if (OF_getprop(ofp->phandle, "device_type", type, sizeof(type)) < 0 ||
+    if (OF_getprop(oba->oba_phandle, "device_type", type, sizeof(type)) < 0 ||
 	strcmp(type, "sound") != 0 ||
-	OF_getprop(ofp->phandle, "name", name, sizeof(name)) < 0 ||
+	OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
 	strcmp(name, "sound") != 0)
 	return 0;
 
     /* Full match on model. */
-    if (OF_getprop(ofp->phandle, "model", model, sizeof(model)) > 0 &&
+    if (OF_getprop(oba->oba_phandle, "model", model, sizeof(model)) > 0 &&
 	(strcmp(model, "es1887-codec") == 0 ||
 	 strcmp(model, "es888-codec") == 0 ||
 	 strcmp(model, "ess1887-codec") == 0 ||
@@ -90,7 +95,7 @@ ofisaessprobe(parent, cf, aux)
 	return 3;
 
     /* Check for compatible match. */
-    if (OF_getprop(ofp->phandle, "compatible", compatible, sizeof(compatible)) > 0 &&
+    if (OF_getprop(oba->oba_phandle, "compatible", compatible, sizeof(compatible)) > 0 &&
 	(strstr(compatible, "es1887-codec") != NULL ||
 	 strstr(compatible, "es888-codec") != NULL ||
 	 strstr(compatible, "ess1887-codec") != NULL ||
@@ -107,7 +112,7 @@ ofisaessattach(parent, dev, aux)
     struct device *parent, *dev;
     void *aux;
 {
-    struct ofprobe *ofp = aux;
+    struct ofbus_attach_args *oba = aux;
     struct isa_attach_args ia;
 
     printf("\n");
@@ -122,7 +127,7 @@ ofisaessattach(parent, dev, aux)
     ia.ia_drq = 5;
     ia.ia_maddr = MADDRUNK;
     ia.ia_msize = 0;
-    ia.ia_aux = (void *)ofp->phandle;
+    ia.ia_aux = (void *)oba->oba_phandle;
 
     config_found(dev, &ia, NULL);
 }
