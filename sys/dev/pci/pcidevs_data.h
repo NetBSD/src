@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.620 2004/05/10 06:20:40 gendalia Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.621 2004/05/10 23:30:40 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.622 2004/05/10 06:18:53 gendalia Exp 
+ *	NetBSD: pcidevs,v 1.623 2004/05/10 23:29:40 lukem Exp 
  */
 
 /*
@@ -7136,6 +7136,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "GeForce4 Ti 4800 SE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_GO,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce4 Ti 4200 Go AGP 8x",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL,
