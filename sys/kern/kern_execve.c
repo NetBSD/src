@@ -111,6 +111,7 @@ execve(p, uap, retval)
 	struct vmspace *vs;
 	caddr_t newframe;
 	char shellname[MAXINTERP];			/* 05 Aug 92*/
+	long magic;
 	union {
 		char	ex_shell[MAXINTERP];	/* #! and interpreter name */
 		struct	exec ex_hdr;
@@ -157,6 +158,8 @@ again:							/* 05 Aug 92*/
 	 * XXX 05 Aug 92
 	 * Read in first few bytes of file for segment sizes, magic number:
 	 *      ZMAGIC = demand paged RO text
+	 *	QMAGIC = "compact" demand paged RO text
+	 *		(first page unmapped, a.out header in text section)
 	 * Also an ASCII line beginning with #! is
 	 * the file name of a ``shell'' and arguments may be prepended
 	 * to the argument list if given here.
@@ -172,7 +175,13 @@ again:							/* 05 Aug 92*/
 
 	/* ... that we recognize? */
 	rv = ENOEXEC;
-	if (exdata.ex_hdr.a_magic != ZMAGIC) {
+	magic = exdata.ex_hdr.a_magic;
+
+	/*
+	 * XXX We should call a machine-dependent function
+	 * to determine what to do with an executable.
+	 */
+	if (magic != ZMAGIC && magic != QMAGIC) {
 		char *cp, *sp;
 
 		if (exdata.ex_shell[0] != '#' ||
@@ -400,7 +409,11 @@ dont_bother:
 		exdata.ex_hdr.a_data += exdata.ex_hdr.a_text;
 	} else {
 		tsize = roundup(exdata.ex_hdr.a_text, NBPG);
-		foff = NBPG;
+		/*
+		 * QMAGIC starts mapping in at the beginning
+		 * of the file; ZMAGIC skips the header.
+		 */
+		foff = (magic == ZMAGIC ? NBPG : 0);
 	}
 
 	/* treat text and data in terms of integral page size */
@@ -416,7 +429,10 @@ dont_bother:
 
 	/* mark pages r/w data, r/o text */
 	if (tsize) {
-		addr = 0;
+		/*
+		 * QMAGIC starts at one page, ZMAGIC at 0.
+		 */
+		addr = (magic == QMAGIC ? NBPG : 0);
 		rv = vm_protect(&vs->vm_map, addr, tsize, FALSE,
 			VM_PROT_READ|VM_PROT_EXECUTE);
 		if (rv)
@@ -424,7 +440,8 @@ dont_bother:
 	}
 
 	/* create anonymous memory region for bss */
-	addr = dsize + tsize;
+	/* We need to take QMAGIC's offset into account, or else get abort */
+	addr = dsize + tsize + (magic == QMAGIC ? NBPG : 0);
 	rv = vm_allocate(&vs->vm_map, &addr, bsize, FALSE);
 	if (rv)
 		goto exec_abort;
@@ -436,8 +453,10 @@ dont_bother:
 	/* touchup process information -- vm system is unfinished! */
 	vs->vm_tsize = tsize/NBPG;		/* text size (pages) XXX */
 	vs->vm_dsize = (dsize+bsize)/NBPG;	/* data size (pages) XXX */
-	vs->vm_taddr = 0;		/* user virtual address of text XXX */
-	vs->vm_daddr = (caddr_t)tsize;	/* user virtual address of data XXX */
+					/* user virtual address of text XXX */
+	vs->vm_taddr = (magic == QMAGIC ? NBPG : 0);
+					/* user virtual address of data XXX */
+	vs->vm_daddr = (caddr_t)tsize + (magic == QMAGIC ? NBPG : 0);
 	vs->vm_maxsaddr = newframe;	/* user VA at max stack growth XXX */
 	vs->vm_ssize =  ((unsigned)vs->vm_maxsaddr + MAXSSIZ
 		- (unsigned)argbuf)/ NBPG + 1; /* stack size (pages) */
