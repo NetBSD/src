@@ -1,4 +1,4 @@
-/* 	$NetBSD: execute.c,v 1.3 1994/12/02 00:43:30 phil Exp $  */
+/* 	$NetBSD: execute.c,v 1.4 1995/10/10 00:22:54 phil Exp $  */
 
 /* execute.c - run a bc program. */
 
@@ -262,6 +262,7 @@ execute ()
 	if (inst == 'W') out_char ('\n');
 	store_var (3);  /* Special variable "last". */
 	if (interactive) fflush (stdout);
+	pop ();
 	break;
 
       case 'c' : /* Call special function. */
