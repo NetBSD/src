@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.c,v 1.3 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: handlers.c,v 1.4 2003/07/16 06:40:47 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -197,13 +197,13 @@ simple_lang_handler(char *path, char *file, int(* handler)(char *) )
 	char buf[PATH_MAX+30];
 
 	if (lang_id == NULL)
-		sprintf(buf, "%s/%s", path, file);
+		snprintf(buf, sizeof(buf), "%s/%s", path, file);
 	else
-		sprintf(buf, "%s/%s.%s", path, file, lang_id);
+		snprintf(buf, sizeof(buf), "%s/%s.%s", path, file, lang_id);
 	if (stat(buf, &sb) == 0)
 		return(handler(buf));
 	else {
-		sprintf(buf, "%s/%s", path, file);
+		snprintf(buf, sizeof(buf), "%s/%s", path, file);
 		if (stat(buf, &sb) == 0)
 			return(handler(buf));
 	}
@@ -219,26 +219,27 @@ handle_endpoint(char *path)
 	int rc;
 
 	if (lang_id == NULL)
-		sprintf(buf, "%s/%s", path, PREFORMFILE);
+		snprintf(buf, sizeof(buf), "%s/%s", path, PREFORMFILE);
 	else
-		sprintf(buf, "%s/%s.%s", path, PREFORMFILE, lang_id);
+		snprintf(buf, sizeof(buf), "%s/%s.%s", path, PREFORMFILE,
+		    lang_id);
 	if (stat(buf, &sb) == 0)
 		return(handle_preform(path, buf));
 	else {
-		sprintf(buf, "%s/%s", path, PREFORMFILE);
+		snprintf(buf, sizeof(buf), "%s/%s", path, PREFORMFILE);
 		if (stat(buf, &sb) == 0)
 			return(handle_preform(path, buf));
 	}
 
 	args[0] = NULL;
 	if (lang_id == NULL)
-		sprintf(buf, "%s/%s", path, FORMFILE);
+		snprintf(buf, sizeof(buf), "%s/%s", path, FORMFILE);
 	else
-		sprintf(buf, "%s/%s.%s", path, FORMFILE, lang_id);
+		snprintf(buf, sizeof(buf), "%s/%s.%s", path, FORMFILE, lang_id);
 	if (stat(buf, &sb) == 0)
 		return(handle_form(path, buf, args));
 	else {
-		sprintf(buf, "%s/%s", path, FORMFILE);
+		snprintf(buf, sizeof(buf), "%s/%s", path, FORMFILE);
 		if (stat(buf, &sb) == 0)
 			return(handle_form(path, buf, args));
 	}
