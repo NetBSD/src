@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.7 1997/02/03 23:43:38 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -82,7 +82,7 @@ db_write_cmd(address, have_addr, count, modif)
 	while (db_expression(&new_value)) {
 	    old_value = db_get_value(addr, size, FALSE);
 	    db_printsym(addr, DB_STGY_ANY);
-	    db_printf("\t\t%#8n\t=\t%#8n\n", old_value, new_value);
+	    db_printf("\t\t%#8ln\t=\t%#8ln\n", old_value, new_value);
 	    db_put_value(addr, size, new_value);
 	    addr += size;
 
