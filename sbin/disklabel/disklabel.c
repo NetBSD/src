@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.101 2001/12/13 13:52:13 reinoud Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.102 2002/02/14 00:07:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.101 2001/12/13 13:52:13 reinoud Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.102 2002/02/14 00:07:43 kleink Exp $");
 #endif
 #endif	/* not lint */
 
@@ -663,7 +663,7 @@ readmbr(int f)
 	 */
 	/* Check if table is valid. */
 	mbrmagicp = (u_int16_t *)(&mbr[MBR_MAGICOFF]);
-	if (*mbrmagicp != MBR_MAGIC)
+	if (*mbrmagicp != le16toh(MBR_MAGIC))
 		return (0);
 	/* Find NetBSD partition. */
 	for (part = 0; part < NMBRPART; part++) {
