@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.7 2003/06/27 13:05:08 wiz Exp $
+.\"	$NetBSD: curses_tty.3,v 1.8 2004/03/16 19:27:35 snj Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -181,7 +181,7 @@ milliseconds.
 Calling
 .Fn def_prog_mode
 will cause the current terminal curses setting to be saved.
-A subequent call to
+A subsequent call to
 .Fn reset_prog_mode ,
 will restore the saved settings.
 This is useful when calls to external programs are made that may
@@ -324,7 +324,7 @@ tty flags can be saved by calling
 and may be restored by calling
 .Fn resetty ,
 the use of these functions is discouraged as they may cause the
-terminal to be put into a state that is incompatiable with curses
+terminal to be put into a state that is incompatible with curses
 operation.
 .Sh RETURN VALUES
 Functions returning pointers will return
