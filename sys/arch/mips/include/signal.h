@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.17 2003/01/18 13:03:17 tsutsui Exp $	*/
+/*	$NetBSD: signal.h,v 1.18 2003/01/20 16:28:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,9 +104,9 @@ do {									\
 	(sc)->mulhi = (uc)->uc_mcontext.__gregs[_REG_MDHI];		\
 									\
 	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy((sc)->sc_fpregs,					\
-		    (uc)->uc_mcontext.__fpregs.__fp_r.__fpregs32,	\
-		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fpregs32)); \
+		memcpy(&(sc)->sc_fpregs,					\
+		    &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
+		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32)); \
 		(sc)->sc_fpregs[32] =					\
 		    (uc)->uc_mcontext.__fpregs.__fp_csr;		\
 		(sc)->sc_fpc_eir = 0;	/* XXX */			\
@@ -124,9 +124,9 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_MDHI] = (sc)->mulhi;		\
 									\
 	if ((sc)->sc_fpused) {						\
-		memcpy((uc)->uc_mcontext.__fpregs.__fp_r.__fpregs32,	\
-		    (sc)->sc_fpregs,					\
-		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fpregs32)); \
+		memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
+		    &(sc)->sc_fpregs,					\
+		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32)); \
 		(uc)->uc_mcontext.__fpregs.__fp_csr =			\
 		    (sc)->sc_fpregs[32];				\
 		(uc)->uc_flags |= _UC_FPU;				\
