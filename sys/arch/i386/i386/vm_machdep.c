@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.1 1993/09/14 17:28:47 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.2 1993/09/24 08:46:11 mycroft Exp $
  */
 
 /*
@@ -166,9 +166,16 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
+        extern int _default_ldt, currentldt;
 	
 #if NNPX > 0
 	npxexit(p);
+#endif
+#ifdef	USER_LDT
+        if (((struct pcb *)p->p_addr)->pcb_ldt && (currentldt != _default_ldt)) {
+                lldt(_default_ldt);
+                currentldt = _default_ldt;
+        }
 #endif
 	splclock();
 	swtch();
@@ -179,9 +186,17 @@ void
 cpu_wait(p)
 	struct proc *p;
 {
+        struct pcb *pcb = (struct pcb *)p->p_addr;
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
+#ifdef	USER_LDT
+        if (pcb->pcb_ldt) {
+                kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+                          (pcb->pcb_ldt_len * sizeof(union descriptor)));
+                pcb->pcb_ldt = NULL;
+        }
+#endif
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
 #endif

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.1 1993/09/14 17:28:46 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.2 1993/09/24 08:46:08 mycroft Exp $
  */
 
 /*
@@ -44,8 +44,8 @@
 #include "npx.h"
 #include "fpe.h"
 
+#include "sys/signal.h"
 #include "machine/cpu.h"
-#include "machine/psl.h"
 #include "machine/reg.h"
 
 #include "param.h"
@@ -69,8 +69,46 @@
 struct	sysent sysent[];
 int	nsysent;
 unsigned rcr2();
-extern short cpl;
 
+/*
+ * Define the code needed before returning to user mode, for
+ * trap, mem_access_fault, and syscall.
+ */
+static inline void
+userret(struct proc *p, int pc, u_quad_t oticks)
+{
+	int sig;
+
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
+		psig(sig);
+	p->p_pri = p->p_usrpri;
+	if (want_resched) {
+		/*
+		 * Since we are curproc, a clock interrupt could
+		 * change our priority without changing run queues
+		 * (the running process is not kept on a run queue).
+		 * If this happened after we setrq ourselves but
+		 * before we swtch()'ed, we might not be on the queue
+		 * indicated by our priority.
+		 */
+		(void) splstatclock();
+		setrq(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		swtch();
+		(void) spl0();
+		while ((sig = CURSIG(p)) != 0)
+			psig(sig);
+	}
+
+	/*
+	 * If profiling, charge recent system time to the trapped pc.
+	 */
+	if (p->p_flag & SPROFIL)
+		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+
+	curpri = p->p_pri;
+}
 
 /*
  * trap(frame):
@@ -87,20 +125,23 @@ trap(frame)
 {
 	register int i;
 	register struct proc *p = curproc;
-	struct timeval syst;
+	u_quad_t sticks;
 	int ucode, type, code, eva;
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
 
+	if (curpcb == 0)
+		goto we_re_toast;
+
 #ifdef DDB
-	if (curpcb && curpcb->pcb_onfault)
+	if (curpcb->pcb_onfault)
 		if (type == T_BPTFLT || type == T_TRCTRAP)
 			if (kdb_trap (type, 0, &frame))
 				return;
 #endif
 	
-	if (curpcb == 0 || curproc == 0)
+	if (curproc == 0)
 		goto we_re_toast;
 
 	if (curpcb->pcb_onfault && type != T_PAGEFLT) {
@@ -109,11 +150,11 @@ copyfault:
 		return;
 	}
 
-	syst = p->p_stime;
+	sticks = p->p_sticks;
+
 	if (ISPL(frame.tf_cs) == SEL_UPL) {
 		type |= T_USER;
 		p->p_regs = (int *)&frame;
-		curpcb->pcb_flags |= FM_TRAP;	/* used by sendsig */
 	}
 
 	ucode = 0;
@@ -157,7 +198,7 @@ copyfault:
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		astoff();
 		cnt.v_soft++;
-		if ((p->p_flag & SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag & (SOWEUPC|SPROFIL)) == (SOWEUPC|SPROFIL)) {
 			addupc(frame.tf_eip, &p->p_stats->p_prof, 1);
 			p->p_flag &= ~SOWEUPC;
 		}
@@ -172,7 +213,7 @@ copyfault:
 #if NFPE > 0
 		i = math_emulate(&frame);
 		if (i == 0) {
-#ifdef		TRACE_EMU			/* XXX is this necessary? */
+#ifdef		TRACE_EMU
 			if (frame.tf_eflags & PSL_T)
 				goto trace;
 #endif
@@ -318,7 +359,7 @@ nogo:
 
 #ifndef DDB
 	/* XXX need to deal with this when DDB is present, too */
-	case T_TRCTRAP:	 /* trace trap -- someone single stepping lcall's */
+	case T_TRCTRAP:	 /* kernel trace trap; someone single stepping lcall's */
 		/* restored later from lcall frame */
 		frame.tf_eflags &= ~PSL_T;
 		return;
@@ -351,44 +392,7 @@ nogo:
 	if ((type & T_USER) == 0)
 		return;
 out:
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		(void) splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		(void) splnone();
-		while (i = CURSIG(p))
-			psig(i);
-	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.tf_eip, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.tf_eip, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-	curpri = p->p_pri;
-	curpcb->pcb_flags &= ~FM_TRAP;	/* used by sendsig */
+	userret(p, frame.tf_eip, sticks);
 }
 
 /*
@@ -413,31 +417,30 @@ int trapwrite(unsigned addr) {
  */
 /*ARGSUSED*/
 syscall(frame)
-	volatile struct syscframe frame;
+	volatile struct trapframe frame;
 {
 	register int *locr0 = ((int *)&frame);
 	register caddr_t params;
 	register int i;
 	register struct sysent *callp;
 	register struct proc *p = curproc;
-	struct timeval syst;
+	u_quad_t sticks;
 	int error, opc;
 	int args[8], rval[2];
 	int code;
 
-	syst = p->p_stime;
-	if (ISPL(frame.sf_cs) != SEL_UPL)
+	if (ISPL(frame.tf_cs) != SEL_UPL)
 		panic("syscall");
 
-	code = frame.sf_eax;
-	curpcb->pcb_flags &= ~FM_TRAP;	/* used by sendsig */
+	sticks = p->p_sticks;
+	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
-	params = (caddr_t)frame.sf_esp + sizeof (int) ;
+	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 	/*
 	 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is always.
 	 */
-	opc = frame.sf_eip - 7;
+	opc = frame.tf_eip - 7;
         if (code == 0) {                        /* indir */
                 code = fuword(params);
                 params += sizeof(int);
@@ -448,8 +451,8 @@ syscall(frame)
                 callp = &sysent[code];
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
-		frame.sf_eax = error;
-		frame.sf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
@@ -461,18 +464,18 @@ syscall(frame)
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
 	rval[0] = 0;
-	rval[1] = frame.sf_edx;
+	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
-		frame.sf_eip = opc;
+		frame.tf_eip = opc;
 	else if (error != EJUSTRETURN) {
 		if (error) {
-			frame.sf_eax = error;
-			frame.sf_eflags |= PSL_C;	/* carry bit */
+			frame.tf_eax = error;
+			frame.tf_eflags |= PSL_C;	/* carry bit */
 		} else {
-			frame.sf_eax = rval[0];
-			frame.sf_edx = rval[1];
-			frame.sf_eflags &= ~PSL_C;	/* carry bit */
+			frame.tf_eax = rval[0];
+			frame.tf_edx = rval[1];
+			frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		}
 	}
 	/* else if (error == EJUSTRETURN) */
@@ -483,56 +486,20 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		(void) splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		(void) splnone();
-		while (i = CURSIG(p))
-			psig(i);
-	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.sf_eip, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.sf_eip, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-	curpri = p->p_pri;
+	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 #ifdef	DIAGNOSTIC
 { extern int _udatasel, _ucodesel;
-	if (frame.sf_ss != _udatasel)
-		printf("ss %x call %d\n", frame.sf_ss, code);
-	if ((frame.sf_cs&0xffff) != _ucodesel)
-		printf("cs %x call %d\n", frame.sf_cs, code);
-	if (frame.sf_eip > VM_MAXUSER_ADDRESS) {
-		printf("eip %x call %d\n", frame.sf_eip, code);
-		frame.sf_eip = 0;
+	if (frame.tf_ss != _udatasel)
+		printf("ss %x call %d\n", frame.tf_ss, code);
+	if ((frame.tf_cs & 0xffff) != _ucodesel)
+		printf("cs %x call %d\n", frame.tf_cs, code);
+	if (frame.tf_eip > VM_MAXUSER_ADDRESS) {
+		printf("eip %x call %d\n", frame.tf_eip, code);
+		frame.tf_eip = 0;
 	}
 }
 #endif
