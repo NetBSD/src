@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.8 2001/12/25 03:47:46 jmcneill Exp $	*/
+/*	$NetBSD: esl.c,v 1.9 2001/12/25 04:05:34 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.8 2001/12/25 03:47:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.9 2001/12/25 04:05:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,7 +645,7 @@ esl_intr(void *hdl)
 			    ESS_FIFO_SIZE / 2);
 
 			sc->sc_esl.sc_blkpos += (ESS_FIFO_SIZE / 2);
-			if (sc->sc_esl.sc_blkpos > sc->sc_esl.sc_blksize) {
+			if (sc->sc_esl.sc_blkpos >= sc->sc_esl.sc_blksize) {
 				(*sc->sc_esl.intr)(sc->sc_esl.arg);
 				sc->sc_esl.sc_blkpos -= sc->sc_esl.sc_blksize;
 			}
