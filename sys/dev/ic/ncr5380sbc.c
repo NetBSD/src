@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.3 1996/02/10 00:11:48 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.4 1996/02/22 03:10:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -838,10 +838,16 @@ next_job:
 			target = sc->sc_ring[i].sr_target;
 			lun = sc->sc_ring[i].sr_lun;
 			if (sc->sc_matrix[target][lun] == NULL) {
-			    sc->sc_matrix[target][lun] =
-					sr = &sc->sc_ring[i];
-			    sc->sc_rr = i;
-			    break;
+				/*
+				 * Do not mark the  target/LUN busy yet,
+				 * because reselect may cause some other
+				 * job to become the current one, so we
+				 * might not actually start this job.
+				 * Instead, set sc_matrix later on.
+				 */
+				sc->sc_rr = i;
+				sr = &sc->sc_ring[i];
+				break;
 			}
 		}
 		i++;
@@ -883,7 +889,8 @@ next_job:
 		goto have_nexus;
 	}
 
-	/* Normal selection result */
+	/* Normal selection result.  Target/LUN is now busy. */
+	sc->sc_matrix[target][lun] = sr;
 	sc->sc_current = sr;	/* connected */
 	xs = sr->sr_xs;
 
@@ -1265,7 +1272,7 @@ ncr5380_select(sc, sr)
 	struct ncr5380_softc *sc;
 	struct sci_req *sr;
 {
-	int timo;
+	int timo, s;
 	u_char bus, data, icmd;
 
 	/* Check for reselect */
@@ -1296,20 +1303,29 @@ ncr5380_select(sc, sr)
 	 * We then wait for one arbitration delay (2.2uS) and
 	 * check the ICMD_LST bit, which will be set if some
 	 * other target drives SEL during arbitration.
+	 *
+	 * There is a time-critical section during the period
+	 * after we enter arbitration up until we assert SEL.
+	 * Avoid long interrupts during this period.
 	 */
+	s = splimp();	/* XXX: Begin time-critical section */
+
 	*(sc->sci_odata) = 0x80;	/* OUR_ID */
 	*(sc->sci_mode) = SCI_MODE_ARB;
 
 	/* Wait for ICMD_AIP. */
-	timo = ncr5380_wait_req_timo;
+	timo = 10;	/* 20 uSec is pleanty. */
 	for (;;) {
 		if (*(sc->sci_icmd) & SCI_ICMD_AIP)
 			break;
 		if (--timo <= 0) {
-			/* Did not see any "bus free" period. */
-			*sc->sci_mode = 0;
+			/*
+			 * Did not see any "bus free" period.
+			 * The usual reason is a reselection,
+			 * so treat this as arbitration loss.
+			 */
 			NCR_TRACE("select: bus busy, rc=%d\n", XS_BUSY);
-			return XS_BUSY;
+			goto lost_arb;
 		}
 		delay(2);
 	}
@@ -1322,10 +1338,8 @@ ncr5380_select(sc, sr)
 	/* Check for ICMD_LST */
 	if (*(sc->sci_icmd) & SCI_ICMD_LST) {
 		/* Some other target asserted SEL. */
-		*sc->sci_mode = 0;
 		NCR_TRACE("select: lost one, rc=%d\n", XS_BUSY);
-		ncr5380_reselect(sc);	/* XXX */
-		return XS_BUSY;
+		goto lost_arb;
 	}
 
 	/*
@@ -1335,7 +1349,7 @@ ncr5380_select(sc, sr)
 	 * We can now declare victory by asserting SEL.
 	 *
 	 * Note that the 5380 is asserting BSY because we
-	 * asked it to do arbitration.  We will now hold
+	 * have entered arbitration mode.  We will now hold
 	 * BSY directly so we can turn off ARB mode.
 	 */
 	icmd = (SCI_ICMD_BSY | SCI_ICMD_SEL);
@@ -1349,27 +1363,41 @@ ncr5380_select(sc, sr)
 	 */
 	delay(2);
 
-#if 1
 	/*
-	 * XXX: Check one last time to see if we really
-	 * XXX: did win arbitration.  (too paranoid?)
+	 * Check one last time to see if we really did
+	 * win arbitration.  This might only happen if
+	 * there can be a higher selection ID than ours.
+	 * Keep this code for reference anyway...
 	 */
 	if (*(sc->sci_icmd) & SCI_ICMD_LST) {
+		/* Some other target asserted SEL. */
+		NCR_TRACE("select: lost two, rc=%d\n", XS_BUSY);
+
+	lost_arb:
 		*sc->sci_icmd = 0;
 		*sc->sci_mode = 0;
-		NCR_TRACE("select: lost two, rc=%d\n", XS_BUSY);
+
+		splx(s);	/* XXX: End of time-critical section. */
+
+		/*
+		 * When we lose arbitration, it usually means
+		 * there is a target trying to reselect us.
+		 */
+		ncr5380_reselect(sc);
 		return XS_BUSY;
 	}
-#endif
+
 	/* Leave ARB mode Now that we drive BSY+SEL */
 	*sc->sci_mode = 0;
 	*sc->sci_sel_enb = 0;
+
+	splx(s);	/* XXX: End of time-critical section. */
 
 	/*
 	 * Arbitration is complete.  Now do selection:
 	 * Drive the data bus with the ID bits for both
 	 * the host and target.  Also set ATN now, to
-	 * ask the target for a messgae out phase.
+	 * ask the target for a message out phase.
 	 */
 	data = 0x80 | (1 << sr->sr_target);
 	*(sc->sci_odata) = data;
