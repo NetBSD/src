@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.37 2004/03/20 19:48:30 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.38 2004/03/20 20:26:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.37 2004/03/20 19:48:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.38 2004/03/20 20:26:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,35 +174,41 @@ smbfs_access(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct thread *a_td;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct ucred *cred = ap->a_cred;
-	u_int mode = ap->a_mode;
+#ifdef SMB_VNODE_DEBUG
+	struct smbnode *np = VTOSMB(vp);
+#endif
+	u_int acc_mode = ap->a_mode;
 	struct smbmount *smp = VTOSMBFS(vp);
-	int error = 0;
 
-	if ((mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
+        SMBVDEBUG("file '%.*s', node mode=%o, acc mode=%x\n",
+	    (int) np->n_nmlen, np->n_name,
+	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
+	    acc_mode);
+
+        /*
+         * Disallow write attempts on read-only file systems;
+         * unless the file is a socket, fifo, or a block or
+         * character device resident on the file system.
+         */
+	if (acc_mode & VWRITE) {
 		switch (vp->v_type) {
 		case VREG:
 		case VDIR:
 		case VLNK:
-			return EROFS;
+ 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
+				return EROFS;
 		default:
 			break;
 		}
 	}
 
-	if (cred->cr_uid == 0)
-		return 0;
-	if (cred->cr_uid != smp->sm_args.uid) {
-		mode >>= 3;
-		if (!groupmember(smp->sm_args.gid, cred))
-			mode >>= 3;
-	}
-	error = (((vp->v_type == VREG) ? smp->sm_args.file_mode : smp->sm_args.dir_mode) & mode) == mode ? 0 : EACCES;
-
-	return error;
+	return (vaccess(vp->v_type,
+	    (vp->v_type == VDIR) ? smp->sm_args.dir_mode : smp->sm_args.file_mode,
+	    smp->sm_args.uid, smp->sm_args.gid,
+	    acc_mode, ap->a_cred));
 }
 
 /* ARGSUSED */
