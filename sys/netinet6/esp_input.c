@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.10 2003/08/05 10:22:34 msaitoh Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.11 2003/09/09 10:02:49 msaitoh Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -811,9 +811,9 @@ noreplaycheck:
 				goto bad;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 #ifndef PULLDOWN_TEST
