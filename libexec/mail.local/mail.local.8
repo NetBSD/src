@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.local.8,v 1.5 1997/10/07 13:07:45 mrg Exp $
+.\"	$NetBSD: mail.local.8,v 1.6 1997/10/20 02:38:33 enami Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,12 +40,12 @@
 .Nm mail.local
 .Nd store mail in a mailbox
 .Sh SYNOPSIS
-.Nm mail.local
+.Nm
 .Op Fl l
 .Op Fl f Ar from
 .Ar user ...
 .Sh DESCRIPTION
-.Nm Mail.local
+.Nm
 reads the standard input up to an end-of-file and appends it to each
 .Ar user's
 .Pa mail
@@ -85,7 +85,7 @@ If the ``biff'' service is returned by
 the biff server is notified of delivered mail.
 .Pp
 The
-.Nm mail.local
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh ENVIRONMENT
 .Bl -tag -width indent
@@ -108,7 +108,7 @@ user's mailbox directory
 .Xr sendmail 8
 .Sh HISTORY
 A superset of
-.Nm mail.local
+.Nm
 (handling mailbox reading as well as mail delivery)
 appeared in
 .At v7
