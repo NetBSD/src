@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.7 1997/03/03 12:26:33 leo Exp $
+#	$NetBSD: HADES,v 1.8 1997/04/01 08:18:00 leo Exp $
 #
 # Medusa-Hades
 #
@@ -111,3 +111,5 @@ pcibus0	at mainbus0		# PCI-bus
 pci0	at pcibus0
 vmebus0	at mainbus0		# VME bus
 vme0	at vmebus0
+idec0   at mainbus0             # IDE bus
+ide*    at idec? drive ?	#  ... and drives

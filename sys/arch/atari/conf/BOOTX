@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.13 1997/01/31 05:50:01 thorpej Exp $
+#	$NetBSD: BOOTX,v 1.14 1997/04/01 08:17:58 leo Exp $
 #
 # BOOTX
 #
@@ -109,3 +109,5 @@ grfcc2	at grfbus0		# third graphics driver
 ite*	at grfcc2		# third tty
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
+idec0   at mainbus0             # IDE bus
+ide*    at idec? drive ?	#  ... and drives
