@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.8 1996/12/27 20:46:23 pk Exp $	*/
+/*	$NetBSD: lint1.h,v 1.9 1997/11/03 22:36:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -198,6 +198,7 @@ typedef enum {
  */
 typedef	struct sym {
 	const	char *s_name;	/* name */
+	const	char *s_rename;	/* renamed symbol's given name */
 	pos_t	s_dpos;		/* position of last (prototype)definition,
 				   prototypedeclaration, no-prototype-def.,
 				   tentative definition or declaration,
