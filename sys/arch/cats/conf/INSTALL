@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.16 2002/04/12 08:10:54 gmcgarry Exp $
+#	$NetBSD: INSTALL,v 1.17 2002/04/15 12:52:28 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -348,10 +348,8 @@ isapnp0	at isa?
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms?
-wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
