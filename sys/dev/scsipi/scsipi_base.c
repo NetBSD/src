@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.6 1998/07/31 03:00:51 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.7 1998/08/11 05:47:43 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -117,11 +117,13 @@ scsipi_get_xs(sc_link, flags)
 	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
 
 	/*
-	 * zero's out the command, as ATAPI may use longer commands
+	 * zeroes out the command, as ATAPI may use longer commands
 	 * than SCSI
 	 */
-	bzero(&xs->cmdstore, sizeof(xs->cmdstore));
-	xs->flags = INUSE | flags;
+	if (xs != NULL) {
+		xs->flags = INUSE | flags;
+		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
+	}
 	return (xs);
 }
 
