@@ -1,3 +1,4 @@
+/*	$NetBSD: packet.c,v 1.1.1.1.2.4 2001/12/10 23:53:49 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +14,7 @@
  *
  *
  * SSH2 packet format added by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.51 2001/02/12 22:56:09 deraadt Exp $");
+RCSID("$OpenBSD: packet.c,v 1.74 2001/12/05 10:06:12 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -75,12 +76,6 @@ RCSID("$OpenBSD: packet.c,v 1.51 2001/02/12 22:56:09 deraadt Exp $");
 static int connection_in = -1;
 static int connection_out = -1;
 
-/*
- * Cipher type.  This value is only used to determine whether to pad the
- * packets with zeroes or random data.
- */
-static int cipher_type = SSH_CIPHER_NONE;
-
 /* Protocol flags for the remote side. */
 static u_int remote_protocol_flags = 0;
 
@@ -104,6 +99,7 @@ static Buffer incoming_packet;
 
 /* Scratch buffer for packet compression/decompression. */
 static Buffer compression_buffer;
+static int compression_buffer_ready = 0;
 
 /* Flag indicating whether packet compression/decompression is enabled. */
 static int packet_compression = 0;
@@ -117,40 +113,11 @@ static int initialized = 0;
 /* Set to true if the connection is interactive. */
 static int interactive_mode = 0;
 
-/* True if SSH2 packet format is used */
-int use_ssh2_packet_format = 0;
-
 /* Session key information for Encryption and MAC */
-Kex	*kex = NULL;
+Newkeys *newkeys[MODE_MAX];
 
-void
-packet_set_kex(Kex *k)
-{
-	if( k->mac[MODE_IN ].key == NULL ||
-	    k->enc[MODE_IN ].key == NULL ||
-	    k->enc[MODE_IN ].iv  == NULL ||
-	    k->mac[MODE_OUT].key == NULL ||
-	    k->enc[MODE_OUT].key == NULL ||
-	    k->enc[MODE_OUT].iv  == NULL)
-		fatal("bad KEX");
-	kex = k;
-}
-static void
-clear_enc_keys(Enc *enc, int len)
-{
-	memset(enc->iv,  0, len);
-	memset(enc->key, 0, len);
-	xfree(enc->iv);
-	xfree(enc->key);
-	enc->iv = NULL;
-	enc->key = NULL;
-}
-void
-packet_set_ssh2_format(void)
-{
-	DBG(debug("use_ssh2_packet_format"));
-	use_ssh2_packet_format = 1;
-}
+/* roundup current message to extra_pad bytes */
+static u_char extra_pad = 0;
 
 /*
  * Sets the descriptors used for communication.  Disables encryption until
@@ -164,9 +131,9 @@ packet_set_connection(int fd_in, int fd_out)
 		fatal("packet_set_connection: cannot load cipher 'none'");
 	connection_in = fd_in;
 	connection_out = fd_out;
-	cipher_type = SSH_CIPHER_NONE;
 	cipher_init(&send_context, none, (u_char *) "", 0, NULL, 0);
 	cipher_init(&receive_context, none, (u_char *) "", 0, NULL, 0);
+	newkeys[MODE_IN] = newkeys[MODE_OUT] = NULL;
 	if (!initialized) {
 		initialized = 1;
 		buffer_init(&input);
@@ -181,7 +148,7 @@ packet_set_connection(int fd_in, int fd_out)
 /* Returns 1 if remote host is connected via socket, 0 if not. */
 
 int
-packet_connection_is_on_socket()
+packet_connection_is_on_socket(void)
 {
 	struct sockaddr_storage from, to;
 	socklen_t fromlen, tolen;
@@ -207,7 +174,7 @@ packet_connection_is_on_socket()
 /* returns 1 if connection is via ipv4 */
 
 int
-packet_connection_is_ipv4()
+packet_connection_is_ipv4(void)
 {
 	struct sockaddr_storage to;
 	socklen_t tolen = sizeof(to);
@@ -223,7 +190,7 @@ packet_connection_is_ipv4()
 /* Sets the connection into non-blocking mode. */
 
 void
-packet_set_nonblocking()
+packet_set_nonblocking(void)
 {
 	/* Set the socket into non-blocking mode. */
 	if (fcntl(connection_in, F_SETFL, O_NONBLOCK) < 0)
@@ -238,7 +205,7 @@ packet_set_nonblocking()
 /* Returns the socket used for reading. */
 
 int
-packet_get_connection_in()
+packet_get_connection_in(void)
 {
 	return connection_in;
 }
@@ -246,7 +213,7 @@ packet_get_connection_in()
 /* Returns the descriptor used for writing. */
 
 int
-packet_get_connection_out()
+packet_get_connection_out(void)
 {
 	return connection_out;
 }
@@ -254,7 +221,7 @@ packet_get_connection_out()
 /* Closes the connection and clears and frees internal data structures. */
 
 void
-packet_close()
+packet_close(void)
 {
 	if (!initialized)
 		return;
@@ -270,7 +237,7 @@ packet_close()
 	buffer_free(&output);
 	buffer_free(&outgoing_packet);
 	buffer_free(&incoming_packet);
-	if (packet_compression) {
+	if (compression_buffer_ready) {
 		buffer_free(&compression_buffer);
 		buffer_compress_uninit();
 	}
@@ -282,13 +249,12 @@ void
 packet_set_protocol_flags(u_int protocol_flags)
 {
 	remote_protocol_flags = protocol_flags;
-	channel_set_options((protocol_flags & SSH_PROTOFLAG_HOST_IN_FWD_OPEN) != 0);
 }
 
 /* Returns the remote protocol flags set earlier by the above function. */
 
 u_int
-packet_get_protocol_flags()
+packet_get_protocol_flags(void)
 {
 	return remote_protocol_flags;
 }
@@ -298,47 +264,24 @@ packet_get_protocol_flags()
  * Level is compression level 1 (fastest) - 9 (slow, best) as in gzip.
  */
 
-/*** XXXXX todo: kex means re-init */
+static void
+packet_init_compression(void)
+{
+	if (compression_buffer_ready == 1)
+		return;
+	compression_buffer_ready = 1;
+	buffer_init(&compression_buffer);
+}
+
 void
 packet_start_compression(int level)
 {
-	if (packet_compression)
+	if (packet_compression && !compat20)
 		fatal("Compression already enabled.");
 	packet_compression = 1;
-	buffer_init(&compression_buffer);
-	buffer_compress_init(level);
-}
-
-/*
- * Encrypts the given number of bytes, copying from src to dest. bytes is
- * known to be a multiple of 8.
- */
-
-static void
-packet_encrypt(CipherContext * cc, void *dest, void *src,
-    u_int bytes)
-{
-	cipher_encrypt(cc, dest, src, bytes);
-}
-
-/*
- * Decrypts the given number of bytes, copying from src to dest. bytes is
- * known to be a multiple of 8.
- */
-
-static void
-packet_decrypt(CipherContext *context, void *dest, void *src, u_int bytes)
-{
-	/*
-	 * Cryptographic attack detector for ssh - Modifications for packet.c
-	 * (C)1998 CORE-SDI, Buenos Aires Argentina Ariel Futoransky(futo@core-sdi.com)
-	 */
-	if (!compat20 &&
-	    context->cipher->number != SSH_CIPHER_NONE &&
-	    detect_attack(src, bytes, NULL) == DEATTACK_DETECTED)
-		packet_disconnect("crc32 compensation attack: network attack detected");
-
-	cipher_decrypt(context, dest, src, bytes);
+	packet_init_compression();
+	buffer_compress_init_send(level);
+	buffer_compress_init_recv();
 }
 
 /*
@@ -346,7 +289,6 @@ packet_decrypt(CipherContext *context, void *dest, void *src, u_int bytes)
  * key is used for both sending and reception.  However, both directions are
  * encrypted independently of each other.
  */
-
 void
 packet_set_encryption_key(const u_char *key, u_int keylen,
     int number)
@@ -360,61 +302,33 @@ packet_set_encryption_key(const u_char *key, u_int keylen,
 	cipher_init(&send_context, cipher, key, keylen, NULL, 0);
 }
 
-/* Starts constructing a packet to send. */
-
-static void
-packet_start1(int type)
-{
-	char buf[9];
-
-	buffer_clear(&outgoing_packet);
-	memset(buf, 0, 8);
-	buf[8] = type;
-	buffer_append(&outgoing_packet, buf, 9);
-}
-
-static void
-packet_start2(int type)
-{
-	char buf[4+1+1];
-
-	buffer_clear(&outgoing_packet);
-	memset(buf, 0, sizeof buf);
-	/* buf[0..3] = payload_len; */
-	/* buf[4] =    pad_len; */
-	buf[5] = type & 0xff;
-	buffer_append(&outgoing_packet, buf, sizeof buf);
-}
-
+/* Start constructing a packet to send. */
 void
-packet_start(int type)
+packet_start(u_char type)
 {
-	DBG(debug("packet_start[%d]",type));
-	if (use_ssh2_packet_format)
-		packet_start2(type);
-	else
-		packet_start1(type);
+	u_char buf[9];
+	int len;
+
+	DBG(debug("packet_start[%d]", type));
+	len = compat20 ? 6 : 9;
+	memset(buf, 0, len - 1);
+	buf[len - 1] = type;
+	buffer_clear(&outgoing_packet);
+	buffer_append(&outgoing_packet, buf, len);
 }
 
-/* Appends a character to the packet data. */
-
+/* Append payload. */
 void
 packet_put_char(int value)
 {
 	char ch = value;
 	buffer_append(&outgoing_packet, &ch, 1);
 }
-
-/* Appends an integer to the packet data. */
-
 void
 packet_put_int(u_int value)
 {
 	buffer_put_int(&outgoing_packet, value);
 }
-
-/* Appends a string to packet data. */
-
 void
 packet_put_string(const char *buf, u_int len)
 {
@@ -423,18 +337,13 @@ packet_put_string(const char *buf, u_int len)
 void
 packet_put_cstring(const char *str)
 {
-	buffer_put_string(&outgoing_packet, str, strlen(str));
+	buffer_put_cstring(&outgoing_packet, str);
 }
-
 void
 packet_put_raw(const char *buf, u_int len)
 {
 	buffer_append(&outgoing_packet, buf, len);
 }
-
-
-/* Appends an arbitrary precision integer to packet data. */
-
 void
 packet_put_bignum(BIGNUM * value)
 {
@@ -479,7 +388,7 @@ packet_send1(void)
 
 	/* Insert padding. Initialized to zero in packet_start1() */
 	padding = 8 - len % 8;
-	if (cipher_type != SSH_CIPHER_NONE) {
+	if (send_context.cipher->number != SSH_CIPHER_NONE) {
 		cp = buffer_ptr(&outgoing_packet);
 		for (i = 0; i < padding; i++) {
 			if (i % 4 == 0)
@@ -505,7 +414,7 @@ packet_send1(void)
 	PUT_32BIT(buf, len);
 	buffer_append(&output, buf, 4);
 	buffer_append_space(&output, &cp, buffer_len(&outgoing_packet));
-	packet_encrypt(&send_context, cp, buffer_ptr(&outgoing_packet),
+	cipher_encrypt(&send_context, cp, buffer_ptr(&outgoing_packet),
 		       buffer_len(&outgoing_packet));
 
 #ifdef PACKET_DEBUG
@@ -522,6 +431,56 @@ packet_send1(void)
 	 */
 }
 
+static void
+set_newkeys(int mode)
+{
+	Enc *enc;
+	Mac *mac;
+	Comp *comp;
+	CipherContext *cc;
+
+	debug("newkeys: mode %d", mode);
+
+	cc = (mode == MODE_OUT) ? &send_context : &receive_context;
+	if (newkeys[mode] != NULL) {
+		debug("newkeys: rekeying");
+		/* todo: free old keys, reset compression/cipher-ctxt; */
+		memset(cc, 0, sizeof(*cc));
+		enc  = &newkeys[mode]->enc;
+		mac  = &newkeys[mode]->mac;
+		comp = &newkeys[mode]->comp;
+		memset(mac->key, 0, mac->key_len);
+		xfree(enc->name);
+		xfree(enc->iv);
+		xfree(enc->key);
+		xfree(mac->name);
+		xfree(mac->key);
+		xfree(comp->name);
+		xfree(newkeys[mode]);
+	}
+	newkeys[mode] = kex_get_newkeys(mode);
+	if (newkeys[mode] == NULL)
+		fatal("newkeys: no keys for mode %d", mode);
+	enc  = &newkeys[mode]->enc;
+	mac  = &newkeys[mode]->mac;
+	comp = &newkeys[mode]->comp;
+	if (mac->md != NULL)
+		mac->enabled = 1;
+	DBG(debug("cipher_init_context: %d", mode));
+	cipher_init(cc, enc->cipher, enc->key, enc->cipher->key_len,
+	    enc->iv, enc->cipher->block_size);
+	memset(enc->iv,  0, enc->cipher->block_size);
+	memset(enc->key, 0, enc->cipher->key_len);
+	if (comp->type != 0 && comp->enabled == 0) {
+		packet_init_compression();
+		if (mode == MODE_OUT)
+			buffer_compress_init_send(6);
+		else
+			buffer_compress_init_recv();
+		comp->enabled = 1;
+	}
+}
+
 /*
  * Finalize packet in SSH2 format (compress, mac, encrypt, enqueue)
  */
@@ -529,26 +488,26 @@ static void
 packet_send2(void)
 {
 	static u_int32_t seqnr = 0;
-	u_char *macbuf = NULL;
+	u_char type, *ucp, *macbuf = NULL;
+	u_char padlen, pad;
 	char *cp;
 	u_int packet_length = 0;
-	u_int i, padlen, len;
+	u_int i, len;
 	u_int32_t rand = 0;
-	int type;
 	Enc *enc   = NULL;
 	Mac *mac   = NULL;
 	Comp *comp = NULL;
 	int block_size;
 
-	if (kex != NULL) {
-		enc  = &kex->enc[MODE_OUT];
-		mac  = &kex->mac[MODE_OUT];
-		comp = &kex->comp[MODE_OUT];
+	if (newkeys[MODE_OUT] != NULL) {
+		enc  = &newkeys[MODE_OUT]->enc;
+		mac  = &newkeys[MODE_OUT]->mac;
+		comp = &newkeys[MODE_OUT]->comp;
 	}
 	block_size = enc ? enc->cipher->block_size : 8;
 
-	cp = buffer_ptr(&outgoing_packet);
-	type = cp[5] & 0xff;
+	ucp = (u_char *) buffer_ptr(&outgoing_packet);
+	type = ucp[5];
 
 #ifdef PACKET_DEBUG
 	fprintf(stderr, "plain:     ");
@@ -579,6 +538,15 @@ packet_send2(void)
 	padlen = block_size - (len % block_size);
 	if (padlen < 4)
 		padlen += block_size;
+	if (extra_pad) {
+		/* will wrap if extra_pad+padlen > 255 */
+		extra_pad  = roundup(extra_pad, block_size);
+		pad = extra_pad - ((len + padlen) % extra_pad);
+		debug("packet_send2: adding %d (len %d padlen %d extra_pad %d)",
+		    pad, len, padlen, extra_pad);
+		padlen += pad;
+		extra_pad = 0;
+	}
 	buffer_append_space(&outgoing_packet, &cp, padlen);
 	if (enc && enc->cipher->number != SSH_CIPHER_NONE) {
 		/* random padding */
@@ -586,7 +554,7 @@ packet_send2(void)
 			if (i % 4 == 0)
 				rand = arc4random();
 			cp[i] = rand & 0xff;
-			rand <<= 8;
+			rand >>= 8;
 		}
 	} else {
 		/* clear padding */
@@ -594,9 +562,9 @@ packet_send2(void)
 	}
 	/* packet_length includes payload, padding and padding length field */
 	packet_length = buffer_len(&outgoing_packet) - 4;
-	cp = buffer_ptr(&outgoing_packet);
-	PUT_32BIT(cp, packet_length);
-	cp[4] = padlen & 0xff;
+	ucp = (u_char *)buffer_ptr(&outgoing_packet);
+	PUT_32BIT(ucp, packet_length);
+	ucp[4] = padlen;
 	DBG(debug("send: len %d (includes padlen %d)", packet_length+4, padlen));
 
 	/* compute MAC over seqnr and packet(length fields, payload, padding) */
@@ -608,7 +576,7 @@ packet_send2(void)
 	}
 	/* encrypt packet and append to output buffer. */
 	buffer_append_space(&output, &cp, buffer_len(&outgoing_packet));
-	packet_encrypt(&send_context, cp, buffer_ptr(&outgoing_packet),
+	cipher_encrypt(&send_context, cp, buffer_ptr(&outgoing_packet),
 	    buffer_len(&outgoing_packet));
 	/* append unencrypted MAC */
 	if (mac && mac->enabled)
@@ -622,28 +590,14 @@ packet_send2(void)
 		log("outgoing seqnr wraps around");
 	buffer_clear(&outgoing_packet);
 
-	if (type == SSH2_MSG_NEWKEYS) {
-		if (kex==NULL || mac==NULL || enc==NULL || comp==NULL)
-			fatal("packet_send2: no KEX");
-		if (mac->md != NULL)
-			mac->enabled = 1;
-		DBG(debug("cipher_init send_context"));
-		cipher_init(&send_context, enc->cipher,
-		    enc->key, enc->cipher->key_len,
-		    enc->iv, enc->cipher->block_size);
-		clear_enc_keys(enc, kex->we_need);
-		if (comp->type != 0 && comp->enabled == 0) {
-			comp->enabled = 1;
-			if (! packet_compression)
-				packet_start_compression(6);
-		}
-	}
+	if (type == SSH2_MSG_NEWKEYS)
+		set_newkeys(MODE_OUT);
 }
 
 void
-packet_send()
+packet_send(void)
 {
-	if (use_ssh2_packet_format)
+	if (compat20)
 		packet_send2();
 	else
 		packet_send1();
@@ -660,9 +614,12 @@ int
 packet_read(int *payload_len_ptr)
 {
 	int type, len;
-	fd_set set;
+	fd_set *setp;
 	char buf[8192];
 	DBG(debug("packet_read()"));
+
+	setp = (fd_set *)xmalloc(howmany(connection_in+1, NFDBITS) *
+	    sizeof(fd_mask));
 
 	/* Since we are blocking, ensure that all written packets have been sent. */
 	packet_write_wait();
@@ -671,24 +628,27 @@ packet_read(int *payload_len_ptr)
 	for (;;) {
 		/* Try to read a packet from the buffer. */
 		type = packet_read_poll(payload_len_ptr);
-		if (!use_ssh2_packet_format && (
+		if (!compat20 && (
 		    type == SSH_SMSG_SUCCESS
 		    || type == SSH_SMSG_FAILURE
 		    || type == SSH_CMSG_EOF
 		    || type == SSH_CMSG_EXIT_CONFIRMATION))
 			packet_integrity_check(*payload_len_ptr, 0, type);
 		/* If we got a packet, return it. */
-		if (type != SSH_MSG_NONE)
+		if (type != SSH_MSG_NONE) {
+			xfree(setp);
 			return type;
+		}
 		/*
 		 * Otherwise, wait for some data to arrive, add it to the
 		 * buffer, and try again.
 		 */
-		FD_ZERO(&set);
-		FD_SET(connection_in, &set);
+		memset(setp, 0, howmany(connection_in + 1, NFDBITS) *
+		    sizeof(fd_mask));
+		FD_SET(connection_in, setp);
 
 		/* Wait for some data to arrive. */
-		while (select(connection_in + 1, &set, NULL, NULL, NULL) == -1 &&
+		while (select(connection_in + 1, setp, NULL, NULL, NULL) == -1 &&
 		    (errno == EAGAIN || errno == EINTR))
 			;
 
@@ -741,8 +701,8 @@ static int
 packet_read_poll1(int *payload_len_ptr)
 {
 	u_int len, padded_len;
-	u_char *ucp;
-	char buf[8], *cp;
+	u_char *ucp, type;
+	char *cp;
 	u_int checksum, stored_checksum;
 
 	/* Check if input size is less than minimum packet size. */
@@ -764,10 +724,20 @@ packet_read_poll1(int *payload_len_ptr)
 	/* Consume packet length. */
 	buffer_consume(&input, 4);
 
-	/* Copy data to incoming_packet. */
+	/*
+	 * Cryptographic attack detector for ssh
+	 * (C)1998 CORE-SDI, Buenos Aires Argentina
+	 * Ariel Futoransky(futo@core-sdi.com)
+	 */
+	if (receive_context.cipher->number != SSH_CIPHER_NONE &&
+	    detect_attack(buffer_ptr(&input), padded_len, NULL) == DEATTACK_DETECTED)
+		packet_disconnect("crc32 compensation attack: network attack detected");
+
+	/* Decrypt data to incoming_packet. */
 	buffer_clear(&incoming_packet);
 	buffer_append_space(&incoming_packet, &cp, padded_len);
-	packet_decrypt(&receive_context, cp, buffer_ptr(&input), padded_len);
+	cipher_decrypt(&receive_context, cp, buffer_ptr(&input), padded_len);
+
 	buffer_consume(&input, padded_len);
 
 #ifdef PACKET_DEBUG
@@ -783,7 +753,6 @@ packet_read_poll1(int *payload_len_ptr)
 	buffer_consume(&incoming_packet, 8 - len % 8);
 
 	/* Test check bytes. */
-
 	if (len != buffer_len(&incoming_packet))
 		packet_disconnect("packet_read_poll: len %d != buffer_len %d.",
 		    len, buffer_len(&incoming_packet));
@@ -794,7 +763,6 @@ packet_read_poll1(int *payload_len_ptr)
 		packet_disconnect("Corrupted check bytes on input.");
 	buffer_consume_end(&incoming_packet, 4);
 
-	/* If using packet compression, decompress the packet. */
 	if (packet_compression) {
 		buffer_clear(&compression_buffer);
 		buffer_uncompress(&incoming_packet, &compression_buffer);
@@ -802,14 +770,9 @@ packet_read_poll1(int *payload_len_ptr)
 		buffer_append(&incoming_packet, buffer_ptr(&compression_buffer),
 		    buffer_len(&compression_buffer));
 	}
-	/* Get packet type. */
-	buffer_get(&incoming_packet, &buf[0], 1);
-
-	/* Return length of payload (without type field). */
+	type = buffer_get_char(&incoming_packet);
 	*payload_len_ptr = buffer_len(&incoming_packet);
-
-	/* Return type. */
-	return (u_char) buf[0];
+	return type;
 }
 
 static int
@@ -818,19 +781,17 @@ packet_read_poll2(int *payload_len_ptr)
 	static u_int32_t seqnr = 0;
 	static u_int packet_length = 0;
 	u_int padlen, need;
-	u_char buf[8], *macbuf;
-	u_char *ucp;
+	u_char *macbuf, *ucp, type;
 	char *cp;
-	int type;
 	int maclen, block_size;
 	Enc *enc   = NULL;
 	Mac *mac   = NULL;
 	Comp *comp = NULL;
 
-	if (kex != NULL) {
-		enc  = &kex->enc[MODE_IN];
-		mac  = &kex->mac[MODE_IN];
-		comp = &kex->comp[MODE_IN];
+	if (newkeys[MODE_IN] != NULL) {
+		enc  = &newkeys[MODE_IN]->enc;
+		mac  = &newkeys[MODE_IN]->mac;
+		comp = &newkeys[MODE_IN]->comp;
 	}
 	maclen = mac && mac->enabled ? mac->mac_len : 0;
 	block_size = enc ? enc->cipher->block_size : 8;
@@ -844,7 +805,7 @@ packet_read_poll2(int *payload_len_ptr)
 			return SSH_MSG_NONE;
 		buffer_clear(&incoming_packet);
 		buffer_append_space(&incoming_packet, &cp, block_size);
-		packet_decrypt(&receive_context, cp, buffer_ptr(&input),
+		cipher_decrypt(&receive_context, cp, buffer_ptr(&input),
 		    block_size);
 		ucp = (u_char *) buffer_ptr(&incoming_packet);
 		packet_length = GET_32BIT(ucp);
@@ -873,7 +834,7 @@ packet_read_poll2(int *payload_len_ptr)
 	buffer_dump(&input);
 #endif
 	buffer_append_space(&incoming_packet, &cp, need);
-	packet_decrypt(&receive_context, cp, buffer_ptr(&input), need);
+	cipher_decrypt(&receive_context, cp, buffer_ptr(&input), need);
 	buffer_consume(&input, need);
 	/*
 	 * compute MAC over seqnr and packet,
@@ -893,7 +854,7 @@ packet_read_poll2(int *payload_len_ptr)
 
 	/* get padlen */
 	cp = buffer_ptr(&incoming_packet) + 4;
-	padlen = *cp & 0xff;
+	padlen = (u_char) *cp;
 	DBG(debug("input: padlen %d", padlen));
 	if (padlen < 4)
 		packet_disconnect("Corrupted padlen %d on input.", padlen);
@@ -915,53 +876,32 @@ packet_read_poll2(int *payload_len_ptr)
 	 * get packet type, implies consume.
 	 * return length of payload (without type field)
 	 */
-	buffer_get(&incoming_packet, (char *)&buf[0], 1);
+	type = buffer_get_char(&incoming_packet);
+	if (type == SSH2_MSG_NEWKEYS)
+		set_newkeys(MODE_IN);
 	*payload_len_ptr = buffer_len(&incoming_packet);
-
-	/* reset for next packet */
-	packet_length = 0;
-
-	/* extract packet type */
-	type = (u_char)buf[0];
-
-	if (type == SSH2_MSG_NEWKEYS) {
-		if (kex==NULL || mac==NULL || enc==NULL || comp==NULL)
-			fatal("packet_read_poll2: no KEX");
-		if (mac->md != NULL)
-			mac->enabled = 1;
-		DBG(debug("cipher_init receive_context"));
-		cipher_init(&receive_context, enc->cipher,
-		    enc->key, enc->cipher->key_len,
-		    enc->iv, enc->cipher->block_size);
-		clear_enc_keys(enc, kex->we_need);
-		if (comp->type != 0 && comp->enabled == 0) {
-			comp->enabled = 1;
-			if (! packet_compression)
-				packet_start_compression(6);
-		}
-	}
-
 #ifdef PACKET_DEBUG
-	fprintf(stderr, "read/plain[%d]:\r\n",type);
+	fprintf(stderr, "read/plain[%d]:\r\n", type);
 	buffer_dump(&incoming_packet);
 #endif
-	return (u_char)type;
+	/* reset for next packet */
+	packet_length = 0;
+	return type;
 }
 
 int
 packet_read_poll(int *payload_len_ptr)
 {
+	int reason;
+	u_char type;
 	char *msg;
-	for (;;) {
-		int type = use_ssh2_packet_format ?
-		    packet_read_poll2(payload_len_ptr):
-		    packet_read_poll1(payload_len_ptr);
 
-		if(compat20) {
-			int reason;
-			if (type != 0)
+	for (;;) {
+		if (compat20) {
+			type = packet_read_poll2(payload_len_ptr);
+			if (type)
 				DBG(debug("received packet type %d", type));
-			switch(type) {
+			switch (type) {
 			case SSH2_MSG_IGNORE:
 				break;
 			case SSH2_MSG_DEBUG:
@@ -985,7 +925,8 @@ packet_read_poll(int *payload_len_ptr)
 				break;
 			}
 		} else {
-			switch(type) {
+			type = packet_read_poll1(payload_len_ptr);
+			switch (type) {
 			case SSH_MSG_IGNORE:
 				break;
 			case SSH_MSG_DEBUG:
@@ -1001,7 +942,7 @@ packet_read_poll(int *payload_len_ptr)
 				xfree(msg);
 				break;
 			default:
-				if (type != 0)
+				if (type)
 					DBG(debug("received packet type %d", type));
 				return type;
 				break;
@@ -1024,7 +965,7 @@ packet_process_incoming(const char *buf, u_int len)
 /* Returns a character from the packet. */
 
 u_int
-packet_get_char()
+packet_get_char(void)
 {
 	char ch;
 	buffer_get(&incoming_packet, &ch, 1);
@@ -1034,7 +975,7 @@ packet_get_char()
 /* Returns an integer from the packet data. */
 
 u_int
-packet_get_int()
+packet_get_int(void)
 {
 	return buffer_get_int(&incoming_packet);
 }
@@ -1152,13 +1093,13 @@ packet_disconnect(const char *fmt,...)
 		packet_put_cstring("");
 	} else {
 		packet_start(SSH_MSG_DISCONNECT);
-		packet_put_string(buf, strlen(buf));
+		packet_put_cstring(buf);
 	}
 	packet_send();
 	packet_write_wait();
 
 	/* Stop listening for connections. */
-	channel_stop_listening();
+	channel_close_all();
 
 	/* Close the connection. */
 	packet_close();
@@ -1171,7 +1112,7 @@ packet_disconnect(const char *fmt,...)
 /* Checks if there is any buffered output, and tries to write some of the output. */
 
 void
-packet_write_poll()
+packet_write_poll(void)
 {
 	int len = buffer_len(&output);
 	if (len > 0) {
@@ -1192,25 +1133,29 @@ packet_write_poll()
  */
 
 void
-packet_write_wait()
+packet_write_wait(void)
 {
+	fd_set *setp;
+
+	setp = (fd_set *)xmalloc(howmany(connection_out + 1, NFDBITS) *
+	    sizeof(fd_mask));
 	packet_write_poll();
 	while (packet_have_data_to_write()) {
-		fd_set set;
-
-		FD_ZERO(&set);
-		FD_SET(connection_out, &set);
-		while (select(connection_out + 1, NULL, &set, NULL, NULL) == -1 &&
+		memset(setp, 0, howmany(connection_out + 1, NFDBITS) *
+		    sizeof(fd_mask));
+		FD_SET(connection_out, setp);
+		while (select(connection_out + 1, NULL, setp, NULL, NULL) == -1 &&
 		    (errno == EAGAIN || errno == EINTR))
 			;
 		packet_write_poll();
 	}
+	xfree(setp);
 }
 
 /* Returns true if there is buffered data to write to the connection. */
 
 int
-packet_have_data_to_write()
+packet_have_data_to_write(void)
 {
 	return buffer_len(&output) != 0;
 }
@@ -1218,7 +1163,7 @@ packet_have_data_to_write()
 /* Returns true if there is not too much data to write to the connection. */
 
 int
-packet_not_very_much_data_to_write()
+packet_not_very_much_data_to_write(void)
 {
 	if (interactive_mode)
 		return buffer_len(&output) < 16384;
@@ -1277,7 +1222,7 @@ packet_set_interactive(int interactive)
 /* Returns true if the current connection is interactive. */
 
 int
-packet_is_interactive()
+packet_is_interactive(void)
 {
 	return interactive_mode;
 }
@@ -1295,7 +1240,42 @@ packet_set_maxsize(int s)
 		log("packet_set_maxsize: bad size %d", s);
 		return -1;
 	}
-	log("packet_set_maxsize: setting to %d", s);
+	called = 1;
+	debug("packet_set_maxsize: setting to %d", s);
 	max_packet_size = s;
 	return s;
+}
+
+/* roundup current message to pad bytes */
+void
+packet_add_padding(u_char pad)
+{
+	extra_pad = pad;
+}
+
+/*
+ * 9.2.  Ignored Data Message
+ *
+ *   byte      SSH_MSG_IGNORE
+ *   string    data
+ *
+ * All implementations MUST understand (and ignore) this message at any
+ * time (after receiving the protocol version). No implementation is
+ * required to send them. This message can be used as an additional
+ * protection measure against advanced traffic analysis techniques.
+ */
+void
+packet_send_ignore(int nbytes)
+{
+	u_int32_t rand = 0;
+	int i;
+
+	packet_start(compat20 ? SSH2_MSG_IGNORE : SSH_MSG_IGNORE);
+	packet_put_int(nbytes);
+	for(i = 0; i < nbytes; i++) {
+		if (i % 4 == 0)
+			rand = arc4random();
+		packet_put_char(rand & 0xff);
+		rand >>= 8;
+	}
 }
