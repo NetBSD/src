@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.9 1997/01/18 01:38:07 mark Exp $ */
+/* $NetBSD: sfas.c,v 1.10 1997/02/04 06:57:47 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -79,6 +79,7 @@ void sfas_scsidone  __P((struct sfas_softc *dev, struct scsi_xfer *xs,
 			 int stat));
 void sfasintr	    __P((struct sfas_softc *dev));
 void sfasiwait	    __P((struct sfas_softc *dev));
+void sfas_ixfer	    __P((struct sfas_softc *dev, int polling));
 void sfasreset	    __P((struct sfas_softc *dev, int how));
 int  sfasselect	    __P((struct sfas_softc *dev, struct sfas_pending *pendp,
 			 unsigned char *cbuf, int clen,
@@ -188,6 +189,9 @@ sfasinitialize(dev)
 	for(i=0; i<8; i++)
 		sfas_init_nexus(dev, &dev->sc_nexus[i]);
 
+	if (dev->sc_ixfer == NULL)
+		dev->sc_ixfer = sfas_ixfer;
+
 /*
  * Setup bump buffer.
  */
@@ -200,7 +204,8 @@ sfasinitialize(dev)
  */
 	pte = pmap_pte(kernel_pmap, (vm_offset_t)dev->sc_bump_va);
 	*pte &= ~(PT_C | PT_B);
-	tlb_flush();	/* XXX - should be a purge */
+	cpu_tlb_flushD();
+	cpu_cache_purgeD_rng((vm_offset_t)dev->sc_bump_va, NBPG);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
@@ -790,12 +795,10 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 							  buf, len);
 	}
 
-/* Flush the caches. (If needed) */
-/* Do I need to ? */
-/*
-	if ((mmutype == MMU_68040) && len && !(mode & SFAS_SELECT_I))
-		dma_cachectl(buf, len);
-*/
+/* Flush the caches. */
+
+	if (len && !(mode & SFAS_SELECT_I))
+		cpu_cache_purgeD_rng((vm_offset_t)buf, len);
 }
 
 int
@@ -1277,7 +1280,7 @@ sfas_postaction(dev, rp, nexus)
 
 		  /* We should use polled IO here. */
 		  if (dev->sc_dma_blk_flg == SFAS_CHAIN_PRG) {
-			sfas_ixfer(dev, nexus->xs->flags & SCSI_POLL);
+			dev->sc_ixfer(dev, nexus->xs->flags & SCSI_POLL);
 			dev->sc_cur_link++;
 			dev->sc_dma_len = 0;
 			break;
@@ -1308,7 +1311,7 @@ sfas_postaction(dev, rp, nexus)
 				    ((nexus->state == SFAS_NS_DATA_OUT) ?
 				     SFAS_DMA_WRITE : SFAS_DMA_READ));
 
-		  printf("Using DMA !!!!\n");
+/*		  printf("Using DMA !!!!\n");*/
 		  cmd = SFAS_CMD_TRANSFER_INFO | SFAS_CMD_DMA;
 		} else {
 			/*
@@ -1697,4 +1700,3 @@ dump_sfassoftc(sc)
 }
 
 #endif	/* SFAS_DEBUG */
-
