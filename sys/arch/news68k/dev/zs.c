@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.4.4.1 2000/12/15 04:20:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,17 +63,6 @@
 
 #include <news68k/dev/hbvar.h>
 
-#include "zsc.h"	/* NZSC */
-#define NZS NZSC
-
-/* Make life easier for the initialized arrays here. */
-#if NZS < 2
-#undef  NZS
-#define NZS 2
-#endif
-
-struct zschan *zs_get_chan_addr __P((int, int));
-
 int zs_getc __P((void *));
 void zs_putc __P((void *, int));
 
@@ -120,14 +109,15 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-static struct zsdevice *zsaddr[NZS];
 static u_char zs_sir;
-
-/* Flags from cninit() */
-static int zs_hwflags[NZS][2];
 
 /* Default speed for all channels */
 static int zs_defspeed = 9600;
+
+/* console status from cninit */
+static struct zs_chanstate zs_conschan_store;
+static struct zs_chanstate *zs_conschan;
+static struct zschan *zc_cons;
 
 static u_char zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -142,31 +132,11 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	((PCLK0/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	BPS_TO_TCONST((PCLK0/16), 9600), /*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
 };
-
-struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
-{
-	struct zsdevice *addr;
-	struct zschan *zc;
-
-	if (zs_unit >= NZS)
-		return NULL;
-	addr = zsaddr[zs_unit];
-	if (addr == NULL)
-		return NULL;
-	if (channel == 0) {
-		zc = &addr->zs_chan_a;
-	} else {
-		zc = &addr->zs_chan_b;
-	}
-	return (zc);
-}
 
 
 /****************************************************************
@@ -185,8 +155,10 @@ struct cfattach zsc_ca = {
 extern struct cfdriver zsc_cd;
 
 static int zshard __P((void *));
-int zssoft __P((void *));
+void zssoft __P((void *));
+#if 0
 static int zs_get_speed __P((struct zs_chanstate *));
+#endif
 
 /*
  * Is the zs chip present?
@@ -217,9 +189,6 @@ zs_match(parent, cf, aux)
 
 /*
  * Attach a found zs.
- *
- * Match slave number to zs unit number, so that misconfiguration will
- * not set up the keyboard as ttya, etc.
  */
 static void
 zs_attach(parent, self, aux)
@@ -231,12 +200,12 @@ zs_attach(parent, self, aux)
 	struct cfdata *cf = self->dv_cfdata;
 	struct hb_attach_args *ha = aux;
 	struct zsc_attach_args zsc_args;
-	volatile struct zschan *zc;
+	struct zsdevice *zs;
+	struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zs_unit, channel, clk;
+	int s, channel, clk;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
-	zsaddr[zs_unit] = (void *)IIOV(ha->ha_address);
+	zs = (void *)IIOV(ha->ha_address);
 
 	clk = cf->cf_flags;
 	if (clk < 0 || clk >= NPCLK)
@@ -249,31 +218,32 @@ zs_attach(parent, self, aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
+		zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
+
+		if (ha->ha_vect != -1)
+			zs_init_reg[2] = ha->ha_vect;
+
+		if (zc == zc_cons) {
+			bcopy(zs_conschan, cs, sizeof(struct zs_chanstate));
+			zs_conschan = cs;
+			zsc_args.hwflags = ZS_HWFLAG_CONSOLE;
+		} else {
+			cs->cs_reg_csr  = &zc->zc_csr;
+			cs->cs_reg_data = &zc->zc_data;
+			bcopy(zs_init_reg, cs->cs_creg, 16);
+			bcopy(zs_init_reg, cs->cs_preg, 16);
+			cs->cs_defspeed = zs_defspeed;
+			zsc_args.hwflags = 0;
+		}
+
+		cs->cs_defcflag = zs_def_cflag;
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
 		cs->cs_brg_clk = pclk[clk] / 16;
-
-		zc = zs_get_chan_addr(zs_unit, channel);
-		cs->cs_reg_csr  = &zc->zc_csr;
-		cs->cs_reg_data = &zc->zc_data;
-
-		if (ha->ha_vect != -1)
-			zs_init_reg[2] = ha->ha_vect;
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
-
-		/* XXX: Get these from the EEPROM instead? */
-		/* XXX: See the mvme167 code.  Better. */
-		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
-			cs->cs_defspeed = zs_get_speed(cs);
-		else
-			cs->cs_defspeed = zs_defspeed;
-		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
 		cs->cs_rr0_dcd = ZSRR0_DCD;
@@ -324,7 +294,7 @@ zs_attach(parent, self, aux)
 	splx(s);
 
 	if (zs_sir == 0)
-		zs_sir = allocate_sir((void (*) __P((void *)))zssoft, zsc);
+		zs_sir = allocate_sir(zssoft, zsc);
 }
 
 static int
@@ -367,7 +337,7 @@ zshard(arg)
 /*
  * Shared among the all chips. We have to look at all of them.
  */
-int
+void
 zssoft(arg)
 	void *arg;
 {
@@ -383,13 +353,12 @@ zssoft(arg)
 		(void) zsc_intr_soft(zsc);
 	}
 	splx(s);
-
-	return 1;
 }
 
 /*
  * Compute the current baud rate given a ZS channel.
  */
+#if 0
 static int
 zs_get_speed(cs)
 	struct zs_chanstate *cs;
@@ -400,6 +369,7 @@ zs_get_speed(cs)
 	tconst |= zs_read_reg(cs, 13) << 8;
 	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
 }
+#endif
 
 /*
  * MD functions for setting the baud rate and control modes.
@@ -564,17 +534,17 @@ int
 zs_getc(arg)
 	void *arg;
 {
-	volatile struct zschan *zc = arg;
+	struct zs_chanstate *cs = arg;
 	int s, c, rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
 	do {
-		rr0 = zc->zc_csr;
+		rr0 = *cs->cs_reg_csr;
 		ZS_DELAY();
 	} while ((rr0 & ZSRR0_RX_READY) == 0);
 
-	c = zc->zc_data;
+	c = *cs->cs_reg_data;
 	ZS_DELAY();
 	splx(s);
 
@@ -589,17 +559,17 @@ zs_putc(arg, c)
 	void *arg;
 	int c;
 {
-	volatile struct zschan *zc = arg;
+	struct zs_chanstate *cs = arg;
 	int s, rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
 	do {
-		rr0 = zc->zc_csr;
+		rr0 = *cs->cs_reg_csr;
 		ZS_DELAY();
 	} while ((rr0 & ZSRR0_TX_READY) == 0);
 
-	zc->zc_data = c;
+	*cs->cs_reg_data = c;
 	ZS_DELAY();
 	splx(s);
 }
@@ -610,8 +580,6 @@ static void zscnprobe __P((struct consdev *));
 static void zscninit __P((struct consdev *));
 static int  zscngetc __P((dev_t));
 static void zscnputc __P((dev_t, int));
-
-static void *zs_conschan;
 
 struct consdev consdev_zs = {
 	zscnprobe,
@@ -626,25 +594,54 @@ static void
 zscnprobe(cn)
 	struct consdev *cn;
 {
+	extern int tty00_is_console;
+
+	cn->cn_dev = makedev(zs_major, 0);
+	if (tty00_is_console)
+		cn->cn_pri = CN_REMOTE;
+	else
+		cn->cn_pri = CN_NORMAL;
 }
 
 static void
 zscninit(cn)
 	struct consdev *cn;
 {
+	struct zs_chanstate *cs;
+
 	extern volatile u_char *sccport0a;
 
-	cn->cn_dev = makedev(zs_major, 0);
-	cn->cn_pri = CN_REMOTE;
-	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
-	zs_conschan = (void *)sccport0a; /* XXX */
+	zc_cons = (struct zschan *)sccport0a; /* XXX */
+
+	zs_conschan = cs = &zs_conschan_store;
+
+	/* Setup temporary chanstate. */
+	cs->cs_reg_csr  = &zc_cons->zc_csr;
+	cs->cs_reg_data = &zc_cons->zc_data;
+
+	/* Initialize the pending registers. */
+	bcopy(zs_init_reg, cs->cs_preg, 16);
+	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
+
+	cs->cs_preg[12] = BPS_TO_TCONST(pclk[systype] / 16, 9600); /* XXX */
+	cs->cs_preg[13] = 0;
+	cs->cs_defspeed = 9600;
+
+	/* Clear the master interrupt enable. */
+	zs_write_reg(cs, 9, 0);
+
+	/* Reset the whole SCC chip. */
+	zs_write_reg(cs, 9, ZSWR9_HARD_RESET);
+
+	/* Copy "pending" to "current" and H/W */
+	zs_loadchannelregs(cs);
 }
 
 static int
 zscngetc(dev)
 	dev_t dev;
 {
-	return zs_getc(zs_conschan);
+	return zs_getc((void *)zs_conschan);
 }
 
 static void
@@ -652,5 +649,5 @@ zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	zs_putc(zs_conschan, c);
+	zs_putc((void *)zs_conschan, c);
 }
