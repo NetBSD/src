@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.25 2002/05/26 12:16:56 grant Exp $
+#	$NetBSD: list,v 1.26 2002/05/29 04:11:03 lukem Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -44,8 +44,6 @@ COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
-LINK	etc/spwd.db			etc/pwd.db
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
