@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.4 1994/01/29 02:20:16 mycroft Exp $
+ *	$Id: crt0.c,v 1.5 1994/01/29 02:34:21 mycroft Exp $
  */
 
 
@@ -262,7 +262,7 @@ __do_dynamic_link ()
 	crt.crt_bp = (caddr_t)_callmain;
 	crt.crt_prog = __progname;
 
-	entry = (void (*)())(crt.crt_ba + sizeof hdr);
+	entry = (int (*)())(crt.crt_ba + sizeof hdr);
 #ifdef SUN_COMPAT
 	(void)(*entry)(CRT_VERSION_SUN, &crt);
 #else
