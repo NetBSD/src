@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 1996/09/07 14:22:01 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.39 1997/01/31 02:18:56 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -247,7 +247,7 @@
 158	STD		{ int sunos_sys_fstatfs(int fd, \
 			    struct sunos_statfs *buf); }
 159	STD		{ int sunos_sys_unmount(char *path); }
-#ifdef NFSCLIENT
+#ifdef NFS
 160	NOARGS		{ int async_daemon(void); }
 161	NOARGS		{ int sys_getfh(char *fname, fhandle_t *fhp); }
 #else
