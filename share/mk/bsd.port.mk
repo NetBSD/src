@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.61 1998/04/08 22:27:41 fvdl Exp $
+#	$NetBSD: bsd.port.mk,v 1.62 1998/04/09 12:47:02 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -585,7 +585,7 @@ INSTALL_SCRIPT_DIR= \
 INSTALL_DATA_DIR= \
 	${INSTALL} -d -o ${SHAREOWN} -g ${SHAREGRP} -m ${BINMODE}
 INSTALL_MAN_DIR= \
-	${INSTALL} -d -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
+	${INSTALL} -d -o ${MANOWN} -g ${MANGRP} -m ${BINMODE}
 
 INSTALL_MACROS=	BSD_INSTALL_PROGRAM="${INSTALL_PROGRAM}" \
 			BSD_INSTALL_SCRIPT="${INSTALL_SCRIPT}" \
