@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.29 2003/02/22 05:06:36 tsutsui Exp $ */
+/*	$NetBSD: if_xi.c,v 1.30 2003/02/27 07:50:57 martin Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.29 2003/02/22 05:06:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.30 2003/02/27 07:50:57 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -431,7 +431,7 @@ xi_pcmcia_attach(parent, self, aux)
 	if (sc->sc_flags & XIFLAGS_DINGO) {
 		struct pcmcia_mem_handle pcmh;
 		int ccr_window;
-		bus_addr_t ccr_offset;
+		bus_size_t ccr_offset;
 
 		/* get access to the DINGO CCR space */
 		if (pcmcia_mem_alloc(psc->sc_pf, PCMCIA_CCR_SIZE_DINGO,
@@ -1028,7 +1028,7 @@ xi_mdi_idle(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	/* Drive MDC low... */
 	bus_space_write_1(bst, bsh, offset + GP2, MDC_LOW);
@@ -1048,7 +1048,7 @@ xi_mdi_pulse(sc, data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	u_int8_t bit = data ? MDIO_HIGH : MDIO_LOW;
 
 	/* First latch the data bit MDIO with clock bit MDC low...*/
@@ -1278,7 +1278,7 @@ xi_start(ifp)
 	struct xi_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	unsigned int s, len, pad = 0;
 	struct mbuf *m0, *m;
 	u_int16_t space;
@@ -1504,7 +1504,7 @@ xi_set_address(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	struct ethercom *ether = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #if WORKING_MULTICAST
@@ -1582,7 +1582,7 @@ xi_cycle_power(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	DPRINTF(XID_CONFIG, ("xi_cycle_power()\n"));
 
@@ -1604,7 +1604,7 @@ xi_full_reset(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 
 	DPRINTF(XID_CONFIG, ("xi_full_reset()\n"));
 
