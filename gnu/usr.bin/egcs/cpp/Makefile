@@ -1,5 +1,5 @@
 #	from: @{#}Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.12 2000/08/06 16:37:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2000/08/06 19:49:53 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -14,11 +14,6 @@ CPPFLAGS+=	-DGCC_INCLUDE_DIR=\"\" \
 .if empty(HAVE_GCC28)
 CWARNFLAGS+=	-Wno-error
 .endif
-
-.NOPATH: cexp.c
-.BEGIN:
-	@rm -f ${DIST}/cexp.c
-
 .endif
 
 LINKS=		/usr/bin/cpp /usr/bin/gcpp
@@ -27,7 +22,13 @@ FILESNAME=	cpp
 FILESDIR=	/usr/bin
 FILESMODE=	${BINMODE}
 
-.include <bsd.prog.mk>
-
 MAN=		cccp.1
 MLINKS=		cccp.1 cpp.1 cccp.1 gcpp.1
+
+.include <bsd.prog.mk>
+
+.if (${MACHINE_ARCH} != "sparc64")
+.NOPATH: cexp.c
+.BEGIN:
+	@rm -f ${DIST}/cexp.c
+.endif
