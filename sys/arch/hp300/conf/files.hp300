@@ -1,7 +1,7 @@
-# $Id: files.hp300,v 1.3 1993/05/20 22:48:23 deraadt Exp $
+# $Id: files.hp300,v 1.4 1993/05/29 19:21:06 cgd Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
-arch/hp300/hp300/clock.c		standard clock
+arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
 arch/hp300/hp300/conf.c			standard
 arch/hp300/hp300/cons.c			standard
 arch/hp300/hp300/dkbad.c		standard
@@ -18,20 +18,20 @@ arch/hp300/hp300/trap.c			standard
 arch/hp300/hp300/vm_machdep.c		standard
 arch/hp300/hp300/disksubr.c		standard
 arch/hp300/dev/dma.c			standard
-arch/hp300/dev/cd.c			optional cd
-arch/hp300/dev/vn.c			optional vn
-arch/hp300/dev/ite.c			optional ite
-arch/hp300/dev/ite_subr.c		optional ite
-arch/hp300/dev/ite_tc.c			optional ite
-arch/hp300/dev/ite_gb.c			optional ite
-arch/hp300/dev/ite_rb.c			optional ite
-arch/hp300/dev/ite_dv.c			optional ite
-arch/hp300/dev/grf.c			optional grf
-arch/hp300/dev/grf_tc.c			optional grf
-arch/hp300/dev/grf_gb.c			optional grf
-arch/hp300/dev/grf_rb.c			optional grf
-arch/hp300/dev/grf_dv.c			optional grf
-arch/hp300/dev/hil.c			standard device-driver
+arch/hp300/dev/cd.c			optional cd needs-count # XXX? d-d?
+arch/hp300/dev/vn.c			optional vn needs-count # XXX? d-d?
+arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
+arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
+arch/hp300/dev/ite_tc.c			optional ite needs-count # XXX? d-d?
+arch/hp300/dev/ite_gb.c			optional ite needs-count # XXX? d-d?
+arch/hp300/dev/ite_rb.c			optional ite needs-count # XXX? d-d?
+arch/hp300/dev/ite_dv.c			optional ite needs-count # XXX? d-d?
+arch/hp300/dev/grf.c			optional grf needs-count # XXX? d-d?
+arch/hp300/dev/grf_tc.c			optional grf needs-count # XXX? d-d?
+arch/hp300/dev/grf_gb.c			optional grf needs-count # XXX? d-d?
+arch/hp300/dev/grf_rb.c			optional grf needs-count # XXX? d-d?
+arch/hp300/dev/grf_dv.c			optional grf needs-count # XXX? d-d?
+arch/hp300/dev/hil.c			standard # XXX device-driver
 arch/hp300/dev/hil_keymaps.c		standard
 arch/hp300/dev/hpib.c			optional hpib device-driver
 arch/hp300/dev/nhpib.c			optional hpib device-driver
