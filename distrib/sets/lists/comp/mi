@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.311 2001/02/18 03:09:50 jmc Exp $
+#	$NetBSD: mi,v 1.312 2001/02/19 22:14:42 cgd Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2182,6 +2182,7 @@
 ./usr/share/man/cat3/getopt_long.0	comp-c-catman
 ./usr/share/man/cat3/getpagesize.0	comp-c-catman
 ./usr/share/man/cat3/getpass.0	comp-c-catman
+./usr/share/man/cat3/getprogname.0	comp-c-catman
 ./usr/share/man/cat3/getprotobyname.0	comp-c-catman
 ./usr/share/man/cat3/getprotobynumber.0	comp-c-catman
 ./usr/share/man/cat3/getprotoent.0	comp-c-catman
@@ -2635,6 +2636,7 @@
 ./usr/share/man/cat3/setnetpath.0	comp-c-catman
 ./usr/share/man/cat3/setpassent.0	comp-c-catman
 ./usr/share/man/cat3/setproctitle.0	comp-c-catman
+./usr/share/man/cat3/setprogname.0	comp-c-catman
 ./usr/share/man/cat3/setprotoent.0	comp-c-catman
 ./usr/share/man/cat3/setpwent.0	comp-c-catman
 ./usr/share/man/cat3/setrgid.0	comp-c-catman
@@ -4021,6 +4023,7 @@
 ./usr/share/man/man3/getopt_long.3		comp-c-man
 ./usr/share/man/man3/getpagesize.3		comp-c-man
 ./usr/share/man/man3/getpass.3		comp-c-man
+./usr/share/man/man3/getprogname.3		comp-c-man
 ./usr/share/man/man3/getprotobyname.3		comp-c-man
 ./usr/share/man/man3/getprotobynumber.3		comp-c-man
 ./usr/share/man/man3/getprotoent.3		comp-c-man
@@ -4474,6 +4477,7 @@
 ./usr/share/man/man3/setnetpath.3	comp-c-man
 ./usr/share/man/man3/setpassent.3		comp-c-man
 ./usr/share/man/man3/setproctitle.3		comp-c-man
+./usr/share/man/man3/setprogname.3		comp-c-man
 ./usr/share/man/man3/setprotoent.3		comp-c-man
 ./usr/share/man/man3/setpwent.3		comp-c-man
 ./usr/share/man/man3/setrgid.3		comp-c-man
