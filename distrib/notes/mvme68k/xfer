@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.10 2001/07/24 18:02:56 nra Exp $
+.\"	$NetBSD: xfer,v 1.11 2001/10/23 22:13:35 scw Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -44,7 +44,7 @@ The boot tape is created as follows:
 .Dl # Ic "dd if=tapeimage/stboot of=$T"
 .Dl # Ic "dd if=tapeimage/bootst of=$T obs=8k conv=osync"
 .Dl # Ic "gzip -dc tapeimage/netbsd-rd.gz | dd of=$T obs=8k conv=osync"
-.Dl # Ic "gzip -dc miniroot/miniroot.gz  | dd of=$T obs=8k conv=osync"
+.Dl # Ic "gzip -dc miniroot/miniroot.fs.gz  | dd of=$T obs=8k conv=osync"
 .Dl # Ic "mt -f $T rewind"
 .Pp
 The installation set tape is created as follows:
@@ -137,7 +137,7 @@ kernel to just
 in the client's root directory before trying to netboot the client.
 .Pp
 The client will need access to the miniroot image, which can be
-provided using NFS or remote shell. If using NFS, miniroot.gz should be
+provided using NFS or remote shell. If using NFS, miniroot.fs.gz should be
 expanded on the server, because doing so from the RAMDISK shell is not
 so easy. The unzipped miniroot takes about 7.5 MB of space.
 .Pp
