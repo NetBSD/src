@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.4 2001/03/03 12:56:38 takemura Exp $	*/
+/*	$NetBSD: platid.def,v 1.5 2001/03/04 03:40:39 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -139,6 +139,10 @@ CASIO {
     EXXX {
       CPU=MIPS_VR_4121 E100 E105 E500 E507
     }
+  }
+  PocketPostPet {
+    CPU=MIPS_VR_4121
+    PocketPostPet -" PocketPostPet"
   }
 }
 #endif /* hpcmips */
