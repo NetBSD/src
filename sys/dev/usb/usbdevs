@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.229 2002/02/19 14:12:02 simonb Exp $
+$NetBSD: usbdevs,v 1.230 2002/02/20 22:27:54 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -858,6 +858,7 @@ product MINDSATWORK DW		0x0001	Digital Wallet
 
 /* Minolta Co., Ltd. */
 product MINOLTA S304		0x4007	Dimage S304
+product MINOLTA X		0x4009	Dimage X
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
