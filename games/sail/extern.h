@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1999/12/28 18:05:24 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.14 2000/02/09 22:27:55 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <sys/types.h>
 #include "machdep.h"
 
 	/* program mode */
@@ -56,7 +57,8 @@ extern char longfmt;			/* -l, print score in long format */
 extern char nobells;			/* -b, don't ring bell before Signal */
 
 	/* other initial modes */
-extern char issetuid;			/* running setuid */
+extern gid_t gid;
+extern gid_t egid;
 
 #define die()		((rand() >> 3) % 6 + 1)
 #define sqr(a)		((a) * (a))
