@@ -29,7 +29,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: README,v 1.1 1993/06/08 03:53:45 cgd Exp $
+#	$Id: README,v 1.2 1993/11/23 04:48:15 cgd Exp $
 #
 
 1.0	Overview
@@ -51,19 +51,6 @@
 	of the kernel; if you wish to use this example with NetBSD
 	you will have to remove this "options" line and rebuild
 	your kernel.
-
-	Note:	The file "/usr/include/sys/mount.h" must have the
-	"kernfs" file system type in it for this example; if you
-	do not have the following line in this file, you will not
-	be able to use this example:
-
-		#define MOUNT_KERNFS	7
-
-	This line is created by applying the "kernfs" patches to
-	your system.  NetBSD as distributed already has these
-	patches applied; if you are running vanilla 386BSD, you
-	will have to locate and add these patches to use this
-	example.
 
 
 3.0	Directions
