@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.10 2002/07/25 12:39:26 jdolecek Exp $       */
+/*      $NetBSD: sushi.c,v 1.11 2002/08/13 18:16:31 pooka Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,8 +104,7 @@ main(int argc, char **argv)
 	}
 
 	if (initscr() == NULL)
-		bailout("%s", catgets(catalog, 1, 22,
-		    "Cannot initialize curses"));
+		errx(1, "%s", "Cannot initialize curses");
 		
 	cdkscreen = initCDKScreen(stdscr);
 
