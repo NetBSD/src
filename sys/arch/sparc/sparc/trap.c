@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2000/11/23 21:58:54 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.96 2000/11/27 13:31:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,7 +96,7 @@ extern struct emul emul_sunos;
 #include <sparc/sparc/cpuvar.h>
 
 #ifdef COMPAT_AOUT
-extern struct emul emul_netbsd;
+extern struct emul emul_netbsd_aout;
 #endif /* COMPAT_AOUT */
 
 #ifdef DEBUG
@@ -1198,7 +1198,7 @@ syscall(code, tf, pc)
 	case SYS___syscall:
 		if (callp != sysent
 #ifdef COMPAT_AOUT
-		    && p->p_emul != &emul_netbsd	/* Our a.out */
+		    && p->p_emul != &emul_netbsd_aout	/* Our a.out */
 #endif
 		)
 			break;
