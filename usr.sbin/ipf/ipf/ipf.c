@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.9 1998/05/17 16:29:41 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.10 1998/05/29 20:14:13 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.3 1998/04/08 13:44:53 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipf.c,v 2.0.2.13.2.4 1998/05/23 14:29:44 darrenr Exp ";
 #endif
 
 static	void	frsync __P((void));
@@ -408,7 +408,9 @@ static void swapactive()
 
 static void frsync()
 {
-	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
+	int frsyn = 0;
+
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, &frsyn) == -1)
 		perror("SIOCFRSYN");
 	else
 		printf("filter sync'd\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.4 1998/05/17 16:29:55 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.1.1.5 1998/05/29 20:14:24 veego Exp $	*/
 
 %{
 /*
@@ -8,7 +8,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.0.2.18.2.6 1997/12/21 12:17:33 darrenr Exp 
+ * Id: iplang_y.y,v 2.0.2.18.2.7 1998/05/23 14:29:53 darrenr Exp 
  */
  
 #include <stdio.h>
@@ -50,7 +50,9 @@
 #include "ipf.h"
 #include "iplang.h"
 
+#ifndef __NetBSD__
 extern	struct ether_addr *ether_aton __P((char *));
+#endif
 
 extern	int	opts;
 extern	struct ipopt_names ionames[];

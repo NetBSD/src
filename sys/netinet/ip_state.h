@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.9 1998/05/17 16:30:02 veego Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.10 1998/05/29 20:14:29 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.0.2.14.2.1 1997/11/06 21:23:15 darrenr Exp 
+ * Id: ip_state.h,v 2.0.2.14.2.6 1998/05/24 05:18:04 darrenr Exp 
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -49,10 +49,18 @@ typedef struct ipstate {
 	u_int	is_pass;
 	U_QUAD_T	is_pkts;
 	U_QUAD_T	is_bytes;
+	void	*is_ifpin;
+	void	*is_ifpout;
 	struct	in_addr	is_src;
 	struct	in_addr	is_dst;
 	u_char	is_p;
 	u_char	is_flags;
+	u_32_t	is_opt;
+	u_32_t	is_optmsk;
+	u_short	is_sec;
+	u_short	is_secmsk;
+	u_short	is_auth;
+	u_short	is_authmsk;
 	union {
 		icmpstate_t	is_ics;
 		tcpstate_t	is_ts;
@@ -122,14 +130,11 @@ extern	u_long	fr_tcptimeout;
 extern	u_long	fr_tcpclosed;
 extern	u_long	fr_udptimeout;
 extern	u_long	fr_icmptimeout;
-extern	int	fr_tcpstate __P((ipstate_t *, fr_info_t *, ip_t *,
-			    tcphdr_t *, u_short));
-extern	ips_stat_t	*fr_statetstats __P((void));
+extern	int	fr_tcpstate __P((ipstate_t *, fr_info_t *, ip_t *, tcphdr_t *));
 extern	int	fr_addstate __P((ip_t *, fr_info_t *, u_int));
 extern	int	fr_checkstate __P((ip_t *, fr_info_t *));
 extern	void	fr_timeoutstate __P((void));
 extern	void	fr_tcp_age __P((u_long *, u_char *, ip_t *, fr_info_t *, int));
-extern	int	fr_state_flush __P((int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_short));
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -137,4 +142,5 @@ extern	int	fr_state_ioctl __P((caddr_t, u_long, int));
 #else
 extern	int	fr_state_ioctl __P((caddr_t, int, int));
 #endif
+
 #endif /* __IP_STATE_H__ */

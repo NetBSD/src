@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.1.1.9 1998/05/17 16:30:01 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.1.1.10 1998/05/29 20:14:28 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.0.2.39.2.10 1997/12/03 10:02:30 darrenr Exp 
+ * Id: ip_fil.h,v 2.0.2.39.2.11 1998/05/23 14:29:37 darrenr Exp 
  */
 
 #ifndef	__IP_FIL_H__
@@ -520,4 +520,5 @@ extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern	struct frgroup *ipfgroups[3][2];
 extern	struct filterstats frstats[];
+
 #endif	/* __IP_FIL_H__ */
