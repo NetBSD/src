@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.98 2001/09/16 16:34:36 wiz Exp $	*/
+/*	$NetBSD: elink3.c,v 1.98.2.1 2001/11/12 21:18:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -611,7 +611,7 @@ ep_509_probemedia(sc)
 	 */
 	port = ep_read_eeprom(sc, EEPROM_ADDR_CFG) >> 14;
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_509_media; epm->epm_name != NULL; epm++) {
 		if (ep_w0_config & epm->epm_mpbit) {
@@ -678,7 +678,7 @@ ep_vortex_probemedia(sc)
 		return;
 	}
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_vortex_media; epm->epm_name != NULL; epm++) {
 		if (reset_options & epm->epm_mpbit) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf64.c,v 1.1 1996/09/26 20:51:06 cgd Exp $	*/
+/*	$NetBSD: exec_elf64.c,v 1.1.46.1 2001/11/12 21:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_elf64.c,v 1.1.46.1 2001/11/12 21:18:43 thorpej Exp $");
 
 #define	ELFSIZE	64
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2001/07/28 18:12:43 chris Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7.4.1 2001/11/12 21:16:30 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -343,18 +343,14 @@ db_machine_init()
 #ifndef __ELF__
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	int len;
-#endif
 
-#ifdef __ELF__
-	printf("[ ELF symbol tables not supported ]\n");
-#else
 	/*
 	 * The boot loader currently loads the kernel with the a.out
 	 * header still attached.
 	 */
 
 	if (kernexec->a_syms == 0) {
-		printf("[No symbol table]\n");
+		printf("ddb: No symbol table\n");
 	} else {
 		/* cover the symbols themselves (what is the int for?? XXX) */
 		esym = (int)&end + kernexec->a_syms + sizeof(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.45 2001/09/28 11:43:23 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.45.2.1 2001/11/12 21:19:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_inode.c	8.13 (Berkeley) 4/21/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.45.2.1 2001/11/12 21:19:45 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -177,7 +180,7 @@ ffs_truncate(v)
 	struct fs *fs;
 	int offset, size, level;
 	long count, nblocks, blocksreleased = 0;
-	int i;
+	int i, ioflag, aflag;
 	int error, allerror = 0;
 	off_t osize;
 
@@ -207,6 +210,7 @@ ffs_truncate(v)
 		return (EFBIG);
 
 	osize = oip->i_ffs_size;
+	ioflag = ap->a_flags;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -215,9 +219,28 @@ ffs_truncate(v)
 	 */
 
 	if (osize < length) {
+		aflag = ioflag & IO_SYNC ? B_SYNC : 0;
+		if (lblkno(fs, osize) < NDADDR &&
+		    lblkno(fs, osize) != lblkno(fs, length) &&
+		    blkroundup(fs, osize) != osize) {
+			error = ufs_balloc_range(ovp, osize,
+			    blkroundup(fs, osize) - osize, ap->a_cred, aflag);
+			if (error) {
+				return error;
+			}
+			if (ioflag & IO_SYNC) {
+				ovp->v_size = blkroundup(fs, osize);
+				simple_lock(&ovp->v_interlock);
+				VOP_PUTPAGES(ovp, osize & ~(fs->fs_bsize - 1),
+				    round_page(ovp->v_size),
+				    PGO_CLEANIT | PGO_SYNCIO);
+			}
+		}
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
+		    aflag);
 		if (error) {
+			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
+			    ap->a_cred, ap->a_p);
 			return error;
 		}
 		uvm_vnp_setsize(ovp, length);
@@ -232,7 +255,7 @@ ffs_truncate(v)
 	 * We must synchronously flush the zeroed pages to disk
 	 * since the new pages will be invalidated as soon as we
 	 * inform the VM system of the new, smaller size.
-	 * We must to this before acquiring the GLOCK, since fetching
+	 * We must do this before acquiring the GLOCK, since fetching
 	 * the pages will acquire the GLOCK internally.
 	 * So there is a window where another thread could see a whole
 	 * zeroed page past EOF, but that's life.
@@ -240,16 +263,14 @@ ffs_truncate(v)
 
 	offset = blkoff(fs, length);
 	if (ovp->v_type == VREG && length < osize && offset != 0) {
-		struct uvm_object *uobj;
 		voff_t eoz;
 
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		uobj = &ovp->v_uobj;
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj, trunc_page(length),
-		    round_page(eoz), PGO_CLEANIT|PGO_DEACTIVATE|PGO_SYNCIO);
+		simple_lock(&ovp->v_interlock);
+		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
+		    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
 		if (error) {
 			return error;
 		}
@@ -421,8 +442,6 @@ done:
 	 */
 	oip->i_ffs_size = length;
 	oip->i_ffs_blocks -= blocksreleased;
-	if (oip->i_ffs_blocks < 0)			/* sanity */
-		oip->i_ffs_blocks = 0;
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA

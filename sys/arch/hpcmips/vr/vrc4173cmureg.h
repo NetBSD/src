@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173cmureg.h,v 1.1 2001/10/21 09:38:11 takemura Exp $	*/
+/*	$NetBSD: vrc4173cmureg.h,v 1.1.2.1 2001/11/12 21:17:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -27,7 +27,7 @@
  */
 
 #define	VRC4173CMU_IOBASE	0x040
-#define	VRC4173CMU_IOSIZE	0x002
+#define	VRC4173CMU_IOSIZE	0x004
 
 #define	VRC4173CMU_CLKMSK	0x00
 #define	VRC4173CMU_CLKMSK_48MOSC	(1<<12)

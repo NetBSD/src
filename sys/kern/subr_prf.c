@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.81 2001/07/10 20:40:56 fvdl Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.81.4.1 2001/11/12 21:18:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)subr_prf.c	8.4 (Berkeley) 5/4/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.81.4.1 2001/11/12 21:18:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

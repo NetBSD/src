@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.95 2001/09/24 06:01:13 chs Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.95.2.1 2001/11/12 21:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,6 +41,9 @@
 /*
  * sysctl system call.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.95.2.1 2001/11/12 21:18:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -758,7 +761,8 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 				newplim = limcopy(ptmp->p_limit);
 				limfree(ptmp->p_limit);
 				ptmp->p_limit = newplim;
-			} else if (ptmp->p_limit->pl_corename != defcorename) {
+			}
+			if (ptmp->p_limit->pl_corename != defcorename) {
 				free(ptmp->p_limit->pl_corename, M_TEMP);
 			}
 			ptmp->p_limit->pl_corename = tmps;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2001/08/11 13:20:20 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23.4.1 2001/11/12 21:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,6 +38,8 @@
 
 /* for pt_entry_t definition */
 #include <machine/pte.h>
+
+#include <arm/arm32/vmparam.h>
 
 #define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -96,9 +98,9 @@
 
 /* Various constants used by the MD code*/
 #define	KERNEL_BASE		0xf0000000
-#define	KERNEL_TEXT_BASE	KERNEL_BASE
-#define	ALT_PAGE_TBLS_BASE	0xf0c00000
-#define	KERNEL_VM_BASE		0xf1000000
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
+#define	ALT_PAGE_TBLS_BASE	(KERNEL_BASE + 0x00c00000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 /*
  * The Kernel VM Size varies depending on the machine depending on how
  * much space is needed (and where) for other mappings.

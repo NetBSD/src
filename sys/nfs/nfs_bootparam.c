@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.18 2001/10/13 23:25:58 simonb Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.18.2.1 2001/11/12 21:19:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Support for NFS diskless booting, Sun-style (RPC/bootparams)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.18.2.1 2001/11/12 21:19:36 thorpej Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"

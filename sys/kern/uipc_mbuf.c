@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.54 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.54.2.1 2001/11/12 21:18:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.54.2.1 2001/11/12 21:18:58 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -85,11 +88,12 @@
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
+
 #include <net/if.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
 
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */

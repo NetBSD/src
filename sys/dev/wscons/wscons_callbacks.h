@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.14 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.14.2.1 2001/11/12 21:18:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct wsevsrc;
+
 /*
  * Calls to the display interface from the glue code.
  */
-struct device *wsdisplay_set_console_kbd(struct device *);
+void wsdisplay_set_console_kbd(struct wsevsrc *);
 
 /*
  * Calls to the display interface from the keyboard interface.
@@ -57,6 +59,5 @@ int	wsdisplay_param(struct device*, u_long, struct wsdisplay_param*);
 /*
  * Calls to the keyboard interface from the glue code.
  */
-struct wsmux_softc;
-struct device *wskbd_set_console_display(struct device *, struct wsmux_softc *);
+struct wsevsrc *wskbd_set_console_display(struct device *, struct wsevsrc *);
 int wskbd_pickfree(void);

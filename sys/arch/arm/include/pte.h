@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2001/06/25 23:22:39 chris Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.6.1 2001/11/12 21:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -74,7 +74,11 @@ typedef	int	pt_entry_t;		/* page table entry */
 #define PT_C		0x08	/* Phys - Cacheable */
 #define PT_U		0x10	/* Phys - Updateable */
 
-#define PT_CACHEABLE	(PT_B | PT_C)
+#ifndef _LOCORE
+extern pt_entry_t	pte_cache_mode;
+
+#define PT_CACHEABLE	(pte_cache_mode)
+#endif
 
 /* Page R/M attributes (in pmseg.attrs). */
 #define PT_M		0x01	/* Virt - Modified */
@@ -93,6 +97,7 @@ typedef	int	pt_entry_t;		/* page table entry */
 /* Page table types and masks */
 #define L1_PAGE		0x01	/* L1 page table mapping */
 #define L1_SECTION	0x02	/* L1 section mapping */
+#define L1_FPAGE	0x03	/* L1 fine page mapping */
 #define L1_MASK		0x03	/* Mask for L1 entry type */
 #define L2_LPAGE	0x01	/* L2 large page (64KB) */
 #define L2_SPAGE	0x02	/* L2 small page (4KB) */

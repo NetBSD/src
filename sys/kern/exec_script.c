@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.29 2001/06/15 17:24:19 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.29.6.1 2001/11/12 21:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.29.6.1 2001/11/12 21:18:43 thorpej Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */

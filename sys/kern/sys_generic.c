@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.57 2001/06/28 05:45:49 atatat Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.57.6.1 2001/11/12 21:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)sys_generic.c	8.9 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.57.6.1 2001/11/12 21:18:54 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -255,8 +258,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 			error = 0;
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
-		if (error == 0) {
+	if (ktriov != NULL) {
+		if (error == 0)
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}

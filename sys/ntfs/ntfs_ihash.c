@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.7 2001/09/15 16:13:03 chs Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.7.2.1 2001/11/12 21:19:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -35,6 +35,9 @@
  *	@(#)ufs_ihash.c	8.7 (Berkeley) 5/17/95
  * Id: ntfs_ihash.c,v 1.5 1999/05/12 09:42:58 semenu Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.7.2.1 2001/11/12 21:19:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.1 2001/08/19 03:16:22 wdk Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.1.6.1 2001/11/12 21:17:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -84,6 +84,9 @@
 #define SBIC_csr        23
 #define SBIC_cmd        24
 #define SBIC_data       25
+#define SBIC_queue_tag	26
+#define	SBIC_aux_status	27
+
 /* sbic_asr is addressed directly */
 
 /*
@@ -107,9 +110,10 @@
  */
 
 #define SBIC_ID_FS_8_10         0x00    /* Input clock is  8-10 Mhz */
-                                    /* 11 Mhz is invalid */
+                                        /* 11 Mhz is invalid */
 #define SBIC_ID_FS_12_15        0x40    /* Input clock is 12-15 Mhz */
 #define SBIC_ID_FS_16_20        0x80    /* Input clock is 16-20 Mhz */
+#define SBIC_ID_RAF             0x20    /* */
 #define SBIC_ID_EHP             0x10    /* Enable host parity */
 #define SBIC_ID_EAF             0x08    /* Enable Advanced Features */
 #define SBIC_ID_MASK            0x07
@@ -304,6 +308,21 @@
 #define SBIC_CMD_RESELECT_SEND  0x0b    /* (DT ) lev II */
 #define SBIC_CMD_WAIT_SEL_RECV  0x0c    /* (DT ) lev II */
 
+
+#define PHASE_MASK		0x07    /* mask for psns/pctl phase */
+#define DATA_OUT_PHASE		0x00
+#define DATA_IN_PHASE		0x01
+#define CMD_PHASE		0x02
+#define STATUS_PHASE		0x03
+#define BUS_FREE_PHASE		0x04
+#define ARB_SEL_PHASE		0x05    /* Fuji chip combines bus arb with sel. */
+#define MESG_OUT_PHASE		0x06
+#define MESG_IN_PHASE		0x07
+
+#define SCSI_PHASE(reg)		((reg) & PHASE_MASK)
+
+#define SCSI_STATUS_MASK	0x3e	/* Mask unused bits in status byte */
+
 /* approximate, but we won't do SBT on selects */
 #define sbic_isa_select(cmd)    (((cmd) > 0x5) && ((cmd) < 0xa))
 
@@ -387,6 +406,8 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 #define GET_SBIC_cmd(sc,val)          sbic_read_reg(sc,SBIC_cmd,val)
 #define SET_SBIC_data(sc,val)         sbic_write_reg(sc,SBIC_data,val)
 #define GET_SBIC_data(sc,val)         sbic_read_reg(sc,SBIC_data,val)
+#define SET_SBIC_queue_tag(sc,val)    sbic_write_reg(sc,SBIC_queue_tag,val)
+#define GET_SBIC_queue_tag(sc,val)    sbic_read_reg(sc,SBIC_queue_tag,val)
 
 #define SBIC_TC_PUT(sc,val)						\
     do {								\
@@ -411,12 +432,12 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
         int   n   = (cmdsize) - 1;                  			\
         char *ptr = (char *)(cmd);                  			\
         sbic_write_reg(regs, SBIC_cdb1, *ptr++);    			\
-        while(n-- > 0) /* (regs)->sbic_value = *ptr++; */		\
+        while(n-- > 0)							\
 		bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,		\
 			  SBIC_VAL, *ptr++); /* XXX write_multi */	\
     } while (0)
 
-#define GET_SBIC_asr(sc,val)       /* (val) = (regs)->sbic_asr */	\
+#define GET_SBIC_asr(sc,val)						\
     do {								\
 	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,SBIC_ASR); \
     } while (0)	
@@ -424,7 +445,6 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 
 #define WAIT_CIP(sc)                          				\
     do {                                        			\
-       /* while ((regs)->sbic_asr & SBIC_ASR_CIP) */			\
         while (bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,		\
 			SBIC_ASR) & SBIC_ASR_CIP) 			\
 	    /*nop*/;                                   			\
@@ -432,7 +452,7 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 
 /*
  * transmit a byte in programmed I/O mode
- **/
+ */
 #define SEND_BYTE(sc, ch)						\
     do {								\
         WAIT_CIP(sc);                                         		\

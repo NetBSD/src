@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.44 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.44.2.1 2001/11/12 21:19:31 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -82,6 +82,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -97,7 +98,7 @@
 #ifdef INET
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#endif /*INET*/
+#endif /* INET */
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
@@ -116,7 +117,6 @@
 /* we need it for NLOOP. */
 #include "loop.h"
 #include "faith.h"
-
 #include "gif.h"
 #include "bpfilter.h"
 
@@ -541,7 +541,7 @@ ip6_input(m)
 		 && ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
-			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /*faith*/
+			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
 			goto hbhcheck;
 		}
 	}
@@ -1321,6 +1321,8 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 2) << 2;
+		if (m->m_pkthdr.len < off)
+			return -1;
 		return off;
 
 	case IPPROTO_HOPOPTS:
@@ -1332,6 +1334,8 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 1) << 3;
+		if (m->m_pkthdr.len < off)
+			return -1;
 		return off;
 
 	case IPPROTO_NONE:
@@ -1390,9 +1394,6 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	ENOPROTOOPT
 };
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

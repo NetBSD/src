@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.171 2001/10/11 16:27:24 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.171.2.1 2001/11/12 21:19:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,6 +40,9 @@
  *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.171.2.1 2001/11/12 21:19:02 thorpej Exp $");
+
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 
@@ -56,14 +59,11 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_flags __P((struct vnode *, u_long, struct proc *));

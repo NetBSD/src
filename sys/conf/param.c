@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.38 2001/08/20 04:51:17 mrg Exp $	*/
+/*	$NetBSD: param.c,v 1.38.4.1 2001/11/12 21:17:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -39,6 +39,9 @@
  *
  *	@(#)param.c	7.20 (Berkeley) 6/27/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.38.4.1 2001/11/12 21:17:56 thorpej Exp $");
 
 #include "opt_rtc_offset.h"
 #include "opt_sb_max.h"

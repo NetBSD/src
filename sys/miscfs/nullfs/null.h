@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.12 2001/06/07 13:44:46 wiz Exp $	*/
+/*	$NetBSD: null.h,v 1.12.6.1 2001/11/12 21:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -108,13 +108,14 @@ struct null_node {
 #define	null_vnode	ln.layer_vnode
 #define	null_flags	ln.layer_flags
 
-int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
+int	null_node_create __P((struct mount *, struct vnode *,
+	    struct vnode **));
 
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
 #define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
 #define	NULLTOV(xp) ((xp)->null_vnode)
 #ifdef NULLFS_DIAGNOSTIC
-extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
+struct vnode *layer_checkvp __P((struct vnode *, char *, int));
 #define	NULLVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)

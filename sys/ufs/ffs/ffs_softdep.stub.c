@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.5 2001/09/16 13:51:45 jdolecek Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.5.2.1 2001/11/12 21:19:46 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,10 +33,12 @@
  *	@(#)ffs_softdep.stub.c	9.1 (McKusick) 7/9/97
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.5.2.1 2001/11/12 21:19:46 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>

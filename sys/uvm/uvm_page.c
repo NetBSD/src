@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.68 2001/09/28 11:59:55 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.68.2.1 2001/11/12 21:19:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -69,6 +69,9 @@
 /*
  * uvm_page.c: page ops.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.68.2.1 2001/11/12 21:19:56 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -918,7 +921,7 @@ uvm_page_recolor(int newncolors)
 
 static __inline struct vm_page *
 uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
-    unsigned int *trycolorp)
+    int *trycolorp)
 {
 	struct pglist *freeq;
 	struct vm_page *pg;
@@ -1188,6 +1191,10 @@ uvm_pagefree(pg)
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
 		    (pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
+	LOCK_ASSERT(pg->uobject == NULL ||
+		    simple_lock_held(&pg->uobject->vmobjlock));
+	LOCK_ASSERT(pg->uobject != NULL || pg->uanon == NULL ||
+		    simple_lock_held(&pg->uanon->an_lock));
 
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
@@ -1201,24 +1208,33 @@ uvm_pagefree(pg)
 	 */
 
 	if (pg->loan_count) {
+		KASSERT(pg->wire_count == 0);
 
 		/*
 		 * if the page is owned by an anon then we just want to
-		 * drop ownership and return.  the kernel will free the page
-		 * when it is done with it.  if the page is owned by an object,
-		 * mark it clean for the benefit of possible anon owners
-		 * and mark it as anon-owned if there current anon loanees.
+		 * drop anon ownership.  the kernel will free the page when
+		 * it is done with it.  if the page is owned by an object,
+		 * remove it from the object and mark it dirty for the benefit
+		 * of possible anon owners.
+		 *
+		 * regardless of previous ownership, wakeup any waiters,
+		 * unbusy the page, and we're done.
 		 */
 
 		if (pg->pqflags & PQ_ANON) {
 			pg->pqflags &= ~PQ_ANON;
 			pg->uanon = NULL;
 		} else if (pg->flags & PG_TABLED) {
+			uvm_pageremove(pg);
 			pg->flags &= ~PG_CLEAN;
-			if (pg->uanon) {
-				pg->pqflags |= PQ_ANON;
-			}
 		}
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+		pg->flags &= ~(PG_WANTED|PG_BUSY);
+#ifdef UVM_PAGE_TRKOWN
+		pg->owner_tag = NULL;
+#endif
 		return;
 	}
 
@@ -1228,25 +1244,13 @@ uvm_pagefree(pg)
 	 */
 
 	if (pg->flags & PG_TABLED) {
-		if (pg->pqflags & PQ_AOBJ &&
-		    uao_find_swslot(pg->uobject,
-				    pg->offset >> PAGE_SHIFT) != 0) {
-			simple_lock(&uvm.swap_data_lock);
-			uvmexp.swpgonly++;
-			simple_unlock(&uvm.swap_data_lock);
-		}
 		uvm_pageremove(pg);
 	} else if (pg->pqflags & PQ_ANON) {
-		if (pg->uanon->an_swslot) {
-			simple_lock(&uvm.swap_data_lock);
-			uvmexp.swpgonly++;
-			simple_unlock(&uvm.swap_data_lock);
-		}
 		pg->uanon->u.an_page = NULL;
 	}
 
 	/*
-	 * now remove the page from the queues
+	 * now remove the page from the queues.
 	 */
 
 	uvm_pagedequeue(pg);
@@ -1361,9 +1365,12 @@ uvm_page_own(pg, tag)
 		panic("uvm_page_own");
 	}
 	pg->owner_tag = NULL;
-	KASSERT((pg->uanon == NULL && pg->uobject == NULL) ||
+	KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) ||
+		(pg->uanon == NULL && pg->uobject == NULL) ||
 		pg->uobject == uvm.kernel_object ||
-		pg->wire_count || (pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)));
+		pg->wire_count > 0 ||
+		(pg->loan_count == 1 && pg->uanon == NULL) ||
+		pg->loan_count > 1);
 	return;
 }
 #endif

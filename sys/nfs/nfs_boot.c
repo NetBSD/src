@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.56 2001/01/19 14:26:01 enami Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.56.8.1 2001/11/12 21:19:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Support for NFS diskless booting, specifically getting information
  * about where to mount root from, what pathnames, etc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.8.1 2001/11/12 21:19:36 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.24 2001/10/17 08:23:06 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.24.2.1 2001/11/12 21:19:31 thorpej Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ip6_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled

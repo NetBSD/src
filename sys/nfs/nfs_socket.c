@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.68 2001/10/13 22:59:16 simonb Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.68.2.1 2001/11/12 21:19:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,6 +41,9 @@
 /*
  * Socket operations for use by nfs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.68.2.1 2001/11/12 21:19:37 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"

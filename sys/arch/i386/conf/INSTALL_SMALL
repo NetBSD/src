@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.71 2001/09/21 23:44:22 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.71.4.1 2001/11/12 21:17:03 thorpej Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -18,8 +18,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2640	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
@@ -142,7 +141,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options	I2OVERBOSE	# verbose I2O driver messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

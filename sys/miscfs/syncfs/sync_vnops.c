@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.6 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.6.8.1 2001/11/12 21:19:14 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -30,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.6.8.1 2001/11/12 21:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

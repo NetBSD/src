@@ -1,0 +1,14 @@
+#	$NetBSD: files.i80312,v 1.3.2.2 2001/11/12 21:16:34 thorpej Exp $
+#
+# Configuration info for Intel i80312 Companion I/O support
+#
+
+file	arch/arm/xscale/i80312_mem.c
+
+device	iopxs: pcibus
+# Board-specific front-end provides attachment.
+file	arch/arm/xscale/i80312.c		iopxs
+file	arch/arm/xscale/i80312_pci.c		iopxs
+file	arch/arm/xscale/i80312_pci_dma.c	iopxs
+file	arch/arm/xscale/i80312_space.c		iopxs
+file	arch/arm/xscale/i80312_space_asm.S	iopxs

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.9 2001/09/15 20:36:38 chs Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.9.2.1 2001/11/12 21:19:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -30,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.9.2.1 2001/11/12 21:19:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

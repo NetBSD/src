@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.20 2001/06/09 11:02:08 wiz Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.20.6.1 2001/11/12 21:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.20 2001/06/09 11:02:08 wiz Exp $
+ *	$Id: null_vnops.c,v 1.20.6.1 2001/11/12 21:19:10 thorpej Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -194,7 +194,7 @@
  *
  * The first approach is to call the aliasing layer's bypass routine.
  * This method is most suitable when you wish to invoke the operation
- * currently being hanldled on the lower layer.  It has the advantage
+ * currently being handled on the lower layer.  It has the advantage
  * that the bypass routine already must do argument mapping.
  * An example of this is null_getattrs in the null layer.
  *
@@ -205,6 +205,9 @@
  * is that vnode arguments must be manually mapped.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.20.6.1 2001/11/12 21:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

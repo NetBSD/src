@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.54 2001/07/30 14:07:25 pooka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.54.4.1 2001/11/12 21:19:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,47 +47,50 @@
  *	http://www.sco.com/developer/gabi/latest/ch4.eheader.html
  */
 
-#include <machine/int_types.h>
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <inttypes.h>
+#endif /* _KERNEL || _STANDALONE */
 
-typedef	__uint8_t  	Elf_Byte;
+#include <machine/elf_machdep.h>
 
-typedef	__uint32_t	Elf32_Addr;
+typedef	uint8_t  	Elf_Byte;
+
+typedef	uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
-typedef	__uint32_t Elf32_Off;
+typedef	uint32_t	Elf32_Off;
 #define	ELF32_FSZ_OFF	4
-typedef	__int32_t   Elf32_Sword;
+typedef	int32_t		Elf32_Sword;
 #define	ELF32_FSZ_SWORD	4
-typedef	__uint32_t Elf32_Word;
+typedef	uint32_t	Elf32_Word;
 #define	ELF32_FSZ_WORD	4
-typedef	__uint16_t Elf32_Half;
+typedef	uint16_t	Elf32_Half;
 #define	ELF32_FSZ_HALF	2
 
-typedef	__uint64_t	Elf64_Addr;
+typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
-typedef	__uint64_t	Elf64_Off;
+typedef	uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	__int32_t	Elf64_Shalf;
+typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
-#ifdef __alpha__
-typedef	__int64_t	Elf64_Sword;
-#define	ELF64_FSZ_SWORD	8
-typedef	__uint64_t	Elf64_Word;
-#define	ELF64_FSZ_WORD	8
-#else
-typedef	__int32_t	Elf64_Sword;
+#ifndef ELF64_FSZ_SWORD
+typedef	int32_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
-typedef	__uint32_t	Elf64_Word;
+#endif /* ELF64_FSZ_SWORD */
+#ifndef ELF64_FSZ_WORD
+typedef	uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
-#endif /* __alpha__ */
+#endif /* ELF64_FSZ_WORD */
 
-typedef	__int64_t	Elf64_Sxword;
+typedef	int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint64_t	Elf64_Xword;
+typedef	uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint32_t	Elf64_Half;
+typedef	uint32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
-typedef	__uint16_t	Elf64_Quarter;
+typedef	uint16_t	Elf64_Quarter;
 #define	ELF64_FSZ_QUARTER 2
 
 /*
@@ -276,6 +279,8 @@ typedef struct {
 #define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
 #define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+#define	EM_NS32K	97	/* National Semiconductor 32000 series */
+
 /* Unofficial machine types follow */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
@@ -652,8 +657,6 @@ typedef struct {
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
-
-#include <machine/elf_machdep.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.38 2001/06/03 02:22:40 chs Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.38.6.1 2001/11/12 21:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,9 @@
 /*
  * Portal Filesystem
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.38.6.1 2001/11/12 21:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

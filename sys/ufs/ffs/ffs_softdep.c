@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.17 2001/09/15 20:36:42 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.17.2.1 2001/11/12 21:19:45 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,6 +32,9 @@
  * from: @(#)ffs_softdep.c 9.56 (McKusick) 1/17/00
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.17.2.1 2001/11/12 21:19:45 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
@@ -44,7 +47,6 @@
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/dir.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ffs/fs.h>
@@ -4132,8 +4134,8 @@ softdep_sync_metadata(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
-		off_t offhi;
-		off_t offlo;
+		off_t a_offlo;
+		off_t a_offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -4405,11 +4407,9 @@ flush_inodedep_deps(fs, ino)
 	int error, waitfor;
 	struct buf *bp;
 	struct vnode *vp;
-	struct uvm_object *uobj;
 
 	vp = softdep_lookupvp(fs, ino);
 	KASSERT(vp != NULL);
-	uobj = &vp->v_uobj;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -4440,9 +4440,8 @@ flush_inodedep_deps(fs, ino)
 		 */
 
 		FREE_LOCK(&lk);
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
-		    PGO_ALLPAGES|PGO_CLEANIT|
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
 		if (waitfor == MNT_WAIT) {
 			drain_output(vp, 0);

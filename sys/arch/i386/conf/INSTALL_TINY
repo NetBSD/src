@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.40 2001/09/21 23:44:22 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.40.4.1 2001/11/12 21:17:03 thorpej Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -18,8 +18,7 @@ makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2688	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 maxusers	2		# estimated number of users
 
@@ -139,7 +138,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options	I2OVERBOSE	# verbose I2O driver messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 options 	NVNODE=50

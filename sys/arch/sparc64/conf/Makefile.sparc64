@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.39 2001/10/21 19:46:16 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.39.2.1 2001/11/12 21:17:34 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,17 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sparc64/conf/Makefile.sparc64
 # after which config should be rerun for all machines of that type.
+
+# Default to 32-bit.  Set the MACHINE_ARCH accordingly, using either
+# the 32-bit or 64-bit toolchain.
+LP64?=	no
+.if ${LP64} == "yes"
+MACHINE_ARCH=sparc64
+.else
+MACHINE_ARCH=sparc
+.endif
+
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 
@@ -46,10 +57,14 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
+.if ${LP64} == "yes"
+CPPFLAGS+=	-D_LP64
+.endif
+
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 .if defined(PROF)
 # We need to run the compiler in medlow memory model.
-CFLAGS += -mcmodel=medlow
+CFLAGS+=	-mcmodel=medlow
 .endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 
@@ -61,7 +76,7 @@ LINKFLAGS=	-Ttext 01000000 -Tdata 01800000 -e start
 #LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
 
 LINKFLAGS+=	-n -T ${SPARC64}/conf/${KERN_LDSCRIPT}
-.if ${MACHINE_ARCH} == "sparc64"
+.if ${LP64} == "yes"
 KERN_LDSCRIPT?= kern.ldscript
 .else
 KERN_LDSCRIPT?= kern32.ldscript

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.14 2000/12/15 11:52:14 fvdl Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.14.8.1 2001/11/12 21:19:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.14.8.1 2001/11/12 21:19:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

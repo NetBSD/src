@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5.14.1 2001/11/12 21:19:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -42,6 +42,9 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.5.14.1 2001/11/12 21:19:43 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -53,7 +56,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -119,7 +121,6 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
 	ufs_daddr_t daddr;
 	long metalbn;
@@ -144,14 +145,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		maxrun = MAXBSIZE / mp->mnt_stat.f_iosize - 1;
 	}
 
-	xap = ap == NULL ? a : ap;
-	if (!nump)
-		nump = &num;
-	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
-
-	num = *nump;
-	if (num == 0) {
+	if (bn >= 0 && bn < NDADDR) {
 		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
@@ -163,11 +157,16 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		return (0);
 	}
 
+	xap = ap == NULL ? a : ap;
+	if (!nump)
+		nump = &num;
+	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
+		return (error);
+
+	num = *nump;
 
 	/* Get disk address out of indirect block array */
 	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
-
-	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 
 #ifdef DIAGNOSTIC
     if (num > NIADDR + 1 || num < 1) {

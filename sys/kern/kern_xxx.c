@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.8.1 2001/11/12 21:18:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,9 @@
  *	@(#)kern_xxx.c	8.3 (Berkeley) 2/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.8.1 2001/11/12 21:18:51 thorpej Exp $");
+
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
@@ -42,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

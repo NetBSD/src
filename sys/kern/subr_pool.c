@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.63 2001/10/21 00:06:05 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.63.2.1 2001/11/12 21:18:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.63.2.1 2001/11/12 21:18:52 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
