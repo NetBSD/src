@@ -1,6 +1,8 @@
+/*	$NetBSD: vacation.c,v 1.5 1994/11/17 07:55:51 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)vacation.c	5.19 (Berkeley) 3/23/91";*/
-static char rcsid[] = "$Id: vacation.c,v 1.4 1993/08/01 18:03:35 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
+#endif
+static char rcsid[] = "$NetBSD: vacation.c,v 1.5 1994/11/17 07:55:51 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -149,7 +153,7 @@ main(argc, argv)
 	}
 
 	db = dbopen(VDB, O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
-	    S_IRUSR|S_IWUSR, DB_HASH, (HASHINFO *)NULL);
+	    S_IRUSR|S_IWUSR, DB_HASH, NULL);
 	if (!db) {
 		syslog(LOG_NOTICE, "vacation: %s: %s\n", VDB, strerror(errno));
 		exit(1);
@@ -175,7 +179,8 @@ main(argc, argv)
 		(void)(db->close)(db);
 		sendmessage(pw->pw_name);
 	}
-	(void)(db->close)(db);
+	else
+		(void)(db->close)(db);
 	exit(0);
 	/* NOTREACHED */
 }
@@ -217,7 +222,8 @@ readheaders()
 			if (!*p)
 				break;
 			if (!strncasecmp(p, "junk", 4) ||
-			    !strncasecmp(p, "bulk", 4))
+			    !strncasecmp(p, "bulk", 4) ||
+			    !strncasecmp(p, "list", 4))
 				exit(0);
 			break;
 		case 'C':		/* "Cc:" */
@@ -263,7 +269,7 @@ nsearch(name, str)
 
 /*
  * junkmail --
- *	read the header and return if automagic/junk/bulk mail
+ *	read the header and return if automagic/junk/bulk/list mail
  */
 junkmail()
 {
@@ -373,13 +379,42 @@ setreply()
 sendmessage(myname)
 	char *myname;
 {
-	if (!freopen(VMSG, "r", stdin)) {
+	FILE *mfp, *sfp;
+	int i;
+	int pvect[2];
+	char buf[MAXLINE];
+
+	mfp = fopen(VMSG, "r");
+	if (mfp == NULL) {
 		syslog(LOG_NOTICE, "vacation: no ~%s/%s file.\n", myname, VMSG);
 		exit(1);
 	}
-	execl(_PATH_SENDMAIL, "sendmail", "-f", myname, from, NULL);
-	syslog(LOG_ERR, "vacation: can't exec %s.\n", _PATH_SENDMAIL);
-	exit(1);
+	if (pipe(pvect) < 0) {
+		syslog(LOG_ERR, "vacation: pipe: %s", strerror(errno));
+		exit(1);
+	}
+	i = vfork();
+	if (i < 0) {
+		syslog(LOG_ERR, "vacation: fork: %s", strerror(errno));
+		exit(1);
+	}
+	if (i == 0) {
+		dup2(pvect[0], 0);
+		close(pvect[0]);
+		close(pvect[1]);
+		fclose(mfp);
+		execl(_PATH_SENDMAIL, "sendmail", "-f", myname, from, NULL);
+		syslog(LOG_ERR, "vacation: can't exec %s: %s",
+			_PATH_SENDMAIL, strerror(errno));
+		exit(1);
+	}
+	close(pvect[0]);
+	sfp = fdopen(pvect[1], "w");
+	fprintf(sfp, "To: %s\n", from);
+	while (fgets(buf, sizeof buf, mfp))
+		fputs(buf, sfp);
+	fclose(mfp);
+	fclose(sfp);
 }
 
 usage()

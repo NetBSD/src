@@ -1,6 +1,8 @@
-.\" Copyright (c) 1985, 1987, 1990, 1991 Regents of the University of California.
-.\" All rights reserved.
-
+.\"	$NetBSD: vacation.1,v 1.4 1994/11/17 07:55:50 jtc Exp $
+.\"
+.\" Copyright (c) 1985, 1987, 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)vacation.1	6.9 (Berkeley) 7/30/91
-.\"	$Id: vacation.1,v 1.3 1993/08/01 07:26:44 mycroft Exp $
+.\"	@(#)vacation.1	8.1 (Berkeley) 6/16/93
 .\"
-.Dd July 30, 1991
+.Dd June 16, 1993
 .Dt VACATION 1
 .Os BSD 4.3
 .Sh NAME
@@ -121,7 +122,6 @@ database in the file
 .Pa .vacation.db
 in your home directory.
 .Pp
-.Pp
 .Nm Vacation
 expects a file
 .Pa .vacation.msg ,
@@ -130,13 +130,13 @@ sender.  It should be an entire message (including headers).  For
 example, it might contain:
 .Pp
 .Bd -unfilled -offset indent -compact
-From: eric@ucbmonet.Berkeley.EDU (Eric Allman)
+From: eric@CS.Berkeley.EDU (Eric Allman)
 Subject: I am on vacation
 Delivered-By-The-Graces-Of: The Vacation program
 Precedence: bulk
 
 I am on vacation until July 22.  If you have something urgent,
-please contact Joe Kalash <kalash@ucbingres.Berkeley.EDU>.
+please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .Ed
 .Pp
@@ -157,7 +157,7 @@ with incorrect arguments, or with non-existent
 are logged in the system log file, using
 .Xr syslog 8 .
 .Sh FILES
-.Bl -tag -width "vacation.msgxxx" -compact
+.Bl -tag -width "vacation.dirxxx" -compact
 .It Pa ~/.vacation.db
 database file
 .It Pa ~/.vacation.msg
