@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.4 2001/01/18 17:48:04 tv Exp $	*/
+/*	$NetBSD: esm.c,v 1.5 2001/01/26 09:22:18 rh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -198,6 +198,9 @@ static audio_encoding_t esm_encoding[] = {
 static const struct esm_quirks esm_quirks[] = {
 	/* COMPAL 38W2 OEM Notebook, e.g. Dell INSPIRON 5000e */
 	{ PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2, ESM_QUIRKF_SWAPPEDCH },
+
+	/* COMPAQ Armada M700 Notebook */
+	{ PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700, ESM_QUIRKF_SWAPPEDCH },
 
 	/* NEC Versa Pro LX VA26D */
 	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D, ESM_QUIRKF_GPIO },
@@ -1382,6 +1385,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	if (esm_get_quirks(ess->subid) & ESM_QUIRKF_SWAPPEDCH) {
 		ess->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
 	}
+	ess->codec_flags |= AC97_HOST_DONT_READ;
 
 	/* initialize AC97 host interface */
 	ess->host_if.arg = self;
