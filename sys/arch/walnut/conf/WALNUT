@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.19 2002/05/03 19:52:36 briggs Exp $
+#	$NetBSD: WALNUT,v 1.20 2002/05/30 15:22:16 eeh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -37,8 +37,8 @@ options 	SYSVSHM		# System V shared memory
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
@@ -59,27 +59,27 @@ options 	COMPAT_43	# and 4.3BSD
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
-#file-system 	KERNFS		# /kern
+file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
 
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
@@ -92,15 +92,16 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-#options 	ISO,TPIP	# OSI
+options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -148,22 +149,22 @@ pchb0	at mainbus?			# PCI-Host bridges
 pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-#fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
-#ep*	at pci? dev ? function ?	# 3Com 3c59x
-#epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-#adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-#ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
-#bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
-#siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-#pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
+ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 pciide*	at pci? dev ? function ?
 #cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 
@@ -197,26 +198,24 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
-#scsibus* at adv?
-#scsibus* at adw?
-#scsibus* at ahc?
-#scsibus* at bha?
-#scsibus* at isp?
-#scsibus* at pcscp?
-#scsibus* at siop?
+scsibus* at adv?
+scsibus* at adw?
+scsibus* at ahc?
+scsibus* at bha?
+scsibus* at isp?
+scsibus* at pcscp?
+scsibus* at siop?
 
-#sd*	at scsibus? target ? lun ?	# SCSI disks
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# SCSI unknown
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 wd*	at pciide? channel ? drive ?
-#wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at pciide? channel ?
-#atapibus* at wdc? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
