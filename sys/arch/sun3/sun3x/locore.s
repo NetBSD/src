@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 1999/04/30 09:21:54 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 1999/08/01 21:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1068,6 +1068,16 @@ GLOBAL(_delay)
 	movl	sp@(4),d0
 	| d1 = delay_divisor;
 	movl	_C_LABEL(delay_divisor),d1
+	jra	L_delay			/* Jump into the loop! */
+
+	/*
+	 * Align the branch target of the loop to a half-line (8-byte)
+	 * boundary to minimize cache effects.  This guarantees both
+	 * that there will be no prefetch stalls due to cache line burst
+	 * operations and that the loop will run from a single cache
+	 * half-line.
+	 */
+	.align	8
 L_delay:
 	subl	d1,d0
 	jgt	L_delay
