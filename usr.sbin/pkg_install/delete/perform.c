@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.35 2002/06/09 13:23:45 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.35 2002/06/09 13:23:45 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $");
 #endif
 #endif
 
@@ -391,7 +391,6 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		FILE   *cfile;
 		package_t rPlist;
 		char   *tmp;
-		plist_t *p;
 
 		/* remove a direct req from our queue */
 		TAILQ_REMOVE(&reqq, lpp, lp_link);
@@ -665,7 +664,7 @@ pkg_do(char *pkg)
 }
 
 int
-pkg_perform(lpkg_head_t *pkgs)
+pkg_perform(lpkg_head_t *pkghead)
 {
 	int     err_cnt = 0;
 	int     oldcwd;
@@ -676,9 +675,9 @@ pkg_perform(lpkg_head_t *pkgs)
 	if (oldcwd == -1)
 		err(1, "cannot open \".\"");
 
-	while ((lpp = TAILQ_FIRST(pkgs))) {
+	while ((lpp = TAILQ_FIRST(pkghead))) {
 		err_cnt += pkg_do(lpp->lp_name);
-		TAILQ_REMOVE(pkgs, lpp, lp_link);
+		TAILQ_REMOVE(pkghead, lpp, lp_link);
 		free_lpkg(lpp);
 		if (fchdir(oldcwd) == FAIL)
 			err(1, "unable to change to previous directory");

@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.40 2002/06/09 13:23:46 yamt Exp $ */
+/* $NetBSD: lib.h,v 1.41 2002/06/10 09:14:28 yamt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -202,14 +202,14 @@ int     add_to_list_fn(const char *, void *);
 
 
 /* File */
-Boolean fexists(char *);
-Boolean isdir(char *);
-Boolean islinktodir(char *);
-Boolean isemptydir(char *fname);
-Boolean isemptyfile(char *fname);
-Boolean isfile(char *);
-Boolean isempty(char *);
-int     URLlength(char *);
+Boolean fexists(const char *);
+Boolean isdir(const char *);
+Boolean islinktodir(const char *);
+Boolean isemptydir(const char *);
+Boolean isemptyfile(const char *);
+Boolean isfile(const char *);
+Boolean isempty(const char *);
+int     URLlength(const char *);
 char   *fileGetURL(char *, char *);
 char   *fileURLFilename(char *, char *, int);
 char   *fileURLHost(char *, char *, int);
