@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.14 1999/09/30 18:01:32 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.15 2002/05/26 00:12:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,23 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.14 1999/09/30 18:01:32 jsm Exp $");
+__RCSID("$NetBSD: io.c,v 1.15 2002/05/26 00:12:11 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <curses.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "deck.h"
 #include "cribbage.h"
@@ -392,21 +387,11 @@ int     Mpos = 0;
 static int Newpos = 0;
 
 void
-#if __STDC__
 msg(const char *fmt, ...)
-#else
-msg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);
@@ -418,21 +403,11 @@ msg(fmt, va_alist)
  *	Add things to the current message
  */
 void
-#if __STDC__
 addmsg(const char *fmt, ...)
-#else
-addmsg(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
 	Newpos = strlen(Msgbuf);
 	va_end(ap);

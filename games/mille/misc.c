@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2000/04/27 00:33:49 jdc Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2002/05/26 00:12:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,18 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 2000/04/27 00:33:49 jdc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2002/05/26 00:12:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <termios.h>
 
-#if __STDC__
-#include	<stdarg.h>
-#else
-#include	<varargs.h>
-#endif
+#include <stdarg.h>
 
 #include	"mille.h"
 #ifndef	unctrl
@@ -64,21 +60,11 @@ __RCSID("$NetBSD: misc.c,v 1.9 2000/04/27 00:33:49 jdc Exp $");
 #define	NUMSAFE	4
 
 bool
-#if __STDC__
 error(const char *str, ...)
-#else
-error(str, va_alist)
-	const char *str;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, str);
-#else
-	va_start(ap);
-#endif
 	wmove(Score, ERR_Y, ERR_X);
 	vwprintw(Score, str, ap);
 	wclrtoeol(Score);

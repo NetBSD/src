@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.6 2001/03/25 20:44:01 jsm Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.7 2002/05/26 00:12:12 wiz Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.6 2001/03/25 20:44:01 jsm Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.7 2002/05/26 00:12:12 wiz Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -466,22 +466,11 @@ askname()
 
 /* VARARGS1 */
 void
-#ifdef __STDC__
 impossible(const char *s, ...)
-#else
-impossible(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char           *s;
 
-	va_start(ap);
-	s = va_arg(ap, const char *);
-#else
 	va_start(ap, s);
-#endif
 	vpline(s, ap);
 	va_end(ap);
 	pline("Program in disorder - perhaps you'd better Quit.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2001/03/25 20:43:58 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2002/05/26 00:12:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,12 +37,8 @@
  */
 #ifndef _EXTERN_H_
 #define _EXTERN_H_
-#include <stdio.h>
-#ifndef __STDC__
-#include <varargs.h>
-#else
 #include <stdarg.h>
-#endif
+#include <stdio.h>
 
 /* alloc.c */
 long *alloc __P((unsigned));

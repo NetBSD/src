@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
+/*	$NetBSD: terminal.c,v 1.3 2002/05/26 00:12:13 wiz Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,16 +7,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.3 2002/05/26 00:12:13 wiz Exp $");
 #endif /* not lint */
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-# include	"hunt.h"
-# define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
+#include "hunt.h"
+#define	TERM_WIDTH	80	/* Assume terminals are 80-char wide */
 
 /*
  * cgoto:
@@ -110,22 +106,12 @@ ref(pp)
  *	Send a command to the given user
  */
 void
-#if __STDC__
 sendcom(PLAYER *pp, int command, ...)
-#else
-sendcom(pp, command, va_alist)
-	PLAYER	*pp;
-	int	command;
-	va_dcl
-#endif
 {
 	va_list	ap;
 	int	arg1, arg2;
-#if __STDC__
+
 	va_start(ap, command);
-#else
-	va_start(ap);
-#endif
 	(void) putc(command, pp->p_output);
 	switch (command & 0377) {
 	case MOVE:
