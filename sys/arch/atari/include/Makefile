@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/04/14 22:46:20 kleink Exp $
+#	$NetBSD: Makefile,v 1.15 2001/04/15 15:29:04 kleink Exp $
 
 KDIR=	/sys/arch/atari/include
 INCSDIR= /usr/include/atari
@@ -9,7 +9,8 @@ INCS=	ahdilabel.h ansi.h aout_machdep.h asm.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
-	intr.h ieee.h ieeefp.h int_const.h int_mwgwtypes.h int_types.h \
+	intr.h ieee.h ieeefp.h \
+	int_const.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h msioctl.h mtpr.h \
