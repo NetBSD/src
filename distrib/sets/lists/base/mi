@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.295 2002/01/01 22:28:57 augustss Exp $
+# $NetBSD: mi,v 1.296 2002/01/09 22:33:53 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -71,6 +71,7 @@
 ./sbin/dhclient		base-dhclient-root
 ./sbin/dhclient-script	base-dhclient-root
 ./sbin/disklabel	base-sysutil-root
+./sbin/dkctl		base-sysutil-root
 ./sbin/dmesg		base-sysutil-root
 ./sbin/dump		base-sysutil-root
 ./sbin/dump_lfs		base-sysutil-root
