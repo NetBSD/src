@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.50 1997/10/09 12:59:52 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.51 1997/10/10 00:44:33 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -320,6 +320,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
+/* open, close, read, write, ioctl, poll -- XXX should be a generic device */
+#define cdev_rnd_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];
 extern	const char devioc[], devcls[];
@@ -448,6 +455,8 @@ cdev_decl(filedesc);
 cdev_decl(lkm);
 
 cdev_decl(log);
+
+cdev_decl(rnd);
 
 #endif /* _KERNEL */
 
