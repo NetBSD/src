@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.21 2003/05/16 18:10:37 itojun Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.22 2003/05/16 23:10:15 dsl Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.21 2003/05/16 18:10:37 itojun Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.22 2003/05/16 23:10:15 dsl Exp $");
 #endif
 #endif
 
@@ -198,7 +198,7 @@ accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 #define GET_ADDR(a) (a = ((u_int32_t)*p++ << 24), a += ((u_int32_t)*p++ << 16),\
 		     a += ((u_int32_t)*p++ << 8), a += *p++)
 
-	printf("%s (%s):\n", inet_fmt(src, s1, sizeof(s1)), inet_name(src));
+	printf("%s (%s):\n", inet_fmt(src), inet_name(src));
 	while (p < ep) {
 		u_int32_t laddr;
 		u_char metric;
@@ -214,9 +214,9 @@ accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 			u_int32_t neighbor;
 			GET_ADDR(neighbor);
 			neighbor = htonl(neighbor);
-			printf("  %s -> ", inet_fmt(laddr, s1, sizeof(s1)));
+			printf("  %s -> ", inet_fmt(laddr));
 			printf("%s (%s) [%d/%d]\n",
-				inet_fmt(neighbor, s1, sizeof(s1)),
+				inet_fmt(neighbor),
 			       inet_name(neighbor), metric, thresh);
 		}
 	}
@@ -230,7 +230,7 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 	u_int broken_cisco = ((level & 0xffff) == 0x020a); /* 10.2 */
 	/* well, only possibly_broken_cisco, but that's too long to type. */
 
-	printf("%s (%s) [version %d.%d", inet_fmt(src, s1, sizeof(s1)),
+	printf("%s (%s) [version %d.%d", inet_fmt(src),
 		inet_name(src), level & 0xff, (level >> 8) & 0xff);
 	if ((level >> 16) & NF_LEAF)   { printf (",leaf"); }
 	if ((level >> 16) & NF_PRUNE)  { printf (",prune"); }
@@ -257,9 +257,9 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		while (--ncount >= 0 && p < ep) {
 			u_int32_t neighbor = *(u_int32_t*)p;
 			p += 4;
-			printf("  %s -> ", inet_fmt(laddr, s1, sizeof(s1)));
+			printf("  %s -> ", inet_fmt(laddr));
 			printf("%s (%s) [%d/%d",
-				inet_fmt(neighbor, s1, sizeof(s1)),
+				inet_fmt(neighbor),
 				inet_name(neighbor), metric, thresh);
 			if (flags & DVMRP_NF_TUNNEL)
 				printf("/tunnel");
@@ -502,7 +502,7 @@ main(int argc, char *argv[])
 		if (igmpdatalen < 0) {
 		    logit(LOG_WARNING, 0,
 			"IP data field too short (%u bytes) for IGMP, from %s",
-			ipdatalen, inet_fmt(src, s1, sizeof(s1)));
+			ipdatalen, inet_fmt(src));
 		    continue;
 		}
 		if (igmp->igmp_type != IGMP_DVMRP)
@@ -513,9 +513,9 @@ main(int argc, char *argv[])
 		case DVMRP_NEIGHBORS2:
 			if (src != target_addr) {
 				fprintf(stderr, "mrinfo: got reply from %s",
-					inet_fmt(src, s1, sizeof(s1)));
+					inet_fmt(src));
 				fprintf(stderr, " instead of %s\n",
-					inet_fmt(target_addr, s1, sizeof(s1)));
+					inet_fmt(target_addr));
 				/*continue;*/
 			}
 			break;
