@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.352 2001/09/04 15:24:35 pooka Exp $
+$NetBSD: pcidevs,v 1.353 2001/09/04 15:37:00 pooka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1088,6 +1088,7 @@ product ESSTECH	MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product ESSTECH	MAESTRO2	0x1968	Maestro 2 PCI Audio Accelerator
 product ESSTECH	SOLO1		0x1969	Solo-1 PCI AudioDrive
 product ESSTECH	MAESTRO2E	0x1978	Maestro 2E PCI Audio Accelerator
+product ESSTECH	ALLEGRO1	0x1988	Allegro-1 PCI Audio Accelerator
 product ESSTECH	MAESTRO3	0x1998	Maestro 3 PCI Audio Accelerator
 product ESSTECH	MAESTRO3MODEM	0x1999	Maestro 3 Modem
 product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
