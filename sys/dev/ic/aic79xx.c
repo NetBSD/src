@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.16 2003/08/29 03:41:28 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.17 2003/08/29 04:00:35 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#197 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#198 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.19 2003/06/06 23:51:13 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.20 2003/06/06 23:53:39 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.16 2003/08/29 03:41:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.17 2003/08/29 04:00:35 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -2223,7 +2223,7 @@ ahd_clear_critical_section(struct ahd_softc *ahd)
 			ahd_outb(ahd, LQOMODE1, 0);
 			ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
   			simode1 = ahd_inb(ahd, SIMODE1);
-  			ahd_outb(ahd, SIMODE1, ENBUSFREE);
+  			ahd_outb(ahd, SIMODE1, simode1 & ENBUSFREE);
 			ahd_outb(ahd, SEQCTL0, ahd_inb(ahd, SEQCTL0) | STEP);
 			stepping = TRUE;
 		}
