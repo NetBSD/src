@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.13 2001/03/13 16:31:14 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.14 2001/11/13 06:17:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -143,6 +143,9 @@
  *	<fill in useful info later>
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.14 2001/11/13 06:17:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
