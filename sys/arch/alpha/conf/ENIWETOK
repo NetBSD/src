@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.4 1999/02/18 21:27:54 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.5 1999/02/18 21:54:04 mycroft Exp $
 # From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
 #
 # Mycroft's AS200.
@@ -228,7 +228,7 @@ audio*	at	sb?
 #uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 #uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic*	at	isapnp?
+#pcic*	at	isapnp?
 
 # EISA devices
 #ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
