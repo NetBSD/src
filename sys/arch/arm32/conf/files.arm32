@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.73 1998/10/08 01:50:28 mark Exp $
+#	$NetBSD: files.arm32,v 1.74 1998/10/12 16:13:04 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -299,28 +299,22 @@ attach	csa at podulebus
 file	arch/arm32/podulebus/csa.c		csa
 
 # ICS IDE driver
-device	icside {}
+device	icside {[channel = -1]}: wdc_base, ata, atapi
 attach	icside at podulebus
 file	arch/arm32/podulebus/icside.c		icside
 file	arch/arm32/podulebus/icside_io_asm.S	icside
 
-attach	wdc at icside with wdc_ics
-
 # Yellowstone RapIDE driver
-device	rapide {}
+device	rapide {[channel = -1]}: wdc_base, ata, atapi
 attach	rapide at podulebus
 file	arch/arm32/podulebus/rapide.c		rapide
 file	arch/arm32/podulebus/rapide_io_asm.S	rapide
 
-attach	wdc at rapide with wdc_rapide
-
 # Simtec IDE driver
-device	simide {}
+device	simide {[channel = -1]}: wdc_base, ata, atapi
 attach	simide at podulebus
 file	arch/arm32/podulebus/simide.c		simide
 file	arch/arm32/podulebus/simide_io_asm.S	simide
-
-attach	wdc at simide with wdc_sim
 
 # Atomwide Multi-Port Serial driver
 device	amps {}
@@ -518,17 +512,6 @@ file	arch/arm32/pci/pcib.c			pcib
 
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c	lpt_puc
-
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.  (when the conf/files
-# XXX and files.isa bogons are fixed, this can be fixed as well.)
-
-# PCI IDE controllers
-device	pciide {[channel = -1]}
-attach	pciide at pci
-file	dev/pci/pciide.c		pciide
-attach	wdc at pciide with wdc_pciide
-file	dev/pci/wdc_pciide.c		wdc_pciide
 
 file	arch/arm32/pci/pciide_machdep.c	pciide
 

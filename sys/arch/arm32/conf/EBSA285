@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.1 1998/09/06 02:30:52 mark Exp $
+#	$NetBSD: EBSA285,v 1.2 1998/10/12 16:13:03 bouyer Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -186,13 +186,12 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # PCI IDE Controllers and Devices
 pciide* at pci? dev ? function ?
-wdc*	at pciide? channel ?
 
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at pciide? channel ? drive ?	# the drives themselves
 
 # ATAPI bus support
-atapibus* at wdc?
+atapibus* at pciide? channel ?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.19 1998/10/05 00:49:14 mark Exp $
+#	$NetBSD: RPCINST,v 1.20 1998/10/12 16:13:04 bouyer Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -170,8 +170,8 @@ pioc0	at mainbus? base 0x00210000
 # IDE disk controller
 wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-wd*	at wdc? drive ?
-atapibus* at wdc?
+wd*	at wdc? channel ? drive ?
+atapibus* at wdc? channel ?
 cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
 
@@ -230,13 +230,16 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 icside*	at podulebus?			# ICS IDE card
-wdc*	at icside?
+wd*	at icside? channel ? drive ?
+atapibus* at icside? channel ?
 
 rapide*	at podulebus?			# Yellowstone RapIDE card
-wdc*	at rapide?
+wd*	at rapide? channel ? drive ?
+atapibus* at rapide? channel ?
 
 simide*	at podulebus?			# Simtec IDE card
-wdc*	at simide?
+wd*	at simide? channel ? drive ?
+atapibus* at simide? channel ?
 
 ie*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
