@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.7 1996/05/07 00:55:23 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.8 1996/06/12 20:59:10 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -483,17 +483,19 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
 	sc->sc_ih.ih_name = "net: ie";
+	sc->sc_ih.ih_maskaddr = sc->sc_podule->irq_addr;
+	sc->sc_ih.ih_maskbits = sc->sc_podule->irq_mask;
 
 	if (irq_claim(IRQ_PODULE, &sc->sc_ih)) {
 		sc->sc_irqmode = 0;
-		printf ( " POLLED" );
+		printf(" POLLED");
 		panic("Cannot install IRQ handler\n");
 	} else {
 		sc->sc_irqmode = 1;
-		printf ( " IRQ" );
+		printf(" IRQ");
 	}
 
-	printf ( "\n" );
+	printf("\n");
 }
   
                   
@@ -502,23 +504,29 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
  */
 
 void
-PWriteShorts ( char *src, char *dest, int cnt )
+PWriteShorts(src, dest, cnt)
+	char *src;
+	char *dest;
+	int cnt;
 {
-    for ( cnt/=2; --cnt>=0; ) {
-	PWriteShort ( dest, *(u_short *)src );
-	src+=2;
-	dest+=4;
-    }
+	for (cnt /= 2; --cnt >= 0; ) {
+		PWriteShort(dest, *(u_short *)src);
+		src+=2;
+		dest+=4;
+	}
 }
 
 void
-ReadShorts ( char *src, char *dest, int cnt )
+ReadShorts(src, dest, cnt)
+	char *src;
+	char *dest;
+	int cnt;
 {
-    for ( cnt/=2; --cnt>=0; ) {
-	*(u_short *)dest = ReadShort ( src );
-	src+=4;
-	dest+=2;
-    }
+	for (cnt /= 2; --cnt >= 0; ) {
+		*(u_short *)dest = ReadShort(src);
+		src+=4;
+		dest+=2;
+	}
 }
 
 /*
@@ -527,43 +535,55 @@ ReadShorts ( char *src, char *dest, int cnt )
  */
 
 static void
-host2ie ( struct ie_softc *sc, void *src, u_long dest, int size )
+host2ie(sc, src, dest, size)
+	struct ie_softc *sc;
+	void *src;
+	u_long dest;
+	int size;
 {
-    int cnt;
+	int cnt;
 
-    if (size&1)
-	panic ( "host2ie" );
+#ifdef DIAGNOSTIC
+	if (size & 1)
+		panic("host2ie");
+#endif
 
-    while ( size>0 ) {
-	cnt = IE_PAGESIZE - dest % IE_PAGESIZE;
-	if ( cnt > size )
-	    cnt = size;
-	setpage ( sc, dest );
-	PWriteShorts ( src, (char *)sc->sc_ram + IE_COFF2POFF(dest), cnt );
-	src+=cnt;
-	dest+=cnt;
-	size-=cnt;
-    }
+	while (size > 0) {
+		cnt = IE_PAGESIZE - dest % IE_PAGESIZE;
+		if (cnt > size)
+			cnt = size;
+		setpage(sc, dest);
+		PWriteShorts(src, (char *)sc->sc_ram + IE_COFF2POFF(dest), cnt);
+		src+=cnt;
+		dest+=cnt;
+		size-=cnt;
+	}
 }
 
 static void
-ie2host ( struct ie_softc *sc, u_long src, void *dest, int size )
+ie2host(sc, src, dest, size)
+	struct ie_softc *sc;
+	u_long src;
+	void *dest;
+	int size;
 {
-    int cnt;
+	int cnt;
 
-    if (size&1)
-	panic ( "ie2host" );
+#ifdef DIAGNOSTIC
+	if (size & 1)
+		panic ( "ie2host" );
+#endif
 
-    while ( size>0 ) {
-	cnt = IE_PAGESIZE - src % IE_PAGESIZE;
-	if ( cnt > size )
-	    cnt = size;
-	setpage ( sc, src );
-	ReadShorts ( (char *)sc->sc_ram + IE_COFF2POFF(src), dest, cnt );
-	src+=cnt;
-	dest+=cnt;
-	size-=cnt;
-    }
+	while (size > 0) {
+		cnt = IE_PAGESIZE - src % IE_PAGESIZE;
+		if (cnt > size)
+			cnt = size;
+		setpage(sc, src);
+		ReadShorts((char *)sc->sc_ram + IE_COFF2POFF(src), dest, cnt);
+		src+=cnt;
+		dest+=cnt;
+		size-=cnt;
+	}
 }
 
 /*
@@ -572,18 +592,22 @@ ie2host ( struct ie_softc *sc, u_long src, void *dest, int size )
  */
 
 static void
-iezero ( struct ie_softc *sc, u_long p, int size )
+iezero(sc, p, size)
+	struct ie_softc *sc;
+	u_long p;
+	int size;
 {
-    int cnt;
-    while ( size > 0 ) {
-	cnt = IE_PAGESIZE - p % IE_PAGESIZE;
-	if ( cnt>size )
-	    cnt=size;
-	setpage(sc, p);
-	bzero((char *)sc->sc_ram + IE_COFF2POFF(p), 2*cnt );
-	p += cnt;
-	size -= cnt;
-    }
+	int cnt;
+
+	while (size > 0) {
+		cnt = IE_PAGESIZE - p % IE_PAGESIZE;
+		if (cnt > size)
+			cnt=size;
+		setpage(sc, p);
+		bzero((char *)sc->sc_ram + IE_COFF2POFF(p), 2*cnt);
+		p += cnt;
+		size -= cnt;
+	}
 }
 
 /*
@@ -591,7 +615,10 @@ iezero ( struct ie_softc *sc, u_long p, int size )
  */
 
 int
-ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
+ieioctl(ifp, cmd, data)
+	struct ifnet *ifp;
+	u_long cmd;
+	caddr_t data;
 {
     struct ie_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
@@ -656,24 +683,25 @@ ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
  */
 
 void
-iereset( struct ie_softc *sc )
+iereset(sc)
+	struct ie_softc *sc;
 {
-    struct ie_sys_ctl_block scb;
-    int s = splimp();
+	struct ie_sys_ctl_block scb;
+	int s = splimp();
 
-    iestop(sc);
+	iestop(sc);
 
-    ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
+	ie2host(sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb);
 
-    if ( command_and_wait(sc, IE_RU_ABORT|IE_CU_ABORT, 0, 0, 0, 0, 0) )
-        printf ( "ie0: abort commands timed out\n" );
+	if (command_and_wait(sc, IE_RU_ABORT|IE_CU_ABORT, 0, 0, 0, 0, 0))
+	        printf("ie0: abort commands timed out\n");
 
-    if ( command_and_wait(sc, IE_RU_DISABLE|IE_CU_STOP, 0, 0, 0, 0, 0) )
-        printf ( "ie0: abort commands timed out\n" );
+	if (command_and_wait(sc, IE_RU_DISABLE|IE_CU_STOP, 0, 0, 0, 0, 0))
+	        printf("ie0: abort commands timed out\n");
 
-    ieinit(sc);
+	ieinit(sc);
 
-    (void)splx(s);
+	(void)splx(s);
 }
 
 /*
@@ -681,14 +709,14 @@ iereset( struct ie_softc *sc )
  */
 
 void
-iewatchdog ( struct ifnet *ifp )
+iewatchdog(ifp)
+	struct ifnet *ifp;
 {
-    struct ie_softc *sc = ifp->if_softc;
+	struct ie_softc *sc = ifp->if_softc;
 
-    /* WOOF WOOF */
-    log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname );
-    ++sc->sc_arpcom.ac_if.if_oerrors;
-    iereset(sc);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
+	iereset(sc);
 }
 
 /* 
@@ -696,7 +724,8 @@ iewatchdog ( struct ifnet *ifp )
  */
 
 static void
-run_tdr ( struct ie_softc *sc )
+run_tdr(sc)
+struct ie_softc *sc;
 {
     struct ie_sys_ctl_block scb;
     u_long ptr = IE_IBASE + IE_SCB_OFF + sizeof scb;
@@ -761,7 +790,9 @@ run_tdr ( struct ie_softc *sc )
 }
 
 u_long
-setup_rfa ( struct ie_softc *sc, u_long ptr )
+setup_rfa(sc, ptr)
+	struct ie_softc *sc;
+	u_long ptr;
 {
     int i;
     {
@@ -820,7 +851,8 @@ setup_rfa ( struct ie_softc *sc, u_long ptr )
 }
 
 static void
-start_receiver ( struct ie_softc *sc )
+start_receiver(sc)
+	struct ie_softc *sc;
 {
     struct ie_sys_ctl_block scb;
     ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
@@ -837,7 +869,8 @@ start_receiver ( struct ie_softc *sc )
  */
 
 int
-ieinit ( struct ie_softc *sc )
+ieinit(sc)
+	struct ie_softc *sc;
 {
     struct ie_sys_ctl_block scb;
     struct ie_config_cmd cmd;
@@ -949,7 +982,8 @@ ieinit ( struct ie_softc *sc )
 }
 
 int
-iestop ( struct ie_softc *sc )
+iestop(sc)
+	struct ie_softc *sc;
 {
     struct ie_sys_ctl_block scb;
     int s = splimp();
@@ -971,9 +1005,12 @@ iestop ( struct ie_softc *sc )
 /*CAW*/
 
 static int
-command_and_wait ( struct ie_softc *sc, u_short cmd,
-			      struct ie_sys_ctl_block *pscb,
-			      void *pcmd, int ocmd, int scmd, int mask )
+command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
+	struct ie_softc *sc;
+	u_short cmd;
+	struct ie_sys_ctl_block *pscb;
+	void *pcmd;
+	int ocmd, scmd, mask;
 {
     int i=0;
 
@@ -1039,18 +1076,21 @@ command_and_wait ( struct ie_softc *sc, u_short cmd,
 	       (offsetof(type, member)), dest );
 
 static inline int
-ie_buflen ( struct ie_softc *sc, int head )
+ie_buflen(sc, head)
+	struct ie_softc *sc;
+	int head;
 {
 	int actual;
 
 	READ_MEMBER(sc,struct ie_recv_buf_desc, ie_rbd_actual,
 	    sc->rbuffs[head], actual );
 
-	return ( actual & ( IE_RXBUF_SIZE | ( IE_RXBUF_SIZE-1 ) ) ) ;
+	return(actual & (IE_RXBUF_SIZE | (IE_RXBUF_SIZE-1))) ;
 }
 
 static inline int
-ie_packet_len ( struct ie_softc *sc )
+ie_packet_len(sc)
+	struct ie_softc *sc;
 {
     int i;
     int actual;
@@ -1186,7 +1226,8 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
 }
 
 void
-ie_drop_packet_buffer ( struct ie_softc *sc )
+ie_drop_packet_buffer(sc)
+	struct ie_softc *sc;
 {
     int i, actual, last;
 
@@ -1223,7 +1264,9 @@ ie_drop_packet_buffer ( struct ie_softc *sc )
 }
 
 void
-ie_read_frame ( struct ie_softc *sc, int num )
+ie_read_frame(sc, num)
+	struct ie_softc *sc;
+	int num;
 {
     int status;
     struct ie_recv_frame_desc rfd;
@@ -1280,7 +1323,8 @@ ie_read_frame ( struct ie_softc *sc, int num )
 }
 
 void
-ierint ( struct ie_softc *sc )
+ierint(sc)
+	struct ie_softc *sc;
 {
     int i;
     int times_thru = 1024;
@@ -1335,17 +1379,16 @@ ierint ( struct ie_softc *sc )
 static int in_intr = 0;
 
 int
-ieintr ( void *arg )
+ieintr(arg)
+	void *arg;
 {
     struct ie_softc *sc = arg;
     u_short status;
     int saftey_catch = 0;
     static saftey_net = 0;
 
-    if ( in_intr==1 )
-    {
+    if (in_intr == 1)
 	panic ( "ie: INTERRUPT REENTERED\n" );
-    }
 
     /* Clear the interrrupt */
     ie_cli (sc);
@@ -1356,23 +1399,20 @@ ieintr ( void *arg )
 
     status = status & IE_ST_WHENCE;
 
-    if ( status==0 )
-    {
+    if (status == 0) {
 	in_intr = 0;
-	return 0;
+	return(0);
     }
 
 loop:
 
     ie_ack(sc, status);
 
-    if (status & (IE_ST_FR | IE_ST_RNR)) {
+    if (status & (IE_ST_FR | IE_ST_RNR))
 	ierint(sc);
-    }
 
-    if (status & IE_ST_CX) {
+    if (status & IE_ST_CX)
 	ietint(sc);
-    }
 
     if (status & IE_ST_RNR) {
 	printf ( "ie: receiver not ready\n" );
@@ -1387,10 +1427,9 @@ loop:
 
     ie_cli(sc);
 
-    if ( status==0 )
-    {
+    if (status == 0) {
 	in_intr = 0;
-	return 1;
+	return(0);
     }
 
     /* This is prehaps a little over cautious */
@@ -1405,14 +1444,15 @@ loop:
 	    disable_irq ( IRQ_PODULE );
 	}
 	in_intr = 0;
-	return 1;
+	return(0);
     }
 
     goto loop;
 }
 
 void
-iexmit ( struct ie_softc *sc )
+iexmit(sc)
+	struct ie_softc *sc;
 {
 /*    int actual;*/
     struct ie_sys_ctl_block scb;
@@ -1447,7 +1487,8 @@ iexmit ( struct ie_softc *sc )
  */
 
 void
-iestart( struct ifnet *ifp )
+iestart(ifp)
+	struct ifnet *ifp;
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1516,7 +1557,8 @@ iestart( struct ifnet *ifp )
 }
 
 void
-ietint ( struct ie_softc *sc )
+ietint(sc)
+	struct ie_softc *sc;
 {
     struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
