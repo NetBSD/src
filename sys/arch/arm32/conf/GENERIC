@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47 1998/09/05 01:14:43 mark Exp $
+#	$NetBSD: GENERIC,v 1.48 1998/09/06 02:37:47 mark Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -13,7 +13,6 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 

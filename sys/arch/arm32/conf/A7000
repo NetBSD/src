@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.29 1998/09/05 01:14:44 mark Exp $
+#	$NetBSD: A7000,v 1.30 1998/09/06 02:37:47 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -13,7 +13,6 @@ maxusers	32
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 
