@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.109 2004/09/10 10:00:33 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.110 2004/09/18 16:40:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.109 2004/09/10 10:00:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.110 2004/09/18 16:40:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -624,7 +624,7 @@ vndstart(struct vnd_softc *vnd)
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstart(%ld): bp %p vp %p blkno 0x%" PRIx64
-				" flags %lx addr %p cnt 0x%lx\n",
+				" flags %x addr %p cnt 0x%x\n",
 			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
 			    bp->b_flags, bp->b_data, bp->b_bcount);
 #endif
@@ -652,7 +652,7 @@ vndiodone(struct buf *bp)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
 		printf("vndiodone(%ld): vbp %p vp %p blkno 0x%" PRIx64
-		       " addr %p cnt 0x%lx\n",
+		       " addr %p cnt 0x%x\n",
 		    (long) (vnd-vnd_softc), vbp, vbp->vb_buf.b_vp,
 		    vbp->vb_buf.b_blkno, vbp->vb_buf.b_data,
 		    vbp->vb_buf.b_bcount);
