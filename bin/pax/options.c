@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.34 2001/10/25 08:51:51 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.35 2002/01/24 07:45:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.34 2001/10/25 08:51:51 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.35 2002/01/24 07:45:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: options.c,v 1.34 2001/10/25 08:51:51 lukem Exp $");
 #include "cpio.h"
 #include "tar.h"
 #include "extern.h"
+#include "mtree.h"
 
 /*
  * Routines which handle command line options
@@ -195,7 +196,7 @@ pax_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getopt(argc, argv,
-	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMOPT:U:XYZ")) != -1) {
+	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ")) != -1) {
 		switch (c) {
 		case 'a':
 			/*
@@ -316,7 +317,7 @@ pax_options(int argc, char **argv)
 					break;
 				case 'p':
 					/*
-					 * preserver file mode bits
+					 * preserve file mode bits
 					 */
 					pmode = 1;
 					break;
@@ -473,6 +474,13 @@ pax_options(int argc, char **argv)
 			 */
 			Mflag = 1;
 			flg |= CMF;
+			break;
+		case 'N':
+			/*
+			 * Use alternative directory for user db lookups.
+			 */
+			if (!setup_getid(optarg))
+				pax_usage();
 			break;
 		case 'O':
 			/*
@@ -1442,29 +1450,23 @@ no_op(void)
 void
 pax_usage(void)
 {
-	(void)fputs("usage: pax [-cdnvz] [-E limit] [-f archive] ", stderr);
-	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
-	(void)fputs("\n           [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
-	(void)fputs("[pattern ...]\n", stderr);
-	(void)fputs("       pax -r [-cdiknuvzDYZ] [-E limit] ", stderr);
-	(void)fputs("[-f archive] [-o options] ... \n", stderr);
-	(void)fputs("           [-p string] ... [-s replstr] ... ", stderr);
-	(void)fputs("[-U user] ... [-G group] ...\n           ", stderr);
-	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
-	(void)fputs(" [pattern ...]\n", stderr);
-	(void)fputs("       pax -w [-dituvzHLMPX] [-b blocksize] ", stderr);
-	(void)fputs("[[-a] [-f archive]] [-x format] \n", stderr);
-	(void)fputs("           [-B bytes] [-o options] ... ", stderr);
-	(void)fputs("[-s replstr] ... [-U user] ...", stderr);
-	(void)fputs("\n           [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
-	(void)fputs("[file ...]\n", stderr);
-	(void)fputs("       pax -r -w [-diklntuvzDHLMPXYZ] ", stderr);
-	(void)fputs("[-p string] ... [-s replstr] ...", stderr);
-	(void)fputs("\n           [-U user] ... [-G group] ... ", stderr);
-	(void)fputs("[-T [from_date][,to_date][/[c][m]]] ... ", stderr);
-	(void)fputs("\n           [file ...] directory\n", stderr);
+	fprintf(stderr,
+"usage: pax [-cdnvzO] [-E limit] [-f archive] [-N dbdir] [-s replstr] ...\n"
+"           [-U user] ... [-G group] ... [-T [from_date][,to_date]] ...\n"
+"           [pattern ...]\n");
+	fprintf(stderr,
+"       pax -r [-cdiknuvzADOYZ] [-E limit] [-f archive] [-N dbdir]\n"
+"           [-o options] ... [-p string] ... [-s replstr] ... [-U user] ...\n"
+"           [-G group] ... [-T [from_date][,to_date]] ... [pattern ...]\n");
+	fprintf(stderr,
+"       pax -w [-dituvzAHLMOPX] [-b blocksize] [[-a] [-f archive]] [-x format]\n"
+"           [-B bytes] [-N dbdir] [-o options] ... [-s replstr] ...\n"
+"           [-U user] ... [-G group] ...\n"
+"           [-T [from_date][,to_date][/[c][m]]] ... [file ...]\n");
+	fprintf(stderr,
+"       pax -r -w [-diklntuvzADHLMOPXYZ] [-N dbdir] [-p string] ...\n"
+"           [-s replstr] ... [-U user] ... [-G group] ...\n"
+"           [-T [from_date][,to_date][/[c][m]]] ... [file ...] directory\n");
 	exit(1);
 	/* NOTREACHED */
 }
