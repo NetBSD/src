@@ -1,0 +1,23 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:34 garbled Exp $
+INTFS=`ifconfig -l | sed -e \
+ 's/lo.//g;s/strip.//g;s/tun.//g;s/ipip.//g;s/eon.//g;s/gre.//g;s/gif.//g'`
+echo "Intf#	State	Media    	IPV4 Addr.	IPV6 Addr."
+echo "---------------------------------------------------------------------------"
+(for i in $INTFS
+do
+	ifconfig $i | grep UP >/dev/null
+	if [ "$?" = "0" ]; then
+		FOO=`echo "$i	up"`
+	else
+		FOO=`echo "$i	down"`
+	fi
+	INET=`ifconfig $i | grep 'media:' | awk '{ print $2 }'`
+	FOO=`echo "$FOO	$INET"`
+	INET=`ifconfig $i | grep 'inet ' | awk '{ print $2 }'`
+	FOO=`echo "$FOO	$INET"`
+	INET=`ifconfig $i | grep 'inet6' | awk '{ print $2 }'`
+	FOO=`echo "$FOO	$INET"`
+
+	echo $FOO | sed -e 's/ /	/g'
+done) | sort -rk 2

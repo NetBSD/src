@@ -1,0 +1,24 @@
+#!/bin/sh
+# $NetBSD: script,v 1.1 2001/04/25 03:43:29 garbled Exp $
+
+DATA=`echo $1 | sed -e 's@,@ .*%%" | sed -e "s%^@g'`
+LIST=`echo $DATA | sed -e 's@,@ .*%%" | sed -e "s%^@g'`
+LIST=`echo 'sed -e "s%^'$LIST' .*%%"'`
+echo $LIST
+IFS=" "
+EXPORTS=`cat /etc/exports`
+echo $EXPORTS | eval "$LIST" | grep -v '^$' >/etc/exports
+if [ "$?" = "0" ]; then
+	echo "Deleted all selected exports from /etc/exports"
+else
+	echo "Failed to delete exports"
+fi
+if [ "$2" = "YES" ]; then
+	if [ -f "/var/run/mountd.pid" ]; then
+		kill -HUP `cat /var/run/mountd.pid`
+		echo "Restarted mountd."
+	else
+		echo "Mountd not running, cannot refresh."
+	fi
+fi
+
