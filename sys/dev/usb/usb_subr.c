@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.25 1999/01/07 02:22:51 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.26 1999/01/07 22:12:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -722,11 +722,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
-/* XXX isn't it bad to build &uaa into a value that has a lifetime
-   longer than this function call? */
 	bdevice bdev;
 	bdev = device_add_child(*parent, NULL, -1, &uaa);
-	if (bdev) {
+	if (!bdev) {
 	    printf("%s: Device creation failed\n", USBDEVNAME(dev->bus->bdev));
 	    return (USBD_INVAL);
 	}
