@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6.2.2 2000/11/22 16:00:33 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.2.3 2001/04/23 09:41:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			*pte &= ~PG_CI;
 		else
 			*pte |= PG_CI;
-		pmap_update();
+		TBIS(va);
 	}
  
 	return 0;

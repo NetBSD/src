@@ -1,7 +1,7 @@
-/* $NetBSD: debug.s,v 1.5.4.1 2000/11/20 19:56:22 bouyer Exp $ */
+/* $NetBSD: debug.s,v 1.5.4.2 2001/04/23 09:41:25 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.5.4.1 2000/11/20 19:56:22 bouyer Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.5.4.2 2001/04/23 09:41:25 bouyer Exp $")
 
 /*
  * Debugger glue.
@@ -98,9 +98,17 @@ NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
 2:	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
 
 3:	/* Dispatch to the debugger - arguments are already in place. */
+#if defined(KGDB)
+	mov	a3, a0			/* a0 == entry (trap type) */
+	mov	a4, a1			/* a1 == frame pointer */
+	CALL(kgdb_trap)
+	br	9f
+#endif
+#if defined(DDB)
 	CALL(ddb_trap)
-
-	/* Debugger return value in v0; switch back to our previous stack. */
+	br	9f
+#endif
+9:	/* Debugger return value in v0; switch back to our previous stack. */
 	mov	s0, sp
 
 #if defined(MULTIPROCESSOR)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.139.2.9 2001/04/21 17:53:49 bouyer Exp $
+#	$NetBSD: files.i386,v 1.139.2.10 2001/04/23 09:41:47 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -149,6 +149,7 @@ file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defopt	PCI_CONF_MODE
@@ -282,6 +283,8 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 device	mca {[slot = -1]} : bioscall
 include	"dev/mca/files.mca"
 file	arch/i386/mca/mca_machdep.c	mca
+
+major	{ ed = 20 }
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp

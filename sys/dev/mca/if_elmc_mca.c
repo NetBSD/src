@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.3.2.3 2001/04/21 17:48:53 bouyer Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.3.2.4 2001/04/23 09:42:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,9 +112,6 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
-	printf(" slot %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
-		ma->ma_slot + 1);
-
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
 
@@ -148,6 +145,9 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 24) >> 3) * 0x8000);
+
+	printf(" slot %d irq %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
+		ma->ma_slot + 1, irq);
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, ELMC_IOADDR_SIZE, 0, &ioh)) {
@@ -265,13 +265,11 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	/* establish interrupt handler */
 	asc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, i82586_intr,
 			sc);
-	if (asc->sc_ih == NULL)
+	if (asc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		       sc->sc_dev.dv_xname);
-	else
-		printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname,irq);
-
-	return;
+		return;
+	}
 }
 
 static void

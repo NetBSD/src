@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45.2.5 2001/03/27 15:31:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45.2.6 2001/04/23 09:41:59 bouyer Exp $	*/
 
 /*
  *
@@ -543,8 +543,8 @@ pmap_unmap_ptes(pmap)
  * p m a p   k e n t e r   f u n c t i o n s
  *
  * functions to quickly enter/remove pages from the kernel address
- * space.   pmap_kremove/pmap_kenter_pgs are exported to MI kernel.
- * we make use of the recursive PTE mappings.
+ * space.   pmap_kremove is exported to MI kernel.  we make use of
+ * the recursive PTE mappings.
  */
 
 /*
@@ -603,33 +603,6 @@ pmap_kremove(va, len)
 #endif
 		*pte = 0;		/* zap! */
 		pmap_update_pg(va);
-	}
-}
-
-/*
- * pmap_kenter_pgs: enter in a number of vm_pages
- */
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	pt_entry_t *pte, opte;
-	int lcv;
-	vaddr_t tva;
-
-	for (lcv = 0 ; lcv < npgs ; lcv++) {
-		tva = va + lcv * PAGE_SIZE;
-		if (va < VM_MIN_KERNEL_ADDRESS)
-			pte = vtopte(tva);
-		else
-			pte = kvtopte(tva);
-		opte = *pte;
-		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V;
-		if (pmap_valid_entry(opte))
-			pmap_update_pg(tva);
 	}
 }
 

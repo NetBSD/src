@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.2.4 2001/03/27 15:31:21 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.5 2001/04/23 09:42:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.4 2001/03/27 15:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.5 2001/04/23 09:42:00 bouyer Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -371,7 +371,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * address space.
 	 */
 	size = (unsigned)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 

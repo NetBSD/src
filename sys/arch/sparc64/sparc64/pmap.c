@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.8 2001/03/27 15:31:36 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.9 2001/04/23 09:42:07 bouyer Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1721,15 +1721,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 }
 
 /*
- * Require that all active physical maps contain no
- * incorrect entries NOW.
- */
-void
-pmap_update()
-{
-}
-
-/*
  * Garbage collects the physical map system for
  * pages which are no longer used.
  * Success need not be guaranteed -- that is, there
@@ -1957,37 +1948,10 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 /*
- * pmap_kenter_pgs:		[ INTERFACE ]
- *
- *	Enter a va -> pa mapping for the array of vm_page's into the
- *	kernel pmap without any physical->virtual tracking, starting
- *	at address va, for npgs pages.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	register u_int64_t phys;
-	int i;
-
-	for (i = 0; i < npgs; i++) {
-		phys = VM_PAGE_TO_PHYS(pgs[i]);
-		
-		/* Eventually we can try to optimize this w/large pages */
-		pmap_kenter_pa(va, phys, VM_PROT_READ|VM_PROT_WRITE);
-		va += NBPG;
-	}
-}
-
-/*
  * pmap_kremove:		[ INTERFACE ]
  *
- *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
- *	starting at va, for size bytes (assumed to be page rounded).
+ *	Remove a mapping entered with pmap_kenter_pa() starting at va,
+ *	for size bytes (assumed to be page rounded).
  */
 #if 0
 void

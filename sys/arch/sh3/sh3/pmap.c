@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2.2.5 2001/03/27 15:31:26 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.2.6 2001/04/23 09:42:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -511,7 +511,7 @@ pmap_map_ptes(pmap)
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V | PG_N | PG_4K | PG_M);
 		if (pmap_valid_entry(opde))
-			pmap_update();
+			TLBFLUSH();
 	}
 	return(APTE_BASE);
 }
@@ -539,8 +539,8 @@ pmap_unmap_ptes(pmap)
  * p m a p   k e n t e r   f u n c t i o n s
  *
  * functions to quickly enter/remove pages from the kernel address
- * space.   pmap_kremove/pmap_kenter_pgs are exported to MI kernel.
- * we make use of the recursive PTE mappings.
+ * space.   pmap_kremove is exported to MI kernel.  we make use of
+ * the recursive PTE mappings.
  */
 
 /*
@@ -594,30 +594,6 @@ pmap_kremove(va, len)
 #endif
 		*pte = 0;		/* zap! */
 		pmap_update_pg(va);
-	}
-}
-
-/*
- * pmap_kenter_pgs: enter in a number of vm_pages
- */
-
-void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	pt_entry_t *pte, opte;
-	int lcv;
-	vaddr_t tva;
-
-	for (lcv = 0 ; lcv < npgs ; lcv++) {
-		tva = va + lcv * NBPG;
-		pte = vtopte(tva);
-		opte = *pte;
-		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | PG_N | PG_4K | PG_M | pmap_pg_g;
-		if (pmap_valid_entry(opte))
-			pmap_update_pg(tva);
 	}
 }
 
@@ -790,7 +766,7 @@ pmap_bootstrap(kva_start)
 	 * ensure the TLB is sync'd with reality by flushing it...
 	 */
 
-	pmap_update();
+	TLBFLUSH();
 }
 
 /*
@@ -1511,7 +1487,7 @@ pmap_steal_ptp(obj, offset)
 				pmaps_hand->pm_pdir[idx] = 0;	/* zap! */
 				pmaps_hand->pm_stats.resident_count--;
 				if (pmap_is_curpmap(pmaps_hand))
-					pmap_update();
+					TLBFLUSH();
 				else if (pmap_valid_entry(*APDP_PDE) &&
 					 (*APDP_PDE & PG_FRAME) ==
 					 pmaps_hand->pm_pdirpa) {
@@ -2208,7 +2184,7 @@ pmap_remove(pmap, sva, eva)
 
 	if (prr && prr->prr_npages) {
 		if (prr->prr_npages > PMAP_RR_MAX) {
-			pmap_update();
+			TLBFLUSH();
 		} else {
 			while (prr->prr_npages) {
 				pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
@@ -2609,7 +2585,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 	if (prr && prr->prr_npages) {
 		if (prr->prr_npages > PMAP_RR_MAX) {
-			pmap_update();
+			TLBFLUSH();
 		} else {
 			while (prr->prr_npages) {
 				pmap_update_pg(prr->prr_vas[--prr->prr_npages]);

@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.1.6.4 2001/04/21 17:48:55 bouyer Exp $
+$NetBSD: mcadevs,v 1.1.6.5 2001/04/23 09:42:25 bouyer Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ $NetBSD: mcadevs,v 1.1.6.4 2001/04/21 17:48:55 bouyer Exp $
  * [9] ftp://ftp.computone.com/pub/Products/legacy/ALC/opt_205.exe
  * [10] IBM PS/2 MicroChannel POSID - ADF files
  *	http://members.aol.com/mcapage1/adflist1.htm
+ * [11] http://www.geocities.com/SiliconValley/Lab/6370/adapters.html
  */
 
 /*
@@ -158,6 +159,7 @@ product 0x62DB 3C529_TM "3Com 3C529 Ethernet Adapter (test mode)"	[2]
 product 0x62F0 "Plexus AIP2 Card"					[6]
 product 0x62F6 3C529_2T "3Com 3C529 Ethernet Adapter (10base2/T)"	[2]
 product 0x62F7 3C529_T "3Com 3C529 Ethernet Adapter (10baseT)"		[2]
+product 0x6354 ARCOAE "Arco Electronics AE/2 Ethernet Adapter"		[11]
 product 0x6361 "Arnet Smartport/2 Communications Adapter"		[6]
 product 0x63B3 "CH GameCard III-Automatic/MCA Adapter"			[5]
 product 0x63CA "HP 27246 Ethernet Adapter"				[1]
@@ -186,6 +188,7 @@ product 0x678B "NeoTecH Dual RS-232 Async. Adapter"			[6]
 product 0x678C "NeoTecH S2M100 Dual RS-232 Async. Adapter"		[6]
 product 0x678D "NeoTecH MSP/4 4-Channel Serial/Parallel Adapter"	[6]
 product 0x678F "BBS GPIB-3000 IEEE-488 Adapter"				[5]
+product 0x6791 NEOCOM1 "NeoTecH Single RS-232 Async. Adapter, SM110"	[10]
 product 0x6792 "NeoTecH SPM121/SPM321 Serial/Parallel Adapter"		[6]
 product 0x6795 "NeoTecH S1M200 Single RS-422/485 Async. Adapter"	[6]
 product 0x6796 "NeoTecH PM101 Single Bidirectional Parallel Adapter"	[6]
@@ -205,6 +208,7 @@ product 0x6AB5 "Mayze Syncro 48PS V.27ter Modem"			[7]
 product 0x6ABF "RM Ethernet MC Adapter"					[5]
 product 0x6AE7 "Dacom Unity Gold+/2 Modem"				[7]
 product 0x6AFB "Miracom Keycard/PS Modem"				[7]
+product 0x6AFD "SKNET Ethernet Adapter/G"				[10]
 product 0x6B76 "Network Designers Garnet 2 Adapter"			[7]
 product 0x6B80 "DataFlex Chameleo Modem"				[7]
 product 0x6B95 "CORE ESDI Fixed Disk Adapter"				[6]
@@ -216,6 +220,7 @@ product 0x6BBB "Barr Synchronous Communications Adapter"		[6]
 product 0x6BBC "Apricot Synchronous Communications Adapter"		[7]
 product 0x6BCB "CONNECT ARCnet Adapter"					[6]
 product 0x6BE7 "Symicron dtsx12 Token Ring Adapter"			[7]
+product 0x6BE9 SKNET "SKNET Ethernet Adapter"				[10]
 product 0x6BFF "Torus Ethernet Adapter/MC"				[6]
 product 0x6C0F "Roland MIDI Processing Unit MPU-IMC"			[5]
 product 0x6DAC "Logitech ScanMan Adapter"				[5]
@@ -282,8 +287,9 @@ product 0x708F KINGRAM8 "Kingston KTM-8000/386 Memory Expansion"	[5]
 product 0x70B0 "Intel AboveBoard MC32"					[6]
 product 0x70D0 KINGRAM16 "Kingston KTM-16000/386 Memory Expansion"	[6]
 product 0x70D4 KINGRAM609 "Kingston KTM-609/16 Memory Expansion"	[4]
+product 0x70DE CENET16 "Compex Inc. PS/2 ENET16-MC/P Microchannel Ad."	[10]
 product 0x7151 "Novell NE/2-32 Ethernet Adapter"			[6]
-product 0x7154 "Novell NE/2 Ethernet Adapter"				[1]
+product 0x7154 NE2 "Novell NE/2 Ethernet Adapter"			[1]
 product 0x7188 "Mountain QIC-02 Tape Adapter"				[6]
 product 0x71D4 "Kingston DataCard 16 Adapter"				[4]
 product 0x72F3 HYPRAM "HyperRAM MC 32/16 SIMM-MF Memory Expansion"	[7]
@@ -343,7 +349,7 @@ product 0x8FD9 "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0x8FDA "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0x8FDB "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0xDDFF IBM_ESDIC "IBM ESDI Fixed Disk Controller"		[3]
-product 0xDEFF "IBM Multi-Protocol Communications Adapter"		[3]
+product 0xDEFF IBM_MPCOM "IBM Multi-Protocol Communications Adapter"	[3]
 product 0xDF7F "IBM 3363 Optical Disk Adapter"				[5]
 product 0xDF9F IBM_ESDIC_IG "IBM Integ. ESDI Fixed Disk & Controller"	[3]
 product 0xDFBF "IBM 6157 Streaming Tape Adapter"			[5]

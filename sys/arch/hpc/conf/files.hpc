@@ -1,5 +1,17 @@
-#	$NetBSD: files.hpc,v 1.2.2.2 2001/02/11 19:09:23 bouyer Exp $
+#	$NetBSD: files.hpc,v 1.2.2.3 2001/04/23 09:41:41 bouyer Exp $
 
+#
+# STANDALONE BOOT or BOOT from WinCE
+# 
+defopt  BOOT_STANDALONE
+#
+# Specified platform only?
+# 
+defopt  SPEC_PLATFORM
+  
+#
+# hpc support functions
+#
 file	arch/hpc/hpc/config_hook.c
 file	arch/hpc/hpc/platid.c
 file	arch/hpc/hpc/platid_mask.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.1.1.1.2.1 2001/04/21 17:53:47 bouyer Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.1.1.1.2.2 2001/04/23 09:41:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,6 +37,40 @@
 
 #define VRIP_NO_ADDR		0x00000000
 /*
+ * VR4181 registers
+ */
+#define VR4181_BCU_ADDR		0x0a000000
+#define VR4181_DMAAU_ADDR	VRIP_NO_ADDR
+#define VR4181_DCU_ADDR		VRIP_NO_ADDR
+#define VR4181_CMU_ADDR		0x0a000004
+#define VR4181_ICU_ADDR		0x0a000080
+#define VR4181_PMU_ADDR		0x0a0000a0
+#define VR4181_RTC_ADDR		0x0a0000c0
+#define VR4181_DSU_ADDR		0x0a0000e0
+#define VR4181_GIU_ADDR		VRIP_NO_ADDR	/* XXX: no register */
+#define VR4181_PIU_ADDR		0x0a000122
+#define VR4181_AIU_ADDR		0x0a000160
+#define VR4181_KIU_ADDR		0x0a000180
+#define VR4181_DSIU_ADDR	0x0a0001a0
+#define VR4181_LED_ADDR		0x0a000240
+#define VR4181_SIU_ADDR		0x0c000000
+#define VR4181_HSP_ADDR		0x0a000020
+#define VR4181_FIR_ADDR		0x0a000000	/* XXX */
+#define VR4181_MEMCON_ADDR	0x0a000300
+#define VR4181_ISABRG_ADDR	0x0b0002c0
+#define VR4181_ECU_ADDR		0x0b0006e0
+#define VR4181_DCU81_ADDR	0x0a000020
+#define VR4181_CSI81_ADDR	0x0b000900
+#define VR4181_GIU81_ADDR	0x0b000300
+#define VR4181_LCD_ADDR		0x0a000400
+#define VR4181_SIU1_ADDR	0x0c000010
+#define	VR4181_SCU_ARR		VRIP_NO_ADDR	/* XXX: no register */
+#define VR4181_SDRAMU_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4181_PCI_ADDR		VRIP_NO_ADDR	/* XXX: no register */
+#define VR4181_PCICONF_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4181_CSI_ADDR		VRIP_NO_ADDR	/* XXX: no register */
+
+/*
  * VR4101-4121 registers
  */
 #define VR4102_BCU_ADDR		0x0b000000
@@ -49,19 +83,25 @@
 #define VR4102_DSU_ADDR		0x0b0000e0
 #define VR4102_GIU_ADDR		0x0b000100
 #define VR4102_PIU_ADDR		0x0b000120
-#define VR4102_AIU_ADDR		0x0b000000	/* XXX */
+#define VR4102_AIU_ADDR		0x0b000160
 #define VR4102_KIU_ADDR		0x0b000180
 #define VR4102_DSIU_ADDR	0x0b0001a0
 #define VR4102_LED_ADDR		0x0b000240
 #define VR4102_SIU_ADDR		0x0c000000
 #define VR4102_HSP_ADDR		0x0c000020
 #define VR4102_FIR_ADDR		0x0b000000	/* XXX */
+#define VR4102_MEMCON_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_ISABRG_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_ECU_ADDR		VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_DCU81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_CSI81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_GIU81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4102_SIU1_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define	VR4102_SCU_ARR		VRIP_NO_ADDR	/* XXX: no register */
 #define VR4102_SDRAMU_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define VR4102_PCI_ADDR		VRIP_NO_ADDR	/* XXX: no register */
 #define VR4102_PCICONF_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define VR4102_CSI_ADDR		VRIP_NO_ADDR	/* XXX: no register */
-
 /*
  * VR4122 registers
  */
@@ -82,6 +122,13 @@
 #define VR4122_SIU_ADDR		0x0f000800
 #define VR4122_HSP_ADDR		VRIP_NO_ADDR	/* XXX: no register */
 #define VR4122_FIR_ADDR		0x0f000840	/* XXX */
+#define VR4122_MEMCON_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_ISABRG_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_ECU_ADDR		VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_DCU81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_CSI81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_GIU81_ADDR	VRIP_NO_ADDR	/* XXX: no register */
+#define VR4122_SIU1_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define	VR4122_SCU_ARR		0x0f001000
 #define VR4122_SDRAMU_ADDR	0x00000400
 #define VR4122_PCI_ADDR		0x00000c00
@@ -105,6 +152,38 @@
 
 #if defined VRGROUP_4181
 #define VRIP_BASE_ADDR		0x0a000000
+
+#define VRIP_BCU_ADDR		VR4181_BCU_ADDR	
+#define VRIP_DMAAU_ADDR		VR4181_DMAAU_ADDR
+#define VRIP_DCU_ADDR		VR4181_DCU_ADDR	
+#define VRIP_CMU_ADDR		VR4181_CMU_ADDR	
+#define VRIP_ICU_ADDR		VR4181_ICU_ADDR	
+#define VRIP_PMU_ADDR		VR4181_PMU_ADDR	
+#define VRIP_RTC_ADDR		VR4181_RTC_ADDR	
+#define VRIP_DSU_ADDR		VR4181_DSU_ADDR	
+#define VRIP_GIU_ADDR		VR4181_GIU_ADDR	
+#define VRIP_PIU_ADDR		VR4181_PIU_ADDR	
+#define VRIP_AIU_ADDR		VR4181_AIU_ADDR
+#define VRIP_KIU_ADDR		VR4181_KIU_ADDR	
+#define VRIP_DSIU_ADDR		VR4181_DSIU_ADDR
+#define VRIP_LED_ADDR		VR4181_LED_ADDR	
+#define VRIP_SIU_ADDR		VR4181_SIU_ADDR	
+#define VRIP_HSP_ADDR		VR4181_HSP_ADDR	
+#define VRIP_FIR_ADDR		VR4181_FIR_ADDR
+#define VRIP_MEMCON_ADDR	VR4181_MEMCON_ADDR
+#define VRIP_ISABRG_ADDR	VR4181_ISABRG_ADDR
+#define VRIP_ECU_ADDR		VR4181_ECU_ADDR
+#define VRIP_DCU81_ADDR		VR4181_DCU81_ADDR
+#define VRIP_CSI81_ADDR		VR4181_CSI81_ADDR
+#define VRIP_GIU81_ADDR		VR4181_GIU81_ADDR
+#define VRIP_LCD_ADDR		VR4181_LCD_ADDR
+#define VRIP_SIU1_ADDR		VR4181_SIU1_ADDR	
+#define	VRIP_SCU_ARR		VR4181_SCU_ARR		/* XXX: no register */
+#define VRIP_SDRAMU_ADDR	VR4181_SDRAMU_ADDR	/* XXX: no register */
+#define VRIP_PCI_ADDR		VR4181_PCI_ADDR		/* XXX: no register */
+#define VRIP_PCICONF_ADDR	VR4181_PCICONF_ADDR	/* XXX: no register */
+#define VRIP_CSI_ADDR		VR4181_CSI_ADDR		/* XXX: no register */
+
 #endif /* VRGROUP_4181 */
 
 #if defined VRGROUP_4122
@@ -127,6 +206,13 @@
 #define VRIP_SIU_ADDR		VR4122_SIU_ADDR	
 #define VRIP_HSP_ADDR		VR4122_HSP_ADDR	
 #define VRIP_FIR_ADDR		VR4122_FIR_ADDR
+#define VRIP_MEMCON_ADDR	VR4122_MEMCON_ADDR	/* XXX: no register */
+#define VRIP_ISABRG_ADDR	VR4122_ISABRG_ADDR	/* XXX: no register */
+#define VRIP_ECU_ADDR		VR4122_ECU_ADDR		/* XXX: no register */
+#define VRIP_DCU81_ADDR		VR4122_DCU81_ADDR	/* XXX: no register */
+#define VRIP_CSI81_ADDR		VR4122_CSI81_ADDR	/* XXX: no register */
+#define VRIP_GIU81_ADDR		VR4122_CSI81_ADDR	/* XXX: no register */
+#define VRIP_SIU1_ADDR		VR4122_SIU1_ADDR	/* XXX: no register */	
 #define	VRIP_SCU_ARR		VR4122_SCU_ARR		/* XXX: no register */
 #define VRIP_SDRAMU_ADDR	VR4122_SDRAMU_ADDR	/* XXX: no register */
 #define VRIP_PCI_ADDR		VR4122_PCI_ADDR		/* XXX: no register */
@@ -155,6 +241,13 @@
 #define VRIP_SIU_ADDR		VR4102_SIU_ADDR	
 #define VRIP_HSP_ADDR		VR4102_HSP_ADDR	
 #define VRIP_FIR_ADDR		VR4102_FIR_ADDR
+#define VRIP_MEMCON_ADDR	VR4102_MEMCON_ADDR	/* XXX: no register */
+#define VRIP_ISABRG_ADDR	VR4102_ISABRG_ADDR	/* XXX: no register */
+#define VRIP_ECU_ADDR		VR4102_ECU_ADDR		/* XXX: no register */
+#define VRIP_DCU81_ADDR		VR4102_DCU81_ADDR	/* XXX: no register */
+#define VRIP_CSI81_ADDR		VR4102_CSI81_ADDR	/* XXX: no register */
+#define VRIP_GIU81_ADDR		VR4102_CSI81_ADDR	/* XXX: no register */
+#define VRIP_SIU1_ADDR		VR4102_SIU1_ADDR	/* XXX: no register */	
 #define	VRIP_SCU_ARR		VR4102_SCU_ARR		/* XXX: no register */
 #define VRIP_SDRAMU_ADDR	VR4102_SDRAMU_ADDR	/* XXX: no register */
 #define VRIP_PCI_ADDR		VR4102_PCI_ADDR		/* XXX: no register */
@@ -173,10 +266,14 @@
 #define VRIP_INTR_CSI		24
 #define VRIP_INTR_SCU		23
 #define VRIP_INTR_PCI		22
+#define VRIP_INTR_LCD		22	/* 4181 */
 #define VRIP_INTR_DSIU		21
+#define VRIP_INTR_DCU81		21	/* 4181 */
 #define VRIP_INTR_FIR		20
 #define VRIP_INTR_TCLK		19
+#define VRIP_INTR_CSI81		19	/* 4181 */
 #define VRIP_INTR_HSP		18
+#define VRIP_INTR_ECU		18	/* 4181 */
 #define VRIP_INTR_LED		17
 #define VRIP_INTR_RTCL2		16
 /* reserved 			15,14 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.2 2000/11/22 16:01:50 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.3 2001/04/23 09:42:07 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -161,6 +161,7 @@ int pmap_count_res __P((pmap_t pmap));
 #define pmap_resident_count(pm)		pmap_count_res((pm))
 #define pmap_from_phys_address(x,f)	((x)>>PGSHIFT)
 #define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
+#define	pmap_update()			/* nothing (yet) */
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.1.1.1.2.3 2001/04/21 17:53:47 bouyer Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.1.1.1.2.4 2001/04/23 09:41:44 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -183,7 +183,7 @@ vrgiu_attach(parent, self, aux)
 
 	/* Display port status (Input/Output) for debugging */
 	VPRINTF(DEBUG_IO, ("I/O setting:                                "));
-	DDUMP_IOSETTING(DEBUG_IO, sc);
+	VDUMP_IOSETTING(DEBUG_IO, sc);
 	VPRINTF(DEBUG_IO, ("\n"));
 	VPRINTF(DEBUG_IO, ("       data:"));
 	VDUMP_IO(DEBUG_IO, sc);

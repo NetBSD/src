@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72.2.7 2001/03/27 15:31:11 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72.2.8 2001/04/23 09:41:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.7 2001/03/27 15:31:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.8 2001/04/23 09:41:54 bouyer Exp $");
 
 /*
  *	Manages physical address maps.
@@ -278,7 +278,7 @@ pmap_bootstrap()
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
 	Sysmap = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
 	/*
 	 * Allocate memory for the pv_heads.  (A few more of the latter
@@ -291,8 +291,7 @@ pmap_bootstrap()
 	 */
 	pv_table_npages = physmem;
 	pv_table = (struct pv_entry *)
-	    pmap_steal_memory(sizeof(struct pv_entry) * pv_table_npages,
-		NULL, NULL);
+	    uvm_pageboot_alloc(sizeof(struct pv_entry) * pv_table_npages);
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -337,6 +336,17 @@ pmap_bootstrap()
 }
 
 /*
+ * Define the initial bounds of the kernel virtual address space.
+ */
+void
+pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
+{
+
+	*vstartp = round_page(virtual_avail);
+	*vendp = trunc_page(virtual_end);
+}
+
+/*
  * Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
  * This function allows for early dynamic memory allocation until the virtual
  * memory system has been bootstrapped.  After that point, either kmem_alloc
@@ -351,6 +361,9 @@ pmap_bootstrap()
  *
  * Note that this memory will never be freed, and in essence it is wired
  * down.
+ *
+ * We must adjust *vstartp and/or *vendp iff we use address space
+ * from the kernel virtual address range defined by pmap_virtual_space().
  */
 vaddr_t
 pmap_steal_memory(size, vstartp, vendp)
@@ -397,15 +410,6 @@ pmap_steal_memory(size, vstartp, vendp)
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
-
-		/*
-		 * Fill these in for the caller; we don't modify them,
-		 * but thge upper layers still want to know.
-		 */
-		if (vstartp)
-			*vstartp = round_page(virtual_avail);
-		if (vendp)
-			*vendp = trunc_page(virtual_end);
 
 		va = MIPS_PHYS_TO_KSEG0(pa);
 		memset((caddr_t)va, 0, size);
@@ -1338,20 +1342,6 @@ pmap_kenter_pa(va, pa, prot)
 }
 
 void
-pmap_kenter_pgs(va, pgs, npgs)
-	vaddr_t va;
-	struct vm_page **pgs;
-	int npgs;
-{
-	int i;
-
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-	}
-}
-
-void
 pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
@@ -1486,24 +1476,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
 		     dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
-}
-
-/*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
- */
-void
-pmap_update()
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.106.2.5 2001/02/11 19:17:35 bouyer Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.106.2.6 2001/04/23 09:42:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -840,16 +840,22 @@ nfs_lookup(v)
 		}
 
 		if (cnp->cn_flags & PDIRUNLOCK) {
-			error = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (error) {
+			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			if (err2 != 0) {
 				*vpp = NULLVP;
-				return error;
+				return err2;
 			}
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
-		if (err2) {
+		if (err2 != 0) {
+			if (error == 0) {
+				if (*vpp != dvp)
+					vput(*vpp);
+				else
+					vrele(*vpp);
+			}
 			*vpp = NULLVP;
 			return err2;
 		}
@@ -862,9 +868,6 @@ nfs_lookup(v)
 			cache_purge(dvp);
 			np->n_nctime = 0;
 			goto dorpc;
-		} else if (error > 0) {
-			*vpp = NULLVP;
-			return error;
 		}
 
 		newvp = *vpp;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.39.2.4 2001/04/23 09:41:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.4 2001/04/23 09:41:25 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,6 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $");
 #include <machine/prom.h>
 #include <machine/alpha.h>
 
+struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list = &cpu_info_primary;
+
 #if defined(MULTIPROCESSOR)
 #include <sys/malloc.h>
 #include <sys/kthread.h>
@@ -95,15 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.2.3 2000/12/08 09:23:20 bouyer Exp $");
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info cpu_info[ALPHA_MAXPROCS];
+struct cpu_info *cpu_info[ALPHA_MAXPROCS];
 
 /* Bitmask of CPUs currently running and paused. */
 __volatile u_long cpus_running;
 __volatile u_long cpus_paused;
 
 void	cpu_boot_secondary __P((struct cpu_info *));
-#else
-struct	cpu_info cpu_info_store;
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -289,10 +290,18 @@ recognized:
 		return;
 	}
 
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
+		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
-	ci = &cpu_info[ma->ma_slot];
-#else
-	ci = &cpu_info_store;
+		cpu_info[ma->ma_slot] = ci;
+#endif
+	}
+#if defined(MULTIPROCESSOR)
+	else {
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
+		memset(ci, 0, sizeof(*ci));
+		cpu_info[ma->ma_slot] = ci;
+	}
 #endif
 	ci->ci_cpuid = ma->ma_slot;
 
@@ -368,7 +377,7 @@ recognized:
 	 * running!
 	 */
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
-		ci->ci_flags |= CPUF_PRIMARY;
+		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
 		atomic_setbits_ulong(&cpus_running, (1UL << ma->ma_slot));
 	}
 
@@ -395,8 +404,8 @@ cpu_boot_secondary_processors()
 	u_long i;
 
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
-		ci = &cpu_info[i];
-		if (ci->ci_idle_pcb == NULL)
+		ci = cpu_info[i];
+		if (ci == NULL || ci->ci_idle_pcb == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PRIMARY)
 			continue;
@@ -477,6 +486,12 @@ cpu_boot_secondary(ci)
 	if (timeout == 0)
 		printf("%s: processor failed to hatch\n",
 		    ci->ci_softc->sc_dev.dv_xname);
+	else {
+		/* Link it into the list.  The primary is already there. */
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
+		atomic_setbits_ulong(&ci->ci_flags, CPUF_RUNNING);
+	}
 }
 
 void
@@ -494,14 +509,13 @@ cpu_pause_resume(u_long cpu_id, int pause)
 void
 cpu_pause_resume_all(int pause)
 {
-	u_long cpu_id, cpu_me = cpu_number();
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
 
-	for (cpu_id = 0; cpu_id < ALPHA_MAXPROCS; cpu_id++) {
-		if ((cpus_running & (1UL << cpu_id)) == 0)
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
 			continue;
-		if (cpu_id == cpu_me)
-			continue;
-		cpu_pause_resume(cpu_id, pause);
+		cpu_pause_resume(ci->ci_cpuid, pause);
 	}
 }
 
@@ -637,13 +651,10 @@ void
 cpu_debug_dump(void)
 {
 	struct cpu_info *ci;
-	int i;
+	CPU_INFO_ITERATOR cii;
 
 	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
-	for (i = 0; i < ALPHA_MAXPROCS; i++) {
-		ci = &cpu_info[i];
-		if (ci->ci_softc == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%lu	%lx	%lx	%p	%p\n",
 		    ci,
 		    ci->ci_softc->sc_dev.dv_xname,

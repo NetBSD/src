@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.13.2.2 2000/11/20 19:56:28 bouyer Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.13.2.3 2001/04/23 09:41:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13.2.2 2000/11/20 19:56:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.13.2.3 2001/04/23 09:41:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,15 @@ void dec_kn300_cons_init __P((void));
 static void dec_kn300_device_register __P((struct device *, void *));
 static void dec_kn300_mcheck_handler
 	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 #define	ALPHASERVER_4100	"AlphaServer 4100"
 
@@ -163,6 +172,10 @@ dec_kn300_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &ccp->cc_iot);
+#endif /* KGDB */
 }
 
 /* #define	BDEBUG	1 */

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.1.2.3 2001/03/27 13:14:32 bouyer Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.1.2.4 2001/04/23 09:41:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.1.2.3 2001/03/27 13:14:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.1.2.4 2001/04/23 09:41:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,15 @@ static void dec_2100_a500_cons_init(void);
 static void dec_2100_a500_device_register(struct device *, void *);
 static void dec_2100_a500_machine_check(unsigned long, struct trapframe *,
 	unsigned long, unsigned long);
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 void
 _dec_2100_a500_init(void)
@@ -220,6 +229,10 @@ dec_2100_a500_cons_init(void)
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &tcp->tc_iot);
+#endif /* KGDB */
 }
 
 static void

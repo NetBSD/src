@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.49.2.7 2001/03/27 15:30:08 bouyer Exp $ */
+/* $NetBSD: trap.c,v 1.49.2.8 2001/04/23 09:41:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.7 2001/03/27 15:30:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.8 2001/04/23 09:41:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,10 +335,6 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			int s;
 #endif
 
-#if defined(MULTIPROCESSOR)
-			/* Block IPIs while we clean house. */
-			s = splhigh();
-#endif
 			/*
 			 * on exit from the kernel, if proc == fpcurproc,
 			 * FP is enabled.
@@ -351,9 +347,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	
 			if (ci->ci_fpcurproc != NULL)
 				fpusave_cpu(ci, 1);
-#if defined(MULTIPROCESSOR)
-			splx(s);
-#endif
+
 			KDASSERT(ci->ci_fpcurproc == NULL);
 
 #if defined(MULTIPROCESSOR)
@@ -363,15 +357,12 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
 #endif
 
-#if defined(MULTIPROCESSOR)
-			s = splhigh();
-#endif
+			FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 			p->p_addr->u_pcb.pcb_fpcpu = ci;
 			ci->ci_fpcurproc = p;
-#if defined(MULTIPROCESSOR)
-			splx(s);
-			alpha_mb();
-#endif
+
+			FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 
 			alpha_pal_wrfen(1);
 			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
@@ -391,11 +382,19 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
-			pmap_emulate_reference(p, a0, user, 0);
-			goto out;
-
 		case ALPHA_MMCSR_FOW:
-			pmap_emulate_reference(p, a0, user, 1);
+			if (user)
+				KERNEL_PROC_LOCK(p);
+			else
+				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
+			pmap_emulate_reference(p, a0, user,
+			    a1 == ALPHA_MMCSR_FOW ? 1 : 0);
+
+			if (user)
+				KERNEL_PROC_UNLOCK(p);
+			else
+				KERNEL_UNLOCK();
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:

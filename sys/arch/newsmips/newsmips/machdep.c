@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.5 2001/03/27 15:31:16 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.6 2001/04/23 09:41:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.5 2001/03/27 15:31:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.6 2001/04/23 09:41:58 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -321,7 +321,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
 	proc0.p_addr = proc0paddr = (struct user *)v;
 	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -334,7 +334,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * virtual address space.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
+	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 

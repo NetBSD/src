@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.1.1.1.2.2 2001/04/21 17:53:46 bouyer Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.1.1.1.2.3 2001/04/23 09:41:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -51,6 +51,10 @@
 #define		BCUCNT1_DRAM64M		(1<<14)	/* DRAM SIZE 64Mbit*/
 #define		BCUCNT1_DRAM32M		(0<<14)	/* DRAM SIZE 32Mbit*/
 
+#define		BCUCNT1_ROMSMASK	(0x3<<14) /* ROM SIZE (=4181) */
+#define		BCUCNT1_ROMS64M		(0x2<<14) /* ROM SIZE 64Mbit */
+#define		BCUCNT1_ROMS32M		(0x1<<14) /* ROM SIZE 32Mbit */
+
 #define		BCUCNT1_ISAMLCD		(1<<13)	/* ISAM/LCD 0x0a000000 to 0xaffffff(>= 4102) */
 #define		BCUCNT1_ISA		(1<<13)	/* ISA memory space */
 #define		BCUCNT1_LCD		(0<<13)	/* LCD  space*/
@@ -88,7 +92,7 @@
 #define		BCUCNT1_ROMWENEN	(1<<5)	/* Enable */
 #define		BCUCNT1_ROMWENDS	(0<<5)	/* Prohibit */
 
-#define		BCUCNT1_ROMWEN0		(1<<4)	/* Enable Flash memory write ROM 0 (<= 4122,>= 4102) */
+#define		BCUCNT1_ROMWEN0		(1<<4)	/* Enable Flash memory write ROM 0 (<= 4122,>= 4102, =4181) */
 #define		BCUCNT1_ROMWEN0EN	(1<<4)	/* Enable */
 #define		BCUCNT1_ROMWEN0DS	(0<<4)	/* Prohibit */
 
@@ -109,12 +113,17 @@
 #define		BCUCNT1_BUSHERREN	(1<<1)	/* Enable */
 #define		BCUCNT1_BUSHERRDS	(0<<1)	/* Prohibit */
 
+#define		BCUCNT1_RTYPE		(0x3<<1) /* ROM type (=4181) */
+#define		BCUCNT1_RTOROM		(0<<1)	/* Odinary ROM */
+#define		BCUCNT1_RTFLASH		(1<<1)	/* flash ROM */
+#define		BCUCNT1_RTPAGEROM	(2<<1)	/* Page ROM */
+
 #define		BCUCNT1_RSTOUT		(1)	/* RSTOUT control bit */
 #define		BCUCNT1_RSTOUTH		(1)	/* RSTOUT high level*/
 #define		BCUCNT1_RSTOUTL		(0)	/* RSTOUT low level*/
 
 
-#define	BCUCNT2_REG_W		0x002	/* BCU Control Register 2 (<= 4121,>= 4102) */
+#define	BCUCNT2_REG_W		0x002	/* BCU Control Register 2 (<= 4121,>= 4102, =4181) */
 
 #define		BCUCNT2_GMODE		(1)	/* LCD access control */
 #define		BCUCNT2_GMODENOM	(1)	/* not invert LCD */
@@ -304,7 +313,7 @@
 #define		BCUIO1SPEED_CSRW_2VT	(0x1)	/* 2VTClock */
 #define		BCUIO1SPEED_CSRW_1VT	(0x0)	/* 1VTClock */
 
-#define	BCUSPEED_REG_W		0x00A	/* BCU Access Cycle Change Register */
+#define	BCUSPEED_REG_W		0x00A	/* BCU Access Cycle Change Register (4121>=4102)*/
 
 #define		BCUSPD_WPROM		(0x3<<12)	/* Page ROM access speed */
 #define		BCUSPD_WPROMRFU		(0x3<<12)	/* RFU */
@@ -352,18 +361,49 @@
 #define		BCUSPD_WROMA9T		(0x0<<0)	/* 9TClock */
 
 
-#define	BCUERRST_REG_W		0x00C	/* BCU BUS ERROR Status Register */
+#define	BCUERRST_REG_W		0x00C	/* BCU BUS ERROR Status Register (4121>=4102)*/
 
 #define		BCUERRST_BUSERRMASK	(1)		/* Bus error, clear to 0 when 1 is written */
 #define		BCUERRST_BUSERR		(1)		/* Bus error */
 #define		BCUERRST_BUSNORM	(0)		/* Normal */
 
+#define	BCU81SPEED_REG_W	0x00C	/* BCU Access Cycle Change Register (=4181)*/
 
-#define	BCURFCNT_REG_W		0x00E	/* BCU Refresh Control Register */
+#define		BCU81SPD_WPROM		(0x7<<12)	/* Page ROM access speed */
+#define		BCU81SPD_WPROM8T	(0x7<<12)	/* 8TClock */
+#define		BCU81SPD_WPROM7T	(0x6<<12)	/* 7TClock */
+#define		BCU81SPD_WPROM6T	(0x5<<12)	/* 6TClock */
+#define		BCU81SPD_WPROM5T	(0x4<<12)	/* 5TClock */
+#define		BCU81SPD_WPROM4T	(0x3<<12)	/* 4TClock */
+#define		BCU81SPD_WPROM3T	(0x2<<12)	/* 3TClock */
+#define		BCU81SPD_WPROM2T	(0x1<<12)	/* 2TClock */
+#define		BCU81SPD_WPROM1T	(0x0<<12)	/* 1TClock */
+
+#define		BCU81SPD_WROMA		(0xf<<0)	/* System Bus Access Speed */
+#define		BCU81SPD_WROMA16T	(0xf<<0)	/* 16TClock */
+#define		BCU81SPD_WROMA15T	(0xe<<0)	/* 15TClock */
+#define		BCU81SPD_WROMA14T	(0xd<<0)	/* 14TClock */
+#define		BCU81SPD_WROMA13T	(0xc<<0)	/* 13TClock */
+#define		BCU81SPD_WROMA12T	(0xb<<0)	/* 12TClock */
+#define		BCU81SPD_WROMA11T	(0xa<<0)	/* 11TClock */
+#define		BCU81SPD_WROMA10T	(0x9<<0)	/* 10TClock */
+#define		BCU81SPD_WROMA9T	(0x8<<0)	/* 9TClock */
+#define		BCU81SPD_WROMA8T	(0x7<<0)	/* 8TClock */
+#define		BCU81SPD_WROMA7T	(0x6<<0)	/* 7TClock */
+#define		BCU81SPD_WROMA6T	(0x5<<0)	/* 6TClock */
+#define		BCU81SPD_WROMA5T	(0x4<<0)	/* 5TClock */
+#define		BCU81SPD_WROMA4T	(0x3<<0)	/* 4TClock */
+#define		BCU81SPD_WROMA3T	(0x2<<0)	/* 3TClock */
+#define		BCU81SPD_WROMA2T	(0x1<<0)	/* 2TClock */
+#define		BCU81SPD_WROMA1T	(0x0<<0)	/* 1TClock */
+
+#define	BCURFCNT_REG_W		0x00E	/* BCU Refresh Control Register(4121>=4102) */
+#define	BCU81RFCNT_REG_W	0x00E	/* BCU Refresh Control Register(=4181) */
 
 #define		BCURFCNT_MASK		0x3fff		/* refresh interval MASK */
 
-#define	BCUREVID_REG_W		0x010	/* BCU Revision ID Register */
+#define	BCUREVID_REG_W		0x010	/* BCU Revision ID Register (4122>=4101)*/
+#define	BCU81REVID_REG_W	0x010	/* BCU Revision ID Register (=4181)*/
 
 #define		BCUREVID_RIDMASK	(0xf<<12)	/* Revision ID */
 #define		BCUREVID_RIDSHFT	(12)		/* Revision ID */
@@ -389,6 +429,7 @@
 
 
 #define	BCUCLKSPEED_REG_W	0x014	/* Clock Speed Register (>= 4102) */
+#define	BCU81CLKSPEED_REG_W	0x014	/* Clock Speed Register (= 4181) */
 
 #define		BCUCLKSPEED_DIVT2B	(1<<15)		/* (= 4102, 4111) */
 #define		BCUCLKSPEED_DIVT3B	(1<<14)		/* (= 4111) */
@@ -405,6 +446,13 @@
 #define			BCUCLKSPEED_TDIV4	0x1
 #define			BCUCLKSPEED_TDIV2	0x0
 #define		BCUCLKSPEED_TDIVSHFT	(12)		
+
+#define		BCU81CLKSPEED_DIVTMASK	(0x7<<12)	/* (=4181) */
+#define			BCU81CLKSPEED_DIVT1	0x7
+#define			BCU81CLKSPEED_DIVT2	0x3
+#define			BCU81CLKSPEED_DIVT3	0x5
+#define			BCU81CLKSPEED_DIVT4	0x6
+#define		BCU81CLKSPEED_DIVTSHFT	(12)		
 
 #define		BCUCLKSPEED_DIVVTMASK	(0xf<<8)	/* (= 4121) */
 #define			BCUCLKSPEED_DIVVT1	0x1

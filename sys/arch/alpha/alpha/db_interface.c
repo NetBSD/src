@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.8.2.3 2001/02/11 19:08:32 bouyer Exp $ */
+/* $NetBSD: db_interface.c,v 1.8.2.4 2001/04/23 09:41:25 bouyer Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.2.3 2001/02/11 19:08:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.2.4 2001/04/23 09:41:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -284,8 +284,8 @@ db_mach_cpu(addr, have_addr, count, modif)
 		return;
 	}
 
-	ci = &cpu_info[addr];
-	if (ci->ci_softc == NULL) {
+	ci = cpu_info[addr];
+	if (ci == NULL) {
 		db_printf("CPU %ld is not configured\n", addr);
 		return;
 	}

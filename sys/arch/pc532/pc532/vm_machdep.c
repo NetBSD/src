@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37.2.2 2001/02/11 19:11:30 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37.2.3 2001/04/23 09:42:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -301,7 +301,7 @@ pagemove(from, to, size)
 			to += NBPG;
 			size -= NBPG;
 		}
-		pmap_update();
+		tlbflush();
 	}
 }
 

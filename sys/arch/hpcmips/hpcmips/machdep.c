@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1.2.6 2001/04/21 17:53:37 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.1.1.2.7 2001/04/23 09:41:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.6 2001/04/21 17:53:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.7 2001/04/23 09:41:43 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -492,7 +492,7 @@ mach_init(argc, argv, bi)
 	 * virtual address space.
 	 */
 	size = (unsigned)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 

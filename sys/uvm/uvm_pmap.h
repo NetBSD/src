@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.1.2.2 2000/11/20 18:12:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.1.2.3 2001/04/23 09:42:37 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -127,7 +127,6 @@ vaddr_t		 pmap_growkernel __P((vaddr_t));
 void		 pmap_init __P((void));
 
 void		 pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
-void		 pmap_kenter_pgs __P((vaddr_t, struct vm_page **, int));
 void		 pmap_kremove __P((vaddr_t, vsize_t));
 #if !defined(pmap_is_modified)
 boolean_t	 pmap_is_modified __P((struct vm_page *));
@@ -148,10 +147,9 @@ void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
+void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #if defined(PMAP_STEAL_MEMORY)
 vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
-#else
-void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #endif
 
 #if defined(PMAP_FORK)

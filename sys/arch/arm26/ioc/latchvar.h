@@ -1,10 +1,8 @@
-/*	$NetBSD: dasdvar.h,v 1.2.2.1 2001/04/21 17:48:52 bouyer Exp $	*/
+/* $NetBSD: latchvar.h,v 1.2.2.2 2001/04/23 09:41:37 bouyer Exp $ */
 
-/*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jaromir Dolecek.
+/*-
+ * Copyright (c) 2001 Ben Harris
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,13 +12,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -33,11 +27,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct ed_attach_args {
-	int sc_devno;
-	bus_dma_tag_t sc_dmat;		/* DMA tag as passed by parent */
-};
-	
-int	dasd_run_cmd __P((struct dasd_mca_softc *, int,
-				int, u_int16_t [], int, int));
-void	dasd_add_disk __P((struct dasd_mca_softc *, struct ed_softc *, int));
+#ifndef _LATCHVAR_H_
+#define _LATCHVAR_H_
+
+extern struct device *the_latches;
+
+extern void latcha_update(u_int8_t mask, u_int8_t value);
+extern void latchb_update(u_int8_t mask, u_int8_t value);
+
+#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.42.2.4 2001/02/11 19:10:52 bouyer Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.42.2.5 2001/04/23 09:41:46 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -69,7 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger

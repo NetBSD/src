@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.3.4.3 2001/04/21 17:48:54 bouyer Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.3.4.4 2001/04/23 09:42:25 bouyer Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -122,9 +122,6 @@ tr_mca_attach(parent, self, aux)
 	int pos2, pos3, pos4, pos5;
 	const struct tr_mca_product *tp;
 
-	tp = tr_mca_lookup(ma->ma_id);
-	printf(" slot %d: %s\n", ma->ma_slot + 1, tp->tr_name);
-
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
 	pos4 = mca_conf_read(ma->ma_mc, ma->ma_slot, 4);
@@ -169,6 +166,10 @@ tr_mca_attach(parent, self, aux)
 	irq = 2 + (pos3 >> 7) + ((pos4 & 0x01) << 3);
 	if (irq == 2)
 		irq = 9;
+
+	tp = tr_mca_lookup(ma->ma_id);
+
+	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, tp->tr_name);
 
 	sram_size = 8 << (((pos3 & 0x0c) >> 2) + 10);
 	sram_addr = (pos2 & 0xfe) << 12;
@@ -224,10 +225,10 @@ tr_mca_attach(parent, self, aux)
 
 	/* establish interrupt handler */
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, tr_intr, sc);
-	if (sc->sc_ih == NULL)
+	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		       sc->sc_dev.dv_xname);
-	else
-		printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
+		return;
+	}
 
 }

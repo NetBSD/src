@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.5.2.5 2001/04/21 17:48:50 bouyer Exp $
+# $NetBSD: TODO,v 1.5.2.6 2001/04/23 09:42:21 bouyer Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -10,4 +10,4 @@ Bugs:
 
 Projects:
 * proper MCA DMA/bus_dma(9) support (primarily for AHA-1640 ATM), using
-  code from dasd_mca.c:dasd_setup_dma()
+  code from edc_mca.c:edc_setup_dma()

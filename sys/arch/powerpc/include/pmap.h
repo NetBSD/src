@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.2 2001/02/11 19:11:35 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.3 2001/04/23 09:42:01 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,6 +68,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_is_modified(pg)		(ptebits((pg), PTE_CHG))
 #define	pmap_is_referenced(pg)		(ptebits((pg), PTE_REF))
 #define	pmap_unwire(pm, va)
+#define	pmap_update()			/* nothing (yet) */
 
 #define	pmap_phys_address(x)		(x)
 

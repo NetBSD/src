@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5 1999/02/26 21:34:38 is Exp $ */
+/* $NetBSD: pmap.h,v 1.5.8.1 2001/04/23 09:41:58 bouyer Exp $ */
 
 /*
  * This file was taken from from mvme68k/include/pmap.h and
@@ -150,6 +150,8 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+#define	pmap_update()			/* nothing (yet) */
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */

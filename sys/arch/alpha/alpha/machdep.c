@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.7 2001/04/21 17:53:02 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.8 2001/04/23 09:41:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.7 2001/04/21 17:53:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.8 2001/04/23 09:41:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,8 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	 * Set our SysValue to the address of our cpu_info structure.
 	 * Secondary processors do this in their spinup trampoline.
 	 */
-	alpha_pal_wrval((u_long)&cpu_info[cpu_id]);
+	alpha_pal_wrval((u_long)&cpu_info_primary);
+	cpu_info[cpu_id] = &cpu_info_primary;
 #endif
 
 	ci = curcpu();
@@ -628,7 +629,7 @@ nobootinfo:
 	 * Init mapping for u page(s) for proc 0
 	 */
 	proc0.p_addr = proc0paddr =
-	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE, NULL, NULL);
+	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
 	 * Allocate space for system data structures.  These data structures
@@ -637,7 +638,7 @@ nobootinfo:
 	 * virtual address space.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
+	v = (caddr_t)uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("alpha_init: table size inconsistency");
 
@@ -663,6 +664,7 @@ nobootinfo:
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
 
 	/*
 	 * Initialize the primary CPU's idle PCB to proc0's.  In a
@@ -773,13 +775,17 @@ nobootinfo:
 #ifdef DDB
 	ddb_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
-	if (boothowto & RB_KDB)
+#endif
+
+	if (boothowto & RB_KDB) {
+#if defined(KGDB)
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+#elif defined(DDB)
 		Debugger();
 #endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
+	}
+
 	/*
 	 * Figure out our clock frequency, from RPB fields.
 	 */
@@ -1790,9 +1796,13 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 	KDASSERT(ci == curcpu());
 
+#if defined(MULTIPROCESSOR)
+	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+#endif
+
 	p = ci->ci_fpcurproc;
 	if (p == NULL)
-		return;
+		goto out;
 
 	if (save) {
 		alpha_pal_wrfen(1);
@@ -1801,15 +1811,18 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 	alpha_pal_wrfen(0);
 
-#if defined(MULTIPROCESSOR)
-	s = splhigh();
-#endif
+	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 	p->p_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurproc = NULL;
+
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+
+ out:
 #if defined(MULTIPROCESSOR)
-	splx(s);
-	alpha_mb();
+	atomic_clearbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
+	return;
 }
 
 /*
@@ -1820,32 +1833,44 @@ fpusave_proc(struct proc *p, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
+#if defined(MULTIPROCESSOR)
+	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
+	int s, spincount;
+#endif
 
 	KDASSERT(p->p_addr != NULL);
 	KDASSERT(p->p_flag & P_INMEM);
 
+	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL)
+	if (oci == NULL) {
+		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 		return;
+	}
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		int s;
 		KASSERT(ci->ci_fpcurproc == p);
-		s = splhigh();
+		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 		fpusave_cpu(ci, save);
-		splx(s);
-	} else {
-		u_long ipi = save ? ALPHA_IPI_SYNCH_FPU :
-				    ALPHA_IPI_DISCARD_FPU;
+		return;
+	}
 
-		KASSERT(oci->ci_fpcurproc == p);
-		do {
-			alpha_send_ipi(oci->ci_cpuid, ipi);
-		} while (p->p_addr->u_pcb.pcb_fpcpu != NULL);
+	KASSERT(oci->ci_fpcurproc == p);
+	alpha_send_ipi(oci->ci_cpuid, ipi);
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+
+	spincount = 0;
+	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+		spincount++;
+		delay(1000);	/* XXX */
+		if (spincount > 10000)
+			panic("fpsave ipi didn't");
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.4.2.2 2000/11/20 19:56:24 bouyer Exp $ */
+/* $NetBSD: dec_550.c,v 1.4.2.3 2001/04/23 09:41:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.4.2.2 2000/11/20 19:56:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.4.2.3 2001/04/23 09:41:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,15 @@ void dec_550_init __P((void));
 static void dec_550_cons_init __P((void));
 static void dec_550_device_register __P((struct device *, void *));
 static void dec_550_powerdown __P((void));
+
+#ifdef KGDB
+#include <machine/db_machdep.h>
+
+static const char *kgdb_devlist[] = {
+	"com",
+	NULL,
+};
+#endif /* KGDB */
 
 void
 dec_550_init()
@@ -155,6 +164,10 @@ dec_550_cons_init()
 		panic("consinit: unknown console type %ld\n",
 		    ctb->ctb_term_type);
 	}
+#ifdef KGDB
+	/* Attach the KGDB device. */
+	alpha_kgdb_init(kgdb_devlist, &ccp->cc_iot);
+#endif /* KGDB */
 }
 
 static void
