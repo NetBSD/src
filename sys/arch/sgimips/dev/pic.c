@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.3.2.3 2004/07/23 06:56:12 tron Exp $	 */
+/*	$NetBSD: pic.c,v 1.3.2.4 2004/07/23 12:55:11 tron Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.3.2.4 2004/07/23 12:55:11 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
