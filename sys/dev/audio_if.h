@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.10 2005/01/01 17:35:27 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.11 2005/01/02 15:54:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -78,38 +78,42 @@ typedef struct audio_stream {
 	uint8_t *end;		/* end of valid buffer area */
 	uint8_t *inp;		/* address to be written next */
 	const uint8_t *outp;	/* address to be read next */
+	int used;		/* valid data size in this stream */
 	audio_params_t param;	/* represents this stream */
 	boolean_t loop;
 } audio_stream_t;
 
 static __inline int
-audio_stream_get_space(const audio_stream_t *p)
+audio_stream_get_space(const audio_stream_t *s)
 {
-	uint8_t *i;
-	const uint8_t *o;
-
-	i = p->inp;
-	o = p->outp;
-	return i <= o ? o - i : p->end - i + o - p->start;
+	return (s->end - s->start) - s->used;
 }
 
 static __inline int
-audio_stream_get_used(const audio_stream_t *p)
+audio_stream_get_used(const audio_stream_t *s)
 {
-	uint8_t *i;
-	const uint8_t *o;
-
-	i = p->inp;
-	o = p->outp;
-	return o <= i ? i - o : p->end - o + i - p->start;
+	return s->used;
 }
 
-#define audio_stream_add(p, v, d) \
-do { \
-	v += d; \
-	if (v >= p->end) \
-		v -= p->end - p->start; \
-} while (/*CONSTCOND*/0)
+static __inline uint8_t *
+audio_stream_add_inp(audio_stream_t *s, uint8_t *v, int diff)
+{
+	s->used += diff;
+	v += diff;
+	if (v >= s->end)
+		v -= s->end - s->start;
+	return v;
+}
+
+static __inline const uint8_t *
+audio_stream_add_outp(audio_stream_t *s, const uint8_t *v, int diff)
+{
+	s->used -= diff;
+	v += diff;
+	if (v >= s->end)
+		v -= s->end - s->start;
+	return v;
+}
 
 /**
  * an interface to fill a audio stream buffer

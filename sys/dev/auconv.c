@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.8 2005/01/01 19:52:54 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.9 2005/01/02 15:54:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.8 2005/01/01 19:52:54 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.9 2005/01/02 15:54:44 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -277,8 +277,8 @@ DEFINE_FILTER(change_sign8)
 	used_src = audio_stream_get_used(this->src);
 	while (used_dst < m && used_src > 0) {
 		*d = *s ^ 0x80;
-		audio_stream_add(dst, d, 1);
-		audio_stream_add(this->src, s, 1);
+		d = audio_stream_add_inp(dst, d, 1);
+		s = audio_stream_add_outp(this->src, s, 1);
 		used_dst++;
 		used_src--;
 	}
@@ -311,8 +311,8 @@ DEFINE_FILTER(change_sign16)
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[0];
 			d[1] = s[1] ^ 0x80;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 2;
 			used_src -= 2;
 		}
@@ -320,8 +320,8 @@ DEFINE_FILTER(change_sign16)
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[0] ^ 0x80;
 			d[1] = s[1];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 2;
 			used_src -= 2;
 		}
@@ -352,8 +352,8 @@ DEFINE_FILTER(swap_bytes)
 	while (used_dst < m && used_src >= 2) {
 		d[0] = s[1];
 		d[1] = s[0];
-		audio_stream_add(dst, d, 2);
-		audio_stream_add(this->src, s, 2);
+		d = audio_stream_add_inp(dst, d, 2);
+		s = audio_stream_add_outp(this->src, s, 2);
 		used_dst += 2;
 		used_src -= 2;
 	}
@@ -386,8 +386,8 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[1];
 			d[1] = s[0] ^ 0x80;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 2;
 			used_src -= 2;
 		}
@@ -395,8 +395,8 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[1] ^ 0x80;
 			d[1] = s[0];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 2;
 			used_src -= 2;
 		}
@@ -437,8 +437,8 @@ DEFINE_FILTER(linear8_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = 0;
 			d[1] = s[0];
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -453,8 +453,8 @@ DEFINE_FILTER(linear8_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = s[0];
 			d[1] = 0;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -469,8 +469,8 @@ DEFINE_FILTER(linear8_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = 0;
 			d[1] = s[0] ^ 0x80;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -482,8 +482,8 @@ DEFINE_FILTER(linear8_to_linear16)
 		while (used_dst < m && used_src >= 1) {
 			d[0] = s[0] ^ 0x80;
 			d[1] = 0;
-			audio_stream_add(dst, d, 2);
-			audio_stream_add(this->src, s, 1);
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
 			used_dst += 2;
 			used_src -= 1;
 		}
@@ -522,8 +522,8 @@ DEFINE_FILTER(linear16_to_linear8)
 		 */
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[1];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -537,8 +537,8 @@ DEFINE_FILTER(linear16_to_linear8)
 		 */
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[1] ^ 0x80;
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -552,8 +552,8 @@ DEFINE_FILTER(linear16_to_linear8)
 		 */
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[0];
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}
@@ -564,8 +564,8 @@ DEFINE_FILTER(linear16_to_linear8)
 		 */
 		while (used_dst < m && used_src >= 2) {
 			d[0] = s[0] ^ 0x80;
-			audio_stream_add(dst, d, 1);
-			audio_stream_add(this->src, s, 2);
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 2);
 			used_dst += 1;
 			used_src -= 2;
 		}

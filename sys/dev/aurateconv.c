@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.9.4.3 2004/12/29 19:02:17 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.9.4.4 2005/01/02 15:54:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.3 2004/12/29 19:02:17 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.4 2005/01/02 15:54:45 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.3 2004/12/29 19:02:17 kent Exp 
 #include <string.h>
 #endif
 
+/* #define AURATECONV_DEBUG */
 #ifdef AURATECONV_DEBUG
 #define DPRINTF(x)	printf x
 #else
@@ -104,12 +105,13 @@ aurateconv(struct audio_softc *sc, const audio_params_t *from,
 {
 	aurateconv_t *this;
 
-	/* check from/to */
-	DPRINTF(("auconv_check_params: rate=%u:%u chan=%u:%u prec=%u/%u:%u/%u "
-		 "enc=%u:%u\n", from->sample_rate, to->sample_rate,
-		 from->channels, to->channels, from->validbits, from->precision,
-		 to->validbits, to->precision, from->encoding, to->encoding));
+	DPRINTF(("Construct '%s' filter: rate=%u:%u chan=%u:%u prec=%u/%u:%u/"
+		 "%u enc=%u:%u\n", __func__, from->sample_rate,
+		 to->sample_rate, from->channels, to->channels,
+		 from->validbits, from->precision, to->validbits,
+		 to->precision, from->encoding, to->encoding));
 #ifdef DIAGNOSTIC
+	/* check from/to */
 	if (from->channels == to->channels
 	    && from->sample_rate == to->sample_rate)
 		printf("%s: no conversion\n", __func__); /* No conversion */
@@ -292,34 +294,34 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 		int j; \
 		for (j = 0; j < (PAR)->channels; j++) { \
 			(V)[j] = READ_S##BITS##EN(RP); \
-			audio_stream_add(STREAM, RP, (BITS) / NBBY); \
+			RP = audio_stream_add_outp(STREAM, RP, (BITS) / NBBY); \
 		} \
 	} while (/*CONSTCOND*/ 0)
 #define WRITE_Sn(BITS, EN, V, STREAM, WP, FROM, TO)	\
 	do { \
 		if ((FROM)->channels == 2 && (TO)->channels == 1) { \
 			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
-			audio_stream_add(STREAM, WP, (BITS) / NBBY * 2); \
+			WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY * 2); \
 		} else if (from->channels <= to->channels) { \
 			int j; \
 			for (j = 0; j < (FROM)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
-				audio_stream_add(STREAM, WP, (BITS) / NBBY); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
 			if (j == 1 && 1 < (TO)->channels) { \
 				WRITE_S##BITS##EN(WP, (V)[0]); \
-				audio_stream_add(STREAM, WP, (BITS) / NBBY); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 				j++; \
 			} \
 			for (; j < (TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, 0); \
-				audio_stream_add(STREAM, WP, (BITS) / NBBY); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
 		} else {	/* from->channels < to->channels */ \
 			int j; \
 			for (j = 0; j < (TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
-				audio_stream_add(STREAM, WP, (BITS) / NBBY); \
+				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
 		} \
 	} while (/*CONSTCOND*/ 0)
@@ -327,7 +329,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 /*
  * Function template
  *
- *   Don't use them for 32bit data because this linear interpolation overflows
+ *   Don't use this for 32bit data because this linear interpolation overflows
  *   for 32bit data.
  */
 #define AURATECONV_SLINEAR(BITS, EN)	\
@@ -348,6 +350,8 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 	r = src->outp; \
 	used_dst = audio_stream_get_used(dst); \
 	used_src = audio_stream_get_used(src); \
+	DPRINTF(("%s: ENTER w=%p r=%p used_dst=%d used_src=%d\n", \
+		__func__, w, r, used_dst, used_src)); \
 	from = &this->from; \
 	to = &this->to; \
 	if (this->from.sample_rate == this->to.sample_rate) { \
@@ -380,14 +384,18 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 				this->count -= to->sample_rate; \
 				memcpy(prev, next, values_size); \
 				READ_Sn(BITS, EN, next, src, r, from); \
+				used_src -= frame_src; \
 			} \
 			c256 = this->count * 256 / to->sample_rate; \
 			for (i = 0; i < from->channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
 			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
+			used_dst += frame_dst; \
 			this->count += from->sample_rate; \
 		} \
 	} \
+	DPRINTF(("%s: LEAVE w=%p r=%p used_dst=%d used_src=%d\n", \
+		__func__, w, r, used_dst, used_src)); \
 	dst->inp = w; \
 	src->outp = r; \
 	return 0; \
@@ -448,11 +456,13 @@ aurateconv_slinear32_##EN (aurateconv_t *this, audio_stream_t *dst, \
 				this->count -= to->sample_rate; \
 				memcpy(prev, next, values_size); \
 				READ_Sn(32, EN, next, src, r, from); \
+				used_src -= frame_src; \
 			} \
 			c256 = this->count * 256 / to->sample_rate; \
 			for (i = 0; i < from->channels; i++) \
 				v[i] = (int32_t)((c256 * next[i] + (INT64_C(256) - c256) * prev[i]) >> 8) & mask; \
 			WRITE_Sn(32, EN, v, dst, w, from, to); \
+			used_dst += frame_dst; \
 			this->count += from->sample_rate; \
 		} \
 	} \
