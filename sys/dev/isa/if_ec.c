@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.6 1998/06/09 07:25:01 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.7 1998/06/25 19:21:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@ void	ec_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
 int	ec_fake_test_mem __P((struct dp8390_softc *));
 int	ec_test_mem __P((struct dp8390_softc *));
 
-__inline void ec_writemem __P((struct ec_softc *, u_int8_t *, int, int));
 __inline void ec_readmem __P((struct ec_softc *, int, u_int8_t *, int));
 
 static const int ec_iobase[] = {
@@ -564,25 +563,11 @@ ec_test_mem(sc)
 	return (1);
 }
 
-__inline void
-ec_writemem(esc, from, to, len)
-	struct ec_softc *esc;
-	u_int8_t *from;
-	int to, len;
-{
-	bus_space_tag_t memt = esc->sc_dp8390.sc_buft;
-	bus_space_handle_t memh = esc->sc_dp8390.sc_bufh;
-
-	if (esc->sc_16bitp) {
-		bus_space_write_region_2(memt, memh, to, (u_int16_t *)from,
-		    len >> 1);
-		if (len & 1)
-			bus_space_write_2(memt, memh, to + (len & ~1),
-			    (u_int16_t)(*(from + (len & ~1))));
-	} else
-		bus_space_write_region_1(memt, memh, to, from, len);
-}
-
+/*
+ * Given a NIC memory source address and a host memory destination address,
+ * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
+ * up to a word - ok as long as mbufs are word-sized.
+ */
 __inline void
 ec_readmem(esc, from, to, len)
 	struct ec_softc *esc;
@@ -593,13 +578,13 @@ ec_readmem(esc, from, to, len)
 	bus_space_tag_t memt = esc->sc_dp8390.sc_buft;
 	bus_space_handle_t memh = esc->sc_dp8390.sc_bufh;
 
-	if (esc->sc_16bitp) {
+	if (len & 1)
+		++len;
+
+	if (esc->sc_16bitp)
 		bus_space_read_region_2(memt, memh, from, (u_int16_t *)to,
 		    len >> 1);
-		if (len & 1)
-			*(to + (len & ~1)) = bus_space_read_2(memt,
-			    memh, from + (len & ~1)) & 0xff;
-	} else
+	else
 		bus_space_read_region_1(memt, memh, from, to, len);
 }
 
@@ -612,9 +597,26 @@ ec_write_mbuf(sc, m, buf)
 	struct ec_softc *esc = (struct ec_softc *)sc;
 	bus_space_tag_t asict = esc->sc_asict;
 	bus_space_handle_t asich = esc->sc_asich;
-	int savelen;
+	bus_space_tag_t memt = esc->sc_dp8390.sc_buft;
+	bus_space_handle_t memh = esc->sc_dp8390.sc_bufh;
+	u_int8_t *data, savebyte[2];
+	int savelen, len, leftover;
+#ifdef DIAGNOSTIC
+	u_int8_t *lim;
+#endif
 
 	savelen = m->m_pkthdr.len;
+
+	/*
+	 * 8-bit boards are simple: we're already in the correct
+	 * page, and no alignment tricks are necessary.
+	 */
+	if (esc->sc_16bitp == 0) {
+		for (; m != NULL; buf += m->m_len, m = m->m_next)
+			bus_space_write_region_1(memt, memh, buf,
+			    mtod(m, u_int8_t *), m->m_len);
+		return (savelen);
+	}
 
 	/*
 	 * If it's a 16-bit board, we have transmit buffers
@@ -624,8 +626,66 @@ ec_write_mbuf(sc, m, buf)
 		bus_space_write_1(asict, asich, ELINK2_GACFR,
 		    ELINK2_GACFR_RSEL);
 
-	for (; m != NULL; buf += m->m_len, m = m->m_next)
-		ec_writemem(esc, mtod(m, u_int8_t *), buf, m->m_len);
+	/* Start out with no leftover data. */
+	leftover = 0;
+	savebyte[0] = savebyte[1] = 0;
+
+	for (; m != NULL; m = m->m_next) {
+		len = m->m_len;
+		if (len == 0)
+			continue;
+		data = mtod(m, u_int8_t *);
+#ifdef DIAGNOSTIC
+		lim = data + len;
+#endif
+		while (len > 0) {
+			if (leftover) {
+				/*
+				 * Data left over (from mbuf or realignment).
+				 * Buffer the next byte, and write it and
+				 * the leftover data out.
+				 */
+				savebyte[1] = *data++;
+				len--;
+				bus_space_write_2(memt, memh, buf,
+				    *(u_int16_t *)savebyte);
+				buf += 2;
+				leftover = 0;
+			} else if (ALIGNED_POINTER(data, u_int16_t) == 0) {
+				/*
+				 * Unaligned data; buffer the next byte.
+				 */
+				savebyte[0] = *data++;
+				len--;
+				leftover = 1;
+			} else {
+				/*
+				 * Aligned data; output contiguous words as
+				 * much as we can, then buffer the remaining
+				 * byte, if any.
+				 */
+				leftover = len & 1;
+				len &= ~1;
+				bus_space_write_region_2(memt, memh, buf,
+				    (u_int16_t *)data, len >> 1);
+				data += len;
+				buf += len;
+				if (leftover)
+					savebyte[0] = *data++;
+				len = 0;
+			}
+		}
+		if (len < 0)
+			panic("ec_write_mbuf: negative len");
+#ifdef DIAGNOSTIC
+		if (data != lim)
+			panic("ec_write_mbuf: data != lim");
+#endif
+	}
+	if (leftover) {
+		savebyte[1] = 0;
+		bus_space_write_2(memt, memh, buf, *(u_int16_t *)savebyte);
+	}
 
 	/*
 	 * Switch back to receive page.
