@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: updatedb.csh,v 1.9 2000/03/10 11:51:25 itohy Exp $
+#	$NetBSD: updatedb.csh,v 1.10 2000/03/20 19:22:55 jdolecek Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -46,9 +46,7 @@ if (! $?TMPDIR) setenv TMPDIR /tmp
 set FCODES = /var/db/locate.database	# the database
 
 set path = ( /bin /usr/bin )
-set bigrams = $TMPDIR/locate.bigrams.$$
 set filelist = $TMPDIR/locate.list.$$
-set errs = $TMPDIR/locate.errs.$$
 
 # Make a file list and compute common bigrams.
 # Entries of each directory shall be sorted (find -s).
@@ -59,17 +57,15 @@ find -s ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
 		-a -prune -o -print \
 	> $filelist
 
-$LIBDIR/locate.bigram < $filelist | \
-	(sort -T "$TMPDIR"; echo $status >> $errs) | \
-	uniq -c | sort -T "$TMPDIR" -nr | \
-	awk '{ if (NR <= 128) print $2 }' | tr -d '\012' > $bigrams
+set bigrams = `$LIBDIR/locate.bigram < $filelist`
 
 # code the file list
 
-if { grep -s -v 0 $errs } then
+if { test -z "$bigrams" } then
 	printf 'locate: updatedb failed\n\n'
 else
 	$LIBDIR/locate.code $bigrams < $filelist > $FCODES
 	chmod 644 $FCODES
-	rm $bigrams $filelist $errs
 endif
+
+rm $filelist
