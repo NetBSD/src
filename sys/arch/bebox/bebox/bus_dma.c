@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 1998/06/03 04:30:20 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 1998/06/03 06:41:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@
 #include <bebox/isa/isa_machdep.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int, vm_offset_t *, int *, int));
+	    struct proc *, int, bus_addr_t, vm_offset_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -221,7 +221,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
-	    &lastaddr, &seg, 1);
+	    t->_bounce_thresh, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -262,7 +262,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = _bus_dmamap_load_buffer(map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
+		    NULL, flags, t->_bounce_thresh, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -502,12 +502,14 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
+_bus_dmamap_load_buffer(map, buf, buflen, p, flags, bounce_thresh, lastaddrp,
+    segp, first)
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
+	bus_addr_t bounce_thresh;
 	vm_offset_t *lastaddrp;
 	int *segp;
 	int first;
@@ -531,6 +533,13 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
 		 * Get the physical address for this segment.
 		 */
 		curaddr = pmap_extract(pmap, vaddr);
+
+		/*
+		 * If we're beyond the bounce threshold, notify
+		 * the caller.
+		 */
+		if (bounce_thresh != 0 && curaddr >= bounce_thresh)
+			return (EINVAL);
 
 		/*
 		 * Compute the segment size, and adjust counts.
