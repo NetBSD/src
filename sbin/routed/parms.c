@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.7 1997/09/15 11:51:58 lukem Exp $	*/
+/*	$NetBSD: parms.c,v 1.8 1997/09/19 16:25:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.7 1997/09/15 11:51:58 lukem Exp $");
+__RCSID("$NetBSD: parms.c,v 1.8 1997/09/19 16:25:49 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -366,7 +366,8 @@ parse_quote(char **linep,
 	    char *buf,
 	    int	lim)
 {
-	char c, *pc, *p;
+	char c = '\0';
+	char *pc, *p;
 
 
 	pc = *linep;
