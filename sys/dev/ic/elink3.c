@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.71 2000/02/02 08:57:51 augustss Exp $	*/
+/*	$NetBSD: elink3.c,v 1.72 2000/02/02 11:00:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1393,7 +1393,8 @@ epintr(arg)
 	int ret = 0;
 	int addrandom = 0;
 
-	if (sc->enabled == 0)
+	if (sc->enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	for (;;) {
@@ -2141,6 +2142,10 @@ ep_detach(self, flags)
 	untimeout(epmbuffill, sc);
 
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
