@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: output.c,v 1.5 1994/05/13 08:04:45 mycroft Exp $";
+static char *rcsid = "$Id: output.c,v 1.6 1994/09/23 14:28:06 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -105,7 +105,7 @@ supply(dst, flags, ifp, rtstate)
 
 	msg->rip_cmd = RIPCMD_RESPONSE;
 	msg->rip_vers = RIPVERSION;
-	bzero(msg->rip_res1, sizeof(msg->rip_res1));
+	memset(msg->rip_res1, 0, sizeof(msg->rip_res1));
 again:
 	for (rh = base; rh < &base[ROUTEHASHSIZ]; rh++)
 	for (rt = rh->rt_forw; rt != (struct rt_entry *)rh; rt = rt->rt_forw) {

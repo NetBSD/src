@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tape.c	8.2 (Berkeley) 3/17/94";*/
-static char *rcsid = "$Id: tape.c,v 1.3 1994/06/08 18:57:40 mycroft Exp $";
+static char *rcsid = "$Id: tape.c,v 1.4 1994/09/23 14:27:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -585,10 +585,10 @@ restore_check_point:
 		 * the remaining names for subsequent volumes.
 		 */
 		tapeno++;               /* current tape sequence */
-		if (nexttape || index(tape, ',')) {
+		if (nexttape || strchr(tape, ',')) {
 			if (nexttape && *nexttape)
 				tape = nexttape;
-			if ((p = index(tape, ',')) != NULL) {
+			if ((p = strchr(tape, ',')) != NULL) {
 				*p = '\0';
 				nexttape = p + 1;
 			} else

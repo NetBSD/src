@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.5 1994/05/13 08:05:09 mycroft Exp $";
+static char *rcsid = "$Id: trace.c,v 1.6 1994/09/23 14:28:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ usage:
 	}
 	if (argc == 0)
 		goto usage;
-	bzero((char *)&router, sizeof (router));
+	memset(&router, 0, sizeof (router));
 	router.sin_family = AF_INET;
 	sp = getservbyname("router", "udp");
 	if (sp == 0) {
@@ -116,7 +116,7 @@ usage:
 				herror((char *)NULL);
 				continue;
 			}
-			bcopy(hp->h_addr, &router.sin_addr, hp->h_length);
+			memcpy(&router.sin_addr, hp->h_addr, hp->h_length);
 		}
 		if (sendto(s, packet, size, 0,
 		    (struct sockaddr *)&router, sizeof(router)) < 0)

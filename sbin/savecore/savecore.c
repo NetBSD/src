@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.16 1994/09/18 03:40:44 deraadt Exp $";
+static char *rcsid = "$Id: savecore.c,v 1.17 1994/09/23 14:28:15 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -494,7 +494,7 @@ rawname(s)
 {
 	char *sl, name[MAXPATHLEN];
 
-	if ((sl = rindex(s, '/')) == NULL || sl[1] == '0') {
+	if ((sl = strrchr(s, '/')) == NULL || sl[1] == '0') {
 		syslog(LOG_ERR,
 		    "can't make raw dump device name from %s", s);
 		return (s);
@@ -623,7 +623,7 @@ Create(file, mode)
 {
 	register int fd;
 
-	fd = creat(file, mode);
+	fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (fd < 0) {
 		syslog(LOG_ERR, "%s: %m", file);
 		exit(1);
