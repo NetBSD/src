@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_isreg.h,v 1.4.2.1 1993/11/03 21:36:52 mycroft Exp $
+ *	$Id: if_isreg.h,v 1.4.2.2 1994/02/02 08:57:21 mycroft Exp $
  */
 
 /*
@@ -30,11 +30,23 @@
 #define NRBUF 8
 #define RLEN 3
 #define BUFSIZE 1518
-#define RAP 0xe
-#define RDP 0xc
+
+/* Board types */
+#define	BICC		1
+#define	BICC_RDP	0xc
+#define	BICC_RAP	0xe
+#define	NE2100		2
+#define	NE2100_RDP	0x10
+#define	NE2100_RAP	0x12
+
+/* Chip types */
+#define	PROBE_MASK	0x0007
+#define	LANCE		1
+#define	LANCE_MASK	0x0007
+#define	PCnet_ISA	2
+#define	PCnet_ISA_MASK	0x0000
 
 /* Control and status register 0 flags */
-
 #define ERR	0x8000
 #define BABL	0x4000
 #define CERR	0x2000
@@ -53,25 +65,22 @@
 #define INIT	0x0001
 
 /* Coontrol and status register 3 flags */
-
 #define BSWP	0x0004
 #define ACON	0x0002
 #define BCON	0x0001
 
 /* Initialisation block (must be on word boundary) */
-
 struct init_block {
-       u_short mode;		/* Mode register 			*/
-       u_char  padr[6];		/* Ethernet address 			*/
-       u_char ladrf[8];		/* Logical address filter (multicast) 	*/
-       u_short rdra;		/* Low order pointer to receive ring 	*/
-       u_short rlen;		/* High order pointer and no. rings 	*/
-       u_short tdra;		/* Low order pointer to transmit ring 	*/
-       u_short tlen;		/* High order pointer and no rings 	*/
-       };
+	u_short mode;		/* Mode register 			*/
+	u_char padr[6];		/* Ethernet address 			*/
+	u_char ladrf[8];	/* Logical address filter (multicast) 	*/
+	u_short rdra;		/* Low order pointer to receive ring 	*/
+	u_short rlen;		/* High order pointer and no. rings 	*/
+	u_short tdra;		/* Low order pointer to transmit ring 	*/
+	u_short tlen;		/* High order pointer and no rings 	*/
+};
 
 /* Mode settings */
-
 #define PROM	0x8000		/* Promiscuous		*/
 #define INTL	0x0040		/* Internal loopback	*/
 #define DRTY	0x0020		/* Disable retry 	*/
@@ -82,16 +91,14 @@ struct init_block {
 #define DRX	0x0001		/* Disable receiver 	*/
 
 /* Message descriptor structure */
-
 struct mds {
-       u_short addr;
-       u_short flags;
-       u_short bcnt;
-       u_short mcnt;
-       };
+	u_short addr;
+	u_short flags;
+	u_short bcnt;
+	u_short mcnt;
+};
 
 /* Receive ring status flags */
-
 #define OWN	0x8000		/* Owner bit, 0=host, 1=Lance 	*/
 #define MDERR	0x4000		/* Error 			*/	
 #define FRAM	0x2000		/* Framing error error 		*/
@@ -102,13 +109,11 @@ struct mds {
 #define ENP	0x0100		/* End of packet 		*/
 
 /* Transmit ring flags */
-
 #define MORE	0x1000		/* More than 1 retry 	*/
 #define ONE	0x0800		/* One retry 		*/
 #define DEF	0x0400		/* Deferred transmit 	*/
 
 /* Transmit errors */
-
 #define TBUFF	0x8000		/* Buffer error 	*/
 #define UFLO	0x4000		/* Silo underflow	*/
 #define LCOL	0x1000		/* Late collision 	*/
