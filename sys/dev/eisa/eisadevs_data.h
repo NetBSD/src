@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.7 1996/05/20 00:39:55 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp 
  */
 
 /*
@@ -161,6 +161,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "TCM",
 	    "3Com",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "USC",
+	    "UltraStor",
 	},
 	{ 0, NULL, NULL, }
 };

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.7 1996/05/20 00:39:55 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp 
  */
 
 /*
@@ -70,4 +70,4 @@
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
 
 /* UltraStor products */
-#define	EISA_PRODUCT_USC0240	"24f SCSI"
+#define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
