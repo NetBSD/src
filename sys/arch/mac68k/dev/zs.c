@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31.2.1 1999/11/20 17:30:54 he Exp $	*/
+/*	$NetBSD: zs.c,v 1.31.2.2 2000/06/27 15:38:11 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -738,7 +738,7 @@ zs_set_modes(cs, cflag)
 		 * Enable only if nothing else will want the interrupt and
 		 * it's ok to enable interrupts on this line.
 		 */
-		if ((cflag & (CLOCAL & MDMBUF)) == CLOCAL)
+		if ((cflag & (CLOCAL | MDMBUF)) == CLOCAL)
 			cs->cs_rr0_pps = ZSRR0_DCD;
 	}
 	if ((xcs->cs_hwflags & ZS_HWFLAG_NO_CTS) && (cflag & (CRTSCTS | CDTRCTS)))
