@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.15 1998/05/29 20:48:51 mycroft Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.16 1998/11/22 03:06:58 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -108,6 +108,9 @@ static void get_ifinterface_info(void)
 			}
 			else if (strcmp(t, "media:") == 0) {
 				t = strtok(NULL, " \t\n");
+				/* handle "media: Ethernet manual" */
+				if (strcmp(t, "Ethernet") == 0)
+					t = strtok(NULL, " \t\n");
 				if (strcmp(t, "none") != 0 &&
 				    strcmp(t, "manual") != 0)
 					strcpy(net_media, t);
@@ -228,6 +231,24 @@ int config_network (void)
 	}
 
 	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
+
+	/*
+	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
+	 * Our UI gies no way to set an option back to null-string if it
+	 * gets accidentally set.
+	 * good way to re-set the media media to null-string.
+	 * Check for plausible alternatives.
+	 */
+	if (strcmp(net_media, "<default>") == 0 ||
+	    strcmp(net_media, "default") == 0 ||
+	    strcmp(net_media, "<manual>") == 0 ||
+	    strcmp(net_media, "manual") == 0 ||
+	    strcmp(net_media, "<none>") == 0 ||
+	    strcmp(net_media, "none") == 0 ||
+	    strcmp(net_media, " ") == 0) {
+		*net_media = '\0';
+	}
+
 	if (*net_media != '\0')
 		run_prog("/sbin/ifconfig %s inet %s netmask %s media %s",
 			  net_dev, net_ip, net_mask, net_media);
