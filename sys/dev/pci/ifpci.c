@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.7 2002/04/08 12:20:50 martin Exp $
+ *	$Id: ifpci.c,v 1.8 2002/04/10 23:51:08 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.7 2002/04/08 12:20:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.8 2002/04/10 23:51:08 martin Exp $");
 
 
 #include <sys/param.h>
@@ -387,7 +387,6 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freeflag2 = 0;
 
 	/* init higher protocol layers */
-	isic_enable_intr(sc, 0);
 	drv = isdn_attach_bri(sc->sc_dev.dv_xname,
 	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver);
 	sc->sc_l3token = drv;
