@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2002/03/23 09:06:50 hamajima Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2002/06/17 16:21:07 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -102,6 +102,7 @@
 #	ch*	SCSI media changer
 #	ucbsnd	UCB1200 (TX39) audio device. 22.154kHz mono 16bit
 #	audio*	audio devices
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -143,6 +144,7 @@ all)
 	makedev ttyTX0 ttyTX1 ucbsnd
 	makedev clockctl
 	makedev audio
+	makedev systrace
 #	makedev local
 	;;
 
@@ -642,6 +644,12 @@ audio*)
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;  
+
+systrace)
+	rm -f systrace
+	mknod systrace c 49 0
+	chmod 644 systrace
+	;;
 
 local)
 	umask 0

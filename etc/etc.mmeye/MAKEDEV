@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 2002/05/25 16:31:10 uch Exp $
+#	$NetBSD: MAKEDEV,v 1.21 2002/06/17 16:21:09 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,6 +76,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
 #	cfs*	Coda file system device
+#	systrace syscall tracer
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -108,6 +109,7 @@ all)
 	makedev speaker lkm audio joy0 joy1 apm local satlink0
 	makedev scsibus0 scsibus1
 	makedev clockctl
+	makedev systrace
 	;;
 
 floppy)
@@ -435,6 +437,12 @@ clockctl)
 	mknod clockctl c 52 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 53 0
+	chmod 644 systrace
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2002/06/06 20:35:38 fredette Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2002/06/17 16:21:07 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,7 @@
 #	tun*	network tunnel driver
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	systrace syscall tracer
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -96,6 +97,7 @@ all)
 	sh $0 lkm random
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 local
+	sh $0 systrace
 	;;
 
 std)
@@ -225,6 +227,12 @@ random)
 scsibus*)
 # XXX fredette - need to put in scsibus:
 #	mk scsibus${unit} c 81 $unit 644 wheel
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 34 0
+	chmod 644 systrace
 	;;
 
 local)

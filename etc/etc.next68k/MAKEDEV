@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.28 2002/03/13 01:27:00 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.29 2002/06/17 16:21:11 christos Exp $
 #
 ###########################################################################
 #
@@ -77,6 +77,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
 #	wsmux*	wscons event multiplexor
+#	systrace syscall tracer
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -109,6 +110,7 @@ all)
 	makedev tun0 tun1 tun2 tun3 lkm ipl local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
+	makedev systrace
 	;;
 
 std)
@@ -409,6 +411,12 @@ clockctl)
 	mknod clockctl c 46 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 47 0
+	chmod 644 systrace
 	;;
 
 local)
