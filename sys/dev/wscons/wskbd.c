@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.48 2001/10/24 14:07:33 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.49 2001/10/24 15:44:50 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.48 2001/10/24 14:07:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.49 2001/10/24 15:44:50 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -519,6 +519,11 @@ wskbd_detach(struct device  *self, int flags)
 	if (sc->sc_base.me_parent != NULL)
 		wsmux_detach_sc(&sc->sc_base);
 #endif
+
+	if (sc->sc_isconsole) {
+		KASSERT(wskbd_console_device == sc);
+		wskbd_console_device = NULL;
+	}
 
 	evar = sc->sc_base.me_evp;
 	if (evar != NULL && evar->io != NULL) {
