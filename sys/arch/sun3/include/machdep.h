@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 1997/04/09 20:42:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 1997/04/28 23:19:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -130,9 +130,6 @@ void	initfpu __P((void));
 
 void	isr_init __P((void));
 void	isr_config __P((void));
-
-void	leds_intr __P((void));
-int 	leds_uio __P((struct uio *uio));
 
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
