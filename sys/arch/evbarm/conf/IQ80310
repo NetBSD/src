@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.15.4.1 2002/08/01 04:18:52 lukem Exp $
+#	$NetBSD: IQ80310,v 1.15.4.2 2002/11/16 09:33:50 he Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -20,8 +20,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_XSCALE_80200	# Support the XScale core
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-#makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+makeoptions	COPTS="-O2 -mcpu=xscale"
 options 	XSCALE_CCLKCFG=9	# 733MHz
 
 # Architecture options
