@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.4 1995/09/14 02:54:05 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.5 1995/09/15 01:52:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -245,6 +245,12 @@ void		*auxp;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
+
+	/*
+	 * bitmasks
+	 */
+	sc->sc_noselatn = 0;
+	sc->sc_selected = 0;
 
 	/*
 	 * Initialize machine-type specific things...
@@ -689,6 +695,8 @@ SC_REQ	*reqp;
 	u_char			phase;
 	u_long			cnt;
 	int			sps;
+	u_int8_t		atn_flag;
+	u_int8_t		targ_bit;
 	struct ncr_softc	*sc;
 
 	sc = reqp->xs->sc_link->adapter_softc;
@@ -788,17 +796,24 @@ SC_REQ	*reqp;
 	delay(2);
 	DBG_SELPRINT ("Arbitration complete\n", 0);
 
+	targ_bit = 1 << reqp->targ_id;
+
 	/*
 	 * Now that we won the arbitration, start the selection.
 	 */
-	SET_5380_REG(NCR5380_DATA, SC_HOST_ID | (1 << reqp->targ_id));
+	SET_5380_REG(NCR5380_DATA, SC_HOST_ID | targ_bit);
+
+	if (sc->sc_noselatn & targ_bit)
+		atn_flag = 0;
+	else
+		atn_flag = SC_A_ATN;
 
 	/*
 	 * Raise ATN while SEL is true before BSY goes false from arbitration,
 	 * since this is the only way to guarantee that we'll get a MESSAGE OUT
 	 * phase immediately after the selection.
 	 */
-	SET_5380_REG(NCR5380_ICOM, SC_A_BSY | SC_A_SEL | SC_A_ATN | SC_ADTB);
+	SET_5380_REG(NCR5380_ICOM, SC_A_BSY | SC_A_SEL | atn_flag | SC_ADTB);
 	SET_5380_REG(NCR5380_MODE, IMODE_BASE);
 
 	/*
@@ -853,51 +868,67 @@ SC_REQ	*reqp;
 	scsi_idisable();
 
 	/*
+	 * If we did not request ATN, then don't try to send IDENTIFY.
+	 */
+	if (atn_flag == 0) {
+		reqp->phase = PH_CMD;
+		goto identify_failed;
+	}
+
+	/*
+	 * Here we prepare to send an 'IDENTIFY' message.
+	 * Allow disconnect only when interrups are allowed.
+	 */
+	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
+			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
+	cnt    = 1;
+	phase  = PH_MSGOUT;
+	/*
 	 * Since we followed the SCSI-spec and raised ATN while SEL was true
 	 * but before BSY was false during the selection, a 'MESSAGE OUT'
 	 * phase should follow.  Unfortunately, this does not happen on
 	 * all targets (Asante ethernet devices, for example), so we must 
-	 * check the actual mode--if it skips the msg out, then we assume
-	 * that it's going straight for COMMAND.
+	 * check the actual mode if the message transfer fails--if the
+	 * new phase is PH_CMD and has never been successfully selected
+	 * w/ATN in the past, then we assume that it is an old device
+	 * that doesn't support select w/ATN.
 	 */
-	if ((phase = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ)
-		phase = (phase >> 2) & 7;
+	if (transfer_pio(&phase, tmp, &cnt, 0) || cnt) {
 
-	if (phase == PH_CMD) {
-		reqp->phase = phase;
-	} else {
-		/*
-		 * Here we send an 'IDENTIFY' message.
-		 * Allow disconnect only when interrups are allowed.
-		 */
-		tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
-				(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
-		cnt    = 1;
-		phase  = PH_MSGOUT;
-		if (transfer_pio(&phase, tmp, &cnt, 0) || cnt) {
-			DBG_SELPRINT ("Target %d: failed to send identify\n",
-								reqp->targ_id);
-			/*
-			 * Try to disconnect from the target.  We cannot leave
-			 * it just hanging here.
-			 */
-			if (!reach_msg_out(sc, sizeof(struct scsi_generic))) {
-				u_long	len   = 1;
-				u_char	phase = PH_MSGOUT;
-				u_char	msg   = MSG_ABORT;
-
-				transfer_pio(&phase, &msg, &len, 0);
-			}
-			else scsi_reset(sc);
-
-			SET_5380_REG(NCR5380_ICOM, 0);
-			reqp->xs->error = code ? code : XS_DRIVER_STUFFUP;
-			finish_req(reqp);
-			PID("scsi_select8");
-			return (0);
+		if ((phase == PH_CMD) && !(sc->sc_selected & targ_bit)) {
+			DBG_SELPRINT ("Target %d: not responding to ATN.\n",
+							reqp->targ_id);
+			sc->sc_noselatn |= targ_bit;
+			reqp->phase = PH_CMD;
+			goto identify_failed;
 		}
-		reqp->phase = PH_MSGOUT;
+
+		DBG_SELPRINT ("Target %d: failed to send identify\n",
+							reqp->targ_id);
+
+		/*
+		 * Try to disconnect from the target.  We cannot leave
+		 * it just hanging here.
+		 */
+		if (!reach_msg_out(sc, sizeof(struct scsi_generic))) {
+			u_long	len   = 1;
+			u_char	phase = PH_MSGOUT;
+			u_char	msg   = MSG_ABORT;
+
+			transfer_pio(&phase, &msg, &len, 0);
+		}
+		else scsi_reset(sc);
+
+		SET_5380_REG(NCR5380_ICOM, 0);
+		reqp->xs->error = code ? code : XS_DRIVER_STUFFUP;
+		finish_req(reqp);
+		PID("scsi_select8");
+		return (0);
 	}
+	reqp->phase = PH_MSGOUT;
+
+identify_failed:
+	sc->sc_selected |= targ_bit;
 
 #ifdef notyet /* LWP: Do we need timeouts in the driver? */
 	/*
@@ -907,7 +938,7 @@ SC_REQ	*reqp;
 #endif
 
 	connected  = reqp;
-	busy      |= 1 << reqp->targ_id;
+	busy      |= targ_bit;
 	PID("scsi_select9");
 	return (0);
 }
