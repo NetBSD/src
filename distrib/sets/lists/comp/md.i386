@@ -1,4 +1,5 @@
-# $NetBSD: md.i386,v 1.63 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.i386,v 1.64 2002/09/22 15:08:19 lukem Exp $
+./lib/libm387.so			base-sys-shlib
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -66,6 +67,8 @@
 ./usr/include/i386/varargs.h		comp-c-include
 ./usr/include/i386/vm86.h		comp-c-include
 ./usr/include/i386/vmparam.h		comp-c-include
+./usr/include/ieeefp.h		comp-c-include
+./usr/include/pmc.h		comp-c-include
 ./usr/lib/libi386.a		comp-c-lib
 ./usr/lib/libi386.so			base-sys-shlib
 ./usr/lib/libi386_p.a		comp-c-proflib
@@ -80,5 +83,3 @@
 ./usr/lib/libpmc_pic.a		comp-c-piclib
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib
-./usr/include/ieeefp.h		comp-c-include
-./usr/include/pmc.h		comp-c-include
