@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.36 2000/07/16 12:46:17 enami Exp $	*/
+/*	$NetBSD: stdio.h,v 1.37 2000/07/23 19:25:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,7 +59,7 @@ typedef	_BSD_SIZE_T_	size_t;
  * innards of an fpos_t anyway.  The library internally uses off_t,
  * which we assume is exactly as big as eight chars.
  */
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
+#if (!defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)) || defined(_LIBC)
 typedef __off_t fpos_t;
 #else
 typedef struct __sfpos {
