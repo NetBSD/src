@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.69 1998/03/01 02:24:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.70 1998/03/03 13:32:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -757,7 +757,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		goto bad;
 	*vpp = NFSTOV(np);
 	VOP_GETATTR(*vpp, &attrs, p->p_ucred, p);
-	if (nmp->nm_flag & NFSMNT_NFSV3) {
+	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = crget();
 		cr->cr_uid = attrs.va_uid;
 		cr->cr_gid = attrs.va_gid;
