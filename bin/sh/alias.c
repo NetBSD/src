@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.7 1996/10/16 15:45:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $";
+static char rcsid[] = "$NetBSD: alias.c,v 1.7 1996/10/16 15:45:03 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ unaliascmd(argc, argv)
 	char **argv;
 {
 	int i;
-	
+
 	while ((i = nextopt("a")) != '\0') {
 		if (i == 'a') {
 			rmaliases();
