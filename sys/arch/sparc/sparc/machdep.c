@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 1997/12/04 15:33:42 tv Exp $ */
+/*	$NetBSD: machdep.c,v 1.95 1997/12/23 23:57:24 tv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,6 +129,8 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
+
+#include "fb.h"
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -687,7 +689,9 @@ cpu_reboot(howto, user_boot_string)
 		romhalt();
 	}
 
+#if NFB > 0
 	fb_unblank();
+#endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;

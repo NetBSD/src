@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 1997/10/18 00:01:55 gwr Exp $ */
+/*	$NetBSD: conf.c,v 1.52 1997/12/23 23:57:22 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 #include "zstty.h"
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
+
 #include "bwtwo.h"
 #include "cgtwo.h"
 #include "cgthree.h"
@@ -80,6 +81,8 @@
 #include "cgeight.h"
 #include "tcx.h"
 #include "cgfourteen.h"
+#include "fb.h"
+
 #include "xd.h"
 #include "xy.h"
 #include "md.h"
@@ -140,7 +143,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 19: SCSI autochanger */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 25: ip-filter device */
