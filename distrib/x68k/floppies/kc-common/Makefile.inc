@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1996/08/30 20:04:03 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1997/06/23 21:50:40 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,11 +16,13 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 
+DISKTYPE=	floppy5
+
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
 	dd if=${MDEC}/fdboot of=${VND_RDEV} conv=sync
-	newfs -O -m 0 -o space -i 6144 -c 80 ${VND_RDEV} floppy5
+	newfs -O -m 0 -o space -i 6144 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
