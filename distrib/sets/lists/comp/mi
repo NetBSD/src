@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.309 2001/02/06 19:33:34 tron Exp $
+#	$NetBSD: mi,v 1.310 2001/02/17 11:40:59 ragge Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -579,7 +579,6 @@
 ./usr/include/gssapi/gssapi.h		comp-c-include
 ./usr/include/hesiod.h			comp-c-include
 ./usr/include/histedit.h		comp-c-include
-./usr/include/ieeefp.h			comp-c-include
 ./usr/include/ifaddrs.h			comp-c-include
 ./usr/include/inttypes.h		comp-c-include
 ./usr/include/iso646.h			comp-c-include
