@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mmap.2	6.2 (Berkeley) 6/5/91
-.\"	$Id: mmap.2,v 1.2 1993/08/01 07:42:38 mycroft Exp $
+.\"	$Id: mmap.2,v 1.3 1994/07/31 08:49:56 mycroft Exp $
 .\"
 .Dd "June 5, 1991"
 .Dt MMAP 2
@@ -107,7 +107,8 @@ The file descriptor used for creating MAP_ANON regions is used only for
 naming, and may be specified as \-1 if no name is associated with the
 region.
 .It Dv MAP_FILE
-Mapped from a regular file or character-special device memory.
+Mapped from a regular file or character-special device memory.  (This is
+the default mapping type, and need not be specified.)
 .It Dv MAP_FIXED
 Do not permit the system to select a different address than the one
 specified.
@@ -171,9 +172,6 @@ was not open for writing.
 .Fa Fd
 is not a valid open file descriptor.
 .It Bq Er EINVAL
-One of MAP_ANON or MAP_FILE was not specified as part of the
-.Fa flags
-parameter.
 MAP_FIXED was specified and the
 .I addr
 parameter was not page aligned.
