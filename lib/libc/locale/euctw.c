@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.9 2001/01/27 05:40:18 tsutsui Exp $	*/
+/*	$NetBSD: euctw.c,v 1.10 2001/06/21 02:20:24 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: euctw.c,v 1.10 2000/12/30 04:51:34 itojun Exp
+ *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/euctw.c,v 1.13 2001/06/21 01:51:44 yamt Exp $
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.9 2001/01/27 05:40:18 tsutsui Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.10 2001/06/21 02:20:24 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -141,6 +141,7 @@ _EUCTW_mbrtowc(rl, pwcs, s, n, state)
 	_EUCTWState *ps;
 	rune_t rune;
 	int c, set;
+	int chlenbak;
 
 	/* rl appears to be unused */
 	/* pwcs may be NULL */
@@ -148,6 +149,7 @@ _EUCTW_mbrtowc(rl, pwcs, s, n, state)
 	_DIAGASSERT(state != NULL);
 
 	ps = state;
+	chlenbak = ps->chlen;
 
 	/* make sure we have the first byte in the buffer */
 	switch (ps->chlen) {
@@ -208,7 +210,7 @@ _EUCTW_mbrtowc(rl, pwcs, s, n, state)
 	if (!rune)
 		return 0;
 	else
-		return c;
+		return c - chlenbak;
 
 encoding_error:
 	ps->chlen = 0;
