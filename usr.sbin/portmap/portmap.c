@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.15 1999/01/13 01:01:26 mjacob Exp $	*/
+/*	$NetBSD: portmap.c,v 1.16 1999/01/16 20:59:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.15 1999/01/13 01:01:26 mjacob Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.16 1999/01/16 20:59:05 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -675,7 +675,7 @@ int
 is_loopback(addr)
 	struct sockaddr_in *addr;
 {
-        if (addr->sin_addr.s_addr != INADDR_LOOPBACK)
+        if (addr->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 		return 1;
 	
 	return 0;
