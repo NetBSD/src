@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.1.1.1 1999/11/20 18:53:58 veego Exp $	*/
+/*	$NetBSD: dig.c,v 1.1.1.1.8.1 2000/10/08 18:28:42 is Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: dig.c,v 8.36 1999/11/05 05:05:14 vixie Exp";
@@ -1506,7 +1506,7 @@ printZone(ns_type xfr, const char *zone, const struct sockaddr_in *sin,
 			return (ERROR);
 		}
 		printf(";; pid %lu: exit %d, signal %d, core %c\n",
-		       pid, WEXITSTATUS(status),
+		       (u_long)pid, WEXITSTATUS(status),
 		       WIFSIGNALED(status) ? WTERMSIG(status) : 0,
 		       WCOREDUMP(status) ? 't' : 'f');
 	}
