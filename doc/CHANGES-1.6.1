@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.107 2003/02/10 09:41:11 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.108 2003/02/11 08:44:40 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3611,3 +3611,32 @@ usr.bin/progress/progress.c			1.6
 	[ross, ticket #1158]
 
 (RC1 tag moved on file)
+
+distrib/utils/sysinst/util.c			revert 1.81
+
+	Revert rev 1.81 out for now.
+	progess(1) and sysinst are not getting along and this needs some 
+	work before it's going to work correctly. Backing it out here will 
+	allow future integration without redoing the whole pullup 
+	(since the rest of the pullup doesn't affect anything).
+	
+share/man/man4/bge.4				0->1.4
+share/man/man4/Makefile				1.275 (hand patched)
+distrib/sets/lists/man/mi			1.545
+
+	Add man page for Broadcom BCM570x family Gigabit Ethernet driver.
+	[tron, ticket #1159]
+
+distrib/sun3/miniroot/list			1.3
+
+	Using libcurses 5 now so make sure it's included. PR#20288
+	[bouyer, ticket #1161]
+
+sys/arch/sparc/sparc/autoconf.c			hand patch
+
+	Make this compile with DEBUG.
+	[martin, ticket #1163]
+
+(Moved RC1 tag for distrib/utils/sysinst/util.c, share/man/man4/bge.4,
+share/man/man4/Makefile, distrib/sun3/miniroot/list, 
+sys/arch/sparc/sparc/autoconf.c)
