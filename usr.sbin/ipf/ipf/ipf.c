@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.9 1997/11/14 12:57:55 mrg Exp $	*/
+/*	$NetBSD: ipf.c,v 1.10 1997/11/18 06:09:25 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -400,7 +400,9 @@ static void swapactive()
 
 static void frsync()
 {
-	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
+	int frsyn = 0;
+
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, &frsyn) == -1)
 		perror("SIOCFRSYN");
 	else
 		printf("filter sync'd\n");
