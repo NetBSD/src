@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.92 2002/10/09 08:56:25 jdc Exp $	*/
+/*	$NetBSD: zs.c,v 1.93 2002/12/09 16:11:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,19 +96,6 @@ int zs_def_cflag = (CREAD | CS8 | HUPCL);
  */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 
-/*
- * Select software interrupt bit based on TTY ipl.
- */
-#if PIL_TTY == 1
-# define IE_ZSSOFT IE_L1
-#elif PIL_TTY == 4
-# define IE_ZSSOFT IE_L4
-#elif PIL_TTY == 6
-# define IE_ZSSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
-
 #define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
 
 /* The layout of this is hardware-dependent (padding, order). */
@@ -192,9 +179,12 @@ CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
 
 extern struct cfdriver zs_cd;
 
+/* softintr(9) cookie, shared by all instances of this driver */
+static void *zs_sicookie;
+
 /* Interrupt handlers. */
 static int zshard __P((void *));
-static int zssoft __P((void *));
+static void zssoft __P((void *));
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -435,7 +425,15 @@ zs_attach(zsc, zsd, pri)
 		return;
 	}
 
-	printf(" softpri %d\n", PIL_TTY);
+	if (!didintr) {
+		zs_sicookie = softintr_establish(IPL_SOFTSERIAL, zssoft, NULL);
+		if (zs_sicookie == NULL) {
+			printf("\n%s: cannot establish soft int handler\n",
+				zsc->zsc_dev.dv_xname);
+			return;
+		}
+	}
+	printf(" softpri %d\n", IPL_SOFTSERIAL);
 
 	/*
 	 * Initialize software state for each channel.
@@ -520,10 +518,6 @@ zs_attach(zsc, zsd, pri)
 		prevpri = pri;
 		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0,
 				   zshard, NULL);
-		bus_intr_establish(zsc->zsc_bustag, PIL_TTY,
-				   IPL_SOFTSERIAL,
-				   BUS_INTR_ESTABLISH_SOFTINTR,
-				   zssoft, NULL);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
 
@@ -606,13 +600,8 @@ zshard(arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = IE_ZSSOFT;
-#if defined(SUN4M)
-		if (CPU_ISSUN4M)
-			raise(0, PIL_TTY);
-		else
-#endif
-			ienab_bis(IE_ZSSOFT);
+		zssoftpending = 1;
+		softintr_schedule(zs_sicookie);
 	}
 	return (rval);
 }
@@ -620,7 +609,7 @@ zshard(arg)
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-static int
+static void
 zssoft(arg)
 	void *arg;
 {
@@ -629,7 +618,7 @@ zssoft(arg)
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
-		return (0);
+		return;
 
 	/*
 	 * The soft intr. bit will be set by zshard only if
@@ -649,7 +638,6 @@ zssoft(arg)
 		(void)zsc_intr_soft(zsc);
 	}
 	splx(s);
-	return (1);
 }
 
 
