@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.11 2000/08/20 21:51:31 scw Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.12 2000/09/19 19:35:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,8 @@ extern struct cfdriver vmepcc_cd;
 extern phys_ram_seg_t mem_clusters[];
 static int vme_pcc_attached;
 
-void vme_pcc_intr_establish(void *, int, int, int, int (*)(void *), void *);
+void vme_pcc_intr_establish(void *, int, int, int, int,
+    int (*)(void *), void *);
 void vme_pcc_intr_disestablish(void *, int, int, int);
 
 
@@ -253,15 +254,18 @@ vme_pcc_attach(parent, self, aux)
 }
 
 void
-vme_pcc_intr_establish(csc, level, vector, first, func, arg)
+vme_pcc_intr_establish(csc, prior, level, vector, first, func, arg)
 	void *csc;
-	int level, vector, first;
+	int prior, level, vector, first;
 	int (*func)(void *);
 	void *arg;
 {
 	struct vme_pcc_softc *sc = csc;
 
-	isrlink_vectored(func, arg, level, vector);
+	if (prior != level)
+		panic("vme_pcc_intr_establish: cpu priority != VMEbus irq level");
+
+	isrlink_vectored(func, arg, prior, vector);
 
 	if (first) {
 		/*
