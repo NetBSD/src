@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpreg.h,v 1.8 1998/08/11 00:12:20 thorpej Exp $	*/
+/*	$NetBSD: if_fxpreg.h,v 1.9 1998/08/25 01:08:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,13 +304,17 @@ struct fxp_cb_tx {
 
 /*
  * RFA definitions
+ * NOTE!  The RFA will NOT be aligned on a 4-byte boundary in the DMA
+ * area!  To prevent EGCS from optimizing the copy of link_addr and
+ * rbd_addr (which would cause an unaligned access fault on RISC systems),
+ * we must make them an array of bytes!
  */
 
 struct fxp_rfa {
 	volatile u_int16_t rfa_status;
 	volatile u_int16_t rfa_control;
-	volatile u_int32_t link_addr;
-	volatile u_int32_t rbd_addr;
+	volatile u_int8_t link_addr[4];
+	volatile u_int8_t rbd_addr[4];
 	volatile u_int16_t actual_size;
 	volatile u_int16_t size;
 };
