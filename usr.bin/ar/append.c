@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,36 +35,36 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)append.c	5.6 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: append.c,v 1.2 1993/08/01 18:18:38 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)append.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: append.c,v 1.3 1994/09/19 03:34:07 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/errno.h>
+
+#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "archive.h"
 #include "extern.h"
-
-extern char *archive;			/* archive name */
 
 /*
  * append --
  *	Append files to the archive - modifies original archive or creates
  *	a new archive if named archive does not exist.
  */
+int
 append(argv)
 	char **argv;
 {
-	register int fd, afd;
-	register char *file;
-	struct stat sb;
+	int afd, fd, eval;
+	char *file;
 	CF cf;
-	int eval;
+	struct stat sb;
 
 	afd = open_archive(O_CREAT|O_RDWR);
 	if (lseek(afd, (off_t)0, SEEK_END) == (off_t)-1)
@@ -74,8 +74,7 @@ append(argv)
 	SETCF(0, 0, afd, archive, WPAD);
 	for (eval = 0; file = *argv++;) {
 		if ((fd = open(file, O_RDONLY)) < 0) {
-			(void)fprintf(stderr,
-			    "ar: %s: %s.\n", file, strerror(errno));
+			warn("%s", file);
 			eval = 1;
 			continue;
 		}
@@ -87,5 +86,5 @@ append(argv)
 		(void)close(fd);
 	}
 	close_archive(afd);
-	return(eval);	
+	return (eval);	
 }

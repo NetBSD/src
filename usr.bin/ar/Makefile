@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 3/10/91
-#	$Id: Makefile,v 1.4 1993/07/31 15:25:54 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.5 1994/09/19 03:34:06 mycroft Exp $
 
 PROG=	ar
 CFLAGS+=-I${.CURDIR}
