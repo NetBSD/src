@@ -240,12 +240,11 @@ main(argc, argv)
 		}
 
 	/*
-	 * 4: If none of MANPATH, -M, or -m were specified, and a section was,
-	 *    rewrite the section's paths (if they have a trailing slash) to
-	 *    append the _subdir list and the machine.  This then becomes the
-	 *    _default list.
+	 * 4: If no -m was specified, and a section was, rewrite the section's
+	 *    paths (if they have a trailing slash) to append the _subdir list
+	 *    and the machine.  This then becomes the _default list.
 	 */
-	if (p_path == NULL && p_add == NULL && section != NULL) {
+	if (p_add == NULL && section != NULL) {
 		sectnewp = addlist("_section_new");
 		for (e_sectp = section->list.tqh_first;
 		    e_sectp != NULL; e_sectp = e_sectp->q.tqe_next) {
