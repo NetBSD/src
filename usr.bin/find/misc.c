@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1998/02/02 14:02:25 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2001/09/21 07:11:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 1998/02/02 14:02:25 mrg Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 2001/09/21 07:11:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,17 +65,28 @@ __RCSID("$NetBSD: misc.c,v 1.7 1998/02/02 14:02:25 mrg Exp $");
 void
 brace_subst(orig, store, path, len)
 	char *orig, **store, *path;
-	int len;
+	int *len;
 {
-	int plen;
-	char ch, *p;
+	int nlen, plen, rest;
+	char ch, *p, *ostore;
 
 	plen = strlen(path);
 	for (p = *store; (ch = *orig) != '\0'; ++orig)
 		if (ch == '{' && orig[1] == '}') {
-			while ((p - *store) + plen > len)
-				if (!(*store = realloc(*store, len *= 2)))
+			/* Length of string after the {}. */
+			rest = strlen(&orig[2]);
+
+			nlen = *len;
+			while ((p - *store) + plen + rest + 1 > nlen)
+				nlen *= 2;
+
+			if (nlen > *len) {
+				ostore = *store;
+				if ((*store = realloc(ostore, nlen)) == NULL)
 					err(1, "realloc");
+				*len = nlen;
+				p += *store - ostore;	/* Relocate. */
+			}
 			memmove(p, path, plen);
 			p += plen;
 			++orig;
