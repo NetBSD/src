@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.74 1998/07/13 03:29:48 mark Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.75 1998/07/19 12:25:46 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp 
+ *	NetBSD: pcidevs,v 1.69 1998/07/19 12:23:56 tron Exp 
  */
 
 /*
@@ -831,12 +831,12 @@
 #define	PCI_PRODUCT_MADGE_COLLAGE155	0x1001		/* Collage 155 ATM adapter */
 
 /* Matrox products */
-#define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (\"Atlas\") */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM	0x0519		/* MGA Millennium 2064W (\"Storm\") */
+#define	PCI_PRODUCT_MATROX_MYSTIQUE	0x051A		/* MGA 1064SG */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM_II	0x051B		/* MGA Millennium II 2164W */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP	0x051F		/* MGA Millennium II 2164WA-B AGP */
-#define	PCI_PRODUCT_MATROX_MYSTIQUE	0x102B		/* MGA 1064SG */
+#define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */
@@ -859,6 +859,9 @@
 #define	PCI_PRODUCT_SYMBIOS_810AP	0x0005		/* 53c810AP */
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
+
+/* NEC products */
+#define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.73 1998/07/13 03:29:49 mark Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.74 1998/07/19 12:25:46 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.68 1998/07/13 03:29:00 mark Exp 
+ *	NetBSD: pcidevs,v 1.69 1998/07/19 12:23:56 tron Exp 
  */
 
 /*
@@ -1246,12 +1246,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Collage 155 ATM adapter",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
-	    0,
-	    "Matrox",
-	    "MGA Impression",
-	},
-	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
 	    0,
 	    "Matrox",
@@ -1262,6 +1256,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA Millennium 2064W (\"Storm\")",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
+	    0,
+	    "Matrox",
+	    "MGA 1064SG",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_II,
@@ -1276,10 +1276,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA Millennium II 2164WA-B AGP",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
 	    0,
 	    "Matrox",
-	    "MGA 1064SG",
+	    "MGA Impression",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
@@ -1352,6 +1352,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "53c875",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
+	    0,
+	    "NEC",
+	    "PowerVR PCX2",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
