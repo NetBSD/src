@@ -2696,35 +2696,69 @@ remap_done:
 	bne	3f
 
 	/*
-	 * On entry:
-	 *	%l0: first VA in current map
-	 *	%l1: first VA to be mapped
-	 *	%l2: last VA to be mapped
+	 * The OBP guarantees us a 16MB mapping using a level 1 PTE at
+	 * 0x0.  All we have to do is copy the entry.  Also, we must
+	 * check to see if we have a TI Viking in non-mbus mode, and
+	 * if so do appropriate flipping and turning off traps before
+	 * we dork with MMU passthrough.  -grrr
 	 */
-	set	1 << 24, %l3		! region size in bytes
-	set	SRMMU_CXTPTR, %o0	!
-	lda	[%o0] ASI_SRMMU, %o0	! read CTPR
-	sll	%o0, (8-4), %o0
-					! assume ctx==0
-	lda	[%o0] ASI_BYPASS, %o0	! load root-level PTP using MMU by-pass
-	srl	%o0, 4, %o0		! to get at 1st level PTP
-	sll	%o0, 8, %o0	! shift bits into position
 
-	srl	%l0, 24-2, %l0		! RGSHIFT-2: word entry in PTP
-	add	%l0, %o0, %o1
-	srl	%l1, 24-2, %l0
-	add	%l0, %o0, %o2
-0:
-	lda	[%o1] ASI_BYPASS, %l4	! regmap[highva] = regmap[lowva];
-	sta	%l4, [%o2] ASI_BYPASS
-	add	%o1, 4, %o1
-	add	%o2, 4, %o2
-	add	%l3, %l1, %l1		! highva += regsiz;
-	cmp	%l1, %l2		! done?
-	blu	0b			! no, loop
-	 add	%l3, %l0, %l0		! (and lowva += regsz)
-	
+	sethi	%hi(0x40000000), %o1	! TI version bit
+	rd	%psr, %o0
+	andcc	%o0, %o1, %g0
+	be	remap_notvik		! is non-TI normal MBUS module
+	lda	[%g0] ASI_SRMMU, %o0	! load MMU
+	andcc	%o0, 0x800, %g0
+	bne	remap_notvik		! It is a viking MBUS module
+	nop
+
+	/*
+	 * Ok, we have a non-Mbus TI Viking, a MicroSparc.
+	 * In this scenerio, in order to play with the MMU
+	 * passthrough safely, we need turn off traps, flip
+	 * the AC bit on in the mmu status register, do our
+	 * passthroughs, then restore the mmu reg and %psr
+	 */
+	rd	%psr, %o4		! saved here till done
+	andn	%o4, 0x20, %o5
+	wr	%o5, 0x0, %psr
+	nop; nop; nop;
+	set	SRMMU_CXTPTR, %o0
+	lda	[%o0] ASI_SRMMU, %o0	! get context table ptr
+	sll	%o0, 4, %o0		! make physical
+	lda	[%g0] ASI_SRMMU, %o3	! hold mmu-sreg here
+	/* 0x8000 is AC bit in Viking mmu-ctl reg */
+	set	0x8000, %o2
+	or	%o3, %o2, %o2
+	sta	%o2, [%g0] ASI_SRMMU	! AC bit on
+	lda	[%o0] ASI_BYPASS, %o1
+	srl	%o1, 4, %o1
+	sll	%o1, 8, %o1		! get phys addr of l1 entry
+	lda	[%o1] ASI_BYPASS, %l4
+	srl	%l1, 22, %o2		! note: 22 == RGSHIFT - 2
+	add	%o1, %o2, %o1
+	sta	%l4, [%o1] ASI_BYPASS
+	sta	%o3, [%g0] ASI_SRMMU	! restore mmu-sreg
+	wr	%o4, 0x0, %psr		! restore psr
 	b,a	startmap_done
+
+	/*
+	 * The following is generic and should work on all
+	 * Mbus based SRMMU's.
+	 */
+remap_notvik:
+	set	SRMMU_CXTPTR, %o0
+	lda	[%o0] ASI_SRMMU, %o0	! get context table ptr
+	sll	%o0, 4, %o0		! make physical
+	lda	[%o0] ASI_BYPASS, %o1
+	srl	%o1, 4, %o1
+	sll	%o1, 8, %o1		! get phys addr of l1 entry
+	lda	[%o1] ASI_BYPASS, %l4
+	srl	%l1, 22, %o2		! note: 22 == RGSHIFT - 2
+	add	%o1, %o2, %o1
+	sta	%l4, [%o1] ASI_BYPASS
+	b,a	startmap_done	
+
 #endif /* SUN4M */
 3:
 	! botch! We should blow up.
