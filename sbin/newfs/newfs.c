@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.29.2.2 1997/11/19 21:24:09 mellon Exp $	*/
+/*	$NetBSD: newfs.c,v 1.29.2.3 1998/10/23 23:58:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.29.2.2 1997/11/19 21:24:09 mellon Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.29.2.3 1998/10/23 23:58:07 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ int	cpgflg;			/* cylinders/cylinder group flag was given */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	density;		/* number of bytes per inode */
-int	maxcontig = 8;		/* max contiguous blocks to allocate */
+int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
