@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2000/12/22 18:16:37 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2001/06/15 15:50:06 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -51,9 +51,10 @@
 #include <dev/pci/pcidevs.h>
 
 #include "isa.h"
+#include "isadma.h"
 
-int	pcibmatch __P((struct device *, struct cfdata *, void *));
-void	pcibattach __P((struct device *, struct device *, void *));
+int	pcibmatch(struct device *, struct cfdata *, void *);
+void	pcibattach(struct device *, struct device *, void *);
 
 struct pcib_softc {
 	struct device sc_dev;
@@ -64,8 +65,8 @@ struct cfattach pcib_ca = {
 	sizeof(struct pcib_softc), pcibmatch, pcibattach
 };
 
-void	pcib_callback __P((struct device *));
-int	pcib_print __P((void *, const char *));
+void	pcib_callback(struct device *);
+int	pcib_print(void *, const char *);
 
 int
 pcibmatch(parent, cf, aux)
@@ -154,6 +155,7 @@ pcib_callback(self)
 	struct device *self;
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
+#if NISA > 0
 	struct isabus_attach_args iba;
 
 	/*
@@ -164,10 +166,11 @@ pcib_callback(self)
 	iba.iba_ic = &sc->sc_chipset;
 	iba.iba_iot = &prep_isa_io_space_tag;
 	iba.iba_memt = &prep_isa_mem_space_tag;
-#if NISA > 0
+#if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
 	config_found(&sc->sc_dev, &iba, pcib_print);
+#endif
 }
 
 int

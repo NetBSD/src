@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.16 2001/01/23 14:12:25 nonaka Exp $
+#	$NetBSD: files.prep,v 1.17 2001/06/15 15:50:04 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -7,7 +7,6 @@ maxpartitions 8
 maxusers 2 8 64
 
 file	arch/prep/prep/autoconf.c
-file	arch/prep/prep/bus_dma.c
 file	arch/prep/prep/bus_space.c
 file	arch/prep/prep/clock.c
 file	arch/prep/prep/conf.c

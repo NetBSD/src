@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2001/05/15 14:48:58 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2001/06/15 15:50:06 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _PREP_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -67,7 +67,7 @@
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-struct prep_bus_dma_tag pci_bus_dma_tag = {
+struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
