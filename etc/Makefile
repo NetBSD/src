@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70.2.3 1997/09/18 22:04:48 cjs Exp $
+#	$NetBSD: Makefile,v 1.70.2.4 1997/09/22 00:12:03 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -7,6 +7,8 @@ LOCALTIME=	US/Pacific
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
 NOOBJ=	oobj
+
+.include <bsd.own.mk>  # for BUILDDIR and configs
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
