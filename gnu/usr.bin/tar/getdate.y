@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.3 $
+/*  $NetBSD: getdate.y,v 1.4 1998/01/05 04:54:16 perry Exp $
 **
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -98,7 +98,7 @@ extern struct tm	*localtime();
 
 #if	!defined(lint) && !defined(SABER)
 static char RCS[] =
-	"$Header: /cvsroot/src/gnu/usr.bin/tar/Attic/getdate.y,v 1.3 1993/12/06 09:38:59 cgd Exp $";
+	"$NetBSD: getdate.y,v 1.4 1998/01/05 04:54:16 perry Exp $";
 #endif	/* !defined(lint) && !defined(SABER) */
 
 
