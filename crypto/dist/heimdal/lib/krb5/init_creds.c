@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: init_creds.c,v 1.1.1.4 2001/09/17 12:25:03 assar Exp $");
+RCSID("$Id: init_creds.c,v 1.2 2001/09/17 15:06:49 assar Exp $");
 
 void
 krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
@@ -103,26 +103,26 @@ krb5_get_init_creds_opt_set_default_flags(krb5_context context,
     time_t t;
 
     b = get_config_bool (context, realm, "forwardable");
-    krb5_appdefault_boolean(context, appname, realm, "forwardable", b, &b);
+    krb5_appdefault_boolean(context, appname, (krb5_realm)realm, "forwardable", b, &b);
     krb5_get_init_creds_opt_set_forwardable(opt, b);
 
     b = get_config_bool (context, realm, "proxiable");
-    krb5_appdefault_boolean(context, appname, realm, "proxiable", b, &b);
+    krb5_appdefault_boolean(context, appname, (krb5_realm)realm, "proxiable", b, &b);
     krb5_get_init_creds_opt_set_proxiable (opt, b);
 
-    krb5_appdefault_time(context, appname, realm, "ticket_lifetime", 0, &t);
+    krb5_appdefault_time(context, appname, (krb5_realm)realm, "ticket_lifetime", 0, &t);
     if (t == 0)
 	t = get_config_time (context, realm, "ticket_lifetime", 0);
     if(t != 0)
 	krb5_get_init_creds_opt_set_tkt_life(opt, t);
     
-    krb5_appdefault_time(context, appname, realm, "renew_lifetime", 0, &t);
+    krb5_appdefault_time(context, appname, (krb5_realm)realm, "renew_lifetime", 0, &t);
     if (t == 0)
 	t = get_config_time (context, realm, "renew_lifetime", 0);
     if(t != 0)
 	krb5_get_init_creds_opt_set_renew_life(opt, t);
 
-    krb5_appdefault_boolean(context, appname, realm, "no-addresses", FALSE, &b);
+    krb5_appdefault_boolean(context, appname, (krb5_realm)realm, "no-addresses", FALSE, &b);
     if (b)
 	krb5_get_init_creds_opt_set_address_list (opt, &no_addrs);
 

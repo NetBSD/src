@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$Id: kinit.c,v 1.5 2001/09/17 12:32:36 assar Exp $");
+RCSID("$Id: kinit.c,v 1.6 2001/09/17 15:06:48 assar Exp $");
 
 int forwardable_flag	= -1;
 int proxiable_flag	= -1;
@@ -620,7 +620,7 @@ main (int argc, char **argv)
 #ifdef KRB4
     if(get_v4_tgt == -1)
 	krb5_appdefault_boolean(context, "kinit", 
-				krb5_principal_get_realm(context, principal), 
+				(krb5_realm)krb5_principal_get_realm(context, principal), 
 				"krb4_get_tickets", TRUE, &get_v4_tgt);
 #endif
 
