@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.13 2001/06/02 18:09:25 chs Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.14 2001/11/06 07:20:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -76,7 +76,7 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 	     struct uio *uio, int linuxmode)
 {
 	int len;
-	int error, buf_full;
+	int error;
 	struct vm_map *map = &p->p_vmspace->vm_map;
 	struct vm_map_entry *entry;
 	char mebuffer[MEBUFFERSIZE];
@@ -93,7 +93,6 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		return (0);
 	
 	error = 0;
-	buf_full = 0;
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
 	for (entry = map->header.next;
