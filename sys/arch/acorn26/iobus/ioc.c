@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.5 2002/10/02 02:21:20 thorpej Exp $ */
+/* $NetBSD: ioc.c,v 1.6 2002/10/02 03:25:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.5 2002/10/02 02:21:20 thorpej Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.6 2002/10/02 03:25:46 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
 
 CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
-	ioc_match, ioc_attach, NULL, NULL);
+    ioc_match, ioc_attach, NULL, NULL);
 
 struct device *the_ioc;
 
