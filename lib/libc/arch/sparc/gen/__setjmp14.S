@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 2004/03/22 12:35:04 pk Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2004/03/23 18:46:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.3 2004/03/22 12:35:04 pk Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.4 2004/03/23 18:46:47 pk Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,32 +58,46 @@
 #include "SYS.h"
 
 ENTRY(__setjmp14)
+	save	%sp, -96, %sp
+#ifdef PIC
+	PIC_PROLOGUE(%l0,%o0)	! %l0 = _GLOBAL_OFFSET_TABLE
+#endif
 	/*
-	 * We use the caller's `arg dump' area (%sp+0x44; there are 6 ints
-	 * reserved there for us) to avoid having to allocate stack space
-	 * here.
+	 * local vars on stack: struct sigstack foo @ offset 0x48
+	 * Note: sc_g1 is not used; sc_o0 is set in longjmp()
 	 */
-	add	%o0, 32, %o2	/* build sigcontext sc.sc_mask */
+#ifdef PIC
+	ld	[%l0 + _C_LABEL(__sigprocmask14)], %g2
+#endif
 	mov	1, %o0		/* SIG_BLOCK */
-	mov	SYS___sigprocmask14, %g1
-	clr	%o1		/* sigprocmask(SIG_BLOCK, NULL, &sc.sc_mask) */
-	t	ST_SYSCALL
-	sub	%o2, 32, %o2
-	mov	SYS___sigaltstack14, %g1
-	clr	%o0		/* sigstack(NULL, &foo) */
+	add	%i0, 32, %o2	/* build sigcontext sc.sc_mask */
+#ifdef PIC
+	call	%g2
+#else
+	call	_C_LABEL(__sigprocmask14)
+#endif
+	 clr	%o1		/* sigprocmask(SIG_BLOCK, NULL, &sc.sc_mask) */
+
+#ifdef PIC
+	ld	[%l0 + _C_LABEL(__sigaltstack14)], %g2
+#endif
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
-	t	ST_SYSCALL
-	ld	[%sp + 0x50], %o0	/* foo.ss_flags */
+#ifdef PIC
+	call	%g2
+#else
+	call	_C_LABEL(__sigaltstack14)
+#endif
+	 clr	%o0		/* sigstack(NULL, &foo) */
+
+	ld	[%sp + 0x48 + 8], %o0	/* foo.ss_flags */
 	and	%o0, 1, %o1	/* onstack = foo.ss_flags & 1; */
-	st	%o0, [%o2 + 0]	/* sc.sc_onstack = current onstack; */
-	st	%sp, [%o2 + 8]	/* sc.sc_sp = sp (both ours and caller's) */
-	add	%o7, 8, %o0
-	st	%o0, [%o2 + 12]	/* sc.sc_pc = return_pc */
-	add	%o7, 12, %o0
-	st	%o0, [%o2 + 16]	/* sc.sc_npc = return_pc + 4 */
-	st	%g0, [%o2 + 20]	/* sc.sc_psr = (clean psr) */
-	st	%fp, [%o2 + 24]	/* sc.sc_g1 = %fp (misuse, but what the heck) */
-				/* sc.sc_o0 = random(), set in longjmp */
-	retl			/* return 0 */
-	 clr	%o0
+	st	%o1, [%i0 + 0]	/* sc.sc_onstack = current onstack; */
+	st	%fp, [%i0 + 8]	/* sc.sc_sp = (caller's) sp */
+	add	%i7, 8, %o0
+	st	%o0, [%i0 + 12]	/* sc.sc_pc = return_pc */
+	add	%i7, 12, %o0
+	st	%o0, [%i0 + 16]	/* sc.sc_npc = return_pc + 4 */
+	st	%g0, [%i0 + 20]	/* sc.sc_psr = (clean psr) */
+	ret			/* return 0 */
+	 restore	%g0, %g0, %o0
 
