@@ -62,11 +62,11 @@ reg int		count;
 	    c = *bytes++;
 	    switch (c) {
 	      case '\t':
-		    SYNCH_IN();
+		    SYNCH_OUT();
 		    if (waddbytes(win, blanks, 8-(x%8)) == ERR) {
 			return ERR;
 		    }
-		    SYNCH_OUT();
+		    SYNCH_IN();
 		    break;
 
 	      default:
