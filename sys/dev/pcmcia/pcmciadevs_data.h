@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.191 2003/12/07 10:37:28 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.192 2003/12/25 17:33:23 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1252,6 +1252,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega Wireless LAN PCCL-11",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_WLCFL_11,
+	    PCMCIA_CIS_COREGA_WIRELESS_LAN_WLCFL_11,
+	    0,
+	    "Corega K.K.",
+	    "Corega Wireless LAN WLCFL-11",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DIGITAL_DEPCMXX,
