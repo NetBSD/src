@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1995/03/24 15:07:19 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 1995/04/11 05:30:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -215,7 +215,7 @@ cpu_fork(p1, p2)
 }
 
 /*
- * cpu_set_pc:
+ * cpu_set_kpc:
  *
  * Arrange for in-kernel execution of a process to continue at the
  * named pc, as if the code at that address were called as a function
