@@ -1,11 +1,17 @@
-# $NetBSD: shl.elf,v 1.7 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: shl.elf,v 1.8 2005/03/18 20:45:42 tron Exp $
 ./usr/X11R6/lib/X11/locale/lib
 ./usr/X11R6/lib/X11/locale/lib/common
+./usr/X11R6/lib/X11/locale/lib/common/ximcp.so
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
+./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2
+./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2
+./usr/X11R6/lib/X11/locale/lib/common/xlibi18n.so
 ./usr/X11R6/lib/X11/locale/lib/common/xlibi18n.so.2
+./usr/X11R6/lib/X11/locale/lib/common/xlocale.so
 ./usr/X11R6/lib/X11/locale/lib/common/xlocale.so.2
+./usr/X11R6/lib/X11/locale/lib/common/xomGeneric.so
 ./usr/X11R6/lib/X11/locale/lib/common/xomGeneric.so.2
 ./usr/X11R6/lib/libFS.so
 ./usr/X11R6/lib/libFS.so.6
