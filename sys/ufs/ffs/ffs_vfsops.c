@@ -1,4 +1,4 @@
-/*	ffs_vfsops.c,v 1.28 1997/07/07 11:47:06 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.30 1997/07/22 14:36:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
