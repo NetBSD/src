@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.34 2001/06/18 02:00:54 christos Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.35 2001/09/18 19:36:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -37,6 +37,7 @@
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscall.h>
@@ -66,6 +67,7 @@ struct emul emul_sunos = {
 	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

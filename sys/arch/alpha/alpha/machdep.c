@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.251 2001/09/18 18:15:50 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.252 2001/09/18 19:36:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2001/09/18 18:15:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2001/09/18 19:36:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1998,7 +1998,6 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, epp, stack);
 	p->p_md.md_tf->tf_regs[FRAME_GP] = execp->a.gp_value;
 }
 

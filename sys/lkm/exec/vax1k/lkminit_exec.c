@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:49 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/09/18 19:36:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int exec_vax1k_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_vax1k =
 	{ sizeof(struct exec), exec_vax1k_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs };	/* vax1k a.out */
+	  0, copyargs };	/* vax1k a.out */
 
 /*
  * declare the exec

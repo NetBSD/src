@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:43 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2 2001/09/18 19:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ int exec_netbsd32_aout_lkmentry __P((struct lkm_table *, int, int));
 static struct execsw exec_netbsd32_aout =
 	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, { NULL },
 	  NULL, EXECSW_PRIO_FIRST,
-	  0, netbsd32_copyargs, netbsd32_setregs }; /* sparc 32 bit */
+	  0, netbsd32_copyargs }; /* sparc 32 bit */
 
 /*
  * declare the exec

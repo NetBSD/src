@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:13 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.3 2001/09/18 19:36:36 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ static struct execsw exec_linux_elf =
 	  NULL,	/* will be set by exec_add() */
 	  EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
-	  LINUX_COPYARGS_FUNCTION, setregs };	/* Linux 32bit ELF bins */
+	  LINUX_COPYARGS_FUNCTION };/* Linux 32bit ELF bins */
 
 /*
  * declare the exec
