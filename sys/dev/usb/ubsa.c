@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.2 2002/10/08 16:13:36 pooka Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.3 2002/10/27 20:16:41 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -183,7 +183,7 @@ struct	ubsa_softc {
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* ubsa status register */
-	
+
 	device_ptr_t		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
@@ -267,7 +267,7 @@ USB_ATTACH(ubsa)
 
 	/*
 	 * initialize rts, dtr variables to something
-	 * different from boolean 0, 1 
+	 * different from boolean 0, 1
 	 */
 	sc->sc_dtr = -1;
 	sc->sc_rts = -1;
@@ -276,7 +276,7 @@ USB_ATTACH(ubsa)
 
 	DPRINTF(("ubsa attach: sc = %p\n", sc));
 
-	/* initialize endpoints */ 
+	/* initialize endpoints */
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
@@ -507,7 +507,7 @@ Static void
 ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 {
 	u_int16_t value = 0;
-		
+
 	DPRINTF(("ubsa_baudrate: speed = %d\n", speed));
 
 	switch(speed) {
@@ -523,17 +523,17 @@ ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 	case B38400:
 	case B57600:
 	case B115200:
-	case B230400: 
+	case B230400:
 		value = B230400 / speed;
 		break;
-	default:	
+	default:
 		printf("%s: ubsa_param: unsupported baudrate, "
 		    "forcing default of 9600\n",
 		    USBDEVNAME(sc->sc_dev));
 		value = B230400 / B9600;
 		break;
 	};
-		
+
 	if (speed == B0) {
 		ubsa_flow(sc, 0, 0);
 		ubsa_dtr(sc, 0);
@@ -569,7 +569,7 @@ ubsa_databits(struct ubsa_softc *sc, tcflag_t cflag)
 	case CS6: value = 1; break;
 	case CS7: value = 2; break;
 	case CS8: value = 3; break;
-	default:	
+	default:
 		printf("%s: ubsa_param: unsupported databits requested, "
 		    "forcing default of 8\n",
 		    USBDEVNAME(sc->sc_dev));
@@ -595,7 +595,7 @@ Static void
 ubsa_flow(struct ubsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 {
 	int value;
-	
+
 	DPRINTF(("ubsa_flow: cflag = 0x%x, iflag = 0x%x\n", cflag, iflag));
 
 	value = 0;
@@ -610,11 +610,10 @@ ubsa_flow(struct ubsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 Static int
 ubsa_param(void *addr, int portno, struct termios *ti)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = addr;
 
 	DPRINTF(("ubsa_param: sc = %p\n", sc));
 
-	sc = addr;
 	ubsa_baudrate(sc, ti->c_ospeed);
 	ubsa_parity(sc, ti->c_cflag);
 	ubsa_databits(sc, ti->c_cflag);
@@ -627,10 +626,9 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 Static int
 ubsa_open(void *addr, int portno)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = addr;
 	int err;
-	
-	sc = addr;
+
 	if (sc->sc_dying)
 		return (ENXIO);
 
@@ -659,12 +657,11 @@ ubsa_open(void *addr, int portno)
 }
 
 Static void
-ubsa_close(void *addr, int portno) 
+ubsa_close(void *addr, int portno)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = addr;
 	int err;
 
-	sc = addr;
 	if (sc->sc_dying)
 		return;
 
@@ -689,10 +686,9 @@ ubsa_close(void *addr, int portno)
 Static void
 ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = priv;
 	u_char *buf;
 
-	sc = priv;
 	buf = sc->sc_intr_buf;
 	if (sc->sc_dying)
 		return;
@@ -721,11 +717,10 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 Static void
 ubsa_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
-	struct ubsa_softc *sc;
+	struct ubsa_softc *sc = addr;
 
 	DPRINTF(("ubsa_get_status\n"));
 
-	sc = addr;
 	if (lsr != NULL)
 		*lsr = sc->sc_lsr;
 	if (msr != NULL)
