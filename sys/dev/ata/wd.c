@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.281 2004/07/31 21:26:43 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.282 2004/08/03 21:38:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.281 2004/07/31 21:26:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.282 2004/08/03 21:38:45 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -417,14 +417,6 @@ wddetach(struct device *self, int flags)
 
 	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
-	/* Clean out the bad sector list */
-	while (!SLIST_EMPTY(&sc->sc_bslist)) {
-		void *head = SLIST_FIRST(&sc->sc_bslist);
-		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
-		free(head, M_TEMP);
-	}
-	sc->sc_bscount = 0;
-
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
@@ -452,6 +444,14 @@ wddetach(struct device *self, int flags)
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
+
+	/* Clean out the bad sector list */
+	while (!SLIST_EMPTY(&sc->sc_bslist)) {
+		void *head = SLIST_FIRST(&sc->sc_bslist);
+		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
+		free(head, M_TEMP);
+	}
+	sc->sc_bscount = 0;
 
 	/* Get rid of the shutdown hook. */
 	if (sc->sc_sdhook != NULL)
