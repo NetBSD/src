@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.22 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.23 1999/01/10 11:13:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  * Data sheets: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *              ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  * UHCI spec: http://www.intel.com/design/usb/uhci11d.pdf
- * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
+ * USB spec: http://www.usb.org/cgi-usb/mailmerge.cgi/home/usb/docs/developers/cgiform.tpl
  */
 
 #include <sys/param.h>

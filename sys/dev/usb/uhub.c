@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.14 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.15 1999/01/10 11:13:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * USB spec: http://www.usb.org/cgi-usb/mailmerge.cgi/home/usb/docs/developers/cgiform.tpl
  */
 
 #include <sys/param.h>
