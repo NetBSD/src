@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.407 2000/10/28 02:29:35 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.408 2000/11/05 22:10:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -219,6 +219,11 @@ extern	paddr_t avail_start, avail_end;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
+/*
+ * The number of CPU cycles in one second.
+ */
+u_int64_t cpu_tsc_freq;
+
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
@@ -329,7 +334,11 @@ cpu_startup()
 
 	printf("%s", version);
 
-	printf("cpu0: %s\n", cpu_model);
+	printf("cpu0: %s", cpu_model);
+	if (cpu_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
+		    ((cpu_tsc_freq + 4999) / 10000) % 100);
+	printf("\n");
 	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
 		printf("cpu0:");
 		if (cpu_icache_info)
@@ -1026,6 +1035,20 @@ identifycpu()
 	 */
 	if (cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
+#endif
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 */
+	if (cpu_feature & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(1000000);
+		cpu_tsc_freq = rdtsc() - last_tsc;
+	}
 #endif
 }
 
