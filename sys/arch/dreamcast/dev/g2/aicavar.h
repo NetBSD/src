@@ -1,4 +1,4 @@
-/*	$NetBSD: aicavar.h,v 1.1 2003/08/24 17:33:29 marcus Exp $	*/
+/*	$NetBSD: aicavar.h,v 1.2 2005/01/15 15:19:51 kent Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -32,14 +32,14 @@
 #define _AICAVAR_H_
 
 typedef struct {
-	u_int32_t serial;
-	u_int32_t command;
-	u_int32_t blocksize;
-	u_int32_t channel;
-	u_int32_t rate;
-	u_int32_t precision;
-	u_int32_t l_param;	/* volume,etc... for left */
-	u_int32_t r_param;	/* volume,etc... for right */
+	uint32_t serial;
+	uint32_t command;
+	uint32_t blocksize;
+	uint32_t channel;
+	uint32_t rate;
+	uint32_t precision;
+	uint32_t l_param;	/* volume,etc... for left */
+	uint32_t r_param;	/* volume,etc... for right */
 } aica_cmd_t;
 
 #define	AICA_COMMAND_NOP	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.31 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.32 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.31 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.32 2005/01/15 15:19:52 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -124,7 +124,7 @@ const struct audio_hw_if audiocs_sbus_hw_if = {
 	cs4231_malloc,
 	cs4231_free,
 	NULL,			/* round_buffersize */
-        NULL,			/* mappage */
+	NULL,			/* mappage */
 	cs4231_get_props,
 	cs4231_sbus_trigger_output,
 	cs4231_sbus_trigger_input,
@@ -141,27 +141,26 @@ static int	cs4231_sbus_intr(void *);
 
 
 static int
-cs4231_sbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cs4231_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct sbus_attach_args *sa = aux;
+	struct sbus_attach_args *sa;
 
-	return (strcmp(sa->sa_name, AUDIOCS_PROM_NAME) == 0);
+	sa = aux;
+	return strcmp(sa->sa_name, AUDIOCS_PROM_NAME) == 0;
 }
 
 
 static void
-cs4231_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cs4231_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cs4231_sbus_softc *sbsc = (struct cs4231_sbus_softc *)self;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	struct sbus_attach_args *sa = aux;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	struct sbus_attach_args *sa;
 	bus_space_handle_t bh;
 
+	sbsc = (struct cs4231_sbus_softc *)self;
+	sc = &sbsc->sc_cs4231;
+	sa = aux;
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
@@ -201,9 +200,7 @@ cs4231_sbus_attach(parent, self, aux)
 
 #ifdef AUDIO_DEBUG
 static void
-cs4231_sbus_regdump(label, sc)
-	char *label;
-	struct cs4231_sbus_softc *sc;
+cs4231_sbus_regdump(char *label, struct cs4231_sbus_softc *sc)
 {
 	char bits[128];
 
@@ -216,13 +213,13 @@ cs4231_sbus_regdump(label, sc)
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNVA));
 	printf("dmapnc: 0x%x\n",
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNC));
-	printf("dmacva: 0x%x; ", 
+	printf("dmacva: 0x%x; ",
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CVA));
-	printf("dmacc: 0x%x; ", 
+	printf("dmacc: 0x%x; ",
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CC));
-	printf("dmacnva: 0x%x; ", 
+	printf("dmacnva: 0x%x; ",
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNVA));
-	printf("dmacnc: 0x%x\n", 
+	printf("dmacnc: 0x%x\n",
 		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNC));
 
 	printf("apc_dmacsr=%s\n",
@@ -236,18 +233,14 @@ cs4231_sbus_regdump(label, sc)
 
 
 static int
-cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+cs4231_sbus_trigger_output(void *addr, void *start, void *end, int blksize,
+			   void (*intr)(void *), void *arg,
+			   const audio_params_t *param)
 {
-	struct cs4231_sbus_softc *sbsc = addr;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	struct cs_transfer *t = &sc->sc_playback;
-	u_int32_t csr;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	struct cs_transfer *t;
+	uint32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
 	int ret;
@@ -255,13 +248,16 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	char bits[128];
 #endif
 
+	sbsc = addr;
+	sc = &sbsc->sc_cs4231;
+	t = &sc->sc_playback;
 	ret = cs4231_transfer_init(sc, t, &dmaaddr, &dmasize,
 				   start, end, blksize, intr, arg);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	DPRINTF(("trigger_output: was: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PC),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC)));
@@ -315,22 +311,23 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC)));
 	}
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_sbus_halt_output(addr)
-	void *addr;
+cs4231_sbus_halt_output(void *addr)
 {
-	struct cs4231_sbus_softc *sbsc = addr;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	u_int32_t csr;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	uint32_t csr;
 	int cfg;
 #ifdef AUDIO_DEBUG
 	char bits[128];
 #endif
 
+	sbsc = addr;
+	sc = &sbsc->sc_cs4231;
 	sc->sc_playback.t_active = 0;
 
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
@@ -340,11 +337,11 @@ cs4231_sbus_halt_output(addr)
 	csr &= ~APC_INTR_MASK;	/* do not clear interrupts accidentally */
 	csr |= APC_PPAUSE;	/* pause playback (let current complete) */
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
-	
+
 	/* let the curernt transfer complete */
 	if (csr & PDMA_GO)
 		do {
-			csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, 
+			csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh,
 				APC_DMA_CSR);
 			DPRINTF(("halt_output: csr=%s\n",
 				 bitmask_snprintf(csr, APC_BITS,
@@ -354,24 +351,20 @@ cs4231_sbus_halt_output(addr)
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,(cfg & ~PLAYBACK_ENABLE));
 
-	return (0);
+	return 0;
 }
 
 
 /* NB: we don't enable APC_CMIE and won't use APC_CM */
 static int
-cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+cs4231_sbus_trigger_input(void *addr, void *start, void *end, int blksize,
+			  void (*intr)(void *), void *arg,
+			  const audio_params_t *param)
 {
-	struct cs4231_sbus_softc *sbsc = addr;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	struct cs_transfer *t = &sc->sc_capture;
-	u_int32_t csr;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	struct cs_transfer *t;
+	uint32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
 	int ret;
@@ -379,16 +372,19 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	char bits[128];
 #endif
 
+	sbsc = addr;
+	sc = &sbsc->sc_cs4231;
+	t = &sc->sc_capture;
 	ret = cs4231_transfer_init(sc, t, &dmaaddr, &dmasize,
 				   start, end, blksize, intr, arg);
 	if (ret != 0)
-		return (ret);
+		return ret;
 
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	DPRINTF(("trigger_input: csr=%s\n",
 		 bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits))));
 	DPRINTF(("trigger_input: was: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CC),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
@@ -398,7 +394,7 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC, dmasize);
 
 	DPRINTF(("trigger_input: 1st: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CC),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA),
 		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
@@ -439,22 +435,23 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
 	}
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_sbus_halt_input(addr)
-	void *addr;
+cs4231_sbus_halt_input(void *addr)
 {
-	struct cs4231_sbus_softc *sbsc = addr;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	u_int32_t csr;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	uint32_t csr;
 	int cfg;
 #ifdef AUDIO_DEBUG
 	char bits[128];
 #endif
 
+	sbsc = addr;
+	sc = &sbsc->sc_cs4231;
 	sc->sc_capture.t_active = 0;
 
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
@@ -478,17 +475,16 @@ cs4231_sbus_halt_input(addr)
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (cfg & ~CAPTURE_ENABLE));
 
-	return (0);
+	return 0;
 }
 
 
 static int
-cs4231_sbus_intr(arg)
-	void *arg;
+cs4231_sbus_intr(void *arg)
 {
-	struct cs4231_sbus_softc *sbsc = arg;
-	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	u_int32_t csr;
+	struct cs4231_sbus_softc *sbsc;
+	struct cs4231_softc *sc;
+	uint32_t csr;
 	int status;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
@@ -497,9 +493,11 @@ cs4231_sbus_intr(arg)
 	char bits[128];
 #endif
 
+	sbsc = arg;
+	sc = &sbsc->sc_cs4231;
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
-		return (0);
+		return 0;
 
 	/* write back DMA status to clear interrupt */
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
@@ -525,7 +523,7 @@ cs4231_sbus_intr(arg)
 		/* clear ad1848 interrupt */
 		ADWRITE(&sc->sc_ad1848, AD1848_STATUS, 0);
 	}
-	
+
 	if (csr & APC_CI) {
 		if (csr & APC_CD) { /* can supply new block */
 			struct cs_transfer *t = &sc->sc_capture;
@@ -576,7 +574,7 @@ cs4231_sbus_intr(arg)
 		/* evcnt? */
 	}
 
-	return (1);
+	return 1;
 }
 
 #endif /* NAUDIO > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.8 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.9 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.8 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.9 2005/01/15 15:19:52 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,9 @@ cs428x_round_blocksize(void *addr, int blk,
 {
 	struct cs428x_softc *sc;
 	int retval;
-	
+
 	DPRINTFN(5,("cs428x_round_blocksize blk=%d -> ", blk));
-	
+
 	sc = addr;
 	if (blk < sc->hw_blocksize)
 		retval = sc->hw_blocksize;
@@ -183,7 +183,7 @@ cs428x_mappage(void *addr, void *mem, off_t off, int prot)
 		return -1;
 
 	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
-		;
+		continue;
 
 	if (p == NULL) {
 		DPRINTF(("cs428x_mappage: bad buffer address\n"));
@@ -220,10 +220,10 @@ cs428x_attach_codec(void *addr, struct ac97_codec_if *codec_if)
 }
 
 int
-cs428x_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
+cs428x_read_codec(void *addr, uint8_t ac97_addr, uint16_t *ac97_data)
 {
 	struct cs428x_softc *sc;
-	u_int32_t acctl;
+	uint32_t acctl;
 	int n;
 
 	sc = addr;
@@ -266,10 +266,10 @@ cs428x_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
 }
 
 int
-cs428x_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
+cs428x_write_codec(void *addr, uint8_t ac97_addr, uint16_t ac97_data)
 {
 	struct cs428x_softc *sc;
-	u_int32_t acctl;
+	uint32_t acctl;
 
 	sc = addr;
 
@@ -292,7 +292,7 @@ cs428x_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
 
 /* Internal functions */
 int
-cs428x_allocmem(struct cs428x_softc *sc, 
+cs428x_allocmem(struct cs428x_softc *sc,
 		size_t size, struct malloc_type *pool, int flags,
 		struct cs428x_dma *p)
 {
@@ -353,8 +353,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 }
 
 int
-cs428x_src_wait(sc)
-	struct cs428x_softc *sc;
+cs428x_src_wait(struct cs428x_softc *sc)
 {
 	int n;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.12 2005/01/10 22:01:36 kent Exp $ */
+/*	$NetBSD: repulse.c,v 1.13 2005/01/15 15:19:51 kent Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.12 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.13 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,20 +61,20 @@ __KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.12 2005/01/10 22:01:36 kent Exp $");
 #include <amiga/dev/repulse_firmware.h>
 
 #ifndef vu_int8_t
-#define vu_int8_t volatile u_int8_t
+#define vu_int8_t volatile uint8_t
 #endif
 #ifndef vu_int16_t
-#define vu_int16_t volatile u_int16_t
+#define vu_int16_t volatile uint16_t
 #endif
 #ifndef vu_int32_t
-#define vu_int32_t volatile u_int32_t
+#define vu_int32_t volatile uint32_t
 #endif
 
 /* ac97 attachment functions */
 
 int repac_attach(void *, struct ac97_codec_if *);
-int repac_read(void *, u_int8_t, u_int16_t *);
-int repac_write(void *, u_int8_t, u_int16_t);
+int repac_read(void *, uint8_t, uint16_t *);
+int repac_write(void *, uint8_t, uint16_t);
 int repac_reset(void *);
 enum ac97_host_flag repac_flags(void *);
 
@@ -97,7 +97,7 @@ size_t rep_round_buffersize(void *, int, size_t);
 int rep_start_input(void *, void *, int, void (*)(void *), void *);
 int rep_start_output(void *, void *, int, void (*)(void *), void *);
 
-int rep_intr(void *tag);
+int rep_intr(void *);
 
 
 /* audio attachment */
@@ -188,14 +188,14 @@ struct repulse_hw {
 #define REPFIFO_RECFIFOGAUGE(x)		(x & 0xf000)
 
 /* ac97 data stream transfer functions */
-void rep_read_16_stereo(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_read_16_mono(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_write_16_stereo(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_write_16_mono(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_read_8_stereo(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_read_8_mono(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_write_8_stereo(struct repulse_hw *, u_int8_t *, int, unsigned);
-void rep_write_8_mono(struct repulse_hw *, u_int8_t *, int, unsigned);
+void rep_read_16_stereo(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_read_16_mono(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_write_16_stereo(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_write_16_mono(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_read_8_stereo(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_read_8_mono(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_write_8_stereo(struct repulse_hw *, uint8_t *, int, unsigned);
+void rep_write_8_mono(struct repulse_hw *, uint8_t *, int, unsigned);
 
 /* AmigaDOS Delay() ticks */
 
@@ -214,7 +214,7 @@ struct repulse_softc {
 	void	(*sc_captmore)(void *);
 	void	 *sc_captarg;
 
-	void	(*sc_captfun)(struct repulse_hw *, u_int8_t *, int, unsigned);
+	void	(*sc_captfun)(struct repulse_hw *, uint8_t *, int, unsigned);
 	void	 *sc_captbuf;
 	int	  sc_captscale;
 	int	  sc_captbufsz;
@@ -223,7 +223,7 @@ struct repulse_softc {
 
 	void	(*sc_playmore)(void *);
 	void	 *sc_playarg;
-	void	(*sc_playfun)(struct repulse_hw *, u_int8_t *, int, unsigned);
+	void	(*sc_playfun)(struct repulse_hw *, uint8_t *, int, unsigned);
 	int	  sc_playscale;
 	unsigned  sc_playflags;
 
@@ -236,7 +236,8 @@ CFATTACH_DECL(repulse, sizeof(struct repulse_softc),
     repulse_match, repulse_attach, NULL, NULL);
 
 int
-repulse_match(struct device *parent, struct cfdata *cfp, void *aux) {
+repulse_match(struct device *parent, struct cfdata *cfp, void *aux)
+{
 	struct zbus_args *zap;
 
 	zap = aux;
@@ -251,13 +252,14 @@ repulse_match(struct device *parent, struct cfdata *cfp, void *aux) {
 }
 
 void
-repulse_attach(struct device *parent, struct device *self, void *aux) {
+repulse_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct repulse_softc *sc;
 	struct zbus_args *zap;
 	struct repulse_hw *bp;
-	u_int8_t *fwp;
+	uint8_t *fwp;
 	int needs_firmware;
-	u_int16_t a;
+	uint16_t a;
 
 	sc = (struct repulse_softc *)self;
 	zap = aux;
@@ -280,9 +282,9 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 
 		delay(1 * USECPERTICK);
 
-		for (fwp = (u_int8_t *)repulse_firmware;
+		for (fwp = (uint8_t *)repulse_firmware;
 		    fwp < (repulse_firmware_size +
-		    (u_int8_t *)repulse_firmware); fwp++)
+		    (uint8_t *)repulse_firmware); fwp++)
 			bp->rhw_firmwareload = *fwp;
 
 		delay(1 * USECPERTICK);
@@ -354,12 +356,15 @@ Initerr:
 
 }
 
-int repac_reset(void *arg) {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+int
+repac_reset(void *arg)
+{
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
+	uint16_t a;
 
-	u_int16_t a;
-
+	sc = arg;
+	bp = sc->sc_boardp;
 	a = bp->rhw_status;
 	a |= REPSTATUS_CODECRESET;
 	bp->rhw_status = a;
@@ -379,34 +384,46 @@ int repac_reset(void *arg) {
 	return 0;
 }
 
-int repac_read(void *arg, u_int8_t reg, u_int16_t *valuep) {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+int
+repac_read(void *arg, u_int8_t reg, u_int16_t *valuep)
+{
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
 
-	while (bp->rhw_status & REPSTATUS_REGSENDBUSY);
+	sc = arg;
+	bp = sc->sc_boardp;
+	while (bp->rhw_status & REPSTATUS_REGSENDBUSY)
+		continue;
 	bp->rhw_reg_address = (reg & 0x7F) | 0x80;
 
-	while (bp->rhw_status & REPSTATUS_REGSENDBUSY);
+	while (bp->rhw_status & REPSTATUS_REGSENDBUSY)
+		continue;
 
 	*valuep = bp->rhw_reg_data;
 
 	return 0;
 }
 
-int repac_write(void *arg, u_int8_t reg, u_int16_t value) {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+int
+repac_write(void *arg, uint8_t reg, uint16_t value)
+{
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
 
+	sc = arg;
+	bp = sc->sc_boardp;
 	bp->rhw_reg_data = value;
 	bp->rhw_reg_address = reg & 0x7F;
 
-	while (bp->rhw_status & REPSTATUS_REGSENDBUSY);
+	while (bp->rhw_status & REPSTATUS_REGSENDBUSY)
+		continue;
 
 	return 0;
 }
 
-int repac_attach(void *arg, struct ac97_codec_if *acip){
-
+int
+repac_attach(void *arg, struct ac97_codec_if *acip)
+{
 	struct repulse_softc *sc;
 
 	sc = arg;
@@ -420,8 +437,9 @@ int repac_attach(void *arg, struct ac97_codec_if *acip){
 void
 rep_close(void *arg)
 {
-	struct repulse_softc *sc = arg;
+	struct repulse_softc *sc;
 
+	sc = arg;
 	rep_halt_output(sc);
 	rep_halt_input(sc);
 }
@@ -429,10 +447,12 @@ rep_close(void *arg)
 int
 rep_getdev(void *arg, struct audio_device *retp)
 {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
 
-	if (retp) {
+	if (retp != NULL) {
+		sc = arg;
+		bp = sc->sc_boardp;
 		strncpy(retp->name, "Repulse", sizeof(retp->name));
 		snprintf(retp->version, sizeof(retp->version), "0x%x",
 			bp->rhw_version);
@@ -445,15 +465,17 @@ rep_getdev(void *arg, struct audio_device *retp)
 int
 rep_get_props(void *v)
 {
-	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
+	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
 int
 rep_halt_output(void *arg)
 {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
 
+	sc = arg;
+	bp = sc->sc_boardp;
 	bp->rhw_status &= ~(REPSTATUS_PLAYIRQENABLE|REPSTATUS_PLAY);
 
 
@@ -463,9 +485,11 @@ rep_halt_output(void *arg)
 int
 rep_halt_input(void *arg)
 {
-	struct repulse_softc *sc = arg;
-	struct repulse_hw *bp = sc->sc_boardp;
+	struct repulse_softc *sc;
+	struct repulse_hw *bp;
 
+	sc = arg;
+	bp = sc->sc_boardp;
 	bp->rhw_status &= ~(REPSTATUS_RECIRQENABLE|REPSTATUS_RECORD);
 
 	return 0;
@@ -501,7 +525,7 @@ rep_query_encoding(void *arg, struct audio_encoding *fp)
 
 	if (i >= sizeof(rep_encoding_queries) /
 	    sizeof(struct repulse_encoding_query))
-		return (EINVAL);
+		return EINVAL;
 
 	p = &rep_encoding_queries[i];
 
@@ -510,7 +534,7 @@ rep_query_encoding(void *arg, struct audio_encoding *fp)
 	fp->precision = p->precision;
 	fp->flags = p->flags;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -521,25 +545,28 @@ rep_query_encoding(void *arg, struct audio_encoding *fp)
 int
 rep_get_port(void *arg, mixer_ctrl_t *cp)
 {
-	struct repulse_softc *sc = arg;
+	struct repulse_softc *sc;
 
-	return (sc->sc_codec_if->vtbl->mixer_get_port(sc->sc_codec_if, cp));
+	sc = arg;
+	return sc->sc_codec_if->vtbl->mixer_get_port(sc->sc_codec_if, cp);
 }
 
 int
 rep_set_port(void *arg, mixer_ctrl_t *cp)
 {
-	struct repulse_softc *sc = arg;
+	struct repulse_softc *sc;
 
-	return (sc->sc_codec_if->vtbl->mixer_set_port(sc->sc_codec_if, cp));
+	sc = arg;
+	return sc->sc_codec_if->vtbl->mixer_set_port(sc->sc_codec_if, cp);
 }
 
 int
-rep_query_devinfo (void *arg, mixer_devinfo_t *dip)
+rep_query_devinfo(void *arg, mixer_devinfo_t *dip)
 {
-	struct repulse_softc *sc = arg;
+	struct repulse_softc *sc;
 
-	return (sc->sc_codec_if->vtbl->query_devinfo(sc->sc_codec_if, dip));
+	sc = arg;
+	return sc->sc_codec_if->vtbl->query_devinfo(sc->sc_codec_if, dip);
 }
 
 int
@@ -551,7 +578,7 @@ rep_round_blocksize(void *arg, int blk, int mode, const audio_params_t *param)
 
 	if (b1 > 65536 / 2 / 2 /* channels */ / 4 /* bytes per channel */)
 		b1 =  65536 / 2 / 2 / 4;
-	return (b1);
+	return b1;
 }
 
 size_t
@@ -567,12 +594,13 @@ rep_set_params(void *addr, int setmode, int usemode,
 	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct repulse_softc *sc = addr;
+	struct repulse_softc *sc;
 	audio_params_t *p;
 	int mode, reg;
 	unsigned  flags;
 	u_int16_t a;
 
+	sc = addr;
 	/* for mode in (RECORD, PLAY) */
 	for (mode = AUMODE_RECORD; mode != -1;
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
@@ -586,12 +614,12 @@ rep_set_params(void *addr, int setmode, int usemode,
 		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
 		    (p->precision != 8 && p->precision != 16) ||
 		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
+			return EINVAL;
 
 		reg = mode == AUMODE_PLAY ?
 			AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
 
-		repac_write(sc, reg, (u_int16_t) p->sample_rate);
+		repac_write(sc, reg, (uint16_t) p->sample_rate);
 		repac_read(sc, reg, &a);
 		p->sample_rate = a;
 
@@ -677,11 +705,10 @@ rep_set_params(void *addr, int setmode, int usemode,
 }
 
 void
-rep_write_8_mono(struct repulse_hw *bp, u_int8_t *p, int length,
-	unsigned flags)
+rep_write_8_mono(struct repulse_hw *bp, uint8_t *p, int length, unsigned flags)
 {
-	u_int16_t sample;
-	u_int16_t xor;
+	uint16_t sample;
+	uint16_t xor;
 
 	xor = flags & 1 ? 0x8000 : 0;
 
@@ -695,10 +722,10 @@ rep_write_8_mono(struct repulse_hw *bp, u_int8_t *p, int length,
 }
 
 void
-rep_write_8_stereo(struct repulse_hw *bp, u_int8_t *p, int length,
+rep_write_8_stereo(struct repulse_hw *bp, uint8_t *p, int length,
 	unsigned flags)
 {
-	u_int16_t xor;
+	uint16_t xor;
 
 	xor = flags & 1 ? 0x8000 : 0;
 
@@ -711,13 +738,14 @@ rep_write_8_stereo(struct repulse_hw *bp, u_int8_t *p, int length,
 }
 
 void
-rep_write_16_mono(struct repulse_hw *bp, u_int8_t *p, int length,
+rep_write_16_mono(struct repulse_hw *bp, uint8_t *p, int length,
 	unsigned flags)
 {
-	u_int16_t *q = (u_int16_t *)p;
-	u_int16_t sample;
-	u_int16_t xor;
+	uint16_t *q;
+	uint16_t sample;
+	uint16_t xor;
 
+	q = (uint16_t *)p;
 	xor = flags & 1 ? 0x8000 : 0;
 
 	bp->rhw_fifo_pack = 0;
@@ -741,12 +769,13 @@ rep_write_16_mono(struct repulse_hw *bp, u_int8_t *p, int length,
 }
 
 void
-rep_write_16_stereo(struct repulse_hw *bp, u_int8_t *p, int length,
+rep_write_16_stereo(struct repulse_hw *bp, uint8_t *p, int length,
 	unsigned flags)
 {
-	u_int16_t *q = (u_int16_t *)p;
-	u_int16_t xor;
+	uint16_t *q;
+	uint16_t xor;
 
+	q = (uint16_t *)p;
 	xor = flags & 1 ? 0x8000 : 0;
 
 	bp->rhw_fifo_pack = 0;
@@ -767,11 +796,10 @@ rep_write_16_stereo(struct repulse_hw *bp, u_int8_t *p, int length,
 }
 
 void
-rep_read_8_mono(struct	repulse_hw  *bp, u_int8_t *p, int length,
-	unsigned flags)
+rep_read_8_mono(struct repulse_hw *bp, uint8_t *p, int length, unsigned flags)
 {
-	u_int16_t v;
-	u_int16_t xor;
+	uint16_t v;
+	uint16_t xor;
 
 	xor = flags & 1 ? 0x8000 : 0;
 
@@ -783,13 +811,13 @@ rep_read_8_mono(struct	repulse_hw  *bp, u_int8_t *p, int length,
 }
 
 void
-rep_read_16_mono(struct	 repulse_hw  *bp, u_int8_t *p, int length,
-	unsigned flags)
+rep_read_16_mono(struct	repulse_hw *bp, uint8_t *p, int length, unsigned flags)
 {
-	u_int16_t *q = (u_int16_t *)p;
-	u_int16_t v;
-	u_int16_t xor;
+	uint16_t *q;
+	uint16_t v;
+	uint16_t xor;
 
+	q = (uint16_t *)p;
 	xor = flags & 1 ? 0x8000 : 0;
 
 	if (flags & 2) {
@@ -809,10 +837,10 @@ rep_read_16_mono(struct	 repulse_hw  *bp, u_int8_t *p, int length,
 }
 
 void
-rep_read_8_stereo(struct  repulse_hw  *bp, u_int8_t *p, int length,
+rep_read_8_stereo(struct repulse_hw *bp, uint8_t *p, int length,
 	unsigned flags)
 {
-	u_int16_t xor;
+	uint16_t xor;
 
 	xor = flags & 1 ? 0x8000 : 0;
 	while (length > 0) {
@@ -823,12 +851,13 @@ rep_read_8_stereo(struct  repulse_hw  *bp, u_int8_t *p, int length,
 }
 
 void
-rep_read_16_stereo(struct  repulse_hw  *bp, u_int8_t *p, int length,
+rep_read_16_stereo(struct repulse_hw *bp, uint8_t *p, int length,
 	unsigned flags)
 {
-	u_int16_t *q = (u_int16_t *)p;
-	u_int16_t xor;
+	uint16_t *q;
+	uint16_t xor;
 
+	q = (uint16_t *)p;
 	xor = flags & 1 ? 0x8000 : 0;
 
 	if (flags & 2) {
@@ -852,12 +881,12 @@ rep_read_16_stereo(struct  repulse_hw  *bp, u_int8_t *p, int length,
 
 int
 rep_start_output(void *addr, void *block, int blksize,
-	void (*intr)(void*), void *intrarg) {
-
+	void (*intr)(void*), void *intrarg)
+{
 	struct repulse_softc *sc;
-	u_int8_t *buf;
+	uint8_t *buf;
 	struct repulse_hw *bp;
-	u_int16_t status;
+	uint16_t status;
 
 
 	sc = addr;
@@ -889,11 +918,11 @@ rep_start_output(void *addr, void *block, int blksize,
 
 int
 rep_start_input(void *addr, void *block, int blksize,
-	void (*intr)(void*), void *intrarg) {
-
+	void (*intr)(void*), void *intrarg)
+{
 	struct repulse_softc *sc;
 	struct repulse_hw *bp;
-	u_int16_t status;
+	uint16_t status;
 
 	sc = addr;
 	bp = sc->sc_boardp;
@@ -917,11 +946,12 @@ rep_start_input(void *addr, void *block, int blksize,
 /* irq handler */
 
 int
-rep_intr(void *tag) {
+rep_intr(void *tag)
+{
 	struct repulse_softc *sc;
 	struct repulse_hw *bp;
 	int foundone;
-	u_int16_t status;
+	uint16_t status;
 
 	foundone = 0;
 

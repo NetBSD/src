@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.6 2005/01/10 22:01:36 kent Exp $ */
+/* $NetBSD: haltwo.c,v 1.7 2005/01/15 15:19:51 kent Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.6 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.7 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ haltwo_write_indirect(struct haltwo_softc *sc, uint32_t ireg, uint16_t low,
 	haltwo_write(sc, ctl, HAL2_REG_CTL_IAR, ireg);
 
 	while (haltwo_read(sc, ctl, HAL2_REG_CTL_ISR) & HAL2_ISR_TSTATUS)
-		;
+		continue;
 }
 
 static void
@@ -148,7 +148,7 @@ haltwo_read_indirect(struct haltwo_softc *sc, uint32_t ireg, uint16_t *low,
 	    ireg | HAL2_IAR_READ);
 
 	while (haltwo_read(sc, ctl, HAL2_REG_CTL_ISR) & HAL2_ISR_TSTATUS)
-		;
+		continue;
 
 	if (low)
 		*low = haltwo_read(sc, ctl, HAL2_REG_CTL_IDR0);
@@ -162,8 +162,9 @@ haltwo_init_codec(struct haltwo_softc *sc, struct haltwo_codec *codec)
 {
 	int err;
 	int rseg;
-	size_t allocsz = sizeof(struct hpc_dma_desc) * HALTWO_MAX_DMASEGS;
+	size_t allocsz;
 
+	allocsz = sizeof(struct hpc_dma_desc) * HALTWO_MAX_DMASEGS;
 	KASSERT(allocsz <= PAGE_SIZE);
 
 	err = bus_dmamem_alloc(sc->sc_dma_tag, allocsz, 0, 0, &codec->dma_seg,
@@ -191,7 +192,7 @@ haltwo_init_codec(struct haltwo_softc *sc, struct haltwo_codec *codec)
 
 	memset(codec->dma_descs, 0, allocsz);
 
-	return (0);
+	return 0;
 
 out_destroy:
 	bus_dmamap_destroy(sc->sc_dma_tag, codec->dma_map);
@@ -200,7 +201,7 @@ out_free:
 out:
 	DPRINTF(("haltwo_init_codec failed: %d\n",err));
 
-	return (err);
+	return err;
 }
 
 static void
@@ -211,10 +212,11 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 	int i;
 	bus_dma_segment_t *segp;
 	struct hpc_dma_desc *descp;
-	int next_intr = blksize;
+	int next_intr;
 
 	KASSERT(len % blksize == 0);
 
+	next_intr = blksize;
 	codec->intr = intr;
 	codec->intr_arg = intrarg;
 
@@ -257,21 +259,24 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 static int
 haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct hpc_attach_args *haa = aux;
+	struct hpc_attach_args *haa;
 
+	haa = aux;
 	if (strcmp(haa->ha_name, cf->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
 haltwo_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct haltwo_softc *sc = (void *)self;
-	struct hpc_attach_args *haa = aux;
+	struct haltwo_softc *sc;
+	struct hpc_attach_args *haa;
 	uint32_t rev;
 
+	sc = (void *)self;
+	haa = aux;
 	sc->sc_st = haa->ha_st;
 	sc->sc_dma_tag = haa->ha_dmat;
 
@@ -345,9 +350,11 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 static int
 haltwo_intr(void *v)
 {
-	struct haltwo_softc *sc = v;
-	int ret = 0;
+	struct haltwo_softc *sc;
+	int ret;
 
+	sc = v;
+	ret = 0;
 	if (bus_space_read_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL)
 	    & HPC3_PBUS_DMACTL_IRQ) {
 		sc->sc_dac.intr(sc->sc_dac.intr_arg);
@@ -356,7 +363,7 @@ haltwo_intr(void *v)
 	} else
 		DPRINTF(("haltwo_intr: Huh?\n"));
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -386,10 +393,10 @@ haltwo_query_encoding(void *v, struct audio_encoding *e)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -398,10 +405,11 @@ haltwo_set_params(void *v, int setmode, int usemode,
 		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	int master, inc, mod;
 	uint16_t tmp;
 
+	sc = v;
 	if (play->sample_rate < 4000)
 		play->sample_rate = 4000;
 	if (play->sample_rate > 48000)
@@ -428,7 +436,7 @@ haltwo_set_params(void *v, int setmode, int usemode,
 	switch (play->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (play->precision != 8)
-			return (EINVAL);
+			return EINVAL;
 
 		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
 		pfil->append(pfil, mulaw_to_linear16, &hw);
@@ -439,7 +447,7 @@ haltwo_set_params(void *v, int setmode, int usemode,
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 	/* play points HW encoding */
 
@@ -467,7 +475,7 @@ haltwo_set_params(void *v, int setmode, int usemode,
 	DPRINTF(("haltwo_set_params: hw_encoding = %d hw_channels = %d\n",
 	    play->encoding, play->channels));
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -483,20 +491,21 @@ haltwo_round_blocksize(void *v, int blocksize,
 static int
 haltwo_halt_output(void *v)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 
+	sc = v;
 	/* Disable PBUS DMA */
 	bus_space_write_4(sc->sc_st, sc->sc_dma_sh, HPC3_PBUS_CH0_CTL,
 	    HPC3_PBUS_DMACTL_ACT_LD);
 
-	return (0);
+	return 0;
 }
 
 static int
 haltwo_halt_input(void *v)
 {
 
-	return (ENXIO);
+	return ENXIO;
 }
 
 static int
@@ -504,18 +513,17 @@ haltwo_getdev(void *v, struct audio_device *dev)
 {
 
 	*dev = haltwo_device;
-
-	return (0);
+	return 0;
 }
 
 static int
 haltwo_set_port(void *v, mixer_ctrl_t *mc)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	int lval, rval;
 
 	if (mc->type != AUDIO_MIXER_VALUE)
-		return (EINVAL);
+		return EINVAL;
 
 	if (mc->un.value.num_channels == 1)
 		lval = rval = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -523,8 +531,9 @@ haltwo_set_port(void *v, mixer_ctrl_t *mc)
 		lval = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 		rval = mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 	} else
-		return (EINVAL);
+		return EINVAL;
 
+	sc = v;
 	switch (mc->dev) {
 	case HALTWO_MASTER_VOL:
 		sc->sc_vol_left = lval;
@@ -537,26 +546,27 @@ haltwo_set_port(void *v, mixer_ctrl_t *mc)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
 haltwo_get_port(void *v, mixer_ctrl_t *mc)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	int l, r;
 
 	switch (mc->dev) {
 	case HALTWO_MASTER_VOL:
+		sc = v;
 		l = sc->sc_vol_left;
 		r = sc->sc_vol_right;
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (mc->un.value.num_channels == 1)
@@ -565,9 +575,9 @@ haltwo_get_port(void *v, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT]  = l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
 	} else
-		return (EINVAL);
+		return EINVAL;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -594,10 +604,10 @@ haltwo_query_devinfo(void *v, mixer_devinfo_t *dev)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -648,11 +658,11 @@ static void *
 haltwo_malloc(void *v, int direction, size_t size, struct malloc_type *type,
 		int flags)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	struct haltwo_dmabuf *p;
 
 	DPRINTF(("haltwo_malloc size = %d\n", size));
-
+	sc = v;
 	p = malloc(sizeof(struct haltwo_dmabuf), type, flags);
 	if (!p)
 		return 0;
@@ -671,9 +681,10 @@ haltwo_malloc(void *v, int direction, size_t size, struct malloc_type *type,
 static void
 haltwo_free(void *v, void *addr, struct malloc_type *type)
 {
-	struct haltwo_softc *sc = v;
-	struct haltwo_dmabuf *p,**pp;
+	struct haltwo_softc *sc;
+	struct haltwo_dmabuf *p, **pp;
 
+	sc = v;
 	for (pp = &sc->sc_dma_bufs; (p = *pp) != NULL; pp = &p->next) {
 		if (p->kern_addr == addr) {
 			*pp = p->next;
@@ -689,14 +700,14 @@ static int
 haltwo_get_props(void *v)
 {
 
-	return (0);
+	return 0;
 }
 
 static int
 haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	struct haltwo_dmabuf *p;
 	uint16_t tmp;
 	uint32_t ctrl;
@@ -704,7 +715,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 
 	DPRINTF(("haltwo_trigger_output start = %p end = %p blksize = %d"
 	    " param = %p\n", start, end, blksize, param));
-
+	sc = v;
 	for (p = sc->sc_dma_bufs; p != NULL; p = p->next)
 		if (p->kern_addr == start)
 			break;
@@ -712,7 +723,7 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	if (p == NULL) {
 		printf("haltwo_trigger_output: buffer not in list\n");
 
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	/* Disable PBUS DMA */
@@ -755,19 +766,19 @@ haltwo_trigger_output(void *v, void *start, void *end, int blksize,
 	haltwo_write_indirect(sc, HAL2_IREG_DMA_PORT_EN,
 	    tmp | HAL2_DMA_PORT_EN_CODECTX, 0);
 
-	return (0);
+	return 0;
 }
 
 static int
 haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 		void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
-	struct haltwo_softc *sc = v;
+	struct haltwo_softc *sc;
 	struct haltwo_dmabuf *p;
 
 	DPRINTF(("haltwo_trigger_input start = %p end = %p blksize = %d\n",
 	    start, end, blksize));
-
+	sc = v;
 	for (p = sc->sc_dma_bufs; p != NULL; p = p->next)
 		if (p->kern_addr == start)
 			break;
@@ -775,7 +786,7 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 	if (p == NULL) {
 		printf("haltwo_trigger_input: buffer not in list\n");
 
-		return (EINVAL);
+		return EINVAL;
 	}
 
 #if 0
@@ -783,5 +794,5 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 	    blksize, intr, intrarg);
 #endif
 
-	return (ENXIO);
+	return ENXIO;
 }

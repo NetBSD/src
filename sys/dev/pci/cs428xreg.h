@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428xreg.h,v 1.2 2001/01/22 01:44:57 augustss Exp $	*/
+/*	$NetBSD: cs428xreg.h,v 1.3 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -31,45 +31,45 @@
  */
 #ifndef _CS428X_REG_H_
 #define _CS428X_REG_H_
-#define CS428X_ACCTL   0x460    /* AC97 Control Register */
-#define  ACCTL_RSTN        0x00000001 /* Only for CS4280 */
-#define  ACCTL_ESYN        0x00000002
-#define  ACCTL_VFRM        0x00000004
-#define  ACCTL_DCV         0x00000008
-#define  ACCTL_CRW         0x00000010
-#define  ACCTL_ASYN        0x00000020 /* Only for CS4280 */
-#define  ACCTL_TC          0x00000040
+#define CS428X_ACCTL   0x460	/* AC97 Control Register */
+#define	 ACCTL_RSTN	   0x00000001 /* Only for CS4280 */
+#define	 ACCTL_ESYN	   0x00000002
+#define	 ACCTL_VFRM	   0x00000004
+#define	 ACCTL_DCV	   0x00000008
+#define	 ACCTL_CRW	   0x00000010
+#define	 ACCTL_ASYN	   0x00000020 /* Only for CS4280 */
+#define	 ACCTL_TC	   0x00000040
 
-#define CS428X_ACSTS   0x464    /* AC97 Status Register */
-#define  ACSTS_CRDY        0x00000001
-#define  ACSTS_VSTS        0x00000002
+#define CS428X_ACSTS   0x464	/* AC97 Status Register */
+#define	 ACSTS_CRDY	   0x00000001
+#define	 ACSTS_VSTS	   0x00000002
 
 #define CS428X_ACOSV   0x468	/* AC97 Output Slot Valid Register */
-#define  ACOSV_SLV3        0x00000001
-#define  ACOSV_SLV4        0x00000002
-#define  ACOSV_SLV5        0x00000004
-#define  ACOSV_SLV6        0x00000008
-#define  ACOSV_SLV7        0x00000010
-#define  ACOSV_SLV8        0x00000020
-#define  ACOSV_SLV9        0x00000040
-#define  ACOSV_SLV10       0x00000080
-#define  ACOSV_SLV11       0x00000100
-#define  ACOSV_SLV12       0x00000200
+#define	 ACOSV_SLV3	   0x00000001
+#define	 ACOSV_SLV4	   0x00000002
+#define	 ACOSV_SLV5	   0x00000004
+#define	 ACOSV_SLV6	   0x00000008
+#define	 ACOSV_SLV7	   0x00000010
+#define	 ACOSV_SLV8	   0x00000020
+#define	 ACOSV_SLV9	   0x00000040
+#define	 ACOSV_SLV10	   0x00000080
+#define	 ACOSV_SLV11	   0x00000100
+#define	 ACOSV_SLV12	   0x00000200
 
 #define CS428X_ACCAD   0x46c	/* AC97 Command Address Register */
 #define CS428X_ACCDA   0x470	/* AC97 Command Data Register */
 
 #define CS428X_ACISV   0x474	/* AC97 Input Slot Valid Register */
-#define  ACISV_ISV3        0x00000001
-#define  ACISV_ISV4        0x00000002
-#define  ACISV_ISV5        0x00000004
-#define  ACISV_ISV6        0x00000008
-#define  ACISV_ISV7        0x00000010
-#define  ACISV_ISV8        0x00000020
-#define  ACISV_ISV9        0x00000040
-#define  ACISV_ISV10       0x00000080
-#define  ACISV_ISV11       0x00000100
-#define  ACISV_ISV12       0x00000200
+#define	 ACISV_ISV3	   0x00000001
+#define	 ACISV_ISV4	   0x00000002
+#define	 ACISV_ISV5	   0x00000004
+#define	 ACISV_ISV6	   0x00000008
+#define	 ACISV_ISV7	   0x00000010
+#define	 ACISV_ISV8	   0x00000020
+#define	 ACISV_ISV9	   0x00000040
+#define	 ACISV_ISV10	   0x00000080
+#define	 ACISV_ISV11	   0x00000100
+#define	 ACISV_ISV12	   0x00000200
 #define CS428X_ACSAD   0x478	/* AC97 Status Address Register */
 #define CS428X_ACSDA   0x47c	/* AC97 Status Data Register */
 
