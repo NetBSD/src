@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.12 2001/12/01 16:43:19 wiz Exp $
+.\" $NetBSD: mixerctl.1,v 1.13 2001/12/01 20:40:20 wiz Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -121,6 +121,16 @@ The suffixes ++ and -- can be used to step through the values of a
 mixer control.  For numeric controls these operators may increase
 (resp. decrease) the value by an amount (the delta) suitable to make
 the control assume the next possible value.
+.Sh ENVIRONMENT
+.Bl -tag -width MIXERDEVICE
+.It Pa MIXERDEVICE
+the mixer device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/mixer0
+.It Pa /dev/mixer0
+mixer audio device
+.El
 .Sh EXAMPLES
 The commmand
 .Dl "mixerctl -a -v"
@@ -136,16 +146,6 @@ record.record=220,220 volume
 record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/mixer0
-.It Pa /dev/mixer0
-mixer audio device
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width MIXERDEVICE
-.It Pa MIXERDEVICE
-the mixer device to use.
-.El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audio 4 ,
@@ -155,4 +155,3 @@ The
 .Nm
 command first appeared in
 .Nx 1.3 .
-
