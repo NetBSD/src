@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.33 2001/01/10 14:02:32 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.34 2001/11/01 16:06:59 tron Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.33 2001/01/10 14:02:32 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.34 2001/11/01 16:06:59 tron Exp $");
 #endif
 #endif					/* not lint */
 
@@ -399,7 +399,6 @@ __init_getch(void)
 		limit = 1023;
 		cp = t_getstr(_cursesi_genbuf, tc[i].name, &p, &limit);
 		if (cp != NULL) {
-			free(cp);
 			current = base_keymap;	/* always start with
 						 * base keymap. */
 			length = (int) strlen(entry);
