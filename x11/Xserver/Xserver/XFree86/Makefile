@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/01/08 03:36:24 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2004/01/23 08:59:20 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,10 @@ DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
 	${DPADD.mi} ${LIBZ} ${LIBM}
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "x86_64"
+LDADD+=	-lx86_64
+DPADD+=	${LIBX86_64}
+.elif ${MACHINE} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif
