@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.1 1997/10/18 04:38:19 mark Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.2 1997/11/06 01:55:18 mark Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1006,8 +1006,7 @@ dp8390_get(sc, src, total_len)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = total_len;
-	m->m_data += 2;	/* XXX */
-	len = MHLEN - 2;
+	len = MHLEN;
 	top = 0;
 	mp = &top;
 
@@ -1028,10 +1027,12 @@ dp8390_get(sc, src, total_len)
 				return 0;
 			}
 			len = MCLBYTES;
-			if (top == 0) {
-				len -= 2;
-				m->m_data += 2;
-			}
+		}
+		if (top == 0) {
+			int pad = ALIGN(sizeof(struct ether_header))
+			    - sizeof(struct ether_header);
+			len -= pad;
+			m->m_data += pad;
 		}
 		m->m_len = len = min(total_len, len);
 		if (sc->ring_copy)
