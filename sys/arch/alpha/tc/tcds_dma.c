@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.23 1998/03/07 00:42:08 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.24 1998/05/24 23:41:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.23 1998/03/07 00:42:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.24 1998/05/24 23:41:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.23 1998/03/07 00:42:08 thorpej Exp $"
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
+
+#include <machine/bus.h>
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsreg.h>
@@ -83,7 +85,7 @@ tcds_dma_isintr(sc)
 
 /*
  * Pseudo (chained) interrupt from the asc driver to kick the
- * current running DMA transfer. I am replying on ascintr() to
+ * current running DMA transfer. I am relying on ascintr() to
  * pickup and clean errors for now
  *
  * return 1 if it was a DMA continue.
@@ -96,7 +98,7 @@ tcds_dma_intr(sc)
 	u_int32_t dud;
 	int trans = 0, resid = 0;
 	u_int32_t *addr, dudmask;
-	u_char tcl, tcm, tch;
+	u_int8_t tcl, tcm, tch;
 
 	NCR_DMA(("tcds_dma %d: intr", sc->sc_slot));
 
@@ -105,7 +107,7 @@ tcds_dma_intr(sc)
 
 	/* This is an "assertion" :) */
 	if (sc->sc_active == 0)
-		panic("dmaintr: DMA wasn't active");
+		panic("tcds_dma_intr: DMA wasn't active");
 
 	/* DMA has stopped */
 	tcds_dma_enable(sc, 0);
@@ -115,7 +117,7 @@ tcds_dma_intr(sc)
 		/* A "Transfer Pad" operation completed */
 		tcl = NCR_READ_REG(nsc, NCR_TCL);
 		tcm = NCR_READ_REG(nsc, NCR_TCM);
-		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		NCR_DMA(("tcds_dma_intr: discarded %d bytes (tcl=%d, tcm=%d)\n",
 		    tcl | (tcm << 8), tcl, tcm));
 		return 0;
 	}
@@ -144,7 +146,7 @@ tcds_dma_intr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	NCR_DMA(("tcds_dma_intr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 	    tcl, tcm, tch, trans, resid));
 
 	/*
@@ -152,7 +154,7 @@ tcds_dma_intr(sc)
 	 */
 	if (sc->sc_iswrite) {
 		/* Handle unaligned starting address, length. */
-		dud = *sc->sc_dud0;
+		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud0);
 		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
 			addr = (u_int32_t *)
 			    ((vm_offset_t)sc->sc_dmaaddr & ~0x3);
@@ -172,11 +174,12 @@ tcds_dma_intr(sc)
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
-		dud = *sc->sc_dud1;
+		dud = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dud1);
 		if ((dud & TCDS_DUD1_VALIDBITS) != 0) {
 	
 			addr = (u_int32_t *)
-			    ((vm_offset_t)*sc->sc_sda << 2);
+			    ((vm_offset_t)bus_space_read_4(sc->sc_bst,
+			     sc->sc_bsh, sc->sc_sda) << 2);
 			dudmask = 0;
 			if (dud & TCDS_DUD1_VALID00)
 				dudmask |= TCDS_DUD_BYTE00;
@@ -236,24 +239,23 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	 * the rules say we cannot transfer more than the limit
 	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
 	 */
-	
+
 	size = min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 	*dmasize = sc->sc_dmasize = size;
 
 	NCR_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
-	*sc->sc_sda = vtophys((vm_offset_t)*addr) >> 2;
-	alpha_mb();
-	dic = *sc->sc_dic;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_sda,
+	    vtophys((vm_offset_t)*addr) >> 2);
+	dic = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->sc_dic);
 	dic &= ~TCDS_DIC_ADDRMASK;
 	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
 	if (datain)
 		dic |= TCDS_DIC_WRITE;
 	else
 		dic &= ~TCDS_DIC_WRITE;
-	*sc->sc_dic = dic;
-	alpha_mb();
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_dic, dic);
 
 	return (0);
 }
