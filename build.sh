@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.26 2001/11/25 18:35:06 thorpej Exp $
+#  $NetBSD: build.sh,v 1.27 2001/11/26 05:57:33 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -176,6 +176,7 @@ while eval $getoptcmd; do case $opt in
 
 	-O)	eval $optargcmd; resolvepath
 		MAKEOBJDIR="\${.CURDIR:C,^$cwd,$OPTARG,}"; export MAKEOBJDIR
+		makeobjdir=$OPTARG
 		makeenv="$makeenv MAKEOBJDIR";;
 
 	-R)	eval $optargcmd; resolvepath
@@ -246,6 +247,14 @@ if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
 	$runcmd cd ..
 fi
 
+#
+# If setting -O to root an obj dir make sure the base directory is made
+# before continuing as bsd.own.mk will need this to pick up _SRC_TOP_OBJ_
+#
+if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
+	$runcmd mkdirp $makeobjdir
+fi
+
 # Find DESTDIR and TOOLDIR.
 if [ "$runcmd" = "echo" ]; then
 	# shown symbolically with -n because these may come from mk.conf
@@ -312,7 +321,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.26 2001/11/25 18:35:06 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.27 2001/11/26 05:57:33 jmc Exp $
 #
 
 EOF
