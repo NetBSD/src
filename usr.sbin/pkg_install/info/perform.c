@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.17 1998/10/09 18:27:34 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.18 1998/10/13 17:08:31 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.17 1998/10/09 18:27:34 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.18 1998/10/13 17:08:31 agc Exp $");
 #endif
 #endif
 
@@ -143,30 +143,45 @@ pkg_do(char *pkg)
 		show_index(tmp, COMMENT_FNAME);
 	} else {
 		/* Start showing the package contents */
-		if (!Quiet)
+		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
-		if (Flags & SHOW_COMMENT)
+		}
+		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
-		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME))
+		}
+		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);
-		if (Flags & SHOW_DESC)
+		}
+		if (Flags & SHOW_DESC) {
 			show_file("Description:\n", DESC_FNAME);
-		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME))
+		}
+		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
 			show_file("Install notice:\n", DISPLAY_FNAME);
-		if (Flags & SHOW_PLIST)
+		}
+		if (Flags & SHOW_PLIST) {
 			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
-		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME))
+		}
+		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
 			show_file("Install script:\n", INSTALL_FNAME);
-		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME))
+		}
+		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
 			show_file("De-Install script:\n", DEINSTALL_FNAME);
-		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME))
+		}
+		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
 			show_file("mtree file:\n", MTREE_FNAME);
-		if (Flags & SHOW_PREFIX)
+		}
+		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
-		if (Flags & SHOW_FILES)
+		}
+		if (Flags & SHOW_FILES) {
 			show_files("Files:\n", &plist);
-		if (!Quiet)
+		}
+		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
+			show_file("Build version:\n", BUILD_VERSION_FNAME);
+		}
+		if (!Quiet) {
 			puts(InfoPrefix);
+		}
 	}
 	free_plist(&plist);
 bail:
