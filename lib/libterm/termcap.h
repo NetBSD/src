@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.6 1999/08/15 10:59:01 blymn Exp $	*/
+/*	$NetBSD: termcap.h,v 1.7 1999/08/16 08:34:33 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,8 @@
  *	@(#)termcap.h	8.1 (Berkeley) 6/4/93
  */
 
+#include <sys/types.h>
+
 #ifndef _TERMCAP_H_
 #define _TERMCAP_H_
 
@@ -57,8 +59,8 @@ void  tputs	__P((const char *, int, void (*)(int)));
 int   t_getent	__P((struct tinfo **, const char *));
 int   t_getnum  __P((struct tinfo *, const char *));
 int   t_getflag __P((struct tinfo *, const char *));
-char *t_getstr  __P((struct tinfo *, const char *, char **, int *));
-int   t_goto    __P((struct tinfo *, const char *, int, int, char *, int));
+char *t_getstr  __P((struct tinfo *, const char *, char **, size_t *));
+int   t_goto    __P((struct tinfo *, const char *, int, int, char *, size_t));
 int   t_puts    __P((struct tinfo *, const char *, int,
 		     void (*)(char, void *), void *));
 void  t_freent  __P((struct tinfo *));
