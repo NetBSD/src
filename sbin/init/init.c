@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.52 2002/08/24 01:02:51 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.53 2002/10/04 13:19:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.52 2002/08/24 01:02:51 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.53 2002/10/04 13:19:05 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -500,7 +500,7 @@ setctty(const char *name)
 	int fd;
 
 	(void) revoke(name);
-	sleep (2);			/* leave DTR low */
+	sleep(2);			/* leave DTR low */
 	if ((fd = open(name, O_RDWR)) == -1) {
 		stall("can't open %s: %m", name);
 		_exit(1);
