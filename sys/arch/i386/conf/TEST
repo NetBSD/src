@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.17 1993/11/04 09:28:26 cgd Exp $
+#	$Id: TEST,v 1.18 1993/11/08 20:10:32 mycroft Exp $
 #
 
 # standard options
@@ -119,6 +119,7 @@ ed0 at isa? port 0x280 irq 9 iomem 0xd0000	# SMC hardware config
 ed0 at isa? port 0x250 irq 9 iomem 0xd8000	# 3C503 default config
 #hp0 at isa? port 0x300
 is0 at isa? port 0x280 drq 7			# IsoLAN AT 4141, IsoLink 4110
+ie0 at isa? port 0x360 irq 7 iomem 0xd0000	# i82586
 
 #pseudo-device	fpe				# floating point emulator
 #pseudo-device	spkr				# speaker queue

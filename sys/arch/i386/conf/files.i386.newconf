@@ -45,6 +45,8 @@ file	arch/i386/isa/if_ed.c		ed needs-count
 #file	arch/i386/isa/if_hp.c		hp
 device	is at isa: ether, ifnet, dma
 file	arch/i386/isa/if_is.c		is
+device	ie at isa: ether, ifnet
+file	arch/i386/isa/if_ie.c		ie
 
 
 device	lms at isa
