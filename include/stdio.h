@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.15 1995/03/22 18:17:24 jtc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.16 1995/03/25 02:51:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -217,7 +217,7 @@ int	 ferror __P((FILE *));
 int	 fflush __P((FILE *));
 int	 fgetc __P((FILE *));
 int	 fgetpos __P((FILE *, fpos_t *));
-char	*fgets __P((char *, size_t, FILE *));
+char	*fgets __P((char *, int, FILE *));
 FILE	*fopen __P((const char *, const char *));
 int	 fprintf __P((FILE *, const char *, ...));
 int	 fputc __P((int, FILE *));
