@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.115 2004/04/21 04:31:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.116 2004/04/21 04:32:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1153,3 +1153,9 @@ sys/kern/init_sysctl.c				1.26
 
 	Lots of sysctl descriptions mostly copied from sysctl(3).
 	[atatat, ticket #93]
+
+sys/kern/init_sysctl.c				1.27
+
+	Prefer that kern.hostid is printed in hex, not as a signed decimal,
+	and avoid accidental sign-extension when setting it.
+	[atatat, ticket #150]
