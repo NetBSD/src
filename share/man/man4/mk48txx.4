@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk48txx.4,v 1.10 2003/04/16 13:35:17 wiz Exp $
+.\"	$NetBSD: mk48txx.4,v 1.11 2003/06/27 18:36:20 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@ The
 .Nm
 driver provides access to several models of
 .Tn Mostek
-time-of-day clock chips. Access methods to retrieve and set date and time
+time-of-day clock chips.
+Access methods to retrieve and set date and time
 are provided through the
 .Em TODR
 interface defined in
@@ -75,7 +76,8 @@ typedef void (*mk48txx_nvwr_t)(bus_space_tag_t bus_tag,
 Specify bus space access to the chip's non-volatile memory
 .Pq including the clock registers .
 .It Fa model
-The chip model which this instance should serve. Must be one of
+The chip model which this instance should serve.
+Must be one of
 .Dq mk48t02 ,
 .Dq mk48t08 ,
 .Dq mk48t18
@@ -84,13 +86,16 @@ or
 .It Fa year0
 The actual year represented by the clock's
 .Sq year
-counter. This is generally dependent on the system configuration in which
-the clock device is mounted. For instance, on Sun Microsystems machines
+counter.
+This is generally dependent on the system configuration in which
+the clock device is mounted.
+For instance, on Sun Microsystems machines
 the convention is to have clock's two-digit year represent the year 1968.
 .It Fa nvread
 .It Fa nvwrite
 Specify alternate access methods for reading resp. writing clock
-device registers.  The default, when
+device registers.
+The default, when
 .Dv NULL
 is passed as an access method, is to access the chip memory
 .Pq and clock registers
@@ -106,8 +111,8 @@ location to be read from or written to, respectively.
 .Pp
 Note that if the resulting date retrieved with the todr_gettime() method
 is earlier that January 1, 1970, the driver will assume that the chip's
-year counter actually represents a year in the 21st century. This
-behaviour can be overridden by setting the global variable
+year counter actually represents a year in the 21st century.
+This behaviour can be overridden by setting the global variable
 .Va mk48txx_auto_century_adjust
 to zero.
 .Sh HARDWARE
