@@ -1,0 +1,127 @@
+/*	$NetBSD: dc_ds.c,v 1.1 1996/09/25 20:48:51 jonathan Exp $	*/
+
+/*
+ * Copyright 1996 The Board of Trustees of The Leland Stanford
+ * Junior University. All Rights Reserved.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies.  Stanford University
+ * makes no representations about the suitability of this
+ * software for any purpose.  It is provided "as is" without
+ * express or implied warranty.
+ *
+ * this driver contributed by Jonathan Stone
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/tty.h>
+#include <machine/autoconf.h>
+#include <machine/dc7085cons.h>		/* XXX */
+#include <pmax/dev/dcvar.h>
+#include <pmax/dev/dc_ds_cons.h>
+#include <pmax/pmax/kn01.h>
+
+extern struct cfdriver mainbus_cd;	/* XXX */
+
+/*
+ * Autoconfig definition of driver front-end
+ */
+int	dc_ds_match  __P((struct device * parent, void *cfdata, void *aux));
+void	dc_ds_attach __P((struct device *parent, struct device *self, void *aux));
+
+struct cfattach dc_ds_ca = {
+	sizeof(struct dc_softc), dc_ds_match, dc_ds_attach
+};
+
+
+/*
+ * Initialize a line for (polled) console I/O
+ */
+int
+dc_ds_consinit(dev)
+	dev_t dev;
+{
+#if defined(DEBUG) || 1			/* XXX untested */
+	printf("dc_ds(%d,%d): serial console at 0x%x\n",
+	       minor(dev) >> 2, minor(dev) & 03,
+	       MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
+	DELAY(100000);
+#endif
+	dc_consinit(dev, (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_DZ));
+	return (1);
+}
+
+
+/*
+ * Match driver on decstation (2100,3100,5100) based on name
+ */
+int
+dc_ds_match(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, "dc") != 0 &&
+	    strcmp(ca->ca_name, "mdc") != 0 &&
+	    strcmp(ca->ca_name, "dc7085") != 0)
+		return (0);
+
+	if (badaddr((caddr_t)ca->ca_addr, 2))
+		return (0);
+
+	return (1);
+}
+
+void
+dc_ds_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+#if NTC > 0
+	struct ioasicdev_attach_args *d = aux;
+#endif /* NTC */
+	caddr_t dcaddr;
+	struct dc_softc *sc = (void*) self;
+
+
+#if NTC > 0
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		dcaddr = (caddr_t)d->iada_addr;
+		(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
+#ifdef HW_FLOW_CONTROL
+	/* rts/cts mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
+#else
+				  0,
+#endif
+				  1, 3);
+		/* tie pseudo-slot to device */
+		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
+			     dcintr, self);
+	}
+	else
+#endif /* NTC */
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
+		dcaddr = (caddr_t)ca->ca_addr;
+		DELAY(1000000); /* let PROM console  output complete */
+
+		(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  1 << DCCOMM_PORT, 0x0, 0, DCCOMM_PORT);
+
+		/* tie pseudo-slot to device */
+		BUS_INTR_ESTABLISH(ca, dcintr, self);
+	}
+	printf("\n");
+}
+
+
+/*XXX*/
