@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.3 1998/02/06 06:16:24 perry Exp $
+.\"	$NetBSD: pool.9,v 1.4 1998/02/20 00:00:00 pk Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,14 +48,14 @@
 .Fd #include <sys/malloc.h>
 .Fd #include <sys/pool.h>
 .Ft struct pool *
-.Fn pool_create "size_t size" "int nitems" "char *wchan" "int mtype"
-.Fn POOL_INITIALIZER "pool" "size" "nitems" "wchan" "mtype"
+.Fn pool_create "size_t size" "int nitems" "char *wchan" "int mtype" "caddr_t storage"
 .Ft void *
 .Fn pool_get "struct pool *pp" "int flags"
 .Ft void
 .Fn pool_put "struct pool *pp" "void *item"
 .Ft int
-.Fn pool_prime "struct pool *pp" "int nitems"
+.Fn pool_prime "struct pool *pp" "int nitems" "caddr_t storage"
+.Fn POOL_STORAGE_SIZE "size" "nitems"
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
 areas of memory. Resource pools set aside an amount of memory for
@@ -98,25 +98,27 @@ must wait for items to be returned to the pool.
 the memory tag passed to
 .Xr malloc 9
 when allocating memory for pool items.
+.It Fa storage
+Optional storage provided by the caller to use in lieu of
+.Xr malloc 9
+for both the pool handle and all pool items.
 .El
 .Pp
 If not enough memory is available to create the pool resource,
 .Fn pool_create
 returns
 .Dv NULL .
-.Pp
-The macro
-.Fn POOL_INITIALIZER
-can be used to initialize a statically declared pool-resource structure.
-The
-.Fa size ,
+If the
+.Fa storage
+parameter is used, the client is responsible for providing enough storage
+to accommodate the number of pool items specified by
 .Fa nitems ,
-.Fa wchan ,
-and
-.Fa mtype
-arguments have the same meaning as their
-.Fn pool_create
-counterparts.
+as well as the space required by the pool's administrative overhead
+.Pq i.e. the pool handle .
+The macro
+.Fn POOL_STORAGE_SIZE "size" "nitems"
+can be used to determine the amount of storage needed to setup a pool,
+given the size and number of the pool items.
 .Pp
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
@@ -140,6 +142,10 @@ otherwise
 .Fn pool_get
 returns
 .Dv NULL .
+Undefined behaviour results if
+.Dv PR_MALLOCOK
+is specified on a pool handle that was created using client-provided
+storage.
 .El
 .Pp
 .Fn pool_put
@@ -165,13 +171,21 @@ adds items to the pool.
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa nitems
-The number of items to add to the pool. The items are allocated by using
+The number of items to add to the pool. Storage for the pool items can be
+passed in the
+.Fa storage
+argument. If this parameter is
+.Dv NULL ,
+the items are allocated by using
 .Xr malloc 9 .
 This function may return
 .Dv ENOMEM
 in case the requested number of items could not be allocated. Otherwise,
 the return value is 0.
 .El
+.Pp
+Note that undefined behaviour results when mixing the storage providing
+methods supported by the pool resource routines.
 .Sh RETURN VALUES
 .Sh EXAMPLES
 .Sh CODE REFERENCES
