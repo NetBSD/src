@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.368 2004/08/03 22:32:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.369 2004/08/03 22:34:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6298,3 +6298,10 @@ UPDATING					patch
 
 	Describe the sysctl failure case.
 	[martin, ticket #726]
+
+gnu/dist/gcc/libstdc++-v3/include/c_std/std_cmath.h	1.2
+
+	Don't undefine some macros which are only redefined if _GLIBCPP_USE_C99
+	is defined - this causes that nothing usable is left unless we implement
+	enough of C99. PR#25930
+	[dmcmahill, ticket #731]
