@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 1997/05/13 22:47:30 jtk Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 1997/05/18 05:29:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,12 +151,16 @@ pchbattach(parent, self, aux)
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
+				 *
+				 * NOTE: The bus dma tag is not forwarded
+				 * here since it will be picked up by
+				 * pci_attach_hook().
 				 */
 				pba.pba_busname = "pci";
 				pba.pba_iot = pa->pa_iot;
 				pba.pba_memt = pa->pa_memt;
 				pba.pba_bus = pbnum;
-				pba.pba_flags = pa->pa_flags;;
+				pba.pba_flags = pa->pa_flags;
 				pba.pba_pc = pa->pa_pc;
 				config_found(self, &pba, pchb_print);
 				break;
