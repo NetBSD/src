@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.33 1998/09/11 12:50:10 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.34 1999/04/11 18:44:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -107,6 +107,7 @@ ktrgetheader(type)
 	microtime(&kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
+	/* Note: ktr_len and ktr_buf are left to be filled in by the caller. */
 	return (kth);
 }
 
@@ -154,6 +155,7 @@ ktrsysret(v, code, error, retval)
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kth = ktrgetheader(KTR_SYSRET);
 	ktp.ktr_code = code;
+	ktp.ktr_eosys = 0;			/* XXX unused */
 	ktp.ktr_error = error;
 	ktp.ktr_retval = retval;		/* what about val2 ? */
 
