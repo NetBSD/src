@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.16 2002/11/01 13:32:27 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.17 2002/11/01 16:41:53 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -590,4 +590,37 @@ sys/dev/pci/pciide.c				1.165
 	Add support for Promise Ultra133TX2 and Ultra133TX2v2, from FreeBSD
 	and stephen@degler.net in kern/17509.
 	[bouyer, ticket #724]
+
+sys/dev/pci/pciide.c				1.166
+sys/dev/pci/pciide_hpt_reg.h			1.8-1.9
+
+	Add support for HPT372. From sdegler@kashmir.degler.net in kern/17908,
+	with some improvement from me, and from FreeBSD.
+	[bouyer, ticket #725]
+
+sys/dev/ic/wdc.c				1.117
+
+	Add support for Ultra/133 (ultra-DMA6) in wdc_probe_caps().
+	[bouyer, ticket #726]
+
+sys/dev/pci/pciide.c				1.167
+sys/dev/pci/pciide_apollo_reg.h			1.12
+
+	Correct setup for Ultra133 capable VIA chipsets, From Matthias Drochner
+	on current-users, with cross-check and some improvement from
+	linux-2.4.19 and FreeBSD-current. Also don't set the
+	APO_UDMA_CLK66 bit for Ultra/100 capable chipset, and support
+	Ultra/133 for the VT8233A.
+	[bouyer, ticket #727]
+
+sys/dev/pci/pciide.c				1.168
+
+	Support Ultra/133 on promise controllers that can do it.
+	[bouyer, ticket #728]
+
+sys/dev/scsipi/atapi_wdc.c			1.53
+
+	Do PIO transfers for len < 4 bytes. From Matthias Drochner in
+	private mail.
+	[bouyer, ticket #733]
 
