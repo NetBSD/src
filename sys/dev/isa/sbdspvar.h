@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.21 1997/05/19 23:14:30 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.22 1997/05/23 21:20:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -96,13 +96,15 @@ struct sbdsp_softc {
 
 	u_int	spkr_state;		/* non-null is on */
 	
-	int	sc_irate, sc_itc;	/* Sample rate for input */
-	int	sc_orate, sc_otc;	/* ...and output */
+	u_int	sc_irate;		/* Sample rate for input */
+	u_int	sc_orate;		/* ...and output */
+	u_char	sc_itc;
+	u_char	sc_otc;
 
-	int	sc_imode;
-	int	sc_omode;
-#define SB_ADAC_LS 0
-#define SB_ADAC_HS 1
+	struct	sbmode *sc_imodep;
+	struct	sbmode *sc_omodep;
+	u_char	sc_ibmode;
+	u_char	sc_obmode;
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void*);	/* dma completion intr handler */
@@ -113,44 +115,35 @@ struct sbdsp_softc {
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
 	int	dmachan;		/* active DMA channel */
-	int	sc_last_hs_size;	/* last HS dma size */
-
-	u_int	sc_precision;		/* size of samples */
-	int	sc_channels;		/* # of channels */
 
 	int	sc_dmadir;		/* DMA direction */
 #define	SB_DMA_NONE	0
 #define	SB_DMA_IN	1
 #define	SB_DMA_OUT	2
 
-	u_int	sc_model;		/* DSP model */
-#define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
-#define SBVER_MINOR(v)	((v)&0xff)
-
-#define MODEL_JAZZ16 0x80000000
-
 	u_int	sc_mixer_model;
 #define SBM_NONE	0
 #define SBM_CT1335	1
 #define SBM_CT1345	2
 #define SBM_CT1745	3
+
+	u_int	sc_model;		/* DSP model */
+#define SB_UNK	-1
+#define SB_1	0			/* original SB */
+#define SB_20	1			/* SB 2 */
+#define SB_2x	2			/* SB 2, new version */
+#define SB_PRO	3			/* SB Pro */
+#define SB_JAZZ	4			/* Jazz 16 */
+#define SB_16	5			/* SB 16 */
+
+	u_int	sc_version;		/* DSP version */
+#define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
+#define SBVER_MINOR(v)	((v)&0xff)
 };
 
-#define	ISSB2CLASS(sc) \
-	(SBVER_MAJOR((sc)->sc_model) >= 2)
-
-#define ISSBPROCLASS(sc) \
-	(SBVER_MAJOR((sc)->sc_model) > 2)
-
-#define ISSBPRO(sc) \
-	(SBVER_MAJOR((sc)->sc_model) == 3)
-
-#define ISSB16CLASS(sc) \
-	(SBVER_MAJOR((sc)->sc_model) > 3)
-
-#define ISJAZZ16(sc) \
-	((sc)->sc_model & MODEL_JAZZ16)
-
+#define ISSBPRO(sc) ((sc)->sc_model == SB_PRO || (sc)->sc_model == SB_JAZZ)
+#define ISSBPROCLASS(sc) ((sc)->sc_model >= SB_PRO)
+#define ISSB16CLASS(sc) ((sc)->sc_model == SB_16)
 
 #ifdef _KERNEL
 int	sbdsp_open __P((struct sbdsp_softc *, dev_t, int));
@@ -196,7 +189,6 @@ int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
 int	sbdsp_rdsp __P((struct sbdsp_softc *));
 
 int	sbdsp_intr __P((void *));
-short	sbversion __P((struct sbdsp_softc *));
 
 int	sbdsp_set_sr __P((struct sbdsp_softc *, u_long *, int));
 int	sbdsp_setfd __P((void *, int));
