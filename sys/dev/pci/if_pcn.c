@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.2 2001/08/28 14:15:18 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.3 2001/08/28 15:22:30 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1723,6 +1723,7 @@ pcn_init(struct ifnet *ifp)
 	 * Send the init block to the chip, and wait for it
 	 * to be processed.
 	 */
+	PCN_CDINITSYNC(sc, BUS_DMASYNC_PREWRITE);
 	pcn_csr_write(sc, LE_CSR1, PCN_CDINITADDR(sc) & 0xffff);
 	pcn_csr_write(sc, LE_CSR2, (PCN_CDINITADDR(sc) >> 16) & 0xffff);
 	pcn_csr_write(sc, LE_CSR0, LE_C0_INIT);
@@ -1732,6 +1733,7 @@ pcn_init(struct ifnet *ifp)
 			break;
 		delay(10);
 	}
+	PCN_CDINITSYNC(sc, BUS_DMASYNC_POSTWRITE);
 	if (i == 10000) {
 		printf("%s: timeout processing init block\n",
 		    sc->sc_dev.dv_xname);
@@ -1916,7 +1918,8 @@ pcn_set_filter(struct pcn_softc *sc)
 		crc >>= 26;
 
 		/* Set the corresponding bit in the filter. */
-		sc->sc_initblock.init_ladrf[crc >> 4] |= 1 << (crc & 0xf);
+		sc->sc_initblock.init_ladrf[crc >> 4] |=
+		    htole16(1 << (crc & 0xf));
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
