@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/14 07:11:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/06 03:14:23 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,8 @@
 
 INCSDIR=${X11INCDIR}/X11/extensions
 
-INCS=	MITMisc.h Print.h Printstr.h XEVI.h XEVIstr.h XI.h XIE.h XIEproto.h \
-	XIEprotost.h XInput.h XIproto.h XKB.h XKBgeom.h XKBproto.h XKBsrv.h \
+INCS=	MITMisc.h Print.h Printstr.h XEVI.h XEVIstr.h XI.h \
+	XInput.h XIproto.h XKB.h XKBgeom.h XKBproto.h XKBsrv.h \
 	XKBstr.h XLbx.h XRes.h XResproto.h XShm.h XTest.h Xag.h Xagsrv.h \
 	Xagstr.h Xcup.h Xcupstr.h Xdbe.h Xdbeproto.h Xext.h Xinerama.h Xv.h \
 	XvMC.h XvMClib.h XvMCproto.h Xvlib.h Xvproto.h bigreqstr.h dpms.h \
