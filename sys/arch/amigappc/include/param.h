@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2001/05/30 12:28:39 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2001/06/27 22:55:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,12 +55,12 @@
  * Machine dependent constants for Amiga PowerPC (32-bit only currently)
  */
 #define	MACHINE		"amigappc"
-#define MACHINE_ARCH	"powerpc"
+#define	MACHINE_ARCH	"powerpc"
 #define	MID_MACHINE	MID_POWERPC
 
 #define	ALIGNBYTES		(sizeof(double) - 1)
 #define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PGSHIFT		12
 #define	NBPG		(1 << PGSHIFT)	/* Page size */
@@ -108,8 +108,8 @@
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define NKMEMPAGES_MIN_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
-#define NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MIN_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT  ((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * pages ("clicks") to disk blocks
