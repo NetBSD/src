@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1 2002/10/16 19:12:42 thorpej Exp $	*/
+/*	$NetBSD: test.c,v 1.2 2002/10/16 21:12:01 thorpej Exp $	*/
 
 /*
  * Regression test for dirname(3).
@@ -43,6 +43,11 @@ struct {
  * The NetBSD implementation returns "/".
  */
 	{ "//foo",		"/" },
+/*
+ * Make sure the trailing slashes after the directory name component
+ * get trimmed.
+ */
+	{ "/usr///lib",		"/usr" },
 
 	{ NULL,			NULL }
 };
