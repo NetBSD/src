@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.33 2002/12/13 23:31:32 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.34 2002/12/16 18:27:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.33 2002/12/13 23:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.34 2002/12/16 18:27:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1268,8 +1268,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		goto done;
 
 	case TWEIO_SET_PARAM:
-		if (tp->tp_size > TWE_SECTOR_SIZE - sizeof(*tp))
-			return EINVAL;
 		pdata = malloc(tp->tp_size, M_DEVBUF, M_WAITOK);
 		if ((error = copyin(tp->tp_data, pdata, tp->tp_size)) != 0)
 			goto done;
