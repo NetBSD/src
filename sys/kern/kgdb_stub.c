@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.8 2001/07/07 22:58:00 wdk Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.9 2001/09/16 16:34:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -389,7 +389,7 @@ kgdb_trap(type, regs)
 #endif
 		kgdb_active = 1;
 	} else {
-		/* Tell remote host that an exception has occured. */
+		/* Tell remote host that an exception has occurred. */
 		sprintf(buffer, "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.11 2000/11/04 18:28:19 veego Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.12 2001/09/16 16:34:37 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -678,7 +678,7 @@ generic_fanrpm(sc, sensors)
 }
 
 /*
- * pre:  last read occured >= 1.5 seconds ago
+ * pre:  last read occurred >= 1.5 seconds ago
  * post: sensors[] current data are the latest from the chip
  */
 void

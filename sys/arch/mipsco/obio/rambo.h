@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.h,v 1.3 2000/10/02 07:58:26 wdk Exp $	*/
+/*	$NetBSD: rambo.h,v 1.4 2001/09/16 16:34:33 wiz Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -83,7 +83,7 @@ struct	rambo_ch {
 
 #define	RB_FIFO_FULL	0x00000800 /* FIFO Buffer is full */
 #define	RB_FIFO_EMPTY	0x00000400 /* FIFO Buffer is empty */
-#define	RB_DMA_ERROR	0x00000200 /* Error has occured */
+#define	RB_DMA_ERROR	0x00000200 /* Error has occurred */
 #define	RB_INTR_PEND	0x00000100 /* Interrupt is pending */
 
 #define	RB_CNT_MASK	0x000000ff /* half-words left in FIFO */

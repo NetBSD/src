@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.h,v 1.7 1997/07/18 19:30:38 thorpej Exp $	*/
+/*	$NetBSD: ns_error.h,v 1.8 2001/09/16 16:34:42 wiz Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -56,7 +56,7 @@ struct  ns_epidp {
 #define	NS_ERR_BADSUM	1	/* Bad Checksum detected at dest */
 #define	NS_ERR_NOSOCK	2	/* Specified socket does not exist at dest*/
 #define	NS_ERR_FULLUP	3	/* Dest. refuses packet due to resource lim.*/
-#define	NS_ERR_UNSPEC_T	0x200	/* Unspec. Error occured before reaching dest*/
+#define	NS_ERR_UNSPEC_T	0x200	/* Unspec. Error occurred before reaching dest*/
 #define	NS_ERR_BADSUM_T	0x201	/* Bad Checksum detected in transit */
 #define	NS_ERR_UNREACH_HOST	0x202	/* Dest cannot be reached from here*/
 #define	NS_ERR_TOO_OLD	0x203	/* Packet x'd 15 routers without delivery*/

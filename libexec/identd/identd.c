@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.10 1999/05/18 04:49:41 jwise Exp $	*/
+/*	$NetBSD: identd.c,v 1.11 2001/09/16 16:34:26 wiz Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -723,7 +723,7 @@ int main(argc,argv)
 	    } while (nfds < 0  && errno == EINTR);
 	    
 	    /*
-	    ** An error occured in select? Just die
+	    ** An error occurred in select? Just die
 	    */
 	    if (nfds < 0)
 		ERROR("main: select");

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2001/04/13 23:30:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2001/09/16 16:34:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -141,7 +141,7 @@ softintr(mask)
 #endif /* !_LOCORE */
 
 #define	INTEVT_SOFT	0xf00	/* This value is stored to INTEVT reg,
-				   when software interrupt occured */
+				   when software interrupt occurred */
 #define INTEVT_TMU0 0x400
 #define INTEVT_TMU1 0x420
 #define INTEVT_TMU2 0x440
