@@ -1,5 +1,5 @@
-/* $NetBSD: makemove.c,v 1.2 1996/12/28 18:57:02 tls Exp $
-*/
+/*	$NetBSD: makemove.c,v 1.3 1997/01/03 01:35:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$NetBSD: makemove.c,v 1.2 1996/12/28 18:57:02 tls Exp $";
+static char rcsid[] = "$NetBSD: makemove.c,v 1.3 1997/01/03 01:35:29 cgd Exp $";
 #endif
 #endif /* not lint */
 
