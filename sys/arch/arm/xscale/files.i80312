@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80312,v 1.5 2002/04/12 19:02:30 thorpej Exp $
+#	$NetBSD: files.i80312,v 1.6 2002/08/01 19:55:03 thorpej Exp $
 #
 # Configuration info for Intel i80312 Companion I/O support
 #
@@ -10,5 +10,4 @@ device	iopxs: pcibus, bus_space_generic
 file	arch/arm/xscale/i80312.c		iopxs
 file	arch/arm/xscale/i80312_gpio.c		iopxs
 file	arch/arm/xscale/i80312_pci.c		iopxs
-file	arch/arm/xscale/i80312_pci_dma.c	iopxs
 file	arch/arm/xscale/i80312_space.c		iopxs
