@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.110 2004/01/15 09:03:26 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.111 2004/01/19 11:57:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.110 2004/01/15 09:03:26 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.111 2004/01/19 11:57:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,10 @@ struct vm_map *buf_map;
 static void *
 bufpool_page_alloc(struct pool *pp, int flags)
 {
+
 	return (void *)uvm_km_kmemalloc1(buf_map,
-					uvm.kernel_object, MAXBSIZE, MAXBSIZE,
-					UVM_UNKNOWN_OFFSET,
-					(flags & PR_WAITOK) ? 0
-							    : UVM_KMF_NOWAIT);
+	    uvm.kernel_object, MAXBSIZE, MAXBSIZE, UVM_UNKNOWN_OFFSET,
+	    (flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK);
 }
 
 static void
