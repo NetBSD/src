@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.2 1998/02/02 21:02:30 thorpej Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.3 1998/11/15 19:53:25 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -191,6 +191,8 @@ OF_getprop(handle, prop, buf, buflen)
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
 		return -1;
+	if (args.size > buflen)
+		args.size = buflen;
 	if (args.size > 0)
 		ofbcopy(OF_buf, buf, args.size);
 	return args.size;
@@ -246,6 +248,8 @@ OF_instance_to_path(ihandle, buf, buflen)
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
 		return -1;
+	if (args.length > buflen)
+		args.length = buflen;
 	if (args.length > 0)
 		ofbcopy(OF_buf, buf, args.length);
 	return args.length;
@@ -279,6 +283,8 @@ OF_package_to_path(phandle, buf, buflen)
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
 		return -1;
+	if (args.length > buflen)
+		args.length = buflen;
 	if (args.length > 0)
 		ofbcopy(OF_buf, buf, args.length);
 	return args.length;
