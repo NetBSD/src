@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.126 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.127 2004/08/09 00:00:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.126 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.127 2004/08/09 00:00:36 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,9 @@ struct ne_pcmcia_softc {
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
+	struct pcmcia_io_handle sc_pcioh2;	/* PCMCIA i/o information */
 	int sc_io_window;			/* i/o window */
+	int sc_io_window2;			/* i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
 };
@@ -546,58 +548,34 @@ ne_pcmcia_attach(parent, self, aux)
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-#if 0
-		/*
-		 * Some ne2000 driver's claim to have memory; others don't.
-		 * Since I don't care, I don't check.
-		 */
-
-		if (cfe->num_memspace != 1) {
-			aprint_error("%s: unexpected number of memory spaces "
-			    " %d should be 1\n", self->dv_xname,
-			    cfe->num_memspace);
+		if (cfe->num_iospace < 1)
 			continue;
-		}
-#endif
-
-		if (cfe->num_iospace == 1) {
-			if (cfe->iospace[0].length != NE2000_NPORTS) {
-				aprint_error("%s: unexpected I/O space"
-				    " configuration (continued)\n",
-				    self->dv_xname);
-				/* XXX really safe for all other cards? */
-			}
-		} else if (cfe->num_iospace == 2) {
-			/*
-			 * Some cards report a separate space for NIC and ASIC.
-			 * This make some sense, but we must allocate a single
-			 * NE2000_NPORTS-sized chunk, due to brain damaged
-			 * address decoders on some of these cards.
-			 */
-			if (cfe->iospace[0].length + cfe->iospace[1].length !=
-			    NE2000_NPORTS) {
-#ifdef DIAGNOSTIC
-				aprint_error("%s: unexpected I/O space"
-				    " configuration (ignored)\n",
-				    self->dv_xname);
-#endif
-				continue;
-			}
-		} else {
-#ifdef DIAGNOSTIC
-			aprint_error("%s: unexpected number of i/o spaces %d"
-			    " should be 1 or 2 (ignored)\n",
-			    self->dv_xname, cfe->num_iospace);
-#endif
-			continue;
-		}
 
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    NE2000_NPORTS, NE2000_NPORTS, &psc->sc_pcioh)) {
+		    cfe->iospace[0].length, cfe->iospace[0].length,
+		    &psc->sc_pcioh)) {
 #ifdef DIAGNOSTIC
 			aprint_error("%s: can't allocate i/o space %lx (ignored\n)",
 			    self->dv_xname, cfe->iospace[0].start);
 #endif
+			continue;
+		}
+
+		/*
+		 * Try to make the second chunk contiguous with the
+		 * first.
+		 */
+		if (cfe->num_iospace >= 2 &&
+		    pcmcia_io_alloc(pa->pf,
+		    cfe->iospace[0].start + cfe->iospace[0].length,
+		    cfe->iospace[1].length, cfe->iospace[1].length,
+		    &psc->sc_pcioh2)) {
+#ifdef DIAGNOSTIC
+			aprint_error("%s: can't allocate i/o space %lx (ignored\n)",
+			    self->dv_xname,
+			    cfe->iospace[0].start + cfe->iospace[0].length);
+#endif
+			pcmcia_io_free(pa->pf, &psc->sc_pcioh2);
 			continue;
 		}
 
@@ -610,22 +588,6 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_1;
 	}
 
-	dsc->sc_regt = psc->sc_pcioh.iot;
-	dsc->sc_regh = psc->sc_pcioh.ioh;
-
-	nsc->sc_asict = psc->sc_pcioh.iot;
-	if (bus_space_subregion(dsc->sc_regt, dsc->sc_regh,
-	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
-	    &nsc->sc_asich)) {
-		aprint_error("%s: can't get subregion for asic\n",
-		    self->dv_xname);
-		goto fail_2;
-	}
-
-	/* Set up power management hooks. */
-	dsc->sc_enable = ne_pcmcia_enable;
-	dsc->sc_disable = ne_pcmcia_disable;
-
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
@@ -633,10 +595,38 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_2;
 	}
 
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
+	dsc->sc_regt = psc->sc_pcioh.iot;
+	dsc->sc_regh = psc->sc_pcioh.ioh;
+
+	if (cfe->num_iospace == 1) {
+		nsc->sc_asict = psc->sc_pcioh.iot;
+		if (bus_space_subregion(dsc->sc_regt, dsc->sc_regh,
+		    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
+		    &nsc->sc_asich)) {
+			aprint_error("%s: can't get subregion for asic\n",
+			    self->dv_xname);
+			goto fail_3;
+		}
+	} else {
+		nsc->sc_asict = psc->sc_pcioh2.iot;
+		nsc->sc_asich = psc->sc_pcioh2.ioh;
+	}
+
+	/* Set up power management hooks. */
+	dsc->sc_enable = ne_pcmcia_enable;
+	dsc->sc_disable = ne_pcmcia_disable;
+
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map NIC i/o space\n", self->dv_xname);
 		goto fail_3;
+	}
+
+	if (cfe->num_iospace >= 2 &&
+	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh2,
+	    &psc->sc_io_window2)) {
+		aprint_error("%s: can't map ASIC i/o space\n", self->dv_xname);
+		goto fail_4;
 	}
 
 	/*
@@ -662,7 +652,7 @@ again:
 	if (enaddr != NULL)
 		aprint_error("%s: ethernet vendor code %02x:%02x:%02x\n",
 	            self->dv_xname, enaddr[0], enaddr[1], enaddr[2]);
-	goto fail_4;
+	goto fail_5;
 
 found:
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
@@ -754,17 +744,17 @@ found:
 	pcmcia_function_disable(pa->pf);
 	return;
 
+fail_5:
+	if (cfe->num_iospace >= 2)
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window2);
 fail_4:
-	/* Unmap NIC i/o windows. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
 fail_3:
 	pcmcia_function_disable(pa->pf);
-
 fail_2:
-	/* Free our i/o space. */
+	if (cfe->num_iospace >= 2)
+		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh2);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-
 fail_1:
 	psc->sc_io_window = -1;
 }
@@ -775,6 +765,7 @@ ne_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
+	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
 	if (psc->sc_io_window == -1)
@@ -786,10 +777,14 @@ ne_pcmcia_detach(self, flags)
 		return (error);
 
 	/* Unmap our i/o windows. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	if (pf->cfe->num_iospace >= 2)
+		pcmcia_io_unmap(pf, psc->sc_io_window2);
+	pcmcia_io_unmap(pf, psc->sc_io_window);
 
 	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	if (pf->cfe->num_iospace >= 2)
+		pcmcia_io_free(pf, &psc->sc_pcioh2);
+	pcmcia_io_free(pf, &psc->sc_pcioh);
 
 	return (0);
 }
