@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.5 1999/05/15 23:56:35 christos Exp $	*/
+/*	$NetBSD: extern.c,v 1.6 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.5 1999/05/15 23:56:35 christos Exp $");
+__RCSID("$NetBSD: extern.c,v 1.6 1999/09/08 21:17:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ bool	Was_bonus = FALSE;	/* Was a bonus last level */
 
 char	Cnt_move;		/* Command which has preceded the count */
 char	Field[Y_FIELDSIZE][X_FIELDSIZE];	/* the playing field itslef */
-char	*Next_move;		/* Next move to be used in the pattern */
-char	*Move_list = "YHBJNLUK";/* List of moves in the pattern */
+const char	*Next_move;	/* Next move to be used in the pattern */
+const char	*Move_list = "YHBJNLUK";/* List of moves in the pattern */
 char	Run_ch;			/* Character for the direction we are running */
 
 int	Count = 0;		/* Command count */

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_field.c,v 1.5 1997/10/12 14:09:57 lukem Exp $	*/
+/*	$NetBSD: init_field.c,v 1.6 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init_field.c,v 1.5 1997/10/12 14:09:57 lukem Exp $");
+__RCSID("$NetBSD: init_field.c,v 1.6 1999/09/08 21:17:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ init_field()
 {
 	int		i;
 	static bool	first = TRUE;
-	static char	*desc[] = {
+	static const char	*const desc[] = {
 				"Directions:",
 				"",
 				"y k u",

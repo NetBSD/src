@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.5 1997/10/10 13:36:06 lukem Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.5 1997/10/10 13:36:06 lukem Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.6 1999/09/08 21:17:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,8 +171,8 @@ pickmove(us)
  */
 int
 better(sp, sp1, us)
-	struct spotstr *sp;
-	struct spotstr *sp1;
+	const struct spotstr *sp;
+	const struct spotstr *sp1;
 	int us;
 {
 	int them, s, s1;

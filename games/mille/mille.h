@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.9 1998/09/13 15:27:29 hubertf Exp $	*/
+/*	$NetBSD: mille.h,v 1.10 1999/09/08 21:17:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -207,13 +207,15 @@ typedef struct {
 
 extern bool	Debug, Finished, Next, On_exit, Order, Saved;
 
-extern char	*C_fmt, **C_name, *Fromfile, Initstr[];
+extern char	Initstr[];
+extern const char	*C_fmt, *const *C_name, *Fromfile;
 
-extern int	Card_no, End, Handstart, Movetype, Numcards[], Numgos,
-		Numneed[], Numseen[NUM_CARDS], Play, Value[], Window;
+extern int	Card_no, End, Handstart, Movetype, Numgos,
+		Numneed[], Numseen[NUM_CARDS], Play, Window;
+extern const int	Numcards[], Value[];
 
-extern CARD	Deck[DECK_SZ], Discard, Opposite[NUM_CARDS], Sh_discard,
-		*Topcard;
+extern CARD	Deck[DECK_SZ], Discard, Sh_discard, *Topcard;
+extern const CARD	Opposite[NUM_CARDS];
 
 extern FILE	*outf;
 
@@ -227,7 +229,7 @@ extern WINDOW	*Board, *Miles, *Score;
 
 void	account __P((CARD));
 void	calcmove __P((void));
-int	canplay __P((PLAY *, PLAY *, CARD));
+int	canplay __P((const PLAY *, const PLAY *, CARD));
 int	check_ext __P((bool));
 void	check_go __P((void));
 void	check_more __P((void));
@@ -239,19 +241,19 @@ void	finalscore __P((PLAY *));
 CARD	getcard __P((void));
 void	getmove __P((void));
 int	getyn __P((int));
-int	haspicked __P((PLAY *));
+int	haspicked __P((const PLAY *));
 void	init __P((void));
 int	isrepair __P((CARD));
 int	main __P((int, char **));
 void	newboard __P((void));
 void	newscore __P((void));
-int	onecard __P((PLAY *));
+int	onecard __P((const PLAY *));
 int	playcard __P((PLAY *));
 void	prboard __P((void));
 void	prompt __P((int));
-void	prscore __P((int));
+void	prscore __P((bool));
 int	readch __P((void));
-bool	rest_f __P((char *));
+bool	rest_f __P((const char *));
 int	roll __P((int, int));
 void	rub __P((int));
 int	safety __P((CARD));
