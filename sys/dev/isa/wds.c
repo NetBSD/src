@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.1 1996/03/29 20:53:40 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.2 1996/03/30 07:40:11 mycroft Exp $	*/
 
 #define	WDSDIAG
 #define	integrate
@@ -149,7 +149,7 @@ void	wds_init __P((struct wds_softc *));
 void	wds_inquire_setup_information __P((struct wds_softc *));
 void    wdsminphys __P((struct buf *));
 int     wds_scsi_cmd __P((struct scsi_xfer *));
-int     wds_sense  __P((struct wds_softc *, struct wds_scb *));
+void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
 int	wds_poll __P((struct wds_softc *, struct scsi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
@@ -1151,7 +1151,7 @@ bad:
 /*
  * Send a sense request.
  */
-int
+void
 wds_sense(sc, scb)
 	struct wds_softc *sc;
 	struct wds_scb *scb;
