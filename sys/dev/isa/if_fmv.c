@@ -45,6 +45,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +55,9 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -197,6 +201,10 @@ struct fe_softc {
 	u_char	filter[FE_FILTER_LEN];	/* new filter value. */
 
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /* Standard driver entry points.  These can be static. */
@@ -1134,6 +1142,11 @@ feattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, feintr, sc);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET);
+#endif
 }
 
 /*
@@ -1909,6 +1922,11 @@ feintr(arg)
 		 */
 		if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
 			fe_start(&sc->sc_ethercom.ec_if);
+
+#if NRND > 0
+		if (rstat != 0 || tstat != 0)
+			rnd_add_uint32(&sc->rnd_source, rstat + tstat);
+#endif
 
 		/*
 		 * Get interrupt conditions, masking unneeded flags.

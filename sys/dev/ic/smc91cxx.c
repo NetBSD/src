@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.4 1997/10/14 21:41:00 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.5 1997/10/15 05:56:03 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -88,6 +89,9 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h> 
 #include <sys/errno.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -259,6 +263,10 @@ smc91cxx_attach(sc, myea)
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
 #endif
 }
 
@@ -825,6 +833,11 @@ smc91cxx_intr(arg)
 	 */
 	mask |= bus_space_read_1(bst, bsh, INTR_MASK_REG_B);
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, mask);
+
+#if NRND > 0
+	if (status)
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
 
 	return (1);
 }

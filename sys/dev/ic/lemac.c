@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.1 1997/07/31 21:54:58 matt Exp $ */
+/* $NetBSD: lemac.c,v 1.2 1997/10/15 05:55:45 explorer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,6 +33,8 @@
  *   This driver supports the LEMAC DE203/204/205 cards.
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -42,6 +44,9 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -988,6 +993,12 @@ lemac_intr(
 
     LEMAC_OUTB(sc, LEMAC_REG_CTL, LEMAC_INB(sc, LEMAC_REG_CTL) ^ LEMAC_CTL_LED);
     LEMAC_INTR_ENABLE(sc);		/* Unmask interrupts */
+
+#if NRND > 0
+    if (cs_value)
+        rnd_add_uint32(&sc->rnd_source, cs_value);
+#endif
+
     return 1;
 }
 
@@ -1047,6 +1058,11 @@ lemac_ifattach(
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dv.dv_xname, RND_TYPE_NET);
+#endif
+
 	ifmedia_init(&sc->sc_ifmedia, 0,
 		     lemac_ifmedia_change,
 		     lemac_ifmedia_status);
