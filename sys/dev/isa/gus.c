@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.34 1997/07/27 23:51:55 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.35 1997/07/28 20:56:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -629,8 +629,8 @@ struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+        NULL,
 	AUDIO_PROP_FULLDUPLEX,
-	0,
 };
 
 
@@ -2798,8 +2798,8 @@ gus_init_cs4231(sc)
 			NULL,
 			NULL,
 			NULL,
+                        NULL,
 			AUDIO_PROP_FULLDUPLEX,
-			0,
 		};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.parent = sc;

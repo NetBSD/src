@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.24 1997/07/27 23:51:52 augustss Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.25 1997/07/28 20:56:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -256,8 +256,8 @@ struct audio_hw_if sa_hw_if = {
 	0,
 	0,
 	0,
-	AUDIO_PROP_FULLDUPLEX,
-	0
+        0,
+	AUDIO_PROP_FULLDUPLEX
 };
 
 /* autoconfig routines */

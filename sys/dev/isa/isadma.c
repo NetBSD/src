@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.27 1997/07/27 01:16:57 augustss Exp $	*/
+/*	$NetBSD: isadma.c,v 1.28 1997/07/28 20:56:16 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -639,4 +639,31 @@ isa_free(addr, pool)
 	isa_dmamem_unmap(m->isadev, m->chan, kva, m->size);
 	isa_dmamem_free(m->isadev, m->chan, m->addr, m->size);
 	free(m, pool);
+}
+
+int
+isa_mappage(mem, off, prot)
+	void *mem;
+	int off;
+	int prot;
+{
+	/* XXX switch to bus_mmap when it works */
+#if 0
+	struct isa_mem *m;
+
+	for(m = isa_mem_head; m && m->kva != (caddr_t)mem; m = m->next)
+		;
+	if (!m) {
+		printf("isa_mappage: mapping unallocted memory\n");
+		return -1;
+	}
+	return isa_dmamem_mmap(m->isadev, m->chan, m->addr, 
+			       m->size, off, prot, BUS_DMA_WAITOK);
+#else
+#ifdef i386
+	return i386_btop(vtophys((caddr_t)mem + off));
+#else
+        return -1;
+#endif
+#endif
 }
