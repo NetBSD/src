@@ -11,12 +11,40 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /* $Log: execute.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:14  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:55:50  brennan
+ * Revision 5.7.1.1  1993/01/15  03:33:39  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.7  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.6  1992/11/29  18:57:50  mike
+ * field expressions convert to long so 16 bit and 32 bit
+ * systems behave the same
+ *
+ * Revision 5.5  1992/08/11  15:24:55  brennan
+ * patch2: F_PUSHA and FE_PUSHA
+ * If this is preparation for g?sub(r,s,$expr) or (++|--) on $expr,
+ * then if expr > NF, make sure $expr is set to ""
+ *
+ * Revision 5.4  1992/08/11  14:51:54  brennan
+ * patch2:  $expr++ is numeric even if $expr is string.
+ * I forgot to do this earlier when handling x++ case.
+ *
+ * Revision 5.3  1992/07/08  17:03:30  brennan
+ * patch 2
+ * revert to version 1.0 comparisons, i.e.
+ * page 44-45 of AWK book
+ *
+ * Revision 5.2  1992/04/20  21:40:40  brennan
+ * patch 2
+ * x++ is numeric, even if x is string
+ *
+ * Revision 5.1  1991/12/05  07:55:50  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -32,16 +60,16 @@ the GNU General Public License, version 2, 1991.
 #include "fin.h"
 #include <math.h>
 
-/* static functions */
 static int PROTO( compare, (CELL *) ) ;
-static void PROTO( eval_overflow, (void) ) ;
-
+static int PROTO( d_to_index, (double)) ;
 
 #if   NOINFO_SIGFPE
 static char dz_msg[] = "division by zero" ;
 #endif
 
 #ifdef   DEBUG
+static void PROTO( eval_overflow, (void) ) ;
+
 #define  inc_sp()   if( ++sp == eval_stack+EVAL_STACK_SIZE )\
                          eval_overflow()
 #else
@@ -140,7 +168,32 @@ void  execute(cdp, sp, fp)
             break ;
 
         case  F_PUSHA :
-            if ( (CELL*)cdp->ptr != field && nf < 0 ) split_field0() ;
+	    cp = (CELL*)cdp->ptr ;
+	    if ( cp != field )
+	    {
+		if ( nf < 0 )  split_field0() ;
+
+		if ( ! ( 
+#if	LM_DOS
+		     SAMESEG(cp,field)   &&
+#endif
+		      cp >= NF && cp <= LAST_PFIELD ) )
+		{
+		  /* its a real field $1, $2 ... 
+		     If its greater than $NF, we have to
+		     make sure its set to ""  so that
+		     (++|--) and g?sub() work right
+		  */
+		  t = field_addr_to_index(cp) ;
+		  if ( t > nf )
+		  {
+		    cell_destroy(cp) ;
+		    cp->type = C_STRING ;
+		    cp->ptr = (PTR) &null_str ;
+		    null_str.ref_cnt++ ;
+		  }
+		}
+	    }
             /* fall thru */
 
         case  _PUSHA :
@@ -194,18 +247,28 @@ void  execute(cdp, sp, fp)
             break ;
 
         case  FE_PUSHA :
+
             if ( sp->type != C_DOUBLE )  cast1_to_d(sp) ;
-            if ( (t = (int) sp->dval) < 0 )
-                rt_error( "negative field index $%d", t) ;
+
+	    t = d_to_index(sp->dval) ;
             if ( t && nf < 0 )  split_field0() ;
             sp->ptr = (PTR) field_ptr(t) ;
+	    if ( t > nf )
+	    {
+	      /* make sure its set to "" */
+	      cp = sp->ptr ;
+	      cell_destroy(cp) ;
+	      cp->type = C_STRING ;
+	      cp->ptr = (PTR) &null_str ;
+	      null_str.ref_cnt++ ;
+	    }
             break ;
 
         case  FE_PUSHI :
+
             if ( sp->type != C_DOUBLE )  cast1_to_d(sp) ;
 
-            if ( (t = (int) sp->dval) < 0 )
-                  rt_error( "negative field index $%d", t) ;
+	    t = d_to_index(sp->dval) ;
 
             if ( nf < 0)  split_field0() ;
             if ( t <= nf ) (void) cellcpy(sp, field_ptr(t)) ;
@@ -673,14 +736,18 @@ void  execute(cdp, sp, fp)
             break ;
 
         case _POST_INC :
-            (void) cellcpy(sp, cp = (CELL *)sp->ptr) ;
+	    cp = (CELL *)sp->ptr ;
             if ( cp->type != C_DOUBLE ) cast1_to_d(cp) ;
+	    sp->type = C_DOUBLE ;
+	    sp->dval = cp->dval ;
             cp->dval += 1.0 ;
             break ;
 
         case _POST_DEC :
-            (void) cellcpy(sp, cp = (CELL *)sp->ptr) ;
+	    cp = (CELL *)sp->ptr ;
             if ( cp->type != C_DOUBLE ) cast1_to_d(cp) ;
+	    sp->type = C_DOUBLE ;
+	    sp->dval = cp->dval ;
             cp->dval -= 1.0 ;
             break ;
 
@@ -701,33 +768,35 @@ void  execute(cdp, sp, fp)
 
         case F_POST_INC  :
             cp = (CELL *) sp->ptr ;
-            (void) cellcpy(sp, cellcpy(&tc, cp) ) ;
-            cast1_to_d(&tc) ;
-            tc.dval += 1.0 ;
+	    (void) cellcpy(&tc, cp) ;
+	    cast1_to_d(&tc) ;
+	    sp->type = C_DOUBLE ;
+	    sp->dval = tc.dval ;
+	    tc.dval += 1.0 ;
             field_assign(cp, &tc) ;
             break ;
 
         case F_POST_DEC  :
             cp = (CELL *) sp->ptr ;
-            (void) cellcpy(sp, cellcpy(&tc, cp) ) ;
-            cast1_to_d(&tc) ;
-            tc.dval -= 1.0 ;
+	    (void) cellcpy(&tc, cp) ;
+	    cast1_to_d(&tc) ;
+	    sp->type = C_DOUBLE ;
+	    sp->dval = tc.dval ;
+	    tc.dval -= 1.0 ;
             field_assign(cp, &tc) ;
             break ;
 
         case F_PRE_INC :
             cp = (CELL *) sp->ptr ;
-            cast1_to_d(cellcpy(&tc, cp)) ;
-            sp->dval = tc.dval += 1.0 ;
-            sp->type = C_DOUBLE ;
+            cast1_to_d(cellcpy(sp, cp)) ;
+            sp->dval += 1.0 ;
             field_assign(cp, sp) ;
             break ;
 
         case F_PRE_DEC :
             cp = (CELL *) sp->ptr ;
-            cast1_to_d(cellcpy(&tc, cp)) ;
-            sp->dval = tc.dval -= 1.0 ;
-            sp->type = C_DOUBLE ;
+            cast1_to_d(cellcpy(sp, cp)) ;
+            sp->dval -= 1.0 ;
             field_assign(cp, sp) ;
             break ;
 
@@ -859,7 +928,8 @@ void  execute(cdp, sp, fp)
 
         case  _EXIT  :
             if ( sp->type != C_DOUBLE ) cast1_to_d(sp) ;
-            exit_code = (int) sp-- -> dval ;
+            exit_code = d_to_i(sp->dval) ;
+	    sp-- ;
             /* fall thru */
 
         case  _EXIT0 :
@@ -1056,6 +1126,7 @@ reswitch :
     default :
       bozo("bad cell type in call to test") ;
   }
+  return 0 ; /*can't get here: shutup */
 }
 
 /* compare cells at cp and cp+1 and
@@ -1064,7 +1135,6 @@ reswitch :
 static int compare(cp)
   register CELL *cp ;
 { int k ;
-  CELL *dp, *sp ;
 
 reswitch :
 
@@ -1077,21 +1147,12 @@ reswitch :
                     cp->dval < (cp+1)->dval ? -1 : 0 ;
     
     case TWO_STRINGS :
+    case STRING_AND_STRNUM :
+    two_s:
             k = strcmp(string(cp)->str, string(cp+1)->str) ;
             free_STRING( string(cp) ) ;
             free_STRING( string(cp+1) ) ;
             return k ;
-
-    case STRING_AND_STRNUM :  /* posix numeric string bozosity */
-    case  NOINIT_AND_STRING  :
-    case  DOUBLE_AND_STRING  :
-            if ( cp->type  == C_STRING ) { sp = cp ; dp = cp+1 ; }
-            else { dp = cp ; sp = cp+1 ; }
-
-            check_strnum(sp) ;
-            if ( sp->type == C_STRING ) cast1_to_s(dp) ;
-            goto reswitch ;
-
 
     case  NOINIT_AND_DOUBLE  :
     case  NOINIT_AND_STRNUM  :
@@ -1099,6 +1160,9 @@ reswitch :
     case TWO_STRNUMS :
             cast2_to_d(cp) ; goto two_d ;
 
+    case  NOINIT_AND_STRING  :
+    case  DOUBLE_AND_STRING  :
+            cast2_to_s(cp) ; goto two_s ;
 
     case  TWO_MBSTRNS :
             check_strnum(cp) ; check_strnum(cp+1) ;
@@ -1114,6 +1178,7 @@ reswitch :
     default :  /* there are no default cases */
             bozo("bad cell type passed to compare") ;
   }
+  return 0 ; /* shut up */
 }
 
 /* does not assume target was a cell, if so
@@ -1181,3 +1246,21 @@ void  DB_cell_destroy(cp)    /* HANGOVER time */
 }
 
 #endif
+
+
+
+/* convert a double d to a field index  $d -> $i */
+static int
+d_to_index( d ) 
+  double d ;
+{
+
+  if ( d > MAX_FIELD ) 
+		rt_overflow("maximum number of fields", MAX_FIELD) ;
+  
+  if ( d >= 0.0 )  return (int) d ;
+  
+  /* might include nan */
+  rt_error("negative field index $%.6g", d) ;
+  return 0 ; /* shutup */
+}

@@ -1,7 +1,7 @@
 
 /********************************************
 fin.c
-copyright 1991, Michael D. Brennan
+copyright 1991, 1992.  Michael D. Brennan
 
 This is a source file for mawk, an implementation of
 the AWK programming language.
@@ -11,13 +11,26 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: fin.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:57:23  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 5.2  92/02/21  13:30:08  brennan
- * fixed bug that free'd FILENAME twice if 
+ * Revision 5.6  1992/12/17  02:48:01  mike
+ * 1.1.2d changes for DOS
+ *
+ * Revision 5.5  1992/07/28  15:11:30  brennan
+ * minor change in finding eol, needed for MsDOS
+ *
+ * Revision 5.4  1992/07/10  16:17:10  brennan
+ * MsDOS: remove NO_BINMODE macro
+ *
+ * Revision 5.3  1992/07/08  16:14:27  brennan
+ * FILENAME and FNR retain last values in the
+ * END block.
+ *
+ * Revision 5.2  1992/02/21  13:30:08  brennan
+ * fixed bug that free'd FILENAME twice if
  * command line was var=value only
- * 
+ *
  * Revision 5.1  91/12/05  07:56:02  brennan
  * 1.1 pre-release
  * 
@@ -37,7 +50,10 @@ the GNU General Public License, version 2, 1991.
 #include <fcntl.h>
 #endif
 
-/* This file handles input buffering */
+/* This file handles input files.  Opening, closing,
+   buffering and (most important) splitting files into
+   records, FINgets().
+*/
 
 #ifndef MSDOS_MSC
 extern int errno ;
@@ -79,14 +95,14 @@ FIN  *FINopen( filename, main_flag )
 { int fd ;
   int oflag = O_RDONLY ;
 
-#if  MSDOS && NO_BINMODE==0
+#if  MSDOS 
   int bm = binmode() & 1 ;
   if ( bm ) oflag |= O_BINARY ;
 #endif
 
   if ( filename[0] == '-' && filename[1] == 0 )
   {
-#if  MSDOS  &&  NO_BINMODE==0
+#if  MSDOS  
      if ( bm )  setmode(0, O_BINARY) ;
 #endif
       return  FINdopen(0, main_flag) ;
@@ -162,8 +178,9 @@ restart :
       }
       else  /* return this line */
       {
-        if ( !(p = strchr(fin->buff, '\n')) )
-             p = fin->buff + BUFFSZ + 1 ; /* unlikely to occur */
+	/* find eol */
+	p = fin->buff ;
+	while ( *p != '\n' && *p != 0 )  p++ ;
 
         *p = 0 ; *len_p = p - fin->buff ;
         fin->buffp = p ;
@@ -273,6 +290,16 @@ static char *enlarge_fin_buffer(fin)
   unsigned r ;
   unsigned oldsize = fin->nbuffs*BUFFSZ+1 ;
 
+#if  LM_DOS
+  /* I'm not sure this can really happen:
+     avoid "16bit wrap" */
+  if ( fin->nbuffs == MAX_BUFFS )
+  {
+    errmsg(0, "out of input buffer space") ;
+    mawk_exit(1) ;
+  }
+#endif
+
   fin->buffp = 
   fin->buff = (char *) zrealloc(fin->buff, oldsize, oldsize+BUFFSZ);
   fin->nbuffs++ ;
@@ -342,14 +369,21 @@ static void  set_main_to_stdin()
     cell_destroy( FILENAME ) ;
     FILENAME->type = C_STRING ;
     FILENAME->ptr = (PTR) new_STRING( "-") ;
+    cell_destroy(FNR) ;
+    FNR->type = C_DOUBLE ;
+    FNR->dval = 0.0 ;
     main_fin = FINdopen(0, 1) ;
 }
    
 
+/* this gets called once to get the input stream going.
+   It is called after the execution of the BEGIN block
+   unless there is a getline inside BEGIN {}
+*/
 void  open_main()  
 { CELL argc ;
 
-#if  MSDOS && NO_BINMODE==0   /* set input modes */
+#if  MSDOS 
   int k = binmode() ;
 
   if ( k & 1 )  setmode(0, O_BINARY) ;
@@ -363,6 +397,7 @@ void  open_main()
   else  (void)  next_main(1) ;
 }
 
+/* get the next command line file open */
 static  FIN  *next_main(open_flag)
   int open_flag ; /* called by open_main() if on */
 { 
@@ -376,13 +411,10 @@ static  FIN  *next_main(open_flag)
   c_argi.type = C_DOUBLE ;
 
   if ( main_fin )  FINclose(main_fin) ;
-  cell_destroy( FILENAME ) ;
-  FILENAME->type = C_NOINIT ; 
-     /* so don't free again if we go to set_main_to_stdin() */
-  cell_destroy( FNR ) ;
-  FNR->type = C_DOUBLE ;
-  FNR->dval = 0.0 ;
+  /* FILENAME and FNR don't change unless we really open
+     a new file */
 
+  /* make a copy of ARGC to avoid side effect */
   if ( cellcpy(&argc, ARGC)->type != C_DOUBLE )
           cast1_to_d(&argc) ;
   
@@ -399,6 +431,7 @@ static  FIN  *next_main(open_flag)
     cp = cellcpy(&argval, cp) ;
     if ( cp->type < C_STRING )  cast1_to_s(cp) ;
     if ( string(cp)->len == 0 )  continue ;
+	      /* file argument is "" */
 
     /* it might be a command line assignment */
     if ( is_cmdline_assign(string(cp)->str) )  continue ;
@@ -407,9 +440,14 @@ static  FIN  *next_main(open_flag)
        but posix says we should quit */
     if ( ! (main_fin = FINopen( string(cp)->str, 1 )) ) mawk_exit(1) ;
 
-    /* success */
+    /* success -- set FILENAME and FNR */
+    cell_destroy(FILENAME) ;
     (void) cellcpy(FILENAME , cp ) ;
     free_STRING( string(cp) ) ;
+    cell_destroy(FNR) ;
+    FNR->type = C_DOUBLE ;
+    FNR->dval = 0.0 ;
+
     return  main_fin ;
   }
   /* failure */
@@ -419,9 +457,6 @@ static  FIN  *next_main(open_flag)
   { set_main_to_stdin() ;  return  main_fin ; }
     
   /* real failure */
-  FILENAME->type = C_STRING ;
-  FILENAME->ptr = (PTR) new_STRING( "" ) ;
-
   { /* this is how we mark EOF on main_fin  */
     static char dead_buff = 0 ;
     static FIN  dead_main = {0, (FILE*)0, &dead_buff, &dead_buff,

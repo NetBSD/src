@@ -12,12 +12,35 @@ the GNU General Public License, version 2, 1991.
 
 
 /*   $Log: cast.c,v $
-/*   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*   initial import of 386bsd-0.1 sources
+/*   Revision 1.2  1993/07/02 23:57:06  jtc
+/*   Updated to mawk 1.1.4
 /*
- * Revision 5.1  91/12/05  07:55:41  brennan
+ * Revision 5.3.1.5  1993/05/05  00:11:22  mike
+ * patch4: overflow in check_strnum() implies pure string
+ *
+ * Revision 5.3.1.4  1993/01/22  15:05:19  mike
+ * pow2->mpow2 for linux
+ *
+ * Revision 5.3.1.3  1993/01/22  14:18:33  mike
+ * const for strtod and ansi picky compilers
+ *
+ * Revision 5.3.1.2  1993/01/20  12:53:06  mike
+ * d_to_l()
+ *
+ * Revision 5.3.1.1  1993/01/15  03:33:37  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.3  1992/11/28  23:48:42  mike
+ * For internal conversion numeric->string, when testing
+ * if integer, use longs instead of ints so 16 and 32 bit
+ * systems behave the same
+ *
+ * Revision 5.2  1992/08/17  14:19:45  brennan
+ * patch2: After parsing, only bi_sprintf() uses string_buff.
+ *
+ * Revision 5.1  1991/12/05  07:55:41  brennan
  * 1.1 pre-release
- * 
+ *
 */
 
 
@@ -29,7 +52,7 @@ the GNU General Public License, version 2, 1991.
 #include "scan.h"
 #include "repl.h"
 
-int pow2[NUM_CELL_TYPES] = {1,2,4,8,16,32,64,128,256,512} ;
+int mpow2[NUM_CELL_TYPES] = {1,2,4,8,16,32,64,128,256,512} ;
 
 void cast1_to_d( cp )
   register CELL *cp ;
@@ -131,7 +154,9 @@ two:   cp++ ;
 
 void cast1_to_s( cp )
   register CELL *cp ;
-{ register int ival ;
+{ 
+  register long lval ;
+  char xbuff[260] ;
 
   switch( cp->type )
   { case C_NOINIT :  
@@ -141,13 +166,13 @@ void cast1_to_s( cp )
 
     case C_DOUBLE  :
 	
-	if ( (double) (ival = (int) cp->dval) == cp->dval )
-	    (void) sprintf(string_buff, "%d", ival) ;
+	lval = d_to_l(cp->dval) ;
+	if ( lval == cp->dval )
+	    (void) sprintf(xbuff, INT_FMT, lval) ;
 	else
-            (void) sprintf(string_buff ,
-            string(CONVFMT)->str, cp->dval) ;
+            (void) sprintf(xbuff , string(CONVFMT)->str, cp->dval) ;
 
-        cp->ptr = (PTR) new_STRING(string_buff) ;
+        cp->ptr = (PTR) new_STRING(xbuff) ;
         break ;
 
     case C_STRING :  return ;
@@ -162,7 +187,9 @@ void cast1_to_s( cp )
 
 void cast2_to_s( cp )
   register CELL *cp ;
-{ register int ival ;
+{ 
+  register long lval ;
+  char xbuff[260] ;
 
   switch( cp->type )
   { case C_NOINIT : 
@@ -171,13 +198,14 @@ void cast2_to_s( cp )
         break ;
 
     case C_DOUBLE  :
-	if ( (double) (ival = (int) cp->dval) == cp->dval )
-	    (void) sprintf(string_buff, "%d", ival) ;
-	else
-            (void) sprintf(string_buff ,
-            string(CONVFMT)->str, cp->dval) ;
 
-        cp->ptr = (PTR) new_STRING(string_buff) ;
+	lval = d_to_l(cp->dval) ;
+	if ( lval == cp->dval )
+	    (void) sprintf(xbuff, INT_FMT, lval) ;
+	else
+            (void) sprintf(xbuff , string(CONVFMT)->str, cp->dval) ;
+
+        cp->ptr = (PTR) new_STRING(xbuff) ;
         break ;
 
     case C_STRING :  goto two ;
@@ -199,13 +227,14 @@ two:
         break ;
 
     case C_DOUBLE  :
-	if ( (double) (ival = (int) cp->dval) == cp->dval )
-	    (void) sprintf(string_buff, "%d", ival) ;
-	else
-            (void) sprintf(string_buff ,
-            string(CONVFMT)->str, cp->dval) ;
 
-        cp->ptr = (PTR) new_STRING(string_buff) ;
+	lval = d_to_l(cp->dval) ;
+	if ( lval == cp->dval )
+	    (void) sprintf(xbuff, INT_FMT, lval) ;
+	else
+            (void) sprintf(xbuff , string(CONVFMT)->str, cp->dval) ;
+
+        cp->ptr = (PTR) new_STRING(xbuff) ;
         break ;
 
     case C_STRING :  return ;
@@ -295,9 +324,8 @@ void check_strnum( cp )
 #if FPE_TRAPS_ON
              errno = 0 ;
              cp->dval  = strtod((char *)s, &test) ;
-             if ( errno && cp->dval != 0.0 )
-                rt_error(
-                "overflow converting %s to double" , s) ;
+	     /* treat overflow as pure string */
+             if ( errno && cp->dval != 0.0 )  return ;
 #else
              cp->dval = strtod((char *)s, &test) ;
 #endif
@@ -322,6 +350,21 @@ void cast_to_REPL( cp )
 }
 
 
+/* convert a double to long (this is not as simple as a
+   cast because the results are undefined if it won't fit).
+   Truncate large values to +MAX__LONG or -MAX__LONG
+   Send nans to -MAX__LONG
+*/
+
+long
+d_to_l(d)
+  double d ;
+{
+  if ( d >= MAX__LONG )  return MAX__LONG ;
+  if ( d >  -MAX__LONG ) return (int) d ;
+  return -MAX__LONG ;
+}
+
 #if   HAVE_STRTOD==0
 
 /* don't use this unless you really don't have strtod() because
@@ -329,8 +372,13 @@ void cast_to_REPL( cp )
    (2) atof() may call the real strtod() 
 */
 
+#if __STDC__ == 0
+#define const
+#endif
+
 double strtod(s, endptr)
-  char *s , **endptr ;
+  const char *s ;
+  char  **endptr ;
 {
   register unsigned char *p ; 
   int flag ;

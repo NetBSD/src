@@ -12,12 +12,22 @@ the GNU General Public License, version 2, 1991.
 
 
 /* $Log: scan.c,v $
-/* Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/* initial import of 386bsd-0.1 sources
+/* Revision 1.2  1993/07/02 23:57:54  jtc
+/* Updated to mawk 1.1.4
 /*
- * Revision 5.2  92/02/21  14:16:53  brennan
+ * Revision 5.4.1.1  1993/01/15  03:33:50  mike
+ * patch3: safer double to int conversion
+ *
+ * Revision 5.4  1992/11/29  18:57:50  mike
+ * field expressions convert to long so 16 bit and 32 bit
+ * systems behave the same
+ *
+ * Revision 5.3  1992/07/08  15:43:41  brennan
+ * patch2: length returns.  I am a wimp
+ *
+ * Revision 5.2  1992/02/21  14:16:53  brennan
  * fix:  getline <=
- * 
+ *
  * Revision 5.1  91/12/05  07:56:27  brennan
  * 1.1 pre-release
  * 
@@ -470,14 +480,13 @@ reswitch:
                 if ( flag )  ct_ret(flag) ; /* an error */
                 else  yylval.cp = &field[0] ;
             else
-            { int k = (int) d ;
-
-              if ( k > MAX_FIELD )
+            { 
+              if ( d > MAX_FIELD )
               { compile_error(
                    "$%g exceeds maximum field(%d)" , d, MAX_FIELD) ;
-                k = MAX_FIELD ;
+                d = MAX_FIELD ;
               }
-              yylval.cp = field_ptr(k) ;
+              yylval.cp = field_ptr((int)d) ;
             }
 
             ct_ret(FIELD) ;
@@ -557,6 +566,18 @@ reswitch:
                       yylval.bip = stp->stval.bip ;
                       current_token = BUILTIN ;
                       break ;
+
+                case  ST_LENGTH  :
+
+		      yylval.bip = stp->stval.bip ;
+
+		      /* check for length alone, this is an ugly
+			 hack */
+                      while ( scan_code[ c = next() ] == SC_SPACE ) ;
+                      un_next() ;
+
+		      current_token = c == '(' ? BUILTIN : LENGTH ;
+		      break ;
 
                 case  ST_FIELD  :
                       yylval.cp = stp->stval.cp ;
