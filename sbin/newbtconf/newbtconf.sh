@@ -50,6 +50,10 @@ if [ -z "`expr $orig : 'etc.\(.*\)'`" ] ; then
 	orig=etc.$orig
 fi
 
+if [ ! -d /etc/$orig ] ; then
+	echo "Original directory /etc/$orig does not exist."
+	exit 1;
+fi
 mkdir -m 755 /etc/$dir
 cp -p /etc/$orig/* /etc/$dir
 echo "/etc/$dir has now been created and populated."
