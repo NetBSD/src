@@ -1,6 +1,6 @@
 #
 # new style config file for vax architecture
-#	$Id: files.vax,v 1.1 1994/08/02 20:19:26 ragge Exp $
+#	$Id: files.vax,v 1.2 1994/08/16 23:41:13 ragge Exp $
 #
 
 maxusers 8 32 64
@@ -172,19 +172,19 @@ device	dhu at uba
 file	arch/vax/uba/dhu.c		dhu needs-count
 
 # These are general files needed for compilation.
+file	dev/cons.c
+file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/skit.c
 file	arch/vax/vax/machdep.c
-#file	arch/vax/vax/lovm.c
-#file	arch/vax/vax/cpudata.c
 file	arch/vax/vax/ka750.c
-#file	arch/vax/vax/disksubr.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
 file	arch/vax/vax/rootfil.c
 file	arch/vax/vax/bcopy.s
 file	arch/vax/vax/trap.c
+
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/in_cksum.c		inet
 file	arch/vax/vax/disksubr.c		ffs
@@ -192,7 +192,6 @@ file	arch/vax/vax/random.s		inet
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/clock.c         standard
-#arch/vax/vax/cons.c          standard
 #arch/vax/vax/crl.c           standard
 #arch/vax/vax/dkbad.c         standard
 #arch/vax/vax/flp.c           standard
