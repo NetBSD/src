@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.6 1999/03/23 12:01:45 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.7 1999/06/30 15:07:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -160,11 +160,13 @@
 #include <vm/vm.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <dev/vme/vmevar.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
+#include "locators.h"
 
 /*
  * VME/multibus definitions
@@ -235,10 +237,20 @@ static int  ie_vmeintr __P((struct ie_softc *, int));
 int ie_vme_match __P((struct device *, struct cfdata *, void *));
 void ie_vme_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ie_vme_ca = {
-	sizeof(struct ie_softc), ie_vme_match, ie_vme_attach
+struct ie_vme_softc {
+	struct ie_softc ie;
+	bus_space_tag_t ievt;
+	bus_space_handle_t ievh;
 };
 
+struct cfattach ie_vme_ca = {
+	sizeof(struct ie_vme_softc), ie_vme_match, ie_vme_attach
+};
+
+#define read_iev(sc, reg) \
+  bus_space_read_2(sc->ievt, sc->ievh, offsetof(struct ievme, reg))
+#define write_iev(sc, reg, val) \
+  bus_space_write_2(sc->ievt, sc->ievh, offsetof(struct ievme, reg), val)
 
 /*
  * MULTIBUS/VME support routines
@@ -248,29 +260,32 @@ ie_vmereset(sc, what)
 	struct ie_softc *sc;
 	int what;
 {
-	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
-	iev->status = IEVME_RESET;
+	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
+	write_iev(vsc, status, IEVME_RESET);
 	delay(100);		/* XXX could be shorter? */
-	iev->status = 0;
+	write_iev(vsc, status, 0);
 }
 
 void
 ie_vmeattend(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
+	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
-	iev->status |= IEVME_ATTEN;	/* flag! */
-	iev->status &= ~IEVME_ATTEN;	/* down. */
+	/* flag! */
+	write_iev(vsc, status, read_iev(vsc, status) | IEVME_ATTEN);
+	/* down. */
+	write_iev(vsc, status, read_iev(vsc, status) & ~IEVME_ATTEN);
 }
 
 void
 ie_vmerun(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
+	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
-	iev->status |= (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
+	write_iev(vsc, status, read_iev(vsc, status)
+		  | IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
 }
 
 int
@@ -278,7 +293,7 @@ ie_vmeintr(sc, where)
 	struct ie_softc *sc;
 	int where;
 {
-	volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
+	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 
 	if (where != INTR_ENTER)
 		return (0);
@@ -286,11 +301,12 @@ ie_vmeintr(sc, where)
         /*
          * check for parity error
          */
-	if (iev->status & IEVME_PERR) {
+	if (read_iev(vsc, status) & IEVME_PERR) {
 		printf("%s: parity error (ctrl 0x%x @ 0x%02x%04x)\n",
-			sc->sc_dev.dv_xname, iev->pectrl,
-			iev->pectrl & IEVME_HADDR, iev->peaddr);
-		iev->pectrl = iev->pectrl | IEVME_PARACK;
+		       sc->sc_dev.dv_xname, read_iev(vsc, pectrl),
+		       read_iev(vsc, pectrl) & IEVME_HADDR,
+		       read_iev(vsc, peaddr));
+		write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEVME_PARACK);
 	}
 	return (0);
 }
@@ -308,12 +324,32 @@ ie_memcopyin(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	void *addr = (void *)((u_long)sc->bh + offset);/*XXX - not MI!*/
-	wcopy(addr, p, size);
+	size_t help;
+
+	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
+		*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
+		offset++;
+		p = (u_int8_t *)p + 1;
+		size--;
+	}
+
+	if ((offset & 1) || ((u_long)p & 1)) {
+		bus_space_read_region_1(sc->bt, sc->bh, offset, p, size);
+		return;
+	}
+
+	help = size / 2;
+	bus_space_read_region_2(sc->bt, sc->bh, offset, p, help);
+	if (2 * help == size)
+		return;
+
+	offset += 2 * help;
+	p = (u_int16_t *)p + help;
+	*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
 }
 
 /*
- * Copy from kernel space to naord memory.
+ * Copy from kernel space to board memory.
  */
 void
 ie_memcopyout(sc, p, offset, size)
@@ -322,8 +358,28 @@ ie_memcopyout(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	void *addr = (void *)((u_long)sc->bh + offset);/*XXX - not MI!*/
-	wcopy(p, addr, size);
+	size_t help;
+
+	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
+		bus_space_write_1(sc->bt, sc->bh, offset, *(u_int8_t *)p);
+		offset++;
+		p = (u_int8_t *)p + 1;
+		size--;
+	}
+
+	if ((offset & 1) || ((u_long)p & 1)) {
+		bus_space_write_region_1(sc->bt, sc->bh, offset, p, size);
+		return;
+	}
+
+	help = size / 2;
+	bus_space_write_region_2(sc->bt, sc->bh, offset, p, help);
+	if (2 * help == size)
+		return;
+
+	offset += 2 * help;
+	p = (u_int16_t *)p + help;
+	bus_space_write_1(sc->bt, sc->bh, offset, *(u_int8_t *)p);
 }
 
 /* read a 16-bit value at BH offset */
@@ -383,12 +439,50 @@ ie_vme_match(parent, cf, aux)
 	void *aux;
 {
 	struct vme_attach_args *va = aux;
-	vme_chipset_tag_t ct = va->vma_chipset_tag;
-	bus_space_tag_t bt = va->vma_bustag;
-	int mod;
+	vme_chipset_tag_t ct = va->va_vct;
+	vme_am_t mod;
+	int error;
 
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	return (vme_bus_probe(ct, bt, va->vma_reg[0], 0, 2, mod, 0, 0));
+	if (va->numcfranges < 2) {
+		printf("ie_vme_match: need 2 ranges\n");
+		return (0);
+	}
+	if ((va->r[1].offset & 0xff0fffff) ||
+	    ((va->r[0].offset & 0xfff00000)
+	     != (va->r[1].offset & 0xfff00000))) {
+		printf("ie_vme_match: base address mismatch\n");
+		return (0);
+	}
+	if (va->r[0].size != VMECF_LEN_DEFAULT &&
+	    va->r[0].size != sizeof(sizeof(struct ievme))) {
+		printf("ie_vme_match: bad csr size\n");
+		return (0);
+	}
+	if (va->r[1].size == VMECF_LEN_DEFAULT) {
+		printf("ie_vme_match: must specify memory size\n");
+		return (0);
+	}
+
+	mod = 0x3d; /* VME_AM_A24|VME_AM_MBO|VME_AM_SUPER|VME_AM_DATA */
+
+	if (va->r[0].am != VMECF_AM_DEFAULT &&
+	    va->r[0].am != mod)
+		return (0);
+
+	if (vme_space_alloc(va->va_vct, va->r[0].offset,
+			    sizeof(struct ievme), mod))
+		return (0);
+	if (vme_space_alloc(va->va_vct, va->r[1].offset,
+			    va->r[1].size, mod)) {
+		vme_space_free(va->va_vct, va->r[0].offset,
+			       sizeof(struct ievme), mod);
+		return (0);
+	}
+	error = vme_probe(ct, va->r[0].offset, 2, mod, VME_D16, 0, 0);
+	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct ievme), mod);
+	vme_space_free(va->va_vct, va->r[1].offset, va->r[1].size, mod);
+
+	return (error == 0);
 }
 
 void
@@ -398,28 +492,34 @@ ie_vme_attach(parent, self, aux)
 	void   *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+#ifdef sparc
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
-	struct ie_softc *sc = (void *) self;
+#endif
+	struct ie_vme_softc *vsc = (void *) self;
 	struct vme_attach_args *va = aux;
-	vme_chipset_tag_t ct = va->vma_chipset_tag;
-	bus_space_tag_t bt = va->vma_bustag;
-	bus_space_handle_t bh;
+	vme_chipset_tag_t ct = va->va_vct;
+	struct ie_softc *sc;
 	vme_intr_handle_t ih;
-	volatile struct ievme *iev;
-	u_long  rampaddr;
-	int     lcv;
-	vme_size_t sz;
+	vme_addr_t rampaddr;
+	vme_size_t memsize;
+	vme_mapresc_t resc;
+	int lcv;
 
-	int mod;
+	vme_am_t mod;
 
 	/*
 	 * *note*: we don't detect the difference between a VME3E and
 	 * a multibus/vme card.   if you want to use a 3E you'll have
 	 * to fix this.
 	 */
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
+	mod = 0x3d; /* VME_AM_A24|VME_AM_MBO|VME_AM_SUPER|VME_AM_DATA */
+	if (vme_space_alloc(va->va_vct, va->r[0].offset,
+			    sizeof(struct ievme), mod) ||
+	    vme_space_alloc(va->va_vct, va->r[1].offset,
+			    va->r[1].size, mod))
+		panic("if_ie: vme alloc");
 
-	sc->bt = bt;
+	sc = &vsc->ie;
 
 	sc->hwreset = ie_vmereset;
 	sc->hwinit = ie_vmerun;
@@ -430,37 +530,34 @@ ie_vme_attach(parent, self, aux)
 	sc->ie_bus_read16 = ie_vme_read16;
 	sc->ie_bus_write16 = ie_vme_write16;
 	sc->ie_bus_write24 = ie_vme_write24;
-	sc->sc_msize = 4*65536;	/* XXX */
 
-	sz = sizeof(struct ievme);
-	if (vme_bus_map(ct, va->vma_reg[0], sz, mod, bt, &bh) != 0)
-		panic("if_ie: vme_map");
-	sc->sc_reg = (caddr_t)bh;
+	memsize = va->r[1].size;
 
-	iev = (volatile struct ievme *) sc->sc_reg;
-	/* top 12 bits */
-	rampaddr = (u_long)va->vma_reg[0] & 0xfff00000;
+	if (vme_space_map(ct, va->r[0].offset, sizeof(struct ievme), mod,
+			  VME_D16 | VME_D8, 0,
+			  &vsc->ievt, &vsc->ievh, &resc) != 0)
+		panic("if_ie: vme map csr");
+
+	rampaddr = va->r[1].offset;
 
 	/* 4 more */
-	rampaddr = rampaddr | ((iev->status & IEVME_HADDR) << 16);
-	sz = sc->sc_msize;
-	if (vme_bus_map(ct, rampaddr, sz, mod, bt, &bh) != 0)
-		panic("if_ie: vme_map");
+	rampaddr = rampaddr | ((read_iev(vsc, status) & IEVME_HADDR) << 16);
+	if (vme_space_map(ct, rampaddr, memsize, mod, VME_D16 | VME_D8, 0,
+			  &sc->bt, &sc->bh, &resc) != 0)
+		panic("if_ie: vme map mem");
 
-	sc->bh = bh;
-
-	iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
+	write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEVME_PARACK);
 
 	/*
 	 * Set up mappings, direct map except for last page
 	 * which is mapped at zero and at high address (for scp)
 	 */
 	for (lcv = 0; lcv < IEVME_MAPSZ - 1; lcv++)
-		iev->pgmap[lcv] = IEVME_SBORDR | IEVME_OBMEM | lcv;
-	iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
+		write_iev(vsc, pgmap[lcv], IEVME_SBORDR | IEVME_OBMEM | lcv);
+	write_iev(vsc, pgmap[IEVME_MAPSZ - 1], IEVME_SBORDR | IEVME_OBMEM | 0);
 
 	/* Clear all ram */
-	bus_space_set_region_2(sc->bt, sc->bh, 0, 0, sc->sc_msize/2);
+	bus_space_set_region_2(sc->bt, sc->bh, 0, 0, memsize/2);
 
 	/*
 	 * We use the first page to set up SCP, ICSP and SCB data
@@ -490,15 +587,17 @@ ie_vme_attach(parent, self, aux)
 	 * Rest of first page is unused; rest of ram for buffers.
 	 */
 	sc->buf_area = IEVME_PAGESIZE;
-	sc->buf_area_sz = sc->sc_msize - IEVME_PAGESIZE;
+	sc->buf_area_sz = memsize - IEVME_PAGESIZE;
 
 	sc->do_xmitnopchain = 0;
 
+	printf("\n%s:", self->dv_xname);
+
+#ifdef sparc
 	myetheraddr(myaddr);
+#endif
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
 
-	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
-	vme_intr_establish(ct, ih, i82586_intr, sc);
-
-	vme_bus_establish(ct, &sc->sc_dev);
+	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
+	vme_intr_establish(ct, ih, IPL_NET, i82586_intr, sc);
 }
