@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2001/07/07 16:35:22 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2001/07/08 15:15:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <sh3/intcreg.h>
 
-#if NBICONSDEV > 0
+#ifdef DEBUG
 #define DPRINTF(arg) printf arg
 #else
 #define DPRINTF(arg)
@@ -137,7 +137,7 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /* VM */
-static psize_t	mem_cluster_init(paddr_t);
+static int	mem_cluster_init(paddr_t);
 static void	mem_cluster_load(void);
 static void	__find_dram_shadow(paddr_t, paddr_t);
 #ifdef NARLY_MEMORY_PROBE
@@ -145,10 +145,7 @@ static int	__check_dram(paddr_t, paddr_t);
 #endif
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
-int		physmem;	/* in hpcsh port, page unit */
-
-/* Console */
-extern void consinit(void);
+int		physmem;
 
 void main(void);
 void machine_startup(int, char *[], struct bootinfo *);
@@ -250,15 +247,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	for (i = 0; i < argc; i++)
 		DPRINTF(("option [%d]: %s\n", i, argv[i]));
 	DPRINTF(("platid(cpu/machine) = %08lx/%08lx\n",
-		 bootinfo->platid_cpu, bootinfo->platid_machine));
+	    bootinfo->platid_cpu, bootinfo->platid_machine));
 	DPRINTF(("display=%dx%d-(%d) %p type=%d \n",
-		 bootinfo->fb_width, bootinfo->fb_height,
-		 bootinfo->fb_line_bytes, bootinfo->fb_addr,
-		 bootinfo->fb_type));
+	    bootinfo->fb_width, bootinfo->fb_height,
+	    bootinfo->fb_line_bytes, bootinfo->fb_addr, bootinfo->fb_type));
+
+	uvm_setpagesize(); /* default page size (4KB) */
 
 	/* find memory cluster */
-	sz = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
-	nkpde = sz >> (PDSHIFT - 1);
+	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
+	nkpde = physmem >> (PDSHIFT - 1);
 	DPRINTF(("nkpde = %d\n", nkpde));
 
 	/* steal page dir area, process0 stack, page table area */
@@ -344,10 +342,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	proc0.p_addr = proc0paddr;
 	/* XXX: PMAP_NEW requires valid curpcb. also init'd in cpu_startup */
 	curpcb = &proc0.p_addr->u_pcb;
-
-	/* Set the VM page size. */
-	uvmexp.pagesize = NBPG; /* Notify the VM system of our page size. */
-	uvm_setpagesize();
 	/* Load physical memory to VM */
 	mem_cluster_load();
 	/* Call pmap initialization to make new kernel address space */
@@ -356,8 +350,10 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
 	/* jump to main */
-	__asm__ __volatile__("jmp	@%0;"
-			     "mov	%1, sp" :: "r"(main), "r"(proc0_sp));
+	__asm__ __volatile__(
+		"jmp	@%0;"
+		"mov	%1, sp" :: "r"(main), "r"(proc0_sp));
+
 	/* NOTREACHED */
 }
 
@@ -376,13 +372,13 @@ cpu_startup()
 
 	if (CPUIDMATCH(SH_3_7709))
 		sprintf(cpu_model, "%s Hitachi SH7709",
-			platid_name(&platid));
+		    platid_name(&platid));
 	else if (CPUIDMATCH(SH_3_7709A))
 		sprintf(cpu_model, "%s Hitachi SH7709A",
-			platid_name(&platid));
+		    platid_name(&platid));
 	else
 		sprintf(cpu_model, "%s Hitachi SH product unknown",
-			platid_name(&platid));
+		    platid_name(&platid));
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	DPRINTF(("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
@@ -395,7 +391,7 @@ cpu_startup()
 
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	   void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct proc *p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -453,7 +449,7 @@ cpu_reboot(int howto, char *bootstr)
 		dumpsys();
 #endif
 
-haltsys:
+ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
@@ -486,12 +482,12 @@ reserve_dumppages(vaddr_t p)
 	return (p + BYTES_PER_DUMP);
 }
 
-psize_t
+/* return # of physical pages. */
+int
 mem_cluster_init(paddr_t addr)
 {
 	phys_ram_seg_t *seg;
-	psize_t sz;
-	int i;
+	int npages, i;
 
 	/* cluster 0 is always kernel myself. */
 	mem_clusters[0].start = DRAM_BANK0_START;
@@ -504,28 +500,27 @@ mem_cluster_init(paddr_t addr)
 	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
 #endif
 	DPRINTF(("mem_cluster_cnt = %d\n", mem_cluster_cnt));
-	sz = 0;
+	npages = 0;
 	for (i = 0, seg = mem_clusters; i < mem_cluster_cnt; i++, seg++) {
 		DPRINTF(("mem_clusters[%d] = {0x%lx+0x%lx <0x%lx}", i,
-			 (paddr_t)seg->start, (paddr_t)seg->size,
-			 (paddr_t)seg->start + (paddr_t)seg->size));
-		sz += atop(seg->size);
+		    (paddr_t)seg->start, (paddr_t)seg->size,
+		    (paddr_t)seg->start + (paddr_t)seg->size));
+		npages += atop(seg->size);
 #ifdef NARLY_MEMORY_PROBE
 		if (i == 0) {
 			DPRINTF((" don't check.\n"));
 			continue;
 		}
 		if (__check_dram((paddr_t)seg->start, (paddr_t)seg->start +
-				 (paddr_t)seg->size) != 0)
+		    (paddr_t)seg->size) != 0)
 			panic("D-RAM check failed.");
 #else
 		DPRINTF(("\n"));
 #endif /* NARLY_MEMORY_PROBE */
 	}
-	DPRINTF(("total memory = %dMbyte\n", (int)(sz >> 20)));
-	physmem = btoc(sz);
+	DPRINTF(("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20)));
 
-	return sz;
+	return (npages);
 }
 
 void
@@ -545,7 +540,7 @@ mem_cluster_load()
 		start = SH3_PHYS_TO_P1SEG(start);
 		memset((void *)start, 0, size);
 		cacheflush();
-		end = atop(sh3_trunc_page(start + size));
+		end = atop(start + size);
 		start = atop(start);
 		uvm_page_physload(start, end, start, end, VM_FREELIST_DEFAULT);
 	}
@@ -589,10 +584,10 @@ __check_dram(paddr_t start, paddr_t end)
 				goto bad;
 	}
 	DPRINTF(("success.\n"));
-	return 0;
+	return (0);
  bad:
 	DPRINTF(("failed.\n"));
-	return 1;
+	return (1);
 }
 #endif /* NARLY_MEMORY_PROBE */
 
