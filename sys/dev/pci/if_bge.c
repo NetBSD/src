@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.60 2004/03/10 18:46:10 drochner Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.61 2004/03/20 01:42:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.60 2004/03/10 18:46:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.61 2004/03/20 01:42:21 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2369,7 +2369,7 @@ bge_reset(sc)
 	struct bge_softc *sc;
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
-	u_int32_t cachesize, command, pcistate;
+	u_int32_t cachesize, command, pcistate, new_pcistate;
 	int i, val = 0;
 
 	/* Save some important PCI state. */
@@ -2434,10 +2434,15 @@ bge_reset(sc)
 	 * results.
 	 */
 	for (i = 0; i < BGE_TIMEOUT; i++) {
-		if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) ==
-		    pcistate)
+		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    BGE_PCI_PCISTATE);
+		if (new_pcistate == pcistate)
 			break;
 		DELAY(10);
+	}
+	if (new_pcistate != pcistate) {
+		printf("%s: pcistate failed to revert\n",
+		    sc->bge_dev.dv_xname);
 	}
 
 	/* Enable memory arbiter. */
