@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2002/03/16 08:25:01 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2002/03/16 17:26:56 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,3 +112,9 @@ EXTERN	char *disk_names[]
  * Default file system type for floppies.
  */
 EXTERN char *fdtype INIT("msdos");
+
+/*
+ * for a.out -> ELF upgrade
+ */
+#define LIB_COUNT	0
+#define LIB_MOVE	1
