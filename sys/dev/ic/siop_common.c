@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.28 2002/05/05 15:23:22 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.28.2.1 2002/07/20 11:35:08 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.28 2002/05/05 15:23:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.28.2.1 2002/07/20 11:35:08 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ siop_wdtr_neg(siop_cmd)
 		/* FALLTHROUH */
 		default:
 			/*
- 			 * hum, we got more than what we can handle, shoudn't
+ 			 * hum, we got more than what we can handle, shouldn't
 			 * happen. Reject, and stay async
 			 */
 			siop_target->flags &= ~TARF_ISWIDE;

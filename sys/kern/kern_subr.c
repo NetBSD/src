@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.80.4.2 2002/06/20 16:02:20 gehenna Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.80.4.3 2002/07/20 11:35:11 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80.4.2 2002/06/20 16:02:20 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80.4.3 2002/07/20 11:35:11 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -110,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.80.4.2 2002/06/20 16:02:20 gehenna E
 #include <sys/queue.h>
 #include <sys/systrace.h>
 #include <sys/ktrace.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -150,8 +152,6 @@ uiomove(buf, n, uio)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
-		panic("uiomove proc");
 #endif
 	while (n > 0 && uio->uio_resid) {
 		iov = uio->uio_iov;
@@ -166,15 +166,22 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			KDASSERT(p->p_cpu != NULL);
-			KDASSERT(p->p_cpu == curcpu());
-			if (p->p_cpu->ci_schedstate.spc_flags &
+			if (curproc->p_cpu->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(NULL);
-			if (uio->uio_rw == UIO_READ)
-				error = copyout(cp, iov->iov_base, cnt);
-			else
-				error = copyin(iov->iov_base, cp, cnt);
+			if (__predict_true(p == curproc)) {
+				if (uio->uio_rw == UIO_READ)
+					error = copyout(cp, iov->iov_base, cnt);
+				else
+					error = copyin(iov->iov_base, cp, cnt);
+			} else {
+				if (uio->uio_rw == UIO_READ)
+					error = copyout_proc(p, cp,
+					    iov->iov_base, cnt);
+				else
+					error = copyin_proc(p, iov->iov_base,
+					    cp, cnt);
+			}
 			if (error)
 				return (error);
 			break;
@@ -235,6 +242,72 @@ again:
 	uio->uio_resid--;
 	uio->uio_offset++;
 	return (0);
+}
+
+/*
+ * Like copyin(), but operates on an arbitrary process.
+ */
+int
+copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	if (len == 0)
+		return (0);
+
+	iov.iov_base = kaddr;
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_resid = len;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = NULL;
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, &uio);
+	uvmspace_free(p->p_vmspace);
+
+	return (error);
+}
+
+/*
+ * Like copyout(), but operates on an arbitrary process.
+ */
+int
+copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
+{
+	struct iovec iov;
+	struct uio uio;
+	int error;
+
+	if (len == 0)
+		return (0);
+
+	iov.iov_base = (void *) kaddr;	/* XXX cast away const */
+	iov.iov_len = len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_resid = len;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = NULL;
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+		return (EFAULT);
+	p->p_vmspace->vm_refcnt++;	/* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, &uio);
+	uvmspace_free(p->p_vmspace);
+
+	return (error);
 }
 
 /*
