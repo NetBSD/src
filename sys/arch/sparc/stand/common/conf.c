@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1995/09/18 21:31:45 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.1 1997/06/01 03:39:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -31,10 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stand.h>
-#include <ufs.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
 #include <netinet/in.h>
-#include <nfs.h>
+#include <lib/libsa/nfs.h>
  
 struct fs_ops file_system_ufs[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },

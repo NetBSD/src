@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.2 1995/09/17 00:50:56 pk Exp $	*/
+/*	$NetBSD: dvma.c,v 1.1 1997/06/01 03:39:33 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -40,7 +40,8 @@
 #include <sys/param.h>
 #include <machine/pte.h>
 #include <machine/ctlreg.h>
-#include "promdev.h"
+
+#include <sparc/stand/common/promdev.h>
 
 #define	DVMA_BASE	0xFFF00000
 #define DVMA_MAPLEN	0xE0000	/* 1 MB - 128K (save MONSHORTSEG) */

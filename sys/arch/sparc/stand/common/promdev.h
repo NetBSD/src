@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.5 1997/05/04 14:19:22 pk Exp $ */
+/*	$NetBSD: promdev.h,v 1.1 1997/06/01 03:39:39 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -30,13 +30,53 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
- *
- *	1.1
- *	1.2	get it to work with V0 bootproms.
- *	1.4	add oldmon support and network support.
- *	1.5	bootprograms work unmodified across all platforms.
- */
+#include <machine/bsd_openprom.h>
 
-char *version = "$Revision: 1.5 $";
+struct promdata {
+	int	fd;			/* Openboot descriptor */
+	struct	saioreq *si;		/* Oldmon IO request */
+	int	devtype;		/* Kind of device we're booting from */
+#define DT_BLOCK	1
+#define DT_NET		2
+#define DT_BYTE		3
+	/* Hooks for netif.c */
+	int	(*xmit) __P((struct promdata *, void *, size_t));
+	int	(*recv) __P((struct promdata *, void *, size_t));
+};
+
+#define LOADADDR	((caddr_t)0x4000)
+#define DDB_MAGIC	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
+
+extern struct promvec	*promvec;
+extern char	*prom_bootdevice;
+extern char	*prom_bootfile;
+extern int	prom_boothow;
+extern int	hz;
+extern int	cputyp, nbpg, pgofset, pgshift;
+extern int	debug;
+
+extern void	prom_init __P((void));
+
+/* Note: dvma_*() routines are for "oldmon" machines only */
+extern char	*dvma_mapin __P((char *, size_t));
+extern char	*dvma_mapout __P((char *, size_t));
+extern char	*dvma_alloc __P((int));
+
+/*
+ * duplicates from pmap.c for mapping device on "oldmon" machines.
+ */
+#include <sparc/sparc/asm.h>
+
+#define getcontext()		lduba(AC_CONTEXT, ASI_CONTROL)
+#define setcontext(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
+#define getsegmap(va)		(cputyp == CPU_SUN4C \
+					? lduba(va, ASI_SEGMAP) \
+					: lduha(va, ASI_SEGMAP))
+#define setsegmap(va, pmeg)	(cputyp == CPU_SUN4C \
+					? stba(va, ASI_SEGMAP, pmeg) \
+					: stha(va, ASI_SEGMAP, pmeg))
+#define getregmap(va)		((unsigned)lduha(va+2, ASI_REGMAP) >> 8)
+#define setregmap(va, smeg)	stha(va+2, ASI_REGMAP, (smeg << 8))
+
+#define getpte(va)		lda(va, ASI_PTE)
+#define setpte(va, pte)		sta(va, ASI_PTE, pte)
