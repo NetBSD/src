@@ -3936,10 +3936,10 @@ zshard:
  */
 return_from_trap:
 #ifdef DEBUG
-	!! Make sure we don't have pc == npc or we suck.
+	!! Make sure we don't have pc == npc == 0 or we suck.
 	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
-	cmp	%g2, %g3
+	orcc	%g2, %g3, %g0
 	tz	%icc, 1
 #endif
 #ifdef NOTDEF_DEBUG

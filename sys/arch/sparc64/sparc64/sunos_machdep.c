@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.4 1998/10/08 02:31:41 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.5 1998/11/16 06:51:36 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -237,7 +237,14 @@ sunos_sys_sigreturn(p, v, retval)
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
+	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
+#ifdef DEBUG
+	{
+		printf("sigreturn13: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		Debugger();
+		return (EINVAL);
+	}
+#endif
 		return (EINVAL);
 	/* take only psr ICC field */
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);

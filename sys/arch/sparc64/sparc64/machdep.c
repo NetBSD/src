@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1998/10/19 22:09:20 tron Exp $ */
+/*	$NetBSD: machdep.c,v 1.22 1998/11/16 06:51:36 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -645,7 +645,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = onstack;
+	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
@@ -674,7 +674,7 @@ sendsig(catcher, sig, mask, code)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow *)((vaddr_t)fp - CC64FSZ);
+	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
 	write_user_windows();
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
@@ -794,10 +794,10 @@ sys___sigreturn14(p, v, retval)
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((sc.sc_pc | sc.sc_npc) & 3) != 0)
+	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 || (sc.sc_pc == 0) || (sc.sc_npc == 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		printf("sigreturn14: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
 		Debugger();
 		return (EINVAL);
 	}
