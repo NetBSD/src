@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.2 1998/07/13 10:49:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,8 +76,10 @@ struct uhid_softc {
 
 	int sc_isize;
 	int sc_osize;
+	int sc_fsize;
 	u_int8_t sc_iid;
 	u_int8_t sc_oid;
+	u_int8_t sc_fid;
 
 	char *sc_ibuf;
 	char *sc_obuf;
@@ -91,6 +93,7 @@ struct uhid_softc {
 #define	UHID_OPEN	0x01	/* device is open */
 #define	UHID_ASLP	0x02	/* waiting for mouse data */
 #define UHID_NEEDCLEAR	0x04	/* needs clearing endpoint stall */
+#define UHID_IMMED	0x08	/* return read data immediately */
 	int sc_disconnected;	/* device is gone */
 };
 
@@ -187,8 +190,9 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	
 	(void)usbd_set_idle(iface, 0, 0);
 
-	sc->sc_isize = hid_report_size(desc, size, hid_input,  &sc->sc_iid);
-	sc->sc_osize = hid_report_size(desc, size, hid_output, &sc->sc_oid);
+	sc->sc_isize = hid_report_size(desc, size, hid_input,   &sc->sc_iid);
+	sc->sc_osize = hid_report_size(desc, size, hid_output,  &sc->sc_oid);
+	sc->sc_fsize = hid_report_size(desc, size, hid_feature, &sc->sc_fid);
 
 	sc->sc_repdesc = desc;
 	sc->sc_repdesc_size = size;
@@ -262,6 +266,7 @@ uhidopen(dev, flag, mode, p)
 		return ENOMEM;
 
 	sc->sc_state |= UHID_OPEN;
+	sc->sc_state &= ~UHID_IMMED;
 
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USB, M_WAITOK);
 	sc->sc_obuf = malloc(sc->sc_osize, M_USB, M_WAITOK);
@@ -320,11 +325,22 @@ uhidread(dev, uio, flag)
 	int error = 0;
 	size_t length;
 	u_char buffer[UHID_CHUNK];
+	usbd_status r;
 
 	if (sc->sc_disconnected)
 		return (EIO);
 
 	DPRINTFN(1, ("uhidread\n"));
+	if (sc->sc_state & UHID_IMMED) {
+		DPRINTFN(1, ("uhidread immed\n"));
+		
+		r = usbd_get_report(sc->sc_iface, UHID_INPUT_REPORT,
+				    sc->sc_iid, sc->sc_ibuf, sc->sc_isize);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (EIO);
+		return (uiomove(buffer, sc->sc_isize, uio));
+	}
+
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {
 		if (flag & IO_NDELAY) {
@@ -414,19 +430,57 @@ uhidioctl(dev, cmd, addr, flag, p)
 {
 	struct uhid_softc *sc = uhid_cd.cd_devs[UHIDUNIT(dev)];
 	struct usb_ctl_report_desc *rd;
-	int size;
+	struct usb_ctl_report *re;
+	int size, id;
+	usbd_status r;
 
 	if (sc->sc_disconnected)
 		return (EIO);
 
 	DPRINTFN(2, ("uhidioctl: cmd=%lx\n", cmd));
 	switch (cmd) {
+	case FIONBIO:
+		/* All handled in the upper FS layer. */
+		break;
+
 	case USB_GET_REPORT_DESC:
 		rd = (struct usb_ctl_report_desc *)addr;
 		size = min(sc->sc_repdesc_size, sizeof rd->data);
 		rd->size = size;
 		memcpy(rd->data, sc->sc_repdesc, size);
 		break;
+
+	case USB_SET_IMMED:
+		if (*(int *)addr)
+			sc->sc_state |=  UHID_IMMED;
+		else
+			sc->sc_state &= ~UHID_IMMED;
+		break;
+
+	case USB_GET_REPORT:
+		re = (struct usb_ctl_report *)addr;
+		switch (re->report) {
+		case UHID_INPUT_REPORT:
+			size = sc->sc_isize;
+			id = sc->sc_iid;
+			break;
+		case UHID_OUTPUT_REPORT:
+			size = sc->sc_osize;
+			id = sc->sc_oid;
+			break;
+		case UHID_FEATURE_REPORT:
+			size = sc->sc_fsize;
+			id = sc->sc_fid;
+			break;
+		default:
+			return (EINVAL);
+		}
+		r = usbd_get_report(sc->sc_iface, re->report, id, 
+				    re->data, size);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (EIO);
+		break;
+
 	default:
 		return (EINVAL);
 	}
