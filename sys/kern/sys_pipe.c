@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.27 2002/10/23 09:14:22 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.28 2002/11/01 21:34:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.27 2002/10/23 09:14:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.28 2002/11/01 21:34:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,11 +612,11 @@ pipe_read(fp, offset, uio, cred, flags)
 
 	PIPE_LOCK(rpipe);
 	++rpipe->pipe_busy;
+	ocnt = rpipe->pipe_buffer.cnt;
+
 	error = pipelock(rpipe, 1);
 	if (error)
 		goto unlocked_error;
-
-	ocnt = rpipe->pipe_buffer.cnt;
 
 	while (uio->uio_resid) {
 		/*
