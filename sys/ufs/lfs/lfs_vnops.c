@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.58 2001/11/08 02:39:14 lukem Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.59 2001/11/23 21:44:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.58 2001/11/08 02:39:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.59 2001/11/23 21:44:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,23 +349,23 @@ lfs_set_dirop(struct vnode *vp)
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
-		if(fs->lfs_writer)
+		if (fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
-		if(lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops==0) {
+		if (lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops == 0) {
                 	++fs->lfs_writer;
                 	lfs_flush(fs, 0);
-                	if(--fs->lfs_writer==0)
+                	if (--fs->lfs_writer == 0)
                         	wakeup(&fs->lfs_dirops);
 		}
 
-		if(lfs_dirvcount > LFS_MAXDIROP) {		
+		if (lfs_dirvcount > LFS_MAXDIROP) {		
 #ifdef DEBUG_LFS
 			printf("lfs_set_dirop: sleeping with dirops=%d, "
 			       "dirvcount=%d\n", fs->lfs_dirops,
 			       lfs_dirvcount); 
 #endif
-			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
-					   "lfs_maxdirop", 0)) !=0) {
+			if ((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
+					   "lfs_maxdirop", 0)) != 0) {
 				lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 3) << fs->lfs_bshift));
 				return error;
 			}
@@ -404,7 +404,7 @@ lfs_set_dirop(struct vnode *vp)
 		++VTOI(dvp)->i_lfs->lfs_nadirop;			\
 	}								\
 	VTOI(dvp)->i_flag |= IN_ADIROP;					\
-} while(0)
+} while (0)
 
 #define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
 
@@ -535,7 +535,7 @@ lfs_create(void *v)
 	} */ *ap = v;
 	int error;
 
-	if((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
@@ -579,7 +579,7 @@ lfs_mkdir(void *v)
 	} */ *ap = v;
 	int error;
 
-	if((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
@@ -728,7 +728,7 @@ lfs_rename(void *v)
 		error = EXDEV;
 		goto errout;
 	}
-	if ((error = SET_DIROP(fdvp))!=0)
+	if ((error = SET_DIROP(fdvp)) != 0)
 		goto errout;
 	MARK_VNODE(fdvp);
 	MARK_VNODE(tdvp);
