@@ -35,14 +35,14 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  *
- *	$Id: machdep.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp $
  */
 
 /*
  * Modified for the pc532 by Phil Nelson.  2/3/93
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/machdep.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -70,12 +70,16 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/machdep.
 
 vm_map_t buffer_map;
 
+#include "machine/psl.h"
 #include "machine/reg.h"
 #include "machine/cpu.h"
 #include "icu.h"
 
 extern vm_offset_t avail_end;
 extern struct user *proc0paddr;
+
+/* A local function... */
+void reboot_cpu();
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -199,7 +203,7 @@ _low_level_init ()
 
   /* Load the ptb0 register and start mapping. */
 
-_mapped = 1;
+  _mapped = 1;
   _load_ptb0 (p0);
   asm(" lmr mcr, 3");		/* Start the machine mapping, 1 vm space. */
 
@@ -604,6 +608,7 @@ boot(arghowto)
 		for(;;);
 	}
 	howto = arghowto;
+printf ("boot: howto=0x%x\n", howto);
 #if 0
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
 		register struct buf *bp;
@@ -641,23 +646,34 @@ boot(arghowto)
 #endif	/* if 0 */
 	splhigh();
 	devtype = major(rootdev);
-#if 0
+
 	if (howto&RB_HALT) {
-		pg("\nThe operating system has halted. Please press any key to reboot.\n\n");
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb, 0);
-			dumppcb.pcb_ptd = _get_ptb0();
-			dumpsys();	
-			/*NOTREACHED*/
-		}
+		printf ("\nThe operating system has halted.\n\n");
+		cpu_reset();
+		for(;;) ;
+		/*NOTREACHED*/
 	}
-#ifdef lint
-	dummy = 0; dummy = dummy;
-	printf("howto %d, devtype %d\n", arghowto, devtype);
+
+	if (howto & RB_DUMP) {
+#if 1
+/* dump the stack! */
+{ int *fp = (int *)_get_fp();
+  int i=0;
+  while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
+    printf ("0x%x (@0x%x), ", fp[1], fp);
+    fp = (int *)fp[0];
+    if (++i == 3) { printf ("\n"); i=0; }
+  }
+}
+#else
+		savectx(&dumppcb, 0);
+		dumppcb.pcb_ptd = _get_ptb0();
+		dumpsys();	
+		/*NOTREACHED*/
 #endif
-#endif	/* if 0 */
-	cpu_reset();
+	}
+
+	reboot_cpu();
 	for(;;) ;
 	/*NOTREACHED*/
 }
@@ -711,7 +727,7 @@ physstrat(bp, strat, prio)
  * Strange exec values!  (Do we want to support a minix a.out header?)
  */
 int
-cpu_exec_makecmds() 
+cpu_exec_aout_makecmds() 
 {
   return ENOEXEC;
 };
@@ -938,6 +954,43 @@ dumpsys()
 }
 #endif
 
+/* ptrace support is next. */
+
+int
+ptrace_set_pc (struct proc *p, unsigned int addr) 
+{
+	register int *regs = p->p_regs;
+
+	regs[PC] = addr;
+	return 0;
+}
+
+int
+ptrace_single_step (struct proc *p)
+{
+	register int *regs = p->p_regs;
+
+	regs[PSR] |= PSL_T;
+	return 0;
+}
+
+int
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
+	register int *regs;
+	regs = p->p_regs;
+
+	return copyout (regs, addr, NIPCREG*sizeof(int));
+}
+
+int
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
+	register int *regs = p->p_regs;
+
+	return copyin (addr, regs, NIPCREG*sizeof(int));
+}
+
 
 /* Final little things that need to be here to get it to link or 
    are not available on the system. */
@@ -962,3 +1015,11 @@ void bad_intr (struct intrframe frame)
    splx(x);
 }
 
+
+/* Stub function for reboot_cpu. */
+
+void reboot_cpu()
+{
+	printf ("Should be rebooting!  Hit reset!\n");
+	while (1);
+}
