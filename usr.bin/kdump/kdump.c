@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.37 2002/03/31 22:44:03 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.38 2002/04/08 20:15:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.37 2002/03/31 22:44:03 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.38 2002/04/08 20:15:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,8 @@ signame(long sig, int xlat)
 		(void)snprintf(buf, sizeof(buf), "*unknown %ld*", sig);
 		return buf;
 	} else
-		return sys_signame[xlat ? current->signalmap[sig] : sig];
+		return sys_signame[(xlat && current->signalmap != NULL) ?
+		    current->signalmap[sig] : sig];
 }
 
 void
