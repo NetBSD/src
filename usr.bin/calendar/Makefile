@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/04 15:55:32 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -8,5 +8,7 @@ PROG=	calendar
 FILESDIR=/usr/share/calendar
 FILES!= echo ${.CURDIR}/calendars/calendar.*
 .endif
+DPADD+=${LIBUTIL}
+LDADD+=-lutil
 
 .include <bsd.prog.mk>
