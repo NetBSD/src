@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.25 2002/05/25 23:12:16 wiz Exp $ */
+/* $NetBSD: test.c,v 1.26 2005/02/10 06:56:55 simonb Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.25 2002/05/25 23:12:16 wiz Exp $");
+__RCSID("$NetBSD: test.c,v 1.26 2005/02/10 06:56:55 simonb Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -211,6 +211,7 @@ main(int argc, char *argv[])
 static void
 syntax(const char *op, const char *msg)
 {
+
 	if (op && *op)
 		error("%s: %s", op, msg);
 	else
@@ -244,6 +245,7 @@ aexpr(enum token n)
 static int
 nexpr(enum token n)
 {
+
 	if (n == UNOT)
 		return !nexpr(t_lex(*++t_wp));
 	return primary(n);
@@ -298,7 +300,7 @@ binop(void)
 	(void) t_lex(*++t_wp);
 	op = t_wp_op;
 
-	if ((opnd2 = *++t_wp) == (char *)0)
+	if ((opnd2 = *++t_wp) == NULL)
 		syntax(op->op_text, "argument expected");
 		
 	switch (op->op_num) {
@@ -323,11 +325,11 @@ binop(void)
 	case INTLT:
 		return getn(opnd1) < getn(opnd2);
 	case FILNT:
-		return newerf (opnd1, opnd2);
+		return newerf(opnd1, opnd2);
 	case FILOT:
-		return olderf (opnd1, opnd2);
+		return olderf(opnd1, opnd2);
 	case FILEQ:
-		return equalf (opnd1, opnd2);
+		return equalf(opnd1, opnd2);
 	default:
 		abort();
 		/* NOTREACHED */
@@ -390,7 +392,7 @@ t_lex(char *s)
 	op = ops;
 
 	if (s == 0) {
-		t_wp_op = (struct t_op *)0;
+		t_wp_op = NULL;
 		return EOI;
 	}
 	while (op->op_text) {
@@ -403,7 +405,7 @@ t_lex(char *s)
 		}
 		op++;
 	}
-	t_wp_op = (struct t_op *)0;
+	t_wp_op = NULL;
 	return OPERAND;
 }
 
@@ -450,32 +452,32 @@ getn(const char *s)
 }
 
 static int
-newerf (const char *f1, const char *f2)
+newerf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
+	return (stat(f1, &b1) == 0 &&
+		stat(f2, &b2) == 0 &&
 		b1.st_mtime > b2.st_mtime);
 }
 
 static int
-olderf (const char *f1, const char *f2)
+olderf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
+	return (stat(f1, &b1) == 0 &&
+		stat(f2, &b2) == 0 &&
 		b1.st_mtime < b2.st_mtime);
 }
 
 static int
-equalf (const char *f1, const char *f2)
+equalf(const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
-	return (stat (f1, &b1) == 0 &&
-		stat (f2, &b2) == 0 &&
+	return (stat(f1, &b1) == 0 &&
+		stat(f2, &b2) == 0 &&
 		b1.st_dev == b2.st_dev &&
 		b1.st_ino == b2.st_ino);
 }
