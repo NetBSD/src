@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.27 1998/08/27 06:55:16 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.28 1998/09/02 20:55:57 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.27 1998/08/27 06:55:16 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.28 1998/09/02 20:55:57 christos Exp $");
 #endif
 #endif
 
@@ -395,13 +395,10 @@ set_up_tty(fd, local)
     }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
-    if (crtscts > 0 && !local) {
-        if (crtscts == 2)
-            tios.c_cflag |= CDTRCTS;
-	else
-	    tios.c_cflag |= CRTSCTS;
-    } else if (crtscts < 0)
-	tios.c_cflag &= ~(CRTSCTS | CDTRCTS);
+    if (crtscts > 0 && !local)
+	tios.c_cflag |= CRTSCTS;
+    else if (crtscts < 0)
+	tios.c_cflag &= ~CRTSCTS;
 
     tios.c_cflag |= CS8 | CREAD | HUPCL;
     if (local || !modem)
