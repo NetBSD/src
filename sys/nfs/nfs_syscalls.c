@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.57 2003/04/02 15:14:23 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.58 2003/04/09 14:22:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.57 2003/04/02 15:14:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.58 2003/04/09 14:22:33 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -125,7 +125,7 @@ MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
 #define	FALSE	0
 
 #ifdef NFS
-static struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 int nfs_niothreads = -1; /* == "0, and has never been set" */
 #endif
 
@@ -948,7 +948,8 @@ nfssvc_iod(l)
 	struct lwp *l;
 {
 	struct buf *bp;
-	int i, myiod;
+	int i;
+	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 	int error = 0;
 	struct proc *p = l->l_proc;
@@ -956,28 +957,28 @@ nfssvc_iod(l)
 	/*
 	 * Assign my position or return error if too many already running
 	 */
-	myiod = -1;
+	myiod = NULL;
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i] == NULL) {
-			myiod = i;
+		if (nfs_asyncdaemon[i].nid_proc == NULL) {
+			myiod = &nfs_asyncdaemon[i];
 			break;
 		}
-	if (myiod == -1)
+	if (myiod == NULL)
 		return (EBUSY);
-	nfs_asyncdaemon[myiod] = p;
+	myiod->nid_proc = p;
 	nfs_numasync++;
 	PHOLD(l);
 	/*
 	 * Just loop around doing our stuff until SIGKILL
 	 */
 	for (;;) {
-	    while (((nmp = nfs_iodmount[myiod]) == NULL
+	    while (((nmp = myiod->nid_mount) == NULL
 		    || TAILQ_EMPTY(&nmp->nm_bufq)) && error == 0) {
 		if (nmp)
 		    nmp->nm_bufqiods--;
-		nfs_iodwant[myiod] = p;
-		nfs_iodmount[myiod] = NULL;
-		error = tsleep((caddr_t)&nfs_iodwant[myiod],
+		myiod->nid_want = p;
+		myiod->nid_mount = NULL;
+		error = tsleep((caddr_t)&myiod->nid_want,
 			PWAIT | PCATCH, "nfsidl", 0);
 	    }
 	    while (nmp != NULL && (bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
@@ -994,7 +995,7 @@ nfssvc_iod(l)
 		 * so that the iods can be shared out fairly between the mounts
 		 */
 		if (nfs_defect && nmp->nm_bufqiods > 1) {
-		    nfs_iodmount[myiod] = NULL;
+		    myiod->nid_mount = NULL;
 		    nmp->nm_bufqiods--;
 		    break;
 		}
@@ -1006,9 +1007,9 @@ nfssvc_iod(l)
 	PRELE(l);
 	if (nmp)
 		nmp->nm_bufqiods--;
-	nfs_iodwant[myiod] = NULL;
-	nfs_iodmount[myiod] = NULL;
-	nfs_asyncdaemon[myiod] = NULL;
+	myiod->nid_want = NULL;
+	myiod->nid_mount = NULL;
+	myiod->nid_proc = NULL;
 	nfs_numasync--;
 
 	return (error);
@@ -1030,7 +1031,7 @@ nfs_getset_niothreads(set)
 	int i, have, start;
 	
 	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i] != NULL)
+		if (nfs_asyncdaemon[i].nid_proc != NULL)
 			have++;
 
 	if (set) {
@@ -1045,8 +1046,8 @@ nfs_getset_niothreads(set)
 		}
 
 		for (i = 0; (start < 0) && (i < NFS_MAXASYNCDAEMON); i++)
-			if (nfs_asyncdaemon[i] != NULL) {
-				psignal(nfs_asyncdaemon[i], SIGKILL);
+			if (nfs_asyncdaemon[i].nid_proc != NULL) {
+				psignal(nfs_asyncdaemon[i].nid_proc, SIGKILL);
 				start++;
 			}
 	} else {
