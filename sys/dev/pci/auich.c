@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.60 2004/07/09 02:42:45 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.61 2004/08/07 16:12:57 soren Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 
-/* #define	ICH_DEBUG */
+/* #define	AUICH_DEBUG */
 /*
  * AC'97 audio found on Intel 810/820/440MX chipsets.
  *	http://developer.intel.com/design/chipsets/datashts/290655.htm
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.60 2004/07/09 02:42:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.61 2004/08/07 16:12:57 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,12 +238,12 @@ struct auich_softc {
 				& AC97_6CH_DACS) == AC97_6CH_DACS)
 
 /* Debug */
-#ifdef AUDIO_DEBUG
+#ifdef AUICH_DEBUG
 #define	DPRINTF(l,x)	do { if (auich_debug & (l)) printf x; } while(0)
 int auich_debug = 0xfffe;
 #define	ICH_DEBUG_CODECIO	0x0001
 #define	ICH_DEBUG_DMA		0x0002
-#define	ICH_DEBUG_PARAM		0x0004
+#define	ICH_DEBUG_INTR		0x0004
 #else
 #define	DPRINTF(x,y)	/* nothing */
 #endif
@@ -1060,11 +1060,12 @@ auich_intr(void *v)
 #endif
 
 	gsts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_GSTS);
-	DPRINTF(ICH_DEBUG_DMA, ("auich_intr: gsts=0x%x\n", gsts));
+	DPRINTF(ICH_DEBUG_INTR, ("auich_intr: gsts=0x%x\n", gsts));
 
 	if (gsts & ICH_POINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_PCMO+sc->sc_sts_reg);
-		DPRINTF(ICH_DEBUG_DMA,
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    ICH_PCMO + sc->sc_sts_reg);
+		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: osts=0x%x\n", sts));
 
 		if (sts & ICH_FIFOE) {
@@ -1082,8 +1083,9 @@ auich_intr(void *v)
 				q = &sc->dmalist_pcmo[qptr];
 
 				q->base = sc->pcmo_p;
-				q->len = (sc->pcmo_blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
-				DPRINTF(ICH_DEBUG_DMA,
+				q->len = (sc->pcmo_blksize /
+				    sc->sc_sample_size) | ICH_DMAF_IOC;
+				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
 				    &sc->dmalist_pcmo[i], q,
 				    sc->pcmo_blksize / 2, sc->pcmo_p));
@@ -1106,15 +1108,16 @@ auich_intr(void *v)
 			sc->sc_pintr(sc->sc_parg);
 
 		/* int ack */
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO + sc->sc_sts_reg,
-		    sts & (ICH_LVBCI | ICH_CELV | ICH_BCIS | ICH_FIFOE));
+		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO +
+		    sc->sc_sts_reg, sts & (ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
 		ret++;
 	}
 
 	if (gsts & ICH_PIINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_PCMI+sc->sc_sts_reg);
-		DPRINTF(ICH_DEBUG_DMA,
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    ICH_PCMI + sc->sc_sts_reg);
+		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: ists=0x%x\n", sts));
 
 		if (sts & ICH_FIFOE) {
@@ -1132,8 +1135,9 @@ auich_intr(void *v)
 				q = &sc->dmalist_pcmi[qptr];
 
 				q->base = sc->pcmi_p;
-				q->len = (sc->pcmi_blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
-				DPRINTF(ICH_DEBUG_DMA,
+				q->len = (sc->pcmi_blksize /
+				    sc->sc_sample_size) | ICH_DMAF_IOC;
+				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
 				    &sc->dmalist_pcmi[i], q,
 				    sc->pcmi_blksize / 2, sc->pcmi_p));
@@ -1156,15 +1160,16 @@ auich_intr(void *v)
 			sc->sc_rintr(sc->sc_rarg);
 
 		/* int ack */
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI + sc->sc_sts_reg,
-		    sts & (ICH_LVBCI | ICH_CELV | ICH_BCIS | ICH_FIFOE));
+		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI +
+		    sc->sc_sts_reg, sts & (ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
 		ret++;
 	}
 
 	if (gsts & ICH_MIINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_MICI+sc->sc_sts_reg);
-		DPRINTF(ICH_DEBUG_DMA,
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    ICH_MICI + sc->sc_sts_reg);
+		DPRINTF(ICH_DEBUG_INTR,
 		    ("auich_intr: ists=0x%x\n", sts));
 		if (sts & ICH_FIFOE)
 			printf("%s: fifo overrun\n", sc->sc_dev.dv_xname);
@@ -1447,10 +1452,9 @@ auich_powerhook(int why, void *addr)
 	}
 }
 
-
-/* -------------------------------------------------------------------- */
-/* Calibrate card (some boards are overclocked and need scaling) */
-
+/*
+ * Calibrate card (some boards are overclocked and need scaling)
+ */
 void
 auich_calibrate(struct auich_softc *sc)
 {
