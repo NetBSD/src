@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.23 2002/11/07 08:40:12 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.24 2002/11/07 20:12:41 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -884,4 +884,10 @@ sys/dev/pci/pcidevs				1.451
 	Clean up Intel i8254x product names, and add i82540, i82545, and i82546
 	product IDs.
 	[thorpej, ticket #452]
+
+sys/dev/pci/if_wm.c				1.11
+
+	Don't use internal names to identify chips.  Add types for the
+	i82540, i82545, and i82546 (but don't match them yet).
+	[thorpej, ticket #453]
 
