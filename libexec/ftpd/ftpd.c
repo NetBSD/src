@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.13 1995/04/11 02:44:55 cgd Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.14 1995/04/11 02:58:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.13 1995/04/11 02:44:55 cgd Exp $":
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.14 1995/04/11 02:58:40 cgd Exp $";
 #endif
 #endif /* not lint */
 
