@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 1999/09/22 07:18:45 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19 1999/10/21 15:38:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -67,6 +67,10 @@
 #define PCI_MEM_START   0x00100000      /*   1 MByte */
 #define PCI_IO_START    0x00004000      /*  16 kByte (some PCI cards allow only
 					    I/O addresses up to 0xffff) */
+/*
+ * Convert a PCI 'device' number to a slot number.
+ */
+#define	DEV2SLOT(dev)	(3 - dev)
 
 /*
  * Struct to hold the memory and I/O datas of the pci devices
@@ -377,8 +381,8 @@ enable_pci_devices()
 	 * number. This makes sense on the atari because the
 	 * individual slots are hard-wired to a specific MFP-pin.
 	 */
-	csr  = (dev << PCI_INTERRUPT_PIN_SHIFT);
-	csr |= (dev << PCI_INTERRUPT_LINE_SHIFT);
+	csr  = (DEV2SLOT(dev) << PCI_INTERRUPT_PIN_SHIFT);
+	csr |= (DEV2SLOT(dev) << PCI_INTERRUPT_LINE_SHIFT);
 	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
     }
 
