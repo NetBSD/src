@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.1 1998/06/04 16:52:34 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.2 1998/06/05 10:09:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -568,7 +568,11 @@ again:
 	/* fall through */
 
 	case PIOMODE:
-		if (drvp->PIO_mode <= 3) 
+		/*
+		 * if mode is < 3, it is unknown. Assume the defaults are
+		 * good.
+		 */
+		if (drvp->PIO_mode < 3) 
 			goto dmamode;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);

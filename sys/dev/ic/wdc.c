@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.3 1998/06/05 08:38:57 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.4 1998/06/05 10:09:14 bouyer Exp $ */
 
 
 /*
@@ -698,10 +698,15 @@ wdc_probe_caps(drvp)
 		(params.atap_extensions & WDC_EXT_MODES)) {
 		printf("%s:", drv_dev->dv_xname);
 		printed = 0;
-		for (i = 15; i >= 0; i--) {
+		/*
+		 * XXX some drives report something wrong here (they claim to
+		 * support PIO mode 8 !). As mode is coded on 3 bits in
+		 * SET FEATURE, limit it to 7 (so limit i to 4).
+		 */
+		for (i = 4; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
 				continue;
-			/* see if mode is accepted */
+			/* See if mode is accepted. */
 			if (ata_set_mode(drvp, 0x08 | (i + 3),
 				AT_POLL) != CMD_OK)
 				continue;
@@ -710,13 +715,19 @@ wdc_probe_caps(drvp)
 				sep = ",";
 				printed = 1;
 			}
-			if (wdc->pio_mode >= i + 3) {
+			/*
+			 * If controller's driver can't set its PIO mode,
+			 * get the highter one for the drive. This should
+			 * work even if the controller can't go that fast.
+			 */
+			if ((wdc->cap & WDC_CAPABILITY_PIO) == 0 ||
+			    wdc->pio_mode >= i + 3) {
 				drvp->PIO_mode = i + 3;
 				break;
 			}
 		}
 		printed = 0;
-		for (i = 15; i >= 0; i--) {
+		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
 			if (ata_set_mode(drvp, 0x20 | i, AT_POLL) != CMD_OK)
@@ -734,7 +745,7 @@ wdc_probe_caps(drvp)
 			}
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
-			for (i = 15; i >= 0; i--) {
+			for (i = 7; i >= 0; i--) {
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
