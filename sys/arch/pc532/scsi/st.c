@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.1 1994/04/01 23:18:21 phil Exp $
+ *	$Id: st.c,v 1.2 1994/06/30 01:12:52 phil Exp $
  */
 
 /*
@@ -38,10 +38,10 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_tape.h>
-#include <scsi/scsiconf.h>
-#include <scsi/stdefs.h>
+#include "../../scsi/scsi_all.h"
+#include "../../scsi/scsi_tape.h"
+#include "../../scsi/scsiconf.h"
+#include "../../scsi/stdefs.h"
 
 long int ststrats, stqueues;
 
