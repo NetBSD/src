@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.100 1997/05/09 05:43:42 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.101 1997/05/09 06:19:55 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -17,10 +17,10 @@ SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
 SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .endif
 
-# prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
-# .so used for PIC object files.  .ln used for lint output files.
-.SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
+# add additional suffixes not exported.
+# .po is used for profiling object files.
+# .so is used for PIC object files.
+.SUFFIXES: .out .a .ln .so .po .o .c .cc .C .F .f .r .y .l .s .S .cl .p .h .sh .m4
 
 
 # Set PICFLAGS to cc flags for producing position-independent code,
