@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.58 2001/03/08 11:07:08 ichiro Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.59 2001/03/18 21:13:12 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -267,6 +267,12 @@ static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_NTT_ME_WLAN,
 	  PCMCIA_STR_NTT_ME_WLAN,
+	  1 },
+
+	{ PCMCIA_VENDOR_IODATA2,
+	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
+	  PCMCIA_CIS_IODATA2_WNB11PCM,
+	  PCMCIA_STR_IODATA2_WNB11PCM,
 	  1 },
 
 	{ 0,
