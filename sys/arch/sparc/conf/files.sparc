@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.124 2003/11/15 17:52:30 bouyer Exp $
+#	$NetBSD: files.sparc,v 1.125 2004/02/14 14:33:29 bjh21 Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -162,8 +162,8 @@ include "dev/ata/files.ata"
 
 file	arch/sparc/dev/kd.c				# console
 
-attach pckbc at obio with pckbc_obio
-attach pckbc at ebus with pckbc_ebus
+attach pckbc at obio with pckbc_obio: pckbc_machdep_cnattach
+attach pckbc at ebus with pckbc_ebus: pckbc_machdep_cnattach
 file	arch/sparc/dev/pckbc_js.c	pckbc_obio | pckbc_ebus
 
 
