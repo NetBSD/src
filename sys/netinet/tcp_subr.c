@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.58 1998/09/04 22:29:54 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.59 1998/09/19 04:02:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -214,7 +214,8 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 	struct route *ro = 0;
 
 	if (tp) {
-		win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
+		if ((flags & TH_RST) == 0)
+			win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
 		ro = &tp->t_inpcb->inp_route;
 	}
 	if (m == 0) {
