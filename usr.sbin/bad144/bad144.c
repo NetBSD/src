@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $	*/
+/*	$NetBSD: bad144.c,v 1.11 1997/06/24 07:48:12 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -37,12 +37,15 @@
 static char copyright[] =
 "@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif not lint
+#endif /* not lint */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95"; */
-static char *rcsid = "$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $";
-#endif not lint
+#if 0
+static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
+#else
+static char rcsid[] = "$NetBSD: bad144.c,v 1.11 1997/06/24 07:48:12 mikel Exp $";
+#endif
+#endif /* not lint */
 
 /*
  * bad144
@@ -66,8 +69,10 @@ static char *rcsid = "$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $";
 #include <ufs/ffs/fs.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <unistd.h>
 
 #define RETRIES	10		/* number of retries on reading old sectors */
 #ifdef i386 /* XXX */
@@ -77,7 +82,6 @@ static char *rcsid = "$NetBSD: bad144.c,v 1.10 1997/03/06 06:12:19 mikel Exp $";
 #endif
 
 int	fflag, add, copy, verbose, nflag;
-int	compare();
 int	dups;
 int	badfile = -1;		/* copy of badsector table to use, -1 if any */
 #define MAXSECSIZE	1024
@@ -85,17 +89,25 @@ struct	dkbad curbad, oldbad;
 #define	DKBAD_MAGIC	0x4321
 
 char	label[BBSIZE];
-daddr_t	size, getold(), badsn();
+daddr_t	size;
 struct	disklabel *dp;
 char	name[BUFSIZ];
-char	*malloc();
-off_t	lseek();
 
+void	Perror __P((const char *));
+daddr_t	badsn __P((const struct bt_bad *));
+int	blkcopy __P((int, daddr_t, daddr_t));
+void	blkzero __P((int, daddr_t));
+int	checkold __P((void));
+int	compare __P((const void *, const void *));
+daddr_t	getold __P((int, struct dkbad *));
+void	shift __P((int, int, int));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct bt_bad *bt;
+	struct bt_bad *bt;
 	daddr_t	sn, bn[126];
 	int i, f, nbad, new, bad, errs;
 
@@ -136,11 +148,11 @@ main(argc, argv)
 	if (argc < 1) {
 usage:
 		fprintf(stderr,
-		  "usage: bad144 [ -f ] disk [ snum [ bn ... ] ]\n");
+		    "usage: bad144 [ -f ] disk [ snum [ bn ... ] ]\n");
 		fprintf(stderr,
-	      "to read or overwrite bad-sector table, e.g.: bad144 hp0\n");
+		  "to read or overwrite bad-sector table, e.g.: bad144 hp0\n");
 		fprintf(stderr,
-		  "or bad144 -a [ -f ] [ -c ] disk  bn ...\n");
+		    "or bad144 -a [ -f ] [ -c ] disk  bn ...\n");
 		fprintf(stderr, "where options are:\n");
 		fprintf(stderr, "\t-a  add new bad sectors to the table\n");
 		fprintf(stderr, "\t-f  reformat listed sectors as bad\n");
@@ -221,7 +233,7 @@ usage:
 			    bt->bt_cyl, bt->bt_trksec>>8, bt->bt_trksec&0xff);
 			bt++;
 		}
-		(void) checkold(&oldbad);
+		(void) checkold();
 		exit(0);
 	}
 	if (add) {
@@ -231,7 +243,7 @@ usage:
 		 * are in order.  Copy the old table to the new one.
 		 */
 		(void) getold(f, &oldbad);
-		i = checkold(&oldbad);
+		i = checkold();
 		if (verbose)
 			printf("Had %d bad sectors, adding %d\n", i, argc);
 		if (i + argc > 126) {
@@ -299,7 +311,8 @@ usage:
 	else
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
-		if (lseek(f, dp->d_secsize * (size - dp->d_nsectors + i),
+		if (lseek(f,
+		    (off_t)dp->d_secsize * (size - dp->d_nsectors + i),
 		    L_SET) < 0)
 			Perror("lseek");
 		if (verbose)
@@ -338,9 +351,10 @@ usage:
 
 daddr_t
 getold(f, bad)
-struct dkbad *bad;
+	int f;
+	struct dkbad *bad;
 {
-	register int i;
+	int i;
 	daddr_t sn;
 	char msg[80];
 
@@ -350,7 +364,7 @@ struct dkbad *bad;
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
 		sn = size - dp->d_nsectors + i;
-		if (lseek(f, sn * dp->d_secsize, L_SET) < 0)
+		if (lseek(f, (off_t)sn * dp->d_secsize, L_SET) < 0)
 			Perror("lseek");
 		if (read(f, (char *) bad, dp->d_secsize) == dp->d_secsize) {
 			if (i > 0)
@@ -367,6 +381,7 @@ struct dkbad *bad;
 	/*NOTREACHED*/
 }
 
+int
 checkold()
 {
 	register int i;
@@ -424,7 +439,9 @@ checkold()
  * to make room for the new bad sectors.
  * new is the new number of bad sectors, old is the previous count.
  */
+void
 shift(f, new, old)
+     int f, new, old;
 {
 	daddr_t repl;
 
@@ -460,8 +477,10 @@ char *buf;
 /*
  *  Copy disk sector s1 to s2.
  */
+int
 blkcopy(f, s1, s2)
-daddr_t s1, s2;
+	int f;
+	daddr_t s1, s2;
 {
 	register tries, n;
 
@@ -473,7 +492,7 @@ daddr_t s1, s2;
 		}
 	}
 	for (tries = 0; tries < RETRIES; tries++) {
-		if (lseek(f, dp->d_secsize * s1, L_SET) < 0)
+		if (lseek(f, (off_t)dp->d_secsize * s1, L_SET) < 0)
 			Perror("lseek");
 		if ((n = read(f, buf, dp->d_secsize)) == dp->d_secsize)
 			break;
@@ -484,7 +503,7 @@ daddr_t s1, s2;
 			perror((char *)0);
 		return(0);
 	}
-	if (lseek(f, dp->d_secsize * s2, L_SET) < 0)
+	if (lseek(f, (off_t)dp->d_secsize * s2, L_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("copying %d to %d\n", s1, s2);
@@ -499,8 +518,10 @@ daddr_t s1, s2;
 
 char *zbuf;
 
+void
 blkzero(f, sn)
-daddr_t sn;
+	int f;
+	daddr_t sn;
 {
 
 	if (zbuf == (char *)NULL) {
@@ -510,7 +531,7 @@ daddr_t sn;
 			exit(20);
 		}
 	}
-	if (lseek(f, dp->d_secsize * sn, L_SET) < 0)
+	if (lseek(f, (off_t)dp->d_secsize * sn, L_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("zeroing %d\n", sn);
@@ -521,9 +542,13 @@ daddr_t sn;
 	}
 }
 
-compare(b1, b2)
-register struct bt_bad *b1, *b2;
+int
+compare(v1, v2)
+	const void *v1, *v2;
 {
+	const struct bt_bad *b1 = v1;
+	const struct bt_bad *b2 = v2;
+
 	if (b1->bt_cyl > b2->bt_cyl)
 		return(1);
 	if (b1->bt_cyl < b2->bt_cyl)
@@ -535,10 +560,12 @@ register struct bt_bad *b1, *b2;
 
 daddr_t
 badsn(bt)
-register struct bt_bad *bt;
+	const struct bt_bad *bt;
 {
-	return ((bt->bt_cyl*dp->d_ntracks + (bt->bt_trksec>>8)) * dp->d_nsectors
-		+ (bt->bt_trksec&0xff));
+
+	return ((bt->bt_cyl * dp->d_ntracks
+		+ (bt->bt_trksec >> 8)) * dp->d_nsectors
+		+ (bt->bt_trksec & 0xff));
 }
 
 #ifdef vax
@@ -583,6 +610,7 @@ struct	formats {
 };
 
 /*ARGSUSED*/
+int
 hpupformat(fp, dp, blk, buf, count)
 	struct formats *fp;
 	struct disklabel *dp;
@@ -604,6 +632,7 @@ hpupformat(fp, dp, blk, buf, count)
 }
 
 /*ARGSUSED*/
+int
 rp06format(fp, dp, blk, buf, count)
 	struct formats *fp;
 	struct disklabel *dp;
@@ -620,6 +649,7 @@ rp06format(fp, dp, blk, buf, count)
 	return (0);
 }
 
+void
 format(fd, blk)
 	int fd;
 	daddr_t blk;
@@ -689,10 +719,11 @@ format(fd, blk)
 }
 #endif
 
+void
 Perror(op)
-	char *op;
+	const char *op;
 {
 
-	fprintf(stderr, "bad144: "); perror(op);
+	(void)fprintf(stderr, "bad144: "); perror(op);
 	exit(4);
 }
