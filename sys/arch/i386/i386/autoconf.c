@@ -154,8 +154,16 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			printf("root device? ");
+			printf("root device");
+			if (bootdv)
+				printf(" (default %s%c)", bootdv->dv_xname,
+				       (minor(bootdev) & PARTITIONMASK) + 'a');
+			printf("? ");
 			len = getstr(buf, sizeof(buf));
+			if (bootdv && len == 0) {
+				nrootdev = bootdev;
+				break;
+			}
 #ifdef GENERIC
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
