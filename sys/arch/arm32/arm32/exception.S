@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.11 1997/10/14 10:18:45 mark Exp $	*/
+/*	$NetBSD: exception.S,v 1.12 1998/04/01 22:59:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -46,13 +46,10 @@
  */
 
 #include "ipkdb.h"
+#include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include "assym.h"
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
 
 	.text	
 	.align	0
@@ -111,8 +108,7 @@ do_exit:
 
 /* entry point for CPU data abort */
 
-	.global	data_abort_entry
-data_abort_entry:
+ASENTRY_NP(data_abort_entry)
         sub     lr, lr, #0x00000008     /* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push trap frame and switch */
@@ -146,8 +142,7 @@ abortdatamsg:
         .align  0
 
 
-	.global	prefetch_abort_entry
-prefetch_abort_entry:
+ASENTRY_NP(prefetch_abort_entry)
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
 	PUSHFRAMEINSVC
@@ -187,8 +182,7 @@ abortprefetchmsg:
  * Main entry point for the SWI vector
  */
 
-	.global	swi_entry
-swi_entry:
+ASENTRY_NP(swi_entry)
 	PUSHFRAME
 
  	sub	r0, lr, #0x00000004	/* Get the address of the SWI */
@@ -232,8 +226,7 @@ do_swi_ast:
  * entry from the vector.
  */
 
-	.global	undefined_entry
-undefined_entry:
+ASENTRY_NP(undefined_entry)
 #if NIPKDB > 0
 /*
  * IPKDB must be hooked in at the earliest possible entry point.
@@ -371,8 +364,7 @@ Lundefined_handler_indirection:
  * a standard trap frame and is called in SVC mode.
  */
 
-	.global	_undefinedinstruction_bounce
-_undefinedinstruction_bounce:
+ENTRY_NP(undefinedinstruction_bounce)
 	PUSHFRAMEINSVC
 	mov	r0, sp
 	bl	_undefinedinstruction
