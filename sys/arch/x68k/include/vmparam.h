@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2001/01/11 10:36:46 minoura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2001/01/11 10:40:55 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,13 +108,6 @@
  */
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	1024		/* 4mb */
-#endif
-
-/*
- * External IO space map size.
- */
-#ifndef EIOMAPSIZE
-#define EIOMAPSIZE	0
 #endif
 
 /*
