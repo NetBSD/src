@@ -3,9 +3,9 @@
 ./bin
 ./bin/[
 ./bin/cat
+./bin/chio
 ./bin/chmod
 ./bin/cp
-./bin/chio
 ./bin/csh
 ./bin/date
 ./bin/dd
@@ -654,6 +654,7 @@
 ./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/tahoe
 ./usr/share/man/cat4/vax
+./usr/share/man/cat4/x68k
 ./usr/share/man/cat5
 ./usr/share/man/cat6
 ./usr/share/man/cat7
@@ -669,6 +670,7 @@
 ./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/tahoe
 ./usr/share/man/cat8/vax
+./usr/share/man/cat8/x68k
 ./usr/share/man/cat9
 ./usr/share/man/makewhatis.sed
 ./usr/share/man/man1
@@ -687,6 +689,7 @@
 ./usr/share/man/man4/sun3
 ./usr/share/man/man4/tahoe
 ./usr/share/man/man4/vax
+./usr/share/man/man4/x68k
 ./usr/share/man/man5
 ./usr/share/man/man6
 ./usr/share/man/man7
@@ -702,6 +705,7 @@
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/tahoe
 ./usr/share/man/man8/vax
+./usr/share/man/man8/x68k
 ./usr/share/man/man9
 ./usr/share/man/whatis.db
 ./usr/share/me
