@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.17 1996/10/11 00:45:01 christos Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.18 1996/10/13 03:39:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -207,7 +207,7 @@ xcfbattach(parent, self, aux)
 
 	/* no interrupts for XCFB */
 	/*BUS_INTR_ESTABLISH(ca, xcfbintr, self->dv_unit);*/
-	kprintf("\n");
+	printf("\n");
 }
 
 
@@ -232,7 +232,7 @@ xcfbinit(fi, base, unit, silent)
 	} else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			kprintf("cfb%d: no memory for cmap\n", unit);
+			printf("cfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
@@ -299,7 +299,7 @@ xcfbinit(fi, base, unit, silent)
 
 	/* Connect serial device(s) */
 	if (tb_kbdmouseconfig(fi)) {
-		kprintf(" (mouse/keyboard config failed)");
+		printf(" (mouse/keyboard config failed)");
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1996/10/11 00:45:03 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1996/10/13 03:39:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,20 +132,20 @@ configure()
 	    panic("no mainbus found");
 
 #if 0
-	kprintf("looking for non-PROM console driver\n");
+	printf("looking for non-PROM console driver\n");
 #endif
 
 	xconsinit();	/* do kludged-up console init */
 
 #ifdef DEBUG
 	if (cputype == DS_3MIN)
-/*FIXME*/	kprintf("switched to non-PROM console\n");
+/*FIXME*/	printf("switched to non-PROM console\n");
 #endif
 
 	initcpu();
 
 #ifdef DEBUG
-	kprintf("autconfiguration done, spl back to 0x%x\n", s);
+	printf("autconfiguration done, spl back to 0x%x\n", s);
 #endif
 	/*
 	 * Configuration is finished,  turn on interrupts.
@@ -161,7 +161,7 @@ configure()
 	 * We do not yet have machine-independent SCSI support or polled
 	 * SCSI.
 	 */
-	kprintf("Beginning old-style SCSI device autoconfiguration\n");
+	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 
 #ifdef GENERIC
@@ -284,7 +284,7 @@ setroot()
 	if (rootdev == orootdev)
 		return;
 
-	kprintf("Changing root device to %c%c%d%c\n",
+	printf("Changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		mindev >> PARTITIONSHIFT, part + 'a');
 
