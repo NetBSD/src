@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.41 1999/02/22 02:33:48 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.42 1999/03/22 07:06:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -245,6 +245,7 @@ _isa_dmamap_create(ids, chan, size, flags)
 	int flags;
 {
 	bus_size_t maxsize;
+	int error;
 
 	if (chan < 0 || chan > 7) {
 		printf("%s: bogus drq %d\n", ids->ids_dev->dv_xname, chan);
@@ -267,8 +268,13 @@ _isa_dmamap_create(ids, chan, size, flags)
 
 	ISA_DMA_DRQ_ALLOC(ids, chan);
 
-	return (bus_dmamap_create(ids->ids_dmat, size, 1, size, maxsize,
-	    flags, &ids->ids_dmamaps[chan]));
+	error = bus_dmamap_create(ids->ids_dmat, size, 1, size, maxsize,
+	    flags, &ids->ids_dmamaps[chan]);
+
+	if (error)
+		ISA_DMA_DRQ_FREE(ids, chan);
+
+	return (error);
 }
 
 void
