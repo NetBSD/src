@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.9 1998/05/17 16:29:42 veego Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.10 1998/07/12 14:48:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
