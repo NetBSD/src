@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/01/09 20:21:30 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/10/19 23:05:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,15 +37,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static char *rcsid = "$NetBSD: main.c,v 1.9 1997/01/09 20:21:30 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
+#else
+__RCSID("$NetBSD: main.c,v 1.10 1997/10/19 23:05:14 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -104,6 +107,7 @@ int lastline;			/* TRUE on the last line of the last file */
 
 static void add_compunit __P((enum e_cut, char *));
 static void add_file __P((char *));
+int	main __P((int, char **));
 
 int
 main(argc, argv)
@@ -113,7 +117,7 @@ main(argc, argv)
 	int c, fflag;
 
 	fflag = 0;
-	while ((c = getopt(argc, argv, "ae:f:n")) != EOF)
+	while ((c = getopt(argc, argv, "ae:f:n")) != -1)
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -244,6 +248,7 @@ again:
 		}
 	}
 	/* NOTREACHED */
+	return (NULL);
 }
 
 /*
