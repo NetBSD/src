@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sigcode.s,v 1.1 2001/06/06 21:19:51 mrg Exp $	*/
+/*	$NetBSD: svr4_32_sigcode.s,v 1.2 2002/05/05 08:21:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -64,6 +64,9 @@
 
 #include <sys/syscall.h>
 #include <compat/svr4/svr4_syscall.h>
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
 
 /*
  * This code is still 32-bit only.

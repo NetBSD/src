@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode64.s,v 1.2 2001/06/30 00:09:08 eeh Exp $	*/
+/*	$NetBSD: svr4_sigcode64.s,v 1.3 2002/05/05 08:15:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -65,6 +65,9 @@
 
 #include <sys/syscall.h>
 #include <compat/svr4/svr4_syscall.h>
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
 
 /*
  * XXXXX Not implemented yet
