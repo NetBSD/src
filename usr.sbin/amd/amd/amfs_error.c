@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_xdr.c,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
+/*	$NetBSD: amfs_error.c,v 1.1.1.1 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -40,22 +40,113 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_xdr.c,v 5.2.2.1 1992/02/09 15:09:32 jsp beta 
+ * Id: amfs_error.c,v 5.2.2.1 1992/02/09 15:08:21 jsp beta 
  *
+ */
+
+/*
+ * Error file system.
+ * This is used as a last resort catchall if
+ * nothing else worked.  EFS just returns lots
+ * of error codes, except for unmount which
+ * always works of course.
  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
-#include <amu.h>
+#include <amd.h>
+
+static char * amfs_error_match(am_opts *fo);
+static int amfs_error_fmount(mntfs *mf);
+static int amfs_error_fumount(mntfs *mf);
+static void amfs_error_umounted(am_node *mp);
 
 
-bool_t
-xdr_amq_string(XDR *xdrs, amq_string *objp)
+/*
+ * Ops structure
+ */
+am_ops amfs_error_ops =
 {
-  if (!xdr_string(xdrs, objp, AMQ_STRLEN)) {
-    return (FALSE);
-  }
-  return (TRUE);
+  "error",
+  amfs_error_match,
+  0,				/* amfs_error_init */
+  amfs_auto_fmount,
+  amfs_error_fmount,
+  amfs_auto_fumount,
+  amfs_error_fumount,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
+  0,				/* amfs_error_readlink */
+  0,				/* amfs_error_mounted */
+  amfs_error_umounted,
+  find_amfs_auto_srvr,
+  FS_DISCARD
+};
+
+
+
+/*
+ * EFS file system always matches
+ */
+static char *
+amfs_error_match(am_opts *fo)
+{
+  return strdup("(error-hook)");
+}
+
+
+static int
+amfs_error_fmount(mntfs *mf)
+{
+  return ENOENT;
+}
+
+
+static int
+amfs_error_fumount(mntfs *mf)
+{
+  /*
+   * Always succeed
+   */
+  return 0;
+}
+
+
+/*
+ * EFS interface to RPC lookup() routine.
+ * Should never get here in the automounter.
+ * If we do then just give an error.
+ */
+am_node *
+amfs_error_lookuppn(am_node *mp, char *fname, int *error_return, int op)
+{
+  *error_return = ESTALE;
+  return 0;
+}
+
+
+/*
+ * EFS interface to RPC readdir() routine.
+ * Should never get here in the automounter.
+ * If we do then just give an error.
+ */
+int
+amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count)
+{
+  return ESTALE;
+}
+
+
+/*
+ * umounted() callback for EFS.
+ *
+ * This prevents core-dumps on callbacks to error file-systems from
+ * nfsx_fumount.
+ */
+static void
+amfs_error_umounted(am_node *mp)
+{
+  /* nothing to do */
 }

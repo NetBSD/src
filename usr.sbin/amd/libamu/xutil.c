@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.1.1.4 1997/10/26 00:02:21 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.1.1.5 1998/08/08 22:05:24 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.1 1997/01/11 21:06:22 ezk Exp ezk 
+ * Id: xutil.c,v 1.1 1997-1998/01/11 21:06:22 ezk Exp ezk 
  *
  */
 
@@ -81,6 +81,8 @@ struct opt_tab dbg_opt[] =
   {"daemon", D_DAEMON},		/* Enter daemon mode */
   {"fork", D_FORK},		/* Fork server (nofork = don't fork) */
   {"full", D_FULL},		/* Program trace */
+  /* info service specific debugging (hesiod, nis, etc) */
+  {"info", D_INFO},
 # ifdef DEBUG_MEM
   {"mem", D_MEM},		/* Trace memory allocations */
 # endif /* DEBUG_MEM */
@@ -129,7 +131,8 @@ xmalloc(int len)
     p = (voidp) malloc((unsigned) len);
     if (p) {
 #if defined(DEBUG) && defined(DEBUG_MEM)
-      amuDebug(D_MEM) plog(XLOG_DEBUG, "Allocated size %d; block %#x", len, p);
+      amuDebug(D_MEM)
+	plog(XLOG_DEBUG, "Allocated size %d; block %#x", len, p);
 #endif /* defined(DEBUG) && defined(DEBUG_MEM) */
       return p;
     }
@@ -145,6 +148,18 @@ xmalloc(int len)
   abort();
 
   return 0;
+}
+
+
+/* like xmalloc, but zeros out the bytes */
+voidp
+xzalloc(int len)
+{
+  voidp p = xmalloc(len);
+
+  if (p)
+    memset(p, 0, len);
+  return p;
 }
 
 
@@ -171,37 +186,39 @@ xrealloc(voidp ptr, int len)
   return ptr;
 }
 
+
 #if defined(DEBUG) && defined(DEBUG_MEM)
 void
-xfree(char *f, int l, voidp p)
+dxfree(char *file, int line, voidp ptr)
 {
-  amuDebug(D_MEM) plog(XLOG_DEBUG, "Free in %s:%d: block %#x", f, l, p);
-  free(p);
+  amuDebug(D_MEM)
+    plog(XLOG_DEBUG, "Free in %s:%d: block %#x", file, line, ptr);
+  /* this is the only place that must NOT use XFREE()!!! */
+  free(ptr);
+  ptr = NULL;			/* paranoid */
 }
 #endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 
 
 #ifdef DEBUG_MEM
 static void
-checkup_mem(P_void)
+checkup_mem(void)
 {
-  extern struct mallinfo __mallinfo;
+  struct mallinfo mi = mallinfo();
+  u_long uordbytes = mi.uordblks * 4096;
 
-  if (mem_bytes != __mallinfo.uordbytes) {
+  if (mem_bytes != uordbytes) {
     if (orig_mem_bytes == 0)
-      mem_bytes = orig_mem_bytes = __mallinfo.uordbytes;
+      mem_bytes = orig_mem_bytes = uordbytes;
     else {
       fprintf(logfp, "%s[%ld]: ", progname, (long) mypid);
-      if (mem_bytes < __mallinfo.uordbytes) {
-	fprintf(logfp, "ALLOC: %d bytes",
-		__mallinfo.uordbytes - mem_bytes);
+      if (mem_bytes < uordbytes) {
+	fprintf(logfp, "ALLOC: %ld bytes", uordbytes - mem_bytes);
       } else {
-	fprintf(logfp, "FREE: %d bytes",
-		mem_bytes - __mallinfo.uordbytes);
+	fprintf(logfp, "FREE: %ld bytes", mem_bytes - uordbytes);
       }
-      mem_bytes = __mallinfo.uordbytes;
-      fprintf(logfp, ", making %d missing\n",
-	      mem_bytes - orig_mem_bytes);
+      mem_bytes = uordbytes;
+      fprintf(logfp, ", making %d missing\n", mem_bytes - orig_mem_bytes);
     }
   }
   malloc_verify();
@@ -211,7 +228,7 @@ checkup_mem(P_void)
 
 /*
  * Take a log format string and expand occurences of %m
- * with the current error code take from errno.
+ * with the current error code taken from errno.
  */
 static void
 expand_error(char *f, char *e)
@@ -330,6 +347,8 @@ real_plog(int lvl, char *fmt, va_list vargs)
   char msg[1024];
   char efmt[1024];
   char *ptr = msg;
+  static char last_msg[1024];
+  static int last_count = 0, last_lvl = 0;
 
   if (!(xlog_level & lvl))
     return;
@@ -386,11 +405,60 @@ real_plog(int lvl, char *fmt, va_list vargs)
   *ptr = '\0';
 
   /*
-   * Mimic syslog header
+   * mimic syslog behavior: only write repeated strings if they differ
    */
-  show_time_host_and_name(lvl);
-  fwrite(msg, ptr - msg, 1, logfp);
-  fflush(logfp);
+  switch (last_count) {
+  case 0:			/* never printed at all */
+    last_count = 1;
+    strncpy(last_msg, msg, 1024);
+    last_lvl = lvl;
+    show_time_host_and_name(lvl); /* mimic syslog header */
+    fwrite(msg, ptr - msg, 1, logfp);
+    fflush(logfp);
+    break;
+
+  case 1:			/* item printed once, if same, don't repeat */
+    if (STREQ(last_msg, msg)) {
+      last_count++;
+    } else {			/* last msg printed once, new one differs */
+      /* last_count remains at 1 */
+      strncpy(last_msg, msg, 1024);
+      last_lvl = lvl;
+      show_time_host_and_name(lvl); /* mimic syslog header */
+      fwrite(msg, ptr - msg, 1, logfp);
+      fflush(logfp);
+    }
+    break;
+
+  case 100:
+    /*
+     * Don't allow repetitions longer than 100, so you can see when something
+     * cycles like crazy.
+     */
+    show_time_host_and_name(last_lvl);
+    sprintf(last_msg, "last message repeated %d times\n", last_count);
+    fwrite(last_msg, strlen(last_msg), 1, logfp);
+    fflush(logfp);
+    last_count = 0;		/* start from scratch */
+    break;
+
+  default:			/* item repeated multiple times */
+    if (STREQ(last_msg, msg)) {
+      last_count++;
+    } else {		/* last msg repeated+skipped, new one differs */
+      show_time_host_and_name(last_lvl);
+      sprintf(last_msg, "last message repeated %d times\n", last_count);
+      fwrite(last_msg, strlen(last_msg), 1, logfp);
+      strncpy(last_msg, msg, 1024);
+      last_count = 1;
+      last_lvl = lvl;
+      show_time_host_and_name(lvl); /* mimic syslog header */
+      fwrite(msg, ptr - msg, 1, logfp);
+      fflush(logfp);
+    }
+    break;
+  }
+
 }
 
 
@@ -504,6 +572,103 @@ switch_option(char *opt)
   return rc;
 }
 
+/*
+ * get syslog facility to use.
+ * logfile can be "syslog", "syslog:daemon", "syslog:local7", etc.
+ */
+static int
+get_syslog_facility(const char *logfile)
+{
+  char *facstr;
+
+  /* parse facility string */
+  facstr = strchr(logfile, ':');
+  if (!facstr)			/* log file was "syslog" */
+    return LOG_DAEMON;
+  facstr++;
+  if (!facstr || facstr[0] == '\0') { /* log file was "syslog:" */
+    plog(XLOG_WARNING, "null syslog facility, using LOG_DAEMON");
+    return LOG_DAEMON;
+  }
+
+#ifdef LOG_KERN
+  if (STREQ(facstr, "kern"))
+      return LOG_KERN;
+#endif /* not LOG_KERN */
+#ifdef LOG_USER
+  if (STREQ(facstr, "user"))
+      return LOG_USER;
+#endif /* not LOG_USER */
+#ifdef LOG_MAIL
+  if (STREQ(facstr, "mail"))
+      return LOG_MAIL;
+#endif /* not LOG_MAIL */
+#ifdef LOG_DAEMON
+  if (STREQ(facstr, "daemon"))
+      return LOG_DAEMON;
+#endif /* not LOG_DAEMON */
+#ifdef LOG_AUTH
+  if (STREQ(facstr, "auth"))
+      return LOG_AUTH;
+#endif /* not LOG_AUTH */
+#ifdef LOG_SYSLOG
+  if (STREQ(facstr, "syslog"))
+      return LOG_SYSLOG;
+#endif /* not LOG_SYSLOG */
+#ifdef LOG_LPR
+  if (STREQ(facstr, "lpr"))
+      return LOG_LPR;
+#endif /* not LOG_LPR */
+#ifdef LOG_NEWS
+  if (STREQ(facstr, "news"))
+      return LOG_NEWS;
+#endif /* not LOG_NEWS */
+#ifdef LOG_UUCP
+  if (STREQ(facstr, "uucp"))
+      return LOG_UUCP;
+#endif /* not LOG_UUCP */
+#ifdef LOG_CRON
+  if (STREQ(facstr, "cron"))
+      return LOG_CRON;
+#endif /* not LOG_CRON */
+#ifdef LOG_LOCAL0
+  if (STREQ(facstr, "local0"))
+      return LOG_LOCAL0;
+#endif /* not LOG_LOCAL0 */
+#ifdef LOG_LOCAL1
+  if (STREQ(facstr, "local1"))
+      return LOG_LOCAL1;
+#endif /* not LOG_LOCAL1 */
+#ifdef LOG_LOCAL2
+  if (STREQ(facstr, "local2"))
+      return LOG_LOCAL2;
+#endif /* not LOG_LOCAL2 */
+#ifdef LOG_LOCAL3
+  if (STREQ(facstr, "local3"))
+      return LOG_LOCAL3;
+#endif /* not LOG_LOCAL3 */
+#ifdef LOG_LOCAL4
+  if (STREQ(facstr, "local4"))
+      return LOG_LOCAL4;
+#endif /* not LOG_LOCAL4 */
+#ifdef LOG_LOCAL5
+  if (STREQ(facstr, "local5"))
+      return LOG_LOCAL5;
+#endif /* not LOG_LOCAL5 */
+#ifdef LOG_LOCAL6
+  if (STREQ(facstr, "local6"))
+      return LOG_LOCAL6;
+#endif /* not LOG_LOCAL6 */
+#ifdef LOG_LOCAL7
+  if (STREQ(facstr, "local7"))
+      return LOG_LOCAL7;
+#endif /* not LOG_LOCAL7 */
+
+  /* didn't match anything else */
+  plog(XLOG_WARNING, "unknown syslog facility \"%s\", using LOG_DAEMON", facstr);
+  return LOG_DAEMON;
+}
+
 
 /*
  * Change current logfile
@@ -520,12 +685,23 @@ switch_to_logfile(char *logfile)
 
     if (STREQ(logfile, "/dev/stderr"))
       new_logfp = stderr;
-    else if (STREQ(logfile, "syslog")) {
+    else if (NSTREQ(logfile, "syslog", strlen("syslog"))) {
 
 #ifdef HAVE_SYSLOG
       syslogging = 1;
       new_logfp = stderr;
-      openlog(progname, LOG_PID | LOG_CONS | LOG_NOWAIT ,LOG_DAEMON);
+      openlog(progname,
+	      LOG_PID
+# ifdef LOG_CONS
+	      | LOG_CONS
+# endif /* LOG_CONS */
+# ifdef LOG_NOWAIT
+	      | LOG_NOWAIT
+# endif /* LOG_NOWAIT */
+# ifdef LOG_DAEMON
+	      , get_syslog_facility(logfile)
+# endif /* LOG_DAEMON */
+	      );
 #else /* not HAVE_SYSLOG */
       plog(XLOG_WARNING, "syslog option not supported, logging unchanged");
 #endif /* not HAVE_SYSLOG */

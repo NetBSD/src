@@ -1,7 +1,7 @@
-/*	$NetBSD: wire.c,v 1.1.1.2 1997/10/26 00:02:19 christos Exp $	*/
+/*	$NetBSD: wire.c,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@ static addrlist *localnets = NULL;
 #if defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN)
 # define SIZE(ifr)	(MAX((ifr)->ifr_addr.sa_len, sizeof((ifr)->ifr_addr)) + sizeof(ifr->ifr_name))
 #else /* not defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN) */
-# define SIZE(ifr)	sizeof(*ifr)
+# define SIZE(ifr)	sizeof(struct ifreq)
 #endif /* not defined(HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR) && defined(HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN) */
 
 #define C(x)		((x) & 0xff)
@@ -92,35 +92,44 @@ static addrlist *localnets = NULL;
 #define count		(ifc.ifc_len/sizeof(struct ifreq))
 
 
-void
-print_wires(char *buf)
+/* return malloc'ed buffer.  caller must free it */
+char *
+print_wires(void)
 {
   addrlist *al;
   char s[256];
   int i;
+  char *buf;
+  int bufcount = 0;
+  int buf_size = 1024;
 
+  buf = malloc(1024);
   if (!buf)
-    return;
+    return NULL;
 
   if (!localnets) {
     sprintf(buf, "No networks.\n");
-    return;
+    return buf;
   }
   /* check if there's more than one network */
   if (!localnets->ip_next) {
     sprintf(buf,
 	    "Network: wire=\"%s\" (netnumber=%s).\n",
 	    localnets->ip_net_name, localnets->ip_net_num);
-    return;
+    return buf;
   }
-  i = 1;
-  for (al = localnets; al; al=al->ip_next) {
-    sprintf(s,
-	    "Network %d: wire=\"%s\" (netnumber=%s).\n",
+  buf[0] = '\0';		/* null out buffer before appending */
+  for (i = 1, al = localnets; al; al = al->ip_next, i++) {
+    sprintf(s, "Network %d: wire=\"%s\" (netnumber=%s).\n",
 	    i, al->ip_net_name, al->ip_net_num);
+    bufcount += strlen(s);
+    if (bufcount > buf_size) {
+      buf_size *= 2;
+      buf = xrealloc(buf, buf_size);
+    }
     strcat(buf, s);
-    i++;
   }
+  return buf;
 }
 
 
@@ -204,6 +213,14 @@ getwire(char **name1, char **number1)
     if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
       continue;
 #endif /* IFF_LOOPBACK */
+    /*
+     * Fix for 0.0.0.0 loopback on SunOS 3.X which defines IFF_ROUTE
+     * instead of IFF_LOOPBACK.
+     */
+#ifdef IFF_ROUTE
+    if (ifr->ifr_flags == (IFF_UP|IFF_RUNNING))
+      continue;
+#endif /* IFF_ROUTE */
 
     /* if the interface is not UP or not RUNNING, skip it */
     if ((ifr->ifr_flags & IFF_RUNNING) == 0 ||

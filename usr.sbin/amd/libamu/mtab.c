@@ -1,7 +1,7 @@
-/*	$NetBSD: mtab.c,v 1.1.1.3 1997/10/26 00:02:17 christos Exp $	*/
+/*	$NetBSD: mtab.c,v 1.1.1.4 1998/08/08 22:05:23 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -57,18 +57,18 @@
 void
 mnt_free(mntent_t *mp)
 {
-  free(mp->mnt_fsname);
-  free(mp->mnt_dir);
-  free(mp->mnt_type);
-  free(mp->mnt_opts);
+  XFREE(mp->mnt_fsname);
+  XFREE(mp->mnt_dir);
+  XFREE(mp->mnt_type);
+  XFREE(mp->mnt_opts);
 
 #ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
 # ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
-  free(mp->mnt_time);
+  XFREE(mp->mnt_time);
 # endif /* HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
 #endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
 
-  free((voidp) mp);
+  XFREE(mp);
 }
 
 
@@ -84,7 +84,7 @@ discard_mntlist(mntlist *mp)
     mp = mp->mnext;
     if (mp2->mnt)
       mnt_free(mp2->mnt);
-    free((voidp) mp2);
+    XFREE(mp2);
   }
 }
 

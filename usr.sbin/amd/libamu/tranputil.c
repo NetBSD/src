@@ -1,7 +1,7 @@
-/*	$NetBSD: tranputil.c,v 1.1.1.4 1997/10/26 00:02:23 christos Exp $	*/
+/*	$NetBSD: tranputil.c,v 1.1.1.5 1998/08/08 22:05:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@ bind_resv_port(int so, u_short *pp)
 
 
 /*
- * close a descriptot, Sockets style
+ * close a descriptor, Sockets style
  */
 int
 amu_close(int fd)
@@ -268,7 +268,7 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, int *tcp_soAMQp, SVCXPR
 /*
  * Ping the portmapper on a remote system by calling the nullproc
  */
-static enum clnt_stat
+enum clnt_stat
 pmap_ping(struct sockaddr_in *address)
 {
   CLIENT *client;
@@ -283,8 +283,10 @@ pmap_ping(struct sockaddr_in *address)
   if (client != (CLIENT *) NULL) {
     clnt_stat = clnt_call(client,
 			  PMAPPROC_NULL,
-			  (XDRPROC_T_TYPE) xdr_void, 0,
-			  (XDRPROC_T_TYPE) xdr_void, 0,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  NULL,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  NULL,
 			  timeout);
     clnt_destroy(client);
   }
@@ -340,8 +342,13 @@ try_again:
     clnt = NULL;
 
   if (clnt == NULL) {
+#ifdef HAVE_CLNT_SPCREATEERROR
     plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s :%s",
 	 nfs_version, proto, host, clnt_spcreateerror(""));
+#else /* not HAVE_CLNT_SPCREATEERROR */
+    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s",
+	 nfs_version, proto, host);
+#endif /* not HAVE_CLNT_SPCREATEERROR */
     return 0;
   }
 
