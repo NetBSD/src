@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1.2.2 2001/11/24 02:11:55 wdk Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.1.2.3 2002/01/02 05:53:43 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,22 +38,24 @@
 
 #include <sys/types.h>
 #include <ucontext.h>
-#include <machine/reg.h>
 #include <lwp.h>
 #include <stdlib.h>
+
+#define CALLFRAME_SIZ	24
 
 void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	void *arg, void *private, caddr_t stack_base, size_t stack_size)
 {
-	unsigned long *gr = u->uc_mcontext.__gregs;
-	void	**sp;
+	caddr_t sp;
+	__greg_t *gr;
 
 	getcontext(u);
+	gr = u->uc_mcontext.__gregs;
 	u->uc_link = NULL;
 
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
-	sp = (void **) (stack_base + stack_size);
+	sp = stack_base + stack_size - CALLFRAME_SIZ;
 
 	gr[_REG_EPC] = (unsigned long) start;
 	gr[_REG_T9] = (unsigned long) start; /* required for .abicalls */
