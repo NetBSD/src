@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.9 1993/08/01 19:24:22 mycroft Exp $
+ *	$Id: ite.c,v 1.10 1993/08/07 04:42:18 cgd Exp $
  */
 
 /*
@@ -59,6 +59,7 @@
 #include "ioctl.h"
 #include "tty.h"
 #include "systm.h"
+#include "malloc.h"
 
 #include "itevar.h"
 #include "iteioctl.h"
@@ -323,7 +324,7 @@ itestart(tp)
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup(&tp->t_out);
+			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
