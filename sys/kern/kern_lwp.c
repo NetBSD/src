@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.10 2003/07/17 18:16:58 fvdl Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.11 2003/07/17 19:05:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.10 2003/07/17 18:16:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.11 2003/07/17 19:05:30 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -332,7 +332,7 @@ exit:
 	SCHED_UNLOCK(s);
 
 
-	return 0;
+	return error;
 }
 
 int
