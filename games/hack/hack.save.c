@@ -3,13 +3,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.save.c,v 1.4 1994/03/28 11:21:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.save.c,v 1.5 1995/03/23 08:31:27 cgd Exp $";
 #endif /* not lint */
 
 #include "hack.h"
 extern char genocided[60];	/* defined in Decl.c */
 extern char fut_geno[60];	/* idem */
 #include <signal.h>
+#include <unistd.h>
 
 extern char SAVEF[], nul[];
 extern char pl_character[PL_CSIZ];
@@ -137,7 +138,7 @@ register fd;
 		savelev(nfd,tmp);
 		(void) close(nfd);
 	}
-	(void) lseek(fd, 0, 0);
+	(void) lseek(fd, (off_t)0, 0);
 	getlev(fd, 0, 0);
 	(void) close(fd);
 	(void) unlink(SAVEF);

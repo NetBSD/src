@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.unix.c,v 1.2 1993/08/02 17:19:34 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.unix.c,v 1.3 1995/03/23 08:31:55 cgd Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  *
- *	$Id: hack.h,v 1.2 1993/08/02 17:17:14 mycroft Exp $
+ *	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $
  */
 
 #include "config.h"

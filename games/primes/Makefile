@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/08/01 05:44:42 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1995/03/23 08:35:43 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	primes
 SRCS=	pattern.c pr_tbl.c primes.c

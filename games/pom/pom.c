@@ -1,6 +1,8 @@
+/*	$NetBSD: pom.c,v 1.4 1995/03/23 08:35:36 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software posted to USENET.
  *
@@ -34,14 +36,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pom.c	5.3 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pom.c,v 1.3 1995/02/03 18:15:02 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: pom.c,v 1.4 1995/03/23 08:35:36 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

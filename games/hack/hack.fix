@@ -1,3 +1,5 @@
+$NetBSD: hack.fix,v 1.2 1995/03/23 08:30:17 cgd Exp $
+
 /***** unido:net.games.hack / ab /  7:23 pm  Sep 13, 1985*/
 
 Recently hack (1.0.3) crashed with core dumps during some good games.

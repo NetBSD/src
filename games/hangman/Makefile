@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.7 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1994/12/22 09:34:37 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/03/23 08:32:38 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	hangman
 SRCS=	endgame.c extern.c getguess.c getword.c main.c playgame.c \

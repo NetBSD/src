@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.search.c,v 1.2 1993/08/02 17:19:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.search.c,v 1.3 1995/03/23 08:31:28 cgd Exp $";
 #endif /* not lint */
 
 #include "hack.h"

@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: rnd.c,v 1.2 1993/08/02 17:19:45 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rnd.c,v 1.3 1995/03/23 08:32:28 cgd Exp $";
 #endif /* not lint */
 
 #define RND(x)	((random()>>3) % x)
