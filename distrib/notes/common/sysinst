@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.3 1999/05/04 03:36:15 simonb Exp $
+.\" $NetBSD: sysinst,v 1.4 1999/05/04 20:20:35 fvdl Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,9 +87,6 @@ can skip this section, and ignore the
 notes.
 .Pp
 This will explains how to work around the installation problem.
-It is anticipated that this bug will be fixed by
-.Nx
-1.4
 .Pp
 What is the bug: The kernel keeps careful track of what interrupts
 and i/o ports are in use during autoconfiguration. It then allows
@@ -290,13 +287,7 @@ devices, so that they won't be found by
 .
 .Pp
 Boot your machine using the boot floppy. The boot loader will
-start, and will print a countdown and begin booting. You will
-likely see one
-.Li file not found
-warning from the boot loader.
-Ignore this, it merely indicates that the boot loader
-did not find a normal kernel to boot before trying to boot a
-compressed kernel.
+start, and will print a countdown and begin booting.
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
@@ -413,16 +404,7 @@ or
 next tries to figure out the real and BIOS geometry
 of your disk. It will present you with the values it found,
 if any, and will give you a chance to change them.
-Please note that if you change the values,
-.Ic sysinst
-.Em will also reinitialize your MBR .
 .\}
-.Pp
-You will also be asked if you want to use the last cylinder of
-the disk. Originally, the last cylinder of the disk was used for
-diagnostic purposes, but this is usually not a concern anymore
-these days. You will be able to specify whether you want to
-skip the last cylinder anyway.
 .Pp
 Next, depending on whether you are using a
 .Li Pf wd Em x
@@ -491,6 +473,15 @@ Be sure to mark the partition you want to boot from as active!
 .Pp
 After you are done editing the MBR, a sanity check
 will be done, checking for partitions that overlap.
+Depending on the BIOS capabilities of your machine and the
+parameters of the NetBSD partition you have specified, you
+may also be asked if you want to install newer bootcode in
+your MBR. If you have multiple operating systems on the
+disk that you are installing on, you will also be given
+the option to install a bootselector, that will allow you
+to pick the operating system to start up when your computer
+is (re-)started.
+.Pp
 If everything is ok, you can go on to the next step,
 editing the
 .Nx
