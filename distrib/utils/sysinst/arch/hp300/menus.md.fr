@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.4 2003/06/03 11:54:52 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.5 2003/06/10 17:47:19 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,23 +37,6 @@
  */
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
-
-menu editfsparts, y=12, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_fspart, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Changer a", action { editpart = A;}, sub menu edfspart;
-	option "Changer b", action { editpart = B;}, sub menu edfspart;
-	option "Partition de NetBSD - Changement impossible", action {};
-	option "Totalité du disque - Changement impossible", action {};
-	option "Changer e", action { editpart = E;}, sub menu edfspart;
-	option "Changer f", action { editpart = F;}, sub menu edfspart;
-	option "Changer g", action { editpart = G;}, sub menu edfspart;
-	option "Changer h", action { editpart = H;}, sub menu edfspart;
-	option "Changer d'unité", action { reask_sizemult(dlcylsize); };
- 
 
 menu md_distcustom, y=3, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };

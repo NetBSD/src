@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.3 2003/06/09 19:06:48 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.4 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -52,29 +52,10 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-#define USER_MENU_INIT sysinst_menu_init()
-#define LAST_MSG ((msg)8192)
-static struct menudesc menu_def[];
-static menudesc *menus;
-
-static int
-sysinst_menu_init(void)
-{
-	int opt;
-	struct menudesc *m;
-
-	for (m = &menu_def[0]; m < &menu_def[DYN_MENU_START]; m++) {
-		if (m->title < LAST_MSG)
-			m->title = msg_string(m->title);
-		for (opt = 0; opt < m->numopts; opt++)
-			if (m->opts[opt].opt_name < LAST_MSG)
-				m->opts[opt].opt_name = msg_string(m->opts[opt].opt_name);
-	}
-	return 0;
-}
 }
 
 default y=12, no exit, scrollable;
 
 allow dynamic menus;
+allow dynamic messages;
 

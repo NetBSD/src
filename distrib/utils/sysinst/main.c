@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2003/06/04 20:05:12 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,11 +137,7 @@ main(argc, argv)
 		wbkgd(win, COLOR_PAIR(1));
 		wattrset(win, COLOR_PAIR(1));
 	}
-	if (msg_window(win) != 0) {
-		(void)fprintf(stderr,
-			 "sysinst: couldn't initialize message window\n");
-		exit(1);
-	}
+	msg_window(win);
 
 	/* Watch for signals and clean up */
 	(void)atexit(cleanup);
