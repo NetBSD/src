@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2002/10/04 09:17:58 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2002/10/05 08:23:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2056,19 +2056,9 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	 */
 	if (pm == pmap_kernel() &&
 	    va < SH5_KSEG1_BASE && va >= SH5_KSEG0_BASE) {
-		struct mem_region *mr;
-		for (mr = mem; mr->mr_size; mr++) {
-			if (va >= mr->mr_kvastart &&
-			    va < (mr->mr_kvastart + mr->mr_size)) {
-				*pap = mr->mr_start +
-				    (paddr_t)(va - mr->mr_kvastart);
-				PMPRINTF(("KSEG0. pa 0x%lx\n", *pap));
-				return (TRUE);
-			}
-		}
-
-		PMPRINTF(("KSEG0. Not found!\n"));
-		return (FALSE);		/* Should probably panic here ... */
+		*pap = (paddr_t)(va - SH5_KSEG0_BASE) + pmap_kseg0_pa;
+		PMPRINTF(("KSEG0. pa 0x%lx\n", *pap));
+		return (TRUE);
 	}
 
 	s = splhigh();
