@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.8 1998/02/13 05:52:32 lukem Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.9 1998/07/26 12:37:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.8 1998/02/13 05:52:32 lukem Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.9 1998/07/26 12:37:18 mycroft Exp $");
 #endif
 #endif
 
@@ -161,7 +161,7 @@ xdr_rejected_reply(xdrs, rr)
 	return (FALSE);
 }
 
-static struct xdr_discrim reply_dscrm[3] = {
+static const struct xdr_discrim reply_dscrm[3] = {
 	{ (int)MSG_ACCEPTED, xdr_accepted_reply },
 	{ (int)MSG_DENIED, xdr_rejected_reply },
 	{ __dontcare__, NULL_xdrproc_t } };
