@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.63 2002/11/02 07:28:13 perry Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.64 2002/11/05 02:07:25 fair Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.63 2002/11/02 07:28:13 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.64 2002/11/05 02:07:25 fair Exp $");
 
 #include "opt_ipsec.h"
 
@@ -84,6 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.63 2002/11/02 07:28:13 perry Exp $")
 #include <netinet/igmp_var.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/ip_encap.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#endif
 
 #include <machine/stdarg.h>
 
