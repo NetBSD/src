@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2002/01/03 04:34:21 mbw Exp $
+# $NetBSD: GENERIC,v 1.120 2002/01/19 18:45:10 oster Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 maxusers	32
 
@@ -344,8 +344,16 @@ midi*	at eap?			# 137[01] MIDI port
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter

@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.28 2001/12/30 13:28:13 augustss Exp $
+# 	$NetBSD: GENERIC32,v 1.29 2002/01/19 18:45:13 oster Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	64
 
@@ -344,8 +344,17 @@ pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-pseudo-device	raid	4
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid	8
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
