@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.2 2001/07/09 22:32:28 nathanw Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,8 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 		case LSRUN:
 			SCHED_LOCK(s);
 			remrunqueue(t);
-			SCHED_UNLOCK(s);
 			t->l_stat = LSSUSPENDED;
+			SCHED_UNLOCK(s);
 			simple_lock(&p->p_lwplock);
 			p->p_nrlwps--;
 			simple_unlock(&p->p_lwplock);
