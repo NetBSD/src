@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.3 1998/01/18 03:39:23 mark Exp $	*/
+/*	$NetBSD: iomd.c,v 1.4 1998/04/10 06:54:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -276,7 +276,7 @@ iomdattach(parent, self, aux)
 			panic("%s: Cannot map pms registers\n", self->dv_xname);
 		ia.ia_pms.pa_name = "pms";
 		ia.ia_pms.pa_iot = iot;
-		ia.ia_pms.pa_irq = -1;
+		ia.ia_pms.pa_irq = IRQ_MSDRX;
 		config_found(self, &ia, iomdprint);
 		break;
 
