@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.7 1998/01/21 00:11:15 mycroft Exp $
+.\"	$NetBSD: pax.1,v 1.8 1998/02/06 05:40:06 perry Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -712,21 +712,28 @@ by this format) which may be truncated by this format is detected by
 .Nm
 and is repaired.
 .It Ar sv4cpio
-The System V release 4 cpio.
+The
+.At V.4
+cpio.
 The default blocksize for this format is 5120 bytes.
 Inode and device information about a file (used for detecting file hard links
 by this format) which may be truncated by this format is detected by
 .Nm
 and is repaired.
 .It Ar sv4crc
-The System V release 4 cpio with file crc checksums.
+The
+.At V.4
+cpio with file crc checksums.
 The default blocksize for this format is 5120 bytes.
 Inode and device information about a file (used for detecting file hard links
 by this format) which may be truncated by this format is detected by
 .Nm
 and is repaired.
 .It Ar tar
-The old BSD tar format as found in BSD4.3.
+The old
+.Bx
+tar format as found in 
+.Bx 4.3 .
 The default blocksize for this format is 10240 bytes.
 Pathnames stored by this format must be 100 characters or less in length.
 Only
