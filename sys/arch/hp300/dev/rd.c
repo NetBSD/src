@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: rd.c 1.38 90/10/12
  *	from: @(#)rd.c	7.9 (Berkeley) 5/7/91
- *	$Id: rd.c,v 1.3 1993/08/01 19:24:28 mycroft Exp $
+ *	$Id: rd.c,v 1.4 1994/01/11 17:19:40 mycroft Exp $
  */
 
 /*
@@ -615,6 +615,7 @@ rdopen(dev, flags, mode, p)
 	return(0);
 }
 
+void
 rdstrategy(bp)
 	register struct buf *bp;
 {

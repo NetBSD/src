@@ -1,5 +1,5 @@
 /*
- *	$Id: sddefs.h,v 1.4 1993/05/20 23:14:22 deraadt Exp $
+ *	$Id: sddefs.h,v 1.5 1994/01/11 17:22:04 mycroft Exp $
  */
 
 struct sd_data {
@@ -41,7 +41,7 @@ int sdopen(int);
 struct scsi_xfer *sd_get_xs(int, int);
 void sd_free_xs(int, struct scsi_xfer *, int);
 void sdminphys(struct buf *);
-int sdstrategy(struct buf *);
+void sdstrategy(struct buf *);
 void sdstart(int);
 int sd_done(int, struct scsi_xfer *);
 int sdioctl(dev_t, int, caddr_t, int);

@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.20 1993/12/23 09:35:51 cgd Exp $
+ *	$Id: cd.c,v 1.21 1994/01/11 17:21:57 mycroft Exp $
  */
 
 #define SPLCD splbio
@@ -68,7 +68,7 @@ int	Debugger();
 
 extern	int hz;
 int	cd_done();
-int	cdstrategy();
+void	cdstrategy();
 int	cd_debug = 0;
 
 struct buf		cd_buf_queue[NCD];
@@ -334,7 +334,7 @@ struct buf	*bp;
 * only one physical transfer.				*
 \*******************************************************/
 
-int	cdstrategy(bp)
+void	cdstrategy(bp)
 struct	buf	*bp;
 {
 	struct	buf	*dp;

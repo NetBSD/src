@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cd.c 1.6 90/11/28
  *	from: @(#)cd.c	7.4 (Berkeley) 5/7/91
- *	$Id: cd.c,v 1.2 1993/08/01 19:23:52 mycroft Exp $
+ *	$Id: cd.c,v 1.3 1994/01/11 17:19:37 mycroft Exp $
  */
 
 /*
@@ -326,6 +326,7 @@ cdopen(dev, flags)
 	return(0);
 }
 
+void
 cdstrategy(bp)
 	register struct buf *bp;
 {

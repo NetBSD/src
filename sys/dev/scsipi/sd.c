@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.19 1993/12/17 08:50:56 mycroft Exp $
+ *	$Id: sd.c,v 1.20 1994/01/11 17:22:02 mycroft Exp $
  */
 
 #include "sd.h"
@@ -339,7 +339,7 @@ sdminphys(struct buf *bp)
  * The transfer is described by a buf and will include
  * only one physical transfer.
  */
-int
+void
 sdstrategy(struct buf *bp)
 {
 	struct sd_data *sd;
