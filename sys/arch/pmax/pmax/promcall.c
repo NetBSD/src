@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.1 1999/05/11 05:06:35 nisimura Exp $	*/
+/*	$NetBSD: promcall.c,v 1.2 1999/05/25 07:37:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.1 1999/05/11 05:06:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.2 1999/05/25 07:37:08 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,8 @@ void	prom_haltbutton __P((void));
 void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
 void	prom_findcons __P((int *, int *, int *));
 
-static int  romgetc	__P((dev_t));
-static void romputc	__P((dev_t, int));
+static int  romgetc __P((dev_t));
+static void romputc __P((dev_t, int));
 static int  atoi __P((const char *));
 
 /*
@@ -83,8 +83,9 @@ static int
 romgetc(dev)
 	dev_t dev;
 {
-	int chr, s = splhigh();
+	int chr, s;
 
+	s  = splhigh();
 	chr = (*callv->_getchar)();
 	splx(s);
 	return chr;
@@ -99,6 +100,7 @@ romputc(dev, c)
 	int c;
 {
 	int s;
+
 	s = splhigh();
 	(*callv->_printf)("%c", c);
 	splx(s);
