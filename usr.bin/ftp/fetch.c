@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.30 1998/08/08 03:06:00 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.31 1998/08/08 03:33:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.30 1998/08/08 03:06:00 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.31 1998/08/08 03:33:20 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -627,7 +627,10 @@ url_get(url, proxyenv, outfile)
 		(void)gettimeofday(&tval[0], NULL);
 		tval[1].tv_sec = mtime;
 		tval[1].tv_usec = 0;
-		if (futimes(fileno(fout), tval) == -1) {
+		(*closefunc)(fout);
+		fout = NULL;
+
+		if (utimes(savefile, tval) == -1) {
 			fprintf(ttyout,
 			    "Can't change modification time to %s",
 			    asctime(localtime(&mtime)));
