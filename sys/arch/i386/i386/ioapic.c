@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.7 2000/08/30 14:20:30 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.8 2000/09/21 13:24:08 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,16 +91,14 @@
 #include <machine/mpbiosvar.h>
 
 /*
- * maps an IO-apic
- * TODO locking, export of interrupt functions
- * and mapping of interrupts.
+ * XXX locking
  */
 
 int     ioapic_match __P((struct device *, struct cfdata *, void *));
 void    ioapic_attach __P((struct device *, struct device *, void *));
 
-int     i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
-            int, bus_space_handle_t *)); /* XXX */
+extern int i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
+    int, bus_space_handle_t *)); /* XXX XXX */
 
 void	apic_vectorset __P((struct ioapic_softc *, int, int));
 
@@ -109,13 +107,19 @@ int apic_verbose = 0;
 int ioapic_bsp_id = 0;
 int ioapic_cold = 1;
 
+static struct ioapic_softc *ioapics;	 /* head of linked list */
+static int nioapics = 0;	   	 /* number attached */
+
+/*
+ * Register read/write routines.
+ */
 static __inline  u_int32_t
 ioapic_read(struct ioapic_softc *sc,int regid)
 {
 	u_int32_t val;
 	
 	/*
-	 * TODO: lock apic  
+	 * XXX lock apic  
 	 */
 	*(sc->sc_reg) = regid;
 	val = *sc->sc_data;
@@ -128,22 +132,53 @@ static __inline  void
 ioapic_write(struct ioapic_softc *sc,int regid, int val)
 {
 	/*
-	 * todo lock apic  
+	 * XXX lock apic  
 	 */
-
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
+}
+
+struct ioapic_softc *
+ioapic_find(int apicid)
+{
+	struct ioapic_softc *sc;
+
+	if (apicid == 0xff) {
+		/*
+		 * XXX kludge for all-ioapics interrupt support
+		 * on single ioapic systems
+		 */
+		if (nioapics <= 1)
+			return ioapics;
+		panic("unsupported: all-ioapics interrupt with >1 ioapic");
+	}
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next)
+		if (sc->sc_apicid == apicid)
+			return sc;
+
+	return NULL;
+}
+
+static __inline void
+ioapic_add(struct ioapic_softc *sc)
+{
+	sc->sc_next = ioapics;
+	ioapics = sc;
+	nioapics++;
+}
+
+void ioapic_print_redir (struct ioapic_softc *sc, char *why, int pin)
+{
+	u_int32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
+	u_int32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));
+
+	apic_format_redir(sc->sc_dev.dv_xname, why, pin, redirhi, redirlo);
 }
 
 struct cfattach ioapic_ca = {
 	sizeof(struct ioapic_softc), ioapic_match, ioapic_attach
 };
-
-/*
- * table of ioapics indexed by apic id.
- */
-
-struct ioapic_softc *ioapics[16] = { 0 };
 
 int
 ioapic_match(parent, match, aux)
@@ -156,14 +191,6 @@ ioapic_match(parent, match, aux)
 	if (strcmp(aaa->aaa_name, match->cf_driver->cd_name) == 0)
 		return 1;
 	return 0;
-}
-
-void ioapic_print_redir (struct ioapic_softc *sc, char *why, int pin)
-{
-	u_int32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
-	u_int32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));
-
-	apic_format_redir(sc->sc_dev.dv_xname, why, pin, redirhi, redirlo);
 }
 
 
@@ -187,13 +214,13 @@ ioapic_attach(parent, self, aux)
 
 	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
 
-	if (ioapics[aaa->apic_id] != NULL) {
+	if (ioapic_find(aaa->apic_id) != NULL) {
 		printf("%s: duplicate apic id (ignored)\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	ioapics[aaa->apic_id] = sc;
+	ioapic_add(sc);
 	
 	printf("%s: pa 0x%lx", sc->sc_dev.dv_xname, aaa->apic_address);
 
@@ -436,53 +463,41 @@ apic_vectorset (sc, irq, level)
 void
 ioapic_enable ()
 {
-	int a, p, maxlevel;
+	int p, maxlevel;
+	struct ioapic_softc *sc;
 	struct intrhand *q;
 	extern void intr_calculatemasks __P((void)); /* XXX */
-	int did_imcr = 0;
-
 	intr_calculatemasks();	/* for softints, AST's */
 
 	ioapic_cold = 0;
 
 	lapic_set_lvt();
 	
-	for (a=0; a<16; a++) {
-		struct ioapic_softc *sc = ioapics[a];
-		if (sc != NULL) {
-			printf("%s: enabling\n", sc->sc_dev.dv_xname);
+	if (ioapics == NULL)
+		return;
 
-			if (!did_imcr &&
-			    (sc->sc_flags & IOAPIC_PICMODE)) {
-				/*
-				 * XXX not tested yet..
-				 */
-				printf("%s: writing to IMCR to disable pics\n",
-				    sc->sc_dev.dv_xname);
-				outb (IMCR_ADDR, IMCR_REGISTER);
-				outb (IMCR_DATA, IMCR_APIC);
-				printf("%s: here's hoping it works\n",
-				    sc->sc_dev.dv_xname);
-				did_imcr = 1;
-			}
+	if (ioapics->sc_flags & IOAPIC_PICMODE) {
+		printf("%s: writing to IMCR to disable pics\n",
+		    ioapics->sc_dev.dv_xname);
+		outb (IMCR_ADDR, IMCR_REGISTER);
+		outb (IMCR_DATA, IMCR_APIC);
+	}
 			
-			for (p=0; p<sc->sc_apic_sz; p++) {
-				maxlevel = 0;
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		printf("%s: enabling\n", sc->sc_dev.dv_xname);
+
+		for (p=0; p<sc->sc_apic_sz; p++) {
+			maxlevel = 0;
 				
-				for (q = sc->sc_pins[p].ip_handler;
-				     q != NULL;
-				     q = q->ih_next) {
-					if (q->ih_level > maxlevel)
-						maxlevel = q->ih_level;
-				}
-				apic_vectorset (sc, p, maxlevel);
+			for (q = sc->sc_pins[p].ip_handler; q != NULL;
+			     q = q->ih_next) {
+				if (q->ih_level > maxlevel)
+					maxlevel = q->ih_level;
 			}
+			apic_vectorset (sc, p, maxlevel);
 		}
 	}
 }
-
-
-
 
 /*
  * Interrupt handler management with the apic is radically different from the
@@ -514,7 +529,7 @@ apic_intr_establish(irq, type, level, ih_fun, ih_arg)
 {
 	unsigned int ioapic = APIC_IRQ_APIC(irq);
 	unsigned int intr = APIC_IRQ_PIN(irq);
-	struct ioapic_softc *sc = ioapics[ioapic];
+	struct ioapic_softc *sc = ioapic_find(ioapic);
 	struct ioapic_pin *pin;
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
@@ -522,7 +537,7 @@ apic_intr_establish(irq, type, level, ih_fun, ih_arg)
 	int maxlevel;
 
 	if (sc == NULL)
-		panic("unknown ioapic id %d", ioapic);
+		panic("apic_intr_establish: unknown ioapic %d", ioapic);
 
 	if ((irq & APIC_INT_VIA_APIC) == NULL)
 		panic("apic_intr_establish of non-apic interrupt 0x%x", irq);
@@ -625,13 +640,16 @@ apic_intr_disestablish(arg)
 	int irq = ih->ih_irq;
 	unsigned int ioapic = APIC_IRQ_APIC(irq);
 	unsigned int intr = APIC_IRQ_PIN(irq);
-	struct ioapic_softc *sc = ioapics[ioapic];
+	struct ioapic_softc *sc = ioapic_find(ioapic);
 	struct ioapic_pin *pin = &sc->sc_pins[intr];
 	struct intrhand **p, *q;
 	int maxlevel;
 	
+	if (sc == NULL)
+		panic("apic_intr_disestablish: unknown ioapic %d", ioapic);
+
 	if (intr >= sc->sc_apic_sz)
-		panic("apic_intr_establish: bogus irq");
+		panic("apic_intr_disestablish: bogus irq");
 
 	/*
 	 * Remove the handler from the chain.
