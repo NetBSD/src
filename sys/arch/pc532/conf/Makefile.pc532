@@ -35,7 +35,7 @@ PC532=	../..
 
 .s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s | ${AS} ${ASFLAGS} -o $*.o)
 
-INCLUDES= -I. -I${PC532} -I$S -I$S/sys 
+INCLUDES= -I. -I$S -I$S/sys -I${PC532}
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL
 ASFLAGS=
 CFLAGS=	-O -msb ${COPTS}
@@ -135,11 +135,15 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} -c vers.c
 
+# for config.new
+newvers:
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} -c vers.c
+
 # This allows you to specify which "awk" you will run, i.e.:
 #   make AWK=nawk ...
 vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
 	AWK=${AWK} sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
-
 
 %RULES
 

@@ -13,8 +13,8 @@ options		VNODEPAGER,DEVPAGER	# vnode and device node caching
 #options	DIAGNOSTIC		# internal consistency checking
 
 #options	ACCOUNTING		# process accounting
-options	KTRACE			# system call tracing, a la ktrace(1)
-options	FIFO			# fifos; recommended
+options		KTRACE			# system call tracing, a la ktrace(1)
+options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
 #options	LKM			# loadable kernel modules
@@ -27,7 +27,7 @@ options		"COMPAT_09"		# NetBSD-0.9
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
-options		FASTLINKS		# fast symbolic links in FFS
+#options	FASTLINKS		# fast symbolic links in FFS
 #options	MFS			# memory file system; uses RAM and swap
 #options	NFSSERVER		# Network File System server
 #options	NFSCLIENT		# Network File System client
@@ -38,7 +38,7 @@ options		FASTLINKS		# fast symbolic links in FFS
 
 # networking options
 #options	GATEWAY			# packet forwarding
-options	INET			# IP
+options		INET			# IP
 #options	NS			# XNS
 #options	CCITT			# X.25
 #options	ISO			# OSI
@@ -47,26 +47,26 @@ options	INET			# IP
 
 # pc532 specific options
 options		"SCNDEF_SPEED=B19200"	# default baud on the scn chips
-options		"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
+#options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
+options		"CONFIG_NEW"		# Use config.new stuff
 
-config		"netbsd"	root on sd1
+config		"netbsd"	root on sd1 swap on sd1
 
 membus0 at root
-clock0 at membus?
-timer0 at membus?
+#clock0 at membus?
+#timer0 at membus?
 
 #rd0 at membus?
 
 ncr0 at membus?
 
-tg0 at scsi? target 0
+scsibus0 at scsi?
 #tg* at scsi? target ?
 
-#sd0 at tg0 drive 0
-sd* at tg? drive ?				# SCSI disks
-st* at tg? drive ?				# SCSI tapes
-#cd* at tg? drive ?				# SCSI CD-ROMs
+sd* at scsibus? target ? lun ?			# SCSI disks
+st* at scsibus? target ? lun ?			# SCSI tapes
+#cd* at scsibus? target ? lun ?			# SCSI CD-ROMs
 
 scn0 at membus? port 0
 scn1 at membus? port 1
