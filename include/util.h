@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.6 1997/09/25 05:04:02 lukem Exp $	*/
+/*	$NetBSD: util.h,v 1.7 1997/10/11 02:24:23 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -43,6 +43,9 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
+#define	PIDLOCK_NONBLOCK	1
+#define PIDLOCK_USEHOSTNAME	2
+
 __BEGIN_DECLS
 void	login __P((struct utmp *));
 int	login_tty __P((int));
@@ -64,6 +67,9 @@ pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
 int	opendisk __P((const char *, int, char *, size_t, int));
+int	pidlock __P((const char *, int, pid_t *, const char *));
+int	ttylock __P((const char *, int, pid_t *));
+int	ttyunlock __P((const char *));
 int	ttyaction __P((char *tty, char *act, char *user));
 struct iovec;
 char   *ttymsg __P((struct iovec *, int, const char *, int));
