@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.119 1999/02/13 03:04:12 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.120 1999/02/24 14:42:36 drochner Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -111,7 +111,7 @@ NOPROFILE=
 # SHLIB_TYPE:		"ELF" or "a.out" or "" to force static libraries.
 #
 .if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "mips" || \
+    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc64"
 OBJECT_FMT?=ELF

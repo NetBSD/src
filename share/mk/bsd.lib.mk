@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.150 1999/02/14 19:12:09 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.151 1999/02/24 14:42:36 drochner Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -64,7 +64,7 @@ CPICFLAGS ?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
-.elif ${MACHINE_ARCH} == "mips"
+.elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 		# mips-specific shared library flags
 
 # On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
