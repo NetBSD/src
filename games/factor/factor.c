@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)factor.c	4.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: factor.c,v 1.2 1993/08/01 18:54:58 mycroft Exp $";
+static char rcsid[] = "$Id: factor.c,v 1.3 1993/12/08 07:27:50 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -292,7 +292,7 @@ pr_fact(val)
 
 	/* firewall - catch 0 and 1 */
 	switch (val) {
-	case -2147483648:
+	case -(2147483648U):
 		/* avoid negation problems */
 		puts("-2147483648: -1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2\n");
 		return;
