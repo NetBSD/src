@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.15 2003/06/29 22:31:12 fvdl Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.16 2003/10/25 08:39:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15 2003/06/29 22:31:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.16 2003/10/25 08:39:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 	struct smb_cred scred;
 	struct smbfs_fctx *ctx;
 	struct smbnode *np = VTOSMB(vp);
-	int error/*, *eofflag = ap->a_eofflag*/;
+	int error = 0/*, *eofflag = ap->a_eofflag*/;
 	long offset, limit;
 
 	KASSERT(vp->v_type == VDIR);
