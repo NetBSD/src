@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.1 2000/06/09 05:31:17 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.1.2.1 2000/07/14 14:37:10 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 /*
  * WaveLAN compatible configuration support routines for the awi driver.
  */
-
-#include "opt_awi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +107,11 @@ awi_wicfg(ifp, cmd, data)
 		error = awi_cfgget(ifp, cmd, data);
 		break;
 	case SIOCSWAVELAN:
+#ifdef __FreeBSD__
+		error = suser(curproc);
+#else
 		error = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
 		if (error)
 			break;
 		error = awi_cfgset(ifp, cmd, data);
@@ -195,7 +197,7 @@ awi_cfgget(ifp, cmd, data)
 		}
 		break;
 	case WI_RID_OWN_CHNL:
-		wreq.wi_val[0] = sc->sc_scan_cur;
+		wreq.wi_val[0] = sc->sc_ownch;
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_CURRENT_CHAN:
@@ -268,6 +270,17 @@ awi_cfgget(ifp, cmd, data)
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
+		/* do not show keys to non-root user */
+#ifdef __FreeBSD__
+		error = suser(curproc);
+#else
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
+		if (error) {
+			memset(keys, 0, sizeof(*keys));
+			error = 0;
+			break;
+		}
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			k = &keys->wi_keys[i];
 			keylen = sizeof(k->wi_keydat);
@@ -405,8 +418,7 @@ awi_cfgset(ifp, cmd, data)
 			break;
 		}
 		sc->sc_ownch = wreq.wi_val[0];
-		if (!sc->sc_mib_local.Network_Mode &&
-		    !sc->sc_no_bssid && sc->sc_start_bss)
+		if (!sc->sc_mib_local.Network_Mode)
 			error = ENETRESET;
 		break;
 	case WI_RID_CURRENT_CHAN:
@@ -416,7 +428,21 @@ awi_cfgset(ifp, cmd, data)
 		error = EPERM;
 		break;
 	case WI_RID_PROMISC:
-		error = EPERM;
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (ifp->if_flags & IFF_PROMISC) {
+			if (wreq.wi_val[0] == 0) {
+				ifp->if_flags &= ~IFF_PROMISC;
+				error = ENETRESET;
+			}
+		} else {
+			if (wreq.wi_val[0] != 0) {
+				ifp->if_flags |= IFF_PROMISC;
+				error = ENETRESET;
+			}
+		}
 		break;
 	case WI_RID_PORTTYPE:
 		if (wreq.wi_len != 1) {
@@ -435,6 +461,10 @@ awi_cfgset(ifp, cmd, data)
 			error = ENETRESET;
 			break;
 		case 3:
+			if (sc->sc_mib_phy.IEEE_PHY_Type == AWI_PHY_TYPE_FH) {
+				error = EINVAL;
+				break;
+			}
 			sc->sc_mib_local.Network_Mode = 0;
 			sc->sc_no_bssid = 1;
 			error = ENETRESET;
@@ -445,7 +475,7 @@ awi_cfgset(ifp, cmd, data)
 		}
 		break;
 	case WI_RID_MAC_NODE:
-		/* should be implemented? */
+		/* XXX: should be implemented? */
 		error = EPERM;
 		break;
 	case WI_RID_TX_RATE:
@@ -511,9 +541,21 @@ awi_cfgset(ifp, cmd, data)
 		error = ENETRESET;
 		break;
 	case WI_RID_SYSTEM_SCALE:
-		error = EINVAL;		/* not supported */
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 1)
+			error = EINVAL;		/* not supported */
 		break;
 	case WI_RID_PM_ENABLED:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 0)
+			error = EINVAL;		/* not implemented */
+		break;
 	case WI_RID_MAX_SLEEP:
 		error = EINVAL;		/* not implemented */
 		break;
