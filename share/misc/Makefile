@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/09/18 08:12:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2003/03/02 20:12:16 jhawk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -12,14 +12,15 @@ FILESDIR=${BINDIR}/misc
 # According to iana@ISI.EDU, the URL below is the authoritative list
 # distributed by the ISO 3166 Maintenance Agency.
 update-domains:
-	ftp -o /tmp/domains.$$$$ http://www.iana.org/country-codes.txt ; \
 	( \
-	echo '# $$NetBSD: Makefile,v 1.23 2002/09/18 08:12:30 lukem Exp $$' ;  \
-	echo '# ISO 3166 country codes, from http://www.iana.org/country-codes.txt' ;  \
-	echo '# '`grep ^Latest /tmp/domains.$$$$` ;  \
-	echo '#' ;  \
-	perl -ane 'print lc(join(" ", $$F[$$#F-2], @F[0..$$#F-3])),"\n" if /^[A-Z]{2,}\s*.*\d{3}\s*$$/;' </tmp/domains.$$$$ \
-	) >domains ; \
-	rm /tmp/domains.$$$$
+	  mkdir /tmp/domains.$$$$; cd /tmp/domains.$$$$ ; \
+	  ftp -o - http://www.iana.org/cctld/cctld-whois.htm | \
+	  tr -d \\015 | \
+	  sed -f ${.CURDIR}/domains.sed > list ;\
+	  echo '# $$''NetBSD: $$' ;  \
+	  echo '# ISO 3166 country codes, from http://www.iana.org/cctld/cctld-whois.htm' ; \
+	  cat top ; echo '#' ; cat list ; \
+	 ) > domains ; \
+	rm -r /tmp/domains.$$$$
 
 .include <bsd.prog.mk>
