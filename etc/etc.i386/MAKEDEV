@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.109 2000/05/02 12:01:13 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.110 2000/05/07 01:39:27 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,7 @@
 #	ch*	SCSI changer
 #	cfs*	Coda file system device
 #	lm	LM7[89] hardware monitor
+#	bktr*	Brooktree 848/849/878/879 based TV cards
 #
 
 dialin=0
@@ -146,6 +147,7 @@ all)
 	sh $0 wscons
 	sh $0 ca0 ca1 ca2 ca3
 	sh $0 lm0
+	sh $0 bktr0
 	;;
 
 audio)
@@ -649,6 +651,16 @@ scsibus*)
 	mknod scsibus$unit c 61 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+bktr*)
+	unit=${i#bktr}
+	rm -f bktr$unit tuner$unit vbi$unit
+	mknod bktr$unit c 71 $(($unit + 0))
+	mknod tuner$unit c 71 $(($unit + 16))
+	mknod vbi$unit c 71 $(($unit + 32))
+	chown root.wheel bktr$unit tuner$unit vbi$unit
+	chmod 444 bktr$unit tuner$unit vbi$unit
 	;;
 
 local)
