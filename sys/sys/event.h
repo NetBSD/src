@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.11 2003/07/08 06:18:00 itojun Exp $	*/
+/*	$NetBSD: event.h,v 1.12 2004/02/22 17:45:26 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -82,9 +82,15 @@ struct kevent {
 #define	EV_ERROR	0x4000		/* error, data contains errno */
 
 /*
+ * hint flag for in-kernel use - must not equal any existing note
+ */
+#ifdef _KERNEL
+#define NOTE_SUBMIT	0x01000000		/* initial knote submission */
+#endif
+/*
  * data/hint flags for EVFILT_{READ|WRITE}, shared with userspace
  */
-#define	NOTE_LOWAT	0x0001		/* low water mark */
+#define	NOTE_LOWAT	0x0001			/* low water mark */
 
 /*
  * data/hint flags for EVFILT_VNODE, shared with userspace
