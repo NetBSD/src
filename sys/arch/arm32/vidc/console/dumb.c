@@ -1,4 +1,4 @@
-/* $NetBSD: dumb.c,v 1.3 1996/04/26 20:59:07 mark Exp $ */
+/* $NetBSD: dumb.c,v 1.4 1996/10/15 00:52:22 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -71,18 +71,17 @@ do_scrollup(vc)
 {
 
 	if (vc==vconsole_current)
-		vc->SCROLLUP ( vc, 0, vc->ychars-1 );
+		vc->SCROLLUP(vc, 0, vc->ychars-1);
 
 	vc->ycur=vc->ychars-1;
 
-	if ( ((vc->flags)&(LOSSY)) == 0 ) {
+	if (((vc->flags)&(LOSSY)) == 0) {
 		int counter;
-		for ( counter=vc->xchars; counter < ((vc->ychars)*(vc->xchars)); counter++ ) {
+		for (counter=vc->xchars; counter < ((vc->ychars)*(vc->xchars)); counter++)
 			vc->charmap[counter-vc->xchars] = vc->charmap[counter];
-		}
-		for ( counter=vc->xchars*(vc->ychars-1); counter < (vc->xchars*vc->ychars); counter++ ) {
+
+		for (counter=vc->xchars*(vc->ychars-1); counter < (vc->xchars*vc->ychars); counter++)
 			vc->charmap[counter]=0x20;
-		}
 	}
 }
 
@@ -94,22 +93,22 @@ do_render(c, vc)
 	/* THE RENDER STAGE **********************************/
 	if ((c>=0x20)&&(c<=0x7f)) {
 		if (((vc->flags)&(LOSSY))==0) {
-			vc->charmap[ vc->xcur + vc->ycur*vc->xchars ] = c | 7<<8;
+			vc->charmap[vc->xcur + vc->ycur*vc->xchars] = c | 7<<8;
 		}
 
-		if ( vc==vconsole_current )
-			vc->RENDER ( vc, c );
+		if (vc==vconsole_current)
+			vc->RENDER(vc, c);
 
 		vc->xcur++;
 	}
 
-	if ( vc->xcur >= vc->xchars ) {
+	if (vc->xcur >= vc->xchars) {
 		vc->xcur=0;
 		vc->ycur++;
 	}
 
-	if ( vc->ycur >= vc->ychars ) {
-		do_scrollup ( vc );
+	if (vc->ycur >= vc->ychars) {
+		do_scrollup(vc);
 		vc->xcur=0;
 		vc->ycur=vc->ychars-1;
 	}
@@ -124,13 +123,13 @@ TERMTYPE_PUTSTRING(string, length, vc)
 {
 	char c;
 
-	while ( ((c=*(string++))!=0) && ((length--)>0)) {
+	while (((c=*(string++))!=0) && ((length--)>0)) {
 		if ((c<31)||(c>127)) c='*';
 		switch (c) {
 		case 0x0a:
 			vc->ycur++;
-			if ( vc->ycur>=vc->ychars ) {
-				do_scrollup ( vc );
+			if (vc->ycur>=vc->ychars) {
+				do_scrollup(vc);
 				vc->ycur=vc->ychars-1;
 			}
 			break;
@@ -140,7 +139,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
 			break;
 
 		default:
-			do_render ( c, vc );
+			do_render(c, vc);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: debugconsole.c,v 1.3 1996/10/13 03:06:03 christos Exp $ */
+/* $NetBSD: debugconsole.c,v 1.4 1996/10/15 00:52:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -49,8 +49,6 @@
 #include <machine/stdarg.h>
 #include <machine/vconsole.h>
 
-#define TOTTY 0x02
-
 /*
  * This code allows the kernel developer to have a 'nice' virtual
  * console for debugging information.
@@ -68,21 +66,9 @@ void
 dprintf(fmt, va_alist)
 	char *fmt;
 {
-	if ( debug_vc==0 )
+	if (debug_vc==0)
 		return;
 
-	dumb_putstring ( fmt, strlen(fmt), debug_vc );
-/*
-	va_list *ap;
-
-	if ( debug_tty == NULL )
-		return;
-
-	va_start(ap, fmt);
-	printf(fmt, TOTTY, debug_tty, ap);
-	va_end(ap);
-*/
+	dumb_putstring(fmt, strlen(fmt), debug_vc);
 }
-
-#endif
-
+#endif	/* DEBUGTERM */
