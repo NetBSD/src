@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 1994/12/04 07:37:27 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 1994/12/10 00:28:18 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1886,7 +1886,17 @@ IDTVEC(bnd)
 IDTVEC(ill)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(dna)
+#if NNPX > 0
+	pushl	$0			# dummy error code
+	pushl	$T_DNA
+	INTRENTRY
+	call	_npxdna
+	testl	%eax,%eax
+	jz	calltrap
+	INTRFASTEXIT
+#else
 	ZTRAP(T_DNA)
+#endif
 IDTVEC(dble)
 	TRAP(T_DOUBLEFLT)
 IDTVEC(fpusegm)
