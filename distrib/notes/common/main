@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.186 2002/06/16 00:38:33 wiz Exp $
+.\"	$NetBSD: main,v 1.187 2002/06/21 02:36:00 bsh Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1524,6 +1524,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Robert V. Baron Ta Mt rvb@netbsd.org
 .It Ta Jason Beegan Ta Mt jtb@netbsd.org
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
+.It Ta Hiroyuki Bessho Ta Mt bsh@netbsd.org
 .It Ta John Birrell Ta Mt jb@netbsd.org
 .It Ta Mason Loring Bliss Ta Mt mason@netbsd.org
 .It Ta Rafal Boni Ta Mt rafal@netbsd.org
