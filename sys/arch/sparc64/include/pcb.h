@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 2000/11/18 03:51:14 mrg Exp $ */
+/*	$NetBSD: pcb.h,v 1.7 2000/12/29 17:12:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,8 +125,8 @@
  * change this as soon as the new scheme is debugged.
  */
 struct pcb {
-	int64_t	pcb_sp;		/* sp (%o6) when switch() was called */
-	int64_t	pcb_pc;		/* pc (%o7) when switch() was called */
+	u_int64_t	pcb_sp;		/* sp (%o6) when switch() was called */
+	u_int64_t	pcb_pc;		/* pc (%o7) when switch() was called */
 	caddr_t	pcb_onfault;	/* for copyin/out */
 	short	pcb_pstate;	/* %pstate when switch() was called -- may be useful if we support multiple memory models */
 	char	pcb_nsaved;	/* number of windows saved in pcb */
