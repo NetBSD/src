@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.5 1999/05/07 00:15:16 ragge Exp $	
+.\"	$NetBSD: install,v 1.6 2000/03/04 15:05:19 ragge Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,6 @@ Other devices may be appropriate for your configuration.
 Then just proceed with the program sysinst. The install descriptions
 for sysinst that follows can be easily adopted to vax.
 
-.\" Sad that the sysinst install instructions is so i386-specific.
+.\" Sad that the sysinst install instructions are so i386-specific.
 .so ../common/sysinst
 
