@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.6 1997/10/31 23:00:57 phil Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.7 1997/11/13 04:23:41 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -147,7 +147,7 @@ menu chooseid, title  "  Partition Kind? ";
 	option "DOS > 32 Meg",	exit,	action { part[editpart][ID] = 6; };
 	option "unused",	exit,	action { part[editpart][ID] = 0; };
 
-menu editfsparts, y=15, exit;
+menu editfsparts, y=13, exit;
 	display action  {
 			ask_sizemult();
 			msg_display(MSG_fspart, multname);
