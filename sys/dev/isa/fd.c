@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 2001/05/27 18:16:21 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 2001/06/07 16:48:09 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@
  * XXX to eliminate a lot of code duplication for now.
  */
 #if !defined(alpha) && !defined(algor) && !defined(atari) && \
-    !defined(bebox) && !defined(i386) && !defined(prep)
+    !defined(bebox) && !defined(i386) && !defined(prep) && \
+    !defined(sandpoint)
 #error platform not supported by this driver, yet
 #endif
 
