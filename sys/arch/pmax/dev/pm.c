@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.8 1995/09/11 21:31:25 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.9 1995/10/16 22:28:36 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -263,6 +263,7 @@ pminit(fi, unit, silent)
 
 	/* Fill in main frame buffer info struct. */
 
+	fi->fi_driver = &pm_driver;
 	fi->fi_pixelsize =
 		((fi->fi_type.fb_depth == 1) ? 1024 / 8 : 1024) * 864;
 	fi->fi_unit = unit;
