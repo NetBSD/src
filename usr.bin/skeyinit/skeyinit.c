@@ -1,3 +1,5 @@
+/*	$NetBSD: skeyinit.c,v 1.5 1994/12/24 17:42:05 cgd Exp $	*/
+
 /* S/KEY v1.1b (skeyinit.c)
  *
  * Authors:
@@ -7,8 +9,6 @@
  *          Scott Chasin <chasin@crimelab.com>
  *
  * S/KEY initialization and seed update
- *
- * $Id: skeyinit.c,v 1.4 1994/05/30 04:52:26 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -16,6 +16,7 @@
 #include <sys/resource.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
 #include <unistd.h>
