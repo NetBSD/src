@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.22 1996/03/31 22:28:38 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.23 1996/04/05 21:50:05 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -295,6 +295,13 @@ busattach(parent, child, args, bustype)
 	caddr_t tmp;
 
 	if (bustype == BUS_OBIO && CPU_ISSUN4) {
+
+		/*
+		 * avoid sun4m entries which don't have valid PA's.
+		 * no point in even probing them. 
+		 */
+		if (cf->cf_loc[0] == -1) return 0;
+
 		/*
 		 * On the 4/100 obio addresses must be mapped at
 		 * 0x0YYYYYYY, but alias higher up (we avoid the
