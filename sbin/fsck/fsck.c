@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.9 1996/12/07 19:09:11 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.10 1997/06/20 15:14:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.9 1996/12/07 19:09:11 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.10 1997/06/20 15:14:09 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -472,29 +472,6 @@ mangle(opts, argcp, argvp, maxargcp)
 }
 
 
-/* Maybe this belongs to <sys/disklabel.h> */
-static char *fscknames[] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"ffs",
-	"msdos",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-
 static char *
 getfslab(str)
 	const char *str;
@@ -528,7 +505,6 @@ getfslab(str)
 
 	return vfstype;
 }
-
 
 
 static void
