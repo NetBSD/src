@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.153 2002/01/01 22:49:32 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.154 2002/01/01 22:55:49 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -133,7 +133,7 @@
 #	agp*	AGP GART devices
 #	pci*	PCI bus access devices
 #	dpti*	DPT/Adaptec RAID management interface
-#	audio*	radio devices
+#	radio*	radio devices
 #
 
 dialin=0
