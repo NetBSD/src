@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.11 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
  *
@@ -88,7 +88,7 @@ uvm_anon_init()
  *
  * => swap_syscall_lock should be held (protects anonblock_list).
  */
-void
+int
 uvm_anon_add(count)
 	int	count;
 {
@@ -102,17 +102,16 @@ uvm_anon_add(count)
 	simple_unlock(&uvm.afreelock);
 
 	if (needed <= 0) {
-		return;
+		return 0;
 	}
- 
-	MALLOC(anonblock, void *, sizeof(*anonblock), M_UVMAMAP, M_WAITOK);
 	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed);
-
-	/* XXX Should wait for VM to free up. */
-	if (anonblock == NULL || anon == NULL) {
-		printf("uvm_anon_add: can not allocate %d anons\n", needed);
-		panic("uvm_anon_add");
+	if (anon == NULL) {
+		simple_lock(&uvm.afreelock);
+		uvmexp.nanonneeded -= count;
+		simple_unlock(&uvm.afreelock);
+		return ENOMEM;
 	}
+	MALLOC(anonblock, void *, sizeof(*anonblock), M_UVMAMAP, M_WAITOK);
 
 	anonblock->count = needed;
 	anonblock->anons = anon;
@@ -129,6 +128,7 @@ uvm_anon_add(count)
 		simple_lock_init(&uvm.afree->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
+	return 0;
 }
 
 /*
