@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.6 1998/10/04 23:38:56 thorpej Exp $
+|	$NetBSD: vectors.s,v 1.7 1998/10/18 04:42:37 itohy Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -40,7 +40,11 @@
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
 	.globl	_spurintr,_intrhand_autovec,_lev7intr
-	.globl	_trap0,_trap1,_trap2,_trap15
+	.globl	_trap0
+#ifdef COMPAT_13
+	.globl	_trap1
+#endif
+	.globl	_trap2,_trap15
 	.globl	_fpfline, _fpunsupp
 	.globl	_trap12
 	.globl	_vectab
