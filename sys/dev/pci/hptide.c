@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.8 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.9 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -276,7 +276,7 @@ hpt_setup_channel(struct wdc_channel *chp)
 	u_int32_t before, after;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int revision =
 	     PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 	const u_int32_t *tim_pio, *tim_dma, *tim_udma;
@@ -332,13 +332,13 @@ hpt_setup_channel(struct wdc_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
-					HPT_IDETIM(chp->channel, drive));
+					HPT_IDETIM(chp->ch_channel, drive));
 
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
+			if ((cable & HPT_CSEL_CBLID(chp->ch_channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
 			after = tim_udma[drvp->UDMA_mode];
@@ -360,7 +360,7 @@ hpt_setup_channel(struct wdc_channel *chp)
 			after = tim_pio[drvp->PIO_mode];
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    HPT_IDETIM(chp->channel, drive), after);
+		    HPT_IDETIM(chp->ch_channel, drive), after);
 		WDCDEBUG_PRINT(("%s: bus speed register set to 0x%08x "
 		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
 		    after, before), DEBUG_PROBE);

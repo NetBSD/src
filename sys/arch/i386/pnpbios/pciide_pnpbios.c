@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.13 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.14 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.13 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.14 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,8 @@ pciide_pnpbios_attach(parent, self, aux)
 
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->wdc_channel;
-	cp->wdc_channel.channel = 0;
-	cp->wdc_channel.wdc = &sc->sc_wdcdev;
+	cp->wdc_channel.ch_channel = 0;
+	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue = malloc(sizeof(struct ata_queue),
 					  M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {

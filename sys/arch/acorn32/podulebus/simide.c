@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.17 2004/01/03 01:50:52 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.17 2004/01/03 01:50:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,8 +253,8 @@ simide_attach(parent, self, aux)
 		sc->wdc_chanarray[channel] = &scp->wdc_channel;
 		cp = &scp->wdc_channel;
 
-		cp->channel = channel;
-		cp->wdc = &sc->sc_wdcdev;
+		cp->ch_channel = channel;
+		cp->ch_wdc = &sc->sc_wdcdev;
 		cp->ch_queue = &scp->wdc_chqueue;
 		cp->cmd_iot = cp->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;

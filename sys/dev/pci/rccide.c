@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,9 @@ serverworks_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int channel = chp->channel;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	int channel = chp->ch_channel;
 	int drive, unit;
 	u_int32_t pio_time, dma_time, pio_mode, udma_mode;
 	u_int32_t idedma_ctl;
@@ -208,7 +209,7 @@ serverworks_setup_channel(struct wdc_channel *chp)
 		/* add timing values, setup DMA if needed */
 		pio_time |= pio_modes[drvp->PIO_mode] << (8 * (unit^1));
 		pio_mode |= drvp->PIO_mode << (4 * unit + 16);
-		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
 			if (drvp->UDMA_mode > 2 &&
@@ -220,7 +221,7 @@ serverworks_setup_channel(struct wdc_channel *chp)
 			udma_mode |= drvp->UDMA_mode << (4 * unit + 16);
 			udma_mode |= 1 << unit;
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) &&
+		} else if ((wdc->cap & WDC_CAPABILITY_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
 			drvp->drive_flags &= ~DRIVE_UDMA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.6 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.7 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -147,8 +147,8 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	cp = &sc->pciide_channels[0];
 	sc->wdc_chanarray[0] = &cp->wdc_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(0);
-	cp->wdc_channel.channel = 0;
-	cp->wdc_channel.wdc = &sc->sc_wdcdev;
+	cp->wdc_channel.ch_channel = 0;
+	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
@@ -181,7 +181,7 @@ cy693_setup_channel(struct wdc_channel *chp)
 	u_int32_t cy_cmd_ctrl;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int dma_mode = -1;
 
 	WDCDEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: piixide.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -316,16 +316,16 @@ piix_setup_channel(struct wdc_channel *chp)
 	u_int8_t mode[2], drive;
 	u_int32_t oidetim, idetim, idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	struct ata_drive_datas *drvp = cp->wdc_channel.ch_drive;
 
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
-	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, chp->channel);
+	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, chp->ch_channel);
 	idedma_ctl = 0;
 
 	/* set up new idetim: Enable IDE registers decode */
 	idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE,
-	    chp->channel);
+	    chp->ch_channel);
 
 	/* setup DMA */
 	pciide_channel_dma_setup(cp);
@@ -385,17 +385,17 @@ ok:	/* The modes are setup */
 	for (drive = 0; drive < 2; drive++) {
 		if (drvp[drive].drive_flags & DRIVE_DMA) {
 			idetim |= piix_setup_idetim_timings(
-			    mode[drive], 1, chp->channel);
+			    mode[drive], 1, chp->ch_channel);
 			goto end;
 		}
 	}
 	/* If we are there, none of the drives are DMA */
 	if (mode[0] >= 2)
 		idetim |= piix_setup_idetim_timings(
-		    mode[0], 0, chp->channel);
+		    mode[0], 0, chp->ch_channel);
 	else 
 		idetim |= piix_setup_idetim_timings(
-		    mode[1], 0, chp->channel);
+		    mode[1], 0, chp->ch_channel);
 end:	/*
 	 * timing mode is now set up in the controller. Enable
 	 * it per-drive
@@ -422,9 +422,10 @@ piix3_4_setup_channel(struct wdc_channel *chp)
 	struct ata_drive_datas *drvp;
 	u_int32_t oidetim, idetim, sidetim, udmareg, ideconf, idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int drive;
-	int channel = chp->channel;
+	int channel = chp->ch_channel;
 
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 	sidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM);
@@ -497,7 +498,7 @@ piix3_4_setup_channel(struct wdc_channel *chp)
 			else
 				ideconf &= ~PIIX_CONFIG_UDMA66(channel, drive);
 		}
-		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
@@ -570,7 +571,7 @@ piix_setup_idetim_drvs(drvp)
 {
 	u_int32_t ret = 0;
 	struct wdc_channel *chp = drvp->chnl_softc;
-	u_int8_t channel = chp->channel;
+	u_int8_t channel = chp->ch_channel;
 	u_int8_t drive = drvp->drive;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.20 2004/01/03 22:56:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.19 2004/01/03 01:50:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.20 2004/01/03 22:56:52 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -261,8 +261,8 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_wdcdev.channels[channel] = &icp->wdc_channel;
 		cp = &icp->wdc_channel;
 
-		cp->channel = channel;
-		cp->wdc = &sc->sc_wdcdev;
+		cp->ch_channel = channel;
+		cp->ch_wdc = &sc->sc_wdcdev;
 		cp->ch_queue = &icp->wdc_chqueue;
 		cp->cmd_iot = &sc->sc_tag;
 		cp->ctl_iot = &sc->sc_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.11 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -539,8 +539,8 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 		cp->idedma_cmd = IDEDMA_CMD_INT_STEER;
 
 	cp->name = channel_names[channel];
-	cp->wdc_channel.channel = channel;
-	cp->wdc_channel.wdc = &sc->sc_wdcdev;
+	cp->wdc_channel.ch_channel = channel;
+	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
@@ -555,7 +555,7 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 static void
 sii3114_mapchan(struct pciide_channel *cp)
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	int i;
 
@@ -564,7 +564,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 
 	wdc_cp->cmd_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
-			satalink_ba5_regmap[wdc_cp->channel].ba5_IDE_TF0,
+			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF0,
 			9, &wdc_cp->cmd_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s cmd base\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -573,7 +573,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 
 	wdc_cp->ctl_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
-			satalink_ba5_regmap[wdc_cp->channel].ba5_IDE_TF8,
+			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF8,
 			1, &cp->ctl_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s ctl base\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -739,7 +739,7 @@ static void
 sii3112_drv_probe(struct wdc_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
 
@@ -762,17 +762,17 @@ sii3112_drv_probe(struct wdc_channel *chp)
 	 */
 	scontrol |= SControl_IPM_NONE;
 
-	BA5_WRITE_4(sc, chp->channel, ba5_SControl, scontrol);
+	BA5_WRITE_4(sc, chp->ch_channel, ba5_SControl, scontrol);
 	delay(50 * 1000);
 	scontrol &= ~SControl_DET_INIT;
-	BA5_WRITE_4(sc, chp->channel, ba5_SControl, scontrol);
+	BA5_WRITE_4(sc, chp->ch_channel, ba5_SControl, scontrol);
 	delay(50 * 1000);
 
-	sstatus = BA5_READ_4(sc, chp->channel, ba5_SStatus);
+	sstatus = BA5_READ_4(sc, chp->ch_channel, ba5_SStatus);
 #if 0
 	aprint_normal("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
-	    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus,
-	    BA5_READ_4(sc, chp->channel, ba5_SControl));
+	    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel, sstatus,
+	    BA5_READ_4(sc, chp->ch_channel, ba5_SControl));
 #endif
 	switch (sstatus & SStatus_DET_mask) {
 	case SStatus_DET_NODEV:
@@ -782,12 +782,12 @@ sii3112_drv_probe(struct wdc_channel *chp)
 	case SStatus_DET_DEV_NE:
 		aprint_error("%s: port %d: device connected, but "
 		    "communication not established\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_OFFLINE:
 		aprint_error("%s: port %d: PHY offline\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel);
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_DEV:
@@ -811,7 +811,7 @@ sii3112_drv_probe(struct wdc_channel *chp)
 				      chp->cmd_iohs[wd_cyl_hi], 0);
 #if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
 		/*
@@ -824,14 +824,14 @@ sii3112_drv_probe(struct wdc_channel *chp)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 
 		aprint_normal("%s: port %d: device present, speed: %s\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
 		    sata_speed[(sstatus & SStatus_SPD_mask) >> 
 			       SStatus_SPD_shift]);
 		break;
 
 	default:
 		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus);
+		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel, sstatus);
 	}
 }
 
@@ -842,7 +842,7 @@ sii3112_setup_channel(struct wdc_channel *chp)
 	int drive;
 	u_int32_t idedma_ctl, dtm;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.ch_wdc;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -878,5 +878,5 @@ sii3112_setup_channel(struct wdc_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 		    idedma_ctl);
 	}
-	BA5_WRITE_4(sc, chp->channel, ba5_IDE_DTM, dtm);
+	BA5_WRITE_4(sc, chp->ch_channel, ba5_IDE_DTM, dtm);
 }

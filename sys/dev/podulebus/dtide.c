@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.14 2004/01/03 01:50:53 thorpej Exp $ */
+/* $NetBSD: dtide.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.14 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -97,8 +97,8 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	for (i = 0; i < DTIDE_NCHANNELS; i++) {
 		ch = sc->sc_chp[i] = &sc->sc_chan[i];
-		ch->channel = i;
-		ch->wdc = &sc->sc_wdc;
+		ch->ch_channel = i;
+		ch->ch_wdc = &sc->sc_wdc;
 		ch->cmd_iot = bst;
 		ch->ctl_iot = bst;
 		ch->ch_queue = &sc->sc_chq[i];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.10 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.11 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -330,8 +330,8 @@ pdc202xx_setup_channel(struct wdc_channel *chp)
 	pcireg_t mode, st;
 	u_int32_t idedma_ctl, scr, atapi;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int channel = chp->channel;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	int channel = chp->ch_channel;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -426,9 +426,9 @@ pdc202xx_setup_channel(struct wdc_channel *chp)
 		WDCDEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, 
-		    chp->channel, drive, mode), DEBUG_PROBE);
+		    chp->ch_channel, drive, mode), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    PDC2xx_TIM(chp->channel, drive), mode);
+		    PDC2xx_TIM(chp->ch_channel, drive), mode);
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
@@ -444,7 +444,7 @@ pdc20268_setup_channel(struct wdc_channel *chp)
 	int drive;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	int u100;
 
 	/* setup DMA if needed */     
@@ -454,13 +454,13 @@ pdc20268_setup_channel(struct wdc_channel *chp)
 
 	/* I don't know what this is for, FreeBSD does it ... */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + 0x1 + IDEDMA_SCH_OFFSET * chp->channel, 0x0b);
+	    IDEDMA_CMD + 0x1 + IDEDMA_SCH_OFFSET * chp->ch_channel, 0x0b);
 
 	/*
 	 * cable type detect, from FreeBSD
 	 */
 	u100 = (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + 0x3 + IDEDMA_SCH_OFFSET * chp->channel) & 0x04) ?
+	    IDEDMA_CMD + 0x3 + IDEDMA_SCH_OFFSET * chp->ch_channel) & 0x04) ?
 	    0 : 1;
 
 	for (drive = 0; drive < 2; drive++) {

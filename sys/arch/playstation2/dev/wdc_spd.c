@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.12 2004/01/03 22:56:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.11 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.12 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,8 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	wdc->channels = sc->wdc_chanlist;
 	wdc->nchannels = 1;
-	ch->channel = 0;
-	ch->wdc = &sc->sc_wdcdev;
+	ch->ch_channel = 0;
+	ch->ch_wdc = &sc->sc_wdcdev;
 	ch->ch_queue = &sc->wdc_chqueue;
 
 	spd_intr_establish(SPD_HDD, wdcintr, &sc->wdc_channel);
