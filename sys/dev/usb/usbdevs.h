@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.28 1999/05/11 09:56:56 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.29 1999/05/20 09:50:39 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.28 1999/05/11 09:56:32 augustss Exp 
+ *	NetBSD: usbdevs,v 1.29 1999/05/20 09:50:09 augustss Exp 
  */
 
 /*
@@ -53,7 +53,7 @@
 #define	USB_VENDOR_CATC	0x0423		/* Computer Access Technology Corp. */
 #define	USB_VENDOR_GRAVIS	0x0428		/* Advanced Gravis Computer Tech. Ltd. */
 #define	USB_VENDOR_NANAO	0x0440		/* NANAO Corporation */
-#define	USB_VENDOR_UNIXTAR	0x0451		/* Texas Instruments */
+#define	USB_VENDOR_TI	0x0451		/* Texas Instruments */
 #define	USB_VENDOR_GENIUS	0x0458		/* KYE Systems Corp. */
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
 #define	USB_VENDOR_KENSINGTON	0x0461		/* Primax Electronics */
@@ -105,7 +105,7 @@
 #define	USB_PRODUCT_GRAVIS_GAMEPADPRO	0x4001		/* GamePad Pro */
 
 /* Unixtar products */
-#define	USB_PRODUCT_UNIXTAR_UTUSB41	0x1446		/* UT-USB41 hub */
+#define	USB_PRODUCT_TI_UTUSB41	0x1446		/* UT-USB41 hub */
 
 /* Genius products */
 #define	USB_PRODUCT_GENIUS_NICHE	0x0001		/* Niche mouse */
