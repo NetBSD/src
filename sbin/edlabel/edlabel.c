@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.7 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.7.10.1 2000/08/10 07:10:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -460,7 +460,7 @@ label_modify(dl, dn)
 		scsi_fict = 1;
 
 	printf(modify_cmds, 'a' + maxpartitions - 1,
-		scsi_fict ? " s   : standarize geometry\n" : "");
+		scsi_fict ? " s   : standardize geometry\n" : "");
 	for (;;) {
 		printf("edlabel/modify> ");
 		fflush(stdout);
@@ -482,7 +482,8 @@ label_modify(dl, dn)
 		}
 		if ((c < 'a') || (c > 'q')) {
 			printf("bad input.  ");
-			printf(modify_cmds);
+			printf(modify_cmds, 'a' + maxpartitions - 1,
+			    scsi_fict ? " s   : standardize geometry\n" : "");
 			continue;
 		}
 		edit_partition(dl, c - 'a', 1);
