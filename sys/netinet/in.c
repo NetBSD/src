@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.39 1998/02/15 18:24:24 tls Exp $	*/
+/*	$NetBSD: in.c,v 1.40 1998/05/29 15:34:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,6 +165,26 @@ in_socktrim(ap)
 			(ap)->sin_len = cp - (char *) (ap) + 1;
 			break;
 		}
+}
+
+/*
+ *  Routine to take an Internet address and convert into a
+ *  "dotted quad" representation for printing.
+ */
+const char *
+in_fmtaddr(addr)
+	struct in_addr addr;
+{
+	static char buf[sizeof("123.456.789.123")];
+
+	addr.s_addr = ntohl(addr.s_addr);
+
+	sprintf(buf, "%d.%d.%d.%d",
+		(addr.s_addr >> 24) & 0xFF,
+		(addr.s_addr >> 16) & 0xFF,
+		(addr.s_addr >>  8) & 0xFF,
+		(addr.s_addr >>  0) & 0xFF);
+	return buf;
 }
 
 /*

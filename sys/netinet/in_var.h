@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.24 1998/05/04 19:24:53 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.25 1998/05/29 15:34:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,7 +277,8 @@ int	in_ifinit __P((struct ifnet *,
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 void	in_delmulti __P((struct in_multi *));
 void	in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
-void	in_setmaxmtu __P ((void));
+void	in_setmaxmtu __P((void));
+const char *in_fmtaddr __P((struct in_addr));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
 int	ipflow_fastforward __P((struct mbuf *));

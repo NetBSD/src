@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.45 1998/02/15 18:24:23 tls Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.46 1998/05/29 15:34:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -553,15 +553,15 @@ in_arpinput(m)
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
 	    ifp->if_data.ifi_addrlen)) {
 		log(LOG_ERR,
-		    "%s: arp: link address is broadcast for IP address %x!\n",
-		    ifp->if_xname, ntohl(isaddr.s_addr));
+		    "%s: arp: link address is broadcast for IP address %s!\n",
+		    ifp->if_xname, in_fmtaddr(isaddr));
 		goto out;
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
 		log(LOG_ERR,
-		   "duplicate IP address %08x sent from link address %s\n",
-		   ntohl(isaddr.s_addr), lla_snprintf(ar_sha(ah), ah->ar_hln));
+		   "duplicate IP address %s sent from link address %s\n",
+		   in_fmtaddr(isaddr), lla_snprintf(ar_sha(ah), ah->ar_hln));
 		itaddr = myaddr;
 		goto reply;
 	}
@@ -569,8 +569,8 @@ in_arpinput(m)
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    bcmp((caddr_t)ar_sha(ah), LLADDR(sdl), sdl->sdl_alen))
-			log(LOG_INFO, "arp info overwritten for %08x by %s\n",
-			    ntohl(isaddr.s_addr),
+			log(LOG_INFO, "arp info overwritten for %s by %s\n",
+			    in_fmtaddr(isaddr),
 			    lla_snprintf(ar_sha(ah), ah->ar_hln));
 		/* 
 		 * sanity check for the address length.
@@ -580,13 +580,13 @@ in_arpinput(m)
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != ah->ar_hln) {
 			log(LOG_WARNING, 
-			    "arp from %08x: new addr len %d, was %d",
-			    ntohl(isaddr.s_addr), ah->ar_hln, sdl->sdl_alen);
+			    "arp from %s: new addr len %d, was %d",
+			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
 			log(LOG_WARNING, 
-			    "arp from %08x: addr len: new %d, i/f %d (ignored)",
-			    ntohl(isaddr.s_addr), ah->ar_hln,
+			    "arp from %s: addr len: new %d, i/f %d (ignored)",
+			    in_fmtaddr(isaddr), ah->ar_hln,
 			    ifp->if_data.ifi_addrlen);
 			goto reply;
 		}
@@ -678,8 +678,8 @@ arplookup(addr, create, proxy)
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
 	    rt->rt_gateway->sa_family != AF_LINK) {
 		if (create)
-			log(LOG_DEBUG, "arplookup: unable to enter address for %x\n",
-			    ntohl(addr->s_addr));
+			log(LOG_DEBUG, "arplookup: unable to enter address for %s\n",
+			    in_fmtaddr(*addr));
 		return (0);
 	}
 	return ((struct llinfo_arp *)rt->rt_llinfo);
