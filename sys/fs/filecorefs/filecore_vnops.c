@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.3 2003/06/23 15:22:58 martin Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4 2003/06/26 05:26:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.3 2003/06/23 15:22:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4 2003/06/26 05:26:45 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfsserver.h"
@@ -298,14 +298,14 @@ filecore_readdir(v)
 			de.d_fileno = dp->i_number;
 			de.d_type = DT_DIR;
 			de.d_namlen = 1;
-			strcpy(de.d_name, ".");
+			strlcpy(de.d_name, ".", sizeof(de.d_name));
 			break;
 		case 1:
 			/* Fake the '..' entry */
 			de.d_fileno = filecore_getparent(dp);
 			de.d_type = DT_DIR;
 			de.d_namlen = 2;
-			strcpy(de.d_name, "..");
+			strlcpy(de.d_name, "..", sizeof(de.d_name));
 			break;
 		default:
 			de.d_fileno = dp->i_dirent.addr +
