@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.5 2002/09/10 01:47:31 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.6 2004/06/29 04:46:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.95 2001/12/10 08:21:24 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.5 2002/09/10 01:47:31 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.6 2004/06/29 04:46:35 itojun Exp $");
 #endif
 #endif
 
@@ -559,6 +559,15 @@ tcp_print(register const u_char *bp, register u_int length,
 				datalen = 4;
 				LENCHECK(datalen);
 				(void)printf(" %u", EXTRACT_32BITS(cp));
+				break;
+
+			case TCPOPT_SIGNATURE:
+				(void)printf("tcpmd5:");
+				datalen = len - 2;
+				for (i = 0; i < datalen; i++) {
+					LENCHECK(i);
+					(void)printf("%02x", cp[i]);
+				}
 				break;
 
 			default:

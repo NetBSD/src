@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.2 2003/08/07 09:21:13 agc Exp $	*/
+/*	$NetBSD: tcp.h,v 1.3 2004/06/29 04:46:35 itojun Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/tcp.h,v 1.8 2001/05/09 01:16:57 fenner Exp (LBL) */
 /*
@@ -73,6 +73,7 @@ struct tcphdr {
 #define TCPOPT_CC		11	/* T/TCP CC options (rfc1644) */
 #define TCPOPT_CCNEW		12	/* T/TCP CC options (rfc1644) */
 #define TCPOPT_CCECHO		13	/* T/TCP CC options (rfc1644) */
+#define TCPOPT_SIGNATURE	19	/* TCP MD5 signature */
 
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
