@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.15 1993/05/22 08:01:43 cgd Exp $
+ *	$Id: wd.c,v 1.16 1993/05/28 09:10:57 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1395,9 +1395,11 @@ wddump(dev_t dev)
     
 	addr = (char *) 0;		/* starting address */
     
-	/* toss any characters present prior to dump */
-	while (sgetc(1))
+#if DO_NOT_KNOW_HOW
+	/* toss any characters present prior to dump, ie. non-blocking getc */
+	while (cngetc())
 		;
+#endif
     
 	/* size of memory to dump */
 	num = Maxmem;
@@ -1532,9 +1534,11 @@ wddump(dev_t dev)
 		blknum++;
 		(int) addr += 512;
 	
-		/* operator aborting dump? */
-		if (sgetc(1))
+#if DO_NOT_KNOW_HOW
+		/* operator aborting dump? non-blocking getc() */
+		if (cngetc())
 			return(EINTR);
+#endif
 	}
 	return(0);
 }
