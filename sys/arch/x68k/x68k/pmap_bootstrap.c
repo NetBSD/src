@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.19 2000/06/29 07:07:56 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.20 2001/01/11 10:40:56 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,10 +71,6 @@ u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
 
 void	pmap_bootstrap __P((paddr_t, paddr_t));
 
-#ifndef EIOMAPSIZE
-#define EIOMAPSIZE 0
-#endif
-
 /*
  * Special purpose kernel virtual addresses, used for mapping
  * physical pages for a variety of temporary or permanent purposes:
@@ -143,9 +139,9 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
+	eiopa = nextpa;
 	iiopa = eiopa - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
@@ -395,16 +391,16 @@ pmap_bootstrap(nextpa, firstpa)
 	 * kernel page table.
 	 */
 	RELOC(IODEVbase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
+		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE));
 	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
 	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
 	 */
 	RELOC(extiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.
