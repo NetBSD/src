@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.8 1997/08/08 00:04:38 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.9 1997/08/18 21:33:33 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,9 +51,10 @@ uniform programming interface layer above different underlying audio
 hardware drivers.  The audio layer provides full-duplex operation if the
 underlying hardware configuration supports it.
 .Pp
-There are three device files available for audio operation:
+There are four device files available for audio operation:
 .Pa /dev/audio ,
 .Pa /dev/sound ,
+.Pa /dev/audioctl ,
 and
 .Pa /dev/mixer .
 .Pa /dev/audio
@@ -63,6 +64,17 @@ are used for recording or playback of digital samples.
 .Pa /dev/mixer
 is used to manipulate volume, recording source, or other audio mixer
 functions.
+.Pa /dev/audioctl
+accepts the same
+.Xr ioctl 2
+operations as
+.Pa /dev/sound ,
+but no other operations.  In contrast to
+.Pa /dev/sound
+which has the exclusive open property
+.Pa /dev/audioctl
+can be opened at any time and can be used to manipulate the audio device
+while it is in use.
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
