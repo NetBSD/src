@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.18.2.2 2001/06/29 03:56:46 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.18.2.3 2001/06/30 01:28:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.18.2.2 2001/06/29 03:56:46 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.18.2.3 2001/06/30 01:28:31 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
 static void	dump_dinode(struct dinode *);
 static void	dump_ifile(int, struct lfs *, int, int, int);
-static int	dump_ipage_ifile(int, IFILE *, int);
-static int	dump_ipage_segusage(struct lfs *, int, IFILE *, int);
+static int	dump_ipage_ifile(struct lfs *, int, char *, int);
+static int	dump_ipage_segusage(struct lfs *, int, char *, int);
 static void	dump_segment(int, int, daddr_t, struct lfs *, int);
 static int	dump_sum(int, struct lfs *, SEGSUM *, int, daddr_t);
 static void	dump_super(struct lfs *);
@@ -106,12 +106,12 @@ char *special;
 #define print_iheader \
 	(void)printf("inum\tstatus\tversion\tdaddr\t\tfreeptr\n")
 #define print_ientry(i, ip) \
-	if (ip->if_daddr == LFS_UNUSED_DADDR) \
+	if ((ip)->if_daddr == LFS_UNUSED_DADDR) \
 		(void)printf("%d\tFREE\t%d\t \t\t%d\n", \
-		    i, ip->if_version, ip->if_nextfree); \
+		    i, (ip)->if_version, (ip)->if_nextfree); \
 	else \
 		(void)printf("%d\tINUSE\t%d\t%8X    \n", \
-		    i, ip->if_version, ip->if_daddr)
+		    i, (ip)->if_version, (ip)->if_daddr)
 
 #define datobyte(fs, da) /* disk address to bytes */	\
 	(((off_t)(da)) << ((fs)->lfs_bshift - (fs)->lfs_fsbtodb))
@@ -191,6 +191,8 @@ main(int argc, char **argv)
 	if (lfs_master->lfs_version == 1) {
 		lfs_master->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
 		lfs_master->lfs_ibsize = lfs_master->lfs_bsize;
+		lfs_master->lfs_start = lfs_master->lfs_sboffs[0];
+		lfs_master->lfs_tstamp = lfs_master->lfs_otstamp;
 	}
 
 	(void)printf("Master Superblock at 0x%x:\n", sbdaddr);
@@ -223,7 +225,7 @@ main(int argc, char **argv)
 static void
 dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t addr)
 {
-	IFILE *ipage;
+	char *ipage;
 	struct dinode *dip, *dpage;
 	daddr_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
@@ -277,7 +279,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 					print_iheader;
 			}
 		} else
-			inum = dump_ipage_ifile(inum, ipage, lfsp->lfs_ifpb);
+			inum = dump_ipage_ifile(lfsp, inum, ipage, lfsp->lfs_ifpb);
 	}
 
 	if (nblocks <= NDADDR)
@@ -310,7 +312,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 					print_iheader;
 			}
 		} else
-			inum = dump_ipage_ifile(inum, ipage, lfsp->lfs_ifpb);
+			inum = dump_ipage_ifile(lfsp, inum, ipage, lfsp->lfs_ifpb);
 	}
 
 	if (nblocks <= lfsp->lfs_nindir * lfsp->lfs_ifpb)
@@ -348,7 +350,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 						print_iheader;
 				}
 			} else
-				inum = dump_ipage_ifile(inum,
+				inum = dump_ipage_ifile(lfsp, inum,
 				    ipage, lfsp->lfs_ifpb);
 		}
 	}
@@ -359,20 +361,24 @@ e0:	free(dpage);
 }
 
 static int
-dump_ipage_ifile(int i, IFILE *pp, int tot)
+dump_ipage_ifile(struct lfs *lfsp, int i, char *pp, int tot)
 {
-	IFILE *ip;
-	int cnt, max;
+	char *ip;
+	int cnt, max, entsize;
 
+	if (lfsp->lfs_version == 1) 
+		entsize = sizeof(IFILE_V1);
+	else 
+		entsize = sizeof(IFILE);
 	max = i + tot;
 
-	for (ip = pp, cnt = i; cnt < max; cnt++, ip++)
-		print_ientry(cnt, ip);
+	for (ip = pp, cnt = i; cnt < max; cnt++, ip += entsize)
+		print_ientry(cnt, (IFILE *)ip);
 	return (max);
 }
 
 static int
-dump_ipage_segusage(struct lfs *lfsp, int i, IFILE *pp, int tot)
+dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 {
 	SEGUSE *sp;
 	int cnt, max;
@@ -498,7 +504,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
 	else
 		fp = (FINFO *)(sp + 1);
-	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; i++) {
+	for (i = 0; i < sp->ss_nfinfo; i++) {
 		(void)printf("    FINFO for inode: %d version %d nblocks %d lastlength %d\n",
 		    fp->fi_ino, fp->fi_version, fp->fi_nblocks,
 		    fp->fi_lastlength);
@@ -681,6 +687,8 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 	CLEANERINFO *cip;
 
 	cip = (CLEANERINFO *)ipage;
+	if (lfsp->lfs_version > 1) 
+		(void)printf("free_ino\t%d\n", cip->free_ino);
 	(void)printf("clean\t%d\tdirty\t%d\n",
 		     cip->clean, cip->dirty);
 	(void)printf("bfree\t%d\tavail\t%d\n\n",
@@ -690,6 +698,6 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: dumplfs [-ai] [-s segnum] file\n");
+	(void)fprintf(stderr, "usage: dumplfs [-aiS] [-b daddr] [-I daddr] [-s segnum] file\n");
 	exit(1);
 }
