@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_swpal.S,v 1.3 1996/09/23 04:33:02 cgd Exp $	*/
+/*	$NetBSD: prom_swpal.S,v 1.4 1996/10/17 02:50:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -66,7 +66,7 @@
 	.align	4
 
 NESTED(switch_palcode, 0, PALSW_FRAME_SIZE, ra, PALSW_REGS, 0)
-	SETGP(pv)
+	LDGP(pv)
 /*	ldgp	gp, 0(pv)*/
 
 	lda 	sp, -PALSW_FRAME_SIZE(sp)
@@ -104,8 +104,7 @@ NESTED(switch_palcode, 0, PALSW_FRAME_SIZE, ra, PALSW_REGS, 0)
 
 	call_pal PAL_VMS_mfpr_vptb
 	mov 	v0, a3
-/*	movi	PAL_OSF, a0 */
-	CONST(PAL_OSF, a0)
+	ldiq	a0, PAL_OSF
 	lda	a1, contin
 	ldq 	a2, 16(sp)
 
