@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.420 2000/11/22 16:41:56 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.421 2000/11/29 09:56:02 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1922,7 +1922,13 @@ init386(first_avail)
 			physmem += atop(mem_clusters[mem_cluster_cnt].size);
 			mem_cluster_cnt++;
 		}
-	} else {
+	}
+
+	/*
+	 * If the loop above didn't find any valid segment, fall back to
+	 * former code.
+	 */
+	if (mem_cluster_cnt == 0) {
 		/*
 		 * Allocate the physical addresses used by RAM from the iomem
 		 * extent map.  This is done before the addresses are
