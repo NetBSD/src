@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.74 2002/01/24 03:43:55 jwise Exp $
+# $NetBSD: mi,v 1.75 2002/01/26 09:31:06 martti Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -343,6 +343,9 @@
 ./usr/share/examples/ipf/BASIC_2.FW		misc-netutil-examples
 ./usr/share/examples/ipf/example.1		misc-netutil-examples
 ./usr/share/examples/ipf/example.10		misc-netutil-examples
+./usr/share/examples/ipf/example.11		misc-netutil-examples
+./usr/share/examples/ipf/example.12		misc-netutil-examples
+./usr/share/examples/ipf/example.13		misc-netutil-examples
 ./usr/share/examples/ipf/example.2		misc-netutil-examples
 ./usr/share/examples/ipf/example.3		misc-netutil-examples
 ./usr/share/examples/ipf/example.4		misc-netutil-examples
