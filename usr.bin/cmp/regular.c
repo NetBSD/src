@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.10 2000/07/27 02:58:57 mycroft Exp $	*/
+/*	$NetBSD: regular.c,v 1.11 2001/01/04 23:05:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.10 2000/07/27 02:58:57 mycroft Exp $");
+__RCSID("$NetBSD: regular.c,v 1.11 2001/01/04 23:05:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ mmap_failed:
 		if ((ch = *p1) != *p2) {
 			if (lflag) {
 				dfound = 1;
-				(void)printf("%6qd %3o %3o\n", (long long)byte,
+				(void)printf("%6lld %3o %3o\n", (long long)byte,
 				    ch, *p2);
 			} else
 				diffmsg(file1, file2, byte, line);
