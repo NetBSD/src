@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.114 2004/01/30 11:32:16 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.115 2004/02/11 17:36:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.114 2004/01/30 11:32:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.115 2004/02/11 17:36:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,6 +399,11 @@ buf_lotsfree(void)
 		return 1;
 	}
 
+	/* If there's anything on the AGE list, it should be eaten. */
+
+	if(TAILQ_FIRST(&bufqueues[BQ_AGE]) != NULL)
+		return 0;
+
 	try = random() & 0x0000000fL;
 
 	thresh = (16 * bufmem) / bufmem_hiwater;
@@ -417,15 +422,20 @@ buf_lotsfree(void)
 static int
 buf_canrelease(void)
 {
-	int n;
+	int pagedemand, ninvalid = 0;
+	struct buf *bp;
+
+	TAILQ_FOREACH(bp, &bufqueues[BQ_AGE], b_freelist)
+		ninvalid += bp->b_bufsize;
 
 	if (bufmem < bufmem_lowater)
 		return 0;
 
-	n = uvmexp.freetarg - uvmexp.free;
-	if (n < 0)
-		return 0;
-	return 2 * n;
+	pagedemand = uvmexp.freetarg - uvmexp.free;
+	if (pagedemand < 0)
+		return ninvalid;
+	return MAX(ninvalid, MIN(2 * MAXBSIZE,
+	    MIN((bufmem - bufmem_lowater) / 16, pagedemand * PAGE_SIZE)));
 }
 
 /*
