@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 1998/08/08 23:39:39 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 1998/09/05 03:50:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -49,28 +50,34 @@
  */
 
 #define _SPL_0		0
-#define _SPL_SOFT	1
-#define _SPL_BIO	2
-#define _SPL_NET	3
-#define _SPL_TTY	4
-#define _SPL_IMP	5
-#define	_SPL_AUDIO	6
-#define _SPL_CLOCK	7
-#define _SPL_HIGH	8
-#define _SPL_LEVELS	9
+#define _SPL_SOFTCLOCK	1
+#define _SPL_SOFTNET	2
+#define _SPL_BIO	3
+#define _SPL_NET	4
+#define _SPL_SOFTSERIAL	5
+#define _SPL_TTY	6
+#define _SPL_IMP	7
+#define _SPL_AUDIO	8
+#define _SPL_CLOCK	9
+#define _SPL_HIGH	10
+#define _SPL_SERIAL	11
+#define _SPL_LEVELS	12
 
 #define spl0()		splx(_SPL_0)
-#define splsoft()	raisespl(_SPL_SOFT)
-#define splsoftclock()	lowerspl(_SPL_SOFT)
-#define splsoftnet()	splsoft()
+/*#define splsoft()	raisespl(_SPL_SOFT)*/
+#define splsoftnet()	raisespl(_SPL_SOFTNET)
+#define splsoftclock()	lowerspl(_SPL_SOFTCLOCK)
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)
+#define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
 #define spltty()	raisespl(_SPL_TTY)
+#define spllpt()	spltty()
 #define splimp()	raisespl(_SPL_IMP)
-#define	splaudio()	raisespl(_SPL_AUDIO)
+#define splaudio()	raisespl(_SPL_AUDIO)
 #define splclock()	raisespl(_SPL_CLOCK)
 #define splstatclock()	raisespl(_SPL_CLOCK)
-#define splhigh()	splx(_SPL_HIGH)
+#define splserial()	raisespl(_SPL_SERIAL)
+#define splhigh()	raisespl(_SPL_HIGH)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -78,14 +85,16 @@ int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
 
-void setsoftnet	__P((void));
-void setsoftast	__P((void));
-void setsoftclock __P((void));
-void setsoftintr __P((u_int intrmask));
+void setsoftast		__P((void));
+void setsoftclock	__P((void));
+void setsoftnet		__P((void));
+void setsoftserial	__P((void));
+void setsoftintr	__P((u_int intrmask));
 
 extern int current_spl_level;
 
 extern u_int spl_masks[_SPL_LEVELS];
+extern u_int spl_smasks[_SPL_LEVELS];
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 
