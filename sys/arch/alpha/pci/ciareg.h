@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.21 1998/06/05 17:22:34 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.22 1998/06/06 20:40:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
  */
 
 #define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL64(r)	(*(volatile u_int64_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
