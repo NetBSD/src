@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.36 1998/09/05 19:03:25 kleink Exp $	*/
+/*	$NetBSD: in.h,v 1.37 1998/09/13 20:27:48 hwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -57,6 +57,7 @@
 #define	IPPROTO_UDP		17		/* user datagram protocol */
 #define	IPPROTO_IDP		22		/* xns idp */
 #define	IPPROTO_TP		29 		/* tp-4 w/ class negotiation */
+#define IPPROTO_GRE		47		/* GRE encaps RFC 1701 */
 #define	IPPROTO_ESP		50 		/* encap. security payload */
 #define	IPPROTO_AH		51 		/* authentication header */
 #define	IPPROTO_EON		80		/* ISO cnlp */
