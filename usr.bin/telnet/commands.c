@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.21 1998/07/06 06:56:06 mrg Exp $	*/
+/*	$NetBSD: commands.c,v 1.22 1998/07/07 13:20:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.21 1998/07/06 06:56:06 mrg Exp $");
+__RCSID("$NetBSD: commands.c,v 1.22 1998/07/07 13:20:12 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1736,8 +1736,7 @@ env_init()
 		char *cp2 = strchr((char *)ep->value, ':');
 
 		gethostname(hbuf, sizeof hbuf);
-		hostname[sizeof(hostname) - 1] = '\0';
-		hbuf[256] = '\0';
+		hbuf[sizeof(hbuf) - 1] = '\0';
 		cp = (char *)malloc(strlen(hbuf) + strlen(cp2) + 1);
 		sprintf((char *)cp, "%s%s", hbuf, cp2);
 		free(ep->value);
