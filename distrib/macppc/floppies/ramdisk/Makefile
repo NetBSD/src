@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/10/21 23:18:14 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2001/11/20 05:45:26 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,8 +56,10 @@ NOLIBHACKOPENDIR=
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
+	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi;
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 	rm -f *.core *.o *.cro *.c
 
 .include <bsd.sys.mk>
 .include <bsd.obj.mk>
+.include <bsd.prog.mk>
