@@ -1,9 +1,10 @@
-;	$NetBSD: 127,v 1.1 1999/01/22 01:41:19 mycroft Exp $
+;	$NetBSD: 127,v 1.2 1999/01/22 01:44:22 mycroft Exp $
 
 @	IN	SOA	netbsd.org. hostmaster.netbsd.org.  (
-				1.4	; Serial
-				3600	; Refresh
-				300	; Retry
-				3600000	; Expire
-				3600 )	; Minimum
+				1999012100	; Serial
+				3600		; Refresh
+				300		; Retry
+				3600000		; Expire
+				3600 )		; Minimum
+	IN	NS	localhost.
 1.0.0	IN	PTR	localhost.
