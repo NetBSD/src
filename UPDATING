@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.66 2002/09/06 13:55:43 gehenna Exp $
+$NetBSD: UPDATING,v 1.67 2002/09/21 04:12:35 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,16 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020917:
+	USE_NEW_TOOLCHAIN has been replaced with:
+	    -	TOOLCHAIN_MISSING -- set to "yes" on platforms for which
+		there is no working in-tree toolchain (hppa, ns32k, sh5,
+		x86_64).
+	    -	EXTERNAL_TOOLCHAIN -- if defined by the user, points to the
+		root ofan external toolchain (e.g. /usr/local/gnu).  This
+		enables the cross-build framework even for TOOLCHAIN_MISSING
+		platforms.
 
 20020906:
 	gehenna-devsw has been merged into the trunk. Need to update and
