@@ -1,3 +1,4 @@
+/* NetBSD $Id: filedesc.h,v 1.8 1994/06/27 19:31:12 cgd Exp $ */
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)filedesc.h	8.1 (Berkeley) 6/2/93
- *	$Id: filedesc.h,v 1.7 1994/05/21 04:10:38 cgd Exp $
+ *	@(#)filedesc.h	8.1 (Berkeley) 6/2/93
  */
 
 /*

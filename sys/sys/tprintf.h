@@ -1,3 +1,4 @@
+/* NetBSD $Id: tprintf.h,v 1.5 1994/06/27 19:32:23 cgd Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tprintf.h	8.1 (Berkeley) 6/2/93
- *	$Id: tprintf.h,v 1.4 1994/05/21 03:52:13 cgd Exp $
+ *	@(#)tprintf.h	8.1 (Berkeley) 6/2/93
  */
 
 typedef struct session *tpr_t;

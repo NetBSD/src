@@ -1,3 +1,4 @@
+/* NetBSD $Id: fcntl.h,v 1.6 1994/06/27 19:31:10 cgd Exp $ */
 /*-
  * Copyright (c) 1983, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fcntl.h	8.3 (Berkeley) 1/21/94
- *	$Id: fcntl.h,v 1.5 1994/06/08 11:38:38 mycroft Exp $
+ *	@(#)fcntl.h	8.3 (Berkeley) 1/21/94
  */
 
 #ifndef _SYS_FCNTL_H_

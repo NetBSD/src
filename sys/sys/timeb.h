@@ -1,3 +1,4 @@
+/* NetBSD $Id: timeb.h,v 1.6 1994/06/27 19:32:20 cgd Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)timeb.h	8.2 (Berkeley) 1/21/94
- *	$Id: timeb.h,v 1.5 1994/05/21 03:52:12 cgd Exp $
+ *	@(#)timeb.h	8.2 (Berkeley) 1/21/94
  */
 
 /* The ftime(2) system call structure -- deprecated. */

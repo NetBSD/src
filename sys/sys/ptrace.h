@@ -1,3 +1,4 @@
+/* NetBSD $Id: ptrace.h,v 1.16 1994/06/27 19:31:48 cgd Exp $ */
 /*-
  * Copyright (c) 1984, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ptrace.h	8.2 (Berkeley) 1/4/94
- *	$Id: ptrace.h,v 1.15 1994/05/21 04:21:27 cgd Exp $
+ *	@(#)ptrace.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef	_SYS_PTRACE_H_

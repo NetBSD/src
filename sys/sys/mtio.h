@@ -1,3 +1,4 @@
+/* NetBSD $Id: mtio.h,v 1.9 1994/06/27 19:31:40 cgd Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mtio.h	8.1 (Berkeley) 6/2/93
- *	$Id: mtio.h,v 1.8 1994/05/21 07:12:40 cgd Exp $
+ *	@(#)mtio.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
