@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.c,v 1.16 1999/06/21 02:30:55 sommerfeld Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.17 1999/07/07 23:33:50 wrstuden Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.17 1999/06/21 02:28:46 sommerfeld Exp 
+ *	NetBSD: vnode_if.src,v 1.18 1999/07/07 23:32:50 wrstuden Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.18 1998/09/13 14:44:34 christos Exp 
+ *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
 
 /*
@@ -83,7 +83,7 @@ int vop_create_vp_offsets[] = {
 struct vnodeop_desc vop_create_desc = {
 	0,
 	"vop_create",
-	0 | VDESC_VP0_WILLRELE,
+	0 | VDESC_VP0_WILLPUT,
 	vop_create_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_create_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -99,7 +99,7 @@ int vop_mknod_vp_offsets[] = {
 struct vnodeop_desc vop_mknod_desc = {
 	0,
 	"vop_mknod",
-	0 | VDESC_VP0_WILLRELE | VDESC_VPP_WILLRELE,
+	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
 	vop_mknod_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_mknod_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -324,7 +324,7 @@ int vop_remove_vp_offsets[] = {
 struct vnodeop_desc vop_remove_desc = {
 	0,
 	"vop_remove",
-	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE,
+	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
 	vop_remove_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
@@ -341,7 +341,7 @@ int vop_link_vp_offsets[] = {
 struct vnodeop_desc vop_link_desc = {
 	0,
 	"vop_link",
-	0 | VDESC_VP0_WILLRELE,
+	0 | VDESC_VP0_WILLPUT,
 	vop_link_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
@@ -360,7 +360,7 @@ int vop_rename_vp_offsets[] = {
 struct vnodeop_desc vop_rename_desc = {
 	0,
 	"vop_rename",
-	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLRELE | VDESC_VP3_WILLRELE,
+	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLRELE,
 	vop_rename_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
@@ -376,7 +376,7 @@ int vop_mkdir_vp_offsets[] = {
 struct vnodeop_desc vop_mkdir_desc = {
 	0,
 	"vop_mkdir",
-	0 | VDESC_VP0_WILLRELE,
+	0 | VDESC_VP0_WILLPUT,
 	vop_mkdir_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_mkdir_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -393,7 +393,7 @@ int vop_rmdir_vp_offsets[] = {
 struct vnodeop_desc vop_rmdir_desc = {
 	0,
 	"vop_rmdir",
-	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE,
+	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
 	vop_rmdir_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
@@ -409,7 +409,7 @@ int vop_symlink_vp_offsets[] = {
 struct vnodeop_desc vop_symlink_desc = {
 	0,
 	"vop_symlink",
-	0 | VDESC_VP0_WILLRELE | VDESC_VPP_WILLRELE,
+	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
 	vop_symlink_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_symlink_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -473,7 +473,7 @@ int vop_inactive_vp_offsets[] = {
 struct vnodeop_desc vop_inactive_desc = {
 	0,
 	"vop_inactive",
-	0,
+	0 | VDESC_VP0_WILLUNLOCK,
 	vop_inactive_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
