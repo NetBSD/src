@@ -1,4 +1,4 @@
-/*      $NetBSD: pathnames.h,v 1.5 1995/09/08 01:06:40 tls Exp $      */
+/*      $NetBSD: pathnames.h,v 1.6 1996/12/29 04:05:32 lukem Exp $      */
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,5 +37,4 @@
 
 #include <paths.h>
 
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/ftpXXXXXX"
+#define	TMPFILE		"ftpXXXXXX"

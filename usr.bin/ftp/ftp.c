@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.18 1996/12/25 16:02:06 christos Exp $      */
+/*      $NetBSD: ftp.c,v 1.19 1996/12/29 04:05:31 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.18 1996/12/25 16:02:06 christos Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.19 1996/12/29 04:05:31 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -875,7 +875,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	} else {
 		if (curtype != type)
 			changetype(type, 0);
-		filesize = remotesize(remote);
+		filesize = remotesize(remote, 0);
 	}
 	if (initconn()) {
 		(void) signal(SIGINT, oldintr);
@@ -1061,10 +1061,11 @@ break2:
 		(void) signal(SIGPIPE, oldintp);
 	(void) fclose(din);
 	(void) getreply(0);
-	if (bytes > 0 && is_retr) {
-		ptransfer(0);
+	if (bytes >= 0 && is_retr) {
+		if (bytes > 0)
+			ptransfer(0);
 		if (preserve && (closefunc == fclose)) {
-			mtime = remotemodtime(remote);
+			mtime = remotemodtime(remote, 0);
 			if (mtime != -1) {
 				(void) gettimeofday(&tval[0],
 				    (struct timezone *)0);
@@ -1124,13 +1125,13 @@ initconn()
 	if (passivemode) {
 		data = socket(AF_INET, SOCK_STREAM, 0);
 		if (data < 0) {
-			perror("ftp: socket");
+			warn("socket");
 			return(1);
 		}
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			       sizeof (on)) < 0)
-			perror("ftp: setsockopt (ignored)");
+			warn("setsockopt (ignored)");
 		if (command("PASV") != COMPLETE) {
 			printf("Passive mode refused.\n");
 			goto bad;
@@ -1164,14 +1165,14 @@ initconn()
 
 		if (connect(data, (struct sockaddr *)&data_addr,
 			    sizeof(data_addr)) < 0) {
-			perror("ftp: connect");
+			warn("connect");
 			goto bad;
 		}
 #ifdef IP_TOS
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
-			perror("ftp: setsockopt TOS (ignored)");
+			warn("setsockopt TOS (ignored)");
 #endif
 		return(0);
 	}
@@ -1303,9 +1304,9 @@ progressmeter(flag)
 	ratio = cursize * 100 / filesize;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	printf("\r%3d%% 0 ", ratio);
+	printf("\r%3d%% ", ratio);
 
-	barlength = ttywidth - 30;
+	barlength = ttywidth - 32;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		printf("%.*s%*s", i, 
