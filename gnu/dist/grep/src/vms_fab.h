@@ -17,4 +17,4 @@ char fna_buffer[NAM$C_MAXRSS];
 char result_name[NAM$C_MAXRSS];
 char final_name[NAM$C_MAXRSS];
 int max_file_path_size = NAM$C_MAXRSS;
-char *arr_ptr[32767]:
+char *arr_ptr[32767];
