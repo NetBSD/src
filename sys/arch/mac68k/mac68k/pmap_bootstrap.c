@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.49 1999/03/27 05:19:34 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,10 +68,10 @@ extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int physmem;
-extern int avail_remaining, avail_range, avail_end;
-extern paddr_t avail_start, avail_next;
+extern paddr_t avail_start;
+extern paddr_t avail_end;
 extern vaddr_t virtual_avail, virtual_end;
-extern vm_size_t mem_size;
+extern vsize_t mem_size;
 extern int protection_codes[];
 
 #if NZSC > 0
@@ -126,6 +126,9 @@ pmap_bootstrap(nextpa, firstpa)
 {
 	paddr_t kstpa, kptpa, vidpa, iiopa, rompa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
+	paddr_t avail_next;
+	int avail_remaining;
+	int avail_range;
 	int i;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
