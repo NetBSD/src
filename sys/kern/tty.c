@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.138 2002/05/02 13:38:57 enami Exp $	*/
+/*	$NetBSD: tty.c,v 1.138.2.1 2002/05/16 04:12:25 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.138 2002/05/02 13:38:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.138.2.1 2002/05/16 04:12:25 gehenna Exp $");
 
 #include "opt_uconsole.h"
 
@@ -298,6 +298,7 @@ ttyclose(struct tty *tp)
 int
 ttyinput(int c, struct tty *tp)
 {
+	const struct cdevsw *cdev;
 	int	iflag, lflag, i, error;
 	u_char	*cc;
 
@@ -441,8 +442,9 @@ ttyinput(int c, struct tty *tp)
 			if (CCEQ(cc[VSTOP], c)) {
 				if (!ISSET(tp->t_state, TS_TTSTOP)) {
 					SET(tp->t_state, TS_TTSTOP);
-					(*cdevsw[major(tp->t_dev)].d_stop)(tp,
-					   0);
+					cdev = cdevsw_lookup(tp->t_dev);
+					if (cdev != NULL)
+						(*cdev->d_stop)(tp, 0);
 					return (0);
 				}
 				if (!CCEQ(cc[VSTART], c))
@@ -974,13 +976,18 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
+	{
+		const struct cdevsw *cdev;
 		s = spltty();
 		if (!ISSET(tp->t_state, TS_TTSTOP)) {
 			SET(tp->t_state, TS_TTSTOP);
-			(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
+			cdev = cdevsw_lookup(tp->t_dev);
+			if (cdev != NULL)
+				(*cdev->d_stop)(tp, 0);
 		}
 		splx(s);
 		break;
+	}
 	case TIOCSCTTY:			/* become controlling tty */
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
@@ -1113,6 +1120,7 @@ ttywflush(struct tty *tp)
 void
 ttyflush(struct tty *tp, int rw)
 {
+	const struct cdevsw *cdev;
 	int	s;
 
 	s = spltty();
@@ -1126,7 +1134,9 @@ ttyflush(struct tty *tp, int rw)
 	}
 	if (rw & FWRITE) {
 		CLR(tp->t_state, TS_TTSTOP);
-		(*cdevsw[major(tp->t_dev)].d_stop)(tp, rw);
+		cdev = cdevsw_lookup(tp->t_dev);
+		if (cdev != NULL)
+			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);
