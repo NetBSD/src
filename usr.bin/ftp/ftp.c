@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.57 1999/07/20 17:52:03 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.58 1999/08/29 22:21:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.57 1999/07/20 17:52:03 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.58 1999/08/29 22:21:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,12 +146,21 @@ hookup(host, port)
 	char *host;
 	char *port;
 {
-	int s, len, error;
+	int s = -1, len, error;
+#ifdef NI_NUMERICHOST
 	struct addrinfo hints, *res, *res0;
-	static char hostnamebuf[MAXHOSTNAMELEN];
 	char hbuf[MAXHOSTNAMELEN];
+#else
+	struct hostent *hp = NULL;
+	struct servent *sp = NULL;
+	char **ptr;
+	struct sockaddr_in sin;
+#endif
+	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
+	int family;
 	
+#ifdef NI_NUMERICHOST
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;
@@ -172,7 +181,6 @@ hookup(host, port)
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 	hostname = hostnamebuf;
 	
-	s = -1;
 	for (res = res0; res; res = res->ai_next) {
 #if 0	/*old behavior*/
 		if (res != res0)	/* not on the first address */
@@ -220,13 +228,80 @@ hookup(host, port)
 	len = res->ai_addrlen;
 	freeaddrinfo(res0);
 	res0 = res = NULL;
+	family = hisctladdr.su_family;
+#else
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	if ((hp = gethostbyname(host)) == NULL) {
+		warnx("%s: %s", host, hstrerror(h_errno));
+		code = -1;
+		return 0;
+	}
+
+	if ((sp = getservbyname(port, "tcp")) == NULL) {
+		sin.sin_port = htons(21);
+	}
+	else
+		sin.sin_port = sp->s_port;
+
+	strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
+	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+	hostname = hostnamebuf;
+
+	if (hp->h_length > sizeof(sin.sin_addr))
+		hp->h_length = sizeof(sin.sin_addr);
+
+	for (ptr = hp->h_addr_list; *ptr; ptr++) {
+		memcpy(&sin.sin_addr, *ptr, (size_t)hp->h_length);
+		if (hp->h_addr_list[1])
+			fprintf(ttyout, "Trying %s...\n",
+			    inet_ntoa(sin.sin_addr));
+		s = socket(AF_INET, SOCK_STREAM, 0);
+		if (s < 0) {
+			cause = "socket";
+			continue;
+		}
+		while ((error = xconnect(s, (struct sockaddr *)&sin,
+		    sizeof(sin))) < 0 && errno == EINTR) {
+			;
+		}
+		if (error) {
+			/* this "if" clause is to prevent print warning twice */
+			if (hp->h_addr_list[1]) {
+				warn("connect to address %s",
+				    inet_ntoa(sin.sin_addr));
+			}
+			cause = "connect";
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		/* finally we got one */
+		break;
+	}
+	if (s < 0) {
+		warn(cause);
+		code = -1;
+		return 0;
+	}
+	memcpy(&hisctladdr, &sin, sizeof(sin));
+	len = sizeof(sin);
+	if (hisctladdr.su_len == 0)
+		hisctladdr.su_len = len;
+	family = AF_INET;
+#endif
+
 	if (getsockname(s, (struct sockaddr *)&myctladdr, &len) < 0) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
 	}
+	if (myctladdr.su_len == 0)
+		myctladdr.su_len = len;
+
 #if defined(IPPROTO_IP) && defined(IP_TOS)
-	if (hisctladdr.su_family == AF_INET) {
+	if (family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
@@ -1536,8 +1611,10 @@ noport:
 #define	UC(b)	(((int)b)&0xff)
 
 	if (sendport) {
+#ifdef INET6
 		char hname[INET6_ADDRSTRLEN];
 		int af;
+#endif
 
 		switch (data_addr.su_family) {
 		case AF_INET:
@@ -1546,6 +1623,7 @@ noport:
 				break;
 			}
 			/* FALLTHROUGH */
+#ifdef INET6
 		case AF_INET6:
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&data_addr,
@@ -1557,6 +1635,7 @@ noport:
 					af, hname, ntohs(data_addr.su_port));
 			}
 			break;
+#endif
 		default:
 			result = COMPLETE + 1;
 			break;
@@ -1572,6 +1651,7 @@ noport:
 				 UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				 UC(p[0]), UC(p[1]));
 			break;
+#ifdef INET6
 		case AF_INET6:
 			a = (char *)&data_addr.su_sin6.sin6_addr;
 			p = (char *)&data_addr.su_port;
@@ -1584,6 +1664,7 @@ noport:
 				 UC(a[12]),UC(a[13]),UC(a[14]),UC(a[15]),
 				 2, UC(p[0]), UC(p[1]));
 			break;
+#endif
 		default:
 			result = COMPLETE + 1; /* xxx */
 		}
