@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.common,v 1.1 2003/07/26 14:55:17 mrg Exp $
+
+DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
+GNUHOSTDIST=	${DIST}
+
+LIBMATHSRCS=	${G_libmath_la_SOURCES} ${G_libmath_la_LIBADD:.lo=.c}
+LIBSTDCXXSRCS=	${G_SRC_SOURCES}
+LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
+
+CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH} \
+		-I${DIST}/gcc -I${DIST}/include \
+		-I${DIST}/libstdc++-v3/libsupc++ \
+		-I${NETBSDSRCDIR}/gnu/usr.bin/gcc3/libiberty \
+		-DHAVE_STDLIB_H -DHAVE_STRING_H
+
+COPTS.cxa_demangle.c=-DIN_GLIBCPP_V3
+COPTS.dyn-string.c=-DIN_GLIBCPP_V3
+
+CLEANFILES+=    cxa_demangle.c
+cxa_demangle.c: ${DIST}/libiberty/cp-demangle.c
+	rm -f ${.TARGET}
+	ln -s $> ${.TARGET}

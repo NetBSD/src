@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/26 14:55:14 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,32 +15,17 @@ SHLIB_MINOR=	0
 
 SUBDIR=		include
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
-GNUHOSTDIST=	${DIST}
-
-LIBMATHSRCS=	${G_libmath_la_SOURCES} ${G_libmath_la_LIBADD:.lo=.c}
-LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
-LIBSTDCXXSRCS=	${G_SRC_SOURCES}
-
-SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 INCS=		c++config.h
 INCSDIR=	/usr/include/g++
 
-#		-I/home/mrg/f2/i386-unknown-netbsdelf1.6U/libstdc++-v3/include/i386-unknown-netbsdelf1.6U
-#		-I/home/mrg/f2/i386-unknown-netbsdelf1.6U/libstdc++-v3/include
+.include "${.CURDIR}/../libsupc++/Makefile.common"
 
-CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
-		-I${DIST}/gcc -I${DIST}/include -I${DIST}/libstdc++-v3/libsupc++ \
-		-I${NETBSDSRCDIR}/gnu/usr.bin/gcc3/libiberty
-
+SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS} xmalloc.c
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
 
 CONF=		${DIST}/libstdc++-v3/config
-CLEANFILES+=    cxa_demangle.c basic_file.cc c++locale.cc
-cxa_demangle.c: ${DIST}/libiberty/cp-demangle.c
-	rm -f ${.TARGET}
-	ln -s $> ${.TARGET}
+CLEANFILES+=    basic_file.cc c++locale.cc
 basic_file.cc: ${CONF}/io/basic_file_stdio.cc
 	cp $> ${.TARGET}
 c++locale.cc: ${CONF}/locale/generic/c_locale.cc
@@ -49,7 +34,8 @@ c++locale.cc: ${CONF}/locale/generic/c_locale.cc
 COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
 COPTS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
-.include <bsd.lib.mk>
+# ARGH!
+#.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
 .include <bsd.info.mk>
 

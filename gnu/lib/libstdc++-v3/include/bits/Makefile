@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/26 14:55:15 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,11 +21,23 @@ c++io.h: ${CONF}/io/c_io_stdio.h
 c++locale.h: ${CONF}/locale/generic/c_locale.h
 	cp $> ${.TARGET}
 
+# List of places to find cpu files; maybe do this differently from
+# mknative?
+BITS_CPUDIR.sparc64=sparc
+
+_DIR=${BITS_CPUDIR.${MACHINE_ARCH}}
+.if ${_DIR} != ""
+BITS_CPUDIR=${BITS_CPUDIR.${MACHINE_ARCH}}
+.else
+BITS_CPUDIR=${MACHINE_GNU_ARCH}
+.endif
+
 .PATH:	${DIST}/libstdc++-v3/include/bits \
 	${DIST}/libstdc++-v3/include/c_std \
 	${CONF}/os/bsd/netbsd \
 	${CONF}/io \
-	${CONF}/cpu/${MACHINE_GNU_ARCH} \
+	${CONF}/cpu/${BITS_CPUDIR} \
+	${CONF}/cpu/generic \
 	${CONF}/locale/generic \
 	${.CURDIR}/../../arch/${MACHINE_ARCH}
 
