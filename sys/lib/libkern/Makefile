@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.13 1994/06/30 06:54:22 deraadt Exp $
+#	$Id: Makefile,v 1.14 1994/06/30 20:17:47 deraadt Exp $
 
 LIB=	kern
 NOPIC=
@@ -42,5 +42,7 @@ install:
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
 	cp mcount.o mcount.po
+
+CLEANFILES+= machine ${MACHINE_ARCH}
 
 .include <bsd.lib.mk>
