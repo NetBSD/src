@@ -1,4 +1,4 @@
-/*	$NetBSD: pramasm.s,v 1.3 1995/09/16 12:36:03 briggs Exp $	*/
+/*	$NetBSD: pramasm.s,v 1.4 1995/09/28 03:15:54 briggs Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -61,9 +61,10 @@ _readPram:
 	lea	_SysParam,a1	|  start of PRam data
 	movel	a6@(8),a0	|  get our data address
 _readPramAgain:
-	dbf	d0,_readPramDone |  see if we are through
+	subql	#1,d0
+	bcs	_readPramDone	|  see if we are through
 	moveb	a1@(d1),a0@+	|  transfer byte
-	addql	 #1,a1		|  next byte
+	addql	#1,d1		|  next byte
 	jmp	_readPramAgain	|  do it again 
 _readPramDone:
 	clrw	d0
@@ -84,9 +85,12 @@ _writePram:
 	lea	_SysParam,a1	|  start of PRam data
 	movel	a6@(8),a0	|  get our data address
 _writePramAgain:
-	dbf	d0,_writePramDone |  see if we are through
+	subql	#1,d0
+	bcs	_writePramDone	|  see if we are through
+	cmpil	#0x14,d1	|  check for end of _SysParam
+	bcc	_writePramDone	|  do not write if beyond end
 	moveb	a0@+,a1@(d1)	|  transfer byte
-	addql	 #1,a1		|  next byte
+	addql	#1,d1		|  next byte
 	jmp	_writePramAgain |  do it again 
 _writePramDone:
 	.word	0xa038		|  writeParam
