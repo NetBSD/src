@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.10 1993/08/07 04:42:18 cgd Exp $
+ *	$Id: ite.c,v 1.11 1993/08/08 03:35:26 mycroft Exp $
  */
 
 /*
@@ -105,8 +105,8 @@ struct itesw itesw[] =
 int	iteburst = 64;
 
 int	nite = NITE;
-struct  tty *kbd_tty = NULL;
 struct	tty *ite_tty[NITE];
+struct  ite_softc *kbd_ite = NULL;
 struct  ite_softc ite_softc[NITE];
 
 int	itestart();
@@ -146,8 +146,8 @@ iteon(dev, flag)
 	ip->flags |= ITE_ACTIVE;
 	if (ip->flags & ITE_INGRF)
 		return(0);
-	if (kbd_tty == NULL || kbd_tty == tp) {
-		kbd_tty = tp;
+	if (kbd_ite == NULL || kbd_ite == ip) {
+		kbd_ite = ip;
 		kbdenable();
 	}
 	iteinit(dev);
@@ -239,7 +239,7 @@ iteopen(dev, mode, devtype, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = CS8|CREAD;
+		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		tp->t_state = TS_ISOPEN|TS_CARR_ON;
@@ -367,6 +367,7 @@ itefilter(stat, c)
 	static int capsmode = 0;
 	static int metamode = 0;
   	register char code, *str;
+	struct tty *kbd_tty = ite_tty[kbd_ite - ite_softc];
 
 	if (kbd_tty == NULL)
 		return;
@@ -665,7 +666,7 @@ ignore:
 		break;
 
 	case CTRL('G'):
-		if (ite_tty[unit] == kbd_tty)
+		if (ip == kbd_ite)
 			kbdbell();
 		break;
 
@@ -857,7 +858,7 @@ itecninit(cp)
 	ip->attrbuf = console_attributes;
 	iteinit(cp->cn_dev);
 	ip->flags |= (ITE_ACTIVE|ITE_ISCONS);
-	kbd_tty = ite_tty[unit];
+	kbd_ite = ip;
 }
 
 /*ARGSUSED*/
