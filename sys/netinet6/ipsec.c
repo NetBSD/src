@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.34 2001/04/15 01:55:49 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.35 2001/07/07 14:45:46 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.102 2001/04/14 16:38:59 itojun Exp $	*/
 
 /*
@@ -88,10 +88,6 @@
 #include <netkey/key_debug.h>
 
 #include <net/net_osdep.h>
-
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
 
 #ifdef IPSEC_DEBUG
 int ipsec_debug = 1;
