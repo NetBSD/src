@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/22 15:00:37 tron Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -8,10 +8,10 @@ MODULE=	i810_drv
 MAN=	i810.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/i810
 
-SRCS=	i810_driver.c i810_cursor.c i810_accel.c i810_memory.c \
-	i810_wmark.c i810_dga.c i810_video.c i810_io.c i830_driver.c \
-	i830_memory.c i830_cursor.c i830_accel.c i830_io.c i830_dga.c \
-	i830_video.c
+SRCS=	i810_accel.c i810_cursor.c i810_dga.c i810_driver.c \
+	i810_io.c i810_memory.c i810_video.c i810_wmark.c \
+	i830_accel.c i830_cursor.c i830_dga.c i830_driver.c \
+	i830_io.c i830_memory.c i830_modes.c i830_video.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/i810 \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
