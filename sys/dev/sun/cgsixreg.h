@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.3 2001/01/10 13:26:52 tsutsui Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.4 2001/01/10 14:58:08 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1993
