@@ -223,19 +223,20 @@ heir respecti)2.906 F .707 -.15(ve m)-.25 H(anual).15 E(pages)108 273.6 Q F3
 302.4 Q(The)108 319.2 Q F3<8d61>4.661 E(gs)-.1 E F0(and)4.661 E F3 2.161
 (mode ar)4.661 F(guments)-.37 E F0 2.161(are as speci\214ed to the)4.661 F F3
 (open)4.661 E F0 2.162(\(2\) routine, ho).24 F(we)-.25 E -.15(ve)-.25 G 2.962
--.4(r, o).15 H 2.162(nly the O_CREA).4 F -.74(T,)-1.11 G 2.597
-(O_EXCL, O_EXLOCK, O_RDONL)108 331.2 R 5.177 -1.29(Y, O)-1 H(_RD)1.29 E 2.597
-(WR, O_SHLOCK and O_TR)-.3 F 2.596(UNC \215ags are meaningful.)-.4 F
-(\(Note, opening a database \214le O_WR)108 343.2 Q(ONL)-.4 E 2.5(Yi)-1 G 2.5
-(sn)289.62 343.2 S(ot possible.\))301.01 343.2 Q(The)108 360 Q F3(type)5.337 E
-F0(ar)5.337 E 2.837(gument is of type DBTYPE \(as de\214ned in the <db)-.18 F
-2.838(.h> include \214le\) and may be set to)-.4 F
-(DB_BTREE, DB_HASH or DB_RECNO.)108 372 Q(The)108 388.8 Q F3(openinfo)2.85 E F0
-(ar)2.85 E .349(gument is a pointer to an access method speci\214c structure d\
-escribed in the access method')-.18 F(s)-.55 E .03(manual page.)108 400.8 R(If)
-5.03 E F3(openinfo)2.53 E F0 .031(is NULL, each access method will use def)2.53
-F .031(aults appropriate for the system and the)-.1 F(access method.)108 412.8
-Q F3(Dbopen)108 429.6 Q F0 .416
+-.4(r, o).15 H 2.162(nly the O_CREA).4 F -.74(T,)-1.11 G .128
+(O_EXCL, O_EXLOCK, O_NONBLOCK, O_RDONL)108 331.2 R 2.708 -1.29(Y, O)-1 H(_RD)
+1.29 E .128(WR, O_SHLOCK and O_TR)-.3 F .127(UNC \215ags are)-.4 F 2.5
+(meaningful. \(Note,)108 343.2 R(opening a database \214le O_WR)2.5 E(ONL)-.4 E
+2.5(Yi)-1 G 2.5(sn)342.67 343.2 S(ot possible.\))354.06 343.2 Q(The)108 360 Q
+F3(type)5.337 E F0(ar)5.337 E 2.837
+(gument is of type DBTYPE \(as de\214ned in the <db)-.18 F 2.838
+(.h> include \214le\) and may be set to)-.4 F(DB_BTREE, DB_HASH or DB_RECNO.)
+108 372 Q(The)108 388.8 Q F3(openinfo)2.85 E F0(ar)2.85 E .349(gument is a poi\
+nter to an access method speci\214c structure described in the access method')
+-.18 F(s)-.55 E .03(manual page.)108 400.8 R(If)5.03 E F3(openinfo)2.53 E F0
+.031(is NULL, each access method will use def)2.53 F .031
+(aults appropriate for the system and the)-.1 F(access method.)108 412.8 Q F3
+(Dbopen)108 429.6 Q F0 .416
 (returns a pointer to a DB structure on success and NULL on error)2.917 F 5.416
 (.T)-.55 G .416(he DB structure is de\214ned in)423.21 429.6 R(the <db)108
 441.6 Q(.h> include \214le, and contains at least the follo)-.4 E
@@ -267,7 +268,8 @@ R F3(dbopen)3.038 E F0 3.038(,a).24 G .538
 F0(or)2.994 E F3(sync)2.994 E F0 .495
 (function may result in inconsistent or lost information.)2.994 F F3(Close)
 5.495 E F0 .495(routines return)2.995 F(4.4 Berk)72 732 Q(ele)-.1 E 2.5(yD)-.15
-G(istrib)132.57 732 Q 92.375(ution September)-.2 F(6, 1993)2.5 E(1)535 732 Q EP
+G(istrib)132.57 732 Q 89.875(ution September)-.2 F(13, 1993)2.5 E(1)535 732 Q
+EP
 %%Page: 2 2
 %%BeginPageSetup
 BP
@@ -353,7 +355,7 @@ F0 .289(routines is to enter the ne)2.789 F 2.789(wk)-.25 G -.15(ey)388.998
 (\), 0 on success, and 1 if the R_NOO).18 F(VER)-.5 E(WRITE)-.55 E F1<8d61>2.87
 E(g)-.1 E F0 -.1(wa)144 681.6 S 2.5(ss).1 G(et and the k)165.84 681.6 Q .3 -.15
 (ey a)-.1 H(lready e).15 E(xists in the \214le.)-.15 E(4.4 Berk)72 732 Q(ele)
--.1 E 2.5(yD)-.15 G(istrib)132.57 732 Q 92.375(ution September)-.2 F(6, 1993)
+-.1 E 2.5(yD)-.15 G(istrib)132.57 732 Q 89.875(ution September)-.2 F(13, 1993)
 2.5 E(2)535 732 Q EP
 %%Page: 3 3
 %%BeginPageSetup
@@ -437,8 +439,8 @@ F0 2.5(\)a).18 G(nd 0 on success.)336.91 626.4 Q/F3 9/Times-Bold@0 SF(KEY/D)72
 (/data pairs.).15 F .134(Both k)5.134 F -.15(ey)-.1 G 2.634(sa).15 G .134
 (nd data are represented by the follo)359.078 655.2 R .135(wing data)-.25 F
 (structure:)108 667.2 Q(typedef struct {)108 684 Q(4.4 Berk)72 732 Q(ele)-.1 E
-2.5(yD)-.15 G(istrib)132.57 732 Q 92.375(ution September)-.2 F(6, 1993)2.5 E(3)
-535 732 Q EP
+2.5(yD)-.15 G(istrib)132.57 732 Q 89.875(ution September)-.2 F(13, 1993)2.5 E
+(3)535 732 Q EP
 %%Page: 4 4
 %%BeginPageSetup
 BP
@@ -499,8 +501,8 @@ E F0 .399(The typedef DBT is a mnemonic for `)108 506.4 R .399
 (ace is a kluge and will be deleted in a future v)-.1 E(ersion of the interf)
 -.15 E(ace.)-.1 E(None of the access methods pro)108 552 Q(vide an)-.15 E 2.5
 (yf)-.15 G(orm of concurrent access, locking, or transactions.)275.16 552 Q
-(4.4 Berk)72 732 Q(ele)-.1 E 2.5(yD)-.15 G(istrib)132.57 732 Q 92.375
-(ution September)-.2 F(6, 1993)2.5 E(4)535 732 Q EP
+(4.4 Berk)72 732 Q(ele)-.1 E 2.5(yD)-.15 G(istrib)132.57 732 Q 89.875
+(ution September)-.2 F(13, 1993)2.5 E(4)535 732 Q EP
 %%Trailer
 end
 %%EOF

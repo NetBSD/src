@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)db.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: db.c,v 1.4 1993/09/09 02:41:41 cgd Exp $";
+/* from: static char sccsid[] = "@(#)db.c	8.3 (Berkeley) 9/13/93"; */
+static char *rcsid = "$Id: db.c,v 1.5 1993/09/17 01:06:33 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,8 +56,8 @@ dbopen(fname, flags, mode, type, openinfo)
 
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
 #define	USE_OPEN_FLAGS							\
-	(O_CREAT | O_EXCL | O_EXLOCK | O_RDONLY | O_RDWR |		\
-	    O_SHLOCK | O_TRUNC)
+	(O_CREAT | O_EXCL | O_EXLOCK | O_NONBLOCK | O_RDONLY |		\
+	 O_RDWR | O_SHLOCK | O_TRUNC)
 
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {
