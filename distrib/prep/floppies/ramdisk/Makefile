@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/13 06:15:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/24 15:30:47 nonaka Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,21 +25,22 @@ MTREECONF=	mtree.conf
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-SIZE=           2048k
+DISKSIZE=	2048k
 DISKTYPE=	floppyinstfs
-DBG=            -Os -mmultiple
+DBG=		-Os -mmultiple
 
 all: ${IMAGE}
 
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	rm -f ${IMAGE}.tmp
-	dd if=/dev/zero of=${IMAGE}.tmp bs=${SIZE} count=1
+	dd if=/dev/zero of=${IMAGE}.tmp bs=${DISKSIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}.tmp
 	disklabel -f ${.CURDIR}/disktab -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -51,13 +52,13 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_CDEV}
-	-/bin/rm -f ${IMAGE}
+	-rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
-	make -f ${CBIN}.mk DBG="${DBG}" all
+	${MAKE} -f ${CBIN}.mk DBG="${DBG}" all
 
 HACKSRC=	${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
@@ -70,5 +71,5 @@ clean cleandir distclean:
 	rm -f ${IMAGE} ${IMAGE}.tmp ${CBIN} ${CBIN}.mk ${CBIN}.cache
 	rm -f *.core *.o *.cro *.c
 
+.include <bsd.sys.mk>
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
