@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.3 1997/02/18 20:49:33 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.4 1997/02/19 23:07:57 scottr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -34,7 +34,9 @@ static	char	rcsid[] = "Id: fil.c,v 1.3.4.12 1996/12/02 11:51:24 darrenr Exp";
 #include <sys/protosw.h>
 #include <sys/socket.h>
 
+#ifndef _LKM
 #include "ipfilter.h"
+#endif
 
 #include <net/if.h>
 #ifdef sun
