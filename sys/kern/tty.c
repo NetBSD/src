@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.134 2002/03/17 19:41:07 atatat Exp $	*/
+/*	$NetBSD: tty.c,v 1.135 2002/03/25 04:26:43 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.134 2002/03/17 19:41:07 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.135 2002/03/25 04:26:43 itohy Exp $");
 
 #include "opt_uconsole.h"
 
@@ -556,10 +556,10 @@ ttyinput(int c, struct tty *tp)
 			 * ^T - kernel info and generate SIGINFO
 			 */
 			if (CCEQ(cc[VSTATUS], c)) {
-				if (ISSET(lflag, ISIG))
-					pgsignal(tp->t_pgrp, SIGINFO, 1);
 				if (!ISSET(lflag, NOKERNINFO))
 					ttyinfo(tp);
+				if (ISSET(lflag, ISIG))
+					pgsignal(tp->t_pgrp, SIGINFO, 1);
 				goto endcase;
 			}
 		}
