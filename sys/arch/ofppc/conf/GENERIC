@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1998/06/26 01:54:04 lukem Exp $
+#	$NetBSD: GENERIC,v 1.16 1998/09/03 01:43:35 sakamoto Exp $
 #
 # First try for PPC config file
 #
@@ -8,8 +8,6 @@ include "arch/ofppc/conf/std.ofppc"
 maxusers	32
 
 options 	EXEC_AOUT
-
-#options	UVM
 
 # various hacks due to bugs in Openfirmware implementation
 options 	FIRMWORKSBUGS
