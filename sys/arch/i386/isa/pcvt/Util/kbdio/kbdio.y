@@ -1,5 +1,6 @@
 /* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
+/*	$NetBSD: kbdio.y,v 1.3 1997/10/13 14:22:22 lukem Exp $	*/
 /*
  * Copyright (c) 1994,1995 Joerg Wunsch
  *
@@ -33,8 +34,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ident "$Header: /cvsroot/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.2 1995/10/07 21:45:19 jtc Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
