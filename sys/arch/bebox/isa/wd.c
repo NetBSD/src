@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 1997/10/14 06:49:19 sakamoto Exp $	*/
+/*	$NetBSD: wd.c,v 1.1.2.1 1997/11/28 19:49:34 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -208,9 +208,9 @@ wdcprobe(parent, match, aux)
 	wdc->sc_iobase = iobase = ia->ia_iobase;
 
 	/* Check if we have registers that work. */
-	outb(iobase+wd_error, 0x5a);	/* Error register not writable, */
-	outb(iobase+wd_cyl_lo, 0xa5);	/* but all of cyllo are. */
-	if (inb(iobase+wd_error) == 0x5a || inb(iobase+wd_cyl_lo) != 0xa5)
+	isa_outb(iobase+wd_error, 0x5a);	/* Error register not writable, */
+	isa_outb(iobase+wd_cyl_lo, 0xa5);	/* but all of cyllo are. */
+	if (isa_inb(iobase+wd_error) == 0x5a || isa_inb(iobase+wd_cyl_lo) != 0xa5)
 		return 0;
 
 	if (wdcreset(wdc) != 0) {
@@ -220,14 +220,14 @@ wdcprobe(parent, match, aux)
 	}
 
 	/* Select drive 0. */
-	outb(iobase+wd_sdh, WDSD_IBM | 0);
+	isa_outb(iobase+wd_sdh, WDSD_IBM | 0);
 
 	/* Wait for controller to become ready. */
 	if (wait_for_unbusy(wdc) < 0)
 		return 0;
     
 	/* Start drive diagnostics. */
-	outb(iobase+wd_command, WDCC_DIAGNOSE);
+	isa_outb(iobase+wd_command, WDCC_DIAGNOSE);
 
 	/* Wait for command to complete. */
 	if (wait_for_unbusy(wdc) < 0)
@@ -610,7 +610,7 @@ loop:
 		wd->sc_blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 	} else {
 #ifdef WDDEBUG
-		printf(" %d)%x", wd->sc_skip, inb(wdc->sc_iobase+wd_altsts));
+		printf(" %d)%x", wd->sc_skip, isa_inb(wdc->sc_iobase+wd_altsts));
 #endif
 	}
 
@@ -725,7 +725,7 @@ loop:
 #ifdef WDDEBUG
 		printf("sector %ld cylin %ld head %ld addr %p sts %x\n",
 		    sector, cylin, head, bp->b_data,
-		    inb(wdc->sc_iobase+wd_altsts));
+		    isa_inb(wdc->sc_iobase+wd_altsts));
 #endif
 	} else if (wd->sc_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -778,7 +778,7 @@ wdcintr(arg)
 
 	if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
 		/* Clear the pending interrupt and abort. */
-		(void) inb(wdc->sc_iobase+wd_status);
+		(void) isa_inb(wdc->sc_iobase+wd_status);
 		return 0;
 	}
 
@@ -1155,7 +1155,7 @@ wdcontrol(wd)
 	multimode:
 		if (wd->sc_mode != WDM_PIOMULTI)
 			goto ready;
-		outb(wdc->sc_iobase+wd_seccnt, wd->sc_multiple);
+		isa_outb(wdc->sc_iobase+wd_seccnt, wd->sc_multiple);
 		if (wdcommandshort(wdc, wd->sc_drive, WDCC_SETMULTI) != 0) {
 			wderror(wd, NULL, "wdcontrol: setmulti failed (1)");
 			goto bad;
@@ -1204,7 +1204,7 @@ wdcommand(wd, command, cylin, head, sector, count)
 	int stat;
     
 	/* Select drive, head, and addressing mode. */
-	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
+	isa_outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
 
 	/* Wait for it to become ready to accept a command. */
 	if (command == WDCC_IDP)
@@ -1216,16 +1216,16 @@ wdcommand(wd, command, cylin, head, sector, count)
     
 	/* Load parameters. */
 	if (wd->sc_dk.dk_label->d_type == DTYPE_ST506)
-		outb(iobase+wd_precomp, wd->sc_dk.dk_label->d_precompcyl / 4);
+		isa_outb(iobase+wd_precomp, wd->sc_dk.dk_label->d_precompcyl / 4);
 	else
-		outb(iobase+wd_features, 0);
-	outb(iobase+wd_cyl_lo, cylin);
-	outb(iobase+wd_cyl_hi, cylin >> 8);
-	outb(iobase+wd_sector, sector);
-	outb(iobase+wd_seccnt, count);
+		isa_outb(iobase+wd_features, 0);
+	isa_outb(iobase+wd_cyl_lo, cylin);
+	isa_outb(iobase+wd_cyl_hi, cylin >> 8);
+	isa_outb(iobase+wd_sector, sector);
+	isa_outb(iobase+wd_seccnt, count);
 
 	/* Send command. */
-	outb(iobase+wd_command, command);
+	isa_outb(iobase+wd_command, command);
 
 	return 0;
 }
@@ -1242,12 +1242,12 @@ wdcommandshort(wdc, drive, command)
 	int iobase = wdc->sc_iobase;
 
 	/* Select drive. */
-	outb(iobase+wd_sdh, WDSD_IBM | (drive << 4));
+	isa_outb(iobase+wd_sdh, WDSD_IBM | (drive << 4));
 
 	if (wdcwait(wdc, WDCS_DRDY) < 0)
 		return -1;
 
-	outb(iobase+wd_command, command);
+	isa_outb(iobase+wd_command, command);
 
 	return 0;
 }
@@ -1346,7 +1346,7 @@ wd_get_parms(wd)
 	}
 
 	/* Clear any leftover interrupt. */
-	(void) inb(wdc->sc_iobase+wd_status);
+	(void) isa_inb(wdc->sc_iobase+wd_status);
 
 	/* Restart the queue. */
 	wdcstart(wdc);
@@ -1678,12 +1678,12 @@ wdcreset(wdc)
 	int iobase = wdc->sc_iobase;
 
 	/* Reset the device. */
-	outb(iobase+wd_ctlr, WDCTL_RST | WDCTL_IDS);
+	isa_outb(iobase+wd_ctlr, WDCTL_RST | WDCTL_IDS);
 	delay(1000);
-	outb(iobase+wd_ctlr, WDCTL_IDS);
+	isa_outb(iobase+wd_ctlr, WDCTL_IDS);
 	delay(1000);
-	(void) inb(iobase+wd_error);
-	outb(iobase+wd_ctlr, WDCTL_4BIT);
+	(void) isa_inb(iobase+wd_error);
+	isa_outb(iobase+wd_ctlr, WDCTL_4BIT);
 
 	if (wait_for_unbusy(wdc) < 0) {
 		printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
@@ -1750,7 +1750,7 @@ wdcwait(wdc, mask)
 #endif
 
 	for (;;) {
-		wdc->sc_status = status = inb(iobase+wd_status);
+		wdc->sc_status = status = isa_inb(iobase+wd_status);
 		if ((status & WDCS_BSY) == 0 && (status & mask) == mask)
 			break;
 		if (++timeout > WDCNDELAY)
@@ -1758,7 +1758,7 @@ wdcwait(wdc, mask)
 		delay(WDCDELAY);
 	}
 	if (status & WDCS_ERR) {
-		wdc->sc_error = inb(iobase+wd_error);
+		wdc->sc_error = isa_inb(iobase+wd_error);
 		return WDCS_ERR;
 	}
 #ifdef WDCNDELAY_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.1 1997/10/14 06:49:11 sakamoto Exp $	*/
+/*	$NetBSD: mms.c,v 1.1.2.1 1997/11/28 19:47:52 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -90,11 +90,11 @@ mmsprobe(parent, match, aux)
 	int iobase = ia->ia_iobase;
 
 	/* Read identification register to see if present */
-	if (inb(iobase + MMS_IDENT) != 0xde)
+	if (isa_inb(iobase + MMS_IDENT) != 0xde)
 		return 0;
 
 	/* Seems it was there; reset. */
-	outb(iobase + MMS_ADDR, 0x87);
+	isa_outb(iobase + MMS_ADDR, 0x87);
 
 	ia->ia_iosize = MMS_NPORTS;
 	ia->ia_msize = 0;
@@ -147,8 +147,8 @@ mmsopen(dev, flag, mode, p)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	outb(sc->sc_iobase + MMS_ADDR, 0x07);
-	outb(sc->sc_iobase + MMS_DATA, 0x09);
+	isa_outb(sc->sc_iobase + MMS_ADDR, 0x07);
+	isa_outb(sc->sc_iobase + MMS_DATA, 0x09);
 
 	return 0;
 }
@@ -163,7 +163,7 @@ mmsclose(dev, flag, mode, p)
 	struct mms_softc *sc = mms_cd.cd_devs[MMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	outb(sc->sc_iobase + MMS_ADDR, 0x87);
+	isa_outb(sc->sc_iobase + MMS_ADDR, 0x87);
 
 	sc->sc_state &= ~MMS_OPEN;
 
@@ -288,20 +288,20 @@ mmsintr(arg)
 		return 0;
 
 	/* Freeze InPort registers (disabling interrupts). */
-	outb(iobase + MMS_ADDR, 0x07);
-	outb(iobase + MMS_DATA, 0x29);
+	isa_outb(iobase + MMS_ADDR, 0x07);
+	isa_outb(iobase + MMS_DATA, 0x29);
 
-	outb(iobase + MMS_ADDR, 0x00);
-	status = inb(iobase + MMS_DATA);
+	isa_outb(iobase + MMS_ADDR, 0x00);
+	status = isa_inb(iobase + MMS_DATA);
 
 	if (status & 0x40) {
-		outb(iobase + MMS_ADDR, 1);
-		dx = inb(iobase + MMS_DATA);
+		isa_outb(iobase + MMS_ADDR, 1);
+		dx = isa_inb(iobase + MMS_DATA);
 #if 0
 		dx = (dx == -128) ? -127 : dx;
 #endif
-		outb(iobase + MMS_ADDR, 2);
-		dy = inb(iobase + MMS_DATA);
+		isa_outb(iobase + MMS_ADDR, 2);
+		dy = isa_inb(iobase + MMS_DATA);
 #if 0
 		dy = (dy == -128) ? 127 : -dy;
 #endif
@@ -309,8 +309,8 @@ mmsintr(arg)
 		dx = dy = 0;
 
 	/* Unfreeze InPort registers (reenabling interrupts). */
-	outb(iobase + MMS_ADDR, 0x07);
-	outb(iobase + MMS_DATA, 0x09);
+	isa_outb(iobase + MMS_ADDR, 0x07);
+	isa_outb(iobase + MMS_DATA, 0x09);
 
 	buttons = status & BUTSTATMASK;
 	changed = status & BUTCHNGMASK;
