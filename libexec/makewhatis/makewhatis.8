@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.1 1997/10/17 20:37:59 hubertf Exp $
+.\"	$NetBSD: makewhatis.8,v 1.2 1997/10/20 02:41:18 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nm /usr/libexec/makewhatis
 .Op Ar manpath
 .Sh DESCRIPTION
-.Nm makewhatis
+.Nm
 strips the NAME lines from compiled or raw
 .Xr man 1
 pages and creates
@@ -54,9 +54,9 @@ or with
 .Xr man 1 's
 -k option.
 If
-.Nm manpath
+.Ar manpath
 is unspecified,
-.Nm makewhatis
+.Nm
 by default creates a database for /usr/share/man.
 Man pages compressed with
 .Xr compress 1
@@ -65,7 +65,7 @@ and
 are uncompressed before processing, unformatted man pages
 will be formatted on the fly.
 .Sh BUGS
-.Nm makewhatis
+.Nm
 should find its search paths using /etc/man.conf
 .Sh SEE ALSO
 .Xr man 1 ,
