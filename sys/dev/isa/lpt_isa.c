@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.19 1994/05/05 07:52:53 mycroft Exp $
+ *	$Id: lpt_isa.c,v 1.20 1994/05/23 02:33:23 cgd Exp $
  */
 
 /*
@@ -76,7 +76,7 @@
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
 
-#ifndef DEBUG
+#if !defined(DEBUG) || !defined(notdef)
 #define lprintf
 #else
 #define lprintf		if (lptdebug) printf
