@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.96 2003/02/20 04:27:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.97 2003/02/23 00:22:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.96 2003/02/20 04:27:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.97 2003/02/23 00:22:34 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1800,14 +1800,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 #endif
 		uvm_lock_pageq();
 		for (i = 0; i < npages; i++) {
-			if (pgs[i]->flags & PG_WANTED)
-				wakeup(pgs[i]);
-			if (pgs[i]->flags & PG_PAGEOUT)
+			pg = pgs[i];
+
+			if (pg->flags & PG_WANTED)
+				wakeup(pg);
+			if (pg->flags & PG_PAGEOUT)
 				uvmexp.paging--;
-			if (pgs[i]->flags & PG_DELWRI) {
-				uvm_pageunwire(pgs[i]);
+			if (pg->flags & PG_DELWRI) {
+				uvm_pageunwire(pg);
+				uvm_pagedeactivate(pg);
 			}
-			pgs[i]->flags &= ~(PG_BUSY|PG_CLEAN|PG_WANTED|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+			pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_WANTED|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 		uvm_page_unbusy(pgs, npages);
@@ -1908,10 +1911,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		/*
 		 * Discover how much we can really pack into this buffer.
 		 */
-#ifdef LFS_UBC_BIGBUFS
 		/* If no room in the current segment, finish it up */
 		if (sp->sum_bytes_left < sizeof(int32_t) ||
-		    sp->seg_bytes_left < MIN(iobytes, (1 << fs->lfs_bshift))) {
+		    sp->seg_bytes_left < (1 << fs->lfs_bshift)) {
 			int version;
 
 			lfs_updatemeta(sp);
@@ -1925,16 +1927,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
 			sp->sum_bytes_left -= FINFOSIZE;
 		}
-		iobytes = MIN(iobytes, ((sp->seg_bytes_left >> fs_bshift) << fs_bshift));
-#else
-		iobytes = MIN(iobytes, (1 << fs_bshift));
-		if (iobytes != blksize(fs, ip, lblkno(fs, offset))) {
-			printf("iobytes = %" PRId64 ", blk = %" PRId64 "\n",
-				(int64_t)iobytes,
-				(int64_t)blksize(fs, ip, lblkno(fs, offset)));
-		}
-		KASSERT(iobytes == blksize(fs, ip, lblkno(fs, offset)));
-#endif
+		/* Check both for space in segment and space in segsum */
+		iobytes = MIN(iobytes, (sp->seg_bytes_left >> fs_bshift)
+					<< fs_bshift);
+		iobytes = MIN(iobytes, (sp->sum_bytes_left / sizeof(int32_t))
+				       << fs_bshift);
 		KASSERT(iobytes > 0);
 
 		/* if it's really one i/o, don't make a second buf */

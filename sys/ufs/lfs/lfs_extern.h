@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.41 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.42 2003/02/23 00:22:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, int *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
-void lfs_update_single(struct lfs *, struct segment *, daddr_t, int32_t, int, int);
+void lfs_update_single(struct lfs *, struct segment *, daddr_t, int32_t, int);
 void lfs_updatemeta(struct segment *);
 int lfs_initseg(struct lfs *);
 void lfs_newseg(struct lfs *);
@@ -175,7 +175,7 @@ int lfs_match_tindir(struct lfs *, struct buf *);
 void lfs_callback(struct buf *);
 void lfs_supercallback(struct buf *);
 /* XXX ondisk32 */
-void lfs_shellsort(struct buf **, int32_t *, int);
+void lfs_shellsort(struct buf **, int32_t *, int, int);
 int lfs_vref(struct vnode *);
 void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
