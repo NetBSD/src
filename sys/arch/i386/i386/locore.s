@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 1995/05/07 03:16:16 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 1995/06/02 18:14:04 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -161,6 +161,9 @@ _proc0paddr:	.long	0
 	.space 512
 tmpstk:
 
+
+#define	RELOC(x)	((x) - KERNBASE)
+
 	.text
 	.globl	start
 start:	movw	$0x1234,0x472			# warm boot
@@ -171,16 +174,16 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * (If we want to hold onto /boot, it's physical %esp up to _end.)
 	 */
 	movl	4(%esp),%eax
-	movl	%eax,_boothowto-KERNBASE
+	movl	%eax,RELOC(_boothowto)
 	movl	8(%esp),%eax
-	movl	%eax,_bootdev-KERNBASE
+	movl	%eax,RELOC(_bootdev)
 	movl	12(%esp),%eax
-	movl	%eax,_cyloffset-KERNBASE
+	movl	%eax,RELOC(_cyloffset)
  	movl	16(%esp),%eax
 	testl	%eax,%eax
 	jz	1f
- 	addl	$(KERNBASE),%eax
-1: 	movl	%eax,_esym-KERNBASE
+	addl	$KERNBASE,%eax
+1: 	movl	%eax,RELOC(_esym)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
@@ -204,7 +207,7 @@ try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 
 	testl	%eax,%eax
 	jnz	try486
-	movl	$CPU_386,_cpu-KERNBASE
+	movl	$CPU_386,RELOC(_cpu)
 	jmp	2f
 
 try486:	/* Try to toggle identification flag; does not exist on early 486s. */
@@ -223,7 +226,7 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 
 	testl	%eax,%eax
 	jnz	try586
-is486:	movl	$CPU_486,_cpu-KERNBASE
+is486:	movl	$CPU_486,RELOC(_cpu)
 
 	/*
 	 * Check for Cyrix CPU by seeing if the flags change during a divide.
@@ -242,9 +245,9 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
 	jne	2f			# yes; must not be Cyrix CPU
 
-	movl	$CPU_486DLC,_cpu-KERNBASE 		# set CPU type
-	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
-	movw	$0x0078,_cpu_vendor-KERNBASE+4
+	movl	$CPU_486DLC,RELOC(_cpu) 	# set CPU type
+	movl	$0x69727943,RELOC(_cpu_vendor)	# store vendor string
+	movb	$0x78,RELOC(_cpu_vendor)+4
 
 #ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
@@ -308,10 +311,9 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
-	movl	%ebx,_cpu_vendor-KERNBASE	# store vendor string
-	movl	%edx,_cpu_vendor-KERNBASE+4
-	movl	%ecx,_cpu_vendor-KERNBASE+8
-	movb	$0,_cpu_vendor-KERNBASE+12
+	movl	%ebx,RELOC(_cpu_vendor)	# store vendor string
+	movl	%edx,RELOC(_cpu_vendor)+4
+	movl	%ecx,RELOC(_cpu_vendor)+8
 
 	movl	$1,%eax
 	cpuid
@@ -319,7 +321,7 @@ try586:	/* Use the `cpuid' instruction. */
 	andl	$15,%eax
 	cmpl	$5,%eax
 	jb	is486			# less than a Pentium
-	movl	$CPU_586,_cpu-KERNBASE
+	movl	$CPU_586,RELOC(_cpu)
 
 2:
 	/*
@@ -334,7 +336,7 @@ try586:	/* Use the `cpuid' instruction. */
 	 * Oops, the gdt is in the carcass of the boot program so clearing
 	 * the rest of memory is still not possible.
 	 */
-	movl	$(tmpstk-KERNBASE),%esp	# bootstrap stack end location
+	movl	$RELOC(tmpstk),%esp	# bootstrap stack end location
 
 /*
  * Virtual address space of kernel:
@@ -349,7 +351,7 @@ try586:	/* Use the `cpuid' instruction. */
 #define	TABLESIZE	((2+UPAGES+NKPDE) * NBPG)
 
 	/* Clear the BSS. */
-	movl	$(_edata-KERNBASE),%edi
+	movl	$RELOC(_edata),%edi
 	movl	$(((_end-_edata)+3)>>2),%ecx
 	xorl	%eax,%eax
 	cld
@@ -357,10 +359,10 @@ try586:	/* Use the `cpuid' instruction. */
 	stosl
 
 	/* Find end of kernel image. */
-	movl	$(_end-KERNBASE),%edi
+	movl	$RELOC(_end),%edi
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
-	movl	_esym-KERNBASE,%eax
+	movl	RELOC(_esym),%eax
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE,%eax
@@ -398,11 +400,11 @@ try586:	/* Use the `cpuid' instruction. */
  * Build initial page tables.
  */
 	/* Calculate end of text segment, rounded to a page. */
-	leal	(_etext-KERNBASE+PGOFSET),%edx
+	leal	(RELOC(_etext)+PGOFSET),%edx
 	andl	$~PGOFSET,%edx
 	
 	/* Skip over the first 1MB. */
-	movl	$(KERNTEXTOFF-KERNBASE),%eax
+	movl	$RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	leal	(SYSMAP)(%esi,%ecx,4),%ebx
@@ -433,7 +435,7 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Map proc 0's kernel stack into user page table page. */
 	movl	$UPAGES,%ecx				# for this many pte s,
 	leal	(PROC0STACK+KERNBASE)(%esi),%edx
-	movl	%edx,_proc0paddr-KERNBASE		# remember VA for 0th process init
+	movl	%edx,RELOC(_proc0paddr)			# remember VA for 0th process init
 	leal	(PROC0STACK+PG_V|PG_KW)(%esi),%eax	# physical address in proc 0
 	leal	(PROC0STACKMAP+NBPG-UPAGES*4)(%esi),%ebx # physical address of stack pt in proc 0
 	fillkpt
