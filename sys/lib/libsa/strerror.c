@@ -30,10 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: strerror.c,v 1.2 1994/02/26 10:29:44 pk Exp $
+ *	$Id: strerror.c,v 1.3 1994/08/04 19:39:41 brezak Exp $
  */
 
-#include <sys/errno.h>
 #include "saerrno.h"
 
 

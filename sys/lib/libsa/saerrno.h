@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.2 1994/07/24 01:22:01 mycroft Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.3 1994/08/04 19:39:38 brezak Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -54,3 +54,14 @@ extern	int errno;	/* just like unix */
 #define	EWCK	14	/* write check error */
 #define	EECC	15	/* uncorrectable ecc error */
 #define	EHER	16	/* hard error */
+#define	ENOEXEC	17	/* Exec format error */
+#define	EPERM	18	/* Operation not permitted */
+#define	ENOENT	19	/* No such file or directory */
+#define	ESTALE	20	/* Stale NFS file handle */
+#define	EINVAL	21	/* Invalid argument */
+#define	EMFILE	22	/* Too many open files */
+#define	EOPNOTSUPP	23	/* Operation not supported */
+#define	EFBIG	24	/* File too large */
+#define	ENOTDIR	25	/* Not a directory */
+#define	EROFS	26	/* Read-only file system */
+#define	ENODEV	27	/* Operation not supported by device */
