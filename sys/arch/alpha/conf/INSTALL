@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.18 1998/08/11 00:28:53 thorpej Exp $
+# $NetBSD: INSTALL,v 1.19 1998/10/14 18:31:34 matt Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -125,7 +125,6 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
-wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
@@ -176,9 +175,11 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
+wd*	at	pciide? channel ?
 wd*	at	wdc? drive ?
 
 # ATAPI bus support
+atapibus* at	pciide? channel ?
 atapibus* at	wdc?
 
 # ATAPI devices

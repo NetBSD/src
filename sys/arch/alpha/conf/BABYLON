@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.10 1998/06/26 01:53:44 lukem Exp $
+# $NetBSD: BABYLON,v 1.11 1998/10/14 18:31:34 matt Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -175,7 +175,6 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
-wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 #tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #vga*	at	pci? dev ? function ?		# PCI VGA Graphics
@@ -244,10 +243,10 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # ST506/ESDI/IDE devices
-wd*	at	wdc? drive ?
+wd*	at	pciide? channel ?
 
 # ATAPI bus support
-atapibus* at	wdc?
+atapibus* at	pciide? channel ?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
