@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.21 2003/12/14 02:45:48 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.21 2003/12/14 02:45:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.22 2003/12/30 00:43:31 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -77,7 +77,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	u_int16_t *p;
 #endif
 
-	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
@@ -94,7 +94,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		WDCDEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
@@ -102,12 +102,12 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_exec_command failed\n"),
+		WDCDEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
 	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_c.flags=0x%x\n",
+		WDCDEBUG_PRINT(("ata_get_parms: wdc_c.flags=0x%x\n",
 		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
@@ -150,7 +150,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
 	struct wdc_command wdc_c;
 
-	WDCDEBUG_PRINT(("wdc_ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 	memset(&wdc_c, 0, sizeof(struct wdc_command));
 
 	wdc_c.r_command = SET_FEATURES;
