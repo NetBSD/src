@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.17 2005/03/09 22:39:20 bouyer Exp $
+#	$NetBSD: files.xen,v 1.18 2005/03/11 20:44:37 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -262,4 +262,4 @@ file	arch/xen/xen/pci_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 
-include "arch/xen/conf/majors.i386"
+include "arch/i386/conf/majors.i386"
