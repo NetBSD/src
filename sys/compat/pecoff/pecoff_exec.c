@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.10 2001/07/14 02:05:06 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.11 2001/07/29 21:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -117,32 +117,31 @@ const struct emul emul_pecoff = {
 };
 #endif
 
-void *
-pecoff_copyargs(pack, arginfo, stack, argp)
+int
+pecoff_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	int len = sizeof(struct pecoff_args);
 	struct pecoff_imghdr *ap;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack) {
-		return NULL;
-	}
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
+
 	ap = (struct pecoff_imghdr *)pack->ep_emul_arg;
-	if (copyout(ap, stack, len)) {
-		return NULL;
-	}
+	if ((error = copyout(ap, *stackp, len)) != 0)
+		return error;
+
 #if 0 /*  kern_exec.c? */
 	free((char *)ap, M_TEMP);
 	pack->ep_emul_arg = 0;
 #endif
 
-	stack = (caddr_t)stack + len;
-	
-	return stack;
+	*stackp += len;
+	return error;
 }
 
 #define PECOFF_SIGNATURE "PE\0\0"

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.8 2001/02/02 07:08:17 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.9 2001/07/29 21:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -61,59 +61,65 @@ int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 #ifdef EXEC_ELF32
 int netbsd32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
-void *netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-	void *, void *));
+int netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif /* EXEC_ELF32 */
 
-static __inline void *netbsd32_copyargs __P((struct exec_package *,
-	struct ps_strings *, void *, void *));
+static __inline int netbsd32_copyargs __P((struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 /*
  * We need to copy out all pointers as 32-bit values.
  */
-static __inline void *
-netbsd32_copyargs(pack, arginfo, stack, argp)
+static __inline int
+netbsd32_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
-	u_int32_t *cpp = stack;
+	u_int32_t *cpp = (u_int32_t *)*stackp;
 	u_int32_t dp;
 	u_int32_t nullp = 0;
 	char *sp;
 	size_t len;
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
+	int error;
 
-	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+		return error;
 
 	dp = (u_long) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = (char **)(u_long)cpp; /* remember location of argv for later */
+	/* remember location of argv for later */
+	arginfo->ps_argvstr = (char **)(u_long)cpp;
 
 	for (; --argc >= 0; sp += len, dp += len) {
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, (char *)(u_long)dp,
+		    ARG_MAX, &len)) != 0)
+			return error;
 	}
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
-	arginfo->ps_envstr = (char **)(u_long)cpp; /* remember location of envp for later */
+	/* remember location of envp for later */
+	arginfo->ps_envstr = (char **)(u_long)cpp;
 
 	for (; --envc >= 0; sp += len, dp += len) {
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, (char *)(u_long)dp,
+		    ARG_MAX, &len)) != 0)
+			return error;
 	}
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
-	return cpp;
+	*stackp = (char *)cpp;
+	return 0;
 }
 
 #endif /* !_NETBSD32_EXEC_H_ */
