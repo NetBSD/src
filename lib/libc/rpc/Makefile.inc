@@ -1,5 +1,4 @@
-#	from: @(#)Makefile.inc	5.3 (Berkeley) 2/20/91
-#	$Id: Makefile.inc,v 1.7 1994/12/22 10:14:41 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1995/02/25 03:01:33 cgd Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
