@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.1.2.1 2001/10/24 16:51:48 thorpej Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.1.2.2 2001/10/30 16:41:41 uch Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -153,8 +153,8 @@ tx3920_icache_sync_all_16wb(void)
 
 	__asm __volatile("sync");
 
-	tx3900_icache_do_inv16(MIPS_PHYS_TO_KSEG0(0),
-	    MIPS_PHYS_TO_KSEG0(mips_picache_size);
+	tx3920_icache_do_inv_16(MIPS_PHYS_TO_KSEG0(0),
+	    MIPS_PHYS_TO_KSEG0(mips_picache_size));
 }
 
 void
@@ -193,7 +193,7 @@ tx3920_pdcache_wbinv_all_16wt(void)
 	 */
 
 	while (va < eva) {
-		cache_tx39_32lines_16(va,
+		cache_tx39_op_32lines_16(va,
 		    CACHE_TX39_D|CACHEOP_TX3920_INDEX_INV);
 		va += (32 * 16);
 	}
@@ -211,7 +211,7 @@ tx3920_pdcache_wbinv_all_16wb(void)
 	 */
 
 	while (va < eva) {
-		cache_tx39_32lines_16(va,
+		cache_tx39_op_32lines_16(va,
 		    CACHE_TX39_D|CACHEOP_TX3920_INDEX_WB_INV);
 		va += (32 * 16);
 	}
@@ -225,13 +225,13 @@ tx3920_pdcache_wbinv_range_16wb(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	while ((eva - va) >= (32 * 16)) {
-		cache_tx39_op_32line_16(va,
+		cache_tx39_op_32lines_16(va,
 		    CACHE_TX39_D|CACHEOP_TX3920_HIT_WB_INV);
 		va += (32 * 16);
 	}
 
 	while (va < eva) {
-		cache_tx39_op_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_WB_INV);
+		cache_op_tx39_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_WB_INV);
 		va += 16;
 	}
 }
@@ -244,13 +244,13 @@ tx3920_pdcache_inv_range_16(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	while ((eva - va) >= (32 * 16)) {
-		cache_tx39_op_32line_16(va,
+		cache_tx39_op_32lines_16(va,
 		    CACHE_TX39_D|CACHEOP_TX3920_HIT_INV);
 		va += (32 * 16);
 	}
 
 	while (va < eva) {
-		cache_tx39_op_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_INV);
+		cache_op_tx39_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_INV);
 		va += 16;
 	}
 }
@@ -270,13 +270,13 @@ tx3920_pdcache_wb_range_16wb(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	while ((eva - va) >= (32 * 16)) {
-		cache_tx39_op_32line_16(va,
+		cache_tx39_op_32lines_16(va,
 		    CACHE_TX39_D|CACHEOP_TX3920_HIT_WB);
 		va += (32 * 16);
 	}
 
 	while (va < eva) {
-		cache_tx39_op_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_WB);
+		cache_op_tx39_line(va, CACHE_TX39_D|CACHEOP_TX3920_HIT_WB);
 		va += 16;
 	}
 }
