@@ -1,9 +1,13 @@
-#	$NetBSD: std.mac68k,v 1.23 1999/09/12 01:17:07 chs Exp $
+#	$NetBSD: std.mac68k,v 1.24 1999/11/15 19:00:28 fvdl Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
 
 machine	mac68k m68k
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options HZ=60			# mac clock runs at 60hz
 

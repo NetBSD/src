@@ -1,9 +1,13 @@
-#	$NetBSD: std.mvme68k,v 1.6 1999/09/12 01:17:13 chs Exp $
+#	$NetBSD: std.mvme68k,v 1.7 1999/11/15 19:00:28 fvdl Exp $
 #
 # Options/devices that all mvme68ks should have
 #
 
 machine mvme68k m68k
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options 	EXEC_AOUT	# support for exec'ing a.out
 options 	EXEC_SCRIPT	# support for #! scripts

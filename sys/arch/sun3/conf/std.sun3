@@ -1,7 +1,11 @@
-# $NetBSD: std.sun3,v 1.26 1999/09/12 01:17:24 chs Exp $
+# $NetBSD: std.sun3,v 1.27 1999/11/15 19:00:30 fvdl Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 # Machine type to be supported by this kernel.  Note:
 # The SUN3 and SUN3X options are mutually exclusive!
