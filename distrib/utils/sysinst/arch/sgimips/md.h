@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2001/11/29 23:21:01 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2001/11/29 23:24:25 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,8 +94,8 @@ EXTERN	char *disk_names[]
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern-GENERIC",		1, NULL, "Kernel       : "},
-    {"kern-GENERIC_INDY",	1, NULL, "Kernel       : "},
+    {"kern-GENERIC",		0, NULL, "Kernel       : "},
+    {"kern-GENERIC_INDY",	0, NULL, "Kernel       : "},
     {"base",			1, NULL, "Base         : "},
     {"etc",			1, NULL, "System (/etc): "},
     {"comp",			1, NULL, "Compiler     : "},
