@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.18 2003/10/18 23:27:36 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.19 2003/10/25 06:42:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.18 2003/10/18 23:27:36 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.19 2003/10/25 06:42:41 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -519,36 +519,28 @@ protected el_action_t
 ce_search_line(EditLine *el, int dir)
 {
 	char *cp = el->el_line.cursor;
-	char oc, *ocp = NULL;
 	char *pattern = el->el_search.patbuf;
+	char oc, *ocp;
+#ifdef ANCHOR
+	ocp = &pattern[1];
+	oc = *ocp;
+	*ocp = '^';
+#else
+	ocp = pattern;
+	oc = *ocp;
+#endif
 
 	if (dir == ED_SEARCH_PREV_HISTORY) {
-		pattern += LEN;
-		if (cp + 1 < el->el_line.limit) {
-			ocp = cp + 1;
-			oc = *ocp;
-			*ocp = '\0';
-		}
 		for (; cp >= el->el_line.buffer; cp--) {
-			if (el_match(cp, pattern)) {
-				if (ocp)
-					*ocp = oc;
+			if (el_match(cp, ocp)) {
+				*ocp = oc;
 				el->el_line.cursor = cp;
 				return (CC_NORM);
 			}
 		}
-		if (ocp)
-			*ocp = oc;
+		*ocp = oc;
 		return (CC_ERROR);
 	} else {
-#ifdef ANCHOR
-		ocp = &pattern[1];
-		oc = *ocp;
-		*ocp = '^';
-#else
-		ocp = pattern;
-		oc = *ocp;
-#endif
 		for (; *cp != '\0' && cp < el->el_line.limit; cp++) {
 			if (el_match(cp, ocp)) {
 				*ocp = oc;
