@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 2001/04/10 12:29:10 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 2001/05/07 21:48:24 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -185,8 +185,7 @@ L_high_code:
 	movl	a1,a0@(P_MDREGS)	|   trapframe
 	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
 	pea	a1@			| push &trapframe
-	lea	_C_LABEL(main),a0
-	jsr	a0@			| main(&trapframe)
+	jbsr	_C_LABEL(main)		| main(&trapframe)
 	addql	#4,sp			| help DDB backtrace
 	trap	#15			| should not get here
 
@@ -329,8 +328,7 @@ Lfptnull:
 GLOBAL(badtrap)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save std frame regs
-	lea	_C_LABEL(straytrap),a0
-	jsr	a0@			| report
+	jbsr	_C_LABEL(straytrap)	| report
 	moveml	sp@+,#0xFFFF		| restore regs
 	addql	#4, sp			| stack adjust count
 	jra	_ASM_LABEL(rei)		| all done
@@ -344,8 +342,7 @@ GLOBAL(trap0)
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	d0,sp@-			| push syscall number
-	lea	_C_LABEL(syscall),a0
-	jsr	a0@			| handle it
+	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,sp			| pop syscall arg
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
@@ -425,8 +422,7 @@ Lbrkpt2:
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
 	movl	d0,sp@-			| push trap type
-	lea	_C_LABEL(trap_kdebug),a0
-	jsr	a0@
+	jbsr	_C_LABEL(trap_kdebug)
 	addql	#4,sp			| pop args
 
 	| The stack pointer may have been modified, or
@@ -466,8 +462,7 @@ Lbrkpt2:
 	.align	2
 GLOBAL(_isr_autovec)
 	INTERRUPT_SAVEREG
-	lea	_C_LABEL(isr_autovec),a0
-	jsr	a0@
+	jbsr	_C_LABEL(isr_autovec)
 	INTERRUPT_RESTORE
 	jra	_ASM_LABEL(rei)
 
@@ -475,8 +470,7 @@ GLOBAL(_isr_autovec)
 	.align	2
 GLOBAL(_isr_clock)
 	INTERRUPT_SAVEREG
-	lea	_C_LABEL(clock_intr),a0
-	jsr	a0@
+	jbsr	_C_LABEL(clock_intr)
 	INTERRUPT_RESTORE
 	jra	_ASM_LABEL(rei)
 
@@ -484,8 +478,7 @@ GLOBAL(_isr_clock)
 	.align	2
 GLOBAL(_isr_vectored)
 	INTERRUPT_SAVEREG
-	lea	_C_LABEL(isr_vectored),a0
-	jsr	a0@
+	jbsr	_C_LABEL(isr_vectored)
 	INTERRUPT_RESTORE
 	jra	_ASM_LABEL(rei)
 
@@ -547,8 +540,7 @@ Lrei1:
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_ASTFLT,sp@-		| type == async system trap
-	lea	_C_LABEL(trap),a0
-	jsr	a0@			| go handle it
+	jbsr	_C_LABEL(trap)		| go handle it
 	lea	sp@(12),sp		| pop value args
 	movl	sp@(FR_SP),a0		| restore user SP
 	movl	a0,usp			|   from save area
@@ -626,8 +618,7 @@ ENTRY(switch_exit)
 
 	/* Schedule the vmspace and stack to be freed. */
 	movl	a0,sp@-			| exit2(p)
-	lea	_C_LABEL(exit2),a0
-	jsr	a0@
+	jbsr	_C_LABEL(exit2)
 
 	/* Don't pop the proc; pass it to cpu_switch(). */
 
@@ -654,8 +645,7 @@ GLOBAL(_Idle)				| See clock.c
 
 Lbadsw:
 	movl	#Lsw0,sp@-
-	lea	_C_LABEL(panic),a0
-	jsr	a0@
+	jbsr	_C_LABEL(panic)
 	/*NOTREACHED*/
 
 /*
@@ -778,8 +768,7 @@ Lswnofpsave:
 	 */
 	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	pea	a2@			| push pmap
-	lea	_C_LABEL(_pmap_switch),a0
-	jsr	a0@			| _pmap_switch(pmap)
+	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
 | Note: pmap_switch will clear the cache if needed.
