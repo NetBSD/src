@@ -1,22 +1,13 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.16 2001/10/25 13:48:50 thorpej Exp $
+\#	$NetBSD: bsd.hostprog.mk,v 1.17 2001/11/02 05:21:50 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		cleanprog 
 clean:		cleanprog
 
-CFLAGS+=	${COPTS}
-
+##### Default values
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a
 LIBC_PIC?=	/usr/lib/libc_pic.a
@@ -56,6 +47,9 @@ LIBWRAP?=	/usr/lib/libwrap.a
 LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
 
+CFLAGS+=	${COPTS}
+
+##### Build rules
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
 .c.lo:
@@ -123,6 +117,7 @@ lint: ${LOBJS}
 	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
+##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
@@ -131,5 +126,4 @@ lint: ${LOBJS}
 .include <bsd.dep.mk>
 .include <bsd.sys.mk>
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-regress:
+${TARGETS}:	# ensure existence
