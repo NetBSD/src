@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.161 2000/05/02 10:35:06 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.162 2000/05/02 13:06:27 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4099,8 +4099,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		return;
 
 #ifdef DIAGNOSTIC
-	if (va < virtual_avail)
-		panic("pmap_rmk4m: attempt to free base kernel addr %lx", va);
 	if (sp->sg_pte == NULL || rp->rg_seg_ptps == NULL)
 		panic("pmap_rmk: segment/region does not exist");
 	if (pm->pm_ctx == NULL)
@@ -4497,9 +4495,11 @@ pmap_page_protect4_4c(pg, prot)
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) ||
 	     !managed(pa) || prot & VM_PROT_WRITE)
 		return;
+
 	write_user_windows();	/* paranoia */
+	pv = pvhead(pa);
 	if (prot & VM_PROT_READ) {
-		pv_changepte4_4c(pvhead(pa), 0, PG_W);
+		pv_changepte4_4c(pv, 0, PG_W);
 		return;
 	}
 
@@ -4509,16 +4509,19 @@ pmap_page_protect4_4c(pg, prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	pv = pvhead(pa);
 	s = splpmap();
-	if ((pm = pv->pv_pmap) == NULL) {
+	if (pv->pv_pmap == NULL) {
 		splx(s);
 		return;
 	}
 	ctx = getcontext4();
 	pv0 = pv;
-	flags = pv->pv_flags & ~PV_NC;
-	for (;; pm = pv->pv_pmap) {
+
+	/* This pv head will become empty, so clear caching state flags */
+	flags = pv->pv_flags & ~(PV_NC|PV_ANC);
+
+	while (pv != NULL) {
+		pm = pv->pv_pmap;
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -4528,8 +4531,8 @@ pmap_page_protect4_4c(pg, prot)
 		sp = &rp->rg_segmap[vs];
 		if ((nleft = sp->sg_npte) == 0)
 			panic("pmap_remove_all: empty vseg");
-		nleft--;
-		sp->sg_npte = nleft;
+
+		sp->sg_npte = --nleft;
 
 		if (sp->sg_pmeg == seginval) {
 			/* Definitely not a kernel map */
@@ -4639,11 +4642,12 @@ pmap_page_protect4_4c(pg, prot)
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pool_put(&pv_pool, pv);
-		if ((pv = npv) == NULL)
-			break;
+		pv = npv;
 	}
+
+	/* Finally, update pv head */
 	pv0->pv_pmap = NULL;
-	pv0->pv_next = NULL; /* ? */
+	pv0->pv_next = NULL;
 	pv0->pv_flags = flags;
 	setcontext4(ctx);
 	splx(s);
@@ -4893,9 +4897,11 @@ pmap_page_protect4m(pg, prot)
 	 */
 	if (!managed(pa) || prot & VM_PROT_WRITE)
 		return;
+
 	write_user_windows();	/* paranoia */
+	pv = pvhead(pa);
 	if (prot & VM_PROT_READ) {
-		pv_changepte4m(pvhead(pa), 0, PPROT_WRITE);
+		pv_changepte4m(pv, 0, PPROT_WRITE);
 		return;
 	}
 
@@ -4905,16 +4911,19 @@ pmap_page_protect4m(pg, prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	pv = pvhead(pa);
 	s = splpmap();
-	if ((pm = pv->pv_pmap) == NULL) {
+	if (pv->pv_pmap == NULL) {
 		splx(s);
 		return;
 	}
 	ctx = getcontext4m();
 	pv0 = pv;
-	flags = pv->pv_flags /*| PV_C4M*/;	/* %%%: ???? */
-	for (;; pm = pv->pv_pmap) {
+
+	/* This pv head will become empty, so clear caching state flags */
+	flags = pv->pv_flags & ~(PV_C4M|PV_ANC);
+
+	while (pv != NULL) {
+		pm = pv->pv_pmap;
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
@@ -4924,8 +4933,7 @@ pmap_page_protect4m(pg, prot)
 		sp = &rp->rg_segmap[vs];
 		if ((nleft = sp->sg_npte) == 0)
 			panic("pmap_remove_all: empty vseg");
-		nleft--;
-		sp->sg_npte = nleft;
+		sp->sg_npte = --nleft;
 
 		/* Invalidate PTE in MMU pagetables. Flush cache if necessary */
 		if (pm->pm_ctx) {
@@ -4935,31 +4943,17 @@ pmap_page_protect4m(pg, prot)
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V");
 
 		flags |= MR4M(tpte);
 
-		if (nleft) {
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
-			goto nextpv;
-		}
-
-		/* Entire segment is gone */
-		if (pm == pmap_kernel()) {
-			tlb_flush_segment(vr, vs); /* Paranoid? */
-			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
-			if (va < virtual_avail) {
-#ifdef DEBUG
-				printf(
-				 "pmap_page_protect: attempt to free"
-				 " base kernel allocation\n");
-#endif
-				goto nextpv;
-			}
-
-		} else { 	/* User mode mapping */
+		if (nleft == 0 && pm != pmap_kernel()) {
+			/*
+			 * Entire user mode segment is gone
+			 */
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
 			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
@@ -4990,15 +4984,15 @@ pmap_page_protect4m(pg, prot)
 			}
 		}
 
-	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pool_put(&pv_pool, pv);
-		if ((pv = npv) == NULL)
-			break;
+		pv = npv;
 	}
+
+	/* Finally, update pv head */
 	pv0->pv_pmap = NULL;
-	pv0->pv_next = NULL; /* ? */
+	pv0->pv_next = NULL;
 	pv0->pv_flags = flags;
 	setcontext4m(ctx);
 	splx(s);
