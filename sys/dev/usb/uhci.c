@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.37 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,6 +212,9 @@ usbd_status	uhci_device_setintr __P((uhci_softc_t *sc,
 void		uhci_intr_done __P((uhci_intr_info_t *ii));
 void		uhci_isoc_done __P((uhci_intr_info_t *ii));
 
+void		uhci_device_clear_toggle __P((usbd_pipe_handle pipe));
+void		uhci_noop __P((usbd_pipe_handle pipe));
+
 #ifdef USB_DEBUG
 static void	uhci_dumpregs __P((uhci_softc_t *));
 void		uhci_dump_tds __P((uhci_soft_td_t *));
@@ -240,6 +243,7 @@ struct usbd_methods uhci_root_ctrl_methods = {
 	uhci_root_ctrl_start,
 	uhci_root_ctrl_abort,
 	uhci_root_ctrl_close,
+	uhci_noop,
 	0,
 };
 
@@ -248,6 +252,7 @@ struct usbd_methods uhci_root_intr_methods = {
 	uhci_root_intr_start,
 	uhci_root_intr_abort,
 	uhci_root_intr_close,
+	uhci_noop,
 	0,
 };
 
@@ -256,6 +261,7 @@ struct usbd_methods uhci_device_ctrl_methods = {
 	uhci_device_ctrl_start,
 	uhci_device_ctrl_abort,
 	uhci_device_ctrl_close,
+	uhci_noop,
 	0,
 };
 
@@ -264,6 +270,7 @@ struct usbd_methods uhci_device_intr_methods = {
 	uhci_device_intr_start,
 	uhci_device_intr_abort,
 	uhci_device_intr_close,
+	uhci_device_clear_toggle,
 	0,
 };
 
@@ -272,6 +279,7 @@ struct usbd_methods uhci_device_bulk_methods = {
 	uhci_device_bulk_start,
 	uhci_device_bulk_abort,
 	uhci_device_bulk_close,
+	uhci_device_clear_toggle,
 	0,
 };
 
@@ -280,6 +288,7 @@ struct usbd_methods uhci_device_isoc_methods = {
 	uhci_device_isoc_start,
 	uhci_device_isoc_abort,
 	uhci_device_isoc_close,
+	uhci_noop,
 	uhci_device_isoc_setbuf,
 };
 
@@ -822,7 +831,6 @@ uhci_check_intr(sc, ii)
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
 	uhci_idone(ii);
-	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
 }
 
 void
@@ -830,6 +838,7 @@ uhci_idone(ii)
 	uhci_intr_info_t *ii;
 {
 	usbd_request_handle reqh = ii->reqh;
+	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
 	uhci_soft_td_t *std;
 	u_int32_t status;
 	int actlen;
@@ -869,6 +878,10 @@ uhci_idone(ii)
 		if (UHCI_TD_GET_PID(std->td->td_token) != UHCI_TD_PID_SETUP)
 			actlen += UHCI_TD_GET_ACTLEN(status);
 	}
+	/* If there are left over TDs we need to update the toggle. */
+	if (std)
+		upipe->nexttoggle = UHCI_TD_GET_DT(std->td->td_token);
+
 	status &= UHCI_TD_ERROR;
 	DPRINTFN(10, ("uhci_check_intr: actlen=%d, status=0x%x\n", 
 		      actlen, status));
@@ -1201,7 +1214,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 		return (USBD_INVAL);
 	}
 	ntd = (len + maxp - 1) / maxp;
-	tog = upipe->pipe.endpoint->toggle;
+	tog = upipe->nexttoggle;
 	if (ntd % 2 == 0)
 		tog ^= 1;
 	upipe->nexttoggle = tog ^ 1;
@@ -1238,10 +1251,23 @@ uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 		tog ^= 1;
 	}
 	*sp = lastp;
-	/*upipe->pipe.endpoint->toggle = tog;*/
-	DPRINTFN(10, ("uhci_alloc_std_chain: oldtog=%d nexttog=%d\n", 
-		      upipe->pipe.endpoint->toggle, upipe->nexttoggle));
+	DPRINTFN(10, ("uhci_alloc_std_chain: nexttog=%d\n", 
+		      upipe->nexttoggle));
 	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+uhci_device_clear_toggle(pipe)
+	usbd_pipe_handle pipe;
+{
+	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
+	upipe->nexttoggle = 0;
+}
+
+void
+uhci_noop(pipe)
+	usbd_pipe_handle pipe;
+{
 }
 
 usbd_status
@@ -1640,7 +1666,7 @@ uhci_device_request(reqh)
 		r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 		if (r != USBD_NORMAL_COMPLETION)
 			goto ret1;
-		upipe->pipe.endpoint->toggle = 1;
+		upipe->nexttoggle = 1;
 		r = uhci_alloc_std_chain(upipe, sc, len, isread, 
 					 reqh->flags & USBD_SHORT_XFER_OK,
 					 dmap, &xfer, &xferend);
@@ -2007,21 +2033,12 @@ uhci_bulk_done(ii)
 	uhci_softc_t *sc = ii->sc;
 	usbd_request_handle reqh = ii->reqh;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
-	uhci_soft_td_t *std;
 	u_int datalen = upipe->u.bulk.length;
 	usb_dma_t *dma;
 
 	LIST_REMOVE(ii, list);	/* remove from active list */
 
 	uhci_remove_bulk(sc, upipe->u.bulk.sqh);
-
-	/* find the toggle for the last transfer and invert it */
-	for (std = ii->stdstart; std; std = std->td->link.std) {
-		if (std->td->td_status & UHCI_TD_ACTIVE)
-			break;
-		upipe->nexttoggle = UHCI_TD_GET_DT(std->td->td_token);
-	}
-	upipe->nexttoggle ^= 1;
 
 	/* copy the data from dma memory to userland storage */
 	dma = &upipe->u.bulk.datadma;

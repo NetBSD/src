@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.37 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -461,7 +461,6 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	found:
 		ifc->endpoints[endpt].edesc = ed;
 		ifc->endpoints[endpt].refcnt = 0;
-		ifc->endpoints[endpt].toggle = 0;
 		p += ed->bLength;
 	}
 #undef ed
@@ -675,6 +674,9 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 		free(p, M_USB);
 		return (r);
 	}
+	/* Clear any stall and make sure DATA0 toggle will be used next. */
+	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT)
+		usbd_clear_endpoint_stall(p);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
