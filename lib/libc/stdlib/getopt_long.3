@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.10 2002/10/02 10:50:04 wiz Exp $
+.\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ function is similar to
 but it accepts options in two forms: words and characters.
 The
 .Fn getopt_long
-function provides a superset of of the functionality of
+function provides a superset of the functionality of
 .Xr getopt 3 .
 .Fn getopt_long
 can be used in two ways.
@@ -121,18 +121,23 @@ an argument to the option may be presented.
 .Pp
 If
 .Fa flag
-is non-NULL, then the integer pointed to by it will be set to the
-value in the
+is not
+.Dv NULL ,
+then the integer pointed to by it will be set to the value in the
 .Fa val
 field.
 If the
 .Fa flag
-field is NULL, then the
+field is
+.Dv NULL ,
+then the
 .Fa val
 field will be returned.
 Setting
 .Fa flag
-to NULL and setting
+to
+.Dv NULL
+and setting
 .Fa val
 to the corresponding short option will make this function act just
 like
@@ -214,11 +219,12 @@ handling of --a in getopt:
 .It Li GNU
 parses this as option '-', option 'a'.
 .It Li NetBSD
-parses this as '--', and returns -1 (ignoring the a).
+parses this as '--', and returns \-1 (ignoring the a).
 (Because the original getopt does.)
 .El
 .It Li o
-setting of optopt for long options with flag != NULL:
+setting of optopt for long options with flag !=
+.Dv NULL :
 .Bl -tag -width "NetBSD"
 .It Li GNU
 sets optopt to val.
@@ -231,7 +237,7 @@ handling of -W with W; in option string in getopt (not getopt_long):
 .It Li GNU
 causes a segfault.
 .It Li NetBSD
-returns -1, with optind pointing past the argument of -W
+returns \-1, with optind pointing past the argument of -W
 (as if `-W arg' were `--arg', and thus '--' had been found).
 .\" How should we treat W; in the option string when called via
 .\" getopt?  Ignore the ';' or treat it as a ':'? Issue a warning?
@@ -243,7 +249,9 @@ invoked via -W (W; in option string):
 .It Li GNU
 sets optarg to the option name (the argument of -W).
 .It Li NetBSD
-sets optarg to NULL (the argument of the long option).
+sets optarg to
+.Dv NULL
+(the argument of the long option).
 .El
 .It Li o
 handling of -W with an argument that is not (a prefix to) a known
@@ -253,7 +261,9 @@ long option (W; in option string):
 returns -W with optarg set to the unknown option.
 .It Li NetBSD
 treats this as an error (unknown option) and returns '?' with
-optopt set to 0 and optarg set to NULL (as GNU's man page documents).
+optopt set to 0 and optarg set to
+.Dv NULL
+(as GNU's man page documents).
 .El
 .It Li o
 The error messages are different.
@@ -261,7 +271,7 @@ The error messages are different.
 NetBSD does not permute the argument vector at the same points in
 the calling sequence as GNU does.
 The aspects normally used by the caller
-(ordering after -1 is returned, value of optind relative
+(ordering after \-1 is returned, value of optind relative
 to current positions) are the same, though.
 (We do fewer variable swaps.)
 .El
@@ -275,6 +285,6 @@ The first
 .Nx
 implementation appeared in 1.5.
 .Sh BUGS
-The implementation, can completely replace
+The implementation can completely replace
 .Xr getopt 3 ,
 but right now we are using separate code.
