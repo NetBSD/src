@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2002/03/17 17:55:26 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2002/03/24 18:04:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -121,6 +121,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	/* Copy flags */
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
+	/* Sync the switchframe before we copy it. */
+	if (p1 == curproc)
+		savectx(curpcb);
+
 	/* Copy PCB */
 	pcb = &p2->p_addr->u_pcb;
 	*pcb = p1->p_addr->u_pcb;
@@ -173,7 +177,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	sf->sf_r15 = pcb->pcb_sp;	/* stack pointer */
 	/* when switch to me, jump to proc_trampoline */
 	sf->sf_pr  = (int)proc_trampoline;
-	sf->sf_ppl = 0;
+	sf->sf_sr &= ~0xf0;		/* SR.IMASK = 0 */
 }
 
 /*
@@ -186,7 +190,7 @@ void
 cpu_exit(struct proc *p)
 {
 	
-	splhigh();
+	splsched();
 	uvmexp.swtch++;
 
 	/* Switch to proc0 stack */

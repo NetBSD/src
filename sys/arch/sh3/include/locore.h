@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: locore.h,v 1.5 2002/03/24 18:04:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,14 +52,14 @@
  * BANK1 r6 conatins current frame pointer. (per process)
  */		 		 	
 /*
- * EXCEPTION_ENTRY:		
+ * __EXCEPTION_ENTRY:		
  *	+ setup stack pointer
  *	+ save all register to frame. (struct trapframe)
  *	+ setup kernel stack.
  *	+ change bank from 1 to 0
- *	+ set BANK0 (r4, r5) = (ssr, spc)
+ *	+ set BANK0 (r4, r5, r6) = (ssr, spc, ssp)
  */
-#define	EXCEPTION_ENTRY							;\
+#define	__EXCEPTION_ENTRY							;\
 	/* Check kernel/user mode. */					;\
 	mov	#0x40,	r3						;\
 	swap.b	r3,	r3						;\
@@ -101,21 +101,21 @@
 	mov	r14,	r6	/* store frame pointer */		;\
 	/* Change register bank to 0 */					;\
 	shlr	r3		/* r3 = 0x20000000 */			;\
-	stc	sr,	r0	/* r0 = SR */				;\
+	stc	sr,	r1	/* r1 = SR */				;\
 	not	r3,	r3						;\
-	and	r0,	r3						;\
+	and	r1,	r3						;\
 	ldc	r3,	sr	/* SR.RB = 0 */				;\
 	/* Set up argument. r4 = ssr, r5 = spc */			;\
 	stc	r2_bank,r4						;\
 	stc	spc,	r5
 
 /*	
- * EXCEPTION_RETURN:	 
+ * __EXCEPTION_RETURN:	 
  *	+ block exception	
  *	+ restore all register from stack. 
  *	+ rte.	
  */
-#define	EXCEPTION_RETURN						;\
+#define	__EXCEPTION_RETURN						;\
 	mov	#0x10,	r0						;\
 	swap.b	r0,	r0						;\
 	swap.w	r0,	r0	/* r0 = 0x10000000 */			;\
@@ -196,33 +196,6 @@
 	stc	sr,	Rm						;\
 	and	Rn,	Rm						;\
 	ldc	Rm,	sr	/* unmask all interrupt */
-
-#define	RECURSEENTRY							;\
-	mov	r14,	r0						;\
-	stc	r6_bank,r14						;\
-	mov.l	r0,	@-r14						;\
-	mov.l	r15,	@-r14						;\
-	mov.l	r0,	@-r14						;\
-	mov.l	r1,	@-r14						;\
-	mov.l	r2,	@-r14						;\
-	mov.l	r3,	@-r14						;\
-	mov.l	r4,	@-r14						;\
-	mov.l	r5,	@-r14						;\
-	mov.l	r6,	@-r14						;\
-	mov.l	r7,	@-r14						;\
-	mov.l	r8,	@-r14						;\
-	mov.l	r9,	@-r14						;\
-	mov.l	r10,	@-r14						;\
-	mov.l	r11,	@-r14						;\
-	mov.l	r12,	@-r14						;\
-	mov.l	r13,	@-r14						;\
-	sts.l	pr,	@-r14						;\
-	sts.l	mach,	@-r14						;\
-	sts.l	macl,	@-r14						;\
-	stc.l	ssr,	@-r14						;\
-	stc.l	spc,	@-r14						;\
-	add	#-8,	r14	/* tf_ubc, tf_trapno */			;\
-	ldc	r14,	r6_bank /* roll down frame */
 
 #ifndef _LOCORE
 void sh3_switch_setup(struct proc *);
