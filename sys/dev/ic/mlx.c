@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.7 2001/04/30 03:48:06 lukem Exp $	*/
+/*	$NetBSD: mlx.c,v 1.8 2001/05/06 19:53:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -342,6 +342,15 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* Disable interrupts before we start talking to the controller */
 	(*mlx->mlx_intaction)(mlx, 0);
+
+	/* If we've got a reset routine, then reset the controller now. */
+	if (mlx->mlx_reset != NULL) {
+		printf("%s: resetting controller...\n", mlx->mlx_dv.dv_xname);
+		if ((*mlx->mlx_reset)(mlx) != 0) {
+			printf("%s: reset failed\n", mlx->mlx_dv.dv_xname);
+			return;
+		}
+	}
 
 	/* 
 	 * Wait for the controller to come ready, handshaking with the

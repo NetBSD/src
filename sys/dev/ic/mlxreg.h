@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxreg.h,v 1.1 2001/02/04 17:05:12 ad Exp $	*/
+/*	$NetBSD: mlxreg.h,v 1.2 2001/05/06 19:53:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,8 +120,10 @@
 #define	MLX_V1_IDB_INIT_BUSY	0x02	/* init in progress */
 
 #define	MLX_V1_IDB_SACK		0x02	/* acknowledge status read */
+#define	MLX_V1_IDB_RESET	0x10	/* reset controller */
 
 #define	MLX_V1_ODB_SAVAIL	0x01	/* status is available */
+#define	MLX_V1_ODB_RESET	0x02	/* reset controller */
 
 #define	MLX_V1_FWERROR_PEND	0x04	/* firmware error pending */
 
@@ -144,6 +146,7 @@
 #define	MLX_V3_IDB_INIT_BUSY	0x02	/* init in progress */
 
 #define	MLX_V3_IDB_SACK		0x02	/* acknowledge status read */
+#define	MLX_V3_IDB_RESET	0x08	/* reset controller */
 
 #define	MLX_V3_ODB_SAVAIL	0x01	/* status is available */
 
