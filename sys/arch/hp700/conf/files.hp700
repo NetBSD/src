@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.7 2003/11/18 04:04:42 chs Exp $
+#	$NetBSD: files.hp700,v 1.8 2004/03/12 11:41:39 jkunz Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -146,6 +146,10 @@ file	arch/hp700/gsc/lpt_gsc.c		lpt
 device	ie: ifnet, ether, arp, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hp700/gsc/if_ie_gsc.c	ie_gsc
+
+device	iee: ifnet, ether, arp, i82596
+attach	iee at gsc with iee_gsc
+file	arch/hp700/gsc/if_iee_gsc.c	iee_gsc
 
 attach	siop at gsc with siop_gsc
 file	arch/hp700/gsc/siop_gsc.c	siop_gsc
