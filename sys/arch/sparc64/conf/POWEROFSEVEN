@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.13 2000/07/18 04:17:23 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.14 2000/07/25 17:26:36 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -12,6 +12,7 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - Ultra 140 and 170
+#options 	LOCKDEBUG
 options		__ELF__		# we use elf 
 #options 	_LP64		# we're using a 64-bit compiler
 
@@ -364,15 +365,15 @@ options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 
 # MII/PHY support
-#exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
-#inphy*	at mii? phy ?			# Intel 82555 PHYs
-#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-#tlphy*	at mii? phy ?			# ThunderLAN PHYs
-#ukphy*	at mii? phy ?			# generic unknown PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 ## Loopback network interface; required
 pseudo-device	loop
