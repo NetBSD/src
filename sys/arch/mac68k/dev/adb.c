@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.27 1999/02/11 06:41:07 ender Exp $	*/
+/*	$NetBSD: adb.c,v 1.28 1999/11/05 18:08:02 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -140,7 +140,7 @@ adbattach(parent, dev, aux)
 		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
-	printf(" (mrg)  ");
+	printf(" (mrg)");
 	ADBAlternateInit();
 #else
 	ADBReInit();
