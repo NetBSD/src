@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1 2003/01/19 23:05:04 scw Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.2 2003/01/22 13:44:37 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "SYS.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.1 2003/01/19 23:05:04 scw Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.2 2003/01/22 13:44:37 scw Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -47,8 +47,9 @@ WEAK_ALIAS(getcontext, _getcontext)
 
 ENTRY(_getcontext)
 	or	r2, r63, r3		/* Preserve ucp in r3 across syscall */
+	or	r18, r63, r4		/* Preserve return address similarly */
 	SYSCALL(getcontext)
-	ptabs/l	r18, tr0
+	ptabs/l	r4, tr0
 	st.q	r3, 72, r63		/* Arrange for return value of 0 */
-	st.q	r3, 176, r18		/* Adjust saved program counter */
+	st.q	r3, 40, r4		/* Adjust saved program counter */
 	blink	tr0, r63
