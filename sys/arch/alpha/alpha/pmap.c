@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24 1998/03/26 19:06:28 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.25 1998/03/26 22:18:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 1998/03/26 19:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 1998/03/26 22:18:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1955,6 +1955,13 @@ pmap_collect(pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_collect(%p)\n", pmap);
 #endif
+
+	/*
+	 * This process is about to be swapped out; free all of
+	 * the PT pages by removing the physical mappings for its
+	 * entire address space.
+	 */
+	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
