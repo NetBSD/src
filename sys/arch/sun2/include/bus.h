@@ -1,7 +1,7 @@
-/*	$NetBSD: bus.h,v 1.1 2001/03/29 04:16:21 fredette Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2001/04/06 13:09:10 fredette Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -153,8 +153,6 @@ struct sun2_bus_space_tag {
 
 /*
  * Bus space function prototypes.
- * In bus_space_map2(), supply a special virtual address only if you
- * get it from ../sun2/vaddrs.h.
  */
 static int	bus_space_map __P((
 				bus_space_tag_t,
@@ -305,6 +303,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define BUS_SPACE_MAP_BUS3	0x0400
 #define BUS_SPACE_MAP_BUS4	0x0800
 
+/* Internal flag: try to find and use a PROM maping for the device. */
+#define	_SUN2_BUS_MAP_USE_PROM		BUS_SPACE_MAP_BUS1
 
 /* flags for intr_establish() */
 #define BUS_INTR_ESTABLISH_FASTTRAP	1
@@ -914,6 +914,12 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 /* Internal flag: current DVMA address is equal to the KVA buffer address */
 #define _BUS_DMA_DIRECTMAP	BUS_DMA_BUS2
 
+/*
+ * Internal flag: current DVMA address has been double-mapped by hand
+ * to the KVA buffer address (without the pmap's help).
+ */
+#define	_BUS_DMA_NOPMAP		BUS_DMA_BUS3
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -1057,6 +1063,8 @@ int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct uio *, int));
 int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
+int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+				bus_size_t, struct proc *, int));
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
@@ -1066,6 +1074,9 @@ int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
 void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
+int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+				int nsegs, size_t size, caddr_t *kvap,
+				int flags));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
 paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
