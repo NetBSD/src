@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.50 1997/04/09 21:12:10 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.51 1997/07/08 21:42:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -214,7 +214,18 @@ bread(vp, blkno, size, cred, bpp)
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
-	/* Wait for the read to complete, and return result. */
+	/*
+	 * Delayed write buffers are found in the cache and have
+	 * valid contents. Also, B_ERROR is not set, otherwise
+	 * getblk() would not have returned them.
+	 */
+	if (ISSET(bp->b_flags, B_DELWRI))
+		return (0);
+
+	/*
+	 * Otherwise, we had to start a read for it; wait until
+	 * it's valid and return the result.
+	 */
 	return (biowait(bp));
 }
 
@@ -248,7 +259,18 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
 	}
 
-	/* Otherwise, we had to start a read for it; wait until it's valid. */
+	/*
+	 * Delayed write buffers are found in the cache and have
+	 * valid contents. Also, B_ERROR is not set, otherwise
+	 * getblk() would not have returned them.
+	 */
+	if (ISSET(bp->b_flags, B_DELWRI))
+		SET(bp->b_flags, B_DONE);
+
+	/*
+	 * Otherwise, we had to start a read for it; wait until
+	 * it's valid and return the result.
+	 */
 	return (biowait(bp));
 }
 
