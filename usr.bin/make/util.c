@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.18 1998/10/18 14:24:16 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.18 1998/10/18 14:24:16 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.18 1998/10/18 14:24:16 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.19 1998/11/06 23:31:09 christos Exp $");
 #endif
 #endif
 
@@ -140,9 +140,9 @@ random()
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) ()
+signal(s, a)) __P((int))
     int     s;
-    void (*a)();
+    void (*a) __P((int));
 {
     struct sigvec osv, sv;
 
@@ -339,9 +339,9 @@ utimes(file, tvp)
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) ()
+signal(s, a)) __P((int))
     int     s;
-    void (*a)();
+    void (*a) __P((int));
 {
     struct sigaction sa, osa;
 
@@ -379,9 +379,9 @@ vsnprintf(s, n, fmt, args)
 	const char *fmt;
 	va_list args;
 {
+#ifdef STRFLAG
 	FILE fakebuf;
 
-#ifdef STRFLAG
 	fakebuf._flag = STRFLAG;
 	/*
 	 * Some os's are char * _ptr, others are unsigned char *_ptr...
