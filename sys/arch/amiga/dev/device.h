@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.10 1994/03/28 06:16:19 chopps Exp $
+ *	$Id: device.h,v 1.11 1994/04/05 18:11:52 chopps Exp $
  */
 
 struct driver {
@@ -114,6 +114,7 @@ struct amiga_hw {
 #define PROD_BUILTIN_DISPLAY	7
 #define PROD_BUILTIN_MOUSE	8
 #define PROD_BUILTIN_CLOCK2	9
+#define PROD_BUILTIN_FLOP	10
 
 /* They have more than one manuf-id */
 #define MANUF_CBM_1		513
@@ -200,6 +201,7 @@ struct amiga_hw {
 #define	D_COMMSER	0x05
 #define	D_PPORT		0x06
 #define D_CLOCK		0x07
+#define D_FLOP		0x0a
 #define	D_MISC		0x7F
 
 #define HW_ISCTLR(hw)	((hw)->hw_type & C_FLAG)
