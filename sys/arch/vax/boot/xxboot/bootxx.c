@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.8 2000/05/23 23:34:21 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.9 2000/06/04 19:58:17 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -254,25 +254,35 @@ romstrategy(sc, func, dblk, size, buf, rsize)
  * already that has valid layout info. If there is no label, we can't boot
  * anyway.
  */
+
+#define MBA_WCSR(reg, val) \
+	((void)(*(volatile u_int32_t *)((adpadr) + (reg)) = (val)));
+#define MBA_RCSR(reg) \
+	(*(volatile u_int32_t *)((adpadr) + (reg)))
+#define HP_WCSR(reg, val) \
+	((void)(*(volatile u_int32_t *)((unitadr) + (reg)) = (val)));
+#define HP_RCSR(reg) \
+	(*(volatile u_int32_t *)((unitadr) + (reg)))
+
 void
 hpread(int bn)
 {
-	volatile struct mba_regs *mr = (void *) bootregs[1];
-	volatile struct hp_drv *hd = (void*)&mr->mba_md[bootregs[3]];
+	int adpadr = bootregs[1];
+	int unitadr = adpadr + MUREG(bootregs[3], 0);
 	u_int cn, sn, tn;
 	struct disklabel *dp;
 	extern char start;
 
 	dp = (struct disklabel *)(LABELOFFSET + &start);
-	*(int *)&mr->mba_map[0] = PG_V;
+	MBA_WCSR(MAPREG(0), PG_V);
 
-	mr->mba_var = 0;
-	mr->mba_bc = (~512) + 1;
+	MBA_WCSR(MBA_VAR, 0);
+	MBA_WCSR(MBA_BC, (~512) + 1);
 #ifdef __GNUC__
 	/*
 	 * Avoid four subroutine calls by using hardware division.
 	 */
-	asm("clrl r1;ediv %4,%3,%0,%1;movl %1,r0;ediv %5,r0,%2,%1"
+	asm("clrl r1;movl %3,r0;ediv %4,r0,%0,%1;movl %1,r0;ediv %5,r0,%2,%1"
 	    : "=g"(cn),"=g"(sn),"=g"(tn)
 	    : "g"(bn),"g"(dp->d_secpercyl),"g"(dp->d_nsectors)
 	    : "r0","r1","cc");
@@ -282,10 +292,11 @@ hpread(int bn)
 	tn = sn / dp->d_nsectors;
 	sn = sn % dp->d_nsectors;
 #endif
-	hd->hp_dc = cn;
-	hd->hp_da = (tn << 8) | sn;
-	hd->hp_cs1 = HPCS_READ;
-	while (mr->mba_sr & MBASR_DTBUSY)
+	HP_WCSR(HP_DC, cn);
+	HP_WCSR(HP_DA, (tn << 8) | sn);
+	HP_WCSR(HP_CS1, HPCS_READ);
+
+	while (MBA_RCSR(MBA_SR) & MBASR_DTBUSY)
 		;
 	return;
 }
