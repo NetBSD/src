@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.26 1998/01/24 18:26:09 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.27 1998/05/07 21:13:24 kleink Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -502,8 +502,8 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct svr4_sigframe *)(psp->ps_sigstk.ss_sp +
-					      psp->ps_sigstk.ss_size);
+		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+		                                       psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct svr4_sigframe *)oldsp;
