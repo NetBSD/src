@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs_softdep.stub.c,v 1.4 2001/01/10 16:45:56 ad Exp $	*/
+
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
  *
