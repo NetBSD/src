@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.220 2001/11/15 21:43:54 atatat Exp $
+#	$NetBSD: bsd.own.mk,v 1.221 2001/11/19 02:46:50 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -22,6 +22,12 @@ NEED_OWN_INSTALL_TARGET?=	yes
     ${MACHINE_ARCH} == "sparc64"
 USE_NEW_TOOLCHAIN=nowarn
 .endif
+.endif
+
+.if defined(USE_NEW_TOOLCHAIN)
+CPPFLAG_ISYSTEM=	-isystem
+.else
+CPPFLAG_ISYSTEM=	-idirafter
 .endif
 
 .if !defined(_SRC_TOP_)
