@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.11 1995/05/05 14:13:01 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.12 1995/06/05 17:17:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -37,7 +37,6 @@
 #include "machine/pcb.h"
 
 #define enablertclock()
-#define	cpu_swapin(p)
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
 
