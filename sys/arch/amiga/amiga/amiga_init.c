@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.57 1998/02/09 22:14:46 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.58 1998/04/10 15:59:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -749,8 +749,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 * some nice variables for pmap to use
 		 */
 		RELOC(amigahwaddr, vm_offset_t) = RELOC(DRCCADDR, u_int);
-		RELOC(namigahwpg, u_int) =
-		    NDRCCPG + NDRCIAPG + RELOC(NZTWOMEMPG, u_int);
 	} else 
 #endif
 	{
@@ -776,16 +774,17 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 * some nice variables for pmap to use
 		 */
 		RELOC(amigahwaddr, vm_offset_t) = RELOC(CHIPMEMADDR, u_int);
-		RELOC(namigahwpg, u_int) =
-		    NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int);
 	}
+
+	/* Set number of pages to reserve for mapping Amiga hardware pages */
+	RELOC(namigahwpg, u_int) = ptextra;
 
 	/*
 	 * set this before copying the kernel, so the variable is updated in
 	 * the `real' place too. protorp[0] is already preset to the
 	 * CRP setting.
 	 */
-	(RELOC(protorp[1], u_int)) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
+	RELOC(protorp[1], u_int) = RELOC(Sysseg_pa, u_int);	/* + segtable address */
 
 	/*
 	 * copy over the kernel (and all now initialized variables)
