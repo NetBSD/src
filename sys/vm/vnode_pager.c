@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.8 (Berkeley) 2/13/94
- *	$Id: vnode_pager.c,v 1.10 1994/05/24 01:07:50 cgd Exp $
+ *	$Id: vnode_pager.c,v 1.11 1994/05/30 13:10:06 mycroft Exp $
  */
 
 /*
@@ -472,12 +472,15 @@ vnode_pager_uncache(vp)
 		return (TRUE);
 #ifdef DEBUG
 	if (!VOP_ISLOCKED(vp)) {
-#if (BSD > 199103)
-#warning if should go away now
 #ifdef NFSCLIENT
+#if (BSD > 199103)
 		extern int (**nfsv2_vnodeop_p)();
 
 		if (vp->v_op != nfsv2_vnodeop_p)
+#else
+		extern struct vnodeops nfsv2_vnodeops;
+
+		if (vp->v_op != &nfsv2_vnodeops)
 #endif
 #endif
 			panic("vnode_pager_uncache: vnode not locked!");
