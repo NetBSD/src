@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.17 2003/03/30 11:58:17 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.18 2003/04/02 15:01:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.17 2003/03/30 11:58:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.18 2003/04/02 15:01:52 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,18 +156,16 @@ smb_rq_done(struct smb_rq *rqp)
 int
 smb_rq_simple(struct smb_rq *rqp)
 {
-	struct smb_vc *vcp = rqp->sr_vc;
-	int error = EINVAL, i;
+	int error, i;
 
 	for (i = 0; i < SMB_MAXRCN; i++) {
 		rqp->sr_flags &= ~SMBR_RESTART;
-		rqp->sr_timo = vcp->vc_timo;
 		rqp->sr_state = SMBRQ_NOTSENT;
 		error = smb_rq_enqueue(rqp);
 		if (error)
 			return error;
 		error = smb_rq_reply(rqp);
-		if (error == 0)
+		if (!error)
 			break;
 		if ((rqp->sr_flags & (SMBR_RESTART | SMBR_NORESTART)) != SMBR_RESTART)
 			break;
