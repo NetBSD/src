@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.6 2000/02/05 11:57:30 enami Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.7 2000/02/12 23:58:09 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,6 +72,11 @@ segment size of 1M is used.
 The block size of the file system in bytes.  If not specified, the block
 size is taken from the partition label, or if the partition label
 indicates 0, a compile-time default of 8K is used.
+.It Fl F
+Force creation of an LFS even on a partition labeled as another type.
+.Nm
+will use compile-time default values for block and fragment size, and segment
+shift, unless these are overridden by command-line flags.
 .It Fl f Ar fragment-size
 The fragment size of the file system in bytes.  If not specified,
 the fragment size is taken from the partition label, or if the partition
