@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.13 1999/10/13 08:10:55 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.14 1999/11/12 00:34:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ typedef struct ohci_soft_td {
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
 	LIST_ENTRY(ohci_soft_td) hnext;
-	usbd_request_handle reqh;
+	usbd_xfer_handle xfer;
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
@@ -87,7 +87,7 @@ typedef struct ohci_softc {
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
 
-	usbd_request_handle sc_intrreqh;
+	usbd_xfer_handle sc_intrxfer;
 
 	char sc_vendor[16];
 	int sc_id_vendor;

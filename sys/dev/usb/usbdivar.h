@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.39 1999/11/10 04:19:59 mycroft Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.40 1999/11/12 00:34:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
 
-struct usbd_request;
+struct usbd_xfer;
 struct usbd_pipe;
 
 struct usbd_endpoint {
@@ -57,12 +57,12 @@ struct usbd_bus_methods {
 };
 
 struct usbd_pipe_methods {
-	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
-	usbd_status	      (*start)__P((usbd_request_handle reqh));
-	void		      (*abort)__P((usbd_request_handle reqh));
+	usbd_status	      (*transfer)__P((usbd_xfer_handle xfer));
+	usbd_status	      (*start)__P((usbd_xfer_handle xfer));
+	void		      (*abort)__P((usbd_xfer_handle xfer));
 	void		      (*close)__P((usbd_pipe_handle pipe));
 	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
-	void		      (*done)__P((usbd_request_handle reqh));
+	void		      (*done)__P((usbd_xfer_handle xfer));
 };
 
 struct usbd_port {
@@ -144,17 +144,17 @@ struct usbd_pipe {
 	struct usbd_endpoint   *endpoint;
 	int			refcnt;
 	char			running;
-	SIMPLEQ_HEAD(, usbd_request) queue;
+	SIMPLEQ_HEAD(, usbd_xfer) queue;
 	LIST_ENTRY(usbd_pipe)	next;
 
-	usbd_request_handle     intrreqh; /* used for repeating requests */
+	usbd_xfer_handle     intrxfer; /* used for repeating requests */
 	char			repeat;
 
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
 };
 
-struct usbd_request {
+struct usbd_xfer {
 	struct usbd_pipe       *pipe;
 	void		       *priv;
 	void		       *buffer;
@@ -182,7 +182,7 @@ struct usbd_request {
 #define URQ_AUTO_DMABUF	0x10
 #define URQ_DEV_DMABUF	0x20
 
-	SIMPLEQ_ENTRY(usbd_request) next;
+	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
 	int			hcprivint; /* ditto */
@@ -216,8 +216,8 @@ usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev,
 					  int i, int a));
 void		usb_free_device __P((usbd_device_handle));
 
-usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
-void		usb_transfer_complete __P((usbd_request_handle reqh));
+usbd_status	usb_insert_transfer __P((usbd_xfer_handle xfer));
+void		usb_transfer_complete __P((usbd_xfer_handle xfer));
 void		usb_disconnect_port __P((struct usbd_port *up, device_ptr_t));
 
 /* Routines from usb.c */
