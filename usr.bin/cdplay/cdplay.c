@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.12 2001/02/19 23:03:45 cgd Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.13 2001/07/01 05:04:26 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.13 2001/07/01 05:04:26 gmcgarry Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -97,6 +97,8 @@ __RCSID("$NetBSD: cdplay.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
 #define CMD_RESET       12
 #define CMD_SET         13
 #define CMD_STATUS      14
+#define CMD_NEXT	15
+#define CMD_PREV	16
 #define STATUS_AUDIO    0x1
 #define STATUS_MEDIA    0x2
 #define STATUS_VOLUME   0x4
@@ -117,6 +119,8 @@ struct cmdtab {
 { CMD_PLAY,     "play",         1, "track1[.index1] [track2[.index2]]" },
 { CMD_PLAY,     "play",         1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
 { CMD_PLAY,     "play",         1, "[#block [len]]" },
+{ CMD_PREV,	"prev",		2, "" },
+{ CMD_NEXT,	"next",		1, "" },
 { CMD_QUIT,     "quit",         1, "" },
 { CMD_RESET,    "reset",        4, "" },
 { CMD_RESUME,   "resume",       1, "" },
@@ -146,6 +150,7 @@ int	get_vol __P((int *, int *));
 int	status __P((int *, int *, int *, int *));
 int	opencd __P((void));
 int	play __P((char *));
+int	skip __P((int));
 int	info __P((char *));
 int	pstatus __P((char *));
 char	*prompt __P((void));
@@ -367,6 +372,12 @@ run(cmd, arg)
 			arg++;
 		return (play(arg));
 
+	case CMD_PREV:
+		return (skip(-1));
+
+	case CMD_NEXT:
+		return (skip(1));
+	
 	case CMD_SET:
 		if (!strcasecmp(arg, "msf"))
 			msf = 1;
@@ -675,6 +686,28 @@ Try_Absolute_Timed_Addresses:
 Clean_up:
 	warnx("invalid command arguments");
 	return (0);
+}
+
+int
+skip(dir)
+	int dir;
+{
+	char str[4];
+	int rc, trk, m, s, f;
+	struct ioc_toc_header h;
+	
+	if ((rc = ioctl(fd, CDIOREADTOCHEADER, &h)) <  0) {
+		printf("ioctl failed\n");
+		return (rc);
+	}
+	if ((rc = status(&trk, &m, &s, &f)) < 0) {
+		printf("status failed\n");
+		return (rc);
+	}
+	if (trk+dir > h.ending_track || trk+dir < h.starting_track)
+		return (0);
+	sprintf(str, "%d", trk+dir);
+	return (play(str));
 }
 
 char *
