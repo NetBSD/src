@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 1997/10/19 14:25:24 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 1997/10/19 19:31:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -100,8 +100,6 @@
 #define LOOKUP	0
 #define INSERT	1
 #define REPLACE	2
-
-#define ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 
 #define ALLOC(x) (struct x *) malloc(sizeof(struct x))
 

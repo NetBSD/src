@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.11 1997/10/18 16:48:39 mrg Exp $	*/
+/*	$NetBSD: wc.c,v 1.12 1997/10/19 19:33:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$NetBSD: wc.c,v 1.11 1997/10/18 16:48:39 mrg Exp $";
+static char rcsid[] = "$NetBSD: wc.c,v 1.12 1997/10/19 19:33:37 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,15 +175,13 @@ cnt(file)
 		 * of inode.
 		 */
 		else if (dochar) {
-			int ifmt;
-
 			if (fstat(fd, &sb)) {
 				warn("%s", file);
 				rval = 1;
 			} else {
-				ifmt = sb.st_mode & S_IFMT;
-				if (ifmt == S_IFREG || ifmt == S_IFLNK
-					|| ifmt == S_IFDIR) {
+				if (S_ISREG(sb.st_mode) ||
+				    S_ISLNK(sb.st_mode) ||
+				    S_ISDIR(sb.st_mode)) {
 					charct = sb.st_size;
 				} else {
 					while ((len = read(fd, buf, MAXBSIZE)) > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1997/03/13 06:19:19 mikel Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/10/19 19:37:31 mycroft Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -19,7 +19,7 @@
 
 #if !defined(lint) && !defined(LINT)
 /*static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";*/
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1997/03/13 06:19:19 mikel Exp $";
+static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/10/19 19:37:31 mycroft Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -208,7 +208,7 @@ set_cron_cwd()
 			exit(ERROR_EXIT);
 		}
 	}
-	if (!(sb.st_mode & S_IFDIR)) {
+	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
 			CRONDIR);
 		exit(ERROR_EXIT);
@@ -232,7 +232,7 @@ set_cron_cwd()
 			exit(ERROR_EXIT);
 		}
 	}
-	if (!(sb.st_mode & S_IFDIR)) {
+	if (!S_ISDIR(sb.st_mode)) {
 		fprintf(stderr, "'%s' is not a directory, bailing out.\n",
 			SPOOL_DIR);
 		exit(ERROR_EXIT);

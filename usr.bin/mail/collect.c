@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.11 1997/10/19 05:03:10 lukem Exp $	*/
+/*	$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.11 1997/10/19 05:03:10 lukem Exp $");
+__RCSID("$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,7 @@ exwrite(name, fp, f)
 		printf("\"%s\" ", name);
 		fflush(stdout);
 	}
-	if (stat(name, &junk) >= 0 && (junk.st_mode & S_IFMT) == S_IFREG) {
+	if (stat(name, &junk) >= 0 && S_ISREG(junk.st_mode)) {
 		if (!f)
 			fprintf(stderr, "%s: ", name);
 		fprintf(stderr, "File exists\n");
