@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.30 2002/05/25 23:29:17 wiz Exp $	*/
+/*	$NetBSD: ed.h,v 1.31 2003/04/17 02:54:07 lukem Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -112,6 +112,7 @@ if (--mutex == 0) { \
 
 /* STRTOL: convert a string to long */
 #define STRTOL(i, p) { \
+	errno = 0 ; \
 	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
 	    errno == ERANGE) { \
 		sprintf(errmsg, "number out of range"); \
