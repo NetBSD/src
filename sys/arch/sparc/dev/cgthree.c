@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.9 1994/10/15 05:48:54 deraadt Exp $
+ * $Id: cgthree.c,v 1.10 1994/11/02 04:55:53 deraadt Exp $
  */
 
 /*
@@ -244,7 +244,7 @@ cgthreeclose(dev, flags, mode, p)
 int
 cgthreeioctl(dev, cmd, data, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 	int flags;
 	struct proc *p;

@@ -42,7 +42,7 @@
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- * $Id: ms.c,v 1.2 1994/07/21 22:05:55 deraadt Exp $
+ * $Id: ms.c,v 1.3 1994/11/02 04:56:07 deraadt Exp $
  */
 
 /*
@@ -292,7 +292,7 @@ mswrite(dev, uio, flags)
 int
 msioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 	int flag;
 	struct proc *p;
