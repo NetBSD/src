@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.19 1999/08/27 06:17:33 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.20 1999/08/27 18:01:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.19 1999/08/27 06:17:33 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.20 1999/08/27 18:01:35 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -687,12 +687,13 @@ fts_build(sp, type)
 	 * If not changing directories set a pointer so that can just append
 	 * each new name into the path.
 	 */
-	maxlen = sp->fts_pathlen - cur->fts_pathlen;
 	len = NAPPEND(cur);
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
 		*cp++ = '/';
 	}
+	len++;
+	maxlen = sp->fts_pathlen - len;
 
 	level = cur->fts_level + 1;
 
@@ -712,7 +713,7 @@ fts_build(sp, type)
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
 		if (dlen >= maxlen) {	/* include space for NUL */
-			if (fts_palloc(sp, dlen + 1)) {
+			if (fts_palloc(sp, len + dlen + 1)) {
 				/*
 				 * No more memory for path or structures.  Save
 				 * errno, free up the current structure and the
@@ -729,10 +730,12 @@ mem1:				saved_errno = errno;
 				return (NULL);
 			}
 			adjust = 1;
-			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen;
+			if (ISSET(FTS_NOCHDIR))
+				cp = sp->fts_path + len;
+			maxlen = sp->fts_pathlen - len;
 		}
 
-		p->fts_pathlen = len + dlen + 1;
+		p->fts_pathlen = len + dlen;
 		p->fts_parent = sp->fts_cur;
 		p->fts_level = level;
 
@@ -1002,6 +1005,7 @@ static size_t
 fts_pow2(x)
 	size_t x;
 {
+
 	x--;
 	x |= x>>1;
 	x |= x>>2;
@@ -1019,12 +1023,14 @@ fts_pow2(x)
  * plus 256 bytes so don't realloc the path 2 bytes at a time. 
  */
 static int
-fts_palloc(sp, more)
+fts_palloc(sp, size)
 	FTS *sp;
-	size_t more;
+	size_t size;
 {
-	sp->fts_pathlen = fts_pow2(sp->fts_pathlen + more);
-	sp->fts_path = realloc(sp->fts_path, (size_t)sp->fts_pathlen);
+
+	size = fts_pow2(size);
+	sp->fts_pathlen = size;
+	sp->fts_path = realloc(sp->fts_path, size);
 	return (sp->fts_path == NULL);
 }
 
