@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.29 1998/01/12 18:59:06 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.30 1998/03/22 12:52:03 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ struct apm_softc {
 #define APMDEV_CTL	8
 
 static void	apmattach __P((struct device *, struct device *, void *));
-static int	apmmatch __P((struct device *, void *, void *));
+static int	apmmatch __P((struct device *, struct cfdata *, void *));
 
 #if 0
 static void	apm_devpowmgt_enable __P((int, u_int));
@@ -733,7 +733,8 @@ apm_busprobe()
 static int
 apmmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct apm_attach_args *aaa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.11 1998/03/16 15:48:00 leo Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.12 1998/03/22 12:53:55 drochner Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -168,7 +168,7 @@ int	ahc_isa_irq __P((bus_space_tag_t, bus_space_handle_t));
 int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
 int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
 
-int	ahc_isa_probe __P((struct device *, void *, void *));
+int	ahc_isa_probe __P((struct device *, struct cfdata *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ahc_isa_ca = {
@@ -339,7 +339,8 @@ ahc_isa_match(ia, iobase)
 int
 ahc_isa_probe(parent, match, aux)
         struct device *parent;
-        void *match, *aux; 
+        struct cfdata *match;
+	void *aux; 
 {       
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;

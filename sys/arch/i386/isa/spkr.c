@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.30 1998/01/12 18:59:19 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.31 1998/03/22 12:53:56 drochner Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -34,7 +34,7 @@
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
-int spkrprobe __P((struct device *, void *, void *));
+int spkrprobe __P((struct device *, struct cfdata *, void *));
 void spkrattach __P((struct device *, struct device *, void *));
 
 struct spkr_softc {
@@ -427,7 +427,7 @@ static void *spkr_inbuf;
 int
 spkrprobe (parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct cfdata *cf = match;

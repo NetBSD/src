@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.121 1998/03/21 04:05:48 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.122 1998/03/22 13:01:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -130,7 +130,7 @@ struct pc_softc {
 	struct	tty *sc_tty;
 };
 
-int pcprobe __P((struct device *, void *, void *));
+int pcprobe __P((struct device *, struct cfdata *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
@@ -436,7 +436,8 @@ async_update()
 int
 pcprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_int i;

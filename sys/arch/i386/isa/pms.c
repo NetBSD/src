@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.37 1998/01/12 18:59:18 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.38 1998/03/22 13:01:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles Hannum.
@@ -101,7 +101,7 @@ struct pms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int pmsprobe __P((struct device *, void *, void *));
+int pmsprobe __P((struct device *, struct cfdata *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
@@ -214,11 +214,11 @@ pms_pit_cmd(value)
  * provides the parent's io port and our irq.
  */
 int
-pmsprobe(parent, match, aux)
+pmsprobe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	u_char x;
 
 	/*

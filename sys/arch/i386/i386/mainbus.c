@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 1998/02/06 07:52:13 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 1998/03/22 12:52:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
 #include <machine/apmvar.h>
 #endif
 
-int	mainbus_match __P((struct device *, void *, void *));
+int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach mainbus_ca = {
@@ -89,7 +89,8 @@ int	eisa_has_been_seen;
 int
 mainbus_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 
 	return 1;
