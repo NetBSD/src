@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.18 2002/07/24 07:00:26 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.19 2002/07/24 23:34:49 heinz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -852,7 +852,7 @@ The Xarm32VIDC and Xprt servers.
 .
 .if \n[amiga] \{\
 .It Sy xserver
-.showsize -unknown- -unknown-
+.showsize 2 4
 .\}
 .
 .if \n[atari] \{\
