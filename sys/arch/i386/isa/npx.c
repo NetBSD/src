@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.96 2003/10/07 14:35:37 skd Exp $	*/
+/*	$NetBSD: npx.c,v 1.97 2003/10/08 19:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.96 2003/10/07 14:35:37 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.97 2003/10/08 19:10:30 thorpej Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -435,7 +435,7 @@ npxintr(void *arg, struct intrframe iframe)
 	/*
 	 * Pass exception to process.
 	 */
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->if_eip;
 	if (USERMODE(frame->if_cs, frame->if_eflags)) {
