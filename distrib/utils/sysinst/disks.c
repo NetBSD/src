@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.10 1997/11/03 02:38:45 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.11 1997/11/05 07:28:24 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* disks.c -- routines to deal with finding disks and labeling disks. */
 
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -56,9 +57,10 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
+
 /*
  *  Default command to use for disklabel. Some ports may need to override this.
-*/
+ */
 #ifndef DISLABEL_CMD
 #if 1
 # define DISKLABEL_CMD "/sbin/disklabel -w -r"	/* Works on i386. */
@@ -71,9 +73,14 @@
 /* Local prototypes */
 static void get_disks (void);
 static void foundffs (struct data *list, int num);
+static int do_fsck(const char *diskpart);
 static int fsck_root __P((void));
 static void 
     do_ffs_newfs(const char *partname, int part, const char *mountpoint);
+
+static int fsck_with_error_menu(const char *diskpart);
+static int target_mount_with_error_menu(const char *opt, char *diskpart,
+					const char *mntpt);
 
 
 static void get_disks(void)
@@ -394,14 +401,25 @@ inode_kind (char *dev)
 	return 1;
 }
 
+/*
+ * Do an fsck. For now, assume ffs filesystems.
+ * Returns zero if the fsck completed with no errors.
+ * Returns a negative numbe to indicate a bad inode type,
+ * and a positive  non-zero value  if exec'ing fsck returns an error.
+ * If the filesystem is an out-of-date version, prompt the user
+ * whether to upgrade the filesystem  level.
+ * 
+ */
 static int
-do_fsck(char *disk, char *part)
+do_fsck(const char *diskpart)
 {
 	char raw[SSTRSIZE];
 	int inodetype;
 	char * upgr = "";
+	int err;
 
-	snprintf (raw, SSTRSIZE, "/dev/r%s%s", disk, part);
+	/* cons up raw partition name. */
+	snprintf (raw, SSTRSIZE, "/dev/r%s", diskpart);
 	inodetype = inode_kind (raw);
 
 	if (inodetype < 0) {
@@ -417,33 +435,100 @@ do_fsck(char *disk, char *part)
 	}
 
 	endwin();
-	if (run_prog ("/sbin/fsck_ffs -f %s%s", upgr, raw)) {
+	err = run_prog ("/sbin/fsck_ffs -f %s%s", upgr, raw);
 		wrefresh(stdscr);
-		return 0;
-	}
-	wrefresh(stdscr);
-	return 1;
+	return err;
 }
 
+/*
+ * Do an fsck. On failure,  inform the user by showing a warning
+ * message and doing menu_ok() before proceeding.
+ * acknowledge the warning before continuing.
+ * Returns 0 on success, or nonzero return code from do_fsck() on failure.
+ */
+int
+fsck_with_error_menu(const char *diskpart)
+{
+	register int error;
+	if ((error = do_fsck (diskpart)) != 0) {
+#ifdef DEBUG
+		fprintf(stderr, "sysinst: do_fsck() returned err %d\n", error);
+#endif
+		msg_display (MSG_badfs, diskpart, "", error);
+		process_menu (MENU_ok);
+	}
+	return error;
+}
+
+
+/*
+ * Do target_mount, but print a message and do menu_ok() before
+ * proceeding, to inform the user.
+ * returns 0 if  the mount completed without indicating errors,
+ *  and an nonzero error code from target_mount() otherwise.
+ */
+int target_mount_with_error_menu(const char *opt, 
+		 char *diskpart, const char *mntpoint)
+{
+	register int error;
+	char devname[STRSIZE];
+
+	snprintf(devname, STRSIZE, "/dev/%s", diskpart);
+#ifdef DEBUG
+	fprintf(stderr, "sysinst: mount_with_error_menu: %s %s %s\n",
+		opt, devname, mntpoint);
+#endif
+
+	if ((error = target_mount(opt, devname, mntpoint)) != 0) {
+		msg_display (MSG_badmount, devname, "");
+		process_menu (MENU_ok);
+		return error;
+	} else {
+#ifdef DEBUG
+	  printf("mount %s %s %s OK\n", opt, diskpart, mntpoint);
+#endif
+	}
+
+	return error;
+}
+
+
+
+
+/*
+ * fsck and mount the root partition.
+ */
 int
 fsck_root()
 {
-	int   res;
-	char  devname[STRSIZE];
-	if ((res = do_fsck (diskdev, "a")) <= 0) {
-		msg_display (MSG_badfs, diskdev, "a", res);
-		process_menu (MENU_ok);
-		return res;
+	int   error;
+	char	rootdev[STRSIZE];
+
+	/* cons up the root name:  partition 'a' on the target diskdev.*/
+	snprintf(rootdev, STRSIZE, "%s%c", diskdev, 'a');
+#ifdef DEBUG
+	printf("fsck_root: rootdev is %s\n", rootdev);
+#endif
+	error = fsck_with_error_menu(rootdev);
+	if (error != 0)
+		return error;
+
+	if (target_already_root()) {
+		return (0);
 	}
 
-	/* Mount /dev/<diskdev>a on  target's "".  Prefixing will DTRT. */
-	snprintf(devname, STRSIZE, "/dev/%sa", diskdev);
-	if ((res = target_mount("", devname, "")) <= 0) {
-		msg_display (MSG_badmount, diskdev, "a");
-		process_menu (MENU_ok);
-		return res;
-	}
-	return 0;
+	/* Mount /dev/<diskdev>a on  target's "".  
+	 * If we pass "" as mount-on, Prefixing will DTRT. 
+	 * for now, use no options.
+	 * XXX consider -o remount in case target root is
+	 * current root, still  readonly from single-user? 
+	 */
+	error = target_mount_with_error_menu("", rootdev, "");
+
+#ifdef DEBUG
+	printf("fsck_root: mount of %s returns %d\n", rootdev, error);
+#endif
+	return (error);
 }
 
 int
@@ -451,35 +536,43 @@ fsck_disks (void)
 {	char *fstab;
 	int   fstabsize;
 	int   i;
-	int   err;
-	char devname[STRSIZE];
+	int   error;
 
 	/* First the root device. */
 	if (!target_already_root()) {
-		if (fsck_root() <= 0)
+		error = fsck_root();
+		if (error != 0 && error != EBUSY) {
 			return 0;
+		}
 	}
+
+	/* Check the target /etc/fstab exists before trying to parse it. */
+	if (target_verify_dir("/etc") != 0 || 
+	    target_verify_file("/etc/fstab") != 0) {
+		msg_display(MSG_noetcfstab, diskdev);
+		process_menu(MENU_ok);
+		return 0;
+	}
+
 
 	/* Get fstab entries from the target-root /etc/fstab. */
 	fs_num = 0;
 	fstabsize = target_collect_file (T_FILE, &fstab, "/etc/fstab");
 	if (fstabsize < 0) {
 		/* error ! */
+		msg_display(MSG_badetcfstab, diskdev);
+		process_menu(MENU_ok);
 		return 0;
 	}
 	walk (fstab, fstabsize, fstabbuf, numfstabbuf);
 	free(fstab);
 
 	for (i=0; i < devcnt; i++) {
-		if (!do_fsck (dev[i], "")) {
-			msg_display (MSG_badfs, dev[i], "");
-			process_menu (MENU_ok);
+	  	if (fsck_with_error_menu(dev[i]))
 			return 0;
-		}
-		snprintf(devname, STRSIZE, "/dev/%s", dev[i]);
-		if ((err = target_mount("", devname, mnt[i])) <= 0) {
-			msg_display (MSG_badmount, dev[i], "");
-			process_menu (MENU_ok);
+
+		printf("sysinst: mount %s\n", dev[i]);
+		if (target_mount_with_error_menu("", dev[i], mnt[i]) != 0) {
 			return 0;
 		}
 	}

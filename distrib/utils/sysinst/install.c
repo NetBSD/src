@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.7 1997/11/03 06:18:08 jonathan Exp $	*/
+/*	$NetBSD: install.c,v 1.8 1997/11/05 07:28:26 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,4 +99,6 @@ void do_install(void)
 
 	/* Unpack the distribution. */
 	get_and_unpack_sets(MSG_instcomplete, MSG_abortinst);
+
+	sanity_check();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 1997/11/05 01:23:09 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.14 1997/11/05 07:28:40 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,10 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+/*
+ * local prototypes 
+ */
+static int check_for __P((const char *type, const char *pathname));
 
 
 void get_ramsize(void)
@@ -108,6 +112,9 @@ void run_makedev (void)
 {
 	msg_display (MSG_makedev);
 	sleep (1);
+
+	/* make /dev, in case the user  didn't extract it. */
+	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
 	run_prog ("/bin/sh MAKEDEV all");
 }
@@ -261,12 +268,17 @@ extract_file (char *path)
 	
 	owd = getcwd (NULL,0);
 
+	/* cd to the target root. */
 	target_chdir_or_die("/");	
 
+	/* now extract set files files into "./". */
 	endwin();
 	(void)printf (msg_string(MSG_extracting), path);
 	tarexit = run_prog ("/usr/bin/tar --unlink -xpz%s -f %s",
 			    verbose ? "v":"", path);
+	if (tarexit) {
+		sleep(5);
+	}
 	puts(CL);
 	wrefresh(stdscr);
 
@@ -284,8 +296,14 @@ extract_dist (void)
 	distinfo *list;
 	char extdir[STRSIZE];
 
+#if 0
+	/* XXX buggy code: does floppy extraction depend onthis?  */
 	/* Current directory has the distribution included. */
 	strncpy(extdir, target_expand(dist_dir), STRSIZE);
+#else
+	/* For NFS,  distdir is mounted in the _current_ root.  */
+	strncpy(extdir, dist_dir, STRSIZE);
+#endif
 
 	list = dist_list;
 	while (list->name) {
@@ -330,7 +348,7 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 		/* Mounted dist dir? */
 		if (mnt2_mounted)
 			run_prog ("/sbin/umount /mnt2");
-		
+
 		/* Install/Upgrade  complete ... reboot or exit to script */
 		msg_display (success_msg);
 		process_menu (MENU_ok);
@@ -338,4 +356,68 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 		msg_display (failure_msg);
 		process_menu (MENU_ok);
 	}
+}
+
+/*
+ * Do a quick sanity check that  the target can reboot.
+ * return 1 if everything OK, 0 if there is a problem.
+ * Uses a table of files we expect to find after a base install/upgrade.
+ */
+
+
+
+/* test flag and pathname to check for after unpacking. */
+struct check_table { const char *testarg; const char *path;} checks[] = {
+  { "-f", "/netbsd" },
+  { "-d ""/etc" },
+  { "-f", "/etc/fstab" },
+  { "-f", "/sbin/init" },
+  { "-f", "/bin/sh" },
+  { "-d" "/dev" },
+  { "-c", "/dev/console" },
+/* XXX check for rootdev in target /dev? */
+  { "-f", "/etc/fstab" },
+  { "-f", "/sbin/fsck" },
+  { "-f", "/sbin/fsck_ffs" },
+  { "-f", "/sbin/mount" },
+  { "-f", "/sbin/mount_ffs" },
+  { "-f", "/sbin/mount_nfs" },
+#if defined(DEBUG) || 1
+  { "-f", "/foo/bar" },		/* XXX */
+#endif
+  { 0, 0 }
+  
+};
+
+
+/*
+ * Check target for a single file.
+ */
+static int check_for(const char *type, const char *pathname)
+{
+	int result; 
+
+	result = (target_test(type, pathname) == 0);
+	if (result != 0) 
+		msg_display(MSG_rootmissing, pathname);
+	return result;
+}
+
+int
+sanity_check()
+{
+
+	int target_ok = 1;
+	struct check_table *p;
+
+	for (p = checks; p->path; p++) {
+		target_ok = target_ok && check_for(p->testarg, p->path);
+	}
+	if (target_ok)
+		return 0;	    
+
+	/* Uh, oh. Something's missing. */
+	msg_display(MSG_badroot);
+	process_menu(MENU_ok);
+	return 1;
 }

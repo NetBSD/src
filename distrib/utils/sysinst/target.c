@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.6 1997/11/04 01:39:07 phil Exp $	*/
+/*	$NetBSD: target.c,v 1.7 1997/11/05 07:28:34 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.6 1997/11/04 01:39:07 phil Exp $");
+__RCSID("$NetBSD: target.c,v 1.7 1997/11/05 07:28:34 jonathan Exp $");
 #endif
 
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: target.c,v 1.6 1997/11/04 01:39:07 phil Exp $");
 #include <stdarg.h>
 #include <unistd.h>
 #include <curses.h>			/* defines TRUE, but checks  */
+#include <errno.h>
 
 
 #include "defs.h"
@@ -71,6 +72,7 @@ static void make_prefixed_dir __P((const char *prefix, const char *path));
 const char* target_prefix __P((void));
 static int do_target_chdir __P((const char *dir, int flag));
 static const char* concat_paths __P((const char *prefix, const char *suffix));
+int target_test(const char *test, const char *path);
 
 
 /* get name of current root device  from kernel via sysctl. */
@@ -226,7 +228,7 @@ make_ramdisk_dir(const char *path)
 void
 append_to_target_file(const char *path, const char *string)
 {
-	run_prog_or_die("echo %s >> %s", target_expand(path));
+	run_prog_or_die("echo %s >> %s", string, target_expand(path));
 }
 
 /*
@@ -269,11 +271,14 @@ static int do_target_chdir(const char *dir, int must_succeed)
 	tgt_dir = target_expand(dir);
 
 #ifndef DEBUG
-	error = chdir(tgt_dir);
+	/* chdir returns -1 on error and sets errno. */
+	if (chdir(tgt_dir) < 0) {
+		error = errno;
+	}
 	if (error && must_succeed) {
 		endwin();
-		(void)fprintf(stderr, 
-			      msg_string(MSG_realdir), target_prefix());
+		fprintf(stderr, msg_string(MSG_realdir),
+		       target_prefix(), strerror(error));
 		exit(1);
 	}
 	return (error);
@@ -319,6 +324,18 @@ void mv_within_target_or_die(const char *frompath, const char *topath)
 	run_prog_or_die("mv %s %s", realfrom, realto);
 }
 
+/* Do a cp where both pathnames are  within the target filesystem. */
+int cp_within_target(const char *frompath, const char *topath)
+{
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+
+	strncpy(realfrom, target_expand(frompath), STRSIZE);
+	strncpy(realto, target_expand(topath), STRSIZE);
+
+	return (run_prog("cp -p %s %s", realfrom, realto));
+}
+
 /* fopen a pathname in the target. */
 FILE*	target_fopen (const char *filename, const char *type)
 {
@@ -338,6 +355,7 @@ int target_mount(const char *fstype, const char *from, const char *on)
 	return (error);
 }
 
+
 int	target_collect_file(int kind, char **buffer, char *name)
 {
 	register const char *realname =target_expand(name);
@@ -346,4 +364,43 @@ int	target_collect_file(int kind, char **buffer, char *name)
 	printf("collect real name %s\n", realname);
 #endif
 	return collect(kind, buffer, realname);
+}
+
+/*
+ * Verify a pathname already exists in the target root filesystem,
+ * by running  test "testflag" on the expanded target pathname.
+ */
+
+int target_test(const char *test, const char *path)
+{
+	const char *realpath = target_expand(path);
+	register int result;
+
+	result = run_prog ("test %s %s", test, realpath);
+
+#if defined(DEBUG)
+	printf("target_test(%s %s) returning %d\n",
+			test, realpath, result);
+#endif
+	return result;
+}
+
+/*
+ * Verify a directory already exists in the target root 
+ * filesystem. Do not create the directory if it doesn't  exist.
+ * Assumes that sysinst has already mounted the target root.
+ */
+int target_verify_dir(const char *path)
+{
+ 	return target_test("-d", path);
+}
+
+/*
+ * Verify an ordinary file already exists in the target root 
+ * filesystem. Do not create the directory if it doesn't  exist.
+ * Assumes that sysinst has already mounted the target root.
+ */
+int target_verify_file(const char *path)
+{
+ 	return target_test("-f", path);
 }
