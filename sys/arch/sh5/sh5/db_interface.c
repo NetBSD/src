@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 2002/11/24 12:07:52 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9 2002/12/06 10:14:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,8 +69,8 @@ const struct db_variable db_regs[] = {
 	{ "usr", (long *)&ddb_regs.tf_state.sf_usr, db_var_reg },
 	{ "sr",  (long *)&ddb_regs.tf_state.sf_ssr, db_var_reg },
 	{ "pc",  (long *)&ddb_regs.tf_state.sf_spc, db_var_reg },
-	{ "kcr0",(long *)&reg_kcr0, db_var_reg },
-	{ "kcr1",(long *)&reg_kcr1, db_var_reg },
+	{ "kcr0",(void *)&reg_kcr0, db_var_reg },
+	{ "kcr1",(void *)&reg_kcr1, db_var_reg },
 
 	{ "tr0", (long *)&ddb_regs.tf_caller.tr0, db_var_reg },
 	{ "tr1", (long *)&ddb_regs.tf_caller.tr1, db_var_reg },
@@ -106,7 +106,7 @@ const struct db_variable db_regs[] = {
 	{ "r21", (long *)&ddb_regs.tf_caller.r21, db_var_reg },
 	{ "r22", (long *)&ddb_regs.tf_caller.r22, db_var_reg },
 	{ "r23", (long *)&ddb_regs.tf_caller.r23, db_var_reg },
-	{ "r24", (long *)&reg_zero,               db_var_reg },
+	{ "r24", (void *)&reg_zero,               db_var_reg },
 	{ "r25", (long *)&ddb_regs.tf_caller.r25, db_var_reg },
 	{ "r26", (long *)&ddb_regs.tf_caller.r26, db_var_reg },
 	{ "r27", (long *)&ddb_regs.tf_caller.r27, db_var_reg },
@@ -149,7 +149,7 @@ const struct db_variable db_regs[] = {
 	{ "r60", (long *)&ddb_regs.tf_caller.r60, db_var_reg },
 	{ "r61", (long *)&ddb_regs.tf_caller.r61, db_var_reg },
 	{ "r62", (long *)&ddb_regs.tf_caller.r62, db_var_reg },
-	{ "r63", (long *)&reg_zero,               db_var_reg }
+	{ "r63", (void *)&reg_zero,               db_var_reg }
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
