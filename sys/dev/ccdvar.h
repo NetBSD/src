@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.24 2003/10/17 05:16:15 lukem Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.25 2004/08/23 04:30:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -112,6 +112,9 @@
  *
  *	@(#)cdvar.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _DEV_CCDVAR_H_
+#define	_DEV_CCDVAR_H_
 
 #include <sys/buf.h>
 #include <sys/lock.h>
@@ -235,3 +238,5 @@ struct ccd_softc {
  */
 #define CCDIOCSET	_IOWR('F', 16, struct ccd_ioctl)   /* enable ccd */
 #define CCDIOCCLR	_IOW('F', 17, struct ccd_ioctl)    /* disable ccd */
+
+#endif /* _DEV_CCDVAR_H_ */
