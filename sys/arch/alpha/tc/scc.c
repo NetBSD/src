@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.2 1995/02/27 16:37:04 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.3 1995/03/03 01:36:38 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -655,6 +655,7 @@ sccparam(tp, t)
 	line = SCCLINE(tp->t_dev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
+#if 0
 	/* reset line */
 	if (line == SCC_CHANNEL_A)
 		value = SCC_WR9_RESET_CHA_A;
@@ -662,6 +663,7 @@ sccparam(tp, t)
 		value = SCC_WR9_RESET_CHA_B;
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	DELAY(25);
+#endif
 
 	/* stop bits, normally 1 */
 	value = sc->scc_wreg[line].wr4 & 0xf0;
