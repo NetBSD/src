@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.7 1999/07/06 12:23:23 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.8 1999/07/09 22:57:31 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +38,7 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #endif
 
 #ifdef __NetBSD__

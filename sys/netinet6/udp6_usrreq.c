@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.4 1999/07/04 02:01:16 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.5 1999/07/09 22:57:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,8 @@
  *
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>

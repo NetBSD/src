@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.5 1999/07/06 12:23:21 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.6 1999/07/09 22:57:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,6 +66,7 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #endif
 
 #include <sys/param.h>
