@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $	*/
+/*	$NetBSD: res_send.c,v 1.6 1996/12/17 03:36:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_send.c,v 8.7 1995/12/03 08:31:17 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_send.c,v 1.6 1996/12/17 03:36:01 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,6 +77,7 @@ static char rcsid[] = "$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $";
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/poll.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
@@ -470,8 +471,8 @@ res_send(buf, buflen, ans, anssiz)
 			/*
 			 * Use datagrams.
 			 */
-			struct timeval timeout;
-			fd_set dsmask;
+			time_t seconds;
+			struct pollfd dsfd;
 			struct sockaddr_in from;
 			int fromlen;
 
@@ -496,7 +497,7 @@ res_send(buf, buflen, ans, anssiz)
 			 * ICMP port unreachable message to be returned.
 			 * If our datagram socket is "connected" to the
 			 * server, we get an ECONNREFUSED error on the next
-			 * socket operation, and select returns if the
+			 * socket operation, and poll returns if the
 			 * error message is received.  We can thus detect
 			 * the absence of a nameserver without timing out.
 			 * If we have sent queries to at least two servers,
@@ -570,19 +571,17 @@ res_send(buf, buflen, ans, anssiz)
 			/*
 			 * Wait for reply
 			 */
-			timeout.tv_sec = (_res.retrans << try);
+			seconds = (_res.retrans << try);
 			if (try > 0)
-				timeout.tv_sec /= _res.nscount;
-			if ((long) timeout.tv_sec <= 0)
-				timeout.tv_sec = 1;
-			timeout.tv_usec = 0;
+				seconds /= _res.nscount;
+			if ((long) seconds <= 0)
+				seconds = 1;
     wait:
-			FD_ZERO(&dsmask);
-			FD_SET(s, &dsmask);
-			n = select(s+1, &dsmask, (fd_set *)NULL,
-				   (fd_set *)NULL, &timeout);
+			dsfd.fd = s;
+			dsfd.events = dsfd.revents = POLLIN;
+			n = poll(&dsfd, 1, seconds * 1000);
 			if (n < 0) {
-				Perror(stderr, "select", errno);
+				Perror(stderr, "poll", errno);
 				_res_close();
 				goto next_ns;
 			}
