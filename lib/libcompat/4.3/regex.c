@@ -43,7 +43,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
-static char rcsid[] = "$Id: regex.c,v 1.5 1995/06/05 19:42:25 pk Exp $";
+static char rcsid[] = "$Id: regex.c,v 1.6 1996/03/21 03:11:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ char *
 re_comp(s)
 	const char *s;
 {
-	if (s == NULL)
+	if (s == NULL || *s == '\0')
 		return (NULL);
 	if (re_regexp)
 		free(re_regexp);
