@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.2 1999/07/06 13:18:46 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.3 1999/07/30 10:31:22 itojun Exp $	*/
 
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.2 1999/07/06 13:18:46 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.3 1999/07/30 10:31:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: inet6.c,v 1.2 1999/07/06 13:18:46 itojun Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #endif
-#include <netinet6/in6_systm.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #ifdef TCP6
