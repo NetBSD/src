@@ -1,4 +1,4 @@
-/*	$NetBSD: nncr.c,v 1.4 1994/12/05 19:27:07 phil Exp $	*/
+/*	$NetBSD: nncr.c,v 1.5 1994/12/30 01:40:01 phil Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -122,7 +122,6 @@ static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0xffd00000;
 static volatile long			*sci_4byte_addr=  (long *) 0xffe00000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0xffe00000;
 
-static unsigned int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
@@ -147,10 +146,7 @@ struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	ncr5380_minphys,		/* scsi_minphys()	*/
 	0,				/* open_target_lu()	*/
-	0,				/* close_target_lu()	*/
-	ncr5380_adapter_info,		/* adapter_info()	*/
-	scsi_name,			/* name			*/
-	{0, 0}				/* spare[3]		*/
+	0				/* close_target_lu()	*/
 };
 
 /* This is copied from julian's bt driver */
@@ -159,10 +155,7 @@ struct scsi_device ncr_dev = {
 	NULL,		/* Use default error handler.	    */
 	NULL,		/* have a queue, served by this (?) */
 	NULL,		/* have no async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
-	"ncr",
-	0,
-	0, 0
+	NULL		/* Use default "done" routine.	    */
 };
 
 extern int	matchbyname();
@@ -228,20 +221,15 @@ ncrattach(parent, self, aux)
 	int r;
 
 	ncr5380->sc_link.adapter_softc = ncr5380;
-	ncr5380->sc_link.scsibus = 0;
-	ncr5380->sc_link.adapter_targ = 7;
+/*	ncr5380->sc_link.scsibus = 0; */
+	ncr5380->sc_link.adapter_target = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
 	ncr5380->sc_link.device = &ncr_dev;
+	ncr5380->sc_link.openings = 1;
 
 	printf("\n");
 
 	config_found(self, &(ncr5380->sc_link), ncr_print);
-}
-
-static unsigned int
-ncr5380_adapter_info(struct ncr5380_softc *ncr5380)
-{
-	return 1;
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
@@ -273,31 +261,12 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 
 	if ( flags & SCSI_RESET ) {
 		printf("flags & SCSIRESET.\n");
-		if ( ! ( flags & SCSI_NOSLEEP ) ) {
-			s = splbio();
-			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
-			splx(s);
-			return(SUCCESSFULLY_QUEUED);
-		} else {
-			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
-			if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-				return (HAD_ERROR);
-			}
-			return (COMPLETE);
-		}
-	}
-	/*
-	 * OK.  Now that that's over with, let's pack up that
-	 * SCSI puppy and send it off.  If we can, we'll just
-	 * queue and go; otherwise, we'll wait for the command
-	 * to finish.
-	if ( ! ( flags & SCSI_NOSLEEP ) ) {
 		s = splbio();
-		ncr5380_send_cmd(xs);
+		ncr5380_reset_target(xs->sc_link->scsibus,
+				     xs->sc_link->target);
 		splx(s);
-		return(SUCCESSFULLY_QUEUED);
+		return(COMPLETE);
 	}
-	 */
 
 	r = ncr5380_send_cmd(xs);
 	xs->flags |= ITSDONE;
@@ -305,24 +274,13 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	switch(r) {
 		case COMPLETE: case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
-			if (xs->flags&SCSI_NOMASK)
+			if (xs->flags&SCSI_POLL)
 				r = COMPLETE;
 			break;
 		default:
 			break;
 	}
 	return r;
-/*
-	do {
-		if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-			if ( ! ( xs->flags & SCSI_SILENT ) )
-				printf("cmd fail.\n");
-			cmd_cleanup
-			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
-		}
-	} while ( ! ( xs->flags & ITSDONE ) );
-*/
 }
 
 static int
@@ -415,10 +373,6 @@ ncr5380_reset_target(int adapter, int target)
 	SCI_CLR_INTR(regs);
 }
 
-static int
-ncr5380_poll(int adapter, int timeout)
-{
-}
 
 static int
 ncr5380_send_cmd(struct scsi_xfer *xs)
@@ -448,13 +402,13 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    sizeof(struct scsi_sense_data));
 				splx(s);
 				xs->error = XS_SENSE;
-				return HAD_ERROR;
+				return COMPLETE;
 			case 0x08:	/* Busy */
 				xs->error = XS_BUSY;
-				return HAD_ERROR;
+				return COMPLETE;
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				return HAD_ERROR;
+				return COMPLETE;
 		}
 	}
 	xs->error = XS_NOERROR;
