@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.15 1994/06/05 07:43:35 chopps Exp $
+#	$Id: GENERIC,v 1.16 1994/06/05 18:24:44 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -79,14 +79,6 @@ options		SYSVMSG		# System V-like messages
 options		SYSVSEM		# System V-like semaphores
 
 #
-# Amiga graphics options (for grfcc)
-#
-options		GRF_ECS		# Enhanced Chip Set
-options		GRF_NTSC	# NTSC
-options		GRF_PAL		# PAL
-options		"GRF_A2024"	# Support for the A2024
-
-#
 # Support for various kernel options
 #
 options		GENERIC		# Mini-root boot support
@@ -94,7 +86,6 @@ options		LKM		# Loadable kernel modules
 options		KTRACE		# Add kernel tracing system call
 options		DIAGNOSTIC	# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
-#options	PROFTIMER	# Kernel profiling support
 
 #
 # Misc. debuging options
@@ -106,6 +97,15 @@ options		DDB		# Kernel debugger
 #options	SCSIDEBUG	# Add SCSI debugging statements
 #options	KGDB		# Kernel debugger (KGDB) support
 #options	PANICBUTTON	# Forced crash via keypress (???)
+
+#
+# Amiga specific options
+#
+options		RETINACONSOLE	# enable code to allow retina to be console
+options		GRF_ECS		# Enhanced Chip Set
+options		GRF_NTSC	# NTSC
+options		GRF_PAL		# PAL
+options		"GRF_A2024"	# Support for the A2024
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at ztwobus0		# retina II
