@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 1998/06/03 04:33:28 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 1998/06/03 04:41:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
+			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
@@ -223,6 +224,7 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 
