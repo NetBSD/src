@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.9 2000/01/21 17:08:37 mycroft Exp $	*/
+/*	$NetBSD: scm.c,v 1.10 2000/03/12 12:16:49 abs Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -466,7 +466,7 @@ register char *host;
 	char *name;
 
 	if ((name = myhost ()) == NULL)
-		logquit (1,"Can't find my host entry");
+		logquit (1,"Can't find my host entry '%s'", myhost());
 	h = gethostbyname (host);
 	if (h == NULL) return (0);
 	return (strcasecmp (name,h->h_name) == 0);
