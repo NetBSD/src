@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.3 2002/10/04 18:28:34 elric Exp $
+#	$NetBSD: majors.shark,v 1.4 2003/04/25 21:11:02 ragge Exp $
 #
 # Device majors for shark
 #
@@ -57,3 +57,4 @@ device-major	openfirm	char 77			ofwgencfg
 
 device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
+device-major	ksyms		char 86			ksyms

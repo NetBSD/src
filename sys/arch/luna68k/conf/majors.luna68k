@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.3 2002/10/04 18:28:30 elric Exp $
+#	$NetBSD: majors.luna68k,v 1.4 2003/04/25 21:10:55 ragge Exp $
 #
 # Device majors for luna68k
 #
@@ -36,3 +36,4 @@ device-major	rnd		char 34			rnd
 device-major	clockctl	char 35			clockctl
 device-major	systrace	char 36			systrace
 device-major	cgd		char 37  block 15	cgd
+device-major	ksyms		char 38			ksyms

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sandpoint,v 1.3 2002/10/04 18:28:34 elric Exp $
+#	$NetBSD: majors.sandpoint,v 1.4 2003/04/25 21:11:01 ragge Exp $
 #
 # Device majors for sandpoint
 #
@@ -55,3 +55,4 @@ device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
 device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
+device-major	ksyms		char 61			ksyms
