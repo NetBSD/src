@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.4 2003/03/12 13:15:08 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.5 2003/03/12 17:35:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,10 +58,9 @@
 
 #include <lib/libkern/libkern.h>
 
-#include "stand.h"
-#include "net.h"
-#include "netif.h"
-#include "nfs.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include "pxe_netif.h"
 #include "dev_net.h"
 
 static int netdev_sock = -1;
@@ -88,7 +87,7 @@ net_open(struct open_file *f, ...)
 	if (netdev_opens == 0) {
 		/* Find network interface. */
 		if (netdev_sock < 0) {
-			netdev_sock = netif_open(0);
+			netdev_sock = pxe_netif_open();
 			if (netdev_sock < 0) {
 				printf("net_open: netif_open() failed\n");
 				return (ENXIO);
@@ -101,7 +100,7 @@ net_open(struct open_file *f, ...)
 			error = net_getparams(netdev_sock);
 			if (error) {
 				/* getparams makes its own noise */
-				netif_close(netdev_sock);
+				pxe_netif_close(netdev_sock);
 				netdev_sock = -1;
 				return (error);
 			}
@@ -135,7 +134,8 @@ net_close(f)
 	if (netdev_sock >= 0) {
 		if (debug)
 			printf("net_close: calling netif_close()\n");
-		netif_close(netdev_sock);
+		pxe_netif_close(netdev_sock);
+		pxe_netif_shutdown(); /* XXX shouldn't be done here */
 		netdev_sock = -1;
 	}
 	return (0);
@@ -164,7 +164,7 @@ net_strategy(devdata, rw, blk, size, buf, rsize)
 
 
 /*
- * Get info for NFS boot: our IP address, our hostname,
+ * Get info for network boot: our IP address, our hostname,
  * server IP address, and our root path on the server.
  */
 #ifdef	SUPPORT_BOOTP
