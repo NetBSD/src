@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.16 2002/01/02 10:38:29 blymn Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.17 2002/12/05 17:23:51 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.16 2002/01/02 10:38:29 blymn Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.17 2002/12/05 17:23:51 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -122,6 +122,9 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 	int	y;
 	__LINE	*wlp;
 
+#ifdef DEBUG
+	__CTRACE("wtouchln: (%0.2o) %d, %d, %d\n", win, line, n, changed);
+#endif
 	for (y = line; y < line + n; y++) {
 		if (changed == 1)
 			__touchline(win, y, 0, (int) win->maxx - 1);
