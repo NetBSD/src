@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.c,v 1.27 2001/04/13 23:30:13 thorpej Exp $	*/
-/*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.28 2001/06/04 23:53:13 itojun Exp $	*/
+/*	$KAME: if_gif.c,v 1.49 2001/06/04 12:03:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -482,6 +482,7 @@ gif_ioctl(ifp, cmd, data)
 	int error = 0, size;
 	struct sockaddr *dst, *src;
 	struct sockaddr *sa;
+	int s;
 	struct gif_softc *sc2;
 		
 	switch (cmd) {
@@ -666,8 +667,10 @@ gif_ioctl(ifp, cmd, data)
 		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
 
-		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
+		s = splsoftnet();
+		ifp->if_flags |= IFF_RUNNING;
 		if_up(ifp);		/* send up RTM_IFINFO */
+		splx(s);
 
 		error = 0;
 		break;
