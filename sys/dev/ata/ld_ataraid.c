@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.2 2003/01/27 20:18:11 thorpej Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.3 2003/01/29 16:50:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -130,7 +130,6 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_aai = aai;	/* this data persists */
 
-	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = MAXPHYS * aai->aai_width;	/* XXX */
 	ld->sc_secperunit = aai->aai_capacity;
 	ld->sc_secsize = 512;				/* XXX */
@@ -192,7 +191,7 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		dev = MAKEDISKDEV(bmajor, adi->adi_dev->dv_unit, RAW_PART);
 		error = bdevvp(dev, &vp);
 		if (error)
-			goto bad;
+			break;
 		error = VOP_OPEN(vp, FREAD|FWRITE, NOCRED, 0);
 		if (error) {
 			vput(vp);
@@ -201,21 +200,26 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 			 * XXX component as FAILED, and write-back new
 			 * XXX config blocks.
 			 */
-			goto bad;
+			break;
 		}
 
 		VOP_UNLOCK(vp, 0);
 		sc->sc_vnodes[i] = vp;
 	}
+	if (i == aai->aai_ndisks) {
+		ld->sc_flags = LDF_ENABLED;
+		goto finish;
+	}
 
-	ldattach(ld);
-	return;
- bad:
 	for (i = 0; i < aai->aai_ndisks; i++) {
 		vp = sc->sc_vnodes[i];
 		sc->sc_vnodes[i] = NULL;
-		(void) vn_close(vp, FREAD|FWRITE, NOCRED, curproc);
+		if (vp != NULL)
+			(void) vn_close(vp, FREAD|FWRITE, NOCRED, curproc);
 	}
+
+ finish:
+	ldattach(ld);
 }
 
 static struct cbuf *
