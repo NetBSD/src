@@ -1,4 +1,4 @@
-.\"	$NetBSD: patch.1,v 1.9 2003/01/06 12:48:06 wiz Exp $ -*- nroff -*-
+.\"	$NetBSD: patch.1,v 1.10 2005/03/25 23:00:55 skd Exp $ -*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -225,6 +225,11 @@ If this argument is specified any argument from -b will be ignored.
 forces
 .I patch
 to interpret the patch file as a context diff.
+.TP 5
+.B \-C or \-\-dry\-run
+causes
+.I patch 
+to report what would be done, but not to actully modify any files or create any rejects.
 .TP 5
 .B \-d or \-\-directory
 causes
