@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.6 1995/02/13 00:46:19 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.7 1995/02/23 17:54:08 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -303,7 +303,7 @@ setregs(p,pack,stack,retval)
 {
 	struct trapframe *exptr;
 
-	exptr=(struct trapframe *)mfpr(PR_SSP);
+	exptr=p->p_addr->u_pcb.framep;
 	exptr->pc=pack+2;
 	mtpr(stack,PR_USP);
 }
@@ -314,10 +314,11 @@ syscall(frame)
 	struct sysent *callp;
 	int err,rval[2],args[8],narg,sig;
 	struct trapframe *exptr;
+	struct proc *p=curproc;
 
 if(startsysc)printf("trap syscall type %x, code %x, pc %x, psl %x\n",
                         frame->trap, frame->code, frame->pc, frame->psl);
-	mtpr(frame,PR_SSP); /* Save frame pointer here, foolish but simple! */
+	p->p_addr->u_pcb.framep=frame;
 	if(frame->code<0||frame->code>=nsysent)
 		callp= &sysent[0];
 	else
@@ -330,8 +331,7 @@ if(startsysc)printf("trap syscall type %x, code %x, pc %x, psl %x\n",
 		copyin((char*)frame->ap+4, args, narg);
 
 	err=(*callp->sy_call)(curproc,args,rval);
-	exptr=(struct trapframe *)
-		mfpr(PR_SSP); /* Might have changed after fork */
+	exptr=curproc->p_addr->u_pcb.framep;
 
 	switch(err){
 	case 0:
