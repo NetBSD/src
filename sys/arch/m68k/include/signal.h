@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 1998/09/30 21:52:45 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 2002/06/23 21:31:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -104,8 +104,8 @@ struct sigframe {
 	int	sf_code;		/* additional info for handler */
 	struct sigcontext *sf_scp;	/* context pointer for handler */
 	sig_t	sf_handler;		/* handler address for u_sigc */
-	struct sigstate sf_state;	/* state of the hardware */
 	struct sigcontext sf_sc;	/* actual context */
+	struct sigstate sf_state;	/* state of the hardware */
 };
 #endif /* _KERNEL && __M68K_SIGNAL_PRIVATE */
 
