@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40 2002/03/25 03:00:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.41 2002/03/25 19:53:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -123,6 +123,8 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 #define	pmap_is_modified(pg)		(((pg)->mdpage.pvh_attrs & PT_M) != 0)
 #define	pmap_is_referenced(pg)		(((pg)->mdpage.pvh_attrs & PT_H) != 0)
+
+#define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
 
