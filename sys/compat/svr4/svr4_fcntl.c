@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.10 1995/09/19 22:10:11 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.11 1995/10/02 08:20:47 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -252,7 +252,7 @@ svr4_fcntl(p, v, retval)
 	void				*v;
 	register_t			*retval;
 {
-	struct svr4_fcntl_args	*uap;
+	struct svr4_fcntl_args	*uap = v;
 	int			error;
 	struct fcntl_args	fa;
 
