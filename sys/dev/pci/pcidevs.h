@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.67 1998/05/14 21:46:53 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.68 1998/05/25 22:32:24 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.61 1998/05/14 21:45:18 augustss Exp 
+ *	NetBSD: pcidevs,v 1.62 1998/05/25 22:31:11 mark Exp 
  */
 
 /*
@@ -497,6 +497,7 @@
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
+#define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
@@ -551,7 +552,11 @@
 #define	PCI_PRODUCT_ALI_M1449	0x1449		/* M1449 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
+#define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
+#define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
+#define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7850	0x5078		/* AIC-7850 */
@@ -875,6 +880,7 @@
 
 /* Promise products */
 #define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
+#define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra DMA/ATA Bus Master IDE Accelerator */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
@@ -966,6 +972,9 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9680	0x9680		/* TGUI 9680 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9682	0x9682		/* TGUI 9682 */
+
+/* TriTech Microelectronics products*/
+#define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
 
 /* Tseng Labs products */
 #define	PCI_PRODUCT_TSENG_ET4000_W32P_A	0x3202		/* ET4000w32p rev A */
