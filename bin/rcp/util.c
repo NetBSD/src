@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2003/09/19 08:46:32 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2005/02/17 15:25:02 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.7 2003/09/19 08:46:32 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.8 2005/02/17 15:25:02 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,7 @@ __RCSID("$NetBSD: util.c,v 1.7 2003/09/19 08:46:32 itojun Exp $");
 #include "extern.h"
 
 char *
-colon(cp)
-	char *cp;
+colon(char *cp)
 {
 	if (*cp == ':')		/* Leading colon is part of file name. */
 		return (0);
@@ -71,8 +70,7 @@ colon(cp)
 }
 
 void
-verifydir(cp)
-	char *cp;
+verifydir(char *cp)
 {
 	struct stat stb;
 
@@ -87,8 +85,7 @@ verifydir(cp)
 }
 
 int
-okname(cp0)
-	char *cp0;
+okname(char *cp0)
 {
 	int c;
 	char *cp;
@@ -108,8 +105,7 @@ bad:	warnx("%s: invalid user name", cp0);
 }
 
 int
-susystem(s)
-	char *s;
+susystem(char *s)
 {
 	sig_t istat, qstat;
 	int status;
@@ -135,9 +131,7 @@ susystem(s)
 }
 
 BUF *
-allocbuf(bp, fd, blksize)
-	BUF *bp;
-	int fd, blksize;
+allocbuf(BUF *bp, int fd, int blksize)
 {
 	struct stat stb;
 	size_t size;
@@ -165,8 +159,7 @@ allocbuf(bp, fd, blksize)
 }
 
 void
-lostconn(signo)
-	int signo;
+lostconn(int signo)
 {
 	if (!iamremote)
 		warnx("lost connection");

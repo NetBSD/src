@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.12 2004/07/23 12:47:55 yamt Exp $	*/
+/*	$NetBSD: setkey.c,v 1.13 2005/02/17 15:17:44 xtraeme Exp $	*/
 /*	$KAME: setkey.c,v 1.31 2003/09/08 12:31:58 itojun Exp $	*/
 
 /*
@@ -58,21 +58,20 @@
 
 #include "libpfkey.h"
 
-void usage __P((void));
-int main __P((int, char **));
-int get_supported __P((void));
-void sendkeyshort __P((u_int));
-void promisc __P((void));
-int sendkeymsg __P((char *, size_t));
-int postproc __P((struct sadb_msg *, int));
-int fileproc __P((const char *));
-int dumpkernfs __P((const char *));
-int sysctldump __P((u_int, u_int8_t));
-const char *numstr __P((int));
-void shortdump_hdr __P((void));
-void shortdump __P((struct sadb_msg *));
-static void printdate __P((void));
-static int32_t gmt2local __P((time_t));
+void usage(void);
+int get_supported(void);
+void sendkeyshort(u_int);
+void promisc(void);
+int sendkeymsg(char *, size_t);
+int postproc(struct sadb_msg *, int);
+int fileproc(const char *);
+int dumpkernfs(const char *);
+int sysctldump(u_int, u_int8_t);
+const char *numstr(int);
+void shortdump_hdr(void);
+void shortdump(struct sadb_msg *);
+static void printdate(void);
+static int32_t gmt2local(time_t);
 
 #define MODE_SCRIPT	1
 #define MODE_CMDDUMP	2
@@ -94,10 +93,10 @@ int kernfs = 0;		/* kernfs support */
 
 extern int lineno;
 
-extern int parse __P((FILE **));
+extern int parse(FILE **);
 
 void
-usage()
+usage(void)
 {
 
 	printf("usage: setkey [-v] file ...\n");
@@ -110,9 +109,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	FILE *fp = stdin;
 	int c;
@@ -237,7 +234,7 @@ main(argc, argv)
 }
 
 int
-get_supported()
+get_supported(void)
 {
 
 	if (pfkey_send_register(so, SADB_SATYPE_UNSPEC) < 0)
@@ -250,8 +247,7 @@ get_supported()
 }
 
 void
-sendkeyshort(type)
-        u_int type;
+sendkeyshort(u_int type)
 {
 	struct sadb_msg msg;
 
@@ -270,7 +266,7 @@ sendkeyshort(type)
 }
 
 void
-promisc()
+promisc(void)
 {
 	struct sadb_msg msg;
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
@@ -336,9 +332,7 @@ promisc()
 }
 
 int
-sendkeymsg(buf, len)
-	char *buf;
-	size_t len;
+sendkeymsg(char *buf, size_t len)
 {
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
 	ssize_t l;
@@ -415,9 +409,7 @@ end:
 }
 
 int
-postproc(msg, len)
-	struct sadb_msg *msg;
-	int len;
+postproc(struct sadb_msg *msg, int len)
 {
 
 	if (msg->sadb_msg_errno != 0) {
@@ -501,8 +493,7 @@ postproc(msg, len)
 }
 
 int
-fileproc(filename)
-	const char *filename;
+fileproc(const char *filename)
 {
 	int fd;
 	ssize_t len, l;
@@ -546,8 +537,7 @@ fileproc(filename)
 }
 
 int
-dumpkernfs(dir)
-	const char *dir;
+dumpkernfs(const char *dir)
 {
 	DIR *p;
 	struct dirent *d;
@@ -569,9 +559,7 @@ dumpkernfs(dir)
 }
 
 int
-sysctldump(type, satype)
-	u_int type;
-	u_int8_t satype;
+sysctldump(u_int type, u_int8_t satype)
 {
 	int mib[] = { CTL_NET, PF_KEY, KEYCTL_DUMPSA, 0 };
 	size_t len, l;
@@ -638,8 +626,7 @@ static const char *ipproto[] = {
 	(((x) < sizeof(tab)/sizeof(tab[0]) && tab[(x)])	? tab[(x)] : numstr(x))
 
 const char *
-numstr(x)
-	int x;
+numstr(int x)
 {
 	static char buf[20];
 	snprintf(buf, sizeof(buf), "#%d", x);
@@ -647,15 +634,14 @@ numstr(x)
 }
 
 void
-shortdump_hdr()
+shortdump_hdr(void)
 {
 	printf("%-4s %-3s %-1s %-8s %-7s %s -> %s\n",
 		"time", "p", "s", "spi", "ltime", "src", "dst");
 }
 
 void
-shortdump(msg)
-	struct sadb_msg *msg;
+shortdump(struct sadb_msg *msg)
 {
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	char buf[NI_MAXHOST], pbuf[NI_MAXSERV];
@@ -741,7 +727,7 @@ shortdump(msg)
  * Print the timestamp
  */
 static void
-printdate()
+printdate(void)
 {
 	struct timeval tp;
 	int s;

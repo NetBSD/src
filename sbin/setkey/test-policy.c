@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy.c,v 1.1 2000/06/13 15:15:27 itojun Exp $	*/
+/*	$NetBSD: test-policy.c,v 1.2 2005/02/17 15:17:44 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -71,7 +71,8 @@ u_char *p_secpolicy;
 int test(char *buf, int family);
 char *setpolicy(char *req);
 
-main()
+int 
+main(void)
 {
 	int i;
 	char *buf;
