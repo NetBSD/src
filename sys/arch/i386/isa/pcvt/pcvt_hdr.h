@@ -92,6 +92,10 @@
 #include <sys/device.h>
 #endif
 
+#if PCVT_NETBSD > 130
+#include "opt_xserver.h"
+#endif
+
 #if PCVT_NETBSD > 9
 #if PCVT_NETBSD > 101
 #include <i386/isa/isa_machdep.h>

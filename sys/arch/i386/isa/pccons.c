@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.119 1998/01/18 14:45:10 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.120 1998/01/22 01:16:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include "opt_xserver.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
