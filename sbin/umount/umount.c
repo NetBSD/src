@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.17 1997/05/21 21:47:07 pk Exp $	*/
+/*	$NetBSD: umount.c,v 1.18 1997/05/21 22:26:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: umount.c,v 1.17 1997/05/21 21:47:07 pk Exp $";
+static char rcsid[] = "$NetBSD: umount.c,v 1.18 1997/05/21 22:26:38 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char rcsid[] = "$NetBSD: umount.c,v 1.17 1997/05/21 21:47:07 pk Exp $";
 #include <string.h>
 #include <unistd.h>
 
-typedef enum { MNTON, MNTFROM } mntwhat;
+typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
 int	fake, fflag, verbose;
 char	**typelist = NULL;
@@ -177,28 +177,37 @@ umountfs(name)
 	CLIENT *clp;
 	int so;
 	char *delimp, *hostp, *mntpt, rname[MAXPATHLEN], type[MFSNAMELEN];
+	mntwhat what;
 
 	if (realpath(name, rname) == NULL) {
 		warn("%s", rname);
 		return (1);
 	}
 
+	what = MNTANY;
 	mntpt = name = rname;
 
-	if (stat(name, &sb) == 0 &&
-	    (S_ISBLK(sb.st_mode) || S_ISDIR(sb.st_mode))) {
-		if (S_ISBLK(sb.st_mode)) {
-			if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
-				warnx("%s: not currently mounted", name);
-				return (1);
-			}
-		} else if (S_ISDIR(sb.st_mode)) {
-			if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
-				warnx("%s: not currently mounted", mntpt);
-				return (1);
-			}
+	if (stat(name, &sb) == 0) {
+		if (S_ISBLK(sb.st_mode))
+			what = MNTON;
+		else if (S_ISDIR(sb.st_mode))
+			what = MNTFROM;
+	}
+
+	switch (what) {
+	case MNTON:
+		if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
+			warnx("%s: not currently mounted", name);
+			return (1);
 		}
-	} else {
+		break;
+	case MNTFROM:
+		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
+			warnx("%s: not currently mounted", mntpt);
+			return (1);
+		}
+		break;
+	default:
 		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
 			name = rname;
 			if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
