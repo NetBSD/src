@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 1999/01/27 21:33:20 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2003/05/10 16:12:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,10 +42,5 @@
 struct cpu_disklabel {
 	int cd_start;		/* Offset to NetBSD partition in blocks */
 };
-
-#ifdef	_KERNEL
-struct disklabel;
-int bounds_check_with_label __P((struct buf *bp, struct disklabel *lp, int wlabel));
-#endif	/* _KERNEL */
 
 #endif	/* _MACHINE_DISKLABEL_H_ */

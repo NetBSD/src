@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2000/02/22 11:26:02 soda Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2003/05/10 16:12:02 thorpej Exp $	*/
 /*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
 /*	NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp 	*/
 
@@ -53,10 +53,5 @@ struct cpu_disklabel {
 	struct mbr_partition dosparts[NMBRPART];
 	struct dkbad bad;
 };
-
-#ifdef _KERNEL
-struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif
 
 #endif /* _MACHINE_DISKLABEL_H_ */
