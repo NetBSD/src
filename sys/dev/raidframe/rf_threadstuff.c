@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.4 1999/09/08 02:01:55 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -36,7 +36,6 @@
 
 static void mutex_destroyer(void *);
 static void cond_destroyer(void *);
-void    thread_wakeup(void *);
 
 /*
  * Shared stuff
