@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 1999/03/27 01:10:56 tron Exp $
+	$NetBSD: syscalls.master,v 1.9 1999/03/30 07:34:49 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -56,6 +56,7 @@
 #include "opt_compat_43.h"
 
 #include <sys/param.h>
+#include <sys/poll.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -182,7 +183,8 @@
 91	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
 92	STD		{ int linux_sys_fcntl(int fd, int cmd, void *arg); }
 93	UNIMPL		osf_select
-94	UNIMPL		poll
+94	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int linux_sys_socket(int domain, int type, \
