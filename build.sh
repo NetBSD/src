@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.81 2003/01/04 14:55:44 lukem Exp $
+#  $NetBSD: build.sh,v 1.82 2003/01/15 01:49:03 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -11,11 +11,16 @@
 # to take any further action.
 #
 
+trap "exit 1" 1 2 3 15
+toppid=$$
 bomb()
 {
-	echo ""
-	echo "ERROR: $@"
-	echo "*** BUILD ABORTED ***"
+	cat >&2 <<ERRORMESSAGE
+
+ERROR: $@
+*** BUILD ABORTED ***
+ERRORMESSAGE
+	kill $toppid		# in case we were invoked from a subshell
 	exit 1
 }
 
@@ -97,12 +102,26 @@ validatearch()
 
 getmakevar()
 {
+	[ -x $make ] || bomb "getmakevar $1: $make is not executable"
 	$make -m ${TOP}/share/mk -s -f- _x_ <<EOF
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
 .include <bsd.kernobj.mk>
 EOF
+}
+
+# getmakevar doesn't work properly if $make hasn't yet been built, which
+# can happen when running with the "-n" option. safe_getmakevar deals
+# with this by emitting a literal '$' followed by the variable name,
+# instead of trying to find the variable's value.
+safe_getmakevar()
+{
+	if [ -x $make ]; then
+		getmakevar "$1"
+	else
+		echo "\$$1"
+	fi
 }
 
 resolvepath()
@@ -319,7 +338,6 @@ if $do_rebuildmake; then
 
 	$runcmd mkdir "$tmpdir" || bomb "cannot mkdir: $tmpdir"
 	trap "cd /; rm -r -f \"$tmpdir\"" 0
-	trap "exit 1" 1 2 3 15
 	$runcmd cd "$tmpdir"
 
 	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
@@ -333,11 +351,12 @@ if $do_rebuildmake; then
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
-EXTERNAL_TOOLCHAIN=$(getmakevar EXTERNAL_TOOLCHAIN)
 if [ "$runcmd" = "echo" ]; then
 	TOOLCHAIN_MISSING=no
+	EXTERNAL_TOOLCHAIN=""
 else
 	TOOLCHAIN_MISSING=$(getmakevar TOOLCHAIN_MISSING)
+	EXTERNAL_TOOLCHAIN=$(getmakevar EXTERNAL_TOOLCHAIN)
 fi
 if [ "${TOOLCHAIN_MISSING}" = "yes" -a \
      "${EXTERNAL_TOOLCHAIN}" = "" ]; then
@@ -376,21 +395,11 @@ if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
 fi
 
 # Find DESTDIR and TOOLDIR.
-if [ "$runcmd" = "echo" ]; then
-	# shown symbolically with -n because these may come from mk.conf
-	DESTDIR='$DESTDIR'
-	TOOLDIR='$TOOLDIR'
-else
-	DESTDIR=$(getmakevar DESTDIR)
-	[ $? = 0 ] || bomb "getmakevar DESTDIR failed"
-	$runcmd echo "===> DESTDIR path: $DESTDIR"
-
-	TOOLDIR=$(getmakevar TOOLDIR)
-	[ $? = 0 ] || bomb "getmakevar TOOLDIR failed"
-	$runcmd echo "===> TOOLDIR path: $TOOLDIR"
-
-	export DESTDIR TOOLDIR
-fi
+DESTDIR=$(safe_getmakevar DESTDIR)
+$runcmd echo "===> DESTDIR path: $DESTDIR"
+TOOLDIR=$(safe_getmakevar TOOLDIR)
+$runcmd echo "===> TOOLDIR path: $TOOLDIR"
+export DESTDIR TOOLDIR
 
 # Check validity of TOOLDIR and DESTDIR.
 if [ -z "$TOOLDIR" ] || [ "$TOOLDIR" = "/" ]; then
@@ -443,7 +452,7 @@ if $do_rebuildmake; then
 		|| bomb "failed to install \$TOOLDIR/bin/nbmake"
 	make="$TOOLDIR/bin/nbmake"
 	$runcmd rm -r -f "$tmpdir"
-	trap 0 1 2 3 15
+	trap 0
 fi
 
 # Build a nbmake wrapper script, usable by hand as well as by build.sh.
@@ -465,7 +474,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.81 2003/01/04 14:55:44 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.82 2003/01/15 01:49:03 lukem Exp $
 #
 
 EOF
@@ -515,29 +524,24 @@ else
 				"without building new tools"
 		fi
 		$runcmd echo "===> Building kernel ${kernconfname}"
-		# The correct value of KERNOBJDIR might depend on a
-		# prior "make obj" in TOP/etc.
 		if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
-			$runcmd cd "$TOP/etc"
+			# The correct value of KERNOBJDIR might
+			# depend on a prior "make obj" in
+			# ${KERNSRCDIR}/${KERNARCHDIR}/compile.
+			KERNSRCDIR="$(safe_getmakevar KERNSRCDIR)"
+			KERNARCHDIR="$(safe_getmakevar KERNARCHDIR)"
+			$runcmd cd "${KERNSRCDIR}/${KERNARCHDIR}/compile"
 			$runcmd "$makewrapper" obj \
-				|| bomb "failed to make obj in etc"
+				|| bomb "failed to make obj in " \
+					"${KERNSRCDIR}/${KERNARCHDIR}/compile"
 			$runcmd cd "$TOP"
 		fi
-		if [ "$runcmd" = "echo" ]; then
-			# shown symbolically with -n
-			# because getmakevar might not work yet
-			KERNCONFDIR='$KERNCONFDIR'
-			KERNOBJDIR='$KERNOBJDIR'
-		else
-			KERNCONFDIR="$( getmakevar KERNCONFDIR )"
-			[ $? = 0 ] || bomb "getmakevar KERNCONFDIR failed"
-			KERNOBJDIR="$( getmakevar KERNOBJDIR )"
-			[ $? = 0 ] || bomb "getmakevar KERNOBJDIR failed"
-		fi
+		KERNCONFDIR="$(safe_getmakevar KERNCONFDIR)"
+		KERNOBJDIR="$(safe_getmakevar KERNOBJDIR)"
 		case "${kernconfname}" in
 		*/*)
 			kernconfpath="${kernconfname}"
-			kernconfbase="$( basename "${kernconfname}" )"
+			kernconfbase="$(basename "${kernconfname}")"
 			;;
 		*)
 			kernconfpath="${KERNCONFDIR}/${kernconfname}"
