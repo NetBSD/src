@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.19 1996/02/10 17:12:36 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.20 1996/04/11 12:46:41 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -57,6 +57,7 @@
 #include <compat/svr4/svr4_utsname.h>
 #include <compat/svr4/svr4_systeminfo.h>
 #include <compat/svr4/svr4_time.h>
+#include <compat/svr4/svr4_socket.h>
 
 #ifdef sparc
 /* 
@@ -70,6 +71,12 @@ static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
 int svr4_ustat __P((struct proc *, void *, register_t *));
 static int svr4_to_bsd_pathconf __P((int));
 
+/*
+ * SVR4 uses named pipes as named sockets, so we tell programs
+ * that sockets are named pipes with mode 0
+ */
+#define BSD_TO_SVR4_MODE(mode) (S_ISSOCK(mode) ? S_IFIFO : (mode))
+
 
 #ifndef SVR4_NO_OSTAT
 static void bsd_to_svr4_stat __P((struct stat *, struct svr4_stat *));
@@ -82,7 +89,7 @@ bsd_to_svr4_stat(st, st4)
 	bzero(st4, sizeof(*st4));
 	st4->st_dev = st->st_dev;
 	st4->st_ino = st->st_ino;
-	st4->st_mode = st->st_mode;
+	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
@@ -104,7 +111,7 @@ bsd_to_svr4_xstat(st, st4)
 	bzero(st4, sizeof(*st4));
 	st4->st_dev = st->st_dev;
 	st4->st_ino = st->st_ino;
-	st4->st_mode = st->st_mode;
+	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
@@ -154,6 +161,9 @@ svr4_sys_stat(p, v, retval)
 
 	bsd_to_svr4_stat(&st, &svr4_st);
 
+	if (S_ISSOCK(st.st_mode))
+		(void) svr4_add_socket(p, SCARG(uap, path), &st);
+
 	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
 		return error;
 
@@ -194,6 +204,9 @@ svr4_sys_lstat(p, v, retval)
 		return error;
 
 	bsd_to_svr4_stat(&st, &svr4_st);
+
+	if (S_ISSOCK(st.st_mode))
+		(void) svr4_add_socket(p, SCARG(uap, path), &st);
 
 	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
 		return error;
@@ -269,6 +282,9 @@ svr4_sys_xstat(p, v, retval)
 
 	bsd_to_svr4_xstat(&st, &svr4_st);
 
+	if (S_ISSOCK(st.st_mode))
+		(void) svr4_add_socket(p, SCARG(uap, path), &st);
+
 	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
 		return error;
 
@@ -300,6 +316,9 @@ svr4_sys_lxstat(p, v, retval)
 		return error;
 
 	bsd_to_svr4_xstat(&st, &svr4_st);
+
+	if (S_ISSOCK(st.st_mode))
+		(void) svr4_add_socket(p, SCARG(uap, path), &st);
 
 	if ((error = copyout(&svr4_st, SCARG(uap, ub), sizeof svr4_st)) != 0)
 		return error;
