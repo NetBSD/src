@@ -1,4 +1,4 @@
-.\"	$NetBSD: mksunbootcd.1,v 1.3 1999/05/11 16:39:03 ross Exp $
+.\"	$NetBSD: mksunbootcd.1,v 1.4 2002/01/15 02:30:45 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Matthew R. Green
 .\" All rights reserved.
@@ -69,7 +69,8 @@ partition, in order.  If any architecture image is missing, that partition is
 not used.  If a disc with sun4 and sun4m support only was to be created, a dummy
 image would need to be in place for sun4c.
 .Pp
-If the same boot image maybe used for multiple architectures (as the NetBSD/sparc
+If the same boot image maybe used for multiple architectures (as the
+.Nx Ns /sparc
 ports for sun4, sun4c and sun4m allow), the same bootfile can be listed multiple
 times on the command line.  The
 .Nm
@@ -119,13 +120,13 @@ The
 .Fl v
 option turns on verbose output.
 .El
-.Sh AUTHOR
+.Sh SEE ALSO
+.Xr mount 8 ,
+.Xr mount_ffs 8 ,
+.Xr newfs 8
+.Sh AUTHORS
 The
 .Nm
 program was written by Ignatios Souvatzis <is@netbsd.org>, with some
 help from Matthew Green <mrg@eterna.com.au>, who also wrote this
 manual page.
-.Sh SEE ALSO
-.Xr newfs 8 ,
-.Xr mount 8 ,
-.Xr mount_ffs 8 .
