@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.12 2003/11/03 09:56:37 wiz Exp $
+.\"	$NetBSD: wd.4,v 1.13 2004/08/30 09:43:32 drochner Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -32,6 +32,7 @@
 .Sh SYNOPSIS
 .Cd "wd* at atabus? drive ? flags 0x0000"
 .Cd "wd* at umass?"
+.Cd options WD_SOFTBADSECT
 .Sh DESCRIPTION
 The
 .Nm wd
@@ -50,6 +51,24 @@ For DMA and UDMA, 0xf (1111) means 'disable'.
 For example, a flags value of 0x0fac (1111 1010 1100)
 means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 0x0000 means "use whatever the drive claims to support."
+.Pp
+The kernel configuration option
+.Dq Cd options WD_SOFTBADSECT
+enables a software managed bad-sector list which will prevent further accesses
+to sectors where an unrecoverable read error occured.
+A user interface is provided by
+.Xr dkctl 8 .
+Unlike the (historical) mechanisms provided by
+.Xr bad144 8
+and
+.Xr badsect 8
+the software list does neither support sector replacement nor is it saved
+across reboots.
+.Sh BUGS
+The optional software bad sector list does not interoperate well with
+sector remapping features of modern disks.
+To let the disk remap a sector internally, the software bad sector list
+must be flushed or disabled before.
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr intro 4 ,
@@ -57,4 +76,5 @@ means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 .Xr scsi 4 ,
 .Xr umass 4 ,
 .Xr wdc 4 ,
-.Xr atactl 8
+.Xr atactl 8 ,
+.Xr dkctl 8
