@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.17 1998/09/06 21:38:36 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.18 1998/09/20 19:29:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -196,10 +196,10 @@
 #define SRMMU_PCR	0x00000000	/* Processor control register */
 #define SRMMU_CXTPTR	0x00000100	/* Context table pointer register */
 #define SRMMU_CXR	0x00000200	/* Context register */
-#define SRMMU_SFSTAT	0x00000300	/* Synchronous fault status reg */
-#define SRMMU_SFADDR	0x00000400	/* Synchronous fault address reg */
-#define SRMMU_AFSTAT	0x00000500	/* Asynchronous fault status reg (HS) */
-#define SRMMU_AFADDR	0x00000600	/* Asynchronous fault address reg (HS)*/
+#define SRMMU_SFSR	0x00000300	/* Synchronous fault status reg */
+#define SRMMU_SFAR	0x00000400	/* Synchronous fault address reg */
+#define SRMMU_AFSR	0x00000500	/* Asynchronous fault status reg (HS) */
+#define SRMMU_AFAR	0x00000600	/* Asynchronous fault address reg (HS)*/
 #define SRMMU_PCFG	0x00000600	/* Processor configuration reg (TURBO)*/
 #define SRMMU_TLBCTRL	0x00001000	/* TLB replacement control reg */
 
