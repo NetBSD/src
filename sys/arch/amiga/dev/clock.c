@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1996/10/10 23:55:32 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1996/10/11 21:32:56 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,7 +143,11 @@ clockattach(pdp, dp, auxp)
 	}
 
 	kprintf(": %s system hz %d hardware hz %d\n", clockchip, hz,
+#ifdef DRACO
 		dracorev >= 4 ? eclockfreq / 7 : eclockfreq);
+#else
+		eclockfreq);
+#endif
 
 #ifdef DRACO
 	if (dracorev >= 4) {
@@ -241,9 +245,9 @@ void calibrate_delay()
 void
 cpu_initclocks()
 {
+#ifdef DRACO
 	unsigned char dracorev;
 	dracorev = is_draco();
-#ifdef DRACO
 	if (dracorev >= 4) {
 		draco_ioct->io_timerlo = CLK_INTERVAL & 0xFF;
 		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
