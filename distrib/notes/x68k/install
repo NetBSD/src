@@ -303,57 +303,29 @@ process again from scratch.
 		probably pick a directory under /mnt/usr.)  The
 		default is /mnt/usr/distrib.
 
-		Configure the appropriate ethernet interface (e.g.
-		ed0, ep0, etc.) up, with a command like:
+		Configure the SLIP interface, with the following
+		command sequence:
 
-		ifconfig <ifname> <ipaddr> [netmask <netmask>]
+		slattach -h -s <speed> tty00
+		ifconfig sl0 <my_ipaddr> <peer_ipaddr>
 
-		where "<ifname>" is the interface name, like those
-		listed above, and "<ipaddr>" is the numeric IP address
-		of the interface.  If the interface has a special
-		netmask, supply the word "netmask" at and that netmask
-		at the end of the command line.  (The brackets
-		indicate that those arguments are optional.)  For
-		instance, to configure interface ed0 with IP address
-		129.133.10.10, use the command:
+		where "<speed>" is the network speed, and "<my_ipaddr>"
+		is the numeric IP address of the machine you are going
+		to install NetBSD/x68k, while "<peer_ipaddr>" is the
+		address of the peer machine connected with your machine.
+		You might have to configure the peer SLIP interface
+		with similar sequence (depending on the peer system).
 
-		ifconfig ed0 129.133.10.10
+		For instance, the sequence
 
-		and to configure interface ep0 with IP address
-		128.32.240.167 and a special netmask, 0xffffff00, use
-		the command:
+		slattach -h -s 38400 tty00
+		ifconfig sl0 192.168.0.1 192.168.0.10
 
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00
-
-		If your board selects software selection of the
-		ethernet interface to use, you might have to add
-		special flags to the "ifconfig" command you use.
-		Consult the table below for the appropriate flags:
-
-		Interface Type	Connector	Flags
-		--------- ----	---------	-----
-		ed with WD/SMC*	BNC		[none necessary]
-		ed with WD/SMC*	UTP		[none necessary]
-		ed with WD/SMC*	AUI		link0
-
-		* Older WD boards do not support software configuration,
-		  and must be configured via jumpers.  These flags
-		  will have no effect on them.
-
-		In other words, if, in the last example, the AUI port
-		of the board were being used, you would use the
-		command:
-
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00 link0
-
-		If the NFS server or FTP server is not on a directly-
-		connected network, you need to set up a route to it
-		using a command like:
-
-		route add default <gate_ipaddr>
-
-		where <gate_ipaddr> is your gateway's numeric IP
-		address.
+		configures the SLIP interface for the network between
+		your machine (with IP address 192.168.0.1) and the peer
+		(192.168.0.10) with speed 38400 bps.  Note that IP
+		addresses 192.168.*.* are the private IP addresses 
+		described in RFC 1597.
 
 		If you are NFS-mounting the distribution sets, mount
 		them on the temporary directory with a command like:

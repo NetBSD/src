@@ -32,15 +32,15 @@ Installation floppy:
 
 	This disk contains the software necessary to prepare your hard
 	drive for NetBSD and install the NetBSD distribution. It is
-	not bootable, and must be used in conjunction with one of the
-	kernel-copy floppies.  This floppy is named "inst12.fs".
+	not bootable, and must be used in conjunction with the kernel-
+	copy floppy.  This floppy is named "inst12.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
 	system from a previous version of NetBSD.  It is not bootable,
-	and must be used in conjunction with one of the kernel-copy
-	floppies.  This floppy is named "upgr12.fs".
+	and must be used in conjunction with the kernel-copy floppy.
+	This floppy is named "upgr12.fs".
 
 The NetBSD/x68k binary distribution sets contain the binaries which
 comprise the NetBSD 1.2 release for the x68k.  There are seven binary
@@ -97,7 +97,7 @@ distribution tree, and are as follows:
 		[ 0.8M gzipped, 2.9M uncompressed ]
 
 For other platform, there is a security distribution named "secr12"
-is provided.  It contains the files which cannot be exported outside
+provided.  It contains the files which cannot be exported outside
 the United States and Canada.  Since all the developers of the NetBSD/x68k
 live in Japan, the x68k security distribution is not provided in the
 binary form.
