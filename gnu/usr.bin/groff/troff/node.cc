@@ -1364,6 +1364,9 @@ public:
   node *copy();
   node *merge_glyph_node(glyph_node *);
   node *merge_self(node *);
+#if defined(STORE_WIDTH) && defined(BROKEN_GXX_VIRTUAL_INLINE)
+  inline
+#endif
   hunits width();
   node *last_char_node();
   units size();
