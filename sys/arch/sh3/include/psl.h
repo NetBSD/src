@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 2001/05/16 12:42:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,8 +57,8 @@
 #define	PSL_MBO		0x00000000	/* must be one bits */
 #define	PSL_MBZ		0x8ffffc0c	/* must be zero bits */
 
-#define PSL_USERSET    0
-#define PSL_USERSTATIC    (PSL_BL|PSL_RB|PSL_MD|PSL_IMASK)
+#define PSL_USERSET	0
+#define PSL_USERSTATIC	(PSL_BL|PSL_RB|PSL_MD|PSL_IMASK|PSL_MBO|PSL_MBZ)
 
 #ifdef _KERNEL
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.12 2001/04/24 04:31:09 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.13 2001/05/16 12:42:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -350,21 +350,13 @@ sys___sigreturn14(p, v, retval)
 
 	/* Restore signal context. */
 	tf = p->p_md.md_regs;
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-#ifdef TODO
-	  if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0) {
-	    return (EINVAL);
-	  }
-#endif
 
-	  tf->tf_ssr = context.sc_ssr;
-	}
+	/* Check for security violations. */
+	if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0)
+		return (EINVAL);
+
+	tf->tf_ssr = context.sc_ssr;
+
 	tf->tf_r0 = context.sc_r0;
 	tf->tf_r1 = context.sc_r1;
 	tf->tf_r2 = context.sc_r2;
