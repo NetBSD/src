@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.34 2004/01/25 03:26:30 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.35 2004/04/22 01:41:22 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.34 2004/01/25 03:26:30 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.35 2004/04/22 01:41:22 itojun Exp $");
 #endif
 #endif
 
@@ -467,7 +467,8 @@ main(argc, argv)
 			break;
 		case 'I':
 			useicmp++;
-			ident = htons(getpid() & 0xffff); /* same as ping6 */
+			/* same as ping6 */
+			ident = htons(arc4random() & 0xffff);
 			break;
 		case 'l':
 			lflag++;
