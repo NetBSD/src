@@ -985,6 +985,16 @@ do_child(Session *s, const char *command)
 	}
 #endif /* KRB4 */
 
+#ifdef KRB5
+	{
+		extern const char *ssh_krb5_ccname;
+
+		if (ssh_krb5_ccname)
+			child_set_env(&env, &envsize, "KRB5CCNAME",
+			    ssh_krb5_ccname);
+	}
+#endif /* KRB5 */
+
 	if (xauthfile)
 		child_set_env(&env, &envsize, "XAUTHORITY", xauthfile);
 	if (auth_get_socket_name() != NULL)
