@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46 2002/12/10 05:14:28 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.47 2003/01/29 14:12:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,11 +57,7 @@
  * Virtual address space arrangement. On 386, both user and kernel
  * share the address space, not unlike the vax.
  * USRSTACK is the top (end) of the user stack. Immediately above the
- * user stack resides the user structure, which is UPAGES long and contains
- * the kernel stack.
- *
- * Immediately after the user structure is the page table map, and then
- * kernal address space.
+ * user stack is the page table map, and then kernal address space.
  */
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
@@ -100,8 +96,7 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAXUSER_ADDRESS	\
-			((vaddr_t)((PDSLOT_PTE << PDSHIFT) - (UPAGES * NBPG)))
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)(PDSLOT_PTE << PDSHIFT))
 #define	VM_MAX_ADDRESS		\
 		((vaddr_t)((PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_KERN << PDSHIFT))

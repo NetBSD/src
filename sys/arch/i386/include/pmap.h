@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.67 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.68 2003/01/29 14:12:35 drochner Exp $	*/
 
 /*
  *
@@ -61,11 +61,7 @@
  * (the following assumes that KERNBASE is 0xc0000000)
  *
  * PDE#s	VA range		usage
- * 0->766	0x0 -> 0xbfc00000	user address space, note that the
- *					max user address is 0xbfbfe000
- *					the final two pages in the last 4MB
- *					used to be reserved for the UAREA
- *					but now are no longer used
+ * 0->766	0x0 -> 0xbfc00000	user address space
  * 767		0xbfc00000->		recursive mapping of PDP (used for
  *			0xc0000000	linear mapping of PTPs)
  * 768->1023	0xc0000000->		kernel address space (constant
