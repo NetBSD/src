@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.66 2004/07/07 00:10:30 sekiya Exp $ */
+/* $NetBSD: wsconsio.h,v 1.67 2004/07/20 20:28:20 heas Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -348,6 +348,7 @@ struct wsdisplay_cursor {
 #define	WSDISPLAYIO_SMODE	_IOW('W', 76, u_int)
 #define	WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
 #define	WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
+#define	WSDISPLAYIO_MODE_DUMBFB	2	/* mapped (graphics) fb mode */
 
 
 /*
@@ -445,6 +446,8 @@ struct wsdisplay_scroll_data {
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
 
+/* Display information: number of bytes per row, may be same as pixels */
+#define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
 
 /*
  * Mux ioctls (96 - 127)
