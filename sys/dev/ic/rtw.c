@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.7 2004/12/20 00:28:02 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.8 2004/12/20 01:13:45 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.7 2004/12/20 00:28:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.8 2004/12/20 01:13:45 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -435,8 +435,10 @@ rtw_config0123_enable(struct rtw_regs *regs, int enable)
 	ecr &= ~(RTW_9346CR_EEM_MASK | RTW_9346CR_EECS | RTW_9346CR_EESK);
 	if (enable)
 		ecr |= RTW_9346CR_EEM_CONFIG;
-	else
+	else {
+		RTW_WBW(regs, RTW_9346CR, MAX(RTW_CONFIG0, RTW_CONFIG3));
 		ecr |= RTW_9346CR_EEM_NORMAL;
+	}
 	RTW_WRITE8(regs, RTW_9346CR, ecr);
 	RTW_SYNC(regs, RTW_9346CR, RTW_9346CR);
 }
@@ -790,6 +792,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 	sd.sd_clkdelay = 50;
 #endif
 
+	/* TBD bus barriers */
 	if (!read_seeprom(&sd, sr->sr_content, 0, sr->sr_size/2)) {
 		printf("%s: could not read SROM\n", dvname);
 		free(sr->sr_content, M_DEVBUF);
@@ -849,6 +852,8 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	}
 
 	RTW_WRITE8(regs, RTW_CONFIG4, cfg4);
+
+	RTW_WBR(regs, RTW_CONFIG4, RTW_CONFIG4);
 
 	printf("%s: %s RF programming method, %#02x\n", dvname, method,
 	    RTW_READ8(regs, RTW_CONFIG4));
@@ -1498,6 +1503,7 @@ rtw_hwring_setup(struct rtw_softc *sc)
 	RTW_WRITE(regs, RTW_TNPDA, RTW_RING_BASE(sc, hd_txmd));
 	RTW_WRITE(regs, RTW_THPDA, RTW_RING_BASE(sc, hd_txhi));
 	RTW_WRITE(regs, RTW_TBDA, RTW_RING_BASE(sc, hd_bcn));
+	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
 }
 
 static void
@@ -1528,6 +1534,7 @@ rtw_kick(struct rtw_softc *sc)
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 	RTW_WRITE16(regs, RTW_IMR, 0);
+	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 	rtw_rxbufs_release(sc->sc_dmat, &sc->sc_rxctl[0]);
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
@@ -1536,15 +1543,15 @@ rtw_kick(struct rtw_softc *sc)
 	rtw_swring_setup(sc);
 	rtw_hwring_setup(sc);
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
+	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
 }
 
 static void
 rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 {
-	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0) {
+	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0)
 		rtw_kick(sc);
-	}
 	if ((isr & RTW_INTR_TXFOVW) != 0)
 		;	/* TBD restart transmit engine */
 	return;
@@ -1553,7 +1560,7 @@ rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 static __inline void
 rtw_suspend_ticks(struct rtw_softc *sc)
 {
-	printf("%s: suspending ticks\n", sc->sc_dev.dv_xname);
+	RTW_DPRINTF2(("%s: suspending ticks\n", sc->sc_dev.dv_xname));
 	sc->sc_do_tick = 0;
 }
 
@@ -1570,14 +1577,14 @@ rtw_resume_ticks(struct rtw_softc *sc)
 
 	sc->sc_do_tick = 1;
 
-	printf("%s: resume ticks delta %#08x now %#08x next %#08x\n",
-	    sc->sc_dev.dv_xname, tsftrl1 - tsftrl0, tsftrl1, next_tick);
+	RTW_DPRINTF2(("%s: resume ticks delta %#08x now %#08x next %#08x\n",
+	    sc->sc_dev.dv_xname, tsftrl1 - tsftrl0, tsftrl1, next_tick));
 }
 
 static void
 rtw_intr_timeout(struct rtw_softc *sc)
 {
-	printf("%s: timeout\n", sc->sc_dev.dv_xname);
+	RTW_DPRINTF2(("%s: timeout\n", sc->sc_dev.dv_xname));
 	if (sc->sc_do_tick)
 		rtw_resume_ticks(sc);
 	return;
@@ -1606,6 +1613,7 @@ rtw_intr(void *arg)
 		isr = RTW_READ16(regs, RTW_ISR);
 
 		RTW_WRITE16(regs, RTW_ISR, isr);
+		RTW_WBR(regs, RTW_ISR, RTW_ISR);
 
 		if (sc->sc_intr_ack != NULL)
 			(*sc->sc_intr_ack)(regs);
@@ -1686,12 +1694,16 @@ rtw_stop(struct ifnet *ifp, int disable)
 		/* Disable interrupts. */
 		RTW_WRITE16(regs, RTW_IMR, 0);
 
+		RTW_WBW(regs, RTW_TPPOLL, RTW_IMR);
+
 		/* Stop the transmit and receive processes. First stop DMA,
 		 * then disable receiver and transmitter.
 		 */
 		RTW_WRITE8(regs, RTW_TPPOLL,
 		    RTW_TPPOLL_SBQ|RTW_TPPOLL_SHPQ|RTW_TPPOLL_SNPQ|
 		    RTW_TPPOLL_SLPQ);
+
+		RTW_SYNC(regs, RTW_TPPOLL, RTW_IMR);
 
 		rtw_io_enable(&sc->sc_regs, RTW_CR_RE|RTW_CR_TE, 0);
 	}
@@ -1954,6 +1966,7 @@ rtw_transmit_config(struct rtw_regs *regs)
 	tcr |= RTW_TCR_CRC;	/* NIC appends CRC32 */
 
 	RTW_WRITE(regs, RTW_TCR, tcr);
+	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
 }
 
 static __inline void
@@ -1965,7 +1978,9 @@ rtw_enable_interrupts(struct rtw_softc *sc)
 	sc->sc_inten |= RTW_INTR_IOERROR|RTW_INTR_TIMEOUT;
 
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
+	RTW_WBW(regs, RTW_IMR, RTW_ISR);
 	RTW_WRITE16(regs, RTW_ISR, 0xffff);
+	RTW_SYNC(regs, RTW_IMR, RTW_ISR);
 
 	/* XXX necessary? */
 	if (sc->sc_intr_ack != NULL)
@@ -2096,9 +2111,11 @@ rtw_init(struct ifnet *ifp)
 	rtw_set_access(sc, RTW_ACCESS_CONFIG);
 
 	RTW_WRITE8(regs, RTW_MSR, 0x0);	/* no link */
+	RTW_WBW(regs, RTW_MSR, RTW_BRSR);
 
 	/* long PLCP header, 1Mbps basic rate */
 	RTW_WRITE16(regs, RTW_BRSR, 0x0);
+	RTW_SYNC(regs, RTW_BRSR, RTW_BRSR);
 
 	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
 	rtw_set_access(sc, RTW_ACCESS_NONE);
@@ -2108,12 +2125,15 @@ rtw_init(struct ifnet *ifp)
 #endif
 	/* XXX from reference sources */
 	RTW_WRITE(regs, RTW_FEMR, 0xffff);
+	RTW_SYNC(regs, RTW_FEMR, RTW_FEMR);
 
 	rtw_set_rfprog(regs, sc->sc_rfchipid, sc->sc_dev.dv_xname);
 
 	RTW_WRITE8(regs, RTW_PHYDELAY, sc->sc_phydelay);
 	/* from Linux driver */
 	RTW_WRITE8(regs, RTW_CRCOUNT, RTW_CRCOUNT_MAGIC);
+
+	RTW_SYNC(regs, RTW_PHYDELAY, RTW_CRCOUNT);
 
 	rtw_enable_interrupts(sc);
 
@@ -2486,6 +2506,7 @@ rtw_start(struct ifnet *ifp)
 		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL,
 		    RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ | RTW_TPPOLL_HPQ |
 		    RTW_TPPOLL_BQ);
+		RTW_SYNC(regs, RTW_TPPOLL, RTW_TPPOLL);
 	}
 	DPRINTF2(sc, ("%s: leave\n", __func__));
 	return;
@@ -2959,6 +2980,7 @@ rtw_check_phydelay(struct rtw_regs *regs, u_int32_t rcr0)
 	u_int8_t phydelay = LSHIFT(0x6, RTW_PHYDELAY_PHYDELAY);
 
 	RTW_WRITE(regs, RTW_RCR, REVAB);
+	RTW_WBW(regs, RTW_RCR, RTW_RCR);
 	RTW_WRITE(regs, RTW_RCR, REVC);
 
 	RTW_WBR(regs, RTW_RCR, RTW_RCR);
@@ -2966,6 +2988,7 @@ rtw_check_phydelay(struct rtw_regs *regs, u_int32_t rcr0)
 		phydelay |= RTW_PHYDELAY_REVC_MAGIC;
 
 	RTW_WRITE(regs, RTW_RCR, rcr0);	/* restore RCR */
+	RTW_SYNC(regs, RTW_RCR, RTW_RCR);
 
 	return phydelay;
 #undef REVC
