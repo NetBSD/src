@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.11 1999/12/01 23:22:59 augustss Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.12 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -48,7 +48,8 @@ void	wsdisplay_reset __P((struct device *, enum wsdisplay_resetops));
 void	wsdisplay_kbdholdscreen __P((struct device *v, int));
 
 void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
-				    void (*poll)(dev_t, int)));
+				    void (*poll)(dev_t, int),
+				    void (*bell)(dev_t, u_int, u_int, u_int)));
 void	wsdisplay_unset_cons_kbd __P((void));
 
 /*

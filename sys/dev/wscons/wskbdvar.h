@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.9 2000/01/22 15:09:01 drochner Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.10 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,7 @@ struct wskbd_accessops {
 struct wskbd_consops {
 	void    (*getc) __P((void *, u_int *, int *));
 	void    (*pollc) __P((void *, int));
+	void	(*bell) __P((void *, u_int, u_int, u_int));
 };
 
 /*
@@ -97,3 +98,4 @@ void	wskbd_rawinput __P((struct device *, u_char *, int));
  */
 int	wskbd_cngetc __P((dev_t dev));
 void	wskbd_cnpollc __P((dev_t dev, int poll));
+void	wskbd_cnbell __P((dev_t, u_int, u_int, u_int));
