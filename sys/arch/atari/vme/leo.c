@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.1 1998/08/18 07:45:09 leo Exp $	*/
+/*	$NetBSD: leo.c,v 1.2 1999/10/25 14:52:56 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -163,15 +163,14 @@ leo_match(parent, cfp, aux)
 		if (bus_space_map(memt, vat.va_maddr, vat.va_msize,
 			  	  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
 			  	  &memh)) {
-			bus_space_unmap(iot, (caddr_t) vat.va_iobase,
-					vat.va_iosize);
+			bus_space_unmap(iot, ioh, vat.va_iosize);
 			printf("leo_match: cannot map memory area\n");
 			return 0;
 		}
 		found = leo_probe(&iot, &memt, &ioh, &memh,
 				  vat.va_iosize, vat.va_msize);
-		bus_space_unmap(iot, (caddr_t) vat.va_iobase, vat.va_iosize);
-		bus_space_unmap(memt, (caddr_t) vat.va_maddr, vat.va_msize);
+		bus_space_unmap(iot, ioh, vat.va_iosize);
+		bus_space_unmap(memt, memh, vat.va_msize);
 		if (found) {
 			*va = vat;
 			return 1;
