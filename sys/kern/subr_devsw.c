@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.4 2002/09/15 14:29:01 tsutsui Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.5 2003/02/01 11:12:35 mrg Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -379,15 +379,20 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		return (-1);
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
+		size_t len;
+
 		conv = &devsw_conv[i];
 		if (conv->d_name == NULL)
 			continue;
-		if (strncmp(conv->d_name, name, strlen(conv->d_name)) != 0)
+		len = strlen(conv->d_name);
+		if (strncmp(conv->d_name, name, len) != 0)
+			continue;
+		if (*(name +len) && !isdigit(*(name + len)))
 			continue;
 		bmajor = conv->d_bmajor;
 		if (bmajor < 0 || bmajor >= max_bdevsws ||
 		    bdevsw[bmajor] == NULL)
-			return (-1);
+			break;
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
