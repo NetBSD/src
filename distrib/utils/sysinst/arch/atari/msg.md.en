@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2002/04/20 20:35:00 leo Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.3 2002/04/25 20:16:08 leo Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,4 +102,11 @@ on the same disk, you must use the existing layout!
 The NetBSD part of your disk is %.2f Megabytes. 
 Standard requires at least %.2f Megabytes. 
 Standard with X requires at least %.2f Megabytes.
+}
+
+message emulbackup
+{Either the /emul/aout or /emul directory on your system was a symbolic link
+pointing to an unmounted filesystem. It has been given a '.old' extension.
+Once you bring your upgraded system back up, you may need to take care
+of merging the newly created /emul/aout directory with the old one.
 }
