@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.33 2000/04/23 21:10:27 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.34 2000/04/24 19:07:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ lfs_truncate(v)
 	} */ *ap = v;
 	struct indir *inp;
 	int i;
-        int error, aflags;
+        int error;
 	ufs_daddr_t *daddrp;
 	struct vnode *vp = ap->a_vp;
 	off_t length = ap->a_length;
@@ -275,7 +275,7 @@ lfs_truncate(v)
 		 * existing fragments get extended.  (XXX Adding the new
 		 * block is not really necessary.)
 		 */
-		error = VOP_BALLOC(vp, length - 1, 1, ap->a_cred, aflags, &bp);
+		error = VOP_BALLOC(vp, length - 1, 1, ap->a_cred, 0, &bp);
 		if (error)
  			return (error);
 		VOP_BWRITE(bp);
