@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.80 1999/10/05 22:04:30 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.81 1999/10/09 03:00:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.80 1999/10/05 22:04:30 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.81 1999/10/09 03:00:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,25 +388,28 @@ void
 cmdabort(notused)
 	int notused;
 {
+	int oerrno = errno;
 
 	alarmtimer(0);
-	putc('\n', ttyout);
+	write(fileno(ttyout), "\n", 1);
 	abrtflag++;
 	if (ptflag)
-		longjmp(ptabort, 1);
+		siglongjmp(ptabort, 1);
+	errno = oerrno;
 }
 
 void
 cmdtimeout(notused)
 	int notused;
 {
+	int oerrno = errno;
 
 	alarmtimer(0);
-	putc('\n', ttyout);
-	(void)fflush(ttyout);
+	write(fileno(ttyout), "\n", 1);
 	timeoutflag++;
 	if (ptflag)
-		longjmp(ptabort, 1);
+		siglongjmp(ptabort, 1);
+	errno = oerrno;
 }
 
 
@@ -682,18 +685,33 @@ empty(cin, din, sec)
 	return nr;
 }
 
-jmp_buf	sendabort;
+jmp_buf	xferabort;
 
 void
-abortsend(notused)
+abortxfer(notused)
 	int notused;
 {
+	char msgbuf[100];
+	int len;
 
 	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
-	fputs("\nsend aborted\nwaiting for remote to finish abort.\n", ttyout);
-	longjmp(sendabort, 1);
+	switch (direction[0]) {
+	case 'r':
+		strlcpy(msgbuf, "\nreceive", sizeof(msgbuf));
+		break;
+	case 's':
+		strlcpy(msgbuf, "\nsend", sizeof(msgbuf));
+		break;
+	default:
+		errx(1, "abortxfer called with unknown direction %s\n",
+		    direction);
+	}
+	len = strlcat(msgbuf, " aborted\nwaiting for remote to finish abort.\n",
+	    sizeof(msgbuf));
+	write(fileno(ttyout), msgbuf, len);
+	siglongjmp(xferabort, 1);
 }
 
 void
@@ -743,7 +761,7 @@ sendrequest(cmd, local, remote, printnames)
 	oldintr = NULL;
 	oldintp = NULL;
 	lmode = "w";
-	if (setjmp(sendabort)) {
+	if (sigsetjmp(xferabort, 1)) {
 		while (cpend) {
 			(void)getreply(0);
 		}
@@ -751,7 +769,7 @@ sendrequest(cmd, local, remote, printnames)
 		goto cleanupsend;
 	}
 	(void)xsignal(SIGQUIT, psummary);
-	oldintr = xsignal(SIGINT, abortsend);
+	oldintr = xsignal(SIGINT, abortxfer);
 	if (strcmp(local, "-") == 0) {
 		fin = stdin;
 		progress = 0;
@@ -784,7 +802,7 @@ sendrequest(cmd, local, remote, printnames)
 		code = -1;
 		goto cleanupsend;
 	}
-	if (setjmp(sendabort))
+	if (sigsetjmp(xferabort, 1))
 		goto abort;
 
 	if (restart_point &&
@@ -965,14 +983,14 @@ abort:
 		ptransfer(0);
 
 cleanupsend:
-	if (data >= 0) {
-		(void)close(data);
-		data = -1;
-	}
 	if (oldintr)
 		(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
 		(void)xsignal(SIGPIPE, oldintp);
+	if (data >= 0) {
+		(void)close(data);
+		data = -1;
+	}
 	if (closefunc != NULL && fin != NULL)
 		(*closefunc)(fin);
 	if (dout)
@@ -980,21 +998,6 @@ cleanupsend:
 	progress = oprogress;
 	restart_point = 0;
 	bytes = 0;
-}
-
-jmp_buf	recvabort;
-
-void
-abortrecv(notused)
-	int notused;
-{
-
-	alarmtimer(0);
-	mflag = 0;
-	abrtflag = 0;
-	fputs("\nreceive aborted\nwaiting for remote to finish abort.\n",
-	    ttyout);
-	longjmp(recvabort, 1);
 }
 
 void
@@ -1049,7 +1052,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	oldintr = NULL;
 	oldintp = NULL;
 	tcrflag = !crflag && is_retr;
-	if (setjmp(recvabort)) {
+	if (sigsetjmp(xferabort, 1)) {
 		while (cpend) {
 			(void)getreply(0);
 		}
@@ -1057,7 +1060,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		goto cleanuprecv;
 	}
 	(void)xsignal(SIGQUIT, psummary);
-	oldintr = xsignal(SIGINT, abortrecv);
+	oldintr = xsignal(SIGINT, abortxfer);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
 		if (access(local, W_OK) < 0) {
 			char *dir = strrchr(local, '/');
@@ -1107,7 +1110,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		code = -1;
 		goto cleanuprecv;
 	}
-	if (setjmp(recvabort))
+	if (sigsetjmp(xferabort, 1))
 		goto abort;
 	if (is_retr && restart_point &&
 #ifndef NO_QUAD
@@ -1337,14 +1340,14 @@ abort:
 		ptransfer(0);
 
 cleanuprecv:
-	if (data >= 0) {
-		(void)close(data);
-		data = -1;
-	}
 	if (oldintr)
 		(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
 		(void)xsignal(SIGPIPE, oldintp);
+	if (data >= 0) {
+		(void)close(data);
+		data = -1;
+	}
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
 	if (din)
@@ -1776,9 +1779,11 @@ void
 psabort(notused)
 	int notused;
 {
+	int oerrno = errno;
 
 	alarmtimer(0);
 	abrtflag++;
+	errno = oerrno;
 }
 
 void
@@ -1875,11 +1880,11 @@ abortpt(notused)
 {
 
 	alarmtimer(0);
-	putc('\n', ttyout);
+	write(fileno(ttyout), "\n", 1);
 	ptabflg++;
 	mflag = 0;
 	abrtflag = 0;
-	longjmp(ptabort, 1);
+	siglongjmp(ptabort, 1);
 }
 
 void
@@ -1928,7 +1933,7 @@ proxtrans(cmd, local, remote)
 		pswitch(1);
 		return;
 	}
-	if (setjmp(ptabort))
+	if (sigsetjmp(ptabort, 1))
 		goto abort;
 	oldintr = xsignal(SIGINT, abortpt);
 	if ((restart_point &&
