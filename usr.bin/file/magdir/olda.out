@@ -17,6 +17,9 @@
 0	long		0413		demand paged pure executable
 >16	long		>0		not stripped
 #>2	short		>0		- version %ld
+0	long		0314		demand paged (first page unmapped) pure executable
+>16	long		>0		not stripped
+#>2	short		>0		- version %ld
 0	long		0420		demand paged (first page unmapped) pure executable
 >16	long		>0		not stripped
 #>2	short		>0		- version %ld
