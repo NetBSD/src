@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.36 1996/12/18 19:22:46 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.37 1997/01/30 03:32:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -560,7 +560,7 @@ ccdopen(dev, flags, fmt, p)
 	/* Check that the partition exists. */
 	if (part != RAW_PART) {
 		if (((cs->sc_flags & CCDF_INITED) == 0) ||
-		    ((part > lp->d_npartitions) ||
+		    ((part >= lp->d_npartitions) ||
 		     (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
 			error = ENXIO;
 			goto done;
