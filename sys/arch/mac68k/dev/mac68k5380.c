@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.37 2002/09/27 15:36:16 provos Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.38 2003/04/02 01:09:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -40,6 +40,9 @@
 #include <sys/dkstat.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
