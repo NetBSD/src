@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.8 2002/08/01 03:40:34 itojun Exp $	*/
+/*	$NetBSD: igmp.c,v 1.1 2002/10/01 03:31:07 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
