@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.c	8.2 (Berkeley) 11/15/93
+ *	@(#)iso.c	8.3 (Berkeley) 1/9/95
  */
 
 /***********************************************************
@@ -60,7 +60,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/iso.c,v 1.1.1.1 1998/03/01 02:10:20 fvdl Exp $ 
+ * $Header: /cvsroot/src/sys/netiso/Attic/iso.c,v 1.1.1.2 1998/03/01 02:13:30 fvdl Exp $ 
  * $Source: /cvsroot/src/sys/netiso/Attic/iso.c,v $ 
  *
  * iso.c: miscellaneous routines to support the iso address family
@@ -413,7 +413,7 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 /* ARGSUSED */
 iso_control(so, cmd, data, ifp)
 	struct socket *so;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	register struct ifnet *ifp;
 {

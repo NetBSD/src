@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_eon.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_eon.c	8.2 (Berkeley) 1/9/95
  */
 
 /***********************************************************
@@ -60,7 +60,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/if_eon.c,v 1.1.1.1 1998/03/01 02:10:20 fvdl Exp $ 
+ * $Header: /cvsroot/src/sys/netiso/Attic/if_eon.c,v 1.1.1.2 1998/03/01 02:13:36 fvdl Exp $ 
  * $Source: /cvsroot/src/sys/netiso/Attic/if_eon.c,v $ 
  *
  *	EON rfc 
@@ -178,7 +178,7 @@ eonattach()
  */
 eonioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	register caddr_t data;
 {
 	int s = splimp();

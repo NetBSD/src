@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_pcb.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_pcb.c	8.3 (Berkeley) 7/19/94
  */
 
 /***********************************************************
@@ -60,7 +60,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/iso_pcb.c,v 1.1.1.1 1998/03/01 02:10:21 fvdl Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/iso_pcb.c,v 1.1.1.2 1998/03/01 02:13:32 fvdl Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/iso_pcb.c,v $
  *
  * Iso address family net-layer(s) pcb stuff. NEH 1/29/87
@@ -200,7 +200,7 @@ iso_pcbbind(isop, nam)
 			printf("iso_pcbbind: bind to NOT zeroisoaddr\n");
 		ENDDEBUG
 		for (ia = iso_ifaddr; ia; ia = ia->ia_next) 
-			if (SAME_ISOADDR(siso, &ia->ia_addr))
+			if (SAME_ISOIFADDR(siso, &ia->ia_addr))
 				break;
 		if (ia == 0)
 			return EADDRNOTAVAIL;
@@ -228,6 +228,7 @@ iso_pcbbind(isop, nam)
 		register char *cp;
 noname:
 		cp = TSEL(isop->isop_laddr);
+		isop->isop_laddr->siso_tlen = 2;
 	IFDEBUG(D_ISO)
 		printf("iso_pcbbind noname\n");
 	ENDDEBUG

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.h	8.1 (Berkeley) 6/10/93
+ *	@(#)iso.h	8.2 (Berkeley) 6/30/94
  */
 
 /***********************************************************
@@ -59,7 +59,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso.h,v 1.1.1.1 1998/03/01 02:10:20 fvdl Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso.h,v 1.1.1.2 1998/03/01 02:13:32 fvdl Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/iso.h,v $ */
 
 #ifndef __ISO__
@@ -157,7 +157,9 @@ struct sockaddr_iso {
 #define TSEL(s) ((caddr_t)((s)->siso_data + (s)->siso_nlen))
 
 #define SAME_ISOADDR(a, b) \
-	(bcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen)==0)
+	(bcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen) == 0)
+#define SAME_ISOIFADDR(a, b)  (bcmp((a)->siso_data, (b)->siso_data, \
+	(unsigned)((b)->siso_nlen - (b)->siso_tlen)) == 0)
 /*
  * The following are specific values for siso->siso_data[0],
  * otherwise known as the AFI:

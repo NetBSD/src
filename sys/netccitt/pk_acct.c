@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_acct.c	8.1 (Berkeley) 6/10/93
+ *	@(#)pk_acct.c	8.2 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ pk_accton (path)
 	if (error = vn_open (&nd, FWRITE, 0644))
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (vp -> v_type != VREG) {
 		vrele (vp);
 		return (EACCES);

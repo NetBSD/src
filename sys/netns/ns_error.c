@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns_error.c	8.1 (Berkeley) 6/10/93
+ *	@(#)ns_error.c	8.2 (Berkeley) 2/9/95
  */
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_snpac.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_snpac.c	8.4 (Berkeley) 5/2/95
  */
 
 /***********************************************************
@@ -59,7 +59,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_snpac.c,v 1.1.1.1 1998/03/01 02:10:21 fvdl Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso_snpac.c,v 1.1.1.2 1998/03/01 02:13:34 fvdl Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/iso_snpac.c,v $ */
 
 #ifdef ISO
@@ -124,7 +124,7 @@ struct rtentry	*known_is;
  *	These addresses assume on-the-wire transmission of least significant
  *	bit first. This is the method used by 802.3. When these
  *	addresses are passed to the token ring driver, (802.5), they
- *	must be bit-swaped because 802.5 transmission order is MSb first.
+ *	must be bit-swapped because 802.5 transmission order is MSb first.
  *
  *	Furthermore, according to IBM Austin, these addresses are not
  *	true token ring multicast addresses. More work is necessary
@@ -178,7 +178,8 @@ struct sockaddr *sa;
 		 */
 		if (rt->rt_flags & RTF_CLONING) {
 			iso_setmcasts(ifp, req);
-			rt_setgate(rt, rt_key(rt), &blank_dl);
+			rt_setgate(rt, rt_key(rt),
+			    (struct sockaddr *)&blank_dl);
 			return;
 		}
 		if (lc != 0)
@@ -424,7 +425,7 @@ int					nsellength;	/* nsaps may differ only in trailing bytes */
 		if (nsellength && (rt->rt_flags & RTF_HOST)) {
 			if (rt->rt_refcnt == 0) {
 				rtrequest(RTM_DELETE, S(dst), (struct sockaddr *)0,
-					(struct sockaddr *)0, 0, (struct rtentry *)0);
+					(struct sockaddr *)0, 0, (struct rtentry **)0);
 				rt = 0;
 				goto add;
 			} else {
@@ -486,7 +487,7 @@ snpac_fixdstandmask(nsellength)
  */
 snpac_ioctl (so, cmd, data)
 struct socket *so;
-int		cmd;	/* ioctl to process */
+u_long	cmd;	/* ioctl to process */
 caddr_t	data;	/* data for the cmd */
 {
 	register struct systype_req *rq = (struct systype_req *)data;

@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)llc_var.h	8.1 (Berkeley) 6/10/93
+ *	@(#)llc_var.h	8.2 (Berkeley) 2/9/95
  */
 
 #ifdef __STDC__
@@ -651,7 +651,7 @@ int llc_send __P((struct llc_linkcb *, int, int, int));
 int llc_resend __P((struct llc_linkcb *, int, int));
 int llc_rawsend __P((struct llc_linkcb *, struct mbuf *, struct llc *, int, int,
 		    int, int));
-int cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int x25_llcglue __P((int, struct sockaddr *));
 
 #endif

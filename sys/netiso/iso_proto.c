@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_proto.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_proto.c	8.2 (Berkeley) 2/9/95
  */
 
 /***********************************************************
@@ -59,7 +59,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/iso_proto.c,v 1.1.1.1 1998/03/01 02:10:21 fvdl Exp $ 
+/* $Header: /cvsroot/src/sys/netiso/Attic/iso_proto.c,v 1.1.1.2 1998/03/01 02:13:33 fvdl Exp $ 
  * $Source: /cvsroot/src/sys/netiso/Attic/iso_proto.c,v $ 
  *
  * iso_proto.c : protocol switch tables in the ISO domain
@@ -79,22 +79,28 @@ SOFTWARE.
 
 #include <netiso/iso.h>
 
-int clnp_output(), clnp_init(),clnp_slowtimo(),clnp_drain();
-int rclnp_input(), rclnp_output(), rclnp_ctloutput(), raw_usrreq();
+void	clnp_init(),clnp_slowtimo(),clnp_drain();
+int	clnp_output();
+void	rclnp_input();
+int	rclnp_output(), rclnp_ctloutput(), raw_usrreq();
 int	clnp_usrreq();
 
-int	tp_ctloutput(), tpclnp_ctlinput(), tpclnp_input(), tp_usrreq();
-int	tp_init(), tp_fasttimo(), tp_slowtimo(), tp_drain();
-int	cons_init(), tpcons_input();
+int	tp_ctloutput(), tp_usrreq();
+void	tp_init(), tp_fasttimo(), tp_slowtimo(), tp_drain();
+void	tpclnp_ctlinput(), tpclnp_input();
+void	cons_init(), tpcons_input();
 
-int isis_input();
-int	esis_input(), esis_ctlinput(), esis_init(), esis_usrreq();
-int	idrp_input(), idrp_init(), idrp_usrreq();
-int	cltp_input(), cltp_ctlinput(), cltp_init(), cltp_usrreq(), cltp_output();
+void	isis_input();
+void	esis_init(), esis_input(), esis_ctlinput();
+int	esis_usrreq();
+void	idrp_init(), idrp_input();
+int	idrp_usrreq();
+void	cltp_init(), cltp_input(), cltp_ctlinput();
+int	cltp_usrreq(), cltp_output();
 
 #ifdef TUBA
-int	tuba_usrreq(), tuba_ctloutput(), tuba_init(), tuba_tcpinput(); 
-int	tuba_slowtimo(), tuba_fasttimo(); 
+int	tuba_usrreq(), tuba_ctloutput();
+void	tuba_init(), tuba_slowtimo(), tuba_fasttimo(), tuba_tcpinput();
 #endif
 
 struct protosw isosw[] = {

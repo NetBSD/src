@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_output.c	8.1 (Berkeley) 6/10/93
+ *	@(#)pk_output.c	8.2 (Berkeley) 9/22/94
  */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ struct pklcd *lcp;
 {
 	register struct mbuf *m, *n;
 	struct socket *so = lcp -> lcd_so;
-	register struct sockbuf *sb = & (so ? so -> so_snd : lcp -> lcd_sb);
+	register struct sockbuf *sb = (so ? &so -> so_snd : &lcp -> lcd_sb);
 
 	if (lcp -> lcd_template) {
 		m = lcp -> lcd_template;
