@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.60 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.61 2001/11/25 06:42:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.60 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.61 2001/11/25 06:42:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,10 @@ sys_mmap(p, v, retval)
 		    vp->v_type != VBLK)
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
 
-		if (vp->v_type == VREG && (pos + size) < pos)
+		if (vp->v_type != VCHR && pos < 0)
+			return (EINVAL);
+
+		if (vp->v_type != VCHR && (pos + size) < pos)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
