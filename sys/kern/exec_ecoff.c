@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.14 2000/11/21 00:37:55 jdolecek Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.14.8.1 2001/11/12 21:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.14.8.1 2001/11/12 21:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +249,7 @@ exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(vp);
+	vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, eap->tsize,

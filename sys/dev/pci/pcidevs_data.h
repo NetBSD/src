@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.367 2001/10/16 08:15:01 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.367.2.1 2001/11/12 21:18:18 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp 
+ *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
  */
 
 /*
@@ -2074,6 +2074,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Cyclom-Z above 1M",
 	},
 	{
+	    PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700,
+	    0,
+	    "Cyclone Micro",
+	    "IQ80310 (PCI-700)",
+	},
+	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB,
 	    0,
 	    "Cyrix Corporation",
@@ -2725,7 +2731,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
 	    0,
 	    "Intel",
-	    "80310 I/O Companion Chip",
+	    "80312 I/O Companion Chip",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
@@ -2770,19 +2776,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "i960 RN PCI-PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
 	    0,
 	    "Intel",
 	    "i82452 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_FIBER,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_FIBER,
 	    0,
 	    "Intel",
 	    "i82453 Gigabit Ethernet (1000BASE-X)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_SC,
 	    0,
 	    "Intel",
 	    "i82453-SC Gigabit Ethernet",
@@ -2792,6 +2798,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "i82543 Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_XT,
+	    0,
+	    "Intel",
+	    "i82544 Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_XF,
+	    0,
+	    "Intel",
+	    "i82544 Gigabit Ethernet (1000BASE-X)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -4360,6 +4378,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "9060ES PCI bus controller",
 	},
 	{
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP,
+	    0,
+	    "Powerhouse Systems",
+	    "PowerTop PowerPC system controller",
+	},
+	{
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERPRO,
+	    0,
+	    "Powerhouse Systems",
+	    "PowerPro PowerPC system controller",
+	},
+	{
 	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
 	    0,
 	    "ProLAN",
@@ -5908,10 +5938,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A AC-97 Audio Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97,
+	    0,
+	    "VIA Technologies",
+	    "VT8233 AC-97 Audio Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 	    0,
 	    "VIA Technologies",
 	    "VT6102 (Rhine II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233,
+	    0,
+	    "VIA Technologies",
+	    "VT8233 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366,
+	    0,
+	    "VIA Technologies",
+	    "VT8366 (Apollo KT266) CPU-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
@@ -5954,6 +6002,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C598 (Apollo MVP3) PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8366 CPU-AGP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,

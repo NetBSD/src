@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.64 2001/04/12 03:08:42 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.64.6.1 2001/11/12 21:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -43,6 +43,9 @@
 /*
  * System calls related to processes and protection
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.64.6.1 2001/11/12 21:18:49 thorpej Exp $");
 
 #include "opt_compat_43.h"
 

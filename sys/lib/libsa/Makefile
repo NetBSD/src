@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2001/09/02 07:04:16 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.45.4.1 2001/11/12 21:19:04 thorpej Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -31,7 +31,8 @@ SRCS+=	cread.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-SRCS+=	loadfile.c
+SRCS+=	loadfile.c loadfile_aout.c loadfile_ecoff.c loadfile_elf32.c \
+	loadfile_elf64.c
 .endif
 .if (${SA_INCLUDE_NET} == "yes")
 # network routines

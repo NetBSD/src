@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.42 2001/09/26 06:20:50 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.42.2.1 2001/11/12 21:19:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,9 @@
  *	@(#)ffs_vnops.c	8.15 (Berkeley) 5/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.42.2.1 2001/11/12 21:19:46 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -52,7 +55,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -240,15 +242,15 @@ ffs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
-		off_t offlo;
-		off_t offhi;
+		off_t a_offlo;
+		off_t a_offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct buf *bp;
 	int s, num, error, i;
 	struct indir ia[NIADDR + 1];
 	int bsize;
-	daddr_t blk_low, blk_high;
+	daddr_t blk_high;
 	struct vnode *vp;
 
 	/*
@@ -260,7 +262,6 @@ ffs_fsync(v)
 	vp = ap->a_vp;
 
 	bsize = ap->a_vp->v_mount->mnt_stat.f_iosize;
-	blk_low = ap->a_offlo / bsize;
 	blk_high = ap->a_offhi / bsize;
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
@@ -270,10 +271,9 @@ ffs_fsync(v)
 	 */
 
 	if (vp->v_type == VREG) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
-		    PGO_CLEANIT|PGO_SYNCIO);
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+		    round_page(ap->a_offhi), PGO_CLEANIT|PGO_SYNCIO);
 		if (error) {
 			return error;
 		}
@@ -326,14 +326,13 @@ ffs_full_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
-		off_t offlo;
-		off_t offhi;
+		off_t a_offlo;
+		off_t a_offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
-	struct uvm_object *uobj;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -345,10 +344,8 @@ ffs_full_fsync(v)
 	 */
 
 	if (vp->v_type == VREG) {
-		uobj = &vp->v_uobj;
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
-		    PGO_ALLPAGES|PGO_CLEANIT|
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
 		if (error) {
 			return error;
@@ -490,7 +487,7 @@ ffs_getpages(void *v)
 	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
 	    DOINGSOFTDEP(ap->a_vp)) {
 		if ((ap->a_flags & PGO_LOCKED) == 0) {
-			simple_unlock(&vp->v_uobj.vmobjlock);
+			simple_unlock(&vp->v_interlock);
 		}
 		return EINVAL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.13 2000/06/29 08:53:02 mrg Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.13.6.1 2001/11/12 21:16:40 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -84,9 +84,6 @@ extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
-#ifdef	DDB
-extern void db_machine_init     __P((void));
-#endif
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 
@@ -133,7 +130,7 @@ cpu_reboot(howto, bootstr)
 
 
 /*
- * vm_offset_t initarm(ofw_handle_t handle)
+ * vaddr_t initarm(ofw_handle_t handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -148,7 +145,7 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
-vm_offset_t
+vaddr_t
 initarm(ofw_handle)
 	ofw_handle_t ofw_handle;
 {
@@ -221,17 +218,19 @@ initarm(ofw_handle)
 	irq_init();
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
-		struct exec *kernexec = (struct exec *)KERNEL_BASE;
+		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
 		ddb_init(kernexec->a_syms, &end, esym);
-		printf("ddb_init: a_syms = 0x%lx, end = %p, esym = %p\n",
-		    kernexec->a_syms, &end, esym);
-		}
+	}
+#endif /* __ELF__ */
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -275,6 +274,6 @@ ofrootfound(void)
 		panic("No OFW root");
 	aa.oba_busname = "ofw";
 	aa.oba_phandle = node;
-	if (!config_rootfound("ofroot", &aa))
+	if (!config_rootfound("ofbus", &aa))
 		panic("ofw root ofbus not configured");
 }

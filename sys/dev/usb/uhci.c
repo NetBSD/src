@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.138 2001/10/02 17:59:38 pooka Exp $	*/
+/*	$NetBSD: uhci.c,v 1.138.2.1 2001/11/12 21:18:30 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -158,7 +158,8 @@ struct uhci_pipe {
 	} u;
 };
 
-Static void		uhci_busreset(uhci_softc_t *);
+Static void		uhci_globalreset(uhci_softc_t *);
+Static void		uhci_reset(uhci_softc_t *);
 Static void		uhci_shutdown(void *v);
 Static void		uhci_power(int, void *);
 Static usbd_status	uhci_run(uhci_softc_t *, int run);
@@ -283,7 +284,7 @@ void			uhci_dump(void);
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
 
-#define UHCI_RESET_TIMEOUT 100	/* reset timeout */
+#define UHCI_RESET_TIMEOUT 100	/* ms, reset timeout */
 
 #define UHCI_CURFRAME(sc) (UREAD2(sc, UHCI_FRNUM) & UHCI_FRNUM_MASK)
 
@@ -375,7 +376,7 @@ uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
 }
 
 void
-uhci_busreset(uhci_softc_t *sc)
+uhci_globalreset(uhci_softc_t *sc)
 {
 	UHCICMD(sc, UHCI_CMD_GRESET);	/* global reset */
 	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY); /* wait a little */
@@ -399,10 +400,9 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
-	uhci_run(sc, 0);			/* stop the controller */
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
-
-	uhci_busreset(sc);
+	uhci_globalreset(sc);			/* reset the controller */
+	uhci_reset(sc);
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus, 
@@ -908,6 +908,16 @@ uhci_dump_ii(uhci_intr_info_t *ii)
 		       ii, DONE, ii->xfer);
                 return;
 	}
+        if (pipe->endpoint == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=%p pipe->endpoint=NULL\n",
+		       ii, DONE, ii->xfer, pipe);
+                return;
+	}
+        if (pipe->device == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=%p pipe->device=NULL\n",
+		       ii, DONE, ii->xfer, pipe);
+                return;
+	}
         ed = pipe->endpoint->edesc;
         dev = pipe->device;
 	printf("ii %p: done=%d xfer=%p dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n", 
@@ -1146,16 +1156,32 @@ uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 		sc->sc_bulk_end = pqh;
 }
 
+Static int uhci_intr1(uhci_softc_t *);
+
 int
 uhci_intr(void *arg)
 {
 	uhci_softc_t *sc = arg;
+
+	DPRINTFN(15,("uhci_intr: real interrupt\n"));
+	if (sc->sc_bus.use_polling) {
+#ifdef DIAGNOSTIC
+		printf("uhci_intr: ignored interrupt while polling\n");
+#endif
+		return (0);
+	}
+	return (uhci_intr1(sc));
+}
+
+int
+uhci_intr1(uhci_softc_t *sc)
+{
 	int status;
 	int ack;
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug > 15) {
-		DPRINTF(("%s: uhci_intr\n", USBDEVNAME(sc->sc_bus.bdev)));
+		DPRINTF(("%s: uhci_intr1\n", USBDEVNAME(sc->sc_bus.bdev)));
 		uhci_dumpregs(sc);
 	}
 #endif
@@ -1226,7 +1252,8 @@ uhci_softintr(void *v)
 	uhci_softc_t *sc = v;
 	uhci_intr_info_t *ii;
 
-	DPRINTFN(10,("%s: uhci_softintr\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTFN(10,("%s: uhci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
+		     sc->sc_bus.intr_context));
 
 	sc->sc_bus.intr_context++;
 
@@ -1311,6 +1338,7 @@ uhci_idone(uhci_intr_info_t *ii)
 	u_int32_t status = 0, nstatus;
 	int actlen;
 
+	DPRINTFN(12, ("uhci_idone: ii=%p\n", ii));
 #ifdef DIAGNOSTIC
 	{
 		int s = splhigh();
@@ -1363,8 +1391,7 @@ uhci_idone(uhci_intr_info_t *ii)
 		upipe->u.iso.inuse -= nframes;
 		xfer->actlen = actlen;
 		xfer->status = USBD_NORMAL_COMPLETION;
-		usb_transfer_complete(xfer);
-		return;
+		goto end;
 	}
 
 #ifdef UHCI_DEBUG
@@ -1391,7 +1418,7 @@ uhci_idone(uhci_intr_info_t *ii)
 		upipe->nexttoggle = UHCI_TD_GET_DT(le32toh(std->td.td_token));
 
 	status &= UHCI_TD_ERROR;
-	DPRINTFN(10, ("uhci_check_intr: actlen=%d, status=0x%x\n", 
+	DPRINTFN(10, ("uhci_idone: actlen=%d, status=0x%x\n", 
 		      actlen, status));
 	xfer->actlen = actlen;
 	if (status != 0) {
@@ -1417,7 +1444,10 @@ uhci_idone(uhci_intr_info_t *ii)
 	} else {
 		xfer->status = USBD_NORMAL_COMPLETION;
 	}
+
+ end:
 	usb_transfer_complete(xfer);
+	DPRINTFN(12, ("uhci_idone: ii=%p done\n", ii));
 }
 
 /*
@@ -1459,7 +1489,7 @@ uhci_waitintr(uhci_softc_t *sc, usbd_xfer_handle xfer)
 		usb_delay_ms(&sc->sc_bus, 1);
 		DPRINTFN(20,("uhci_waitintr: 0x%04x\n", UREAD2(sc, UHCI_STS)));
 		if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT) {
-			uhci_intr(sc);
+			uhci_intr1(sc);
 			if (xfer->status != USBD_IN_PROGRESS)
 				return;
 		}
@@ -1484,10 +1514,9 @@ uhci_poll(struct usbd_bus *bus)
 	uhci_softc_t *sc = (uhci_softc_t *)bus;
 
 	if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT)
-		uhci_intr(sc);
+		uhci_intr1(sc);
 }
 
-#if 0
 void
 uhci_reset(uhci_softc_t *sc)
 {
@@ -1502,7 +1531,6 @@ uhci_reset(uhci_softc_t *sc)
 		printf("%s: controller did not reset\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
 }
-#endif
 
 usbd_status
 uhci_run(uhci_softc_t *sc, int run)
@@ -3138,21 +3166,21 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		x = UREAD2(sc, port);
 		status = change = 0;
-		if (x & UHCI_PORTSC_CCS  )
+		if (x & UHCI_PORTSC_CCS)
 			status |= UPS_CURRENT_CONNECT_STATUS;
-		if (x & UHCI_PORTSC_CSC  ) 
+		if (x & UHCI_PORTSC_CSC) 
 			change |= UPS_C_CONNECT_STATUS;
-		if (x & UHCI_PORTSC_PE   ) 
+		if (x & UHCI_PORTSC_PE) 
 			status |= UPS_PORT_ENABLED;
 		if (x & UHCI_PORTSC_POEDC) 
 			change |= UPS_C_PORT_ENABLED;
-		if (x & UHCI_PORTSC_OCI  ) 
+		if (x & UHCI_PORTSC_OCI) 
 			status |= UPS_OVERCURRENT_INDICATOR;
-		if (x & UHCI_PORTSC_OCIC ) 
+		if (x & UHCI_PORTSC_OCIC) 
 			change |= UPS_C_OVERCURRENT_INDICATOR;
-		if (x & UHCI_PORTSC_SUSP ) 
+		if (x & UHCI_PORTSC_SUSP) 
 			status |= UPS_SUSPEND;
-		if (x & UHCI_PORTSC_LSDA ) 
+		if (x & UHCI_PORTSC_LSDA) 
 			status |= UPS_LOW_SPEED;
 		status |= UPS_PORT_POWER;
 		if (sc->sc_isreset)

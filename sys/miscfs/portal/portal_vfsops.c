@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.27 2001/09/15 16:12:59 chs Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.27.2.1 2001/11/12 21:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -42,6 +42,9 @@
 /*
  * Portal Filesystem
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.27.2.1 2001/11/12 21:19:11 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

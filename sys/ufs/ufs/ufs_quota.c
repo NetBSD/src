@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.21 2001/09/15 16:13:07 chs Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.21.2.1 2001/11/12 21:19:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -37,6 +37,10 @@
  *
  *	@(#)ufs_quota.c	8.5 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.21.2.1 2001/11/12 21:19:51 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

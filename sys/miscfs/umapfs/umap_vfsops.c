@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.31 2001/09/15 16:13:00 chs Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.31.2.1 2001/11/12 21:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  * Umap Layer
  * (See mount_umap(8) for a description of this layer.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.31.2.1 2001/11/12 21:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

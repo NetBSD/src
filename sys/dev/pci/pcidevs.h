@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.369 2001/10/16 08:15:01 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.369.2.1 2001/11/12 21:18:17 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp 
+ *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
  */
 
 /*
@@ -1025,6 +1025,9 @@
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z above 1M */
 
+/* Cyclone Microsystems products */
+#define	PCI_PRODUCT_CYCLONE_PCI_700	0x0700		/* IQ80310 (PCI-700) */
+
 /* Cyrix (now National) products */
 #define	PCI_PRODUCT_CYRIX_MEDIAGX_PCHB	0x0001		/* MediaGX Built-in PCI Host Controller */
 #define	PCI_PRODUCT_CYRIX_CX5520_PCIB	0x0002		/* Cx5520 I/O Companion */
@@ -1195,7 +1198,7 @@
 #define	PCI_PRODUCT_IMS_TT128M	0x9128		/* TwinTurbo 128M */
 
 /* Intel products */
-#define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80310 I/O Companion Chip */
+#define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller (CDC) */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378ZB System I/O (SIO) */
@@ -1203,10 +1206,12 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82452	0x1000		/* i82452 Gigabit Ethernet */
-#define	PCI_PRODUCT_INTEL_82453_FIBER	0x1001		/* i82453 Gigabit Ethernet (1000BASE-X) */
-#define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* i82453-SC Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82452 Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82543_FIBER	0x1001		/* i82453 Gigabit Ethernet (1000BASE-X) */
+#define	PCI_PRODUCT_INTEL_82543_SC	0x1003		/* i82453-SC Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543_COPPER	0x1004		/* i82543 Gigabit Ethernet (1000BASE-T) */
+#define	PCI_PRODUCT_INTEL_82544_XT	0x1008		/* i82544 Gigabit Ethernet (1000BASE-T) */
+#define	PCI_PRODUCT_INTEL_82544_XF	0x1009		/* i82544 Gigabit Ethernet (1000BASE-X) */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
@@ -1548,6 +1553,10 @@
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
+
+/* Powerhouse Systems products */
+#define	PCI_PRODUCT_POWERHOUSE_POWERTOP	0x6037		/* PowerTop PowerPC system controller */
+#define	PCI_PRODUCT_POWERHOUSE_POWERPRO	0x6073		/* PowerPro PowerPC system controller */
 
 /* ProLAN products - XXX better descriptions */
 #define	PCI_PRODUCT_PROLAN_NE2KETHER	0x1980		/* Ethernet */
@@ -1891,7 +1900,10 @@
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
+#define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233 AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT6102	0x3065		/* VT6102 (Rhine II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT8233	0x3074		/* VT8233 PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT8366	0x3099		/* VT8366 (Apollo KT266) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8363_PPB	0x8305		/* VT8363 KT133 PCI to AGP Bridge */
@@ -1899,6 +1911,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8501AGP	0x8501		/* VT8501 PCI-AGP */
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) PCI-AGP */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) PCI-AGP */
+#define	PCI_PRODUCT_VIATECH_VT8366AGP	0xb099		/* VT8366 CPU-AGP */
 
 /* Vortex Computer Systems products */
 /* GDT_PCI */

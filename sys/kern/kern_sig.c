@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.115 2001/07/18 05:34:58 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.115.4.1 2001/11/12 21:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kern_sig.c	8.14 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.115.4.1 2001/11/12 21:18:49 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.10 2001/10/23 19:26:43 thorpej Exp $
+#	$NetBSD: Makefile.arm26,v 1.10.2.1 2001/11/12 21:16:37 thorpej Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -12,7 +12,8 @@
 #	/sys/arch/arm26/conf/Makefile.arm26
 # after which config should be rerun for all machines of that type.
 
-MACHINE_ARCH=arm26
+MACHINE_ARCH=arm
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 

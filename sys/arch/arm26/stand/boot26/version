@@ -1,7 +1,8 @@
-	$NetBSD: version,v 1.5 2001/08/03 00:41:12 bjh21 Exp $
+	$NetBSD: version,v 1.5.6.1 2001/11/12 21:16:38 thorpej Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
 1.0:	loadfile() update:  ELF symbols no longer need backward seeks.
 1.1:	Now wrapped in a relocatable module.
 1.2:	*boot26 available after loading module.
+1.3:	loadfile() update to avoid backwards seeks for ELF Program Headers.

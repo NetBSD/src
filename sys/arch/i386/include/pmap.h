@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60 2001/09/10 21:19:14 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.60.2.1 2001/11/12 21:17:06 thorpej Exp $	*/
 
 /*
  *
@@ -66,7 +66,7 @@
  *					the final two pages in the last 4MB
  *					used to be reserved for the UAREA
  *					but now are no longer used
- * 768		0xbfc00000->		recursive mapping of PDP (used for
+ * 767		0xbfc00000->		recursive mapping of PDP (used for
  *			0xc0000000	linear mapping of PTPs)
  * 768->1023	0xc0000000->		kernel address space (constant
  *			0xffc00000	across all pmap's/processes)

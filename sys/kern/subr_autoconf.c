@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.57 2001/07/01 02:56:20 gmcgarry Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.57.6.1 2001/11/12 21:18:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,8 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.57 2001/07/01 02:56:20 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.57.6.1 2001/11/12 21:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

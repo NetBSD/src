@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.12.1 2001/11/12 21:18:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -38,6 +38,10 @@
 /*
  * Indirect driver for controlling tty.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.12.1 2001/11/12 21:18:58 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>

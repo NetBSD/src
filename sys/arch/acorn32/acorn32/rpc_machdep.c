@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.1 2001/10/05 22:27:46 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.1.2.1 2001/11/12 21:16:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -196,13 +196,10 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 
 static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
-extern void db_machine_init	__P((void));
 extern void vidcrender_reinit	__P((void));
 extern int vidcrender_blank	__P((struct vconsole *vc, int type));
 
@@ -968,14 +965,17 @@ initarm_new_bootloader(bootconf)
 #endif	/* NIPKDB */
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		extern int end;
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif /* __ELF__ */
 
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1852,14 +1852,17 @@ initarm_old_bootloader(bootconf)
 #endif	/* NIPKDB */
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		extern int end;
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#endif /* __ELF__ */
 
 	if (boothowto & RB_KDB)
 		Debugger();

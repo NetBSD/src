@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.31 2001/06/13 10:46:03 wiz Exp $	*/
+/*	$NetBSD: pdq.c,v 1.31.6.1 2001/11/12 21:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1013,9 +1013,13 @@ pdq_queue_transmit_data(
      * Everything went fine.  Finish it up.
      */
     tx->tx_descriptor_count[tx->tx_producer] = tx->tx_free - freecnt;
-    if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET)
+    if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET) {
 	dbp->pdqdb_transmits[tx->tx_producer].txd_sop = 1;
+	PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[tx->tx_producer],
+	    sizeof(pdq_txdesc_t));
+    }
     eop->txd_eop = 1;
+    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
     PDQ_OS_DATABUF_ENQUEUE(&tx->tx_txq, pdu);
     tx->tx_producer = producer;
     tx->tx_free = freecnt;

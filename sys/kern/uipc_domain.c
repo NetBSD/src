@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.34 2001/02/11 06:38:46 itojun Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.34.8.1 2001/11/12 21:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)uipc_domain.c	8.3 (Berkeley) 2/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.34.8.1 2001/11/12 21:18:58 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_atalk.h"
@@ -54,7 +57,6 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 void	pffasttimo __P((void *));

@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.21 2001/09/21 22:08:41 eeh Exp $
+# 	$NetBSD: GENERIC32,v 1.21.2.1 2001/11/12 21:17:34 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.21.2.1 $"
 
 maxusers	64
 
@@ -12,7 +12,6 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options 	SUN4U		# sun4u - UltraSPARC
-#options 	_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
 
@@ -135,7 +134,6 @@ options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
 #options 	SYSCALL_DEBUG
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -279,13 +277,16 @@ scsibus* at isp?
 siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
-# PCI SCSI controllers (untested)
-adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
-pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+# PCI SCSI controllers
+# 	UT marks untested.
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI UT
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI UT
+trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 scsibus* at scsi?
 

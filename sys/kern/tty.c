@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.6.1 2001/11/12 21:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)tty.c	8.13 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.6.1 2001/11/12 21:18:57 thorpej Exp $");
 
 #include "opt_uconsole.h"
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.67 2001/09/28 23:42:17 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.67.2.1 2001/11/12 21:18:32 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <dev/wscons/wsksymvar.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_ddb.h"
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
@@ -180,12 +181,12 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	char sc_debounce;		/* for quirk handling */
-	struct callout sc_delay;	/* for quirk handling */
+	usb_callout_t sc_delay;		/* for quirk handling */
 	struct ukbd_data sc_data;	/* for quirk handling */
 
 	int sc_leds;
 #if defined(__NetBSD__)
-	struct callout sc_rawrepeat_ch;
+	usb_callout_t sc_rawrepeat_ch;
 
 	struct device *sc_wskbddev;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -384,9 +385,9 @@ USB_ATTACH(ukbd)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-	callout_init(&sc->sc_rawrepeat_ch);
+	usb_callout_init(sc->sc_rawrepeat_ch);
 
-	callout_init(&sc->sc_delay);
+	usb_callout_init(sc->sc_delay);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -432,6 +433,7 @@ ukbd_enable(void *v, int on)
 		/* Disable interrupts. */
 		usbd_abort_pipe(sc->sc_intrpipe);
 		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
 	}
 	sc->sc_enabled = on;
 
@@ -493,6 +495,13 @@ USB_DETACH(ukbd)
 	if (sc->sc_wskbddev != NULL)
 		rv = config_detach(sc->sc_wskbddev, flags);
 
+	/* The console keyboard does not get a disable call, so check pipe. */
+	if (sc->sc_intrpipe != NULL) {
+		usbd_abort_pipe(sc->sc_intrpipe);
+		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
+	}
+
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
@@ -519,7 +528,7 @@ ukbd_intr(xfer, addr, status)
 		return;
 	}
 
-	if (sc->sc_debounce) {
+	if (sc->sc_debounce && !sc->sc_polling) {
 		/*
 		 * Some keyboards have a peculiar quirk.  They sometimes
 		 * generate a key up followed by a key down for the same
@@ -527,7 +536,18 @@ ukbd_intr(xfer, addr, status)
 		 * We avoid this bug by holding off decoding for 20 ms.
 		 */
 		sc->sc_data = *ud;
-		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+		usb_callout(sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+#if DDB
+	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
+		/*
+		 * For the console keyboard we can't deliver CTL-ALT-ESC
+		 * from the interrupt routine.  Doing so would start
+		 * polling from inside the interrupt routine and that
+		 * loses bigtime.
+		 */
+		sc->sc_data = *ud;
+		usb_callout(sc->sc_delay, 1, ukbd_delayed_decode, sc);
+#endif
 	} else {
 		ukbd_decode(sc, ud);
 	}
@@ -659,10 +679,10 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-		callout_stop(&sc->sc_rawrepeat_ch);
+		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			callout_reset(&sc->sc_rawrepeat_ch,
+			usb_callout(sc->sc_rawrepeat_ch,
 			    hz * REP_DELAY1 / 1000, ukbd_rawrepeat, sc);
 		}
 		return;
@@ -685,11 +705,14 @@ ukbd_set_leds(void *v, int leds)
 	struct ukbd_softc *sc = v;
 	u_int8_t res;
 
-	DPRINTF(("ukbd_set_leds: sc=%p leds=%d\n", sc, leds));
+	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
+		 sc, leds, sc->sc_leds));
 
 	if (sc->sc_dying)
 		return;
 
+	if (sc->sc_leds == leds)
+		return;
 	sc->sc_leds = leds;
 	res = 0;
 	if (leds & WSKBD_LED_SCROLL)
@@ -712,7 +735,7 @@ ukbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	callout_reset(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
+	usb_callout(sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
 	    ukbd_rawrepeat, sc);
 }
 #endif
@@ -736,12 +759,18 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		callout_stop(&sc->sc_rawrepeat_ch);
+		usb_uncallout(sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
 		return (0);
 #endif
 	}
 	return (-1);
 }
+
+/*
+ * This is a hack to work around some broken ports that don't call
+ * cnpollc() before cngetc().
+ */
+static int pollenter, warned;
 
 /* Console interface. */
 void
@@ -750,6 +779,19 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	struct ukbd_softc *sc = v;
 	int s;
 	int c;
+	int broken;
+
+	if (pollenter == 0) {
+		if (!warned) {
+			printf("\n"
+"This port is broken, it does not call cnpollc() before calling cngetc().\n"
+"This should be fixed, but it will work anyway (for now).\n");
+			warned = 1;
+		}
+		broken = 1;
+		ukbd_cnpollc(v, 1);
+	} else
+		broken = 0;
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	s = splusb();
@@ -765,6 +807,8 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	*data = c & CODEMASK;
 	splx(s);
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
+	if (broken)
+		ukbd_cnpollc(v, 0);
 }
 
 void
@@ -776,6 +820,7 @@ ukbd_cnpollc(void *v, int on)
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
 	(void)usbd_interface2device_handle(sc->sc_iface,&dev);
+	if (on) pollenter++; else pollenter--;
 	usbd_set_polling(dev, on);
 }
 

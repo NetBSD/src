@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134.2.3 2001/11/11 03:47:38 shin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134.2.4 2001/11/12 21:17:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.3 2001/11/11 03:47:38 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.2.4 2001/11/12 21:17:14 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -806,7 +806,7 @@ pmap_page_protect(pg, prot)
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
+		printf("pmap_page_protect(%lx, %x)\n", (u_long)pa, prot);
 #endif
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -1027,7 +1027,7 @@ pmap_page_cache(paddr_t pa, int mode)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_page_uncache(%lx)\n", pa);
+		printf("pmap_page_uncache(%lx)\n", (u_long)pa);
 #endif
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pa_to_pvh(pa);
@@ -1097,7 +1097,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
-		    pmap, va, pa, prot, wired);
+		    pmap, va, (u_long)pa, prot, wired);
 #endif
 #if defined(DEBUG) || defined(DIAGNOSTIC) || defined(PARANOIADIAG)
 	if (pmap == pmap_kernel()) {
@@ -1311,7 +1311,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: flush I cache va %lx (%lx)\n",
-			    va - NBPG, pa);
+			    va - NBPG, (u_long)pa);
 #endif
 		/* XXXJRT */
 		mips_icache_sync_range_index(va, PAGE_SIZE);
@@ -1333,7 +1333,7 @@ pmap_kenter_pa(va, pa, prot)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot);
+		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, (u_long)pa, prot);
 #endif
 
 	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
@@ -1476,14 +1476,14 @@ pmap_extract(pmap, va, pap)
 #endif
 	if (pmap == pmap_kernel()) {
 		pte = kvtopte(va);
-		if (!mips_pg_v(pte->pt_entry)) {
-			return (FALSE);
-		}
 	} else {
 		if (!(pte = pmap_segmap(pmap, va))) {
 			return (FALSE);
 		}
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
+	}
+	if (!mips_pg_v(pte->pt_entry)) {
+		return (FALSE);
 	}
 	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
 	if (pap != NULL) {
@@ -1491,7 +1491,7 @@ pmap_extract(pmap, va, pap)
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_extract: pa %lx\n", pa);
+		printf("pmap_extract: pa %lx\n", (u_long)pa);
 #endif
 	return (TRUE);
 }
@@ -1550,11 +1550,11 @@ pmap_zero_page(phys)
 {
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_zero_page(%lx)\n", phys);
+		printf("pmap_zero_page(%lx)\n", (u_long)phys);
 #endif
 #ifdef PARANOIADIAG
 	if (! (phys < MIPS_MAX_MEM_ADDR))
-		printf("pmap_zero_page(%lx) nonphys\n", phys);
+		printf("pmap_zero_page(%lx) nonphys\n", (u_long)phys);
 #endif
 
 	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
@@ -1583,13 +1583,13 @@ pmap_copy_page(src, dst)
 {
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
+		printf("pmap_copy_page(%lx, %lx)\n", (u_long)src, (u_long)dst);
 #endif
 #ifdef PARANOIADIAG
 	if (! (src < MIPS_MAX_MEM_ADDR))
-		printf("pmap_copy_page(%lx) src nonphys\n", src);
+		printf("pmap_copy_page(%lx) src nonphys\n", (u_long)src);
 	if (! (dst < MIPS_MAX_MEM_ADDR))
-		printf("pmap_copy_page(%lx) dst nonphys\n", dst);
+		printf("pmap_copy_page(%lx) dst nonphys\n", (u_long)dst);
 #endif
 
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
@@ -1650,7 +1650,7 @@ pmap_clear_reference(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%lx)\n", pa);
+		printf("pmap_clear_reference(%lx)\n", (u_long)pa);
 #endif
 	attrp = pa_to_attribute(pa);
 	rv = *attrp & PV_REFERENCED;
@@ -1691,7 +1691,7 @@ pmap_clear_modify(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", pa);
+		printf("pmap_clear_modify(%lx)\n", (u_long)pa);
 #endif
 	attrp = pa_to_attribute(pa);
 	rv = *attrp & PV_MODIFIED;
@@ -1941,7 +1941,7 @@ again:
 				    mips_tlbpfn_to_paddr(entry) != pa)
 					printf(
 		"pmap_enter: found va %lx pa %lx in pv_table but != %x\n",
-						va, pa, entry);
+						va, (u_long)pa, entry);
 #endif
 				return;
 			}
@@ -1985,7 +1985,7 @@ pmap_remove_pv(pmap, va, pa)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PVENTRY))
-		printf("pmap_remove_pv(%p, %lx, %lx)\n", pmap, va, pa);
+		printf("pmap_remove_pv(%p, %lx, %lx)\n", pmap, va, (u_long)pa);
 #endif
 	/*
 	 * Remove page from the PV table.

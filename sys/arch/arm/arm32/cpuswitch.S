@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.2 2001/09/16 17:38:08 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.2.2.1 2001/11/12 21:16:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -357,14 +357,15 @@ switchmodeok:
 	
 	adr	r5, Lcpu_switch_ffs_table
 	
-	orr	r4, r0, r0, lsl #4  /* r0 = X * 0x11 */ 
-	orr	r4, r4, r4, lsl #6  /* r0 = X * 0x451 */
-	rsb	r4, r4, r4, lsl #16 /* r0 = X * 0x0450fbaf */
+				    /* X = R0 */
+	orr	r4, r0, r0, lsl #4  /* r4 = X * 0x11 */ 
+	orr	r4, r4, r4, lsl #6  /* r4 = X * 0x451 */
+	rsb	r4, r4, r4, lsl #16 /* r4 = X * 0x0450fbaf */
 	
 	/* used further down, saves SA stall */
 	ldr	r6, Lqs
               
-	/* now lookup in table indexed on top 6 bits of a0 */
+	/* now lookup in table indexed on top 6 bits of a4 */
 	ldrb	r4, [ r5, r4, lsr #26 ]
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */

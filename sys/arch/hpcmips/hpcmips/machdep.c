@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2001/09/17 17:03:45 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.2.1 2001/11/12 21:16:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2001/09/17 17:03:45 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63.2.1 2001/11/12 21:16:59 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -205,7 +205,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
+#ifdef DDB
 	extern caddr_t esym;
+#endif
 	caddr_t kernend, v;
 	unsigned size;
 	char *cp;

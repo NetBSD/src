@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.55 2001/09/15 20:36:38 chs Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.55.2.1 2001/11/12 21:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -38,6 +38,9 @@
  *
  *	@(#)union_vnops.c	8.33 (Berkeley) 7/31/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.55.2.1 2001/11/12 21:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

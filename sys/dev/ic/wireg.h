@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.12 2001/10/14 12:33:18 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.12.2.1 2001/11/12 21:18:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -377,7 +377,6 @@ struct wi_ltv_str {
 /*
  * Download buffer location and length (0xFD01).
  */
-#define WI_RID_DNLD_BUF		0xFD01
 struct wi_ltv_dnld_buf {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -389,7 +388,6 @@ struct wi_ltv_dnld_buf {
 /*
  * Mem sizes (0xFD02).
  */
-#define WI_RID_MEMSZ		0xFD02
 struct wi_ltv_memsz {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -398,10 +396,8 @@ struct wi_ltv_memsz {
 };
 
 /*
- * NIC Identification (0xFD0B)
+ * NIC Identification (0xFD0B, 0xFD20)
  */
-#define WI_RID_CARDID		0xFD0B
-#define WI_RID_IDENT		0xFD20
 struct wi_ltv_ver {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -420,7 +416,6 @@ struct wi_ltv_ver {
 /*
  * List of intended regulatory domains (0xFD11).
  */
-#define WI_RID_DOMAINS		0xFD11
 struct wi_ltv_domains {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -430,7 +425,6 @@ struct wi_ltv_domains {
 /*
  * CIS struct (0xFD13).
  */
-#define WI_RID_CIS		0xFD13
 struct wi_ltv_cis {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -440,7 +434,6 @@ struct wi_ltv_cis {
 /*
  * Communications quality (0xFD43).
  */
-#define WI_RID_COMMQUAL		0xFD43
 struct wi_ltv_commqual {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -450,10 +443,8 @@ struct wi_ltv_commqual {
 };
 
 /*
- * Actual system scale thresholds (0xFD46).
+ * Actual system scale thresholds (0xFC06, 0xFD46).
  */
-#define WI_RID_SYSTEM_SCALE	0xFC06
-#define WI_RID_SCALETHRESH	0xFD46
 struct wi_ltv_scalethresh {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -468,7 +459,6 @@ struct wi_ltv_scalethresh {
 /*
  * PCF info struct (0xFD87).
  */
-#define WI_RID_PCF		0xFD87
 struct wi_ltv_pcf {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -478,21 +468,18 @@ struct wi_ltv_pcf {
 };
 
 /*
- * Connection control characteristics.
+ * Connection control characteristics. (0xFC00)
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribudion System (WDS)
  * 3 == Pseudo IBSS
  */
-#define WI_RID_PORTTYPE		0xFC00
 #define WI_PORTTYPE_BSS		0x1
 #define WI_PORTTYPE_WDS		0x2
 #define WI_PORTTYPE_ADHOC	0x3
 
 /*
- * Mac addresses.
+ * Mac addresses. (0xFC01, 0xFC08)
  */
-#define WI_RID_MAC_NODE		0xFC01
-#define WI_RID_MAC_WDS		0xFC08
 struct wi_ltv_macaddr {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -500,10 +487,8 @@ struct wi_ltv_macaddr {
 };
 
 /*
- * Station set identification (SSID).
+ * Station set identification (SSID). (0xFC02, 0xFC04)
  */
-#define WI_RID_DESIRED_SSID	0xFC02
-#define WI_RID_OWN_SSID		0xFC04
 struct wi_ltv_ssid {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -511,29 +496,8 @@ struct wi_ltv_ssid {
 };
 
 /*
- * Set communications channel (radio frequency).
+ * Set our station name. (0xFC0E)
  */
-#define WI_RID_OWN_CHNL		0xFC03
-
-/*
- * Frame data size.
- */
-#define WI_RID_MAX_DATALEN	0xFC07
-
-/*
- * ESS power management enable
- */
-#define WI_RID_PM_ENABLED	0xFC09
-
-/*
- * ESS max PM sleep internal
- */
-#define WI_RID_MAX_SLEEP	0xFC0C
-
-/*
- * Set our station name.
- */
-#define WI_RID_NODENAME		0xFC0E
 struct wi_ltv_nodename {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
@@ -542,40 +506,13 @@ struct wi_ltv_nodename {
 
 /*
  * Multicast addresses to be put in filter. We're
- * allowed up to 16 addresses in the filter.
+ * allowed up to 16 addresses in the filter. (0xFC80)
  */
-#define WI_RID_MCAST		0xFC80
 struct wi_ltv_mcast {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
 	struct ether_addr	wi_mcast[16];
 };
-
-/*
- * Create IBSS.
- */
-#define WI_RID_CREATE_IBSS	0xFC81
-
-#define WI_RID_FRAG_THRESH	0xFC82
-#define WI_RID_RTS_THRESH	0xFC83
-
-/*
- * TX rate control
- * 0 == Fixed 1mbps
- * 1 == Fixed 2mbps
- * 2 == auto fallback
- */
-#define WI_RID_TX_RATE		0xFC84
-
-/*
- * promiscuous mode.
- */
-#define WI_RID_PROMISC		0xFC85
-
-/*
- * Auxiliary Timer tick interval
- */
-#define WI_RID_TICK_TIME	0xFCE0
 
 /*
  * Information frame types.

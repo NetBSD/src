@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.20 2000/08/02 20:53:07 thorpej Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.20.8.1 2001/11/12 21:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.20.8.1 2001/11/12 21:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

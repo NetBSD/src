@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.11 2000/09/28 19:05:07 eeh Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.11.8.1 2001/11/12 21:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.11.8.1 2001/11/12 21:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

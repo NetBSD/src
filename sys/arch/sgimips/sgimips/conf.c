@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2001/09/17 09:33:41 wdk Exp $	*/
+/*	$NetBSD: conf.c,v 1.9.2.1 2001/11/12 21:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,8 +125,8 @@ struct cdevsw cdevsw[] =
 	cdev_cn_init(1,cn),             /* 0: console */
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_disk_init(NMD,md),		/* 2: memory disk driver */
-	cdev_disk_init(NVND,vnd),	/* 3: vnode disk driver */
-	cdev_disk_init(NCCD,ccd),	/* 4: concatenated disk driver */
+	cdev_disk_init(NCCD,ccd),	/* 3: concatenated disk driver */
+	cdev_disk_init(NVND,vnd),	/* 4: vnode disk driver */
 	cdev_disk_init(NRAID,raid),	/* 5: RAIDframe disk driver */
 	cdev_notdef(),			/* 6: */
 	cdev_notdef(),			/* 7: */
@@ -193,7 +193,7 @@ static int chrtoblktbl[] =  {
 	/*  1 */	1,
 	/*  2 */	2,
 	/*  3 */	3,
-	/*  4 */	3,
+	/*  4 */	4,
 	/*  5 */	5,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,

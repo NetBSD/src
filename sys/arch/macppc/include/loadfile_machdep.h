@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.20.1 2001/11/12 21:17:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
  */
 
 #define BOOT_AOUT
-#define BOOT_ELF
-#define ELFSIZE 32
+#define BOOT_ELF32
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
 #define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)

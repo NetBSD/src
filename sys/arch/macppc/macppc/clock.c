@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.6.1 2001/11/12 21:17:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -101,7 +101,10 @@ inittodr(base)
 
 	printf("WARNING: clock %s %d days",
 	    time.tv_sec < base ? "lost" : "gained", (int)(deltat / SECDAY));
-
+	if (time.tv_sec < base && deltat > 1000 * SECDAY) {
+		printf(", using FS time");
+		time.tv_sec = base;
+	}
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 

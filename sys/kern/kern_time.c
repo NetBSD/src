@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.56 2001/09/16 06:50:06 manu Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.56.2.1 2001/11/12 21:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *
  *	@(#)kern_time.c	8.4 (Berkeley) 5/26/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.56.2.1 2001/11/12 21:18:51 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -643,7 +646,7 @@ itimerfix(tv)
 	struct timeval *tv;
 {
 
-	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
+	if (tv->tv_sec < 0 || tv->tv_sec > 1000000000 ||
 	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return (EINVAL);
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.2 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.2.2.1 2001/11/12 21:18:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -54,6 +54,9 @@
  *  - support for size >= PAGE_SIZE
  *  - add support to the fault handler to give better diagnostics if we fail.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.2.2.1 2001/11/12 21:18:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,7 +115,7 @@ int
 debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
-	int s, wait = flags & M_NOWAIT;
+	int s, wait = !(flags & M_NOWAIT);
 
 	/* Careful not to compare unsigned long to int -1 */
 	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
