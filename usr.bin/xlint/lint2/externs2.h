@@ -1,4 +1,4 @@
-/*	$NetBSD: externs2.h,v 1.5 1998/02/22 15:40:41 christos Exp $	*/
+/* $NetBSD: externs2.h,v 1.5.8.1 2000/06/23 16:40:20 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.

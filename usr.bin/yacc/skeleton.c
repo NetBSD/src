@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.17.4.1 2000/06/23 16:40:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.17.4.1 2000/06/23 16:40:23 minoura Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ char *banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.17.4.1 2000/06/23 16:40:23 minoura Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -96,8 +96,8 @@ char *tables[] =
     "extern short yytable[];",
     "extern short yycheck[];",
     "#if YYDEBUG",
-    "extern char *yyname[];",
-    "extern char *yyrule[];",
+    "extern const char *yyname[];",
+    "extern const char *yyrule[];",
     "#endif",
     0
 };
@@ -173,7 +173,7 @@ char *body[] =
     "{",
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
-    "    char *yys;",
+    "    const char *yys;",
     "",
     "    if ((yys = getenv(\"YYDEBUG\")) != NULL)",
     "    {",
