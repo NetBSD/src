@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.4 1994/10/20 04:21:23 cgd Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.5 1994/12/14 13:04:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_readwrite.c	8.7 (Berkeley) 1/21/94
+ *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
  */
 
 #ifdef LFS_READWRITE
@@ -116,7 +116,7 @@ READ(ap)
 		(void)lfs_check(vp, lbn);
 		error = cluster_read(vp, ip->i_size, lbn, size, NOCRED, &bp);
 #else
-		if (lblktosize(fs, nextlbn) > ip->i_size)
+		if (lblktosize(fs, nextlbn) >= ip->i_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
 			error = cluster_read(vp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.4 1994/10/20 04:21:21 cgd Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.5 1994/12/14 13:03:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_inode.c	8.4 (Berkeley) 1/21/94
+ *	@(#)ufs_inode.c	8.7 (Berkeley) 7/22/94
  */
 
 #include <sys/param.h>
@@ -58,12 +58,11 @@ u_long	nextgennumber;		/* Next generation number to assign. */
 int
 ufs_init()
 {
-	static int first = 1;
+	static int done;
 
-	if (!first)
+	if (done)
 		return (0);
-	first = 0;
-
+	done = 1;
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();

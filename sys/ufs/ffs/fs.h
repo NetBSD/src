@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.4 1994/12/13 19:10:43 mycroft Exp $	*/
+/*	$NetBSD: fs.h,v 1.5 1994/12/14 13:03:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -111,7 +111,7 @@
  * is taken away to point to an array of cluster sizes that is
  * computed as cylinder groups are inspected.
  */
-#define	MAXCSBUFS	(128 / sizeof(void *))
+#define	MAXCSBUFS	((128 / sizeof(void *)) - 1)
 
 /*
  * A summary of contiguous blocks of various sizes is maintained
@@ -215,7 +215,7 @@ struct fs {
 	int32_t	 fs_ipg;		/* inodes per group */
 	int32_t	 fs_fpg;		/* blocks per group * fs_frag */
 /* this data must be re-computed after crashes */
-	struct	 csum fs_cstotal;	/* cylinder summary information */
+	struct	csum fs_cstotal;	/* cylinder summary information */
 /* these fields are cleared at mount time */
 	int8_t	 fs_fmod;		/* super block modified flag */
 	int8_t	 fs_clean;		/* file system is clean flag */
@@ -224,7 +224,8 @@ struct fs {
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 /* these fields retain the current block allocation info */
 	int32_t	 fs_cgrotor;		/* last cg searched */
-	struct	 csum *fs_csp[MAXCSBUFS];/* list of fs_cs info buffers */
+	struct	csum *fs_csp[MAXCSBUFS];/* list of fs_cs info buffers */
+	int32_t	 *fs_maxcluster;	/* max cluster in each cyl group */
 	int32_t	 fs_cpc;		/* cyl per cycle in postbl */
 	int16_t	 fs_opostbl[16][8];	/* old rotation block list head */
 	int32_t	 fs_sparecon[50];	/* reserved for future constants */
@@ -311,7 +312,7 @@ struct cg {
 	int16_t	 cg_ncyl;		/* number of cyl's this cg */
 	int16_t	 cg_niblk;		/* number of inode blocks this cg */
 	int32_t	 cg_ndblk;		/* number of data blocks this cg */
-	struct	 csum cg_cs;		/* cylinder summary information */
+	struct	csum cg_cs;		/* cylinder summary information */
 	int32_t	 cg_rotor;		/* position of last used block */
 	int32_t	 cg_frotor;		/* position of last used frag */
 	int32_t	 cg_irotor;		/* position of last used inode */
@@ -368,7 +369,7 @@ struct ocg {
 	int16_t	 cg_ncyl;		/* number of cyl's this cg */
 	int16_t	 cg_niblk;		/* number of inode blocks this cg */
 	int32_t	 cg_ndblk;		/* number of data blocks this cg */
-	struct	 csum cg_cs;		/* cylinder summary information */
+	struct	csum cg_cs;		/* cylinder summary information */
 	int32_t	 cg_rotor;		/* position of last used block */
 	int32_t	 cg_frotor;		/* position of last used frag */
 	int32_t	 cg_irotor;		/* position of last used inode */

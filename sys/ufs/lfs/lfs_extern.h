@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.2 1994/06/29 06:46:55 cgd Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.3 1994/12/14 13:03:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_extern.h	8.2 (Berkeley) 4/16/94
+ *	@(#)lfs_extern.h	8.3 (Berkeley) 6/16/94
  */
 
 struct fid;
