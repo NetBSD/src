@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.27 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.28 2003/04/14 14:36:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2054,7 +2054,7 @@ channel_setup_fwd_listener(int type, const char *listen_addr, u_short listen_por
 			continue;
 		}
 		/* Create a port to listen for the host. */
-		sock = socket(ai->ai_family, SOCK_STREAM, 0);
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sock < 0) {
 			/* this is no error since kernel may not support ipv6 */
 			verbose("socket: %.100s", strerror(errno));
@@ -2270,7 +2270,7 @@ connect_to(const char *host, u_short port)
 			error("connect_to: getnameinfo failed");
 			continue;
 		}
-		sock = socket(ai->ai_family, SOCK_STREAM, 0);
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sock < 0) {
 			if (ai->ai_next == NULL)
 				error("socket: %.100s", strerror(errno));
@@ -2371,7 +2371,8 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 		for (ai = aitop; ai; ai = ai->ai_next) {
 			if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
 				continue;
-			sock = socket(ai->ai_family, SOCK_STREAM, 0);
+			sock = socket(ai->ai_family, ai->ai_socktype,
+			    ai->ai_protocol);
 			if (sock < 0) {
 				error("socket: %.100s", strerror(errno));
 				return -1;
@@ -2515,7 +2516,7 @@ x11_connect_display(void)
 	}
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		/* Create a socket. */
-		sock = socket(ai->ai_family, SOCK_STREAM, 0);
+		sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sock < 0) {
 			debug("socket: %.100s", strerror(errno));
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.28 2003/04/03 06:21:37 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.29 2003/04/14 14:36:48 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1099,7 +1099,8 @@ main(int ac, char **av)
 				continue;
 			}
 			/* Create socket for listening. */
-			listen_sock = socket(ai->ai_family, SOCK_STREAM, 0);
+			listen_sock = socket(ai->ai_family, ai->ai_socktype,
+			    ai->ai_protocol);
 			if (listen_sock < 0) {
 				/* kernel may not support ipv6 */
 				verbose("socket: %.100s", strerror(errno));
