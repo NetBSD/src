@@ -1,12 +1,12 @@
-#	$NetBSD: fstab.sd,v 1.1 1996/10/16 15:20:12 perry Exp $
+#	$NetBSD: fstab.sd,v 1.2 1997/06/16 00:58:49 perry Exp $
 #
 # Sample fstab for SCSI disk based system
 # see fstab(5) for details on what the fields mean
 # Notes:
-# the swap entry is not strictly needed; strictly speaking, devices
-# labeled "sw" are only in fstab for use by "swapon -a", and the
-# first swap device is always used even without the swapon.
-# /tmp is on a 10M mfs partition; see mount_mfs(8) for details
+# All swap devices are now configured by swapctl(8), so a swap entry
+# is now needed for all swap partitions so that the "swapctl -A" in
+# /etc/rc will find them, or you will have no swap space.
+# /tmp is on a 10M mfs partition; see mount_mfs(8) for details.
 #
 /dev/sd0a	/	ffs	rw		1 1
 /dev/sd0b	none	swap	sw		0 0
