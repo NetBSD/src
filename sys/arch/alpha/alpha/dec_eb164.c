@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.30 1999/09/02 22:04:41 ross Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30 1999/09/02 22:04:41 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.30.2.1 1999/10/19 19:25:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ dec_eb164_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */
