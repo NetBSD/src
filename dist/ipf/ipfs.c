@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.3 2000/05/11 19:54:35 veego Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.4 2001/03/26 06:11:46 mike Exp $	*/
 
 /*
  * Copyright (C) 1999 by Darren Reed.
@@ -43,12 +43,19 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.1 2000/05/06 00:11:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 2.6.2.3 2001/01/10 06:20:12 darrenr Exp";
 #endif
 
 #ifndef	IPF_SAVEDIR
 # define	IPF_SAVEDIR	"/var/db/ipf"
 #endif
+#ifndef IPF_NATFILE
+# define	IPF_NATFILE	"ipnat.ipf"
+#endif
+#ifndef IPF_STATEFILE
+# define	IPF_STATEFILE	"ipstate.ipf"
+#endif
+
 #if !defined(__SVR4) && defined(__GNUC__)
 extern	char	*index __P((const char *, int));
 #endif
@@ -273,8 +280,14 @@ char *argv[];
 			usage();
 		}
 
-	if (ifs)
-		return changestateif(ifs, filename);
+	if (ifs) {
+		if (!filename || ns<0)
+			usage();
+		if (ns == 0)
+			return changenatif(ifs, filename);
+		else
+			return changestateif(ifs, filename);
+	}
 
 	if ((ns >= 0) || (lock >= 0)) {
 		if (lock >= 0)
@@ -365,6 +378,9 @@ char *file;
 	ipstate_save_t ips, *ipsp;
 	int wfd = -1;
 
+	if (!file)
+		file = IPF_STATEFILE;
+
 	wfd = open(file, O_WRONLY|O_TRUNC|O_CREAT, 0600);
 	if (wfd == -1) {
 		fprintf(stderr, "%s ", file);
@@ -406,6 +422,9 @@ char *file;
 	ipstate_save_t ips, *is, *ipshead = NULL, *is1, *ipstail = NULL;
 	int sfd = -1, i;
 
+	if (!file)
+		file = IPF_STATEFILE;
+
 	sfd = open(file, O_RDONLY, 0600);
 	if (sfd == -1) {
 		fprintf(stderr, "%s ", file);
@@ -434,6 +453,11 @@ char *file;
 			return 1;
 		}
 		is = (ipstate_save_t *)malloc(sizeof(*is));
+		if(!is) {
+			fprintf(stderr, "malloc failed\n");
+			return 1;
+		}
+
 		bcopy((char *)&ips, (char *)is, sizeof(ips));
 
 		/*
@@ -498,6 +522,9 @@ char *file;
 	nat_save_t ipn, *in, *ipnhead = NULL, *in1, *ipntail = NULL, *ipnp;
 	int nfd = -1, i;
 	nat_t *nat;
+
+	if (!file)
+		file = IPF_NATFILE;
 
 	nfd = open(file, O_RDONLY);
 	if (nfd == -1) {
@@ -617,6 +644,9 @@ char *file;
 	int nfd = -1;
 	natget_t ng;
 
+	if (!file)
+		file = IPF_NATFILE;
+
 	nfd = open(file, O_WRONLY|O_TRUNC|O_CREAT, 0600);
 	if (nfd == -1) {
 		fprintf(stderr, "%s ", file);
@@ -701,14 +731,14 @@ char *dirname;
 	devfd = opendevice(IPL_STATE);
 	if (devfd == -1)
 		return 1;
-	if (writestate(devfd, "ipstate.ipf"))
+	if (writestate(devfd, NULL))
 		return 1;
 	close(devfd);
 
 	devfd = opendevice(IPL_NAT);
 	if (devfd == -1)
 		return 1;
-	if (writenat(devfd, "ipnat.ipf"))
+	if (writenat(devfd, NULL))
 		return 1;
 	close(devfd);
 
@@ -745,14 +775,14 @@ char *dirname;
 	devfd = opendevice(IPL_STATE);
 	if (devfd == -1)
 		return 1;
-	if (readstate(devfd, "ipstate.ipf"))
+	if (readstate(devfd, NULL))
 		return 1;
 	close(devfd);
 
 	devfd = opendevice(IPL_NAT);
 	if (devfd == -1)
 		return 1;
-	if (readnat(devfd, "ipnat.ipf"))
+	if (readnat(devfd, NULL))
 		return 1;
 	close(devfd);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.2 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.3 2001/03/26 06:11:46 mike Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3 2000/03/13 22:10:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.1 2001/01/10 06:19:53 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -56,9 +56,9 @@ static	int	text_open __P((char *)), text_close __P((void));
 static	int	text_readip __P((char *, int, char **, int *));
 static	int	parseline __P((char *, ip_t *, char **, int *));
 
-static	char	_tcp_flagset[] = "FSRPAU";
+static	char	_tcp_flagset[] = "FSRPAUEC";
 static	u_char	_tcp_flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH,
-				TH_ACK, TH_URG };
+				TH_ACK, TH_URG, TH_ECN, TH_CWR };
 
 struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
