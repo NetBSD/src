@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2001/03/15 06:10:52 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.95 2001/04/01 19:18:42 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -816,6 +816,9 @@ if (startpmapdebug)
 	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
 
+	if (flags & PMAP_WIRED)
+		newpte |= PG_V; /* Not allowed to be invalid */
+
 	patch[i] = newpte;
 	patch[i+1] = newpte+1;
 	patch[i+2] = newpte+2;
@@ -1123,17 +1126,18 @@ pmap_clear_reference(pg)
 	pv->pv_attr &= ~PG_V;
 
 	RECURSESTART;
-	if (pv->pv_pte)
+	if (pv->pv_pte && (pv->pv_pte[0].pg_w == 0))
 		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
 		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 
 	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
-		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
-		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
-		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+		if (pv->pv_pte[0].pg_w == 0)
+			pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
+			    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
+			    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
+			    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
 	return ref;
