@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.8 1994/01/30 01:07:01 briggs Exp $
+ * $Id: console.c,v 1.9 1994/02/10 04:30:30 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -1532,7 +1532,7 @@ conwrite(dev_t dev, struct uio *uio, int flag)
    return ((*linesw[maccon_tty[unit]->t_line].l_write)(maccon_tty[unit], uio, flag));
 }
 
-conioctl(dev_t dev, int cmd, caddr_t data, int flag)
+conioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
@@ -1543,10 +1543,10 @@ conioctl(dev_t dev, int cmd, caddr_t data, int flag)
 	if (unit >= NCON)
 		return (ENODEV);
 	tp = maccon_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 

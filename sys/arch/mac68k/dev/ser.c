@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.4 1994/01/30 01:10:33 briggs Exp $
+ * $Id: ser.c,v 1.5 1994/02/10 04:30:27 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -553,7 +553,7 @@ sersir(void)
 }
 
 extern int
-serioctl(dev_t dev, int cmd, caddr_t data, int flag)
+serioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -563,10 +563,10 @@ serioctl(dev_t dev, int cmd, caddr_t data, int flag)
 	printf("ser: entering ioctl()\n");
 #endif
 	tp = ser_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
