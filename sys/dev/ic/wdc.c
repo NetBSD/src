@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.6 1998/06/09 13:01:27 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.7 1998/06/09 13:58:17 bouyer Exp $ */
 
 
 /*
@@ -316,7 +316,7 @@ wdcattach(chp)
 		if ((channel_flags & (0x01 << drv)) &&
 		    (chp->ch_drives_mask & DRIVE(drv))) {
 			chp->ch_drives_mask |= CAP32(drv);
-			printf("%s:%d:%d: unsing 32-bits pio transfert\n",
+			printf("%s:%d:%d: unsing 32-bits pio transfer\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel, drv);
 		}
 	}
@@ -672,7 +672,7 @@ wdc_probe_caps(drvp)
 	char *sep = "";
 
 	/*
-	 * Probe for 32-bit transferts. Do 2 IDENTIFY cmds, one with 16-bit
+	 * Probe for 32-bit transfers. Do 2 IDENTIFY cmds, one with 16-bit
 	 * and one with 32-bit, and compare results.
 	 */
 	if (wdc->cap & WDC_CAPABILITY_DATA32) {
@@ -687,7 +687,7 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: using 32-bits pio transferts\n",
+			printf("%s: using 32-bits pio transfers\n",
 			    drv_dev->dv_xname);
 		}
 	}
