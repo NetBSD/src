@@ -1,4 +1,4 @@
-/*	$NetBSD: ___tolower_mb.c,v 1.2 2000/12/21 17:25:32 itojun Exp $	*/
+/*	$NetBSD: ___tolower_mb.c,v 1.3 2001/01/20 17:40:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,11 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ___tolower_mb.c,v 1.2 2000/12/21 17:25:32 itojun Exp $");
+__RCSID("$NetBSD: ___tolower_mb.c,v 1.3 2001/01/20 17:40:10 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
 #include "rune.h"
+#include "rune_local.h"
 
 wint_t
 ___tolower_mb(c)
