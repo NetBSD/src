@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.68 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: locore.c,v 1.69 2004/10/11 01:00:11 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.68 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.69 2004/10/11 01:00:11 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -270,7 +270,10 @@ _start(struct rpb *prpb)
 		case VAX_STYP_691:
 			strcpy(cpu_model,"VAX 4000/600A"); break;
 		case VAX_STYP_694:
-			strcpy(cpu_model,"VAX 4000/705A"); break;
+			strcpy(cpu_model,"VAX 4000/700A");
+			if (vax_cpudata & 0x1000) /* 705A */
+				cpu_model[sizeof("VAX 4000/70") - 1] = '5';
+			break;
 		default:
 			strcpy(cpu_model,"unknown 1305");
 		}
