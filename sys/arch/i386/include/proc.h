@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9 1995/05/01 07:56:20 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.10 1995/08/06 05:33:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -40,5 +40,8 @@
  */
 struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
-	int	__spare;
+	int	md_flags;		/* machine-dependent flags */
 };
+
+/* md_flags */
+#define	MDP_USEDFPU	0x0001	/* has used the FPU */
