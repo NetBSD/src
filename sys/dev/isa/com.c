@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.27 1994/03/23 03:01:53 mycroft Exp $
+ *	$Id: com.c,v 1.28 1994/03/25 04:38:01 mycroft Exp $
  */
 
 /*
@@ -279,7 +279,7 @@ comopen(dev, flag, mode, p)
 	int s;
 	int error = 0;
  
-	if (unit > NCOM)
+	if (unit >= NCOM)
 		return ENXIO;
 	sc = &com_softc[unit];
 	if (!sc->sc_iobase)
