@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.395 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.396 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -158,7 +158,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Unicode range supported. [jdolecek 20041121]
 	getent(1): Add tool to get entries from an administrative database.
 		[lukem 20041123]
-	pdcsata(4): Driver for the SATA150 family of promise controllers.
+	pdcsata(4): Driver for the SATA150 family of Promise controllers.
 		[bouyer 20041124]
 	am-utils: import 6.1b5pre 20040916 [christos 20041126]
 	bpf(4): Convert to a cloning device [christos 20041129]
