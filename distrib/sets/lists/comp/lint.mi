@@ -15,6 +15,7 @@
 ./usr/libdata/lint/llib-lmenu.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lossaudio.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lpcap.ln	comp-c-lintlib
+./usr/libdata/lint/llib-lpci.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lposix.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lresolv.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lrmt.ln		comp-c-lintlib
