@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.125 1999/09/23 16:09:13 tron Exp $
+#	$NetBSD: INSTALL,v 1.126 1999/09/27 23:59:51 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -288,6 +288,7 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -329,6 +330,7 @@ scsibus* at ahb?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
+scsibus* at dpt?
 scsibus* at isp?
 scsibus* at nca?
 scsibus* at ncr?

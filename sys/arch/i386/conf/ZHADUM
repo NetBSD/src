@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.18 1999/07/29 10:37:18 augustss Exp $
+#	$NetBSD: ZHADUM,v 1.19 1999/09/27 23:59:51 ad Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -254,6 +254,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 bha0	at pci1 dev 8 function 0	# BusLogic 9xx SCSI
 bha1	at pci1 dev 9 function 0	# BusLogic 9xx SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 
@@ -290,6 +291,7 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 scsibus0 at bha0
 scsibus1 at bha1
 scsibus* at bha?
+#scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at ncr?
 #scsibus* at sea?

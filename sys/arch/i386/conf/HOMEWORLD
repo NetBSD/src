@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.41 1999/07/29 10:37:17 augustss Exp $
+#	$NetBSD: HOMEWORLD,v 1.42 1999/09/27 23:59:50 ad Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
@@ -280,6 +280,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -320,6 +321,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 scsibus* at ahc?
 #scsibus* at aic?
 #scsibus* at bha?
+#scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
