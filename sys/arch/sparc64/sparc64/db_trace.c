@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2000/03/16 02:36:58 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.12 2000/04/06 13:32:49 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -149,8 +149,8 @@ db_dump_window(addr, have_addr, count, modif)
 	/* Traverse window stack */
 	for (i=0; i<addr && frame; i++) {
 		if (frame & 1) 
-			frame = (u_int64_t)((struct frame64 *)(frame + BIAS))->fr_fp;
-		else frame = (u_int64_t)((struct frame32 *)frame)->fr_fp;
+			frame = (u_int64_t)((struct frame64 *)(u_long)(frame + BIAS))->fr_fp;
+		else frame = (u_int64_t)((struct frame32 *)(u_long)frame)->fr_fp;
 	}
 
 	db_printf("Window %x ", addr);
@@ -162,7 +162,7 @@ db_print_window(frame)
 u_int64_t frame;
 {
 	if (frame & 1) {
-		struct frame64* f = (struct frame64*)(frame + BIAS);
+		struct frame64* f = (struct frame64*)(u_long)(frame + BIAS);
 
 		db_printf("frame64 %x locals, ins:\n", f);		
 		if (INKERNEL(f)) {
@@ -195,7 +195,7 @@ u_int64_t frame;
 			db_printf("\n");	 
 		}
 	} else {
-		struct frame32* f = (struct frame32*)frame;
+		struct frame32* f = (struct frame32*)(u_long)frame;
 
 		db_printf("frame %x locals, ins:\n", f);
 		if (INKERNEL(f)) {
@@ -262,25 +262,25 @@ db_dump_stack(addr, have_addr, count, modif)
 		oldframe = frame;
 		if (frame & 1) {
 			frame += BIAS;
-			if (!INKERNEL(((struct frame64 *)(frame)))
+			if (!INKERNEL(((struct frame64 *)(u_long)(frame)))
 			    && kernel_only) break;
 			db_printf("Window %x ", i);
 			db_print_window(frame - BIAS);
-			if (!INKERNEL(((struct frame64 *)(frame))))
-				copyin(((caddr_t)&((struct frame64 *)frame)->fr_fp), &frame, sizeof(frame));
+			if (!INKERNEL(((struct frame64 *)(u_long)(frame))))
+				copyin(((caddr_t)&((struct frame64 *)(u_long)frame)->fr_fp), &frame, sizeof(frame));
 			else
-				frame = ((struct frame64 *)frame)->fr_fp;
+				frame = ((struct frame64 *)(u_long)frame)->fr_fp;
 		} else {
 			u_int32_t tmp;
-			if (!INKERNEL(((struct frame32 *)frame))
+			if (!INKERNEL(((struct frame32 *)(u_long)frame))
 			    && kernel_only) break;
 			db_printf("Window %x ", i);
 			db_print_window(frame);
-			if (!INKERNEL(((struct frame32 *)frame))) {
-				copyin(&((struct frame32 *)frame)->fr_fp, &tmp, sizeof(tmp));
+			if (!INKERNEL(((struct frame32 *)(u_long)frame))) {
+				copyin(&((struct frame32 *)(u_long)frame)->fr_fp, &tmp, sizeof(tmp));
 				frame = (u_int64_t)tmp;
 			} else
-				frame = (u_int64_t)((struct frame32 *)frame)->fr_fp;
+				frame = (u_int64_t)((struct frame32 *)(u_long)frame)->fr_fp;
 		}
 	}
 
@@ -363,7 +363,7 @@ db_dump_ts(addr, have_addr, count, modif)
 	int			i, tl;
 
 	/* Use our last trapframe? */
-	ts = &ddb_regs.ddb_ts;
+	ts = &ddb_regs.ddb_ts[0];
 	tl = ddb_regs.ddb_tl;
 	for (i=0; i<tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
