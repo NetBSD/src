@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.1 2001/02/09 18:35:34 uch Exp $	*/
+/*	$NetBSD: compat.h,v 1.2 2004/08/06 18:33:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -36,12 +36,12 @@
  *
  */
 #define	__lint__
-#define __symbolrename(x)
-#define _LKM
-#define _STANDALONE
-#define __STDC__
-#define NO_LONG_LONG
-#define INT64TYPE __int64
-#define UINT64TYPE unsigned __int64
+#define	__symbolrename(x)
+#define	_LKM
+#define	_STANDALONE
+#define	__STDC__
+#define	NO_LONG_LONG
+#define	INT64TYPE __int64
+#define	UINT64TYPE unsigned __int64
 
-#define bzero(s, n)	memset((s), 0, (n))
+#define	bzero(s, n)	memset((s), 0, (n))

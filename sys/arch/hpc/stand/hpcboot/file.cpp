@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file.cpp,v 1.2 2001/05/08 18:51:22 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file.cpp,v 1.3 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ FileManager::FileManager(Console *&cons, enum FileOps ops)
 	case FILE_HTTP:
 		_file = new HttpFile(_cons);
 	}
-	
+
 	// GZIP set magic header
 	_gz_magic[0] = 0x1f; _gz_magic[1] = 0x8b;
 	memset(_inbuf, 0, Z_BUFSIZE);

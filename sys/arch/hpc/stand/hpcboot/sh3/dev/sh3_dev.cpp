@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.2 2003/05/03 18:10:49 wiz Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.3 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ SH3dev::icu_control()
 	DPRINTF((TEXT(" %S maskable,"), r & SH3_ICR1_MAI ? "" : "never"));
 	DPRINTF((TEXT("  SR.BL %S\n"),
 	    r & SH3_ICR1_BLMSK ? "ignored" : "maskable"));
-	// IRQ0-5  
+	// IRQ0-5
 	DPRINTF((TEXT("IRQ[3:0]pin : %S mode\n"),
 	    r & SH3_ICR1_IRQLVL ? "IRL 15level" : "IRQ[0:3]"));
 	if (r & SH3_ICR1_IRQLVL) {
@@ -173,7 +173,7 @@ SH3dev::bsc_dump()
 {
 
 	DPRINTF((TEXT("<<<Bus State Controller>>>\n")));
-#define DUMP_BSC_REG(x)							\
+#define	DUMP_BSC_REG(x)							\
 	DPRINTF((TEXT("%-8S"), #x));					\
 	bitdisp(_reg_read_2(SH3_ ## x))
 	DUMP_BSC_REG(BCR1);
@@ -196,7 +196,7 @@ SH3dev::pfc_dump()
 {
 	DPRINTF((TEXT("<<<Pin Function Controller>>>\n")));
 	DPRINTF((TEXT("[control]\n")));
-#define DUMP_PFC_REG(x)							\
+#define	DUMP_PFC_REG(x)							\
 	DPRINTF((TEXT("P%SCR :"), #x));					\
 	bitdisp(_reg_read_2(SH3_P##x##CR))
 	DUMP_PFC_REG(A);
@@ -214,7 +214,7 @@ SH3dev::pfc_dump()
 	DPRINTF((TEXT("SCPCR :")));
 	bitdisp(_reg_read_2(SH3_SCPCR));
 	DPRINTF((TEXT("\n[data]\n")));
-#define DUMP_IOPORT_REG(x)						\
+#define	DUMP_IOPORT_REG(x)						\
 	DPRINTF((TEXT("P%SDR :"), #x));					\
 	bitdisp(_reg_read_1(SH3_P##x##DR))
 	DUMP_IOPORT_REG(A);
@@ -237,7 +237,7 @@ void
 SH3dev::tmu_dump()
 {
 	u_int8_t r8;
-	
+
 	DPRINTF((TEXT("<<<TMU>>>\n")));
 	/* Common */
 	/* TOCR  timer output control register */
@@ -251,7 +251,7 @@ SH3dev::tmu_dump()
 	    r8 & SH3_TSTR_STR1 ? 'x' : '_',
 	    r8 & SH3_TSTR_STR2 ? 'x' : '_'));
 
-#define CHANNEL_DUMP(a, x)						\
+#define	CHANNEL_DUMP(a, x)						\
 	tmu_channel_dump(x, SH##a##_TCOR##x,				\
 			 SH##a##_TCNT##x,				\
 			 SH##a##_TCR##x##)
@@ -270,7 +270,7 @@ SH3dev::tmu_channel_dump(int unit, paddr_t tcor, paddr_t tcnt,
 	u_int16_t r16;
 
 	DPRINTF((TEXT("TMU#%d:"), unit));
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SH3_TCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SH3_TCR_##m, #m)
 	/* TCR*/
 	r16 = _reg_read_2(tcr);
 	DBG_BIT_PRINT(r16, UNF);
@@ -306,11 +306,11 @@ SH3dev::hd64461_dump(platid_t &platform)
 	u_int16_t r16;
 	u_int8_t r8;
 
-#define MATCH(p)						\
+#define	MATCH(p)						\
 	platid_match(&platform, &platid_mask_MACH_##p)
 
 	DPRINTF((TEXT("<<<HD64461>>>\n")));
-	if (!MATCH(HP_LX) && 
+	if (!MATCH(HP_LX) &&
 	    !MATCH(HP_JORNADA_6XX) &&
 	    !MATCH(HITACHI_PERSONA_HPW230JC)) {
 		DPRINTF((TEXT("don't exist.")));
@@ -329,7 +329,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("STBCR (System Control Register)\n")));
 	r16 = _reg_read_2(HD64461_SYSSTBCR_REG16);
 	bitdisp(r16);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSTBCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSTBCR_##m, #m)
 	DBG_BIT_PRINT(r16, CKIO_STBY);
 	DBG_BIT_PRINT(r16, SAFECKE_IST);
 	DBG_BIT_PRINT(r16, SLCKE_IST);
@@ -350,7 +350,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("SYSCR (System Configuration Register)\n")));
 	r16 = _reg_read_2(HD64461_SYSSYSCR_REG16);
 	bitdisp(r16);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSYSCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSYSCR_##m, #m)
 	DBG_BIT_PRINT(r16, SCPU_BUS_IGAT);
 	DBG_BIT_PRINT(r16, SPTA_IR);
 	DBG_BIT_PRINT(r16, SPTA_TM);
@@ -364,7 +364,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("SCPUCR (CPU Data Bus Control Register)\n")));
 	r16 = _reg_read_2(HD64461_SYSSCPUCR_REG16);
 	bitdisp(r16);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSCPUCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_SYSSCPUCR_##m, #m)
 	DBG_BIT_PRINT(r16, SPDSTOF);
 	DBG_BIT_PRINT(r16, SPDSTIG);
 	DBG_BIT_PRINT(r16, SPCSTOF);
@@ -388,7 +388,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("NIRR (Interrupt Request Register)\n")));
 	r16 = _reg_read_2(HD64461_INTCNIRR_REG16);
 	bitdisp(r16);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_INTCNIRR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_INTCNIRR_##m, #m)
 	DBG_BIT_PRINT(r16, PCC0R);
 	DBG_BIT_PRINT(r16, PCC1R);
 	DBG_BIT_PRINT(r16, AFER);
@@ -403,7 +403,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("NIMR (Interrupt Mask Register)\n")));
 	r16 = _reg_read_2(HD64461_INTCNIMR_REG16);
 	bitdisp(r16);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_INTCNIMR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_INTCNIMR_##m, #m)
 	DBG_BIT_PRINT(r16, PCC0M);
 	DBG_BIT_PRINT(r16, PCC1M);
 	DBG_BIT_PRINT(r16, AFEM);
@@ -423,7 +423,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC0 Interface Status Register\n")));
 	r8 = _reg_read_1(HD64461_PCC0ISR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0ISR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0ISR_##m, #m)
 	DBG_BIT_PRINT(r8, P0READY);
 	DBG_BIT_PRINT(r8, P0MWP);
 	DBG_BIT_PRINT(r8, P0VS2);
@@ -436,9 +436,9 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("\n")));
 
 	DPRINTF((TEXT("PCC0 General Control Register\n")));
-	r8 = _reg_read_1(HD64461_PCC0GCR_REG8);	
+	r8 = _reg_read_1(HD64461_PCC0GCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0GCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0GCR_##m, #m)
 	DBG_BIT_PRINT(r8, P0DRVE);
 	DBG_BIT_PRINT(r8, P0PCCR);
 	DBG_BIT_PRINT(r8, P0PCCT);
@@ -453,7 +453,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC0 Card Status Change Register\n")));
 	r8 = _reg_read_1(HD64461_PCC0CSCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0CSCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0CSCR_##m, #m)
 	DBG_BIT_PRINT(r8, P0SCDI);
 	DBG_BIT_PRINT(r8, P0IREQ);
 	DBG_BIT_PRINT(r8, P0SC);
@@ -467,7 +467,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC0 Card Status Change Interrupt Enable Register\n")));
 	r8 = _reg_read_1(HD64461_PCC0CSCIER_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0CSCIER_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0CSCIER_##m, #m)
 	DBG_BIT_PRINT(r8, P0CRE);
 	DBG_BIT_PRINT(r8, P0SCE);
 	DBG_BIT_PRINT(r8, P0CDE);
@@ -494,9 +494,9 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC0 Software Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCC0SCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0SCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC0SCR_##m, #m)
 	DBG_BIT_PRINT(r8, P0VCC1);
-	DBG_BIT_PRINT(r8, P0SWP);	
+	DBG_BIT_PRINT(r8, P0SWP);
 #undef DBG_BIT_PRINT
 	DPRINTF((TEXT("\n")));
 
@@ -505,7 +505,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 Interface Status Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1ISR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1ISR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1ISR_##m, #m)
 	DBG_BIT_PRINT(r8, P1READY);
 	DBG_BIT_PRINT(r8, P1MWP);
 	DBG_BIT_PRINT(r8, P1VS2);
@@ -520,7 +520,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 General Contorol Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1GCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1GCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1GCR_##m, #m)
 	DBG_BIT_PRINT(r8, P1DRVE);
 	DBG_BIT_PRINT(r8, P1PCCR);
 	DBG_BIT_PRINT(r8, P1VCC0);
@@ -534,7 +534,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 Card Status Change Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1CSCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1CSCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1CSCR_##m, #m)
 	DBG_BIT_PRINT(r8, P1SCDI);
 	DBG_BIT_PRINT(r8, P1CDC);
 	DBG_BIT_PRINT(r8, P1RC);
@@ -546,7 +546,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 Card Status Change Interrupt Enable Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1CSCIER_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1CSCIER_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1CSCIER_##m, #m)
 	DBG_BIT_PRINT(r8, P1CRE);
 	DBG_BIT_PRINT(r8, P1CDE);
 	DBG_BIT_PRINT(r8, P1RE);
@@ -558,7 +558,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 Software Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCC1SCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1SCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCC1SCR_##m, #m)
 	DBG_BIT_PRINT(r8, P1VCC1);
 	DBG_BIT_PRINT(r8, P1SWP);
 #undef DBG_BIT_PRINT
@@ -569,7 +569,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC0 Output pins Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCCP0OCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCP0OCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCP0OCR_##m, #m)
 	DBG_BIT_PRINT(r8, P0DEPLUP);
 	DBG_BIT_PRINT(r8, P0AEPLUP);
 #undef DBG_BIT_PRINT
@@ -578,7 +578,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PCC1 Output pins Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCCP1OCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCP1OCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCP1OCR_##m, #m)
 	DBG_BIT_PRINT(r8, P1RST8MA);
 	DBG_BIT_PRINT(r8, P1RST4MA);
 	DBG_BIT_PRINT(r8, P1RAS8MA);
@@ -589,14 +589,14 @@ SH3dev::hd64461_dump(platid_t &platform)
 	DPRINTF((TEXT("PC Card General Control Register\n")));
 	r8 = _reg_read_1(HD64461_PCCPGCR_REG8);
 	bitdisp(r8);
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCPGCR_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, HD64461_PCCPGCR_##m, #m)
 	DBG_BIT_PRINT(r8, PSSDIR);
 	DBG_BIT_PRINT(r8, PSSRDWR);
 #undef DBG_BIT_PRINT
 	DPRINTF((TEXT("\n")));
 
 	// GPIO
-#define GPIO_DUMP(x)							\
+#define	GPIO_DUMP(x)							\
 	bitdisp(_reg_read_2(HD64461_GPA##x##R_REG16));			\
 	bitdisp(_reg_read_2(HD64461_GPB##x##R_REG16));			\
 	bitdisp(_reg_read_2(HD64461_GPC##x##R_REG16));			\
@@ -616,12 +616,12 @@ SH3dev::hd64461_dump(platid_t &platform)
 u_int32_t sh7707_fb_dma_addr;
 u_int16_t val;
 int s;
-	
+
 s = suspendIntr();
 VOLATILE_REF16(SH7707_LCDAR) = SH7707_LCDAR_LCDDMR0;
 val = VOLATILE_REF16(SH7707_LCDDMR);
 sh7707_fb_dma_addr = val;
-VOLATILE_REF16(SH7707_LCDAR) = SH7707_LCDAR_LCDDMR1;	
+VOLATILE_REF16(SH7707_LCDAR) = SH7707_LCDAR_LCDDMR1;
 val = VOLATILE_REF16(SH7707_LCDDMR);
 sh7707_fb_dma_addr |= (val << 16);
 resumeIntr(s);

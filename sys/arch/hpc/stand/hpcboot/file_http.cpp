@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.8 2004/08/06 17:21:28 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.9 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ HttpFile::setRoot(TCHAR *server)
 			u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 			for (int i = 0; i < 4; i++)
 				b[i] = addr_list[0][i];
-      
+
 			DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2],b[3]));
 			if (connect(h,(const struct sockaddr *)&_sockaddr,
 			    sizeof(struct sockaddr_in)) == 0)
@@ -208,7 +208,7 @@ HttpFile::setRoot(TCHAR *server)
 	}
 	DPRINTF((TEXT("can't connect server.\n")));
 	return FALSE;
-  
+
  connected:
 	DPRINTF((TEXT("(%S) connected.\n"), _server_name));
 	closesocket(h);
@@ -294,13 +294,13 @@ HttpFile::read(void *buf, size_t bytes, off_t offset)
 	} else {
 		int i, n = ofs / bytes;
 		b = static_cast <char *>(buf);
-      
+
 		for (readed = 0, i = 0; i < n; i++)
 			readed += _recv_buffer(h, b, bytes);
 		if ((n =(ofs % bytes)))
 			readed += _recv_buffer(h, b, n);
 		DPRINTF((TEXT("skip contents %d byte.\n"), readed));
-      
+
 		readed = _recv_buffer(h, b, bytes);
 	}
 	return readed;
@@ -376,7 +376,6 @@ HttpFile::_recv_buffer(SOCKET h, char *buf, size_t size)
 		DPRINTFN(2,(TEXT("size %d readed %d byte(+%d)\n"),
 		    size, total, cnt));
 	} while (total < size && cnt > 0);
-  
 
 	DPRINTFN(1,(TEXT("total read %d byte\n"), total));
 	return total;
@@ -404,7 +403,7 @@ Socket::Socket(struct sockaddr_in &sock)
 }
 
 Socket::~Socket(void)
-{ 
+{
 
 	if (_socket != INVALID_SOCKET)
 		closesocket(_socket);

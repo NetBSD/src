@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.10 2004/08/06 17:22:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.11 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
  */
 
 #ifndef _HPCBOOT_MENU_H_
-#define _HPCBOOT_MENU_H_
+#define	_HPCBOOT_MENU_H_
 
 #include <hpcdefs.h>
 
 // forward declaration.
 class Console;
-class HpcBootApp;	
+class HpcBootApp;
 class RootWindow;
 class BootButton;
 class CancelButton;
@@ -91,7 +91,7 @@ class HpcMenuInterface
 {
 public:
 	struct HpcMenuPreferences {
-#define HPCBOOT_MAGIC		0x177d5753
+#define	HPCBOOT_MAGIC		0x177d5753
 		int		_magic;
 		int		_version;
 		size_t	_size;	// size of HpcMenuPreferences structure.
@@ -118,7 +118,7 @@ public:
 		BOOL	safety_message;
 		// serial console speed
 		int	serial_speed;
-#define MAX_BOOT_STR 256
+#define	MAX_BOOT_STR 256
 		TCHAR	boot_extra[MAX_BOOT_STR];
 	};
 	struct support_status {
@@ -166,7 +166,7 @@ public:
 	// preferences.
 	BOOL load(void);
 	BOOL save(void);
-  
+
 	// Boot button
 	// when user click `boot button' inquires all options.
 	void get_options(void);
@@ -193,7 +193,7 @@ public:
 	// Main window options
 	TCHAR *dir(int);
 	int dir_default(void);
-  
+
 	// platform
 	TCHAR *platform_get(int n) {
 		return reinterpret_cast <TCHAR *>
@@ -207,7 +207,7 @@ public:
 };
 
 /* Global access macro */
-#define HPC_MENU	(HpcMenuInterface::Instance())
-#define HPC_PREFERENCE	(HPC_MENU._pref)
+#define	HPC_MENU	(HpcMenuInterface::Instance())
+#define	HPC_PREFERENCE	(HPC_MENU._pref)
 
 #endif // _HPCBOOT_MENU_H_

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_vr41.h,v 1.1 2001/02/09 18:35:07 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_vr41.h,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 class VR41XX : public MIPSArchitecture {
 private:
-  
+
 public:
 	VR41XX(Console *&, MemoryManager *&);
 	~VR41XX(void);
@@ -52,7 +52,7 @@ public:
 	static void boot_func(struct BootArgs *, struct PageTag *);
 };
 
-#define MIPS_VR41XX_CACHE_FLUSH()					\
+#define	MIPS_VR41XX_CACHE_FLUSH()					\
 __asm(									\
 	".set	noreorder;"						\
 	/* Flush I-cache */						\
