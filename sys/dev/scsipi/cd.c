@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.206 2004/09/17 23:10:50 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.207 2004/09/17 23:35:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.206 2004/09/17 23:10:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.207 2004/09/17 23:35:13 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -859,9 +859,7 @@ cdstart(struct scsipi_periph *periph)
 #else
 		BUFQ_GET(&cd->buf_queue);
 #endif
-		error = scsipi_command(periph, xs, cmdp, cmdlen,
-		    (u_char *)bp->b_data, bp->b_bcount,
-		    CDRETRIES, 30000, bp, flags);
+		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
 		KASSERT(error == 0);
 	}

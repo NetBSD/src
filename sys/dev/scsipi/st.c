@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.167 2004/09/17 23:10:53 mycroft Exp $ */
+/*	$NetBSD: st.c,v 1.168 2004/09/17 23:35:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.167 2004/09/17 23:10:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.168 2004/09/17 23:35:13 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1307,10 +1307,7 @@ ststart(struct scsipi_periph *periph)
 #else
 		BUFQ_GET(&st->buf_queue);
 #endif
-		error = scsipi_command(periph, xs,
-		    (struct scsipi_generic *)&cmd, sizeof(cmd),
-		    (u_char *)bp->b_data, bp->b_bcount,
-		    0, ST_IO_TIME, bp, flags);
+		error = scsipi_execute_xs(xs);
 		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
 		KASSERT(error == 0);
 	} /* go back and see if we can cram more work in.. */

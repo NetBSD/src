@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.32 2004/09/09 19:35:33 bouyer Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.33 2004/09/17 23:35:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.32 2004/09/09 19:35:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.33 2004/09/17 23:35:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,10 +300,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 #else
 	BUFQ_GET(&ss->buf_queue);
 #endif
-	error = scsipi_command(periph, xs,
-	    (struct scsipi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
-	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
+	error = scsipi_execute_xs(xs);
 	/* with a scsipi_xfer preallocated, scsipi_command can't fail */
 	KASSERT(error == 0);
 	ss->sio.scan_window_size -= bp->b_bcount;
