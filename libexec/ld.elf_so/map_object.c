@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.9 1999/11/04 02:00:18 erh Exp $	 */
+/*	$NetBSD: map_object.c,v 1.10 1999/11/07 00:21:13 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -33,8 +33,10 @@
 
 #include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 
@@ -50,9 +52,10 @@ static int protflags __P((int));	/* Elf flags -> mmap protection */
  * for the shared object.  Returns NULL on failure.
  */
 Obj_Entry *
-_rtld_map_object(path, fd)
+_rtld_map_object(path, fd, sb)
 	const char *path;
 	int fd;
+	const struct stat *sb;
 {
 	Obj_Entry      *obj;
 	union {
@@ -66,6 +69,7 @@ _rtld_map_object(path, fd)
 	int             nsegs;
 	Elf_Phdr       *phdyn;
 	Elf_Phdr       *phphdr;
+	Elf_Phdr       *phinterp;
 	caddr_t         mapbase;
 	size_t          mapsize;
 	Elf_Off         base_offset;
@@ -132,10 +136,12 @@ _rtld_map_object(path, fd)
 	phdr = (Elf_Phdr *) (u.buf + u.hdr.e_phoff);
 	phlimit = phdr + u.hdr.e_phnum;
 	nsegs = 0;
-	phdyn = NULL;
-	phphdr = NULL;
+	phdyn = phphdr = phinterp = NULL;
 	while (phdr < phlimit) {
 		switch (phdr->p_type) {
+		case PT_INTERP:
+			phinterp = phdr;
+			break;
 
 		case PT_LOAD:
 #ifdef __mips__
@@ -245,7 +251,11 @@ _rtld_map_object(path, fd)
 	/* Non-file portion of BSS mapped above. */
 #endif
 
-	obj = CNEW(Obj_Entry);
+	obj = _rtld_obj_new();
+	if (sb != NULL) {
+		obj->dev = sb->st_dev;
+		obj->ino = sb->st_ino;
+	}
 	obj->mapbase = mapbase;
 	obj->mapsize = mapsize;
 	obj->textsize = round_up(segs[0]->p_vaddr + segs[0]->p_memsz) -
@@ -260,6 +270,45 @@ _rtld_map_object(path, fd)
 		    (obj->relocbase + phphdr->p_vaddr);
 		obj->phsize = phphdr->p_memsz;
 	}
+	if (phinterp != NULL)
+		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
+
+	return obj;
+}
+
+void
+_rtld_obj_free(obj)
+	Obj_Entry *obj;
+{
+	Objlist_Entry *elm;
+
+	free(obj->path);
+	while (obj->needed != NULL) {
+		Needed_Entry *needed = obj->needed;
+		obj->needed = needed->next;
+		free(needed);
+	}
+	while (SIMPLEQ_FIRST(&obj->dldags) != NULL) {
+		elm = SIMPLEQ_FIRST(&obj->dldags);
+		SIMPLEQ_REMOVE_HEAD(&obj->dldags, elm, link);
+		free(elm);
+	}
+	while (SIMPLEQ_FIRST(&obj->dagmembers) != NULL) {
+		elm = SIMPLEQ_FIRST(&obj->dagmembers);
+		SIMPLEQ_REMOVE_HEAD(&obj->dagmembers, elm, link);
+		free(elm);
+	}
+	free(obj);
+}
+
+Obj_Entry *
+_rtld_obj_new(void)
+{
+	Obj_Entry *obj;
+
+	obj = CNEW(Obj_Entry);
+	SIMPLEQ_INIT(&obj->dldags);
+	SIMPLEQ_INIT(&obj->dagmembers);
 	return obj;
 }
 
