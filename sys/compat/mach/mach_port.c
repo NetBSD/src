@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.35 2003/02/09 22:13:46 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.36 2003/03/29 11:04:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.35 2003/02/09 22:13:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.36 2003/03/29 11:04:11 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.35 2003/02/09 22:13:46 manu Exp $");
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_notify.h>
 #include <compat/mach/mach_syscallargs.h>
 
 #ifdef COMPAT_DARWIN
@@ -176,9 +177,15 @@ mach_port_destroy(args)
 	mach_port_t mn;
 	struct mach_right *mr;
 
+#ifdef DEBUG_MACH
+	printf("mach_port_destroy mn = %x\n", req->req_name);
+#endif
 	mn = req->req_name;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_REF_RIGHTS)) != NULL) 
-		mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
+	if ((mr = mach_right_check(mn, 
+	    l, MACH_PORT_TYPE_ALL_RIGHTS)) != NULL) { 
+		mr->mr_refcount = 0; /* Make sure it will be kicked away */	
+		mach_right_put(mr, MACH_PORT_TYPE_ALL_RIGHTS);
+	}
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -414,6 +421,78 @@ mach_port_move_member(args)
 	return 0;
 }
 
+int 
+mach_port_request_notification(args)
+	struct mach_trap_args *args;
+{
+	mach_port_request_notification_request_t *req = args->smsg;
+	mach_port_request_notification_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
+	size_t *msglen = args->rsize;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_right *oldmr;
+	mach_port_t oldmn;
+
+	mn = req->req_notify.name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+
+	oldmr = NULL;
+	switch(req->req_msgid) {
+	case MACH_NOTIFY_DESTROYED_MSGID:
+		oldmr = mr->mr_notify_destroyed;
+		mr->mr_notify_destroyed = mach_right_get(mach_port_get(),
+		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
+		break;
+
+	case MACH_NOTIFY_NO_SENDERS_MSGID:
+		oldmr = mr->mr_notify_no_senders;
+		mr->mr_notify_no_senders = mach_right_get(mach_port_get(),
+		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
+		mr->mr_notify_no_senders->mr_port->mp_datatype = 
+		    MACH_MP_NOTIFY_SYNC;
+		(int)mr->mr_notify_no_senders->mr_port->mp_data =
+		    req->req_count;
+		break;
+
+	case MACH_NOTIFY_DEAD_NAME_MSGID:
+		oldmr = mr->mr_notify_dead_name;
+		mr->mr_notify_dead_name = mach_right_get(mach_port_get(),
+		    l, MACH_PORT_TYPE_RECEIVE, req->req_name);
+		break;
+
+	case MACH_NOTIFY_SEND_ONCE_MSGID:
+	case MACH_NOTIFY_DELETED_MSGID:
+	default:
+#ifdef DEBUG_MACH
+		printf("unsupported notify request %d\n", req->req_msgid);
+		return mach_msg_error(args, EINVAL);
+		break;
+#endif
+	}
+
+	if (oldmr != NULL) {
+		oldmr->mr_refcount++;
+		oldmn = oldmr->mr_name;
+	} else {
+		oldmn = (mach_port_t)MACH_PORT_NULL;
+	}
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_previous.name = oldmn;
+	rep->rep_previous.disposition = MACH_MSG_TYPE_MOVE_SEND_ONCE;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
 void 
 mach_port_init(void) 
 {
@@ -520,6 +599,9 @@ mach_right_get(mp, l, type, hint)
 	mr->mr_type = type;
 	mr->mr_sethead = mr; 
 	mr->mr_refcount = 1;
+	mr->mr_notify_destroyed = NULL;
+	mr->mr_notify_dead_name = NULL;
+	mr->mr_notify_no_senders = NULL;
 
 	LIST_INIT(&mr->mr_set);
 
@@ -612,6 +694,10 @@ mach_right_put_exclocked(mr, right)
 
 	/* When receive right is deallocated, the port should die */
 	lright = (right & MACH_PORT_TYPE_RECEIVE);
+#ifdef DEBUG_MACH_RIGHT
+	printf("mr->mr_type = %x, lright = %x, right = %x\n",
+	    mr->mr_type, lright, right);
+#endif
 	if (mr->mr_type & lright) {
 		if (mr->mr_refcount <= 0) {
 			mr->mr_type &= ~MACH_PORT_TYPE_RECEIVE;
@@ -619,6 +705,7 @@ mach_right_put_exclocked(mr, right)
 		} else {
 			mr->mr_type &= ~MACH_PORT_TYPE_RECEIVE;
 			mr->mr_type |= MACH_PORT_TYPE_DEAD_NAME;
+			mach_notify_port_dead_name(mr->mr_lwp, mr);
 		}
 		if (mr->mr_port != NULL) {
 			mr->mr_port->mp_refcount--;
@@ -632,6 +719,9 @@ mach_right_put_exclocked(mr, right)
 	lright = (right & MACH_PORT_TYPE_REF_RIGHTS);
 	if (mr->mr_type & lright) {
 		mr->mr_refcount--;
+
+		mach_notify_port_no_senders(mr->mr_lwp, mr);
+
 		if (mr->mr_refcount <= 0) {
 			mr->mr_type &= ~MACH_PORT_TYPE_REF_RIGHTS;
 			if ((mr->mr_type & MACH_PORT_TYPE_RECEIVE) == 0)
@@ -655,6 +745,8 @@ mach_right_put_exclocked(mr, right)
 #ifdef DEBUG_MACH_RIGHT
 		printf("mach_right_put: kill name %x\n", mr->mr_name);
 #endif
+
+		mach_notify_port_destroyed(mr->mr_lwp, mr);
 		LIST_REMOVE(mr, mr_list);
 		pool_put(&mach_right_pool, mr);
 	}
