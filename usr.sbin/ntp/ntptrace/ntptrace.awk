@@ -3,7 +3,7 @@
 # Based on a perl script by
 # John Hay -- John.Hay@icomtek.csir.co.za / jhay@FreeBSD.org
 #
-# awk version by Frederick Bruckman <fbruckman@ntp.org>
+# awk version by Frederick Bruckman <bruckman@ntp.org>
 
 
 function usage() {
