@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 2002/08/31 09:25:53 scw Exp $	*/
+/*	$NetBSD: trap.h,v 1.5 2002/09/10 11:51:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -100,12 +100,22 @@
 #define	TRAPA_SYSCALL	0x80	/* NetBSD/sh5 native system call */
 
 
+/*
+ * Critical section owners
+ */
+#define	CRIT_FREE		0	/* Nobody is in the critical section */
+#define	CRIT_EXIT		0x01	/* Flag bit for exiting crit section */
+#define	CRIT_SYNC_EXCEPTION	0x02	/* Syncronous Exception Handler */
+#define	CRIT_ASYNC_EXCEPTION	0x04	/* Asyncronous Exception Handler */
+#define	CRIT_TLBMISS_TRAP	0x06	/* TLB Miss promoted to TRAP */
+
+
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern void	userret(struct proc *);
 extern void	trap(struct proc *, struct trapframe *);
 extern void	trapa(struct proc *, struct trapframe *);
-extern void	panic_trap(struct cpu_info *, struct trapframe *,
-		    register_t, register_t);
+extern void	panic_trap(struct trapframe *, register_t, register_t,
+		    register_t, int);
 extern const char *trap_type(int);
 extern label_t	*onfault;
 #endif
