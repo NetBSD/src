@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.36 2004/09/28 06:35:38 dyoung Exp $	*/
+/*	$NetBSD: gencode.c,v 1.37 2004/10/01 20:46:15 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/gencode.c,v 1.193.2.8 2004/03/29 20:53:47 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.36 2004/09/28 06:35:38 dyoung Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.37 2004/10/01 20:46:15 he Exp $");
 #endif
 #endif
 
@@ -68,9 +68,6 @@ struct rtentry;
 #include "sunatmpos.h"
 #include "ppp.h"
 #include "sll.h"
-#ifndef offsetof
-#define offsetof(s, e) ((size_t)&((s *)0)->e)
-#endif
 #ifdef INET6
 #ifndef WIN32
 #include <netdb.h>	/* for "struct addrinfo" */
@@ -93,6 +90,10 @@ struct rtentry;
 #ifdef __NetBSD__
 #include <stddef.h>
 #include <limits.h>
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((size_t)&((s *)0)->e)
 #endif
 
 #define JMP(c) ((c)|BPF_JMP|BPF_K)
