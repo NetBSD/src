@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.3 1995/04/10 05:45:26 mycroft Exp $	*/
+/*	$NetBSD: bw2.c,v 1.4 1995/04/10 07:05:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ static int  bw2gvideo __P((struct fbdevice *, int *));
 static int	bw2svideo __P((struct fbdevice *, int *));
 
 static struct fbdriver bw2fbdriver = {
-	bw2open, bw2close, bw2map,
+	bw2open, bw2close, bw2mmap,
 	enoioctl, /* gattr */
 	bw2gvideo, bw2svideo,
 	enoioctl, enoioctl };
