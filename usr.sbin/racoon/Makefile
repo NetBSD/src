@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2005/03/04 20:41:09 he Exp $
+# $NetBSD: Makefile,v 1.12 2005/03/09 03:11:23 christos Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -62,8 +62,8 @@ LDADD+= ${LIBCRYPTO_RC5}
 CPPFLAGS+=-DINET6
 .endif
 
-LDADD+= -lcrypto 
-DPADD+= ${LIBIPSEC}
+LDADD+= -lcrypto -lcrypt
+DPADD+= ${LIBIPSEC} ${LIBCRYPT}
 
 .PATH:  ${NETBSDSRCDIR}/lib/libipsec ${DIST}/src/racoon		\
 	${DIST}/src/racoon/missing/crypto/sha2
