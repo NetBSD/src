@@ -69,7 +69,7 @@
 #define	ETHER_ADDR_LEN	6
 
 char *card_type[] = {"unknown", "BICC Isolan", "NE2100"};
-char *chip_type[] = ("unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
+char *chip_type[] = {"unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
 
 struct	is_softc {
 	struct	device sc_dev;
@@ -179,9 +179,10 @@ found:
 		if (ia->ia_irq == IRQNONE)
 			return 0;
 		if ((isrdcsr(sc, 0) & IDON) == 0) {
-			printf("is%d: failed to initialize\n", cf->cf_unit);
-			printf("is%d: state is %04x\n", cf->cf_unit,
-			       isrdcsr(sc, 0));
+			printf("is%d: failed to initialize\n",
+				sc->sc_dev.dv_unit);
+			printf("is%d: state is %04x\n", sc->sc_dev.dv_unit,
+				isrdcsr(sc, 0));
 			return 0;
 		}
 		/* had our fun; turn it off again */
