@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 1995/03/28 19:59:56 jtc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 1995/09/29 13:51:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,6 +36,7 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>

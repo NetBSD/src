@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1995/09/23 13:42:03 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1995/09/29 13:51:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,10 @@
  */
 
 #include "assym.s"
+
+	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
+	.fill	NBPG/4-1,4,0/*xdeadbeef*/
+
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
 
@@ -762,8 +766,8 @@ Lsetcpu040:
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
-	moveq	#0,d0
-	movc	d0,vbr
+	movl	#Lvectab,a0
+	movc	a0,vbr
 
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space

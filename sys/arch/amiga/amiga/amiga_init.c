@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.31 1995/09/16 16:11:03 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.32 1995/09/29 13:51:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,7 +61,7 @@
 extern int	machineid, mmutype;
 extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
-extern u_int	Sysseg2;	/* 68040 2nd level descriptor table */
+extern u_int	Sysseg_pa;
 extern u_int	virtual_avail;
 
 extern char *esym;
@@ -166,11 +166,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	extern u_int protorp[2];
 	struct cfdev *cd;
 	u_int pstart, pend, vstart, vend, avail;
-	u_int pt, ptpa, ptsize, ptextra;
-	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg2_pa;
-	u_int sg_proto, pg_proto;
+	u_int pt, ptpa, ptsize, ptextra, kstsize;
+	u_int Sysptmap_pa, umap_pa;
+	register st_entry_t sg_proto, *sg, *esg;
+	register pt_entry_t pg_proto, *pg;
 	u_int tc, end_loaded, ncd, i;
-	u_int *sg, *pg, *pg2;
 
 	boot_fphystart = fphystart;
 	boot_fphysize = fphysize;
@@ -215,7 +215,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 
 		sp = memlist->m_seg;
 		esp = sp + memlist->m_nseg;
-		for (; sp < esp; i++, sp++) {
+		for (; sp < esp; sp++) {
 			if ((sp->ms_attrib & (MEMF_FAST | MEMF_24BITDMA)) 
 			    != (MEMF_FAST|MEMF_24BITDMA))
 				continue;
@@ -277,36 +277,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	avail -= vstart;
 
 #ifdef M68040
-	if (mmutype == MMU_68040) {
-		/*
-		 * allocate the kernel 1st level segment table
-		 */
-		Sysseg_pa = pstart;
-		Sysseg = vstart;
-		vstart += NBPG;
-		pstart += NBPG;
-		avail -= NBPG;
-
-		/*
-		 * allocate the kernel segment table
-		 */
-		Sysseg2_pa = pstart;
-		Sysseg2 = vstart;
-		vstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
-		pstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
-		avail -= AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
-	} else
+	if (mmutype == MMU_68040)
+		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
+	else
 #endif
-	{
-		/*
-		 * allocate the kernel segment table
-		 */
-		Sysseg = vstart;
-		Sysseg_pa = pstart;
-		vstart += NBPG;
-		pstart += NBPG;
-		avail -= NBPG;
-	}
+		kstsize = 1;
+
+	/*
+	 * allocate the kernel segment table
+	 */
+	Sysseg_pa = pstart;
+	Sysseg = vstart;
+	vstart += NBPG * kstsize;
+	pstart += NBPG * kstsize;
+	avail -= NBPG * kstsize;
 
 	/*
 	 * allocate initial page table pages
@@ -350,75 +334,96 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 */
 #ifdef M68040
 	if (mmutype == MMU_68040) {
-		sg_proto = Sysseg2_pa | SG_RW | SG_V;
 		/*
-		 * map all level 1 entries to the segment table
+		 * First invalidate the entire "segment table" pages
+		 * (levels 1 and 2 have the same "invalid" values).
 		 */
 		sg = (u_int *)Sysseg_pa;
-		while (sg_proto < ptpa) {
-			*sg++ = sg_proto;
-			sg_proto += AMIGA_040RTSIZE;
-		}
-		sg_proto = ptpa | SG_RW | SG_V;
-		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
+		esg = &sg[kstsize * NPTEPG];
+		while (sg < esg)
+			*sg++ = SG_NV;
 		/*
-		 * map so many segs
+		 * Initialize level 2 descriptors (which immediately
+		 * follow the level 1 table).  We need:
+		 *	NPTEPG / SG4_LEV3SIZE
+		 * level 2 descriptors to map eachof the nptpages + 1
+		 * pages of PTEs.  Note that we set the "used" bit
+		 * now to save the HW the expense of doing it.
 		 */
-		sg = (u_int *)Sysseg2_pa;
-		pg = (u_int *)Sysptmap_pa;
-		while (sg_proto < pstart) {
+		i = ((ptsize >> PGSHIFT) + 1) * (NPTEPG / SG4_LEV3SIZE);
+		sg = &((u_int *)Sysseg_pa)[SG4_LEV1SIZE];
+		esg = &sg[i];
+		sg_proto = ptpa | SG_U | SG_RW | SG_V;
+		while (sg < esg) {
 			*sg++ = sg_proto;
-			if (pg_proto < pstart)
-				*pg++ = pg_proto;
-			else if (pg < (u_int *)pstart)
-				*pg++ = PG_NV;
-			sg_proto += AMIGA_040PTSIZE;
+			sg_proto += (SG4_LEV3SIZE * sizeof (st_entry_t));
+		}
+		/*
+		 * Initialize level 1 descriptors.  We need:
+		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
+		 * level 1 descriptors to map the 'num' level 2's.
+		 */
+		sg = (u_int *) Sysseg_pa;
+		esg = &sg[roundup(i, SG4_LEV2SIZE) / SG4_LEV2SIZE];
+		sg_proto = (u_int)&sg[SG4_LEV1SIZE] | SG_U | SG_RW |SG_V;
+		while (sg < esg) {
+			*sg++ = sg_proto;
+			sg_proto += (SG4_LEV2SIZE * sizeof(st_entry_t));
+		}
+		/*
+		 * Initialize Sysptmap
+		 */
+		sg = (u_int *)Sysptmap_pa;
+		esg = &sg[(ptsize >> PGSHIFT) + 1];
+		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
+		while (sg < esg) {
+			*sg++ = pg_proto;
 			pg_proto += NBPG;
 		}
 		/*
-		 * invalidate the remainder of the table
+		 * Invalidate rest of Sysptmap page
 		 */
-		do {
+		esg = (u_int *)(Sysptmap_pa + NBPG);
+		while (sg < esg)
 			*sg++ = SG_NV;
-			if (pg < (u_int *)pstart)
-				*pg++ = PG_NV;
-		} while (sg < (u_int *)(Sysseg2_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE));
 	} else
 #endif /* M68040 */
 	{
-		sg_proto = ptpa | SG_RW | SG_V;
-		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
 		/*
-		 * map so many segs
+		 * Map the page table pages in both the HW segment table
+		 * and the software Sysptmap.  Note that Sysptmap is also
+		 * considered a PT page, hence the +1.
 		 */
 		sg = (u_int *)Sysseg_pa;
 		pg = (u_int *)Sysptmap_pa;
-		while (sg_proto < pstart) {
+		esg = &pg[(ptsize >> PGSHIFT) + 1];
+		sg_proto = ptpa | SG_RW | SG_V;
+		pg_proto = ptpa | PG_RW | PG_CI | PG_V;
+		while (pg < esg) {
 			*sg++ = sg_proto;
 			*pg++ = pg_proto;
 			sg_proto += NBPG;
 			pg_proto += NBPG;
 		}
 		/* 
-		 * invalidate the remainder of the tables
+		 * invalidate the remainder of each table
 		 */
-		do {
+		esg = (u_int *)(Sysptmap_pa + NBPG);
+		while (pg < esg) {
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
-		} while (sg < (u_int *)(Sysseg_pa + AMIGA_STSIZE));
+		}
 	}
-
-	/*
-	 * record KVA at which to access current u-area PTE(s)
-	 */
-	/* Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4; */
 
 	/*
 	 * initialize kernel page table page(s) (assume load at VA 0)
 	 */
 	pg_proto = fphystart | PG_RO | PG_V;	/* text pages are RO */
 	pg       = (u_int *) ptpa;
-	for (i = 0; i < (u_int) etext; i += NBPG, pg_proto += NBPG)
+/* XXX make first page PG_NV when vectors get moved */
+	*pg++ = pg_proto;
+	pg_proto += NBPG;
+	for (i = NBPG; i < (u_int) etext; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
 
 	/* 
@@ -721,10 +726,18 @@ kernel_reload_write(uio)
 		 */
 		kernel_text_size = (kernel_exec.a_text
 			+ __LDPGSZ - 1) & (-__LDPGSZ);
+		/*
+		 * Estimate space needed for symbol names, since we don't
+		 * know how big it really is.
+		 */
 		if (esym != NULL) {
 			kernel_symbol_size = kernel_exec.a_syms;
 			kernel_symbol_size += 16 * (kernel_symbol_size / 12);
 		}
+		/*
+		 * XXX - should check that image will fit in CHIP memory
+		 * XXX return an error if it doesn't
+		 */
 		kernel_image = malloc(kernel_text_size + kernel_exec.a_data
 			+ kernel_exec.a_bss
 			+ kernel_symbol_size
@@ -797,6 +810,12 @@ kernel_reload_write(uio)
 		    boot_cphysize, kernel_symbol_esym, eclockfreq,
 		    boot_flags);
 		/*NOTREACHED*/
+		/*
+		 * XXX - kernel_reload() needs to verify that the
+		 * reload code is at the same location in the new
+		 * kernel.  If it isn't, it will return and we will
+		 * return an error.
+		 */
 	case 3:		/* done loading kernel symbol table */
 		c = *((u_long *)(kernel_image + kernel_load_ofs - 4));
 		if (c > 16 * (kernel_exec.a_syms / 12))
