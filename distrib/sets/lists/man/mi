@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.626 2003/11/01 01:44:14 abs Exp $
+# $NetBSD: mi,v 1.627 2003/11/05 02:59:09 uwe Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -486,6 +486,7 @@
 ./usr/share/man/cat4/acpilid.0			man-sys-catman
 ./usr/share/man/cat4/acpitz.0			man-sys-catman
 ./usr/share/man/cat4/adb.0			man-sys-catman
+./usr/share/man/cat4/adc.0			man-sys-catman
 ./usr/share/man/cat4/adv.0			man-sys-catman
 ./usr/share/man/cat4/adw.0			man-sys-catman
 ./usr/share/man/cat4/agp.0			man-sys-catman
@@ -718,6 +719,7 @@
 ./usr/share/man/cat4/hp300/rmp.0		man-sys-catman
 ./usr/share/man/cat4/hp300/rtc.0		man-sys-catman
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman
+./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman
 ./usr/share/man/cat4/hptide.0			man-sys-catman
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman
@@ -2237,6 +2239,7 @@
 ./usr/share/man/man4/acpilid.4			man-sys-man
 ./usr/share/man/man4/acpitz.4			man-sys-man
 ./usr/share/man/man4/adb.4			man-sys-man
+./usr/share/man/man4/adc.4			man-sys-man
 ./usr/share/man/man4/adv.4			man-sys-man
 ./usr/share/man/man4/adw.4			man-sys-man
 ./usr/share/man/man4/agp.4			man-sys-man
@@ -2469,6 +2472,7 @@
 ./usr/share/man/man4/hp300/rmp.4		man-sys-man
 ./usr/share/man/man4/hp300/rtc.4		man-sys-man
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man
+./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man
 ./usr/share/man/man4/hptide.4			man-sys-man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man
 ./usr/share/man/man4/i386/apm.4			man-sys-man
