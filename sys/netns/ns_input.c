@@ -31,31 +31,31 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_input.c	7.8 (Berkeley) 6/27/91
- *	$Id: ns_input.c,v 1.2 1993/05/20 04:35:56 cgd Exp $
+ *	$Id: ns_input.c,v 1.3 1993/12/18 00:44:29 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
-#include "time.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
-#include "../net/raw_cb.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/raw_cb.h>
 
-#include "ns.h"
-#include "ns_if.h"
-#include "ns_pcb.h"
-#include "idp.h"
-#include "idp_var.h"
-#include "ns_error.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#include <netns/ns_pcb.h>
+#include <netns/idp.h>
+#include <netns/idp_var.h>
+#include <netns/ns_error.h>
 
 /*
  * NS initialization.

@@ -34,22 +34,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
- *	$Id: nfs_node.c,v 1.3 1993/07/28 02:22:25 cgd Exp $
+ *	$Id: nfs_node.c,v 1.4 1993/12/18 00:44:56 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "mount.h"
-#include "namei.h"
-#include "vnode.h"
-#include "kernel.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 
-#include "nfsv2.h"
-#include "nfs.h"
-#include "nfsnode.h"
-#include "nfsmount.h"
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsmount.h>
 
 /* The request list head */
 extern struct nfsreq nfsreqh;

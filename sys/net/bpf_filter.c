@@ -36,12 +36,13 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)bpf_filter.c	7.2 (Berkeley) 5/14/91
- *	$Id: bpf_filter.c,v 1.3 1993/05/20 03:05:53 cgd Exp $
+ *	$Id: bpf_filter.c,v 1.4 1993/12/18 00:40:51 mycroft Exp $
  */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
+
 #include <net/bpf.h>
 
 #ifdef sun

@@ -36,15 +36,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ccitt_proto.c	7.5 (Berkeley) 8/30/90
- *	$Id: ccitt_proto.c,v 1.2 1993/05/20 04:12:03 cgd Exp $
+ *	$Id: ccitt_proto.c,v 1.3 1993/12/18 00:41:15 mycroft Exp $
  */
 #define HDLC
-#include "param.h"
-#include "socket.h"
-#include "protosw.h"
-#include "domain.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
 
-#include "x25.h"
+#include <netccitt/x25.h>
 
 /*
  *	Definitions of protocols supported in the CCITT domain.

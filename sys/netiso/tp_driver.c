@@ -1,8 +1,8 @@
-/* $Id: tp_driver.c,v 1.2 1993/05/20 05:27:34 cgd Exp $ */
+/* $Id: tp_driver.c,v 1.3 1993/12/18 00:43:29 mycroft Exp $ */
 
 #define _XEBEC_PG static
 
-#include "tp_states.h"
+#include <netiso/tp_states.h>
 
 static struct act_ent {
 	int a_newstate;
@@ -11,22 +11,23 @@ static struct act_ent {
 #include "tp_states.init"
 };
 
-#include "param.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "mbuf.h"
-#include "time.h"
-#include "errno.h"
-#include "../netiso/tp_param.h"
-#include "../netiso/tp_stat.h"
-#include "../netiso/tp_pcb.h"
-#include "../netiso/tp_tpdu.h"
-#include "../netiso/argo_debug.h"
-#include "../netiso/tp_trace.h"
-#include "../netiso/iso_errno.h"
-#include "../netiso/tp_seq.h"
-#include "../netiso/cons.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/mbuf.h>
+#include <sys/time.h>
+#include <sys/errno.h>
+
+#include <netiso/tp_param.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/tp_tpdu.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_trace.h>
+#include <netiso/iso_errno.h>
+#include <netiso/tp_seq.h>
+#include <netiso/cons.h>
 
 #define DRIVERTRACE TPPTdriver
 #define sbwakeup(sb)	sowakeup(p->tp_sock, sb);
@@ -55,7 +56,7 @@ typedef  struct tp_pcb tpcb_struct;
 
 typedef tpcb_struct tp_PCB_;
 
-#include "tp_events.h"
+#include <netiso/tp_events.h>
 
 _XEBEC_PG int _Xebec_action(a,e,p)
 int a;
