@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.4 2002/09/27 20:39:13 thorpej Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.5 2002/09/28 18:19:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.4 2002/09/27 20:39:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.5 2002/09/28 18:19:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.4 2002/09/27 20:39:13 thorpej Exp $
 
 #include <dev/mca/mcavar.h>
 #include <dev/mca/mcadevs.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
 
 int	ate_mca_match __P((struct device *, struct cfdata *, void *));
 void	ate_mca_attach __P((struct device *, struct device *, void *));
