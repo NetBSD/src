@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.27 2000/07/28 21:38:44 tron Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.28 2000/07/28 21:49:09 tron Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -447,13 +447,9 @@ linux_sys_rt_sigprocmask(p, v, retval)
 	}
 	error = sigprocmask1(p, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
-	if (error)
-		return (error); 
-	if (oset) {
+	if (!error && oset) {
 		native_to_linux_sigset(&obss, &olss);
 		error = copyout(&olss, oset, sizeof(olss));
-		if (error)
-			return (error);
 	}       
 	return (error);
 }
