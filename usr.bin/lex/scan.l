@@ -1,552 +1,710 @@
+/* scan.l - scanner for flex input */
+
+%{
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Vern Paxson of Lawrence Berkeley Laboratory.
+ * Vern Paxson.
  * 
- * The United States Government has rights in this work pursuant 
+ * The United States Government has rights in this work pursuant
  * to contract no. DE-AC03-76SF00098 between the United States
  * Department of Energy and the University of California.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)scan.l	5.3 (Berkeley) 4/12/91
+ * Redistribution and use in source and binary forms are permitted provided
+ * that: (1) source distributions retain this entire copyright notice and
+ * comment, and (2) distributions including binaries display the following
+ * acknowledgement:  ``This product includes software developed by the
+ * University of California, Berkeley and its contributors'' in the
+ * documentation or other materials provided with the distribution and in
+ * all advertising materials mentioning features or use of this software.
+ * Neither the name of the University nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* scan.l - scanner for flex input */
-
-%{
-#undef yywrap
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/scan.l,v 1.1.1.2 1996/12/10 06:06:42 mikel Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
 
-#ifndef lint
-static char copyright[] =
-    "@(#) Copyright (c) 1989 The Regents of the University of California.\n";
-static char CR_continuation[] = "@(#) All rights reserved.\n";
+#define ACTION_ECHO add_action( yytext )
+#define ACTION_IFDEF(def, should_define) \
+	{ \
+	if ( should_define ) \
+		action_define( def, 1 ); \
+	}
 
-static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.bin/lex/Attic/scan.l,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)";
-#endif
+#define MARK_END_OF_PROLOG mark_prolog();
 
-#define ACTION_ECHO fprintf( temp_action_file, "%s", yytext )
-#define MARK_END_OF_PROLOG fprintf( temp_action_file, "%%%% end of prolog\n" );
-
-#undef YY_DECL
 #define YY_DECL \
 	int flexscan()
 
 #define RETURNCHAR \
-	yylval = yytext[0]; \
-	return ( CHAR );
+	yylval = (unsigned char) yytext[0]; \
+	return CHAR;
 
 #define RETURNNAME \
-	(void) strcpy( nmstr, (char *) yytext ); \
-	return ( NAME );
+	strcpy( nmstr, yytext ); \
+	return NAME;
 
 #define PUT_BACK_STRING(str, start) \
-	for ( i = strlen( (char *) (str) ) - 1; i >= start; --i ) \
-	    unput((str)[i])
+	for ( i = strlen( str ) - 1; i >= start; --i ) \
+		unput((str)[i])
 
 #define CHECK_REJECT(str) \
 	if ( all_upper( str ) ) \
-	    reject = true;
+		reject = true;
 
 #define CHECK_YYMORE(str) \
 	if ( all_lower( str ) ) \
-	    yymore_used = true;
+		yymore_used = true;
 %}
 
+%option caseless nodefault outfile="scan.c" stack noyy_top_state
+%option nostdinit
+
 %x SECT2 SECT2PROLOG SECT3 CODEBLOCK PICKUPDEF SC CARETISBOL NUM QUOTE
-%x FIRSTCCL CCL ACTION RECOVER BRACEERROR C_COMMENT ACTION_COMMENT
-%x ACTION_STRING PERCENT_BRACE_ACTION USED_LIST CODEBLOCK_2 XLATION
+%x FIRSTCCL CCL ACTION RECOVER COMMENT ACTION_STRING PERCENT_BRACE_ACTION
+%x OPTION LINEDIR
 
-WS		[ \t\f]+
-OPTWS		[ \t\f]*
-NOT_WS		[^ \t\f\n]
+WS		[[:blank:]]+
+OPTWS		[[:blank:]]*
+NOT_WS		[^[:blank:]\n]
 
-NAME		[a-z_][a-z_0-9-]*
-NOT_NAME	[^a-z_\n]+
+NL		\r?\n
+
+NAME		([[:alpha:]_][[:alnum:]_-]*)
+NOT_NAME	[^[:alpha:]_*\n]+
 
 SCNAME		{NAME}
 
-ESCSEQ		\\([^\n]|[0-9]{1,3}|x[0-9a-f]{1,2})
+ESCSEQ		(\\([^\n]|[0-7]{1,3}|x[[:xdigit:]]{1,2}))
+
+FIRST_CCL_CHAR	([^\\\n]|{ESCSEQ})
+CCL_CHAR	([^\\\n\]]|{ESCSEQ})
+CCL_EXPR	("[:"[[:alpha:]]+":]")
+
+LEXOPT		[aceknopr]
 
 %%
-    static int bracelevel, didadef;
-    int i, indented_code, checking_used, new_xlation;
-    int doing_codeblock = false;
-    Char nmdef[MAXLINE], myesc();
+	static int bracelevel, didadef, indented_code;
+	static int doing_rule_action = false;
+	static int option_sense;
 
-^{WS}			indented_code = true; BEGIN(CODEBLOCK);
-^#.*\n			++linenum; /* treat as a comment */
-^"/*"			ECHO; BEGIN(C_COMMENT);
-^"%s"{NAME}?		return ( SCDECL );
-^"%x"{NAME}?		return ( XSCDECL );
-^"%{".*\n		{
+	int doing_codeblock = false;
+	int i;
+	Char nmdef[MAXLINE], myesc();
+
+
+<INITIAL>{
+	^{WS}		indented_code = true; BEGIN(CODEBLOCK);
+	^"/*"		ACTION_ECHO; yy_push_state( COMMENT );
+	^#{OPTWS}line{WS}	yy_push_state( LINEDIR );
+	^"%s"{NAME}?	return SCDECL;
+	^"%x"{NAME}?	return XSCDECL;
+	^"%{".*{NL}	{
 			++linenum;
-			line_directive_out( stdout );
+			line_directive_out( (FILE *) 0, 1 );
 			indented_code = false;
 			BEGIN(CODEBLOCK);
 			}
 
-{WS}			return ( WHITESPACE );
+	{WS}		/* discard */
 
-^"%%".*			{
+	^"%%".*		{
 			sectnum = 2;
-			line_directive_out( stdout );
+			bracelevel = 0;
+			mark_defs1();
+			line_directive_out( (FILE *) 0, 1 );
 			BEGIN(SECT2PROLOG);
-			return ( SECTEND );
+			return SECTEND;
 			}
 
-^"%used"		{
-	pinpoint_message( "warning - %%used/%%unused have been deprecated" );
-			checking_used = REALLY_USED; BEGIN(USED_LIST);
-			}
-^"%unused"		{
-			checking_used = REALLY_NOT_USED; BEGIN(USED_LIST);
-	pinpoint_message( "warning - %%used/%%unused have been deprecated" );
-			checking_used = REALLY_NOT_USED; BEGIN(USED_LIST);
-			}
+	^"%pointer".*{NL}	yytext_is_array = false; ++linenum;
+	^"%array".*{NL}		yytext_is_array = true; ++linenum;
 
+	^"%option"	BEGIN(OPTION); return OPTION_OP;
 
-^"%"[aeknopt]" ".*\n	{
-#ifdef NOTDEF
-			fprintf( stderr,
-			     "old-style lex command at line %d ignored:\n\t%s",
-				 linenum, yytext );
-#endif
-			++linenum;
-			}
+	^"%"{LEXOPT}{OPTWS}[[:digit:]]*{OPTWS}{NL}	++linenum; /* ignore */
+	^"%"{LEXOPT}{WS}.*{NL}	++linenum;	/* ignore */
 
-^"%"[cr]{OPTWS}		/* ignore old lex directive */
+	^"%"[^sxaceknopr{}].*	synerr( _( "unrecognized '%' directive" ) );
 
-%t{OPTWS}\n		{
-			++linenum;
-			xlation =
-			    (int *) malloc( sizeof( int ) * (unsigned) csize );
-
-			if ( ! xlation )
-			    flexfatal(
-				"dynamic memory failure building %t table" );
-
-			for ( i = 0; i < csize; ++i )
-			    xlation[i] = 0;
-
-			num_xlations = 0;
-
-			BEGIN(XLATION);
-			}
-
-^"%"[^sxanpekotcru{}]{OPTWS}	synerr( "unrecognized '%' directive" );
-
-^{NAME}			{
-			(void) strcpy( nmstr, (char *) yytext );
+	^{NAME}		{
+			strcpy( nmstr, yytext );
 			didadef = false;
 			BEGIN(PICKUPDEF);
 			}
 
-{SCNAME}		RETURNNAME;
-^{OPTWS}\n		++linenum; /* allows blank lines in section 1 */
-{OPTWS}\n		++linenum; return ( '\n' );
-.			synerr( "illegal character" ); BEGIN(RECOVER);
+	{SCNAME}	RETURNNAME;
+	^{OPTWS}{NL}	++linenum; /* allows blank lines in section 1 */
+	{OPTWS}{NL}	ACTION_ECHO; ++linenum; /* maybe end of comment line */
+}
 
 
-<C_COMMENT>"*/"		ECHO; BEGIN(INITIAL);
-<C_COMMENT>"*/".*\n	++linenum; ECHO; BEGIN(INITIAL);
-<C_COMMENT>[^*\n]+	ECHO;
-<C_COMMENT>"*"		ECHO;
-<C_COMMENT>\n		++linenum; ECHO;
+<COMMENT>{
+	"*/"		ACTION_ECHO; yy_pop_state();
+	"*"		ACTION_ECHO;
+	[^*\n]+		ACTION_ECHO;
+	[^*\n]*{NL}	++linenum; ACTION_ECHO;
+}
 
+<LINEDIR>{
+	\n		yy_pop_state();
+	[[:digit:]]+	linenum = myctoi( yytext );
 
-<CODEBLOCK>^"%}".*\n	++linenum; BEGIN(INITIAL);
-<CODEBLOCK>"reject"	ECHO; CHECK_REJECT(yytext);
-<CODEBLOCK>"yymore"	ECHO; CHECK_YYMORE(yytext);
-<CODEBLOCK>{NAME}|{NOT_NAME}|.	ECHO;
-<CODEBLOCK>\n		{
-			++linenum;
-			ECHO;
-			if ( indented_code )
-			    BEGIN(INITIAL);
+	\"[^"\n]*\"	{
+			flex_free( (void *) infilename );
+			infilename = copy_string( yytext + 1 );
+			infilename[strlen( infilename ) - 1] = '\0';
 			}
+	.		/* ignore spurious characters */
+}
+
+<CODEBLOCK>{
+	^"%}".*{NL}	++linenum; BEGIN(INITIAL);
+
+	{NAME}|{NOT_NAME}|.	ACTION_ECHO;
+
+	{NL}		{
+			++linenum;
+			ACTION_ECHO;
+			if ( indented_code )
+				BEGIN(INITIAL);
+			}
+}
 
 
-<PICKUPDEF>{WS}		/* separates name and definition */
+<PICKUPDEF>{
+	{WS}		/* separates name and definition */
 
-<PICKUPDEF>{NOT_WS}.*	{
-			(void) strcpy( (char *) nmdef, (char *) yytext );
+	{NOT_WS}.*	{
+			strcpy( (char *) nmdef, yytext );
 
+			/* Skip trailing whitespace. */
 			for ( i = strlen( (char *) nmdef ) - 1;
-			      i >= 0 &&
-			      nmdef[i] == ' ' || nmdef[i] == '\t';
+			      i >= 0 && (nmdef[i] == ' ' || nmdef[i] == '\t');
 			      --i )
-			    ;
+				;
 
 			nmdef[i + 1] = '\0';
 
-                        ndinstal( nmstr, nmdef );
+			ndinstal( nmstr, nmdef );
 			didadef = true;
 			}
 
-<PICKUPDEF>\n		{
+	{NL}		{
 			if ( ! didadef )
-			    synerr( "incomplete name definition" );
+				synerr( _( "incomplete name definition" ) );
 			BEGIN(INITIAL);
 			++linenum;
 			}
+}
 
-<RECOVER>.*\n		++linenum; BEGIN(INITIAL); RETURNNAME;
+
+<OPTION>{
+	{NL}		++linenum; BEGIN(INITIAL);
+	{WS}		option_sense = true;
+
+	"="		return '=';
+
+	no		option_sense = ! option_sense;
+
+	7bit		csize = option_sense ? 128 : 256;
+	8bit		csize = option_sense ? 256 : 128;
+
+	align		long_align = option_sense;
+	always-interactive	{
+			action_define( "YY_ALWAYS_INTERACTIVE", option_sense );
+			}
+	array		yytext_is_array = option_sense;
+	backup		backing_up_report = option_sense;
+	batch		interactive = ! option_sense;
+	"c++"		C_plus_plus = option_sense;
+	caseful|case-sensitive		caseins = ! option_sense;
+	caseless|case-insensitive	caseins = option_sense;
+	debug		ddebug = option_sense;
+	default		spprdflt = ! option_sense;
+	ecs		useecs = option_sense;
+	fast		{
+			useecs = usemecs = false;
+			use_read = fullspd = true;
+			}
+	full		{
+			useecs = usemecs = false;
+			use_read = fulltbl = true;
+			}
+	input		ACTION_IFDEF("YY_NO_INPUT", ! option_sense);
+	interactive	interactive = option_sense;
+	lex-compat	lex_compat = option_sense;
+	main		{
+			action_define( "YY_MAIN", option_sense );
+			do_yywrap = ! option_sense;
+			}
+	meta-ecs	usemecs = option_sense;
+	never-interactive	{
+			action_define( "YY_NEVER_INTERACTIVE", option_sense );
+			}
+	perf-report	performance_report += option_sense ? 1 : -1;
+	pointer		yytext_is_array = ! option_sense;
+	read		use_read = option_sense;
+	reject		reject_really_used = option_sense;
+	stack		action_define( "YY_STACK_USED", option_sense );
+	stdinit		do_stdinit = option_sense;
+	stdout		use_stdout = option_sense;
+	unput		ACTION_IFDEF("YY_NO_UNPUT", ! option_sense);
+	verbose		printstats = option_sense;
+	warn		nowarn = ! option_sense;
+	yylineno	do_yylineno = option_sense;
+	yymore		yymore_really_used = option_sense;
+	yywrap		do_yywrap = option_sense;
+
+	yy_push_state	ACTION_IFDEF("YY_NO_PUSH_STATE", ! option_sense);
+	yy_pop_state	ACTION_IFDEF("YY_NO_POP_STATE", ! option_sense);
+	yy_top_state	ACTION_IFDEF("YY_NO_TOP_STATE", ! option_sense);
+
+	yy_scan_buffer	ACTION_IFDEF("YY_NO_SCAN_BUFFER", ! option_sense);
+	yy_scan_bytes	ACTION_IFDEF("YY_NO_SCAN_BYTES", ! option_sense);
+	yy_scan_string	ACTION_IFDEF("YY_NO_SCAN_STRING", ! option_sense);
+
+	outfile		return OPT_OUTFILE;
+	prefix		return OPT_PREFIX;
+	yyclass		return OPT_YYCLASS;
+
+	\"[^"\n]*\"	{
+			strcpy( nmstr, yytext + 1 );
+			nmstr[strlen( nmstr ) - 1] = '\0';
+			return NAME;
+			}
+
+	(([a-mo-z]|n[a-np-z])[[:alpha:]\-+]*)|.	{
+			format_synerr( _( "unrecognized %%option: %s" ),
+				yytext );
+			BEGIN(RECOVER);
+			}
+}
+
+<RECOVER>.*{NL}		++linenum; BEGIN(INITIAL);
 
 
-<USED_LIST>\n		++linenum; BEGIN(INITIAL);
-<USED_LIST>{WS}
-<USED_LIST>"reject"	{
-			if ( all_upper( yytext ) )
-			    reject_really_used = checking_used;
+<SECT2PROLOG>{
+	^"%{".*	++bracelevel; yyless( 2 );	/* eat only %{ */
+	^"%}".*	--bracelevel; yyless( 2 );	/* eat only %} */
+
+	^{WS}.*	ACTION_ECHO;	/* indented code in prolog */
+
+	^{NOT_WS}.*	{	/* non-indented code */
+			if ( bracelevel <= 0 )
+				{ /* not in %{ ... %} */
+				yyless( 0 );	/* put it all back */
+				yy_set_bol( 1 );
+				mark_prolog();
+				BEGIN(SECT2);
+				}
 			else
-			    synerr( "unrecognized %used/%unused construct" );
-			}
-<USED_LIST>"yymore"	{
-			if ( all_lower( yytext ) )
-			    yymore_really_used = checking_used;
-			else
-			    synerr( "unrecognized %used/%unused construct" );
-			}
-<USED_LIST>{NOT_WS}+	synerr( "unrecognized %used/%unused construct" );
-
-
-<XLATION>"%t"{OPTWS}\n	++linenum; BEGIN(INITIAL);
-<XLATION>^{OPTWS}[0-9]+	++num_xlations; new_xlation = true;
-<XLATION>^.		synerr( "bad row in translation table" );
-<XLATION>{WS}		/* ignore whitespace */
-
-<XLATION>{ESCSEQ}	{
-			xlation[myesc( yytext )] =
-				(new_xlation ? num_xlations : -num_xlations);
-			new_xlation = false;
-			}
-<XLATION>.		{
-			xlation[yytext[0]] =
-				(new_xlation ? num_xlations : -num_xlations);
-			new_xlation = false;
+				ACTION_ECHO;
 			}
 
-<XLATION>\n		++linenum;
+	.*		ACTION_ECHO;
+	{NL}	++linenum; ACTION_ECHO;
 
-
-<SECT2PROLOG>.*\n/{NOT_WS}	{
-			++linenum;
-			ACTION_ECHO;
-			MARK_END_OF_PROLOG;
-			BEGIN(SECT2);
+	<<EOF>>		{
+			mark_prolog();
+			sectnum = 0;
+			yyterminate(); /* to stop the parser */
 			}
+}
 
-<SECT2PROLOG>.*\n	++linenum; ACTION_ECHO;
+<SECT2>{
+	^{OPTWS}{NL}	++linenum; /* allow blank lines in section 2 */
 
-<SECT2PROLOG><<EOF>>	MARK_END_OF_PROLOG; yyterminate();
-
-<SECT2>^{OPTWS}\n	++linenum; /* allow blank lines in section 2 */
-
-<SECT2>^({WS}|"%{")	{
-			indented_code = (yytext[0] != '%');
+	^{OPTWS}"%{"	{
+			indented_code = false;
 			doing_codeblock = true;
 			bracelevel = 1;
-
-			if ( indented_code )
-			    ACTION_ECHO;
-
-			BEGIN(CODEBLOCK_2);
+			BEGIN(PERCENT_BRACE_ACTION);
 			}
 
-<SECT2>"<"		BEGIN(SC); return ( '<' );
-<SECT2>^"^"		return ( '^' );
-<SECT2>\"		BEGIN(QUOTE); return ( '"' );
-<SECT2>"{"/[0-9]		BEGIN(NUM); return ( '{' );
-<SECT2>"{"[^0-9\n][^}\n]*	BEGIN(BRACEERROR);
-<SECT2>"$"/[ \t\n]	return ( '$' );
+	^{OPTWS}"<"	BEGIN(SC); return '<';
+	^{OPTWS}"^"	return '^';
+	\"		BEGIN(QUOTE); return '"';
+	"{"/[[:digit:]]	BEGIN(NUM); return '{';
+	"$"/([[:blank:]]|{NL})	return '$';
 
-<SECT2>{WS}"%{"		{
+	{WS}"%{"		{
 			bracelevel = 1;
 			BEGIN(PERCENT_BRACE_ACTION);
-			return ( '\n' );
-			}
-<SECT2>{WS}"|".*\n	continued_action = true; ++linenum; return ( '\n' );
 
-<SECT2>{WS}		{
-			/* this rule is separate from the one below because
+			if ( in_rule )
+				{
+				doing_rule_action = true;
+				in_rule = false;
+				return '\n';
+				}
+			}
+	{WS}"|".*{NL}	continued_action = true; ++linenum; return '\n';
+
+	^{WS}"/*"	{
+			yyless( yyleng - 2 );	/* put back '/', '*' */
+			bracelevel = 0;
+			continued_action = false;
+			BEGIN(ACTION);
+			}
+
+	^{WS}		/* allow indented rules */
+
+	{WS}		{
+			/* This rule is separate from the one below because
 			 * otherwise we get variable trailing context, so
-			 * we can't build the scanner using -{f,F}
+			 * we can't build the scanner using -{f,F}.
 			 */
 			bracelevel = 0;
 			continued_action = false;
 			BEGIN(ACTION);
-			return ( '\n' );
+
+			if ( in_rule )
+				{
+				doing_rule_action = true;
+				in_rule = false;
+				return '\n';
+				}
 			}
 
-<SECT2>{OPTWS}/\n	{
+	{OPTWS}{NL}	{
 			bracelevel = 0;
 			continued_action = false;
 			BEGIN(ACTION);
-			return ( '\n' );
+			unput( '\n' );	/* so <ACTION> sees it */
+
+			if ( in_rule )
+				{
+				doing_rule_action = true;
+				in_rule = false;
+				return '\n';
+				}
 			}
 
-<SECT2>^{OPTWS}\n	++linenum; return ( '\n' );
+	^{OPTWS}"<<EOF>>"	|
+	"<<EOF>>"	return EOF_OP;
 
-<SECT2>"<<EOF>>"	return ( EOF_OP );
-
-<SECT2>^"%%".*		{
+	^"%%".*		{
 			sectnum = 3;
 			BEGIN(SECT3);
-			return ( EOF ); /* to stop the parser */
+			yyterminate(); /* to stop the parser */
 			}
 
-<SECT2>"["([^\\\]\n]|{ESCSEQ})+"]"	{
+	"["({FIRST_CCL_CHAR}|{CCL_EXPR})({CCL_CHAR}|{CCL_EXPR})*	{
 			int cclval;
 
-			(void) strcpy( nmstr, (char *) yytext );
+			strcpy( nmstr, yytext );
 
-			/* check to see if we've already encountered this ccl */
-			if ( (cclval = ccllookup( (Char *) nmstr )) )
-			    {
-			    yylval = cclval;
-			    ++cclreuse;
-			    return ( PREVCCL );
-			    }
+			/* Check to see if we've already encountered this
+			 * ccl.
+			 */
+			if ( (cclval = ccllookup( (Char *) nmstr )) != 0 )
+				{
+				if ( input() != ']' )
+					synerr( _( "bad character class" ) );
+
+				yylval = cclval;
+				++cclreuse;
+				return PREVCCL;
+				}
 			else
-			    {
-			    /* we fudge a bit.  We know that this ccl will
-			     * soon be numbered as lastccl + 1 by cclinit
-			     */
-			    cclinstal( (Char *) nmstr, lastccl + 1 );
+				{
+				/* We fudge a bit.  We know that this ccl will
+				 * soon be numbered as lastccl + 1 by cclinit.
+				 */
+				cclinstal( (Char *) nmstr, lastccl + 1 );
 
-			    /* push back everything but the leading bracket
-			     * so the ccl can be rescanned
-			     */
-			    PUT_BACK_STRING((Char *) nmstr, 1);
+				/* Push back everything but the leading bracket
+				 * so the ccl can be rescanned.
+				 */
+				yyless( 1 );
 
-			    BEGIN(FIRSTCCL);
-			    return ( '[' );
-			    }
+				BEGIN(FIRSTCCL);
+				return '[';
+				}
 			}
 
-<SECT2>"{"{NAME}"}"	{
+	"{"{NAME}"}"	{
 			register Char *nmdefptr;
 			Char *ndlookup();
 
-			(void) strcpy( nmstr, (char *) yytext );
-			nmstr[yyleng - 1] = '\0';  /* chop trailing brace */
+			strcpy( nmstr, yytext + 1 );
+			nmstr[yyleng - 2] = '\0';  /* chop trailing brace */
 
-			/* lookup from "nmstr + 1" to chop leading brace */
-			if ( ! (nmdefptr = ndlookup( nmstr + 1 )) )
-			    synerr( "undefined {name}" );
+			if ( (nmdefptr = ndlookup( nmstr )) == 0 )
+				format_synerr(
+					_( "undefined definition {%s}" ),
+						nmstr );
 
 			else
-			    { /* push back name surrounded by ()'s */
-			    unput(')');
-			    PUT_BACK_STRING(nmdefptr, 0);
-			    unput('(');
-			    }
+				{ /* push back name surrounded by ()'s */
+				int len = strlen( (char *) nmdefptr );
+
+				if ( lex_compat || nmdefptr[0] == '^' ||
+				     (len > 0 && nmdefptr[len - 1] == '$') )
+					{ /* don't use ()'s after all */
+					PUT_BACK_STRING((char *) nmdefptr, 0);
+
+					if ( nmdefptr[0] == '^' )
+						BEGIN(CARETISBOL);
+					}
+
+				else
+					{
+					unput(')');
+					PUT_BACK_STRING((char *) nmdefptr, 0);
+					unput('(');
+					}
+				}
 			}
 
-<SECT2>[/|*+?.()]	return ( yytext[0] );
-<SECT2>.		RETURNCHAR;
-<SECT2>\n		++linenum; return ( '\n' );
+	[/|*+?.(){}]	return (unsigned char) yytext[0];
+	.		RETURNCHAR;
+}
 
 
-<SC>","			return ( ',' );
-<SC>">"			BEGIN(SECT2); return ( '>' );
-<SC>">"/"^"		BEGIN(CARETISBOL); return ( '>' );
-<SC>{SCNAME}		RETURNNAME;
-<SC>.			synerr( "bad start condition name" );
+<SC>{
+	[,*]		return (unsigned char) yytext[0];
+	">"		BEGIN(SECT2); return '>';
+	">"/^		BEGIN(CARETISBOL); return '>';
+	{SCNAME}	RETURNNAME;
+	.		{
+			format_synerr( _( "bad <start condition>: %s" ),
+				yytext );
+			}
+}
 
-<CARETISBOL>"^"		BEGIN(SECT2); return ( '^' );
+<CARETISBOL>"^"		BEGIN(SECT2); return '^';
 
 
-<QUOTE>[^"\n]		RETURNCHAR;
-<QUOTE>\"		BEGIN(SECT2); return ( '"' );
+<QUOTE>{
+	[^"\n]		RETURNCHAR;
+	\"		BEGIN(SECT2); return '"';
 
-<QUOTE>\n		{
-			synerr( "missing quote" );
+	{NL}		{
+			synerr( _( "missing quote" ) );
 			BEGIN(SECT2);
 			++linenum;
-			return ( '"' );
+			return '"';
 			}
+}
 
 
-<FIRSTCCL>"^"/[^-\n]	BEGIN(CCL); return ( '^' );
-<FIRSTCCL>"^"/-		return ( '^' );
-<FIRSTCCL>-		BEGIN(CCL); yylval = '-'; return ( CHAR );
-<FIRSTCCL>.		BEGIN(CCL); RETURNCHAR;
+<FIRSTCCL>{
+	"^"/[^-\]\n]	BEGIN(CCL); return '^';
+	"^"/("-"|"]")	return '^';
+	.		BEGIN(CCL); RETURNCHAR;
+}
 
-<CCL>-/[^\]\n]		return ( '-' );
-<CCL>[^\]\n]		RETURNCHAR;
-<CCL>"]"		BEGIN(SECT2); return ( ']' );
+<CCL>{
+	-/[^\]\n]	return '-';
+	[^\]\n]		RETURNCHAR;
+	"]"		BEGIN(SECT2); return ']';
+	.|{NL}		{
+			synerr( _( "bad character class" ) );
+			BEGIN(SECT2);
+			return ']';
+			}
+}
 
+<FIRSTCCL,CCL>{
+	"[:alnum:]"	BEGIN(CCL); return CCE_ALNUM;
+	"[:alpha:]"	BEGIN(CCL); return CCE_ALPHA;
+	"[:blank:]"	BEGIN(CCL); return CCE_BLANK;
+	"[:cntrl:]"	BEGIN(CCL); return CCE_CNTRL;
+	"[:digit:]"	BEGIN(CCL); return CCE_DIGIT;
+	"[:graph:]"	BEGIN(CCL); return CCE_GRAPH;
+	"[:lower:]"	BEGIN(CCL); return CCE_LOWER;
+	"[:print:]"	BEGIN(CCL); return CCE_PRINT;
+	"[:punct:]"	BEGIN(CCL); return CCE_PUNCT;
+	"[:space:]"	BEGIN(CCL); return CCE_SPACE;
+	"[:upper:]"	BEGIN(CCL); return CCE_UPPER;
+	"[:xdigit:]"	BEGIN(CCL); return CCE_XDIGIT;
+	{CCL_EXPR}	{
+			format_synerr(
+				_( "bad character class expression: %s" ),
+					yytext );
+			BEGIN(CCL); return CCE_ALNUM;
+			}
+}
 
-<NUM>[0-9]+		{
+<NUM>{
+	[[:digit:]]+	{
 			yylval = myctoi( yytext );
-			return ( NUMBER );
+			return NUMBER;
 			}
 
-<NUM>","			return ( ',' );
-<NUM>"}"			BEGIN(SECT2); return ( '}' );
+	","		return ',';
+	"}"		BEGIN(SECT2); return '}';
 
-<NUM>.			{
-			synerr( "bad character inside {}'s" );
+	.		{
+			synerr( _( "bad character inside {}'s" ) );
 			BEGIN(SECT2);
-			return ( '}' );
+			return '}';
 			}
 
-<NUM>\n			{
-			synerr( "missing }" );
+	{NL}		{
+			synerr( _( "missing }" ) );
 			BEGIN(SECT2);
 			++linenum;
-			return ( '}' );
+			return '}';
 			}
+}
 
 
-<BRACEERROR>"}"		synerr( "bad name in {}'s" ); BEGIN(SECT2);
-<BRACEERROR>\n		synerr( "missing }" ); ++linenum; BEGIN(SECT2);
+<PERCENT_BRACE_ACTION>{
+	{OPTWS}"%}".*		bracelevel = 0;
 
+	<ACTION>"/*"		ACTION_ECHO; yy_push_state( COMMENT );
 
-<PERCENT_BRACE_ACTION,CODEBLOCK_2>{OPTWS}"%}".*		bracelevel = 0;
-<PERCENT_BRACE_ACTION,CODEBLOCK_2,ACTION>"reject"	{
+	<CODEBLOCK,ACTION>{
+		"reject"	{
 			ACTION_ECHO;
 			CHECK_REJECT(yytext);
 			}
-<PERCENT_BRACE_ACTION,CODEBLOCK_2,ACTION>"yymore"	{
+		"yymore"	{
 			ACTION_ECHO;
 			CHECK_YYMORE(yytext);
 			}
-<PERCENT_BRACE_ACTION,CODEBLOCK_2>{NAME}|{NOT_NAME}|.	ACTION_ECHO;
-<PERCENT_BRACE_ACTION,CODEBLOCK_2>\n			{
+	}
+
+	{NAME}|{NOT_NAME}|.	ACTION_ECHO;
+	{NL}		{
 			++linenum;
 			ACTION_ECHO;
 			if ( bracelevel == 0 ||
 			     (doing_codeblock && indented_code) )
-			    {
-			    if ( ! doing_codeblock )
-				fputs( "\tYY_BREAK\n", temp_action_file );
-			    
-			    doing_codeblock = false;
-			    BEGIN(SECT2);
-			    }
+				{
+				if ( doing_rule_action )
+					add_action( "\tYY_BREAK\n" );
+
+				doing_rule_action = doing_codeblock = false;
+				BEGIN(SECT2);
+				}
 			}
+}
 
 
 	/* Reject and YYmore() are checked for above, in PERCENT_BRACE_ACTION */
-<ACTION>"{"		ACTION_ECHO; ++bracelevel;
-<ACTION>"}"		ACTION_ECHO; --bracelevel;
-<ACTION>[^a-z_{}"'/\n]+	ACTION_ECHO;
-<ACTION>{NAME}		ACTION_ECHO;
-<ACTION>"/*"		ACTION_ECHO; BEGIN(ACTION_COMMENT);
-<ACTION>"'"([^'\\\n]|\\.)*"'"	ACTION_ECHO; /* character constant */
-<ACTION>\"		ACTION_ECHO; BEGIN(ACTION_STRING);
-<ACTION>\n		{
+<ACTION>{
+	"{"		ACTION_ECHO; ++bracelevel;
+	"}"		ACTION_ECHO; --bracelevel;
+	[^[:alpha:]_{}"'/\n]+	ACTION_ECHO;
+	{NAME}		ACTION_ECHO;
+	"'"([^'\\\n]|\\.)*"'"	ACTION_ECHO; /* character constant */
+	\"		ACTION_ECHO; BEGIN(ACTION_STRING);
+	{NL}		{
 			++linenum;
 			ACTION_ECHO;
 			if ( bracelevel == 0 )
-			    {
-			    fputs( "\tYY_BREAK\n", temp_action_file );
-			    BEGIN(SECT2);
-			    }
+				{
+				if ( doing_rule_action )
+					add_action( "\tYY_BREAK\n" );
+
+				doing_rule_action = false;
+				BEGIN(SECT2);
+				}
 			}
-<ACTION>.		ACTION_ECHO;
+	.		ACTION_ECHO;
+}
 
-<ACTION_COMMENT>"*/"	ACTION_ECHO; BEGIN(ACTION);
-<ACTION_COMMENT>[^*\n]+	ACTION_ECHO;
-<ACTION_COMMENT>"*"	ACTION_ECHO;
-<ACTION_COMMENT>\n	++linenum; ACTION_ECHO;
-<ACTION_COMMENT>.	ACTION_ECHO;
+<ACTION_STRING>{
+	[^"\\\n]+	ACTION_ECHO;
+	\\.		ACTION_ECHO;
+	{NL}		++linenum; ACTION_ECHO;
+	\"		ACTION_ECHO; BEGIN(ACTION);
+	.		ACTION_ECHO;
+}
 
-<ACTION_STRING>[^"\\\n]+	ACTION_ECHO;
-<ACTION_STRING>\\.	ACTION_ECHO;
-<ACTION_STRING>\n	++linenum; ACTION_ECHO;
-<ACTION_STRING>\"	ACTION_ECHO; BEGIN(ACTION);
-<ACTION_STRING>.	ACTION_ECHO;
-
-<ACTION,ACTION_COMMENT,ACTION_STRING><<EOF>>	{
-			synerr( "EOF encountered inside an action" );
+<COMMENT,ACTION,ACTION_STRING><<EOF>>	{
+			synerr( _( "EOF encountered inside an action" ) );
 			yyterminate();
 			}
 
 
-<SECT2,QUOTE,CCL>{ESCSEQ}	{
-			yylval = myesc( yytext );
-			return ( CHAR );
+<SECT2,QUOTE,FIRSTCCL,CCL>{ESCSEQ}	{
+			yylval = myesc( (Char *) yytext );
+
+			if ( YY_START == FIRSTCCL )
+				BEGIN(CCL);
+
+			return CHAR;
 			}
 
-<FIRSTCCL>{ESCSEQ}	{
-			yylval = myesc( yytext );
-			BEGIN(CCL);
-			return ( CHAR );
-			}
 
+<SECT3>{
+	.*(\n?)		ECHO;
+	<<EOF>>		sectnum = 0; yyterminate();
+}
 
-<SECT3>.*(\n?)		ECHO;
+<*>.|\n			format_synerr( _( "bad character: %s" ), yytext );
+
 %%
 
 
 int yywrap()
-
-    {
-    if ( --num_input_files > 0 )
 	{
-	set_input_file( *++input_files );
-	return ( 0 );
-	}
+	if ( --num_input_files > 0 )
+		{
+		set_input_file( *++input_files );
+		return 0;
+		}
 
-    else
-	return ( 1 );
-    }
+	else
+		return 1;
+	}
 
 
 /* set_input_file - open the given file (if NULL, stdin) for scanning */
 
 void set_input_file( file )
 char *file;
-
-    {
-    if ( file )
 	{
-	infilename = file;
-	yyin = fopen( infilename, "r" );
+	if ( file && strcmp( file, "-" ) )
+		{
+		infilename = copy_string( file );
+		yyin = fopen( infilename, "r" );
 
-	if ( yyin == NULL )
-	    lerrsf( "can't open %s", file );
+		if ( yyin == NULL )
+			lerrsf( _( "can't open %s" ), file );
+		}
+
+	else
+		{
+		yyin = stdin;
+		infilename = copy_string( "<stdin>" );
+		}
+
+	linenum = 1;
 	}
 
-    else
+
+/* Wrapper routines for accessing the scanner's malloc routines. */
+
+void *flex_alloc( size )
+size_t size;
 	{
-	yyin = stdin;
-	infilename = "<stdin>";
+	return (void *) malloc( size );
 	}
-    }
+
+void *flex_realloc( ptr, size )
+void *ptr;
+size_t size;
+	{
+	return (void *) realloc( ptr, size );
+	}
+
+void flex_free( ptr )
+void *ptr;
+	{
+	if ( ptr )
+		free( ptr );
+	}
