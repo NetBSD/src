@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.16 2001/11/19 18:40:15 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.17 2001/11/23 19:17:04 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -53,9 +53,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/bootconfig.h>
 #include <arch/arm/arm/disassem.h>
+
+#include <arm/cpufunc.h>
 
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
@@ -1485,8 +1486,7 @@ xscale_setup(args)
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
-		 | CPU_CONTROL_BPRD_ENABLE;
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
