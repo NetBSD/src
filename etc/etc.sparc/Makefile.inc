@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2003/01/03 15:34:40 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2003/01/04 15:49:31 lukem Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -45,6 +45,4 @@ CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc/bootfs && ${PRINTOBJDIR}
 CDBOOTIMAGE=	${CDBOOTIMAGEDIR}/boot.fs
 
 iso-image_md_post:
-	mksunbootcd \
-	    ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso \
-	    ${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}
+	mksunbootcd ${CDROM.image} ${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}

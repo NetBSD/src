@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.241 2003/01/03 15:34:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.242 2003/01/04 15:49:29 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -31,15 +31,14 @@
 #	Any port-dependent stuff for this target is found in
 #	etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
-
-# setting NOOBJ prevents "make obj" from doing anything;
-# an objdir would break the installation stuff below
-NOOBJ=		# defined
+#
 
 # For NO_SENDMAIL, INSTPRIV, MKCRYPTO
+#
 .include <bsd.own.mk>
 
 # For KERNSRCDIR, KERNOBJDIR, ...
+#
 .include <bsd.kernobj.mk>
 
 
@@ -52,6 +51,8 @@ MAKESUMS=	CKSUM=${CKSUM:Q} sh ${NETBSDSRCDIR}/distrib/sets/makesums
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
+# Note: At least mkisofs 2.0 should be used.
+#
 MKISOFS?=	mkisofs
 DISTRIBREV!=	sh ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
@@ -64,6 +65,7 @@ MKISOFS_FLAGS+= -J -l \
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".
+#
 BIN1=
 BIN2=
 BIN3=
@@ -71,6 +73,7 @@ BIN3=
 # Directories to build in ${RELEASEDIR}/${MACHINE}.
 # MD Makefile.inc files can add to this.
 # NOTE: Parent directories must be listed before subdirectories.
+#
 INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 
 .if exists(etc.${MACHINE}/Makefile.inc)
@@ -92,7 +95,7 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	weekly weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys
 
-# use machine-specific disktab if it exists, or the MI one otherwise
+# Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)
 BIN1+=	etc.${MACHINE}/disktab
 .else
@@ -115,9 +118,9 @@ BIN3+=	hosts.equiv
 
 ETC_PKG=-T etc_pkg
 BASE_PKG=-T base_pkg
-ETC_INSTALL_FILE=${INSTALL_FILE} ${ETC_PKG}
-ETC_INSTALL_LINK=${INSTALL_LINK} ${ETC_PKG}
-ETC_INSTALL_SYMLINK=${INSTALL_SYMLINK} ${ETC_PKG}
+ETC_INSTALL_FILE=cd ${.CURDIR} && ${INSTALL_FILE} ${ETC_PKG}
+ETC_INSTALL_LINK=cd ${.CURDIR} && ${INSTALL_LINK} ${ETC_PKG}
+ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
@@ -132,9 +135,10 @@ TARGET_ENDIANNESS=
 .endif
 .endif	# install-etc-files						# }
 
-obj:
-	mkdir -p ${KERNOBJDIR}
 
+# distribution --
+#	Build a distribution
+#
 distribution: check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
@@ -144,6 +148,10 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 	${MAKE} install-etc-files
 .endif	# !DISTRIBUTION_DONE
 
+
+# install-etc-files --
+#	Install etc (config) files; not performed by "make build"
+#
 install-etc-files: check_DESTDIR
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${BIN1} ${DESTDIR}/etc
@@ -172,26 +180,22 @@ install-etc-files: check_DESTDIR
 	    MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    minfree ${DESTDIR}/var/crash
-	(cd root; \
-		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
-		    dot.cshrc ${DESTDIR}/root/.cshrc; \
-		${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-		    dot.klogin ${DESTDIR}/root/.klogin; \
-		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
-		    dot.login ${DESTDIR}/root/.login; \
-		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
-		    dot.profile ${DESTDIR}/root/.profile; \
-		${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
-		    dot.shrc ${DESTDIR}/root/.shrc; \
-		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
-		${ETC_INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
-		${ETC_INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
-	(cd defaults; ${MAKE} install)
-	(cd mtree; ${MAKE} install)
-	(cd namedb; \
-		${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-		    ${NAMEDB} ${DESTDIR}/etc/namedb)
-	(cd rc.d; ${MAKE} install)
+.for file in cshrc login profile shrc
+	${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
+	    root/dot.${file} ${DESTDIR}/root/.${file}
+.endfor
+	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
+	    root/dot.klogin ${DESTDIR}/root/.klogin
+	rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile
+	${ETC_INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc
+	${ETC_INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile
+	(cd ${.CURDIR}/defaults; ${MAKE} install)
+	(cd ${.CURDIR}/mtree; ${MAKE} install)
+.for file in ${NAMEDB}
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    namedb/${file} ${DESTDIR}/etc/namedb
+.endfor
+	(cd ${.CURDIR}/rc.d; ${MAKE} install)
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    postinstall ${DESTDIR}/etc
 	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
@@ -266,7 +270,7 @@ install-etc-files: check_DESTDIR
 	    /dev/null ${DESTDIR}/var/games/snake.log
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/tetris.scores
-	(cd skel; ${MAKE} distribution)
+	(cd ${.CURDIR}/skel; ${MAKE} distribution)
 	(cd ${NETBSDSRCDIR}/usr.bin/mail; ${MAKE} distribution)
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/postfix/; ${MAKE} distribution)
 .if (${MKCRYPTO} != "no")
@@ -276,11 +280,19 @@ install-etc-files: check_DESTDIR
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
+
+# distrib-dirs --
+#	Populate $DESTDIR with directories needed by NetBSD
+#
 distrib-dirs: check_DESTDIR
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
-	${MTREE} -def mtree/NetBSD.dist -N ${.CURDIR} \
+	${MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 
+
+# release, snapshot --
+#	Build a full distribution including kernels & install media.
+#
 release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
 		    distribution .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
@@ -288,31 +300,55 @@ release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
 	(cd ${NETBSDSRCDIR}/distrib/sets; ${MAKE} sets)
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/kernel '*.gz'
 
-# Standalone target to create a CDROM image after the release
-# was composed. Should be run after "make build" in both src and xsrc
+
+# iso-image --
+#	Standalone target to create a CDROM image after the release
+#	was composed.  Should be run after "make release" in src and xsrc.
+#
+#
+CDROM.image=${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso
+CDROM.dir=	cdrom.dir
+CDROM.pathlist=	cdrom.pathlist
+
 iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_post
 #	empty target
 
-iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
-	@if ${MKISOFS} --version; then \
-		mkdir -p ${RELEASEDIR}/${MACHINE}/installation/cdrom ; \
-		${MKISOFS} ${MKISOFS_FLAGS} \
-		    -o ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso \
-		    ${RELEASEDIR}/${MACHINE} ; \
-		${MAKESUMS} -t \
-		    ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso' ; \
-	else \
-		echo "install pkgsrc/sysutils/cdrecord and type 'make iso-image'." ; \
+iso-image_setup: check_RELEASEDIR
+	rm -f ${CDROM.pathlist}
+	echo "${MACHINE}=${RELEASEDIR}/${MACHINE}" >> ${CDROM.pathlist}
+	mkdir -p ${CDROM.dir}
+	mkdir -p ${RELEASEDIR}/${MACHINE}/installation/cdrom
+
+# iso-image_mi --
+#	Create the image after the MD operations have completed.
+iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT \
+		iso-image_setup .WAIT iso-image_md_pre
+	@if ! ${MKISOFS} --version; then \
+		echo "install pkgsrc/sysutils/cdrecord and run 'make iso-image'." ; \
+		false; \
 	fi
+	${MKISOFS} ${MKISOFS_FLAGS} -graft-points -path-list ${CDROM.pathlist} \
+	    -o ${CDROM.image} ${CDROM.dir}
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 
-# Setup the ${RELEASEDIR}/${MACHINE} to produce a bootable CD image:
+# iso-image_md_pre --
+#	Setup ${CDROM.dir} to produce a bootable CD image.
+#	Overridden by etc.$MACHINE/Makefile.inc
+#
 iso-image_md_pre: check_DESTDIR check_RELEASEDIR
-#	nothing here -- look in the machine-dependent Makefile.inc
+#	(empty -- look in the machine-dependent Makefile.inc)
 
-# Fixup the  CD-image to be bootable
+# iso-image_md_post --
+#	Fixup the CD-image to be bootable.
+#	Overridden by etc.$MACHINE/Makefile.inc
+#
 iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
-#	nothing here -- look in the machine-dependent Makefile.inc
+#	(empty -- look in the machine-dependent Makefile.inc)
 
+
+# snap_pre --
+#	Create ${RELEASEDIR} and necessary subdirectories.
+#
 snap_pre: check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}
 .ifndef UPDATE
@@ -324,6 +360,9 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 	${INSTALL} -d -m 755 ${RELEASEDIR}/${MACHINE}/${dir}
 .endfor
 
+# snap_post --
+#	Build the install media and notes from distrib
+#
 snap_post: check_DESTDIR check_RELEASEDIR
 .ifndef UPDATE
 	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
@@ -332,8 +371,8 @@ snap_post: check_DESTDIR check_RELEASEDIR
 	    ${MAKE} release
 
 # snap_kern --
-# This target builds the kernels specified by each port.
-# A port may specify the following kernels:
+#	This target builds the kernels specified by each port.
+#	A port may specify the following kernels:
 #
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
@@ -356,21 +395,21 @@ snap_post: check_DESTDIR check_RELEASEDIR
 #				that are built for inclusion only in
 #				installation disk/CD-ROM/tape images.
 #
-# A port may also specify KERNEL_SUFFIXES, which is an optional list
-# of filename suffixes for kernels to include in the kernel sets and
-# in the binary/kernel area of the release package (e.g. "netbsd" vs.
-# "netbsd.ecoff" and "netbsd.srec").  It is not an error if kernels
-# with these suffixes do not exist in the kernel build directory.
+#	A port may also specify KERNEL_SUFFIXES, which is an optional list
+#	of filename suffixes for kernels to include in the kernel sets and
+#	in the binary/kernel area of the release package (e.g. "netbsd" vs.
+#	"netbsd.ecoff" and "netbsd.srec").  It is not an error if kernels
+#	with these suffixes do not exist in the kernel build directory.
 #
 #
 # A list of all the kernels to build, which can be overridden from
 # external sources (such as make(1)'s environment or command line)
 #
 ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
-#
+
 GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
-#
+
 .if !target(snap_kern)						# {
 
 # build_kernels --
@@ -446,6 +485,7 @@ build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
 
 # snap_kern --
 #	build the kernels, then the sets & release kernels
+#
 snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
 	    build_kernels .WAIT \
 	    build_kernelsets build_releasekernels
@@ -453,7 +493,15 @@ snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
 .endif # !target(snap_kern)					# }
 
 
+# snap_md_post --
+#	Machine dependent distribution media operations.
+#	Overridden by etc.$MACHINE/Makefile.inc
+#
 snap_md_post: check_DESTDIR check_RELEASEDIR
-#	nothing here -- look in the machine-dependent Makefile.inc
+#	(empty -- look in the machine-dependent Makefile.inc)
+
+
+clean:
+	-rm -rf ${CDROM.dir} ${CDROM.pathlist}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2003/01/03 15:34:38 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2003/01/04 15:49:31 lukem Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -12,9 +12,6 @@ BUILD_KERNELS=		INSTALL INSTALL_SMALL INSTALL_TINY \
 INSTALLATION_DIRS+=	installation/misc	\
 			installation/floppy
 
-# mkisofs arguments to generate bootable iso image
-MKISOFS_FLAGS+=	-b installation/floppy/boot-big.fs
-
 # i386 specific distrib stuff
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/dosboot && ${MAKE} release
@@ -23,7 +20,5 @@ snap_md_post:
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.*'
 
 # For "make iso-image"
-iso-image_md_pre:
-	echo iso-image_md_pre ${MACHINE_ARCH}
-iso-image_md_post:
-	echo iso-image_md_post ${MACHINE_ARCH}
+# mkisofs arguments to generate bootable iso image
+MKISOFS_FLAGS+=	-b ${MACHINE}/installation/floppy/boot-big.fs -c boot.catalog
