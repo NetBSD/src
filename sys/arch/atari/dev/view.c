@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.4 2002/10/10 18:32:04 jdolecek Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.5 2002/10/10 22:00:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -73,11 +73,10 @@ dev_type_close(viewclose);
 dev_type_ioctl(viewioctl);
 dev_type_poll(viewpoll);
 dev_type_mmap(viewmmap);
-dev_type_kqfilter(viewkqfilter);
 
 const struct cdevsw view_cdevsw = {
 	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, viewpoll, viewmmap, viewkqfilter,
+	nostop, notty, viewpoll, viewmmap, nokqfilter,
 };
 
 /* 
@@ -460,14 +459,6 @@ struct proc	*p;
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	return (revents);
-}
-
-int
-viewkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }
 
 view_t	*

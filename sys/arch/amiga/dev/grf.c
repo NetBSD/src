@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37.4.5 2002/10/10 18:31:24 jdolecek Exp $ */
+/*	$NetBSD: grf.c,v 1.37.4.6 2002/10/10 22:00:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.5 2002/10/10 18:31:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.6 2002/10/10 22:00:09 jdolecek Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -104,11 +104,10 @@ dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
 dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
-dev_type_kqfilter(grfkqfilter);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap, grfkqfilter,
+	nostop, notty, grfpoll, grfmmap, nokqfilter,
 };
 
 /*
@@ -296,14 +295,6 @@ int
 grfpoll(dev_t dev, int events, struct proc *p)
 {
 	return(events & (POLLOUT | POLLWRNORM));
-}
-
-int
-grfkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }
 
 /*
