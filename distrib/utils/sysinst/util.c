@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.30 1998/06/22 12:18:52 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.31 1998/08/10 02:23:45 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -508,7 +508,7 @@ extract_dist()
 	distinfo *list;
 
 	/* reset failure/success counters */
-	bzero(&tarstats, sizeof(tarstats));
+	memset(&tarstats, 0, sizeof(tarstats));
 
 	endwin();
 	list = dist_list;
