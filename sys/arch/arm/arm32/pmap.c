@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2001/06/25 23:22:38 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2001/07/06 20:15:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -2303,7 +2303,54 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pt_entry_t *pte;
+ 
+#ifdef DIAGNOSTIC
+	int bank, off;
+ 
+	if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
+		struct pv_entry *pv;
+		
+		pv = &vm_physmem[bank].pmseg.pvent[off];
+		if (pv->pv_pmap != NULL)
+			panic("pmap_kenter_pa: %08lx multiply mapped\n", pa);
+	}
+#endif
+ 
+	if (!pmap_pde_v(pmap_pde(pmap_kernel(), va))) {
+		/* 
+		 * For the kernel pmaps it would be better to ensure
+		 * that they are always present, and to grow the
+		 * kernel as required.
+		 */
+		vm_offset_t l2pa;
+		struct vm_page *m;
+
+		/* Allocate a page table */
+		m = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+		if (m == NULL) {
+			/*
+			 * No page available.  We're the kernel
+			 * pmap, so die.
+			 */
+			panic("pmap_kenter_pa: no free pages");
+		}
+
+		/* Wire this page table into the L1. */
+		l2pa = VM_PAGE_TO_PHYS(m);
+		pmap_zero_page(l2pa);
+		pmap_map_in_l1(pmap_kernel(), va, l2pa);
+		++(pmap_kernel())->pm_stats.resident_count;
+	}
+	pte = vtopte(va);
+
+	if (pmap_pte_v(pte))
+	{
+		cpu_tlb_flushID_SE(va);
+		cpu_cache_purgeID_rng(va, PAGE_SIZE);
+	}
+	*pte = L2_PTE(pa, AP_KRW);
+/*	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED); */
 }
 
 void
@@ -2312,7 +2359,34 @@ pmap_kremove(va, len)
 	vsize_t len;
 {
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+		pt_entry_t *pte;
+#ifdef DIAGNOSTIC
+		int bank, off;
+		paddr_t pa;
+
+		if (!pmap_pde_v(pmap_pde(pmap_kernel(), va)))
+			panic("pmap_kremove: no pde\n");
+#endif
+		pte = vtopte(va);
+
+#ifdef DIAGNOSTIC
+		pa = pmap_pte_pa(pte);
+		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
+			struct pv_entry *pv;
+
+			pv = &vm_physmem[bank].pmseg.pvent[off];
+			if (pv->pv_pmap != NULL)
+				panic("pmap_kremove: %08lx multiply mapped\n",
+						pa);
+		}
+#endif
+
+		/* We assume that we will only be called with small
+		   regions of memory.  */
+		cpu_cache_purgeID_rng(va, PAGE_SIZE);
+		*pte = 0;
+		cpu_tlb_flushID_SE(va);
+		/* pmap_remove(pmap_kernel(), va, va + PAGE_SIZE); */
 	}
 }
 
