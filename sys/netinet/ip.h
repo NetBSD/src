@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.20 1999/11/20 00:37:59 thorpej Exp $	*/
+/*	$NetBSD: ip.h,v 1.21 2000/05/02 14:15:07 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -148,7 +148,7 @@ struct	ip_timestamp {
 			struct in_addr ipt_addr;
 			n_time ipt_time;
 		 } ipt_ta[1] __attribute__((__packed__));
-	} ipt_timestamp /* XXX __attribute__((__packed__)) ??? */;
+	} ipt_timestamp __attribute__((__packed__));
 };
 
 /* flag bits for ipt_flg */
