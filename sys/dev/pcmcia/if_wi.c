@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.54 2001/01/29 11:26:28 ichiro Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.55 2001/02/10 15:46:51 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -201,6 +201,12 @@ static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
 	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCC_11,
+	  1 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
+	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCA_11,
 	  1 },
 
 	{ PCMCIA_VENDOR_INTERSIL,
