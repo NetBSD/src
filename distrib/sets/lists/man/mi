@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.524 2002/10/17 12:27:58 lukem Exp $
+# $NetBSD: mi,v 1.525 2002/10/30 11:46:53 blymn Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1745,6 +1745,7 @@
 ./usr/share/man/cat8/vax/drtest.0		man-sys-catman
 ./usr/share/man/cat8/vax/format.0		man-sys-catman
 ./usr/share/man/cat8/vax/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/verifiedexec_load.0	man-sysutil-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
 ./usr/share/man/cat8/virtual.0			man-sysutil-catman
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman
@@ -2828,6 +2829,7 @@
 ./usr/share/man/man4/vax/va.4			man-sys-man
 ./usr/share/man/man4/vax/vp.4			man-sys-man
 ./usr/share/man/man4/vax/vv.4			man-sys-man
+./usr/share/man/man4/veriexec.4			man-sys-man
 ./usr/share/man/man4/vga.4			man-sys-man
 ./usr/share/man/man4/viaenv.4			man-sys-man
 ./usr/share/man/man4/viapm.4			man-sys-man
@@ -3499,6 +3501,7 @@
 ./usr/share/man/man8/vax/drtest.8		man-sys-man
 ./usr/share/man/man8/vax/format.8		man-sys-man
 ./usr/share/man/man8/vax/makedev.8		man-sysutil-man
+./usr/share/man/man8/verifiedexec_load.8	man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/virtual.8			man-sysutil-man
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man
