@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.58 2002/09/17 23:18:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.59 2002/09/19 01:23:24 matt Exp $
 
 .include <bsd.own.mk>
 
-.if !defined(TOOLCHAIN_MISSING)
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
 # XXX Eventually, we want to be able to build dbsym and mdsetimage
 # XXX if EXTERNAL_TOOLCHAIN is set.
