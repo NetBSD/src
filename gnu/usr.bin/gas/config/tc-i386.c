@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.9 1996/01/18 22:09:08 mycroft Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.10 1996/02/16 22:19:45 pk Exp $";
 #endif
 
 #include "as.h"
@@ -1871,7 +1871,7 @@ register fragS *	fragP;
 
 int md_short_jump_size = 2;	/* size of byte displacement jmp */
 int md_long_jump_size  = 5;	/* size of dword displacement jmp */
-int md_reloc_size = 8;		/* Size of relocation record */
+const int md_reloc_size = 8;		/* Size of relocation record */
 
 void md_create_short_jump(ptr, from_addr, to_addr, frag, to_symbol)
 char	*ptr;

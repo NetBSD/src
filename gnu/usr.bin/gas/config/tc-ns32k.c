@@ -1824,7 +1824,7 @@ segT segment;
 
 int md_short_jump_size = 3;
 int md_long_jump_size  = 5;
-int md_reloc_size = 8;		/* Size of relocation record */
+const int md_reloc_size = 8;		/* Size of relocation record */
 
 void
     md_create_short_jump(ptr,from_addr,to_addr,frag,to_symbol)

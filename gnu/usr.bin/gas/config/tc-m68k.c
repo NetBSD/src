@@ -64,7 +64,7 @@ const char FLT_CHARS[] = "rRsSfFdDxXeEpP";
    but nothing is ideal around here.
    */
 
-int md_reloc_size = 8;		/* Size of relocation record */
+const int md_reloc_size = 8;		/* Size of relocation record */
 
 /* Its an arbitrary name:  This means I don't approve of it */
 /* See flames below */
