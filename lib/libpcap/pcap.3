@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.5 1997/10/03 15:53:15 christos Exp $
+.\" $NetBSD: pcap.3,v 1.6 1997/10/18 06:57:59 mikel Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,9 +117,7 @@ is called to open a ``savefile'' for reading.
 .I fname
 specifies the name of the file to open. The file has
 the same format as those used by
-.B tcpdump(1)
-and
-.BR tcpslice(1) .
+.B tcpdump(8) .
 The name "-" in a synonym for
 .BR stdin .
 .I ebuf
@@ -316,7 +314,7 @@ and deallocates resources.
 closes the ``savefile.''
 .PP
 .SH SEE ALSO
-tcpdump(1), tcpslice(1)
+tcpdump(8)
 .SH AUTHORS
 Van Jacobson,
 Craig Leres and
