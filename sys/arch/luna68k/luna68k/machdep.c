@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2002/03/06 13:10:21 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2002/03/20 17:59:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2002/03/06 13:10:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2002/03/20 17:59:23 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -397,7 +397,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

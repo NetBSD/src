@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2002/03/15 05:55:38 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2002/03/20 17:59:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2002/03/15 05:55:38 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2002/03/20 17:59:23 christos Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -444,7 +444,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

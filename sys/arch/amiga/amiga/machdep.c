@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2002/03/06 13:10:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.169 2002/03/20 17:59:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2002/03/06 13:10:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2002/03/20 17:59:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2002/03/06 13:10:19 tsutsui Exp $"
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -386,7 +385,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.4 2001/06/17 13:10:05 kleink Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.5 2002/03/20 17:59:26 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ svr4_32_setregs(p, epp, stack)
 
 	netbsd32_setregs(p, epp, stack);
 	
-	/* This should be the exit function, not PS_STRINGS. */
+	/* This should be the exit function, not p->p_psstr. */
 	tf->tf_global[1] = (vaddr_t)0;
 }
 
