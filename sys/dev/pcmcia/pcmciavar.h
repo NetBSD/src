@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.26 2004/08/12 16:04:20 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.27 2004/08/12 17:31:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -160,6 +160,7 @@ struct pcmcia_function {
 
 /* pf_flags */
 #define	PFF_ENABLED	0x0001		/* function is enabled */
+#define	PFF_DETACHED	0x0002		/* card is detached */
 
 SIMPLEQ_HEAD(pcmcia_function_head, pcmcia_function);
 
