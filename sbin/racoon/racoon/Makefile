@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2000/12/12 17:18:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2000/12/12 22:41:51 itojun Exp $
+
+.include <bsd.own.mk>
 
 PROG=	racoon
 SRCS=	main.c session.c isakmp.c handler.c random.c \
@@ -16,7 +18,9 @@ MAN=	racoon.8 racoon.conf.5
 # debugging code with print-isakmp.c
 SRCS+=	print-isakmp.c
 CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
+.if (${MKKERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
+.endif
 
 # for debugging malloc/free
 #.if exists(/usr/pkg/lib/libefence.a) || exists(/usr/pkg/lib/libefence.so)
@@ -26,17 +30,22 @@ CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; make print-objdir
 LDADD+=	-L${LIBPFKEYDIR} -lpfkey
 DPADD+=	${LIBPFKEYDIR}/libpfkey.a
+.if (${MKKERBEROS} != "no")
 LDADD+=	-lgssapi -lkrb5 -lcom_err -lroken -lasn1
 DPADD+=	${LIBGSSAPI} ${LIBKRB5} ${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1}
+.endif
 LDADD+=	-lipsec -ly -ll -lcrypto
 DPADD+=	${LIBIPSEC} ${LIBY} ${LIBL} ${LIBCRYPTO}
 
 #CFLAGS+=-g
-OPTFLAG+=-DHAVE_PFKEYV2 -DHAVE_GSSAPI -DYIPS_DEBUG
+OPTFLAG+=-DHAVE_PFKEYV2 -DYIPS_DEBUG
 CPPFLAGS+=-DINET6 -DHAVE_FUNCTION_MACRO=1 -DHAVE_LIBCRYPTO=1 -DHAVE_LIBL=1 -DHAVE_LIBY=1 -DENABLE_IPV6=1 -DADVAPI=1 -DHAVE_GETADDRINFO=1 -DHAVE_GETNAMEINFO=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_LIMITS_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDARG_H=1 -DHAVE_VARARGS_H=1 -DTIME_WITH_SYS_TIME=1 -DRETSIGTYPE=void -DHAVE_VPRINTF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRERROR=1 -DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -DHAVE_STRDUP=1  $(OPTFLAG) -DIPSEC -I${RACOONSRCDIR} -I. -Dss_family=__ss_family -Dss_len=__ss_len -DSYSCONFDIR=\"$(ETCDIR)\"
 CPPFLAGS+=-DHAVE_OPENSSL_OPENSSLV_H=1
 CPPFLAGS+=-DYY_NO_UNPUT
 CPPFLAGS+=-I${LIBPFKEYSRCDIR}
+.if (${MKKERBEROS} != "no")
+CPPFLAGS+=-DHAVE_GSSAPI 
+.endif
 YFLAGS+=-d
 
 # Certificate support
