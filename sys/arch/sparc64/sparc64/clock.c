@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2002/03/14 20:55:27 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.48 2002/03/16 14:00:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/ebus/ebusreg.h>
-#include <sparc64/dev/ebusvar.h>
+#include <dev/ebus/ebusvar.h>
 
 extern u_int64_t cpu_clockrate;
 
@@ -323,10 +323,10 @@ clockattach_ebus(parent, self, aux)
 	int sz;
 
 	/* hard code to 8K? */
-	sz = ea->ea_regs[0].size;
+	sz = ea->ea_reg[0].size;
 
 	if (bus_space_map(bt,
-			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 &ci.ci_bh) != 0) {
@@ -340,7 +340,6 @@ clockattach_ebus(parent, self, aux)
 	todr_handle->bus_cookie = &ci;
 	todr_handle->todr_setwen = clock_wenable;
 }
-
 
 
 static void
@@ -422,10 +421,10 @@ clockattach_rtc(parent, self, aux)
 	static struct clock_info ci;
 
 	/* hard code to 8K? */
-	sz = ea->ea_regs[0].size;
+	sz = ea->ea_reg[0].size;
 
 	if (bus_space_map(bt,
-			 EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
+			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 &ci.ci_bh) != 0) {
