@@ -1,4 +1,4 @@
-/* $NetBSD: term_chk.c,v 1.2 2003/05/03 15:57:11 christos Exp $ */
+/* $NetBSD: term_chk.c,v 1.3 2003/05/13 23:05:34 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: term_chk.c,v 1.2 2003/05/03 15:57:11 christos Exp $");
+__RCSID("$NetBSD: term_chk.c,v 1.3 2003/05/13 23:05:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty,
 		goto error;
 	if (!isatty(fd))
 		goto error;
-	if (s.st_uid != uid) {
+	if (s.st_uid != uid && uid != 0) {
 		errno = EPERM;
 		goto error;
 	}
