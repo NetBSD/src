@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.43 2002/03/29 01:03:15 shin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.43.2.1 2002/10/13 23:19:33 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,7 +168,7 @@ message fsize
 {taille de fragment}
 
 message mountpoint
-{point de montage}
+{point de montage (or 'none')}
 
 message cylname
 {cyl}
