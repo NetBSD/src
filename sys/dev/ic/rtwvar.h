@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.6 2004/12/20 23:05:41 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.7 2004/12/23 08:27:38 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -138,7 +138,7 @@ struct rtw_txctl {
     (RTW_NTXDESC_ROUNDUP(n * RTW_MAXPKTSEGS) / RTW_MAXPKTSEGS)
 
 #define RTW_RXQLEN_ROUNDUP(n) \
-    roundup(n, RTW_DESC_ALIGNMENT / sizeof(struct rtw_rxctl))
+    roundup(n, RTW_DESC_ALIGNMENT / sizeof(struct rtw_rxdesc))
 
 /* The descriptor rings must begin on RTW_DESC_ALIGNMENT boundaries.
  * I allocate them consecutively from one buffer, so just round up.
