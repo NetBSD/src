@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.25 1995/05/08 22:02:14 brezak Exp $	*/
+/*	$NetBSD: sb.c,v 1.26 1995/07/07 02:19:54 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -50,14 +50,13 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
 #include <dev/isa/sbdspvar.h>
 #include <dev/isa/sbreg.h>
 
-#define DEBUG	/*XXX*/
-#ifdef DEBUG
-#define DPRINTF(x)	if (sbdebug) printf x
+#ifdef AUDIO_DEBUG
+extern void Dprintf __P((const char *, ...));
+#define DPRINTF(x)	if (sbdebug) Dprintf x
 int	sbdebug = 0;
 #else
 #define DPRINTF(x)
@@ -75,7 +74,7 @@ int	sbprobe();
 void	sbattach __P((struct device *, struct device *, void *));
 
 struct cfdriver sbcd = {
-	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sb_softc)
+	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sbdsp_softc)
 };
 
 struct audio_device sb_device = {
@@ -147,7 +146,7 @@ sbprobe(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct sb_softc *sc = (void *)self;
+	register struct sbdsp_softc *sc = (void *)self;
 	register struct isa_attach_args *ia = aux;
 	register u_short iobase = ia->ia_iobase;
 	static u_char irq_conf[11] = {
@@ -158,8 +157,8 @@ sbprobe(parent, self, aux)
 		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
 		return 0;
 	}
-	sc->sc_sbdsp.sc_iobase = iobase;
-	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
+	sc->sc_iobase = iobase;
+	if (sbdsp_probe(sc) == 0) {
 		DPRINTF(("sb: sbdsp probe failed\n"));
 		return 0;
 	}
@@ -167,13 +166,13 @@ sbprobe(parent, self, aux)
 	/*
 	 * Cannot auto-discover DMA channel.
 	 */
-	if (ISSBPROCLASS(&sc->sc_sbdsp)) {
+	if (ISSBPROCLASS(sc)) {
 		if (!SBP_DRQ_VALID(ia->ia_drq)) {
 			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
 			return 0;
 		}
-		if (ISSB16CLASS(&sc->sc_sbdsp)) {
-			sbdsp_mix_write(&sc->sc_sbdsp, SBP_SET_DRQ, 
+		if (ISSB16CLASS(sc)) {
+			sbdsp_mix_write(sc, SBP_SET_DRQ, 
 					1 << ia->ia_drq);
 		}
 	}
@@ -190,8 +189,8 @@ sbprobe(parent, self, aux)
 	 */
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(sbforceintr, aux);
-		sbdsp_reset(&sc->sc_sbdsp);
-		if (ISSBPROCLASS(&sc->sc_sbdsp)) {
+		sbdsp_reset(sc);
+		if (ISSBPROCLASS(sc)) {
 			if (!SBP_IRQ_VALID(ia->ia_irq)) {
 				printf("sb: couldn't auto-detect interrupt");
 				return 0;
@@ -205,13 +204,13 @@ sbprobe(parent, self, aux)
 		}
 	} else
 #endif
-	if (ISSBPROCLASS(&sc->sc_sbdsp)) {
+	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(ia->ia_irq)) {
 			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
-		if (ISSB16CLASS(&sc->sc_sbdsp)) {
-			sbdsp_mix_write(&sc->sc_sbdsp, SBP_SET_IRQ, 
+		if (ISSB16CLASS(sc)) {
+			sbdsp_mix_write(sc, SBP_SET_IRQ, 
 					irq_conf[ia->ia_irq]);
 		}
 	}
@@ -222,10 +221,10 @@ sbprobe(parent, self, aux)
 		}
 	}
 
-	sc->sc_sbdsp.sc_irq = ia->ia_irq;
-	sc->sc_sbdsp.sc_drq = ia->ia_drq;
+	sc->sc_irq = ia->ia_irq;
+	sc->sc_drq = ia->ia_drq;
 	
-	if (ISSBPROCLASS(&sc->sc_sbdsp))
+	if (ISSBPROCLASS(sc))
 		ia->ia_iosize = SBP_NPORT;
 	else
 		ia->ia_iosize = SB_NPORT;
@@ -269,24 +268,22 @@ sbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct sb_softc *sc = (struct sb_softc *)self;
+	register struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	register u_short iobase = ia->ia_iobase;
+	int err;
+	
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+				       sbdsp_intr, sc);
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    sbdsp_intr, &sc->sc_sbdsp);
-
-	sbdsp_attach(&sc->sc_sbdsp);
+	sbdsp_attach(sc);
 
 	sprintf(sb_device.version, "%d.%d", 
-		SBVER_MAJOR(sc->sc_sbdsp.sc_model),
-		SBVER_MINOR(sc->sc_sbdsp.sc_model));
+		SBVER_MAJOR(sc->sc_model),
+		SBVER_MINOR(sc->sc_model));
 
-	if (audio_hardware_attach(&sb_hw_if, &sc->sc_sbdsp) != 0)
-		printf("sb: could not attach to audio pseudo-device driver\n");
+	if ((err = audio_hardware_attach(&sb_hw_if, sc)) != 0)
+		printf("sb: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 /*
@@ -298,7 +295,7 @@ sbopen(dev, flags)
     dev_t dev;
     int flags;
 {
-    struct sb_softc *sc;
+    struct sbdsp_softc *sc;
     int unit = AUDIOUNIT(dev);
     
     if (unit >= sbcd.cd_ndevs)
@@ -308,7 +305,7 @@ sbopen(dev, flags)
     if (!sc)
 	return ENXIO;
     
-    return sbdsp_open(&sc->sc_sbdsp, dev, flags);
+    return sbdsp_open(sc, dev, flags);
 }
 
 int
