@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.93 2004/03/17 10:03:26 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.94 2004/03/17 10:21:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.93 2004/03/17 10:03:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.94 2004/03/17 10:21:59 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1699,3 +1699,47 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	return (0);
 }
 
+#include <sys/sysctl.h>
+
+static int sysctl_kern_somaxkva(SYSCTLFN_PROTO);
+
+/*
+ * sysctl helper routine for kern.somaxkva.  ensures that the given
+ * value is not too small.
+ * (XXX should we maybe make sure it's not too large as well?)
+ */
+static int
+sysctl_kern_somaxkva(SYSCTLFN_ARGS)
+{
+	int error, new_somaxkva;
+	struct sysctlnode node;
+	int s;
+
+	new_somaxkva = somaxkva;
+	node = *rnode;
+	node.sysctl_data = &new_somaxkva;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (new_somaxkva < (16 * 1024 * 1024)) /* sanity */
+		return (EINVAL);
+
+	s = splvm();
+	simple_lock(&so_pendfree_slock);
+	somaxkva = new_somaxkva;
+	wakeup(&socurkva);
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
+
+	return (error);
+}
+
+SYSCTL_SETUP(sysctl_kern_somaxkva_setup, "sysctl kern.somaxkva setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "somaxkva", NULL,
+		       sysctl_kern_somaxkva, 0, NULL, 0,
+		       CTL_KERN, KERN_SOMAXKVA, CTL_EOL);
+}
