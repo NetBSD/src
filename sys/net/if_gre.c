@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.29 2002/06/09 17:13:31 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.30 2002/06/09 17:17:15 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.29 2002/06/09 17:13:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.30 2002/06/09 17:17:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -456,10 +456,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * to the remote end and mark if as up
 		 */
 		sa = &ifr->ifr_addr;
-		if (cmd == GRESADDRS )
+		if (cmd == GRESADDRS)
 			sc->g_src = (satosin(sa))->sin_addr;
-		if (cmd == GRESADDRD )
+		if (cmd == GRESADDRD)
 			sc->g_dst = (satosin(sa))->sin_addr;
+	recompute:
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
 			if (sc->route.ro_rt != 0) /* free old route */
@@ -494,14 +495,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->g_src = (satosin((struct sockadrr *)&lifr->addr))->sin_addr;
 		sc->g_dst =
 		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
-		if ((sc->g_src.s_addr != INADDR_ANY) &&
-		    (sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->route.ro_rt != 0) /* free old route */
-				RTFREE(sc->route.ro_rt);
-			if (gre_compute_route(sc) == 0)
-				ifp->if_flags |= IFF_UP;
-		}
-		break;
+		goto recompute;
 	case SIOCDIFPHYADDR:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
