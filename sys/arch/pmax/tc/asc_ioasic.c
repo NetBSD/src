@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.6 1999/03/29 16:50:35 drochner Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.7 1999/03/30 07:09:41 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.6 1999/03/29 16:50:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.7 1999/03/30 07:09:41 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -20,11 +20,8 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.6 1999/03/29 16:50:35 drochner 
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h> /* XXX XXX XXX */
+#include <dev/tc/ioasicvar.h>
 #include <dev/tc/ioasicreg.h>
-
-int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -35,8 +32,7 @@ struct asc_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
 	int	sc_active;			/* DMA active ? */
-	int	sc_iswrite;			/* DMA into main memory? */
-	int	sc_datain;
+	int	sc_ispullup;			/* DMA into main memory? */
 	size_t	sc_dmasize;
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
@@ -50,6 +46,9 @@ struct asc_softc {
 	volatile u_int32_t *sc_scsi_sdr0;
 	volatile u_int32_t *sc_scsi_sdr1;
 };
+
+int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
+void	asc_ioasic_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
@@ -225,7 +224,7 @@ asc_ioasic_intr(sc)
 	}
 
 	resid = 0;
-	if (!asc->sc_iswrite &&
+	if (!asc->sc_ispullup &&
 	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("ioasic_intr: empty FIFO of %d ", resid));
 		DELAY(1);
@@ -268,7 +267,7 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 
 	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
-	asc->sc_iswrite = datain;
+	asc->sc_ispullup = datain;
 
 	NCR_DMA(("ioasic_setup: start %d@%p %s\n",
 		*asc->sc_dmalen, *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
@@ -310,12 +309,12 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 	*asc->sc_scsi_dmaptr = IOASIC_DMA_ADDR(phys);
 	*asc->sc_scsi_nextptr = IOASIC_DMA_ADDR(nphys);
 	ssr = *asc->sc_ssr;
-	if (asc->sc_iswrite)
+	if (asc->sc_ispullup)
 		ssr = (ssr | IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	else
 		ssr = (ssr &~ IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	*asc->sc_ssr = ssr;
-	wbflush();
+	tc_wmb();
 	asc->sc_active = 1;
 	return 0;
 }
@@ -328,12 +327,12 @@ asc_ioasic_go(sc)
 #if 0
 	u_int32_t ssr = *asc->sc_ssr;
 
-	if (asc->sc_iswrite)
+	if (asc->sc_ispullup)
 		ssr = (ssr | IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	else
 		ssr = (ssr &~ IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	*asc->sc_ssr = ssr;
-	wbflush();
+	tc_wmb();
 #endif
 	asc->sc_active = 1;
 }
@@ -353,9 +352,9 @@ asc_ioasic_stop(sc)
 	to = (u_short *)MIPS_PHYS_TO_KSEG1(*asc->sc_scsi_dmaptr >> 3);
 	*asc->sc_scsi_dmaptr = ~0;
 	*asc->sc_scsi_nextptr = ~0;
-	wbflush();
+	tc_wmb();
 
-	if (asc->sc_iswrite != 0 && (nb = *asc->sc_scsi_scr) != 0) {
+	if (asc->sc_ispullup != 0 && (nb = *asc->sc_scsi_scr) != 0) {
 		/* pick up last upto 6 bytes, sigh. */
 
 		/* Last byte really xferred is.. */
