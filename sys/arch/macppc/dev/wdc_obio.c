@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.29 2003/10/08 11:12:36 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.30 2003/12/03 12:09:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.29 2003/10/08 11:12:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.30 2003/12/03 12:09:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ wdc_obio_attach(parent, self, aux)
 	struct wdc_obio_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	struct channel_softc *chp = &sc->wdc_channel;
-	int intr;
+	int intr, i;
 	int use_dma = 0;
 	char path[80];
 
@@ -153,12 +153,23 @@ wdc_obio_attach(parent, self, aux)
 	chp->cmd_iot = chp->ctl_iot =
 		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
 
-	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0, &chp->cmd_ioh) ||
-	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
+	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	    &chp->cmd_baseioh) ||
+	    bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &chp->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
+	}
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &chp->cmd_iohs[i]) != 0) {
+			bus_space_unmap(chp->cmd_iot, chp->cmd_baseioh,
+			    WDC_REG_NPORTS);
+			printf("%s: couldn't subregion registers\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return;
+		}
 	}
 #if 0
 	chp->data32iot = chp->cmd_iot;
@@ -271,7 +282,7 @@ wdc_obio_select(chp, drive)
 	int drive;
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
-	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+	bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			CONFIG_REG, sc->sc_dmaconf[drive]);
 }
 
