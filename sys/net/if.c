@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.79 2000/12/18 18:54:47 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.80 2000/12/18 21:05:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1085,6 +1085,10 @@ ifioctl(so, cmd, data, p)
 
 	case SIOCGIFMTU:
 		ifr->ifr_mtu = ifp->if_mtu;
+		break;
+
+	case SIOCGIFDLT:
+		ifr->ifr_dlt = ifp->if_dlt;
 		break;
 
 	case SIOCSIFFLAGS:
