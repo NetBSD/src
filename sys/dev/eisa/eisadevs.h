@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp 
  */
 
 /*
@@ -71,6 +71,9 @@
 
 /* Intel products */
 #define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
+
+/* ETI products */
+#define	EISA_PRODUCT_ETI1001	"Microdyne NE3300 Ethernet Rev. C & D"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"

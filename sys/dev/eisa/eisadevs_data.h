@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp 
+ *	NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp 
  */
 
 /*
@@ -139,6 +139,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "ETI1001",
+	    EISA_PRODUCT_ETI1001,
+	},
+	{
+	    0,
 	    "TCM5091",
 	    EISA_PRODUCT_TCM5091,
 	},
@@ -186,6 +191,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "INT",
 	    "Intel",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "ETI",
+	    "Microdyne",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
