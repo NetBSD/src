@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.13 2004/03/19 02:34:30 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.14 2004/03/20 04:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -168,6 +168,14 @@ typedef struct RF_VoidFunctionPointerListElem_s RF_VoidFunctionPointerListElem_t
 struct RF_VoidFunctionPointerListElem_s {
 	RF_VoidFuncPtr fn;
 	RF_VoidFunctionPointerListElem_t *next;
+};
+
+/* We need something to just be a linked list of anonymous pointers
+   to stuff */
+typedef struct RF_VoidPointerListElem_s RF_VoidPointerListElem_t;
+struct RF_VoidPointerListElem_s {
+	void *p;
+	RF_VoidPointerListElem_t *next;
 };
 
 /* A structure to be used in a linked list to keep track of ASM Headers */

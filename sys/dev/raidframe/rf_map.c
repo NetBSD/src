@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.36 2004/03/19 15:16:18 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.37 2004/03/20 04:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.36 2004/03/19 15:16:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.37 2004/03/20 04:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -331,6 +331,9 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
 #define RF_MAX_FREE_VFPLE 128
 #define RF_MIN_FREE_VFPLE  32
 
+#define RF_MAX_FREE_VPLE 128
+#define RF_MIN_FREE_VPLE  32
+
 
 /* called at shutdown time.  So far, all that is necessary is to
    release all the free lists */
@@ -340,7 +343,11 @@ rf_ShutdownMapModule(void *ignored)
 {
 	pool_destroy(&rf_pools.asm_hdr);
 	pool_destroy(&rf_pools.asmap);
+	pool_destroy(&rf_pools.asmhle);
 	pool_destroy(&rf_pools.pda);
+	pool_destroy(&rf_pools.fss);
+	pool_destroy(&rf_pools.vfple);
+	pool_destroy(&rf_pools.vple);
 }
 
 int 
@@ -359,6 +366,8 @@ rf_ConfigureMapModule(RF_ShutdownList_t **listp)
 		     "rf_fss_pl", RF_MIN_FREE_FSS, RF_MAX_FREE_FSS);
 	rf_pool_init(&rf_pools.vfple, sizeof(RF_VoidFunctionPointerListElem_t),
 		     "rf_vfple_pl", RF_MIN_FREE_VFPLE, RF_MAX_FREE_VFPLE);
+	rf_pool_init(&rf_pools.vple, sizeof(RF_VoidPointerListElem_t),
+		     "rf_vple_pl", RF_MIN_FREE_VPLE, RF_MAX_FREE_VPLE);
 	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
 
 	return (0);
@@ -398,6 +407,25 @@ rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
 {
 
 	pool_put(&rf_pools.vfple, p);
+}
+
+
+RF_VoidPointerListElem_t *
+rf_AllocVPListElem()
+{
+	RF_VoidPointerListElem_t *p;
+
+	p = pool_get(&rf_pools.vple, PR_WAITOK);
+	memset((char *) p, 0, sizeof(RF_VoidPointerListElem_t));
+
+	return (p);
+}
+
+void
+rf_FreeVPListElem(RF_VoidPointerListElem_t *p)
+{
+
+	pool_put(&rf_pools.vple, p);
 }
 
 RF_ASMHeaderListElem_t *

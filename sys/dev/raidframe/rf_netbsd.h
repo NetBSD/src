@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.18 2004/03/19 17:01:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.19 2004/03/20 04:22:05 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,10 +86,15 @@ struct RF_Pools_s {
 	struct pool revent;      /* reconstruct events */
 	struct pool stripelock;  /* StripeLock */
 	struct pool vfple;       /* VoidFunctionPtr List Elements */
+	struct pool vple;        /* VoidPointer List Elements */
 };
 
 extern struct RF_Pools_s rf_pools;
 void rf_pool_init(struct pool *, size_t, char *, size_t, size_t);
+
+typedef struct RF_IOBufHeader_s {
+	struct RF_IOBufHeader_s *next;
+} RF_IOBufHeader_t;
 
 
 /* XXX probably belongs in a different .h file. */

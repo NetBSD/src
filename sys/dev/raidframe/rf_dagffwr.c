@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.22 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.23 2004/03/20 04:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.22 2004/03/18 16:40:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.23 2004/03/20 04:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.22 2004/03/18 16:40:05 oster Exp $"
 #include "rf_dagffrd.h"
 #include "rf_general.h"
 #include "rf_dagffwr.h"
+#include "rf_map.h"
 
 /******************************************************************************
  *
@@ -174,6 +175,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_ReconUnitNum_t which_ru;
 	RF_RaidLayout_t *layoutPtr;
 	RF_PhysDiskAddr_t *pda;
+	RF_VoidPointerListElem_t *vple;
 
 	layoutPtr = &(raidPtr->Layout);
 	parityStripeID = rf_RaidAddressToParityStripeID(layoutPtr, 
@@ -350,9 +352,12 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 	if ((!allowBufferRecycle) || (i == nRodNodes)) {
-		RF_MallocAndAdd(xorNode->results[0],
-				rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit),
-				(void *), allocList);
+		xorNode->results[0] = rf_AllocIOBuffer(raidPtr, 
+						       rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit));
+		vple = rf_AllocVPListElem();
+		vple->p = xorNode->results[0];
+		vple->next = dag_h->iobufs;
+		dag_h->iobufs = vple;
 	} else {
 		/* this works because the only way we get here is if
 		   allowBufferRecycle is true and we went through the

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.10 2004/03/19 02:27:44 oster Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.11 2004/03/20 04:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -60,6 +60,8 @@ void rf_ASMCheckStatus(RF_Raid_t *, RF_PhysDiskAddr_t *, RF_AccessStripeMap_t *,
 
 RF_VoidFunctionPointerListElem_t *rf_AllocVFPListElem(void);
 void rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *);
+RF_VoidPointerListElem_t *rf_AllocVPListElem(void);
+void rf_FreeVPListElem(RF_VoidPointerListElem_t *);
 RF_ASMHeaderListElem_t *rf_AllocASMHeaderListElem(void);
 void rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *);
 RF_FailedStripe_t *rf_AllocFailedStripeStruct(void);

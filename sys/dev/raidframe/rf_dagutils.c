@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.40 2004/03/19 17:01:26 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.41 2004/03/20 04:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.40 2004/03/19 17:01:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.41 2004/03/20 04:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -65,7 +65,6 @@ static int rf_ValidateBranch(RF_DagNode_t *, int *, int *,
 static void rf_ValidateBranchVisitedBits(RF_DagNode_t *, int, int);
 static void rf_ValidateVisitedBits(RF_DagHeader_t *);
 #endif /* RF_DEBUG_VALIDATE_DAG */
-
 
 /* The maximum number of nodes in a DAG is bounded by
 
@@ -181,6 +180,7 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 	RF_AccessStripeMapHeader_t *asmap, *t_asmap;
 	RF_PhysDiskAddr_t *pda;
 	RF_DagNode_t *tmpnode;
+	RF_VoidPointerListElem_t *tmpiobuf;
 	RF_DagHeader_t *nextDag;
 
 	while (dag_h) {
@@ -195,6 +195,13 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 			pda = dag_h->pda_cleanup_list;
 			dag_h->pda_cleanup_list = dag_h->pda_cleanup_list->next;
 			rf_FreePhysDiskAddr(pda);
+		}
+		while (dag_h->iobufs) {
+			tmpiobuf = dag_h->iobufs;
+			dag_h->iobufs = dag_h->iobufs->next;
+			if (tmpiobuf->p)
+				rf_FreeIOBuffer(dag_h->raidPtr, tmpiobuf->p);
+			rf_FreeVPListElem(tmpiobuf);
 		}
 		while (dag_h->nodes) {
 			tmpnode = dag_h->nodes;
@@ -220,6 +227,9 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 
 #define RF_MAX_FREE_FUNCLIST 128
 #define RF_MIN_FREE_FUNCLIST  32
+
+#define RF_MAX_FREE_BUFFERS 128
+#define RF_MIN_FREE_BUFFERS  32
 
 static void rf_ShutdownDAGs(void *);
 static void 
@@ -347,11 +357,63 @@ rf_AllocBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
 	       RF_AllocListElem_t *allocList)
 {
 	char   *p;
+	p = rf_AllocIOBuffer(raidPtr, pda->numSector << raidPtr->logBytesPerSector);
 
-	RF_MallocAndAdd(p, pda->numSector << raidPtr->logBytesPerSector,
-	    (char *), allocList);
+	if (allocList) 
+		rf_AddToAllocList(allocList, p, pda->numSector << raidPtr->logBytesPerSector);
 	return ((void *) p);
 }
+
+void *
+rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
+{
+	void *p;
+
+	RF_ASSERT(size <= (raidPtr->Layout.sectorsPerStripeUnit << 
+			   raidPtr->logBytesPerSector));
+
+	p =  malloc( raidPtr->Layout.sectorsPerStripeUnit << 
+				 raidPtr->logBytesPerSector, 
+				 M_RAIDFRAME, M_NOWAIT);
+	if (!p) {
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		if (raidPtr->iobuf_count > 0) {
+			p = raidPtr->iobuf;
+			raidPtr->iobuf = raidPtr->iobuf->next;
+			raidPtr->iobuf_count--;
+		} else {
+#ifdef DIAGNOSTIC
+			printf("raid%d: Help!  Out of emergency buffers!\n", raidPtr->raidid);
+#endif
+		}
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		if (!p) {
+			/* We didn't get a buffer... not much we can do other than wait, 
+			   and hope that someone frees up memory for us.. */
+			p = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
+				    raidPtr->logBytesPerSector, 
+				    M_RAIDFRAME, M_WAITOK);
+		}
+	}
+	return (p);
+}
+
+void
+rf_FreeIOBuffer(RF_Raid_t *raidPtr, void *p)
+{
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	if (raidPtr->iobuf_count < raidPtr->numEmergencyBuffers) {
+		((RF_IOBufHeader_t *)p)->next = raidPtr->iobuf;
+		raidPtr->iobuf = p;
+		raidPtr->iobuf_count++;
+	} else {
+		free(p, M_RAIDFRAME);
+	}
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
+}
+
+
+
 #if RF_DEBUG_VALIDATE_DAG
 /******************************************************************************
  *
@@ -877,6 +939,7 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 {
 	RF_RaidAddr_t sosRaidAddress, eosRaidAddress;
 	RF_SectorNum_t sosNumSector, eosNumSector;
+	RF_VoidPointerListElem_t *vple;
 
 	RF_ASSERT(asmap->numStripeUnitsAccessed > (layoutPtr->numDataCol / 2));
 	/* generate an access map for the region of the array from start of
@@ -886,7 +949,11 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 	if (!rf_RaidAddressStripeAligned(layoutPtr, asmap->raidAddress)) {
 		sosRaidAddress = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 		sosNumSector = asmap->raidAddress - sosRaidAddress;
-		RF_MallocAndAdd(*sosBuffer, rf_RaidAddressToByte(raidPtr, sosNumSector), (char *), allocList);
+		*sosBuffer = rf_AllocIOBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, sosNumSector));
+		vple = rf_AllocVPListElem();
+		vple->p = *sosBuffer;
+		vple->next = dag_h->iobufs;
+		dag_h->iobufs = vple;
 		new_asm_h[0] = rf_MapAccess(raidPtr, sosRaidAddress, sosNumSector, *sosBuffer, RF_DONT_REMAP);
 		new_asm_h[0]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[0];
@@ -902,7 +969,11 @@ rf_MapUnaccessedPortionOfStripe(RF_Raid_t *raidPtr,
 	if (!rf_RaidAddressStripeAligned(layoutPtr, asmap->endRaidAddress)) {
 		eosRaidAddress = asmap->endRaidAddress;
 		eosNumSector = rf_RaidAddressOfNextStripeBoundary(layoutPtr, eosRaidAddress) - eosRaidAddress;
-		RF_MallocAndAdd(*eosBuffer, rf_RaidAddressToByte(raidPtr, eosNumSector), (char *), allocList);
+		*eosBuffer = rf_AllocIOBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, eosNumSector));
+		vple = rf_AllocVPListElem();
+		vple->p = *eosBuffer;
+		vple->next = dag_h->iobufs;
+		dag_h->iobufs = vple;
 		new_asm_h[1] = rf_MapAccess(raidPtr, eosRaidAddress, eosNumSector, *eosBuffer, RF_DONT_REMAP);
 		new_asm_h[1]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[1];
