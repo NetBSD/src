@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.26.2.2 2000/08/27 01:25:08 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.26.2.3 2003/09/09 10:19:03 msaitoh Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.63 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -778,6 +778,10 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 }
 
 #ifndef TCP6
+/*
+ * WARNING: return value (rtentry) could be IPv4 one if in6pcb is connected to
+ * IPv4 mapped address.
+ */
 struct rtentry *
 in6_pcbrtentry(in6p)
 	struct in6pcb *in6p;
@@ -790,6 +794,19 @@ in6_pcbrtentry(in6p)
 		/*
 		 * No route yet, so try to acquire one.
 		 */
+#ifdef INET
+		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+			struct sockaddr_in *dst =
+			    (struct sockaddr_in *)&ro->ro_dst;
+
+			bzero(dst, sizeof(*dst));
+			dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(struct sockaddr_in);
+			bcopy(&in6p->in6p_faddr.s6_addr32[3], &dst->sin_addr,
+			    sizeof(dst->sin_addr));
+			rtalloc((struct route *)ro);
+		} else
+#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 			bzero(&ro->ro_dst, sizeof(ro->ro_dst));
 			ro->ro_dst.sin6_family = AF_INET6;
