@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 2004/01/23 04:44:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2004/01/23 04:44:20 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,8 +187,9 @@ void
 cpu_startup()
 {
 	extern char kernel_text[];
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+	vaddr_t minaddr, maxaddr;
+	int i;
 
 	/*
 	 * Initialize error message buffer (at end of core).
