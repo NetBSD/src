@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 1995/01/03 01:42:59 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 1995/01/27 05:46:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,8 +54,8 @@
 #include <machine/pio.h>
 
 #include <i386/isa/icu.h>
-#include <i386/pci/pcivar.h>
-#include <i386/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
 
 int pci_mode = -1;
 
