@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3 2001/08/22 09:43:15 ad Exp $	*/
+/*	$NetBSD: iopl.c,v 1.4 2001/09/18 18:15:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1349,7 +1349,7 @@ iopl_ifmedia_change(struct ifnet *ifp)
 }
 
 /*
- * Initalize the interface.
+ * Initialize the interface.
  */
 static int
 iopl_init(struct ifnet *ifp)

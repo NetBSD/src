@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.9 2000/12/30 16:52:37 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.10 2001/09/18 18:15:53 wiz Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp
@@ -618,7 +618,7 @@ struct bktr_softc {
     u_short     capcontrol;     /* reg 0xdc capture control */
     u_short     bktr_cap_ctl;
     volatile u_int	flags;
-#define	METEOR_INITALIZED	0x00000001
+#define	METEOR_INITIALIZED	0x00000001
 #define	METEOR_OPEN		0x00000002 
 #define	METEOR_MMAP		0x00000004
 #define	METEOR_INTR		0x00000008
@@ -658,10 +658,10 @@ struct bktr_softc {
 #define METEOR_RGB		0x20000000	/* meteor rgb unit */
 #define METEOR_FIELD_MODE	0x80000000
     u_char	tflags;				/* Tuner flags (/dev/tuner) */
-#define	TUNER_INITALIZED	0x00000001
+#define	TUNER_INITIALIZED	0x00000001
 #define	TUNER_OPEN		0x00000002 
     u_char      vbiflags;			/* VBI flags (/dev/vbi) */
-#define VBI_INITALIZED          0x00000001
+#define VBI_INITIALIZED         0x00000001
 #define VBI_OPEN                0x00000002
 #define VBI_CAPTURE             0x00000004
     u_short	fps;		/* frames per second */

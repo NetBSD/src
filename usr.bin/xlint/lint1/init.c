@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.8 2001/09/16 16:34:44 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.9 2001/09/18 18:15:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.8 2001/09/16 16:34:44 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.9 2001/09/18 18:15:54 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -353,7 +353,7 @@ mkinit(tnode_t *tn)
 
 	/*
 	 * Do not test for automatic aggregat initialisation. If the
-	 * initalizer starts with a brace we have the warning already.
+	 * initializer starts with a brace we have the warning already.
 	 * If not, an error will be printed that the initializer must
 	 * be enclosed by braces.
 	 */

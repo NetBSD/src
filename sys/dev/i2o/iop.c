@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.16 2001/08/22 09:42:05 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.17 2001/09/18 18:15:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		SLIST_INSERT_HEAD(&sc->sc_im_freelist, im, im_chain);
 	}
 
-	/* Initalise the IOP's outbound FIFO. */
+	/* Initialise the IOP's outbound FIFO. */
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init oubound FIFO\n",
 		    sc->sc_dv.dv_xname);
@@ -944,7 +944,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 }
 
 /*
- * Initalize and populate the IOP's outbound FIFO.
+ * Initialize and populate the IOP's outbound FIFO.
  */
 static int
 iop_ofifo_init(struct iop_softc *sc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.9 2001/08/05 18:07:55 jdolecek Exp $	*/
+/*	$NetBSD: stic.c,v 1.10 2001/09/18 18:15:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@ stic_init(struct stic_info *si)
 	tc_syncbus();
 	DELAY(1000);
 
-	/* Finish the initalization. */
+	/* Finish the initialization. */
 	SELECT(vdac, BT459_IREG_COMMAND_1);
 	REG(vdac, bt_reg) = 0x00000000; tc_wmb();
 	REG(vdac, bt_reg) = 0x00c2c2c2; tc_wmb();

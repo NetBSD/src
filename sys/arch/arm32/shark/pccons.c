@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.16 2001/06/19 13:42:13 wiz Exp $       */
+/*      $NetBSD: pccons.c,v 1.17 2001/09/18 18:15:50 wiz Exp $       */
 
 /*
  * Copyright 1997
@@ -868,7 +868,7 @@ pcprobe(struct device *parent,
         if ( I8042_MAP(iot, iobase, ioh) == 0 ) 
         {
             /*
-            ** Initalise keyboard controller.  We don't fail the 
+            ** Initialise keyboard controller.  We don't fail the 
             ** probe even if the init failed.  This allows the
             ** console device to be used even if a keyboard
             ** isn't connected.
@@ -1979,7 +1979,7 @@ pccnprobe(struct consdev *cp)
 	    == 0) 
         {
 	    /*  
-	    ** Initalise the keyboard.  Look for another device if
+	    ** Initialise the keyboard.  Look for another device if
             ** keyboard wont initialise but leave us as a backup display
 	    ** unit.
 	    */

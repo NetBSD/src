@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.7 2001/07/04 14:17:58 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.8 2001/09/18 18:15:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ px_init(struct stic_info *si, int bootstrap)
 	 */
 	if (bootstrap) {
 		/* 
-		 * UVM won't be initalised at this point, so grab memory
+		 * UVM won't be initialised at this point, so grab memory
 		 * directly from vm_physmem[].
 		 */
 		kva = (caddr_t)uvm_pageboot_alloc(PX_BUF_SIZE + PX_BUF_ALIGN);

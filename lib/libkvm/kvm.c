@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.69 2000/11/16 08:57:15 msaitoh Exp $	*/
+/*	$NetBSD: kvm.c,v 1.70 2001/09/18 18:15:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.69 2000/11/16 08:57:15 msaitoh Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.70 2001/09/18 18:15:49 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -324,7 +324,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	} else {
 		/*
 		 * This is a crash dump.
-		 * Initalize the virtual address translation machinery,
+		 * Initialize the virtual address translation machinery,
 		 * but first setup the namelist fd.
 		 */
 		if ((kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {

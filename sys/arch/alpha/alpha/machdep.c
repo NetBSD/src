@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.250 2001/09/17 17:40:40 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.251 2001/09/18 18:15:50 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2001/09/17 17:40:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2001/09/18 18:15:50 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ nobootinfo:
 	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
 
 	/*
-	 * Initalize the (temporary) bootstrap console interface, so
+	 * Initialize the (temporary) bootstrap console interface, so
 	 * we can use printf until the VM system starts being setup.
 	 * The real console is initialized before then.
 	 */
@@ -391,7 +391,7 @@ nobootinfo:
 	strcpy(cpu_model, platform.model);
 
 	/*
-	 * Initalize the real console, so that the bootstrap console is
+	 * Initialize the real console, so that the bootstrap console is
 	 * no longer necessary.
 	 */
 	(*platform.cons_init)();
