@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.93 1999/12/20 23:59:44 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.94 2000/01/05 23:57:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1894,10 +1894,6 @@ libexec/getty/main.c				1.29 via patch
   Make room for a terminating '\0' in the username string and make
   sure the user name passed to "login" is terminated.
 
-sys/arch/mac68k/dev/if_mc.c			1.15
-
-  Make this compile without bpf.
-
 usr.sbin/pkg_install/README			1.3
 
   Update of the history of our pkg tools.
@@ -2323,3 +2319,26 @@ sys/conf/osrelease.sh				patch
 sys/conf/param.h				patch
 
   Bump version to NetBSD-1.4.2_ALPHA.
+
+sys/arch/sparc/conf/GENERIC			1.91
+sys/arch/sparc/sparc/conf.c			1.61
+etc/etc.sparc/MAKEDEV				1.50
+
+  Add coda to the sparc port and enable in GENERIC.
+
+sys/dev/ic/tropic.c				1.6
+
+  Fix interface hang which could happen in case of cable problems
+  or if the cable was pulled and then reinserted.
+
+sys/nfs/nfs_node.c				1.30
+sys/nfs/nfs_vnops.c				1.108 via patch
+sys/nfs/nfsnode.h				1.28
+
+  Insert an extra VOP_ACCESS check in nfs_lookup, preventing cached
+  access mishaps for lookup and getattr.  Fixes PR#8884.
+
+sys/dev/ic/com.c				1.165
+
+  Set carrier early enough for a serial console or kgdb to work
+  with hardware handshake.  Fixes PR#6547.
