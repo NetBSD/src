@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.508 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.508 2003/01/17 23:10:30 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -111,7 +112,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 #include <machine/kcore.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -580,7 +584,7 @@ i386_proc0_tss_ldt_init()
 
 	gdt_init();
 
-	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
+	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
@@ -591,11 +595,11 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	proc0.p_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_tss.tss_esp0 = (int)lwp0.l_addr + USPACE - 16;
+	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(proc0.p_md.md_tss_sel);
+	ltr(lwp0.l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 }
 
@@ -2167,14 +2171,15 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -2203,7 +2208,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	frame.sf_signum = sig;
@@ -2217,7 +2222,7 @@ sendsig(sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -2263,7 +2268,7 @@ sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -2288,6 +2293,42 @@ sendsig(sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct saframe *sf, frame;
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+	/* Finally, copy out the rest of the frame. */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_arg = ap;
+	frame.sa_ra = 0;
+ 
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_eip = (int) upcall;
+	tf->tf_esp = (int) sf;
+	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -2299,14 +2340,15 @@ sendsig(sig, mask, code)
  * a machine fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
@@ -2320,7 +2362,7 @@ sys___sigreturn14(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
@@ -2329,7 +2371,7 @@ sys___sigreturn14(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(l, context.sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -2725,32 +2767,32 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(p, 0);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, 0);
 #endif
 
 #ifdef USER_LDT
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDP_USEDFPU;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
@@ -2758,7 +2800,7 @@ setregs(p, pack, stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)p->p_psstr;
+	tf->tf_ebx = (int)l->l_proc->p_psstr;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
@@ -3009,8 +3051,8 @@ init386(first_avail)
 	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 
-	proc0.p_addr = proc0paddr;
-	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr;
+	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
 	i386_bus_space_init();
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
@@ -3730,6 +3772,176 @@ cpu_reset()
 }
 
 void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	const struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Save register context. */
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		gr[_REG_GS]  = tf->tf_vm86_gs;
+		gr[_REG_FS]  = tf->tf_vm86_fs;
+		gr[_REG_ES]  = tf->tf_vm86_es;
+		gr[_REG_DS]  = tf->tf_vm86_ds;
+		gr[_REG_EFL] = get_vflags(l);
+	} else
+#endif
+	{
+		gr[_REG_GS]  = tf->tf_gs;
+		gr[_REG_FS]  = tf->tf_fs;
+		gr[_REG_ES]  = tf->tf_es;
+		gr[_REG_DS]  = tf->tf_ds;
+		gr[_REG_EFL] = tf->tf_eflags;
+	}
+	gr[_REG_EDI]    = tf->tf_edi;
+	gr[_REG_ESI]    = tf->tf_esi;
+	gr[_REG_EBP]    = tf->tf_ebp;
+	gr[_REG_EBX]    = tf->tf_ebx;
+	gr[_REG_EDX]    = tf->tf_edx;
+	gr[_REG_ECX]    = tf->tf_ecx;
+	gr[_REG_EAX]    = tf->tf_eax;
+	gr[_REG_EIP]    = tf->tf_eip;
+	gr[_REG_CS]     = tf->tf_cs;
+	gr[_REG_ESP]    = tf->tf_esp;
+	gr[_REG_UESP]   = tf->tf_esp;
+	gr[_REG_SS]     = tf->tf_ss;
+	gr[_REG_TRAPNO] = tf->tf_trapno;
+	gr[_REG_ERR]    = tf->tf_err;
+	*flags |= _UC_CPU;
+
+	/* Save floating point register context, if any. */
+	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+#if NNPX > 0
+		/*
+		 * If this process is the current FP owner, dump its
+		 * context to the PCB first.
+		 * XXX npxsave() also clears the FPU state; depending on the
+		 * XXX application this might be a penalty.
+		 */
+		if (l->l_addr->u_pcb.pcb_fpcpu) {
+			npxsave_lwp(l, 1);
+		}
+#endif
+		if (i386_use_fxsave) {
+			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+			    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+			    sizeof (mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm));
+			*flags |= _UC_FXSAVE;
+		} else {
+			memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+			    &l->l_addr->u_pcb.pcb_savefpu.sv_87,
+			    sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
+		}
+#if 0
+		/* Apparently nothing ever touches this. */
+		ucp->mcp.mc_fp.fp_emcsts = l->l_addr->u_pcb.pcb_saveemc;
+#endif
+		*flags |= _UC_FPU;
+	}
+}
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Restore register context, if any. */
+	if ((flags & _UC_CPU) != 0) {
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM) {
+			tf->tf_vm86_gs = gr[_REG_GS];
+			tf->tf_vm86_fs = gr[_REG_FS];
+			tf->tf_vm86_es = gr[_REG_ES];
+			tf->tf_vm86_ds = gr[_REG_DS];
+			set_vflags(l, gr[_REG_EFL]);
+		} else
+#endif
+		{
+			/*
+			 * Check for security violations.  If we're returning
+			 * to protected mode, the CPU will validate the segment
+			 * registers automatically and generate a trap on
+			 * violations.  We handle the trap, rather than doing
+			 * all of the checking here.
+			 */
+			if (!USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
+				printf("cpu_setmcontext error: uc EFL: %08x  tf EFL: %08x uc CS: %d",
+				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
+				return (EINVAL);
+			}
+			tf->tf_gs = gr[_REG_GS];
+			tf->tf_fs = gr[_REG_FS];
+			tf->tf_es = gr[_REG_ES];
+			tf->tf_ds = gr[_REG_DS];
+			/* Only change the user-alterable part of eflags */
+			tf->tf_eflags &= ~PSL_USER;
+			tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
+		}
+		tf->tf_edi    = gr[_REG_EDI];
+		tf->tf_esi    = gr[_REG_ESI];
+		tf->tf_ebp    = gr[_REG_EBP];
+		tf->tf_ebx    = gr[_REG_EBX];
+		tf->tf_edx    = gr[_REG_EDX];
+		tf->tf_ecx    = gr[_REG_ECX];
+		tf->tf_eax    = gr[_REG_EAX];
+		tf->tf_eip    = gr[_REG_EIP];
+		tf->tf_cs     = gr[_REG_CS];
+		tf->tf_esp    = gr[_REG_UESP];
+		tf->tf_ss     = gr[_REG_SS];
+	}
+
+	/* Restore floating point register context, if any. */
+	if ((flags & _UC_FPU) != 0) {
+#if NNPX > 0
+		/*
+		 * If we were using the FPU, forget that we were.
+		 */
+		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+			npxsave_lwp(l, 0);
+#endif
+		if (flags & _UC_FXSAVE) {
+			if (i386_use_fxsave) {
+				memcpy(
+					&l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+					sizeof (&l->l_addr->u_pcb.pcb_savefpu.sv_xmm));
+			} else {
+				/* This is a weird corner case */
+				process_xmm_to_s87((struct savexmm *)
+				    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+				    &l->l_addr->u_pcb.pcb_savefpu.sv_87);
+			}
+		} else {
+			if (i386_use_fxsave) {
+				process_s87_to_xmm((struct save87 *)
+				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+				    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+			} else {
+				memcpy(&l->l_addr->u_pcb.pcb_savefpu.sv_87,
+				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
+			}
+		}
+		/* If not set already. */
+		l->l_md.md_flags |= MDP_USEDFPU;
+#if 0
+		/* Apparently unused. */
+		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
+#endif
+	}
+
+	return (0);
+}
+
+void
 cpu_initclocks()
 {
 	(*initclock_func)();
@@ -3740,7 +3952,8 @@ void
 need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
-	aston(ci);
+	if ((ci)->ci_curlwp != NULL)
+		aston((ci)->ci_curlwp->l_proc);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2002/12/21 16:23:58 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.15 2003/01/17 23:36:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2002/12/21 16:23:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2003/01/17 23:36:18 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2002/12/21 16:23:58 manu Exp $");
 #include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,8 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2002/12/21 16:23:58 manu Exp $");
 #endif
 
 void	EMULNAME(syscall_intern)(struct proc *);
-void	EMULNAME(syscall_plain)(struct proc *, u_int, u_int, u_int);
-void	EMULNAME(syscall_fancy)(struct proc *, u_int, u_int, u_int);
+void	EMULNAME(syscall_plain)(struct lwp *, u_int, u_int, u_int);
+void	EMULNAME(syscall_fancy)(struct lwp *, u_int, u_int, u_int);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, u_int, int);
 
@@ -155,9 +157,10 @@ EMULNAME(syscall_intern)(struct proc *p)
  */
 
 void
-EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	register_t *args, copyargs[8];
 	register_t *rval;
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
@@ -269,7 +272,7 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[V1];
 #endif
 
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -295,16 +298,17 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif
 
-	userret(p);
+	userret(l);
 }
 
 void
-EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	register_t *args, copyargs[8];
 	register_t *rval;
 #if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
@@ -402,7 +406,7 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;
 	}
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
@@ -415,7 +419,7 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[V1];
 #endif
 
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -440,7 +444,7 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }

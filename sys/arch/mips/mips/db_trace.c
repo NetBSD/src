@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22 2002/11/04 03:46:18 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.23 2003/01/17 23:36:11 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -136,6 +136,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 #ifndef DDB_TRACE
 	struct pcb *pcb;
 	struct proc *p;
+	struct lwp *l;
 
 	if (!have_addr) {
 		stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1],
@@ -156,12 +157,13 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		(*pr)("not found\n");
 		return;
 	}	
-	if (!(p->p_flag&P_INMEM)) {
+	l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+	if (!(l->l_flag & L_INMEM)) {
 		(*pr)("swapped out\n");
 		return;
 	}
 
-	pcb = &(p->p_addr->u_pcb);
+	pcb = &(l->l_addr->u_pcb);
 	(*pr)("at %p\n", pcb);
 
 	stacktrace_subr(0,0,0,0,	/* no args known */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2002/12/06 00:00:20 christos Exp $
+#	$NetBSD: genassym.cf,v 1.35 2003/01/17 23:10:30 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,9 +139,8 @@ include <machine/isa_machdep.h>
 endif
 
 include <machine/tlog.h>
-
-define	SRUN			SRUN
-define	SONPROC			SONPROC
+define	LSRUN			LSRUN
+define	LSONPROC		LSONPROC
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
@@ -153,18 +152,20 @@ define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_BACK			offsetof(struct proc, p_back)
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_PRIORITY		offsetof(struct proc, p_priority)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
+define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_BACK			offsetof(struct lwp, l_back)
+define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
+define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_CPU			offsetof(struct lwp, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_CPU			offsetof(struct proc, p_cpu)
 define	P_NRAS			offsetof(struct proc, p_nras)
-define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
 define	P_SYSTEM		P_SYSTEM
 
@@ -253,7 +254,7 @@ endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)

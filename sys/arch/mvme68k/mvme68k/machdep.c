@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2002/10/20 02:37:29 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2003/01/17 23:42:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #if defined(DDB) && defined(__ELF__)
@@ -443,6 +444,12 @@ cpu_startup()
 #endif
 
 	/*
+	 * If we have an FPU, initialise the cached idle frame
+	 */
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
+
+	/*
 	 * Initialize the kernel crash dump header.
 	 */
 	cpu_init_kcore_hdr();
@@ -579,12 +586,12 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	extern void m68881_restore __P((struct fpframe *));
 
 	frame->f_sr = PSL_USERSET;
@@ -599,7 +606,7 @@ setregs(p, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -607,9 +614,9 @@ setregs(p, pack, stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
 }
 
 /*
@@ -780,8 +787,8 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
-		savectx(&curproc->p_addr->u_pcb);
+	if (curlwp && curlwp->l_addr)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* Save the RB_SBOOT flag. */
 	howto |= (boothowto & RB_SBOOT);

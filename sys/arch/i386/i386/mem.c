@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.54 2002/10/23 09:11:21 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.55 2003/01/17 23:10:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.54 2002/10/23 09:11:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.55 2003/01/17 23:10:31 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,7 +92,7 @@ mmopen(dev, flag, mode, p)
 	case DEV_IO:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
-			fp = curproc->p_md.md_regs;
+			fp = curlwp->l_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.20 2002/07/04 23:32:04 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.20 2002/07/04 23:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.21 2003/01/17 23:10:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,20 +69,20 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.20 2002/07/04 23:32:04 thorpej E
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 
 void
-ibcs2_setregs(p, epp, stack)
-	struct proc *p;
+ibcs2_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	register struct pcb *pcb = &l->l_addr->u_pcb;
 	register struct trapframe *tf;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	if (i386_use_fxsave)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __iBCS2_NPXCW__;
 	else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __iBCS2_NPXCW__;
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
 }
 
@@ -103,13 +103,14 @@ ibcs2_sendsig(sig, mask, code)
 	u_long code;
 {
 	/* XXX Need SCO sigframe format. */
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -137,7 +138,7 @@ ibcs2_sendsig(sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -173,7 +174,7 @@ ibcs2_sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -197,8 +198,8 @@ ibcs2_sendsig(sig, mask, code)
 }
 
 int
-ibcs2_sys_sysmachine(p, v, retval)
-	struct proc *p;
+ibcs2_sys_sysmachine(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

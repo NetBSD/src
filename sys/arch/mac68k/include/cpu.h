@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2002/10/28 00:55:13 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2003/01/17 23:21:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,6 +105,9 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
+
+void	cpu_proc_fork(struct proc *, struct proc *);
+
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -329,7 +332,8 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 void	proc_trampoline __P((void));
 void	loadustp __P((int));
 

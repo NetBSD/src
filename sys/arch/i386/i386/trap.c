@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.177 2003/01/17 23:10:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177 2003/01/17 23:10:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
@@ -99,6 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $");
 #include <sys/signal.h>
 #include <sys/syscall.h>
 
+#include <sys/ucontext.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -210,7 +214,8 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l ? l->l_proc : 0;
 	int type = frame.tf_trapno;
 	struct pcb *pcb;
 	extern char fusubail[],
@@ -225,20 +230,22 @@ trap(frame)
 
 	uvmexp.traps++;
 
-	pcb = (p != NULL) ? &p->p_addr->u_pcb : NULL;
+	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curproc %p\n", curproc);
+		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
+		if (curlwp)
+			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
 
 	if (!KVM86MODE && !KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
-		p->p_md.md_regs = &frame;
-		pcb->pcb_cr2 = 0;
+		l->l_md.md_regs = &frame;
+		pcb->pcb_cr2 = 0;		
 	}
 
 	switch (type) {
@@ -384,7 +391,7 @@ copyfault:
 	case T_PROTFLT|T_USER:		/* protection fault */
 #ifdef VM86
 		if (frame.tf_eflags & PSL_VM) {
-			vm86_gpfault(p, type & ~T_USER);
+			vm86_gpfault(l, type & ~T_USER);
 			goto out;
 		}
 #endif
@@ -393,29 +400,29 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGBUS, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGILL, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, SIGILL, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
-			KERNEL_PROC_LOCK(p);
+			KERNEL_PROC_LOCK(l);
 			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched) /* XXX CSE me? */
-			preempt(NULL);
+			preempt(0);
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -426,16 +433,16 @@ copyfault:
 				goto trace;
 			return;
 		}
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, rv, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, rv, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGKILL, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, SIGKILL, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 #endif
 	}
@@ -443,20 +450,20 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGFPE, type & ~T_USER);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, SIGFPE, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGFPE,
+		KERNEL_PROC_LOCK(l);
+		(*p->p_emul->e_trapsignal)(l, SIGFPE,
 		    frame.tf_err & ~TC_FLAGMASK);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
+		if (l == 0)
 			goto we_re_toast;
 #ifdef LOCKDEBUG
 		/* If we page-fault while in scheduler, we're doomed. */
@@ -474,7 +481,7 @@ copyfault:
 		 * process doing kernel-mode page fault must have
 		 * been running with big lock held
 		 */
-		if ((p->p_flag & P_BIGLOCK) == 0)
+		if ((l->l_flag & L_BIGLOCK) == 0)
 			goto we_re_toast;
 #endif
 
@@ -496,7 +503,7 @@ copyfault:
 		unsigned nss;
 
 		cr2 = rcr2();
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -559,7 +566,7 @@ copyfault:
 				KERNEL_UNLOCK();
 				return;
 			}
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			goto out;
 		}
 		if (error == EACCES) {
@@ -580,14 +587,14 @@ copyfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			(*p->p_emul->e_trapsignal)(p, SIGKILL, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGKILL, T_PAGEFLT);
 		} else {
-			(*p->p_emul->e_trapsignal)(p, SIGSEGV, T_PAGEFLT);
+			(*p->p_emul->e_trapsignal)(l, SIGSEGV, T_PAGEFLT);
 		}
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK();
 		else
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 		break;
 	}
 
@@ -611,9 +618,9 @@ copyfault:
 		 */
 		if ((p->p_nras == 0) ||
 		    (ras_lookup(p, (caddr_t)frame.tf_eip) == (caddr_t)-1)) {
-			KERNEL_PROC_LOCK(p);
-			(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_LOCK(l);
+			(*p->p_emul->e_trapsignal)(l, SIGTRAP, type & ~T_USER);
+			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
 
@@ -652,7 +659,7 @@ copyfault:
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p);
+	userret(l);
 }
 
 #if defined(I386_CPU)
@@ -694,3 +701,38 @@ trapwrite(addr)
 	return 0;
 }
 #endif /* I386_CPU */
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_PROC_UNLOCK(l);
+
+	userret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	KERNEL_PROC_UNLOCK(l);
+
+	userret(l);
+}
