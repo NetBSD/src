@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.80 2003/01/04 12:55:32 lukem Exp $
+#  $NetBSD: build.sh,v 1.81 2003/01/04 14:55:44 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -116,10 +116,9 @@ resolvepath()
 usage()
 {
 	cat <<_usage_
-Usage:
-$(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i instdir]
-    [-j njob] [-k kernel] [-M obj] [-m mach] [-O obj] [-R release] [-T tools]
-    [-V var=[value]] [-w wrapper]
+Usage: $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest]
+		[-i instdir] [-j njob] [-k kernel] [-M obj] [-m mach]
+		[-O obj] [-R release] [-T tools] [-V var=[value]] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
     -B buildid	set BUILDID to buildid
@@ -127,7 +126,7 @@ $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i instdir]
     -D dest	set DESTDIR to dest
     -d		build a full distribution into DESTDIR (including etc files)
     -E		set "expert" mode; disables some DESTDIR checks
-    -i instdir	installworld from DESTDIR to instdir
+    -i instdir	installworld from DESTDIR to instdir (after build completes)
     -j njob	run up to njob jobs in parallel; see make(1)
     -k kernel	build a kernel using the named configuration file
     -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
@@ -145,8 +144,10 @@ $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i instdir]
     -w wrapper	create nbmake script at wrapper
 		(default TOOLDIR/bin/nbmake-MACHINE)
 
-Note: if -T is unset and TOOLDIR is not set in the environment,
-      nbmake will be [re]built unconditionally.
+Notes:
+    *	The last specified option with "build" functionality will be run.
+    *	If -T is unset and TOOLDIR is not set in the environment,
+	nbmake will be [re]built unconditionally.
 _usage_
 	exit 1
 }
@@ -464,7 +465,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.80 2003/01/04 12:55:32 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.81 2003/01/04 14:55:44 lukem Exp $
 #
 
 EOF
