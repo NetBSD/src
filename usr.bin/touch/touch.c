@@ -120,6 +120,7 @@ main(argc, argv)
 		if (*p == '\0' && (len == 8 || len == 10)) {
 			timeset = 1;
 			stime_arg2(argv[0], len == 10, tv);
+			argv++;
 		}
 	}
 
