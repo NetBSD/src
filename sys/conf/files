@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.262 1998/12/20 14:26:44 drochner Exp $
+#	$NetBSD: files,v 1.263 1998/12/27 21:14:56 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -28,6 +28,7 @@ defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 defopt	NFSSERVER
 
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+defopt	opt_pool.h	POOL_DIAGOSTIC POOL_LOGSIZE
 
 defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 
