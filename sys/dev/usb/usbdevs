@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.286 2003/01/02 04:01:46 imp Exp $
+$NetBSD: usbdevs,v 1.287 2003/01/02 09:20:21 tron Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -718,6 +718,7 @@ product HP S20b			0x0202	PhotoSmart S20
 product HP 815C			0x0204	DeskJet 815C
 product HP 3300C		0x0205	ScanJet 3300C
 product HP CDW8200		0x0207	CD-Writer Plus 8200e
+product HP 1220C		0x0212	DeskJet 1220C
 product HP 810C			0x0304	DeskJet 810C/812C
 product HP 4300C		0x0305	Scanjet 4300C
 product HP CD4E			0x0307	CD-Writer+ CD-4e
