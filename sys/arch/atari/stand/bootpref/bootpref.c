@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpref.c,v 1.1.1.1 1998/05/28 12:39:23 leo Exp $	*/
+/*	$NetBSD: bootpref.c,v 1.2 1998/06/17 11:45:12 leo Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -511,6 +511,7 @@ showLang (lang)
 	u_char lang;
 {
 	switch (lang) {
+	case LANG_USA:
 	case LANG_GB:
 		printf ("English");
 		break;

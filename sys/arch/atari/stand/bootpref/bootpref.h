@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpref.h,v 1.1.1.1 1998/05/28 12:39:23 leo Exp $	*/
+/*	$NetBSD: bootpref.h,v 1.2 1998/06/17 11:45:13 leo Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,9 +45,10 @@
 #define BOOTPREF_NONE	0x00
 
 #define	NVRAM_LANG	6	/* Language				*/
-#define	LANG_GB		0x00
+#define	LANG_USA	0x00
 #define	LANG_D		0x01
 #define	LANG_FR		0x02
+#define	LANG_GB		0x03
 #define	LANG_ESP	0x04
 #define	LANG_I		0x05
 
