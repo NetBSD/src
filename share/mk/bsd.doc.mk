@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.44 2000/01/22 19:31:01 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.45 2000/04/28 10:47:34 tron Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -74,5 +74,7 @@ spell: ${SRCS}
 	spell ${.ALLSRC} | sort | comm -23 - spell.ok > paper.spell
 
 depend includes lint obj tags:
+
+dependall: all
 
 .include <bsd.obj.mk>
