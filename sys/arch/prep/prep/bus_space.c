@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2000/03/27 16:45:42 nonaka Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2000/04/16 14:44:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,6 @@ prep_memio_unmap(t, bsh, size)
 	bus_size_t size;
 {
 	struct extent *ex;
-	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
@@ -134,7 +133,8 @@ prep_memio_unmap(t, bsh, size)
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 		printf("prep_memio_unmap: %s 0x%lx, size 0x%lx\n",
-		    (t == PREP_BUS_SPACE_IO) ? "port" : "mem", bpa, size);
+		    (t == PREP_BUS_SPACE_IO) ? "port" : "mem",
+		    (unsigned long)bpa, (unsigned long)size);
 		printf("prep_memio_unmap: can't free region\n");
 	}
 }
