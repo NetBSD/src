@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29 2003/09/13 13:30:04 chris Exp $
+#	$NetBSD: INSTALL,v 1.30 2003/10/08 11:06:42 bouyer Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -216,6 +216,9 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # a machine hang with some controllers.
 pciide* at pci? dev ? function ? flags 0x0000
 
+# ATA bus support
+atabus* at pciide? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -227,10 +230,10 @@ pciide* at pci? dev ? function ? flags 0x0000
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at pciide? channel ? drive ? flags 0x0000	# the drives themselves
+wd*	at atabus? drive ? flags 0x0000	# the drives themselves
 
 # ATAPI bus support
-atapibus* at pciide? channel ?
+atapibus* at atabus?
 
 # ATAPI devices
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
