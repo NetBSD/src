@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.6 1995/06/03 06:09:03 jtc Exp $";
+static char *rcsid = "$Id: chown.c,v 1.7 1995/06/03 07:01:19 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -157,10 +157,9 @@ main(argc, argv)
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
-			if (Rflag)		/* Change it at FTS_DP. */
-				continue;
-			fts_set(ftsp, p, FTS_SKIP);
-			break;
+			if (!Rflag)		/* Change it at FTS_DP. */
+				fts_set(ftsp, p, FTS_SKIP);
+			continue;
 		case FTS_DNR:			/* Warn, chown, continue. */
 			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = 1;
@@ -181,8 +180,9 @@ main(argc, argv)
 		default:
 			break;
 		}
+
 		if (chown(p->fts_accpath, uid, gid) && !fflag) {
-			chownerr(p->fts_path);
+			warn("%s", p->fts_path);
 			rval = 1;
 		}
 	}
@@ -232,40 +232,6 @@ id(name, type)
 	if (*ep != '\0')
 		errx(1, "%s: illegal %s name", name, type);
 	return (val);
-}
-
-void
-chownerr(file)
-	char *file;
-{
-	static uid_t euid = -1;
-	static gid_t egid = -1;
-	static int ngroups = -1;
-	gid_t groups[NGROUPS];
-
-	/* Check for chown without being root. */
-	if (errno != EPERM ||
-	    uid != -1 && euid == -1 && (euid = geteuid()) != 0) {
-		if (fflag)
-			exit(0);
-		err(1, "%s", file);
-	}
-
-	if (gid != -1 && egid == -1 && (egid = getegid()) != gid) {
-		if (ngroups == -1) {
-
-			ngroups = getgroups(NGROUPS, groups);
-			while (--ngroups >= 0 && gid != groups[ngroups]);
-			if (ngroups < 0) {
-				if (fflag)
-					exit(0);
-				errx(1, "you are not a member of group %s", gname);
-			}
-		}
-	}
-
-	if (!fflag) 
-		warn("%s", file);
 }
 
 void
