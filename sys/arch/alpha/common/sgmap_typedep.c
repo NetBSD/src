@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.6 1998/01/17 21:53:52 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.7 1998/01/18 00:05:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.6 1998/01/17 21:53:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.7 1998/01/18 00:05:33 thorpej Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -56,6 +56,8 @@ u_long			__C(SGMAP_TYPE,_log_unloads);
 #ifdef SGMAP_DEBUG
 int			__C(SGMAP_TYPE,_debug);
 #endif
+
+SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
 
 int
 __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -76,6 +78,14 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 #ifdef SGMAP_LOG
 	struct sgmap_log_entry sl;
 #endif
+
+	/*
+	 * Initialize the spill page PTE if that hasn't already been done.
+	 */
+	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
+		__C(SGMAP_TYPE,_prefetch_spill_page_pte) =
+		    (alpha_sgmap_prefetch_spill_page_pa >>
+		     SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -113,11 +123,15 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	/*
 	 * Allocate the necessary virtual address space for the
 	 * mapping.  Round the size, since we deal with whole pages.
+	 * Allocate one extra PTE to deal with systems that implement
+	 * prefetch for memory -> device DMA, otherwise we could get
+	 * a machine check during the last page of the transfer.
 	 */
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
 	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0) {
-		error = alpha_sgmap_alloc(map, endva - va, sgmap, flags);
+		error = alpha_sgmap_alloc(map, (endva - va) + NBPG, sgmap,
+		    flags);
 		if (error)
 			return (error);
 	}
@@ -128,7 +142,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
 		printf("sgmap_load: sgva = 0x%lx, pteidx = %d, "
-		    "pte = %p (pt = %p)\n", a->apdc_sgva, pteidx, pte,
+		    "pte = %p (pt = %p)\n", map->_dm_sgva, pteidx, pte,
 		    page_table);
 #endif
 
@@ -177,6 +191,19 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 			    "*pte = 0x%lx\n", pa, pte, (u_long)(*pte));
 #endif
 	}
+
+	/*
+	 * ...and the prefetch-spill page.
+	 */
+	*pte = __C(SGMAP_TYPE,_prefetch_spill_page_pte);
+	map->_dm_ptecnt++;
+#ifdef SGMAP_DEBUG
+	if (__C(SGMAP_TYPE,_debug)) {
+		printf("sgmap_load:     spill page, pte = %p, *pte = 0x%lx\n",
+		    pte, *pte);
+		printf("sgmap_load:     pte count = %d\n", map->_dm_ptecnt);
+	}
+#endif
 
 	alpha_mb();
 
