@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.16.2.2 1998/11/10 18:48:52 cgd Exp $	*/
+/*	$NetBSD: fetch.c,v 1.16.2.3 1998/11/23 03:56:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.16.2.2 1998/11/10 18:48:52 cgd Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.16.2.3 1998/11/23 03:56:50 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -448,6 +448,7 @@ url_get(url, proxyenv, outfile)
 			fprintf(ttyout, "Requesting %s\n", url);
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s\r\n", host);
+			fprintf(fin, "Accept: */*\r\n");
 			fprintf(fin, "Connection: close\r\n\r\n");
 		}
 		if (fflush(fin) == EOF) {
@@ -530,12 +531,14 @@ url_get(url, proxyenv, outfile)
 				    || (t = strptime(cp,
 						"%a, %b %d %H:%M:%S %Y",
 						&parsed))) {
+					parsed.tm_isdst = -1;
 					if (*t == '\0')
-						mtime = mktime(&parsed);
-					if (debug && mtime != -1)
+						mtime = mkgmtime(&parsed);
+					if (debug && mtime != -1) {
 						fprintf(ttyout,
 						    "parsed date as: %s",
 						    ctime(&mtime));
+					}
 				}
 #define LOCATION "Location: "
 			} else if (isredirected &&
