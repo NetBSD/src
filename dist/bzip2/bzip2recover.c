@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.1.1.1 2001/06/03 13:03:03 simonb Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.2 2001/06/03 13:39:38 simonb Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -67,6 +67,15 @@ typedef  unsigned char  Bool;
 #define True    ((Bool)1)
 #define False   ((Bool)0)
 
+typedef
+   struct {
+      FILE*  handle;
+      Int32  buffer;
+      Int32  buffLive;
+      Char   mode;
+   }
+   BitStream;
+
 
 Char inFileName[2000];
 Char outFileName[2000];
@@ -75,6 +84,17 @@ Char progName[2000];
 UInt32 bytesOut = 0;
 UInt32 bytesIn  = 0;
 
+void readError ( void );
+void writeError ( void );
+void mallocFail ( Int32 n );
+BitStream* bsOpenReadStream ( FILE* stream );
+BitStream* bsOpenWriteStream ( FILE* stream );
+void bsPutBit ( BitStream* bs, Int32 bit );
+Int32 bsGetBit ( BitStream* bs );
+void bsClose ( BitStream* bs );
+void bsPutUChar ( BitStream* bs, UChar c );
+void bsPutUInt32 ( BitStream* bs, UInt32 c );
+Bool endsInBz2 ( Char* name );
 
 /*---------------------------------------------------*/
 /*--- I/O errors                                  ---*/
@@ -117,20 +137,9 @@ void mallocFail ( Int32 n )
    exit ( 1 );
 }
 
-
 /*---------------------------------------------------*/
 /*--- Bit stream I/O                              ---*/
 /*---------------------------------------------------*/
-
-typedef
-   struct {
-      FILE*  handle;
-      Int32  buffer;
-      Int32  buffLive;
-      Char   mode;
-   }
-   BitStream;
-
 
 /*---------------------------------------------*/
 BitStream* bsOpenReadStream ( FILE* stream )
