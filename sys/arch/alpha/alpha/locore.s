@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.6 2002/06/20 03:37:30 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.7 2002/07/09 16:52:32 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.6 2002/06/20 03:37:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.7 2002/07/09 16:52:32 nathanw Exp $");
 
 #include "assym.h"
 
@@ -89,13 +89,13 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.6 2002/06/20 03:37:30 nathanw Exp 
  */
 #define	GET_CPUINFO		call_pal PAL_OSF1_rdval
 
-#define	GET_CURPROC							\
+#define	GET_CURLWP							\
 	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPROC, v0
+	addq	v0, CPU_INFO_CURLWP, v0
 
-#define	GET_FPCURPROC							\
+#define	GET_FPCURLWP							\
 	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_FPCURPROC, v0
+	addq	v0, CPU_INFO_FPCURLWP, v0
 
 #define	GET_CURPCB							\
 	call_pal PAL_OSF1_rdval					;	\
@@ -111,9 +111,9 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
 #define	GET_CPUINFO		lda v0, cpu_info_primary
 
-#define	GET_CURPROC		lda v0, cpu_info_primary + CPU_INFO_CURPROC
+#define	GET_CURLWP		lda v0, cpu_info_primary + CPU_INFO_CURLWP
 
-#define	GET_FPCURPROC		lda v0, cpu_info_primary + CPU_INFO_FPCURPROC
+#define	GET_FPCURLWP		lda v0, cpu_info_primary + CPU_INFO_FPCURLWP
 
 #define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
 
@@ -348,7 +348,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 
 	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
 	GET_CPUINFO
-	ldq	t1, CPU_INFO_CURPROC(v0)
+	ldq	t1, CPU_INFO_CURLWP(v0)
 	ldq	t2, L_PROC(t1)
 	ldl	t3, P_MD_ASTPENDING(t2)		/* AST pending? */
 	bne	t3, 6f				/* yes */
@@ -356,9 +356,9 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 
 	/*
 	 * We are going back to usermode.  Enable the FPU based on whether
-	 * the current proc is fpcurproc.
+	 * the current proc is fpcurlwp.
 	 */
-	ldq	t2, CPU_INFO_FPCURPROC(v0)
+	ldq	t2, CPU_INFO_FPCURLWP(v0)
 	cmpeq	t1, t2, t1
 	mov	zero, a0
 	cmovne	t1, 1, a0
@@ -551,7 +551,7 @@ LEAF(exception_restore_regs, 0)
 
 	/* syscall number, passed in v0, is first arg, frame pointer second */
 	mov	v0,a1
-	GET_CURPROC
+	GET_CURLWP
 	ldq	a0,0(v0)
 	mov	sp,a2			; .loc 1 __LINE__
 	ldq	t11,L_PROC(a0)
@@ -701,9 +701,9 @@ LEAF(restorefpstate, 1)
 /*
  * savectx: save process context, i.e. callee-saved registers
  *
- * Note that savectx() only works for processes other than curproc,
+ * Note that savectx() only works for processes other than curlwp,
  * since cpu_switch will copy over the info saved here.  (It _can_
- * sanely be used for curproc iff cpu_switch won't be called again, e.g.
+ * sanely be used for curlwp iff cpu_switch won't be called again, e.g.
  * if called from boot().)
  *
  * Arguments:
@@ -747,9 +747,9 @@ IMPORT(sched_whichqs, 4)
 LEAF(idle, 0)
 	br	pv, 1f
 1:	LDGP(pv)
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	stq	zero, 0(v0)			/* curproc <- NULL for stats */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	stq	zero, 0(v0)			/* curlwp <- NULL for stats */
 #if defined(MULTIPROCESSOR)
 	/*
 	 * Switch to the idle PCB unless we're already running on it
@@ -794,9 +794,9 @@ LEAF(cpu_switch, 0)
 	LDGP(pv)
 	/*
 	 * do an inline savectx(), to save old context
-	 * Note: GET_CURPROC clobbers v0, t0, t8...t11.
+	 * Note: GET_CURLWP clobbers v0, t0, t8...t11.
 	 */
-	GET_CURPROC
+	GET_CURLWP
 	ldq	a0, 0(v0)
 	ldq	a1, L_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
@@ -811,7 +811,7 @@ LEAF(cpu_switch, 0)
 	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
 	stq	v0, U_PCB_CONTEXT+(8 * 8)(a1)	/* store ps, for ipl */
 
-	mov	a0, s0				/* save old curproc */
+	mov	a0, s0				/* save old curlwp */
 	mov	a1, s1				/* save old U-area */
 
 cpu_switch_queuescan:
@@ -860,7 +860,7 @@ cpu_switch_queuescan:
 	 * don't bother loading the new context.
 	 *
 	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curproc value because any
+	 * s0 will still contain the old curlwp value because any
 	 * users of that register between then and now must have
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
@@ -911,10 +911,10 @@ cpu_switch_queuescan:
 #endif
 
 	/*
-	 * Now that the switch is done, update curproc and other
+	 * Now that the switch is done, update curlwp and other
 	 * globals.  We must do this even if switching to ourselves
 	 * because we might have re-entered cpu_switch() from idle(),
-	 * in which case curproc would be NULL.
+	 * in which case curlwp would be NULL.
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
@@ -926,7 +926,7 @@ cpu_switch_queuescan:
 #if defined(MULTIPROCESSOR)
 	stq	v0, L_CPU(s2)			/* p->p_cpu = curcpu() */
 #endif
-	stq	s2, CPU_INFO_CURPROC(v0)	/* curproc = p */
+	stq	s2, CPU_INFO_CURLWP(v0)	/* curlwp = l */
 	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
 
 	mov	s4, t1
@@ -964,9 +964,9 @@ LEAF(cpu_preempt, 0)
 	LDGP(pv)
 	/*
 	 * do an inline savectx(), to save old context
-	 * Note: GET_CURPROC clobbers v0, t0, t8...t11.
+	 * Note: GET_CURLWP clobbers v0, t0, t8...t11.
 	 */
-	GET_CURPROC
+	GET_CURLWP
 	mov	a1, a2
 	ldq	a0, 0(v0)
 	ldq	a1, L_ADDR(a0)
@@ -982,7 +982,7 @@ LEAF(cpu_preempt, 0)
 	call_pal PAL_OSF1_rdps			/* NOTE: doesn't kill a0 */
 	stq	v0, U_PCB_CONTEXT+(8 * 8)(a1)	/* store ps, for ipl */
 
-	mov	a0, s0				/* save old curproc */
+	mov	a0, s0				/* save old curlwp */
 	mov	a1, s1				/* save old U-area */
 
 	mov	a2, t4				/* use given new LWP */
@@ -1026,7 +1026,7 @@ cpu_preempt_queuescan:
 	 * don't bother loading the new context.
 	 *
 	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curproc value because any
+	 * s0 will still contain the old curlwp value because any
 	 * users of that register between then and now must have
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
@@ -1067,10 +1067,10 @@ cpu_preempt_queuescan:
 
 	ldiq	s4, 1				/* note that we switched */
 7:	/*
-	 * Now that the switch is done, update curproc and other
+	 * Now that the switch is done, update curlwp and other
 	 * globals.  We must do this even if switching to ourselves
 	 * because we might have re-entered cpu_switch() from idle(),
-	 * in which case curproc would be NULL.
+	 * in which case curlwp would be NULL.
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
@@ -1082,7 +1082,7 @@ cpu_preempt_queuescan:
 #if defined(MULTIPROCESSOR)
 	stq	v0, L_CPU(s2)			/* p->p_cpu = curcpu() */
 #endif
-	stq	s2, CPU_INFO_CURPROC(v0)	/* curproc = p */
+	stq	s2, CPU_INFO_CURLWP(v0)	/* curlwp = l */
 	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
 
 	mov	s4, t1
@@ -1131,7 +1131,7 @@ LEAF_NOPROFILE(proc_trampoline, 0)
 /*
  * switch_exit(struct proc *p)
  * Make a the named process exit.  Partially switch to our idle thread
- * (we don't update curproc or restore registers), and jump into the middle
+ * (we don't update curlwp or restore registers), and jump into the middle
  * of cpu_switch to switch into a few process.  The process reaper will
  * free the dead process's VM resources.  MUST BE CALLED AT SPLHIGH.
  */
@@ -1146,7 +1146,7 @@ LEAF(switch_exit, 1)
 	SWITCH_CONTEXT
 
 	/*
-	 * Now running as idle thread, except for the value of 'curproc' and
+	 * Now running as idle thread, except for the value of 'curlwp' and
 	 * the saved regs.
 	 */
 
@@ -1171,7 +1171,7 @@ LEAF(switch_exit, 1)
 /*
  * switch_lwp_exit(struct lwp *l)
  * Make a the named LWP exit.  Partially switch to our idle thread
- * (we don't update curproc or restore registers), and jump into the middle
+ * (we don't update curlwp or restore registers), and jump into the middle
  * of cpu_switch to switch into a few process.  The process reaper will
  * free the dead process stack.  MUST BE CALLED AT SPLHIGH.
  */
@@ -1186,7 +1186,7 @@ LEAF(switch_lwp_exit, 1)
 	SWITCH_CONTEXT
 
 	/*
-	 * Now running as idle thread, except for the value of 'curproc' and
+	 * Now running as idle thread, except for the value of 'curlwp' and
 	 * the saved regs.
 	 */
 
@@ -1258,8 +1258,8 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	mov	v0, s0
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
@@ -1287,8 +1287,8 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	mov	v0, s0
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
@@ -1328,9 +1328,9 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	mov	a1, v0
 	mov	a0, a1
 	mov	v0, a0
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	s1, 0(v0)			/* s1 = curproc		     */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	ldq	s1, 0(v0)			/* s1 = curlwp		     */
 	lda	v0, kcopyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_ADDR(s1)
@@ -1376,9 +1376,9 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	a1, v0
 	mov	a0, a1
 	mov	v0, a0
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	s0, 0(v0)			/* s0 = curproc		     */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	ldq	s0, 0(v0)			/* s0 = curlwp		     */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_ADDR(s0)
@@ -1408,9 +1408,9 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	a1, v0
 	mov	a0, a1
 	mov	v0, a0
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
-	ldq	s0, 0(v0)			/* s0 = curproc		     */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	ldq	s0, 0(v0)			/* s0 = curlwp		     */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_ADDR(s0)
@@ -1451,8 +1451,8 @@ XLEAF(fuiword, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1474,8 +1474,8 @@ XLEAF(fuisword, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1496,8 +1496,8 @@ XLEAF(fuibyte, 1)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1517,8 +1517,8 @@ LEAF(suword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1540,8 +1540,8 @@ LEAF(suiword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1563,8 +1563,8 @@ LEAF(susword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1585,8 +1585,8 @@ LEAF(suisword, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1609,8 +1609,8 @@ LEAF(subyte, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1636,8 +1636,8 @@ LEAF(suibyte, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
@@ -1679,8 +1679,8 @@ LEAF(fuswintr, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswintrberr
 	.set noat
@@ -1701,8 +1701,8 @@ LEAF(suswintr, 2)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
-	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
 	ldq	t1, 0(v0)
 	lda	t0, fswintrberr
 	.set noat
