@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.5 1999/04/10 14:00:38 drochner Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.5.12.1 2001/03/30 21:48:32 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -133,8 +133,9 @@ procfs_domap(curp, p, pfs, uio)
 }
 
 int
-procfs_validmap(p)
+procfs_validmap(p, mp)
 	struct proc *p;
+	struct mount *mp;
 {
 	return ((p->p_flag & P_SYSTEM) == 0);
 }
