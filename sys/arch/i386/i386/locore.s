@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232 2000/12/12 20:22:49 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.233 2001/02/11 19:03:49 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_realmem.h"
 
 #include "npx.h"
 #include "assym.h"
