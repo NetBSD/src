@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.43 1997/06/20 15:18:03 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.44 1998/06/13 04:20:24 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -195,6 +195,7 @@ struct disklabel {
 #define	DTYPE_FLOPPY		10		/* floppy */
 #define	DTYPE_CCD		11		/* concatenated disk device */
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
+#define DTYPE_ATAPI		13		/* ATAPI */
 
 #ifdef DKTYPENAMES
 static char *dktypenames[] = {
@@ -211,6 +212,7 @@ static char *dktypenames[] = {
 	"floppy",
 	"ccd",
 	"vnd",
+	"ATAPI",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)
