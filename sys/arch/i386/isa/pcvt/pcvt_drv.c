@@ -346,7 +346,7 @@ pcattach(struct isa_device *dev)
 	 */
 	while (config_found(self, NULL, NULL))
 		/* will break when no more children */ ;
-#endif /* PVCT_NETBSD > 110 */
+#endif /* PCVT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;
@@ -1226,8 +1226,12 @@ pccncheckc(Dev_t dev)
 void
 pccnpollc(Dev_t dev, int on)
 {
+#if PCVT_NETBSD > 110
+	struct vt_softc *sc = vt_cd.cd_devs[0];	/* XXX */
+#else	
 #if PCVT_NETBSD > 101
 	struct vt_softc *sc = vtcd.cd_devs[0];	/* XXX */
+#endif
 #endif
 
 	kbd_polling = on;

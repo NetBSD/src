@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.1.1 1995/07/25 23:12:07 chuck Exp $	*/
+i*	$NetBSD: zs.c,v 1.2 1996/03/17 01:35:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Mackerras.
@@ -129,8 +129,12 @@ void    zs_softint();
 void zsattach __P((struct device *, struct device *, void *));
 int zsmatch __P((struct device *, void *, void *));
 
-struct cfdriver zscd = {
-	NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zssoftc), 0
+struct cfattach zs_ca = {
+	sizeof(struct zssoftc), zsmatch, zsattach
+};
+
+struct cfdriver zs_cd = {
+	NULL, "zs", DV_TTY, 0
 };
 
 int
@@ -238,8 +242,8 @@ zsopen(dev_t dev, int flag, int mode, struct proc * p)
 	struct zs *zp;
 	struct zssoftc *dv;
 
-	if (zsunit(dev) > zscd.cd_ndevs
-	    || (dv = (struct zssoftc *) zscd.cd_devs[zsunit(dev)]) == NULL)
+	if (zsunit(dev) > zs_cd.cd_ndevs
+	    || (dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(dev)]) == NULL)
 		return ENODEV;
 
 	zp = &dv->zs[zsside(dev)];
@@ -279,8 +283,8 @@ zsclose(dev, flag, mode, p)
 	struct zssoftc *dv;
 	int     s;
 
-	if (zsunit(dev) > zscd.cd_ndevs
-	    || (dv = (struct zssoftc *) zscd.cd_devs[zsunit(dev)]) == NULL)
+	if (zsunit(dev) > zs_cd.cd_ndevs
+	    || (dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(dev)]) == NULL)
 		return ENODEV;
 	zp = &dv->zs[zsside(dev)];
 	tp = zp->tty;
@@ -304,7 +308,7 @@ zsread(dev, uio, flag)
 	struct uio *uio;
 	int     flag;
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(dev)];
 	struct zs *zp = &dv->zs[zsside(dev)];
 	struct tty *tp = zp->tty;
 
@@ -317,7 +321,7 @@ zswrite(dev, uio, flag)
 	struct uio *uio;
 	int     flag;
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(dev)];
 	struct zs *zp = &dv->zs[zsside(dev)];
 	struct tty *tp = zp->tty;
 
@@ -330,7 +334,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int     cmd, flag;
 	struct proc *p;
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(dev)];
 	struct zs *zp = &dv->zs[zsside(dev)];
 	struct tty *tp = zp->tty;
 	register struct sccregs *scc = &zp->scc;
@@ -386,7 +390,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(tp->t_dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(tp->t_dev)];
 	struct zs *zp = &dv->zs[zsside(tp->t_dev)];
 	register int s;
 
@@ -411,7 +415,7 @@ void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(tp->t_dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(tp->t_dev)];
 	struct zs *zp = &dv->zs[zsside(tp->t_dev)];
 	register int s, n;
 
@@ -434,7 +438,7 @@ zsstart(tp)
 
 zsstop(struct tty * tp, int flag)
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(tp->t_dev)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(tp->t_dev)];
 	struct zs *zp = &dv->zs[zsside(tp->t_dev)];
 	int     s, n;
 
@@ -608,7 +612,7 @@ zs_unblock(register struct tty * tp)
 int
 zsirq(int unit)
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[unit];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[unit];
 	register struct zs *zp = &dv->zs[0];
 	register int ipend, x;
 	register volatile struct scc *scc;
@@ -739,10 +743,10 @@ zs_softint()
 	int     unit, side;
 
 	s = splzs();
-	for (unit = 0; unit < zscd.cd_ndevs; ++unit) {
-		if (zscd.cd_devs[unit] == NULL)
+	for (unit = 0; unit < zs_cd.cd_ndevs; ++unit) {
+		if (zs_cd.cd_devs[unit] == NULL)
 			continue;
-		zp = &((struct zssoftc *) zscd.cd_devs[unit])->zs[0];
+		zp = &((struct zssoftc *) zs_cd.cd_devs[unit])->zs[0];
 		for (side = 0; side < 2; ++side, ++zp) {
 			if ((zp->hflags & ZH_SIRQ) == 0)
 				continue;
@@ -838,7 +842,7 @@ zs_softint()
 int
 zs_kbdopen(int unit, int gsp_unit, struct termios * tiop, struct proc * p)
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(unit)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(unit)];
 	struct zs *zp = &dv->zs[zsside(unit)];
 	int     error;
 
@@ -855,7 +859,7 @@ zs_kbdopen(int unit, int gsp_unit, struct termios * tiop, struct proc * p)
 void
 zs_kbdclose(int unit)
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(unit)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(unit)];
 	struct zs *zp = &dv->zs[zsside(unit)];
 
 	zp->nkbd_open = 0;
@@ -866,7 +870,7 @@ zs_kbdclose(int unit)
 void
 zs_kbdput(int unit, int c)
 {
-	struct zssoftc *dv = (struct zssoftc *) zscd.cd_devs[zsunit(unit)];
+	struct zssoftc *dv = (struct zssoftc *) zs_cd.cd_devs[zsunit(unit)];
 	struct zs *zp = &dv->zs[zsside(unit)];
 	struct tty *tp = zp->tty;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.15 1996/01/12 04:16:43 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.16 1996/03/17 01:33:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -59,9 +59,12 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 static u_short	GetWord __P((nubus_slot *fmt, u_long ptr));
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
-struct cfdriver nubuscd = {
-	NULL, "nubus", matchbyname, nubusattach,
-	DV_DULL, sizeof(struct nubus_softc), 1
+struct cfattach nubus_ca = {
+	sizeof(struct nubus_softc), matchbyname, nubusattach
+};
+
+struct cfdriver nubus_cd = {
+	NULL, "nubus", DV_DULL, 1
 };
 
 static void

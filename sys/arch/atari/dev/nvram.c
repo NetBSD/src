@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.1 1996/01/06 20:11:08 leo Exp $	*/
+/*	$NetBSD: nvram.c,v 1.2 1996/03/17 01:26:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -61,18 +61,21 @@ static u_char	nvram_csum __P((void));
  * Auto config stuff....
  */
 static void	nvr_attach __P((struct device *, struct device *, void *));
-static int	nvr_match __P((struct device *, struct cfdata *, void *));
+static int	nvr_match __P((struct device *, void *, void *));
 
-struct cfdriver nvrcd = {
-	NULL, "nvr", (cfmatch_t)nvr_match, nvr_attach,
-	DV_DULL, sizeof(struct nvr_softc), NULL, 0 };
+struct cfattach nvr_ca = {
+	sizeof(struct nvr_softc), nvr_match, nvr_attach
+};
+
+struct cfdriver nvr_cd = {
+	NULL, "nvr", DV_DULL, NULL, 0
+};
 
 /*ARGSUSED*/
 static	int
-nvr_match(pdp, cfp, auxp)
+nvr_match(pdp, match, auxp)
 struct	device *pdp;
-struct	cfdata *cfp;
-void	*auxp;
+void	*match, *auxp;
 {
 	if (!strcmp((char *)auxp, "nvr"))
 		return (1);
@@ -97,7 +100,7 @@ void	*auxp;
 			mc146818_write(RTC, nreg, 0);
 		nvram_set_csum(nvram_csum());
 	}
-	nvr_soft = nvrcd.cd_devs[0];
+	nvr_soft = nvr_cd.cd_devs[0];
 	nvr_soft->nvr_flags = NVR_CONFIGURED;
 	printf("\n");
 }
@@ -116,7 +119,7 @@ int	byteno;
 #if NNVR > 0
 	struct nvr_softc	*nvr_soft;
 
-	nvr_soft = nvrcd.cd_devs[0];
+	nvr_soft = nvr_cd.cd_devs[0];
 	if (!(nvr_soft->nvr_flags & NVR_CONFIGURED))
 		return(NVR_INVALID);
 	return (mc146818_read(RTC, byteno + MC_NVRAM_START) & 0xff);
@@ -137,7 +140,7 @@ struct uio	*uio;
 	u_char			*p;
 	struct nvr_softc	*nvr_soft;
 
-	nvr_soft = nvrcd.cd_devs[0];
+	nvr_soft = nvr_cd.cd_devs[0];
 	if (!(nvr_soft->nvr_flags & NVR_CONFIGURED))
 		return ENXIO;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.25 1996/03/16 06:08:50 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.26 1996/03/17 01:31:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -104,8 +104,12 @@ int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
-struct cfdriver pmscd = {
-	NULL, "pms", pmsprobe, pmsattach, DV_TTY, sizeof(struct pms_softc)
+struct cfattach pms_ca = {
+	sizeof(struct pms_softc), pmsprobe, pmsattach,
+};
+
+struct cfdriver pms_cd = {
+	NULL, "pms", DV_TTY
 };
 
 #define	PMSUNIT(dev)	(minor(dev))
@@ -216,9 +220,9 @@ pmsopen(dev, flag)
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
 
-	if (unit >= pmscd.cd_ndevs)
+	if (unit >= pms_cd.cd_ndevs)
 		return ENXIO;
-	sc = pmscd.cd_devs[unit];
+	sc = pms_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -253,7 +257,7 @@ pmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
@@ -273,7 +277,7 @@ pmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -321,7 +325,7 @@ pmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -444,7 +448,7 @@ pmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
 	int ret;
 
