@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.17 2002/06/24 05:26:07 itojun Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.1.1.18 2002/10/01 13:40:01 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.105 2002/06/23 03:30:17 deraadt Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.107 2002/07/01 19:48:46 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -96,10 +96,10 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	    compat_cipher_proposal(myproposal[PROPOSAL_ENC_ALGS_STOC]);
 	if (options.compression) {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib,none";
 	} else {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none,zlib";
 	}
 	if (options.macs != NULL) {
 		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
@@ -423,7 +423,7 @@ input_userauth_pk_ok(int type, u_int32_t seq, void *ctxt)
 	clear_auth_state(authctxt);
 	dispatch_set(SSH2_MSG_USERAUTH_PK_OK, NULL);
 
-	/* try another method if we did not send a packet*/
+	/* try another method if we did not send a packet */
 	if (sent == 0)
 		userauth(authctxt, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.1.1.10 2002/06/24 05:26:00 itojun Exp $	*/
+/*	$NetBSD: sftp.c,v 1.1.1.11 2002/10/01 13:40:00 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.30 2002/06/23 09:30:14 deraadt Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.31 2002/07/25 01:16:59 mouring Exp $");
 
 /* XXX: short-form remote directory listings (like 'ls -C') */
 
@@ -116,7 +116,6 @@ main(int argc, char **argv)
 
 	args.list = NULL;
 	addargs(&args, "ssh");		/* overwritten with ssh_program */
-	addargs(&args, "-oFallBackToRsh no");
 	addargs(&args, "-oForwardX11 no");
 	addargs(&args, "-oForwardAgent no");
 	addargs(&args, "-oClearAllForwardings yes");

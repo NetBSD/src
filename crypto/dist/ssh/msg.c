@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.2 2002/06/26 14:03:18 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.1.1.3 2002/10/01 13:40:03 itojun Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: msg.c,v 1.3 2002/06/24 15:49:22 itojun Exp $");
+RCSID("$OpenBSD: msg.c,v 1.4 2002/07/01 16:15:25 deraadt Exp $");
 
 #include "buffer.h"
 #include "getput.h"
@@ -64,7 +64,7 @@ msg_recv(int fd, Buffer *m)
 	}
 	msg_len = GET_32BIT(buf);
 	if (msg_len > 256 * 1024)
-		fatal("msg_recv: read: bad msg_len %d", msg_len);
+		fatal("msg_recv: read: bad msg_len %u", msg_len);
 	buffer_clear(m);
 	buffer_append_space(m, msg_len);
 	res = atomicio(read, fd, buffer_ptr(m), msg_len);

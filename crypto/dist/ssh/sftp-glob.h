@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-glob.h,v 1.1.1.6 2002/04/22 07:37:43 itojun Exp $	*/
-/* $OpenBSD: sftp-glob.h,v 1.7 2002/03/19 10:49:35 markus Exp $ */
+/*	$NetBSD: sftp-glob.h,v 1.1.1.7 2002/10/01 13:40:00 itojun Exp $	*/
+/* $OpenBSD: sftp-glob.h,v 1.8 2002/09/11 22:41:50 djm Exp $ */
 
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
@@ -32,8 +32,7 @@
 
 #include "sftp-client.h"
 
-int
-remote_glob(struct sftp_conn *, const char *, int,
+int remote_glob(struct sftp_conn *, const char *, int,
     int (*)(const char *, int), glob_t *);
 
 #endif

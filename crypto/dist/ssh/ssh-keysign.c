@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.1.1.2 2002/10/01 13:40:03 itojun Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,12 +23,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.4 2002/06/19 00:27:55 deraadt Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.7 2002/07/03 14:21:05 markus Exp $");
 
 #include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
 
 #include "log.h"
 #include "key.h"
+#include "ssh.h"
 #include "ssh2.h"
 #include "misc.h"
 #include "xmalloc.h"
@@ -38,6 +41,9 @@ RCSID("$OpenBSD: ssh-keysign.c,v 1.4 2002/06/19 00:27:55 deraadt Exp $");
 #include "msg.h"
 #include "canohost.h"
 #include "pathnames.h"
+#include "readconf.h"
+
+uid_t original_real_uid;	/* XXX readconf.c needs this */
 
 static int
 valid_request(struct passwd *pw, char *host, Key **ret, u_char *data,
@@ -129,12 +135,14 @@ int
 main(int argc, char **argv)
 {
 	Buffer b;
+	Options options;
 	Key *keys[2], *key;
 	struct passwd *pw;
 	int key_fd[2], i, found, version = 2, fd;
 	u_char *signature, *data;
 	char *host;
 	u_int slen, dlen;
+	u_int32_t rnd[256];
 
 	key_fd[0] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 	key_fd[1] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
@@ -146,6 +154,15 @@ main(int argc, char **argv)
 	log_init("ssh-keysign", SYSLOG_LEVEL_DEBUG3, SYSLOG_FACILITY_AUTH, 0);
 #endif
 
+	/* verify that ssh-keysign is enabled by the admin */
+	original_real_uid = getuid();	/* XXX readconf.c needs this */
+	initialize_options(&options);
+	(void)read_config_file(_PATH_HOST_CONFIG_FILE, "", &options);
+	fill_default_options(&options);
+	if (options.hostbased_authentication != 1)
+		fatal("Hostbased authentication not enabled in %s",
+		    _PATH_HOST_CONFIG_FILE);
+
 	if (key_fd[0] == -1 && key_fd[1] == -1)
 		fatal("could not open any host key");
 
@@ -154,6 +171,9 @@ main(int argc, char **argv)
 	pw = pwcopy(pw);
 
 	SSLeay_add_all_algorithms();
+	for (i = 0; i < 256; i++)
+		rnd[i] = arc4random();
+	RAND_seed(rnd, sizeof(rnd));
 
 	found = 0;
 	for (i = 0; i < 2; i++) {
@@ -163,6 +183,13 @@ main(int argc, char **argv)
 		keys[i] = key_load_private_pem(key_fd[i], KEY_UNSPEC,
 		    NULL, NULL);
 		close(key_fd[i]);
+		if (keys[i] != NULL && keys[i]->type == KEY_RSA) {
+			if (RSA_blinding_on(keys[i]->rsa, NULL) != 1) {
+				error("RSA_blinding_on failed");
+				key_free(keys[i]);
+				keys[i] = NULL;
+			}
+		}
 		if (keys[i] != NULL)
 			found = 1;
 	}
@@ -183,7 +210,6 @@ main(int argc, char **argv)
 	data = buffer_get_string(&b, &dlen);
 	if (valid_request(pw, host, &key, data, dlen) < 0)
 		fatal("not a valid request");
-	xfree(data);
 	xfree(host);
 
 	found = 0;
@@ -199,6 +225,7 @@ main(int argc, char **argv)
 
 	if (key_sign(keys[i], &signature, &slen, data, dlen) != 0)
 		fatal("key_sign failed");
+	xfree(data);
 
 	/* send reply */
 	buffer_clear(&b);
