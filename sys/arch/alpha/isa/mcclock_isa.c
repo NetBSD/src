@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.2 1996/04/17 22:22:46 cgd Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.3 1996/10/23 04:12:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -42,8 +42,8 @@
 struct mcclock_isa_softc {
 	struct mcclock_softc	sc_mcclock;
 
-	bus_chipset_tag_t	sc_bc;
-	bus_io_handle_t		sc_ioh;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 };
 
 int	mcclock_isa_match __P((struct device *, void *, void *));
@@ -86,8 +86,9 @@ mcclock_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)self;
 
-	sc->sc_bc = ia->ia_bc;
-	if (bus_io_map(sc->sc_bc, ia->ia_iobase, ia->ia_iosize, &sc->sc_ioh))
+	sc->sc_iot = ia->ia_iot;
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	    &sc->sc_ioh))
 		panic("mcclock_isa_attach: couldn't map clock I/O space");
 
 	mcclock_attach(&sc->sc_mcclock, &mcclock_isa_busfns);
@@ -99,11 +100,11 @@ mcclock_isa_write(mcsc, reg, datum)
 	u_int reg, datum;
 {
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
-	bus_io_write_1(bc, ioh, 0, reg);
-	bus_io_write_1(bc, ioh, 1, datum);
+	bus_space_write_1(iot, ioh, 0, reg);
+	bus_space_write_1(iot, ioh, 1, datum);
 }
 
 u_int
@@ -112,9 +113,9 @@ mcclock_isa_read(mcsc, reg)
 	u_int reg;
 {
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
-	bus_io_write_1(bc, ioh, 0, reg);
-	return bus_io_read_1(bc, ioh, 1);
+	bus_space_write_1(iot, ioh, 0, reg);
+	return bus_space_read_1(iot, ioh, 1);
 }
