@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.4 1999/12/20 19:31:47 jwise Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.5 1999/12/20 21:49:11 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,6 +34,7 @@
 
 #include <curses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "systat.h"
 #include "extern.h"
