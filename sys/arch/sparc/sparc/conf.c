@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 1996/09/30 22:49:12 abrown Exp $ */
+/*	$NetBSD: conf.c,v 1.44 1996/11/11 23:54:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,10 +65,12 @@
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
+#include "uk.h"
 
 #include "zs.h"
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
+#include "cgtwo.h"
 #include "cgthree.h"
 #include "cgfour.h"
 #include "cgsix.h"
@@ -142,7 +144,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 28 */
 	cdev_gen_init(1,kbd),		/* 29: /dev/kbd */
 	cdev_notdef(),			/* 30 */
-	cdev_notdef(),			/* 31: should be /dev/cgtwo */
+	cdev_fb_init(NCGTWO,cgtwo),	/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
@@ -169,10 +171,10 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NCGTHREE,cgthree),	/* 55: /dev/cgthree */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
-	cdev_disk_init(NCD,cd),		/* 58 SCSI CD-ROM */
-	cdev_notdef(),			/* 59 */
-	cdev_notdef(),			/* 60 */
-	cdev_notdef(),			/* 61 */
+	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
+	cdev_scanner_init(NSS,ss),	/* 59: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 60: SCSI unknown */
+	cdev_disk_init(NRD,rd),		/* 61: memory disk */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
 	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */
