@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.14.14.2 1998/05/05 08:09:50 mycroft Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.14.14.3 1998/11/08 22:39:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -59,19 +59,11 @@ struct ctldebug debug13 = { "doreallocblks", &doreallocblks };
 /*
  * Local declarations
  */
-struct buf *cluster_newbuf __P((struct vnode *, struct buf *, long, daddr_t,
-	    daddr_t, long, int));
 struct buf *cluster_rbuild __P((struct vnode *, u_quad_t, struct buf *,
 	    daddr_t, daddr_t, long, int, long));
 void	    cluster_wbuild __P((struct vnode *, struct buf *, long,
 	    daddr_t, int, daddr_t));
 struct cluster_save *cluster_collectbufs __P((struct vnode *, struct buf *));
-
-/*
- * Instrument how many times a read cluster was aborted due to
- * not being able to push memory out of a buffer.
- */
-u_long	cluster_rbuild_too_much_memory;
 
 #ifdef DIAGNOSTIC
 /*
@@ -137,7 +129,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	error = 0;
 	flags = B_READ;
 	*bpp = bp = getblk(vp, lblkno, size, 0, 0);
-	if (bp->b_flags & B_CACHE) {
+	if (bp->b_flags & (B_DONE | B_DELWRI)) {
 		/*
 		 * Desired block is in cache; do any readahead ASYNC.
 		 * Case 1, 2.
@@ -170,7 +162,8 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	if (!ISSEQREAD(vp, lblkno)) {
 		vp->v_ralen = 0;
 		vp->v_maxra = lblkno;
-	} else if ((ioblkno + 1) * size <= filesize && !alreadyincore &&
+	} else if ((u_quad_t)(ioblkno + 1) * (u_quad_t)size <= filesize &&
+	    !alreadyincore &&
 	    !(error = VOP_BMAP(vp, ioblkno, NULL, &blkno, &num_ra)) &&
 	    blkno != -1) {
 		/*
@@ -207,9 +200,12 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 			bp->b_blkno = blkno;
 			/* Case 5: check how many blocks to read ahead */
 			++ioblkno;
-			if ((ioblkno + 1) * size > filesize ||
-			    incore(vp, ioblkno) || (error = VOP_BMAP(vp,
-			     ioblkno, NULL, &blkno, &num_ra)) || blkno == -1)
+			if (((u_quad_t)(ioblkno + 1) * (u_quad_t)size >
+			     filesize) ||
+			    incore(vp, ioblkno) ||
+			    (error = VOP_BMAP(vp, ioblkno, NULL,
+					      &blkno, &num_ra)) ||
+			    blkno == -1)
 				goto skip_readahead;
 			/*
 			 * Adjust readahead as above.
@@ -272,7 +268,7 @@ skip_readahead:
 	if (rbp == NULL)
 		rbp = bp;
 	if (rbp)
-		vp->v_maxra = rbp->b_lblkno + (rbp->b_bufsize / size) - 1;
+		vp->v_maxra = rbp->b_lblkno + (rbp->b_bcount / size) - 1;
 
 	if (bp)
 		return(biowait(bp));
@@ -295,7 +291,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	int run;
 	long flags;
 {
-	struct cluster_save *b_save;
+	struct cluster_save *b_save = 0;
 	struct buf *tbp;
 	daddr_t bn;
 	int i, inc;
@@ -305,7 +301,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		panic("cluster_rbuild: size %ld != filesize %ld\n",
 			size, vp->v_mount->mnt_stat.f_iosize);
 #endif
-	if (size * (lbn + run + 1) > filesize)
+	if ((u_quad_t)size * (u_quad_t)(lbn + run + 1) > filesize)
 		--run;
 	if (run == 0) {
 		if (!bp) {
@@ -313,117 +309,109 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 			bp->b_blkno = blkno;
 			bp->b_flags |= flags;
 		}
-		return(bp);
+		return (bp);
 	}
 
-	bp = cluster_newbuf(vp, bp, flags, blkno, lbn, size, run + 1);
+	if (!bp)
+		bp = getblk(vp, lbn, size, 0, 0);
+	bp->b_blkno = blkno;
+
+	/*
+	 * If initial component of the cluster is already
+	 * in core, terminate the cluster early.
+	 */
 	if (bp->b_flags & (B_DONE | B_DELWRI))
 		return (bp);
 
-	b_save = malloc(sizeof(struct buf *) * run + sizeof(struct cluster_save),
-	    M_SEGMENT, M_WAITOK);
-	b_save->bs_bufsize = b_save->bs_bcount = size;
-	b_save->bs_nchildren = 0;
-	b_save->bs_children = (struct buf **)(b_save + 1);
-	b_save->bs_saveaddr = bp->b_saveaddr;
-	bp->b_saveaddr = (caddr_t) b_save;
+	bp->b_flags |= flags;
+
+	/*
+	 * If block size is not a multiple of page size there
+	 * is no way of doing the necessary page moving, so
+	 * terminate early.
+	 */
+	if (size != roundup(size, CLBYTES))
+		return (bp);
 
 	inc = btodb(size);
 	for (bn = blkno + inc, i = 1; i <= run; ++i, bn += inc) {
 		/*
-		 * A component of the cluster is already in core,
+		 * If a component of the cluster is already in core,
 		 * terminate the cluster early.
 		 */
 		if (incore(vp, lbn + i))
 			break;
-		tbp = getblk(vp, lbn + i, 0, 0, 0);
-		/*
-		 * getblk may return some memory in the buffer if there were
-		 * no empty buffers to shed it to.  If there is currently
-		 * memory in the buffer, we move it down size bytes to make
-		 * room for the valid pages that cluster_callback will insert.
-		 * We do this now so we don't have to do it at interrupt time
-		 * in the callback routine.
-		 */
-		if (tbp->b_bufsize != 0) {
-			caddr_t bdata = (char *)tbp->b_data;
-
-			/*
-			 * No room in the buffer to add another page,
-			 * terminate the cluster early.
-			 */
-			if (tbp->b_bufsize + size > MAXBSIZE) {
-				/*
-				 * Instrument this; we used to crash if
-				 * DIAGNOSTIC, but this can happen a lot
-				 * with big buffer caches.
-				 */
-				cluster_rbuild_too_much_memory++;
-				brelse(tbp);
-				break;
-			}
-			if (tbp->b_bufsize > size) {
-				/*
-				 * XXX if the source and destination regions
-				 * overlap we have to copy backward to avoid
-				 * clobbering any valid pages (i.e. pagemove
-				 * implementations typically can't handle
-				 * overlap).
-				 */
-				bdata += tbp->b_bufsize;
-				while (bdata > (char *)tbp->b_data) {
-					bdata -= CLBYTES;
-					pagemove(bdata, bdata + size, CLBYTES);
-				}
-			} else 
-				pagemove(bdata, bdata + size, tbp->b_bufsize);
+		tbp = getblk(vp, lbn + i, size, 0, 0);
+		if (tbp->b_flags & (B_DONE | B_DELWRI)) {
+			brelse(tbp);
+			break;
 		}
+
+		/*
+		 * If there are excess pages in the cluster buffer and
+		 * this buffer can take some of them, then shift some
+		 * of the excess to here.
+		 */
+		if (bp->b_bufsize > (i * size)) {
+			int freespace = MAXBSIZE - tbp->b_bufsize;
+
+			if (freespace > 0) {
+				int nbytes = bp->b_bufsize - (i * size);
+				if (nbytes > freespace)
+					nbytes = freespace;
+
+				/* move pages and update sizes */
+				pagemove(bp->b_data + bp->b_bufsize - nbytes,
+					 tbp->b_data + tbp->b_bufsize,
+					 nbytes);
+				bp->b_bufsize -= nbytes;
+				tbp->b_bufsize += nbytes;
+			}
+		}
+
+		/*
+		 * If there there is no space for forming a composite
+		 * cluster buffer with this one, terminate.
+		 */
+		if (bp->b_bufsize + size > MAXBSIZE) {
+		  	brelse(tbp);
+			break;
+		}
+
+		/*
+		 * Have good candidate for cluster; make sure cluster
+		 * save area is allocated etc.
+		 */
+		if (b_save == 0) {
+			bp->b_iodone = cluster_callback;
+			bp->b_flags |= B_CALL;
+
+			b_save = malloc(sizeof(struct buf *) * run +
+					sizeof(struct cluster_save),
+					M_SEGMENT, M_WAITOK);
+			b_save->bs_bufsize = b_save->bs_bcount = size;
+			b_save->bs_nchildren = 0;
+			b_save->bs_children = (struct buf **)(b_save + 1);
+			b_save->bs_saveaddr = bp->b_saveaddr;
+
+			bp->b_saveaddr = (caddr_t) b_save;
+		}
+
+		/*
+		 * Move pages to the cluster buffer and update
+		 * its size appropriately.
+		 */
+		pagemove(tbp->b_data, bp->b_data + bp->b_bufsize, size);
+		bp->b_bcount += size;
+		bp->b_bufsize += size;
+
+		tbp->b_bufsize -= size;
 		tbp->b_blkno = bn;
 		tbp->b_flags |= flags | B_READ | B_ASYNC;
-		++b_save->bs_nchildren;
-		b_save->bs_children[i - 1] = tbp;
-	}
-	/*
-	 * The cluster may have been terminated early, adjust the cluster
-	 * buffer size accordingly.  If no cluster could be formed,
-	 * deallocate the cluster save info.
-	 */
-	if (i <= run) {
-		if (i == 1) {
-			bp->b_saveaddr = b_save->bs_saveaddr;
-			bp->b_flags &= ~B_CALL;
-			bp->b_iodone = NULL;
-			free(b_save, M_SEGMENT);
-		}
-		allocbuf(bp, size * i);
-	}
-	return(bp);
-}
 
-/*
- * Either get a new buffer or grow the existing one.
- */
-struct buf *
-cluster_newbuf(vp, bp, flags, blkno, lblkno, size, run)
-	struct vnode *vp;
-	struct buf *bp;
-	long flags;
-	daddr_t blkno;
-	daddr_t lblkno;
-	long size;
-	int run;
-{
-	if (!bp) {
-		bp = getblk(vp, lblkno, size, 0, 0);
-		if (bp->b_flags & (B_DONE | B_DELWRI)) {
-			bp->b_blkno = blkno;
-			return(bp);
-		}
+		b_save->bs_children[b_save->bs_nchildren++] = tbp;
 	}
-	allocbuf(bp, run * size);
-	bp->b_blkno = blkno;
-	bp->b_iodone = cluster_callback;
-	bp->b_flags |= flags | B_CALL;
+
 	return(bp);
 }
 
@@ -438,7 +426,7 @@ cluster_callback(bp)
 	struct buf *bp;
 {
 	struct cluster_save *b_save;
-	struct buf **bpp, *tbp;
+	struct buf *tbp;
 	long bsize;
 	caddr_t cp;
 	int error = 0;
@@ -453,13 +441,13 @@ cluster_callback(bp)
 	bp->b_saveaddr = b_save->bs_saveaddr;
 
 	bsize = b_save->bs_bufsize;
-	cp = (char *)bp->b_data + bsize;
+	cp = (char *)bp->b_data + bsize * b_save->bs_nchildren;
 	/*
 	 * Move memory from the large cluster buffer into the component
-	 * buffers and mark IO as done on these.
+	 * buffers in reverse order and mark IO as done on these.
 	 */
-	for (bpp = b_save->bs_children; b_save->bs_nchildren--; ++bpp) {
-		tbp = *bpp;
+	while (b_save->bs_nchildren--) {
+		tbp = b_save->bs_children[b_save->bs_nchildren];
 		pagemove(cp, tbp->b_data, bsize);
 		tbp->b_bufsize += bsize;
 		tbp->b_bcount = bsize;
@@ -469,7 +457,7 @@ cluster_callback(bp)
 		}
 		biodone(tbp);
 		bp->b_bufsize -= bsize;
-		cp += bsize;
+		cp -= bsize;
 	}
 	/*
 	 * If there was excess memory in the cluster buffer,
@@ -478,11 +466,15 @@ cluster_callback(bp)
 	if (bp->b_bufsize != bsize) {
 		if (bp->b_bufsize < bsize)
 			panic("cluster_callback: too little memory");
-		pagemove(cp, (char *)bp->b_data + bsize, bp->b_bufsize - bsize);
+		pagemove((char *)bp->b_data + bp->b_bcount,
+			 (char *)bp->b_data + bsize,
+			 bp->b_bufsize - bsize);
 	}
 	bp->b_bcount = bsize;
+
 	bp->b_iodone = NULL;
 	free(b_save, M_SEGMENT);
+
 	if (bp->b_flags & B_ASYNC)
 		brelse(bp);
 	else {
@@ -532,7 +524,7 @@ cluster_write(bp, filesize)
 			 */
 			cursize = vp->v_lastw - vp->v_cstart + 1;
 			if (!doreallocblks ||
-			    (lbn + 1) * bp->b_bcount != filesize ||
+			    (u_quad_t)(lbn + 1) * bp->b_bcount != filesize ||
 			    lbn != vp->v_lastw + 1 || vp->v_clen <= cursize) {
 				cluster_wbuild(vp, NULL, bp->b_bcount,
 				    vp->v_cstart, cursize, lbn);
@@ -572,7 +564,7 @@ cluster_write(bp, filesize)
 		 * If at end of file, make cluster as large as possible,
 		 * otherwise find size of existing cluster.
 		 */
-		if ((lbn + 1) * bp->b_bcount != filesize &&
+		if ((u_quad_t)(lbn + 1) * (u_quad_t)bp->b_bcount != filesize &&
 		    (VOP_BMAP(vp, lbn, NULL, &bp->b_blkno, &maxclen) ||
 		     bp->b_blkno == -1)) {
 			bawrite(bp);
