@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.28 2000/06/03 14:47:42 he Exp $
+.\" $NetBSD: main,v 1.6.2.29 2000/07/01 17:58:07 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,7 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that 
 .Nx
 wouldn't exist.
-.Ss Upgrade path to NetBSD 1.4.2
+.Ss Upgrade path to NetBSD 1.4.3
 If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
@@ -135,9 +135,9 @@ you need to know which versions you can upgrade with
 .Nx
 \*V is an upgrade of 
 .Nx
-1.4.1,
+1.4.2, 1.4.1,
 .Nx
-1.4 and earlier releases of
+1.4 and earlier major and patch releases of
 .Nx
 such as versions 1.3.3, 1.2 etc.
 .Pp
@@ -161,13 +161,65 @@ in all probability result in problems.
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions
 mentioned above and \*V to determine if a given feature is present
-or absent in \*V.  The development of 1.4, 1.4.1 and \*V is done
-on a separate branch in the CVS repository which was created when
-the release cylcle for 1.4 was started, and during the release
-cycles for all these versions selective fixes (with minor impact on
-the stability of the code on the release branch) have been imported
-from the main development trunk.  So, there are features in \*V
+or absent in \*V.  The development of 1.4 and the subsequent patch
+or ``point'' releases is done on a separate branch in the CVS
+repository which was created when the release cylcle for 1.4 was
+started, and during the release cycle of 1.4 and its patch releases,
+selective fixes have been imported from the main development trunk
+(the intent is to only import fixes with no or minor impact on the
+stability of the release branch).  So, there are features in \*V
 which were not in e.g. 1.4H, but the reverse is also true.
+.Ss Major Changes Between 1.4.2 and 1.4.3
+The complete list of changes between
+.Nx
+1.4.2 and 1.4.3 can be found in the file CHANGES-1.4.3 in the top
+directory of the source tree.  The following are the highlights
+only.
+.Bl -bullet
+.It
+A driver for the Lucent Wavelan PCMCIA card has been added, see
+.Xr wi 4 .
+.It
+The PCI Cyclom-4Y and Cyclom-8Y cards are now supported.
+.It
+The Macontosh LC Ethernet Adapter is now supported.
+.It
+Fixes to the Alteon Gigabit ethernet driver,
+.Xr ti 4 ,
+has been imported.
+.It
+The i386 port can now be installed on wd2 or wd3.
+.It
+A possible CPU hog problem related to large I/Os has been fixed.
+Fixes SA#2000-005.
+.It
+A denial-of-service problem related to handling of IP options
+has been fixed.  Fixes SA#2000-002.
+.It
+A problem with /etc/ftpchroot has been fixed.  Fixes SA#2000-006.
+.It
+A minor problem related to locking of semaphore resources has
+been fixed.  Fixes SA#2000-004.
+.El
+.Pp
+In addition, many bugs have been fixed -- more than 40 problems
+reported through our problem tracking system have been fixed, and
+some other non-reported problems have also been found and fixed.
+See the CHANGES-1.4.3 file for the complete list.
+.Ss Known caveats with 1.4.3
+The following are the major known issues with
+.Nx
+1.4.3.
+.Bl -bullet
+.It
+.Tn PCMCIA
+support may require hand adjustment to function properly.
+See
+.Sx Possible Tn PCMCIA Sx issues
+under
+.Sx Installing the NetBSD System
+for more details.
+.El
 .Ss Major Changes Between 1.4.1 and 1.4.2
 The complete list of changes between
 .Nx
@@ -237,18 +289,6 @@ In addition, many, many bugs have been fixed -- more than 100
 problems reported through our problem tracking system have been
 fixed, and many other non-reported problems have also been found
 and fixed.  See the CHANGES-1.4.2 file for the complete list.
-.Ss Known caveats with 1.4.3
-The following are the major known issues with
-.Nx
-1.4.3.
-.Bl -bullet
-.It
-.Tn PCMCIA support may require hand adjustment to function properly. See
-.Sx Possible Tn PCMCIA Sx issues
-under
-.Sx Installing the NetBSD System
-for more details.
-.El
 .Ss Known caveats with 1.4.2
 The following are the major known issues with
 .Nx
