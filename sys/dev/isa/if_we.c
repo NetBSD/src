@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.6 1998/01/26 20:30:08 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.7 1998/04/07 16:23:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,9 +107,6 @@ struct we_softc {
 	bus_space_tag_t sc_asict;	/* space tag for ASIC */
 	bus_space_handle_t sc_asich;	/* space handle for ASIC */
 
-	bus_space_tag_t sc_delayt;	/* space tag for `delay port' */
-	bus_space_handle_t sc_delayh;	/* space handle for `delay port' */
-
 	u_int8_t sc_laar_proto;
 	u_int8_t sc_msr_proto;
 
@@ -120,11 +117,7 @@ struct we_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	we_probe __P((struct device *, void *, void *));
-#else
 int	we_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void	we_attach __P((struct device *, struct device *, void *));
 
 struct cfattach we_ca = {
@@ -169,11 +162,7 @@ int we_media[] = {
 /*
  * Delay needed when switching 16-bit access to shared memory.
  */
-#define	WE_DELAY(wsc) \
-do { \
-	(void) bus_space_read_1((wsc)->sc_delayt, (wsc)->sc_delayh, 0); \
-	(void) bus_space_read_1((wsc)->sc_delayt, (wsc)->sc_delayh, 0); \
-} while (0)
+#define	WE_DELAY(wsc) delay(3)
 
 /*
  * Enable card RAM, and 16-bit access.
@@ -202,21 +191,12 @@ do { \
 } while (0)
 
 int
-we_probe(parent, match, aux)
+we_probe(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	struct cfdata *match;
-#endif
+	struct cfdata *cf;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
-#else
-	struct cfdata *cf = match;
-#endif
 	bus_space_tag_t asict, memt;
 	bus_space_handle_t asich, memh;
 	bus_size_t memsize;
@@ -365,9 +345,6 @@ we_attach(parent, self, aux)
 
 	nict = asict = ia->ia_iot;
 	memt = ia->ia_memt;
-
-	wsc->sc_delayt = ia->ia_iot;
-	wsc->sc_delayh = ia->ia_delaybah;
 
 	/* Map the device. */
 	if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
