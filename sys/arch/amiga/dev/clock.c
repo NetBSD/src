@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1996/05/10 14:30:53 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1996/06/18 11:41:48 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -287,9 +287,13 @@ delay(mic)
 	 * usec / (1000000 / 715909) with no loss of
 	 * precision
 	 */
+#ifdef M68060
+	temp = (((u_quad_t)mic) << 20) / micspertick;
+#else
 	temp = mic >> 12;
 	asm("divul %3,%1:%0" : "=d" (temp) : "d" (mic >> 12), "0" (mic << 20),
 	    "d" (micspertick));
+#endif
 
 	if ((temp & 0xffff0000) > 0x10000) {
 		mic = (temp >> 16) - 1;
