@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.31 2001/02/11 19:34:58 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.32 2001/06/24 01:11:08 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -604,8 +604,11 @@ tga_intr(v)
 			return 0;
 		}
 	}
-	dc->dc_ramdac_intr(dcrc);
-	dc->dc_ramdac_intr = NULL;
+	/* if we have something to do, do it */
+	if (dc->dc_ramdac_intr) {
+		dc->dc_ramdac_intr(dcrc);
+		dc->dc_ramdac_intr = NULL;
+	}
 	TGAWREG(dc, TGA_REG_SISR, 0x00000001);
 	TGAREGWB(dc, TGA_REG_SISR, 1);
 	return (1);
