@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.10 1998/03/30 15:05:20 kleink Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.11 1998/11/15 17:10:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.10 1998/03/30 15:05:20 kleink Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.11 1998/11/15 17:10:31 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -104,10 +104,10 @@ ypmatch_add(map, key, keylen, val, vallen)
 		ep->val = NULL;
 	}
 
-	if ((ep->key = malloc(keylen)) == NULL)
+	if ((ep->key = malloc((size_t)keylen)) == NULL)
 		return 0;
 
-	if ((ep->val = malloc(vallen)) == NULL) {
+	if ((ep->val = malloc((size_t)vallen)) == NULL) {
 		free(ep->key);
 		ep->key = NULL;
 		return 0;
@@ -116,8 +116,8 @@ ypmatch_add(map, key, keylen, val, vallen)
 	ep->keylen = keylen;
 	ep->vallen = vallen;
 
-	(void)memcpy(ep->key, key, ep->keylen);
-	(void)memcpy(ep->val, val, ep->vallen);
+	(void)memcpy(ep->key, key, (size_t)ep->keylen);
+	(void)memcpy(ep->val, val, (size_t)ep->vallen);
 
 	if (ep->map) {
 		if (strcmp(ep->map, map)) {
@@ -155,7 +155,7 @@ ypmatch_find(map, key, keylen, val, vallen)
 			continue;
 		if (strcmp(ep->map, map))
 			continue;
-		if (memcmp(ep->key, key, keylen))
+		if (memcmp(ep->key, key, (size_t)keylen))
 			continue;
 		if (t > ep->expire_t)
 			continue;
@@ -203,9 +203,9 @@ again:
 	if (!strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
 			 inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
 		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
+		if ((*outval = malloc((size_t)(*outvallen + 1))) == NULL)
 			return YPERR_YPERR;
-		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
+		(void)memcpy(*outval, yprv.valdat.dptr, (size_t)*outvallen);
 		(*outval)[*outvallen] = '\0';
 		return 0;
 	}
@@ -213,7 +213,8 @@ again:
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	yprk.keydat.dptr = (char *) inkey;
+	/* LINTED const castaway */
+	yprk.keydat.dptr = (char *)(void *)inkey;
 	yprk.keydat.dsize = inkeylen;
 
 	memset(&yprv, 0, sizeof yprv);
@@ -231,9 +232,9 @@ again:
 	}
 	if (!(r = ypprot_err(yprv.status))) {
 		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
+		if ((*outval = malloc((size_t)(*outvallen + 1))) == NULL)
 			return YPERR_YPERR;
-		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
+		(void)memcpy(*outval, yprv.valdat.dptr, (size_t)*outvallen);
 		(*outval)[*outvallen] = '\0';
 #ifdef YPMATCHCACHE
 		if (strcmp(_yp_domain, indomain) == 0)
@@ -242,7 +243,7 @@ again:
 				r = YPERR_RESRC;
 #endif
 	}
-	xdr_free(xdr_ypresp_val, (char *) &yprv);
+	xdr_free(xdr_ypresp_val, (char *)(void *)&yprv);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outval) {

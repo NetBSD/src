@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.7 1997/07/21 14:09:30 jtc Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.8 1998/11/15 17:10:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_order.c,v 1.7 1997/07/21 14:09:30 jtc Exp $");
+__RCSID("$NetBSD: yp_order.c,v 1.8 1998/11/15 17:10:31 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -95,7 +95,7 @@ again:
 		goto again;
 	}
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *) &ypro);
+	xdr_free(xdr_ypresp_order, (char *)(void *)&ypro);
 	r = ypprot_err(ypro.status);
 bail:
 	__yp_unbind(ysd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.16 1998/09/07 14:11:37 kleink Exp $	*/
+/*	$NetBSD: strptime.c,v 1.17 1998/11/15 17:11:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.16 1998/09/07 14:11:37 kleink Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.17 1998/11/15 17:11:06 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -361,6 +361,7 @@ literal:
 
 	}
 
+	/* LINTED functional specification */
 	return ((char *)bp);
 }
 
