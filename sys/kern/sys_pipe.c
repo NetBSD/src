@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.49 2004/02/24 15:12:52 wiz Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.50 2004/02/24 20:57:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.49 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.50 2004/02/24 20:57:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,6 @@ pipeselwakeup(selp, sigp, data, code)
 	void *data;
 	int code;
 {
-/*###406 [cc] warning: `band' might be used uninitialized in this function%%%*/
 	int band;
 
 	selnotify(&selp->pipe_sel, NOTE_SUBMIT);
