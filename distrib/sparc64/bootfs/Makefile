@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2002/11/18 12:39:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/03/07 09:49:34 lukem Exp $
 #
 # boot.fs is the image for cdrom booting.
 #
 # It is constructed by packaging an INSTALL kernel and ofwboot together
 # into a FFS filesystem and slapping on a disklabel and bootblock.
 #
-# boot.fs along with an ISO image with a correct .slicemapfile in
-# the root directory need to be fed to mksunbootcd to get a workable
-# CDROM image.
+# boot.fs along with an ISO image need to be fed to distrib/common/sunbootcd.sh
+# to get a workable CDROM image.
 #
 
 .include <bsd.own.mk>
