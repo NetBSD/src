@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.3 1996/07/15 03:13:15 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1996/10/17 02:58:18 cgd Exp $
 
-KMINCLUDES= arch/alpha/SYS.h arch/alpha/DEFS.h
+KMINCLUDES=
 KMSRCS=	divrem.m4 bzero.S htonl.S htons.S ntohl.S ntohs.S \
 	byte_swap_2.S byte_swap_4.S ffs.S
 #KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
