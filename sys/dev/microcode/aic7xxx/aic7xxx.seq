@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.seq,v 1.8 1998/04/16 07:07:37 leo Exp $	*/
+/*	$NetBSD: aic7xxx.seq,v 1.9 1998/07/03 23:45:10 mjacob Exp $	*/
 
 /*+M***********************************************************************
  *Adaptec 274x/284x/294x device driver for Linux and FreeBSD.
@@ -43,7 +43,7 @@
  *
  *-M************************************************************************/
 
-VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.8 1998/04/16 07:07:37 leo Exp $"
+VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.9 1998/07/03 23:45:10 mjacob Exp $"
 
 #if defined(__NetBSD__)
 #include "../../ic/aic7xxxreg.h"
@@ -905,9 +905,9 @@ mesgin_phasemis:
  */
 dma:
 	mov	DFCNTRL,SINDEX
-dma1:
-	test	SSTAT0,DMADONE	jnz dma3
-	test	SSTAT1,PHASEMIS	jz dma1		/* ie. underrun */
+dma_loop:
+	test	SSTAT0,DMADONE	jnz dma_checkfifo
+	test	SSTAT1,PHASEMIS	jz dma_loop		/* ie. underrun */
 
 /*
  * We will be "done" DMAing when the transfer count goes to zero, or
@@ -917,20 +917,30 @@ dma1:
  * magically on STCNT=0 or a phase change, so just wait for FIFO empty
  * status.
  */
-dma3:
-	test	SINDEX,DIRECTION	jnz dma5
-dma4:
-	test	DFSTATUS,FIFOEMP	jz dma4
-
+dma_checkfifo:
+	test	DFCNTRL,DIRECTION	jnz dma_fifoempty
+dma_fifoflush:
+	test	DFSTATUS,FIFOEMP	jz dma_fifoflush
+ 
+dma_fifoempty:
+	/* Don't clobber an inprogress host data transfer */ 
+	test	DFSTATUS, MREQPEND	jnz dma_fifoempty
 /*
- * Now shut the DMA enables off and make sure that the DMA enables are 
+ * Now shut the DMA enables off and make sure that the DMA enables are
  * actually off first lest we get an ILLSADDR.
  */
-dma5:
-	/* disable DMA, but maintain WIDEODD */
-	and	DFCNTRL,WIDEODD
-dma6:
-	test	DFCNTRL,0x38	jnz dma6  /* SCSIENACK|SDMAENACK|HDMAENACK */
+dma_dmadone:
+	and	DFCNTRL, 0xc7	/* ~(SCSIEN|SDMAEN|HDMAEN); */
+dma_halt:
+	/*
+	 * Some revisions of the aic7880 have a problem where, if the
+	 * data fifo is full, but the PCI input latch is not empty,
+	 * HDMAEN cannot be cleared.  The fix used here is to attempt
+	 * to drain the data fifo until there is space for the input
+	 * latch to drain and HDMAEN de-asserts.
+	 */
+	mov	NONE, DFDAT
+	test	DFCNTRL, HDMAEN jnz dma_halt
 return:
 	ret
 
