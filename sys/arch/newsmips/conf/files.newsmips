@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.16 2001/01/17 00:07:31 fvdl Exp $
+#	$NetBSD: files.newsmips,v 1.17 2001/01/25 13:13:59 tsutsui Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -54,7 +54,7 @@ attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-count
 
 device kb: wskbddev
-file arch/newsmips/dev/newskeymap.c		kb
+file dev/news/newskeymap.c			kb
 
 attach kb at hb with kb_hb
 file arch/newsmips/dev/kb_hb.c			kb_hb
