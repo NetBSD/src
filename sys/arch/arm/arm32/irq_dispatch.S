@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.1 2003/01/02 23:37:53 thorpej Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.2 2003/01/03 00:38:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -93,14 +93,36 @@
 	.align	0
 .Lastpending:
 	.word	_C_LABEL(astpending)
+.Lcurrent_intr_depth:
+	.word	_C_LABEL(current_intr_depth)
 
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
 
-	mov	r0, sp
+	/*
+	 * Increment the interrupt nesting depth and call the interrupt
+	 * dispatch routine.  We've pushed a frame, so we can safely use
+	 * callee-saved regs here.  We use the following registers, which
+	 * we expect to presist:
+	 *
+	 *	r5	address of `current_intr_depth' variable
+	 *	r6	old value of `current_intr_depth'
+	 */
+	ldr	r5, .Lcurrent_intr_depth
+	mov	r0, sp			/* arg for dispatcher */
+	ldr	r6, [r5]
+	add	r1, r6, #1
+	str	r1, [r5]
+
 	bl	ARM_IRQ_HANDLER
+
+	/*
+	 * Restore the old interrupt depth value (which should be the
+	 * same as decrementing it at this point).
+	 */
+	str	r6, [r5]
 
 	/*
 	 * If we're returning to user mode, check for pending ASTs.
@@ -138,6 +160,10 @@ ASENTRY_NP(irq_entry)
 
 	.global _C_LABEL(astpending)
 _C_LABEL(astpending):
+	.word	0
+
+	.global _C_LABEL(current_intr_depth)
+_C_LABEL(current_intr_depth):
 	.word	0
 
 	/*
