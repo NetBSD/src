@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.4 1996/12/29 10:34:07 cgd Exp $	*/
+/*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cu.c,v 1.4 1996/12/29 10:34:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -108,7 +108,7 @@ cumain(argc, argv)
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)sprintf(sbuf, "cu%d", BR);
+	(void)snprintf(sbuf, sizeof sbuf, "cu%d", BR);
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);

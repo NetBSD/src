@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.5 1996/12/29 10:42:02 cgd Exp $	*/
+/*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ventel.c,v 1.5 1996/12/29 10:42:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -105,7 +105,7 @@ ven_dialer(num, acu)
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
-		sprintf(line, "%d second dial timeout",
+		(void)snprintf(line, sizeof line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "ventel", line);
 	}
