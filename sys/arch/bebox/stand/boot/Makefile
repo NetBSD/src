@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/10/05 02:01:57 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.5 1998/10/26 00:45:47 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -6,18 +6,19 @@ BASE= boot
 PROG= ${BASE}.pef
 NEWVERSWHAT= "BOOT"
 
-SRCS= srt0.s boot.c clock.c com.c conf.c cons.c cpu.c crt.c devopen.c
-SRCS+= fd.c filesystem.c io.c monitor.c ns16550.c prf.c tgets.c vreset.c
-SRCS+= inkernel.c
+SRCS= srt0.s boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
+SRCS+= fd.c filesystem.c inkernel.c io.c pci.c tgets.c prf.c monitor.c
+SRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
 CLEANFILES+= vers.c vers.o netbsd.gz ${BASE} elf2pef
 
 CPPFLAGS= -I${.CURDIR}/../../.. -I${S} -I${S}/lib/libsa
 CPPFLAGS+= -DDBMONITOR -DRELOC=${RELOC} -DENTRY=${ENTRY}
+#CPPFLAGS+= -DCONS_BE
 CPPFLAGS+= -DCONS_VGA
 #CPPFLAGS+= -DCONS_SERIAL
 #CPPFLAGS+= -DCOMSPEED=9600 -DCOMPORT=0x3F8
-CPPFLAGS+= -DUSE_SCAN
+#CPPFLAGS+= -DUSE_SCAN
 
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 NOMAN=
