@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.241 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.242 2005/02/26 21:34:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.241 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.242 2005/02/26 21:34:56 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -3101,10 +3101,10 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
 		 * these requests come from kernel code (NOCRED case above)?
 		 */
 		return (suser(cred, &p->p_acflag));
-	
+
 	case EXTATTR_NAMESPACE_USER:
 		return (VOP_ACCESS(vp, access, cred, p));
-	
+
 	default:
 		return (EPERM);
 	}

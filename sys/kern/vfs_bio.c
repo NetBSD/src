@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.142 2005/02/26 21:34:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.141 2005/01/10 15:29:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.142 2005/02/26 21:34:56 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ buf_lotsfree(void)
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
 		return 1;
-	
+
 	/* Never allocate if greater than the high water mark. */
 	if (bufmem > bufmem_hiwater)
 		return 0;
@@ -676,7 +676,7 @@ breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
     int rabsize, struct ucred *cred, struct buf **bpp)
 {
 
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));	
+	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));
 }
 
 /*
@@ -706,7 +706,7 @@ bwrite(struct buf *bp)
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
 	 * synchronous, but the file system was mounted with MNT_ASYNC,
-	 * convert it to a delayed write.  
+	 * convert it to a delayed write.
 	 * XXX note that this relies on delayed tape writes being converted
 	 * to async, not sync writes (which is safe, but ugly).
 	 */
@@ -1100,7 +1100,7 @@ start:
 struct buf *
 geteblk(int size)
 {
-	struct buf *bp; 
+	struct buf *bp;
 	int s;
 
 	s = splbio();
@@ -1179,7 +1179,7 @@ allocbuf(struct buf *bp, int size, int preserve)
 /*
  * Find a buffer which is available for use.
  * Select something from a free list.
- * Preference is to AGE list, then LRU list.    
+ * Preference is to AGE list, then LRU list.
  *
  * Called at splbio and with buffer queues locked.
  * Return buffer locked.
@@ -1279,9 +1279,9 @@ start:
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = 0;
-	
+
 	bremhash(bp);
-	return (bp); 
+	return (bp);
 }
 
 /*
@@ -1342,7 +1342,7 @@ int
 biowait(struct buf *bp)
 {
 	int s, error;
-	
+
 	s = splbio();
 	simple_lock(&bp->b_interlock);
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))

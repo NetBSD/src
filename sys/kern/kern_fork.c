@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.119 2004/09/17 23:20:21 enami Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.120 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -7,8 +7,8 @@
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
- * 
- * Redistribution and use in source and binary forms, with or without  
+ *
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -23,7 +23,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -35,7 +35,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */   
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.119 2004/09/17 23:20:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.120 2005/02/26 21:34:55 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -373,7 +373,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
 
 	/*
-	 * p_stats. 
+	 * p_stats.
 	 * Copy parts of p_stats, and zero out the rest.
 	 */
 	p2->p_stats = pstatscopy(p1->p_stats);
@@ -402,8 +402,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize, 
-	    (func != NULL) ? func : child_return, 
+	newlwp(l1, p2, uaddr, inmem, 0, stack, stacksize,
+	    (func != NULL) ? func : child_return,
 	    arg, &l2);
 
 	/* Now safe for scheduler to see child process */

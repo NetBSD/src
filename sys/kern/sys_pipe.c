@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.63 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.63 2005/02/26 21:34:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $
 /*
  * interfaces to the outside world
  */
-static int pipe_read(struct file *fp, off_t *offset, struct uio *uio, 
+static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
-static int pipe_write(struct file *fp, off_t *offset, struct uio *uio, 
+static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
 static int pipe_close(struct file *fp, struct proc *p);
 static int pipe_poll(struct file *fp, int events, struct proc *p);
@@ -316,7 +316,7 @@ pipe_create(pipep, allockva)
 
 	pipe = *pipep = pool_get(&pipe_pool, PR_WAITOK);
 
-	/* Initialize */ 
+	/* Initialize */
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
@@ -968,7 +968,7 @@ retry:
 			else
 				size = space;
 			/*
-			 * First segment to transfer is minimum of 
+			 * First segment to transfer is minimum of
 			 * transfer size and contiguous space in
 			 * pipe buffer.  If first segment to transfer
 			 * is less than the transfer size, we've got
@@ -982,7 +982,7 @@ retry:
 			error = uiomove(&bp->buffer[bp->in], segsize, uio);
 
 			if (error == 0 && segsize < size) {
-				/* 
+				/*
 				 * Transfer remaining part now, to
 				 * support atomic writes.  Wraparound
 				 * happened.
@@ -1432,7 +1432,7 @@ filt_pipewrite(struct knote *kn, long hint)
 	/* XXXSMP: race for peer */
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
-		kn->kn_flags |= EV_EOF; 
+		kn->kn_flags |= EV_EOF;
 		if ((hint & NOTE_SUBMIT) == 0)
 			PIPE_UNLOCK(rpipe);
 		return (1);
