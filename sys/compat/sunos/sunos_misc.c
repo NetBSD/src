@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.60 1996/01/05 16:53:14 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.61 1996/02/18 14:46:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
 #include <vm/vm.h>
@@ -218,6 +218,30 @@ sunos_sys_unmount(p, v, retval)
 	return (sys_unmount(p, &ouap, retval));
 }
 
+/*
+ * Conversion table for SunOS NFS mount flags.
+ */
+static struct {
+	int	sun_flg;
+	int	bsd_flg;
+} sunnfs_flgtab[] = {
+	{ SUNNFS_SOFT,		NFSMNT_SOFT },
+	{ SUNNFS_WSIZE,		NFSMNT_WSIZE },
+	{ SUNNFS_RSIZE,		NFSMNT_RSIZE },
+	{ SUNNFS_TIMEO,		NFSMNT_TIMEO },
+	{ SUNNFS_RETRANS,	NFSMNT_RETRANS },
+	{ SUNNFS_HOSTNAME,	0 },			/* Ignored */
+	{ SUNNFS_INT,		NFSMNT_INT },
+	{ SUNNFS_NOAC,		0 },			/* Ignored */
+	{ SUNNFS_ACREGMIN,	0 },			/* Ignored */
+	{ SUNNFS_ACREGMAX,	0 },			/* Ignored */
+	{ SUNNFS_ACDIRMIN,	0 },			/* Ignored */
+	{ SUNNFS_ACDIRMAX,	0 },			/* Ignored */
+	{ SUNNFS_SECURE,	0 },			/* Ignored */
+	{ SUNNFS_NOCTO,		0 },			/* Ignored */
+	{ SUNNFS_POSIX,		0 }			/* Ignored */
+};
+
 int
 sunos_sys_mount(p, v, retval)
 	struct proc *p;
@@ -255,6 +279,7 @@ sunos_sys_mount(p, v, retval)
 		struct sockaddr_in sain;
 		struct nfs_args na;
 		struct sockaddr sa;
+		int n;
 
 		if (error = copyin(SCARG(uap, data), &sna, sizeof sna))
 			return (error);
@@ -263,12 +288,19 @@ sunos_sys_mount(p, v, retval)
 		bcopy(&sain, &sa, sizeof sa);
 		sa.sa_len = sizeof(sain);
 		SCARG(uap, data) = STACKGAPBASE;
-		na.addr = (struct sockaddr *)((int)SCARG(uap, data) + sizeof na);
+		na.version = NFS_ARGSVERSION;
+		na.addr = (struct sockaddr *)
+			  ((int)SCARG(uap, data) + sizeof na);
 		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
-		na.fh = (nfsv2fh_t *)sna.fh;
-		na.flags = sna.flags;
+		na.fh = (void *)sna.fh;
+		na.fhsize = NFSX_V2FH;
+		na.flags = 0;
+		n = sizeof(sunnfs_flgtab) / sizeof(sunnfs_flgtab[0]);
+		while (--n >= 0)
+			if (sna.flags & sunnfs_flgtab[n].sun_flg)
+				na.flags |= sunnfs_flgtab[n].bsd_flg;
 		na.wsize = sna.wsize;
 		na.rsize = sna.rsize;
 		na.timeo = sna.timeo;
