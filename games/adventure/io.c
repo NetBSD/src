@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.4 1997/08/11 14:06:15 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.5 1997/10/10 11:59:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.4 1997/08/11 14:06:15 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.5 1997/10/10 11:59:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: io.c,v 1.4 1997/08/11 14:06:15 christos Exp $");
 void
 getin(wrd1,wrd2)                        /* get command from user        */
 char **wrd1,**wrd2;                     /* no prompt, usually           */
-{       register char *s;
+{       char *s;
 	static char wd1buf[MAXSTR],wd2buf[MAXSTR];
 	int first, numch;
 
@@ -102,7 +102,7 @@ char **wrd1,**wrd2;                     /* no prompt, usually           */
 int
 confirm(mesg)                           /* confirm irreversible action  */
 char *mesg;
-{       register int result;
+{       int result;
 	printf("%s",mesg);              /* tell him what he did         */
 	if (getchar()=='y')             /* was his first letter a 'y'?  */
 		result=1;
@@ -114,8 +114,8 @@ char *mesg;
 int
 yes(x,y,z)                              /* confirm with rspeak          */
 int x,y,z;
-{       register int result = TRUE;	/* pacify gcc */
-	register char ch;
+{       int result = TRUE;	/* pacify gcc */
+	char ch;
 	for (;;)
 	{       rspeak(x);                     /* tell him what we want*/
 		if ((ch=getchar())=='y')
@@ -133,8 +133,8 @@ int x,y,z;
 int
 yesm(x,y,z)                             /* confirm with mspeak          */
 int x,y,z;
-{       register int result = TRUE;	/* pacify gcc */
-	register char ch;
+{       int result = TRUE;	/* pacify gcc */
+	char ch;
 	for (;;)
 	{       mspeak(x);                     /* tell him what we want*/
 		if ((ch=getchar())=='y')
@@ -176,8 +176,8 @@ char breakch;                           /* tell which char ended rnum   */
 
 void
 rdata()                                 /* "read" data from virtual file*/
-{       register int sect;
-	register char ch;
+{       int sect;
+	char ch;
 
 	inptr = data_file;              /* Pointer to virtual data file */
 	srandom(SEED);                  /* which is lightly encrypted.  */
@@ -247,7 +247,7 @@ char nbf[12];
 
 int
 rnum()                                  /* read initial location num    */
-{       register char *s;
+{       char *s;
 	tape = iotape;                  /* restart encryption tape      */
 	for (s=nbf,*s=0;; s++)
 		if ((*s=next())==TAB || *s=='\n' || *s==LF)
@@ -263,7 +263,7 @@ char *seekhere;
 void
 rdesc(sect)                             /* read description-format msgs */
 int sect;
-{	register int locc;
+{	int locc;
 	char *seekstart, *maystart;
 
 	seekhere = inptr;               /* Where are we in virtual file?*/
@@ -328,9 +328,9 @@ int sect;
 
 void
 rtrav()                                 /* read travel table            */
-{       register int locc;
-	register struct travlist *t = NULL;
-	register char *s;
+{       int locc;
+	struct travlist *t = NULL;
+	char *s;
 	char buf[12];
 	int len,m,n,entries = 0;
 
@@ -377,7 +377,7 @@ rtrav()                                 /* read travel table            */
 void
 twrite(loq)                             /* travel options from this loc */
 int loq;
-{       register struct travlist *t;
+{       struct travlist *t;
 	printf("If");
 	speak(&ltext[loq]);
 	printf("then\n");
@@ -397,8 +397,8 @@ int loq;
 
 void
 rvoc()
-{       register char *s;               /* read the vocabulary          */
-	register int index;
+{       char *s;               /* read the vocabulary          */
+	int index;
 	char buf[6];
 	for (;;)
 	{       index=rnum();
@@ -437,7 +437,7 @@ rdflt()                                 /* default verb messages        */
 
 void
 rliq()                                  /* liquid assets &c: cond bits  */
-{       register int bitnum;
+{       int bitnum;
 	for (;;)                        /* read new bit list            */
 	{       if ((bitnum=rnum())<0) break;
 		for (;;)                /* read locs for bits           */
@@ -449,7 +449,7 @@ rliq()                                  /* liquid assets &c: cond bits  */
 
 void
 rhints()
-{       register int hintnum,i;
+{       int hintnum,i;
 	hntmax=0;
 	for (;;)
 	{       if ((hintnum=rnum())<0) break;
@@ -478,7 +478,7 @@ void
 speak(msg)       /* read, decrypt, and print a message (not ptext)      */
 struct text *msg;/* msg is a pointer to seek address and length of mess */
 {
-	register char *s, nonfirst;
+	char *s, nonfirst;
 
 	s = msg->seekadr;
 	nonfirst=0;
@@ -504,7 +504,7 @@ pspeak(m,skip) /* read, decrypt an print a ptext message              */
 int m;         /* msg is the number of all the p msgs for this place  */
 int skip;       /* assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c*/
 {
-	register char *s,nonfirst;
+	char *s,nonfirst;
 	char *numst, save;
 	struct text *msg;
 	char *tbuf;
