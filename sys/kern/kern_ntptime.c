@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.23 2003/04/16 21:35:07 dsl Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.24 2003/12/04 19:23:00 drochner Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23 2003/04/16 21:35:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.24 2003/12/04 19:23:00 drochner Exp $");
 
 #include "opt_ntp.h"
 
@@ -83,7 +83,7 @@ extern long time_esterror;	/* estimated error (us) */
 extern long time_constant;	/* pll time constant */
 extern long time_precision;	/* clock precision (us) */
 extern long time_tolerance;	/* frequency tolerance (scaled ppm) */
-extern int time_adjusted;	/* ntp might have changes the system time */
+extern int time_adjusted;	/* ntp might have changed the system time */
 
 #ifdef PPS_SYNC
 /*
