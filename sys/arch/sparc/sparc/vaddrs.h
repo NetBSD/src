@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.9 1998/08/23 09:53:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -89,16 +89,27 @@
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
 #define	IODEV_END	0xff000000		/* 16 MB of iospace */
 
-#define	DVMA_BASE	0xfff00000
-#define	DVMA_END	0xfffc0000
+/*
+ * DVMA range for 24 bit devices.
+ */
+#define	D24_DVMA_BASE	0xff000000
+#define	D24_DVMA_END	VME4_DVMA_BASE
+
+/*
+ * DMA on sun4 VME devices use the last MB of virtual space, which
+ * is mapped by hardware onto the first MB of VME space.
+ * The DVMA area ends before the PROM mappings appear in the address space.
+ */
+#define	VME4_DVMA_BASE	0xfff00000
+#define	VME4_DVMA_END	0xfffc0000
 
 /*
  * The next constant defines the amount of reserved DVMA space on the
  * Sun4m. The amount of space *must* be a multiple of 16MB, and thus
- * (((u_int)0) - DVMA4M_BASE) must be divisible by 16*1024*1024!
+ * (((u_int)0) - IOMMU_DVMA_BASE) must be divisible by 16*1024*1024!
  * Note that pagetables must be allocated at a cost of 1k per MB of DVMA
- * space, plus severe alignment restrictions. So don't make DVMA4M_BASE too
- * low (max space = 2G).
+ * space, plus severe alignment restrictions. So don't make IOMMU_DVMA_BASE
+ * too low (max space = 2G).
  *
  * Since DVMA space overlaps with normal kernel address space (notably
  * the device mappings and the PROM), we don't want to put any DVMA
@@ -111,10 +122,12 @@
  * avoid consistency problems, DVMA addresses must map to the same place
  * in both processor and IOMMU space.
  */
-#define DVMA4M_BASE	0xfc000000	/* can change subject to above rule */
-#define DVMA4M_TOP	0xffffffff 	/* do not modify */
-#define DVMA4M_START	0xfd000000	/* 16M of DVMA */
-#define DVMA4M_END	0xfe000000	/* XXX is this enough? */
+#define IOMMU_DVMA_BASE	0xfc000000	/* can change subject to above rule */
+#if 0
+#define IOMMU_DVMA_TOP	0xffffffff 	/* do not modify */
+#define IOMMU_DVMA_START 0xfd000000	/* 16M of DVMA */
+#endif
+#define IOMMU_DVMA_END	0xfe000000	/* XXX is this enough? */
 
 /*
  * Virtual address of the per cpu `cpu_softc' structure.
