@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mmap.c,v 1.1 2003/06/25 09:51:37 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mmap.c,v 1.2 2004/10/17 22:21:43 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mmap.c,v 1.1 2003/06/25 09:51:37 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mmap.c,v 1.2 2004/10/17 22:21:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,38 +48,39 @@ __RCSID("$NetBSD: citrus_mmap.c,v 1.1 2003/06/25 09:51:37 tshiozak Exp $");
 
 int
 _citrus_map_file(struct _citrus_region * __restrict r,
-		 const char * __restrict path)
+    const char * __restrict path)
 {
-	int fd, ret;
+	int fd, ret = 0;
 	struct stat st;
 	void *head;
 
 	_DIAGASSERT(r != NULL);
 
 	_region_init(r, NULL, 0);
-	fd = open(path, O_RDONLY);
-	if (fd<0)
-		return (errno);
-	if (fstat(fd, &st)) {
+
+	if ((fd = open(path, O_RDONLY)) == -1)
+		return errno;
+
+	if (fstat(fd, &st)  == -1) {
 		ret = errno;
-		close(fd);
-		return ret;
+		goto error;
 	}
-	if ((st.st_mode & S_IFMT) != S_IFREG) {
-		close(fd);
-		return EOPNOTSUPP;
+	if (!S_ISREG(st.st_mode)) {
+		ret = EOPNOTSUPP;
+		goto error;
 	}
+
 	head = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE|MAP_PRIVATE,
-		    fd, (off_t)0);
-	if (!head) {
+	    fd, (off_t)0);
+	if (head == MAP_FAILED) {
 		ret = errno;
-		close(fd);
-		return ret;
+		goto error;
 	}
 	_region_init(r, head, (size_t)st.st_size);
-	close(fd);
 
-	return 0;
+error:
+	(void)close(fd);
+	return ret;
 }
 
 void
@@ -89,7 +90,7 @@ _citrus_unmap_file(struct _citrus_region *r)
 	_DIAGASSERT(r != NULL);
 
 	if (_region_head(r) != NULL) {
-		munmap(_region_head(r), _region_size(r));
+		(void)munmap(_region_head(r), _region_size(r));
 		_region_init(r, NULL, 0);
 	}
 }
