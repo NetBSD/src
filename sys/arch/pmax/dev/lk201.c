@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.6 1997/05/25 05:26:00 jonathan Exp $ */
+/* $NetBSD: lk201.c,v 1.7 1998/02/05 05:19:45 jonathan Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -391,6 +391,6 @@ MouseInit(mdev, putc, getc)
 	 * For some reason, the mouse doesn't see this command if it comes
 	 * too soon after a self test.
 	 */
-	DELAY(100);
+	DELAY(150);
 	(*putc)(mdev, MOUSE_INCREMENTAL);
 }
