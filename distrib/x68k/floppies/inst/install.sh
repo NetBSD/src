@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.2 1996/06/17 04:12:19 oki Exp $
+#	$Id: install.sh,v 1.3 1996/07/08 19:36:21 oki Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +38,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -57,14 +57,14 @@ echo	"manual, the installation notes, and a calculator handy."
 echo	""
 echo	"In particular, you will need to know some reasonably detailed"
 echo	"information about your disk's geometry, because there is currently"
-echo	"no way this this program can figure that information out."
+echo	"no way this program can figure that information out."
 echo	""
 echo	"As with anything which modifies your hard drive's contents, this"
 echo	"program can cause SIGNIFICANT data loss, and you are advised"
 echo	"to make sure your hard drive is backed up before beginning the"
 echo	"installation process."
 echo	""
-echo	"Default answers are displyed in brackets after the questions."
+echo	"Default answers are displayed in brackets after the questions."
 echo	"You can hit Control-C at any time to quit, but if you do so at a"
 echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
 echo	"installation may leave your system in an inconsistent state."
@@ -112,7 +112,7 @@ echo	"Note that they may not exist in _your_ machine; the list of"
 echo	"disks in your machine was printed when the system was booting."
 echo	""
 while [ "X${drivename}" = "X" ]; do
-	echo -n	"Which disk would like to install on? [${prefdrive}] "
+	echo -n	"Which disk would you like to install on? [${prefdrive}] "
 	getresp ${prefdrive}
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
@@ -207,17 +207,9 @@ if [ $sizeunit = "sectors" ]; then
 	echo	"multiples of the cylinder size ($cylindersize sectors)."
 fi
 
-echo -n ""
-echo -n "Size of NetBSD portion of disk (in $sizeunit)? "
-getresp
-partition=$resp
-partition_sects=`expr $resp \* $sizemult`
 part_offset=0
-if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of NetBSD portion of disk (in $sizeunit)? "
-	getresp
-	part_offset=$resp
-fi
+partition_sects=`expr $disksize - 64`
+partition=`expr $partition_sects / $sizemult`
 badspacesec=0
 if [ "$sect_fwd" = "sf:" ]; then
 	badspacecyl=`expr $sects_per_track + 126`
@@ -277,7 +269,7 @@ echo	""
 
 fragsize=1024
 blocksize=8192
-$DONTDOIT mount -u /dev/fd0a /
+$DONTDOIT mount -u /dev/fd0c /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
 echo	"$labelname|NetBSD installation generated:\\" >> $DT
@@ -286,15 +278,12 @@ echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
 echo	":nt#${tracks_per_cyl}:\\" >> $DT
 echo	"	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
 _size=`expr $root \* $sizemult`
-_offset=`expr $root_offset \* $sizemult`
+_offset=`expr $root_offset \* $sizemult + 64`
 echo -n	"	:pa#${_size}:oa#${_offset}" >> $DT
 echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
 _size=`expr $swap \* $sizemult`
-_offset=`expr $swap_offset \* $sizemult`
+_offset=`expr $swap_offset \* $sizemult + 64`
 echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-_size=`expr $partition \* $sizemult`
-_offset=`expr $part_offset \* $sizemult`
-echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
 echo	"to be created in the NetBSD portion of the disk.  This process will"
@@ -333,35 +322,35 @@ while [ $part_used -lt $partition ]; do
 		dname=$part_name
 		offset=`expr $part_offset + $root + $swap`
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pd#${_size}:od#${_offset}" >> $DT
-		echo ":te=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
+		echo ":td=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$ename" = "" ]; then
 		ename=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
 		echo ":te=4.2BSD:be#${blocksize}:fe#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$fname" = "" ]; then
 		fname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pf#${_size}:of#${_offset}" >> $DT
 		echo ":tf=4.2BSD:bf#${blocksize}:ff#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$gname" = "" ]; then
 		gname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:pg#${_size}:og#${_offset}" >> $DT
 		echo ":tg=4.2BSD:bg#${blocksize}:fg#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
 	elif [ "$hname" = "" ]; then
 		hname=$part_name
 		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
+		_offset=`expr $offset \* $sizemult + 64`
 		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
 		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
 		part_used=$partition
@@ -399,8 +388,8 @@ done
 
 echo	""
 echo -n	"Labeling disk $drivename..."
-$DONTDOIT dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
 $DONTDOIT disklabel -w $drivename $labelname
+$DONTDOIT dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
 echo	" done."
 
 if [ "$sect_fwd" = "sf:" ]; then
