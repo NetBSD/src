@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 1997/02/12 04:29:10 scottr Exp $
+#	$NetBSD: GENERIC,v 1.57 1997/02/14 06:23:14 scottr Exp $
 #
 # GENERIC
 
@@ -107,6 +107,7 @@ pseudo-device	pty		16
 pseudo-device	bpfilter	12
 pseudo-device	vnd		2
 pseudo-device	ccd		2
+pseudo-device	md		1
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl
