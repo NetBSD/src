@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.11 1999/08/04 18:40:47 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.12 1999/09/05 14:26:34 jdolecek Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -316,59 +316,8 @@ ext2fs_lookup(v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		int vpid;	/* capability number of vnode */
-
-		if (error == ENOENT)
-			return (error);
-		/*
-		 * Get the next vnode in the path.
-		 * See comment below starting `Step through' for
-		 * an explaination of the locking protocol.
-		 */
-		pdp = vdp;
-		dp = VTOI(*vpp);
-		vdp = *vpp;
-		vpid = vdp->v_id;
-		if (pdp == vdp) {   /* lookup on "." */
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-			error = vget(vdp, LK_EXCLUSIVE);
-			if (!error && lockparent && (flags & ISLASTCN)) {
-				error = vn_lock(pdp, LK_EXCLUSIVE);
-				if (error == 0)
-					cnp->cn_flags &= ~PDIRUNLOCK;
-			}
-		} else {
-			error = vget(vdp, LK_EXCLUSIVE);
-			if (!lockparent || error || !(flags & ISLASTCN)) {
-				VOP_UNLOCK(pdp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-		}
-		/*
-		 * Check that the capability number did not change
-		 * while we were waiting for the lock.
-		 */
-		if (!error) {
-			if (vpid == vdp->v_id)
-				return (0);
-			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
-				VOP_UNLOCK(pdp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-		}
-		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
-			return (error);
-		cnp->cn_flags &= ~PDIRUNLOCK;
-		vdp = pdp;
-		dp = VTOI(pdp);
-		*vpp = NULL;
-	}
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
 	/*
 	 * Suppress search for slots unless creating
