@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.12 1998/05/06 19:17:38 kleink Exp $	*/
+/*	$NetBSD: pwd.h,v 1.13 1998/06/08 03:05:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -70,6 +70,9 @@
 #define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
 #define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
 
+#define _PASSWORD_OLDFMT	0x10	/* flag to expect an old style entry */
+#define _PASSWORD_NOWARN	0x20	/* no warnings for bad entries */
+
 #define _PASSWORD_WARNDAYS	14	/* days to warn about expiry */
 #define _PASSWORD_CHGNOW	-1	/* special day to force password
 					 * change at next login */
@@ -99,6 +102,7 @@ void		 setpwent __P((void));
 void		 endpwent __P((void));
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+int		 pw_scan __P((char *bp, struct passwd *pw, int *flags));
 int		 setpassent __P((int));
 char		*user_from_uid __P((uid_t, int));
 #endif
