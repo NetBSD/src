@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.48 2002/07/02 20:27:46 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.49 2002/07/26 06:04:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.48 2002/07/02 20:27:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.49 2002/07/26 06:04:12 enami Exp $");
 
 #include "opt_kstack.h"
 
@@ -371,8 +371,10 @@ enterpgrp(p, pgid, mksess)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
-		if ((np = pfind(savepid)) == NULL || np != p)
+		if ((np = pfind(savepid)) == NULL || np != p) {
+			pool_put(&pgrp_pool, pgrp);
 			return (ESRCH);
+		}
 		if (mksess) {
 			struct session *sess;
 
@@ -381,6 +383,11 @@ enterpgrp(p, pgid, mksess)
 			 */
 			MALLOC(sess, struct session *, sizeof(struct session),
 			    M_SESSION, M_WAITOK);
+			if ((np = pfind(savepid)) == NULL || np != p) {
+				FREE(sess, M_SESSION);
+				pool_put(&pgrp_pool, pgrp);
+				return (ESRCH);
+			}
 			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
 			sess->s_count = 1;
@@ -539,13 +546,11 @@ p_sugid(p)
 			newlim = limcopy(p->p_limit);
 			limfree(p->p_limit);
 			p->p_limit = newlim;
-		} else {
-			free(p->p_limit->pl_corename, M_TEMP);
 		}
+		free(p->p_limit->pl_corename, M_TEMP);
 		p->p_limit->pl_corename = defcorename;
 	}
 }
-
 
 #ifdef DEBUG
 void
