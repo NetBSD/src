@@ -2409,7 +2409,7 @@ for machine in $build $host $target; do
 	arm*-*-netbsd*)
 		tm_file=arm/netbsd.h
 		xm_file=arm/xm-netbsd.h
-		tmake_file="t-netbsd arm/t-netbsd"
+		tmake_file=t-netbsd
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		gas=yes
