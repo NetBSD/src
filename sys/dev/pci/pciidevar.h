@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.12 2003/10/08 11:51:59 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.13 2003/10/24 00:24:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -118,7 +118,6 @@ struct pciide_product_desc {
 };
 
 /* Flags for ide_flags */
-#define IDE_PCI_CLASS_OVERRIDE	0x0001 /* accept even if class != pciide */
 #define	IDE_16BIT_IOSPACE	0x0002 /* I/O space BARS ignore upper word */
 
 
