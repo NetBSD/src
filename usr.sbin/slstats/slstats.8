@@ -1,4 +1,4 @@
-.\"	$NetBSD: slstats.8,v 1.8 2002/01/19 11:45:02 wiz Exp $
+.\"	$NetBSD: slstats.8,v 1.9 2002/02/02 01:52:32 wiz Exp $
 .\"
 .Dd July 5, 1993
 .Dt SLSTATS 8
@@ -13,7 +13,6 @@
 .Op Fl i Ar interval
 .Op Ar unit-number
 .Sh DESCRIPTION
-.Pp
 The
 .Nm
 utility reports slip-related statistics for the
@@ -95,9 +94,8 @@ compressed packet.  Only reported when the
 .Fl v
 option is specified.
 .El
-.Sh BUGS
-Should take an interface name and not a unit number.
-.Pp
 .Sh SEE ALSO
 .Xr sl 4 ,
-.Xr sliplogin 8 .
+.Xr sliplogin 8
+.Sh BUGS
+Should take an interface name and not a unit number.
