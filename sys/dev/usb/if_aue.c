@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.11 2000/01/17 02:20:43 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.12 2000/01/17 13:23:05 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1182,7 +1182,7 @@ aue_rxeof(xfer, priv, status)
 		c->aue_accum = AUE_CUTOFF;
 		usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
 		    c, c->aue_buf,
-		    AUE_CUTOFF, USBD_SHORT_XFER_OK,
+		    AUE_CUTOFF, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 		    USBD_NO_TIMEOUT, aue_rxeof);
 		DPRINTFN(5,("%s: %s: extra rx\n", USBDEVNAME(sc->aue_dev),
 			    __FUNCTION__));
