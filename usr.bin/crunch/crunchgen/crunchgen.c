@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.26 2001/10/21 23:06:59 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.27 2001/11/07 04:48:07 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.26 2001/10/21 23:06:59 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.27 2001/11/07 04:48:07 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -820,6 +820,7 @@ void top_makefile_rules(FILE *outmk)
     for(p = progs; p != NULL; p = p->next)
 	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
+    fprintf(outmk, "LDSTATIC=-static\n");
     fprintf(outmk, "DPADD+= ${CRUNCHED_OBJS}\n");
     fprintf(outmk, "LDADD+= ${CRUNCHED_OBJS} ");
     output_strlst(outmk, libs);
