@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.2 1996/08/08 23:42:30 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.3 1996/08/09 00:00:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,6 +84,13 @@ struct extent_fixed {
 #define EX_CATCH	0x04		/* catch signals while sleeping */
 #define EX_NOBLOB	0x08		/* create a non-blobbing extent */
 #define EX_MALLOCOK	0x10		/* safe to call malloc() */
+
+/*
+ * Special place holders for "alignment" and "boundary" arguments,
+ * in the event the caller doesn't wish to use those features.
+ */
+#define EX_NOALIGN	1		/* don't do alignment */
+#define EX_NOBOUNDARY	0		/* don't do boundary checking */
 
 #ifdef _KERNEL
 #define EXTENT_ALIGN(_start, _align)	\
