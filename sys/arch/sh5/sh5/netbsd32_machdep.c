@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1 2002/10/23 13:26:37 scw Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.2 2002/10/24 13:58:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,6 +65,8 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <sh5/fpu.h>
 
 char	machine_arch32[] = "sh5";
 
@@ -163,7 +165,7 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 *
 	 * With FPSCR.DN set, denormalised numbers are quietly flushed to zero.
 	 */
-	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = 0x20000;
+	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = SH5_FPSCR_DN_FLUSH_ZERO;
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/10/23 13:26:35 scw Exp $
+#	$NetBSD: Makefile,v 1.9 2002/10/24 13:58:48 scw Exp $
 
 KDIR=	/sys/arch/sh5/include
 INCSDIR= /usr/include/sh5
@@ -8,7 +8,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h conreg.h cpu.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h \
+	float.h fpu.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	limits.h lock.h \
