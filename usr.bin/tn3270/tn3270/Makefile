@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 1998/03/04 13:16:10 christos Exp $
+#	$NetBSD: Makefile,v 1.30 1999/03/06 16:21:58 itohy Exp $
 
 CPPFLAGS+=-I${.CURDIR}/../../../lib -I${.CURDIR}/../../telnet
 LDADD+=	-lcurses -lcrypt
@@ -64,3 +64,7 @@ CLEANFILES+=	TMPfunc.out kbd.tmp
 .PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
 .PATH: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet
 .PATH: ${.CURDIR}/../../../lib/libtelnet
+
+astosc.o:	astosc.out
+disp_asc.o:	asc_disp.out disp_asc.out
+inbound.o:	kbd.out
