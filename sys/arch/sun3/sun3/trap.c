@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.115 2003/11/08 12:17:25 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.116 2004/03/14 01:08:49 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2003/11/08 12:17:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2004/03/14 01:08:49 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -539,8 +539,7 @@ trap(type, code, v, tf)
 			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
 		} else if (l->l_flag & L_SA) {
-			KDASSERT(p != NULL && p->p_sa != NULL);
-			p->p_sa->sa_vp_faultaddr = (vaddr_t)v;
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 
