@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.31 2003/08/22 21:53:09 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.32 2003/09/06 03:36:33 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -294,6 +294,9 @@ int	none_input __P((struct mbuf **, int *, int));
 struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 	struct ip6_pktopts *, struct ip6_moptions *, struct route_in6 *,
 	struct in6_addr *, int *));
+
+u_int32_t ip6_randomid __P((void));
+u_int32_t ip6_randomflowlabel __P((void));
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

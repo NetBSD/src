@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.79 2003/08/22 22:00:37 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.80 2003/09/06 03:36:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.79 2003/08/22 22:00:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.80 2003/09/06 03:36:30 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1564,7 +1564,7 @@ encap_send(ip, vifp, m)
 	 */
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
-	ip_copy->ip_id = htons(ip_id++);
+	ip_copy->ip_id = htons(ip_randomid());
 	ip_copy->ip_len = htons(len);
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
