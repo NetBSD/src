@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.52 2001/07/14 02:08:30 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.53 2001/07/29 21:23:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -731,16 +731,16 @@ struct elf_args {
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
-void	*elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-	    void *, void *));
+int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 
 #ifdef EXEC_ELF64
 int	exec_elf64_makecmds __P((struct proc *, struct exec_package *));
 int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
-	    caddr_t, int));
-void	*elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-	    void *, void *));
+    caddr_t, int));
+void	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 
 /* common */
