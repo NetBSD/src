@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.2 1998/02/05 04:57:11 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.3 1999/03/04 08:06:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
  */
 
 #include <sys/types.h>
-#include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
 
@@ -66,7 +65,7 @@ idprom_cksum(p)
 {
 	int len, x;
 
-	len = sizeof(struct idprom);
+	len = IDPROM_CKSUM_SIZE;
 	x = 0;	/* xor of data */
 	do x ^= *p++;
 	while (--len > 0);
@@ -109,62 +108,52 @@ idprom_init()
 void
 idprom_init3()
 {
-	u_char *dst;
-	vm_offset_t src;	/* control space address */
-	int len, x, xorsum;
 
 	/* Copy the IDPROM contents and do the checksum. */
-	dst = (u_char *) &identity_prom;
-	src = 0;	/* XXX */
-	len = sizeof(struct idprom);
-	do {
-		x = get_control_byte(src++);
-		*dst++ = x;
-	} while (--len > 0);
-
-	x = idprom_cksum((char *) &identity_prom);
-	if (x != 0)
-		mon_printf("idprom: bad checksum\n");
+	sun3_getidprom((u_char *) &identity_prom);
+	if (idprom_cksum((u_char *) &identity_prom))
+		printf("idprom: bad checksum\n");
 }
-
-
 
 /*
  * Sun3X version:
  * Rather than do all the map-in/probe work to find the idprom,
- * we can cheat!  We _know_ the monitor already made of copy of
+ * we can cheat!  We _know_ the monitor already made a copy of
  * the IDPROM in its data page.  All we have to do is find it.
  *
- * Yeah, this is sorta gross...  This is not needed any longer
- * because netif_sun.c now can use the "advertised" function
- * in 3.x PROMs to get the ethernet address.  Let's keep this
- * bit of trickery around for a while anyway, just in case...
+ * Yeah, this is sorta gross...  Only used on old PROMs that
+ * do not have a sif_macaddr function (rev < 3.0).  The area
+ * to search was determined from some "insider" info. about
+ * the layout of the PROM data area.
  */
 void
 idprom_init3x()
 {
-	u_short *p;
-	int x;
+	u_char *p;
 
-	/* Search for it.  Range determined empirically. */
-	for (p = (u_short *)(SUN3X_MONDATA + 0x0400);
-	     p < (u_short *)(SUN3X_MONDATA + 0x1c00); p++)
+	printf("idprom: Sun3X search for soft copy...\n");
+
+	for (p = (u_char *)(SUN3X_MONDATA + 0x0400);
+	     p < (u_char *)(SUN3X_MONDATA + 0x1c00); p++)
 	{
-		/* first some quick checks */
-		if ((p[0] & 0xfffc) != 0x140)
+		/* first check for some constants */
+		if (p[0] != 0x01) /* format */
 			continue;
-		if (p[1] != 0x0800)
+		if (p[2] != 0x08) /* ether[0] */
+			continue;
+		if (p[3] != 0x00) /* ether[1] */
+			continue;
+		if (p[4] != 0x20) /* ether[2] */
+			continue;
+		if ((p[1] & 0xfc) != IDM_ARCH_SUN3X)
 			continue;
 		/* Looks plausible.  Try the checksum. */
-		x = idprom_cksum((u_char *) p);
-		if (x == 0)
+		if (idprom_cksum(p) == 0)
 			goto found;
 	}
 	panic("idprom: not found in monitor data\n");
 
 found:
-#ifdef	DEBUG
 	printf("idprom: copy found at 0x%x\n", (int)p);
-#endif
 	bcopy(p, &identity_prom, sizeof(struct idprom));
 }
