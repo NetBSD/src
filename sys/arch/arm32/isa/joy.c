@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.3 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy.c,v 1.4 2002/01/07 22:58:08 chris Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -47,7 +47,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/joystick.h>
-#include <machine/conf.h>
+#include <arm/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
