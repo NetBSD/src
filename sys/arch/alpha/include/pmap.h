@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.19 1998/05/19 02:04:28 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.20 1998/05/20 04:05:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,9 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
+#include <sys/lock.h>
 #include <sys/queue.h>
+
 #include <machine/pte.h>
 
 /*
@@ -96,7 +98,7 @@ struct pmap {
 	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
+	struct simplelock	pm_slock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_nlev2;	/* level 2 pt page count */
 	long			pm_nlev3;	/* level 3 pt page count */
@@ -128,6 +130,7 @@ typedef struct pv_entry {
  */
 struct pv_head {
 	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
+	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 	int pvh_usage;				/* page usage */
 	int pvh_refcnt;				/* special use ref count */
