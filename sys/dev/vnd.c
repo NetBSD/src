@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.27 1996/07/10 18:15:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -389,7 +389,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
+		printf("vndstart(%ld): bp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
@@ -414,7 +414,7 @@ vndiodone(bp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
+		printf("vndiodone(%ld): vbp %p vp %p blkno %x addr %p cnt %lx\n",
 		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif
@@ -564,7 +564,7 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %x\n",
+			printf("vndioctl: SET vp %p size %lx\n",
 			    vnd->sc_vp, vnd->sc_size);
 #endif
 
