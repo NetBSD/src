@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.6 1993/10/14 23:03:41 jtc Exp $";
+static char rcsid[] = "$Id: print.c,v 1.7 1994/01/13 21:50:41 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -297,8 +297,8 @@ printlink(p)
 	if (p->fts_level == FTS_ROOTLEVEL)
 		(void)snprintf(name, sizeof(name), "%s", p->fts_name);
 	else 
-		(void)snprintf(name, sizeof(name),
-		    "%s/%s", p->fts_path, p->fts_name);
+		(void)snprintf(name, sizeof(name), "%s/%s",
+		    p->fts_parent->fts_accpath, p->fts_name);
 	if ((lnklen = readlink(name, path, sizeof(name) - 1)) == -1) {
 		(void)fprintf(stderr, "\nls: %s: %s\n", name, strerror(errno));
 		return;
