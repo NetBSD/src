@@ -1,7 +1,7 @@
-/*      $NetBSD: eti.h,v 1.3 1999/11/24 12:43:15 kleink Exp $	*/
+/*      $Id: eti.h,v 1.4 1999/12/16 12:08:07 blymn Exp $ */
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
+ * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
