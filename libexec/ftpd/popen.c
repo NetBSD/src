@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $	*/
+/*	$NetBSD: popen.c,v 1.14 1999/05/17 15:14:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $");
+__RCSID("$NetBSD: popen.c,v 1.14 1999/05/17 15:14:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #ifdef KERBEROS5
@@ -74,6 +75,8 @@ __RCSID("$NetBSD: popen.c,v 1.13 1999/02/24 16:45:13 explorer Exp $");
 static int *pids;
 static int fds;
 
+extern int ls_main __P((int, char *[]));
+
 FILE *
 ftpd_popen(program, type, stderrfd)
 	char *program, *type;
@@ -81,7 +84,7 @@ ftpd_popen(program, type, stderrfd)
 {
 	char *cp;
 	FILE *iop = NULL;
-	int argc, gargc, pdes[2], pid;
+	int argc, gargc, pdes[2], pid, isls;
 	char **pop, **np;
 	char **argv = NULL, **gargv = NULL;
 	size_t nargc = 100, ngargc = 100;
@@ -91,6 +94,7 @@ ftpd_popen(program, type, stderrfd)
 	(void) &gargv;
 	(void) &argv;
 #endif
+	isls = 0;
 
 	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
@@ -149,7 +153,10 @@ ftpd_popen(program, type, stderrfd)
 	}
 	gargv[gargc] = NULL;
 
-	switch(pid = vfork()) {
+	isls = (strcmp(gargv[0], "/bin/ls") == 0);
+
+	pid = isls ? fork() : vfork();
+	switch (pid) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -172,6 +179,11 @@ ftpd_popen(program, type, stderrfd)
 				(void)close(pdes[0]);
 			}
 			(void)close(pdes[1]);
+		}
+		if (isls) {	/* use internal ls */
+			optreset = optind = optopt = 1;
+			closelog();
+			exit(ls_main(gargc, gargv));
 		}
 		execv(gargv[0], gargv);
 		_exit(1);

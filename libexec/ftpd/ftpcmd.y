@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.26 1999/02/24 16:45:13 explorer Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.27 1999/05/17 15:14:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.26 1999/02/24 16:45:13 explorer Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.27 1999/05/17 15:14:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,27 @@ cmd
 
 	| QUIT CRLF
 		{
+			if (logged_in) {
+				lreply(221,
+	    "Data traffic for this session was %qd byte%s in %qd file%s.",
+				    total_data, PLURAL(total_data),
+				    total_files, PLURAL(total_files));
+				lreply(221,
+	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
+				    total_bytes, PLURAL(total_bytes),
+				    total_xfers, PLURAL(total_xfers));
+				syslog(LOG_INFO,
+				    "Data traffic: %qd byte%s in %qd file%s",
+				    total_data, PLURAL(total_data),
+				    total_files, PLURAL(total_files));
+				syslog(LOG_INFO,
+				  "Total traffic: %qd byte%s in %qd transfer%s",
+				    total_bytes, PLURAL(total_bytes),
+				    total_xfers, PLURAL(total_xfers));
+			}
+			lreply(211,
+			    "Thank you for using the FTP service on %s.",
+			    hostname);
 			reply(221, "Goodbye.");
 			dologout(0);
 		}
@@ -564,10 +585,10 @@ cmd
 	| FEAT CRLF
 		{
 			lreply(211, "Features supported");
-			printf(" MDTM\r\n");
-			printf(" REST STREAM\r\n");
-			printf(" SIZE\r\n");
-			reply(211, "End");
+			lreply(-1,  " MDTM");
+			lreply(-1,  " REST STREAM");
+			lreply(-1,  " SIZE");
+			reply(211,  "End");
 		}
 
 	| OPTS SP STRING CRLF
@@ -1026,6 +1047,7 @@ getline(s, n, iop)
 	int n;
 	FILE *iop;
 {
+	off_t b;
 	int c;
 	char *cs;
 
@@ -1044,21 +1066,33 @@ getline(s, n, iop)
 			tmpline[0] = '\0';
 	}
 	while ((c = getc(iop)) != EOF) {
+		total_bytes++;
+		total_bytes_in++;
 		c &= 0377;
 		if (c == IAC) {
 		    if ((c = getc(iop)) != EOF) {
+			total_bytes++;
+			total_bytes_in++;
 			c &= 0377;
 			switch (c) {
 			case WILL:
 			case WONT:
 				c = getc(iop);
-				printf("%c%c%c", IAC, DONT, 0377&c);
+				total_bytes++;
+				total_bytes_in++;
+				b = printf("%c%c%c", IAC, DONT, 0377&c);
+				total_bytes += b;
+				total_bytes_out += b;
 				(void) fflush(stdout);
 				continue;
 			case DO:
 			case DONT:
 				c = getc(iop);
-				printf("%c%c%c", IAC, WONT, 0377&c);
+				total_bytes++;
+				total_bytes_in++;
+				b = printf("%c%c%c", IAC, WONT, 0377&c);
+				total_bytes += b;
+				total_bytes_out += b;
 				(void) fflush(stdout);
 				continue;
 			case IAC:
@@ -1360,6 +1394,7 @@ help(ctab, s)
 {
 	struct tab *c;
 	int width, NCMDS;
+	off_t b;
 	char *type;
 
 	if (ctab == sitetab)
@@ -1380,17 +1415,20 @@ help(ctab, s)
 		int columns, lines;
 
 		lreply(214, "The following %scommands are recognized.", type);
-		printf(
-		    "    (`-' = not implemented, `+' = supports options)\r\n");
+		lreply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
 		lines = (NCMDS + columns - 1) / columns;
 		for (i = 0; i < lines; i++) {
-			printf("   ");
+			b = printf("   ");
+			total_bytes += b;
+			total_bytes_out += b;
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
-				fputs(c->name, stdout);
+				b = printf("%s", c->name);
+				total_bytes += b;
+				total_bytes_out += b;
 				w = strlen(c->name);
 				if (! c->implemented) {
 					putchar('-');
@@ -1407,7 +1445,9 @@ help(ctab, s)
 					w++;
 				}
 			}
-			printf("\r\n");
+			b = printf("\r\n");
+			total_bytes += b;
+			total_bytes_out += b;
 		}
 		(void) fflush(stdout);
 		reply(214, "Direct comments to ftp-bugs@%s.", hostname);
