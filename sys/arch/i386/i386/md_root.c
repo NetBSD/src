@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.8 1996/12/28 23:42:34 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.9 1996/12/28 23:52:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,7 +31,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 extern int boothowto;
 
