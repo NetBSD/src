@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/23 04:49:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/23 10:48:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ SUBDIR.md=fontbase
 SUBDIR=	include \
 	.WAIT \
 	dix os mi printer Xext xkb xinput GL lbx dbe record randr render \
-	xtrap mfb cfb cfb16 cfb24 cfb32 fb hw Xfont lbxutil ${SUBDIR.md} \
+	xtrap mfb cfb cfb16 cfb24 cfb32 fb hw Xfont ${SUBDIR.md} \
 	.WAIT \
 	Xserver
 
