@@ -1,4 +1,4 @@
-/*	$NetBSD: amd756.c,v 1.3 2003/02/26 22:23:06 fvdl Exp $	*/
+/*	$NetBSD: amd756.c,v 1.4 2004/04/11 06:00:25 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.3 2003/02/26 22:23:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.4 2004/04/11 06:00:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,13 +91,13 @@ struct amd756_handle {
 	pcitag_t ph_tag;
 };
 
-int	amd756_getclink __P((pciintr_icu_handle_t, int, int *));
-int	amd756_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	amd756_set_intr __P((pciintr_icu_handle_t, int, int));
-int	amd756_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	amd756_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	amd756_getclink(pciintr_icu_handle_t, int, int *);
+int	amd756_get_intr(pciintr_icu_handle_t, int, int *);
+int	amd756_set_intr(pciintr_icu_handle_t, int, int);
+int	amd756_get_trigger(pciintr_icu_handle_t, int, int *);
+int	amd756_set_trigger(pciintr_icu_handle_t, int, int);
 #ifdef AMD756_DEBUG
-static void	amd756_pir_dump __P((struct amd756_handle *));
+static void	amd756_pir_dump(struct amd756_handle *);
 #endif
 
 const struct pciintr_icu amd756_pci_icu = {
@@ -110,12 +110,8 @@ const struct pciintr_icu amd756_pci_icu = {
 
 
 int
-amd756_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+amd756_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct amd756_handle *ph;
 
@@ -138,9 +134,7 @@ amd756_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-amd756_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+amd756_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	if (AMD756_LEGAL_LINK(link - 1) == 0)
 		return (1);
@@ -151,9 +145,7 @@ amd756_getclink(v, link, clinkp)
 }
 
 int
-amd756_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+amd756_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct amd756_handle *ph = v;
 	pcireg_t reg;
@@ -171,9 +163,7 @@ amd756_get_intr(v, clink, irqp)
 }
 
 int
-amd756_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+amd756_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct amd756_handle *ph = v;
 	int val;
@@ -192,9 +182,7 @@ amd756_set_intr(v, clink, irq)
 }
 
 int
-amd756_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+amd756_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct amd756_handle *ph = v;
 	int i, pciirq;
@@ -219,9 +207,7 @@ amd756_get_trigger(v, irq, triggerp)
 }
 
 int
-amd756_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+amd756_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct amd756_handle *ph = v;
 	int i, pciirq;
@@ -248,8 +234,7 @@ amd756_set_trigger(v, irq, trigger)
 
 #ifdef AMD756_DEBUG
 static void
-amd756_pir_dump(ph)
-	struct amd756_handle *ph;
+amd756_pir_dump(struct amd756_handle *ph)
 {
 	int a, b;
 

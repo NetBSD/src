@@ -1,4 +1,4 @@
-/*	$NetBSD: piixvar.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: piixvar.h,v 1.2 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,8 +66,8 @@
  * Support for the Intel PIIX PCI-ISA bridge interrupt controller.
  */
 
-int	piix_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	piix_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	piix_get_trigger(pciintr_icu_handle_t, int, int *);
+int	piix_set_trigger(pciintr_icu_handle_t, int, int);
 
 struct piix_handle {
 	bus_space_tag_t ph_iot;

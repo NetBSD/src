@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.6 2004/02/19 12:23:47 uebayasi Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.7 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -82,20 +82,20 @@ struct pcibios_pir_header {
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
 
-void	pcibios_init __P((void));
+void	pcibios_init(void);
 
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 extern int pcibios_max_bus;
 
-void pci_device_foreach __P((pci_chipset_tag_t, int,
-			     void (*) (pci_chipset_tag_t, pcitag_t, void*),
-			     void *context));
+void pci_device_foreach(pci_chipset_tag_t, int,
+			void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			void *);
 
-void pci_device_foreach_min __P((pci_chipset_tag_t, int, int,
-				 void (*) (pci_chipset_tag_t, pcitag_t, void*),
-				 void *context));
+void pci_device_foreach_min(pci_chipset_tag_t, int, int,
+			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			    void *);
 
 void pci_bridge_foreach(pci_chipset_tag_t, int, int,
     void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);

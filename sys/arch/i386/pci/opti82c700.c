@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c700.c,v 1.4 2003/02/26 22:23:07 fvdl Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.4 2003/02/26 22:23:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.4 2003/02/26 22:23:07 fvdl Exp $");
 #define	DPRINTF(arg)
 #endif
 
-int	opti82c700_getclink __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_set_intr __P((pciintr_icu_handle_t, int, int));
-int	opti82c700_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	opti82c700_getclink(pciintr_icu_handle_t, int, int *);
+int	opti82c700_get_intr(pciintr_icu_handle_t, int, int *);
+int	opti82c700_set_intr(pciintr_icu_handle_t, int, int);
+int	opti82c700_get_trigger(pciintr_icu_handle_t, int, int *);
+int	opti82c700_set_trigger(pciintr_icu_handle_t, int, int);
 
 const struct pciintr_icu opti82c700_pci_icu = {
 	opti82c700_getclink,
@@ -109,18 +109,14 @@ struct opti82c700_handle {
 	pcitag_t ph_tag;
 };
 
-int	opti82c700_addr __P((int, int *, int *));
+int	opti82c700_addr(int, int *, int *);
 #ifdef FIRESTARDEBUG
-void	opti82c700_pir_dump __P((struct opti82c700_handle *));
+void	opti82c700_pir_dump(struct opti82c700_handle *);
 #endif
 
 int
-opti82c700_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+opti82c700_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
+    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c700_handle *ph;
 
@@ -139,8 +135,7 @@ opti82c700_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-opti82c700_addr(link, addrofs, ofs)
-	int link, *addrofs, *ofs;
+opti82c700_addr(int link, int *addrofs, int *ofs)
 {
 	int regofs, src;
 
@@ -175,9 +170,7 @@ opti82c700_addr(link, addrofs, ofs)
 }
 
 int
-opti82c700_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+opti82c700_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	DPRINTF(("FireStar link value 0x%x: ", link));
 
@@ -206,9 +199,7 @@ opti82c700_getclink(v, link, clinkp)
 }
 
 int
-opti82c700_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+opti82c700_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct opti82c700_handle *ph = v;
 	pcireg_t reg;
@@ -227,9 +218,7 @@ opti82c700_get_intr(v, clink, irqp)
 }
 
 int
-opti82c700_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+opti82c700_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct opti82c700_handle *ph = v;
 	int addrofs, ofs;
@@ -250,9 +239,7 @@ opti82c700_set_intr(v, clink, irq)
 }
 
 int
-opti82c700_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+opti82c700_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct opti82c700_handle *ph = v;
 	int i, val, addrofs, ofs;
@@ -298,9 +285,7 @@ opti82c700_get_trigger(v, irq, triggerp)
 }
 
 int
-opti82c700_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+opti82c700_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct opti82c700_handle *ph = v;
 	int i, val, addrofs, ofs;
@@ -349,8 +334,7 @@ opti82c700_set_trigger(v, irq, trigger)
 
 #ifdef FIRESTARDEBUG
 void
-opti82c700_pir_dump(ph)
-	struct opti82c700_handle *ph;
+opti82c700_pir_dump(struct opti82c700_handle *ph)
 {
 	pcireg_t r;
 	pcitag_t tag = ph->ph_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.h,v 1.2 2001/07/06 18:03:17 mcr Exp $	*/
+/*	$NetBSD: pci_bus_fixup.h,v 1.3 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,8 +25,7 @@
  * SUCH DAMAGE. 
  */
 
-int	pci_bus_fixup __P((pci_chipset_tag_t, int));
+int	pci_bus_fixup(pci_chipset_tag_t, int);
 
 extern int      pci_bus_parent[256];
 extern pcitag_t pci_bus_tag[256];
-

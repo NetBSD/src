@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c558.c,v 1.4 2003/02/26 22:23:06 fvdl Exp $	*/
+/*	$NetBSD: opti82c558.c,v 1.5 2004/04/11 06:00:25 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c558.c,v 1.4 2003/02/26 22:23:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c558.c,v 1.5 2004/04/11 06:00:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,11 +84,11 @@ __KERNEL_RCSID(0, "$NetBSD: opti82c558.c,v 1.4 2003/02/26 22:23:06 fvdl Exp $");
 #include <i386/pci/pci_intr_fixup.h>
 #include <i386/pci/opti82c558reg.h>
 
-int	opti82c558_getclink __P((pciintr_icu_handle_t, int, int *));
-int	opti82c558_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	opti82c558_set_intr __P((pciintr_icu_handle_t, int, int));
-int	opti82c558_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	opti82c558_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	opti82c558_getclink(pciintr_icu_handle_t, int, int *);
+int	opti82c558_get_intr(pciintr_icu_handle_t, int, int *);
+int	opti82c558_set_intr(pciintr_icu_handle_t, int, int);
+int	opti82c558_get_trigger(pciintr_icu_handle_t, int, int *);
+int	opti82c558_set_trigger(pciintr_icu_handle_t, int, int);
 
 const struct pciintr_icu opti82c558_pci_icu = {
 	opti82c558_getclink,
@@ -127,12 +127,8 @@ static const int viper_pirq_encode[] = {
 };
 
 int
-opti82c558_init(pc, iot, tag, ptagp, phandp)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	pcitag_t tag;
-	pciintr_icu_tag_t *ptagp;
-	pciintr_icu_handle_t *phandp;
+opti82c558_init(pci_chipset_tag_t pc, bus_space_tag_t iot,
+    pcitag_t tag, pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c558_handle *ph;
 
@@ -149,9 +145,7 @@ opti82c558_init(pc, iot, tag, ptagp, phandp)
 }
 
 int
-opti82c558_getclink(v, link, clinkp)
-	pciintr_icu_handle_t v;
-	int link, *clinkp;
+opti82c558_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	if (VIPER_LEGAL_LINK(link - 1)) {
@@ -163,9 +157,7 @@ opti82c558_getclink(v, link, clinkp)
 }
 
 int
-opti82c558_get_intr(v, clink, irqp)
-	pciintr_icu_handle_t v;
-	int clink, *irqp;
+opti82c558_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 {
 	struct opti82c558_handle *ph = v;
 	pcireg_t reg;
@@ -183,9 +175,7 @@ opti82c558_get_intr(v, clink, irqp)
 }
 
 int
-opti82c558_set_intr(v, clink, irq)
-	pciintr_icu_handle_t v;
-	int clink, irq;
+opti82c558_set_intr(pciintr_icu_handle_t v, int clink, int irq)
 {
 	struct opti82c558_handle *ph = v;
 	int shift;
@@ -204,9 +194,7 @@ opti82c558_set_intr(v, clink, irq)
 }
 
 int
-opti82c558_get_trigger(v, irq, triggerp)
-	pciintr_icu_handle_t v;
-	int irq, *triggerp;
+opti82c558_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct opti82c558_handle *ph = v;
 	pcireg_t reg;
@@ -227,9 +215,7 @@ opti82c558_get_trigger(v, irq, triggerp)
 }
 
 int
-opti82c558_set_trigger(v, irq, trigger)
-	pciintr_icu_handle_t v;
-	int irq, trigger;
+opti82c558_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct opti82c558_handle *ph = v;
 	int shift;

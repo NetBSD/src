@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.28 2004/04/04 16:06:09 kochi Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.29 2004/04/11 06:00:26 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.28 2004/04/04 16:06:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.29 2004/04/11 06:00:26 kochi Exp $");
 
 #include "opt_pcibios.h"
 
@@ -104,30 +104,30 @@ pciintr_icu_handle_t pciintr_icu_handle;
 int pcibios_irqs_hint = PCIBIOS_IRQS_HINT;
 #endif
 
-struct pciintr_link_map *pciintr_link_lookup __P((int));
-struct pciintr_link_map *pciintr_link_alloc __P((struct pcibios_intr_routing *,
-	int));
-struct pcibios_intr_routing *pciintr_pir_lookup __P((int, int));
-static int pciintr_bitmap_count_irq __P((int, int *));
-static int pciintr_bitmap_find_lowest_irq __P((int, int *));
-int	pciintr_link_init __P((void));
+struct pciintr_link_map *pciintr_link_lookup(int);
+struct pciintr_link_map *pciintr_link_alloc(struct pcibios_intr_routing *,
+	int);
+struct pcibios_intr_routing *pciintr_pir_lookup(int, int);
+static int pciintr_bitmap_count_irq(int, int *);
+static int pciintr_bitmap_find_lowest_irq(int, int *);
+int	pciintr_link_init (void);
 #ifdef PCIBIOS_INTR_GUESS
-int	pciintr_guess_irq __P((void));
+int	pciintr_guess_irq(void);
 #endif
-int	pciintr_link_fixup __P((void));
-int	pciintr_link_route __P((u_int16_t *));
-int	pciintr_irq_release __P((u_int16_t *));
-int	pciintr_header_fixup __P((pci_chipset_tag_t));
-void	pciintr_do_header_fixup __P((pci_chipset_tag_t, pcitag_t, void*));
+int	pciintr_link_fixup(void);
+int	pciintr_link_route(u_int16_t *);
+int	pciintr_irq_release(u_int16_t *);
+int	pciintr_header_fixup(pci_chipset_tag_t);
+void	pciintr_do_header_fixup(pci_chipset_tag_t, pcitag_t, void*);
 
 SIMPLEQ_HEAD(, pciintr_link_map) pciintr_link_map_list;
 
 const struct pciintr_icu_table {
 	pci_vendor_id_t	piit_vendor;
 	pci_product_id_t piit_product;
-	int (*piit_init) __P((pci_chipset_tag_t,
-		bus_space_tag_t, pcitag_t, pciintr_icu_tag_t *,
-		pciintr_icu_handle_t *));
+	int (*piit_init)(pci_chipset_tag_t,
+	    bus_space_tag_t, pcitag_t, pciintr_icu_tag_t *,
+	    pciintr_icu_handle_t *);
 } pciintr_icu_table[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371MX,
 	  piix_init },
@@ -181,11 +181,10 @@ const struct pciintr_icu_table {
 	  NULL },
 };
 
-const struct pciintr_icu_table *pciintr_icu_lookup __P((pcireg_t));
+const struct pciintr_icu_table *pciintr_icu_lookup(pcireg_t);
 
 const struct pciintr_icu_table *
-pciintr_icu_lookup(id)
-	pcireg_t id;
+pciintr_icu_lookup(pcireg_t id)
 {
 	const struct pciintr_icu_table *piit;
 
@@ -201,8 +200,7 @@ pciintr_icu_lookup(id)
 }
 
 struct pciintr_link_map *
-pciintr_link_lookup(link)
-	int link;
+pciintr_link_lookup(int link)
 {
 	struct pciintr_link_map *l;
 
@@ -215,9 +213,7 @@ pciintr_link_lookup(link)
 }
 
 struct pciintr_link_map *
-pciintr_link_alloc(pir, pin)
-	struct pcibios_intr_routing *pir;
-	int pin;
+pciintr_link_alloc(struct pcibios_intr_routing *pir, int pin)
 {
 	int link = pir->linkmap[pin].link, clink, irq;
 	struct pciintr_link_map *l, *lstart;
@@ -288,8 +284,7 @@ pciintr_link_alloc(pir, pin)
 }
 
 struct pcibios_intr_routing *
-pciintr_pir_lookup(bus, device)
-	int bus, device;
+pciintr_pir_lookup(int bus, int device)
 {
 	struct pcibios_intr_routing *pir;
 	int entry;
@@ -308,8 +303,7 @@ pciintr_pir_lookup(bus, device)
 }
 
 static int
-pciintr_bitmap_count_irq(irq_bitmap, irqp)
-	int irq_bitmap, *irqp;
+pciintr_bitmap_count_irq(int irq_bitmap, int *irqp)
 {
 	int i, bit, count = 0, irq = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
 
@@ -326,8 +320,7 @@ pciintr_bitmap_count_irq(irq_bitmap, irqp)
 }
 
 static int
-pciintr_bitmap_find_lowest_irq(irq_bitmap, irqp)
-	int irq_bitmap, *irqp;
+pciintr_bitmap_find_lowest_irq(int irq_bitmap, int *irqp)
 {
 	int i, bit;
 
@@ -525,8 +518,7 @@ pciintr_link_fixup()
 }
 
 int
-pciintr_link_route(pciirq)
-	u_int16_t *pciirq;
+pciintr_link_route(u_int16_t *pciirq)
 {
 	struct pciintr_link_map *l;
 	int rv = 0;
@@ -580,8 +572,7 @@ pciintr_link_route(pciirq)
 }
 
 int
-pciintr_irq_release(pciirq)
-	u_int16_t *pciirq;
+pciintr_irq_release(u_int16_t *pciirq)
 {
 	int i, bit;
 
@@ -595,8 +586,7 @@ pciintr_irq_release(pciirq)
 }
 
 int
-pciintr_header_fixup(pc)
-	pci_chipset_tag_t pc;
+pciintr_header_fixup(pci_chipset_tag_t pc)
 {
 	PCIBIOS_PRINTV(("------------------------------------------\n"));
 	PCIBIOS_PRINTV(("  device vendor product pin PIRQ IRQ stage\n"));
@@ -608,10 +598,7 @@ pciintr_header_fixup(pc)
 }
 
 void
-pciintr_do_header_fixup(pc, tag, context)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void *context;
+pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag, void *context)
 {
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;
@@ -723,10 +710,7 @@ pciintr_do_header_fixup(pc, tag, context)
 }
 
 int
-pci_intr_fixup(pc, iot, pciirq)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
-	u_int16_t *pciirq;
+pci_intr_fixup(pci_chipset_tag_t pc, bus_space_tag_t iot, u_int16_t *pciirq)
 {
 	const struct pciintr_icu_table *piit = NULL;
 	pcitag_t icutag;
