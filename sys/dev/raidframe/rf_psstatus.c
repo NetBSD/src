@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.23 2004/03/03 01:02:44 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.24 2004/03/04 03:27:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.23 2004/03/03 01:02:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.24 2004/03/04 03:27:30 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -251,10 +251,6 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 		Dprintf1("Waking up access waiting on parity stripe ID %ld\n", p->parityStripeID);
 		cb1 = cb->next;
 		(cb->callbackFunc) (cb->callbackArg);
-
-		/* THIS IS WHAT THE ORIGINAL CODE HAD... the extra 0 is bogus,
-		 * IMHO */
-		/* (cb->callbackFunc)(cb->callbackArg, 0); */
 		rf_FreeCallbackDesc(cb);
 		cb = cb1;
 	}
