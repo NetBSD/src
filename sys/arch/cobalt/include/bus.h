@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2000/03/31 14:51:52 soren Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2000/05/27 02:15:01 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -259,14 +259,14 @@ do {									\
 #define __COBALT_bus_space_write_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);					\
+	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
 static __inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
 	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
+	const __PB_TYPENAME(BITS) *a;					\
 	size_t c;							\
 {									\
 									\
@@ -297,14 +297,14 @@ __COBALT_bus_space_write_multi(4,32)
 #define __COBALT_bus_space_write_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);					\
+	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
 static __inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
 	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
+	const __PB_TYPENAME(BITS) *a;					\
 	size_t c;							\
 {									\
 									\
