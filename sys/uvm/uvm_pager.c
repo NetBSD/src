@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.13.2.4 1999/04/29 13:46:59 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13.2.5 1999/05/30 15:34:01 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -364,12 +364,8 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 			}
 
 #ifdef UBC
-			/* XXX assumes blkno in units of DEV_BSIZE */
-			/* check physical adjacency too */
-			if (pclust->blkno != center->blkno +
-			    ((pclust->offset - center->offset) >> DEV_BSHIFT)) {
-				break;
-			}
+			/* XXX for now, disable putpage clustering */
+			break;
 #endif
 
 			/* yes!   enroll the page in our array */
@@ -539,8 +535,7 @@ ReTry:
 		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 	} else {
 		/* nothing locked */
-/* XXX should we pass more than just PGO_SYNCIO here too? */
-		result = uvm_swap_put(swblk, ppsp, *npages, flags & PGO_SYNCIO);
+		result = uvm_swap_put(swblk, ppsp, *npages, flags);
 		/* nothing locked */
 	}
 
@@ -738,7 +733,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 			continue;		/* next page */
 
 		} else {
-			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED);
+			ppsp[lcv]->flags &= ~(PG_BUSY|PG_WANTED|PG_FAKE);
 			UVM_PAGE_OWN(ppsp[lcv], NULL);
 		}
 
@@ -815,13 +810,25 @@ uvm_aio_aiodone(aio)
 	struct uvm_aiobuf *abp = aio->pd_ptr;
 	struct vm_page *pgs[aio->npages];
 	int s, i;
+	boolean_t release;
 
+	release = (abp->buf.b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
 	for (i = 0; i < aio->npages; i++) {
 		pgs[i] = uvm_pageratop(aio->kva + (i << PAGE_SHIFT));
+
+		/*
+		 * if this is an async read and we got an error,
+		 * mark the pages PG_RELEASED so that uvm_pager_dropcluster()
+		 * will free them.
+		 */
+
+		if (release) {
+			pgs[i]->flags |= PG_RELEASED;
+		}
 	}
 	uvm_pagermapout(aio->kva, aio->npages);
-	uvm_pager_dropcluster(pgs[0]->uobject, NULL, pgs, &aio->npages,
-			      PGO_PDFREECLUST, 0);
+	uvm_pager_dropcluster((struct uvm_object *)abp->buf.b_vp, NULL, pgs,
+			      &aio->npages, PGO_PDFREECLUST, 0);
 
 	s = splbio();
 	pool_put(uvm_aiobuf_pool, abp);
