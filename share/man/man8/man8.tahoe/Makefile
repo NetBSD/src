@@ -1,7 +1,8 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 3/22/91
-#	$Id: Makefile,v 1.4 1994/12/22 10:51:00 cgd Exp $
+#	@(#)Makefile	5.1 (Berkeley) 3/22/91
+#	$NetBSD: Makefile,v 1.5 1995/09/06 21:36:41 jtc Exp $
 
 MAN=	MAKEDEV.8
+MLINKS=	MAKEDEV.8 makedev.8
 MANSUBDIR=/tahoe
 
 .include <bsd.prog.mk>
