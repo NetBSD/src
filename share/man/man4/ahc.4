@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.9 1999/03/16 01:19:14 garbled Exp $
+.\"	$NetBSD: ahc.4,v 1.10 1999/12/15 22:07:30 abs Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -41,10 +41,10 @@ For one or more VL/EISA cards:
 .Cd controller ahc0
 \}
 \{For VL cards:
-.Cd ahc0	at isa? port ? irq ?
+.Cd ahc0 at isa? port ? irq ?
 .Pp
 For EISA cards:
-.Cd ahc*	at eisa? slot ?\}
+.Cd ahc* at eisa? slot ?\}
 .Pp
 .ie 0 \{
 For one or more PCI cards:
@@ -52,7 +52,7 @@ For one or more PCI cards:
 .Cd controller ahc0
 \}
 \{For PCI cards:
-.Cd ahc*	at pci? dev ? function ?\}
+.Cd ahc* at pci? dev ? function ?\}
 .Pp
 To enable tagged queueing:
 .Cd options AHC_TAGENABLE

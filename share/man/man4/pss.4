@@ -1,4 +1,4 @@
-.\"   $NetBSD: pss.4,v 1.4 1999/03/16 01:19:17 garbled Exp $
+.\"   $NetBSD: pss.4,v 1.5 1999/12/15 22:07:33 abs Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -30,10 +30,10 @@
 .Os
 .Sh NAME
 .Nm pss
-.Nd Personal Sound System hardware driver
+.Nd Personal Sound System hardware audio device driver
 .Sh SYNOPSIS
-.Cd "device pss0 at isa?"
-.Cd "device sp0 at pss? port 0x530 irq 10 drq 0"
+.Cd "pss0 at isa?"
+.Cd "sp0 at pss? port 0x530 irq 10 drq 0"
 .Cd "audio* at sp?"
 .Sh DESCRIPTION
 The
