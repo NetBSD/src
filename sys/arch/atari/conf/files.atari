@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.61 1999/04/19 21:22:57 kleink Exp $
+#	$NetBSD: files.atari,v 1.62 1999/05/06 20:27:57 leo Exp $
 
 maxpartitions 16
 
@@ -214,3 +214,6 @@ include "compat/linux/arch/m68k/files.linux_m68k"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+# network devices MII bus
+include "../../../dev/mii/files.mii"
