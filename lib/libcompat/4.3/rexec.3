@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rexec.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: rexec.3,v 1.3 1997/10/09 10:20:56 lukem Exp $
+.\"	$NetBSD: rexec.3,v 1.4 1998/02/05 18:51:28 perry Exp $
 .\"
 .Dd June 4, 1993
 .Dt REXEC 3
@@ -38,6 +38,8 @@
 .Sh NAME
 .Nm rexec
 .Nd return stream to a remote command
+.Sh LIBRARY
+.Lb libcompat
 .Sh SYNOPSIS
 .Ft int
 .Fn rexec ahost "int inport" "char *user" "char *passwd" "char *cmd" "int *fd2p"

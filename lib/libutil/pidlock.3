@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.1 1997/10/11 02:56:22 cjs Exp $
+.\"	$NetBSD: pidlock.3,v 1.2 1998/02/05 18:52:28 perry Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>
 .\"
@@ -28,6 +28,8 @@
 .Nm ttylock ,
 .Nm ttyunlock
 .Nd locks based on files containing PIDs
+.Sh LIBRARY
+.Lb libutil
 .Sh SYNOPSIS
 .Fd #include <util.h>
 .Ft int
