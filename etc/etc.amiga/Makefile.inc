@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.21.2.1 2004/06/24 13:51:26 he Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.1.2.1 2005/03/05 17:53:28 he Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC
 
-EXTRA_KERNELS=		INSTALL
+EXTRA_KERNELS=		INSTALL ISDN
 
 INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
