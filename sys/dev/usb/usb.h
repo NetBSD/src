@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.62 2002/02/20 20:30:13 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.63 2002/02/25 00:46:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -47,23 +47,13 @@
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
+#endif
 
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>
 #endif /* _KERNEL */
 
-#elif defined(__FreeBSD__)
-#if defined(KERNEL)
-#include <sys/malloc.h>
-
-MALLOC_DECLARE(M_USB);
-MALLOC_DECLARE(M_USBDEV);
-MALLOC_DECLARE(M_USBHC);
-
-#include <dev/usb/usb_port.h>
-#endif /* KERNEL */
-#endif /* __FreeBSD__ */
-
+#define USB_STACK_VERSION 2
 
 #define USB_MAX_DEVICES 128
 #define USB_START_ADDR 0
