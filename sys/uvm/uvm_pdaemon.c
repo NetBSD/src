@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.42 2001/11/10 07:37:01 lukem Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.43 2001/12/09 03:07:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.42 2001/11/10 07:37:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.43 2001/12/09 03:07:19 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -367,6 +367,9 @@ uvmpd_scan_inactive(pglst)
 	int swnpages, swcpages;
 	int swslot;
 	int dirtyreacts, t, result;
+	boolean_t anonunder, fileunder, execunder;
+	boolean_t anonover, fileover, execover;
+	boolean_t anonreact, filereact, execreact;
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -378,6 +381,22 @@ uvmpd_scan_inactive(pglst)
 	swslot = 0;
 	swnpages = swcpages = 0;
 	dirtyreacts = 0;
+
+	/*
+	 * decide which types of pages we want to reactivate instead of freeing
+	 * to keep usage within the minimum and maximum usage limits.
+	 */
+
+	t = uvmexp.active + uvmexp.inactive + uvmexp.free;
+	anonunder = (uvmexp.anonpages <= (t * uvmexp.anonmin) >> 8);
+	fileunder = (uvmexp.filepages <= (t * uvmexp.filemin) >> 8);
+	execunder = (uvmexp.execpages <= (t * uvmexp.execmin) >> 8);
+	anonover = uvmexp.anonpages > ((t * uvmexp.anonmax) >> 8);
+	fileover = uvmexp.filepages > ((t * uvmexp.filemax) >> 8);
+	execover = uvmexp.execpages > ((t * uvmexp.execmax) >> 8);
+	anonreact = anonunder || (!anonover && (fileover || execover));
+	filereact = fileunder || (!fileover && (anonover || execover));
+	execreact = execunder || (!execover && (anonover || fileover));
 	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
 		uobj = NULL;
 		anon = NULL;
@@ -433,24 +452,20 @@ uvmpd_scan_inactive(pglst)
 			 * on to the next page.
 			 */
 
-			t = uvmexp.active + uvmexp.inactive + uvmexp.free;
-			if (anon &&
-			    uvmexp.anonpages <= (t * uvmexp.anonmin) >> 8) {
+			if (anon && anonreact) {
 				uvm_pageactivate(p);
 				uvmexp.pdreanon++;
 				continue;
 			}
-			if (uobj && UVM_OBJ_IS_VTEXT(uobj) &&
-			    uvmexp.vtextpages <= (t * uvmexp.vtextmin) >> 8) {
+			if (uobj && UVM_OBJ_IS_VTEXT(uobj) && execreact) {
 				uvm_pageactivate(p);
-				uvmexp.pdrevtext++;
+				uvmexp.pdreexec++;
 				continue;
 			}
 			if (uobj && UVM_OBJ_IS_VNODE(uobj) &&
-			    !UVM_OBJ_IS_VTEXT(uobj) &&
-			    uvmexp.vnodepages <= (t * uvmexp.vnodemin) >> 8) {
+			    !UVM_OBJ_IS_VTEXT(uobj) && filereact) {
 				uvm_pageactivate(p);
-				uvmexp.pdrevnode++;
+				uvmexp.pdrefile++;
 				continue;
 			}
 
