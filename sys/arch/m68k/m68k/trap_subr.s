@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.2 1997/06/04 22:12:43 is Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.3 1998/09/30 23:52:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,39 @@ _ASM_LABEL(faultstkadjnotrap2):
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
 	jra	_ASM_LABEL(rei)		| all done
+
+#ifdef COMPAT_13
+/*
+ * Trap 1 - compat_13_sigreturn13
+ */
+ENTRY_NOPROFILE(trap1)
+	/* sigreturn trap handler expects syscall number in d0 */
+	movew	SYS_compat_13_sigreturn13,d0
+	jra	_ASM_LABEL(sigreturn)
+#endif
+
+/*
+ * Trap 2 - trace trap
+ *
+ * XXX SunOS uses this for a cache flush!  What do we do here?
+ * XXX
+ * XXX	movl	#IC_CLEAR,d0
+ * XXX	movc	d0,cacr
+ * XXX	rte
+ */
+ENTRY_NOPROFILE(trap2)
+	jra	_C_LABEL(trace)
+
+/*
+ * Trap 3 - special handling system calls
+ */
+ENTRY_NOPROFILE(trap3)
+	/* System call number is in d0; see if it's one we know about. */
+	cmpl	#SYS___sigreturn14,d0
+	jeq	_ASM_LABEL(sigreturn)
+
+	/* Not one we know about.  Give them an illegal instruction. */
+	jra	_C_LABEL(illinst)
 
 /*
  * The following exceptions only cause four and six word stack frames
