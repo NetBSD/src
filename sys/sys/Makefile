@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2003/01/18 09:53:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.51 2003/01/20 20:05:26 christos Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -11,14 +11,15 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	event.h \
 	exec.h exec_aout.h exec_coff.h exec_ecoff.h exec_elf.h exec_script.h \
 	extent.h fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
-	gmon.h hash.h inttypes.h ioccom.h \
-	ioctl.h ioctl_compat.h ipc.h kcore.h kernel.h kgdb.h ktrace.h lkm.h \
+	gmon.h hash.h inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \
+	kcore.h kernel.h kgdb.h ksem.h ktrace.h lkm.h \
 	localedef.h lock.h lockf.h lwp.h malloc.h mbuf.h md4.h md5.h midiio.h \
 	mman.h mount.h msg.h msgbuf.h mtio.h namei.h null.h param.h pipe.h \
 	pmc.h poll.h pool.h proc.h properties.h \
 	protosw.h ptrace.h queue.h ras.h reboot.h radioio.h resource.h \
-	resourcevar.h rnd.h sa.h scanio.h sched.h scsiio.h select.h sem.h sha1.h \
-	shm.h siginfo.h signal.h signalvar.h sigtypes.h socket.h socketvar.h sockio.h \
+	resourcevar.h rnd.h sa.h scanio.h sched.h scsiio.h select.h sem.h \
+	sha1.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
+	socket.h socketvar.h sockio.h \
 	stat.h syscall.h syscallargs.h sysctl.h stdint.h swap.h syslimits.h \
 	syslog.h systm.h tablet.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h \
