@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.30 2000/01/19 23:28:31 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.31 2000/05/15 23:14:42 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.30 2000/01/19 23:28:31 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31 2000/05/15 23:14:42 hubertf Exp $");
 #endif
 #endif
 
@@ -48,8 +48,6 @@ pkg_do(char *pkg)
 	Boolean installed = FALSE, isTMP = FALSE;
 	char    log_dir[FILENAME_MAX];
 	char    fname[FILENAME_MAX];
-	package_t plist;
-	FILE   *fp;
 	struct stat sb;
 	char   *cp = NULL;
 	int     code = 0;
@@ -134,18 +132,6 @@ pkg_do(char *pkg)
 		installed = TRUE;
 	}
 
-	/* Suck in the contents list */
-	plist.head = plist.tail = NULL;
-	fp = fopen(CONTENTS_FNAME, "r");
-	if (!fp) {
-		warnx("unable to open %s file", CONTENTS_FNAME);
-		code = 1;
-		goto bail;
-	}
-	/* If we have a prefix, add it now */
-	read_plist(&plist, fp);
-	fclose(fp);
-
 	/*
          * Index is special info type that has to override all others to make
          * any sense.
@@ -156,6 +142,21 @@ pkg_do(char *pkg)
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(tmp, COMMENT_FNAME);
 	} else {
+		FILE   *fp;
+		package_t plist;
+		
+		/* Read the contents list */
+		plist.head = plist.tail = NULL;
+		fp = fopen(CONTENTS_FNAME, "r");
+		if (!fp) {
+			warnx("unable to open %s file", CONTENTS_FNAME);
+			code = 1;
+			goto bail;
+		}
+		/* If we have a prefix, add it now */
+		read_plist(&plist, fp);
+		fclose(fp);
+
 		/* Start showing the package contents */
 		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
@@ -208,8 +209,8 @@ pkg_do(char *pkg)
 		if (!Quiet) {
 			puts(InfoPrefix);
 		}
+		free_plist(&plist);
 	}
-	free_plist(&plist);
 bail:
 	leave_playpen(Home);
 	if (isTMP)
