@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.44 2001/01/01 16:41:43 jdolecek Exp $
+#	$NetBSD: makesyscalls.sh,v 1.45 2001/01/27 07:21:43 thorpej Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -265,12 +265,17 @@ function parserr(was, wanted) {
 }
 function parseline() {
 	f=3			# toss number and type
+	sycall_flags="0"
 	if ($NF != "}") {
 		funcalias=$NF
 		end=NF-1
 	} else {
 		funcalias=""
 		end=NF
+	}
+	if ($f == "MPSAFE") {		# allow for MP-safe syscalls
+		sycall_flags = sprintf("SYCALL_MPSAFE | %s", sycall_flags)
+		f++
 	}
 	if ($f ~ /^[a-z0-9_]*$/) {	# allow syscall alias
 		funcalias=$f
@@ -377,8 +382,8 @@ function putent(nodefs, compatwrap) {
 
 	# output syscall switch entry
 	if (nodefs == "INDIR") {
-		printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
-		    syscall, funcalias) > sysent
+		printf("\t{ 0, 0, %s,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
+		    sycall_flags, syscall, funcalias) > sysent
 	} else {
 #		printf("\t{ { %d", argc) > sysent
 #		for (i = 1; i <= argc; i++) {
@@ -400,7 +405,7 @@ function putent(nodefs, compatwrap) {
 			wfn = sprintf("%s", funcname);
 		else
 			wfn = sprintf("%s(%s)", compatwrap, funcname);
-		printf(",\n\t    %s },", wfn) > sysent
+		printf(", %s,\n\t    %s },", sycall_flags, wfn) > sysent
 		for (i = 0; i < (33 - length(wfn)) / 8; i++)
 			printf("\t") > sysent
 		if (compatwrap == "")
@@ -479,7 +484,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
 	for (i = 3; i <= NF; i++)
 		comment=comment " " $i
 
-	printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s */\n", \
+	printf("\t{ 0, 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s */\n", \
 	    syscall, comment) > sysent
 	printf("\t\"#%d (%s)\",\t\t/* %d = %s */\n", \
 	    syscall, comment, syscall, comment) > sysnamesbottom
@@ -508,7 +513,7 @@ END {
 			exit 1
 		}
 		while (syscall < nsysent) {
-			printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = filler */\n", \
+			printf("\t{ 0, 0, 0,\n\t    sys_nosys },\t\t\t/* %d = filler */\n", \
 			    syscall) > sysent
 			syscall++
 		}
