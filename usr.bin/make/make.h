@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.11 1996/11/06 17:59:17 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.12 1996/12/31 17:55:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -52,17 +52,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
 #if !defined(MAKE_BOOTSTRAP) && defined(BSD)
-#include <sys/cdefs.h>
+# include <sys/cdefs.h>
 #else
-#ifndef __P
-#if defined(__STDC__) || defined(__cplusplus)
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#else
-#define	__P(protos)	()		/* traditional C preprocessor */
+# ifndef __P
+#  if defined(__STDC__) || defined(__cplusplus)
+#   define	__P(protos)	protos		/* full-blown ANSI C */
+#  else
+#   define	__P(protos)	()		/* traditional C preprocessor */
+#  endif
+# endif
+# ifndef const
+#  define const
+# endif
+# ifndef volatile
+#  define volatile
+# endif
 #endif
-#endif
-#endif
+
 #if __STDC__
 #include <stdlib.h>
 #include <unistd.h>
