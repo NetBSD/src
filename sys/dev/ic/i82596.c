@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.4 2004/10/30 23:52:22 thorpej Exp $ */
+/* $NetBSD: i82596.c,v 1.5 2005/02/17 11:23:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,14 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.4 2004/10/30 23:52:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.5 2005/02/17 11:23:36 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <machine/iomod.h>
-#include <machine/autoconf.h>
 #include "locators.h"
 #include "ioconf.h"
 
@@ -57,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.4 2004/10/30 23:52:22 thorpej Exp $");
 /* general system data and functions */
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/ioccom.h>
-#include <sys/types.h>
 
 /* tsleep / sleep / wakeup */
 #include <sys/proc.h>
