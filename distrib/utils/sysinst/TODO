@@ -1,6 +1,12 @@
-#	$NetBSD: TODO,v 1.15 1999/03/17 12:42:42 simonb Exp $
+#	$NetBSD: TODO,v 1.16 1999/03/19 15:44:59 he Exp $
 
 Things to do ....  in no specific order.
+
+	-  On upgrade, remove /usr/include/machine and the machine-
+	   dependent name e.g. /usr/include/i386.  On 1.3, machine
+	   is a directory and e.g. i386 is a symlink, whereas in 1.4
+	   the reverse is true.  Without this fix, extraction of base
+	   and comp will fail.
 
 	-  rework the fdisk/MBR code to be able to get the correct
 	   MBR geometry with much better probability.
