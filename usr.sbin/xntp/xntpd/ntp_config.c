@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <signal.h>
 #if !defined(VMS)
@@ -1877,8 +1878,18 @@ save_resolve(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 			(void) strcat(res_file, "xntpdXXXXXX");
 		}
 #endif /* SYS_WINNT */
+#ifdef BSD4_4
+		{
+			int fd;
+
+			res_fp = NULL;
+			if ((fd = mkstemp(res_file)) != -1)
+				res_fp = fdopen(fd, "w");
+		}
+#else
 		(void) mktemp(res_file);
 		res_fp = fopen(res_file, "w");
+#endif
 		if (res_fp == NULL) {
 			msyslog(LOG_ERR, "open failed for %s: %m", res_file);
 			return;
