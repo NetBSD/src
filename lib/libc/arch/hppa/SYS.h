@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.2 2002/07/01 16:00:50 fredette Exp $	*/
+/*	$NetBSD: SYS.h,v 1.3 2002/07/04 16:48:44 thorpej Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -107,34 +107,9 @@ __EXIT(p,x)
 	PSEUDO(weak,weak)
 #endif
 
-/*
- * Design note:
- *
- * When the syscalls need to be renamed so they can be handled
- * specially by the threaded library, these macros insert `_thread_sys_'
- * in front of their name. This avoids the need to #ifdef _THREAD_SAFE 
- * everywhere that the renamed function needs to be called.
- */
-#ifdef _THREAD_SAFE
-/*
- * For the thread_safe versions, we prepend _thread_sys_ to the function
- * name so that the 'C' wrapper can go around the real name.
- */
-# define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
-# define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
-# define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(_thread_sys_,x)
-# define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
-/*# define SYSENTRY(x)		__ENTRY(_thread_sys_,x)*/
-#else /* _THREAD_SAFE */
-/*
- * The non-threaded library defaults to traditional syscalls where
- * the function name matches the syscall name.
- */
-# define SYSCALL(x)		__SYSCALL(,x)
-# define RSYSCALL(x)		__RSYSCALL(,x)
-# define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(,x)
-# define PSEUDO(x,y)		__PSEUDO(,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
-/*# define SYSENTRY(x)		__ENTRY(,x)*/
-#endif /* _THREAD_SAFE */
+#define SYSCALL(x)		__SYSCALL(,x)
+#define RSYSCALL(x)		__RSYSCALL(,x)
+#define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(,x)
+#define PSEUDO(x,y)		__PSEUDO(,x,y)
+#define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
+/*#define SYSENTRY(x)		__ENTRY(,x)*/
