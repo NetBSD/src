@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.2 (Berkeley) 2/28/91
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	snscore
 CFLAGS+=-I${.CURDIR}/../snake
