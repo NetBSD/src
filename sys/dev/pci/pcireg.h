@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.13 1997/04/11 05:24:40 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.14 1998/04/14 21:22:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -73,7 +73,9 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_SERR_ENABLE			0x00000100
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
 
-#define	PCI_STATUS_BACKTOBACK_OKAY		0x00800000
+#define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
+#define	PCI_STATUS_UDF_SUPPORT			0x00400000
+#define	PCI_STATUS_BACKTOBACK_SUPPORT		0x00800000
 #define	PCI_STATUS_PARITY_ERROR			0x01000000
 #define	PCI_STATUS_DEVSEL_FAST			0x00000000
 #define	PCI_STATUS_DEVSEL_MEDIUM		0x02000000
