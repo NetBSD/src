@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
+/*	$NetBSD: data.c,v 1.7 2000/04/02 11:02:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -69,7 +69,7 @@ hid_set_data(void *p, hid_item_t *h, int data)
 	unsigned char *buf;
 	unsigned int hpos;
 	unsigned int hsize;
-	int i, end, offs;
+	int i, end, offs, mask;
 
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(h != NULL);
@@ -78,13 +78,20 @@ hid_set_data(void *p, hid_item_t *h, int data)
 	hpos = h->pos;			/* bit position of data */
 	hsize = h->report_size;		/* bit length of data */
 
-	if (hsize != 32)
-		data &= (1 << hsize) - 1;
+	if (hsize != 32) {
+		mask = (1 << hsize) - 1;
+		data &= mask;
+	} else
+		mask = ~0;
+
 	data <<= (hpos % 8);
+	mask <<= (hpos % 8);
+	mask = ~mask;
 
 	offs = hpos / 8;
 	end = (hpos + hsize) / 8 - offs;
-	data = 0;
+
 	for (i = 0; i <= end; i++)
-		buf[offs + i] |= (data >> (i*8)) & 0xff;
+		buf[offs + i] = (buf[offs + i] & (mask >> (i*8))) |
+			((data >> (i*8)) & 0xff);
 }
