@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.27 1997/02/22 04:11:42 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.28 1997/02/22 04:36:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -490,7 +490,7 @@ vnode_pager_sync(mp)
 		vm_object_lock(object);
 
 		/*
-		 * This object might have lost it's last reference while
+		 * This object might have lost its last reference while
 		 * we were paging out something else.  If so, don't bother
 		 * to clean it; just delete it.
 		 */
