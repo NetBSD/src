@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1998/02/21 19:03:26 scw Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 1998/05/07 21:01:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,7 +193,7 @@ mmrw(dev, uio, flags)
 		}
 		if (error)
 			break;
-		iov->iov_base += c;
+		(caddr_t)iov->iov_base += c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
