@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.20 2002/06/09 19:21:08 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -216,26 +216,26 @@ rtimer(void *arg)
 #define	CMN_IDSPTCH "_cmn_idsptch"
 #endif
 
-asm("
-	.text
-	.align	2
-	.globl  " IDSPTCH ", " EIDSPTCH "
-" IDSPTCH ":
-	pushr   $0x3f
-	.word	0x9f16
-	.long   " CMN_IDSPTCH "
-	.long	0
-	.long	0
-	.long	0
-" EIDSPTCH ":
+asm(
+"	.text;"
+"	.align	2;"
+"	.globl  " IDSPTCH ", " EIDSPTCH ";"
+IDSPTCH ":;"
+"	pushr   $0x3f;"
+"	.word	0x9f16;"
+"	.long   " CMN_IDSPTCH ";"
+"	.long	0;"
+"	.long	0;"
+"	.long	0;"
+EIDSPTCH ":;"
 
-" CMN_IDSPTCH ":
-	movl	(%sp)+,%r0
-	pushl	4(%r0)
-	calls	$1,*(%r0)
-	popr	$0x3f
-	rei
-");
+CMN_IDSPTCH ":;"
+"	movl	(%sp)+,%r0;"
+"	pushl	4(%r0);"
+"	calls	$1,*(%r0);"
+"	popr	$0x3f;"
+"	rei;"
+);
 
 /*
  * Stray interrupt handler.

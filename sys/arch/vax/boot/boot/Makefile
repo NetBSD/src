@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
+#	$NetBSD: Makefile,v 1.28 2002/06/09 19:21:07 matt Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -10,7 +10,9 @@ WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
+LIBC=
 
+CFLAGS+=-ffreestanding
 CLEANFILES+=${PROG} ${PROG}.sym vers.c
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK

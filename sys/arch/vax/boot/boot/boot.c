@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.19 2002/06/09 19:21:08 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -261,9 +261,9 @@ load:
 
 #define	extzv(one, two, three,four)	\
 ({			\
-	asm __volatile (" extzv %0,%3,(%1),(%2)+"	\
+	asm __volatile ("extzv %0,%3,%1,%2"	\
 			:			\
-			: "g"(one),"g"(two),"g"(three),"g"(four));	\
+			: "g"(one),"m"(two),"mo>"(three),"g"(four));	\
 })
 
 
@@ -314,7 +314,7 @@ loadpcs()
 	ip = (int *)PCS_PATCHADDR;
 	jp = (int *)0;
 	for (i=0; i < PCS_BITCNT; i++) {
-		extzv(i,jp,ip,1);
+		extzv(i,*jp,*ip++,1);
 	}
 	*((int *)PCS_PATCHBIT) = 0;
 
@@ -324,7 +324,7 @@ loadpcs()
 	ip = (int *)PCS_PCSADDR;
 	jp = (int *)1024;
 	for (i=j=0; j < PCS_MICRONUM * 4; i+=20, j++) {
-		extzv(i,jp,ip,20);
+		extzv(i,*jp,*ip++,20);
 	}
 
 	/*
