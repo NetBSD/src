@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.7 2001/12/05 04:30:24 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.8 2001/12/05 14:50:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (error);
 	}
 	sc->sc_open = 1;
-	irf_reset_params(sc);
+	(void)irf_reset_params(sc);
 	return (0);
 }
 
