@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.4 1999/11/17 12:34:52 soren Exp $ */
+/* $NetBSD: pnpbios.c,v 1.5 1999/11/19 02:40:25 matt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <arch/i386/pnpbios/pnpbiosvar.h>
 
 #include "opt_pnpbiosverbose.h"
+#include "isadma.h"
 #include "locators.h"
 
 struct pnpbios_softc {
@@ -182,7 +183,9 @@ pnpbios_attach(parent, self, aux)
 	pnpbios_softc = sc;
 	sc->sc_ic = paa->paa_ic;
 
+#if NISADMA > 0
 	isa_dmainit(sc->sc_ic, I386_BUS_SPACE_IO, &isa_bus_dma_tag, self);
+#endif
 
 	p = pnpbios_find();
 	if (!p)
