@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.14 2004/01/06 18:46:08 he Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.15 2004/03/10 15:14:49 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.14 2004/01/06 18:46:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.15 2004/03/10 15:14:49 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,12 +80,19 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 	struct wdc_channel ch;
 	struct obio_attach_args *oa = aux;
 	int result = 0;
+	int i;
 
-	bzero(&ch, sizeof(ch));
+	memset(&ch, 0, sizeof(ch));
 	ch.cmd_iot = oa->oa_iot;
 	if (bus_space_map(ch.cmd_iot, oa->oa_iobase, WDC_OBIO_REG_NPORTS, 0,
 	    &ch.cmd_baseioh))
 		goto out;
+
+	for (i = 0; i < WDC_OBIO_REG_NPORTS; i++) {
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
+			goto outunmap;
+	}
 
 	ch.ctl_iot = oa->oa_iot;
 	if (bus_space_map(ch.ctl_iot, oa->oa_iobase + WDC_OBIO_AUXREG_OFFSET,
@@ -110,6 +117,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_obio_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
+	int i;
 
 	printf("\n");
 
@@ -123,6 +131,16 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
+
+	for (i = 0; i < WDC_OBIO_REG_NPORTS; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+		      sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
+		      &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf(": couldn't subregion registers\n");
+			return;
+		}
+	}
+
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 
