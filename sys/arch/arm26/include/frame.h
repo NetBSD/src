@@ -1,5 +1,4 @@
-/* $NetBSD: frame.h,v 1.1 2000/05/09 21:55:59 bjh21 Exp $ */
-/*	$NetBSD: frame.h,v 1.1 2000/05/09 21:55:59 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2001/01/11 22:03:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -142,6 +141,15 @@ struct switchframe {
 	register_t	sf_r11; /* Frame pointer */
 	register_t	sf_r13; /* Stack pointer */
 	register_t	sf_r14; /* Return address */
+};
+
+/*
+ * Floating-point frame.  Stores the state of the FPU.
+ */
+
+struct fpframe {
+	register_t	ff_fpsr;
+	register_t	ff_regs[8*3];
 };
  
 /*
