@@ -5,6 +5,7 @@ kern
 lib
 misc
 pkg
+port-algor
 port-alpha
 port-amiga
 port-arc
