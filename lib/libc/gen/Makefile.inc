@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.84 1997/11/14 02:04:38 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.85 1997/12/20 20:23:16 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -12,7 +12,7 @@ SRCS+=	_errno.c alarm.c assert.c basename.c clock.c closedir.c confstr.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c __glob13.c \
 	glob.c \
-	initgroups.c isatty.c isctype.c nice.c nlist.c nlist_aout.c \
+	initgroups.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
 	nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c pause.c \
 	popen.c psignal.c pwcache.c raise.c readdir.c rewinddir.c scandir.c \
 	seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
@@ -41,7 +41,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	getsubopt.3 getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
 	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
 	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
-	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
+	ldexp.3 lockf.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 \
 	time.3 times.3 timezone.3 toascii.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.5 1997/11/02 16:48:25 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.6 1997/12/20 20:23:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@
 #define jrand48			_jrand48
 #define l64a			_l64a
 #define lcong48			_lcong48
+#define lockf			_lockf
 #define lrand48			_lrand48
 #define mergesort		_mergesort
 #define mpool_close		_mpool_close

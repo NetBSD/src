@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.45 1997/11/25 17:57:37 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.46 1997/12/20 20:23:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -188,6 +188,16 @@ extern	 int optreset;
 int	 getsubopt __P((char **, char * const *, char **));
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* !_POSIX_SOURCE */
+
+#if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE_EXTENDED - 0 == 1)
+#define F_ULOCK         0
+#define F_LOCK          1
+#define F_TLOCK         2
+#define F_TEST          3
+int     lockf __P((int, int, off_t));
+#endif /* (!defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)) || ... */
 __END_DECLS
 
 #endif /* !_UNISTD_H_ */
