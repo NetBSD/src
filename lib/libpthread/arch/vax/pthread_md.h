@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/19 23:22:29 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/01/20 01:49:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,18 +67,22 @@ pthread__sp(void)
  */
 
 #define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy(&(reg)->r_regs, &(uc)->uc_mcontext.__gregs,		\
-		17 * sizeof(__greg_t));					\
+	memcpy((reg), &(uc)->uc_mcontext.__gregs, 17 * sizeof(__greg_t)); \
 	(reg)->fp = (uc)->uc_mcontext.__gregs[_REG_FP];			\
 	(reg)->sp = (uc)->uc_mcontext.__gregs[_REG_SP];			\
 	} while (/*CONSTCOND*/0)
 
 #define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_regs,		\
-		17 * sizeof(__greg_t));					\
+	memcpy(&(uc)->uc_mcontext.__gregs, (reg), 17 * sizeof(__greg_t)); \
 	(uc)->uc_mcontext.__gregs[_REG_FP] = (reg)->fp;			\
 	(uc)->uc_mcontext.__gregs[_REG_SP] = (reg)->sp;			\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(reg, uc) do {				\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, reg) do {				\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_VAX_MD_H */
