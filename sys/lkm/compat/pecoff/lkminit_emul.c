@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.1 2002/03/25 06:52:43 kent Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2 2002/03/27 20:54:29 kent Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.1 2002/03/25 06:52:43 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2 2002/03/27 20:54:29 kent Exp $");
 
 #include <sys/param.h>
+#include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
@@ -47,13 +48,30 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.1 2002/03/25 06:52:43 kent Exp $"
 #include <sys/lkm.h>
 
 #include <compat/pecoff/pecoff_exec.h>
+extern struct sysent sysent[];	/* sys/kern/init_sysent.c */
+extern struct sysent pecoff_sysent[];	/* sys/compat/pecoff/pecoff_sysent.c*/
 
+int compat_pecoff_lkmload(struct lkm_table *lkmtp, int cmd);
 int compat_pecoff_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * declare the emulation
  */
 MOD_COMPAT("compat_pecoff", -1, &emul_pecoff);
+
+int
+compat_pecoff_lkmload(struct lkm_table *lkmtp, int cmd)
+{
+	/*
+	 * Copy some syscall entries.
+	 */
+	pecoff_sysent[SYS_compat_10_oshmsys] = sysent[SYS_compat_10_oshmsys];
+	pecoff_sysent[SYS_shmat] = sysent[SYS_shmat];
+	pecoff_sysent[SYS_shmdt] = sysent[SYS_shmdt];
+	pecoff_sysent[SYS_shmget] = sysent[SYS_shmget];
+	pecoff_sysent[SYS___shmctl13] = sysent[SYS___shmctl13];
+	return 0;
+}
 
 /*
  * entry point
@@ -65,5 +83,6 @@ compat_pecoff_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+	DISPATCH(lkmtp, cmd, ver, compat_pecoff_lkmload,
+		 lkm_nofunc, lkm_nofunc);
 }
