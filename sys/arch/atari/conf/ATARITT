@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.28 1999/07/29 10:37:15 augustss Exp $
+#	$NetBSD: ATARITT,v 1.29 1999/09/16 12:00:04 leo Exp $
 #
 # ATARI-TT
 #
@@ -29,7 +29,7 @@ options 	UCONSOLE	# Allow xconsole to work
 #
 # Floating-point options
 #
-options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
+#options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #options 	FPSP		# 68040 Floatingpoint support
 
 #
