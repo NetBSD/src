@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74 2003/06/23 11:01:42 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.75 2003/06/29 09:56:27 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -405,13 +405,13 @@ cpu_coredump(l, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (!error)
 		chdr->c_nseg++;
 
