@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.22 2000/06/13 14:43:44 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.23 2000/06/28 03:04:03 mrg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.94 2000/06/13 10:06:19 jinmei Exp $	*/
 
 /*
@@ -1325,7 +1325,7 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.14 1999/10/17 23:38:45 sommerfeld Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.15 2000/06/28 03:01:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,8 @@
 #include <sys/proc.h>
 #include <sys/pool.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <sys/sysctl.h>
 
 #include <net/if.h>

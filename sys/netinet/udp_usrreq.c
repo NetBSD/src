@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.66 2000/03/30 13:25:11 augustss Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.67 2000/06/28 03:01:17 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 #include <sys/proc.h>
 #include <sys/domain.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.33 2000/06/13 17:31:37 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.34 2000/06/28 03:04:03 mrg Exp $	*/
 /*	$KAME: icmp6.c,v 1.113 2000/06/12 09:24:41 itojun Exp $	*/
 
 /*
@@ -2545,8 +2545,9 @@ icmp6_mtudisc_timeout(rt, r)
 	}
 }
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+
 int
 icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
