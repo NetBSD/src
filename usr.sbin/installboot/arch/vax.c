@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.7 2002/05/14 06:40:33 lukem Exp $	*/
+/*	$NetBSD: vax.c,v 1.8 2002/05/15 02:18:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.7 2002/05/14 06:40:33 lukem Exp $");
+__RCSID("$NetBSD: vax.c,v 1.8 2002/05/15 02:18:24 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -79,7 +79,6 @@ __RCSID("$NetBSD: vax.c,v 1.7 2002/05/14 06:40:33 lukem Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>

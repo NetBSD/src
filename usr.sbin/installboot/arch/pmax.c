@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.8 2002/05/14 06:40:33 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.9 2002/05/15 02:18:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.8 2002/05/14 06:40:33 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.9 2002/05/15 02:18:23 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -109,7 +109,6 @@ __RCSID("$NetBSD: pmax.c,v 1.8 2002/05/14 06:40:33 lukem Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
@@ -206,7 +205,6 @@ pmax_clearboot(ib_params *params)
 int
 pmax_setboot(ib_params *params)
 {
-	struct stat		bootstrapsb;
 	struct pmax_boot_block	bb;
 	uint32_t		startblock;
 	int			retval;
@@ -236,14 +234,6 @@ pmax_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->s1fd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->stage1);
-		goto done;
-	}
-	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->stage1);
-		goto done;
-	}
 	if (! load_bootstrap(params, &bootstrapbuf, &bootstrapload,
 	    &bootstrapexec, &bootstrapsize))
 		goto done;
@@ -259,19 +249,13 @@ pmax_setboot(ib_params *params)
 
 		/* fill in the updated boot block fields */
 	if (params->flags & IB_APPEND) {
-		struct stat	filesyssb;
-
-		if (fstat(params->fsfd, &filesyssb) == -1) {
-			warn("Examining `%s'", params->filesystem);
-			goto done;
-		}
-		if (!S_ISREG(filesyssb.st_mode)) {
+		if (! S_ISREG(params->fsstat.st_mode)) {
 			warnx(
 		    "`%s' must be a regular file to append a bootstrap",
 			    params->filesystem);
 			goto done;
 		}
-		startblock = howmany(filesyssb.st_size,
+		startblock = howmany(params->fsstat.st_size,
 		    PMAX_BOOT_BLOCK_BLOCKSIZE);
 	} else if (params->flags & IB_STAGE1START) {
 		startblock = params->s1start;
