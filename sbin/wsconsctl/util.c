@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2004/01/21 15:39:34 heas Exp $ */
+/*	$NetBSD: util.c,v 1.18 2004/04/02 22:16:52 heas Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,13 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_TIGER,		"hp-tiger" },
 	{ WSDISPLAY_TYPE_HYPERION,	"hp-hyperion" },
 	{ WSDISPLAY_TYPE_AMIGACC,	"amiga-cc" },
+	{ WSDISPLAY_TYPE_SUN24,		"sun24" },
+	{ WSDISPLAY_TYPE_NEWPORT,	"sgi-newport" },
+	{ WSDISPLAY_TYPE_GR2,		"sgi-gr2" },
+	{ WSDISPLAY_TYPE_SUNCG12,	"suncg12" },
+	{ WSDISPLAY_TYPE_SUNCG14,	"suncg14" },
+	{ WSDISPLAY_TYPE_SUNTCX,	"suntcx" },
+	{ WSDISPLAY_TYPE_SUNFFB,	"sunffb" },
 };
 
 static struct nameint kbdenc_tab[] = {
