@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.56 2002/11/02 07:26:57 perry Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.57 2002/11/24 11:38:51 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.56 2002/11/02 07:26:57 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.57 2002/11/24 11:38:51 scw Exp $");
 
 #include "opt_inet.h"
 
@@ -474,7 +474,7 @@ rt_xaddrs(cp, cplim, rtinfo)
 	caddr_t cp, cplim;
 	struct rt_addrinfo *rtinfo;
 {
-	struct sockaddr *sa;
+	struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
