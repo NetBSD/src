@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1 2002/03/07 14:44:03 simonb Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.2 2002/04/09 03:40:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.1 2002/03/07 14:44:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.2 2002/04/09 03:40:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.1 2002/03/07 14:44:03 simonb Exp $
 #include <evbmips/evbmips/clockvar.h>
 #include <evbmips/dev/mcclockvar.h>
 
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 struct mcclock_isa_softc {
@@ -75,7 +76,7 @@ mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (ia->ia_nio < 1 ||
 	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
-	     ia->ia_io[0].ir_addr != 0x70))
+	     ia->ia_io[0].ir_addr != IO_RTC))
 		return (0);
 
 	if (ia->ia_niomem > 0 &&
@@ -90,13 +91,13 @@ mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
-	if (bus_space_map(ia->ia_iot, 0x70, 0x2, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, IO_RTC, 0x2, 0, &ioh))
 		return (0);
 
 	bus_space_unmap(ia->ia_iot, ioh, 0x2);
 
 	ia->ia_nio = 1;
-	ia->ia_io[0].ir_addr = 0x70;
+	ia->ia_io[0].ir_addr = IO_RTC;
 	ia->ia_io[0].ir_size = 0x02;
 
 	ia->ia_niomem = 0;
