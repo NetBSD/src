@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1999/03/20 00:13:52 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 1999/08/24 08:55:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -41,7 +41,9 @@ __asm("
 	.text
 	.align	4
 	.global	__start
+	.global	_start
 __start:
+_start:
 	mov	0, %fp
 	ld	[%sp + 64], %o0		! get argc
 	add	%sp, 68, %o1		! get argv
@@ -97,7 +99,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 1999/03/20 00:13:52 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 1999/08/24 08:55:27 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
