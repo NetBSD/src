@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_vfsops.c,v 1.11 1994/01/20 21:23:08 ws Exp $
+ *	$Id: procfs_vfsops.c,v 1.12 1994/04/14 04:06:10 cgd Exp $
  */
 
 /*
@@ -81,9 +81,9 @@ procfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	mp->mnt_flag |= MNT_LOCAL;
+	/* mp->mnt_flag |= MNT_LOCAL; */
 	mp->mnt_data = 0;
-	getnewfsid(mp, MOUNT_PROCFS);
+	getnewfsid(mp, (int)MOUNT_PROCFS);
 
 	(void) copyinstr(path, (caddr_t)mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -165,7 +165,11 @@ procfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
-	sbp->f_type = MOUNT_PROCFS;
+#ifdef COMPAT_09
+	sbp->f_type = 10;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_fsize = page_size >> 2;
 	sbp->f_bsize = page_size;
 	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
@@ -179,6 +183,8 @@ procfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 
 	return (0);
 }
@@ -235,6 +241,7 @@ procfs_init()
 }
 
 struct vfsops procfs_vfsops = {
+	MOUNT_PROCFS,
 	procfs_mount,
 	procfs_start,
 	procfs_unmount,

@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.9 1994/04/07 07:30:23 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.10 1994/04/14 04:06:15 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -415,8 +415,8 @@ mountmsdosfs(devvp, mp, p)
 	if (ronly == 0)
 		pmp->pm_fmod = 1;
 	mp->mnt_data = (qaddr_t) pmp;
-	mp->mnt_stat.f_fsid.val[0] = (long) dev;
-	mp->mnt_stat.f_fsid.val[1] = MOUNT_MSDOS;
+        mp->mnt_stat.f_fsid.val[0] = (long)dev;
+        mp->mnt_stat.f_fsid.val[1] = (long)MOUNT_ISOFS;
 	mp->mnt_flag |= MNT_LOCAL;
 #if defined(QUOTA)
 	/*
@@ -554,7 +554,11 @@ msdosfs_statfs(mp, sbp, p)
 	/*
 	 * Fill in the stat block.
 	 */
-	sbp->f_type = MOUNT_MSDOS;
+#ifdef COMPAT_09
+	sbp->f_type = 4;
+#else
+	sbp->f_type = 0;
+#endif
 	sbp->f_fsize = pmp->pm_bpcluster;
 	sbp->f_bsize = pmp->pm_bpcluster;
 	sbp->f_blocks = pmp->pm_nmbrofclusters;
@@ -573,6 +577,8 @@ msdosfs_statfs(mp, sbp, p)
 		bcopy((caddr_t) mp->mnt_stat.f_mntfromname,
 		    (caddr_t) & sbp->f_mntfromname[0], MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return 0;
 }
 
@@ -666,6 +672,7 @@ msdosfs_vptofh(vp, fhp)
 }
 
 struct vfsops msdosfs_vfsops = {
+	MOUNT_MSDOS,
 	msdosfs_mount,
 	msdosfs_start,
 	msdosfs_unmount,
