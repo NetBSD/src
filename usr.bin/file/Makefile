@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.50 2004/06/16 01:33:35 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ CLEANFILES+=	magic magic.mgc magic.mime magic.mime.mgc
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
 
-MAGDIRF:sh=	echo ${DIST}/magic/magdir/[0-9a-z]*
+MAGDIRF:sh=	LANG=C sh -c 'echo ${DIST}/magic/magdir/[0-9a-z]*'
 MAGFILES=	${DIST}/magic/Header \
 		${DIST}/magic/Localstuff \
 		${DIST}/magic/magdir/netbsd \
