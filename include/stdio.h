@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.35 2000/07/15 18:04:38 drochner Exp $	*/
+/*	$NetBSD: stdio.h,v 1.36 2000/07/16 12:46:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -155,8 +155,8 @@ __END_DECLS
 #define	__SMBF	0x0080		/* _buf is from malloc */
 #define	__SAPP	0x0100		/* fdopen()ed in append mode */
 #define	__SSTR	0x0200		/* this is an sprintf/snprintf string */
-#define	__SOPT	0x0400		/* do fseek() optimisation */
-#define	__SNPT	0x0800		/* do not do fseek() optimisation */
+#define	__SOPT	0x0400		/* do fseek() optimization */
+#define	__SNPT	0x0800		/* do not do fseek() optimization */
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
 #define	__SMOD	0x2000		/* true => fgetln modified _p text */
 #define	__SALC	0x4000		/* allocate string space dynamically */
@@ -338,8 +338,10 @@ typedef	__off_t		off_t;
 #define	off_t		off_t
 #endif /* off_t */
 
+__BEGIN_DECLS
 int	 fseeko __P((FILE *, off_t, int));
 off_t	 ftello __P((FILE *));
+__END_DECLS
 #endif /* (!_POSIX_SOURCE && !_XOPEN_SOURCE) || ... */
 
 /*
