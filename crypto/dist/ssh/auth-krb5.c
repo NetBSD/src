@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.5.2.2 2001/12/10 23:55:09 he Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.5.2.3 2002/03/20 22:42:47 he Exp $	*/
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  * 
@@ -61,8 +61,10 @@ auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client)
 	reply.length = 0;
 	
 	problem = krb5_init(authctxt);
-	if (problem) 
-		goto err;
+	if (problem) {
+		debug("Kerberos v5: krb5_init_context failed");
+		return 0;
+	}
 	
 	problem = krb5_auth_con_init(authctxt->krb5_ctx,
 	    &authctxt->krb5_auth_ctx);
@@ -188,11 +190,13 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (authctxt->pw == NULL)
 		return (0);
 	
-	temporarily_use_uid(authctxt->pw);
-	
 	problem = krb5_init(authctxt);
-	if (problem)
-		goto out;
+	if (problem) {
+		debug("Kerberos v5: krb5_init_context failed");
+		return -1;
+	}
+	
+	temporarily_use_uid(authctxt->pw);
 	
 	problem = krb5_parse_name(authctxt->krb5_ctx, authctxt->pw->pw_name,
 		    &authctxt->krb5_user);
