@@ -1,4 +1,4 @@
-/*	$NetBSD: unctime.c,v 1.11 1997/09/15 07:58:11 lukem Exp $	*/
+/*	$NetBSD: unctime.c,v 1.12 1998/02/04 14:49:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,18 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-__RCSID("$NetBSD: unctime.c,v 1.11 1997/09/15 07:58:11 lukem Exp $");
+__RCSID("$NetBSD: unctime.c,v 1.12 1998/02/04 14:49:11 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
-
-#include <stdio.h>
+#include <sys/param.h>
 #include <time.h>
-#ifdef __STDC__
-#include <stdlib.h>
-#include <string.h>
-#endif
+#include "dump.h"
 
 /*
  * Convert a ctime(3) format string into a system format date.
@@ -58,53 +53,15 @@ __RCSID("$NetBSD: unctime.c,v 1.11 1997/09/15 07:58:11 lukem Exp $");
  * Return -1 if the string is not in ctime format.
  */
 
-/*
- * Offsets into the ctime string to various parts.
- */
-
-#define	E_MONTH		4
-#define	E_DAY		8
-#define	E_HOUR		11
-#define	E_MINUTE	14
-#define	E_SECOND	17
-#define	E_YEAR		20
-
-static	int lookup __P((char *));
-time_t unctime __P((char *));
-
-
 time_t
 unctime(str)
 	char *str;
 {
 	struct tm then;
-	char dbuf[26];
 
-	(void) strncpy(dbuf, str, sizeof(dbuf) - 1);
-	dbuf[sizeof(dbuf) - 1] = '\0';
-	dbuf[E_MONTH+3] = '\0';
-	if ((then.tm_mon = lookup(&dbuf[E_MONTH])) < 0)
-		return (-1);
-	then.tm_mday = atoi(&dbuf[E_DAY]);
-	then.tm_hour = atoi(&dbuf[E_HOUR]);
-	then.tm_min = atoi(&dbuf[E_MINUTE]);
-	then.tm_sec = atoi(&dbuf[E_SECOND]);
-	then.tm_year = atoi(&dbuf[E_YEAR]) - 1900;
+	str = strptime(str, "%a %b %e %H:%M:%S %Y", &then);
 	then.tm_isdst = -1;
-	return(mktime(&then));
-}
-
-static char months[] =
-	"JanFebMarAprMayJunJulAugSepOctNovDec";
-
-static int
-lookup(str)
-	char *str;
-{
-	char *cp, *cp2;
-
-	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
-		if (strncmp(cp, cp2, 3) == 0)
-			return((cp-months) / 3);
-	return(-1);
+	if (str == NULL || (*str != '\n' && *str != '\0'))
+		return (time_t) -1;
+	return mktime(&then);
 }
