@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.18 1998/06/08 06:55:54 thorpej Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.19 1999/10/12 08:41:55 hannken Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -96,6 +96,7 @@
 #define PCI_DEVICE_ID_ADAPTEC_3940U	0x82789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944U	0x84789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940U	0x81789004ul
+#define PCI_DEVICE_ID_ADAPTEC_2940UP	0x87789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940AU	0x61789004ul
 #define PCI_DEVICE_ID_ADAPTEC_3940	0x72789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944	0x74789004ul
@@ -226,6 +227,9 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 		case PCI_DEVICE_ID_ADAPTEC_2940U:
 			return ("Adaptec 2940 Ultra SCSI host adapter");
 			break;
+		case PCI_DEVICE_ID_ADAPTEC_2940UP:
+			return ("Adaptec 2940 Ultra SCSI Pro host adapter");
+			break;
 		case PCI_DEVICE_ID_ADAPTEC_2944:
 			return ("Adaptec 2944 SCSI host adapter");
 			break;
@@ -278,6 +282,7 @@ ahc_pci_probe(parent, match, aux)
 	case PCI_DEVICE_ID_ADAPTEC_3940U:
 	case PCI_DEVICE_ID_ADAPTEC_2944U:
 	case PCI_DEVICE_ID_ADAPTEC_2940U:
+	case PCI_DEVICE_ID_ADAPTEC_2940UP:
 	case PCI_DEVICE_ID_ADAPTEC_2940AU:
 	case PCI_DEVICE_ID_ADAPTEC_3940:
 	case PCI_DEVICE_ID_ADAPTEC_2944:
@@ -374,6 +379,7 @@ ahc_pci_attach(parent, self, aux)
 			break;
 		case PCI_DEVICE_ID_ADAPTEC_2944U:
 		case PCI_DEVICE_ID_ADAPTEC_2940U:
+		case PCI_DEVICE_ID_ADAPTEC_2940UP:
 			ahc_t = AHC_294U;
 			break;
 		case PCI_DEVICE_ID_ADAPTEC_2944:
