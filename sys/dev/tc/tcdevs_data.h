@@ -1,7 +1,6 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
- * $NetBSD: tcdevs_data.h,v 1.7 1998/01/05 19:38:42 perry Exp $
  * generated from:
  *	NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp 
  */
