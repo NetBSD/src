@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.1 1999/06/06 19:00:53 ragge Exp $ */
+/* $NetBSD: uba_dma.c,v 1.2 1999/06/20 00:59:55 ragge Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ uba_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	map = *dmamp;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
-		error = vax_sgmap_alloc(map, round_page(size),
+		error = vax_sgmap_alloc(map, vax_round_page(size),
 		    t->_sgmap, flags);
 		if (error)
 			uba_bus_dmamap_destroy_sgmap(t, map);
