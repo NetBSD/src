@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21285reg.h,v 1.1 1998/09/06 02:20:33 mark Exp $	*/
+/*	$NetBSD: dc21285reg.h,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridgevar.h,v 1.1 1998/09/06 02:20:36 mark Exp $	*/
+/*	$NetBSD: footbridgevar.h,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21285mem.h,v 1.2 2000/01/10 07:43:07 mark Exp $	*/
+/*	$NetBSD: dc21285mem.h,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.7 2001/05/02 10:32:13 scw Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,9 +50,9 @@
 #include <sys/termios.h>
 #include <machine/bus.h>
 #include <machine/irqhandler.h>
-#include <arm32/footbridge/dc21285mem.h>
-#include <arm32/footbridge/dc21285reg.h>
-#include <arm32/footbridge/footbridgevar.h>
+#include <arm/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
+#include <arm/footbridge/footbridgevar.h>
 
 #include <dev/cons.h>
 

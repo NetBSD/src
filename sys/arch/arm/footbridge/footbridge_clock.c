@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.6 2001/02/25 21:31:15 bjh21 Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,8 +45,8 @@
 
 #include <machine/cpufunc.h>
 #include <machine/irqhandler.h>
-#include <arm32/footbridge/dc21285reg.h>
-#include <arm32/footbridge/footbridgevar.h>
+#include <arm/footbridge/dc21285reg.h>
+#include <arm/footbridge/footbridgevar.h>
 
 extern struct footbridge_softc *clock_sc;
 extern u_int dc21285_fclk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.2 2000/04/17 17:39:17 drochner Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

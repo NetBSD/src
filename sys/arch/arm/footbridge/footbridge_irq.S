@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.6 2001/06/07 21:47:36 chris Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.1 2001/06/09 10:29:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -40,8 +40,8 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <arm32/footbridge/dc21285mem.h>
-#include <arm32/footbridge/dc21285reg.h>
+#include <arm/footbridge/dc21285mem.h>
+#include <arm/footbridge/dc21285reg.h>
 
 	.text
 	.align	0
