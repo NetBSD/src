@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.9 1997/07/14 01:49:25 mikel Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.10 1999/01/15 13:04:10 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd May 10, 1991
+.Dd January 16, 1999
 .Dt RESOLV.CONF 5
 .Os BSD 4
 .Sh NAME
@@ -88,36 +88,8 @@ the domain part is taken to be everything after the first `.'.
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
 .It Sy lookup
-This keyword is used by the library routines
-.Xr gethostbyname 3
-and
-.Xr gethostbyaddr 3 .
-It specifies which databases should be searched,
-and the order to do so.
-The legal space-separated values are
-.Bl -tag -width bind
-.It Sy bind
-use the Domain Name server by querying the
-.Xr named 8
-.It Sy file
-search for entries in
-.Nm /etc/hosts
-.It Sy yp
-talk to the YP system if
-.Xr ypbind 8
-is running
-.El
-.Pp
-If the
-.Sy lookup
-keyword is not used in the system's
-.Pa resolv.conf
-file then the assumed order is
-.Sy bind file .
-Furthermore, if the system's
-.Pa resolv.conf
-file does not exist, then the only database used is
-.Sy file .
+This keyword has been deprecated by the functionality described in 
+.Xr nsswitch.conf 5 .
 .Pp
 .It Sy search
 Search list for host-name lookup.
@@ -218,6 +190,7 @@ resides in
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr resolver 3 ,
+.Xr nsswitch.conf 5 ,
 .Xr hostname 7 ,
 .Xr named 8
 .Rs
