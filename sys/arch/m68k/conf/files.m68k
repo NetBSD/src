@@ -1,4 +1,4 @@
-#       $NetBSD: files.m68k,v 1.27 2000/02/14 21:42:52 thorpej Exp $
+#       $NetBSD: files.m68k,v 1.28 2000/04/06 13:37:50 jdolecek Exp $
 #
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
@@ -11,7 +11,7 @@ file	netinet/in4_cksum.c			inet
 file	arch/m68k/m68k/kgdb_m68k.c		kgdb
 file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
-file	arch/m68k/m68k/ns_cksum.c		ns
+file	netns/ns_cksum.c			ns
 file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/regdump.c
