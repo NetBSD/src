@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.25 2000/03/14 15:56:58 oster Exp $
+#	$NetBSD: files.sparc64,v 1.26 2000/04/05 07:58:44 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -84,6 +84,10 @@ file	dev/ic/z8530sc.c			zs
 # XXX bogus; this is in dev/isa/files.isa.  fix me please!
 device	lpt
 file	dev/ic/lpt.c				lpt needs-flag
+
+device	auxio
+attach auxio at ebus with auxio_ebus
+file	arch/sparc64/dev/auxio_ebus.c		auxio_ebus
 
 attach lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
