@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.129 2004/01/03 03:02:25 lukem Exp $
+# $NetBSD: mi,v 1.130 2004/01/03 14:17:06 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -269,5 +269,5 @@
 ./var/msgs/bounds			etc-sysutil-log
 ./var/run/utmp				etc-sys-log
 ./var/run/utmpx				etc-sys-log
-./var/yp/Makefile.main			etc-nis-root
-./var/yp/Makefile.yp			etc-nis-root
+./var/yp/Makefile.main			etc-nis-root	yp
+./var/yp/Makefile.yp			etc-nis-root	yp

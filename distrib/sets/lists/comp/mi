@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.652 2004/01/03 13:50:26 lukem Exp $
+#	$NetBSD: mi,v 1.653 2004/01/03 14:17:06 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4514,18 +4514,18 @@
 ./usr/share/man/cat3/y1f.0	comp-c-catman
 ./usr/share/man/cat3/yn.0	comp-c-catman
 ./usr/share/man/cat3/ynf.0	comp-c-catman
-./usr/share/man/cat3/yp_all.0	comp-c-catman
-./usr/share/man/cat3/yp_bind.0	comp-c-catman
-./usr/share/man/cat3/yp_first.0	comp-c-catman
-./usr/share/man/cat3/yp_get_default_domain.0	comp-c-catman
-./usr/share/man/cat3/yp_master.0	comp-c-catman
-./usr/share/man/cat3/yp_match.0	comp-c-catman
-./usr/share/man/cat3/yp_next.0	comp-c-catman
-./usr/share/man/cat3/yp_order.0	comp-c-catman
-./usr/share/man/cat3/yp_unbind.0	comp-c-catman
-./usr/share/man/cat3/ypclnt.0	comp-c-catman
-./usr/share/man/cat3/yperr_string.0	comp-c-catman
-./usr/share/man/cat3/ypprot_err.0	comp-c-catman
+./usr/share/man/cat3/yp_all.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_bind.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_first.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_get_default_domain.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_master.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_match.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_next.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_order.0	comp-c-catman	yp
+./usr/share/man/cat3/yp_unbind.0	comp-c-catman	yp
+./usr/share/man/cat3/ypclnt.0	comp-c-catman	yp
+./usr/share/man/cat3/yperr_string.0	comp-c-catman	yp
+./usr/share/man/cat3/ypprot_err.0	comp-c-catman	yp
 ./usr/share/man/cat3/zlib.0	comp-c-catman
 ./usr/share/man/cat5/cvs.0	comp-cvs-catman
 ./usr/share/man/cat5/mk.conf.0		comp-util-catman
@@ -8101,18 +8101,18 @@
 ./usr/share/man/man3/y1f.3		comp-c-man
 ./usr/share/man/man3/yn.3		comp-c-man
 ./usr/share/man/man3/ynf.3		comp-c-man
-./usr/share/man/man3/yp_all.3		comp-c-man
-./usr/share/man/man3/yp_bind.3		comp-c-man
-./usr/share/man/man3/yp_first.3		comp-c-man
-./usr/share/man/man3/yp_get_default_domain.3		comp-c-man
-./usr/share/man/man3/yp_master.3	comp-c-man
-./usr/share/man/man3/yp_match.3		comp-c-man
-./usr/share/man/man3/yp_next.3		comp-c-man
-./usr/share/man/man3/yp_order.3		comp-c-man
-./usr/share/man/man3/yp_unbind.3	comp-c-man
-./usr/share/man/man3/ypclnt.3		comp-c-man
-./usr/share/man/man3/yperr_string.3	comp-c-man
-./usr/share/man/man3/ypprot_err.3	comp-c-man
+./usr/share/man/man3/yp_all.3		comp-c-man	yp
+./usr/share/man/man3/yp_bind.3		comp-c-man	yp
+./usr/share/man/man3/yp_first.3		comp-c-man	yp
+./usr/share/man/man3/yp_get_default_domain.3		comp-c-man	yp
+./usr/share/man/man3/yp_master.3	comp-c-man	yp
+./usr/share/man/man3/yp_match.3		comp-c-man	yp
+./usr/share/man/man3/yp_next.3		comp-c-man	yp
+./usr/share/man/man3/yp_order.3		comp-c-man	yp
+./usr/share/man/man3/yp_unbind.3	comp-c-man	yp
+./usr/share/man/man3/ypclnt.3		comp-c-man	yp
+./usr/share/man/man3/yperr_string.3	comp-c-man	yp
+./usr/share/man/man3/ypprot_err.3	comp-c-man	yp
 ./usr/share/man/man3/zlib.3		comp-c-man
 ./usr/share/man/man5/cvs.5		comp-cvs-man
 ./usr/share/man/man5/mk.conf.5		comp-util-man
