@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 1996/07/12 13:16:39 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 1996/07/20 20:52:42 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -44,16 +44,17 @@
 #define	_MACHINE_PMAP_H_
 
 /*
- * Pmap stuff (in anticipation of '40 support)
+ * Pmap stuff
  */
 struct pmap {
-	u_int 	*pm_ptab;	/* KVA of page table */
-	u_int	*pm_stab;	/* KVA of segment table */
-	u_int	*pm_rtab;	/* KVA of 68040 root table */
-	int	pm_stchanged;	/* ST changed */
-	short	pm_sref;	/* segment table ref count */
-	short	pm_count;	/* pmap reference count */
-	long	pm_ptpages;	/* more stats: PT pages */
+	pt_entry_t 		*pm_ptab;	/* KVA of page table */
+	st_entry_t		*pm_stab;	/* KVA of segment table */
+	int			pm_stchanged;	/* ST changed */
+	int			pm_stfree;	/* 040: free lev2 blocks */
+	u_int			*pm_stpa;	/* 040: ST phys. address */
+	short			pm_sref;	/* segment table ref count */
+	short			pm_count;	/* pmap reference count */
+	long			pm_ptpages;	/* more stats: PT pages */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
@@ -61,18 +62,33 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 /*
+ * On the 040 we keep track of which level 2 blocks are already in use
+ * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
+ * (block 31).  For convenience, the level 1 table is considered to be
+ * block 0.
+ *
+ * MAX[KU]L2SIZE control how many pages of level 2 descriptors are allowed.
+ * for the kernel and users.  16 implies only the initial "segment table"
+ * page is used.  WARNING: don't change MAXUL2SIZE unless you can allocate
+ * physically contiguous pages for the ST in pmap.c!
+ */
+#define	MAXKL2SIZE	32
+#define MAXUL2SIZE	16
+#define l2tobm(n)	(1 << (n))
+#define	bmtol2(n)	(ffs(n) - 1)
+
+/*
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
-		    atari_btop(pmap_extract(pmap_kernel(), \
-		    cpu040 ? (vm_offset_t)(pmapp)->pm_rtab : \
-		    (vm_offset_t)(pmapp)->pm_stab)); \
+		    atari_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
 	}
+
 #define PMAP_DEACTIVATE(pmapp, pcbp)
 
 /*
@@ -103,6 +119,25 @@ typedef struct pv_entry {
 #define	PV_CI		0x01	/* all entries must be cache inhibited */
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
+struct pv_page;
+
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+/*
+ * This is basically:
+ * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ */
+#define	NPVPPG	340
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
+
 #ifdef	_KERNEL
 /*
  * Memory segment descriptors.
@@ -130,7 +165,7 @@ struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
-void	pmap_bootstrap __P((vm_offset_t));
+void	pmap_bootstrap __P((vm_offset_t, u_int, u_int));
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */

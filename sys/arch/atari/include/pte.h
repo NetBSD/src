@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1995/04/30 14:02:14 leo Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 1996/07/20 20:52:43 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,8 +61,8 @@ struct ste {
 
 typedef u_int	st_entry_t;
 
-#define	PT_ENTRY_NULL	((u_int *) 0)
-#define	ST_ENTRY_NULL	((u_int *) 0)
+#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
+#define	ST_ENTRY_NULL	((st_entry_t *) 0)
 
 #define	SG_V		0x00000002	/* segment is valid */
 #define	SG_NV		0x00000000
@@ -84,7 +84,10 @@ typedef u_int	st_entry_t;
 #define SG4_MASK3	0x0003e000	/* page table index mask */
 #define	SG4_SHIFT3	13
 #define	SG4_ADDR1	0xfffffe00	/* pointer table address mask */
-#define	SG4_ADDR2	0xffffff00	/* page table address mask */
+#define	SG4_ADDR2	0xffffff80	/* page table address mask */
+#define SG4_LEV1SIZE	128		/* entries in pointer table 1 */
+#define SG4_LEV2SIZE	128		/* entries in pointer table 2 */
+#define SG4_LEV3SIZE	32		/* entries in page table */
 
 #define	PG_V		0x00000001
 #define	PG_NV		0x00000000
@@ -107,10 +110,8 @@ typedef u_int	st_entry_t;
 #define PG_CIN		0x00000060	/* cache inhibited nonserialized */
 #define PG_SO		0x00000080	/* supervisor only */
 
-#define ATARI_040RTSIZE		512	/* root (level 1) table size */
-#define ATARI_040STSIZE		512	/* segment (level 2) table size */
-#define	ATARI_040PTSIZE		128	/* page (level 3) table size */
-#define ATARI_STSIZE		1024	/* segment table size */
+#define	ATARI_STSIZE		(MAXUL2SIZE*SG4_LEV2SIZE*sizeof(st_entry_t))
+
 /*
  * ATARI_MAX_COREUPT	maximum number of incore user page tables
  * ATARI_USER_PTSIZE	the number of bytes for user pagetables
