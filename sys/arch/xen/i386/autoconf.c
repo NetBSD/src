@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2004/09/17 14:11:23 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2004/10/20 04:20:05 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2004/09/17 14:11:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/20 04:20:05 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -101,8 +101,8 @@ static void matchbiosdisks(void);
 static void findroot(void);
 static int is_valid_disk(struct device *);
 
-extern struct disklist *i386_alldisks;
-extern int i386_ndisks;
+struct disklist *x86_alldisks;
+int x86_ndisks;
 
 #include "bios32.h"
 #if NBIOS32 > 0
@@ -210,30 +210,30 @@ matchbiosdisks(void)
 	 */
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
 		if (is_valid_disk(dv))
-			i386_ndisks++;
+			x86_ndisks++;
 
-	if (i386_ndisks == 0)
+	if (x86_ndisks == 0)
 		return;
 
-	dklist_size = sizeof (struct disklist) + (i386_ndisks - 1) *
+	dklist_size = sizeof (struct disklist) + (x86_ndisks - 1) *
 	    sizeof (struct nativedisk_info);
 
 	/* XXX M_TEMP is wrong */
-	i386_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT);
-	if (i386_alldisks == NULL)
+	x86_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT);
+	if (x86_alldisks == NULL)
 		return;
 
-	memset(i386_alldisks, 0, dklist_size);
+	memset(x86_alldisks, 0, dklist_size);
 
-	i386_alldisks->dl_nnativedisks = i386_ndisks;
-	i386_alldisks->dl_nbiosdisks = big->num;
+	x86_alldisks->dl_nnativedisks = x86_ndisks;
+	x86_alldisks->dl_nbiosdisks = big->num;
 	for (i = 0; i < big->num; i++) {
-		i386_alldisks->dl_biosdisks[i].bi_dev = big->disk[i].dev;
-		i386_alldisks->dl_biosdisks[i].bi_sec = big->disk[i].sec;
-		i386_alldisks->dl_biosdisks[i].bi_head = big->disk[i].head;
-		i386_alldisks->dl_biosdisks[i].bi_cyl = big->disk[i].cyl;
-		i386_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
-		i386_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
+		x86_alldisks->dl_biosdisks[i].bi_dev = big->disk[i].dev;
+		x86_alldisks->dl_biosdisks[i].bi_sec = big->disk[i].sec;
+		x86_alldisks->dl_biosdisks[i].bi_head = big->disk[i].head;
+		x86_alldisks->dl_biosdisks[i].bi_cyl = big->disk[i].cyl;
+		x86_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
+		x86_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
 #ifdef GEOM_DEBUG
 #ifdef NOTYET
 		printf("disk %x: flags %x, interface %x, device %llx\n",
@@ -256,7 +256,7 @@ matchbiosdisks(void)
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
-			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
+			sprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_name,
 			    dv->dv_unit);
 
@@ -302,11 +302,11 @@ matchbiosdisks(void)
 					printf("matched bios disk %x with %s\n",
 					    be->dev, dv->dv_xname);
 #endif
-					i386_alldisks->dl_nativedisks[n].
+					x86_alldisks->dl_nativedisks[n].
 					    ni_biosmatches[m++] = i;
 				}
 			}
-			i386_alldisks->dl_nativedisks[n].ni_nmatches = m;
+			x86_alldisks->dl_nativedisks[n].ni_nmatches = m;
 			vput(tv);
 		}
 	}
