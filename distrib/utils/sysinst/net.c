@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.76.2.3 2002/06/20 02:43:28 lukem Exp $	*/
+/*	$NetBSD: net.c,v 1.76.2.4 2003/02/14 02:51:41 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -450,6 +450,9 @@ again:
 	/* try a dhcp configuration */
 	dhcp_config = config_dhcp(net_dev);
 	if (dhcp_config) {
+		/* Get newly configured data off interface. */
+		get_ifinterface_info();
+
 		net_dhcpconf |= DHCPCONF_IPADDR;
 
 		/* run route show and extract data */
