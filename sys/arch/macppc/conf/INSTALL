@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2004/03/29 01:36:49 kristerw Exp $
+#	$NetBSD: INSTALL,v 1.75 2004/03/29 01:46:03 kristerw Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -182,3 +182,4 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	wsmux			# mouse and keyboard multiplexor
