@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.77.2.4 1994/10/11 10:00:54 mycroft Exp $
+ *	$Id: locore.s,v 1.77.2.5 1994/11/07 23:32:51 cgd Exp $
  */
 
 /*
@@ -1609,6 +1609,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
 
+	/* Record new process. */
+	movl	%edi,_curproc
+
 	/* It's okay to take interrupts here. */
 	sti
 
@@ -1703,9 +1706,6 @@ switch_exited:
 	sti
 
 switch_return:
-	/* Record new process. */
-	movl	%edi,_curproc
-
 	/* Old _cpl is already on the stack. */
 	popl	_cpl
 	call    _spllower		# restore the process's ipl
