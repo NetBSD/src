@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.11 1996/10/13 04:10:52 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.12 1997/01/01 21:14:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -55,9 +55,12 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/dma.h>
+
+#include <atari/atari/intr.h>
 
 #define	NDMA_DEV	10	/* Max 2 floppy's, 8 hard-disks		*/
 typedef struct dma_entry {
@@ -81,13 +84,12 @@ static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
 
 static	int	must_init = 1;		/* Must initialize		*/
 
-void	cdmaint __P((int));
+void	cdmaint __P((void *, int));
 
-long	sr;	/* sr at time of interrupt */
-static	void	init_queues __P((void));
+static	void	st_dma_init __P((void));
 
 static void
-init_queues()
+st_dma_init()
 {
 	int	i;
 
@@ -96,6 +98,9 @@ init_queues()
 
 	for(i = 0; i < NDMA_DEV; i++)
 		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
+
+	if (intr_establish(7, USER_VEC, 0, (hw_ifun_t)cdmaint, NULL) == NULL)
+		panic("st_dma_init: Can't establish interrupt\n");
 }
 
 int
@@ -110,7 +115,7 @@ int		rcaller;
 	DMA_ENTRY	*req;
 
 	if(must_init) {
-		init_queues();
+		st_dma_init();
 		must_init = 0;
 	}
 	*lock_stat = DMA_LOCK_REQ;
@@ -197,7 +202,8 @@ st_dmawanted()
 }
 
 void
-cdmaint(sr)
+cdmaint(unused, sr)
+void	*unused;
 int	sr;	/* sr at time of interrupt */
 {
 	dma_farg	int_func;
