@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.1 1998/07/27 23:59:11 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.2 1998/07/28 14:04:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -156,9 +156,6 @@ extern struct cfdriver le_cd;
 
 static void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
-hide void lehwreset __P((struct lance_softc *));
-hide void lehwinit __P((struct lance_softc *));
-hide void lenocarrier __P((struct lance_softc *));
 
 static void
 lewrcsr(sc, port, val)
