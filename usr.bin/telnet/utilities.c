@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -898,20 +898,18 @@ EmptyTerminal()
 #if	defined(unix)
     struct pollfd set[1];
 
+    set[0].fd = tout;
+    set[0].events = POLLOUT;
 #endif	/* defined(unix) */
 
     if (TTYBYTES() == 0) {
 #if	defined(unix)
-	set[0].fd = tout;
-	set[0].events = POLLOUT;
 	(void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
 #if	defined(unix)
-	    set[0].fd = tout;
-	    set[0].events = POLLOUT;
 	    (void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
 	}
