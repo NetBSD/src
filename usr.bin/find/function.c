@@ -51,6 +51,7 @@ static char sccsid[] = "@(#)function.c	5.17 (Berkeley) 5/24/91";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fnmatch.h>
 #include "find.h"
 
 #define	FIND_EQUAL	0
@@ -556,7 +557,7 @@ f_name(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	return(!fnmatch(plan->c_data, entry->fts_name, FNM_QUOTE));
+	return(!fnmatch(plan->c_data, entry->fts_name, 0));
 }
  
 PLAN *
