@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.1 1995/02/10 17:50:23 cgd Exp $	*/
+/*	$NetBSD: isinf.c,v 1.2 1998/10/13 14:43:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,9 +27,15 @@
  * rights to redistribute these changes.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>
+
+#ifdef __weak_alias
+__weak_alias(isnan,_isnan);
+__weak_alias(isinf,_isinf);
+#endif
 
 int
 isnan(d)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.28 1998/09/09 12:08:05 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.29 1998/10/13 14:43:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.28 1998/09/09 12:08:05 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.29 1998/10/13 14:43:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: vfprintf.c,v 1.28 1998/09/09 12:08:05 kleink Exp $");
  * This code is large and complicated...
  */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

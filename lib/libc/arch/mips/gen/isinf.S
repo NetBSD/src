@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.S,v 1.5 1996/09/17 01:32:25 jonathan Exp $	*/
+/*	$NetBSD: isinf.S,v 1.6 1998/10/13 14:43:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,8 +40,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)isinf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: isinf.S,v 1.5 1996/09/17 01:32:25 jonathan Exp $")
+	ASMSTR("$NetBSD: isinf.S,v 1.6 1998/10/13 14:43:37 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef WEAK_ALIAS
+#define isnan	_isnan	/* XXX */
+#define isinf	_isinf	/* XXX */
+WEAK_ALIAS(isnan,_isnan);
+WEAK_ALIAS(isinf,_isinf);
+#endif
 
 #ifdef ABICALLS
 	.abicalls

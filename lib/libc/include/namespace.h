@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.13 1998/10/13 14:19:21 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.14 1998/10/13 14:43:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -207,6 +207,8 @@
 #define initgroups		_initgroups
 #define initstate		_initstate
 #define innetgr			_innetgr
+#define isinf			_isinf
+#define isnan			_isnan
 #define jrand48			_jrand48
 #define l64a			_l64a
 #define lcong48			_lcong48

@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.3 1997/10/06 00:18:30 mark Exp $	*/
+/*	$NetBSD: isinf.c,v 1.4 1998/10/13 14:43:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -32,9 +32,15 @@
  * SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>
+
+#ifdef __weak_alias
+__weak_alias(isnan,_isnan);
+__weak_alias(isinf,_isinf);
+#endif
 
 int
 isnan(d)
