@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.4 1995/04/23 16:20:47 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.5 1995/07/04 18:06:44 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -72,6 +72,7 @@ static struct aconfdata aconftab[] = {
 	{ "gvpbus",	2017,	2 },
 	{ "gvpbus",	2017,	11 },
 	{ "giv",	2017,	32 },
+	{ "gio",	2017,	255 },
 	/* progressive perhiperals */
 	{ "zssc",	2026,	150 },
 	{ "ppia",	2026,	187 },
