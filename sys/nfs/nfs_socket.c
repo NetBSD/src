@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.93 2003/07/23 13:41:00 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.94 2003/07/23 13:50:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.93 2003/07/23 13:41:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.94 2003/07/23 13:50:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1136,7 +1136,7 @@ tryagain:
 						PSOCK, "nqnfstry", 0);
 				trylater_delay *= nfs_backoff[trylater_cnt];
 				if (trylater_cnt + 1 <
-				    sizeof(nfs_backoff) / sizeof(nfs_backoff[0])
+				   sizeof(nfs_backoff) / sizeof(nfs_backoff[0]))
 					trylater_cnt++;
 				goto tryagain;
 			}
