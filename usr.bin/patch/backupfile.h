@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.h,v 1.4 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: backupfile.h,v 1.5 2003/07/08 01:55:35 kristerw Exp $	*/
 
 /* backupfile.h -- declarations for making Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -29,7 +29,7 @@ enum backup_type
 };
 
 extern enum backup_type backup_type;
-extern char *simple_backup_suffix;
+extern const char *simple_backup_suffix;
 
 char *find_backup_file_name(char *);
 enum backup_type get_version(char *);

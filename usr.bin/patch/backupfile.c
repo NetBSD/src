@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.10 2003/05/30 23:08:12 kristerw Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.11 2003/07/08 01:55:35 kristerw Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.10 2003/05/30 23:08:12 kristerw Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.11 2003/07/08 01:55:35 kristerw Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,16 +51,16 @@ enum backup_type backup_type = none;
 
 /* The extension added to file names to produce a simple (as opposed
    to numbered) backup file name. */
-char *simple_backup_suffix = "~";
+const char *simple_backup_suffix = "~";
 
 /* backupfile.c */
 static int max_backup_version(char *, char *);
 static char *make_version_name(char *, int);
 static int version_number(char *, char *, size_t);
-static char *concat(char *, char *);
-static char *dirname(char *);
-static int argmatch(char *, char **);
-static void invalid_arg(char *, char *, int);
+static char *concat(const char *, const char *);
+static char *dirname(const char *);
+static int argmatch(char *, const char **);
+static void invalid_arg(const char *, const char *, int);
 
 /* Return the name of the new backup file for file FILE,
    allocated with malloc.
@@ -164,7 +164,7 @@ version_number(char *base, char *backup, size_t base_length)
 /* Return the newly-allocated concatenation of STR1 and STR2. */
 
 static char *
-concat(char *str1, char *str2)
+concat(const char *str1, const char *str2)
 {
   char *newstr;
   char str1_length = strlen (str1);
@@ -192,7 +192,7 @@ basename(char *name)
    removed.  */
 
 static char *
-dirname(char *path)
+dirname(const char *path)
 {
   char *newpath;
   char *slash;
@@ -225,7 +225,7 @@ dirname(char *path)
    or -2 if it is ambiguous (is a prefix of more than one element). */
 
 static int
-argmatch(char *arg, char **optlist)
+argmatch(char *arg, const char **optlist)
 {
   int i;			/* Temporary index in OPTLIST. */
   size_t arglen;		/* Length of ARG. */
@@ -262,7 +262,7 @@ argmatch(char *arg, char **optlist)
    PROBLEM is the return value from argmatch. */
 
 static void
-invalid_arg(char *kind, char *value, int problem)
+invalid_arg(const char *kind, const char *value, int problem)
 {
   fprintf (stderr, "patch: ");
   if (problem == -1)
@@ -272,7 +272,7 @@ invalid_arg(char *kind, char *value, int problem)
   fprintf (stderr, " %s `%s'\n", kind, value);
 }
 
-static char *backup_args[] =
+static const char *backup_args[] =
 {
   "never", "simple", "nil", "existing", "t", "numbered", 0
 };

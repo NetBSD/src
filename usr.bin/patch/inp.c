@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.13 2003/05/30 22:33:58 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.14 2003/07/08 01:55:35 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.13 2003/05/30 22:33:58 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.14 2003/07/08 01:55:35 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -81,7 +81,7 @@ plan_a(char *filename)
 	    /* I can't write to it. */
 	    ((filestat.st_mode & 0022) == 0 && filestat.st_uid != myuid)) {
 		struct stat cstat;
-		char *cs = NULL;
+		const char *cs = NULL;
 		char *filebase;
 		size_t pathlen;
 
@@ -215,7 +215,7 @@ plan_a(char *filename)
 /*
  * Fetch a line from the input file, \n terminated, not necessarily \0.
  */
-char *
+const char *
 ifetch(LINENUM line)
 {
 	if (line < 1 || line > input_lines)
