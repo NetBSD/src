@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.69 1999/12/02 19:41:39 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.70 1999/12/03 01:13:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.69 1999/12/02 19:41:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.70 1999/12/03 01:13:17 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -262,15 +262,6 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
  * Pull in the PALcode function stubs.
  */
 #include <alpha/alpha/pal.s>
-
-/**************************************************************************/
-
-/**************************************************************************/
-
-/*
- * Pull in the atomic primitives.
- */
-#include <alpha/alpha/atomic.s>
 
 /**************************************************************************/
 
