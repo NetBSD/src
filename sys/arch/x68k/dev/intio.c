@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1.2.7 1999/03/12 15:13:37 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.1.2.8 1999/03/14 12:27:17 minoura Exp $	*/
 
 /*
  *
@@ -68,22 +68,6 @@ static struct x68k_bus_space intio_bus = {
 #if 0
 	x68k_bus_space_barrier,
 #endif
-	x68k_bus_space_read_1, x68k_bus_space_read_2, x68k_bus_space_read_4,
-	x68k_bus_space_read_multi_1, x68k_bus_space_read_multi_2,
-	x68k_bus_space_read_multi_4,
-	x68k_bus_space_read_region_1, x68k_bus_space_read_region_2,
-	x68k_bus_space_read_region_4,
-
-	x68k_bus_space_write_1, x68k_bus_space_write_2, x68k_bus_space_write_4,
-	x68k_bus_space_write_multi_1, x68k_bus_space_write_multi_2,
-	x68k_bus_space_write_multi_4,
-	x68k_bus_space_write_region_1, x68k_bus_space_write_region_2,
-	x68k_bus_space_write_region_4,
-
-	x68k_bus_space_set_region_1, x68k_bus_space_set_region_2,
-	x68k_bus_space_set_region_4,
-	x68k_bus_space_copy_region_1, x68k_bus_space_copy_region_2,
-	x68k_bus_space_copy_region_4,
 
 	0
 };
