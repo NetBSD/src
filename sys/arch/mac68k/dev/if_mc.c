@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.5 1998/03/09 23:05:28 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -566,7 +566,7 @@ mc_tint(sc)
 	mcstart(&sc->sc_if);
 }
 
-integrate void
+void
 mc_rint(sc)
 	struct mc_softc *sc;
 {
