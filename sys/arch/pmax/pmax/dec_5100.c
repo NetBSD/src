@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.3 1998/11/29 00:58:06 jonathan Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.4 1999/03/15 11:45:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -97,14 +97,14 @@ dec_5100_init()
 {
 
 	platform.iobus = "ibus";
-	/* XXX model ? */
+
 	platform.os_init = dec_5100_os_init;
 	platform.bus_reset = dec_5100_bus_reset;
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 
 	dec_5100_os_init();
-	sprintf(cpu_model, "DECstation 5100 (MIPSMATE)");
+	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
 
 void
