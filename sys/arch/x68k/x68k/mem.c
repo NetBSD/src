@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7 1997/10/10 12:55:31 oki Exp $	*/
+/*	$NetBSD: mem.c,v 1.8 1997/10/10 17:43:16 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,9 +91,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vm_offset_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 

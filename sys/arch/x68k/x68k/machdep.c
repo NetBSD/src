@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1997/09/19 13:55:55 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1997/10/10 17:43:25 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,8 +181,8 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
-	register caddr_t v, firstaddr;
+	unsigned i;
+	caddr_t v, firstaddr;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -389,7 +389,7 @@ again:
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
@@ -607,11 +607,11 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct sigframe *fp, *kfp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
@@ -734,7 +734,7 @@ sendsig(catcher, sig, mask, code)
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
 	if (p->p_emul == &emul_hpux) {
-		register struct hpuxsigframe *hkfp;
+		struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
 		hkfp->hsf_signum = bsdtohpuxsig(kfp->sf_signum);
@@ -799,9 +799,9 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct sigcontext *scp;
+	struct frame *frame;
+	int rf;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
@@ -922,7 +922,7 @@ sys_sigreturn(p, v, retval)
 	 * the sigcontext structure.
 	 */
 	if (flags & SS_RTEFRAME) {
-		register int sz;
+		int sz;
 		
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
@@ -960,7 +960,7 @@ int	waittime = -1;
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
@@ -1112,9 +1112,9 @@ dumpsys()
 {
 	unsigned bytes, i, n;
 	int range;
-	register int maddr, psize;
-	register daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 
 	/* Don't put dump messages in msgbuf. */
@@ -1277,9 +1277,9 @@ int	*nofault;
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1294,9 +1294,9 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
