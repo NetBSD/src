@@ -1,9 +1,9 @@
-/*	$NetBSD: session.c,v 1.1.1.3 2003/01/17 14:54:33 wiz Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.4 2003/02/13 08:50:53 wiz Exp $	*/
 
 /* session.c -- user windowing interface to Info.
-   Id: session.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: session.c,v 1.3 2003/01/24 19:05:53 karl Exp
 
-   Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002 Free
+   Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -3938,7 +3938,7 @@ incremental_search (window, count, ignore)
       key = info_get_input_char ();
       window_get_state (window, &mystate);
 
-      if (key == DEL)
+      if (key == DEL || key == Control ('h'))
         {
           /* User wants to delete one level of search? */
           if (!isearch_states_index)
@@ -3969,9 +3969,15 @@ incremental_search (window, count, ignore)
 
       if (!Meta_p (key) || key > 32)
         {
-          func = InfoFunction(window->keymap[key].function);
+          /* If this key is not a keymap, get its associated function,
+             if any.  If it is a keymap, then it's probably ESC from an
+             arrow key, and we handle that case below.  */
+          char type = window->keymap[key].type;
+          func = type == ISFUNC
+                 ? InfoFunction(window->keymap[key].function)
+                 : NULL;  /* function member is a Keymap if ISKMAP */
 
-          if (isprint (key) || func == (VFunction *)NULL)
+          if (isprint (key) || (type == ISFUNC && func == NULL))
             {
             insert_and_search:
 

@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.3 2002/09/27 20:31:36 karl Exp
+# Id: Makefile.am,v 1.8 2003/01/06 01:01:05 karl Exp
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -24,7 +24,7 @@ MAKEINFO = ../makeinfo/makeinfo
 INSTALL_INFO = ../util/install-info
 
 TXI_XLATE = txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-fr.tex \
-	    txi-it.tex txi-nl.tex txi-no.tex txi-pt.tex
+	    txi-it.tex txi-nl.tex txi-no.tex txi-pt.tex txi-tr.tex
 
 # Include our texinfo.tex, not Automake's.
 EXTRA_DIST = epsf.tex pdfcolor.tex texinfo.tex \
@@ -74,9 +74,8 @@ endif
 # Do not create info files for distribution, but do create man pages.
 dist-info:
 
-# Do not try to build the info files in $(srcdir),
-# since we don't distribute them.
-.texi.info:
-	$(MAKEINFO) -I$(srcdir) `echo $< | sed 's,.*/,,'`
-texinfo: $(srcdir)/texinfo.txi
+# Do not try to build the info files in $(srcdir), since we don't
+# distribute them.  (This will be fixed for no-suffix info files such as
+# `texinfo' in automake 1.7.2, and is already fixed for normal info files.)
+texinfo: $(srcdir)/texinfo.txi version.texi
 	$(MAKEINFO) -I$(srcdir) texinfo.txi

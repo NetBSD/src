@@ -1,9 +1,10 @@
-/*	$NetBSD: cmds.c,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.1.1.3 2003/02/13 08:50:54 wiz Exp $	*/
 
 /* cmds.c -- Texinfo commands.
-   Id: cmds.c,v 1.14 2002/11/11 12:37:34 feloy Exp
+   Id: cmds.c,v 1.16 2003/01/12 15:18:24 karl Exp
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -758,7 +759,7 @@ cm_verb (arg)
   last_char_was_newline = 0;
 
   if (html)
-    add_word ("<pre>");
+    add_word ("<tt>");
 
   if (input_text_offset < input_text_length)
     {
@@ -780,18 +781,28 @@ cm_verb (arg)
       character = curchar ();
 
       if (character == '\n')
-        line_number++;
-      /*
-	Assume no newlines in END_VERBATIM
-      */
+        {
+          line_number++;
+          if (html)
+            add_word ("<br>\n");
+        }
+
+      else if (html && character == '<')
+        add_word ("&lt;");
+
+      else if (html && character == '&')
+        add_word ("&amp;");
+
       else if (character == delimiter)
-	{
+	{ /* Assume no newlines in END_VERBATIM. */
 	  seen_end = 1;
 	  input_text_offset++;
 	  break;
 	}
 
-      add_char (character);
+      else
+        add_char (character);
+
       input_text_offset++;
     }
 
@@ -808,8 +819,11 @@ cm_verb (arg)
     }
 
   if (html)
-    add_word ("</pre>");
+    add_word ("</tt>");
+
+  in_fixed_width_font--;
 }
+
 
 void
 cm_strong (arg, position)
@@ -1291,13 +1305,17 @@ static void
 handle_include (verbatim_include)
   int verbatim_include;
 {
-  char *filename;
+  char *arg, *filename;
 
   if (macro_expansion_output_stream && !executing_string)
     me_append_before_this_command ();
 
   close_paragraph ();
-  get_rest_of_line (0, &filename);
+  get_rest_of_line (0, &arg);
+  /* We really only want to expand @value, but it's easier to just do
+     everything.  TeX will only work with @value.  */
+  filename = text_expansion (arg);
+  free (arg);
 
   if (macro_expansion_output_stream && !executing_string)
     remember_itext (input_text, input_text_offset);
@@ -1321,8 +1339,6 @@ handle_include (verbatim_include)
 
   if (!find_and_load (filename))
     {
-      extern int errno;
-
       popfile ();
       line_number--;
 
