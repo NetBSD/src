@@ -1,4 +1,4 @@
-/*	$NetBSD: getpar.c,v 1.8 2000/07/03 03:57:44 matt Exp $	*/
+/*	$NetBSD: getpar.c,v 1.9 2002/02/26 02:37:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getpar.c,v 1.8 2000/07/03 03:57:44 matt Exp $");
+__RCSID("$NetBSD: getpar.c,v 1.9 2002/02/26 02:37:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ testterm()
 
 
 /*
-**  TEST FOR SPECIFIED DELIMETER
+**  TEST FOR SPECIFIED DELIMITER
 **
 **	The standard input is scanned for the parameter.  If found,
 **	it is thrown away and non-zero is returned.  If not found,
