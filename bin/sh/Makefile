@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.33 1997/07/04 21:40:55 christos Exp $
+#	$NetBSD: Makefile,v 1.34 1997/07/20 22:37:55 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
-WARNS=	1
 PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 1997/07/20 04:45:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/07/20 22:36:31 christos Exp $
 
 PROG=	chio
-WARNS=1
 
 .include <bsd.prog.mk>

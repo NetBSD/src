@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.8 1997/07/20 17:41:56 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1997/07/20 22:37:12 christos Exp $
 
-WARNS=1
 CFLAGS+=	-DHAVE_CONFIG_H -I.
 
 PROG=	ksh

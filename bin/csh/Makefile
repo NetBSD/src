@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/07/04 21:23:50 christos Exp $
+#	$NetBSD: Makefile,v 1.14 1997/07/20 22:36:39 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -6,7 +6,6 @@
 #
 # To profile, put -DPROF in DEFS and -pg in CFLAGS, and recompile.
 
-WARNS=	1
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
 CFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
