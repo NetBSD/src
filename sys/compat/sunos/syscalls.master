@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 1994/11/14 07:33:50 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.22 1994/11/20 21:30:03 deraadt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -66,7 +66,8 @@
 23	NOARGS		{ int setuid(uid_t uid); }
 24	NOARGS		{ uid_t getuid(void); }
 25	UNIMPL		sunos_stime
-26	UNIMPL		sunos_ptrace
+26	STD		{ long sunos_ptrace(int req, int pid, char *addr, \
+			  int data, char *addr2); }
 27	UNIMPL		sunos_alarm
 28	UNIMPL		sunos_fstat
 29	UNIMPL		sunos_pause
@@ -209,7 +210,8 @@
 150	NOARGS		{ int compat_43_getsockname(int fdes, caddr_t asa, int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
-153	UNIMPL		poll
+153	STD		{ int sunos_poll(struct sunos_pollfd *fds, long nfds, \
+			  int timeout); }
 154	UNIMPL		
 #ifdef NFSSERVER
 155	STD		{ int sunos_nfssvc(int fd); }
