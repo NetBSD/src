@@ -39,4 +39,3 @@ sainfo anonymous {
 	authentication_algorithm hmac_sha1;
 	compression_algorithm deflate;
 }
-

@@ -4,15 +4,15 @@
 # "include" directive with relative file path.
 # you can overwrite "path" directive afterwards, however, doing so may add
 # more confusion.
-#path include "/usr/local/v6/etc" ;
+#path include "/etc/racoon" ;
 #include "remote.conf" ;
 
 # the file should contain key ID/key pairs, for pre-shared key authentication.
-path pre_shared_key "/usr/local/v6/etc/psk.txt" ;
+path pre_shared_key "/etc/racoon/psk.txt" ;
 
 # racoon will look for certificate file in the directory,
 # if the certificate/certificate request payload is received.
-#path certificate "/usr/local/openssl/certs" ;
+#path certificate "/etc/openssl/certs" ;
 
 # "log" specifies logging level.  It is followed by either "notify", "debug"
 # or "debug2".
