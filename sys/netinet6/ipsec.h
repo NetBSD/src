@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.5 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.6 1999/11/19 10:41:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,26 +108,26 @@ struct ipsecrequest {
 
 /* statistics for ipsec processing */
 struct ipsecstat {
-	u_long in_success;  /* succeeded inbound process */
-	u_long in_polvio;   /* security policy violation for inbound process */
-	u_long in_nosa;     /* inbound SA is unavailable */
-	u_long in_inval;    /* inbound processing failed due to EINVAL */
-	u_long in_badspi;   /* failed getting a SPI */
-	u_long in_ahreplay; /* AH replay check failed */
-	u_long in_espreplay; /* ESP replay check failed */
-	u_long in_ahauthsucc; /* AH authentication success */
-	u_long in_ahauthfail; /* AH authentication failure */
-	u_long in_espauthsucc; /* ESP authentication success */
-	u_long in_espauthfail; /* ESP authentication failure */
-	u_long in_esphist[SADB_EALG_MAX];
-	u_long in_ahhist[SADB_AALG_MAX];
-	u_long out_success; /* succeeded outbound process */
-	u_long out_polvio;  /* security policy violation for outbound process */
-	u_long out_nosa;    /* outbound SA is unavailable */
-	u_long out_inval;   /* outbound process failed due to EINVAL */
-	u_long out_noroute; /* there is no route */
-	u_long out_esphist[SADB_EALG_MAX];
-	u_long out_ahhist[SADB_AALG_MAX];
+	u_quad_t in_success; /* succeeded inbound process */
+	u_quad_t in_polvio;  /* security policy violation for inbound process */
+	u_quad_t in_nosa;    /* inbound SA is unavailable */
+	u_quad_t in_inval;   /* inbound processing failed due to EINVAL */
+	u_quad_t in_badspi;   /* failed getting a SPI */
+	u_quad_t in_ahreplay; /* AH replay check failed */
+	u_quad_t in_espreplay; /* ESP replay check failed */
+	u_quad_t in_ahauthsucc; /* AH authentication success */
+	u_quad_t in_ahauthfail; /* AH authentication failure */
+	u_quad_t in_espauthsucc; /* ESP authentication success */
+	u_quad_t in_espauthfail; /* ESP authentication failure */
+	u_quad_t in_esphist[SADB_EALG_MAX];
+	u_quad_t in_ahhist[SADB_AALG_MAX];
+	u_quad_t out_success; /* succeeded outbound process */
+	u_quad_t out_polvio;  /* security policy violation for outbound process */
+	u_quad_t out_nosa;    /* outbound SA is unavailable */
+	u_quad_t out_inval;   /* outbound process failed due to EINVAL */
+	u_quad_t out_noroute; /* there is no route */
+	u_quad_t out_esphist[SADB_EALG_MAX];
+	u_quad_t out_ahhist[SADB_AALG_MAX];
 };
 
 /*
