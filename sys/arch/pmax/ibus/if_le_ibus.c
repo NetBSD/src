@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.3 2002/01/08 17:10:28 chs Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.4 2002/09/26 20:33:25 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -57,9 +57,6 @@ int
 le_pmax_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ibus_attach_args *d = aux;
-
-	if (parent->dv_cfdata->cf_driver != &ibus_cd)
-		return (0);
 
 	if (strcmp("lance", d->ia_name) != 0)
 		return (0);

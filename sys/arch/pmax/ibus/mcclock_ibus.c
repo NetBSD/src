@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ibus.c,v 1.8 2002/01/08 17:10:29 chs Exp $	*/
+/*	$NetBSD: mcclock_ibus.c,v 1.9 2002/09/26 20:33:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.8 2002/01/08 17:10:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.9 2002/09/26 20:33:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,9 +58,6 @@ mcclock_ibus_match(parent, match, aux)
 	void *aux;
 {
 	struct ibus_attach_args *ia = aux;
-
-	if (parent->dv_cfdata->cf_driver != &ibus_cd)
-		return (0);
 
 	if (strcmp("mc146818", ia->ia_name) != 0)
 		return (0);
