@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 1997/06/17 04:12:38 mhitch Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 1997/06/21 04:10:42 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ int pmap_is_page_ro(pmap_t, vm_offset_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS1_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS1_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips1_pfn_to_vad((x))
+#define	pfn_to_vad(x)		mips1_pfn_to_vad((vm_offset_t)(x))
 #define	vad_to_pfn(x)		mips1_vad_to_pfn((x))
 #endif /* mips1 */
 
@@ -122,7 +122,7 @@ int pmap_is_page_ro(pmap_t, vm_offset_t, int);
 #define	PTE_TO_PADDR(pte)	MIPS3_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS3_PAGE_IS_RDONLY((pte), (va))
 
-#define	pfn_to_vad(x)		mips3_pfn_to_vad((x))
+#define	pfn_to_vad(x)		mips3_pfn_to_vad((vm_offset_t)(x))
 #define	vad_to_pfn(x)		mips3_vad_to_pfn((x))
 #endif /* mips3 */
 
