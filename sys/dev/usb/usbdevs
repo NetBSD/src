@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.302 2003/02/08 04:07:36 ichiro Exp $
+$NetBSD: usbdevs,v 1.303 2003/02/08 04:21:22 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -354,6 +354,7 @@ vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
+vendor NI		0x3923	National Instruments
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -1016,6 +1017,9 @@ product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
+
+/* National Instruments */
+product NI GPIB_USB_A		0xc920	GPIB-USB-A
 
 /* National Semiconductor */
 product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
