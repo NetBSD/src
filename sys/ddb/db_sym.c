@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.23 2000/08/09 19:51:47 tv Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -520,7 +520,7 @@ db_printsym(off, strategy, pr)
 				char tbuf[24];
 
 				db_format_radix(tbuf, 24, d, TRUE);
-				(*pr)("+%s", d);
+				(*pr)("+%s", tbuf);
 			}
 			if (strategy == DB_STGY_PROC) {
 				if (db_line_at_pc(cursym, &filename, &linenum, off))
