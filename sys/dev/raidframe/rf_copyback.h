@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.h,v 1.4 2001/10/04 15:58:51 oster Exp $	*/
+/*	$NetBSD: rf_copyback.h,v 1.5 2004/01/01 19:32:55 oster Exp $	*/
 /*
  * rf_copyback.h
  */
@@ -36,9 +36,7 @@
 
 typedef struct RF_CopybackDesc_s {
 	RF_Raid_t *raidPtr;
-	RF_RowCol_t frow;
 	RF_RowCol_t fcol;
-	RF_RowCol_t spRow;
 	RF_RowCol_t spCol;
 	int     status;
 	RF_StripeNum_t stripeAddr;
