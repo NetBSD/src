@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.14 2002/12/08 21:53:58 manu Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.15 2002/12/24 12:15:46 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.14 2002/12/08 21:53:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.15 2002/12/24 12:15:46 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -52,11 +52,7 @@ const char *const darwin_syscallnames[] = {
 	"break",			/* 17 = break */
 	"getfsstat",			/* 18 = getfsstat */
 	"olseek",			/* 19 = olseek */
-#ifdef COMPAT_43
 	"getpid",			/* 20 = getpid */
-#else
-	"getpid",			/* 20 = getpid */
-#endif
 	"mount",			/* 21 = mount */
 	"unmount",			/* 22 = unmount */
 	"setuid",			/* 23 = setuid */
