@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
+#	$NetBSD: Makefile,v 1.3 1996/10/05 23:46:44 mrg Exp $
 
 R=	..
 .PATH:	${.CURDIR}/${R}
@@ -8,7 +8,7 @@ NOMAN=	1
 BINDIR=	/usr/mdec
 LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep
 
-${PROG}:${OBJS} ${LIBS}
+${PROG}: ${OBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBS}
 	# convert to Sun magic
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
