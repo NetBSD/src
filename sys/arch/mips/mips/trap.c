@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 1998/07/05 22:48:06 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 1998/08/25 01:55:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 1998/07/05 22:48:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 1998/08/25 01:55:40 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -349,7 +349,6 @@ char	*trap_type[] = {
 	"reserved 30",
 	"r4000 virtual coherency data",
 };
-extern unsigned intrcnt[];
 
 #ifdef DEBUG
 #define TRAPSIZE	10
@@ -415,30 +414,6 @@ extern void setsoftclock __P((void));
 extern int main __P((void*));
 extern void am7990_meminit __P((void*)); /* XXX */
 #endif	/* DEBUG || DDB */
-
-
-/*
- * Index into intrcnt[], which is defined in locore
- */
-typedef enum {
-	SOFTCLOCK_INTR = 0,
-	SOFTNET_INTR,
-	SERIAL0_INTR,
-	SERIAL1_INTR,
-	SERIAL2_INTR,
-	LANCE_INTR,
-	SCSI_INTR,
-	ERROR_INTR,
-	HARDCLOCK,
-  	FPU_INTR,
-	SLOT0_INTR,
-	SLOT1_INTR,
-	SLOT2_INTR,
-	DTOP_INTR,
-	ISDN_INTR,
-	FLOPPY_INTR,
-	STRAY_INTR
-} decstation_intr_t;
 
 static void
 userret(p, pc, sticks)
@@ -1643,17 +1618,12 @@ specialframe:
 #endif /* MIPS3 */
 
 
-	if (pcBetween(splx, switchfpregs))
-		subr = (unsigned) splx;
-	else if (pcBetween(cpu_switch, savectx))
+	if (pcBetween(cpu_switch, savectx))
 		subr = (unsigned) cpu_switch;
 	else if (pcBetween(idle, cpu_switch))	{
 		subr = (unsigned) idle;
 		ra = 0;
 		goto done;
-	}
-	else if (pcBetween(bcopy, setrunqueue))	{
-		subr = (unsigned) bcopy;
 	}
 	
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 1998/04/29 23:11:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.26 1998/08/25 01:55:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,3 +98,15 @@
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
+
+#include <machine/intr.h>
+
+#ifdef _KERNEL
+#ifndef _LOCORE
+
+extern void delay __P((int n));
+extern int cpuspeed;
+#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+
+#endif	/* !_LOCORE */
+#endif	/* _KERNEL */
