@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.18.4.1 1996/12/11 03:29:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -109,10 +109,9 @@ struct socket {
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
 
-#define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
-#define	SS_NBIO			0x100	/* non-blocking ops */
-#define	SS_ASYNC		0x200	/* async i/o notify */
-#define	SS_ISCONFIRMING		0x400	/* deciding to accept connection req */
+#define	SS_NBIO			0x080	/* non-blocking ops */
+#define	SS_ASYNC		0x100	/* async i/o notify */
+#define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
 
 
 /*
@@ -219,7 +218,7 @@ int	soo_select __P((struct file *fp, int which, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
 int	soo_stat __P((struct socket *, struct stat *));
 int	uipc_usrreq __P((struct socket *, int , struct mbuf *,
-			 struct mbuf *, struct mbuf *));
+	    struct mbuf *, struct mbuf *, struct proc *));
 void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
 int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control));
