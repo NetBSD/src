@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.35 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.36 2000/01/13 21:55:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ proclist_lock_read()
 {
 	int error, s;
 
-	s = splstatclock();
+	s = splsoftclock();
 	error = spinlockmgr(&proclist_lock, LK_SHARED, NULL);
 #ifdef DIAGNOSTIC
 	if (error)
@@ -219,7 +219,7 @@ proclist_unlock_read()
 {
 	int s;
 
-	s = splstatclock();
+	s = splsoftclock();
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
 	splx(s);
 }
@@ -232,7 +232,7 @@ proclist_lock_write()
 {
 	int error, s;
 
-	s = splstatclock();
+	s = splsoftclock();
 	error = spinlockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
 #ifdef DIAGNOSTIC
 	if (error != 0)
