@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.14 2000/03/16 18:44:30 enami Exp $	*/
+/*	$NetBSD: option.c,v 1.15 2000/10/18 08:58:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.14 2000/03/16 18:44:30 enami Exp $");
+__RCSID("$NetBSD: option.c,v 1.15 2000/10/18 08:58:11 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,8 @@ static OPTION const options[] = {
 	{ "(",		N_OPENPAREN,	c_openparen,	0 },
 	{ ")",		N_CLOSEPAREN,	c_closeparen,	0 },
 	{ "-a",		N_AND,		c_null,		0 },
-	{ "-and",	N_AND,		c_null,		0 },
 	{ "-amin",	N_AMIN,		c_amin,		1 },
+	{ "-and",	N_AND,		c_null,		0 },
 	{ "-atime",	N_ATIME,	c_atime,	1 },
 	{ "-cmin",	N_CMIN,		c_cmin,		1 },
 	{ "-ctime",	N_CTIME,	c_ctime,	1 },
