@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.12 1997/01/13 17:53:22 tls Exp $	*/
+/*	$NetBSD: func.c,v 1.13 1997/07/04 21:24:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: func.c,v 1.12 1997/01/13 17:53:22 tls Exp $";
+__RCSID("$NetBSD: func.c,v 1.13 1997/07/04 21:24:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1223,7 +1224,6 @@ getval(lp, v)
     Char  **v;
 {
     float f;
-    double  atof();
     Char   *cp = *v++;
 
     f = atof(short2str(cp));
@@ -1388,7 +1388,7 @@ dosuspend(v, t)
 {
     int     ctpgrp;
 
-    void    (*old) ();
+    void    (*old) __P((int));
 
     if (loginsh)
 	stderror(ERR_SUSPLOG);
