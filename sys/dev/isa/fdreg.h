@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.3 2003/08/07 16:31:07 agc Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.4 2003/09/23 21:36:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -46,6 +46,8 @@
 #define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
 
 #define	fdsts	2	/* NEC 765 Main Status Register (R) */
+#define	FDS_DRVBUSY(n)	((1 << n) * 0x01)	/* drive busy */
+
 #define	fddata	3	/* NEC 765 Data Register (R/W) */
 
 #define	fdctl	5	/* Control Register (W) */
