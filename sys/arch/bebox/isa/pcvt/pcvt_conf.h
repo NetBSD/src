@@ -91,6 +91,10 @@
 #define PCVT_NETBSD (120 + (NetBSD1_2 - 1))
 #endif
 
+#ifdef NetBSD1_3
+#define PCVT_NETBSD (130 + (NetBSD1_3 - 1))
+#endif
+
 #endif
 
 
