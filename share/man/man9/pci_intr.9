@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.4 2001/06/21 11:59:01 wiz Exp $
+.\" $NetBSD: pci_intr.9,v 1.5 2001/09/15 23:57:33 uwe Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ Each driver has an
 function which has a bus-specific
 .Ft attach_args
 structure.
-Each driver for a PCI device is is passed a pointer to an object of type
+Each driver for a PCI device is passed a pointer to an object of type
 .Ft struct pci_attach_args
 which contains, among other things, information about the location
 of the device in the PCI bus topology sufficient to allow interrupts
