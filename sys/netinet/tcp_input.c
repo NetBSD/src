@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.63 1998/08/02 00:35:51 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.64 1998/09/09 01:32:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2075,7 +2075,7 @@ syn_cache_get(so, m)
 	 * had to retransmit the SYN,ACK, we must initialize cwnd
 	 * to 1 segment (i.e. the Loss Window).
 	 */
-	if (sc->sc_flags & SCF_SYNACK_REXMT)
+	if (sc->sc_rexmt_count)
 		tp->snd_cwnd = tp->t_peermss;
 	else
 		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, tp->t_peermss);
@@ -2170,6 +2170,21 @@ syn_cache_unreach(ip, th)
 		splx(s);
 		return;
 	}
+
+	/*
+	 * If we've rertransmitted 3 times and this is our second error,
+	 * we remove the entry.  Otherwise, we allow it to continue on.
+	 * This prevents us from incorrectly nuking an entry during a
+	 * spurious network outage.
+	 *
+	 * See tcp_notify().
+	 */
+	if ((sc->sc_flags & SCF_UNREACH) == 0 || sc->sc_rexmt_count < 3) {
+		sc->sc_flags |= SCF_UNREACH;
+		splx(s);
+		return;
+	}
+
 	SYN_CACHE_RM(sc, scp);
 	splx(s);
 	tcpstat.tcps_sc_unreach++;
@@ -2246,7 +2261,16 @@ syn_cache_add(so, m, optp, optlen, oi)
 	 */
 	if ((sc = syn_cache_lookup(ti, &scp)) != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
-		sc->sc_flags |= SCF_SYNACK_REXMT;
+		sc->sc_rexmt_count++;
+		if (sc->sc_rexmt_count == 0) {
+			/*
+			 * Eeek!  We rolled the counter.  Just set it
+			 * to the max value.  This shouldn't ever happen,
+			 * but there's no real reason to panic here, since
+			 * the count doesn't have to be very precise.
+			 */
+			sc->sc_rexmt_count = USHRT_MAX;
+		}
 
 		if (ipopts) {
 			/*

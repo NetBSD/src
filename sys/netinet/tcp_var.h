@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.51 1998/07/21 10:46:00 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.52 1998/09/09 01:32:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -221,9 +221,11 @@ struct syn_cache {
 	struct in_addr sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
-	int sc_flags;
+	u_short sc_rexmt_count;			/* number of times SYN,ACK
+						   was retransmitted */
+	u_short sc_flags;
 
-#define	SCF_SYNACK_REXMT	0x0001		/* SYN,ACK was retransmitted */
+#define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 
 	struct mbuf *sc_ipopts;			/* IP options */
