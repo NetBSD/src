@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.15 1995/09/19 23:18:28 thorpej Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.16 1995/10/02 12:33:32 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -40,6 +40,7 @@
 #include "sys/exec.h"
 #include "sys/vnode.h"
 #include "sys/core.h"
+#include "sys/mount.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -345,6 +346,9 @@ sysarch(p, v, retval)
 	return (ENOSYS);
 };
 
+#ifdef COMPAT_ULTRIX
+extern struct emul emul_ultrix;
+#endif
 /*
  * 4.3BSD Reno programs have an 1K header first in the executable
  * file, containing a.out header. Otherwise programs are identical.
@@ -364,6 +368,10 @@ reno_zmagic(p, epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
+
+#ifdef COMPAT_ULTRIX
+	epp->ep_emul = &emul_ultrix;
+#endif
 
 	/*
 	 * check if vnode is in open for writing, because we want to
