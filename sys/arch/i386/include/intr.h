@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2001/12/18 10:12:28 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2001/12/18 15:21:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ static __inline void softintr __P((int));
  * this "instruction", acting as a sequence point for code generation.
  */
 
-#define __splbarrier() __asm __volatile("":::"memory")
+#define	__splbarrier() __asm __volatile("":::"memory")
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
@@ -129,7 +129,7 @@ spllower(ncpl)
 #define	splstatclock()	splclock()
 #define	splserial()	splraise(imask[IPL_SERIAL])
 
-#define spllpt()	spltty()
+#define	spllpt()	spltty()
 
 /*
  * Software interrupt masks
