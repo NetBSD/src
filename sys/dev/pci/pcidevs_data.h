@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.200 2000/03/09 09:53:04 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.201 2000/03/11 16:13:39 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.195 2000/03/09 09:50:49 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.196 2000/03/11 16:13:14 jdolecek Exp 
  */
 
 /*
@@ -554,6 +554,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
+	},
+	{
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT25,
+	    0,
+	    "Alliance Semiconductor",
+	    "AT25",
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
