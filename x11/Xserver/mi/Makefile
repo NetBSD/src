@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/12/20 01:29:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/23 04:41:06 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -29,7 +29,8 @@ CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
 
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS+=  miinitext.c
-CPPFLAGS.miinitext.c+=   -UXF86MISC
+CPPFLAGS.miinitext.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
+CPPFLAGS.miscrinit.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
 .endif
 
 .include <bsd.x11.mk>
