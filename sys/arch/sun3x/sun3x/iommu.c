@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.4 1997/03/03 06:51:42 jeremy Exp $	*/
+/*	$NetBSD: iommu.c,v 1.5 1997/04/25 18:45:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <machine/obio.h>
 #include "iommu.h"
 
-#define OBIO_IOMMU_SIZE	(IOMMU_NENT * sizeof(iommu_pde_t))
+#define IOMMU_SIZE	(IOMMU_NENT * sizeof(iommu_pde_t))
 
 static int  iommu_match __P((struct device *, struct cfdata *, void *));
 static void iommu_attach __P((struct device *, struct device *, void *));
@@ -73,14 +73,9 @@ iommu_match(parent, cf, args)
 	struct cfdata *cf;
 	void *args;
 {
-	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
-		return (0);
-
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_IOMMU)
 		return (0);
 
 	return (1);
@@ -95,7 +90,7 @@ iommu_attach(parent, self, args)
 	struct confargs *ca = args;
 
 	iommu_va = (iommu_pde_t *)
-		obio_alloc(ca->ca_paddr, OBIO_IOMMU_SIZE);
+		bus_mapin(ca->ca_bustype, ca->ca_paddr, IOMMU_SIZE);
 
 	printf(": range %dMB\n", IOMMU_NENT * IOMMU_PAGE_SIZE / (1024 * 1024));
 }
