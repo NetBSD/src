@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.2.4.2 1993/09/24 08:46:50 mycroft Exp $
+ *	$Id: psl.h,v 1.2.4.3 1993/09/30 17:31:15 mycroft Exp $
  */
 
 /*
@@ -85,6 +85,7 @@ SPL(splhigh, -1)
 #define spl0()		splnone()
 
 int splsoftclock __P((void));		/* XXXX */
+int splstatclock __P((void));		/* XXXX */
 
 int splnone __P((void));
 int splx __P((int));
