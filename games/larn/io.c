@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.9 2000/05/22 12:42:46 blymn Exp $	*/
+/*	$NetBSD: io.c,v 1.10 2000/05/24 14:20:29 blymn Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.9 2000/05/22 12:42:46 blymn Exp $");
+__RCSID("$NetBSD: io.c,v 1.10 2000/05/24 14:20:29 blymn Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -777,7 +777,7 @@ init_term()
 	char           *capptr;
 	char           *term;
 
-	*cap = NULL;
+	cap = NULL;
 	switch (t_getent(&info, term = getenv("TERM"))) {
 	case -1:
 		write(2, "Cannot open termcap file.\n", 26);
