@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.31 2000/07/17 19:57:50 jeffs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.32 2000/08/10 08:01:24 jeffs Exp $	*/
 
 /*
  * Mach Operating System
@@ -387,7 +387,7 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 	if (!have_addr)
 		return;
 	if (MIPS_KSEG2_START <= addr)
-		db_printf("0x%x -> 0x%x\n", addr, kvtophys(addr));
+		db_printf("0x%lx -> 0x%lx\n", addr, kvtophys(addr));
 	else
 		printf("not a kernel virtual address\n");
 }
