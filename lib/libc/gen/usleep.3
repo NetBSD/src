@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.14 2002/02/07 07:00:18 ross Exp $
+.\"	$NetBSD: usleep.3,v 1.15 2002/09/04 01:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,9 +63,11 @@ argument must be less than 1,000,000.  If the value of
 .Fa microseconds
 is 0, then the call has no effect.
 .Sh RETURN VALUES
-On successful completition,
+On successful completion,
 .Fn usleep
-returns 0.  Otherwhise, it returns -1 and sets errno to indicate the error.
+returns 0.  Otherwise, it returns \-1 and sets
+.Va errno
+to indicate the error.
 .Sh ERRORS
 The
 .Fn usleep
