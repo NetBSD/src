@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/03/30 00:17:29 kristerw Exp $
+#	$NetBSD: Makefile,v 1.4 2003/11/30 05:32:39 tsutsui Exp $
 
 SA_PROG= ufsboot
 
@@ -13,4 +13,4 @@ NOMAN= # defined
 
 .include <bsd.prog.mk>
 .PATH: ${S}/lib/libsa
-DEFS+=  -DCOMPAT_UFS -D__daddr_t=int32_t
+DEFS+=  -DCOMPAT_UFS
