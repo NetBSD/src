@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 1997/02/03 20:02:02 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65.4.1 1997/03/10 15:57:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -82,7 +82,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 #endif
 #ifdef NS

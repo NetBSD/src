@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.8.6.1 1997/03/04 18:07:32 is Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.8.6.2 1997/03/10 15:54:08 is Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -32,7 +32,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
