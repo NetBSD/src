@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.6 2002/04/22 13:08:34 wiz Exp $ */
+/* $NetBSD: moused.c,v 1.7 2002/08/09 02:17:28 itojun Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.6 2002/04/22 13:08:34 wiz Exp $");
+__RCSID("$NetBSD: moused.c,v 1.7 2002/08/09 02:17:28 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -904,11 +904,19 @@ moused(char *wsm)
     for (;;) {
 
 	FD_ZERO(&fds);
+	if (rodent.mfd >= FD_SETSIZE)
+	    logerr(1, "descriptor too big");
 	FD_SET(rodent.mfd, &fds);
-	if (rodent.mremsfd >= 0)
+	if (rodent.mremsfd >= 0) {
+	    if (rodent.mremsfd >= FD_SETSIZE)
+		logerr(1, "descriptor too big");
 	    FD_SET(rodent.mremsfd, &fds);
-	if (rodent.mremcfd >= 0)
+	}
+	if (rodent.mremcfd >= 0) {
+	    if (rodent.mremcfd >= FD_SETSIZE)
+		logerr(1, "descriptor too big");
 	    FD_SET(rodent.mremcfd, &fds);
+	}
 
 	c = select(FD_SETSIZE, &fds, NULL, NULL,
 		   (rodent.flags & Emulate3Button) ? &timeout : NULL);

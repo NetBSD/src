@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.5 2002/07/20 08:40:18 grant Exp $	*/
+/*	$NetBSD: mld6.c,v 1.6 2002/08/09 02:17:27 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -141,6 +141,8 @@ main(int argc, char *argv[])
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
 
 	FD_ZERO(&fdset);
+	if (s >= FD_SETSIZE)
+		errx(1, "descriptor too big");
 	for (;;) {
 		FD_SET(s, &fdset);
 		if ((i = select(s + 1, &fdset, NULL, NULL, NULL)) < 0)
