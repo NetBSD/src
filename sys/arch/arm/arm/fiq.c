@@ -1,7 +1,7 @@
-/*	$NetBSD: fiq.c,v 1.4 2002/02/05 18:26:07 thorpej Exp $	*/
+/*	$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -36,13 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.4 2002/02/05 18:26:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <arm/cpufunc.h>
 #include <arm/fiq.h>
+
+#ifdef __PROG32
+#include <uvm/uvm.h>
+#endif
 
 TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
     TAILQ_HEAD_INITIALIZER(fiqhandler_stack);
@@ -72,17 +76,14 @@ static void
 fiq_installhandler(void *func, size_t size)
 {
 #if defined(__PROG32) && !defined(__ARM_FIQ_INDIRECT)
-	extern void zero_page_readwrite(void);	/* XXX */
-	extern void zero_page_readonly(void);	/* XXX */
-
-	zero_page_readwrite();
+	vector_page_setprot(VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
 	memcpy(fiqvector, func, size);
 
 #ifdef __PROG32
 #if !defined(__ARM_FIQ_INDIRECT)
-	zero_page_readonly();
+	vector_page_setprot(VM_PROT_READ);
 #endif
 	cpu_icache_sync_range((vaddr_t) fiqvector, size);
 #endif

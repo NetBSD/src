@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.11 2002/03/31 00:42:50 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.12 2002/04/03 23:33:35 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1203,17 +1203,18 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	struct mem_translation *tp;
 
 	/* Set-up the system page. */
-	systempage.pv_va = ofw_claimvirt(0, NBPG, 0);
+	KASSERT(vector_page == 0);	/* XXX for now */
+	systempage.pv_va = ofw_claimvirt(vector_page, NBPG, 0);
 	if (systempage.pv_va == -1) {
-		/* Something was already mapped to VA 0. */
-		systempage.pv_va = 0;
-		systempage.pv_pa = ofw_gettranslation(0);
+		/* Something was already mapped to vector_page's VA. */
+		systempage.pv_va = vector_page;
+		systempage.pv_pa = ofw_gettranslation(vector_page);
 		if (systempage.pv_pa == -1)
-			panic("bogus result from gettranslation(0)");
+			panic("bogus result from gettranslation(vector_page)");
 	} else {
 		/* We were just allocated the page-length range at VA 0. */
-		if (systempage.pv_va != 0)
-			panic("bogus result from claimvirt(0, NBPG, 0)");
+		if (systempage.pv_va != vector_page)
+			panic("bogus result from claimvirt(vector_page, NBPG, 0)");
 
 		/* Now allocate a physical page, and establish the mapping. */
 		systempage.pv_pa = ofw_claimphys(0, NBPG, NBPG);

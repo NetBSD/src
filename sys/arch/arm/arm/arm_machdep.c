@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.4 2002/03/18 22:21:25 bjh21 Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.4 2002/03/18 22:21:25 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.5 2002/04/03 23:33:27 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -49,6 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.4 2002/03/18 22:21:25 bjh21 Exp $"
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
+
+/*
+ * The ARM architecture places the vector page at address 0.
+ * Later ARM architecture versions, however, allow it to be
+ * relocated to a high address (0xffff0000).  This is primarily
+ * to support the Fast Context Switch Extension.
+ *
+ * This variable contains the address of the vector page.  It
+ * defaults to 0; it only needs to be initialized if we enable
+ * relocated vectors.
+ */
+vaddr_t	vector_page;
 
 /*
  * Clear registers on exec

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.41 2002/03/25 04:51:21 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.42 2002/04/03 23:33:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -287,7 +287,6 @@ initarm(argc, argv, bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
-	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 #ifdef DDB
@@ -591,11 +590,8 @@ initarm(argc, argv, bi)
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 
-	/*
-	 * Map the system page in the kernel page table for the bottom 1Meg
-	 * of the virtual memory map.
-	 */
-	pmap_map_entry(l1pagetable, 0x0000000, systempage.pv_pa,
+	/* Map the vector page. */
+	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map any I/O modules here, as we don't have real bus_space_map() */
@@ -614,9 +610,6 @@ initarm(argc, argv, bi)
 	 */
 
 	printf("done.\n");
-
-	/* Right set up the vectors at the bottom of page 0 */
-	memcpy((char *)systempage.pv_va, page0, page0_end - page0);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -665,6 +658,8 @@ initarm(argc, argv, bi)
 #endif
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
+
+	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
 	consinit();
 

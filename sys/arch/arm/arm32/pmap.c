@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2002/04/03 15:59:58 reinoud Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2002/04/03 23:33:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2002/04/03 15:59:58 reinoud Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2002/04/03 23:33:28 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1473,10 +1473,15 @@ pmap_pinit(struct pmap *pmap)
 		}
 	}
 
-	/* Map zero page for the pmap. This will also map the L2 for it */
-	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-	pmap_update(pmap);
+	if (vector_page < KERNEL_BASE) {
+		/*
+		 * Map the vector page.  This will also allocate and map
+		 * an L2 table for it.
+		 */
+		pmap_enter(pmap, vector_page, systempage.pv_pa,
+		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
+		pmap_update(pmap);
+	}
 }
 
 
@@ -3394,7 +3399,25 @@ out:
 	return (pmap_curmaxkvaddr);
 }
 
+/************************ Utility routines ****************************/
 
+/*
+ * vector_page_setprot:
+ *
+ *	Manipulate the protection of the vector page.
+ */
+void
+vector_page_setprot(int prot)
+{
+	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
+	pt_entry_t *pte;
+
+	pte = vtopte(vector_page);
+
+	*pte = (*pte & ~PT_AP(AP_KRW)) | PT_AP(ap);
+	cpu_tlb_flushD_SE(vector_page);
+	cpu_cpwait();
+}
 
 /************************ Bootstrapping routines ****************************/
 
