@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.113 2003/05/31 20:33:16 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.114 2003/06/12 23:26:19 provos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -570,6 +570,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
