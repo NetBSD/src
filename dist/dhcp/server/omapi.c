@@ -3,7 +3,7 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2001 Internet Software Consortium.
+ * Copyright (c) 1999-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.4 2002/06/11 14:17:27 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.5 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -243,8 +243,8 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 	    if (lease -> binding_state != bar) {
 		lease -> next_binding_state = bar;
 		if (supersede_lease (lease, 0, 1, 1, 1)) {
-			log_info ("lease state changed from %s to %s",
-				  ols, nls);
+			log_info ("lease %s state changed from %s to %s",
+				  piaddr(lease->ip_addr), ols, nls);
 			return ISC_R_SUCCESS;
 		}
 		log_info ("lease state change from %s to %s failed.",

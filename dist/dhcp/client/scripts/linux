@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # dhclient-script for Linux. Dan Halbert, March, 1997.
 # Updated for Linux 2.[12] by Brian J. Murrell, January 1999.
 # No guarantees about this. I'm a novice at the details of Linux
