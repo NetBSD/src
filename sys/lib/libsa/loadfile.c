@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.9 2000/11/11 09:25:12 tsutsui Exp $ */
+/* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ aout_exec(fd, x, marks, flags)
 	 * symbols were loaded by this boot program.
 	 */
 	if (magic == OMAGIC || magic == NMAGIC) {
-		if (flags & LOAD_HDR)
+		if (flags & LOAD_HDR && maxp >= sizeof(*x))
 			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
 	}
 	else {
