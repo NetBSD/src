@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.29 2002/04/25 15:06:29 atatat Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.30 2002/05/18 23:49:40 jmcneill Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -378,6 +378,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
