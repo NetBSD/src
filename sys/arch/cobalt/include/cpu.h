@@ -1,6 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2000/04/15 22:05:52 soda Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2000/05/05 03:18:26 soren Exp $	*/
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
-
-#define INT_MASK_REAL_DEV	MIPS_HARD_INT_MASK
