@@ -1,7 +1,16 @@
 The files in this directory with suffixes `.t', `.d', `.r' and `.err' are
 used for testing ed.  To run the tests, set the ED variable in the Makefile
 for the path name of the program to be tested (e.g., /bin/ed), and type
-`make'.  The tests do not exhaustively verify POSIX compliance.
+`make'.  The tests do not exhaustively verify POSIX compliance nor do
+they verify correct 8-bit or long line support.
+
+The test file suffixes have the following meanings:
+.t    Template - a list of ed commands from which an ed script is
+      constructed
+.d    Data - read by an ed script
+.r    Result - the expected output after processing data via an ed
+      script.
+.err  Error - invalid ed commands that should generate an error
 
 The output of the tests is written to the two files err.o and scripts.o.
 At the end of the tests, these files are grep'ed for error messages,
