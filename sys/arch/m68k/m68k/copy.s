@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.17 1995/02/08 14:50:38 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.18 1995/02/08 17:32:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -328,41 +328,41 @@ _fubail:
 
 ENTRY(suword)
 	movl	sp@(4),a0		| address to write
-	movl	sp@(8),d1		| value to put there
+	movl	sp@(8),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
 	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
 	USER_DFC
-	movsl	d1,a0@			| do write to user space
+	movsl	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	jra	Lsdone
 
 ENTRY(susword)
 	movl	sp@(4),a0		| address to write
-	movw	sp@(10),d1		| value to put there
+	movw	sp@(10),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
 	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
 	USER_DFC
-	movsw	d1,a0@			| do write to user space
+	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	jra	Lsdone
 
 ENTRY(suswintr)
 	movl	sp@(4),a0
-	movw	sp@(10),d1
+	movw	sp@(10),d0
 	movl	_curpcb,a1
 	movl	#_subail,a1@(PCB_ONFAULT)
 	USER_DFC
-	movsw	d1,a0@
+	movsw	d0,a0@
 	moveq	#0,d0
 	jra	Lsdone
 
 ENTRY(subyte)
 	movl	sp@(4),a0		| address to write
-	movb	sp@(11),d1		| value to put there
+	movb	sp@(11),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
 	movl	#Lserr,a1@(PCB_ONFAULT)	| where to return to on a fault
 	USER_DFC
-	movsb	d1,a0@			| do write to user space
+	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	jra	Lsdone
 
