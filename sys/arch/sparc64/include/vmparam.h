@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 2002/12/10 05:14:34 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.23 2003/04/01 16:05:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,14 @@
 
 #ifndef VMPARAM_H
 #define VMPARAM_H
+
+/*
+ * We use 8K VM pages on the Sun4U.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRSTACK is the top (end) of the user stack.
