@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.13 1998/02/04 05:14:55 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.14 1998/02/04 08:26:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -833,12 +833,21 @@ fxp_start(ifp)
 		txp->cb_command =
 		    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF | FXP_CB_COMMAND_S;
 		txp->tx_threshold = tx_threshold;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, txp), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	
 		/*
 		 * Advance the end of list forward.
 		 */
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, sc->cbl_last), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		sc->cbl_last->cb_command &= ~FXP_CB_COMMAND_S;
 		sc->cbl_last = txp;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, sc->cbl_last), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); 
 
 		/*
 		 * Advance the beginning of the list forward if there are
@@ -913,15 +922,16 @@ fxp_intr(arg)
 			rfa = (struct fxp_rfa *)(m->m_ext.ext_buf +
 			    RFA_ALIGNMENT_FUDGE);
 
+			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
+			    rxmap->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 			if (rfa->rfa_status & FXP_RFA_STATUS_C) {
 				/*
 				 * Remove first packet from the chain.
 				 */
 				sc->rfa_head = rxd->fr_next;
 				rxd->fr_next = NULL;
-
-				bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
-				    rxmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 				/*
 				 * Add a new buffer to the receive chain.
@@ -986,9 +996,14 @@ fxp_intr(arg)
 			struct fxp_cb_tx *txp;
 			bus_dmamap_t txmap;
 
-			for (txp = sc->cbl_first; sc->tx_queued &&
-			    (txp->cb_status & FXP_CB_STATUS_C) != 0;
+			for (txp = sc->cbl_first; sc->tx_queued;
 			    txp = txp->cb_soft.next) {
+				bus_dmamap_sync(sc->sc_dmat,
+				    sc->sc_dmamap, FXP_TXDESCOFF(sc, txp),
+				    FXP_TXDESCSIZE,
+				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+				if ((txp->cb_status & FXP_CB_STATUS_C) == 0)
+					break;
 				if (txp->cb_soft.mb_head != NULL) {
 					txmap = txp->cb_soft.dmamap;
 					bus_dmamap_sync(sc->sc_dmat, txmap,
@@ -1315,12 +1330,19 @@ fxp_init(xsc)
 		    FXP_CDOFF(fcd_txcbs[i].tbd[0]);
 		txp[i].cb_soft.dmamap = sc->sc_tx_dmamaps[i];
 		txp[i].cb_soft.next = &txp[(i + 1) & FXP_TXCB_MASK];
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		    FXP_TXDESCOFF(sc, &txp[i]), FXP_TXDESCSIZE,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	/*
 	 * Set the suspend flag on the first TxCB and start the control
 	 * unit. It will execute the NOP and then suspend.
 	 */
 	txp->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    FXP_TXDESCOFF(sc, txp), FXP_TXDESCSIZE,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	sc->cbl_first = sc->cbl_last = txp;
 	sc->tx_queued = 1;
 
@@ -1512,9 +1534,6 @@ fxp_add_rfabuf(sc, rxd)
 		}
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
-
 	/*
 	 * Move the data pointer up so that the incoming data packet
 	 * will be 32-bit aligned.
@@ -1558,6 +1577,9 @@ fxp_add_rfabuf(sc, rxd)
 		sc->rfa_head = rxd;
 	}
 	sc->rfa_tail = rxd;
+
+	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, rxmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	return (rval);
 }
@@ -1779,6 +1801,10 @@ fxp_mc_setup(sc)
 	mcsp->mc_cnt = nmcasts * 6;
 	sc->cbl_first = sc->cbl_last = (struct fxp_cb_tx *) mcsp;
 	sc->tx_queued = 1;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    FXP_CDOFF(fcd_mcscb.cb_status), FXP_MCSDESCSIZE,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Wait until command unit is not active. This should never
