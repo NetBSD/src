@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 1997/11/28 01:09:52 jonathan Exp $
+#	$NetBSD: MAKEDEV,v 1.19 1997/11/28 03:11:58 mhitch Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -137,7 +137,7 @@ rz*|vnd*|ccd*)
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
 	esac
 	case $unit in
-	[0-6])
+	[0-6]|8|9|1[0-4])
 		rm -f ${name}${unit}[a-h] r${name}${unit}[a-h]
 		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
 		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
