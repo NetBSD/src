@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmux.4,v 1.5 2001/09/11 22:52:54 wiz Exp $
+.\" $NetBSD: wsmux.4,v 1.6 2001/09/11 23:18:56 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,9 +40,8 @@
 .Sh SYNOPSIS
 .Cd "wskbd*     at ... mux N"
 .Cd "wsmouse*   at ... mux N"
-
-.Cd pseudo-device  wsmux    N
 .Pp
+.Cd pseudo-device  wsmux    N
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,7 +74,6 @@ user program.
 .\" .Xr moused 8
 .\" daemon to take data from a mouse connected to a serial port and
 .\" make it appear on the standard mouse mux.
-.Pp
 .Sh FILES
 .Bl -item
 .It
