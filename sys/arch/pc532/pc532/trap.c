@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 1998/03/18 21:59:39 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 1998/04/11 17:44:11 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -82,9 +82,15 @@ struct proc *fpu_proc;		/* Process owning the FPU. */
 /* Allow turning off if ieee_handler for debugging */
 int ieee_handler_disable = 0;
 
+#if defined(MRTD)
+#define __CDECL__ __attribute__ ((cdecl))
+#else
+#define __CDECL__
+#endif
+
+void syscall __P((struct syscframe)) __CDECL__;
+void trap __P((struct trapframe)) __CDECL__;
 static __inline void userret __P((struct proc *, int, u_quad_t));
-void trap __P((struct trapframe));
-void syscall __P((struct syscframe));
 
 /*
  * Define the code needed before returning to user mode, for
@@ -176,7 +182,7 @@ trap(frame)
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
-	extern char fusubail[];
+	extern char fubail[], subail[];
 #ifdef CINVSMALL
 	extern char cinvstart[], cinvend[];
 #endif
@@ -347,10 +353,10 @@ trap(frame)
 			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
 		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
+		 * {fu,su}bail is used by [fs]uswintr() to prevent page
+		 * faulting from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusubail)
+		if (pcb->pcb_onfault == fubail || pcb->pcb_onfault == subail)
 			goto copyfault;
 #ifdef CINVSMALL
 		/*
@@ -635,14 +641,13 @@ syscall(frame)
 }
 
 void
-child_return(p, frame)
+child_return(p)
 	struct proc *p;
-	struct syscframe frame;
 {
-	frame.sf_regs.r_r0 = 0;
-	frame.sf_regs.r_psr &= ~PSL_C;
+	p->p_md.md_regs->r_r0 = 0;
+	p->p_md.md_regs->r_psr &= ~PSL_C;
 
-	userret(p, frame.sf_regs.r_pc, 0);
+	userret(p, p->p_md.md_regs->r_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
