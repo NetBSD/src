@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.19.2.2 2002/07/09 08:11:37 lukem Exp $
+.\"	$NetBSD: macros,v 1.19.2.3 2002/07/22 17:27:01 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,19 +172,29 @@
 ..
 .
 .\" setsize <G> <U>
-.\" display "<G> MB gzipped, <U> MB uncompressed" on a new line.
-.\" values can be generated with something like this:
-.\"	gzip -l *.tgz | \
-.\"	awk '/\.tar/ { printf ".el .ie r_%s .setsize %d %d\n", \
-.\"	    substr($4,0,index($4, "/")-1), \
-.\"	    ( $1+1048575 ) /1048576, \
-.\"	    ( $2 + 1048575) / 1048576 } '
+.\"	Remember <G> and <U> for the next showsize
+.\" showsize [<G> <U>]
+.\"	Display "<G> MB gzipped, <U> MB uncompressed" on a new line,
+.\"	and then reset the values of <G> and <U> to '-unset-'.
+.\"	Values can be generated with something like this:
+.\"		gzip -l *.tgz | \
+.\"		awk '/\.tar/ { printf ".if \\n[%s] .setsize %d %d\n", \
+.\"		    substr($4,0,index($4, "/")-1), \
+.\"		    ( $1+1048575 ) /1048576, \
+.\"		    ( $2 + 1048575) / 1048576 } '
 .\"
 .
 .de setsize
-.br
-.Em \\$[1] MB gzipped, \\$[2] MB uncompressed
+\.ds set_gzip \\$[1]
+\.ds set_gunzip \\$[2]
 ..
+.de showsize
+.br
+.if \\n(.$==2 .setsize \\$*
+.Em \\*[set_gzip] MB gzipped, \\*[set_gunzip] MB uncompressed
+.setsize -unset- -unset-
+..
+.setsize -unset- -unset-
 .
 .\" .Bc/.Ec; begin/end two-column mode. This may not work in all
 .\" cases, but was designed for common/donations. There is no
@@ -216,7 +226,7 @@
 .rt		\" return to the mk
 .po +\\n(CEu		\" space to next column
 .ns
-\}
+.\}
 .el \{\
 .ll \\n(CLu	\" restore linelength
 .in \\n(CIu	\" restore indent
@@ -385,8 +395,9 @@
 .define_all \*[MACHINE_LIST]
 .
 .\" Supported MACHINE_ARCHs:
-.\"	alpha arm i386 m68000 m68k mipseb mipsel ns32k powerpc
-.\"	sh3eb sh3el sparc sparc64 vax x86_64
+.ds MACHINE_ARCH_LIST alpha arm i386 m68000 m68k mipseb mipsel ns32k
+.as MACHINE_ARCH_LIST " powerpc sh3eb sh3el sparc sparc64 vax x86_64
+.
 .\" Define registers for MACHINE_ARCHs with multiple or different MACHINEs
 .
 .ds A \*M
@@ -399,12 +410,7 @@
 .if \n[evbsh3]:\n[mmeye] .ds A sh3eb
 .if \n[dreamcast]:\n[hpcsh] .ds A sh3el
 .if !r\*A .nr \*A 1
-.
-.
-.\" Define _ versions, sometimes these look better as with .if r_xxx
-.
-.nr _\*M 1
-.nr _\*A 1
+.define_all \*[MACHINE_ARCH_LIST]
 .
 .\" Other strings available:
 .\"
