@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/02/22 07:11:11 chs Exp $
+#	$NetBSD: Makefile,v 1.14 2001/03/21 11:02:24 tsutsui Exp $
 
 SA_PROG= netboot
 
@@ -10,7 +10,6 @@ SRCS+= dev_net.c bootparam.c globals.c nfs.c rpc.c udp.c
 
 PROG=	${SA_PROG}
 MKMAN= no
-NOMAN= yes
 
 .include <bsd.prog.mk>
 
