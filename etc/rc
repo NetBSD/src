@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.26 1993/12/16 04:02:24 deraadt Exp $
+#	$Id: rc,v 1.27 1994/01/05 06:34:56 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -67,7 +67,6 @@ echo 'starting network'
 . /etc/netstart
 
 mount /usr >/dev/null 2>&1
-mount -a -t nfs >/dev/null 2>&1
 
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
@@ -90,7 +89,13 @@ if [ X${nfs_client} = X"YES" ]; then
 	echo -n ' nfsiod';		nfsiod 4
 fi
 
+if [ X${amd} = X"YES" ]; then
+	echo -n ' amd'
+	amd -x error,noinfo,nostats -a /tmp_mnt /home amd.home
+fi
+
 echo '.'
+mount -a -t nfs
 
 # clean up left-over files
 rm -f /etc/nologin
