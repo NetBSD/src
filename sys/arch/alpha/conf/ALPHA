@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.55 1997/06/12 18:41:58 mrg Exp $
+# $NetBSD: ALPHA,v 1.56 1997/06/13 00:44:13 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -37,6 +37,7 @@ file-system 	LFS		# Log-structured file system
 file-system 	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system 	ADOSFS		# AmigaDOS-compatible file system
 file-system 	MSDOSFS		# MS-DOS-compatible file system
+file-system 	EXT2FS		# Linux ext2 file system
 file-system 	NFS		# Sun NFS-compatible file system client
 file-system 	NULLFS		# Null file system layer
 file-system 	KERNFS		# Kernel variable file system (/kern)
