@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.30 2000/03/17 22:54:07 tron Exp $
+# $NetBSD: md.x68k,v 1.31 2000/04/29 03:46:31 thorpej Exp $
 ./usr/include/x68k	comp-c-include
 ./usr/include/x68k/_G_config.h	comp-c-include
 ./usr/include/x68k/ansi.h	comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/x68k/kbio.h	comp-c-include
 ./usr/include/x68k/kcore.h	comp-c-include
 ./usr/include/x68k/limits.h	comp-c-include
+./usr/include/x68k/lock.h	comp-c-include
 ./usr/include/x68k/math.h	comp-c-include
 ./usr/include/x68k/opmbellio.h	comp-c-include
 ./usr/include/x68k/param.h	comp-c-include
