@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.5 1994/05/28 15:43:49 gwr Exp $
+ * $Id: si.c,v 1.6 1994/07/06 02:53:39 gwr Exp $
  */
 
 /* #define DEBUG 1 */
@@ -419,6 +419,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 				printf("check cond. target %d.\n",
 					   xs->sc_link->target);
 #endif
+				delay(10);	/* Phil's fix for slow devices. */
 				s = splbio();
 				si_group0(xs->sc_link->scsibus,
 					    xs->sc_link->target,
