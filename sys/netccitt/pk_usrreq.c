@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.21 2001/11/13 00:12:59 lukem Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.22 2002/07/03 19:06:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.21 2001/11/13 00:12:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.22 2002/07/03 19:06:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,6 +268,7 @@ pk_usrreq(so, req, m, nam, control, p)
 			if (n && n->m_type == MT_OOBDATA) {
 				unsigned        len = n->m_pkthdr.len;
 				so->so_rcv.sb_mb = n->m_nextpkt;
+				SB_UPDATE_TAIL(&so->so_rcv);
 				if (len != n->m_len &&
 				    (n = m_pullup(n, len)) == 0)
 					break;
