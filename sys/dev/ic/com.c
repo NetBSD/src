@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.223 2003/11/12 06:27:59 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.224 2004/01/23 05:01:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,13 +73,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.223 2003/11/12 06:27:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.224 2004/01/23 05:01:19 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_ntp.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)
@@ -215,9 +216,6 @@ static int ppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT | 
 	PPS_CAPTURECLEAR |
-#ifdef  PPS_SYNC 
-	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
-#endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -1120,16 +1118,6 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * Compute msr masks from user-specified timestamp state.
 		 */
 		mode = sc->ppsparam.mode;
-#ifdef	PPS_SYNC
-		if (mode & PPS_HARDPPSONASSERT) {
-			mode |= PPS_CAPTUREASSERT;
-			/* XXX revoke any previous HARDPPS source */
-		}
-		if (mode & PPS_HARDPPSONCLEAR) {
-			mode |= PPS_CAPTURECLEAR;
-			/* XXX revoke any previous HARDPPS source */
-		}
-#endif	/* PPS_SYNC */
 		switch (mode & PPS_CAPTUREBOTH) {
 		case 0:
 			sc->sc_ppsmask = 0;
@@ -1170,6 +1158,32 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*pi = sc->ppsinfo;
 		break;
 	}
+
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND: {
+		int edge = (*(int *)data) & PPS_CAPTUREBOTH;
+
+		if (edge == 0) {
+			/*
+			 * remove binding for this source; ignore
+			 * the request if this is not the current
+			 * hardpps source
+			 */
+			if (pps_kc_hardpps_source == sc) {
+				pps_kc_hardpps_source = NULL;
+				pps_kc_hardpps_mode = 0;
+			}
+		} else {
+			/*
+			 * bind hardpps to this source, replacing any
+			 * previously specified source or edges
+			 */
+			pps_kc_hardpps_source = sc;
+			pps_kc_hardpps_mode = edge;
+		}
+		break;
+	}
+#endif /* PPS_SYNC */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		/*
@@ -2166,8 +2180,10 @@ again:	do {
 				}
 
 #ifdef PPS_SYNC
-				if (sc->ppsparam.mode & PPS_HARDPPSONASSERT)
+				if (pps_kc_hardpps_source == sc &&
+				    pps_kc_hardpps_mode & PPS_CAPTUREASSERT) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				sc->ppsinfo.assert_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
@@ -2184,8 +2200,10 @@ again:	do {
 				}
 
 #ifdef PPS_SYNC
-				if (sc->ppsparam.mode & PPS_HARDPPSONCLEAR)
+				if (pps_kc_hardpps_source == sc &&
+				    pps_kc_hardpps_mode & PPS_CAPTURECLEAR) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				sc->ppsinfo.clear_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.88 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.89 2004/01/23 05:01:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.88 2003/12/04 19:38:23 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.89 2004/01/23 05:01:19 simonb Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -230,6 +230,13 @@ long time_reftime = 0;		/* time at last adjustment (s) */
  *
  * pps_intcnt counts the calibration intervals for use in the interval-
  * adaptation algorithm. It's just too complicated for words.
+ *
+ * pps_kc_hardpps_source contains an arbitrary value that uniquely
+ * identifies the currently bound source of the PPS signal, or NULL
+ * if no source is bound.
+ *
+ * pps_kc_hardpps_mode indicates which transitions, if any, of the PPS
+ * signal should be reported.
  */
 struct timeval pps_time;	/* kernel time at last interval */
 long pps_tf[] = {0, 0, 0};	/* pps time offset median filter (us) */
@@ -244,6 +251,8 @@ int pps_glitch = 0;		/* pps signal glitch counter */
 int pps_count = 0;		/* calibration interval counter (s) */
 int pps_shift = PPS_SHIFT;	/* interval duration (s) (shift) */
 int pps_intcnt = 0;		/* intervals at current duration */
+void *pps_kc_hardpps_source = NULL; /* current PPS supplier's identifier */
+int pps_kc_hardpps_mode = 0;	/* interesting edges of PPS signal */
 
 /*
  * PPS signal quality monitors

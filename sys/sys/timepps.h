@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.5 2003/07/08 06:18:00 itojun Exp $	*/
+/*	$NetBSD: timepps.h,v 1.6 2004/01/23 05:01:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -127,7 +127,7 @@ typedef struct {
 #define PPS_IOC_GETPARAMS	_IOR('1', 4, pps_params_t)
 #define PPS_IOC_GETCAP		_IOR('1', 5, int)
 #define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
-#define PPS_IOC_KCBIND		_IOWR('1', 7, int)
+#define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
 #ifndef _KERNEL
 
@@ -207,7 +207,7 @@ time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
 	const int edge;
 	const int tsformat;
 {
-	return (ioctl(handle, PPS_IOC_KCBIND, edge));
+	return (ioctl(handle, PPS_IOC_KCBIND, &edge));
 }
 #endif /* !_KERNEL*/
 
