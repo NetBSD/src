@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: params.c,v 1.10 2004/08/13 15:03:57 tv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $");
+__RCSID("$NetBSD: params.c,v 1.10 2004/08/13 15:03:57 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -368,12 +368,13 @@ keygen_verify(const struct keygen *kg)
 			warnx("keygen storedkey does not need `salt'");
 		break;
 	case KEYGEN_RANDOMKEY:
+	case KEYGEN_URANDOMKEY:
 		if (kg->kg_iterations != -1)
-			warnx("keygen randomkey does not need `iterations'");
+			warnx("keygen [u]randomkey does not need `iterations'");
 		if (kg->kg_key)
-			warnx("keygen randomkey does not need `key'");
+			warnx("keygen [u]randomkey does not need `key'");
 		if (kg->kg_salt)
-			warnx("keygen randomkey does not need `salt'");
+			warnx("keygen [u]randomkey does not need `salt'");
 		break;
 	}
 	return keygen_verify(kg->next);
@@ -408,10 +409,11 @@ keygen_filldefaults(struct keygen *kg, int keylen)
 		return 0;
 	switch (kg->kg_method) {
 	case KEYGEN_RANDOMKEY:
+	case KEYGEN_URANDOMKEY:
 		break;
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
-		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN);
+		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN, 1);
 		kg->kg_iterations =
 		    pkcs5_pbkdf2_calibrate(keylen, DEFAULT_ITERATION_TIME);
 		if (kg->kg_iterations < 1) {
@@ -422,7 +424,7 @@ keygen_filldefaults(struct keygen *kg, int keylen)
 		break;
 	case KEYGEN_STOREDKEY:
 		/* Generate a random stored key */
-		kg->kg_key = bits_getrandombits(keylen);
+		kg->kg_key = bits_getrandombits(keylen, 1);
 		if (!kg->kg_key) {
 			warnx("can't generate random bits for storedkey");
 			return -1;
@@ -476,6 +478,8 @@ keygen_method(string_t *in)
 		kg->kg_method = KEYGEN_RANDOMKEY;
 	if (!strcmp("storedkey", kgm))
 		kg->kg_method = KEYGEN_STOREDKEY;
+	if (!strcmp("urandomkey", kgm))
+		kg->kg_method = KEYGEN_URANDOMKEY;
 
 	string_free(in);
 
@@ -684,6 +688,9 @@ keygen_fput(struct keygen *kg, int ts, FILE *f)
 		break;
 	case KEYGEN_RANDOMKEY:
 		fprintf(f, "randomkey;\n");
+		break;
+	case KEYGEN_URANDOMKEY:
+		fprintf(f, "urandomkey;\n");
 		break;
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 		fprintf(f, "pkcs5_pbkdf2 {\n");

@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.19 2004/07/04 17:19:57 elric Exp $
+.\" $NetBSD: cgdconfig.8,v 1.20 2004/08/13 15:03:57 tv Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl nv
-.Op Fl V Ar vmeth
 .Ar cgd dev
 .Op Ar paramsfile
 .Nm
@@ -57,7 +56,6 @@
 .Nm
 .Fl G
 .Op Fl nv
-.Op Fl i Ar ivmeth
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
 .Ar paramsfile
@@ -151,6 +149,8 @@ Existing parameters files should be
 converted to use the correct method using the
 .Fl G
 option, and a new passphrase.
+.It storedkey
+This method stores its key in the parameters file.
 .It randomkey
 The method simply reads
 .Pa /dev/random
@@ -160,8 +160,17 @@ This method is typically used to present disk devices that do not
 need to survive a reboot, such as the swap partition.
 It is also handy to facilitate overwriting the contents of
 a disk volume with meaningless data prior to use.
-.It storedkey
-This method stores its key in the parameters file.
+.It urandomkey
+The method simply reads
+.Pa /dev/urandom
+and uses the resulting bits as the key.  This is similar to the
+.Pa randomkey
+method, but it guarantees that cgdconfig will not stall waiting for
+hard-random bits (useful when configuring a cgd for swap at boot time).
+Note, however, that some or all of the bits used to generate the
+key may be obtained from a pseudo-random number generator,
+which may not be as secure as the entropy based hard-random
+number generator.
 .El
 .Ss Verification Method
 The verification method is how
