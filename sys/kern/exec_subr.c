@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_subr.c,v 1.2 1994/01/08 18:05:38 cgd Exp $
+ *	$Id: exec_subr.c,v 1.3 1994/01/13 02:29:32 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -41,7 +41,7 @@
 #include <vm/vm.h>
 #include <vm/vm_user.h>
 
-#ifdef EXEC_DEBUG
+#ifdef DEBUG
 /*
  * new_vmcmd():
  *	create a new vmcmd structure and fill in its fields based
@@ -74,7 +74,7 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
 }
-#endif
+#endif /* DEBUG */
 
 void
 vmcmdset_extend(evsp)
@@ -140,11 +140,6 @@ vmcmd_map_pagedvn(p, cmd)
 	 * VTEXT.  that's handled in the routine which sets up the vmcmd to
 	 * call this routine.
 	 */
-#ifdef EXEC_DEBUG
-	printf("vmcmd_map_pagedvn: mapping file %x+%x into mem %x+%x (%x/%x)\n",
-	    cmd->ev_offset, cmd->ev_len, cmd->ev_addr, cmd->ev_len,
-	    cmd->ev_prot, VM_PROT_ALL);
-#endif
 	return vm_mmap(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    cmd->ev_prot, VM_PROT_ALL, MAP_FIXED|MAP_FILE|MAP_COPY,
 	    cmd->ev_vp, cmd->ev_offset);
@@ -163,11 +158,6 @@ vmcmd_map_readvn(p, cmd)
 {
 	int error;
 
-#ifdef EXEC_DEBUG
-	printf("vmcmd_map_readdvn: reading file %x+%x into mem %x+%x (%x/%x)\n",
-	    cmd->ev_offset, cmd->ev_len, cmd->ev_addr, cmd->ev_len,
-	    cmd->ev_prot, VM_PROT_ALL);
-#endif
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    cmd->ev_len, 0);
 	if (error)
@@ -196,10 +186,6 @@ vmcmd_map_zero(p, cmd)
 {
 	int error;
 
-#ifdef EXEC_DEBUG
-	printf("vmcmd_map_zero: mapping into addr %x for len %x (%x/%x)\n",
-	    cmd->ev_addr, cmd->ev_len, cmd->ev_prot, VM_PROT_ALL);
-#endif
 	error = vm_allocate(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    cmd->ev_len, 0);
 	if (error)
