@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.60 2003/07/15 03:36:08 lukem Exp $ */
+/*	$NetBSD: clock.c,v 1.61 2003/08/24 17:52:38 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2003/07/15 03:36:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2003/08/24 17:52:38 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -260,9 +260,9 @@ clockattach_sbus(parent, self, aux)
 
 	if (sbus_bus_map(bt,
 			 sa->sa_slot,
-			 (sa->sa_offset & ~PAGE_SIZE),
+			 (sa->sa_offset & ~(PAGE_SIZE - 1)),
 			 sz,
-			 BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY,
+			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
 			 &ci.ci_bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
@@ -284,30 +284,28 @@ clock_wenable(handle, onoff)
 	struct todr_chip_handle *handle;
 	int onoff;
 {
-	register int s, err = 0;
-	register int prot;/* nonzero => change prot */
+	struct clock_info *ci;
+	vm_prot_t prot;
+	vaddr_t va;
+	int s, err = 0;
 	static int writers;
 
 	s = splhigh();
 	if (onoff)
-		prot = writers++ == 0 ? 
-			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED : 0;
+		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
 	else
-		prot = --writers == 0 ? 
-			VM_PROT_READ|PMAP_WIRED : 0;
+		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
-	if (prot) {
-		struct clock_info *ci = 
-			(struct clock_info *)handle->bus_cookie;
-		vaddr_t vaddr = 
-			(vaddr_t)bus_space_vaddr(ci->ci_bt, ci->ci_bh);
-
-		if (vaddr)
-			pmap_protect(pmap_kernel(), vaddr, vaddr+PAGE_SIZE,
-				     prot);
-		else
-			printf("clock_wenable: WARNING -- cannot get va\n");
+	if (prot == VM_PROT_NONE) {
+		return 0;
 	}
+	ci = (struct clock_info *)handle->bus_cookie;
+	va = (vaddr_t)bus_space_vaddr(ci->ci_bt, ci->ci_bh);
+	if (va == NULL) {
+		printf("clock_wenable: WARNING -- cannot get va\n");
+		return EIO;
+	}
+	pmap_kprotect(va, prot);
 	return (err);
 }
 
@@ -440,7 +438,7 @@ clockattach_rtc(parent, self, aux)
 #endif
 	printf(": %s\n", model);
 
-	/* 
+	/*
 	 * Turn interrupts off, just in case. (Although they shouldn't
 	 * be wired to an interrupt controller on sparcs).
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.68 2003/08/20 21:48:41 fvdl Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.69 2003/08/24 17:52:32 chs Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.68 2003/08/20 21:48:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.69 2003/08/24 17:52:32 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -125,12 +125,14 @@ svr4_setregs(l, epp, stack)
 	u_long stack;
 {
 	register struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __SVR4_NPXCW__;
 	else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __SVR4_NPXCW__;
+	tf->tf_cs = GSEL(LUCODEBIG_SEL, SEL_UPL);
 }
 
 void *
@@ -436,7 +438,7 @@ svr4_sendsig(sig, mask, code)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.184 2003/08/20 21:48:43 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.185 2003/08/24 17:52:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2003/08/20 21:48:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.185 2003/08/24 17:52:32 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -393,6 +393,12 @@ copyfault:
 			goto out;
 		}
 #endif
+		/* If pmap_exec_fixup does something, let's retry the trap. */
+		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
+		    &l->l_addr->u_pcb)) {
+			goto out;
+		}
+
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
