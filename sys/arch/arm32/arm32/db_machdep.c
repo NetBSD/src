@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.1 1996/03/06 23:08:36 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.2 1996/04/26 20:30:54 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -36,6 +36,7 @@
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
 
 void
 db_show_fs_cmd(addr, have_addr, count, modif)
@@ -92,7 +93,7 @@ db_show_vnode_cmd(addr, have_addr, count, modif)
 	db_printf("vp->v_flag = %ld\n", vp->v_flag);
 	db_printf("vp->v_numoutput = %ld\n", vp->v_numoutput);
 
-	db_printf("type %s, usecount %d, writecount %d, refcount %d,",
+	db_printf("type %s, usecount %d, writecount %d, refcount %ld,",
 		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';
@@ -114,7 +115,7 @@ db_show_vnode_cmd(addr, have_addr, count, modif)
 		db_printf(" flags (%s)", &buf[1]);
 		db_printf("\n");
 	if (vp->v_data != NULL) {
-		db_printf("data=%08x\n", vp->v_data);
+		db_printf("data=%08x\n", (u_int)vp->v_data);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.2 1996/03/06 22:49:51 mark Exp $ */
+/* $NetBSD: db_trace.c,v 1.3 1996/04/26 20:30:57 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -34,6 +34,7 @@
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
  
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK)
 
@@ -69,9 +70,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		frame = (struct frame *)(addr - (sizeof(struct frame) - sizeof(u_int)));
 
 	while (count--) {
-		int		i;
 		db_expr_t	offset;
-		db_sym_t	sym;
 		char		*name;
 		db_addr_t	pc;
 
