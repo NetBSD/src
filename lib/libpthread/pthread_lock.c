@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.6 2001/12/30 02:17:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.7 2002/02/08 22:26:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		 * (in case (a), we should let the code finish and 
 		 * we will bail out in pthread_spinunlock()).
 		 */
-		if (thread->pt_next != NULL) {
+		if ((thread->pt_next != NULL) &&
+		    (thread->pt_type != PT_THREAD_UPCALL)) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 			pthread__switch(thread, thread->pt_next);
 		}
@@ -129,7 +130,8 @@ pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 		/* See above. */
-		if (thread->pt_next != NULL) {
+		if ((thread->pt_next != NULL) &&
+		    (thread->pt_type != PT_THREAD_UPCALL)) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 			pthread__switch(thread, thread->pt_next);
 		}
@@ -156,7 +158,8 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 	 * XXX when will we ever have more than one?
 	 */
 	
-	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL)) {
+	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL) 
+		&& (thread->pt_type != PT_THREAD_UPCALL)) {
 		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
 		pthread__switch(thread, thread->pt_next);
 	}
