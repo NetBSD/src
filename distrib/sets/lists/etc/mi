@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.11 2001/04/06 01:54:04 he Exp $
+# $NetBSD: mi,v 1.60.2.12 2001/04/23 22:39:06 he Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -14,7 +14,6 @@
 ./etc/defaults/rc.conf
 ./etc/defaults/security.conf
 ./etc/defaults/weekly.conf
-./etc/dhclient-script
 ./etc/disktab
 ./etc/dm.conf
 ./etc/dumpdates
