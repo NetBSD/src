@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1998/06/09 12:01:28 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -296,7 +296,12 @@ consinit()
     /*
      * Initialize kernel debugger, if compiled in.
      */
-    ddb_init();
+	{
+		extern int end;
+		extern int *esym; 
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
 #endif
 
     cninit();
