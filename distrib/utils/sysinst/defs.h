@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.71 2002/07/29 03:05:16 grant Exp $	*/
+/*	$NetBSD: defs.h,v 1.72 2002/10/09 13:28:48 augustss Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,8 +125,8 @@ EXTERN FILE *log;
 EXTERN FILE *script;
 
 /* Hardware variables */
-EXTERN long ramsize INIT(0);
-EXTERN int  rammb   INIT(0);
+EXTERN unsigned long ramsize INIT(0);
+EXTERN unsigned int  rammb   INIT(0);
 
 /* Disk descriptions */
 #define MAX_DISKS 15
