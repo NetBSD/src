@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.170 1999/11/04 09:39:17 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.171 1999/11/04 10:34:40 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.163 1999/11/04 09:38:38 joda Exp 
+ *	NetBSD: pcidevs,v 1.164 1999/11/04 10:34:03 augustss Exp 
  */
 
 /*
@@ -821,6 +821,9 @@
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
+
+/* Creative Labs products */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SBLive! EMU 10000 */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */

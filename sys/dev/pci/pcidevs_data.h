@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.168 1999/11/04 09:39:18 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.169 1999/11/04 10:34:40 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.163 1999/11/04 09:38:38 joda Exp 
+ *	NetBSD: pcidevs,v 1.164 1999/11/04 10:34:03 augustss Exp 
  */
 
 /*
@@ -1208,6 +1208,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Corrollary",
 	    "\"C-Bus II\"-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
+	    0,
+	    "Creative Labs",
+	    "SBLive! EMU 10000",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
