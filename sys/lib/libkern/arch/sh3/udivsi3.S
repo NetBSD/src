@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.1 1999/09/13 10:31:43 itojun Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.2 1999/12/21 21:48:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.1 1999/09/13 10:31:43 itojun Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.2 1999/12/21 21:48:19 msaitoh Exp $")
 #endif
 
 /* r0 <= r4 / r5 */
@@ -63,7 +63,7 @@ ENTRY(__udivsi3)
 	mov	r4, r0		/* delay slot */
 
 div_by_zero:
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	rts
 	mov	#0, r0		/* delay slot */
 #else
