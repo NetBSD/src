@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.27 2003/09/02 07:34:59 jlam Exp $	*/
+/*	$NetBSD: show.c,v 1.28 2004/04/01 02:37:24 reed Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.27 2003/09/02 07:34:59 jlam Exp $");
+__RCSID("$NetBSD: show.c,v 1.28 2004/04/01 02:37:24 reed Exp $");
 #endif
 #endif
 
@@ -133,7 +133,7 @@ show_index(char *title, char *fname)
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
-		maxline -= MAXNAMESIZE;
+		maxline -= MAX(MAXNAMESIZE, strlen(title));
 	}
 	if ((fp = fopen(fname, "r")) == (FILE *) NULL) {
 		warnx("show_file: can't open '%s' for reading", fname);
