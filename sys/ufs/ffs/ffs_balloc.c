@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.12 1998/06/13 16:26:22 kleink Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.13 1998/10/27 21:32:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -330,7 +330,7 @@ fail:
 		(void)chkdq(ip, (long)-btodb(deallocated), cred, FORCE);
 #endif
 		ip->i_ffs_blocks -= btodb(deallocated);
-		ip->i_ffs_flags |= IN_CHANGE | IN_UPDATE;
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	return (error);
 }
