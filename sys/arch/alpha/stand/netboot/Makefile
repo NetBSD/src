@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 1999/04/01 11:08:39 ross Exp $
+# $NetBSD: Makefile,v 1.17 1999/04/02 03:11:58 cgd Exp $
 
 PROG = netboot
 
@@ -7,21 +7,21 @@ SRCS+= rpcc.S
 SRCS+= dev_net.c conf.c devopen.c
 SRCS+= if_prom.c loadfile.c getsecs.c
 
-BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
-HEADERSIZE_PROG = headersize
+BOOT_RELOC = ${UNIFIED_LOAD_ADDRESS}
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
+CLEANFILES+= vers.c vers.o ${PROG}.sym
 
-CPPFLAGS += ${PRIMARY_CPPFLAGS} ${FILE_FORMAT_CPPFLAGS} -DSUPPORT_DHCP
+CPPFLAGS += ${UNIFIED_CPPFLAGS} -DSUPPORT_DHCP
 
-${PROG}.nosym: ${PROG}.sym
-	cp ${PROG}.sym ${PROG}.nosym
-	${STRIP} ${PROG}.nosym
+${PROG}: ${PROG}.sym
+	@echo creating ${PROG} from ${PROG}.sym...
+	@objcopy --output-target=binary ${PROG}.sym ${PROG}
+	@chmod 644 ${PROG}
+	@ls -l ${PROG}
+	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${UNIFIED_MAX_LOAD} \
+	    ${UNIFIED_MAX_TOTAL} || (rm -f ${PROG} ; false)
 
-${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
-	dd if=${PROG}.nosym of=${PROG} \
-	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1
-
+SAMISCMAKEFLAGS= SA_INCLUDE_NET=yes SA_USE_CREAD=yes
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
