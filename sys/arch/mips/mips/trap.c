@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 1997/07/19 09:54:29 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 1997/07/20 03:46:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,7 @@
 #include <net/if_pppvar.h>		/* decl of enum for... */
 #include <net/if_ppp.h>			/* pppintr() prototype */
 #endif
+
 
 /*
  * Port-specific hardware interrupt handler
@@ -1374,6 +1375,7 @@ stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
 	int more, stksize;
 	extern char start[], edata[];
 	unsigned int frames =  0;
+	int foundframesize = 0;
 
 /* Jump here when done with a frame, to start a new one */
 loop:
@@ -1420,12 +1422,27 @@ specialframe:
 		sp = sp + 176;
 		goto specialframe;
 	}
+	else if (pcBetween(mips1_KernGenException, mips1_UserGenException)) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips1_KernGenException, a0, a1, a2);
+
+		a0 = kdbpeek(sp + 40);
+		a1 = kdbpeek(sp + 44);
+		a2 = kdbpeek(sp + 48);
+		a3 = kdbpeek(sp + 52);
+
+		pc = kdbpeek(sp + 172);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		sp = sp + 176;
+		goto specialframe;
+	}
 #endif	/* MIPS1 */
 
 #ifdef MIPS3		/* r4000 family (mips-III cpu) */
 	if (pcBetween(mips3_KernIntr, mips3_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		(*printfn)("------ mips3 KernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)mips3_KernIntr, a0, a1, a2);
 		a0 = kdbpeek(sp + 40);
 		a1 = kdbpeek(sp + 44);
@@ -1433,6 +1450,21 @@ specialframe:
 		a3 = kdbpeek(sp + 52);
 
 		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 148);	/* ra at time of exception */
+		sp = sp + 176;
+		goto specialframe;
+	}
+	else if (pcBetween(mips3_KernGenException, mips3_UserGenException)) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("------ kernel trap+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips3_KernGenException, a0, a1, a2);
+
+		a0 = kdbpeek(sp + 40);
+		a1 = kdbpeek(sp + 44);
+		a2 = kdbpeek(sp + 48);
+		a3 = kdbpeek(sp + 52);
+
+		pc = kdbpeek(sp + 172);	/* exc_pc - pc at time of exception */
 		ra = kdbpeek(sp + 148);	/* ra at time of exception */
 		sp = sp + 176;
 		goto specialframe;
@@ -1498,6 +1530,10 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
+	else if (pcBetween(bcopy, setrunqueue))	{
+		subr = (unsigned) bcopy;
+	}
+	
 
 
 	/* Check for bad PC */
@@ -1538,6 +1574,7 @@ stackscan:
 	stksize = 0;
 	more = 3;
 	mask = 0;
+	foundframesize = 0;
 	for (va = subr; more; va += sizeof(int),
 	     		      more = (more == 3) ? 3 : more - 1) {
 		/* stop if hit our current position */
@@ -1619,7 +1656,11 @@ stackscan:
 			/* look for stack pointer adjustment */
 			if (i.IType.rs != 29 || i.IType.rt != 29)
 				break;
-			stksize = - ((short)i.IType.imm);
+			/* don't count pops for mcount */
+			if (!foundframesize) {
+				stksize = - ((short)i.IType.imm);
+				foundframesize = 1;
+			}				
 		}
 	}
 
