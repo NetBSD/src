@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.107 2003/08/15 12:52:42 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.108 2003/08/15 14:46:46 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1215,6 +1215,13 @@ sys/dev/pci/pcivar.h				1.59
 sys/dev/pci/if_sip.c				1.79
 sys/dev/pci/if_sipreg.h				1.12
 
-	accept 1518-byte frames (needed for vlan).  Valtteri Vuorikoski
+	Accept 1518-byte frames (needed for vlan).  Valtteri Vuorikoski
 	[itojun, ticket #1413]
+
+sys/dev/pci/pcidevs				1.563-1.564
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Add National Semiconductors SC1100 (GEODE) PCI devices.
+	[itojun, ticket #1414]
 
