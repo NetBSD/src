@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.7 1995/02/12 19:19:08 chopps Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.8 1995/03/05 13:01:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -114,6 +114,7 @@ gvpbusattach(pdp, dp, auxp)
 	case GVP_GFORCE_030_SCSI:
 		ga.flags = GVP_SCSI | GVP_IO | GVP_ACCEL | GVP_25BITDMA;
 		break;
+	case GVP_A530_SCSI:
 	case GVP_COMBO_R4_SCSI:
 		ga.flags = GVP_SCSI | GVP_ACCEL | GVP_25BITDMA;
 		break;
