@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.14 2003/12/04 19:40:55 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.15 2003/12/04 19:45:19 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,13 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.14 2003/12/04 19:40:55 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.15 2003/12/04 19:45:19 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
-#define __USE_NEW_SYSCTL
 #include <sys/sysctl.h>
 
 #include <errno.h>
