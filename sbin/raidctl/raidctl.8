@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.37 2003/11/02 09:01:47 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.38 2004/02/29 22:22:35 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd November 2, 2003
+.Dd February 29, 2004
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -145,6 +145,11 @@ Add
 .Ar component
 as a hot spare for the device
 .Ar dev .
+Component labels (which identify the location of a given
+component within a particular RAID set) are automatically added to the
+hot spare after it has been used and are not required for
+.Ar component
+before it is used.
 .It Fl A Ic yes Ar dev
 Make the RAID set auto-configurable.
 The RAID set will be automatically configured at boot
