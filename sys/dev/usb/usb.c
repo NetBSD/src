@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.23 1999/09/15 14:17:15 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.24 1999/09/15 21:10:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,10 +157,8 @@ USB_ATTACH(usb)
 	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
-	if (cold)
-		sc->sc_bus->use_polling++;
 	sc->sc_port.power = USB_MAX_POWER;
-	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0,0,0,
+	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
 			    &sc->sc_port);
 
 	if (r == USBD_NORMAL_COMPLETION) {
@@ -172,14 +170,23 @@ USB_ATTACH(usb)
 			USB_ATTACH_ERROR_RETURN;
 		}
 		sc->sc_bus->root_hub = dev;
-		dev->hub->explore(sc->sc_bus->root_hub);
+#if 1
+		/* 
+		 * Turning this code off will delay attachment of USB devices
+		 * until the USB event thread is running, which means that
+		 * the keyboard will not work until after cold boot.
+		 */
+		if (cold) {
+			sc->sc_bus->use_polling++;
+			dev->hub->explore(sc->sc_bus->root_hub);
+			sc->sc_bus->use_polling--;
+		}
+#endif
 	} else {
 		printf("%s: root hub problem, error=%d\n", 
 		       USBDEVNAME(sc->sc_dev), r); 
 		sc->sc_dying = 1;
 	}
-	if (cold)
-		sc->sc_bus->use_polling--;
 
 	kthread_create(usb_create_event_thread, sc);
 
