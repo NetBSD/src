@@ -1,10 +1,12 @@
-#	$NetBSD: GENERIC,v 1.40 2000/01/20 19:12:37 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.41 2000/01/23 23:46:21 hubertf Exp $
 
 #
 #	GENERIC
 #
 
 include "arch/x68k/conf/std.x68k"
+
+#ident 		"GENERIC-$Revision: 1.41 $"
 
 maxusers	32
 

@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.7 2000/01/20 19:12:34 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.8 2000/01/23 23:46:16 hubertf Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	8			# estimated number of users
 

@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.22 2000/01/20 19:12:34 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.23 2000/01/23 23:46:16 hubertf Exp $
 #
 # First try for PPC config file
 #
 
 include "arch/ofppc/conf/std.ofppc"
+
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	32
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.58 2000/01/20 19:12:30 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.59 2000/01/23 23:46:07 hubertf Exp $
 #
 # Generic atari
 #
@@ -7,6 +7,9 @@
 # with network (through ppp or slip).
 
 include "arch/atari/conf/std.atari"
+
+#ident 		"GENERIC-$Revision: 1.59 $"
+
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
