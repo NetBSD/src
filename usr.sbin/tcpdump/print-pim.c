@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pim.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-pim.c,v 1.5 2000/04/24 13:02:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-pim.c,v 1.4 1999/11/17 14:49:49 jinmei Exp";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.5 2000/04/24 13:02:29 itojun Exp $");
 #endif
 #endif
 
@@ -145,7 +145,7 @@ pim_print(register const u_char *bp, register u_int len)
 	TCHECK(pim->pim_rsv);
 #endif
 
-	switch(pim->pim_ver) {
+	switch (pim->pim_ver) {
 	 case 2:		/* avoid hardcoding? */
 		(void)printf("PIMv2");
 		pimv2_print(bp, len);
@@ -315,7 +315,7 @@ pimv2_print(register const u_char *bp, register u_int len)
 		if (bp >= ep)
 			break;
 		ip = (struct ip *)bp;
-		switch(ip->ip_v) {
+		switch (ip->ip_v) {
 		 case 4:	/* IPv4 */
 			printf(" ");
 			ip_print(bp, len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.6 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.7 2000/04/24 13:02:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.6 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.7 2000/04/24 13:02:28 itojun Exp $");
 #endif
 #endif
 
@@ -101,7 +101,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 #endif
 
 	TCHECK(dp->icmp6_code);
-	switch(dp->icmp6_type) {
+	switch (dp->icmp6_type) {
 	case ICMP6_DST_UNREACH:
 		TCHECK(oip->ip6_dst);
 		switch (dp->icmp6_code) {
@@ -454,7 +454,7 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	ECHECK(op->nd_opt_len);
 	if (resid <= 0)
 		return;
-	switch(op->nd_opt_type) {
+	switch (op->nd_opt_type) {
 	case ND_OPT_SOURCE_LINKADDR:
 		opl = (struct nd_opt_hdr *)op;
 #if 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-arcnet.c,v 1.1 1999/10/05 20:37:22 is Exp $	*/
+/*	$NetBSD: print-arcnet.c,v 1.2 2000/04/24 13:02:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-arcnet.c,v 1.1 1999/10/05 20:37:22 is Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.2 2000/04/24 13:02:28 itojun Exp $");
 #endif
 #endif
 
@@ -168,7 +168,7 @@ arcnet_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	ap = (struct arc_header *)p;
 	arc_type = ap->arc_type;
 
-	switch(arc_type) {
+	switch (arc_type) {
 	default:
 		phds = 1;
 		break;

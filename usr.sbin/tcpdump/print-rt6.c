@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rt6.c,v 1.4 2000/04/24 13:01:24 itojun Exp $	*/
+/*	$NetBSD: print-rt6.c,v 1.5 2000/04/24 13:02:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-rt6.c,v 1.4 2000/04/24 13:01:24 itojun Exp $");
+__RCSID("$NetBSD: print-rt6.c,v 1.5 2000/04/24 13:02:30 itojun Exp $");
 #endif
 #endif
 
@@ -85,7 +85,7 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 	printf("type=%d, ", dp->ip6r_type);
 	printf("segleft=%d, ", dp->ip6r_segleft);
 
-	switch(dp->ip6r_type) {
+	switch (dp->ip6r_type) {
 	case IPV6_RTHDR_TYPE_0:
 		dp0 = (struct ip6_rthdr0 *)dp;
 
