@@ -43,7 +43,7 @@ fi
 
 touch version
 
-kernvers="NetBSD 0.8"
+kernvers="NetBSD 0.8a"
 v=`cat version`
 t=`date`
 user=${USER-root}
