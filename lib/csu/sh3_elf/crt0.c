@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.3 2000/06/14 22:52:50 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.4 2001/02/25 15:51:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -42,7 +42,11 @@
 void _start __P((int, char **, char **, void (*cleanup) __P((void)),
 			const Obj_Entry *, struct ps_strings *));
 
+#ifdef __LEADING_UNDERSCORE
 __asm (".globl start; start = __start");
+#else
+__asm (".globl __start; __start = _start");
+#endif
 
 void
 _start(argc, argv, envp, cleanup, obj, ps_strings)
@@ -85,7 +89,7 @@ _start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.3 2000/06/14 22:52:50 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.4 2001/02/25 15:51:24 msaitoh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
