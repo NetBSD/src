@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.4 1995/09/25 22:10:56 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.5 1995/09/29 21:55:19 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -214,11 +214,41 @@ struct speedtab sccspeedtab[] = {
 	{ 1800,		126,	},
 	{ 2400,		94,	},
 	{ 4800,		46,	},
+	{ 7200,		30,	}, /* 7.2  (an d14.4, 28.8, 57.6) non-POSSIX */
 	{ 9600,		22,	},
+	{ 14400,	14,	},	/* non-POSIX */
 	{ 19200,	10,	},
-	{ 38400,	4,	},
+	{ 28800,	6,	},	/* non-POSIX */
+	{ 38400,	4,	},	/* all higher speeds are non-POSIX */
+	{ 57600,	2,	},
+	{ 76800,	1,	},
+	{ 115200, 	0	},
 	{ -1,		-1,	},
 };
+
+#if 0
+/* speed selections with clock x1 */
+{
+	{ 0,		0 },
+	{ 300,		24574 },
+	{ 300,		12286 },
+	{ 600,		6142 },
+	{ 1200,		3070 },
+	{ 2400,		1534 },
+	{ 4800,		766 },
+	{ 7200,		510 },
+	{ 9600,		382 },
+	{ 14400,	254 },
+	{ 19200,	190 },
+	{ 28800,	126 },
+	{ 38400,	94 },
+	{ 57600,	62, },
+	{ 76800,	46, },
+	{ 115200,	30 },
+	{ 204800,	16 },
+	{ 230400,	14 },
+}
+#endif
 
 #ifndef	PORTSELECTOR
 #define	ISPEED	TTYDEF_SPEED
@@ -434,6 +464,7 @@ sccattach(parent, self, aux)
 	 {
 		s = spltty();
 #ifdef pmax
+		printf("wiring unit %d as console\n", SCCUNIT(cn_tab->cn_dev));
 		ctty.t_dev = cn_tab->cn_dev;
 #else
                 ctty.t_dev = makedev(SCCDEV,
@@ -1079,23 +1110,7 @@ sccstart(tp)
 		goto out;
 	}
 	
-#ifndef SCC_PARITY_MEANS_DELAY
-	/* normal case */
 	cc = ndqb(&tp->t_outq, 0);
-#else /* SCC_PARITY_MEANS_DELAY */
-	/* XXX 4.4bsd/pmax quirk: even parity means delay ? */
-	if (tp->t_flags & (RAW|LITOUT))
-		cc = ndqb(&tp->t_outq, 0);
-	else {
-		cc = ndqb(&tp->t_outq, 0200);
-		if (cc == 0) {
-			cc = getc(&tp->t_outq);
-			timeout(ttrstrt, (void *)tp, (cc & 0x7f) + 6);
-			tp->t_state |= TS_TIMEOUT;
-			goto out;
-		}
-	}
-#endif /* SCC_PARITY_MEANS_DELAY */
 
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
