@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2000/07/13 06:23:36 mrg Exp $ */
+/*	$NetBSD: vmparam.h,v 1.12 2000/08/31 19:12:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * Machine dependent constants for Sun-4c SPARC
  */
+
+#ifndef VMPARAM_H
+#define VMPARAM_H
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
@@ -117,11 +120,12 @@
  */
 
 struct pmap_physseg {
-	/* NULL */
+	struct pv_entry *pvent;
 };
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;
 vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
 void		dvma_mapout __P((vaddr_t, vaddr_t, int));
+#endif
 #endif
