@@ -132,6 +132,7 @@ print_operand_address (stream, x)
   switch (GET_CODE (x))
     {
     case REG:
+    case SUBREG:
       fprintf (stream, "@%s", reg_names[REGNO (x)]);
       break;
 
@@ -148,6 +149,7 @@ print_operand_address (stream, x)
 	    break;
 
 	  case REG:
+	  case SUBREG:
 	    fprintf (stream, "@(r0,%s)",
 		     reg_names[MAX (REGNO (base), REGNO (index))]);
 	    break;
