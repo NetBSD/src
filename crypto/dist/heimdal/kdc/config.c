@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id: config.c,v 1.4 2001/02/11 14:13:09 assar Exp $");
+RCSID("$Id: config.c,v 1.5 2001/06/19 22:39:55 assar Exp $");
 
 static char *config_file;	/* location of kdc config file */
 
@@ -252,7 +252,7 @@ configure(int argc, char **argv)
     if(config_file == NULL)
 	config_file = _PATH_KDC_CONF;
     
-    if(krb5_config_parse_file(config_file, &cf))
+    if(krb5_config_parse_file(context, config_file, &cf))
 	cf = NULL;
     
     get_dbinfo(cf);
@@ -288,6 +288,7 @@ configure(int argc, char **argv)
 
 	for (i = 0; i < addresses_str.num_strings; ++i)
 	    add_one_address (addresses_str.strings[i], i == 0);
+	free_getarg_strings (&addresses_str);
     } else {
 	char **foo = krb5_config_get_strings (context, cf,
 					      "kdc", "addresses", NULL);
@@ -312,11 +313,11 @@ configure(int argc, char **argv)
 	enable_http = krb5_config_get_bool(context, cf, "kdc", 
 					   "enable-http", NULL);
     check_ticket_addresses = 
-	krb5_config_get_bool(context, cf, "kdc", 
-			     "check-ticket-addresses", NULL);
+	krb5_config_get_bool_default(context, cf, TRUE, "kdc", 
+				     "check-ticket-addresses", NULL);
     allow_null_ticket_addresses = 
-	krb5_config_get_bool(context, cf, "kdc", 
-			     "allow-null-ticket-addresses", NULL);
+	krb5_config_get_bool_default(context, cf, TRUE, "kdc", 
+				     "allow-null-ticket-addresses", NULL);
 
     allow_anonymous = 
 	krb5_config_get_bool(context, cf, "kdc", 

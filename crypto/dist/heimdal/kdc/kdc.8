@@ -1,30 +1,32 @@
-.\" $Id: kdc.8,v 1.5 2001/06/05 10:13:55 wiz Exp $
+.\" $Id: kdc.8,v 1.6 2001/06/19 22:39:55 assar Exp $
 .\"
 .Dd July 27, 1997
 .Dt KDC 8
 .Os
 .Sh NAME
 .Nm kdc
-.Nd
-Kerberos 5 server
+.Nd Kerberos 5 server
 .Sh SYNOPSIS
 .Nm
 .Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file Oc
+.Fl -config-file= Ns Ar file
 .Xc
+.Oc
 .Op Fl p | Fl -no-require-preauth
 .Op Fl -max-request= Ns Ar size
 .Op Fl H | Fl -enable-http
 .Op Fl D | Fl -no-detach
 .Oo Fl r Ar string \*(Ba Xo
-.Fl -v4-realm= Ns Ar string Oc
+.Fl -v4-realm= Ns Ar string
 .Xc
+.Oc
 .Op Fl K | Fl -no-kaserver
 .Op Fl r Ar realm
 .Op Fl -v4-realm= Ns Ar realm
 .Oo Fl P Ar string \*(Ba Xo
-.Fl -ports= Ns Ar string Oc
+.Fl -ports= Ns Ar string
 .Xc
+.Oc
 .Op Fl -addresses= Ns Ar list of addresses
 .Sh DESCRIPTION
 .Nm
