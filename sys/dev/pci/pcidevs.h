@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.409 2002/02/21 00:00:28 simonb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.410 2002/02/24 01:44:00 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.404 2002/02/20 23:59:58 simonb Exp 
+ *	NetBSD: pcidevs,v 1.405 2002/02/24 01:42:36 kleink Exp 
  */
 
 /*
@@ -1222,6 +1222,7 @@
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
+#define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
