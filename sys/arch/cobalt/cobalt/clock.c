@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2000/03/19 23:07:43 soren Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2000/03/22 20:38:22 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -77,12 +77,14 @@ inittodr(base)
 	MC146818_GETTOD(NULL, &regs)
 	splx(s);
 
-	dt.dt_year = regs[MC_YEAR] + 2000;
-        dt.dt_mon = regs[MC_MONTH];
-        dt.dt_day = regs[MC_DOM];
-        dt.dt_hour = regs[MC_HOUR];
-        dt.dt_min = regs[MC_MIN];
-        dt.dt_sec = regs[MC_SEC];
+	dt.dt_year = FROMBCD(regs[MC_YEAR]) + 2000;
+        dt.dt_mon = FROMBCD(regs[MC_MONTH]);
+        dt.dt_day = FROMBCD(regs[MC_DOM]);
+        dt.dt_wday = FROMBCD(regs[MC_DOW]);
+        dt.dt_hour = FROMBCD(regs[MC_HOUR]);
+        dt.dt_min = FROMBCD(regs[MC_MIN]);
+        dt.dt_sec = FROMBCD(regs[MC_SEC]);
+
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 
 	return;
@@ -100,13 +102,13 @@ resettodr(void)
 	splx(s); 
 
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
-	regs[MC_YEAR] = dt.dt_year % 100;
-        regs[MC_MONTH] = dt.dt_mon;
-        regs[MC_DOW] = dt.dt_wday;
-        regs[MC_DOM] = dt.dt_day;
-        regs[MC_HOUR] = dt.dt_hour;
-        regs[MC_MIN] = dt.dt_min;
-        regs[MC_SEC] = dt.dt_sec;
+	regs[MC_YEAR] = TOBCD(dt.dt_year % 100);
+        regs[MC_MONTH] = TOBCD(dt.dt_mon);
+        regs[MC_DOM] = TOBCD(dt.dt_day);
+        regs[MC_DOW] = TOBCD(dt.dt_wday);
+        regs[MC_HOUR] = TOBCD(dt.dt_hour);
+        regs[MC_MIN] = TOBCD(dt.dt_min);
+        regs[MC_SEC] = TOBCD(dt.dt_sec);
 
 	s = splclock();
 	MC146818_PUTTOD(NULL, &regs);
