@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.18 1997/02/13 17:29:43 scottr Exp $
+#	$NetBSD: std.mac68k,v 1.19 1997/11/17 01:58:03 lukem Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -19,10 +19,10 @@ zstty*	at zsc? channel ?
 options HZ=60			# mac clock runs at 60hz
 
 # Executable support
-options		EXEC_AOUT	# a.out binary support
-options		EXEC_SCRIPT	# shell script support
+options 	EXEC_AOUT	# a.out binary support
+options 	EXEC_SCRIPT	# shell script support
 
 # VM pager support
-options		SWAPPAGER	# paging; REQUIRED
-options		VNODEPAGER	# mmap() of files; REQUIRED
-options		DEVPAGER	# mmap() of devices; REQUIRED
+options 	SWAPPAGER	# paging; REQUIRED
+options 	VNODEPAGER	# mmap() of files; REQUIRED
+options 	DEVPAGER	# mmap() of devices; REQUIRED

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.63 1997/10/20 18:47:08 explorer Exp $
+# $NetBSD: ALPHA,v 1.64 1997/11/17 01:57:24 lukem Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -30,6 +30,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DEBUG			# Expensive debugging checks/support
 options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
 # File systems
 file-system	FFS		# Fast file system

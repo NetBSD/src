@@ -5,17 +5,17 @@
 include	"arch/alpha/conf/std.alpha"
 maxusers	8
 
-options		NKMEMCLUSTERS=8192
-options		NMBCLUSTERS=1024
-options		USRIOSIZE=2048
-options		MAXPHYS=0x40000
-options		MAXBSIZE=0x10000
+options 	NKMEMCLUSTERS=8192
+options 	NMBCLUSTERS=1024
+options 	USRIOSIZE=2048
+options 	MAXPHYS=0x40000
+options 	MAXBSIZE=0x10000
 #
 # When all the driver's that we actually are going to use
 # are converted over to using the busdma map stuff, then
 # we can get rid of this limit
 #
-options		LIMITMEM=1024
+options 	LIMITMEM=1024
 
 # CPU Support
 options 	DEC_EB164	# EB164:	AlphaPC 164
@@ -41,7 +41,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
-options		SCSIVERBOSE		# Verbose SCSI errors
+options 	SCSIVERBOSE		# Verbose SCSI errors
 config		netbsd	root on ? type ?
 
 mainbus0 at	root

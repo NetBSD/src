@@ -14,6 +14,7 @@ options 	LKM		# loadable kernel modules
 
 # Debugging options
 options 	DDB		# kernel dynamic debugger
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Compatibility options
