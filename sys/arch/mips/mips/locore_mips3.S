@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.15 2000/02/18 00:02:43 mycroft Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.16 2000/02/18 00:15:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -436,11 +436,11 @@ NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
-	REG_L	v0, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
+	REG_L	k0, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	mtlo	t0
 	mthi	t1
-	dmtc0	v0, MIPS_COP_0_EXC_PC		# set return address
+	dmtc0	k0, MIPS_COP_0_EXC_PC		# set return address
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
 	REG_L	v0, TF_BASE+TF_REG_V0(sp)
 	REG_L	v1, TF_BASE+TF_REG_V1(sp)
