@@ -1,4 +1,4 @@
-/*      $NetBSD: cmds.c,v 1.10 1996/11/28 03:12:28 lukem Exp $      */
+/*      $NetBSD: cmds.c,v 1.11 1996/12/06 02:06:46 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.10 1996/11/28 03:12:28 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.11 1996/12/06 02:06:46 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -658,7 +658,7 @@ usage:
 			if (ret == 0) {
 				time_t mtime;
 
-				mtime = getmodtime(argv[1]);
+				mtime = remotemodtime(argv[1]);
 				if (mtime == -1)
 					return(0);
 				if (stbuf.st_mtime >= mtime)
@@ -881,7 +881,8 @@ status(argc, argv)
 	else {
 		printf("Nmap: off\n");
 	}
-	printf("Hash mark printing: %s; Mark count: %d\n", onoff(hash), mark);
+	printf("Hash mark printing: %s; Mark count: %d; Progress bar: %s\n",
+	    onoff(hash), mark, onoff(progress));
 	printf("Use of PORT cmds: %s\n", onoff(sendport));
 	if (macnum > 0) {
 		printf("Macros:\n");
@@ -1005,6 +1006,19 @@ setport(argc, argv)
 }
 
 /*
+ * Toggle transfer progress bar.
+ */
+/*VARARGS*/
+void
+setprogress(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	code = togglevar(argc, argv, &progress, "Progress bar");
+}
+
+/*
  * Turn on interactive prompting
  * during mget, mput, and mdelete.
  */
@@ -1073,10 +1087,10 @@ setdebug(argc, argv)
 				code = -1;
 				return;
 			}
+			debug = val;
 		}
 	} else
-		val = !debug;
-	debug = val;
+		debug = !debug;
 	if (debug)
 		options |= SO_DEBUG;
 	else
@@ -1242,13 +1256,14 @@ ls(argc, argv)
 		code = -1;
 		return;
 	}
-	cmd = argv[0][0] == 'n' ? "NLST" : "LIST";
+	cmd = strcmp(argv[0], "dir") == 0 ? "LIST" : "NLST";
 	if (strcmp(argv[2], "-") && !globulize(&argv[2])) {
 		code = -1;
 		return;
 	}
 	if (strcmp(argv[2], "-") && *argv[2] != '|')
-		if (!globulize(&argv[2]) || !confirm("output to local-file:", argv[2])) {
+		if (!globulize(&argv[2]) || !confirm("output to local-file:",
+		    argv[2])) {
 			code = -1;
 			return;
 	}
@@ -1288,7 +1303,7 @@ usage:
 			code = -1;
 			return;
 	}
-	cmd = argv[0][1] == 'l' ? "NLST" : "LIST";
+	cmd = strcmp(argv[0], "mls") == 0 ? "NLST" : "LIST";
 	mname = argv[0];
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
@@ -1666,7 +1681,7 @@ confirm(cmd, file)
 		return (1);
 	printf("%s %s? ", cmd, file);
 	(void) fflush(stdout);
-	if (fgets(line, sizeof line, stdin) == NULL)
+	if (fgets(line, sizeof(line), stdin) == NULL)
 		return (0);
 	switch (tolower(*line)) {
 		case 'n':
@@ -2035,7 +2050,8 @@ LOOP:
 						}
 					}
 					if (!*cp2) {
-						printf("nmap: unbalanced brackets\n");
+						printf("nmap: unbalanced "
+							"brackets\n");
 						return (name);
 					}
 					match = 1;
@@ -2048,7 +2064,8 @@ LOOP:
 					      }
 					}
 					if (!*cp2) {
-						printf("nmap: unbalanced brackets\n");
+						printf("nmap: unbalanced "
+							"brackets\n");
 						return (name);
 					}
 					break;
@@ -2147,8 +2164,8 @@ restart(argc, argv)
 		printf("restart: offset not specified\n");
 	else {
 		restart_point = atol(argv[1]);
-		printf("restarting at %qd. %s\n", restart_point,
-		    "execute get, put or append to initiate transfer");
+		printf("Restarting at %qd. Execute get, put or append to"
+			"initiate transfer\n", restart_point);
 	}
 }
 
@@ -2181,7 +2198,8 @@ macdef(argc, argv)
 		return;
 	}
 	if (interactive) {
-		printf("Enter macro line by line, terminating it with a null line\n");
+		printf("Enter macro line by line, terminating it with a "
+			"null line\n");
 	}
 	(void) strncpy(macros[macnum].mac_name, argv[1], 8);
 	if (macnum == 0) {
@@ -2224,6 +2242,28 @@ macdef(argc, argv)
 }
 
 /*
+ * determine size of remote file
+ */
+off_t
+remotesize(file)
+	const char *file;
+{
+	int overbose;
+	off_t size;
+
+	overbose = verbose;
+	size = -1;
+	if (debug == 0)
+		verbose = -1;
+	if (command("SIZE %s", file) == COMPLETE)
+		sscanf(reply_string, "%*s %qd", &size);
+	else if (debug == 0)
+		printf("%s\n", reply_string);
+	verbose = overbose;
+	return (size);
+}
+
+/*
  * get size of file on remote machine
  */
 void
@@ -2231,20 +2271,24 @@ sizecmd(argc, argv)
 	int argc;
 	char *argv[];
 {
+	off_t size;
 
 	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
 		printf("usage: %s filename\n", argv[0]);
 		code = -1;
 		return;
 	}
-	(void) command("SIZE %s", argv[1]);
+	size = remotesize(argv[1]);
+	if (size != -1)
+		printf("%s\t%qd\n", argv[1], size);
+	code = size;
 }
 
 /*
- * determine last modification time (in GMT) of given file
+ * determine last modification time (in GMT) of remote file
  */
 time_t
-getmodtime(file)
+remotemodtime(file)
 	const char *file;
 {
 	int overbose;
@@ -2272,7 +2316,7 @@ getmodtime(file)
 			printf("Can't convert %s to a time\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
-	} else
+	} else if (debug == 0)
 		printf("%s\n", reply_string);
 	verbose = overbose;
 	return(rtime);
@@ -2293,7 +2337,7 @@ modtime(argc, argv)
 		code = -1;
 		return;
 	}
-	mtime = getmodtime(argv[1]);
+	mtime = remotemodtime(argv[1]);
 	if (mtime != -1)
 		printf("%s\t%s", argv[1], asctime(localtime(&mtime)));
 	code = mtime;

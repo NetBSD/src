@@ -1,4 +1,4 @@
-/*      $NetBSD: cmdtab.c,v 1.9 1996/11/28 03:12:30 lukem Exp $      */
+/*      $NetBSD: cmdtab.c,v 1.10 1996/12/06 02:06:47 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.9 1996/11/28 03:12:30 lukem Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.10 1996/12/06 02:06:47 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ char	cduphelp[] = 	"change remote working directory to parent directory";
 char	chmodhelp[] =	"change file permissions of remote file";
 char	connecthelp[] =	"connect to remote ftp server";
 char	crhelp[] =	"toggle carriage return stripping on ascii gets";
-char	deletehelp[] =	"delete remote file";
 char	debughelp[] =	"toggle/set debugging mode";
+char	deletehelp[] =	"delete remote file";
 char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] = 	"execute macro";
@@ -78,16 +78,18 @@ char	mdirhelp[] =	"list contents of multiple remote directories";
 char	mgethelp[] =	"get multiple files";
 char	mkdirhelp[] =	"make directory on the remote machine";
 char	mlshelp[] =	"list contents of multiple remote directories";
-char	modtimehelp[] = "show last modification time of remote file";
 char	modehelp[] =	"set file transfer mode";
+char	modtimehelp[] = "show last modification time of remote file";
 char	mputhelp[] =	"send multiple files";
 char	newerhelp[] =	"get file if remote file is newer than local file ";
 char	nlisthelp[] =	"nlist contents of remote directory";
 char	nmaphelp[] =	"set templates for default file name mapping";
 char	ntranshelp[] =	"set translation table for default file name mapping";
+char	passivehelp[] =	"enter passive transfer mode";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
-char	preservhelp[] = "toggle preservation of modification time of "
+char	preservehelp[] ="toggle preservation of modification time of "
 			"retreived files";
+char	progresshelp[] ="toggle transfer progress meter";
 char	prompthelp[] =	"force interactive prompting on multiple commands";
 char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
@@ -97,16 +99,16 @@ char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
 char	remotehelp[] =	"get help from remote server";
 char	renamehelp[] =	"rename file";
+char	resethelp[] =	"clear queued command replies";
 char	restarthelp[]=	"restart file transfer at bytecount";
 char	rmdirhelp[] =	"remove directory on the remote machine";
 char	rmtstatushelp[]="show status of remote machine";
 char	runiquehelp[] = "toggle store unique for local files";
-char	resethelp[] =	"clear queued command replies";
 char	sendhelp[] =	"send one file";
-char	passivehelp[] =	"enter passive transfer mode";
-char	sitehelp[] =	"send site specific command to remote server\n"
-		"\t\tTry \"rhelp site\" or \"site help\" for more information";
 char	shellhelp[] =	"escape to the shell";
+char	sitehelp[] =	"send site specific command to remote server\n"
+			"\t\tTry \"rhelp site\" or \"site help\" "
+			"for more information";
 char	sizecmdhelp[] = "show size of remote file";
 char	statushelp[] =	"show current status";
 char	structhelp[] =	"set file transfer structure";
@@ -134,8 +136,8 @@ struct cmd cmdtab[] = {
 	{ "chmod",	chmodhelp,	0,	1,	1,	do_chmod },
 	{ "close",	disconhelp,	0,	1,	1,	disconnect },
 	{ "cr",		crhelp,		0,	0,	0,	setcr },
-	{ "delete",	deletehelp,	0,	1,	1,	delete },
 	{ "debug",	debughelp,	0,	0,	0,	setdebug },
+	{ "delete",	deletehelp,	0,	1,	1,	delete },
 	{ "dir",	dirhelp,	1,	1,	1,	ls },
 	{ "disconnect",	disconhelp,	0,	1,	1,	disconnect },
 	{ "exit",	quithelp,	0,	0,	0,	quit },
@@ -161,40 +163,41 @@ struct cmd cmdtab[] = {
 	{ "mput",	mputhelp,	1,	1,	1,	mput },
 	{ "msend",	mputhelp,	1,	1,	1,	mput },
 	{ "newer",	newerhelp,	1,	1,	1,	newer },
-	{ "nmap",	nmaphelp,	0,	0,	1,	setnmap },
 	{ "nlist",	nlisthelp,	1,	1,	1,	ls },
+	{ "nmap",	nmaphelp,	0,	0,	1,	setnmap },
 	{ "ntrans",	ntranshelp,	0,	0,	1,	setntrans },
 	{ "open",	connecthelp,	0,	0,	1,	setpeer },
 	{ "passive",	passivehelp,	0,	0,	0,	setpassive },
-	{ "preserve",	preservhelp,	0,	0,	0,	setpreserve },
+	{ "preserve",	preservehelp,	0,	0,	0,	setpreserve },
+	{ "progress",	progresshelp,	0,	0,	0,	setprogress },
 	{ "prompt",	prompthelp,	0,	0,	0,	setprompt },
 	{ "proxy",	proxyhelp,	0,	0,	1,	doproxy },
-	{ "sendport",	porthelp,	0,	0,	0,	setport },
 	{ "put",	sendhelp,	1,	1,	1,	put },
 	{ "pwd",	pwdhelp,	0,	1,	1,	pwd },
 	{ "quit",	quithelp,	0,	0,	0,	quit },
 	{ "quote",	quotehelp,	1,	1,	1,	quote },
 	{ "recv",	receivehelp,	1,	1,	1,	get },
 	{ "reget",	regethelp,	1,	1,	1,	reget },
-	{ "rstatus",	rmtstatushelp,	0,	1,	1,	rmtstatus },
-	{ "rhelp",	remotehelp,	0,	1,	1,	rmthelp },
 	{ "rename",	renamehelp,	0,	1,	1,	renamefile },
 	{ "reset",	resethelp,	0,	1,	1,	reset },
 	{ "restart",	restarthelp,	1,	1,	1,	restart },
+	{ "rhelp",	remotehelp,	0,	1,	1,	rmthelp },
 	{ "rmdir",	rmdirhelp,	0,	1,	1,	removedir },
+	{ "rstatus",	rmtstatushelp,	0,	1,	1,	rmtstatus },
 	{ "runique",	runiquehelp,	0,	0,	1,	setrunique },
 	{ "send",	sendhelp,	1,	1,	1,	put },
+	{ "sendport",	porthelp,	0,	0,	0,	setport },
 	{ "site",	sitehelp,	0,	1,	1,	site },
 	{ "size",	sizecmdhelp,	1,	1,	1,	sizecmd },
 	{ "status",	statushelp,	0,	0,	1,	status },
 	{ "struct",	structhelp,	0,	1,	1,	setstruct },
-	{ "system",	systemhelp,	0,	1,	1,	syst },
 	{ "sunique",	suniquehelp,	0,	0,	1,	setsunique },
+	{ "system",	systemhelp,	0,	1,	1,	syst },
 	{ "tenex",	tenexhelp,	0,	1,	1,	settenex },
 	{ "trace",	tracehelp,	0,	0,	0,	settrace },
 	{ "type",	typehelp,	0,	1,	1,	settype },
-	{ "user",	userhelp,	0,	1,	1,	user },
 	{ "umask",	umaskhelp,	0,	1,	1,	do_umask },
+	{ "user",	userhelp,	0,	1,	1,	user },
 	{ "verbose",	verbosehelp,	0,	0,	0,	setverbose },
 	{ "?",		helphelp,	0,	0,	1,	help },
 	{ 0 },
