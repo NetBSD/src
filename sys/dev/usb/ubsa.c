@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.10 2004/09/13 12:55:49 drochner Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.11 2004/11/08 13:00:07 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.10 2004/09/13 12:55:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.11 2004/11/08 13:00:07 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,6 @@ struct	ubsa_softc {
 
 	int			sc_iface_number;	/* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
 	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
@@ -231,6 +230,8 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
+	/* Vodafone */
+	{ USB_VENDOR_VODAFONE, USB_PRODUCT_VODAFONE_MC3G },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
@@ -637,7 +638,7 @@ ubsa_open(void *addr, int portno)
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
-		err = usbd_open_pipe_intr(sc->sc_intr_iface,
+		err = usbd_open_pipe_intr(sc->sc_iface,
 		    sc->sc_intr_number,
 		    USBD_SHORT_XFER_OK,
 		    &sc->sc_intr_pipe,
