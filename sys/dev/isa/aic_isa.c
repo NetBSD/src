@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.5 1997/11/30 15:31:23 drochner Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.6 1998/01/13 03:34:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -62,14 +62,15 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
+
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
