@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.12 1998/10/15 09:28:13 kleink Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.13 1998/11/13 15:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_comp.c,v 8.12 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.12 1998/10/15 09:28:13 kleink Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.13 1998/11/13 15:46:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: res_comp.c,v 1.12 1998/10/15 09:28:13 kleink Exp $");
 __weak_alias(dn_expand,_dn_expand);
 #endif
 
-static int dn_find __P((u_char *, u_char *, u_char **, u_char **));
+static int dn_find __P((const u_char *, u_char *, u_char **, u_char **));
 static int mklower __P((int));
 
 /*
@@ -178,12 +178,13 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 	u_char *comp_dn, **dnptrs, **lastdnptr;
 	int length;
 {
-	register u_char *cp, *dn;
-	register int c, l;
+	u_char *cp;
+	const u_char *dn;
+	int c, l;
 	u_char **cpp, **lpp, *sp, *eob;
 	u_char *msg;
 
-	dn = (u_char *)exp_dn;
+	dn = (const u_char *)exp_dn;
 	cp = comp_dn;
 	if (length > MAXCDNAME)
 		length = MAXCDNAME;
@@ -203,7 +204,7 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 			if ((l = dn_find(dn-1, msg, dnptrs, lpp)) >= 0) {
 				if (cp+1 >= eob)
 					return (-1);
-				*cp++ = (l >> 8) | INDIR_MASK;
+				*cp++ = ((u_int32_t)l >> 8) | INDIR_MASK;
 				*cp++ = l % 256;
 				return (cp - comp_dn);
 			}
@@ -300,10 +301,12 @@ mklower(ch)
  */
 static int
 dn_find(exp_dn, msg, dnptrs, lastdnptr)
-	u_char *exp_dn, *msg;
+	const u_char *exp_dn;
+	u_char *msg;
 	u_char **dnptrs, **lastdnptr;
 {
-	register u_char *dn, *cp, **cpp;
+	const u_char *dn;
+	u_char *cp, **cpp;
 	register int n;
 	u_char *sp;
 
@@ -376,7 +379,7 @@ int
 res_hnok(dn)
 	const char *dn;
 {
-	int ppch = '\0', pch = PERIOD, ch = *dn++;
+	int pch = PERIOD, ch = *dn++;
 
 	while (ch != '\0') {
 		int nch = *dn++;
@@ -393,7 +396,7 @@ res_hnok(dn)
 			if (!middlechar(ch))
 				return (0);
 		}
-		ppch = pch, pch = ch, ch = nch;
+		pch = ch, ch = nch;
 	}
 	return (1);
 }

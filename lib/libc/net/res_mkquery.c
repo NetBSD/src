@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.13 1998/10/15 10:22:24 kleink Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.14 1998/11/13 15:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.13 1998/10/15 10:22:24 kleink Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.14 1998/11/13 15:46:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,6 +83,7 @@ __weak_alias(res_mkquery,_res_mkquery);
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
+/* ARGSUSED */
 int
 res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	int op;			/* opcode of query */
@@ -114,7 +115,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	if ((buf == NULL) || (buflen < sizeof(HEADER)))
 		return(-1);
 	(void)memset(buf, 0, sizeof (HEADER));
-	hp = (HEADER *) buf;
+	hp = (HEADER *)(void *)buf;
 	hp->id = htons(++_res.id);
 	hp->opcode = op;
 	hp->rd = (_res.options & RES_RECURSE) != 0;
@@ -148,7 +149,8 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		 * Make an additional record for completion domain.
 		 */
 		buflen -= RRFIXEDSZ;
-		if ((n = dn_comp(data, cp, buflen, dnptrs, lastdnptr)) < 0)
+		if ((n = dn_comp((const char *)data, cp, buflen, dnptrs,
+		    lastdnptr)) < 0)
 			return (-1);
 		cp += n;
 		buflen -= n;

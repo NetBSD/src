@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.11 1998/11/13 10:26:19 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.12 1998/11/13 15:49:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.11 1998/11/13 10:26:19 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.12 1998/11/13 15:49:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,8 +78,10 @@ getusershell()
 
 	if (curshell == NULL)
 		curshell = initshells();
+
 	/* LINTED (auditing puproses only */
 	ret = (__aconst char *)*curshell;
+
 	if (ret != NULL)
 		curshell++;
 	return (ret);

@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.15 1998/10/23 09:44:34 kleink Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.16 1998/11/13 15:49:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.15 1998/10/23 09:44:34 kleink Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.16 1998/11/13 15:49:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,7 +100,8 @@ setlocale(category, locale)
 	int category;
 	const char *locale;
 {
-	int i, len;
+	int i;
+	size_t len;
 	char *env, *r;
 
 	/*
@@ -223,14 +224,17 @@ loadlocale(category)
 		switch (category) {
 		case LC_CTYPE:
 			if (_ctype_ != _C_ctype_) {
+				/* LINTED const castaway */
 				free((void *)_ctype_);
 				_ctype_ = _C_ctype_;
 			}
 			if (_toupper_tab_ != _C_toupper_) {
+				/* LINTED const castaway */
 				free((void *)_toupper_tab_);
 				_toupper_tab_ = _C_toupper_;
 			}
 			if (_tolower_tab_ != _C_tolower_) {
+				/* LINTED const castaway */
 				free((void *)_tolower_tab_);
 				_tolower_tab_ = _C_tolower_;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.2 1997/04/30 00:40:47 thorpej Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.3 1998/11/13 15:48:30 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ MDNAME(End)(ctx, buf)
 	MDNAME(Final)(digest, ctx);
 
 	for (i = 0; i < 16; i++) {
-		buf[i+i] = hex[digest[i] >> 4];
+		buf[i+i] = hex[(u_int32_t)digest[i] >> 4];
 		buf[i+i+1] = hex[digest[i] & 0x0f];
 	}
 
@@ -66,7 +66,7 @@ MDNAME(File)(filename, buf)
 		return NULL;
 
 	while ((i = read(f, buffer, sizeof(buffer))) > 0)
-		MDNAME(Update)(&ctx, buffer, i);
+		MDNAME(Update)(&ctx, buffer, (unsigned int)i);
 
 	j = errno;
 	close(f);

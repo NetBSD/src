@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.13 1998/08/10 02:43:10 perry Exp $	*/
+/*	$NetBSD: gmon.c,v 1.14 1998/11/13 15:47:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.14 1998/11/13 15:47:09 christos Exp $");
 #endif
 #endif
 
@@ -59,7 +59,7 @@ extern char *minbrk __asm ("minbrk");
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
-static int	s_scale;
+static u_int	s_scale;
 /* see profil(2) where this is describe (incorrectly) */
 #define		SCALE_1_TO_1	0x10000L
 
@@ -75,7 +75,7 @@ monstartup(lowpc, highpc)
 	u_long lowpc;
 	u_long highpc;
 {
-	int o;
+	long o;
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
 
@@ -96,7 +96,7 @@ monstartup(lowpc, highpc)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
-	cp = sbrk(p->kcountsize + p->fromssize + p->tossize);
+	cp = sbrk((int)(p->kcountsize + p->fromssize + p->tossize));
 	if (cp == (char *)-1) {
 		ERR("monstartup: out of memory\n");
 		return;
@@ -104,11 +104,11 @@ monstartup(lowpc, highpc)
 #ifdef notdef
 	memset(cp, 0, p->kcountsize + p->fromssize + p->tossize);
 #endif
-	p->tos = (struct tostruct *)cp;
-	cp += p->tossize;
-	p->kcount = (u_short *)cp;
-	cp += p->kcountsize;
-	p->froms = (u_short *)cp;
+	p->tos = (struct tostruct *)(void *)cp;
+	cp += (size_t)p->tossize;
+	p->kcount = (u_short *)(void *)cp;
+	cp += (size_t)p->kcountsize;
+	p->froms = (u_short *)(void *)cp;
 
 	minbrk = sbrk(0);
 	p->tos[0].link = 0;
@@ -211,8 +211,8 @@ _mcleanup()
 		divisor=10000;
 		while (divisor > pid) divisor /= 10;	/* skip leading zeros */
 		do {
-			*t++ = (pid/divisor) + '0';
-			pid %= divisor;
+			*t++ = (char)((pid/divisor) + '0');
+			pid %= (pid_t)divisor;
 		} while (divisor /= 10);
 		*t++ = '.';
 
@@ -243,12 +243,12 @@ _mcleanup()
 	hdr = (struct gmonhdr *)&gmonhdr;
 	hdr->lpc = p->lowpc;
 	hdr->hpc = p->highpc;
-	hdr->ncnt = p->kcountsize + sizeof(gmonhdr);
+	hdr->ncnt = (int)(p->kcountsize + sizeof(gmonhdr));
 	hdr->version = GMONVERSION;
 	hdr->profrate = clockinfo.profhz;
-	write(fd, (char *)hdr, sizeof *hdr);
-	write(fd, p->kcount, p->kcountsize);
-	endfrom = p->fromssize / sizeof(*p->froms);
+	(void)write(fd, hdr, sizeof *hdr);
+	(void)write(fd, p->kcount, (size_t)p->kcountsize);
+	endfrom = (int)(p->fromssize / sizeof(*p->froms));
 	for (fromindex = 0; fromindex < endfrom; fromindex++) {
 		if (p->froms[fromindex] == 0)
 			continue;
@@ -286,12 +286,12 @@ moncontrol(mode)
 
 	if (mode) {
 		/* start */
-		profil((char *)p->kcount, p->kcountsize, p->lowpc,
-		    s_scale);
+		profil((char *)(void *)p->kcount, (size_t)p->kcountsize,
+		    p->lowpc, s_scale);
 		p->state = GMON_PROF_ON;
 	} else {
 		/* stop */
-		profil((char *)0, 0, 0, 0);
+		profil(NULL, 0, (u_long)0, 0);
 		p->state = GMON_PROF_OFF;
 	}
 }
@@ -313,5 +313,5 @@ hertz()
 	setitimer(ITIMER_REAL, 0, &tim);
 	if (tim.it_interval.tv_usec < 2)
 		return(0);
-	return (1000000 / tim.it_interval.tv_usec);
+	return (int)(1000000 / tim.it_interval.tv_usec);
 }

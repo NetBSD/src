@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.13 1998/07/26 13:14:04 mycroft Exp $	*/
+/*	$NetBSD: ethers.c,v 1.14 1998/11/13 15:46:53 christos Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -116,7 +116,7 @@ ether_ntohost(hostname, e)
 		}
 #endif
 		if (ether_line(p, &try, hostname) == 0 &&
-		    memcmp((char *)&try, (char *)e, sizeof try) == 0) {
+		    memcmp(&try, e, sizeof try) == 0) {
 			(void)fclose(f);
 			return 0;
 		}     

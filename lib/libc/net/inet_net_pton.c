@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.7 1998/01/06 05:01:21 perry Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.8 1998/11/13 15:46:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.7 1998/01/06 05:01:21 perry Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.8 1998/11/13 15:46:54 christos Exp $");
 #endif
 #endif
 
@@ -113,7 +113,8 @@ inet_net_pton_ipv4(src, dst, size)
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
 	    && isascii(src[1]) && isxdigit(src[1])) {
 		/* Hexadecimal: Eat nybble string. */
-		if (size <= 0)
+		/* size is unsigned */
+		if (size == 0)
 			goto emsgsize;
 		*dst = 0, dirty = 0;
 		src++;	/* skip x or X. */
@@ -146,7 +147,7 @@ inet_net_pton_ipv4(src, dst, size)
 					goto enoent;
 			} while ((ch = *src++) != '\0' &&
 				 isascii(ch) && isdigit(ch));
-			if (size-- <= 0)
+			if (size-- == 0)
 				goto emsgsize;
 			*dst++ = (u_char) tmp;
 			if (ch == '\0' || ch == '/')
@@ -203,7 +204,8 @@ inet_net_pton_ipv4(src, dst, size)
 	}
 	/* Extend network to cover the actual mask. */
 	while (bits > ((dst - odst) * 8)) {
-		if (size-- <= 0)
+		/* size is unsigned */
+		if (size-- == 0)
 			goto emsgsize;
 		*dst++ = '\0';
 	}
