@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.12 2003/11/18 21:40:13 briggs Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.13 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.12 2003/11/18 21:40:13 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.13 2004/02/24 15:22:01 wiz Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -1175,7 +1175,7 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 
 
 		/*
-		 * IO Cell paramter setup.
+		 * IO Cell parameter setup.
 		 */
 		AHD_SET_PRECOMP(ahd, AHD_PRECOMP_CUTBACK_29);
 
@@ -1195,7 +1195,7 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 			ahd->bugs |= AHD_INTCOLLISION_BUG|AHD_ABORT_LQI_BUG;
 
 		/*
-		 * IO Cell paramter setup.
+		 * IO Cell parameter setup.
 		 */
 		AHD_SET_PRECOMP(ahd, AHD_PRECOMP_CUTBACK_29);
 		AHD_SET_SLEWRATE(ahd, AHD_SLEWRATE_DEF_REVB);

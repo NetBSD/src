@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.24 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: exception.S,v 1.25 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1543,7 +1543,7 @@ Lcheck_softint_lower:
  * cpu_fork() arranges for the following information to be passed to us:
  *
  *    r10 - The kernel function to invoke before returning to userland
- *    r11 - A single paramter for the kernel function.
+ *    r11 - A single parameter for the kernel function.
  *
  * The kernel stack already has a valid trapframe, so all we need to do
  * is return through the normal trap/syscall exit path.
