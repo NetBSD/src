@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1995/10/08 19:33:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1995/12/05 20:01:54 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -457,7 +457,17 @@ bogons:
 	 * map where we want it.
 	 */
 	addr = HP_PTBASE;
-	s = min(HP_PTMAXSIZE, maxproc*HP_MAX_PTSIZE);
+	if ((HP_PTMAXSIZE / HP_MAX_PTSIZE) < maxproc) {
+		s = HP_PTMAXSIZE;
+		/*
+		 * XXX We don't want to hang when we run out of
+		 * page tables, so we lower maxproc so that fork()
+		 * will fail instead.  Note that root could still raise
+		 * this value via sysctl(2).
+		 */
+		maxproc = (HP_PTMAXSIZE / HP_MAX_PTSIZE);
+	} else
+		s = (maxproc * HP_MAX_PTSIZE);
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
