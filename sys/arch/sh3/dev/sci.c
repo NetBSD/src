@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.19 2002/02/22 19:44:04 uch Exp $ */
+/* $NetBSD: sci.c,v 1.20 2002/02/24 19:35:42 uch Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -296,7 +296,7 @@ InitializeSci(unsigned int bps)
 	SHREG_SCSMR = 0x00;	/* Async,8bit,NonParity,Even,1Stop,NoMulti */
 
 	/* Bit Rate Register */
-	SHREG_SCBRR = divrnd(PCLOCK, 32 * bps) - 1;
+	SHREG_SCBRR = divrnd(sh_clock_get_pclock(), 32 * bps) - 1;
 
 	/*
 	 * wait 1mSec, because Send/Recv must begin 1 bit period after
