@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.30 2003/07/22 08:54:29 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.31 2003/07/25 10:00:50 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.30 2003/07/22 08:54:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.31 2003/07/25 10:00:50 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -51,19 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.30 2003/07/22 08:54:29 itojun Exp $")
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
-#ifdef INET6
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet/icmp6.h>
-#endif
 
 #include <netinet6/ipsec.h>
 #include <netinet6/ah.h>
 #include <netinet6/esp.h>
 #include <netinet6/esp_rijndael.h>
+#include <netinet6/esp_aesctr.h>
 #include <net/pfkeyv2.h>
-#include <netkey/keydb.h>
 #include <netkey/key.h>
 
 #include <crypto/des/des.h>
@@ -129,7 +123,7 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_3des_schedule,
 		esp_3des_blockdecrypt, esp_3des_blockencrypt, },
-	{ 1, 0, esp_null_mature, 0, 2048, 0, "null",
+	{ 1, 0, esp_null_mature, 0, 2048, NULL, "null",
 		esp_common_ivlen, esp_null_decrypt,
 		esp_null_encrypt, NULL, },
 	{ 8, 8, esp_cbc_mature, 40, 448, esp_blowfish_schedlen, "blowfish-cbc",
@@ -146,6 +140,9 @@ static const struct esp_algorithm esp_algorithms[] = {
 		esp_common_ivlen, esp_cbc_decrypt,
 		esp_cbc_encrypt, esp_rijndael_schedule,
 		esp_rijndael_blockdecrypt, esp_rijndael_blockencrypt },
+	{ 16, 8, esp_aesctr_mature, 160, 288, esp_aesctr_schedlen, "aes-ctr",
+		esp_common_ivlen, esp_aesctr_decrypt,
+		esp_aesctr_encrypt, esp_aesctr_schedule },
 };
 
 const struct esp_algorithm *
@@ -166,6 +163,8 @@ esp_algorithm_lookup(idx)
 		return &esp_algorithms[4];
 	case SADB_X_EALG_RIJNDAELCBC:
 		return &esp_algorithms[5];
+	case SADB_X_EALG_AESCTR:
+		return &esp_algorithms[6];
 	default:
 		return NULL;
 	}

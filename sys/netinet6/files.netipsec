@@ -1,8 +1,9 @@
-#	$NetBSD: files.netipsec,v 1.4 2003/07/22 03:26:16 itojun Exp $
+#	$NetBSD: files.netipsec,v 1.5 2003/07/25 10:00:51 itojun Exp $
 
-defflag opt_ipsec.h		IPSEC: sha2
+defflag opt_ipsec.h		IPSEC: rijndael, sha2, ripemd160
 defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael
 
+file	netinet6/ah_aesxcbcmac.c	ipsec
 file	netinet6/ah_core.c		ipsec
 file	netinet6/ah_input.c		ipsec
 file	netinet6/ah_output.c		ipsec
@@ -11,6 +12,7 @@ file	netinet6/esp_core.c		ipsec & ipsec_esp
 file	netinet6/esp_output.c		ipsec & ipsec_esp
 file	netinet6/esp_input.c		ipsec & ipsec_esp
 file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
+file	netinet6/esp_aesctr.c		ipsec & ipsec_esp
 
 file	netinet6/ipcomp_core.c		ipsec
 file	netinet6/ipcomp_input.c		ipsec

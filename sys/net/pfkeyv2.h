@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkeyv2.h,v 1.13 2003/07/22 03:24:25 itojun Exp $	*/
-/*	$KAME: pfkeyv2.h,v 1.23 2000/10/03 21:38:21 itojun Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.14 2003/07/25 10:00:49 itojun Exp $	*/
+/*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -305,6 +305,8 @@ struct sadb_x_ipsecrequest {
 #define SADB_X_AALG_SHA2_256	5
 #define SADB_X_AALG_SHA2_384	6
 #define SADB_X_AALG_SHA2_512	7
+#define SADB_X_AALG_RIPEMD160HMAC 8
+#define SADB_X_AALG_AES_XCBC_MAC 9 /* draft-ietf-ipsec-ciph-aes-xcbc-mac-04 */
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_AALG_MD5		249	/* Keyed MD5 */
 #define SADB_X_AALG_SHA		250	/* Keyed SHA */
@@ -315,13 +317,14 @@ struct sadb_x_ipsecrequest {
 #define SADB_EALG_DESCBC	2
 #define SADB_EALG_3DESCBC	3
 #define SADB_EALG_NULL		11
-#define SADB_EALG_MAX		12
+#define SADB_EALG_MAX		249
 /* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_EALG_CAST128CBC	6
 #define SADB_X_EALG_BLOWFISHCBC	7
 #define SADB_X_EALG_RIJNDAELCBC	12
 #define SADB_X_EALG_AES		12
 /* private allocations should use 249-255 (RFC2407) */
+#define SADB_X_EALG_AESCTR	249	/* draft-ietf-ipsec-ciph-aes-ctr-03 */
 
 /* private allocations - based on RFC2407/IANA assignment */
 #define SADB_X_CALG_NONE	0
