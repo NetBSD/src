@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.6 1998/07/10 02:20:27 fair Exp $
+#	$NetBSD: airport,v 1.7 1999/01/02 03:36:54 hubertf Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -163,6 +163,7 @@ MSN:Madison Dane County Regional, Wisconsin, USA
 MSO:Missoula County, Montana, USA
 MSP:Minneapolis-St. Paul International, Minnesota, USA
 MSY:New Orleans International, Louisiana, USA
+MUC:Munich International Airport, Munich, Germany
 NAS:Nassau, Bahamas
 NRT:Narita, Tokyo, Japan
 NRW:All Airports around Nordrhein-Westfalen, Germany
