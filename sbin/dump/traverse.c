@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.37 2003/04/02 10:39:24 fvdl Exp $	*/
+/*	$NetBSD: traverse.c,v 1.38 2003/04/08 09:16:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.37 2003/04/02 10:39:24 fvdl Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.38 2003/04/08 09:16:19 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ mapdirs(ino_t maxino, u_int64_t *tape_size)
 			isdir >>= 1;
 		/*
 		 * If dir has been removed from the used map, it's either
-		 * because it had the nodump flag, or it herited it from
+		 * because it had the nodump flag, or it inherited it from
 		 * its parent. A directory can't be in dumpinomap if
 		 * not in usedinomap, but we have to go throuh it anyway
 		 * to propagate the nodump attribute.
@@ -407,7 +407,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 	struct direct *dp;
 	union dinode *ip;
 	long loc, ret = 0;
-	char *dblk;
+	static char *dblk;
 	ino_t ino;
 
 	if (dblk == NULL && (dblk = malloc(size)) == NULL)
