@@ -2446,6 +2446,22 @@ _getidprom:
 #endif
 
 dostart:
+#ifdef DDB
+	/*
+	 * First, check for DDB arguments. The loader passes `_esym' in %o1.
+	 * A DDB magic number is passed in %o2 to allow for bootloaders
+	 * that know nothing about DDB symbol loading conventions.
+	 */
+	set	0x44444230, %l3
+	cmp	%o2, %l3		! chk magic
+	bne	1f
+	tst	%o1			! do we have the symbols?
+	bz	1f
+	 nop
+	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
+	st	%o1, [%l3 + %lo(_esym - KERNBASE)]
+1:
+#endif
 	/*
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
@@ -2552,13 +2568,6 @@ start_havetype:
 	 * want to run (0xf8004000).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
-#ifdef DDB
-	/*
-	 * Additionally, the loader passes `_esym' in %o1. A DDB magic
-	 * number is passed in %o2 to allow for bootloaders that know
-	 * nothing about DDB symbol loading conventions.
-	 */
-#endif
 
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
@@ -2575,16 +2584,13 @@ start_havetype:
 	set	KERNBASE, %l1		! highva
 	set	_end + (2 << 18), %l2	! last va that must be remapped
 #ifdef DDB
-	set	0x44444230, %l3
-	cmp	%o2, %l3		! chk magic
-	bne	1f
-	tst	%o1			! do we have the symbols?
+	sethi	%hi(_esym - KERNBASE), %o1
+	ld	[%o1+%lo(_esym - KERNBASE)], %o1
+	tst	%o1
 	bz	1f
 	 nop
-	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
-	st	%o1, [%l3 + %lo(_esym - KERNBASE)]
-	set	(2 << 18), %l2		! compute new va
-	add	%l2, %o1, %l2
+	set	(2 << 18), %l2
+	add	%l2, %o1, %l2		! last va that must be remapped
 1:
 #endif
 	/*
