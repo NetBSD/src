@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.40 1999/02/11 06:41:08 ender Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.41 1999/11/07 00:12:54 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -361,7 +361,6 @@ adb_init()
 	int adbindex, adbaddr;
 	int error, cmd, count, devtype = 0;
 	u_char buffer[9];
-	extern int adb_initted;
 
 #ifdef MRG_ADB
 	/*

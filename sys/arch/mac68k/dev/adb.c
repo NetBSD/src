@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.29 1999/11/05 18:27:11 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.30 1999/11/07 00:12:53 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -64,6 +64,7 @@ extern void	adb_jadbproc __P((void));
 /*
  * Global variables.
  */
+int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 int	adb_initted = 0;	/* adb_init() has completed successfully */
 #ifdef ADB_DEBUG
 int	adb_debug = 0;		/* Output debugging messages */
@@ -150,6 +151,7 @@ adb_config_interrupts(self)
 	JADBProc = adb_jadbproc;
 
 	/* Initialize ADB */
+	adb_polling = 1;
 #ifdef ADB_DEBUG
 	if (adb_debug)
 		printf("adb: calling ADBAlternateInit.\n");
@@ -190,6 +192,7 @@ adb_config_interrupts(self)
 
 		(void)config_found(self, &aa_args, adbprint);
 	}
+	adb_polling = 0;
 }
 
 
