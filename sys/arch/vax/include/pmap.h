@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.14 1996/03/07 23:24:01 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.15 1996/03/09 23:39:51 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -101,6 +101,8 @@ typedef struct pv_entry {
 #ifdef	_KERNEL
 #define pa_index(pa)	                atop(pa)
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
+
+extern	struct pmap kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 
