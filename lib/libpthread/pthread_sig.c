@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.17 2003/08/22 17:35:52 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.18 2003/09/12 00:37:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.17 2003/08/22 17:35:52 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.18 2003/09/12 00:37:17 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -95,12 +95,13 @@ static pthread_spin_t pt_sigwaiting_lock;
 static pthread_t pt_sigwmaster;
 static pthread_cond_t pt_sigwaiting_cond = PTHREAD_COND_INITIALIZER;
 
-static void pthread__kill(pthread_t, pthread_t, int, int);
-static void pthread__kill_self(pthread_t, int, int);
+static void pthread__make_siginfo(siginfo_t *, int);
+static void pthread__kill(pthread_t, pthread_t, siginfo_t *);
+static void pthread__kill_self(pthread_t, siginfo_t *);
 
 static void 
-pthread__signal_tramp(int, int, void (*)(int, int, struct sigcontext *),
-    ucontext_t *, sigset_t *);
+pthread__signal_tramp(void (*)(int, siginfo_t *, void *),
+    siginfo_t *, ucontext_t *);
 
 static int firstsig(const sigset_t *);
 
@@ -117,6 +118,19 @@ pthread__signal_init(void)
 
 	PTQ_INIT(&pt_sigsuspended);
 	PTQ_INIT(&pt_sigwaiting);
+}
+
+static void
+pthread__make_siginfo(siginfo_t *si, int sig)
+{
+	(void)memset(&si, 0, sizeof(*si));
+	si->si_signo = sig;
+	si->si_code = SI_USER;
+	/*
+	 * XXX: these could be cached, but beware of setuid().
+	 */
+	si->si_uid = getuid();
+	si->si_pid = getpid();
 }
 
 int
@@ -152,8 +166,10 @@ pthread_kill(pthread_t thread, int sig)
 		SDPRINTF(("(pthread_kill %p) kernel kill\n", self, thread, sig));
 		kill(getpid(), sig);
 	} else {
+		siginfo_t si;
+		pthread__make_siginfo(&si, sig);
 		pthread_spinlock(self, &thread->pt_siglock);
-		pthread__kill(self, thread, sig, 0);
+		pthread__kill(self, thread, &si);
 		pthread_spinunlock(self, &thread->pt_siglock);
 	}
 
@@ -466,8 +482,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 				 * 'their' signal arrives before the master
 				 * thread would be scheduled after _lwp_wakeup().
 				 */
-				pthread__signal(self, NULL, info->si_signo,
-					info->si_code);
+				pthread__signal(self, NULL, info);
 			} else {
 				/*
 				 * Signal waiter removed, adjust our wait set.
@@ -534,6 +549,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	sigset_t tmp, takelist;
 	pthread_t self;
 	int i;
+	siginfo_t si;
 
 	self = pthread__self();
 	/*
@@ -589,11 +605,13 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	}
 	pthread_spinunlock(self, &pt_process_siglock);
 
+	pthread__make_siginfo(&si, 0);
 	while ((i = firstsig(&takelist)) != 0) {
 		/* Take the signal */	
 		SDPRINTF(("(pt_sigmask %p) taking unblocked signal %d\n",
 		    self, i));
-		pthread__kill_self(self, i, 0);
+		si.si_signo = i;
+		pthread__kill_self(self, &si);
 		__sigdelset14(&takelist, i);
 	}
 
@@ -608,7 +626,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
  * willing thread, if t is null.
  */
 void
-pthread__signal(pthread_t self, pthread_t t, int sig, int code)
+pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 {
 	pthread_t target, good, okay;
 
@@ -635,7 +653,8 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 			SDPRINTF((
 				"(pt_signal %p) target %p: state %d, mask %08x\n", 
 				self, target, target->pt_state, target->pt_sigmask.__bits[0]));
-			if (!__sigismember14(&target->pt_sigmask, sig)) {
+			if (!__sigismember14(&target->pt_sigmask,
+			    si->si_signo)) {
 				if (target->pt_state != PT_STATE_BLOCKED_SYS) {
 					good = target;
 					/* Leave target locked */
@@ -664,11 +683,11 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 			 * for later unblocking.  
 			 */
 			pthread_spinlock(self, &pt_process_siglock);
-			__sigaddset14(&pt_process_sigmask, sig);
+			__sigaddset14(&pt_process_sigmask, si->si_signo);
 			SDPRINTF(("(pt_signal %p) lazily setting proc sigmask to "
 			    "%08x\n", self, pt_process_sigmask.__bits[0]));
 			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
-			__sigaddset14(&pt_process_siglist, sig);
+			__sigaddset14(&pt_process_siglist, si->si_signo);
 			pthread_spinunlock(self, &pt_process_siglock);
 			return;
 		}
@@ -692,7 +711,7 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 	pthread_spinunlock(self, &pt_process_siglock);
 
-	pthread__kill(self, target, sig, code);
+	pthread__kill(self, target, si);
 	pthread_spinunlock(self, &target->pt_siglock);
 }
 
@@ -702,28 +721,38 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
  * Must be called with target's siglock held.
  */
 static void
-pthread__kill_self(pthread_t self, int sig, int code)
+pthread__kill_self(pthread_t self, siginfo_t *si)
 {
-	struct sigcontext xxxsc;
 	sigset_t oldmask;
 	struct sigaction act;
-	void (*handler)(int, int, struct sigcontext *);
 
 	pthread_spinlock(self, &pt_sigacts_lock);
-	act = pt_sigacts[sig];
+	act = pt_sigacts[si->si_signo];
 	pthread_spinunlock(self, &pt_sigacts_lock);
 
-	SDPRINTF(("(pthread__kill_self %p) sig %d code %d\n", self, sig, code));
+	SDPRINTF(("(pthread__kill_self %p) sig %d\n", self, si->si_signo));
 
 	oldmask = self->pt_sigmask;
 	__sigplusset(&self->pt_sigmask, &act.sa_mask);
 	if ((act.sa_flags & SA_NODEFER) == 0)
-		__sigaddset14(&self->pt_sigmask, sig);
+		__sigaddset14(&self->pt_sigmask, si->si_signo);
 
-	handler = (void (*)(int, int, struct sigcontext *)) act.sa_handler;
 
 	pthread_spinunlock(self, &self->pt_siglock);
-	handler(sig, code, &xxxsc);
+#ifdef __HAVE_SIGINFO
+	{
+		ucontext_t uc;
+		(*act.sa_sigaction)(si->si_signo, si, &uc);
+	}
+#else
+	{
+		struct sigcontext xxxsc;
+		void (*handler)(int, int, struct sigcontext *);
+		handler = (void (*)(int, int, struct sigcontext *))
+		    act.sa_handler;
+		(*handler)(si->si_signo, si->si_trap, &xxxsc);
+	}
+#endif
 	pthread_spinlock(self, &self->pt_siglock);
 
 	self->pt_sigmask = oldmask;
@@ -731,19 +760,20 @@ pthread__kill_self(pthread_t self, int sig, int code)
 
 /* Must be called with target's siglock held */
 static void
-pthread__kill(pthread_t self, pthread_t target, int sig, int code)
+pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 {
 
-	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target, sig, code));
+	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target,
+	    si->si_signo));
 
-	if (__sigismember14(&target->pt_sigmask, sig)) {
+	if (__sigismember14(&target->pt_sigmask, si->si_signo)) {
 		/* Record the signal for later delivery. */
-		__sigaddset14(&target->pt_siglist, sig);
+		__sigaddset14(&target->pt_siglist, si->si_signo);
 		return;
 	}
 
 	if (self == target) {
-		pthread__kill_self(self, sig, code);
+		pthread__kill_self(self, si);
 		return;
 	}
 
@@ -778,8 +808,8 @@ pthread__kill(pthread_t self, pthread_t target, int sig, int code)
 		 * again for a while. Try to wake it from its torpor, then
 		 * mark the signal for later processing.
 		 */
-		__sigaddset14(&target->pt_sigblocked, sig);
-		__sigaddset14(&target->pt_sigmask, sig);
+		__sigaddset14(&target->pt_sigblocked, si->si_signo);
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
 		pthread_spinlock(self, &target->pt_flaglock);
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
 		pthread_spinunlock(self, &target->pt_flaglock);
@@ -790,21 +820,21 @@ pthread__kill(pthread_t self, pthread_t target, int sig, int code)
 		;
 	}
 
-	pthread__deliver_signal(self, target, sig, code);
+	pthread__deliver_signal(self, target, si);
 	pthread__sched(self, target);
 	pthread_spinunlock(self, &target->pt_statelock);
 }
 
 /* Must be called with target's siglock held */
 void
-pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
+pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 {
 	sigset_t oldmask, *maskp;
 	ucontext_t *uc, *olduc;
 	struct sigaction act;
 
 	pthread_spinlock(self, &pt_sigacts_lock);
-	act = pt_sigacts[sig];
+	act = pt_sigacts[si->si_signo];
 	pthread_spinunlock(self, &pt_sigacts_lock);
 	
 	/*
@@ -813,7 +843,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	 */
 	oldmask = target->pt_sigmask;
 	__sigplusset(&target->pt_sigmask, &act.sa_mask);
-	__sigaddset14(&target->pt_sigmask, sig);
+	__sigaddset14(&target->pt_sigmask, si->si_signo);
 
 	if (target->pt_trapuc) {
 		olduc = target->pt_trapuc;
@@ -846,10 +876,9 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	uc->uc_stack.ss_size = 0;
 	uc->uc_link = NULL;
 
-	SDPRINTF(("(makecontext %p): target %p: sig: %d %d uc: %p oldmask: %08x\n",
-	    self, target, sig, code, target->pt_uc, maskp->__bits[0]));
-	makecontext(uc, pthread__signal_tramp, 5,
-	    sig, code, act.sa_handler, olduc, maskp);
+	SDPRINTF(("(makecontext %p): target %p: sig: %d uc: %p oldmask: %08x\n",
+	    self, target, si->si_signo, target->pt_uc, maskp->__bits[0]));
+	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, si, olduc);
 	target->pt_uc = uc;
 }
 
@@ -857,12 +886,15 @@ void
 pthread__signal_deferred(pthread_t self, pthread_t t)
 {
 	int i;
+	siginfo_t si;
 
 	pthread_spinlock(self, &t->pt_siglock);
 
+	pthread__make_siginfo(&si, 0);
 	while ((i = firstsig(&t->pt_sigblocked)) != 0) {
 		__sigdelset14(&t->pt_sigblocked, i);
-		pthread__deliver_signal(self, t, i, 0);
+		si.si_signo = i;
+		pthread__deliver_signal(self, t, &si);
 	}
 	t->pt_flags &= ~PT_FLAG_SIGDEFERRED;
 
@@ -870,21 +902,28 @@ pthread__signal_deferred(pthread_t self, pthread_t t)
 }
 
 static void 
-pthread__signal_tramp(int sig, int code,
-    void (*handler)(int, int, struct sigcontext *),
-    ucontext_t *uc, sigset_t *oldmask)
+pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
+    siginfo_t *info, ucontext_t *uc)
 {
-	struct pthread__sigcontext psc;
-
 	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x\n", 
-	    pthread__self(), sig, uc, oldmask->__bits[0]));
+	    pthread__self(), si->si_signo, uc, uc->uc_stack.ss_mask->__bits[0]));
 
-	/*
-	 * XXX we don't support siginfo here yet.
-	 */
-	PTHREAD_UCONTEXT_TO_SIGCONTEXT(oldmask, uc, &psc);
-	handler(sig, code, &psc.psc_context);
-	PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
+#ifdef __HAVE_SIGINFO
+	(*handler)(info->si_signo, info, uc);
+#else
+	{
+		struct pthread__sigcontext psc;
+
+		/*
+		 * XXX we don't support siginfo here yet.
+		 * Note that uc_stack.ss_sp holds the ol sigmask
+		 */
+		PTHREAD_UCONTEXT_TO_SIGCONTEXT(uc->uc_stack.ss_sp, uc, &psc);
+		(*((void *)(*)(int, int, struct sigcontext *)handler))
+		    (si->si_signo, si->si_trap, &psc.psc_context);
+		PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
+	}
+#endif
 
 	/*
 	 * We've finished the handler, so this thread can restore the

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.14 2003/09/07 14:47:45 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.15 2003/09/12 00:37:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.14 2003/09/07 14:47:45 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.15 2003/09/12 00:37:17 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -182,10 +182,9 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 */
 		si = arg;
 		if (ev)
-			pthread__signal(self, pthread__sa_id(sas[1]),
-			    si->si_signo, si->si_code);
+			pthread__signal(self, pthread__sa_id(sas[1]), si);
 		else
-			pthread__signal(self, NULL, si->si_signo, si->si_code);
+			pthread__signal(self, NULL, si);
 		break;
 	case SA_UPCALL_SIGEV:
 		PTHREADD_ADD(PTHREADD_UP_SIGEV);
