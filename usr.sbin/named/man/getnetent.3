@@ -1,5 +1,7 @@
-.\" $Id: getnetent.3,v 1.1.1.1 1997/04/13 09:07:26 mrg Exp $
-.TH getnetent @LIB_NETWORK_EXT_U@
+.\"	$NetBSD: getnetent.3,v 1.2 1997/04/13 10:50:48 mrg Exp $
+.\"
+.\" from: Id: getnetent.3,v 8.2 1996/05/09 05:59:10 vixie Exp
+.TH getnetent 3
 .SH NAME
 getnetent, getnetbyaddr, getnetbyname, setnetent, endnetent \- get networks
 entry
@@ -121,7 +123,7 @@ and
 Null pointer (0) returned on EOF or error.
 .SH SEE ALSO
 .nf
-networks(@FORMAT_EXT@)
+networks(5)
 RFC 1101
 .SH HISTORY
 The getnetent(), getnetbyaddr(), getnetbyname(), setnetent(), and

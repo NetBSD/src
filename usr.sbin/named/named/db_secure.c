@@ -1,5 +1,7 @@
+/*	$NetBSD: db_secure.c,v 1.2 1997/04/13 10:51:21 mrg Exp $	*/
+
 #ifndef LINT
-static char rcsid[] = "$Id: db_secure.c,v 1.1.1.1 1997/04/13 09:06:44 mrg Exp $";
+static char rcsid[] = "from: Id: db_secure.c,v 8.6 1996/05/17 09:10:46 vixie Exp";
 #endif
 
 /* this file was contributed by Gregory Neil Shapiro of WPI in August 1993 */

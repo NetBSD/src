@@ -1,3 +1,5 @@
+/*	$NetBSD: dnsquery.c,v 1.2 1997/04/13 10:50:17 mrg Exp $	*/
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>

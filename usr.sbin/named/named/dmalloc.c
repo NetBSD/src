@@ -1,11 +1,11 @@
-/*	$NetBSD: dmalloc.c,v 1.1 1996/02/02 15:28:39 mrg Exp $	*/
+/*	$NetBSD: dmalloc.c,v 1.2 1997/04/13 10:51:24 mrg Exp $	*/
 
 /* dmalloc - debugging layer on top of malloc
  * vix 25mar92 [fixed bug in round-up calcs in alloc()]
  * vix 24mar92 [added size calcs, improved printout]
  * vix 22mar92 [original work]
  *
- * $Id: dmalloc.c,v 8.2 1995/12/06 20:34:38 vixie Exp 
+ * from: Id: dmalloc.c,v 8.2 1995/12/06 20:34:38 vixie Exp 
  */
 
 /*
