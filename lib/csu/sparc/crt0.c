@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.18 1996/12/27 21:44:59 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.19 1997/10/09 12:29:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -31,8 +31,9 @@
  */
 
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.18 1996/12/27 21:44:59 pk Exp $";
+__RCSID("$NetBSD: crt0.c,v 1.19 1997/10/09 12:29:37 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

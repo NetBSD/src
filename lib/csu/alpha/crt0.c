@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 1997/05/17 16:19:49 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.8 1997/10/09 12:29:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -95,6 +95,9 @@ extern void	monstartup __P((u_long, u_long));
 extern void	_mcleanup __P((void));
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
+
+void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
+		struct ps_strings *));
 
 void
 __start(sp, cleanup, obj, ps_strings)

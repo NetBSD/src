@@ -113,6 +113,9 @@ extern unsigned char _etext, _eprol;
  *	as well as the usual registers (pc, sp, and t9 == pc for ABI).
  */
 
+void __start __P((u_long, void (*) __P((void)), const Obj_Entry *,
+		struct ps_strings *));
+
 void
 __start(sp, cleanup, obj, ps_strings)
 	register u_long sp;
