@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.44 1999/06/22 02:43:10 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.45 1999/06/22 06:57:01 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -716,7 +716,7 @@ cleanup_dist(name)
  * show failure_msg and wait for the user to ack it before continuing.
  * success_msg and failure_msg must both be 0-adic messages.
  */
-void
+int
 get_and_unpack_sets(success_msg, failure_msg)
 	int success_msg;
 	int failure_msg;
@@ -739,14 +739,13 @@ get_and_unpack_sets(success_msg, failure_msg)
 	process_menu(MENU_distmedium);
 
 	if (nodist)
-		return;
+		return 1;
 
 	if (got_dist) {
 
 		/* Extract the distribution, abort on errors. */
-		if (extract_dist()) {
-			goto bad;
-		}
+		if (extract_dist())
+			return 1;
 
 		/* Configure the system */
 		run_makedev();
@@ -765,12 +764,12 @@ get_and_unpack_sets(success_msg, failure_msg)
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);
 		process_menu(MENU_ok);
-		return;
+		return 0;
 	}
 
-bad:
 	msg_display(failure_msg);
 	process_menu(MENU_ok);
+	return 1;
 }
 
 
