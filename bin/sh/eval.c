@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.19 1995/03/21 09:08:54 cgd Exp $	*/
+/*	$NetBSD: eval.c,v 1.20 1995/03/31 21:58:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.19 1995/03/21 09:08:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.20 1995/03/31 21:58:09 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -604,7 +604,6 @@ evalcommand(cmd, flags, backcmd)
 	char **envp;
 	int varflag;
 	struct strlist *sp;
-	register char *p;
 	int mode;
 	int pip[2];
 	struct cmdentry cmdentry;
@@ -624,7 +623,7 @@ evalcommand(cmd, flags, backcmd)
 	varlist.lastp = &varlist.list;
 	varflag = 1;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
-		p = argp->narg.text;
+		char *p = argp->narg.text;
 		if (varflag && is_name(*p)) {
 			do {
 				p++;
@@ -832,16 +831,10 @@ cmddone:
 		trputs("normal command:  ");  trargs(argv);
 		clearredir();
 		redirect(cmd->ncmd.redirect, 0);
-		if (varlist.list) {
-			p = stalloc(strlen(pathval()) + 1);
-			scopy(pathval(), p);
-		} else {
-			p = pathval();
-		}
 		for (sp = varlist.list ; sp ; sp = sp->next)
 			setvareq(sp->text, VEXPORT|VSTACK);
 		envp = environment();
-		shellexec(argv, envp, p, cmdentry.u.index);
+		shellexec(argv, envp, pathval(), cmdentry.u.index);
 		/*NOTREACHED*/
 	}
 	goto out;
@@ -982,9 +975,13 @@ execcmd(argc, argv)
 	char **argv; 
 {
 	if (argc > 1) {
+		struct strlist *sp;
+
 		iflag = 0;		/* exit on error */
 		mflag = 0;
 		optschanged();
+		for (sp = cmdenviron; sp ; sp = sp->next)
+			setvareq(sp->text, VEXPORT|VSTACK);
 		shellexec(argv + 1, environment(), pathval(), 0);
 
 	}
