@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.3 2000/08/11 00:43:20 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.4 2000/08/11 01:02:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.3 2000/08/11 00:43:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4 2000/08/11 01:02:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,8 +465,10 @@ eisa_init()
 
 			/* Skip disabled functions. */
 			if (dp[EISA_FUNC_INFO_OFFSET] & ECUF_DISABLED) {
+#if 0
 				printf("SLOT %d:%d disabled\n",
 				    ecud->ecud_slot, func);
+#endif
 				continue;
 			}
 
