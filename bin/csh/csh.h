@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)csh.h	8.1 (Berkeley) 5/31/93
- *	$Id: csh.h,v 1.7 1994/09/23 11:16:30 mycroft Exp $
+ *	$Id: csh.h,v 1.8 1995/01/30 19:37:25 mycroft Exp $
  */
 
 /*
@@ -94,7 +94,7 @@ typedef void *ptr_t;
 #include <stdio.h>
 FILE *cshin, *cshout, *csherr;
 
-#define	isdir(d)	((d.st_mode & S_IFMT) == S_IFDIR)
+#define	isdir(d)	(S_ISDIR(d.st_mode))
 
 typedef int bool;
 
