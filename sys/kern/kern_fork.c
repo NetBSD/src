@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.38 1998/02/10 14:09:30 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.39 1998/02/14 00:37:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -175,16 +175,22 @@ retry:
 again:
 		for (; p2 != 0; p2 = p2->p_list.le_next) {
 			while (p2->p_pid == nextpid ||
-			    p2->p_pgrp->pg_id == nextpid) {
+			    p2->p_pgrp->pg_id == nextpid ||
+			    p2->p_session->s_sid == nextpid) {
 				nextpid++;
 				if (nextpid >= pidchecked)
 					goto retry;
 			}
 			if (p2->p_pid > nextpid && pidchecked > p2->p_pid)
 				pidchecked = p2->p_pid;
+
 			if (p2->p_pgrp->pg_id > nextpid && 
 			    pidchecked > p2->p_pgrp->pg_id)
 				pidchecked = p2->p_pgrp->pg_id;
+
+			if (p2->p_session->s_sid > nextpid &&
+			    pidchecked > p2->p_session->s_sid)
+				pidchecked = p2->p_session->s_sid;
 		}
 		if (!doingzomb) {
 			doingzomb = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.20 1998/02/07 02:44:46 chs Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.21 1998/02/14 00:37:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -214,6 +214,7 @@ enterpgrp(p, pgid, mksess)
 			 */
 			MALLOC(sess, struct session *, sizeof(struct session),
 			    M_SESSION, M_WAITOK);
+			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
 			sess->s_count = 1;
 			sess->s_ttyvp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.24 1997/09/19 14:05:53 leo Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.25 1998/02/14 00:37:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -216,7 +216,8 @@ struct kinfo_proc {
 #define	EPROC_CTTY	0x01	/* controlling tty vnode active */
 #define	EPROC_SLEADER	0x02	/* session leader */
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
-		long	e_spare[4];
+		pid_t	e_sid;			/* session id */
+		long	e_spare[3];
 	} kp_eproc;
 };
 
