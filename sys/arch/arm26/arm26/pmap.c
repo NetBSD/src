@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.2 2000/05/13 17:56:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2000/05/13 17:56:32 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -500,21 +500,37 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
 			if (pv->pv_pmap != NULL &&
 			    (pv->pv_pmap != pmap || pv->pv_lpn != lpn)) {
-				printf("new: pmap = %p, ppn = %d, lpn = %d\n",
-				       pmap, ppn, lpn);
-				printf("old: pmap = %p, ppn = %d, lpn = %d\n",
-				       pv->pv_pmap, pv->pv_ppn, pv->pv_lpn);
-				panic("Mapping clash not handled");
+				if (pv->pv_vflags & PV_WIRED) {
+					printf("new: pmap = %p, ppn = %d, "
+					       "lpn = %d\n", pmap, ppn, lpn);
+					printf("old: pmap = %p, ppn = %d, "
+					       "lpn = %d\n", pv->pv_pmap,
+					       pv->pv_ppn, pv->pv_lpn);
+					panic("Mapping clash not handled");
+				} else {
+					pmap_remove(pv->pv_pmap,
+						    pv->pv_lpn * PAGE_SIZE,
+						    (pv->pv_lpn+1) *
+						    PAGE_SIZE);
+				}
 			}
 	} else {
 		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
 			if (pv->pv_pmap == pmap_kernel() ||
 			    (pv->pv_pmap == pmap && pv->pv_lpn != lpn)) {
-				printf("new: pmap = %p, ppn = %d, lpn = %d\n",
-				       pmap, ppn, lpn);
-				printf("old: pmap = %p, ppn = %d, lpn = %d\n",
-				       pv->pv_pmap, pv->pv_ppn, pv->pv_lpn);
-				panic("Mapping clash not handled");
+				if (pv->pv_vflags & PV_WIRED) {
+					printf("new: pmap = %p, ppn = %d, "
+					       "lpn = %d\n", pmap, ppn, lpn);
+					printf("old: pmap = %p, ppn = %d, "
+					       "lpn = %d\n", pv->pv_pmap,
+					       pv->pv_ppn, pv->pv_lpn);
+					panic("Mapping clash not handled");
+				} else {
+					pmap_remove(pv->pv_pmap,
+						    pv->pv_lpn * PAGE_SIZE,
+						    (pv->pv_lpn+1) *
+						    PAGE_SIZE);
+				}
 			}
 	}
 
