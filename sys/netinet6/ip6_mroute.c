@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.6 1999/07/06 12:23:22 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.7 1999/07/22 15:46:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -205,7 +205,8 @@ static int pim6;
 	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
 
 #ifdef UPCALL_TIMING
-u_long upcall_data[51];
+#define UPCALL_MAX	50
+u_long upcall_data[UPCALL_MAX + 1];
 static void collate();
 #endif /* UPCALL_TIMING */
 
@@ -816,8 +817,8 @@ collate(t)
 		TV_DELTA(tp, *t, delta);
 	
 		d = delta >> 10;
-		if (d > 50)
-			d = 50;
+		if (d > UPCALL_MAX)
+			d = UPCALL_MAX;
 	
 		++upcall_data[d];
 	}
@@ -1177,7 +1178,7 @@ ip6_mdq(m, ifp, rt)
 	register struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	register mifi_t mifi, iif;
 	register struct mif6 *mifp;
-	register u_long plen = m->m_pkthdr.len;
+	register int plen = m->m_pkthdr.len;
 
 /*
  * Macro to send packet on mif.  Since RSVP packets don't get counted on
@@ -1569,14 +1570,14 @@ pim6_input(mp, offp, proto)
 	if (pim->pim_type == PIM_REGISTER) {
 		/*
 		 * since this is a REGISTER, we'll make a copy of the register
-		 * headers ip6+pim+u_long+encap_ip6, to be passed up to the
+		 * headers ip6+pim+u_int32_t+encap_ip6, to be passed up to the
 		 * routing daemon.
 		 */
 		static struct sockaddr_in6 dst = { sizeof(dst), AF_INET6 };
 
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
-		u_long *reghdr;
+		u_int32_t *reghdr;
 		int rc;
 	
 		++pim6stat.pim6s_rcv_registers;
@@ -1592,7 +1593,7 @@ pim6_input(mp, offp, proto)
 			return(IPPROTO_DONE);
 		}
 	
-		reghdr = (u_long *)(pim + 1);
+		reghdr = (u_int32_t *)(pim + 1);
 	
 		if ((ntohl(*reghdr) & PIM_NULL_REGISTER))
 			goto pim6_input_to_daemon;
