@@ -594,7 +594,6 @@ typedef int		pid_t;
 # if defined(__NetBSD__) && (NetBSD > 199307 || NetBSD0_9 > 1)
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
-#  define setreuid	__setreuid
 # endif
 #endif
 
