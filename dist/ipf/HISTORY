@@ -10,6 +10,83 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.5 - Released 9 January 2005
+
+all rules were being converted into "dup-to" rules in the kernel
+
+fix two ftp proxy problems: 1st, buffer needs to be bigger for fitting in
+complete RETR/CWD commands, 2nd is () use in 227 messages isn't copied
+over correctly.
+
+response to CWDs
+revert ip_off back to network byte order in the ICMP error packet that
+gets generated.
+
+4.1.4 - Released 9 January 2005
+
+force NAT rules to only match ipv4 NAT rules (which all are, currently,
+by default)
+
+include state synchronisation fixes from Frank Volf
+
+make the maximum log size for internally buffered log entries accessible
+via "ipf -T"
+
+redesign start of fr_check() to avoid putting duplicate information in
+ipfilter about how much data needs to be pulled up for a protocol to be
+properly filtered.
+
+tidy up sending ICMP error messages - some bad inputs could result in
+data not being freed and/or no error returned.
+
+make the maximum size of the log buffer run-time tunable
+
+fix bug in parsing TCP header when looking for MSS option that could make
+the system hang
+
+change pool lookups that fail to find a match to return "no match"
+rather than fail.
+
+add run-time tunable debugging for proxy support code and FTP proxy.
+
+fix state table updates for entries where the first packet as an ICMPv6
+multicast message
+
+fix hang when flushing state for v4/v6 and other (v6/v4) entries are present
+too
+
+attaching filtering to ipv6 pfil hook wasn't present for solaris
+
+don't allow rules with "keep state" and "with oow"
+
+move a bunch of userland only code from fil.c to ip_fil.c
+
+make fr_coalesce() more resiliant to bad input, just returning an error
+instead of crashing, making calling it easier in many places
+
+When m_pulldown doesn't return NULL, it doesn't necessarily return a pointer
+to the same mbuf passed in as the first arg.
+
+remove fr_unreach and use ENETUNREACH by default.
+
+printing out of tag data in ipf rules doesn't match input syntax
+
+ipftest(1) man page update
+
+ipfs command line option parsing still rejects some valid syntaxes
+
+SIGHUP handling by ipmon was not as safe as it could be
+
+fix various parsing regressions, including "<thishost>", "tcpudp", ordering
+of "keep" options
+
+patches from Frank Volk: add udp_acktimeout to sysctl list for FreeBSD,
+ICMP packet length not calculated correctly in send_icmp_err, reply-to
+not printed by ipfstat, keep state with icmp passing (mtrr)
+
+patches for return-rst and return-icmp from Attila Fueloep
+(lichtscheu@gesindel.org)
+
 4.1.3 - Released 18 July 2004
 
 do some more fine tuning on NAT checksum adjustments

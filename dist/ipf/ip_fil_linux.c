@@ -1,15 +1,18 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.2 2004/07/23 05:33:50 martti Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
 
-#if LINUX >= 020600
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 # define __irq_h        1       /* stop it being included! */
 #else
 # define _LINUX_TCP_H
 #endif
-#include <net/checksum.h>
+#include <net/ip.h>
 
 #include "ipf-linux.h"
 
+#include <net/checksum.h>
 #include <net/route.h>
+
 #include <linux/random.h>
 #include <asm/ioctls.h>
 
@@ -25,7 +28,7 @@ ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 
 static u_int ipf_linux_inout __P((u_int, struct sk_buff **, const struct net_device *, const struct net_device *, int (*okfn)(struct sk_buff *)));
 
-#if LINUX >= 020600
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 static struct nf_hook_ops ipf_hooks[] = {
 	{
 		.hook		= ipf_linux_inout,
@@ -261,7 +264,7 @@ int ipf_ioctl(struct inode *in, struct file *fp, u_int cmd, u_long arg)
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			frsync();
+			frsync(NULL);
 		}
 		break;
 	default :
@@ -321,6 +324,7 @@ fr_info_t *fin;
 
 	bzero(MTOD(m, char *), hlen);
 	ip = MTOD(m, ip_t *);
+	bzero((char *)ip, hlen);
 	ip->ip_v = fin->fin_v;
 	tcp2 = (tcphdr_t *)((char *)ip + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
@@ -334,7 +338,7 @@ fr_info_t *fin;
 		tcp2->th_ack = htonl(tcp2->th_ack);
 		tcp2->th_flags = TH_RST|TH_ACK;
 	}
-	tcp2->th_off = sizeof(struct tcphdr) >> 2;
+	tcp2->th_off = sizeof(*tcp2) >> 2;
 
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
@@ -361,26 +365,40 @@ static int fr_send_ip(fin, sk, skp)
 fr_info_t *fin;
 struct sk_buff *sk, **skp;
 {
+	fr_info_t fnew;
 	ip_t *ip, *oip;
+	int hlen;
 
 	ip = MTOD(sk, ip_t *);
+	bzero((char *)&fnew, sizeof(fnew));
 	oip = fin->fin_ip;
 
 	switch (fin->fin_v)
 	{
 	case 4 :
+		fnew.fin_v = 4;
 		ip->ip_hl = sizeof(*oip) >> 2;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_id = 0;
 		ip->ip_ttl = sysctl_ip_default_ttl;
 		ip->ip_sum = 0;
 		ip->ip_off = 0x4000;
+		hlen = sizeof(*ip);
 		break;
 	default :
 		return EINVAL;
 	}
 
-	return fr_fastroute(sk, skp, fin, NULL);
+	fnew.fin_ifp = fin->fin_ifp;
+	fnew.fin_flx = FI_NOCKSUM;
+	fnew.fin_m = sk;
+	fnew.fin_ip = ip;
+	fnew.fin_mp = skp;
+	fnew.fin_hlen = hlen;
+	fnew.fin_dp = (char *)ip + hlen;
+	(void) fr_makefrip(hlen, ip, &fnew);
+
+	return fr_fastroute(sk, skp, &fnew, NULL);
 }
 
 
@@ -479,8 +497,10 @@ int isdst;
 
 		if (isdst == 0) {
 			if (fr_ifpaddr(6, FRI_NORMAL, qif->qf_ill,
-				       (struct in_addr *)&dst6, NULL) == -1)
+				       (struct in_addr *)&dst6, NULL) == -1) {
+				FREE_MB_T(m);
 				return -1;
+			}
 		} else
 			dst6 = fin->fin_dst6;
 
@@ -503,14 +523,18 @@ int isdst;
 		ip->ip_len = (u_short)sz;
 		if (isdst == 0) {
 			if (fr_ifpaddr(4, FRI_NORMAL, fin->fin_ifp,
-				       &dst4, NULL) == -1)
+				       &dst4, NULL) == -1) {
+				FREE_MB_T(m);
 				return -1;
+			}
 		} else
 			dst4 = fin->fin_dst;
 		ip->ip_src = dst4;
 		ip->ip_dst = fin->fin_src;
 		bcopy((char *)fin->fin_ip, (char *)&icmp->icmp_ip,
 		      sizeof(*fin->fin_ip));
+		icmp->icmp_ip.ip_len = htons(icmp->icmp_ip.ip_len);
+		icmp->icmp_ip.ip_off = htons(icmp->icmp_ip.ip_off);
 		bcopy((char *)fin->fin_ip + fin->fin_hlen,
 		      (char *)&icmp->icmp_ip + sizeof(*fin->fin_ip), 8);
 		icmp->icmp_cksum = ip_compute_csum((u_char *)icmp,
@@ -599,7 +623,8 @@ frdest_t *fdp;
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
-	} else if (fdp) {
+	}
+	if (fdp != NULL) {
 		if (fdp->fd_ip.s_addr)
 			dip = fdp->fd_ip;
 	}
@@ -607,7 +632,7 @@ frdest_t *fdp;
 	switch (fin->fin_v)
 	{
 	case 4 :
-#if LINUX < 020600
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 		err = ip_route_output(&rt, dip.s_addr, 0,
 				       RT_TOS(ip->ip_tos) | RTO_CONN, 0);
 #else
@@ -664,7 +689,7 @@ frdest_t *fdp;
 	}
 
 	min->dst = &rt->u.dst;
-#if LINUX < 020421
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21)
 	if (min->len > min->dst->pmtu) {
 		err = EMSGSIZE;
 		goto bad;
@@ -1017,4 +1042,65 @@ int len;
 		return m;
 	kfree_skb(m);
 	return NULL;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_pullup                                                   */
+/* Returns:     NULL == pullup failed, else pointer to protocol header      */
+/* Parameters:  m(I)   - pointer to buffer where data packet starts         */
+/*              fin(I) - pointer to packet information                      */
+/*              len(I) - number of bytes to pullup                          */
+/*                                                                          */
+/* Attempt to move at least len bytes (from the start of the buffer) into a */
+/* single buffer for ease of access.  Operating system native functions are */
+/* used to manage buffers - if necessary.  If the entire packet ends up in  */
+/* a single buffer, set the FI_COALESCE flag even though fr_coalesce() has  */
+/* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
+/* and ONLY if the pullup succeeds.                                         */
+/*                                                                          */
+/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* of buffers that starts at *fin->fin_mp.                                  */
+/* ------------------------------------------------------------------------ */
+void *fr_pullup(min, fin, len)
+mb_t *min;
+fr_info_t *fin;
+int len;
+{
+	int out = fin->fin_out, dpoff, ipoff;
+	mb_t *m = min;
+	char *ip;
+
+	if (m == NULL)
+		return NULL;
+
+	ip = (char *)fin->fin_ip;
+	if ((fin->fin_flx & FI_COALESCE) != 0)
+		return ip;
+
+	ipoff = fin->fin_ipoff;
+	if (fin->fin_dp != NULL)
+		dpoff = (char *)fin->fin_dp - (char *)ip;
+	else
+		dpoff = 0;
+
+	if (M_LEN(m) < len) {
+		m = m_pullup(m, len);
+		*fin->fin_mp = m;
+		fin->fin_m = m;
+		if (m == NULL) {
+			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			return NULL;
+		}
+		ip = MTOD(m, char *) + ipoff;
+	}
+
+	ATOMIC_INCL(frstats[out].fr_pull[0]);
+	fin->fin_ip = (ip_t *)ip;
+	if (fin->fin_dp != NULL)
+		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+
+	if (len == fin->fin_plen)
+		fin->fin_flx |= FI_COALESCE;
+	return ip;
 }

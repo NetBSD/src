@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.2 2004/07/23 05:34:07 martti Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.3 2005/02/08 06:53:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.2 2004/05/11 19:51:37 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.4 2004/12/15 18:30:42 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -235,9 +235,6 @@ cfg_subsys_attr_t ipfilter_attributes[] = {
 				(caddr_t)&fr_minttl, 0, 1, 0 },
 { "fr_running",		CFG_ATTR_INTTYPE, CFG_OP_QUERY,
 				(caddr_t)&fr_minttl, 0, 1, 0 },
-{ "fr_unreach",		CFG_ATTR_INTTYPE, CFG_OP_QUERY |
-				CFG_OP_CONFIGURE | CFG_OP_RECONFIGURE,
-				(caddr_t) &fr_unreach, 0, 255, 0 },
 { "fr_control_forwarding",
 			CFG_ATTR_INTTYPE, CFG_OP_QUERY |
 				CFG_OP_CONFIGURE | CFG_OP_RECONFIGURE,
@@ -611,7 +608,7 @@ struct ifnet *ifp;
 	}
 
 	if (cmd == (ioctlcmd_t)SIOCAIFADDR)
-		frsync();
+		frsync(NULL);
 
 	RWLOCK_EXIT(&ipf_tru64);
 }

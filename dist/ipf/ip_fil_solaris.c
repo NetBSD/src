@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.2 2004/07/23 05:33:53 martti Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.5 2004/05/10 12:42:07 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.16 2005/01/08 16:55:56 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.5 2004/05/10 12:4
 extern	int	fr_flags, fr_active;
 
 
-static	int	fr_send_ip __P((fr_info_t *fin, mblk_t *m));
+static	int	fr_send_ip __P((fr_info_t *fin, mblk_t *m, mblk_t **mp));
 
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
@@ -524,7 +524,6 @@ cred_t *cp;
 #endif /* IPFILTER_LOG */
 
 
-#ifdef	IPFILTER_SYNC
 /*
  * iplread/ipllog
  * both of these must operate with at least splnet() lest they be
@@ -539,11 +538,12 @@ cred_t *cp;
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplwrite(%x,%x,%x)\n", dev, uio, cp);
 #endif
-	if (getminor(dev) != IPL_LOGSYNC)
-		return ENXIO;
-	return ipfsync_write(uio);
-}
+#ifdef	IPFILTER_SYNC
+	if (getminor(dev) == IPL_LOGSYNC)
+		return ipfsync_write(uio);
 #endif /* IPFILTER_SYNC */
+	return ENXIO;
+}
 
 
 /*
@@ -584,7 +584,8 @@ fr_info_t *fin;
 	m->b_rptr += 64;
 	MTYPE(m) = M_DATA;
 	m->b_wptr = m->b_rptr + hlen;
-	bzero((char *)m->b_rptr, hlen);
+	ip = (ip_t *)m->b_rptr;
+	bzero((char *)ip, hlen);
 	tcp2 = (struct tcphdr *)(m->b_rptr + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
 	tcp2->th_sport = tcp->th_dport;
@@ -599,11 +600,11 @@ fr_info_t *fin;
 	}
 	tcp2->th_off = sizeof(struct tcphdr) >> 2;
 
-	ip = (ip_t *)m->b_rptr;
 	ip->ip_v = fin->fin_v;
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
 		ip6 = (ip6_t *)m->b_rptr;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_src = fin->fin_dst6;
 		ip6->ip6_dst = fin->fin_src6;
 		ip6->ip6_plen = htons(sizeof(*tcp));
@@ -616,35 +617,41 @@ fr_info_t *fin;
 		ip->ip_id = fr_nextipid(fin);
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_p = IPPROTO_TCP;
-		ip->ip_len = htons(sizeof(*ip) + sizeof(*tcp));
+		ip->ip_len = sizeof(*ip) + sizeof(*tcp);
 		ip->ip_tos = fin->fin_ip->ip_tos;
 		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2);
 	}
-	return fr_send_ip(fin, m);
+	return fr_send_ip(fin, m, &m);
 }
 
 
 /*ARGSUSED*/
-static int fr_send_ip(fin, m)
+static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
-mblk_t *m;
+mblk_t *m, **mpp;
 {
-	int i;
+	qpktinfo_t qpi, *qpip;
+	fr_info_t fnew;
+	qif_t *qif;
+	ip_t *ip;
+	int i, hlen;
+
+	ip = (ip_t *)m->b_rptr;
+	bzero((char *)&fnew, sizeof(fnew));
 
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
 		ip6_t *ip6;
 
-		ip6 = (ip6_t *)m->b_rptr;
-		ip6->ip6_flow = 0;
+		ip6 = (ip6_t *)ip;
 		ip6->ip6_vfc = 0x60;
 		ip6->ip6_hlim = 127;
+		fnew.fin_v = 6;
+		hlen = sizeof(*ip6);
 	} else
 #endif
 	{
-		ip_t *ip;
-
-		ip = (ip_t *)m->b_rptr;
+		fnew.fin_v = 4;
 		if (ip_ttl_ptr != NULL)
 			ip->ip_ttl = (u_char)(*ip_ttl_ptr);
 		else
@@ -653,9 +660,43 @@ mblk_t *m;
 			ip->ip_off = htons(*ip_mtudisc ? IP_DF : 0);
 		else
 			ip->ip_off = htons(IP_DF);
+		/*
+		 * The dance with byte order and ip_len/ip_off is because in
+		 * fr_fastroute, it expects them to be in host byte order but
+		 * ipf_cksum expects them to be in network byte order.
+		 */
+		ip->ip_len = htons(ip->ip_len);
 		ip->ip_sum = ipf_cksum((u_short *)ip, sizeof(*ip));
+		ip->ip_len = ntohs(ip->ip_len);
+		ip->ip_off = ntohs(ip->ip_off);
+		hlen = sizeof(*ip);
 	}
-	i = fr_fastroute(m, &m, fin, NULL);
+
+	qpip = fin->fin_qpi;
+	qpi.qpi_q = qpip->qpi_q;
+	qpi.qpi_off = 0;
+	qpi.qpi_name = qpip->qpi_name;
+	qif = qpip->qpi_real;
+	qpi.qpi_real = qif;
+	qpi.qpi_ill = qif->qf_ill;
+	qpi.qpi_hl = qif->qf_hl;
+	qpi.qpi_ppa = qif->qf_ppa;
+	qpi.qpi_num = qif->qf_num;
+	qpi.qpi_flags = qif->qf_flags;
+	qpi.qpi_max_frag = qif->qf_max_frag;
+	qpi.qpi_m = m;
+	qpi.qpi_data = ip;
+	fnew.fin_qpi = &qpi;
+	fnew.fin_ifp = fin->fin_ifp;
+	fnew.fin_flx = FI_NOCKSUM;
+	fnew.fin_m = m;
+	fnew.fin_ip = ip;
+	fnew.fin_mp = mpp;
+	fnew.fin_hlen = hlen;
+	fnew.fin_dp = (char *)ip + hlen;
+	(void) fr_makefrip(hlen, ip, &fnew);
+
+	i = fr_fastroute(m, mpp, &fnew, NULL);
 	return i;
 }
 
@@ -761,6 +802,7 @@ int dst;
 		csz = sz;
 		sz -= sizeof(ip6_t);
 		ip6 = (ip6_t *)m->b_rptr;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons((u_short)sz);
 		ip6->ip6_nxt = IPPROTO_ICMPV6;
 		ip6->ip6_src = dst6;
@@ -790,6 +832,8 @@ int dst;
 		      sizeof(*fin->fin_ip));
 		bcopy((char *)fin->fin_ip + fin->fin_hlen,
 		      (char *)&icmp->icmp_ip + sizeof(*fin->fin_ip), 8);
+		icmp->icmp_ip.ip_len = htons(icmp->icmp_ip.ip_len);
+		icmp->icmp_ip.ip_off = htons(icmp->icmp_ip.ip_off);
 		icmp->icmp_cksum = ipf_cksum((u_short *)icmp,
 					     sz - sizeof(ip_t));
 	}
@@ -798,7 +842,7 @@ int dst;
 	 * Need to exit out of these so we don't recursively call rw_enter
 	 * from fr_qout.
 	 */
-	return fr_send_ip(fin, m);
+	return fr_send_ip(fin, m, &m);
 }
 
 
@@ -917,7 +961,7 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-INLINE u_short fr_nextipid(fin)
+u_short fr_nextipid(fin)
 fr_info_t *fin;
 {
 	static u_short ipid = 0;
@@ -1074,6 +1118,7 @@ frdest_t *fdp;
 	qpktinfo_t *qpi;
 	frentry_t *fr;
 	frdest_t fd;
+	qif_t *qif;
 	ill_t *ifp;
 	u_char *s;
 	ip_t *ip;
@@ -1085,6 +1130,7 @@ frdest_t *fdp;
 	struct in6_addr dst6;
 #endif
 
+	dir = NULL;
 	fr = fin->fin_fr;
 	ip = fin->fin_ip;
 	qpi = fin->fin_qpi;
@@ -1110,7 +1156,7 @@ frdest_t *fdp;
 	 * If the fdp is NULL then there is no set route for this packet.
 	 */
 	if (fdp == NULL) {
-		ifp = fin->fin_ifp;
+		qif = fin->fin_ifp;
 
 		switch (fin->fin_v)
 		{
@@ -1125,9 +1171,9 @@ frdest_t *fdp;
 		}
 		fdp = &fd;
 	} else {
-		ifp = fdp->fd_ifp;
+		qif = fdp->fd_ifp;
 
-		if (ifp == NULL || ifp == (void *)-1)
+		if (qif == NULL || qif == (void *)-1)
 			goto bad_fastroute;
 	}
 
@@ -1137,7 +1183,7 @@ frdest_t *fdp;
 	 * direction.
 	 */
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
+		if ((qif != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst.s_addr = fin->fin_fi.fi_daddr;
 	} else {
@@ -1180,8 +1226,10 @@ frdest_t *fdp;
 			dir = NULL;
 #else
 	if (dir != NULL)
-		if (dir->ire_fp_mp == NULL || dir->ire_dlureq_mp == NULL)
+		if (dir->ire_fp_mp == NULL || dir->ire_dlureq_mp == NULL) {
+			ire_refrele(dir);
 			dir = NULL;
+		}
 #endif
 
 	if (dir != NULL) {
@@ -1196,11 +1244,11 @@ frdest_t *fdp;
 #endif
 
 		if (fin->fin_out == 0) {
-			void *saveifp;
+			void *saveqif;
 			u_32_t pass;
 
-			saveifp = fin->fin_ifp;
-			fin->fin_ifp = ifp;
+			saveqif = fin->fin_ifp;
+			fin->fin_ifp = qif;
 			fin->fin_out = 1;
 			fr_acctpkt(fin, &pass);
 			fin->fin_fr = NULL;
@@ -1220,7 +1268,7 @@ frdest_t *fdp;
 			}
 
 			fin->fin_out = 0;
-			fin->fin_ifp = saveifp;
+			fin->fin_ifp = saveqif;
 		}
 #ifndef sparc
 		if (fin->fin_v == 4) {
@@ -1231,6 +1279,8 @@ frdest_t *fdp;
 			ip->ip_off = htons(__ipoff);
 		}
 #endif
+
+		ifp = qif->qf_ill;
 
 		if (mp != NULL) {
 			s = mb->b_rptr;
@@ -1279,13 +1329,121 @@ frdest_t *fdp;
 #endif
 			putnext(q, mb);
 			ATOMIC_INCL(fr_frouteok[0]);
+#if SOLARIS2 >= 8
+			ire_refrele(dir);
+#endif
 			READ_ENTER(&ipf_global);
 			return 0;
 		}
 	}
 
 bad_fastroute:
+#if SOLARIS2 >= 8
+	if (dir != NULL)
+		ire_refrele(dir);
+#endif
 	freemsg(mb);
 	ATOMIC_INCL(fr_frouteok[1]);
 	return -1;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_pullup                                                   */
+/* Returns:     NULL == pullup failed, else pointer to protocol header      */
+/* Parameters:  m(I)   - pointer to buffer where data packet starts         */
+/*              fin(I) - pointer to packet information                      */
+/*              len(I) - number of bytes to pullup                          */
+/*                                                                          */
+/* Attempt to move at least len bytes (from the start of the buffer) into a */
+/* single buffer for ease of access.  Operating system native functions are */
+/* used to manage buffers - if necessary.  If the entire packet ends up in  */
+/* a single buffer, set the FI_COALESCE flag even though fr_coalesce() has  */
+/* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
+/* and ONLY if the pullup succeeds.                                         */
+/*                                                                          */
+/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* of buffers that starts at *fin->fin_mp.                                  */
+/* ------------------------------------------------------------------------ */
+void *fr_pullup(min, fin, len)
+mb_t *min;
+fr_info_t *fin;
+int len;
+{
+	qpktinfo_t *qpi = fin->fin_qpi;
+	int out = fin->fin_out, dpoff, ipoff;
+	mb_t *m = min;
+	char *ip;
+
+	if (m == NULL)
+		return NULL;
+
+	ip = (char *)fin->fin_ip;
+	if ((fin->fin_flx & FI_COALESCE) != 0)
+		return ip;
+
+	ipoff = fin->fin_ipoff;
+	if (fin->fin_dp != NULL)
+		dpoff = (char *)fin->fin_dp - (char *)ip;
+	else
+		dpoff = 0;
+
+	if (M_LEN(m) < len) {
+		int inc = 0;
+
+		if (ipoff > 0) {
+			if ((ipoff & 3) != 0) {
+				inc = 4 - (ipoff & 3);
+				if (m->b_rptr - inc >= m->b_datap->db_base)
+					m->b_rptr -= inc;
+				else
+					inc = 0;
+			}
+		}
+		m = msgpullup(min, len + ipoff + inc);
+		if (m == NULL) {
+			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			FREE_MB_T(*fin->fin_mp);
+			*fin->fin_mp = NULL;
+			fin->fin_m = NULL;
+			return NULL;
+		}
+
+		/*
+		 * Because msgpullup allocates a new mblk, we need to delink
+		 * (and free) the old one and link on the new one.
+		 */
+		if (min == *fin->fin_mp) {	/* easy case 1st */
+			FREE_MB_T(*fin->fin_mp);
+			*fin->fin_mp = m;
+		} else {
+			mb_t *m2;
+
+			for (m2 = *fin->fin_mp; m2 != NULL; m2 = m2->b_next)
+				if (m2->b_next == min)
+					break;
+			if (m2 == NULL) {
+				ATOMIC_INCL(frstats[out].fr_pull[1]);
+				FREE_MB_T(*fin->fin_mp);
+				FREE_MB_T(m);
+				return NULL;
+			}
+			FREE_MB_T(min);
+			m2->b_next = m;
+		}
+
+		fin->fin_m = m;
+		m->b_rptr += inc;
+		ip = MTOD(m, char *) + ipoff;
+		qpi->qpi_data = ip;
+	}
+
+	ATOMIC_INCL(frstats[out].fr_pull[0]);
+	fin->fin_ip = (ip_t *)ip;
+	if (fin->fin_dp != NULL)
+		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+
+	if (len == fin->fin_plen)
+		fin->fin_flx |= FI_COALESCE;
+	return ip;
 }

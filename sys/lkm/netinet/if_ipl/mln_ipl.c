@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.16 2004/03/28 08:56:52 martti Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.17 2005/02/08 06:53:30 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -84,7 +84,7 @@ struct	cdevsw	ipldevsw =
 	iplopen,		/* open */
 	iplclose,		/* close */
 	iplread,		/* read */
-	0,			/* write */
+	iplwrite,		/* write */
 	iplioctl,		/* ioctl */
 	0,			/* stop */
 	0,			/* tty */
@@ -99,7 +99,7 @@ struct	cdevsw	ipldevsw =
 	iplopen,		/* open */
 	iplclose,		/* close */
 	iplread,		/* read */
-	(void *)nullop,		/* write */
+	iplwrite,		/* write */
 	iplioctl,		/* ioctl */
 	(void *)nullop,		/* stop */
 	(void *)nullop,		/* reset */
@@ -151,11 +151,13 @@ int cmd;
 			return EEXIST;
 
 #if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000)
+# if (__NetBSD_Version__ < 200000000)
 		err = devsw_attach(args->lkm_devname,
 				   args->lkm_bdev, &args->lkm_bdevmaj,
 				   args->lkm_cdev, &args->lkm_cdevmaj);
 		if (err != 0)
 			return (err);
+# endif
 		ipl_major = args->lkm_cdevmaj;
 #else
 		for (i = 0; i < nchrdev; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1.1.1 2004/12/31 11:30:45 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.1.2 2005/02/08 06:53:28 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.4 2004/06/20 10:25:28 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.5 2004/12/20 23:12:05 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -189,7 +189,8 @@ typedef	struct	ipnat	{
 	u_int		in_hv;
 	int		in_flineno;		/* conf. file line number */
 	u_short		in_pnext;
-	u_char		in_xxx1[2];
+	u_char		in_v;
+	u_char		in_xxx;
 	/* From here to the end is covered by IPN_CMPSIZ */
 	u_32_t		in_flags;
 	u_32_t		in_mssclamp;		/* if != 0 clamp MSS to this */

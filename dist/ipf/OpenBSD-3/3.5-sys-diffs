@@ -371,7 +371,7 @@
 +
 +#ifdef IPFILTER
 +	/* XXX More ipf & ipnat cleanup needed.  */
-+	frsync();
++	frsync(ifp);
 +#endif
  
  	/*

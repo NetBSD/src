@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_irix.c,v 1.1.1.2 2004/07/23 05:33:50 martti Exp $	*/
+/*	$NetBSD: ip_fil_irix.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.6 2004/05/24 14:00:06 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.15 2005/01/08 16:55:53 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -76,7 +76,7 @@ extern	toid_t	fr_timer_id;
 #endif
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
-static	int	fr_send_ip __P((fr_info_t *, struct mbuf *));
+static	int	fr_send_ip __P((fr_info_t *, struct mbuf *, struct mbuf **));
 extern  ipfmutex_t	ipf_rw;
 extern	ipfrwlock_t	ipf_mutex;
 
@@ -335,7 +335,7 @@ int *rp;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			frsync();
+			frsync(NULL);
 		}
 		break;
 	default :
@@ -347,6 +347,7 @@ int *rp;
 }
 
 
+#if 0
 void fr_forgetifp(ifp)
 void *ifp;
 {
@@ -382,6 +383,7 @@ void *ifp;
 	RWLOCK_EXIT(&ipf_mutex);
 	fr_natsync(ifp);
 }
+#endif
 
 
 /*
@@ -479,6 +481,7 @@ fr_info_t *fin;
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
 # endif
 	ip = mtod(m, struct ip *);
+	bzero((char *)ip, hlen);
 # ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 # endif
@@ -505,7 +508,7 @@ fr_info_t *fin;
 
 # ifdef	USE_INET6
 	if (fin->fin_v == 6) {
-		ip6->ip6_flow = 0;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons(sizeof(struct tcphdr));
 		ip6->ip6_nxt = IPPROTO_TCP;
 		ip6->ip6_hlim = 0;
@@ -513,7 +516,7 @@ fr_info_t *fin;
 		ip6->ip6_dst = fin->fin_src6;
 		tcp2->th_sum = in6_cksum(m, IPPROTO_TCP,
 					 sizeof(*ip6), sizeof(*tcp2));
-		return fr_send_ip(fin, m);
+		return fr_send_ip(fin, m, &m);
 	}
 # endif
 	ip->ip_p = IPPROTO_TCP;
@@ -522,22 +525,26 @@ fr_info_t *fin;
 	ip->ip_dst.s_addr = fin->fin_saddr;
 	tcp2->th_sum = in_cksum(m, hlen + sizeof(*tcp2));
 	ip->ip_len = hlen + sizeof(*tcp2);
-	return fr_send_ip(fin, m);
+	return fr_send_ip(fin, m, &m);
 }
 
 
-static int fr_send_ip(fin, m)
+static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
-struct mbuf *m;
+struct mbuf *m, **mpp;
 {
+	fr_info_t fnew;
 	ip_t *ip;
+	int hlen;
 
 	ip = mtod(m, ip_t *);
+	bzero((char *)&fnew, sizeof(fnew));
 
 	IP_V_A(ip, fin->fin_v);
 	switch (fin->fin_v)
 	{
 	case 4 :
+		fnew.fin_v = 4;
 		IP_HL_A(ip, sizeof(ip_t) >> 2);
 		ip->ip_tos = fin->fin_ip->ip_tos;
 		ip->ip_id = fin->fin_ip->ip_id;
@@ -545,6 +552,7 @@ struct mbuf *m;
 			ip->ip_off = IP_DF;
 		ip->ip_ttl = tcp_ttl;
 		ip->ip_sum = 0;
+		hlen = sizeof(*ip);
 		break;
 #ifdef	USE_INET6
 	case 6 :
@@ -562,7 +570,17 @@ struct mbuf *m;
 #ifdef	IPSEC
 	m->m_pkthdr.rcvif = NULL;
 #endif
-	return fr_fastroute(m, &m, fin, NULL);
+
+	fnew.fin_ifp = fin->fin_ifp;
+	fnew.fin_flx = FI_NOCKSUM;
+	fnew.fin_m = m;
+	fnew.fin_ip = ip;
+	fnew.fin_mp = mpp;
+	fnew.fin_hlen = hlen;
+	fnew.fin_dp = (char *)ip + hlen;
+	(void) fr_makefrip(hlen, ip, &fnew);
+
+	return fr_fastroute(m, mpp, &fnew, NULL);
 }
 
 
@@ -598,7 +616,6 @@ int dst;
 #endif
 
 	avail = 0;
-	m = NULL;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
 		if ((fin->fin_p == IPPROTO_ICMP) &&
@@ -663,20 +680,30 @@ int dst;
 			dst6 = fin->fin_dst6;
 	}
 #endif
+	else {
+		FREE_MB_T(m);
+		return -1;
+	}
 
-	iclen = hlen + sizeof(*icmp) + xtra;
+	iclen = hlen + sizeof(*icmp);
 # if (BSD >= 199103)
 	avail -= (max_linkhdr + iclen);
+	if (avail < 0) {
+		FREE_MB_T(m);
+		return -1;
+	}
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	iclen += xtra;
 	m->m_pkthdr.len = iclen;
 #else
 	avail -= (m->m_off + iclen);
-#endif
 	if (avail < 0) {
-		m_freem(m);
+		FREE_MB_T(m);
 		return -1;
 	}
+	iclen += xtra;
+#endif
 	m->m_len = iclen;
 	ip = mtod(m, ip_t *);
 	icmp = (struct icmp *)((char *)ip + hlen);
@@ -698,7 +725,8 @@ int dst;
 	if (fin->fin_v == 6) {
 		ip62 = (ip6_t *)ip2;
 
-		ip6->ip6_flow = 0;
+		ip62->ip6_plen = htons(ip62->ip6_plen);
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons(iclen - hlen);
 		ip6->ip6_nxt = IPPROTO_ICMPV6;
 		ip6->ip6_hlim = 0;
@@ -712,6 +740,8 @@ int dst;
 	} else
 #endif
 	{
+		ip2->ip_len = htons(ip2->ip_len);
+		ip2->ip_off = htons(ip2->ip_off);
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_src.s_addr = dst4.s_addr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
@@ -724,7 +754,7 @@ int dst;
 		ip->ip_len = iclen;
 		ip->ip_p = IPPROTO_ICMP;
 	}
-	err = fr_send_ip(fin, m);
+	err = fr_send_ip(fin, m, &m);
 	return err;
 }
 
@@ -809,7 +839,7 @@ frdest_t *fdp;
 	dst->sin_family = AF_INET;
 
 	fr = fin->fin_fr;
-	if (fdp)
+	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
 	else {
 		ifp = fin->fin_ifp;
@@ -824,7 +854,8 @@ frdest_t *fdp;
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst->sin_addr = ip->ip_dst;
-	} else if (fdp)
+	}
+	if (fdp != NULL)
 		dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
 
 	rtalloc(ro);
@@ -1225,3 +1256,63 @@ fr_info_t *fin;
 #endif
 }
 #endif /* USE_INET6 */
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_pullup                                                   */
+/* Returns:     NULL == pullup failed, else pointer to protocol header      */
+/* Parameters:  m(I)   - pointer to buffer where data packet starts         */
+/*              fin(I) - pointer to packet information                      */
+/*              len(I) - number of bytes to pullup                          */
+/*                                                                          */
+/* Attempt to move at least len bytes (from the start of the buffer) into a */
+/* single buffer for ease of access.  Operating system native functions are */
+/* used to manage buffers - if necessary.  If the entire packet ends up in  */
+/* a single buffer, set the FI_COALESCE flag even though fr_coalesce() has  */
+/* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
+/* and ONLY if the pullup succeeds.                                         */
+/*                                                                          */
+/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* of buffers that starts at *fin->fin_mp.                                  */
+/* ------------------------------------------------------------------------ */
+void *fr_pullup(min, fin, len)
+mb_t *min;
+fr_info_t *fin;
+int len;
+{
+	int out = fin->fin_out, dpoff;
+	mb_t *m = min;
+	char *ip;
+
+	if (m == NULL)
+		return NULL;
+
+	ip = (char *)fin->fin_ip;
+	if ((fin->fin_flx & FI_COALESCE) != 0)
+		return ip;
+
+	if (fin->fin_dp != NULL)
+		dpoff = (char *)fin->fin_dp - (char *)ip;
+	else
+		dpoff = 0;
+
+	if (M_LEN(m) < len) {
+		KMALLOCS(fin->fin_hbuf, void *, fin->fin_plen);
+		if (fin->fin_hbuf == NULL) {
+			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			return NULL;
+		}
+		m_copydata(m, 0, fin->fin_plen, fin->fin_hbuf);
+		ip = fin->fin_hbuf;
+		fin->fin_flx |= FI_COALESCE;
+	} else if (len == fin->fin_plen) {
+		fin->fin_flx |= FI_COALESCE;
+	}
+
+	ATOMIC_INCL(frstats[out].fr_pull[0]);
+	fin->fin_ip = (ip_t *)ip;
+	if (fin->fin_dp != NULL)
+		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+
+	return ip;
+}

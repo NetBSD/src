@@ -19,7 +19,7 @@
 -	M ipauth c 44 3 600
 -	M ipsync c 44 4 600
 -	M ipscan c 44 5 600
--	M ippool c 44 6 600
+-	M iplookup c 44 6 600
 -	;;
 -
  pf*)

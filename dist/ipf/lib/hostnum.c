@@ -1,11 +1,11 @@
-/*	$NetBSD: hostnum.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: hostnum.c,v 1.1.1.2 2005/02/08 06:53:15 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: hostnum.c,v 1.10 2003/08/14 14:26:54 darrenr Exp
+ * Id: hostnum.c,v 1.10.2.1 2004/12/09 19:41:20 darrenr Exp
  */
 
 #include <ctype.h>
@@ -37,7 +37,7 @@ char	*ifname;
 			return -1;
 	}
 #endif
-	if (isdigit(*host) && inet_aton(host, &ip)) {
+	if (ISDIGIT(*host) && inet_aton(host, &ip)) {
 		*ipa = ip.s_addr;
 		return 0;
 	}

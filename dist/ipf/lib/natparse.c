@@ -1,4 +1,4 @@
-/*	$NetBSD: natparse.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: natparse.c,v 1.1.1.2 2005/02/08 06:53:16 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: natparse.c,v 1.8 2003/12/01 02:03:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: natparse.c,v 1.8.2.1 2004/12/09 19:41:21 darrenr Exp";
 #endif
 
 #include <sys/ioctl.h>
@@ -57,7 +57,7 @@ int linenum;
 		*s = '\0';
 	if ((s = strchr(line, '#')))
 		*s = '\0';
-	while (*line && isspace(*line))
+	while (*line && ISSPACE(*line))
 		line++;
 	if (!*line)
 		return NULL;
@@ -225,7 +225,7 @@ int linenum;
 			return NULL;
 		}
 
-		if (isdigit(**cpp) && (s = strchr(*cpp, '-')))
+		if (ISDIGIT(**cpp) && (s = strchr(*cpp, '-')))
 			*s++ = '\0';
 		else
 			s = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_osf.c,v 1.1.1.2 2004/07/23 05:33:53 martti Exp $	*/
+/*	$NetBSD: ip_fil_osf.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_osf.c,v 2.44.2.8 2004/06/22 20:57:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_osf.c,v 2.44.2.18 2005/01/08 16:55:55 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -339,7 +339,7 @@ int mode;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			frsync();
+			frsync(NULL);
 		}
 		break;
 	default :
@@ -351,6 +351,7 @@ int mode;
 }
 
 
+#if 0
 void fr_forgetifp(ifp)
 void *ifp;
 {
@@ -386,6 +387,7 @@ void *ifp;
 	RWLOCK_EXIT(&ipf_mutex);
 	fr_natsync(ifp);
 }
+#endif
 
 
 /*
@@ -490,6 +492,7 @@ fr_info_t *fin;
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
 
 	ip = mtod(m, struct ip *);
+	bzero((char *)ip, hlen);
 #ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 #endif
@@ -516,7 +519,7 @@ fr_info_t *fin;
 
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
-		ip6->ip6_flow = 0;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons(sizeof(struct tcphdr));
 		ip6->ip6_nxt = IPPROTO_TCP;
 		ip6->ip6_hlim = 0;
@@ -543,10 +546,12 @@ static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
 mb_t *m, **mpp;
 {
+	fr_info_t fnew;
 	ip_t *ip, *oip;
-	int ttl;
+	int ttl, hlen;
 
 	ip = mtod(m, ip_t *);
+	bzero((char *)&fnew, sizeof(fnew));
 
 	switch (fin->fin_p)
 	{
@@ -566,6 +571,7 @@ mb_t *m, **mpp;
 	switch (fin->fin_v)
 	{
 	case 4 :
+		fnew.fin_v = 4;
 		oip = fin->fin_ip;
 		IP_HL_A(ip, sizeof(*oip) >> 2);
 		ip->ip_tos = oip->ip_tos;
@@ -573,18 +579,22 @@ mb_t *m, **mpp;
 		ip->ip_off = 0;
 		ip->ip_ttl = ttl;
 		ip->ip_sum = 0;
+		hlen = sizeof(*oip);
 		break;
 #ifdef	USE_INET6
 	case 6 :
 	{
 		ip6_t *ip6 = (ip6_t *)ip;
 
-# if TRU64 <= 732
+# if TRU64 <= 1885
 		ip6->ip6_vcf = 0x60;
 # else
 		ip6->ip6_vfc = 0x60;
 # endif
 		ip6->ip6_hlim = ttl;
+
+		fnew.fin_v = 6;
+		hlen = sizeof(*ip6);
 	}
 #endif
 	default :
@@ -593,7 +603,17 @@ mb_t *m, **mpp;
 #ifdef	IPSEC
 	m->m_pkthdr.rcvif = NULL;
 #endif
-	return fr_fastroute(m, mpp, fin, NULL);
+
+	fnew.fin_ifp = fin->fin_ifp;
+	fnew.fin_flx = FI_NOCKSUM;
+	fnew.fin_m = m;
+	fnew.fin_ip = ip;
+	fnew.fin_mp = mpp;
+	fnew.fin_hlen = hlen;
+	fnew.fin_dp = (char *)ip + hlen;
+	(void) fr_makefrip(hlen, ip, &fnew);
+
+	return fr_fastroute(m, mpp, &fnew, NULL);
 }
 
 
@@ -608,7 +628,7 @@ int dst;
 	struct mbuf *m;
 	void *ifp;
 #ifdef USE_INET6
-	ip6_t *ip6, *ip62;
+	ip6_t *ip6;
 	struct in6_addr dst6;
 #endif
 	ip_t *ip, *ip2;
@@ -635,7 +655,6 @@ int dst;
 		return -1;
 	avail = MHLEN;
 
-	m = NULL;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
 		if ((fin->fin_p == IPPROTO_ICMP) &&
@@ -648,6 +667,7 @@ int dst;
 			case ICMP_MASKREQ :
 				break;
 			default :
+				FREE_MB_T(m);
 				return 0;
 			}
 
@@ -696,6 +716,10 @@ int dst;
 			dst6 = fin->fin_dst6;
 	}
 #endif
+	else {
+		FREE_MB_T(m);
+		return -1;
+	}
 
 	iclen = hlen + sizeof(*icmp) + xtra;
 	avail -= (max_linkhdr + iclen);
@@ -729,9 +753,7 @@ int dst;
 #ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 	if (fin->fin_v == 6) {
-		ip62 = (ip6_t *)ip2;
-
-		ip6->ip6_flow = 0;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons(iclen - hlen);
 		ip6->ip6_nxt = IPPROTO_ICMPV6;
 		ip6->ip6_hlim = 0;
@@ -747,6 +769,8 @@ int dst;
 	} else
 #endif
 	{
+		ip2->ip_len = htons(ip2->ip_len);
+		ip2->ip_off = htons(ip2->ip_off);
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_src.s_addr = dst4.s_addr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
@@ -858,7 +882,7 @@ frdest_t *fdp;
 	dst->sin_family = AF_INET;
 
 	fr = fin->fin_fr;
-	if (fdp)
+	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
 	else {
 		ifp = fin->fin_ifp;
@@ -873,7 +897,8 @@ frdest_t *fdp;
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst->sin_addr = ip->ip_dst;
-	} else if (fdp) {
+	}
+	if (fdp != NULL) {
 		if (fdp->fd_ip.s_addr) {
 			dst->sin_addr = fdp->fd_ip;
 			ip->ip_dst = fdp->fd_ip;
@@ -1317,4 +1342,86 @@ struct mbuf *m0;
 			len += m->m_len;
 	}
 	return len;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_pullup                                                   */
+/* Returns:     NULL == pullup failed, else pointer to protocol header      */
+/* Parameters:  m(I)   - pointer to buffer where data packet starts         */
+/*              fin(I) - pointer to packet information                      */
+/*              len(I) - number of bytes to pullup                          */
+/*                                                                          */
+/* Attempt to move at least len bytes (from the start of the buffer) into a */
+/* single buffer for ease of access.  Operating system native functions are */
+/* used to manage buffers - if necessary.  If the entire packet ends up in  */
+/* a single buffer, set the FI_COALESCE flag even though fr_coalesce() has  */
+/* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
+/* and ONLY if the pullup succeeds.                                         */
+/*                                                                          */
+/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* of buffers that starts at *fin->fin_mp.                                  */
+/* ------------------------------------------------------------------------ */
+void *fr_pullup(min, fin, len)
+mb_t *min;
+fr_info_t *fin;
+int len;
+{
+	int out = fin->fin_out, dpoff, ipoff;
+	mb_t *m = min;
+	char *ip;
+
+	if (m == NULL)
+		return NULL;
+
+	ip = (char *)fin->fin_ip;
+	if ((fin->fin_flx & FI_COALESCE) != 0)
+		return ip;
+
+	ipoff = fin->fin_ipoff;
+	if (fin->fin_dp != NULL)
+		dpoff = (char *)fin->fin_dp - (char *)ip;
+	else
+		dpoff = 0;
+
+	if (M_LEN(m) < len) {
+#ifdef MHLEN
+		/*
+		 * Assume that M_PKTHDR is set and just work with what is left
+		 * rather than check..
+		 * Should not make any real difference, anyway.
+		 */
+		if (len > MHLEN)
+#else
+		if (len > MLEN)
+#endif
+		{
+#ifdef HAVE_M_PULLDOWN
+			if (m_pulldown(m, 0, len, NULL) == NULL)
+				m = NULL;
+#else
+			FREE_MB_T(*fin->fin_mp);
+			m = NULL;
+#endif
+		} else
+		{
+			m = m_pullup(m, len);
+		}
+		*fin->fin_mp = m;
+		fin->fin_m = m;
+		if (m == NULL) {
+			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			return NULL;
+		}
+		ip = MTOD(m, char *) + ipoff;
+	}
+
+	ATOMIC_INCL(frstats[out].fr_pull[0]);
+	fin->fin_ip = (ip_t *)ip;
+	if (fin->fin_dp != NULL)
+		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+
+	if (len == fin->fin_plen)
+		fin->fin_flx |= FI_COALESCE;
+	return ip;
 }

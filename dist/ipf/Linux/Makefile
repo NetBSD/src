@@ -18,18 +18,20 @@ CFLAGS=-g -I$(TOP)
 # For Linux
 #
 CPUTYPE:=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-ARCH:=`uname -m`
+ARCH:=$(shell uname -m)
 OBJ=.
 TOP=..
 TOOL=$(TOP)/tools
-CPU:=`uname -i`
-MODDIR=/lib/modules/`uname -r`/kernel/net/ipv4/
-CPUDIR=`uname -s|sed -e 's@/@@g'`-`uname -r`-`uname -m`
+CPU:=$(shell uname -i)
+KREV:=$(shell uname -r)
+MODEXT:=$(shell modprobe -l | head -n 1 | sed -e 's/.*\.\([^\.]*\)$$/\1/')
+MODDIR=/lib/modules/$(KREV)
+IPV4DIR=$(MODDIR)/kernel/net/ipv4/
+CPUDIR=$(shell uname -s|sed -e 's@/@@g')-$(KREV)-$(ARCH)
 HERE=Linux
 #LEXLIB=-ll
 DEST=$(OBJ)
 DEBUG=-g
-GENSRC=../$(HERE)/$(OBJ)
 LINUXKERNEL=/usr/src/linux
 LIBS=-L$(OBJ) -lipf $(LIBBPF)
 INC=-nostdinc -I$(TOP) -I$(LINUXKERNEL)/include/
@@ -38,6 +40,9 @@ KCFLAGS=-Wall -Wstrict-prototypes -O2 -fomit-frame-pointer  -Wno-trigraphs \
 	-fno-strict-aliasing -fno-common -DLINUX=$(LINUX) -I/usr/src/linux/asm/${mcore}
 IPDEF=$(DEF) -DGATEWAY -DDIRECTED_BROADCAST
 IPFILC=ip_lfil.c
+XCFLAGS=-DLINUX=$(LINUX) -I.. -I`pwd`/.. -I`pwd`/../..  $(LOOKUP) $(IPFLOG) -O2
+EXTRA_CFLAGS += $(XCFLAGS)
+#
 MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 	'CFLAGS=$(CFLAGS)' "IPFLKM=$(IPFLKM)" \
 	"IPFLOG=$(IPFLOG)" "LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" \
@@ -84,20 +89,28 @@ include $(TOP)/lib/Makefile
 $(OBJ):
 	@if [ ! -d $(OBJ) ] ; then \
 		mkdir $(OBJ) ; \
-		ln -s ../Makefile $(OBJ) ; \
+		if [ $(LINUX) -ge 20600 ] ; then \
+			ln -s ../Makefile.kbuild $(OBJ)/Makefile ; \
+		fi ; \
 		ln -s ../Makefile.ipsend $(OBJ) ; \
 	fi
 
 build all: $(OBJ) $(OBJ)/ipf $(OBJ)/ipfs $(OBJ)/ipfstat $(OBJ)/ipftest \
-	   $(OBJ)/ipmon $(OBJ)/ipnat $(OBJ)/ippool $(OBJ)/ipfilter.o
+	   $(OBJ)/ipmon $(OBJ)/ipnat $(OBJ)/ippool
 	-sh -c 'for i in ipf ipftest ipmon ippool ipnat ipscan ipsyncm ipsyncs; do /bin/rm -f $(TOP)/$$i; ln -s `pwd`/$(OBJ)/$$i $(TOP); done'
 
+ipflkm:
+	if [ $(LINUX) -lt 20499 ] ; then \
+		make $(OBJ)/ipfilter.o ; \
+	else \
+		(cd $(OBJ); unset MAKEFLAGS; make -C "$(MODDIR)/build" SUBDIRS="`pwd`" TOP="`pwd`/../.."  CPUDIR="$(CPUDIR)" EXTRA_CFLAGS="$(EXTRA_CFLAGS)" OBJ= modules); \
+	fi
 
 $(OBJ)/ipfstat: $(FILS) $(OBJ)/libipf.a $(TOP)/ip_fil.h $(TOP)/ipf.h \
 	    $(TOP)/ip_frag.h $(TOP)/ip_compat.h $(TOP)/ip_state.h \
 	    $(TOP)/ip_nat.h
 	-if [ ! -f /usr/lib/libelf.so ] ; then \
-		(cd /usr/lib; a=`echo libelf.so.*|head -1`; \
+		(cd /usr/lib; a=`echo libelf.so.*|head -n 1`; \
 		 if [ "$$a" != "" ] ; then ln -s $$a libelf.so; fi) \
 	fi
 	$(CC) $(CCARGS) $(FILS) -o $@ -lelf $(LIBS) $(STATETOP_LIB)
@@ -112,7 +125,7 @@ $(OBJ)/ipftest: $(IPT) $(OBJ)/libipf.a
 
 $(OBJ)/ipnat: $(IPNAT) $(OBJ)/libipf.a
 	-if [ ! -f /usr/lib/libelf.so ] ; then \
-		(cd /usr/lib; a=`echo libelf.so.*|head -1`; \
+		(cd /usr/lib; a=`echo libelf.so.*|head -n 1`; \
 		 if [ "$$a" != "" ] ; then ln -s $$a libelf.so; fi) \
 	fi
 	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lelf $(LEXLIB)
@@ -448,10 +461,10 @@ clean:
 		fi \
 	done)
 
-install: $(SPECFILE) ipfilter
+install: $(CPUDIR)/$(SPECFILE) $(CPUDIR)/ipfilter
 	mkdir -p $(ROOTDIR) $(ROOTDIR)/usr/include/netinet
 	mkdir -p $(ROOTDIR)$(SBINDEST) $(ROOTDIR)$(BINDEST)
-	mkdir -p $(ROOTDIR)$(MODDIR)
+	mkdir -p $(ROOTDIR)$(IPV4DIR)
 	mkdir -p $(ROOTDIR)/etc/init.d
 	mkdir -p $(ROOTDIR)/etc/sysconfig
 	mkdir -p $(ROOTDIR)$(MANDIR)/man1
@@ -465,16 +478,16 @@ install: $(SPECFILE) ipfilter
 		$(CHMOD) 444 $(ROOTDIR)/usr/include/netinet/ip_$$i.h; \
 	done
 	$(CP) $(TOP)/ipl.h $(ROOTDIR)/usr/include/netinet/ipl.h
-	-if [ -d $(MODDIR) ] ; then \
-		cp ipfilter.o $(ROOTDIR)$(MODDIR); \
+	-if [ -d $(IPV4DIR) ] ; then \
+		cp $(CPUDIR)/ipfilter.o $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \
 	fi
 	(for i in ipfstat ipf ipnat ippool ipfs; do \
-		$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(SBINDEST); \
+		(cd $(CPUDIR); ../$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(SBINDEST)); \
 	 done;)
 	(for i in ipmon ipftest; do \
-		$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(BINDEST); \
+		(cd $(CPUDIR); ../$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(BINDEST)); \
 	 done;)
-	(../../bsdinstall -c -g wheel -m 755 -o root ipfilter $(ROOTDIR)/etc/init.d)
+	(cd $(CPUDIR); ../$(INSTALL) -c -g wheel -m 755 -o root ipfilter $(ROOTDIR)/etc/init.d)
 	(cd $(TOP)/man; make INSTALL=../bsdinstall MANDIR=$(ROOTDIR)$(MANDIR) install; cd $(TOP))
 	for i in BASIC_1.FW BASIC_2.FW BASIC.NAT example.1 example.2 \
 		 example.3 example.4 example.5 example.6 example.7 \
@@ -485,13 +498,15 @@ install: $(SPECFILE) ipfilter
 		$(CHMOD) 444 $(ROOTDIR)/usr/share/ipfilter/examples/$$i; \
 		chown root:root $(ROOTDIR)/usr/share/ipfilter/examples/$$i; \
 	done
-	rpmbuild -bb $(SPECFILE)
+	rpmbuild -bb $(CPUDIR)/$(SPECFILE)
 	rpm -i ipfilter
 
-$(SPECFILE): ../$(SPECFILE).dist
-	sed -e "s/KERNELBUILD/`uname -r`/" \
-	    -e "s/TURNONIPFILTER/`../howchkconfig`/" \
+$(CPUDIR)/$(SPECFILE): $(SPECFILE).dist
+	sed -e "s/KERNELBUILD/$(KREV)/" \
+	    -e "s/MODEXT/$(MODEXT)/" \
+	    -e "s/TURNONIPFILTER/`./howchkconfig`/" \
 	    $< > $@
 
-ipfilter:
-	../mkinit
+$(CPUDIR)/ipfilter:
+	./mkinit `pwd`/$(CPUDIR)
+

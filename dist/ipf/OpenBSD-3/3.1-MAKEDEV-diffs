@@ -33,7 +33,7 @@ diff -r -c -d /tmp/etc/MAKEDEV.mi etc/MAKEDEV.mi
 + __devitem(ipsync, ipsync*, Packet Filter sync)dnl
 + _mkdev(ipscan, {-ipscan*-}, {-M ipscan c major_ipscan_c 5 600-})dnl
 + __devitem(ipscan, ipscan*, Packet Filter scan)dnl
-+ _mkdev(ippool, {-ippool*-}, {-M ippool c major_ippool_c 6 600-})dnl
++ _mkdev(iplookup, {-iplookup*-}, {-M iplookup c major_iplookup_c 6 600-})dnl
   __devitem(bpf, bpf*, Berkeley Packet Filter)dnl
   _mkdev(bpf, {-bpf*-}, {-M bpf$U c major_bpf_c $U 600-}, 600)dnl
   _mkdev(tun, {-tun*-}, {-M tun$U c major_tun_c $U 600-}, 600)dnl
@@ -52,7 +52,7 @@ diff -r -c -d /tmp/etc/etc.alpha/MAKEDEV.md etc/etc.alpha/MAKEDEV.md
 + _DEV(ipauth, 44)
 + _DEV(ipscan, 44)
 + _DEV(ipsync, 44)
-+ _DEV(ippool, 44)
++ _DEV(iplookup, 44)
   _DEV(bpf, 11)
   _DEV(altq, 53)
   _DEV(iop, 54)
@@ -71,7 +71,7 @@ diff -r -c -d /tmp/etc/etc.amiga/MAKEDEV.md etc/etc.amiga/MAKEDEV.md
 + _DEV(ipauth, 38)
 + _DEV(ipsync, 38)
 + _DEV(ipscan, 38)
-+ _DEV(ippool, 38)
++ _DEV(iplookup, 38)
   _DEV(ss, 25)
   _DEV(uk, 36)
   _DEV(rnd, 35)
@@ -90,7 +90,7 @@ diff -r -c -d /tmp/etc/etc.hp300/MAKEDEV.md etc/etc.hp300/MAKEDEV.md
 + _DEV(ipauth, 37)
 + _DEV(ipsync, 37)
 + _DEV(ipscan, 37)
-+ _DEV(ippool, 37)
++ _DEV(iplookup, 37)
   _DEV(lkm, 24)
   _DEV(rnd, 32)
   _DEV(xfs, 51)
@@ -109,7 +109,7 @@ diff -r -c -d /tmp/etc/etc.hppa/MAKEDEV.md etc/etc.hppa/MAKEDEV.md
 + _DEV(ipauth, 34)
 + _DEV(ipsync, 34)
 + _DEV(ipscan, 34)
-+ _DEV(ippool, 34)
++ _DEV(iplookup, 34)
   _DEV(lkm, 19)
   _DEV(altq, 33)
   _DEV(rnd, 20)
@@ -128,7 +128,7 @@ diff -r -c -d /tmp/etc/etc.i386/MAKEDEV.md etc/etc.i386/MAKEDEV.md
 + _DEV(ipauth, 78)
 + _DEV(ipsync, 78)
 + _DEV(ipscan, 78)
-+ _DEV(ippool, 78)
++ _DEV(iplookup, 78)
   _DEV(bpf, 23)
   _DEV(speak, 27)
   _DEV(lkm, 28)
@@ -147,7 +147,7 @@ diff -r -c -d /tmp/etc/etc.mac68k/MAKEDEV.md etc/etc.mac68k/MAKEDEV.md
 + _DEV(ipauth, 38)
 + _DEV(ipsync, 38)
 + _DEV(ipscan, 38)
-+ _DEV(ippool, 38)
++ _DEV(iplookup, 38)
   _DEV(altq, 52)
   _DEV(lkm, 25)
   _DEV(rnd, 32)
@@ -166,7 +166,7 @@ diff -r -c -d /tmp/etc/etc.macppc/MAKEDEV.md etc/etc.macppc/MAKEDEV.md
 + _DEV(ipauth, 45)
 + _DEV(ipsync, 45)
 + _DEV(ipscan, 45)
-+ _DEV(ippool, 45)
++ _DEV(iplookup, 45)
   _DEV(cry, 47)
   _DEV(usbs)
   _DEV(pci, 71)
@@ -205,8 +205,8 @@ diff -r -c -d /tmp/etc/etc.mvme68k/MAKEDEV.md etc/etc.mvme68k/MAKEDEV.md
 +       mknod ipauth c 44 3
 +       mknod ipsync c 44 4
 +       mknod ipscan c 44 5
-+       mknod ippool c 44 6
-+       chown root.wheel ipl ipnat ipstate ipauth ipsync ipscan ippool
++       mknod iplookup c 44 6
++       chown root.wheel ipl ipnat ipstate ipauth ipsync ipscan iplookup
 +       ;;
   
   tun*)
@@ -246,8 +246,8 @@ diff -r -c -d /tmp/etc/etc.mvme88k/MAKEDEV.md etc/etc.mvme88k/MAKEDEV.md
 +       mknod ipauth c 41 3
 +       mknod ipsync c 41 4
 +       mknod ipscan c 41 5
-+       mknod ippool c 41 6
-+       chown root.wheel ipl ipnat ipstate ipauth ipsync ipscan ippool
++       mknod iplookup c 41 6
++       chown root.wheel ipl ipnat ipstate ipauth ipsync ipscan iplookup
 +       ;;
   
   bpf*|tun*)
@@ -267,7 +267,7 @@ diff -r -c -d /tmp/etc/etc.mvmeppc/MAKEDEV.md etc/etc.mvmeppc/MAKEDEV.md
 + _DEV(ipauth, 44)
 + _DEV(ipsync, 44)
 + _DEV(ipscan, 44)
-+ _DEV(ippool, 44)
++ _DEV(iplookup, 44)
   _DEV(usbs)
   #
   dnl
@@ -286,7 +286,7 @@ diff -r -c -d /tmp/etc/etc.sparc/MAKEDEV.md etc/etc.sparc/MAKEDEV.md
 + _DEV(ipauth, 60)
 + _DEV(ipsync, 60)
 + _DEV(ipscan, 60)
-+ _DEV(ippool, 60)
++ _DEV(iplookup, 60)
   _DEV(altq, 125)
   _DEV(lkm, 112)
   _DEV(tun, 111)
@@ -305,7 +305,7 @@ diff -r -c -d /tmp/etc/etc.sparc64/MAKEDEV.md etc/etc.sparc64/MAKEDEV.md
 + _DEV(ipauth, 82)
 + _DEV(ipsync, 82)
 + _DEV(ipscan, 82)
-+ _DEV(ippool, 82)
++ _DEV(iplookup, 82)
   _DEV(altq, 74)
   _DEV(bpf, 105)
   _DEV(tun, 111)
@@ -324,7 +324,7 @@ diff -r -c -d /tmp/etc/etc.sun3/MAKEDEV.md etc/etc.sun3/MAKEDEV.md
 + _DEV(ipauth, 86)
 + _DEV(ipsync, 86)
 + _DEV(ipscan, 86)
-+ _DEV(ippool, 86)
++ _DEV(iplookup, 86)
   _DEV(tun, 24)
   _DEV(rd, 52, 13)
   _DEV(rnd, 72)
@@ -343,7 +343,7 @@ diff -r -c -d /tmp/etc/etc.vax/MAKEDEV.md etc/etc.vax/MAKEDEV.md
 + _DEV(ipauth, 47)
 + _DEV(ipsync, 47)
 + _DEV(ipscan, 47)
-+ _DEV(ippool, 47)
++ _DEV(iplookup, 47)
   _DEV(altq, 75)
   _DEV(lkm, 28)
   _DEV(tun, 57)

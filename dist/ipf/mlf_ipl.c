@@ -1,4 +1,4 @@
-/*	$NetBSD: mlf_ipl.c,v 1.1.1.8 2004/03/28 08:55:47 martti Exp $	*/
+/*	$NetBSD: mlf_ipl.c,v 1.1.1.9 2005/02/08 06:53:02 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -120,8 +120,6 @@ SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_defnatage, CTLFLAG_RWO,
 	   &fr_defnatage, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_ipfrttl, CTLFLAG_RW,
 	   &fr_ipfrttl, 0, "");
-SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_unreach, CTLFLAG_RW,
-	   &fr_unreach, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_running, CTLFLAG_RD,
 	   &fr_running, 0, "");
 SYSCTL_IPF(_net_inet_ipf, OID_AUTO, fr_statesize, CTLFLAG_RWO,

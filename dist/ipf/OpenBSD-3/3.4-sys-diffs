@@ -490,7 +490,7 @@ diff sys/net/if.c sys.ipf/net/if.c
 + 
 + #ifdef IPFILTER
 + 	/* XXX More ipf & ipnat cleanup needed.  */
-+ 	frsync();
++ 	frsync(ifp);
 + #endif
   
   	/*

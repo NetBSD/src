@@ -359,7 +359,7 @@ clean:
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
 	${RM} -f ipscan ipscan_y.c ipscan_y.h ipscan_l.c y.tab.? lex.yy.c ipfs
-	${RM} -f ipsyncm ipsyncs ip_rules.c ip_rules.h
+	${RM} -f ipsyncm ipsyncs ip_rules.c ip_rules.h sysconfigtab
 
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
 	-(for i in *; do \

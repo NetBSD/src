@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.2 2004/07/23 05:34:50 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.1.1.3 2005/02/08 06:53:23 martti Exp $	*/
 
 /*
  * Copyright (C) 1999-2001, 2003 by Darren Reed.
@@ -226,7 +226,7 @@ char *argv[];
 				usage();
 			break;
 		case 'f' :
-			if ((set == 0) && !dirname && !filename)
+			if ((set != 0) && !dirname && !filename)
 				filename = optarg;
 			else
 				usage();
@@ -251,7 +251,7 @@ char *argv[];
 			set = 1;
 			break;
 		case 'r' :
-			if ((ns >= 0) || dirname || (rw != -1))
+			if (dirname || (rw != -1) || (ns == -1))
 				usage();
 			rw = 0;
 			set = 1;

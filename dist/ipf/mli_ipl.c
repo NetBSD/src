@@ -1,4 +1,4 @@
-/*	$NetBSD: mli_ipl.c,v 1.1.1.6 2004/03/28 08:55:48 martti Exp $	*/
+/*	$NetBSD: mli_ipl.c,v 1.1.1.7 2005/02/08 06:53:03 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -536,7 +536,7 @@ ipl_ipfilter_intfsync(void)
 	if (nif_interfaces != in_interfaces) {
 		/* if the number of interfaces has changed, resync */
 		MUTEX_EXIT(&ipfi_mutex);
-		frsync();
+		frsync(NULL);
 	} else
 		MUTEX_EXIT(&ipfi_mutex);
 }

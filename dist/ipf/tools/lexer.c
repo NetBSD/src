@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.1.1.2 2004/07/23 05:34:52 martti Exp $	*/
+/*	$NetBSD: lexer.c,v 1.1.1.3 2005/02/08 06:53:24 martti Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -26,7 +26,7 @@ union	{
 
 FILE *yyin;
 
-#define	ishex(c)	(isdigit(c) || ((c) >= 'a' && (c) <= 'f') || \
+#define	ishex(c)	(ISDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || \
 			 ((c) >= 'A' && (c) <= 'F'))
 #define	TOOLONG		-3
 
@@ -181,6 +181,8 @@ nextchar:
 		}
 		yylast -= yypos;
 		yypos = 0;
+		lnext = 0;
+		nokey = 0;
 		goto nextchar;
 
 	case '\\' :
@@ -227,13 +229,13 @@ nextchar:
 			}
 			(void) yygetc();
 		} else {
-			if (!isalpha(n)) {
+			if (!ISALPHA(n)) {
 				yyunputc(n);
 				break;
 			}
 			do {
 				n = yygetc();
-			} while (isalpha(n) || isdigit(n) || n == '_');
+			} while (ISALPHA(n) || ISDIGIT(n) || n == '_');
 			yyunputc(n);
 		}
 
@@ -302,6 +304,8 @@ nextchar:
 	switch (c)
 	{
 	case '-' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1)
 			break;
 		n = yygetc();
@@ -328,6 +332,8 @@ nextchar:
 		goto done;
 
 	case '<' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1) {
 			yyunputc(c);
 			goto done;
@@ -346,6 +352,8 @@ nextchar:
 		goto done;
 
 	case '>' :
+		if (yyexpectaddr)
+			break;
 		if (isbuilding == 1) {
 			yyunputc(c);
 			goto done;
@@ -428,10 +436,10 @@ nextchar:
 	/*
 	 * No negative numbers with leading - sign..
 	 */
-	if (isbuilding == 0 && isdigit(c)) {
+	if (isbuilding == 0 && ISDIGIT(c)) {
 		do {
 			n = yygetc();
-		} while (isdigit(n));
+		} while (ISDIGIT(n));
 		yyunputc(n);
 		rval = YY_NUMBER;
 		goto done;
@@ -474,7 +482,7 @@ done:
 	switch (rval)
 	{
 	case YY_NUMBER :
-		yylval.num = atoi(yystr);
+		sscanf(yystr, "%u", &yylval.num);
 		break;
 
 	case YY_HEX :

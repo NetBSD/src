@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.1.1.3 2004/03/28 08:56:16 martti Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.1.1.4 2005/02/08 06:53:14 martti Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -48,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sdlpi.c	1.3 10/30/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.8 2004/01/05 14:17:07 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.8.2.1 2004/12/09 19:41:13 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -70,7 +70,7 @@ int	tout;
 	(void) strncat(devname, device, sizeof(devname) - strlen(devname));
 
 	s = devname + 5;
-	while (*s && !isdigit(*s))
+	while (*s && !ISDIGIT(*s))
 		s++;
 	if (!*s)
 	    {

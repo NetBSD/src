@@ -532,7 +532,7 @@ diff -d -c -r /tmp/sys/net/if.c sys/net/if.c
 + 
 + #ifdef IPFILTER
 + 	/* XXX More ipf & ipnat cleanup needed.  */
-+ 	frsync();
++ 	frsync(ifp);
 + #endif
   
   	/* Deallocate private resources.  */

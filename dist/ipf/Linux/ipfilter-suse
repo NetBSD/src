@@ -26,7 +26,7 @@ logit() {
 }
 
 start() {
-	/sbin/insmod -s ipfilter
+	modprobe ipfilter
 	rc=$?
 	if [ ${rc} -ne 0 ] ; then
 		rc_status -v
@@ -57,7 +57,7 @@ start() {
 		logit $rc ippool "$msg"
 	fi
 	if [ $rc -eq 0 ] ; then
-		/sbin/ipmon -Das
+		/usr/bin/ipmon -Das
 		rc=$?
 	fi
 	rc_status -v
@@ -73,7 +73,7 @@ stop() {
 }
 
 dostatus() {
-	status ipmon
+#	status ipmon
 	rc=$?
 }
 

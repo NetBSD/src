@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.2 2004/07/23 05:33:50 martti Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.3 2005/02/08 06:52:57 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.5 2004/05/10 12:42:04 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.11 2005/01/08 16:55:52 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -476,6 +476,7 @@ fr_info_t *fin;
 	m->b_wptr = m->b_rptr + hlen;
 	bzero((char *)m->b_rptr, hlen);
 	ip = (ip_t *)m->b_rptr;
+	bzero((char *)ip, hlen);
 	ip->ip_v = fin->fin_v;
 	tcp2 = (struct tcphdr *)(m->b_rptr + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
@@ -498,6 +499,7 @@ fr_info_t *fin;
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
 		ip6 = (ip6_t *)m->b_rptr;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_src = fin->fin_dst6;
 		ip6->ip6_dst = fin->fin_src6;
 		ip6->ip6_plen = htons(sizeof(*tcp));
@@ -510,7 +512,7 @@ fr_info_t *fin;
 		ip->ip_id = fr_nextipid(fin);
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_p = IPPROTO_TCP;
-		ip->ip_len = htons(sizeof(*ip) + sizeof(*tcp));
+		ip->ip_len = sizeof(*ip) + sizeof(*tcp);
 		ip->ip_tos = fin->fin_ip->ip_tos;
 		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2);
 	}
@@ -528,7 +530,6 @@ static int fr_send_ip(fr_info_t *fin, mblk_t *m)
 		ip6_t *ip6;
 
 		ip6 = (ip6_t *)m->b_rptr;
-		ip6->ip6_flow = 0;
 		ip6->ip6_vfc = 0x60;
 		ip6->ip6_hlim = 127;
 	} else
@@ -539,8 +540,9 @@ static int fr_send_ip(fr_info_t *fin, mblk_t *m)
 		ip = (ip_t *)m->b_rptr;
 		ip->ip_v = IPVERSION;
 		ip->ip_ttl = *ip_ttl_ptr;
-		ip->ip_sum = ipf_cksum((u_short *)ip, sizeof(*ip));
+		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(*ip_mtudisc == 1 ? IP_DF : 0);
+		ip->ip_sum = ipf_cksum((u_short *)ip, sizeof(*ip));
 	}
 	i = pfil_sendbuf(m);
 	READ_ENTER(&ipf_global);
@@ -640,6 +642,7 @@ int dst;
 		csz = sz;
 		sz -= sizeof(ip6_t);
 		ip6 = (ip6_t *)m->b_rptr;
+		ip6->ip6_flow = ((ip6_t *)fin->fin_ip)->ip6_flow;
 		ip6->ip6_plen = htons((u_short)sz);
 		ip6->ip6_nxt = IPPROTO_ICMPV6;
 		ip6->ip6_src = dst6;
@@ -654,7 +657,7 @@ int dst;
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_id = fin->fin_ip->ip_id;
 		ip->ip_tos = fin->fin_ip->ip_tos;
-		ip->ip_len = htons((u_short)sz);
+		ip->ip_len = (u_short)sz;
 		if (dst == 0) {
 			if (fr_ifpaddr(4, FRI_NORMAL, qpi->qpi_real,
 				       &dst4, NULL) == -1) {
@@ -667,6 +670,8 @@ int dst;
 		ip->ip_dst = fin->fin_src;
 		bcopy((char *)fin->fin_ip, (char *)&icmp->icmp_ip,
 		      sizeof(*fin->fin_ip));
+		icmp->icmp_ip.ip_len = htons(icmp->icmp_ip.ip_len);
+		icmp->icmp_ip.ip_off = htons(icmp->icmp_ip.ip_off);
 		bcopy((char *)fin->fin_ip + fin->fin_hlen,
 		      (char *)&icmp->icmp_ip + sizeof(*fin->fin_ip), 8);
 		icmp->icmp_cksum = ipf_cksum((u_short *)icmp,
@@ -854,3 +859,104 @@ fr_info_t *fin;
 # endif
 }
 #endif /* USE_INET6 */
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_pullup                                                   */
+/* Returns:     NULL == pullup failed, else pointer to protocol header      */
+/* Parameters:  m(I)   - pointer to buffer where data packet starts         */
+/*              fin(I) - pointer to packet information                      */
+/*              len(I) - number of bytes to pullup                          */
+/*                                                                          */
+/* Attempt to move at least len bytes (from the start of the buffer) into a */
+/* single buffer for ease of access.  Operating system native functions are */
+/* used to manage buffers - if necessary.  If the entire packet ends up in  */
+/* a single buffer, set the FI_COALESCE flag even though fr_coalesce() has  */
+/* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
+/* and ONLY if the pullup succeeds.                                         */
+/*                                                                          */
+/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* of buffers that starts at *fin->fin_mp.                                  */
+/* ------------------------------------------------------------------------ */
+void *fr_pullup(min, fin, len)
+mb_t *min;
+fr_info_t *fin;
+int len;
+{
+	qpktinfo_t *qpi = fin->fin_qpi;
+	int out = fin->fin_out, dpoff, ipoff;
+	mb_t *m = min;
+	char *ip;
+
+	if (m == NULL)
+		return NULL;
+
+	ip = (char *)fin->fin_ip;
+	if ((fin->fin_flx & FI_COALESCE) != 0)
+		return ip;
+
+	ipoff = fin->fin_ipoff;
+	if (fin->fin_dp != NULL)
+		dpoff = (char *)fin->fin_dp - (char *)ip;
+	else
+		dpoff = 0;
+
+	if (M_LEN(m) < len) {
+		int inc = 0;
+
+		if (ipoff > 0) {
+			if ((ipoff & 3) != 0) {
+				inc = 4 - (ipoff & 3);
+				if (m->b_rptr - inc >= m->b_datap->db_base)
+					m->b_rptr -= inc;
+				else
+					inc = 0;
+			}
+		}
+		m = msgpullup(min, len + ipoff + inc);
+		if (m == NULL) {
+			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			FREE_MB_T(*fin->fin_mp);
+			*fin->fin_mp = NULL;
+			fin->fin_m = NULL;
+			return NULL;
+		}
+
+		/*
+		 * Because msgpullup allocates a new mblk, we need to delink
+		 * (and free) the old one and link on the new one.
+		 */
+		if (min == *fin->fin_mp) {	/* easy case 1st */
+			FREE_MB_T(*fin->fin_mp);
+			*fin->fin_mp = m;
+		} else {
+			mb_t *m2;
+
+			for (m2 = *fin->fin_mp; m2 != NULL; m2 = m2->b_next)
+				if (m2->b_next == min)
+					break;
+			if (m2 == NULL) {
+				ATOMIC_INCL(frstats[out].fr_pull[1]);
+				FREE_MB_T(*fin->fin_mp);
+				FREE_MB_T(m);
+				return NULL;
+			}
+			FREE_MB_T(min);
+			m2->b_next = m;
+		}
+
+		fin->fin_m = m;
+		m->b_rptr += inc;
+		ip = MTOD(m, char *) + ipoff;
+		qpi->qpi_data = ip;
+	}
+
+	ATOMIC_INCL(frstats[out].fr_pull[0]);
+	fin->fin_ip = (ip_t *)ip;
+	if (fin->fin_dp != NULL)
+		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+
+	if (len == fin->fin_plen)
+		fin->fin_flx |= FI_COALESCE;
+	return ip;
+}

@@ -1,13 +1,14 @@
-/*	$NetBSD: ipf-linux.h,v 1.1.1.2 2004/07/23 05:34:17 martti Exp $	*/
+/*	$NetBSD: ipf-linux.h,v 1.1.1.3 2005/02/08 06:53:09 martti Exp $	*/
 
 #ifndef __IPF_LINUX_H__
 #define __IPF_LINUX_H__
 
 #include <linux/config.h>
+#include <linux/version.h>
 #ifndef CONFIG_NETFILTER
 # define CONFIG_NETFILTER
 #endif
-#if LINUX >= 020600
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 # define __irq_h	1	/* stop it being included! */
 # include <linux/mtd/compatmac.h>
 #else
@@ -18,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/time.h>
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/socket.h>
 #include <linux/netdevice.h>
@@ -30,7 +32,7 @@
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv6.h>
-#if LINUX >= 020600
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 # include <asm/ioctls.h>
 #else
 # define	ipftcphdr	tcphdr
@@ -145,7 +147,7 @@ struct	ether_header	{
 	__u16	ether_type;
 };
 
-#if LINUX >= 020600
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 typedef	struct	ipftcphdr	tcphdr_t;
 typedef	struct	ipfudphdr	udphdr_t;
 #endif

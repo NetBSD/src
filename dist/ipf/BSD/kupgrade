@@ -20,6 +20,9 @@ ipfdir=/sys/netinet
 if [ -d /sys/contrib/ipfilter ] ; then
 	ipfdir=/sys/contrib/ipfilter/netinet
 fi
+if [ -d /sys/dist/ipf ] ; then
+	ipfdir=/sys/dist/ipf/netinet
+fi
 confdir="$archdir/conf"
 if [ -f /dev/ipnat ] ; then
 	major=`ls -l /dev/ipnat | sed -e 's/.* \([0-9]*\),.*/\1/'`
@@ -62,11 +65,12 @@ SunOS)
 	;;
 esac
 
-if [ -d $ipfdir/$filc ] ; then
+if [ -f $ipfdir/$filc ] ; then
 	echo -n "$filc -> $ipfdir/$filc "
 	cp $filc $ipfdir/$filc
 	chmod 644 $ipfdir/$filc
-else
+fi
+if [ -f $ipfdir/ip_fil.c ] ; then
 	echo -n "$filc -> $ipfdir/ip_fil.c "
 	cp $filc $ipfdir/ip_fil.c
 	chmod 644 $ipfdir/ip_fil.c
@@ -166,7 +170,7 @@ if [ $os = NetBSD -a -f /sys/conf/files ] ; then
 		mv files files.preipf4
 		cp -p files.preipf4 files
 	fi
-	if [ $fullrev -ge 010600 ] ; then
+	if [ $fullrev -ge 010600 -a $fullrev -lt 020000 ] ; then
 		for i in htable pool lookup; do
 			grep ip_$i.c files >/dev/null 2>&1
 			if [ $? -ne 0 ] ; then

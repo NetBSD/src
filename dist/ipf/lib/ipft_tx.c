@@ -1,15 +1,15 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.2 2005/02/08 06:53:16 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipft_tx.c,v 1.15 2004/01/08 13:34:32 darrenr Exp
+ * Id: ipft_tx.c,v 1.15.2.2 2004/12/09 19:41:21 darrenr Exp
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 1.15 2004/01/08 13:34:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 1.15.2.2 2004/12/09 19:41:21 darrenr Exp";
 #endif
 
 #include <ctype.h>
@@ -56,7 +56,7 @@ int	*resolved;
 	*resolved = 0;
 	if (!strcasecmp("any", host))
 		return 0L;
-	if (isdigit(*host))
+	if (ISDIGIT(*host))
 		return inet_addr(host);
 
 	if (gethost(host, &ipa) == -1) {
@@ -78,7 +78,7 @@ char	*name;
 	struct	servent	*sp, *sp2;
 	u_short	p1 = 0;
 
-	if (isdigit(*name))
+	if (ISDIGIT(*name))
 		return (u_short)atoi(name);
 	if (!tx_proto)
 		tx_proto = "tcp/udp";
@@ -202,11 +202,11 @@ int	*out;
 		return 1;
 
 	c = **cpp;
-	if (!isalpha(c) || (tolower(c) != 'o' && tolower(c) != 'i')) {
+	if (!ISALPHA(c) || (TOLOWER(c) != 'o' && TOLOWER(c) != 'i')) {
 		fprintf(stderr, "bad direction \"%s\"\n", *cpp);
 		return 1;
 	}
-	*out = (tolower(c) == 'o') ? 1 : 0;
+	*out = (TOLOWER(c) == 'o') ? 1 : 0;
 	cpp++;
 	if (!*cpp)
 		return 1;
@@ -238,7 +238,7 @@ int	*out;
 			tx_proto = "icmp";
 		}
 		cpp++;
-	} else if (isdigit(**cpp) && !index(*cpp, '.')) {
+	} else if (ISDIGIT(**cpp) && !index(*cpp, '.')) {
 		ip->ip_p = atoi(*cpp);
 		cpp++;
 	} else
@@ -256,6 +256,10 @@ int	*out;
 		}
 		*last++ = '\0';
 		tcp->th_sport = htons(tx_portnum(last));
+		if (ip->ip_p == IPPROTO_TCP) {
+			tcp->th_win = htons(4096);
+			TCP_OFF_A(tcp, sizeof(*tcp) >> 2);
+		}
 	}
 	ip->ip_src.s_addr = tx_hostnum(*cpp, &r);
 	cpp++;
@@ -280,6 +284,7 @@ int	*out;
 		extern	u_char	_tcp_flags[];
 		char	*s, *t;
 
+		tcp->th_flags = 0;
 		for (s = *cpp; *s; s++)
 			if ((t  = strchr(_tcp_flagset, *s)))
 				tcp->th_flags |= _tcp_flags[t - _tcp_flagset];
@@ -287,8 +292,8 @@ int	*out;
 			cpp++;
 		if (tcp->th_flags == 0)
 			abort();
-		tcp->th_win = htons(4096);
-		TCP_OFF_A(tcp, sizeof(*tcp) >> 2);
+		if (tcp->th_flags & TH_URG)
+			tcp->th_urp = htons(1);
 	} else if (*cpp && ip->ip_p == IPPROTO_ICMP) {
 		extern	char	*tx_icmptypes[];
 		char	**s, *t;

@@ -44,7 +44,7 @@ diff -cr src.30/etc/etc.alpha/MAKEDEV src/etc/etc.alpha/MAKEDEV
 + 	mknod ipauth c 37 3
 + 	mknod ipsync c 37 4
 + 	mknod ipscan c 37 5
-+ 	mknod ippool c 37 6
++ 	mknod iplookup c 37 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -122,7 +122,7 @@ diff -cr src.30/etc/etc.amiga/MAKEDEV src/etc/etc.amiga/MAKEDEV
 + 	mknod ipauth c 38 3
 + 	mknod ipsync c 38 4
 + 	mknod ipscan c 38 5
-+ 	mknod ippool c 38 6
++ 	mknod iplookup c 38 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -163,7 +163,7 @@ diff -cr src.30/etc/etc.hp300/MAKEDEV src/etc/etc.hp300/MAKEDEV
 + 	mknod ipauth c 37 3
 + 	mknod ipsync c 37 4
 + 	mknod ipscan c 37 5
-+ 	mknod ippool c 37 6
++ 	mknod iplookup c 37 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -204,7 +204,7 @@ diff -cr src.30/etc/etc.hppa/MAKEDEV src/etc/etc.hppa/MAKEDEV
 + 	mknod ipauth c 34 3
 + 	mknod ipsync c 34 4
 + 	mknod ipscan c 34 5
-+ 	mknod ippool c 34 6
++ 	mknod iplookup c 34 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -246,7 +246,7 @@ diff -cr src.30/etc/etc.i386/MAKEDEV src/etc/etc.i386/MAKEDEV
 + 	mknod ipauth c 77 3
 + 	mknod ipsync c 77 4
 + 	mknod ipscan c 77 5
-+ 	mknod ippool c 77 6
++ 	mknod iplookup c 77 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -280,7 +280,7 @@ diff -cr src.30/etc/etc.mac68k/MAKEDEV src/etc/etc.mac68k/MAKEDEV
 + 	mknod ipauth c 38 3
 + 	mknod ipsync c 38 4
 + 	mknod ipscan c 38 5
-+ 	mknod ippool c 38 6
++ 	mknod iplookup c 38 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -321,7 +321,7 @@ diff -cr src.30/etc/etc.macppc/MAKEDEV src/etc/etc.macppc/MAKEDEV
 + 	mknod ipauth c 45 3
 + 	mknod ipsync c 45 4
 + 	mknod ipscan c 45 5
-+ 	mknod ippool c 45 6
++ 	mknod iplookup c 45 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -361,7 +361,7 @@ diff -cr src.30/etc/etc.mvme68k/MAKEDEV src/etc/etc.mvme68k/MAKEDEV
 + 	mknod ipauth c 44 3
 + 	mknod ipsync c 44 4
 + 	mknod ipscan c 44 5
-+ 	mknod ippool c 44 6
++ 	mknod iplookup c 44 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
 + 	;;
   
@@ -403,7 +403,7 @@ diff -cr src.30/etc/etc.mvme88k/MAKEDEV src/etc/etc.mvme88k/MAKEDEV
 + 	mknod ipauth c 41 3
 + 	mknod ipsync c 41 4
 + 	mknod ipscan c 41 5
-+ 	mknod ippool c 41 6
++ 	mknod iplookup c 41 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -444,7 +444,7 @@ diff -cr src.30/etc/etc.mvmeppc/MAKEDEV src/etc/etc.mvmeppc/MAKEDEV
 + 	mknod ipauth c 44 3
 + 	mknod ipsync c 44 4
 + 	mknod ipscan c 44 5
-+ 	mknod ippool c 44 6
++ 	mknod iplookup c 44 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -488,7 +488,7 @@ diff -cr src.30/etc/etc.sparc/MAKEDEV src/etc/etc.sparc/MAKEDEV
 + 	mknod ipauth c 60 3
 + 	mknod ipsync c 60 4
 + 	mknod ipscan c 60 5
-+ 	mknod ippool c 60 6
++ 	mknod iplookup c 60 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -525,7 +525,7 @@ diff -cr src.30/etc/etc.sparc64/MAKEDEV src/etc/etc.sparc64/MAKEDEV
 + 	M ipauth c 75 3 root.wheel
 + 	M ipsync c 75 4 root.wheel
 + 	M ipscan c 75 5 root.wheel
-+ 	M ippool c 75 6 root.wheel
++ 	M iplookup c 75 6 root.wheel
 + 	;;
   cgsix*)M cgsix$U c 67 $U 666;;
   audio*)M sound$U	c 69 $U
@@ -569,7 +569,7 @@ diff -cr src.30/etc/etc.sun3/MAKEDEV src/etc/etc.sun3/MAKEDEV
 + 	mknod ipauth c 86 3
 + 	mknod ipsync c 86 4
 + 	mknod ipscan c 86 5
-+ 	mknod ippool c 86 6
++ 	mknod iplookup c 86 6
 + 	chown root.wheel ipl ipnat ipstate ipauth
   	;;
   
@@ -606,7 +606,7 @@ diff -cr src.30/etc/etc.vax/MAKEDEV src/etc/etc.vax/MAKEDEV
 + 	mknod ipauth            c 47 3  ; chmod 600 ipauth
 + 	mknod ipsync            c 47 4  ; chmod 600 ipsync
 + 	mknod ipscan            c 47 5  ; chmod 600 ipscan
-+ 	mknod ippool            c 47 6  ; chmod 600 ippool
++ 	mknod iplookup            c 47 6  ; chmod 600 iplookup
   	;;
   
   fd)

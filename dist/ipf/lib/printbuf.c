@@ -1,11 +1,11 @@
-/*	$NetBSD: printbuf.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printbuf.c,v 1.1.1.2 2005/02/08 06:53:17 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printbuf.c,v 1.5 2001/06/09 17:09:24 darrenr Exp
+ * Id: printbuf.c,v 1.5.4.1 2004/12/09 19:41:22 darrenr Exp
  */
 
 #include <ctype.h>
@@ -22,7 +22,7 @@ int len, zend;
 
 	for (s = buf, i = len; i; i--) {
 		c = *s++;
-		if (isprint(c))
+		if (ISPRINT(c))
 			putchar(c);
 		else
 			printf("\\%03o", c);

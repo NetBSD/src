@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.12 2004/03/28 08:55:49 martti Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.13 2005/02/08 06:53:04 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.73.2.1 2004/03/06 14:33:17 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.73.2.5 2004/12/15 17:13:20 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -59,9 +59,7 @@
 extern	struct	filterstats	frstats[];
 extern	int	fr_running;
 extern	int	fr_flags;
-#ifdef IPFILTER_SYNC
 extern	int	iplwrite __P((dev_t, struct uio *, cred_t *));
-#endif
 
 extern ipnat_t *nat_list;
 
@@ -93,11 +91,7 @@ static struct cb_ops ipf_cb_ops = {
 	nodev,		/* print */
 	nodev,		/* dump */
 	iplread,
-#ifdef IPFILTER_SYNC
 	iplwrite,	/* write */
-#else
-	nodev,		/* write */
-#endif
 	iplioctl,	/* ioctl */
 	nodev,		/* devmap */
 	nodev,		/* mmap */
@@ -312,6 +306,11 @@ ddi_attach_cmd_t cmd;
 		if (pfil_add_hook(fr_check, PFIL_IN|PFIL_OUT, &pfh_inet4))
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_inet4) failed",
 				"pfil_add_hook");
+#ifdef USE_INET6
+		if (pfil_add_hook(fr_check, PFIL_IN|PFIL_OUT, &pfh_inet6))
+			cmn_err(CE_WARN, "IP Filter: %s(pfh_inet6) failed",
+				"pfil_add_hook");
+#endif
 		if (pfil_add_hook(fr_qifsync, PFIL_IN|PFIL_OUT, &pfh_sync))
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_sync) failed",
 				"pfil_add_hook");
@@ -332,7 +331,9 @@ ddi_attach_cmd_t cmd;
 	}
 
 attach_failed:
+#ifdef	IPFDEBUG
 	cmn_err(CE_NOTE, "IP Filter: failed to attach\n");
+#endif
 	/*
 	 * Use our own detach routine to toss
 	 * away any stuff we allocated above.
@@ -372,6 +373,11 @@ ddi_detach_cmd_t cmd;
 		if (pfil_remove_hook(fr_check, PFIL_IN|PFIL_OUT, &pfh_inet4))
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_inet4) failed",
 				"pfil_remove_hook");
+#ifdef USE_INET6
+		if (pfil_remove_hook(fr_check, PFIL_IN|PFIL_OUT, &pfh_inet6))
+			cmn_err(CE_WARN, "IP Filter: %s(pfh_inet6) failed",
+				"pfil_add_hook");
+#endif
 		if (pfil_remove_hook(fr_qifsync, PFIL_IN|PFIL_OUT, &pfh_sync))
 			cmn_err(CE_WARN, "IP Filter: %s(pfh_sync) failed",
 				"pfil_remove_hook");
@@ -459,7 +465,7 @@ void *qif;
 mblk_t **mp;
 {
 
-	frsync();
+	frsync(qif);
 	/*
 	 * Resync. any NAT `connections' using this interface and its IP #.
 	 */
@@ -475,18 +481,7 @@ mblk_t **mp;
  */
 int ipfsync()
 {
-	qpktinfo_t qpi;
-	qif_t *qf;
-
-	frsync();
-	/*
-	 * Resync. any NAT `connections' using this interface and its IP #.
-	 */
-	qf = NULL;
-	while (qif_walk(&qf)) {
-		qpi.qpi_real = qf;
-		(void) fr_qifsync(NULL, 0, (void *)qf->qf_ill, -1, &qpi, NULL);
-	}
+	frsync(NULL);
 	return 0;
 }
 

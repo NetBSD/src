@@ -74,9 +74,20 @@ EXTRA=$(ALLOPTS)
 
 include $(TOP)/lib/Makefile
 
-build all: $(OBJ)/libipf.a ipf ipfs ipfstat ipftest ipmon ipnat ippool \
-	   ipscan ipsyncm ipsyncs $(LKM) $(LKMR)
+build all: machine $(OBJ)/libipf.a ipf ipfs ipfstat ipftest ipmon ipnat \
+	   ippool ipscan ipsyncm ipsyncs $(LKM) $(LKMR)
 	-sh -c 'for i in ipf ipftest ipmon ippool ipnat ipscan ipsyncm ipsyncs; do /bin/rm -f $(TOP)/$$i; ln -s `pwd`/$$i $(TOP); done'
+
+machine: Makefile.kmod
+	if [ -f Makefile.kmod ] ; then \
+		make -f Makefile.kmod depend MKUPDATE=no; \
+	fi
+
+Makefile.kmod:
+	if [ -f /usr/share/mk/bsd.kmod.mk -a "`uname -s`" = "NetBSD" ] ; then \
+		rm -f Makefile.kmod; \
+		ln -s /usr/share/mk/bsd.kmod.mk Makefile.kmod; \
+	fi
 
 ipfstat: $(FILS) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
@@ -440,10 +451,14 @@ clean:
 	${RM} -f ipsyncm ipsyncs ipfs ip_rules.c ip_rules.h
 
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
+	if [ -f Makefile.kmod ] ; then \
+		${MAKE} -f Makefile.kmod ${MFLAGS} clean; \
+	fi
 	-(for i in *; do \
 		if [ -d $${i} -a -f $${i}/Makefile ] ; then \
 			cd $${i}; (make TOP=../.. clean); cd ..; \
-			rm $${i}/Makefile $${i}/Makefile.ipsend; \
+			/bin/rm -f $${i}/Makefile $${i}/Makefile.ipsend; \
+			/bin/rm -f $${i}/Makefile.kmod; \
 			rmdir $${i}; \
 		fi \
 	done)

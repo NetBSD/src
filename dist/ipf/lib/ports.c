@@ -1,11 +1,11 @@
-/*	$NetBSD: ports.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: ports.c,v 1.1.1.2 2005/02/08 06:53:17 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ports.c,v 1.9 2002/01/28 06:50:47 darrenr Exp
+ * Id: ports.c,v 1.9.4.1 2004/12/09 19:41:22 darrenr Exp
  */
 
 #include <ctype.h>
@@ -30,7 +30,7 @@ int     linenum;
 		return 0;
 	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(*seg + 2)) {
 		(*seg)++;
-		if (isalnum(***seg) && *(*seg + 2)) {
+		if (ISALNUM(***seg) && *(*seg + 2)) {
 			if (portnum(**seg, proto, pp, linenum) == 0)
 				return -1;
 			(*seg)++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.2 2004/07/23 05:34:50 martti Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.1.1.3 2005/02/08 06:53:24 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -78,7 +78,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 1.33.2.6 2004/06/20 10:24:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 1.33.2.8 2004/12/09 19:41:26 darrenr Exp";
 #endif
 
 
@@ -136,10 +136,8 @@ static	char	*pidfile = "/etc/ipmon.pid";
 
 static	char	line[2048];
 static	int	opts = 0;
-static	FILE	*newlog = NULL;
 static	char	*logfile = NULL;
 static	FILE	*binarylog = NULL;
-static	FILE	*newbinarylog = NULL;
 static	char	*binarylogfile = NULL;
 static	int	donehup = 0;
 static	void	usage __P((char *));
@@ -391,17 +389,7 @@ size_t tablesz;
 static void handlehup(sig)
 int sig;
 {
-	FILE	*fp;
-
-	if (donehup == 1)
-		return;
-
 	signal(SIGHUP, handlehup);
-	if (logfile && (fp = fopen(logfile, "a")))
-		newlog = fp;
-	if (binarylogfile && (fp = fopen(binarylogfile, "a")))
-		newbinarylog = fp;
-	init_tabs();
 	donehup = 1;
 }
 
@@ -668,7 +656,7 @@ int	len;
 			sprintf((char *)t, "        ");
 			t += 8;
 			for (k = 16; k; k--, s++)
-				*t++ = (isprint(*s) ? *s : '.');
+				*t++ = (ISPRINT(*s) ? *s : '.');
 			s--;
 		}
 			
@@ -686,7 +674,7 @@ int	len;
 		t += 7;
 		s -= j & 0xf;
 		for (k = j & 0xf; k; k--, s++)
-			*t++ = (isprint(*s) ? *s : '.');
+			*t++ = (ISPRINT(*s) ? *s : '.');
 		*t++ = '\n';
 		*t = '\0';
 	}
@@ -1021,7 +1009,7 @@ int	blen;
 	(void) sprintf(t, "%s", ifname);
 	t += strlen(t);
 # if defined(MENTAT) || defined(linux)
-	if (isalpha(*(t - 1))) {
+	if (ISALPHA(*(t - 1))) {
 		sprintf(t, "%d", ipf->fl_unit);
 		t += strlen(t);
 	}
@@ -1422,6 +1410,7 @@ char *argv[];
 {
 	struct	stat	sb;
 	FILE	*log = stdout;
+	FILE	*fp;
 	int	fd[3], doread, n, i;
 	int	tr, nr, regular[3], c;
 	int	fdt[3], devices = 0, make_daemon = 0;
@@ -1625,16 +1614,15 @@ char *argv[];
 
 			tr = read_log(fd[i], &n, buf, sizeof(buf));
 			if (donehup) {
-				if (newlog) {
+				if (logfile && (fp = fopen(logfile, "a"))) {
 					fclose(log);
-					log = newlog;
-					newlog = NULL;
+					log = fp;
 				}
-				if (newbinarylog) {
+				if (binarylogfile && (fp = fopen(binarylogfile, "a"))) {
 					fclose(binarylog);
-					binarylog = newbinarylog;
-					newbinarylog = NULL;
+					binarylog = fp;
 				}
+				init_tabs();
 				if (conf_file != NULL)
 					load_config(conf_file);
 				donehup = 0;

@@ -481,7 +481,7 @@ diff -cr sys.30/conf/GENERIC sys/conf/GENERIC
   #option		CCITT,LLC,HDLC	# X.25
 + option		IPFILTER        # IP packet filter for security
 + option		IPFILTER_LOG    # use /dev/ipl to log IPF
-+ #option		IPFILTER_LOOKUP    # use /dev/ippool for IP pools
++ #option		IPFILTER_LOOKUP    # use /dev/iplookup for IP pools
   option		PPP_BSDCOMP	# PPP BSD compression
   option		PPP_DEFLATE
   #option		MROUTING	# Multicast router
@@ -552,7 +552,7 @@ diff -cr sys.30/net/if.c sys/net/if.c
 + 
 + #ifdef IPFILTER
 + 	/* XXX More ipf & ipnat cleanup needed.  */
-+ 	frsync();
++ 	frsync(ifp);
 + #endif
   
   	/* Deallocate private resources.  */

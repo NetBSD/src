@@ -1,6 +1,6 @@
 Summary: IP Filter Software
 Name: ipfilter
-Version: 4.1.3
+Version: 4.1.5
 Release: 1
 Copyright: Copyright 2004 Darren Reed
 Group: System Environment/Base
@@ -12,7 +12,7 @@ Packet Filtering and NAT for firewall applications
 %files
 %defattr(-,root,root)
 
-/lib/modules/KERNELBUILD/kernel/net/ipv4/ipfilter.o
+/lib/modules/KERNELBUILD/kernel/net/ipv4/ipfilter.MODEXT
 /etc/init.d/ipfilter
 /etc/sysconfig/ipfilter
 /sbin/ipf
@@ -89,6 +89,7 @@ fi
 %post
 /sbin/chkconfig --add ipfilter
 /sbin/chkconfig TURNONIPFILTER
+/sbin/depmod -A
 
 %preun
 /etc/init.d/ipfilter stop

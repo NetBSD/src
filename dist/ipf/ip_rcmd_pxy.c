@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.1.8 2004/07/23 05:34:00 martti Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.1.9 2005/02/08 06:53:01 martti Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_rcmd_pxy.c,v 1.41.2.2 2004/05/24 14:01:49 darrenr Exp
+ * Id: ip_rcmd_pxy.c,v 1.41.2.3 2004/12/09 19:41:00 darrenr Exp
  *
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
@@ -88,7 +88,7 @@ char *ptr;
 	register char *s = ptr, c;
 	register u_short i = 0;
 
-	while (((c = *s++) != '\0') && isdigit(c)) {
+	while (((c = *s++) != '\0') && ISDIGIT(c)) {
 		i *= 10;
 		i += c - '0';
 	}

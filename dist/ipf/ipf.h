@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.6 2004/07/23 05:33:51 martti Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.7 2005/02/08 06:53:02 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.71.2.3 2004/04/20 11:53:08 darrenr Exp
+ * Id: ipf.h,v 2.71.2.4 2004/11/02 11:15:35 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -79,6 +79,7 @@ struct file;
 #include "netinet/ip_pool.h"
 #include "netinet/ip_scan.h"
 #include "netinet/ip_htable.h"
+#include "netinet/ip_sync.h"
 
 #include "opts.h"
 

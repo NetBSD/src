@@ -1,11 +1,11 @@
-/*	$NetBSD: addicmp.c,v 1.1.1.1 2004/03/28 08:56:17 martti Exp $	*/
+/*	$NetBSD: addicmp.c,v 1.1.1.2 2005/02/08 06:53:15 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: addicmp.c,v 1.10 2003/12/01 02:03:50 darrenr Exp
+ * Id: addicmp.c,v 1.10.2.1 2004/12/09 19:41:16 darrenr Exp
  */
 
 #include <ctype.h>
@@ -36,7 +36,7 @@ int     linenum;
 		return -1;
 	if (!fp->fr_proto)	/* to catch lusers */
 		fp->fr_proto = IPPROTO_ICMP;
-	if (isdigit(***cp)) {
+	if (ISDIGIT(***cp)) {
 		if (!ratoi(**cp, &i, 0, 255)) {
 			fprintf(stderr,
 				"%d: Invalid icmp-type (%s) specified\n",
@@ -70,7 +70,7 @@ int     linenum;
 	if (**cp && strcasecmp("code", **cp))
 		return 0;
 	(*cp)++;
-	if (isdigit(***cp)) {
+	if (ISDIGIT(***cp)) {
 		if (!ratoi(**cp, &i, 0, 255)) {
 			fprintf(stderr,
 				"%d: Invalid icmp code (%s) specified\n",

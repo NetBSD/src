@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.c,v 1.1.1.1 2004/03/28 08:55:25 martti Exp $	*/
+/*	$NetBSD: hpux.c,v 1.1.1.2 2005/02/08 06:52:56 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -472,12 +472,7 @@ mblk_t **mp;
 	register struct frentry *f;
 	register ipnat_t *np;
 
-	frsync();
-	/*
-	 * Resync. any NAT `connections' using this interface and its IP #.
-	 */
-	fr_natsync(qif);
-	fr_statesync(qif);
+	frsync(NULL);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipscan_y.y,v 1.1.1.1 2004/03/28 08:56:35 martti Exp $	*/
+/*	$NetBSD: ipscan_y.y,v 1.1.1.2 2005/02/08 06:53:24 martti Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -209,7 +209,7 @@ char *src;
 			j = k = 0;
 			do {
 				c = *s++;
-				if (j && (!isdigit(c) || (c > '7') ||
+				if (j && (!ISDIGIT(c) || (c > '7') ||
 				     (k >= 248))) {
 					*u++ = k, i++;
 					j = k = 0;
@@ -218,7 +218,7 @@ char *src;
 				}
 				i++;
 
-				if (isalpha(c) || (c > '7')) {
+				if (ISALPHA(c) || (c > '7')) {
 					switch (c)
 					{
 					case 'n' :
@@ -234,7 +234,7 @@ char *src;
 						*u++ = c;
 						break;
 					}
-				} else if (isdigit(c)) {
+				} else if (ISDIGIT(c)) {
 					j = 1;
 					k <<= 3;
 					k |= (c - '0');
