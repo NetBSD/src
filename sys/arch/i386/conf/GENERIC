@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.472 2002/02/10 17:36:57 wiz Exp $
+# $NetBSD: GENERIC,v 1.473 2002/02/27 00:31:12 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.472 $"
+#ident 		"GENERIC-$Revision: 1.473 $"
 
 maxusers	32		# estimated number of users
 
@@ -339,7 +339,9 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
+#options	PMS_DISABLE_POWERHOOK
 pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+#options	PMSI_DISABLE_POWERHOOK
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 vga*		at pci? dev ? function ?
