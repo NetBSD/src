@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.7 2002/03/31 13:55:14 bjh21 Exp $	*/
 
 /********************************************************************\
  *
@@ -18,10 +18,14 @@
  *
 \********************************************************************/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.7 2002/03/31 13:55:14 bjh21 Exp $");
 #endif	/* not lint */
+#endif
 
 /* header files */
 #include <sys/types.h>
@@ -34,10 +38,6 @@ __RCSID("$NetBSD: rmd160.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #if !HAVE_RMD160_H
 
