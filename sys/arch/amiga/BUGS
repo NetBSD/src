@@ -1,13 +1,18 @@
-Current list as of 93-7-5:
+There are probably dozens of bugs, keep in mind this is the first release :-)
 
 Those I'm aware of:
+-  the console has some scrolling bug. This shows in the ircII client, where
+   incoming message lines just `scroll' in the last displayed line, instead
+   of scrolling the entire display.
+-  the dma code is currently broken. I'd really like to get this going again,
+   it's scribbling over innocent memory at the moment, and I think there might
+   be some bugs in the A3000 Service Manual describing some registers, we'll
+   see...
 -  nfsd and mountd crash regularly when going to multiuser mode...
 -  the console seems to have some problems displaying text when parity is
    enabled. This shows in a distorted login-prompt (multiuser mode).
 -  the vt200 emulator is really far from perfect, and needs a lot more work
    to be honestly called a vt200 (or vt320 even) emulator.
--  the console chops the rightmost character, I guess this is a problem of
-   the display-window, not of the bitmap drawing itself.
 -  8bit characters are all displayed as ^@. Problems could lie in wrong tty
    settings or the ite driver.
 -  although autoconfig information is passed into the kernel and the hardware
@@ -18,6 +23,8 @@ Those I'm aware of:
 -  disklabels can't be written back to disk. You'll have to configure your
    drives under amigados (with hdtoolbox), and just format the partitions
    under BSD. I think this is a tolerable limitation.
+-  the clock runs much too fast. I have an idea the kernel might think in
+   60Hz units, when the clock really runs at 100Hz, I'll look into this.
 -  there's currently no provision for reading the realtime-clock, so time
    is always set using the last modification date of the mounted root 
    filesystem.
