@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.22 2002/10/16 20:05:20 wennmach Exp $
+.\"	$NetBSD: bpf.4,v 1.23 2003/02/04 22:38:15 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -679,7 +679,7 @@ received packets as a side effect of another file requesting this
 mode on the same hardware interface.  This could be fixed in the kernel
 with additional processing overhead.  However, we favor the model where
 all files must assume that the interface is promiscuous, and if
-so desired, must utilize a filter to reject foreign packets.
+so desired, must use a filter to reject foreign packets.
 .Pp
 Data link protocols with variable length headers are not currently supported.
 .Pp
