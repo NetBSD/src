@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.13 1998/12/08 14:34:08 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.14 1998/12/10 23:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -650,7 +650,8 @@ ohci_process_done(sc, done)
 				len = std->td->td_be - std->td->td_cbp + 1;
 			reqh->actlen += len;
 			if (reqh->hcpriv == std) {
-				switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
+				switch (reqh->pipe->endpoint->edesc->
+					bmAttributes & UE_XFERTYPE) {
 				case UE_CONTROL:
 					ohci_ctrl_done(sc, reqh);
 					break;
@@ -673,8 +674,8 @@ ohci_process_done(sc, done)
 			struct ohci_pipe *opipe = 
 				(struct ohci_pipe *)reqh->pipe;
 			DPRINTFN(-1,("ohci_process_done: error cc=%d (%s)\n",
-				     OHCI_TD_GET_CC(std->td->td_flags),
-				     ohci_cc_strs[OHCI_TD_GET_CC(std->td->td_flags)]));
+			     OHCI_TD_GET_CC(std->td->td_flags),
+			     ohci_cc_strs[OHCI_TD_GET_CC(std->td->td_flags)]));
 			/*
 			 * Endpoint is halted.  First unlink all the TDs
 			 * belonging to the failed transfer, and then restart
@@ -894,7 +895,8 @@ ohci_device_request(reqh)
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
-	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
+	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
+		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), len, addr, 
 		    opipe->pipe.endpoint->edesc->bEndpointAddress));
@@ -1125,7 +1127,8 @@ void
 ohci_dump_td(std)
 	ohci_soft_td_t *std;
 {
-	printf("TD(%p) at %08lx: %b delay=%d ec=%d cc=%d\ncbp=0x%08lx nexttd=0x%08lx be=0x%08lx\n", 
+	printf("TD(%p) at %08lx: %b delay=%d ec=%d cc=%d\ncbp=0x%08lx "
+	       "nexttd=0x%08lx be=0x%08lx\n", 
 	       std, (u_long)std->physaddr,
 	       (u_long)std->td->td_flags, 
 	       "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
@@ -1140,7 +1143,8 @@ void
 ohci_dump_ed(sed)
 	ohci_soft_ed_t *sed;
 {
-	printf("ED(%p) at %08lx: addr=%d endpt=%d maxp=%d %b\ntailp=0x%08lx headp=%b nexted=0x%08lx\n",
+	printf("ED(%p) at %08lx: addr=%d endpt=%d maxp=%d %b\ntailp=0x%08lx "
+	       "headp=%b nexted=0x%08lx\n",
 	       sed, (u_long)sed->physaddr, 
 	       OHCI_ED_GET_FA(sed->ed->ed_flags),
 	       OHCI_ED_GET_EN(sed->ed->ed_flags),
@@ -1458,7 +1462,8 @@ ohci_root_ctrl_transfer(reqh)
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(8, ("ohci_root_ctrl_control: UR_CLEAR_PORT_FEATURE port=%d feature=%d\n",
+		DPRINTFN(8, ("ohci_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
+			     "port=%d feature=%d\n",
 			     index, value));
 		if (index < 1 || index > sc->sc_noport) {
 			r = USBD_IOERROR;
@@ -1585,7 +1590,8 @@ ohci_root_ctrl_transfer(reqh)
 			OWRITE4(sc, port, UPS_SUSPEND);
 			break;
 		case UHF_PORT_RESET:
-			DPRINTFN(5,("ohci_root_ctrl_transfer: reset port %d\n", index));
+			DPRINTFN(5,("ohci_root_ctrl_transfer: reset port %d\n",
+				    index));
 			OWRITE4(sc, port, UPS_RESET);
 			for (i = 0; i < 10; i++) {
 				usbd_delay_ms(&sc->sc_bus, 10);
@@ -1596,7 +1602,8 @@ ohci_root_ctrl_transfer(reqh)
 				    index, OREAD4(sc, port)));
 			break;
 		case UHF_PORT_POWER:
-			DPRINTFN(2,("ohci_root_ctrl_transfer: set port power %d\n", index));
+			DPRINTFN(2,("ohci_root_ctrl_transfer: set port power "
+				    "%d\n", index));
 			OWRITE4(sc, port, UPS_PORT_POWER);
 			break;
 		default:
@@ -1705,7 +1712,7 @@ ohci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is donw */
 	/* XXX call done */
 }
 
@@ -1822,7 +1829,7 @@ ohci_device_bulk_abort(reqh)
 		usbd_delay_ms(reqh->pipe->device->bus, 2);
 #endif
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	/* XXX call done */
 }
 
@@ -1860,7 +1867,8 @@ ohci_device_intr_transfer(reqh)
 	int len;
 	int s;
 
-	DPRINTFN(3, ("ohci_device_intr_transfer: reqh=%p buf=%p len=%d flags=%d priv=%p\n",
+	DPRINTFN(3, ("ohci_device_intr_transfer: reqh=%p buf=%p len=%d "
+		     "flags=%d priv=%p\n",
 		 reqh, reqh->buffer, reqh->length, reqh->flags, reqh->priv));
 
 	if (reqh->isreq)
@@ -1939,7 +1947,7 @@ ohci_device_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1);	/* make sure it is finished */
+	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;

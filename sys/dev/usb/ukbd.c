@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.14 1998/12/09 00:18:11 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.15 1998/12/10 23:16:47 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -268,12 +268,14 @@ ukbd_attach(parent, self, aux)
 		return;
 	}
 
-	DPRINTFN(10,("ukbd_attach: \
-bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketSize=%d bInterval=%d\n",
-	       ed->bLength, ed->bDescriptorType, ed->bEndpointAddress & UE_ADDR,
-	       ed->bEndpointAddress & UE_IN ? "in" : "out",
-	       ed->bmAttributes & UE_XFERTYPE,
-	       UGETW(ed->wMaxPacketSize), ed->bInterval));
+	DPRINTFN(10,("ukbd_attach: bLength=%d bDescriptorType=%d "
+		     "bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketSize=%d"
+		     " bInterval=%d\n",
+		     ed->bLength, ed->bDescriptorType, 
+		     ed->bEndpointAddress & UE_ADDR,
+		     ed->bEndpointAddress & UE_IN ? "in" : "out",
+		     ed->bmAttributes & UE_XFERTYPE,
+		     UGETW(ed->wMaxPacketSize), ed->bInterval));
 
 	if ((ed->bEndpointAddress & UE_IN) != UE_IN ||
 	    (ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
