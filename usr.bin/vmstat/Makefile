@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2001/05/06 23:37:36 wiz Exp $
+#	$NetBSD: Makefile,v 1.21 2005/02/26 21:19:18 dsl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	vmstat
+WARNS=3
 
 SRCS=	dkstats.c vmstat.c
 MAN=	vmstat.1

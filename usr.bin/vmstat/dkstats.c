@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.21 2004/02/13 11:36:24 wiz Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.22 2005/02/26 21:19:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -241,7 +241,7 @@ dkreadstats(void)
  * track disk statistics.
  */
 int
-dkinit(int select)
+dkinit(int selected)
 {
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
@@ -351,7 +351,7 @@ dkinit(int select)
 			err(1, "sysctl hw.diskstats failed");
 		for (i = 0; i < dk_ndrive; i++) {
 			cur.dk_name[i] = dk_drives[i].dk_name;
-			cur.dk_select[i] = select;
+			cur.dk_select[i] = selected;
 		}
 	} else {
 		p = dk_drivehead;
@@ -362,7 +362,7 @@ dkinit(int select)
 			cur.dk_name[i] = strdup(buf);
 			if (!cur.dk_name[i])
 				err(1, "strdup");
-			cur.dk_select[i] = select;
+			cur.dk_select[i] = selected;
 
 			p = cur_disk.dk_link.tqe_next;
 		}
