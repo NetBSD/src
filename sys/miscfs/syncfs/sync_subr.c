@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.3.6.1 2000/07/27 02:46:51 mycroft Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.3.6.2 2000/12/14 23:36:16 he Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -183,7 +183,7 @@ sched_sync(v)
 			if (VOP_ISLOCKED(vp) == 0) {
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				(void) VOP_FSYNC(vp, curproc->p_ucred,
-				    FSYNC_LAZY, curproc);
+				    FSYNC_LAZY, 0, 0, curproc);
 				VOP_UNLOCK(vp, 0);
 			}
 			s = splbio();
