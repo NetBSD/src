@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.26 2002/03/10 19:20:50 cyber Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.27 2002/04/03 00:18:31 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.26 2002/03/10 19:20:50 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.27 2002/04/03 00:18:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,8 @@ com_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
+	psc->sc_io_window = -1;
+
 retry:
 	/* find a cfe we can use */
 
@@ -308,11 +310,13 @@ com_pcmcia_detach(self, flags)
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) self;
 	int error;
 
-	if ((error = com_detach(self, flags)) != 0)
-		return error;
+	if (psc->sc_io_window != -1) {
+		if ((error = com_detach(self, flags)) != 0)
+			return error;
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+		/* Unmap our i/o window. */
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	}
 
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
