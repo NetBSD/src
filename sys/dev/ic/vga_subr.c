@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.2 1998/05/28 16:48:40 drochner Exp $ */
+/* $NetBSD: vga_subr.c,v 1.3 1999/01/13 16:48:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -111,22 +111,22 @@ vga_loadchars(vh, fontset, first, num, lpc, data)
 }
 
 void
-vga_setfontset(vh, fontset)
+vga_setfontset(vh, fontset1, fontset2)
 	struct vga_handle *vh;
-	int fontset;
+	int fontset1, fontset2;
 {
 	u_int8_t cmap;
 	static u_int8_t cmaptaba[] = {
-		0x00, 0x10, 0x02, 0x12,
-		0x01, 0x11, 0x03, 0x13
+		0x00, 0x10, 0x01, 0x11,
+		0x02, 0x12, 0x03, 0x13
 	};
 	static u_int8_t cmaptabb[] = {
-		0x00, 0x20, 0x08, 0x28,
-		0x04, 0x24, 0x0c, 0x2c
+		0x00, 0x20, 0x04, 0x24,
+		0x08, 0x28, 0x0c, 0x2c
 	};
 
 	/* no extended fonts for now */
-	cmap = cmaptaba[fontset] | cmaptabb[fontset];
+	cmap = cmaptaba[fontset1] | cmaptabb[fontset2];
 
 	vga_ts_write(vh, fontsel, cmap);
 }
@@ -144,4 +144,16 @@ vga_setscreentype(vh, type)
 	/* set cursor to last 2 lines */
 	vga_6845_write(vh, curstart, type->fontheight - 2);
 	vga_6845_write(vh, curend, type->fontheight - 1);
+
+	/*
+	 * disable colour plane 3 if needed for font selection
+	 */
+	if (type->capabilities & WSSCREEN_HILIT) {
+		/*
+		 * these are the screens which don't support
+		 * 512-character fonts
+		 */
+		vga_attr_write(vh, colplen, 0x0f);
+	} else
+		vga_attr_write(vh, colplen, 0x07);
 }
