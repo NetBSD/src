@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.49 2002/12/05 17:22:13 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.50 2002/12/23 12:17:55 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.49 2002/12/05 17:22:13 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.50 2002/12/23 12:17:55 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,57 +75,117 @@ refresh(void)
 int
 wnoutrefresh(WINDOW *win)
 {
-	return _cursesi_wnoutrefresh(_cursesi_screen, win);
+#ifdef DEBUG
+	__CTRACE("wnoutrefresh: win %0.2o\n", win);
+#endif
+
+	return _cursesi_wnoutrefresh(_cursesi_screen, win, 0, 0, win->begy,
+	    win->begx, win->maxy, win->maxx);
 }
 
+/*
+ * pnoutrefresh --
+ *	Add the contents of "pad" to the virtual window.
+ */
+int
+pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
+    int smaxy, int smaxx)
+{
+	int pmaxy, pmaxx;
+
+#ifdef DEBUG
+	__CTRACE("pnoutrefresh: pad %0.2o, flags 0x%08x\n", pad, pad->flags);
+	__CTRACE("pnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n", pbegy, pbegx,
+	    sbegy, sbegx, smaxy, smaxx);
+#endif
+
+	/* SUS says if these are negative, they should be treated as zero */
+	if (pbegy < 0)
+		pbegy = 0;
+	if (pbegx < 0)
+		pbegx = 0;
+	if (sbegy < 0)
+		sbegy = 0;
+	if (sbegx < 0)
+		sbegx = 0;
+
+	/* Calculate rectangle on pad - used bu _cursesi_wnoutrefresh */
+	pmaxy = pbegy + smaxy - sbegy + 1;
+	pmaxx = pbegx + smaxx - sbegx + 1;
+
+	/* Check rectangle fits in pad */
+	if (pmaxy > pad->maxy - pad->begy)
+		pmaxy = pad->maxy - pad->begy;
+	if (pmaxx > pad->maxx - pad->begx)
+		pmaxx = pad->maxx - pad->begx;
+		
+	if (smaxy - sbegy < 0 || smaxx - sbegx < 0 )
+		return ERR;
+
+	return _cursesi_wnoutrefresh(_cursesi_screen, pad,
+	    pad->begy + pbegy, pad->begx + pbegx, pad->begy + sbegy,
+	    pad->begx + sbegx, pmaxy, pmaxx);
+}
 
 /*
  * _cursesi_wnoutrefresh --
  *      Does the grunt work for wnoutrefresh to the given screen.
- *
+ *	Copies the part of the window given by the rectangle
+ *	(begy, begx) to (maxy, maxx) at screen position (wbegy, wbegx).
  */
 int
-_cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
+_cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
+    int wbegy, int wbegx, int maxy, int maxx)
 {
 
-	short	wy, wx, x_off;
+	short	wy, wx, y_off, x_off;
 	__LINE	*wlp, *vlp;
 
 #ifdef DEBUG
 	__CTRACE("wnoutrefresh: win %0.2o, flags 0x%08x\n", win, win->flags);
+	__CTRACE("wnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n", begy, begx,
+		wbegy, wbegx, maxy, maxx);
 #endif
 
 	if (screen->curwin)
 		return(OK);
-	screen->__virtscr->cury = win->cury + win->begy;
-	screen->__virtscr->curx = win->curx + win->begx;
+
+	/* Check that cursor position on "win" is valid for "__virtscr" */
+	if (win->cury + wbegy - begy < screen->__virtscr->maxy &&
+	    win->cury + wbegy - begy >= 0 && win->cury < maxy - begy)
+		screen->__virtscr->cury = win->cury + wbegy - begy;
+	if (win->curx + wbegx - begx < screen->__virtscr->maxx &&
+	    win->curx + wbegx - begx >= 0 && win->curx < maxx - begx)
+		screen->__virtscr->curx = win->curx + wbegx - begx;
 
 	/* Copy the window flags from "win" to "__virtscr" */
 	if (win->flags & __CLEAROK) {
-		if (win->flags & __FULLWIN)
+		if (win->flags & __FULLWIN) {
 			screen->__virtscr->flags |= __CLEAROK;
+			werase(screen->__virtscr);
+		}
 		win->flags &= ~__CLEAROK;
 	}
 	screen->__virtscr->flags &= ~__LEAVEOK;
 	screen->__virtscr->flags |= win->flags;
 
-	for (wy = 0; wy < win->maxy &&
-	    wy < screen->__virtscr->maxy - win->begy; wy++) {
-		wlp = win->lines[wy];
+	for (wy = begy, y_off = wbegy; wy < maxy &&
+	    y_off < screen->__virtscr->maxy; wy++, y_off++) {
+ 		wlp = win->lines[wy];
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
 		    *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
 		if ((wlp->flags & __ISDIRTY) == 0)
 			continue;
-		vlp = screen->__virtscr->lines[wy + win->begy];
+		vlp = screen->__virtscr->lines[y_off];
 
-		if (*wlp->firstchp < win->maxx + win->ch_off &&
+		if (*wlp->firstchp < maxx + win->ch_off &&
 		    *wlp->lastchp >= win->ch_off) {
 			/* Copy line from "win" to "__virtscr". */
-			for (wx = *wlp->firstchp - win->ch_off,
-			    x_off = win->begx + *wlp->firstchp - win->ch_off;
-			    wx <= *wlp->lastchp && wx < win->maxx &&
+			for (wx = begx + *wlp->firstchp - win->ch_off,
+			    x_off = wbegx + *wlp->firstchp - win->ch_off;
+			    wx <= *wlp->lastchp && wx < maxx &&
 			    x_off < screen->__virtscr->maxx; wx++, x_off++) {
 				vlp->line[x_off].attr = wlp->line[wx].attr;
 				if (wlp->line[wx].attr & __COLOR)
@@ -157,29 +217,34 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
 #endif
 			/* Set change pointers on "__virtscr". */
 			if (*vlp->firstchp >
-			    *wlp->firstchp + win->begx - win->ch_off)
+			    *wlp->firstchp + wbegx - win->ch_off)
 				*vlp->firstchp =
-				    *wlp->firstchp + win->begx - win->ch_off;
+				    *wlp->firstchp + wbegx - win->ch_off;
 			if (*vlp->lastchp <
-			    *wlp->lastchp + win->begx - win->ch_off)
+			    *wlp->lastchp + wbegx - win->ch_off)
 				*vlp->lastchp =
-				    *wlp->lastchp + win->begx - win->ch_off;
+				    *wlp->lastchp + wbegx - win->ch_off;
 #ifdef DEBUG
 			__CTRACE("__virtscr: firstch = %d, lastch = %d\n",
 			    *vlp->firstchp, *vlp->lastchp);
 #endif
-
-			/* Set change pointers on "win". */
-			if (*wlp->firstchp >= win->ch_off)
-				*wlp->firstchp = win->maxx + win->ch_off;
-			if (*wlp->lastchp < win->maxx + win->ch_off)
-				*wlp->lastchp = win->ch_off;
-			if (*wlp->lastchp < *wlp->firstchp) {
+			/*
+			 * Unset change pointers only if a window, as a pad
+			 * can be displayed again without any of the contents
+			 * changing.
+			 */
+			if (!(win->flags & __ISPAD)) {
+				/* Set change pointers on "win". */
+				if (*wlp->firstchp >= win->ch_off)
+					*wlp->firstchp = maxx + win->ch_off;
+				if (*wlp->lastchp < maxx + win->ch_off)
+					*wlp->lastchp = win->ch_off;
+				if (*wlp->lastchp < *wlp->firstchp) {
 #ifdef DEBUG
-				__CTRACE("wnoutrefresh: line %d notdirty\n",
-				    wy);
+					__CTRACE("wnoutrefresh: line %d notdirty\n", wy);
 #endif
-				wlp->flags &= ~__ISDIRTY;
+					wlp->flags &= ~__ISDIRTY;
+				}
 			}
 		}
 	}
@@ -189,7 +254,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
 
 /*
  * wrefresh --
- *	Make the current screen look like "win" over the area coverd by
+ *	Make the current screen look like "win" over the area covered by
  *	win.
  */
 int
@@ -197,9 +262,14 @@ wrefresh(WINDOW *win)
 {
 	int retval;
 
+#ifdef DEBUG
+	__CTRACE("wrefresh: win %0.2o\n", win);
+#endif
+
 	_cursesi_screen->curwin = (win == _cursesi_screen->curscr);
 	if (!_cursesi_screen->curwin)
-		retval = _cursesi_wnoutrefresh(_cursesi_screen, win);
+		retval = _cursesi_wnoutrefresh(_cursesi_screen, win, 0, 0,
+		    win->begy, win->begx, win->maxy, win->maxx);
 	else
 		retval = OK;
 	if (retval == OK) {
@@ -210,6 +280,33 @@ wrefresh(WINDOW *win)
 		}
 	}
 	_cursesi_screen->curwin = 0;
+	return(retval);
+}
+
+ /*
+ * prefresh --
+ *	Make the current screen look like "pad" over the area coverd by
+ *	the specified area of pad.
+ */
+int
+prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
+    int smaxy, int smaxx)
+{
+	int retval;
+
+#ifdef DEBUG
+	__CTRACE("prefresh: pad %0.2o, flags 0x%08x\n", pad, pad->flags);
+#endif
+
+	/* Use pnoutrefresh() to avoid duplicating code here */
+	retval = pnoutrefresh(pad, pbegy, pbegx, sbegy, sbegx, smaxy, smaxx);
+	if (retval == OK) {
+		retval = doupdate();
+		if (!pad->flags & __LEAVEOK) {
+			pad->cury = max(0, curscr->cury - pad->begy);
+			pad->curx = max(0, curscr->curx - pad->begx);
+		}
+	}
 	return(retval);
 }
 
