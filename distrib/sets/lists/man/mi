@@ -318,6 +318,7 @@
 ./usr/share/man/cat4/bt.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
+./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cy.0
@@ -373,12 +374,14 @@
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/sb.0
+./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sea.0
 ./usr/share/man/cat4/si.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/spp.0
+./usr/share/man/cat4/ss.0
 ./usr/share/man/cat4/st.0
 ./usr/share/man/cat4/stderr.0
 ./usr/share/man/cat4/stdin.0
@@ -406,6 +409,7 @@
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
+./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/core.0
@@ -493,6 +497,7 @@
 ./usr/share/man/cat7/mailaddr.0
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/msafer.0
+./usr/share/man/cat7/packages.0
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/release.0
 ./usr/share/man/cat7/symlink.0
@@ -1319,6 +1324,7 @@
 ./usr/share/man/man4/bt.4
 ./usr/share/man/man4/ccd.4
 ./usr/share/man/man4/cd.4
+./usr/share/man/man4/ch.4
 ./usr/share/man/man4/clnp.4
 ./usr/share/man/man4/cltp.4
 ./usr/share/man/man4/cy.4
@@ -1374,12 +1380,14 @@
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rtfps.4
 ./usr/share/man/man4/sb.4
+./usr/share/man/man4/scsi.4
 ./usr/share/man/man4/sd.4
 ./usr/share/man/man4/sea.4
 ./usr/share/man/man4/si.4
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/spp.4
+./usr/share/man/man4/ss.4
 ./usr/share/man/man4/st.4
 ./usr/share/man/man4/stderr.4
 ./usr/share/man/man4/stdin.4
@@ -1407,6 +1415,7 @@
 ./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
+./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bootptab.5
 ./usr/share/man/man5/core.5
@@ -1494,6 +1503,7 @@
 ./usr/share/man/man7/mailaddr.7
 ./usr/share/man/man7/mdoc.7
 ./usr/share/man/man7/msafer.7
+./usr/share/man/man7/packages.7
 ./usr/share/man/man7/re_format.7
 ./usr/share/man/man7/release.7
 ./usr/share/man/man7/symlink.7
