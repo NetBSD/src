@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.8 1999/04/17 16:18:18 augustss Exp $
+.\" $NetBSD: main,v 1.9 1999/04/20 14:30:32 minoura Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -834,8 +834,8 @@ them, and would like to mentioned, tell us!)
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.ORG Ta Sy vax
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy macppc
 .It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy newsmips
+.It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG Ta Sy x68k
 .It Ta Phil Nelson Ta Mt phil@NetBSD.ORG Ta Sy pc532
-.It Ta Masaru Oki Ta Mt oki@NetBSD.ORG Ta Sy x68k
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG Ta Sy mac68k
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Gordon Ross Ta Mt gwr@NetBSD.ORG Ta Sy sun3,\ sun3x
@@ -908,9 +908,9 @@ them, and would like to mentioned, tell us!)
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.ORG
-.It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG
 .It Ta der Mouse Ta Mt mouse@NetBSD.ORG
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG
+.It Ta Masaru Oki Ta Mt oki@NetBSD.ORG
 .It Ta Greg Oster Ta Mt oster@NetBSD.ORG
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.ORG
 .It Ta Dante Profeta Ta Mt dante@NetBSD.ORG
