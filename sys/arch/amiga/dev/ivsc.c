@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.13 1996/03/17 01:17:41 thorpej Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.14 1996/03/28 19:23:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -327,4 +327,6 @@ ivsc_intr(dev)
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return(0);
 	stat = *dev->sci_iack;
+	/* XXXX is: something is missing here, at least a: */
+	return(1);
 }
