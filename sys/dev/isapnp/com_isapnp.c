@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.11 1998/02/25 13:18:50 christos Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.12 1998/04/25 10:58:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,11 +62,7 @@ struct com_isapnp_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	com_isapnp_match __P((struct device *, void *, void *));
-#else
 int	com_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	com_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_isapnp_ca = {
@@ -76,11 +72,7 @@ struct cfattach com_isapnp_ca = {
 int
 com_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
@@ -90,6 +82,7 @@ com_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "OZO8039") && /* Zoom 56k flex */
 	    strcmp(ipa->ipa_devlogic, "BRI1400") && /* Boca 33.6 PnP */
 	    strcmp(ipa->ipa_devlogic, "ROK0010") && /* Rockwell ? */
+	    strcmp(ipa->ipa_devlogic, "USR2070") && /* USR Sportster 56k */
 	    strcmp(ipa->ipa_devcompat, "PNP0500") && /* generic 8250/16450 */
 	    strcmp(ipa->ipa_devcompat, "PNP0501")) /* generic 16550A */
 		return (0);
@@ -121,6 +114,8 @@ com_isapnp_attach(parent, self, aux)
 	 */
 	if (comprobe1(sc->sc_iot, sc->sc_ioh, sc->sc_iobase) == 0)
 		return;
+
+	sc->sc_frequency = 115200 * 16; /* is that always right? */
 
 	com_attach_subr(sc);
 
