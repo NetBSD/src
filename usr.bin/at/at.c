@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.19 2002/08/01 22:39:14 christos Exp $	*/
+/*	$NetBSD: at.c,v 1.20 2002/11/16 04:31:15 itojun Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -70,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.19 2002/08/01 22:39:14 christos Exp $");
+__RCSID("$NetBSD: at.c,v 1.20 2002/11/16 04:31:15 itojun Exp $");
 #endif
 #endif
 
@@ -195,7 +195,7 @@ writefile(time_t runtimer, char queue)
 
 	sigaction(SIGINT, &act, NULL);
 
-	(void)strncpy(atfile, _PATH_ATJOBS, sizeof(atfile) - 1);
+	(void)strlcpy(atfile, _PATH_ATJOBS, sizeof(atfile));
 	ppos = atfile + strlen(atfile);
 
 	/*
