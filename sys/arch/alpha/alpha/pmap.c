@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.32 1998/04/27 19:07:03 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.33 1998/04/27 19:17:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 1998/04/27 19:07:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 1998/04/27 19:17:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1882,21 +1882,21 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  * pmap_update:
  *
  *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
- *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
+ *	incorrect entries NOW, by processing any deferred
+ *	pmap operations.
  */
 void
 pmap_update()
 {
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_update()\n");
 #endif
-	ALPHA_TBIA();
-	alpha_pal_imb();
+
+	/*
+	 * Nothing to do; this pmap module does not defer any operations.
+	 */
 }
 
 /*
