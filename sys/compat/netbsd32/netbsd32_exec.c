@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.6 1998/09/09 10:29:18 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.7 1998/09/09 23:36:15 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -131,7 +131,10 @@ exec_sparc32_makecmds(p, epp)
 		break;
 	}
 
-	if (error)
+	if (error == 0) {
+		/* set up our emulation information */
+		epp->ep_emul = &emul_sparc32;
+	} else
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	return error;
