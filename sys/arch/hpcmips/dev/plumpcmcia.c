@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.16 2003/07/15 02:29:30 lukem Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.17 2004/08/11 01:54:46 mycroft Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.16 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.17 2004/08/11 01:54:46 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ static int plumpcmcia_chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
 static void plumpcmcia_chip_io_unmap(pcmcia_chipset_handle_t, int);
 static void plumpcmcia_chip_socket_enable(pcmcia_chipset_handle_t);
 static void plumpcmcia_chip_socket_disable(pcmcia_chipset_handle_t);
+static void plumpcmcia_chip_socket_settype(pcmcia_chipset_handle_t, int);
 static void *plumpcmcia_chip_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *);
 static void plumpcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
@@ -176,7 +177,8 @@ static struct pcmcia_chip_functions plumpcmcia_functions = {
 	plumpcmcia_chip_intr_establish,
 	plumpcmcia_chip_intr_disestablish,
 	plumpcmcia_chip_socket_enable,
-	plumpcmcia_chip_socket_disable
+	plumpcmcia_chip_socket_disable,
+	plumpcmcia_chip_socket_settype,
 };
 
 /* CSC */
@@ -705,16 +707,23 @@ plumpcmcia_wait_ready(struct plumpcmcia_handle *ph)
 static void
 plumpcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
-	struct plumpcmcia_handle *ph = (void*)pch;
+	struct plumpcmcia_handle *ph = (void *)pch;
 	bus_space_tag_t regt = ph->ph_regt;
 	bus_space_handle_t regh = ph->ph_regh;
 	plumreg_t reg, power;
-	int win, cardtype;
+	int win;
 
 	/* this bit is mostly stolen from pcic_attach_card */
 
-	/* power down the socket to reset it, clear the card reset pin */
+	/* set card type to memory to disable interrupts */
+	reg = plum_conf_read(regt, regh, PLUM_PCMCIA_GENCTRL);
+	reg &= ~PLUM_PCMCIA_GENCTRL_CARDTYPE_MASK;
+	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
 
+	/* zero out the address windows */
+	plum_conf_write(regt, regh, PLUM_PCMCIA_WINEN, 0);
+
+	/* power down the socket to reset it, clear the card reset pin */
 	plum_conf_write(regt, regh, PLUM_PCMCIA_PWRCTRL, 0);
 
 	/* 
@@ -772,26 +781,7 @@ plumpcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 	/* wait for the chip to finish initializing */
 	plumpcmcia_wait_ready(ph);
 
-	/* zero out the address windows */
-
-	plum_conf_write(regt, regh, PLUM_PCMCIA_WINEN, 0);
-
-	/* set the card type */
-
-	cardtype = pcmcia_card_gettype(ph->ph_pcmcia);
-
-	reg = (cardtype == PCMCIA_IFTYPE_IO) ?
-	    PLUM_PCMCIA_GENCTRL_CARDTYPE_IO :
-	    PLUM_PCMCIA_GENCTRL_CARDTYPE_MEM;
-	reg |= plum_conf_read(regt, regh, PLUM_PCMCIA_GENCTRL);
-	DPRINTF(("%s: plumpcmcia_chip_socket_enable cardtype %s\n",
-	    ph->ph_parent->dv_xname, 
-	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem")));
-
-	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
-
 	/* reinstall all the memory and io mappings */
-
 	for (win = 0; win < PLUM_PCMCIA_MEM_WINS; win++) {
 		if (ph->ph_memalloc & (1 << win)) {
 			plumpcmcia_chip_do_mem_map(ph, win);
@@ -803,15 +793,47 @@ plumpcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 			plumpcmcia_chip_do_io_map(ph, win);
 		}
 	}
+}
 
+static void
+plumpcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
+{
+	struct plumpcmcia_handle *ph = (void *)pch;
+	bus_space_tag_t regt = ph->ph_regt;
+	bus_space_handle_t regh = ph->ph_regh;
+	plumreg_t reg;
+
+	/* set the card type */
+
+	reg = plum_conf_read(regt, regh, PLUM_PCMCIA_GENCTRL);
+	reg &= ~PLUM_PCMCIA_GENCTRL_CARDTYPE_MASK;
+	if (type == PCMCIA_IFTYPE_IO)
+		reg |= PLUM_PCMCIA_GENCTRL_CARDTYPE_IO;
+	else
+		reg |= PLUM_PCMCIA_GENCTRL_CARDTYPE_MEM;
+
+	DPRINTF(("%s: plumpcmcia_chip_socket_enable type %s %02x\n",
+	    ph->ph_parent->dv_xname, 
+	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
+
+	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
 }
 
 static void
 plumpcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 {
-	struct plumpcmcia_handle *ph = (void*)pch;
+	struct plumpcmcia_handle *ph = (void *)pch;
 	bus_space_tag_t regt = ph->ph_regt;
 	bus_space_handle_t regh = ph->ph_regh;
+	plumreg_t reg;
+
+	/* set card type to memory to disable interrupts */
+	reg = plum_conf_read(regt, regh, PLUM_PCMCIA_GENCTRL);
+	reg &= ~PLUM_PCMCIA_GENCTRL_CARDTYPE_MASK;
+	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
+
+	/* zero out the address windows */
+	plum_conf_write(regt, regh, PLUM_PCMCIA_WINEN, 0);
 
 	/* power down the socket */
 	plum_conf_write(regt, regh, PLUM_PCMCIA_PWRCTRL, 0);
