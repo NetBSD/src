@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.15 1995/10/09 15:39:34 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.16 1995/10/23 23:35:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@
 #include <machine/fbvar.h>
 #if defined(SUN4)
 #include <machine/eeprom.h>
+#include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
 #endif
 
 #include <sparc/dev/bwtworeg.h>
@@ -77,6 +79,7 @@ struct bwtwo_softc {
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	volatile struct bwtworeg *sc_reg;/* control registers */
 	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	int	sc_bustype;		/* type of bus we live on */
 };
 
 /* autoconfiguration driver */
@@ -165,7 +168,7 @@ bwtwoattach(parent, self, args)
 #endif
 		break;
 	}
-
+	sc->sc_bustype = ca->ca_bustype;
 
 	sc->sc_fb.fb_type.fb_depth = 1;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
@@ -210,7 +213,13 @@ bwtwoattach(parent, self, args)
 	sc->sc_phys = p->ba_ram;
 
 	/* Insure video is enabled */
-	sc->sc_reg->bw_ctl |= CTL_VE;
+#if defined(SUN4)
+	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
+		stba(AC_SYSENABLE, ASI_CONTROL,
+		    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
+	else
+#endif
+		sc->sc_reg->bw_ctl |= CTL_VE;
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -271,14 +280,32 @@ bwtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-		*(int *)data = (sc->sc_reg->bw_ctl & CTL_VE) != 0;
+#if defined(SUN4)
+		if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
+			*(int *)data =
+			 (lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO) != 0;
+		else
+#endif
+			*(int *)data = (sc->sc_reg->bw_ctl & CTL_VE) != 0;
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			sc->sc_reg->bw_ctl |= CTL_VE;
+#if defined(SUN4)
+		if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
+			if (*(int *)data)
+				stba(AC_SYSENABLE, ASI_CONTROL,
+				    lduba(AC_SYSENABLE, ASI_CONTROL) |
+				    SYSEN_VIDEO);
+			else
+				stba(AC_SYSENABLE, ASI_CONTROL,
+				    lduba(AC_SYSENABLE, ASI_CONTROL) &
+				    ~SYSEN_VIDEO);
 		else
-			sc->sc_reg->bw_ctl &= ~CTL_VE;
+#endif
+			if (*(int *)data)
+				sc->sc_reg->bw_ctl |= CTL_VE;
+			else
+				sc->sc_reg->bw_ctl &= ~CTL_VE;
 		break;
 
 	default:
