@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.41 2004/10/22 22:38:38 bouyer Exp $	*/
+/*	$NetBSD: dirs.c,v 1.42 2005/01/08 14:30:39 fredb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.41 2004/10/22 22:38:38 bouyer Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.42 2005/01/08 14:30:39 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -636,8 +636,7 @@ setdirmodes(flags)
 				ep->e_flags &= ~NEW;
 				continue;
 			}
-			if (node.ino == ROOTINO &&
-		   	    reply("set owner/mode for '.'") == FAIL)
+			if (node.ino == ROOTINO && dotflag == 0)
 				continue;
 		}
 		if (ep == NULL) {

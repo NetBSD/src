@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.19 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: interactive.c,v 1.20 2005/01/08 14:30:39 fredb Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.19 2003/08/07 10:04:37 agc Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.20 2005/01/08 14:30:39 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,8 @@ loop:
 		ino = dirlookup(name);
 		if (ino == 0)
 			break;
+		if (ino == ROOTINO)
+			dotflag = 1;
 		if (mflag)
 			pathcheck(name);
 		treescan(name, ino, addfile);
