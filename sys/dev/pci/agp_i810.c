@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.20 2003/09/07 15:40:57 tron Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.21 2003/12/23 19:56:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.20 2003/09/07 15:40:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.21 2003/12/23 19:56:58 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_82840_HB:
 		case PCI_PRODUCT_INTEL_82865_HB:
+		case PCI_PRODUCT_INTEL_82845G_DRAM:
 			return agp_intel_attach(parent, self, aux);
 		}
 #endif
