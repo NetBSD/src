@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.23 2002/10/06 23:17:46 kristerw Exp $	*/
+/*	$NetBSD: mlx.c,v 1.24 2002/10/08 12:51:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.23 2002/10/06 23:17:46 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.24 2002/10/08 12:51:20 ad Exp $");
 
 #include "ld.h"
 
@@ -1891,6 +1891,7 @@ mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int control)
 	int s;
 
 	s = splbio();
+	mc = SLIST_FIRST(&mlx->mlx_ccb_freelist);
 	if (control) {
 		if (mlx->mlx_nccbs_ctrl >= MLX_NCCBS_CONTROL) {
 			splx(s);
@@ -1900,7 +1901,6 @@ mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int control)
 		mc->mc_flags |= MC_CONTROL;
 		mlx->mlx_nccbs_ctrl++;
 	}
-	mc = SLIST_FIRST(&mlx->mlx_ccb_freelist);
 	SLIST_REMOVE_HEAD(&mlx->mlx_ccb_freelist, mc_chain.slist);
 	splx(s);
 
