@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.89 2003/02/26 06:31:16 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.90 2003/03/01 04:40:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.89 2003/02/26 06:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.90 2003/03/01 04:40:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -561,8 +561,19 @@ tcp_output(tp)
 			 * expected to clock out any data we send --
 			 * slow start to get ack "clock" running again.
 			 */
+			int ss = tcp_init_win;
+#ifdef INET
+			if (tp->t_inpcb &&
+			    in_localaddr(tp->t_inpcb->inp_faddr))
+				ss = tcp_init_win_local;
+#endif
+#ifdef INET6
+			if (tp->t_in6pcb &&
+			    in6_localaddr(&tp->t_in6pcb->in6p_faddr))
+				ss = tcp_init_win_local;
+#endif
 			tp->snd_cwnd = min(tp->snd_cwnd,
-			    TCP_INITIAL_WINDOW(tcp_init_win, txsegsize));
+			    TCP_INITIAL_WINDOW(ss, txsegsize));
 		}
 	}
 
