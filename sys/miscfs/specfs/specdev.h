@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.18 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: specdev.h,v 1.19 1999/12/08 19:16:52 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -90,6 +90,7 @@ int	spec_close	__P((void *));
 int	spec_read	__P((void *));
 int	spec_write	__P((void *));
 #define	spec_lease_check genfs_nullop
+#define spec_fcntl	genfs_fcntl
 int	spec_ioctl	__P((void *));
 int	spec_poll	__P((void *));
 #define spec_revoke	genfs_revoke
