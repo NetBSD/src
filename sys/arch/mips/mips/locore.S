@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.131 2002/01/30 16:09:29 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.132 2002/03/05 15:48:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@
 #include "opt_lockdebug.h"
 #include "fs_coda.h"
 
-#include <machine/cdefs.h>
+#include <sys/cdefs.h>
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -92,7 +92,7 @@
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-#if defined(MIPS3) & !defined(MIPS1)
+#if defined(MIPS3_PLUS) && !defined(MIPS1)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	v0, MIPS3_SR_DIAG_BEV
