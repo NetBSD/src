@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.10 2003/04/17 01:22:21 thorpej Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.11 2003/05/15 21:29:50 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -129,6 +129,8 @@ struct acpi_softc {
 	int sc_switch_sleep[ACPI_NSWITCHES];
 
 	int sc_sleepstate;		/* current sleep state */
+
+	int sc_quirks;
 
 	/*
 	 * Scopes we manage.
@@ -284,3 +286,17 @@ ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int state);
 ACPI_STATUS	acpi_acquire_global_lock(UINT32 *);
 void		acpi_release_global_lock(UINT32);
 int		acpi_is_global_locked(void);
+
+/*
+ * quirk handling
+ */
+struct acpi_quirk {
+	const char *aq_oemid;	/* compared against the X/RSDT OemId */
+	int aq_oemrev;		/* compared against the X/RSDT OemRev */
+	int aq_quirks;		/* the actual quirks */
+};
+
+#define ACPI_QUIRK_BADPCI	0x00000001	/* bad PCI hierarchy */
+#define ACPI_QUIRK_BADIRQ	0x00000002	/* bad IRQ information */
+
+int acpi_find_quirks(void);
