@@ -28,9 +28,6 @@ NTFS - list of things to do in no particular order:
 - working VOP_BALLOC()
 	(from Chuq)
 
-- add pathconf(2) support
-	(from Klaus Klein)
-
 - make ntfs nfs exportable, for the completeness sake
 
 - mountroot support
