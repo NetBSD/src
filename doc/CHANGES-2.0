@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.538 2004/11/12 07:10:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.539 2004/11/12 10:40:38 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7817,8 +7817,8 @@ usr.bin/ftp/ftp.1				1.102-1.104
 	redirects.
 	[dan, ticket #909]
 
-sys/sys/param.h					patched by hand
-share/tmac/doc-common				patched by hand
+sys/sys/param.h					patch
+share/tmac/doc-common				patch
 
 	Welcome to 2.0_RC4
 
@@ -7907,11 +7907,12 @@ xfree/xc/programs/Xserver/hw/netbsd/dec/px/pxwindow.c		1.3
 	[mitch, ticket #927]
 
 usr.bin/rsh/Makefile				patch
-usr.bin/rsh/getport.c				new
-usr.bin/rsh/getport.h				new
+usr.bin/rsh/getport.c				1.1 (new)
+usr.bin/rsh/getport.h				1.1 (new)
 usr.bin/rsh/rsh.c				1.23
 usr.bin/rlogin/Makefile				1.19
 usr.bin/rlogin/rlogin.c				1.31
+bin/rcmd/Makefile				1.8
 
 	- Fix bug in port parsing code; s_port must be in network byte order.
 	- Factor out port parsing code and add error checking to it.
@@ -7930,10 +7931,11 @@ sys/dev/pci/ahc_pci.c				1.46-1.47
 
 sys/netinet/ip_fil_netbsd.c			patch
 
-	Build a new fr_info_t structure in fr_send_ip() and pass it through to
-	the fastroute function so that it uses accurate packet information about
-	the packet being sent out rather than the packet received (impacts both
-	return-rst and return-icmp features.) PR#27093
+	Build a new fr_info_t structure in fr_send_ip() and pass
+	it through to the fastroute function so that it uses accurate
+	packet information about the packet being sent out rather
+	than the packet received (impacts both return-rst and
+	return-icmp features.) Fixes PR#27093.
 	[darrenr, ticket #934]
 
 distrib/notes/common/contents			1.110
@@ -7951,7 +7953,6 @@ distrib/notes/macppc/hardware			1.42
 	 - update list of supported machines  
 	 - mention that NetBSD uses different names for serial ports than OF
 	 - update date of supported hardware info 
-
 	[mbw, ticket #937]
 
 sys/dev/pci/agp_i810.c				1.23
@@ -8073,27 +8074,27 @@ distrib/utils/sysinst/arch/hp300/md.c		1.18
 
 	[he, ticket #970]
 
-sys/compat/common/vm_43.c				1.10
-sys/compat/darwin/darwin_mman.c				1.14
-sys/compat/hpux/hpux_compat.c				1.70
-sys/compat/hpux/hpux_file.c				1.26
-sys/compat/hpux/hpux_tty.c				1.27-1.28
-sys/compat/ibcs2/ibcs2_misc.c				1.71
-sys/compat/irix/irix_prctl.c				1.24
-sys/compat/irix/irix_signal.c				1.29
-sys/compat/irix/irix_swap.c				1.12
-sys/compat/osf1/osf1_signal.c				1.24
-sys/compat/svr4/svr4_filio.c				1.13
-sys/compat/svr4/svr4_signal.c				1.50
-sys/compat/svr4_32/svr4_32_filio.c			1.7
-sys/compat/svr4_32/svr4_32_signal.c			1.12
-sys/compat/ultrix/ultrix_misc.c				1.95
+sys/compat/common/vm_43.c			1.10
+sys/compat/darwin/darwin_mman.c			1.14
+sys/compat/hpux/hpux_compat.c			1.70
+sys/compat/hpux/hpux_file.c			1.26
+sys/compat/hpux/hpux_tty.c			1.27-1.28
+sys/compat/ibcs2/ibcs2_misc.c			1.71
+sys/compat/irix/irix_prctl.c			1.24
+sys/compat/irix/irix_signal.c			1.29
+sys/compat/irix/irix_swap.c			1.12
+sys/compat/osf1/osf1_signal.c			1.24
+sys/compat/svr4/svr4_filio.c			1.13
+sys/compat/svr4/svr4_signal.c			1.50
+sys/compat/svr4_32/svr4_32_filio.c		1.7
+sys/compat/svr4_32/svr4_32_signal.c		1.12
+sys/compat/ultrix/ultrix_misc.c			1.95
 
 	Bounds check syscall arguments where appropriate.
 	[david, ticket #946]
 
-sys/sys/param.h					patched by hand
-share/tmac/doc-common				patched by hand
-gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patch
+share/tmac/doc-common				patch
+gnu/usr.bin/groff/tmac/mdoc.local		patch
 
 	Welcome to 2.0_RC5
