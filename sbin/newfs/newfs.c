@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.80 2004/03/07 12:26:38 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.81 2004/03/18 20:32:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.80 2004/03/07 12:26:38 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.81 2004/03/18 20:32:06 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 		mfs = 1;
 	} else {
 		/* Undocumented, for ease of testing */
-		if (!strcmp(argv[1], "-mfs")) {
+		if (argv[1] != NULL && !strcmp(argv[1], "-mfs")) {
 			argv++;
 			argc--;
 			mfs = 1;
@@ -390,8 +390,13 @@ main(int argc, char *argv[])
 	/* This is enough to get through the correct kernel code paths */
 	memset(&args, 0, sizeof args);
 	args.fspec = mountfromname;
-	if (mntflags & (MNT_GETARGS | MNT_UPDATE))
-		goto doit;
+	if (mntflags & (MNT_GETARGS | MNT_UPDATE)) {
+		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
+			err(1, "mount `%s' failed", argv[1]);
+		if (mntflags & MNT_GETARGS)
+			printf("base=%p, size=%ld\n", args.base, args.size);
+		exit(0);
+	}
 #endif
 
 	if (argc != 2 && (mfs || argc != 1))
@@ -678,14 +683,8 @@ main(int argc, char *argv[])
 			args.export.ex_flags = 0;
 		args.base = membase;
 		args.size = fssize * sectorsize;
-doit:
-		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0) {
-			if (mntflags & (MNT_GETARGS | MNT_UPDATE))
-				err(1, "mount `%s' failed", argv[1]);
+		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
 			exit(errno); /* parent prints message */
-		}
-		if (mntflags & MNT_GETARGS)
-			printf("base=%p, size=%ld\n", args.base, args.size);
 	}
 #endif
 	exit(0);
