@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2001/04/06 15:05:55 fredette Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 2001/06/11 21:35:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ pte_print(pte)
 {
 	int t;
 	static char *pgt_names[] = {
-		"MEM", "OBIO", "VMES", "VMEL",
+		"MEM", "OBIO", "VME0", "VME8",
 	};
 
 	if (pte & PG_VALID) {
