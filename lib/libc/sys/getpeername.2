@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getpeername.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: getpeername.2,v 1.3 1993/11/25 00:38:58 jtc Exp $
+.\"	$Id: getpeername.2,v 1.4 1993/11/29 21:25:09 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt GETPEERNAME 2
@@ -58,7 +58,7 @@ The name is truncated if the buffer provided is too small.
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
-.Bl -tag -width ENOTSOCKAA
+.Bl -tag -width Er
 .It Bq Er EBADF
 The argument
 .Fa s

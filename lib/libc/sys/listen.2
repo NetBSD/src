@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)listen.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: listen.2,v 1.4 1993/11/25 02:49:23 jtc Exp $
+.\"	$Id: listen.2,v 1.5 1993/11/29 21:25:19 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt LISTEN 2
@@ -74,7 +74,7 @@ A 0 return value indicates success; -1 indicates an error.
 .Sh ERRORS
 .Fn Listen
 will fail if:
-.Bl -tag -width [EOPNOTSUPP]
+.Bl -tag -width Er
 .It Bq Er EBADF
 The argument
 .Fa s

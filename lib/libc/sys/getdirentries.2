@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)getdirentries.2	6.5 (Berkeley) 7/23/91
-.\"	$Id: getdirentries.2,v 1.4 1993/11/29 19:45:00 jtc Exp $
+.\"	$Id: getdirentries.2,v 1.5 1993/11/29 21:25:08 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt GETDIRENTRIES 2
@@ -129,7 +129,7 @@ is set to indicate the error.
 .Sh ERRORS
 .Fn Getdirentries
 will fail if:
-.Bl -tag -width [EFAULT]
+.Bl -tag -width Er
 .It Bq Er EBADF
 .Fa fd
 is not a valid file descriptor open for reading.

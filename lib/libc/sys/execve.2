@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)execve.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: execve.2,v 1.4 1993/11/25 00:38:37 jtc Exp $
+.\"	$Id: execve.2,v 1.5 1993/11/29 21:25:05 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt EXECVE 2
@@ -188,7 +188,7 @@ is set to indicate the error.
 .Sh ERRORS
 .Fn Execve
 will fail and return to the calling process if:
-.Bl -tag -width [ENAMETOOLONG]
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL
