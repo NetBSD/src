@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.27 2004/03/10 22:02:53 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.28 2004/05/17 18:37:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -86,6 +86,7 @@ struct siop_common_cmd {
 	int status;
 	int flags;
 	int tag;	/* tag used for tagged command queuing */
+	int resid;	/* valid when CMDFL_RESID is set */
 };
 
 /* status defs */
@@ -96,6 +97,7 @@ struct siop_common_cmd {
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */
+#define CMDFL_RESID	0x0004 /* current offset in table is partial */
 
 /* per-target struct */
 struct siop_common_target {
@@ -198,6 +200,8 @@ void	siop_update_xfer_mode __P((struct siop_common_softc *, int));
 void	siop_minphys __P((struct buf *));
 int	siop_ioctl __P((struct scsipi_channel *, u_long,
 		caddr_t, int, struct proc *));
-void 	siop_sdp __P((struct siop_common_cmd *));
+void 	siop_ma  __P((struct siop_common_cmd *));
+void 	siop_sdp __P((struct siop_common_cmd *, int));
+void 	siop_update_resid __P((struct siop_common_cmd *, int));
 void	siop_clearfifo __P((struct siop_common_softc *));
 void	siop_resetbus __P((struct siop_common_softc *));
