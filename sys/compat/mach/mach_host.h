@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.4 2002/11/11 09:28:00 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.5 2002/11/14 19:44:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ typedef struct {
 } mach_host_get_clock_service_reply_t;
 
 int mach_host_info __P((struct proc *, mach_msg_header_t *));
+void mach_host_basic_info __P((struct mach_host_basic_info *));
 int mach_host_page_size __P((struct proc *, mach_msg_header_t *));
 int mach_host_get_clock_service __P((struct proc *, mach_msg_header_t *));
 
