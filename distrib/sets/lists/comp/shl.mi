@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.20 2001/08/19 17:18:02 mrg Exp $
+# $NetBSD: shl.mi,v 1.21 2001/08/25 15:49:12 thorpej Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbfd.so.4.0		comp-util-bin
 ./usr/lib/libbz2_pic.a		comp-c-piclib
@@ -12,7 +12,6 @@
 ./usr/lib/libdes_pic.a		comp-c-piclib
 ./usr/lib/libedit_pic.a		comp-c-piclib
 ./usr/lib/libform_pic.a		comp-c-piclib
-./usr/lib/libg2c_pic.a		comp-fortran-piclib
 ./usr/lib/libgnumalloc_pic.a	comp-c-piclib
 ./usr/lib/libgssapi_pic.a	comp-c-piclib
 ./usr/lib/libhdb_pic.a		comp-c-piclib
@@ -29,7 +28,6 @@
 ./usr/lib/libkvm_pic.a		comp-c-piclib
 ./usr/lib/libm_pic.a		comp-c-piclib
 ./usr/lib/libmenu_pic.a		comp-c-piclib
-./usr/lib/libobjc_pic.a		comp-objc-piclib
 ./usr/lib/libossaudio_pic.a	comp-c-piclib
 ./usr/lib/libpcap_pic.a		comp-c-piclib
 ./usr/lib/libposix_pic.a	comp-c-piclib
@@ -39,7 +37,6 @@
 ./usr/lib/libsl_pic.a		comp-c-piclib
 ./usr/lib/libss_pic.a		comp-c-piclib
 ./usr/lib/libssl_pic.a		comp-c-piclib
-./usr/lib/libstdc++_pic.a	comp-cxx-piclib
 ./usr/lib/libtelnet_pic.a	comp-c-piclib
 ./usr/lib/libtermcap_pic.a	comp-c-piclib
 ./usr/lib/libtermlib_pic.a	comp-c-piclib
