@@ -54,10 +54,6 @@ static bfd_size_type total_bsssize;
 static bfd_size_type total_datasize;
 static bfd_size_type total_textsize;
 
-static bfd_size_type total_bsssize;
-static bfd_size_type total_datasize;
-static bfd_size_type total_textsize;
-
 /* Program exit status.  */
 int return_code = 0;
 
@@ -469,11 +465,11 @@ print_berkeley_format (abfd)
   if (files_seen++ == 0)
 #if 0
     /* Intel doesn't like bss/stk because they don't have core files.  */
-    puts ((radix == octal) ? "text\tdata\tbss/stk\toct\thex\tfilename" :
-	  "text\tdata\tbss/stk\tdec\thex\tfilename");
+    puts ((radix == octal) ? "   text\t   data\tbss/stk\t    oct\t    hex\tfilename" :
+	  "   text\t   data\tbss/stk\t    dec\t    hex\tfilename");
 #else
-    puts ((radix == octal) ? "text\tdata\tbss\toct\thex\tfilename" :
-	  "text\tdata\tbss\tdec\thex\tfilename");
+    puts ((radix == octal) ? "   text\t   data\t    bss\t    oct\t    hex\tfilename" :
+	  "   text\t   data\t    bss\t    dec\t    hex\tfilename");
 #endif
 
   total = textsize + datasize + bsssize;
