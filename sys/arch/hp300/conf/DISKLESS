@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.11 1996/12/11 09:10:38 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.12 1997/01/20 16:55:33 scottr Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -15,7 +15,6 @@ cpu		"HP380"		# includes 425t, 425s, 433s
 ident		DISKLESS
 
 # Need to set locally
-timezone	8 dst
 maxusers	8
 
 # Standard system options

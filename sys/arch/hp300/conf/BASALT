@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.12 1997/01/07 11:35:11 mrg Exp $
+#	$NetBSD: BASALT,v 1.13 1997/01/20 16:55:32 scottr Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -8,7 +8,6 @@ cpu		"HP380"		# includes 425t, 425s, 433s
 ident		BASALT
 
 # Need to set locally
-timezone	8 dst
 maxusers	32
 
 # Standard system options
