@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.15 2004/10/12 03:28:30 jmc Exp $	*/
+/*	$NetBSD: makefs.h,v 1.16 2004/12/20 20:51:42 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -135,27 +135,7 @@ typedef struct {
 	int	needswap;	/* non-zero if byte swapping needed */
 	int	sectorsize;	/* sector size */
 
-		/* ffs specific options */
-	int	bsize;		/* block size */
-	int	fsize;		/* fragment size */
-	int	cpg;		/* cylinders per group */
-	int	cpgflg;		/* cpg was specified by user */
-	int	density;	/* bytes per inode */
-	int	ntracks;	/* number of tracks */
-	int	nsectors;	/* number of sectors */
-	int	rpm;		/* rpm */
-	int	minfree;	/* free space threshold */
-	int	optimization;	/* optimization (space or time) */
-	int	maxcontig;	/* max contiguous blocks to allocate */
-	int	rotdelay;	/* rotational delay between blocks */
-	int	maxbpg;		/* maximum blocks per file in a cyl group */
-	int	nrpos;		/* # of distinguished rotational positions */
-	int	avgfilesize;	/* expected average file size */
-	int	avgfpdir;	/* expected # of files per directory */
-	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
-	int	maxbsize;	/* maximum extent size */
-	int	maxblkspercg;	/* max # of blocks per cylinder group */
-			/* XXX: support `old' file systems ? */
+	void	*fs_specific;	/* File system specific additions. */
 } fsinfo_t;
 
 
@@ -179,7 +159,9 @@ const char *	inode_type(mode_t);
 int		set_option(option_t *, const char *, const char *);
 fsnode *	walk_dir(const char *, fsnode *);
 
+void		ffs_prep_opts(fsinfo_t *);
 int		ffs_parse_opts(const char *, fsinfo_t *);
+void		ffs_cleanup_opts(fsinfo_t *);
 void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 
