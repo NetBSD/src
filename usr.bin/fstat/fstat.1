@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.21 2002/09/30 11:09:01 grant Exp $
+.\"	$NetBSD: fstat.1,v 1.22 2002/11/07 13:52:04 enami Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.21 2002/09/30 11:09:01 grant Exp $
+.\"	$NetBSD: fstat.1,v 1.22 2002/11/07 13:52:04 enami Exp $
 .\"
 .Dd February 18, 1999
 .Dt FSTAT 1
@@ -47,7 +47,7 @@
 .Op Fl N Ar system
 .Op Fl p Ar pid
 .Op Fl u Ar user
-.Op Ar filename ...
+.Op Ar
 .Sh DESCRIPTION
 .Nm
 identifies open files.
@@ -102,7 +102,7 @@ This
 is normal and  unavoidable since the rest of the system is running while
 .Nm
 itself is running.
-.It Ar filename ...
+.It Ar
 Restrict reports to the specified files.
 .El
 .Pp
@@ -137,7 +137,7 @@ or there is an error.
 In this case the remainder of the line doesn't
 correspond to the remaining headers -- the format of the line
 is described later under
-.Sx Sockets .
+.Sx SOCKETS .
 .It Li MOUNT
 If the
 .Fl n
@@ -178,7 +178,7 @@ The letter
 .Dq r
 indicates open for reading;
 the letter
-.Dq
+.Dq w
 indicates open for writing.
 This field is useful when trying to find the processes that are
 preventing a filesystem from being downgraded to read-only.
@@ -238,7 +238,7 @@ also attempts to print the internet address and port for the
 local end of a connection.
 If the socket is connected, it also prints the remote internet address
 and port.
-A
+An asterisk
 .Pq Dq *
 is used to indicate an INADDR_ANY binding.
 .Sh SEE ALSO
