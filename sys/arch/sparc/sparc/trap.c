@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 1998/09/20 20:01:15 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.74 1998/09/30 18:38:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -256,7 +256,7 @@ static __inline void share_fpu(p, tf)
 	struct proc *p;
 	struct trapframe *tf;
 {
-	if ((tf->tf_psr & PSR_EF) != 0 && fpproc != p)
+	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fpproc != p)
 		tf->tf_psr &= ~PSR_EF;
 }
 
@@ -414,11 +414,27 @@ badtrap:
 			fpu_cleanup(p, fs);
 			break;
 		}
-		if (fpproc != p) {		/* we do not have it */
-			if (fpproc != NULL)	/* someone else had it */
-				savefpstate(fpproc->p_md.md_fpstate);
+		if (cpuinfo.fpproc != p) {		/* we do not have it */
+			int mid = p->p_md.md_fpumid;
+			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
+				cpuinfo.fpproc->p_md.md_fpumid = -1;
+			}
+			/*
+			 * On MP machines, some of the other FPUs might
+			 * still have our state. We can't handle that yet,
+			 * so panic if it happens. Possible solutions:
+			 * (1) send an inter-processor message to have the
+			 * other FPU save the state, or (2) don't do lazy FPU
+			 * context switching at all.
+			 */
+			if (mid != -1 && mid != cpuinfo.mid) {
+				printf("own FPU on module %d\n", mid);
+				panic("fix this");
+			}
 			loadfpstate(fs);
-			fpproc = p;		/* now we do have it */
+			cpuinfo.fpproc = p;		/* now we do have it */
+			p->p_md.md_fpumid = cpuinfo.mid;
 		}
 		tf->tf_psr |= PSR_EF;
 		break;
@@ -503,10 +519,10 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		if (p != fpproc)
+		if (p != cpuinfo.fpproc)
 			panic("fpe without being the FP user");
 		savefpstate(p->p_md.md_fpstate);
-		fpproc = NULL;
+		cpuinfo.fpproc = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(p, p->p_md.md_fpstate);
 		/* fpu_cleanup posts signals if needed */
