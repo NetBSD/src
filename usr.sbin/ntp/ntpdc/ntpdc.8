@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdc.8,v 1.10 2003/03/31 09:27:15 wiz Exp $
+.\"	$NetBSD: ntpdc.8,v 1.11 2003/06/30 10:41:10 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -118,15 +118,15 @@ the
 program itself and do not result in NTP mode 7 requests
 being sent to a server. These are described following.
 .Bl -tag -width indent
-.It Ar ? [ command_keyword ]
+.It Ar \&? [ command_keyword ]
 .It Ar helpl [ command_keyword ]
 A
-.Pa ?
+.Pa \&?
 by itself will print a list of all the command keywords known
 to this incarnation of
 .Pa ntpq .
 A
-.Pa ?
+.Pa \&?
 followed by a command
 keyword will print function and usage information about the command. This
 command is probably a better source of information about
@@ -225,7 +225,7 @@ A slightly different peer summary list. Identical to the output of the
 command, except for the character in the leftmost column.
 Characters only appear beside peers which were included in the final stage
 of the clock selection algorithm. A
-.Pa .
+.Pa \&.
 indicates that this peer
 was cast off in the falseticker detection, while a
 .Pa +
