@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.8 2000/10/22 10:42:33 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.9 2001/06/13 19:09:08 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ enum txio_group {
 	NTXIO_GROUP
 };
 
-struct txio_ops;
+struct hpcio_chip;
 
 struct tx_chipset_tag {
 	enum tx_chipset tc_chipset;
@@ -66,7 +66,7 @@ struct tx_chipset_tag {
 	void *tc_powert; /* power tag */
 	void *tc_clockt; /* clock/timer tag */
 	void *tc_soundt; /* sound tag */
-	struct txio_ops *tc_ioops[NTXIO_GROUP];
+	struct hpcio_chip *tc_iochip[NTXIO_GROUP];
 	void *tc_videot; /* video chip tag */
 };
 
@@ -90,37 +90,8 @@ void	tx_conf_register_intr(tx_chipset_tag_t, void *);
 void	tx_conf_register_power(tx_chipset_tag_t, void *);
 void	tx_conf_register_clock(tx_chipset_tag_t, void *);
 void	tx_conf_register_sound(tx_chipset_tag_t, void *);
-void	tx_conf_register_ioman(tx_chipset_tag_t, struct txio_ops *);
+void	tx_conf_register_ioman(tx_chipset_tag_t, struct hpcio_chip *);
 void	tx_conf_register_video(tx_chipset_tag_t, void *);
-
-/* Unified IO manager */
-struct txio_ops {
-	void *_v; /* context */
-	enum txio_group _group;
-	int (*_in)(void *, int);
-	void (*_out)(void *, int, int);
-	void (*_intr_map)(void *, int, int *, int *);
-	void *(*_intr_establish)(void *, int, int (*)(void *), void *);
-	void (*_intr_disestablish)(void *, void *);
-	void (*_update)(void *);	/* debug */
-	void (*_dump)(void *);		/* debug */
-};
-#define tx_ioman_T(g, ops, args...)					\
-({									\
-	struct txio_ops *__o = tx_chipset.tc_ioops[g];			\
-	KASSERT(__o);							\
-	__o->_##ops(__o->_v , ##args);					\
-})
-/* access ops */
-#define tx_ioman_in(g, args...)		tx_ioman_T(g, in, args)
-#define tx_ioman_out(g, args...)	tx_ioman_T(g, out, args)
-#define tx_ioman_intr_map(g, args...)	tx_ioman_T(g, intr_map, args)
-#define tx_ioman_intr_establish(g, args...)				\
-					tx_ioman_T(g, intr_establish, args)
-#define tx_ioman_intr_disestablish(g, args...)				\
-					tx_ioman_T(g, intr_disestablish, args)
-#define tx_ioman_update(g)		tx_ioman_T(g, update)
-#define tx_ioman_dump(g)		tx_ioman_T(g, dump)
 
 /*
  *	TX39 Internal Function Register access

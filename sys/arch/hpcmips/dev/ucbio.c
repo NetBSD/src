@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.2 2000/10/22 10:42:32 uch Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.3 2001/06/13 19:09:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@
 #include <hpcmips/dev/ucb1200var.h>
 #include <hpcmips/dev/ucb1200reg.h>
 
+#include <dev/hpc/hpciovar.h>	/* I/O manager */
+
 int ucbio_match(struct device*, struct cfdata *, void *);
 void ucbio_attach(struct device*, struct device *, void *);
 
@@ -69,7 +71,7 @@ struct ucbio_softc {
 	tx_chipset_tag_t sc_tc;
 
 	struct betty_port_status sc_stat, sc_ostat;
-	struct txio_ops sc_betty_ops;
+	struct hpcio_chip sc_hc;
 };
 
 struct cfattach ucbio_ca = {
@@ -77,20 +79,20 @@ struct cfattach ucbio_ca = {
 };
 
 /* I/O */
-static int betty_in(void *, int);
-static void betty_out(void *, int, int);
+static int betty_in(hpcio_chip_t, int);
+static void betty_out(hpcio_chip_t, int, int);
 /* interrupt */
-static void betty_intr_map(void *, int, int *, int *);
-static void *betty_intr_establish(void *, int, int (*)(void *), void *);
-static void betty_intr_disestablish(void *, void *);
+static hpcio_intr_handle_t betty_intr_establish(hpcio_chip_t, int, int,
+    int (*)(void *), void *);
+static void betty_intr_disestablish(hpcio_chip_t, void *);
 /* debug */
-static void betty_update(void *);
-static void betty_dump(void *);
+static void betty_update(hpcio_chip_t);
+static void betty_dump(hpcio_chip_t);
 
 int
 ucbio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -98,32 +100,32 @@ ucbio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ucb1200_attach_args *ucba = aux;
 	struct ucbio_softc *sc = (void *)self;
-	struct txio_ops *ops = &sc->sc_betty_ops;
+	struct hpcio_chip *hc = &sc->sc_hc;
 
 	sc->sc_tc = ucba->ucba_tc;
 	printf("\n");
 
-	ops->_v			= sc;
-	ops->_group		= BETTY;
-	ops->_in		= betty_in;
-	ops->_out		= betty_out;
-	ops->_intr_map		= betty_intr_map;
-	ops->_intr_establish	= betty_intr_establish;
-	ops->_intr_disestablish	= betty_intr_disestablish;
-	ops->_update		= betty_update;
-	ops->_dump		= betty_dump;
+	hc->hc_sc		 = sc;
+	hc->hc_chipid		 = 2;
+	hc->hc_name		 = "UCB1200";
+	hc->hc_portread		 = betty_in;
+	hc->hc_portwrite	 = betty_out;
+	hc->hc_intr_establish	 = betty_intr_establish;
+	hc->hc_intr_disestablish = betty_intr_disestablish;
+	hc->hc_update		 = betty_update;
+	hc->hc_dump		 = betty_dump;
 
-	tx_conf_register_ioman(sc->sc_tc, ops);
+	tx_conf_register_ioman(sc->sc_tc, hc);
 
-	tx_ioman_update(BETTY);
-	tx_ioman_dump(BETTY);
+	hpcio_update(hc);
+	hpcio_dump(hc);
 }
 
 /* basic I/O */
 static void
-betty_out(void *arg, int port, int onoff)
+betty_out(hpcio_chip_t hc, int port, int onoff)
 {
-	struct ucbio_softc *sc = arg;
+	struct ucbio_softc *sc = hc->hc_sc;
 	tx_chipset_tag_t tc = sc->sc_tc;	
 	txreg_t reg, pos;
 
@@ -137,42 +139,42 @@ betty_out(void *arg, int port, int onoff)
 }
 
 static int
-betty_in(void *arg, int port)
+betty_in(hpcio_chip_t hc, int port)
 {
-	struct ucbio_softc *sc = arg;
+	struct ucbio_softc *sc = hc->hc_sc;
 	tx_chipset_tag_t tc = sc->sc_tc;	
 	txreg_t reg = txsibsf0_reg_read(tc, UCB1200_IO_DATA_REG);
-	return reg & (1 << port);
+
+	return (reg & (1 << port));
 }
 
 /* interrupt method not implemented */
-static void
-betty_intr_map(void *arg, int port, int *pedge, int *nedge)
+static hpcio_intr_handle_t
+betty_intr_establish(hpcio_chip_t hc, int port, int mode, int (*func)(void *),
+    void *func_arg)
 {
-}
+	struct ucbio_softc *sc = hc->hc_sc;
 
-static void *
-betty_intr_establish(void *arg, int edge, int (*func)(void *), void *func_arg)
-{
-	struct ucbio_softc *sc = arg;
 	printf("%s: %s not implemented.\n", sc->sc_dev.dv_xname,
-	       __FUNCTION__);
-	return 0;
+	    __FUNCTION__);
+
+	return (0);
 }
 
 static void
-betty_intr_disestablish(void *arg, void *ih)
+betty_intr_disestablish(hpcio_chip_t hc, void *ih)
 {
-	struct ucbio_softc *sc = arg;
+	struct ucbio_softc *sc = hc->hc_sc;
+
 	printf("%s: %s not implemented.\n", sc->sc_dev.dv_xname,
-	       __FUNCTION__);
+	    __FUNCTION__);
 }
 
 /* debug */
 static void
-betty_update(void *arg)
+betty_update(hpcio_chip_t hc)
 {
-	struct ucbio_softc *sc = arg;
+	struct ucbio_softc *sc = hc->hc_sc;
 	tx_chipset_tag_t tc = sc->sc_tc;	
 	struct betty_port_status *stat = &sc->sc_stat;
 	u_int16_t dir, data;
@@ -185,9 +187,9 @@ betty_update(void *arg)
 }
 
 static void
-betty_dump(void *arg)
+betty_dump(hpcio_chip_t hc)
 {
-	struct ucbio_softc *sc = arg;
+	struct ucbio_softc *sc = hc->hc_sc;
 	struct betty_port_status *stat = &sc->sc_stat;
 
 	printf("[BETTY I/O]\n");
@@ -198,7 +200,3 @@ betty_dump(void *arg)
 	printf("DIR ");
 	bitdisp(stat->dir);
 }
-
-
-
-
