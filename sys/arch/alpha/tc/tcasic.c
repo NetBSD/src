@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.33 2001/02/22 07:46:01 nisimura Exp $ */
+/* $NetBSD: tcasic.c,v 1.34 2001/03/04 13:36:20 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.33 2001/02/22 07:46:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.34 2001/03/04 13:36:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,10 +174,8 @@ tcasicprint(aux, pnp)
 #include "cfb.h"
 #include "sfb.h"
 #include "sfbp.h"
-#ifdef notyet
 #include "px.h"
 #include "pxg.h"
-#endif
 
 extern void	sfb_cnattach __P((tc_addr_t));
 extern void	cfb_cnattach __P((tc_addr_t));
@@ -189,7 +187,7 @@ extern int	tc_checkslot __P((tc_addr_t, char *));
 struct cnboards {
 	const char	*cb_tcname;
 	void	(*cb_cnattach)(tc_addr_t);
-} static cnboards[] = {
+} static const cnboards[] = {
 #if NSFB > 0
 	{ "PMAGB-BA", sfb_cnattach },
 #endif
@@ -199,7 +197,6 @@ struct cnboards {
 #if NSFBP > 0
 	{ "PMAGD   ", sfbp_cnattach },
 #endif
-#ifdef notyet
 #if NPX > 0
 	{ "PMAG-CA ", px_cnattach },
 #endif
@@ -209,7 +206,6 @@ struct cnboards {
 	{ "PMAG-FB ", pxg_cnattach },
 	{ "PMAGB-FA", pxg_cnattach },
 	{ "PMAGB-FB", pxg_cnattach },
-#endif
 #endif
 };
 
