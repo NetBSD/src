@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.8.2.2 2001/10/08 20:20:40 nathanw Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.8.2.3 2001/11/14 19:32:01 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -463,8 +463,14 @@ local_rpcb()
 	client = clnt_vc_create(sock, &nbuf, (rpcprog_t)RPCBPROG,
 	    (rpcvers_t)RPCBVERS, tsize, tsize);
 
-	if (client != NULL)
+	if (client != NULL) {
+		/* XXX - mark the socket to be closed in destructor */
+		(void) CLNT_CONTROL(client, CLSET_FD_CLOSE, NULL);
 		return client;
+	}
+
+	/* XXX - nobody needs this socket anymore, free the descriptor */
+	close(sock);
 
 try_nconf:
 
@@ -556,6 +562,7 @@ rpcb_set(program, version, nconf, address)
 	parms.r_addr = taddr2uaddr((struct netconfig *) nconf,
 				   (struct netbuf *)address);
 	if (!parms.r_addr) {
+		CLNT_DESTROY(client);
 		rpc_createerr.cf_stat = RPC_N2AXLATEFAILURE;
 		return (FALSE); /* no universal address */
 	}

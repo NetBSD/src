@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.22.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.22.2.2 2001/11/14 19:32:01 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.22.2.1 2001/08/08 16:13:44 nathanw Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.22.2.2 2001/11/14 19:32:01 nathanw Exp $");
 #endif
 #endif
 
@@ -248,9 +248,9 @@ call_again:
 
 /*ARGSUSED*/
 static void
-clnt_raw_geterr(cl, err)
+clnt_raw_geterr(cl, error)
 	CLIENT *cl;
-	struct rpc_err *err;
+	struct rpc_err *error;
 {
 }
 

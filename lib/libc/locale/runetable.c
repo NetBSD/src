@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.5.2.1 2001/10/08 20:19:53 nathanw Exp $	*/
+/*	$NetBSD: runetable.c,v 1.5.2.2 2001/11/14 19:31:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.5.2.1 2001/10/08 20:19:53 nathanw Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.5.2.2 2001/11/14 19:31:58 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,7 +67,7 @@ static _RuneState _DefaultRuneState = {
 _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
     "NONE",
-    -3,
+    _DEFAULT_INVALID_RUNE,
 
     {	/*00*/	_CTYPE_C,
 		_CTYPE_C,

@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.1.2.1 2001/10/08 20:17:00 nathanw Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.1.2.2 2001/11/14 19:31:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -91,10 +91,9 @@ ENTRY(_longjmp)
        	/* Restore integer registers */
         ldmia	r0, {r4-r14}
 
-	/* Validate r13 and r14 */
-	teq	r13, #0
-	beq	botch
-	teq	r14, #0
+	/* Validate sp and r14 */
+	teq	sp, #0
+	teqne	r14, #0
 	beq	botch
 
 	/* Set return value */

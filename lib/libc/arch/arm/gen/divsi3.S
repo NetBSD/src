@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1.2.1 2001/10/08 20:17:00 nathanw Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.1.2.2 2001/11/14 19:31:49 nathanw Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,9 +16,16 @@
 
 #include <machine/asm.h>
 
+/* 
+ * stack is aligned as there's a possibility of branching to L_overflow
+ * which makes a C call
+ */
+
 ENTRY(__umodsi3)
 	stmfd	sp!, {lr}
+	sub	sp, sp, #4	/* align stack */
 	bl	L_udivide
+	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
 #ifdef __APCS_26__
 	ldmfd	sp!, {pc}^
@@ -28,7 +35,9 @@ ENTRY(__umodsi3)
 
 ENTRY(__modsi3)
 	stmfd	sp!, {lr}
+	sub	sp, sp, #4	/* align stack */
 	bl	L_divide
+	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
 #ifdef __APCS_26__
 	ldmfd	sp!, {pc}^

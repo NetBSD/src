@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24.2.2 2001/10/08 20:22:20 nathanw Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.3 2001/11/14 19:32:06 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24.2.2 2001/10/08 20:22:20 nathanw Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.3 2001/11/14 19:32:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1130,14 +1130,14 @@ const time_t * const	timep;
  * Re-entrant version of localtime
  */
 struct tm *
-localtime_r(timep, tm)
+localtime_r(timep, tmp)
 const time_t * const	timep;
-struct tm *		tm;
+struct tm *		tmp;
 {
 	rwlock_rdlock(&lcl_lock);
-	localsub(timep, 0L, tm);
+	localsub(timep, 0L, tmp);
 	rwlock_unlock(&lcl_lock);
-	return tm;
+	return tmp;
 }
 
 /*
@@ -1199,12 +1199,12 @@ const time_t * const	timep;
  * Re-entrant version of gmtime
  */
 struct tm *
-gmtime_r(timep, tm)
+gmtime_r(timep, tmp)
 const time_t * const	timep;
-struct tm *		tm;
+struct tm *		tmp;
 {
-	gmtsub(timep, 0L, tm);
-	return tm;
+	gmtsub(timep, 0L, tmp);
+	return tmp;
 }
 
 #ifdef STD_INSPIRED

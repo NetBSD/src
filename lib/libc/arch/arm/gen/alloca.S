@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.1 2000/12/29 20:13:46 bjh21 Exp $	*/
+/*	$NetBSD: alloca.S,v 1.1.2.1 2001/11/14 19:31:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -37,10 +37,10 @@
 #include <machine/asm.h>
 
 ENTRY(alloca)
-	add	r0, r0, #0x00000003	/* round up to next word */
-	bic	r0, r0, #0x00000003
-	sub	r13, r13, r0		/* Adjust the stack pointer */
-	mov	r0, r13			/* r0 = base of new space */
+	add	r0, r0, #0x00000007	/* round up to next 8 byte alignment */
+	bic	r0, r0, #0x00000007
+	sub	sp, sp, r0		/* Adjust the stack pointer */
+	mov	r0, sp			/* r0 = base of new space */
 #ifdef __APCS_26__
 	movs	r15, r14		/* return */
 #else
