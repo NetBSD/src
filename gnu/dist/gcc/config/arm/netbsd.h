@@ -50,7 +50,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    arm32 is the NetBSD port name, so we always define arm32 and __arm32__.  */
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "\
--Dunix -Driscbsd -Darm32 -D__arm32__ -D__arm6__
+-Dunix -Driscbsd -Darm32 -D__arm32__ -D__arm6__ \
 -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
@@ -134,5 +134,5 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#define DWARF2_UNWIND_INFO 0
+#undef DWARF2_UNWIND_INFO
 

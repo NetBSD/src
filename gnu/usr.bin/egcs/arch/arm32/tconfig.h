@@ -1,1 +1,1 @@
-#include "arm32/xm-netbsd.h"
+#include "arm/xm-netbsd.h"
