@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/14 00:50:22 tv Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:48 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -37,7 +37,7 @@ SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c dev_net.c
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
 
-NOMAN=	1
+MKMAN=	no
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}

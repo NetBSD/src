@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 1999/01/26 02:49:13 perry Exp $
+#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:27 lukem Exp $
+
+.include <bsd.own.mk>
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -14,7 +16,7 @@ TMACMODE?=	${FILESMODE}
 MAN=		groff_mm.7 groff_mmse.7
 MLINKS= 	groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=		tmac.m
 LINKS=		${TMACDIR}/tmac.m ${TMACDIR}/tmac.mse
 FILESDIR=	${TMACDIR}

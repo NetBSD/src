@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/06/26 12:29:29 tsubai Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:47 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-NOMAN=
+MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
 OBJCOPY?=	objcopy

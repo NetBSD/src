@@ -1,7 +1,7 @@
 PROG=		fontedit
 CLEANFILES+=	core.fontedit fontedit.core
 
-NOMAN=	yes
+MKMAN=	no
 
 .include <bsd.prog.mk>
 

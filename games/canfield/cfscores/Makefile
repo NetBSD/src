@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/22 04:42:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:21 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	cfscores
 CPPFLAGS+=-I${.CURDIR}/../canfield
-NOMAN=	noman
+MKMAN=	no
 HIDEGAME=hidegame
 
 .include "../../Makefile.inc"

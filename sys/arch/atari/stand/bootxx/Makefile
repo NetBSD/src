@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/04/17 07:30:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:39 lukem Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
-NOMAN=
+MKMAN=	no
 
 STRIPFLAG=
 BINDIR=	/usr/mdec

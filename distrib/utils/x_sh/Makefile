@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.7 1998/10/08 01:08:24 ross Exp $
+# 	$NetBSD: Makefile,v 1.8 1999/02/13 02:54:19 lukem Exp $
 # Build a smaller sh (e.g. for boot media)
 #
 # Be very careful before attempting to "clean up" the ugly location
@@ -11,9 +11,9 @@
 # of BSDSRCDIR can be deleted here, and so I didn't want to depend on it
 # in case someday we completely nuke the rarely used BSDSRCDIR.
 
-NOMAN=1
-
 .include <bsd.own.mk>
+
+MKMAN=no
 
 .for i in     ../../bin/sh		\
 	   ../../../bin/sh		\

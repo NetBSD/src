@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.8 1998/03/02 21:36:55 cgd Exp $
+# $NetBSD: Makefile,v 1.9 1999/02/13 02:54:37 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	setnetbootinfo
 BINDIR=	/usr/mdec
 
-NOMAN=	yes
+MKMAN=	no
 
 CFLAGS+= -g -I${.CURDIR}/../..
 LDSTATIC?=-static

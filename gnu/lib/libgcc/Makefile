@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 1998/11/23 09:29:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:23 lukem Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 LIB=		gcc
-NOLINT=		nolint (gcc private fns library)
-NOPROFILE=
-NOPIC=
+MKLINT=		no
+MKPROFILE=	no
+MKPIC=		no
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 

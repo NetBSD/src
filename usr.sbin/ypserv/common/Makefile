@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1999/01/22 02:37:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:55:01 lukem Exp $
 
 LIB=	common
 SRCS=	localhostname.c ypdb.c yplib_host.c ypresp_xdr.c
 
-NOPROFILE=	noprofile
-NOPIC=		nopic
+MKPROFILE=	no
+MKPIC=		no
 
 # only needed during build
 libinstall::

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/01/22 14:05:06 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:48 lukem Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 
@@ -8,7 +8,7 @@ SRCS=	start.S boot.c bootconf.c filesystem.c
 CLEANFILES+=${PROG}.elf ${PROG}.map bootconf.c ${ALL}
 
 DPADD+=	${LIBS}
-NOMAN=	noman	# XXX: Should have one
+MKMAN=	no
 LDBUG=	-T $S/arch/mips/conf/stand.ldscript
 
 # Tell boot code which drivers we want to link against

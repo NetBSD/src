@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/27 17:22:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:56 lukem Exp $
+
+.include <bsd.own.mk>
 
 PROG=	units
-.if !defined(NOSHARE)
+.if ${MKSHARE} != "no"
 FILES=  units.lib
 FILESDIR=/usr/share/misc
 .endif

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 1998/03/02 19:57:00 cgd Exp $
+# $NetBSD: Makefile,v 1.10 1999/02/13 02:54:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ WARNS?=	1
 
 SRCS=	installboot.c cd9660.c dkcksum.c
 
-NOMAN=	yes
+MKMAN=	no
 
 CFLAGS+= -g -I${.CURDIR}/../..
 LDSTATIC?=-static

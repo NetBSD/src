@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/11 15:42:15 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:29 lukem Exp $
 
 PROG=		makeinfo
 SRCS=		makeinfo.c multi.c
 CPPFLAGS+=	-I${DIST}/texinfo/makeinfo
-NOMAN=
+MKMAN=		no
 
 .include <bsd.prog.mk>
 

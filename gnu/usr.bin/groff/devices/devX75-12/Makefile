@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1998/09/05 14:57:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:26 lukem Exp $
 
 DEVICE=		X75-12
 FONTFILES=	CB CBI CI CR HB HBI HI HR NB NBI NI NR S TB TBI TI TR DESC
 
-NOOBJ=		noobj
+MKOBJ=		no
 
 clean cleandir distclean:
 
