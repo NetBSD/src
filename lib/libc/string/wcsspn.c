@@ -1,7 +1,7 @@
-/*	$NetBSD: wcsspn.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wcsspn.c,v 1.3 2001/09/21 16:09:15 yamt Exp $	*/
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c)1999,2001 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: wcsspn.c,v 1.1 1999/12/29 21:47:45 tshiozak Exp
+ *	$Citrus: xpg4dl/FreeBSD/lib/libc/string/wcsspn.c,v 1.3 2001/09/21 16:06:43 yamt Exp $
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsspn.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wcsspn.c,v 1.3 2001/09/21 16:09:15 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -53,6 +53,7 @@ wcsspn(s, set)
 		while (*q) {
 			if (*p == *q)
 				break;
+			q++;
 		}
 		if (!*q)
 			goto done;
