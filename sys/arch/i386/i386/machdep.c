@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.2.1 1997/02/12 12:47:05 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.2.1 1997/05/04 15:18:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -274,12 +274,8 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 
@@ -947,7 +943,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -1010,14 +1006,14 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -1084,7 +1080,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
@@ -1176,28 +1172,6 @@ dumpsys()
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }
-
-#ifdef HZ
-/*
- * If HZ is defined we use this code, otherwise the code in
- * /sys/i386/i386/microtime.s is used.  The other code only works
- * for HZ=100.
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splhigh();
-
-	*tvp = time;
-	tvp->tv_usec += tick;
-	splx(s);
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-}
-#endif /* HZ */
 
 /*
  * Clear registers on exec
@@ -1301,12 +1275,8 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
-	IDTVEC(ofl),     IDTVEC(bnd),     IDTVEC(ill),     IDTVEC(dna),
-	IDTVEC(dble),    IDTVEC(fpusegm), IDTVEC(tss),     IDTVEC(missing),
-	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
-	IDTVEC(fpu),     IDTVEC(align),
-	IDTVEC(syscall), IDTVEC(osyscall);
+extern	IDTVEC(syscall), IDTVEC(osyscall);
+extern	*IDTVEC(exceptions)[];
 
 void
 init386(first_avail)
@@ -1359,25 +1329,11 @@ init386(first_avail)
 	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
-	for (x = 0; x < NIDT; x++)
-		setgate(&idt[x], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  3], &IDTVEC(bpt),     0, SDT_SYS386TGT, SEL_UPL);
-	setgate(&idt[  4], &IDTVEC(ofl),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  5], &IDTVEC(bnd),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  6], &IDTVEC(ill),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  7], &IDTVEC(dna),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  8], &IDTVEC(dble),    0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[  9], &IDTVEC(fpusegm), 0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 10], &IDTVEC(tss),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 11], &IDTVEC(missing), 0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 12], &IDTVEC(stk),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 13], &IDTVEC(prot),    0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL);
-	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL);
+	for (x = 0; x < 32; x++)
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		    x == 3 ? SEL_UPL : SEL_KPL);
+
+	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
 
 	setregion(&region, gdt, sizeof(gdt) - 1);
@@ -1389,7 +1345,7 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
-	splhigh();
+	splraise(-1);
 	enable_intr();
 
 	/*
@@ -1445,8 +1401,11 @@ init386(first_avail)
 	avail_next = avail_start;
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("warning: too little memory available; running in degraded mode\n"
-		    "press a key to confirm\n\n");
+		printf("warning: too little memory available; "
+		       "have %d bytes, want %d bytes\n"
+		       "running in degraded mode\n"
+		       "press a key to confirm\n\n",
+		       ctob(physmem), 2*1024*1024);
 		cngetc();
 	}
 
@@ -1655,25 +1614,35 @@ cpu_reset()
 {
 	struct region_descriptor region;
 
-	/* Toggle the hardware reset line on the keyboard controller. */
-	outb(KBCMDP, KBC_PULSE0);
-	delay(20000);
-	outb(KBCMDP, KBC_PULSE0);
-	delay(20000);
+	disable_intr();
 
 	/*
-	 * Try to cause a triple fault and watchdog reset by setting the
-	 * IDT to point to nothing.
+	 * The keyboard controller has 4 random output pins, one of which is
+	 * connected to the RESET pin on the CPU in many PCs.  We tell the
+	 * keyboard controller to pulse this line a couple of times.
 	 */
-	setregion(&region, 0, 0);
-	lidt(&region);
+	outb(KBCMDP, KBC_PULSE0);
+	delay(100000);
+	outb(KBCMDP, KBC_PULSE0);
+	delay(100000);
 
+	/*
+	 * Try to cause a triple fault and watchdog reset by making the IDT
+	 * invalid and causing a fault.
+	 */
+	bzero((caddr_t)idt, sizeof(idt));
+	setregion(&region, idt, sizeof(idt) - 1);
+	lidt(&region);
+	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+
+#if 0
 	/*
 	 * Try to cause a triple fault and watchdog reset by unmapping the
-	 * entire address space.
+	 * entire address space and doing a TLB flush.
 	 */
 	bzero((caddr_t)PTD, NBPG);
 	pmap_update(); 
+#endif
 
 	for (;;);
 }
@@ -1823,7 +1792,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	vm_offset_t va;
 
 	pa = i386_trunc_page(bpa);
-	endpa = i386_round_page((bpa + size) - 1);
+	endpa = i386_round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
@@ -1870,7 +1839,7 @@ bus_space_unmap(t, bsh, size)
 	case I386_BUS_SPACE_MEM:
 		ex = iomem_ex;
 		va = i386_trunc_page(bsh);
-		endva = i386_round_page((bsh + size) - 1);
+		endva = i386_round_page(bsh + size);
 
 #ifdef DIAGNOSTIC
 		if (endva <= va)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82.4.1 1997/02/12 12:46:58 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.1 1997/05/04 15:18:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@
 
 #include "fd.h"
 #include "ser.h"
-#include "ether.h"
+#include "arp.h"
 #include "ppp.h"
 
 #include <net/netisr.h>
@@ -113,8 +113,8 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#ifdef NETHER
-#include <netinet/if_ether.h>
+#if NARP > 0
+#include <netinet/if_inarp.h>
 #endif
 #include <netinet/ip_var.h>
 #endif 
@@ -124,6 +124,9 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -144,8 +147,6 @@ void straytrap __P((int, u_short));
 static void netintr __P((void));
 static void call_sicallbacks __P((void));
 void intrhand __P((int));
-static void dumpmem __P((int *, int, int));
-static char *hexstr __P((int, int));
 #if NSER > 0
 void ser_outintr __P((void));
 #endif
@@ -394,12 +395,8 @@ again:
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
@@ -967,7 +964,7 @@ bootsync(void)
 
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
@@ -1003,27 +1000,71 @@ long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int nblks;
 	int i;
 	extern u_int Sysseg_pa;
+	extern char end[];
+
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+
+	/*
+	 * Intitialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = NBPG;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK;
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize the pointer to the kernel segment table.
+	 */
+	m->sysseg_pa = Sysseg_pa;
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = lowram;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (u_int32_t)end;
 
 	/* XXX new corefile format, single segment + chipmem */
 	dumpsize = physmem;
-	cpu_kcore_hdr.ram_segs[0].start = lowram;
-	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size  = ctob(physmem);
 	for (i = 0; i < memlist->m_nseg; i++) {
 		if ((memlist->m_seg[i].ms_attrib & MEMF_CHIP) == 0)
 			continue;
 		dumpsize += btoc(memlist->m_seg[i].ms_size);
-		cpu_kcore_hdr.ram_segs[1].start = 0;
-		cpu_kcore_hdr.ram_segs[1].size = memlist->m_seg[i].ms_size;
+		m->ram_segs[1].start = 0;
+		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	cpu_kcore_hdr.mmutype = mmutype;
-	cpu_kcore_hdr.kernel_pa = lowram;
-	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)Sysseg_pa;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
@@ -1076,7 +1117,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
@@ -1104,7 +1145,7 @@ dumpsys()
 	*chdr_p = cpu_kcore_hdr;
 
 	bytes = ctob(dumpsize);
-	maddr = cpu_kcore_hdr.ram_segs[0].start;
+	maddr = cpu_kcore_hdr.un._m68k.ram_segs[0].start;
 	seg = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
@@ -1131,11 +1172,11 @@ dumpsys()
 			break;
 		maddr += n;
 		blkno += btodb(n);	/* XXX? */
-		if (maddr >= (cpu_kcore_hdr.ram_segs[seg].start +
-		    cpu_kcore_hdr.ram_segs[seg].size)) {
+		if (maddr >= (cpu_kcore_hdr.un._m68k.ram_segs[seg].start +
+		    cpu_kcore_hdr.un._m68k.ram_segs[seg].size)) {
 			++seg;
-			maddr = cpu_kcore_hdr.ram_segs[seg].start;
-			if (cpu_kcore_hdr.ram_segs[seg].size == 0)
+			maddr = cpu_kcore_hdr.un._m68k.ram_segs[seg].start;
+			if (cpu_kcore_hdr.un._m68k.ram_segs[seg].size == 0)
 				break;
 		}
 	}
@@ -1335,7 +1376,7 @@ static void
 netintr()
 {
 #ifdef INET
-#if NETHER > 0
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
@@ -1344,6 +1385,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
@@ -1848,98 +1895,6 @@ nmihand(frame)
 	printf("unexpected level 7 interrupt ignored\n");
 }
 #endif
-
-void
-regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
-	int sbytes;
-{
-	static int doingdump = 0;
-	register int i;
-	int s;
-
-	if (doingdump)
-		return;
-	s = splhigh();
-	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc ? curproc->p_pid : 0,
-	    hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
-	if (sbytes > 0) {
-		if (fp->f_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&fp)-1), 8));
-			dumpmem(((int *)&fp)-1, sbytes, 0);
-		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
-			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-extern u_int proc0paddr;
-#define KSADDR	((int *)((curproc ? (u_int)curproc->p_addr : proc0paddr) + USPACE - NBPG))
-
-static void
-dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz, ustack;
-{
-	register int i, val;
-
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
-		else
-			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
-	}
-	printf("\n");
-}
-
-static char *
-hexstr(val, len)
-	register int val;
-	int len;
-{
-	static char nbuf[9];
-	register int x, i;
-
-	if (len > 8)
-		return("");
-	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
-		x = val & 0xF;
-		if (x > 9)
-			nbuf[i] = x - 10 + 'A';
-		else
-			nbuf[i] = x + '0';
-		val >>= 4;
-	}
-	return(nbuf);
-}
 
 /*
  * should only get here, if no standard executable. This can currently
