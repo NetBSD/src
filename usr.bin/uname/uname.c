@@ -30,13 +30,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: uname.c,v 1.6 1994/02/06 05:27:40 cgd Exp $";
+static char rcsid[] = "$Id: uname.c,v 1.7 1994/12/20 01:28:57 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <locale.h>
 #include <unistd.h>
 #include <sys/utsname.h>
+#include <err.h>
 
 static void usage();
 
