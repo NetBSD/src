@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.53 2001/01/23 01:56:16 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.54 2001/01/23 02:27:39 thorpej Exp $	*/
 
 /*
  *
@@ -1183,7 +1183,7 @@ ReFault:
 		oanon = anon;		/* oanon = old, locked anon */
 		anon = uvm_analloc();
 		if (anon) {
-			simple_lock(&anon->an_lock);
+			/* new anon is locked! */
 			pg = uvm_pagealloc(NULL, 0, anon, 0);
 		}
 
@@ -1586,12 +1586,13 @@ Case2:
 		anon = uvm_analloc();
 		if (anon) {
 			/*
+			 * The new anon is locked.
+			 *
 			 * In `Fill in data...' below, if
 			 * uobjpage == PGO_DONTCARE, we want
 			 * a zero'd, dirty page, so have
 			 * uvm_pagealloc() do that for us.
 			 */
-			simple_lock(&anon->an_lock);
 			pg = uvm_pagealloc(NULL, 0, anon,
 			    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
 		}

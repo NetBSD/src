@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.28 2001/01/23 01:56:16 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.29 2001/01/23 02:27:39 thorpej Exp $	*/
 
 /*
  *
@@ -801,7 +801,7 @@ ReStart:
 			 */
 			nanon = uvm_analloc();
 			if (nanon) {
-				simple_lock(&nanon->an_lock);
+				/* nanon is locked! */
 				npg = uvm_pagealloc(NULL, 0, nanon, 0);
 			} else
 				npg = NULL;	/* XXX: quiet gcc warning */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.12 2001/01/23 01:56:16 thorpej Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.13 2001/01/23 02:27:39 thorpej Exp $	*/
 
 /*
  *
@@ -150,6 +150,8 @@ uvm_anon_remove(count)
 
 /*
  * allocate an anon
+ *
+ * => new anon is returned locked!
  */
 struct vm_anon *
 uvm_analloc()
@@ -164,6 +166,8 @@ uvm_analloc()
 		a->an_ref = 1;
 		a->an_swslot = 0;
 		a->u.an_page = NULL;		/* so we can free quickly */
+		LOCK_ASSERT(simple_lock_held(&a->an_lock) == 0);
+		simple_lock(&a->an_lock);
 	}
 	simple_unlock(&uvm.afreelock);
 	return(a);
