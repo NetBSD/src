@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.21.4.6 2002/10/18 02:38:08 nathanw Exp $ */
+/* $NetBSD: pnpbios.c,v 1.21.4.7 2002/12/29 19:29:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.21.4.6 2002/10/18 02:38:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.21.4.7 2002/12/29 19:29:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.21.4.6 2002/10/18 02:38:08 nathanw Exp
 #include <arch/i386/pnpbios/pnpbiosreg.h>
 
 #include "opt_pnpbiosverbose.h"
-#include "isadma.h"
 #include "locators.h"
 
 #ifdef PNPBIOSVERBOSE
@@ -301,10 +300,6 @@ pnpbios_attach(parent, self, aux)
 
 	pnpbios_softc = sc;
 	sc->sc_ic = paa->paa_ic;
-
-#if NISADMA > 0
-	isa_dmainit(sc->sc_ic, I386_BUS_SPACE_IO, &isa_bus_dma_tag, self);
-#endif
 
 	p = pnpbios_find();
 	if (!p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hbvar.h,v 1.3.10.1 2002/10/18 02:39:06 nathanw Exp $	*/
+/*	$NetBSD: hbvar.h,v 1.3.10.2 2002/12/29 19:33:36 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -46,5 +46,5 @@ struct hb_attach_args {
 	int		ha_vect;	/* interrupt vector */
 };
 
-void	hb_intr_establish __P((int, int (*)(void *), int, void *));
-void	hb_intr_disestablish __P((int));
+void hb_intr_establish(int, int (*)(void *), int, void *);
+void hb_intr_disestablish(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31.6.8 2002/10/18 02:37:45 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.6.9 2002/12/29 19:29:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.6.8 2002/10/18 02:37:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.6.9 2002/12/29 19:29:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.6.8 2002/10/18 02:37:45 nathanw Exp
 #include "pci.h"
 #include "eisa.h"
 #include "isa.h"
+#include "isadma.h"
 #include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
@@ -188,6 +189,14 @@ mainbus_attach(parent, self, aux)
 	pci_mode = pci_mode_detect();
 #endif
 
+#if NISADMA > 0 && (NACPI > 0 || NPNPBIOS > 0)
+	/*
+	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
+	 */
+	isa_dmainit(&i386_isa_chipset, I386_BUS_SPACE_IO, &isa_bus_dma_tag,
+	    self);
+#endif
+
 #if NACPI > 0
 	if (acpi_probe()) {
 		mba.mba_acpi.aa_busname = "acpi";
@@ -198,6 +207,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
+		mba.mba_acpi.aa_ic = &i386_isa_chipset;
 		config_found(self, &mba.mba_acpi, mainbus_print);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {

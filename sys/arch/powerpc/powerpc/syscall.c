@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.12 2002/12/11 06:11:46 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.13 2002/12/29 19:35:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -67,7 +67,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.12 2002/12/11 06:11:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.13 2002/12/29 19:35:07 thorpej Exp $");
 
 void
 child_return(void *arg)
@@ -275,7 +275,8 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 		params = args;
 	}
 
-	if ((error = trace_enter(l, code, realcode, params, rval)) != 0)
+	if ((error = trace_enter(l, code, realcode, 
+	    callp - code, params, rval)) != 0)
 		goto syscall_bad;
 
 	rval[0] = 0;

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.2.2.7 2002/10/18 02:36:42 nathanw Exp $
+# $NetBSD: INSTALL,v 1.2.2.8 2002/12/29 19:25:41 thorpej Exp $
 #
 # INSTALL machine description file
 #
@@ -120,6 +120,9 @@ dio0		at mainbus0	# DIO/DIO-II bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
+
+# DMA controller
+dma* 		at intio?
 
 # Human Interface Loop
 hil*		at intio?

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.8.2 2002/06/20 03:40:08 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.8.3 2002/12/29 19:33:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@
 struct device *booted_device;
 int booted_partition;
 
-static void findroot __P((void));
+static void findroot(void);
 
 /*
  * Determine mass storage and memory configuration for a machine.

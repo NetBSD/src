@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116.6.9 2002/11/11 21:58:25 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.116.6.10 2002/12/29 19:25:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross

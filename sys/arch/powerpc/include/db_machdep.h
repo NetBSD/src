@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.10.8.5 2002/06/20 03:40:31 nathanw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10.8.6 2002/12/29 19:35:04 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -64,15 +64,18 @@ extern	db_regs_t	ddb_regs;		/* register state */
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->iar)
 
-#define	BKPT_ASM	"trap"				/* should match BKPT_INST */
+#define	BKPT_ASM	"trap"		/* should match BKPT_INST */
 #define	BKPT_INST	0x7fe00008	/* breakpoint instruction */
-
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
+#ifndef PPC_IBM4XX
 #define SR_SINGLESTEP	0x400
 #define	db_clear_single_step(regs)	((regs)->msr &= ~SR_SINGLESTEP)
 #define	db_set_single_step(regs)	((regs)->msr |=  SR_SINGLESTEP)
+#else
+#define	SOFTWARE_SSTEP
+#endif
 
 #define T_BREAKPOINT	0xffff
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
@@ -84,21 +87,39 @@ extern	db_regs_t	ddb_regs;		/* register state */
 #define	IS_WATCHPOINT_TRAP(type, code)	0
 #endif
 
-#define	M_RTS		0xfc0007fe
+#define	M_RTS		0xfc0007ff
 #define I_RTS		0x4c000020
-#define M_BC		0xfc000000
+#define	I_BLRL		0x4c000021
+#define M_BC		0xfc000001
 #define I_BC		0x40000000
-#define M_B		0xfc000000
-#define I_B		0x50000000
+#define I_BCL		0x40000001
+#define M_B		0xfc000001
+#define I_B		0x48000000
+#define I_BL		0x48000001
+#define	M_BCTR		0xfc0007fe
+#define	I_BCTR		0x4c000420
+#define	I_BCTRL		0x4c000421
 #define	M_RFI		0xfc0007fe
 #define	I_RFI		0x4c000064
 
 #define	inst_trap_return(ins)	(((ins)&M_RFI) == I_RFI)
 #define	inst_return(ins)	(((ins)&M_RTS) == I_RTS)
-#define	inst_call(ins)		(((ins)&M_BC ) == I_BC  || \
-				 ((ins)&M_B  ) == I_B )
+#define	inst_call(ins)		(((ins)&M_BC  ) == I_BCL   || \
+				 ((ins)&M_B   ) == I_BL    || \
+				 ((ins)&M_BCTR) == I_BCTRL || \
+				 ((ins)&M_RTS ) == I_BLRL )
+#define	inst_branch(ins)	(((ins)&M_BC  ) == I_BC || \
+				 ((ins)&M_B   ) == I_B  || \
+				 ((ins)&M_BCTR) == I_BCTR )
+#define	inst_unconditional_flow_transfer(ins)	\
+				(((ins)&M_B   ) == I_B    || \
+				 ((ins)&M_BCTR) == I_BCTR )
 #define inst_load(ins)		0
 #define inst_store(ins)		0
+#ifdef PPC_IBM4XX
+#define next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
+extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
+#endif
 
 /*
  * GDB's register array is:

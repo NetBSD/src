@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.13.32.3 2002/10/18 02:36:45 nathanw Exp $	*/
+/*	$NetBSD: dio.c,v 1.13.32.4 2002/12/29 19:25:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.13.32.3 2002/10/18 02:36:45 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.13.32.4 2002/12/29 19:25:42 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -100,9 +100,9 @@ dioattach(parent, self, aux)
 	caddr_t pa, va;
 	int scode, scmax, didmap, scodesize;
 
+	printf("\n");
+
 	scmax = DIO_SCMAX(machineid);
-	printf(": ");
-	dmainit();
 
 	for (scode = 0; scode < scmax; ) {
 		if (DIO_INHOLE(scode)) {
