@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.42 2000/05/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.43 2000/07/17 06:51:18 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -961,7 +961,7 @@ sdgo(arg)
 		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %d\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
-		       bp->b_data, bp->b_rawblkno, bp->b_bcount,
+		       bp->b_data, (long)bp->b_rawblkno, bp->b_bcount,
 		       sc->sc_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;
