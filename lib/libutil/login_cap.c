@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.10 2001/01/03 15:41:19 lukem Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.10 2001/01/03 15:41:19 lukem Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -658,7 +658,7 @@ setuserpath(login_cap_t *lc, char *home)
  *	6) A number followed by a g (mult by 1024 * 1024 * 1024).
  *	7) A number followed by a t (mult by 1024 * 1024 * 1024 * 1024).
  *	8) Two or more numbers (with/without k,b,m,g, or t).
- *	   seperated by x (also * for backwards compatibility), specifying
+ *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  */
 static u_quad_t

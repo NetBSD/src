@@ -144,7 +144,7 @@ and for prodding me into improving it.
 
 - Clean up the memory allocation/reference history printer.
 
-- Support input of dotted quads and colon-seperated hex lists as
+- Support input of dotted quads and colon-separated hex lists as
   attribute values in omshell.
 
 - Fix a typo in the linux interface discovery code.
@@ -394,7 +394,7 @@ and for prodding me into improving it.
   given a lease where the hardware address was correct but the client
   identifier was not, resulting in a lease conflict message.
 
-- Fix a problem where the server could write out a colon-seperated
+- Fix a problem where the server could write out a colon-separated
   hex list as a value for a variable, which would then not parse.
   The fix is to always write strings as quoted strings, with any
   non-printable characters quoted as octal escape sequences.   So

@@ -1,4 +1,4 @@
-.\"	$NetBSD: read_me.nr,v 1.2 1995/04/22 10:59:44 cgd Exp $
+.\"	$NetBSD: read_me.nr,v 1.3 2001/07/22 13:34:01 wiz Exp $
 .de @h
 'sp 4
 'tl 'TREK SETUP INSTRUCTIONS''%'
@@ -196,7 +196,7 @@ There are many neat things
 which could go in,
 if there were only enough space.
 However,
-I have specifically not gone to seperated I/D
+I have specifically not gone to separated I/D
 space.
 The main reason is that I would like future versions
 of the game
