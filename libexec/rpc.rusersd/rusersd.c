@@ -75,6 +75,10 @@ main(argc, argv)
 
                 (void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
                 (void) pmap_unset(RUSERSPROG, RUSERSVERS_ORIG);
+
+		(void) signal(SIGINT, cleanup);
+		(void) signal(SIGTERM, cleanup);
+		(void) signal(SIGHUP, cleanup);
         }
 
         openlog("rpc.rusersd", LOG_PID, LOG_DAEMON);
@@ -93,10 +97,6 @@ main(argc, argv)
 		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_ORIG, %s).", proto?"udp":"(inetd)");
 		exit(1);
 	}
-
-        (void) signal(SIGINT, cleanup);
-        (void) signal(SIGTERM, cleanup);
-        (void) signal(SIGHUP, cleanup);
         
         svc_run();
 	syslog(LOG_ERR, "svc_run returned");
