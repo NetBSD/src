@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.114 2003/08/19 08:00:54 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.115 2003/08/22 20:29:00 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.114 2003/08/19 08:00:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.115 2003/08/22 20:29:00 jonathan Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -209,8 +209,9 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
-#ifdef IPSEC	/* XXX so = ((inp == NULL) ? NULL : inp->inp_socket; */
-	so = ipsec_getsocket(m);
+#ifdef IPSEC
+	/* so = ipsec_getsocket(m); */
+	so = ((inp == NULL) ? NULL : inp->inp_socket;
 	(void)ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
