@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1993/10/13 05:55:57 cgd Exp $
+#	$Id: Makefile.inc,v 1.3 1993/10/13 06:17:33 cgd Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -12,8 +12,8 @@ NETBOOTLIBDIR=  $(NETBOOTDIR)
 
 NETBOOTLIB=	$(NETBOOTLIBDIR)/libnetboot.a
 
-$(NETBOOTLIB):	__always_make_netbootlib
+$(NETBOOTLIB):	.NOTMAIN __always_make_netbootlib
 	@echo making sure the netboot library is up to date...
 	@(cd $(NETBOOTDIR) ; make)
 
-__always_make_netbootlib:
+__always_make_netbootlib: .NOTMAIN
