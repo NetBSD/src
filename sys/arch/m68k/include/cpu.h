@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1996/09/11 00:08:52 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1996/09/12 02:52:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,6 +99,7 @@ extern	int mmutype;		/* MMU on this host */
 #define	FPU_68882	2	/* 68882 FPU */
 #define	FPU_68040	3	/* 68040 on-chip FPU */
 #define	FPU_68060	4	/* 68060 on-chip FPU */
+#define	FPU_UNKNOWN	5	/* placeholder; unknown FPU */
 
 /* values for mmutype (assigned for quick testing) */
 #define	MMU_68060	-3	/* 68060 on-chip MMU */
