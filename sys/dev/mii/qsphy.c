@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.7 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.8 1998/11/04 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ qsphymatch(parent, match, aux)
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_QUALSEMI &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_QUALSEMI_QS6612)
-		return (1);
+		return (10);
 
 	return (0);
 }
