@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.108 2000/01/24 10:49:19 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.109 2000/01/31 22:39:37 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2947,3 +2947,110 @@ sys/arch/i386/stand/lib/comio_direct.c		1.4
 distrib/utils/sysinst/run.c			1.29
 
   Remove local declaration of errno, rely on <errno.h> instead.
+
+gnu/usr.bin/gas/input-scrub.c			1.7
+
+  Handle arbitrarily long input lines.
+
+share/man/man4/ioat.4				1.1 (new)
+share/man/man4/Makefile				patch
+distrib/sets/lists/man/mi			1.199 via patch
+distrib/notes/i386/hardware			1.60
+
+  Document the ioat device driver.
+
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC_TINY			patch
+
+  Add commented-out entry for the ioat device driver.
+
+libexec/lfs_cleanerd/cleanerd.c			1.18
+libexec/lfs_cleanerd/library.c			1.15
+libexec/lfs_cleanerd/print.c			1.8
+
+  Fix a few memory leaks in lfs_cleanerd.
+
+sys/compat/linux/arch/i386/syscalls.master	patch
+sys/compat/linux/arch/i386/linux_sysent.c	regenerate
+sys/compat/linux/arch/i386/linux_syscallargs.h	regenerate
+sys/compat/linux/arch/i386/linux_syscall.h	regenerate
+sys/compat/linux/arch/i386/linux_syscalls.c	regenerate
+
+  Enable emulation of vfork(2).
+
+sys/arch/alpha/pci/cia_dma.c			1.14
+
+  Fix a fatal typo in a Pyxis SGMAP TLB bug workaround.
+
+sys/arch/vax/vax/pmap.c				patch
+
+  Fix a panic when the system goes out of free pages.
+
+lib/libc/arch/arm32/sys/cerror.S		1.6
+lib/libc/arch/arm32/sys/ptrace.S		1.5-1.6
+
+  Support *__errno() indirection.
+
+domestic/usr.bin/telnet/externs.h		1.10
+
+  Include <errno.h>.
+
+etc/netstart					1.69
+
+  Use 'route -n flush' instead of 'route flush' to avoid delay
+  caused by name lookups for entries we throw away.
+
+domestic/usr.bin/kinit/kinit.c			1.2
+
+  Calculate user specified ticket lifetime correctly.  Fixes PR#9098.
+
+sbin/restore/tape.c				1.39
+
+  Print the header even on dumps from a system with an unset
+  host name.  Fixes PR#9282.
+
+lib/libc/arch/i386/sys/cerror.S			1.11
+
+  Make cerror() work correctly for stubs in other shlibs -- e.g.
+  libposix.
+
+sys/uvm/uvm_vnode.c				1.28 via patch
+
+  Remove a debug printf that has outlived its usefulness.
+
+sys/compat/ultrix/ultrix_flock.h		1.1 (new)
+sys/compat/ultrix/ultrix_misc.c			1.52
+sys/compat/ultrix/syscalls.master		1.32
+sys/compat/ultrix/ultrix_syscall.h		regenerate
+sys/compat/ultrix/ultrix_syscallargs.h		regenerate
+sys/compat/ultrix/ultrix_sysent.c		regenerate
+sys/compat/ultrix/ultrix_syscalls.c		regenerate
+
+  Emulate Ultrix fcntl(F_SETLK) & Co. so the Ultrix seti@home client
+  works.
+
+usr.sbin/pkg_install/add/perform.c		1.43
+
+  Also move the +SIZE file into place, if a package comes with one.
+
+usr.sbin/pkg_install/add/main.c			1.14
+usr.sbin/pkg_install/add/perform.c		1.44-1.45
+usr.sbin/pkg_install/add/pkg_add.1		1.18-1.19
+usr.sbin/pkg_install/delete/perform.c		1.30
+usr.sbin/pkg_install/info/perform.c		1.30
+usr.sbin/pkg_install/info/pkg_info.1		1.21
+usr.sbin/pkg_install/lib/Makefile		1.13
+usr.sbin/pkg_install/lib/exec.c			1.7
+usr.sbin/pkg_install/lib/file.c			1.36-1.37
+usr.sbin/pkg_install/lib/ftpio.c		1.1-1.9 (new)
+usr.sbin/pkg_install/lib/lib.h			1.29
+usr.sbin/pkg_install/lib/str.c			1.19-1.20
+usr.sbin/pkg_install/create/pkg_create.1	1.22
+
+  Implement FTP wildcard depends, to give NetBSD full wildcard support
+  not only in pkgsrc but also for binary packages installed from
+  local disk or via FTP.
+
+share/man/man4/termios.4			1.15
+
+  Correct typo, fixing PR#9314.
