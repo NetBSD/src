@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.6 2003/01/20 05:29:59 simonb Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.7 2003/04/06 03:22:50 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -319,8 +319,12 @@ main(int argc, char *argv[])
 				break;
 			case R_68K_PC16:
 				++pcrelsz;
+				value -= htobe32(ra->r_offset);
+				if (value < -0x8000 || value > 0x7fff)
+					errx(1,  "PC-relative offset out of range: %x\n",
+					    value);
 				*((int16_t *)(base + htobe32(ra->r_offset))) =
-				    htobe16(value - htobe32(ra->r_offset));
+				    htobe16(value);
 				break;
 			default:
 				errx(1, "Relocation type %d not supported",
