@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.2 2000/03/20 00:53:17 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.3 2000/03/20 03:49:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ esp_pcmcia_dma_intr(sc)
 		}
 
 		if (esc->sc_active) {
-			while (!(NCR_READ_REG(sc, NCR_STAT) & 0x80));
+			while (!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT));
 			espstat = NCR_READ_REG(sc, NCR_STAT);
 			espintr = NCR_READ_REG(sc, NCR_INTR);
 			espphase = (espintr & NCRINTR_DIS)
