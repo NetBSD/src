@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2002/11/13 14:00:27 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2003/01/18 06:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -80,6 +80,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_proc_fork(p1, p2)		/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -111,7 +112,7 @@ struct clockframe {
 do {									\
 	want_resched = 1;						\
 	if (curproc != NULL)						\
-		aston(curproc);						\
+		aston(curproc);					\
 } while (/*CONSTCOND*/0)
 
 /*

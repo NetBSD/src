@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2002/04/29 09:33:30 uch Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 2003/01/18 06:33:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -76,19 +76,17 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-static __inline struct trapframe *process_frame(struct proc *);
-
 static __inline struct trapframe *
-process_frame(struct proc *p)
+process_frame(struct lwp *l)
 {
 
-	return (p->p_md.md_regs);
+	return (l->l_md.md_regs);
 }
 
 int
-process_read_regs(struct proc *p, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	regs->r_spc = tf->tf_spc;
 	regs->r_ssr = tf->tf_ssr;
@@ -116,9 +114,9 @@ process_read_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_write_regs(struct proc *p, struct reg *regs)
+process_write_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	/*
 	 * Check for security violations.
@@ -154,8 +152,8 @@ process_write_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 {
 
 	if (sstep)
@@ -165,9 +163,9 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(struct proc *p, caddr_t addr)
+process_set_pc(struct lwp *l, caddr_t addr)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	tf->tf_spc = (int)addr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.14 2002/12/16 02:15:59 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.15 2003/01/18 06:33:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-void (*__sh_switch_resume)(struct proc *);
-struct proc *cpu_switch_search(struct proc *);
+void (*__sh_switch_resume)(struct lwp *);
+struct lwp *cpu_switch_search(struct lwp *);
 void idle(void);
 int want_resched;
 
@@ -112,13 +112,13 @@ int want_resched;
  * struct proc *cpu_switch_search(struct proc *oldproc):
  *	Find the highest priority process.
  */
-struct proc *
-cpu_switch_search(struct proc *oldproc)
+struct lwp *
+cpu_switch_search(struct lwp *oldlwp)
 {
 	struct prochd *q;
-	struct proc *p;
+	struct lwp *l;
 
-	curproc = 0;
+	curlwp = 0;
 
 	SCHED_LOCK_IDLE();
 	while (sched_whichqs == 0) {
@@ -128,29 +128,31 @@ cpu_switch_search(struct proc *oldproc)
 	}
 
 	q = &sched_qs[ffs(sched_whichqs) - 1];
-	p = q->ph_link;
-	remrunqueue(p);
+	l = q->ph_link;
+	remrunqueue(l);
 	want_resched = 0;
 	SCHED_UNLOCK_IDLE();
 
-	p->p_stat = SONPROC;
+	l->l_stat = LSONPROC;
 
-	if (p != oldproc) {
-		curpcb = p->p_md.md_pcb;
-		pmap_activate(p);
+	if (l != oldlwp) {
+		struct proc *p = l->l_proc;
+
+		curpcb = l->l_md.md_pcb;
+		pmap_activate(l);
 
 		/* Check for Restartable Atomic Sequences. */
 		if (p->p_nras != 0) {
 			caddr_t pc;
 
-			pc = ras_lookup(p, (caddr_t) p->p_md.md_regs->tf_spc);
+			pc = ras_lookup(p, (caddr_t) l->l_md.md_regs->tf_spc);
 			if (pc != (caddr_t) -1)
-				p->p_md.md_regs->tf_spc = (int) pc;
+				l->l_md.md_regs->tf_spc = (int) pc;
 		}
 	}
-	curproc = p;
+	curlwp = l;
 
-	return (p);
+	return (l);
 }
 
 /*
@@ -169,18 +171,18 @@ idle()
 }
 
 /*
- * void sh3_switch_setup(struct proc *p):
+ * void sh3_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. TLB miss handler check these.
  */
 void
-sh3_switch_setup(struct proc *p)
+sh3_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
-	struct md_upte *md_upte = p->p_md.md_upte;
+	struct md_upte *md_upte = l->l_md.md_upte;
 	u_int32_t vpn;
 	int i;
 
-	vpn = (u_int32_t)p->p_addr;
+	vpn = (u_int32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	for (i = 0; i < UPAGES; i++, vpn += NBPG, md_upte++) {
 		pte = __pmap_kpte_lookup(vpn);
@@ -192,18 +194,18 @@ sh3_switch_setup(struct proc *p)
 }
 
 /*
- * void sh4_switch_setup(struct proc *p):
+ * void sh4_switch_setup(struct lwp *l):
  *	prepare kernel stack PTE table. sh4_switch_resume wired this PTE.
  */
 void
-sh4_switch_setup(struct proc *p)
+sh4_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
-	struct md_upte *md_upte = p->p_md.md_upte;
+	struct md_upte *md_upte = l->l_md.md_upte;
 	u_int32_t vpn;
 	int i, e;
 
-	vpn = (u_int32_t)p->p_addr;
+	vpn = (u_int32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	e = SH4_UTLB_ENTRY - UPAGES;
 	for (i = 0; i < UPAGES; i++, e++, vpn += NBPG) {
