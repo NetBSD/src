@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.20 1996/05/05 06:18:51 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21 1996/05/05 06:54:21 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -562,7 +562,6 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
-	u_int get_mapping __P((void));
 	extern u_long	videoaddr;
 	extern caddr_t	esym;
 	vm_offset_t	nextpa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 1996/05/05 06:18:25 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14 1996/05/05 06:54:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -106,7 +106,6 @@ fpu_probe()
 	int	fpframe[60 / sizeof(int)];
 	label_t	faultbuf;
 	u_char	b;
-	void	m68881_restore __P((int []));
 
 	nofault = (int *) &faultbuf;
 	if (setjmp(&faultbuf)) {

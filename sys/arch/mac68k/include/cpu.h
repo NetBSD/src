@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 1996/05/05 06:43:33 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1996/05/05 06:54:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -349,7 +349,32 @@ extern	unsigned long		load_addr;
 #define CACHE4_OFF	0x00000000
 
 __BEGIN_DECLS
+/* machdep.c */
+u_int get_mapping __P((void));
+
+/* locore.s */
+void	m68881_restore __P((int []));
+void	m68881_save __P((struct fpframe *));
+u_int	getsfc __P((void));
+u_int	getdfc __P((void));
+void	TBIA __P((void));
+void	TBIAS __P((void));
+void	TBIS __P((vm_offset_t));
+void	DCFP __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	DCFL __P((vm_offset_t));
+int	suline __P((caddr_t, caddr_t));
+int	susword __P((caddr_t, u_int));
+void	savectx __P((struct pcb *));
+void	proc_trampoline __P((void));
+
+/* trap.c */
+void	child_return __P((struct proc *, struct frame));
+
 #if defined(COMPAT_SUNOS)
+/* m68k/m68k/sunos_machdep.c */
 void	sunos_sendsig __P((sig_t, int, int, u_long));
 #endif
 __END_DECLS
