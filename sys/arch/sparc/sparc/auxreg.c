@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.11 1996/03/14 21:08:53 christos Exp $ */
+/*	$NetBSD: auxreg.c,v 1.12 1996/03/17 02:01:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,13 @@
 static int auxregmatch __P((struct device *, void *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
 
-struct cfdriver auxregcd =
-    { 0, "auxreg", auxregmatch, auxregattach, DV_DULL, sizeof(struct device) };
+struct cfattach auxreg_ca = {
+	sizeof(struct device), auxregmatch, auxregattach
+};
+
+struct cfdriver auxreg_cd = {
+	0, "auxreg", DV_DULL
+};
 
 #ifdef BLINK
 static int

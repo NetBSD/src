@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.42 1996/03/16 23:28:30 christos Exp $ */
+/*	$NetBSD: esp.c,v 1.43 1996/03/17 02:01:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -85,15 +85,16 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ int	espintr		__P((struct esp_softc *));
 /*static*/ void	esp_timeout	__P((void *arg));
 /*static*/ void	esp_abort	__P((struct esp_softc *, struct ecb *));
-
 int esp_stp2cpb __P((struct esp_softc *, int));
 int esp_cpb2stp __P((struct esp_softc *, int));
 
-
 /* Linkup to the rest of the kernel */
-struct cfdriver espcd = {
-	NULL, "esp", espmatch, espattach,
-	DV_DULL, sizeof(struct esp_softc)
+struct cfattach esp_ca = {
+	sizeof(struct esp_softc), espmatch, espattach
+};
+
+struct cfdriver esp_cd = {
+	NULL, "esp", DV_DULL
 };
 
 struct scsi_adapter esp_switch = {

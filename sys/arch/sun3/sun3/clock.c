@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 1995/08/21 21:37:36 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 1996/03/17 02:04:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -79,9 +79,13 @@ volatile char *clock_va;
 int clockmatch __P((struct device *, void *vcf, void *args));
 void clockattach __P((struct device *, struct device *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
+};
 
 int clockmatch(parent, vcf, args)
     struct device *parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.10 1995/02/11 20:57:11 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.11 1996/03/17 02:03:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -54,9 +54,13 @@ struct idprom identity_prom;
 static int  idprom_match __P((struct device *, void *vcf, void *args));
 static void idprom_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver idpromcd = {
-	NULL, "idprom", idprom_match, idprom_attach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach idprom_ca = {
+	sizeof(struct device), idprom_match, idprom_attach
+};
+
+struct cfdriver idprom_cd = {
+	NULL, "idprom", DV_DULL
+};
 
 int idprom_match(parent, vcf, args)
 	struct device *parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.22 1996/03/16 23:28:27 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.23 1996/03/17 02:00:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -126,9 +126,13 @@ int		cgsixioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgsixmmap __P((dev_t, int, int));
 static void	cg6_unblank __P((struct device *));
 
-struct cfdriver cgsixcd =
-    { NULL, "cgsix", cgsixmatch, cgsixattach,
-      DV_DULL, sizeof(struct cgsix_softc) };
+struct cfattach cgsix_ca = {
+	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
+};
+
+struct cfdriver cgsix_cd = {
+	NULL, "cgsix", DV_DULL
+};
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
@@ -345,7 +349,7 @@ cgsixopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgsixcd.cd_ndevs || cgsixcd.cd_devs[unit] == NULL)
+	if (unit >= cgsix_cd.cd_ndevs || cgsix_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -356,7 +360,7 @@ cgsixclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	struct cgsix_softc *sc = cgsixcd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
 	cg6_reset(sc);
 	return (0);
@@ -370,7 +374,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgsix_softc *sc = cgsixcd.cd_devs[minor(dev)];
+	register struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	u_int count;
 	int v, error;
 	union cursor_cmap tcm;
@@ -712,7 +716,7 @@ cgsixmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgsix_softc *sc = cgsixcd.cd_devs[minor(dev)];
+	register struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	register struct mmo *mo;
 	register u_int u, sz;
 #define	O(memb) ((u_int)(&((struct cg6_layout *)0)->memb))

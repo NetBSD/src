@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 1996/02/13 19:39:08 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 1996/03/17 02:04:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -57,9 +57,13 @@ int fpu_match __P((struct device *, void *vcf, void *args));
 void fpu_attach __P((struct device *, struct device *, void *));
 int fpu_probe();
 
-struct cfdriver fpucd = {
-	NULL, "fpu", fpu_match, fpu_attach,
-	DV_DULL, sizeof(struct device), 0 };
+struct cfattach fpu_ca = {
+	sizeof(struct device), fpu_match, fpu_attach
+};
+
+struct cfdriver fpu_cd = {
+	NULL, "fpu", DV_DULL
+};
 
 int fpu_match(parent, vcf, args)
     struct device *parent;
