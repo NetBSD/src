@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.70 2003/04/02 15:14:20 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.71 2003/04/03 15:19:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.70 2003/04/02 15:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.71 2003/04/03 15:19:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,9 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		off = (off_t)fxdr_unsigned(u_int32_t, *tl);
 	}
-	nfsm_srvstrsiz(reqlen, NFS_SRVMAXDATA(nfsd));
+	nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
+	reqlen = fxdr_unsigned(uint32_t, *tl);
+	reqlen = MIN(reqlen, NFS_SRVMAXDATA(nfsd));
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
