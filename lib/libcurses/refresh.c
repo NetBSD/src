@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.35 2000/05/20 15:12:15 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.36 2000/06/12 20:51:39 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.35 2000/05/20 15:12:15 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.36 2000/06/12 20:51:39 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -117,10 +117,12 @@ wnoutrefresh(WINDOW *win)
 			for (wx = 0, x_off = win->begx; wx < win->maxx &&
 			    x_off < __virtscr->maxx; wx++, x_off++) {
 				vlp->line[x_off].attr = wlp->line[wx].attr;
-				if (!(wlp->line[wx].attr & __COLOR) &&
-				    (wlp->line[wx].battr & __COLOR))
+				if (wlp->line[wx].attr & __COLOR)
 					vlp->line[x_off].attr |=
-					    wlp->line[wx].battr & __COLOR;
+					    wlp->line[wx].battr & ~__COLOR;
+				else
+					vlp->line[x_off].attr |=
+					    wlp->line[wx].battr;
 				if (wlp->line[wx].ch == ' ' &&
 				    wlp->line[wx].bch != ' ')
 					vlp->line[x_off].ch
