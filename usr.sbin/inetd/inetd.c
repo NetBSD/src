@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.95 2004/01/25 10:00:17 cube Exp $	*/
+/*	$NetBSD: inetd.c,v 1.96 2004/09/14 17:42:31 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.95 2004/01/25 10:00:17 cube Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.96 2004/09/14 17:42:31 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,9 +550,10 @@ main(int argc, char *argv[])
 			if (ev->ident != sep->se_fd)
 				continue;
 			if (debug)
-				fprintf(stderr, "someone wants %s\n", sep->se_service);
+				fprintf(stderr, "someone wants %s\n",
+				    sep->se_service);
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-				/* XXX here do the libwrap check-before-accept */
+				/* XXX here do the libwrap check-before-accept*/
 				ctrl = accept(sep->se_fd, NULL, NULL);
 				if (debug)
 					fprintf(stderr, "accept, ctrl %d\n",
@@ -595,8 +596,10 @@ spawn(struct servtab *sep, int ctrl)
 				sep->se_count = 1;
 			} else {
 				syslog(LOG_ERR,
-			"%s/%s server failing (looping), service terminated\n",
-				    sep->se_service, sep->se_proto);
+				    "%s/%s max spawn rate (%d in %d seconds) "
+				    "exceeded; service not started",
+				    sep->se_service, sep->se_proto,
+				    sep->se_max, CNT_INTVL);
 				if (!sep->se_wait && sep->se_socktype ==
 				    SOCK_STREAM)
 					close(ctrl);
@@ -883,7 +886,8 @@ config(void)
 			s = socket(sep->se_family, SOCK_DGRAM, 0);
 			if (s < 0) {
 				syslog(LOG_WARNING,
-"%s/%s: %s: the address family is not supported by the kernel",
+				    "%s/%s: %s: the address family is not "
+				    "supported by the kernel",
 				    sep->se_service, sep->se_proto,
 				    sep->se_hostaddr);
 				sep->se_checked = 0;
