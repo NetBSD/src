@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetops.c,v 1.12 1998/09/26 23:53:36 christos Exp $	*/
+/*	$NetBSD: sigsetops.c,v 1.13 1998/12/01 22:05:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sigsetops.c,v 1.12 1998/09/26 23:53:36 christos Exp $");
+__RCSID("$NetBSD: sigsetops.c,v 1.13 1998/12/01 22:05:21 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,17 @@ __RCSID("$NetBSD: sigsetops.c,v 1.12 1998/09/26 23:53:36 christos Exp $");
 #undef sigaddset
 #undef sigdelset
 #undef sigismember
+
+__warn_references(sigaddset,
+    "warning: reference to compatibility sigaddset(); include <signal.h> for correct reference")
+__warn_references(sigdelset,
+    "warning: reference to compatibility sigdelset(); include <signal.h> for correct reference")
+__warn_references(sigemptyset,
+    "warning: reference to compatibility sigemptyset(); include <signal.h> for correct reference")
+__warn_references(sigfillset,
+    "warning: reference to compatibility sigfillset(); include <signal.h> for correct reference")
+__warn_references(sigismember,
+    "warning: reference to compatibility sigismember(); include <signal.h> for correct reference")
 
 int
 sigemptyset(set)
