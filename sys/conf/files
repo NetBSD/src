@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.612 2003/05/14 22:45:03 itojun Exp $
+#	$NetBSD: files,v 1.613 2003/05/26 21:11:04 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -151,7 +151,7 @@ defflag	opt_ddb.h		DDB
 defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
 defflag	opt_kgdb.h		KGDB
-defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
+defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME KGDB_DEVPORT
 				KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 defflag				LOCKDEBUG
 defflag				SYSCALL_DEBUG
