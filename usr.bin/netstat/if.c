@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.48 2001/04/06 05:10:28 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.49 2001/10/06 18:48:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.48 2001/04/06 05:10:28 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.49 2001/10/06 18:48:30 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,8 @@ intpr(interval, ifnetaddr, pfunc)
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
-#ifdef INET6
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
+#ifdef INET6
 #ifdef KAME_SCOPEID
 	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
@@ -336,28 +336,26 @@ intpr(interval, ifnetaddr, pfunc)
 				break;
 #endif
 			case AF_LINK:
-				{
-				struct sockaddr_dl *sdl =
-					(struct sockaddr_dl *)sa;
-				    cp = (char *)LLADDR(sdl);
-				    if (sdl->sdl_type == IFT_FDDI
-					|| sdl->sdl_type == IFT_ETHER
-					|| sdl->sdl_type == IFT_IEEE1394)
-					    hexsep = ':';
-				    n = sdl->sdl_alen;
-				    if (sdl->sdl_type == IFT_IEEE1394
-					&& sdl->sdl_len > 8)
-					    n = 8; /* XXX */
-				}
-				m = printf("%-13.13s ", "<Link>");
-				goto hexprint;
+				printf("%-13.13s ", "<Link>");
+				if (getnameinfo(sa, sa->sa_len,
+				    hbuf, sizeof(hbuf), NULL, 0,
+				    NI_NUMERICHOST) != 0) {
+					cp = "?";
+				} else
+					cp = hbuf;
+				if (vflag)
+					n = strlen(cp) < 17 ? 17 : strlen(cp);
+				else
+					n = 17;
+				printf("%-*.*s ", n, n, cp);
+				break;
+
 			default:
 				m = printf("(%d)", sa->sa_family);
 				for (cp = sa->sa_len + (char *)sa;
 					--cp > sa->sa_data && (*cp == 0);) {}
 				n = cp - sa->sa_data + 1;
 				cp = sa->sa_data;
-			hexprint:
 				while (--n >= 0)
 					m += printf(hexfmt, *cp++ & 0xff,
 						    n > 0 ? hexsep : ' ');
