@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.11 2002/02/13 08:17:38 ross Exp $
+.\"	$NetBSD: ip6.4,v 1.12 2002/09/29 11:06:37 wiz Exp $
 .\"	$KAME: ip6.4,v 1.11 2000/05/07 06:21:41 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -110,7 +110,7 @@ may be used to set the hoplimit field in the
 .Tn IPv6
 header.
 As symbol name suggests, the option controls hoplimit field on unicast packets.
-If -1 is specified, the kernel will use a default value.
+If \-1 is specified, the kernel will use a default value.
 If a value of 0 to 255 is specified, the packet will have the specified
 value as hoplimit.
 Other values are considered invalid, and
@@ -268,7 +268,7 @@ you will end up accepting IPv4 traffic by
 listening socket on the same port.
 The default value for this flag is copied at socket instantiation time,
 from
-.Li net.inet6.ip6.bindv6only
+.Li net.inet6.ip6.v6only
 .Xr sysctl 3
 variable.
 The option affects
@@ -564,9 +564,9 @@ socket option.
 .Pp
 When writing to a raw socket the kernel will automatically fragment
 the packet if its size exceeds the path MTU, inserting the required
-fragmentation headers.  On input the kernel reassembles received
-fragments, so the reader of a raw socket never sees any fragment
-headers.
+fragmentation headers.
+On input the kernel reassembles received fragments, so the reader of
+a raw socket never sees any fragment headers.
 .Pp
 Most IPv4 implementations give special treatment to a raw socket
 created with a third argument to
@@ -605,8 +605,9 @@ int offset = 2;
 setsockopt(fd, IPPROTO_IPV6, IPV6_CHECKSUM, \*[Am]offset, sizeof(offset));
 .Ed
 .Pp
-By default, this socket option is disabled.  Setting the offset to -1
-also disables the option.  By disabled we mean (1) the kernel will
+By default, this socket option is disabled.
+Setting the offset to \-1 also disables the option.
+By disabled we mean (1) the kernel will
 not calculate and store a checksum for outgoing packets, and (2) the
 kernel will not verify a checksum for received packets.
 .Pp
