@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.17 1996/06/22 02:00:34 chuck Exp $
+#	$NetBSD: files.pci,v 1.18 1996/07/14 19:13:22 cgd Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -20,10 +20,26 @@ device	de: ether, ifnet
 attach	de at pci
 file	dev/pci/if_de.c			de
 
+# ENI ATM driver
+device	en: atm, ifnet
+attach	en at pci with en_pci
+file    dev/pci/if_en_pci.c		en
+file    dev/ic/midway.c			en
+
+# 3Com 3c590 and 3c595 Ethernet controllers
+# device declaration in sys/conf/files
+attach	ep at pci with ep_pci
+file	dev/pci/if_ep_pci.c		ep_pci
+
 # Digital DEFPA PCI FDDI Controller
 device	fpa: pdq, fddi, ifnet
 attach	fpa at pci
 file	dev/pci/if_fpa.c		fpa
+
+# AMD am7990 (LANCE) -based Ethernet controllers
+# device declaration in sys/conf/files
+attach	le at pci with le_pci
+file	dev/pci/if_le_pci.c		le_pci
 
 # NCR 53c8xx SCSI chips
 device	ncr: scsi
@@ -34,19 +50,3 @@ file	dev/pci/ncr.c			ncr
 device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
-
-# 3Com 3c590 and 3c595 Ethernet controllers
-# device declaration in sys/conf/files
-attach	ep at pci with ep_pci
-file	dev/pci/if_ep_pci.c		ep_pci
-
-# AMD am7990 (LANCE) -based Ethernet controllers
-# device declaration in sys/conf/files
-attach	le at pci with le_pci
-file	dev/pci/if_le_pci.c		le_pci
-
-# ENI ATM driver
-device	en: atm, ifnet
-attach	en at pci with en_pci
-file    dev/pci/if_en_pci.c		en
-file    dev/ic/midway.c			en
