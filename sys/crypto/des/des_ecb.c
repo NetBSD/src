@@ -1,4 +1,4 @@
-/*	$NetBSD: des_ecb.c,v 1.4 2001/09/09 11:01:02 tls Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.5 2001/09/09 15:52:57 taca Exp $	*/
 /*	$KAME: des_ecb.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
@@ -52,6 +52,7 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 #else
+#include <stdio.h>
 #include <string.h>
 #endif
 #include <crypto/des/des_locl.h>
