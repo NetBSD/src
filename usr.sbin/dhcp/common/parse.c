@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.4 2001/04/02 23:45:56 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.5 2001/04/06 19:01:07 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1972,6 +1972,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		return 1;
 		
 		/* Also not really a statement, but same idea as above. */
+#if !defined (SMALL)
 	      case KEY:
 		token = next_token (&val, (unsigned *)0, cfile);
 		if (!parse_key (cfile)) {
@@ -1979,6 +1980,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			return 0;
 		}
 		return 1;
+#endif
 
 	      default:
 		if (config_universe && is_identifier (token)) {
@@ -2111,6 +2113,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    }
 		    break;
 
+#if !defined (SMALL)
 		  case KEY:
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    token = peek_token (&val, (unsigned *)0, cfile);
@@ -2134,6 +2137,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
 		    if (!parse_semi (cfile))
 			    return 0;
 		    break;
+#endif
 		    
 		  default:
 		    done = 1;
@@ -2157,6 +2161,7 @@ int parse_zone (struct dns_zone *zone, struct parse *cfile)
    secret-definition :== SECRET base64val |
 			 SECRET STRING */
 
+#if !defined (SMALL)
 int parse_key (struct parse *cfile)
 {
 	int token;
@@ -2283,6 +2288,7 @@ int parse_key (struct parse *cfile)
 	omapi_auth_key_dereference (&key, MDL);
 	return 0;
 }
+#endif
 
 /*
  * on-statement :== event-types LBRACE executable-statements RBRACE

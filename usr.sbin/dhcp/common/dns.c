@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.4 2001/04/02 23:45:55 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.5 2001/04/06 19:01:07 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -281,8 +281,10 @@ int dns_zone_dereference (ptr, file, line)
 
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
+#if !defined (SMALL)
 	if (dns_zone -> key)
 		omapi_auth_key_dereference (&dns_zone -> key, file, line);
+#endif
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
