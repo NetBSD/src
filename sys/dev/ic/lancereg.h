@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.3 2000/02/17 20:18:29 thorpej Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.4 2001/08/18 21:16:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -567,3 +567,23 @@
 #define	LE_MODE_DTX	0x0002		/* disable transmitter */
 #define	LE_MODE_DRX	0x0001		/* disable receiver */
 #define	LE_MODE_NORMAL	0		/* none of the above */
+
+/*
+ * Chip ID (CSR88 IDL, CSR89 IDU) values for various AMD PCnet parts.
+ */
+#define	CHIPID_MANFID(x)	(((x) >> 1) & 0x3ff)
+#define	CHIPID_PARTID(x)	(((x) >> 12) & 0xffff)
+#define	CHIPID_VER(x)		(((x) >> 28) & 0x7)
+
+#define	PARTID_Am79c960		0x0003
+#deifne	PARTID_Am79c961		0x2260
+#define	PARTID_Am79c961A	0x2261
+#define	PARTID_Am79c965		0x2430
+#define	PARTID_Am79c970		0x0242
+#define	PARTID_Am79c970A	0x2621
+#define	PARTID_Am79c971		0x2623
+#define	PARTID_Am79c972		0x2624
+#define	PARTID_Am79c973		0x2625
+#define	PARTID_Am79c978		0x2626
+#define	PARTID_Am79c975		0x2627
+#define	PARTID_Am79c976		0x2628
