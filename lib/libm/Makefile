@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.52 1999/12/13 09:40:27 christos Exp $
+#  $NetBSD: Makefile,v 1.53 2001/06/19 00:25:36 fvdl Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -48,8 +48,8 @@
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S
-.elif (${MACHINE_ARCH} == "i386")
-.if defined(I387_LIBM)
+.elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
+.if (defined(I387_LIBM) || (${MACHINE_ARCH} == "x86_64"))
 .PATH:	${.CURDIR}/arch/i387
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_remainder.S e_remainderf.S \
