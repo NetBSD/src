@@ -2,7 +2,7 @@
 /* scan.l: the (f)lex description file for the scanner. */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,6 +79,13 @@ warranty return(Warranty);
 continue return(Continue);
 print  return(Print);
 limits return(Limits);
+"." {
+#ifdef DOT_IS_LAST
+       return(Last);
+#else
+       yyerror ("illegal character: %s",yytext);
+#endif
+    }
 "+"|"-"|";"|"("|")"|"{"|"}"|"["|"]"|","|"^" { yylval.c_value = yytext[0]; 
 					      return((int)yytext[0]); }
 && { return(AND); }
