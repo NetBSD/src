@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.7 1999/03/15 08:22:20 garbled Exp $
+.\"	$NetBSD: environ.7,v 1.7.2.1 1999/10/22 09:40:12 he Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd July 13, 1994
 .Dt ENVIRON 7
 .Os
 .Sh NAME
@@ -50,7 +50,18 @@ when a process begins.
 By convention these strings have the form
 .Dq Ar name=value .
 The following names are used by various commands:
-.Bl -tag -width BLOCKSIZE
+.Bl -tag -width AUDIOCTLDEVICE
+.It Ev AUDIOCTLDEVICE
+The name of the audio control device to be used by
+.Xr audioctl 1 ,
+.Xr audioplay 1
+and
+.Xr audiorecord 1 .
+.It Ev AUDIODEVICE
+The name of the audio device to be used by
+.Xr audioplay 1
+and
+.Xr audiorecord 1 .
 .It Ev BLOCKSIZE
 The size of the block units used by several commands, most notably
 .Xr df 1 ,
@@ -74,6 +85,9 @@ A user's login directory, set by
 .Xr login 1
 from the password file
 .Xr passwd 5 .
+.It Ev MIXERDEVICE
+The name of the audio mixer device to be used by
+.Xr mixerctl 1 .
 .It Ev PATH
 The sequence of directories, separated by colons, searched by
 .Xr csh 1 ,
@@ -167,6 +181,9 @@ and
 .Ev IFS ,
 unless you know what you are doing.
 .Sh SEE ALSO
+.Xr audioctl 1 ,
+.Xr audioplay 1 ,
+.Xr audiorecord 1 ,
 .Xr csh 1 ,
 .Xr ex 1 ,
 .Xr login 1 ,
@@ -175,6 +192,7 @@ unless you know what you are doing.
 .Xr execle 3 ,
 .Xr system 3 ,
 .Xr termcap 3 ,
+.Xr audio 4 ,
 .Xr termcap 5
 .Sh HISTORY
 The
