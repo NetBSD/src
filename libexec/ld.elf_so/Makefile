@@ -1,21 +1,21 @@
-#	$NetBSD: Makefile,v 1.28 1999/04/29 15:31:05 kleink Exp $
+#	$NetBSD: Makefile,v 1.29 1999/05/07 22:04:27 thorpej Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
-
-.if ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
-PROG=	ld.elf_so
-.endif
 
 ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
 M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
-.if (${MACHINE_ARCH} == "alpha") ||					\
-    (${MACHINE_ARCH} == "i386") ||					\
-    (${MACHINE_ARCH} == "m68k") ||					\
-    (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
-    (${MACHINE_ARCH} == "powerpc") ||					\
-    (${MACHINE_ARCH} == "sparc") ||					\
-    (${MACHINE_ARCH} == "sparc64")
+.if ((${MACHINE_ARCH} == "alpha") ||					\
+     (${MACHINE_ARCH} == "i386") ||					\
+     (${MACHINE_ARCH} == "m68k") ||					\
+     (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
+     (${MACHINE_ARCH} == "powerpc") ||					\
+     (${MACHINE_ARCH} == "sparc") ||					\
+     (${MACHINE_ARCH} == "sparc64")) &&					\
+    ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
+
+PROG=	ld.elf_so
+
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
 .if exists($M/Makefile.inc)
