@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_coff.c,v 1.1 1999/11/26 13:47:53 msaitoh Exp $	*/
+/*	$NetBSD: exec_coff.c,v 1.2 2000/01/07 09:40:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_coff.c,v 1.1 1999/11/26 13:47:53 msaitoh Exp $");
+__RCSID("$NetBSD: exec_coff.c,v 1.2 2000/01/07 09:40:34 msaitoh Exp $");
 #endif
  
 #include <stdio.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: exec_coff.c,v 1.1 1999/11/26 13:47:53 msaitoh Exp $");
 
 #if defined(NLIST_COFF)
 
-#include <machine/exec_coff.h>	/* XXX DIRTY HACK */
+#include <sys/exec_coff.h>
 
 int
 check_coff(int fd, const char *filename)
