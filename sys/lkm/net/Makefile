@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2004/06/30 09:21:26 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/24 15:50:52 cube Exp $
 
-SUBDIR=	bsdcomp deflate pf
+SUBDIR=	bsdcomp deflate pf tap
 
 .include <bsd.subdir.mk>
