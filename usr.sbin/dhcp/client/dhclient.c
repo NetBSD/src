@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.9 1999/02/05 18:17:27 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.10 1999/02/10 03:00:06 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -172,15 +172,16 @@ int main (argc, argv, envp)
 	inaddr_any.s_addr = INADDR_ANY;
 
 	/* Set up SIGHUP and SIGTERM handlers. */
-	sa.sa_handler = catch_sighup;
 	sa.sa_flags = 0;
 	(void) sigemptyset (&sa.sa_mask);
+	(void) sigaddset (&sa.sa_mask, SIGHUP);
+	(void) sigaddset (&sa.sa_mask, SIGTERM);
+
+	sa.sa_handler = catch_sighup;
 	if (sigaction (SIGHUP, &sa, NULL))
 		error ("Unable to setup SIGHUP handler.");
 
 	sa.sa_handler = catch_sigterm;
-	sa.sa_flags = 0;
-	(void) sigemptyset (&sa.sa_mask);
 	if (sigaction (SIGTERM, &sa, NULL))
 		error ("Unable to setup SIGTERM handler.");
 
