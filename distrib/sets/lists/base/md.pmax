@@ -1,19 +1,5 @@
-# $NetBSD: md.pmax,v 1.34 1999/05/18 23:18:18 tron Exp $
+# $NetBSD: md.pmax,v 1.35 1999/05/18 23:23:32 tron Exp $
 ./boot
-./usr/lkm/adosfs.o
-./usr/lkm/cd9660.o
-./usr/lkm/coda.o
-./usr/lkm/ext2fs.o
-./usr/lkm/fdesc.o
-./usr/lkm/if_ipl.o
-./usr/lkm/kernfs.o
-./usr/lkm/mfs.o
-./usr/lkm/msdosfs.o
-./usr/lkm/ntfs.o
-./usr/lkm/nullfs.o
-./usr/lkm/portal.o
-./usr/lkm/procfs.o
-./usr/lkm/umapfs.o
 ./usr/mdec/boot
 ./usr/mdec/bootrz
 ./usr/mdec/rzboot
