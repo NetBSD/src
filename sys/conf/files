@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.566 2002/10/10 22:56:03 thorpej Exp $
+#	$NetBSD: files,v 1.567 2002/10/10 22:58:49 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -82,12 +82,12 @@ include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.netipsec"
 include "netiso/files.netiso"
+include "netnatm/files.netnatm"
 
 defflag	opt_ns.h		NS NSIP		# NS network stack,
 						# XNS tunneled over IP
 defflag opt_smb.h		SMB		# SMB network stack
 defflag				IPX		# IPX network stack
-defflag				NATM		# "native" ATM protocols
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# Include deflate or bsd
@@ -1142,9 +1142,6 @@ file	netinet/ip_ecn.c		ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre
 file	netinet6/in6_gif.c		gif & inet6
-file	netnatm/natm.c			natm
-file	netnatm/natm_pcb.c		natm
-file	netnatm/natm_proto.c		natm
 file	netns/idp_usrreq.c		ns
 file	netns/ns.c			ns
 file	netns/ns_error.c		ns
