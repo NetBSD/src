@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 1997/01/13 14:05:01 oki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 1997/06/10 20:18:35 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -325,8 +325,8 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Validate PTEs for kernel text (RO)
 	 */
-	pte = &((u_int *)kptpa)[x68k_btop(KERNBASE)];
-	epte = &pte[x68k_btop(x68k_trunc_page(&etext))];
+	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE)];
+	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
 #if defined(KGDB) || defined(DDB)
 	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
 #else
@@ -341,7 +341,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[x68k_btop(kstpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -357,7 +357,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
-	epte = &((u_int *)kptpa)[x68k_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	if (RELOC(mmutype, int) == MMU_68040) {
 		protopte &= ~PG_CCB;
@@ -400,22 +400,22 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
-		(pt_entry_t *)x68k_ptob(nptpages * NPTEPG);
+		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * IODEVbase, intiolimit: base and end of internal (DIO) IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
 	RELOC(IODEVbase, char *) =
-		(char *)x68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
+		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
 	RELOC(intiolimit, char *) =
-		(char *)x68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
 	 */
 	RELOC(extiobase, char *) =
-		(char *)x68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 
 	/*
 	 * Setup u-area for process 0.
@@ -440,9 +440,9 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
 	RELOC(avail_end, vm_offset_t) =
-		x68k_ptob(RELOC(maxmem, int))
+		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
-			- x68k_round_page(sizeof(struct msgbuf));
+			- m68k_round_page(sizeof(struct msgbuf));
 	RELOC(avail_next, vm_offset_t) = nextpa;
 	RELOC(avail_remaining, vm_size_t) = 0;
 	RELOC(avail_range, int) = -1;
@@ -458,19 +458,19 @@ int i;
 		}
 	}
 }
-	physmem = x68k_btop(avail_remaining + nextpa - firstpa);
-	avail_remaining -= x68k_round_page(sizeof(struct msgbuf));
-	high[numranges - 1] -= x68k_round_page(sizeof(struct msgbuf));
+	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
+	avail_remaining -= m68k_round_page(sizeof(struct msgbuf));
+	high[numranges - 1] -= m68k_round_page(sizeof(struct msgbuf));
 	/* XXX -- this doesn't look correct to me. */
 	while (high[numranges - 1] < low[numranges - 1]) {
 		numranges--;
 		high[numranges - 1] -= low[numranges] - high[numranges];
 	}
-	avail_remaining = x68k_trunc_page(avail_remaining);
+	avail_remaining = m68k_trunc_page(avail_remaining);
 	avail_end = avail_start + avail_remaining;
-	avail_remaining = x68k_btop(avail_remaining);
+	avail_remaining = m68k_btop(avail_remaining);
 #endif
-	RELOC(mem_size, vm_size_t) = x68k_ptob(RELOC(physmem, int));
+	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
