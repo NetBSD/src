@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.23 1996/03/17 01:33:31 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.24 1996/03/20 05:15:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -216,7 +216,7 @@ struct cfattach CANAME(DRNAME) = {
 };
 
 struct cfdriver CFNAME(DRNAME) = {
-	NULL, CFSTRING(DRNAME), DV_DULL, NULL, 0
+	NULL, CFSTRING(DRNAME), DV_DULL
 };
 
 int

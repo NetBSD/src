@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.20 1996/03/17 01:33:29 thorpej Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.21 1996/03/20 05:15:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -190,13 +190,13 @@ machine_match(pdp, match, auxp, cd)
 	void		*match, *auxp;
 	struct cfdriver	*cd;
 {
-	struct cfdata *cdp = match;
+	struct device *self = match;	/* XXX mainbus is "indirect" */
 
-	if (matchbyname(pdp, cdp, auxp) == 0)
+	if (matchbyname(pdp, match, auxp) == 0)
 		return 0;
 	if (!mac68k_machine.scsi80)
 		return 0;
-	if (cdp->cf_unit != 0)
+	if (self->dv_cfdata->cf_unit != 0)
 		return 0;
 	return 1;
 }
