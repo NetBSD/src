@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2003/10/30 21:19:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -245,6 +245,8 @@ struct cpu_info;
 
 extern char idt_allocmap[];
 
+struct pcibus_attach_args;
+
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct cpu_info *);
@@ -253,9 +255,10 @@ int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 		       int *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
+void intr_add_pcibus(struct pcibus_attach_args *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int, int, int *, void *);
+int intr_find_mpmapping(int, int, int *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
