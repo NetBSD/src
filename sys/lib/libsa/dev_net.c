@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.6 1997/03/14 20:34:48 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.7 1997/03/14 21:03:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ net_strategy()
  */
 #ifdef	SUPPORT_BOOTP
 int try_bootp;
+int bootp __P((int sock));
 #endif
 
 static int
