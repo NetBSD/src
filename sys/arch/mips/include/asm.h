@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 1999/01/31 00:55:41 castor Exp $	*/
+/*	$NetBSD: asm.h,v 1.17 1999/02/16 05:06:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,14 @@
 #  define _C_LABEL(x)	_ ## x
 # else
 #  define _C_LABEL(x)	_/**/x
+#  define _END_LABEL(x)	x/**/End
 # endif
+#endif
+
+#ifdef __STDC__
+# define _END_LABEL(x)	x ## End
+#else
+# define _END_LABEL(x)	x/**/End
 #endif
 
 #ifdef USE_AENT
@@ -203,6 +210,18 @@ _C_LABEL(x):
 #define	ALIAS(x)			\
 	.globl	_C_LABEL(x);		\
 _C_LABEL(x):
+
+/*
+ * VECTOR
+ *	exception vector entrypoint
+ */
+#define VECTOR(x, regmask)		\
+	.ent	_C_LABEL(x),0;		\
+	EXPORT(x);			\
+
+#define VECTOR_END(x)			\
+	.end	_C_LABEL(x);		\
+	EXPORT(_END_LABEL(x))
 
 /*
  * Macros to panic and printf from assembly language.
