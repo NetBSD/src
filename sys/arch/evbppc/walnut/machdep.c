@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2004/09/14 08:22:33 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2005/01/17 17:14:56 shige Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/09/14 08:22:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2005/01/17 17:14:56 shige Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -149,7 +149,6 @@ struct mem_region physmemr[MEMREGIONS];		/* Hard code memory */
 struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
 
 struct board_cfg_data board_data;
-struct propdb *board_info = NULL;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
