@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsv2.h	7.8 (Berkeley) 6/28/90
- *	$Id: nfsv2.h,v 1.6 1994/03/10 16:56:29 ws Exp $
+ *	$Id: nfsv2.h,v 1.7 1994/04/10 06:46:00 cgd Exp $
  */
 
 #ifndef _NFS_NFSV2_H_
@@ -95,7 +95,7 @@
 #define	NFSPROC_GETATTR		1
 #define	NFSPROC_SETATTR		2
 #define	NFSPROC_ROOT		3		/* Obsolete */
-#define NFSPROC_NOOP		3	/* Fake for err returns XXX 08 Sep 92*/
+#define NFSPROC_NOOP		3		/* Fake for err returns XXX */
 #define	NFSPROC_LOOKUP		4
 #define	NFSPROC_READLINK	5
 #define	NFSPROC_READ		6
