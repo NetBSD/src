@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.2 2003/09/14 10:15:47 martin Exp $
+# $NetBSD: defs.mk,v 1.3 2003/09/26 17:37:56 christos Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -133,6 +133,19 @@ target.o \
 thread.o \
 top.o \
 tracepoint.o \
+typeprint.o \
+ui-file.o \
+ui-out.o \
+utils.o \
+valarith.o \
+valops.o \
+valprint.o \
+values.o \
+varobj.o \
+version.o \
+wrapper.o
+
+G_TUI_OBJS=\
 tui-file.o \
 tui-hooks.o \
 tui-out.o \
@@ -148,18 +161,7 @@ tuiRegs.o \
 tuiSource.o \
 tuiSourceWin.o \
 tuiStack.o \
-tuiWin.o \
-typeprint.o \
-ui-file.o \
-ui-out.o \
-utils.o \
-valarith.o \
-valops.o \
-valprint.o \
-values.o \
-varobj.o \
-version.o \
-wrapper.o
+tuiWin.o
 
 G_SIM_OBJS=
 
