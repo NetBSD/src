@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.70 2002/12/31 15:10:28 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.71 2003/01/03 16:20:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -273,11 +273,6 @@ nmi_soft(tf)
 	/* XXX - Most of this is superseded by xcallintr() below */
 #if defined(MULTIPROCESSOR)
 	switch (cpuinfo.msg.tag) {
-	case XPMSG_SAVEFPU:
-		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
-		cpuinfo.fpproc->p_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
-		break;
 	case XPMSG_PAUSECPU:
 		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
