@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.3 1997/10/06 00:07:16 mark Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.4 1998/12/04 09:52:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,22 +38,21 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	curbrk
 
 	.data
-curbrk:	.long	_end
-	.text
 	.align	0
-
+	.globl	curbrk
+	.type	curbrk,#object
+curbrk:
+	.word	_end
 
 /*
  * Change the data segment size
  */
-
 ENTRY(sbrk)
 #ifdef PIC
 	/* Setup the GOT */
-	ldr	r3, got
+	ldr	r3, Lgot
 	add	r3, pc, r3
 L1:
 	ldr	r2, Lcurbrk
@@ -74,13 +73,14 @@ L1:
 	ldr	r0, [r2]
 	add	r1, r0, r3
 	str	r1, [r2]
+
+	/* Return old curbrk value */
 	mov	r15, r14
 
-#ifdef PIC
 	.align	0
-got:
-	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+#ifdef PIC
+Lgot:
+	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
 #endif
-
 Lcurbrk:
 	.word	curbrk
