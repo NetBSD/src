@@ -1,4 +1,41 @@
-/*	$NetBSD: vmstat.c,v 1.44 1998/02/09 13:11:26 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.45 1998/02/13 05:10:32 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.44 1998/02/09 13:11:26 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.45 1998/02/13 05:10:32 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +97,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.44 1998/02/09 13:11:26 mrg Exp $");
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+#include <err.h>
 #include <time.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -73,6 +111,10 @@ __RCSID("$NetBSD: vmstat.c,v 1.44 1998/02/09 13:11:26 mrg Exp $");
 #include <paths.h>
 #include <limits.h>
 #include "dkstats.h"
+
+#if defined(UVM)
+#include <uvm/uvm_stat.h>
+#endif
 
 struct nlist namelist[] = {
 #define	X_CPTIME	0
@@ -134,6 +176,10 @@ kvm_t *kd;
 #define	MEMSTAT		0x04
 #define	SUMSTAT		0x08
 #define	VMSTAT		0x20
+#if defined(UVM)
+#define	HISTLIST	0x40
+#define	HISTDUMP	0x80
+#endif
 
 void	cpustats __P((void));
 void	dkstats __P((void));
@@ -148,6 +194,11 @@ void	printhdr __P((void));
 long	pct __P((long, long));
 void	usage __P((void));
 void	doforkst __P((void));
+
+#if defined(UVM)
+void	hist_traverse __P((int, const char *));
+void	hist_dodump __P((struct uvm_history *));
+#endif
 
 int	main __P((int, char **));
 char	**choosedrives __P((char **));
@@ -170,10 +221,17 @@ main(argc, argv)
 	u_int interval;
 	int reps;
         char errbuf[_POSIX2_LINE_MAX];
+#if defined(UVM)
+	const char *histname = NULL;
+#endif
 
 	memf = nlistf = NULL;
 	interval = reps = todo = 0;
+#if defined(UVM)
+	while ((c = getopt(argc, argv, "c:fh:HilM:mN:stw:")) != -1) {
+#else
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != -1) {
+#endif
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -181,9 +239,22 @@ main(argc, argv)
 		case 'f':
 			todo |= FORKSTAT;
 			break;
+#if defined(UVM)
+		case 'h':
+			histname = optarg;
+			/* FALLTHROUGH */
+		case 'H':
+			todo |= HISTDUMP;
+			break;
+#endif
 		case 'i':
 			todo |= INTRSTAT;
 			break;
+#if defined(UVM)
+		case 'l':
+			todo |= HISTLIST;
+			break;
+#endif
 		case 'M':
 			memf = optarg;
 			break;
@@ -267,6 +338,13 @@ main(argc, argv)
 	} else if (reps)
 		interval = 1;
 
+#if defined(UVM)
+	if (todo & (HISTLIST|HISTDUMP)) {
+		if ((todo & (HISTLIST|HISTDUMP)) == (HISTLIST|HISTDUMP))
+			errx(1, "you may list or dump, but not both!");
+		hist_traverse(todo, histname);
+	}
+#endif
 	if (todo & FORKSTAT)
 		doforkst();
 	if (todo & MEMSTAT)
@@ -938,12 +1016,183 @@ kread(nlx, addr, size)
 	}
 }
 
+#if defined(UVM)
+struct nlist histnl[] = {
+	{ "_uvm_histories" },
+#define	X_UVM_HISTORIES		0
+	{ NULL },
+};
+
+/*
+ * Traverse the UVM history buffers, performing the requested action.
+ *
+ * Note, we assume that if we're not listing, we're dumping.
+ */
+void
+hist_traverse(todo, histname)
+	int todo;
+	const char *histname;
+{
+	struct uvm_history_head histhead;
+	struct uvm_history hist, *histkva;
+	char *name = NULL;
+	size_t namelen = 0;
+
+	if (kvm_nlist(kd, histnl) != 0) {
+		printf("UVM history is not compiled into the kernel.\n");
+		return;
+	}
+
+	if (kvm_read(kd, histnl[X_UVM_HISTORIES].n_value, &histhead,
+	    sizeof(histhead)) != sizeof(histhead)) {
+		warnx("unable to read %s: %s",
+		    histnl[X_UVM_HISTORIES].n_name, kvm_geterr(kd));
+		return;
+	}
+
+	if (histhead.lh_first == NULL) {
+		printf("No active UVM history logs.\n");
+		return;
+	}
+
+	if (todo & HISTLIST)
+		printf("Active UVM histories:");
+
+	for (histkva = histhead.lh_first; histkva != NULL;
+	    histkva = hist.list.le_next) {
+		if (kvm_read(kd, (u_long)histkva, &hist, sizeof(hist)) !=
+		    sizeof(hist)) {
+			warnx("unable to read history at %p: %s",
+			    histkva, kvm_geterr(kd));
+			goto out;
+		}
+
+		if (hist.namelen > namelen) {
+			if (name != NULL)
+				free(name);
+			namelen = hist.namelen;
+			if ((name = malloc(namelen + 1)) == NULL)
+				err(1, "malloc history name");
+		}
+
+		if (kvm_read(kd, (u_long)hist.name, name, namelen) !=
+		    namelen) {
+			warnx("unable to read history name at %p: %s",
+			    hist.name, kvm_geterr(kd));
+			goto out;
+		}
+		name[namelen] = '\0';
+		if (todo & HISTLIST)
+			printf(" %s", name);
+		else {
+			/*
+			 * If we're dumping all histories, do it, else
+			 * check to see if this is the one we want.
+			 */
+			if (histname == NULL || strcmp(histname, name) == 0) {
+				if (histname == NULL)
+					printf("\nUVM history `%s':\n", name);
+				hist_dodump(&hist);
+			}
+		}
+	}
+
+	if (todo & HISTLIST)
+		printf("\n");
+
+ out:
+	if (name != NULL)
+		free(name);
+}
+
+/*
+ * Actually dump the history buffer at the specified KVA.
+ */
+void
+hist_dodump(histp)
+	struct uvm_history *histp;
+{
+	struct uvm_history_ent *histents, *e;
+	size_t histsize;
+	char *fmt = NULL, *fn = NULL;
+	size_t fmtlen = 0, fnlen = 0;
+	int i;
+
+	histsize = sizeof(struct uvm_history_ent) * histp->n;
+
+	if ((histents = malloc(histsize)) == NULL)
+		err(1, "malloc history entries");
+
+	memset(histents, 0, histsize);
+
+	if (kvm_read(kd, (u_long)histp->e, histents, histsize) != histsize) {
+		warnx("unable to read history entries at %p: %s",
+		    histp->e, kvm_geterr(kd));
+		goto out;
+	}
+
+	i = histp->f;
+	do {
+		e = &histents[i];
+		if (e->fmt != NULL) {
+			if (e->fmtlen > fmtlen) {
+				if (fmt != NULL)
+					free(fmt);
+				fmtlen = e->fmtlen;
+				if ((fmt = malloc(fmtlen + 1)) == NULL)
+					err(1, "malloc printf format");
+			}
+			if (e->fnlen > fnlen) {
+				if (fn != NULL)
+					free(fn);
+				fnlen = e->fnlen;
+				if ((fn = malloc(fnlen + 1)) == NULL)
+					err(1, "malloc function name");
+			}
+
+			if (kvm_read(kd, (u_long)e->fmt, fmt, fmtlen)
+			    != fmtlen) {
+				warnx("unable to read printf format "
+				    "at %p: %s", e->fmt, kvm_geterr(kd));
+				goto out;
+			}
+			fmt[fmtlen] = '\0';
+
+			if (kvm_read(kd, (u_long)e->fn, fn, fnlen) != fnlen) {
+				warnx("unable to read function name "
+				    "at %p: %s", e->fn, kvm_geterr(kd));
+				goto out;
+			}
+			fn[fnlen] = '\0';
+
+			printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
+			printf("%s#%ld: ", fn, e->call); 
+			printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
+			printf("\n");
+		}
+		i = (i + 1) % histp->n;
+	} while (i != histp->f);
+
+ out:
+	free(histents);
+	if (fmt != NULL)
+		free(fmt);
+	if (fn != NULL)
+		free(fn);
+}
+#endif /* UVM */
+
 void
 usage()
 {
+#if defined(UVM)
 	(void)fprintf(stderr,
-	    "usage: vmstat [-ims] [-c count] [-M core] \
+	    "usage: vmstat [-fHilms] [-h histname] [-c count] [-M core] \
 [-N system] [-w wait] [disks]\n");
+#else
+	(void)fprintf(stderr,
+	    "usage: vmstat [-fims] [-c count] [-M core] \
+[-N system] [-w wait] [disks]\n");
+#endif /* UVM */
 	exit(1);
 }
-
