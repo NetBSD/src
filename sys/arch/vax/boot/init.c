@@ -1,4 +1,4 @@
-/* $NetBSD: init.c,v 1.2 1995/04/25 14:14:28 ragge Exp $ */
+/* $NetBSD: init.c,v 1.3 1995/09/16 13:34:21 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden. All rights reserved.
  * 
@@ -38,123 +38,45 @@
 #include "../include/mtpr.h"	/* mfpr(), mtpr() */
 #include "../include/sid.h"	/* cpu_type, cpu_number */
 
-#define NRSP 0			/* Kludge, must be done before udareg.h
-				 * includes */
-#define NCMD 0			/* Kludge */
+#define NRSP 0			/* Kludge, must be done before udareg.h */
+#define NCMD 0			/* includes */
+
 #include "../uba/udareg.h"	/* struct udadevice */
 
 #include "data.h"		/* bootregs[], rpb, bqo */
 
-int             bootregs[16];
 struct rpb     *rpb;
 struct bqo     *bqo;
 
+int	is_750 = 0, is_mvax = 0;
+
 /*
- * initData() sets up data gotten from start routines, mostly for uVAX.
+ * initdata() sets up data gotten from start routines, mostly for uVAX.
  */
 int
-initData()
+initdata()
 {
-	int            *saved_regs;
-	int            *tmp;
-	int             i;
-
-	saved_regs = (void *) (RELOC);
-	saved_regs -= 12;
-
-	for (i = 0; i < 12; i++)
-		bootregs[i] = saved_regs[i];
+	int i, *tmp;
 
 	cpu_type = mfpr(PR_SID);
 	cpunumber = (mfpr(PR_SID) >> 24) & 0xFF;
 
-	/*
-	 * for MicroVAXen (KA630, KA410, KA650, ...) we need to relocate rpb
-	 * and iovec.
-	 */
-	if (cpunumber == VAX_78032 || cpunumber == VAX_650) {
-		int             cpu_sie;	/* sid-extension */
-		int             pfn_size;	/* size of bitmap */
-		unsigned char  *pfn_bm;		/* the pfn-bitmap */
-		int             ntop = 0;	/* top of good memory */
+	switch (cpunumber) {
 
+	case VAX_78032:
+	case VAX_650:
+	{
+		int             cpu_sie;	/* sid-extension */
+
+		is_mvax = 1;
 		cpu_sie = *((int *) 0x20040004) >> 24;
 		cpu_type |= cpu_sie;
 
-		rpb = (void *) bootregs[11];	/* get old rpb */
-
-		pfn_size = rpb->pfnmap[0];
-		pfn_bm = (void *) rpb->pfnmap[1];
-
-		while (pfn_size--) {
-			if (*pfn_bm++ != 0xFF)	/* count contigous good */
-				break;		/* memory */
-
-			ntop += (8 * 512);	/* 8 pages are coded in 1
-						 * byte */
-		}
-
-		ntop = relocate(rpb->iovec, rpb->iovecsz, ntop);
-		bqo = (void *) ntop;	/* new address of iovec */
-
-		ntop = relocate(rpb, 512, ntop);
-		rpb = (void *) ntop;	/* new address of rpb */
-		rpb->iovec = (int) bqo;	/* update iovec in new rpb */
-		bootregs[11] = (int) rpb;	/* update r11's value */
-
-		/*
-		 * bootregs 0..5 are stored in rpb. Since we want/need to use
-		 * them we must copy them from rpb->bootrX into bootregs[X].
-		 * Don\'t forget to update howto/boothowto from value of R5
-		 */
-		tmp = (int *) &(rpb->bootr0);
-		for (i = 0; i < 6; i++)
-			bootregs[i] = tmp[i];
+		break;
 	}
-	return (0);
-}
-
-
-
-int
-initCtrl()
-{
-	register int    (*init) (void);	/* ROM-based initialization routine */
-	struct udadevice *up;	/* IP-register / SA-register */
-	int res = 1;
-
-
-	if (bqo->unit_init) {
-		init = (void *) bqo + bqo->unit_init;
-		if (rpb->devtyp == 17 ||	/* BTD$K_UDA = 17; */
-		    rpb->devtyp == 18) {	/* BTD$K_TK50 = 18; */
-			/*
-			 * writing into the base-address of the controller
-			 * (IP Register) starts initialisation of the RQDX3
-			 * controller module ...
-			 */
-			up = (void *) rpb->csrphy;
-			up->udaip = 0;
-
-			/*
-			 * reading the SA register gives the status. wait
-			 * until initialisation started or error (???)
-			 */
-			while (1) {
-				res = up->udasa;
-				printf("status: 0x%x (%d)\n", res, res);
-				if ((res & (UDA_STEP1 | UDA_STEP2 | UDA_STEP3 |
-				    UDA_STEP4 | UDA_ERR)) != 0)
-					break;
-			}
-			/*
-			 * RQDX3:  0x0B40      (2880) TQK50:  0x0BC0
-			 * (3008)
-			 */
-		}
-		printf("init() ... ");
-		res = init();	/* low bit clear indicates error */
-		printf("done. (0x%x)\n", res);
+	case VAX_750:
+		is_750 = 1;
+		break;
 	}
-	return (res);
+	return 0;
 }
