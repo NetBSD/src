@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.17 2001/05/23 15:02:55 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.18 2001/05/25 13:46:15 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -13,7 +13,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -1213,6 +1213,8 @@ _formi_manipulate_field(FORM *form, int c)
 		"entry: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
 		cur->buffers[0].allocated);
+	fprintf(dbg, "entry: start_line=%d, ypos=%d\n", cur->start_line,
+		cur->cursor_ypos);
 	fprintf(dbg, "entry: string=");
 	if (cur->buffers[0].string == NULL)
 		fprintf(dbg, "(null)\n");
@@ -1325,7 +1327,8 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_NEXT_WORD:
-		start = cur->start_char + cur->cursor_xpos;
+		start = cur->lines[cur->start_line + cur->cursor_ypos].start
+			+ cur->cursor_xpos + cur->start_char;
 		str = cur->buffers[0].string;
 
 		start = find_eow(str, start);
@@ -1335,16 +1338,32 @@ _formi_manipulate_field(FORM *form, int c)
 			return E_REQUEST_DENIED;
 
 		  /* otherwise we must have found the start of a word...*/
-		if (start - cur->start_char < cur->cols) {
-			cur->cursor_xpos = start;
+		if ((cur->rows + cur->nrows) == 1) {
+			  /* single line field */
+			if (start - cur->start_char < cur->cols) {
+				cur->cursor_xpos = start;
+			} else {
+				cur->start_char = start;
+				cur->cursor_xpos = 0;
+			}
 		} else {
-			cur->start_char = start;
-			cur->cursor_xpos = 0;
+			  /* multiline field */
+			row = find_cur_line(cur, start);
+			cur->cursor_xpos = start - cur->lines[row].start;
+			if (row != (cur->start_line + cur->cursor_ypos)) {
+				if (cur->cursor_ypos == (cur->rows - 1)) {
+					cur->start_line = row - cur->rows + 1;
+				} else {
+					cur->cursor_ypos = row
+						- cur->start_line;
+				}
+			}
 		}
 		break;
 		
 	case REQ_PREV_WORD:
-		start = cur->start_char + cur->cursor_xpos;
+		start = cur->start_char + cur->cursor_xpos
+			+ cur->lines[cur->start_line + cur->cursor_ypos].start;
 		if (cur->start_char > 0)
 			start--;
 		
@@ -1355,12 +1374,33 @@ _formi_manipulate_field(FORM *form, int c)
 
 		start = find_sow(str, start);
 		
-		if (start - cur->start_char > 0) {
-			cur->cursor_xpos = start;
+		if ((cur->rows + cur->nrows) == 1) {
+			  /* single line field */
+			if (start - cur->start_char > 0) {
+				cur->cursor_xpos = start;
+			} else {
+				cur->start_char = start;
+				cur->cursor_xpos = 0;
+			}
 		} else {
-			cur->start_char = start;
-			cur->cursor_xpos = 0;
+			  /* multiline field */
+			row = find_cur_line(cur, start);
+			cur->cursor_xpos = start - cur->lines[row].start;
+			if (row != (cur->start_line + cur->cursor_ypos)) {
+				if (cur->cursor_ypos == 0) {
+					cur->start_line = row;
+				} else {
+					if (cur->start_line > row) {
+						cur->start_line = row;
+						cur->cursor_ypos = 0;
+					} else {
+						cur->cursor_ypos = row -
+							cur->start_line;
+					}
+				}
+			}
 		}
+		
 		break;
 		
 	case REQ_BEG_FIELD:
@@ -1746,6 +1786,8 @@ _formi_manipulate_field(FORM *form, int c)
 	fprintf(dbg, "exit: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
 		cur->buffers[0].allocated);
+	fprintf(dbg, "exit: start_line=%d, ypos=%d\n", cur->start_line,
+		cur->cursor_ypos);
 	fprintf(dbg, "exit: string=\"%s\"\n", cur->buffers[0].string);
 #endif
 	return 1;
