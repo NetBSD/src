@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.11 1996/01/09 02:36:58 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.12 1996/02/22 07:14:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -1012,12 +1012,15 @@ si_vme_dma_stop(ncr_sc)
 	 *
 	 * SCSI-3 VME interface is a little funny on writes:
 	 * if we have a disconnect, the dma has overshot by
-	 * one byte and needs to be incremented.  This is
-	 * true if we have not transferred either all data
-	 * or no data.  XXX - from Matt Jacob
+	 * one byte and the resid needs to be incremented.
+	 * Only happens for partial transfers.
+	 * (Thanks to Matt Jacob)
 	 */
 
 	resid = si->fifo_count & 0xFFFF;
+	if (dh->dh_flags & SIDH_OUT)
+		if ((resid > 0) && (resid < sc->sc_xlen))
+			resid++;
 	ntrans = sc->sc_xlen - resid;
 
 #ifdef	DEBUG
