@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.2 1997/07/18 21:57:22 thorpej Exp $	 */
+/*	$NetBSD: yptest.c,v 1.3 1997/10/13 07:44:01 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yptest.c,v 1.3 1997/10/13 07:44:01 lukem Exp $");
+#endif
 
 #include <sys/types.h>
 #include <err.h>
