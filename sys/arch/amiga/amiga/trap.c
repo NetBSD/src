@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.15 1994/05/08 05:52:31 chopps Exp $
+ *	$Id: trap.c,v 1.16 1994/05/09 06:38:02 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ userret(p, pc, oticks)
 	int sig, s;
 
 	while ((sig = CURSIG(p)) != 0)
-		psig(sig);
+		postsig(sig);
 
 	p->p_priority = p->p_usrpri;
 
@@ -145,7 +145,7 @@ userret(p, pc, oticks)
 		swtch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
 #ifdef notdef_p_stime
 	if (p->p_stats->p_prof.pr_scale) {
