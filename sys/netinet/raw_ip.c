@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.38 1997/11/16 20:58:18 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.39 1998/01/05 10:32:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
+ *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
 
 #include <sys/param.h>

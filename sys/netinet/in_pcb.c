@@ -1,7 +1,7 @@
-/*	$NetBSD: in_pcb.c,v 1.43 1998/01/05 09:52:03 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.44 1998/01/05 10:31:53 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1991, 1993
+ * Copyright (c) 1982, 1986, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
+ *	@(#)in_pcb.c	8.4 (Berkeley) 5/24/95
  */
 
 #include <sys/param.h>
