@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.9 1998/06/29 19:49:04 gwr Exp $	*/
+/*	$NetBSD: dd.c,v 1.10 1998/07/28 05:15:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.9 1998/06/29 19:49:04 gwr Exp $");
+__RCSID("$NetBSD: dd.c,v 1.10 1998/07/28 05:15:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ main(argc, argv)
 	(void)signal(SIGINFO, summaryx);
 	(void)signal(SIGINT, terminate);
 
-	atexit(summary);
+	(void)atexit(summary);
 
 	while (files_cnt--)
 		dd_in();
@@ -244,9 +244,9 @@ dd_in()
 		 */
 		if (flags & C_SYNC)
 			if (flags & (C_BLOCK|C_UNBLOCK))
-				memset(in.dbp, ' ', in.dbsz);
+				(void)memset(in.dbp, ' ', in.dbsz);
 			else
-				memset(in.dbp, 0, in.dbsz);
+				(void)memset(in.dbp, 0, in.dbsz);
 
 		n = read(in.fd, in.dbp, in.dbsz);
 		if (n == 0) {
@@ -337,7 +337,7 @@ dd_close()
 	else if (cfunc == unblock)
 		unblock_close();
 	if (ddflags & C_OSYNC && out.dbcnt < out.dbsz) {
-		memset(out.dbp, 0, out.dbsz - out.dbcnt);
+		(void)memset(out.dbp, 0, out.dbsz - out.dbcnt);
 		out.dbcnt = out.dbsz;
 	}
 	if (out.dbcnt)
@@ -405,6 +405,6 @@ dd_out(force)
 
 	/* Reassemble the output block. */
 	if (out.dbcnt)
-		memmove(out.db, out.dbp - out.dbcnt, out.dbcnt);
+		(void)memmove(out.db, out.dbp - out.dbcnt, out.dbcnt);
 	out.dbp = out.db + out.dbcnt;
 }
