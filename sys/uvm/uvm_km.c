@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.69 2004/03/24 07:47:32 junyoung Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.70 2005/01/01 21:00:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.69 2004/03/24 07:47:32 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.70 2005/01/01 21:00:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -155,6 +155,7 @@ struct vm_map *kernel_map = NULL;
  */
 
 static struct vm_map		kernel_map_store;
+static struct vm_map_entry	kernel_first_mapent_store;
 
 /*
  * uvm_km_init: init kernel maps and objects to reflect reality (i.e.
@@ -187,12 +188,25 @@ uvm_km_init(start, end)
 
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
-	if (start != base &&
-	    uvm_map(&kernel_map_store, &base, start - base, NULL,
-		    UVM_UNKNOWN_OFFSET, 0,
+	if (start != base) {
+		int error;
+		struct uvm_map_args args;
+
+		error = uvm_map_prepare(&kernel_map_store, base, start - base,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED)) != 0)
-		panic("uvm_km_init: could not reserve space for kernel");
+		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED), &args);
+		if (!error) {
+			kernel_first_mapent_store.flags =
+			    UVM_MAP_KERNEL | UVM_MAP_FIRST;
+			error = uvm_map_enter(&kernel_map_store, &args,
+			    &kernel_first_mapent_store);
+		}
+
+		if (error)
+			panic(
+			    "uvm_km_init: could not reserve space for kernel");
+	}
 
 	/*
 	 * install!
@@ -398,7 +412,8 @@ uvm_km_kmemalloc1(map, obj, size, align, prefer, flags)
 	if (__predict_false(uvm_map(map, &kva, size, obj, prefer, align,
 		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 			    UVM_ADV_RANDOM,
-			    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT))))
+			    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT))
+			    | UVM_FLAG_QUANTUM))
 			!= 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);
@@ -509,7 +524,7 @@ uvm_km_free_wakeup(map, addr, size)
 
 	vm_map_lock(map);
 	uvm_unmap_remove(map, trunc_page(addr), round_page(addr + size),
-	    &dead_entries);
+	    &dead_entries, NULL);
 	wakeup(map);
 	vm_map_unlock(map);
 	if (dead_entries != NULL)
@@ -545,7 +560,7 @@ uvm_km_alloc1(map, size, zeroit)
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
 	      UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					      UVM_INH_NONE, UVM_ADV_RANDOM,
-					      0)) != 0)) {
+					      UVM_FLAG_QUANTUM)) != 0)) {
 		UVMHIST_LOG(maphist,"<- done (no VM)",0,0,0,0);
 		return(0);
 	}
@@ -632,6 +647,7 @@ uvm_km_valloc1(map, size, align, prefer, flags)
 	if (size > vm_map_max(map) - vm_map_min(map))
 		return (0);
 
+	flags |= UVM_FLAG_QUANTUM;
 	for (;;) {
 		kva = vm_map_min(map);		/* hint */
 
