@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.31 1998/12/25 00:54:11 marc Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.32 1998/12/29 08:59:14 marc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.28 1998/12/24 03:55:54 marc Exp 
+ *	NetBSD: pcmciadevs,v 1.29 1998/12/29 08:58:37 marc Exp 
  */
 
 /*-
@@ -258,3 +258,6 @@
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
 #define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
+#define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
+#define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
+#define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"

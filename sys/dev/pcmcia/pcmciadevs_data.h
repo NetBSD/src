@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.31 1998/12/25 00:54:11 marc Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.32 1998/12/29 08:59:14 marc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.28 1998/12/24 03:55:54 marc Exp 
+ *	NetBSD: pcmciadevs,v 1.29 1998/12/29 08:58:37 marc Exp 
  */
 
 /*-
@@ -372,6 +372,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SVEC/Hawking Technology",
 	    "SVEC/Hawking Tech. Combo Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_LANCARD,
+	    PCMCIA_CIS_SVEC_LANCARD,
+	    0,
+	    "SVEC/Hawking Technology",
+	    "SVEC PCMCIA Lan Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_SANDISK, 0,
