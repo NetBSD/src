@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.61 1998/09/30 14:10:00 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.62 1998/10/02 19:25:33 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -50,6 +50,7 @@
 #include "opt_atalk.h"
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_ultrix.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +488,7 @@ consinit()
 #endif
 }
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 int
 compat_13_sys_sigreturn(p, v, retval)
 	struct proc *p;
@@ -623,7 +624,7 @@ sendsig(catcher, sig, mask, code)
 	gsigctx.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	gsigctx.sc_mask = *mask;
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 	native_sigset_to_sigset13(mask, &gsigctx.__sc_mask13);
 #endif
 
