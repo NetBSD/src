@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.4 1998/02/07 11:08:25 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.5 1998/02/07 17:00:42 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -390,8 +390,8 @@ struct vm_anon *anon;
 	 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN page into the
 	 * uvm_swap_get function with all data structures unlocked.
 	 */
+	uvmexp.pageins++;
 	result = uvm_swap_get(pg, anon->an_swslot, PGO_SYNCIO);
-	/* XXXMRG: we need a counter here! */
 
 	/*
 	 * we clean up after the i/o below in the "we_own" case
