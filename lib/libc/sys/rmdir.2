@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rmdir.2	6.6 (Berkeley) 3/10/91
-.\"	$Id: rmdir.2,v 1.3 1993/11/25 00:39:32 jtc Exp $
+.\"	$Id: rmdir.2,v 1.4 1993/11/29 21:25:32 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt RMDIR 2
@@ -58,7 +58,7 @@ returned and an error code is stored in the global location
 .Va errno .
 .Sh ERRORS
 The named file is removed unless:
-.Bl -tag -width [ENAMETOOLONG]
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path is not a directory.
 .It Bq Er EINVAL

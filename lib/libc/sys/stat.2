@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)stat.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: stat.2,v 1.3 1993/11/25 00:39:48 jtc Exp $
+.\"	$Id: stat.2,v 1.4 1993/11/29 21:25:45 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt STAT 2
@@ -177,7 +177,7 @@ is set to indicate the error.
 and
 .Fn lstat
 will fail if:
-.Bl -tag -width ENAMETOOLONGAA
+.Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er EINVAL
@@ -200,7 +200,7 @@ points to an invalid address.
 An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
-.Bl -tag -width [EFAULT]
+.Bl -tag -width Er
 .Fn Fstat
 will fail if:
 .It Bq Er EBADF

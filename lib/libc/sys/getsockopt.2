@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getsockopt.2	6.9 (Berkeley) 5/1/91
-.\"	$Id: getsockopt.2,v 1.3 1993/11/25 00:39:06 jtc Exp $
+.\"	$Id: getsockopt.2,v 1.4 1993/11/29 21:25:13 jtc Exp $
 .\"
 .Dd May 1, 1991
 .Dt GETSOCKOPT 2
@@ -305,7 +305,7 @@ datagram sockets or for other asynchronous errors.
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
-.Bl -tag -width ENOPROTOOPTAA
+.Bl -tag -width Er
 .It Bq Er EBADF
 The argument
 .Fa s
