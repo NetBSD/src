@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.177 1999/06/29 07:21:30 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.178 1999/08/10 18:53:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 1999/06/29 07:21:30 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 1999/08/10 18:53:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1939,12 +1939,7 @@ do_sir()
 {
 	u_int64_t n;
 
-	do {
-		(void)splhigh();
-		n = ssir;
-		ssir = 0;
-		splsoft();		/* don't recurse through spl0() */
-
+	while ((n = alpha_atomic_loadlatch_q(&ssir, 0)) != 0) {
 #define	COUNT_SOFT	uvmexp.softs++
 
 #define	DO_SIR(bit, fn)							\
@@ -1963,15 +1958,17 @@ do_sir()
 
 #undef COUNT_SOFT
 #undef DO_SIR
-	} while (ssir != 0);
+	}
 }
 
 int
 spl0()
 {
 
-	if (ssir)
-		do_sir();		/* it lowers the IPL itself */
+	if (ssir) {
+		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+		do_sir();
+	}
 
 	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
 }
