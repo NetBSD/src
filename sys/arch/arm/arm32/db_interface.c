@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2003/04/18 11:08:25 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24 2003/04/28 01:54:49 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -34,6 +34,7 @@
  * Interface to new debugger.
  */
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,6 +55,10 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #include <dev/cons.h>
+
+#if defined(KGDB) || !defined(DDB)
+#define db_printf	printf
+#endif
 
 static int nil;
 
@@ -120,6 +125,7 @@ db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 	return(0);
 }
 
+#ifdef DDB
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -156,9 +162,9 @@ kdb_trap(int type, db_regs_t *regs)
 
 	return (1);
 }
+#endif
 
-
-static int
+int
 db_validate_address(vaddr_t addr)
 {
 	struct proc *p = curproc;
@@ -335,6 +341,7 @@ cpu_Debugger(void)
 	asm(".word	0xe7ffffff");
 }
 
+#ifdef DDB
 const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "panic",	db_show_panic_cmd,	0, NULL },
@@ -397,6 +404,7 @@ db_machine_init(void)
 	db_uh.uh_handler = db_trapper;
 	install_coproc_handler_static(0, &db_uh);
 }
+#endif
 
 u_int
 db_fetch_reg(int reg, db_regs_t *db_regs)

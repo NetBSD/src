@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 2003/04/28 01:54:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -102,6 +102,7 @@ db_regs_t		ddb_regs;	/* register state */
 u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
 int kdb_trap __P((int, db_regs_t *));
 void db_machine_init __P((void));
+int db_validate_address(vm_offset_t addr);
 
 #ifdef __ELF__
 #define DB_ELF_SYMBOLS
@@ -109,5 +110,15 @@ void db_machine_init __P((void));
 #else
 #define	DB_AOUT_SYMBOLS
 #endif
+
+/*
+ * kgdb
+ */
+typedef register_t	kgdb_reg_t;
+#define KGDB_NUMREGS	(16 + 8*3 + 2)	/* r0..r15, f0..f7, fps, cpsr
+					 * fp-registers are 12 bytes wide */
+#define KGDB_REGNUM_R0		0
+#define KGDB_REGNUM_SPSR	16 + 8*3 + 1
+#define KGDB_BUFLEN		1024
 
 #endif	/* _ARM_DB_MACHDEP_H_ */

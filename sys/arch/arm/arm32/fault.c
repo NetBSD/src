@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.27 2003/04/18 11:08:25 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.28 2003/04/28 01:54:50 briggs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -78,10 +78,11 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.27 2003/04/18 11:08:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.28 2003/04/28 01:54:50 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +98,14 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.27 2003/04/18 11:08:25 scw Exp $");
 #include <arm/arm32/katelib.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+#if !defined(DDB)
+#define kdb_trap	kgdb_trap
+#endif
 #endif
 
 #include <arch/arm/arm/disassem.h>
@@ -412,14 +419,14 @@ we_re_toast:
 		 * Were are dead, try and provide some debug
 		 * information before dying.
 		 */
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		printf("Unhandled trap (frame = %p)\n", frame);
 		report_abort(NULL, fault_status, fault_address, fault_pc);
 		kdb_trap(-1, frame);
 		return;
 #else
 		panic("Unhandled trap (frame = %p)", frame);
-#endif	/* DDB */
+#endif	/* DDB || KGDB */
 	}
 
 	/*
@@ -526,7 +533,7 @@ we_re_toast:
 #endif
 
 	if (current_intr_depth > 0) {
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		printf("Non-emulated page fault with intr_depth > 0\n");
 		report_abort(NULL, fault_status, fault_address, fault_pc);
 		kdb_trap(-1, frame);
