@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.33 1997/10/19 20:34:54 christos Exp $	*/
+/*	$NetBSD: am7930.c,v 1.34 1997/12/06 03:20:56 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -588,8 +588,13 @@ amd7930_set_port(addr, cp)
 
 	DPRINTF(("amd7930_set_port: port=%d", cp->dev));
 
-	if (cp->type != AUDIO_MIXER_VALUE || cp->un.value.num_channels != 1)
+	if (cp->dev == SUNAUDIO_SOURCE || cp->dev == SUNAUDIO_OUTPUT) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return(EINVAL);
+	} else if (cp->type != AUDIO_MIXER_VALUE || 
+					cp->un.value.num_channels != 1) {
 		return(EINVAL);
+	}
 
 	switch(cp->dev) {
 	    case SUNAUDIO_MIC_PORT:
@@ -628,8 +633,13 @@ amd7930_get_port(addr, cp)
 
 	DPRINTF(("amd7930_get_port: port=%d", cp->dev));
 
-	if (cp->type != AUDIO_MIXER_VALUE || cp->un.value.num_channels != 1)
+	if (cp->dev == SUNAUDIO_SOURCE || cp->dev == SUNAUDIO_OUTPUT) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return(EINVAL);
+	} else if (cp->type != AUDIO_MIXER_VALUE || 
+					cp->un.value.num_channels != 1) {
 		return(EINVAL);
+	}
 
 	switch(cp->dev) {
 	    case SUNAUDIO_MIC_PORT:
@@ -692,6 +702,14 @@ amd7930_query_devinfo(addr, dip)
 		    dip->un.v.num_channels = 1;
 		    strcpy(dip->un.v.units.name, AudioNvolume);
 		    break;
+	    case SUNAUDIO_MONITOR:
+		    dip->type = AUDIO_MIXER_VALUE;
+		    dip->mixer_class = SUNAUDIO_MONITOR_CLASS;
+		    dip->prev = dip->next = AUDIO_MIXER_LAST;
+		    strcpy(dip->label.name, AudioNmonitor);
+		    dip->un.v.num_channels = 1;
+		    strcpy(dip->un.v.units.name, AudioNvolume);
+		    break;
 	    case SUNAUDIO_SOURCE:
 		    dip->type = AUDIO_MIXER_ENUM;
 		    dip->mixer_class = SUNAUDIO_RECORD_CLASS;
@@ -722,15 +740,15 @@ amd7930_query_devinfo(addr, dip)
 		    dip->type = AUDIO_MIXER_CLASS;
 		    dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCrecord);
+		    strcpy(dip->label.name, AudioCoutputs);
 		    break;
 	    case SUNAUDIO_RECORD_CLASS:
 		    dip->type = AUDIO_MIXER_CLASS;
 		    dip->mixer_class = SUNAUDIO_RECORD_CLASS;
 		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCoutputs);
+		    strcpy(dip->label.name, AudioCrecord);
 		    break;
-	    case SUNAUDIO_MONITOR:
+	    case SUNAUDIO_MONITOR_CLASS:
 		    dip->type = AUDIO_MIXER_CLASS;
 		    dip->mixer_class = SUNAUDIO_MONITOR_CLASS;
 		    dip->next = dip->prev = AUDIO_MIXER_LAST;
