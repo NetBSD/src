@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2002/03/05 14:12:29 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.15 2002/11/09 20:05:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@ struct mdproc {
 	void	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
-	int	md_ss_addr;		/* single step address for ptrace */
+	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	__volatile int md_astpending;	/* AST pending on return to userland */
 					/* syscall entry for this process */
