@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.23 2000/09/04 22:06:32 lukem Exp $	*/
+/*	$NetBSD: term.c,v 1.24 2000/10/04 16:21:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.23 2000/09/04 22:06:32 lukem Exp $");
+__RCSID("$NetBSD: term.c,v 1.24 2000/10/04 16:21:39 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1300,7 +1300,7 @@ term_echotc(EditLine *el, int argc, char **argv)
 	int arg_need, arg_cols, arg_rows;
 	int verbose = 0, silent = 0;
 	char *area;
-	static char *fmts = "%s\n", *fmtd = "%d\n";
+	static const char fmts[] = "%s\n", fmtd[] = "%d\n";
 	struct termcapstr *t;
 	char buf[TC_BUFSIZE];
 	long i;
