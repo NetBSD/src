@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/01/18 10:34:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2003/01/19 19:55:13 thorpej Exp $
 #
 
 WARNS=	2
@@ -11,8 +11,11 @@ ARCHSUBDIR=	${MACHINE_ARCH}
 ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
-	@echo "no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
+	@echo "WARNING: no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
 .endif
+
+INCS=	pthread.h pthread_types.h pthread_queue.h
+INCSDIR=/usr/include
 
 .if defined(ARCHSUBDIR)
 
@@ -58,9 +61,6 @@ SRCS+= pthread_md.c
 
 pthread_switch.S _context_u.S: assym.h
 
-INCS=	pthread.h pthread_types.h pthread_queue.h
-INCSDIR=/usr/include
-
 debuglog: debuglog.o
 	$(CC) -o debuglog debuglog.o -lpthread
 
@@ -69,6 +69,8 @@ debuglog: debuglog.o
 .else
 
 .include <bsd.man.mk>
+.include <bsd.files.mk>
+.include <bsd.inc.mk>
 
 .endif
 
