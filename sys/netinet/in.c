@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.50 2000/02/01 22:52:07 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.51 2000/02/02 23:28:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -547,6 +547,20 @@ in_purgeaddr(ifa, ifp)
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 	IFAFREE(&ia->ia_ifa);
 	in_setmaxmtu();
+}
+
+void
+in_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		in_purgeaddr(ifa, ifp);
+	}
 }
 
 /*

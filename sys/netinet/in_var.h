@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.36 2000/02/01 22:52:08 thorpej Exp $	*/
+/*	$NetBSD: in_var.h,v 1.37 2000/02/02 23:28:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ const char *in_fmtaddr __P((struct in_addr));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
 void	in_purgeaddr __P((struct ifaddr *, struct ifnet *));
+void	in_purgeif __P((struct ifnet *));
 void	ip_input __P((struct mbuf *));
 int	ipflow_fastforward __P((struct mbuf *));
 
