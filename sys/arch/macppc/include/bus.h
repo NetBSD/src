@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1998/12/06 15:39:12 tsubai Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1999/03/23 21:29:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -700,6 +700,8 @@ bus_space_set_region_stream_4(tag, bsh, offset, val, count)
 #define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 #endif
+
+#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 /*
  * Bus DMA methods.
