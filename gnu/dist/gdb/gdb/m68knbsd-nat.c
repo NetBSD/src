@@ -166,8 +166,6 @@ fetch_inferior_registers (int regno)
 void
 store_inferior_registers (int regno)
 {
-  struct reg inferior_registers;
-  struct fpreg inferior_fp_registers;
 
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
