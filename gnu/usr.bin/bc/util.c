@@ -1,9 +1,7 @@
-/* 	$NetBSD: util.c,v 1.3 1994/12/02 00:43:44 phil Exp $  */
-
 /* util.c: Utility routines for bc. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,13 +54,15 @@ strcopyof (str)
 /* nextarg adds another value to the list of arguments. */
 
 arg_list *
-nextarg (args, val)
+nextarg (args, val, is_var)
      arg_list *args;
      int val;
+     int is_var;
 { arg_list *temp;
 
   temp = (arg_list *) bc_malloc (sizeof (arg_list));
   temp->av_name = val;
+  temp->arg_is_var = is_var;
   temp->next = args;
  
   return (temp);
@@ -94,7 +94,7 @@ make_arg_str (args, len)
 
   /* Recursive call. */
   if (args != NULL)
-    temp = make_arg_str (args->next, len+11);
+    temp = make_arg_str (args->next, len+12);
   else
     {
       temp = (char *) bc_malloc (len);
@@ -103,10 +103,16 @@ make_arg_str (args, len)
     }
 
   /* Add the current number to the end of the string. */
-  if (len != 1) 
-    sprintf (sval, "%d,", args->av_name);
+  if (args->arg_is_var)
+    if (len != 1) 
+      sprintf (sval, "*%d,", args->av_name);
+    else
+      sprintf (sval, "*%d", args->av_name);
   else
-    sprintf (sval, "%d", args->av_name);
+    if (len != 1) 
+      sprintf (sval, "%d,", args->av_name);
+    else
+      sprintf (sval, "%d", args->av_name);
   temp = strcat (temp, sval);
   return (temp);
 }
@@ -186,8 +192,8 @@ check_params ( params, autos )
 		yyerror ("duplicate parameter names");
 	      tmp2 = tmp2->next;
 	    }
-	  if (tmp1->av_name < 0)
-	    warn ("Array parameter");
+	  if (tmp1->arg_is_var)
+	    warn ("Variable array parameter");
 	  tmp1 = tmp1->next;
 	}
     }
@@ -205,6 +211,8 @@ check_params ( params, autos )
 		yyerror ("duplicate auto variable names");
 	      tmp2 = tmp2->next;
 	    }
+	  if (tmp1->arg_is_var)
+	    yyerror ("* not allowed here");
 	  tmp1 = tmp1->next;
 	}
     }
@@ -296,7 +304,7 @@ run_code()
 
 /* Output routines: Write a character CH to the standard output.
    It keeps track of the number of characters output and may
-   break the output with a "\<cr>". */
+   break the output with a "\<cr>".  Always used for numbers. */
 
 void
 out_char (ch)
@@ -310,11 +318,41 @@ out_char (ch)
   else
     {
       out_col++;
-      if (out_col == 70)
+      if (out_col == line_size-1)
 	{
 	  putchar ('\\');
 	  putchar ('\n');
 	  out_col = 1;
+	}
+      putchar (ch);
+    }
+}
+
+/* Output routines: Write a character CH to the standard output.
+   It keeps track of the number of characters output and may
+   break the output with a "\<cr>".  This one is for strings.
+   In POSIX bc, strings are not broken across lines. */
+
+void
+out_schar (ch)
+     char ch;
+{
+  if (ch == '\n')
+    {
+      out_col = 0;
+      putchar ('\n');
+    }
+  else
+    {
+      if (!std_only)
+	{
+	  out_col++;
+	  if (out_col == line_size-1)
+	    {
+	      putchar ('\\');
+	      putchar ('\n');
+	      out_col = 1;
+	    }
 	}
       putchar (ch);
     }
@@ -491,7 +529,8 @@ init_tree()
   name_tree  = NULL;
   next_array = 1;
   next_func  = 1;
-  next_var   = 4;  /* 0 => ibase, 1 => obase, 2 => scale, 3 => last. */
+  /* 0 => ibase, 1 => obase, 2 => scale, 3 => history, 4 => last. */
+  next_var   = 5;
 }
 
 
@@ -634,7 +673,7 @@ limits()
 }
 
 /* bc_malloc will check the return value so all other places do not
-   have to do it!  SIZE is the number of types to allocate. */
+   have to do it!  SIZE is the number of bytes to allocate. */
 
 char *
 bc_malloc (size)
@@ -691,7 +730,7 @@ yyerror (str, va_alist)
   if (is_std_in)
     name = "(standard_in)";
   else
-    name = g_argv[optind-1];
+    name = file_name;
   fprintf (stderr,"%s %d: ",name,line_no);
   vfprintf (stderr, str, args);
   fprintf (stderr, "\n");
@@ -731,7 +770,7 @@ warn (mesg, va_alist)
       if (is_std_in)
 	name = "(standard_in)";
       else
-	name = g_argv[optind-1];
+	name = file_name;
       fprintf (stderr,"%s %d: ",name,line_no);
       vfprintf (stderr, mesg, args);
       fprintf (stderr, "\n");
@@ -743,7 +782,7 @@ warn (mesg, va_alist)
 	if (is_std_in)
 	  name = "(standard_in)";
 	else
-	  name = g_argv[optind-1];
+	  name = file_name;
 	fprintf (stderr,"%s %d: (Warning) ",name,line_no);
 	vfprintf (stderr, mesg, args);
 	fprintf (stderr, "\n");

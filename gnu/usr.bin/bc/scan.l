@@ -1,10 +1,8 @@
 %{
-/* 	$NetBSD: scan.l,v 1.2 1994/12/02 00:43:41 phil Exp $  */
-
 /* scan.l: the (f)lex description file for the scanner. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,9 +28,10 @@
 *************************************************************************/
 
 #include "bcdefs.h"
-#include "y.tab.h"
+#include "bc.h"
 #include "global.h"
 #include "proto.h"
+#include <errno.h>
 
 /* Using flex, we can ask for a smaller input buffer.  With lex, this
    does nothing! */
@@ -42,24 +41,112 @@
 #define YY_READ_BUF_SIZE 512
 #endif
 
+/* Force . as last for now. */
+#define DOT_IS_LAST
+
 /* We want to define our own yywrap. */
 #undef yywrap
 _PROTOTYPE(int yywrap, (void));
 
+#ifdef READLINE
+/* Support for the readline and history libraries.  This allows
+   nicer input on the interactive part of input. */
+
+/* Have input call the following function. */
+#undef  YY_INPUT
+#define YY_INPUT(buf,result,max_size) \
+		rl_input((char *)buf, &result, max_size)
+
+/* Variables to help interface readline with bc. */
+static char *rl_line = (char *)NULL;
+static char *rl_start = (char *)NULL;
+static char  rl_len = 0;
+
+/* Definitions for readline access. */
+extern FILE *rl_instream;
+_PROTOTYPE(char *readline, (char *));
+
+/* Needed here? */
+extern FILE *yyin;
+
+/* rl_input puts upto MAX characters into BUF with the number put in
+   BUF placed in *RESULT.  If the yy input file is the same as
+   rl_instream (stdin), use readline.  Otherwise, just read it.
+*/
+
+static void
+rl_input (buf, result, max)
+	char *buf;
+	int  *result;
+	int   max;
+{
+  if (yyin != rl_instream)
+    {
+      while ( (*result = read( fileno(yyin), buf, max )) < 0 )
+        if (errno != EINTR)
+	  {
+	    yyerror( "read() in flex scanner failed" );
+	    exit (1);
+	  }
+      return;
+    }
+
+  /* Do we need a new string? */
+  if (rl_len == 0)
+    {
+      if (rl_line)
+	free(rl_line);
+      rl_line = readline ("");
+      if (rl_line == NULL) {
+	/* end of file */
+	*result = 0;
+	rl_len = 0;
+	return;
+      }
+      rl_len = strlen (rl_line)+1;
+      if (rl_len != 1)
+	add_history (rl_line); 
+      rl_line[rl_len-1] = '\n';
+      printf ("\r");
+      fflush (stdout);
+    }
+
+  if (rl_len <= max)
+    {
+      strncpy (buf, rl_line, rl_len);
+      *result = rl_len;
+      rl_len = 0;
+    }
+  else
+    {
+      strncpy (buf, rl_line, max);
+      *result = max;
+      rl_len -= max;
+    }
+}
+#else
 /* MINIX returns from read with < 0 if SIGINT is  encountered.
    In flex, we can redefine YY_INPUT to the following.  In lex, this
    does nothing! */
-#include <errno.h>
 #undef  YY_INPUT
 #define YY_INPUT(buf,result,max_size) \
 	while ( (result = read( fileno(yyin), (char *) buf, max_size )) < 0 ) \
 	    if (errno != EINTR) \
 		YY_FATAL_ERROR( "read() in flex scanner failed" );
-
+#endif
 %}
 DIGIT [0-9A-F]
 LETTER [a-z]
+%s slcomment
 %%
+"#"		{
+ 		  if (!std_only)
+		    BEGIN(slcomment);
+ 		  else
+		    yyerror ("illegal character: #");
+		}
+<slcomment>[^\n]* { BEGIN(INITIAL); }
+<slcomment>"\n" { line_no++; BEGIN(INITIAL); return(NEWLINE); }
 define return(Define);
 break  return(Break);
 quit   return(Quit);
@@ -77,6 +164,14 @@ else   return(Else);
 read   return(Read);
 halt   return(Halt);
 last   return(Last);
+history {
+#ifdef READLINE
+	  return(History);
+#else
+	  yylval.s_value = strcopyof(yytext); return(NAME);
+#endif
+	}
+
 warranty return(Warranty);
 continue return(Continue);
 print  return(Print);
@@ -93,7 +188,7 @@ limits return(Limits);
 && { return(AND); }
 \|\| { return(OR); }
 "!" { return(NOT); }
-"*"|"/"|"%" { yylval.c_value = yytext[0]; return(MUL_OP); }
+"*"|"/"|"%" { yylval.c_value = yytext[0]; return((int)yytext[0]); }
 "="|\+=|-=|\*=|\/=|%=|\^=  { yylval.c_value = yytext[0]; return(ASSIGN_OP); }
 =\+|=-|=\*|=\/|=%|=\^  { 
 #ifdef OLD_EQ_OP

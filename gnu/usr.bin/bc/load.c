@@ -1,9 +1,7 @@
-/*	$NetBSD: load.c,v 1.3 1994/12/02 00:43:35 phil Exp $  */
-
 /* load.c:  This code "loads" code into the code segments. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -237,12 +235,27 @@ load_code (code)
 			str++;
 			break;
 		      }
-		    ap_name = long_val (&str);
+		    if (*str == '*')
+		      {
+			str++;
+			ap_name = long_val (&str);
 #if DEBUG > 2
-		    printf ("parameter number %d\n", ap_name);
+			printf ("var parameter number %d\n", ap_name);
 #endif
-		    functions[(int)func].f_params = 
-		      nextarg (functions[(int)func].f_params, ap_name);
+			functions[(int)func].f_params = 
+			  nextarg (functions[(int)func].f_params, ap_name,
+				   TRUE);
+		      }
+		    else
+		      {
+			ap_name = long_val (&str);
+#if DEBUG > 2
+			printf ("parameter number %d\n", ap_name);
+#endif
+			functions[(int)func].f_params = 
+			  nextarg (functions[(int)func].f_params, ap_name,
+				   FALSE);
+		      }
 		  }
 
 		/* get the auto vars */
@@ -254,7 +267,7 @@ load_code (code)
 		    printf ("auto number %d\n", ap_name);
 #endif
 		    functions[(int)func].f_autos = 
-		      nextarg (functions[(int)func].f_autos, ap_name);
+		      nextarg (functions[(int)func].f_autos, ap_name, FALSE);
 		  }
 		save_adr = load_adr;
 		load_adr.pc_func = func;

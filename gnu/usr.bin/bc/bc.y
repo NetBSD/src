@@ -1,11 +1,9 @@
 %{
-/*	$NetBSD: bc.y,v 1.2 1994/12/02 00:43:23 phil Exp $ */
-
 /* bc.y: The grammar for a POSIX compatable bc processor with some
          extensions to the language. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -66,26 +64,26 @@
 %token <i_value> NEWLINE AND OR NOT
 %token <s_value> STRING NAME NUMBER
 /*     '-', '+' are tokens themselves		*/
-%token <c_value> MUL_OP
-/*     '*', '/', '%' 				*/
-%token <c_value> ASSIGN_OP
 /*     '=', '+=',  '-=', '*=', '/=', '%=', '^=' */
-%token <s_value> REL_OP
+%token <c_value> ASSIGN_OP
 /*     '==', '<=', '>=', '!=', '<', '>' 	*/
-%token <c_value> INCR_DECR
+%token <s_value> REL_OP
 /*     '++', '--' 				*/
-%token <i_value> Define    Break    Quit    Length
+%token <c_value> INCR_DECR
 /*     'define', 'break', 'quit', 'length' 	*/
-%token <i_value> Return    For    If    While    Sqrt   Else
+%token <i_value> Define    Break    Quit    Length
 /*     'return', 'for', 'if', 'while', 'sqrt', 'else' 	*/
-%token <i_value> Scale    Ibase    Obase    Auto  Read
+%token <i_value> Return    For    If    While    Sqrt   Else
 /*     'scale', 'ibase', 'obase', 'auto', 'read' 	*/
-%token <i_value> Warranty, Halt, Last, Continue, Print, Limits
+%token <i_value> Scale    Ibase    Obase    Auto  Read
 /*     'warranty', 'halt', 'last', 'continue', 'print', 'limits'   */
+%token <i_value> Warranty, Halt, Last, Continue, Print, Limits
+/*     'history' */
+%token <i_value> UNARY_MINUS History
 
 /* Types of all other things. */
 %type <i_value> expression return_expression named_expression opt_expression
-%type <c_value> '+' '-' 
+%type <c_value> '+' '-' '*' '/' '%' 
 %type <a_value> opt_parameter_list opt_auto_define_list define_list
 %type <a_value> opt_argument_list argument_list
 %type <i_value> program input_item semicolon_list statement_list
@@ -98,7 +96,7 @@
 %left REL_OP
 %right ASSIGN_OP
 %left '+' '-'
-%left MUL_OP
+%left '*' '/' '%'
 %right '^'
 %nonassoc UNARY_MINUS
 %nonassoc INCR_DECR
@@ -107,7 +105,7 @@
 program			: /* empty */
 			    {
 			      $$ = 0;
-			      if (interactive)
+			      if (interactive && !quiet)
 				{
 				  printf ("%s\n", BC_VERSION);
 				  welcome ();
@@ -124,6 +122,10 @@ input_item		: semicolon_list NEWLINE
 			      yyerrok;
 			      init_gen ();
 			    }
+			;
+opt_newline		: /* empty */
+			| NEWLINE
+			    { warn ("newline not allowed"); }
 			;
 semicolon_list		: /* empty */
 			    { $$ = 0; }
@@ -229,7 +231,7 @@ statement 		: Warranty
 				sprintf (genstr, "pJ%1d:N%1d:", $4, $7);
 			      generate (genstr);
 			    }
-			  statement
+			  opt_newline statement
 			    {
 			      sprintf (genstr, "J%1d:N%1d:",
 				       continue_label, break_label);
@@ -244,7 +246,7 @@ statement 		: Warranty
 			      sprintf (genstr, "Z%1d:", if_label);
 			      generate (genstr);
 			    }
-			  statement  opt_else
+			  opt_newline statement  opt_else
 			    {
 			      sprintf (genstr, "N%1d:", if_label); 
 			      generate (genstr);
@@ -263,7 +265,7 @@ statement 		: Warranty
 			      sprintf (genstr, "Z%1d:", break_label);
 			      generate (genstr);
 			    }
-			')' statement
+			')' opt_newline statement
 			    {
 			      sprintf (genstr, "J%1d:N%1d:", $1, break_label);
 			      generate (genstr);
@@ -296,18 +298,18 @@ opt_else		: /* nothing */
 			      generate (genstr);
 			      if_label = $1;
 			    }
-			  statement
-function 		: Define NAME '(' opt_parameter_list ')' '{'
-			  NEWLINE opt_auto_define_list 
+			  opt_newline statement
+function 		: Define NAME '(' opt_parameter_list ')' opt_newline
+     			  '{' NEWLINE opt_auto_define_list 
 			    {
 			      /* Check auto list against parameter list? */
-			      check_params ($4,$8);
+			      check_params ($4,$9);
 			      sprintf (genstr, "F%d,%s.%s[",
 				       lookup($2,FUNCTDEF), 
-				       arg_str ($4), arg_str ($8));
+				       arg_str ($4), arg_str ($9));
 			      generate (genstr);
 			      free_args ($4);
-			      free_args ($8);
+			      free_args ($9);
 			      $1 = next_label;
 			      next_label = 1;
 			    }
@@ -329,13 +331,17 @@ opt_auto_define_list 	: /* empty */
 			    { $$ = $2; } 
 			;
 define_list 		: NAME
-			    { $$ = nextarg (NULL, lookup ($1,SIMPLE)); }
+			    { $$ = nextarg (NULL, lookup ($1,SIMPLE), FALSE);}
 			| NAME '[' ']'
-			    { $$ = nextarg (NULL, lookup ($1,ARRAY)); }
+			    { $$ = nextarg (NULL, lookup ($1,ARRAY), FALSE); }
+			| '*' NAME '[' ']'
+			    { $$ = nextarg (NULL, lookup ($2,ARRAY), TRUE); }
 			| define_list ',' NAME
-			    { $$ = nextarg ($1, lookup ($3,SIMPLE)); }
+			    { $$ = nextarg ($1, lookup ($3,SIMPLE), FALSE); }
 			| define_list ',' NAME '[' ']'
-			    { $$ = nextarg ($1, lookup ($3,ARRAY)); }
+			    { $$ = nextarg ($1, lookup ($3,ARRAY), FALSE); }
+			| define_list ',' '*' NAME '[' ']'
+			    { $$ = nextarg ($1, lookup ($4,ARRAY), TRUE); }
 			;
 opt_argument_list	: /* empty */
 			    { $$ = NULL; }
@@ -344,24 +350,24 @@ opt_argument_list	: /* empty */
 argument_list 		: expression
 			    {
 			      if ($1 > 1) warn ("comparison in argument");
-			      $$ = nextarg (NULL,0);
+			      $$ = nextarg (NULL,0,FALSE);
 			    }
 			| NAME '[' ']'
 			    {
 			      sprintf (genstr, "K%d:", -lookup ($1,ARRAY));
 			      generate (genstr);
-			      $$ = nextarg (NULL,1);
+			      $$ = nextarg (NULL,1,FALSE);
 			    }
 			| argument_list ',' expression
 			    {
 			      if ($3 > 1) warn ("comparison in argument");
-			      $$ = nextarg ($1,0);
+			      $$ = nextarg ($1,0,FALSE);
 			    }
 			| argument_list ',' NAME '[' ']'
 			    {
 			      sprintf (genstr, "K%d:", -lookup ($3,ARRAY));
 			      generate (genstr);
-			      $$ = nextarg ($1,1);
+			      $$ = nextarg ($1,1,FALSE);
 			    }
 			;
 opt_expression 		: /* empty */
@@ -482,11 +488,19 @@ expression		:  named_expression ASSIGN_OP
 			      generate ("-");
 			      $$ = $1 | $3;
 			    }
-			| expression MUL_OP expression
+			| expression '*' expression
 			    {
-			      genstr[0] = $2;
-			      genstr[1] = 0;
-			      generate (genstr);
+			      generate ("*");
+			      $$ = $1 | $3;
+			    }
+			| expression '/' expression
+			    {
+			      generate ("/");
+			      $$ = $1 | $3;
+			    }
+			| expression '%' expression
+			    {
+			      generate ("%");
 			      $$ = $1 | $3;
 			    }
 			| expression '^' expression
@@ -609,9 +623,15 @@ named_expression	: NAME
 			    { $$ = 1; }
 			| Scale
 			    { $$ = 2; }
-			| Last
+			| History
 			    { $$ = 3;
+			      warn ("History variable");
+			    }
+			| Last
+			    { $$ = 4;
 			      warn ("Last variable");
 			    }
 			;
+
 %%
+
