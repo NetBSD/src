@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.26 2003/09/28 08:11:47 tsutsui Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.27 2003/11/08 21:35:26 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.26 2003/09/28 08:11:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.27 2003/11/08 21:35:26 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -260,10 +260,7 @@ irix_to_native_sigset(sss, bss)
 }
 
 void
-irix_sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -271,14 +268,14 @@ irix_sendsig(sig, mask, code)
 	struct frame *f;
 	int onstack;
 	int error;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 	struct irix_sigframe sf;
  
 	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_IRIX
 	printf("irix_sendsig()\n");
-	printf("catcher = %p, sig = %d, code = 0x%lx\n",
-	    (void *)catcher, sig, code);
+	printf("catcher = %p, sig = %d, code = 0x%x\n",
+	    (void *)catcher, ksi->ksi_signo, ksi->ksi_trap);
 	printf("irix_sendsig(): starting [PC=%p SP=%p SR=0x%08lx]\n",
 	    (void *)f->f_regs[PC], (void *)f->f_regs[SP], f->f_regs[SR]);
 #endif /* DEBUG_IRIX */
@@ -288,7 +285,7 @@ irix_sendsig(sig, mask, code)
 	 */
 	onstack = 
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 
-		&& (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0; 
+		&& (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_ONSTACK) != 0; 
 #ifdef DEBUG_IRIX
 	if (onstack)
 		printf("irix_sendsig: using signal stack\n");
@@ -307,12 +304,12 @@ irix_sendsig(sig, mask, code)
 	 * Build the signal frame
 	 */
 	bzero(&sf, sizeof(sf));
-	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
-		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, code, l);
-		irix_signal_siginfo(&sf.isf_ctx.iss.iis, sig, 
-		    code, (caddr_t)f->f_regs[BADVADDR]);
+	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
+		irix_set_ucontext(&sf.isf_ctx.iss.iuc, mask, ksi->ksi_trap, l);
+		irix_signal_siginfo(&sf.isf_ctx.iss.iis, ksi->ksi_signo, 
+		    ksi->ksi_trap, (caddr_t)f->f_regs[BADVADDR]);
 	} else {
-		irix_set_sigcontext(&sf.isf_ctx.isc, mask, code, l);
+		irix_set_sigcontext(&sf.isf_ctx.isc, mask, ksi->ksi_trap, l);
 	}
 	
 	/*
@@ -341,7 +338,7 @@ irix_sendsig(sig, mask, code)
 	/* 
 	 * Set up signal trampoline arguments. 
 	 */
-	f->f_regs[A0] = native_to_svr4_signo[sig];	/* signo */
+	f->f_regs[A0] = native_to_svr4_signo[ksi->ksi_signo];	/* signo */
 	f->f_regs[A1] = 0;			/* NULL */
 	f->f_regs[A2] = (unsigned long)sp;	/* ucontext/sigcontext */
 	f->f_regs[A3] = (unsigned long)catcher; /* signal handler address */
@@ -352,7 +349,7 @@ irix_sendsig(sig, mask, code)
 	 * points to a struct irix_sigcontext or struct irix_ucontext.
 	 * Also, A1 points to struct siginfo instead of being NULL.
 	 */
-	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO) {
+	if (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_SIGINFO) {
 		f->f_regs[A0] |= 0x80000000;
 		f->f_regs[A1] = (u_long)sp + 
 		    ((u_long)&sf.isf_ctx.iss.iis - (u_long)&sf); 
@@ -373,7 +370,7 @@ irix_sendsig(sig, mask, code)
 	 * the signal trampoline address.
 	 */
 	f->f_regs[PC] = (unsigned long)
-	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp[sig]);
+	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp[ksi->ksi_signo]);
 
 	/* 
 	 * Remember that we're now on the signal stack. 
