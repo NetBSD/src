@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.4 2001/02/01 01:25:56 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.5 2001/02/02 03:07:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.4 2001/02/01 01:25:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.5 2001/02/02 03:07:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,13 @@ struct fb_devconfig {
 	int	dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t	dc_videobase;		/* base of flat frame buffer */
 	int	dc_blanked;		/* currently has video disabled */
+	int	dc_dispflags;		/* display flags */
 
 	struct rasops_info rinfo;
 };
+
+#define	PVR_RGBMODE	0x01		/* RGB or composite */
+#define	PVR_VGAMODE	0x02		/* VGA */
 
 struct pvr_softc {
 	struct device sc_dev;
@@ -190,6 +194,7 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 	dc->dc_rowbytes = dc->dc_wid * (dc->dc_depth / 8);
 	dc->dc_videobase = dc->dc_vaddr;
 	dc->dc_blanked = 0;
+	dc->dc_dispflags = 0;
 
 	/* Clear the screen. */
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
@@ -250,8 +255,11 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 		    M_WAITOK);
 		pvr_getdevconfig(sc->sc_dc);
 	}
-	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_depth);
+	printf(": %d x %d, %dbpp, %s, %s\n", sc->sc_dc->dc_wid,
+	    sc->sc_dc->dc_ht, sc->sc_dc->dc_depth,
+							/* XXX PAL? */
+	    (sc->sc_dc->dc_dispflags & PVR_VGAMODE) ? "VGA" : "NTSC",
+	    (sc->sc_dc->dc_dispflags & PVR_RGBMODE) ? "RGB" : "composite");
 
 	/* XXX Colormap initialization? */
 
@@ -357,7 +365,7 @@ pvr_show_screen(void *v, void *cookie, int waitok,
 }
 
 static void
-pvr_check_cable(int *vgamode_p, int *rgbmode_p)
+pvr_check_cable(struct fb_devconfig *dc)
 {
 	__volatile u_int32_t *porta =
 	    (__volatile u_int32_t *)0xff80002c;
@@ -370,11 +378,9 @@ pvr_check_cable(int *vgamode_p, int *rgbmode_p)
 	v = ((*(__volatile u_int16_t *)(porta + 1)) >> 8) & 3;
 
 	if ((v & 2) == 0)
-		*vgamode_p = *rgbmode_p = 1;
-	else {
-		*vgamode_p = 0;
-		*rgbmode_p = (v & 1) ? 0 : 1;
-	}
+		dc->dc_dispflags |= PVR_VGAMODE|PVR_RGBMODE;
+	else if ((v & 1) == 0)
+		dc->dc_dispflags |= PVR_RGBMODE;
 }
 
 void
@@ -384,14 +390,13 @@ pvrinit(struct fb_devconfig *dc)
 	    SH3_PHYS_TO_P2SEG(0x005f8000);
 	int display_lines_per_field = 240;
 	int modulo = 1, voffset;
-	int vgamode, rgbmode;
 
-	pvr_check_cable(&vgamode, &rgbmode);
+	pvr_check_cable(dc);
 
 	pvr[8/4] = 0;		/* reset */
 	pvr[0x40/4] = 0;	/* black border */
 
-	if (vgamode) {
+	if (dc->dc_dispflags & PVR_VGAMODE) {
 		pvr[0x44/4] = 0x800004;	/* 31kHz, RGB565 */
 		pvr[0xd0/4] = 0x100;	/* video output */
 		display_lines_per_field = 480;
@@ -420,7 +425,8 @@ pvrinit(struct fb_devconfig *dc)
 
 	/* RGB / composite */
 	*(__volatile u_int32_t *)
-	    SH3_PHYS_TO_P2SEG(0x00702c00) = (rgbmode ? 0 : 3) << 8;
+	    SH3_PHYS_TO_P2SEG(0x00702c00) =
+	    ((dc->dc_dispflags & PVR_RGBMODE) ? 0 : 3) << 8;
 
 	pvr[0x44/4] |= 1;	/* display on */
 }
