@@ -1,7 +1,7 @@
-/* 	$NetBSD: wsfont.c,v 1.23 2001/11/15 09:48:19 lukem Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.24 2002/03/13 10:42:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.23 2001/11/15 09:48:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.24 2002/03/13 10:42:56 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -197,7 +197,7 @@ static void
 wsfont_revbit(struct wsdisplay_font *font)
 {
 	u_char *p, *m;
-	
+
 	p = (u_char *)font->data;
 	m = p + font->stride * font->numchars * font->fontheight;
 
@@ -213,24 +213,24 @@ wsfont_revbyte(struct wsdisplay_font *font)
 {
 	int x, l, r, nr;
 	u_char *rp;
-	
+
 	if (font->stride == 1)
 		return;
 
 	rp = (u_char *)font->data;
 	nr = font->numchars * font->fontheight;
-	
+
 	while (nr--) {
 		l = 0;
 		r = font->stride - 1;
-		
+
 		while (l < r) {
 			x = rp[l];
 			rp[l] = rp[r];
 			rp[r] = x;
 			l++, r--;
 		}
-		
+
 		rp += font->stride;
 	}
 }
@@ -244,14 +244,14 @@ wsfont_enum(void (*cb)(char *, int, int, int))
 	struct wsdisplay_font *f;
 	struct font *ent;
 	int s;
-	
+
 	s = splhigh();
-	
-	for (ent = list; ent; ent = ent->next) {
+
+	for (ent = list; ent != NULL; ent = ent->next) {
 		f = ent->font;	
 		cb(f->name, f->fontwidth, f->fontheight, f->stride);
 	}
-	
+
 	splx(s);
 }
 
@@ -281,11 +281,11 @@ static struct font *
 wsfont_find0(int cookie)
 {
 	struct font *ent;
-	
+
 	for (ent = list; ent != NULL; ent = ent->next)
 		if (ent->cookie == cookie)
 			return (ent);
-			
+
 	return (NULL);
 }
 
@@ -302,7 +302,7 @@ wsfont_matches(struct wsdisplay_font *font, char *name,
 
 	if (stride != 0 && font->stride != stride)
 		return (0);
-		
+
 	if (name != NULL && strcmp(font->name, name) != 0)
 		return (0);
 
@@ -317,9 +317,9 @@ wsfont_find(char *name, int width, int height, int stride)
 {
 	struct font *ent;
 	int s;
-	
+
 	s = splhigh();
-	
+
 	for (ent = list; ent != NULL; ent = ent->next) {
 		if (wsfont_matches(ent->font, name, width, height, stride)) {
 			splx(s);
@@ -341,24 +341,24 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 	struct font *ent;
 	size_t size;
 	int s;
-	
+
 	s = splhigh();
-	
+
 	/* Don't allow exact duplicates */
 	if (wsfont_find(font->name, font->fontwidth, font->fontheight, 
 	    font->stride) >= 0) {
 		splx(s);
 		return (EEXIST);
 	}
-	
+
 	MALLOC(ent, struct font *, sizeof *ent, M_DEVBUF, M_WAITOK);
-	
+
 	ent->lockcount = 0;
 	ent->flg = 0;
 	ent->cookie = cookiegen++;
 	ent->next = list;
 	ent->prev = NULL;
-	
+
 	/* Is this font statically allocated? */
 	if (!copy) {
 		ent->font = font;
@@ -376,13 +376,13 @@ wsfont_add(struct wsdisplay_font *font, int copy)
 		strcpy(ent->font->name, font->name);
 		ent->flg = 0;
 	}
-	
+
 	/* Now link into the list and return */
 	list = ent;
 	splx(s);	
 	return (0);
 }
-			
+
 /*
  * Remove a font.
  */
@@ -391,35 +391,35 @@ wsfont_remove(int cookie)
 {
 	struct font *ent;
 	int s;
-	
+
 	s = splhigh();
 
 	if ((ent = wsfont_find0(cookie)) == NULL) {
 		splx(s);
 		return (ENOENT);
 	}
-	
+
 	if ((ent->flg & WSFONT_BUILTIN) != 0 || ent->lockcount != 0) {
 		splx(s);
 		return (EBUSY);
 	}
-	
+
 	/* Don't free statically allocated font data */
 	if ((ent->flg & WSFONT_STATIC) != 0) {
 		FREE(ent->font->data, M_DEVBUF);
 		FREE(ent->font->name, M_DEVBUF);
 		FREE(ent->font, M_DEVBUF);
 	}
-		
+
 	/* Remove from list, free entry */	
 	if (ent->prev)
 		ent->prev->next = ent->next;
 	else
 		list = ent->next;
-			
+
 	if (ent->next)
 		ent->next->prev = ent->prev;	
-			
+
 	FREE(ent, M_DEVBUF);
 	splx(s);
 	return (0);
@@ -436,12 +436,12 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr,
 {
 	struct font *ent;
 	int s, lc;
-	
+
 	s = splhigh();
-	
+
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (bitorder && bitorder != ent->font->bitorder) {
-			if (ent->lockcount) {
+			if (ent->lockcount != 0) {
 				splx(s);
 				return (-1);
 			}
@@ -457,12 +457,12 @@ wsfont_lock(int cookie, struct wsdisplay_font **ptr,
 			wsfont_revbyte(ent->font);
 			ent->font->byteorder = byteorder;
 		}
-		
+
 		lc = ++ent->lockcount;
 		*ptr = ent->font;
 	} else
 		lc = -1;
-	
+
 	splx(s);
 	return (lc);
 }
@@ -475,14 +475,14 @@ wsfont_getflg(int cookie, int *flg, int *lc)
 {
 	struct font *ent;
 	int s;
-	
+
 	s = splhigh();
-	
+
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		*flg = ent->flg;
 		*lc = ent->lockcount;
 	}
-	
+
 	splx(s);
 	return (ent != NULL ? 0 : -1);
 }
@@ -495,44 +495,43 @@ wsfont_unlock(int cookie)
 {
 	struct font *ent;
 	int s, lc;
-	
+
 	s = splhigh();
-	
+
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (ent->lockcount == 0)
 			panic("wsfont_unlock: font not locked\n");
 		lc = --ent->lockcount;
 	} else	
 		lc = -1;
-	
+
 	splx(s);
 	return (lc);
 }
-
 
 /*
  * Unicode to font encoding mappings
  */
 
 /*
- * To save memory, font encoding tables use a two level lookup.
- * First the high byte of the Unicode is used to lookup the level 2
- * table, then the low byte indexes that table.  Level 2 tables that are
- * not needed are omitted (NULL), and both level 1 and level 2 tables
- * have base and size attributes to keep their size down.
+ * To save memory, font encoding tables use a two level lookup.  First the
+ * high byte of the Unicode is used to lookup the level 2 table, then the
+ * low byte indexes that table.  Level 2 tables that are not needed are
+ * omitted (NULL), and both level 1 and level 2 tables have base and size
+ * attributes to keep their size down.
  */
 
 struct wsfont_level1_glyphmap {
-	struct wsfont_level2_glyphmap **level2;
-	int base;	/* High byte for first level2 entry	*/
-	int size;	/* Number of level2 entries		*/
+	const struct	wsfont_level2_glyphmap **level2;
+	int	base;	/* High byte for first level2 entry	*/
+	int	size;	/* Number of level2 entries		*/
 };
 
 struct wsfont_level2_glyphmap {
-	int base;	/* Low byte for first character		*/
-	int size;	/* Number of characters			*/
-	void *chars;	/* Pointer to character number entries  */
-	int width;	/* Size of each entry in bytes (1,2,4)  */
+	int	base;	/* Low byte for first character		*/
+	int	size;	/* Number of characters			*/
+	const void	*chars;	/* Pointer to character number entries  */
+	int	width;	/* Size of each entry in bytes (1,2,4)  */
 };
 
 #define null16			\
@@ -545,8 +544,7 @@ struct wsfont_level2_glyphmap {
  * IBM 437 maps
  */
 
-static u_int8_t
-ibm437_chars_0[] = {
+static const u_int8_t ibm437_chars_0[] = {
 	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -563,22 +561,26 @@ ibm437_chars_0[] = {
 	 0, 165, 0,  0,  0,  0, 153, 0,  0,  0,  0,  0, 154, 0,  0,  0,
 	133,160,131, 0, 132,134,145,135,138,130,136,137,141,161,140,139,
 	 0, 164,149,162,147, 0, 148,246, 0, 151,163,150,129, 0,  0, 152
-},
-ibm437_chars_1[] = {
+};
+
+static const u_int8_t ibm437_chars_1[] = {
 	159
-},
-ibm437_chars_3[] = {
+};
+
+static const u_int8_t ibm437_chars_3[] = {
 	226, 0,  0,  0,  0, 233, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	228, 0,  0, 232, 0,  0, 234, 0,  0,  0,  0,  0,  0,  0, 224,225,
 	 0, 235,238, 0,  0,  0,  0,  0,  0, 230, 0,  0,  0, 227, 0,  0,
 	229,231
-},
-ibm437_chars_32[] = {
+};
+
+static const u_int8_t ibm437_chars_32[] = {
 	252, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0,  0,  0,  0,  0, 158
-},
-ibm437_chars_34[] = {
+};
+
+static const u_int8_t ibm437_chars_34[] = {
 	237, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0, 248,250,251, 0,  0,  0, 236, 0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0, 239, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -586,12 +588,14 @@ ibm437_chars_34[] = {
 	 0,  0,  0, 247, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,240,  0,  0,243,
 	242
-},
-ibm437_chars_35[] = {
+};
+
+static const u_int8_t ibm437_chars_35[] = {
 	169, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	244,245
-},
-ibm437_chars_37[] = {
+};
+
+static const u_int8_t ibm437_chars_37[] = {
 	196,205,179,186, 0,  0,  0,  0,  0,  0,  0,  0, 218,213,214,201,
 	191,184,183,187,192,212,211,200,217,190,189,188,195,198, 0,  0,
 	199, 0,  0, 204,180,181, 0,  0, 182, 0,  0, 185,194, 0,  0, 209,
@@ -605,16 +609,28 @@ ibm437_chars_37[] = {
 	254
 };
 
-static struct wsfont_level2_glyphmap
-ibm437_level2_0 = { 0, 256, ibm437_chars_0, 1 },
-ibm437_level2_1 = { 146, 1, ibm437_chars_1, 1 },
-ibm437_level2_3 = { 147, 50, ibm437_chars_3, 1 },
-ibm437_level2_32 = { 127, 41, ibm437_chars_32, 1 },
-ibm437_level2_34 = { 5, 97, ibm437_chars_34, 1 },
-ibm437_level2_35 = { 16, 18, ibm437_chars_35, 1 },
-ibm437_level2_37 = { 0, 161, ibm437_chars_37, 1 };
+static const struct wsfont_level2_glyphmap ibm437_level2_0 =
+    { 0, 256, ibm437_chars_0, 1 };
 
-static struct wsfont_level2_glyphmap *ibm437_level1[] = {
+static const struct wsfont_level2_glyphmap ibm437_level2_1 =
+    { 146, 1, ibm437_chars_1, 1 };
+
+static const struct wsfont_level2_glyphmap ibm437_level2_3 =
+    { 147, 50, ibm437_chars_3, 1 };
+
+static const struct wsfont_level2_glyphmap ibm437_level2_32 =
+    { 127, 41, ibm437_chars_32, 1 };
+
+static const struct wsfont_level2_glyphmap ibm437_level2_34 =
+    { 5, 97, ibm437_chars_34, 1 };
+
+static const struct wsfont_level2_glyphmap ibm437_level2_35 =
+    { 16, 18, ibm437_chars_35, 1 };
+
+static const struct wsfont_level2_glyphmap ibm437_level2_37 =
+    { 0, 161, ibm437_chars_37, 1 };
+
+static const struct wsfont_level2_glyphmap *ibm437_level1[] = {
 	&ibm437_level2_0, &ibm437_level2_1, NULL, &ibm437_level2_3,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -627,13 +643,10 @@ static struct wsfont_level2_glyphmap *ibm437_level1[] = {
 	NULL, &ibm437_level2_37
 };
 
-
 /*
  * ISO-8859-7 maps
  */
-
-static u_int8_t
-iso7_chars_0[] = {
+static const u_int8_t iso7_chars_0[] = {
 	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -646,8 +659,9 @@ iso7_chars_0[] = {
 	144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
 	160, 0,  0, 163, 0,  0, 166,167,168,169, 0, 171,172,173, 0,  0,
 	176,177,178,179,180, 0,  0, 183, 0,  0,  0, 187, 0, 189
-},
-iso7_chars_3[] = {
+};
+
+static const u_int8_t iso7_chars_3[] = {
 	182, 0, 184,185,186, 0, 188, 0, 190,191,192,193,194,195,196,197,
 	198,199,200,201,202,203,204,205,206,207,208,209, 0, 211,212,213,
 	214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,
@@ -655,17 +669,22 @@ iso7_chars_3[] = {
 	246,247,248,249,250,251,252,253,254, 0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 181
-},
-iso7_chars_32[] = {
+};
+
+static const u_int8_t iso7_chars_32[] = {
 	175, 0,  0,  0,  0, 162, 0, 161
 };
 
-static struct wsfont_level2_glyphmap
-iso7_level2_0 = { 0, 190, iso7_chars_0, 1 },
-iso7_level2_3 = { 134, 111, iso7_chars_3, 1 },
-iso7_level2_32 = { 20, 8, iso7_chars_32, 1 };
+static const struct wsfont_level2_glyphmap iso7_level2_0 =
+    { 0, 190, iso7_chars_0, 1 };
 
-static struct wsfont_level2_glyphmap *iso7_level1[] = {
+static const struct wsfont_level2_glyphmap iso7_level2_3 =
+    { 134, 111, iso7_chars_3, 1 };
+
+static const struct wsfont_level2_glyphmap iso7_level2_32 =
+    { 20, 8, iso7_chars_32, 1 };
+
+static const struct wsfont_level2_glyphmap *iso7_level1[] = {
 	&iso7_level2_0, NULL, NULL, &iso7_level2_3,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -677,7 +696,7 @@ static struct wsfont_level2_glyphmap *iso7_level1[] = {
 	&iso7_level2_32
 };
 
-static struct wsfont_level1_glyphmap encodings[] = {
+static const struct wsfont_level1_glyphmap encodings[] = {
 	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_ISO */
 	{ ibm437_level1, 0, 38 },	/* WSDISPLAY_FONTENC_IBM */
 	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_PCVT */
@@ -692,54 +711,44 @@ static struct wsfont_level1_glyphmap encodings[] = {
 int
 wsfont_map_unichar(struct wsdisplay_font *font, int c)
 {
-	if (font->encoding == WSDISPLAY_FONTENC_ISO) {
+	const struct wsfont_level1_glyphmap *map1;
+	const struct wsfont_level2_glyphmap *map2;
+	int hi, lo;
 
-		return c;
+	if (font->encoding == WSDISPLAY_FONTENC_ISO)
+		return (c);
 
-	} else if (font->encoding < 0 || font->encoding > MAX_ENCODING) {
-
+	if (font->encoding < 0 || font->encoding > MAX_ENCODING)
 		return (-1);
 
-	} else {
+	hi = (c >> 8);
+	lo = c & 255;
+	map1 = &encodings[font->encoding];
 
-		int hi = (c >> 8), lo = c & 255;
-		struct wsfont_level1_glyphmap *map1 =
-			&encodings[font->encoding];
+	if (hi < map1->base || hi >= map1->base + map1->size)
+		return (-1);
 
-		if (hi >= map1->base && hi < map1->base + map1->size) {
-			struct wsfont_level2_glyphmap *map2 =
-			  map1->level2[hi - map1->base];
+	map2 = map1->level2[hi - map1->base];
 
-			if (map2 != NULL &&
-			    lo >= map2->base && lo < map2->base + map2->size) {
+	if (map2 == NULL || lo < map2->base || lo >= map2->base + map2->size)
+		return (-1);
 
-			  	lo -= map2->base;
+	lo -= map2->base;
 
-				switch(map2->width) {
-				 case 1:
-				   c = (((u_int8_t *)map2->chars)[lo]);
-				   break;
-				 case 2:
-				   c = (((u_int16_t *)map2->chars)[lo]);
-				   break;
-				 case 4:
-				   c = (((u_int32_t *)map2->chars)[lo]);
-				   break;
-				}
-
-				if (c == 0 && lo != 0)
-					return (-1);
-				else
-					return (c);
-
-			} else {
-				return (-1);
-			}
-
-		} else {
-			return (-1);
-		}
-
+	switch(map2->width) {
+	case 1:
+		c = (((const u_int8_t *)map2->chars)[lo]);
+		break;
+	case 2:
+		c = (((const u_int16_t *)map2->chars)[lo]);
+		break;
+	case 4:
+		c = (((const u_int32_t *)map2->chars)[lo]);
+		break;
 	}
 
+	if (c == 0 && lo != 0)
+		return (-1);
+
+	return (c);
 }
