@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1997/03/17 19:03:35 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1997/03/21 22:46:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,7 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/dvma.h>
-/* #include <machine/kcore.h> XXX: needs st_entry_t */
+#include <machine/kcore.h>
 #include <machine/db_machdep.h>
 #include <machine/machdep.h>
 
@@ -621,7 +621,6 @@ dumpconf()
 }
 
 struct pcb dumppcb;
-extern vm_offset_t avail_start;
 
 /*
  * Write a crash dump.  The format while in swap is:
@@ -635,9 +634,12 @@ void
 dumpsys()
 {
 	struct bdevsw *dsw;
+	kcore_seg_t	*kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	cpu_ram_seg_t *crs_p;
 	char *vaddr;
 	vm_offset_t paddr;
-	int psize, todo, chunk;
+	int psize, todo, seg, segsz;
 	daddr_t blkno;
 	int error = 0;
 
@@ -666,54 +668,60 @@ dumpsys()
 		   (int) dumpdev, (int) dumplo);
 
 	/*
-	 * Write the dump header, including MMU state.
+	 * We put the dump header is in physical page zero,
+	 * so there is no extra work here to write it out.
 	 */
-	blkno = dumplo;
-	todo = dumpsize;	/* pages */
+	kseg_p = (kcore_seg_t *)KERNBASE;
+	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = sizeof(*chdr_p);
+	pmap_set_kcore_hdr(chdr_p);
 
 	/*
-	 * Now dump physical memory.  Have to do it in two chunks.
-	 * The first chunk is "unmanaged" (by the VM code) and its
-	 * range of physical addresses is not allow in pmap_enter.
-	 * However, that segment is mapped linearly, so we can just
-	 * use the virtual mappings already in place.  The second
-	 * chunk is done the normal way, using pmap_enter.
-	 *
-	 * Note that vaddr==(paddr+KERNBASE) for paddr=0 through etext.
+	 * Now dump physical memory.  Note that physical memory
+	 * might NOT be congiguous, so do it by segments.
 	 */
 
-	/* Do the first chunk (0 <= PA < avail_start) */
-	paddr = 0;
-	chunk = btoc(avail_start);
-	if (chunk > todo)
-		chunk = todo;
-	do {
-		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
-		vaddr = (char*)(paddr + KERNBASE);
-		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-		if (error)
-			goto fail;
-		paddr += NBPG;
-		blkno += btodb(NBPG);
-		--todo;
-	} while (--chunk > 0);
-
-	/* Do the second chunk (avail_start <= PA < dumpsize) */
+	blkno = dumplo;
+	todo = dumpsize;	/* pages */
 	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
-	do {
-		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
-		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-			VM_PROT_READ, FALSE);
-		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
-		if (error)
-			goto fail;
-		paddr += NBPG;
-		blkno += btodb(NBPG);
-	} while (--todo > 0);
 
+	for (seg = 0; seg < NPHYS_RAM_SEGS; seg++) {
+		crs_p = &chdr_p->ram_segs[seg];
+		paddr = crs_p->start;
+		segsz = crs_p->size;
+		/*
+		 * Our header lives in the first little bit of
+		 * physical memory (not written separately), so
+		 * we have to adjust the first ram segment size
+		 * and start address to reflect the stolen RAM.
+		 * (Nothing interesing in that RAM anyway 8^).
+		 */
+		if (seg == 0) {
+			int adj = sizeof(*kseg_p) + sizeof(*chdr_p);
+			crs_p->start += adj;
+			crs_p->size  -= adj;
+		}
+
+		while (todo && (segsz > 0)) {
+
+			/* Print pages left after every 16. */
+			if ((todo & 0xf) == 0)
+				printf("\r%4d", todo);
+
+			/* Make a temporary mapping for the page. */
+			pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
+					   VM_PROT_READ, FALSE);
+			error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+			if (error)
+				goto fail;
+			paddr += NBPG;
+			segsz -= NBPG;
+			blkno += btodb(NBPG);
+			todo--;
+		}
+	}
 	printf("\rdump succeeded\n");
 	return;
 fail:
