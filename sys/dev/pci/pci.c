@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.13 1996/03/08 20:34:25 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.14 1996/03/14 02:35:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,13 +70,12 @@ pcimatch(parent, match, aux)
 		return (0);
 
 	/* Check the locators */
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pba->pba_bus)
+	if (cf->pcibuscf_bus != PCIBUS_UNK_BUS &&
+	    cf->pcibuscf_bus != pba->pba_bus)
 		return (0);
 
 	/* sanity */
 	if (pba->pba_bus < 0 || pba->pba_bus > 255)
-		return (0);
-	if (pba->pba_maxndevs < 0 || pba->pba_maxndevs > 32)
 		return (0);
 
 	/*
@@ -94,20 +93,15 @@ pciattach(parent, self, aux)
 	struct pci_softc *sc = (struct pci_softc *)self;
 	struct pcibus_attach_args *pba = aux;
 	bus_chipset_tag_t bc;
-	int maxndevs, device, function, nfunctions;
-
-#ifdef i386 /* XXX */
-	if (pba->pba_bus == 0)
-		printf(": configuration mode %d", pci_mode);
-#endif /* XXX */
-	printf("\n");
+	int device, function, nfunctions;
 
 	sc->sc_bus = pba->pba_bus;
 	sc->sc_bc = bc = pba->pba_bc;
 
-	maxndevs = pba->pba_maxndevs;
+	pci_md_attach_hook(parent, sc, pba);
+	printf("\n");
 
-	for (device = 0; device < maxndevs; device++) {
+	for (device = 0; device < PCI_MAX_DEVICE_NUMBER; device++) {
 		pcitag_t tag;
 		pcireg_t id, class;
 		struct pci_attach_args pa;
@@ -164,9 +158,11 @@ pcisubmatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_device)
+	if (cf->pcicf_dev != PCI_UNK_DEV &&
+	    cf->pcicf_dev != pa->pa_device)
 		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_function)
+	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
+	    cf->pcicf_function != pa->pa_function)
 		return 0;
 	return ((*cf->cf_driver->cd_match)(parent, match, aux));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.12 1996/03/08 20:25:30 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.13 1996/03/14 02:35:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -55,6 +55,15 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 
 /*
+ * The maximum number of devices on a PCI bus is 32.  However, some
+ * PCI chipsets (e.g. chipsets that implement 'Configuration Mechanism #2'
+ * on the i386) can't deal with that many, so let pci_machdep.h override it.
+ */
+#ifndef PCI_MAX_DEVICE_NUMBER
+#define	PCI_MAX_DEVICE_NUMBER	32
+#endif
+
+/*
  * PCI bus attach arguments.
  */
 struct pcibus_attach_args {
@@ -62,7 +71,6 @@ struct pcibus_attach_args {
 	bus_chipset_tag_t pba_bc;	/* XXX should be common */
 
 	int		pba_bus;	/* PCI bus number */
-	int		pba_maxndevs;	/* max # of devs on bus [0..n-1] */
 };
 
 /*
@@ -76,6 +84,21 @@ struct pci_attach_args {
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
 };
+
+/*
+ * Locators devices that attach to 'pcibus', as specified to config.
+ */
+#define	pcibuscf_bus		cf_loc[0]
+#define	PCIBUS_UNK_BUS		-1		/* wildcarded 'bus' */
+
+/*
+ * Locators for PCI devices, as specified to config.
+ */
+#define	pcicf_dev		cf_loc[0]
+#define	PCI_UNK_DEV		-1		/* wildcarded 'dev' */
+
+#define	pcicf_function		cf_loc[1]
+#define	PCI_UNK_FUNCTION	-1		/* wildcarded 'function' */
 
 pcireg_t pci_conf_read __P((pcitag_t, int));
 void	 pci_conf_write __P((pcitag_t, int, pcireg_t));

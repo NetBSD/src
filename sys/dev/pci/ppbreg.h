@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.1 1996/02/28 01:46:33 cgd Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.2 1996/03/14 02:35:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,9 +70,3 @@
  */
 #define	PPB_INTERRUPT_SWIZZLE(pin, device)				\
 	    ((((pin) + (device) - 1) % 4) + 1)
-
-/*
- * Max number of devices on a secondary bus.
- * XXX really a "global" PCI constant.
- */
-#define	PPB_SECONDARY_DEVICES	32
