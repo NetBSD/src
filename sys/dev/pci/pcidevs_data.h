@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.28 1997/05/13 14:44:54 jtk Exp 
+ *	NetBSD: pcidevs,v 1.29 1997/06/24 05:04:10 kml Exp 
  */
 
 /*
@@ -678,6 +678,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Emulex",
 	    "\"Light Pulse\" FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
+	    0,
+	    "Essential Communications",
+	    "RoadRunner HIPPI Interface",
+	},
+	{
+	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_GIGE,
+	    0,
+	    "Essential Communications",
+	    "RoadRunner Gig-E Interface",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -4391,6 +4403,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CYCLADES, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Cyclades",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ESSENTIAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Essential Communications",
 	    NULL,
 	},
 	{
