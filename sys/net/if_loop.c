@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.29 2000/02/06 12:49:37 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.30 2000/03/30 09:45:36 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,8 +143,8 @@ void
 loopattach(n)
 	int n;
 {
-	register int i;
-	register struct ifnet *ifp;
+	int i;
+	struct ifnet *ifp;
 
 	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
@@ -167,12 +167,12 @@ loopattach(n)
 int
 looutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
@@ -336,13 +336,13 @@ lortrequest(cmd, rt, sa)
 /* ARGSUSED */
 int
 loioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr;
+	int error = 0;
 
 	switch (cmd) {
 

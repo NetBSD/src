@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.21 2000/01/28 13:27:29 enami Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.22 2000/03/30 09:45:35 augustss Exp $       */
 
 /*
  *
@@ -90,7 +90,7 @@
 
 int
 atm_output(ifp, m0, dst, rt0)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
 	struct rtentry *rt0;
@@ -98,8 +98,8 @@ atm_output(ifp, m0, dst, rt0)
 	u_int16_t etype = 0;			/* if using LLC/SNAP */
 	int s, error = 0, sz;
 	struct atm_pseudohdr atmdst, *ad;
-	register struct mbuf *m = m0;
-	register struct rtentry *rt;
+	struct mbuf *m = m0;
+	struct rtentry *rt;
 	struct atmllc *atmllc;
 	struct atmllc *llc_hdr = NULL;
 	u_int32_t atm_flags;
@@ -240,11 +240,11 @@ bad:
 void
 atm_input(ifp, ah, m, rxhand)
 	struct ifnet *ifp;
-	register struct atm_pseudohdr *ah;
+	struct atm_pseudohdr *ah;
 	struct mbuf *m;
 	void *rxhand;
 {
-	register struct ifqueue *inq;
+	struct ifqueue *inq;
 	u_int16_t etype = ETHERTYPE_IP; /* default */
 	int s;
 
@@ -330,10 +330,10 @@ atm_input(ifp, ah, m, rxhand)
  */
 void
 atm_ifattach(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;

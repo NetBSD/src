@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.10 1996/05/23 18:35:02 mycroft Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.11 2000/03/30 09:45:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -67,10 +67,10 @@ u_long	raw_recvspace = RAWRCVQ;
  */
 int
 raw_attach(so, proto)
-	register struct socket *so;
+	struct socket *so;
 	int proto;
 {
-	register struct rawcb *rp = sotorawcb(so);
+	struct rawcb *rp = sotorawcb(so);
 	int error;
 
 	/*
@@ -95,7 +95,7 @@ raw_attach(so, proto)
  */
 void
 raw_detach(rp)
-	register struct rawcb *rp;
+	struct rawcb *rp;
 {
 	struct socket *so = rp->rcb_socket;
 
@@ -115,7 +115,7 @@ raw_detach(rp)
  */
 void
 raw_disconnect(rp)
-	register struct rawcb *rp;
+	struct rawcb *rp;
 {
 
 #ifdef notdef

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.10 2000/02/06 12:49:37 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.11 2000/03/30 09:45:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -82,8 +82,8 @@
 #include <net/net_osdep.h>
 
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
-int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
-	register struct rtentry *));
+int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	struct rtentry *));
 static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
 void faithattach __P((int));
@@ -97,8 +97,8 @@ void
 faithattach(faith)
 	int faith;
 {
-	register struct ifnet *ifp;
-	register int i;
+	struct ifnet *ifp;
+	int i;
 
 	for (i = 0; i < NFAITH; i++) {
 		ifp = &faithif[i];
@@ -126,12 +126,12 @@ faithattach(faith)
 int
 faithoutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct sockaddr *dst;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
@@ -235,13 +235,13 @@ faithrtrequest(cmd, rt, sa)
 /* ARGSUSED */
 static int
 faithioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa;
-	register struct ifreq *ifr = (struct ifreq *)data;
-	register int error = 0;
+	struct ifaddr *ifa;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int error = 0;
 
 	switch (cmd) {
 
