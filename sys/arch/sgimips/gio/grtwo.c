@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.2 2004/07/06 23:51:40 sekiya Exp $	 */
+/* $NetBSD: grtwo.c,v 1.3 2004/07/07 00:11:11 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.2 2004/07/06 23:51:40 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.3 2004/07/07 00:11:11 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,6 @@ grtwo_attach_common(struct grtwo_devconfig * dc, struct gio_attach_args * ga)
 
 	dc->iot = ga->ga_iot;
 	dc->ioh = ga->ga_ioh;
-	dc->fifo_busy = 0;
 	int i = 0;
 
 	wsfont_init();
