@@ -1,4 +1,5 @@
-/* $NetBSD: isadma_bounce.c,v 1.1 2000/06/20 08:25:41 soda Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.2 2000/06/20 08:26:55 soda Exp $ */
+/* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.1 2000/06/20 08:25:41 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.2 2000/06/20 08:26:55 soda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.1 2000/06/20 08:25:41 soda Exp $
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#define _ALPHA_BUS_DMA_PRIVATE
+#define _ARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -57,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.1 2000/06/20 08:25:41 soda Exp $
 
 #include <vm/vm.h>
 
-extern	paddr_t avail_end;
+extern paddr_t avail_end;	/* from pmap.c */
 
 /*
  * ISA can only DMA to 0-16M.
@@ -100,9 +101,47 @@ struct isadma_bounce_cookie {
 #define	ID_BUFTYPE_UIO		3
 #define	ID_BUFTYPE_RAW		4
 
-int	isadma_bounce_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
+int	isadma_bounce_dmamap_create(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	isadma_bounce_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	isadma_bounce_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	isadma_bounce_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	isadma_bounce_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	isadma_bounce_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	isadma_bounce_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+	    bus_addr_t, bus_size_t, int);
+int	isadma_bounce_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int);
+
+static int isadma_bounce_alloc_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_size_t, int));
-void	isadma_bounce_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+static void isadma_bounce_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
+
+void
+isadma_bounce_tag_init(t)
+	bus_dma_tag_t t;
+{
+	/*
+	 * Initialize the DMA tag used for ISA DMA.
+	 */
+
+	_bus_dma_tag_init(t);
+
+	t->_dmamap_create = isadma_bounce_dmamap_create;
+	t->_dmamap_destroy = isadma_bounce_dmamap_destroy;
+	t->_dmamap_load = isadma_bounce_dmamap_load;
+	t->_dmamap_load_mbuf = isadma_bounce_dmamap_load_mbuf;
+	t->_dmamap_load_uio = isadma_bounce_dmamap_load_uio;
+	t->_dmamap_load_raw = isadma_bounce_dmamap_load_raw;
+	t->_dmamap_unload = isadma_bounce_dmamap_unload;
+	t->_dmamap_sync = isadma_bounce_dmamap_sync;
+	t->_dmamem_alloc = isadma_bounce_dmamem_alloc;
+}
 
 /*
  * Create an ISA DMA map.
@@ -148,7 +187,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
 	cookieflags = 0;
-	if (avail_end > (t->_wbase + t->_wsize) ||
+	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD ||
 	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) *
@@ -211,7 +250,7 @@ isadma_bounce_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
  */
 int
 isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    size_t buflen, struct proc *p, int flags)
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
 	int error;
@@ -226,7 +265,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * Try to load the map the normal way.  If this errors out,
 	 * and we can bounce, we will.
 	 */
-	error = _bus_dmamap_load_direct(t, map, buf, buflen, p, flags);
+	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
 	if (error == 0 ||
 	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
 		return (error);
@@ -251,7 +290,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_origbuf = buf;
 	cookie->id_origbuflen = buflen;
 	cookie->id_buftype = ID_BUFTYPE_LINEAR;
-	error = _bus_dmamap_load_direct(t, map, cookie->id_bouncebuf, buflen,
+	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf, buflen,
 	    p, flags);
 	if (error) {
 		/*
@@ -296,7 +335,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	 * Try to load the map the normal way.  If this errors out,
 	 * and we can bounce, we will.
 	 */
-	error = _bus_dmamap_load_mbuf_direct(t, map, m0, flags);
+	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
 	if (error == 0 ||
 	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
 		return (error);
@@ -322,7 +361,7 @@ isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	cookie->id_origbuf = m0;
 	cookie->id_origbuflen = m0->m_pkthdr.len;	/* not really used */
 	cookie->id_buftype = ID_BUFTYPE_MBUF;
-	error = _bus_dmamap_load_direct(t, map, cookie->id_bouncebuf,
+	error = _bus_dmamap_load(t, map, cookie->id_bouncebuf,
 	    m0->m_pkthdr.len, NULL, flags);
 	if (error) {
 		/*
@@ -395,7 +434,17 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
+	void (*sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 
+#if defined(MIPS1) && defined(MIPS3)
+	sync = (CPUISMIPS3) ? _mips3_bus_dmamap_sync : _mips1_bus_dmamap_sync;
+#elif defined(MIPS1)
+	sync = _mips1_bus_dmamap_sync;
+#elif defined(MIPS3)
+	sync = _mips3_bus_dmamap_sync;
+#else
+#error neither MIPS1 nor MIPS3 is defined
+#endif
 	/*
 	 * Mixing PRE and POST operations is not allowed.
 	 */
@@ -414,12 +463,21 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 	/*
 	 * If we're not bouncing, just drain the write buffer
-	 * and return.
+	 * and flush cache.
 	 */
 	if ((cookie->id_flags & ID_IS_BOUNCING) == 0) {
-		alpha_mb();
+		((*sync)(t, map, offset, len, ops));
 		return;
 	}
+
+	/*
+	 * XXX
+	 * This should be needed in BUS_DMASYNC_POSTREAD case only,
+	 * if _mips3_bus_dmamap_sync() used "Hit_Invalidate on POSTREAD",
+	 * rather than "Hit_Write_Back_Invalidate on PREREAD".
+	 */
+	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD))
+		((*sync)(t, map, offset, len, ops));
 
 	switch (cookie->id_buftype) {
 	case ID_BUFTYPE_LINEAR:
@@ -518,8 +576,8 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		panic("isadma_bounce_dmamap_sync");
 	}
 
-	/* Drain the write buffer. */
-	alpha_mb();
+	if (ops & BUS_DMASYNC_PREWRITE)
+		((*sync)(t, map, offset, len, ops));
 }
 
 /*
@@ -545,7 +603,7 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
  * ISA DMA utility functions
  **********************************************************************/
 
-int
+static int
 isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
     bus_size_t size, int flags)
 {
@@ -574,7 +632,7 @@ isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	return (error);
 }
 
-void
+static void
 isadma_bounce_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
