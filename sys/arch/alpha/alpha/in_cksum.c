@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1996/11/13 21:13:06 cgd Exp $	*/
+/* $NetBSD: in_cksum.c,v 1.5 1997/04/07 00:19:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -36,6 +36,8 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1996/11/23 06:31:57 cgd Exp $	*/
+/* $NetBSD: clock.c,v 1.15 1997/04/07 00:19:11 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/kernel.h>

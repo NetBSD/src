@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
+/* $NetBSD: process_machdep.c,v 1.8 1997/04/07 00:19:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,6 +51,8 @@
  * process_set_pc(proc)
  *	Set the process's program counter.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

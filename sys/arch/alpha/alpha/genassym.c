@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.9 1996/08/20 23:00:24 cgd Exp $	*/
+/* $NetBSD: genassym.c,v 1.10 1997/04/07 00:19:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/buf.h>

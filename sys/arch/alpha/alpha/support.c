@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.4 1996/11/13 22:20:56 cgd Exp $	*/
+/* $NetBSD: support.c,v 1.5 1997/04/07 00:19:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 /*
  * Some C support functions that aren't (yet) in libkern or assembly.
