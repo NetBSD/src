@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2002/05/13 06:05:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2002/06/19 17:01:20 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -306,6 +306,7 @@ initppc(startkernel, endkernel, args)
 #endif /* DDB || IPKDB || KGDB */
 		}
 
+	cpu_probe_cache();
 	/*
 	 * external interrupt handler install
 	 */
