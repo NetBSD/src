@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.8 2003/05/15 19:16:37 wiz Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.9 2003/07/17 20:40:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.8 2003/05/15 19:16:37 wiz Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.9 2003/07/17 20:40:43 nathanw Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -237,7 +237,7 @@ pthread__destroy_tsd(pthread_t self)
 	 * a while.''
 	 */
 
-	iterations = PTHREAD_DESTRUCTOR_ITERATIONS;
+	iterations = 4; /* We're not required to try very hard */
 	do {
 		done = 1;
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
