@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.16 1997/07/29 06:43:55 fair Exp $	*/
+/*	$NetBSD: xd.c,v 1.17 1997/10/17 03:47:52 gwr Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.16 1997/07/29 06:43:55 fair Exp $
+ * id: $NetBSD: xd.c,v 1.17 1997/10/17 03:47:52 gwr Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -84,6 +84,8 @@
 #include <sun3/dev/xdreg.h>
 #include <sun3/dev/xdvar.h>
 #include <sun3/dev/xio.h>
+
+#include "locators.h"
 
 /*
  * macros
@@ -215,11 +217,11 @@ inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
 			    struct xd_softc *, int, u_long, int,
 			    caddr_t, struct buf *));
 void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-int	xdc_start __P((struct xdc_softc *, int));
+void	xdc_start __P((struct xdc_softc *, int));
 int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
 int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
 void	xdc_tick __P((void *));
-int	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
 
 /* machine interrupt hook */
 int	xdcintr __P((void *));
@@ -229,11 +231,13 @@ bdev_decl(xd);
 cdev_decl(xd);
 
 /* autoconf */
-int	xdcmatch __P((struct device *, struct cfdata *, void *));
-void	xdcattach __P((struct device *, struct device *, void *));
-int	xdmatch __P((struct device *, struct cfdata *, void *));
-void	xdattach __P((struct device *, struct device *, void *));
-int  xdc_print __P((void *, char *name));
+static int	xdcmatch __P((struct device *, struct cfdata *, void *));
+static void	xdcattach __P((struct device *, struct device *, void *));
+static int  xdc_print __P((void *, const char *name));
+
+static int	xdmatch __P((struct device *, struct cfdata *, void *));
+static void	xdattach __P((struct device *, struct device *, void *));
+static void xd_init __P((struct xd_softc *));
 
 static	void xddummystrat __P((struct buf *));
 int	xdgetdisklabel __P((struct xd_softc *, void *));
@@ -315,11 +319,11 @@ xdgetdisklabel(xd, b)
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xd->pcyl = sdl->sl_pcyl;
 	else {
-		printf("%s: WARNING: no `pcyl' in disk label.\n", 
+		printf("%s: WARNING: no `pcyl' in disk label.\n",
 							xd->sc_dev.dv_xname);
 		xd->pcyl = xd->sc_dk.dk_label->d_ncylinders +
 			xd->sc_dk.dk_label->d_acylinders;
-		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n", 
+		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
 
@@ -349,21 +353,21 @@ xdgetdisklabel(xd, b)
 int xdcmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void   *aux;
+	void *aux;
 {
 	struct confargs *ca = aux;
-	int x;
 
-	if (ca->ca_bustype != BUS_VME32)
+	/* No default VME address. */
+	if (ca->ca_paddr == -1)
 		return (0);
 
-	/* Default interrupt priority always splbio==2 */
+	/* Make sure something is there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 11, 1) == -1)
+		return (0);
+
+	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
-
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 11, 1);
-	if (x == -1)
-		return (0);
 
 	return (1);
 }
@@ -371,16 +375,15 @@ int xdcmatch(parent, cf, aux)
 /*
  * xdcattach: attach controller
  */
-void 
+void
 xdcattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
-
 {
 	struct xdc_softc *xdc = (void *) self;
 	struct confargs *ca = aux;
 	struct xdc_attach_args xa;
-	int     lcv, rqno, err, pri;
+	int     lcv, rqno, err;
 	struct xd_iopb_ctrl *ctl;
 
 	/* get addressing and intr level stuff from autoconfig and load it
@@ -395,7 +398,7 @@ xdcattach(parent, self, aux)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
 
 	/* allocate and zero buffers
-	 * 
+	 *
 	 * note: we simplify the code by allocating the max number of iopbs and
 	 * iorq's up front.   thus, we avoid linked lists and the costs
 	 * associated with them in exchange for wasting a little memory. */
@@ -404,7 +407,7 @@ xdcattach(parent, self, aux)
 	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb));	/* KVA */
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 	xdc->dvmaiopb = (struct xd_iopb *)
-		dvma_kvtopa((long) xdc->iopbase, BUS_VME32);
+		dvma_kvtopa(xdc->iopbase, BUS_VME32);
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
 	if (xdc->reqs == NULL)
@@ -473,14 +476,9 @@ xdcattach(parent, self, aux)
 	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
 
 	/* now we must look for disks using autoconfig */
-	xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
-	xa.fullmode = XD_SUB_POLL;
 	xa.booting = 1;
-
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, xdc_print);
-
-	dvma_free(xa.dvmabuf, XDFM_BPS);
 
 	/* start the watchdog clock */
 	timeout(xdc_tick, xdc, XDC_TICKCNT);
@@ -489,7 +487,7 @@ xdcattach(parent, self, aux)
 int
 xdc_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct xdc_attach_args *xa = aux;
 
@@ -507,33 +505,30 @@ xdc_print(aux, name)
  *
  * note: we almost always say disk is present.   this allows us to
  * spin up and configure a disk after the system is booted (we can
- * call xdattach!).
+ * call xdattach!).  Also, wire down the relationship between the
+ * xd* and xdc* devices, to simplify boot device identification.
  */
-int 
+int
 xdmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void   *aux;
-
+	void *aux;
 {
-	struct xdc_softc *xdc = (void *) parent;
 	struct xdc_attach_args *xa = aux;
+	int xd_unit;
 
-	/* looking for autoconf wildcard or exact match */
+	/* Match only on the "wired-down" controller+disk. */
+	xd_unit = parent->dv_unit * 2 + xa->driveno;
+	if (cf->cf_unit != xd_unit)
+		return (0);
 
-	if (cf->cf_loc[XDCCF_DRIVE] != XDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[XDCCF_DRIVE] != xa->driveno)
-		return 0;
-
-	return 1;
-
+	return (1);
 }
 
 /*
- * xdattach: attach a disk.   this can be called from autoconf and also
- * from xdopen/xdstrategy.
+ * xdattach: attach a disk.
  */
-void 
+void
 xdattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -542,10 +537,8 @@ xdattach(parent, self, aux)
 	struct xd_softc *xd = (void *) self;
 	struct xdc_softc *xdc = (void *) parent;
 	struct xdc_attach_args *xa = aux;
-	int     rqno, err, spt, mb, blk, lcv, fmode, s, newstate;
-	struct xd_iopb_drive *driopb;
-	struct dkbad *dkb;
-	struct bootpath *bp;
+
+	printf("\n");
 
 	/*
 	 * Always re-initialize the disk structure.  We want statistics
@@ -555,54 +548,63 @@ xdattach(parent, self, aux)
 	xd->sc_dk.dk_driver = &xddkdriver;
 	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
 
-	/* if booting, init the xd_softc */
+	xd->state = XD_DRIVE_UNKNOWN;	/* to start */
+	xd->flags = 0;
+	xd->parent = xdc;
 
-	if (xa->booting) {
-		xd->state = XD_DRIVE_UNKNOWN;	/* to start */
-		xd->flags = 0;
-		xd->parent = xdc;
-	}
 	xd->xd_drive = xa->driveno;
-	fmode = xa->fullmode;
 	xdc->sc_drives[xa->driveno] = xd;
 
-	/* if not booting, make sure we are the only process in the attach for
-	 * this drive.   if locked out, sleep on it. */
+	/* Do init work common to attach and open. */
+	xd_init(xd);
+	dk_establish(&xd->sc_dk, &xd->sc_dev);
+}
 
-	if (!xa->booting) {
-		s = splbio();
-		while (xd->state == XD_DRIVE_ATTACHING) {
-			if (tsleep(&xd->state, PRIBIO, "xdattach", 0)) {
-				splx(s);
-				return;
-			}
-		}
-		printf("%s at %s",
-			xd->sc_dev.dv_xname,
-			xd->parent->sc_dev.dv_xname);
-	}
-	/* we now have control */
+/*
+ * end of autoconfig functions
+ */
 
+/*
+ * Initialize a disk.  This can be called from both autoconf and
+ * also from xdopen/xdstrategy.
+ */
+static void
+xd_init(xd)
+	struct xd_softc *xd;
+{
+	struct xdc_softc *xdc;
+	struct dkbad *dkb;
+	struct xd_iopb_drive *driopb;
+	void *dvmabuf;
+	int rqno, err, spt, mb, blk, lcv, fullmode, newstate;
+	extern int cold;
+
+	xdc = xd->parent;
 	xd->state = XD_DRIVE_ATTACHING;
 	newstate = XD_DRIVE_UNKNOWN;
+	fullmode = (cold) ? XD_SUB_POLL : XD_SUB_WAIT;
+	dvmabuf = dvma_malloc(XDFM_BPS);
 
 	/* first try and reset the drive */
-
-	rqno = xdc_cmd(xdc, XDCMD_RST, 0, xd->xd_drive, 0, 0, 0, fmode);
+	rqno = xdc_cmd(xdc, XDCMD_RST, 0, xd->xd_drive, 0, 0, 0, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err == XD_ERR_NRDY) {
-		printf(" drive %d: off-line\n", xa->driveno);
+		printf("%s: drive %d: off-line\n",
+			   xd->sc_dev.dv_xname, xd->xd_drive);
 		goto done;
 	}
 	if (err) {
-		printf(": ERROR 0x%02x (%s)\n", err, xdc_e2str(err));
+		printf("%s: ERROR 0x%02x (%s)\n",
+			   xd->sc_dev.dv_xname, err, xdc_e2str(err));
 		goto done;
 	}
-	printf(" drive %d: ready\n", xa->driveno);
+	printf("%s: drive %d ready\n",
+		   xd->sc_dev.dv_xname, xd->xd_drive);
 
 	/* now set format parameters */
 
-	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_FMT, xd->xd_drive, 0, 0, 0, fmode);
+	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_FMT, xd->xd_drive,
+				   0, 0, 0, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
 		printf("%s: write format parameters failed: %s\n",
@@ -611,7 +613,9 @@ xdattach(parent, self, aux)
 	}
 
 	/* get drive parameters */
-	rqno = xdc_cmd(xdc, XDCMD_RDP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
+	spt = 0;
+	rqno = xdc_cmd(xdc, XDCMD_RDP, XDFUN_DRV, xd->xd_drive,
+				   0, 0, 0, fullmode);
 	if (rqno != XD_ERR_FAIL) {
 		driopb = (struct xd_iopb_drive *) & xdc->iopbase[rqno];
 		spt = driopb->sectpertrk;
@@ -633,8 +637,10 @@ xdattach(parent, self, aux)
 	xd->nsect = 1;
 	xd->sectpercyl = 1;
 	for (lcv = 0; lcv < 126; lcv++)	/* init empty bad144 table */
-		xd->dkb.bt_bad[lcv].bt_cyl = xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
-	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
+		xd->dkb.bt_bad[lcv].bt_cyl =
+		    xd->dkb.bt_bad[lcv].bt_trksec = 0xffff;
+	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive,
+				   0, 0, 0, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
 		printf("%s: write drive parameters failed: %s\n",
@@ -643,8 +649,8 @@ xdattach(parent, self, aux)
 	}
 
 	/* read disk label */
-	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive, 0, 1,
-				   xa->dvmabuf, fmode);
+	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive,
+				   0, 1, dvmabuf, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
 		printf("%s: reading disk label failed: %s\n",
@@ -657,21 +663,21 @@ xdattach(parent, self, aux)
 	/* Attach the disk: must be before getdisklabel to malloc label */
 	disk_attach(&xd->sc_dk);
 
-	if (xdgetdisklabel(xd, xa->dvmabuf) != XD_ERR_AOK)
+	if (xdgetdisklabel(xd, dvmabuf) != XD_ERR_AOK)
 		goto done;
 
 	/* inform the user of what is up */
 	printf("%s: <%s>, pcyl %d, hw_spt %d\n",
 		xd->sc_dev.dv_xname,
-		xa->dvmabuf, xd->pcyl, spt);
+		(char *)dvmabuf, xd->pcyl, spt);
 	mb = xd->ncyl * (xd->nhead * xd->nsect) / (1048576 / XDFM_BPS);
-	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	printf("%s: %dMB, %d cyl, %d head, %d sec\n",
 		xd->sc_dev.dv_xname, mb,
-		xd->ncyl, xd->nhead, xd->nsect, XDFM_BPS);
+		xd->ncyl, xd->nhead, xd->nsect);
 
 	/* now set the real drive parameters! */
-
-	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
+	rqno = xdc_cmd(xdc, XDCMD_WRP, XDFUN_DRV, xd->xd_drive,
+				   0, 0, 0, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
 		printf("%s: write real drive parameters failed: %s\n",
@@ -684,10 +690,10 @@ xdattach(parent, self, aux)
 	 * read bad144 table. this table resides on the first sector of the
 	 * last track of the disk (i.e. second cyl of "acyl" area).
 	 */
-
 	blk = (xd->ncyl + xd->acyl - 1) * (xd->nhead * xd->nsect) + /* last cyl */
 	    (xd->nhead - 1) * xd->nsect;	/* last head */
-	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive, blk, 1, xa->dvmabuf, fmode);
+	rqno = xdc_cmd(xdc, XDCMD_RD, 0, xd->xd_drive,
+				   blk, 1, dvmabuf, fullmode);
 	XDC_DONE(xdc, rqno, err);
 	if (err) {
 		printf("%s: reading bad144 failed: %s\n",
@@ -696,7 +702,7 @@ xdattach(parent, self, aux)
 	}
 
 	/* check dkbad for sanity */
-	dkb = (struct dkbad *) xa->dvmabuf;
+	dkb = (struct dkbad *) dvmabuf;
 	for (lcv = 0; lcv < 126; lcv++) {
 		if ((dkb->bt_bad[lcv].bt_cyl == 0xffff ||
 				dkb->bt_bad[lcv].bt_cyl == 0) &&
@@ -713,23 +719,13 @@ xdattach(parent, self, aux)
 		printf("%s: warning: invalid bad144 sector!\n",
 			xd->sc_dev.dv_xname);
 	} else {
-		bcopy(xa->dvmabuf, &xd->dkb, XDFM_BPS);
+		bcopy(dvmabuf, &xd->dkb, XDFM_BPS);
 	}
-
-	/* XXX - Where is this and what does it do? -gwr */
-	dk_establish(&xd->sc_dk, &xd->sc_dev);
 
 done:
 	xd->state = newstate;
-	if (!xa->booting) {
-		wakeup(&xd->state);
-		splx(s);
-	}
+	dvma_free(dvmabuf, XDFM_BPS);
 }
-
-/*
- * end of autoconfig functions
- */
 
 /*
  * { b , c } d e v s w   f u n c t i o n s
@@ -738,11 +734,11 @@ done:
 /*
  * xdclose: close device
  */
-int 
-xdclose(dev, flag, fmt)
+int
+xdclose(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-
+	struct proc *p;
 {
 	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -765,10 +761,12 @@ xdclose(dev, flag, fmt)
 /*
  * xddump: crash dump system
  */
-int 
-xddump(dev)
+int
+xddump(dev, blkno, va, sz)
 	dev_t   dev;
-
+	daddr_t blkno;
+	caddr_t va;
+	size_t sz;
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -790,19 +788,19 @@ xddump(dev)
 	 * "dumpsize" == size of dump in clicks "physmem" == size of physical
 	 * memory (clicks, ctob() to get bytes) (normal case: dumpsize ==
 	 * physmem)
-	 * 
+	 *
 	 * dump a copy of physical memory to the dump device starting at sector
 	 * "dumplo" in the swap partition (make sure > 0).   map in pages as
 	 * we go.   use polled I/O.
-	 * 
-	 * XXX how to handle NON_CONTIG? */
-
+	 *
+	 * XXX how to handle NON_CONTIG?
+	 */
 }
 
 /*
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
-int 
+int
 xdioctl(dev, command, addr, flag, p)
 	dev_t   dev;
 	u_long  command;
@@ -892,49 +890,56 @@ xdioctl(dev, command, addr, flag, p)
 		return ENOTTY;
 	}
 }
+
 /*
  * xdopen: open drive
  */
-
-int 
-xdopen(dev, flag, fmt)
+int
+xdopen(dev, flag, fmt, p)
 	dev_t   dev;
 	int     flag, fmt;
-
+	struct proc *p;
 {
-	int     unit, part;
+	int err, unit, part, s;
 	struct xd_softc *xd;
-	struct xdc_attach_args xa;
 
 	/* first, could it be a valid target? */
-
 	unit = DISKUNIT(dev);
 	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
+	err = 0;
 
-	/* do we need to attach the drive? */
-
-	if (xd->state == XD_DRIVE_UNKNOWN) {
-		xa.driveno = xd->xd_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
-		xa.fullmode = XD_SUB_WAIT;
-		xa.booting = 0;
-		xdattach((struct device *) xd->parent, (struct device *) xd, &xa);
-		dvma_free(xa.dvmabuf, XDFM_BPS);
-		if (xd->state == XD_DRIVE_UNKNOWN) {
-			return (EIO);
+	/*
+	 * If some other processing is doing init, sleep.
+	 */
+	s = splbio();
+	while (xd->state == XD_DRIVE_ATTACHING) {
+		if (tsleep(&xd->state, PRIBIO, "xdopen", 0)) {
+			err = EINTR;
+			goto done;
 		}
 	}
-	/* check for partition */
+	/* Do we need to init the drive? */
+	if (xd->state == XD_DRIVE_UNKNOWN) {
+		xd_init(xd);
+		wakeup(&xd->state);
+	}
+	/* Was the init successful? */
+	if (xd->state == XD_DRIVE_UNKNOWN) {
+		err = EIO;
+		goto done;
+	}
 
+	/* check for partition */
 	if (part != RAW_PART &&
 	    (part >= xd->sc_dk.dk_label->d_npartitions ||
 		xd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
-		return (ENXIO);
+		err = ENXIO;
+		goto done;
 	}
-	/* set open masks */
 
+	/* set open masks */
 	switch (fmt) {
 	case S_IFCHR:
 		xd->sc_dk.dk_copenmask |= (1 << part);
@@ -945,22 +950,26 @@ xdopen(dev, flag, fmt)
 	}
 	xd->sc_dk.dk_openmask = xd->sc_dk.dk_copenmask | xd->sc_dk.dk_bopenmask;
 
-	return 0;
+done:
+	splx(s);
+	return (err);
 }
 
 int
-xdread(dev, uio)
+xdread(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-xdwrite(dev, uio)
+xdwrite(dev, uio, flags)
 	dev_t   dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -970,8 +979,7 @@ xdwrite(dev, uio)
 /*
  * xdsize: return size of a partition for a dump
  */
-
-int 
+int
 xdsize(dev)
 	dev_t   dev;
 
@@ -987,7 +995,7 @@ xdsize(dev)
 	part = DISKPART(dev);
 	omask = xdsc->sc_dk.dk_openmask & (1 << part);
 
-	if (omask == 0 && xdopen(dev, 0, S_IFBLK) != 0)
+	if (omask == 0 && xdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
@@ -996,15 +1004,15 @@ xdsize(dev)
 	else
 		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size *
 		    (xdsc->sc_dk.dk_label->d_secsize / DEV_BSIZE);
-	if (omask == 0 && xdclose(dev, 0, S_IFBLK) != 0)
+	if (omask == 0 && xdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 	return (size);
 }
+
 /*
  * xdstrategy: buffering system interface to xd.
  */
-
-void 
+void
 xdstrategy(bp)
 	struct buf *bp;
 
@@ -1013,7 +1021,6 @@ xdstrategy(bp)
 	struct xdc_softc *parent;
 	struct buf *wq;
 	int     s, unit;
-	struct xdc_attach_args xa;
 
 	unit = DISKUNIT(bp->b_dev);
 
@@ -1025,20 +1032,13 @@ xdstrategy(bp)
 		bp->b_error = EINVAL;
 		goto bad;
 	}
-	/* do we need to attach the drive? */
 
+	/* There should always be an open first. */
 	if (xd->state == XD_DRIVE_UNKNOWN) {
-		xa.driveno = xd->xd_drive;
-		xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
-		xa.fullmode = XD_SUB_WAIT;
-		xa.booting = 0;
-		xdattach((struct device *)xd->parent, (struct device *)xd, &xa);
-		dvma_free(xa.dvmabuf, XDFM_BPS);
-		if (xd->state == XD_DRIVE_UNKNOWN) {
-			bp->b_error = EIO;
-			goto bad;
-		}
+		bp->b_error = EIO;
+		goto bad;
 	}
+
 	if (xd->state != XD_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
@@ -1061,7 +1061,7 @@ xdstrategy(bp)
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
 	 * on.
-	 * 
+	 *
 	 * note that we don't disksort because the controller has a sorting
 	 * algorithm built into the hardware.
 	 */
@@ -1069,15 +1069,15 @@ xdstrategy(bp)
 	s = splbio();		/* protect the queues */
 
 	/* first, give jobs in front of us a chance */
-
 	parent = xd->parent;
 	while (parent->nfree > 0 && parent->sc_wq.b_actf)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
-	/* if there are no free iorq's, then we just queue and return. the
-	 * buffs will get picked up later by xdcintr(). */
-
+	/*
+	 * if there are no free iorq's, then we just queue and return. the
+	 * buffs will get picked up later by xdcintr().
+	 */
 	if (parent->nfree == 0) {
 		wq = &xd->parent->sc_wq;
 		bp->b_actf = 0;
@@ -1087,8 +1087,8 @@ xdstrategy(bp)
 		splx(s);
 		return;
 	}
-	/* now we have free iopb's and we are at splbio... start 'em up */
 
+	/* now we have free iopb's and we are at splbio... start 'em up */
 	if (xdc_startbuf(parent, xd, bp) != XD_ERR_AOK) {
 		return;
 	}
@@ -1114,29 +1114,23 @@ done:				/* tells upper layers we are done with this
  *
  * xdcintr: hardware interrupt.
  */
-int 
+int
 xdcintr(v)
 	void   *v;
 
 {
 	struct xdc_softc *xdcsc = v;
-	struct xd_softc *xd;
-	struct buf *bp;
 
 	/* kick the event counter */
-
 	xdcsc->sc_intrcnt.ev_count++;
 
 	/* remove as many done IOPBs as possible */
-
 	xdc_remove_iorq(xdcsc);
 
 	/* start any iorq's already waiting */
-
 	xdc_start(xdcsc, XDC_MAXIOPB);
 
 	/* fill up any remaining iorq's with queue'd buffers */
-
 	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
@@ -1155,7 +1149,7 @@ xdcintr(v)
  * xdc_rqinit: fill out the fields of an I/O request
  */
 
-inline void 
+inline void
 xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
 	struct xd_iorq *rq;
 	struct xdc_softc *xdc;
@@ -1176,11 +1170,11 @@ xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
 	rq->dbuf = rq->dbufbase = db;
 	rq->buf = bp;
 }
+
 /*
  * xdc_rqtopb: load up an IOPB based on an iorq
  */
-
-void 
+void
 xdc_rqtopb(iorq, iopb, cmd, subfun)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
@@ -1217,7 +1211,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 					XDPC_RBC | XDPC_ECC2;
 			ctrl->throttle = XDC_THROTTLE;
 #ifdef sparc
-			if (cputyp == CPU_SUN4 && cpumod == SUN4_300)
+			if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 				ctrl->delay = XDC_DELAY_4_300;
 			else
 				ctrl->delay = XDC_DELAY_SPARC;
@@ -1284,7 +1278,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
 			iopb->cylno = block;
 		}
 		iopb->daddr = dp = (iorq->dbuf == NULL) ? 0 :
-		dvma_kvtopa((long)iorq->dbuf, BUS_VME32);
+			dvma_kvtopa(iorq->dbuf, BUS_VME32);
 		iopb->addrmod = XDC_ADDRMOD;
 	}
 }
@@ -1294,7 +1288,7 @@ xdc_rqtopb(iorq, iopb, cmd, subfun)
  * If you've already got an IORQ, you can call submit directly (currently
  * there is no need to do this).    NORM requests are handled seperately.
  */
-int 
+int
 xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 	struct xdc_softc *xdcsc;
 	int     cmd, subfn, unit, block, scnt;
@@ -1302,10 +1296,10 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 	int     fullmode;
 
 {
-	int     rqno, submode = XD_STATE(fullmode), retry;
-	u_long  dp;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
+	int rqno, retry;
+	int submode = XD_STATE(fullmode);
 
 	/* get iorq/iopb */
 	switch (submode) {
@@ -1341,27 +1335,24 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 
 
 	/* init iorq/iopb */
-
 	xdc_rqinit(iorq, xdcsc,
 	    (unit == XDC_NOUNIT) ? NULL : xdcsc->sc_drives[unit],
 	    fullmode, block, scnt, dptr, NULL);
 
 	/* load IOPB from iorq */
-
 	xdc_rqtopb(iorq, iopb, cmd, subfn);
 
 	/* submit it for processing */
-
 	xdc_submit_iorq(xdcsc, rqno, fullmode);	/* error code will be in iorq */
 
 	return (rqno);
 }
+
 /*
  * xdc_startbuf
  * start a buffer running, assumes nfree > 0
  */
-
-int 
+int
 xdc_startbuf(xdcsc, xdsc, bp)
 	struct xdc_softc *xdcsc;
 	struct xd_softc *xdsc;
@@ -1372,7 +1363,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	struct buf *wq;
-	u_long  block, dp;
+	u_long  block;
 	caddr_t dbuf;
 
 	if (!xdcsc->nfree)
@@ -1406,7 +1397,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/*
 	 * load request.  we have to calculate the correct block number based
 	 * on partition info.
-	 * 
+	 *
 	 * also, note that there are two kinds of buf structures, those with
 	 * B_PHYS set and those without B_PHYS.   if B_PHYS is set, then it is
 	 * a raw I/O (to a cdevsw) and we are doing I/O directly to the users'
@@ -1414,7 +1405,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	 * However, if B_PHYS is not set, then the buffer is a normal system
 	 * buffer which does *not* live in DVMA space.  In that case we call
 	 * dvma_mapin to map it into DVMA space so we can do the DMA to it.
-	 * 
+	 *
 	 * in cases where we do a dvma_mapin, note that iorq points to the buffer
 	 * as mapped into DVMA space, where as the bp->b_data points to its
 	 * non-DVMA mapping.
@@ -1428,9 +1419,10 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
 	    xdsc->sc_dk.dk_label->d_partitions[partno].p_offset);
 
-	dbuf = dvma_mapin(bp->b_data, bp->b_bcount);
+	dbuf = dvma_mapin(bp->b_data, bp->b_bcount, 0);
 	if (dbuf == NULL) {	/* out of DVMA space */
-		printf("%s: warning: out of DVMA space\n", xdcsc->sc_dev.dv_xname);
+		printf("%s: warning: out of DVMA space\n",
+			   xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
 		wq = &xdcsc->sc_wq;	/* put at end of queue */
 		bp->b_actf = 0;
@@ -1489,7 +1481,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
  */
 
 
-int 
+int
 xdc_submit_iorq(xdcsc, iorqno, type)
 	struct xdc_softc *xdcsc;
 	int     iorqno;
@@ -1539,7 +1531,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 #endif				/* XDC_DEBUG */
 
 	/* controller not busy, start command */
-	iopbaddr = dvma_kvtopa((long) iorq->iopb, BUS_VME32);
+	iopbaddr = dvma_kvtopa(iorq->iopb, BUS_VME32);
 	XDC_GO(xdcsc->xdc, iopbaddr);	/* go! */
 	xdcsc->nrun++;
 	/* command now running, wrap it up */
@@ -1570,7 +1562,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
  * the caller is interesting in.   if freeone is true, then it returns
  * when there is a free iorq.
  */
-int 
+int
 xdc_piodriver(xdcsc, iorqno, freeone)
 	struct xdc_softc *xdcsc;
 	char    iorqno;
@@ -1648,7 +1640,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
  * xdc_reset: reset one drive.   NOTE: assumes xdc was just reset.
  * we steal iopb[0] for this, but we put it back when we are done.
  */
-int 
+void
 xdc_xdreset(xdcsc, xdsc)
 	struct xdc_softc *xdcsc;
 	struct xd_softc *xdsc;
@@ -1682,14 +1674,14 @@ xdc_xdreset(xdcsc, xdsc)
  * xdc_reset: reset everything: requests are marked as errors except
  * a polled request (which is resubmitted)
  */
-int 
+int
 xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	struct xdc_softc *xdcsc;
 	int     quiet, blastmode, error;
 	struct xd_softc *xdsc;
 
 {
-	int     del = 0, lcv, poll = -1, retval = XD_ERR_AOK;
+	int     del = 0, lcv, retval = XD_ERR_AOK;
 	int     oldfree = xdcsc->nfree;
 	struct xd_iorq *iorq;
 
@@ -1732,7 +1724,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
 			    disk_unbusy(&iorq->xd->sc_dk,
-				(iorq->buf->b_bcount - iorq->buf->b_resid));
+					(iorq->buf->b_bcount - iorq->buf->b_resid));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -1774,11 +1766,11 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	printf("RESET DONE\n");
 	return (retval);
 }
+
 /*
  * xdc_start: start all waiting buffers
  */
-
-int 
+void
 xdc_start(xdcsc, maxio)
 	struct xdc_softc *xdcsc;
 	int     maxio;
@@ -1794,18 +1786,17 @@ xdc_start(xdcsc, maxio)
 		maxio--;
 	}
 }
+
 /*
  * xdc_remove_iorq: remove "done" IOPB's.
  */
-
-int 
+int
 xdc_remove_iorq(xdcsc)
 	struct xdc_softc *xdcsc;
 
 {
 	int     errno, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
-	u_long  addr;
 	struct xd_iopb *iopb;
 	struct xd_iorq *iorq;
 	struct buf *bp;
@@ -1829,7 +1820,7 @@ xdc_remove_iorq(xdcsc)
 
 	/*
 	 * get iopb that is done
-	 * 
+	 *
 	 * hmm... I used to read the address of the done IOPB off the VME
 	 * registers and calculate the rqno directly from that.   that worked
 	 * until I started putting a load on the controller.   when loaded, i
@@ -1897,7 +1888,7 @@ xdc_remove_iorq(xdcsc)
 			 * at the bad144 sector.   to exit bad144 mode, we
 			 * must advance the pointers 1 sector and issue a new
 			 * request if there are still sectors left to process
-			 * 
+			 *
 			 */
 			XDC_ADVANCE(iorq, 1);	/* advance 1 sector */
 
@@ -1915,8 +1906,8 @@ xdc_remove_iorq(xdcsc)
 					(iorq->blockno / iorq->xd->nhead) %
 						iorq->xd->nhead;
 				iopb->sectno = iorq->blockno % XDFM_BPS;
-				iopb->daddr = 
-					dvma_kvtopa((long)iorq->dbuf, BUS_VME32);
+				iopb->daddr =
+					dvma_kvtopa(iorq->dbuf, BUS_VME32);
 				XDC_HWAIT(xdcsc, rqno);
 				xdc_start(xdcsc, 1);	/* resubmit */
 				continue;
@@ -1966,7 +1957,7 @@ xdc_remove_iorq(xdcsc)
  *   is in lasterror. also, if iorq->errno == 0, then we recovered
  *   from that error (otherwise iorq->errno == iorq->lasterror).
  */
-void 
+void
 xdc_perror(iorq, iopb, still_trying)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
@@ -2000,7 +1991,7 @@ xdc_perror(iorq, iopb, still_trying)
  * xdc_error: non-fatal error encountered... recover.
  * return AOK if resubmitted, return FAIL if this iopb is done
  */
-int 
+int
 xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	struct xdc_softc *xdcsc;
 	struct xd_iorq *iorq;
@@ -2072,7 +2063,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 /*
  * xdc_tick: make sure xd is still alive and ticking (err, kicking).
  */
-void 
+void
 xdc_tick(arg)
 	void   *arg;
 
@@ -2080,7 +2071,7 @@ xdc_tick(arg)
 	struct xdc_softc *xdcsc = arg;
 	int     lcv, s, reset = 0;
 #ifdef XDC_DIAG
-	int     wait, run, free, done, whd;
+	int     wait, run, free, done, whd = 0;
 	u_char  fqc[XDC_MAXIOPB], wqc[XDC_MAXIOPB], mark[XDC_MAXIOPB];
 	s = splbio();
 	wait = xdcsc->nwait;
@@ -2110,12 +2101,13 @@ xdc_tick(arg)
 		printf("\n");
 		for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 			if (mark[lcv] == 0)
-				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf 0x%x\n",
+				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
 				lcv, xdcsc->reqs[lcv].mode,
 				xdcsc->iopbase[lcv].done,
 				xdcsc->iopbase[lcv].errs,
 				xdcsc->iopbase[lcv].errno,
-				xdcsc->reqs[lcv].ttl, xdcsc->reqs[lcv].buf);
+				xdcsc->reqs[lcv].ttl,
+				xdcsc->reqs[lcv].buf);
 		}
 	} else
 		if (done > XDC_MAXIOPB - XDC_SUBWAITLIM)
@@ -2164,14 +2156,14 @@ xdc_tick(arg)
  * in user code, and is also useful for some debugging.   we return
  * an error code.   called at user priority.
  */
-int 
+int
 xdc_ioctlcmd(xd, dev, xio)
 	struct xd_softc *xd;
 	dev_t   dev;
 	struct xd_iocmd *xio;
 
 {
-	int     s, err, rqno, dummy;
+	int     s, err, rqno;
 	caddr_t dvmabuf = NULL;
 	struct xdc_softc *xdcsc;
 
@@ -2258,7 +2250,8 @@ xdc_ioctlcmd(xd, dev, xio)
 	if (xio->dlen) {
 		dvmabuf = dvma_malloc(xio->dlen);
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
-			if (err = copyin(xio->dptr, dvmabuf, xio->dlen)) {
+			err = copyin(xio->dptr, dvmabuf, xio->dlen);
+			if (err) {
 				dvma_free(dvmabuf, xio->dlen);
 				return (err);
 			}
@@ -2277,7 +2270,7 @@ xdc_ioctlcmd(xd, dev, xio)
 	}
 	xio->errno = xdcsc->reqs[rqno].errno;
 	xio->tries = xdcsc->reqs[rqno].tries;
-	XDC_DONE(xdcsc, rqno, dummy);
+	XDC_DONE(xdcsc, rqno, err);
 
 	if (xio->cmd == XDCMD_RD || xio->cmd == XDCMD_XRD)
 		err = copyout(dvmabuf, xio->dptr, xio->dlen);
