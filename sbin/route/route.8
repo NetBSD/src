@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.22 2001/06/05 11:22:52 wiz Exp $
+.\"	$NetBSD: route.8,v 1.23 2001/06/05 12:44:43 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm route
-.Nd manually manipulate the routing tables.
+.Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm
 .Op Fl fnqv
@@ -51,15 +51,15 @@
 .Nm
 is a utility used to manually manipulate the network
 routing tables.
-Except for setting up the default route, it is normally not needed, 
+Except for setting up the default route, it is normally not needed,
 as a system routing table management daemon such as
 .Xr routed 8 ,
 should tend to this task.
 .Pp
 .Nm
-can be used to modify nearly any aspect of the routing policy, 
+can be used to modify nearly any aspect of the routing policy,
 except packet forwarding, which can be manipulated through the
-.Xr sysctl 8 
+.Xr sysctl 8
 command.
 .Pp
 The
@@ -191,7 +191,7 @@ is interpreted as
 .Fl host Li 128.32.0.130 ;
 .Fl net Li 128.32
 is interpreted as
-.Li 128.32.0.0;
+.Li 128.32.0.0 ;
 and
 .Fl net Li 128.32.130
 is interpreted as
@@ -315,10 +315,10 @@ the routing tables.
 .Sh EXAMPLES
 This sets the default route to 192.168.0.1:
 .Dl route add default 192.168.0.1
-This shows all routes, without DNS resolution (this is useful if the 
+This shows all routes, without DNS resolution (this is useful if the
 DNS is not available):
 .Dl route -n show
-To install a static route through 10.200.0.1 to reach the network 
+To install a static route through 10.200.0.1 to reach the network
 192.168.1.0/28, use this:
 .Dl route add -net 192.168.1.0 -netmask 255.255.255.248 10.200.0.1
 .Sh DIAGNOSTICS
