@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.19 2002/03/05 17:39:26 shiba Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.20 2002/05/30 21:27:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -901,10 +901,10 @@ pm_pmgrop_mrg(pmdata)
 {
 	u_int32_t rval=0;
 
-	asm("
-		movl	%1,%%a0
-		.word	0xa085
-		movl	%%d0,%0"
+	__asm __volatile(
+	"	movl	%1,%%a0	\n"
+	"	.word	0xa085	\n"
+	"	movl	%%d0,%0"
 		: "=g" (rval)
 		: "g" (pmdata)
 		: "a0","d0");
