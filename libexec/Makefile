@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.27 1997/10/08 09:07:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 1998/03/28 00:53:09 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
-#					# and ECOFF_TOOLCHAIN
 
 SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd ld.elf_so lfs_cleanerd \
 	mail.local makekey makewhatis rexecd rlogind rmail rshd rpc.rquotad \
