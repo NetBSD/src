@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.52 2001/05/06 23:48:32 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.53 2001/09/12 18:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,7 +152,6 @@ if
 .Cm DDB
 is configured.
 .Sh COMMAND SYNTAX
-.Pp
 The general command syntax is:
 .Bd -ragged -offset indent
 .Ic command Ns Op Cm / Ns Ar modifier
@@ -1049,7 +1048,7 @@ and
 .Sm on
 can be accepted as a symbol.
 The symbol may be prefixed with
-.Ar "symbol_table_name" Ns ::
+.Ar symbol_table_name : :
 (e.g.,
 .Li emulator::mach_msg_trap )
 to specify other than kernel symbols.
@@ -1094,11 +1093,11 @@ It may be followed by a
 .Sq \&:
 and modifiers as described above.
 .El
+.Sh SEE ALSO
+.Xr options 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 kernel debugger was written as part of the MACH project at
 Carnegie-Mellon University.
-.Sh SEE ALSO
-.Xr options 4 ,
-.Xr sysctl 8
