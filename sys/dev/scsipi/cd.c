@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.162 2002/05/05 15:16:31 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.162.2.1 2002/05/16 11:40:53 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.162 2002/05/05 15:16:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.162.2.1 2002/05/16 11:40:53 gehenna Exp $");
 
 #include "rnd.h"
 
@@ -138,6 +138,24 @@ int	dvd_read_manufact __P((struct cd_softc *, dvd_struct *));
 int	dvd_read_struct __P((struct cd_softc *, dvd_struct *));
 
 extern struct cfdriver cd_cd;
+
+dev_type_open(cdopen);
+dev_type_close(cdclose);
+dev_type_read(cdread);
+dev_type_write(cdwrite);
+dev_type_ioctl(cdioctl);
+dev_type_strategy(cdstrategy);
+dev_type_dump(cddump);
+dev_type_size(cdsize);
+
+const struct bdevsw cd_bdevsw = {
+	cdopen, cdclose, cdstrategy, cdioctl, cddump, cdsize, D_DISK
+};
+
+const struct cdevsw cd_cdevsw = {
+	cdopen, cdclose, cdread, cdwrite, cdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct dkdriver cddkdriver = { cdstrategy };
 
@@ -231,12 +249,8 @@ cddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == cdopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == cdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&cd_bdevsw);
+	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 
 	s = splbio();
 
