@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 1999/06/06 19:09:50 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.67 1999/06/30 19:31:33 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -124,25 +124,6 @@ pmap_bootstrap()
 	 */
 
 #define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-#ifdef notyet
-#define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)
-	/* all physical memory */
-	sysptsize = vax_btoc(avail_end);
-	/* reverse mapping struct is in phys memory already */
-	/* user page table */
-	sysptsize += vax_btoc(USRPTSIZE * sizeof(struct pte) * maxproc);
-	/* kernel malloc area */
-	sysptsize += vax_btoc(NKMEMCLUSTERS * CLSIZE);
-	/* Different table etc... called again in machdep */
-	physmem = btoc(avail_end); /* XXX in machdep also */
-	sysptsize += vax_btoc((int) allocsys((caddr_t) 0));
-	/* buffer pool (buffer_map) */
-	sysptsize += vax_btoc(MAXBSIZE * nbuf);
-	/* exec argument submap */
-	sysptsize += vax_btoc(16 * NCARGS);
-	/* phys_map - XXX This submap should be nuked */
-	sysptsize += vax_btoc(VM_PHYS_SIZE);
-#else
 	/* Kernel alloc area */
 	sysptsize = (((0x100000 * maxproc) >> VAX_PGSHIFT) / 4);
 	/* reverse mapping struct */
@@ -153,7 +134,6 @@ pmap_bootstrap()
 	sysptsize += UPAGES * maxproc;
 	/* IO device register space */
 	sysptsize += IOSPSZ;
-#endif
 
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
@@ -267,6 +247,46 @@ pmap_bootstrap()
 	mtpr(1, PR_MAPEN);
 }
 
+#ifdef PMAP_STEAL_MEMORY
+/*
+ * Let the VM system do early memory allocation from the direct-mapped
+ * physical memory instead.
+ */
+vaddr_t
+pmap_steal_memory(size, vstartp, vendp)
+	vsize_t size;
+	vaddr_t *vstartp, *vendp;
+{
+	vaddr_t v;
+	int npgs;
+
+#ifdef PMAPDEBUG
+	if (startpmapdebug) 
+		printf("pmap_steal_memory: size 0x%lx start %p end %p\n",
+		    size, vstartp, vendp);
+#endif
+	size = round_page(size);
+	npgs = btoc(size);
+
+	/*
+	 * A vax only have one segment of memory.
+	 */
+#ifdef DIAGNOSTIC
+	if (vm_physmem[0].pgs)
+		panic("pmap_steal_memory: called _after_ bootstrap");
+#endif
+
+	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
+	vm_physmem[0].avail_start += npgs;
+	vm_physmem[0].start += npgs;
+	if (vstartp)
+		*vstartp = virtual_avail;
+	if (vendp)
+		*vendp = virtual_end;
+	bzero((caddr_t)v, size);
+	return v;
+}
+#else
 /*
  * How much virtual space does this kernel have?
  * (After mapping kernel text, data, etc.)
@@ -279,6 +299,7 @@ pmap_virtual_space(v_start, v_end)
 	*v_start = virtual_avail;
 	*v_end	 = virtual_end;
 }
+#endif
 
 /*
  * pmap_init() is called as part of vm init after memory management
@@ -605,10 +626,14 @@ if (startpmapdebug)
 	oldpte &= PG_FRAME;
 	if ((newpte & PG_FRAME) != oldpte) {
 
-		/* Mapped before? Remove it then. */
-		if (oldpte)
+		/*
+		 * Mapped before? Remove it then.
+		 * This can be done more efficient than pmap_page_protect().
+		 */
+		if (oldpte) {
 			pmap_page_protect(PHYS_TO_VM_PAGE((oldpte
 			    << VAX_PGSHIFT)), 0);
+		}
 
 		s = splimp();
 		if (pv->pv_pte == 0) {
