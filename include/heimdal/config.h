@@ -89,6 +89,12 @@
 /* Define if you have the <bsdsetjmp.h> header file. */
 /* #undef HAVE_BSDSETJMP_H */
 
+/* Define if you have the `bswap16' function. */
+#define HAVE_BSWAP16 1
+
+/* Define if you have the `bswap32' function. */
+#define HAVE_BSWAP32 1
+
 /* Define if you have the <capability.h> header file. */
 /* #undef HAVE_CAPABILITY_H */
 
@@ -259,6 +265,9 @@
 /* Define if you have the `getopt' function. */
 #define HAVE_GETOPT 1
 
+/* Define if you have the `getprogname' function. */
+/* #undef HAVE_GETPROGNAME */
+
 /* Define if you have the `getpwnam_r' function. */
 /* #undef HAVE_GETPWNAM_R */
 
@@ -284,7 +293,7 @@
 #define HAVE_GETUSERSHELL 1
 
 /* define if you have a glob() that groks GLOB_BRACE, GLOB_NOCHECK,
-   GLOB_QUOTE, and GLOB_TILDE */
+   GLOB_QUOTE, and GLOB_TILDE, and GLOB_LIMIT  */
 #define HAVE_GLOB 1
 
 /* Define if you have the `grantpt' function. */
@@ -377,9 +386,6 @@
 /* Define if you have the `memmove' function. */
 #define HAVE_MEMMOVE 1
 
-/* Define if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
 /* Define if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
 
@@ -432,7 +438,7 @@
 #define HAVE_OPENSSL_DES_H 1
 
 /* Define if you have the <openssl/md4.h> header file. */
-/* #undef HAVE_OPENSSL_MD4_H */
+#define HAVE_OPENSSL_MD4_H 1
 
 /* Define if you have the <openssl/md5.h> header file. */
 #define HAVE_OPENSSL_MD5_H 1
@@ -557,6 +563,9 @@
 /* Define if you have the `setproctitle' function. */
 #define HAVE_SETPROCTITLE 1
 
+/* Define if you have the `setprogname' function. */
+#define HAVE_SETPROGNAME 1
+
 /* Define if you have the `setregid' function. */
 #define HAVE_SETREGID 1
 
@@ -611,9 +620,6 @@
 /* Define if you have the <standards.h> header file. */
 /* #undef HAVE_STANDARDS_H */
 
-/* Define if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
-
 /* Define if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
 
@@ -625,12 +631,6 @@
 
 /* Define if you have the `strftime' function. */
 #define HAVE_STRFTIME 1
-
-/* Define if you have the <strings.h> header file. */
-#define HAVE_STRINGS_H 1
-
-/* Define if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
 
 /* Define if you have the `strlcat' function. */
 #define HAVE_STRLCAT 1
@@ -754,6 +754,9 @@
 
 /* Define if you have the <sys/bitypes.h> header file. */
 /* #undef HAVE_SYS_BITYPES_H */
+
+/* Define if you have the <sys/bswap.h> header file. */
+#define HAVE_SYS_BSWAP_H 1
 
 /* Define if you have the <sys/capability.h> header file. */
 /* #undef HAVE_SYS_CAPABILITY_H */
@@ -1120,7 +1123,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "0.3e"
+#define VERSION "0.3f"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 17:21:45 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.8 2001/06/20 02:01:18 assar Exp $
 
 NOMAN=	noman
 
@@ -12,10 +12,29 @@ MKLINT= no
 
 HOSTPROG= asn1_compile
 
-SRCS=	parse.y lex.l main.c hash.c symbol.c gen.c			\
-	gen_encode.c gen_decode.c gen_free.c gen_length.c gen_copy.c	\
-	gen_glue.c							\
-	getarg.c print_version.c warnerr.c strupr.c get_window_size.c
+asn1_compile_SRCS = 				\
+	gen.c					\
+	gen_copy.c				\
+	gen_decode.c				\
+	gen_encode.c				\
+	gen_free.c				\
+	gen_glue.c				\
+	gen_length.c				\
+	hash.c					\
+	lex.l					\
+	main.c					\
+	parse.y					\
+	symbol.c
+
+roken_SRCS =					\
+	getarg.c				\
+	print_version.c				\
+	warnerr.c				\
+	strupr.c				\
+	get_window_size.c
+
+SRCS=	$(asn1_compile_SRCS)			\
+	$(roken_SRCS)
 
 YHEADER=	1
 
