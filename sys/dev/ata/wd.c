@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274.2.3 2004/07/02 17:08:38 he Exp $ */
+/*	$NetBSD: wd.c,v 1.274.2.4 2004/07/23 13:32:11 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.3 2004/07/02 17:08:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.4 2004/07/23 13:32:11 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -536,7 +536,7 @@ wdstrategy(struct buf *bp)
 	 */
 	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
 		struct disk_badsectors *dbs;
-		daddr_t maxblk = blkno + (bp->b_bcount / DEV_BSIZE) - 1;
+		daddr_t maxblk = blkno + (bp->b_bcount >> DEV_BSHIFT) - 1;
 
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
 			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
@@ -778,7 +778,7 @@ retry:		/* Just reset and retry. Can we do more ? */
 
 			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
 			dbs->dbs_min = bp->b_rawblkno;
-			dbs->dbs_max = dbs->dbs_min + bp->b_bcount - 1;
+			dbs->dbs_max = dbs->dbs_min + (bp->b_bcount >> DEV_BSHIFT) - 1;
 			microtime(&dbs->dbs_failedat);
 			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
 			wd->sc_bscount++;
