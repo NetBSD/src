@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.30 1999/04/24 08:01:07 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.31 1999/05/10 12:36:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -333,12 +333,13 @@ sfbinit(fi, base, unit, silent)
 
 
 /*
- * The  TURBOChannel sfb interrupts by default on every vertical retrace,
+ * The TURBOChannel sfb interrupts by default on every vertical retrace,
  * and we don't know to disable those interrupt requests.
- * The 4.4BSD/pamx kernel never enabled delivery of those interrupts from the TC bus,
- * but there's a kernel design bug on the 3MIN, where disabling
- * (or enabling) TC option interrupts has no effect; each slot interrupt is
- * mapped directly to a separate R3000 interrupt  and they always seem to be taken.
+ * The 4.4BSD/pmax kernel never enabled delivery of those interrupts
+ * from the TC bus, but there's a kernel design bug on the 3MIN, where
+ * disabling (or enabling) TC option interrupts has no effect; each slot
+ * interrupt is mapped directly to a separate R3000 interrupt and they
+ * always seem to be taken.
  *
  * This function simply dismisses SFB interrupts, or the interrupt
  * request from the card will still be active.
