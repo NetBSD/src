@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.8 1997/09/02 13:29:17 thorpej Exp $ */
+/* $NetBSD: tc_conf.h,v 1.9 1998/10/22 01:03:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -67,3 +67,6 @@ extern struct tc_slotdesc tc_3000_300_slots[];
 extern int	tc_3000_300_nbuiltins;
 extern struct tc_builtin tc_3000_300_builtins[];
 #endif /* DEC_3000_300 */
+
+extern int	tc_fb_cnattach __P((tc_addr_t));
+
