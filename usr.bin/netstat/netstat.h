@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
+/*	$NetBSD: netstat.h,v 1.7 1997/02/28 00:14:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
 void	protopr __P((u_long, char *));
 
-void	mbpr(u_long);
+void	mbpr(u_long, u_long, u_long);
 
 void	hostpr __P((u_long, u_long));
 void	impstats __P((u_long, u_long));
