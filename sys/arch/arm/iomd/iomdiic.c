@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.1 2003/10/06 16:11:19 thorpej Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.2 2003/11/01 23:37:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -121,8 +121,10 @@ static const struct i2c_bitbang_ops iomdiic_bbops = {
 static int
 iomdiic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct iic_attach_args *ia = aux;
 
-	return (1);
+	if (strcmp(ia->ia_name, "iic") == 0) return 1;
+	return 0;
 }
 
 static void
