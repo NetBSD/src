@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.9 1999/11/01 18:12:19 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.9.6.1 2002/03/27 10:13:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,6 +101,9 @@
  * Portions also supplied from the SoundBlaster driver for NetBSD.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.9.6.1 2002/03/27 10:13:33 he Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -126,6 +129,15 @@
 #include <dev/isa/cs4231var.h>
 #endif
 
+/*
+ * AD1845 on some machines don't match the AD1845 doc
+ * and defining AD1845_HACK to 1 works around the problems.
+ * options AD1845_HACK=0  should work if you have ``correct'' one.
+ */
+#ifndef AD1845_HACK
+#define AD1845_HACK	1	/* weird mixer, can't play slinear_be */
+#endif
+
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (ad1848debug) printf x
 int	ad1848debug = 0;
@@ -136,7 +148,7 @@ int	ad1848debug = 0;
 /*
  * Initial values for the indirect registers of CS4248/AD1848.
  */
-static int ad1848_init_values[] = {
+static const int ad1848_init_values[] = {
     GAIN_12|INPUT_MIC_GAIN_ENABLE,	/* Left Input Control */
     GAIN_12|INPUT_MIC_GAIN_ENABLE,	/* Right Input Control */
     ATTEN_12,				/* Left Aux #1 Input Control */
@@ -415,7 +427,11 @@ ad1848_attach(sc)
 	ad1848_set_channel_gain(sc, AD1848_MONITOR_CHANNEL, &vol_0);
 	ad1848_set_channel_gain(sc, AD1848_AUX1_CHANNEL, &vol_mid);	/* CD volume */
 	sc->mute[AD1848_MONITOR_CHANNEL] = MUTE_ALL;
-	if (sc->mode >= 2) {
+	if (sc->mode >= 2
+#if AD1845_HACK
+	    && sc->is_ad1845 == 0
+#endif
+		) {
 		ad1848_set_channel_gain(sc, AD1848_AUX2_CHANNEL, &vol_mid); /* CD volume */
 		ad1848_set_channel_gain(sc, AD1848_LINE_CHANNEL, &vol_mid);
 		ad1848_set_channel_gain(sc, AD1848_MONO_CHANNEL, &vol_0);
@@ -432,7 +448,7 @@ ad1848_attach(sc)
 /*
  * Various routines to interface to higher level audio driver
  */
-struct ad1848_mixerinfo {
+const struct ad1848_mixerinfo {
 	int  left_reg;
 	int  right_reg;
 	int  atten_bits;
@@ -507,7 +523,7 @@ ad1848_set_channel_gain(sc, device, gp)
 	int device;
 	struct ad1848_volume *gp;
 {
-	struct ad1848_mixerinfo *info = &mixer_channel_info[device];
+	const struct ad1848_mixerinfo *info = &mixer_channel_info[device];
 	u_char reg;
 	u_int atten;
 
@@ -845,7 +861,11 @@ ad1848_query_encoding(addr, fp)
 		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
-		fp->flags = sc->mode == 1 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
+		fp->flags = sc->mode == 1
+#if AD1845_HACK
+		    || sc->is_ad1845
+#endif
+			? AUDIO_ENCODINGFLAG_EMULATED : 0;
 		break;
 
 		/* emulate some modes */
@@ -869,11 +889,11 @@ ad1848_query_encoding(addr, fp)
 		break;
 
 	case 8: /* only on CS4231 */
-		if (sc->mode == 1)
+		if (sc->mode == 1 || sc->is_ad1845)
 			return EINVAL;
 		strcpy(fp->name, AudioEadpcm);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;
+		fp->precision = 4;
 		fp->flags = 0;
 		break;
 	default:
@@ -907,7 +927,11 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 		}
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16 && sc->mode == 1) {
+		if (p->precision == 16 && (sc->mode == 1
+#if AD1845_HACK
+		    || sc->is_ad1845
+#endif
+			)) {
 			enc = AUDIO_ENCODING_SLINEAR_LE;
 			pswcode = rswcode = swap_bytes;
 		}
@@ -920,7 +944,11 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 16) {
-			if (sc->mode == 1) {
+			if (sc->mode == 1
+#if AD1845_HACK
+			    || sc->is_ad1845
+#endif
+				) {
 				enc = AUDIO_ENCODING_SLINEAR_LE;
 				pswcode = swap_bytes_change_sign16_le;
 				rswcode = change_sign16_swap_bytes_le;
@@ -1112,6 +1140,14 @@ ad1848_commit_settings(addr)
 	if (sc->channels == 2)
 		fs |= FMT_STEREO;
 
+	/*
+	 * OPL3-SA2 (YMF711) is sometimes busy here.
+	 * Wait until it becomes ready.
+	 */
+	for (timeout = 0;
+	    timeout < 1000 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT; timeout++)
+		delay(10);
+
 	ad_write(sc, SP_CLOCK_DATA_FORMAT, fs);
 
 	/*
@@ -1207,7 +1243,7 @@ ad1848_set_speed(sc, argp)
 	} speed_struct;
 	u_long arg = *argp;
 
-	static speed_struct speed_table[] =  {
+	static const speed_struct speed_table[] =  {
 		{5510, (0 << 1) | 1},
 		{5510, (0 << 1) | 1},
 		{6620, (7 << 1) | 1},
