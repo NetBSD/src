@@ -1,7 +1,7 @@
 #
 # Theo Deraadt's 386
 #
-#	$Id: TDR,v 1.12 1993/06/03 01:30:39 cgd Exp $
+#	$Id: TDR,v 1.13 1993/06/06 04:15:39 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -44,7 +44,7 @@ disk		cd1	at aha0	flags 2 drive ?
 device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
-device		we0 at isa? port 0x280 net irq 2 iomem 0xd0000 iosiz 8192 vector weintr
+device		we0 at isa? port 0x280 net irq 9 iomem 0xd0000 iosiz 8192 vector weintr
 
 pseudo-device	loop
 pseudo-device	ether

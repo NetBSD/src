@@ -35,9 +35,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.26 1993/06/03 18:06:43 cgd Exp $
+ *	$Id: machdep.c,v 1.27 1993/06/06 04:16:14 cgd Exp $
  */
 
+#include <stddef.h>
 #include "param.h"
 #include "systm.h"
 #include "signalvar.h"
@@ -468,7 +469,15 @@ sigreturn(p, uap, retval)
 	register int *regs = p->p_regs;
 
 
-	fp = (struct sigframe *) regs[sESP] ;
+	/*
+	 * (XXX old comment) regs[sESP] points to the return address.
+	 * The user scp pointer is above that.
+	 * The return address is faked in the signal trampoline code
+	 * for consistency.
+	 */
+	scp = uap->sigcntxp;
+	fp = (struct sigframe *)
+	     ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
 
 	if (useracc((caddr_t)fp, sizeof (*fp), 0) == 0)
 		return(EINVAL);
@@ -478,7 +487,6 @@ sigreturn(p, uap, retval)
 	regs[sEDX] = fp->sf_edx ;
 	regs[sECX] = fp->sf_ecx ;
 
-	scp = fp->sf_scp;
 	if (useracc((caddr_t)scp, sizeof (*scp), 0) == 0)
 		return(EINVAL);
 #ifdef notyet

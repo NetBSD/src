@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # from @(#)Makefile.i386	7.1 5/10/91
-# $Id: Makefile.i386,v 1.12 1993/05/24 11:04:52 cgd Exp $
+# $Id: Makefile.i386,v 1.13 1993/06/06 04:15:38 cgd Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,7 +42,7 @@ SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o
 SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
 SYSTEM_LD= @${LD} -z -T FE000000 -o $@ -X vers.o ${SYSTEM_OBJS}
-SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/dbsym $@ || true; size $@; chmod 755 $@
+SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/dbsym $@ 2>/dev/null || true; size $@; chmod 755 $@
 
 # (XXX) ok, this is weird.  but we've got a working ed, and a broken ex, and
 # the script is identical for either... -- cgd
@@ -61,7 +61,7 @@ PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
 
 clean:
 	rm -f eddep *netbsd tags *.o locore.i [a-uw-z]*.s \
-		errs linterrs makelinks
+		errs linterrs makelinks genassym
 
 lint: /tmp param.c
 	@lint -hbxn -I. -DGENERIC -Dvolatile= ${COPTS} ${PARAM} \
@@ -74,8 +74,9 @@ symbols.sort: ${I386}/i386/symbols.raw
 	    | sed 's/^	//' | sort -u > symbols.sort
 
 locore.o: assym.s ${I386}/i386/locore.s machine/trap.h machine/psl.h \
-	machine/pte.h vector.s ${I386}/isa/icu.s ${I386}/isa/isa.h \
-	${I386}/isa/icu.h
+	machine/pte.h ${I386}/isa/vector.s ${I386}/isa/icu.s \
+	$S/sys/errno.h machine/specialreg.h ${I386}/isa/debug.h \
+	${I386}/isa/icu.h ${I386}/isa/isa.h vector.h $S/net/netisr.h
 	${CPP} -I. -DLOCORE ${COPTS} ${I386}/i386/locore.s | \
 		${AS} ${ASFLAGS} -o locore.o
 
@@ -133,7 +134,7 @@ param.o: param.c Makefile
 
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh ${KERN_IDENT} ${IDENT}
-	cc ${CFLAGS} -c vers.c
+	${CC} ${CFLAGS} -c vers.c
 
 %RULES
 
