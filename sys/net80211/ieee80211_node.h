@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.11 2004/07/23 09:22:15 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.12 2004/07/23 10:15:13 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -159,29 +159,21 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 	*ni = NULL;			/* guard against use */
 }
 
-#define	IEEE80211_NODE_LOCK_INIT(_ic, _name) \
-	mtx_init(&(_ic)->ic_nodelock, _name, "802.11 node table", MTX_DEF)
-#define	IEEE80211_NODE_LOCK_DESTROY(_ic)	mtx_destroy(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_LOCK(_ic)		mtx_lock(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_UNLOCK(_ic)		mtx_unlock(&(_ic)->ic_nodelock)
-#define	IEEE80211_NODE_LOCK_ASSERT(_ic) \
-	mtx_assert(&(_ic)->ic_nodelock, MA_OWNED)
-
 struct ieee80211com;
 
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_80211_NODE);
 #endif
 
-extern	void ieee80211_node_attach(struct ifnet *);
-extern	void ieee80211_node_lateattach(struct ifnet *);
-extern	void ieee80211_node_detach(struct ifnet *);
+extern	void ieee80211_node_attach(struct ieee80211com *);
+extern	void ieee80211_node_lateattach(struct ieee80211com *);
+extern	void ieee80211_node_detach(struct ieee80211com *);
 
-extern	void ieee80211_begin_scan(struct ifnet *);
-extern	void ieee80211_next_scan(struct ifnet *);
-extern	void ieee80211_create_ibss(struct ieee80211com* ,
+extern	void ieee80211_begin_scan(struct ieee80211com *);
+extern	void ieee80211_next_scan(struct ieee80211com *);
+extern	void ieee80211_create_ibss(struct ieee80211com *,
 		struct ieee80211_channel *);
-extern	void ieee80211_end_scan(struct ifnet *);
+extern	void ieee80211_end_scan(struct ieee80211com *);
 extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
@@ -192,8 +184,9 @@ extern	struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
 		struct ieee80211_frame *);
 extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
-extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
-		u_int8_t *macaddr, struct ieee80211_channel *);
+extern	struct ieee80211_node *ieee80211_find_node_with_channel(
+		struct ieee80211com *, u_int8_t *macaddr,
+		struct ieee80211_channel *);
 extern	void ieee80211_free_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);
