@@ -1,4 +1,4 @@
-/*	$NetBSD: postmortem.c,v 1.11 1997/10/14 10:26:56 mark Exp $	*/
+/*	$NetBSD: postmortem.c,v 1.12 1998/01/21 22:34:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -153,7 +153,7 @@ dumpframe(frame)
 	int s;
     
 	s = splhigh();
-	printf("frame address = %08x  ", (u_int)frame);
+	printf("frame address = %p  ", frame);
 	printf("spsr =%08x\n", frame->tf_spsr);
 	printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n", frame->tf_r0,
 	    frame->tf_r1, frame->tf_r2, frame->tf_r3);
@@ -198,7 +198,6 @@ postmortem(frame)
  	trapframe_t *frame;
 {
 	u_int s;
-	struct proc *p = curproc;
 	u_int addr;
 	static	postmortem_active = 0;
 
@@ -214,7 +213,7 @@ postmortem(frame)
 #ifdef STACKCHECKS
 	/* Check the stack for a known pattern */
 
-	check_stacks(p);
+	check_stacks(curproc);
 #endif	/* STACKCHECKS */
 
 #ifdef ROTTEN_INARDS
@@ -247,14 +246,14 @@ postmortem(frame)
 	    get_stackptr(PSR_SVC32_MODE));
 
 	if (curpcb)
-		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb,
+		printf("curpcb=%p pcb_sp=%08x pcb_und_sp=%08x\n", curpcb,
 		    curpcb->pcb_sp, curpcb->pcb_und_sp);
 
-	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
-	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
+	printf("proc0=%p paddr=%p pcb=%p\n", &proc0,
+	    proc0.p_addr, &proc0.p_addr->u_pcb);
 
 #else	/* ROTTENS_INARDS */
-	printf("Process = %08x ", (u_int)curproc);
+	printf("Process = %p ", curproc);
 	if (curproc) {
 	  printf("pid = %d ", curproc->p_pid); 
 	  printf("comm = %s\n", curproc->p_comm); 
@@ -263,7 +262,7 @@ postmortem(frame)
 	}
 	printf("CPSR=%08x ", GetCPSR());
 
-	printf("Traceback info (frame=%08x)\n", (u_int)frame);
+	printf("Traceback info (frame=%p)\n", frame);
 	addr = simpletraceback();
 	printf("Trapframe PC = %08x\n", frame->tf_pc);
 	printf("Trapframe SPSR = %08x\n", frame->tf_spsr);
@@ -285,9 +284,7 @@ buried_alive(p)
 {
 	printf("Ok major screw up detected on kernel stack\n");
 	printf("Putting the process down to minimise further trashing\n");
-	printf("Process was %08x pid=%d comm=%s\n", (u_int) p,
-	    p->p_pid, p->p_comm);
-
+	printf("Process was %p pid=%d comm=%s\n", p, p->p_pid, p->p_comm);
 }
 #else	/* POSTMORTEM */
 void
