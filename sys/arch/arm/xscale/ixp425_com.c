@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.7 2003/06/01 21:35:39 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.8 2003/06/03 14:13:30 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.7 2003/06/01 21:35:39 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.8 2003/06/03 14:13:30 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -669,12 +669,10 @@ ixp4xx_comopen(dev_t dev, int flag, int mode, struct proc *p)
 			sc->enabled = 1;
 		}
 		/* Turn on interrupts. */
-#if 1
 		sc->sc_mcr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR);
 		SET(sc->sc_mcr, MCR_IENABLE);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_MCR, sc->sc_mcr);
-#endif
-		SET(sc->sc_ier, IER_RAVIE | IER_RLSE | IER_RIE | IER_TIE);
+		SET(sc->sc_ier, IER_RAVIE | IER_TIE);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_UART_IER, sc->sc_ier);
 #if 0
 		/* Fetch the current modem control status, needed later. */
@@ -1304,7 +1302,7 @@ ixp4xxcomintr(void* arg)
 			/* Disable transmit completion interrupts if necessary. */
 			if (ISSET(sc->sc_ier, IER_TIE)) {
 				CLR(sc->sc_ier, IER_TIE);
-				ixp4xx_com_filltx(sc);
+				ixp4xx_com_set_cr(sc);
 			}
 			if (sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
