@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.9 2000/05/01 12:30:30 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.10 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -53,7 +53,6 @@ struct __ldata {
 struct __line {
 #define	__ISDIRTY	0x01		/* Line is dirty. */
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
-#define __FORCEPAINT	0x04		/* Force a repaint of the line */
 	unsigned int flags;
 	unsigned int hash;		/* Hash value for the line. */
 	int *firstchp, *lastchp;	/* First and last chngd columns ptrs */
@@ -126,7 +125,7 @@ void	 __stop_signal_handler(int signo);
 int	 __stopwin(void);
 void	 __swflags(WINDOW *win);
 int	 __timeout(int delay);
-int	 __touchline(WINDOW *win, int y, int sx, int ex, int force);
+int	 __touchline(WINDOW *win, int y, int sx, int ex);
 int	 __touchwin(WINDOW *win);
 char	*__tscroll(const char *cap, int n1, int n2);
 void	 __unsetattr(int);

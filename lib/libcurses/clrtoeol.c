@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.13 2000/04/18 22:45:24 jdc Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.13 2000/04/18 22:45:24 jdc Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -98,5 +98,5 @@ wclrtoeol(WINDOW *win)
 	    *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
-	return (__touchline(win, y, x, (int) win->maxx - 1, 0));
+	return (__touchline(win, y, x, (int) win->maxx - 1));
 }
