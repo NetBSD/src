@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205 2004/09/04 23:29:46 manu Exp $
+# $NetBSD: GENERIC,v 1.206 2004/11/10 17:25:21 christos Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.206 $"
 
 
 maxusers	8
@@ -150,6 +150,7 @@ options 	COMPAT_NOMID	# allow nonvalid machine id executables
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #
 # Support for System V IPC facilities.
