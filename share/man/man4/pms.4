@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.15 2003/05/14 12:20:01 wiz Exp $
+.\" $NetBSD: pms.4,v 1.16 2004/12/28 20:59:32 christos Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd May 14, 2003
+.Dd December 28, 2004
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -56,7 +56,9 @@ the PC keyboard controller.
 is a generic driver which supports mice using common variants of the PS/2
 protocol, including wheel mice of the
 .Dq IntelliMouse
-breed.  Wheel movements are mapped to a third (z-) axis.  The driver is
+breed.
+Wheel movements are mapped to a third (z-) axis.
+The driver is
 believed to work with both 3-button and 5-button mice with scroll wheels.
 Mice which use other protocol extensions are not currently supported, but
 might be if protocol documentation could be found.
@@ -74,6 +76,30 @@ after being switched away or reset (for instance, by a console switch).
 The
 .Va PMS_DISABLE_POWERHOOK
 kernel option disables PS/2 reset on resume.
+.Pp
+In addition, the
+.Nm
+driver supports the
+.Dq Synaptics
+pad.
+The following
+.Xr sysctl 8 
+variables control the pad's behavior:
+.Bl -tag
+.It Dv hw.synaptics.emulate_mid
+Emulate the middle button by pressing both buttons (default 0).
+.It Dv hw.synaptics.slow_limit
+Distance in pixels that is considered to be a slow (high-res) move.
+(default 900)
+.It Dv hw.synaptics.tap_enable
+Enable tapping on the pad to behave like a mouse click (default 1).
+.It Dv hw.synaptics.tap_length
+Time in microseconds that the pad needs to be pressed to be considered a tap
+(default 200000).
+.It Dv hw.synaptics.tap_tolerance
+Tolerance in pixels we can move on the pad and still considered a tap
+(default 500).
+.El
 .Sh SEE ALSO
 .Xr pckbc 4 ,
 .Xr ums 4 ,
@@ -81,12 +107,16 @@ kernel option disables PS/2 reset on resume.
 .Sh AUTHORS
 The
 .Nm
-driver was originally written by Christopher G. Demetriou.  The changes to
-merge the
+driver was originally written by Christopher G. Demetriou.
+The changes to merge the
 .Dq IntelliMouse
 protocol in, and reset the mouse in the event of protocol problems, were
-contributed by Peter Seebach.  Special thanks to Ray Trent, at Synaptics,
-who contributed valuable insight into how to identify bogus mouse data.
+contributed by Peter Seebach.
+Special thanks to Ray Trent, at Synaptics, who contributed valuable
+insight into how to identify bogus mouse data.
+The changes to add
+.Dq Synaptics
+pad support were by Ales Krenek and Kentaro A. Kurahone.
 .Sh BUGS
 It is possible for the driver to mistakenly negotiate the non-scroll-wheel
 protocol, after which it is unlikely to recover until the device is closed
