@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.2 1997/07/30 07:38:48 marc Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.3 1997/07/30 18:00:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -66,7 +66,7 @@
 #define PCMCIA_MANUFACTURER_MOTOROLA		0x109
 #define PCMCIA_PRODUCT_MOTOROLA_POWER144	0x105
 
-#ifndef __CGD_INDIRECT_CONFIG
+#ifdef __BROKEN_INDIRECT_CONFIG
 int com_pcmcia_match __P((struct device *, void *, void *));
 #else
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
@@ -81,7 +81,7 @@ struct cfattach com_pcmcia_ca = {
 int
 com_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifndef __CGD_INDIRECT_CONFIG
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
 #else
 	struct cfdata *match;
