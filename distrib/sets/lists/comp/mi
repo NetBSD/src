@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.141 1999/05/11 21:02:25 augustss Exp $
+# $NetBSD: mi,v 1.142 1999/05/11 21:30:43 veego Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -921,6 +921,7 @@
 ./usr/include/ufs/ufs/ufsmount.h
 ./usr/include/unctrl.h
 ./usr/include/unistd.h
+./usr/include/usb.h
 ./usr/include/util.h
 ./usr/include/utime.h
 ./usr/include/utmp.h
