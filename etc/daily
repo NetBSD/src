@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.39 2001/10/09 05:28:42 veego Exp $
+#	$NetBSD: daily,v 1.40 2001/10/23 17:34:53 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -140,7 +140,7 @@ fi
 
 if checkyesno check_disks; then
 	df -k > $TMP 
-	dump W > $TMP2
+	dump -W > $TMP2
 	if [ -s $TMP -o -s $TMP2 ]; then
 		echo ""
 		echo "Checking subsystem status:"
