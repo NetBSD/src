@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.64 2002/07/10 19:04:09 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.65 2002/09/23 23:16:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.64 2002/07/10 19:04:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.65 2002/09/23 23:16:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,6 +110,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.64 2002/07/10 19:04:09 drochner 
  */
 extern struct cfdata cfdata[];
 extern short cfroots[];
+
+/*
+ * List of cfdata tables.  We always have one such list -- the one
+ * built statically when the kernel was configured.
+ */
+struct cftablelist allcftables;
+static struct cftable initcftable;
 
 #define	ROOT ((struct device *)NULL)
 
@@ -152,6 +159,11 @@ __volatile int config_pending;		/* semaphore for mountroot */
 void
 configure(void)
 {
+
+	TAILQ_INIT(&allcftables);
+
+	initcftable.ct_cfdata = cfdata;
+	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
 
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
@@ -223,6 +235,7 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 struct cfdata *
 config_search(cfmatch_t fn, struct device *parent, void *aux)
 {
+	struct cftable *ct;
 	struct cfdata *cf;
 	short *p;
 	struct matchinfo m;
@@ -232,19 +245,23 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		/*
-		 * Skip cf if no longer eligible, otherwise scan through
-		 * parents for one matching `parent', and try match function.
-		 */
-		if (cf->cf_fstate == FSTATE_FOUND)
-			continue;
-		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-		    cf->cf_fstate == FSTATE_DSTAR)
-			continue;
-		for (p = cf->cf_parents; *p >= 0; p++)
-			if (parent->dv_cfdata == &cfdata[*p])
-				mapply(&m, cf);
+
+	TAILQ_FOREACH(ct, &allcftables, ct_list) {
+		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
+			/*
+			 * Skip cf if no longer eligible, otherwise scan
+			 * through parents for one matching `parent', and
+			 * try match function.
+			 */
+			if (cf->cf_fstate == FSTATE_FOUND)
+				continue;
+			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+			    cf->cf_fstate == FSTATE_DSTAR)
+				continue;
+			for (p = cf->cf_parents; *p >= 0; p++)
+				if (parent->dv_cfdata == &(ct->ct_cfdata)[*p])
+					mapply(&m, cf);
+		}
 	}
 	return (m.match);
 }
@@ -252,6 +269,8 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 /*
  * Find the given root device.
  * This is much like config_search, but there is no parent.
+ * Don't bother with multiple cfdata tables; the root node
+ * must always be in the initial table.
  */
 struct cfdata *
 config_rootsearch(cfmatch_t fn, const char *rootname, void *aux)
@@ -373,6 +392,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	cfprint_t print)
 {
 	struct device *dev;
+	struct cftable *ct;
 	struct cfdriver *cd;
 	struct cfattach *ca;
 	size_t lname, lunit;
@@ -448,15 +468,19 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 #ifdef __BROKEN_CONFIG_UNIT_USAGE
 	/* bump the unit number on all starred cfdata for this device. */
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
-	for (cf = cfdata; cf->cf_driver; cf++)
-		if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
-			if (cf->cf_fstate == FSTATE_NOTFOUND)
-				cf->cf_fstate = FSTATE_FOUND;
+	TAILQ_FOREACH(ct, &allcftables, ct_list) {
+		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
+			if (cf->cf_driver == cd &&
+			    cf->cf_unit == dev->dv_unit) {
+				if (cf->cf_fstate == FSTATE_NOTFOUND)
+					cf->cf_fstate = FSTATE_FOUND;
 #ifdef __BROKEN_CONFIG_UNIT_USAGE
-			if (cf->cf_fstate == FSTATE_STAR)
-				cf->cf_unit++;
+				if (cf->cf_fstate == FSTATE_STAR)
+					cf->cf_unit++;
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
+			}
 		}
+	}
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
@@ -477,6 +501,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 int
 config_detach(struct device *dev, int flags)
 {
+	struct cftable *ct;
 	struct cfdata *cf;
 	struct cfattach *ca;
 	struct cfdriver *cd;
@@ -551,16 +576,18 @@ config_detach(struct device *dev, int flags)
 	 * being detached had the last assigned unit number.
 	 */
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (cf->cf_driver == cd) {
-			if (cf->cf_fstate == FSTATE_FOUND &&
-			    cf->cf_unit == dev->dv_unit)
-				cf->cf_fstate = FSTATE_NOTFOUND;
+	TAILQ_FOREACH(ct, &allcftables, ct_list) {
+		for (cf = ct->ct_cfdata; cf->cf_driver; cf++) {
+			if (cf->cf_driver == cd) {
+				if (cf->cf_fstate == FSTATE_FOUND &&
+				    cf->cf_unit == dev->dv_unit)
+					cf->cf_fstate = FSTATE_NOTFOUND;
 #ifdef __BROKEN_CONFIG_UNIT_USAGE
-			if (cf->cf_fstate == FSTATE_STAR &&
-			    cf->cf_unit == dev->dv_unit + 1)
-				cf->cf_unit--;
+				if (cf->cf_fstate == FSTATE_STAR &&
+				    cf->cf_unit == dev->dv_unit + 1)
+					cf->cf_unit--;
 #endif /* __BROKEN_CONFIG_UNIT_USAGE */
+			}
 		}
 	}
 

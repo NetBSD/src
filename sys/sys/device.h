@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.49 2002/02/15 11:18:26 simonb Exp $ */
+/* $NetBSD: device.h,v 1.50 2002/09/23 23:16:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -180,6 +180,16 @@ struct cfdata {
 #define FSTATE_DSTAR		3	/* has not been found, and disabled */
 #define FSTATE_DNOTFOUND	4	/* duplicate, and disabled */
 
+/*
+ * Multiple configuration data tables may be maintained.  This structure
+ * provides the linkage.
+ */
+struct cftable {
+	struct cfdata *ct_cfdata;	/* pointer to cfdata table */
+	TAILQ_ENTRY(cftable) ct_list;	/* list linkage */
+};
+TAILQ_HEAD(cftablelist, cftable);
+
 typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
 /*
@@ -211,7 +221,7 @@ struct cfattach {
 
 struct cfdriver {
 	void	**cd_devs;		/* devices found */
-	char	*cd_name;		/* device name */
+	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
@@ -239,6 +249,7 @@ struct pdevinit {
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
+extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
