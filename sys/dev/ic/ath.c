@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32 2004/07/30 17:40:57 mycroft Exp $	*/
+/*	$NetBSD: ath.c,v 1.33 2004/08/03 20:06:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32 2004/07/30 17:40:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.33 2004/08/03 20:06:54 dyoung Exp $");
 #endif
 
 /*
@@ -1361,14 +1361,21 @@ ath_initkeytable(struct ath_softc *sc)
 	struct ath_hal *ah = sc->sc_ah;
 	int i;
 
+	/* XXX maybe should reset all keys when !WEPON */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		struct ieee80211_wepkey *k = &ic->ic_nw_keys[i];
 		if (k->wk_len == 0)
 			ath_hal_keyreset(ah, i);
-		else
+		else {
+			HAL_KEYVAL hk;
+
+			memset(&hk, 0, sizeof(hk));
+			hk.kv_type = HAL_CIPHER_WEP;
+			hk.kv_len = k->wk_len;
+			memcpy(hk.kv_val, k->wk_key, k->wk_len);
 			/* XXX return value */
-			/* NB: this uses HAL_KEYVAL == ieee80211_wepkey */
-			ath_hal_keyset(ah, i, (const HAL_KEYVAL *) k);
+			ath_hal_keyset(ah, i, &hk);
+		}
 	}
 }
 
@@ -2299,7 +2306,25 @@ ath_rx_proc(void *arg, int npending)
 		if (status == HAL_EINPROGRESS)
 			break;
 		TAILQ_REMOVE(&sc->sc_rxbuf, bf, bf_list);
-		if (ds->ds_rxstat.rs_status != 0) {
+
+		if (ds->ds_rxstat.rs_more) {
+			/*
+			 * Frame spans multiple descriptors; this
+			 * cannot happen yet as we don't support
+			 * jumbograms.  If not in monitor mode,
+			 * discard the frame.
+			 */
+
+			/* enable this if you want to see error frames in Monitor mode */
+#ifdef ERROR_FRAMES
+			if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+				/* XXX statistic */
+				goto rx_next;
+			}
+#endif
+			/* fall thru for monitor mode handling... */
+
+		} else if (ds->ds_rxstat.rs_status != 0) {
 			if (ds->ds_rxstat.rs_status & HAL_RXERR_CRC)
 				sc->sc_stats.ast_rx_crcerr++;
 			if (ds->ds_rxstat.rs_status & HAL_RXERR_FIFO)
@@ -2310,17 +2335,23 @@ ath_rx_proc(void *arg, int npending)
 				sc->sc_stats.ast_rx_phyerr++;
 				phyerr = ds->ds_rxstat.rs_phyerr & 0x1f;
 				sc->sc_stats.ast_rx_phy[phyerr]++;
-			} else {
-				/*
-				 * NB: don't count PHY errors as input errors;
-				 * we enable them on the 5212 to collect info
-				 * about environmental noise and, in that
-				 * setting, they don't really reflect tx/rx
-				 * errors.
-				 */
-				ifp->if_ierrors++;
 			}
-			goto rx_next;
+
+			/*
+			 * reject error frames, we normally don't want
+			 * to see them in monitor mode.
+			 */
+			if ((ds->ds_rxstat.rs_status & HAL_RXERR_DECRYPT ) ||
+			    (ds->ds_rxstat.rs_status & HAL_RXERR_PHY))
+			    goto rx_next;
+
+			/*
+			 * In monitor mode, allow through packets that
+			 * cannot be decrypted
+			 */
+			if ((ds->ds_rxstat.rs_status & ~HAL_RXERR_DECRYPT) ||
+			    sc->sc_ic.ic_opmode != IEEE80211_M_MONITOR)
+				goto rx_next;
 		}
 
 		len = ds->ds_rxstat.rs_datalen;
@@ -2468,24 +2499,43 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		 * XXX
 		 * IV must not duplicate during the lifetime of the key.
 		 * But no mechanism to renew keys is defined in IEEE 802.11
-		 * WEP.  And IV may be duplicated between other stations
-		 * because of the session key itself is shared.
-		 * So we use pseudo random IV for now, though it is not the
-		 * right way.
+		 * for WEP.  And the IV may be duplicated at other stations
+		 * because the session key itself is shared.  So we use a
+		 * pseudo random IV for now, though it is not the right way.
+		 *
+		 * NB: Rather than use a strictly random IV we select a
+		 * random one to start and then increment the value for
+		 * each frame.  This is an explicit tradeoff between
+		 * overhead and security.  Given the basic insecurity of
+		 * WEP this seems worthwhile.
 		 */
-                iv = ic->ic_iv;
+
 		/*
 		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
-		 * (B, 255, N) with 3 <= B < 8
+		 * (B, 255, N) with 3 <= B < 16 and 0 <= N <= 255
 		 */
-		if (iv >= 0x03ff00 && (iv & 0xf8ff00) == 0x00ff00)
-			iv += 0x000100;
-		ic->ic_iv = iv + 1;
-		for (i = 0; i < IEEE80211_WEP_IVLEN; i++) {
-			ivp[i] = iv;
-			iv >>= 8;
+		iv = ic->ic_iv;
+		if ((iv & 0xff00) == 0xff00) {
+			int B = (iv & 0xff0000) >> 16;
+			if (3 <= B && B < 16)
+				iv = (B+1) << 16;
 		}
-		ivp[i] = sc->sc_ic.ic_wep_txkey << 6;	/* Key ID and pad */
+		ic->ic_iv = iv + 1;
+
+		/*
+		 * NB: Preserve byte order of IV for packet
+		 *     sniffers; it doesn't matter otherwise.
+		 */
+#if AH_BYTE_ORDER == AH_BIG_ENDIAN
+		ivp[0] = iv >> 0;
+		ivp[1] = iv >> 8;
+		ivp[2] = iv >> 16;
+#else
+		ivp[2] = iv >> 0;
+		ivp[1] = iv >> 8;
+		ivp[0] = iv >> 16;
+#endif
+		ivp[3] = ic->ic_wep_txkey << 6; /* Key ID and pad */
 		memcpy(mtod(m0, caddr_t), hdrbuf, sizeof(hdrbuf));
 		/*
 		 * The ICV length must be included into hdrlen and pktlen.
