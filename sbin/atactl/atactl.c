@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.23 2003/11/30 14:07:49 yamt Exp $	*/
+/*	$NetBSD: atactl.c,v 1.24 2003/12/20 20:03:20 lha Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.23 2003/11/30 14:07:49 yamt Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.24 2003/12/20 20:03:20 lha Exp $");
 #endif
 
 
@@ -77,7 +77,11 @@ int	main(int, char *[]);
 void	usage(void);
 void	ata_command(struct atareq *);
 void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
-void	print_smart_status(void *vbuf, void *tbuf);
+void	print_smart_status(void *, void *);
+void	print_selftest_entry(int, struct ata_smart_selftest *);
+
+void	print_selftest(void *);
+
 int	is_smart(void);
 
 int	fd;				/* file descriptor for device */
@@ -92,6 +96,8 @@ void	device_idle(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
 
+void	smart_temp(struct ata_smart_attr *, int64_t);
+
 struct command commands[] = {
 	{ "identify",	"",			device_identify },
 	{ "setidle",	"idle-timer",		device_setidle },
@@ -100,7 +106,7 @@ struct command commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
-	{ "smart",	"enable|disable|status", device_smart },
+	{ "smart",	"enable|disable|status|selftest-log", device_smart },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -184,6 +190,7 @@ struct bitinfo ata_cmd_ext[] = {
 static const struct {
 	const int	id;
 	const char	*name;
+	void (*special)(struct ata_smart_attr *, int64_t);
 } smart_attrs[] = {
 	{ 1,		"Raw read error rate" },
 	{ 2,		"Throughput performance" },
@@ -199,12 +206,13 @@ static const struct {
 	{ 191,		"Gsense error rate" },
 	{ 192,		"Power-off retract count" },
 	{ 193,		"Load cycle count" },
-	{ 194,		"Temperature" },
+	{ 194,		"Temperature",			smart_temp},
+	{ 195,		"Hardware ECC Recovered" },
 	{ 196,		"Reallocated event count" },
 	{ 197,		"Current pending sector" },
 	{ 198,		"Offline uncorrectable" },
 	{ 199,		"Ultra DMA CRC error count" },
-	{ 0,		"" },
+	{ 0,		"Unknown" },
 };
 
 int
@@ -329,6 +337,22 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 			printf("%s%s%s", bf, binfo->string, af);
 }
 
+
+/*
+ * Try to print SMART temperature field
+ */
+
+void
+smart_temp(struct ata_smart_attr *attr, int64_t raw_value)
+{
+	printf("\t%d", (int)attr->raw[0]);
+	if (attr->raw[0] != raw_value)
+		printf(" Lifetime max/min %d/%d", 
+		    (int)attr->raw[2],
+		    (int)attr->raw[4]);
+}
+
+
 /*
  * Print out SMART attribute thresholds and values
  */
@@ -338,11 +362,11 @@ print_smart_status(void *vbuf, void *tbuf)
 {
 	struct ata_smart_attributes *value_buf = vbuf;
 	struct ata_smart_thresholds *threshold_buf = tbuf;
-	int values[256];
-	int thresholds[256];
-	int flags[256];
+	struct ata_smart_attr *attr;
+	int64_t raw_value;
+	int flags;
 	int i, j;
-	int id;
+	int aid;
 	int8_t checksum;
 
 	for (i = checksum = 0; i < 511; i++)
@@ -361,30 +385,147 @@ print_smart_status(void *vbuf, void *tbuf)
 		return;
 	}
 
-	memset(values, 0, sizeof(values));
-	memset(thresholds, 0, sizeof(thresholds));
-	memset(flags, 0, sizeof(flags));
+	printf("id value thresh crit collect reliability description\t\t\traw\n");
+	for (i = 0; i < 256; i++) {
+		int thresh = 0;
 
-	for (i = 0; i < 30; i++) {
-		id = value_buf->attributes[i].id;
-		values[id] = value_buf->attributes[i].value;
-		flags[id] = value_buf->attributes[i].flags;
-		id = threshold_buf->thresholds[i].id;
-		thresholds[id] = threshold_buf->thresholds[i].value;
+		attr = NULL;
+
+		for (j = 0; j < 30; j++) {
+			if (value_buf->attributes[j].id == i)
+				attr = &value_buf->attributes[j];
+			if (threshold_buf->thresholds[j].id == i)
+				thresh = threshold_buf->thresholds[j].value;
 	}
 
-	printf("id\tvalue\tthresh\tcrit\tcollect\treliability description\n");
-	for (i = 0; i < 256; i++) {
-		if (values[i] != 00 && values[i] != 0xFE && values[i] != 0xFF) {
-			for (j = 0; smart_attrs[j].id != i && smart_attrs[j].id != 0; j++);
-			printf("%3d\t%3d\t%3d\t%s\t%sline\t%stive    %s\n",
-			       i, values[i], thresholds[i],
-			       flags[i] & WDSM_ATTR_ADVISORY ? "yes" : "no",
-			       flags[i] & WDSM_ATTR_COLLECTIVE ? "on" : "off",
-			       values[i] > thresholds[i] ? "posi" : "nega",
-			       smart_attrs[j].name);
+		if (thresh && attr == NULL)
+			errx(1, "threshold but not attr %d", i);
+		if (attr == NULL)
+			continue;
+
+		if (attr->value == 0||attr->value == 0xFE||attr->value == 0xFF)
+			continue;
+
+		for (aid = 0; 
+		     smart_attrs[aid].id != i && smart_attrs[aid].id != 0; 
+		     aid++)
+			;
+
+		flags = attr->flags;
+
+		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s",
+		    i, attr->value, thresh,
+		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
+		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
+		    attr->value > thresh ? "posi" : "nega",
+		    smart_attrs[aid].name);
+
+		for (j = 0, raw_value = 0; j < 6; j++)
+			raw_value += ((int64_t)attr->raw[j]) << (8*j);
+
+		if (smart_attrs[aid].special)
+			(*smart_attrs[aid].special)(attr, raw_value);
+		printf("\n");
 		}
 	}
+
+struct {
+	int number;
+	const char *name;
+} selftest_name[] = {
+	{ 0, "Off-line" },
+	{ 1, "Short off-line" },
+	{ 2, "Extended off-line" },
+	{ 127, "Abort off-line test" },
+	{ 129, "Short captive" },
+	{ 130, "Extended captive" },
+	{ 256, "Unknown test" }, /* larger then u_int8_t */
+	{ 0, NULL }
+};
+
+const char *selftest_status[] = {
+	"No error",
+	"Aborted by the host",
+	"Interruped by the host by reset",
+	"Fatal error or unknown test error",
+	"Unknown test element failed",
+	"Electrical test element failed",
+	"The Servo (and/or seek) test element failed",
+	"Read element of test failed",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Self-test in progress"
+};
+
+void
+print_selftest_entry(int num, struct ata_smart_selftest *le)
+{
+	unsigned char *p;
+	int i;
+
+	/* check if all zero */
+	for (p = (void *)le, i = 0; i < sizeof(*le); i++)
+		if (p[i] != 0)
+			break;
+	if (i == sizeof(*le))
+		return;
+
+	printf("Log entry: %d\n", num);
+
+	/* Get test name */
+	for (i = 0; selftest_name[i].name != NULL; i++)
+		if (selftest_name[i].number == le->number)
+			break;
+	if (selftest_name[i].number == 0)
+		i = 255; /* unknown test */
+
+	printf("\tName: %s\n", selftest_name[i].name);
+	printf("\tStatus: %s\n", selftest_status[le->status >> 4]);
+	if (le->status >> 4 == 15)
+		printf("\tPrecent of test remaning: %1d0\n", le->status & 0xf);
+	if (le->status)
+		printf("LBA first error: %d\n", le->lba_first_error);
+}
+
+void
+print_selftest(void *buf)
+{
+	struct ata_smart_selftestlog *stlog = buf;
+	int8_t checksum;
+	int i;
+
+	for (i = checksum = 0; i < 511; i++)
+		checksum += ((int8_t *) buf)[i];
+  	checksum *= -1;
+	if ((u_int8_t)checksum != stlog->checksum) {
+		fprintf(stderr, "SMART selftest log checksum error\n");
+		return;
+	}
+
+	if (stlog->data_structure_revision != 1) {
+		fprintf(stderr, "Log revision not 1");
+		return;
+	}
+
+	if (stlog->mostrecenttest == 0) {
+		printf("No self-tests have been logged\n");
+		return;
+	}
+		
+	if (stlog->mostrecenttest > 22) {
+		fprintf(stderr, "Most recent test is too large\n");
+		return;
+	}
+	
+	for (i = stlog->mostrecenttest; i < 22; i++)
+		print_selftest_entry(i, &stlog->log_entries[i]);
+	for (i = 0; i < stlog->mostrecenttest; i++)
+		print_selftest_entry(i, &stlog->log_entries[i]);
 }
 
 /*
@@ -736,7 +877,11 @@ device_smart(int argc, char *argv[])
 
 		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
-		if (is_smart()) {
+		if (!is_smart()) {
+			fprintf(stderr, "SMART not supported\n");
+			return;
+		}
+
 			memset(&inbuf, 0, sizeof(inbuf));
 			memset(&req, 0, sizeof(req));
 
@@ -783,9 +928,30 @@ device_smart(int argc, char *argv[])
 			ata_command(&req);
 
 			print_smart_status(inbuf, inbuf2);
-		} else {
+
+	} else if (strcmp(argv[0], "selftest-log") == 0) {
+		if (!is_smart()) {
 			fprintf(stderr, "SMART not supported\n");
+			return;
 		}
+
+		memset(&inbuf, 0, sizeof(inbuf));
+		memset(&req, 0, sizeof(req));
+		
+		req.flags = ATACMD_READ;
+		req.features = WDSM_RD_LOG;
+		req.sec_count = 1;
+		req.sec_num = 6;
+		req.command = WDCC_SMART;
+		req.databuf = (caddr_t) inbuf;
+		req.datalen = sizeof(inbuf);
+		req.cylinder = htole16(WDSMART_CYL);
+		req.timeout = 1000;
+		
+		ata_command(&req);
+		
+		print_selftest(inbuf);
+
 	} else {
 		usage();
 	}

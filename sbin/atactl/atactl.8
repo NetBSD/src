@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.13 2002/10/01 13:40:23 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.14 2003/12/20 20:03:20 lha Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 18, 1998
+.Dd December 20, 2003
 .Dt ATACTL 8
 .Os
 .Sh NAME
@@ -107,7 +107,7 @@ Will print out if the device is in Active, Idle, or Standby power
 management mode.
 .Pp
 .Cm smart
-.Ar [enable | disable | status]
+.Ar [enable | disable | status | selftest-log]
 .Pp
 Controls SMART feature set of the specified device.
 SMART stands for Self-Monitoring, Analysis, and Reporting Technology.
@@ -161,6 +161,9 @@ The collect field indicates whether this attribute is updated while the
 device is online.
 The reliability field indicates whether the attribute
 value is within the acceptable threshold.
+.Pp
+.Ar selftest-log
+Print the selftest log.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
