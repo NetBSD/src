@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.1 1999/04/28 09:08:50 christos Exp $ */
+/* $NetBSD: loadfile.c,v 1.2 1999/04/28 09:12:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -504,9 +504,10 @@ aout_exec(fd, x, marks, flags)
 	if (magic == ZMAGIC || magic == NMAGIC) {
 		int size = (int)maxp & __LDPGSZ;
 
-		PROGRESS(("/%d", size));
-		if (flags & LOAD_TEXTA)
+		if (flags & LOAD_TEXTA) {
+			PROGRESS(("/%d", size));
 			BZERO(maxp, size);
+		}
 
 		if (flags & (LOAD_TEXTA|COUNT_TEXTA))
 			maxp += size;
