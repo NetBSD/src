@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.34 2001/05/04 01:32:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.35 2001/05/04 20:19:57 thorpej Exp $	*/
 
 /*
  *
@@ -414,6 +414,7 @@ static caddr_t csrcp, cdstp, zerop, ptpp;
 
 struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
+u_int pmap_pdp_cache_generation;
 
 int	pmap_pdp_ctor(void *, void *, int);
 
@@ -1677,6 +1678,7 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
+	u_int gen;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -1704,15 +1706,21 @@ pmap_create()
 	 * malloc since malloc allocates out of a submap and we should
 	 * have already allocated kernel PTPs to cover the range...
 	 *
-	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock'!
+	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock', nor
+	 * must we call pmap_growkernel() while holding it!
 	 */
+
+ try_again:
+	gen = pmap_pdp_cache_generation;
+	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	simple_lock(&pmaps_lock);
 
-	/* XXX Need a generic "I want memory" wchan */
-	while ((pmap->pm_pdir =
-	    pool_cache_get(&pmap_pdp_cache, PR_NOWAIT)) == NULL)
-		(void) ltsleep(&lbolt, PVM, "pmapcr", hz >> 3, &pmaps_lock);
+	if (gen != pmap_pdp_cache_generation) {
+		simple_unlock(&pmaps_lock);
+		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+		goto try_again;
+	}
 
 	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
 
@@ -3215,6 +3223,7 @@ pmap_growkernel(maxkvaddr)
 
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
+		pmap_pdp_cache_generation++;
 
 		simple_unlock(&pmaps_lock);
 	}
