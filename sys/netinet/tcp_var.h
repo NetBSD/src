@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.42 1998/04/29 05:16:47 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.43 1998/04/29 20:43:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,6 +105,10 @@ struct tcpcb {
 #define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
 #define	TF_SYN_REXMT	0x0400		/* rexmit timer fired on SYN */
+#define	TF_WILL_SACK	0x0800		/* try to use SACK */
+#define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
+#define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
+
 
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -166,11 +170,13 @@ struct tcpcb {
 	u_char	request_r_scale;	/* pending window scaling */
 	u_char	requested_s_scale;
 	u_int32_t ts_recent;		/* timestamp echo data */
-	u_int32_t ts_recent_age;		/* when last updated */
+	u_int32_t ts_recent_age;	/* when last updated */
 	tcp_seq	last_ack_sent;
 
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
+/* SACK stuff */
+	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
 };
 
 /*
@@ -374,7 +380,10 @@ struct	tcpstat {
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
 #define	TCPCTL_INIT_WIN		8	/* initial window */
 #define	TCPCTL_MSS_IFMTU	9	/* mss from interface, not in_maxmtu */
-#define	TCPCTL_MAXID	       10
+#define	TCPCTL_SACK		10	/* RFC2018 selective acknowledgement */
+#define	TCPCTL_WSCALE		11	/* RFC1323 window scaling */
+#define	TCPCTL_TSTAMP		12	/* RFC1323 timestamps */
+#define	TCPCTL_MAXID		13
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -387,6 +396,9 @@ struct	tcpstat {
 	{ "syn_cache_interval", CTLTYPE_INT },\
 	{ "init_win", CTLTYPE_INT }, \
 	{ "mss_ifmtu", CTLTYPE_INT }, \
+	{ "sack", CTLTYPE_INT }, \
+	{ "win_scale", CTLTYPE_INT }, \
+	{ "timestamps", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -394,6 +406,9 @@ struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
+extern	int tcp_do_sack;	/* SACK enabled/disabled? */
+extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
+extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
@@ -406,6 +421,22 @@ extern	int tcp_syn_cache_size;
 extern	int tcp_syn_cache_timeo;
 extern	struct syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
 extern	u_long syn_cache_count;
+
+#define	TCPCTL_VARIABLES { \
+	NULL, \
+	&tcp_do_rfc1323, \
+	&tcp_sendspace, \
+	&tcp_recvspace, \
+	&tcp_mssdflt, \
+	&tcp_syn_cache_limit, \
+	&tcp_syn_bucket_limit, \
+	&tcp_syn_cache_interval, \
+	&tcp_init_win, \
+	&tcp_mss_ifmtu, \
+	&tcp_do_sack, \
+	&tcp_do_win_scale, \
+	&tcp_do_timestamps, \
+}
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));

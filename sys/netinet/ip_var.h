@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.27 1998/04/29 03:44:12 kml Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.28 1998/04/29 20:43:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -71,6 +71,13 @@ struct ipqent {
 	} _ipqe_u1;
 	struct mbuf	*ipqe_m;	/* mbuf contains packet */
 	u_int8_t	ipqe_mff;	/* for IP fragmentation */
+	/*
+	 * The following are used in TCP reassembly
+	 */
+	LIST_ENTRY(ipqent) ipqe_timeq;
+	u_int32_t ipqe_seq;
+	u_int32_t ipqe_len;
+	u_int32_t ipqe_flags;
 };
 #define	ipqe_ip		_ipqe_u1._ip
 #define	ipqe_tcp	_ipqe_u1._tcp
