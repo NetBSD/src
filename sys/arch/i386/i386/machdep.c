@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.86 1994/02/18 02:23:31 mycroft Exp $
+ *	$Id: machdep.c,v 1.87 1994/02/24 05:03:03 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -442,7 +442,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
-	if (copyout(&frame, fp, sizeof(frame)) < 0) {
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -506,7 +506,7 @@ sigreturn(p, uap, retval)
 	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
 		return(EFAULT);
 
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) < 0)
+	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return(EFAULT);
 
 	eflags = context.sc_efl;
