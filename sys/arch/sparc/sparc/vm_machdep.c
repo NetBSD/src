@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1995/05/19 06:58:30 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.14 1995/06/26 22:46:04 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,43 +88,97 @@ pagemove(from, to, size)
 }
 
 /*
+ * Map a range [va, va+len] in the given map to a kernel address
+ * in DVMA space.
+ */
+vm_offset_t
+dvma_mapin(map, va, len, canwait)
+	struct vm_map	*map;
+	vm_offset_t	va;
+	int		len, canwait;
+{
+	vm_offset_t	kva, tva;
+	register int npf, s;
+	register vm_offset_t pa;
+	long pn;
+
+	npf = btoc(round_page(len));
+
+	s = splimp();
+	for (;;) {
+		pn = rmalloc(dvmamap, npf);
+		if (pn != 0)
+			break;
+		if (canwait) {
+			(void)tsleep(dvmamap, PRIBIO+1, "physio", 0);
+			continue;
+		}
+		splx(s);
+		return NULL;
+	}
+	splx(s);
+
+	kva = tva = rctov(pn);
+
+	while (npf--) {
+		pa = pmap_extract(vm_map_pmap(map), va);
+		if (pa == 0)
+			panic("dvma_mapin: null page frame");
+
+		/*
+		 * ###	pmap_enter distributes this mapping to all contexts...
+		 *      maybe we should avoid this extra work
+		 */
+		pmap_enter(pmap_kernel(), tva,
+		    trunc_page(pa) | PMAP_NC,
+		    VM_PROT_READ|VM_PROT_WRITE, 1);
+		tva += PAGE_SIZE;
+		va += PAGE_SIZE;
+	}
+	return kva;
+}
+
+/*
+ * Remove double map of `va' in DVMA space at `kva'.
+ */
+int
+dvma_mapout(kva, va, len)
+	vm_offset_t	kva, va;
+	int		len;
+{
+	register int s;
+
+	pmap_remove(pmap_kernel(), kva, kva + len);
+
+	s = splimp();
+	rmfree(dvmamap, btoc(len), vtorc(kva));
+	wakeup(dvmamap);
+	splx(s);
+
+	if (vactype != VAC_NONE)
+		cache_flush((caddr_t)va, len);
+}
+
+/*
  * Map an IO request into kernel virtual address space.
- *
- * ###	pmap_enter distributes this mapping to all contexts ... maybe
- *	we should avoid this extra work
- *
- * THIS IS NOT IDEAL -- WE NEED ONLY VIRTUAL SPACE BUT kmem_alloc_wait
- * DOES WORK DESIGNED TO SUPPLY PHYSICAL SPACE ON DEMAND LATER
  */
 vmapbuf(bp)
 	register struct buf *bp;
 {
-	register int npf;
+	register int len;
 	register caddr_t addr;
 	struct proc *p;
 	int off;
 	vm_offset_t kva;
-	register vm_offset_t pa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	addr = bp->b_saveaddr = bp->b_un.b_addr;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
+	len = round_page(bp->b_bcount + off);
+	kva = dvma_mapin(&p->p_vmspace->vm_map, addr-off, len, 1);
 	bp->b_un.b_addr = (caddr_t) (kva + off);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
-		if (pa == 0)
-			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva,
-		    trunc_page(pa) | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, 1);
-		addr += PAGE_SIZE;
-		kva += PAGE_SIZE;
-	}
 }
 
 /*
@@ -138,14 +192,13 @@ vunmapbuf(bp)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	off = (int)kva & PGOFSET;
-	kva -= off;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+
 	bp->b_un.b_addr = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-	if (vactype != VAC_NONE)
-		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
+
+	off = (int)kva & PGOFSET;
+	kva -= off;
+	dvma_mapout(kva, bp->b_un.b_addr, round_page(bp->b_bcount + off));
 }
 
 /*
@@ -165,6 +218,18 @@ dvma_malloc(size)
 	kvm_uncache(va, vsize >> PGSHIFT);
 	return (va);
 }
+
+/*
+ * Free dvma addresses allocated with dvma_malloc()
+ */
+void
+dvma_free(ptr, size)
+	caddr_t ptr;
+	size_t size;
+{
+	kmem_free(phys_map, (vm_offset_t)ptr, size);
+}
+
 
 /*
  * The offset of the topmost frame in the kernel stack.
