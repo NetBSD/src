@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.66 2003/04/27 04:18:29 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.67 2003/07/02 13:40:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.66 2003/04/27 04:18:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.67 2003/07/02 13:40:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,10 +160,7 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
 	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
-		++fs->lfs_writer;
 		lfs_flush(fs, 0);
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
 
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 		    "lfsresbuf", hz * LFS_BUFWAIT);
@@ -482,23 +479,13 @@ lfs_flush_fs(struct lfs *fs, int flags)
 	if (fs->lfs_ronly)
 		return;
 
-	/* disallow dirops during flush */
-	fs->lfs_writer++;
-
-	/* drain dirops */
-	while (fs->lfs_dirops > 0) {
-		++fs->lfs_diropwait;
-		tsleep(&fs->lfs_writer, PRIBIO+1, "fldirop", 0);
-		--fs->lfs_diropwait; 
-	}
+	lfs_writer_enter(fs, "fldirop");
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
 
-	/* allow dirops again */
-	if (--fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
+	lfs_writer_leave(fs);
 }
 
 /*
@@ -513,6 +500,8 @@ void
 lfs_flush(struct lfs *fs, int flags)
 {
 	struct mount *mp, *nmp;
+
+	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
 	
 	if (lfs_dostats) 
 		++lfs_stats.write_exceeded;
