@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1999/02/26 22:37:58 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1999/03/23 05:54:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,7 +123,7 @@ vdoualarm(arg)
 int
 cachectl1(req, addr, len, p)
 	unsigned long req;
-	caddr_t	addr;
+	vaddr_t	addr;
 	size_t len;
 	struct proc *p;
 {
