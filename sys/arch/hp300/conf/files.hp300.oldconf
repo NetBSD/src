@@ -1,4 +1,4 @@
-# $Id: files.hp300.oldconf,v 1.2 1993/05/18 10:36:12 cgd Exp $
+# $Id: files.hp300.oldconf,v 1.3 1993/05/20 22:48:23 deraadt Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard clock
@@ -16,6 +16,7 @@ arch/hp300/hp300/pmap.c			standard
 arch/hp300/hp300/sys_machdep.c		standard
 arch/hp300/hp300/trap.c			standard
 arch/hp300/hp300/vm_machdep.c		standard
+arch/hp300/hp300/disksubr.c		standard
 arch/hp300/dev/dma.c			standard
 arch/hp300/dev/cd.c			optional cd
 arch/hp300/dev/vn.c			optional vn
