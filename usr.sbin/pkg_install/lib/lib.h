@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.45 2003/01/05 21:27:30 agc Exp $ */
+/* $NetBSD: lib.h,v 1.46 2003/01/05 21:49:58 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -116,6 +116,11 @@
 #define TAILQ_FIRST(head)               ((head)->tqh_first)
 #define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
 #endif
+
+enum {
+	ReadWrite,
+	ReadOnly
+};
 
 
 /* Enumerated constants for plist entry types */
