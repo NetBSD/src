@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.60 1999/07/22 18:28:30 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.61 1999/07/22 21:08:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -172,8 +172,9 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	newproc = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
-	 * BEGIN PID ALLOCATION.  (Lock PID allocation variables eventually).
+	 * BEGIN PID ALLOCATION.
 	 */
+	s = proclist_lock_write();
 
 	/*
 	 * Find an unused process ID.  We remember a range of unused IDs
@@ -253,8 +254,9 @@ again:
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 
 	/*
-	 * END PID ALLOCATION.  (Unlock PID allocation variables).
+	 * END PID ALLOCATION.
 	 */
+	proclist_unlock_write(s);
 
 	/*
 	 * Make a proc table entry for the new process.
