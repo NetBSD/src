@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.62.4.4 2001/05/26 16:17:59 he Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.62.4.5 2001/06/16 19:18:50 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -334,6 +334,11 @@ struct ne2000dev {
       PCMCIA_CIS_SOCKET_LP_ETHER,
       0, -1, { 0x00, 0xc0, 0x1b } },
 
+    { PCMCIA_STR_KINGSTON_KNE2,
+      PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
+      PCMCIA_CIS_KINGSTON_KNE2,
+      0, -1, { 0x00, 0xc0, 0xf0 } },
+
     { PCMCIA_STR_XIRCOM_CFE_10,
       PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
       PCMCIA_CIS_XIRCOM_CFE_10,
@@ -409,9 +414,6 @@ struct ne2000dev {
     { "Kingston KNE-PCM/x",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0xe2, 0x0c, 0x0f } },
-    { "Kingston KNE-PC2",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0180, { 0x00, 0xc0, 0xf0 } },
     { "Longshine LCS-8534",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0000, { 0x08, 0x00, 0x00 } },
