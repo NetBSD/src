@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.108 2000/03/29 18:55:36 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.109 2000/04/06 23:44:20 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -643,7 +643,7 @@ uhci_shutdown(v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
