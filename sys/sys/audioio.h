@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.10 1997/05/24 23:23:17 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.11 1997/07/15 07:46:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -106,17 +106,16 @@ typedef struct audio_device {
 #define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
 #define AUDIO_ENCODING_ULAW		1
 #define AUDIO_ENCODING_ALAW		2
-#define AUDIO_ENCODING_LINEAR		3
-#define AUDIO_ENCODING_ULINEAR		4
+#define AUDIO_ENCODING_PCM16		3 /* obsolete */
+#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* obsolete */
+#define AUDIO_ENCODING_PCM8		4 /* obsolete */
 #define AUDIO_ENCODING_ADPCM		5
-#define AUDIO_ENCODING_LINEAR_LE	6
-#define AUDIO_ENCODING_LINEAR_BE	7
+#define AUDIO_ENCODING_SLINEAR_LE	6
+#define AUDIO_ENCODING_SLINEAR_BE	7
 #define AUDIO_ENCODING_ULINEAR_LE	8
 #define AUDIO_ENCODING_ULINEAR_BE	9
-
-/* Backwards compatibility defines */
-#define AUDIO_ENCODING_PCM16		AUDIO_ENCODING_LINEAR
-#define AUDIO_ENCODING_PCM8		AUDIO_ENCODING_ULINEAR
+#define AUDIO_ENCODING_SLINEAR		10
+#define AUDIO_ENCODING_ULINEAR		11
 
 typedef struct audio_encoding {
 	int index;
