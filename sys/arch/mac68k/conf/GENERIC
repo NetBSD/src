@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.58 1997/03/02 06:43:00 scottr Exp $
+#	$NetBSD: GENERIC,v 1.59 1997/03/15 18:35:47 scottr Exp $
 #
 # GENERIC
 
@@ -71,7 +71,6 @@ options 	FPSP
 options 	FPU_EMULATE
 options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
-options 	MAC68K_BROKEN_VIDEO
 
 config		netbsd	root on ? type ?
 
