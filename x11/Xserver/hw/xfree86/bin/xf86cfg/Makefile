@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/06 16:11:49 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/08 04:39:16 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,9 @@ PROG=	xf86cfg
 SRCS=	accessx.c card-cfg.c cards.c config.c expert.c help.c interface.c \
 	keyboard-cfg.c libc_wrapper.c loader.c loadmod.c monitor-cfg.c \
 	mouse-cfg.c options.c screen-cfg.c screen.c startx.c stubs.c \
-	vidmode.c xf86config.c xf86PciIds.h
+	vidmode.c xf86config.c
+
+DPSRCS+=xf86PciIds.h
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 SCANPCIINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/bin/xf86cfg && ${PRINTOBJDIR}
