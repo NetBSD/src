@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.20 2003/05/22 15:35:51 kochi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.21 2003/05/29 02:47:49 gson Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.20 2003/05/22 15:35:51 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.21 2003/05/29 02:47:49 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,7 @@ static void
 acpibat_print_stat(struct acpibat_softc *sc)
 {
 	const char *capstat, *chargestat;
-	int percent;
+	int percent, denom;
 
 	percent = 0;
 
@@ -528,10 +528,9 @@ acpibat_print_stat(struct acpibat_softc *sc)
 		chargestat = "discharging";
 	else
 		chargestat = "idling";
-	if (sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s>0)
-		percent =
-		    (sc->sc_data[ACPIBAT_CAPACITY].cur.data_s*100)/
-		    sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s;
+	denom = sc->sc_data[ACPIBAT_DCAPACITY].cur.data_s / 100;
+	if (denom > 0)
+		percent = (sc->sc_data[ACPIBAT_CAPACITY].cur.data_s) / denom;
 	printf("%s: %s%s: %d.%03dV cap %d.%03d%s (%d%%) rate %d.%03d%s\n",
 	       sc->sc_dev.dv_xname,
 	       capstat, chargestat,
