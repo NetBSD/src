@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:38 mycroft Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.47.2.1 1999/05/03 12:56:52 perry Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -115,7 +115,7 @@ cpu_fork(p1, p2)
 	pmap = p2->p_vmspace->vm_map.pmap;
 
 	/* Mark page invalid */
-	pt = kvtopte((u_int)p2->p_addr + VAX_NBPG);
+	pt = kvtopte((u_int)p2->p_addr + REDZONEADDR);
 	pt->pg_v = 0; 
 
 	/*
