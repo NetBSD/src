@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.4 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.5 2001/08/20 23:08:11 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -63,6 +63,8 @@ extern void ioc_irq_waitfor(int);
 extern void ioc_irq_clear(int);
 extern u_int32_t ioc_irq_status_full(void);
 extern void ioc_irq_setmask(u_int32_t);
+
+extern void ioc_fiq_setmask(u_int32_t);
 
 extern void ioc_counter_start(struct device *, int, int);
 
