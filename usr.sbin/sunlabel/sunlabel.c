@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.7 2002/12/21 06:53:29 lukem Exp $ */
+/* $NetBSD: sunlabel.c,v 1.8 2002/12/21 08:11:28 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.7 2002/12/21 06:53:29 lukem Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.8 2002/12/21 08:11:28 lukem Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -277,18 +277,13 @@ static void usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-mnqs] [-d disk]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-mnqs] disk\n", getprogname());
 	exit(1);
 }
 
 /*
  * Command-line arguments.  We can have at most one non-flag
  *  argument, which is the disk name; we can also have flags
- *
- *	-d diskdev
- *		Specifies disk device unambiguously (if it begins with
- *		a dash, it will be mistaken for a flag if simply placed
- *		on the command line).
  *
  *	-m
  *		Turns on fixmagic, which causes bad magic numbers to be
@@ -303,9 +298,9 @@ usage(void)
  *	-n
  *		Turns on newlabel, which means we're creating a new
  *		label and anything in the label sector should be
- *		ignored.  This is a bit like -fixmagic -fixsum, except
- *		that it doesn't print complaints and it ignores
- *		possible garbage on-disk.
+ *		ignored.  This is a bit like -m -s, except that it
+ *		doesn't print complaints and it ignores possible
+ *		garbage on-disk.
  *
  *	-q
  *		Turns on quiet, which suppresses printing of prompts
@@ -317,11 +312,8 @@ handleargs(int ac, char **av)
 {
 	int c;
 
-	while ((c = getopt(ac, av, "d:mnqs")) != -1) {
+	while ((c = getopt(ac, av, "mnqs")) != -1) {
 		switch (c) {
-		case 'd':
-			setdisk(optarg);
-			break;
 		case 'm':
 			fixmagic++;
 			break;
@@ -339,7 +331,13 @@ handleargs(int ac, char **av)
 			usage();
 		}
 	}
+	ac -= optind;
+	av += optind;
+	if (ac != 1)
+		usage();
+	setdisk(av[0]);
 }
+
 /*
  * Sets the ending cylinder for a partition.  This exists mainly to
  * centralize the check.  (If spc is zero, cylinder numbers make
@@ -891,7 +889,7 @@ chvalue(const char *str)
 		}
 	}
 	if (!fields[i].tag)
-		warnx("Bad name %.*s - see l output for names", (int)n, str);
+		warnx("Bad name %.*s - see L output for names", (int)n, str);
 }
 
 /*
