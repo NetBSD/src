@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 12/4/90
-#	$Id: Makefile,v 1.5 1993/08/09 04:42:36 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.6 1994/09/22 09:24:46 mycroft Exp $
 
 PROG=	date
 SRCS=	date.c netdate.c

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)mkdir.1	6.9 (Berkeley) 6/27/91
-.\"	$Id: mkdir.1,v 1.5 1993/08/01 07:48:25 mycroft Exp $
+.\"	from: @(#)mkdir.1	8.2 (Berkeley) 1/25/94
+.\"	$Id: mkdir.1,v 1.6 1994/09/22 09:25:38 mycroft Exp $
 .\"
-.Dd June 27, 1991
+.Dd January 25, 1994
 .Dt MKDIR 1
 .Os
 .Sh NAME
@@ -43,35 +43,40 @@
 .Nd make directories
 .Sh SYNOPSIS
 .Nm mkdir
-.Op Fl m Ar mode
 .Op Fl p
+.Op Fl m Ar mode
 .Ar directory_name  ...
 .Sh DESCRIPTION
 .Nm Mkdir
-creates the directories named as operands, in the order specified.
-The default mode of created directories is 
-.Li \&0777
-modified by the current
+creates the directories named as operands, in the order specified,
+using mode
+.Li rwxrwxrwx (\&0777)
+as modified by the current
 .Xr umask  2  .
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
-.It Fl m Ar mode
-Set the file permission bits of newly-created directories to
-.Ar mode .
-The 
-.Ar mode
-is specified as in 
-.Xr chmod 1 .
-In symbolic mode strings, the 
+.Pp
+.Bl -tag -width indent
+.It Fl m
+Set the file permission bits of the final created directory to
+the specified mode.
+The mode argument can be in any of the formats specified to the
+.Xr chmod 1
+command.
+If a symbolic mode is specified, the operation characters
 .Dq +
-and 
+and
 .Dq -
-operators are interpreted relative to an assumed initial mode of
+are interpreted relative to an initial mode of
 .Dq a=rwx .
 .It Fl p
-Create intermediate directories as required.  If this option is not
-specified, the full path prefix of each operand must already exist.
+Create intermediate directories as required.
+If this option is not specified, the full path prefix of each
+operand must already exist.
+Intermediate directories are created with permission bits of
+.Li rwxrwxrwx (\&0777)
+as modified by the current umask, plus write and search
+permission for the owner.
 .El
 .Pp
 The user must have write permission in the parent directory.
@@ -83,7 +88,8 @@ exits 0 if successful, and >0 if an error occurred.
 .Xr rmdir 1 ,
 .Xr umask 2
 .Sh STANDARDS
-.Nm Mkdir
-is expected to be
+The
+.Nm mkdir
+utility is expected to be
 .St -p1003.2
 compatible.

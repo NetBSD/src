@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)echo.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: echo.1,v 1.5 1993/08/28 04:07:58 jtc Exp $
+.\"	from: @(#)echo.1	8.1 (Berkeley) 7/22/93
+.\"	$Id: echo.1,v 1.6 1994/09/22 09:25:15 mycroft Exp $
 .\"
-.Dd July 27, 1991
+.Dd July 22, 1993
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@
 The
 .Nm echo
 utility writes any specified operands, separated by single blank (`` '')
-characters) and followed by a newline (``\en'') character, to the standard
+characters and followed by a newline (``\en'') character, to the standard
 output.
 .Pp
 The following option is available:
@@ -66,5 +66,6 @@ utility exits 0 on success, and >0 if an error occurs.
 .Sh STANDARDS
 The
 .Nm echo
-conforms to
-.St -p1003.2-92 .
+utility is expected to be
+.St -p1003.2
+compatible.

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego and Lance
@@ -36,17 +36,20 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)position.c	5.3 (Berkeley) 8/5/91";*/
-static char rcsid[] = "$Id: position.c,v 1.2 1993/08/01 19:00:06 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)position.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: position.c,v 1.3 1994/09/22 09:25:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "dd.h"
 #include "extern.h"
 
@@ -59,12 +62,12 @@ static char rcsid[] = "$Id: position.c,v 1.2 1993/08/01 19:00:06 mycroft Exp $";
 void
 pos_in()
 {
-	register int bcnt, cnt, nr, warned;
+	int bcnt, cnt, nr, warned;
 
 	/* If not a character, pipe or tape device, try to seek on it. */
 	if (!(in.flags & (ISCHR|ISPIPE|ISTAPE))) {
 		if (lseek(in.fd, (off_t)(in.offset * in.dbsz), SEEK_CUR) == -1)
-			err("%s: %s", in.name, strerror(errno));
+			err(1, "%s", in.name);
 		return;
 	}
 
@@ -90,7 +93,7 @@ pos_in()
 				--files_cnt;
 				continue;
 			}
-			err("skip reached end of input");
+			errx(1, "skip reached end of input");
 		}
 
 		/*
@@ -100,21 +103,21 @@ pos_in()
 		 */
 		if (ddflags & C_NOERROR) {
 			if (!warned) {
-				warn("%s: %s", in.name, strerror(errno));
+				warn("%s", in.name);
 				warned = 1;
-				summary(0);
+				summary();
 			}
 			continue;
 		}
-		err("%s: %s", in.name, strerror(errno));
+		err(1, "%s", in.name);
 	}
 }
 
 void
 pos_out()
 {
-	register int cnt, n;
 	struct mtop t_op;
+	int cnt, n;
 
 	/*
 	 * If not a tape, try seeking on the file.  Seeking on a pipe is
@@ -124,7 +127,7 @@ pos_out()
 	if (!(out.flags & ISTAPE)) {
 		if (lseek(out.fd,
 		    (off_t)out.offset * out.dbsz, SEEK_SET) == -1)
-			err("%s: %s", out.name, strerror(errno));
+			err(1, "%s", out.name);
 		return;
 	}
 
@@ -134,7 +137,7 @@ pos_out()
 		t_op.mt_count = out.offset;
 
 		if (ioctl(out.fd, MTIOCTOP, &t_op) < 0)
-			err("%s: %s", out.name, strerror(errno));
+			err(1, "%s", out.name);
 		return;
 	}
 
@@ -144,7 +147,7 @@ pos_out()
 			continue;
 
 		if (n < 0)
-			err("%s: %s", out.name, strerror(errno));
+			err(1, "%s", out.name);
 
 		/*
 		 * If reach EOF, fill with NUL characters; first, back up over
@@ -154,11 +157,11 @@ pos_out()
 		t_op.mt_op = MTBSR;
 		t_op.mt_count = 1;
 		if (ioctl(out.fd, MTIOCTOP, &t_op) == -1)
-			err("%s: %s", out.name, strerror(errno));
+			err(1, "%s", out.name);
 
 		while (cnt++ < out.offset)
 			if ((n = write(out.fd, out.db, out.dbsz)) != out.dbsz)
-				err("%s: %s", out.name, strerror(errno));
+				err(1, "%s", out.name);
 		break;
 	}
 }

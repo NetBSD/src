@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego and Lance
@@ -36,12 +36,13 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)conv.c	5.6 (Berkeley) 4/28/93";*/
-static char rcsid[] = "$Id: conv.c,v 1.2 1993/08/01 19:00:11 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)conv.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: conv.c,v 1.3 1994/09/22 09:24:58 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 
+#include <err.h>
 #include <string.h>
 
 #include "dd.h"
@@ -56,8 +57,8 @@ static char rcsid[] = "$Id: conv.c,v 1.2 1993/08/01 19:00:11 mycroft Exp $";
 void
 def()
 {
-	register int cnt;
-	register u_char *inp, *t;
+	int cnt;
+	u_char *inp, *t;
 
 	if (t = ctab)
 		for (inp = in.dbp - (cnt = in.dbrcnt); cnt--; ++inp)
@@ -100,9 +101,8 @@ void
 block()
 {
 	static int intrunc;
-	register int ch, cnt;
-	register u_char *inp, *outp, *t;
-	int maxlen;
+	int ch, cnt, maxlen;
+	u_char *inp, *outp, *t;
 
 	/*
 	 * Record truncation can cross block boundaries.  If currently in a
@@ -210,8 +210,8 @@ block_close()
 void
 unblock()
 {
-	register int cnt;
-	register u_char *inp, *t;
+	int cnt;
+	u_char *inp, *t;
 
 	/* Translation and case conversion. */
 	if (t = ctab)
@@ -243,11 +243,11 @@ unblock()
 void
 unblock_close()
 {
-	register int cnt;
-	register u_char *t;
+	int cnt;
+	u_char *t;
 
 	if (in.dbcnt) {
-		warn("%s: short input record", in.name);
+		warnx("%s: short input record", in.name);
 		for (t = in.db + in.dbcnt - 1; t >= in.db && *t == ' '; --t);
 		if (t >= in.db) {
 			cnt = t - in.db + 1;

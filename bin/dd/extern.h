@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego and Lance
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	5.4 (Berkeley) 11/13/91
- *	$Id: extern.h,v 1.2 1993/08/01 19:00:13 mycroft Exp $
+ *	from: @(#)extern.h	8.3 (Berkeley) 4/2/94
+ *	$Id: extern.h,v 1.3 1994/09/22 09:25:08 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
@@ -45,15 +45,14 @@ void block_close __P((void));
 void dd_out __P((int));
 void def __P((void));
 void def_close __P((void));
-void err __P((const char *, ...));
 void jcl __P((char **));
 void pos_in __P((void));
 void pos_out __P((void));
-void summary __P((int));
+void summary __P((void));
+void summaryx __P((int));
 void terminate __P((int));
 void unblock __P((void));
 void unblock_close __P((void));
-void warn __P((const char *, ...));
 
 extern IO in, out;
 extern STAT st;

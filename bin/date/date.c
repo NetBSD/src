@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1987, 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1987, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,30 +32,41 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1985, 1987, 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1985, 1987, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)date.c	5.5 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: date.c,v 1.7 1993/12/31 19:25:23 jtc Exp $";
+/*static char sccsid[] = "from: @(#)date.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: date.c,v 1.8 1994/09/22 09:24:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/file.h>
-#include <syslog.h>
-#include <unistd.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <ctype.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "extern.h"
 
 time_t tval;
 int retval, nflag;
 
+static void setthetime __P((char *));
+static void badformat __P((void));
+static void usage __P((void));
+
+int logwtmp __P((char *, char *, char *));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -103,15 +114,11 @@ main(argc, argv)
 	 * doesn't belong here, there kernel should not know about either.
 	 */
 	if ((tz.tz_minuteswest || tz.tz_dsttime) &&
-	    settimeofday((struct timeval *)NULL, &tz)) {
-		perror("date: settimeofday");
-		exit(1);
-	}
+	    settimeofday(NULL, &tz))
+		err(1, "settimeofday");
 
-	if (!rflag && time(&tval) == -1) {
-		perror("date: time");
-		exit(1);
-	}
+	if (!rflag && time(&tval) == -1)
+		err(1, "time");
 
 	format = "%a %b %e %H:%M:%S %Z %Y";
 
@@ -135,31 +142,35 @@ main(argc, argv)
 }
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
+void
 setthetime(p)
 	register char *p;
 {
 	register struct tm *lt;
 	struct timeval tv;
-	int dot;
-	char *t;
+	char *dot, *t;
 
-	for (t = p, dot = 0; *t; ++t)
-		if (!isdigit(*t) && (*t != '.' || dot++))
-			badformat();
+	for (t = p, dot = NULL; *t; ++t) {
+		if (isdigit(*t))
+			continue;
+		if (*t == '.' && dot == NULL) {
+			dot = t;
+			continue;
+		}
+		badformat();
+	}
 
 	lt = localtime(&tval);
 
-	if (t = index(p, '.')) {		/* .ss */
-		*t++ = '\0';
-		lt->tm_sec = ATOI2(t);
+	if (dot != NULL) {			/* .ss */
+		*dot++ = '\0';
+		if (strlen(dot) != 2)
+			badformat();
+		lt->tm_sec = ATOI2(dot);
 		if (lt->tm_sec > 61)
 			badformat();
 	} else
 		lt->tm_sec = 0;
-
-	for (t = p; *t; ++t)
-		if (!isdigit(*t))
-			badformat();
 
 	switch (strlen(p)) {
 	case 10:				/* yy */
@@ -196,29 +207,31 @@ setthetime(p)
 	if ((tval = mktime(lt)) == -1)
 		badformat();
 
-	if (!(p = getlogin()))			/* single-user or no tty */
-		p = "root";
-	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
-
 	/* set the time */
 	if (nflag || netsettime(tval)) {
 		logwtmp("|", "date", "");
 		tv.tv_sec = tval;
 		tv.tv_usec = 0;
-		if (settimeofday(&tv, (struct timezone *)NULL)) {
+		if (settimeofday(&tv, NULL)) {
 			perror("date: settimeofday");
 			exit(1);
 		}
 		logwtmp("{", "date", "");
 	}
+
+	if ((p = getlogin()) == NULL)
+		p = "???";
+	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
 }
 
+static void
 badformat()
 {
-	(void)fprintf(stderr, "date: illegal time format.\n");
+	warnx("illegal time format");
 	usage();
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr,
