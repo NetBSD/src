@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2002/04/04 04:25:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2002/04/04 04:43:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2002/04/04 04:25:44 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2002/04/04 04:43:20 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1751,11 +1751,13 @@ pmap_zero_page(paddr_t phys)
 		panic("pmap_zero_page: page has mappings");
 #endif
 
+	KDASSERT((phys & PGOFSET) == 0);
+
 	/*
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*cdst_pte = L2_PTE(phys & PG_FRAME, AP_KRW);
+	*cdst_pte = L2_PTE(phys, AP_KRW);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bzero_page(cdstp);
@@ -1780,12 +1782,14 @@ pmap_pageidlezero(paddr_t phys)
 	if (pg->mdpage.pvh_list != NULL)
 		panic("pmap_pageidlezero: page has mappings");
 #endif
-	
+
+	KDASSERT((phys & PGOFSET) == 0);
+
 	/*
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
 	 */
-	*cdst_pte = L2_PTE(phys & PG_FRAME, AP_KRW);
+	*cdst_pte = L2_PTE(phys, AP_KRW);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 
@@ -1831,6 +1835,9 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		panic("pmap_copy_page: dst page has mappings");
 #endif
 
+	KDASSERT((src & PGOFSET) == 0);
+	KDASSERT((dst & PGOFSET) == 0);
+
 	/*
 	 * Clean the source page.  Hold the source page's lock for
 	 * the duration of the copy so that no other mappings can
@@ -1844,8 +1851,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*csrc_pte = L2_PTE(src & PG_FRAME, AP_KR);
-	*cdst_pte = L2_PTE(dst & PG_FRAME, AP_KRW);
+	*csrc_pte = L2_PTE(src, AP_KR);
+	*cdst_pte = L2_PTE(dst, AP_KRW);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
@@ -2186,10 +2193,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	if (!pmap)
 		return;
 
-	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n", pmap, sva, eva));
-
-	sva &= PG_FRAME;
-	eva &= PG_FRAME;
+	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
+	    pmap, sva, eva));
 
 	/*
 	 * we lock in the pmap => vm_page direction
@@ -2350,8 +2355,9 @@ pmap_remove_all(struct vm_page *pg)
 		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
 		    pv->pv_va, pv->pv_flags));
 #ifdef DEBUG
-		if (!pmap_pde_page(pmap_pde(pmap, pv->pv_va)) ||
-		    !pmap_pte_v(pte) || pmap_pte_pa(pte) != pa)
+		if (pmap_pde_page(pmap_pde(pmap, pv->pv_va)) == 0 ||
+		    pmap_pte_v(pte) == 0 ||
+		    pmap_pte_pa(pte) != VM_PAGE_TO_PHYS(pg))
 			panic("pmap_remove_all: bad mapping");
 #endif	/* DEBUG */
 
@@ -2422,9 +2428,6 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 */
 		return;
 	}
-
-	sva &= PG_FRAME;
-	eva &= PG_FRAME;
 
 	/* Need to lock map->head */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -2531,6 +2534,9 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			panic("pmap_enter: entering PT page");
 	}
 #endif
+
+	KDASSERT(((va | pa) & PGOFSET) == 0);
+
 	/*
 	 * Get a pointer to the page.  Later on in this function, we
 	 * test for a managed page by checking pg != NULL.
@@ -2636,7 +2642,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 
 	/* Construct the pte, giving the correct access. */
-	npte = (pa & PG_FRAME);
+	npte = pa;
 
 	/* VA 0 is magic. */
 	if (pmap != pmap_kernel() && va != vector_page)
@@ -3484,7 +3490,7 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 	if (pte == NULL)
 		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
 
-	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
+	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa, ap, fl);
 }
 
 /*
