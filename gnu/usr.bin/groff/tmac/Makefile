@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2003/10/21 10:01:20 lukem Exp $
+# $NetBSD: Makefile,v 1.20 2003/12/12 06:08:30 jmc Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -8,6 +8,9 @@ TMACMODE?=	${NOBINMODE}
 # XXX: next depends on ../src/include/defs.h
 TMACDIR?=	/usr/share/tmac
 MDOCDIR?=	${TMACDIR}/mdoc
+
+# For ms.7
+USETBL=
 
 MAN=		groff_ms.7 groff_man.7 groff_me.7 groff_mdoc.7
 MAN+=		groff_trace.7 groff_www.7
