@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.1 1999/08/29 00:30:08 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.2 1999/08/29 17:34:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -42,6 +42,12 @@
  *
  *	x Should handle more than just Iomega USB Zip drives.  There are
  *	  a fair number of USB->SCSI dongles out there.
+ *
+ *	x Need to implement SCSI command timeout/abort handling.
+ *
+ *	x Need to handle SCSI Sense handling.
+ *
+ *	x Need to handle hot-unplug.
  */
 
 /* Authors: (with short acronyms for comments)
