@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.204 2002/03/05 03:51:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.205 2002/03/29 04:45:37 matt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -188,6 +188,10 @@ install-etc-files: check_DESTDIR
 	(cd namedb; \
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
+.if ${MACHINE_ARCH} == "vax"
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${PCS} \
+		${DESTDIR}/${PCS}
+.endif
 	(cd rc.d; ${MAKE} install)
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
 		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
