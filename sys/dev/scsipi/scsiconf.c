@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.147.2.4 2001/11/13 21:37:15 he Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.147.2.5 2002/09/04 04:12:29 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -489,6 +489,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-561  ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-76S", ""},SDEV_NOLUNS|SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
