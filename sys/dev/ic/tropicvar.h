@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.7 2000/06/06 16:26:58 soren Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.8 2000/06/13 20:00:03 soren Exp $	*/
 
 /* 
  * Mach Operating System
@@ -94,12 +94,12 @@ struct	tr_softc {
 					/* open of adapter  */
 	unsigned short exsap_station;	/* station assigned by open sap cmd */
 
-	void *sd_hook;
+	void *sc_sdhook;
 
 	/* Power management hooks */    
-	int (*enable) __P((struct tr_softc *));
-	void (*disable) __P((struct tr_softc *));
-	int enabled;
+	int (*sc_enable) __P((struct tr_softc *));
+	void (*sc_disable) __P((struct tr_softc *));
+	int sc_enabled;
 };
 
 int tr_config __P((struct tr_softc *));
