@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.28 2000/03/30 12:22:13 augustss Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.28.4.1 2004/04/08 02:51:45 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -435,7 +435,12 @@ fifo_close(v)
 		if (--fip->fi_writers == 0)
 			socantrcvmore(fip->fi_readsock);
 	}
-	if (vp->v_usecount > 1)
+	/*
+	 * shut down if either last close, or if close called from
+	 * vclean(). vclean() will call us with a_fflag == FNONBLOCK.
+	 */
+	if ((vp->v_usecount > 1)
+	    && ((ap->a_fflag & (FREAD | FWRITE | FNONBLOCK)) != FNONBLOCK))
 		return (0);
 	error1 = soclose(fip->fi_readsock);
 	error2 = soclose(fip->fi_writesock);
