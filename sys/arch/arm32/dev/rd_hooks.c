@@ -1,4 +1,4 @@
-/* $NetBSD: rd_hooks.c,v 1.3 1996/03/07 10:25:28 leo Exp $ */
+/* $NetBSD: rd_hooks.c,v 1.4 1996/03/09 17:26:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <vm/vm_map.h>
