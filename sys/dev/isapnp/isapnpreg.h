@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.2 1997/01/24 21:58:35 christos Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.3 1997/03/12 13:53:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -55,7 +55,7 @@
 #define ISAPNP_SERIAL_ISOLATION				0x01
 #define ISAPNP_CONFIG_CONTROL				0x02
 #define		ISAPNP_CC_RESET				0x01
-#define		ISAPNP_CC_WAIT_FOR KEY			0x02
+#define		ISAPNP_CC_WAIT_FOR_KEY			0x02
 #define		ISAPNP_CC_RESET_CSN			0x04
 #define		ISAPNP_CC_RESET_DRV			0x07
 #define ISAPNP_WAKE					0x03
