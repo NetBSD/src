@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 2001/06/04 17:08:36 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.4 2001/06/28 17:03:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "sci.h"
 #include "scif.h"
 #include "com.h"
-#include "hd64461if.h"
+#include "hd64461video.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ cons_decl(bicons);
 #endif
 
 /* HD64461 video module */
-#if NHD64461IF > 0
+#if NHD64461VIDEO > 0
 cons_decl(hd64461video_);
 #if NWSKBD > 0
 #define hd64461video_cngetc	wskbd_cngetc
@@ -109,7 +109,7 @@ struct consdev constab[] = {
 #if NBICONSDEV > 0
 	cons_init(bicons),
 #endif
-#if NHD64461IF > 0
+#if NHD64461VIDEO > 0
 	cons_init(hd64461video_),
 #endif
 #if NSCI > 0
@@ -123,19 +123,18 @@ struct consdev constab[] = {
 #endif
 	{ 0 } /* terminator */
 };
-#define CN_SELECTED	(CN_REMOTE + 1)		/* highest priority */
-#define CN_ENABLE(x)	set_console(x##cnputc, x##cnprobe)
+#define CN_ENABLE(x)	set_console(x ## cnputc, x ## cnprobe)
 
 static int initialized;
+static int attach_kbd = 1;
 static void set_console(void (*)(dev_t, int), void (*)(struct consdev *));
 static void disable_console(void);
 static void cn_nonprobe(struct consdev *);
+static void enable_bicons(void);
 
 void
 consinit()
 {
-	int serial_console = 1;
-
 	if (initialized)
 		return;
 
@@ -145,14 +144,13 @@ consinit()
 	switch (bootinfo->bi_cnuse) {
 	case BI_CNUSE_BUILTIN:
 #if NBICONSDEV > 0
-		CN_ENABLE(bicons);
-		serial_console = 0;
+		enable_bicons();
 #endif
 		break;
 	case BI_CNUSE_HD64461VIDEO:
-#if NHD64461IF > 0
+#if NHD64461VIDEO > 0
 		CN_ENABLE(hd64461video_);
-		serial_console = 0;
+		attach_kbd = 1;
 #endif
 		break;
 	case BI_CNUSE_SCI:
@@ -173,17 +171,15 @@ consinit()
 	}
 
 #if NBICONSDEV > 0
-	if (!initialized) { /* use builtin console instead */
-		bootinfo->bi_cnuse = BI_CNUSE_BUILTIN;
-		CN_ENABLE(bicons);
-	}
+	if (!initialized) /* use builtin console instead */
+		enable_bicons();
 #endif
 
 	if (initialized)
 		cninit();
 
 #if NPFCKBD > 0
-	if (!serial_console)
+	if (attach_kbd)
 		pfckbd_cnattach();
 #endif
 
@@ -222,3 +218,14 @@ cn_nonprobe(struct consdev *cp)
 {
 	cp->cn_pri = CN_DEAD;
 }
+
+#if NBICONSDEV > 0
+static void
+enable_bicons()
+{
+	bootinfo->bi_cnuse = BI_CNUSE_BUILTIN;
+	bicons_set_priority(CN_INTERNAL);
+	CN_ENABLE(bicons);
+	attach_kbd = 1;
+}
+#endif

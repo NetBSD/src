@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.12 2001/06/04 17:08:36 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.13 2001/06/28 17:03:47 uch Exp $
 #
 maxpartitions 8
 
@@ -63,7 +63,7 @@ file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 define	hd64461if {}
 device	hd64461if: hd64461if
 attach	hd64461if at shb
-file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if needs-flag
+file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if
 
 device	hd64461pcmcia: pcmciabus
 attach	hd64461pcmcia at hd64461if
@@ -74,7 +74,7 @@ file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart
 
 device	hd64461video: hpcfbif
 attach	hd64461video at hd64461if
-file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video
+file	arch/hpcsh/dev/hd64461/hd64461video.c	hd64461video	needs-flag
 file	dev/hpc/video_subr.c			hd64461video
 
 # network devices MII bus
