@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.5 1994/02/01 06:01:43 deraadt Exp $
+ * $Id: locore.s,v 1.6 1994/03/10 20:59:28 pk Exp $
  */
 
 #define	LOCORE
@@ -2579,12 +2579,12 @@ _addupc:
 	bneg,a	Lauexit			! if(pc<pr_off) skip out
 	 nop
 	ld	[%i1 + 12], %l3		! scale = pr->pr_scale
-	sll	%i0, 1, %o0		! pc /= 2
-	sll	%l3, 1, %o1		! scale /= 2
+	srl	%l0, 1, %o0		! pc /= 2
+	srl	%l3, 1, %o1		! scale /= 2
 	call	.umul			! praddr = pc * scale
 	 nop
 	ld	[%i1 + 4], %l3		! get pr->pr_size
-	sll	%o0, 15, %l5		! praddr <<= 15
+	srl	%o0, 15, %l5		! praddr <<= 15
 	andn	%l5, 1, %l5		! praddr &= ~1
 	cmp	%l5, %l3		! if(praddr > pr_size) skip out
 	bge,a	Lauexit
