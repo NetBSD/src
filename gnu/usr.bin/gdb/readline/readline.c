@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)readline.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: readline.c,v 1.2 1993/08/01 18:48:07 mycroft Exp $";
+static char rcsid[] = "$Id: readline.c,v 1.3 1993/12/07 19:58:50 mycroft Exp $";
 #endif /* not lint */
 
 /* readline.c -- a general facility for reading lines of input
@@ -48,6 +48,8 @@ static char *xmalloc (), *xrealloc ();
 #include <fcntl.h>
 #include <sys/file.h>
 #include <signal.h>
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef __GNUC__
 #define alloca __builtin_alloca
@@ -454,7 +456,7 @@ rl_handle_sigwinch (sig, code, scp)
      int sig, code;
      struct sigcontext *scp;
 {
-  char *term = rl_terminal_name, *getenv ();
+  char *term = rl_terminal_name;
 
   if (readline_echoing_p)
     {
@@ -2145,7 +2147,6 @@ int
 alphabetic (c)
      int c;
 {
-  char *rindex ();
   if (pure_alphabetic (c) || (numeric (c)))
     return (1);
 
@@ -3264,7 +3265,7 @@ rl_complete_internal (what_to_do)
 	    /* Handle simple case first.  What if there is only one answer? */
 	    if (!matches[1])
 	      {
-		char *rindex (), *temp;
+		char *temp;
 
 		if (rl_filename_completion_desired)
 		  temp = rindex (matches[0], '/');
@@ -3287,7 +3288,7 @@ rl_complete_internal (what_to_do)
 	       is. */
 	    for (i = 1; matches[i]; i++)
 	      {
-		char *rindex (), *temp = (char *)NULL;
+		char *temp = (char *)NULL;
 
 		/* If we are hacking filenames, then only count the characters
 		   after the last slash in the pathname. */
@@ -3356,7 +3357,7 @@ rl_complete_internal (what_to_do)
 		      }
 		    else
 		      {
-			char *rindex (), *temp = (char *)NULL;
+			char *temp = (char *)NULL;
 
 			if (rl_filename_completion_desired)
 			  temp = rindex (matches[l], '/');
@@ -4575,7 +4576,7 @@ filename_completion_function (text, state)
   /* If we don't have any state, then do some initialization. */
   if (!state)
     {
-      char *rindex (), *temp;
+      char *temp;
 
       if (dirname) free (dirname);
       if (filename) free (filename);
@@ -5165,7 +5166,7 @@ rl_parse_and_bind (string)
      char *string;
 {
   extern char *possible_control_prefixes[], *possible_meta_prefixes[];
-  char *rindex (), *funname, *kname;
+  char *funname, *kname;
   static int substring_member_of_array (), stricmp ();
   register int c;
   int key, i;
