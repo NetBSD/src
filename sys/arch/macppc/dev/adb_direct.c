@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.7 1998/11/15 19:41:33 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.8 1998/11/24 08:26:50 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -145,8 +145,7 @@
  * ADB transactions. The actual timing delay for for each uS is
  * calculated at boot time to account for differences in machine speed.
  */
-/*#define ADB_DELAY	150*/
-#define ADB_DELAY	1000
+#define ADB_DELAY	150
 
 /*
  * Maximum ADB message length; includes space for data, result, and
@@ -1281,7 +1280,7 @@ adb_reinit(void)
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
-	DELAY(1000);
+	delay(1000);
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
@@ -1358,6 +1357,7 @@ adb_reinit(void)
 			send_string[2] = 0xfe;
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
+			delay(500);
 
 			/* send TALK R3 - anything at old address? */
 			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
@@ -1412,6 +1412,7 @@ adb_reinit(void)
 				send_string[2] = 0xfe;
 				adb_op_sync((Ptr)send_string, (Ptr)0,
 				    (Ptr)0, (short)command);
+				delay(1000);
 			}
 		}
 	}
