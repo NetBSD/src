@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.343 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.344 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -19,7 +19,6 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		machines) can be used as console again. [tsutsui 20040408]
 	hp300: Fix some bugs in apci serial which was switched to MI com(4),
 		so that now it's actually functional. [tsutsui 20040410]
-	sgimips: Add IP12 support.  [pooka 20040411]
 	setrlimit(2): Add RLIMIT_SBSIZE to limit the socket buffer size.
 		[christos 20040417]
 	csh(1): Add support for "limit sbsize" to control the
