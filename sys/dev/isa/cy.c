@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cy.c,v 1.5 1994/03/06 17:18:51 mycroft Exp $
+ *	$Id: cy.c,v 1.6 1994/03/08 12:21:16 mycroft Exp $
  */
 
 /*
@@ -73,6 +73,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 

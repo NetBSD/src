@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.11 1994/03/06 17:19:21 mycroft Exp $
+ *	$Id: wd7000.c,v 1.12 1994/03/08 12:21:30 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -35,6 +35,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa_device.h>

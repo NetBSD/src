@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.15 1994/03/06 17:19:03 mycroft Exp $
+ *	$Id: if_hp.c,v 1.16 1994/03/08 12:21:24 mycroft Exp $
  */
 
 /*
@@ -87,6 +87,7 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa_device.h>
@@ -159,7 +160,7 @@ hpprobe(dvp)
 #endif
 
 	hpc = (ns->ns_port = dvp->id_iobase + 0x10);
-	s = splnet();
+	s = splimp();
 
 	ns->hp_irq = ffs(dvp->id_irq) - 1;
 
@@ -438,7 +439,7 @@ hpinit(unit)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splnet();
+	s = splimp();
 
 #ifdef HP_DEBUG
 	printf("hpinit: hp%d at 0x%x irq %d\n", unit, hpc, (int) ns->hp_irq);
@@ -502,7 +503,7 @@ hpinit(unit)
  * Setup output on interface.
  * Get another datagram to send off of the interface queue,
  * and map it to the interface before starting the output.
- * called only at splnet or interrupt level.
+ * called only at splimp or interrupt level.
  */
 hpstart(ifp)
 	struct ifnet *ifp;
@@ -923,7 +924,7 @@ hpioctl(ifp, cmd, data)
 	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct hp_softc *ns = &hp_softc[ifp->if_unit];
 	struct ifreq *ifr = (struct ifreq *) data;
-	int     s = splnet(), error = 0;
+	int     s = splimp(), error = 0;
 
 
 	switch (cmd) {
