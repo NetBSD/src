@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.5 2002/07/16 13:26:02 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.6 2002/10/22 01:31:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ pthread__alarm_process(pthread_t self, void *arg)
 	pthread_spinlock(self, &pthread_alarmqlock);
 
 	/* 1. Collect a list of all alarms whose time has passed. */
-	for (iterator = PTQ_FIRST(&pthread_alarmqueue), next = NULL;
+	for (iterator = next = PTQ_FIRST(&pthread_alarmqueue);
 	     iterator; 
 	     iterator = next) {
 		if (timespeccmp(&ts, iterator->pta_time, <))
