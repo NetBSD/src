@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.153 1999/08/17 09:42:14 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.154 1999/08/24 21:32:25 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.146 1999/08/17 09:40:25 drochner Exp 
+ *	NetBSD: pcidevs,v 1.147 1999/08/24 21:32:04 soren Exp 
  */
 
 /*
@@ -951,6 +951,7 @@
 #define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX Host Bridge/Controller */
 #define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Interface */
 #define	PCI_PRODUCT_INTEL_82443BX_NOAGP	0x7192		/* 82443BX Host Bridge/Controller (AGP disabled) */
+#define	PCI_PRODUCT_INTEL_I740	0x7800		/* i740 Graphics Accelerator */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 
