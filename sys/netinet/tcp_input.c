@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.54 1998/04/29 20:43:29 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.55 1998/05/02 04:21:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
 
+int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
+
 extern u_long sb_max;
 
 #endif /* TUBA_INCLUDE */
@@ -126,10 +128,13 @@ extern u_long sb_max;
 /*
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
  * we have already delayed an ACK (must send an ACK every two segments).
+ * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
+ * option is enabled.
  */
 #define	TCP_SETUP_ACK(tp, ti) \
 do { \
-	if ((tp)->t_flags & TF_DELACK) \
+	if ((tp)->t_flags & TF_DELACK || \
+	    (tcp_ack_on_push && (ti)->ti_flags & TH_PUSH)) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
