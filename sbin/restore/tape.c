@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.20 1996/03/15 22:39:41 scottr Exp $	*/
+/*	$NetBSD: tape.c,v 1.21 1996/11/30 18:04:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.20 1996/03/15 22:39:41 scottr Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.21 1996/11/30 18:04:48 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -1002,33 +1002,33 @@ gethead(buf)
 	long i;
 	union {
 		quad_t	qval;
-		long	val[2];
+		int32_t	val[2];
 	} qcvt;
 	union u_ospcl {
 		char dummy[TP_BSIZE];
 		struct	s_ospcl {
-			long	c_type;
-			long	c_date;
-			long	c_ddate;
-			long	c_volume;
-			long	c_tapea;
-			u_short	c_inumber;
-			long	c_magic;
-			long	c_checksum;
+			int32_t   c_type;
+			int32_t   c_date;
+			int32_t   c_ddate;
+			int32_t   c_volume;
+			int32_t   c_tapea;
+			u_int16_t c_inumber;
+			int32_t   c_magic;
+			int32_t   c_checksum;
 			struct odinode {
 				unsigned short odi_mode;
-				u_short	odi_nlink;
-				u_short	odi_uid;
-				u_short	odi_gid;
-				long	odi_size;
-				long	odi_rdev;
-				char	odi_addr[36];
-				long	odi_atime;
-				long	odi_mtime;
-				long	odi_ctime;
+				u_int16_t odi_nlink;
+				u_int16_t odi_uid;
+				u_int16_t odi_gid;
+				int32_t   odi_size;
+				int32_t   odi_rdev;
+				char      odi_addr[36];
+				int32_t   odi_atime;
+				int32_t   odi_mtime;
+				int32_t   odi_ctime;
 			} c_dinode;
-			long	c_count;
-			char	c_addr[256];
+			int32_t c_count;
+			char    c_addr[256];
 		} s_ospcl;
 	} u_ospcl;
 
