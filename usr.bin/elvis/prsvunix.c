@@ -3,7 +3,7 @@
 /* This file contains the UNIX-specific parts of the "elvprsv" program. */
 
 #ifndef lint
-static char prsvunix_rcsid[] = "$Id: prsvunix.c,v 1.3 1993/08/14 10:32:15 mycroft Exp $";
+static char prsvunix_rcsid[] = "$Id: prsvunix.c,v 1.4 1993/12/06 09:29:36 cgd Exp $";
 #endif /* not lint */
 
 
@@ -13,9 +13,6 @@ static char prsvunix_rcsid[] = "$Id: prsvunix.c,v 1.3 1993/08/14 10:32:15 mycrof
 #else
 #include <sys/stat.h>
 #include <pwd.h>
-#endif
-#ifndef __386BSD__
-extern struct passwd *getpwuid();
 #endif
 
 /* This variable is used to add extra error messages for mail sent to root */
