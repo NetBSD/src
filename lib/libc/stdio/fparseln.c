@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.2.2.3 2004/06/22 07:17:40 tron Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.2.2.4 2004/06/22 21:42:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,9 +29,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.2.2.3 2004/06/22 07:17:40 tron Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.2.2.4 2004/06/22 21:42:28 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,20 +51,6 @@ __weak_alias(fparseln,_fparseln)
 #endif
 
 #if ! HAVE_FPARSELN
-
-#ifndef HAVE_NBTOOL_CONFIG_H
-#include "reentrant.h"
-#include "local.h"
-#else
-#define FLOCKFILE(fp)
-#define FUNLOCKFILE(fp)
-#endif
-
-#if defined(_REENTRANT) && !HAVE_NBTOOL_CONFIG_H
-#define __fgetln(f, l) __fgetstr(f, l, '\n')
-#else
-#define __fgetln(f, l) fgetln(f, l)
-#endif
 
 static int isescaped(const char *, const char *, int);
 
@@ -124,15 +114,13 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 	 */
 	nl  = '\n';
 
-	FLOCKFILE(fp);
-
 	while (cnt) {
 		cnt = 0;
 
 		if (lineno)
 			(*lineno)++;
 
-		if ((ptr = __fgetln(fp, &s)) == NULL)
+		if ((ptr = fgetln(fp, &s)) == NULL)
 			break;
 
 		if (s && com) {		/* Check and eliminate comments */
@@ -164,7 +152,6 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 			continue;
 
 		if ((cp = realloc(buf, len + s + 1)) == NULL) {
-			FUNLOCKFILE(fp);
 			free(buf);
 			return NULL;
 		}
@@ -174,8 +161,6 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 		len += s;
 		buf[len] = '\0';
 	}
-
-	FUNLOCKFILE(fp);
 
 	if ((flags & FPARSELN_UNESCALL) != 0 && esc && buf != NULL &&
 	    strchr(buf, esc) != NULL) {
