@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.4 1998/03/06 18:11:53 christos Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.5 1998/03/09 21:34:13 christos Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkmake.y	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mkmake.y,v 1.4 1998/03/06 18:11:53 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: mkmake.y,v 1.5 1998/03/09 21:34:13 christos Exp $");
+#endif
 #endif /* not lint */
 
 typedef struct string {
@@ -75,6 +79,7 @@ typedef struct same {
 	*value_list,			/* If variable, value list */
 	*shell_item;			/* If a shell variable, current value */
 } same_t;
+
 
 %}
 
@@ -301,8 +306,45 @@ white_space : WHITE_SPACE
     ;
 %%
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
+/* mkmake.y */
+void yyerror __P((char *));
+void assign __P((same_t *, same_t *));
+int yylex __P((void));
+extern int yyparse __P((void));
+int main __P((int, char *[]));
+
+static int visitcheck __P((same_t *));
+static int string_hashof __P((char *, int));
+static int string_same __P((string_t *, string_t *));
+static string_t *string_lookup __P((char *));
+static same_t *same_search __P((same_t *, same_t *));
+static same_t *same_cat __P((same_t *, same_t *));
+static same_t *same_item __P((string_t *));
+static same_t *same_copy __P((same_t *));
+static same_t *same_merge __P((same_t *, same_t *));
+static void same_free __P((same_t *));
+static same_t *same_unlink __P((same_t *));
+static void same_replace __P((same_t *, same_t *));
+static same_t *same_char __P((int));
+static void add_target __P((same_t *, same_t *));
+static same_t *add_targets_actions __P((same_t *, same_t *));
+static same_t *add_depends __P((same_t *, same_t *));
+static same_t *value_of __P((same_t *));
+static same_t *expand_variables __P((same_t *, int));
+static same_t *ws_merge __P((same_t *));
+static same_t *variable __P((same_t *));
+static same_t *shell_variable __P((same_t *));
+static same_t *for_statement __P((same_t *, same_t *, same_t *));
+static same_t *do_command __P((same_t *, same_t *));
+static int Getchar __P((void));
+static int token_type __P((char *));
+#if 0
+static void dump_same __P((same_t *));
+#endif
+static void do_dump __P((void));
 static int last_char, last_saved = 0;
 static int column = 0, lineno = 1;
 
@@ -311,19 +353,14 @@ static string_t
     *strings = 0;
 
 static same_t
-    *shell_variables = 0,
-    *shell_special = 0,
     *variables = 0,
-    *targets = 0,
-    *actions = 0;
+    *targets = 0;
 
 static same_t
     *null,
     *blank,
     *cwd_line,
     *newline;
-
-extern char *malloc();
 
 static unsigned int
 	clock = -1;
@@ -340,6 +377,7 @@ struct {
 #define	visit_next(via)	(visit_stack[clock].next = 1, (via) = (via)->nexttoken)
 #define	visit_end()	(clock--)
 
+void
 yyerror(s)
 char *s;
 {
@@ -347,7 +385,7 @@ char *s;
     do_dump();
 }
 
-int
+static int
 visitcheck(same)
 same_t *same;
 {
@@ -358,7 +396,7 @@ same_t *same;
     return 0;
 }
 
-int
+static int
 string_hashof(string, length)
 char *string;
 int length;
@@ -366,12 +404,12 @@ int length;
     register int i = 0;
 
     while (length--) {
-	i = (i<<3) + *string ^ ((i>>28)&0x7);
+	i = ((i<<3) + *string) ^ ((i>>28)&0x7);
     }
     return i;
 }
 
-int
+static int
 string_same(s1, s2)
 string_t
     *s1, *s2;
@@ -384,7 +422,7 @@ string_t
     }
 }
 
-string_t *
+static string_t *
 string_lookup(string)
 char *string;
 {
@@ -418,7 +456,7 @@ char *string;
 
 #define	same_singleton(s)	((s)->nexttoken == (s))
 
-same_t *
+static same_t *
 same_search(list, token)
 same_t
     *list,
@@ -440,7 +478,7 @@ same_t
     return 0;
 }
 
-same_t *
+static same_t *
 same_cat(list, tokens)
 same_t
     *list,
@@ -463,7 +501,7 @@ same_t
     }
 }
 
-same_t *
+static same_t *
 same_item(string)
 string_t *string;
 {
@@ -479,7 +517,7 @@ string_t *string;
     return ptr;
 }
 
-same_t *
+static same_t *
 same_copy(same)
 same_t *same;
 {
@@ -497,7 +535,7 @@ same_t *same;
 }
 
 
-same_t *
+static same_t *
 same_merge(t1, t2)
 same_t
     *t1,
@@ -524,7 +562,7 @@ same_t
 }
 
 
-void
+static void
 same_free(list)
 same_t *list;
 {
@@ -543,7 +581,7 @@ same_t *list;
     } while (token != list);
 }
 
-same_t *
+static same_t *
 same_unlink(token)
 same_t
     *token;
@@ -562,7 +600,7 @@ same_t
     return tmp;
 }
 
-void
+static void
 same_replace(old, new)
 same_t
     *old,
@@ -579,7 +617,7 @@ same_t
 }
 
 
-same_t *
+static same_t *
 same_char(ch)
 char ch;
 {
@@ -592,7 +630,7 @@ char ch;
 }
 
 
-void
+static void
 add_target(target, actions)
 same_t
     *target,
@@ -615,7 +653,7 @@ same_t
 }
 
 
-same_t *
+static same_t *
 add_targets_actions(target, actions)
 same_t
     *target,
@@ -636,7 +674,7 @@ same_t
     return 0;
 }
 
-same_t *
+static same_t *
 add_depends(target, depends)
 same_t
     *target,
@@ -677,7 +715,7 @@ same_t
     variables = same_cat(variables, variable);
 }
 
-same_t *
+static same_t *
 value_of(variable)
 same_t *variable;
 {
@@ -691,7 +729,7 @@ same_t *variable;
 }
 
 
-same_t *
+static same_t *
 expand_variables(token, free)
 same_t *token;
 int	free;
@@ -722,11 +760,11 @@ int	free;
 }
 
 
-same_t *
+static same_t *
 ws_merge(list)
 same_t *list;
 {
-    same_t *newlist = 0, *item;
+    same_t *newlist = 0, *item = NULL;
     int what = 0;
 
     while (list) {
@@ -756,7 +794,7 @@ same_t *list;
 }
 
 
-same_t *
+static same_t *
 variable(var_name)
 same_t *var_name;
 {
@@ -765,7 +803,7 @@ same_t *var_name;
     char *newname;
 
     if ((newname = malloc(length+1+3)) == 0) {
-	fprintf("Out of space for a variable name.\n");
+	fprintf(stderr, "Out of space for a variable name.\n");
 	exit(1);
     }
     newname[0] = '$';
@@ -779,7 +817,7 @@ same_t *var_name;
 }
 
 
-same_t *
+static same_t *
 shell_variable(var_name)
 same_t *var_name;
 {
@@ -788,7 +826,7 @@ same_t *var_name;
     char *newname;
 
     if ((newname = malloc(length+1+2)) == 0) {
-	fprintf("Out of space for a variable name.\n");
+	fprintf(stderr, "Out of space for a variable name.\n");
 	exit(1);
     }
     newname[0] = '$';
@@ -800,7 +838,7 @@ same_t *var_name;
     return resolved;
 }
 
-same_t *
+static same_t *
 for_statement(special, variable, list)
 same_t
     *special,
@@ -812,7 +850,7 @@ same_t
     return variable;
 }
 
-same_t *
+static same_t *
 do_command(forlist, commands)
 same_t
     *forlist,
@@ -856,7 +894,7 @@ same_t
 }
 
 
-int
+static int
 Getchar()
 {
     if (last_saved) {
@@ -878,7 +916,7 @@ Getchar()
 }
 
 
-int
+static int
 token_type(string)
 char *string;
 {
@@ -909,6 +947,7 @@ char *string;
 }
 
 
+int
 yylex()
 {
 #define	ret_token(c)	if (bufptr != buffer) { \
@@ -1019,9 +1058,11 @@ yylex()
     Return(EOF, 0);
 }
 
-main()
+int
+main(argc, argv)
+    int argc;
+    char *argv[];
 {
-#define	YYDEBUG
     extern int yydebug;
 
     null = same_item(string_lookup(""));
@@ -1038,7 +1079,8 @@ main()
     return 0;
 }
 
-#if	defined(YYDEBUG)
+#if 0
+static void
 dump_same(same)
 same_t *same;
 {
@@ -1049,8 +1091,9 @@ same_t *same;
     }
     visit_end();
 }
-#endif	/* YYDEBUG */
+#endif
 
+static void
 do_dump()
 {
     string_t *string;
