@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2001/06/02 18:09:15 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.164 2001/10/16 16:31:38 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2001/06/02 18:09:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2001/10/16 16:31:38 uch Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -190,8 +190,13 @@ trap(status, cause, vaddr, opc, frame)
 		type |= T_USER;
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
-		if (type != T_BREAK)
+		if (type != T_BREAK) {
+#ifdef IPL_ICU_MASK
+			spllowersofthigh();
+#else
 			_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+#endif
+		}
 	}
 
 	switch (type) {
@@ -488,7 +493,14 @@ trap(status, cause, vaddr, opc, frame)
 		break; /* SIGNAL */
 	    }
 	case T_RES_INST+T_USER:
+#if defined(MIPS3_5900) && defined(SOFTFLOAT)
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+		userret(p);
+		return; /* GEN */
+#else
 		sig = SIGILL;
+		break; /* SIGNAL */
+#endif
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
 #if defined(NOFPU) && !defined(SOFTFLOAT)
