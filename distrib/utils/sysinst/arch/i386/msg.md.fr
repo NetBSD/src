@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.18 2002/08/12 02:22:55 grant Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.19 2003/05/14 22:11:44 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,6 +144,20 @@ message editparttable
 {Editez votre table de partition DOS. La partition en surbrillance est
 actuellement active. La table des partitions est :
 
+}
+
+message mbrpart_start_special
+{
+  Valeurs spéciales qui peuvent être entrées pour la valeur Début:
+ -N: commence à la fin de la parition N
+  0: commence au début du disque
+}
+
+message mbrpart_size_special
+{
+  Valeurs spéciales qui peuvent être entrées pour la valeur Taille:
+  -N: dimentionne la partition de façon à finir au début de la partition N
+   0: finit à la fin du disque
 }
 
 message reeditpart
