@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.48 1996/10/13 02:32:48 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.49 1996/10/15 23:06:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -170,6 +170,7 @@ bio_doread(vp, blkno, size, cred, async)
 	int async;
 {
 	register struct buf *bp;
+	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	bp = getblk(vp, blkno, size, 0, 0);
 
@@ -188,7 +189,7 @@ bio_doread(vp, blkno, size, cred, async)
 		VOP_STRATEGY(bp);
 
 		/* Pay for the read. */
-		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
+		p->p_stats->p_ru.ru_inblock++;
 	} else if (async) {
 		brelse(bp);
 	}
@@ -276,6 +277,7 @@ bwrite(bp)
 	struct buf *bp;
 {
 	int rv, sync, wasdelayed, s;
+	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -303,7 +305,7 @@ bwrite(bp)
 	if (wasdelayed)
 		reassignbuf(bp, bp->b_vp);
 	else
-		curproc->p_stats->p_ru.ru_oublock++;
+		p->p_stats->p_ru.ru_oublock++;
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	bp->b_vp->v_numoutput++;
@@ -352,6 +354,7 @@ bdwrite(bp)
 	struct buf *bp;
 {
 	int s;
+	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
 
 	/* If this is a tape block, write the block now. */
 	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
@@ -367,7 +370,7 @@ bdwrite(bp)
 	 */
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;
+		p->p_stats->p_ru.ru_oublock++;
 		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
