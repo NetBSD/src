@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2003/05/10 21:10:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2003/05/27 20:05:35 fvdl Exp $	*/
 
 /*
  *
@@ -3347,9 +3347,14 @@ pmap_get_physpage(va, level, paddrp)
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
 	} else {
+		/* XXX */
+		if (level != 1)
+			simple_lock(&kpm->pm_obj[level - 1].vmobjlock);
 		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
 				    ptp_va2o(va, level), NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (level != 1)
+			simple_unlock(&kpm->pm_obj[level - 1].vmobjlock);
 		if (ptp == NULL)
 			panic("pmap_get_physpage: out of memory");
 		ptp->flags &= ~PG_BUSY;
