@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.38 2003/10/17 05:23:56 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.39 2004/10/28 19:43:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.38 2003/10/17 05:23:56 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.39 2004/10/28 19:43:29 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -447,7 +447,7 @@ resolve_ccdname(name)
 	len = strlen(name);
 	c = name[len - 1];
 
-	if (isdigit(c)) {
+	if (isdigit((unsigned char)c)) {
 		if ((rawpart = getrawpartition()) < 0)
 			return (NULL);
 		if (asprintf(&path, "/dev/%s%c", name, 'a' + rawpart) < 0)
