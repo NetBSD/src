@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.19 1996/10/13 22:54:52 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.20 1996/11/11 20:33:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -413,7 +413,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entry = addr + eh.e_entry;
+				*entry = addr + eh.e_entry - ph[i].p_vaddr;
 				ap->arg_interp = addr;
 			}
 			addr += size;
@@ -612,6 +612,8 @@ ELFNAME2(exec,makecmds)(p, epp)
 		}
 	}
 
+	/* this breaks on, e.g., OpenBSD-compatible mips shared binaries. */
+#ifndef ELF_INTERP_NON_RELOCATABLE
 	/*
 	 * If no position to load the interpreter was set by a probe
 	 * function, pick the same address that a non-fixed mmap(0, ..)
@@ -620,6 +622,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 	if (pos == ELFDEFNNAME(NO_ADDR) &&
 	    epp->ep_emul == &ELFNAMEEND(emul_netbsd))
 		pos = round_page(epp->ep_daddr + MAXDSIZ);
+#endif	/* !ELF_INTERP_NON_RELOCATABLE */
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
