@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.42 1999/11/25 21:57:45 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.43 1999/11/25 22:11:03 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -160,7 +160,7 @@ static struct aconfdata aconftab[] = {
 	{ "apssc",	8738,	35 },	/* Apollo '060 scsi */
 	/* KATO development */
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
-	/* Individual Computers / Joerg Schoenfeld */
+	/* Individual Computers Jens Schoenfeld */
 	{ "buddha",	4626,	0 },
 	{ "X-serve",	4626,	23 },	/* X-serve Ethernet */
 	/* VMC Harald Frank */
