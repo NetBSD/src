@@ -33,7 +33,7 @@
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
  *	from: genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp
- *	$Id: genassym.c,v 1.16 1994/05/05 03:09:11 gwr Exp $
+ *	$Id: genassym.c,v 1.17 1994/05/06 22:09:49 gwr Exp $
  */
 
 #define KERNEL
@@ -145,12 +145,12 @@ main()
 	 */
 
 	/* pcb offsets */
-	printf("#define\tP_LINK %d\n", &p->p_link);
-	printf("#define\tP_RLINK %d\n", &p->p_rlink);
+	printf("#define\tP_FORW %d\n", &p->p_forw);
+	printf("#define\tP_BACK %d\n", &p->p_back);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRI %d\n", &p->p_pri);
+	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tP_FLAG %d\n", &p->p_flag);
