@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.20 2000/10/15 12:33:02 shin Exp $
+.\"	$NetBSD: contents,v 1.21 2000/10/16 02:13:02 shin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ A gzipped
 .Nx
 kernel containing code for everything supported in this release.
 .if r_hpcmips \{\
-This kernel runs on VR41xx CPU only.
+This kernel runs on Vr41xx CPU only.
 .\}
 .
 .if r_arm26 \{\
@@ -852,7 +852,7 @@ follows:
 .(tag pbsdboot1.exe
 .It Pa netbsd.gz
 .Nx*M
-kernel with system installer (sysinst). This kernel runs on VR41xx only.
+kernel with system installer (sysinst). This kernel runs on Vr41xx CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa pbsdboot.exe
