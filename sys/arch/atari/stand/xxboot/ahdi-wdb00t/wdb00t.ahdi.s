@@ -1,4 +1,4 @@
-/*	$NetBSD: wdb00t.ahdi.s,v 1.1.1.1 1996/02/29 11:36:50 leo Exp $	*/
+/*	$NetBSD: wdb00t.ahdi.s,v 1.2 1996/12/26 14:55:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -152,14 +152,16 @@ err:	movq	#-1,d0
 	beqs	err
 	movq	#63,d0
 	lea	idedr:l,a1
-4:	movl	a1@,a0@+
-	movl	a1@,a0@+
+4:	movw	a1@,a0@+
+	movw	a1@,a0@+
+	movw	a1@,a0@+
+	movw	a1@,a0@+
 	dbra	d0,4b
 	dbra	d1,wait
 	movq	#0,d0
 	rts
 
-fill:	.space	68
+fill:	.space	64
 
 dpar:	.byte	0			| tracks/cylinder
 	.byte	0			| sectors/track

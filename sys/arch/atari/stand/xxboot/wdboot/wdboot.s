@@ -1,4 +1,4 @@
-/*	$NetBSD: wdboot.s,v 1.2 1996/03/18 21:06:39 leo Exp $	*/
+/*	$NetBSD: wdboot.s,v 1.3 1996/12/26 14:55:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -183,8 +183,10 @@ err:	movq	#-1,d0
 	beqs	err
 	movq	#63,d0
 	lea	idedr:l,a1
-4:	movl	a1@,a0@+
-	movl	a1@,a0@+
+4:	movw	a1@,a0@+
+	movw	a1@,a0@+
+	movw	a1@,a0@+
+	movw	a1@,a0@+
 	dbra	d0,4b
 	dbra	d1,wait
 	movq	#0,d0
@@ -192,7 +194,7 @@ err:	movq	#-1,d0
 
 regsav:	.long	0
 
-fill:	.space	24
+fill:	.space	20
 
 dpar:	.byte	0			| tracks/cylinder
 	.byte	0			| sectors/track
