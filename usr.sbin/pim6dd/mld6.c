@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.4 2000/02/25 06:30:54 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.5 2000/02/28 07:17:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -65,7 +65,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: mld6.c,v 1.11 2000/02/03 06:39:50 jinmei Exp
+ *  KAME Id: mld6.c,v 1.12 2000/02/28 05:39:35 jinmei Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -101,8 +101,9 @@ static struct msghdr 		sndmh,
 static struct iovec 		sndiov[2];
 static struct iovec 		rcviov[2];
 static struct sockaddr_in6 	from;
-static u_char   		rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-			   	CMSG_SPACE(sizeof(int))];
+static u_char   		*rcvcmsgbuf = NULL;
+static int			rcvcmsglen;
+
 #ifndef USE_RFC2292BIS
 u_int8_t raopt[IP6OPT_RTALERT_LEN];
 #endif 
@@ -132,10 +133,15 @@ init_mld6()
 
     rtalert_code = htons(IP6OPT_RTALERT_MLD);
     if (!mld6_recv_buf && (mld6_recv_buf = malloc(RECV_BUF_SIZE)) == NULL)
-	    log(LOG_ERR, 0, "malloca failed");
+	    log(LOG_ERR, 0, "malloc failed");
     if (!mld6_send_buf && (mld6_send_buf = malloc(RECV_BUF_SIZE)) == NULL)
-	    log(LOG_ERR, 0, "malloca failed");
+	    log(LOG_ERR, 0, "malloc failed");
 
+    rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	    CMSG_SPACE(sizeof(int));
+    if (rcvcmsgbuf == NULL && (rcvcmsgbuf = malloc(rcvcmsglen)) == NULL)
+	    log(LOG_ERR, 0,"malloc failed");
+    
     IF_DEBUG(DEBUG_KERN)
         log(LOG_DEBUG,0,"%d octets allocated for the emit/recept buffer mld6",RECV_BUF_SIZE);
 
@@ -194,7 +200,7 @@ init_mld6()
     rcvmh.msg_iov = rcviov;
     rcvmh.msg_iovlen = 1;
     rcvmh.msg_control = (caddr_t) rcvcmsgbuf;
-    rcvmh.msg_controllen = sizeof(rcvcmsgbuf);
+    rcvmh.msg_controllen = rcvcmsglen;
 
     /* initialize msghdr for sending packets */
     sndiov[0].iov_base = (caddr_t)mld6_send_buf;
@@ -258,7 +264,7 @@ int recvlen;
 	 */
 	if (rcvmh.msg_controllen == 0) {
 		/* XXX: msg_controllen must be reset in this case. */
-		rcvmh.msg_controllen = sizeof(rcvcmsgbuf);
+		rcvmh.msg_controllen = rcvcmsglen;
 
 		process_kernel_call();
 		return;
