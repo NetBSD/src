@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.363 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.364 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -114,5 +114,6 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	compat_darwin(8): Support for MacOS X.3 binaries. [manu 20040825]
 	crtstuff: Switch to GCC-supplied crtbegin.o / crtend.o on GCC 3.3
 		platforms.  [thorpej 20040827]
-	kernel: Add IPv4 PIM support, submitted by Pavlin Radoslavov.
-		[manu 20040905]
+	kernel: Add IPv4 PIM support from Pavlin Radoslavov and Hitoshi 
+		Asaeda. Part of this work has been supported by the XORP 
+		project http://www.xorp.org [manu 20040905]
