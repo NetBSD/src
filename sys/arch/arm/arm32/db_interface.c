@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2003/05/03 17:29:27 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.27 2003/05/03 17:32:59 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -308,17 +308,13 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
+	extern char kernel_text[];
 	extern char etext[];
 	char *dst;
 	size_t loop;
 
 	/* If any part is in kernel text, use db_write_text() */
-#ifndef ARM32_NEW_VM_LAYOUT
-	if (addr >= KERNEL_TEXT_BASE && addr < (vaddr_t) etext)
-#else
-	if (addr >= KERNEL_BASE && addr < (vaddr_t) etext)
-#endif
-	{
+	if (addr >= (vaddr_t) kernel_text && addr < (vaddr_t) etext) {
 		db_write_text(addr, size, data);
 		return;
 	}
