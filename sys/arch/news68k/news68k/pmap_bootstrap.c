@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.5 2005/02/28 11:58:17 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.6 2005/02/28 12:08:15 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.5 2005/02/28 11:58:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.6 2005/02/28 12:08:15 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -292,6 +292,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
+
 	/*
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.

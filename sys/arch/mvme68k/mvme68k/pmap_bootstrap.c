@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.21.10.1 2005/02/23 10:23:37 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.21.10.2 2005/02/28 12:08:15 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21.10.1 2005/02/23 10:23:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21.10.2 2005/02/28 12:08:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -361,6 +361,7 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
+
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
