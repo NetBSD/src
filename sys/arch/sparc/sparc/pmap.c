@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.246 2003/02/26 14:18:24 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.247 2003/02/27 14:19:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -918,7 +918,7 @@ pgt_page_free(struct pool *pp, void *v)
 	KASSERT(rv);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	pmap_kremove(va, PAGE_SIZE);
-	uvm_km_free(kernel_map, va, PAGE_SIZE);
+	uvm_km_free(kmem_map, va, PAGE_SIZE);
 }
 #endif /* SUN4M || SUN4D */
 
