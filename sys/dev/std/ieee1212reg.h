@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.6 2002/02/27 04:55:58 jmc Exp $ */
+/*        $NetBSD: ieee1212reg.h,v 1.7 2002/04/02 10:10:54 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -251,5 +251,6 @@
 
 /* Same thing applies for immediate types. */
 #define P1212_ALLOW_DEPENDENT_INFO_IMMED_TYPE	0x2
+#define P1212_ALLOW_VENDOR_DIRECTORY_TYPE	0x4
 
 #endif	/* _DEV_STD_IEEE1212REG_H_ */
