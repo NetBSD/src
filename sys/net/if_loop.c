@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.33 2000/12/18 19:50:44 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.34 2000/12/18 21:13:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -139,7 +139,9 @@
 
 struct	ifnet loif[NLOOP];
 
+#ifdef ALTQ
 void	lostart(struct ifnet *);
+#endif
 
 void
 loopattach(n)
@@ -156,7 +158,9 @@ loopattach(n)
 		ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
 		ifp->if_ioctl = loioctl;
 		ifp->if_output = looutput;
+#ifdef ALTQ
 		ifp->if_start = lostart;
+#endif
 		ifp->if_type = IFT_LOOP;
 		ifp->if_hdrlen = 0;
 		ifp->if_addrlen = 0;
