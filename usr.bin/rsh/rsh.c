@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.24 2004/10/16 07:36:08 christos Exp $	*/
+/*	$NetBSD: rsh.c,v 1.25 2005/01/13 23:02:28 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.24 2004/10/16 07:36:08 christos Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.25 2005/01/13 23:02:28 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,20 +362,20 @@ try_connect:
 	setsockopt(remerr, proto->p_proto, TCP_NODELAY, &one, sizeof(one));
 
 
-	(void) setuid(uid);
+	(void)setuid(uid);
 
-	(void) sigemptyset(&nset);
+	(void)sigemptyset(&nset);
 	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-		(void) sigaddset(&nset, sigs[i]);
+		(void)sigaddset(&nset, sigs[i]);
 
-	(void) sigprocmask(SIG_BLOCK, &nset, &oset);
+	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
 		struct sigaction sa;
 
 		if (sa.sa_handler != SIG_IGN) {
-			sa.sa_handler = sendsig;		
-			(void) sigaction(sigs[i], &sa, NULL);
+			sa.sa_handler = sendsig;
+			(void)sigaction(sigs[i], &sa, NULL);
 		}
 	}
 
@@ -447,7 +447,6 @@ talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 	struct pollfd fds[2], *fdp = &fds[0];
 	char *bp, buf[BUFSIZ];
 
-
 	if (!nflag && pid == 0) {
 		(void)close(remerr);
 
@@ -504,7 +503,7 @@ done:
 		exit(0);
 	}
 
-	(void) sigprocmask(SIG_SETMASK, oset, NULL);
+	(void)sigprocmask(SIG_SETMASK, oset, NULL);
 	fds[0].events = fds[1].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
 	fds[0].fd = remerr;
 	fds[1].fd = rem;
@@ -553,11 +552,11 @@ warning(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void) fprintf(stderr, "%s: warning, using standard rsh: ",
+	(void)fprintf(stderr, "%s: warning, using standard rsh: ",
 	    getprogname());
-	(void) vfprintf(stderr, fmt, ap);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	(void) fprintf(stderr, ".\n");
+	(void)fprintf(stderr, ".\n");
 }
 #endif
 
