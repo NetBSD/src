@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.19 1998/07/26 12:58:17 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.20 1999/03/08 03:09:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.19 1998/07/26 12:58:17 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.20 1999/03/08 03:09:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ char	verbosehelp[] =	"toggle verbose mode";
 #define CMPL(x)
 #define CMPL0
 #else  /* !SMALL */
-#define CMPL(x)	__STRING(x), 
+#define CMPL(x)	__STRING(x),
 #define CMPL0	"",
 #endif /* !SMALL */
 
