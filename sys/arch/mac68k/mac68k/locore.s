@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1995/09/02 05:44:07 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 1995/09/16 15:35:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1942,27 +1942,8 @@ _doboot:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
-	cmpl	#MMU_68040, _mmutype
-	jeq	Lreboot			| go ahead and reboot if '040
-
-	cmpl	#MMU_68030, _mmutype
-	jeq	Lmap030rom		| don't turn off MMU if '030
-
-	lea	longscratch,a0		| make sure we have real memory
-	movl	#0,a0@			| value for pmove to TC (turn off MMU)
-	pmove	a0@,tc			| disable MMU
-	jra	Lreboot
-
-	| If '030, we can't turn off MMU because we might not be PA == VA.
-	| We must therefore map the ROMs using the tt registers before
-	| we jump there.
-Lmap030rom:
-	lea	longscratch,a0
-	movl	#0x400F8307,a0@		| map all of 0x4xxxxxxx
-	.long	0xf0100800		| pmove a0@,tt0
 	movl	_MacOSROMBase, _ROMBase	| Load MacOS ROMBase
 
-Lreboot:
 	movl	#0x90,a1		| offset of ROM reset routine
 	addl	_ROMBase,a1		| add to ROM base
 	jra	a1@			| and jump to ROM to reset machine
