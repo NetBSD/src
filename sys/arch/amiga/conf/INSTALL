@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.21 2002/01/27 11:12:39 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.22 2002/01/27 13:36:59 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.170 2002/01/27 11:07:38 jdolecek Exp $
+# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.21 $"
+#ident  		"GENERIC-$Revision: 1.22 $"
 
 makeoptions	COPTS="-Os"
 
@@ -94,6 +94,8 @@ file-system 	KERNFS		# kernel data-structure filesystem
 
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 
@@ -229,7 +231,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-#
+
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 
@@ -242,8 +244,6 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
-aucc*		at mainbus0		# Amiga CC audio
-audio*		at aucc?
 
 #DraCo Mainboard devices (sans keyboard)
 
@@ -253,9 +253,6 @@ com*		at drsupio? port ?	# DraCo serial
 lpt0		at drsupio? port ?	# DraCo parallel
 
 #Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
-
-repulse*	at zbus0		# ALiENDESiGN Repulse
-audio*		at repulse?
 
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
