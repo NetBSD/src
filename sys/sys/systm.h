@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.9 2001/11/24 19:55:46 bjh21 Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.10 2001/12/03 05:00:14 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -242,7 +242,6 @@ long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
 int	hzto __P((struct timeval *));
-void	realitexpire __P((void *));
 
 void	hardclock __P((struct clockframe *));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
