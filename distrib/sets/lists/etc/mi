@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.138 2004/01/30 08:44:11 lukem Exp $
+# $NetBSD: mi,v 1.139 2004/01/31 21:53:31 christos Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -126,6 +126,7 @@
 ./etc/rc.d/fsck.sh				etc-obsolete		obsolete
 ./etc/rc.d/gated				etc-obsolete		obsolete
 ./etc/rc.d/ifwatchd				etc-net-rc
+./etc/rc.d/identd				etc-net-rc
 ./etc/rc.d/inetd				etc-net-rc
 ./etc/rc.d/ipfilter				etc-ipf-rc
 ./etc/rc.d/ipfs					etc-ipf-rc
