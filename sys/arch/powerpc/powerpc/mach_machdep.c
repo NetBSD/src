@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.16 2003/11/11 17:31:59 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.17 2003/11/11 18:12:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.16 2003/11/11 17:31:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17 2003/11/11 18:12:40 manu Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -141,7 +141,7 @@ mach_create_thread_child(void *arg)
 }
 
 int
-mach_thread_state(l, flavor, state, size)
+mach_thread_get_state_machdep(l, flavor, state, size)
 	struct lwp *l;
 	int flavor;
 	void *state;
@@ -158,7 +158,7 @@ mach_thread_state(l, flavor, state, size)
 		mpts = (struct mach_ppc_thread_state *)state;
 		mpts->srr0 = tf->srr0;
 		mpts->srr1 = tf->srr1;
-		memcpy(mpts, &tf->fixreg[0], sizeof(mpts->gpreg));
+		memcpy(mpts->gpreg, tf->fixreg, 32 * sizeof(register_t));
 		mpts->cr = tf->cr;
 		mpts->xer = tf->xer;
 		mpts->lr = tf->lr;
@@ -172,6 +172,47 @@ mach_thread_state(l, flavor, state, size)
 
 	case MACH_THREAD_STATE_NONE:
 		*size = 0;
+		break;
+		
+	case MACH_PPC_FLOAT_STATE: 
+	case MACH_PPC_EXCEPTION_STATE:
+	case MACH_PPC_VECTOR_STATE:
+	default: 
+		printf("Unimplemented thread state flavor %d\n", flavor);
+		return EINVAL;
+		break;
+	}
+
+	return 0;
+}
+
+int
+mach_thread_set_state_machdep(l, flavor, state)
+	struct lwp *l;
+	int flavor;
+	void *state;
+{
+	struct trapframe *tf;
+
+	tf = trapframe(l);
+
+	switch (flavor) {
+	case MACH_PPC_THREAD_STATE: {
+		struct mach_ppc_thread_state *mpts;
+
+		mpts = (struct mach_ppc_thread_state *)state;
+		tf->srr0 = mpts->srr0;
+		tf->srr1 = mpts->srr1;
+		memcpy(tf->fixreg, mpts->gpreg, 32 * sizeof(register_t));
+		tf->cr = mpts->cr;
+		tf->xer = mpts->xer;
+		tf->lr = mpts->lr;
+		tf->ctr = mpts->ctr;
+  
+  		break;
+  	}
+
+	case MACH_THREAD_STATE_NONE:
 		break;
 		
 	case MACH_PPC_FLOAT_STATE: 
