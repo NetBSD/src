@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: ms.c,v 1.10.8.1 2001/09/09 19:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -84,11 +84,7 @@ typedef void	(*FPV) __P((void *));
 
 static struct ms_softc	ms_softc[NMOUSE];
 
-dev_type_open(msopen);
-dev_type_close(msclose);
-dev_type_read(msread);
-dev_type_ioctl(msioctl);
-dev_type_poll(mspoll);
+cdev_decl(ms);
 
 static	void	ms_3b_delay __P((struct ms_softc *));
 
@@ -418,5 +414,14 @@ struct proc	*p;
 
 	ms = &ms_softc[minor(dev)];
 	return(ev_poll(&ms->ms_events, events, p));
+}
+
+int
+mskqfilter(dev_t dev, struct knote *kn)
+{
+	struct ms_softc *ms;
+
+	ms = &ms_softc[minor(dev)];
+	return (ev_kqfilter(&ms->ms_events, kn));
 }
 #endif /* NMOUSE > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18.16.1 2001/09/09 19:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -71,11 +71,7 @@ static u_char		kbd_soft  = 0;	/* 1: Softint has been scheduled*/
 static struct kbd_softc kbd_softc;
 
 /* {b,c}devsw[] function prototypes */
-dev_type_open(kbdopen);
-dev_type_close(kbdclose);
-dev_type_read(kbdread);
-dev_type_ioctl(kbdioctl);
-dev_type_poll(kbdpoll);
+cdev_decl(kbd);
 
 /* Interrupt handler */
 void	kbdintr __P((int));
@@ -260,6 +256,13 @@ int
 kbdpoll (dev_t dev, int events, struct proc *p)
 {
   return ev_poll (&kbd_softc.k_events, events, p);
+}
+
+int
+kbdkqfilter(dev_t dev, struct knote *kn)
+{
+
+	return (ev_kqfilter(&kbd_softc.k_events, kn));
 }
 
 /*
