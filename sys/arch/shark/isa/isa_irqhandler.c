@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.3 2002/09/27 15:36:43 provos Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.4 2002/10/05 17:01:49 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,9 +102,9 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-extern void set_spl_masks	__P((void));
-
-void irq_calculatemasks __P((void));
+extern void set_spl_masks(void);
+void irq_calculatemasks(void);
+void stray_irqhandler(u_int);
 
 #define WriteWord(a, b) *((volatile unsigned int *)(a)) = (b)
 

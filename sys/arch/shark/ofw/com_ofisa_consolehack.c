@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_consolehack.c,v 1.1 2002/02/10 01:57:56 thorpej Exp $	*/
+/*	$NetBSD: com_ofisa_consolehack.c,v 1.2 2002/10/05 17:01:50 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,6 +53,9 @@
 #include <machine/isa_machdep.h>	/* XXX for space tags */
 
 #include <dev/cons.h>
+
+void comcnprobe(struct consdev *);
+void comcninit(struct consdev *);
 
 void
 comcnprobe(cp)
