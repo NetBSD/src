@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.11 1997/02/26 07:07:15 leo Exp $
+.\"	$NetBSD: options.4,v 1.12 1997/03/11 03:49:04 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -46,16 +46,7 @@ file. See
 for information on how to configure and build kernels.
 .Em Note:
 Options are passed to the compile process as -D flags to the C
-compiler, as is the name of the kernel. This means that kernel names
-(which are set by the file name passed to
-.Xr config 8 )
-and option names must not conflict! Naming your kernel
-.Em PORTAL
-or
-.Em GATEWAY
-or other such things is the equivalent of setting an option, and can
-have unintended consequences! (Unfortunately, not all possible kernel
-options are documented here. You may find out about one the hard way.)
+compiler.
 .Ss Compatibility Options
 .Bl -ohang
 .It Cd options COMPAT_09
