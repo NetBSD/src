@@ -1,4 +1,4 @@
-/*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
+/*	$NetBSD: sub.c,v 1.5 1997/07/20 06:35:41 thorpej Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
    line editor */
@@ -28,11 +28,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $";
+__RCSID("$NetBSD: sub.c,v 1.5 1997/07/20 06:35:41 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +102,7 @@ extract_subst_template()
 			;
 		else if (!isglobal) {
 			while ((n = get_tty_line()) == 0 ||
-			    n > 0 && ibuf[n - 1] != '\n')
+			    (n > 0 && ibuf[n - 1] != '\n'))
 				clearerr(stdin);
 			if (n < 0)
 				return NULL;
@@ -217,8 +218,8 @@ substitute_matching_text(pat, lp, gflag, kth)
 				off += i;
 			}
 			txt += rm[0].rm_eo;
-		} while (*txt && (!changed || (gflag & GSG) && rm[0].rm_eo) &&
-		    !regexec(pat, txt, SE_MAX, rm, REG_NOTBOL));
+		} while (*txt && (!changed || ((gflag & GSG) && rm[0].rm_eo))
+		    && !regexec(pat, txt, SE_MAX, rm, REG_NOTBOL));
 		i = eot - txt;
 		REALLOC(rbuf, rbufsz, off + i + 2, ERR);
 		if (i > 0 && !rm[0].rm_eo && (gflag & GSG)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.3 1997/01/09 16:34:27 tls Exp $	*/
+/*	$NetBSD: io.c,v 1.4 1997/07/20 06:35:38 thorpej Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -27,11 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: io.c,v 1.3 1997/01/09 16:34:27 tls Exp $";
+__RCSID("$NetBSD: io.c,v 1.4 1997/07/20 06:35:38 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +111,7 @@ read_stream(fp, n)
 		return ERR;
 	if (appended && size && o_isbinary && o_newline_added)
 		fputs("newline inserted\n", stderr);
-	else if (newline_added && (!appended || !isbinary && !o_isbinary))
+	else if (newline_added && (!appended || (!isbinary && !o_isbinary)))
 		fputs("newline appended\n", stderr);
 	if (isbinary && newline_added && !appended)
 	    	size += 1;
@@ -132,8 +133,8 @@ get_stream_line(fp)
 	int c;
 	int i = 0;
 
-	while (((c = des ? get_des_char(fp) : getc(fp)) != EOF || !feof(fp) &&
-	    !ferror(fp)) && c != '\n') {
+	while (((c = des ? get_des_char(fp) : getc(fp)) != EOF || (!feof(fp) &&
+	    !ferror(fp))) && c != '\n') {
 		REALLOC(sbuf, sbufsz, i + 1, ERR);
 		if (!(sbuf[i++] = c))
 			isbinary = 1;
@@ -332,7 +333,6 @@ put_tty_line(s, l, n, gflag)
 	int gflag;
 {
 	int col = 0;
-	int lc = 0;
 	char *cp;
 
 	if (gflag & GNP) {

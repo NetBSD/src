@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.10 1997/01/09 16:34:26 tls Exp $	*/
+/*	$NetBSD: cbc.c,v 1.11 1997/07/20 06:35:36 thorpej Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -39,11 +39,12 @@
  *	from: @(#)bdes.c	5.5 (Berkeley) 6/27/91
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$NetBSD: cbc.c,v 1.10 1997/01/09 16:34:26 tls Exp $";
+__RCSID("$NetBSD: cbc.c,v 1.11 1997/07/20 06:35:36 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,6 +143,8 @@ get_des_char(fp)
 		des_ct = cbc_decode(des_buf, fp);
 	}
 	return (des_ct > 0) ? des_buf[des_n++] : EOF;
+#else
+	return EOF;
 #endif
 }
 
@@ -158,6 +161,8 @@ put_des_char(c, fp)
 		des_n = 0;
 	}
 	return (des_ct >= 0) ? (des_buf[des_n++] = c) : EOF;
+#else
+	return EOF;
 #endif
 }
 
@@ -173,6 +178,8 @@ flush_des_file(fp)
 		des_n = 0;
 	}
 	return (des_ct >= 0 && cbc_encode(des_buf, des_n, fp) >= 0) ? 0 : EOF;
+#else
+	return EOF;
 #endif
 }
 
