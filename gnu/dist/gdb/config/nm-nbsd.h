@@ -17,18 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* This is the amount to subtract from u.u_ar0
-   to get the offset in the core file of the register values.  */
+#define ATTACH_DETACH
 
-#include <machine/vmparam.h>
-
-#define KERNEL_U_ADDR USRSTACK
-
-#define PTRACE_ARG3_TYPE char*
-
+/* Use this instead of KERNEL_U_ADDR (See gdb/infptrace.c) */
 #define FETCH_INFERIOR_REGISTERS
 
-#define ATTACH_DETACH
+/* This enables functions needed by kcore-nbsd.c */
+#define FETCH_KCORE_REGISTERS
+
+#define PTRACE_ARG3_TYPE char*
 
 #include "solib.h"      /* Support for shared libraries. */
 
@@ -54,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define link_dynamic_2	section_dispatch_table
 #define ld_loaded	sdt_loaded
 #define ld_need		sdt_sods
-#define ld_rules	sdt_filler1
+#define ld_rules	sdt_rules
 #define ld_got		sdt_got
 #define ld_plt		sdt_plt
 #define ld_rel		sdt_rel
