@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.81 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.82 2000/10/11 17:21:11 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,9 +152,10 @@ vaddr_t uvm_maxkaddr;
  *
  * => map need not be locked (protected by hint_lock).
  */
-#define SAVE_HINT(map,value) do { \
+#define SAVE_HINT(map,check,value) do { \
 	simple_lock(&(map)->hint_lock); \
-	(map)->hint = (value); \
+	if ((map)->hint == (check)) \
+		(map)->hint = (value); \
 	simple_unlock(&(map)->hint_lock); \
 } while (0)
 
@@ -770,7 +771,7 @@ uvm_map_lookup_entry(map, address, entry)
 				 */
 
 				*entry = cur;
-				SAVE_HINT(map, cur);
+				SAVE_HINT(map, map->hint, cur);
 				UVMHIST_LOG(maphist,"<- search got it (0x%x)",
 					cur, 0, 0, 0);
 				return (TRUE);
@@ -780,7 +781,7 @@ uvm_map_lookup_entry(map, address, entry)
 		cur = cur->next;
 	}
 	*entry = cur->prev;
-	SAVE_HINT(map, *entry);
+	SAVE_HINT(map, map->hint, *entry);
 	UVMHIST_LOG(maphist,"<- failed!",0,0,0,0);
 	return (FALSE);
 }
@@ -916,7 +917,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 			return(NULL); /* only one shot at it ... */
 		}
 	}
-	SAVE_HINT(map, entry);
+	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
 	return (entry);
@@ -959,7 +960,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		entry = first_entry;
 		UVM_MAP_CLIP_START(map, entry, start);
 		/* critical!  prevents stale hint */
-		SAVE_HINT(map, entry->prev);
+		SAVE_HINT(map, entry, entry->prev);
 
 	} else {
 		entry = first_entry->next;
@@ -1089,6 +1090,10 @@ uvm_unmap_remove(map, start, end, entry_list)
 		 * that we've nuked.  then go do next entry.
 		 */
 		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
+
+		/* critical!  prevents stale hint */
+		SAVE_HINT(map, entry, entry->prev);
+
 		uvm_map_entry_unlink(map, entry);
 		map->size -= len;
 		entry->next = first_entry;
@@ -1301,7 +1306,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 		last = newents->prev;		/* we expect this */
 
 		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, newents);
+		SAVE_HINT(map, map->hint, newents);
 		if (map->first_free == oldent)
 			map->first_free = last;
 
@@ -1314,7 +1319,7 @@ uvm_map_replace(map, start, end, newents, nnewents)
 	} else {
 
 		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, oldent->prev);
+		SAVE_HINT(map, map->hint, oldent->prev);
 		if (map->first_free == oldent)
 			map->first_free = oldent->prev;
 
@@ -1422,7 +1427,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 			 * fudge is zero)
 			 */
 			UVM_MAP_CLIP_START(srcmap, entry, start);
-			SAVE_HINT(srcmap, entry->prev);
+			SAVE_HINT(srcmap, srcmap->hint, entry->prev);
 			fudge = 0;
 		}
 
@@ -1581,7 +1586,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 
 		/* purge possible stale hints from srcmap */
 		if (flags & UVM_EXTRACT_REMOVE) {
-			SAVE_HINT(srcmap, orig_entry->prev);
+			SAVE_HINT(srcmap, srcmap->hint, orig_entry->prev);
 			if (srcmap->first_free->start >= start)
 				srcmap->first_free = orig_entry->prev;
 		}
