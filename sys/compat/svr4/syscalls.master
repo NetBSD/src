@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 1999/02/09 20:46:41 christos Exp $
+	$NetBSD: syscalls.master,v 1.43 1999/03/22 17:28:22 sommerfe Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -261,7 +261,7 @@
 150	UNIMPL
 151	UNIMPL
 152	UNIMPL		modctl
-153	STD		{ int svr4_sys_fchroot(int fd); }
+153	NOARGS		{ int sys_fchroot(int fd); }
 154	STD		{ int svr4_sys_utimes(const char *path, \
 			    struct timeval *tptr); }
 155	STD		{ int svr4_sys_vhangup(void); }
