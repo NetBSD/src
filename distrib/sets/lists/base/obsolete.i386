@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.i386,v 1.8 2000/10/27 13:02:19 fvdl Exp $
+# $NetBSD: obsolete.i386,v 1.9 2001/05/02 13:45:52 jdolecek Exp $
 /dev/ttyv1
 /dev/ttyv2
 /dev/ttyv3
@@ -126,6 +126,7 @@
 /usr/include/i386/vm86.h
 /usr/include/i386/vmparam.h
 /usr/include/i386
+/usr/mdec/biosboot_ps2.sym
 /usr/mdec/bootfd
 /usr/mdec/bootsd
 /usr/mdec/bootwd

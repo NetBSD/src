@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.76 2001/01/27 23:48:33 jdolecek Exp $
+# $NetBSD: md.i386,v 1.77 2001/05/02 13:45:52 jdolecek Exp $
 ./dev/audio				base-sys-devlinks
 ./dev/audioctl				base-sys-devlinks
 ./dev/bktr				base-sys-devlinks
@@ -38,7 +38,6 @@
 ./usr/lkm/umapfs.o			base-miscfs-lkm
 ./usr/mdec/biosboot.sym			base-sysutil-bin
 ./usr/mdec/biosboot_com0.sym		base-sysutil-bin
-./usr/mdec/biosboot_ps2.sym		base-sysutil-bin
 ./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
 ./usr/mdec/installboot			base-sysutil-bin
