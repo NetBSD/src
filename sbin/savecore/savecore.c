@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.61 2003/08/07 10:04:39 agc Exp $	*/
+/*	$NetBSD: savecore.c,v 1.62 2004/03/30 19:52:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.61 2003/08/07 10:04:39 agc Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.62 2004/03/30 19:52:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -684,7 +684,7 @@ get_crashtime(void)
 		return (0);
 	}
 	(void)printf("savecore: system went down at %s", ctime(&dumptime));
-#define	LEEWAY	(7 * SECSPERDAY)
+#define	LEEWAY	(60 * SECSPERDAY)
 	if (dumptime < now - LEEWAY || dumptime > now + LEEWAY) {
 		(void)printf("dump time is unreasonable\n");
 		return (0);
