@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.28 1997/04/08 21:29:26 chuck Exp $	*/
+/*	$NetBSD: if.h,v 1.28.4.1 1997/10/14 10:29:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -145,6 +145,7 @@ struct ifnet {				/* and the entries */
 		int	ifq_drops;
 	} if_snd;			/* output queue */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
+	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

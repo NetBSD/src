@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: _setjmp.s,v 1.1 91/07/06 16:45:53 torek Exp
- * $Id: _setjmp.S,v 1.3 1996/11/18 22:50:29 pk Exp $
+ * $NetBSD: _setjmp.S,v 1.3.10.1 1997/10/14 10:27:57 thorpej Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.36 1997/01/11 05:21:13 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.36.10.1 1997/10/14 10:29:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -181,7 +181,8 @@ rip_output(m, va_alist)
 	va_end(ap);
 
 	flags =
-	    (inp->inp_socket->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST;
+	    (inp->inp_socket->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
+	    | IP_RETURNMTU;
 
 	/*
 	 * If the user handed us a complete IP packet, use it.
@@ -215,7 +216,7 @@ rip_output(m, va_alist)
 		flags |= IP_RAWOUTPUT;
 		ipstat.ips_rawout++;
 	}
-	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions));
+	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions, &inp->inp_errormtu));
 }
 
 /*

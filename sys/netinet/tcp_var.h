@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.21.2.2 1997/09/29 07:21:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.21.2.3 1997/10/14 10:29:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -364,6 +364,7 @@ int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
+tcp_seq  tcp_new_iss __P((void *, u_long, tcp_seq));
 
 int	 syn_cache_add __P((struct socket *, struct mbuf *, u_char *,
 	    int, struct tcp_opt_info *));

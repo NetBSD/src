@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
- * $Id: saveregs.S,v 1.3 1996/11/18 22:50:35 pk Exp $
+ * $NetBSD: saveregs.S,v 1.3.10.1 1997/10/14 10:28:10 thorpej Exp $
  */
 
 /*

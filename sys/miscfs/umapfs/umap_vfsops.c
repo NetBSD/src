@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.14.4.1 1997/09/16 03:51:16 thorpej Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.14.4.2 1997/10/14 10:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,7 +409,7 @@ umapfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-struct vfsops umap_vfsops = {
+struct vfsops umapfs_vfsops = {
 	MOUNT_UMAP,
 	umapfs_mount,
 	umapfs_start,

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.20.2.1 1997/09/29 07:21:18 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.20.2.2 1997/10/14 10:29:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -58,6 +58,7 @@ struct inpcb {
 	struct	  ip inp_ip;		/* header prototype; should have more */
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
+	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
 };
 #define	inp_faddr	inp_ip.ip_dst
 #define	inp_laddr	inp_ip.ip_src

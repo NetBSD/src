@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.14 1997/04/03 21:07:42 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.14.4.1 1997/10/14 10:29:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -772,6 +772,7 @@ fddi_ifattach(ifp)
 	    sdl->sdl_alen = ifp->if_addrlen;
 	    bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+	ifp->if_broadcastaddr = fddibroadcastaddr;
 #else
 	for (ifa = ifp->if_addrlist; ifa != NULL; ifa = ifa->ifa_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&

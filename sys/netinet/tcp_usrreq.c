@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.26 1997/07/28 22:31:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.26.2.1 1997/10/14 10:29:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -201,7 +201,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
 		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		tp->iss = tcp_iss; tcp_iss += TCP_ISSINCR/2;
+		tp->iss = tcp_new_iss(tp, sizeof(struct tcpcb), 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
 		break;

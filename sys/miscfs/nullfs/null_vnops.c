@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.10.4.1 1997/09/16 03:51:12 thorpej Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.10.4.2 1997/10/14 10:28:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -765,5 +765,5 @@ struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*)NULL,	(int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc null_vnodeop_opv_desc =
+struct vnodeopv_desc nullfs_vnodeop_opv_desc =
 	{ &null_vnodeop_p, null_vnodeop_entries };
