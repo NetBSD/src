@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1998/01/22 21:35:27 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1998/01/22 21:48:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -802,17 +802,14 @@ Lswnofpsave:
 	jeq	Lbadsw			| panic
 #endif
 #ifdef PMAP_DEBUG
-	/*
-	 * Just call pmap_activate() for now.  Later on,
-	 * use the in-line version below (for speed).
-	 */
-	pea	a0@			| push proc
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
+	/* When debugging just call _pmap_switch(). */
+	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
+	pea	a2@			| push pmap
+	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
 #else
-	/* XXX - Later, use this inline version. */
-	/* Just load the new CPU Root Pointer (MMU) */
+	/* Otherwise, use this inline version. */
 	lea	_C_LABEL(kernel_crp), a3 | our CPU Root Ptr. (CRP)
 	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	movl	a2@(PM_A_PHYS),d0	| phys = pmap->pm_a_phys
