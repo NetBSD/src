@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.39 1998/07/28 11:41:57 mycroft Exp $	*/
+/*	$NetBSD: parser.c,v 1.40 1998/09/26 20:56:33 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.39 1998/07/28 11:41:57 mycroft Exp $");
+__RCSID("$NetBSD: parser.c,v 1.40 1998/09/26 20:56:33 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1346,8 +1346,7 @@ done:
                 STPUTC('\0', out);
                 savelen = out - stackblock();
                 if (savelen > 0) {
-                        str = ckmalloc(savelen);
-                        memcpy(str, stackblock(), savelen);
+			str = grabstackstr(out);
 			setinputstring(str, 1);
                 }
         }
