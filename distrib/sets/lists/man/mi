@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.180 1999/12/10 23:31:11 jlam Exp $
+# $NetBSD: mi,v 1.181 1999/12/12 11:37:17 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -364,10 +364,12 @@
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
 ./usr/share/man/cat4/cardbus.0
+./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clnp.0
+./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
@@ -1271,10 +1273,12 @@
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/bt.4
 ./usr/share/man/man4/cardbus.4
+./usr/share/man/man4/cbb.4
 ./usr/share/man/man4/ccd.4
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/ch.4
 ./usr/share/man/man4/clnp.4
+./usr/share/man/man4/clcs.4
 ./usr/share/man/man4/cltp.4
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
