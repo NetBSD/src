@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.20 1995/04/17 12:07:31 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -53,7 +53,7 @@
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 #define	PMS_DATA	0x60	/* offset for data port, read-write */
 #define	PMS_CNTRL	0x64	/* offset for control port, write-only */
@@ -192,7 +192,7 @@ pmsattach(parent, self, aux)
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih = intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NONE,
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NONE,
 	    pmsintr, sc);
 }
 
