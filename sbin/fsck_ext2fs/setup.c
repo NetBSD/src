@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.2 1997/06/16 08:14:38 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.3 1997/07/10 04:53:35 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.2 1997/06/16 08:14:38 bouyer Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.3 1997/07/10 04:53:35 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ struct bufarea asblk;
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 void badsb __P((int, char *));
-/* int calcsb __P((char *, int, struct m_ext2fs *)); */
+int calcsb __P((char *, int, struct m_ext2fs *));
 static struct disklabel *getdisklabel __P((char *, int));
 static int readsb __P((int));
 
