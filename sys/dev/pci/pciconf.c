@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.15 2002/02/21 20:22:48 kleink Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.15.10.1 2002/06/27 01:26:59 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.15 2002/02/21 20:22:48 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.15.10.1 2002/06/27 01:26:59 lukem Exp $");
 
 #include "opt_pci.h"
 
@@ -544,7 +544,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 				size = (u_int64_t) PCI_MAPREG_MEM64_SIZE(
 				      (((u_int64_t) mask64) << 32) | mask);
 				width = 8;
-				continue;
+				break;
 			default:
 				print_tag(pb->pc, tag);
 				printf("reserved mapping type 0x%x\n",
@@ -561,6 +561,14 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 						64 : 32, br);
 				}
 				continue;
+			} else {
+				if (pci_conf_debug) {
+					print_tag(pb->pc, tag);
+					printf("MEM%d BAR 0x%x has size %lx\n",
+					    PCI_MAPREG_MEM_TYPE(mask) ==
+						PCI_MAPREG_MEM_TYPE_64BIT ?
+						64 : 32, br, (unsigned long)size);
+				}
 			}
 
 			if (pb->nmemwin >= MAX_CONF_MEM) {
