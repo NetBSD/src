@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.30 1998/02/02 21:07:55 perry Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.31 1998/02/04 21:06:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -167,7 +167,7 @@ int	 radixsort __P((const unsigned char **, int, const unsigned char *,
 int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-char	*initstate __P((unsigned long, char *, long));
+char	*initstate __P((unsigned long, char *, size_t));
 long	 random __P((void));
 char	*realpath __P((const char *, char *));
 char	*setstate __P((char *));
