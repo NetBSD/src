@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.6 1997/06/20 04:41:33 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_file.c,v 1.6 1997/06/20 04:41:33 mikel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ static char *rcsid = "$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp 
 /*
  * Get file structures.
  */
-static
+static int
 kvm_deadfiles(kd, op, arg, filehead_o, nfiles)
 	kvm_t *kd;
 	int op, arg, nfiles;
