@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.12 1996/03/07 23:22:36 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.13 1996/04/08 18:32:27 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,9 +32,11 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <machine/mtpr.h>
 #include <machine/sid.h>
+#include <machine/uvaxII.h>
 
 #define SEC_PER_DAY (60*60*24)
 
@@ -155,7 +157,7 @@ inittodr(fs_time)
 	} else if (year_ticks / 100 > fs_time - year + SEC_PER_DAY * 3) {
 		printf(
 	"WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
-		    (year_ticks / 100 - (fs_time - year)) / SEC_PER_DAY);
+		    (int)(year_ticks / 100 - (fs_time - year)) / SEC_PER_DAY);
 		sluttid = year + (year_ticks / 100);
 	} else if (year_ticks / 100 < fs_time - year) {
 		printf(

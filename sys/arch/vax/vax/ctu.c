@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.2 1996/03/02 13:41:24 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.3 1996/04/08 18:32:31 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,8 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/disklabel.h>	/* For disklabel prototype */
 
 #include <machine/mtpr.h>
 #include <machine/rsp.h>
@@ -83,10 +85,19 @@ volatile struct tu_softc {
 
 struct	ivec_dsp tu_recv, tu_xmit;
 
-void	ctutintr __P(());
-void	cturintr __P(());
+void	ctutintr __P((int));
+void	cturintr __P((int));
+void	ctuattach __P((void));
 void	ctustart __P((struct buf *));
-void	ctuwatch __P(());
+void	ctuwatch __P((void *));
+short	ctu_cksum __P((unsigned short *, int));
+
+int	ctuopen __P((dev_t, int, int, struct proc *));
+int	ctuclose __P((dev_t, int, int, struct proc *));
+void	ctustrategy __P((struct buf *));
+int	ctuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
+
 
 void
 ctuattach()
@@ -95,8 +106,8 @@ ctuattach()
 
 	bcopy(&idsptch, &tu_recv, sizeof(struct ivec_dsp));
 	bcopy(&idsptch, &tu_xmit, sizeof(struct ivec_dsp));
-	scb->scb_csrint = &tu_recv;
-	scb->scb_cstint = &tu_xmit;
+	scb->scb_csrint = (void *)&tu_recv;
+	scb->scb_cstint = (void *)&tu_xmit;
 	tu_recv.hoppaddr = cturintr;
 	tu_xmit.hoppaddr = ctutintr;
 }
@@ -125,7 +136,8 @@ ctuopen(dev, oflags, devtype, p)
 
 	mtpr(RSP_TYP_INIT, PR_CSTD);
 
-        if (error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH, "ctuopen", 0))
+        if ((error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH,
+	    "ctuopen", 0)))
                 return (error);
 
 	if (tu_sc.sc_error)
@@ -170,7 +182,7 @@ ctustrategy(bp)
 	}
 	bp->b_cylinder = bp->b_blkno;
 	s = splimp();
-	disksort(&tu_sc.sc_q, bp); /* Why not use disksort? */
+	disksort((struct buf *)&tu_sc.sc_q, bp); /* Why not use disksort? */
 	if (tu_sc.sc_state == SC_READY)
 		ctustart(bp);
 	splx(s);
@@ -197,11 +209,11 @@ ctustart(bp)
 	rsp->rsp_sw = rsp->rsp_xx1 = rsp->rsp_xx2 = 0;
 	rsp->rsp_cnt = tu_sc.sc_nbytes;
 	rsp->rsp_blk = tu_sc.sc_tpblk;
-	rsp->rsp_sum = ctu_cksum(rsp, 6);
+	rsp->rsp_sum = ctu_cksum((unsigned short *)rsp, 6);
 	tu_sc.sc_state = SC_SEND_CMD;
 	if (tu_sc.sc_xmtok) {
 		tu_sc.sc_xmtok = 0;
-		ctutintr();
+		ctutintr(0);
 	}
 }
 
@@ -213,6 +225,7 @@ ctuioctl(dev, cmd, data, fflag, p)
 	int fflag;
 	struct proc *p;
 {
+	return 0;
 }
 
 /*
@@ -225,10 +238,12 @@ ctudump(dev, blkno, va, size)
 	caddr_t va;
 	size_t size;
 {
+	return 0;
 }
 
 void
-cturintr()
+cturintr(arg)
+	int arg;
 {
 	int	status = mfpr(PR_CSRD);
 	struct	buf *bp;
@@ -243,7 +258,7 @@ cturintr()
 	case SC_INIT:
 		if (status != RSP_TYP_CONTINUE)
 			tu_sc.sc_error = EIO;
-		wakeup(&tu_sc);
+		wakeup((void *)&tu_sc);
 		break;
 	case SC_GET_RESP:
 		tu_sc.sc_tpblk++;
@@ -278,7 +293,7 @@ cturintr()
 		if (status != 020)
 			printf("SC_GET_WCONT: status %o\n", status);
 		else
-			ctutintr();
+			ctutintr(0);
 		tu_sc.sc_xmtok = 0;
 		break;
 
@@ -299,7 +314,8 @@ cturintr()
 }
 
 void
-ctutintr()
+ctutintr(arg)
+	int arg;
 {
 	int	c;
 
@@ -354,6 +370,7 @@ ctutintr()
 	}
 }
 
+short
 ctu_cksum(buf, words)
 	unsigned short *buf;
 	int words;
@@ -376,7 +393,8 @@ int	oldtp;
  * Watch so that we don't get blocked unnecessary due to lost int's.
  */
 void
-ctuwatch()
+ctuwatch(arg)
+	void *arg;
 {
 
 	timeout(ctuwatch, 0, 1000);

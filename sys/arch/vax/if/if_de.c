@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.18 1996/03/18 16:47:24 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.19 1996/04/08 18:34:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -150,6 +150,7 @@ void    destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
 void    derecv __P((int));
 void	de_setaddr __P((u_char *, int));
+void	deintr __P((int));
 
 
 struct  cfdriver de_cd = {
@@ -677,7 +678,6 @@ dematch(parent, match, aux)
 	struct	device *parent;
 	void	*match, *aux;
 {
-	struct	de_softc *sc = match;
 	struct	uba_attach_args *ua = aux;
 	volatile struct	dedevice *addr = (struct dedevice *)ua->ua_addr;
 	int	i;
