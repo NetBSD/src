@@ -12,13 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.8 1993/07/17 11:00:09 deraadt Exp $
+ *	$Id: bt742a.c,v 1.9 1993/12/07 12:51:58 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.8  1993/07/17 11:00:09  deraadt
+ * Revision 1.9  1993/12/07 12:51:58  deraadt
+ * __386BSD__ -> __NetBSD__
+ *
+ * Revision 1.8  1993/07/17  11:00:09  deraadt
  * scsi_switch had wrong entries for these controllers...
  *
  * Revision 1.7  1993/06/09  22:36:49  deraadt
@@ -106,7 +109,7 @@
 #endif	OSF
 #endif	MACH	/* end of MACH specific */
 
-#ifdef	__386BSD__	/* 386BSD specific */
+#ifdef	__NetBSD__	/* NetBSD specific */
 #define isa_dev isa_device
 #define dev_unit id_unit
 #define dev_addr id_iobase
@@ -114,16 +117,16 @@
 #include <i386/isa/isa_device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#endif	__386BSD__
+#endif	__NetBSD__
 
 
-#ifdef	__386BSD__
+#ifdef	__NetBSD__
 #ifdef DDB
 int	Debugger();
 #else
 #define	Debugger() panic("should call debugger here (adaptec.c)")
 #endif	/*!DDB*/
-#endif	__386BSD__
+#endif	__NetBSD__
 
 #ifdef	MACH
 int	Debugger();
@@ -377,10 +380,10 @@ extern physaddr	kvtophys();
 #define KVTOPHYS(x)   kvtophys(x)
 #endif MACH
 
-#ifdef        __386BSD__
+#ifdef        __NetBSD__
 #define PHYSTOKV(x)   (x | 0xFE000000)
 #define KVTOPHYS(x)   vtophys(x)
-#endif        __386BSD__
+#endif        __NetBSD__
 
 
 
@@ -424,9 +427,9 @@ struct	isa_driver	btdriver = { btprobe, 0, btattach, "bt", 0, 0, 0};
 int (*btintrs[])() = {btintr, 0};
 #endif	MACH
 
-#ifdef	__386BSD__
+#ifdef	__NetBSD__
 struct	isa_driver	btdriver = { btprobe, btattach, "bt"};
-#endif	__386BSD__
+#endif	__NetBSD__
 
 static	int	btunit = 0;
 
@@ -646,11 +649,11 @@ struct isa_dev *dev;
 #endif /* !defined(OSF) */
 	printf("port=%x spl=%d\n", dev->dev_addr, dev->dev_spl);
 #endif	MACH
-#ifdef  __386BSD__				/* 386BSD */
+#ifdef  __NetBSD__				/* NetBSD */
         dev->id_irq = (1 << bt_int[unit]);
         dev->id_drq = bt_dma[unit];
 	printf("\n  **");
-#endif  __386BSD__
+#endif  __NetBSD__
 
 	btunit++;
 	return(8);
@@ -948,13 +951,13 @@ int	unit;
 	* setup dma channel from jumpers and save int	*
 	* level						*
 	\***********************************************/
-#ifdef	__386BSD__
+#ifdef	__NetBSD__
 	printf("bt%d reading board settings, ",unit);
 #define	PRNT(x)
-#else	__386BSD__
+#else	__NetBSD__
 	printf("bt%d:",unit);
 #define	PRNT(x) printf(x)
-#endif	__386BSD__
+#endif	__NetBSD__
 
 	bt_cmd(unit,0, sizeof(conf), 0 ,&conf, BT_CONF_GET);
 	switch(conf.chan)
