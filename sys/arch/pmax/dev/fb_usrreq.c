@@ -1,4 +1,10 @@
-/*	$NetBSD: fb_usrreq.c,v 1.13 1999/01/16 07:05:05 nisimura Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.14 1999/04/13 03:22:00 ad Exp $	*/
+
+/* 
+ * XXX this should be stored in 'fbinfo', but that might just break the
+ * staticly linked Xserver.
+ */
+static u_char saved_cmap[NFB][768];
 
 /*ARGSUSED*/
 int
@@ -23,6 +29,9 @@ fbopen(dev, flag, mode, p)
 
 	fi->fi_open = 1;
 
+	if (fi->fi_type.fb_depth == 8)
+		fi->fi_driver->fbd_getcmap(fi, saved_cmap[minor(dev)], 0, 256);
+	
 	(*fi->fi_driver->fbd_initcmap)(fi);
 
 	/*
@@ -53,7 +62,12 @@ fbclose(dev, flag, mode, p)
 
 	fbtty = fi->fi_glasstty;
 	fi->fi_open = 0;
-	(*fi->fi_driver->fbd_initcmap)(fi);
+	
+	if (fi->fi_type.fb_depth == 8)
+		fi->fi_driver->fbd_putcmap(fi, saved_cmap[minor(dev)], 0, 256);
+	else
+		fi->fi_driver->fbd_initcmap(fi);
+	
 	genDeconfigMouse();
 	fbScreenInit(fi);
 
