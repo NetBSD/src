@@ -1,20 +1,18 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/05/20 17:23:59 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1996/08/08 15:06:40 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 COMPATDIR=	$S/compat/common
 
-COMPATDST?=	lib/compat
-COMPATREL?=	../../
+COMPATDST?=	${.OBJDIR}/lib/compat
 COMPATLIB=	${COMPATDST}/libcompat.a
 COMPATLIB_PROF=	${COMPATDST}/libcompat_p.a
 
 COMPATMAKE= \
-	cd ${COMPATDST} && ${MAKE} -f ${COMPATREL}${COMPATDIR}/Makefile \
+	cd ${COMPATDIR} && MAKEOBJDIR=${COMPATDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
 	    LD='${LD}' \
 	    COMPATCPPFLAGS='${CPPFLAGS}' \
-	    COMPATREL='${COMPATREL}' \
 	    COMPATDIR='${COMPATDIR}'
 
 ${COMPATLIB}:		.NOTMAIN __always_make_compatlib
