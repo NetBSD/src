@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/07/08 20:30:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/28 12:13:50 manu Exp $
 
 KDIR=	/sys/arch/sgimips/include
 INCSDIR= /usr/include/sgimips
@@ -18,7 +18,7 @@ INCS=	asm.h ansi.h aout_machdep.h autoconf.h \
 	param.h pci_machdep.h pcb.h pmap.h proc.h profile.h psl.h pte.h \
 	ptrace.h \
 	reg.h regdef.h regnum.h reloc.h \
-	setjmp.h signal.h stdarg.h \
+	setjmp.h signal.h svr4_machdep.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
 	z8530var.h
