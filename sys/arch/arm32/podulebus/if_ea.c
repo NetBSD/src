@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.27 2001/03/18 00:00:43 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.28 2001/03/18 01:30:30 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -120,7 +120,6 @@
 
 struct ea_softc {
 	struct device sc_dev;
-	irqhandler_t sc_ih;
 	int sc_irq;			/* IRQ number */
 	struct evcnt sc_intrcnt;	/* IRQ count */
 	podule_t *sc_podule;		/* Our podule */
