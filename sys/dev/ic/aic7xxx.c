@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.51 2000/05/25 11:41:05 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.52 2000/05/27 21:58:16 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -95,6 +95,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/scsiio.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -204,6 +205,8 @@ static void	ahc_dump_targcmd(struct target_cmd *);
 #endif
 static void	ahc_shutdown(void *arg);
 static int32_t	ahc_action(struct scsipi_xfer *);
+static int	ahc_ioctl(struct scsipi_link *, u_long, caddr_t, int,
+			  struct proc *);
 static int	ahc_execute_scb(void *, bus_dma_segment_t *, int);
 static int	ahc_poll(struct ahc_softc *, int);
 static int	ahc_setup_data(struct ahc_softc *, struct scsipi_xfer *,
@@ -1409,6 +1412,7 @@ ahc_attach(struct ahc_softc *ahc)
 
 	ahc->sc_adapter.scsipi_cmd = ahc_action;
 	ahc->sc_adapter.scsipi_minphys = ahcminphys;
+	ahc->sc_adapter.scsipi_ioctl = ahc_ioctl;
 	ahc->sc_link.type = BUS_SCSI;
 	ahc->sc_link.scsipi_scsi.adapter_target = ahc->our_id;
 	ahc->sc_link.scsipi_scsi.channel = 0;
@@ -3840,6 +3844,29 @@ ahc_init(struct ahc_softc *ahc)
 	return (0);
 }
 
+static int
+ahc_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr, int flag,
+	  struct proc *p)
+{
+	struct ahc_softc *ahc = sc_link->adapter_softc;
+	char channel;
+	int s, ret = ENOTTY;
+
+	switch (cmd) {
+	case SCBUSIORESET:
+		channel = SIM_CHANNEL(ahc, sc_link);
+		s = splbio();
+		ahc_reset_channel(ahc, channel, TRUE);
+		splx(s);
+		ret = 0;
+		break;
+	default:
+	}
+
+	return ret;
+}
+
+
 /*
  * XXX fvdl the busy_tcl checks and settings should only be done
  * for the non-tagged queueing case, but we don't do tagged queueing
@@ -3858,6 +3885,7 @@ ahc_action(struct scsipi_xfer *xs)
 	u_int our_id;
 	int s, tcl;
 	u_int16_t mask;
+	char channel;
 	int dontqueue = 0, fromqueue = 0;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
@@ -3991,7 +4019,15 @@ get_scb:
 		ahc_busy_tcl(ahc, scb);
 
 	splx(s);
- 
+
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	if (ahc->inited_channels[channel - 'A'] == 0) {
+		s = splbio();
+		ahc_reset_channel(ahc, channel, TRUE);
+		splx(s);
+		ahc->inited_channels[channel - 'A'] = 1;
+	}
+
 	/*
 	 * Put all the arguments for the xfer in the scb
 	 */
