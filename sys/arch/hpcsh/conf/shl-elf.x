@@ -1,4 +1,4 @@
-/*	$NetBSD: shl-elf.x,v 1.6 2002/04/25 17:01:47 uch Exp $	*/
+/*	$NetBSD: shl-elf.x,v 1.7 2003/04/15 16:29:12 uwe Exp $	*/
 
 OUTPUT_FORMAT("elf32-shl-nbsd")
 OUTPUT_ARCH(sh)
@@ -6,9 +6,10 @@ ENTRY(start)
 
 MEMORY
 {
-  ram : o = 0x8c001000, l = 16M
+  ram (a) : o = 0x8c001000, l = 16M
 }
 SECTIONS
+
 {
   .text :
   {
@@ -16,7 +17,7 @@ SECTIONS
     *(.text)
     *(.rodata)
     *(.strings)
-  } > ram
+  }
   etext = . ;
   PROVIDE (etext = .);
   . = ALIGN(8);
@@ -26,7 +27,7 @@ SECTIONS
     PROVIDE (fdata = .);
     *(.data)
     CONSTRUCTORS
-  } > ram
+  }
   edata = . ;
   PROVIDE (edata = .);
   . = ALIGN(8);
@@ -36,7 +37,7 @@ SECTIONS
     PROVIDE (fbss = .);
     *(.bss)
     *(COMMON)
-  } > ram
+  }
   . = ALIGN(4);
   end = . ;
   PROVIDE (end = .);
