@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.16 1996/10/21 22:56:57 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.17 1996/11/23 21:58:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -137,5 +137,6 @@ int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
  * Helper functions for autoconfiguration.
  */
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
+void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */
