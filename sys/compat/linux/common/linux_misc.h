@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.8 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.8.4.1 2004/11/12 06:18:55 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,17 @@
 /*
  * Options passed to the Linux wait4() system call.
  */
-#define	LINUX_WAIT4_WNOHANG	0x00000001
-#define	LINUX_WAIT4_WUNTRACED	0x00000002
-#define	LINUX_WAIT4_WALL	0x40000000
-#define	LINUX_WAIT4_WCLONE	0x80000000
+#define LINUX_WAIT4_WNOHANG   0x00000001
+#define LINUX_WAIT4_WUNTRACED 0x00000002
+#define LINUX_WAIT4_WNOTHREAD 0x20000000
+#define LINUX_WAIT4_WALL      0x40000000
+#define LINUX_WAIT4_WCLONE    0x80000000
+
+#define LINUX_WAIT4_KNOWNFLAGS (LINUX_WAIT4_WNOHANG | \
+                                LINUX_WAIT4_WUNTRACED | \
+                                LINUX_WAIT4_WNOTHREAD | \
+                                LINUX_WAIT4_WALL | \
+                                LINUX_WAIT4_WCLONE)
 
 /* This looks very unportable to me, but this is how Linux defines it. */
 struct linux_sysinfo {
