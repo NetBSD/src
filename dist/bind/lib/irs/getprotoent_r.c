@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.1.1.1.8.1 2002/07/01 17:13:21 he Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getprotoent_r.c,v 8.4 1999/01/18 07:46:52 vixie Exp";
+static const char rcsid[] = "Id: getprotoent_r.c,v 8.6 2001/11/01 08:02:14 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -28,6 +28,7 @@ static const char rcsid[] = "Id: getprotoent_r.c,v 8.4 1999/01/18 07:46:52 vixie
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <port_after.h>
@@ -40,21 +41,41 @@ copy_protoent(struct protoent *, struct protoent *, PROTO_R_COPY_ARGS);
 PROTO_R_RETURN
 getprotobyname_r(const char *name, struct protoent *pptr, PROTO_R_ARGS) {
 	struct protoent *pe = getprotobyname(name);
+#ifdef PROTO_R_SETANSWER
+	int n = 0;
 
+	if (pe == NULL || (n = copy_protoent(pe, pptr, PROTO_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = pptr;
+	
+	return (n);
+#else
 	if (pe == NULL)
 		return (PROTO_R_BAD);
 
 	return (copy_protoent(pe, pptr, PROTO_R_COPY));
+#endif
 }
 
 PROTO_R_RETURN
 getprotobynumber_r(int proto, struct protoent *pptr, PROTO_R_ARGS) {
 	struct protoent *pe = getprotobynumber(proto);
+#ifdef PROTO_R_SETANSWER
+	int n = 0;
 
+	if (pe == NULL || (n = copy_protoent(pe, pptr, PROTO_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = pptr;
+	
+	return (n);
+#else
 	if (pe == NULL)
 		return (PROTO_R_BAD);
 
 	return (copy_protoent(pe, pptr, PROTO_R_COPY));
+#endif
 }
 
 /*
@@ -66,11 +87,21 @@ getprotobynumber_r(int proto, struct protoent *pptr, PROTO_R_ARGS) {
 PROTO_R_RETURN
 getprotoent_r(struct protoent *pptr, PROTO_R_ARGS) {
 	struct protoent *pe = getprotoent();
+#ifdef PROTO_R_SETANSWER
+	int n = 0;
 
+	if (pe == NULL || (n = copy_protoent(pe, pptr, PROTO_R_COPY)) != 0)
+		*answerp = NULL;
+	else
+		*answerp = pptr;
+	
+	return (n);
+#else
 	if (pe == NULL)
 		return (PROTO_R_BAD);
 
 	return (copy_protoent(pe, pptr, PROTO_R_COPY));
+#endif
 }
 
 PROTO_R_SET_RETURN
@@ -115,7 +146,7 @@ copy_protoent(struct protoent *pe, struct protoent *pptr, PROTO_R_COPY_ARGS) {
 	len += strlen(pe->p_name) + 1;
 	len += numptr * sizeof(char*);
 	
-	if (len > buflen) {
+	if (len > (int)buflen) {
 		errno = ERANGE;
 		return (PROTO_R_BAD);
 	}
@@ -182,6 +213,6 @@ copy_protoent(struct protoent *pe, struct protoent *pptr, PROTO_R_COPY_ARGS) {
 }
 #endif /* PROTOENT_DATA */
 #else /* PROTO_R_RETURN */
-	static int getprotoent_r_unknown_systemm = 0;
+	static int getprotoent_r_unknown_system = 0;
 #endif /* PROTO_R_RETURN */
 #endif /* !defined(_REENTRANT) || !defined(DO_PTHREADS) */

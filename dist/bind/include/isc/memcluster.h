@@ -1,4 +1,4 @@
-/*	$NetBSD: memcluster.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: memcluster.h,v 1.1.1.1.8.1 2002/07/01 17:13:11 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
@@ -36,6 +36,7 @@
 #endif /*MEMCLUSTER_RECORD*/
 #endif /*MEMCLUSTER_DEBUG*/
 #define memstats	__memstats
+#define memactive	__memactive
 
 int	meminit(size_t, size_t);
 void *	__memget(size_t);
@@ -45,5 +46,6 @@ void 	__memput_debug(void *, size_t, const char *, int);
 void *	__memget_record(size_t, const char *, int);
 void 	__memput_record(void *, size_t, const char *, int);
 void 	memstats(FILE *);
+int	memactive(void);
 
 #endif /* MEMCLUSTER_H */

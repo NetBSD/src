@@ -1,4 +1,4 @@
-/*	$NetBSD: nul_ng.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: nul_ng.c,v 1.1.1.1.8.1 2002/07/01 17:13:29 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nul_ng.c,v 1.10 1999/01/18 07:46:59 vixie Exp";
+static const char rcsid[] = "Id: nul_ng.c,v 1.11 2001/05/29 05:49:20 marka Exp";
 #endif
 
 /*
@@ -51,7 +51,8 @@ static const char rcsid[] = "Id: nul_ng.c,v 1.10 1999/01/18 07:46:59 vixie Exp";
 /* Forward. */
 
 static void 		ng_close(struct irs_ng *);
-static int		ng_next(struct irs_ng *, char **, char **, char **);
+static int		ng_next(struct irs_ng *, const char **,
+				const char **, const char **);
 static int		ng_test(struct irs_ng *,
  				const char *, const char *,
 				const char *, const char *);
@@ -63,6 +64,8 @@ static void		ng_minimize(struct irs_ng *);
 struct irs_ng *
 irs_nul_ng(struct irs_acc *this) {
 	struct irs_ng *ng;
+
+	UNUSED(this);
 
 	if (!(ng = memget(sizeof *ng))) {
 		errno = ENOMEM;
@@ -87,7 +90,13 @@ ng_close(struct irs_ng *this) {
 
 /* ARGSUSED */
 static int
-ng_next(struct irs_ng *this, char **host, char **user, char **domain) {
+ng_next(struct irs_ng *this, const char **host, const char **user,
+	const char **domain)
+{
+	UNUSED(this);
+	UNUSED(host);
+	UNUSED(user);
+	UNUSED(domain);
 	errno = ENOENT;
 	return (-1);
 }
@@ -96,16 +105,24 @@ static int
 ng_test(struct irs_ng *this, const char *name,
 	const char *user, const char *host, const char *domain)
 {
+	UNUSED(this);
+	UNUSED(name);
+	UNUSED(user);
+	UNUSED(host);
+	UNUSED(domain);
 	errno = ENODEV;
 	return (-1);
 }
 
 static void
 ng_rewind(struct irs_ng *this, const char *netgroup) {
+	UNUSED(this);
+	UNUSED(netgroup);
 	/* NOOP */
 }
 
 static void
 ng_minimize(struct irs_ng *this) {
+	UNUSED(this);
 	/* NOOP */
 }
