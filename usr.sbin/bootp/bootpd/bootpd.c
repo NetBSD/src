@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.9 1998/07/06 07:02:16 mrg Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.10 1998/12/04 18:24:16 abs Exp $");
 #endif
 
 /*
@@ -640,6 +640,15 @@ ignoring request for server %s from client at %s address %s",
 		strcpy(bp->bp_sname, hostname);
 	}
 
+	/* If it uses an unknown network type, ignore the request.  */
+	if (bp->bp_htype >= hwinfocnt) {
+		if (debug)
+			report(LOG_INFO,
+			    "Request with unknown network type %u",
+			    bp->bp_htype);
+		return;
+	}
+
 	/* Convert the request into a reply. */
 	bp->bp_op = BOOTREPLY;
 	if (bp->bp_ciaddr.s_addr == 0) {
@@ -654,7 +663,7 @@ ignoring request for server %s from client at %s address %s",
 		}
 		hlen = haddrlength(bp->bp_htype);
 		if (hlen != bp->bp_hlen) {
-			report(LOG_NOTICE, "bad addr len from from %s address %s",
+			report(LOG_NOTICE, "bad addr len from %s address %s",
 				   netname(bp->bp_htype),
 				   haddrtoa(bp->bp_chaddr, hlen));
 		}
