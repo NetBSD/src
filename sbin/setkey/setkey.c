@@ -1,5 +1,5 @@
-/*	$NetBSD: setkey.c,v 1.7 2003/07/01 07:20:14 itojun Exp $	*/
-/*	$KAME: setkey.c,v 1.28 2003/06/27 07:15:45 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.8 2003/09/08 06:18:49 itojun Exp $	*/
+/*	$KAME: setkey.c,v 1.29 2003/09/08 06:08:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
+#include <fcntl.h>
 
 #include "libpfkey.h"
 
@@ -60,6 +61,7 @@ void sendkeyshort __P((u_int));
 void promisc __P((void));
 int sendkeymsg __P((char *, size_t));
 int postproc __P((struct sadb_msg *, int));
+int fileproc __P((const char *));
 const char *numstr __P((int));
 void shortdump_hdr __P((void));
 void shortdump __P((struct sadb_msg *));
@@ -100,21 +102,21 @@ usage()
 }
 
 int
-main(ac, av)
-	int ac;
-	char **av;
+main(argc, argv)
+	int argc;
+	char **argv;
 {
 	FILE *fp = stdin;
 	int c;
 
-	if (ac == 1) {
+	if (argc == 1) {
 		usage();
 		/* NOTREACHED */
 	}
 
 	thiszone = gmt2local(0);
 
-	while ((c = getopt(ac, av, "acdf:hlvxDFP")) != -1) {
+	while ((c = getopt(argc, argv, "acdf:hlvxDFP")) != -1) {
 		switch (c) {
 		case 'c':
 			f_mode = MODE_SCRIPT;
@@ -123,7 +125,7 @@ main(ac, av)
 		case 'f':
 			f_mode = MODE_SCRIPT;
 			if ((fp = fopen(optarg, "r")) == NULL) {
-				err(-1, "fopen");
+				err(1, "fopen");
 				/*NOTREACHED*/
 			}
 			break;
@@ -158,6 +160,18 @@ main(ac, av)
 		}
 	}
 
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 0) {
+		while (argc--)
+			if (fileproc(*argv++) < 0) {
+				err(1, "%s", argv[-1]);
+				/*NOTREACHED*/
+			}
+		exit(0);
+	}
+
 	so = pfkey_open();
 	if (so < 0) {
 		perror("pfkey_open");
@@ -173,7 +187,7 @@ main(ac, av)
 		break;
 	case MODE_SCRIPT:
 		if (get_supported() < 0) {
-			errx(-1, "%s", ipsec_strerror());
+			errx(1, "%s", ipsec_strerror());
 			/*NOTREACHED*/
 		}
 		if (parse(&fp))
@@ -200,7 +214,7 @@ get_supported()
 	if (pfkey_recv_register(so) < 0)
 		return -1;
 
-	return 0;
+	return (0);
 }
 
 void
@@ -360,7 +374,7 @@ again:
 	}
 
 end:
-	return(0);
+	return (0);
 }
 
 int
@@ -398,7 +412,7 @@ postproc(msg, len)
 			errmsg = strerror(msg->sadb_msg_errno);
 		}
 		printf("%s%s.\n", inf, errmsg);
-		return(-1);
+		return (-1);
 	}
 
 	switch (msg->sadb_msg_type) {
@@ -430,6 +444,10 @@ postproc(msg, len)
 		}
 		break;
 
+	case SADB_X_SPDGET:
+		pfkey_spdump(msg);
+		break;
+
 	case SADB_X_SPDDUMP:
 		pfkey_spdump(msg);
 		if (msg->sadb_msg_seq == 0) break;
@@ -442,7 +460,52 @@ postproc(msg, len)
 		break;
 	}
 
-	return(0);
+	return (0);
+}
+
+int
+fileproc(filename)
+	const char *filename;
+{
+	int fd;
+	ssize_t len, l;
+	u_char *p, *ep;
+	struct sadb_msg *msg;
+	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
+
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	l = 0;
+	while (1) {
+		len = read(fd, rbuf + l, sizeof(rbuf) - l);
+		if (len < 0) {
+			close(fd);
+			return -1;
+		} else if (len == 0)
+			break;
+		l += len;
+	}
+
+	if (l < sizeof(struct sadb_msg)) {
+		close(fd);
+		errno = EINVAL;
+		return -1;
+	}
+	close(fd);
+
+	p = rbuf;
+	ep = rbuf + l;
+
+	while (p < ep) {
+		msg = (struct sadb_msg *)p;
+		len = PFKEY_UNUNIT64(msg->sadb_msg_len);
+		postproc(msg, len);
+		p += len;
+	}
+
+	return (0);
 }
 
 /*------------------------------------------------------------*/
