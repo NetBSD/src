@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.29 2001/04/30 01:13:21 lukem Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.30 2001/06/06 21:46:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -162,6 +162,13 @@ const int sigprop[NSIG] = {
 #ifdef _KERNEL
 
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
+
+/*
+ * Set if we need to short-cut coredump() with the 32-bit version
+ * on a 64-bit platform.
+ */
+struct vnode;
+extern	int (*coredump32_hook)(struct proc *p, struct vnode *vp);
 
 /*
  * Machine-independent functions:
