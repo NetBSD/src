@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.32 1995/01/29 07:37:08 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.33 1995/04/03 21:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -150,8 +150,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <dev/isa/if_ie507.h>
 #include <dev/isa/elink.h>
 
-static struct mbuf *last_not_for_us;
-
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
 #define	IED_RNR		0x04
@@ -200,6 +198,7 @@ enum ie_hardware {
 	IE_EN100,
 	IE_SLFIBER,
 	IE_3C507,
+	IE_EE16,
 	IE_UNKNOWN
 };
 
@@ -208,6 +207,7 @@ const char *ie_hardware_names[] = {
 	"EN100",
 	"StarLAN Fiber",
 	"3C507",
+	"EtherExpress 16",
 	"Unknown"
 };
 
@@ -240,7 +240,6 @@ struct ie_softc {
 	volatile struct ie_recv_buf_desc *rbuffs[NRXBUF];
 	volatile char *cbuffs[NRXBUF];
 
-	int xmit_busy;
 	int xmit_free;
 	int xchead, xctail;
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
@@ -257,6 +256,7 @@ struct ie_softc {
 
 int iewatchdog __P((/* short */));
 int ieintr __P((struct ie_softc *));
+void iestop __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
 int iestart __P((struct ifnet *));
@@ -264,17 +264,17 @@ static void el_reset_586 __P((struct ie_softc *));
 static void sl_reset_586 __P((struct ie_softc *));
 static void el_chan_attn __P((struct ie_softc *));
 static void sl_chan_attn __P((struct ie_softc *));
-void iereset __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc *, int));
-static void ie_drop_packet_buffer __P((struct ie_softc *));
 static void slel_get_address __P((struct ie_softc *));
-static void find_ie_mem_size __P((struct ie_softc *));
+void iereset __P((struct ie_softc *));
+void ie_readframe __P((struct ie_softc *, int));
+void ie_drop_packet_buffer __P((struct ie_softc *));
+void ie_find_mem_size __P((struct ie_softc *));
 static int command_and_wait __P((struct ie_softc *, int,
     void volatile *, int));
-/*static*/ void ierint __P((struct ie_softc *));
-/*static*/ void ietint __P((struct ie_softc *));
-static int ieget __P((struct ie_softc *, struct mbuf **,
-		      struct ether_header *, int *));
+void ierint __P((struct ie_softc *));
+void ietint __P((struct ie_softc *));
+struct mbuf *ieget __P((struct ie_softc *,
+    struct ether_header *, int *));
 void iememinit __P((void *, struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
@@ -317,7 +317,7 @@ ie_setup_config(cmd, promiscuous, manchester)
 	cmd->ie_ifs = 0x60;
 	cmd->ie_slot_low = 0;
 	cmd->ie_slot_high = 0xf2;
-	cmd->ie_promisc = !!promiscuous | manchester << 2;
+	cmd->ie_promisc = promiscuous | manchester << 2;
 	cmd->ie_crs_cdt = 0;
 	cmd->ie_min_len = 64;
 	cmd->ie_junk = 0xff;
@@ -396,7 +396,7 @@ sl_probe(sc, ia)
 	 * Divine memory size on-board the card.  Ususally 16k.
 	 */
 	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
-	find_ie_mem_size(sc);
+	ie_find_mem_size(sc);
 
 	if (!sc->sc_msize) {
 		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
@@ -491,7 +491,7 @@ el_probe(sc, ia)
 	 * Divine memory size on-board the card.
 	 */
 	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
-	find_ie_mem_size(sc);
+	ie_find_mem_size(sc);
 
 	if (!sc->sc_msize) {
 		printf("%s: can't find shared memory\n", sc->sc_dev.dv_xname);
@@ -569,7 +569,6 @@ iewatchdog(unit)
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
-
 	iereset(sc);
 }
 
@@ -582,19 +581,17 @@ ieintr(sc)
 {
 	register u_short status;
 
-	status = sc->scb->ie_status;
+	/* Clear the interrupt latch on the 3C507. */
+	if (sc->hard_type == IE_3C507)
+		outb(PORT + IE507_ICTRL, 1);
 
-	if ((status & IE_ST_WHENCE) == 0) {
-		/* Clear the interrupt latch on the 3C507. */
-		if (sc->hard_type == IE_3C507 &&
-		    (inb(PORT + IE507_CTRL) & EL_CTRL_INTL))
-			outb(PORT + IE507_ICTRL, 1);
+	status = sc->scb->ie_status & IE_ST_WHENCE;
+	if (status == 0)
 		return 0;
-	}
 
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
-	ie_ack(sc, IE_ST_WHENCE & status);
+	ie_ack(sc, status);
 
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
 #ifdef IEDEBUG
@@ -631,14 +628,15 @@ loop:
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
-	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
-		goto loop;
-
 	/* Clear the interrupt latch on the 3C507. */
 	if (sc->hard_type == IE_3C507)
 		outb(PORT + IE507_ICTRL, 1);
 
-	return 1;
+	status = sc->scb->ie_status & IE_ST_WHENCE;
+	if (status == 0)
+		return 1;
+
+	goto loop;
 }
 
 /*
@@ -657,7 +655,6 @@ ierint(sc)
 		status = sc->rframes[i]->ie_fd_status;
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
-			sc->sc_arpcom.ac_if.if_ipackets++;
 			if (!--timesthru) {
 				sc->sc_arpcom.ac_if.if_ierrors +=
 				    scb->ie_err_crc + scb->ie_err_align +
@@ -691,10 +688,11 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int status;
 
-	sc->sc_arpcom.ac_if.if_timer = 0;
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
@@ -702,24 +700,29 @@ ietint(sc)
 		printf("ietint: command still busy!\n");
 
 	if (status & IE_STAT_OK) {
-		sc->sc_arpcom.ac_if.if_opackets++;
-		sc->sc_arpcom.ac_if.if_collisions += status & IE_XS_MAXCOLL;
-	} else if (status & IE_STAT_ABORT) {
-		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
-	} else if (status & IE_XS_NOCARRIER) {
-		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
-	} else if (status & IE_XS_LOSTCTS) {
-		printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
-	} else if (status & IE_XS_UNDERRUN) {
-		printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
-	} else if (status & IE_XS_EXCMAX) {
-		printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_collisions += 16;
-		sc->sc_arpcom.ac_if.if_oerrors++;
+		ifp->if_opackets++;
+		ifp->if_collisions += status & IE_XS_MAXCOLL;
+	} else {
+		ifp->if_oerrors++;
+		/*
+		 * XXX
+		 * Check SQE and DEFERRED?
+		 * What if more than one bit is set?
+		 */
+		if (status & IE_STAT_ABORT)
+			printf("%s: send aborted\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_LATECOLL)
+			printf("%s: late collision\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_NOCARRIER)
+			printf("%s: no carrier\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_LOSTCTS)
+			printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_UNDERRUN)
+			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_EXCMAX) {
+			printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
+			ifp->if_collisions += 16;
+		}
 	}
 
 	/*
@@ -734,10 +737,13 @@ ietint(sc)
 
 	/* Done with the buffer. */
 	sc->xmit_free++;
-	sc->xmit_busy = 0;
 	sc->xctail = (sc->xctail + 1) % NTXBUF;
 
-	iestart(&sc->sc_arpcom.ac_if);
+	/* Start the next packet, if any, transmitting. */
+	if (sc->xmit_free < NTXBUF)
+		iexmit(sc);
+
+	iestart(ifp);
 }
 
 /*
@@ -775,7 +781,7 @@ check_eh(sc, eh, to_bpf)
 {
 	int i;
 
-	switch(sc->promisc) {
+	switch (sc->promisc) {
 	case IFF_ALLMULTI:
 		/*
 		 * Receiving all multicasts, but no unicasts except those
@@ -786,7 +792,8 @@ check_eh(sc, eh, to_bpf)
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) return 1;
+		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+			return 1;
 		return 0;
 
 	case IFF_PROMISC:
@@ -797,7 +804,8 @@ check_eh(sc, eh, to_bpf)
 		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) return 1;
+		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+			return 1;
 
 #if NBPFILTER > 0
 		if (*to_bpf)
@@ -848,7 +856,7 @@ check_eh(sc, eh, to_bpf)
 #endif
 		return 1;
 
-	default:
+	case 0:
 		/*
 		 * Only accept unicast packets destined for us, or multicasts
 		 * for groups that we belong to.  For now, we assume that the
@@ -862,7 +870,10 @@ check_eh(sc, eh, to_bpf)
 #endif
 		return 1;
 	}
-	return 0;
+
+#ifdef DIAGNOSTIC
+	panic("check_eh: impossible");
+#endif
 }
 
 /*
@@ -889,15 +900,8 @@ ie_packet_len(sc)
 	int acc = 0;
 
 	do {
-		if (!(sc->rbuffs[sc->rbhead]->ie_rbd_actual & IE_RBD_USED)) {
-#ifdef IEDEBUG
-			print_rbd(sc->rbuffs[sc->rbhead]);
-#endif
-			log(LOG_ERR, "%s: receive descriptors out of sync at %d\n",
-			    sc->sc_dev.dv_xname, sc->rbhead);
-			iereset(sc);
+		if (!(sc->rbuffs[sc->rbhead]->ie_rbd_actual & IE_RBD_USED))
 			return -1;
-		}
 
 		i = sc->rbuffs[head]->ie_rbd_actual & IE_RBD_LAST;
 
@@ -945,7 +949,6 @@ iexmit(sc)
 	sc->scb->ie_command_list = MK_16(MEM, sc->xmit_cmds[sc->xctail]);
 	command_and_wait(sc, IE_CU_START, 0, 0);
 
-	sc->xmit_busy = 1;
 	sc->sc_arpcom.ac_if.if_timer = 5;
 }
 
@@ -959,30 +962,27 @@ iexmit(sc)
  * mbufs.  This should help to speed up the operation considerably.  (Provided
  * that it works, of course.)
  */
-static inline int
-ieget(sc, mp, ehp, to_bpf)
+struct mbuf *
+ieget(sc, ehp, to_bpf)
 	struct ie_softc *sc;
-	struct mbuf **mp;
 	struct ether_header *ehp;
 	int *to_bpf;
 {
-	struct mbuf *m, *top, **mymp;
-	int i;
-	int offset;
-	int totlen, resid;
-	int thismboff;
+	struct mbuf *top, **mp, *m;
+	int len, totlen, resid;
+	int thisrboff, thismboff;
 	int head;
 
 	totlen = ie_packet_len(sc);
 	if (totlen <= 0)
-		return -1;
+		return 0;
 
-	i = sc->rbhead;
+	head = sc->rbhead;
 
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	bcopy((caddr_t)sc->cbuffs[i], (caddr_t)ehp, sizeof *ehp);
+	bcopy((caddr_t)sc->cbuffs[head], (caddr_t)ehp, sizeof *ehp);
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -992,130 +992,73 @@ ieget(sc, mp, ehp, to_bpf)
 	 * we are either running BPF or doing multicasting.
 	 */
 	if (!check_eh(sc, ehp, to_bpf)) {
-		ie_drop_packet_buffer(sc);
 		sc->sc_arpcom.ac_if.if_ierrors--; /* just this case, it's not an error */
-		return -1;
-	}
-	totlen -= (offset = sizeof *ehp);
-
-	MGETHDR(*mp, M_DONTWAIT, MT_DATA);
-	if (!*mp) {
-		ie_drop_packet_buffer(sc);
-		return -1;
+		return 0;
 	}
 
-	m = *mp;
+	resid = totlen -= (thisrboff = sizeof *ehp);
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return 0;
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-	m->m_len = MHLEN;
-	resid = m->m_pkthdr.len = totlen;
+	m->m_pkthdr.len = totlen;
+	len = MHLEN;
 	top = 0;
-	mymp = &top;
+	mp = &top;
 
 	/*
 	 * This loop goes through and allocates mbufs for all the data we will
 	 * be copying in.  It does not actually do the copying yet.
 	 */
-	do {				/* while (resid > 0) */
-		/*
-		 * Try to allocate an mbuf to hold the data that we have.  If
-		 * we already allocated one, just get another one and stick it
-		 * on the end (eventually).  If we don't already have one, try
-		 * to allocate an mbuf cluster big enough to hold the whole
-		 * packet, if we think it's reasonable, or a single mbuf which
-		 * may or may not be big enough.
-		 * Got that?
-		 */
+	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (!m) {
+			if (m == 0) {
 				m_freem(top);
-				ie_drop_packet_buffer(sc);
-				return -1;
+				return 0;
 			}
-			m->m_len = MLEN;
+			len = MLEN;
 		}
-
-		if (resid >= MINCLSIZE) {
+		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
-				m->m_len = min(resid, MCLBYTES);
-		} else {
-			if (resid < m->m_len) {
-				if (!top && resid + max_linkhdr <= m->m_len)
-					m->m_data += max_linkhdr;
-				m->m_len = resid;
-			}
+				len = MCLBYTES;
 		}
-		resid -= m->m_len;
-		*mymp = m;
-		mymp = &m->m_next;
-	} while (resid > 0);
+		m->m_len = len = min(totlen, len);
+		totlen -= len;
+		*mp = m;
+		mp = &m->m_next;
+	}
 
-	resid = totlen;
 	m = top;
 	thismboff = 0;
-	head = sc->rbhead;
 
 	/*
 	 * Now we take the mbuf chain (hopefully only one mbuf most of the
 	 * time) and stuff the data into it.  There are no possible failures at
 	 * or after this point.
 	 */
-	while (resid > 0) {		/* while there's stuff left */
-		int thislen = ie_buflen(sc, head) - offset;
+	while (resid > 0) {
+		int thisrblen = ie_buflen(sc, head) - thisrboff,
+		    thismblen = m->m_len - thismboff;
+		len = min(thisrblen, thismblen);
 
-		/*
-		 * If too much data for the current mbuf, then fill the current
-		 * one up, go to the next one, and try again.
-		 */
-		if (thislen > m->m_len - thismboff) {
-			int newlen = m->m_len - thismboff;
-			bcopy((caddr_t)(sc->cbuffs[head] + offset),
-			    mtod(m, caddr_t) + thismboff, (u_int)newlen);
+		bcopy((caddr_t)(sc->cbuffs[head] + thisrboff),
+		    mtod(m, caddr_t) + thismboff, (u_int)len);
+		resid -= len;
+
+		if (len == thismblen) {
 			m = m->m_next;
-			thismboff = 0;		/* new mbuf, so no offset */
-			offset += newlen;	/* we are now this far
-							into the packet */
-			resid -= newlen;	/* so there is this much
-							left to get */
-			continue;
-		}
+			thismboff = 0;
+		} else
+			thismboff += len;
 
-		/*
-		 * If there is more than enough space in the mbuf to hold the
-		 * contents of this buffer, copy everything in, advance
-		 * pointers and so on.
-		 */
-		if (thislen < m->m_len - thismboff) {
-			bcopy((caddr_t)(sc->cbuffs[head] + offset),
-			    mtod(m, caddr_t) + thismboff, (u_int)thislen);
-			thismboff += thislen;	/* we are this far into the mbuf */
-			resid -= thislen;	/* and this much is left */
-			goto nextbuf;
-		}
-
-		/*
-		 * Otherwise, there is exactly enough space to put this
-		 * buffer's contents into the current mbuf.  Do the combination
-		 * of the above actions.
-		 */
-		bcopy((caddr_t)(sc->cbuffs[head] + offset),
-		    mtod(m, caddr_t) + thismboff, (u_int)thislen);
-		m = m->m_next;
-		thismboff = 0;		/* new mbuf, start at the beginning */
-		resid -= thislen;	/* and we are this far through */
-
-		/*
-		 * Advance all the pointers.  We can get here from either of
-		 * the last two cases, but never the first.
-		 */
-	nextbuf:
-		offset = 0;
-		sc->rbuffs[head]->ie_rbd_actual = 0;
-		sc->rbuffs[head]->ie_rbd_length |= IE_RBD_LAST;
-		sc->rbhead = head = (head + 1) % NRXBUF;
-		sc->rbuffs[sc->rbtail]->ie_rbd_length &= ~IE_RBD_LAST;
-		sc->rbtail = (sc->rbtail + 1) % NRXBUF;
+		if (len == thisrblen) {
+			head = (head + 1) % NRXBUF;
+			thisrboff = 0;
+		} else
+			thisrboff += len;
 	}
 
 	/*
@@ -1123,7 +1066,7 @@ ieget(sc, mp, ehp, to_bpf)
 	 * have now copied everything in from the shared memory.
 	 * This means that we are done.
 	 */
-	return 0;
+	return top;
 }
 
 /*
@@ -1135,7 +1078,7 @@ ieget(sc, mp, ehp, to_bpf)
  * on confusing code to deal with them.  Hopefully, this machine will never ARP
  * for trailers anyway.
  */
-static void
+void
 ie_readframe(sc, num)
 	struct ie_softc *sc;
 	int num;			/* frame number to read */
@@ -1149,7 +1092,7 @@ ie_readframe(sc, num)
 
 	status = sc->rframes[num]->ie_fd_status;
 
-	/* Immediately advance the RFD list, since we have copied ours now. */
+	/* Advance the RFD list, since we're done with this descriptor. */
 	sc->rframes[num]->ie_fd_status = 0;
 	sc->rframes[num]->ie_fd_last |= IE_FD_LAST;
 	sc->rframes[sc->rftail]->ie_fd_last &= ~IE_FD_LAST;
@@ -1158,13 +1101,15 @@ ie_readframe(sc, num)
 
 	if (status & IE_FD_OK) {
 #if NBPFILTER > 0
-		if (ieget(sc, &m, &eh, &bpf_gets_it)) {
+		m = ieget(sc, &eh, &bpf_gets_it);
 #else
-		if (ieget(sc, &m, &eh, 0)) {
+		m = ieget(sc, &eh, 0);
 #endif
-			sc->sc_arpcom.ac_if.if_ierrors++;
-			return;
-		}
+		ie_drop_packet_buffer(sc);
+	}
+	if (m == 0) {
+		sc->sc_arpcom.ac_if.if_ierrors++;
+		return;
 	}
 
 #ifdef IEDEBUG
@@ -1172,14 +1117,6 @@ ie_readframe(sc, num)
 		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
-
-	if (!m)
-		return;
-
-	if (last_not_for_us) {
-		m_freem(last_not_for_us);
-		last_not_for_us = 0;
-	}
 
 #if NBPFILTER > 0
 	/*
@@ -1198,15 +1135,17 @@ ie_readframe(sc, num)
 
 		/* Pass it up. */
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, &m0);
-	}
-	/*
-	 * A signal passed up from the filtering code indicating that the
-	 * packet is intended for BPF but not for the protocol machinery.
-	 * We can save a few cycles by not handing it off to them.
-	 */
-	if (bpf_gets_it == 2) {
-		last_not_for_us = m;
-		return;
+
+		/*
+		 * A signal passed up from the filtering code indicating that
+		 * the packet is intended for BPF but not for the protocol
+		 * machinery.  We can save a few cycles by not handing it off
+		 * to them.
+		 */
+		if (bpf_gets_it == 2) {
+			m_freem(m);
+			return;
+		}
 	}
 #endif /* NBPFILTER > 0 */
 
@@ -1222,9 +1161,10 @@ ie_readframe(sc, num)
 	 * Finally pass this packet up to higher layers.
 	 */
 	ether_input(&sc->sc_arpcom.ac_if, &eh, m);
+	sc->sc_arpcom.ac_if.if_ipackets++;
 }
 
-static void
+void
 ie_drop_packet_buffer(sc)
 	struct ie_softc *sc;
 {
@@ -1255,7 +1195,6 @@ ie_drop_packet_buffer(sc)
 	} while (!i);
 }
 
-
 /*
  * Start transmission on an interface.
  */
@@ -1268,17 +1207,15 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return 0;
+	if ((ifp->if_flags & IFF_OACTIVE) != 0)
+		return;
 
-	if (sc->xmit_free == 0) {
-		ifp->if_flags |= IFF_OACTIVE;
-		if (!sc->xmit_busy)
-			iexmit(sc);
-		return 0;
-	}
+	for (;;) {
+		if (sc->xmit_free == 0) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-	do {
 		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 		if (!m)
 			break;
@@ -1286,7 +1223,8 @@ iestart(ifp)
 		len = 0;
 		buffer = sc->xmit_cbuffs[sc->xchead];
 
-		for (m0 = m; m && len < IE_TBUF_SIZE; m = m->m_next) {
+		for (m0 = m; m && (len + m->m_len) < IE_TBUF_SIZE;
+		     m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
@@ -1296,15 +1234,13 @@ iestart(ifp)
 		len = max(len, ETHER_MIN_LEN);
 		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = len;
 
-		sc->xmit_free--;
+		/* Start the first packet transmitting. */
+		if (sc->xmit_free == NTXBUF)
+			iexmit(sc);
+
 		sc->xchead = (sc->xchead + 1) % NTXBUF;
-	} while (sc->xmit_free > 0);
-
-	/* If we stuffed any packets into the card's memory, send now. */
-	if ((sc->xmit_free < NTXBUF) && (!sc->xmit_busy))
-		iexmit(sc);
-
-	return 1;
+		sc->xmit_free--;
+	}
 }
 
 /*
@@ -1399,8 +1335,8 @@ check_ie_present(sc, where, size)
  * Divine the memory size of ie board UNIT.
  * Better hope there's nothing important hiding just below the ie card...
  */
-static void
-find_ie_mem_size(sc)
+void
+ie_find_mem_size(sc)
 	struct ie_softc *sc;
 {
 	u_int size;
@@ -1466,11 +1402,7 @@ iereset(sc)
 {
 	int s = splimp();
 
-	printf("%s: reset\n", sc->sc_dev.dv_xname);
-
-	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
-	sc->sc_arpcom.ac_if.if_flags &= ~(IFF_UP | IFF_OACTIVE);
-	ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, 0);
+	iestop(sc);
 
 	/*
 	 * Stop i82586 dead in its tracks.
@@ -1481,13 +1413,7 @@ iereset(sc)
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
-#ifdef notdef
-	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
-		panic("ie disappeared!\n");
-#endif
-
-	sc->sc_arpcom.ac_if.if_flags |= IFF_UP;
-	ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, 0);
+	ieinit(sc);
 
 	splx(s);
 }
@@ -1677,7 +1603,6 @@ iememinit(ptr, sc)
 	sc->xchead = sc->xctail = 0;
 
 	/* Clear transmit-busy flag and set number of free transmit buffers. */
-	sc->xmit_busy = 0;
 	sc->xmit_free = NTXBUF;
 }
 
@@ -1740,7 +1665,8 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_CONFIG | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = 0xffff;
 
-		ie_setup_config(cmd, sc->promisc, sc->hard_type == IE_STARLAN10);
+		ie_setup_config(cmd, sc->promisc != 0,
+		    sc->hard_type == IE_STARLAN10);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
@@ -1787,7 +1713,8 @@ ieinit(sc)
 	 */
 	iememinit(ptr, sc);
 
-	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING; /* tell higher levels that we are here */
+	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
+	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 
 	sc->scb->ie_recv_list = MK_16(MEM, sc->rframes[0]);
 	command_and_wait(sc, IE_RU_START, 0, 0);
@@ -1797,7 +1724,7 @@ ieinit(sc)
 	return 0;
 }
 
-static void
+void
 iestop(sc)
 	struct ie_softc *sc;
 {
@@ -1818,19 +1745,20 @@ ieioctl(ifp, cmd, data)
 
 	s = splimp();
 
-	switch(cmd) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
-		switch(ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
 			/*
 			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a conflict
-			 * exists, a message is sent to the console.
+			 * i.e.: There is an address conflict! If a
+			 * conflict exists, a message is sent to the
+			 * console.
 			 */
 			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
