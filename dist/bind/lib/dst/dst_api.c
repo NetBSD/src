@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.3 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.4 2001/05/17 23:00:18 itojun Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/dst_api.c,v 1.16 2000/11/13 04:09:23 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/dst_api.c,v 1.17 2001/04/05 22:00:02 bwelling Exp";
 #endif
 
 /*
@@ -658,6 +658,7 @@ dst_dnskey_to_key(const char *in_name, const u_char *rdata, const int len)
 
 	if (in_name == NULL)
 		return (NULL);
+	key_st->dk_id = dst_s_dns_key_id(rdata, len);
 	key_st->dk_flags = dst_s_get_int16(rdata);
 	key_st->dk_proto = (u_int16_t) rdata[DST_KEY_PROT];
 	if (key_st->dk_flags & DST_EXTEND_FLAG) {
@@ -761,6 +762,8 @@ dst_buffer_to_key(const char *key_name,		/* name of the key */
 {
 	
 	DST_KEY *dkey = NULL; 
+	int dnslen;
+	u_char dns[2048];
 
 	if (!dst_check_algorithm(alg)) { /* make sure alg is available */
 		EREPORT(("dst_buffer_to_key(): Algorithm %d not suppored\n", alg));
@@ -772,14 +775,17 @@ dst_buffer_to_key(const char *key_name,		/* name of the key */
 
 	if (dkey == NULL)
 		return (NULL);
-	if (dkey->dk_func != NULL && dkey->dk_func->from_dns_key != NULL) {
-		if (dkey->dk_func->from_dns_key(dkey, key_buf, key_len) < 0) {
-			EREPORT(("dst_buffer_to_key(): dst_buffer_to_hmac failed\n"));
-			return (dst_free_key(dkey));
-		}
-		return (dkey);
+	if (dkey->dk_func == NULL || dkey->dk_func->from_dns_key == NULL)
+		return NULL;
+
+	if (dkey->dk_func->from_dns_key(dkey, key_buf, key_len) < 0) {
+		EREPORT(("dst_buffer_to_key(): dst_buffer_to_hmac failed\n"));
+		return (dst_free_key(dkey));
 	}
-	return (NULL);
+
+	dnslen = dst_key_to_dnskey(dkey, dns, sizeof(dns));
+	dkey->dk_id = dst_s_dns_key_id(dns, dnslen);
+	return (dkey);
 }
 
 int 
@@ -817,10 +823,12 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, u_int16_t in_id,
 			    int in_alg)
 {
 	int cnt, alg, len, major, minor, file_major, file_minor;
-	int id;
+	int ret, id;
 	char filename[PATH_MAX];
 	u_char in_buff[RAW_KEY_SIZE], *p;
 	FILE *fp;
+	int dnslen;
+	u_char dns[2048];
 
 	if (name == NULL || pk_key == NULL) {
 		EREPORT(("dst_read_private_key_file(): No key name given\n"));
@@ -887,9 +895,12 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, u_int16_t in_id,
 	if (pk_key->dk_func == NULL || pk_key->dk_func->from_file_fmt == NULL)
 		goto fail;
 
-	id = pk_key->dk_func->from_file_fmt(pk_key, (char *)p, &in_buff[len] - p);
-	if (id < 0)
+	ret = pk_key->dk_func->from_file_fmt(pk_key, (char *)p, &in_buff[len] - p);
+	if (ret < 0)
 		goto fail;
+
+	dnslen = dst_key_to_dnskey(pk_key, dns, sizeof(dns));
+	id = dst_s_dns_key_id(dns, dnslen);
 
 	/* Make sure the actual key tag matches the input tag used in the filename
 	 */
@@ -943,6 +954,9 @@ dst_generate_key(const char *name, const int bits, const int exp,
 {
 	DST_KEY *new_key = NULL;
 	int res;
+	int dnslen;
+	u_char dns[2048];
+
 	if (name == NULL)
 		return (NULL);
 
@@ -967,6 +981,13 @@ dst_generate_key(const char *name, const int bits, const int exp,
 			 new_key->dk_key_size, exp));
 		return (dst_free_key(new_key));
 	}
+
+	dnslen = dst_key_to_dnskey(new_key, dns, sizeof(dns));
+	if (dnslen != UNSUPPORTED_KEYALG)
+		new_key->dk_id = dst_s_dns_key_id(dns, dnslen);
+	else
+		new_key->dk_id = 0;
+
 	return (new_key);
 }
 

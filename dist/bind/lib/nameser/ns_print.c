@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.3 2001/05/17 23:00:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_print.c,v 8.21 2000/12/09 00:15:38 marka Exp";
+static const char rcsid[] = "Id: ns_print.c,v 8.22 2001/03/26 07:04:31 marka Exp";
 #endif
 
 /* Import. */
@@ -318,7 +318,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		break;
 
 	case ns_t_nsap: {
-		char t[255*3];
+		char t[2+255*3];
 
 		(void) inet_nsap_ntoa(rdlen, rdata, t);
 		T(addstr(t, strlen(t), &buf, &buflen));

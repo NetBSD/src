@@ -1,4 +1,4 @@
-/*	$NetBSD: getinfo.c,v 1.3 2001/01/27 07:22:01 itojun Exp $	*/
+/*	$NetBSD: getinfo.c,v 1.4 2001/05/17 22:59:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989
@@ -55,7 +55,7 @@
 
 #ifndef lint
 static const char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: getinfo.c,v 8.17 2000/12/23 08:14:46 vixie Exp";
+static const char rcsid[] = "Id: getinfo.c,v 8.18 2001/02/27 06:03:40 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -176,7 +176,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
      */
     FreeHostInfoPtr(hostPtr);
 
-    status = SendRequest(nsAddrPtr, msg, msglen, (u_char *) &answer,
+    status = SendRequest(nsAddrPtr, (u_char *)msg, msglen, (u_char *) &answer,
 			 sizeof(answer), &n);
 
     if (status != SUCCESS) {

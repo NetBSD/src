@@ -1,7 +1,7 @@
-/*	$NetBSD: ndc.c,v 1.3 2001/01/27 07:22:01 itojun Exp $	*/
+/*	$NetBSD: ndc.c,v 1.4 2001/05/17 22:59:41 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ndc.c,v 1.16 2000/12/23 08:14:45 vixie Exp";
+static const char rcsid[] = "Id: ndc.c,v 1.16.2.1 2001/04/26 02:56:10 marka Exp";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,9 @@ static const char rcsid[] = "Id: ndc.c,v 1.16 2000/12/23 08:14:45 vixie Exp";
 
 #include "port_after.h"
 #include "pathnames.h"
+#ifndef PATH_SEP
+#define PATH_SEP '/'
+#endif
 
 typedef union {
 	struct sockaddr_in in;
@@ -126,7 +129,7 @@ main(int argc, char *argv[], char *envp[]) {
 	char *p;
 	int ch;
 
-	if ((program = strrchr(argv[0], '/')) != NULL)
+	if ((program = strrchr(argv[0], PATH_SEP)) != NULL)
 		program++;
 	else
 		program = argv[0];

@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_parser.y,v 1.3 2001/01/27 07:21:59 itojun Exp $	*/
+/*	$NetBSD: ns_parser.y,v 1.4 2001/05/17 22:59:40 itojun Exp $	*/
 
 %{
 #if !defined(lint) && !defined(SABER)
-static char rcsid[] = "Id: ns_parser.y,v 8.63 2000/12/23 08:14:41 vixie Exp";
+static char rcsid[] = "Id: ns_parser.y,v 8.63.2.4 2001/04/30 08:03:02 marka Exp";
 #endif /* not lint */
 
 /*
@@ -269,7 +269,11 @@ statement: include_stmt
 	| error L_END_INCLUDE
 	;
 
-include_stmt: T_INCLUDE L_QSTRING L_EOS	{ lexer_begin_file($2, NULL); }
+include_stmt: T_INCLUDE L_QSTRING L_EOS
+	{
+		lexer_begin_file($2, NULL);
+		freestr($2);
+	}
 	;
 
 /*
@@ -605,6 +609,7 @@ control: /* Empty */
 #ifndef NO_SOCKADDR_UN
 		ns_ctl_add(&current_controls, ns_ctl_new_unix($2, $4, $6, $8));
 #endif
+		freestr($2);
 	}
 	| error
 	;
@@ -1277,6 +1282,7 @@ address_match_element: address_match_simple
 		}
 		else
 			$$ = new_ip_match_key(dst_key);
+	        (void)freestr(key_name);
 	}
 	;
 
@@ -1403,13 +1409,11 @@ key_stmt: T_SEC_KEY
 				     $3);
 		} else if (lookup_key(key_name) != NULL) {
 			parser_error(0, "can't redefine key '%s'", key_name);
-			freestr(key_name);
 		} else {
 			if (current_algorithm == NULL ||
 			    current_secret == NULL)  {
 				parser_error(0, "skipping bad key '%s'",
 					     key_name);
-				freestr(key_name);
 			} else {
 				dst_key = new_key_info(key_name,
 						       current_algorithm,
@@ -1424,6 +1428,15 @@ key_stmt: T_SEC_KEY
 				}
 			}
 		}
+		if (key_name != NULL)
+			freestr(key_name);
+		key_name = NULL;
+		if (current_algorithm != NULL)
+			freestr(current_algorithm);
+		current_algorithm = NULL;
+		if (current_secret != NULL)
+			freestr(current_secret);
+		current_secret = NULL;
 		freestr($3);
 	}
 	;

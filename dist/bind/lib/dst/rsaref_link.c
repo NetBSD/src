@@ -1,7 +1,7 @@
-/*	$NetBSD: rsaref_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: rsaref_link.c,v 1.3 2001/05/17 23:00:18 itojun Exp $	*/
 
 #ifdef RSAREF
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/rsaref_link.c,v 1.7 2000/07/17 07:36:53 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/rsaref_link.c,v 1.9 2001/04/05 22:00:04 bwelling Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -359,8 +359,6 @@ dst_rsaref_from_dns_key(DST_KEY *s_key, const u_char *key, const int len)
 	memcpy(&r_key->rk_Public_Key->modulus[MAX_RSA_MODULUS_LEN - bytes],
 	       key_ptr, bytes);
 	r_key->rk_Public_Key->bits = bytes * 8;
-	s_key->dk_id = (u_int16_t) dst_s_get_int16((u_char *)
-		   &r_key->rk_Public_Key->modulus[MAX_RSA_MODULUS_LEN - 3]);
 	s_key->dk_key_size = r_key->rk_Public_Key->bits;
 
 	return (1);
@@ -546,10 +544,8 @@ dst_rsaref_key_from_file_format(DST_KEY *d_key, const u_char *buff,
 	r_key->rk_signer = strdup(d_key->dk_key_name);
 	d_key->dk_KEY_struct = (void *) r_key;
 	d_key->dk_key_size = r_key->rk_Private_Key->bits;
-	d_key->dk_id = (u_int16_t) dst_s_get_int16((u_char *)
-		   &r_key->rk_Public_Key->modulus[MAX_RSA_MODULUS_LEN - 3]);
-	foot = (int) d_key->dk_id;
-	return (foot);
+
+	return (0);
 }
 
 
@@ -648,8 +644,6 @@ dst_rsaref_generate_keypair(DST_KEY *key, const int exp)
 	rsa->rk_Public_Key = public;
 	key->dk_KEY_struct = (void *) rsa;
 
-	key->dk_id = (u_int16_t) dst_s_get_int16((u_char *)
-		     &rsa->rk_Public_Key->modulus[MAX_RSA_MODULUS_LEN - 3]);
 	return (1);
 }
 
@@ -708,7 +702,6 @@ dst_rsaref_init_random_struct(R_RANDOM_STRUCT * randomstruct)
 	 * This must be the FIRST CALL
 	 */
 	gettimeofday(&tv, 0);
-	assert(tv.tv_usec >= 0 && tv.tv_usec < 1000000);
 	R_RandomUpdate(randomstruct, (u_char *) &tv,
 		       sizeof(struct timeval));
 

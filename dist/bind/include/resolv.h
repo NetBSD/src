@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.5 2001/01/27 07:22:02 itojun Exp $	*/
+/*	$NetBSD: resolv.h,v 1.6 2001/05/17 22:59:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -52,7 +52,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 8.32 2000/12/23 08:14:49 vixie Exp
+ *	Id: resolv.h,v 8.32.2.1 2001/05/17 03:01:30 marka Exp
  */
 
 #ifndef _RESOLV_H_
@@ -171,7 +171,9 @@
 
 #define RES_SET_H_ERRNO(r,x) __h_errno_set(r,x)
 struct __res_state; /* forward */
+__BEGIN_DECLS
 void __h_errno_set(struct __res_state *res, int err);
+__END_DECLS
 
 /*
  * Resolver configuration file.
@@ -314,7 +316,9 @@ typedef struct __res_state *res_state;
 
 /* Things involving an internal (static) resolver context. */
 #ifdef _REENTRANT
+__BEGIN_DECLS
 extern struct __res_state *__res_state(void);
+__END_DECLS
 #define _res (*__res_state())
 #else
 #ifndef __BIND_NOSTATIC

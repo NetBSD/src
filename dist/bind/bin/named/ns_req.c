@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_req.c,v 1.3 2001/01/27 07:22:00 itojun Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.4 2001/05/17 22:59:40 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
-static const char rcsid[] = "Id: ns_req.c,v 8.129 2001/01/08 23:46:41 marka Exp";
+static const char rcsid[] = "Id: ns_req.c,v 8.138.2.1 2001/04/27 07:44:05 marka Exp";
 #endif /* not lint */
 
 /*
@@ -206,16 +206,26 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 			ns_debug(ns_log_default, 1,
 				 "ns_req: bad TSIG key name",
 				 buf);
+			error = ns_r_formerr;
+			hp->rcode = ns_r_formerr;
 			key = NULL;
-		}
-		key = find_key(buf, NULL);
-		if (key == NULL) {
+		} else if ((key = find_key(buf, NULL)) == NULL) {
 			error = ns_r_badkey;
 			hp->rcode = ns_r_notauth;
 			ns_debug(ns_log_default, 1,
 				 "ns_req: TSIG verify failed - unknown key %s",
 				 buf);
 		}
+#ifdef LOG_TSIG_BUG
+		if (n < 0 || key == NULL)
+			ns_error(ns_log_security,
+	  "SECURITY: POSSIBLE ATTEMPT TO EXERCISE \"TSIG BUG\" FROM %s: %s%s%s",
+				 sin_ntoa(from),
+				 (n < 0) ? "bad key (formerr)" :
+					   "unknown key (",
+				 (n < 0) ? "" : (buf[0] != '\0' ? buf : "."),
+				 (n < 0) ? "" : ")");
+#endif
 	}
 	if (has_tsig && key != NULL) {
 		n = ns_verify(msg, &msglen, key, NULL, 0, sig, &siglen, 
@@ -421,10 +431,12 @@ ns_req(u_char *msg, int msglen, int buflen, struct qstream *qsp,
 	}
 
 #ifdef DEBUG
-	ns_debug(ns_log_default, 1,
-		 "ns_req: answer -> %s fd=%d id=%d size=%d rc=%d",
-		 sin_ntoa(from), (qsp == NULL) ? dfd : qsp->s_rfd,
-		 ntohs(hp->id), cp - msg, hp->rcode);
+	if (ns_wouldlog(ns_log_default, 1)) {
+		ns_debug(ns_log_default, 1,
+			 "ns_req: answer -> %s fd=%d id=%d size=%d rc=%d",
+			 sin_ntoa(from), (qsp == NULL) ? dfd : qsp->s_rfd,
+			 ntohs(hp->id), cp - msg, hp->rcode);
+	}
 	if (debug >= 10)
 		res_pquery(&res, msg, cp - msg,
 			    log_get_stream(packet_channel));
@@ -514,6 +526,13 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 	/* XXX - when answers are allowed, we'll need to do compression
 	 * correctly here, and we will need to check for packet underflow.
 	 */
+	/*
+	 * We are ignoring the other field, make sure the header reflects
+	 * *cpp.
+	 */
+	hp->ancount = htons(0);
+	hp->nscount = htons(0);
+	hp->arcount = htons(0);
 	/* Find the zone this NOTIFY refers to. */
 	zp = find_auth_zone(dnbuf, class);
 	if (zp == NULL) {
@@ -538,7 +557,7 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 			 * AXFR from you.
 			 */
 			ns_info(ns_log_notify,
-			    "NOTIFY(SOA) for non-secondary name (%s), from %s",
+			    "NOTIFY(SOA) for non-slave zone (%s), from %s",
 				dnbuf, sin_ntoa(from));
 			goto refuse;
 		}
@@ -567,6 +586,7 @@ req_notify(HEADER *hp, u_char **cpp, u_char *eom, u_char *msg,
 			ns_info(ns_log_notify,
 				"NOTIFY(SOA) for zone already xferring (%s)",
 				dnbuf);
+			zp->z_flags |= Z_NEEDREFRESH;
 			goto noerror;
 		}
 		zp->z_time = tt.tv_sec;
@@ -806,6 +826,19 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 #endif /*YPKLUDGE*/
 
 	/*
+	 * Don't accept in a query names which would be rejected in responses.
+	 * (This is primarily in case we have to forward it, but it's also a
+	 * matter of architectural symmetry.)
+	 */
+	if (!ns_nameok(NULL, dname, class, NULL, response_trans,
+		       ns_ownercontext(type, response_trans),
+		       dname, from.sin_addr)) {
+		ns_debug(ns_log_default, 1, "bad name in query"); 
+		hp->rcode = ns_r_formerr;
+		return (Refuse);
+	}
+
+	/*
 	 * Begin Access Control Point
 	 */
 
@@ -931,8 +964,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 				}
 			}
 			ns_notice(ns_log_security,
-				  "denied query from %s for \"%s\"",
-				  sin_ntoa(from), *dname ? dname : ".");
+				  "denied query from %s for \"%s\" %s",
+				  sin_ntoa(from), *dname ? dname : ".",
+				  p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUQ);
 			return (Refuse);
 		}
@@ -951,9 +985,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 					       in_key))
 		{
 			ns_notice(ns_log_security,
-				  "denied %s from %s for \"%s\" (acl)",
+				  "denied %s from %s for \"%s\" %s (acl)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -981,9 +1015,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 		if ((zp->z_flags & Z_AUTH) == 0) {
 			ns_notice(ns_log_security,
-			 "denied %s from %s for \"%s\" (not authoritative)",
+			 "denied %s from %s for \"%s\" %s (not authoritative)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -996,9 +1030,9 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 		if (ns_samename(zp->z_origin, dname) != 1) {
 			ns_notice(ns_log_security,
-			  "denied %s from %s for \"%s\" (not zone top)",
+			  "denied %s from %s for \"%s\" %s (not zone top)",
 				  p_type(type), sin_ntoa(from),
-				  *dname ? dname : ".");
+				  *dname ? dname : ".", p_class(class));
 			nameserIncr(from.sin_addr, nssRcvdUXFR);
 			if (type == ns_t_ixfr) {
 				hp->rcode = ns_r_refused;
@@ -1273,8 +1307,8 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 
 	if (!founddata && hp->rd && recursion_blocked_by_acl) {
 		ns_notice(ns_log_security,
-			  "denied recursion for query from %s for %s",
-			  sin_ntoa(from), *dname ? dname : ".");
+			  "denied recursion for query from %s for %s %s",
+			  sin_ntoa(from), *dname ? dname : ".", p_class(class));
 		nameserIncr(from.sin_addr, nssRcvdURQ);
 	}
 
@@ -1335,6 +1369,7 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 			ns_info(ns_log_default, "res_mkquery(%s) failed",
 				dname);
 			hp->rcode = ns_r_servfail;
+			memput(omsg, omsglen);
 			free_nsp(nsp);
 			return (Finish);
 		}
@@ -1352,6 +1387,7 @@ req_query(HEADER *hp, u_char **cpp, u_char *eom, struct qstream *qsp,
 			qp->q_cname = cname;
 			qp->q_cmsg = omsg;
 			qp->q_cmsglen = omsglen;
+			qp->q_cmsgsize = omsglen;
 			qp->q_id = id;
 		}
 		break;
@@ -1559,7 +1595,7 @@ stale(struct databuf *dp) {
 #endif
 	case z_slave:
 		/*
-		 * Check to see whether a secondary zone has expired or
+		 * Check to see whether a slave zone has expired or
 		 * time warped; if so clear authority flag for zone,
 		 * schedule the zone for immediate maintenance, and
 		 * return true.
@@ -1571,7 +1607,7 @@ stale(struct databuf *dp) {
 				zp->z_origin);
 			if (!haveComplained((u_long)zp, (u_long)stale)) {
 				ns_notice(ns_log_default,
-					  "secondary zone \"%s\" expired",
+					  "slave zone \"%s\" expired",
 					  zp->z_origin);
 			}
 			zp->z_flags &= ~Z_AUTH;
@@ -1584,7 +1620,7 @@ stale(struct databuf *dp) {
 		if (zp->z_lastupdate > tt.tv_sec) {
 			if (!haveComplained((u_long)zp, (u_long)stale)) {
 				ns_notice(ns_log_default,
-					  "secondary zone \"%s\" time warp",
+					  "slave zone \"%s\" time warp",
 					  zp->z_origin);
 			}
 			zp->z_flags &= ~Z_AUTH;
@@ -1608,7 +1644,6 @@ stale(struct databuf *dp) {
 
 	default:
 		/* FALLTHROUGH */ ;
-
 	}
 	panic("stale: impossible condition", NULL);
 	/* NOTREACHED */

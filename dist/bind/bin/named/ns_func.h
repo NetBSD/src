@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.5 2001/01/27 07:21:59 itojun Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.6 2001/05/17 22:59:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990
@@ -92,7 +92,7 @@
 
 /* ns_func.h - declarations for ns_*.c's externally visible functions
  *
- * Id: ns_func.h,v 8.104 2001/01/25 05:50:54 marka Exp
+ * Id: ns_func.h,v 8.105 2001/02/16 04:46:12 marka Exp
  */
 
 /* ++from ns_glue.c++ */

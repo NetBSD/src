@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: gethostent.c,v 1.3 2001/05/17 23:00:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gethostent.c,v 1.27 2000/04/20 07:10:33 vixie Exp";
+static const char rcsid[] = "Id: gethostent.c,v 1.28 2001/03/01 05:47:44 marka Exp";
 #endif
 
 /* Imports */
@@ -140,7 +140,8 @@ gethostbyname2_p(const char *name, int af, struct net_data *net_data) {
 
 	if (!net_data || !(ho = net_data->ho))
 		return (NULL);
-	if (net_data->ho_stayopen && net_data->ho_last) {
+	if (net_data->ho_stayopen && net_data->ho_last &&
+	    net_data->ho_last->h_addrtype == af) {
 		if (ns_samename(name, net_data->ho_last->h_name) == 1)
 			return (net_data->ho_last);
 		for (hap = net_data->ho_last->h_aliases; hap && *hap; hap++)

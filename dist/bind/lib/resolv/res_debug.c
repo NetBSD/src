@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.3 2001/01/27 07:22:05 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.4 2001/05/17 23:00:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 8.37 2000/11/13 05:22:53 vixie Exp";
+static const char rcsid[] = "Id: res_debug.c,v 8.38 2001/02/13 23:12:56 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -454,6 +454,10 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_naptr,	"NAPTR",	"URN Naming Authority"},
 	{ns_t_kx,	"KX",		"Key Exchange"},
 	{ns_t_cert,	"CERT",		"Certificate"},
+	{ns_t_a6,	"A6",		"IPv6 Address"},
+	{ns_t_dname,	"DNAME",	"dname"},
+	{ns_t_sink,	"SINK",		"Kitchen Sink (experimental)"},
+	{ns_t_opt,	"OPT",		"EDNS Options"},
 	{ns_t_any,	"ANY",		"\"any\""},
 	{0, 		NULL,		NULL}
 };
