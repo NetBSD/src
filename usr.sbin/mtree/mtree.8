@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.21 2001/10/05 15:32:57 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.22 2001/10/08 00:53:30 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,7 +128,7 @@ Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
 If
 .Ql all
-is specified, add all the keywords.
+is specified, add all of the other keywords.
 .It Fl k Ar keywords
 Use the
 .Sy type
@@ -136,7 +136,7 @@ keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 If
 .Ql all
-is specified, use all the keywords.
+is specified, use all of the other keywords.
 .It Fl l
 Do
 .Dq loose
@@ -167,7 +167,7 @@ Remove the specified (whitespace or comma separated) keywords from the current
 set of keywords.
 If
 .Ql all
-is specified, remove all the keywords.
+is specified, remove all of the other keywords.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.
@@ -259,7 +259,7 @@ stored internally with them.
 The last modification time of the file.
 .It Sy type
 The type of the file; may be set to any one of the following:
-.sp
+.Pp
 .Bl -tag -width Sy -compact
 .It Sy block
 block special device
@@ -350,7 +350,7 @@ corresponding keyword.
 .Pp
 A path that contains a slash
 .Pq Ql /
-that is not the first character will be treated as an absolute path
+that is not the first character will be treated as a full path
 (relative to the root of the tree).
 All parent directories referenced in the path must exist.
 The current directory path used by relative paths will be updated
@@ -451,5 +451,5 @@ keywords,
 .Fl I
 and
 .Fl R
-flags, and support for absolute paths appeared in
+flags, and support for full paths appeared in
 .Nx 1.6 .
