@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.19 1998/01/12 10:39:59 thorpej Exp $ */
+/*	$NetBSD: mfc.c,v 1.20 1998/09/01 02:30:29 mhitch Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -485,8 +485,7 @@ mfcsopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	tp->t_hwiflow = mfcshwiflow;
 
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
 			/*
@@ -531,9 +530,10 @@ mfcsopen(dev, flag, mode, p)
 	 * block waiting for carrier
 	 */
 	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
-		tp->t_state |= TS_WOPEN;
+		tp->t_wopen++;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 		    TTIPRI | PCATCH, ttopen, 0);
+		tp->t_wopen--;
 		if (error) {
 			splx(s);
 			return(error);
@@ -585,7 +585,7 @@ mfcsclose(dev, flag, mode, p)
 	 * modem control signals nor not.
 	 */
 #if 0
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
+	if (tp->t_cflag & HUPCL || tp->t_wopen != 0 ||
 	    (tp->t_state & TS_ISOPEN) == 0)
 #endif
 		(void) mfcsmctl(dev, 0, DMSET);
@@ -1137,7 +1137,7 @@ mfcsmint(unit)
 	if (!tp)
 		return;
 
-	if ((tp->t_state & (TS_ISOPEN | TS_WOPEN)) == 0) {
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		sc->rptr = sc->wptr = sc->inbuf;
 		sc->incnt = 0;
 		return;
