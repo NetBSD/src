@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.2 1998/05/31 00:37:38 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.3 1998/08/09 16:47:52 mycroft Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -222,24 +222,34 @@ void bootp (packet)
 	memset (&raw, 0, sizeof raw);
 	outgoing.raw = &raw;
 
-	/* Come up with a list of options that we want to send to this
-	   client.   Start with the per-subnet options, and then override
-	   those with client-specific options. */
-
-	memcpy (options, subnet -> group -> options, sizeof options);
-
-	for (i = 0; i < 256; i++) {
-		if (hp -> group -> options [i])
-			options [i] = hp -> group -> options [i];
-	}
-
-	/* Pack the options into the buffer.   Unlike DHCP, we can't
-	   pack options into the filename and server name buffers. */
-
-	outgoing.packet_length =
-		cons_options (packet, outgoing.raw, options, 0, 0, 1);
-	if (outgoing.packet_length < BOOTP_MIN_LEN)
+	/* If we didn't get a known vendor magic number on the way in,
+	   just copy the input options to the output. */
+	if (!packet -> options_valid) {
+		memcpy (outgoing.raw -> options,
+			packet -> raw -> options, DHCP_OPTION_LEN);
 		outgoing.packet_length = BOOTP_MIN_LEN;
+	} else {
+		/* Come up with a list of options that we want to send
+		   to this client.  Start with the per-subnet options,
+		   and then override those with client-specific
+		   options. */
+
+		memcpy (options, subnet -> group -> options, sizeof options);
+
+		for (i = 0; i < 256; i++) {
+			if (hp -> group -> options [i])
+				options [i] = hp -> group -> options [i];
+		}
+
+		/* Pack the options into the buffer.  Unlike DHCP, we
+		   can't pack options into the filename and server
+		   name buffers. */
+
+		outgoing.packet_length =
+			cons_options (packet, outgoing.raw, options, 0, 0, 1);
+		if (outgoing.packet_length < BOOTP_MIN_LEN)
+			outgoing.packet_length = BOOTP_MIN_LEN;
+	}
 
 	/* Take the fields that we care about... */
 	raw.op = BOOTREPLY;
