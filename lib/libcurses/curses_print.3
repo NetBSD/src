@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_print.3,v 1.1 2002/10/21 13:55:18 blymn Exp $
+.\"	$NetBSD: curses_print.3,v 1.2 2002/10/21 14:15:31 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@netbsd.org, brett_lymn@yahoo.com.au)
@@ -73,7 +73,7 @@ function is the same as the
 .Fn printw
 function, excepting that the resulting output is printed on the window
 specified by
-.Fa win.
+.Fa win .
 .Pp
 The
 .Fn mvprintw
@@ -110,15 +110,15 @@ The function completed successfully.
 .It Er ERR
 An error occurred in the function.
 .El
+.Sh SEE ALSO
+.Xr curses_cursor 3 ,
+.Xr curses_scan 3 ,
+.Xr printf 3
 .Sh STANDARDS
 The
 .Nx
 Curses library complies with the X/Open Curses specification, part of the
 Single Unix Specification.
-.Sh SEE ALSO
-.Xr curses_cursor 3 ,
-.Xr curses_scan 3 ,
-.Xr printf 3
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
