@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.15 1997/01/25 01:13:41 cgd Exp $	*/
+/*	$NetBSD: open.c,v 1.16 1997/01/28 09:41:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -99,6 +99,7 @@ fnd:
 	f->f_flags = mode + 1;
 	f->f_dev = (struct devsw *)0;
 	f->f_ops = (struct fs_ops *)0;
+	f->f_offset = 0;
 	file = (char *)0;
 	error = devopen(f, fname, &file);
 	if (error ||
