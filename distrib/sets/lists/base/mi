@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.333 2002/06/18 13:25:21 wiz Exp $
+# $NetBSD: mi,v 1.334 2002/06/19 09:25:10 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1243,6 +1243,7 @@
 ./usr/share/man/cat8/vax		base-man-share
 ./usr/share/man/cat8/walnut		base-man-share
 ./usr/share/man/cat8/x68k		base-man-share
+./usr/share/man/cat8/x86_64		base-man-share
 ./usr/share/man/cat9		base-man-share
 ./usr/share/man/cat9/acorn26		base-man-share
 ./usr/share/man/cat9/alpha		base-man-share
@@ -1336,6 +1337,7 @@
 ./usr/share/man/man8/vax		base-man-share
 ./usr/share/man/man8/walnut		base-man-share
 ./usr/share/man/man8/x68k		base-man-share
+./usr/share/man/man8/x86_64		base-man-share
 ./usr/share/man/man9			base-man-share
 ./usr/share/man/man9/acorn26		base-man-share
 ./usr/share/man/man9/alpha		base-man-share
@@ -1428,6 +1430,7 @@
 ./usr/share/man/html8/vax		base-man-share
 ./usr/share/man/html8/walnut		base-man-share
 ./usr/share/man/html8/x68k		base-man-share
+./usr/share/man/html8/x86_64		base-man-share
 ./usr/share/man/html9			base-man-share
 ./usr/share/man/html9/acorn26		base-man-share
 ./usr/share/man/html9/alpha		base-man-share
