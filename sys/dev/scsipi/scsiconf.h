@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.18 1994/12/30 05:33:08 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.19 1995/01/26 11:56:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -261,7 +261,6 @@ int scsi_change_def __P((struct scsi_link *, int));
 int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, int));
 int scsi_prevent __P((struct scsi_link *, int, int));
 int scsi_start __P((struct scsi_link *, int, int));
-int scsi_start_and_wait __P((struct scsi_link *, int, int));
 void scsi_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			int cmdlen, u_char *data_addr,
