@@ -16,6 +16,7 @@ port-macppc
 port-mips
 port-mvme68k
 port-newsmips
+port-next68k
 port-ofppc
 port-pc532
 port-pica
