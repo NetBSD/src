@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.4 1995/08/14 01:27:51 mycroft Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.5 1995/08/16 04:14:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -63,7 +63,7 @@ static int linux_spmasks[] = {
 	LINUX_B0, LINUX_B50, LINUX_B75, LINUX_B110, LINUX_B134, LINUX_B150,
 	LINUX_B200, LINUX_B300, LINUX_B600, LINUX_B1200, LINUX_B1800,
 	LINUX_B2400, LINUX_B4800, LINUX_B9600, LINUX_B19200, LINUX_B38400,
-	LINUX_B57600, LINUX_B115200
+	LINUX_B57600, LINUX_B115200, LINUX_B230400
 };
 
 /*
