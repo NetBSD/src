@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.9 1999/05/19 13:35:54 bad Exp $
+.\"	$NetBSD: identd.8,v 1.10 2002/01/15 02:22:28 wiz Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -179,10 +179,10 @@ The
 flags tells
 .B identd
 to add the optional (according to the IDENT protocol) character set
-designator to the reply generated. 
+designator to the reply generated.
 .I charset
 should be a valid character set as described in the MIME RFC in upper
-case characters. 
+case characters.
 .PP
 The
 .BR \-C [ <keyfile> ]
@@ -367,7 +367,7 @@ The username (or UID) returned ought to be the login name. However it
 stored with the process; there is no provision for returning the "effective
 user ID". Thus the UID returned may be different from the login name for
 setuid programs (or those running as root) which done a
-.BR setuid (3)
+.BR setuid (2)
 call and their children. For example, it may (should?) be wrong for an
 incoming
 .B ftpd
