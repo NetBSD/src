@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.37 2002/08/21 16:26:12 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.38 2002/09/20 13:30:18 mycroft Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.37 2002/08/21 16:26:12 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.38 2002/09/20 13:30:18 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: route6d.c,v 1.37 2002/08/21 16:26:12 itojun Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
+#include <sys/poll.h>
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
@@ -136,12 +137,9 @@ int	nifc;		/* number of valid ifc's */
 struct	ifc **index2ifc;
 int	nindex2ifc;
 struct	ifc *loopifcp = NULL;	/* pointing to loopback */
-fd_set	*sockvecp;	/* vector to select() for receiving */
-fd_set	*recvecp;
-int	fdmasks;
+struct	pollfd set[2];
 int	rtsock;		/* the routing socket */
 int	ripsock;	/* socket to send/receive RIP datagram */
-int	maxfd;		/* maximum fd for select() */
 
 struct	rip6 *ripbuf;	/* packet buffer for sending */
 
@@ -442,8 +440,7 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		memcpy(recvecp, sockvecp, fdmasks);
-		switch (select(maxfd + 1, recvecp, 0, 0, 0)) {
+		switch (poll(set, 2, INFTIM)) {
 		case -1:
 			if (errno != EINTR) {
 				fatal("select");
@@ -453,12 +450,12 @@ main(int argc, char **argv)
 		case 0:
 			continue;
 		default:
-			if (FD_ISSET(ripsock, recvecp)) {
+			if (set[0].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				riprecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
 			}
-			if (FD_ISSET(rtsock, recvecp)) {
+			if (set[1].revents & POLLIN) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				rtrecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -635,31 +632,18 @@ init(void)
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
 
-	maxfd = ripsock;
+	set[0].fd = ripsock;
+	set[0].events = POLLIN;
 
 	if (nflag == 0) {
 		if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
-		if (rtsock > maxfd)
-			maxfd = rtsock;
+		set[1].fd = rtsock;
+		set[1].events = POLLIN;
 	} else
-		rtsock = -1;	/*just for safety */
-
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((sockvecp = malloc(fdmasks)) == NULL) {
-		fatal("malloc");
-		/*NOTREACHED*/
-	}
-	if ((recvecp = malloc(fdmasks)) == NULL) {
-		fatal("malloc");
-		/*NOTREACHED*/
-	}
-	memset(sockvecp, 0, fdmasks);
-	FD_SET(ripsock, sockvecp);
-	if (rtsock >= 0)
-		FD_SET(rtsock, sockvecp);
+		set[1].events = 0;
 }
 
 #define	RIPSIZE(n) \
