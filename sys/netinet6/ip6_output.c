@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.41 2001/11/13 00:57:02 lukem Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.42 2001/12/18 03:04:04 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.41 2001/11/13 00:57:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.42 2001/12/18 03:04:04 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -383,7 +383,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -507,7 +507,7 @@ skip_ipsec2:;
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -865,6 +865,7 @@ skip_ipsec2:;
 		ip6 = mtod(m, struct ip6_hdr *);
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 		if (ia6) {
+			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				m->m_pkthdr.len;
 		}
@@ -930,7 +931,8 @@ skip_ipsec2:;
 
 		/*
 		 * Loop through length of segment after first fragment,
-		 * make new header and copy data of each part and link onto chain.
+		 * make new header and copy data of each part and link onto
+		 * chain.
 		 */
 		m0 = m;
 		for (off = hlen; off < tlen; off += len) {
@@ -947,8 +949,8 @@ skip_ipsec2:;
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
- 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
- 			if (error) {
+			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
+			if (error) {
 				ip6stat.ip6s_odropped++;
 				goto sendorfree;
 			}
@@ -994,6 +996,10 @@ sendorfree:
 			ip6 = mtod(m, struct ip6_hdr *);
 			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 			if (ia6) {
+				/*
+				 * Record statistics for this interface
+				 * address.
+				 */
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 					m->m_pkthdr.len;
 			}
