@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.29 2001/02/21 02:43:02 chs Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.30 2001/07/03 05:17:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -101,25 +101,5 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	512 	/* 4 MB */
 #endif
-
-/*
- * Mach-derived constants:
- */
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)KERN_END)
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
-
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 #define	PAGER_MAP_SIZE (4 * 1024 * 1024)

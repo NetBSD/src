@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29 2001/05/01 02:19:20 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30 2001/07/03 05:17:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SUN3_VMPARAM_H_
+#define _SUN3_VMPARAM_H_ 1
+
 /*
  * We use 8K pages on both the sun3 and sun3x.  Override PAGE_*
  * to be compile-time constants.
@@ -54,7 +57,6 @@
 #define MAXDSIZ         (32*1024*1024)          /* max data size */
 #endif
 extern	char KERNBASE[];
-#define      VM_NFREELIST            1
 #endif	/* _LKM */
 
 /* This is needed by some LKMs. */
@@ -70,3 +72,25 @@ extern	char KERNBASE[];
  * change over time.
  */
 #define	MAXSLP 		20
+
+/*
+ * Mach-derived constants:
+ */
+
+/* user/kernel map constants */
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
+
+/* virtual sizes (bytes) for various kernel submaps */
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+#endif	/* _SUN3_VMPARAM_H_ */
