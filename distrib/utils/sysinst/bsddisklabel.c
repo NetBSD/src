@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.12 2003/06/04 20:05:12 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.13 2003/06/06 19:04:55 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -313,8 +313,6 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 		{ PART_USR,	"/usr",	DEFUSRSIZE },
 		{ -1,		"/var",	DEFVARSIZE },
 		{ -1,		"/home",	0 },
-		{ -2 }, { -2 }, { -2 }, { -2 }, { -2 }, { -2 },
-		{ -2 }, { -2 }, { -2 }, { -2 }, { -2 }, 
 	} };
 	menu_ent *m;
 
@@ -362,6 +360,9 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		m = &pi.ptn_menus[i];
 		m->opt_name = pi.ptn_titles[i];
+		p = &pi.ptn_sizes[i];
+		if (i != 0 && p->ptn_id == 0)
+			p->ptn_id = -2;
 	}
 	msg_display(MSG_ptnsizes);
 	msg_table_add(MSG_ptnheaders);
