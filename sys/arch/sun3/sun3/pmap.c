@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 1997/10/31 03:04:42 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 1997/10/31 19:52:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -276,22 +276,6 @@ struct pv_entry {
 typedef struct pv_entry *pv_entry_t;
 
 pv_entry_t pv_head_table = NULL;
-#ifdef	DIAGNOSTIC
-static struct pv_entry * pa_to_pvp __P((vm_offset_t pa));
-static struct pv_entry *
-pa_to_pvp(pa)
-	vm_offset_t pa;
-{
-	struct pv_entry *pvp;
-	if (pa < avail_start || pa >= avail_end) {
-		panic("pmap:pa_to_pvp: bad pa=0x%lx", pa);
-	}
-	pvp = &pv_head_table[PA_PGNUM(pa)];
-	return pvp;
-}
-#else
-#define pa_to_pvp(pa) &pv_head_table[PA_PGNUM(pa)]
-#endif
 
 /* These are as in the MMU but shifted by PV_SHIFT. */
 #define PV_SHIFT	24
@@ -309,26 +293,6 @@ pa_to_pvp(pa)
 
 
 /*
- * Save the MOD bit from the given PTE using its PA
- */
-static void
-save_modref_bits(int pte)
-{
-	pv_entry_t pvhead;
-
-	if (pv_initialized == 0)
-		return;
-
-	/* Only main memory is ever in the pv_lists */
-	if (!IS_MAIN_MEM(pte))
-		return;
-
-	pvhead = pa_to_pvp(PG_PA(pte));
-	pvhead->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
-}
-
-
-/*
  * context structures, and queues
  */
 
@@ -342,8 +306,8 @@ typedef struct context_state *context_t;
 #define	CTXINVAL -1
 #define	has_context(pmap)	(pmap->pm_ctxnum >= 0)
 
-TAILQ_HEAD(context_tailq, context_state);
-struct context_tailq context_free_queue, context_active_queue;
+TAILQ_HEAD(context_tailq, context_state)
+	context_free_queue, context_active_queue;
 
 static struct context_state context_array[NCONTEXT];
 
@@ -375,33 +339,11 @@ typedef struct pmeg_state *pmeg_t;
 #define PMEG_NULL (pmeg_t) NULL
 
 /* XXX - Replace pmeg_kernel_queue with pmeg_wired_queue ? */
-TAILQ_HEAD(pmeg_tailq, pmeg_state);
-struct pmeg_tailq pmeg_free_queue, pmeg_inactive_queue,
+TAILQ_HEAD(pmeg_tailq, pmeg_state)
+	pmeg_free_queue, pmeg_inactive_queue,
 	pmeg_active_queue, pmeg_kernel_queue;
 
 static struct pmeg_state pmeg_array[NPMEG];
-
-#ifdef	PMAP_DEBUG
-void pmap_print __P((pmap_t pmap));
-void pv_print __P((vm_offset_t pa));
-
-static pmeg_t pmeg_p __P((int sme));
-static void pmeg_verify_empty __P((vm_offset_t va));
-static void pmeg_print __P((pmeg_t pmegp));
-
-static pmeg_t
-pmeg_p(sme)
-	int sme;
-{
-	if (sme < 0 || sme >= SEGINV)
-		panic("pmeg_p: bad sme");
-	return &pmeg_array[sme];
-}
-#else
-#define pmeg_p(x) &pmeg_array[x]
-#endif
-
-#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
 
 
 /*
@@ -453,6 +395,83 @@ static void pmap_remove_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_remove_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
 
 static int  pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
+
+#ifdef	PMAP_DEBUG
+void pmap_print __P((pmap_t pmap));
+void pv_print __P((vm_offset_t pa));
+void pmeg_print __P((pmeg_t pmegp));
+static void pmeg_verify_empty __P((vm_offset_t va));
+#endif	/* PMAP_DEBUG */
+
+
+/*
+ * Various in-line helper functions.
+ */
+
+#ifdef	DIAGNOSTIC
+static struct pv_entry *
+pa_to_pvp(vm_offset_t pa)
+{
+	struct pv_entry *pvp;
+	if (pa < avail_start || pa >= avail_end) {
+		panic("pmap:pa_to_pvp: bad pa=0x%lx", pa);
+	}
+	pvp = &pv_head_table[PA_PGNUM(pa)];
+	return pvp;
+}
+#else
+#define pa_to_pvp(pa) &pv_head_table[PA_PGNUM(pa)]
+#endif
+
+#ifdef	DIAGNOSTIC
+static pmeg_t
+pmeg_p(int sme)
+{
+	if (sme < 0 || sme >= SEGINV)
+		panic("pmeg_p: bad sme");
+	return &pmeg_array[sme];
+}
+#else
+#define pmeg_p(x) &pmeg_array[x]
+#endif
+
+#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
+
+static void
+pmeg_set_wiring(pmegp, va, flag)
+	pmeg_t pmegp;
+	vm_offset_t va;
+	int flag;
+{
+	int idx, mask;
+
+	idx = VA_PTE_NUM(va);
+	mask = 1 << idx;
+
+	if (flag)
+		pmegp->pmeg_wired |= mask;
+	else
+		pmegp->pmeg_wired &= ~mask;
+}
+
+/*
+ * Save the MOD bit from the given PTE using its PA
+ */
+static void
+save_modref_bits(int pte)
+{
+	pv_entry_t pvhead;
+
+	if (pv_initialized == 0)
+		return;
+
+	/* Only main memory is ever in the pv_lists */
+	if (!IS_MAIN_MEM(pte))
+		return;
+
+	pvhead = pa_to_pvp(PG_PA(pte));
+	pvhead->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
+}
 
 
 /****************************************************************
@@ -973,23 +992,6 @@ pmeg_cache(pmap, va)
 	TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
 
 	return pmegp;
-}
-
-static void
-pmeg_set_wiring(pmegp, va, flag)
-	pmeg_t pmegp;
-	vm_offset_t va;
-	int flag;
-{
-	int idx, mask;
-
-	idx = VA_PTE_NUM(va);
-	mask = 1 << idx;
-
-	if (flag)
-		pmegp->pmeg_wired |= mask;
-	else
-		pmegp->pmeg_wired &= ~mask;
 }
 
 #ifdef	PMAP_DEBUG
