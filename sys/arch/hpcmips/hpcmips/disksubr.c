@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2000/11/20 08:24:15 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2001/01/22 12:37:14 shin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -38,8 +38,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/syslog.h>
 
 #include "opt_mbr.h"
@@ -53,7 +53,6 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 
 static struct mbr_partition *
 mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
-
 
 /* 
  * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
@@ -434,6 +433,7 @@ nombrpart:
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
+	bp->b_flags &= ~(B_DONE);
 	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
