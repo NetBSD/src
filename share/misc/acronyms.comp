@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.32 2004/01/13 23:21:47 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.33 2004/01/14 00:11:53 grant Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -171,6 +171,7 @@ SVGA	super video graphics array
 TCL	tool command language
 TCP	transmission control protocol
 TFT	thin film transistor
+TIFF	tagged image file format
 TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
