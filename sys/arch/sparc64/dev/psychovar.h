@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.3 2000/05/24 20:27:52 eeh Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.4 2000/07/18 11:35:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -93,6 +93,9 @@ struct psycho_softc {
 	struct psychoreg		*sc_regs;
 	paddr_t				sc_basepaddr;
 
+	/* Interrupt Group Number for this device */
+	int				sc_ign;
+
 	/* our tags (from parent) */
 	bus_space_tag_t			sc_bustag;
 	bus_dma_tag_t			sc_dmatag;	
@@ -105,10 +108,9 @@ struct psycho_softc {
 	int				sc_node;	/* prom node */
 	int				sc_mode;	/* (whatareya?) */
 #define	PSYCHO_MODE_SABRE	1	/* i'm a sabre (yob) */
-#define	PSYCHO_MODE_PSYCHO_A	2	/* i'm a psycho (w*nker) */
-#define	PSYCHO_MODE_PSYCHO_B	3	/* i'm another psycho (w*nker) */
+#define	PSYCHO_MODE_PSYCHO	2	/* i'm a psycho (w*nker) */
 
-	struct iommu_state		sc_is;
+	struct iommu_state		*sc_is;
 };
 
 /* config space is per-psycho.  mem/io/dma are per-pci bus */
