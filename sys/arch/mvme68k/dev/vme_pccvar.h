@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pccvar.h,v 1.3 2000/06/04 19:14:50 cgd Exp $	*/
+/*	$NetBSD: vme_pccvar.h,v 1.4 2000/08/13 17:00:52 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,52 +39,10 @@
 #ifndef _MVME68K_VME_PCCVAR_H
 #define _MVME68K_VME_PCCVAR_H
 
-
 struct vme_pcc_softc {
-	struct device		sc_dev;
+	struct mvmebus_softc	sc_mvmebus;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
-	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_vmet;
-	struct vme_chipset_tag	sc_vct;
-	u_long			sc_irqref[8];
 };
-
-
-struct vme_pcc_mapresc_t {
-	bus_space_handle_t	pm_handle;
-	bus_addr_t		pm_addr;
-	bus_size_t		pm_size;
-	vme_am_t		pm_am;
-	vme_datasize_t		pm_datasize;
-};
-
-
-int _vme_pcc_map __P((void *, vme_addr_t, vme_size_t, vme_am_t, vme_datasize_t,
-    vme_swap_t, bus_space_tag_t *, bus_space_handle_t *, vme_mapresc_t *));
-
-void _vme_pcc_unmap __P((void *, vme_mapresc_t));
-
-int _vme_pcc_probe __P((void *, vme_addr_t, vme_size_t, vme_am_t,vme_datasize_t,
-    int (*)(void *, bus_space_tag_t, bus_space_handle_t), void *));
-
-int _vme_pcc_intmap __P((void *, int, int, vme_intr_handle_t *));
-
-const struct evcnt *_vme_pcc_intr_evcnt __P((void *, vme_intr_handle_t));
-
-void *_vme_pcc_intr_establish __P((void *, vme_intr_handle_t, int,
-    int (*)(void *), void *));
-
-void _vme_pcc_intr_disestablish __P((void *, vme_intr_handle_t));
-
-int _vme_pcc_dmamap_create __P((void *, vme_size_t, vme_am_t, vme_datasize_t,
-    vme_swap_t, int, vme_size_t, vme_addr_t, int, bus_dmamap_t *));
-
-void _vme_pcc_dmamap_destroy __P((void *, bus_dmamap_t));
-
-int _vme_pcc_dmamem_alloc __P((void *, vme_size_t, vme_am_t, vme_datasize_t,
-    vme_swap_t, bus_dma_segment_t *, int, int *, int));
-
-void _vme_pcc_dmamem_free __P((void *, bus_dma_segment_t *, int));
 
 #endif /* __MVME68K_VME_PCCVAR_H */
