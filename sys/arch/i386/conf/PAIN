@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.26 1994/04/16 07:59:23 cgd Exp $
+#	$Id: PAIN,v 1.27 1994/04/17 05:20:30 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -95,3 +95,5 @@ pseudo-device	pty		32
 
 pseudo-device	sl		4
 pseudo-device	bpfilter	4
+
+pseudo-device	vn		4
