@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.517 2002/09/27 15:02:24 wiz Exp $
+# $NetBSD: mi,v 1.518 2002/10/01 22:43:03 provos Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -296,6 +296,7 @@
 ./usr/share/man/cat1/ps.0			man-util-catman
 ./usr/share/man/cat1/pushd.0			man-util-catman
 ./usr/share/man/cat1/pwd.0			man-util-catman
+./usr/share/man/cat1/pwhash.0			man-util-catman
 ./usr/share/man/cat1/quota.0			man-util-catman
 ./usr/share/man/cat1/radioctl.0			man-audio-catman
 ./usr/share/man/cat1/rcmd.0			man-netutil-catman
