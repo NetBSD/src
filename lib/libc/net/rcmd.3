@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rcmd.3	6.11 (Berkeley) 4/19/91
-.\"	$Id: rcmd.3,v 1.2 1993/08/01 07:45:16 mycroft Exp $
+.\"	$Id: rcmd.3,v 1.3 1994/01/11 00:12:29 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt RCMD 3
@@ -145,7 +145,7 @@ If that lookup is not done, or is unsuccessful, the
 .Pa .rhosts
 in the local user's home directory is checked to see if the request for
 service is allowed.  If this file is owned by anyone other than the
-user or the super-user, or if it is writeable by anyone other than the
+user or the super-user, or if it is writable by anyone other than the
 owner, the check automatically fails.  A 0 is returned if the machine
 name is listed in the
 .Dq Pa hosts.equiv

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)stdio.3	6.5 (Berkeley) 5/6/91
-.\"	$Id: stdio.3,v 1.2 1993/08/01 07:44:50 mycroft Exp $
+.\"	$Id: stdio.3,v 1.3 1994/01/11 00:07:00 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt STDIO 3
@@ -49,7 +49,7 @@ The standard
 library provides a simple and efficient buffered stream
 .Tn I/O
 interface.
-Input and ouput is mapped into logical data streams
+Input and output is mapped into logical data streams
 and the physical
 .Tn I/O
 characteristics are concealed. The functions and macros are listed
@@ -64,13 +64,13 @@ If a file can support positioning requests (such as a disk file, as opposed
 to a terminal) then a
 .Em file position indicator
 associated with the stream is positioned at the start of the file (byte
-zero), unless the file is opened with appened mode. If append mode
+zero), unless the file is opened with append mode. If append mode
 is used, the position indicator will be placed the end-of-file.
 The position indicator is maintained by subsequent reads, writes
 and positioning requests. All input occurs as if the characters
 were read by successive calls to the
 .Xr fgetc 3
-function; all ouput takes place as if all characters were
+function; all output takes place as if all characters were
 read by successive calls to the
 .Xr fputc 3
 function.
@@ -78,7 +78,7 @@ function.
 A file is disassociated from a stream by
 .Em closing
 the file.
-Ouput streams are flushed (any unwritten buffer contents are transfered
+Output streams are flushed (any unwritten buffer contents are transferred
 to the host environment) before the stream is disassociated from the file.
 The value of a pointer to a
 .Dv FILE
@@ -99,10 +99,10 @@ At program startup, three text streams are predefined and need not be
 opened explicitly
 \(em
 .Em standard input 
-(for reading converntional input),
+(for reading conventional input),
 \(em
 .Em standard output 
-(for writing converntional input),
+(for writing conventional input),
 and
 .Em standard error
 (for writing diagnostic output).
@@ -206,7 +206,7 @@ feof	check and reset stream status
 ferror	check and reset stream status
 fflush	flush a stream
 fgetc	get next character or word from input stream
-fgetline	get a line from a stream
+fgetln	get a line from a stream
 fgetpos	reposition a stream
 fgets	get a line from a stream
 fileno	check and reset stream status
