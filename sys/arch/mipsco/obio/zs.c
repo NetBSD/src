@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 2001/02/21 09:12:14 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 2001/02/21 09:20:56 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,9 +56,6 @@
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/mainboard.h>
