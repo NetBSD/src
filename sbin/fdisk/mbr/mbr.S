@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.6 1999/05/02 13:48:30 fvdl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.7 2002/08/04 20:27:22 ross Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -89,11 +89,11 @@
  */
 ENTRY(start)
 	xorl	%eax, %eax
-	movl	%ax, %ss
+	movl	%eax, %ss
 	data32
 	movl	$BOOTADDR, %esp
-	movl	%ax, %es
-	movl	%ax, %ds
+	movl	%eax, %es
+	movl	%eax, %ds
 	movl	%esp, %esi
 	data32
 	movl	$_C_LABEL(start), %edi
