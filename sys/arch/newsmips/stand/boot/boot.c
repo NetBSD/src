@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1999/12/23 06:52:31 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2000/10/12 05:34:29 onoe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -81,7 +81,6 @@ boot(a0, a1, a2, a3, a4, a5)
 	if (apbus)
 		_sip = (void *)a4;
 
-	printf("\n");
 	printf("NetBSD/newsmips Secondary Boot\n");
 
 	if (apbus) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1 1999/07/08 11:48:06 tsubai Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 2000/10/12 05:34:29 onoe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,6 +28,7 @@
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
+#include <machine/apcall.h>
 #include <machine/romcall.h>
 
 #define MAXBLOCKNUM 64
@@ -44,10 +45,12 @@ int block_table[MAXBLOCKNUM] = { 0 };
 #endif
 
 char *devs[] = { "sd", "fh", "fd", NULL, NULL, "rd", "st" };
+struct apbus_sysinfo *_sip;
+int apbus = 0;
 
 void
 bootxx(a0, a1, a2, a3, a4, a5)
-	int a0, a1, a2, a3, a4, a5;
+	u_int a0, a1, a2, a3, a4, a5;
 {
 	int fd, blk, bs;
 	int ctlr, unit, part, type;
@@ -55,6 +58,16 @@ bootxx(a0, a1, a2, a3, a4, a5)
 	int bootdev = a1;
 	char *addr;
 	char devname[32];
+
+	/*
+	 * XXX a3 contains:
+	 *     maxmem (nws-3xxx)
+	 *     argv   (apbus-based machine)
+	 */
+	if (a3 & 0x80000000)
+		apbus = 1;
+	else
+		apbus = 0;
 
 	printf("NetBSD/newsmips Primary Boot\n");
 
@@ -70,21 +83,25 @@ bootxx(a0, a1, a2, a3, a4, a5)
 	DPRINTF("block_count = %d\n", block_count);
 	DPRINTF("entry_point = %x\n", (int)entry_point);
 
-	/* sd(ctlr, lun, part, bus?, host) */
+	if (apbus) {
+		strcpy(devname, (char *)a1);
+		fd = apcall_open(devname, 0);
+	} else {
+		/* sd(ctlr, lun, part, bus?, host) */
 
-	ctlr = BOOTDEV_CTLR(bootdev);
-	unit = BOOTDEV_UNIT(bootdev);
-	part = BOOTDEV_PART(bootdev);
-	type = BOOTDEV_TYPE(bootdev);
+		ctlr = BOOTDEV_CTLR(bootdev);
+		unit = BOOTDEV_UNIT(bootdev);
+		part = BOOTDEV_PART(bootdev);
+		type = BOOTDEV_TYPE(bootdev);
 
-	if (devs[type] == NULL) {
-		printf("unknown bootdev (0x%x)\n", bootdev);
-		return;
+		if (devs[type] == NULL) {
+			printf("unknown bootdev (0x%x)\n", bootdev);
+			return;
+		}
+		sprintf(devname, "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
+
+		fd = rom_open(devname, 0);
 	}
-
-	sprintf(devname, "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
-
-	fd = rom_open(devname, 0);
 	if (fd == -1) {
 		printf("cannot open %s\n", devname);
 		return;
@@ -98,14 +115,22 @@ bootxx(a0, a1, a2, a3, a4, a5)
 
 		DPRINTF(" %d", blk);
 
-		rom_lseek(fd, blk * 512, 0);
-		rom_read(fd, addr, bs);
+		if (apbus) {
+			apcall_lseek(fd, blk * 512, 0);
+			apcall_read(fd, addr, bs);
+		} else {
+			rom_lseek(fd, blk * 512, 0);
+			rom_read(fd, addr, bs);
+		}
 		addr += bs;
 	}
 	DPRINTF(" done\n");
-	rom_close(fd);
+	if (apbus)
+		apcall_close(fd);
+	else
+		rom_close(fd);
 
-	(*entry_point)(a0, a1, a2, a3);
+	(*entry_point)(a0, a1, a2, a3, _sip);
 }
 
 void
@@ -114,5 +139,8 @@ putchar(x)
 {
 	char c = x;
 
-	rom_write(1, &c, 1);
+	if (apbus)
+		apcall_write(1, &c, 1);
+	else
+		rom_write(1, &c, 1);
 }
