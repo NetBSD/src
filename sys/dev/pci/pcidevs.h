@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.141 1999/07/12 15:04:41 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.142 1999/07/14 23:03:10 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp 
+ *	NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp 
  */
 
 /*
@@ -625,9 +625,11 @@
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
 
 #define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940 Ultra2 */
-#define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
-#define	PCI_PRODUCT_ADP2_3940U2	0x0050		/* AHA-3940 Ultra2 */
-#define	PCI_PRODUCT_ADP2_7896	0x005f		/* AIC-7896/7 */
+#define	PCI_PRODUCT_ADP2_2930U2	0x0011		/* AHA-2930 Ultra2 */
+#define	PCI_PRODUCT_ADP2_AIC7890	0x001f		/* AIC-7890/1 */
+#define	PCI_PRODUCT_ADP2_3950U2B	0x0050		/* AHA-3950 Ultra2 */
+#define	PCI_PRODUCT_ADP2_3950U2D	0x0051		/* AHA-3950 Ultra2 */
+#define	PCI_PRODUCT_ADP2_AIC7896	0x005f		/* AIC-7896/7 */
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
