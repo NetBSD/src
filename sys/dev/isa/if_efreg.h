@@ -1,5 +1,4 @@
-/*	$NetBSD: if_efreg.h,v 1.2 1998/02/28 01:14:15 pk Exp $	*/
-/* 	$Id: if_efreg.h,v 1.2 1998/02/28 01:14:15 pk Exp $	*/
+/*	$NetBSD: if_efreg.h,v 1.3 1998/02/28 20:43:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
