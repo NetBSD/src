@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.36 1998/12/19 14:46:10 drochner Exp $ */
+/*	$NetBSD: apm.c,v 1.37 1999/01/21 22:58:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1051,11 +1051,11 @@ apmattach(parent, self, aux)
 	    apminfo.apm_data_seg_len,
 	    apmsc->sc_dev.dv_xname));
 	setsegment(&gdt[GAPM32CODE_SEL].sd,
-	    (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
+	    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 1, 0);
 	setsegment(&gdt[GAPM16CODE_SEL].sd,
-	    (void *)ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
+	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
 	    IOM_END - apminfo.apm_code16_seg_base - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
 	if (apminfo.apm_data_seg_len == 0) {
@@ -1065,7 +1065,7 @@ apmattach(parent, self, aux)
 		 * segment, read only.
 		 */
 		setsegment(&gdt[GAPMDATA_SEL].sd,
-		    (void *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
+		    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 		    0, SDT_MEMROA, SEL_KPL, 0, 0);
 	} else if (apminfo.apm_data_seg_base < IOM_BEGIN &&
 	    apminfo.apm_data_seg_len > 0) {
@@ -1094,7 +1094,7 @@ apmattach(parent, self, aux)
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 	} else
 		setsegment(&gdt[GAPMDATA_SEL].sd,
-		    (void *)ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
+		    ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
 		    apminfo.apm_data_seg_len - 1,
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 
@@ -1111,7 +1111,8 @@ apmattach(parent, self, aux)
 	    apminfo.apm_data_seg_len,
 	    apminfo.apm_entrypt,
 	    apminfo.apm_segsel,
-	    apminfo.apm_entrypt + ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
+	    apminfo.apm_entrypt +
+	     (char *)ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    &apminfo.apm_segsel,
 	    apmsc->sc_dev.dv_xname));
 
