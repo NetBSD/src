@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9.12.3 2000/08/07 00:58:10 mrg Exp $ */
+/*	$NetBSD: asm.h,v 1.9.12.4 2000/08/07 01:26:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -105,8 +105,8 @@
 
 #ifdef GPROF
 #define _PROF_PROLOGUE \
-	.data; .align 4; 1: .long 0; \
-	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call mcount; \
+	.data; .align 8; 1: .uaword 0; .uaword 0; \
+	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call _mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
 #define _PROF_PROLOGUE
