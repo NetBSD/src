@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.60 2001/04/01 23:04:31 aidan Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.61 2001/04/10 01:41:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.60 2001/04/01 23:04:31 aidan Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.61 2001/04/10 01:41:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1775,6 +1775,13 @@ help(struct tab *ctab, const char *s)
 static void
 port_check(const char *cmd, int family)
 {
+	char h1[NI_MAXHOST], h2[NI_MAXHOST];
+	char s1[NI_MAXHOST], s2[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+#endif
 
 	if (epsvall) {
 		reply(501, "%s disallowed after EPSV ALL", cmd);
@@ -1792,27 +1799,25 @@ port_check(const char *cmd, int family)
 
 			/* be paranoid, if told so */
 	if (CURCLASS_FLAGS_ISSET(checkportcmd)) {
-		if ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
-		    (data_dest.su_len != his_addr.su_len))
-			goto port_check_fail;
-		switch (data_dest.su_family) {
-		case AF_INET:
-			if (memcmp(&data_dest.su_addr, &his_addr.su_addr,
-			    data_dest.su_len) != 0)
-				goto port_check_fail;
-			break;
 #ifdef INET6
-		case AF_INET6:
-			if (memcmp(&data_dest.su_6addr, &his_addr.su_6addr,
-			    sizeof(data_dest.su_6addr)) != 0)
-				goto port_check_fail;
-			if (data_dest.su_scope_id != his_addr.su_scope_id)
-				goto port_check_fail;
-			break;
-#endif
-		default:
+		/*
+		 * be paranoid, there are getnameinfo implementation that does
+		 * not present scopeid portion
+		 */
+		if (data_dest.su_family == AF_INET6 &&
+		    data_dest.su_scope_id != his_addr.su_scope_id)
 			goto port_check_fail;
-		}
+#endif
+
+		if (getnameinfo((struct sockaddr *)&data_dest, data_dest.su_len,
+		    h1, sizeof(h1), s1, sizeof(s1), niflags))
+			goto port_check_fail;
+		if (getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
+		    h2, sizeof(h2), s2, sizeof(s2), niflags))
+			goto port_check_fail;
+
+		if (atoi(s1) < IPPORT_RESERVED || strcmp(h1, h2) != 0)
+			goto port_check_fail;
 	}
 
 	usedefault = 0;
