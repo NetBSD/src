@@ -1,4 +1,4 @@
-/*	$KAME: backupsa.c,v 1.8 2001/02/26 04:18:34 itojun Exp $	*/
+/*	$KAME: backupsa.c,v 1.11 2001/04/03 15:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -165,7 +165,7 @@ backupsa_to_file(satype, mode, src, dst, spi, reqid, wsize,
 
 	k = val2str(keymat, e_keylen + a_keylen);
 	l = snprintf(p, len, " %s", k);
-	free(k);
+	racoon_free(k);
 	p += l;
 	len -= l;
 	if (len < 0)
@@ -252,7 +252,7 @@ backupsa_from_file()
 		*q = '\0';
 		dst = str2saddr(p, NULL);
 		if (dst == NULL) {
-			free(src);
+			racoon_free(src);
 			goto err;
 		}
 		p = q + 1;
@@ -293,8 +293,8 @@ do { \
 			plog(LLV_ERROR, LOCATION, NULL,
 				"illegal format(keymat) line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], buf);
-			free(src);
-			free(dst);
+			racoon_free(src);
+			racoon_free(dst);
 			continue;
 		}
 
@@ -302,9 +302,9 @@ do { \
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"ignore this line#%d in %s due to expiration\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA]);
-			free(src);
-			free(dst);
-			free(keymat);
+			racoon_free(src);
+			racoon_free(dst);
+			racoon_free(keymat);
 			continue;
 		}
 		l_addtime -= current - created;
@@ -325,9 +325,9 @@ do { \
 				"restore SA filed line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], ipsec_strerror());
 		}
-		free(src);
-		free(dst);
-		free(keymat);
+		racoon_free(src);
+		racoon_free(dst);
+		racoon_free(keymat);
 	}
 
 	fclose(fp);
@@ -349,6 +349,10 @@ int
 backupsa_clean()
 {
 	FILE *fp;
+
+	/* simply return if the file is not defined. */
+	if (!lcconf->pathinfo[LC_PATHTYPE_BACKUPSA])
+		return 0;
 
 	fp = fopen(lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], "w+");
 	if (fp == NULL) {

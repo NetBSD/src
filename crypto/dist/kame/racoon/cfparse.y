@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.89 2001/02/26 06:58:53 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.97 2001/04/04 02:35:18 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -42,12 +42,11 @@
 #include "isakmp.h"
 #include "ipsec_doi.h"
 #include "strnames.h"
-#ifdef GC
 #include "gcmalloc.h"
-#endif
 #ifdef HAVE_GSSAPI
 #include "gssapi.h"
 #endif
+#include "vendorid.h"
 
 struct proposalspec {
 	time_t lifetime;		/* for isakmp/ipsec */
@@ -67,6 +66,7 @@ struct secprotospec {
 	int proto_id;		/* for ipsec (isakmp?) */
 	int ipsec_level;	/* for ipsec */
 	int encmode;		/* for ipsec */
+	int vendorid;		/* for isakmp */
 	char *gssid;
 	struct sockaddr *remote;
 	int algclass[MAXALGCLASS];
@@ -103,7 +103,9 @@ static int set_isakmp_proposal
 	__P((struct remoteconf *, struct proposalspec *));
 static void clean_tmpalgtype __P((void));
 static int expand_isakmpspec __P((int, int, int *,
-	int, int, time_t, int, int, char *, struct remoteconf *));
+	int, int, time_t, int, int, int, char *, struct remoteconf *));
+
+static int fix_lifebyte __P((u_long));
 %}
 
 %union {
@@ -150,24 +152,27 @@ static int expand_isakmpspec __P((int, int, int *,
 %token POST_COMMAND
 %token EXEC_PATH EXEC_COMMAND EXEC_SUCCESS EXEC_FAILURE
 %token GSSAPI_ID
+%token COMPLEX_BUNDLE
 
 %token PREFIX PORT PORTANY UL_PROTO ANY
-%token PFS_GROUP LIFETIME LIFETYPE UNITTYPE STRENGTH
+%token PFS_GROUP LIFETIME LIFETYPE_TIME LIFETYPE_BYTE STRENGTH
 
 %token NUMBER SWITCH BOOLEAN
 %token HEXSTRING QUOTEDSTRING ADDRSTRING
+%token UNITTYPE_BYTE UNITTYPE_KBYTES UNITTYPE_MBYTES UNITTYPE_TBYTES
+%token UNITTYPE_SEC UNITTYPE_MIN UNITTYPE_HOUR
 %token EOS BOC EOC COMMA
 
 %type <num> NUMBER BOOLEAN SWITCH keylength
 %type <num> PATHTYPE IDENTIFIERTYPE LOGLEV 
-%type <num> ALGORITHM_CLASS algorithm_types algorithm_type dh_group_num
+%type <num> ALGORITHM_CLASS dh_group_num
 %type <num> ALGORITHMTYPE STRENGTHTYPE
 %type <num> PREFIX prefix PORT port ike_port DIRTYPE ACTION PLADDRTYPE WHICHSIDE
 %type <num> ul_proto UL_PROTO secproto
-%type <num> LIFETYPE UNITTYPE
 %type <num> SECLEVELTYPE SECMODETYPE 
 %type <num> EXCHANGETYPE DOITYPE SITUATIONTYPE
 %type <num> CERTTYPE CERT_X509 PROPOSAL_CHECK_LEVEL
+%type <num> unittype_time unittype_byte
 %type <val> QUOTEDSTRING HEXSTRING ADDRSTRING sainfo_id
 %type <val> identifierstring
 %type <spidx> policy_index
@@ -188,11 +193,9 @@ statement
 	|	padding_statement
 	|	listen_statement
 	|	timer_statement
-	|	algorithm_statement
 	|	policy_statement
 	|	sainfo_statement
 	|	remote_statement
-	|	staticsa_statement
 	|	special_statement
 	;
 
@@ -207,7 +210,7 @@ path_statement
 
 			/* free old pathinfo */
 			if (lcconf->pathinfo[$2])
-				free(lcconf->pathinfo[$2]);
+				racoon_free(lcconf->pathinfo[$2]);
 
 			/* set new pathinfo */
 			lcconf->pathinfo[$2] = strdup($3->v);
@@ -369,7 +372,7 @@ timer_stmt
 			lcconf->retry_counter = $2;
 		}
 		EOS
-	|	RETRY_INTERVAL NUMBER UNITTYPE
+	|	RETRY_INTERVAL NUMBER unittype_time
 		{
 			lcconf->retry_interval = $2 * $3;
 		}
@@ -379,48 +382,16 @@ timer_stmt
 			lcconf->count_persend = $2;
 		}
 		EOS
-	|	RETRY_PHASE1 NUMBER UNITTYPE
+	|	RETRY_PHASE1 NUMBER unittype_time
 		{
 			lcconf->retry_checkph1 = $2 * $3;
 		}
 		EOS
-	|	RETRY_PHASE2 NUMBER UNITTYPE
+	|	RETRY_PHASE2 NUMBER unittype_time
 		{
 			lcconf->wait_ph2complete = $2 * $3;
 		}
 		EOS
-	;
-
-	/* algorithm */
-algorithm_statement
-	:	ALGORITHM_LEVEL
-		{
-			/*XXX to be deleted.XXX*/
-		} BOC algorithm_stmts EOC
-	;
-algorithm_stmts
-	:	/* nothing */
-	|	algorithm_stmts algorithm_stmt
-	;
-algorithm_stmt
-	:	algorithm_class BOC algorithm_strengthes EOC
-	;
-algorithm_class
-	:	ALGORITHM_CLASS
-	;
-algorithm_strengthes
-	:	/* nothing */
-	|	algorithm_strengthes algorithm_strength
-	;
-algorithm_strength
-	:	STRENGTHTYPE algorithm_types EOS
-	;
-algorithm_types
-	:	algorithm_type 
-	|	algorithm_type algorithm_types 
-	;
-algorithm_type
-	:	ALGORITHMTYPE
 	;
 
 	/* policy */
@@ -517,14 +488,7 @@ policy_spec
 	:	PFS_GROUP dh_group_num
 		{
 			/*
-			int doi;
-
-			doi = algtype2doi(algclass_isakmp_dh, $2);
-			if (doi == -1) {
-				yyerror("must be DH group");
-				return -1;
-			}
-			cur_spidx->policy->pfs_group = doi;
+			cur_spidx->policy->pfs_group = $2;
 			*/
 		}
 		EOS
@@ -547,19 +511,16 @@ ipsecproposal_specs
 	|	ipsecproposal_specs ipsecproposal_spec
 	;
 ipsecproposal_spec
-	:	LIFETIME LIFETYPE NUMBER UNITTYPE
+	:	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			if ($2 == CF_LIFETYPE_TIME)
-				prhead->lifetime = $3 * $4;
-			else {
-				prhead->lifebyte = $3 * $4;
-				if (prhead->lifebyte < 1024) {
-					yyerror("byte size should be more "
-						"than 1024B.");
-					return -1;
-				}
-				prhead->lifebyte /= 1024;
-			}
+			prhead->lifetime = $3 * $4;
+		}
+		EOS
+	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
+		{
+			prhead->lifebyte = fix_lifebyte($3 * $4);
+			if (prhead->lifebyte == 0)
+				return -1;
 		}
 		EOS
 	|	PROTOCOL secproto
@@ -761,7 +722,7 @@ sainfo_id
 			case AF_INET:
 				if ($5 == IPPROTO_ICMPV6) {
 					yyerror("upper layer protocol mismatched.\n");
-					free(saddr);
+					racoon_free(saddr);
 					return -1;
 				}
 				$$ = ipsecdoi_sockaddr2id(saddr,
@@ -772,7 +733,7 @@ sainfo_id
 			case AF_INET6:
 				if ($5 == IPPROTO_ICMP) {
 					yyerror("upper layer protocol mismatched.\n");
-					free(saddr);
+					racoon_free(saddr);
 					return -1;
 				}
 				$$ = ipsecdoi_sockaddr2id(saddr,
@@ -784,7 +745,7 @@ sainfo_id
 				yyerror("invalid family: %d", saddr->sa_family);
 				break;
 			}
-			free(saddr);
+			racoon_free(saddr);
 			if ($$ == NULL)
 				return -1;
 		}
@@ -821,29 +782,19 @@ sainfo_specs
 sainfo_spec
 	:	PFS_GROUP dh_group_num
 		{
-			int doi;
-
-			doi = algtype2doi(algclass_isakmp_dh, $2);
-			if (doi == -1) {
-				yyerror("must be DH group");
-				return -1;
-			}
-			cur_sainfo->pfs_group = doi;
+			cur_sainfo->pfs_group = $2;
 		}
 		EOS
-	|	LIFETIME LIFETYPE NUMBER UNITTYPE
+	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			if ($2 == CF_LIFETYPE_TIME)
-				cur_sainfo->lifetime = $3 * $4;
-			else {
-				cur_sainfo->lifebyte = $3 * $4;
-				if (cur_sainfo->lifebyte < 1024) {
-					yyerror("byte size should be more "
-						"than 1024B.");
-					return -1;
-				}
-				cur_sainfo->lifebyte /= 1024;
-			}
+			cur_sainfo->lifetime = $3 * $4;
+		}
+		EOS
+	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
+		{
+			cur_sainfo->lifebyte = fix_lifebyte($3 * $4);
+			if (cur_sainfo->lifebyte == 0)
+				return -1;
 		}
 		EOS
 	|	ALGORITHM_CLASS {
@@ -900,7 +851,7 @@ algorithm
 			$$->alg = algtype2doi(cur_algclass, $1);
 			if ($$->alg == -1) {
 				yyerror("algorithm mismatched");
-				free($$);
+				racoon_free($$);
 				return -1;
 			}
 
@@ -908,13 +859,13 @@ algorithm
 			if (defklen == 0) {
 				if ($2) {
 					yyerror("keylen not allowed");
-					free($$);
+					racoon_free($$);
 					return -1;
 				}
 			} else {
 				if ($2 && check_keylen(cur_algclass, $1, $2) < 0) {
 					yyerror("invalid keylen %d", $2);
-					free($$);
+					racoon_free($$);
 					return -1;
 				}
 			}
@@ -933,7 +884,7 @@ algorithm
 					a = IPSECDOI_PROTO_IPSEC_AH;
 				yyerror("algorithm %s not supported",
 					s_ipsecdoi_trns(a, b));
-				free($$);
+				racoon_free($$);
 				return -1;
 			}
 		}
@@ -1091,24 +1042,18 @@ remote_spec
 	|	SUPPORT_MIP6 SWITCH { cur_rmconf->support_mip6 = $2; } EOS
 	|	INITIAL_CONTACT SWITCH { cur_rmconf->ini_contact = $2; } EOS
 	|	PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL { cur_rmconf->pcheck_level = $2; } EOS
-	|	LIFETIME LIFETYPE NUMBER UNITTYPE
+	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			if ($2 == CF_LIFETYPE_TIME)
-				prhead->lifetime = $3 * $4;
-			else {
-				prhead->lifebyte = $3 * $4;
-				/*
-				 * check size.
-				 * Must be more than 1024B because its unit
-				 * is kilobytes.  That is defined RFC2407.
-				 */
-				if (prhead->lifebyte < 1024) {
-					yyerror("byte size should be more "
-						"than 1024B.");
-					return -1;
-				}
-				prhead->lifebyte /= 1024;
-			}
+			prhead->lifetime = $3 * $4;
+		}
+		EOS
+	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
+		{
+			yywarn("the lifetime of bytes in phase 1 "
+				"will be ignored at the moment.");
+			prhead->lifebyte = fix_lifebyte($3 * $4);
+			if (prhead->lifebyte == 0)
+				return -1;
 		}
 		EOS
 	|	PROPOSAL
@@ -1127,7 +1072,7 @@ exchange_types
 	|	exchange_types EXCHANGETYPE
 		{
 			struct etypes *new;
-			new = malloc(sizeof(struct etypes));
+			new = racoon_malloc(sizeof(struct etypes));
 			if (new == NULL) {
 				yyerror("filed to allocate etypes");
 				return -1;
@@ -1194,24 +1139,16 @@ isakmpproposal_spec
 		{
 			yyerror("strength directive is obsoleted.");
 		} STRENGTHTYPE EOS
-	|	LIFETIME LIFETYPE NUMBER UNITTYPE
+	|	LIFETIME LIFETYPE_TIME NUMBER unittype_time
 		{
-			if ($2 == CF_LIFETYPE_TIME)
-				prhead->spspec->lifetime = $3 * $4;
-			else {
-				prhead->spspec->lifebyte = $3 * $4;
-				/*
-				 * check size.
-				 * Must be more than 1024B because its unit
-				 * is kilobytes.  That is defined RFC2407.
-				 */
-				if (prhead->spspec->lifebyte < 1024) {
-					yyerror("byte size should be "
-						"more than 1024B.");
-					return -1;
-				}
-				prhead->spspec->lifebyte /= 1024;
-			}
+			prhead->spspec->lifetime = $3 * $4;
+		}
+		EOS
+	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
+		{
+			prhead->spspec->lifebyte = fix_lifebyte($3 * $4);
+			if (prhead->spspec->lifebyte == 0)
+				return -1;
 		}
 		EOS
 	|	DH_GROUP dh_group_num
@@ -1221,6 +1158,10 @@ isakmpproposal_spec
 		EOS
 	|	GSSAPI_ID QUOTEDSTRING
 		{
+			if (prhead->spspec->vendorid != VENDORID_GSSAPI) {
+				yyerror("wrong Vendor ID for gssapi_id");
+				return -1;
+			}
 			prhead->spspec->gssid = strdup($2->v);
 		}
 		EOS
@@ -1276,6 +1217,28 @@ isakmpproposal_spec
 				break;
 			case algclass_isakmp_ameth:
 				prhead->spspec->algclass[algclass_isakmp_ameth] = doi;
+				/*
+				 * We may have to set the Vendor ID for the
+				 * authentication method we're using.
+				 */
+				switch ($2) {
+				case algtype_gssapikrb:
+					if (prhead->spspec->vendorid !=
+					    VENDORID_UNKNOWN) {
+						yyerror("Vendor ID mismatch "
+						    "for auth method");
+						return -1;
+					}
+					/*
+					 * For interoperability with Win2k,
+					 * we set the Vendor ID to "GSSAPI".
+					 */
+					prhead->spspec->vendorid =
+					    VENDORID_GSSAPI;
+					break;
+				default:
+					break;
+				}
 				break;
 			default:
 				yyerror("algorithm mismatched 2");
@@ -1285,6 +1248,17 @@ isakmpproposal_spec
 		EOS
 	;
 
+unittype_time
+	:	UNITTYPE_SEC	{ $$ = 1; }
+	|	UNITTYPE_MIN	{ $$ = 60; }
+	|	UNITTYPE_HOUR	{ $$ = (60 * 60); }
+	;
+unittype_byte
+	:	UNITTYPE_BYTE	{ $$ = 1; }
+	|	UNITTYPE_KBYTES	{ $$ = 1024; }
+	|	UNITTYPE_MBYTES	{ $$ = (1024 * 1024); }
+	|	UNITTYPE_TBYTES	{ $$ = (1024 * 1024 * 1024); }
+	;
 %%
 
 static struct proposalspec *
@@ -1292,7 +1266,7 @@ newprspec()
 {
 	struct proposalspec *new;
 
-	new = CALLOC(sizeof(*new), struct proposalspec *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL)
 		yyerror("failed to allocate proposal");
 
@@ -1309,7 +1283,7 @@ cleanprhead()
 
 	for (p = prhead; p != NULL; p = next) {
 		next = p->next;
-		free(p);
+		racoon_free(p);
 	}
 
 	prhead = NULL;
@@ -1334,13 +1308,20 @@ newspspec()
 {
 	struct secprotospec *new;
 
-	new = CALLOC(sizeof(*new), struct secprotospec *);
+	new = racoon_calloc(1, sizeof(*new));
 	if (new == NULL) {
 		yyerror("failed to allocate spproto");
 		return NULL;
 	}
 
 	new->encklen = 0;	/*XXX*/
+
+	/*
+	 * Default to "uknown" vendor -- we will override this
+	 * as necessary.  When we send a Vendor ID payload, an
+	 * "unknown" will be translated to a KAME/racoon ID.
+	 */
+	new->vendorid = VENDORID_UNKNOWN;
 
 	return new;
 }
@@ -1435,7 +1416,7 @@ set_isakmp_proposal(rmconf, prspec)
 				algclass_isakmp_enc, algclass_isakmp_ameth + 1,
 				s->lifetime ? s->lifetime : p->lifetime,
 				s->lifebyte ? s->lifebyte : p->lifebyte,
-				s->encklen, s->gssid,
+				s->encklen, s->vendorid, s->gssid,
 				rmconf);
 		if (trns_no == -1) {
 			plog(LLV_ERROR, LOCATION, NULL,
@@ -1465,12 +1446,14 @@ clean_tmpalgtype()
 
 static int
 expand_isakmpspec(prop_no, trns_no, types,
-		class, last, lifetime, lifebyte, encklen, gssid, rmconf)
+		class, last, lifetime, lifebyte, encklen, vendorid, gssid,
+		rmconf)
 	int prop_no, trns_no;
 	int *types, class, last;
 	time_t lifetime;
 	int lifebyte;
 	int encklen;
+	int vendorid;
 	char *gssid;
 	struct remoteconf *rmconf;
 {
@@ -1526,17 +1509,35 @@ expand_isakmpspec(prop_no, trns_no, types,
 	new->authmethod = types[algclass_isakmp_ameth];
 	new->hashtype = types[algclass_isakmp_hash];
 	new->dh_group = types[algclass_isakmp_dh];
+	new->vendorid = vendorid;
 #ifdef HAVE_GSSAPI
 	if (gssid != NULL) {
 		new->gssid = vmalloc(strlen(gssid) + 1);
 		memcpy(new->gssid->v, gssid, new->gssid->l);
-		free(gssid);
+		racoon_free(gssid);
 	} else
 		new->gssid = NULL;
 #endif
 	insisakmpsa(new, rmconf);
 
 	return trns_no;
+}
+
+/*
+ * fix lifebyte.
+ * Must be more than 1024B because its unit is kilobytes.
+ * That is defined RFC2407.
+ */
+static int
+fix_lifebyte(t)
+	unsigned long t;
+{
+	if (t < 1024) {
+		yyerror("byte size should be more than 1024B.");
+		return 0;
+	}
+
+	return(t / 1024);
 }
 
 int

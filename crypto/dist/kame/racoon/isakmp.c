@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.130 2001/03/05 12:19:48 sakane Exp $	*/
+/*	$KAME: isakmp.c,v 1.137 2001/04/03 15:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -256,7 +256,7 @@ isakmp_handler(so_isakmp)
 			"(valid as UDP but not with IKE)\n");
 		goto end;
 	}
-	if (cmpsaddr((struct sockaddr *)&local,
+	if (cmpsaddrwild((struct sockaddr *)&local,
 			(struct sockaddr *)&remote) == 0) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
 			"possible attack: "
@@ -343,10 +343,18 @@ isakmp_main(msg, remote, local)
 	iph1 = getph1byindex(index);
 	if (iph1 != NULL) {
 		/* must be same addresses in one stream of a phase at least. */
-		if (cmpsaddr(iph1->remote, remote) != 0) {
-			plog(LLV_ERROR, LOCATION, remote,
-				"remote address mismatched. db=%s\n",
-				saddr2str(iph1->remote));
+		if (cmpsaddrwild(iph1->remote, remote) != 0) {
+			char *saddr_db, *saddr_act;
+
+			saddr_db = strdup(saddr2str(iph1->remote));
+			saddr_act = strdup(saddr2str(remote));
+
+			plog(LLV_WARNING, LOCATION, remote,
+				"remote address mismatched. db=%s, act=%s\n",
+				saddr_db, saddr_act);
+
+			racoon_free(saddr_db);
+			racoon_free(saddr_act);
 		}
 		/*
 		 * don't check of exchange type here because other type will be
@@ -456,7 +464,7 @@ isakmp_main(msg, remote, local)
 					"exchange received.\n");
 				return -1;
 			}
-			if (cmpsaddr(iph1->remote, remote) != 0) {
+			if (cmpsaddrwild(iph1->remote, remote) != 0) {
 				plog(LLV_WARNING, LOCATION, remote,
 					"remote address mismatched. "
 					"db=%s\n",
@@ -685,7 +693,7 @@ quick_main(iph2, msg)
 			"failed to pre-process packet.\n");
 		if (error == ISAKMP_INTERNAL_ERROR)
 			return 0;
-		isakmp_info_send_n2(iph2, error, NULL);
+		isakmp_info_send_n1(iph2->ph1, error, NULL);
 		return -1;
 	}
 
@@ -771,7 +779,7 @@ isakmp_ph1begin_i(rmconf, remote)
 	plog(LLV_INFO, LOCATION, NULL,
 		"initiate new phase 1 negotiation: %s<=>%s\n",
 		a, saddr2str(iph1->remote));
-	free(a);
+	racoon_free(a);
     }
 	plog(LLV_INFO, LOCATION, NULL,
 		"begin %s mode.\n",
@@ -854,7 +862,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 	plog(LLV_INFO, LOCATION, NULL,
 		"responde new phase 1 negotiation: %s<=>%s\n",
 		a, saddr2str(iph1->remote));
-	free(a);
+	racoon_free(a);
     }
 	plog(LLV_INFO, LOCATION, NULL,
 		"begin %s mode.\n", s_isakmp_etype(etype));
@@ -965,7 +973,7 @@ isakmp_ph2begin_r(iph1, msg)
 	plog(LLV_INFO, LOCATION, NULL,
 		"responde new phase 2 negotiation: %s<=>%s\n",
 		a, saddr2str(iph2->dst));
-	free(a);
+	racoon_free(a);
     }
 
 	error = (ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
@@ -975,7 +983,7 @@ isakmp_ph2begin_r(iph1, msg)
 		plog(LLV_ERROR, LOCATION, iph1->remote,
 			"failed to pre-process packet.\n");
 		if (error != ISAKMP_INTERNAL_ERROR)
-			isakmp_info_send_n2(iph2, error, NULL);
+			isakmp_info_send_n1(iph2->ph1, error, NULL);
 		/*
 		 * release handler because it's wrong that ph2handle is kept
 		 * after failed to check message for responder's.
@@ -1172,6 +1180,7 @@ isakmp_open()
 {
 	const int yes = 1;
 	int ifnum;
+	int pktinfo;
 	struct myaddrs *p;
 
 	ifnum = 0;
@@ -1222,19 +1231,19 @@ isakmp_open()
 		case AF_INET6:
 #ifdef ADVAPI
 #ifdef IPV6_RECVPKTINFO
-			if (setsockopt(p->sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-					(void *)&yes, sizeof(yes)) < 0)
+			pktinfo = IPV6_RECVPKTINFO;
 #else  /* old adv. API */
-			if (setsockopt(p->sock, IPPROTO_IPV6, IPV6_PKTINFO,
-					(void *)&yes, sizeof(yes)) < 0)
+			pktinfo = IPV6_PKTINFO;
 #endif /* IPV6_RECVPKTINFO */
 #else
-			if (setsockopt(p->sock, IPPROTO_IPV6, IPV6_RECVDSTADDR,
-					(void *)&yes, sizeof(yes)) < 0)
+			pktinfo = IPV6_RECVDSTADDR;
 #endif
+			if (setsockopt(p->sock, IPPROTO_IPV6, pktinfo,
+					(void *)&yes, sizeof(yes)) < 0)
 			{
 				plog(LLV_ERROR, LOCATION, NULL,
-					"setsockopt (%s)\n", strerror(errno));
+					"setsockopt(%d): %s\n",
+					pktinfo, strerror(errno));
 				goto err_and_next;
 			}
 			break;
@@ -1270,7 +1279,7 @@ isakmp_open()
 		continue;
 
 	err_and_next:
-		free(p->addr);
+		racoon_free(p->addr);
 		p->addr = NULL;
 		if (! lcconf->autograbaddr && lcconf->strict_address)
 			return -1;
@@ -1297,8 +1306,8 @@ isakmp_close()
 		if (!p->addr)
 			continue;
 		close(p->sock);
-		free(p->addr);
-		free(p);
+		racoon_free(p->addr);
+		racoon_free(p);
 	}
 
 	lcconf->myaddrs = NULL;
@@ -1446,8 +1455,8 @@ isakmp_ph1expire(iph1)
 		"ISAKMP-SA expired %s-%s spi:%s\n",
 		src, dst,
 		isakmp_pindex(&iph1->index, 0));
-	free(src);
-	free(dst);
+	racoon_free(src);
+	racoon_free(dst);
 
 	SCHED_INIT(iph1->sce);
 
@@ -1487,8 +1496,8 @@ isakmp_ph1delete(iph1)
 	plog(LLV_INFO, LOCATION, NULL,
 		"ISAKMP-SA deleted %s-%s spi:%s\n",
 		src, dst, isakmp_pindex(&iph1->index, 0));
-	free(src);
-	free(dst);
+	racoon_free(src);
+	racoon_free(dst);
 
 	remph1(iph1);
 	delph1(iph1);
@@ -1522,15 +1531,17 @@ isakmp_ph2expire(iph2)
 	dst = strdup(saddrwop2str(iph2->dst));
 	plog(LLV_INFO, LOCATION, NULL,
 		"phase2 sa expired %s-%s\n", src, dst);
-	free(src);
-	free(dst);
+	racoon_free(src);
+	racoon_free(dst);
 
-	iph2->sce = sched_new(10, isakmp_ph2delete_stub, iph2);
+	iph2->status = PHASE2ST_EXPIRED;
+
+	iph2->sce = sched_new(1, isakmp_ph2delete_stub, iph2);
 
 	return;
 }
 
-/* called from scheduler. */
+/* called from scheduler */
 void
 isakmp_ph2delete_stub(p)
 	void *p;
@@ -1551,8 +1562,8 @@ isakmp_ph2delete(iph2)
 	dst = strdup(saddrwop2str(iph2->dst));
 	plog(LLV_INFO, LOCATION, NULL,
 		"phase2 sa deleted %s-%s\n", src, dst);
-	free(src);
-	free(dst);
+	racoon_free(src);
+	racoon_free(dst);
 
 	unbindph12(iph2);
 	remph2(iph2);
@@ -1897,7 +1908,7 @@ isakmp_newcookie(place, remote, local)
 
 	sa1 = val2str(place, sizeof (cookie_t));
 	plog(LLV_DEBUG, LOCATION, NULL, "new cookie:\n%s\n", sa1);
-	free(sa1);
+	racoon_free(sa1);
 
 	error = 0;
 end:
@@ -2311,8 +2322,8 @@ log_ph1established(iph1)
 		"ISAKMP-SA established %s-%s spi:%s\n",
 		src, dst,
 		isakmp_pindex(&iph1->index, 0));
-	free(src);
-	free(dst);
+	racoon_free(src);
+	racoon_free(dst);
 
 	return;
 }

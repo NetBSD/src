@@ -1,4 +1,4 @@
-/*	$KAME: main.c,v 1.31 2001/02/27 06:08:54 sakane Exp $	*/
+/*	$KAME: main.c,v 1.32 2001/04/03 15:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,6 +46,13 @@
 #endif
 #include <paths.h>
 #include <err.h>
+
+/*
+ * If we're using a debugging malloc library, this may define our
+ * wrapper stubs.
+ */
+#define	RACOON_MAIN_PROGRAM
+#include "gcmalloc.h"
 
 #include "var.h"
 #include "misc.h"

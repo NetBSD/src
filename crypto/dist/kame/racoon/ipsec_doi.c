@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.128 2001/02/26 07:03:02 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.132 2001/04/04 04:58:15 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,6 +79,7 @@
 #include "proposal.h"
 #include "crypto_openssl.h"
 #include "strnames.h"
+#include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
 #include "gssapi.h"
@@ -233,7 +234,7 @@ found:
 		oakley_dhgrp_free(sa->dhgrp);
 	}
 
-	sa->dhgrp = CALLOC(sizeof(struct dhgroup), struct dhgroup *);
+	sa->dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
 	if (!sa->dhgrp) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get buffer\n");
@@ -248,7 +249,7 @@ found:
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid DH parameter grp=%d.\n",
 				sa->dh_group);
-			free(sa->dhgrp);
+			racoon_free(sa->dhgrp);
 			sa->dhgrp = NULL;
 			return NULL;
 		}
@@ -410,7 +411,7 @@ t2isakmpsa(trns, sa)
 	life_t = OAKLEY_ATTR_SA_LD_TYPE_DEFAULT;
 	sa->lifetime = OAKLEY_ATTR_SA_LD_SEC_DEFAULT;
 	sa->lifebyte = 0;
-	sa->dhgrp = CALLOC(sizeof(struct dhgroup), struct dhgroup *);
+	sa->dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
 	if (!sa->dhgrp)
 		goto err;
 
@@ -979,7 +980,7 @@ found:
 		if (!x)
 			goto err;	/* XXX */
 
-		n = CALLOC(sizeof(struct prop_pair), struct prop_pair *);
+		n = racoon_calloc(1, sizeof(struct prop_pair));
 		if (!n) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get buffer.\n");
@@ -1021,7 +1022,7 @@ free_proppair(pair)
 		free_proppair0(pair[i]);
 		pair[i] = NULL;
 	}
-	free(pair);
+	racoon_free(pair);
 }
 
 static void
@@ -1032,7 +1033,7 @@ free_proppair0(pair)
 
 	for (p = pair; p; p = q) {
 		q = p->next;
-		free(p);
+		racoon_free(p);
 	}
 }
 
@@ -1070,7 +1071,7 @@ get_proppair(sa, mode)
 	if (check_situation(ntohl(sab->sit)) < 0)
 		return NULL;
 
-	pair = CALLOC(MAXPROPPAIRLEN * sizeof(*pair), struct prop_pair **);
+	pair = racoon_calloc(1, MAXPROPPAIRLEN * sizeof(*pair));
 	if (pair == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get buffer.\n");
@@ -1178,7 +1179,7 @@ get_proppair(sa, mode)
 		if (notrans) {
 			for (p = pair[i]; p; p = q) {
 				q = p->next;
-				free(p);
+				racoon_free(p);
 			}
 			pair[i] = NULL;
 			num_p--;
@@ -1277,7 +1278,7 @@ get_transform(prop, pair, num_p)
 		if (check_attributes[prop->proto_id](trns) != 0)
 			continue;
 
-		p = CALLOC(sizeof(*p), struct prop_pair *);
+		p = racoon_calloc(1, sizeof(*p));
 		if (p == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get buffer.\n");
@@ -3097,7 +3098,7 @@ ipsecdoi_setid1(iph1)
 			if (oakley_getmycert(iph1) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to get own CERT.\n");
-				return 0;
+				goto err;
 			}
 			ident = eay_get_x509asn1subjectname(&iph1->cert->cert);
 		}
@@ -3420,8 +3421,8 @@ ipsecdoi_sockaddr2id(saddr, prefixlen, ul_proto)
 }
 
 /*
- * create sockaddr structure from ID payload.
- * buffer must be allocated.
+ * create sockaddr structure from ID payload (buf).
+ * buffers (saddr, prefixlen, ul_proto) must be allocated.
  * see, RFC2407 4.6.2.1
  */
 int
@@ -3504,7 +3505,7 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 
 		/* sanity check */
 		if (buf->l < alen)
-			return -1;
+			return ISAKMP_INTERNAL_ERROR;
 
 		/* get subnet mask length */
 		plen = 0;
@@ -3803,7 +3804,7 @@ fixup_initiator_sa(match, received)
 	memcpy(newsa, match, sizeof *newsa);
 
 	if (match->dhgrp != NULL) {
-		newsa->dhgrp = CALLOC(sizeof(struct dhgroup), struct dhgroup *);
+		newsa->dhgrp = racoon_calloc(1, sizeof(struct dhgroup));
 		memcpy(newsa->dhgrp, match->dhgrp, sizeof (struct dhgroup));
 	}
 	newsa->next = NULL;
