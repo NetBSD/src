@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.47 1999/11/01 18:12:20 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.48 1999/11/02 17:05:05 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -1026,6 +1026,7 @@ ess_open(addr, flags)
 	int flags;
 {
 	struct ess_softc *sc = addr;
+	int i;
 
 	DPRINTF(("ess_open: sc=%p\n", sc));
     
@@ -1033,6 +1034,10 @@ ess_open(addr, flags)
 		return ENXIO;
 
 	ess_setup(sc);		/* because we did a reset */
+
+	/* Set all mixer controls again since some change at reset. */
+	for (i = 0; i < ESS_MAX_NDEVS; i++)
+		ess_set_gain(sc, i, 1);
 
 	sc->sc_open = 1;
 
@@ -2231,7 +2236,7 @@ ess_reset(sc)
 	sc->sc_audio2.active = 0;
 
 	EWRITE1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
-	delay(10000);
+	delay(10000);		/* XXX shouldn't delay so long */
 	EWRITE1(iot, ioh, ESS_DSP_RESET, 0);
 	if (ess_rdsp(sc) != ESS_MAGIC)
 		return (1);
