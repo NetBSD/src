@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 1997/02/04 19:28:50 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 1997/04/17 07:32:34 thorpej Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -8,7 +8,7 @@ PROG=		${PROGAOUT}.lif
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
 NOMAN=
-STRIP=
+STRIPFLAG=
 BINMODE=	444
 
 CLEANFILES+=	${PROGAOUT} vers.c vers.o

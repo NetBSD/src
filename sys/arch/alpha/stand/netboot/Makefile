@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 1997/04/06 08:41:22 cgd Exp $
+# $NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -11,7 +11,7 @@ SRCS+= rpcc.S
 SRCS+= dev_net.c conf.c devopen.c
 SRCS+= if_prom.c loadfile.c getsecs.c
 NOMAN=
-STRIP=
+STRIPFLAG=
 BINMODE= 444
 
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}

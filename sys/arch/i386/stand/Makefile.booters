@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.booters,v 1.1.1.1 1997/03/14 02:40:29 perry Exp $
+#	$NetBSD: Makefile.booters,v 1.2 1997/04/17 07:34:57 thorpej Exp $
 
 BINDIR= /usr/mdec
-STRIP=
+STRIPFLAG=
 BINMODE=444
 
 .PATH: ${.CURDIR}/../lib/crt/bootsect ${.CURDIR}/../lib

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1996/02/29 11:36:49 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/04/17 07:31:43 thorpej Exp $
 
 BINDIR=		/usr/mdec
 BINMODE=	${NONBINMODE}
 
-STRIP=
+STRIPFLAG=
 LDFLAGS=	-nostdlib -static -Wl,-T0,-N
 CPPFLAGS+=	-I- -I. -I..
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1996/06/29 20:48:41 leo Exp $
+#	$NetBSD: Makefile,v 1.4 1997/04/17 07:30:08 thorpej Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
 NOMAN=
 
-STRIP=
+STRIPFLAG=
 BINDIR=	/usr/mdec
 BINMODE=${NONBINMODE}
 
