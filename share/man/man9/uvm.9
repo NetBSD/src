@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.49 2003/11/03 08:07:36 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.50 2003/11/13 03:45:01 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -874,10 +874,6 @@ and should match what was used for previous call to
 .br
 .Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw" ;
 .Pp
-.Ft boolean_t
-.br
-.Fn uvm_useracc "caddr_t addr" "size_t len" "int rw" ;
-.Pp
 .Ft int
 .br
 .Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len" "vm_prot_t prot" ;
@@ -949,16 +945,13 @@ This function is only available with options
 .Dv KGDB .
 .Pp
 .Fn uvm_kernacc
-and
-.Fn uvm_useracc
-check the access at address
+checks the access at address
 .Fa addr
 to
 .Fa addr + len
 for
 .Fa rw
-access, in the kernel address space, and the current process'
-address space respectively.
+access in the kernel address space.
 .Pp
 .Fn uvm_vslock
 and
