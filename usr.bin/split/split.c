@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.9 2003/03/20 14:12:50 christos Exp $	*/
+/*	$NetBSD: split.c,v 1.10 2003/06/10 16:32:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.9 2003/03/20 14:12:50 christos Exp $");
+__RCSID("$NetBSD: split.c,v 1.10 2003/06/10 16:32:54 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: split.c,v 1.9 2003/03/20 14:12:50 christos Exp $");
 static int file_open;		/* If a file open. */
 static int ifd = -1, ofd = -1;	/* Input/output file descriptors. */
 static char fname[MAXPATHLEN];	/* File name prefix. */
+static int sfxlen = 2;		/* suffix length. */
 
 int  main(int, char **);
 static void newfile(void);
@@ -77,7 +78,7 @@ main(int argc, char *argv[])
 	unsigned long long bytecnt = 0;	/* Byte count to split on. */
 	unsigned long long numlines = 0;/* Line count to split on. */
 
-	while ((ch = getopt(argc, argv, "-0123456789b:l:")) != -1)
+	while ((ch = getopt(argc, argv, "-0123456789b:l:a:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -117,6 +118,10 @@ main(int argc, char *argv[])
 			if ((numlines = strtoull(optarg, &ep, 10)) <= 0 || *ep)
 				errx(1, "%s: illegal line count.", optarg);
 			break;
+		case 'a': /* Suffix length. */
+			if ((sfxlen = strtol(optarg, &ep, 10)) <= 0 || *ep)
+				errx(1, "%s: illegal suffix length.", optarg);
+			break;
 		default:
 			usage();
 		}
@@ -129,8 +134,16 @@ main(int argc, char *argv[])
 				err(1, "%s", *argv);
 			++argv;
 		}
-	if (*argv != NULL)			/* File name prefix. */
-		(void)strcpy(fname, *argv++);
+
+	if (*argv != NULL) {
+		if (strlen(*argv) + sfxlen > NAME_MAX)
+			errx(EXIT_FAILURE, "Output file name too long");
+		(void)strcpy(fname, *argv++);		/* File name prefix. */
+	} else {
+		if (1 + sfxlen > NAME_MAX)
+			errx(EXIT_FAILURE, "Output file name too long");
+	}
+
 	if (*argv != NULL)
 		usage();
 
@@ -255,6 +268,7 @@ newfile(void)
 	static int fnum;
 	static int defname;
 	static char *fpnt;
+	int quot, i;
 
 	if (ofd == -1) {
 		if (fname[0] == '\0') {
@@ -271,15 +285,18 @@ newfile(void)
 	 * Hack to increase max files; original code wandered through
 	 * magic characters.  Maximum files is 3 * 26 * 26 == 2028
 	 */
-#define MAXFILES	676
-	if (fnum == MAXFILES) {
+	fpnt[sfxlen] = '\0';
+	quot = fnum;
+	for (i = sfxlen - 1; i >= 0; i--) {
+		fpnt[i] = quot % 26 + 'a';
+		quot = quot / 26;
+	}
+	if (quot > 0) {
 		if (!defname || fname[0] == 'z')
 			errx(1, "too many files.");
 		++fname[0];
 		fnum = 0;
 	}
-	fpnt[0] = fnum / 26 + 'a';
-	fpnt[1] = fnum % 26 + 'a';
 	++fnum;
 	if (!freopen(fname, "w", stdout))
 		err(1, "%s", fname);
@@ -307,6 +324,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"Usage: %s [-b byte_count] [-l line_count] [file [prefix]]\n", getprogname());
+"Usage: %s [-b byte_count] [-l line_count] [-a suffix_length] "
+"[file [prefix]]\n", getprogname());
 	exit(1);
 }
