@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.102 2003/10/18 08:12:07 lukem Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.103 2004/06/14 01:28:00 lukem Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -69,7 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
