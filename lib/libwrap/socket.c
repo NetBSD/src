@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.12 2002/06/06 21:42:43 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.13 2002/06/07 01:36:09 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.12 2002/06/06 21:42:43 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.13 2002/06/07 01:36:09 itojun Exp $");
 #endif
 #endif
 
@@ -44,7 +44,36 @@ __RCSID("$NetBSD: socket.c,v 1.12 2002/06/06 21:42:43 itojun Exp $");
 
 /* Forward declarations. */
 
+#ifdef APPEND_DOT
+static const char *append_dot __P((const char *));
+#endif
 static void sock_sink __P((int));
+
+#ifdef APPEND_DOT
+ /*
+  * Speed up DNS lookups by terminating the host name with a dot. Should be
+  * done with care. The speedup can give problems with lookups from sources
+  * that lack DNS-style trailing dot magic, such as local files or NIS maps.
+  */
+
+static const char *
+append_dot(name)
+char *name;
+{
+    static char hbuf[MAXHOSTNAMELEN + 1];
+
+    /*
+     * Don't append dots to unqualified names. Such names are likely to come
+     * from local hosts files or from NIS.
+     */
+
+    if (strchr(name, '.') == 0 || strlen(name) + 2 > sizeof(hbuf))
+	strlcpy(hbuf, name, sizeof(hbuf));
+    else
+	(void)snprintf(hbuf, sizeof(hbuf), "%s.", name);
+    return hbuf;
+}
+#endif
 
 /* sock_host - look up endpoint addresses and install conversion methods */
 
@@ -161,7 +190,12 @@ struct host_info *host;
 	hints.ai_family = sa->sa_family;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_CANONNAME;
-	if (getaddrinfo(host->name, "0", &hints, &res0) != 0) {
+#ifdef APPEND_DOT
+	if (getaddrinfo(append_dot(host->name), "0", &hints, &res0) != 0)
+#else
+	if (getaddrinfo(host->name, "0", &hints, &res0) != 0)
+#endif
+	{
 	    /*
 	     * Unable to verify that the host name matches the address. This
 	     * may be a transient problem or a botched name server setup.
