@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.11 1994/07/16 11:50:58 ws Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.12 1994/09/20 07:21:46 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -374,6 +374,8 @@ char **argv;
 	sprintf(path, "%s/%s.%d", BINDINGDIR, ypbindlist->dom_domain,
 		ypbindlist->dom_vers);
 	(void)unlink(path);
+
+	checkwork();
 
 	width = getdtablesize();
 	while(1) {
