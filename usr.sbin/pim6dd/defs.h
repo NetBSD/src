@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 1999/08/19 17:31:06 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: defs.h,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
+ *  KAME Id: defs.h,v 1.3 1999/08/24 16:45:23 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -330,6 +330,7 @@ extern void     fdump        __P((int i));
 extern void     cdump        __P((int i));
 extern void     dump_vifs    __P((FILE *fp));
 extern void     dump_pim_mrt __P((FILE *fp));
+extern void	dump_lcl_grp __P((FILE *fp));
 
 /* dvmrp_proto.c */
 extern void	dvmrp_accept_probe             __P((u_int32 src, u_int32 dst,
@@ -550,7 +551,8 @@ extern void   set_leaves             __P((mrtentry_t *mrtentry_ptr));
 extern int    change_interfaces      __P((mrtentry_t *mrtentry_ptr,
 					  vifi_t new_iif,
 					  if_set *new_pruned_oifs,
-					  if_set *new_leaves_));
+					  if_set *new_leaves_,
+					  if_set *new_asserted_oifs));
 extern void   calc_oifs              __P((mrtentry_t *mrtentry_ptr,
                                        if_set *oifs_ptr));
 extern void   process_kernel_call    __P((void));

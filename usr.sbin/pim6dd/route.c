@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.2 1999/08/19 17:31:08 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -35,7 +35,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: route.c,v 1.1.1.1 1999/08/08 23:30:53 itojun Exp
+ *  KAME Id: route.c,v 1.2 1999/08/24 10:04:56 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -264,7 +264,8 @@ add_leaf(vifi, source, group)
 		change_interfaces(mrtentry_srcs,
 				  mrtentry_srcs->incoming,
 				  &mrtentry_srcs->pruned_oifs,
-				  &new_leaves);
+				  &new_leaves,
+				  &mrtentry_srcs->asserted_oifs);
 
 	    /* Handle transition from negative cache */
 	    if(state_change == 1) 
@@ -324,7 +325,8 @@ delete_leaf(vifi, source, group)
 		change_interfaces(mrtentry_srcs,
 				  mrtentry_srcs->incoming,
 				  &mrtentry_srcs->pruned_oifs,
-				  &new_leaves);
+				  &new_leaves,
+				  &mrtentry_srcs->asserted_oifs);
 
 	    /* Handle transition to negative cache */
 	    if(state_change == -1)
@@ -356,6 +358,7 @@ calc_oifs(mrtentry_ptr, oifs_ptr)
     IF_COPY(&nbr_mifs, &oifs);
     IF_CLR_MASK(&oifs, &mrtentry_ptr->pruned_oifs);
     IF_MERGE(&oifs, &mrtentry_ptr->leaves, &oifs);
+    IF_CLR_MASK(&oifs, &mrtentry_ptr->asserted_oifs);
     IF_CLR_MASK(&oifs, &mrtentry_ptr->filter_oifs);
     IF_CLR(mrtentry_ptr->incoming, &oifs);
     IF_COPY(&oifs, oifs_ptr);
@@ -374,17 +377,19 @@ calc_oifs(mrtentry_ptr, oifs_ptr)
  */
 int
 change_interfaces(mrtentry_ptr, new_iif, new_pruned_oifs,
-		  new_leaves_)
+		  new_leaves_, new_asserted_oifs)
     mrtentry_t *mrtentry_ptr;
     vifi_t new_iif;
     if_set *new_pruned_oifs;
     if_set *new_leaves_;
+    if_set *new_asserted_oifs;
 {
-    if_set old_pruned_oifs;
-    if_set old_leaves;
+    if_set old_pruned_oifs;	/* unnecessary? */
+    if_set old_leaves;		/* unnecessary? */
     if_set new_leaves;
     if_set new_real_oifs;    /* The result oifs */
     if_set old_real_oifs;
+    if_set old_asserted_oifs;	/* unnecessary? */
     vifi_t      old_iif;
     int return_value;
     
@@ -396,12 +401,14 @@ change_interfaces(mrtentry_ptr, new_iif, new_pruned_oifs,
     old_iif = mrtentry_ptr->incoming;
     IF_COPY(&mrtentry_ptr->leaves, &old_leaves);
     IF_COPY(&mrtentry_ptr->pruned_oifs, &old_pruned_oifs);
+    IF_COPY(&mrtentry_ptr->asserted_oifs, &old_asserted_oifs);
 
     IF_COPY(&mrtentry_ptr->oifs, &old_real_oifs);
     
     mrtentry_ptr->incoming = new_iif;
     IF_COPY(new_pruned_oifs, &mrtentry_ptr->pruned_oifs);
     IF_COPY(&new_leaves, &mrtentry_ptr->leaves);
+    IF_COPY(new_asserted_oifs, &mrtentry_ptr->asserted_oifs);
     calc_oifs(mrtentry_ptr, &new_real_oifs);
 
     if (IF_ISEMPTY(&old_real_oifs)) {
