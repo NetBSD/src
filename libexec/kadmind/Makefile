@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:41 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:23 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kadmin
 
@@ -9,7 +12,8 @@ PROG= kadmind
 
 SRCS= 	kadmind.c				\
 	server.c				\
-	version4.c
+	version4.c				\
+	kadm_conn.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kadmin		\
@@ -26,6 +30,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H
 
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+
 LDADD=	-lkadm5srv				\
 	-lhdb					\
 	-lkrb5					\
@@ -34,9 +40,11 @@ LDADD=	-lkadm5srv				\
 	-lcrypto				\
 	-lasn1					\
 	-lcom_err				\
+	-L${VERS} -lvers			\
 	-lroken					\
-	-lcrypt
+	-lcrypt					\
+	-lutil
 
-NOMAN=
+MAN=	kadmind.8
 
 .include <bsd.prog.mk>
