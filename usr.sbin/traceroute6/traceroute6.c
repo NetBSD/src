@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.8 2000/02/28 07:03:58 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.9 2000/03/02 07:43:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.8 2000/02/28 07:03:58 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.9 2000/03/02 07:43:32 itojun Exp $");
 #endif
 #endif
 
@@ -960,7 +960,7 @@ pr_type(t0)
 		cp = "Neighbor Advertisement";
 		break;
 	case ND_REDIRECT:
-		cp = "Ridirect";
+		cp = "Redirect";
 		break;
 	default:
 		cp = "Unknown";
