@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.5 2000/05/02 17:45:15 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.6 2000/05/08 21:56:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.5 2000/05/02 17:45:15 uch Exp $";
+    "$Id: hpcfb.c,v 1.6 2000/05/08 21:56:32 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ hpcfbmatch(parent, match, aux)
 	void *aux;
 {
 #if 0
-	struct hpcfb_attach_args *fap = aux;
+	struct hpcfb_attach_args *ha = aux;
 #endif
 
 	return (1);
@@ -344,6 +344,12 @@ hpcfbattach(parent, self, aux)
 #endif /* HPCFB_BSTORE */
 	printf("\n");
 
+	/* Set video chip dependent CLUT if any. */
+	if (hpcfbconsole && sc->sc_accessops->setclut) {
+		sc->sc_accessops->setclut(sc->sc_accessctx, 
+					  &hpcfb_console_dc.dc_rinfo);
+	}
+
 	wa.console = hpcfbconsole;
 	wa.scrdata = &hpcfb_screenlist;
 	wa.accessops = &hpcfb_accessops;
@@ -359,7 +365,7 @@ hpcfbprint(aux, pnp)
 	const char *pnp;
 {
 #if 0
-	struct hpchpcfb_attach_args *fap = aux;
+	struct hpcfb_attach_args *ha = aux;
 #endif
 
 	if (pnp)
@@ -481,17 +487,6 @@ hpcfb_init(fbconf, dc)
 	rasops_emul = ri->ri_ops; /* struct copy */
 	ri->ri_ops = hpcfb_emulops; /* struct copy */
 #endif /* HPCFB_HOOK */
-
-#if 0
-	/*
-	 *  setup color map
-	 *  overriding rasops.c: rasops_init_devcmap().
-	 */
-	ri->ri_devcmap[0] = bg;
-	for (i = 1; i < 16; i++) {
-		ri->ri_devcmap[i] = fg;
-	}
-#endif
 
 	return (0);
 }

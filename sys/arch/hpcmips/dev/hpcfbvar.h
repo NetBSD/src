@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.3 2000/05/02 17:45:15 uch Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.4 2000/05/08 21:56:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -40,18 +40,14 @@
  * video access functions (must be provided by all video).
  */
 struct hpcfb_accessops {
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p));
-	int	(*mmap) __P((void *v, off_t off, int prot));
-	void	(*cursor) __P((void *v, int on, int xoff, int yoff, \
-			int curwidth, int curheiht));
-	void	(*bitblit) __P((void *v, int srcxoff, int srcyoff, \
-			int dstxoff, int dstyoff, int height, int width));
-	void	(*erase) __P((void *v, int xoff, int yoff, \
-			int height, int width, int attr));
-	void	(*putchar) __P((void *v, int xoff, int yoff, \
-			struct wsdisplay_font *font, int fclr, int uclr, \
-			u_int uc, int attr));
+	int	(*ioctl) __P((void *, u_long, caddr_t, int, struct proc *));
+	int	(*mmap) __P((void *, off_t, int));
+	void	(*cursor) __P((void *, int, int, int, int, int));
+	void	(*bitblit) __P((void *, int, int, int, int, int, int));
+	void	(*erase) __P((void *, int, int, int, int, int));
+	void	(*putchar) __P((void *, int, int, struct wsdisplay_font *,
+				int, int, u_int, int));
+	void	(*setclut) __P((void *, struct rasops_info *));
 };
 
 /*
