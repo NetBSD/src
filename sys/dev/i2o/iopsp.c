@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.3 2000/12/03 13:17:03 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4 2001/02/07 17:05:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,10 +112,6 @@ iopsp_match(struct device *parent, struct cfdata *match, void *aux)
 	    I2O_PARAM_HBA_CTLR_INFO, &param, sizeof(param)) != 0)
 		return (0);
 
-	/*
-	 * XXX DPT's driver matches fibrechannel ports, but the spec says we
-	 * shouldn't; need testing.
-	 */
 	return (param.ci.bustype == I2O_HBA_BUS_SCSI ||
 	    param.ci.bustype == I2O_HBA_BUS_FCA);
 }
@@ -297,7 +293,6 @@ iopsp_reconfig(struct device *dv)
 	for (i = 0, le = iop->sc_lct->entry; i < nent; i++, le++) {
 		switch (le16toh(le->classid) & 4095) {
 		case I2O_CLASS_SCSI_PERIPHERAL:
-		case I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL:
 			break;
 		default:
 			continue;
