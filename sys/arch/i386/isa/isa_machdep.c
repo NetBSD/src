@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 1995/07/04 07:09:53 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.7 1995/08/09 01:47:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -192,7 +192,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs;
+		imask[level] = irqs | SIR_ALLMASK;
 	}
 
 #include "sl.h"
