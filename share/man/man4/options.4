@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.184 2002/10/17 07:48:12 jdc Exp $
+.\"	$NetBSD: options.4,v 1.185 2002/11/07 01:13:57 grant Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1269,6 +1269,113 @@ will enable source code that is subject to export control in some countries
 and compiled kernel binary will be subject to certain restriction.
 This option assumes
 .Em IPSEC .
+
+.It Cd options ALTQ
+Enabled ALTQ (Alternate Queueing).
+For simple rate-limiting, use
+.Xr tbrconfig 8
+to set up the interface transmission rate.
+To use queueing disciplines, their appropriate kernel options should also
+be defined (documented below).
+Queueing disciplines are managed by
+.Xr altqd 8 .
+See
+.Xr altq 9
+for details.
+.It Cd options ALTQ_HFSC
+Include support for ALTQ-implemented HFSC (Hierarchical Fair Service Curve)
+module.
+HFSC supports both link-sharing and guaranteed real-time services.
+H-FSC employs a service curve based QoS model, and its unique feature
+is an ability to decouple delay and bandwidth allocation.
+Requires
+.Em ALTQ_RED
+to use the RED queueing discipline on HFSC classes, or
+.Em ALTQ_RIO
+to use the RIO queueing discipline on HFSC classes.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_PRIQ
+Include support for ALTQ-implemented PRIQ (Priority Queueing).
+PRIQ implements a simple priority-based queueing discipline.
+A higher priority class is always served first.
+Requires
+.Em ALTQ_RED
+to use the RED queueing discipline on HFSC classes, or
+.Em ALTQ_RIO
+to use the RIO queueing discipline on HFSC classes.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_WFQ
+Include support for ALTQ-implemented WFQ (Weighted Fair Queueing).
+WFQ implements a weighted-round robin scheduler for a set of queues.
+A weight can be assigned to each queue to give a different proportion
+of the link capacity.
+A hash function is used to map a flow to one of a set of queues.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_FIFOQ
+Include support for ALTQ-implemented FIFO queueing.
+FIFOQ is a simple drop-tail FIFO (First In, First Out) queueing discipline.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_RIO
+Include support for ALTQ-implemented RIO (RED with In/Out).
+The original RIO has 2 sets of RED parameters; one for in-profile
+packets and the other for out-of-profile packets.
+At the ingress of the network, profile meters tag packets as IN or
+OUT based on contracted profiles for customers.
+Inside the network, IN packets receive preferential treatment by
+the RIO dropper.
+ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
+PHB of DiffServ (RFC2597).
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_BLUE
+Include support for ALTQ-implemented Blue buffer management.
+Blue is another active buffer management mechanism.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_FLOWVALVE
+Include support for ALTQ-implemented Flowvalve.
+Flowvalve is a simple implementation of a RED penalty box that identifies
+and punishes misbehaving flows.
+This option requires
+.Em ALTQ_RED
+and assumes
+.Em ALTQ .
+.It Cd options ALTQ_CDNR
+Include support for ALTQ-implemented CDNR (diffserv traffic conditioner)
+packet marking/manipulation.
+Traffic conditioners are components to meter, mark, or drop incoming
+packets according to some rules.
+As opposed to queueing disciplines, traffic conditioners handle incoming
+packets at an input interface.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_NOPCC
+Disables use of processor cycle counter to measure time in ALTQ.
+This option should be defined for a non-Pentium i386 CPU which does not
+have TSC, SMP (per-CPU counters are not in sync), or power management
+which affects processor cycle counter.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_IPSEC
+Include support for IPSEC in IPv4 ALTQ.
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_JOBS
+Undocumented at this time.
+.It Cd options ALTQ_AFMAP
+Include support for an undocumented ALTQ feature that is used to map an IP
+flow to an ATM VC (Virtual Circuit).
+This option assumes
+.Em ALTQ .
+.It Cd options ALTQ_LOCALQ
+Include support for ALTQ-implemented local queues.
+Its practical use is undefined.
+Assumes
+.Em ALTQ .
 .It Cd options SUBNETSARELOCAL
 Sets default value for net.inet.ip.subnetsarelocal variable, which
 controls whether non-directly-connected subnets of connected networks
