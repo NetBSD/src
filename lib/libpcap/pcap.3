@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.7 1998/06/24 19:07:00 kleink Exp $
+.\" $NetBSD: pcap.3,v 1.8 2000/10/06 16:39:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP 3  "26 April 1997"
+.TH PCAP 3  "24 June 1998"
 .SH NAME
 pcap \- Packet Capture library
 .SH SYNOPSIS
@@ -60,6 +60,11 @@ u_char *sp)
 int pcap_compile(pcap_t *p, struct bpf_program *fp,
 .ti +8
 char *str, int optimize, bpf_u_int32 netmask)
+int pcap_compile_nopcap(int snaplen, int linktype,
+.ti +8
+struct bpf_program *fp, char *str, int optimize,
+.ti +8
+bpf_uint32 netmask, char *errbuf)
 int pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 .ft
 .LP
@@ -224,6 +229,17 @@ controls whether optimization on the resulting code is performed.
 .I netmask
 specifies the netmask of the local net.
 .PP
+.B pcap_compile_nopcap()
+is similar to
+.B pcap_compile()
+except that instead of passing a pcap descriptor, one passes the
+snaplen, linktype, and error buffer (which must be
+.B PCAP_ERRBUF_SIZE
+in length) explicitly.  It is intended to
+be used for compiling filters for direct bpf usage, without
+necessarily having called
+.BR pcap_open() .
+.PP
 .B pcap_setfilter()
 is used to specify a filter program.
 .I fp
@@ -316,15 +332,27 @@ closes the ``savefile.''
 .SH SEE ALSO
 tcpdump(8)
 .SH AUTHORS
+The original authors are:
+.LP
 Van Jacobson,
 Craig Leres and
 Steven McCanne, all of the
 Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
 .LP
-The current version is available via anonymous ftp:
+The current version is available from "The Tcpdump Group"'s Web site at
 .LP
 .RS
-.I ftp://ftp.ee.lbl.gov/libpcap.tar.Z
+.I http://www.tcpdump.org/
 .RE
 .SH BUGS
-Please send bug reports to libpcap@ee.lbl.gov.
+Please send problems, bugs, questions, desirable enhancements, etc. to:
+.LP  
+.RS
+tcpdump-workers@tcpdump.org
+.RE 
+.LP
+Please send source code contributions, etc. to:
+.LP
+.RS
+patches@tcpdump.org
+.RE
