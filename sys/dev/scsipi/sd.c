@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.166 2000/11/24 00:17:35 chs Exp $	*/
+/*	$NetBSD: sd.c,v 1.167 2000/12/08 02:30:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -822,7 +822,9 @@ sdminphys(bp)
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
-	if (sd->flags & SDF_ANCIENT) {
+	if ((sd->flags & SDF_ANCIENT) &&
+	    ((sd->sc_link->flags & (SDEV_REMOVABLE | SDEV_MEDIA_LOADED)) !=
+	     SDEV_REMOVABLE)) {
 		max = sd->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
