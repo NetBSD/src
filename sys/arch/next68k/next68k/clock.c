@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2003/07/15 02:59:33 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2005/01/19 01:58:21 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2003/07/15 02:59:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/01/19 01:58:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,23 +65,23 @@ int	delay_divisor = 2048/25;  /* delay constant */
  * Calibrate the delay constant.
  */
 void
-next68k_calibrate_delay()
+next68k_calibrate_delay(void)
 {
-  extern int delay_divisor;
+	extern int delay_divisor;
 
-  /* @@@ write this once we know how to read
-   * a real time clock
-   */
+	/* @@@ write this once we know how to read
+	 * a real time clock
+	 */
 
-  /*
-   * Sanity check the delay_divisor value.  If we totally lost,
-   * assume a 25MHz CPU;
-   */
-  if (delay_divisor == 0)
-    delay_divisor = 2048 / 25;
+	/*
+	 * Sanity check the delay_divisor value.  If we totally lost,
+	 * assume a 25MHz CPU;
+	 */
+	if (delay_divisor == 0)
+		delay_divisor = 2048 / 25;
 
-  /* Calculate CPU speed. */
-  cpuspeed = 2048 / delay_divisor;
+	/* Calculate CPU speed. */
+	cpuspeed = 2048 / delay_divisor;
 }
 
 #define	SECDAY		(24 * 60 * 60)
@@ -91,49 +91,49 @@ next68k_calibrate_delay()
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-        time_t base;
+inittodr(time_t base)
 {
-  int badbase = 0;
+	int badbase = 0;
 
-  if (base < 5*SECYR) {
-    printf("WARNING: preposterous time in file system");
-    base = 6*SECYR + 186*SECDAY + SECDAY/2;
-    badbase = 1;
-  }
+	if (base < 5*SECYR) {
+		printf("WARNING: preposterous time in file system");
+		base = 6*SECYR + 186*SECDAY + SECDAY/2;
+		badbase = 1;
+	}
 
-  if ((time.tv_sec = getsecs()) == 0) {
-    printf("WARNING: bad date in battery clock");
-    /*
-     * Believe the time in the file system for lack of
-     * anything better, resetting the clock.
-     */
-    time.tv_sec = base;
-    if (!badbase)
-      resettodr();
-  } else {
-    int deltat = time.tv_sec - base;
-    
-    if (deltat < 0)
-      deltat = -deltat;
-    if (deltat < 2 * SECDAY)
-      return;
-    printf("WARNING: clock %s %d days\n",
-           time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-  }
+	if ((time.tv_sec = getsecs()) == 0) {
+		printf("WARNING: bad date in battery clock");
+
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the clock.
+		 */
+
+		time.tv_sec = base;
+		if (!badbase)
+			resettodr();
+	} else {
+		int deltat = time.tv_sec - base;
+
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat < 2 * SECDAY)
+			return;
+		printf("WARNING: clock %s %d days\n",
+		       time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+	}
 }
 
 void
-resettodr()
+resettodr(void)
 {
-  setsecs(time.tv_sec);
+	setsecs(time.tv_sec);
 }
 
-int clock_intr __P((void *));
+int clock_intr(void *);
 
 int
-clock_intr(arg)
-     void *arg;
+clock_intr(void *arg)
 {
 	volatile struct timer_reg *timer;
 	int whilecount = 0;
@@ -169,7 +169,7 @@ clock_intr(arg)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int s, cnt;
 	volatile struct timer_reg *timer;
@@ -190,8 +190,7 @@ cpu_initclocks()
 
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* XXX should we do something here? XXX */
@@ -214,12 +213,12 @@ setstatclockrate(newhz)
  */
 
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
-	int s = splhigh();
+	int s;
 	static struct timeval lasttime;
 
+	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec++;
 	while (tvp->tv_usec >= 1000000) {
