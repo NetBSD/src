@@ -1,11 +1,11 @@
-/*	$NetBSD: irix_signal.c,v 1.2 2001/12/25 19:04:18 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3 2001/12/26 11:04:20 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,18 +37,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.2 2001/12/25 19:04:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3 2001/12/26 11:04:20 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
+#include <sys/ptrace.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wait.h>
 
 #include <machine/regnum.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_wait.h>
 
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -56,11 +62,69 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.2 2001/12/25 19:04:18 manu Exp $")
 extern const int native_to_svr4_sig[];
 extern const int svr4_to_native_sig[];
 
+static int irix_setinfo __P((struct proc *, int, irix_irix5_siginfo_t *));
+
 #define irix_sigmask(n)         (1 << (((n) - 1) & 31))
 #define irix_sigword(n)         (((n) - 1) >> 5) 
 #define irix_sigemptyset(s)     memset((s), 0, sizeof(*(s)))
 #define irix_sigismember(s, n)  ((s)->bits[irix_sigword(n)] & irix_sigmask(n))
 #define irix_sigaddset(s, n)    ((s)->bits[irix_sigword(n)] |= irix_sigmask(n))
+
+/* 
+ * This is ripped from svr4_setinfo. See irix_sys_waitsys...
+ */
+int
+irix_setinfo(p, st, s)
+	struct proc *p;
+	int st;
+	irix_irix5_siginfo_t *s;
+{
+        irix_irix5_siginfo_t i;
+        int sig;
+
+        memset(&i, 0, sizeof(i));
+
+        i.isi_signo = SVR4_SIGCHLD;
+        i.isi_errno = 0; /* XXX? */
+
+        if (p) {
+                i.isi_pid = p->p_pid;
+                if (p->p_stat == SZOMB) {
+                        i.isi_stime = p->p_ru->ru_stime.tv_sec;
+                        i.isi_utime = p->p_ru->ru_utime.tv_sec;
+                }
+                else {
+                        i.isi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+                        i.isi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+                }
+        }
+
+	if (WIFEXITED(st)) {
+                i.isi_status = WEXITSTATUS(st);
+                i.isi_code = SVR4_CLD_EXITED;
+        } else if (WIFSTOPPED(st)) {
+                sig = WSTOPSIG(st);
+                if (sig >= 0 && sig < NSIG)
+                        i.isi_status = native_to_svr4_sig[sig];
+
+                if (i.isi_status == SVR4_SIGCONT)
+                        i.isi_code = SVR4_CLD_CONTINUED;
+                else
+                        i.isi_code = SVR4_CLD_STOPPED;
+        } else {
+                sig = WTERMSIG(st);
+                if (sig >= 0 && sig < NSIG)
+                        i.isi_status = native_to_svr4_sig[sig];
+
+                if (WCOREDUMP(st))
+                        i.isi_code = SVR4_CLD_DUMPED;
+                else
+                        i.isi_code = SVR4_CLD_KILLED;
+        }
+
+        return copyout(&i, s, sizeof(i));
+}
+
 
 void
 native_to_irix_sigset(bss, sss)
@@ -375,4 +439,177 @@ irix_sys_setcontext(p, v, retval)
 
 out:
 	return error;
+}
+
+
+/* 
+ * The following code is from svr4_sys_waitsys(), with a few lines added
+ * for supporting the rusage argument which is present in the IRIX version
+ * and not in the SVR4 version.
+ * Both version could be merged by creating a svr4_sys_waitsys1() with the
+ * rusage argument, and by calling it with NULL from svr4_sys_waitsys().
+ * irix_setinfo is here because 1) svr4_setinfo is static and cannot be 
+ * used here and 2) because struct irix_irix5_siginfo is quite different
+ * from svr4_siginfo. In order to merge, we need to include irix_signal.h
+ * from svr4_misc.c, or push the irix_irix5_siginfo into svr4_siginfo.h
+ */
+int 
+irix_sys_waitsys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_waitsys_args /* {
+		syscallarg(int) type;
+		syscallarg(int) pid;
+		syscallarg(struct irix_irix5_siginfo *) info;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) ru;
+	} */ *uap = v;
+	int nfound, error, s;
+	struct proc *q, *t;
+
+	switch (SCARG(uap, type)) {
+	case SVR4_P_PID:	
+		break;
+
+	case SVR4_P_PGID:
+		SCARG(uap, pid) = -p->p_pgid;
+		break;
+
+	case SVR4_P_ALL:
+		SCARG(uap, pid) = WAIT_ANY;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+#ifdef DEBUG_IRIX
+	printf("waitsys(%d, %d, %p, %x)\n", 
+	         SCARG(uap, type), SCARG(uap, pid),
+		 SCARG(uap, info), SCARG(uap, options));
+#endif
+
+loop:
+	nfound = 0;
+	for (q = p->p_children.lh_first; q != 0; q = q->p_sibling.le_next) {
+		if (SCARG(uap, pid) != WAIT_ANY &&
+		    q->p_pid != SCARG(uap, pid) &&
+		    q->p_pgid != -SCARG(uap, pid)) {
+#ifdef DEBUG_IRIX
+			printf("pid %d pgid %d != %d\n", q->p_pid,
+				 q->p_pgid, SCARG(uap, pid));
+#endif
+			continue;
+		}
+		nfound++;
+		if (q->p_stat == SZOMB && 
+		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
+			*retval = 0;
+#ifdef DEBUG_IRIX
+			printf("found %d\n", q->p_pid);
+#endif
+			if ((error = irix_setinfo(q, q->p_xstat,
+						  SCARG(uap, info))) != 0)
+				return error;
+
+
+		        if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
+#ifdef DEBUG_IRIX
+				printf(("Don't wait\n"));
+#endif
+				return 0;
+			}
+			if (SCARG(uap, ru) &&
+			    (error = copyout((caddr_t)p->p_ru,
+			    (caddr_t)SCARG(uap, ru),
+			    sizeof(struct rusage))))
+				return (error);
+
+			/*
+			 * If we got the child via ptrace(2) or procfs, and
+			 * the parent is different (meaning the process was
+			 * attached, rather than run as a child), then we need
+			 * to give it back to the old parent, and send the
+			 * parent a SIGCHLD.  The rest of the cleanup will be
+			 * done when the old parent waits on the child.
+			 */
+			if ((q->p_flag & P_TRACED) &&
+			    q->p_oppid != q->p_pptr->p_pid) {
+				t = pfind(q->p_oppid);
+				proc_reparent(q, t ? t : initproc);
+				q->p_oppid = 0;
+				q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+				psignal(q->p_pptr, SIGCHLD);
+				wakeup((caddr_t)q->p_pptr);
+				return (0);
+			}
+			q->p_xstat = 0;
+			ruadd(&p->p_stats->p_cru, q->p_ru);
+			pool_put(&rusage_pool, q->p_ru);
+
+			/*
+			 * Finally finished with old proc entry.
+			 * Unlink it from its process group and free it.
+			 */
+			leavepgrp(q);
+
+			s = proclist_lock_write();
+			LIST_REMOVE(q, p_list);	/* off zombproc */
+			proclist_unlock_write(s);
+
+			LIST_REMOVE(q, p_sibling);
+
+			/*
+			 * Decrement the count of procs running with this uid.
+			 */
+			(void)chgproccnt(q->p_cred->p_ruid, -1);
+
+			/*
+			 * Free up credentials.
+			 */
+			if (--q->p_cred->p_refcnt == 0) {
+				crfree(q->p_cred->pc_ucred);
+				pool_put(&pcred_pool, q->p_cred);
+			}
+
+			/*
+			 * Release reference to text vnode
+			 */
+			if (q->p_textvp)
+				vrele(q->p_textvp);
+
+			pool_put(&proc_pool, q);
+			nprocs--;
+			return 0;
+		}
+		if (q->p_stat == SSTOP && (q->p_flag & P_WAITED) == 0 &&
+		    (q->p_flag & P_TRACED ||
+		     (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
+#ifdef DEBUG_IRIX
+			printf("jobcontrol %d\n", q->p_pid);
+#endif
+		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
+				q->p_flag |= P_WAITED;
+			*retval = 0;
+			return irix_setinfo(q, W_STOPCODE(q->p_xstat),
+					    SCARG(uap, info));
+		}
+	}
+
+	if (nfound == 0)
+		return ECHILD;
+
+	if (SCARG(uap, options) & SVR4_WNOHANG) {
+		*retval = 0;
+		if ((error = irix_setinfo(NULL, 0, SCARG(uap, info))) != 0)
+			return error;
+		return 0;
+	}
+
+	if ((error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0)) != 0)
+		return error;
+	goto loop;
+
 }

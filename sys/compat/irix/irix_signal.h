@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.2 2001/12/25 19:04:18 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.3 2001/12/26 11:04:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,10 +108,60 @@ typedef struct irix_ucontext {
 	int			iuc_triggersave;
 } irix_ucontext_t;
 
+/* From IRIX's <sys/siginfo.h> */
+#define IRIX_SI_MAXSZ	128
+#define IRIX_SI_PAD	((IRIX_SI_MAXSZ / sizeof(__int32_t)) - 3)
+
+/* From IRIX's <sys/ksignal.h> */
+typedef union irix_irix5_sigval {
+	irix_app32_int_t	sigbval_int;
+	irix_app32_ptr_t	sival_ptr;
+} irix_irix5_sigval_t;
+
+typedef struct irix_irix5_siginfo {
+	irix_app32_int_t 	isi_signo;
+	irix_app32_int_t	isi_code;
+	irix_app32_int_t	isi_errno;
+	union {
+		irix_app32_int_t	si_pad[IRIX_SI_PAD];
+		struct {
+			irix_irix5_pid_t	__pid;
+			union {
+				struct {
+					irix_irix5_uid_t	__uid;
+				} __kill;
+				struct {
+					irix_irix5_clock_t	__utime;
+					irix_app32_int_t	__status;
+					irix_irix5_clock_t	__stime;
+					irix_app32_int_t	__swap;
+				} __cld;
+			} __pdata;
+		} __proc;
+		struct {
+			irix_app32_ptr_t	__addr;
+		} __fault;
+		struct {
+			irix_app32_int_t	__fd;
+			irix_app32_long_t	__band;
+		} __file;
+		union irix_irix5_sigval	__value;
+	} __data;
+} irix_irix5_siginfo_t;
+#define isi_pid		__data.__proc.__pid
+#define isi_stime	__data.__proc.__pdata.__cld.__stime
+#define isi_utime	__data.__proc.__pdata.__cld.__utime
+#define isi_status	__data.__proc.__pdata.__cld.__status
+#define isi_addr	__data.__fault.__addr;
+#define isi_trap
+
+
 #ifdef _KERNEL
 __BEGIN_DECLS
 void native_to_irix_sigset __P((const sigset_t *, irix_sigset_t *));
 void irix_to_native_sigset __P((const irix_sigset_t *, sigset_t *));
+
+
 void irix_sendsig __P((sig_t, int, sigset_t *, u_long));
 __END_DECLS
 #endif /* _KERNEL */
