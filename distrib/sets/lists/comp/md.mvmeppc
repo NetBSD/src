@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.mvmeppc,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -55,3 +55,4 @@
 ./usr/include/mvmeppc/types.h			comp-c-include
 ./usr/include/mvmeppc/varargs.h			comp-c-include
 ./usr/include/mvmeppc/vmparam.h			comp-c-include
+./usr/include/mvmeppc/wchar_limits.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn26,v 1.7 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.acorn26,v 1.8 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-c-include
 ./usr/include/acorn26/aout_machdep.h		comp-c-include
@@ -46,6 +46,7 @@
 ./usr/include/acorn26/types.h			comp-c-include
 ./usr/include/acorn26/varargs.h			comp-c-include
 ./usr/include/acorn26/vmparam.h			comp-c-include
+./usr/include/acorn26/wchar_limits.h		comp-c-include
 ./usr/include/arm/arm32/bus.h			comp-obsolete		obsolete
 ./usr/include/arm/arm32/sysarch.h		comp-obsolete		obsolete
 ./usr/include/arm26				comp-obsolete		obsolete
