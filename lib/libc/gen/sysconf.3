@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.8 1998/05/24 20:12:25 kleink Exp $
+.\"	$NetBSD: sysconf.3,v 1.9 1998/08/03 14:41:21 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,18 +73,37 @@ The maximum bytes of argument to
 The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
 The number of clock ticks per second.
+.It Li _SC_FSYNC
+Return 1 if the File Synchronization Option is available on this system,
+otherwise \-1.
+.It Li _SC_IOV_MAX
+The maximum number of
+.Va iovec
+structures that a process has available for use with
+.Xr preadv 2 ,
+.Xr pwritev 2 ,
+.Xr readv 2 ,
+.Xr recvmsg 2 ,
+.Xr sendmsg 2
+or
+.Xr writev 2 .
+.It Li _SC_JOB_CONTROL
+Return 1 if job control is available on this system, otherwise \-1.
 .It Li _SC_NGROUPS_MAX
 The maximum number of supplemental groups.
 .It Li _SC_OPEN_MAX
 The maximum number of open files per user id.
+.It Li _SC_PAGESIZE
+The size of a system page in bytes.
 .It Li _SC_STREAM_MAX
 The minimum maximum number of streams that a process may have open
 at any one time.
+.It Li _SC_SYNCHRONIZED_IO
+Return 1 if the Synchronized I/O Option is available on this system,
+otherwise \-1.
 .It Li _SC_TZNAME_MAX
 The minimum maximum number of types supported for the name of a
 timezone.
-.It Li _SC_JOB_CONTROL
-Return 1 if job control is available on this system, otherwise \-1.
 .It Li _SC_SAVED_IDS
 Returns 1 if saved set-group and saved set-user ID is available,
 otherwise \-1.
@@ -146,10 +165,9 @@ otherwise \-1.
 .It Li _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities Option,
 otherwise \-1.
-.It Li _SC_PAGESIZE
-The size of a system page in bytes.
-.It Li _SC_FSYNC
-Return 1 if the system supports the File Synchronisation Option, otherwise \-1.
+.It Li _SC_XOPEN_SHM
+Return 1 of the system supports System V style shared memory,
+otherwise \-1.
 .El
 .Sh RETURN VALUES
 If the call to
