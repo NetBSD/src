@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86 2003/06/18 12:39:03 agc Exp $
+# $NetBSD: mi,v 1.87 2003/07/04 04:56:28 atatat Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -541,6 +541,7 @@
 ./usr/share/sendmail					misc-sendmail-share
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
+./usr/share/sendmail/README.milter			misc-sendmail-share
 ./usr/share/sendmail/cf					misc-sendmail-share
 ./usr/share/sendmail/cf/Makefile			misc-sendmail-share
 ./usr/share/sendmail/cf/boat-anchor.mc			misc-sendmail-share
