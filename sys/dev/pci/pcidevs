@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.230 2000/06/07 19:52:07 ad Exp $
+$NetBSD: pcidevs,v 1.231 2000/06/09 00:20:18 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1406,6 +1406,7 @@ product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
 product TOSHIBA2 FIRO		0x0701	Fast Infrared Type O
 
 /* Trident products */
+product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
 product TRIDENT	TGUI_9360	0x9360	TGUI 9360
@@ -1459,6 +1460,7 @@ product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product	VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
+product VIATECH VT8501_MVP4	0x0501	VT8501 MVP4 System Controller
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C586A_IDE	0x0571	VT82C586A IDE Controller
@@ -1485,6 +1487,7 @@ product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product	VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
+product VIATECH VT8501AGP	0x8501	VT8501 PCI-AGP
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) PCI-AGP
 
