@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.7 1995/06/13 07:13:45 mycroft Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.8 1995/06/13 07:58:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -261,7 +261,7 @@ int 	in_pcbdetach();
 int 	in_pcballoc(); 
 int 	tpip_output(); 
 int 	tpip_output_dg(); 
-struct inpcb	tp_inpcb;
+struct inpcbtable	tp_inpcb;
 #endif /* INET */
 #ifdef ISO
 int		iso_putnetaddr();
@@ -374,7 +374,7 @@ tp_init()
 		return;
 
 	/* FOR INET */
-	tp_inpcb.inp_next = tp_inpcb.inp_prev = &tp_inpcb;
+	in_pcbinit(&tp_inpcb);
 	/* FOR ISO */
 	tp_isopcb.isop_next = tp_isopcb.isop_prev = &tp_isopcb;
 

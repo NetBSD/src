@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.6 1995/06/13 07:13:20 mycroft Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.7 1995/06/13 07:58:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -420,7 +420,7 @@ int					flags;		/* flags */
 		IFDEBUG(D_OUTPUT)
 			printf("clnp_output: packet routed to %s\n", 
 				clnp_iso_addrp(
-					&satosiso(clcp->clc_firsthop)->siso_addr);
+					&satosiso(clcp->clc_firsthop)->siso_addr));
 		ENDDEBUG
 		
 		/*
