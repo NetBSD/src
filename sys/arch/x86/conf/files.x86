@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.1 2003/02/26 21:26:09 fvdl Exp $
+#	$NetBSD: files.x86,v 1.2 2003/02/27 00:39:52 fvdl Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUGA
@@ -25,3 +25,7 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # MP configuration using Intel SMP specification 1.4
 file 	arch/x86/x86/mpbios.c		mpbios
+
+file	arch/x86/pci/pci_machdep.c	pci
+
+file	arch/x86/isa/isa_machdep.c	isa
