@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.565 2003/07/06 04:03:21 kochi Exp $
+# $NetBSD: GENERIC,v 1.566 2003/08/06 12:32:07 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.565 $"
+#ident 		"GENERIC-$Revision: 1.566 $"
 
 maxusers	32		# estimated number of users
 
@@ -517,6 +517,7 @@ mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 #options 	SIOP_SYMLED		# drive the act. LED in software
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 

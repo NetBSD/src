@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2003/06/15 06:10:42 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.91 2003/08/06 12:32:05 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.90 $"
+#ident		"GENERIC-$Revision: 1.91 $"
 
 maxusers	32		# estimated number of users
 
@@ -303,6 +303,9 @@ scsibus* 	at pcscp?
 
 siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
 scsibus* 	at siop?
+
+esiop*		at pci? dev ? function ?	# NCR/Symbios 53c875/95/1010
+scsibus* 	at esiop?
 
 trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
 scsibus*	at trm?

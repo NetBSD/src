@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66 2003/04/26 14:10:07 ragge Exp $
+# $NetBSD: GENERIC,v 1.67 2003/08/06 12:32:08 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.66 $"
+#ident		"GENERIC-$Revision: 1.67 $"
 
 maxusers	32
 
@@ -243,6 +243,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
@@ -254,6 +255,7 @@ scsibus* at aic?
 scsibus* at iha?
 scsibus* at pcscp?
 scsibus* at siop?
+scsibus* at esiop?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives

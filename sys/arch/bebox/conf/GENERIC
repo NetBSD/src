@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63 2003/04/26 14:10:13 ragge Exp $
+# $NetBSD: GENERIC,v 1.64 2003/08/06 12:32:06 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 maxusers	32
 
@@ -168,6 +168,8 @@ wskbd*		at pckbd? console ?
 
 #siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at siop?
+#esiop*	at pci? dev ? function ?	# NCR 53875 and newer SCSI controllers
+#scsibus* at esiop?
 
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
