@@ -38,7 +38,7 @@
  * from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *
  *	from: @(#)ultrix_compat.c	8.1 (Berkeley) 6/10/93
- *      $Id: ultrix_compat.c,v 1.4 1994/05/27 09:06:48 glass Exp $
+ *      $Id: ultrix_compat.c,v 1.5 1994/05/30 06:39:18 glass Exp $
  */
 
 /*
@@ -249,19 +249,6 @@ ultrixsigreturn(p, uap, retval)
 {
 	printf("ultrixsigreturn %s %d\n", p->p_comm, p->p_pid); /* XXX */
 	return (ENOSYS);
-}
-
-/*
- * Switch process from ULTRIX emulation to BSD.
- */
-ultrixtobsd(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
-{
-
-	p->p_md.md_flags &= ~MDP_ULTRIX;
-	return (0);
 }
 
 ultrixgetsysinfo(p, uap, retval)
