@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.12 1997/11/21 08:37:26 lukem Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.13 1998/12/20 15:03:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.12 1997/11/21 08:37:26 lukem Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.13 1998/12/20 15:03:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,10 @@ wwinit()
 	sigaddset(&sigset, SIGTERM);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
-	if (signal(SIGCHLD, wwchild) == BADSIG ||
-	    signal(SIGHUP, wwquit) == BADSIG ||
-	    signal(SIGTERM, wwquit) == BADSIG ||
-	    signal(SIGPIPE, SIG_IGN) == BADSIG) {
+	if (signal(SIGCHLD, wwchild) == SIG_ERR ||
+	    signal(SIGHUP, wwquit) == SIG_ERR ||
+	    signal(SIGTERM, wwquit) == SIG_ERR ||
+	    signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		wwerrno = WWE_SYS;
 		return -1;
 	}
@@ -326,7 +326,7 @@ wwinit()
 #endif
 
 	if (tt.tt_checkpoint)
-		if (signal(SIGALRM, wwalarm) == BADSIG) {
+		if (signal(SIGALRM, wwalarm) == SIG_ERR) {
 			wwerrno = WWE_SYS;
 			goto bad;
 		}
