@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.1 2000/04/09 18:23:23 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.2 2000/04/12 10:36:46 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,9 +74,6 @@
 #include <netinet/in.h> 
 #include <netinet/in_var.h> 
 #include <netinet/if_inarp.h>
-#endif
-#ifdef INET6
-#include <netinet6/in6_ifattach.h> 
 #endif
 
 #ifdef NS
@@ -318,9 +315,6 @@ USB_ATTACH(upl)
 	ifp->if_output = upl_output;
 	ifp->if_input = upl_input;
 	ifp->if_baudrate = 12000000;
-#ifdef INET6
-	in6_ifattach_getifid(ifp);
-#endif
 
 	/* Attach the interface. */
 	if_attach(ifp);

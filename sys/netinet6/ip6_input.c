@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.19 2000/03/23 07:03:30 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.20 2000/04/12 10:36:45 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.72 2000/03/21 09:23:19 itojun Exp $	*/
 
 /*
@@ -194,16 +194,11 @@ static void
 ip6_init2(dummy)
 	void *dummy;
 {
-	int ret;
-
-	/* get EUI64 from somewhere */
-	ret = in6_ifattach_getifid(NULL);
-
 	/*
 	 * to route local address of p2p link to loopback,
 	 * assign loopback address first. 
 	 */
-	in6_ifattach(&loif[0], IN6_IFT_LOOP, NULL, 0);
+	in6_ifattach(&loif[0], NULL);
 
 	/* nd6_timer_init */
 	callout_init(&nd6_timer_ch);
