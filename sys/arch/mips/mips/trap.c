@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.12 2002/07/02 22:13:25 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.13 2002/07/06 03:14:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.12 2002/07/02 22:13:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.13 2002/07/06 03:14:00 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -516,7 +516,7 @@ trap(status, cause, vaddr, opc, frame)
 		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
 		}
 #else
-		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+		MachFPInterrupt(status, cause, opc, l->l_md.md_regs);
 #endif
 		userret(l);
 		return; /* GEN */
