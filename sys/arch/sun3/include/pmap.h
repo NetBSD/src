@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 1998/02/05 04:56:57 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 1998/03/15 22:36:08 fair Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,5 +42,9 @@
 #ifdef	_SUN3X_
 #include <machine/pmap3x.h>
 #endif	/* SUN3X */
+
+#if !defined(_SUN3_) && !defined(_SUN3X_)
+#error "Must have either _SUN3_ or _SUN3X_ (or bad things happen)"
+#endif
 
 #endif	/* _MACHINE_PMAP_H */
