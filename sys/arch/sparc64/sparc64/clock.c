@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2000/12/29 18:35:18 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.38 2000/12/30 07:34:40 mjacob Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -682,7 +682,9 @@ setstatclockrate(newhz)
  * console input, we need to check for that here as well, and generate
  * a software interrupt to read it.
  */
+#ifdef	DEBUG
 static int clockcheck = 0;
+#endif
 int
 clockintr(cap)
 	void *cap;
