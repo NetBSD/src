@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmuxctl.8,v 1.4 2001/10/14 20:13:31 augustss Exp $
+.\" $NetBSD: wsmuxctl.8,v 1.5 2001/10/18 12:27:15 augustss Exp $
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -43,6 +43,7 @@
 .Op Fl a Ar dev
 .Fl f Ar ctldev
 .Op Fl l
+.Op Fl L
 .Op Fl r Ar dev
 .Sh DESCRIPTION
 The
@@ -64,8 +65,11 @@ The options are:
 Add the specified device to the mux.
 .It Fl f Ar ctldev
 Specify the control device of the wsmux to operate on.
+A number maybe give, which is then taken to be the number of the mux.
 .It Fl l
 List all devices connected to a mux.
+.It Fl L
+List all devices connected to a mux and recursively list mux subdevices.
 .It Fl r Ar dev
 Remove the specified device from the mux.
 .El
