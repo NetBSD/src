@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel.c,v 1.5 2001/12/16 22:30:26 thorpej Exp $	*/
+/*	$NetBSD: weasel_isa.c,v 1.1 2001/12/16 22:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel.c,v 1.5 2001/12/16 22:30:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.1 2001/12/16 22:35:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

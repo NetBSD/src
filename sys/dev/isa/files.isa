@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.119 2001/11/28 10:21:22 lukem Exp $
+#	$NetBSD: files.isa,v 1.120 2001/12/16 22:35:31 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -412,7 +412,7 @@ file	dev/isa/pcdisplay.c		pcdisplay		needs-flag
 # but we can't use an `option', because options can't have
 # attributes.
 defpseudo pcweasel: sysmon_wdog
-file	dev/isa/weasel.c		pcweasel		needs-flag
+file	dev/isa/weasel_isa.c		pcweasel		needs-flag
 
 # PC PPI + TIMER 1 (speaker interface)
 device	pcppi {}
