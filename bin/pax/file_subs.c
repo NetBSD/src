@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.47 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.48 2004/06/26 12:39:06 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.47 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.48 2004/06/26 12:39:06 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		/*
 		 * try to get rid of the file, based on the type
 		 */
-		if (S_ISDIR(sb.st_mode)) {
+		if (S_ISDIR(sb.st_mode) && strcmp(from, ".") != 0) {
 			if (rmdir(from) < 0) {
 				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
@@ -593,8 +593,13 @@ unlnk_exist(char *name, int type)
 	if (S_ISDIR(sb.st_mode)) {
 		/*
 		 * try to remove a directory, if it fails and we were going to
-		 * create a directory anyway, tell the caller (return a 1)
+		 * create a directory anyway, tell the caller (return a 1).
+		 *
+		 * don't try to remove the directory if the name is "."
+		 * otherwise later file/directory creation fails.
 		 */
+		if (strcmp(name, ".") == 0)
+			return(1);
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
 				return(1);
