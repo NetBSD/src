@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 1999/12/14 17:51:23 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1999/12/14 21:42:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -51,9 +51,13 @@ struct btinfo_magic {
 	int magic2;
 };
 
-#define BTINFO_FILENAME_LEN	64
+#define BTINFO_FILENAME_LEN		64
+#define	BTINFO_BOOTPATH_TYPE_SCSI	0
+#define	BTINFO_BOOTPATH_TYPE_HPIB	1
+#define	BTINFO_BOOTPATH_TYPE_NET	2
 struct btinfo_bootpath {
 	struct btinfo_common common;
+	int type;
 	int scode;
 	int target;
 	int lun;
