@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.6 1999/07/21 21:46:17 mjacob Exp $	*/
+/*	$NetBSD: mmap.c,v 1.7 1999/08/06 23:01:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ main(argc, argv)
 	if ((shmid = shmget(IPC_PRIVATE, npgs * pgsize, IPC_CREAT)) == -1)
 		err(1, "shmget");
 
-	if ((addr = shmat(shmid, NULL, 0)) == NULL)
+	if ((addr = shmat(shmid, NULL, 0)) == (void *) -1)
 		err(1, "shmat");
 
 	printf("    ZEROING SEGMENT\n");
