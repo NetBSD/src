@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.38 1997/11/20 08:11:15 fair Exp $
+#	$NetBSD: GENERIC,v 1.39 1997/12/01 15:19:39 kleink Exp $
 #
 # Generic atari
 #
@@ -70,6 +70,7 @@ options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0
 options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
+options 	COMPAT_13	# Compatibility to NetBSD1.3
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
