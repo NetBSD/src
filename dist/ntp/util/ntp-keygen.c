@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.3 2003/12/04 17:06:12 drochner Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.4 2003/12/04 17:15:26 drochner Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -1249,7 +1249,7 @@ gen_mv(
 	char	*id		/* file name id */
 	)
 {
-	EVP_PKEY *pkey;		/* private key */
+	EVP_PKEY *pkey, *pkey1;	/* private key */
 	DSA	*dsa;		/* DSA parameters */
 	DSA	*sdsa;		/* DSA parameters */
 	BN_CTX	*ctx;		/* BN working space */
@@ -1288,7 +1288,7 @@ gen_mv(
 	    modulus / n);
 	ctx = BN_CTX_new(); u = BN_new(); v = BN_new(); w = BN_new();
 	b = BN_new(); b1 = BN_new();
-	dsa = malloc(sizeof(DSA));
+	dsa = DSA_new();
 	dsa->p = BN_new();
 	dsa->q = BN_new();
 	dsa->g = BN_new();
@@ -1593,7 +1593,7 @@ gen_mv(
 	 * the designated recipient(s) who pay a suitably outrageous fee
 	 * for its use.
 	 */
-	sdsa = malloc(sizeof(DSA));
+	sdsa = DSA_new();
 	sdsa->p = BN_dup(dsa->p);
 	sdsa->q = BN_dup(BN_value_one());
 	sdsa->g = BN_dup(BN_value_one());
@@ -1626,15 +1626,16 @@ gen_mv(
 		 */
 		sprintf(ident, "MVkey%d", j);
 		str = fheader(ident, trustname);
-		pkey = EVP_PKEY_new();
-		EVP_PKEY_assign_DSA(pkey, sdsa);
-		PEM_write_PrivateKey(str, pkey, passwd2 ?
+		pkey1 = EVP_PKEY_new();
+		EVP_PKEY_set1_DSA(pkey1, sdsa);
+		PEM_write_PrivateKey(str, pkey1, passwd2 ?
 		    EVP_des_cbc() : NULL, NULL, 0, NULL, passwd2);
 		fclose(str);
 		fprintf(stderr, "ntpkey_%s_%s.%lu\n", ident, trustname,
 		    epoch + JAN_1970);
 		if (debug)
 			DSA_print_fp(stdout, sdsa, 0);
+		EVP_PKEY_free(pkey1);
 	}
 
 	/*
@@ -1647,7 +1648,7 @@ gen_mv(
 	BN_free(u); BN_free(v); BN_free(w); BN_CTX_free(ctx);
 	BN_free(b); BN_free(b1); BN_free(biga); BN_free(bige);
 	BN_free(ss); BN_free(gbar); BN_free(ghat);
-	DSA_free(dsa); DSA_free(sdsa);
+	DSA_free(sdsa);
 
 	/*
 	 * Free the world.
