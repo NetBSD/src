@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1996/05/09 23:54:14 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1996/05/10 00:15:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,7 +179,7 @@ loadfile(fname, entryp)
 	}
 
 	/* Exec a.out or COFF. */
-	rval = ECOFF_BADMAG(&hdr.coff.f) ?	/* XXX check aouthdr */
+	rval = ECOFF_BADMAG(&hdr.coff) ?	/* XXX check aouthdr */
 	    aout_exec(fd, &hdr.aout, entryp) :
 	    coff_exec(fd, &hdr.coff, entryp);
 
@@ -243,7 +243,7 @@ coff_exec(fd, coff, entryp)
 
 	/* Read in text. */
 	(void)printf("%lu", coff->a.tsize);
-	(void)lseek(fd, ECOFF_TXTOFF(&coff->f, &coff->a), 0);
+	(void)lseek(fd, ECOFF_TXTOFF(coff), 0);
 	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
 	    coff->a.tsize) {
 		(void)printf("read text: %d\n", errno);
