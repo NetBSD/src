@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.12 2001/11/07 06:26:48 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.13 2001/11/27 04:10:24 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.82 2001/10/10 22:18:47 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.84 2001/11/22 12:34:22 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -88,7 +88,7 @@ static int client_alive_timeouts = 0;
  * will exit after that, as soon as forwarded connections have terminated.
  */
 
-static volatile int child_terminated;	/* The child has terminated. */
+static volatile sig_atomic_t child_terminated = 0;	/* The child has terminated. */
 
 /* prototypes */
 static void server_init_dispatch(void);
@@ -273,8 +273,8 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	ret = select((*maxfdp)+1, *readsetp, *writesetp, NULL, tvp);
 
 	if (ret == -1) {
-		memset(*readsetp, 0, *maxfdp);
-		memset(*writesetp, 0, *maxfdp);
+		memset(*readsetp, 0, *nallocp);
+		memset(*writesetp, 0, *nallocp);
 		if (errno != EINTR)
 			error("select: %.100s", strerror(errno));
 	} else if (ret == 0 && client_alive_scheduled)
