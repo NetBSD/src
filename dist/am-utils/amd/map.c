@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.1.1.5 2002/11/29 22:58:14 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.2 2002/11/29 23:11:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -403,9 +403,6 @@ free_map(am_node *mp)
 
   if (mp->am_mnt)
     free_mntfs(mp->am_mnt);
-
-  if (mp->am_transp)
-    XFREE(mp->am_transp);
 
   if (mp->am_mfarray) {
     mntfs **temp_mf;
