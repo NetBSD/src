@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.2 1998/06/26 01:54:09 lukem Exp $
+# 	$NetBSD: GENERIC,v 1.3 1998/08/26 09:09:31 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -16,7 +16,8 @@ options		TRAPWIN
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-options 	RASTERCONSOLE	# fast rasterop console
+# XXX broken on sparc64
+#options 	RASTERCONSOLE	# fast rasterop console
 
 
 #### System options that are the same for all ports
@@ -119,6 +120,7 @@ options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
+options 	COMPAT_SPARC32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
@@ -180,17 +182,17 @@ sbus0	at mainbus0				# sun4c and sun4u
 #### Standard system devices -- all required for a given architecture
 
 ## Auxiliary system registers on sun4c and sun4m
-auxreg0 at sbus0
+#auxreg0 at sbus0
 
 # We also need:
 # bpp0 at sbus0					# parallel port
 
 ## Power status and control register on Sun4m systems
-power0 at sbus0
+#power0 at sbus0
 
 ## Mostek clock found on 4/300, sun4c, and sun4m systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
-clock0	at sbus0
+clock0	at sbus0 slot ? offset ?
 
 ## Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at mainbus0				# sun4c
@@ -199,11 +201,11 @@ timer0	at mainbus0				# sun4c
 
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
-zs0	at sbus0
+zs0	at sbus0 slot ? offset ?
 zstty0	at zs0 channel 0	# ttya
 zstty1	at zs0 channel 1	# ttyb
 
-zs1	at sbus0
+zs1	at sbus0 slot ? offset ?
 kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
 
@@ -248,8 +250,8 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## Floppy controller and drive found on SPARCstations.
 
-#fdc0	at sbus0
-#fd*	at fdc0					# the drive itself
+#fdc0	at sbus0 slot ? offset ?
+#fd*	at fdc0 slot ? offset ?			# the drive itself
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -325,23 +327,23 @@ pseudo-device	ipfilter
 ## the P4 entries for "bwtwo" will attach to the overlay plane of the
 ## "cgfour".
 
-bwtwo0		at sbus0 slot ? offset ?		# sun4c and sun4m
-bwtwo*		at sbus? slot ? offset ?		#
+#bwtwo0		at sbus0 slot ? offset ?		# sun4c and sun4m
+#bwtwo*		at sbus? slot ? offset ?		#
 
 ## Sun "cgthree" Sbus color framebuffer
-cgthree0	at sbus? slot ? offset ?
-cgthree*	at sbus? slot ? offset ?
+#cgthree0	at sbus? slot ? offset ?
+#cgthree*	at sbus? slot ? offset ?
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix0		at sbus? slot ? offset ?
 cgsix*		at sbus? slot ? offset ?
 
 ## Sun "tcx" accelerated color framebuffer.
-tcx0		at sbus? slot ? offset ?
-tcx*		at sbus? slot ? offset ?
+#tcx0		at sbus? slot ? offset ?
+#tcx*		at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
-cgfourteen0	at obio0			# sun4m
+#cgfourteen0	at obio0			# sun4m
 
 
 #### Other device configuration
