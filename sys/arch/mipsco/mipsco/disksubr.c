@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2000/08/12 22:58:53 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2000/08/22 11:59:36 wdk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -42,12 +42,16 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <ufs/ufs/dinode.h>		/* XXX for fs.h */
+#include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
 #define	b_cylin	b_resid
 
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       register struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
+static char *disklabel_mips_to_bsd __P((struct mips_volheader *,
+					  struct disklabel *));
+static int disklabel_bsd_to_mips __P((struct disklabel *,
+					struct mips_volheader *));
+static int mipsvh_cksum __P((struct mips_volheader *)); 
 
 /*
  * Attempt to read a disk label from a device
@@ -58,17 +62,16 @@ char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+	struct cpu_disklabel *clp;
 {
 	register struct buf *bp;
 	struct mips_volheader *vh;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int  i;
 
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
@@ -87,22 +90,15 @@ readdisklabel(dev, strat, lp, osdep)
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
+		/* Save copy of current label */
+		bcopy(bp->b_data, &clp->cd_volhdr, sizeof(clp->cd_volhdr));
+
 		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 		vh = (struct mips_volheader *) bp->b_un.b_addr;
 		if (dlp->d_magic == DISKMAGIC) {
 			*lp = *dlp;
-		} else if (vh->vh_magic == MIPS_VH_MAGIC) {
-			printf("warning: using RISC/os disk label\n");
-			for (i = 0; i < MAXPARTITIONS; i++) {
-				lp->d_partitions[i].p_offset = vh->partitions[i].first;
-				lp->d_partitions[i].p_size = vh->partitions[i].blocks;
-				lp->d_partitions[i].p_fstype = FS_BSDFFS;
-				lp->d_partitions[i].p_fsize = 1024;
-				lp->d_partitions[i].p_frag = 8;
-				lp->d_partitions[i].p_cpg = 16;
-				if (i == RAW_PART)
-					lp->d_partitions[i].p_fstype = FS_OTHER;
-			}
+		} else if (vh->vh_magic == MIPS_VHMAGIC) {
+			msg = disklabel_mips_to_bsd(vh, lp);
 		} else 
 			msg = "no disk label";
 	}
@@ -116,10 +112,10 @@ readdisklabel(dev, strat, lp, osdep)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, clp)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
-	struct cpu_disklabel *osdep;
+	struct cpu_disklabel *clp;
 {
 	register int i;
 	register struct partition *opp, *npp;
@@ -162,16 +158,15 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
-	struct disklabel *dlp;
 	int labelpart;
-	int error = 0;
+	int error;
 
 	labelpart = dkpart(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
@@ -179,42 +174,28 @@ writedisklabel(dev, strat, lp, osdep)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
+
+	error = disklabel_bsd_to_mips(lp, &clp->cd_volhdr);
+	if (error)
+		return (error);
+	
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
+
+	/* Get a buffer and copy the new label into it. */
+	bp = geteblk((int)lp->d_secsize);
+	bcopy(&clp->cd_volhdr, bp->b_data, sizeof(clp->cd_volhdr));
+
+	/* Write out the updated label. */
+	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
+	bp->b_flags = B_WRITE;
 	(*strat)(bp);
-	if ((error = biowait(bp)) != 0)
-		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
-	error = ESRCH;
-done:
+	error = biowait(bp);
 	brelse(bp);
-	return (error);
-}
 
-
-/*
- * was this the boot device ?
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
+	return error;
 }
 
 /* 
@@ -264,4 +245,152 @@ bounds_check_with_label(bp, lp, wlabel)
 bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
+}
+
+/*
+ * Convertion table for mapping partition numbers and types between
+ * a MIPS volume header and a BSD partition table.
+ *
+ * Mips volume header compatability is required in order to boot
+ * NetBSD from the Mips stand alone shell, but due to the differences
+ * in the partition numbers used along with different methods for
+ * determining partition types we must use a table for mapping the
+ * differences.
+ */
+
+struct partitionmap {
+	int	mips_part;		/* Mips partition number */
+	int	mips_type;	/* Mips partition type */
+	int	bsd_part;		/* BSD partition number */
+	int	bsd_type;	/* BSD partition type */
+};
+
+struct partitionmap partition_map[] = {
+     /* Mips       Mips Type	       BSD      BSD Type */
+	{0,	MIPS_FS_BSD42,		0,	FS_BSDFFS},
+	{1,	MIPS_FS_BSD42,		1,	FS_SWAP},
+	{10,	MIPS_FS_VOLUME,	     RAW_PART,	FS_OTHER},
+	{3,	MIPS_FS_BSD42,		3,	FS_BSDFFS},
+        {4,	MIPS_FS_BSD42,		4,	FS_BSDFFS},
+        {5,	MIPS_FS_BSD42,		5,	FS_BSDFFS},
+        {6,	MIPS_FS_BSD42,		6,	FS_BSDFFS},
+	{7,	MIPS_FS_BSD42,		7,	FS_BSDFFS}
+};
+#define NPARTMAP	(sizeof(partition_map)/sizeof(struct partitionmap))
+
+/*
+ * Convert a RISC/os disk label into a NetBSD disk label.
+ *
+ * Returns NULL on success, otherwise an error string
+ */
+static char *
+disklabel_mips_to_bsd(vh, lp)
+	struct mips_volheader *vh;
+	struct disklabel *lp;
+{
+	int  i, bp, mp;
+	struct partition *lpp;
+	if (mipsvh_cksum(vh))
+		return ("MIPS disk label corrupted");
+
+	lp->d_secsize    = vh->vh_dp.dp_secbytes;
+	lp->d_nsectors   = vh->vh_dp.dp_secs;
+	lp->d_ntracks    = vh->vh_dp.dp_trks0;
+	lp->d_ncylinders = vh->vh_dp.dp_cyls;
+	lp->d_interleave = vh->vh_dp.dp_interleave;
+
+	lp->d_secpercyl  = lp->d_nsectors * lp->d_ntracks;
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
+	lp->d_npartitions = MAXPARTITIONS;
+
+	for (i = 0; i < NPARTMAP; i++) {
+		mp = partition_map[i].mips_part;
+		bp = partition_map[i].bsd_part;
+
+		lpp = &lp->d_partitions[bp];
+		lpp->p_offset = vh->vh_part[mp].pt_offset;
+		lpp->p_size = vh->vh_part[mp].pt_size;
+		lpp->p_fstype = partition_map[i].bsd_type;
+		if (lpp->p_fstype == FS_BSDFFS) {
+			lpp->p_fsize = 1024;
+			lpp->p_frag = 8;
+			lpp->p_cpg = 16;
+		}
+	}
+#if DIAGNOSTIC
+	printf("Warning: using MIPS disk label\n");
+#endif
+	return NULL;
+}
+
+/*
+ * Convert a NetBSD disk label into a RISC/os disk label.
+ *
+ * Returns NULL on success, otherwise an error string
+ */
+static int
+disklabel_bsd_to_mips(lp, vh)
+	struct disklabel *lp;
+	struct mips_volheader *vh;
+{
+	int  i, bp, mp;
+	struct partition *lpp;
+
+	if (vh->vh_magic != MIPS_VHMAGIC) {
+#if DIAGNOSTIC
+		printf("Warning: writing MIPS compatible label\n");
+#endif
+		bzero((void *)vh, sizeof *vh);
+		vh->vh_magic = MIPS_VHMAGIC;
+		vh->vh_root = 0;	/* a*/
+		vh->vh_swap = 1;	/* b*/
+		strcpy(vh->bootfile, "/netbsd");
+		vh->vh_dp.dp_skew = lp->d_trackskew;
+		vh->vh_dp.dp_gap1 = 1; /* XXX */
+		vh->vh_dp.dp_gap2 = 1; /* XXX */
+		vh->vh_dp.dp_cyls = lp->d_ncylinders;
+		vh->vh_dp.dp_shd0 = 0;
+		vh->vh_dp.dp_trks0 = lp->d_ntracks;
+		vh->vh_dp.dp_secs = lp->d_nsectors;
+		vh->vh_dp.dp_secbytes = lp->d_secsize;
+		vh->vh_dp.dp_interleave = lp->d_interleave;
+		vh->vh_dp.dp_nretries = 22;
+	}
+	
+	for (i = 0; i < NPARTMAP; i++) {
+		mp = partition_map[i].mips_part;
+		bp = partition_map[i].bsd_part;
+
+		lpp = &lp->d_partitions[bp];
+		vh->vh_part[mp].pt_offset = lpp->p_offset;
+		vh->vh_part[mp].pt_size = lpp->p_size;
+		vh->vh_part[mp].pt_fstype = partition_map[i].mips_type;
+	}
+
+	vh->vh_cksum = 0;
+	vh->vh_cksum = -mipsvh_cksum(vh);
+	return 0;
+}
+
+/*
+ * Compute checksum for MIPS disk volume header
+ * 
+ * Mips volume header checksum is the 32bit 2's complement sum
+ * of the entire volume header structure
+ */
+int
+mipsvh_cksum(vhp)
+	struct mips_volheader *vhp;
+{
+	int i, *ptr;
+	int cksum = 0;
+
+	ptr = (int *)vhp;
+	i = sizeof(*vhp) / sizeof(*ptr);
+	while (i--)
+		cksum += *ptr++;
+	return cksum;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2000/08/12 22:58:13 wdk Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2000/08/22 11:59:34 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -29,22 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
-
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
-#define NUMBOOT		2			/* bootxx + xxboot... */
-
-/* Just a dummy */
-struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
-};
-
-#endif /* _MACHINE_DISKLABEL_H_ */
-
-
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
@@ -59,44 +43,87 @@ struct cpu_disklabel {
  * Partition 10 - whole disk
  */
 
-#define MAXPARTITIONS	8
+#define MAXPARTITIONS	8	/* XXX - NetBSD Compatability */
 #define RAW_PART	2
-
 #define LABELSECTOR	0
 #define LABELOFFSET	128
 
-struct cpu_disklabel {
-	int	cd_dummy;
-};
+#define MIPS_PARTITIONS	16	/* Number or partitions for Mips */
+#define MIPS_NVOLDIR	15	/* Number of volume directory files */
+#define MIPS_VDIRSZ	8	/* File name size in volume directory */
+#define MIPS_BFSIZE	16	/* Boot filename size */
 
-struct mips_volheader {
-	u_int32_t	vh_magic;
-#define MIPS_VH_MAGIC	0xbe5a941
-	int16_t		root;	/* Root partition number */
-	int16_t		swap;	/* Swap partition number */
-	char		bootfile[16]; /* Path of default file to boot */
-	char		_devparms[48]; /* disk device parameters */
-	struct {		/* Disk volume directory */
-		char 		name[8];
-		int32_t		block;
-		int32_t		bytes;
-	} voldir[15];
-	struct {
-		int32_t 	blocks;
-		int32_t 	first;
-		int32_t 	type;
-	} partitions[16];
-	int32_t		checksum;
-	int32_t		_pad;
+/*
+ * Devices parameters that RISC/os uses for mapping logical block numbers
+ * to physical device addresses.
+ */
+struct mips_devparams {
+	u_int8_t	dp_skew;	/* spiral addressing skew */
+	u_int8_t	dp_gap1;	/* words of 0 before header */
+	u_int8_t	dp_gap2;	/* words of 0 between hdr and data */
+	u_int8_t	dp_spare0;	/* spare space */
+	u_int16_t	dp_cyls;	/* number of cylinders */
+	u_int16_t	dp_shd0;	/* starting head vol 0 */
+	u_int16_t	dp_trks0;	/* number of tracks vol 0 */
+	u_int16_t	dp_shd1;	/* starting head vol 1 */
+	u_int16_t	dp_trks1;	/* number of tracks vol 1 */
+	u_int16_t	dp_secs;	/* number of sectors/track */
+	u_int16_t	dp_secbytes;	/* length of sector in bytes */
+	u_int16_t	dp_interleave;	/* sector interleave */
+	int32_t		dp_flags;	/* controller characteristics */
+	int32_t		dp_datarate;	/* bytes/sec for kernel stats */
+	int32_t		dp_nretries;	/* max num retries on data error */
+	int32_t		dp_spare1;	/* spare entries */
+	int32_t		dp_spare2;
+	int32_t		dp_spare3;
+	int32_t		dp_spare4;
 } __attribute__((__packed__));
 
-#define MIPS_PTYPE_VOLHDR	0
-#define MIPS_PTYPE_TRKREPL      1
-#define MIPS_PTYPE_SECREPL      2
-#define MIPS_PTYPE_RAW		3
-#define MIPS_PTYPE_BSD          4
-#define MIPS_PTYPE_BSD42        4
-#define MIPS_PTYPE_SYSV         5
-#define MIPS_PTYPE_VOLUME	6 /* Entire volume */
+/*
+ * Volume directory is used as a shortcut to find bootstraps etc
+ */
+struct mips_voldir {			/* Disk volume directory */
+	char 		vd_name[MIPS_VDIRSZ];
+	int32_t		vd_lba;
+	int32_t		vd_len;
+};
+
+struct mips_partitions {
+	int32_t 	pt_size;	/* # of logical blocks in partition */
+	int32_t 	pt_offset;	/* first logical block of partiton */
+	int32_t 	pt_fstype;
+};
+
+/*
+ * Mips RISC/os compatible volume header and partition table
+ *
+ * 1 sector (512 bytes) in size, and normally copied to the first sector
+ * and cylinder of every track on a disk. 
+ */
+struct mips_volheader {
+	u_int32_t	vh_magic;
+#define MIPS_VHMAGIC	0xbe5a941
+	int16_t		vh_root;		/* Root partition number */
+	int16_t		vh_swap;		/* Swap partition number */
+	char		bootfile[MIPS_BFSIZE];	/* default file to boot */
+	struct mips_devparams	vh_dp;		/* disk device parameters */
+	struct mips_voldir 	vh_voldir[MIPS_NVOLDIR];
+	struct mips_partitions	vh_part[MIPS_PARTITIONS];
+	int32_t		vh_cksum;
+	int32_t		vh_pad;
+} __attribute__((__packed__));
+
+#define MIPS_FS_VOLHDR	0
+#define MIPS_FS_TRKREPL 1
+#define MIPS_FS_SECREPL	2
+#define MIPS_FS_RAW	3
+#define MIPS_FS_BSD     4
+#define MIPS_FS_BSD42   4
+#define MIPS_FS_SYSV    5
+#define MIPS_FS_VOLUME	6 /* Entire volume */
+
+struct cpu_disklabel {
+	struct	mips_volheader cd_volhdr;
+};
 
 #endif /* _MACHINE_DISKLABEL_H_ */
