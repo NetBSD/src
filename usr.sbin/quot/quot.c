@@ -30,19 +30,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.3 1994/04/14 03:26:06 cgd Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.4 1994/04/25 18:17:04 cgd Exp $";
 #endif /* not lint */
+
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <sys/time.h>
+#include <ufs/fs.h>
+#include <ufs/quota.h>
+#include <ufs/inode.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <pwd.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <ufs/fs.h>
-#include <ufs/quota.h>
-#include <ufs/inode.h>
 
 /* some flags of what to do: */
 static char estimate;
