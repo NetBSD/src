@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.1 2002/06/26 23:13:08 christos Exp $ */
+/* $NetBSD: selection.c,v 1.2 2002/07/04 20:50:29 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.1 2002/06/26 23:13:08 christos Exp $");
+__RCSID("$NetBSD: selection.c,v 1.2 2002/07/04 20:50:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: selection.c,v 1.1 2002/06/26 23:13:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/tty.h>
 #include <dev/wscons/wsconsio.h>
- 
+
 #include <ctype.h>
 #include <fcntl.h>
 #include <err.h>
@@ -78,11 +78,16 @@ alloc_sel(size_t len)
 	return ptr;
 }
 
-static void
+/*
+ * Copies a region of a line inside the buffer pointed by ptr. We use
+ * a double pointer because we modify the pointer. When the function
+ * finishes, ptr points to the end of the buffer.
+ */
+static char *
 fill_buf(char *ptr, struct mouse *m, size_t row, size_t col, size_t end)
 {
 	struct wsdisplay_char ch;
-	ch.row = sel.start_row;
+	ch.row = row;
 	for (ch.col = col; ch.col < end; ch.col++) {
 		if (ioctl(m->tty_fd, WSDISPLAYIO_GETWSCHAR, &ch) == -1) {
 			warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
@@ -91,6 +96,7 @@ fill_buf(char *ptr, struct mouse *m, size_t row, size_t col, size_t end)
 			*ptr++ = ch.letter;
 		}
 	}
+	return ptr;
 }
 
 
@@ -135,31 +141,31 @@ sel_copy_text(struct mouse *m)
 		else {
 			if (sel.end_col > l)
 				sel.end_col = l;
-			ptr = str = alloc_sel( sel.end_col - sel.start_col + 1);
+			ptr = str = alloc_sel(sel.end_col - sel.start_col + 1);
 			if (ptr == NULL)
 				return;
-			
-			fill_buf(ptr, m, sel.start_row, sel.start_col,
+
+			ptr = fill_buf(ptr, m, sel.start_row, sel.start_col,
 			    sel.end_col);
 			*ptr = '\0';
 		}
 	} else {
 		/* Selection is multiple rows */
-		ptr = str =  alloc_sel(sel.abs_end - sel.abs_start + 1);
+		ptr = str = alloc_sel(sel.abs_end - sel.abs_start + 1);
 		if (ptr == NULL)
 			return;
 
 		/* Calculate and copy first line */
 		l = row_length(m, sel.start_row);
 		if (sel.start_col < l) {
-			fill_buf(ptr, m, sel.start_row, sel.start_col, l);
+			ptr = fill_buf(ptr, m, sel.start_row, sel.start_col, l);
 			*ptr++ = '\r';
 		}
 
 		/* Copy mid lines if there are any */
 		if ((sel.end_row - sel.start_row) > 1) {
 			for (r = sel.start_row + 1; r <= sel.end_row - 1; r++) {
-				fill_buf(ptr, m, r, 0, row_length(m, r));
+				ptr = fill_buf(ptr, m, r, 0, row_length(m, r));
 				*ptr++ = '\r';
 			}
 		}
@@ -168,7 +174,7 @@ sel_copy_text(struct mouse *m)
 		l = row_length(m, sel.end_row);
 		if (sel.end_col < l)
 			l = sel.end_col;
-		fill_buf(ptr, m, sel.end_row, 0, l);
+		ptr = fill_buf(ptr, m, sel.end_row, 0, l);
 		*ptr = '\0';
 	}
 
@@ -176,7 +182,7 @@ sel_copy_text(struct mouse *m)
 		free(sel.text);
 		sel.text = NULL;
 	}
-	
+
 	if (str != NULL) {
 		sel.text = str;
 		sel.text_size = ptr - str;
@@ -203,7 +209,7 @@ mouse_sel_start(struct mouse *m)
 		free(sel.text);
 		sel.text = NULL;
 	}
-	
+
 	sel.start_row = m->row;
 	sel.start_col = m->col;
 	mouse_sel_calculate(m);
@@ -276,7 +282,7 @@ void
 mouse_sel_show(struct mouse *m)
 {
 	size_t i;
-	
+
 	mouse_sel_calculate(m);
 	for (i = sel.abs_start; i <= sel.abs_end; i++)
 		char_invert(m, 0, i);
@@ -290,7 +296,7 @@ void
 mouse_sel_paste(struct mouse *m)
 {
 	size_t i;
-	
+
 	if (sel.text == NULL)
 		return;
 	for (i = 0; i < sel.text_size; i++)
