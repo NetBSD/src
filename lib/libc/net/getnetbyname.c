@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetbyname.c,v 1.5 1996/02/02 15:22:20 mrg Exp $	*/
+/*	$NetBSD: getnetbyname.c,v 1.6 1997/07/13 19:57:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,13 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid_[] = "from getnetbyname.c	1.1 (Coimbra) 93/06/02";
 static char rcsid[] = "=Id: getnetbyname.c,v 1.6 1994/05/31 01:49:35 vixie Exp =";
 static char sccsid[] = "@(#)getnetbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getnetbyname.c,v 1.5 1996/02/02 15:22:20 mrg Exp $";
+__RCSID("$NetBSD: getnetbyname.c,v 1.6 1997/07/13 19:57:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +57,7 @@ getnetbyname(name)
 	register char **cp;
 
 	setnetent(_net_stayopen);
-	while (p = getnetent()) {
+	while ((p = getnetent()) != NULL) {
 		if (strcasecmp(p->n_name, name) == 0)
 			break;
 		for (cp = p->n_aliases; *cp != 0; cp++)

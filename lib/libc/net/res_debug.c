@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.10 1997/04/13 10:30:48 mrg Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.11 1997/07/13 19:58:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -75,12 +75,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_debug.c,v 1.10 1997/04/13 10:30:48 mrg Exp $";
+__RCSID("$NetBSD: res_debug.c,v 1.11 1997/07/13 19:58:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,11 +99,38 @@ static char rcsid[] = "$NetBSD: res_debug.c,v 1.10 1997/04/13 10:30:48 mrg Exp $
 #include <string.h>
 #include <time.h>
 
-void __fp_query();
 extern const char *_res_opcodes[];
 extern const char *_res_resultcodes[];
 
-static char retbuf[16];
+static char *dewks __P((int));
+static const char *deproto __P((int));
+static const u_char *do_rrset __P((const u_char *, int, const u_char *,
+    int, int, FILE *, const char *));
+static const char *precsize_ntoa __P((u_int8_t));
+static u_int8_t precsize_aton __P((const char **));
+static u_int32_t latlon2ul __P((const char **, int *));
+
+void __p_query __P((const u_char *));
+void __fp_resstat __P((struct __res_state *, FILE *));
+void __fp_nquery __P((const u_char *, int, FILE *));
+void __fp_query __P((const u_char *, FILE *));
+const u_char *__p_cdnname __P((const u_char *, const u_char *, int, FILE *));
+const u_char *__p_cdname __P((const u_char *, const u_char *, FILE *));
+const u_char *__p_fqnname __P((const u_char *, const u_char *, int, char *,
+    int));
+const u_char *__p_fqname __P((const u_char *, const u_char *, FILE *));
+const u_char *__p_rr __P((const u_char *, const u_char *, FILE *));
+int __sym_ston __P((const struct res_sym *, char *, int *));
+const char *__sym_ntos __P((const struct res_sym *, int, int *));
+const char *__sym_ntop __P((const struct res_sym *, int, int *));
+const char *__p_type __P((int));
+const char *__p_class __P((int));
+const char *__p_option __P((u_long));
+const char *__p_time __P((u_int32_t));
+int loc_aton __P((const char *, u_char *));
+const char *loc_ntoa __P((const u_char *, char *));
+int __dn_count_labels __P((char *));
+char *__p_secstodate __P((unsigned long));
 
 static char *
 dewks(wks)
@@ -203,7 +231,7 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	 * Print answer records.
 	 */
 	sflag = (_res.pfcode & pflag);
-	if (n = ntohs(cnt)) {
+	if ((n = ntohs(cnt)) != 0) {
 		if ((!_res.pfcode) || ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
 			fprintf(file, hs);
 		while (--n >= 0) {
@@ -322,7 +350,7 @@ __fp_nquery(msg, len, file)
 	/*
 	 * Print question records.
 	 */
-	if (n = ntohs(hp->qdcount)) {
+	if ((n = ntohs(hp->qdcount)) != 0) {
 		if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
 			fprintf(file,";; QUESTIONS:\n");
 		while (--n >= 0) {
@@ -631,7 +659,7 @@ __p_rr(cp, msg, file)
 		cp2 = cp1 + dlen;
 		while (cp < cp2) {
 			putc('"', file);
-			if (n = (unsigned char) *cp++) {
+			if ((n = (unsigned char) *cp++) != 0) {
 				for (c = n; c > 0 && cp < cp2; c--) {
 					if (strchr("\n\"\\", *cp))
 						(void) putc('\\', file);
@@ -928,7 +956,7 @@ __sym_ston(syms, name, success)
 	char *name;
 	int *success;
 {
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (strcasecmp (name, syms->name) == 0) {
 			if (success)
 				*success = 1;
@@ -948,7 +976,7 @@ __sym_ntos(syms, number, success)
 {
 	static char unname[20];
 
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;
@@ -971,7 +999,7 @@ __sym_ntop(syms, number, success)
 {
 	static char unname[20];
 
-	for (NULL; syms->name != 0; syms++) {
+	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
 			if (success)
 				*success = 1;
@@ -1124,11 +1152,11 @@ precsize_ntoa(prec)
 /* converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer. */
 static u_int8_t
 precsize_aton(strptr)
-	char **strptr;
+	const char **strptr;
 {
 	unsigned int mval = 0, cmval = 0;
 	u_int8_t retval = 0;
-	register char *cp;
+	register const char *cp;
 	register int exponent;
 	register int mantissa;
 
@@ -1166,10 +1194,10 @@ precsize_aton(strptr)
 /* converts ascii lat/lon to unsigned encoded 32-bit number.  moves pointer. */
 static u_int32_t
 latlon2ul(latlonstrptr,which)
-	char **latlonstrptr;
+	const char **latlonstrptr;
 	int *which;
 {
-	register char *cp;
+	register const char *cp;
 	u_int32_t retval;
 	int deg = 0, min = 0, secs = 0, secsfrac = 0;
 

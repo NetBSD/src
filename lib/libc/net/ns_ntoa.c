@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.4 1995/02/25 06:20:51 cgd Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.5 1997/07/13 19:57:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -33,17 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: ns_ntoa.c,v 1.4 1995/02/25 06:20:51 cgd Exp $";
+__RCSID("$NetBSD: ns_ntoa.c,v 1.5 1997/07/13 19:57:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netns/ns.h>
 #include <stdio.h>
+
+static char *spectHex __P((char *));
 
 char *
 ns_ntoa(addr)
@@ -56,7 +59,6 @@ ns_ntoa(addr)
 	char *cp2;
 	register u_char *up = addr.x_host.c_host;
 	u_char *uplim = up + 6;
-	static char *spectHex();
 
 	net.net_e = addr.x_net;
 	sprintf(obuf, "%lx", ntohl(net.long_e));
