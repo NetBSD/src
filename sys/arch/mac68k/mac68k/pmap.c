@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.12 1994/07/31 08:28:32 lkestel Exp $
+ *	$Id: pmap.c,v 1.13 1994/08/08 00:08:47 lkestel Exp $
  */
 
 /*
@@ -523,15 +523,11 @@ pmap_init(phys_start, phys_end)
 	 * Mac II series IO memory
 	 * (Added by BG)
 	 */
-/* LAK: removed the following to see what would happen... */
-/* BG: You bozo.  Well, turning this back on seems to be working. */
-/*  I wish I knew why it works now... */
-#if 1
 	addr = (vm_offset_t) IOBase;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 			   &addr, mac68k_ptob(IIOMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)IOBase)
-		panic("pmap_init: I/O space not mapped!  Oh, no!\n");
+		panic("pmap_init: I/O space not mapped!\n");
 
 	/*
 	 * Mac II NuBus space (0xF0000000 - 0xFFFFFFFF)
@@ -541,7 +537,22 @@ pmap_init(phys_start, phys_end)
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
 			   &addr, mac68k_ptob(NBMAPSIZE), FALSE);
 	if (addr != (vm_offset_t)NuBusBase)
-		panic("pmap_init: NuBus space not mapped!  Oh, no!\n");
+		panic("pmap_init: NuBus space not mapped!\n");
+
+	/*
+	 * Mac II ROM space (0x40000000 - 0x40800000)
+	 * (Added by LK)
+	 */
+#if 0
+	/*
+	 * Make sure to uncomment the code in remap_rom() if this is
+	 * uncommented.
+	 */
+	addr = (vm_offset_t) 0x40000000;
+	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
+			   &addr, 0x800000, FALSE);
+	if (addr != (vm_offset_t)0x40000000)
+		panic("pmap_init: ROM space not mapped!\n");
 #endif
 
 	/*
