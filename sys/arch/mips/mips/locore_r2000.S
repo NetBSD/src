@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.25 1996/10/13 07:45:03 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.26 1996/10/13 08:45:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -600,6 +600,13 @@ NNON_LEAF(mips_r2000_UserIntr, STAND_FRAME_SIZE, ra)
 	rfe
 	.set	at
 END(mips_r2000_UserIntr)
+
+/*
+ *  Mark where code entreed from exception hander jumptable
+ * ends, for stack traceback code.
+ */
+	.globl	_C_LABEL(mips1_exceptionentry_end)
+_C_LABEL(mips1_exceptionentry_end):
 
 
 
