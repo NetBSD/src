@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.29 2004/06/16 12:37:01 yamt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.30 2004/06/16 12:39:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.29 2004/06/16 12:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.30 2004/06/16 12:39:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,12 +108,12 @@ umap_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
+	int (**our_vnodeop_p) __P((void *));
 	struct ucred **credpp = 0, *credp = 0;
 	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;
 	struct vnode **this_vp_p;
 	int error, error1;
-	int (**our_vnodeop_p) __P((void *));
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
 	struct vnode ***vppp;
@@ -127,16 +127,17 @@ umap_bypass(v)
 	 */
 	if (descp->vdesc_vp_offsets == NULL ||
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("umap_bypass: no vp's in map.\n");
+		panic("%s: no vp's in map.\n", __func__);
 #endif
-	vps_p[0] = VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[0],
-				ap);
+
+	vps_p[0] =
+	    VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[0], ap);
 	vp0 = *vps_p[0];
 	flags = MOUNTTOUMAPMOUNT(vp0->v_mount)->umapm_flags;
 	our_vnodeop_p = vp0->v_op;
 
 	if (flags & LAYERFS_MBYPASSDEBUG)
-		printf("umap_bypass: %s\n", descp->vdesc_name);
+		printf("%s: %s\n", __func__, descp->vdesc_name);
 
 	/*
 	 * Map the vnodes going in.
@@ -148,21 +149,25 @@ umap_bypass(v)
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
 		vps_p[i] = this_vp_p = 
-			VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[i], ap);
-
+		    VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[i],
+		    ap);
 		/*
 		 * We're not guaranteed that any but the first vnode
 		 * are of our type.  Check for and don't map any
-		 * that aren't.  (Must map first vp or vclean fails.)
+		 * that aren't.  (We must always map first vp or vclean fails.)
 		 */
-
-		if (i && ((*this_vp_p)==NULL ||
+		if (i && (*this_vp_p == NULL ||
 		    (*this_vp_p)->v_op != our_vnodeop_p)) {
 			old_vps[i] = NULL;
 		} else {
 			old_vps[i] = *this_vp_p;
 			*(vps_p[i]) = UMAPVPTOLOWERVP(*this_vp_p);
-			if (reles & 1)
+			/*
+			 * XXX - Several operations have the side effect
+			 * of vrele'ing their vp's.  We must account for
+			 * that.  (This should go away in the future.)
+			 */
+			if (reles & VDESC_VP0_WILLRELE)
 				VREF(*this_vp_p);
 		}
 			
@@ -228,7 +233,7 @@ umap_bypass(v)
 	 * Call the operation on the lower layer
 	 * with the modified argument structure.
 	 */
-	error = VCALL(*(vps_p[0]), descp->vdesc_offset, ap);
+	error = VCALL(*vps_p[0], descp->vdesc_offset, ap);
 
 	/*
 	 * Maintain the illusion of call-by-value
@@ -245,8 +250,8 @@ umap_bypass(v)
 				LAYERFS_UPPERUNLOCK(*(vps_p[i]), 0, error1);
 			if (reles & VDESC_VP0_WILLRELE)
 				vrele(*(vps_p[i]));
-		};
-	};
+		}
+	}
 
 	/*
 	 * Map the possible out-going vpp
@@ -256,10 +261,24 @@ umap_bypass(v)
 	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
 	    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
 	    !error) {
+		/*
+		 * XXX - even though some ops have vpp returned vp's,
+		 * several ops actually vrele this before returning.
+		 * We must avoid these ops.
+		 * (This should go away when these ops are regularized.)
+		 */
 		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
 			goto out;
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
+		/*
+		 * Only vop_lookup, vop_create, vop_makedir, vop_bmap,
+		 * vop_mknod, and vop_symlink return vpp's. vop_bmap
+		 * doesn't call bypass as the lower vpp is fine (we're just
+		 * going to do i/o on it). vop_lookup doesn't call bypass
+		 * as a lookup on "." would generate a locking error.
+		 * So all the calls which get us here have a locked vpp. :-)
+		 */
 		error = layer_node_create(old_vps[0]->v_mount, **vppp, *vppp);
 		if (error) {
 			vput(**vppp);
