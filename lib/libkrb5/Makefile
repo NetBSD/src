@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/06/19 23:50:52 thorpej Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/03 03:53:39 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/lib/des
@@ -22,10 +22,12 @@ ERR_FILES= krb5_err.c heim_err.c
 DPSRCS=	krb5_err.h heim_err.h
 
 SRCS=						\
+	acl.c					\
 	add_et_list.c				\
 	addr_families.c				\
 	address.c				\
 	aname_to_localname.c			\
+	appdefault.c				\
 	asn1_glue.c				\
 	auth_context.c				\
 	build_ap_req.c				\
@@ -43,6 +45,7 @@ SRCS=						\
 	creds.c					\
 	crypto.c				\
 	data.c					\
+	eai_to_heim_errno.c			\
 	expand_hostname.c			\
 	fcache.c				\
 	free.c					\
@@ -120,15 +123,19 @@ INCS=	krb5.h					\
 	heim_err.h				\
 	krb5-types.h
 
-MAN=	krb5.conf.5				\
-	krb5_warn.3				\
-	krb5_openlog.3				\
+MAN=						\
+	krb5.conf.5				\
 	krb5_425_conv_principal.3		\
+	krb5_appdefault.3			\
 	krb5_build_principal.3			\
+	krb5_config.3				\
 	krb5_free_principal.3			\
+	krb5_openlog.3				\
 	krb5_parse_name.3			\
 	krb5_sname_to_principal.3		\
-	krb5_unparse_name.3
+	krb5_unparse_name.3			\
+	krb5_warn.3				\
+	verify_krb5_conf.8
 
 krb5-types.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@

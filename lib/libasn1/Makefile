@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:45 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/03 03:53:37 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -24,7 +24,6 @@ BUILT_SOURCES =			\
 	asn1_err.c
 
 gen_files =				\
-	asn1_UNSIGNED.x			\
 	asn1_APOptions.x		\
 	asn1_AP_REP.x			\
 	asn1_AP_REQ.x			\
@@ -32,7 +31,10 @@ gen_files =				\
 	asn1_AS_REQ.x			\
 	asn1_Authenticator.x		\
 	asn1_AuthorizationData.x	\
+	asn1_CKSUMTYPE.x		\
 	asn1_Checksum.x			\
+	asn1_ETYPE_INFO.x		\
+	asn1_ETYPE_INFO_ENTRY.x		\
 	asn1_EncAPRepPart.x		\
 	asn1_EncASRepPart.x		\
 	asn1_EncKDCRepPart.x		\
@@ -42,8 +44,6 @@ gen_files =				\
 	asn1_EncTicketPart.x		\
 	asn1_EncryptedData.x		\
 	asn1_EncryptionKey.x		\
-	asn1_ETYPE_INFO.x		\
-	asn1_ETYPE_INFO_ENTRY.x		\
 	asn1_HostAddress.x		\
 	asn1_HostAddresses.x		\
 	asn1_KDCOptions.x		\
@@ -58,7 +58,10 @@ gen_files =				\
 	asn1_KerberosTime.x		\
 	asn1_KrbCredInfo.x		\
 	asn1_LastReq.x			\
+	asn1_MESSAGE_TYPE.x		\
 	asn1_METHOD_DATA.x		\
+	asn1_NAME_TYPE.x		\
+	asn1_PADATA_TYPE.x		\
 	asn1_PA_DATA.x			\
 	asn1_PA_ENC_TS_ENC.x		\
 	asn1_Principal.x		\
@@ -68,7 +71,8 @@ gen_files =				\
 	asn1_TGS_REQ.x			\
 	asn1_Ticket.x			\
 	asn1_TicketFlags.x		\
-	asn1_TransitedEncoding.x
+	asn1_TransitedEncoding.x	\
+	asn1_UNSIGNED.x
 
 SRCS=	der_get.c \
 	der_put.c \

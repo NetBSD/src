@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:46 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/03 03:53:37 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/hdb
 
@@ -20,11 +20,14 @@ DPSRCS=	hdb_err.h
 
 BUILT_SOURCES = $(gen_files:.x=.c) hdb_err.c
 
-SRCS=	\
-	    keytab.c			\
-	    hdb.c			\
+SRCS=					\
 	    common.c			\
 	    db.c			\
+	    db3.c			\
+	    hdb-ldap.c			\
+	    hdb.c			\
+	    keytab.c			\
+	    mkey.c			\
 	    ndbm.c			\
 	    print.c			\
 	    $(BUILT_SOURCES)

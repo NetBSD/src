@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/08/02 17:37:57 msaitoh Exp $
+# $NetBSD: Makefile,v 1.4 2000/08/03 03:53:38 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -16,6 +16,7 @@ ERR_FILES = kadm5_err.c
 
 SRCS	 =		\
 	acl.c		\
+	bump_pw_expire.c \
 	chpass_s.c	\
 	common_glue.c	\
 	context_s.c	\
@@ -30,6 +31,7 @@ SRCS	 =		\
 	get_s.c		\
 	init_s.c	\
 	kadm5_err.c	\
+	keys.c		\
 	log.c		\
 	marshall.c	\
 	modify_s.c	\
