@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.7 1997/05/11 08:31:04 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.8 1997/05/11 08:44:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -66,7 +66,7 @@ int	sflag;
 int	pri;		/* uses 0 as default pri */
 char	*path;
 
-static	void list_swap __P((int));	/* 1 for long, 2 for short */
+static	void list_swap __P((int));	/* 1 for long, 0 for short */
 static	void add_swap __P((char *));
 #ifdef SWAP_OFF_WORKS
 static	void del_swap __P((char *));
@@ -136,11 +136,11 @@ main(argc, argv)
 		}
 	}
 	/* SWAP_OFF_WORKS */
-	if (!aflag && !lflag && !Aflag && !sflag/* && !dflag */)
+	if (!aflag && !lflag && !Aflag && !sflag /* && !dflag */)
 		usage();
 
 	argv += optind;
-	if (!*argv && !lflag && !sflag)
+	if (!*argv && !lflag && !sflag && !Aflag)
 		usage();
 	/* SWAP_OFF_WORKS */
 	if (pri && !aflag && !Aflag /* && !dflag */)
@@ -238,7 +238,7 @@ add_swap(path)
 {
 
 	if (swapon(SWAP_ON, path, pri) < 0)
-		warn("swapon on: %s", path);
+		warn("%s", path);
 }
 
 #if SWAP_OFF_WORKS
@@ -253,7 +253,7 @@ del_swap(path)
 {
 
 	if (swapon(SWAP_OFF, path, pri) < 0)
-		warn("swapon off: %s", path);
+		warn("%s", path);
 }
 #endif /* SWAP_OFF_WORKS */
 
@@ -274,7 +274,10 @@ do_fstab()
 				priority = pri;
 
 			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
-				warn("swap_on all: %s", fp->fs_spec);
+				warn("%s", fp->fs_spec);
+			else
+				printf("swap: adding %s as swap device",
+				    fp->fs_spec);
 		}
 	}
 }
