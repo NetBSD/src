@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.17 1997/05/08 10:19:11 mycroft Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.18 1997/07/08 02:32:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -41,6 +41,9 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/file.h>
+#ifdef SETUIDSCRIPTS
+#include <sys/stat.h>
+#endif
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
@@ -71,8 +74,9 @@ exec_script_makecmds(p, epp)
 	char **shellargp, **tmpsap;
 	struct vnode *scriptvp;
 #ifdef SETUIDSCRIPTS
-	uid_t script_uid;
-	gid_t script_gid;
+	/* Gcc needs those initialized for spurious uninitialized warning */
+	uid_t script_uid = (uid_t) -1;
+	gid_t script_gid = NOGROUP;
 	u_short script_sbits;
 #endif
 
@@ -175,8 +179,11 @@ check_shell:
 			panic("exec_script_makecmds: epp already has a fd");
 #endif
 
-		if (error = falloc(p, &fp, &epp->ep_fd))
+		if ((error = falloc(p, &fp, &epp->ep_fd)) != 0) {
+			scriptvp = NULL;
+			shellargp = NULL;
 			goto fail;
+		}
 
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
@@ -276,7 +283,7 @@ fail:
         if (epp->ep_flags & EXEC_HASFD) {
                 epp->ep_flags &= ~EXEC_HASFD;
                 (void) fdrelease(p, epp->ep_fd);
-        } else {
+        } else if (scriptvp) {
 		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
 		vrele(scriptvp);
 	}
@@ -284,12 +291,13 @@ fail:
         FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 
 	/* free the fake arg list, because we're not returning it */
-	tmpsap = shellargp;
-	while (*tmpsap != NULL) {
-		FREE(*tmpsap, M_EXEC);
-		tmpsap++;
+	if ((tmpsap = shellargp) != NULL) {
+		while (*tmpsap != NULL) {
+			FREE(*tmpsap, M_EXEC);
+			tmpsap++;
+		}
+		FREE(shellargp, M_EXEC);
 	}
-	FREE(shellargp, M_EXEC);
 
         /*
          * free any vmspace-creation commands,
