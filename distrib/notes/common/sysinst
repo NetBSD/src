@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.39 2002/06/13 14:45:54 leo Exp $
+.\"	$NetBSD: sysinst,v 1.40 2002/06/15 16:48:38 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[acorn26]:\n[atari]:\n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
+.\} \" ! \n[acorn26]:\n[atari]:\n[macppc]:\[mvme68k]:\[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[x68k]
 .It
 .To 2 General
 .Em General
@@ -310,6 +310,7 @@ a harddisk and a minimum of
 .if r_macppc 8 MB
 .if r_mvme68k 4 MB
 .if r_news68k 4 MB
+.if r_newsmips 16 MB
 .if r_pmax 8 MB
 .if r_sparc 4 MB
 .if r_sgimips 16 MB
@@ -323,6 +324,7 @@ The harddisk should have at least
 .if r_macppc 200
 .if r_mvme68k 100
 .if r_news68k 100
+.if r_newsmips 200
 .if r_pmax 200
 .if r_sparc 200
 .if r_sgimips 200
@@ -336,7 +338,7 @@ main memory in your system. If you wish to install
 the X Window System as well, you will need at least
 60 MB more.
 .bullet)
-.if \n[alpha]:\n[i386]:\n[news68k] \{\
+.if \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips] \{\
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
@@ -363,6 +365,7 @@ for the second diskette.
 .\}
 .if r_alpha .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
 .if r_news68k .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.if r_newsmips .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
 .Sq Ic a .
@@ -375,7 +378,7 @@ system, you would type something like:
 .Pp
 .Dl # Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a"
 .Pp
-.\} \" \n[alpha]:\n[i386]:\[news68k]
+.\} \" \n[alpha]:\n[i386]:\[news68k]:\n[newsmips]
 .It
 The Quick Installation
 .(bullet
@@ -408,6 +411,16 @@ Type
 Type
 .Pp
 .Dl \&NEWS\*> Ic "bo fh"
+.Pp
+.\}
+.if r_newsmips \{\
+Type
+.Pp
+.Dl \&\*> Ic "bo fd" (in case of NWS-5000)
+.Pp
+or
+.Pp
+.Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
 The main menu will be displayed.
@@ -510,7 +523,7 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
@@ -641,7 +654,7 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
