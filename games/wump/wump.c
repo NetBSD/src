@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.7 1998/09/13 15:27:31 hubertf Exp $	*/
+/*	$NetBSD: wump.c,v 1.8 1999/02/10 01:44:34 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.7 1998/09/13 15:27:31 hubertf Exp $");
+__RCSID("$NetBSD: wump.c,v 1.8 1999/02/10 01:44:34 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,10 @@ __RCSID("$NetBSD: wump.c,v 1.7 1998/09/13 15:27:31 hubertf Exp $");
  * would care to remember.
  */
 
+#include <err.h>
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -724,7 +726,10 @@ int_compare(a, b)
 void
 instructions()
 {
-	char buf[120], *p;
+	const char *pager;
+	pid_t pid;
+	int status;
+	int fd;
 
 	/*
 	 * read the instructions file, if needed, and show the user how to
@@ -740,12 +745,26 @@ puff of greasy black smoke! (poof)\n");
 		return;
 	}
 
-	if (!(p = getenv("PAGER")) ||
-	    strlen(p) > sizeof(buf) + strlen(_PATH_WUMPINFO) + 5)
-		p = _PATH_PAGER;
-
-	(void)sprintf(buf, "%s %s", p, _PATH_WUMPINFO);
-	(void)system(buf);
+	if (!isatty(1))
+		pager = "cat";
+	else {
+		if (!(pager = getenv("PAGER")) || (*pager == 0))
+			pager = _PATH_PAGER;
+	}
+	switch (pid = fork()) {
+	case 0: /* child */
+		if ((fd = open(_PATH_WUMPINFO, O_RDONLY)) == -1)
+			err(1, "open %s", _PATH_WUMPINFO);
+		if (dup2(fd, 0) == -1)
+			err(1, "dup2");
+		(void)execl("/bin/sh", "sh", "-c", pager, NULL);
+		err(1, "exec sh -c %s", pager);
+	case -1:
+		err(1, "fork");
+	default:
+		(void)waitpid(pid, &status, 0);
+		break;
+	}
 }
 
 void
