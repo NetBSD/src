@@ -1,4 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:57:18 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:18 he Exp $
+
+NOMAN=	noman
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
@@ -17,10 +22,11 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-LDADD=	-lroken \
-	-lcrypt
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
-NOMAN=	noman
+LDADD=	-L${VERS} -lvers \
+	-lroken \
+	-lcrypt
 
 CLEANFILES+=	lex.c parse.c parse.h
 

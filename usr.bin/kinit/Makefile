@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:57:19 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:18 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kuser
 
@@ -18,6 +21,8 @@ CPPFLAGS+= -I.					\
 	 -I${DESTDIR}/usr/include/openssl	\
 	 -DHAVE_CONFIG_H
 
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+
 LDADD=						\
 	-lkafs					\
 	-lkrb5					\
@@ -25,6 +30,7 @@ LDADD=						\
 	-lcrypto				\
 	-lasn1					\
 	-lcom_err				\
+	-L${VERS} -lvers			\
 	-lroken					\
 	-lcrypt
 
