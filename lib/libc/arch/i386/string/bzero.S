@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: bzero.S,v 1.4 1994/01/28 20:34:35 jtc Exp $
+ *	$Id: bzero.S,v 1.5 1994/03/12 01:39:57 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: bzero.S,v 1.4 1994/01/28 20:34:35 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: bzero.S,v 1.5 1994/03/12 01:39:57 jtc Exp $")
+#endif
 
 /*
  * bzero (void *b, size_t len)

@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rindex.S,v 1.6 1994/02/14 20:05:59 mycroft Exp $
+ *	$Id: rindex.S,v 1.7 1994/03/12 01:40:03 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: rindex.S,v 1.6 1994/02/14 20:05:59 mycroft Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: rindex.S,v 1.7 1994/03/12 01:40:03 jtc Exp $")
+#endif
 
 /*
  * strrchr(s, c)

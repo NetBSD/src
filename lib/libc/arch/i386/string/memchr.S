@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memchr.S,v 1.4 1994/02/14 20:05:57 mycroft Exp $
+ *	$Id: memchr.S,v 1.5 1994/03/12 01:40:01 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: memchr.S,v 1.4 1994/02/14 20:05:57 mycroft Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: memchr.S,v 1.5 1994/03/12 01:40:01 jtc Exp $")
+#endif
 
 /*
  * memchr (b, c, len)

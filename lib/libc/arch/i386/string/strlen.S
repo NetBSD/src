@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strlen.S,v 1.3 1994/01/28 20:34:53 jtc Exp $
+ *	$Id: strlen.S,v 1.4 1994/03/12 01:40:07 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: strlen.S,v 1.3 1994/01/28 20:34:53 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: strlen.S,v 1.4 1994/03/12 01:40:07 jtc Exp $")
+#endif
 
 /*
  * strlen (s)

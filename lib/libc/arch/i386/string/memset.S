@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memset.S,v 1.5 1994/01/28 20:34:43 jtc Exp $
+ *	$Id: memset.S,v 1.6 1994/03/12 01:40:03 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: memset.S,v 1.5 1994/01/28 20:34:43 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: memset.S,v 1.6 1994/03/12 01:40:03 jtc Exp $")
+#endif
 
 /*
  * memset(void *b, int c, size_t len)
