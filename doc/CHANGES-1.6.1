@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.129 2003/03/21 12:24:07 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.130 2003/03/23 01:30:11 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3835,3 +3835,7 @@ crypto/dist/heimdal/kdc/kerberos4.c		1.2 (via patch)
 	by disable support for it.
 	[lha, ticket #1225]
 
+sys/arch/vax/boot/boot/Makefile			1.31
+
+	Bring back "START=start", otherwise booting via real VMB don't work.
+	[jklos, ticket #1227]
