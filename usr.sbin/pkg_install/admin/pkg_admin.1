@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.8.4.2 2001/05/01 10:55:06 he Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.8.4.3 2002/02/23 18:02:46 he Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd May 4, 2000
-.Dt pkg_admin 1
+.Dt PKG_ADMIN 1
 .Os
 .Sh NAME
 .Nm pkg_admin
@@ -39,7 +39,8 @@
 .Op Fl V
 .Ar command Op args ...
 .Sh DESCRIPTION
-This command performs various administrative tasks around the NetBSD
+This command performs various administrative tasks around the
+.Nx
 Packages System. Available commands are:
 .Pp
 .Bl -tag -width check
@@ -72,7 +73,7 @@ pkg-wildcards against arbitrary files, useful mainly in the build
 system itself. See
 .Xr pkg_info 1
 for a description of the pattern.
-
+.Pp
 Example:
 .Bd -literal
 yui# cd /usr/pkgsrc/packages/i386ELF/All/
@@ -81,12 +82,12 @@ unzip-5.40.tgz  unzip-5.41.tgz
 yui# pkg_admin lsall 'unzip*'
 unzip-5.40.tgz
 unzip-5.41.tgz
-yui# pkg_admin lsall 'unzip>=5.40'
+yui# pkg_admin lsall 'unzip\*[Ge]5.40'
 unzip-5.40.tgz
 unzip-5.41.tgz
-yui# pkg_admin lsall 'unzip>=5.41'
+yui# pkg_admin lsall 'unzip\*[Ge]5.41'
 unzip-5.41.tgz
-yui# pkg_admin lsbest 'unzip>=5.40'
+yui# pkg_admin lsbest 'unzip\*[Ge]5.40'
 unzip-5.41.tgz
 yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
@@ -112,28 +113,28 @@ and
 Needs to be run as root.
 .Pp
 .El
-.Pp
 .Sh ENVIRONMENT
-.Ss PKG_DBDIR
+.Bl -tag -width PKG_DBDIR -compact
+.It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
+.El
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db
-.It Pa /var/db/pkg/<pkg>/+CONTENTS
+.It Pa /var/db/pkg/\*[Lt]pkg\*[Gt]/+CONTENTS
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
+.Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr pkg_info 1 ,
-.Xr pkg_create 1
-.Sh AUTHORS
-The
-.Nm
-command was written by Hubert Feyrer.
+.Xr pkg_info 1
 .Sh HISTORY
 The
 .Nm
 command first appeared in
-.Nx
-1.4.
+.Nx 1.4 .
+.Sh AUTHORS
+The
+.Nm
+command was written by Hubert Feyrer.
