@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.15 1997/10/19 14:51:01 mrg Exp $	*/
+/*	$NetBSD: server.c,v 1.16 1998/12/19 20:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.15 1997/10/19 14:51:01 mrg Exp $");
+__RCSID("$NetBSD: server.c,v 1.16 1998/12/19 20:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: server.c,v 1.15 1997/10/19 14:51:01 mrg Exp $");
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#include <fcntl.h>
 
 #include "defs.h"
 
@@ -319,7 +320,7 @@ sendf(rname, opts)
 	int sizerr, f, u, len;
 	off_t i;
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *otp, *cp;
 	extern struct subcmd *subcmds;
 	static char user[15], group[15];
@@ -1196,7 +1197,7 @@ clean(cp)
 	char *cp;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	struct stat stb;
 	char *otp;
 	int len, opts;
@@ -1270,7 +1271,7 @@ removeit(stp)
 	struct stat *stp;
 {
 	DIR *d;
-	struct direct *dp;
+	struct dirent *dp;
 	char *cp;
 	struct stat stb;
 	char *otp;
