@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.18 2004/01/04 11:33:31 jdolecek Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.19 2004/01/11 18:37:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
 	struct	lwp *l_back;
 	LIST_ENTRY(lwp) l_list;		/* Entry on list of all LWPs. */
-	LIST_ENTRY(lwp) _l_nu1;		/* Unused, was entry on zombie list.  */
 
 	struct proc *l_proc;	/* Process with which we are associated. */
 

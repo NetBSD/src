@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.186 2004/01/04 11:33:31 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.187 2004/01/11 18:37:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -177,7 +177,6 @@ struct proc {
 	char		p_pad1[3];
 
 	pid_t		p_pid;		/* Process identifier. */
-	SLIST_ENTRY(proc) _p_nu3;	/* unused: was link to deadproc list */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
