@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.6 1998/11/18 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.6.4.1 1999/04/27 13:55:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,49 @@ struct mbe_pcmcia_get_enaddr_args {
 };
 int	mbe_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 
+struct mbe_pcmcia_product {
+	u_int32_t	mpp_vendor;	/* vendor ID */
+	u_int32_t	mpp_product;	/* product ID */
+	int		mpp_expfunc;	/* exptected function */
+	u_int32_t	mpp_ioalign;	/* required alignment */
+	const char	*mpp_name;	/* product name */
+} mbe_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_CD021BX,
+	  0,				0,
+	  PCMCIA_STR_TDK_LAK_CD021BX },
+#if 0 /* XXX 86960-based? */
+	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_DFL9610,
+	  1,				0,
+	  PCMCIA_STR_TDK_LAK_DFL9610 }
+#endif
+
+	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA501,
+	  0,				0x20,
+	  PCMCIA_STR_FUJITSU_LA501 },
+
+	{ 0,				0,
+	  0,				0,
+	  NULL },
+};
+
+const struct mbe_pcmcia_product *mbe_pcmcia_lookup
+    __P((const struct pcmcia_attach_args *pa));
+
+const struct mbe_pcmcia_product *
+mbe_pcmcia_lookup(pa)
+	const struct pcmcia_attach_args *pa;
+{
+	const struct mbe_pcmcia_product *mpp;
+
+	for (mpp = mbe_pcmcia_products; mpp->mpp_name != NULL; mpp++) {
+		if (pa->manufacturer == mpp->mpp_vendor &&
+		    pa->product == mpp->mpp_product &&
+		    pa->pf->number == mpp->mpp_expfunc)
+			return (mpp);
+	}
+	return (NULL);
+}
+
 int
 mbe_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -97,20 +140,8 @@ mbe_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_TDK) {
-		switch (pa->product) {
-		case PCMCIA_PRODUCT_TDK_LAK_CD021BX:
-			if (pa->pf->number == 0)
-				return (1);
-			break;
-#if 0				/* XXX Is this card mb86960 based one? */
-		case PCMCIA_PRODUCT_TDK_DFL9610:
-			if (pa->pf->number == 1)
-				return (1);
-			break;
-#endif
-		}
-	}
+	if (mbe_pcmcia_lookup(pa) != NULL)
+		return (1);
 
 	return (0);
 }
@@ -125,7 +156,13 @@ mbe_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct mbe_pcmcia_get_enaddr_args pgea;
-	const char *model;
+	const struct mbe_pcmcia_product *mpp;
+
+	mpp = mbe_pcmcia_lookup(pa);
+	if (mpp == NULL) {
+		printf("\n");
+		panic("mbe_pcmcia_attach: impossible");
+	}
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -139,7 +176,9 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	/* Allocate and map i/o space for the card. */
 	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pcioh)) {
+	    cfe->iospace[0].length,
+	    mpp->mpp_ioalign ? mpp->mpp_ioalign : cfe->iospace[0].length,
+	    &psc->sc_pcioh)) {
 		printf(": can't allocate i/o space\n");
 		return;
 	}
@@ -150,27 +189,17 @@ mbe_pcmcia_attach(parent, self, aux)
 	sc->sc_enable = mbe_pcmcia_enable;
 	sc->sc_disable = mbe_pcmcia_disable;
 
-	if (pcmcia_io_map(pa->pf, (cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
+	/*
+	 * Don't bother checking flags; the back-end sets the chip
+	 * into 16-bit mode.
+	 */
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	switch (pa->product) {
-	case PCMCIA_PRODUCT_TDK_LAK_CD021BX:
-		model = PCMCIA_STR_TDK_LAK_CD021BX;
-		break;
-	case PCMCIA_PRODUCT_TDK_DFL9610:
-		model = PCMCIA_STR_TDK_DFL9610;
-		break;
-
-	default:
-		printf("%s: Unknown MB86960 PCMCIA ethernet card (%d)\n",
-		    sc->sc_dev.dv_xname, pa->product);
-		panic("unknown card");
-	}
-	printf(": %s\n", model);
+	printf(": %s\n", mpp->mpp_name);
 
 	/* Read station address. */
 	pgea.got_enaddr = 0;
