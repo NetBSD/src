@@ -315,7 +315,7 @@ portspec:
 	| YY_STR			{ int p = getport(NULL, $1);
 					  if (p < 0)
 						yyerror("invalid port number");
-					  $$ = p;
+					  $$ = ntohs(p);
 					}
 	;
 
