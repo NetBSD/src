@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 1998/02/05 04:57:03 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.8 1998/06/29 20:11:06 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -74,8 +74,8 @@ main()
 #endif
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
-		printf("bootxx: open failed\n");
-		exit();
+		printf("bootxx: devopen failed\n");
+		return;
 	}
 
 	addr = (char*)LOADADDR;
@@ -89,7 +89,7 @@ main()
 		chain_to(entry);
 	}
 	/* copyboot had a problem... */
-	exit();
+	return;
 }
 
 int
