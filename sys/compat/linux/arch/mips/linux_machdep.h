@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
 #include <compat/linux/common/linux_signal.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
+/* 
+ * From Linux's include/asm-mips64/sigcontext.h 
+ */
 struct linux_sigcontext {
 	unsigned long long sc_regs[32];
 	unsigned long long sc_fpregs[32];
@@ -57,7 +60,7 @@ struct linux_sigcontext {
 }
 #else
 /* 
- * From Linux's include/asm-mips64/sigcontext.h 
+ * From Linux's include/asm-mips/sigcontext.h 
  */
 struct linux_sigcontext { 
 	unsigned int lsc_regmask;		/* Unused */
@@ -92,7 +95,7 @@ struct linux_sigframe {
 	unsigned int lsf_ass[4];
 	unsigned int lsf_code[2];
 	struct linux_sigcontext lsf_sc;
-	sigset_t lsf_mask;
+	linux_sigset_t lsf_mask;
 };
 
 /*
@@ -107,7 +110,7 @@ struct linux_ucontext {
 };
 
 /*
- * From Linux's arch/mips/kernel/signal.c, the real rt_sigframe
+ * From Linux's arch/mips/kernel/signal.c
  */
 struct linux_rt_sigframe
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,16 +52,27 @@
 /*
  * Linux a.out format parameters
  */
-#define LINUX_M_MIPS		MID_MIPS 	/* XXX This is a guess */
+#define LINUX_M_MIPS		MID_MIPS
 #define LINUX_MID_MACHINE	LINUX_M_MIPS	
 
 /*
  * Linux Elf32 format parameters
  */
 
-#define LINUX_GCC_SIGNATURE 1			/* XXX to be tested */
+#define LINUX_ATEXIT_SIGNATURE 1
+#define LINUX_GCC_SIGNATURE 1
 
-#define LINUX_COPYARGS_FUNCTION ELFNAME2(linux,copyargs)
+/* #define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs */
+#if defined(ELFSIZE) && (ELFSIZE == 64)
+#define LINUX_COPYARGS_FUNCTION ELF64NAME(copyargs)
+#else
+#define LINUX_COPYARGS_FUNCTION ELF32NAME(copyargs)
+#endif
+
+#define LINUX_ELF_AUX_ENTRIES 14
+
+#define LINUX_ELF_AUX_ARGSIZ \
+    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
 
 typedef struct {
 	Elf32_Sword a_type;
@@ -79,8 +90,14 @@ typedef struct {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void * ELFNAME2(linux,copyargs) __P((struct exec_package *,
-    struct ps_strings *, void *, void *)); 
+#ifdef EXEC_ELF32
+int linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *, 
+    char **, void *)); 
+#endif
+#ifdef EXEC_ELF64
+int linux_elf64_copyargs __P((struct exec_package *, struct ps_strings *, 
+    char **, void *)); 
+#endif
 __END_DECLS
 #endif /* _KERNEL */
 
