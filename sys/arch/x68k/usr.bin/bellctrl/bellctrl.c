@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.6 2003/05/17 09:55:43 isaki Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.7 2003/05/17 10:11:19 isaki Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -31,13 +31,13 @@ static struct bell_info values = {
 };
 
 /* function prototype */
-int is_number();
-void set_bell_vol();
-void set_bell_pitch();
-void set_bell_dur();
-void set_voice_param();
-void set_bell_param();
-int usage();
+int is_number(char *, int);
+void set_bell_vol(int);
+void set_bell_pitch(int);
+void set_bell_dur(int);
+void set_voice_param(char *, int);
+void set_bell_param(void);
+int usage(char *, char *);
 
 int
 main(int argc, char **argv)
@@ -132,9 +132,8 @@ main(int argc, char **argv)
 			/*
 			 * set voice parameter
 			 */
-			if (i >= argc) {
+			if (i >= argc)
 				usage("missing -v argument", NULL);
-			}
 			arg = nextarg(i, argv);
 			set_voice_param(arg, 0);
 			i++;
@@ -144,7 +143,7 @@ main(int argc, char **argv)
 	}
 
 	if (bell_setting)
-	set_bell_param();
+		set_bell_param();
 
 	exit(0);
 }
@@ -238,9 +237,9 @@ int
 usage(char *fmt, char *arg)
 {
 	if (fmt) {
-		fprintf (stderr, "%s:  ", progName);
-		fprintf (stderr, fmt, arg);
-		fprintf (stderr, "\n\n");
+		fprintf(stderr, "%s:  ", progName);
+		fprintf(stderr, fmt, arg);
+		fprintf(stderr, "\n\n");
 	}
 
 	fprintf(stderr, "usage:  %s option ...\n", progName);
