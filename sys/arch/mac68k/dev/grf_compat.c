@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.1.2.2 1999/11/17 08:11:54 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.1.2.3 1999/11/18 08:12:42 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -300,12 +300,9 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCLISTMODES:
 	case GRFIOCGETMODE:
 	case GRFIOCSETMODE:
-		/* NONE of these operations are (or ever were) supported. */
-		rv = ENOTTY;
-		break;
-
+		/* NONE of these operations are (officially) supported. */
 	default:
-		rv = (-1);
+		rv = EINVAL;
 		break;
 	}
 	return rv;
@@ -342,7 +339,7 @@ grfmmap(dev, off, prot)
 
 	if (off >= 0 &&
 	    off < m68k_round_page(dc->dc_offset + dc->dc_size))
-		addr = m68k_btop(dc->dc_paddr + dc->dc_offset + off);
+		addr = m68k_btop(dc->dc_paddr + off);
 	else
 		addr = (-1);	/* XXX bogus */
 
