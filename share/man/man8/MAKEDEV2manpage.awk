@@ -1,4 +1,4 @@
-#       $NetBSD: MAKEDEV2manpage.awk,v 1.2 2002/04/18 13:33:01 dillo Exp $
+#       $NetBSD: MAKEDEV2manpage.awk,v 1.3 2002/04/19 01:34:41 dillo Exp $
 #
 # Copyright (c) 2002
 #	Dieter Baron <dillo@netbsd.org>.  All rights reserved.
@@ -140,10 +140,14 @@ function read1line() {
 			sub(/[ \t]*$/, "", line);
 
               		# add manpage, if available
-			page=target;
-			sub(/[^a-zA-Z]+/, "", page);
 			if (target == "fd#")
 				page = "fdc";
+			else if (target == "pms#")
+				page = "omps";
+			else {
+				page=target;
+				sub(/[^a-zA-Z]+/, "", page);
+			}
 
 			if (system("test -f ../man4/" page ".4 -o -f ../man4/man4." ARCH "/" page ".4") == 0) {
 				sub(/[ \t]*$/, "", line);
