@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.10 2003/03/29 21:42:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.9 2003/03/03 21:16:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.10 2003/03/29 21:42:44 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -350,11 +350,6 @@ smb_co_lock(struct smb_connobj *cp, int flags)
 		return EINVAL;
 	if ((flags & LK_TYPE_MASK) == 0)
 		flags |= LK_EXCLUSIVE;
-#ifdef DEBUG
-	if (smb_co_lockstatus(cp) == LK_EXCLUSIVE && 
-	    (flags & LK_CANRECURSE) == 0)
-		panic("recursive lock for object %d\n", cp->co_level);
-#endif
 	return lockmgr(&cp->co_lock, flags, &cp->co_interlock);
 }
 
