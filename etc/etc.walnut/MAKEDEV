@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 2002/08/09 02:39:35 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.25 2002/08/13 01:16:24 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	ch*	SCSI media changer
 #	cfs*	Coda file system device
 #	wsmux*	wscons event multiplexor
+#	pci*	PCI bus access devices
 #	systrace syscall tracer
 #	kttcp	kernel ttcp helper
 #	sysmon	System Monitoring hardware
@@ -132,6 +133,7 @@ all)
 	makedev lkm mms0 lms0 apm local satlink0
 	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev isdns
 	makedev clockctl
 	makedev systrace
@@ -530,6 +532,13 @@ isdntrc*)
 	rm -f isdntrc$unit
 	mknod isdntrc$unit c 57 $unit
 	chmod 600 isdntrc$unit
+	;;
+
+pci*)
+	unit=${i#pci};
+	rm -f pci$unit
+	mknod pci$unit c 63 $unit
+	chmod 644 pci$unit
 	;;
 
 clockctl)
