@@ -1,12 +1,12 @@
-/*	$NetBSD: version.h,v 1.6 2000/12/30 22:30:01 assar Exp $	*/
+/*	$NetBSD: version.h,v 1.7 2001/02/04 18:05:01 christos Exp $	*/
 
-#ifdef __KRB5_VERSION
+#if defined(__KRB5_VERSION) && !defined(__NO_KRB4_VERSION)
 #define	heimdal_long_version	__heimdal_long_version
 #define	heimdal_version		__heimdal_version
 #define	__NO_KRB4_VERSION
 #endif
 
-#ifdef __KRB4_VERSION
+#if defined(__KRB4_VERSION) && !defined(__NO_KRB5_VERSION)
 #define	krb4_long_version	__krb4_long_version
 #define	krb4_version		__krb4_version
 #define	__NO_KRB5_VERSION
