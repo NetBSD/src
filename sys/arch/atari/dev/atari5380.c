@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.28 1997/08/27 11:23:39 bouyer Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.28.4.1 1998/10/30 17:18:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -375,11 +375,13 @@ tt_poll_edma(SC_REQ *reqp)
 	 * 'dma_ready' to check errors and perform the bookkeeping.
 	 */
 
+	scsi_tt_idisable();
 	for (;;) {
 		delay(20);
 		if (--timeout <= 0) {
 			ncr_tprint(reqp, "timeout on polled transfer\n");
 			reqp->xs->error = XS_TIMEOUT;
+			scsi_tt_ienable();
 			return(0);
 		}
 		dmstat  = GET_TT_REG(NCR5380_DMSTAT);
@@ -397,6 +399,7 @@ tt_poll_edma(SC_REQ *reqp)
 		if (dmastat & (SD_BUSERR|SD_ZERO))
 			break;
 	}
+	scsi_tt_ienable();
 	return(1);
 }
 
@@ -598,6 +601,12 @@ extern	int			*nofault;
 	}
 
 	/*
+	 * OK.  No bus error occurred above.  Clear the nofault flag
+	 * so we no longer short-circuit bus errors.
+	 */
+	nofault = (int *) 0;
+
+	/*
 	 * Schedule an interrupt
 	 */
 	if (!poll && (SCSI_DMA->s_dma_ctrl & SD_ENABLE))
@@ -607,12 +616,6 @@ extern	int			*nofault;
 	 * Clear DMA-mode
 	 */
 	SCSI_DMA->s_dma_ctrl &= ~SD_ENABLE;
-
-	/*
-	 * OK.  No bus error occurred above.  Clear the nofault flag
-	 * so we no longer short-circuit bus errors.
-	 */
-	nofault = (int *) 0;
 
 	/*
 	 * Update the DMA 'registers' to reflect that all bytes
