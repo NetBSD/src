@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.10.4.1 2002/11/01 18:20:32 tron Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.10.4.2 2003/08/15 12:49:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ struct sip_desc {
 #define	RXCFG_STRIPCRC	0x20000000	/* strip CRC */
 #endif /* DP83820 */
 #define	RXCFG_ATX	0x10000000	/* accept transmit packets */
-#define	RXCFG_AJAB	0x08000000	/* accept jabber packets */
+#define	RXCFG_ALP	0x08000000	/* accept long packets */
 #ifdef DP83820
 #define	RXCFG_AIRL	0x04000000	/* accept in-range length err packets */
 #define	RXCFG_MXDMA	 0x00700000	/* max DMA burst size */
