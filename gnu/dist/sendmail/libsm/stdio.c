@@ -1,7 +1,7 @@
-/* $NetBSD: stdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: stdio.c,v 1.1.1.3 2004/03/25 19:02:20 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.1.1.3 2004/03/25 19:02:20 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: stdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: stdio.c,v 1.56.2.10 2003/01/10 23:07:17 ca Exp")
+SM_RCSID("@(#)Id: stdio.c,v 1.56.2.13 2003/09/04 01:18:08 ca Exp")
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -69,7 +69,7 @@ sm_stdopen(fp, info, flags, rpool)
 	char *path = (char *) info;
 	int oflags;
 
-	switch (flags)
+	switch (SM_IO_MODE(flags))
 	{
 	  case SM_IO_RDWR:
 		oflags = O_RDWR;
@@ -93,6 +93,10 @@ sm_stdopen(fp, info, flags, rpool)
 		errno = EINVAL;
 		return -1;
 	}
+#ifdef O_BINARY
+	if (SM_IS_BINARY(flags))
+		oflags |= O_BINARY;
+#endif /* O_BINARY */
 	fp->f_file = open(path, oflags,
 			  S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
 	if (fp->f_file < 0)
@@ -227,7 +231,7 @@ sm_stdsetmode(fp, mode)
 {
 	int flags = 0;
 
-	switch (*mode)
+	switch (SM_IO_MODE(*mode))
 	{
 	  case SM_IO_RDWR:
 		flags |= SMRW;
@@ -408,7 +412,7 @@ sm_stdfdopen(fp, info, flags, rpool)
 {
 	int oflags, tmp, fdflags, fd = *((int *) info);
 
-	switch (flags)
+	switch (SM_IO_MODE(flags))
 	{
 	  case SM_IO_RDWR:
 		oflags = O_RDWR | O_CREAT;
@@ -429,6 +433,10 @@ sm_stdfdopen(fp, info, flags, rpool)
 		errno = EINVAL;
 		return -1;
 	}
+#ifdef O_BINARY
+	if (SM_IS_BINARY(flags))
+		oflags |= O_BINARY;
+#endif /* O_BINARY */
 
 	/* Make sure the mode the user wants is a subset of the actual mode. */
 	if ((fdflags = fcntl(fd, F_GETFL, 0)) < 0)

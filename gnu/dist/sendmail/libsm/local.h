@@ -1,6 +1,6 @@
-/* $NetBSD: local.h,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $ */
+/* $NetBSD: local.h,v 1.1.1.3 2004/03/25 19:02:09 atatat Exp $ */
 /*
- * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -12,7 +12,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: local.h,v 1.51.2.1 2002/09/09 21:38:08 gshapiro Exp
+ *	Id: local.h,v 1.51.2.2 2004/01/09 18:32:44 ca Exp
  */
 
 /*
@@ -38,7 +38,6 @@ int	sm_wsetup __P((SM_FILE_T *));
 int	sm_flags __P((int));
 SM_FILE_T	*sm_fp __P((const SM_FILE_T *, const int, SM_FILE_T *));
 int	sm_vprintf __P((int, char const *, va_list));
-int	sm_vfscanf __P((SM_FILE_T *, int, char const *, va_list));
 
 /* std io functions */
 ssize_t	sm_stdread __P((SM_FILE_T *, char *, size_t));

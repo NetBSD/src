@@ -1,7 +1,7 @@
-/* $NetBSD: smstdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: smstdio.c,v 1.1.1.3 2004/03/25 19:02:19 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smstdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: smstdio.c,v 1.1.1.3 2004/03/25 19:02:19 atatat Exp $");
 #endif
 
 /*
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: smstdio.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)Id: smstdio.c,v 1.32 2002/02/23 20:18:36 gshapiro Exp")
+SM_IDSTR(id, "@(#)Id: smstdio.c,v 1.32.2.2 2003/09/05 20:35:28 ca Exp")
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -74,6 +74,23 @@ sm_stdioopen(fp, info, flags, rpool)
 	  case SM_IO_APPENDRW:
 		stdiomode = "a+";
 		break;
+#if SM_IO_BINARY != 0
+	  case SM_IO_RDONLY_B:
+		stdiomode = "rb";
+		break;
+	  case SM_IO_WRONLY_B:
+		stdiomode = "wb";
+		break;
+	  case SM_IO_APPEND_B:
+		stdiomode = "ab";
+		break;
+	  case SM_IO_APPENDRW_B:
+		stdiomode = "a+b";
+		break;
+	  case SM_IO_RDWR_B:
+		stdiomode = "r+b";
+		break;
+#endif /* SM_IO_BINARY != 0 */
 	  case SM_IO_RDWR:
 	  default:
 		stdiomode = "r+";

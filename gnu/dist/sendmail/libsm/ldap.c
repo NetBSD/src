@@ -1,11 +1,11 @@
-/* $NetBSD: ldap.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $ */
+/* $NetBSD: ldap.c,v 1.1.1.3 2004/03/25 19:02:09 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldap.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $");
+__RCSID("$NetBSD: ldap.c,v 1.1.1.3 2004/03/25 19:02:09 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2001-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2001-2003 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: ldap.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: ldap.c,v 1.44.2.2 2002/08/09 22:23:12 gshapiro Exp")
+SM_RCSID("@(#)Id: ldap.c,v 1.44.2.5 2003/12/23 21:21:56 gshapiro Exp")
 
 #if LDAPMAP
 # include <sys/types.h>
@@ -576,9 +576,11 @@ sm_ldap_results(lmap, msgid, flags, delim, rpool, result,
 			**  no need to spin through attributes
 			*/
 
-			if (statp == EX_OK &&
-			    bitset(SM_LDAP_MATCHONLY, flags))
+			if (bitset(SM_LDAP_MATCHONLY, flags))
+			{
+				statp = EX_OK;
 				continue;
+			}
 
 			/* record completed DN's to prevent loops */
 			dn = ldap_get_dn(lmap->ldap_ld, entry);
@@ -588,7 +590,7 @@ sm_ldap_results(lmap, msgid, flags, delim, rpool, result,
 				save_errno += E_LDAPBASE;
 				SM_LDAP_ERROR_CLEANUP();
 				errno = save_errno;
-				return EX_OSERR;
+				return EX_TEMPFAIL;
 			}
 
 			rl = sm_ldap_add_recurse(&recurse, dn,
