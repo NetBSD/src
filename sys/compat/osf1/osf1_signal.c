@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.7 1999/04/23 05:56:28 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.8 1999/04/24 07:09:49 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ osf1_sys_sigaction(p, v, retval)
 
 int 
 osf1_sys_sigaltstack(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -319,7 +319,7 @@ osf1_sys_sigaltstack(p, v, retval)
 #if 0
 int
 osf1_sys_signal(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -441,7 +441,7 @@ osf1_sys_signal(p, v, retval)
 
 int
 osf1_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -497,7 +497,7 @@ osf1_sys_sigprocmask(p, v, retval)
 
 int
 osf1_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -515,7 +515,7 @@ osf1_sys_sigpending(p, v, retval)
 
 int
 osf1_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -538,7 +538,7 @@ osf1_sys_sigsuspend(p, v, retval)
 
 int
 osf1_sys_kill(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
