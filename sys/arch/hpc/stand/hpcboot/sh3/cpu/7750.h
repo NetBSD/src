@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.h,v 1.1 2002/02/04 17:38:27 uch Exp $	*/
+/*	$NetBSD: 7750.h,v 1.1 2002/02/11 17:08:57 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,28 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../../hpcsh/dev/hd64465/hd64465uartreg.h"
+#ifndef _HPCBOOT_SH_CPU_7750_H_
+#define _HPCBOOT_SH_CPU_7750_H_
 
-#define	LSR_TXRDY	0x20	/* Transmitter buffer empty */
-
-#define HD64465COM_TX_BUSY()						\
-	while ((VOLATILE_REF8(HD64465_ULSR_REG8) & LSR_TXRDY) == 0)
-
-#define HD64465COM_PUTC(c)						\
+#define SH7750_CACHE_FLUSH()						\
 __BEGIN_MACRO								\
-	HD64465COM_TX_BUSY();						\
-	VOLATILE_REF8(HD64465_UTBR_REG8) = (c);				\
-	HD64465COM_TX_BUSY();						\
-__END_MACRO
-
-#define HD64465COM_PRINT(s)						\
-__BEGIN_MACRO								\
-	char *__s =(char *)(s);						\
-	int __i;							\
-	for (__i = 0; __s[__i] != '\0'; __i++) {			\
-		char __c = __s[__i];					\
-		if (__c == '\n')					\
-			HD64465COM_PUTC('\r');				\
-		HD64465COM_PUTC(__c);					\
+	u_int32_t __e, __a;						\
+									\
+	/* D-cache */							\
+	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+		__a = SH4REG_CCDA | (__e << CCDA_ENTRY_SHIFT);		\
+		VOLATILE_REF(__a) &= ~(CCDA_U | CCDA_V);		\
+	}								\
+	/* I-cache  */							\
+	for (__e = 0; __e < (SH4_ICACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\
+		__a = SH4REG_CCIA | (__e << CCIA_ENTRY_SHIFT);		\
+		VOLATILE_REF(__a) &= ~(CCIA_V);				\
 	}								\
 __END_MACRO
+
+#define SH7750_MMU_DISABLE	SH4_MMU_DISABLE
+
+#endif // _HPCBOOT_SH_CPU_7750_H_

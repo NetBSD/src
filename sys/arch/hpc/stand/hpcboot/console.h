@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.6 2001/06/19 16:48:49 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.7 2002/02/11 17:08:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 
 class Console {
 private:
-	static Console *_instance;
 	int16_t _boot_console;
 
 protected:
@@ -57,6 +56,7 @@ protected:
 	~Console(void) { /* NO-OP */ }
 
 public:
+	static Console *_instance;
 	static Console *Instance(void);
 	static void Destroy(void);
 	virtual void print(const TCHAR *fmt, ...);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.h,v 1.3 2002/02/04 17:38:27 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh.h,v 1.1 2002/02/11 17:08:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,32 +36,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../../hpcsh/dev/hd64461/hd64461reg.h"
-#include "../../../../hpcsh/dev/hd64461/hd64461intcreg.h"
-#include "../../../../hpcsh/dev/hd64461/hd64461pcmciareg.h"
-#include "../../../../hpcsh/dev/hd64461/hd64461gpioreg.h"
-#include "../../../../hpcsh/dev/hd64461/hd64461uartreg.h"
+#ifndef _HPCBOOT_SH_CPU_SH_H_
+#define _HPCBOOT_SH_CPU_SH_H_
 
-#define	LSR_TXRDY	0x20	/* Transmitter buffer empty */
+/*
+ * SH3, SH4 common defines.
+ */
 
-#define HD64461COM_TX_BUSY()						\
-	while ((VOLATILE_REF8(HD64461_ULSR_REG8) & LSR_TXRDY) == 0)
+/*
+ * Address space.
+ */
+#define SH_P0_START		0x00000000
+#define SH_P1_START		0x80000000
+#define SH_P2_START		0xa0000000
+#define SH_P3_START		0xc0000000
+#define SH_P4_START		0xe0000000
 
-#define HD64461COM_PUTC(c)						\
-__BEGIN_MACRO								\
-	HD64461COM_TX_BUSY();						\
-	VOLATILE_REF8(HD64461_UTBR_REG8) = (c);				\
-	HD64461COM_TX_BUSY();						\
-__END_MACRO
+/*
+ * Chip select.
+ */
+#define SH_AREA_SIZE		0x04000000
 
-#define HD64461COM_PRINT(s)						\
-__BEGIN_MACRO								\
-	char *__s =(char *)(s);						\
-	int __i;							\
-	for (__i = 0; __s[__i] != '\0'; __i++) {			\
-		char __c = __s[__i];					\
-		if (__c == '\n')					\
-			HD64461COM_PUTC('\r');				\
-		HD64461COM_PUTC(__c);					\
-	}								\
-__END_MACRO
+#define SH_AREA0_START		0x00000000
+#define SH_AREA1_START		0x04000000
+#define SH_AREA2_START		0x08000000
+#define SH_AREA3_START		0x0c000000
+#define SH_AREA4_START		0x10000000
+#define SH_AREA5_START		0x14000000
+#define SH_AREA6_START		0x18000000
+#define SH_AREA7_START		0x1c000000
+
+
+#endif /* _HPCBOOT_SH_CPU_SH_H_ */

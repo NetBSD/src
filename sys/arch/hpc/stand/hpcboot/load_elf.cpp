@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.6 2001/07/19 16:13:01 wiz Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.7 2002/02/11 17:08:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ ElfLoader::load()
 
 	// tag chain still opening 
 
-	return TRUE;
+	return _load_success();
 }
 
 //

@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_7707.h,v 1.1 2001/02/09 18:35:15 uch Exp $	*/
+/*	$NetBSD: 7709.h,v 1.1 2002/02/11 17:08:57 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,20 +36,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCBOOT_SH_7707_H_
-#define _HPCBOOT_SH_7707_H_
-#ifndef _HPCBOOT_SH3_H_
-#error "include sh3.h"
-#endif
-#define SH7707_LCDAR_REG16	0xa40000c0 /* address register */
-#define SH7707_LCDDR_REG16	0xa40000c2 /* display control register */
-#define SH7707_LCDPR_REG16	0xa40000c6 /* palette register */
-#define SH7707_LCDDMR_REG16	0xa40000ce /* DMA control register */
+#ifndef _HPCBOOT_SH_CPU_7709_H_
+#define _HPCBOOT_SH_CPU_7709_H_
 
-#define SH7707_LCDAR_LCDDMR0	0x0
-#define SH7707_LCDAR_LCDDMR1	0x1
-#define SH7707_LCDAR_LCDDMR2	0x2
-#define SH7707_LCDAR_LCDDMR3	0x3
-#define SH7707_LCDAR_LCDDMR4	0x4
+#define SH7709_CACHE_LINESZ		16
+#define SH7709_CACHE_ENTRY		128
+#define SH7709_CACHE_WAY		4
+#define SH7709_CACHE_SIZE						\
+	(SH7709_CACHE_LINESZ * SH7709_CACHE_ENTRY * SH7709_CACHE_WAY)
 
-#endif // _HPCBOOT_SH_7707_H_
+#define SH7709_CACHE_ENTRY_SHIFT	4
+#define SH7709_CACHE_ENTRY_MASK		0x000007f0
+#define SH7709_CACHE_WAY_SHIFT		11
+#define SH7709_CACHE_WAY_MASK		0x00001800
+
+#define SH7709_CACHE_FLUSH()						\
+__BEGIN_MACRO								\
+	u_int32_t __e, __w, __wa, __a;					\
+									\
+	for (__w = 0; __w < SH7709_CACHE_WAY; __w++) {			\
+		__wa = SH3_CCA | __w << SH7709_CACHE_WAY_SHIFT;		\
+		for (__e = 0; __e < SH7709_CACHE_ENTRY; __e++) {	\
+			__a = __wa |(__e << SH7709_CACHE_ENTRY_SHIFT);	\
+			_reg_read_4(__a) &= ~0x3; /* Clear U,V bit */	\
+		}							\
+	}								\
+__END_MACRO
+
+#define SH7709_MMU_DISABLE	SH3_MMU_DISABLE
+
+#endif // _HPCBOOT_SH_CPU_7709_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_boot.cpp,v 1.5 2002/02/04 17:38:27 uch Exp $	*/
+/*	$NetBSD: sh_boot.cpp,v 1.6 2002/02/11 17:08:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ SHBoot::create()
 
 	// Setup console. this setting is passed to kernel bootinfo.
 	if (args.console == CONSOLE_SERIAL) {
-		_cons = SHConsole::Instance();
+		_cons = new SHConsole;
 		if (!_cons->init()) {
 			_cons = Console::Instance();
 			DPRINTF((TEXT("use LCD console instead.\n")));
@@ -110,14 +110,20 @@ SHBoot::create()
 	case ARCHITECTURE_SH3_7709:
 		_arch = new SH7709(_cons, _mem, SH7709::boot_func);      
 		page_size = SH3_PAGE_SIZE;
+		if (SHArchitecture::cpu_type() != 3)
+			goto cpu_mismatch;
 		break;
 	case ARCHITECTURE_SH3_7709A:
 		_arch = new SH7709A(_cons, _mem, SH7709A::boot_func);
 		page_size = SH3_PAGE_SIZE;
+		if (SHArchitecture::cpu_type() != 3)
+			goto cpu_mismatch;
 		break;
 	case ARCHITECTURE_SH4_7750:
 		_arch = new SH7750(_cons, _mem, SH7750::boot_func);
 		page_size = SH4_PAGE_SIZE;
+		if (SHArchitecture::cpu_type() != 4)
+			goto cpu_mismatch;
 		break;
 	}
 	_arch->setDebug() = args.architectureDebug;
@@ -155,4 +161,10 @@ SHBoot::create()
 
 	// File Manager, Loader
 	return super::create();
+
+ cpu_mismatch:
+	DPRINTF((TEXT("CPU mismatch. CPU is SH%d\n"),
+	    SHArchitecture::cpu_type()));
+
+	return FALSE;
 }
