@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.28 2001/02/23 08:02:42 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.29 2001/10/16 06:24:45 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -351,13 +351,14 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	if (max_linkhdr + maxlen >= MCLBYTES) {
 #ifdef DIAGNOSTIC
+	if (max_linkhdr + maxlen >= MCLBYTES) {
 		printf("nd6_ns_output: max_linkhdr + maxlen >= MCLBYTES "
 		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-#endif
-		return;
+		panic("nd6_ns_output: insufficient MCLBYTES");
+		/* NOTREACHED */
 	}
+#endif
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
@@ -756,6 +757,13 @@ nd6_na_input(m, off, icmp6len)
 			int s;
 
 			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+
+			/*
+			 * Lock to protect the default router list.
+			 * XXX: this might be unnecessary, since this function
+			 * is only called under the network software interrupt
+			 * context.  However, we keep it just for safety.  
+			 */
 			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
@@ -829,13 +837,14 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-	if (max_linkhdr + maxlen >= MCLBYTES) {
 #ifdef DIAGNOSTIC
+	if (max_linkhdr + maxlen >= MCLBYTES) {
 		printf("nd6_na_output: max_linkhdr + maxlen >= MCLBYTES "
 		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-#endif
-		return;
+		panic("nd6_na_output: insufficient MCLBYTES");
+		/* NOTREACHED */
 	}
+#endif
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
