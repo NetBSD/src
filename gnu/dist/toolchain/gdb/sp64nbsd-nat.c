@@ -145,6 +145,46 @@ supply_fpregs64 (fregs)
   supply_register (FSR_REGNUM, fregs + 256);
 }
 
+static void
+unsupply_regs64 (regs)
+     struct reg *regs;
+{
+}
+
+static void
+unsupply_fpregs64 (regs)
+     struct reg *regs;
+{
+}
+
+void
+nbsd_reg_to_internal (regs)
+     char *regs;
+{
+  supply_regs64 (regs);
+}
+
+void
+nbsd_fpreg_to_internal (fregs)
+     char *fregs;
+{
+  supply_fpregs64 (fregs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+     char *regs;
+{
+  unsupply_regs64 (regs);
+}
+
+void
+nbsd_internal_to_fpreg (fregs)
+     char *fregs;
+{
+  unsupply_fpregs64 (fregs);
+}
+
 /* We don't store all registers immediately when requested, since they
    get sent over in large chunks anyway.  Instead, we accumulate most
    of the changes and send them over once.  "deferred_stores" keeps
