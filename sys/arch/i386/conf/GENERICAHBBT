@@ -1,7 +1,7 @@
 #
 # GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.15 1993/06/06 22:20:06 cgd Exp $
+#	$Id: GENERICAHBBT,v 1.16 1993/07/11 09:03:13 cgd Exp $
 #
 
 machine		"i386"
@@ -16,7 +16,6 @@ options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
 options		SCSI
-options		DDB
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
 
