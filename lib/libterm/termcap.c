@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.31 2000/05/28 09:58:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.31 2000/05/28 09:58:15 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,25 @@ __RCSID("$NetBSD: termcap.c,v 1.30 2000/05/20 13:55:10 blymn Exp $");
 
 static	char *tbuf;	/* termcap buffer */
 static  struct tinfo *fbuf;     /* untruncated termcap buffer */
+
+/*
+ * Set the termcap entry to the arbitrary string passed in, this can
+ * be used to provide a "dummy" termcap entry if a real one does not
+ * exist.  This function will malloc the buffer and space for the
+ * string.  If an error occurs return -1 otherwise return 0.
+ */
+int
+t_setinfo(struct tinfo **bp, const char *entry)
+{
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
+		return -1;
+
+	if (((*bp)->info = (char *) malloc(strlen(entry) + 1)) == NULL)
+		return -1;
+
+	strcpy((*bp)->info, entry);
+	return 0;
+}
 
 /*
  * Get an extended entry for the terminal name.  This differs from
@@ -182,7 +201,7 @@ t_getent(bp, name)
 				return (-2);
 		i = cgetent(&((*bp)->info), pathvec, name);      
 	}
-	
+
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
