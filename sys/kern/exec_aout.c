@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.13 1994/08/01 18:49:49 pk Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -87,7 +87,6 @@ exec_aout_makecmds(p, epp)
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
-bad:
 	return error;
 }
 

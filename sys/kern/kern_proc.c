@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.12 1995/03/19 23:44:49 mycroft Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.13 1996/02/04 02:15:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -73,6 +73,8 @@ struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 struct proclist allproc;
 struct proclist zombproc;
+
+static void orphanpg __P((struct pgrp *));
 
 /*
  * Initialize global process hashing structures.
@@ -279,8 +281,6 @@ pgdelete(pgrp)
 		FREE(pgrp->pg_session, M_SESSION);
 	FREE(pgrp, M_PGRP);
 }
-
-static void orphanpg();
 
 /*
  * Adjust pgrp jobc counters when specified process changes process group.
