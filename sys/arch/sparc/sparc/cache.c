@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.40 1998/10/09 10:48:15 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.41 1998/10/13 13:34:06 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -625,10 +625,20 @@ srmmu_cache_flush_all()
 void
 srmmu_cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	u_int len;
 {
-	register int i, ls, baseoff;
-	register char *p;
+	int i, ls, baseoff;
+	char *p;
+
+	if (len < NBPG) {
+		/* less than a page, flush just the covered cache lines */
+		ls = CACHEINFO.c_linesize;
+		p = (char *)((int)base & -ls);
+		i = (len + ls - 1) >> CACHEINFO.c_l2linesize;
+		for (; --i >= 0; p += ls)
+			sta(p, ASI_IDCACHELFP, 0);
+		return;
+	}
 
 	/*
 	 * Figure out how much must be flushed.
@@ -827,7 +837,7 @@ srmmu_pcache_flush_line(va, pa)
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
  */
-#define simple_lock(x)
+
 void
 smp_vcache_flush_page(va)
 	int va;
