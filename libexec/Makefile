@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.21 1996/12/18 05:39:57 thorpej Exp $
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$Id: Makefile,v 1.20 1996/12/18 05:39:13 thorpej Exp $
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
 #					# and ELF_TOOLCHAIN
