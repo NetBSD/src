@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.1 2002/07/09 02:28:08 thorpej Exp $
+.\"	$NetBSD: signal.9,v 1.2 2002/07/09 14:05:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ must be NULL in this case.  Otherwise,
 .Fa vers
 specifies the ABI of the trampoline specified by
 .Fa tramp .
-The signal trampoline ABI is machine-dependent, and must be cooridinated
+The signal trampoline ABI is machine-dependent, and must be coordinated
 with the
 .Fn sendsig
 function.
@@ -364,7 +364,7 @@ generating a core file if appropriate.  No checks are made for masked
 or caught signals; the process always exits.
 .It int Fn sigmasked "struct proc *p" "int signum"
 .Pp
-This function returns non-zero if the signal specifed by
+This function returns non-zero if the signal specified by
 .Fa signum
 is ignored or masked for process
 .Fa p .
@@ -382,7 +382,7 @@ and signal state are stored in a
 .Fa struct sigcontext ,
 which is then copied out to the user's stack.
 .Pp
-The registers and stack must be set up to invoke the singal handler as
+The registers and stack must be set up to invoke the signal handler as
 follows:
 .Bd -literal -offset indent
 (*handler)(signum, code, scp)
