@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.18 1994/02/10 16:33:58 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.19 1994/02/10 16:43:01 mycroft Exp $
  */
 
 #include "ed.h"
@@ -1361,11 +1361,10 @@ ed_init(sc)
 	 *	(there is no settable hardware default).
 	 */
 	if (sc->vendor == ED_VENDOR_3COM) {
-		if (ifp->if_flags & IFF_ALTPHYS) {
+		if (ifp->if_flags & IFF_ALTPHYS)
 			outb(sc->asic_addr + ED_3COM_CR, 0);
-		} else {
+		else
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
-		}
 	}
 
 	i = ED_RCR_AB;
@@ -1375,9 +1374,8 @@ ed_init(sc)
 		 * that we should receive all multicast packets.
 		 */
 		i |= ED_RCR_AM | ED_RCR_PRO | ED_RCR_AR | ED_RCR_SEP;
-	} else if ((ifp->if_flags & IFF_MULTICAST) != 0) {
+	} else if ((ifp->if_flags & IFF_MULTICAST) != 0)
 		i |= ED_RCR_AM;
-	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
 
 	/*
@@ -1553,9 +1551,8 @@ outloop:
 				break;
 			}
 		}
-	} else {
+	} else
 		len = ed_pio_write_mbufs(sc, m, (u_short)buffer);
-	}
 		
 	sc->txb_len[sc->txb_new] = MAX(len, ETHER_MIN_LEN);
 
@@ -2193,8 +2190,6 @@ ed_get_packet(sc, buf, len)
 		if ((sc->arpcom.ac_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&
 		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-			 sizeof(eh->ether_dhost)) != 0 &&
-		    bcmp(eh->ether_dhost, etherbroadcastaddr,
 			 sizeof(eh->ether_dhost)) != 0) {
 			m_freem(head);
 			return;
@@ -2239,7 +2234,8 @@ ed_pio_readmem(sc,src,dst,amount)
 
 	/* round up to a word */
 	tmp_amount = amount;
-	if (amount & 1) ++amount;
+	if (amount & 1)
+		++amount;
 
 	/* set up DMA byte count */
 	outb(sc->nic_addr + ED_P0_RBCR0, amount);
@@ -2251,9 +2247,9 @@ ed_pio_readmem(sc,src,dst,amount)
 
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD0 | ED_CR_STA);
 
-	if (sc->isa16bit) {
+	if (sc->isa16bit)
 		insw(sc->asic_addr + ED_NOVELL_DATA, dst, amount/2);
-	} else
+	else
 		insb(sc->asic_addr + ED_NOVELL_DATA, dst, amount);
 
 }
@@ -2270,7 +2266,7 @@ ed_pio_writemem(sc,src,dst,len)
 	u_short dst;
 	u_short len;
 {
-	int maxwait=100; /* about 120us */
+	int maxwait = 100; /* about 120us */
 
 	/* select page 0 registers */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
@@ -2293,6 +2289,7 @@ ed_pio_writemem(sc,src,dst,len)
 		outsw(sc->asic_addr + ED_NOVELL_DATA, src, len/2);
 	else
 		outsb(sc->asic_addr + ED_NOVELL_DATA, src, len);
+
 	/*
 	 * Wait for remote DMA complete. This is necessary because on the
 	 *	transmit side, data is handled internally by the NIC in bursts
@@ -2316,7 +2313,7 @@ ed_pio_write_mbufs(sc,m,dst)
 	u_short len, mb_offset;
 	struct mbuf *mp;
 	u_char residual[2];
-	int maxwait=100; /* about 120us */
+	int maxwait = 100; /* about 120us */
 
 	/* First, count up the total number of bytes to copy */
 	for (len = 0, mp = m; mp; mp = mp->m_next)
