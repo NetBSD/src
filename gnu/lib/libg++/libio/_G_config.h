@@ -62,7 +62,11 @@ typedef int _G_wchar_t;
 #ifndef __alpha__
 typedef int _G_ssize_t;
 typedef int /* default */ _G_wint_t;
+#ifndef __powerpc__
 typedef char * _G_va_list;
+#else
+#define _G_NEED_STDARG_H 1
+#endif /* __powerpc__ */
 #else /* __alpha__ */
 typedef long _G_ssize_t;
 typedef unsigned int /* default */ _G_wint_t;
@@ -114,5 +118,4 @@ typedef unsigned int _G_uint32_t;
 #define _G_HAVE_CURSES 1
 #define _G_MATH_H_INLINES 0
 #define _G_HAVE_BOOL 1
-#define _G_NEED_STDARG_H 1
 #endif /* !_G_config_h */
