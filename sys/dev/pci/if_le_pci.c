@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.5 1996/05/13 00:03:21 mycroft Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.6 1996/05/14 22:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -75,7 +75,6 @@
 #include <dev/pci/if_levar.h>
 
 #ifdef __alpha__			/* XXX */
-#include <machine/intr.h>
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
 #define vtophys(va)     (vtophys(va) | 0x40000000) 
 #endif
