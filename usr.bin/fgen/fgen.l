@@ -277,6 +277,7 @@ fload		{ token.type = TOK_FLOAD; token.text = yytext;
 /* Function definitions */
 void push __P((Cell));
 Cell pop __P((void));
+int depth __P((void));
 int fadd __P((struct fcode *, struct fcode *));
 struct fcode *flookup __P((struct fcode *, char *));
 int aadd __P((struct macro *, struct macro *));
@@ -730,6 +731,12 @@ pop()
 	return parse_stack[--parse_stack_ptr];
 }
 
+int
+depth()
+{
+	return (parse_stack_ptr);
+}
+
 /*
  * Insert fcode into dictionary.
  */
@@ -1032,6 +1039,7 @@ tokenize(input)
 	FILE *inf;
 	YY_BUFFER_STATE inbuf;
 	TOKEN *token;
+	char *last_token = "";
 	struct fcode *fcode;
 	int pos, off;
 
@@ -1161,12 +1169,18 @@ tokenize(input)
 			}
 			spit(fcode->num);
 			emit("b(:)");
+			last_token = fcode->name;
 			defining = 1;
  			break;
 		case TOK_SEMICOLON: 
 			STATE(token->text, "TOK_SEMICOLON:");
 			emit("b(;)");
 			defining = 0;
+			if (depth()) {
+				(void)printf( "Warning: stack depth %d at end of %s\n", 
+					      depth(), last_token);
+			}
+			last_token = "";
 			break;
 
 			/* These are special */
