@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.100 2003/03/01 05:07:52 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.101 2003/03/01 11:20:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.100 2003/03/01 05:07:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.101 2003/03/01 11:20:21 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -130,7 +130,7 @@ extern int  locked_queue_count;
 extern long locked_queue_bytes;
 extern struct simplelock lfs_subsys_lock;
 
-int lfs_writer_daemon = 0;
+pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
 
 const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
