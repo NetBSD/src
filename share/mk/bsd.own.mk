@@ -1,4 +1,10 @@
-#	$NetBSD: bsd.own.mk,v 1.12 1994/06/30 05:31:18 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.13 1994/09/28 15:59:28 mycroft Exp $
+
+# Defining `SKEY' causes support for S/key authentication to be compiled in.
+SKEY=		yes
+# Defining `KERBEROS' causes support for Kerberos authentication to be
+# compiled in.
+#KERBEROS=	yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
