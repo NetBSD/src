@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.6 1996/10/10 22:05:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -173,7 +173,7 @@ ep_isa_probe(parent, match, aux)
 	 * Map the Etherlink ID port for the probe sequence.
 	 */
 	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
-		printf("ep_isa_probe: can't map Etherlink ID port\n");
+		kprintf("ep_isa_probe: can't map Etherlink ID port\n");
 		return 0;
 	}
 
@@ -192,7 +192,7 @@ ep_isa_probe(parent, match, aux)
 		model = htons(epreadeeprom(bc, ioh, EEPROM_PROD_ID));
 		if ((model & 0xfff0) != PROD_ID) {
 #ifndef trusted
-			printf(
+			kprintf(
 			 "ep_isa_probe: ignoring model %04x\n", model);
 #endif
 			continue;
@@ -268,7 +268,7 @@ ep_isa_attach(parent, self, aux)
 	GO_WINDOW(0);
 	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
 
-	printf(": 3Com 3C509 Ethernet\n");
+	kprintf(": 3Com 3C509 Ethernet\n");
 
 	epconfig(sc, conn);
 

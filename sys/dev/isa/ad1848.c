@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.10 1996/04/29 20:02:32 christos Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.11 1996/10/10 22:04:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -168,7 +168,7 @@ ad_read(sc, reg)
 
     outb(sc->sc_iobase+AD1848_IADDR, (u_char) (reg & 0xff) | sc->MCE_bit);
     x = inb(sc->sc_iobase+AD1848_IDATA);
-    /*  printf("(%02x<-%02x) ", reg|sc->MCE_bit, x); */
+    /*  kprintf("(%02x<-%02x) ", reg|sc->MCE_bit, x); */
 
     return x;
 }
@@ -181,7 +181,7 @@ ad_write(sc, reg, data)
 {
     outb(sc->sc_iobase+AD1848_IADDR, (u_char) (reg & 0xff) | sc->MCE_bit);
     outb(sc->sc_iobase+AD1848_IDATA, (u_char) (data & 0xff));
-    /* printf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
+    /* kprintf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
 }
 
 static void
@@ -248,18 +248,18 @@ ad1848_dump_regs(sc)
     int i;
     u_char r;
     
-    printf("ad1848 status=%x", inb(sc->sc_iobase+AD1848_STATUS));
-    printf(" regs: ");
+    kprintf("ad1848 status=%x", inb(sc->sc_iobase+AD1848_STATUS));
+    kprintf(" regs: ");
     for (i = 0; i < 16; i++) {
 	r = ad_read(sc, i);
-	printf("%x ", r);
+	kprintf("%x ", r);
     }
     if (sc->mode == 2)
 	    for (i = 16; i < 32; i++) {
 		    r = ad_read(sc, i);
-		    printf("%x ", r);
+		    kprintf("%x ", r);
 	    }
-    printf("\n");
+    kprintf("\n");
 }
 #endif
 
@@ -301,7 +301,7 @@ ad1848_probe(sc)
     int i;
     
     if (!AD1848_BASE_VALID(iobase)) {
-	printf("ad1848: configured iobase %x invalid\n", iobase);
+	kprintf("ad1848: configured iobase %x invalid\n", iobase);
 	return 0;
     }
 
@@ -519,7 +519,7 @@ ad1848_attach(sc)
     /* Set default port */
     (void) ad1848_set_rec_port(sc, MIC_IN_PORT);
 
-    printf(": %s", sc->chip_name);
+    kprintf(": %s", sc->chip_name);
 }
 
 /*
@@ -1275,7 +1275,7 @@ ad1848_commit_settings(addr)
 	timeout--;
 
     if (inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
-	printf("ad1848_commit: Auto calibration timed out\n");
+	kprintf("ad1848_commit: Auto calibration timed out\n");
 
     /*
      * Starts the calibration process and
@@ -1384,7 +1384,7 @@ ad1848_set_speed(sc, arg)
 	}
 
     if (selected == -1) {
-	printf("ad1848: Can't find speed???\n");
+	kprintf("ad1848: Can't find speed???\n");
 	selected = 3;
     }
 
