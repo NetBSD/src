@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26.2.4 2000/07/27 00:13:59 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.5 2000/07/27 00:17:18 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2370,7 +2370,7 @@ void client_envadd (struct client_state *client,
 
 int dhcp_option_ev_name (buf, buflen, option)
 	char *buf;
-	unsigned buflen;
+	size_t buflen;
 	struct option *option;
 {
 	int i;
