@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.21 2003/07/15 02:43:28 lukem Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.22 2004/04/18 23:32:21 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.21 2003/07/15 02:43:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.22 2004/04/18 23:32:21 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.21 2003/07/15 02:43:28 lukem Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
@@ -55,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.21 2003/07/15 02:43:28 lukem Exp $");
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #include <dev/ofw/openfirm.h>
