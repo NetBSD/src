@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.222 2000/05/18 08:03:23 garbled Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.223 2000/05/18 13:04:27 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.217 2000/05/18 08:02:19 garbled Exp 
+ *	NetBSD: pcidevs,v 1.218 2000/05/18 13:03:31 drochner Exp 
  */
 
 /*
@@ -1832,6 +1832,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IBM",
 	    "Turboways 25 ATM",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
+	    0,
+	    "IBM",
+	    "MPIC-II",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
