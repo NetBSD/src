@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpgetround.c,v 1.1.1.1 1999/09/16 12:18:26 takemura Exp $	*/
+/*	$NetBSD: sf_fpgetround.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -57,7 +57,7 @@ fp_rnd
 fpgetround()
 {
 #ifdef SOFT_FLOAT
-	return(sfp_getround());
+	return(_mips_sfp_getround());
 #else
 	return(FP_RN);
 #endif
