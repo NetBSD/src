@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.7 1996/11/13 19:41:37 cgd Exp $	*/
+/*	$NetBSD: comvar.h,v 1.8 1997/04/04 20:56:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,22 +30,87 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct commulti_attach_args {
-	int		ca_slave;		/* slave number */
-
-	bus_space_tag_t	ca_iot;
-	bus_space_handle_t ca_ioh;
-	int		ca_iobase;
-	int		ca_noien;
-};
-
-int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
-int comintr __P((void *));
-
-/* For other ports that use 'com' as console (alpha). */
 extern int comconsaddr;
 extern int comconsattached;
 extern bus_space_tag_t comconstag;
-extern bus_space_handle_t comconsbah;
+extern bus_space_handle_t comconsioh;
 extern tcflag_t comconscflag;
-void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
+
+/* Hardware flag masks */
+#define	COM_HW_NOIEN	0x01
+#define	COM_HW_FIFO	0x02
+#define	COM_HW_HAYESP	0x04
+#define	COM_HW_CONSOLE	0x40
+
+/* Buffer size for character buffer */
+#define RXBUFSIZE 2048		/* More than enough.. */
+#define RXBUFMASK (RXBUFSIZE-1)	/* Only iff previous is a power of 2 */
+#define RXHIWAT   (RXBUFSIZE >> 2)
+
+struct com_softc {
+	struct device sc_dev;
+	void *sc_ih;
+	void *sc_si;
+	struct tty *sc_tty;
+
+	int sc_overflows;
+	int sc_floods;
+	int sc_errors;
+
+	int sc_iobase;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_hayespioh;
+
+	u_char sc_hwflags;
+	u_char sc_swflags;
+	int sc_fifolen;
+
+	u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr, sc_mcr_active, sc_lcr,
+	       sc_ier, sc_fifo, sc_dlbl, sc_dlbh;
+	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
+
+	int sc_r_hiwat;
+ 	volatile u_int sc_rbget;
+ 	volatile u_int sc_rbput;
+	volatile u_int sc_rbavail;
+ 	u_char sc_rbuf[RXBUFSIZE];
+	u_char sc_lbuf[RXBUFSIZE];
+
+ 	u_char *sc_tba;
+ 	int sc_tbc,
+	    sc_heldtbc;
+
+	volatile u_char sc_rx_blocked,
+			sc_tx_busy,
+			sc_tx_done,
+			sc_tx_stopped,
+			sc_st_check,
+			sc_rx_ready;
+
+	volatile u_char sc_heldchange;
+};
+
+/* Macros to clear/set/test flags. */
+#define SET(t, f)	(t) |= (f)
+#define CLR(t, f)	(t) &= ~(f)
+#define ISSET(t, f)	((t) & (f))
+
+int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+int comintr __P((void *));
+void com_attach_subr __P((struct com_softc *));
+void cominit 		__P((bus_space_tag_t, bus_space_handle_t, int));
+
+#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifdef alpha
+#define	IPL_SERIAL	IPL_TTY
+#define	splserial()	spltty()
+#define	IPL_SOFTSERIAL	IPL_TTY
+#define	splsoftserial()	spltty()
+#endif
+#endif
+
+#ifndef __BROKEN_INDIRECT_CONFIG
+#define	__CGD_INDIRECT_CONFIG
+#endif
