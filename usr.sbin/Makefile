@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.177 2002/08/31 19:11:16 atatat Exp $
+#	$NetBSD: Makefile,v 1.178 2002/09/01 20:32:43 atatat Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	kgmon kvm_mkdb lastlogin link lpr mailwrapper makefs map-mbone \
 	mdconfig memswitch mlxctl mopd mountd moused mrinfo mrouted mscdlabel \
 	mtrace mtree ndbootd netgroup_mkdb nfsd ntp pcictl pkg_install pppd \
-	pmap pstat pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
+	pstat pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpcbind rwhod sa screenblank sesd \
 	sliplogin slstats spray sup sushi syslogd tadpolectl tcpdchk \
