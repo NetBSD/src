@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.15 1997/09/02 13:26:42 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.16 1998/01/12 10:21:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.15 1997/09/02 13:26:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.16 1998/01/12 10:21:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,10 +63,6 @@ int     ioasicprint(void *, const char *);
 
 struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
-};
-
-struct cfdriver ioasic_cd = {
-	NULL, "ioasic", DV_DULL,
 };
 
 int	ioasic_intr __P((void *));

@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.11 1997/09/02 13:19:04 thorpej Exp $ */
+/* $NetBSD: pms.c,v 1.12 1998/01/12 10:21:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.11 1997/09/02 13:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12 1998/01/12 10:21:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,10 +106,6 @@ int pmsintr __P((void *));
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
-};
-
-struct cfdriver pms_cd = {
-	NULL, "pms", DV_TTY,
 };
 
 #define	PMSUNIT(dev)	(minor(dev))

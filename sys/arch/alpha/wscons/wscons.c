@@ -1,4 +1,4 @@
-/* $NetBSD: wscons.c,v 1.15 1997/09/02 13:20:58 thorpej Exp $ */
+/* $NetBSD: wscons.c,v 1.16 1998/01/12 10:21:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.15 1997/09/02 13:20:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.16 1998/01/12 10:21:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,9 +76,7 @@ struct cfattach wscons_ca = {
 	sizeof (struct wscons_softc), wsconsmatch, wsconsattach,
 };
 
-struct cfdriver wscons_cd = {
-    NULL, "wscons", DV_TTY,
-};
+extern struct cfdriver wscons_cd;
 
 /*
  * Console handing functions and variables.

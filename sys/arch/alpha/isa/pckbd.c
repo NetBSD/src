@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.20 1997/09/25 02:42:47 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.21 1998/01/12 10:21:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.20 1997/09/25 02:42:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.21 1998/01/12 10:21:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -109,10 +109,6 @@ int pckbdintr __P((void *));
 
 struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
-};
-
-struct cfdriver pckbd_cd = {
-	NULL, "pckbd", DV_DULL,
 };
 
 int	pckbd_cngetc __P((struct device *));
