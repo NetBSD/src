@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_alloc.c	7.26 (Berkeley) 5/2/91
- *	$Id: ufs_alloc.c,v 1.5 1994/03/27 09:10:17 cgd Exp $
+ *	$Id: ufs_alloc.c,v 1.6 1994/05/18 10:21:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -544,7 +544,7 @@ fragextend(ip, cg, bprev, osize, nsize)
 		brelse(bp);
 		return (NULL);
 	}
-	cgp = bp->b_un.b_cg;
+	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp)) {
 		brelse(bp);
 		return (NULL);
@@ -607,7 +607,7 @@ alloccg(ip, cg, bpref, size)
 		brelse(bp);
 		return (NULL);
 	}
-	cgp = bp->b_un.b_cg;
+	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp) ||
 	    (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize)) {
 		brelse(bp);
@@ -808,7 +808,7 @@ ialloccg(ip, cg, ipref, mode)
 		brelse(bp);
 		return (NULL);
 	}
-	cgp = bp->b_un.b_cg;
+	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp) || cgp->cg_cs.cs_nifree == 0) {
 		brelse(bp);
 		return (NULL);
@@ -897,7 +897,7 @@ blkfree(ip, bno, size)
 		brelse(bp);
 		return;
 	}
-	cgp = bp->b_un.b_cg;
+	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp)) {
 		brelse(bp);
 		return;
@@ -992,7 +992,7 @@ ifree(ip, ino, mode)
 		brelse(bp);
 		return;
 	}
-	cgp = bp->b_un.b_cg;
+	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp)) {
 		brelse(bp);
 		return;
