@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.89 1999/10/28 10:29:23 ad Exp $
+.\"	$NetBSD: options.4,v 1.90 1999/11/28 23:41:48 tron Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -739,13 +739,13 @@ gadget box
 to convert from TTL to RS-232 signal levels.
 The gadget box and PPS are described in more detail in the HTML documentation
 shipped with the xntpd distribution.
-.It Cd option SETUIDSCRIPTS
+.It Cd options SETUIDSCRIPTS
 Allows scripts with the setuid bit set to execute as the effective
 user rather than the real user, just like binary executables.
 .Pp
 .Em NOTE :
 Using this option will also enable
-.Em option FDSCRIPTS
+.Em options FDSCRIPTS
 .It Cd option FDSCRIPTS
 Allows execution of scripts with the execute bit set, but not the
 read bit, by opening the file and passing the file descriptor to
