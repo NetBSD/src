@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.213 2001/11/12 20:11:21 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.214 2001/11/12 23:16:21 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -77,7 +77,6 @@ TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
 AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
 ASN1_COMPILE=	${TOOLDIR}/bin/asn1_compile
-#BIB=		${TOOLDIR}/bin/bib
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/compile_et
 CONFIG=		${TOOLDIR}/bin/config
@@ -85,19 +84,18 @@ CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 CRUNCHGEN=	MAKE=${.MAKE} ${TOOLDIR}/bin/crunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
-#EQN=		${TOOLDIR}/bin/eqn
+EQN=		${TOOLDIR}/bin/eqn
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
 GENCAT=		${TOOLDIR}/bin/gencat
 #GRIND=		${TOOLDIR}/bin/vgrind -f
-#GROFF=		${TOOLDIR}/bin/groff -Tascii
-#INDXBIB=	${TOOLDIR}/bin/indxbib
+GROFF=		${TOOLDIR}/bin/groff
+INDXBIB=	${TOOLDIR}/bin/indxbib
 INSTALL=	STRIP=${STRIP} ${TOOLDIR}/bin/binstall
 INSTALL_INFO=	${TOOLDIR}/bin/install-info
 LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/lex
 LINT=		CC="${CC}" ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
-#MAKE=		${TOOLDIR}/bin/bmake
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
@@ -106,18 +104,16 @@ MKLOCALE=	${TOOLDIR}/bin/mklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/msgc
 MTREE=		${TOOLDIR}/bin/mtree
 NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
-#NROFF=		${TOOLDIR}/bin/nroff -Tascii
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
-#PIC=		${TOOLDIR}/bin/pic
+PIC=		${TOOLDIR}/bin/pic
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
-#REFER=		${TOOLDIR}/bin/refer
-#ROFF=		${TOOLDIR}/bin/groff -Tps
+REFER=		${TOOLDIR}/bin/refer
 RPCGEN=		${TOOLDIR}/bin/rpcgen
 SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
-#SOELIM=	${TOOLDIR}/bin/soelim
+SOELIM=		${TOOLDIR}/bin/soelim
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
-#TBL=		${TOOLDIR}/bin/tbl
+TBL=		${TOOLDIR}/bin/tbl
 TSORT=		${TOOLDIR}/bin/tsort -q
 YACC=		${TOOLDIR}/bin/yacc
 
