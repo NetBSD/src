@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.4 2002/02/13 08:18:40 ross Exp $
+.\"     $NetBSD: driver.9,v 1.5 2002/04/02 14:16:34 heinz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,7 +196,7 @@ is a pointer to the attachment structure.  The
 .Fa parent
 and
 .Fa aux
-arguments are the same as the match function.
+arguments are the same as passed to the match function.
 .Pp
 The driver's attach function is called before system interrupts are
 enabled.  If interrupts are required during initialisation, then
