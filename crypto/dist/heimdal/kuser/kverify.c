@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kverify.c,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $");
+RCSID("$Id: kverify.c,v 1.1.1.1.2.1 2001/04/05 23:23:03 he Exp $");
 
 int
 main(int argc, char **argv)
@@ -45,7 +45,9 @@ main(int argc, char **argv)
     krb5_get_init_creds_opt get_options;
     krb5_verify_init_creds_opt verify_options;
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     krb5_get_init_creds_opt_init (&get_options);
 

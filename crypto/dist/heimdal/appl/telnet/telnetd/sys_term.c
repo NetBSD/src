@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: sys_term.c,v 1.1.1.1 2000/06/16 18:31:57 thorpej Exp $");
+RCSID("$Id: sys_term.c,v 1.1.1.1.2.1 2001/04/05 23:22:55 he Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP
@@ -1177,6 +1177,10 @@ startslave(char *host, int autologin, char *autoname)
 # endif	/* PARENT_DOES_UTMP */
     } else {
 	getptyslave();
+#if defined(DCE)
+	/* if we authenticated via K5, try and join the PAG */
+	kerberos5_dfspag();
+#endif
 	start_login(host, autologin, autoname);
 	/*NOTREACHED*/
     }
@@ -1205,26 +1209,50 @@ init_env(void)
 /*
  * scrub_env()
  *
- * Remove variables from the environment that might cause login to
- * behave in a bad manner. To avoid this, login should be staticly
- * linked.
+ * We only accept the environment variables listed below.
  */
 
-static void scrub_env(void)
+static void
+scrub_env(void)
 {
-    static char *remove[] = { "LD_", "_RLD_", "LIBPATH=", "IFS=", NULL };
+    static const char *reject[] = {
+	"TERMCAP=/",
+	NULL
+    };
+
+    static const char *accept[] = {
+	"XAUTH=", "XAUTHORITY=", "DISPLAY=",
+	"TERM=",
+	"EDITOR=",
+	"PAGER=",
+	"PRINTER=",
+	"LOGNAME=",
+	"POSIXLY_CORRECT=",
+	"TERMCAP=",
+	NULL
+    };
 
     char **cpp, **cpp2;
-    char **p;
+    const char **p;
   
     for (cpp2 = cpp = environ; *cpp; cpp++) {
-	for(p = remove; *p; p++)
+	int reject_it = 0;
+
+	for(p = reject; *p; p++)
+	    if(strncmp(*cpp, *p, strlen(*p)) == 0) {
+		reject_it = 1;
+		break;
+	    }
+	if (reject_it)
+	    continue;
+
+	for(p = accept; *p; p++)
 	    if(strncmp(*cpp, *p, strlen(*p)) == 0)
 		break;
-	if(*p == NULL)
+	if(*p != NULL)
 	    *cpp2++ = *cpp;
     }
-    *cpp2 = 0;
+    *cpp2 = NULL;
 }
 
 

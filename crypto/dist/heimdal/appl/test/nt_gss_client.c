@@ -35,7 +35,7 @@
 #include <gssapi.h>
 #include "nt_gss_common.h"
 
-RCSID("$Id: nt_gss_client.c,v 1.1.1.1 2000/06/16 18:31:46 thorpej Exp $");
+RCSID("$Id: nt_gss_client.c,v 1.1.1.1.2.1 2001/04/05 23:22:56 he Exp $");
 
 /*
  * This program tries to act as a client for the sample in `Sample
@@ -46,7 +46,7 @@ static int
 proto (int sock, const char *hostname, const char *service)
 {
     struct sockaddr_in remote, local;
-    int addrlen;
+    socklen_t addrlen;
 
     int context_established = 0;
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;

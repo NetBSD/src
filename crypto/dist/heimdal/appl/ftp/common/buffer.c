@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -36,7 +36,7 @@
 #include <err.h>
 #include "roken.h"
 
-RCSID("$Id: buffer.c,v 1.1.1.1 2000/06/16 18:31:48 thorpej Exp $");
+RCSID("$Id: buffer.c,v 1.1.1.1.2.1 2001/04/05 23:22:46 he Exp $");
 
 /*
  * Allocate a buffer enough to handle st->st_blksize, if
@@ -49,7 +49,7 @@ alloc_buffer (void *oldbuf, size_t *sz, struct stat *st)
     size_t new_sz;
 
     new_sz = BUFSIZ;
-#ifdef HAVE_ST_BLKSIZE
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
     if (st)
 	new_sz = max(BUFSIZ, st->st_blksize);
 #endif

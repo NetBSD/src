@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: md4.h,v 1.1.1.1 2000/06/16 18:32:26 thorpej Exp $ */
+/* $Id: md4.h,v 1.1.1.1.2.1 2001/04/05 23:23:06 he Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -54,6 +54,6 @@ struct md4 {
 
 typedef struct md4 MD4_CTX;
 
-void MD4Init (struct md4 *m);
-void MD4Update (struct md4 *m, const void *p, size_t len);
-void MD4Final (void *res, struct md4 *m);
+void MD4_Init (struct md4 *m);
+void MD4_Update (struct md4 *m, const void *p, size_t len);
+void MD4_Final (void *res, struct md4 *m);

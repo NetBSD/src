@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: encapsulate.c,v 1.1.1.1 2000/06/16 18:32:46 thorpej Exp $");
+RCSID("$Id: encapsulate.c,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $");
 
 void
 gssapi_krb5_encap_length (size_t data_len,
@@ -78,7 +78,7 @@ gssapi_krb5_make_header (u_char *p,
 
 OM_uint32
 gssapi_krb5_encapsulate(
-			krb5_data *in_data,
+			const krb5_data *in_data,
 			gss_buffer_t output_token,
 			u_char *type
 )
@@ -95,6 +95,5 @@ gssapi_krb5_encapsulate(
 
     p = gssapi_krb5_make_header (output_token->value, len, type);
     memcpy (p, in_data->data, in_data->length);
-    krb5_data_free (in_data);
     return GSS_S_COMPLETE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: krb5.c,v 1.1.1.1 2000/06/16 18:31:43 thorpej Exp $");
+RCSID("$Id: krb5.c,v 1.1.1.1.2.1 2001/04/05 23:22:49 he Exp $");
 
 #ifdef KRB5
 
@@ -265,6 +265,11 @@ krb5_copy_encrypted (kx_context *kc, int fd1, int fd2)
 	fd_set fdset;
 	int ret;
 
+	if (fd1 >= FD_SETSIZE || fd2 >= FD_SETSIZE) {
+	    warnx ("fd too large");
+	    return 1;
+	}
+
 	FD_ZERO(&fdset);
 	FD_SET(fd1, &fdset);
 	FD_SET(fd2, &fdset);
@@ -316,6 +321,7 @@ void
 krb5_make_context (kx_context *kc)
 {
     krb5_kx_context *c;
+    krb5_error_code ret;
 
     kc->authenticate	= krb5_authenticate;
     kc->userok		= krb5_userok;
@@ -330,7 +336,9 @@ krb5_make_context (kx_context *kc)
 	err (1, "malloc");
     memset (kc->data, 0, sizeof(krb5_kx_context));
     c = (krb5_kx_context *)kc->data;
-    krb5_init_context (&c->context);
+    ret = krb5_init_context (&c->context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 }
 
 /*

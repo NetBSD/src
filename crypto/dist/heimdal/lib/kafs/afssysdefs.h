@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: afssysdefs.h,v 1.1.1.1 2000/06/16 18:32:54 thorpej Exp $ */
+/* $Id: afssysdefs.h,v 1.1.1.1.2.1 2001/04/05 23:23:11 he Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!
@@ -50,8 +50,12 @@
 #define AFS_SYSCALL	105
 #endif
 
-#if SunOS >= 57
+#if SunOS == 57
 #define AFS_SYSCALL	73
+#endif
+
+#if SunOS >= 58
+#define AFS_SYSCALL	65
 #endif
 
 #if defined(__hpux)

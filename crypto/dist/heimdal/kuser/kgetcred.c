@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$Id: kgetcred.c,v 1.1.1.1 2000/06/16 18:31:40 thorpej Exp $");
+RCSID("$Id: kgetcred.c,v 1.1.1.1.2.1 2001/04/05 23:23:02 he Exp $");
 
 static char *etype_str;
 static int version_flag;
@@ -69,7 +69,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+	errx(1, "krb5_init_context failed: %d", ret);
   
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);

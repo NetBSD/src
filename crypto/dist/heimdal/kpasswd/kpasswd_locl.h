@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: kpasswd_locl.h,v 1.1.1.1 2000/06/16 18:31:41 thorpej Exp $ */
+/* $Id: kpasswd_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:02 he Exp $ */
 
 #ifndef __KPASSWD_LOCL_H__
 #define __KPASSWD_LOCL_H__
@@ -86,10 +86,16 @@
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
 #include <err.h>
 #include <roken.h>
 #include <getarg.h>
-#include <krb5.h>
 #include <des.h>
+#include <krb5.h>
 
 #endif /* __KPASSWD_LOCL_H__ */

@@ -1,6 +1,6 @@
 \input texinfo @c -*- texinfo -*-
 @c %**start of header
-@c $Id: heimdal.texi,v 1.1.1.1 2000/06/16 18:32:09 thorpej Exp $
+@c $Id: heimdal.texi,v 1.1.1.1.2.1 2001/04/05 23:22:58 he Exp $
 @setfilename heimdal.info
 @settitle HEIMDAL
 @iftex
@@ -15,9 +15,9 @@
 @c %**end of header
 
 @c not yet @include version.texi
-@set UPDATED $Date: 2000/06/16 18:32:09 $
-@set EDITION 0.0
-@set VERSION 0.2k
+@set UPDATED $Date: 2001/04/05 23:22:58 $
+@set EDITION 0.1
+@set VERSION 0.3a
 
 @ifinfo
 @dircategory Heimdal
@@ -227,6 +227,7 @@ to the following restrictions:
 * Things in search for a better place::  
 * Kerberos 4 issues::           
 * Windows 2000 compatability::
+* Migration::
 * Acknowledgments::             
 
 @end menu
@@ -237,6 +238,7 @@ to the following restrictions:
 @include setup.texi
 @include misc.texi
 @include kerberos4.texi
+@include migration.texi
 @include win2k.texi
 @include ack.texi
 

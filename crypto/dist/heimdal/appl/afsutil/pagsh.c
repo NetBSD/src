@@ -35,7 +35,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: pagsh.c,v 1.1.1.1 2000/06/16 18:31:44 thorpej Exp $");
+RCSID("$Id: pagsh.c,v 1.1.1.1.2.1 2001/04/05 23:22:45 he Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +83,7 @@ main(int argc, char **argv)
   f = mkstemp (tf + 5);
   close (f);
   unlink (tf + 5);
-  setenv("KRB5CCNAME", tf, 1);
+  esetenv("KRB5CCNAME", tf, 1);
 #endif
 
 #ifdef KRB4
@@ -91,7 +91,7 @@ main(int argc, char **argv)
   f = mkstemp (tf);
   close (f);
   unlink (tf);
-  setenv("KRBTKFILE", tf, 1);
+  esetenv("KRBTKFILE", tf, 1);
 #endif
 
   i = 0;

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4a from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-9, 2000 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -9,15 +9,6 @@
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $
-
 
 SHELL = @SHELL@
 
@@ -40,8 +31,6 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
-DESTDIR =
-
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -54,9 +43,10 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_STRIP_FLAG =
 transform = @program_transform_name@
 
 NORMAL_INSTALL = :
@@ -65,26 +55,39 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+
+@SET_MAKE@
 host_alias = @host_alias@
 host_triplet = @host@
-AFS_EXTRA_LD = @AFS_EXTRA_LD@
 AIX_EXTRA_KAFS = @AIX_EXTRA_KAFS@
+AMDEP = @AMDEP@
+AMTAR = @AMTAR@
+AS = @AS@
 AWK = @AWK@
 CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+CPP = @CPP@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
+DEPDIR = @DEPDIR@
+DIR_des = @DIR_des@
+DIR_roken = @DIR_roken@
+DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
+INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
-LD = @LD@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_des = @LIB_des@
+LIB_des_appl = @LIB_des_appl@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -92,30 +95,42 @@ LIB_security = @LIB_security@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MAKE_X_PROGS_BIN_PROGS = @MAKE_X_PROGS_BIN_PROGS@
-MAKE_X_PROGS_BIN_SCRPTS = @MAKE_X_PROGS_BIN_SCRPTS@
-MAKE_X_PROGS_LIBEXEC_PROGS = @MAKE_X_PROGS_LIBEXEC_PROGS@
 NEED_WRITEAUTH_FALSE = @NEED_WRITEAUTH_FALSE@
 NEED_WRITEAUTH_TRUE = @NEED_WRITEAUTH_TRUE@
-NM = @NM@
 NROFF = @NROFF@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
+STRIP = @STRIP@
 VERSION = @VERSION@
 VOID_RETSIGTYPE = @VOID_RETSIGTYPE@
 WFLAGS = @WFLAGS@
 WFLAGS_NOIMPLICITINT = @WFLAGS_NOIMPLICITINT@
 WFLAGS_NOUNUSED = @WFLAGS_NOUNUSED@
 YACC = @YACC@
+dpagaix_CFLAGS = @dpagaix_CFLAGS@
+dpagaix_LDADD = @dpagaix_LDADD@
+install_sh = @install_sh@
+
+# $Id: Makefile.in,v 1.1.1.1.2.1 2001/04/05 23:23:07 he Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.1.2.1 2001/04/05 23:23:07 he Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.1.2.1 2001/04/05 23:23:07 he Exp $
+
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
-INCLUDES = -I$(top_builddir)/include
+INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken) $(IS)
 
 AM_CFLAGS =  $(WFLAGS)
+
+CP = cp
 
 COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
@@ -136,6 +151,7 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_pidfile = @LIB_pidfile@
 LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
@@ -143,6 +159,8 @@ LIB_setsockopt = @LIB_setsockopt@
 LIB_socket = @LIB_socket@
 LIB_syslog = @LIB_syslog@
 LIB_tgetent = @LIB_tgetent@
+
+LIBS = @LIBS@
 
 HESIODLIB = @HESIODLIB@
 HESIODINCLUDE = @HESIODINCLUDE@
@@ -159,90 +177,109 @@ INCLUDE_readline = @INCLUDE_readline@
 
 LEXLIB = @LEXLIB@
 
-cat1dir = $(mandir)/cat1
-cat3dir = $(mandir)/cat3
-cat5dir = $(mandir)/cat5
-cat8dir = $(mandir)/cat8
-
-MANRX = \(.*\)\.\([0-9]\)
-CATSUFFIX = @CATSUFFIX@
-
 NROFF_MAN = groff -mandoc -Tascii
 
-@KRB4_TRUE@LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
+@KRB4_TRUE@LIB_kafs = @KRB4_TRUE@$(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
 
-@KRB5_TRUE@LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la 	$(top_builddir)/lib/asn1/libasn1.la
-@KRB5_TRUE@LIB_gssapi = $(top_builddir)/lib/gssapi/libgssapi.la
+@KRB5_TRUE@LIB_krb5 = @KRB5_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
+@KRB5_TRUE@	$(top_builddir)/lib/asn1/libasn1.la
+@KRB5_TRUE@LIB_gssapi = @KRB5_TRUE@$(top_builddir)/lib/gssapi/libgssapi.la
 
 CHECK_LOCAL = 
 
+@do_roken_rename_TRUE@IS = @do_roken_rename_TRUE@-DROKEN_RENAME
+@do_roken_rename_TRUE@ES = @do_roken_rename_TRUE@snprintf.c strdup.c
+
 man_MANS = editline.3
 
-lib_LIBRARIES = libeditline.a
-@el_compat_TRUE@noinst_LIBRARIES = libel_compat.a
-@el_compat_FALSE@noinst_LIBRARIES = 
+lib_LTLIBRARIES = libeditline.la
+@el_compat_TRUE@noinst_LTLIBRARIES = @el_compat_TRUE@libel_compat.la
+@el_compat_FALSE@noinst_LTLIBRARIES = 
 
 noinst_PROGRAMS = testit
 
-testit_LDADD =  	libeditline.a 	$(LIB_tgetent) 	$(LIB_roken)
+testit_LDADD = \
+	libeditline.la \
+	$(LIB_tgetent) \
+	$(LIB_roken)
 
 
 include_HEADERS = editline.h
 
-libeditline_a_SOURCES = complete.c editline.c sysunix.c 	editline.h roken_rename.h unix.h
+libeditline_la_SOURCES = \
+	complete.c \
+	editline.c \
+	sysunix.c \
+	editline.h \
+	roken_rename.h \
+	unix.h \
+	$(EXTRA_SOURCE)
 
-libel_compat_a_SOURCES = edit_compat.c
+
+libeditline_la_LDFLAGS = -static
+
+EXTRA_SOURCE = $(ES) 
+
+libel_compat_la_SOURCES = edit_compat.c
+
+libel_compat_la_LDFLAGS = -static
 
 EXTRA_DIST = $(man_MANS)
+subdir = lib/editline
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../include/config.h
 CONFIG_CLEAN_FILES = 
-LIBRARIES =  $(lib_LIBRARIES) $(noinst_LIBRARIES)
+LTLIBRARIES =  $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I../../include
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
 X_CFLAGS = @X_CFLAGS@
 X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
-libeditline_a_LIBADD = 
-libeditline_a_OBJECTS =  complete.$(OBJEXT) editline.$(OBJEXT) \
-sysunix.$(OBJEXT)
-libel_compat_a_LIBADD = 
-libel_compat_a_OBJECTS =  edit_compat.$(OBJEXT)
-AR = ar
+libeditline_la_LIBADD = 
+@do_roken_rename_FALSE@am_libeditline_la_OBJECTS =  complete.lo \
+@do_roken_rename_FALSE@editline.lo sysunix.lo
+@do_roken_rename_TRUE@am_libeditline_la_OBJECTS =  complete.lo \
+@do_roken_rename_TRUE@editline.lo sysunix.lo snprintf.lo strdup.lo
+libeditline_la_OBJECTS =  $(am_libeditline_la_OBJECTS)
+libel_compat_la_LIBADD = 
+am_libel_compat_la_OBJECTS =  edit_compat.lo
+libel_compat_la_OBJECTS =  $(am_libel_compat_la_OBJECTS)
 noinst_PROGRAMS =  testit$(EXEEXT)
 PROGRAMS =  $(noinst_PROGRAMS)
 
 testit_SOURCES = testit.c
 testit_OBJECTS =  testit.$(OBJEXT)
-testit_DEPENDENCIES =  libeditline.a
+testit_DEPENDENCIES =  libeditline.la
 testit_LDFLAGS = 
-CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CFLAGS = @CFLAGS@
 CCLD = $(CC)
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+DIST_SOURCES =  $(libeditline_la_SOURCES) $(libel_compat_la_SOURCES) \
+testit.c
 man3dir = $(mandir)/man3
 MANS = $(man_MANS)
 HEADERS =  $(include_HEADERS)
 
-DIST_COMMON =  README ChangeLog Makefile.am Makefile.in
+depcomp = 
+DIST_COMMON =  README $(include_HEADERS) ChangeLog Makefile.am \
+Makefile.in
 
 
-DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
 GZIP_ENV = --best
-SOURCES = $(libeditline_a_SOURCES) $(libel_compat_a_SOURCES) testit.c
-OBJECTS = $(libeditline_a_OBJECTS) $(libel_compat_a_OBJECTS) testit.$(OBJEXT)
+SOURCES = $(libeditline_la_SOURCES) $(libel_compat_la_SOURCES) testit.c
+OBJECTS = $(am_libeditline_la_OBJECTS) $(am_libel_compat_la_OBJECTS) testit.$(OBJEXT)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .1 .3 .5 .8 .S .c .cat1 .cat3 .cat5 .cat8 .et .h .lo .o .obj .s .x
+.SUFFIXES: .1 .3 .5 .8 .c .cat1 .cat3 .cat5 .cat8 .et .h .lo .o .obj .x
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) $(top_srcdir)/Makefile.am.common $(top_srcdir)/cf/Makefile.am.common
 	cd $(top_srcdir) && $(AUTOMAKE) --foreign lib/editline/Makefile
 
@@ -251,60 +288,40 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-mostlyclean-libLIBRARIES:
+mostlyclean-libLTLIBRARIES:
 
-clean-libLIBRARIES:
-	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+clean-libLTLIBRARIES:
+	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
 
-distclean-libLIBRARIES:
+distclean-libLTLIBRARIES:
 
-maintainer-clean-libLIBRARIES:
+maintainer-clean-libLTLIBRARIES:
 
-install-libLIBRARIES: $(lib_LIBRARIES)
+install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(libdir)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p; \
-	  else :; fi; \
-	done
-	@$(POST_INSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(RANLIB) $(DESTDIR)$(libdir)/$$p"; \
-	    $(RANLIB) $(DESTDIR)$(libdir)/$$p; \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p; \
 	  else :; fi; \
 	done
 
-uninstall-libLIBRARIES:
+uninstall-libLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(libdir)/$$p; \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  echo " $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p"; \
+	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p; \
 	done
 
-mostlyclean-noinstLIBRARIES:
+mostlyclean-noinstLTLIBRARIES:
 
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
 
-distclean-noinstLIBRARIES:
+distclean-noinstLTLIBRARIES:
 
-maintainer-clean-noinstLIBRARIES:
-
-.c.o:
-	$(COMPILE) -c $<
-
-# FIXME: We should only use cygpath when building on Windows,
-# and only if it is available.
-.c.obj:
-	$(COMPILE) -c `cygpath -w $<`
-
-.s.o:
-	$(COMPILE) -c $<
-
-.S.o:
-	$(COMPILE) -c $<
+maintainer-clean-noinstLTLIBRARIES:
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
@@ -317,15 +334,6 @@ distclean-compile:
 
 maintainer-clean-compile:
 
-.c.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.s.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
-.S.lo:
-	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -336,15 +344,11 @@ distclean-libtool:
 
 maintainer-clean-libtool:
 
-libeditline.a: $(libeditline_a_OBJECTS) $(libeditline_a_DEPENDENCIES)
-	-rm -f libeditline.a
-	$(AR) cru libeditline.a $(libeditline_a_OBJECTS) $(libeditline_a_LIBADD)
-	$(RANLIB) libeditline.a
+libeditline.la: $(libeditline_la_OBJECTS) $(libeditline_la_DEPENDENCIES)
+	$(LINK) -rpath $(libdir) $(libeditline_la_LDFLAGS) $(libeditline_la_OBJECTS) $(libeditline_la_LIBADD) $(LIBS)
 
-libel_compat.a: $(libel_compat_a_OBJECTS) $(libel_compat_a_DEPENDENCIES)
-	-rm -f libel_compat.a
-	$(AR) cru libel_compat.a $(libel_compat_a_OBJECTS) $(libel_compat_a_LIBADD)
-	$(RANLIB) libel_compat.a
+libel_compat.la: $(libel_compat_la_OBJECTS) $(libel_compat_la_DEPENDENCIES)
+	$(LINK)  $(libel_compat_la_LDFLAGS) $(libel_compat_la_OBJECTS) $(libel_compat_la_LIBADD) $(LIBS)
 
 mostlyclean-noinstPROGRAMS:
 
@@ -358,6 +362,12 @@ maintainer-clean-noinstPROGRAMS:
 testit$(EXEEXT): $(testit_OBJECTS) $(testit_DEPENDENCIES)
 	@rm -f testit$(EXEEXT)
 	$(LINK) $(testit_LDFLAGS) $(testit_OBJECTS) $(testit_LDADD) $(LIBS)
+.c.o:
+	$(COMPILE) -c $<
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+.c.lo:
+	$(LTCOMPILE) -c -o $@ $<
 
 install-man3:
 	$(mkinstalldirs) $(DESTDIR)$(man3dir)
@@ -372,6 +382,7 @@ install-man3:
 	  else file=$$i; fi; \
 	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
 	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
 	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
 	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man3dir)/$$inst"; \
 	  $(INSTALL_DATA) $$file $(DESTDIR)$(man3dir)/$$inst; \
@@ -387,6 +398,7 @@ uninstall-man3:
 	for i in $$list; do \
 	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
 	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
 	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
 	  echo " rm -f $(DESTDIR)$(man3dir)/$$inst"; \
 	  rm -f $(DESTDIR)$(man3dir)/$$inst; \
@@ -403,35 +415,42 @@ install-includeHEADERS: $(include_HEADERS)
 	$(mkinstalldirs) $(DESTDIR)$(includedir)
 	@list='$(include_HEADERS)'; for p in $$list; do \
 	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$p"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$p; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$f"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(includedir)/$$f; \
 	done
 
 uninstall-includeHEADERS:
 	@$(NORMAL_UNINSTALL)
-	list='$(include_HEADERS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(includedir)/$$p; \
+	@list='$(include_HEADERS)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(includedir)/$$f"; \
+	  rm -f $(DESTDIR)$(includedir)/$$f; \
 	done
 
 tags: TAGS
 
-ID: $(HEADERS) $(SOURCES) $(LISP)
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
-	here=`pwd` && cd $(srcdir) \
-	  && mkid -f$$here/ID $$unique $(LISP)
+	mkid -fID $$unique $(LISP)
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)'; \
-	unique=`for i in $$list; do echo $$i; done | \
-	  awk '    { files[$$0] = 1; } \
+	list='$(SOURCES) $(HEADERS) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+	  || etags $(ETAGS_ARGS) $$tags  $$unique $(LISP)
 
 mostlyclean-tags:
 
@@ -444,17 +463,16 @@ maintainer-clean-tags:
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 
-subdir = lib/editline
-
 distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
 	  else \
 	    test -f $(distdir)/$$file \
-	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
-	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
 	  fi; \
 	done
 	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
@@ -467,7 +485,7 @@ check-am: all-am
 check: check-am
 installcheck-am:
 installcheck: installcheck-am
-install-exec-am: install-libLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-exec: install-exec-am
@@ -478,13 +496,13 @@ install-data: install-data-am
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
-uninstall-am: uninstall-libLIBRARIES uninstall-man \
+uninstall-am: uninstall-libLTLIBRARIES uninstall-man \
 		uninstall-includeHEADERS
 uninstall: uninstall-am
-all-am: Makefile $(LIBRARIES) $(PROGRAMS) $(MANS) $(HEADERS) all-local
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(MANS) $(HEADERS) all-local
 all-redirect: all-am
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(libdir) $(DESTDIR)$(mandir)/man3 \
 		$(DESTDIR)$(includedir)
@@ -499,20 +517,21 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-mostlyclean-am:  mostlyclean-libLIBRARIES mostlyclean-noinstLIBRARIES \
-		mostlyclean-compile mostlyclean-libtool \
-		mostlyclean-noinstPROGRAMS mostlyclean-tags \
-		mostlyclean-generic
+	-rm -f Makefile.in
+mostlyclean-am:  mostlyclean-libLTLIBRARIES \
+		mostlyclean-noinstLTLIBRARIES mostlyclean-compile \
+		mostlyclean-libtool mostlyclean-noinstPROGRAMS \
+		mostlyclean-tags mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
-clean-am:  clean-libLIBRARIES clean-noinstLIBRARIES clean-compile \
+clean-am:  clean-libLTLIBRARIES clean-noinstLTLIBRARIES clean-compile \
 		clean-libtool clean-noinstPROGRAMS clean-tags \
 		clean-generic mostlyclean-am
 
 clean: clean-am
 
-distclean-am:  distclean-libLIBRARIES distclean-noinstLIBRARIES \
+distclean-am:  distclean-libLTLIBRARIES distclean-noinstLTLIBRARIES \
 		distclean-compile distclean-libtool \
 		distclean-noinstPROGRAMS distclean-tags \
 		distclean-generic clean-am
@@ -520,8 +539,8 @@ distclean-am:  distclean-libLIBRARIES distclean-noinstLIBRARIES \
 
 distclean: distclean-am
 
-maintainer-clean-am:  maintainer-clean-libLIBRARIES \
-		maintainer-clean-noinstLIBRARIES \
+maintainer-clean-am:  maintainer-clean-libLTLIBRARIES \
+		maintainer-clean-noinstLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
 		maintainer-clean-noinstPROGRAMS maintainer-clean-tags \
 		maintainer-clean-generic distclean-am
@@ -530,22 +549,23 @@ maintainer-clean-am:  maintainer-clean-libLIBRARIES \
 
 maintainer-clean: maintainer-clean-am
 
-.PHONY: mostlyclean-libLIBRARIES distclean-libLIBRARIES \
-clean-libLIBRARIES maintainer-clean-libLIBRARIES uninstall-libLIBRARIES \
-install-libLIBRARIES mostlyclean-noinstLIBRARIES \
-distclean-noinstLIBRARIES clean-noinstLIBRARIES \
-maintainer-clean-noinstLIBRARIES mostlyclean-compile distclean-compile \
-clean-compile maintainer-clean-compile mostlyclean-libtool \
-distclean-libtool clean-libtool maintainer-clean-libtool \
-mostlyclean-noinstPROGRAMS distclean-noinstPROGRAMS \
-clean-noinstPROGRAMS maintainer-clean-noinstPROGRAMS install-man3 \
-uninstall-man3 install-man uninstall-man uninstall-includeHEADERS \
-install-includeHEADERS tags mostlyclean-tags distclean-tags clean-tags \
-maintainer-clean-tags distdir info-am info dvi-am dvi check-local check \
-check-am installcheck-am installcheck install-exec-am install-exec \
+.PHONY: mostlyclean-libLTLIBRARIES distclean-libLTLIBRARIES \
+clean-libLTLIBRARIES maintainer-clean-libLTLIBRARIES \
+uninstall-libLTLIBRARIES install-libLTLIBRARIES \
+mostlyclean-noinstLTLIBRARIES distclean-noinstLTLIBRARIES \
+clean-noinstLTLIBRARIES maintainer-clean-noinstLTLIBRARIES \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile mostlyclean-libtool distclean-libtool \
+clean-libtool maintainer-clean-libtool mostlyclean-noinstPROGRAMS \
+distclean-noinstPROGRAMS clean-noinstPROGRAMS \
+maintainer-clean-noinstPROGRAMS install-man3 uninstall-man3 install-man \
+uninstall-man uninstall-includeHEADERS install-includeHEADERS tags \
+mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
+distdir info-am info dvi-am dvi check-local check check-am \
+installcheck-am installcheck install-exec-am install-exec \
 install-data-local install-data-am install-data install-am install \
-uninstall-am uninstall all-local all-redirect all-am all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
+uninstall-am uninstall all-local all-redirect all-am all install-strip \
+installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
@@ -554,7 +574,10 @@ install-suid-programs:
 	for file in $$foo; do \
 	x=$(DESTDIR)$(bindir)/$$file; \
 	if chown 0:0 $$x && chmod u+s $$x; then :; else \
-	chmod 0 $$x; fi; done
+	echo "*"; \
+	echo "* Failed to install $$x setuid root"; \
+	echo "*"; \
+	fi; done
 
 install-exec-hook: install-suid-programs
 
@@ -566,8 +589,8 @@ install-build-headers:: $(include_HEADERS) $(build_HEADERZ)
 		else file="$$f"; fi; \
 		if cmp -s  $$file $(buildinclude)/$$f 2> /dev/null ; then \
 		: ; else \
-			echo " cp $$file $(buildinclude)/$$f"; \
-			cp $$file $(buildinclude)/$$f; \
+			echo " $(CP) $$file $(buildinclude)/$$f"; \
+			$(CP) $$file $(buildinclude)/$$f; \
 		fi ; \
 	done
 
@@ -636,87 +659,8 @@ dist-cat8-mans:
 
 dist-hook: dist-cat1-mans dist-cat3-mans dist-cat5-mans dist-cat8-mans
 
-install-cat1-mans:
-	@ext=1;\
-	foo='$(man1_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.1) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat1dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat1/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat3-mans:
-	@ext=3;\
-	foo='$(man3_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.3) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat3dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat3/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat5-mans:
-	@ext=5;\
-	foo='$(man5_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.5) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat5dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat5/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat8-mans:
-	@ext=8;\
-	foo='$(man8_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.8) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat8dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat8/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat-mans: install-cat1-mans install-cat3-mans install-cat5-mans install-cat8-mans
+install-cat-mans:
+	$(SHELL) $(top_srcdir)/cf/install-catman.sh "$(INSTALL_DATA)" "$(mkinstalldirs)" "$(srcdir)" "$(DESTDIR)$(mandir)" '$(CATMANEXT)' $(man_MANS) $(man1_MANS) $(man3_MANS) $(man5_MANS) $(man8_MANS)
 
 install-data-local: install-cat-mans
 
@@ -752,6 +696,11 @@ check-local::
 	  echo "$$dashes"; \
 	  test "$$failed" -eq 0; \
 	fi
+
+snprintf.c:
+	$(LN_S) $(srcdir)/../roken/snprintf.c .
+strdup.c:
+	$(LN_S) $(srcdir)/../roken/strdup.c .
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

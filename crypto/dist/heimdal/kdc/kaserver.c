@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kaserver.c,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $");
+RCSID("$Id: kaserver.c,v 1.1.1.1.2.1 2001/04/05 23:23:01 he Exp $");
 
 #ifdef KASERVER
 
@@ -277,9 +277,6 @@ create_reply_ticket (struct rx_header *hdr,
     krb5_generate_random_block(&fyrtiosjuelva, sizeof(fyrtiosjuelva));
     fyrtiosjuelva &= 0xffffffff;
     krb5_store_int32 (sp, fyrtiosjuelva);
-#if 0
-    krb5_store_int32 (sp, 4711); /* XXX */
-#endif
     krb5_store_int32 (sp, challenge);
     sp->store  (sp, session, 8);
     memset (&session, 0, sizeof(session));
@@ -436,7 +433,7 @@ do_authenticate (struct rx_header *hdr,
     }
 
     /* find a DES key */
-    ret = get_des_key(client_entry, &ckey);
+    ret = get_des_key(client_entry, TRUE, &ckey);
     if(ret){
 	kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	make_error_reply (hdr, KANOKEYS, reply);
@@ -444,7 +441,7 @@ do_authenticate (struct rx_header *hdr,
     }
 
     /* find a DES key */
-    ret = get_des_key(server_entry, &skey);
+    ret = get_des_key(server_entry, TRUE, &skey);
     if(ret){
 	kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	make_error_reply (hdr, KANOKEYS, reply);
@@ -471,6 +468,11 @@ do_authenticate (struct rx_header *hdr,
     reply_sp = krb5_storage_from_mem (request.data, 4);
     krb5_ret_int32 (reply_sp, &chal);
     krb5_storage_free (reply_sp);
+
+    if (abs(chal - kdc_time) > context->max_skew) {
+	make_error_reply (hdr, KACLOCKSKEW, reply);
+	goto out;
+    }
 
     /* life */
     max_life = end_time - kdc_time;
@@ -499,14 +501,10 @@ out:
 	free (name);
     if (instance)
 	free (instance);
-    if (client_entry) {
-	hdb_free_entry (context, client_entry);
-	free (client_entry);
-    }
-    if (server_entry) {
-	hdb_free_entry (context, server_entry);
-	free (server_entry);
-    }
+    if (client_entry)
+	free_ent (client_entry);
+    if (server_entry)
+	free_ent (server_entry);
 }
 
 static krb5_error_code
@@ -625,7 +623,7 @@ do_getticket (struct rx_header *hdr,
     }
 
     /* find a DES key */
-    ret = get_des_key(krbtgt_entry, &kkey);
+    ret = get_des_key(krbtgt_entry, TRUE, &kkey);
     if(ret){
 	kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	make_error_reply (hdr, KANOKEYS, reply);
@@ -633,7 +631,7 @@ do_getticket (struct rx_header *hdr,
     }
 
     /* find a DES key */
-    ret = get_des_key(server_entry, &skey);
+    ret = get_des_key(server_entry, TRUE, &skey);
     if(ret){
 	kdc_log(0, "%s", krb5_get_err_text(context, ret));
 	make_error_reply (hdr, KANOKEYS, reply);
@@ -652,6 +650,14 @@ do_getticket (struct rx_header *hdr,
 	char sname[ANAME_SZ];
 	char sinstance[SNAME_SZ];
 	u_int32_t paddress;
+
+	if (aticket.length > sizeof(ticket.dat)) {
+	    kdc_log(0, "ticket too long (%u > %u)",
+		    (unsigned)aticket.length,
+		    (unsigned)sizeof(ticket.dat));
+	    make_error_reply (hdr, KABADTICKET, reply);
+	    goto out;
+	}
 
 	ticket.length = aticket.length;
 	memcpy (ticket.dat, aticket.data, ticket.length);
@@ -733,14 +739,10 @@ out:
 	free (name);
     if (instance)
 	free (instance);
-    if (krbtgt_entry) {
-	hdb_free_entry (context, krbtgt_entry);
-	free (krbtgt_entry);
-    }
-    if (server_entry) {
-	hdb_free_entry (context, server_entry);
-	free (server_entry);
-    }
+    if (krbtgt_entry)
+	free_ent (krbtgt_entry);
+    if (server_entry)
+	free_ent (server_entry);
 }
 
 krb5_error_code

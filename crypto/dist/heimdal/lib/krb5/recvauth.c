@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: recvauth.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: recvauth.c,v 1.1.1.1.2.1 2001/04/05 23:23:14 he Exp $");
 
 /*
  * See `sendauth.c' for the format.
@@ -177,7 +177,7 @@ krb5_recvauth_match_version(krb5_context context,
     return errno;
 
   if (ap_options & AP_OPTS_MUTUAL_REQUIRED) {
-    ret = krb5_mk_rep (context, auth_context, &data);
+    ret = krb5_mk_rep (context, *auth_context, &data);
     if (ret)
       return ret;
 

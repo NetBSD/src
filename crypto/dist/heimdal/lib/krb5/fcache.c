@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: fcache.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: fcache.c,v 1.1.1.1.2.1 2001/04/05 23:23:12 he Exp $");
 
 typedef struct krb5_fcache{
     char *filename;
@@ -174,7 +174,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
     f = malloc(sizeof(*f));
     if(f == NULL)
 	return KRB5_CC_NOMEM;
-    file = strdup (KRB5_DEFAULT_CCFILE_ROOT);
+    asprintf (&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
     if(file == NULL) {
 	free(f);
 	return KRB5_CC_NOMEM;
@@ -336,12 +336,17 @@ init_fcc (krb5_context context,
     int fd;
     int8_t pvno, tag;
     krb5_storage *sp;
+    krb5_error_code ret;
 
     fd = open(fcache->filename, O_RDONLY | O_BINARY);
     if(fd < 0)
 	return errno;
     sp = krb5_storage_from_fd(fd);
-    krb5_ret_int8(sp, &pvno);
+    ret = krb5_ret_int8(sp, &pvno);
+    if(ret == KRB5_CC_END)
+	return ENOENT;
+    if(ret)
+	return ret;
     if(pvno != 5) {
 	krb5_storage_free(sp);
 	close(fd);

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: simple_exec.c,v 1.1.1.1 2000/06/16 18:32:36 thorpej Exp $");
+RCSID("$Id: simple_exec.c,v 1.1.1.1.2.1 2001/04/05 23:23:16 he Exp $");
 #endif
 
 #include <stdarg.h>
@@ -145,6 +145,23 @@ simple_execle(const char *file, ... /* ,char *const envp[] */)
     if(argv == NULL)
 	return -1;
     ret = simple_execve(file, argv, envp);
+    free(argv);
+    return ret;
+}
+
+int
+simple_execl(const char *file, ...) 
+{
+    va_list ap;
+    char **argv;
+    int ret;
+
+    va_start(ap, file);
+    argv = vstrcollect(&ap);
+    va_end(ap);
+    if(argv == NULL)
+	return -1;
+    ret = simple_execve(file, argv, environ);
     free(argv);
     return ret;
 }

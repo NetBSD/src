@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:48 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -16,22 +16,24 @@ LDADD = libhdb.la \
 	$(LIB_openldap) \
 	../krb5/libkrb5.la \
 	../asn1/libasn1.la \
-	../des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(DBLIB)
 
 lib_LTLIBRARIES = libhdb.la
-libhdb_la_LDFLAGS = -version-info 4:2:1
+libhdb_la_LDFLAGS = -version-info 7:0:0
 
-libhdb_la_SOURCES = 				\
-		    keytab.c			\
-		    hdb.c			\
-		    common.c			\
-		    db.c			\
-		    ndbm.c			\
-		    hdb-ldap.c			\
-		    print.c			\
-		    $(BUILT_SOURCES)
+libhdb_la_SOURCES =				\
+	common.c				\
+	db.c					\
+	db3.c					\
+	hdb-ldap.c				\
+	hdb.c					\
+	keytab.c				\
+	mkey.c					\
+	ndbm.c					\
+	print.c					\
+	$(BUILT_SOURCES)
 
 INCLUDES += $(INCLUDE_openldap)
 

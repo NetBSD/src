@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: kx.c,v 1.1.1.1 2000/06/16 18:31:43 thorpej Exp $");
+RCSID("$Id: kx.c,v 1.1.1.1.2.1 2001/04/05 23:22:49 he Exp $");
 
 static int nchild;
 static int donep;
@@ -98,7 +98,7 @@ connect_host (kx_context *kc)
     struct addrinfo hints;
     int error;
     char portstr[NI_MAXSERV];
-    int addrlen;
+    socklen_t addrlen;
     int s;
     struct sockaddr_storage thisaddr_ss;
     struct sockaddr *thisaddr = (struct sockaddr *)&thisaddr_ss;
@@ -445,11 +445,14 @@ doit_active (kx_context *kc)
 	fd_set fdset;
 	pid_t child;
 	int fd, thisfd = -1;
-	int zero = 0;
+	socklen_t zero = 0;
 
 	FD_ZERO(&fdset);
-	for (i = 0; i < nsockets; ++i)
+	for (i = 0; i < nsockets; ++i) {
+	    if (sockets[i].fd >= FD_SETSIZE) 
+		errx (1, "fd too large");
 	    FD_SET(sockets[i].fd, &fdset);
+	}
 	if (select(FD_SETSIZE, &fdset, NULL, NULL, NULL) <= 0)
 	    continue;
 	for (i = 0; i < nsockets; ++i)

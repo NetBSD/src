@@ -33,7 +33,7 @@
  *	@(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
-/* $Id: externs.h,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $ */
+/* $Id: externs.h,v 1.1.1.1.2.1 2001/04/05 23:22:54 he Exp $ */
 
 #ifndef	BSD
 # define BSD 43
@@ -182,7 +182,7 @@ extern jmp_buf
 int telnet_net_write(unsigned char *str, int len);
 void net_encrypt(void);
 int telnet_spin(void);
-char *telnet_getenv(char *val);
+char *telnet_getenv(const char *val);
 char *telnet_gets(char *prompt, char *result, int length, int echo);
 #endif
 

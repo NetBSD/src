@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb5_locl.h,v 1.1.1.1 2000/06/16 18:32:58 thorpej Exp $ */
+/* $Id: krb5_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:13 he Exp $ */
 
 #ifndef __KRB5_LOCL_H__
 #define __KRB5_LOCL_H__
@@ -109,11 +109,31 @@ struct sockaddr_dl;
 #include <parse_time.h>
 #include <base64.h>
 
+#ifdef HAVE_OPENSSL_DES_H
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
+#ifdef HAVE_OPENSSL_MD4_H
+#include <openssl/md4.h>
+#else
 #include <md4.h>
+#endif
+#ifdef HAVE_OPENSSL_MD5_H
+#include <openssl/md5.h>
+#else
 #include <md5.h>
+#endif
+#ifdef HAVE_OPENSSL_SHA_H
+#include <openssl/sha.h>
+#else
 #include <sha.h>
+#endif
+#ifdef HAVE_OPENSSL_RC4_H
+#include <openssl/rc4.h>
+#else
 #include <rc4.h>
+#endif
 
 #include <asn1.h>
 #include <der.h>
@@ -132,8 +152,5 @@ struct sockaddr_dl;
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
-
-int
-des_new_random_key __P((des_cblock *key));
 
 #endif /* __KRB5_LOCL_H__ */

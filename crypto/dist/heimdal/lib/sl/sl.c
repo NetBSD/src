@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,12 +33,17 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: sl.c,v 1.1.1.1 2000/06/16 18:32:33 thorpej Exp $");
+RCSID("$Id: sl.c,v 1.1.1.1.2.1 2001/04/05 23:23:18 he Exp $");
 #endif
 
 #include "sl_locl.h"
+#include <setjmp.h>
 
-static size_t __attribute__ ((unused))
+static size_t
+print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
+    __attribute__ ((unused));
+
+static size_t
 print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
 {
     if(mdoc){
@@ -269,9 +274,28 @@ sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
     return 0;
 }
 
+static jmp_buf sl_jmp;
+
+static void sl_sigint(int sig)
+{
+    longjmp(sl_jmp, 1);
+}
+
+static char *sl_readline(const char *prompt)
+{
+    char *s;
+    void (*old)(int);
+    old = signal(SIGINT, sl_sigint);
+    if(setjmp(sl_jmp))
+	printf("\n");
+    s = readline((char*)prompt);
+    signal(SIGINT, old);
+    return s;
+}
+
 /* return values: 0 on success, -1 on fatal error, or return value of command */
 int
-sl_command_loop(SL_cmd *cmds, char *prompt, void **data)
+sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
 {
     int ret = 0;
     char *buf;
@@ -279,7 +303,7 @@ sl_command_loop(SL_cmd *cmds, char *prompt, void **data)
     char **argv;
 	
     ret = 0;
-    buf = readline(prompt);
+    buf = sl_readline(prompt);
     if(buf == NULL)
 	return 1;
 
@@ -304,7 +328,7 @@ sl_command_loop(SL_cmd *cmds, char *prompt, void **data)
 }
 
 int 
-sl_loop(SL_cmd *cmds, char *prompt)
+sl_loop(SL_cmd *cmds, const char *prompt)
 {
     void *data = NULL;
     int ret;
@@ -314,7 +338,7 @@ sl_loop(SL_cmd *cmds, char *prompt)
 }
 
 void
-sl_apropos (SL_cmd *cmd, char *topic)
+sl_apropos (SL_cmd *cmd, const char *topic)
 {
     for (; cmd->name != NULL; ++cmd)
         if (cmd->usage != NULL && strstr(cmd->usage, topic) != NULL)

@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb.c,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $");
+RCSID("$Id: hdb.c,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $");
 
 struct hdb_method {
     const char *prefix;
@@ -41,20 +41,20 @@ struct hdb_method {
 };
 
 static struct hdb_method methods[] = {
-#if HAVE_DB_H
+#ifdef HAVE_DB_H
     {"db:",	hdb_db_create},
 #endif
-#if HDB_NDBM_H
+#if defined(HAVE_NDBM_H) || defined(HAVE_GDBM_NDBM_H)
     {"ndbm:",	hdb_ndbm_create},
 #endif
-#if OPENLDAP
+#ifdef OPENLDAP
     {"ldap:",	hdb_ldap_create},
 #endif
-#if HAVE_DB_H
+#ifdef HAVE_DB_H
     {"",	hdb_db_create},
-#elif HAVE_NDBM_H
+#elif defined(HAVE_NDBM_H)
     {"",	hdb_ndbm_create},
-#elif OPENLDAP
+#elif defined(OPENLDAP)
     {"",	hdb_ldap_create},
 #endif
     {NULL,	NULL}
@@ -62,13 +62,13 @@ static struct hdb_method methods[] = {
 
 krb5_error_code
 hdb_next_enctype2key(krb5_context context,
-		     hdb_entry *e,
+		     const hdb_entry *e,
 		     krb5_enctype enctype,
 		     Key **key)
 {
     Key *k;
     
-    for (k = *key ? *key : e->keys.val; 
+    for (k = *key ? (*key) + 1 : e->keys.val;
 	 k < e->keys.val + e->keys.len; 
 	 k++)
 	if(k->key.keytype == enctype){
@@ -88,108 +88,6 @@ hdb_enctype2key(krb5_context context,
     return hdb_next_enctype2key(context, e, enctype, key);
 }
 
-/* this is a bit ugly, but will get better when the crypto framework
-   gets fixed */
-
-krb5_error_code
-hdb_process_master_key(krb5_context context, EncryptionKey key, 
-		       krb5_data *schedule)
-{
-    krb5_error_code ret;
-
-    if(key.keytype != ETYPE_DES_CBC_MD5)
-	return KRB5_PROG_KEYTYPE_NOSUPP;
-
-    ret = krb5_data_alloc (schedule, sizeof(des_key_schedule));
-    if (ret)
-	return ret;
-
-    des_set_key((des_cblock*)key.keyvalue.data, schedule->data);
-    return 0;
-}
-
-krb5_error_code
-hdb_read_master_key(krb5_context context, const char *filename, 
-		    EncryptionKey *key)
-{
-    FILE *f;
-    unsigned char buf[256];
-    size_t len;
-    krb5_error_code ret;
-    if(filename == NULL)
-	filename = HDB_DB_DIR "/m-key";
-    f = fopen(filename, "r");
-    if(f == NULL)
-	return errno;
-    len = fread(buf, 1, sizeof(buf), f);
-    if(ferror(f))
-	ret = errno;
-    else
-	ret = decode_EncryptionKey(buf, len, key, &len);
-    fclose(f);
-    memset(buf, 0, sizeof(buf));
-    return ret;
-}
-
-void
-_hdb_unseal_keys_int(hdb_entry *ent, int key_version, krb5_data schedule)
-{
-    int i;
-    for(i = 0; i < ent->keys.len; i++){
-	des_cblock iv;
-	int num = 0;
-	if(ent->keys.val[i].mkvno == NULL)
-	    continue;
-	if(*ent->keys.val[i].mkvno != key_version)
-	    ;
-	memset(&iv, 0, sizeof(iv));
-	
-	des_cfb64_encrypt(ent->keys.val[i].key.keyvalue.data, 
-			  ent->keys.val[i].key.keyvalue.data, 
-			  ent->keys.val[i].key.keyvalue.length, 
-			  schedule.data, &iv, &num, 0);
-	free(ent->keys.val[i].mkvno);
-	ent->keys.val[i].mkvno = NULL;
-    }
-}
-
-void
-hdb_unseal_keys(HDB *db, hdb_entry *ent)
-{
-    if (db->master_key_set == 0)
-	return;
-    _hdb_unseal_keys_int(ent, db->master_key_version, db->master_key);
-}
-
-void
-_hdb_seal_keys_int(hdb_entry *ent, int key_version, krb5_data schedule)
-{
-    int i;
-    for(i = 0; i < ent->keys.len; i++){
-	des_cblock iv;
-	int num = 0;
-
-	if(ent->keys.val[i].mkvno != NULL)
-	    continue;
-	memset(&iv, 0, sizeof(iv));
-	des_cfb64_encrypt(ent->keys.val[i].key.keyvalue.data, 
-			  ent->keys.val[i].key.keyvalue.data, 
-			  ent->keys.val[i].key.keyvalue.length, 
-			  schedule.data, &iv, &num, 1);
-	ent->keys.val[i].mkvno = malloc(sizeof(*ent->keys.val[i].mkvno));
-	*ent->keys.val[i].mkvno = key_version;
-    }
-}
-
-void
-hdb_seal_keys(HDB *db, hdb_entry *ent)
-{
-    if (db->master_key_set == 0)
-	return;
-    
-    _hdb_seal_keys_int(ent, db->master_key_version, db->master_key);
-}
-
 void
 hdb_free_key(Key *key)
 {
@@ -204,7 +102,8 @@ hdb_free_key(Key *key)
 krb5_error_code
 hdb_lock(int fd, int operation)
 {
-    int i, code;
+    int i, code = 0;
+
     for(i = 0; i < 3; i++){
 	code = flock(fd, (operation == HDB_RLOCK ? LOCK_SH : LOCK_EX) | LOCK_NB);
 	if(code == 0 || errno != EWOULDBLOCK)
@@ -338,54 +237,4 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
     if (h == NULL)
 	krb5_errx(context, 1, "No database support! (hdb_create)");
     return (*h->create)(context, db, residual);
-}
-
-krb5_error_code
-hdb_set_master_key (krb5_context context,
-		    HDB *db,
-		    EncryptionKey key)
-{
-    krb5_error_code ret;
-
-    ret = hdb_process_master_key(context, key, &db->master_key);
-    if (ret)
-	return ret;
-#if 0 /* XXX - why? */
-    des_set_random_generator_seed(key.keyvalue.data);
-#endif
-    db->master_key_set = 1;
-    db->master_key_version = 0; /* XXX */
-    return 0;
-}
-
-krb5_error_code
-hdb_set_master_keyfile (krb5_context context,
-			HDB *db,
-			const char *keyfile)
-{
-    EncryptionKey key;
-    krb5_error_code ret;
-
-    ret = hdb_read_master_key(context, keyfile, &key);
-    if (ret) {
-	if (ret != ENOENT)
-	    return ret;
-	return 0;
-    }
-    ret = hdb_set_master_key(context, db, key);
-    memset(key.keyvalue.data, 0, key.keyvalue.length);
-    free_EncryptionKey(&key);
-    return ret;
-}
-
-krb5_error_code
-hdb_clear_master_key (krb5_context context,
-		      HDB *db)
-{
-    if (db->master_key_set) {
-	memset(db->master_key.data, 0, db->master_key.length);
-	krb5_data_free(&db->master_key);
-	db->master_key_set = 0;
-    }
-    return 0;
 }

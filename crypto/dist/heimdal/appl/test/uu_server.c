@@ -32,7 +32,7 @@
  */
 
 #include "test_locl.h"
-RCSID("$Id: uu_server.c,v 1.1.1.1 2000/06/16 18:31:47 thorpej Exp $");
+RCSID("$Id: uu_server.c,v 1.1.1.1.2.1 2001/04/05 23:22:56 he Exp $");
 
 krb5_context context;
 
@@ -40,7 +40,7 @@ static int
 proto (int sock, const char *service)
 {
     struct sockaddr_in remote, local;
-    int addrlen;
+    socklen_t addrlen;
     krb5_address remote_addr, local_addr;
     krb5_ccache ccache;
     krb5_auth_context auth_context;

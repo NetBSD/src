@@ -1,4 +1,4 @@
-dnl $Id: krb-version.m4,v 1.1.1.1 2000/06/16 18:32:18 thorpej Exp $
+dnl $Id: krb-version.m4,v 1.1.1.1.2.1 2001/04/05 23:22:57 he Exp $
 dnl
 dnl
 dnl output a C header-file with some version strings
@@ -6,8 +6,8 @@ dnl
 AC_DEFUN(AC_KRB_VERSION,[
 dnl AC_OUTPUT_COMMANDS([
 cat > include/newversion.h.in <<FOOBAR
-char *${PACKAGE}_long_version = "@(#)\$Version: $PACKAGE-$VERSION by @USER@ on @HOST@ ($host) @DATE@ \$";
-char *${PACKAGE}_version = "$PACKAGE-$VERSION";
+const char *${PACKAGE}_long_version = "@(#)\$Version: $PACKAGE-$VERSION by @USER@ on @HOST@ ($host) @DATE@ \$";
+const char *${PACKAGE}_version = "$PACKAGE-$VERSION";
 FOOBAR
 
 if test -f include/version.h && cmp -s include/newversion.h.in include/version.h.in; then

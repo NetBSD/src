@@ -32,7 +32,7 @@
  */
 
 #include "krb5_locl.h"
-RCSID("$Id: config_file.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: config_file.c,v 1.1.1.1.2.1 2001/04/05 23:23:12 he Exp $");
 
 #ifndef HAVE_NETINFO
 
@@ -210,7 +210,7 @@ krb5_config_parse_file_debug (const char *fname,
     krb5_config_section *s;
     krb5_config_binding *b;
     char buf[BUFSIZ];
-    int ret;
+    int ret = 0;
 
     s = NULL;
     b = NULL;
@@ -218,7 +218,7 @@ krb5_config_parse_file_debug (const char *fname,
     f = fopen (fname, "r");
     if (f == NULL) {
 	*error_message = "cannot open file";
-	return -1;
+	return ENOENT;
     }
     *res = NULL;
     while (fgets(buf, sizeof(buf), f) != NULL) {
@@ -234,20 +234,23 @@ krb5_config_parse_file_debug (const char *fname,
 	    continue;
 	if (*p == '[') {
 	    ret = parse_section(p, &s, res, error_message);
-	    if (ret)
-		return ret;
+	    if (ret) {
+		goto out;
+	    }
 	    b = NULL;
 	} else if (*p == '}') {
 	    *error_message = "unmatched }";
-	    return -1;
+	    ret = -1;
+	    goto out;
 	} else if(*p != '\0') {
 	    ret = parse_binding(f, lineno, p, &b, &s->u.list, error_message);
 	    if (ret)
-		return ret;
+		goto out;
 	}
     }
+out:
     fclose (f);
-    return 0;
+    return ret;
 }
 
 krb5_error_code

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_safe.c,v 1.1.1.1 2000/06/16 18:33:00 thorpej Exp $");
+RCSID("$Id: mk_safe.c,v 1.1.1.1.2.1 2001/04/05 23:23:14 he Exp $");
 
 krb5_error_code
 krb5_mk_safe(krb5_context context,
@@ -64,7 +64,7 @@ krb5_mk_safe(krb5_context context,
   usec2                  = usec2;
   s.safe_body.usec       = &usec2;
   if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
-      tmp_seq = ++auth_context->local_seqnumber;
+      tmp_seq = auth_context->local_seqnumber;
       s.safe_body.seq_number = &tmp_seq;
   } else 
       s.safe_body.seq_number = NULL;
@@ -76,13 +76,20 @@ krb5_mk_safe(krb5_context context,
   s.cksum.checksum.data   = NULL;
   s.cksum.checksum.length = 0;
 
-
   buf_size = length_KRB_SAFE(&s);
   buf = malloc(buf_size + 128); /* add some for checksum */
   if(buf == NULL)
       return ENOMEM;
   ret = encode_KRB_SAFE (buf + buf_size - 1, buf_size, &s, &len);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_create_checksum(context, 
 			     crypto,
 			     KRB5_KU_KRB_SAFE_CKSUM,
@@ -111,5 +118,8 @@ krb5_mk_safe(krb5_context context,
   }
   memcpy (outbuf->data, buf + buf_size - len, len);
   free (buf);
+  if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE)
+      auth_context->local_seqnumber =
+	  (auth_context->local_seqnumber + 1) & 0xFFFFFFFF;
   return 0;
 }
