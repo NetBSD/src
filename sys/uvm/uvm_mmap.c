@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.69 2003/02/23 14:37:38 pk Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.70 2003/03/06 00:41:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.69 2003/02/23 14:37:38 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.70 2003/03/06 00:41:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1041,6 +1041,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;
+	vaddr_t align = 0;
 	int error;
 	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
@@ -1068,6 +1069,30 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
 		(void) uvm_unmap(map, *addr, *addr + size);
+	}
+
+	/*
+	 * Try to see if any requested alignment can even be attemped.
+	 * Make sure we can express the alignment (asking for a >= 4GB
+	 * alignment on an ILP32 architecure make no sense) and the
+	 * alignment is at least for a page sized quanitiy.  If the
+	 * request was for a fixed mapping, make sure supplied address
+	 * adheres to the request alignment.
+	 */
+	align = (flags & MAP_ALIGNMENT_MASK) >> MAP_ALIGNMENT_SHIFT;
+	if (align) {
+		if (align >= sizeof(vaddr_t) * NBBY)
+			return(EINVAL);
+		align = 1L << align;
+		if (align < PAGE_SIZE)
+			return(EINVAL);
+		if (align >= map->max_offset)
+			return(ENOMEM);
+		if (flags & MAP_FIXED) {
+			if ((*addr & (align-1)) != 0)
+				return(EINVAL);
+			align = 0;
+		}
 	}
 
 	/*
@@ -1140,7 +1165,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
 			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
 			advice, uvmflag);
-	error = uvm_map(map, addr, size, uobj, foff, 0, uvmflag);
+	error = uvm_map(map, addr, size, uobj, foff, align, uvmflag);
 	if (error) {
 		if (uobj)
 			uobj->pgops->pgo_detach(uobj);
