@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: fstat.c,v 1.11 1994/06/13 22:12:13 mycroft Exp $";
+static char *rcsid = "$Id: fstat.c,v 1.12 1994/12/24 16:38:43 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -638,16 +638,16 @@ socktrans(sock, i)
 					    so.so_pcb);
 					goto bad;
 				}
-				printf(" %x", (int)inpcb.inp_ppcb);
+				printf(" %lx", (long)inpcb.inp_ppcb);
 			}
 		}
 		else if (so.so_pcb)
-			printf(" %x", (int)so.so_pcb);
+			printf(" %lx", (long)so.so_pcb);
 		break;
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
-			printf(" %x", (int)so.so_pcb);
+			printf(" %lx", (long)so.so_pcb);
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
 			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
 				dprintf(stderr, "can't read unpcb at %x\n",
@@ -664,14 +664,14 @@ socktrans(sock, i)
 				if (!(so.so_state & SS_CANTSENDMORE))
 					*cp++ = '>';
 				*cp = '\0';
-				printf(" %s %x", shoconn,
-				    (int)unpcb.unp_conn);
+				printf(" %s %lx", shoconn,
+				    (long)unpcb.unp_conn);
 			}
 		}
 		break;
 	default:
 		/* print protocol number and socket address */
-		printf(" %d %x", proto.pr_protocol, (int)sock);
+		printf(" %d %lx", proto.pr_protocol, (long)sock);
 	}
 	printf("\n");
 	return;
