@@ -10,7 +10,7 @@
 ##      - dump handles properly the 'nodump' flag, an that restore can
 ##        properly restore the filesystem.
 ##
-##    This is derived from work done by Brian Grayson, submitted in PR xxxx.
+##    This is derived from work done by Brian Grayson, submitted in PR 6706.
 
 TMPL=/tmp/ffstemplate
 TMPMP=/tmp/ffsregresstest_mount
