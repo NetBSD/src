@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.35 2004/11/17 15:40:50 fvdl Exp $	*/
+/*	$NetBSD: atactl.c,v 1.36 2005/01/17 13:00:32 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.35 2004/11/17 15:40:50 fvdl Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.36 2005/01/17 13:00:32 dogcow Exp $");
 #endif
 
 
@@ -242,6 +242,7 @@ static const struct {
 	{   3,		"Spin-up time" },
 	{   4,		"Start/stop count" },
 	{   5,		"Reallocated sector count" },
+	{   6,		"Read channel margin" },
 	{   7,		"Seek error rate" },
 	{   8,		"Seek time performance" },
 	{   9,		"Power-on hours count" },
