@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.18 2002/10/16 03:46:08 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.19 2002/10/17 00:32:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.18 2002/10/16 03:46:08 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.19 2002/10/17 00:32:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,8 @@ list(void)
 			 * we need to read, to get the real filename
 			 */
 			off_t cnt;
-			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			    ? -1 : -2, &cnt));
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
 		}
@@ -205,7 +206,8 @@ extract(void)
 			/*
 			 * we need to read, to get the real filename
 			 */
-			if (!(*frmt->rd_data)(arcn, -1, &cnt));
+			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			    ? -1 : -2, &cnt));
 				(void)rd_skip(cnt + arcn->pad);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.28 2002/10/16 18:53:40 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.29 2002/10/17 00:32:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.28 2002/10/16 18:53:40 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.29 2002/10/17 00:32:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: tar.c,v 1.28 2002/10/16 18:53:40 christos Exp $");
  * Routines for reading, writing and header identify of various versions of tar
  */
 
+static void expandname(ARCHD *, const char *, const char *);
 static void longlink(ARCHD *);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
@@ -85,8 +86,10 @@ int is_gnutar;				/* behave like gnu tar; enable gnu
 					 * extensions and skip end-ofvolume
 					 * checks
 					 */
-char *gnu_hack_string;			/* ././@LongLink hackery */
-int gnu_hack_len;			/* len of gnu_hack_string */
+static char *gnu_hack_string;		/* ././@LongLink hackery */
+static int gnu_hack_len;		/* len of gnu_hack_string */
+char *gnu_name_string;			/* ././@LongLink hackery name */
+char *gnu_link_string;			/* ././@LongLink hackery name */
 
 /*
  * tar_endwr()
@@ -402,22 +405,16 @@ tar_rd(ARCHD *arcn, char *buf)
 	 */
 	if (tar_id(buf, BLKMULT) < 0)
 		return(-1);
+	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
-	arcn->sb.st_nlink = 1;
 	arcn->pat = NULL;
+	arcn->sb.st_nlink = 1;
 
 	/*
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	if (gnu_hack_string) {
-		arcn->nlen = strlcpy(arcn->name, gnu_hack_string,
-		    sizeof(arcn->name));
-		free(gnu_hack_string);
-		gnu_hack_string = NULL;
-	} else {
-		arcn->nlen = strlcpy(arcn->name, hd->name, sizeof(arcn->name));
-	}
+	expandname(arcn, hd->name, hd->linkname);
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
@@ -440,8 +437,6 @@ tar_rd(ARCHD *arcn, char *buf)
 		 * the st_mode so -v printing will look correct.
 		 */
 		arcn->type = PAX_SLK;
-		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name));
 		arcn->sb.st_mode |= S_IFLNK;
 		break;
 	case LNKTYPE:
@@ -451,8 +446,6 @@ tar_rd(ARCHD *arcn, char *buf)
 		 */
 		arcn->type = PAX_HLK;
 		arcn->sb.st_nlink = 2;
-		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name));
 
 		/*
 		 * no idea of what type this thing really points at, but
@@ -472,8 +465,6 @@ tar_rd(ARCHD *arcn, char *buf)
 			arcn->type = PAX_GLF;
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 		arcn->skip = arcn->sb.st_size;
-		arcn->ln_name[0] = '\0';
-		arcn->ln_nlen = 0;
 		break;
 	case AREGTYPE:
 	case REGTYPE:
@@ -484,8 +475,6 @@ tar_rd(ARCHD *arcn, char *buf)
 		 * Note: V7 tar doesn't actually have DIRTYPE, but it was
 		 * reported that V7 archives using USTAR directories do exist.
 		 */
-		arcn->ln_name[0] = '\0';
-		arcn->ln_nlen = 0;
 		if (*pt == '/' || hd->linkflag == DIRTYPE) {
 			/*
 			 * it is a directory, set the mode for -v printing
@@ -765,10 +754,11 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 */
 	if (ustar_id(buf, BLKMULT) < 0)
 		return(-1);
+
+	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
-	arcn->sb.st_nlink = 1;
 	arcn->pat = NULL;
-	arcn->nlen = 0;
+	arcn->sb.st_nlink = 1;
 	hd = (HD_USTAR *)buf;
 
 	/*
@@ -782,11 +772,11 @@ ustar_rd(ARCHD *arcn, char *buf)
 		*dest++ = '/';
 		cnt++;
 	}
-	if (gnu_hack_string) {
-		arcn->nlen = strlcpy(dest, gnu_hack_string,
+	if (gnu_name_string) {
+		arcn->nlen = strlcpy(dest, gnu_name_string,
 		    sizeof(arcn->name) - cnt);
-		free(gnu_hack_string);
-		gnu_hack_string = NULL;
+		free(gnu_name_string);
+		gnu_name_string = NULL;
 	} else {
 		arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
 	}
@@ -817,8 +807,6 @@ ustar_rd(ARCHD *arcn, char *buf)
 	/*
 	 * set the defaults, these may be changed depending on the file type
 	 */
-	arcn->ln_name[0] = '\0';
-	arcn->ln_nlen = 0;
 	arcn->pad = 0;
 	arcn->skip = 0;
 	arcn->sb.st_rdev = (dev_t)0;
@@ -873,11 +861,6 @@ ustar_rd(ARCHD *arcn, char *buf)
 			arcn->sb.st_mode |= S_IFREG;
 			arcn->sb.st_nlink = 2;
 		}
-		/*
-		 * copy the link name
-		 */
-		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name));
 		break;
 	case LONGLINKTYPE:
 		if (is_gnutar)
@@ -893,8 +876,6 @@ ustar_rd(ARCHD *arcn, char *buf)
 				arcn->type = PAX_GLF;
 			arcn->pad = TAR_PAD(arcn->sb.st_size);
 			arcn->skip = arcn->sb.st_size;
-			arcn->ln_name[0] = '\0';
-			arcn->ln_nlen = 0;
 		} else {
 			tty_warn(1, "GNU Long %s found in posix ustar archive.",
 			    hd->typeflag == LONGLINKTYPE ? "Link" : "File");
@@ -917,6 +898,27 @@ ustar_rd(ARCHD *arcn, char *buf)
 	return(0);
 }
 
+static void
+expandname(ARCHD *arcn, const char *name, const char *linkname)
+{
+	if (gnu_name_string) {
+		arcn->nlen = strlcpy(arcn->name, gnu_name_string,
+		    sizeof(arcn->name));
+		free(gnu_name_string);
+		gnu_name_string = NULL;
+	} else {
+		arcn->nlen = strlcpy(arcn->name, name, sizeof(arcn->name));
+	}
+	if (gnu_link_string) {
+		arcn->ln_nlen = strlcpy(arcn->ln_name, gnu_link_string,
+		    sizeof(arcn->ln_name));
+		free(gnu_link_string);
+		gnu_link_string = NULL;
+	} else {
+		arcn->ln_nlen = strlcpy(arcn->ln_name, linkname,
+		    sizeof(arcn->ln_name));
+	}
+}
 
 static void
 longlink(ARCHD *arcn)
