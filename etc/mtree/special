@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.41 2001/10/02 00:16:36 lukem Exp $
+#	$NetBSD: special,v 1.42 2001/10/02 00:26:07 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -119,7 +119,7 @@ rc.conf		type=file mode=0644 uname=root gname=wheel
 # XXX support rc.d/*
 # XXX support rc.conf.d/*
 rc.lkm		type=file mode=0644 uname=root gname=wheel
-rc.local	type=file mode=0644 uname=root gname=wheel
+rc.local	type=file mode=0644 uname=root gname=wheel optional
 rc.shutdown	type=file mode=0644 uname=root gname=wheel
 rc.shutdown.local	type=file mode=0644 uname=root gname=wheel optional
 rc.subr		type=file mode=0644 uname=root gname=wheel
