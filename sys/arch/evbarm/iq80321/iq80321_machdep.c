@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.19 2003/04/30 18:12:03 thorpej Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.20 2003/05/02 23:22:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -380,7 +380,9 @@ initarm(void *arg)
 	int loop1;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
+#ifndef ARM32_PMAP_NEW
 	pv_addr_t kernel_ptpt;
+#endif
 	paddr_t memstart;
 	psize_t memsize;
 
@@ -530,8 +532,10 @@ initarm(void *arg)
 	 */
 	alloc_pages(systempage.pv_pa, 1);
 
+#ifndef ARM32_PMAP_NEW
 	/* Allocate a page for the page table to map kernel page tables. */
 	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
+#endif
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -587,7 +591,9 @@ initarm(void *arg)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+#ifndef ARM32_PMAP_NEW
 	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
+#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -649,13 +655,10 @@ initarm(void *arg)
 	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
 	    minidataclean.pv_pa);
 
+#ifndef ARM32_PMAP_NEW
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
-#ifndef ARM32_PMAP_NEW
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif
 
 	/*
 	 * Map entries in the page table used to map PTE's
@@ -667,19 +670,11 @@ initarm(void *arg)
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-#ifndef ARM32_PMAP_NEW
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#else
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif
 	}
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-#ifndef ARM32_PMAP_NEW
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#else
-	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#endif
 	pmap_map_entry(l1pagetable,
 	    trunc_page(PTE_BASE + (ARM_VECTORS_HIGH >> (PGSHIFT-2))),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
@@ -690,6 +685,7 @@ initarm(void *arg)
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
