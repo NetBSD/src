@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.22 2005/02/26 22:45:13 perry Exp $	*/
+/*	$NetBSD: key.c,v 1.23 2005/02/28 17:47:50 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.22 2005/02/26 22:45:13 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.23 2005/02/28 17:47:50 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -186,7 +186,7 @@ static const int minsize[] = {
 	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
 	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
 	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
-	sizeof(struct sadb_x_nat_t_oa),		/* SADB_X_EXT_NAT_T_OA */
+	sizeof(struct sadb_address),		/* SADB_X_EXT_NAT_T_OA */
 	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 static const int maxsize[] = {
@@ -213,7 +213,7 @@ static const int maxsize[] = {
 	sizeof(struct sadb_x_nat_t_type),	/* SADB_X_EXT_NAT_T_TYPE */
 	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_SPORT */
 	sizeof(struct sadb_x_nat_t_port),	/* SADB_X_EXT_NAT_T_DPORT */
-	sizeof(struct sadb_x_nat_t_oa),		/* SADB_X_EXT_NAT_T_OA */
+	0,					/* SADB_X_EXT_NAT_T_OA */
 	sizeof(struct sadb_x_nat_t_frag),	/* SADB_X_EXT_NAT_T_FRAG */
 };
 
