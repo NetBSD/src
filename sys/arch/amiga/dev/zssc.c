@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.12 1995/09/16 16:11:34 chopps Exp $	*/
+/*	$NetBSD: zssc.c,v 1.13 1995/10/09 15:20:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -187,7 +187,7 @@ zssc_dmaintr(sc)
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
-	add_sicallback (siopintr, sc, NULL);
+	add_sicallback((sifunc_t)siopintr, sc, NULL);
 	return(1);
 }
 

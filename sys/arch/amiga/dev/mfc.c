@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.7 1995/09/29 13:51:57 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.8 1995/10/09 15:20:33 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -993,8 +993,8 @@ mfcintr (scc)
 			scc->imask &= ~0x01;
 			regs->du_imr = scc->imask;
 			add_sicallback (tp->t_line ?
-			    linesw[tp->t_line].l_start : mfcsstart,
-			    tp, NULL);
+			    (sifunc_t)linesw[tp->t_line].l_start
+			    : (sifunc_t)mfcsstart, tp, NULL);
 
 		}
 		else
@@ -1008,8 +1008,8 @@ mfcintr (scc)
 			scc->imask &= ~0x10;
 			regs->du_imr = scc->imask;
 			add_sicallback (tp->t_line ?
-			    linesw[tp->t_line].l_start : mfcsstart,
-			    tp, NULL);
+			    (sifunc_t)linesw[tp->t_line].l_start
+			    : (sifunc_t)mfcsstart, tp, NULL);
 		}
 		else
 			regs->du_tbb = *sc->ptr++;
