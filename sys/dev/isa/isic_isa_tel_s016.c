@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16 and clones
  *	=================================================================
  *
- *	$Id: i4b_tel_s016.c,v 1.1.1.1 2001/01/05 12:50:16 martin Exp $ 
+ *	$Id: isic_isa_tel_s016.c,v 1.1 2001/02/18 13:54:33 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
