@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.35 1997/10/15 05:55:26 explorer Exp $	*/
+/*	$NetBSD: elink3.c,v 1.36 1997/10/18 00:15:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -80,6 +80,10 @@
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
+
+#ifdef DEBUG
+int epdebug = 0;
+#endif
 
 /*
  * Structure to map  media-present bits in boards to 
@@ -715,7 +719,8 @@ epsetmedia(sc, medium)
 		DELAY(1000);	/*  not strictly necessary? */
 		break;
 	case EPMEDIA_MII:
-		break;
+		/* XXX talk to phy? */
+	  	break;
 	default:
 #if defined(DEBUG)
 		printf("%s unknown media 0x%x\n", sc->sc_dev.dv_xname, medium);
@@ -738,15 +743,19 @@ epsetmedia(sc, medium)
 		    EP_W3_INTERNAL_CONFIG + 2);
 
 #if defined(DEBUG)
-		printf("%s:  read 0x%x, 0x%x from EP_W3_CONFIG register\n",
-		       sc->sc_dev.dv_xname, config0, config1);
+		if (epdebug) {
+			printf("%s:  read 0x%x, 0x%x from EP_W3_CONFIG register\n",
+			    sc->sc_dev.dv_xname, config0, config1);
+		}
 #endif
 		config1 = config1 & ~CONFIG_MEDIAMASK;
 		config1 |= (medium << CONFIG_MEDIAMASK_SHIFT);
 		
 #if defined(DEBUG)
-		printf("epsetmedia: %s: medium 0x%x, 0x%x to EP_W3_CONFIG\n",
-		    sc->sc_dev.dv_xname, medium, config1);
+		if (epdebug) {
+			printf("epsetmedia: %s: medium 0x%x, 0x%x to EP_W3_CONFIG\n",
+			    sc->sc_dev.dv_xname, medium, config1);
+		}
 #endif
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
