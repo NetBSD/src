@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.6 1998/11/19 15:38:26 mrg Exp $ */
+/* $NetBSD: sfb.c,v 1.7 1999/01/11 21:35:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.6 1998/11/19 15:38:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.7 1999/01/11 21:35:56 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,6 @@ int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 void	sfb_free_screen __P((void *, void *));
 void	sfb_show_screen __P((void *, void *));
-int	sfb_load_font __P((void *, void *, int, int, int, void *));
 
 struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
@@ -197,7 +196,7 @@ struct wsdisplay_accessops sfb_accessops = {
 	sfb_alloc_screen,
 	sfb_free_screen,
 	sfb_show_screen,
-	sfb_load_font
+	0 /* load_font */
 };
 
 int  sfb_cnattach __P((tc_addr_t));
@@ -496,16 +495,6 @@ sfb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-}
-
-int
-sfb_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return (EINVAL);
 }
 
 int
