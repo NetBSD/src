@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.28 1999/03/23 10:45:37 lukem Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.29 1999/04/22 04:50:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -55,8 +55,6 @@
 const char	netio[] = "netio";
 const char	netcon[] = "netcon";
 const char	netcls[] = "netcls";
-
-u_long	sb_max = SB_MAX;		/* patchable */
 
 /*
  * Procedures to manipulate state flags of socket
