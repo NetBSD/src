@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.61 2000/12/01 12:28:34 jdolecek Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.62 2000/12/01 19:20:56 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,9 @@
  * rights to redistribute these changes.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
