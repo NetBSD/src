@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# $NetBSD: isdnd,v 1.1 2001/01/07 17:04:50 martin Exp $
+#
+
+# PROVIDE: isdnd
+# REQUIRE: NETWORK syslogd mountcritremote
+
+. /etc/rc.subr
+
+name="isdnd"
+rcvar=$name
+required_files="/etc/isdn/${name}.rc"
+
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+
+load_rc_config $name
+run_rc_command "$1"
+
+# The isdn network interfaces could not be marked UP in the ifconfig.* files,
+# since the daemon wasn't available then. If we are doing start: now it's 
+# running, so figure which interfaces these applies to and UP them. 
+# If doing stop: down them (for symetry, and effectively they are down).
+
+case "$_arg" in
+  start)
+	ifflag="-d"
+	ifcmd="up"
+	;;
+  stop)
+	ifflag="-u"
+	ifcmd="down"
+	;;
+  *)
+	exit 0
+	;;
+esac
+
+tmp=`ifconfig -l $ifflag`
+for int in $tmp; do
+	# Check if the interface has been configured at all
+	# XXX - does this work with IPv6 ?
+	if ifconfig $int | fgrep inet >/dev/null; then
+		case $int in
+		isp*)
+			ifconfig $int $ifcmd
+			;;
+		ipr*)
+			ifconfig $int $ifcmd
+			;;
+		esac
+	fi
+done
