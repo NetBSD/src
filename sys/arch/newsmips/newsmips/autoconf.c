@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2003/05/25 14:02:49 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2003/06/14 16:18:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,8 @@
 #include <machine/romcall.h>
 
 #include <newsmips/newsmips/machid.h>
+
+#include "scsibus.h"
 
 /*
  * The following several variables are related to
@@ -154,6 +156,7 @@ findroot()
 	 * XXX assumes only one controller exists.
 	 */
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+#if NSCSIBUS > 0
 		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
 			struct scsibus_softc *sdv = (void *)dv;
 			struct scsipi_periph *periph;
@@ -167,5 +170,6 @@ findroot()
 			booted_partition = part;
 			return;
 		}
+#endif /* NSCSIBUS > 0 */
 	}
 }
