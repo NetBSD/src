@@ -1,4 +1,4 @@
-.\"	$NetBSD: fparseln.3,v 1.3 1997/11/24 06:28:52 lukem Exp $
+.\"	$NetBSD: fparseln.3,v 1.4 1997/12/01 02:58:40 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 23, 1997
+.Dd December 1, 1997
 .Dt FPARSELN 3
 .Os
 .Sh NAME
@@ -35,8 +35,11 @@
 .Nd return the next logical line from a stream
 .Sh SYNOPSIS
 .Fd #include <util.h>
-.Ft char *
-.Fn fparseln "FILE *stream" "size_t *len" "size_t *lineno" "const char delim[3]"
+.Ft "char *"
+.Fo "fparseln"
+.Fa "FILE *stream" "size_t *len" "size_t *lineno"
+.Fa "const char delim[3]" "int flags"
+.Fc
 .Sh DESCRIPTION
 The
 .Fn fparseln
@@ -48,8 +51,16 @@ This string is
 terminated and it is dynamicaly allocated on each invocation. It is the
 responsibility of the caller to free the pointer.
 .Pp
-The meaning of the other arguments is as follows:
+By default, if a character is escaped, both it and the preceeding escape
+character will be present in the returned string.
+Various
+.Fa flags
+alter this behaviour.
+.Pp
+The meaning of the arguments is as follows:
 .Bl -tag -width "lineno"
+.It Fa stream
+The stream to read from.
 .It Fa len
 If not
 .Dv NULL ,
@@ -88,9 +99,25 @@ The comment character, which defaults to
 if not escaped indicates the beginning of a comment that extends until the
 end of the current line.
 .El
+.It Fa flags
+If non-zero, alter the operation of
+.Fn fparseln .
+The various flags, which may be
+.Em or Ns -ed
+together, are:
+.Bl -tag -width "FPARSELN_UNESCCOMM"
+.It Dv FPARSELN_UNESCCOMM
+Remove escape preceeding an escaped comment.
+.It Dv FPARSELN_UNESCCONT
+Remove escape preceeding an escaped continuation.
+.It Dv FPARSELN_UNESCESC
+Remove escape preceeding an escaped escape.
+.It Dv FPARSELN_UNESCREST
+Remove escape preceeding any other character.
+.It Dv FPARSELN_UNESCALL
+All of the above.
+.El
 .Pp
-If a character is escaped, both it and the preceeding escape character
-will be present in the returned string. 
 .El
 .Sh RETURN VALUES
 Upon successful completion a pointer to the parsed line is returned;
