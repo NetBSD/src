@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.20 2000/05/28 06:02:13 gmcgarry Exp $
+# 	$NetBSD: R4000,v 1.21 2000/09/13 03:44:38 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -127,7 +127,6 @@ oldscsibus*	at asc?
 # SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
 #
 include 	"arch/pmax/conf/scsi.pmax"
-#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
 #########################################################################

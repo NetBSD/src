@@ -1,7 +1,7 @@
 #
 # Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.22 2000/02/12 03:36:33 thorpej Exp $
+# 	$NetBSD: DSG,v 1.23 2000/09/13 03:44:38 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -144,7 +144,6 @@ oldscsibus*	at asc?
 # SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
 #
 include 	"arch/pmax/conf/scsi.pmax"
-#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
 #########################################################################
