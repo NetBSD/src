@@ -42,7 +42,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.6 1994/08/06 22:08:32 deraadt Exp $
+ * $Id: pmap.h,v 1.7 1994/11/14 06:09:19 deraadt Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
@@ -170,8 +170,10 @@ extern pmap_t		kernel_pmap;
 
 void	pmap_bootstrap __P((int nmmu, int nctx));
 void	pmap_init __P((vm_offset_t phys_start, vm_offset_t phys_end));
-#endif /* KERNEL */
+int	pmap_count_ptes __P((struct pmap *));
 
-#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
+
+#endif /* KERNEL */
 
 #endif /* _SPARC_PMAP_H_ */
