@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.4 1998/07/27 00:52:03 mycroft Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.5 1998/07/27 15:14:05 mycroft Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -100,8 +100,7 @@ get_password(usrnam)
 {
 	struct passwd *p;
 	static struct passwd localp;
-	const char *pswd;
-	const char *ushell;
+	__aconst char *pswd, *ushell;
 
 
 #ifdef SHADOW_SUPPORT

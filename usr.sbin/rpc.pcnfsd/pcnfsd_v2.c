@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.7 1998/07/27 00:52:04 mycroft Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.8 1998/07/27 15:14:05 mycroft Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -479,7 +479,7 @@ fillin_extra_groups(uname, main_gid, len, extra_gids)
 	gid_t   extra_gids[EXTRAGIDLEN];
 {
 	struct group *grp;
-	const char *const *members;
+	__aconst char *__aconst *members;
 	int     n = 0;
 
 	setgrent();

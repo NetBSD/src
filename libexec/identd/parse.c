@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 1998/07/26 19:47:06 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 1998/07/27 15:11:06 mycroft Exp $	*/
 
 /*
 ** parse.c                         This file contains the protocol parser
@@ -630,7 +630,7 @@ int parse(fp, laddr, faddr)
     if (format_flag)
     {
       char *cp;
-      const char *const *gmp;
+      __aconst char *__aconst *gmp;
       int bp;
       char buff[512];
       for (cp = format, bp = 0; *cp != 0; cp++)
