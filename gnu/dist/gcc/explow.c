@@ -886,7 +886,7 @@ emit_stack_save (save_level, psave, after)
 #ifdef HAVE_save_stack_function
     case SAVE_FUNCTION:
       if (HAVE_save_stack_function)
-	fcn = gen_save_stack_function;
+	fcn = (rtx (*)PROTO((rtx,rtx)))gen_save_stack_function;
       break;
 #endif
 #ifdef HAVE_save_stack_nonlocal
@@ -967,7 +967,7 @@ emit_stack_restore (save_level, sa, after)
 #ifdef HAVE_restore_stack_function
     case SAVE_FUNCTION:
       if (HAVE_restore_stack_function)
-	fcn = gen_restore_stack_function;
+	fcn = (rtx (*)PROTO((rtx,rtx)))gen_restore_stack_function;
       break;
 #endif
 #ifdef HAVE_restore_stack_nonlocal
