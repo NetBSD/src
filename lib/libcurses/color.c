@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.10 2000/04/27 05:03:22 mycroft Exp $	*/
+/*	$NetBSD: color.c,v 1.11 2000/04/29 00:43:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.10 2000/04/27 05:03:22 mycroft Exp $");
+__RCSID("$NetBSD: color.c,v 1.11 2000/04/29 00:43:36 mycroft Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -143,9 +143,7 @@ start_color(void)
 		tputs(OC, 0, __cputchar);
 	if (OP != NULL) {
 		tputs(OP, 0, __cputchar);
-		/* Have we also switched off attributes? */
-		if (ME != NULL && !strcmp(OP, ME))
-			curscr->wattr &= ~__TERMATTR;
+		curscr->wattr &= __mask_OP;
 	}
 
 	/* Type of colour manipulation - ANSI/TEK/HP/other */
