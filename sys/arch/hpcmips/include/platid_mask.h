@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.22 2000/09/21 03:18:05 sato Exp $ */
+/* $Id: platid_mask.h,v 1.23 2000/10/21 07:30:34 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -248,6 +248,14 @@ extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E15;
 extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E55;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define CASIO_CASSIOPEIAE_E55 ((int)&platid_mask_MACH_CASIO_CASSIOPEIAE_E55)
+#endif
+extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_FORDOCOMO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_CASSIOPEIAE_FORDOCOMO ((int)&platid_mask_MACH_CASIO_CASSIOPEIAE_FORDOCOMO)
+#endif
+extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E65;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define CASIO_CASSIOPEIAE_E65 ((int)&platid_mask_MACH_CASIO_CASSIOPEIAE_E65)
 #endif
 extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_EXXX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
