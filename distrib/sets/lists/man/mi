@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532 2002/12/01 09:17:27 isaki Exp $
+# $NetBSD: mi,v 1.533 2002/12/08 21:57:50 perry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -297,6 +297,7 @@
 ./usr/share/man/cat1/pushd.0			man-util-catman
 ./usr/share/man/cat1/pwd.0			man-util-catman
 ./usr/share/man/cat1/pwhash.0			man-util-catman
+./usr/share/man/cat1/qsubst.0			man-util-catman
 ./usr/share/man/cat1/quota.0			man-util-catman
 ./usr/share/man/cat1/radioctl.0			man-audio-catman
 ./usr/share/man/cat1/rcmd.0			man-netutil-catman
@@ -2066,6 +2067,7 @@
 ./usr/share/man/man1/pushd.1			man-util-man
 ./usr/share/man/man1/pwd.1			man-util-man
 ./usr/share/man/man1/pwhash.1			man-util-man
+./usr/share/man/man1/qsubst.1			man-util-man
 ./usr/share/man/man1/quota.1			man-util-man
 ./usr/share/man/man1/radioctl.1			man-audio-man
 ./usr/share/man/man1/rcmd.1			man-netutil-man
