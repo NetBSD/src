@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.3 2000/07/09 10:35:12 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.4 2000/08/13 10:38:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ mca_conf_write(mc, slot, reg, data)
 #error mca_intr_(dis)establish: needs ISA to be configured into kernel
 #endif
 
+#if 0
 const struct evcnt *
 mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih)
 {
@@ -139,6 +140,7 @@ mca_intr_establish(mca_chipset_tag_t mc, mca_intr_handle_t ih)
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
 }
+#endif
 
 void *
 mca_intr_establish(mc, ih, level, func, arg)
