@@ -1,3 +1,400 @@
+Sun Mar 14 02:38:07 PST 1999 Jeff Law  (law@cygnus.com)
+
+	* egcs-1.1.2 Released.
+
+Sun Mar 14 03:23:47 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* README, gcc.1, gcc.texi, version.c: Update for egcs-1.1.2 release.
+
+Thu Mar 11 14:00:58 1999  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.h (HARD_REGNO_MODE_OK): Disallow QI/HImode in fp regs.
+	(MODES_TIEABLE_P): Update.
+
+Thu Mar 11 00:20:52 1999  Alexandre Oliva <oliva@dcc.unicamp.br>
+
+	* gcc.texi: Update bug reporting instructions to match
+	current ezmlm list reality.
+
+Mon Mar  8 01:19:23 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for prerelease.
+
+Mon Mar  8 01:16:30 1999  Manfred Hollstein  <manfred@s-direktnet.de>
+			  Jeff Law <law@cygnus.com>
+
+	* configure.in (cpp_install_dir): Initialize from $enable_cpp
+	if that's looking like a pathname.
+	* configure: Rebuilt.
+
+	* Makefile.in (install-cpp, uninstall-cpp): cpp_install_dir is an
+	absolute pathname, not a $prefix relative pathname.
+
+Fri Mar  5 01:19:22 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Thu Dec 17 18:21:49 1998  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+	* fixincludes (c_asm.h): Wrap Digital UNIX V4.0B DEC C specific
+	asm() etc. function declarations in __DECC.
+
+Wed Mar  3 23:55:14 1999  Zack Weinberg  <zack@rabi.columbia.edu>
+
+	* cpp.in: New.  Better cpp shell script.
+	* cpp.sh: Delete.
+	* Makefile.in (cpp.sh): Build from cpp.in
+
+Tue Mar  2 01:27:52 1999  H.J. Lu  (hjl@gnu.org)
+
+	* Makefile.in (cpp_install_dir, INSTALL_CPP, UNINSTALL_CPP): New
+	variables.
+	(install-cpp, uninstall-cpp): New targets.
+	(install-normal): Depend on $(INSTALL_CPP).
+	(uninstall): Depend on $(UNINSTALL_CPP).
+	* configure.in (cpp_install_dir): New, substitute.
+	(tmake_file): Added t-install-cpp for --enable-cpp.
+	* configure: Rebuilt.
+	* cpp.sh: New cpp script.
+	* config/t-install-cpp: New target fragment.
+
+Mon Mar  1 23:38:20 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Tue Feb  2 23:38:35 1999  David O'Brien <obrien@FreeBSD.org>
+	* i386/freebsd*.h now allows '$' in label names and does not use the
+	PCC struct return method.
+
+	Wed Dec 30 23:00:28 1998  David O'Brien <obrien@NUXI.com>
+        * configure.in (FreeBSD ELF): Needs special crt files.
+	* configure: Rebuilt.
+
+Sun Feb 28 14:47:53 1999  Arturo Montes  <mitosys@colomsat.com.co>
+
+        * config/i386/t-sco5gas (crti.o): New target.
+
+Sun Feb 28 00:50:28 1999  Franz Sirl <Franz.Sirl-kernel@lauterbach.com>
+			  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (fold_rtx): Update comments for (const (minus (label) (label)))
+	case.
+	(cse_insn): Avoid creating a bogus REG_EQUAL note for
+	(const (minus (label) (label)))
+	(record_jump_cond): Fix mismatched paren in comment.
+	
+Sat Feb 27 22:48:38 1999  H.J. Lu  (hjl@gnu.org)
+			  Jeffrey A Law  (law@cygnus.com)
+
+	* frame.h: Update some comments.
+	* crtstuff.c (TARGET_ATTRIBUTE_WEAK): Define.
+	(__register_frame_info, __deregister_frame_info): Declare using
+	TARGET_WEAK_ATTRIBUTE.
+	(__do_global_dtors_aux): Check if __deregister_frame_info is
+	zero before calling it.
+	(__do_global_dtors): Likewise.
+	(frame_dummy): Check if __register_frame_info is zero before
+	calling it.
+	(__frame_dummy): Likewise.
+	
+Sat Feb 27 19:47:39 1999  Marc Espie <espie@openbsd.org>
+
+	* config/t-openbsd (T_CFLAGS): Add -Dmkstemps=my_mkstemps.
+
+Sat Feb 27 19:37:04 1999  Arturo Montes  <mitosys@colomsat.com.co>
+
+	* i386/t-sco5 (crti.o): New target.
+	* i386/sco5.h (STARTFILE_SPEC): Include crti.o when 
+	linking -shared.
+	* configure.in (i[34567]86-*-sco3.2v5*): Add crti.o.
+	* configure: Rebuilt.
+
+Sat Feb 27 19:29:46 1999  Toon Moene  <toon@moene.indiv.nluug.nl>
+			  Mark Mitchell  <mark@markmitchell.com>
+			  Jeffrey A Law  (law@cygnus.com)
+
+	* alias.c (true_dependence): Only apply MEM_IN_STRUCT_P tests
+	when flag_structure_noalias is set.
+	* toplev.c (flag_structure_noalias): New variable.
+	(f_options): Add -fstructure-noalias.
+	* flags.h (flag_structure_noalias): Declare.
+	* invoke.texi: Update documentation.
+
+Sat Feb 27 19:19:36 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* SERVICE: Update from the FSF.
+
+Fri Feb 26 19:31:25 1999  Dave Love  <fx@gnu.org>
+
+	* md.texi, invoke.texi: Fix unterminated @xrefs.
+
+Fri Feb 26 01:47:46 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Sun Jan 17 03:20:47 1999  H.J. Lu  (hjl@gnu.org)
+	* reg-stack.c (subst_stack_regs_pat): Abort if the destination
+	of a FP conditional move is not on the FP register stack.
+
+	* Makefile.in (compare, gnucompare): We do not care about
+	comparison failures for objc/linking.o either.
+
+Wed Feb 24 23:17:41 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Thu Feb 18 19:59:37 1999  Marc Espie <espie@cvs.openbsd.org>
+	* configure.in :Handle OpenBSD platforms.
+	* configure: Rebuilt.
+	* config/openbsd.h: New file.
+	* config/xm-openbsd.h: New file.
+	* config/t-openbsd: New file.
+	* config/t-openbsd-thread: New file.
+
+	Thu Feb 18 13:15:56 1999  Marc Espie <espie@cvs.openbsd.org>
+	* alpha/openbsd.h: New file.
+	* alpha/xm-openbsd.h: New file.
+	* sparc/openbsd.h: New file.
+	* sparc/xm-openbsd.h: New file.
+	* m68k/openbsd.h: New file.
+	* m68k/xm-openbsd.h: New file.
+	* i386/openbsd.h: New file, originally from netbsd.
+	* i386/xm-openbsd.h: New file.
+
+	Wed Nov 19 12:56:54 1997  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+	* configure.in: Fix check for <inttypes.h>.
+	* configure: Rebuilt.
+
+	* varasm.c (declare_weak): If HANDLE_PRAGMA_WEAK, call
+	handle_pragma_weak.
+	
+Wed Feb 24 03:17:56 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for prerelease.
+
+	* Makefile.in (compare, gnucompare): Ignore comparison failures
+	for some objects in the ObjC runtime.
+
+Wed Feb 24 02:39:08 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Mon Dec  7 16:15:51 1998  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* sh.c (output_far_jump): Emit braf only for TARGET_SH2.
+
+	Mon Nov 23 16:46:46 1998  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* va-sh.h (__va_arg_sh1): Use __asm instead of asm.
+
+Tue Feb 23 00:38:17 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Thu Sep  3 00:23:21 1998  Richard Henderson  <rth@cygnus.com>
+	* ginclude/va-alpha.h: Protect entire second portion of the
+	file against double inclusion.
+
+	Mon Aug 31 13:57:55 1998  Richard Henderson  <rth@cygnus.com>
+	* alpha/va_list.h: New file.
+	* alpha/x-alpha (EXTRA_HEADERS): New.  Add va_list.h.
+
+	Sat Aug  1 17:59:30 1998  Richard Henderson  <rth@cygnus.com>
+	* ginclude/va-alpha.h (va_list): Use a typedef, not a define.
+
+Sun Feb 21 20:35:10 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Wed Oct 28 22:58:35 1998  Jason Merrill  <jason@yorick.cygnus.com>
+	* tree.c (append_random_chars): New fn.
+	(get_file_function_name_long): Use it.
+
+	Thu Aug 13 17:08:11 1998  Jason Merrill  <jason@yorick.cygnus.com>
+	* tree.c (get_file_function_name_long): Split out...
+	(get_file_function_name): ...from here.
+
+	* config/aoutos.h (ASM_OUTPUT_CONSTRUCTOR): Delete.
+	(ASM_OUTPUT_DESTRUCTOR, ASM_OUTPUT_GC_ENTRY): Likewise.
+	* tm.texi: Update docs for constructors and destructors.
+
+Tue Feb 16 21:02:07 1999  Anton Hartl <toni@devsoft.com>
+
+	* rs6000.md (call_value): Fix typo.
+
+Tue Feb 16 01:37:33 1999  Charles G Waldman  <cgw@alum.mit.edu>
+
+	* c-common.c (shorten_compare): Get the min/max value from the
+	underlying type of an enumeration, not the enumerated type itself.
+
+Mon Feb 15 11:33:51 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Sat Jan 16 21:48:17 1999  Marc Espie (Marc.Espie@openbsd.org)
+        * gcc.c: (do_spec_1): Fix obvious typo.
+
+	* jump.c: Include insn-attr.h.
+	(delete_computation): If reload has completed and insn scheduling
+	after reload is enabled, then do not depend on REG_DEAD notes.
+	* Makefile.in (jump.o): Depend on insn-attr.h.
+
+	* sparc.c (output_scc_insn): Add missing argument to output_cbranch.
+
+	* loop.c (mark_loop_jump): Handle LO_SUM.  If we encounter something
+	we do not understand, mark the loop and containing loops as invalid.
+
+Sun Feb 14 23:05:34 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Tue Feb  9 21:14:03 1999  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* alias.c (init_alias_analysis): Avoid self-referential value
+	when setting reg_known_value from REG_EQUAL notes.
+
+	Mon Aug 17 02:03:55 1998  Richard Henderson  <rth@cygnus.com>
+	* regclass.c (allocate_reg_info): Respect MIN when clearing data.
+
+	* loop.c (scan_loop): Fix typo in last change.
+
+Sat Feb 13 11:53:12 1999  Jeffrey A Law  (law@cygnus.com)
+
+	1999-02-05  Michael Meissner  <meissner@cygnus.com>
+		    J"orn Rennecke <amylaar@cygnus.co.uk>
+	* loop.c (check_dbra_loop): A store using an address giv for which
+	we have no life information is not reversible.
+	* loop.c (first_loop_store_insn): New file-scope variable.
+	(prescan_loop): Set it.
+	(check_dbra_loop): Check if a store depends on a register
+	that is set after the store.
+
+	Sun Jan 31 13:22:02 1999  John Wehle  (john@feith.com)
+	* i386.md (movsicc, movhicc, movsfcc, movdfcc,
+	movxfcc, movdicc): Delete unconstrained alternatives.
+	* i386.c (output_fp_conditional_move,
+	output_int_conditional_move): Delete unused case.
+
+	Tue Aug 18 10:33:30 1998  Jeffrey A Law  (law@cygnus.com)
+	* expr.c (emit_block_move): Do not call memcpy as a libcall
+	instead build up a CALL_EXPR and call it like any other
+	function.
+	(clear_storage): Similarly for memset.
+
+	Sun Sep 20 20:57:02 1998  Robert Lipe  <robertl@dgii.com>
+	* configure.in (i*86-*-sysv5*): Use fixinc.svr4 to patch byteorder
+	problems.
+	* configure: Regenerate.
+
+Fri Feb 12 23:20:54 1999  Michael P. Hayes  <michaelh@ongaonga.chch.cri.nz>
+
+	* loop.c (scan_loop): Call reg_in_basic_block_p before
+	loop_reg_used_before_p.
+
+Thu Feb 11 01:53:10 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Wed Nov 18 22:13:00 1998  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* expr.c (store_expr): Don't generate load-store pair
+	if TEMP is identical (according to ==) with TARGET.
+
+Thu Feb 11 01:06:49 1999  Nathan Sidwell  <nathan@acm.org>
+
+	* fold-const.c (range_binop): Take account of the bounded nature
+	of fixed length arithmetic when comparing unbounded ranges.
+
+Wed Feb 10 11:03:22 1999  Richard Henderson  <rth@cygnus.com>
+
+	* configure.in (alphaev6*): Fix typo in target_cpu_default2.
+
+Tue Feb  9 00:00:14 1999  Mark Kettenis  <kettenis@gnu.org>
+
+	* configure.in (i[34567]86-*gnu*): Set float_format to i386.
+	* configure: Rebuilt.
+
+Sat Feb  6 16:03:36 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* invoke.texi, expr.c: Update email addresses.
+
+	* gcc.c, gcc.texi: Update email addresses.
+
+Sat Jan 30 05:27:25 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Thu Jan 21 01:59:30 1999  Richard Henderson  <rth@cygnus.com>
+	* explow.c (allocate_dynamic_stack_space): Use register_operand
+	instead of arith_operand, which does not exist.
+
+Thu Jan 28 09:44:04 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in (hppa1.0-hp-hpux10*): Use t-pa.
+	* configure: Rebuilt.
+
+Thu Jan 21 23:27:06 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* m68k.md (ashldi_const): Disable for !TARGET_5200.  Fix indention.
+	(ashldi3 expander): Similarly.  Update comments.
+	(ashrdi_const, lshrdi_const): Fix indention.
+	(ashrdi3, lshrdi3): FIx indention.  Update comments.
+
+Thu Jan 21 20:33:31 1999  Richard Henderson  <rth@cygnus.com>
+
+	* rs6000.h (LEGITIMIZE_RELOAD_ADDRESS): Recognize and accept
+	transformations that we have performed earlier.
+	* alpha.h (LEGITIMIZE_RELOAD_ADDRESS): Likewise.
+
+Sun Jan 17 20:39:20 1999  Richard Henderson  <rth@cygnus.com>
+
+	* jump.c (rtx_renumbered_equal_p): Special case CODE_LABEL.
+
+Sun Jan 17 19:01:47 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* i386.md (integer conditional moves): Add missing earlyclobbers.
+
+	* regmove.c (optimize_reg_copy_1): Undo Aug 18 change.  Update
+	REG_N_CALLS_CROSSED and REG_LIVE_LENGH if and only if we change
+	where a register is live.
+
+Fri Jan 15 01:19:42 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* unroll.c (find_splittable_givs): For a DEST_ADDR giv, do not share
+	a register with another DEST_ADDR giv if the address is not valid.
+
+	* h8300.h (ASM_OUTPUT_LABELREF): Use asm_fprintf, not fprintf.
+
+Mon Jan 11 20:23:34 1999  Richard Henderson  <rth@cygnus.com>
+
+	* sparc.c (legitimize_pic_address): Treat labels like symbols.
+	(emit_move_sequence): Likewise.
+	* sparc.h (PRINT_OPERAND_ADDRESS): Likewise.
+	(ASM_OUTPUT_ADDR_VEC_ELT): Don't special case CM_MEDLOW.
+	(ASM_OUTPUT_ADDR_DIFF_ELT): Likewise.  Don't reference magic `1b'.
+	* sparc.md (move_pic_label_si): Kill.
+	(move_label_di): Kill.
+	(pic_tablejump_32, pic_tablejump_64): Kill.
+	(tablejump): Expose pic arithmetic to the compiler.
+
+Thu Jan  7 00:33:33 1999  Bernd Schmidt <crux@ohara.Informatik.RWTH-Aachen.DE>
+
+	* combine.c (num_sign_bit_copies): In NEG, MULT, DIV and MOD cases,
+	when a test can't be performed due to limited width of
+	HOST_BITS_PER_WIDE_INT, use the more conservative approximation.
+	Fix UDIV case for cases where the first operand has the highest bit
+	set.
+
+Wed Jan  6 23:37:47 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* h8300.h (ASM_OUTPUT_LABELREF): Define.
+
+Wed Jan  6 02:23:36 1999  "Charles M. Hannum" <root@ihack.net>
+
+	* expr.c (store_expr): If the lhs is a memory location pointed
+	to be a postincremented (or postdecremented) pointer, always
+	force the rhs to be evaluated into a pseudo.
+
+Fri Jan  1 11:48:20 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* i386.md (doubleword shifts): Fix dumb mistakes in previous change.
+
+Wed Dec 30 23:44:11 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* m68k.md (adddi_dilshr32): Allow all operands to be registers too.
+	(adddi_dishl32): Similarly.
+
+	* cse.c (invalidate_skipped_block): Call invalidate_from_clobbers
+	for each insn in the skipped block.
+
+	* i386.md (doubleword shifts): Avoid namespace pollution.
+
+Mon Dec 28 10:44:40 1998  Richard Henderson  <rth@cygnus.com>
+
+	* combine.c (subst): Process the inputs to a parallel asm_operands
+	only once.
+
+Sun Dec 13 00:09:47 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/next.h (ASM_OUTPUT_ALIGN): Use 0x90 for fill character.
+
+	* h8300.c (h8300_encode_label): Use '&' for tiny data items.
+	* h8300.h (TINY_DATA_NAME_P): Likewise.
+	(STRIP_NAME_ENCODING): Handle '&'.
+
 Wed Dec  2 01:44:58 1998  Jeffrey A Law  (law@cygnus.com)
 
 	* egcs-1.1.1 released.
