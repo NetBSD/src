@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 1995/06/16 15:36:43 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 1995/07/05 09:54:09 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -60,9 +60,10 @@ kdb_trap(frame)
 {
 	int s;
 
+#if 0
 	if ((boothowto&RB_KDB) == 0)
 		return(0);
-
+#endif
 
 	switch (frame->trap) {
 	case T_BPTFLT:	/* breakpoint */
@@ -139,14 +140,16 @@ db_write_bytes(addr, size, data)
 {
 	register char	*dst;
 
-	printf("db_write_bytes: addr %x, size %x, data %x\n",addr, size, data);
+	dst = addr;
+	for (;size;size--)
+		*dst++ = *data++;
 }
 
 int
 Debugger()
 {
-	int s=splx(0xe); /* Is this good? We must lower anyway... */
-	mtpr(0xf,PR_SIRR); /* beg for debugger */
+	int s = splx(0xe); /* Is this good? We must lower anyway... */
+	mtpr(0xf, PR_SIRR); /* beg for debugger */
 	splx(s);
 }
 
@@ -181,21 +184,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
         db_expr_t       count;
         char            *modif;
 {
-	printf("db_stack_trace_cmd - not yet...\n");
-}
-
-/*
- * Disassemble instruction at 'loc'.  'altfmt' specifies an
- * (optional) alternate format.  Return address of start of
- * next instruction.
- */
-db_addr_t
-db_disasm(loc, altfmt)
-        db_addr_t       loc;
-        boolean_t       altfmt;
-{
-	printf("db_disasm - not yet...\n");
-	return loc;
+	printf("db_stack_trace_cmd - addr %x, have_addr %x, count %x, modif %x\n",addr, have_addr, count, modif);
 }
 
 static int ddbescape = 0;
