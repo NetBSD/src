@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.29 2000/11/08 19:50:08 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.30 2000/11/08 21:47:25 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -303,8 +303,8 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #scsibus* at aic?
 #scsibus* at bha?
 #scsibus* at dpt?
-#scsibus* at isp?
 #scsibus* at iopsp?
+#scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
 #scsibus* at sea?
