@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 1996/05/14 04:00:53 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 1996/05/15 02:34:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2635,7 +2635,6 @@ get_mapping(void)
 			check_video("LC video (0x50f40000)",
 					512 * 1024, 512 * 1024);
 		} else {
-			mac68k_vidphys = videoaddr;
 			printf( "  no internal video at address 0 -- "
 				"videoaddr is 0x%lx.\n", videoaddr);
 		}
