@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.10 2000/06/09 14:36:26 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.10.2.1 2000/07/14 14:37:32 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct awi_bss
 	u_int16_t	dwell_time;	/* dwell time */
 	u_int8_t	timestamp[8];	/* timestamp of this bss */
 	u_int8_t	bssid[ETHER_ADDR_LEN];
+	u_int16_t	capinfo;
 	u_int32_t	rxtime;		/* unit's local time */
 	u_int16_t	interval;	/* beacon interval */
 	u_int8_t	txrate;
@@ -114,13 +115,13 @@ struct awi_softc
 				sc_cansleep:1,
 				sc_invalid:1,
 				sc_enab_intr:1,
-				sc_cmd_inprog:1,
 				sc_format_llc:1,
 				sc_start_bss:1,
 				sc_rawbpf:1,
 				sc_no_bssid:1,
 				sc_active_scan:1,
 				sc_attached:1;	/* attach has succeeded */
+	u_int8_t		sc_cmd_inprog;
 	int			sc_sleep_cnt;
 
 	int			sc_mgt_timer;
@@ -153,7 +154,7 @@ struct awi_softc
 	void			*sc_wep_ctx;	/* work area */
 	struct awi_wep_algo	*sc_wep_algo;
 
-	char			sc_banner[AWI_BANNER_LEN];
+	u_char			sc_banner[AWI_BANNER_LEN];
 	struct awi_mib_local	sc_mib_local;
 	struct awi_mib_addr	sc_mib_addr;
 	struct awi_mib_mac	sc_mib_mac;
