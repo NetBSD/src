@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.54 1997/07/27 23:51:53 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.55 1997/07/28 01:31:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -185,8 +185,8 @@ audio_alloc_ring(sc, r, bufsize)
 	ROUNDSIZE(bufsize);
 	if (bufsize < AUMINBUF)
 		bufsize = AUMINBUF;
-	if (hw->roundbuffer)
-		bufsize = hw->roundbuffer(hdl, bufsize);
+	if (hw->round_buffersize)
+		bufsize = hw->round_buffersize(hdl, bufsize);
 	r->bufsize = bufsize;
 	if (hw->alloc)
 	    r->start = hw->alloc(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
@@ -249,7 +249,6 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
 	    hwp->set_params == 0 ||
-	    hwp->round_blocksize == 0 ||
 	    hwp->set_out_port == 0 ||
 	    hwp->get_out_port == 0 ||
 	    hwp->set_in_port == 0 ||
@@ -958,7 +957,9 @@ audio_calc_blksize(sc, mode)
 	bs = parm->sample_rate * audio_blk_ms / 1000 *
 		parm->channels * parm->precision / NBBY;
 	ROUNDSIZE(bs);
-	rb->blksize = hw->round_blocksize(sc->hw_hdl, bs);
+	if (hw->round_blocksize)
+		bs = hw->round_blocksize(sc->hw_hdl, bs);
+	rb->blksize = bs;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n", 
 		 mode == AUMODE_PLAY ? "play" : "record", bs));

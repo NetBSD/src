@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.30 1997/07/27 23:51:59 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.31 1997/07/28 01:32:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -241,8 +241,8 @@ struct audio_hw_if pss_audio_if = {
 	pss_set_in_port,
 	pss_get_in_port,
 	ad1848_commit_settings,
-	NULL,
-	NULL,
+	ad1848_dma_init_output,
+	ad1848_dma_init_input,
 	ad1848_dma_output,
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
@@ -258,7 +258,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_malloc,
 	ad1848_free,
 	ad1848_round,
-	0,
+	AUDIO_PROP_MMAP,
 	0
 };
 
