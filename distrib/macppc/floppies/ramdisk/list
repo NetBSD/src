@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1999/06/05 20:17:41 bouyer Exp $
+#	$NetBSD: list,v 1.6 1999/08/29 08:45:27 tsubai Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -77,9 +77,10 @@ COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
 # various files that we need in /etc for the install
 #COPY	${DESTDIR}/etc/disktab			etc/disktab
 COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/passwd
+COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/services	etc/services
+SPECIAL	pwd_mkdb -p -d . etc/master.passwd
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
