@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.73 2004/04/14 17:37:11 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.74 2004/10/29 19:02:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.73 2004/04/14 17:37:11 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.74 2004/10/29 19:02:17 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1005,14 +1005,20 @@ getdisklabelpart(dev, lp)
 	struct disklabel *lp;
 {
 	char *cp;
+	int c;
 
-	cp = strchr(dev, '\0') - 1;
-	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'p')) && !isdigit(*cp)) {
-		return 0;
-	}
-	if (isdigit(*cp))
+	cp = strchr(dev, '\0');
+	if (cp == dev)
+		return NULL;
+
+	c = (unsigned char)cp[-1];
+	if (isdigit(c))
+		/* eg "wd0", return info for first partition */
 		return &lp->d_partitions[0];
-	else
-		return &lp->d_partitions[*cp - 'a'];
+
+	if (c >= 'a' && c <= 'p')
+		/* eg "wd0f", return info for specified partition */
+		return &lp->d_partitions[c - 'a'];
+	return NULL;
 }
-  
+
