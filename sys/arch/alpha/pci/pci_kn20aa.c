@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.42 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.43 2002/05/15 16:57:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.42 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.43 2002/05/15 16:57:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ dec_kn20aa_intr_map(pa, ihp)
 	 * The DEC engineers who did this hardware obviously engaged
 	 * in random drug testing.
 	 */
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	switch (device) {
 	case 11:
 	case 12:
