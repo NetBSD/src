@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.9 1996/04/30 11:57:49 briggs Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.10 1996/05/05 16:11:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 #include <sys/buf.h>
 
 #include <sys/syscallargs.h>
+#include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 
 #include <machine/reg.h>
