@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.3 1993/03/23 08:12:15 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.4 1993/04/01 00:06:04 cgd Exp $";
 
 
 #include "param.h"
@@ -180,10 +180,7 @@ again:
 			bufpages = physmem / 10 / CLSIZE;
 		else
 			bufpages = ((2 * 1024 * 1024 + physmem) / 20) / CLSIZE;
-	/*
-	 * 15 Aug 92	William Jolitz		bufpages fix for too large
-	 */
-	bufpages = min( NKMEMCLUSTERS/2, bufpages);
+	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);
 
 	if (nbuf == 0) {
 		nbuf = bufpages / 2;
