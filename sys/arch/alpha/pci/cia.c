@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.14 1996/11/25 03:55:46 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.14.2.1 1996/12/07 02:09:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -51,7 +51,11 @@
 #include <alpha/pci/pci_eb164.h>
 #endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	ciamatch __P((struct device *, void *, void *));
+#else
+int	ciamatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	ciaattach __P((struct device *, struct device *, void *));
 
 struct cfattach cia_ca = {
@@ -71,7 +75,12 @@ struct cia_config cia_configuration;
 int
 ciamatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct confargs *ca = aux;
 
