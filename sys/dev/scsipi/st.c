@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.115 2000/01/12 14:46:43 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.116 2000/01/13 00:18:27 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -285,6 +285,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
 #endif
+	{{T_SEQUENTIAL, T_REMOV,
+	 "TEAC    ", "MT-2ST/N50      ", ""},     {ST_Q_IGNORE_LOADS, 0, {
+		{0, 0, 0},				/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
+	}}},
 };
 
 #define NOEJECT 0
