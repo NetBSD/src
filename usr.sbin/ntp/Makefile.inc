@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/01/11 13:15:06 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/28 09:58:10 jmc Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -16,9 +16,6 @@ DIST=		${.CURDIR}/../../../../dist/ntp
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
-.if (${MACHINE_ARCH} == "sparc64")
-CFLAGS+=        -msoft-quad-float
-.endif
 
 .if defined(PROG)
 LIBNTP!=	cd ${.CURDIR}/../libntp && ${PRINTOBJDIR}
