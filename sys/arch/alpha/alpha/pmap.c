@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.140 2000/08/13 22:30:19 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.141 2000/08/13 22:43:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2000/08/13 22:30:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2000/08/13 22:43:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,7 +641,7 @@ do {									\
 #define	PMAP_SYNC_ISTREAM_USER(pmap)					\
 do {									\
 	(pmap)->pm_needisync = ~0UL;					\
-	alpha_mb();							\
+	alpha_mb();	/* XXX alpha_wmb()? */				\
 	alpha_multicast_ipi((pmap)->pm_cpus, ALPHA_IPI_AST);		\
 } while (0)
 #else
@@ -746,7 +746,7 @@ do {									\
 #define	PMAP_SET_PTE(ptep, val)						\
 do {									\
 	*(ptep) = (val);						\
-	alpha_mb();							\
+	alpha_mb();	/* XXX alpha_wmb()? */				\
 } while (0)
 #else
 #define	PMAP_SET_PTE(ptep, val)	*(ptep) = (val)
@@ -1105,7 +1105,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			*vendp = trunc_page(virtual_end);
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
-		bzero((caddr_t)va, size);
+		memset((caddr_t)va, 0, size);
 		pmap_pages_stolen += npgs;
 		return (va);
 	}
@@ -1194,7 +1194,7 @@ pmap_create(void)
 #endif
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 
 	pmap->pm_asn = pool_get(&pmap_asn_pool, PR_WAITOK);
 	pmap->pm_asngen = pool_get(&pmap_asngen_pool, PR_WAITOK);
@@ -2307,8 +2307,8 @@ pmap_deactivate(struct proc *p)
  * pmap_zero_page:		[ INTERFACE ]
  *
  *	Zero the specified (machine independent) page by mapping the page
- *	into virtual memory and using bzero to clear its contents, one
- *	machine dependent page at a time.
+ *	into virtual memory and clear its contents, one machine dependent
+ *	page at a time.
  *
  *	Note: no locking is necessary in this function.
  */
@@ -2356,13 +2356,17 @@ pmap_zero_page(paddr_t phys)
 		: "0" (p0), "1" (p1)
 		: "memory");
 	} while (p0 < pend);
+#if defined(MULTIPROCESSOR)
+	/* Ensure the other CPUs see the correct data. */
+	alpha_mb();		/* XXX alpha_wmb()? */
+#endif
 }
 
 /*
  * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
- *	into virtual memory and using bcopy to copy the page, one machine
+ *	into virtual memory and using memcpy to copy the page, one machine
  *	dependent page at a time.
  *
  *	Note: no locking is necessary in this function.
@@ -2378,7 +2382,11 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 #endif
         s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
         d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
-	bcopy(s, d, PAGE_SIZE);
+	memcpy(d, s, PAGE_SIZE);
+#if defined(MULTIPROCESSOR)
+	/* Ensure the other CPUs see the correct data. */
+	alpha_mb();		/* XXX alpha_wmb()? */
+#endif
 }
 
 /*
