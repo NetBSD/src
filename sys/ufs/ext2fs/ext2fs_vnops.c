@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.8 1998/03/01 02:23:46 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.9 1998/06/20 13:14:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -425,11 +425,10 @@ ext2fs_chmod(vp, mode, cred, p)
 	ip->i_e2fs_mode &= ~ALLPERMS;
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-#if defined(UVM)
 	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
+#if defined(UVM)
 		(void) uvm_vnp_uncache(vp);
 #else
-	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
 		(void) vnode_pager_uncache(vp);
 #endif
 	return (0);
