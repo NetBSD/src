@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.13 1994/02/02 07:30:43 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.14 1994/02/02 07:49:22 mycroft Exp $
  */
 
 /*
@@ -1563,7 +1563,7 @@ outloop:
 		etype = ntohs(eh->ether_type);
 		if (etype >= ETHERTYPE_TRAIL &&
 		    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-			datasize = ((etype - ETHERTYPE_TRAIL) << 9);
+			datasize = (etype - ETHERTYPE_TRAIL) << 9;
 			off = datasize + sizeof(struct ether_header);
 
 			/* copy trailer_header into a data structure */
@@ -2067,7 +2067,7 @@ ed_get_packet(sc, buf, len)
 	head->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
 
-	etype = ntohs((u_short)eh->ether_type);
+	etype = ntohs(eh->ether_type);
 
 	/*
 	 * Deal with trailer protocol:
@@ -2079,7 +2079,6 @@ ed_get_packet(sc, buf, len)
 	 */
 	if (etype >= ETHERTYPE_TRAIL &&
 	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-
 		off = (etype - ETHERTYPE_TRAIL) << 9;
 		if ((off + sizeof(struct trailer_header)) > len)
 			goto bad;	/* insanity */
@@ -2102,13 +2101,16 @@ ed_get_packet(sc, buf, len)
 			resid = trailer_header.ether_residual;
 		}
 
-		if ((off + resid) > len) goto bad;	/* insanity */
+		if ((off + resid) > len)
+			goto bad;	/* insanity */
 
 		resid -= sizeof(struct trailer_header);
-		if (resid < 0) goto bad;	/* insanity */
+		if (resid < 0)
+			goto bad;	/* insanity */
 
 		m = ed_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, caddr_t), head, resid);
-		if (m == 0) goto bad;
+		if (m == 0)
+			goto bad;
 
 		len = off;
 		head->m_pkthdr.len -= 4; /* subtract trailer header */
