@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48.2.2 1999/04/21 15:03:41 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.48.2.3 1999/11/21 15:04:24 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,6 +83,7 @@
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/nubus/nubus.h>
+#include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/itevar.h>
 #include <mac68k/dev/grfvar.h>
 
@@ -167,7 +168,6 @@ static int	bell_length = 10;	/* duration */
 static int	bell_volume = 100;	/* volume */
 
 /* For polled kbd mode */
-int		ite_polling = 0;
 static int	polledkey;
 
 extern u_int32_t mac68k_vidphys;
@@ -895,7 +895,7 @@ ite_pollforchar()
 	s = splhigh();
 
 	polledkey = -1;
-	ite_polling = 1;
+	adb_polling = 1;
 
 	/* pretend we're VIA interrupt dispatcher */
 	while (polledkey == -1) {
@@ -911,7 +911,7 @@ ite_pollforchar()
 		}
 	}
 
-	ite_polling = 0;
+	adb_polling = 0;
 
 	splx(s);
 
@@ -1215,7 +1215,7 @@ ite_intr(adb_event_t * event)
 			str[1] = '\0';
 			break;
 		}
-		if (ite_polling)
+		if (adb_polling)
 			polledkey = str[0];
 		else
 			for (s = str; *s; s++)
