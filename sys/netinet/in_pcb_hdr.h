@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.2 2003/10/28 17:18:37 provos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.3 2004/03/02 02:11:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -83,6 +83,8 @@ struct inpcb_hdr {
 	struct	  inpcbpolicy *inph_sp;	/* security policy */
 #endif
 };
+
+#define	sotoinpcb_hdr(so)	((struct inpcb_hdr *)(so)->so_pcb)
 
 LIST_HEAD(inpcbhead, inpcb_hdr);
 
