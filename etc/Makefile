@@ -56,7 +56,7 @@ distribution:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 	    ${DESTDIR}/var/run/utmp
 	(cd etc.${MACHINE}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    fstab.* ${DESTDIR}/)
+	    fstab.* ${DESTDIR}/etc)
 .if ${MACHINE} == "tahoe"
 	(cd etc.tahoe; install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${WCS1} \
 	    ${DESTDIR}/)
