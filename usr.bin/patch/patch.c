@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.23 2005/03/25 23:00:55 skd Exp $	*/
+/*	$NetBSD: patch.c,v 1.24 2005/03/25 23:55:02 wiz Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.23 2005/03/25 23:00:55 skd Exp $");
+__RCSID("$NetBSD: patch.c,v 1.24 2005/03/25 23:55:02 wiz Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -578,7 +578,7 @@ exclusive\n");
 		    fprintf(stderr, "\
 Usage: patch [options] [origfile [patchfile]] [+ [options] [origfile]]...\n\
 Options:\n\
-       [-ceEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
+       [-CcEeflNnRSstuv] [-B backup-prefix] [-b backup-ext] [-d directory]\n\
        [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n\
        [-r rej-name] [-V {numbered,existing,simple}]\n");
 		    my_exit(1);
