@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.20 1999/01/09 21:18:54 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.21 1999/02/28 09:59:33 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1390,7 +1390,7 @@ ieintr(arg)
     struct ie_softc *sc = arg;
     u_short status;
     int saftey_catch = 0;
-    static saftey_net = 0;
+    static int saftey_net = 0;
 
     if (in_intr == 1)
 	panic ( "ie: INTERRUPT REENTERED\n" );
