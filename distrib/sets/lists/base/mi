@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122 1999/09/02 20:50:29 tron Exp $
+# $NetBSD: mi,v 1.123 1999/09/07 15:45:07 perry Exp $
 .
 ./altroot
 ./bin
@@ -43,8 +43,14 @@
 ./etc
 ./etc/disklabels
 ./etc/kerberosIV
+./etc/kerberosV
 ./etc/mtree
 ./etc/namedb
+./etc/openssl
+./etc/openssl/cert.pem
+./etc/openssl/certs
+./etc/openssl/misc
+./etc/openssl/private
 ./etc/postfix
 ./etc/sliphome
 ./etc/uucp
@@ -140,7 +146,6 @@
 ./usr/bin/basename
 ./usr/bin/batch
 ./usr/bin/bc
-./usr/bin/bdes
 ./usr/bin/biff
 ./usr/bin/bunzip2
 ./usr/bin/bzcat
@@ -408,7 +413,11 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/usb
 ./usr/include/g++
+./usr/include/gssapi
+./usr/include/gssapi/rpc
+./usr/include/kadm5
 ./usr/include/kerberosIV
+./usr/include/krb5
 ./usr/include/machine
 ./usr/include/net
 ./usr/include/netatalk
@@ -419,9 +428,11 @@
 ./usr/include/netns
 ./usr/include/nfs
 ./usr/include/objc
+./usr/include/openssl
 ./usr/include/protocols
 ./usr/include/rpc
 ./usr/include/rpcsvc
+./usr/include/ss
 ./usr/include/sys
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
@@ -527,6 +538,7 @@
 ./usr/sbin/dumplfs
 ./usr/sbin/edquota
 ./usr/sbin/eshconfig
+./usr/sbin/faithd
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
 ./usr/sbin/gifconfig
@@ -584,6 +596,7 @@
 ./usr/sbin/ntptime
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
+./usr/sbin/pim6dd
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_admin
 ./usr/sbin/pkg_create
@@ -594,6 +607,8 @@
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
 ./usr/sbin/pstat
+./usr/sbin/pvcsif
+./usr/sbin/pvctxctl
 ./usr/sbin/pwd_mkdb
 ./usr/sbin/quot
 ./usr/sbin/quotacheck
@@ -612,8 +627,9 @@
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
-./usr/sbin/rtquery
 ./usr/sbin/rtadvd
+./usr/sbin/rtquery
+./usr/sbin/rtsold
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/screenblank
@@ -645,6 +661,7 @@
 ./usr/sbin/usbdevs
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
+./usr/sbin/wiconfig
 ./usr/sbin/wire-test
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
@@ -756,6 +773,9 @@
 ./usr/share/examples/emul/ultrix/etc
 ./usr/share/examples/ftpd
 ./usr/share/examples/ipf
+./usr/share/examples/mount_portal
+./usr/share/examples/named
+./usr/share/examples/openssl
 ./usr/share/examples/supfiles
 ./usr/share/games
 ./usr/share/games/atc
@@ -946,13 +966,16 @@
 ./usr/share/man/whatis.db
 ./usr/share/me
 ./usr/share/misc
+./usr/share/misc/acronyms
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/birthtoken
 ./usr/share/misc/bsd-family-tree
+./usr/share/misc/country
 ./usr/share/misc/domains
 ./usr/share/misc/flowers
 ./usr/share/misc/inter.phone
+./usr/share/misc/language
 ./usr/share/misc/magic
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
@@ -1576,6 +1599,7 @@
 ./var/games/hackdir/save
 ./var/games/larn
 ./var/games/phantasia
+./var/krb5kdc
 ./var/log
 ./var/log/rdist
 ./var/mail
