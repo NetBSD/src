@@ -1,0 +1,8 @@
+# $NetBSD: mi,v 1.1 2000/10/01 22:46:39 thorpej Exp $
+./usr/X11R6/bin/ssh-askpass
+./usr/X11R6/lib/X11/app-default/SshAskpass
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-green.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-motif.ad
