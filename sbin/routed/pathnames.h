@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -32,7 +32,7 @@
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/5/93
  *
- *	$NetBSD: pathnames.h,v 1.1.1.4 1996/09/24 15:11:40 christos Exp $
+ *	$NetBSD: pathnames.h,v 1.1.1.5 1999/02/23 09:56:51 christos Exp $
  */
 
 #include <paths.h>
