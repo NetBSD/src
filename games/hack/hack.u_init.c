@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.7 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.8 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.7 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.8 2004/11/05 21:30:32 dsl Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -169,8 +169,8 @@ u_init()
 	rolesyms[i] = 0;
 
 	if ((pc = pl_character[0]) != '\0') {
-		if (islower(pc))
-			pc = toupper(pc);
+		if (islower((unsigned char)pc))
+			pc = toupper((unsigned char)pc);
 		if ((i = role_index(pc)) >= 0)
 			goto got_suffix;	/* implies experienced */
 		printf("\nUnknown role: %c\n", pc);
@@ -201,8 +201,8 @@ u_init()
 	printf("? [%s] ", rolesyms);
 
 	while ((pc = readchar()) != '\0') {
-		if (islower(pc))
-			pc = toupper(pc);
+		if (islower((unsigned char)pc))
+			pc = toupper((unsigned char)pc);
 		if ((i = role_index(pc)) >= 0) {
 			printf("%c\n", pc);	/* echo */
 			(void) fflush(stdout);	/* should be seen */

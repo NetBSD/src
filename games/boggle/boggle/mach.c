@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.13 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: mach.c,v 1.14 2004/11/05 21:30:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.13 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: mach.c,v 1.14 2004/11/05 21:30:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,7 +445,7 @@ findword()
 		if (board[wordpath[i]] == 'q')
 			printw("Qu");
 		else
-			printw("%c", toupper(board[wordpath[i]]));
+			printw("%c", toupper((unsigned char)board[wordpath[i]]));
 		move(r, c);
 		refresh();
 		delay(5);
@@ -460,7 +460,7 @@ findword()
 		if (board[wordpath[i]] == 'q')
 			printw("Qu");
 		else
-			printw("%c", toupper(board[wordpath[i]]));
+			printw("%c", toupper((unsigned char)board[wordpath[i]]));
 	}
 	move(r, c);
 	clrtoeol();
@@ -666,7 +666,7 @@ tty_showboard(b)
 		if (b[i] == 'q')
 			printw("| Qu");
 		else
-			printw("| %c ", toupper(b[i]));
+			printw("| %c ", toupper((unsigned char)b[i]));
 		if ((i + 1) % 4 == 0) {
 			printw("|");
 			move(++line, BOARD_COL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.20 2004/09/07 13:20:39 jrf Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.20 2004/09/07 13:20:39 jrf Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,8 +425,7 @@ next(void)
 			if (tp == 0)
 				p = "Driver";
 			else {
-				if (islower(*tp))
-					*tp = toupper(*tp);
+				*tp = toupper((unsigned char)*tp);
 				p = tp;
 			}
 			strlcpy(bestship->file->captain, p,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.43 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.44 2004/11/05 21:30:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.43 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.44 2004/11/05 21:30:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,9 +282,9 @@ rot13(line, len)
 		len = strlen(line);
 
 	for (p = line; (ch = *p) != 0; ++p)
-		if (isupper(ch))
+		if (isupper((unsigned char)ch))
 			*p = 'A' + (ch - 'A' + 13) % 26;
-		else if (islower(ch))
+		else if (islower((unsigned char)ch))
 			*p = 'a' + (ch - 'a' + 13) % 26;
 }
 
@@ -453,11 +453,11 @@ form_file_list(files, file_cnt)
 	}
 	for (i = 0; i < file_cnt; i++) {
 		percent = NO_PROB;
-		if (!isdigit(files[i][0]))
+		if (!isdigit((unsigned char)files[i][0]))
 			sp = files[i];
 		else {
 			percent = 0;
-			for (sp = files[i]; isdigit(*sp); sp++)
+			for (sp = files[i]; isdigit((unsigned char)*sp); sp++)
 				percent = percent * 10 + *sp - '0';
 			if (percent > 100) {
 				warnx("Percentages must be <= 100");
@@ -1268,7 +1268,7 @@ conv_pat(orig)
 
 	cnt = 1;	/* allow for '\0' */
 	for (sp = orig; *sp != '\0'; sp++)
-		if (isalpha(*sp))
+		if (isalpha((unsigned char)*sp))
 			cnt += 4;
 		else
 			cnt++;
@@ -1276,16 +1276,16 @@ conv_pat(orig)
 		err(1, NULL);
 
 	for (sp = new; *orig != '\0'; orig++) {
-		if (islower(*orig)) {
+		if (islower((unsigned char)*orig)) {
 			*sp++ = '[';
 			*sp++ = *orig;
-			*sp++ = toupper(*orig);
+			*sp++ = toupper((unsigned char)*orig);
 			*sp++ = ']';
 		}
-		else if (isupper(*orig)) {
+		else if (isupper((unsigned char)*orig)) {
 			*sp++ = '[';
 			*sp++ = *orig;
-			*sp++ = tolower(*orig);
+			*sp++ = tolower((unsigned char)*orig);
 			*sp++ = ']';
 		}
 		else
