@@ -117,6 +117,11 @@ struct cfattach awi_pcmcia_ca = {
 	awi_pcmcia_detach, /* awi_activate */ 0
 };
 
+#if __NetBSD_Version__ <= 104120000
+#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
+#define	PCMCIA_PRODUCT_BAY_STACK_650	0x804
+#endif
+
 int
 awi_pcmcia_enable(sc)
 	struct awi_softc *sc;
