@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.19 1997/10/09 12:29:37 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.20 1997/10/14 11:45:25 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,7 +33,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.19 1997/10/09 12:29:37 lukem Exp $");
+/*
+ * XXX should be __RCSID(), but the const char used in there currently 
+ * makes our ld bus error.
+ */
+static char __rcsid[] __attribute__((__unused__)) = 
+    "$NetBSD: crt0.c,v 1.20 1997/10/14 11:45:25 is Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
