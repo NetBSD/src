@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2000/07/22 08:53:37 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2000/08/24 11:19:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -60,6 +60,9 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
+/* There can be only one. */
+static int mainbus_found;
+
 static int
 mbmatch(parent, cf, aux)
 	struct device *parent;
@@ -67,16 +70,10 @@ mbmatch(parent, cf, aux)
 	void *aux;
 {
 
-	/*
-	 * Only one mainbus, but some people are stupid...
-	 */	
-	if (cf->cf_unit > 0)
-		return(0);
+	if (mainbus_found)
+		return (0);
 
-	/*
-	 * That one mainbus is always here.
-	 */
-	return(1);
+	return (1);
 }
 
 int ncpus = 0;	/* only support uniprocessors, for now */
@@ -86,13 +83,15 @@ bus_space_tag_t
 mb_bus_space_init()
 {
 	bus_space_tag_t iot;
+
 	iot = hpcmips_alloc_bus_space_tag();
 	strcpy(iot->t_name, "System internal");
 	iot->t_base = 0x0;
 	iot->t_size = 0xffffffff;
 	iot->t_extent = 0; /* No extent for bootstraping */
 	system_bus_iot = iot;
-	return iot;
+
+	return (iot);
 }
 
 static void
@@ -107,6 +106,8 @@ mbattach(parent, self, aux)
 	char *devnames[] = {
 		"txsim", "vrip", "bivideo", "btnmgr", "hpcapm",
 	};
+
+	mainbus_found = 1;
 
 	printf("\n");
 
@@ -139,5 +140,6 @@ mbprint(aux, pnp)
 
 	if (pnp)
 		return (QUIET);
+
 	return (UNCONF);
 }
