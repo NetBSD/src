@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.37 1997/07/14 12:54:27 is Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.38 1997/09/08 05:26:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.37 1997/07/14 12:54:27 is Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.38 1997/09/08 05:26:08 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ int	newaddr = -1;
 int	nsellength = 1;
 int	af;
 int	dflag, mflag, lflag, uflag;
+int	reset_if_flags;
 
 void 	notealias __P((char *, int));
 void 	notrailers __P((char *, int));
@@ -400,6 +401,8 @@ main(argc, argv)
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
 	}
+	if (reset_if_flags && ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFFLAGS");
 	exit(0);
 }
 
@@ -623,6 +626,8 @@ setifflags(vname, value)
 	ifr.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
 		err(1, "SIOCSIFFLAGS");
+
+	reset_if_flags = 1;
 }
 
 void
