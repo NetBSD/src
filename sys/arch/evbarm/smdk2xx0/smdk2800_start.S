@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.2 2003/05/09 16:25:46 bsh Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.3 2003/05/13 04:20:39 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -127,7 +127,7 @@ smdk2800_start_ram:
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 
 	/* Set the Domain Access register.  Very important! */
-	mov	r0, #1
+	mov	r0, #(1<<30)|(1<<0)
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Enable MMU */
