@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.3 2001/08/16 19:14:41 tv Exp $
+#	$NetBSD: install.md,v 1.4 2003/03/07 17:00:22 he Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,14 +113,19 @@ md_native_fstype() {
 md_native_fsopts() {
 }
 
+grep_check () {
+	pattern=$1; shift
+	awk 'BEGIN{ es=1; } /'"$pattern"'/{ print; es=0; } END{ exit es; }' "$@"
+}
+
 md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
 
 	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
-	if grep "no disk label" /tmp/checkfordisklabel; then
+	if grep_check "no disklabel" /tmp/checkfordisklabel; then
 		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
+	elif grep_check "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
 	else
 		rval=0
