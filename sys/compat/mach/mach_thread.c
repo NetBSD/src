@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.27 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.28 2003/12/03 22:25:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.27 2003/11/27 23:44:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.28 2003/12/03 22:25:46 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -317,7 +317,7 @@ mach_thread_info(args)
 			break;
 		}
 
-		tbi->suspend_count = tl->l_swtime;
+		tbi->suspend_count = 0;
 		tbi->sleep_time = tl->l_slptime;
 		break;
 	}
