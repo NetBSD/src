@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.1 2003/12/13 23:04:37 ad Exp $
+# $NetBSD: WSCONS,v 1.2 2003/12/16 12:22:24 keihan Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 
 # The following configurations are untested with wscons.  Please report
-# success or failure with these to port-pmax@netbsd.org.
+# success or failure with these to port-pmax@NetBSD.org.
 #
 # o Mono graphics on the 2100 and 3100, including X.
 # o Keyboard and mouse on Personal DECstation.
@@ -34,7 +34,7 @@ options		WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 maxusers	64
 
