@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.59 2003/07/12 14:46:41 itojun Exp $	*/
+/*	$NetBSD: init.c,v 1.60 2003/08/05 09:31:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.59 2003/07/12 14:46:41 itojun Exp $");
+__RCSID("$NetBSD: init.c,v 1.60 2003/08/05 09:31:48 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1446,26 +1446,24 @@ mfs_dev(void)
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
 	case 0:
-		if (chdir("/dev") == -1)
-			goto fail;
-		(void)execl(INIT_BSHELL, "sh", "./MAKEDEV", "init", NULL); 
-		goto fail;
+		if (chdir("/dev") == 0)
+			(void)execl(INIT_BSHELL, "sh", "./MAKEDEV", "init",
+			    NULL); 
+		_exit(1);
 
 	case -1:
-		goto fail;
+		break;
 
 	default:
 		if (waitpid(pid, &status, 0) == -1)
-			goto fail;
+			break;
 		if (status != 0) {
 			errno = EINVAL;
-			goto fail;
+			break;
 		}
-		break;
+		return 0;
 	}
-	return(0);
-fail:
 	warn("Unable to run MAKEDEV");
-	return(-1);
+	return (-1);
 }
 #endif
