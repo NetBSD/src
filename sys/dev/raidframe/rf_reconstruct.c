@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.83 2005/02/05 23:39:12 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.84 2005/02/06 02:29:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.83 2005/02/05 23:39:12 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.84 2005/02/06 02:29:36 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -320,10 +320,6 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
                         raidPtr->raid_cinfo[scol].ci_dev,
 			raidPtr->raid_cinfo[scol].ci_vp,
 			&c_label);
-		
-
-		rf_update_component_labels(raidPtr, 
-					   RF_NORMAL_COMPONENT_UPDATE);
 
 	} else {
 		/* Reconstruct failed. */
@@ -335,7 +331,9 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		/* Spare disk goes back to "spare" status. */
 		spareDiskPtr->status = rf_ds_spare;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 	}
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	return (rc);
 }
 
@@ -545,8 +543,6 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 					  raidPtr->raid_cinfo[col].ci_vp,
 					  &c_label);
 
-		rf_update_component_labels(raidPtr, 
-					   RF_NORMAL_COMPONENT_UPDATE);
 	} else {
 		/* Reconstruct-in-place failed.  Disk goes back to
 		   "failed" status, regardless of what it was before.  */
@@ -554,6 +550,8 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		raidPtr->Disks[col].status = rf_ds_failed;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	}
+
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->reconInProgress--;
