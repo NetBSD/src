@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.40 2001/06/11 01:50:50 wiz Exp $
+.\"	$NetBSD: install,v 1.41 2001/08/29 03:26:07 mrg Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -429,7 +429,7 @@ of the following forms:
 .It OpenBoot PROM 1
 .Li ok Ic "b le()netbsd"
 .It OpenBoot PROM 2
-.Li ok Ic "b net netbsd"
+.Li ok Ic "boot net netbsd"
 .tag)
 .Pp
 After the initial probe messages you'll be asked to start the
