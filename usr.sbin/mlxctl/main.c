@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.3.2.2 2001/12/09 19:37:30 he Exp $	*/
+/*	$NetBSD: main.c,v 1.3.2.3 2002/04/11 21:11:16 he Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.3.2.2 2001/12/09 19:37:30 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.3.2.3 2002/04/11 21:11:16 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,15 +87,16 @@ main(int argc, char **argv)
 {
 	const struct cmd *cmd, *maxcmd;
 	const char *cmdname, *dv;
-	int ch, i, rv;
+	int ch, i, rv, all;
 
+	all = 0;
 	dv = "/dev/mlx0";
 	mlx_disk_init();
 
 	while ((ch = getopt(argc, argv, "af:v")) != -1) {
 		switch (ch) {
 		case 'a':
-			mlx_disk_add_all();
+			all = 1;
 			break;
 
 		case 'f':
@@ -133,10 +134,14 @@ main(int argc, char **argv)
 		usage();
 
 	if ((cmd->flags & CMD_DISKS) != 0) {
+		if (all)
+			mlx_disk_add_all();
+
 		while (argv[optind] != NULL)
 			mlx_disk_add(argv[optind++]);
 		if (mlx_disk_empty())
-			usage();
+			errx(EXIT_FAILURE,
+			    "no logical drives attached to this controller");
 	} else if ((cmd->flags & CMD_NOARGS) != 0)
 		if (argv[optind] != NULL)
 			usage();
