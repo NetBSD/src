@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1995/04/23 18:24:27 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 1995/05/11 23:05:22 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -799,6 +799,26 @@ syscall(code, frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
+#endif
+}
+
+/*
+ * Process the tail end of a fork() for the child
+ */
+void
+finish_child(frame)
+	struct frame frame;
+{
+	struct proc *p;
+
+	p = curproc;
+	frame.f_regs[D0] = 0;
+	frame.f_sr &= ~PSL_C;	/* carry bit */
+
+	userret(p, frame.f_pc, p->p_sticks);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }
 
