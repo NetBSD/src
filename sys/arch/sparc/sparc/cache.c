@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.35 1997/11/10 21:20:07 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.36 1998/08/09 23:37:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -110,6 +110,7 @@ sun4_cache_enable()
 #endif
 }
 
+#if defined(SUN4M)
 void
 ms1_cache_enable()
 {
@@ -313,6 +314,7 @@ turbosparc_cache_enable()
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
+#endif
 
 /*
  * Flush the current context from the cache.
