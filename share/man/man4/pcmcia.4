@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.30 2003/04/16 09:07:06 wiz Exp $
+.\" $NetBSD: pcmcia.4,v 1.31 2003/05/02 08:05:14 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,7 +168,7 @@ used. For 12-bit wide cards, 0x400-0x4ff is used.
 Neither choice is perfect. In the 12-bit case, 0x400 appears to work
 on substantially more devices than 0x300. In the event that
 .Tn PCMCIA
-devices are mapped in 0x400-0xfff and appear to be nonfunctional,
+devices are mapped in 0x400-0x4ff and appear to be nonfunctional,
 remapping to 0x300-0x3ff may be appropriate; consult
 .Cd options PCIC_ISA_ALLOC_IOBASE
 and
@@ -178,7 +178,7 @@ in
 Example:
 .Bd -literal -offset indent
 # Avoid PCMCIA bus space conflicts with the default IO space
-# allocation on 12-bit wide busses (base 0x400 size 0xfff).
+# allocation on 12-bit wide busses (base 0x300 size 0xff).
 options PCIC_ISA_ALLOC_IOBASE=0x300
 options PCIC_ISA_ALLOC_IOSIZE=0x0ff
 .Ed
