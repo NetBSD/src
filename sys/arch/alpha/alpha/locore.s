@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.82 2000/11/19 20:11:12 sommerfeld Exp $ */
+/* $NetBSD: locore.s,v 1.83 2000/11/20 02:44:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.82 2000/11/19 20:11:12 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.83 2000/11/20 02:44:45 thorpej Exp $");
 
 #include "assym.h"
 
@@ -773,9 +773,17 @@ LEAF(idle, 0)
 	GET_CURPROC
 	stq	zero, 0(v0)			/* curproc <- NULL for stats */
 #if defined(MULTIPROCESSOR)
+	/*
+	 * Switch to the idle PCB unless we're already running on it
+	 * (if s0 == NULL, we're already on it...)
+	 */
+	beq	s0, 1f				/* skip if s0 == NULL */
+	mov	s0, a0
+	CALL(pmap_deactivate)			/* pmap_deactivate(oldproc) */
 	GET_IDLE_PCB(a0)
 	SWITCH_CONTEXT
-	mov	zero,s0				/* no outgoing proc */
+	mov	zero, s0			/* no outgoing proc */
+1:
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	CALL(sched_unlock_idle)			/* release sched_lock */
@@ -889,11 +897,11 @@ cpu_switch_queuescan:
 	 * do this after we activate, then we might end up
 	 * incorrectly marking the pmap inactive!
 	 *
-	 * We don't deactivate if we came here from switch_exit
-	 * (old pmap no longer exists; vmspace has been freed).
-	 * oldproc will be NULL in this case.  We have actually
-	 * taken care of calling pmap_deactivate() in cpu_exit(),
-	 * before the vmspace went away.
+	 * Note that don't deactivate if we don't have to...
+	 * We know this if oldproc (s0) == NULL.  This is the
+	 * case if we've come from switch_exit() (pmap no longer
+	 * exists; vmspace has been freed), or if we switched to
+	 * the Idle PCB in the MULTIPROCESSOR case.
 	 */
 	beq	s0, 6f
 
