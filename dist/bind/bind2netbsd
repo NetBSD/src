@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.4 1999/11/14 16:37:20 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.5 1999/11/17 21:18:03 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,7 +68,9 @@ mkdir -p $d/man
 cd $r/src
 pax -rvw bin include lib $d
 cd port/netbsd/include
-pax -rvw port_after.h port_before.h $d/include
+pax -rvw port_after.h port_before.h prand_conf.h $d/include
+cd bin
+pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
 pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 $d/man
 
