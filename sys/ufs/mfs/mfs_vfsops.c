@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.16 1998/03/01 22:16:01 fvdl Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.17 1998/07/05 08:49:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -34,6 +34,10 @@
  *
  *	@(#)mfs_vfsops.c	8.11 (Berkeley) 6/19/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

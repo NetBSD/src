@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysent.c,v 1.93 1998/07/02 01:24:24 thorpej Exp $	*/
+/*	$NetBSD: init_sysent.c,v 1.94 1998/07/05 08:49:42 jonathan Exp $	*/
 
 /*
  * System call switch table.
@@ -9,6 +9,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
+#include "opt_compat_netbsd.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1997/10/12 18:23:18 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1998/07/05 08:49:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
