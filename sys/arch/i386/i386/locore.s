@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.253 2002/04/09 16:29:25 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.254 2002/04/09 16:41:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -703,6 +703,14 @@ begin:
 
 	call 	_C_LABEL(main)
 
+/*
+ * void proc_trampoline(void);
+ * This is a trampoline function pushed onto the stack of a newly created
+ * process in order to do some additional setup.  The trampoline is entered by
+ * cpu_switch()ing to the process, so we abuse the callee-saved registers used
+ * by cpu_switch() to store the information about the stub to call.
+ * NOTE: This function does not have a normal calling sequence!
+ */
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
 	pushl	%ebx
@@ -1610,6 +1618,11 @@ NENTRY(lgdt)
 	pushl	%eax
 	lret
 
+/*****************************************************************************/
+
+/*
+ * These functions are primarily used by DDB.
+ */
 
 /* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
