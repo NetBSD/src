@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 1999/04/12 20:38:20 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.20 1999/06/21 01:39:06 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -52,6 +52,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
+#include <machine/cpu.h>
 #include <machine/openfirm.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
@@ -260,7 +261,6 @@ db_read_bytes(addr, size, data)
 {
 	register char	*src;
 
-	addr = addr & 0x0ffffffffL; /* XXXXX */
 	src = (char *)addr;
 	while (size-- > 0) {
 		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
@@ -692,38 +692,45 @@ db_traptrace(addr, have_addr, count, modif)
 	char *modif;
 {
 	extern struct traptrace {
-		unsigned short tl:3, ns:4, tt:9;	
-		unsigned short pid;
-		u_int tstate;
-		u_int tsp;
-		u_int tpc;
+		unsigned short tl:3,	/* Trap level */
+			ns:4,		/* PCB nsaved */
+			tt:9;		/* Trap type */
+		unsigned short pid;	/* PID */
+		u_int tstate;		/* tstate */
+		u_int tsp;		/* sp */
+		u_int tpc;		/* pc */
+		u_int tfault;		/* MMU tag access */
 	} trap_trace[], trap_trace_end[];
-	int i;
+	int i, start, full = 0;
+	struct traptrace *end;
 
-	if (have_addr) {
-		i=addr;
-		db_printf("%d:%d p:%d:%d tt:%x ts:%lx sp:%p tpc:%p ", i, 
-			  (int)trap_trace[i].tl, (int)trap_trace[i].pid, 
-			  (int)trap_trace[i].ns, (int)trap_trace[i].tt,
-			  (u_long)trap_trace[i].tstate, (u_long)trap_trace[i].tsp,
-			  (u_long)trap_trace[i].tpc);
-		db_printsym((u_long)trap_trace[i].tpc, DB_STGY_PROC);
-		db_printf(": ");
-		if (trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
-			db_disasm((u_long)trap_trace[i].tpc, 0);
-		} else db_printf("\n");
-		return;
+	start = 0;
+	end = &trap_trace_end[0];
+
+	{
+		register char c, *cp = modif;
+		if (modif)
+			while ((c = *cp++) != 0)
+				if (c == 'f')
+					full = 1;
 	}
 
-	for (i=0; &trap_trace[i] < &trap_trace_end[0] ; i++) {
-		db_printf("%d:%d p:%d:%d tt:%x ts:%lx sp:%p tpc:%p ", i, 
+	if (have_addr) {
+		start=addr;
+		if (!full) end =  &trap_trace[start+1];
+	}
+
+	for (i=start; &trap_trace[i] < end ; i++) {
+		db_printf("%d:%d p:%d tt:%x:%lx:%p %p:%p", i, 
 			  (int)trap_trace[i].tl, (int)trap_trace[i].pid, 
-			  (int)trap_trace[i].ns, (int)trap_trace[i].tt,
-			  (u_long)trap_trace[i].tstate, (u_long)trap_trace[i].tsp,
+			  (int)trap_trace[i].tt, (u_long)trap_trace[i].tstate, 
+			  (u_long)trap_trace[i].tfault, (u_long)trap_trace[i].tsp,
 			  (u_long)trap_trace[i].tpc);
 		db_printsym((u_long)trap_trace[i].tpc, DB_STGY_PROC);
 		db_printf(": ");
-		if (trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) {
+		if ((trap_trace[i].tpc && !(trap_trace[i].tpc&0x3)) &&
+		    curproc &&
+		    (curproc->p_pid == trap_trace[i].pid)) {
 			db_disasm((u_long)trap_trace[i].tpc, 0);
 		} else db_printf("\n");
 	}
@@ -822,6 +829,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+	int full = 0;
 	extern void uvmhist_dump __P((struct uvm_history *));
 	extern struct uvm_history_head uvm_histories;
 
