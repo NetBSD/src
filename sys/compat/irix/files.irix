@@ -1,8 +1,9 @@
-#	$NetBSD: files.irix,v 1.5 2001/12/02 09:23:58 manu Exp $
+#	$NetBSD: files.irix,v 1.6 2001/12/02 16:16:57 manu Exp $
 #
 
 file	arch/mips/mips/irix_syscall.c		compat_irix
 
+file	compat/irix/irix_errno.c		compat_irix
 file	compat/irix/irix_exec.c			compat_irix
 file	compat/irix/irix_exec_elf32.c		compat_irix & exec_elf32
 file	compat/irix/irix_prctl.c		compat_irix
