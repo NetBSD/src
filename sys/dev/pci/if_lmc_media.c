@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.7 2001/07/19 15:38:18 itojun Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.8 2001/07/19 16:14:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -287,7 +287,7 @@ lmc_hssi_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
 }
@@ -433,7 +433,7 @@ lmc_ds3_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_cable_length(sc, LMC_CTL_CABLE_LENGTH_LT_100FT);
 	sc->lmc_media->set_scrambler(sc, LMC_CTL_OFF);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -587,7 +587,7 @@ lmc_ssi_default(lmc_softc_t * const sc)
 	 */
 	lmc_gpio_mkoutput(sc, LMC_GEP_SSI_TXCLOCK);
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_speed(sc, NULL);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -1013,7 +1013,7 @@ lmc_t1_get_link_status(lmc_softc_t * const sc)
 	if ((sc->t1_alarm1_status & T1F_RAIS) != (link_status & T1F_RAIS)) {
 		if (link_status & T1F_RAIS) {
 			/* turn on blue LED */
-			    /* DEBUG */
+			/* DEBUG */
 			printf(" link status: RAIS turn ON Blue %x\n",
 			    link_status);
 			lmc_led_on(sc, LMC_DS3_LED1);
