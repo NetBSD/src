@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.2 2002/12/28 09:44:11 matt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.3 2002/12/28 10:14:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.2 2002/12/28 09:44:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.3 2002/12/28 10:14:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,10 +177,11 @@ pckbc_acpi_attach(struct device *parent,
 	psc->sc_irq = irq->ar_irq;
 	psc->sc_ist = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
 
-	if (!first)
+	if (psc->sc_slot == PCKBC_KBD_SLOT)
 		first = psc;
 
-	if (!first->sc_pckbc.id) {
+	if ((!first || !first->sc_pckbc.id) &&
+	    (psc->sc_slot == PCKBC_KBD_SLOT)) {
 
 		io0 = acpi_res_io(&res, 0);
 		if (io0 == NULL) {
