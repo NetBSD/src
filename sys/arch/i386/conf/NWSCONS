@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.8 1998/08/31 17:58:54 thorpej Exp $
+#	$NetBSD: NWSCONS,v 1.9 1998/09/13 23:15:46 tron Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -22,10 +22,14 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
+#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\""
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#	you don't want the option below ON iff you are using the
+#	serial debugger option of the new boot strap code.
+#options	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -95,6 +99,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -128,6 +133,7 @@ options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
@@ -206,6 +212,12 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
+# Keyboard layout configuration for pccons
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
+
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
@@ -266,6 +278,7 @@ lpt2	at isa? port 0x3bc
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
@@ -297,6 +310,7 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
+scsibus* at adv?
 scsibus* at aha?
 scsibus* at ahb?
 scsibus* at ahc?
@@ -353,7 +367,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # ISA tape devices
-# note: the wt driver conflicts unpleasantly with ed devices at the
+# note: the wt driver conflicts unpleasantly with SMC boards at the
 # same I/O address. The probe reprograms their EEPROMs. Don't
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
@@ -389,6 +403,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
+cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
@@ -417,14 +432,47 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
+# USB Controller and Devices
+
+# PCI USB controllers
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at uhci?
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB Mice
+ums*	at uhub? port ?
+wsmouse*	at ums?
+
+# USB Keyboards
+ukbd*	at uhub? port ?
+wskbd*	at ukbd? console ?
+
+# USB Generic HID devices
+uhid*	at uhub? port ?
+
+# USB Printer
+ulpt*	at uhub? port ?
+
+# USB Generic driver
+#ugen*	at uhub? port ?
+
 # Audio Devices
 
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # ISA Plug-and-Play audio devices
+ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
+wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
@@ -433,19 +481,34 @@ gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
-sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
+sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
+
+# OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at ess?
+opl*	at sb?
+
+# USB Audio devices
+#uaudio*	at uhub? port ?
 
 # Audio support
 audio*	at aria?
 audio*	at eap?
+audio*	at ess?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
+#audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
+
+# MIDI support
+midi*	at pcppi?		# MIDI interface to the PC speaker
+midi*	at sb?			# SB MPU401 port
+midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -496,11 +559,16 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
