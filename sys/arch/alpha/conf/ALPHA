@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.90 1999/01/06 23:42:27 thorpej Exp $
+# $NetBSD: ALPHA,v 1.91 1999/01/10 22:51:46 nathanw Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -307,7 +307,7 @@ wsmouse* at	ums?
 
 # USB keyboards
 ukbd*	at	uhub? port ?
-wsbks*	at	ukbd? console ?
+wskbd*	at	ukbd? console ?
 
 # USB Generic HID devices
 uhid*	at	uhub? port ?
