@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.38 1999/05/24 13:05:40 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.39 1999/06/19 18:49:34 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.35 1999/05/24 13:05:12 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
  */
 
 /*-
@@ -309,6 +309,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "NewMedia Corporation",
 	    "NewMedia BASICS Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
+	    PCMCIA_CIS_NEWMEDIA_BUSTOASTER,
+	    0,
+	    "NewMedia Corporation",
+	    "NewMedia BusToaster SCSI Host Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8016,
