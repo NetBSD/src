@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.222 2003/12/05 22:33:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.223 2004/01/03 14:04:27 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -295,7 +295,7 @@ release snapshot:
 #
 
 check-tools:
-.if ${TOOLCHAIN_MISSING} == "yes" && !defined(EXTERNAL_TOOLCHAIN)
+.if ${TOOLCHAIN_MISSING} != "no" && !defined(EXTERNAL_TOOLCHAIN)
 	@echo '*** WARNING:  Building on MACHINE=${MACHINE} with missing toolchain.'
 	@echo '*** May result in a failed build or corrupt binaries!'
 .elif defined(EXTERNAL_TOOLCHAIN)

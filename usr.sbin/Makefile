@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2003/12/10 11:40:12 hannken Exp $
+#	$NetBSD: Makefile,v 1.189 2004/01/03 14:04:27 lukem Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -30,7 +30,7 @@ SUBDIR+= hprop kadmin kdc kstash ktutil
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
 .endif
 
-.if ${TOOLCHAIN_MISSING} == "yes"
+.if ${TOOLCHAIN_MISSING} != "no"
 SUBDIR+= mdsetimage
 .endif
 
