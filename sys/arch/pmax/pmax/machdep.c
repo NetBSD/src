@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1995/04/21 22:16:01 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1995/04/21 23:04:32 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1011,6 +1011,7 @@ boot(howto)
 		/*
 		 * Synchronize the disks....
 		 */
+		waittime = 0;
 		vfs_shutdown ();
 
 		/*
