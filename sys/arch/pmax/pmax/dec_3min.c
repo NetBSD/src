@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.41 2000/05/28 05:56:36 mhitch Exp $ */
+/* $NetBSD: dec_3min.c,v 1.42 2000/06/06 00:08:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.41 2000/05/28 05:56:36 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.42 2000/06/06 00:08:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.41 2000/05/28 05:56:36 mhitch Exp $")
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
 static void	dec_3min_cons_init __P((void));
-static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3min_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -319,7 +319,7 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
         }							\
     } while (0)
 
-static int
+static void
 dec_3min_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
@@ -444,7 +444,7 @@ done:
 	intr_depth--;
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

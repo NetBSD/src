@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.40 2000/05/29 12:09:45 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.41 2000/06/06 00:08:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.40 2000/05/29 12:09:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.41 2000/06/06 00:08:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ void		dec_3maxplus_init __P((void));		/* XXX */
 static void	dec_3maxplus_bus_reset __P((void));
 static void	dec_3maxplus_cons_init __P((void));
 static void 	dec_3maxplus_errintr __P((void));
-static int	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3maxplus_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
@@ -282,7 +282,7 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	}							\
     } while (0)
 
-static int
+static void
 dec_3maxplus_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
@@ -387,7 +387,7 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 
