@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.10 1996/04/05 05:06:08 mhitch Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.10.4.1 1996/05/27 09:53:48 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -141,6 +141,7 @@ long adoswordn __P((struct buf *, int));
 #endif
 
 long adoscksum __P((struct buf *, long));
+int adoscaseequ __P((const u_char *, const u_char *, int, int));
 int adoshash __P((const u_char *, int, int, int));
 int adunixprot __P((int));
 int adosfs_getblktype __P((struct adosfsmount *, struct buf *));
