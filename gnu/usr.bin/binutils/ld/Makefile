@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/08/19 17:19:46 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/04 17:46:22 tv Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -26,7 +26,7 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	${G_TEXINFOS}
 INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
-FILESDIR=	/usr/share/ldscripts
+#FILESDIR=	/usr/share/ldscripts
 
 .PATH: ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
@@ -58,17 +58,19 @@ stringify.sed: ${G_STRINGIFY}
 
 CLEANFILES+=	.depend.${f} e${f}.c
 
-e${f}.c: ${DIST}/ld/genscripts.sh stringify.sed
-	MACHINE= LIB_PATH=/usr/lib sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
-		none ${G_target_alias} ${G_target_alias} ${G_EMUL} ${LIBDIR} ${f}
+e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
+	MACHINE= LIB_PATH=/usr/lib \
+		sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
+		${G_target_alias} ${G_target_alias} ${G_target_alias} \
+		${G_EMUL} ${LIBDIR} ${f}
 
-FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
+#FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs exists - slow!
-HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
-.if !empty(HAS_XS)
-FILES+=		${f}.xs
-.endif
+#HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
+#.if !empty(HAS_XS)
+#FILES+=		${f}.xs
+#.endif
 .endfor
 
 .include <bsd.prog.mk>
