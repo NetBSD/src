@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_auto.c,v 1.1.1.2 1999/02/01 18:45:57 christos Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.1.1.2.2.1 1999/09/21 04:54:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_auto.c,v 1.3 1999/01/13 23:30:57 ezk Exp 
+ * Id: amfs_auto.c,v 1.4 1999/08/09 06:09:43 ezk Exp 
  *
  */
 
@@ -62,10 +62,11 @@
 /* DEVELOPERS: turn this on for special debugging of readdir code */
 #undef DEBUG_READDIR
 
+#define DOT_DOT_COOKIE (u_int) 1
+
 /****************************************************************************
  *** STRUCTURES                                                           ***
  ****************************************************************************/
-
 
 
 /****************************************************************************
@@ -1323,7 +1324,7 @@ amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, i
      * fairly unbelievable) then tough.
      */
 #ifdef DEBUG
-    dlog("default search");
+    dlog("amfs_auto_readdir: default search");
 #endif /* DEBUG */
     /*
      * Check for enough room.  This is extremely approximate but is more
@@ -1352,8 +1353,7 @@ amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, i
       ep[1].ne_fileid = mp->am_gen;
     ep[1].ne_name = "..";
     ep[1].ne_nextentry = 0;
-    *(u_int *) ep[1].ne_cookie =
-      xp ? xp->am_gen : ~(u_int) 0;
+    *(u_int *) ep[1].ne_cookie = (xp ? xp->am_gen : DOT_DOT_COOKIE);
 
     if (!xp)
       dp->dl_eof = TRUE;	/* by default assume readdir done */
@@ -1361,12 +1361,12 @@ amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, i
     return 0;
   }
 #ifdef DEBUG
-  dlog("real child");
+  dlog("amfs_auto_readdir: real child");
 #endif /* DEBUG */
 
-  if (gen == ~(u_int) 0) {
+  if (gen == DOT_DOT_COOKIE) {
 #ifdef DEBUG
-    dlog("End of readdir in %s", mp->am_path);
+    dlog("amfs_auto_readdir: End of readdir in %s", mp->am_path);
 #endif /* DEBUG */
     dp->dl_eof = TRUE;
     dp->dl_entries = 0;
@@ -1381,6 +1381,7 @@ amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, i
   if (xp) {
     int nbytes = count / 2;	/* conservative */
     int todo = MAX_READDIR_ENTRIES;
+
     dp->dl_entries = ep;
     do {
       am_node *xp_next = next_nonerror_node(xp->am_osib);
@@ -1388,7 +1389,7 @@ amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, i
       if (xp_next) {
 	*(u_int *) ep->ne_cookie = xp_next->am_gen;
       } else {
-	*(u_int *) ep->ne_cookie = ~(u_int) 0;
+	*(u_int *) ep->ne_cookie = DOT_DOT_COOKIE;
 	dp->dl_eof = TRUE;
       }
 
@@ -1446,7 +1447,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
      * fairly unbelievable) then tough.
      */
 #ifdef DEBUG
-    dlog("default search");
+    dlog("amfs_auto_readdir_browsable: default search");
 #endif /* DEBUG */
     /*
      * Check for enough room.  This is extremely approximate but is more
@@ -1486,7 +1487,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
       ep[1].ne_fileid = mp->am_gen;
     ep[1].ne_name = "..";
     ep[1].ne_nextentry = 0;
-    *(u_int *) ep[1].ne_cookie = ~(u_int) 0;
+    *(u_int *) ep[1].ne_cookie = DOT_DOT_COOKIE;
 
     /*
      * If map is browsable, call a function make_entry_chain() to construct
@@ -1498,8 +1499,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
     if (!te)
       return 0;
 #ifdef DEBUG_READDIR
-    j = 0;
-    for (ne=te; ne; ne=ne->ne_nextentry)
+    for (j=0,ne=te; ne; ne=ne->ne_nextentry)
       plog(XLOG_INFO, "gen1 key %4d \"%s\"", j++, ne->ne_name);
 #endif /* DEBUG_READDIR */
 
@@ -1520,19 +1520,23 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
     }
     ep[1].ne_nextentry = te;	/* append this chunk of "te" chain */
 #ifdef DEBUG_READDIR
-    for (ne=te; ne; ne=ne->ne_nextentry)
+    for (j=0,ne=te; ne; ne=ne->ne_nextentry)
       plog(XLOG_INFO, "gen2 key %4d \"%s\"", j++, ne->ne_name);
+    for (j=0,ne=ep; ne; ne=ne->ne_nextentry)
+      plog(XLOG_INFO, "gen2+ key %4d \"%s\" fi=%d ck=%d",
+	   j++, ne->ne_name, ne->ne_fileid, *(u_int *)ne->ne_cookie);
+    plog(XLOG_INFO, "EOF is %d", dp->dl_eof);
 #endif /* DEBUG_READDIR */
     return 0;
   } /* end of "if (gen == 0)" statement */
 
 #ifdef DEBUG
-  dlog("real child");
+  dlog("amfs_auto_readdir_browsable: real child");
 #endif /* DEBUG */
 
-  if (gen == ~(u_int) 0) {
+  if (gen == DOT_DOT_COOKIE) {
 #ifdef DEBUG
-    dlog("End of readdir in %s", mp->am_path);
+    dlog("amfs_auto_readdir_browsable: End of readdir in %s", mp->am_path);
 #endif /* DEBUG */
     dp->dl_eof = TRUE;
     dp->dl_entries = 0;
@@ -1574,7 +1578,7 @@ amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsen
   dp->dl_entries = ep;
 #ifdef DEBUG_READDIR
   plog(XLOG_INFO, "dl_entries=0x%x, te_next=0x%x, dl_eof=%d",
-       dp->dl_entries, te_next, dp->dl_eof);
+       (int) dp->dl_entries, (int) te_next, dp->dl_eof);
   for (ne=te; ne; ne=ne->ne_nextentry)
     plog(XLOG_INFO, "gen3 key %4d \"%s\"", j++, ne->ne_name);
 #endif /* DEBUG_READDIR */
