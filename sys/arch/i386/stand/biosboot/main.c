@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1997/03/14 06:56:27 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1997/03/22 09:00:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -179,7 +179,7 @@ print_bootsel(filename, howto)
 		printf("booting %s%d%c:%s", devname, unit,
 		    'a' + partition, file);
 		if (howto)
-			printf("(howto 0x%x)", howto);
+			printf(" (howto 0x%x)", howto);
 		printf("\n");
 	}
 }
@@ -329,13 +329,32 @@ void
 bootmenu()
 {
 	char input[80];
+	int i;
 
 	printf("\ntype \"?\" or \"help\" for help.\n");
 	for (;;) {
+ loop:
 		input[0] = '\0';
 		printf("> ");
 		gets(input);
-		docommand(input);
+
+		/*
+		 * Skip leading whitespace.
+		 */
+		for (i = 0; i < sizeof(input); i++) {
+			if (input[i] == '\0')
+				goto loop;
+			if (input[i] != ' ' && input[i] != '\t')
+				break;
+		}
+		if (i >= sizeof(input)) {
+			/*
+			 * Uhh, what?  Can't happen, but what the heck.
+			 */
+			goto loop;
+		}
+
+		docommand(&input[i]);
 	}
 }
 
