@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2000/05/21 16:33:12 jhawk Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2000/07/29 20:06:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -292,7 +292,7 @@ command_help(arg)
 {
 
 	printf("commands are:\n"
-	    "boot [xdNx:][filename] [-adrs]\n"
+	    "boot [xdNx:][filename] [-ads]\n"
 	    "     (ex. \"sd0a:netbsd.old -s\"\n"
 	    "ls [path]\n"
 	    "dev xd[N[x]]:\n"
