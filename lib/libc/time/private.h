@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.17 2000/12/12 15:25:41 kleink Exp $	*/
+/*	$NetBSD: private.h,v 1.18 2000/12/12 15:35:31 kleink Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -75,9 +75,9 @@ static char	privatehid[] = "@(#)private.h	7.51";
 #define HAVE_UTMPX_H		0
 #endif /* !defined HAVE_UTMPX_H */
 
-#ifndef LOCALE_HOME
-#define LOCALE_HOME		"/usr/lib/locale"
-#endif /* !defined LOCALE_HOME */
+#ifdef LOCALE_HOME
+#undefine LOCALE_HOME		/* not to be handled by tzcode itself */
+#endif /* defined LOCALE_HOME */
 
 #if HAVE_INCOMPATIBLE_CTIME_R
 #define asctime_r _incompatible_asctime_r
