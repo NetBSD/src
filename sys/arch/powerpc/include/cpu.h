@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.2 2001/11/05 19:46:16 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.3 2001/11/15 14:42:31 briggs Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -139,7 +139,7 @@ extern volatile int intr_depth;
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
 
-#define	PROC_PC(p)		(trapframe(p)->srr0)
+#define	LWP_PC(l)		(trapframe(l)->srr0)
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
