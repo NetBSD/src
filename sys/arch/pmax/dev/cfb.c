@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.8 1995/08/10 04:21:38 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.9 1995/08/29 09:56:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -201,6 +201,23 @@ cfbmatch(parent, match, aux)
 	return (1);
 }
 
+/*
+ * The original TURBOChannel cfb interrupts on every vertical
+ * retrace, and we can't disable the board from requesting those
+ * interrupts.  The 4.4BSD kernel never enabled those interrupts;
+ * but there's a kernel design bug on the 3MIN, where the cfb
+ * interrupts at spl0, spl1, or spl2.
+ */
+void
+cfb_intr(int unit)
+{
+	register struct pmax_fb *fp=  &cfbfb;
+	char *slot_addr = (((char *)fp->fr_addr) - CFB_OFFSET_VRAM);
+	
+	/* reset vertical-retrace interrupt by writing a dont-care */
+	*(int*) (slot_addr+CFB_OFFSET_IREQ) = 0;
+}
+
 void
 cfbattach(parent, self, aux)
 	struct device *parent;
@@ -216,9 +233,12 @@ cfbattach(parent, self, aux)
 
 	/* no interrupts for CFB */
 	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	/* Vertical-retrace interrupts aren't honoured, except on 3MIN XXX */
+	if (pmax_boardtype == DS_3MIN) {
+		BUS_INTR_ESTABLISH(ca, cfb_intr, self->dv_unit);
+	}
 	printf("\n");
 }
-
 
 /*ARGSUSED*/
 cfbopen(dev, flag)
