@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.76 2003/12/14 09:40:07 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.77 2004/02/13 17:22:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd December 14, 2003
+.Dd February 13, 2004
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -153,6 +153,15 @@ keyboard.
 Interrupt switch on the body.
 .El
 .Pp
+The key sequence to activate
+.Nm
+can be changed by modifying
+.Dq hw.cnmagic
+with
+.Xr sysctl 8 .
+If the console is not dedicated to
+.Nm
+the sequence should not be easily typed by accident.
 In addition,
 .Nm
 may be explicitly activated by the debugging code in the kernel
@@ -1196,7 +1205,8 @@ and modifiers as described above.
 .El
 .Sh SEE ALSO
 .Xr options 4 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr cnmagic 9
 .Sh HISTORY
 The
 .Nm
