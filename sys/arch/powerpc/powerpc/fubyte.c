@@ -1,4 +1,4 @@
-/*	$NetBSD: fubyte.c,v 1.3 2003/07/15 02:54:47 lukem Exp $	*/
+/*	$NetBSD: fubyte.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fubyte.c,v 1.3 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fubyte.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -40,8 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fubyte.c,v 1.3 2003/07/15 02:54:47 lukem Exp $");
  * Emulate fubyte.
  */
 int
-fubyte(addr)
-	const void *addr;
+fubyte(const void *addr)
 {
 	unsigned char c;
 	

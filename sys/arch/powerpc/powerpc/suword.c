@@ -1,4 +1,4 @@
-/*	$NetBSD: suword.c,v 1.3 2003/07/15 02:54:49 lukem Exp $	*/
+/*	$NetBSD: suword.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.3 2003/07/15 02:54:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -40,9 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.3 2003/07/15 02:54:49 lukem Exp $");
  * Emulate suword
  */
 int
-suword(addr,l)
-	void *addr;
-	long l;
+suword(void *addr, long l)
 {
 	if (copyout(&l,addr,sizeof(l)))
 		return -1;

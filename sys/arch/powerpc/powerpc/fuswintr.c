@@ -1,4 +1,4 @@
-/*	$NetBSD: fuswintr.c,v 1.3 2003/07/15 02:54:47 lukem Exp $	*/
+/*	$NetBSD: fuswintr.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fuswintr.c,v 1.3 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fuswintr.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -42,8 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: fuswintr.c,v 1.3 2003/07/15 02:54:47 lukem Exp $");
  * Simply return fault for all cases
  */
 int
-fuswintr(addr)
-	const void *addr;
+fuswintr(const void *addr)
 {
 	return -1;
 }

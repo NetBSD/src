@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -131,9 +131,7 @@ process_set_pc(struct lwp *l, caddr_t addr)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp *l;
-	int sstep;
+process_sstep(struct lwp *l, int sstep)
 {
 	struct trapframe *tf = trapframe(l);
 	

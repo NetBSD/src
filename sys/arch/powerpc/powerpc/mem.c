@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2003/08/07 16:29:19 agc Exp $ */
+/*	$NetBSD: mem.c,v 1.20 2003/09/27 04:44:42 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 2003/08/07 16:29:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -101,10 +101,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t v;
 	u_int c;
@@ -162,10 +159,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-        dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;
 

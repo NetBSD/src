@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.56 2003/08/27 20:20:08 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.57 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2003/08/27 20:20:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -78,12 +78,8 @@ void vunmaprange(vaddr_t, vsize_t);
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+	void (*func)(void *), void *arg)
 {
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -168,10 +164,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	extern void fork_trampoline(void);
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -198,8 +191,7 @@ cpu_setfunc(l, func, arg)
 }
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 }
 
@@ -207,9 +199,7 @@ cpu_swapin(l)
  * Move pages from one kernel virtual address to another.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	paddr_t pa;
 	vaddr_t va;
@@ -258,11 +248,8 @@ cpu_exit(struct lwp *l, int proc)
  * Write the machine-dependent part of a core dump.
  */
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+	struct core *chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
@@ -316,11 +303,7 @@ cpu_coredump(l, vp, cred, chdr)
  * Map a range of user addresses into the kernel.
  */
 vaddr_t
-vmaprange(p, uaddr, len, prot)
-	struct proc *p;
-	vaddr_t uaddr;
-	vsize_t len;
-	int prot;
+vmaprange(struct proc *p, vaddr_t uaddr, vsize_t len, int prot)
 {
 	vaddr_t faddr, taddr, kaddr;
 	vsize_t off;
@@ -345,9 +328,7 @@ vmaprange(p, uaddr, len, prot)
  * Undo vmaprange.
  */
 void
-vunmaprange(kaddr, len)
-	vaddr_t kaddr;
-	vsize_t len;
+vunmaprange(vaddr_t kaddr, vsize_t len)
 {
 	vaddr_t addr;
 	vsize_t off;
@@ -365,9 +346,7 @@ vunmaprange(kaddr, len)
  * Note: these pages have already been locked by uvm_vslock.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr;
 	vsize_t off;
@@ -405,9 +384,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr;
 	vsize_t off;
