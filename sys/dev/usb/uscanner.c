@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.23 2001/12/12 15:48:18 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.24 2001/12/30 05:12:36 gehenna Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.23 2001/12/12 15:48:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.24 2001/12/30 05:12:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static const struct uscan_info uscanner_devs[] = {
 
   /* Mustek */
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU }, 0 },
- {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW }, 0 },
+ {{ USB_VENDOR_NATIONAL, USB_PRODUCT_NATIONAL_BEARPAW1200 }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_600CU }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200USB }, 0 },
  {{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200UB }, 0 },
