@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2000/06/02 22:56:32 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.64 2000/06/08 17:59:32 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,12 @@
 
 /* Our exported CPU info; we have only one for now. */  
 struct cpu_info cpu_info_store;
-int bus_space_debug = 0;
+int bus_space_debug = 0; /* This may be used by macros elsewhere. */
+#ifdef DEBUG
+#define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -1476,7 +1481,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 {
 	vaddr_t v;
 	u_int64_t pa;
-	paddr_t	pm_flags;
+	paddr_t	pm_flags = 0;
 static	vaddr_t iobase = IODEV_BASE;
 
 	t->type = iospace;
@@ -1502,13 +1507,13 @@ static	vaddr_t iobase = IODEV_BASE;
 		if (!vaddr) return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
-		pm_flags = PMAP_NC|PMAP_LITTLE;
+		pm_flags = PMAP_LITTLE;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE|PMAP_NC;
+		pm_flags = PMAP_LITTLE;
 		break;
 	default:
-		pm_flags = PMAP_NC;
+		pm_flags = 0;
 		break;
 	}
 
@@ -1528,16 +1533,15 @@ static	vaddr_t iobase = IODEV_BASE;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 
-#ifdef NOTDEF_DEBUG
-	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
-		(int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
-#endif
+
+	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
+		"addr %016llx size %016llx virt %llx paddr %016llx\n",
+		(int)iospace, (int) flags, (u_int64_t)addr, (u_int64_t)size,
+		(u_int64_t)*hp, (u_int64_t)pa));
 
 	do {
-#ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
-			(u_int64_t)pa, (char *)v, (u_int64_t)*hp);
-#endif
+		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
+			(u_int64_t)pa, (char *)v, (u_int64_t)*hp));
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
 				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
