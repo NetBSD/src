@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.5 2003/08/07 16:31:22 agc Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.6 2003/08/24 17:32:05 uwe Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.5 2003/08/07 16:31:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.6 2003/08/24 17:32:05 uwe Exp $");
+
+#include "opt_rcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
