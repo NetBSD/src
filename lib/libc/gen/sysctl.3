@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.34 1999/03/09 19:45:09 erh Exp $
+.\"	$NetBSD: sysctl.3,v 1.34.2.1 2001/05/30 09:45:05 he Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -542,6 +542,7 @@ The currently defined protocols and names are:
 .It ip	anonportmin	integer	yes
 .It ip	anonportmax	integer	yes
 .It ip	mtudisctimeout	integer	yes
+.It ip	maxfragpacket	integer	yes
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
@@ -606,6 +607,11 @@ be greater than
 Returns the number of seconds in which a route added by the Path MTU
 Discovery engine will time out.  When the route times out, the Path
 MTU Discovery engine will attempt to probe a larger path MTU.
+.It Li ip.maxfragpackets
+The maximum number of fragmented packets the node will accept.
+0 means that the node will not accept any fragmented packets.
+-1 means that the node will accept as many fragmented packets as it receives.
+The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li tcp.rfc1323
