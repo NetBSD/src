@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.36.2.2 2000/02/08 22:23:57 he Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.36.2.3 2000/05/11 09:14:47 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.33.2.1 1999/04/27 13:53:47 perry Exp 
+ *	NetBSD: pcmciadevs,v 1.33.2.2 2000/02/08 22:23:24 he Exp 
  */
 
 /*-
@@ -262,6 +262,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Simple Technology 28.8 Communicator"	},
 	},
 	{
+	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24,
+	    PCMCIA_CIS_SIMPLETECH_SPECTRUM24,
+	    0,
+	    "Simple Technology",
+	    "Symbol Spectrum24 WLAN Adapter"	},
+	},
+	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
 	    PCMCIA_CIS_SOCKET_PAGECARD,
 	    0,
@@ -330,6 +337,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC 8016 EtherCard"	},
+	},
+	{
+	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
+	    0,
+	    "Lucent Technologies",
+	    "WaveLAN/IEEE"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -532,6 +546,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Simple Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_LUCENT, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Lucent Technologies",
 	    NULL,
 	},
 	{
