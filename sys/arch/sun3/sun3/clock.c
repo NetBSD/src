@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 1996/12/17 21:11:17 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 1997/01/27 20:43:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -59,10 +59,10 @@
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 
+#include <sun3/sun3/interreg.h>
 #include "intersil7170.h"
-#include "interreg.h"
-#include "machdep.h"
 
 #define	CLOCK_PRI	5
 

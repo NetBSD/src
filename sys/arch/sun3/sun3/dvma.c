@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.7 1997/01/27 19:41:15 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.8 1997/01/27 20:43:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,8 +59,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/dvma.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 /* Resource map used by dvma_mapin/dvma_mapout */
 #define	NUM_DVMA_SEGS 10
