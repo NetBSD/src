@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.3 1996/03/06 23:01:49 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.4 1996/03/09 17:22:12 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -39,7 +39,6 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>	/* just for boothowto */
 #include <sys/exec.h>
-#include <setjmp.h>
 
 #include <vm/vm.h>
 
@@ -77,7 +76,7 @@ struct db_variable db_regs[] = {
 
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-extern jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 int	db_active = 0;
 
