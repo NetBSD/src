@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.12 2003/08/07 16:29:12 agc Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.13 2005/03/17 20:39:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -46,6 +46,7 @@
 
 /* XXX */
 #include <sys/select.h>
+#include <sys/selinfo.h>
 
 /* Hardware cursor information... */
 struct hw_cursor {

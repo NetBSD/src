@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.22 2005/03/17 20:39:17 kleink Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.1 2005/03/17 20:39:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,47 +29,22 @@
  * SUCH DAMAGE.
  *
  *	@(#)select.h	8.2 (Berkeley) 1/4/94
+*	from: NetBSD: select.h,v 1.21 2005/03/10 00:25:45 kleink Exp
  */
 
-#ifndef _SYS_SELECT_H_
-#define	_SYS_SELECT_H_
+#ifndef _SYS_SELINFO_H_
+#define	_SYS_SELINFO_H_
 
-#include <sys/cdefs.h>
-#include <sys/featuretest.h>
-#include <sys/types.h>
+#include <sys/event.h>		/* for struct klist */
 
-#ifdef _KERNEL
-#include <sys/selinfo.h>		/* for struct selinfo */
-#include <sys/signal.h>			/* for sigset_t */
+/*
+ * Used to maintain information about processes that wish to be
+ * notified when I/O becomes possible.
+ */
+struct selinfo {
+	struct klist	sel_klist;	/* knotes attached to this selinfo */
+	pid_t		sel_pid;	/* process to be notified */
+	uint8_t		sel_collision;	/* non-zero if a collision occurred */
+};
 
-struct lwp;
-struct proc;
-struct timeval;
-
-int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
-	    fd_set *, struct timeval *, sigset_t *);
-void	selrecord(struct proc *selector, struct selinfo *);
-void	selwakeup(struct selinfo *);
-
-static __inline void
-selnotify(struct selinfo *sip, long knhint)
-{
-
-	if (sip->sel_pid != 0)
-		selwakeup(sip);
-	KNOTE(&sip->sel_klist, knhint);
-}
-
-#else /* _KERNEL */
-
-#include <sys/sigtypes.h>
-#include <time.h>
-
-int	pselect(int, fd_set * __restrict, fd_set * __restrict,
-	    fd_set * __restrict, const struct timespec * __restrict,
-	    const sigset_t * __restrict);
-int	select(int, fd_set * __restrict, fd_set * __restrict,
-	    fd_set * __restrict, struct timeval * __restrict);
-#endif /* _KERNEL */
-
-#endif /* !_SYS_SELECT_H_ */
+#endif /* !_SYS_SELINFO_H_ */
