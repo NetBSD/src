@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.87 2001/07/18 10:18:21 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.88 2001/07/29 22:18:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ ssize_t	 pwrite __P((int, const void *, size_t, off_t));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	 acct __P((const char *));
 int	 des_cipher __P((const char *, char *, long, int));
-int	 des_setkey __P((const char *key));
+int	 des_setkey __P((const char *));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchroot __P((int));
