@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.58 2001/11/13 06:17:47 lukem Exp $ */
+/* $NetBSD: wskbd.c,v 1.59 2001/11/22 00:57:15 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.58 2001/11/13 06:17:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.59 2001/11/22 00:57:15 augustss Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -606,6 +606,13 @@ wskbd_input(struct device *dev, u_int type, int value)
 		DPRINTF(("wskbd_input: not open\n"));
 		return;
 	}
+
+#ifdef DIAGNOSTIC
+	if (evar->q == NULL) {
+		printf("wskbd_input: evar->q=NULL\n");
+		return;
+	}
+#endif
 
 	put = evar->put;
 	ev = &evar->q[put];
