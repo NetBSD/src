@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.34 1997/03/15 18:12:36 is Exp $	*/
+/*	$NetBSD: in.c,v 1.35 1997/07/23 21:26:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -126,6 +126,32 @@ in_socktrim(ap)
 			(ap)->sin_len = cp - (char *) (ap) + 1;
 			break;
 		}
+}
+
+/*
+ * Maintain the "in_maxmtu" variable, which is the largest
+ * mtu for non-local interfaces with AF_INET addresses assigned
+ * to them that are up.
+ */
+unsigned long in_maxmtu;
+
+void
+in_setmaxmtu()
+{
+	register struct in_ifaddr *ia;
+	register struct ifnet *ifp;
+	unsigned long maxmtu = 0;
+
+	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
+		if ((ifp = ia->ia_ifp) == 0)
+			continue;
+		if ((ifp->if_flags & (IFF_UP|IFF_LOOPBACK)) != IFF_UP)
+			continue;
+		if (ifp->if_mtu > maxmtu)
+			maxmtu =  ifp->if_mtu;
+	}
+	if (maxmtu)
+		in_maxmtu = maxmtu;
 }
 
 int	in_interfaces;		/* number of external internet interfaces */
@@ -305,6 +331,7 @@ in_control(so, cmd, data, ifp, p)
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
+		in_setmaxmtu();
 		break;
 
 #ifdef MROUTING
@@ -316,7 +343,9 @@ in_control(so, cmd, data, ifp, p)
 	default:
 		if (ifp == 0 || ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		in_setmaxmtu();
+		return(error);
 	}
 	return (0);
 }
@@ -373,6 +402,7 @@ in_ifinit(ifp, ia, sin, scrub)
 		in_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
+
 	if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
@@ -389,9 +419,12 @@ in_ifinit(ifp, ia, sin, scrub)
 		ia->ia_sockmask.sin_addr.s_addr = ia->ia_subnetmask;
 	} else
 		ia->ia_netmask &= ia->ia_subnetmask;
+
 	ia->ia_net = i & ia->ia_netmask;
 	ia->ia_subnet = i & ia->ia_subnetmask;
 	in_socktrim(&ia->ia_sockmask);
+	/* re-calculate the "in_maxmtu" value */
+	in_setmaxmtu();
 	/*
 	 * Add route for the network.
 	 */
