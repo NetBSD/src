@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.38 2000/09/28 19:05:07 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.39 2000/11/28 13:07:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1767,8 +1767,6 @@ netbsd32_execve(p, v, retval)
 	struct vmspace *vm;
 	char **tmpfap;
 	int szsigcode;
-	extern struct emul emul_netbsd;
-
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
@@ -1796,7 +1794,7 @@ netbsd32_execve(p, v, retval)
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = SCARG(&ua, path);
-	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -1804,7 +1802,6 @@ netbsd32_execve(p, v, retval)
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
-	pack.ep_emul = &emul_netbsd;
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
@@ -1889,17 +1886,18 @@ netbsd32_execve(p, v, retval)
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
+	szsigcode = pack.ep_es->es_emul->e_esigcode -
+	    pack.ep_es->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -1953,7 +1951,7 @@ netbsd32_execve(p, v, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp))
 		goto exec_abort;
 
 	/* fill process ps_strings info */
@@ -1969,7 +1967,7 @@ netbsd32_execve(p, v, retval)
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
-		if (copyout((char *)pack.ep_emul->e_sigcode,
+		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode))
 			goto exec_abort;
@@ -2035,13 +2033,36 @@ netbsd32_execve(p, v, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
 
-	p->p_emul = pack.ep_emul;
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
+
+	/*
+	 * Call emulation specific exec hook. This can setup setup per-process
+	 * p->p_emuldata or do any other per-process stuff an emulation needs.
+	 *
+	 * If we are executing process of different emulation than the
+	 * original forked process, call e_proc_exit() of the old emulation
+	 * first, then e_proc_exec() of new emulation. If the emulation is
+	 * same, the exec hook code should deallocate any old emulation
+	 * resources held previously by this process.
+	 */
+	if (p->p_emul && p->p_emul->e_proc_exit
+	    && p->p_emul != pack.ep_es->es_emul)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * Call exec hook. Emulation code may NOT store reference to anything
+	 * from &pack.
+	 */
+        if (pack.ep_es->es_emul->e_proc_exec)
+                (*pack.ep_es->es_emul->e_proc_exec)(p, &pack);
+
+	/* update p_emul, the old value is no longer needed */
+	p->p_emul = pack.ep_es->es_emul;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
@@ -2066,7 +2087,7 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
