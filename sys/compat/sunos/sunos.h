@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.16 2003/09/26 12:02:57 simonb Exp $	*/
+/*	$NetBSD: sunos.h,v 1.17 2003/09/28 00:04:52 cl Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
@@ -155,7 +155,7 @@ struct sunos_audio_info {
 __BEGIN_DECLS
 /* Defined in arch/<arch>/sunos_machdep.c */
 #ifdef __HAVE_SIGINFO
-void	sunos_sendsig __P((struct ksiginfo *, sigset_t *));
+void	sunos_sendsig __P((const ksiginfo_t *, const sigset_t *));
 #else
 void	sunos_sendsig __P((int, const sigset_t *, u_long));
 #endif
