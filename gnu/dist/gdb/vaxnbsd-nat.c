@@ -59,7 +59,7 @@ store_inferior_registers (regno)
 
 /* XXX - Add this to machine/regs.h instead? */
 struct md_core {
-  struct reg intreg;
+  struct trapframe intreg;
   /* struct fpreg freg; XXX */
 };
 
@@ -71,6 +71,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      unsigned int reg_addr;	/* Unused in this version */
 {
   struct md_core *core_reg;
+  struct reg *reg;
 
   core_reg = (struct md_core *)core_reg_sect;
 
@@ -84,8 +85,13 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   }
 
   /* Integer registers */
-  memcpy(&registers[REGISTER_BYTE (0)],
-	 &core_reg->intreg, sizeof(struct reg));
+  reg = (struct reg *) &registers[REGISTER_BYTE (0)];
+  memcpy(&reg->r0, &core_reg->intreg.r0, sizeof(reg->r0)*12);
+  reg->ap = core_reg->intreg.ap;
+  reg->fp = core_reg->intreg.fp;
+  reg->sp = core_reg->intreg.sp;
+  reg->pc = core_reg->intreg.pc;
+  reg->psl = core_reg->intreg.psl;
 
   registers_fetched ();
 }
