@@ -23,14 +23,14 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.5.2.1 1993/09/14 18:17:23 mycroft Exp $
+ *	$Id: db_command.c,v 1.5.2.2 1993/11/14 22:48:30 mycroft Exp $
  */
 
 /*
  * Command dispatcher.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>

@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_break.c,v 1.2 1993/05/20 03:39:08 cgd Exp $
+ * $Id: db_break.c,v 1.2.4.1 1993/11/14 22:48:28 mycroft Exp $
  *
  * HISTORY
  * $Log: db_break.c,v $
- * Revision 1.2  1993/05/20 03:39:08  cgd
+ * Revision 1.2.4.1  1993/11/14 22:48:28  mycroft
+ * Canonicalize all #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:08  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
@@ -76,8 +79,8 @@
 /*
  * Breakpoints.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>
