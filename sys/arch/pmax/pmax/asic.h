@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.7 1996/01/31 08:46:42 jonathan Exp $	*/
+/*	$NetBSD: asic.h,v 1.8 1996/05/19 01:42:54 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -275,13 +275,13 @@
 
 #define	XINE_INTR_xxxx			0x00002808	/* ro */
 #define	XINE_INTR_FLOPPY		0x00008000	/* ro */
-/*#define	XINE_INTR_NVR_JUMPER	0x00004000	/* ro */
+/*#define	XINE_INTR_NVR_JUMPER	0x00004000 */	/* ro */
 #define	XINE_INTR_POWERUP		0x00002000	/* ro */
 #define	XINE_INTR_TC_0			0x00001000	/* ro */
 #define	XINE_INTR_ISDN			0x00000800	/* ro */
-/*#define	XINE_INTR_NRMOD_JUMPER	0x00000400	/* ro */
-/*#define	XINE_INTR_SCSI		0x00000200	/* ro */
-/*#define	XINE_INTR_LANCE		0x00000100	/* ro */
+/*#define	XINE_INTR_NRMOD_JUMPER	0x00000400 */	/* ro */
+/*#define	XINE_INTR_SCSI		0x00000200 */	/* ro */
+/*#define	XINE_INTR_LANCE		0x00000100 */	/* ro */
 #define	XINE_INTR_FLOPPY_HDS		0x00000080	/* ro */
 #define	XINE_INTR_SCC_0			0x00000040	/* ro */
 #define	XINE_INTR_TC_1			0x00000020	/* ro */
