@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.44 2002/02/26 22:36:41 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.45 2002/03/06 23:42:15 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2249,3 +2249,59 @@ distrib/notes/common/main			patch
 
   Minor update for 1.5.3: add a list of notable changes for 1.5.3,
   and note a caveat about the IPF update.
+
+distrib/notes/common/sysinst                    1.27,1.29
+distrib/notes/common/postinstall                1.29,1.31
+distrib/notes/common/main               1.137-1.141,1.143,1.146-1.147,1.149
+distrib/notes/macppc/hardware                   1.14,1.21
+distrib/notes/macppc/install                    1.18
+distrib/notes/macppc/prep                       1.19,1.21,1.24
+
+  Various fixes:
+   o Significant fixes/rework for macppc section:
+     - Tweak ``Quick install'' section for macppc
+     - OpenFirmware boot syntax section
+     - Update/correct description of boot problems
+     - Mention de0 as macppc possible interface
+     - Other improvements and fixes
+   o Add recently added developers
+   o Formatting and spelling fixes
+
+distrib/notes/common/main			patch
+
+  Note FFS softdep performance improvement.
+
+distrib/notes/common/main			patch
+
+  Note package tools digital signatures and version number handling.
+
+sys/compat/freebsd/syscalls.master		1.28-1.30
+sys/compat/freebsd/freebsd_sysent.c		regenerate
+sys/compat/freebsd/freebsd_syscalls.c		regenerate
+sys/compat/freebsd/freebsd_syscall.h		regenerate
+sys/compat/freebsd/freebsd_syscallargs.h	regenerate
+sys/compat/freebsd/freebsd_misc.c		1.6-1.7
+sys/compat/freebsd/freebsd_signal.h		1.1 (new)
+
+  Add support for FreeBSD 4.x signals; fixes PR#9769.
+
+distrib/sets/lists/etc/mi			1.91 via patch
+etc/defaults/rc.conf				1.19,1.28,1.31 via patch
+etc/rc.d/ipfs					1.1-1.3 (new)
+etc/rc.d/ipmon					1.4-1.5
+share/man/man5/rc.conf.5			1.52
+
+  Added ipfs to save state tables.  Use -D for ipmon.
+
+bin/rm/rm.c					1.28
+
+  Fix a problem where ``rm -rf foo'' exits with a non-zero exit status
+  on a read-only file system even if foo doesn't exist.
+
+usr.bin/newsyslog/Makefile			1.13
+usr.bin/newsyslog/newsyslog.8			1.13-1.21
+usr.bin/newsyslog/newsyslog.c			1.22-1.43 via patch
+usr.bin/newsyslog/pathnames.h			1.1-1.2 (new)
+
+  Synchronize to current development version.  This includes among
+  other things the ``specific time for periodic trimming'' feature.
