@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.13 1998/10/12 12:03:25 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.14 1998/10/26 17:39:23 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.13 1998/10/12 12:03:25 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.14 1998/10/26 17:39:23 agc Exp $");
 #endif
 #endif
 
@@ -106,16 +106,27 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     fprintf(totar, "%s\n", COMMENT_FNAME);
     fprintf(totar, "%s\n", DESC_FNAME);
 
-    if (Install)
+    if (Install) {
 	fprintf(totar, "%s\n", INSTALL_FNAME);
-    if (DeInstall)
+    }
+    if (DeInstall) {
 	fprintf(totar, "%s\n", DEINSTALL_FNAME);
-    if (Require)
+    }
+    if (Require) {
 	fprintf(totar, "%s\n", REQUIRE_FNAME);
-    if (Display)
+    }
+    if (Display) {
 	fprintf(totar, "%s\n", DISPLAY_FNAME);
-    if (Mtree)
+    }
+    if (Mtree) {
 	fprintf(totar, "%s\n", MTREE_FNAME);
+    }
+	if (BuildVersion) {
+		(void) fprintf(totar, "%s\n", BUILD_VERSION_FNAME);
+	}
+	if (BuildInfo) {
+		(void) fprintf(totar, "%s\n", BUILD_INFO_FNAME);
+	}
 
     for (p = plist->head; p; p = p->next) {
 	if (p->type == PLIST_FILE)
@@ -260,8 +271,9 @@ pkg_perform(char **pkgs)
      * Run down the list and see if we've named it, if not stick in a name
      * at the top.
      */
-    if (find_plist(&plist, PLIST_NAME) == NULL)
+    if (find_plist(&plist, PLIST_NAME) == NULL) {
 	add_plist_top(&plist, PLIST_NAME, basename_of(pkg));
+    }
 
     /*
      * We're just here for to dump out a revised plist for the FreeBSD ports
@@ -320,6 +332,16 @@ pkg_perform(char **pkgs)
 	add_plist(&plist, PLIST_IGNORE, NULL);
 	add_plist(&plist, PLIST_FILE, MTREE_FNAME);
 	add_plist(&plist, PLIST_MTREE, MTREE_FNAME);
+    }
+    if (BuildVersion) {
+	copy_file(home, BuildVersion, BUILD_VERSION_FNAME);
+	add_plist(&plist, PLIST_IGNORE, NULL);
+	add_plist(&plist, PLIST_FILE, BUILD_VERSION_FNAME);
+    }
+    if (BuildInfo) {
+	copy_file(home, BuildInfo, BUILD_INFO_FNAME);
+	add_plist(&plist, PLIST_IGNORE, NULL);
+	add_plist(&plist, PLIST_FILE, BUILD_INFO_FNAME);
     }
 
     /* Finally, write out the packing list */

@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.8 1998/10/12 12:03:25 agc Exp $ */
+/* $NetBSD: create.h,v 1.9 1998/10/26 17:39:22 agc Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -38,6 +38,8 @@ extern char	*ExcludeFrom;
 extern char	*Mtree;
 extern char	*Pkgdeps;
 extern char	*Pkgcfl;
+extern char	*BuildVersion;
+extern char	*BuildInfo;
 extern char	PlayPen[];
 extern size_t	PlayPenSize;
 extern int	Dereference;
