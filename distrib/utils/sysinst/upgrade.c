@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.37 2003/07/08 16:12:18 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.38 2003/07/18 09:46:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,11 +48,13 @@
 /*
  * local prototypes
  */
-void 	check_prereqs (void);
-int	save_etc (void);
-int	merge_etc (void);
-int	save_X (void);
-int	merge_X (void);
+void 	check_prereqs(void);
+int	save_etc(void);
+int	merge_etc(void);
+int	save_X(void);
+int	merge_X(void);
+
+static int etc_saved;
 
 /*
  * Do the system upgrade.
@@ -150,6 +152,8 @@ save_etc(void)
 	/* Move target /etc to /etc.old.  Abort on error. */
 	mv_within_target_or_die("/etc", "/etc.old");
 
+	etc_saved = 1;
+
 	/* now make an /etc that should let the user reboot. */
 	make_target_dir("/etc");
 
@@ -184,6 +188,27 @@ save_etc(void)
 
 	return 0;
 }
+
+/*
+ * Attempt to undo save_etc() if the install fails
+ */
+
+void
+restore_etc(void)
+{
+	const char *tp;
+
+	if (!etc_saved)
+		return;
+	if (sets_installed & SET_ETC)
+		return;
+
+	tp = target_prefix();
+	run_prog(0, NULL, "mv -f %s/etc.old/* %s/etc", tp, tp);
+	run_prog(0, NULL, "rmdir  %s/etc.old", tp);
+	etc_saved = 0;
+}
+
 
 /*
  * Save X symlink to X.old so it can be recovered later
