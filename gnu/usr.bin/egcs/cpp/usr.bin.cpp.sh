@@ -44,6 +44,7 @@
 PATH=/usr/bin:/bin
 CC=${CC-gcc}
 CPP=/usr/libexec/cpp
+STDINCDIR=/usr/include
 ALST="-traditional -D__GNUC__ -$ "
 NSI=no
 OPTS=""
@@ -84,7 +85,7 @@ do
 		FOUNDFILES=yes
 		if [ $NSI = "no" ]
 		then
-			INCS="$INCS -I/usr/include"
+			INCS="$INCS -I$STDINCDIR"
 			NSI=skip
 		fi
 		eval $CPP $ALST $INCS $OPTS $A || exit $?
@@ -97,7 +98,7 @@ then
 	# read standard input
 	if [ $NSI = "no" ]
 	then
-		INCS="$INCS -I/usr/include"
+		INCS="$INCS -I$STDINCDIR"
 	fi
 	eval exec $CPP $ALST $INCS $OPTS
 fi
