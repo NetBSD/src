@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.17 1994/05/13 06:07:05 chopps Exp $
+ *	$Id: trap.c,v 1.18 1994/05/18 16:05:07 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ static void
 userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	struct timeval *oticks;
+	u_quad_t oticks;
 {
 	int sig, s;
 
@@ -136,34 +136,25 @@ userret(p, pc, oticks)
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
 		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
+		 * we switch'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		s = splclock();
+		s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
-#ifdef notdef_p_stime
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - oticks->tv_sec) * 1000 +
-		    (tv->tv_usec - oticks->tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
-#else
-			addupc(pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
+	/*
+	 * If profiling, charge recent system time.
+	 */
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+		
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
-#endif
 	curpriority = p->p_priority;
 }
 
@@ -211,7 +202,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	u_int code, v;
 	struct frame *fp;
 	struct proc *p;
-	struct timeval *sticks;
+	u_quad_t sticks;
 {
 	extern vm_map_t kernel_map;
 	struct vmspace *vm;
@@ -411,20 +402,18 @@ trap(type, code, v, frame)
 	u_int code, v;
 	struct frame frame;
 {
-	struct timeval syst;
 	struct proc *p;
 	u_int ncode, ucode;
+	u_quad_t sticks;
 	int i, s;
 
 	p = curproc;
 	ucode = 0;
 	cnt.v_trap++;
-#ifdef	notdef_p_stime
-	syst = p->p_stime;
-#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
+		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
 
@@ -548,7 +537,7 @@ trap(type, code, v, frame)
 		 * DONT trap on it.. 
 		 */
 		if (p->p_emul == EMUL_SUNOS) {
-			userret(p, frame.f_pc, &syst); 
+			userret(p, frame.f_pc, sticks); 
 			return;
 		}
 #endif
@@ -605,20 +594,20 @@ trap(type, code, v, frame)
 			p->p_flag &= ~P_OWEUPC;
 		}
 #endif
-		userret(p, frame.f_pc, &syst); 
+		userret(p, frame.f_pc, sticks); 
 		return;
 	/*
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
-		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == subail) {
+		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail) {
 			trapcpfault(p, &frame);
 			return;
 		}
 		/*FALLTHROUGH*/
 	case T_MMUFLT|T_USER:	/* page fault */
-		trapmmufault(type, code, v, &frame, p, &syst);
+		trapmmufault(type, code, v, &frame, p, sticks);
 		return;
 	}
 
@@ -630,7 +619,7 @@ trap(type, code, v, frame)
 	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, frame.f_pc, &syst); 
+	userret(p, frame.f_pc, sticks); 
 }
 
 /*
@@ -640,11 +629,11 @@ syscall(code, frame)
 	volatile int code;
 	struct frame frame;
 {
-	struct timeval syst;
 	struct sysent *callp;
 	struct sysent *systab;
 	int rval[2], args[8], error, opc, numsys, s, i;
 	caddr_t params;
+	u_quad_t sticks;
 	struct proc *p;
 
 	if (USERMODE(frame.f_sr) == 0)
@@ -655,9 +644,7 @@ syscall(code, frame)
 	p = curproc;
 	p->p_md.md_regs = frame.f_regs;
 	p->p_md.md_flags &= ~MDP_STACKADJ;
-#ifdef notdef_p_stime
-	syst = p->p_stime;
-#endif
+	sticks = p->p_sticks;
 	opc = frame.f_pc - 2;
 	error = 0;
 
@@ -771,7 +758,7 @@ syscall(code, frame)
 		p->p_md.md_flags &= ~MDP_STACKADJ;
 	}
 #endif
-	userret(p, frame.f_pc, &syst);
+	userret(p, frame.f_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
