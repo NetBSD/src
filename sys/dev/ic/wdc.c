@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.91 2000/06/12 21:10:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.91.2.1 2002/01/05 18:03:30 he Exp $ */
 
 
 /*
@@ -1139,6 +1139,10 @@ wdc_probe_caps(drvp)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
 		}
+	}
+	if ((wdc->cap & WDC_CAPABILITY_UDMA) == 0) {
+		/* don't care about UDMA modes */
+		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
