@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.50 2004/03/23 13:22:33 junyoung Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.51 2005/03/15 18:22:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.50 2004/03/23 13:22:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.51 2005/03/15 18:22:24 bouyer Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -677,7 +677,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		 * If the region pasts the subend, bail out and see
 		 * if we fit against the subend.
 		 */
-		if (rp->er_start >= subend) {
+		if (rp->er_start > subend) {
 			exend = rp->er_start;
 			break;
 		}
@@ -923,7 +923,7 @@ extent_free(ex, start, size, flags)
 	 */
 	if (ex == NULL)
 		panic("extent_free: NULL extent");
-	if ((start < ex->ex_start) || (start > ex->ex_end)) {
+	if ((start < ex->ex_start) || (end > ex->ex_end)) {
 		extent_print(ex);
 		printf("extent_free: extent `%s', start 0x%lx, size 0x%lx\n",
 		    ex->ex_name, start, size);
