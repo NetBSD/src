@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.3 1998/09/05 14:17:38 christos Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.4 1999/03/19 16:09:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ fdc_pcmcia_attach(parent, self, aux)
 	fdc->sc_iot = psc->sc_pcioh.iot;
 	fdc->sc_ioh = psc->sc_pcioh.ioh;
 
-	fdc->sc_flags = 0;
+	fdc->sc_flags = FDC_HEADSETTLE;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
