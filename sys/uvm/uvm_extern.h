@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.5 1999/07/11 05:44:00 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.6 1999/08/02 23:16:14 thorpej Exp $	*/
 
 /*
  *
@@ -150,6 +150,12 @@
 #define UFP_NORDONLY	0x8
 
 /*
+ * lockflags that control the locking behavior of various functions.
+ */
+#define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
+#define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
+
+/*
  * structures
  */
 
@@ -166,6 +172,7 @@ struct pmap;
 struct vnode;
 struct uvm_aiodesc;
 struct pool;
+struct simplelock;
 
 extern struct pool *uvm_aiobuf_pool;
 
@@ -308,6 +315,8 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
+void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
+			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t));
 void			uvm_exit __P((struct proc *));
@@ -352,7 +361,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t, boolean_t));
+				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));

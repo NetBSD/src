@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.49.4.2 1999/07/04 01:52:13 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.49.4.3 1999/08/02 22:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -133,12 +133,15 @@ ffs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ffs_mountroot: can't setup bdevvp's");
 
-	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -894,7 +897,6 @@ ffs_vget(mp, ino, vpp)
 	 */
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;

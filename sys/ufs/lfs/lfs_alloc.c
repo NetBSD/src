@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.2 1999/07/11 05:43:59 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.3 1999/08/02 22:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -252,7 +252,6 @@ lfs_vcreate(mp, ino, vpp)
 	
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
-	lockinit(&ip->i_lock, PINOD, "lfsinode", 0, 0);
 	(*vpp)->v_data = ip;
 	ip->i_vnode = *vpp;
 	ip->i_devvp = ump->um_devvp;

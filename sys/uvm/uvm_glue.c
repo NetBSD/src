@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.18.4.1 1999/06/21 01:47:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.18.4.2 1999/08/02 23:16:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,6 +109,31 @@ int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 
 
 /*
+ * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
+ */
+
+void
+uvm_sleep(event, slock, canintr, msg, timo)
+	void *event;
+	struct simplelock *slock;
+	boolean_t canintr;
+	const char *msg;
+	int timo;
+{
+	int s, pri;
+
+	pri = PVM;
+	if (canintr)
+		pri |= PCATCH;
+
+	s = splhigh();
+	if (slock != NULL)
+		simple_unlock(slock);
+	(void) tsleep(event, pri, msg, timo);
+	splx(s);
+}
+
+/*
  * uvm_kernacc: can the kernel access a region of memory
  *
  * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
@@ -204,10 +229,9 @@ uvm_chgkprot(addr, len, rw)
 		 * page 0 from an invalid mapping, not that it
 		 * really matters...
 		 */
-		pa = pmap_extract(pmap_kernel(), sva|1);
-		if (pa == 0)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
 			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa&~1, prot, TRUE, 0);
+		pmap_enter(pmap_kernel(), sva, pa, prot, TRUE, 0);
 	}
 }
 #endif
@@ -423,6 +447,7 @@ loop:
 #endif
 	pp = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 
 		/* is it a runnable swapped out process? */
@@ -435,6 +460,7 @@ loop:
 			}
 		}
 	}
+	proclist_unlock_read();
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -522,6 +548,7 @@ uvm_swapout_threads()
 	 */
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (!swappable(p))
 			continue;
@@ -545,6 +572,7 @@ uvm_swapout_threads()
 			continue;
 		}
 	}
+	proclist_unlock_read();
 
 	/*
 	 * If we didn't get rid of any real duds, toss out the next most

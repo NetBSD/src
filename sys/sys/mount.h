@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.74.4.3 1999/07/04 01:49:25 chs Exp $	*/
+/*	$NetBSD: mount.h,v 1.74.4.4 1999/08/02 22:55:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -130,6 +130,7 @@ struct mount {
 	int		mnt_dev_bshift;		/* sector shift of device */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	qaddr_t		mnt_data;		/* private data */
+	int		mnt_wcnt;		/* count of vfs_busy waiters */
 };
 
 /*
@@ -202,7 +203,7 @@ struct mount {
  * past the mount point.  This keeps the subtree stable during mounts
  * and unmounts.
  */
-#define	MNT_MWAIT	0x00200000	/* waiting for unmount to finish */
+#define	MNT_GONE	0x00200000	/* filesystem is gone.. */
 #define MNT_UNMOUNT	0x01000000	/* unmount in progress */
 #define MNT_WANTRDWR	0x02000000	/* upgrade to read/write requested */
 
