@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 1997/04/25 15:35:27 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 1997/04/28 23:38:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -350,6 +350,12 @@ obio_init()
 	cninit();
 }
 
+/*
+ * This function is used by some OBIO drivers to conserve
+ * kernel virtual space by sharing mappings made by the
+ * PROM monitor.  If we could not find any mapping made by
+ * the PROM monitor, then make our own as usual.
+ */
 caddr_t
 obio_mapin(obio_addr, obio_size)
 	int obio_addr, obio_size;
