@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.36 1998/01/22 00:39:19 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.37 1998/01/24 12:42:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -93,9 +93,17 @@ int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
 
 /*
  * Deal with some i386-specific things in the Linux emulation code.
- * This means just signals for now, will include stuff like
- * I/O map permissions and V86 mode sometime.
  */
+
+void
+linux_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+
+	setregs(p, epp, stack);
+}
 
 /*
  * Send an interrupt to process.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.14 1998/01/15 22:25:54 thorpej Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.15 1998/01/24 12:42:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,16 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_ptrace.h>
+
+void
+freebsd_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+
+	setregs(p, epp, stack);
+}
 
 /*
  * signal support
