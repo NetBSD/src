@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.c,v 1.5 2000/03/30 12:19:46 augustss Exp $	*/
+/*	$NetBSD: scanc.c,v 1.6 2001/08/09 08:03:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -39,10 +39,7 @@
 #include <lib/libkern/libkern.h>
 
 int
-scanc(size, cp, table, mask)
-	u_int size;
-	const u_char *cp, table[];
-	u_char mask;
+scanc(u_int size, const u_char *cp, const u_char table[], int mask)
 {
 	const u_char *end = &cp[size];
 
