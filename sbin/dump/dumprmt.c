@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.20 1998/03/30 01:54:40 mrg Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.21 1998/07/30 18:14:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.20 1998/03/30 01:54:40 mrg Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.21 1998/07/30 18:14:00 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: dumprmt.c,v 1.20 1998/03/30 01:54:40 mrg Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include <protocols/dumprestore.h>
 
@@ -132,11 +133,8 @@ rmtgetconn()
 	char *cp;
 	static struct servent *sp = NULL;
 	static struct passwd *pwd = NULL;
-#ifdef notdef
-	static int on = 1;
-#endif
 	char *tuser, *name;
-	int size;
+	int size, opt;
 
 	if (sp == NULL) {
 		sp = getservbyname("shell", "tcp");
@@ -172,6 +170,12 @@ rmtgetconn()
 	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
+
+	opt = IPTOS_THROUGHPUT;
+	(void)setsockopt(rmtape, IPPROTO_IP, IP_TOS, &opt, sizeof (opt));
+
+	opt = 1;
+	(void)setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof (opt));
 }
 
 static int
