@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.30 1994/03/24 18:42:49 cgd Exp $
+#	$Id: Makefile,v 1.31 1994/03/29 12:42:04 cgd Exp $
 
 # not yet done: catman
 
-SUBDIR=	accton amd arp chown chroot config config.new cron dev_mkdb \
+SUBDIR=	ac accton amd arp chown chroot config config.new cron dev_mkdb \
 	diskpart edquota gettable htable inetd iostat kgmon \
 	kvm_mkdb lpr mrouted mtree named portmap pppd pwd_mkdb quot quotaon \
 	rarpd rbootd repquota rmt rpc.bootparamd rwhod \
