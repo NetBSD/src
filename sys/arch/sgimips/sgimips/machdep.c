@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2004/04/09 16:41:23 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2004/04/11 12:13:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2004/04/09 16:41:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2004/04/11 12:13:20 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2004/04/09 16:41:23 pooka Exp $");
 #endif
 
 #include <sgimips/dev/int2reg.h>
+#include <sgimips/sgimips/arcemu.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -146,10 +147,10 @@ extern void	ip22_sdcache_enable(void);
 #endif
 
 extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern unsigned long mips1_clkread(void);
-extern unsigned long mips3_clkread(void);
 
+extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern unsigned long mips3_clkread(void);
 
 void	mach_init(int, char **, int, struct btinfo_common *);
 
@@ -222,9 +223,15 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	int i, rv, nsym;
 
 	/*
-	 * Initialize ARCS.  This will set up the bootstrap console.
+	 * Initialize firmware.  This will set up the bootstrap console.
+	 * At this point we do not yet know the machine type, so we
+	 * try to init real arcbios, and if that fails (return value 1),
+	 * fall back to the emulator.  If the latter fails also we
+	 * don't have much to panic with.
 	 */
-	arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000));
+	if (arcbios_init(MIPS_PHYS_TO_KSEG0(0x00001000)) == 1)
+		arcemu_init();
+
 	strcpy(cpu_model, arcbios_system_identifier);
 
 	uvm_setpagesize();
@@ -381,29 +388,31 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 #endif
 
 	switch (mach_type) {
+#ifdef MIPS1
 	case MACH_SGI_IP12:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
         	mach_boardrev = (i & 0x7000) >> 12; 
 
 		if ((i & 0x8000) == 0) {
-			if (mach_boardrev < 7)	/* 4D/3X */
+			if (mach_boardrev < 7)
 				mach_subtype = MACH_SGI_IP12_4D_3X;
-			else			/* VIP12 */
+			else
 				mach_subtype = MACH_SGI_IP12_VIP12;
 		} else {
-			if (mach_boardrev < 6)	/* HP1 */
+			if (mach_boardrev < 6)
 				mach_subtype = MACH_SGI_IP12_HP1;
-			else			/* HPLC */
+			else
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		biomask = 0x0700;
-		netmask = 0x0700;
-		ttymask = 0x0f00;
-		clockmask = 0xbf00;
+		biomask = 0x0b00;
+		netmask = 0x0b00;
+		ttymask = 0x1b00;
+		clockmask = 0x7f00;
 		platform.intr3 = mips1_clock_intr;
 		platform.clkread = mips1_clkread;
 		break;
+#endif /* MIPS1 */
 #ifdef MIPS3
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
