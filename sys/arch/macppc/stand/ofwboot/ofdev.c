@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.4 1999/03/05 06:21:17 tsubai Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4.18.1 2001/04/24 22:56:59 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
+#include <hfs.h>
 
 #include "ofdev.h"
 
@@ -149,6 +150,9 @@ int ndevs = sizeof devsw / sizeof devsw[0];
 
 static struct fs_ops file_system_ufs = {
 	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
+};
+static struct fs_ops file_system_hfs = {
+	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
 };
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
@@ -328,17 +332,17 @@ devopen(of, name, file)
 		
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
-		bcopy(&file_system_cd9660, file_system + 1,
-		    sizeof file_system[0]);
-		nfsys = 2;
+		file_system[0] = file_system_ufs;
+		file_system[1] = file_system_cd9660;
+		file_system[2] = file_system_hfs;
+		nfsys = 3;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {
 		ofdev.type = OFDEV_NET;
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
-		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
+		file_system[0] = file_system_nfs;
 		nfsys = 1;
 		if (error = net_open(&ofdev))
 			goto bad;
