@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2002/11/25 02:06:16 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2003/01/22 21:03:37 kleink Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -401,6 +401,7 @@ struct specialreg {
 };
 
 const struct specialreg sprregs[] = {
+	{ 0x000, "mq" },
 	{ 0x001, "xer" },
 	{ 0x008, "lr" },
 	{ 0x009, "ctr" },
@@ -769,7 +770,7 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		for (i = 0; regs[i].name != NULL; i++)
 			if (spr == regs[i].reg)
 				break;
-		if (regs[i].reg == 0)
+		if (regs[i].name == NULL)
 			pstr += sprintf(pstr, "[unknown special reg (%d)]", spr);
 		else
 			pstr += sprintf(pstr, "%s", regs[i].name);
