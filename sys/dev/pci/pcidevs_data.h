@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.25 1997/02/16 17:17:30 veego Exp 
+ *	NetBSD: pcidevs,v 1.26 1997/03/20 20:18:43 chuck Exp 
  */
 
 /*
@@ -144,6 +144,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AIC-7855",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5900,
+	    0,
+	    "Adaptec",
+	    "AIC-5900 ATM",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5905,
+	    0,
+	    "Adaptec",
+	    "AIC-5905 ATM",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860,
@@ -686,10 +698,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TMC-18C30 (36C70)",
 	},
 	{
-	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155P,
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
 	    0,
 	    "Efficent Networks",
-	    "155P-MF1 ATM",
+	    "155P-MF1 ATM (FPGA)",
+	},
+	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PA,
+	    0,
+	    "Efficent Networks",
+	    "155P-MF1 ATM (ASIC)",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
