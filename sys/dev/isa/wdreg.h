@@ -1,4 +1,4 @@
-/*	$NetBSD: wdreg.h,v 1.12 1995/03/26 20:28:55 jtc Exp $	*/
+/*	$NetBSD: wdreg.h,v 1.13 1995/03/29 21:56:46 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -158,4 +158,4 @@ struct wdparams {
 	char	wdp_vendor5[1];
 	char	wdp_dmatiming;		/* DMA timing mode */
 };
-#endif KERNEL
+#endif /* _KERNEL */
