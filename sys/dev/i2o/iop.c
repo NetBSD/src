@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.15 2002/10/18 02:41:42 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.16 2002/11/11 22:09:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.15 2002/10/18 02:41:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.16 2002/11/11 22:09:12 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -113,7 +113,7 @@ dev_type_ioctl(iopioctl);
 
 const struct cdevsw iop_cdevsw = {
 	iopopen, iopclose, noread, nowrite, iopioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 #define	IC_CONFIGURE	0x01
@@ -218,6 +218,9 @@ static const char * const iop_status[] = {
 static inline u_int32_t	iop_inl(struct iop_softc *, int);
 static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
 
+static inline u_int32_t	iop_inl_msg(struct iop_softc *, int);
+static inline void	iop_outl_rep(struct iop_softc *, int, u_int32_t);
+
 static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *);
@@ -264,6 +267,24 @@ iop_outl(struct iop_softc *sc, int off, u_int32_t val)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, off, val);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline u_int32_t
+iop_inl_msg(struct iop_softc *sc, int off)
+{
+
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, off));
+}
+
+static inline void
+iop_outl_rep(struct iop_softc *sc, int off, u_int32_t val)
+{
+
+	bus_space_write_4(sc->sc_rep_iot, sc->sc_rep_ioh, off, val);
+	bus_space_barrier(sc->sc_rep_iot, sc->sc_rep_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -904,10 +925,18 @@ iop_shutdown(void *junk)
 			continue;
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
+
 		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
 		    0, 5000);
-		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR, IOP_ICTX,
-		    0, 1000);
+
+		if (le16toh(sc->sc_status.orgid) != I2O_ORG_AMI) {
+			/*
+			 * Some AMI firmware revisions will go to sleep and
+			 * never come back after this.
+			 */
+			iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR,
+			    IOP_ICTX, 0, 1000);
+		}
 	}
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
@@ -1667,7 +1696,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		status = I2O_STATUS_SUCCESS;
 
 		fn = (struct i2o_fault_notify *)rb;
-		tctx = iop_inl(sc, fn->lowmfa + 12);
+		tctx = iop_inl_msg(sc, fn->lowmfa + 12);
 		iop_release_mfa(sc, fn->lowmfa);
 		iop_tfn_print(sc, fn);
 	} else {
@@ -2103,9 +2132,10 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
 
 	/* Copy out the message frame. */
-	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, mb[0] >> 16);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, (mb[0] >> 14) & ~3,
-	    BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_region_4(sc->sc_rep_iot, sc->sc_rep_ioh, mfa, mb,
+	    mb[0] >> 16);
+	bus_space_barrier(sc->sc_rep_iot, sc->sc_rep_ioh, mfa,
+	    (mb[0] >> 14) & ~3, BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
 	iop_outl(sc, IOP_REG_IFIFO, mfa);
@@ -2240,10 +2270,10 @@ iop_release_mfa(struct iop_softc *sc, u_int32_t mfa)
 {
 
 	/* Use the frame to issue a no-op. */
-	iop_outl(sc, mfa, I2O_VERSION_11 | (4 << 16));
-	iop_outl(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
-	iop_outl(sc, mfa + 8, 0);
-	iop_outl(sc, mfa + 12, 0);
+	iop_outl_rep(sc, mfa, I2O_VERSION_11 | (4 << 16));
+	iop_outl_rep(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
+	iop_outl_rep(sc, mfa + 8, 0);
+	iop_outl_rep(sc, mfa + 12, 0);
 
 	iop_outl(sc, IOP_REG_IFIFO, mfa);
 }

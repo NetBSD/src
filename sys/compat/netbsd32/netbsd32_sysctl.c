@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.7 2002/08/23 02:37:11 petrov Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.8 2002/11/11 22:08:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.7 2002/08/23 02:37:11 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.8 2002/11/11 22:08:01 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -194,8 +194,8 @@ netbsd32___sysctl(l, v, retval)
 	 */
 	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 2)
 		return (EINVAL);
-	error = copyin((caddr_t)(u_long)SCARG(uap, name), &name,
-		       SCARG(uap, namelen) * sizeof(int));
+	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, name)), &name,
+	    SCARG(uap, namelen) * sizeof(int));
 	if (error)
 		return (error);
 
@@ -266,8 +266,8 @@ netbsd32___sysctl(l, v, retval)
 	 */
 
 	if (SCARG(uap, oldlenp) &&
-	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen,
-	     sizeof(savelen))))
+	    (error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, oldlenp)),
+	    &savelen, sizeof(savelen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
@@ -282,10 +282,11 @@ netbsd32___sysctl(l, v, retval)
 		oldlen = savelen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, 
-		      (void *)(u_long)SCARG(uap, old), &oldlen, 
-		      (void *)(u_long)SCARG(uap, new), SCARG(uap, newlen), p);
+	    (void *)NETBSD32PTR64(SCARG(uap, old)), &oldlen, 
+	    (void *)NETBSD32PTR64(SCARG(uap, new)), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
-		uvm_vsunlock(p, (void *)(u_long)SCARG(uap, old), savelen);
+		uvm_vsunlock(p, (void *)NETBSD32PTR64(SCARG(uap, old)),
+		    savelen);
 		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 	}
 	savelen = oldlen;
@@ -293,6 +294,7 @@ netbsd32___sysctl(l, v, retval)
 		return (error);
 	if (SCARG(uap, oldlenp))
 		error = copyout(&savelen,
-		    (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
+		    (caddr_t)NETBSD32PTR64(SCARG(uap, oldlenp)),
+		    sizeof(savelen));
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.25.2.7 2002/08/01 03:28:14 nathanw Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25.2.8 2002/11/11 22:22:25 nathanw Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.7 2002/08/01 03:28:14 nathanw Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.8 2002/11/11 22:22:25 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -254,7 +254,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		 * hostlen == 0 means that the caller does not want the result.
 		 */
 	} else if (flags & NI_NUMERICHOST) {
-		int numaddrlen;
+		size_t numaddrlen;
 
 		/* NUMERICHOST and NAMEREQD conflicts with each other */
 		if (flags & NI_NAMEREQD)
@@ -338,7 +338,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	socklen_t hostlen;
 	int flags;
 {
-	int numaddrlen;
+	size_t numaddrlen;
 	char numaddr[512];
 
 	_DIAGASSERT(sa != NULL);
@@ -362,7 +362,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 		    zonebuf, sizeof(zonebuf), flags);
 		if (zonelen < 0)
 			return EAI_MEMORY;
-		if (zonelen + 1 + numaddrlen + 1 > hostlen)
+		if ((size_t) zonelen + 1 + numaddrlen + 1 > hostlen)
 			return EAI_MEMORY;
 		/* construct <numeric-addr><delim><zoneid> */
 		memcpy(host + numaddrlen + 1, zonebuf,
@@ -413,7 +413,7 @@ ip6_sa2str(sa6, buf, bufsiz, flags)
 
 	/* last resort */
 	n = snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id);
-	if (n < 0 || n >= bufsiz)
+	if (n < 0 || (size_t) n >= bufsiz)
 		return -1;
 	else
 		return n;
@@ -442,7 +442,7 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 
 	if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 && sdl->sdl_slen == 0) {
 		n = snprintf(host, hostlen, "link#%u", sdl->sdl_index);
-		if (n > hostlen) {
+		if (n < 0 || (socklen_t) n > hostlen) {
 			*host = '\0';
 			return EAI_MEMORY;
 		}
@@ -459,7 +459,7 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		else
 			n = snprintf(host, hostlen, "%u.%u",
 			    LLADDR(sdl)[1], LLADDR(sdl)[0]);
-		if (n >= hostlen) {
+		if (n < 0 || (socklen_t) n >= hostlen) {
 			*host = '\0';
 			return EAI_MEMORY;
 		} else
@@ -506,14 +506,15 @@ hexname(cp, len, host, hostlen)
 	size_t len;
 	socklen_t hostlen;
 {
-	int i, n;
+	int n;
+	size_t i;
 	char *outp = host;
 
 	*outp = '\0';
 	for (i = 0; i < len; i++) {
 		n = snprintf(outp, hostlen, "%s%02x",
 		    i ? ":" : "", cp[i]);
-		if (n < 0 || n >= hostlen) {
+		if (n < 0 || (socklen_t) n >= hostlen) {
 			*host = '\0';
 			return EAI_MEMORY;
 		}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.7.8.7 2002/09/17 21:12:29 nathanw Exp $
+#	$NetBSD: files.algor,v 1.7.8.8 2002/11/11 21:55:54 nathanw Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -37,7 +37,6 @@ file	arch/algor/algor/autoconf.c
 file	arch/algor/algor/bus_dma.c
 file	arch/algor/algor/clock.c
 file	dev/clock_subr.c
-file	arch/algor/algor/conf.c
 file	arch/algor/algor/disksubr.c
 file	arch/algor/algor/interrupt.c
 file	arch/algor/algor/led.c

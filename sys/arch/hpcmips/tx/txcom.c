@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.14.8.5 2002/10/18 02:37:14 nathanw Exp $ */
+/*	$NetBSD: txcom.c,v 1.14.8.6 2002/11/11 21:58:44 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ dev_type_poll(txcompoll);
 
 const struct cdevsw txcom_cdevsw = {
 	txcomopen, txcomclose, txcomread, txcomwrite, txcomioctl,
-	txcomstop, txcomtty, txcompoll, nommap, D_TTY
+	txcomstop, txcomtty, txcompoll, nommap, ttykqfilter, D_TTY
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24.2.6 2002/09/17 21:24:02 nathanw Exp $	*/
+/*	$NetBSD: uvm.h,v 1.24.2.7 2002/11/11 22:17:00 nathanw Exp $	*/
 
 /*
  *
@@ -151,9 +151,11 @@ extern struct uvm uvm;
  * historys
  */
 
+#ifdef UVMHIST
 UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
 UVMHIST_DECL(ubchist);
+#endif
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
@@ -164,7 +166,7 @@ UVMHIST_DECL(ubchist);
 do {									\
 	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * UVM_KICK_PDAEMON: perform checks to determine if we need to

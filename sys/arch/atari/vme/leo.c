@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.3.8.2 2002/10/18 02:36:00 nathanw Exp $	*/
+/*	$NetBSD: leo.c,v 1.3.8.3 2002/11/11 21:57:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -113,7 +113,7 @@ dev_type_mmap(leommap);
 
 const struct cdevsw leo_cdevsw = {
 	leoopen, leoclose, leomove, leomove, leoioctl,
-	nostop, notty, nopoll, leommap,
+	nostop, notty, nopoll, leommap, nokqfilter,
 };
 
 static int

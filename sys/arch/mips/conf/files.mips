@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.32.2.7 2002/08/01 02:42:29 nathanw Exp $
+#	$NetBSD: files.mips,v 1.32.2.8 2002/11/11 22:00:23 nathanw Exp $
 #
 
 defflag	opt_cputype.h		NOFPU	# and the rest...
@@ -6,6 +6,7 @@ defflag	opt_cputype.h		NOFPU	# and the rest...
 					# MIPS32 MIPS64
 					# MIPS3_4100
 					# MIPS3_5900
+					# MIPS64_SB1
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
@@ -19,20 +20,23 @@ file	arch/mips/mips/mips3_subr.S		(mips3 | mips4) & !mips3_5900
 file	arch/mips/mips/mips5900_subr.S		mips3 & mips3_5900
 file	arch/mips/mips/mips32_subr.S		mips32
 file	arch/mips/mips/mips64_subr.S		mips64
+file	arch/mips/mips/sigcode.S
+file	arch/mips/mips/copy.S
 
 file	arch/mips/mips/db_disasm.c		ddb
 file	arch/mips/mips/db_interface.c		ddb | kgdb
 file	arch/mips/mips/db_trace.c		ddb
-file	arch/mips/mips/cpu_exec.c
 file	arch/mips/mips/kgdb_machdep.c		kgdb
 file	arch/mips/mips/mem.c
 file	arch/mips/mips/pmap.c
-file	arch/mips/mips/syscall.c		# syscalls
-file	arch/mips/mips/trap.c			# interrupt, trap handlers
+file	arch/mips/mips/trap.c			# trap handlers
+file	arch/mips/mips/syscall.c		# syscall entries
+file	arch/mips/mips/mips_machdep.c
+file	arch/mips/mips/sig_machdep.c		# signal delivery
+file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c
-file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
-file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
-file	arch/mips/mips/process_machdep.c	# shared process_machdep
+file	arch/mips/mips/process_machdep.c
+file	arch/mips/mips/cpu_exec.c
 
 file	arch/mips/mips/cache.c
 file	arch/mips/mips/cache_r3k.c		mips1

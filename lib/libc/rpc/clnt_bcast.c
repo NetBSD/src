@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.4.2.3 2002/10/18 02:16:23 nathanw Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.4.2.4 2002/11/11 22:22:37 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #include <err.h>
 #include <string.h>
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #define	MAXBCAST 20	/* Max no of broadcasting transports */
 #define	INITTIME 4000	/* Time to wait initially */

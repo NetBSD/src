@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4.8.4 2002/10/05 07:11:57 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.8.5 2002/11/11 22:05:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -90,19 +90,12 @@ void	initfpu __P((void));
 
 void	set_clk_mode __P((int, int));
 
-void	proc_trampoline __P((void));
-
-void	savectx __P((struct pcb *));
-
 void	setvbr __P((void **));
 
 void	g0_entry __P((void));
 void	g4_entry __P((void));
 
 void	swapconf __P((void));
-
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
 
 void	zs_init __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.17.4.4 2002/06/20 03:39:25 nathanw Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.17.4.5 2002/11/11 21:59:52 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -268,6 +268,8 @@ pm_setup_adb()
 		case MACH_MACPB280:
 		case MACH_MACPB280C:
 		case MACH_MACPB500:
+		case MACH_MACPB190:
+		case MACH_MACPB190CS:
 			pmHardware = PM_HW_PB5XX;
 			break;
 		default:
@@ -1061,6 +1063,8 @@ pm_adb_op(buffer, compRout, data, command)
 		case MACH_MACPB270:
 		case MACH_MACPB280:
 		case MACH_MACPB280C:
+		case MACH_MACPB190:
+		case MACH_MACPB190CS:
 			pm_intr((void *)0);
 			break;
 		default:

@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.72.2.15 2002/08/27 23:46:36 nathanw Exp $ */
+/* $NetBSD: isp.c,v 1.72.2.16 2002/11/11 22:09:38 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.72.2.15 2002/08/27 23:46:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.72.2.16 2002/11/11 22:09:38 nathanw Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -315,6 +315,8 @@ isp_reset(struct ispsoftc *isp)
 			btype = "1280";
 		else if (IS_1080(isp))
 			btype = "1080";
+		else if (IS_10160(isp))
+			btype = "10160";
 		else if (IS_12160(isp))
 			btype = "12160";
 		else
@@ -981,28 +983,55 @@ isp_scsi_init(struct ispsoftc *isp)
 	 * Now enable request/response queues
 	 */
 
-	mbs.param[0] = MBOX_INIT_RES_QUEUE;
-	mbs.param[1] = RESULT_QUEUE_LEN(isp);
-	mbs.param[2] = DMA_WD1(isp->isp_result_dma);
-	mbs.param[3] = DMA_WD0(isp->isp_result_dma);
-	mbs.param[4] = 0;
-	mbs.param[5] = 0;
-	isp_mboxcmd(isp, &mbs, MBLOGALL);
-	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		return;
-	}
-	isp->isp_residx = mbs.param[5];
+	if (IS_ULTRA2(isp) || IS_1240(isp)) {
+		mbs.param[0] = MBOX_INIT_RES_QUEUE_A64;
+		mbs.param[1] = RESULT_QUEUE_LEN(isp);
+		mbs.param[2] = DMA_WD1(isp->isp_result_dma);
+		mbs.param[3] = DMA_WD0(isp->isp_result_dma);
+		mbs.param[4] = 0;
+		mbs.param[6] = DMA_WD3(isp->isp_result_dma);
+		mbs.param[7] = DMA_WD2(isp->isp_result_dma);
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			return;
+		}
+		isp->isp_residx = mbs.param[5];
 
-	mbs.param[0] = MBOX_INIT_REQ_QUEUE;
-	mbs.param[1] = RQUEST_QUEUE_LEN(isp);
-	mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
-	mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
-	mbs.param[4] = 0;
-	isp_mboxcmd(isp, &mbs, MBLOGALL);
-	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		return;
+		mbs.param[0] = MBOX_INIT_REQ_QUEUE_A64;
+		mbs.param[1] = RQUEST_QUEUE_LEN(isp);
+		mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+		mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+		mbs.param[5] = 0;
+		mbs.param[6] = DMA_WD3(isp->isp_result_dma);
+		mbs.param[7] = DMA_WD2(isp->isp_result_dma);
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			return;
+		}
+		isp->isp_reqidx = isp->isp_reqodx = mbs.param[4];
+	} else {
+		mbs.param[0] = MBOX_INIT_RES_QUEUE;
+		mbs.param[1] = RESULT_QUEUE_LEN(isp);
+		mbs.param[2] = DMA_WD1(isp->isp_result_dma);
+		mbs.param[3] = DMA_WD0(isp->isp_result_dma);
+		mbs.param[4] = 0;
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			return;
+		}
+		isp->isp_residx = mbs.param[5];
+
+		mbs.param[0] = MBOX_INIT_REQ_QUEUE;
+		mbs.param[1] = RQUEST_QUEUE_LEN(isp);
+		mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+		mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+		mbs.param[5] = 0;
+		isp_mboxcmd(isp, &mbs, MBLOGALL);
+		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			return;
+		}
+		isp->isp_reqidx = isp->isp_reqodx = mbs.param[4];
 	}
-	isp->isp_reqidx = isp->isp_reqodx = mbs.param[4];
 
 	/*
 	 * Turn on Fast Posting, LVD transitions
@@ -4339,53 +4368,52 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 	case RQCS_TRANSPORT_ERROR:
 	{
 		char buf[172];
-		buf[0] = 0;
-		STRNCAT(buf, "states=>", sizeof buf);
+		SNPRINTF(buf, sizeof (buf), "states=>");
 		if (sp->req_state_flags & RQSF_GOT_BUS) {
-			STRNCAT(buf, " GOT_BUS", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s GOT_BUS", buf);
 		}
 		if (sp->req_state_flags & RQSF_GOT_TARGET) {
-			STRNCAT(buf, " GOT_TGT", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s GOT_TGT", buf);
 		}
 		if (sp->req_state_flags & RQSF_SENT_CDB) {
-			STRNCAT(buf, " SENT_CDB", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s SENT_CDB", buf);
 		}
 		if (sp->req_state_flags & RQSF_XFRD_DATA) {
-			STRNCAT(buf, " XFRD_DATA", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s XFRD_DATA", buf);
 		}
 		if (sp->req_state_flags & RQSF_GOT_STATUS) {
-			STRNCAT(buf, " GOT_STS", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s GOT_STS", buf);
 		}
 		if (sp->req_state_flags & RQSF_GOT_SENSE) {
-			STRNCAT(buf, " GOT_SNS", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s GOT_SNS", buf);
 		}
 		if (sp->req_state_flags & RQSF_XFER_COMPLETE) {
-			STRNCAT(buf, " XFR_CMPLT", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s XFR_CMPLT", buf);
 		}
-		STRNCAT(buf, "\nstatus=>", sizeof buf);
+		SNPRINTF(buf, sizeof (buf), "%s\nstatus=>", buf);
 		if (sp->req_status_flags & RQSTF_DISCONNECT) {
-			STRNCAT(buf, " Disconnect", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Disconnect", buf);
 		}
 		if (sp->req_status_flags & RQSTF_SYNCHRONOUS) {
-			STRNCAT(buf, " Sync_xfr", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Sync_xfr", buf);
 		}
 		if (sp->req_status_flags & RQSTF_PARITY_ERROR) {
-			STRNCAT(buf, " Parity", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Parity", buf);
 		}
 		if (sp->req_status_flags & RQSTF_BUS_RESET) {
-			STRNCAT(buf, " Bus_Reset", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Bus_Reset", buf);
 		}
 		if (sp->req_status_flags & RQSTF_DEVICE_RESET) {
-			STRNCAT(buf, " Device_Reset", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Device_Reset", buf);
 		}
 		if (sp->req_status_flags & RQSTF_ABORTED) {
-			STRNCAT(buf, " Aborted", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Aborted", buf);
 		}
 		if (sp->req_status_flags & RQSTF_TIMEOUT) {
-			STRNCAT(buf, " Timeout", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Timeout", buf);
 		}
 		if (sp->req_status_flags & RQSTF_NEGOTIATION) {
-			STRNCAT(buf, " Negotiation", sizeof buf);
+			SNPRINTF(buf, sizeof (buf), "%s Negotiation", buf);
 		}
 		isp_prt(isp, ISP_LOGERR, "%s", buf);
 		isp_prt(isp, ISP_LOGERR, "transport error for %d.%d.%d:\n%s",
@@ -4857,8 +4885,8 @@ static u_int16_t mbpscsi[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x4f: */
 	ISPOPMAP(0xdf, 0xdf),	/* 0x50: LOAD RAM A64 */
 	ISPOPMAP(0xdf, 0xdf),	/* 0x51: DUMP RAM A64 */
-	ISPOPMAP(0xdf, 0xdf),	/* 0x52: INITIALIZE REQUEST QUEUE A64 */
-	ISPOPMAP(0xff, 0xff),	/* 0x53: INITIALIZE RESPONSE QUEUE A64 */
+	ISPOPMAP(0xdf, 0xff),	/* 0x52: INITIALIZE REQUEST QUEUE A64 */
+	ISPOPMAP(0xef, 0xff),	/* 0x53: INITIALIZE RESPONSE QUEUE A64 */
 	ISPOPMAP(0xcf, 0x01),	/* 0x54: EXECUTE IOCB A64 */
 	ISPOPMAP(0x07, 0x01),	/* 0x55: ENABLE TARGET MODE */
 	ISPOPMAP(0x03, 0x0f),	/* 0x56: GET TARGET STATUS */
@@ -5900,7 +5928,8 @@ isp_read_nvram(struct ispsoftc *isp)
 
 	if (IS_ULTRA3(isp)) {
 		isp_parse_nvram_12160(isp, 0, nvram_data);
-		isp_parse_nvram_12160(isp, 1, nvram_data);
+		if (IS_12160(isp))
+			isp_parse_nvram_12160(isp, 1, nvram_data);
 	} else if (IS_1080(isp)) {
 		isp_parse_nvram_1080(isp, 0, nvram_data);
 	} else if (IS_1280(isp) || IS_1240(isp)) {

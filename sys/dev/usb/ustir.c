@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.1.4.4 2002/08/01 02:46:12 nathanw Exp $	*/
+/*	$NetBSD: ustir.c,v 1.1.4.5 2002/11/11 22:13:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.4 2002/08/01 02:46:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.1.4.5 2002/11/11 22:13:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,7 @@ Static int ustir_set_params(void *h, struct irda_params *params);
 Static int ustir_get_speeds(void *h, int *speeds);
 Static int ustir_get_turnarounds(void *h, int *times);
 Static int ustir_poll(void *h, int events, usb_proc_ptr p);
+Static int ustir_kqfilter(void *h, struct knote *kn);
 
 #ifdef USTIR_DEBUG_IOCTLS
 Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p);
@@ -223,7 +224,8 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 
 Static struct irframe_methods const ustir_methods = {
 	ustir_open, ustir_close, ustir_read, ustir_write, ustir_poll,
-	ustir_set_params, ustir_get_speeds, ustir_get_turnarounds,
+	ustir_kqfilter, ustir_set_params, ustir_get_speeds,
+	ustir_get_turnarounds,
 #ifdef USTIR_DEBUG_IOCTLS
 	ustir_ioctl
 #endif
@@ -475,6 +477,8 @@ deframe_process(struct framestate *fstate, u_int8_t const **bptr, size_t *blen)
 			break;
 
 		state_in_end:
+			/* FALLTHROUGH */
+
 		case FSTATE_IN_END:
 			if (--fstate->state_index == 0) {
 				u_int32_t crc;
@@ -559,7 +563,7 @@ deframe_rd_ur(struct ustir_softc *sc)
 		case FR_FRAMEOK:
 			sc->sc_ur_framelen = sc->sc_framestate.bufindex;
 			wakeup(&sc->sc_ur_framelen); /* XXX should use flag */
-			selwakeup(&sc->sc_rd_sel);
+			selnotify(&sc->sc_rd_sel, 0);
 			return 1;
 		}
 	}
@@ -769,7 +773,7 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* Wake up for possible output */
 		wakeup(&sc->sc_wr_buf);
-		selwakeup(&sc->sc_wr_sel);
+		selnotify(&sc->sc_wr_sel, 0);
 	}
 }
 
@@ -835,6 +839,7 @@ ustir_activate(device_ptr_t self, enum devact act)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 {
@@ -922,6 +927,7 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
@@ -1172,6 +1178,80 @@ ustir_poll(void *h, int events, usb_proc_ptr p)
 	}
 
 	return revents;
+}
+
+static void
+filt_ustirrdetach(struct knote *kn)
+{
+	struct ustir_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_rd_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ustirread(struct knote *kn, long hint)
+{
+	struct ustir_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_ur_framelen;
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_ustirwdetach(struct knote *kn)
+{
+	struct ustir_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_wr_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ustirwrite(struct knote *kn, long hint)
+{
+	struct ustir_softc *sc = kn->kn_hook;
+
+	kn->kn_data = 0;
+	return (sc->sc_direction != udir_input);
+}
+
+static const struct filterops ustirread_filtops =
+	{ 1, NULL, filt_ustirrdetach, filt_ustirread };
+static const struct filterops ustirwrite_filtops =
+	{ 1, NULL, filt_ustirwdetach, filt_ustirwrite };
+
+Static int
+ustir_kqfilter(void *h, struct knote *kn)
+{
+	struct ustir_softc *sc = h;
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rd_sel.si_klist;
+		kn->kn_fop = &ustirread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wr_sel.si_klist;
+		kn->kn_fop = &ustirwrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 #ifdef USTIR_DEBUG_IOCTLS

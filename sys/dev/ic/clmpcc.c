@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.15.2.6 2002/09/17 21:19:42 nathanw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.15.2.7 2002/11/11 22:09:19 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.6 2002/09/17 21:19:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.7 2002/11/11 22:09:19 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,7 +109,7 @@ dev_type_poll(clmpccpoll);
 
 const struct cdevsw clmpcc_cdevsw = {
 	clmpccopen, clmpccclose, clmpccread, clmpccwrite, clmpccioctl,
-	clmpccstop, clmpcctty, clmpccpoll, nommap, D_TTY
+	clmpccstop, clmpcctty, clmpccpoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

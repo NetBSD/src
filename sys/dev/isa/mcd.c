@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.70.2.8 2002/10/18 02:42:25 nathanw Exp $	*/
+/*	$NetBSD: mcd.c,v 1.70.2.9 2002/11/11 22:10:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.2.8 2002/10/18 02:42:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.2.9 2002/11/11 22:10:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ const struct bdevsw mcd_bdevsw = {
 
 const struct cdevsw mcd_cdevsw = {
 	mcdopen, mcdclose, mcdread, mcdwrite, mcdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
@@ -1324,7 +1324,7 @@ mcdintr(arg)
 
 		/* Return buffer. */
 		bp->b_resid = 0;
-		disk_unbusy(&sc->sc_dk, bp->b_bcount);
+		disk_unbusy(&sc->sc_dk, bp->b_bcount, (bp->b_flags & B_READ));
 		biodone(bp);
 
 		mcdstart(sc);
@@ -1357,7 +1357,8 @@ changed:
 	/* Invalidate the buffer. */
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount - mbx->skip;
-	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 
 	mcdstart(sc);

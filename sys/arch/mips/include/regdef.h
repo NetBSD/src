@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.7.26.1 2002/04/01 07:41:00 nathanw Exp $	*/
+/*	$NetBSD: regdef.h,v 1.7.26.2 2002/11/11 22:00:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,16 @@
 #define a1	$5
 #define a2	$6
 #define a3	$7
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	a4	$8
+#define	a5	$9
+#define	a6	$10
+#define	a7	$11
+#define	t0	$12	/* temp registers (not saved across subroutine calls) */
+#define	t1	$13
+#define	t2	$14
+#define	t3	$15
+#else
 #define t0	$8	/* temp registers (not saved across subroutine calls) */
 #define t1	$9
 #define t2	$10
@@ -60,6 +70,7 @@
 #define t5	$13
 #define t6	$14
 #define t7	$15
+#endif /* __mips_n32 || __mips_n64 */
 #define s0	$16	/* saved across subroutine calls (callee saved) */
 #define s1	$17
 #define s2	$18
@@ -76,5 +87,25 @@
 #define sp	$29	/* stack pointer */
 #define s8	$30	/* one more callee saved */
 #define ra	$31	/* return address */
+
+/*
+ * These are temp registers whose names can be used in either the old
+ * or new ABI, although they map to different physical registers.  In
+ * the old ABI, they map to t4-t7, and in the new ABI, they map to a4-a7.
+ *
+ * Because they overlap with the last 4 arg regs in the new ABI, ta0-ta3
+ * should be used only when we need more than t0-t3.
+ */
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	ta0	$8
+#define	ta1	$9
+#define	ta2	$10
+#define	ta3	$11
+#else
+#define	ta0	$12
+#define	ta1	$13
+#define	ta2	$14
+#define	ta3	$15
+#endif /* __mips_n32 || __mips_n64 */
 
 #endif /* _MIPS_REGDEF_H */

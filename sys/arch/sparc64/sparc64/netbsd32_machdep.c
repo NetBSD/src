@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.12 2002/10/18 02:40:10 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.13 2002/11/11 22:04:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -338,7 +338,6 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 	struct netbsd32_sigcontext13 *scp;
 	struct netbsd32_sigcontext13 sc;
 	register struct trapframe64 *tf;
-	struct rwindow32 *rwstack, *kstack;
 	sigset_t mask;
 
 	/* First ensure consistent stack state (see sendsig). */
@@ -359,15 +358,15 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 #endif
 	scp = (struct netbsd32_sigcontext13 *)(u_long)SCARG(uap, sigcntxp);
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
-#ifdef DEBUG
 	{
+#ifdef DEBUG
 		printf("compat_13_netbsd32_sigreturn: copyin failed\n");
 		Debugger();
+#endif
 		return (EINVAL);
 	}
-#else
-		return (EINVAL);
-#endif
+	scp = &sc;
+
 	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -391,8 +390,6 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 	tf->tf_global[1] = (int64_t)sc.sc_g1;
 	tf->tf_out[0] = (int64_t)sc.sc_o0;
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
-	rwstack = (struct rwindow32 *)(u_long)tf->tf_out[6];
-	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("compat_13_netbsd32_sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
@@ -408,6 +405,7 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
 	return (EJUSTRETURN);
 }
 #endif
@@ -453,15 +451,13 @@ netbsd32___sigreturn14(l, v, retval)
 #endif
 	scp = (struct netbsd32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
-#ifdef DEBUG
 	{
+#ifdef DEBUG
 		printf("netbsd32_sigreturn14: copyin failed: scp=%p\n", scp);
 		Debugger();
+#endif
 		return (EINVAL);
 	}
-#else
-		return (EINVAL);
-#endif
 	scp = &sc;
 
 	tf = l->l_md.md_tf;
@@ -482,11 +478,11 @@ netbsd32___sigreturn14(l, v, retval)
 #endif
 	/* take only psr ICC field */
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_psr);
-	tf->tf_pc = (int64_t)scp->sc_pc;
-	tf->tf_npc = (int64_t)scp->sc_npc;
-	tf->tf_global[1] = (int64_t)scp->sc_g1;
-	tf->tf_out[0] = (int64_t)scp->sc_o0;
-	tf->tf_out[6] = (int64_t)scp->sc_sp;
+	tf->tf_pc = (int64_t)sc.sc_pc;
+	tf->tf_npc = (int64_t)sc.sc_npc;
+	tf->tf_global[1] = (int64_t)sc.sc_g1;
+	tf->tf_out[0] = (int64_t)sc.sc_o0;
+	tf->tf_out[6] = (int64_t)sc.sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("netbsd32_sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",

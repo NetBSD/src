@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.7.8.3 2002/10/18 02:38:18 nathanw Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7.8.4 2002/11/11 21:59:50 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -64,7 +64,7 @@ dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, nopoll, grfmmap,
+	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
 void	grf_scinit __P((struct grf_softc *, const char *, int));

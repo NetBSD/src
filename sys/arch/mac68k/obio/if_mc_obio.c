@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.7.8.1 2002/10/18 02:38:30 nathanw Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.7.8.2 2002/11/11 22:00:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -67,8 +67,6 @@ hide void	mc_reset_rxdma __P((struct mc_softc *sc));
 hide void	mc_reset_rxdma_set __P((struct mc_softc *, int set));
 hide void	mc_reset_txdma __P((struct mc_softc *sc));
 hide int	mc_obio_getaddr __P((struct mc_softc *, u_int8_t *));
-
-extern int	kvtop __P((register caddr_t addr));
 
 CFATTACH_DECL(mc_obio, sizeof(struct mc_softc),
     mc_obio_match, mc_obio_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.35.6.4 2002/10/18 02:39:52 nathanw Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.35.6.5 2002/11/11 22:04:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,12 +105,13 @@ dev_type_mmap(cgtwommap);
 
 const struct cdevsw cgtwo_cdevsw = {
 	cgtwoopen, nullclose, noread, nowrite, cgtwoioctl,
-	nostop, notty, nopoll, cgtwommap,
+	nostop, notty, nopoll, cgtwommap, nokqfilter,
 };
 
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {
-	cgtwounblank, cgtwoopen, nullclose, cgtwoioctl, nopoll, cgtwommap
+	cgtwounblank, cgtwoopen, nullclose, cgtwoioctl, nopoll, cgtwommap,
+	nokqfilter
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.62.8.6 2002/09/17 21:12:51 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.62.8.7 2002/11/11 21:56:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.6 2002/09/17 21:12:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.7 2002/11/11 21:56:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,17 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62.8.6 2002/09/17 21:12:51 nathanw Exp $"
 #include "ser.h"
 #include "ite.h"
 #include "amidisplaycc.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
 
 /*
  * This entire table could be autoconfig()ed but that would mean that

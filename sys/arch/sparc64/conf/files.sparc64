@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.53.2.8 2002/10/18 02:40:03 nathanw Exp $
+#	$NetBSD: files.sparc64,v 1.53.2.9 2002/11/11 22:04:42 nathanw Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -175,7 +175,6 @@ file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc64/sparc64/autoconf.c
-file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet
@@ -204,8 +203,8 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #
 # Raster Console support
 #
+include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
-include "dev/rcons/files.rcons"
 
 # USB Support
 include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.15.2.5 2002/10/18 02:42:07 nathanw Exp $	*/
+/*	$NetBSD: irframe.c,v 1.15.2.6 2002/11/11 22:10:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,10 +68,11 @@ dev_type_read(irframeread);
 dev_type_write(irframewrite);
 dev_type_ioctl(irframeioctl);
 dev_type_poll(irframepoll);
+dev_type_kqfilter(irframekqfilter);
 
 const struct cdevsw irframe_cdevsw = {
 	irframeopen, irframeclose, irframeread, irframewrite, irframeioctl,
-	nostop, notty, irframepoll, nommap,
+	nostop, notty, irframepoll, nommap, irframekqfilter,
 };
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
@@ -117,6 +118,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_poll == NULL ||
+	    sc->sc_methods->im_kqfilter == NULL ||
 	    sc->sc_methods->im_set_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
 	    sc->sc_methods->im_get_turnarounds == NULL)
@@ -388,6 +390,19 @@ irframepoll(dev_t dev, int events, struct proc *p)
 
 	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
 }
+
+int
+irframekqfilter(dev_t dev, struct knote *kn)
+{
+	struct irframe_softc *sc;
+
+	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+		return (1);
+
+	return (sc->sc_methods->im_kqfilter(sc->sc_handle, kn));
+}
+
 
 /*********/
 

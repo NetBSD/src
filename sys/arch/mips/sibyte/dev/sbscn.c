@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.1.12.3 2002/10/18 02:38:49 nathanw Exp $ */
+/* $NetBSD: sbscn.c,v 1.1.12.4 2002/11/11 22:01:00 nathanw Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -196,7 +196,7 @@ dev_type_poll(sbscnpoll);
 
 const struct cdevsw sbscn_cdevsw = {
 	sbscnopen, sbscnclose, sbscnread, sbscnwrite, sbscnioctl,
-	sbscnstop, sbscntty, sbscnpoll, nommap, D_TTY
+	sbscnstop, sbscntty, sbscnpoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	integrate	static inline
@@ -514,10 +514,14 @@ sbscn_shutdown(struct sbscn_channel *ch)
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
+	 * Avoid tsleeping above splhigh().
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		sbscn_modem(ch, 0);
+		splx(s);
+		/* XXX tsleep will only timeout */
 		(void) tsleep(ch, TTIPRI, ttclos, hz);
+		s = splserial();
 	}
 
 	/* Turn off interrupts. */
@@ -749,11 +753,11 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int s;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -799,7 +803,7 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.7.8.1 2002/09/17 21:18:31 nathanw Exp $	*/
+/*	$NetBSD: cfl.c,v 1.7.8.2 2002/11/11 22:05:56 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -94,7 +94,7 @@ dev_type_read(cflrw);
 
 const struct cdevsw cfl_cdevsw = {
 	cflopen, cflclose, cflrw, cflrw, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*ARGSUSED*/

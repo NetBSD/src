@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.35.6.4 2002/10/18 02:40:21 nathanw Exp $	*/
+/*	$NetBSD: xy.c,v 1.35.6.5 2002/11/11 22:05:19 nathanw Exp $	*/
 
 /*
  *
@@ -223,7 +223,7 @@ const struct bdevsw xy_bdevsw = {
 
 const struct cdevsw xy_cdevsw = {
 	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -1659,8 +1659,8 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 				            iorq->buf->b_bcount);
 			    (void)BUFQ_GET(&iorq->xy->xyq);
 			    disk_unbusy(&iorq->xy->sc_dk,
-					        (iorq->buf->b_bcount -
-					         iorq->buf->b_resid));
+				(iorq->buf->b_bcount - iorq->buf->b_resid),
+				(iorq->buf->b_flags & B_READ));
 			    biodone(iorq->buf);
 			    iorq->mode = XY_SUB_FREE;
 			    break;
@@ -1837,7 +1837,8 @@ xyc_remove_iorq(xycsc)
 					    iorq->buf->b_bcount);
 			(void)BUFQ_GET(&iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
-			    (bp->b_bcount - bp->b_resid));
+			    (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 			iorq->mode = XY_SUB_FREE;
 			biodone(bp);
 			break;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8.2.4 2002/10/18 02:39:37 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.8.2.5 2002/11/11 22:03:18 nathanw Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -91,7 +91,6 @@
 #include <machine/swarm.h>
 #include <mips/locore.h>
 
-#include <mips/cfe/cfe_xiocb.h>
 #include <mips/cfe/cfe_api.h>
 
 #if 0 /* XXXCGD */
@@ -113,8 +112,9 @@
 
 #include <dev/cons.h>
 
-#ifdef IKOS
-#include <sbmips/ikos/ikosvar.h>
+#ifdef DDB
+/* start and end of kernel symbol table */
+void	*ksym_start, *ksym_end;
 #endif
 
 /* For sysctl_hw. */
@@ -170,22 +170,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	config |= 0x05;				/* XXX.  cacheable coherent */
 	mips3_cp0_config_write(config);
 
-	/*
-	 * Clear the BSS segment.
-	 */
-#ifdef DDB
-	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
-	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
-		esym = end;
-		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
-	} else
-#endif
-	{
-		kernend = (caddr_t)mips_round_page(end);
-		memset(edata, 0, kernend - edata);
-	}
+	/* Zero BSS.  XXXCGD: uh, is this really necessary still?  */
+	memset(edata, 0, end - edata);
 
 	/*
 	 * Copy the bootinfo structure from the boot loader.
@@ -205,12 +191,12 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		bootinfo.fwentry = bootdata;
 	}
 
-#ifdef IKOS
-	ikoscons_output_bufsize = IKOSCONS_OUTPUT_BUFSIZE;
-	memsize -= ikoscons_output_bufsize;
-	ikoscons_output_buf =
-	    (void *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(memsize));
-	memset(ikoscons_output_buf, 0, ikoscons_output_bufsize);
+#ifdef DDB
+        ksym_start = (void *)bootinfo.ssym;
+        ksym_end   = (void *)bootinfo.esym;
+        kernend = (caddr_t)mips_round_page((vaddr_t)ksym_end);
+#else
+        kernend = (caddr_t)mips_round_page((vaddr_t)end);
 #endif
 
 	consinit();
@@ -234,15 +220,15 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;
 		int added;
-		cfe_xuint_t start, len, type;
+		uint64_t start, len, type;
 
-		cfe_init(fwhandle);
+		cfe_init(bootinfo.fwhandle, bootinfo.fwentry);
 		cfe_present = 1;
 
 		idx = 0;
 		physmem = 0;
 		mem_cluster_cnt = 0;
-		while (cfe_getmeminfo(idx, &start, &len, &type) == 0) {
+		while (cfe_enummem(idx, 0, &start, &len, &type) == 0) {
 			added = 0;
 			printf("Memory Block #%d start %08llX len %08llX: %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
@@ -303,13 +289,6 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 				i++;
 			}
 		}
-		if (memcmp("single", &bootinfo.boot_flags[i], 5) == 0)
-			boothowto |= RB_SINGLE;
-		if (memcmp("nfsroot=", &bootinfo.boot_flags[i], 8) == 0)
-			netboot = 1;
-		/*
-		 * XXX Select root device from 'root=/dev/hd[abcd][1234]' too.
-		 */
 	}
 
 	/*
@@ -360,7 +339,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
 #if defined(DDB)
-	ddb_init(0, 0, 0);
+	ddb_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+	    ksym_start, ksym_end);
 #endif
 
 	if (boothowto & RB_KDB) {
@@ -517,21 +497,6 @@ haltsys:
 		cfe_exit(0, (howto & RB_DUMP) ? 1 : 0);
 		printf("cfe_exit didn't!\n");
 	}
-
-	delay(500000);
-
-#if defined(IKOS) && defined(REALLY_IKOS)
-	*(volatile char *)MIPS_PHYS_TO_KSEG1(0x408000) = 0;
-#else
-    {
-	static int broken;
-
-	if (!broken) {
-		broken = 1;
-		__asm__ ( "move $4, %0 ; break 0x3ff" : : "r"(howto) );
-	}
-    }
-#endif
 
 	printf("WARNING: reboot failed!\n");
 

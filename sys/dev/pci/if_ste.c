@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.6.2.5 2002/10/18 02:43:06 nathanw Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.6.2.6 2002/11/11 22:11:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.6.2.5 2002/10/18 02:43:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.6.2.6 2002/11/11 22:11:09 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -484,7 +484,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = ste_mii_readreg;
 	sc->sc_mii.mii_writereg = ste_mii_writereg;
 	sc->sc_mii.mii_statchg = ste_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ste_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ste_mediachange,
 	    ste_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);

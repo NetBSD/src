@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.22.8.2 2002/09/17 21:16:58 nathanw Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.22.8.3 2002/11/11 22:02:32 nathanw Exp $	*/
 
 #include <sys/conf.h>
 
@@ -7,10 +7,11 @@ dev_type_close(fbclose);
 dev_type_ioctl(fbioctl);
 dev_type_poll(fbpoll);
 dev_type_mmap(fbmmap);
+dev_type_kqfilter(fbkqfilter);
 
 const struct cdevsw fb_cdevsw = {
 	fbopen, fbclose, noread, nowrite, fbioctl,
-	nostop, notty, fbpoll, fbmmap,
+	nostop, notty, fbpoll, fbmmap, fbkqfilter,
 };
 
 /*ARGSUSED*/
@@ -267,6 +268,57 @@ fbpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_fbrdetach(struct knote *kn)
+{
+	struct fbinfo *fi = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&fi->fi_selp.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_fbread(struct knote *kn, long hint)
+{
+	struct fbinfo *fi = kn->kn_hook;
+
+	if (fi->fi_fbu->scrInfo.qe.eHead == fi->fi_fbu->scrInfo.qe.eTail)
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops fbread_filtops =
+	{ 1, NULL, filt_fbrdetach, filt_fbread };
+
+int
+fbkqfilter(dev_t dev, struct knote *kn)
+{
+	struct fbinfo *fi = fbdevs[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &fi->fi_selp.si_klist;
+		kn->kn_fop = &fbread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = fi;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 /*
  * Return the physical page number that corresponds to byte offset 'off'.

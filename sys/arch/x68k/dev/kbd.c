@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11.8.3 2002/10/18 02:40:46 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11.8.4 2002/11/11 22:06:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -90,10 +90,11 @@ dev_type_close(kbdclose);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 dev_type_poll(kbdpoll);
+dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap,
+	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
 static int
@@ -308,6 +309,14 @@ kbdpoll(dev, events, p)
 	return (ev_poll(&k->sc_events, events, p));
 }
 
+int
+kbdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&k->sc_events, kn));
+}
 
 #define KBDBUFMASK 63
 #define KBDBUFSIZ 64

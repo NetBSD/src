@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.c,v 1.2 1995/02/27 17:31:34 cgd Exp $	*/
+/*	$NetBSD: mul.c,v 1.2.22.1 2002/11/11 22:22:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mul.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mul.c,v 1.2 1995/02/27 17:31:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: mul.c,v 1.2.22.1 2002/11/11 22:22:36 nathanw Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$NetBSD: mul.c,v 1.2 1995/02/27 17:31:34 cgd Exp $";
 
 main()
 {
-	union { long long q; unsigned long v[2]; } a, b, m;
+	union { long long q; unsigned int v[2]; } a, b, m;
 	char buf[300];
 	extern long long __muldi3(long long, long long);
 
@@ -63,17 +63,17 @@ main()
 		printf("> ");
 		if (fgets(buf, sizeof buf, stdin) == NULL)
 			break;
-		if (sscanf(buf, "%lu:%lu %lu:%lu",
+		if (sscanf(buf, "%u:%u %u:%u",
 			    &a.v[0], &a.v[1], &b.v[0], &b.v[1]) != 4 &&
-		    sscanf(buf, "0x%lx:%lx 0x%lx:%lx",
+		    sscanf(buf, "0x%x:%x 0x%x:%x",
 			    &a.v[0], &a.v[1], &b.v[0], &b.v[1]) != 4) {
 			printf("eh?\n");
 			continue;
 		}
 		m.q = __muldi3(a.q, b.q);
-		printf("%lx:%lx * %lx:%lx => %lx:%lx\n",
+		printf("%x:%x * %x:%x => %x:%x\n",
 		    a.v[0], a.v[1], b.v[0], b.v[1], m.v[0], m.v[1]);
-		printf("  = %lX%08lX * %lX%08lX => %lX%08lX\n",
+		printf("  = %X%08X * %X%08X => %X%08X\n",
 		    a.v[0], a.v[1], b.v[0], b.v[1], m.v[0], m.v[1]);
 	}
 	exit(0);

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5.2.3 2002/10/18 02:39:38 nathanw Exp $
+#	$NetBSD: GENERIC,v 1.5.2.4 2002/11/11 22:03:48 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5.2.3 $"
+#ident		"GENERIC-$Revision: 1.5.2.4 $"
 
 maxusers	32
 
@@ -62,6 +62,10 @@ options 	SYSVSHM		# System V shared memory
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

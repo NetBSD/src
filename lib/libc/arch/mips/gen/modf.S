@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.8 1997/08/19 20:49:47 jonathan Exp $	*/
+/*	$NetBSD: modf.S,v 1.8.14.1 2002/11/11 22:21:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995
@@ -40,10 +40,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: modf.S,v 1.8 1997/08/19 20:49:47 jonathan Exp $")
+	ASMSTR("$NetBSD: modf.S,v 1.8.14.1 2002/11/11 22:21:32 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 
@@ -53,7 +53,7 @@
  * returns: xxx and n (in *iptr) where val == n.xxx
  */
 LEAF(modf)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder

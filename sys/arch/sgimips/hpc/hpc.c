@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.2.6.5 2002/10/18 02:39:41 nathanw Exp $	*/
+/*	$NetBSD: hpc.c,v 1.2.6.6 2002/11/11 22:03:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -199,7 +199,7 @@ hpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct hpc_attach_args *ha = aux;
 
 	if (cf->cf_loc[HPCCF_OFFSET] != HPCCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[HPCCF_OFFSET] != ha->ha_devoff)
+	    (bus_addr_t) cf->cf_loc[HPCCF_OFFSET] != ha->ha_devoff)
 		return (0);
 
 	return (config_match(parent, cf, aux));

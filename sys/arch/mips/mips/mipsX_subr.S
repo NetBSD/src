@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2.6.7 2002/08/27 01:04:26 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2.6.8 2002/11/11 22:00:46 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -208,13 +208,6 @@
 	.set	mips64
 #endif
 
-/*
- * Set up hazard/interlock dependancies.
- */
-#if !defined(MIPS3_5900)
-#undef COP0_SYNC
-#define	COP0_SYNC	/* nothing */
-#endif
 
 /*
  * CPP function renaming macros.
@@ -398,7 +391,7 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	mtc0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sll	k1, 2				#12: chop top 2 bits (part 2a)
 	srl	k1, 2				#13: chop top 2 bits (part 2b)
-	mtc0	k1, MIPS_COP_0_TLB_LO1	#14: lo1 is loaded
+	mtc0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
 	nop					#15: standard nop
 	nop					#16: extra nop for QED5230
 	tlbwr					#17: write to tlb
@@ -565,10 +558,10 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_S	t2, TF_BASE+TF_REG_T2(sp)
 	REG_S	t3, TF_BASE+TF_REG_T3(sp)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	t4, TF_BASE+TF_REG_T4(sp)
-	REG_S	t5, TF_BASE+TF_REG_T5(sp)
-	REG_S	t6, TF_BASE+TF_REG_T6(sp)
-	REG_S	t7, TF_BASE+TF_REG_T7(sp)
+	REG_S	ta0, TF_BASE+TF_REG_TA0(sp)
+	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
+	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
+	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
 	mfc0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
@@ -639,10 +632,10 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_L	t1, TF_BASE+TF_REG_T1(sp)
 	REG_L	t2, TF_BASE+TF_REG_T2(sp)
 	REG_L	t3, TF_BASE+TF_REG_T3(sp)
-	REG_L	t4, TF_BASE+TF_REG_T4(sp)
-	REG_L	t5, TF_BASE+TF_REG_T5(sp)
-	REG_L	t6, TF_BASE+TF_REG_T6(sp)
-	REG_L	t7, TF_BASE+TF_REG_T7(sp)
+	REG_L	ta0, TF_BASE+TF_REG_TA0(sp)
+	REG_L	ta1, TF_BASE+TF_REG_TA1(sp)
+	REG_L	ta2, TF_BASE+TF_REG_TA2(sp)
+	REG_L	ta3, TF_BASE+TF_REG_TA3(sp)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
@@ -696,10 +689,10 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	REG_S	t2, FRAME_T2(k1)
 	REG_S	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	t4, FRAME_T4(k1)
-	REG_S	t5, FRAME_T5(k1)
-	REG_S	t6, FRAME_T6(k1)
-	REG_S	t7, FRAME_T7(k1)
+	REG_S	ta0, FRAME_TA0(k1)
+	REG_S	ta1, FRAME_TA1(k1)
+	REG_S	ta2, FRAME_TA2(k1)
+	REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
@@ -806,10 +799,10 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	REG_L	t1, FRAME_T1(k1)
 	REG_L	t2, FRAME_T2(k1)
 	REG_L	t3, FRAME_T3(k1)
-	REG_L	t4, FRAME_T4(k1)
-	REG_L	t5, FRAME_T5(k1)
-	REG_L	t6, FRAME_T6(k1)
-	REG_L	t7, FRAME_T7(k1)
+	REG_L	ta0, FRAME_TA0(k1)
+	REG_L	ta1, FRAME_TA1(k1)
+	REG_L	ta2, FRAME_TA2(k1)
+	REG_L	ta3, FRAME_TA3(k1)
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
@@ -861,10 +854,10 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	#REG_S	t2, FRAME_T2(k1)
 	#REG_S	t3, FRAME_T3(k1)
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
-	#REG_S	t4, FRAME_T4(k1)
-	#REG_S	t5, FRAME_T5(k1)
-	#REG_S	t6, FRAME_T6(k1)
-	#REG_S	t7, FRAME_T7(k1)
+	#REG_S	ta0, FRAME_TA0(k1)
+	#REG_S	ta1, FRAME_TA1(k1)
+	#REG_S	ta2, FRAME_TA2(k1)
+	#REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
@@ -977,10 +970,10 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_L	t1, FRAME_T1(k1)
 	REG_L	t2, FRAME_T2(k1)
 	REG_L	t3, FRAME_T3(k1)
-	REG_L	t4, FRAME_T4(k1)
-	REG_L	t5, FRAME_T5(k1)
-	REG_L	t6, FRAME_T6(k1)
-	REG_L	t7, FRAME_T7(k1)
+	REG_L	ta0, FRAME_TA0(k1)
+	REG_L	ta1, FRAME_TA1(k1)
+	REG_L	ta2, FRAME_TA2(k1)
+	REG_L	ta3, FRAME_TA3(k1)
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
@@ -1074,10 +1067,10 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	REG_S	t2, TF_BASE+TF_REG_T2(sp)
 	REG_S	t3, TF_BASE+TF_REG_T3(sp)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	t4, TF_BASE+TF_REG_T4(sp)
-	REG_S	t5, TF_BASE+TF_REG_T5(sp)
-	REG_S	t6, TF_BASE+TF_REG_T6(sp)
-	REG_S	t7, TF_BASE+TF_REG_T7(sp)
+	REG_S	ta0, TF_BASE+TF_REG_TA0(sp)
+	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
+	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
+	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
 	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
@@ -1142,10 +1135,10 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	REG_L	t1, TF_BASE+TF_REG_T1(sp)
 	REG_L	t2, TF_BASE+TF_REG_T2(sp)
 	REG_L	t3, TF_BASE+TF_REG_T3(sp)
-	REG_L	t4, TF_BASE+TF_REG_T4(sp)
-	REG_L	t5, TF_BASE+TF_REG_T5(sp)
-	REG_L	t6, TF_BASE+TF_REG_T6(sp)
-	REG_L	t7, TF_BASE+TF_REG_T7(sp)
+	REG_L	ta0, TF_BASE+TF_REG_TA0(sp)
+	REG_L	ta1, TF_BASE+TF_REG_TA1(sp)
+	REG_L	ta2, TF_BASE+TF_REG_TA2(sp)
+	REG_L	ta3, TF_BASE+TF_REG_TA3(sp)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
@@ -1197,10 +1190,10 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_S	t2, FRAME_T2(k1)
 	REG_S	t3, FRAME_T3(k1)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	t4, FRAME_T4(k1)
-	REG_S	t5, FRAME_T5(k1)
-	REG_S	t6, FRAME_T6(k1)
-	REG_S	t7, FRAME_T7(k1)
+	REG_S	ta0, FRAME_TA0(k1)
+	REG_S	ta1, FRAME_TA1(k1)
+	REG_S	ta2, FRAME_TA2(k1)
+	REG_S	ta3, FRAME_TA3(k1)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	t8, FRAME_T8(k1)
 	REG_S	t9, FRAME_T9(k1)
@@ -1347,10 +1340,10 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_L	t1, FRAME_T1(k1)
 	REG_L	t2, FRAME_T2(k1)
 	REG_L	t3, FRAME_T3(k1)
-	REG_L	t4, FRAME_T4(k1)
-	REG_L	t5, FRAME_T5(k1)
-	REG_L	t6, FRAME_T6(k1)
-	REG_L	t7, FRAME_T7(k1)
+	REG_L	ta0, FRAME_TA0(k1)
+	REG_L	ta1, FRAME_TA1(k1)
+	REG_L	ta2, FRAME_TA2(k1)
+	REG_L	ta3, FRAME_TA3(k1)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
@@ -1756,7 +1749,7 @@ LEAF(MIPSX(TLBRead))
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 	nop
-	mfc0	t6, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	mfc0	ta2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 	nop
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
@@ -1771,11 +1764,11 @@ LEAF(MIPSX(TLBRead))
 	nop
 	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the pgMask
 	_MFC0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
-	_MFC0	t4, MIPS_COP_0_TLB_LO0		# See what we got
-	_MFC0	t5, MIPS_COP_0_TLB_LO1		# See what we got
+	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
+	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	COP0_SYNC
-	mtc0	t6, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	nop
 	nop
@@ -1785,9 +1778,9 @@ LEAF(MIPSX(TLBRead))
 	nop
 	sw	t2, 0(a1)
 	sw	t3, 4(a1)
-	sw	t4, 8(a1)
+	sw	ta0, 8(a1)
 	j	ra
-	sw	t5, 12(a1)
+	sw	ta1, 12(a1)
 END(MIPSX(TLBRead))
 
 #if defined(MIPS3) && !defined(MIPS3_5900)
@@ -1940,10 +1933,10 @@ LEAF(MIPSX(proc_trampoline))
 	REG_L	t1, FRAME_T1(k1)
 	REG_L	t2, FRAME_T2(k1)
 	REG_L	t3, FRAME_T3(k1)
-	REG_L	t4, FRAME_T4(k1)
-	REG_L	t5, FRAME_T5(k1)
-	REG_L	t6, FRAME_T6(k1)
-	REG_L	t7, FRAME_T7(k1)
+	REG_L	ta0, FRAME_TA0(k1)
+	REG_L	ta1, FRAME_TA1(k1)
+	REG_L	ta2, FRAME_TA2(k1)
+	REG_L	ta3, FRAME_TA3(k1)
 	REG_L	s0, FRAME_S0(k1)
 	REG_L	s1, FRAME_S1(k1)
 	REG_L	s2, FRAME_S2(k1)
@@ -2113,7 +2106,7 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	t4, t1, 13			# PAGE_SHIFT + 1
+	sll	ta0, t1, 13			# PAGE_SHIFT + 1
 	nop
 	/* XXX simonb: lose this nop for mips32/64? */
 	nop
@@ -2126,9 +2119,9 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
 	and	a0, a0, MIPS3_PG_G		# check to see it has G bit
 	bnez	a0, 2f
-	addu	t4, t4, v0
+	addu	ta0, ta0, v0
 
-	_MTC0	t4, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	COP0_SYNC
@@ -2182,9 +2175,9 @@ LEAF_NOPROFILE(MIPSX(TBIA))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	COP0_SYNC
-	sll	t4, t1, 13			# PAGE_SHIFT + 1
-	add	t4, v0, t4
-	_MTC0	t4, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	sll	ta0, t1, 13			# PAGE_SHIFT + 1
+	add	ta0, v0, ta0
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	nop
 	nop

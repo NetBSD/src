@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.9.2.7 2002/10/18 02:42:45 nathanw Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.9.2.8 2002/11/11 22:10:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.7 2002/10/18 02:42:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.8 2002/11/11 22:10:27 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -875,7 +875,8 @@ edcworker(arg)
 				bp->b_resid = sc->sc_resblk * DEV_BSIZE;
 			}
 
-			disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid));
+			disk_unbusy(&ed->sc_dk, (bp->b_bcount - bp->b_resid),
+			    (bp->b_flags & B_READ));
 #if NRND > 0
 			rnd_add_uint32(&ed->rnd_source, bp->b_blkno);
 #endif

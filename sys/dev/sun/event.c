@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.6.2.5 2002/06/24 22:10:19 nathanw Exp $	*/
+/*	$NetBSD: event.c,v 1.6.2.6 2002/11/11 22:12:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.6.2.5 2002/06/24 22:10:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.6.2.6 2002/11/11 22:12:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.6.2.5 2002/06/24 22:10:19 nathanw Exp $"
 #include <sys/select.h>
 #include <sys/poll.h>
 
-#include <machine/vuid_event.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 
 int (*ev_out32_hook) __P((struct firm_event *, int, struct uio *));
@@ -174,4 +174,62 @@ ev_poll(ev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_evrdetach(struct knote *kn)
+{
+	struct evvar *ev = kn->kn_hook;
+	int s;
+
+	s = splev();
+	SLIST_REMOVE(&ev->ev_sel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_evread(struct knote *kn, long hint)
+{               
+	struct evvar *ev = kn->kn_hook;
+
+	if (ev->ev_get == ev->ev_put)
+		return (0);
+
+	if (ev->ev_get < ev->ev_put)
+		kn->kn_data = ev->ev_put - ev->ev_get;
+	else
+		kn->kn_data = (EV_QSIZE - ev->ev_get) +
+		    ev->ev_put;
+
+	kn->kn_data *= sizeof(struct firm_event);
+
+	return (1);
+}
+
+static const struct filterops ev_filtops =
+	{ 1, NULL, filt_evrdetach, filt_evread };
+
+int
+ev_kqfilter(struct evvar *ev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &ev->ev_sel.si_klist;
+		kn->kn_fop = &ev_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = ev;
+
+	s = splev();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

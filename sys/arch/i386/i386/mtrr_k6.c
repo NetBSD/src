@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.1.2.5 2002/10/18 02:37:47 nathanw Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.1.2.6 2002/11/11 21:59:10 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.1.2.5 2002/10/18 02:37:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.1.2.6 2002/11/11 21:59:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ k6_mtrr_init_first(void)
 	    malloc(MTRR_K6_NVAR * sizeof(struct mtrr), M_TEMP, M_NOWAIT);
 	if (mtrr_var == NULL)
 		panic("can't allocate variable MTRR array");
+	mtrr_funcs = &k6_mtrr_funcs;
 
 	k6_raw2soft();
 }

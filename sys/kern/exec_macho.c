@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.2.4.4 2002/10/18 02:44:49 nathanw Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2.4.5 2002/11/11 22:13:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.4 2002/10/18 02:44:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.5 2002/11/11 22:13:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,9 +98,9 @@ static void
 exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch) {
 	printf("arch.cputype %x\n", be32toh(arch->cputype));
 	printf("arch.cpusubtype %d\n", be32toh(arch->cpusubtype));
-	printf("arch.offset 0x%x\n", be32toh(arch->offset));
-	printf("arch.size %d\n", be32toh(arch->size));
-	printf("arch.align 0x%x\n", be32toh(arch->align));
+	printf("arch.offset 0x%x\n", (int32_t)be32toh(arch->offset));
+	printf("arch.size %d\n", (int32_t)be32toh(arch->size));
+	printf("arch.align 0x%x\n", (int32_t)be32toh(arch->align));
 }
 
 static void
@@ -351,31 +351,46 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 	int error = ENOEXEC, i;
 	size_t size;
 	void *buf = &lc;
-
-	if (be32toh(fat->magic) != MACHO_FAT_MAGIC) {
-		DPRINTF(("bad exec_macho fat magic %x\n", fat->magic));
-		goto bad;
-	}
+	u_int32_t *sc = NULL;
 
 #ifdef DEBUG_MACHO
 	exec_macho_print_fat_header(fat);
 #endif
 
-	for (i = 0; i < be32toh(fat->nfat_arch); i++, arch) {
-		if ((error = exec_read_from(p, vp, sizeof(*fat) +
-		    sizeof(arch) * i, &arch, sizeof(arch))) != 0)
-			goto bad;
+	switch(be32toh(fat->magic)){
+	case MACHO_FAT_MAGIC:		
+		for (i = 0; i < be32toh(fat->nfat_arch); i++, arch) {
+			if ((error = exec_read_from(p, vp, sizeof(*fat) +
+			    sizeof(arch) * i, &arch, sizeof(arch))) != 0)
+				goto bad;
 #ifdef DEBUG_MACHO
-		exec_macho_print_fat_arch(&arch);
+			exec_macho_print_fat_arch(&arch);
 #endif
-		switch (be32toh(arch.cputype)) {
-		MACHO_MACHDEP_CASES
+			for (sc = exec_macho_supported_cpu; *sc; sc++)
+				if (*sc == be32toh(arch.cputype))
+					break;
 		}
-	}
-	DPRINTF(("This MACH-O binary does not support your cpu"));
-	goto bad;
+		if (sc == NULL || *sc == 0) {
+			DPRINTF(("CPU %d not supported by this binary",
+				be32toh(arch.cputype)));
+			goto bad;
+		}
+		break;
 
-done:
+	case MACHO_MOH_MAGIC:
+		/* 
+		 * This is not a FAT Mach-O binary, the file starts
+		 * with the object header.
+		 */
+		arch.offset = 0;
+		break;
+
+	default:
+		DPRINTF(("bad exec_macho magic %x\n", fat->magic));
+		goto bad;
+		break;
+	}
+
 	if ((error = exec_read_from(p, vp, be32toh(arch.offset), &hdr,
 	    sizeof(hdr))) != 0)
 		goto bad;

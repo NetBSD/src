@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1.2.2 2002/10/18 02:35:27 nathanw Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.2.3 2002/11/11 21:56:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -116,12 +116,8 @@ int fakeintr __P((void *));
 
 int isa_irqdispatch __P((void *arg));
 
-u_int imask[IPL_LEVELS];
+u_int imask[NIPL];
 unsigned imen;
-
-#ifdef IRQSTATS
-u_int isa_intr_count[ICU_LEN];
-#endif	/* IRQSTATS */
 
 #define AUTO_EOI_1
 #define AUTO_EOI_2
@@ -182,8 +178,7 @@ isa_strayintr(irq)
 		    strays >= 5 ? "; stopped logging" : "");
 }
 
-int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-struct irqhandler *intrhand[ICU_LEN];
+static struct intrq isa_intrq[ICU_LEN];
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -195,22 +190,25 @@ void
 intr_calculatemasks()
 {
 	int irq, level;
-	struct irqhandler *q;
+	struct intrq *iq;
+	struct intrhand *ih;
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
+		iq = &isa_intrq[irq];
+		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
+			ih = TAILQ_NEXT(ih, ih_list))
+			levels |= (1U << ih->ih_ipl);
+		iq->iq_levels = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < IPL_LEVELS; level++) {
+	for (level = 0; level < NIPL; level++) {
 		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
+			if (isa_intrq[irq].iq_levels & (1U << level))
+				irqs |= (1U << irq);
 		imask[level] = irqs;
 	}
 
@@ -220,12 +218,17 @@ intr_calculatemasks()
 	 */
 	imask[IPL_NONE] = 0;
 
+	imask[IPL_SOFT] |= imask[IPL_NONE];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_BIO] |= imask[IPL_NONE];
+	imask[IPL_BIO] |= imask[IPL_SOFTCLOCK];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
 	imask[IPL_TTY] |= imask[IPL_NET];
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
@@ -238,13 +241,13 @@ intr_calculatemasks()
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
 	imask[IPL_CLOCK] |= imask[IPL_IMP];
+	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
@@ -255,17 +258,19 @@ intr_calculatemasks()
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs;
+		iq = &isa_intrq[irq];
+		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
+			ih = TAILQ_NEXT(ih, ih_list))
+			irqs |= imask[ih->ih_ipl];
+		iq->iq_mask = irqs;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
 	{
 		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrhand[irq])
-				irqs |= 1 << irq;
+			if (!TAILQ_EMPTY(&isa_intrq[irq].iq_list))
+				irqs |= (1U << irq);
 		if (irqs >= 0x100) /* any IRQs >= 8 in use */
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
@@ -300,7 +305,8 @@ isa_intr_alloc(ic, mask, type, irq)
 	int *irq;
 {
 	int i, tmp, bestirq, count;
-	struct irqhandler **p, *q;
+	struct intrq *iq;
+	struct intrhand *ih;
 
 	if (type == IST_NONE)
 		panic("intr_alloc: bogus type");
@@ -320,8 +326,9 @@ isa_intr_alloc(ic, mask, type, irq)
 	for (i = 0; i < ICU_LEN; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
-
-		switch(intrtype[i]) {
+		
+		iq = &isa_intrq[i];
+		switch(iq->iq_ist) {
 		case IST_NONE:
 			/*
 			 * if nothing's using the irq, just return it
@@ -331,7 +338,7 @@ isa_intr_alloc(ic, mask, type, irq)
 
 		case IST_EDGE:
 		case IST_LEVEL:
-			if (type != intrtype[i])
+			if (type != iq->iq_ist)
 				continue;
 			/*
 			 * if the irq is shareable, count the number of other
@@ -342,9 +349,9 @@ isa_intr_alloc(ic, mask, type, irq)
 			 * interrupt level and stick IPL_TTY with other
 			 * IPL_TTY, etc.
 			 */
-			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
-			     p = &q->ih_next, tmp++)
-				;
+			tmp = 0;
+			TAILQ_FOREACH(ih, &(iq->iq_list), ih_list)
+			     tmp++;
 			if ((bestirq == -1) || (count > tmp)) {
 				bestirq = i;
 				count = tmp;
@@ -368,9 +375,7 @@ isa_intr_alloc(ic, mask, type, irq)
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
+    return &isa_intrq[irq].iq_ev;
 }
 
 /*
@@ -386,23 +391,29 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	struct irqhandler **p, *q, *ih;
-	static struct irqhandler fakehand = {fakeintr};
+    	struct intrq *iq;
+	struct intrhand *ih;
+	u_int oldirqstate;
 
-/*	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);*/
-
+#if 0
+	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);
+#endif
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
-		panic("isa_intr_establish: can't malloc handler info");
+	    return (NULL);
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	switch (intrtype[irq]) {
+	iq = &isa_intrq[irq];
+
+	switch (iq->iq_ist) {
 	case IST_NONE:
-		intrtype[irq] = type;
-/*		printf("Setting irq %d to type %d - ", irq, type);*/
+		iq->iq_ist = type;
+#if 0
+		printf("Setting irq %d to type %d - ", irq, type);
+#endif
 		if (irq < 8) {
 			outb(0x4d0, (inb(0x4d0) & ~(1 << irq))
 			    | ((type == IST_LEVEL) ? (1 << irq) : 0));
@@ -415,45 +426,29 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		break;
 	case IST_EDGE:
 	case IST_LEVEL:
-		if (type == intrtype[irq])
+		if (iq->iq_ist == type)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			    isa_intr_typename(intrtype[irq]),
+			    isa_intr_typename(iq->iq_ist),
 			    isa_intr_typename(type));
 		break;
 	}
 
-	/*
-	 * Figure out where to put the handler.
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * generally small.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
-
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	intr_calculatemasks();
-
-	/*
-	 * Poke the real handler in now.
-	 */
 	ih->ih_func = ih_fun;
 	ih->ih_arg = ih_arg;
-/*	ih->ih_count = 0;*/
-	ih->ih_next = NULL;
-	ih->ih_level = level;
-	ih->ih_num = irq;
-	*p = ih;
+	ih->ih_ipl = level;
+	ih->ih_irq = irq;
 
+	/* do not stop us */
+	oldirqstate = disable_interrupts(I32_bit);
+	
+	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
+
+	intr_calculatemasks();
+	restore_interrupts(oldirqstate);	
+	
 	return (ih);
 }
 
@@ -465,29 +460,26 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct irqhandler *ih = arg;
-	int irq = ih->ih_num;
-	struct irqhandler **p, *q;
-
+	struct intrhand *ih = arg;
+	struct intrq *iq = &isa_intrq[ih->ih_irq];
+	int irq = ih->ih_irq;
+	u_int oldirqstate;
+	
 	if (!LEGAL_IRQ(irq))
 		panic("intr_disestablish: bogus irq");
 
-	/*
-	 * Remove the handler from the chain.
-	 * This is O(n^2), too.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-	if (q)
-		*p = q->ih_next;
-	else
-		panic("intr_disestablish: handler not registered");
-	free(ih, M_DEVBUF);
+	oldirqstate = disable_interrupts(I32_bit);
+
+	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
 
 	intr_calculatemasks();
 
-	if (intrhand[irq] == NULL)
-		intrtype[irq] = IST_NONE;
+	restore_interrupts(oldirqstate);
+
+	free(ih, M_DEVBUF);
+
+	if (TAILQ_EMPTY(&(iq->iq_list)))
+		iq->iq_ist = IST_NONE;
 }
 
 /*
@@ -500,13 +492,29 @@ void
 isa_intr_init(void)
 {
 	static void *isa_ih;
-
+ 	struct intrq *iq;
+ 	int i;
+ 
+ 	/* 
+ 	 * should get the parent here, but initialisation order being so
+ 	 * strange I need to check if it's available
+ 	 */
+ 	for (i = 0; i < ICU_LEN; i++) {
+ 		iq = &isa_intrq[i];
+ 		TAILQ_INIT(&iq->iq_list);
+  
+ 		sprintf(iq->iq_name, "irq %d", i);
+ 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+ 		    NULL, "isa", iq->iq_name);
+ 	}
+	
 	isa_icu_init();
-	/* something break the build in an informative way */
+	intr_calculatemasks();
+	/* something to break the build in an informative way */
 #ifndef ISA_FOOTBRIDGE_IRQ 
 #warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
 #endif
-	isa_ih = intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
+	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
 	    isa_irqdispatch, NULL);
 	
 }
@@ -555,10 +563,12 @@ int
 isa_irqdispatch(arg)
 	void *arg;
 {
+	struct clockframe *frame = arg;
 	int irq;
-	struct irqhandler *p;
+	struct intrq *iq;
+	struct intrhand *ih;
 	u_int iack;
-	int res;
+	int res = 0;
 
 	iack = *((u_int *)(DC21285_PCI_IACK_VBASE));
 	iack &= 0xff;
@@ -568,18 +578,13 @@ isa_irqdispatch(arg)
 	}
 
 	irq = iack & 0x0f;
-#ifdef IRQSTATS
-	++isa_intr_count[irq];
-#endif	/* IRQSTATS */
-	p = intrhand[irq];
-	while (p) {
-#ifdef IRQSTATS
-/*		++p->ih_count;*/
-#endif	/* IRQSTATS */
-		res = p->ih_func(p->ih_arg);
-		p = p->ih_next;
+	iq = &isa_intrq[irq];
+	iq->iq_ev.ev_count++;
+	for (ih = TAILQ_FIRST(&iq->iq_list); res != 1 && ih != NULL;
+		     ih = TAILQ_NEXT(ih, ih_list)) {
+		res = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 	}
-	return(0);
+	return res;
 }
 
 

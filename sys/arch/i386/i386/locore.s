@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.19 2002/10/18 04:05:26 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.20 2002/11/11 21:59:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
@@ -106,6 +107,7 @@
 #include <machine/i82489reg.h>
 #endif
 
+/* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <sys/systm.h> */
 /* LINTSTUB: include <machine/cpu.h> */
 
@@ -125,7 +127,11 @@
 #include <machine/asm.h>
 
 #define CPL _C_LABEL(lapic_tpr)
+#if __STDC__
+#define	_CONCAT(a,b) a ## b
+#else
 #define _CONCAT(a,b) a/**/b
+#endif
 
 #if defined(MULTIPROCESSOR)
 #define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
@@ -146,7 +152,7 @@
 
 #endif
 
-#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
+#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
 
 #define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
@@ -1053,8 +1059,8 @@ ENTRY(i386_copyout)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1095,8 +1101,8 @@ ENTRY(i486_copyout)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1147,8 +1153,8 @@ ENTRY(i386_copyin)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1857,12 +1863,12 @@ ENTRY(cpu_switch)
 	pushl	%edi
 
 #ifdef DEBUG
-	cmpl	$IPL_HIGH,CPL
-	je	1f
-	pushl	2f
+	cmpl	$IPL_SCHED,CPL
+	jae	1f
+	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splhigh() in cpu_switch!"
+2:	.asciz	"not splsched() in cpu_switch!"
 
 1:	
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.46.4.4 2002/09/17 21:14:26 nathanw Exp $
+#	$NetBSD: files.hp300,v 1.46.4.5 2002/11/11 21:58:06 nathanw Exp $
 #
 # hp300-specific configuration info
 
@@ -190,23 +190,23 @@ file	dev/md_root.c			memory_disk_hooks
 file	arch/hp300/hp300/autoconf.c
 file	arch/hp300/hp300/bus_space.c
 file	arch/hp300/hp300/clock.c
-file	arch/hp300/hp300/conf.c
-file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
 file	arch/hp300/hp300/dkbad.c
-file	arch/hp300/hp300/kgdb_machdep.c		kgdb
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/intr.c
 file	arch/hp300/hp300/leds.c			useleds
 file	arch/hp300/hp300/mem.c
-file	arch/hp300/hp300/pmap.c
 file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/hp300/hp300/procfs_machdep.c	procfs
 file	arch/hp300/hp300/softintr.c
-file	arch/hp300/hp300/sys_machdep.c
 file	arch/hp300/hp300/trap.c
-file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/hp300/dev/dma.c
+file	arch/m68k/m68k/cacheops.c
+file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/clock_subr.c
 file	dev/cons.c

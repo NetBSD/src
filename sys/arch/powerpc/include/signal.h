@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4.30.1 2002/08/01 02:43:04 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.4.30.2 2002/11/11 22:02:54 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_SIGNAL_H_
-#define	_MACHINE_SIGNAL_H_
+#ifndef	_POWERPC_SIGNAL_H_
+#define	_POWERPC_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
@@ -58,4 +58,4 @@ struct sigframe {
 	struct sigcontext sf_sc;
 };
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif	/* !_MACHINE_SIGNAL_H_ */
+#endif	/* !_POWERPC_SIGNAL_H_ */

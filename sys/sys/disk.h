@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.16.6.3 2002/10/18 02:45:40 nathanw Exp $	*/
+/*	$NetBSD: disk.h,v 1.16.6.4 2002/11/11 22:16:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,9 +112,11 @@ struct disk {
 	 * on certain types of disks.
 	 */
 	int		dk_busy;	/* busy counter */
-	u_int64_t	dk_xfer;	/* total number of transfers */
+	u_int64_t	dk_rxfer;	/* total number of read transfers */
+	u_int64_t	dk_wxfer;	/* total number of write transfers */
 	u_int64_t	dk_seek;	/* total independent seek operations */
-	u_int64_t	dk_bytes;	/* total bytes transfered */
+	u_int64_t	dk_rbytes;	/* total bytes read */
+	u_int64_t	dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
@@ -147,6 +149,11 @@ struct disk_sysctl {
 	u_int32_t	dk_timestamp_usec;
 	u_int32_t	dk_time_sec;
 	u_int32_t	dk_time_usec;
+	/* New separate read/write stats */
+	u_int64_t	dk_rxfer;
+	u_int64_t	dk_rbytes;
+	u_int64_t	dk_wxfer;
+	u_int64_t	dk_wbytes;
 };
 
 struct dkdriver {
@@ -182,7 +189,7 @@ void	disk_init __P((void));
 void	disk_attach __P((struct disk *));
 void	disk_detach __P((struct disk *));
 void	disk_busy __P((struct disk *));
-void	disk_unbusy __P((struct disk *, long));
+void	disk_unbusy __P((struct disk *, long, int));
 void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.2.40.1 2001/06/21 20:06:10 nathanw Exp $	*/
+/*	$NetBSD: event_var.h,v 1.2.40.2 2002/11/11 22:12:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,7 @@ struct evvar {
 #define	splev()	spltty()
 
 #define	EV_WAKEUP(ev) { \
-	selwakeup(&(ev)->ev_sel); \
+	selnotify(&(ev)->ev_sel, 0); \
 	if ((ev)->ev_wanted) { \
 		(ev)->ev_wanted = 0; \
 		wakeup((caddr_t)(ev)); \
@@ -80,6 +80,7 @@ void	ev_init __P((struct evvar *));
 void	ev_fini __P((struct evvar *));
 int	ev_read __P((struct evvar *, struct uio *, int));
 int	ev_poll __P((struct evvar *, int, struct proc *));
+int	ev_kqfilter __P((struct evvar *, struct knote *));
 
 /*
  * Hook for 32-bit compatibility on a 64-bit kernel.

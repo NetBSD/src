@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15.2.6 2002/10/18 02:42:52 nathanw Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15.2.7 2002/11/11 22:10:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.6 2002/10/18 02:42:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.7 2002/11/11 22:10:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -87,7 +87,7 @@ const struct bdevsw ofdisk_bdevsw = {
 
 const struct cdevsw ofdisk_cdevsw = {
 	ofdisk_open, ofdisk_close, ofdisk_read, ofdisk_write, ofdisk_ioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
@@ -276,7 +276,8 @@ ofdisk_strategy(struct buf *bp)
 	} else
 		bp->b_resid = bp->b_bcount - read;
 
-	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 
 done:
 	biodone(bp);

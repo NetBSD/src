@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.47.8.6 2002/10/18 02:36:44 nathanw Exp $	*/
+/*	$NetBSD: dcm.c,v 1.47.8.7 2002/11/11 21:58:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.47.8.6 2002/10/18 02:36:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.47.8.7 2002/11/11 21:58:10 nathanw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -329,7 +329,7 @@ dev_type_poll(dcmpoll);
 
 const struct cdevsw dcm_cdevsw = {
 	dcmopen, dcmclose, dcmread, dcmwrite, dcmioctl,
-	dcmstop, dcmtty, dcmpoll, nommap, D_TTY
+	dcmstop, dcmtty, dcmpoll, nommap, ttykqfilter, D_TTY
 };
 
 int
@@ -959,7 +959,7 @@ dcmmint(sc, port, mcnd)
 	delta = mcnd ^ sc->sc_mcndlast[port];
 	sc->sc_mcndlast[port] = mcnd;
 	if ((delta & MI_CTS) && (tp->t_state & TS_ISOPEN) &&
-	    (tp->t_flags & CCTS_OFLOW)) {
+	    (tp->t_cflag & CCTS_OFLOW)) {
 		if (mcnd & MI_CTS) {
 			tp->t_state &= ~TS_TTSTOP;
 			ttstart(tp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.5 2002/09/17 21:13:21 nathanw Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.6 2002/11/11 21:56:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 

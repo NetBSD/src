@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_sysent.c,v 1.4.4.6 2002/06/20 03:43:16 nathanw Exp $ */
+/* $NetBSD: sunos32_sysent.c,v 1.4.4.7 2002/11/11 22:08:14 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.4.4.6 2002/06/20 03:43:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.4.4.7 2002/11/11 22:08:14 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -439,5 +439,137 @@ struct sysent sunos32_sysent[] = {
 	    sunos32_sys_sysconf },		/* 188 = sysconf */
 	{ 1, s(struct sunos32_sys_uname_args), 0,
 	    sunos32_sys_uname },		/* 189 = uname */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 190 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 191 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 192 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 193 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 194 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 195 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 196 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 197 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 198 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 199 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 200 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 201 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 202 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 203 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 204 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 205 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 206 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 207 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 208 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 209 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 210 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 211 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 212 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 213 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 214 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 215 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 216 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 217 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 218 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 219 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 220 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 221 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 222 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 223 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 224 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 225 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 226 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 227 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 228 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 229 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 230 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 231 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 232 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 233 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 234 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 235 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 236 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 237 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 238 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 239 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 240 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 241 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 242 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 243 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 244 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 245 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 246 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 247 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 248 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 249 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 250 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 251 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 252 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 253 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 254 = filler */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 255 = filler */
 };
 

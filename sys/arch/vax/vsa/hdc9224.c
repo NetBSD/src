@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.17.2.4 2002/10/18 02:40:38 nathanw Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.17.2.5 2002/11/11 22:06:04 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -201,7 +201,7 @@ const struct bdevsw rd_bdevsw = {
 
 const struct cdevsw rd_cdevsw = {
 	rdopen, rdclose, rdread, rdwrite, rdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /* At least 0.7 uS between register accesses */

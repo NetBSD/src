@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.99.2.13 2002/09/17 21:23:56 nathanw Exp $ */
+/* $NetBSD: syscallargs.h,v 1.99.2.14 2002/11/11 22:16:38 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -1322,6 +1322,15 @@ struct sys_rasctl_args {
 	syscallarg(int) op;
 };
 
+struct sys_kevent_args {
+	syscallarg(int) fd;
+	syscallarg(const struct kevent *) changelist;
+	syscallarg(size_t) nchanges;
+	syscallarg(struct kevent *) eventlist;
+	syscallarg(size_t) nevents;
+	syscallarg(const struct timespec *) timeout;
+};
+
 /*
  * System call prototypes.
  */
@@ -1655,4 +1664,6 @@ int	sys___sigaction_sigtramp(struct lwp *, void *, register_t *);
 int	sys_pmc_get_info(struct lwp *, void *, register_t *);
 int	sys_pmc_control(struct lwp *, void *, register_t *);
 int	sys_rasctl(struct lwp *, void *, register_t *);
+int	sys_kqueue(struct lwp *, void *, register_t *);
+int	sys_kevent(struct lwp *, void *, register_t *);
 #endif /* _SYS__SYSCALLARGS_H_ */

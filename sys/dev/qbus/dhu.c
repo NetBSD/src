@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.10 2002/10/18 02:43:37 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.11 2002/11/11 22:11:50 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.10 2002/10/18 02:43:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.11 2002/11/11 22:11:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ dev_type_poll(dhupoll);
 
 const struct cdevsw dhu_cdevsw = {
 	dhuopen, dhuclose, dhuread, dhuwrite, dhuioctl,
-	dhustop, dhutty, dhupoll, nommap, D_TTY
+	dhustop, dhutty, dhupoll, nommap, ttykqfilter, D_TTY
 };
 
 /* Autoconfig handles: setup the controller to interrupt, */

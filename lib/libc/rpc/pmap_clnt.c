@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.16 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.16.2.1 2002/11/11 22:22:41 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.16.2.1 2002/11/11 22:22:41 nathanw Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(pmap_set,_pmap_set)

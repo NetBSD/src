@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54.12.4 2002/09/17 21:15:27 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.54.12.5 2002/11/11 21:59:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,18 +42,6 @@
 #include <dev/cons.h>
 
 #include "zstty.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t	dev;
-{
-
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
-
 #include "akbd.h"
 #include "macfb.h"
 #define maccnpollc	nullcnpollc

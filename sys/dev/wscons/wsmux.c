@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.4.6 2002/09/17 21:21:49 nathanw Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.4.7 2002/11/11 22:13:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.4.6 2002/09/17 21:21:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.4.7 2002/11/11 22:13:22 nathanw Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -123,10 +123,11 @@ dev_type_close(wsmuxclose);
 dev_type_read(wsmuxread);
 dev_type_ioctl(wsmuxioctl);
 dev_type_poll(wsmuxpoll);
+dev_type_kqfilter(wsmuxkqfilter);
 
 const struct cdevsw wsmux_cdevsw = {
 	wsmuxopen, wsmuxclose, wsmuxread, nowrite, wsmuxioctl,
-	nostop, notty, wsmuxpoll, nommap,
+	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter,
 };
 
 struct wssrcops wsmux_srcops = {
@@ -572,6 +573,30 @@ wsmuxpoll(dev_t dev, int events, struct proc *p)
 	}
 
 	return (wsevent_poll(sc->sc_base.me_evp, events, p));
+}
+
+/*
+ * kqfilter() of the pseudo device from device table.
+ */
+int
+wsmuxkqfilter(dev_t dev, struct knote *kn)
+{
+	int minr = minor(dev);  
+	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];
+
+	if (WSMUXCTL(minr)) {
+		/* control device */
+		return (1);
+	}
+
+	if (sc->sc_base.me_evp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("wsmuxkqfilter: not open\n");
+#endif
+		return (1);
+	}
+
+	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }
 
 /*

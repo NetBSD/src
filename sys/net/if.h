@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.65.2.8 2002/08/27 23:47:50 nathanw Exp $	*/
+/*	$NetBSD: if.h,v 1.65.2.9 2002/11/11 22:14:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -393,7 +393,7 @@ do {									\
 		else							\
 			m_freem(__m0);					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_MAXLEN	50
@@ -593,7 +593,7 @@ struct if_laddrreq {
 do {									\
 	printf("IFAREF: %s:%d %p -> %d\n", __FILE__, __LINE__,		\
 	    (ifa), ++(ifa)->ifa_refcnt);				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFAFREE(ifa)							\
 do {									\
@@ -604,7 +604,7 @@ do {									\
 	    (ifa), --(ifa)->ifa_refcnt);				\
 	if ((ifa)->ifa_refcnt == 0)					\
 		ifafree(ifa);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	IFAREF(ifa)	(ifa)->ifa_refcnt++
 
@@ -616,13 +616,13 @@ do {									\
 		    __LINE__, (ifa));					\
 	if (--(ifa)->ifa_refcnt == 0)					\
 		ifafree(ifa);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	IFAFREE(ifa)							\
 do {									\
 	if (--(ifa)->ifa_refcnt == 0)					\
 		ifafree(ifa);						\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #endif /* DIAGNOSTIC */
 #endif /* IFAREF_DEBUG */
 
@@ -644,7 +644,7 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define IFQ_DEQUEUE(ifq, m)						\
 do {									\
@@ -654,7 +654,7 @@ do {									\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
@@ -664,7 +664,7 @@ do {									\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
@@ -672,12 +672,12 @@ do {									\
 		ALTQ_PURGE((ifq));					\
 	else								\
 		IF_PURGE((ifq));					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)						\
 do {									\
 	(ifq)->altq_flags |= ALTQF_READY;				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_CLASSIFY(ifq, m, af, pa)					\
 do {									\
@@ -688,7 +688,7 @@ do {									\
 		(pa)->pattr_af = (af);					\
 		(pa)->pattr_hdr = mtod((m), caddr_t);			\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	ALTQ_DECL(x)		/* nothing */
 
@@ -703,7 +703,7 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
 

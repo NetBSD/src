@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.5 1999/01/31 00:57:10 castor Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.5.12.1 2002/11/11 22:21:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1995,
@@ -43,10 +43,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigsetjmp.S,v 1.5 1999/01/31 00:57:10 castor Exp $")
+	ASMSTR("$NetBSD: sigsetjmp.S,v 1.5.12.1 2002/11/11 22:21:33 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.abicalls
 #endif
 
@@ -63,7 +63,7 @@
  */
 
 LEAF(sigsetjmp)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder
@@ -78,7 +78,7 @@ LEAF(sigsetjmp)
 END(sigsetjmp)
 
 LEAF(siglongjmp)
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.set	noreorder
 	.cpload	t9
 	.set	reorder

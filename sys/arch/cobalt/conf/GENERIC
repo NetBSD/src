@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20.6.7 2002/10/18 02:36:17 nathanw Exp $
+# $NetBSD: GENERIC,v 1.20.6.8 2002/11/11 21:57:47 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20.6.7 $"
+#ident 		"GENERIC-$Revision: 1.20.6.8 $"
 
 maxusers	32
 
@@ -42,6 +42,10 @@ options 	SYSVSHM		# System V shared memory
 #options 	UCONSOLE	# users can redirect console (unsafe)
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking

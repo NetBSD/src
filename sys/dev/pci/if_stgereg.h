@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stgereg.h,v 1.1.4.2 2001/08/24 00:10:08 nathanw Exp $	*/
+/*	$NetBSD: if_stgereg.h,v 1.1.4.3 2002/11/11 22:11:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct stge_frag {
 
 /*
  * TC9021 Transmit Frame Descriptor.  Note the number of fragments
- * here is arbitrary, but we can't have any more than than 15.
+ * here is arbitrary, but we can't have any more than 15.
  */
 #define	STGE_NTXFRAGS	12
 struct stge_tfd {

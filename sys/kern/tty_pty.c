@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55.2.9 2002/10/18 02:44:56 nathanw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55.2.10 2002/11/11 22:14:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.9 2002/10/18 02:44:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.10 2002/11/11 22:14:06 nathanw Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -106,6 +106,7 @@ dev_type_close(ptcclose);
 dev_type_read(ptcread);
 dev_type_write(ptcwrite);
 dev_type_poll(ptcpoll);
+dev_type_kqfilter(ptckqfilter);
 
 dev_type_open(ptsopen);
 dev_type_close(ptsclose);
@@ -119,23 +120,23 @@ dev_type_tty(ptytty);
 
 const struct cdevsw ptc_cdevsw = {
 	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
-	nullstop, ptytty, ptcpoll, nommap, D_TTY
+	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
 };
 
 const struct cdevsw pts_cdevsw = {
 	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
-	ptsstop, ptytty, ptspoll, nommap, D_TTY
+	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
 };
 
 #if defined(pmax)
 const struct cdevsw ptc_ultrix_cdevsw = {
 	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
-	nullstop, ptytty, ptcpoll, nommap, D_TTY
+	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
 };
 
 const struct cdevsw pts_ultrix_cdevsw = {
 	ptsopen, ptsclose, ptsread, ptswrite, ptyioctl,
-	ptsstop, ptytty, ptspoll, nommap, D_TTY
+	ptsstop, ptytty, ptspoll, nommap, ttykqfilter, D_TTY
 };
 #endif /* defined(pmax) */
 
@@ -495,11 +496,11 @@ ptcwakeup(tp, flag)
 	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
 
 	if (flag & FREAD) {
-		selwakeup(&pti->pt_selr);
+		selnotify(&pti->pt_selr, 0);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 	if (flag & FWRITE) {
-		selwakeup(&pti->pt_selw);
+		selnotify(&pti->pt_selw, 0);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 }
@@ -612,7 +613,7 @@ ptcread(dev, uio, flag)
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup((caddr_t)&tp->t_outq);
 		}
-		selwakeup(&tp->t_wsel);
+		selnotify(&tp->t_wsel, 0);
 	}
 	return (error);
 }
@@ -749,6 +750,124 @@ ptcpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_ptcrdetach(struct knote *kn)
+{
+	struct pt_softc *pti;
+	int		s;
+
+	pti = kn->kn_hook;
+	s = spltty();
+	SLIST_REMOVE(&pti->pt_selr.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ptcread(struct knote *kn, long hint)
+{
+	struct pt_softc *pti;
+	struct tty	*tp;
+	int canread;
+
+	pti = kn->kn_hook;
+	tp = pti->pt_tty;
+
+	canread = (ISSET(tp->t_state, TS_ISOPEN) &&
+		    ((tp->t_outq.c_cc > 0 && !ISSET(tp->t_state, TS_TTSTOP)) ||
+		     ((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)));
+
+	if (canread) {
+		/*
+		 * c_cc is number of characters after output post-processing;
+		 * the amount of data actually read(2) depends on 
+		 * setting of input flags for the terminal.
+		 */
+		kn->kn_data = tp->t_outq.c_cc;
+		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
+			kn->kn_data++;
+	}
+
+	return (canread);
+}
+
+static void
+filt_ptcwdetach(struct knote *kn)
+{
+	struct pt_softc *pti;
+	int		s;
+
+	pti = kn->kn_hook;
+	s = spltty();
+	SLIST_REMOVE(&pti->pt_selw.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_ptcwrite(struct knote *kn, long hint)
+{
+	struct pt_softc *pti;
+	struct tty	*tp;
+	int canwrite;
+	int nwrite;
+
+	pti = kn->kn_hook;
+	tp = pti->pt_tty;
+
+	canwrite = (ISSET(tp->t_state, TS_ISOPEN) &&
+		    ((pti->pt_flags & PF_REMOTE) ?
+		     (tp->t_canq.c_cc == 0) :
+		     ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2) ||
+		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON)))));
+
+	if (canwrite) {
+		if (pti->pt_flags & PF_REMOTE)
+			nwrite = tp->t_canq.c_cn;
+		else {
+			/* this is guaranteed to be > 0 due to above check */
+			nwrite = tp->t_canq.c_cn
+				- (tp->t_rawq.c_cc + tp->t_canq.c_cc);
+		}
+		kn->kn_data = nwrite;
+	}
+
+	return (canwrite);
+}
+
+static const struct filterops ptcread_filtops =
+	{ 1, NULL, filt_ptcrdetach, filt_ptcread };
+static const struct filterops ptcwrite_filtops =
+	{ 1, NULL, filt_ptcwdetach, filt_ptcwrite };
+
+int
+ptckqfilter(dev_t dev, struct knote *kn)
+{
+	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct klist	*klist;
+	int		s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &pti->pt_selr.si_klist;
+		kn->kn_fop = &ptcread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &pti->pt_selw.si_klist;
+		kn->kn_fop = &ptcwrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = pti;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 struct tty *
 ptytty(dev)

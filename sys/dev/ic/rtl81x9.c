@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.31.2.4 2002/06/20 03:44:57 nathanw Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.31.2.5 2002/11/11 22:09:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.31.2.4 2002/06/20 03:44:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.31.2.5 2002/11/11 22:09:58 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -734,7 +734,7 @@ rtk_attach(sc)
 	sc->mii.mii_readreg = rtk_phy_readreg;
 	sc->mii.mii_writereg = rtk_phy_writereg;
 	sc->mii.mii_statchg = rtk_phy_statchg;
-	ifmedia_init(&sc->mii.mii_media, 0, rtk_ifmedia_upd, rtk_ifmedia_sts);
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd, rtk_ifmedia_sts);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, 
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
@@ -979,7 +979,7 @@ STATIC void rtk_rxeof(sc)
         struct mbuf		*m;
         struct ifnet		*ifp;
 	caddr_t			rxbufpos, dst;
-	int			total_len, wrap = 0;
+	u_int			total_len, wrap = 0;
 	u_int32_t		rxstat;
 	u_int16_t		cur_rx, new_rx;
 	u_int16_t		limit;

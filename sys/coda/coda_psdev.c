@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.15.2.7 2002/09/17 21:18:53 nathanw Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.15.2.8 2002/11/11 22:06:38 nathanw Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.15.2.7 2002/09/17 21:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.15.2.8 2002/11/11 22:06:38 nathanw Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -102,10 +102,11 @@ dev_type_read(vc_nb_read);
 dev_type_write(vc_nb_write);
 dev_type_ioctl(vc_nb_ioctl);
 dev_type_poll(vc_nb_poll);
+dev_type_kqfilter(vc_nb_kqfilter);
 
 const struct cdevsw vcoda_cdevsw = {
 	vc_nb_open, vc_nb_close, vc_nb_read, vc_nb_write, vc_nb_ioctl,
-	nostop, notty, vc_nb_poll, nommap,
+	nostop, notty, vc_nb_poll, nommap, vc_nb_kqfilter,
 };
 
 struct vmsg {
@@ -493,6 +494,62 @@ vc_nb_poll(dev, events, p)
     return(0);
 }
 
+static void
+filt_vc_nb_detach(struct knote *kn)
+{
+	struct vcomm *vcp = kn->kn_hook;
+
+	SLIST_REMOVE(&vcp->vc_selproc.si_klist, kn, knote, kn_selnext);
+}
+
+static int
+filt_vc_nb_read(struct knote *kn, long hint)
+{
+	struct vcomm *vcp = kn->kn_hook; 
+	struct vmsg *vmp;
+
+	if (EMPTY(vcp->vc_requests))
+		return (0);
+
+	vmp = (struct vmsg *)GETNEXT(vcp->vc_requests);
+
+	kn->kn_data = vmp->vm_inSize;
+	return (1);
+}
+
+static const struct filterops vc_nb_read_filtops =
+	{ 1, NULL, filt_vc_nb_detach, filt_vc_nb_read };
+
+int
+vc_nb_kqfilter(dev_t dev, struct knote *kn)
+{
+	struct vcomm *vcp;
+	struct klist *klist;
+
+	ENTRY;
+    
+	if (minor(dev) >= NVCODA || minor(dev) < 0)
+		return(ENXIO);
+    
+	vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &vcp->vc_selproc.si_klist;
+		kn->kn_fop = &vc_nb_read_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = vcp;
+
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+
+	return (0);
+}
+
 /*
  * Statistics
  */
@@ -551,7 +608,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 
 	/* Append msg to request queue and poke Venus. */
 	INSQUE(vmp->vm_chain, vcp->vc_requests);
-	selwakeup(&(vcp->vc_selproc));
+	selnotify(&(vcp->vc_selproc), 0);
 
 	/* We can be interrupted while we wait for Venus to process
 	 * our request.  If the interrupt occurs before Venus has read
@@ -674,7 +731,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		
 		/* insert at head of queue! */
 		INSQUE(svmp->vm_chain, vcp->vc_requests);
-		selwakeup(&(vcp->vc_selproc));
+		selnotify(&(vcp->vc_selproc), 0);
 	    }
 	}
 

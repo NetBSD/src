@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.5.2.3 2002/10/18 02:43:11 nathanw Exp $	*/
+/*	$NetBSD: oboe.c,v 1.5.2.4 2002/11/11 22:11:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ int oboe_set_params(void *h, struct irda_params *params);
 int oboe_get_speeds(void *h, int *speeds);
 int oboe_get_turnarounds(void *h, int *times);
 int oboe_poll(void *h, int events, struct proc *p);
+int oboe_kqfilter(void *h, struct knote *kn);
 
 #ifdef OBOE_DEBUG
 #define DPRINTF(x)	if (oboedebug) printf x
@@ -99,6 +100,7 @@ struct oboe_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmatag;	
 	struct selinfo		sc_rsel;
+	struct selinfo		sc_wsel;
 
 	int			sc_state;
 #define	OBOE_RSLP		0x01	/* waiting for data (read) */
@@ -155,8 +157,8 @@ CFATTACH_DECL(oboe, sizeof(struct oboe_softc),
     oboe_match, oboe_attach, oboe_detach, oboe_activate);
 
 struct irframe_methods oboe_methods = {
-	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll, 
-	oboe_set_params, oboe_get_speeds, oboe_get_turnarounds
+	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll,
+	oboe_kqfilter, oboe_set_params, oboe_get_speeds, oboe_get_turnarounds
 };
 
 int
@@ -478,6 +480,70 @@ oboe_poll(void *h, int events, struct proc *p)
 	return (revents);
 }
 
+static void
+filt_oboerdetach(struct knote *kn)
+{
+	struct oboe_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splir();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_oboeread(struct knote *kn, long hint)
+{
+	struct oboe_softc *sc = kn->kn_hook;
+
+	kn->kn_data = sc->sc_saved;
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_oboewdetach(struct knote *kn)
+{
+	struct oboe_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splir();
+	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static const struct filterops oboeread_filtops =
+	{ 1, NULL, filt_oboerdetach, filt_oboeread };
+static const struct filterops oboewrite_filtops =
+	{ 1, NULL, filt_oboewdetach, filt_seltrue };
+
+int
+oboe_kqfilter(void *h, struct knote *kn)
+{
+	struct oboe_softc *sc = h;
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &oboeread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_klist;
+		kn->kn_fop = &oboewrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splir();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 static int
 oboe_reset(struct oboe_softc *sc)
@@ -536,7 +602,7 @@ oboe_intr(void *p)
 			DPRINTF(("oboe_intr: waking up reader\n"));
 			wakeup(&sc->sc_rxs);
 		}
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 		DPRINTF(("oboe_intr returning\n"));
 	}
 	if (irqstat & OBOE_ISR_TXDONE) {
@@ -555,6 +621,7 @@ oboe_intr(void *p)
 			DPRINTF(("oboe_intr: waking up writer\n"));
 			wakeup(&sc->sc_txs);
 		}
+		selnotify(&sc->sc_wsel, 0);
 	}
 	return (1);
 }

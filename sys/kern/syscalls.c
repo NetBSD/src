@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.119.2.13 2002/09/17 21:22:20 nathanw Exp $ */
+/* $NetBSD: syscalls.c,v 1.119.2.14 2002/11/11 22:14:02 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.13 2002/09/17 21:22:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.14 2002/11/11 22:14:02 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -465,6 +465,6 @@ const char *const syscallnames[] = {
 	"pmc_get_info",			/* 341 = pmc_get_info */
 	"pmc_control",			/* 342 = pmc_control */
 	"rasctl",			/* 343 = rasctl */
-	"#344 (unimplemented kqueue)",		/* 344 = unimplemented kqueue */
-	"#345 (unimplemented kevent)",		/* 345 = unimplemented kevent */
+	"kqueue",			/* 344 = kqueue */
+	"kevent",			/* 345 = kevent */
 };

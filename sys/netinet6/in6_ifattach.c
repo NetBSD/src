@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.34.2.7 2002/09/17 21:23:19 nathanw Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.34.2.8 2002/11/11 22:15:42 nathanw Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.34.2.7 2002/09/17 21:23:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.34.2.8 2002/11/11 22:15:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static int in6_ifattach_loopback __P((struct ifnet *));
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
-#define EUI64_TO_IFID(in6)	do {(in6)->s6_addr[8] ^= EUI64_UBIT; } while (0)
+#define EUI64_TO_IFID(in6)	do {(in6)->s6_addr[8] ^= EUI64_UBIT; } while (/*CONSTCOND*/ 0)
 #define EUI64_GROUP(in6)	((in6)->s6_addr[8] & EUI64_GBIT)
 #define EUI64_INDIVIDUAL(in6)	(!EUI64_GROUP(in6))
 #define EUI64_LOCAL(in6)	((in6)->s6_addr[8] & EUI64_UBIT)

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.20 2002/10/18 02:41:20 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.21 2002/11/11 22:08:24 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -22,6 +22,8 @@ defparam			RTC_OFFSET
 defparam			DEFCORENAME
 defflag				UCONSOLE
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
+
+defflag	opt_bufq.h		NEW_BUFQ_STRATEGY
 
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
 defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
@@ -70,7 +72,7 @@ defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
-				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
+				COMPAT_13 COMPAT_14 COMPAT_16 COMPAT_NOMID
 
 #
 # Cryptography support.  Include this early, since several things
@@ -138,7 +140,7 @@ defflag	opt_mbr.h		COMPAT_386BSD_MBRPART
 # debugging options
 #
 defflag	opt_ddb.h		DDB
-defparam opt_ddb.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE SYMTAB_SPACE
 defflag	opt_kgdb.h		KGDB
 defparam opt_kgdb.h		KGDB_DEV KGDB_DEVNAME
@@ -821,6 +823,10 @@ defflag	opt_slhci.h	SLHCI_DEBUG
 device	slhci: usbus
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
+# Myson MTD803 3-in-1 Fast Ethernet Controller
+device	mtd: arp, ether, ifnet, mii
+file	dev/ic/mtd803.c			mtd
+
 # radio devices, attaches to radio hardware driver
 device	radio
 attach	radio at radiodev
@@ -873,14 +879,21 @@ define	isdndev		# the ISDN subsystem
 define	passive_isdn	# files needed by passive cards (XXX - protocol
 			# specific)
 
+# The isac found on the Fritz V2.0 Card.
+define	nisacsx
+file	dev/ic/isacsx.c			nisacsx	needs-flag
+
+# The 'standard' isac
+define	nisac
+file	dev/ic/isac.c			nisac	needs-flag
+
 # ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
 #
-device	isic: isdndev, passive_isdn
+device	isic: isdndev, passive_isdn, nisac
 
 file	dev/ic/isic.c			isic
-file	dev/ic/isac.c			isic|ifpci
-file	dev/ic/isic_l1.c		isic|ifpci
-file	dev/ic/isic_l1fsm.c		isic|ifpci
+file	dev/ic/isic_l1.c		isic|ifpci|ifritz
+file	dev/ic/isic_l1fsm.c		isic|ifpci|ifritz
 file	dev/ic/hscx.c			isic
 file	dev/ic/isic_bchan.c		isic
 
@@ -936,6 +949,11 @@ defpseudo ippp:		isdndev, sppp, ifnet
 # KTTCP network throughput testing pseudo-device
 defpseudo kttcp
 file	dev/kttcp.c			kttcp		needs-flag
+
+# Verified exec fingerprint loader pseudo-device
+defpseudo verifiedexec
+file	kern/kern_verifiedexec.c	verifiedexec		needs-flag
+file	dev/verified_exec.c		verifiedexec		needs-flag
 
 #
 # File systems
@@ -1017,6 +1035,7 @@ file	kern/kern_acct.c
 file	kern/kern_allocsys.c
 file	kern/kern_clock.c
 file	kern/kern_descrip.c
+file	kern/kern_event.c
 file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c

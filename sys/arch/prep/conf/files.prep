@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.20.8.5 2002/09/17 21:17:10 nathanw Exp $
+#	$NetBSD: files.prep,v 1.20.8.6 2002/11/11 22:03:05 nathanw Exp $
 #
 # prep-specific configuration info
 #
@@ -28,7 +28,6 @@ file	arch/prep/prep/platform.c
 file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/bus_space.c
 file	arch/prep/prep/clock.c
-file	arch/prep/prep/conf.c
 file	arch/prep/prep/consinit.c
 file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
@@ -41,19 +40,6 @@ file	arch/powerpc/powerpc/bus_dma.c
 # General files
 file	dev/clock_subr.c
 file	dev/cons.c
-
-#
-# Compatibility modules
-#
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # Machine-independent I2O drivers

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44.4.7 2002/10/18 02:36:02 nathanw Exp $
+# $NetBSD: GENERIC,v 1.44.4.8 2002/11/11 21:57:25 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44.4.7 $"
+#ident 		"GENERIC-$Revision: 1.44.4.8 $"
 
 maxusers	32
 
@@ -42,6 +42,10 @@ options 	KTRACE
 options 	SYSTRACE		# system call vetting via systrace(1)
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43

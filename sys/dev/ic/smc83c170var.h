@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.4.6.1 2001/06/21 20:03:19 nathanw Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.4.6.2 2002/11/11 22:10:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ struct epic_softc {
 
 	int	sc_rxptr;		/* next ready RX descriptor */
 
-	int	sc_serinst;		/* ifmedia instance for serial mode */
+	u_int	sc_serinst;		/* ifmedia instance for serial mode */
 };
 
 #define	EPIC_CDTXADDR(sc, x)	((sc)->sc_cddma + EPIC_CDTXOFF((x)))

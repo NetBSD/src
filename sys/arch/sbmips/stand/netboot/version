@@ -1,0 +1,7 @@
+$NetBSD: version,v 1.1.2.2 2002/11/11 22:03:48 nathanw Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.1:	Initial version

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.1.2.4 2002/09/17 21:14:16 nathanw Exp $	*/
+/*	$NetBSD: plcom.c,v 1.1.2.5 2002/11/11 21:57:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -209,7 +209,7 @@ extern struct cfdriver plcom_cd;
 
 const struct cdevsw plcom_cdevsw = {
 	plcomopen, plcomclose, plcomread, plcomwrite, plcomioctl,
-	plcomstop, plcomtty, plcompoll, nommap, D_TTY
+	plcomstop, plcomtty, plcompoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13.2.10 2002/10/18 02:42:11 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.13.2.11 2002/11/11 22:10:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.13.2.10 2002/10/18 02:42:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.13.2.11 2002/11/11 22:10:19 nathanw Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -285,7 +285,7 @@ const struct bdevsw fd_bdevsw = {
 
 const struct cdevsw fd_cdevsw = {
 	fdopen, fdclose, fdread, fdwrite, fdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel __P((struct fd_softc *));
@@ -1132,7 +1132,8 @@ loop:
 		return 1;
 
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+		/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0);
 
 		/* Make sure seek really happened. */
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
@@ -1158,7 +1159,8 @@ loop:
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		callout_stop(&fdc->sc_timo_ch);
 
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 			isa_dmaabort(fdc->sc_ic, fdc->sc_drq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.s,v 1.2.24.2 2002/06/20 03:39:09 nathanw Exp $	*/
+/*	$NetBSD: db_dbgreg.s,v 1.2.24.3 2002/11/11 21:59:00 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,6 +26,7 @@
  * the rights to redistribute these changes.
  */
 
+/* LINTSTUB: Empty */
 
 #include <i386/include/asm.h>
 #define S_ARG0	 4(%esp)

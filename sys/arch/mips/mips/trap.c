@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.19 2002/10/18 02:38:47 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.20 2002/11/11 22:00:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.19 2002/10/18 02:38:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.20 2002/11/11 22:00:54 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -323,7 +323,7 @@ trap(status, cause, vaddr, opc, frame)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
-			frame->tf_epc = (int)fswintrberr;
+			frame->tf_regs[TF_EPC] = (int)fswintrberr;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -361,9 +361,9 @@ trap(status, cause, vaddr, opc, frame)
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
 			if (rv == 0) {
-				unsigned nss;
+				segsz_t nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = btoc(USRSTACK - va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
@@ -382,7 +382,7 @@ trap(status, cause, vaddr, opc, frame)
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred->cr_uid : (uid_t) -1);
 			sig = SIGKILL;
 		} else {
 			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
@@ -407,7 +407,7 @@ trap(status, cause, vaddr, opc, frame)
 	copyfault:
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame->tf_epc = (int)l->l_addr->u_pcb.pcb_onfault;
+		frame->tf_regs[TF_EPC] = (int)l->l_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -483,7 +483,7 @@ trap(status, cause, vaddr, opc, frame)
 		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
-			printf("Warning: can't restore instruction at 0x%x: 0x%x\n",
+			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
 				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
 		l->l_md.md_ss_addr = 0;
 		sig = SIGTRAP;
@@ -607,7 +607,7 @@ mips_singlestep(l)
 	int rv;
 
 	if (l->l_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %x\n",
+		printf("SS %s (%d): breakpoint already set at %lx\n",
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}

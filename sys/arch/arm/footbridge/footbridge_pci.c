@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.4.6.3 2002/10/18 02:35:26 nathanw Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.4.6.4 2002/11/11 21:56:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -67,11 +67,10 @@ void		footbridge_pci_conf_write __P((void *, pcitag_t, int,
 int		footbridge_pci_intr_map __P((struct pci_attach_args *,
 		    pci_intr_handle_t *));
 const char	*footbridge_pci_intr_string __P((void *, pci_intr_handle_t));
-const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
 void		*footbridge_pci_intr_establish __P((void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *));
 void		footbridge_pci_intr_disestablish __P((void *, void *));
-
+const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
 
 struct arm32_pci_chipset footbridge_pci_chipset = {
 	NULL,	/* conf_v */
@@ -352,16 +351,6 @@ footbridge_pci_intr_string(pcv, ih)
 	return(irqstr);	
 }
 
-const struct evcnt *
-footbridge_pci_intr_evcnt(pcv, ih)
-	void *pcv;
-	pci_intr_handle_t ih;
-{
-
-	/* XXX for now, no evcnt parent reported */
-	return NULL;
-}
-
 void *
 footbridge_pci_intr_establish(pcv, ih, level, func, arg)
 	void *pcv;
@@ -395,7 +384,7 @@ footbridge_pci_intr_establish(pcv, ih, level, func, arg)
 		    level, func, arg);
 	} else
 #endif
-	intr = intr_claim(ih, level, string, func, arg);
+	intr = footbridge_intr_claim(ih, level, string, func, arg);
 
 	return(intr);
 }
@@ -410,6 +399,5 @@ footbridge_pci_intr_disestablish(pcv, cookie)
 	    pcv, cookie);
 #endif
 	/* XXXX Need to free the string */
-
-	intr_release(cookie);
+	footbridge_intr_disestablish(cookie);
 }

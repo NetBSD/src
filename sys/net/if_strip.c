@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35.2.9 2002/09/17 21:22:55 nathanw Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.10 2002/11/11 22:15:02 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.9 2002/09/17 21:22:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.10 2002/11/11 22:15:02 nathanw Exp $");
 
 #include "strip.h"
 
@@ -318,7 +318,7 @@ void	stripintr(void *);
  do {\
     (sc)->sc_state = ST_ALIVE;	\
     (sc)->sc_statetimo = time.tv_sec + ST_PROBE_INTERVAL;	\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * we received a response from the radio that indicates it's crashed
@@ -329,7 +329,7 @@ void	stripintr(void *);
     (sc)->sc_statetimo = time.tv_sec - 1; \
     (sc)->sc_state = ST_DEAD;	\
     /*(sc)->sc_if.if_timer = 0;*/ \
- } while (0)
+ } while (/*CONSTCOND*/ 0)
 
 #define RADIO_PROBE_TIMEOUT(sc) \
 	 ((sc)-> sc_statetimo > time.tv_sec)

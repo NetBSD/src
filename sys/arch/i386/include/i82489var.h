@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.2.2.2 2002/10/18 02:37:56 nathanw Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.2.2.3 2002/11/11 21:59:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ extern void Xintripi(void);
  */
 
 extern void Xintrltimer(void);
-#define LAPIC_TIMER_VECTOR		0xd0
+#define LAPIC_TIMER_VECTOR		0xc0
 
 extern void (*apichandler[]) __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.2.5 2002/10/18 02:41:28 nathanw Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.2.6 2002/11/11 22:08:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.5 2002/10/18 02:41:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.6 2002/11/11 22:08:48 nathanw Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -97,10 +97,11 @@ dev_type_read(midiread);
 dev_type_write(midiwrite);
 dev_type_ioctl(midiioctl);
 dev_type_poll(midipoll);
+dev_type_kqfilter(midikqfilter);
 
 const struct cdevsw midi_cdevsw = {
 	midiopen, midiclose, midiread, midiwrite, midiioctl,
-	nostop, notty, midipoll, nommap,
+	nostop, notty, midipoll, nommap, midikqfilter,
 };
 
 CFATTACH_DECL(midi, sizeof(struct midi_softc),
@@ -361,7 +362,7 @@ deliver:
 		mb->used++;
 	}
 	midi_wakeup(&sc->rchan);
-	selwakeup(&sc->rsel);
+	selnotify(&sc->rsel, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 }
@@ -559,7 +560,7 @@ midi_start_output(struct midi_softc *sc, int intr)
 			break;
 	}
 	midi_wakeup(&sc->wchan);
-	selwakeup(&sc->wsel);
+	selnotify(&sc->wsel, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 	if (!(sc->props & MIDI_PROP_OUT_INTR) || error==EINPROGRESS) {
@@ -767,6 +768,88 @@ midipoll(dev_t dev, int events, struct proc *p)
 
 	splx(s);
 	return revents;
+}
+
+static void
+filt_midirdetach(struct knote *kn)
+{
+	struct midi_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_midiread(struct knote *kn, long hint)
+{
+	struct midi_softc *sc = kn->kn_hook;
+
+	/* XXXLUKEM (thorpej): please make sure this is correct. */
+
+	kn->kn_data = sc->inbuf.used;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops midiread_filtops =
+	{ 1, NULL, filt_midirdetach, filt_midiread };
+
+static void
+filt_midiwdetach(struct knote *kn)
+{
+	struct midi_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_midiwrite(struct knote *kn, long hint)
+{
+	struct midi_softc *sc = kn->kn_hook;
+
+	/* XXXLUKEM (thorpej): please make sure this is correct. */
+
+	kn->kn_data = sc->outbuf.usedhigh - sc->outbuf.used;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops midiwrite_filtops =
+	{ 1, NULL, filt_midiwdetach, filt_midiwrite };
+
+int
+midikqfilter(dev_t dev, struct knote *kn)
+{
+	int unit = MIDIUNIT(dev);
+	struct midi_softc *sc = midi_cd.cd_devs[unit];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->rsel.si_klist;
+		kn->kn_fop = &midiread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->wsel.si_klist;
+		kn->kn_fop = &midiwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = sc;
+
+	s = splaudio();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 void

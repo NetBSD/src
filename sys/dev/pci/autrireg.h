@@ -1,4 +1,4 @@
-/*	$NetBSD: autrireg.h,v 1.1.2.3 2002/06/20 03:45:20 nathanw Exp $	*/
+/*	$NetBSD: autrireg.h,v 1.1.2.4 2002/11/11 22:11:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -146,6 +146,8 @@
  * Indexed Channel Registers
  */
 #define AUTRI_ARAM_CR			0xe0
+# define AUTRI_ATTR_PCMREC_SIS		0x88000000
+# define AUTRI_ATTR_ENASRC_SIS		0x00800000
 # define AUTRI_CTRL_WAVEVOL		0x80000000
 # define AUTRI_CTRL_MUTEVOL		0x3fff0000
 # define AUTRI_CTRL_MUTEVOL_SIS		0x3f000fff

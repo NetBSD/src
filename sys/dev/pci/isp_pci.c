@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.66.2.12 2002/10/18 02:43:09 nathanw Exp $ */
+/* $NetBSD: isp_pci.c,v 1.66.2.13 2002/11/11 22:11:16 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.66.2.12 2002/10/18 02:43:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.66.2.13 2002/11/11 22:11:16 nathanw Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -239,6 +239,10 @@ static struct ispmdvec mdvec_2300 = {
 #define	PCI_PRODUCT_QLOGIC_ISP1280	0x1280
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP10160
+#define	PCI_PRODUCT_QLOGIC_ISP10160	0x1016
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP12160
 #define	PCI_PRODUCT_QLOGIC_ISP12160	0x1216
 #endif
@@ -269,6 +273,9 @@ static struct ispmdvec mdvec_2300 = {
 
 #define	PCI_QLOGIC_ISP1280	\
 	((PCI_PRODUCT_QLOGIC_ISP1280 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP10160	\
+	((PCI_PRODUCT_QLOGIC_ISP10160 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP12160	\
 	((PCI_PRODUCT_QLOGIC_ISP12160 << 16) | PCI_VENDOR_QLOGIC)
@@ -331,6 +338,7 @@ isp_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 		return (1);
 #endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
+	case PCI_QLOGIC_ISP10160:
 	case PCI_QLOGIC_ISP12160:
 		return (1);
 #endif
@@ -457,6 +465,19 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP10160) {
+		dstring = ": QLogic Ultra-3 Wide SCSI HBA\n";
+		isp->isp_mdvec = &mdvec_12160;
+		isp->isp_type = ISP_HA_SCSI_10160;
+		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf(nomem, isp->isp_name);
+			return;
+		}
+		memset(isp->isp_param, 0, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
 	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
 		dstring = ": QLogic Dual Channel Ultra-3 Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec_12160;

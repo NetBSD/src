@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2000/12/05 17:01:20 sommerfeld Exp $
+#	$NetBSD: Makefile.inc,v 1.18.2.1 2002/11/11 22:06:45 nathanw Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -29,6 +29,9 @@ COMPATLIB=		${COMPATDST}/libcompat.a
 COMPATLIB_PROF=	${COMPATDST}/libcompat_p.a
 .endif
 
+LIBCOMPATLNBN=	llib-lcompat.ln
+COMPATLIBLN=	${COMPATDST}/${LIBCOMPATLNBN}
+
 COMPATMAKE= \
 	cd ${COMPATDST} && ${MAKE} -f ${COMPATDIR:Q}/Makefile \
 	    COMPATDIR=${COMPATDIR:Q} \
@@ -41,6 +44,7 @@ COMPATMAKE= \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    COMPATCPPFLAGS=${CPPFLAGS:S@^-I.@-I${COMPATDOTDIR}@g:Q} \
+	    LINTFLAGS=${KERNLINTFLAGS:Q} \
 	    ${COMPATMISCMAKEFLAGS}
 
 ${COMPATLIB}:		.NOTMAIN .MAKE __always_make_compatlib
@@ -58,6 +62,10 @@ ${COMPATLIB_PROF}:	.NOTMAIN .MAKE __always_make_compatlib
 .else
 	@${COMPATMAKE} libcompat.po
 .endif
+
+${COMPATLIBLN}:		.NOTMAIN .MAKE __always_make_compatlib
+	@echo making sure the compat lint library is up to date...
+	@${COMPATMAKE} ${LIBCOMPATLNBN}
 
 clean:			.NOTMAIN cleancompatlib
 cleancompatlib:		.NOTMAIN .MAKE __always_make_compatlib

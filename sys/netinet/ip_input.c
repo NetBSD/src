@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.14 2002/10/18 02:45:17 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.15 2002/11/11 22:15:23 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.14 2002/10/18 02:45:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.15 2002/11/11 22:15:23 nathanw Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -257,14 +257,14 @@ do {									\
 		printf("%s:%d: ipq already locked\n", __FILE__, __LINE__); \
 		panic("ipq_lock");					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	IPQ_LOCK_CHECK()						\
 do {									\
 	if (ipq_locked == 0) {						\
 		printf("%s:%d: ipq lock not held\n", __FILE__, __LINE__); \
 		panic("ipq lock check");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	IPQ_LOCK()		(void) ipq_lock_try()
 #define	IPQ_LOCK_CHECK()	/* nothing */
@@ -338,9 +338,7 @@ ip_init()
 	TAILQ_INIT(&in_ifaddr);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
-	if (ip_mtudisc != 0)
-		ip_mtudisc_timeout_q =
-		    rt_timer_queue_create(ip_mtudisc_timeout);
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();
 #endif

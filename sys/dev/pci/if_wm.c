@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.1.2.8 2002/10/18 02:43:08 nathanw Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.1.2.9 2002/11/11 22:11:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -2480,7 +2480,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, wm_tbi_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_tbi_mediachange,
 	    wm_tbi_mediastatus);
 
 	/*
@@ -2494,10 +2494,10 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
-#define	ADD(s, m, d)							\
+#define	ADD(ss, mm, dd)							\
 do {									\
-	printf("%s%s", sep, s);						\
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(m), (d), NULL);	\
+	printf("%s%s", sep, ss);					\
+	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(mm), (dd), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
@@ -2741,7 +2741,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	wm_gmii_reset(sc);
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, wm_gmii_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5.4.7 2002/06/21 06:21:37 gmcgarry Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.4.8 2002/11/11 22:00:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.7 2002/06/21 06:21:37 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.8 2002/11/11 22:00:53 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -165,9 +165,9 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	register_t copyrval[2];
 #endif
 	mips_reg_t ov0;
-	size_t code, numsys, nsaved, nargs;
+	size_t numsys, nsaved, nargs;
 	const struct sysent *callp;
-	int error;
+	int code, error;
 
 	uvmexp.syscalls++;
 
@@ -313,9 +313,9 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	register_t copyrval[2];
 #endif
 	mips_reg_t ov0;
-	size_t code, numsys, nsaved, nargs;
+	size_t numsys, nsaved, nargs;
 	const struct sysent *callp;
-	int error;
+	int code, error;
 
 	uvmexp.syscalls++;
 

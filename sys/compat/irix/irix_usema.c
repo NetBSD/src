@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.4.2.5 2002/10/18 02:41:07 nathanw Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.4.2.6 2002/11/11 22:07:01 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.5 2002/10/18 02:41:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.6 2002/11/11 22:07:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.4.2.5 2002/10/18 02:41:07 nathanw E
 
 const struct cdevsw irix_usema_cdevsw = {
 	nullopen, nullclose, noread, nowrite,
-	noioctl, nostop, notty, nopoll, nommap,
+	noioctl, nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*

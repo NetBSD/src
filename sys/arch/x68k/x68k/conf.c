@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26.8.7 2002/09/17 21:18:50 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.26.8.8 2002/11/11 22:06:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -41,17 +41,6 @@
 #include "ite.h"
 #include "kbd.h"
 #include "zstty.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
 
 /*
  * This entire table could be autoconfig()ed but that would mean that

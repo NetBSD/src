@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.11.2.3 2001/09/21 22:37:13 nathanw Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.11.2.4 2002/11/11 22:17:01 nathanw Exp $	*/
 
 /*
  *
@@ -128,6 +128,7 @@ uvmfault_lookup(ufi, write_lock)
 	 * only be two levels so we won't loop very long.
 	 */
 
+	/*CONSTCOND*/
 	while (1) {
 		/*
 		 * Make sure this is not an "interrupt safe" map.

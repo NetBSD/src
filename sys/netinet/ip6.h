@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.11.2.1 2001/08/24 00:12:25 nathanw Exp $	*/
+/*	$NetBSD: ip6.h,v 1.11.2.2 2002/11/11 22:15:19 nathanw Exp $	*/
 /*	$KAME: ip6.h,v 1.14 2000/10/09 01:04:09 itojun Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ do {									\
 		return ret;						\
 	}								\
     }									\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * IP6_EXTHDR_GET ensures that intermediate protocol header (from "off" to
@@ -274,7 +274,7 @@ do {									\
 			(m) = NULL;					\
 		}							\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define IP6_EXTHDR_GET0(val, typ, m, off, len) \
 do {									\
@@ -292,7 +292,7 @@ do {									\
 			(m) = NULL;					\
 		}							\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #endif /*_KERNEL*/
 
 #endif /* not _NETINET_IP6_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.26.4.9 2002/10/18 02:36:58 nathanw Exp $
+#	$NetBSD: files.hpcarm,v 1.26.4.10 2002/11/11 21:58:36 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -16,8 +16,6 @@ define todservice {}
 
 # Memory disk driver
 file	dev/md_root.c				memory_disk_hooks
-
-file	arch/arm/arm32/conf.c
 
 # Standard keyboard driver
 #device	kbd

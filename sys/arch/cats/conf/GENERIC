@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.2.8 2002/10/18 02:36:07 nathanw Exp $
+# $NetBSD: GENERIC,v 1.11.2.9 2002/11/11 21:57:31 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,6 +33,10 @@ options 	INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # CPU options
 
@@ -136,10 +140,13 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-#options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# if set defines a keycode for the fcom console to break into ddb.
+# 0x40 == @, see man ascii(7)
+#options 	DDB_KEYCODE=0x40
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
@@ -424,6 +431,8 @@ com*	at isapnp?			# Modems and serial boards
 
 # ISA Plug-and-Play network interfaces
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+fmv*	at isapnp?			# Fujitsu FMV-183
+ne*	at isapnp?			# NE2000-compatible
 
 # ISA serial interfaces
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports

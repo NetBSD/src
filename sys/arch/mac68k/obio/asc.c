@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.8.2 2002/10/18 02:38:29 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.8.3 2002/11/11 22:00:06 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -120,7 +120,7 @@ dev_type_mmap(ascmmap);
 
 const struct cdevsw asc_cdevsw = {
 	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, nopoll, ascmmap,
+	nostop, notty, nopoll, ascmmap, nokqfilter,
 };
 
 static int

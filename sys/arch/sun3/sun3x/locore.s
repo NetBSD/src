@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48.6.4 2002/06/24 22:08:42 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.48.6.5 2002/11/11 22:05:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,57 +145,33 @@ L_high_code:
 | is finished, to avoid spurrious interrupts.
 
 /*
- * Final preparation for calling main.
- *
- * Create a fake exception frame that returns to user mode,
- * and save its address in p->p_md.md_regs for cpu_lwp_fork().
- * The new frames for process 1 and 2 will be adjusted by
- * cpu_set_kpc() to arrange for a call to a kernel function
- * before the new process does its rte out to user mode.
+ * Create a fake exception frame so that cpu_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
  */
 	clrw	%sp@-			| tf_format,tf_vector
 	clrl	%sp@-			| tf_pc (filled in later)
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	movl	%sp,%a1			| a1=trapframe
-	lea	_C_LABEL(lwp0),%a0	| lwp0.l_md.md_regs = 
+	lea	_C_LABEL(lwp0),%a0	| proc0.p_md.md_regs = 
 	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
-	movl	%a2,%a1@(FR_SP)		| a2 == usp (from above)
-	pea	%a1@			| push &trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
-	addql	#4,%sp			| help DDB backtrace
-	trap	#15			| should not get here
-
-| This is used by cpu_lwp_fork() to return to user mode.
-| It is called with SP pointing to a struct trapframe.
-GLOBAL(proc_do_uret)
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| load most registers (all but SSP)
-	addql	#8,%sp			| pop SSP and stack adjust count
-	rte
+	PANIC("main() returned")
 
 /*
- * proc_trampoline:
- * This is used by cpu_set_kpc() to "push" a function call onto the
- * kernel stack of some process, very much like a signal delivery.
- * When we get here, the stack has:
- *
- * SP+8:	switchframe from before cpu_set_kpc
- * SP+4:	void *arg;
- * SP:  	u_long func;
- *
- * On entry, the switchframe pushed by cpu_set_kpc has already been
- * popped off the stack, so all this needs to do is pop the function
- * pointer into a register, call it, then pop the arg, and finally
- * return using the switchframe that remains on the stack.
+ * proc_trampoline: call function in register %a2 with %a3 as an arg
+ * and then rei.
  */
 GLOBAL(proc_trampoline)
-	movl	%sp@+,%a0		| function pointer
-	jbsr	%a0@			| (*func)(arg)
-	addql	#4,%sp			| toss the arg
-	rts				| as cpu_switch would do
+	movl	%a3,%sp@-		| push function arg
+	jbsr	%a2@			| call function
+	addql	#4,%sp			| pop arg
+	movl	%sp@(FR_SP),%a0		| grab and load
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most user regs
+	addql	#8,%sp			| toss SP and stack adjust
+	jra	_ASM_LABEL(rei)		| and return
 
 | That is all the assembly startup code we need on the sun3x!
 | The rest of this is like the hp300/locore.s where possible.
@@ -653,94 +629,6 @@ ASGLOBAL(fullcflush)
 	.long	0
 	.text
 #endif
-
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
-	pflusha
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
-	movl	%sp@(4),%a0
-	pflush	#0,#0,%a0@		| flush address from both sides
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip data cache
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-	pflush	#4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	movl	#IC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate i-cache
-	rts
-
-/*
- * Invalidate data cache.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-	rts
-
-ENTRY(DCIS)
-__DCIS:
-	rts
-
-/*
- * Invalidate data cache.
- */
-ENTRY(DCIU)
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
-
-ENTRY(PCIA)
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
 
 ENTRY(ecacheon)
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.10 2002/10/18 02:43:56 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.11 2002/11/11 22:12:00 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.10 2002/10/18 02:43:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.11 2002/11/11 22:12:00 nathanw Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -363,7 +363,9 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 
 		/* XXX doesn't hold for RAID 6!!*/
 
+		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->parity_good = RF_RAID_CLEAN;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* XXXX MORE NEEDED HERE */
 		
@@ -442,8 +444,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			raidPtr->numFailures++;
 			raidPtr->Disks[row][col].status = rf_ds_failed;
 			raidPtr->status[row] = rf_rs_degraded;
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			rf_update_component_labels(raidPtr, 
 						   RF_NORMAL_COMPONENT_UPDATE);
+			RF_LOCK_MUTEX(raidPtr->mutex);
 		}
 
 		while (raidPtr->reconInProgress) {
@@ -483,7 +487,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 #endif
 			vp = raidPtr->raid_cinfo[row][col].ci_vp;
 			ac = raidPtr->Disks[row][col].auto_configured;
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			rf_close_component(raidPtr, vp, ac);
+			RF_LOCK_MUTEX(raidPtr->mutex);
 			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 		}
 		/* note that this disk was *not* auto_configured (any longer)*/
@@ -493,16 +499,17 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		printf("About to (re-)open the device for rebuilding: %s\n",
 		       raidPtr->Disks[row][col].devname);
 #endif
-		
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		retcode = raidlookup(raidPtr->Disks[row][col].devname, 
 				     proc, &vp);
-	
+
 		if (retcode) {
 			printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
 			       raidPtr->Disks[row][col].devname, retcode);
 
 			/* the component isn't responding properly... 
 			   must be still dead :-( */
+			RF_LOCK_MUTEX(raidPtr->mutex);
 			raidPtr->reconInProgress--;
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return(retcode);
@@ -514,6 +521,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 			if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, 
 						   proc)) != 0) {
+				RF_LOCK_MUTEX(raidPtr->mutex);
 				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
@@ -521,10 +529,12 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			retcode = VOP_IOCTL(vp, DIOCGPART, (caddr_t) & dpart,
 					    FREAD, proc->p_ucred, proc);
 			if (retcode) {
+				RF_LOCK_MUTEX(raidPtr->mutex);
 				raidPtr->reconInProgress--;
 				RF_UNLOCK_MUTEX(raidPtr->mutex);
 				return(retcode);
 			}
+			RF_LOCK_MUTEX(raidPtr->mutex);
 			raidPtr->Disks[row][col].blockSize =
 				dpart.disklab->d_secsize;
 
@@ -543,6 +553,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			raidPtr->Disks[row][col].numBlocks =
 				raidPtr->Disks[row][col].numBlocks *
 				rf_sizePercentage / 100;
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
 		}
 
 
@@ -555,8 +566,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		printf("raid%d:    row %d col %d -> spare at row %d col %d\n", 
 		       raidPtr->raidid, row, col, row, col);
 
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
-		
 		reconDesc = AllocRaidReconDesc((void *) raidPtr, row, col, 
 					       spareDiskPtr, numDisksDone, 
 					       row, col);
@@ -580,14 +589,15 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			     lp->parityConfig);
 		rc = EIO;
 	}
-	RF_LOCK_MUTEX(raidPtr->mutex);
 	
 	if (!rc) {
+		RF_LOCK_MUTEX(raidPtr->mutex);
 		/* Need to set these here, as at this point it'll be claiming
 		   that the disk is in rf_ds_spared!  But we know better :-) */
 		
 		raidPtr->Disks[row][col].status = rf_ds_optimal;
 		raidPtr->status[row] = rf_rs_optimal;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		
 		/* fix up the component label */
 		/* Don't actually need the read here.. */
@@ -595,6 +605,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 					 raidPtr->raid_cinfo[row][col].ci_vp,
 					 &c_label);
 
+		RF_LOCK_MUTEX(raidPtr->mutex);
 		raid_init_component_label(raidPtr, &c_label);
 
 		c_label.row = row;
@@ -607,13 +618,13 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		/* XXX doesn't hold for RAID 6!!*/
 
 		raidPtr->parity_good = RF_RAID_CLEAN;
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 	
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
 					  &c_label);
 
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
 	return (rc);
 }

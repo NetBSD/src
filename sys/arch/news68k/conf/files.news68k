@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.14.8.3 2002/09/17 21:16:11 nathanw Exp $
+#	$NetBSD: files.news68k,v 1.14.8.4 2002/11/11 22:01:49 nathanw Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -14,21 +14,21 @@ attach mainbus at root
 
 file	arch/news68k/news68k/autoconf.c
 file	arch/news68k/news68k/bus_space.c
-file	arch/news68k/news68k/conf.c
 #file	arch/news68k/news68k/cons_machdep.c
 file	arch/news68k/news68k/clock.c
-file	arch/news68k/news68k/db_memrw.c		ddb | kgdb
 file	arch/news68k/news68k/disksubr.c		disk
 file	arch/news68k/news68k/isr.c
 file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
 file	arch/news68k/news68k/mem.c
-file	arch/news68k/news68k/pmap.c
 file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/news68k/news68k/procfs_machdep.c	procfs
-file	arch/news68k/news68k/sys_machdep.c
 file	arch/news68k/news68k/trap.c
-file	arch/news68k/news68k/vm_machdep.c
+file	arch/m68k/m68k/cacheops.c
+file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vm_machdep.c
 file	dev/clock_subr.c
 file	dev/cons.c
 

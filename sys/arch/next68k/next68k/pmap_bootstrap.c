@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9.8.2 2002/09/17 21:16:44 nathanw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9.8.3 2002/11/11 22:02:17 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -647,5 +647,35 @@ pmap_bootstrap(nextpa, firstpa)
 		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
+	}
+}
+
+void
+pmap_init_md(void)
+{
+	vaddr_t addr;
+
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(IIOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != 0)
+		goto failed;
+	addr = (vaddr_t) monobase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != 0)
+		goto failed;
+	addr = (vaddr_t) colorbase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != 0) {
+failed:
+		panic("pmap_init_md: uvm_map failed");
 	}
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: basename.c,v 1.2.6.3 2002/03/22 20:42:05 nathanw Exp $	*/
+/*	$NetBSD: basename.c,v 1.2.6.4 2002/11/11 22:22:03 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Klaus Klein and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,11 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.2.6.3 2002/03/22 20:42:05 nathanw Exp $");
+__RCSID("$NetBSD: basename.c,v 1.2.6.4 2002/11/11 22:22:03 nathanw Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
 #include <libgen.h>
+#include <limits.h>
 #include <string.h>
 
 #ifdef __weak_alias
@@ -55,7 +56,9 @@ basename(path)
 	char *path;
 {
 	static char singledot[] = ".";
-	char *p;
+	static char result[PATH_MAX];
+	char *p, *lastp;
+	size_t len;
 
 	/*
 	 * If `path' is a null pointer or points to an empty string,
@@ -65,14 +68,23 @@ basename(path)
 		return (singledot);
 
 	/* Strip trailing slashes, if any. */
-	p = path + strlen(path) - 1;
-	while (*p == '/' && p != path)
-		*p-- = '\0';
+	lastp = path + strlen(path) - 1;
+	while (lastp != path && *lastp == '/')
+		lastp--;
 
-	/* Return pointer to the final pathname component. */
-	if (((p = strrchr(path, '/')) == NULL) || (*(p + 1) == '\0'))
-		return (path);
-	else
-		return (p + 1);
+	/* Now find the beginning of this (final) component. */
+	p = lastp;
+	while (p != path && *(p - 1) != '/')
+		p--;
+
+	/* ...and copy the result into the result buffer. */
+	len = (lastp - p) + 1 /* last char */;
+	if (len > (PATH_MAX - 1))
+		len = PATH_MAX - 1;
+
+	memcpy(result, p, len);
+	result[len] = '\0';
+
+	return (result);
 }
 #endif

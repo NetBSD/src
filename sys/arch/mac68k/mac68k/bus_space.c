@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.16.4.5 2002/10/18 02:38:22 nathanw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.16.4.6 2002/11/11 21:59:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <sys/extent.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <uvm/uvm_extern.h>
 

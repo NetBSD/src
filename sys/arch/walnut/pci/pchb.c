@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.8.7 2002/10/18 02:40:40 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.8.8 2002/11/11 22:06:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 	extent_destroy(memext);
+	extent_destroy(ioext);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 #ifdef PCI_CONFIGURE_VERBOSE

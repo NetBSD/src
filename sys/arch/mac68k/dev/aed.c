@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.10.12.2 2002/10/18 02:38:17 nathanw Exp $	*/
+/*	$NetBSD: aed.c,v 1.10.12.3 2002/11/11 21:59:49 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -79,10 +79,11 @@ dev_type_close(aedclose);
 dev_type_read(aedread);
 dev_type_ioctl(aedioctl);
 dev_type_poll(aedpoll);
+dev_type_kqfilter(aedkqfilter);
 
 const struct cdevsw aed_cdevsw = {
 	aedopen, aedclose, aedread, nullwrite, aedioctl,
-	nostop, notty, aedpoll, nommap,
+	nostop, notty, aedpoll, nommap, aedkqfilter,
 };
 
 static int
@@ -408,7 +409,7 @@ aed_enqevent(event)
 	    AED_MAX_EVENTS] = *event;
 	aed_sc->sc_evq_len++;
 
-	selwakeup(&aed_sc->sc_selinfo);
+	selnotify(&aed_sc->sc_selinfo, 0);
 	if (aed_sc->sc_ioproc)
 		psignal(aed_sc->sc_ioproc, SIGIO);
 
@@ -599,4 +600,58 @@ aedpoll(dev, events, p)
 	splx(s);
 
 	return (revents);
+}
+
+static void
+filt_aedrdetach(struct knote *kn)
+{
+	int s;
+
+	s = spladb();
+	SLIST_REMOVE(&aed_sc->sc_selinfo.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_aedread(struct knote *kn, long hint)
+{
+
+	kn->kn_data = aed_sc->sc_evq_len * sizeof(adb_event_t);
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops aedread_filtops =
+	{ 1, NULL, filt_aedrdetach, filt_aedread };
+
+static const struct filterops aed_seltrue_filtops =
+	{ 1, NULL, filt_aedrdetach, filt_seltrue };
+
+int
+aedkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &aed_sc->sc_selinfo.si_klist;
+		kn->kn_fop = &aedread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &aed_sc->sc_selinfo.si_klist;
+		kn->kn_fop = &aed_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = spladb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

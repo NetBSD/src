@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.16.2.2 2001/11/14 19:17:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.16.2.3 2002/11/11 22:14:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.16.2.2 2001/11/14 19:17:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.16.2.3 2002/11/11 22:14:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ procfs_dostatus(curp, l, pfs, uio)
 	char *ps;
 	char *sep;
 	int pid, ppid, pgid, sid;
-	int i;
+	u_int i;
 	int xlen;
 	int error;
 	char psbuf[256+MAXHOSTNAMELEN];		/* XXX - conservative */

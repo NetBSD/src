@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.61.8.4 2002/10/18 02:40:17 nathanw Exp $
+#	$NetBSD: files.sun3,v 1.61.8.5 2002/11/11 22:05:11 nathanw Exp $
 
 #
 # sun3-specific configuration info
@@ -32,13 +32,11 @@ file arch/sun3/sun3x/pmap.c			_sun3x_
 
 # Standard stuff (common to Sun3 and Sun3X)
 file arch/sun3/sun3/autoconf.c
-file arch/sun3/sun3/conf.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c			ddb | kgdb
 file arch/sun3/sun3/disksubr.c
 file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
-file arch/sun3/sun3/kgdb_machdep.c 		kgdb
 file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/procfs_machdep.c		procfs
 file arch/sun3/sun3/stub.c
@@ -46,7 +44,9 @@ file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c
-file arch/sun3/sun3/vm_machdep.c
+file arch/m68k/m68k/cacheops.c			_sun3x_
+file arch/m68k/m68k/kgdb_machdep.c 		kgdb
+file arch/m68k/m68k/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
 
@@ -253,6 +253,14 @@ file dev/sun/ms.c			ms needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
+
+
+#
+# wscons
+#
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Compatibility modules
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.2.7 2002/10/18 02:43:11 nathanw Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.2.8 2002/11/11 22:11:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.7 2002/10/18 02:43:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.8 2002/11/11 22:11:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ dev_type_ioctl(mlyioctl);
 
 const struct cdevsw mly_cdevsw = {
 	mlyopen, mlyclose, noread, nowrite, mlyioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 struct mly_ident {

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.32.2.8 2002/10/18 02:41:59 nathanw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.32.2.9 2002/11/11 22:10:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.8 2002/10/18 02:41:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.9 2002/11/11 22:10:06 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -311,7 +311,7 @@ smc91cxx_attach(sc, myea)
 	sc->sc_mii.mii_readreg = smc91cxx_mii_readreg;
 	sc->sc_mii.mii_writereg = smc91cxx_mii_writereg;
 	sc->sc_mii.mii_statchg = smc91cxx_statchg;
-	ifmedia_init(ifm, 0, smc91cxx_mediachange, smc91cxx_mediastatus);
+	ifmedia_init(ifm, IFM_IMASK, smc91cxx_mediachange, smc91cxx_mediastatus);
 
 	SMC_SELECT_BANK(sc, 1);
 	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);

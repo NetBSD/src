@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.70.2.2 2001/11/14 19:14:53 nathanw Exp $	*/
+/*	$NetBSD: sb.c,v 1.70.2.3 2002/11/11 22:10:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.70.2.2 2001/11/14 19:14:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.70.2.3 2002/11/11 22:10:23 nathanw Exp $");
 
 #include "midi.h"
 
@@ -73,12 +73,6 @@ struct midi_hw_if sb_midi_hw_if = {
 	0,			/* ioctl */
 };
 #endif
-
-struct audio_device sb_device = {
-	"SoundBlaster",
-	"x",
-	"sb"
-};
 
 int	sb_getdev __P((void *, struct audio_device *));
 

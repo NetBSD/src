@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.25.2.5 2002/02/28 04:13:08 nathanw Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.25.2.6 2002/11/11 22:08:34 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,9 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.25.2.5 2002/02/28 04:13:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.25.2.6 2002/11/11 22:08:34 nathanw Exp $");
 
-#include "opt_ddb.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -443,7 +443,7 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 			continue;
 		sym = X_db_search_symbol(&db_symtabs[i], val, strategy,
 		    &newdiff);
-		if (newdiff < diff) {
+		if ((unsigned int) newdiff < diff) {
 			db_last_symtab = &db_symtabs[i];
 			diff = newdiff;
 			ret = sym;
@@ -507,10 +507,12 @@ db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 	int 		linenum;
 	db_sym_t	cursym;
 
-	if (off <= db_lastsym) {
+	if ((unsigned long) off <= db_lastsym) {
 		cursym = db_search_symbol(off, strategy, &d);
 		db_symbol_values(cursym, &name, &value);
-		if (name && (d < db_maxoff) && value) {
+		if (name != NULL &&
+		    ((unsigned int) d < db_maxoff) &&
+		    value != 0) {
 			strcpy(buf, name);
 			if (d) {
 				strcat(buf, "+");
@@ -540,10 +542,12 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 	int 		linenum;
 	db_sym_t	cursym;
 
-	if (off <= db_lastsym) {
+	if ((unsigned long) off <= db_lastsym) {
 		cursym = db_search_symbol(off, strategy, &d);
 		db_symbol_values(cursym, &name, &value);
-		if (name && (d < db_maxoff) && value) {
+		if (name != NULL &&
+		    ((unsigned int) d < db_maxoff) &&
+		    value != 0) {
 			(*pr)("%s", name);
 			if (d) {
 				char tbuf[24];

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.6.2.1 2001/08/08 16:13:45 nathanw Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.6.2.2 2002/11/11 22:22:46 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -59,7 +59,7 @@
 #endif
 #include <err.h>
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 #include "svc_dg.h"
 
 #define	su_data(xprt)	((struct svc_dg_data *)(xprt->xp_p2))

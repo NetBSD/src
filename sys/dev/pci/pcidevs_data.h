@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.21 2002/10/18 02:43:15 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.22 2002/11/11 22:11:34 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1054,16 +1054,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD768 USB Controller",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
-	    0,
-	    "Advanced Micro Devices",
-	    "AMD8111 AC97 Audio",
-	},
-	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD8111 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 AC97 Audio",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
@@ -1430,6 +1430,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "3D Rage LT Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage Mobility M1",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
@@ -2362,12 +2368,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82C693 PCI-ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11,
-	    0,
-	    "Corega",
-	    "CGWLPCIA11",
-	},
-	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
 	    0,
 	    "Corrollary",
@@ -2734,6 +2734,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SmartRAID (I2O)",
 	},
 	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2000S,
+	    0,
+	    "Distributed Processing Technology",
+	    "Zero channel SmartRAID(I2O)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2005S,
+	    0,
+	    "Distributed Processing Technology",
+	    "Zero channel SmartRAID(I2O) SO-DIMM",
+	},
+	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
 	    0,
 	    "Distributed Processing Technology",
@@ -2768,6 +2780,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Emulex",
 	    "\"Light Pulse\" FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB1410 Cardbus Controller",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
@@ -3220,6 +3238,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MPIC-II",
 	},
 	{
+	    PCI_VENDOR_ICOMPRESSION, PCI_PRODUCT_ICOMPRESSION_ITVC15,
+	    0,
+	    "Conexant (iCompression)",
+	    "iTVC15 MPEG2 codec",
+	},
+	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
 	    0,
 	    "IDT",
@@ -3379,7 +3403,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
 	    0,
 	    "Intel",
-	    "i82452 Gigabit Ethernet",
+	    "i82542 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER,
@@ -4192,6 +4216,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82845G/GL Integrated Graphics Device",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
+	    0,
+	    "Intel",
+	    "31244 Serial ATA Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
 	    0,
 	    "Intel",
@@ -4759,7 +4789,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2_AGP,
 	    0,
 	    "Matrox",
-	    "MGA Millennium II 2164WA-B AG",
+	    "MGA Millennium II 2164WA-B AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_PCI,
@@ -4940,6 +4970,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Mutech",
 	    "MV1000",
+	},
+	{
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
+	    0,
+	    "Myson-Century Technology",
+	    "MTD803 3-in-1 Fast Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
+	    0,
+	    "National Datacomm Corp.",
+	    "NCP130 Wireless NIC",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2,
+	    0,
+	    "National Datacomm Corp.",
+	    "NCP130 rev A2 Wireless NIC",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
@@ -6572,6 +6620,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
+	    0,
+	    "Texas Instruments",
+	    "ACX100 802.11b",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -11014,6 +11068,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ENE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ENE Technology, Inc.",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_TERRATEC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "TerraTec Electronic",
@@ -11068,9 +11128,15 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_COREGA, 0,
+	    PCI_VENDOR_MYSON, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Corega",
+	    "Myson-Century Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NDC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "National Datacomm Corp.",
 	    NULL,
 	},
 	{
@@ -11125,6 +11191,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADDTRON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Addtron Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ICOMPRESSION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Conexant (iCompression)",
 	    NULL,
 	},
 	{

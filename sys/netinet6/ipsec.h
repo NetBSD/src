@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.19.2.6 2002/09/17 21:23:30 nathanw Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.19.2.7 2002/11/11 22:15:51 nathanw Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ extern int ip6_ah_net_deflev;
 extern int ip6_ipsec_ecn;
 #endif
 
-#define ipseclog(x)	do { if (ipsec_debug) log x; } while (0)
+#define ipseclog(x)	do { if (ipsec_debug) log x; } while (/*CONSTCOND*/ 0)
 
 extern int ipsec_pcbconn __P((struct inpcbpolicy *));
 extern int ipsec_pcbdisconn __P((struct inpcbpolicy *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.21.2.6 2002/09/17 21:19:44 nathanw Exp $	*/
+/*	$NetBSD: cy.c,v 1.21.2.7 2002/11/11 22:09:22 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.21.2.6 2002/09/17 21:19:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.21.2.7 2002/11/11 22:09:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -65,7 +65,7 @@ dev_type_poll(cypoll);
 
 const struct cdevsw cy_cdevsw = {
 	cyopen, cyclose, cyread, cywrite, cyioctl,
-	cystop, cytty, cypoll, nommap, D_TTY
+	cystop, cytty, cypoll, nommap, ttykqfilter, D_TTY
 };
 
 static int      cy_open = 0;

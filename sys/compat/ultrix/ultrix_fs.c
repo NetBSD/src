@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.19.2.6 2002/07/12 01:40:05 nathanw Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.19.2.7 2002/11/11 22:08:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.19.2.6 2002/07/12 01:40:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.19.2.7 2002/11/11 22:08:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ int
 ultrix_sys_getmnt(l, v, retval)
 	struct lwp *l;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
 	struct ultrix_sys_getmnt_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -351,7 +351,7 @@ int
 ultrix_sys_mount(l, v, retval)
 	struct lwp *l;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
 	struct ultrix_sys_mount_args *uap = v;
 	struct proc *p = l->l_proc;

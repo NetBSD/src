@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45.6.8 2002/10/18 02:39:13 nathanw Exp $
+# $NetBSD: GENERIC,v 1.45.6.9 2002/11/11 22:02:07 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45.6.8 $"
+#ident 		"GENERIC-$Revision: 1.45.6.9 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -44,6 +44,10 @@ options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 options 	DEBUG		# kernel debugging code
 options 	DIAGNOSTIC	# extra kernel sanity checking

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.87.2.7 2002/06/20 03:44:32 nathanw Exp $	*/
+/*	$NetBSD: elink3.c,v 1.87.2.8 2002/11/11 22:09:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.87.2.7 2002/06/20 03:44:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.87.2.8 2002/11/11 22:09:23 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -459,7 +459,7 @@ epconfig(sc, chipset, enaddr)
 	sc->sc_mii.mii_readreg = ep_mii_readreg;
 	sc->sc_mii.mii_writereg = ep_mii_writereg;
 	sc->sc_mii.mii_statchg = ep_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ep_media_change,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ep_media_change,
 	    ep_media_status);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.17 2002/10/18 02:44:52 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.18 2002/11/11 22:13:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.17 2002/10/18 02:44:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.18 2002/11/11 22:13:42 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -253,84 +253,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2 = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
-	 * BEGIN PID ALLOCATION.
-	 */
-	s = proclist_lock_write();
-
-	/*
-	 * Find an unused process ID.  We remember a range of unused IDs
-	 * ready to use (from nextpid+1 through pidchecked-1).
-	 */
-	nextpid++;
- retry:
-	/*
-	 * If the process ID prototype has wrapped around,
-	 * restart somewhat above 0, as the low-numbered procs
-	 * tend to include daemons that don't exit.
-	 */
-	if (nextpid >= PID_MAX) {
-		nextpid = 500;
-		pidchecked = 0;
-	}
-	if (nextpid >= pidchecked) {
-		const struct proclist_desc *pd;
-
-		pidchecked = PID_MAX;
-		/*
-		 * Scan the process lists to check whether this pid
-		 * is in use.  Remember the lowest pid that's greater
-		 * than nextpid, so we can avoid checking for a while.
-		 */
-		pd = proclists;
- again:
-		LIST_FOREACH(tp, pd->pd_list, p_list) {
-			while (tp->p_pid == nextpid ||
-			    tp->p_pgrp->pg_id == nextpid ||
-			    tp->p_session->s_sid == nextpid) {
-				nextpid++;
-				if (nextpid >= pidchecked)
-					goto retry;
-			}
-			if (tp->p_pid > nextpid && pidchecked > tp->p_pid)
-				pidchecked = tp->p_pid;
-
-			if (tp->p_pgrp->pg_id > nextpid && 
-			    pidchecked > tp->p_pgrp->pg_id)
-				pidchecked = tp->p_pgrp->pg_id;
-
-			if (tp->p_session->s_sid > nextpid &&
-			    pidchecked > tp->p_session->s_sid)
-				pidchecked = tp->p_session->s_sid;
-		}
-
-		/*
-		 * If there's another list, scan it.  If we have checked
-		 * them all, we've found one!
-		 */
-		pd++;
-		if (pd->pd_list != NULL)
-			goto again;
-	}
-
-	/*
-	 * Put the proc on allproc before unlocking PID allocation
-	 * so that waiters won't grab it as soon as we unlock.
-	 */
-
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_pid = nextpid;
-	p2->p_exitsig = exitsig;		/* signal for parent on exit */
-
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
-
-	/*
-	 * END PID ALLOCATION.
-	 */
-	proclist_unlock_write(s);
-
-	/*
 	 * Make a proc table entry for the new process.
 	 * Start by zeroing the section of proc that is zero-initialized,
 	 * then copy the section that is copied directly from the parent.
@@ -463,21 +385,119 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	    arg, &l2);
 
 	/*
-	 * Make child runnable, set start time, and add to run queue.
+	 * BEGIN PID ALLOCATION.
+	 */
+	s = proclist_lock_write();
+
+	/*
+	 * Find an unused process ID.  We remember a range of unused IDs
+	 * ready to use (from nextpid+1 through pidchecked-1).
+	 */
+	nextpid++;
+ retry:
+	/*
+	 * If the process ID prototype has wrapped around,
+	 * restart somewhat above 0, as the low-numbered procs
+	 * tend to include daemons that don't exit.
+	 */
+	if (nextpid >= PID_MAX) {
+		nextpid = 500;
+		pidchecked = 0;
+	}
+	if (nextpid >= pidchecked) {
+		const struct proclist_desc *pd;
+
+		pidchecked = PID_MAX;
+		/*
+		 * Scan the process lists to check whether this pid
+		 * is in use.  Remember the lowest pid that's greater
+		 * than nextpid, so we can avoid checking for a while.
+		 */
+		pd = proclists;
+ again:
+		LIST_FOREACH(tp, pd->pd_list, p_list) {
+			while (tp->p_pid == nextpid ||
+			    tp->p_pgrp->pg_id == nextpid ||
+			    tp->p_session->s_sid == nextpid) {
+				nextpid++;
+				if (nextpid >= pidchecked)
+					goto retry;
+			}
+			if (tp->p_pid > nextpid && pidchecked > tp->p_pid)
+				pidchecked = tp->p_pid;
+
+			if (tp->p_pgrp->pg_id > nextpid && 
+			    pidchecked > tp->p_pgrp->pg_id)
+				pidchecked = tp->p_pgrp->pg_id;
+
+			if (tp->p_session->s_sid > nextpid &&
+			    pidchecked > tp->p_session->s_sid)
+				pidchecked = tp->p_session->s_sid;
+		}
+
+		/*
+		 * If there's another list, scan it.  If we have checked
+		 * them all, we've found one!
+		 */
+		pd++;
+		if (pd->pd_list != NULL)
+			goto again;
+	}
+
+	/*
+	 * Put the proc on allproc before unlocking PID allocation
+	 * so that waiters won't grab it as soon as we unlock.
+	 */
+
+	p2->p_stat = SIDL;			/* protect against others */
+	p2->p_pid = nextpid;
+	p2->p_exitsig = exitsig;		/* signal for parent on exit */
+	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
+
+	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+
+	/*
+	 * END PID ALLOCATION.
+	 */
+	proclist_unlock_write(s);
+
+	/*
+	 * Make child runnable, set start time, and add to run queue
+	 * except if the parent requested the child to start in SSTOP state.
 	 */
 	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
-	p2->p_stat = SACTIVE;
 	p2->p_nrlwps = 1;
-	l2->l_stat = LSRUN;
-	setrunqueue(l2);
+	if (p1->p_flag & P_STOPFORK) {
+		p2->p_stat = SSTOP;
+		l2->l_stat = LSSTOP;
+	} else {
+		p2->p_stat = SACTIVE;
+		l2->l_stat = LSRUN;
+		setrunqueue(l2);
+	}
 	SCHED_UNLOCK(s);
+
+	/*
+	 * Inherit STOPFORK and STOPEXEC flags 
+	 */
+	if (p1->p_flag & P_STOPFORK)
+		p2->p_flag |= P_STOPFORK;
+	if (p1->p_flag & P_STOPEXEC)
+		p2->p_flag |= P_STOPEXEC;
 
 	/*
 	 * Now can be swapped.
 	 */
 	PRELE(l1);
+
+	/*
+	* Notify any interested parties about the new process.
+	*/
+	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.

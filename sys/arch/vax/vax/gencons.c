@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35.8.4 2002/09/17 21:18:34 nathanw Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35.8.5 2002/11/11 22:06:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,7 +86,7 @@ dev_type_poll(gencnpoll);
 
 const struct cdevsw gen_cdevsw = {
 	gencnopen, gencnclose, gencnread, gencnwrite, gencnioctl,
-	nostop, gencntty, gencnpoll, nommap, D_TTY
+	nostop, gencntty, gencnpoll, nommap, ttykqfilter, D_TTY
 };
 
 int

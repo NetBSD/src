@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25.8.3 2002/10/18 02:35:51 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.8.4 2002/11/11 21:57:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -110,7 +110,7 @@ dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, nopoll, grfmmap,
+	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
 /*

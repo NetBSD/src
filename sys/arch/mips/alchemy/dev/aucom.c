@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.1.2.2 2002/09/17 21:15:42 nathanw Exp $	*/
+/*	$NetBSD: aucom.c,v 1.1.2.3 2002/11/11 22:00:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.2.2 2002/09/17 21:15:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.2.3 2002/11/11 22:00:19 nathanw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -244,7 +244,7 @@ dev_type_poll(compoll);
 
 const struct cdevsw com_cdevsw = {
 	comopen, comclose, comread, comwrite, comioctl,
-	comstop, comtty, compoll, nommap, D_TTY
+	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
 };
 
 /*

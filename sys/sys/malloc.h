@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.9 2002/08/01 02:46:58 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.10 2002/11/11 22:16:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -190,7 +190,8 @@
 #define	M_SMBFSDATA	131	/* SMBFS private data */
 #define	M_SMBFSHASH	132	/* SMBFS hash table */
 #define	M_SA		133	/* Scheduler activations */
-#define	M_LAST		134	/* Must be last type + 1 */
+#define	M_KEVENT	134	/* kevents/knotes */
+#define	M_LAST		135	/* Must be last type + 1 */
 
 /* added something?  don't forget to update malloc.9 */
 
@@ -329,7 +330,8 @@
 	"smbfsdata",	/* 131 M_SMBFSDATA */ \
 	"smbfshash",	/* 132 M_SMBFSHASH */ \
 	"sa",		/* 133 M_SA */ \
-	NULL,		/* 134 */ \
+	"kevent",	/* 134 M_KEVENT */ \
+	NULL,		/* 135 */ \
 }
 
 struct kmemstats {
@@ -429,11 +431,14 @@ do {									\
 	long __s = splvm();						\
 	if (__kbp->kb_next == NULL) {					\
 		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
+		splx(__s);						\
 	} else {							\
 		(space) = (cast)__kbp->kb_next;				\
 		__kbp->kb_next = *(caddr_t *)(space);			\
+		splx(__s);						\
+		if ((flags) & M_ZERO)					\
+			memset((space), 0, (size));			\
 	}								\
-	splx(__s);							\
 } while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\

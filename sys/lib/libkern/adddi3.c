@@ -1,4 +1,4 @@
-/*	$NetBSD: adddi3.c,v 1.6 1998/03/27 01:29:58 cgd Exp $	*/
+/*	$NetBSD: adddi3.c,v 1.6.26.1 2002/11/11 22:14:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)adddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: adddi3.c,v 1.6 1998/03/27 01:29:58 cgd Exp $");
+__RCSID("$NetBSD: adddi3.c,v 1.6.26.1 2002/11/11 22:14:21 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: adddi3.c,v 1.6 1998/03/27 01:29:58 cgd Exp $");
 
 /*
  * Add two quads.  This is trivial since a one-bit carry from a single
- * u_long addition x+y occurs if and only if the sum x+y is less than
+ * u_int addition x+y occurs if and only if the sum x+y is less than
  * either x or y (the choice to compare with x or y is arbitrary).
  */
 quad_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.17.2.5 2002/09/17 21:22:29 nathanw Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.17.2.6 2002/11/11 22:14:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.5 2002/09/17 21:22:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.6 2002/11/11 22:14:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,11 +550,9 @@ lf_getblock(lock)
 	struct lockf *lock;
 {
 	struct lockf **prev, *overlap, *lf = *(lock->lf_head);
-	int ovcase;
 
 	prev = lock->lf_head;
-	while ((ovcase = lf_findoverlap(lf, lock, OTHERS,
-					&prev, &overlap)) != 0) {
+	while (lf_findoverlap(lf, lock, OTHERS, &prev, &overlap) != 0) {
 		/*
 		 * We've found an overlap, see if it blocks us
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.7.2.3 2002/06/20 03:40:51 nathanw Exp $	*/
+/*	$NetBSD: ip22.c,v 1.7.2.4 2002/11/11 22:03:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -76,7 +76,7 @@ extern void	ip22_sdcache_disable(void);
 void
 ip22_init(void)
 {
-	int i;
+	u_int i;
 	u_int32_t sysid;
 	u_int32_t int23addr;
 	unsigned long cps;

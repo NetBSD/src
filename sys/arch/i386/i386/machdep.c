@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.30 2002/10/18 04:11:57 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.31 2002/11/11 21:59:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.30 2002/10/18 04:11:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.31 2002/11/11 21:59:06 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -231,10 +231,6 @@ int	i386_has_sse2;
 
 int	tmx86_has_longrun;
 
-#define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
-#define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
-#define	CPUID2STEPPING(cpuid)	((cpuid) & 15)
-
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
 
@@ -306,6 +302,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
 	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
 	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
 	{ 0,               0,  0,	        0,  0 },
@@ -480,29 +477,6 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
-
-#if 0
-#ifdef MTRR
-	if (cpu_feature & CPUID_MTRR) {
-		mtrr_funcs = &i686_mtrr_funcs;
-		i686_mtrr_init_first();
-		mtrr_init_cpu(ci);
-	} else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
-		/*
-		 * Must be a K6-2 Step >= 7 or a K6-III.
-		 */
-		if (CPUID2FAMILY(cpu_id) == 5) {
-			if (CPUID2MODEL(cpu_id) > 8 ||
-			    (CPUID2MODEL(cpu_id) == 8 &&
-			     CPUID2STEPPING(cpu_id) >= 7)) {
-				mtrr_funcs = &k6_mtrr_funcs;
-				k6_mtrr_init_first();
-				mtrr_init_cpu(ci);
-			}
-		}
-	}
-#endif
-#endif
 
 #ifdef TRAPLOG
 	/*
@@ -1070,7 +1044,7 @@ winchip_cpu_setup(ci)
 }
 
 #define CPUID(code, eax, ebx, ecx, edx) 			\
-	asm ("cpuid"						\
+	__asm("cpuid"						\
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
 	    : "a" (code));
 
@@ -1403,19 +1377,25 @@ transmeta_cpu_info(struct cpu_info *ci)
 		printf("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
-	crusoe_longrun = tmx86_get_longrun_mode();
-	tmx86_get_longrun_status(&crusoe_frequency,
-	    &crusoe_voltage, &crusoe_percentage);
-	printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n", ci->ci_dev->dv_xname,
-	    crusoe_longrun, crusoe_frequency, crusoe_voltage,
-	    crusoe_percentage);
+	if (nreg >= 0x80860007) {
+		crusoe_longrun = tmx86_get_longrun_mode();
+		tmx86_get_longrun_status(&crusoe_frequency,
+		    &crusoe_voltage, &crusoe_percentage);
+		printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		    ci->ci_dev->dv_xname,
+		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
+		    crusoe_percentage);
+	}
 }
 
 void
 transmeta_cpu_setup(struct cpu_info *ci)
 {
+	u_int nreg = 0, dummy;
 
-	tmx86_has_longrun = 1;
+	CPUID(0x80860000, nreg, dummy, dummy, dummy);
+	if (nreg >= 0x80860007)
+		tmx86_has_longrun = 1;
 }
 
 
@@ -2769,6 +2749,7 @@ add_mem_cluster(seg_start, seg_end, type)
 	u_int32_t type;
 {
 	extern struct extent *iomem_ex;
+	int i;
 
 	if (seg_end > 0x100000000ULL) {
 		printf("WARNING: skipping large "
@@ -2790,6 +2771,17 @@ add_mem_cluster(seg_start, seg_end, type)
 	if (seg_end <= seg_start)
 		return;
 
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if ((mem_clusters[i].start == round_page(seg_start))
+		    && (mem_clusters[i].size
+			    == trunc_page(seg_end) - mem_clusters[i].start)) {
+#ifdef DEBUG_MEMLOAD
+			printf("WARNING: skipping duplicate segment entry\n");
+#endif
+			return;
+		}
+	}
+
 	/*
 	 * Allocate the physical addresses used by RAM
 	 * from the iomem extent map.  This is done before
@@ -2804,6 +2796,7 @@ add_mem_cluster(seg_start, seg_end, type)
 		    "(0x%qx/0x%qx/0x%x) FROM "
 		    "IOMEM EXTENT MAP!\n",
 		    seg_start, seg_end - seg_start, type);
+		return;
 	}
 
 	/*
@@ -2958,6 +2951,10 @@ init386(first_avail)
 		realmode_reserved_start = avail_start;
 		avail_start += realmode_reserved_size;
 	}
+
+#ifdef DEBUG_MEMLOAD
+	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
+#endif
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -3147,14 +3144,18 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end;
+
+				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, tmp,
-				    atop(seg_start), atop(tmp));
+					printf("loading 0x%qx-0x%qx "
+					    "(0x%lx-0x%lx)\n",
+				    	    seg_start, tmp,
+				  	    atop(seg_start), atop(tmp));
 #endif
-				uvm_page_physload(atop(seg_start),
-				    atop(tmp), atop(seg_start),
-				    atop(tmp), first16q);
+					uvm_page_physload(atop(seg_start),
+				    	    atop(tmp), atop(seg_start),
+				    	    atop(tmp), first16q);
+				}
 				seg_start = tmp;
 			}
 
@@ -3180,14 +3181,18 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end1;
+
+				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, tmp,
-				    atop(seg_start1), atop(tmp));
+					printf("loading 0x%qx-0x%qx "
+					    "(0x%lx-0x%lx)\n",
+				    	    seg_start1, tmp,
+				    	    atop(seg_start1), atop(tmp));
 #endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(tmp), atop(seg_start1),
-				    atop(tmp), first16q);
+					uvm_page_physload(atop(seg_start1),
+				    	    atop(tmp), atop(seg_start1),
+				    	    atop(tmp), first16q);
+				}
 				seg_start1 = tmp;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.2.7 2002/09/17 21:19:59 nathanw Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.2.8 2002/11/11 22:10:17 nathanw Exp $	*/
 
 /*
  * TODO
@@ -122,6 +122,8 @@ struct irframet_softc {
 	u_int sc_frameo;
 	struct frame sc_frames[MAXFRAMES];
 	struct selinfo sc_rsel;
+	/* XXXJRT Nothing selnotify's sc_wsel */
+	struct selinfo sc_wsel;
 };
 
 /* line discipline methods */
@@ -141,6 +143,7 @@ Static int	irframet_close(void *h, int flag, int mode, struct proc *p);
 Static int	irframet_read(void *h, struct uio *uio, int flag);
 Static int	irframet_write(void *h, struct uio *uio, int flag);
 Static int	irframet_poll(void *h, int events, struct proc *p);
+Static int	irframet_kqfilter(void *h, struct knote *kn);
 Static int	irframet_set_params(void *h, struct irda_params *params);
 Static int	irframet_get_speeds(void *h, int *speeds);
 Static int	irframet_get_turnarounds(void *h, int *times);
@@ -157,7 +160,7 @@ Static void	irt_delay(struct tty *tp, u_int delay);
 
 Static const struct irframe_methods irframet_methods = {
 	irframet_open, irframet_close, irframet_read, irframet_write,
-	irframet_poll, irframet_set_params,
+	irframet_poll, irframet_kqfilter, irframet_set_params,
 	irframet_get_speeds, irframet_get_turnarounds
 };
 
@@ -356,7 +359,7 @@ irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
 		DPRINTF(("%s: waking up reader\n", __FUNCTION__));
 		wakeup(sc->sc_frames);
 	}
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0);
 }
 
 void
@@ -659,6 +662,91 @@ irframet_poll(void *h, int events, struct proc *p)
 	splx(s);
 
 	return (revents);
+}
+
+static void
+filt_irframetrdetach(struct knote *kn)
+{
+	struct tty *tp = kn->kn_hook;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int s;
+
+	s = splir();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_irframetread(struct knote *kn, long hint)
+{
+	struct tty *tp = kn->kn_hook;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+
+	kn->kn_data = sc->sc_nframes;
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_irframetwdetach(struct knote *kn)
+{
+	struct tty *tp = kn->kn_hook;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int s;
+
+	s = splir();
+	SLIST_REMOVE(&sc->sc_wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_irframetwrite(struct knote *kn, long hint)
+{
+	struct tty *tp = kn->kn_hook;
+
+	/* XXX double-check this */
+
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		kn->kn_data = tp->t_lowat - tp->t_outq.c_cc;
+		return (1);
+	}
+
+	kn->kn_data = 0;
+	return (0);
+}
+
+static const struct filterops irframetread_filtops =
+	{ 1, NULL, filt_irframetrdetach, filt_irframetread };
+static const struct filterops irframetwrite_filtops =
+	{ 1, NULL, filt_irframetwdetach, filt_irframetwrite };
+
+int
+irframet_kqfilter(void *h, struct knote *kn)
+{
+	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &irframetread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_klist;
+		kn->kn_fop = &irframetwrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = tp;
+
+	s = splir();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.21.2.5 2002/10/18 02:43:39 nathanw Exp $	*/
+/*	$NetBSD: qd.c,v 1.21.2.6 2002/11/11 22:11:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.21.2.5 2002/10/18 02:43:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.21.2.6 2002/11/11 22:11:52 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -140,12 +140,6 @@ struct	qd_softc {
 #define MAPEQ		0x04		/* event queue buffer mapped */
 #define MAPSCR		0x08		/* scroll param area mapped */
 #define MAPCOLOR	0x10		/* color map writing buffer mapped */
-
-/*
- * bit definitions for 'selmask' member of qdflag structure 
- */
-#define SEL_READ	0x01		/* read select is active */
-#define SEL_WRITE	0x02		/* write select is active */
 
 /*
  * constants used in shared memory operations 
@@ -355,10 +349,11 @@ dev_type_write(qdwrite);
 dev_type_ioctl(qdioctl);
 dev_type_stop(qdstop);
 dev_type_poll(qdpoll);
+dev_type_kqfilter(qdkqfilter);
 
 const struct cdevsw qd_cdevsw = {
 	qdopen, qdclose, qdread, qdwrite, qdioctl,
-	qdstop, notty, qdpoll, nommap,
+	qdstop, notty, qdpoll, nommap, qdkqfilter,
 };
 
 /*
@@ -1543,15 +1538,11 @@ qdpoll(dev, events, p)
 				revents |= events & (POLLOUT | POLLWRNORM);
 	   
 		if (revents == 0)  {
-			if (events & (POLLIN | POLLRDNORM))  {
+			if (events & (POLLIN | POLLRDNORM))
 				selrecord(p, &qdrsel[unit]);
-				qdflags[unit].selmask |= SEL_READ;
-			}
 
-			if (events & (POLLOUT | POLLWRNORM))  {
+			if (events & (POLLOUT | POLLWRNORM))
 				selrecord(p, &qdrsel[unit]);
-				qdflags[unit].selmask |= SEL_WRITE;
-			}
 		}
 	} else  {
 		/*
@@ -1565,6 +1556,88 @@ qdpoll(dev, events, p)
 	return (revents);
 } /* qdpoll() */
 
+static void
+filt_qdrdetach(struct knote *kn)
+{
+	dev_t dev = (intptr_t) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+	int s;
+
+	s = spl5();
+	SLIST_REMOVE(&qdrsel[unit].si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_qdread(struct knote *kn, long hint)
+{
+	dev_t dev = (intptr_t) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+
+	if (ISEMPTY(eq_header[unit]))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static int
+filt_qdwrite(struct knote *kn, long hint)
+{
+	dev_t dev = (intptr_t) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+
+	if (! DMA_ISEMPTY(DMAheader[unit]))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops qdread_filtops =
+	{ 1, NULL, filt_qdrdetach, filt_qdread };
+
+static const struct filterops qdwrite_filtops =
+	{ 1, NULL, filt_qdrdetach, filt_qdwrite };
+
+int
+qdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	u_int minor_dev = minor(dev);
+	int s, unit = minor_dev >> 2;
+
+	if ((minor_dev & 0x03) != 2) {
+		/* TTY device. */
+		return (ttykqfilter(dev, kn));
+	}
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &qdrsel[unit].si_klist;
+		kn->kn_fop = &qdread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &qdrsel[unit].si_klist;
+		kn->kn_fop = &qdwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *)(intptr_t) dev;
+
+	s = spl5();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 void qd_strategy(struct buf *bp);
 
@@ -2051,11 +2124,7 @@ qddint(arg)
 		header->newest = header->oldest;
 		header->used = 0;
 
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 
 		if (dga->bytcnt_lo != 0) {
 			dga->bytcnt_lo = 0;
@@ -2070,11 +2139,7 @@ qddint(arg)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;  
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 	}
 
 	header->DMAreq[header->oldest].DMAdone |= REQUEST_DONE;
@@ -2090,11 +2155,7 @@ qddint(arg)
 	* if no more DMA pending, wake up "select" client and exit 
 	*/
 	if (DMA_ISEMPTY(header)) {
-		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
-		}
+		selnotify(&qdrsel[dv->dv_unit], 0);
 		DMA_CLRACTIVE(header);  /* flag DMA done */
 		return;
 	}
@@ -2723,10 +2784,8 @@ GET_TBUTTON:
 		/*
 		* do select wakeup	
 		*/
-		if (qdrsel[dv->dv_unit].si_pid && do_wakeup && qdflags[dv->dv_unit].selmask & SEL_READ) {
-			selwakeup(&qdrsel[dv->dv_unit]);
-			qdrsel[dv->dv_unit].si_pid = 0;
-			qdflags[dv->dv_unit].selmask &= ~SEL_READ;
+		if (do_wakeup) {
+			selnotify(&qdrsel[dv->dv_unit], 0);
 			do_wakeup = 0;
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.27.2.5 2002/10/18 02:42:49 nathanw Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.27.2.6 2002/11/11 22:10:54 nathanw Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.27.2.5 2002/10/18 02:42:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.27.2.6 2002/11/11 22:10:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -121,7 +121,7 @@ const struct bdevsw ra_bdevsw = {
 
 const struct cdevsw ra_cdevsw = {
 	raopen, raclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -537,7 +537,7 @@ const struct bdevsw rx_bdevsw = {
 
 const struct cdevsw rx_cdevsw = {
 	rxopen, nullclose, rxread, rxwrite, rxioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -869,7 +869,7 @@ rriodone(usc, bp)
 	   already have verified it. Thus, no checks here... /bqt */
 	unit = DISKUNIT(bp->b_dev);
 	ra = ra_cd.cd_devs[unit];
-	disk_unbusy(&ra->ra_disk, bp->b_bcount);
+	disk_unbusy(&ra->ra_disk, bp->b_bcount, (bp->b_flags & B_READ));
 
 	biodone(bp);
 }

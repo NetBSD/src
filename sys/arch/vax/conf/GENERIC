@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.6.7 2002/10/18 02:40:29 nathanw Exp $
+# $NetBSD: GENERIC,v 1.90.6.8 2002/11/11 22:05:50 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.6.7 $"
+#ident 		"GENERIC-$Revision: 1.90.6.8 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -136,6 +136,10 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Kernel(s) to compile
 config		netbsd root on ? type ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.41.2.4 2001/11/14 19:14:37 nathanw Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.41.2.5 2002/11/11 22:10:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.41.2.4 2001/11/14 19:14:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.41.2.5 2002/11/11 22:10:04 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -116,7 +116,8 @@ epic_attach(sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, rseg, error, miiflags;
+	int rseg, error, miiflags;
+	u_int i;
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
@@ -235,7 +236,7 @@ epic_attach(sc)
 	sc->sc_mii.mii_readreg = epic_mii_read;
 	sc->sc_mii.mii_writereg = epic_mii_write;
 	sc->sc_mii.mii_statchg = epic_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epic_mediachange,
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
@@ -574,7 +575,8 @@ epic_intr(arg)
 	struct epic_descsoft *ds;
 	struct mbuf *m;
 	u_int32_t intstat;
-	int i, len, claimed = 0;
+	int i, claimed = 0;
+	u_int len;
 
  top:
 	/*

@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.23.2.9 2002/10/18 02:40:02 nathanw Exp $
+# 	$NetBSD: GENERIC32,v 1.23.2.10 2002/11/11 22:04:41 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23.2.9 $"
+#ident 		"GENERIC-$Revision: 1.23.2.10 $"
 
 maxusers	64
 
@@ -59,6 +59,10 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
@@ -304,14 +308,29 @@ ss*	at scsibus? target ? lun ?		# SCSI scanners
 ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
-# PCI IDE.
-pciide* at pci ? dev ? function ? flags 0x0000
+# IDE and related devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide* at pci? dev ? function ? flags 0x0000
 atapibus* at pciide? channel ?
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
 
 ## Disable UDMA 4 which causes data corruption on the Acer Labs
 ## chipset on Sun Blade 100 and Netra X1 machines.
 wd*	at pciide? channel ? drive ? flags 0x0a00 # Disable UDMA 4
-
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
@@ -405,14 +424,14 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B] UT
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
@@ -462,7 +481,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 uscanner* at uhub? port ?				# USB scanners
-uyap* at uhub? port ?					# Y@P firmware loader
+uyap*	at uhub? port ?					# Y@P firmware loader
 ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # PCI IEEE1394 controllers
@@ -471,7 +490,7 @@ fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus? oui ? devhi ? devlo ?
+#fwnode*at fwbus? oui ? devhi ? devlo ?
 #scsibus* at fwnode?
 
 ## Loopback network interface; required

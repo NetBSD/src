@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.6.2.3 2001/11/14 19:32:01 nathanw Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.6.2.4 2002/11/11 22:22:42 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -58,7 +58,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <rpc/nettype.h>
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 struct handle {
 	NCONF_HANDLE *nhandle;

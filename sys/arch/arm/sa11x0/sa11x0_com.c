@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.1.8.6 2002/10/18 02:35:40 nathanw Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.1.8.7 2002/11/11 21:56:54 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_com.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
@@ -122,7 +123,7 @@ dev_type_poll(sacompoll);
 
 const struct cdevsw sacom_cdevsw = {
 	sacomopen, sacomclose, sacomread, sacomwrite, sacomioctl,
-	sacomstop, sacomtty, sacompoll, nommap, D_TTY
+	sacomstop, sacomtty, sacompoll, nommap, ttykqfilter, D_TTY
 };
 
 static	int	sacom_match(struct device *, struct cfdata *, void *);

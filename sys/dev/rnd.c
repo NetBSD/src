@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.21.2.7 2002/10/18 02:41:28 nathanw Exp $	*/
+/*	$NetBSD: rnd.c,v 1.21.2.8 2002/11/11 22:08:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.7 2002/10/18 02:41:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.8 2002/11/11 22:08:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -161,10 +161,11 @@ dev_type_read(rndread);
 dev_type_write(rndwrite);
 dev_type_ioctl(rndioctl);
 dev_type_poll(rndpoll);
+dev_type_kqfilter(rndkqfilter);
 
 const struct cdevsw rnd_cdevsw = {
 	rndopen, nullclose, rndread, rndwrite, rndioctl,
-	nostop, notty, rndpoll, nommap,
+	nostop, notty, rndpoll, nommap, rndkqfilter,
 };
 
 static inline void	rnd_wakeup_readers(void);
@@ -218,7 +219,7 @@ rnd_wakeup_readers(void)
 			rnd_status &= ~RND_READWAITING;
 			wakeup(&rnd_selq);
 		}
-		selwakeup(&rnd_selq);
+		selnotify(&rnd_selq, 0);
 
 #ifdef RND_VERBOSE
 		if (!rnd_have_entropy)
@@ -373,8 +374,8 @@ int
 rndread(dev_t dev, struct uio *uio, int ioflag)
 {
 	u_int8_t *buf;
-	u_int32_t entcnt, mode, nread;
-	int n, ret, s;
+	u_int32_t entcnt, mode, n, nread;
+	int ret, s;
 
 	DPRINTF(RND_DEBUG_READ,
 	    ("Random:  Read of %d requested, flags 0x%08x\n",
@@ -706,6 +707,68 @@ rndpoll(dev_t dev, int events, struct proc *p)
 	return (revents);
 }
 
+static void
+filt_rnddetach(struct knote *kn)
+{
+	int s;
+
+	s = splsoftclock();
+	SLIST_REMOVE(&rnd_selq.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_rndread(struct knote *kn, long hint)
+{
+	uint32_t entcnt;
+
+	entcnt = rndpool_get_entropy_count(&rnd_pool);
+	if (entcnt >= RND_ENTROPY_THRESHOLD * 8) {
+		kn->kn_data = RND_TEMP_BUFFER_SIZE;
+		return (1);
+	}
+	return (0);
+}
+
+static const struct filterops rnd_seltrue_filtops =
+	{ 1, NULL, filt_rnddetach, filt_seltrue };
+
+static const struct filterops rndread_filtops =
+	{ 1, NULL, filt_rnddetach, filt_rndread };
+
+int
+rndkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &rnd_selq.si_klist;
+		if (minor(dev) == RND_DEV_URANDOM)
+			kn->kn_fop = &rnd_seltrue_filtops;
+		else
+			kn->kn_fop = &rndread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &rnd_selq.si_klist;
+		kn->kn_fop = &rnd_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splsoftclock();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
 static rnd_sample_t *
 rnd_sample_allocate(rndsource_t *source)
 {
@@ -1013,7 +1076,7 @@ rnd_timeout(void *arg)
 	rnd_wakeup_readers();
 }
 
-int
+u_int32_t
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	int retval, s;

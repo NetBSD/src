@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.9.4.7 2002/10/18 02:35:49 nathanw Exp $
+#	$NetBSD: GENERIC.in,v 1.9.4.8 2002/11/11 21:57:11 nathanw Exp $
 #
 # Generic atari
 #
@@ -32,6 +32,10 @@ options 	UCONSOLE	# Allow xconsole to work
 # Standard system options
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 #
 # (Co)processors this kernel should support

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.13 2002/10/18 02:45:23 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.14 2002/11/11 22:15:48 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.13 2002/10/18 02:45:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.14 2002/11/11 22:15:48 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -186,7 +186,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		if (error)						\
 			goto freehdrs;					\
 	}								\
-    } while (0)
+    } while (/*CONSTCOND*/ 0)
 
 	bzero(&exthdrs, sizeof(exthdrs));
 	if (opt) {
@@ -337,7 +337,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		(mp)->m_next = (m);\
 		(mp) = (m);\
 	}\
-    } while (0)
+    } while (/*CONSTCOND*/ 0)
 		/*
 		 * result: IPv6 hbh dest1 rthdr dest2 payload
 		 * m will point to IPv6 header.  mprev will point to the
@@ -1289,7 +1289,7 @@ do { \
 		in6p->in6p_flags |= (bit); \
 	else \
 		in6p->in6p_flags &= ~(bit); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 				case IPV6_RECVOPTS:
 					OPTSET(IN6P_RECVOPTS);
@@ -1654,8 +1654,7 @@ ip6_pcbopts(pktopt, m, so)
 		/*
 		 * Only turning off any previous options.
 		 */
-		if (opt)
-			free(opt, M_IP6OPT);
+		free(opt, M_IP6OPT);
 		if (m)
 			(void)m_free(m);
 		return (0);
@@ -1666,6 +1665,7 @@ ip6_pcbopts(pktopt, m, so)
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
+		free(opt, M_IP6OPT);
 		return (error);
 	}
 	*pktopt = opt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.70.8.8 2002/10/18 02:39:28 nathanw Exp $	*/
+/*	$NetBSD: scc.c,v 1.70.8.9 2002/11/11 22:02:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70.8.8 2002/10/18 02:39:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70.8.9 2002/11/11 22:02:38 nathanw Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -223,7 +223,7 @@ dev_type_poll(sccpoll);
 
 const struct cdevsw scc_cdevsw = {
 	sccopen, sccclose, sccread, sccwrite, sccioctl,
-	sccstop, scctty, sccpoll, nommap, D_TTY
+	sccstop, scctty, sccpoll, nommap, ttykqfilter, D_TTY
 };
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */

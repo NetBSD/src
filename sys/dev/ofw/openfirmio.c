@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.2.4.2 2002/09/17 21:20:12 nathanw Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.2.4.3 2002/11/11 22:10:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.4.2 2002/09/17 21:20:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.4.3 2002/11/11 22:10:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.2.4.2 2002/09/17 21:20:12 nathanw E
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/openfirmio.h>
@@ -70,7 +71,7 @@ dev_type_ioctl(openfirmioctl);
 
 const struct cdevsw openfirm_cdevsw = {
 	nullopen, nullclose, noread, nowrite, openfirmioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

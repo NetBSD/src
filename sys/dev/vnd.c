@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.14 2002/09/17 21:19:25 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.15 2002/11/11 22:08:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.14 2002/09/17 21:19:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.15 2002/11/11 22:08:53 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -198,7 +198,7 @@ const struct bdevsw vnd_bdevsw = {
 
 const struct cdevsw vnd_cdevsw = {
 	vndopen, vndclose, vndread, vndwrite, vndioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void
@@ -592,7 +592,7 @@ vndiodone(bp)
 
 	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
 	pbp->b_resid -= resid;
-	disk_unbusy(&vnd->sc_dkdev, resid);
+	disk_unbusy(&vnd->sc_dkdev, resid, (pbp->b_flags & B_READ));
 	vnx->vx_pending--;
 
 	if (vbp->vb_buf.b_error) {

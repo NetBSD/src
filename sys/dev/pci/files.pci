@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123.2.17 2002/10/18 02:43:01 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.18 2002/11/11 22:11:05 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -72,6 +72,10 @@ file	dev/pci/mlx_pci.c		mlx_pci
 device	mly: scsi
 attach	mly at pci
 file	dev/pci/mly.c			mly			needs-flag
+
+# Myson-Century Technology MTD803 3-in-1 Fast Ethernet Controller
+attach	mtd at pci with mtd_pci
+file	dev/pci/if_mtd_pci.c		mtd_pci
 
 # ICP-Vortex/Intel RAID controllers
 attach	icp at pci with icp_pci
@@ -553,9 +557,13 @@ file	dev/pci/isic_pci.c		isic_pci
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 
-device	ifpci: isdndev, passive_isdn
+device	ifpci: isdndev, passive_isdn, nisac
 attach	ifpci at pci
 file	dev/pci/ifpci.c			ifpci
+
+device	ifritz: isdndev, passive_isdn, nisacsx
+attach	ifritz at pci
+file	dev/pci/ifpci2.c		ifritz
 
 # Winbond W6692
 device	iwic: isdndev, passive_isdn
@@ -580,3 +588,8 @@ file	dev/pci/weasel_pci.c		weasel
 # Game adapter (joystick)
 attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
+
+# ATI Mach64 framebuffer console driver
+device	machfb: wsemuldisplaydev, rasops8
+attach	machfb at pci
+file	dev/pci/machfb.c		machfb

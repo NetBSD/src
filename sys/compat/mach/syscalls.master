@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2.4.3 2002/05/29 21:32:47 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.2.4.4 2002/11/11 22:07:31 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,7 +82,14 @@
 28	STD		{ mach_port_name_t	mach_sys_task_self_trap(void); }
 29	STD		{ mach_port_name_t	mach_sys_host_self_trap(void); }
 30	UNIMPL	
-31	UNIMPL	
+31	STD		{ mach_msg_return_t	mach_sys_msg_trap( \
+			    mach_msg_header_t	*msg, \
+			    mach_msg_option_t	option, \
+			    mach_msg_size_t	send_size, \
+			    mach_msg_size_t	rcv_size, \
+			    mach_port_name_t	rcv_name, \
+			    mach_msg_timeout_t	timeout, \
+			    mach_port_name_t	notify); }
 32	STD		{ mach_kern_return_t	mach_sys_msg_overwrite_trap( \
 			    mach_msg_header_t	*msg, \
 			    mach_msg_option_t	option, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1.4.3 2002/10/18 02:35:31 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.1.4.4 2002/11/11 21:56:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -151,13 +151,12 @@ extern struct cfdriver kbd_cd;
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
-dev_type_poll(kbdpoll);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /* keyboard commands */
@@ -324,33 +323,6 @@ kbdread(dev, uio, flag)
 			break;
 	}
 	return error;
-}
-
-
-int
-kbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
-	int revents = 0;
-	int s = spltty();
-
-	if (KBDFLAG(dev) == KBDFLAG_CONUNIT) {
-		splx(s);
-		return(ENXIO);
-	}
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_q.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-	}
-
-	splx(s);
-	return (revents);
 }
 
 

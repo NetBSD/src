@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.11.2.3 2002/06/20 03:48:00 nathanw Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.11.2.4 2002/11/11 22:14:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.11.2.3 2002/06/20 03:48:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.11.2.4 2002/11/11 22:14:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ procfs_docmdline(curp, p, pfs, uio)
 	struct uio *uio;
 {
 	struct ps_strings pss;
-	int count, error, i;
-	size_t len, xlen, upper_bound;
+	int count, error;
+	size_t i, len, xlen, upper_bound;
 	struct uio auio;
 	struct iovec aiov;
 	vaddr_t argv;

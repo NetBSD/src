@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.4.3 2002/09/17 21:18:52 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.4.4 2002/11/11 22:06:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap,
+	nostop, notty, nopoll, mmmmap, nokqfilter
 };
 
 /*ARGSUSED*/

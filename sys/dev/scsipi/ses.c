@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.8.4.6 2002/10/18 02:44:20 nathanw Exp $ */
+/*	$NetBSD: ses.c,v 1.8.4.7 2002/11/11 22:12:24 nathanw Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.6 2002/10/18 02:44:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.7 2002/11/11 22:12:24 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -138,7 +138,7 @@ dev_type_ioctl(sesioctl);
 
 const struct cdevsw ses_cdevsw = {
 	sesopen, sesclose, noread, nowrite, sesioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));

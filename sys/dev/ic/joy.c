@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2.4.3 2002/09/17 21:19:48 nathanw Exp $	*/
+/*	$NetBSD: joy.c,v 1.2.4.4 2002/11/11 22:09:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.3 2002/09/17 21:19:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.4 2002/11/11 22:09:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.3 2002/09/17 21:19:48 nathanw Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/bus.h>
 
@@ -86,7 +87,7 @@ dev_type_ioctl(joyioctl);
 
 const struct cdevsw joy_cdevsw = {
 	joyopen, joyclose, joyread, nowrite, joyioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

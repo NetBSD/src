@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.7.8.3 2002/09/17 21:15:53 nathanw Exp $
+#	$NetBSD: files.mipsco,v 1.7.8.4 2002/11/11 22:01:16 nathanw Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -50,7 +50,6 @@ attach zstty at zsc
 file dev/ic/z8530tty.c			zstty needs-count
 
 file arch/mipsco/mipsco/autoconf.c
-file arch/mipsco/mipsco/conf.c
 file arch/mipsco/mipsco/machdep.c
 file arch/mipsco/mipsco/interrupt.c
 file arch/mipsco/mipsco/mips_3x30.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.9.2.1 2001/09/21 22:36:05 nathanw Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.9.2.2 2002/11/11 22:11:43 nathanw Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp
@@ -656,7 +656,6 @@ struct bktr_softc {
 #define	METEOR_OUTPUT_FMT_MASK	0x040f0000
 #define	METEOR_WANT_TS		0x08000000	/* time-stamp a frame */
 #define METEOR_RGB		0x20000000	/* meteor rgb unit */
-#define METEOR_FIELD_MODE	0x80000000
     u_char	tflags;				/* Tuner flags (/dev/tuner) */
 #define	TUNER_INITIALIZED	0x00000001
 #define	TUNER_OPEN		0x00000002 

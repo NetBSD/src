@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.44.8.3 2002/06/20 03:39:24 nathanw Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.44.8.4 2002/11/11 21:59:47 nathanw Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2533,6 +2533,8 @@ adb_setup_hw_type(void)
 	case MACH_MACPB280:		/* PowerBook Duo 280 */
 	case MACH_MACPB280C:		/* PowerBook Duo 280c */
 	case MACH_MACPB500:		/* PowerBook 500 series */
+	case MACH_MACPB190:		/* PowerBook 190 */
+	case MACH_MACPB190CS:		/* PowerBook 190cs */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
 #ifdef ADB_DEBUG

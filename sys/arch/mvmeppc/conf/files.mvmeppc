@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.1.2.4 2002/09/17 21:16:07 nathanw Exp $
+#	$NetBSD: files.mvmeppc,v 1.1.2.5 2002/11/11 22:01:35 nathanw Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -14,7 +14,6 @@ defflag	opt_mvmetype.h		SUPPORT_MVME240X
 file	arch/mvmeppc/mvmeppc/autoconf.c
 file	arch/mvmeppc/mvmeppc/bus_space.c
 file	arch/mvmeppc/mvmeppc/clock.c
-file	arch/mvmeppc/mvmeppc/conf.c
 file	arch/mvmeppc/mvmeppc/disksubr.c		disk
 file	arch/mvmeppc/mvmeppc/extintr.c
 file	arch/mvmeppc/mvmeppc/machdep.c
@@ -36,16 +35,6 @@ include "dev/scsipi/files.scsipi"
 # Memory Disk for install floppy
 #
 file dev/md_root.c	memory_disk_hooks
-
-#
-# Compatibility modules
-#
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/powerpc/files.linux_powerpc"
-file arch/powerpc/powerpc/linux_sigcode.S	compat_linux
-file arch/powerpc/powerpc/linux_trap.c		compat_linux
 
 #
 # System bus types

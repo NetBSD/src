@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19.8.5 2002/07/12 01:39:37 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19.8.6 2002/11/11 22:00:38 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -85,6 +85,16 @@ const struct db_variable db_regs[] = {
 	{ "a1",	(long *)&ddb_regs.f_regs[A1],  DB_SETF_REGS },
 	{ "a2",	(long *)&ddb_regs.f_regs[A2],  DB_SETF_REGS },
 	{ "a3",	(long *)&ddb_regs.f_regs[A3],  DB_SETF_REGS },
+#if defined(__mips_n32) || defined(__mips_n64)
+	{ "a4",	(long *)&ddb_regs.f_regs[A4],  DB_SETF_REGS },
+	{ "a5",	(long *)&ddb_regs.f_regs[A5],  DB_SETF_REGS },
+	{ "a6",	(long *)&ddb_regs.f_regs[A6],  DB_SETF_REGS },
+	{ "a7",	(long *)&ddb_regs.f_regs[A7],  DB_SETF_REGS },
+	{ "t0",	(long *)&ddb_regs.f_regs[T0],  DB_SETF_REGS },
+	{ "t1",	(long *)&ddb_regs.f_regs[T1],  DB_SETF_REGS },
+	{ "t2",	(long *)&ddb_regs.f_regs[T2],  DB_SETF_REGS },
+	{ "t3",	(long *)&ddb_regs.f_regs[T3],  DB_SETF_REGS },
+#else
 	{ "t0",	(long *)&ddb_regs.f_regs[T0],  DB_SETF_REGS },
 	{ "t1",	(long *)&ddb_regs.f_regs[T1],  DB_SETF_REGS },
 	{ "t2",	(long *)&ddb_regs.f_regs[T2],  DB_SETF_REGS },
@@ -93,6 +103,7 @@ const struct db_variable db_regs[] = {
 	{ "t5",	(long *)&ddb_regs.f_regs[T5],  DB_SETF_REGS },
 	{ "t6",	(long *)&ddb_regs.f_regs[T6],  DB_SETF_REGS },
 	{ "t7",	(long *)&ddb_regs.f_regs[T7],  DB_SETF_REGS },
+#endif /* __mips_n32 || __mips_n64 */
 	{ "s0",	(long *)&ddb_regs.f_regs[S0],  DB_SETF_REGS },
 	{ "s1",	(long *)&ddb_regs.f_regs[S1],  DB_SETF_REGS },
 	{ "s2",	(long *)&ddb_regs.f_regs[S2],  DB_SETF_REGS },

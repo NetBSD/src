@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.19.2.2 2002/04/01 07:49:24 nathanw Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.19.2.3 2002/11/11 22:17:12 nathanw Exp $	*/
 
 /*
  *
@@ -79,17 +79,17 @@ do { \
 	uvm_cnt_head = &CNT; \
 	CNT.name = NAM; \
 	CNT.p = PRIV; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMCNT_SET(C,V) \
 do { \
 	(C).c = (V); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMCNT_ADD(C,V) \
 do { \
 	(C).c += (V); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMCNT_INCR(C) UVMCNT_ADD(C,1)
 #define UVMCNT_DECR(C) UVMCNT_ADD(C,-1)
@@ -169,7 +169,7 @@ do { \
 		    M_WAITOK); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (N)); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMHIST_INIT_STATIC(NAME,BUF) \
 do { \
@@ -181,7 +181,7 @@ do { \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #if defined(UVMHIST_PRINT)
 extern int uvmhist_print_enabled;
@@ -191,7 +191,7 @@ do { \
 			uvmhist_print(E); \
 			DELAY(100000); \
 		} \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define UVMHIST_PRINTNOW(E) /* nothing */
 #endif
@@ -216,7 +216,7 @@ do { \
 	(NAME).e[_i_].v[2] = (u_long)(C); \
 	(NAME).e[_i_].v[3] = (u_long)(D); \
 	UVMHIST_PRINTNOW(&((NAME).e[_i_])); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMHIST_CALLED(NAME) \
 do { \
@@ -228,7 +228,7 @@ do { \
 		splx(s); \
 	} \
 	UVMHIST_LOG(NAME,"called!", 0, 0, 0, 0); \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \

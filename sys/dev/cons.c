@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.37.4.5 2002/10/18 02:41:27 nathanw Exp $	*/
+/*	$NetBSD: cons.c,v 1.37.4.6 2002/11/11 22:08:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.37.4.5 2002/10/18 02:41:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.37.4.6 2002/11/11 22:08:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,10 +64,11 @@ dev_type_read(cnread);
 dev_type_write(cnwrite);
 dev_type_ioctl(cnioctl);
 dev_type_poll(cnpoll);
+dev_type_kqfilter(cnkqfilter);
 
 const struct cdevsw cons_cdevsw = {
 	cnopen, cnclose, cnread, cnwrite, cnioctl,
-	nostop, notty, cnpoll, nommap, D_TTY
+	nostop, notty, cnpoll, nommap, cnkqfilter, D_TTY
 };
 
 struct	tty *constty = NULL;	/* virtual console output device */
@@ -267,6 +268,31 @@ cnpoll(dev, events, p)
 	if (cdev == NULL)
 		return (ENXIO);
 	return ((*cdev->d_poll)(dev, events, p));
+}
+
+/*ARGSUSED*/
+int
+cnkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	const struct cdevsw *cdev;
+
+	/*
+	 * Redirect the kqfilter, if that's appropriate.
+	 * I don't want to think of the possible side effects
+	 * of console redirection here.
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
+	else
+		dev = cn_tab->cn_dev;
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_kqfilter)(dev, kn));
 }
 
 int

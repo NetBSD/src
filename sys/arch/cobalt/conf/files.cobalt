@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.10.8.3 2002/09/17 21:14:07 nathanw Exp $
+#	$NetBSD: files.cobalt,v 1.10.8.4 2002/11/11 21:57:48 nathanw Exp $
 
 maxpartitions 16
 
@@ -30,7 +30,6 @@ file arch/cobalt/dev/gt.c		gt
 file arch/cobalt/cobalt/autoconf.c
 file arch/cobalt/cobalt/bus.c
 file arch/cobalt/cobalt/clock.c
-file arch/cobalt/cobalt/conf.c
 file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/machdep.c

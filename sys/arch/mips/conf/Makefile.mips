@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.24.2.4 2002/06/20 03:39:43 nathanw Exp $
+#	$NetBSD: Makefile.mips,v 1.24.2.5 2002/11/11 22:00:23 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -20,17 +20,6 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
-
-AR?=		${CROSSDIR}ar
-AS?=		${CROSSDIR}as
-CC?=		${CROSSDIR}cc
-LD?=		${CROSSDIR}ld
-NM?=		${CROSSDIR}nm
-RANLIB?=	${CROSSDIR}ranlib
-SIZE?=		${CROSSDIR}size
-STRIP?=		${CROSSDIR}strip
-TSORT?=		${CROSSDIR}tsort -q
-OBJCOPY?=	${CROSSDIR}objcopy
 
 ##
 ## (1) port identification
@@ -58,12 +47,8 @@ GENASSYM=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
-CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls -mno-half-pic
-.if defined(HAVE_GCC3)
-AFLAGS+=	${ENDIAN} -x assembler-with-cpp
-.else
-AFLAGS+=	${ENDIAN} -x assembler-with-cpp -traditional-cpp
-.endif
+CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls -msoft-float
+AFLAGS+=	${ENDIAN} -mno-abicalls -x assembler-with-cpp -traditional-cpp
 
 ##
 ## (3) libkern and compat

@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3.2.2 2001/10/08 20:17:49 nathanw Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3.2.3 2002/11/11 22:21:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ LEAF(__clone)
 	REG_L	a0, SZREG(sp)
 	addu	sp, sp, (2 * SZREG)
 
-#ifdef ABICALLS
+#ifdef __ABICALLS__
 	.cprestore
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.8 2002/10/18 02:41:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.57.2.9 2002/11/11 22:07:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.57.2.8 2002/10/18 02:41:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.57.2.9 2002/11/11 22:07:53 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -112,7 +112,7 @@ const struct emul emul_netbsd32 = {
 	0,
 	NULL,
 	netbsd32_SYS_syscall,
-	netbsd32_SYS_MAXSYSCALL,
+	netbsd32_SYS_NSYSENT,
 #endif
 	netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
@@ -369,7 +369,7 @@ netbsd32_break(l, v, retval)
 	} */ *uap = v;
 	struct sys_obreak_args ua;
 
-	SCARG(&ua, nsize) = (char *)(u_long)SCARG(uap, nsize);
+	SCARG(&ua, nsize) = (char *)NETBSD32PTR64(SCARG(uap, nsize));
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(l, &ua, retval));
 }
@@ -944,8 +944,7 @@ netbsd32_getgroups(l, v, retval)
 	ngrp = pc->pc_ucred->cr_ngroups;
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
 	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-			(caddr_t)(u_long)SCARG(uap, gidset), 
-			ngrp * sizeof(gid_t));
+	    (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)), ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	*retval = ngrp;
@@ -1651,8 +1650,8 @@ netbsd32_getrlimit(l, v, retval)
 
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout(&l->l_proc->p_rlimit[which], (caddr_t)(u_long)SCARG(uap, rlp),
-	    sizeof(struct rlimit)));
+	return (copyout(&l->l_proc->p_rlimit[which],
+	    (caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), sizeof(struct rlimit)));
 }
 
 int
@@ -1670,7 +1669,8 @@ netbsd32_setrlimit(l, v, retval)
 	int error;
 	struct proc *p = l->l_proc;
 
-	error = copyin((caddr_t)(u_long)SCARG(uap, rlp), &alim, sizeof(struct rlimit));
+	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
+	    sizeof(struct rlimit));
 	if (error)
 		return (error);
 	return (dosetrlimit(p, p->p_cred, which, &alim));

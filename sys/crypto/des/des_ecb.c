@@ -1,4 +1,4 @@
-/*	$NetBSD: des_ecb.c,v 1.3.4.2 2001/11/14 19:13:35 nathanw Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.3.4.3 2002/11/11 22:08:29 nathanw Exp $	*/
 /*	$KAME: des_ecb.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: des_ecb.c,v 1.3.4.2 2001/11/14 19:13:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: des_ecb.c,v 1.3.4.3 2002/11/11 22:08:29 nathanw Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -93,6 +93,7 @@ char *des_options(void)
 #else
                 unroll="4";
 #endif
+		/*CONSTCOND*/
                 if (sizeof(DES_LONG) != sizeof(long))
                         size="int";
                 else

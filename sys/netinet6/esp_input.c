@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.16.2.8 2002/09/17 21:23:14 nathanw Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.16.2.9 2002/11/11 22:15:37 nathanw Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.8 2002/09/17 21:23:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.9 2002/11/11 22:15:37 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -635,7 +635,7 @@ esp6_input(mp, offp, proto)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
 	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		goto bad;
 	}
 	if (AH_MAXSUMSIZE < siz) {

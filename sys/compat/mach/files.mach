@@ -1,12 +1,18 @@
-#	$NetBSD: files.mach,v 1.1.4.2 2001/08/24 00:08:51 nathanw Exp $
+#	$NetBSD: files.mach,v 1.1.4.3 2002/11/11 22:07:17 nathanw Exp $
 #
-# Config file description for machine-independent SVR4 compat code.
+# Config file description for machine-independent Mach compat code.
 # Included by ports that need it.
 
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+file	compat/mach/mach_errno.c	compat_mach
+file	compat/mach/mach_exec.c		compat_mach
+file	compat/mach/mach_host.c		compat_mach
+file	compat/mach/mach_misc.c		compat_mach
+file	compat/mach/mach_namemap.c	compat_mach
+file	compat/mach/mach_port.c		compat_mach
 file	compat/mach/mach_syscalls.c	compat_mach
 file	compat/mach/mach_sysent.c	compat_mach
-file	compat/mach/mach_misc.c		compat_mach
-file	compat/mach/mach_exec.c		compat_mach
+file	compat/mach/mach_task.c		compat_mach
+file	compat/mach/mach_vm.c		compat_mach

@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.4.2.2 2002/09/17 21:14:23 nathanw Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.4.2.3 2002/11/11 21:58:00 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -146,8 +146,6 @@ evbmips_intr_init(void)
 		evcnt_attach_dynamic(&malta_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", malta_cpuintrnames[i]);
 	}
-
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	mcp->mc_pc.pc_intr_v = NULL;
 	mcp->mc_pc.pc_intr_map = malta_pci_intr_map;

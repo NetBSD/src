@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.3.2.9 2002/10/18 02:41:20 nathanw Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.3.2.10 2002/11/11 22:08:23 nathanw Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -90,6 +90,8 @@ LIBKERN?=	${KERNLIB}
 LIBKERN?=	${KERNLIB_PROF}
 .endif
 
+LIBKERNLN?=	${KERNLIBLN}
+
 ### find out what to use for libcompat
 .include "$S/compat/common/Makefile.inc"
 .ifndef PROF
@@ -97,6 +99,8 @@ LIBCOMPAT?=	${COMPATLIB}
 .else
 LIBCOMPAT?=	${COMPATLIB_PROF}
 .endif
+
+LIBCOMPATLN?=	${COMPATLIBLN}
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -205,7 +209,7 @@ assym.h machdep.o: Makefile
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f ${KERNELS} eddep tags *.[io] [a-z]*.s vers.c \
+	rm -f ${KERNELS} eddep tags *.[io] *.ln [a-z]*.s vers.c \
 	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
 	    ${EXTRA_KERNELS} ${EXTRA_CLEAN}
 .endif
@@ -246,16 +250,25 @@ dependall: depend all
 .if !target(lint)
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
-KERNLINTFLAGS?=	-hbxncez -Dvolatile=
+KERNLINTFLAGS?=	-bcehnxzFS
+NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $<
+
+_lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${LIBCOMPATLN}
+
 .for _sfile in ${ALLSFILES}
 LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
 	      awk -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
-lint: ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-	@${LINT} ${KERNLINTFLAGS} ${CPPFLAGS} -UKGDB \
-	    ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES} | \
-	    grep -v 'static function .* unused'
+
+.for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+${_cfile:T:R}.ln: ${_cfile}
+	${NORMAL_LN}
+.endfor
+
+lint: ${LOBJS}
+	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${LOBJS}
 .endif
 
 .if !target(install)
@@ -263,7 +276,7 @@ lint: ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
 MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
-.if !target(install-kernel-${MACHINE_NAME}})
+.if !target(install-kernel-${MACHINE_NAME})
 install-kernel-${MACHINE_NAME}:
 	rm -f ${DESTDIR}/onetbsd
 	ln ${DESTDIR}/netbsd ${DESTDIR}/onetbsd

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45.2.7 2002/10/18 02:44:58 nathanw Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.8 2002/11/11 22:14:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.7 2002/10/18 02:44:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.8 2002/11/11 22:14:15 nathanw Exp $");
 
 #include "fs_union.h"
 
@@ -64,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.7 2002/10/18 02:44:58 nathanw E
 #ifdef UNION
 #include <miscfs/union/union.h>
 #endif
+#include <sys/verified_exec.h>
+
+extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
+extern struct veriexec_devhead veriexec_file_dev_head;
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
@@ -77,7 +81,7 @@ static int vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
 
 struct 	fileops vnops = {
 	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
-	vn_statfile, vn_closefile
+	vn_statfile, vn_closefile, vn_kqfilter
 };
 
 /*
@@ -94,7 +98,12 @@ vn_open(ndp, fmode, cmode)
 	struct ucred *cred = p->p_ucred;
 	struct vattr va;
 	int error;
-
+#ifdef VERIFIED_EXEC
+	char got_dev;
+	struct veriexec_inode_list *veriexec_node;
+	char fingerprint[MAXFINGERPRINTLEN];
+#endif
+		
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
@@ -145,10 +154,76 @@ vn_open(ndp, fmode, cmode)
 		error = EOPNOTSUPP;
 		goto bad;
 	}
+
+#ifdef VERIFIED_EXEC
+	veriexec_node = NULL;
+
+	if ((error = VOP_GETATTR(vp, &va, cred, p)) != 0)
+		goto bad;
+#endif
+
 	if ((fmode & O_CREAT) == 0) {
+#ifdef VERIFIED_EXEC
+		  /*
+		   * Look for the file on the fingerprint lists iff
+		   * it has not been seen before.
+		   */
+		if ((vp->fp_status == FINGERPRINT_INVALID) ||
+		    (vp->fp_status == FINGERPRINT_NODEV)) {
+			  /* check the file list for the finger print */
+			veriexec_node = get_veriexec_inode(&veriexec_file_dev_head,
+						     va.va_fsid,
+						     va.va_fileid,
+						     &got_dev);
+			if (veriexec_node == NULL) {
+				/* failing that, check the exec list */
+				veriexec_node = get_veriexec_inode(
+					&veriexec_dev_head, va.va_fsid,
+					va.va_fileid, &got_dev);
+			}
+
+			if ((veriexec_node == NULL) && (got_dev == 1))
+				vp->fp_status = FINGERPRINT_NOENTRY;
+
+			if (veriexec_node != NULL) {
+				if ((error = evaluate_fingerprint(vp,
+						veriexec_node, p, va.va_size,
+						fingerprint)) != 0)
+					goto bad;
+
+				if (fingerprintcmp(veriexec_node,
+						   fingerprint) == 0) {
+					  /* fingerprint ok */
+					vp->fp_status =	FINGERPRINT_VALID;
+#ifdef VERIFIED_EXEC_DEBUG
+					printf(
+			"file fingerprint matches for dev %lu, file %lu\n",
+						va.va_fsid, va.va_fileid);
+#endif
+				} else {
+					vp->fp_status =	FINGERPRINT_NOMATCH;
+				}
+			}
+		}
+#endif
+		
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
+
+#ifdef VERIFIED_EXEC
+				/* file is on finger print list */
+			if (vp->fp_status == FINGERPRINT_NOMATCH) {
+				  /* fingerprint bad */
+				printf(
+		"file fingerprint does not match on dev %lu, file %lu\n",
+					va.va_fsid, va.va_fileid);
+				if (securelevel > 2) {
+					error = EPERM;
+					goto bad;
+				}
+			}
+#endif
 		}
 		if (fmode & (FWRITE | O_TRUNC)) {
 			if (vp->v_type == VDIR) {
@@ -158,6 +233,26 @@ vn_open(ndp, fmode, cmode)
 			if ((error = vn_writechk(vp)) != 0 ||
 			    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0)
 				goto bad;
+#ifdef VERIFIED_EXEC
+			  /*
+			   * If file has a fingerprint then
+			   * deny the write request, otherwise
+			   * invalidate the status so we don't
+			   * keep checking for the file having
+			   * a fingerprint.
+			   */
+			if (vp->fp_status == FINGERPRINT_VALID) {
+				printf(
+		      "writing to fingerprinted file for dev %lu, file %lu\n",
+		      va.va_fsid, va.va_fileid);
+				if (securelevel > 2) {
+					error = EPERM;
+					goto bad;
+				} else {
+					vp->fp_status =	FINGERPRINT_INVALID;
+				}
+			}
+#endif
 		}
 	}
 	if (fmode & O_TRUNC) {
@@ -618,6 +713,18 @@ vn_poll(fp, events, p)
 {
 
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
+}
+
+/*
+ * File table vnode kqfilter routine.
+ */
+int
+vn_kqfilter(fp, kn)
+	struct file *fp;
+	struct knote *kn;
+{
+
+	return (VOP_KQFILTER((struct vnode *)fp->f_data, kn));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38.4.3 2001/12/08 08:22:40 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.4.4 2002/11/11 21:57:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -215,7 +215,7 @@ int	fpu_probe __P((void));
 int	badbaddr __P((caddr_t, int));
 void	consinit __P((void));
 void	dumpconf __P((void));
-paddr_t	kvtop __P((caddr_t));
+int	kvtop __P((caddr_t));
 void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	setredzone __P((u_int *, caddr_t));
@@ -239,27 +239,6 @@ void	savectx __P((struct pcb *));
 int	suline __P((caddr_t, caddr_t));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
-void	DCIAS __P((vaddr_t));
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vaddr_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
-
-#if defined(M68040) || defined(M68060)
-void	DCFA __P((void));
-void	DCFP __P((paddr_t));
-void	DCFL __P((paddr_t));
-void	DCPL __P((paddr_t));
-void	DCPP __P((paddr_t));
-void	ICPL __P((paddr_t));
-void	ICPP __P((paddr_t));
-#endif
 
 /*
  * Prototypes from machdep.c:

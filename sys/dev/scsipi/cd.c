@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.144.2.10 2002/10/18 02:44:13 nathanw Exp $	*/
+/*	$NetBSD: cd.c,v 1.144.2.11 2002/11/11 22:12:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.10 2002/10/18 02:44:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.11 2002/11/11 22:12:07 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -155,7 +155,7 @@ const struct bdevsw cd_bdevsw = {
 
 const struct cdevsw cd_cdevsw = {
 	cdopen, cdclose, cdread, cdwrite, cdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct dkdriver cddkdriver = { cdstrategy };
@@ -826,7 +826,7 @@ cdstart(periph)
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
 		if (error) {
-			disk_unbusy(&cd->sc_dk, 0); 
+			disk_unbusy(&cd->sc_dk, 0, 0);
 			printf("%s: not queued, error %d\n",
 			    cd->sc_dev.dv_xname, error);
 		}
@@ -840,7 +840,8 @@ cddone(xs)
 	struct cd_softc *cd = (void *)xs->xs_periph->periph_dev;
 
 	if (xs->bp != NULL) {
-		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
+		    (xs->bp->b_flags & B_READ));;
 #if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
 #endif
@@ -1246,7 +1247,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		struct ioc_read_subchannel *args =
 		    (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
-		int len = args->data_len;
+		u_int len = args->data_len;
 
 		if (len > sizeof(data) ||
 		    len < sizeof(struct cd_sub_channel_header))
@@ -1279,7 +1280,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		    (struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
 		struct cd_toc_entry *cte;
-		int len = te->data_len;
+		u_int len = te->data_len;
 		int ntracks;
 
 		th = &toc.header;

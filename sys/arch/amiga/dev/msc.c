@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.19.8.5 2002/10/18 02:35:02 nathanw Exp $ */
+/*	$NetBSD: msc.c,v 1.19.8.6 2002/11/11 21:56:20 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.8.5 2002/10/18 02:35:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.8.6 2002/11/11 21:56:20 nathanw Exp $");
 
 #include "msc.h"
 
@@ -186,7 +186,7 @@ dev_type_poll(mscpoll);
 
 const struct cdevsw msc_cdevsw = {
 	mscopen, mscclose, mscread, mscwrite, mscioctl,
-	mscstop, msctty, mscpoll, nommap, D_TTY
+	mscstop, msctty, mscpoll, nommap, ttykqfilter, D_TTY
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19.12.3 2002/10/18 02:36:50 nathanw Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.12.4 2002/11/11 21:58:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.12.3 2002/10/18 02:36:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.12.4 2002/11/11 21:58:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
 	ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void	ppistart __P((void *));

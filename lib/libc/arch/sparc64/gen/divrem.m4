@@ -1,3 +1,5 @@
+/*	$NetBSD: divrem.m4,v 1.1.12.1 2002/11/11 22:21:55 nathanw Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,17 +37,19 @@
  * SUCH DAMAGE.
  *
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
- * $NetBSD: divrem.m4,v 1.1 1998/09/11 04:56:21 eeh Exp $
  */
+
+#include <machine/asm.h>
+#include <machine/trap.h>
 
 /*
  * Division and remainder, from Appendix E of the Sparc Version 8
  * Architecture Manual, with fixes from Gordon Irlam.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: divrem.m4,v 1.1.12.1 2002/11/11 22:21:55 nathanw Exp $")
+#endif
 
 /*
  * Input: dividend and divisor in %o0 and %o1 respectively.
@@ -93,7 +97,7 @@ define(V, `%o5')
 
 /* m4 reminder: ifelse(a,b,c,d) => if a is b, then c, else d */
 define(T, `%g1')
-define(SC, `%g7')
+define(SC, `%g5')
 ifelse(S, `true', `define(SIGN, `%g6')')
 
 /*
@@ -127,9 +131,6 @@ L.$1.eval(TWOSUPN+$2):
 		add	Q, ($2*2-1), Q
 	', `	DEVELOP_QUOTIENT_BITS(incr($1), `eval(2*$2-1)')')
 	ifelse($1, 1, `9:')')
-
-#include <machine/asm.h>
-#include <machine/trap.h>
 
 FUNC(NAME)
 ifelse(S, `true',

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.45.2.5 2002/10/18 02:45:39 nathanw Exp $ */
+/* $NetBSD: device.h,v 1.45.2.6 2002/11/11 22:16:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -155,7 +155,7 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_INITIALIZER(type, parent, group, name)			\
     {									\
 	0,			/* ev_count */				\
-	{ },			/* ev_list */				\
+	{ 0 },			/* ev_list */				\
 	type,			/* ev_type */				\
 	0,			/* ev_grouplen */			\
 	0,			/* ev_namelen */			\
@@ -237,7 +237,7 @@ LIST_HEAD(cfattachlist, cfattach);
 
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 struct cfattach __CONCAT(name,_ca) = {					\
-	___STRING(name), { }, ddsize, matfn, attfn, detfn, actfn	\
+	___STRING(name), { 0 }, ddsize, matfn, attfn, detfn, actfn	\
 }
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -257,7 +257,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
-	{ }, { }, NULL, ___STRING(name), class, 0, attrs		\
+	{ 0 }, { 0 }, NULL, ___STRING(name), class, 0, attrs		\
 }
 
 /*
@@ -310,6 +310,7 @@ int	config_cfdriver_detach(struct cfdriver *);
 int	config_cfattach_attach(const char *, struct cfattach *);
 int	config_cfattach_detach(const char *, struct cfattach *);
 
+struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
 
 struct cfdata *config_search(cfmatch_t, struct device *, void *);

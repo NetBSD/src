@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.72.2.6 2002/10/18 02:42:05 nathanw Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.72.2.7 2002/11/11 22:10:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.72.2.6 2002/10/18 02:42:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.72.2.7 2002/11/11 22:10:13 nathanw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -231,7 +231,7 @@ dev_type_poll(zspoll);
 
 const struct cdevsw zstty_cdevsw = {
 	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, D_TTY
+	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
 };
 
 struct zsops zsops_tty;
@@ -1028,7 +1028,8 @@ zsparam(tp, t)
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
-	int ospeed, cflag;
+	int ospeed;
+	tcflag_t cflag;
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
 

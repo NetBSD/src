@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.1.4.4 2002/10/18 02:35:35 nathanw Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.1.4.5 2002/11/11 21:56:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -114,7 +114,7 @@ dev_type_mmap(vidcconsolemmap);
 
 const struct cdevsw vidcconsole_cdevsw = {
 	vidcconsoleopen, vidcconsoleclose, noread, nowrite, vidcconsoleioctl,
-	nostop, notty, nopoll, vidcconsolemmap,
+	nostop, notty, nopoll, vidcconsolemmap, nokqfilter,
 };
 
 int

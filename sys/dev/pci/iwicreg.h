@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicreg.h,v 1.1.4.2 2002/10/18 02:43:10 nathanw Exp $	*/
+/*	$NetBSD: iwicreg.h,v 1.1.4.3 2002/11/11 22:11:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -96,7 +96,7 @@
  * 	Remaining control register offsets.
  *---------------------------------------------------------------------------*/
 #define ISTA		0x14	/* Interrupt status register */
-#define IMASK		0x18	/* Interrupt mask register */
+#define IWIC_IMASK	0x18	/* Interrupt mask register */
 #define TIMR2		0x4c	/* Timer 2 */
 #define L1_RC		0x50	/* GCI layer 1 ready code */
 #define CIR		0x58	/* Command/Indication receive */

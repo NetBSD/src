@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.2.2.4 2002/10/18 02:42:07 nathanw Exp $	*/
+/*	$NetBSD: cir.c,v 1.2.2.5 2002/11/11 22:10:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,10 +56,11 @@ dev_type_read(cirread);
 dev_type_write(cirwrite);
 dev_type_ioctl(cirioctl);
 dev_type_poll(cirpoll);
+dev_type_kqfilter(cirkqfilter);
 
 const struct cdevsw cir_cdevsw = {
 	ciropen, circlose, cirread, cirwrite, cirioctl,
-	nostop, notty, cirpoll, nommap,
+	nostop, notty, cirpoll, nommap, cirkqfilter,
 };
 
 int cir_match(struct device *parent, struct cfdata *match, void *aux);

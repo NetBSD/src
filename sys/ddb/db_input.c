@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.14.2.3 2002/02/28 04:13:05 nathanw Exp $	*/
+/*	$NetBSD: db_input.c,v 1.14.2.4 2002/11/11 22:08:32 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.14.2.3 2002/02/28 04:13:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.14.2.4 2002/11/11 22:08:32 nathanw Exp $");
 
-#include "opt_ddb.h"
+#include "opt_ddbparam.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -138,14 +138,14 @@ db_delete_line(void)
 		 db_history_curr++; \
 		 if (db_history_curr > db_history + db_history_size - 1) \
 			 db_history_curr = db_history; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define DEC_DB_CURR() \
 	do { \
 		 db_history_curr--; \
 		 if (db_history_curr < db_history) \
 		     db_history_curr = db_history + \
 		     db_history_size - 1; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #endif
 
 /* returns TRUE at end-of-line */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.1.4.3 2002/08/23 02:37:11 petrov Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.1.4.4 2002/11/11 22:08:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.1.4.3 2002/08/23 02:37:11 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.1.4.4 2002/11/11 22:08:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,16 +83,16 @@ loop:
 			if (SCARG(uap, status)) {
 				status = p->p_xstat;	/* convert to int */
 				error = copyout((caddr_t)&status,
-						(caddr_t)(u_long)SCARG(uap, status),
-						sizeof(status));
+				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
+				    sizeof(status));
 				if (error)
 					return (error);
 			}
 			if (SCARG(uap, rusage)) {
 				netbsd32_from_rusage(p->p_ru, &ru32);
 				if ((error = copyout((caddr_t)&ru32,
-						     (caddr_t)(u_long)SCARG(uap, rusage),
-						     sizeof(struct netbsd32_rusage))))
+				    (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
+				    sizeof(struct netbsd32_rusage))))
 					return (error);
 			}
 			/*
@@ -157,7 +157,7 @@ loop:
 			if (SCARG(uap, status)) {
 				status = W_STOPCODE(p->p_xstat);
 				error = copyout((caddr_t)&status,
-				    (caddr_t)(u_long)SCARG(uap, status),
+				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
 				    sizeof(status));
 			} else
 				error = 0;
@@ -204,5 +204,6 @@ netbsd32_getrusage(l, v, retval)
 		return (EINVAL);
 	}
 	netbsd32_from_rusage(rup, &ru);
-	return (copyout(&ru, (caddr_t)(u_long)SCARG(uap, rusage), sizeof(ru)));
+	return (copyout(&ru, (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
+	    sizeof(ru)));
 }

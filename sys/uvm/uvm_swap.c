@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.14 2002/10/18 02:46:01 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.15 2002/11/11 22:17:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.14 2002/10/18 02:46:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.15 2002/11/11 22:17:13 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -187,7 +187,7 @@ static struct pool vndbuf_pool;
 	int s = splbio();						\
 	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
 	splx(s);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define putvndxfer(vnx) {						\
 	pool_put(&vndxfer_pool, (void *)(vnx));				\
@@ -197,7 +197,7 @@ static struct pool vndbuf_pool;
 	int s = splbio();						\
 	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
 	splx(s);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define putvndbuf(vbp) {						\
 	pool_put(&vndbuf_pool, (void *)(vbp));				\
@@ -244,7 +244,7 @@ const struct bdevsw swap_bdevsw = {
 
 const struct cdevsw swap_cdevsw = {
 	nullopen, nullclose, swread, swwrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter
 };
 
 /*
@@ -1386,7 +1386,7 @@ sw_reg_iodone(bp)
 	struct vndxfer *vnx = vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;		/* parent buffer */
 	struct swapdev	*sdp = vnx->vx_sdp;
-	int		s, resid;
+	int s, resid, error;
 	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "  vbp=%p vp=%p blkno=%x addr=%p",
@@ -1403,12 +1403,11 @@ sw_reg_iodone(bp)
 	pbp->b_resid -= resid;
 	vnx->vx_pending--;
 
-	if (vbp->vb_buf.b_error) {
-		UVMHIST_LOG(pdhist, "  got error=%d !",
-		    vbp->vb_buf.b_error, 0, 0, 0);
-
+	if (vbp->vb_buf.b_flags & B_ERROR) {
 		/* pass error upward */
-		vnx->vx_error = vbp->vb_buf.b_error;
+		error = vbp->vb_buf.b_error ? vbp->vb_buf.b_error : EIO;
+		UVMHIST_LOG(pdhist, "  got error=%d !", error, 0, 0, 0);
+		vnx->vx_error = error;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27.6.6 2002/10/18 02:35:50 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.6.7 2002/11/11 21:57:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+#include <sys/event.h>
 
 #include <dev/clock_subr.h>
 
@@ -104,7 +105,7 @@ extern struct cfdriver clock_cd;
 
 const struct cdevsw rtc_cdevsw = {
 	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void statintr __P((struct clockframe));

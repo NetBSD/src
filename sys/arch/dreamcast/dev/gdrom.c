@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8.6.4 2002/10/18 02:36:19 nathanw Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.6.5 2002/11/11 21:57:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -66,7 +66,7 @@ const struct bdevsw gdrom_bdevsw = {
 
 const struct cdevsw gdrom_cdevsw = {
 	gdromopen, gdromclose, gdromread, gdromwrite, gdromioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 struct gdrom_softc {

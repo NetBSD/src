@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.44.2.6 2002/06/20 03:44:38 nathanw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.44.2.7 2002/11/11 22:09:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.6 2002/06/20 03:44:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.7 2002/11/11 22:09:31 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -457,7 +457,7 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_readreg = fxp_mdi_read;
 	sc->sc_mii.mii_writereg = fxp_mdi_write;
 	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
 
 	flags = MIIF_NOISOLATE;
@@ -2040,7 +2040,7 @@ static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
 #define	UCODE(x)	x, sizeof(x)
 
 static const struct ucode {
-	uint32_t	revision;
+	int32_t		revision;
 	const uint32_t	*ucode;
 	size_t		length;
 	uint16_t	int_delay_offset;

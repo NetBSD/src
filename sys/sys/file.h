@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.23.2.5 2002/08/01 02:46:57 nathanw Exp $	*/
+/*	$NetBSD: file.h,v 1.23.2.6 2002/11/11 22:16:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,6 +48,7 @@ struct proc;
 struct uio;
 struct iovec;
 struct stat;
+struct knote;
 
 /*
  * Kernel descriptor table.
@@ -60,6 +61,7 @@ struct file {
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
+#define	DTYPE_KQUEUE	4		/* event queue */
 #define	DTYPE_MISC	5		/* misc file descriptor type */
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
@@ -82,6 +84,7 @@ struct file {
 		int	(*fo_stat)	(struct file *fp, struct stat *sp,
 					    struct proc *p);
 		int	(*fo_close)	(struct file *fp, struct proc *p);
+		int	(*fo_kqfilter)	(struct file *fp, struct knote *kn);
 	} *f_ops;
 	off_t		f_offset;
 	caddr_t		f_data;		/* descriptor data, e.g. vnode/socket */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.18.2.4 2002/06/20 03:49:18 nathanw Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.18.2.5 2002/11/11 22:15:45 nathanw Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ extern struct icmp6stat icmp6stat;
 do {								\
 	if (ifp)						\
 		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->in6_ifstat->tag++; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
 extern struct in6_addr zeroin6_addr;
@@ -479,7 +479,7 @@ do {									\
 			break;						\
 	}								\
 	(ia) = (struct in6_ifaddr *)ifa;				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #endif /* _KERNEL */
 
@@ -535,7 +535,7 @@ do {								\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
 		     (in6m) = in6m->in6m_entry.le_next)		\
 			continue;				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Macro to step through all of the in6_multi records, one at a time.
@@ -559,7 +559,7 @@ do {									\
 				break;					\
 			}						\
 		}							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define IN6_FIRST_MULTI(step, in6m)		\
 /* struct in6_multistep step; */		\
@@ -568,7 +568,7 @@ do {						\
 	(step).i_ia = in6_ifaddr;		\
 	(step).i_in6m = NULL;			\
 	IN6_NEXT_MULTI((step), (in6m));		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
 	int *));

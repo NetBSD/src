@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77.2.8 2002/08/01 02:46:50 nathanw Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77.2.9 2002/11/11 22:15:34 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -310,7 +310,7 @@ do {									\
 		    __FILE__, __LINE__, tp);				\
 		panic("tcp_reass_lock");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	TCP_REASS_LOCK_CHECK(tp)					\
 do {									\
 	if (((tp)->t_flags & TF_REASSEMBLING) == 0) {			\
@@ -318,7 +318,7 @@ do {									\
 		    __FILE__, __LINE__, tp);				\
 		panic("tcp reass lock check");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	TCP_REASS_LOCK(tp)	(void) tcp_reass_lock_try((tp))
 #define	TCP_REASS_LOCK_CHECK(tp) /* nothing */

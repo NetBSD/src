@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5.4.2 2002/10/18 02:33:25 nathanw Exp $
+# $NetBSD: GENERIC,v 1.5.4.3 2002/11/11 21:55:48 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -117,6 +117,10 @@ options 	SYSTRACE	# system call vetting via systrace(1)
 options 	NTP		# Kernel PLL for ntpd(8).
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Disable kernel security.
 #options 	INSECURE

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.48.2.3 2002/06/20 03:48:59 nathanw Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.48.2.4 2002/11/11 22:15:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.48.2.3 2002/06/20 03:48:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.48.2.4 2002/11/11 22:15:32 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -408,10 +408,10 @@ void
 tcp_timer_persist(void *arg)
 {
 	struct tcpcb *tp = arg;
-	struct socket *so;
 	uint32_t rto;
 	int s;
 #ifdef TCP_DEBUG
+	struct socket *so;
 	short ostate;
 #endif
 
@@ -419,6 +419,7 @@ tcp_timer_persist(void *arg)
 
 	callout_deactivate(&tp->t_timer[TCPT_PERSIST]);
 
+#ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -428,9 +429,8 @@ tcp_timer_persist(void *arg)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
 
-#ifdef TCP_DEBUG
 	ostate = tp->t_state;
-#endif
+#endif /* TCP_DEBUG */
 
 	/*
 	 * Persistance timer into zero window.
@@ -557,9 +557,9 @@ void
 tcp_timer_2msl(void *arg)
 {
 	struct tcpcb *tp = arg;
-	struct socket *so;
 	int s;
 #ifdef TCP_DEBUG
+	struct socket *so;
 	short ostate;
 #endif
 
@@ -567,6 +567,7 @@ tcp_timer_2msl(void *arg)
 
 	callout_deactivate(&tp->t_timer[TCPT_2MSL]);
 
+#ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -576,9 +577,8 @@ tcp_timer_2msl(void *arg)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
 
-#ifdef TCP_DEBUG
 	ostate = tp->t_state;
-#endif
+#endif /* TCP_DEBUG */
 
 	/*
 	 * 2 MSL timeout in shutdown went off.  If we're closed but

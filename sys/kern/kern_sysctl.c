@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.23 2002/09/17 21:22:13 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.24 2002/11/11 22:13:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.23 2002/09/17 21:22:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.24 2002/11/11 22:13:52 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -751,7 +751,34 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 				return EPERM;
 		}
 	}
-	if (name[1] == PROC_PID_CORENAME) {
+	switch(name[1]) {
+	case PROC_PID_STOPFORK: 
+		if (namelen != 2)
+			return EINVAL;
+		i = ((ptmp->p_flag & P_STOPFORK) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+			return error;
+		if (i != 0)
+			ptmp->p_flag |= P_STOPFORK;
+		else
+			ptmp->p_flag &= ~P_STOPFORK;
+		return 0;
+		break;
+	
+	case PROC_PID_STOPEXEC: 
+		if (namelen != 2)
+			return EINVAL;
+		i = ((ptmp->p_flag & P_STOPEXEC) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+			return error;
+		if (i != 0)	
+			ptmp->p_flag |= P_STOPEXEC;
+		else
+			ptmp->p_flag &= ~P_STOPEXEC;
+		return 0;
+		break;
+
+	case PROC_PID_CORENAME:
 		if (namelen != 2)
 			return EINVAL;
 		/*
@@ -821,8 +848,9 @@ cleanup:
 		if (tmps)
 			free(tmps, M_TEMP);
 		return (error);
-	}
-	if (name[1] == PROC_PID_LIMIT) {
+		break;
+
+	case PROC_PID_LIMIT:
 		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
 			return EINVAL;
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
@@ -842,7 +870,13 @@ cleanup:
 			error = dosetrlimit(ptmp, p->p_cred,
 			    name[2] - 1, &alim);
 		return error;
+		break;
+
+	default:
+		return (EINVAL);
+		break;
 	}
+	/* NOTREACHED */
 	return (EINVAL);
 }
 
@@ -887,8 +921,12 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #else
 	for (i = 0; i < nexecs_builtin; i++) {
 	    e = execsw_builtin[i].es_emul;
-	    if (e == NULL || strcmp(ename, e->e_name) != 0 ||
-		e->e_sysctl != NULL)
+	    /*
+	     * In order to match e.g. e->e_name "irix o32" with ename "irix", 
+	     * we limit the comparison to the length of ename.
+	     */
+	    if (e == NULL || strncmp(ename, e->e_name, strlen(ename)) != 0 ||
+		e->e_sysctl == NULL)
 		continue;
 
 	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
@@ -1168,7 +1206,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 		(dst).cgid = (src).cgid; \
 		(dst).mode = (src).mode; \
 		(dst)._seq = (src)._seq; \
-	} while (0);
+	} while (/*CONSTCOND*/ 0);
 #define	FILL_MSG(src, dst) do { \
 	FILL_PERM((src).msg_perm, (dst).msg_perm); \
 	(dst).msg_qnum = (src).msg_qnum; \
@@ -1179,13 +1217,13 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).msg_stime = (src).msg_stime; \
 	(dst).msg_rtime = (src).msg_rtime; \
 	(dst).msg_ctime = (src).msg_ctime; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define	FILL_SEM(src, dst) do { \
 	FILL_PERM((src).sem_perm, (dst).sem_perm); \
 	(dst).sem_nsems = (src).sem_nsems; \
 	(dst).sem_otime = (src).sem_otime; \
 	(dst).sem_ctime = (src).sem_ctime; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define	FILL_SHM(src, dst) do { \
 	FILL_PERM((src).shm_perm, (dst).shm_perm); \
 	(dst).shm_segsz = (src).shm_segsz; \
@@ -1195,7 +1233,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).shm_dtime = (src).shm_dtime; \
 	(dst).shm_ctime = (src).shm_ctime; \
 	(dst).shm_nattch = (src).shm_nattch; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 static int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)

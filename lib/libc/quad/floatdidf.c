@@ -1,4 +1,4 @@
-/*	$NetBSD: floatdidf.c,v 1.4 1997/07/13 20:01:46 christos Exp $	*/
+/*	$NetBSD: floatdidf.c,v 1.4.14.1 2002/11/11 22:22:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)floatdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatdidf.c,v 1.4 1997/07/13 20:01:46 christos Exp $");
+__RCSID("$NetBSD: floatdidf.c,v 1.4.14.1 2002/11/11 22:22:30 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,12 +69,12 @@ __floatdidf(x)
 
 	/*
 	 * Now u.ul[H] has the factor of 2^32 (or whatever) and u.ul[L]
-	 * has the units.  Ideally we could just set d, add LONG_BITS to
+	 * has the units.  Ideally we could just set d, add INT_BITS to
 	 * its exponent, and then add the units, but this is portable
 	 * code and does not know how to get at an exponent.  Machine-
 	 * specific code may be able to do this more efficiently.
 	 */
-	d = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((int)1 << (INT_BITS - 2)) * 4.0);
 	d += u.ul[L];
 
 	return (neg ? -d : d);

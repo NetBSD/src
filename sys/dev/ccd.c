@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71.2.8 2002/09/17 21:19:17 nathanw Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71.2.9 2002/11/11 22:08:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.8 2002/09/17 21:19:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.9 2002/11/11 22:08:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ const struct bdevsw ccd_bdevsw = {
 
 const struct cdevsw ccd_cdevsw = {
 	ccdopen, ccdclose, ccdread, ccdwrite, ccdioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #ifdef DEBUG
@@ -712,7 +712,7 @@ ccdstart(cs, bp)
 			bp->b_error = ENOMEM;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
-			disk_unbusy(&cs->sc_dkdev, 0);
+			disk_unbusy(&cs->sc_dkdev, 0, 0);
 			return;
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
@@ -849,7 +849,8 @@ ccdintr(cs, bp)
 	 */
 	if (bp->b_flags & B_ERROR)
 		bp->b_resid = bp->b_bcount;
-	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 }
 

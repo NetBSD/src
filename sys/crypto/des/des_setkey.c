@@ -1,4 +1,4 @@
-/*	$NetBSD: des_setkey.c,v 1.4.2.3 2001/11/14 19:13:35 nathanw Exp $	*/
+/*	$NetBSD: des_setkey.c,v 1.4.2.4 2002/11/11 22:08:30 nathanw Exp $	*/
 /*	$KAME: des_setkey.c,v 1.6 2001/07/03 14:27:53 itojun Exp $	*/
 
 /* crypto/des/set_key.c */
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: des_setkey.c,v 1.4.2.3 2001/11/14 19:13:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: des_setkey.c,v 1.4.2.4 2002/11/11 22:08:30 nathanw Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -73,7 +73,7 @@ int des_check_key=0;
 
 void des_set_odd_parity(des_cblock *key)
 {
-	int i;
+	unsigned int i;
 
 	for (i=0; i<DES_KEY_SZ; i++)
 		(*key)[i]=odd_parity[(*key)[i]];
@@ -81,7 +81,7 @@ void des_set_odd_parity(des_cblock *key)
 
 int des_check_key_parity(des_cblock *key)
 {
-	int i;
+	unsigned int i;
 
 	for (i=0; i<DES_KEY_SZ; i++)
 		{

@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.10.4.5 2002/10/18 02:41:28 nathanw Exp $        */
+/*      $NetBSD: rndpool.c,v 1.10.4.6 2002/11/11 22:08:51 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.10.4.5 2002/10/18 02:41:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.10.4.6 2002/11/11 22:08:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
  * etc.  Note that we must have at least 64 bits of entropy in the pool
  * before we return anything in the high-quality modes.
  */
-int
+u_int32_t
 rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 {
 	u_int i;

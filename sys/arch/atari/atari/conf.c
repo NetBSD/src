@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.50.8.6 2002/09/17 21:13:37 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.50.8.7 2002/11/11 21:57:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,17 +43,6 @@
 #include "ite.h"
 #include "ser.h"
 #include "vga_pci.h"
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
 
 /*
  * This entire table could be autoconfig()ed but that would mean that

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_40.h,v 1.5 1999/11/06 17:42:32 thorpej Exp $	*/
+/*	$NetBSD: cacheops_40.h,v 1.5.12.1 2002/11/11 21:59:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,9 +39,8 @@
 /*
  * Invalidate entire TLB.
  */
-void TBIA_40 __P((void));
-extern __inline void
-TBIA_40()
+static __inline void __attribute__((__unused__))
+TBIA_40(void)
 {
 	__asm __volatile (" .word 0xf518" ); /*  pflusha */
 }
@@ -49,10 +48,8 @@ TBIA_40()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_40 __P((vaddr_t));
-extern __inline void
-TBIS_40(va)
-	vaddr_t	va;
+static __inline void __attribute__((__unused__))
+TBIS_40(vaddr_t va)
 {
 	register vaddr_t	r_va __asm("%a0") = va;
 	int	tmp;
@@ -68,9 +65,8 @@ TBIS_40(va)
 /*
  * Invalidate supervisor side of TLB
  */
-void TBIAS_40 __P((void));
-extern __inline void
-TBIAS_40()
+static __inline void __attribute__((__unused__))
+TBIAS_40(void)
 {
 	/*
 	 * Cannot specify supervisor/user on pflusha, so we flush all
@@ -81,9 +77,8 @@ TBIAS_40()
 /*
  * Invalidate user side of TLB
  */
-void TBIAU_40 __P((void));
-extern __inline void
-TBIAU_40()
+static __inline void __attribute__((__unused__))
+TBIAU_40(void)
 {
 	/*
 	 * Cannot specify supervisor/user on pflusha, so we flush all
@@ -94,16 +89,14 @@ TBIAU_40()
 /*
  * Invalidate instruction cache
  */
-void ICIA_40 __P((void));
-extern __inline void
-ICIA_40()
+static __inline void __attribute__((__unused__))
+ICIA_40(void)
 {
 	__asm __volatile (" .word 0xf498;"); /* cinva ic */
 }
 
-void ICPA_40 __P((void));
-extern __inline void
-ICPA_40()
+static __inline void __attribute__((__unused__))
+ICPA_40(void)
 {
 	__asm __volatile (" .word 0xf498;"); /* cinva ic */
 }
@@ -111,56 +104,47 @@ ICPA_40()
 /*
  * Invalidate data cache.
  */
-void DCIA_40 __P((void));
-extern __inline void
-DCIA_40()
+static __inline void __attribute__((__unused__))
+DCIA_40(void)
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIS_40 __P((void));
-extern __inline void
-DCIS_40()
+static __inline void __attribute__((__unused__))
+DCIS_40(void)
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIU_40 __P((void));
-extern __inline void
-DCIU_40()
+static __inline void __attribute__((__unused__))
+DCIU_40(void)
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIAS_40 __P((paddr_t));
-extern __inline void
-DCIAS_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+DCIAS_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
 	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
-void PCIA_40 __P((void));
-extern __inline void
-PCIA_40()
+static __inline void __attribute__((__unused__))
+PCIA_40(void)
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCFA_40 __P((void));
-extern __inline void
-DCFA_40()
+static __inline void __attribute__((__unused__))
+DCFA_40(void)
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 /* invalidate instruction physical cache line */
-void ICPL_40 __P((paddr_t));
-extern __inline void
-ICPL_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+ICPL_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
@@ -168,10 +152,8 @@ ICPL_40(pa)
 }
 
 /* invalidate instruction physical cache page */
-void ICPP_40 __P((paddr_t));
-extern __inline void
-ICPP_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+ICPP_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
@@ -179,10 +161,8 @@ ICPP_40(pa)
 }
 
 /* invalidate data physical cache line */
-void DCPL_40 __P((paddr_t));
-extern __inline void
-DCPL_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+DCPL_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
@@ -190,10 +170,8 @@ DCPL_40(pa)
 }
 
 /* invalidate data physical cache page */
-void DCPP_40 __P((paddr_t));
-extern __inline void
-DCPP_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+DCPP_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
@@ -201,18 +179,15 @@ DCPP_40(pa)
 }
 
 /* invalidate data physical all */
-void DCPA_40 __P((void));
-extern __inline void
-DCPA_40()
+static __inline void __attribute__((__unused__))
+DCPA_40(void)
 {
 	__asm __volatile (" .word 0xf458;"); /* cinva dc */
 }
 
 /* data cache flush line */
-void DCFL_40 __P((paddr_t));
-extern __inline void
-DCFL_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+DCFL_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 
@@ -220,10 +195,8 @@ DCFL_40(pa)
 }
 
 /* data cache flush page */
-void DCFP_40 __P((paddr_t));
-extern __inline void
-DCFP_40(pa)
-	paddr_t	pa;
+static __inline void __attribute__((__unused__))
+DCFP_40(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
 

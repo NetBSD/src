@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.40.2.9 2002/08/13 02:17:52 nathanw Exp $
+#	$NetBSD: files.arm,v 1.40.2.10 2002/11/11 21:56:37 nathanw Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -112,6 +112,7 @@ file	arch/arm/arm32/setstack.S		arm32
 file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
 file	arch/arm/arm32/vm_machdep.c		arm32
+file	arch/arm/arm32/atomic.S			arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

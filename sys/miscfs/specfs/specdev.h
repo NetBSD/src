@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.19.6.2 2002/06/20 03:48:03 nathanw Exp $	*/
+/*	$NetBSD: specdev.h,v 1.19.6.3 2002/11/11 22:14:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -93,6 +93,7 @@ int	spec_write	__P((void *));
 #define spec_fcntl	genfs_fcntl
 int	spec_ioctl	__P((void *));
 int	spec_poll	__P((void *));
+int	spec_kqfilter	__P((void *));
 #define spec_revoke	genfs_revoke
 #define	spec_mmap	genfs_mmap
 int	spec_fsync	__P((void *));

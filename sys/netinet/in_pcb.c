@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.68.2.5 2002/06/20 03:48:34 nathanw Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.68.2.6 2002/11/11 22:15:16 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.68.2.5 2002/06/20 03:48:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.68.2.6 2002/11/11 22:15:16 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -223,9 +223,6 @@ in_pcbbind(v, nam, p)
 	struct sockaddr_in *sin;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
-#ifndef IPNOPRIVPORTS
-	int error;
-#endif
 
 	if (TAILQ_FIRST(&in_ifaddr) == 0)
 		return (EADDRNOTAVAIL);
@@ -267,7 +264,7 @@ in_pcbbind(v, nam, p)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
 			return (EACCES);
 #endif
 		if (so->so_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
@@ -299,7 +296,7 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 				return (EACCES);
 #endif
 			min = lowportmin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.21 2002/11/09 02:14:52 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.22 2002/11/11 22:13:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.21 2002/11/09 02:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.22 2002/11/11 22:13:54 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -438,7 +438,6 @@ adjtime1(delta, olddelta, p)
 	struct proc *p;
 {
 	struct timeval atv;
-	struct timeval *oatv = NULL;
 	long ndelta, ntickdelta, odelta;
 	int error;
 	int s;
@@ -451,7 +450,6 @@ adjtime1(delta, olddelta, p)
 		if (uvm_useracc((caddr_t)olddelta,
 		    sizeof(struct timeval), B_WRITE) == FALSE)
 			return (EFAULT);
-		oatv = olddelta;
 	}
 
 	/*

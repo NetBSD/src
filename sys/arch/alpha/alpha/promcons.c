@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18.4.3 2002/09/17 21:12:42 nathanw Exp $ */
+/* $NetBSD: promcons.c,v 1.18.4.4 2002/11/11 21:55:57 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.4.3 2002/09/17 21:12:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.4.4 2002/11/11 21:55:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ dev_type_poll(prompoll);
 
 const struct cdevsw prom_cdevsw = {
 	promopen, promclose, promread, promwrite, promioctl,
-	promstop, promtty, prompoll, nommap, D_TTY
+	promstop, promtty, prompoll, nommap, ttykqfilter, D_TTY
 };
 
 #define	PROM_POLL_HZ	50

@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.31.2.11 2002/08/27 23:46:39 nathanw Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31.2.12 2002/11/11 22:09:46 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -139,6 +139,9 @@
 #define		FW_FEATURE_LVD_NOTIFY	0x2
 #define		FW_FEATURE_RIO_32BIT	0x4
 #define		FW_FEATURE_RIO_16BIT	0x8
+
+#define	MBOX_INIT_REQ_QUEUE_A64		0x0052
+#define	MBOX_INIT_RES_QUEUE_A64		0x0053
 
 #define	MBOX_ENABLE_TARGET_MODE		0x0055
 #define		ENABLE_TARGET_FLAG	0x8000
@@ -368,6 +371,9 @@ typedef struct {
 	u_int8_t	req_cdb[12];
 	ispds_t		req_dataseg[ISP_RQDSEG];
 } ispreq_t;
+
+#define	ispreq64_t	ispreqt3_t	/* same as.... */
+#define	ISP_RQDSEG_A64	2
 
 /*
  * A request packet can also be a marker packet.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.15.2.3 2002/02/28 04:13:06 nathanw Exp $	*/
+/*	$NetBSD: db_print.c,v 1.15.2.4 2002/11/11 22:08:33 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.15.2.3 2002/02/28 04:13:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.15.2.4 2002/11/11 22:08:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,7 +62,8 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		db_read_variable(&vs, &value);
 		db_printf("%-12s%s", vs.name, db_num_to_str(value));
 		db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
-		if (name != 0 && offset <= db_maxoff && offset != value) {
+		if (name != NULL &&
+		    (unsigned int) offset <= db_maxoff && offset != value) {
 			db_printf("\t%s", name);
 			if (offset != 0) {
 				char tbuf[24];

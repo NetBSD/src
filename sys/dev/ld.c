@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.7.2.7 2002/09/17 21:19:20 nathanw Exp $	*/
+/*	$NetBSD: ld.c,v 1.7.2.8 2002/11/11 22:08:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.7.2.7 2002/09/17 21:19:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.7.2.8 2002/11/11 22:08:46 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -93,7 +93,7 @@ const struct bdevsw ld_bdevsw = {
 
 const struct cdevsw ld_cdevsw = {
 	ldopen, ldclose, ldread, ldwrite, ldioctl,
-	nostop, notty, nopoll, nommap, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static struct	dkdriver lddkdriver = { ldstrategy };
@@ -552,7 +552,8 @@ lddone(struct ld_softc *sc, struct buf *bp)
 		printf("\n");
 	}
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif

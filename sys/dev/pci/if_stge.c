@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.6.4.5 2002/10/18 02:43:06 nathanw Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6.4.6 2002/11/11 22:11:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.4.5 2002/10/18 02:43:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.4.6 2002/11/11 22:11:10 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -590,7 +590,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = stge_mii_readreg;
 	sc->sc_mii.mii_writereg = stge_mii_writereg;
 	sc->sc_mii.mii_statchg = stge_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, stge_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, stge_mediachange,
 	    stge_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);

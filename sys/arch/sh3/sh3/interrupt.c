@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2.6.2 2002/10/18 02:39:44 nathanw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2.6.3 2002/11/11 22:04:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -393,16 +393,17 @@ void
 tmu1_oneshot()
 {
 
+	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_write_4(SH_(TCNT1), 0);
-	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR1);
+	_reg_bset_1(SH_(TSTR), TSTR_STR1);
 }
 
 int
 tmu1_intr(void *arg)
 {
 
-	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR1);
-	_reg_write_2(SH_(TCR1), _reg_read_2(SH_(TCR1)) & ~TCR_UNF);
+	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
+	_reg_bclr_2(SH_(TCR1), TCR_UNF);
 
 	softintr_dispatch(IPL_SOFTCLOCK);
 	softintr_dispatch(IPL_SOFT);
@@ -414,16 +415,17 @@ void
 tmu2_oneshot()
 {
 
+	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
 	_reg_write_4(SH_(TCNT2), 0);
-	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR2);
+	_reg_bset_1(SH_(TSTR), TSTR_STR2);
 }
 
 int
 tmu2_intr(void *arg)
 {
 
-	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR2);
-	_reg_write_2(SH_(TCR2), _reg_read_2(SH_(TCR2)) & ~TCR_UNF);
+	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
+	_reg_bclr_2(SH_(TCR2), TCR_UNF);
 
 	softintr_dispatch(IPL_SOFTSERIAL);
 	softintr_dispatch(IPL_SOFTNET);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5.4.3 2002/09/17 21:15:18 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.5.4.4 2002/11/11 21:59:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.4.3 2002/09/17 21:15:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.4.4 2002/11/11 21:59:31 nathanw Exp $");
 
 /*
  * Memory special file
@@ -69,7 +69,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.4.4.4 2002/10/06 02:02:00 gmcgarry Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.4.4.5 2002/11/11 22:08:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -96,7 +96,7 @@ dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
 	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 void

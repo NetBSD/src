@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.1.8.3 2002/04/01 07:42:22 nathanw Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.1.8.4 2002/11/11 22:03:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -61,7 +61,6 @@ void
 hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 {
 	bus_dma_segment_t seg;
-	struct hpc_dma_desc *hdd;
 	int rseg, allocsz;
 
 	sc->sc_bst = haa->ha_st;
@@ -96,19 +95,18 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 	}
 	/* Map pages into kernel memory */
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, allocsz,
-			   (caddr_t *)&hdd, BUS_DMA_NOWAIT)) {
+			   (caddr_t *)&sc->sc_desc_kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map sglist\n");
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
 
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, hdd,
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_desc_kva,
 			    allocsz, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load sglist\n");
 		return;
 	}
 
-	sc->sc_desc_kva = hdd;
 	sc->sc_desc_pa = (void *) sc->sc_dmamap->dm_segs[0].ds_addr;
 }
 

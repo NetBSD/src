@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.11.2.1 2002/06/20 03:50:15 nathanw Exp $	*/
+/*	$NetBSD: select.h,v 1.11.2.2 2002/11/11 22:16:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
 #define	_SYS_SELECT_H_
 
 #include <sys/types.h>
+#include <sys/event.h>		/* for struct klist */
 
 /*
  * Used to maintain information about processes that wish to be
@@ -46,6 +47,7 @@
  */
 struct selinfo {
 	pid_t		si_pid;		/* process to be notified */
+	struct klist	si_klist;	/* knotes attached to this selinfo */
 	short		si_flags;	/* see below */
 };
 #define	SI_COLL		0x0001		/* collision occurred */
@@ -55,6 +57,15 @@ struct proc;
 
 void	selrecord(struct proc *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
+
+static __inline void
+selnotify(struct selinfo *sip, long knhint)
+{
+
+	if (sip->si_pid != 0)
+		selwakeup(sip);
+	KNOTE(&sip->si_klist, knhint);
+}
 #endif
 
 #endif /* !_SYS_SELECT_H_ */

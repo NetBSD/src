@@ -1,0 +1,7 @@
+include "arch/i386/conf/GENERIC"
+
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options VERIFIED_EXEC
+#options VERIFIED_EXEC_DEBUG
+#options VERIFIED_EXEC_DEBUG_VERBOSE
+pseudo-device verifiedexec        1

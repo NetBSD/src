@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.4.2.4 2002/10/18 02:42:35 nathanw Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4.2.5 2002/11/11 22:10:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.4 2002/10/18 02:42:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.5 2002/11/11 22:10:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ dev_type_ioctl(spkrioctl);
 
 const struct cdevsw spkr_cdevsw = {
 	spkropen, spkrclose, noread, spkrwrite, spkrioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static pcppi_tag_t ppicookie;

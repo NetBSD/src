@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.27.2.5 2002/10/18 02:44:22 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.27.2.6 2002/11/11 22:12:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.5 2002/10/18 02:44:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.6 2002/11/11 22:12:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.5 2002/10/18 02:44:22 nathanw Exp $")
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
@@ -68,9 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27.2.5 2002/10/18 02:44:22 nathanw Exp $")
 #include <sys/poll.h>
 #include <sys/file.h>
 
-#include <machine/vuid_event.h>
-#include <machine/kbd.h>
-#include <machine/kbio.h>
+#include <dev/wscons/wsksymdef.h>
+
+#include <dev/sun/kbd_reg.h>
+#include <dev/sun/kbio.h>
+#include <dev/sun/vuid_event.h>
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
@@ -84,12 +87,47 @@ dev_type_close(kbdclose);
 dev_type_read(kbdread);
 dev_type_ioctl(kbdioctl);
 dev_type_poll(kbdpoll);
+dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap,
+	nostop, notty, kbdpoll, nommap, kbdkqfilter
 };
 
+#if NWSKBD > 0
+int	wssunkbd_enable __P((void *, int));
+void	wssunkbd_set_leds __P((void *, int));
+int	wssunkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+
+void    sunkbd_wskbd_cngetc __P((void *, u_int *, int *));
+void    sunkbd_wskbd_cnpollc __P((void *, int));
+void    sunkbd_wskbd_cnbell __P((void *, u_int, u_int, u_int));
+static void sunkbd_bell_off(void *v);
+
+const struct wskbd_accessops sunkbd_wskbd_accessops = {
+	wssunkbd_enable,
+	wssunkbd_set_leds,
+	wssunkbd_ioctl,
+};
+
+extern const struct wscons_keydesc wssun_keydesctab[];
+const struct wskbd_mapdata sunkbd_wskbd_keymapdata = {
+	wssun_keydesctab,
+#ifdef SUNKBD_LAYOUT
+	SUNKBD_LAYOUT,
+#else
+	KB_US,
+#endif
+};
+
+const struct wskbd_consops sunkbd_wskbd_consops = {
+        sunkbd_wskbd_cngetc,
+        sunkbd_wskbd_cnpollc,
+        sunkbd_wskbd_cnbell,
+};
+
+void kbd_wskbd_attach(struct kbd_softc *k, int isconsole);
+#endif
 
 /* ioctl helpers */
 static int kbd_iockeymap(struct kbd_state *ks,
@@ -99,10 +137,26 @@ static int kbd_oldkeymap(struct kbd_state *ks,
 			 u_long cmd, struct okiockey *okio);
 #endif
 
-/* console input helpers */
-static void kbd_input_string(struct kbd_softc *, char *);
-static void kbd_input_funckey(struct kbd_softc *, int);
-static void kbd_update_leds(struct kbd_softc *);
+
+/* callbacks for console driver */
+static int kbd_cc_open(struct cons_channel *);
+static int kbd_cc_close(struct cons_channel *);
+
+/* console input */
+static void	kbd_input_console(struct kbd_softc *, int);
+static void	kbd_repeat(void *);
+static int	kbd_input_keysym(struct kbd_softc *, int);
+static void	kbd_input_string(struct kbd_softc *, char *);
+static void	kbd_input_funckey(struct kbd_softc *, int);
+static void	kbd_update_leds(struct kbd_softc *);
+
+#if NWSKBD > 0
+static void	kbd_input_wskbd(struct kbd_softc *, int);
+#endif
+
+/* firm events input */
+static void	kbd_input_event(struct kbd_softc *, int);
+
 
 
 /****************************************************************
@@ -132,10 +186,23 @@ kbdopen(dev, flags, mode, p)
 	if (k == NULL)
 		return (ENXIO);
 
+	/*
+	 * NB: wscons support: while we can track if wskbd has called
+	 * enable(), we can't tell if that's for console input or for
+	 * events input, so we should probably just let the open to
+	 * always succeed regardless (e.g. Xsun opening /dev/kbd).
+	 */
+
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
 		return (EBUSY);
 	k->k_events.ev_io = p;
+
+	/* stop pending autorepeat of console input */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
 
 	/* open actual underlying device */
 	if (k->k_ops != NULL && k->k_ops->open != NULL)
@@ -203,6 +270,16 @@ kbdpoll(dev, events, p)
 	return (ev_poll(&k->k_events, events, p));
 }
 
+int
+kbdkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct kbd_softc *k;
+
+	k = kbd_cd.cd_devs[minor(dev)];
+	return (ev_kqfilter(&k->k_events, kn));
+}
 
 int
 kbdioctl(dev, cmd, data, flag, p)
@@ -387,61 +464,220 @@ kbd_oldkeymap(ks, cmd, kio)
 #endif /* KIOCGETKEY */
 
 
+
 /****************************************************************
- *  Callbacks we supply to console driver
+ *  Keyboard input - called by middle layer at spltty().
  ****************************************************************/
 
-/*
- * Open/close routines called upon opening /dev/console
- * if we serve console input.
- */
-int
+void
+kbd_input(k, code)
+	struct kbd_softc *k;
+	int code;
+{
+	if (k->k_evmode) {
+
+#ifdef KBD_IDLE_EVENTS
+		/*
+		 * XXX: is this still true?
+		 * IDLEs confuse the MIT X11R4 server badly, so we must drop them.
+		 * This is bad as it means the server will not automatically resync
+		 * on all-up IDLEs, but I did not drop them before, and the server
+		 * goes crazy when it comes time to blank the screen....
+		 */
+		if (code == KBD_IDLE)
+			return;
+#endif
+
+		/*
+		 * Keyboard is generating firm events.  Turn this keystroke
+		 * into an event and put it in the queue.
+		 */
+		kbd_input_event(k, code);
+		return;
+	}
+
+#if NWSKBD > 0
+	if (k->k_wskbd != NULL && k->k_wsenabled) {
+		/*
+		 * We are using wskbd input mode, pass the event up.
+		 */
+		kbd_input_wskbd(k, code);
+		return;
+	}
+#endif
+
+	/*
+	 * If /dev/kbd is not connected in event mode, or wskbd mode,
+	 * translate and send upstream (to console).
+	 */
+	kbd_input_console(k, code);
+}
+
+
+
+/****************************************************************
+ *  Open/close routines called upon opening /dev/console
+ *  if we serve console input.
+ ****************************************************************/
+
+struct cons_channel *
+kbd_cc_alloc(k)
+	struct kbd_softc *k;
+{
+	struct cons_channel *cc;
+
+	if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+		return (NULL);
+
+	/* our callbacks for the console driver */
+	cc->cc_dev = k;
+	cc->cc_iopen = kbd_cc_open;
+	cc->cc_iclose = kbd_cc_close;
+
+	/* will be provided by the console driver so that we can feed input */
+	cc->cc_upstream = NULL;
+
+	/*
+	 * TODO: clean up cons_attach_input() vs kd_attach_input() in
+	 * lower layers and move that code here.
+	 */
+
+	k->k_cc = cc;
+	return (cc);
+}
+
+
+static int
 kbd_cc_open(cc)
 	struct cons_channel *cc;
 {
 	struct kbd_softc *k;
+	int ret;
 
 	if (cc == NULL)
-	    return (0);
+		return (0);
 
 	k = (struct kbd_softc *)cc->cc_dev;
-	if (k != NULL && k->k_ops != NULL && k->k_ops->open != NULL)
-		return ((*k->k_ops->open)(k));
-	else
+	if (k == NULL)
 		return (0);
+
+	if (k->k_ops != NULL && k->k_ops->open != NULL)
+		ret = (*k->k_ops->open)(k);
+	else
+		ret = 0;
+
+	/* XXX: verify that callout is not active? */
+	k->k_repeat_start = hz/2;
+	k->k_repeat_step = hz/20;
+	callout_init(&k->k_repeat_ch);
+
+	return (ret);
 }
 
 
-int
+static int
 kbd_cc_close(cc)
 	struct cons_channel *cc;
 {
 	struct kbd_softc *k;
+	int ret;
 
 	if (cc == NULL)
-	    return (0);
+		return (0);
 
 	k = (struct kbd_softc *)cc->cc_dev;
-	if (k != NULL && k->k_ops != NULL && k->k_ops->close != NULL)
-		return ((*k->k_ops->close)(k));
-	else
+	if (k == NULL)
 		return (0);
+
+	if (k->k_ops != NULL && k->k_ops->close != NULL)
+		ret = (*k->k_ops->close)(k);
+	else
+		ret = 0;
+
+	/* stop any pending auto-repeat */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
+
+	return (ret);
 }
+
 
 
 /****************************************************************
  *  Console input - called by middle layer at spltty().
  ****************************************************************/
 
+static void
+kbd_input_console(k, code)
+	struct kbd_softc *k;
+	int code;
+{
+	struct kbd_state *ks= &k->k_state;
+	int keysym;
+
+	/* any input stops auto-repeat (i.e. key release) */
+	if (k->k_repeating) {
+		k->k_repeating = 0;
+		callout_stop(&k->k_repeat_ch);
+	}
+
+	keysym = kbd_code_to_keysym(ks, code);
+
+	/* pass to console */
+	if (kbd_input_keysym(k, keysym)) {
+		log(LOG_WARNING, "%s: code=0x%x with mod=0x%x"
+		    " produced unexpected keysym 0x%x\n",
+		    k->k_dev.dv_xname,
+		    code, ks->kbd_modbits, keysym);
+		return;		/* no point in auto-repeat here */
+	}
+
+	if (KEYSYM_NOREPEAT(keysym))
+		return;
+
+	/* setup for auto-repeat after initial delay */
+	k->k_repeating = 1;
+	k->k_repeatsym = keysym;
+	callout_reset(&k->k_repeat_ch, k->k_repeat_start,
+		      kbd_repeat, k);
+}
+
+
 /*
- * Entry point for the middle layer to supply keysym as console input.
- * Convert keysym to character(s) and pass them up to cons_channel's
- * upstream hook.
+ * This is the autorepeat callout function scheduled by kbd_input() above.
+ * Called at splsoftclock().
+ */
+static void
+kbd_repeat(arg)
+	void *arg;
+{
+	struct kbd_softc *k = (struct kbd_softc *)arg;
+	int s;
+
+	s = spltty();
+	if (k->k_repeating && k->k_repeatsym >= 0) {
+		/* feed typematic keysym to the console */
+		(void)kbd_input_keysym(k, k->k_repeatsym);
+
+		/* reschedule next repeat */
+		callout_reset(&k->k_repeat_ch, k->k_repeat_step,
+			      kbd_repeat, k);
+	}
+	splx(s);
+}
+
+
+
+/*
+ * Supply keysym as console input.  Convert keysym to character(s) and
+ * pass them up to cons_channel's upstream hook.
  *
  * Return zero on success, else the keysym that we could not handle
  * (so that the caller may complain).
  */
-int
+static int
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
 	int keysym;
@@ -567,16 +803,15 @@ kbd_update_leds(k)
  ****************************************************************/
 
 /*
- * Entry point for the middle layer to supply raw keystrokes when
- * keyboard is open (i.e. is in event mode).
+ * Supply raw keystrokes when keyboard is open in firm event mode.
  *
  * Turn the keystroke into an event and put it in the queue.
  * If the queue is full, the keystroke is lost (sorry!).
  */
-void
-kbd_input_event(k, c)
+static void
+kbd_input_event(k, code)
 	struct kbd_softc *k;
-	int c;
+	int code;
 {
 	struct firm_event *fe;
 	int put;
@@ -596,12 +831,14 @@ kbd_input_event(k, c)
 		    k->k_dev.dv_xname);
 		return;
 	}
-	fe->id = KEY_CODE(c);
-	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
+
+	fe->id = KEY_CODE(code);
+	fe->value = KEY_UP(code) ? VKEY_UP : VKEY_DOWN;
 	fe->time = time;
 	k->k_events.ev_put = put;
 	EV_WAKEUP(&k->k_events);
 }
+
 
 
 /****************************************************************
@@ -695,6 +932,134 @@ void
 kbd_bell(on)
 	int on;
 {
-	/* XXX: stub out for now */
-	return;
+	struct kbd_softc *k = kbd_cd.cd_devs[0]; /* XXX: hardcoded minor */
+
+	if (k == NULL || k->k_ops == NULL || k->k_ops->docmd == NULL)
+		return;
+
+	(void)(*k->k_ops->docmd)(k, on ? KBD_CMD_BELL : KBD_CMD_NOBELL, 0);
 }
+
+#if NWSKBD > 0
+static void
+kbd_input_wskbd(struct kbd_softc *k, int code)
+{
+	int type, key;
+
+	type = KEY_UP(code) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+	key = KEY_CODE(code);
+	wskbd_input(k->k_wskbd, type, key);
+}
+
+int
+wssunkbd_enable(v, on)
+	void *v;
+	int on;
+{
+	struct kbd_softc *k = v;
+
+	k->k_wsenabled = on;
+	if (on) {
+		/* open actual underlying device */
+		if (k->k_ops != NULL && k->k_ops->open != NULL)
+			(*k->k_ops->open)(k);
+		ev_init(&k->k_events);
+		k->k_evmode = 0;	/* XXX: OK? */
+	} else {
+		/* close underlying device */
+		if (k->k_ops != NULL && k->k_ops->close != NULL)
+			(*k->k_ops->close)(k);
+	}
+	
+	return 0;
+}
+
+void
+wssunkbd_set_leds(v, leds)
+	void *v;
+	int leds;
+{
+	struct kbd_softc *k = v;
+	int l = 0;
+
+	if (leds & WSKBD_LED_CAPS)
+		l |= LED_CAPS_LOCK;
+	if (leds & WSKBD_LED_NUM)
+		l |= LED_NUM_LOCK;
+	if (leds & WSKBD_LED_SCROLL)
+		l |= LED_SCROLL_LOCK;
+	if (leds & WSKBD_LED_COMPOSE)
+		l |= LED_COMPOSE;
+	if (k->k_ops != NULL && k->k_ops->setleds != NULL)
+		(*k->k_ops->setleds)(k, l, 0);
+}
+
+int
+wssunkbd_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	return EPASSTHROUGH;
+}
+
+void
+sunkbd_wskbd_cngetc(v, type, data)
+	void *v;
+	u_int *type;
+	int *data;
+{
+	/* struct kbd_sun_softc *k = v; */
+}
+
+void
+sunkbd_wskbd_cnpollc(v, on)
+	void *v;
+	int on;
+{
+}
+
+static void
+sunkbd_bell_off(v)
+	void *v;
+{
+	struct kbd_softc *k = v;
+	k->k_ops->docmd(k, KBD_CMD_NOBELL, 0);
+}
+
+void
+sunkbd_wskbd_cnbell(v, pitch, period, volume)
+	void *v;
+	u_int pitch, period, volume;
+{
+	struct kbd_softc *k = v;
+
+	callout_reset(&k->k_wsbell, period*1000/hz, sunkbd_bell_off, v);
+	k->k_ops->docmd(k, KBD_CMD_BELL, 0);
+}
+
+void
+kbd_wskbd_attach(k, isconsole)
+	struct kbd_softc *k;
+	int isconsole;
+{
+	struct wskbddev_attach_args a;
+
+	a.console = isconsole;
+
+	if (a.console)
+		wskbd_cnattach(&sunkbd_wskbd_consops, k, &sunkbd_wskbd_keymapdata);
+
+	a.keymap = &sunkbd_wskbd_keymapdata;
+
+	a.accessops = &sunkbd_wskbd_accessops;
+	a.accesscookie = k;
+
+	/* Attach the wskbd */
+	k->k_wskbd = config_found(&k->k_dev, &a, wskbddevprint);
+	k->k_wsenabled = 0;
+	callout_init(&k->k_wsbell);
+}
+#endif

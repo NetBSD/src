@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10.2.5 2002/09/17 21:16:50 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.10.2.6 2002/11/11 22:02:22 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,16 +35,6 @@
 #include <sys/conf.h>
 
 #include "ofcons.h"
-
-/*
- * Check whether dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-	return major(dev) == mem_no && minor(dev) < 2;
-}
 
 #include <dev/cons.h>
 
