@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.9 2002/07/28 21:46:34 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.10 2002/08/01 23:23:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.9 2002/07/28 21:46:34 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.10 2002/08/01 23:23:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,35 +60,12 @@ __RCSID("$NetBSD: who.c,v 1.9 2002/07/28 21:46:34 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#ifdef SUPPORT_UTMP
-#include <utmp.h>
-#endif
-#ifdef SUPPORT_UTMPX
-#include <utmpx.h>
-#endif
-
-struct entry {
-	char name[65];
-	char line[65];
-	char host[257];
-	time_t time;
-	struct entry *next;
-};
+#include "utmpentry.h"
 
 static void output_labels(void);
 static void who_am_i(const char *, int);
 static void usage(void);
 static void process(const char *, int);
-#ifdef SUPPORT_UTMP
-static void getentry(struct entry *, struct utmp *);
-#endif
-#ifdef SUPPORT_UTMPX
-static void getentryx(struct entry *, struct utmpx *);
-#endif
-#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
-static int setup(const char *);
-static void adjust_size(struct entry *e);
-#endif
 static void print(const char *, const char *, time_t, const char *);
 
 int main(int, char **);
@@ -158,73 +135,14 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-#if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
-static void
-adjust_size(struct entry *e)
-{
-	int max;
-
-	if ((max = strlen(e->name)) > maxname)
-		maxname = max;
-	if ((max = strlen(e->line)) > maxline)
-		maxline = max;
-	if ((max = strlen(e->host)) > maxhost)
-		maxhost = max;
-}
-
-static int
-setup(const char *fname)
-{
-	int what = 3;
-
-	if (fname == NULL) {
-#ifdef SUPPORT_UTMPX
-		setutent();
-#endif
-#ifdef SUPPORT_UTMP
-		setutxent();
-#endif
-	} else {
-		size_t len = strlen(fname);
-		if (len == 0)
-			errx(1, "Filename cannot be 0 length.");
-		what = fname[len - 1] == 'x' ? 1 : 2;
-		if (what == 1) {
-#ifdef SUPPORT_UTMPX
-			if (utmpxname(fname) == 0)
-				err(1, "Cannot open `%s'", fname);
-#else
-			errx(1, "utmpx support not compiled in");
-#endif
-		} else {
-#ifdef SUPPORT_UTMPX
-			if (utmpname(fname) == 0)
-				err(1, "Cannot open `%s'", fname);
-#else
-			errx(1, "utmp support not compiled in");
-#endif
-		}
-	}
-	return what;
-}
-#endif
-
 static void
 who_am_i(const char *fname, int show_labels)
 {
-#ifdef SUPPORT_UTMPX
-	struct utmpx *utx;
-#endif
-#ifdef SUPPORT_UTMP
-	struct utmp *ut;
-#endif
 	struct passwd *pw;
 	char *p;
 	char *t;
 	time_t now;
-#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
-	int what = setup(fname);
-#endif
+	struct utmpentry *ehead, *ep;
 
 	/* search through the utmp and find an entry for this tty */
 	if ((p = ttyname(STDIN_FILENO)) != NULL) {
@@ -232,29 +150,16 @@ who_am_i(const char *fname, int show_labels)
 		/* strip any directory component */
 		if ((t = strrchr(p, '/')) != NULL)
 			p = t + 1;
-#ifdef SUPPORT_UTMPX
-		while ((what & 1) && (utx = getutxent()) != NULL)
-			if (utx->ut_type == USER_PROCESS &&
-			    !strcmp(utx->ut_line, p)) {
-				struct entry e;
-				getentryx(&e, utx);
+
+		(void)getutentries(fname, &ehead);
+		for (ep = ehead; ep; ep = ep->next)
+			if (strcmp(ep->line, p) == 0) {
 				if (show_labels)
 					output_labels();
-				print(e.name, e.line, e.time, e.host);
+				print(ep->name, ep->line, (time_t)ep->tv.tv_sec,
+				    ep->host);
 				return;
 			}
-#endif
-#ifdef SUPPORT_UTMP
-		while ((what & 2) && (ut = getutent()) != NULL)
-			if (!strcmp(ut->ut_line, p)) {
-				struct entry e;
-				getentry(&e, ut);
-				if (show_labels)
-					output_labels();
-				print(e.name, e.line, e.time, e.host);
-				return;
-			}
-#endif
 	} else
 		p = "tty??";
 
@@ -268,103 +173,13 @@ who_am_i(const char *fname, int show_labels)
 static void
 process(const char *fname, int show_labels)
 {
-#ifdef SUPPORT_UTMPX
-	struct utmpx *utx;
-#endif
-#ifdef SUPPORT_UTMP
-	struct utmp *ut;
-#endif
-	struct entry *ep, *ehead = NULL;
-#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
-	int what = setup(fname);
-	struct entry **nextp = &ehead;
-#endif
-
-#ifdef SUPPORT_UTMPX
-	while ((what & 1) && (utx = getutxent()) != NULL) {
-		if (fname == NULL && utx->ut_type != USER_PROCESS)
-			continue;
-		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
-			err(1, NULL);
-		getentryx(ep, utx);
-		*nextp = ep;
-		nextp = &(ep->next);
-	}
-#endif
-
-#ifdef SUPPORT_UTMP
-	while ((what & 2) && (ut = getutent()) != NULL) {
-		if (fname == NULL && (*ut->ut_name == '\0' ||
-		    *ut->ut_line == '\0'))
-			continue;
-		/* Don't process entries that we have utmpx for */
-		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (strncmp(ep->line, ut->ut_line,
-			    sizeof(ut->ut_line)) == 0)
-				break;
-		}
-		if (ep != NULL)
-			continue;
-		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
-			err(1, NULL);
-		getentry(ep, ut);
-		*nextp = ep;
-		nextp = &(ep->next);
-	}
-#endif
-#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
-	if (ehead != NULL) {
-		struct entry *from = ehead, *save;
-		
-		ehead = NULL;
-		while (from != NULL) {
-			for (nextp = &ehead;
-			    (*nextp) && strcmp(from->line, (*nextp)->line) > 0;
-			    nextp = &(*nextp)->next)
-				continue;
-			save = from;
-			from = from->next;
-			save->next = *nextp;
-			*nextp = save;
-		}
-	}
-#endif
+	struct utmpentry *ehead, *ep;
+	(void)getutentries(fname, &ehead);
 	if (show_labels)
 		output_labels();
 	for (ep = ehead; ep != NULL; ep = ep->next)
-		print(ep->name, ep->line, ep->time, ep->host);
+		print(ep->name, ep->line, (time_t)ep->tv.tv_sec, ep->host);
 }
-
-#ifdef SUPPORT_UTMP
-static void
-getentry(struct entry *e, struct utmp *up)
-{
-	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	e->name[sizeof(e->name) - 1] = '\0';
-	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	e->line[sizeof(e->line) - 1] = '\0';
-	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
-	e->name[sizeof(e->host) - 1] = '\0';
-	e->time = up->ut_time;
-	adjust_size(e);
-}
-#endif
-
-#ifdef SUPPORT_UTMPX
-static void
-getentryx(struct entry *e, struct utmpx *up)
-{
-	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	e->name[sizeof(e->name) - 1] = '\0';
-	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	e->line[sizeof(e->line) - 1] = '\0';
-	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
-	e->name[sizeof(e->host) - 1] = '\0';
-	e->time = (time_t)up->ut_tv.tv_sec;
-	adjust_size(e);
-}
-#endif
-
 
 static void
 print(const char *name, const char *line, time_t t, const char *host)
