@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 1995/10/10 04:46:02 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 1995/10/11 04:20:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,6 @@
  */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
-#define	cpu_set_init_frame(p,frame)	(p->p_md.md_regs = frame)
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*

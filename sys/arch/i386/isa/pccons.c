@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.90 1995/10/11 04:20:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1636,8 +1636,11 @@ pc_xmode_on()
 		get_cursor_shape();
 #endif
 
+#ifdef COMPAT_10
+	/* This is done by i386_iopl(3) now. */
 	fp = curproc->p_md.md_regs;
 	fp->tf_eflags |= PSL_IOPL;
+#endif
 }
 
 pc_xmode_off()

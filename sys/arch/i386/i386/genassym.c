@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.44 1995/10/10 01:26:36 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.45 1995/10/11 04:19:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -98,8 +98,6 @@ main()
 
 	def("SRUN", SRUN);
 
-	def("USRSTACK", USRSTACK);
-	def("UPTDI", UPTDI);
 	def("PTDPTDI", PTDPTDI);
 	def("KPTDI", KPTDI);
 	def("NKPDE", NKPDE);
@@ -114,6 +112,9 @@ main()
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
 	def("P_VMSPACE", &p->p_vmspace);
+	def("P_FLAG", &p->p_flag);
+
+	def("P_SYSTEM", P_SYSTEM);
 
 	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
@@ -124,12 +125,15 @@ main()
 	def("PCB_FS", &pcb->pcb_fs);
 	def("PCB_GS", &pcb->pcb_gs);
 	def("PCB_CR0", &pcb->pcb_cr0);
+	def("PCB_LDT_SEL", &pcb->pcb_ldt_sel);
+	def("PCB_TSS_SEL", &pcb->pcb_tss_sel);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
-	def("PCB_USERLDT", &pcb->pcb_ldt);
 
 	def("TF_CS", &tf->tf_cs);
 	def("TF_TRAPNO", &tf->tf_trapno);
 	def("TF_EFLAGS", &tf->tf_eflags);
+
+	def("FRAMESIZE", sizeof(struct trapframe));
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
