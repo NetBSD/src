@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.24 1993/11/09 08:29:17 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.25 1993/11/11 01:53:55 mycroft Exp $
  */
 
 
@@ -334,6 +334,7 @@ start:	movw	$0x1234,0x472	# warm boot
 
 	sidt	6(%esp)
 	movl	6+2(%esp),%esi		# base address of current idt
+#ifdef BDBTRAP
 	movl	8+4(%esi),%eax		# convert dbg descriptor to ...
 	movw	8(%esi),%ax
 	movl	%eax,bdb_dbg_ljmp+1-KERNBASE	# ... immediate offset ...
@@ -344,6 +345,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,bdb_bpt_ljmp+1-KERNBASE
 	movl	24+2(%esi),%eax
 	movw	%ax,bdb_bpt_ljmp+5-KERNBASE
+#endif
 
 	movl	$(_idt-KERNBASE),%edi
 	movl	%edi,6+2(%esp)
@@ -384,7 +386,6 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	%esi,PCB_CR3(%eax)
 
 	/* relocate debugger gdt entries */
-
 	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
 	movl	$9,%ecx
 reloc_gdt:
@@ -393,7 +394,7 @@ reloc_gdt:
 	loop	reloc_gdt
 
 	cmpl	$0,_bdb_exists
-	je	1f
+	jz	1f
 	int	$3
 1:
 
@@ -457,15 +458,10 @@ ENTRY(icode)
 	movl	$(init),%eax
 	subl	$(_icode),%eax
 	pushl	%eax		/* fname for execve() */
-
 	pushl	%eax		/* dummy return address */
-
 	movl	$(SYS_execve),%eax
 	LCALL(0x7,0x0)
-
 	/* exit if something botches up in the above exec */
-	pushl	%eax		/* exit code */
-	pushl	%eax		/* dummy return address */
 	movl	$(SYS_exit),%eax
 	LCALL(0x7,0x0)
 
@@ -496,21 +492,6 @@ ENTRY(sigcode)
 	.globl	_esigcode
 _esigcode:
 
-
-	/*
-	 * Support routines for GCC
-	 */
-ENTRY(__udivsi3)
-	movl 4(%esp),%eax
-	xorl %edx,%edx
-	divl 8(%esp)
-	ret
-
-ENTRY(__divsi3)
-	movl 4(%esp),%eax
-	cltd
-	idivl 8(%esp)
-	ret
 
 	/*
 	 * fillw (pat,base,cnt)
@@ -602,16 +583,6 @@ ENTRY(bcopyw)
 	popl	%esi
 	cld
 	ret
-
-ENTRY(bcopyx)
-	movl	16(%esp),%eax
-	cmpl	$2,%eax
-	je	_bcopyw
-	cmpl	$4,%eax
-	jne	_bcopyb
-	/*
-	 * Fall through to bcopy.  ENTRY() provides harmless fill bytes.
-	 */
 
 	/*
 	 * (ov)bcopy (src,dst,cnt)
@@ -1436,11 +1407,6 @@ ENTRY(cpu_swtch)
 1:
 #endif
 
-#if 0
-	movl	_CMAP2,%eax		# save temporary map PTE
-	movl	%eax,PCB_CMAP2(%ecx)	# in our context
-#endif
-
 	movl	$0,_curproc		# out of process
 
 	movl	_cpl,%eax		# splhigh()
@@ -1505,11 +1471,6 @@ sw1:
 	movl	PCB_EDI(%edx),%edi
 	movl	PCB_EIP(%edx),%eax
 	movl	%eax,(%esp)
-
-#if 0
-	movl	PCB_CMAP2(%edx),%eax	# get temporary map
-	movl	%eax,_CMAP2		# reload temporary map PTE
-#endif
 
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
@@ -1652,44 +1613,59 @@ _proc0paddr:	.long	0
  * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#define	INTRENTRY \
+	pushl	%ds		; \
+	pushl	%es		; /* now the stack frame is a trap frame */ \
+	pushal			; \
+	movl	$(KDSEL),%eax	; \
+	movl	%ax,%ds		; \
+	movl	%ax,%es
+#define	INTREXIT \
+	jmp	doreti
+#define	INTRFASTEXIT \
+	popal			; \
+	popl	%es		; \
+	popl	%ds		; \
+	addl	$8,%esp		; \
+	iret
+
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
+#define	ZTRAP(a)	pushl $0 ; TRAP(a)
 #ifdef KGDB
-#define	BPTTRAP(a)	pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	pushl $0 ; pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	TRAP(a)
+#define	BPTTRAP(a)	ZTRAP(a)
 #endif
 
 	.text
 IDTVEC(div)
-	pushl $0; TRAP(T_DIVIDE)
+	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
 #ifdef BDBTRAP
 	BDBTRAP(dbg)
 #endif
-	pushl $0; BPTTRAP(T_TRCTRAP)
+	BPTTRAP(T_TRCTRAP)
 IDTVEC(nmi)
-	pushl $0; TRAP(T_NMI)
+	ZTRAP(T_NMI)
 IDTVEC(bpt)
 #ifdef BDBTRAP
 	BDBTRAP(bpt)
 #endif
-	pushl $0; BPTTRAP(T_BPTFLT)
+	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
-	pushl $0; TRAP(T_OFLOW)
+	ZTRAP(T_OFLOW)
 IDTVEC(bnd)
-	pushl $0; TRAP(T_BOUND)
+	ZTRAP(T_BOUND)
 IDTVEC(ill)
-	pushl $0; TRAP(T_PRIVINFLT)
+	ZTRAP(T_PRIVINFLT)
 IDTVEC(dna)
-	pushl $0; TRAP(T_DNA)
+	ZTRAP(T_DNA)
 IDTVEC(dble)
 	TRAP(T_DOUBLEFLT)
-	/*PANIC("Double Fault");*/
 IDTVEC(fpusegm)
-	pushl $0; TRAP(T_FPOPFLT)
+	ZTRAP(T_FPOPFLT)
 IDTVEC(tss)
 	TRAP(T_TSSFLT)
-	/*PANIC("TSS not valid");*/
 IDTVEC(missing)
 	TRAP(T_SEGNPFLT)
 IDTVEC(stk)
@@ -1699,7 +1675,7 @@ IDTVEC(prot)
 IDTVEC(page)
 	TRAP(T_PAGEFLT)
 IDTVEC(rsvd)
-	pushl $0; TRAP(T_RESERVED)
+	ZTRAP(T_RESERVED)
 IDTVEC(fpu)
 #if NNPX > 0
 	/*
@@ -1709,62 +1685,52 @@ IDTVEC(fpu)
 	 */
 	pushl	$0		/* dummy error code */
 	pushl	$(T_ASTFLT)
-	pushl	%ds
-	pushl	%es		/* now the stack frame is a trap frame */
-	pushal
-	movl	$(KDSEL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 	pushl	_cpl		/* now it's an intrframe */
 	incl	_cnt+V_TRAP
 	movl	%esp,%eax	/* pointer to frame */
 	pushl	%eax
 	call	_npxintr
 	addl	$4,%esp
-	jmp	doreti
+	INTREXIT
 #else
-	pushl $0; TRAP(T_ARITHTRAP)
+	ZTRAP(T_ARITHTRAP)
 #endif
-	/* 17 - 31 reserved for future exp */
 IDTVEC(align)
-	pushl $0; TRAP(T_ALIGNFLT)
+	ZTRAP(T_ALIGNFLT)
+	/* 18 - 31 reserved for future exp */
 IDTVEC(rsvd1)
-	pushl $0; TRAP(18)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd2)
-	pushl $0; TRAP(19)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd3)
-	pushl $0; TRAP(20)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd4)
-	pushl $0; TRAP(21)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd5)
-	pushl $0; TRAP(22)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd6)
-	pushl $0; TRAP(23)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd7)
-	pushl $0; TRAP(24)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd8)
-	pushl $0; TRAP(25)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd9)
-	pushl $0; TRAP(26)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd10)
-	pushl $0; TRAP(27)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd11)
-	pushl $0; TRAP(28)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd12)
-	pushl $0; TRAP(29)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd13)
-	pushl $0; TRAP(30)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd14)
-	pushl $0; TRAP(31)
+	ZTRAP(T_RESERVED)
 
 	SUPERALIGN_TEXT
 alltraps:
-	pushl	%ds
-	pushl	%es
-	pushal
-	movl	$(KDSEL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 calltrap:
 	call	_trap
 	/*
@@ -1773,7 +1739,7 @@ calltrap:
 	 */
 	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
-	jmp	doreti
+	INTREXIT
 
 #ifdef KGDB
 /*
@@ -1782,12 +1748,7 @@ calltrap:
  */
 	ALIGN_TEXT
 bpttraps:
-	pushl	%ds
-	pushl	%es
-	pushal
-	movl	$(KDSEL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 	testb	$(SEL_RPL_MASK),TF_CS(%esp)
 					# non-kernel mode?
 	jne	calltrap		# yes
@@ -1803,12 +1764,7 @@ bpttraps:
 IDTVEC(syscall)
 	pushl	$0			# Room for tf_err
 	pushfl				# Room for tf_trapno
-	pushl	%ds
-	pushl	%es
-	pushal
-	movl	$(KDSEL),%eax		# switch to kernel segments
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to tf_eflags
 	movl	%eax,TF_EFLAGS(%esp)
 	call	_syscall
@@ -1817,7 +1773,7 @@ IDTVEC(syscall)
 	 */
 	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	# new trap type (err code not used)
 	pushl	_cpl
-	jmp	doreti
+	INTREXIT
 
 #include "i386/isa/vector.s"
 #include "i386/isa/icu.s"
