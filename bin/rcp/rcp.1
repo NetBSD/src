@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcp.1,v 1.16 2003/08/07 09:05:27 agc Exp $
+.\"	$NetBSD: rcp.1,v 1.17 2004/09/05 08:38:23 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,12 +37,10 @@
 .Nd remote file copy
 .Sh SYNOPSIS
 .Nm
-.Op Fl Kpx
-.Op Fl k Ar realm
+.Op Fl p
 .Ar file1 file2
 .Nm
-.Op Fl Kprx
-.Op Fl k Ar realm
+.Op Fl pr
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
@@ -57,20 +55,6 @@ form ``rname@rhost:path'', or a local file name (containing no `:' characters,
 or a `/' before any `:'s).
 .Pp
 .Bl -tag -width flag
-.It Fl K
-The
-.Fl K
-option turns off all Kerberos authentication.
-.It Fl k
-The
-.Fl k
-option requests
-.Nm
-to obtain tickets
-for the remote host in realm
-.Ar realm
-instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
 .It Fl p
 The
 .Fl p
@@ -90,17 +74,6 @@ If any of the source files are directories,
 .Nm
 copies each subtree rooted at that name; in this case
 the destination must be a directory.
-.It Fl x
-The
-.Fl x
-option turns on
-.Tn DES
-encryption for all data passed by
-.Nm .
-This may impact response time and
-.Tn CPU
-utilization, but provides
-increased security.
 .El
 .Pp
 If
@@ -134,7 +107,7 @@ are on the current machine.
 .Xr rcmd 3 ,
 .Xr hosts.equiv 5 ,
 .Xr rhosts 5 ,
-.Xr environ 7
+.Xr environ 7 .
 .Sh HISTORY
 The
 .Nm
