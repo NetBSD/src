@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.52 2003/06/19 02:40:45 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.53 2003/06/19 09:38:03 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -662,3 +662,11 @@ sys/net/if.c					1.118 (via patch)
 	as many of the code assumes that TAILQ_FIRST(ifp->if_addrlist) is
 	non-null.
 	[itojun, ticket #1290]
+
+sys/netatalk/aarp.c				1.13
+sys/netatalk/ddp_output.c			1.7 (via patch)
+
+	- don't use M_WAIT within splnet.
+	- retain m_pkthdr for mbuf passed down to ifp->if_output.
+	  pointed out by is@netbsd
+	[itojun, ticket #1316]
