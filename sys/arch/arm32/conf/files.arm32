@@ -219,4 +219,9 @@ file	arch/arm32/fpe-sp/fpetoe.S		fpe
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.c		armfpe
+file	arch/arm32/fpe-arm/armfpe.s		armfpe
+
+# DDB
+file	arch/arm32/arm32/db_disasm.c		ddb
+file	arch/arm32/arm32/db_interface.c		ddb
+file	arch/arm32/arm32/db_trace.c		ddb
