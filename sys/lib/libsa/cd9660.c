@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.4 1997/06/13 14:29:50 drochner Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.5 1997/06/26 19:11:33 drochner Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,7 +38,11 @@
  * blocksizes other than 2048 bytes, multi-extent files, etc.
  */
 #include <sys/param.h>
+#ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 #include <isofs/cd9660/iso.h>
 
 #include "stand.h"

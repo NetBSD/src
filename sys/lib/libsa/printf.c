@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.11 1997/06/26 06:20:30 thorpej Exp $	*/
+/*	$NetBSD: printf.c,v 1.12 1997/06/26 19:11:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -61,9 +61,9 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #ifdef __STDC__
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #else
-#include <varargs.h>
+#include <machine/varargs.h>
 #endif
 
 #include "stand.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.8 1997/03/15 18:12:14 is Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.9 1997/06/26 19:11:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  * for use by the NFS open code (NFS/lookup).
  */
 
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>

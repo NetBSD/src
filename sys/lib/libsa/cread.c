@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.3 1997/06/13 14:28:52 drochner Exp $	*/
+/*	$NetBSD: cread.c,v 1.4 1997/06/26 19:11:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,9 +45,14 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include <lib/libkern/libkern.h>
 #include "stand.h"
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
 #include <lib/libz/zlib.h>
+#else
+#include <string.h>
+#include <zlib.h>
+#endif
 
 #define EOF (-1) /* needed by compression code */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.18 1997/06/13 14:32:24 drochner Exp $	*/
+/*	$NetBSD: ufs.c,v 1.19 1997/06/26 19:11:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -71,7 +71,17 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+inline u_int
+max(a, b)
+        u_int a, b;
+{
+        return (a > b ? a : b);
+}
+#endif
 
 #include "stand.h"
 
