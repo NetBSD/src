@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_hash.h,v 1.1 2003/06/25 09:51:33 tshiozak Exp $	*/
+/*	$NetBSD: citrus_hash.h,v 1.2 2003/06/27 17:43:15 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -29,40 +29,26 @@
 #ifndef _CITRUS_HASH_H_
 #define _CITRUS_HASH_H_
 
-#define _CITRUS_HASH_ENTRY(type) 				\
-struct {							\
-	struct type *che_next, **che_pprev;			\
-}
-#define _CITRUS_HASH_HEAD(headname, type, hashsize)		\
-struct headname {						\
-	struct type *chh_table[hashsize];			\
+#define _CITRUS_HASH_ENTRY(type) LIST_ENTRY(type)
+#define _CITRUS_HASH_HEAD(headname, type, hashsize)	\
+struct headname {					\
+	LIST_HEAD(, type)	chh_table[hashsize];	\
 }
 #define _CITRUS_HASH_INIT(head, hashsize)			\
 do {								\
 	int _ch_loop;						\
 	for (_ch_loop=0; _ch_loop<hashsize; _ch_loop++)		\
-		(head)->chh_table[_ch_loop] = NULL;		\
+		LIST_INIT(&(head)->chh_table[_ch_loop]);	\
 } while (/*CONSTCOND*/0)
-#define _CITRUS_HASH_REMOVE(elm, field)				\
-do {								\
-	if ((elm)->field.che_next)				\
-		(elm)->field.che_next->field.che_pprev =	\
-			(elm)->field.che_pprev;			\
-	*(elm)->field.che_pprev = (elm)->field.che_next;	\
-} while (/*CONSTCOND*/0)
+#define _CITRUS_HASH_REMOVE(elm, field) LIST_REMOVE(elm, field)
 #define _CITRUS_HASH_INSERT(head, elm, field, hashval)		\
-do {								\
-	(elm)->field.che_pprev = &(head)->chh_table[hashval];	\
-	(elm)->field.che_next  =  (head)->chh_table[hashval];	\
-	(head)->chh_table[hashval] = (elm);			\
-} while (/*CONSTCOND*/0)
+LIST_INSERT_HEAD(&(head)->chh_table[hashval], elm, field)
 #define _CITRUS_HASH_SEARCH(head, elm, field, matchfunc, key, hashval)	\
 do {									\
-	for ((elm)=(head)->chh_table[hashval];				\
-	     (elm);							\
-	     (elm)=(elm)->field.che_next)				\
+	LIST_FOREACH((elm), &(head)->chh_table[hashval], field) {	\
 		if (matchfunc((elm), key)==0)				\
 			break;						\
+	}								\
 } while (/*CONSTCOND*/0)
 
 __BEGIN_DECLS
