@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.343 2003/10/02 18:34:12 augustss Exp $
+$NetBSD: usbdevs,v 1.344 2003/10/02 19:09:28 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -781,12 +781,15 @@ product HP 1200			0x0317	LaserJet 1200
 product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
 product HP 3400CSE		0x0405	ScanJet 3400cse
+product HP 885C			0x0504	DeskJet 885C
 product HP 6300C		0x0601	Scanjet 6300C
 product HP 840C			0x0604	DeskJet 840c
 product HP 2200C		0x0605	ScanJet 2200C
 product HP 5300C		0x0701	Scanjet 5300C
+product HP 816C			0x0804	DeskJet 816C
 product HP 970CSE		0x1004	Deskjet 970Cse
 product HP 5400C		0x1005	Scanjet 5400C
+product HP 959C			0x1104	Deskjet 959C
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
 product HP 640C			0x2004	DeskJet 640c
@@ -1085,6 +1088,10 @@ product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 /* NEC products */
 product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
+product NEC PICTY760		0xbef4	Picty760
+product NEC PICTY900		0xefbe	Picty900
+product NEC PICTY920		0xf0be	Picty920
+product NEC PICTY800		0xf1be	Picty800
 
 /* NEC2 products */
 product NEC2 HUB2_0		0x0058	USB2.0 Hub Controller
