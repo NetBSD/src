@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.27 2002/01/07 12:12:55 tron Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.28 2002/01/07 18:05:34 jmcneill Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.27 2002/01/07 12:12:55 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.28 2002/01/07 18:05:34 jmcneill Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -195,11 +195,7 @@ int bktr_debug = 0;
 
 /* Support for radio(4) under NetBSD */
 #ifdef __NetBSD__
-#ifdef RADIO_ON_BKTR_WORKS
 #include "radio.h"
-#else
-#define	NRADIO	0
-#endif
 #if NRADIO > 0
 #include <sys/radioio.h>
 #include <dev/radio_if.h>
@@ -1532,7 +1528,8 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 
 #if NRADIO > 0
 	/* attach to radio(4) */
-	radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
+	if (bktr->card.tuner->pllControl[3] != 0x00)
+		radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
 #endif
 }
 
