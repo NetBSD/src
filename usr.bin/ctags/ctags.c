@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.7 2002/01/31 19:26:35 tv Exp $	*/
+/*	$NetBSD: ctags.c,v 1.8 2003/07/14 09:40:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.7 2002/01/31 19:26:35 tv Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.8 2003/07/14 09:40:26 itojun Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -160,7 +160,7 @@ usage:		(void)fprintf(stderr,
 		else {
 			if (uflag) {
 				for (step = 0; step < argc; step++) {
-					(void)sprintf(cmd,
+					(void)snprintf(cmd, sizeof(cmd),
 						"mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
 							outfile, argv[step],
 							outfile);
@@ -173,8 +173,8 @@ usage:		(void)fprintf(stderr,
 			put_entries(head);
 			(void)fclose(outf);
 			if (uflag) {
-				(void)sprintf(cmd, "sort -o %s %s",
-						outfile, outfile);
+				(void)snprintf(cmd, sizeof(cmd),
+				    "sort -o %s %s", outfile, outfile);
 				system(cmd);
 			}
 		}
@@ -254,7 +254,7 @@ find_entries(file)
 				 * for C references.  This may be wrong.
 				 */
 				toss_yysec();
-				(void)strcpy(lbuf, "%%$");
+				(void)strlcpy(lbuf, "%%$", sizeof(lbuf));
 				pfnote("yylex", lineno);
 				rewind(inf);
 			}
@@ -265,7 +265,7 @@ find_entries(file)
 			 * for C references.  This may be wrong.
 			 */
 			toss_yysec();
-			(void)strcpy(lbuf, "%%$");
+			(void)strlcpy(lbuf, "%%$", sizeof(lbuf));
 			pfnote("yyparse", lineno);
 			y_entries();
 		}
