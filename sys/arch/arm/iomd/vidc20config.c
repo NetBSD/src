@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.4 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.5 2001/12/15 22:21:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -112,30 +112,6 @@ static struct vidc_state vidc_lookup = {
 };
 
 struct vidc_state vidc_current[1];
-
-
-/*
- * Structures defining clock frequenties and their settings...
- * move to a constants header file ?
- */
-
-struct fsyn {
-	int r, v, f;
-};
-
-static struct fsyn fsyn_pref[] = {
-	{ 6,   2,  8000 },
-	{ 4,   2, 12000 },
-	{ 3,   2, 16000 },
-	{ 2,   2, 24000 },
-	{ 41, 43, 25171 },
-	{ 50, 59, 28320 },
-	{ 3,   4, 32000 },
-	{ 2,   3, 36000 },
-	{ 31, 58, 44903 },
-	{ 12, 35, 70000 },
-	{ 0,   0, 00000 }
-};
 
 
 /*
@@ -484,11 +460,10 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	register int acc;
 	int bpp_mask;
         int ereg;
-	int best_r, best_v, best_match;
+	int best_r, best_v;
+	int least_error;
+	int r, v, f;
 
-#ifdef NC
-return;
-#endif
 	/*
 	 * Find out what bit mask we need to or with the vidc20 control register
 	 * in order to generate the desired number of bits per pixel.
@@ -500,46 +475,26 @@ return;
 	newmode = *mode;
 	vidc_currentmode = &newmode;
 
-	/* Program the VCO Look-up to a preferred value before choosing one */
-	{
-		int least_error = mod(fsyn_pref[0].f - vidc_currentmode->pixel_rate);
-		int counter;
-		best_r = fsyn_pref[0].r;
-		best_match = fsyn_pref[0].f;
-		best_v = fsyn_pref[0].v;
-        
-		/* Look up */
-		counter=0;
-		while (fsyn_pref[counter].r != 0) {
-			if (least_error > mod(fsyn_pref[counter].f - vidc_currentmode->pixel_rate)) {
-				best_match = fsyn_pref[counter].f;
-				least_error = mod(fsyn_pref[counter].f - vidc_currentmode->pixel_rate);
-				best_r = fsyn_pref[counter].r;
-				best_v = fsyn_pref[counter].v;
-			}
-			counter++;
-		}
+	least_error = INT_MAX;
+	best_r = 0; best_v = 0;
 
-		if (least_error > 0) { /* Accuracy of 1000Hz */
-			int r, v, f;
-			for (v = 63; v > 0; v--)
-				for (r = 63; r > 0; r--) {
-					f = ((v * vidc_fref) /1000) / r;
-					if (least_error >= mod(f - vidc_currentmode->pixel_rate)) {
-						best_match = f;
-						least_error = mod(f - vidc_currentmode->pixel_rate);
-						best_r = r;
-						best_v = v;
-					}
-				}
+	for (v = 63; v > 0; v--) {
+		for (r = 63; r > 0; r--) {
+			f = ((v * vidc_fref) /1000) / r;
+			if (least_error >=
+			    abs(f - vidc_currentmode->pixel_rate)) {
+				least_error = 
+				    abs(f - vidc_currentmode->pixel_rate);
+				best_r = r;
+				best_v = v;
+			}
 		}
-    
-		if (best_r > 63) best_r=63;
-		if (best_v > 63) best_v=63;
-		if (best_r < 1)  best_r= 1;
-		if (best_v < 1)  best_v= 1;
-    
 	}
+
+	if (best_r > 63) best_r=63;
+	if (best_v > 63) best_v=63;
+	if (best_r < 1)  best_r= 1;
+	if (best_v < 1)  best_v= 1;
 
 	vidcvideo_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
 
