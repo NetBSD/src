@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.35 2000/12/12 18:13:29 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.36 2000/12/12 18:26:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@ u_int arm700bugcount = 0;
  *
  * System call request from POSIX system call gate interface to kernel.
  */
-
 void
 syscall(frame, code)
 	trapframe_t *frame;
@@ -124,13 +123,12 @@ syscall(frame, code)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 
-	uvmexp.syscalls++;
-
 #ifdef DEBUG
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("syscall: Not in SVC32 mode\n");
 #endif	/* DEBUG */
 
+	uvmexp.syscalls++;
 	p = curproc;
 	p->p_md.md_regs = frame;
 
@@ -215,20 +213,16 @@ syscall(frame, code)
 	}
 
 	callp += (code & (SYS_NSYSENT - 1));
-
 	argsize = callp->sy_argsize;
 	if (argsize <= regparams)
 		args = (int *)stackargs;
 	else {
 		args = copyargs;
 		bcopy(stackargs, (caddr_t)args, regparams);
-		if ((error = copyin((caddr_t)frame->tf_usr_sp,
-		    (caddr_t)args + regparams, argsize - regparams))) {
-#ifdef SYSCALL_DEBUG
-			scdebug_call(p, code, callp->sy_narg, args);
-#endif
+		error = copyin((caddr_t)frame->tf_usr_sp,
+		    (caddr_t)args + regparams, argsize - regparams);
+		if (error)
 			goto bad;
-		}
 	}
 
 #ifdef SYSCALL_DEBUG
@@ -238,9 +232,9 @@ syscall(frame, code)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
-	rval[0] = 0;
-	rval[1] = frame->tf_r1;
 
+	rval[0] = 0;
+	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
 
 	switch (error) {
@@ -262,38 +256,33 @@ syscall(frame, code)
 		break;
 
 	default:
-bad:
+	bad:
 		frame->tf_r0 = error;
 		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
 		break;
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval[0]);
+	scdebug_ret(p, code, error, rval);
 #endif
-
 	userret(p);
-
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
-
 void
 child_return(arg)
 	void *arg;
 {
 	struct proc *p = arg;
-	/* See cpu_fork() */
 	struct trapframe *frame = p->p_md.md_regs;
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
 
 	userret(p);
-
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
