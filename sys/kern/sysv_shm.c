@@ -57,9 +57,10 @@
 int	shmat(), shmctl(), shmdt(), shmget();
 int	(*shmcalls[])() = { shmat, shmctl, shmdt, shmget };
  
-#define SHMSEG_FREE      0x200
-#define SHMSEG_REMOVED   0x400
-#define SHMSEG_ALLOCATED 0x800
+#define	SHMSEG_FREE     	0x0200
+#define	SHMSEG_REMOVED  	0x0400
+#define	SHMSEG_ALLOCATED	0x0800
+#define	SHMSEG_WANTED		0x1000
 
 vm_map_t sysvshm_map;
 int shm_last_free, shm_nused, shm_committed;
@@ -342,8 +343,18 @@ shmget_existing(p, uap, mode, segnum, retval)
 	int error;
 
 	shmseg = &shmsegs[segnum];
-	if (shmseg->shm_perm.mode & SHMSEG_REMOVED)
-		return EBUSY;
+	if (shmseg->shm_perm.mode & SHMSEG_REMOVED) {
+		/*
+		 * This segment is in the process of being allocated.  Wait
+		 * until it's done, and look the key up again (in case the
+		 * allocation failed or it was freed).
+		 */
+		shmseg->shm_perm.mode |= SHMSEG_WANTED;
+		if (error =
+		    tsleep((caddr_t)shmseg, PLOCK | PCATCH, "shmget", 0))
+			return error;
+		return EAGAIN;
+	}
 	if (error = ipcperm(cred, &shmseg->shm_perm, mode))
 		return error;
 	if (uap->size && uap->size > shmseg->shm_segsz)
@@ -401,12 +412,15 @@ shmget_allocate_segment(p, uap, mode, retval)
 		shmseg->shm_perm.mode = SHMSEG_FREE;
 		shm_last_free = segnum;
 		free((caddr_t)shm_handle, M_SHM);
+		/* Just in case. */
+		wakeup((caddr_t)shmseg);
 		return ENOMEM;
 	}
 	shmseg->shm_internal = shm_handle;
 	shmseg->shm_perm.cuid = shmseg->shm_perm.uid = cred->cr_uid;
 	shmseg->shm_perm.cgid = shmseg->shm_perm.gid = cred->cr_gid;
-	shmseg->shm_perm.mode = (mode & ACCESSPERMS) | SHMSEG_ALLOCATED;
+	shmseg->shm_perm.mode = (shmseg->shm_perm.mode & SHMSEG_WANTED) |
+	    (mode & ACCESSPERMS) | SHMSEG_ALLOCATED;
 	shmseg->shm_segsz = uap->size;
 	shmseg->shm_cpid = p->p_pid;
 	shmseg->shm_lpid = shmseg->shm_nattch = 0;
@@ -414,6 +428,14 @@ shmget_allocate_segment(p, uap, mode, retval)
 	shmseg->shm_ctime = time.tv_sec;
 	shm_committed += btoc(size);
 	shm_nused++;
+	if (shmseg->shm_perm.mode & SHMSEG_WANTED) {
+		/*
+		 * Somebody else wanted this key while we were asleep.  Wake
+		 * them up now.
+		 */
+		shmseg->shm_perm.mode &= ~SHMSEG_WANTED;
+		wakeup((caddr_t)shmseg);
+	}
 	*retval = shmid;
 	return 0;
 }
@@ -429,9 +451,14 @@ shmget(p, uap, retval)
 
 	mode = uap->shmflg & ACCESSPERMS;
 	if (uap->key != IPC_PRIVATE) {
+	again:
 		segnum = shm_find_segment_by_key(uap->key);
-		if (segnum >= 0)
-			return shmget_existing(p, uap, mode, segnum, retval);
+		if (segnum >= 0) {
+			error = shmget_existing(p, uap, mode, segnum, retval);
+			if (error == EAGAIN)
+				goto again;
+			return error;
+		}
 		if ((uap->shmflg & IPC_CREAT) == 0) 
 			return ENOENT;
 	}
