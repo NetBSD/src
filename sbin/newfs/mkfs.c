@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.76 2003/09/03 19:29:13 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.77 2003/09/04 15:30:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.76 2003/09/03 19:29:13 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.77 2003/09/04 15:30:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,7 +494,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_clean = FS_ISCLEAN;
 	sblock.fs_ronly = 0;
 	sblock.fs_id[0] = (long)tv.tv_sec;	/* XXXfvdl huh? */
-	sblock.fs_id[1] = random();
+	sblock.fs_id[1] = arc4random() & 0x7fffffff;
 	sblock.fs_fsmnt[0] = '\0';
 	csfrags = howmany(sblock.fs_cssize, sblock.fs_fsize);
 	sblock.fs_dsize = sblock.fs_size - sblock.fs_sblkno -
@@ -804,10 +804,10 @@ initcg(int cylno, const struct timeval *tv)
 	for (i = MIN(sblock.fs_ipg, 2) * INOPB(&sblock); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
 			/* No need to swap, it'll stay random */
-			dp1->di_gen = random();
+			dp1->di_gen = arc4random() & 0x7fffffff;
 			dp1++;
 		} else {
-			dp2->di_gen = random();
+			dp2->di_gen = arc4random() & 0x7fffffff;
 			dp2++;
 		}
 	}
@@ -821,7 +821,7 @@ initcg(int cylno, const struct timeval *tv)
 		     i += sblock.fs_frag) {
 			dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 			for (j = 0; j < INOPB(&sblock); j++) {
-				dp1->di_gen = random();
+				dp1->di_gen = arc4random() & 0x7fffffff;
 				dp1++;
 			}
 			wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
