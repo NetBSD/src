@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.24 1999/02/12 11:14:49 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.24.2.1 1999/12/04 19:41:46 he Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -467,11 +467,13 @@
 #define KB_FR			0x0600
 #define KB_UK			0x0700
 #define KB_JP			0x0800
+#define KB_SV			0x0900
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
 #define KB_SWAPCTRLCAPS		0x0008	/* Swap Control-L and Caps-Lock */
+#define KB_DVORAK		0x0010	/* Dvorak layout */
 
 #define KB_NAMETAB \
 	{ KB_USER,	"user" }, \
@@ -482,9 +484,11 @@
 	{ KB_FR,	"fr" }, \
 	{ KB_UK,	"uk" }, \
 	{ KB_JP,	"jp" }, \
+	{ KB_SV,	"sv" }, \
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
 	{ KB_LK401,	"lk401" }, \
-	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }
+	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
+	{ KB_DVORAK,	"dvorak" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
