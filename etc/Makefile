@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.218 2002/05/02 22:13:31 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.219 2002/05/04 19:43:57 jdolecek Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -246,8 +246,6 @@ install-etc-files: check_DESTDIR
 		${DESTDIR}/var/games/larn/lscore12.0
 	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/larn/playerids
-	(cd etc.${MACHINE}; ${INSTALL_FILE} -o ${BINOWN} \
-	    -g ${BINGRP} -m 444 fstab.* ${DESTDIR}/etc)
 	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
