@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.18 2003/08/07 09:05:33 agc Exp $	*/
+/*	$NetBSD: jobs.h,v 1.19 2003/11/27 21:16:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,11 +57,7 @@
  * latter case, pidlist will be non-NULL, and will point to a -1 terminated
  * array of pids.
  */
-#ifdef SMALL
-#define	MAXCMDTEXT	20
-#else
 #define	MAXCMDTEXT	200
-#endif
 
 struct procstat {
 	pid_t	pid;		/* process id */
