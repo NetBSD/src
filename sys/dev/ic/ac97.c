@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.48 2003/09/28 15:39:09 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.49 2003/09/28 22:24:09 cube Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.48 2003/09/28 15:39:09 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.49 2003/09/28 22:24:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1152,7 +1152,8 @@ ac97_mixer_set_port(codec_if, cp)
 	case AUDIO_MIXER_VALUE:
 	{
 		const struct audio_mixer_value *value = si->info;
-		u_int16_t  l, r;
+		u_int16_t  l, r, ol, or;
+		int deltal, deltar;
 
 		if ((cp->un.value.num_channels <= 0) ||
 		    (cp->un.value.num_channels > value->num_channels))
@@ -1176,12 +1177,23 @@ ac97_mixer_set_port(codec_if, cp)
 			r = 255 - r;
 		}
 
+		ol = (val >> (8+si->ofs)) & mask;
+		or = (val >> si->ofs) & mask;
+
+		deltal = (ol << (8 - si->bits)) - l;
+		deltar = (or << (8 - si->bits)) - r;
+
 		l = l >> (8 - si->bits);
 		r = r >> (8 - si->bits);
 
-		newval = ((l & mask) << si->ofs);
+		if (deltal && ol == l)
+			l += (deltal > 0) ? (l ? -1 : 0) : (l < mask ? 1 : 0);
+		if (deltar && or == r)
+			r += (deltar > 0) ? (r ? -1 : 0) : (r < mask ? 1 : 0);
+
+		newval = ((r & mask) << si->ofs);
 		if (value->num_channels == 2) {
-			newval = (newval << 8) | ((r & mask) << si->ofs);
+			newval = newval | ((l & mask) << (si->ofs+8));
 			mask |= (mask << 8);
 		}
 		mask = mask << si->ofs;
