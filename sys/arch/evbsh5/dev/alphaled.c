@@ -1,4 +1,4 @@
-/*	$NetBSD: alphaled.c,v 1.1.8.3 2004/09/21 13:15:13 skrll Exp $	*/
+/*	$NetBSD: alphaled.c,v 1.1.8.4 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alphaled.c,v 1.1.8.3 2004/09/21 13:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alphaled.c,v 1.1.8.4 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ alphaled_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-alphaled_open(dev_t dev, int flag, int mode, struct proc *p)
+alphaled_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct alphaled_softc *sc;
 
@@ -178,7 +178,7 @@ alphaled_open(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-alphaled_close(dev_t dev, int flag, int mode, struct proc *p)
+alphaled_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct alphaled_softc *sc;
 
@@ -213,7 +213,7 @@ alphaled_write(dev_t dev, struct uio *uio, int flags)
 
 /*ARGSUSED*/
 int
-alphaled_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+alphaled_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct alphaled_softc *sc;
 	u_int8_t rv;

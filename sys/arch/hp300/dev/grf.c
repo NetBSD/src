@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.53.2.4 2004/09/21 13:15:14 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.53.2.5 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.4 2004/09/21 13:15:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -192,7 +192,7 @@ grfprint(void *aux, const char *pnp)
 
 /*ARGSUSED*/
 static int
-grfopen(dev_t dev, int flags, int mode, struct proc *p)
+grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -214,7 +214,7 @@ grfopen(dev_t dev, int flags, int mode, struct proc *p)
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (p->p_emul == &emul_hpux)
+	if (l->l_proc->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -239,7 +239,7 @@ grfopen(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 static int
-grfclose(dev_t dev, int flags, int mode, struct proc *p)
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -262,7 +262,7 @@ grfclose(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 static int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct grf_softc *sc;
 	struct grf_data *gp;
@@ -276,8 +276,8 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENXIO);
 
 #ifdef COMPAT_HPUX
-	if (p->p_emul == &emul_hpux)
-		return(hpuxgrfioctl(dev, cmd, data, flag, p));
+	if (l->l_proc->p_emul == &emul_hpux)
+		return(hpuxgrfioctl(dev, cmd, data, flag, l->l_proc));
 #endif
 	error = 0;
 	switch (cmd) {
@@ -295,11 +295,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
 		break;
 
 	default:

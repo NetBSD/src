@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.3.2.4 2004/09/21 13:26:26 skrll Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.3.2.5 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.3.2.4 2004/09/21 13:26:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.3.2.5 2005/01/24 08:59:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,10 @@ struct veriexec_devhead veriexec_file_dev_head;
 /* Autoconfiguration glue */
 void	verifiedexecattach(struct device *parent, struct device *self,
 			 void *aux);
-int     verifiedexecopen(dev_t dev, int flags, int fmt, struct proc *p);
-int     verifiedexecclose(dev_t dev, int flags, int fmt, struct proc *p);
+int     verifiedexecopen(dev_t dev, int flags, int fmt, struct lwp *l);
+int     verifiedexecclose(dev_t dev, int flags, int fmt, struct lwp *l);
 int     verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-			struct proc *p);
+			struct lwp *l);
 void    add_veriexec_inode(struct veriexec_dev_list *list, unsigned long inode,
 			unsigned char fingerprint[MAXFINGERPRINTLEN],
 			unsigned char type, unsigned char fp_type);
@@ -86,13 +86,13 @@ verifiedexecattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-verifiedexecopen(dev_t dev, int flags, int fmt, struct proc *p)
+verifiedexecopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	return 0;
 }
 
 int
-verifiedexecclose(dev_t dev, int flags, int fmt, struct proc *p)
+verifiedexecclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 #ifdef VERIFIED_EXEC_DEBUG_VERBOSE
 	struct veriexec_dev_list *lp;
@@ -194,10 +194,8 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 	struct verified_exec_params *params;
 	struct nameidata nid;
 	struct vattr vattr;
-	struct proc *p;
 	struct veriexec_dev_list *dlp;
 
-	p = l->l_proc;
 	params = (struct verified_exec_params *)data;
 #ifdef VERIFIED_EXEC_DEBUG
 	printf("veriexec_ioctl: got cmd 0x%lx for file %s\n", cmd, params->file);
@@ -220,12 +218,12 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 			if ((error = vn_open(&nid, FREAD, 0)) != 0) {
 				return(error);
 			}
-			error = VOP_GETATTR(nid.ni_vp, &vattr, p->p_ucred, p);
+			error = VOP_GETATTR(nid.ni_vp, &vattr, l->l_proc->p_ucred, l);
 			if (error) {
 				nid.ni_vp->fp_status = FINGERPRINT_INVALID;
 				VOP_UNLOCK(nid.ni_vp, 0);
 				(void) vn_close(nid.ni_vp, FREAD,
-						p->p_ucred, p);
+						l->l_proc->p_ucred, l);
 				return(error);
 			}
 			/* invalidate the node fingerprint status
@@ -234,7 +232,7 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 			 */
 			nid.ni_vp->fp_status = FINGERPRINT_INVALID;
 			VOP_UNLOCK(nid.ni_vp, 0);
-			(void) vn_close(nid.ni_vp, FREAD, p->p_ucred, p);
+			(void) vn_close(nid.ni_vp, FREAD, l->l_proc->p_ucred, l);
 			  /* vattr.va_fsid = dev, vattr.va_fileid = inode */
 			if (params->type == VERIEXEC_FILE) {
 				dlp = find_veriexec_dev(vattr.va_fsid,

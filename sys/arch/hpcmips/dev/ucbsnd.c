@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.14.6.3 2004/09/21 13:16:05 skrll Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.14.6.4 2005/01/24 08:59:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.14.6.3 2004/09/21 13:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.14.6.4 2005/01/24 08:59:39 skrll Exp $");
 
 #include "opt_use_poll.h"
 
@@ -520,7 +520,7 @@ __ucbsnd_sound_mute(tx_sound_tag_t arg, int onoff)
 extern struct cfdriver ucbsnd_cd;
 
 int
-ucbsndopen(dev_t dev, int flags, int ifmt, struct proc *p)
+ucbsndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
@@ -538,7 +538,7 @@ ucbsndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 }
 
 int
-ucbsndclose(dev_t dev, int flags, int ifmt, struct proc *p)
+ucbsndclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;

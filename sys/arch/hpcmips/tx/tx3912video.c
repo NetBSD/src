@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.33.6.4 2004/12/18 09:31:03 skrll Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.33.6.5 2005/01/24 08:59:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.33.6.4 2004/12/18 09:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.33.6.5 2005/01/24 08:59:39 skrll Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -107,7 +107,7 @@ void	tx3912video_attach(struct device *, struct device *, void *);
 int	tx3912video_print(void *, const char *);
 
 void	tx3912video_hpcfbinit(struct tx3912video_softc *);
-int	tx3912video_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	tx3912video_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	tx3912video_mmap(void *, off_t, int);
 
 void	tx3912video_clut_init(struct tx3912video_softc *);
@@ -505,7 +505,7 @@ tx3912video_reset(struct video_chip *chip)
 }
 
 int
-tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+tx3912video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tx3912video_softc *sc = (struct tx3912video_softc *)v;
 	struct hpcfb_fbconf *fbconf;

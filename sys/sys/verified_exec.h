@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.3.2.4 2004/09/21 13:38:51 skrll Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.3.2.5 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -95,7 +95,7 @@ struct veriexec_inode_list
 struct veriexec_inode_list *get_veriexec_inode(struct veriexec_devhead *,
 	    long, long, char *);
 int evaluate_fingerprint(struct vnode *, struct veriexec_inode_list *,
-	    struct lwp *, u_quad_t, char *);
+	    struct proc *, u_quad_t, char *);
 int fingerprintcmp(struct veriexec_inode_list *, unsigned char *);
 
 #endif

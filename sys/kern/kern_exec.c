@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.5 2004/10/19 15:58:03 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.6 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.5 2004/10/19 15:58:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.6 2005/01/24 08:59:40 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -195,7 +195,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  *
  * ON ENTRY:
  *	exec package with appropriate namei info
- *	proc pointer of exec'ing proc
+ *	lwp pointer of exec'ing lwp
  *      iff verified exec enabled then flag indicating a direct exec or
  *        an indirect exec (i.e. for a shell script interpreter)
  *	NO SELF-LOCKED VNODES
@@ -267,7 +267,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 
 #ifdef VERIFIED_EXEC
         /* Evaluate signature for file... */
-        if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
+        if ((error = check_veriexec(l->l_proc, vp, epp, direct_exec)) != 0)
                 goto bad2;
 #endif
 

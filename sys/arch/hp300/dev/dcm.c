@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.61.2.4 2004/09/21 13:15:13 skrll Exp $	*/
+/*	$NetBSD: dcm.c,v 1.61.2.5 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.61.2.4 2004/09/21 13:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.61.2.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -521,7 +521,7 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static int
-dcmopen(dev_t dev, int flag, int mode, struct proc *p)
+dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dcm_softc *sc;
 	struct tty *tp;
@@ -551,7 +551,7 @@ dcmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -613,7 +613,7 @@ dcmopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 static int
-dcmclose(dev_t dev, int flag, int mode, struct proc *p)
+dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s, unit, board, port;
 	struct dcm_softc *sc;
@@ -683,7 +683,7 @@ dcmwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 static int
-dcmpoll(dev_t dev, int events, struct proc *p)
+dcmpoll(dev_t dev, int events, struct lwp *l)
 {
 	int unit, board, port;
 	struct dcm_softc *sc;
@@ -696,7 +696,7 @@ dcmpoll(dev_t dev, int events, struct proc *p)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 static struct tty *
@@ -995,7 +995,7 @@ dcmmint(struct dcm_softc *sc, int port, int mcnd)
 }
 
 static int
-dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dcm_softc *sc;
 	struct tty *tp;
@@ -1016,11 +1016,11 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		       sc->sc_dev.dv_xname, port, cmd, *data, flag);
 #endif
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -1086,7 +1086,7 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (EPERM);
 

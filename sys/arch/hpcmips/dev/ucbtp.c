@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.11.2.4 2004/09/21 13:16:05 skrll Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.11.2.5 2005/01/24 08:59:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.4 2004/09/21 13:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.5 2005/01/24 08:59:39 skrll Exp $");
 
 #include "opt_use_poll.h"
 
@@ -171,7 +171,7 @@ int	ucbtp_input(struct ucbtp_softc *);
 int	ucbtp_busy(void *);
 
 int	ucbtp_enable(void *);
-int	ucbtp_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	ucbtp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	ucbtp_disable(void *);
 
 CFATTACH_DECL(ucbtp, sizeof(struct ucbtp_softc),
@@ -716,7 +716,7 @@ ucbtp_disable(void *v)
 }
 
 int
-ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ucbtp_softc *sc = v;
 
@@ -729,7 +729,7 @@ ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 	}
 
 	return 0;

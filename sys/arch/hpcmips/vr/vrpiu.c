@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.28.2.3 2004/09/21 13:16:14 skrll Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.28.2.4 2005/01/24 08:59:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.28.2.3 2004/09/21 13:16:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.28.2.4 2005/01/24 08:59:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void	vrpiu_dump_cntreg(unsigned int);
 #endif
 
 static int	vrpiu_tp_enable(void *);
-static int	vrpiu_tp_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int	vrpiu_tp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void	vrpiu_tp_disable(void *);
 static void	vrpiu_tp_up(struct vrpiu_softc *);
 static void	vrpiu_tp_timeout(void *);
@@ -511,7 +511,7 @@ vrpiu_tp_disable(void *v)
 }
 
 int
-vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vrpiu_softc *sc = v;
 
@@ -549,7 +549,7 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
 	default:
-		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
+		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 	}
 	return 0;
 }

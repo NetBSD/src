@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.72.2.8 2005/01/17 19:32:26 skrll Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.72.2.9 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.8 2005/01/17 19:32:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.9 2005/01/24 08:59:40 skrll Exp $");
 
 #include "fs_union.h"
 
@@ -206,7 +206,7 @@ restart:
 
 			if (veriexec_node != NULL) {
 				if ((error = evaluate_fingerprint(vp,
-						veriexec_node, l, va.va_size,
+						veriexec_node, l->l_proc, va.va_size,
 						fingerprint)) != 0)
 					goto bad;
 

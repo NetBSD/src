@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97.2.5 2004/11/21 08:53:51 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.6 2005/01/24 08:59:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -250,7 +250,7 @@ void	setregs			__P((struct lwp *, struct exec_package *,
 #ifdef VERIFIED_EXEC
 int	check_veriexec		__P((struct proc *, struct vnode *,
 				     struct exec_package *, int));
-int	check_exec		__P((struct proc *, struct exec_package *,
+int	check_exec		__P((struct lwp *, struct exec_package *,
 				     int));
 #else
 int	check_exec		__P((struct lwp *, struct exec_package *));
