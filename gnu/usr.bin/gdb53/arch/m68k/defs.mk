@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/13 19:45:16 cl Exp $
+# $NetBSD: defs.mk,v 1.2 2003/09/23 13:10:32 cl Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -66,6 +66,7 @@ jv-exp.tab.o \
 jv-lang.o \
 jv-typeprint.o \
 jv-valprint.o \
+kcore-nbsd.o \
 kod-cisco.o \
 kod.o \
 language.o \
