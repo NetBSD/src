@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.1 1994/02/07 22:02:37 proven Exp $ $provenid: stdio.h,v 1.18 1994/02/07 03:32:06 proven Exp $
+ *	$Id: stdio.h,v 1.2 1997/10/08 00:35:50 christos Exp $ $provenid: stdio.h,v 1.18 1994/02/07 03:32:06 proven Exp $
  */
 
 #ifndef _STDIO_H_
@@ -210,7 +210,7 @@ char  * gets 		__P((char *));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern int sys_nerr;			/* perror(3) external variables */
-extern char *sys_errlist[];
+extern const char *const sys_errlist[];
 #endif
 
 void	 perror __P((const char *));
@@ -297,6 +297,8 @@ __BEGIN_DECLS
 int	__srget __P((FILE *));
 int	__svfscanf __P((FILE *, const char *, va_list));
 int	__swbuf __P((int, FILE *));
+void	flockfile __P((const FILE *));
+void	funlockfile __P((const FILE *));
 __END_DECLS
 
 /*
