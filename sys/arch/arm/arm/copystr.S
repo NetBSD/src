@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.3 2002/03/03 11:22:59 chris Exp $	*/
+/*	$NetBSD: copystr.S,v 1.5.2.2 2002/08/30 00:19:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,19 +40,15 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+
+RCSID("$NetBSD: copystr.S,v 1.5.2.2 2002/08/30 00:19:01 gehenna Exp $")
+
 #include <sys/errno.h>
 
 	.text
 	.align	0
-Lcurpcb:
+.Lcurpcb:
 	.word	_C_LABEL(curpcb)
-
-Lvm_min_address:
-	.word	VM_MIN_ADDRESS
-Lvm_maxuser_address:
-	.word	VM_MAXUSER_ADDRESS
-Lvm_maxkern_address:
-	.word	_C_LABEL(pmap_curmaxkvaddr)
 
 /*
  * r0 - from
@@ -62,33 +58,38 @@ Lvm_maxkern_address:
  *
  * Copy string from r0 to r1
  */
-
 ENTRY(copystr)
 	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	teq	r2, #0x00000000
 	mov	r5, #0x00000000
 	moveq	r0, #ENAMETOOLONG
-	beq	Lcopystrexit
+	beq	2f
 
-Lcopystr_loop:
-	ldrb	r4, [r0], #0x0001
-	strb	r4, [r1], #0x0001
+1:	ldrb	r4, [r0], #0x0001
 	add	r5, r5, #0x00000001
 	teq	r4, #0x00000000
+	strb	r4, [r1], #0x0001
 	teqne	r5, r2
-	bne	Lcopystr_loop
+	bne	1b
 
 	teq	r4, #0x00000000
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-Lcopystrexit:
-	teq	r3, #0x00000000
+2:	teq	r3, #0x00000000
 	strne	r5, [r3]
 
 	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
+#ifdef __PROG32
+#define SAVE_REGS	stmfd	sp!, {r4-r6}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#else
+/* Need to save R14_svc because it'll get trampled if we take a page fault. */
+#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
+#endif
 
 /*
  * r0 - user space address
@@ -98,26 +99,44 @@ Lcopystrexit:
  *
  * Copy string from user space to kernel space
  */
-
 ENTRY(copyinstr)
-	stmfd	sp!, {r4-r6}
+	SAVE_REGS
 
-	/* Validate user and kernel addresses */
-	ldr	r4, Lvm_min_address
-	cmp	r0, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxuser_address
-	cmp	r0, r4
-	bcs	Lbadaddress
-	cmp	r1, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxkern_address
-	ldr	r5, [r4]
-	cmp	r1, r5
-	bcs	Lbadaddress
+	teq	r2, #0x00000000
+	mov	r6, #0x00000000
+	moveq	r0, #ENAMETOOLONG
+	beq	2f
 
-	/* Do the actual copy */
-	b	do_copyinoutstr
+	ldr	r4, .Lcurpcb
+	ldr	r4, [r4]
+
+#ifdef DIAGNOSTIC
+	teq	r4, #0x00000000
+	beq	.Lcopystrpcbfault
+#endif
+
+	add	r5, pc, #.Lcopystrfault - . - 8
+	str	r5, [r4, #PCB_ONFAULT]
+
+1:	ldrbt	r5, [r0], #0x0001
+	add	r6, r6, #0x00000001
+	teq	r5, #0x00000000
+	strb	r5, [r1], #0x0001
+	teqne	r6, r2
+	bne	1b
+
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+
+	teq	r5, #0x00000000
+	moveq	r0, #0x00000000
+	movne	r0, #ENAMETOOLONG
+
+2:	teq	r3, #0x00000000
+	strne	r6, [r3]
+
+	RESTORE_REGS
+	mov	pc, lr
 
 /*
  * r0 - kernel space address
@@ -127,49 +146,31 @@ ENTRY(copyinstr)
  *
  * Copy string from kernel space to user space
  */
-
 ENTRY(copyoutstr)
-	stmfd	sp!, {r4-r6}		/* stack isn't 8 byte aligned */
+	SAVE_REGS
 
-	/* Validate user and kernel addresses */
-	ldr	r4, Lvm_min_address
-	cmp	r1, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxuser_address
-	cmp	r1, r4
-	bcs	Lbadaddress
-	cmp	r0, r4
-	bcc	Lbadaddress
-	ldr	r4, Lvm_maxkern_address
-	ldr	r5, [r4]
-	cmp	r0, r5
-	bcs	Lbadaddress
-
-	/* Do the actual copy */
-do_copyinoutstr:
 	teq	r2, #0x00000000
 	mov	r6, #0x00000000
 	moveq	r0, #ENAMETOOLONG
-	beq	Lcopyinoutstrexit
+	beq	2f
 
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
+	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #Lcopystrfault - . - 8
+	add	r5, pc, #.Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
-Lcopyinoutstr_loop:
-	ldrb	r5, [r0], #0x0001
-	strb	r5, [r1], #0x0001
+1:	ldrb	r5, [r0], #0x0001
 	add	r6, r6, #0x00000001
 	teq	r5, #0x00000000
+	strbt	r5, [r1], #0x0001
 	teqne	r6, r2
-	bne	Lcopyinoutstr_loop
+	bne	1b
 
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
@@ -178,28 +179,21 @@ Lcopyinoutstr_loop:
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-Lcopyinoutstrexit:
-	teq	r3, #0x00000000
+2:	teq	r3, #0x00000000
 	strne	r6, [r3]
 
-	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
+	RESTORE_REGS
 	mov	pc, lr
 
 /* A fault occurred during the copy */
-Lcopystrfault:
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
-
-	/* FALLTHROUGH */
-
-/* Source or Destination address was bad so fail */
-Lbadaddress:
-	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
-	mov	r0, #EFAULT
+.Lcopystrfault:
+	mov	r1, #0x00000000
+	str	r1, [r4, #PCB_ONFAULT]
+	RESTORE_REGS
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-Lcopystrpcbfault:
+.Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8

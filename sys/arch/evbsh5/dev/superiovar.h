@@ -1,4 +1,4 @@
-/*	$NetBSD: superiovar.h,v 1.1.2.2 2002/07/16 00:41:03 gehenna Exp $	*/
+/*	$NetBSD: superiovar.h,v 1.1.2.3 2002/08/30 00:19:41 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,5 +50,15 @@
  */
 extern int superio_console_tag(bus_space_tag_t, int,
 	    bus_space_tag_t *, bus_addr_t *);
+
+/*
+ * The following is only used to enable the wm(4) driver to be attached.
+ */
+struct superio_attach_args {
+	const char *saa_name;
+	bus_space_tag_t saa_bust;
+	bus_addr_t saa_offset;
+	int saa_irq;
+};
 
 #endif /* _EVBSH5_SUPERIOVAR_H */

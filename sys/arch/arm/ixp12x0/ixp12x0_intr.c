@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.1.2.2 2002/07/21 13:00:30 gehenna Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.1.2.3 2002/08/30 00:19:15 gehenna Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ ixp12x0_disable_irq(int irq)
 			/* nothing to do */
 		}
 	} else {
-		pci_intr_enabled &= (1U << (irq - SYS_NIRQ));
+		pci_intr_enabled &= ~(1U << (irq - SYS_NIRQ));
 		IXPREG(IXPPCI_IRQ_ENABLE_CLEAR) = (1U << (irq - SYS_NIRQ));
 	}
 }

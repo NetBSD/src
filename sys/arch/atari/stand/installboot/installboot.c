@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.13 2002/04/12 22:11:33 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.13.2.1 2002/08/30 00:19:24 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -176,8 +176,7 @@ oscheck ()
 	struct stat	sb;
 
 	if (stat(_PATH_UNIX, &sb) < 0) {
-		warnx("Cannot stat %s, no bootversion check done\n",
-							_PATH_UNIX);
+		warnx("Cannot stat %s, no bootversion check done", _PATH_UNIX);
 		return;
 	}
 
@@ -193,7 +192,7 @@ oscheck ()
 		errx(EXIT_FAILURE, "kvm_read: %s", kvm_geterr(kd_kern));
 	kvm_close(kd_kern);
 	if (kvers != BOOTVERSION)
-		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d\n",
+		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d",
 					kvers, BOOTVERSION);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.16.1 2002/07/09 05:17:57 gehenna Exp $
+#	$NetBSD: Makefile,v 1.3.16.2 2002/08/30 00:18:46 gehenna Exp $
 
 KDIR=	/sys/arch/algor/include
 INCSDIR=/usr/include/algor
@@ -17,7 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	limits.h lock.h locore.h \
 	math.h mips_opcode.h \
 	param.h pcb.h pci_machdep.h \
-	pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
