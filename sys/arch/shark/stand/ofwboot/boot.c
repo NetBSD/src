@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.1 2002/02/10 01:58:16 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2002/02/10 18:28:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ int boothowto;
 int debug;
 
 static int ofw_version = 0;
-static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.dnard", NULL };
+static char *kernels[] = { "/netbsd", "/netbsd.gz", "/netbsd.shark", NULL };
 
 static void
 prom2boot(dev)
