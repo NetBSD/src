@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.21 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.22 2000/02/02 08:05:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ int	tlphymatch __P((struct device *, struct cfdata *, void *));
 void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
-	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -183,7 +183,7 @@ tlphyattach(parent, self, aux)
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
 		printf(sep);
-		mii_add_media(&sc->sc_mii);
+		mii_phy_add_media(&sc->sc_mii);
 	} else if ((sc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
 		printf("no media present");

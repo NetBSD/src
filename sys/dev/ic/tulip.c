@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.42 2000/02/01 22:54:47 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.43 2000/02/02 08:05:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -531,7 +531,7 @@ tlp_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_flags & TULIPF_HAS_MII)
-			mii_phy_activate(&sc->sc_mii, act, MII_PHY_ANY,
+			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
 			    MII_OFFSET_ANY);
 		if_deactivate(&sc->sc_ethercom.ec_if);
 		break;
@@ -561,7 +561,7 @@ tlp_detach(sc)
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
 		/* Detach all PHYs */
-		mii_phy_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
 	/* Delete all remaining media. */
@@ -4310,7 +4310,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * particularly care; the MII code just likes to
 			 * search the whole thing anyhow.
 			 */
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 			    MII_PHY_ANY, tm->tm_phyno);
 
 			/*
@@ -4470,7 +4470,7 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * particularly care; the MII code just likes to
 			 * search the whole thing anyhow.
 			 */
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 			    MII_PHY_ANY, tm->tm_phyno);
 
 			/*
@@ -4687,7 +4687,7 @@ tlp_sio_mii_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -4735,7 +4735,7 @@ tlp_pnic_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* XXX What about AUI/BNC support? */
@@ -5147,7 +5147,7 @@ tlp_pmac_tmsw_init(sc)
 	    tlp_mediastatus);
 	if (sc->sc_chip == TULIP_CHIP_MX98713 ||
 	    sc->sc_chip == TULIP_CHIP_MX98713A) {
-		mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 		    MII_PHY_ANY, MII_OFFSET_ANY);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL) {
 			sc->sc_flags |= TULIPF_HAS_MII;
@@ -5215,7 +5215,7 @@ tlp_al981_tmsw_init(sc)
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);

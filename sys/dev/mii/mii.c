@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.17 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.18 2000/02/02 08:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ int	mii_submatch __P((struct device *, struct cfdata *, void *));
  * to the network interface driver parent.
  */
 void
-mii_phy_probe(parent, mii, capmask, phyloc, offloc)
+mii_attach(parent, mii, capmask, phyloc, offloc)
 	struct device *parent;
 	struct mii_data *mii;
 	int capmask, phyloc, offloc;
@@ -73,7 +73,7 @@ mii_phy_probe(parent, mii, capmask, phyloc, offloc)
 	int phymin, phymax;
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
-		panic("mii_phy_probe: phyloc and offloc specified");
+		panic("mii_attach: phyloc and offloc specified");
 
 	if (phyloc == MII_PHY_ANY) {
 		phymin = 0;
@@ -89,7 +89,7 @@ mii_phy_probe(parent, mii, capmask, phyloc, offloc)
 	for (ma.mii_phyno = phymin; ma.mii_phyno <= phymax; ma.mii_phyno++) {
 		/*
 		 * Make sure we haven't already configured a PHY at this
-		 * address.  This allows mii_phy_probe() to be called
+		 * address.  This allows mii_attach() to be called
 		 * multiple times.
 		 */
 		for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
@@ -152,7 +152,7 @@ mii_phy_probe(parent, mii, capmask, phyloc, offloc)
 }
 
 void
-mii_phy_activate(mii, act, phyloc, offloc)
+mii_activate(mii, act, phyloc, offloc)
 	struct mii_data *mii;
 	enum devact act;
 	int phyloc, offloc;
@@ -160,7 +160,7 @@ mii_phy_activate(mii, act, phyloc, offloc)
 	struct mii_softc *child;
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
-		panic("mii_phy_detach: phyloc and offloc specified");
+		panic("mii_activate: phyloc and offloc specified");
 
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
 		return;
@@ -177,7 +177,7 @@ mii_phy_activate(mii, act, phyloc, offloc)
 		}
 		switch (act) {
 		case DVACT_ACTIVATE:
-			panic("mii_phy_activate: DVACT_ACTIVATE");
+			panic("mii_activate: DVACT_ACTIVATE");
 			break;
 
 		case DVACT_DEACTIVATE:
@@ -189,14 +189,14 @@ mii_phy_activate(mii, act, phyloc, offloc)
 }
 
 void
-mii_phy_detach(mii, phyloc, offloc)
+mii_detach(mii, phyloc, offloc)
 	struct mii_data *mii;
 	int phyloc, offloc;
 {
 	struct mii_softc *child, *nchild;
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
-		panic("mii_phy_detach: phyloc and offloc specified");
+		panic("mii_detach: phyloc and offloc specified");
 
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
 		return;

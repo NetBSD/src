@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.1 1999/12/07 19:36:37 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.2 2000/02/02 08:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@ int	nsphytermatch __P((struct device *, struct cfdata *, void *));
 void	nsphyterattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphyter_ca = {
-	sizeof(struct mii_softc), nsphytermatch, nsphyterattach
+	sizeof(struct mii_softc), nsphytermatch, nsphyterattach,
+	    mii_phy_detach, mii_phy_activate
 };
 
 int	nsphyter_service __P((struct mii_softc *, struct mii_data *, int));
@@ -138,7 +139,7 @@ nsphyterattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 

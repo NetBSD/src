@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.14 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.15 2000/02/02 08:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ int	inphymatch __P((struct device *, struct cfdata *, void *));
 void	inphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach inphy_ca = {
-	sizeof(struct mii_softc), inphymatch, inphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct mii_softc), inphymatch, inphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	inphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -146,7 +146,7 @@ inphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.1 2000/02/02 04:29:49 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.2 2000/02/02 08:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ int	dmphymatch __P((struct device *, struct cfdata *, void *));
 void	dmphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach dmphy_ca = {
-	sizeof(struct mii_softc), dmphymatch, dmphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct mii_softc), dmphymatch, dmphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	dmphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -139,7 +139,7 @@ dmphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.9 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.10 2000/02/02 08:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ mii_phy_down(sc)
  * of media names.  Does not print a newline.
  */
 void
-mii_add_media(sc)
+mii_phy_add_media(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -259,7 +259,7 @@ mii_add_media(sc)
 }
 
 void
-mii_delete_media(sc)
+mii_phy_delete_media(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
@@ -268,7 +268,7 @@ mii_delete_media(sc)
 }
 
 int
-mii_activate(self, act)
+mii_phy_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
@@ -288,7 +288,7 @@ mii_activate(self, act)
 }
 
 int
-mii_detach(self, flags)
+mii_phy_detach(self, flags)
 	struct device *self;
 	int flags;
 {
@@ -297,7 +297,7 @@ mii_detach(self, flags)
 	if (sc->mii_flags & MIIF_DOINGAUTO)
 		untimeout(mii_phy_auto_timeout, sc);
 
-	mii_delete_media(sc);
+	mii_phy_delete_media(sc);
 
 	return (0);
 }

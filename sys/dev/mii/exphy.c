@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.19 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.20 2000/02/02 08:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ int	exphymatch __P((struct device *, struct cfdata *, void *));
 void	exphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach exphy_ca = {
-	sizeof(struct mii_softc), exphymatch, exphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct mii_softc), exphymatch, exphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	exphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -154,7 +154,7 @@ exphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 
