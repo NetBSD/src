@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.8 2001/03/11 21:28:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.8 2001/03/11 21:28:59 eeh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,6 +100,7 @@ __RCSID("$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $");
 #include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
 #include "../../sys/compat/svr4/svr4_syscall.h"
+#include "../../sys/compat/svr4_32/svr4_32_syscall.h"
 #include "../../sys/compat/ultrix/ultrix_syscall.h"
 
 #define KTRACE
@@ -114,6 +115,7 @@ __RCSID("$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $");
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/sunos32/sunos32_syscalls.c"
 #include "../../sys/compat/svr4/svr4_syscalls.c"
+#include "../../sys/compat/svr4_32/svr4_32_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
 
 #include "../../sys/compat/hpux/hpux_errno.c"
@@ -144,6 +146,8 @@ static const struct emulation emulations[] = {
 	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{     "svr4",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
+	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
+	{     "svr4_32",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
 	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
 	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
 	        NULL,			0 },
