@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.2 1998/02/06 22:32:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.3 1998/02/07 02:35:11 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -246,6 +246,7 @@ void uvm_pageout()
 
     for (/*null*/; aio != NULL ; aio = nextaio) {
 
+      uvmexp.paging -= aio->npages;
       nextaio = aio->aioq.tqe_next;
       aio->aiodone(aio);
 
@@ -333,6 +334,7 @@ struct pglist *pglst;
    */
   swslot = 0;
   swnpages = swcpages = 0;
+  free = 0;
 
   for (p = pglst->tqh_first ; p != NULL || swslot != 0 ; p = nextpg) {
 
@@ -466,6 +468,20 @@ struct pglist *pglst;
 	  simple_unlock(&anon->an_lock);
 	} else {
 	  /* pagefree has already removed the page from the object */
+	  simple_unlock(&uobj->vmobjlock);
+	}
+	continue;
+      }
+
+      /*
+       * this page is dirty, skip it if we'll have met
+       * our free target when all the current pageouts complete.
+       */
+      if (free + uvmexp.paging > uvmexp.freetarg)
+      {
+	if (anon) {
+	  simple_unlock(&anon->an_lock);
+	} else {
 	  simple_unlock(&uobj->vmobjlock);
 	}
 	continue;
@@ -630,6 +646,7 @@ struct pglist *pglst;
      */
 
     if (result == VM_PAGER_PEND) {
+      uvmexp.paging += npages;
       uvm_lock_pageq();				/* relock page queues */
       uvmexp.pdpending++;
       if (p) {
@@ -709,7 +726,12 @@ struct pglist *pglst;
 	   */
 	  if (!uobj->pgops->pgo_releasepg(p, &nextpg))
 	    uobj = NULL;			/* uobj died after release */
-	
+
+	  /*
+	   * lock page queues here so that they're always locked
+	   * at the end of the loop.
+	   */
+	  uvm_lock_pageq();
 	}
 
       } else {	/* page was not released during I/O */
@@ -753,6 +775,11 @@ struct pglist *pglst;
       /* if p is null in this loop, make sure it stays null in next loop */
       nextpg = NULL;
       
+      /*
+       * lock page queues here just so they're always locked
+       * at the end of the loop.
+       */
+      uvm_lock_pageq();
     }
 
     if (nextpg && (nextpg->pqflags & PQ_INACTIVE) == 0) {
@@ -760,7 +787,6 @@ struct pglist *pglst;
       nextpg = pglst->tqh_first;	/* reload! */
     }
 
-    continue;
   }		/* end of "inactive" 'for' loop */
   return(retval);
 }
