@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.3 2002/06/27 22:58:54 wiz Exp $ */
+/* $NetBSD: wsmoused.c,v 1.4 2002/07/04 20:50:29 christos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.3 2002/06/27 22:58:54 wiz Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.4 2002/07/04 20:50:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -150,7 +150,7 @@ event_loop(void)
 			res = poll(fds, 1, INFTIM);
 		else
 			res = poll(fds, 2, 300);
-			
+
 		if (res < 0)
 			warn("failed to read from devices");
 
@@ -202,7 +202,7 @@ mouse_init(void)
 	ioctl(mouse.stat_fd, WSDISPLAYIO_GETACTIVESCREEN, &i);
 	mouse.tty_fd = -1;
 	mouse_open_tty(&mouse, i);
-	
+
 	/* Check if the kernel has character functions */
 	ch.row = ch.col = 0;
 	if (ioctl(mouse.tty_fd, WSDISPLAYIO_GETWSCHAR, &ch) < 0)
