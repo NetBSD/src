@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.8 1996/10/21 22:34:33 thorpej Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.9 1997/03/11 23:30:21 chuck Exp $	*/
 
 /*
  *
@@ -189,6 +189,7 @@ struct en_softc {
   u_int8_t bestburstshift;	/* (x >> shift) == (x / bestburstlen) */
   u_int8_t bestburstmask;	/* bits to check if not multiple of burst */
   u_int8_t alburst;		/* align dma bursts? */
+  u_int8_t is_adaptec;		/* adaptec version of midway? */
 };
 
 /*
