@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.13 1998/07/12 03:20:14 mrg Exp $	*/
+/*	$NetBSD: mroute.c,v 1.14 2001/05/28 04:22:56 assar Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.13 1998/07/12 03:20:14 mrg Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.14 2001/05/28 04:22:56 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	vifi_t vifi;
 	int i;
 	int banner_printed;
-	int saved_nflag;
+	int saved_numeric_addr;
 	int numvifs;
 	int nmfc;		/* No. of cache entries */
 
@@ -143,8 +143,8 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 		return;
 	}
 
-	saved_nflag = nflag;
-	nflag = 1;
+	saved_numeric_addr = numeric_addr;
+	numeric_addr = 1;
 
 	kread(vifaddr, (char *)&viftable, sizeof(viftable));
 	banner_printed = 0;
@@ -209,7 +209,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 		printf("\nTotal no. of entries in cache: %d\n", nmfc);
 
 	printf("\n");
-	nflag = saved_nflag;
+	numeric_addr = saved_numeric_addr;
 }
 
 
