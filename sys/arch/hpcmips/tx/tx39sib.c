@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.6 2000/03/12 15:42:43 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.7 2000/10/22 10:42:32 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -138,7 +138,7 @@ tx39sib_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return ATTACH_FIRST;
 }
 
 void
