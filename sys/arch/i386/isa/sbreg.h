@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.7 1995/02/21 02:28:10 brezak Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.8 1995/02/28 21:47:47 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
- *	$Id: sbreg.h,v 1.7 1995/02/21 02:28:10 brezak Exp $
+ *	$Id: sbreg.h,v 1.8 1995/02/28 21:47:47 brezak Exp $
  */
 
 /*
@@ -175,13 +175,10 @@
 /*
  * Macros to detect valid hardware configuration data.
  */
-#define SB_IRQ_MASK 	0x00ac	/* IRQ 2,3,5,7 */
-#define SBP_IRQ_MASK	0x04a4	/* IRQ 2,5,7,10 */
+#define SBP_IRQ_VALID(irq)  ((irq) == 2 || (irq) == 5 || (irq) == 7 || (irq) == 10)
+#define SB_IRQ_VALID(irq)   ((irq) == 2 || (irq) == 3 || (irq) == 5 || (irq) == 7)
 
-#define SBP_IRQ_VALID(mask)  ((mask) & SBP_IRQ_MASK)
-#define SB_IRQ_VALID(mask)  ((mask) & SB_IRQ_MASK)
-
-#define SBP_DRQ_VALID(chan)  ((chan) == 0 || (chan) == 1 || (chan) == 3)
+#define SBP_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 #define SB_DRQ_VALID(chan)  ((chan) == 1)
 
 #define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240)
