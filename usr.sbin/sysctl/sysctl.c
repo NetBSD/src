@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.15 1998/03/05 23:23:29 tron Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.15 1998/03/05 23:23:29 tron Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.16 1998/03/11 17:44:02 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,7 @@ parse(string, flags)
 			break;
 
 		case CTLTYPE_QUAD:
-			sscanf(newval, "%qd", &quadval);
+			sscanf(newval, "%qd", (long long *)&quadval);
 			newval = &quadval;
 			newsize = sizeof quadval;
 			break;
@@ -452,12 +452,13 @@ parse(string, flags)
 		if (newsize == 0) {
 			if (!nflag)
 				fprintf(stdout, "%s = ", string);
-			fprintf(stdout, "%qd\n", *(quad_t *)buf);
+			fprintf(stdout, "%qd\n", (long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag)
 				fprintf(stdout, "%s: %qd -> ", string,
-				    *(quad_t *)buf);
-			fprintf(stdout, "%qd\n", *(quad_t *)newval);
+				    (long long)(*(quad_t *)buf));
+			fprintf(stdout, "%qd\n",
+			    (long long)(*(quad_t *)newval));
 		}
 		return;
 
