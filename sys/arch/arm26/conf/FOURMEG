@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.12 2000/12/30 13:53:26 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.13 2001/04/10 21:33:00 bjh21 Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -140,9 +140,6 @@ eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
-
-#asc*		at podulebus0 slot ?	# Acorn SCSI card (AKA30, AKA31)
-#scsibus*	at asc?
 
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 #com0		at upc0			# Serial port
