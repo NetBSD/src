@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.47 1999/02/12 15:10:22 tv Exp $
+#	$NetBSD: bsd.README,v 1.48 1999/02/13 03:04:09 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -94,8 +94,9 @@ MKPICINSTALL	If "no", don't install the *_pic.a libraries.
 
 MKPROFILE	If "no", don't build or install the profiling libraries.
 
-MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKMAN=no MKNLS=no".
-		I.e, don't build documentation, man pages, NLS files, etc.
+MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKINFO=no MKMAN=no
+		MKNLS=no".  I.e, don't build catman pages, documentation,
+		Info documentation, man pages, NLS files, ...
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
