@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.81 2004/07/30 23:42:29 dbj Exp $ */
+/*	$NetBSD: fdisk.c,v 1.82 2004/09/12 07:46:24 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.81 2004/07/30 23:42:29 dbj Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.82 2004/09/12 07:46:24 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1380,10 +1380,10 @@ intuit_translated_geometry(void)
 	for (i = 0; i < MBR_PART_COUNT * 2 - 1; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
+		a1 -= s1;
 		for (j = i + 1; j < MBR_PART_COUNT * 2; j++) {
 			if (get_mapping(j, &c2, &h2, &s2, &a2) < 0)
 				continue;
-			a1 -= s1;
 			a2 -= s2;
 			num = (uint64_t)h1 * a2 - (uint64_t)h2 * a1;
 			denom = (uint64_t)c2 * a1 - (uint64_t)c1 * a2;
@@ -2288,10 +2288,62 @@ get_params(void)
 	return (0);
 }
 
+#ifdef BOOTSEL
+/*
+ * Rather unfortunately the bootsel 'magic' number is at the end of the
+ * the structure, and there is no checksum.  So when other operating
+ * systems install mbr code by only writing the length of their code they
+ * can overwrite part of the structure but keeping the magic number intact.
+ * This code attempts to empirically detect this problem.
+ */
+static int
+validate_bootsel(struct mbr_bootsel *mbs)
+{
+	uint key = mbs->mbrbs_defkey;
+	uint tmo;
+	int i;
+
+	if (v_flag)
+		return 0;
+
+	/*
+	 * Check default key is sane
+	 * - this is the most likely field to be stuffed
+	 * 12 disks and 12 bootable partitions seems enough!
+	 * (the keymap decode starts falling apart at that point)
+	 */
+	if (key != 0 && !(key == SCAN_ENTER
+	    || (key >= SCAN_1 && key < SCAN_1 + 12)
+	    || (key >= SCAN_F1 && key < SCAN_F1 + 12)))
+		return 1;
+
+	/* Checking the flags will lead to breakage... */
+
+	/* Timeout value is expecyed to be a multiple of a second */
+	tmo = htole16(mbs->mbrbs_timeo);
+	if (tmo != 0 && tmo != 0xffff && tmo != (10 * tmo + 9) / 182 * 182 / 10)
+		return 2;
+
+	/* Check the menu strings are printable */
+	/* Unfortunately they aren't zero filled... */
+	for (i = 0; i < sizeof(mbs->mbrbs_nametab); i++) {
+		int c = (uint8_t)mbs->mbrbs_nametab[0][i];
+		if (c == 0 || isprint(c))
+			continue;
+		return 3;
+	}
+
+	return 0;
+}
+#endif
+
 int
 read_s0(daddr_t offset, struct mbr_sector *boot)
 {
 	const char *tabletype = offset ? "extended" : "primary";
+#ifdef BOOTSEL
+	static int reported;
+#endif
 
 	if (read_disk(offset, boot) == -1) {
 		warn("Can't read %s partition table", tabletype);
@@ -2301,35 +2353,51 @@ read_s0(daddr_t offset, struct mbr_sector *boot)
 		warnx("%s partition table invalid, "
 		    "no magic in sector %"PRIdaddr, tabletype, offset);
 		return -1;
+
 	}
 #ifdef BOOTSEL
-	if (le16toh(boot->mbr_bootsel_magic) == MBR_MAGIC) {
-				/* mbr_bootsel in old location */
+	if (le16toh(boot->mbr_bootsel_magic) == MBR_BS_MAGIC) {
+		/* mbr_bootsel in new location */
+		if (validate_bootsel(&boot->mbr_bootsel)) {
+			warnx("removing corrupt bootsel information");
+			boot->mbr_bootsel_magic = 0;
+		}
+		return 0;
+	}
+	if (le16toh(boot->mbr_bootsel_magic) != MBR_MAGIC)
+		return 0;
+
+	/* mbr_bootsel in old location */
+	if (!reported)
 		warnx("%s partition table: using old-style bootsel information",
 		    tabletype);
-		memmove((u_int8_t *)boot + MBR_BS_OFFSET,
-			(u_int8_t *)boot + MBR_BS_OFFSET + 4,
-			sizeof(struct mbr_bootsel));
-		if ( ! (boot->mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)) {
-				/* old style default key */
-			int id;
-				/* F1..F4 => ptn 0..3, F5+ => disk 0+ */
-			id = boot->mbr_bootsel.mbrbs_defkey;
-			id -= SCAN_F1;
-			if (id >= MBR_PART_COUNT)
-				id -= MBR_PART_COUNT; /* Use number of disk */
-			else if (mboot.mbr_parts[id].mbrp_type != 0)
-				id = le32toh(boot->mbr_parts[id].mbrp_start);
-			else
-				id = DEFAULT_ACTIVE;
-			boot->mbr_bootsel.mbrbs_defkey = id;
-		}
-		boot->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
-			/* highlight that new bootsel code is necessar */
-	    	boot->mbr_bootsel.mbrbs_flags &= ~ MBR_BS_NEWMBR;
+	reported = 1;
+	if (validate_bootsel((void *)((uint8_t *)boot + MBR_BS_OFFSET + 4))) {
+		warnx("%s bootsel information corrupt - ignoring", tabletype);
+		return 0;
 	}
+	memmove((u_int8_t *)boot + MBR_BS_OFFSET,
+		(u_int8_t *)boot + MBR_BS_OFFSET + 4,
+		sizeof(struct mbr_bootsel));
+	if ( ! (boot->mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)) {
+			/* old style default key */
+		int id;
+			/* F1..F4 => ptn 0..3, F5+ => disk 0+ */
+		id = boot->mbr_bootsel.mbrbs_defkey;
+		id -= SCAN_F1;
+		if (id >= MBR_PART_COUNT)
+			id -= MBR_PART_COUNT; /* Use number of disk */
+		else if (mboot.mbr_parts[id].mbrp_type != 0)
+			id = le32toh(boot->mbr_parts[id].mbrp_start);
+		else
+			id = DEFAULT_ACTIVE;
+		boot->mbr_bootsel.mbrbs_defkey = id;
+	}
+	boot->mbr_bootsel_magic = htole16(MBR_BS_MAGIC);
+		/* highlight that new bootsel code is necessary */
+	boot->mbr_bootsel.mbrbs_flags &= ~MBR_BS_NEWMBR;
 #endif /* BOOTSEL */
-	return (0);
+	return 0;
 }
 
 int
