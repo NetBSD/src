@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.187 2004/04/05 10:27:11 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.188 2004/04/05 10:35:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.187 2004/04/05 10:27:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.188 2004/04/05 10:35:12 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -265,6 +265,28 @@ extern const nfstype nfsv3_type[9];
 
 int nfs_numasync = 0;
 #define	DIRHDSIZ	(sizeof (struct dirent) - (MAXNAMLEN + 1))
+
+static void nfs_cache_enter(struct vnode *, struct vnode *,
+    struct componentname *);
+
+static void
+nfs_cache_enter(struct vnode *dvp, struct vnode *vp,
+    struct componentname *cnp)
+{
+
+	if (vp != NULL) {
+		struct nfsnode *np = VTONFS(vp);
+
+		np->n_ctime = np->n_vattr->va_ctime.tv_sec;
+	} else {
+		struct nfsnode *dnp = VTONFS(dvp);
+
+		if (!timespecisset(&dnp->n_nctime))
+			dnp->n_nctime = dnp->n_vattr->va_mtime;
+	}
+
+	cache_enter(dvp, vp, cnp);
+}
 
 /*
  * nfs null call from vfs.
@@ -1011,8 +1033,7 @@ dorpc:
 		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
-		np->n_ctime = np->n_vattr->va_ctime.tv_sec;
-		cache_enter(dvp, newvp, cnp);
+		nfs_cache_enter(dvp, newvp, cnp);
 	}
 	*vpp = newvp;
 	nfsm_reqdone;
@@ -1025,11 +1046,7 @@ dorpc:
 		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
 		    cnp->cn_nameiop != CREATE) {
-			if (!timespecisset(&VTONFS(dvp)->n_nctime))
-				VTONFS(dvp)->n_nctime =
-				    VTONFS(dvp)->n_vattr->va_mtime;
-
-			cache_enter(dvp, NULL, cnp);
+			nfs_cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
 			vrele(newvp);
@@ -1529,7 +1546,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 			vput(newvp);
 	} else {
 		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, newvp, cnp);
+			nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -1659,7 +1676,7 @@ again:
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
 	if (!error) {
 		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, newvp, cnp);
+			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -2172,7 +2189,7 @@ nfs_mkdir(v)
 	} else {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		if (cnp->cn_flags & MAKEENTRY)
-			cache_enter(dvp, newvp, cnp);
+			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -2704,7 +2721,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				    cnp->cn_hash =
 					namei_hash(cnp->cn_nameptr, &cp);
 				    if (cnp->cn_namelen <= NCHNAMLEN)
-				        cache_enter(ndp->ni_dvp, ndp->ni_vp,
+				        nfs_cache_enter(ndp->ni_dvp, ndp->ni_vp,
 						    cnp);
 				}
 			   }
