@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.3 1993/06/27 06:08:15 andrew Exp $
+ *	$Id: uipc_socket.c,v 1.4 1993/08/03 01:36:10 cgd Exp $
  */
 
 #include "param.h"
@@ -71,7 +71,7 @@ socreate(dom, aso, type, proto)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (prp == 0)
+	if (prp == 0 || || !prp->pr_usrreq)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
