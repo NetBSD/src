@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.47 1999/09/07 19:30:11 soren Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.48 1999/09/09 18:12:05 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp 
+ *	NetBSD: pcmciadevs,v 1.45 1999/09/09 18:09:10 is Exp 
  */
 
 /*-
@@ -279,6 +279,7 @@
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking Technology */
+#define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -322,3 +323,6 @@
 #define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
 #define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
 #define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"
+#define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
+#define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
+#define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
