@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.37 2002/09/27 15:37:34 provos Exp $	*/
+/*	$NetBSD: ehci.c,v 1.38 2002/11/09 08:59:46 martin Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.37 2002/09/27 15:37:34 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.38 2002/11/09 08:59:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,14 +200,15 @@ Static void		ehci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 #ifdef EHCI_DEBUG
 Static void		ehci_dump_regs(ehci_softc_t *);
-Static void		ehci_dump(void);
 Static ehci_softc_t 	*theehci;
 Static void		ehci_dump_link(ehci_link_t, int);
 Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
 Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
 Static void		ehci_dump_qtd(ehci_qtd_t *);
 Static void		ehci_dump_sqh(ehci_soft_qh_t *);
+#ifdef DIAGNOSTIC
 Static void		ehci_dump_exfer(struct ehci_xfer *);
+#endif
 #endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
@@ -1054,12 +1055,6 @@ ehci_dump_regs(ehci_softc_t *sc)
 }
 
 void
-ehci_dump()
-{
-	ehci_dump_regs(theehci);
-}
-
-void
 ehci_dump_link(ehci_link_t link, int type)
 {
 	link = le32toh(link);
@@ -1152,11 +1147,13 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	ehci_dump_qtd(&qh->qh_qtd);
 }
 
+#ifdef DIAGNOSTIC
 Static void
 ehci_dump_exfer(struct ehci_xfer *ex)
 {
 	printf("ehci_dump_exfer: ex=%p\n", ex);
 }
+#endif
 #endif
 
 usbd_status
