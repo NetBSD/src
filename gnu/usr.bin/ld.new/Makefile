@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.23 2001/02/02 19:32:38 tsubai Exp $
+#	$NetBSD: Makefile,v 1.24 2001/08/06 15:56:08 tv Exp $
 
 # for OBJECT_FMT, UNPRIVILEGED
 .include <bsd.own.mk>
 
+.if !defined(USE_NEW_TOOLCHAIN)
 .if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
 ELF_PLEASE=
 .endif
@@ -158,6 +159,7 @@ __cleanldscripts:
 	rm -rf ldscripts
 
 .include <bsd.info.mk>
+.endif
 .include <bsd.prog.mk>
 
 ${OBJS}: ldemul-list.h
