@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1999/04/29 15:06:42 kleink Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/08/23 09:13:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 	.text
-	.align	2
+	.align	4
 	.globl	.rtld_start
 	.type	.rtld_start,@function
 .rtld_start:
@@ -53,7 +53,7 @@
 	jmp	(%a3)			| Go for it!
 	.size	.rtld_start,.-.rtld_start
 
-	.align	2
+	.align	4
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:
