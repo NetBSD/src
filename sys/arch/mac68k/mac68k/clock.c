@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1995/09/14 23:44:12 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1995/09/16 12:31:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,24 +282,26 @@ profclock(clockframe * pclk)
 #endif
 
 /*
- * convert a Mac PRAM time value to GMT, using /etc/TIMEZONE.
+ * Convert GMT to Mac PRAM time, using global timezone
+ * GMT bias adjustment is done elsewhere.
  */
-u_long 
+static u_long 
 ugmt_2_pramt(u_long t)
 {
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
 
-	return (t = t + DIFF19041970 - tz.tz_minuteswest);
+	return (t = t + DIFF19041970 - 60*tz.tz_minuteswest);
 }
 
 /*
- * convert GMT to Mac PRAM time, using global timezone
+ * Convert a Mac PRAM time value to GMT, using compiled-in timezone
+ * GMT bias adjustment is done elsewhere.
  */
-u_long 
+static u_long 
 pramt_2_ugmt(u_long t)
 {
-	return (t = t - DIFF19041970 + tz.tz_minuteswest);
+	return (t = t - DIFF19041970 + 60*tz.tz_minuteswest);
 }
 
 /*
@@ -331,13 +333,12 @@ inittodr(time_t base)
 	u_long  pramtime;
 
 	timbuf = pramt_2_ugmt(pram_readtime());
-	if (   ((timbuf - macos_boottime) > 10 * 60)
-	    && ((macos_boottime - timbuf) > 10 * 60)) {
+	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
 #if DIAGNOSTIC
 		printf(
 		   "PRAM time does not appear to have been read correctly.\n");
 		printf("PRAM: 0x%x, macos_boottime: 0x%x.\n",
-			timbuf, macos_boottime);
+			timbuf, macos_boottime + 60 * tz.tz_minuteswest);
 #endif
 		timbuf = macos_boottime;
 		mac68k_trust_pram = 0;
@@ -387,6 +388,11 @@ void
 resettodr(void)
 {
 	if (mac68k_trust_pram)
+		/*
+		 * GMT bias is passed in from the Booter.
+		 * To get *our* time, add GMTBIAS to GMT.
+		 * (gmtbias is in minutes, multiply by 60).
+		 */
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
 #if DIAGNOSTIC
 	else
