@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 1999/02/25 23:13:39 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 1999/02/26 22:37:57 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,8 +227,7 @@ void	dumpconf __P((void));
 /*
  * Prototypes from sys_machdep.c:
  */
-int	cachectl __P((int, vm_offset_t, int));
-int	cachectl1 __P((int, vm_offset_t, int, struct proc *));
+int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 int	dma_cachectl __P((caddr_t, int));
 
 /*
