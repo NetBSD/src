@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.12 2002/11/14 04:10:08 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.13 2002/12/18 22:53:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 	int count, ret;
 
 	count = nspins;
-	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
-		thread, thread->pt_spinlocks));
+	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock %p (count %d)\n",
+		thread, lock, thread->pt_spinlocks));
 #ifdef PTHREAD_SPIN_DEBUG
 	if(!(thread->pt_spinlocks >= 0)) {
 		(void)kill(getpid(), SIGABRT);
@@ -86,8 +86,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		if (ret == 1)
 			break;
 
-	SDPRINTF(("(pthread_spinlock %p) decrementing spinlock from %d\n",
-		thread, thread->pt_spinlocks));
+	SDPRINTF(("(pthread_spinlock %p) decrementing spinlock %p (count %d)\n",
+		thread, lock, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 			
 		/*
@@ -148,8 +148,8 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 {
 
 	__cpu_simple_unlock(lock);
-	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock from %d\n",
-		thread, thread->pt_spinlocks));
+	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock %p (count %d)\n",
+		thread, lock, thread->pt_spinlocks));
 	--thread->pt_spinlocks;
 #ifdef PTHREAD_SPIN_DEBUG
 	if (!(thread->pt_spinlocks >= 0)) {
