@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.144 2000/02/09 08:18:19 tron Exp $
+# $NetBSD: mi,v 1.145 2000/02/20 03:26:10 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -880,6 +880,7 @@
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
+./usr/share/man/cat3/atari
 ./usr/share/man/cat3/i386
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
@@ -941,6 +942,7 @@
 ./usr/share/man/man1/x68k
 ./usr/share/man/man2
 ./usr/share/man/man3
+./usr/share/man/man3/atari
 ./usr/share/man/man3/i386
 ./usr/share/man/man3f
 ./usr/share/man/man4

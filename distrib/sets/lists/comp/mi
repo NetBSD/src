@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.191 2000/02/09 12:23:56 itojun Exp $
+#	$NetBSD: mi,v 1.192 2000/02/20 03:26:15 mycroft Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/ar		comp-util-bin
 ./usr/bin/as		comp-util-bin
@@ -2613,6 +2613,7 @@
 ./usr/share/man/cat9/powerhook_establish.0		comp-kern-catman
 ./usr/share/man/cat9/printf.0		comp-kern-catman
 ./usr/share/man/cat9/psignal.0		comp-kern-catman
+./usr/share/man/cat9/ratecheck.0		comp-kern-catman
 ./usr/share/man/cat9/readdisklabel.0		comp-kern-catman
 ./usr/share/man/cat9/resettodr.0		comp-kern-catman
 ./usr/share/man/cat9/rnd.0		comp-kern-catman
@@ -4095,6 +4096,7 @@
 ./usr/share/man/man9/powerhook_establish.9		comp-kern-man
 ./usr/share/man/man9/printf.9		comp-kern-man
 ./usr/share/man/man9/psignal.9		comp-kern-man
+./usr/share/man/man9/ratecheck.9		comp-kern-man
 ./usr/share/man/man9/readdisklabel.9		comp-kern-man
 ./usr/share/man/man9/resettodr.9		comp-kern-man
 ./usr/share/man/man9/rnd.9		comp-kern-man
