@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.27 2000/03/27 05:23:42 nisimura Exp $	*/
+/*	$NetBSD: locore.h,v 1.28 2000/03/27 05:30:40 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -180,7 +180,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachFlushICache		mips1_FlushICache
 #define MachForceCacheUpdate	mips1_ForceCacheUpdate
 #define MachSetPID		mips1_SetPID
-#define MachTLBFlush()		mips1_TBIAP(MIPS1_TLB_NUM_TLB_ENTRIES)
+#define MachTLBFlush()		mips1_TBIAP(mips_num_tlb_entries)
 #define MachTLBFlushAddr	mips1_TBIS
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
