@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.6 1997/10/03 19:55:01 christos Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.7 2000/04/04 05:44:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: print-atalk.c,v 1.48 97/05/28 12:50:58 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.6 1997/10/03 19:55:01 christos Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.7 2000/04/04 05:44:35 itojun Exp $");
 #endif
 #endif
 
@@ -79,13 +79,13 @@ static struct tok type2str[] = {
 };
 
 struct aarp {
-	u_short htype, ptype;
-	u_char	halen, palen;
-	u_short op;
-	u_char	hsaddr[6];
-	u_char	psaddr[4];
-	u_char	hdaddr[6];
-	u_char	pdaddr[4];
+	u_int16_t	htype, ptype;
+	u_int8_t	halen, palen;
+	u_int16_t	op;
+	u_int8_t	hsaddr[6];
+	u_int8_t	psaddr[4];
+	u_int8_t	hdaddr[6];
+	u_int8_t	pdaddr[4];
 };
 
 static char tstr[] = "[|atalk]";
@@ -196,9 +196,9 @@ aarp_print(register const u_char *bp, u_int length)
 
 	printf("aarp ");
 	ap = (const struct aarp *)bp;
-	if (ap->htype == 1 && ap->ptype == ETHERTYPE_ATALK &&
+	if (ntohs(ap->htype) == 1 && ntohs(ap->ptype) == ETHERTYPE_ATALK &&
 	    ap->halen == 6 && ap->palen == 4 )
-		switch (ap->op) {
+		switch (ntohs(ap->op)) {
 
 		case 1:				/* request */
 			(void)printf("who-has %s tell %s",
@@ -215,8 +215,9 @@ aarp_print(register const u_char *bp, u_int length)
 			    AT(pdaddr), AT(psaddr));
 			return;
 		}
-	(void)printf("len %d op %d htype %d ptype %#x halen %d palen %d",
-	    length, ap->op, ap->htype, ap->ptype, ap->halen, ap->palen );
+	(void)printf("len %u op %u htype %u ptype %#x halen %u palen %u",
+	    length, ntohs(ap->op), ntohs(ap->htype), ntohs(ap->ptype),
+	    ap->halen, ap->palen);
 }
 
 static void
