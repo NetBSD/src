@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.174 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.175 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -421,3 +421,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	locale(1): Added.  Obtained from FreeBSD.  [tshiozak 20030704]
 	pax(1): Add support for gnutar's -O "extract to stdout" option in tar
 		mode.  [simonb 20030708]
+	share/mk: Rename many make(1) variables that contain names of
+		programs from `FOO' to `TOOL_FOO'.  [lukem 20030711]
