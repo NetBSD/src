@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.17 2002/09/26 19:37:29 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.18 2002/11/09 02:30:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,9 +81,7 @@ struct sadata {
 	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
 	int	sa_ncached;		/* list length */
 	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
-	stack_t	*sa_rstacks;		/* reserved stacks */
 	int	sa_nstacks;		/* number of valid stacks */
-	int	sa_nrstacks;		/* number of reserved stacks */
 	SIMPLEQ_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
 
