@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.1.1.1 1998/06/06 06:11:19 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.2 2002/01/15 02:31:31 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .Dd January 21, 1997
 .Dt GZIP 1
-.Os 
+.Os
 .Sh NAME
 .Nm gzip
 .Nd compression/decompression tool using Lempel-Ziv coding (LZ77)
@@ -138,6 +138,8 @@ option being the fastest, with less compression, and the
 .Fl 9
 option being the slowest, with optimal compression.
 .El
+.Sh SEE ALSO
+.Xr fts 3
 .Sh HISTORY
 The
 .Nm
@@ -149,5 +151,3 @@ distribution zlib compression library, for
 The
 .Nm
 program does not print the compression ratio when not using files.
-.Sh SEE ALSO
-.Xr fts 3 .
