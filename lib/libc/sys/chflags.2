@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.13 1999/03/22 19:45:01 garbled Exp $
+.\"	$NetBSD: chflags.2,v 1.14 1999/07/31 03:30:44 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,9 @@ The
 .Dv UF_APPEND ,
 and
 .Dv UF_OPAQUE
-flags may be set or unset by either the owner of a file or the super-user.
+flags may be set or unset by either the owner of a file or the super-user,
+except on block and character devices, where only the super-user may set
+or unset them.
 .Pp
 The
 .Dv SF_ARCHIVED ,
