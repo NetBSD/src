@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.119 1997/10/29 18:28:07 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.120 1997/11/01 20:31:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -538,11 +538,15 @@ comopen(dev, flag, mode, p)
 		return (EBUSY);
 #endif
 
-	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+	tp = sc->sc_tty;
+	if (tp == 0) {
+		sc->sc_tty = tp = ttymalloc();
+		tp->t_dev = dev;
+		tp->t_oproc = comstart;
+		tp->t_param = comparam;
+		tp->t_hwiflow = comhwiflow;
 		tty_attach(tp);
-	} else
-		tp = sc->sc_tty;
+	}
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
@@ -560,6 +564,8 @@ comopen(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		struct termios t;
 
+		s2 = splserial();
+
 		/* Turn on interrupts. */
 		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
@@ -567,11 +573,7 @@ comopen(dev, flag, mode, p)
 		/* Fetch the current modem control status, needed later. */
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_msr);
 
-		/* Add some entry points needed by the tty layer. */
-		tp->t_oproc = comstart;
-		tp->t_param = comparam;
-		tp->t_hwiflow = comhwiflow;
-		tp->t_dev = dev;
+		splx(s2);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -591,11 +593,11 @@ comopen(dev, flag, mode, p)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
+		(void) comparam(tp, &t);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		ttychars(tp);
-		(void) comparam(tp, &t);
 		ttsetwater(tp);
 
 		s2 = splserial();
@@ -670,11 +672,16 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
+	s = splserial();
+
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 	com_hwiflow(sc);
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
+
+	splx(s);
+
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -685,6 +692,7 @@ comclose(dev, flag, mode, p)
 	}
 
 	s = splserial();
+
 	/* Turn off interrupts. */
 #ifdef DDB
 	if(ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
@@ -694,6 +702,7 @@ comclose(dev, flag, mode, p)
 		sc->sc_ier = 0;
 #endif
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+
 	splx(s);
 	
 	return (0);
@@ -1769,8 +1778,9 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 	tcflag_t cflag;
 {
 	int res;
-	static struct consdev comcons = { NULL, NULL,
-	comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL};
+	static struct consdev comcons = {
+		NULL, NULL, comcngetc, comcnputc, comcnpollc, NODEV, CN_NORMAL
+	};
 
 	res = cominit(iot, iobase, rate, frequency, cflag, &comconsioh);
 	if (res)
