@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.9 1999/04/19 21:34:16 kleink Exp $
+# $NetBSD: ad.m68k,v 1.10 1999/06/10 00:54:13 simonb Exp $
 ./usr/include/m68k
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/aout_machdep.h
@@ -42,5 +42,3 @@
 ./usr/lib/libm68k_p.a
 ./usr/lib/libm68k_pic.a
 ./usr/lib/scrt0.o
-./usr/share/man/cat2/m68k_sync_icache.0
-./usr/share/man/man2/m68k_sync_icache.2

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.36 1999/05/11 20:16:53 veego Exp $
+# $NetBSD: md.i386,v 1.37 1999/06/10 00:54:13 simonb Exp $
 ./usr/include/i386
 ./usr/include/i386/_G_config.h
 ./usr/include/i386/ansi.h
@@ -70,15 +70,3 @@
 ./usr/lib/scrt0.o
 ./usr/libdata/lint/llib-li386.ln
 ./usr/libdata/lint/llib-lkeycap.ln
-./usr/share/man/cat2/i386_get_ioperm.0
-./usr/share/man/cat2/i386_get_ldt.0
-./usr/share/man/cat2/i386_iopl.0
-./usr/share/man/cat2/i386_set_ioperm.0
-./usr/share/man/cat2/i386_set_ldt.0
-./usr/share/man/cat2/i386_vm86.0
-./usr/share/man/man2/i386_get_ioperm.2
-./usr/share/man/man2/i386_get_ldt.2
-./usr/share/man/man2/i386_iopl.2
-./usr/share/man/man2/i386_set_ioperm.2
-./usr/share/man/man2/i386_set_ldt.2
-./usr/share/man/man2/i386_vm86.2
