@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.8 1999/03/31 01:50:26 cgd Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.9 1999/06/22 22:44:16 christos Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -202,6 +202,9 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 	} else
 		ustf->uas_offset = 0;
 	while(xferrqst > 0) {
+#if !defined(LIBSA_NO_TWIDDLE)
+		twiddle();
+#endif
 		e = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, seek2 / 512,
 			xferrqst, xferbase, &xfercount);
 		if (e)
