@@ -1,6 +1,6 @@
-.\" $NetBSD: eh.4,v 1.5 2001/06/30 16:55:03 bjh21 Exp $
+.\" $NetBSD: cpu.4,v 1.1 2002/03/24 22:29:56 bjh21 Exp $
 .\"
-.\" Copyright (c) 2000 Ben Harris
+.\" Copyright (c) 2000 Ben Harris.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,48 +25,34 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 22, 2000
+.Dd December 11, 2000
 .Os
-.Dt EH 4 arm26
+.Dt CPU 4 acorn26
 .Sh NAME
-.Nm eh
-.Nd i-cubed EtherLan 100/200/500-series (EtherH) Ethernet driver
+.Nm cpu
+.Nd Device driver for CPU-specific features
 .Sh SYNOPSIS
-.Cd eh* at podulebus0 slot ?
+.Cd cpu0 at root flags 0
+.Cd options CPU_ARM2
+.Cd options CPU_ARM250
+.Cd options CPU_ARM3
 .Sh DESCRIPTION
 The
 .Nm
-driver provides access to a 10 Mb/s Ethernet network through an
-i-cubed EtherLan 100-series, 200-series or 500-series expansion card.
-It also supports the Acorn-badged variants of the same cards, with part
-numbers
-.Tn AEH75 ,
-.Tn AEH77
-and
-.Tn AEH79 .
+driver provides a convenient hook for identifying the system's CPU and setting
+various parameters relating to it.
 .Pp
-Media selection on cards supporting multiple media can be accomplished
-either using
-.Xr ifconfig 8
-or using links on the card.  The links override the software and make the
-card behave as if only one medium is available.  The media available,
-subject to the hardware on the card, are:
-.Bl -tag -width 10baseFL
-.It auto
-Automatically select 10BASE-T or 10BASE2.  10BASE-T will be used if a link
-beat appears to be present on that interface.  Otherwise, 10BASE2 will be used.
-.It 10baseT
-10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
-.It 10base2
-10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+Setting the bottom bit of the flags will cause the cache on the ARM3 to be
+disabled, otherwise it's enabled.
+.Pp
+The following options are available relating to the
+.Nm
+driver:
+.Bl -ohang
+.It Cd options CPU_ARM2
+Enables support for ARM2 CPUs.
+.It Cd options CPU_ARM250
+Enables support for ARM2as CPUs (as found in the ARM250).
+.It Cd options CPU_ARM3
+Enables support for ARM3 CPUs.
 .El
-.Sh SEE ALSO
-.Xr ifmedia 4 ,
-.Xr ne 4 ,
-.Xr netintro 4 ,
-.Xr podulebus 4 ,
-.Xr ifconfig 8
-.Sh BUGS
-EtherLan 500-series support is untested.
-.Pp
-The 10BASE-FL port on the EtherLan 513 will probably be identified as 10BASE2.
