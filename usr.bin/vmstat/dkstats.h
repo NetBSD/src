@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.3 2000/12/01 02:08:26 simonb Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.4 2002/01/28 02:15:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -53,6 +53,6 @@ extern struct _disk	cur;
 extern char		**dr_name;
 extern int		*dk_select, dk_ndrive;
 
-int	dkinit(int, gid_t);
-void	dkswap(void);
+int	dkinit(int);
 void	dkreadstats(void);
+void	dkswap(void);
