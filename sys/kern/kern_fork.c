@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.34 1998/01/04 03:52:02 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.35 1998/01/05 05:16:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -69,7 +69,7 @@ sys_fork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 0, retval));
+	return (fork1(p, 0, retval, NULL));
 }
 
 /*
@@ -84,7 +84,7 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT, retval));
+	return (fork1(p, FORK_PPWAIT, retval, NULL));
 }
 
 /*
@@ -99,14 +99,15 @@ sys___vfork14(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval));
+	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval, NULL));
 }
 
 int
-fork1(p1, flags, retval)
+fork1(p1, flags, retval, rnewprocp)
 	register struct proc *p1;
 	int flags;
 	register_t *retval;
+	struct proc **rnewprocp;
 {
 	register struct proc *p2;
 	register uid_t uid;
@@ -294,6 +295,12 @@ again:
 		cnt.v_forks_ppwait++;
 	if (flags & FORK_SHAREVM)
 		cnt.v_forks_sharevm++;
+
+	/*
+	 * Pass a pointer to the new process to the caller.
+	 */
+	if (rnewprocp != NULL)
+		*rnewprocp = p2;
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for

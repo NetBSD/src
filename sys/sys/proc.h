@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.54 1998/01/04 03:53:04 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.55 1998/01/05 05:16:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -319,7 +319,7 @@ int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
 void	exit1 __P((struct proc *, int));
-int	fork1 __P((struct proc *, int, register_t *));
+int	fork1 __P((struct proc *, int, register_t *, struct proc **));
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
