@@ -35,7 +35,6 @@
 ./usr/include/pmax/pte.h
 ./usr/include/pmax/ptrace.h
 ./usr/include/pmax/reg.h
-./usr/include/pmax/regdef.h
 ./usr/include/pmax/regnum.h
 ./usr/include/pmax/reloc.h
 ./usr/include/pmax/setjmp.h
