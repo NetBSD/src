@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.7.4.2 2000/07/13 16:42:34 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.7.4.3 2001/04/22 18:07:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.7.4.2 2000/07/13 16:42:34 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.7.4.3 2001/04/22 18:07:14 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,9 +79,11 @@ struct whatisstruct {
 };
 
 int              main (int, char **);
-char		*findwhitespace(char *);
-char		*GetS(gzFile, char *, int);
+char		*findwhitespace (char *);
+char		*strmove (char *,char *);
+char		*GetS (gzFile, char *, int);
 int		 manpagesection (char *);
+char		*createsectionstring(char *);
 int		 addmanpage (manpage **, ino_t, char *);
 int		 addwhatis (whatis **, char *);
 char		*replacestring (char *, char *, char *);
@@ -178,6 +180,13 @@ char
 }
 
 char
+*strmove(char *dest,char *src)
+
+{
+	return memmove(dest, src, strlen(src) + 1);
+}
+
+char
 *GetS(gzFile in, char *buffer, int length)
 
 {
@@ -212,6 +221,19 @@ manpagesection(char *name)
 	}
 
 	return -1;
+}
+
+char
+*createsectionstring(char *section_id)
+{
+	char *section;
+
+	if ((section = malloc(strlen(section_id) + 7)) != NULL) {
+		section[0] = ' ';
+		section[1] = '(';
+		(void) strcat(strcpy(&section[2], section_id), ") - ");
+	}
+	return section;
 }
 
 int
@@ -355,7 +377,8 @@ parsecatpage(gzFile *in)
 			free(section);
 			return NULL;
 		}
-		if (strncmp(buffer, "N\10NA\10AM\10ME\10E", 12) == 0)
+		catpreprocess(buffer);
+		if (strncmp(buffer, "NAME", 4) == 0)
 			break;
 	}
 
@@ -412,7 +435,9 @@ manpreprocess(char *line)
 			case '\0':
 			case '-':
 				break;
+			case 'f':
 			case 's':
+				from++;
 				if ((*from=='+') || (*from=='-'))
 					from++;
 				while (isdigit(*from))
@@ -577,16 +602,28 @@ parsemanpage(gzFile *in, int defaultsection)
 				*end = '\0';
 
 			free(section);
-			if ((section = malloc(strlen(ptr) + 7)) != NULL) {
-				section[0] = ' ';
-				section[1] = '(';
-				(void) strcpy(&section[2], ptr);
-				(void) strcat(&section[2], ") - ");
+			section = createsectionstring(ptr);
+		}
+		else if (strncasecmp(buffer, ".TH", 3) == 0) {
+			ptr = &buffer[3];
+			while (isspace(*ptr))
+				ptr++;
+			if ((ptr = findwhitespace(ptr)) != NULL) {
+				char *next;
+
+				while (isspace(*ptr))
+					ptr++;
+				if ((next = findwhitespace(ptr)) != NULL)
+					*next = '\0';
+				free(section);
+				section = createsectionstring(ptr);
 			}
 		}
-		else if (strncasecmp(buffer, ".Ds", 3) == 0)
-			return nroff(in);
-	} while ((strncasecmp(buffer, ".Sh NAME", 8) != 0));
+		else if (strncasecmp(buffer, ".Ds", 3) == 0) {
+			free(section);
+			return NULL;
+		}
+	} while (strncasecmp(buffer, ".Sh NAME", 8) != 0);
 
 	do {
 		if (GetS(in, buffer, sizeof(buffer) - 1) == NULL) {
@@ -654,12 +691,16 @@ parsemanpage(gzFile *in, int defaultsection)
 				if (*ptr == '.') {
 					char	*space;
 
-					if ((space = findwhitespace(ptr)) == NULL)
+					if (strncasecmp(ptr, ".Nd", 3) != 0) {
+						free(section);
+						return NULL;
+					}
+					space = findwhitespace(ptr);
+					if (space == NULL)
 						ptr = "";
 					else {
 						space++;
-						(void) memmove(ptr, space,
-							   strlen(space) + 1);
+						(void) strmove(ptr, space);
 					}
 				}
 
@@ -686,12 +727,12 @@ parsemanpage(gzFile *in, int defaultsection)
 		if (*buffer == '.') {
 			char	*space;
 
-			if ((space = findwhitespace(buffer)) == NULL) {
+			if ((space = findwhitespace(&buffer[1])) == NULL) {
 				free(section);
 				return NULL;
 			}
 			space++;
-			(void) memmove(buffer, space, strlen(space) + 1);
+			(void) strmove(buffer, space);
 		}
 
 		offset = strlen(buffer) + 1;
@@ -764,7 +805,13 @@ getwhatisdata(char *name)
 	}
 
 	section = manpagesection(name);
-	data = (section == 0) ? parsecatpage(in) : parsemanpage(in, section);
+	if (section == 0)
+		data = parsecatpage(in);
+	else {
+		data = parsemanpage(in, section);
+		if (data == NULL)
+			data = nroff(in);
+	}
 
 	(void) gzclose(in);
 	return data;
