@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.3 2000/05/03 11:40:19 veego Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.4 2003/07/20 03:14:40 lukem Exp $	*/
 
 %{
 /*
@@ -320,5 +320,6 @@ void swallow()
 		while ((c != '\n') && (c != EOF))
 			c = input();
 	}
-	unput(c);
+	if (c != EOF)
+		unput(c);
 }
