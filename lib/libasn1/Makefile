@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2001/10/11 03:56:43 mason Exp $
+# $NetBSD: Makefile,v 1.16 2001/10/25 07:42:38 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,14 @@ LIB=	asn1
 .if !defined(USETOOLS) || (${USETOOLS} == "no")
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET?=	${COMPILEETOBJ}/compile_et
+
+ASN1COMPILEOBJ!=cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
+ASN1_COMPILE?=	${ASN1COMPILEOBJ}/asn1_compile
+
+.PHONY: asn1_compile
+
+asn1_compile:
+	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 .endif
 
 asn1_err.h asn1_err.c: asn1_err.et
@@ -100,20 +108,21 @@ CPPFLAGS+= -I.					\
 
 ${gen_files} krb5_asn1.hx: asn1_files
 
-ASN1COMPILE!=	cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
-ASN1_COMPILE=	${ASN1COMPILE}/asn1_compile
-
-asn1_files: k5.asn1 all-asn1_compile
+asn1_files: k5.asn1
 	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1 krb5_asn1
 
 ${SRCS}: krb5_asn1.h
 
 CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
 
+.if !defined(USETOOLS) || (${USETOOLS} == "no")
 SUBDIR=	asn1_compile
+.endif
 
 .include <bsd.lib.mk>
+.if !defined(USETOOLS) || (${USETOOLS} == "no")
 .include <bsd.subdir.mk>
+.endif
 
 .SUFFIXES: .hx .x
 
