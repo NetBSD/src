@@ -1,4 +1,4 @@
-/* $NetBSD: lrintf.c,v 1.1 2004/06/30 15:08:30 drochner Exp $ */
+/* $NetBSD: lrintf.c,v 1.2 2004/07/01 16:06:30 drochner Exp $ */
 
 #include <math.h>
 #include <sys/ieee754.h>
@@ -53,9 +53,9 @@ LRINTNAME(float x)
 
 	shift = e - SNG_FRACBITS;
 	if (shift >=0)
-		res = (RESTYPE)i0 << shift;
+		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
 	else
-		res = i0 >> -shift;
+		res = (shift > -32 ? i0 >> -shift : 0);
 
 	return (s ? -res : res);
 }
