@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.18 2000/08/08 22:31:14 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.19 2000/08/10 10:03:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.18 2000/08/08 22:31:14 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.19 2000/08/10 10:03:43 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,7 +84,8 @@ static char current_categories[_LC_LAST][32] = {
     "C",
     "C"
 };
-int __mb_cur_max = 1;
+
+size_t __mb_cur_max = 1;
 
 /*
  * The locales we are going to try and load
