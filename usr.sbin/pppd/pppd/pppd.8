@@ -1,5 +1,5 @@
 .\" manual page [] for pppd 2.0
-.\" $Id: pppd.8,v 1.8 1995/07/04 23:48:04 paulus Exp $
+.\" $Id: pppd.8,v 1.9 1995/08/17 12:04:01 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -11,11 +11,11 @@ pppd \- Point to Point Protocol daemon
 .SH SYNOPSIS
 .B pppd
 [
-.I options
-] [
 .I tty_name
 ] [
 .I speed
+] [
+.I options
 ]
 .SH DESCRIPTION
 .LP
@@ -42,9 +42,9 @@ will use the controlling terminal, and will not fork to put itself in
 the background.
 .TP
 .I <speed>
-Set the baud rate to <speed>.  On systems such as 4.4BSD and NetBSD,
-any speed can be specified.  Other systems (e.g. SunOS) allow only a
-limited set of speeds.
+Set the baud rate to <speed> (a decimal number).  On systems such as
+4.4BSD and NetBSD, any speed can be specified.  Other systems
+(e.g. SunOS) allow only a limited set of speeds.
 .TP
 .B asyncmap \fI<map>
 Set the async character map to <map>.
@@ -68,23 +68,14 @@ packets to be sent or received.
 .TP
 .B connect \fI<p>
 Use the executable or shell command specified by \fI<p>\fR to set up the
-serial line.  This script would typically use the "chat" program to
+serial line.  This script would typically use the chat(8) program to
 dial the modem and start the remote ppp session.
 .TP
 .B crtscts
-Use hardware flow control (i.e. RTS/CTS) to control the flow of data on
-the serial port.
-.TP
-.B -crtscts
-Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
-neither the \fBcrtscts\fR nor the \fB\-crtscts\fR option is given,
-the hardware flow control setting for the serial port is left
-unchanged.
-.TP
-.B xonxoff
-Use software flow control (i.e. XON/XOFF) to control the flow of data on
-the serial port.  This option is only implemented on Linux systems
-at present.
+Use hardware flow control (i.e. RTS/CTS) to control the flow of data
+on the serial port.  If neither the \fBcrtscts\fR nor the
+\fB\-crtscts\fR option is given, the hardware flow control setting for
+the serial port is left unchanged.
 .TP
 .B defaultroute
 Add a default route to the system routing tables, using the peer as
@@ -111,20 +102,31 @@ with hex values 0x20 - 0x3f or 0x5e.
 Read options from file <f> (the format is described below).
 .TP
 .B lock
-Specifies that \fIpppd\fR should use a UUCP-style lock on the serial
-device to ensure exclusive access to the device.
+Specifies that \fIpppd\fR should create a UUCP-style lock file for the
+serial device to ensure exclusive access to the device.
 .TP
 .B mru \fI<n>
 Set the MRU [Maximum Receive Unit] value to <n> for negotiation.
 .I pppd
-will ask the peer to send packets of no more than <n> bytes.
-The minimum MRU value is 128. 
-The default MRU value is 1500.  A value of 296 is recommended for slow
-links (40 bytes for TCP/IP header + 256 bytes of data).
+will ask the peer to send packets of no more than <n> bytes.  The
+minimum MRU value is 128.  The default MRU value is 1500.  A value of
+296 is recommended for slow links (40 bytes for TCP/IP header + 256
+bytes of data).
+.TP
+.B mtu \fI<n>
+Set the MTU [Maximum Transmit Unit] value to \fI<n>\fR.  Unless the
+peer requests a smaller value via MRU negotiation, \fIpppd\fR will
+request that the kernel networking code send data packets of no more
+than \fIn\fR bytes through the PPP network interface. 
 .TP
 .B netmask \fI<n>
-Set the interface netmask to <n>, a 32 bit netmask in "decimal dot" notation
-(e.g. 255.255.255.0).
+Set the interface netmask to <n>, a 32 bit netmask in "decimal dot"
+notation (e.g. 255.255.255.0).  If this option is given, the value
+specified is ORed with the default netmask.  The default netmask is
+chosen based on the negotiated remote IP address; it is the
+appropriate network mask for the class of the remote IP address, ORed
+with the netmasks for any non point-to-point network interfaces in the
+system which are on the same network.
 .TP
 .B passive
 Enables the "passive" option in the LCP.  With this option,
@@ -140,7 +142,7 @@ With this option,
 .I pppd
 will not transmit LCP packets to initiate a connection until a valid
 LCP packet is received from the peer (as for the `passive' option with
-old versions of \fIpppd\fR).
+ancient versions of \fIpppd\fR).
 .SH OPTIONS
 .TP
 .I <local_IP_address>\fB:\fI<remote_IP_address>
@@ -151,8 +153,8 @@ address is the (first) IP address of the system (unless the
 .B noipdefault
 option is given).  The remote address will be obtained from the peer
 if not specified in any option.  Thus, in simple cases, this option is
-not required.
-If a local and/or remote IP address is specified with this option,
+not required.  If a local and/or remote IP address is specified with
+this option,
 .I pppd
 will not accept a different value from the peer in the IPCP
 negotiation, unless the
@@ -161,13 +163,13 @@ and/or
 .B ipcp-accept-remote
 options are given, respectively.
 .TP
+.B -ac
+Disable Address/Control compression negotiation (use default, i.e.
+address/control field compression disabled).
+.TP
 .B -all
 Don't request or allow negotiation of any options for LCP and IPCP (use
 default values).
-.TP
-.B -ac
-Disable Address/Control compression negotiation (use default, i.e.
-address/control field disabled).
 .TP
 .B -am
 Disable asyncmap negotiation (use the default asyncmap, i.e. escape
@@ -176,61 +178,6 @@ all control characters).
 .B -as \fI<n>
 Same as
 .B asyncmap \fI<n>
-.TP
-.B -d
-Increase debugging level (same as the \fBdebug\fR option).
-.TP
-.B -detach
-Don't fork to become a background process (otherwise
-.I pppd
-will do so if a serial device is specified).
-.TP
-.B -ip
-Disable IP address negotiation (with this option, the remote IP
-address must be specified with an option on the command line or in an
-options file).
-.TP
-.B -mn
-Disable magic number negotiation.  With this option,
-.I pppd
-cannot detect a looped-back line.
-.TP
-.B -mru
-Disable MRU [Maximum Receive Unit] negotiation (use default, i.e. 1500).
-.TP
-.B -p
-Same as the
-.B passive
-option.
-.TP
-.B -pc
-Disable protocol field compression negotiation (use default, i.e.
-protocol field compression disabled).
-.TP
-.B +ua \fI<p>
-Agree to authenticate using PAP [Password Authentication Protocol] if
-requested by the peer, and
-use the data in file <p> for the user and password to send to the
-peer. The file contains the remote user name, followed by a newline,
-followed by the remote password, followed by a newline.  This option
-is obsolescent.
-.TP
-.B +pap
-Require the peer to authenticate itself using PAP.
-.TP
-.B -pap
-Don't agree to authenticate using PAP.
-.TP
-.B +chap
-Require the peer to authenticate itself using CHAP [Cryptographic
-Handshake Authentication Protocol] authentication.
-.TP
-.B -chap
-Don't agree to authenticate using CHAP.
-.TP
-.B -vj
-Disable negotiation of Van Jacobson style IP header compression (use
-default, i.e. no compression).
 .TP
 .B bsdcomp \fInr,nt
 Request that the peer compress packets that it sends, using the
@@ -247,6 +194,35 @@ compression in the corresponding direction.
 Disables compression; \fBpppd\fR will not request or agree to compress
 packets using the BSD-Compress scheme.
 .TP
+.B +chap
+Require the peer to authenticate itself using CHAP [Cryptographic
+Handshake Authentication Protocol] authentication.
+.TP
+.B -chap
+Don't agree to authenticate using CHAP.
+.TP
+.B chap-interval \fI<n>
+If this option is given,
+.I pppd
+will rechallenge the peer every <n> seconds.
+.TP
+.B chap-max-challenge \fI<n>
+Set the maximum number of CHAP challenge transmissions to <n> (default
+10).
+.TP
+.B chap-restart \fI<n>
+Set the CHAP restart interval (retransmission timeout for challenges)
+to <n> seconds (default 3).
+.TP
+.B -crtscts
+Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
+neither the \fBcrtscts\fR nor the \fB\-crtscts\fR option is given,
+the hardware flow control setting for the serial port is left
+unchanged.
+.TP
+.B -d
+Increase debugging level (same as the \fBdebug\fR option).
+.TP
 .B debug
 Increase debugging level (same as \fB\-d\fR).
 If this
@@ -256,11 +232,112 @@ through syslog with facility \fIdaemon\fR and level \fIdebug\fR.  This
 information can be directed to a file by setting up /etc/syslog.conf
 appropriately (see syslog.conf(5)).
 .TP
+.B \-defaultroute
+Disable the \fBdefaultroute\fR option.  The system administrator who
+wishes to prevent users from creating default routes with \fIpppd\fR
+can do so by placing this option in the /etc/ppp/options file.
+.TP
+.B -detach
+Don't fork to become a background process (otherwise
+.I pppd
+will do so if a serial device other than its controlling terminal is
+specified).
+.TP
 .B domain \fI<d>
 Append the domain name <d> to the local host name for authentication
 purposes.  For example, if gethostname() returns the name porsche, but the
 fully qualified domain name is porsche.Quotron.COM, you would use the
 domain option to set the domain name to Quotron.COM.
+.TP
+.B -ip
+Disable IP address negotiation.  If this option is used, the remote IP
+address must be specified with an option on the command line or in an
+options file.
+.TP
+.B ipcp-accept-local
+With this option,
+.I pppd
+will accept the peer's idea of our local IP address, even if the
+local IP address was specified in an option.
+.TP
+.B ipcp-accept-remote
+With this option,
+.I pppd
+will accept the peer's idea of its (remote) IP address, even if the
+remote IP address was specified in an option.
+.TP
+.B ipcp-max-configure \fI<n>
+Set the maximum number of IPCP configure-request transmissions to <n>
+(default 10).
+.TP
+.B ipcp-max-failure \fI<n>
+Set the maximum number of IPCP configure-NAKs returned before starting
+to send configure-Rejects instead to <n> (default 10).
+.TP
+.B ipcp-max-terminate \fI<n>
+Set the maximum number of IPCP terminate-request transmissions to <n>
+(default 3).
+.TP
+.B ipcp-restart \fI<n>
+Set the IPCP restart interval (retransmission timeout) to <n> seconds
+(default 3).
+.TP
+.B ipparam \fIstring
+Provides an extra parameter to the ip-up and ip-down scripts.  If this
+option is given, the \fIstring\fR supplied is given as the 6th
+parameter to those scripts.
+.TP
+.B kdebug \fIn
+Enable debugging code in the kernel-level PPP driver.  The argument
+\fIn\fR is a number which is the sum of the following values: 1 to
+enable general debug messages, 2 to request that the contents of
+received packets be printed, and 4 to request that the contents of
+transmitted packets be printed.
+.TP
+.B lcp-echo-failure \fI<n>
+If this option is given, \fIpppd\fR will presume the peer to be dead
+if \fIn\fR LCP echo-requests are sent without receiving a valid LCP
+echo-reply.  If this happens, \fIpppd\fR will terminate the
+connection.  Use of this option requires a non-zero value for the
+\fIlcp-echo-interval\fR parameter.  This option can be used to enable
+\fIpppd\fR to terminate after the physical connection has been broken
+(e.g., the modem has hung up) in situations where no hardware modem
+control lines are available.
+.TP
+.B lcp-echo-interval \fI<n>
+If this option is given, \fIpppd\fR will send an LCP echo-request
+frame to the peer every \fIn\fR seconds.  Under Linux, the
+echo-request is sent when no packets have been received from the peer
+for \fIn\fR seconds.  Normally the peer should respond to the
+echo-request by sending an echo-reply.  This option can be used with
+the \fIlcp-echo-failure\fR option to detect that the peer is no longer
+connected.
+.TP
+.B lcp-max-configure \fI<n>
+Set the maximum number of LCP configure-request transmissions to <n>
+(default 10).
+.TP
+.B lcp-max-failure \fI<n>
+Set the maximum number of LCP configure-NAKs returned before starting
+to send configure-Rejects instead to <n> (default 10).
+.TP
+.B lcp-max-terminate \fI<n>
+Set the maximum number of LCP terminate-request transmissions to <n>
+(default 3).
+.TP
+.B lcp-restart \fI<n>
+Set the LCP restart interval (retransmission timeout) to <n> seconds
+(default 3).
+.TP
+.B local
+Don't use the modem control lines.  With this option,
+.B pppd
+will ignore the state of the CD (Carrier Detect) signal from the modem and
+will not change the state of the DTR (Data Terminal Ready) signal.
+.TP
+.B login
+Use the system password database for authenticating the peer using
+PAP, and record the user in the system wtmp file.
 .TP
 .B modem
 Use the modem control lines.  This option is the default.  With this
@@ -274,60 +351,17 @@ executing the connect script.
 On Ultrix, this option implies hardware
 flow control, as for the \fBcrtscts\fR option.  
 .TP
-.B kdebug \fIn
-Enable debugging code in the kernel-level PPP driver.  The argument
-\fIn\fR is a number which is the sum of the following values: 1 to
-enable general debug messages, 2 to request that the contents of
-received packets be printed, and 4 to request that the contents of
-transmitted packets be printed.
+.B -mn
+Disable magic number negotiation.  With this option,
+.I pppd
+cannot detect a looped-back line.
 .TP
-.B local
-Don't use the modem control lines.  With this option,
-.B pppd
-will ignore the state of the CD (Carrier Detect) signal from the modem and
-will not change the state of the DTR (Data Terminal Ready) signal.
-.TP
-.B mtu \fI<n>
-Set the MTU [Maximum Transmit Unit] value to \fI<n>\fR.  Unless the
-peer requests a smaller value via MRU negotiation, \fIpppd\fR will
-request that the kernel networking code send data packets of no more
-than \fIn\fR bytes through the PPP network interface. 
+.B -mru
+Disable MRU [Maximum Receive Unit] negotiation.  With this option,
+\fIpppd\fR will use the default MRU value of 1500 bytes.
 .TP
 .B name \fI<n>
 Set the name of the local system for authentication purposes to <n>.
-.TP
-.B user \fI<u>
-Set the user name to use for authenticating this machine with the peer
-using PAP to <u>.
-.TP
-.B usehostname
-Enforce the use of the hostname as the name of the local system for
-authentication purposes (overrides the
-.B name
-option).
-.TP
-.B remotename \fI<n>
-Set the assumed name of the remote system for authentication purposes
-to <n>.
-.TP
-.B papcrypt
-Indicates that all secrets in the /etc/ppp/pap-secrets file which
-are used for checking the identity of the peer are encrypted, and thus
-pppd should not accept a password which (before encryption) is
-identical to the secret from the /etc/ppp/pap-secrets file.
-.TP
-.B proxyarp
-Add an entry to this system's ARP [Address Resolution Protocol] table
-with the IP address of the peer and the Ethernet address of this
-system.
-.TP
-.B persist
-Do not exit after a connection is terminated; instead try to reopen
-the connection.
-.TP
-.B login
-Use the system password database for authenticating the peer using
-PAP.
 .TP
 .B noipdefault
 Disables the default behaviour when no local IP address is specified,
@@ -336,64 +370,30 @@ hostname.  With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it specified explicitly on the
 command line or in an options file).
 .TP
-.B lcp-echo-interval \fI<n>
-If this option is given, \fIpppd\fR will send an LCP echo-request
-frame to the peer every \fIn\fR seconds.  Under Linux, the
-echo-request is sent when no packets have been received from the peer
-for \fIn\fR seconds.  Normally the peer should respond to the
-echo-request by sending an echo-reply.  This option can be used with
-the \fIlcp-echo-failure\fR option to detect that the peer is no longer
-connected.
+.B -p
+Same as the
+.B passive
+option.
 .TP
-.B lcp-echo-failure \fI<n>
-If this option is given, \fIpppd\fR will presume the peer to be dead
-if \fIn\fR LCP echo-requests are sent without receiving a valid LCP
-echo-reply.  If this happens, \fIpppd\fR will terminate the
-connection.  Use of this option requires a non-zero value for the
-\fIlcp-echo-interval\fR parameter.  This option can be used to enable
-\fIpppd\fR to terminate after the physical connection has been broken
-(e.g., the modem has hung up) in situations where no hardware modem
-control lines are available.
+.B +pap
+Require the peer to authenticate itself using PAP.
 .TP
-.B lcp-restart \fI<n>
-Set the LCP restart interval (retransmission timeout) to <n> seconds
-(default 3).
+.B -pap
+Don't agree to authenticate using PAP.
 .TP
-.B lcp-max-terminate \fI<n>
-Set the maximum number of LCP terminate-request transmissions to <n>
-(default 3).
-.TP
-.B lcp-max-configure \fI<n>
-Set the maximum number of LCP configure-request transmissions to <n>
-(default 10).
-.TP
-.B lcp-max-failure \fI<n>
-Set the maximum number of LCP configure-NAKs returned before starting
-to send configure-Rejects instead to <n> (default 10).
-.TP
-.B ipcp-restart \fI<n>
-Set the IPCP restart interval (retransmission timeout) to <n> seconds
-(default 3).
-.TP
-.B ipcp-max-terminate \fI<n>
-Set the maximum number of IPCP terminate-request transmissions to <n>
-(default 3).
-.TP
-.B ipcp-max-configure \fI<n>
-Set the maximum number of IPCP configure-request transmissions to <n>
-(default 10).
-.TP
-.B ipcp-max-failure \fI<n>
-Set the maximum number of IPCP configure-NAKs returned before starting
-to send configure-Rejects instead to <n> (default 10).
-.TP
-.B pap-restart \fI<n>
-Set the PAP restart interval (retransmission timeout) to <n> seconds
-(default 3).
+.B papcrypt
+Indicates that all secrets in the /etc/ppp/pap-secrets file which
+are used for checking the identity of the peer are encrypted, and thus
+pppd should not accept a password which (before encryption) is
+identical to the secret from the /etc/ppp/pap-secrets file.
 .TP
 .B pap-max-authreq \fI<n>
 Set the maximum number of PAP authenticate-request transmissions to
 <n> (default 10).
+.TP
+.B pap-restart \fI<n>
+Set the PAP restart interval (retransmission timeout) to <n> seconds
+(default 3).
 .TP
 .B pap-timeout \fI<n>
 Set the maximum time that
@@ -401,30 +401,66 @@ Set the maximum time that
 will wait for the peer to authenticate itself with PAP to
 <n> seconds (0 means no limit).
 .TP
-.B chap-restart \fI<n>
-Set the CHAP restart interval (retransmission timeout for challenges)
-to <n> seconds (default 3).
+.B -pc
+Disable protocol field compression negotiation (use default, i.e.
+protocol field compression disabled).
 .TP
-.B chap-max-challenge \fI<n>
-Set the maximum number of CHAP challenge transmissions to <n> (default
-10).
+.B persist
+Do not exit after a connection is terminated; instead try to reopen
+the connection.
 .TP
-.B chap-interval \fI<n>
-If this option is given,
-.I pppd
-will rechallenge the peer every <n> seconds.
+.B proxyarp
+Add an entry to this system's ARP [Address Resolution Protocol] table
+with the IP address of the peer and the Ethernet address of this
+system.
 .TP
-.B ipcp-accept-local
-With this option,
-.I pppd
-will accept the peer's idea of our local IP address, even if the
-local IP address was specified in an option.
+.B \-proxyarp
+Disable the \fBproxyarp\fR option.  The system administrator who
+wishes to prevent users from creating proxy ARP entries with
+\fIpppd\fR can do so by placing this option in the /etc/ppp/options
+file.
 .TP
-.B ipcp-accept-remote
-With this option,
-.I pppd
-will accept the peer's idea of its (remote) IP address, even if the
-remote IP address was specified in an option.
+.B remotename \fI<n>
+Set the assumed name of the remote system for authentication purposes
+to <n>.
+.TP
+.B +ua \fI<p>
+Agree to authenticate using PAP [Password Authentication Protocol] if
+requested by the peer, and
+use the data in file <p> for the user and password to send to the
+peer. The file contains the remote user name, followed by a newline,
+followed by the remote password, followed by a newline.  This option
+is obsolescent.
+.TP
+.B usehostname
+Enforce the use of the hostname as the name of the local system for
+authentication purposes (overrides the
+.B name
+option).
+.TP
+.B user \fI<u>
+Set the user name to use for authenticating this machine with the peer
+using PAP to <u>.
+.TP
+.B -vj
+Disable negotiation of Van Jacobson style TCP/IP header compression (use
+default, i.e. no compression).
+.TP
+.B -vjccomp
+Disable the connection-ID compression option in Van Jacobson style
+TCP/IP header compression.  With this option, \fIpppd\fR will not omit
+the connection-ID byte from Van Jacobson compressed TCP/IP headers,
+nor ask the peer to do so.
+.TP
+.B vj-max-slots \fIn
+Sets the number of connection slots to be used by the Van Jacobson
+TCP/IP header compression and decompression code to \fIn\fR, which
+must be between 2 and 16 (inclusive).
+.TP
+.B xonxoff
+Use software flow control (i.e. XON/XOFF) to control the flow of data on
+the serial port.  This option is only implemented on Linux systems
+at present.
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  
 .I pppd
