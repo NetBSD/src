@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.19 2001/11/07 12:14:17 bjh21 Exp $	*/
+/*	$NetBSD: if_types.h,v 1.20 2002/05/23 06:18:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -252,6 +252,13 @@
 #define IFT_SIPSIG		   0xcc /* SIP Signaling */
 #define IFT_DOCSCABLEUPSTREAMCHANNEL 0xcd /* CATV Upstream Channel */
 #define IFT_ECONET		   0xce /* Acorn Econet */
+#define IFT_PON155		   0xcf /* FSAN 155Mb Symetrical PON interface */
+#define IFT_PON622		   0xd0 /* FSAN 622Mb Symetrical PON interface */*/
+#define IFT_BRIDGE		   0xd1 /* Transparent bridge interface */
+#define IFT_LINEGROUP		   0xd2 /* Interface common to multiple lines */
+#define IFT_VOICEEMFGD		   0xd3 /* voice E&M Feature Group D */
+#define IFT_VOICEFGDEANA	   0xd4 /* voice FGD Exchange Access North American */
+#define IFT_VOICEDID		   0xd5 /* voice Direct Inward Dialing */
 
 /* not based on IANA assignments - how should we treat these? */
 #define IFT_GIF		0xf0
