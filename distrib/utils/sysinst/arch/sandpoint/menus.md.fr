@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.5 2003/05/07 10:20:25 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.6 2003/05/07 19:03:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,25 +97,7 @@ menu editpart, title  "Changement";
 			   msg_display_add(MSG_newline);
 			};
 	option "du type de FS", sub menu chooseid;
-	option "du Début et de la taille", action 
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_start, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start < bsec)
-				start = bsec;
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start == bsec)
-				size -= bsec;
-			if (start + size > bsize)
-				size = bsize - start;
-			if (size < 0) {
-				size = 0;
-				start = 0;
-			}
-			part[editpart].mbrp_start = start;
-			part[editpart].mbrp_size = size;
-		};
+	option "du Début et de la taille", action { edit_ptn_bounds(); };
 	option "Rendre la partition active", action { activepart = editpart; };
 	option "Partition OK", exit;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2003/05/07 10:20:19 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.4 2003/05/07 19:02:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* md.c -- Machine specific code for x86_64 */
+/* md.c -- Machine specific code for amd64 */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -57,8 +57,7 @@
 
 
 mbr_sector_t mbr;
-char kernstr[STRSIZE];
-int mbr_present, mbr_len;
+int mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
@@ -66,26 +65,25 @@ struct biosdisk_info *biosdisk = NULL;
 int netbsd_mbr_installed = 0;
 int netbsd_bootsel_installed = 0;
 
-static int md_read_bootcode (const char *, mbr_sector_t *);
-static int count_mbr_parts (struct mbr_partition *);
-static int mbr_part_above_chs (struct mbr_partition *);
-static int mbr_partstart_above_chs (struct mbr_partition *);
-static void configure_bootsel (void);
-static void md_upgrade_mbrtype (void);
-
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
 
-
 /* prototypes */
+
+static int md_read_bootcode(const char *, mbr_sector_t *);
+static int count_mbr_parts(struct mbr_partition *);
+static int mbr_part_above_chs(struct mbr_partition *);
+static int mbr_partstart_above_chs(struct mbr_partition *);
+static void configure_bootsel(void);
+static void md_upgrade_mbrtype(void);
 
 
 int
-md_get_info()
+md_get_info(void)
 {
 	read_mbr(diskdev, &mbr, sizeof mbr);
 	if (!valid_mbr(&mbr)) {
-		memset(&mbr.mbr_parts, 0, sizeof mbr.mbr_parts);
+		memset(&mbr, 0, sizeof mbr);
 		/* XXX check result and give up if < 0 */
 		mbr_len = md_read_bootcode(_PATH_MBR, &mbr);
 		netbsd_mbr_installed = 1;
@@ -141,9 +139,7 @@ edit:
  * The existing partition table and bootselect configuration is kept.
  */
 static int
-md_read_bootcode(path, mbr)
-	const char *path;
-	mbr_sector_t *mbr;
+md_read_bootcode(const char *path, mbr_sector_t *mbr)
 {
 	int fd, cc;
 	struct stat st;
@@ -175,7 +171,7 @@ md_read_bootcode(path, mbr)
 }
 
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
 	msg_display(MSG_dofdisk);
 
@@ -194,6 +190,7 @@ md_post_disklabel(void)
 {
 	if (rammb <= 32)
 		set_swap(diskdev, bsdlabel, 1);
+
 	return 0;
 }
 
@@ -204,16 +201,16 @@ md_post_newfs(void)
 	int ret;
 
 	/* boot blocks ... */
-	ret = stat("/usr/mdec/biosboot_com0.sym", &sb);
+	ret = stat("/usr/mdec/biosboot_com0_9600.sym", &sb);
 	if ((ret != -1) && (sb.st_mode & S_IFREG)) {
 		msg_display(MSG_getboottype);
 		process_menu(MENU_getboottype);
 	}
 	msg_display(MSG_dobootblks, diskdev);
-	if (!strcmp(boottype, "serial"))
+	if (!strncmp(boottype, "serial", 6))
 	        return run_prog(RUN_DISPLAY, NULL,
-	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0.sym /dev/r%sa",
-	            diskdev);
+	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0_%s.sym /dev/r%sa",
+	            boottype + 6, diskdev);
 	else
 	        return run_prog(RUN_DISPLAY, NULL,
 	            "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
@@ -445,7 +442,7 @@ md_update(void)
 }
 
 void
-md_upgrade_mbrtype()
+md_upgrade_mbrtype(void)
 {
 	struct mbr_partition *mbrp;
 	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
@@ -495,7 +492,7 @@ md_cleanup_install(void)
 	sprintf(cmd, "sed "
 			"-e '/^ttyE[1-9]/s/off/on/'"
 			" < %s > %s", realfrom, realto);
-		
+
 	scripting_fprintf(logfp, "%s\n", cmd);
 	do_system(cmd);
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
@@ -520,7 +517,11 @@ md_bios_info(dev)
 		mib[1] = CPU_DISKINFO;
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
 			goto nogeom;
-		disklist = (struct disklist *)malloc(len);
+		disklist = malloc(len);
+		if (disklist == NULL) {
+			fprintf(stderr, "Out of memory\n");
+			return -1;
+		}
 		sysctl(mib, 2, disklist, &len, NULL, 0);
 	}
 
@@ -583,26 +584,23 @@ count_mbr_parts(pt)
 }
 
 static int
-mbr_part_above_chs(pt)
-	struct mbr_partition *pt;
+mbr_part_above_chs(mbr_partition_t *pt)
 {
 	return ((pt[bsdpart].mbrp_start + pt[bsdpart].mbrp_size) >=
 		bcyl * bhead * bsec);
 }
 
 static int
-mbr_partstart_above_chs(pt)
-	struct mbr_partition *pt;
+mbr_partstart_above_chs(mbr_partition_t *pt)
 {
 	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
 }
 
 static void
-configure_bootsel()
+configure_bootsel(void)
 {
 	struct mbr_partition *parts = &mbr.mbr_parts[0];
 	int i;
-
 
 	mbs = &mbr.mbr_bootsel;
 	mbs->mbrb_flags = BFL_SELACTIVE;
@@ -613,7 +611,7 @@ configure_bootsel()
 	for (i = 0; i < NMBRPART; i++) {
 		if (parts[i].mbrp_typ != 0 && mbs->mbrb_nametab[i][0] == '\0')
 			snprintf(mbs->mbrb_nametab[i], sizeof(mbs->mbrb_nametab[0]),
-			    "entry %d", i+1);
+			    "entry %d", i);
 	}
 
 	process_menu(MENU_configbootsel);
@@ -628,34 +626,21 @@ configure_bootsel()
 }
 
 void
-disp_bootsel(part, mbsp)
-	struct mbr_partition *part;
-	struct mbr_bootsel *mbsp;
-{
-	int i;
-
-	msg_table_add(MSG_bootsel_header);
-	for (i = 0; i < 4; i++) {
-		msg_table_add(MSG_bootsel_row,
-		    i, get_partname(i), mbs->mbrb_nametab[i]);
-	}
-	msg_display_add(MSG_newline);
-}
-
-void
-md_init()
+md_init(void)
 {
 }
 
+#ifdef notdef
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
+#endif
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 
 	toggle_getit (8);
