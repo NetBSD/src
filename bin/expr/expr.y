@@ -2,7 +2,7 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * $Header: /cvsroot/src/bin/expr/expr.y,v 1.7 1993/07/20 00:29:41 jtc Exp $
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.8 1993/07/20 00:52:57 jtc Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -292,12 +292,6 @@ struct val *a, *b;
 {
 	struct val *r; 
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);	
@@ -317,12 +311,6 @@ struct val *a, *b;
 {
 	struct val *r;
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
@@ -342,12 +330,6 @@ struct val *a, *b;
 {
 	struct val *r;
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
@@ -367,12 +349,6 @@ struct val *a, *b;
 {
 	struct val *r;
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
@@ -392,12 +368,6 @@ struct val *a, *b;
 {
 	struct val *r;
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
@@ -417,12 +387,6 @@ struct val *a, *b;
 {
 	struct val *r;
 
-	/* attempt to coerce both arguments to integers */
-	(void) to_integer (a);
-	(void) to_integer (b);
-
-	/* But if either one of them really is a string, do 
-	   a string comparison */
 	if (isstring (a) || isstring (b)) {
 		to_string (a);
 		to_string (b);
@@ -554,7 +518,6 @@ struct val *a, *b;
 		fprintf (stderr, "expr: %s\n", errbuf);
 		exit (2);
 	}
-	free (newpat);
 
 	/* compare string against pattern */
 	if (regexec(&rp, a->u.s, SE_MAX, rm, 0) == 0) {
