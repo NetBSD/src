@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.38 1999/03/19 14:49:07 perry Exp $	*/
+/*	$NetBSD: net.c,v 1.39 1999/04/07 05:18:49 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -412,20 +412,16 @@ get_via_ftp()
 		 * "@", ":" and "/" need quoting).  Let's be
 		 * paranoid and also encode ftp_user and ftp_dir.  (For
 		 * example, ftp_dir could easily contain '~', which is
-		 * unsafe by a strict reading of RFC 1738).  There's
-		 * no need to encode the ftp_host or filename parts
-		 * of the URL for consumption by ftp, but we may need
-		 * to protect them from the shell, so we wrap the
-		 * whole URL in quotes for the shell.
+		 * unsafe by a strict reading of RFC 1738).
 		 */
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog(0, 1, "/usr/bin/ftp -a 'ftp://%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
 			    filename);
 		else {
-			ret = run_prog(0, 1, "/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL),
 			    url_encode(ftp_pass_encoded, ftp_pass, STRSIZE,
