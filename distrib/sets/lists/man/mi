@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.502 2002/07/10 10:01:46 agc Exp $
+# $NetBSD: mi,v 1.503 2002/07/10 10:49:51 agc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -308,6 +308,7 @@
 ./usr/share/man/cat1/rcslog.0			man-rcs-catman
 ./usr/share/man/cat1/rcsmerge.0			man-rcs-catman
 ./usr/share/man/cat1/rdist.0			man-netutil-catman
+./usr/share/man/cat1/readlink.0			man-util-catman
 ./usr/share/man/cat1/rehash.0			man-util-catman
 ./usr/share/man/cat1/repeat.0			man-util-catman
 ./usr/share/man/cat1/reset.0			man-util-catman
@@ -2044,6 +2045,7 @@
 ./usr/share/man/man1/rcslog.1			man-rcs-man
 ./usr/share/man/man1/rcsmerge.1			man-rcs-man
 ./usr/share/man/man1/rdist.1			man-netutil-man
+./usr/share/man/man1/readlink.1			man-util-man
 ./usr/share/man/man1/rehash.1			man-util-man
 ./usr/share/man/man1/repeat.1			man-util-man
 ./usr/share/man/man1/reset.1			man-util-man

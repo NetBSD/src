@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.339 2002/07/10 10:35:50 agc Exp $
+# $NetBSD: mi,v 1.340 2002/07/10 10:49:50 agc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -337,6 +337,7 @@
 ./usr/bin/rcslog	base-rcs-bin
 ./usr/bin/rcsmerge	base-rcs-bin
 ./usr/bin/rdist		base-netutil-bin
+./usr/bin/readlink	base-util-bin
 ./usr/bin/renice	base-util-bin
 ./usr/bin/reset		base-util-bin
 ./usr/bin/rev		base-util-bin
