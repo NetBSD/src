@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #
-#	$NetBSD: devlist2h.awk,v 1.5 1998/01/09 06:59:10 thorpej Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 2003/12/15 07:32:20 jmc Exp $
 #
 # Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 BEGIN {
-	ndevices = 0
+	ndevices = blanklines = 0
 	fbid = 0
 	dfile="diodevs_data.h"
 	hfile="diodevs.h"
@@ -41,7 +41,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > dfile
@@ -50,7 +50,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
-	printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
+	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
@@ -61,7 +61,7 @@ NR == 1 {
 
 	next
 }
-$1 == "device" {
+NF > 0 && $1 == "device" {
 	ndevices++
 
 	devices[ndevices, 1] = $2		# nickname
@@ -95,7 +95,7 @@ $1 == "device" {
 
 	next
 }
-$1 == "framebuffer" {
+NF > 0 && $1 == "framebuffer" {
 	ndevices++
 
 	devices[ndevices, 1] = $2		# nickname
@@ -165,4 +165,6 @@ END {
 	printf("};\n") > dfile
 
 	printf("#endif /* DIOVERBOSE */\n") > dfile
+	close(dfile)
+	close(hfile)
 }
