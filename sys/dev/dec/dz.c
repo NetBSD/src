@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.12 2003/12/09 14:30:55 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.13 2003/12/13 23:02:33 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.12 2003/12/09 14:30:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.13 2003/12/13 23:02:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.12 2003/12/09 14:30:55 ad Exp $");
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
 #define	DZ_WRITE_WORD(adr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
+#define	DZ_BARRIER() \
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_dr.dr_firstreg, \
+	    sc->sc_dr.dr_winsize, \
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ)
 
 #include "ioconf.h"
 
@@ -169,6 +173,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	DZ_WRITE_WORD(dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
 	DZ_WRITE_BYTE(dr_dtr, 0);
 	DZ_WRITE_BYTE(dr_break, 0);
+	DZ_BARRIER();
 
 	/* Initialize our softc structure. Should be done in open? */
 
@@ -291,6 +296,7 @@ dzxint(void *arg)
 			tp->t_state |= TS_BUSY;
 			ch = getc(cl);
 			DZ_WRITE_BYTE(dr_tbuf, ch);
+			DZ_BARRIER();
 			continue;
 		} 
 		/* Nothing to send; clear the scan bit */
@@ -299,6 +305,7 @@ dzxint(void *arg)
 		tcr &= 255;
 		tcr &= ~(1 << line);
 		DZ_WRITE_BYTE(dr_tcr, tcr);
+		DZ_BARRIER();
 		if (sc->sc_dz[line].dz_catch)
 			continue;
 
@@ -548,6 +555,7 @@ dzstart(struct tty *tp)
 	state = DZ_READ_WORD(dr_tcrw) & 255;
 	if ((state & (1 << line)) == 0) {
 		DZ_WRITE_BYTE(dr_tcr, state | (1 << line));
+		DZ_BARRIER();
 	}
 	dzxint(sc);
 	splx(s);
@@ -608,6 +616,7 @@ dzparam(struct tty *tp, struct termios *t)
 		lpr |= DZ_LPR_2_STOP;
 
 	DZ_WRITE_WORD(dr_lpr, lpr);
+	DZ_BARRIER();
 
 	(void) splx(s);
 	return (0);
@@ -682,6 +691,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
 	}
 
+	DZ_BARRIER();
 	(void) splx(s);
 	return (mbits);
 }
@@ -720,6 +730,7 @@ dzscan(void *arg)
 			    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
 				DZ_WRITE_BYTE(dr_tcr, 
 				    (DZ_READ_WORD(dr_tcrw) & 255) & ~bit);
+				DZ_BARRIER();
 			}
 	    	}
 
@@ -741,6 +752,7 @@ dzscan(void *arg)
 			if (sc->sc_rxint < 10)
 				DZ_WRITE_WORD(dr_csr, csr & ~(DZ_CSR_SAE));
 
+		DZ_BARRIER();
 		sc->sc_rxint = 0;
 	}
 	(void) splx(s);
