@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 2002/03/28 10:36:15 manu Exp $
+	$NetBSD: syscalls.master,v 1.31 2002/04/02 19:58:39 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -144,7 +144,7 @@
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
+62	STD		{ int irix_sys_fcntl(int fd, int cmd, char *arg); }
 63	NOARGS		{ long svr4_sys_ulimit(int cmd, long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc

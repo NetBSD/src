@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.3 2002/02/23 22:43:56 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.4 2002/04/02 19:58:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.3 2002/02/23 22:43:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.4 2002/04/02 19:58:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -45,12 +45,20 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.3 2002/02/23 22:43:56 manu Exp $");
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/fcntl.h>
 #include <sys/syscallargs.h>
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_fcntl.h>
 #include <compat/irix/irix_syscallargs.h>
 
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_fcntl.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 int
 irix_sys_lseek64(p, v, retval)
@@ -87,3 +95,64 @@ irix_sys_lseek64(p, v, retval)
 
 	return sys_lseek(p, (void *)&cup, retval);
 }
+
+int
+irix_sys_fcntl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_fcntl_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(char *)arg;
+	} */ *uap = v;
+	struct svr4_sys_fcntl_args cup;
+	int cmd;
+
+	cmd = SCARG(uap, cmd);
+	switch (cmd) {
+	case IRIX_F_CHKLK:
+	case IRIX_F_CHKLKW:
+	case IRIX_F_CLNLK:
+	case IRIX_F_DIOINFO:
+	case IRIX_F_FSGETXATTR:
+	case IRIX_F_FSSETXATTR:
+	case IRIX_F_GETBMAP:
+	case IRIX_F_FSSETDM:
+	case IRIX_F_RESVSP:
+	case IRIX_F_UNRESVSP:
+	case IRIX_F_RESVSP64:
+	case IRIX_F_UNRESVSP64:
+	case IRIX_F_GETBMAPA:
+	case IRIX_F_FSGETXATTRA:
+	case IRIX_F_SETBIOSIZE:
+	case IRIX_F_GETBIOSIZE:
+	case IRIX_F_GETOPS:
+	case IRIX_F_DMAPI:
+	case IRIX_F_FSYNC:
+	case IRIX_F_FSYNC64:
+	case IRIX_F_GETBDSATTR:
+	case IRIX_F_SETBDSATTR:
+	case IRIX_F_GETBMAPX:
+	case IRIX_F_SETPRIO:
+	case IRIX_F_GETPRIO:
+		printf("Warning: unimplemented IRIX fcntl() command %d\n", 
+		    cmd);
+		return EINVAL;
+		break;
+
+	case IRIX_F_SETBSDLKW:
+		cmd = SVR4_F_SETLKW;
+	case IRIX_F_SETBSDLK:
+		cmd = SVR4_F_SETLK;
+	default:
+		SCARG(&cup, fd) = SCARG(uap, fd);
+		SCARG(&cup, cmd) = cmd;
+		SCARG(&cup, arg) = SCARG(uap, arg);
+		return svr4_sys_fcntl(p, &cup, retval);
+		break;
+	}
+	/* NOTREACHED */
+}
+	
