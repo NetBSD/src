@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.97 2000/02/11 05:57:58 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.98 2000/02/12 17:45:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -397,11 +397,13 @@ ip_input(struct mbuf *m)
 		}
 		ip = mtod(m, struct ip *);
 	}
+
 	/*
-	 * we drop packets that have a multicast address as source
-	 * as wanted by rfc 1112
+	 * RFC1112: packets with a multicast source address are
+	 * not allowed.
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
+		/* XXX stat */
 		goto bad;
 	}
 
