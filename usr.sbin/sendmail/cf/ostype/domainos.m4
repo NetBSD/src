@@ -1,10 +1,8 @@
-PUSHDIVERT(-1)
+divert(-1)
 #
 # Copyright (c) 1983 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
-#
-#	This assumes you already have Sam Leffler's FAX software.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,16 +33,10 @@ PUSHDIVERT(-1)
 # SUCH DAMAGE.
 #
 
-ifdef(`FAX_MAILER_PATH',,
-	`define(`FAX_MAILER_PATH', /usr/local/lib/fax/mailfax)')
-ifdef(`FAX_MAILER_MAX',,
-	`define(`FAX_MAILER_MAX', 100000)')
-POPDIVERT
-####################################
-###   FAX Mailer specification   ###
-####################################
+divert(0)
+VERSIONID(`@(#)domainos.m4	8.1 (Berkeley) 1/23/94')
+divert(-1)
 
-VERSIONID(`@(#)fax.m4	8.2 (Berkeley) 1/24/94')
-
-Mfax,		P=FAX_MAILER_PATH, F=DFMhu, S=14, R=24, M=FAX_MAILER_MAX,
-		A=mailfax $u $h $f
+define(`ALIAS_FILE', /usr/lib/aliases)
+define(`STATUS_FILE', /usr/lib/sendmail.st)
+define(`QUEUE_DIR', /usr/spool/mqueue)
