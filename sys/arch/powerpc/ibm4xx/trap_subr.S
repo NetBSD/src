@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.8 2003/07/09 22:51:50 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.9 2003/08/11 05:13:21 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -273,7 +273,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	3,FRAME_PID+8(1);					\
 	lwz	4,FRAME_SRR1+8(1);					\
 	bl	_C_LABEL(ctx_setup);					\
-	TRAP_IF_ZERO(r3);						\
+	TRAP_IF_ZERO(3);						\
 	stw	3,FRAME_PID+8(1);					\
 	lmw	26,FRAME_LR+8(1);					\
 	mtlr	26;							\
@@ -294,7 +294,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtcr	29;							\
 	mtmsr	31;							\
 	isync;								\
-	TRAP_IF_ZERO(r30);						\
+	TRAP_IF_ZERO(30);						\
 	mtpid	30;							\
 	lmw	29,savearea(0)
 
