@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.13 2002/09/05 23:06:17 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.14 2002/10/18 10:24:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -863,7 +863,8 @@ findpcb:
 #endif
 		{
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				char src[4*sizeof "123"];
 				char dst[4*sizeof "123"];
 
@@ -915,7 +916,8 @@ findpcb:
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				char src[INET6_ADDRSTRLEN];
 				char dst[INET6_ADDRSTRLEN];
 
