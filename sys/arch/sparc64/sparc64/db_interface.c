@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.76 2004/03/21 14:15:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2004/03/14 18:18:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2004/03/21 14:15:35 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,14 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75 2004/03/14 18:18:54 chs Exp $"
 
 #include <machine/instr.h>
 #include <machine/cpu.h>
-#include <machine/openfirm.h>
+#include <machine/promlib.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 
 #include "fb.h"
 #include "esp_sbus.h"
-
-extern void OF_enter __P((void));
 
 db_regs_t		ddb_regs;
 
@@ -304,9 +302,9 @@ kdb_trap(type, tf)
 	default:
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
-			OF_enter();
+			prom_abort();
 			db_error("Faulted in DDB; continuing...\n");
-			OF_enter();
+			prom_abort();
 			/*NOTREACHED*/
 		}
 		db_recover = (label_t *)1;
@@ -444,7 +442,7 @@ db_prom_cmd(addr, have_addr, count, modif)
 	char *modif;
 {
 
-	OF_enter();
+	prom_abort();
 }
 
 void
