@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.46 1997/09/19 13:55:49 leo Exp $	 */
+/* $NetBSD: machdep.c,v 1.47 1997/10/19 14:33:48 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -75,6 +75,7 @@
 #include <sys/shm.h>
 #endif
 
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 
 #include <net/netisr.h>
@@ -121,7 +122,7 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
-int		nmcr, nmba, numuba, cold = 1;
+int		nmba, cold = 1;
 caddr_t		mcraddr[MAXNMCR];
 int		astpending;
 int		want_resched;
@@ -131,7 +132,7 @@ char		cpu_model[100];
 caddr_t		msgbufaddr;
 int		physmem;
 struct cfdriver nexuscd;
-int		todrstopped = 0, glurg;
+int		todrstopped = 0;
 int		dumpsize = 0;
 
 caddr_t allocsys __P((caddr_t));
@@ -341,7 +342,6 @@ void
 cpu_dumpconf()
 {
 	int		nblks;
-	extern int	dumpdev;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
@@ -671,7 +671,6 @@ machinecheck(frame)
 void
 dumpsys()
 {
-	extern int	dumpdev;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
