@@ -5,7 +5,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_sem.c,v 1.6 1994/02/13 11:31:16 mycroft Exp $
+ *	$Id: sysv_sem.c,v 1.7 1994/05/25 02:14:29 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -361,7 +361,7 @@ semctl(p, uap, retval)
 		break;
 
 	case IPC_STAT:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
@@ -370,7 +370,7 @@ semctl(p, uap, retval)
 		break;
 
 	case GETNCNT:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
@@ -378,7 +378,7 @@ semctl(p, uap, retval)
 		break;
 
 	case GETPID:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
@@ -386,7 +386,7 @@ semctl(p, uap, retval)
 		break;
 
 	case GETVAL:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
@@ -394,7 +394,7 @@ semctl(p, uap, retval)
 		break;
 
 	case GETALL:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
@@ -407,7 +407,7 @@ semctl(p, uap, retval)
 		break;
 
 	case GETZCNT:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_R, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
@@ -415,7 +415,7 @@ semctl(p, uap, retval)
 		break;
 
 	case SETVAL:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_W, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
@@ -427,7 +427,7 @@ semctl(p, uap, retval)
 		break;
 
 	case SETALL:
-		if ((eval = ipcaccess(&semaptr->sem_perm, IPC_W, cred)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
@@ -483,8 +483,8 @@ semget(p, uap, retval)
 #ifdef SEM_DEBUG
 			printf("found public key\n");
 #endif
-			if ((eval = ipcaccess(&sema[semid].sem_perm,
-			    semflg & 0700, cred)))
+			if ((eval = ipcperm(cred, &sema[semid].sem_perm,
+			    semflg & 0700)))
 				return(eval);
 			if (nsems > 0 && sema[semid].sem_nsems < nsems) {
 #ifdef SEM_DEBUG
@@ -602,7 +602,7 @@ semop(p, uap, retval)
 	if (semaptr->sem_perm.seq != IPCID_TO_SEQ(uap->semid))
 		return(EINVAL);
 
-	if ((eval = ipcaccess(&semaptr->sem_perm, IPC_W, cred))) {
+	if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
 #ifdef SEM_DEBUG
 		printf("eval = %d from ipaccess\n", eval);
 #endif
