@@ -1,4 +1,4 @@
-/*	$NetBSD: strpct.c,v 1.3 1999/01/31 08:00:50 mrg Exp $	*/
+/*	$NetBSD: strpct.c,v 1.4 1999/03/19 12:58:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/limits.h>
+#include <limits.h>
 
 #include <stdio.h>
 
