@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.11 2003/04/01 23:19:11 thorpej Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.12 2003/04/03 17:47:04 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -93,8 +93,6 @@ CFATTACH_DECL(saip, sizeof(struct sa11x0_softc),
 
 extern struct bus_space sa11x0_bs_tag;
 extern vaddr_t saipic_base;
-
-extern int SetCPSR(int, int);
 
 /*
  * int sa11x0_print(void *aux, const char *name)
