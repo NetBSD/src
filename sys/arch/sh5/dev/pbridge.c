@@ -1,4 +1,4 @@
-/*	$NetBSD: pbridge.c,v 1.6 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: pbridge.c,v 1.7 2002/10/24 13:48:44 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -156,7 +156,7 @@ pbridgeprint(void *arg, const char *cp)
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset - pa->_pa_base);
+	printf(" offset 0x%x", pa->pa_offset - pa->_pa_base);
 
 	if (pa->pa_ipl != -1)
 		printf(" ipl %d", pa->pa_ipl);
