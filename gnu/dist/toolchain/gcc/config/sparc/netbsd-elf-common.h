@@ -64,10 +64,6 @@
 
 #undef STDC_0_IN_SYSTEM_HEADERS
 
-/** We don't have the C++ support for this (yet). */
-#undef DWARF2_UNWIND_INFO
-#define DWARF2_UNWIND_INFO 0
-
 /* XXX Redefine this; <sparc/sparc.h> mucks with it. */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);
