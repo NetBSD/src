@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.351 2001/08/27 08:03:37 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.352 2001/08/27 14:10:20 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.348 2001/08/27 08:02:52 ad Exp 
+ *	NetBSD: pcidevs,v 1.349 2001/08/27 14:04:47 enami Exp 
  */
 
 /*
@@ -2698,6 +2698,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
+	    0,
+	    "Intel",
+	    "InBusiness Fast Ethernet LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	    0,
 	    "Intel",
@@ -2804,66 +2810,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82815 Graphics",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
-	    0,
-	    "Intel",
-	    "InBusiness Fast Ethernet LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_01,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_02,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Internal GUI Accelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_10,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge, AGP Not Implemented",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_12,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Internal GUI Accelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_20,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge, AGP Implemented",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_21,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_30,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge (Fully featured chipset)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_31,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_32,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Interal GUI Accelerator",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
