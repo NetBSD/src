@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,15 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)verify.c	5.11 (Berkeley) 4/17/92"; */
-static char *rcsid = "$Id: verify.c,v 1.7 1993/11/02 08:44:00 cgd Exp $";
+static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fts.h>
-#include <unistd.h>
 #include <fnmatch.h>
+#include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include "mtree.h"
@@ -108,8 +107,8 @@ vwalk()
 		}
 
 		for (ep = level; ep; ep = ep->next)
-			if (ep->flags & F_MAGIC && !fnmatch(ep->name,
-			    p->fts_name, FNM_PATHNAME) ||
+			if (ep->flags & F_MAGIC &&
+			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
 				if (compare(ep->name, ep, p))

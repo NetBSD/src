@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)spec.c	5.17 (Berkeley) 4/17/92"; */
-static char *rcsid = "$Id: spec.c,v 1.4 1994/03/27 09:09:54 cgd Exp $";
+static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -215,7 +214,11 @@ set(t, ip)
 				err("%s", strerror(errno));
 			break;
 		case F_TIME:
-			ip->st_mtime = strtoul(val, &ep, 10);
+			ip->st_mtimespec.ts_sec = strtoul(val, &ep, 10);
+			if (*ep != '.')
+				err("invalid time %s", val);
+			val = ep + 1;
+			ip->st_mtimespec.ts_nsec = strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid time %s", val);
 			break;
