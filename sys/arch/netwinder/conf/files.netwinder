@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.21 2002/02/21 02:43:57 thorpej Exp $
+#	$NetBSD: files.netwinder,v 1.22 2002/04/10 20:11:45 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -17,9 +17,6 @@ defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
 defflag	COMPAT_OLD_BOOTLOADER
-
-# Architectures and core logic
-defflag	NETWINDER
 
 define todservice {}
 
