@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2002/02/04 16:17:36 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2002/03/26 00:03:47 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,12 +34,14 @@
 #include <lib/libsa/stand.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
+#include <powerpc/spr.h>
 
 #include "boot.h"
 
 u_long ns_per_tick = NS_PER_TICK;
 
 static inline u_quad_t mftb __P((void));
+static inline void mfrtc __P((u_long *, u_long *));
 
 static inline u_quad_t
 mftb()
@@ -52,6 +54,19 @@ mftb()
 	return (tb);
 }
 
+static inline void
+mfrtc(up, lp)
+	u_long *up;
+	u_long *lp;
+{
+	u_long scratch;
+
+	__asm __volatile ("1: mfspr %0,%3; mfspr %1,%4; mfspr %2,%3;"
+	    "cmpw %0,%2; bne 1b"
+	    : "=r"(*up), "=r"(*lp), "=r"(scratch)
+	    : "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
+}
+
 /*
  * Wait for about n microseconds (at least!).
  */
@@ -61,11 +76,34 @@ delay(n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
+	unsigned int cpuvers;
 
-	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = tb;
-	__asm__ volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:"
-		: "=r"(scratch) : "r"(tbh), "r"(tbl));
+	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	cpuvers >>= 16;
+
+	if (cpuvers == MPC601) {
+		mfrtc(&tbh, &tbl);
+		while (n >= 1000000) {
+			tbh++;
+			n -= 1000000;
+		}
+		tbl += n * 1000;
+		if (tbl >= 1000000000) {
+			tbh++;
+			tbl -= 1000000000;
+		}
+		__asm __volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
+		    : "=r"(scratch)
+		    : "r"(tbh), "r"(tbl), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
+	} else {
+		tb = mftb();
+		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+		tbh = tb >> 32;
+		tbl = tb;
+		__asm __volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f;"
+		                  "mftb %0; cmpw %0,%2; blt 1b; 2:"
+		                  : "=r"(scratch)
+		                  : "r"(tbh), "r"(tbl));
+	}
 }
