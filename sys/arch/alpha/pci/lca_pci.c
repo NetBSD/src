@@ -1,4 +1,4 @@
-/*	$NetBSD: lca_pci.c,v 1.2 1996/04/12 23:27:05 cgd Exp $	*/
+/*	$NetBSD: lca_pci.c,v 1.3 1996/04/23 14:01:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -114,15 +114,13 @@ lca_conf_read(cpv, tag, offset)
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap, data;
 	int s, secondary, device, ba;
-	int32_t old_ioc_conf;					/* XXX */
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		old_ioc_conf = REGVAL(LCA_IOC_CONF);
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf | 0x1;
+		REGVAL(LCA_IOC_CONF) = 0x01;
 		wbflush();
 	} else {
 		/*
@@ -145,7 +143,7 @@ lca_conf_read(cpv, tag, offset)
 
 	if (secondary) {
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf;
+		REGVAL(LCA_IOC_CONF) = 0x00;
 		wbflush();
 		splx(s);
 	}
@@ -168,15 +166,13 @@ lca_conf_write(cpv, tag, offset, data)
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;
 	int s, secondary, device;
-	int32_t old_ioc_conf;					/* XXX */
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
-		old_ioc_conf = REGVAL(LCA_IOC_CONF);
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf | 0x1;
+		REGVAL(LCA_IOC_CONF) = 0x01;
 		wbflush();
 	} else {
 		/*
@@ -197,7 +193,7 @@ lca_conf_write(cpv, tag, offset, data)
 
 	if (secondary) {
 		wbflush();
-		REGVAL(LCA_IOC_CONF) = old_ioc_conf;	
+		REGVAL(LCA_IOC_CONF) = 0x00;	
 		wbflush();
 		splx(s);
 	}
