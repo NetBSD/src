@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.8 1999/06/16 23:14:59 thorpej Exp $
+.\"	$NetBSD: mlock.2,v 1.9 1999/06/16 23:30:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,13 +139,13 @@ Some portion of the indicated address range is not locked.
 .Xr munmap 2 ,
 .Xr setrlimit 2 ,
 .Xr getpagesize 3
-.Sh BUGS
-The per-process resource limit is a limit on the amount of virtual
-memory locked, while the system-wide limit is for the number of locked
-physical pages.
-Hence a process with two distinct locked mappings of the same physical page
-counts as 2 pages against the per-process limit and as only a single page
-in the system limit.
+.Sh STANDARDS
+The
+.Fn mlock
+and
+.Fn munlock
+functions conform to
+.St -p1003.1b-93 .
 .Sh HISTORY
 The
 .Fn mlock
@@ -153,3 +153,10 @@ and
 .Fn munlock
 functions first appeared in
 .Bx 4.4 .
+.Sh BUGS
+The per-process resource limit is a limit on the amount of virtual
+memory locked, while the system-wide limit is for the number of locked
+physical pages.
+Hence a process with two distinct locked mappings of the same physical page
+counts as 2 pages against the per-process limit and as only a single page
+in the system limit.
