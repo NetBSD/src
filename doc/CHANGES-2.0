@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.55 2004/04/07 21:43:48 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.56 2004/04/08 03:50:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -572,3 +572,10 @@ dist/ipf/tools/ipfstat.c			1.3
 
 	Incorrect conditional -- misplaced ]. PR#25097
 	[christos, ticket #84]
+
+sys/kern/init_sysctl.c				1.25
+
+	Clear out the struct kinfo_drivers before stuffing things into it.
+	Avoids leaking garbage from the stack (left over from the earlier
+	call to sysctl_locate()).
+	[atatat, ticket #85]
