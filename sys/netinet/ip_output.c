@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.54 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.55 1999/01/11 22:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ ip_output(m0, va_alist)
 		ipstat.ips_localout++;
 	} else {
 		hlen = ip->ip_hl << 2;
+		HTONS(ip->ip_id);
 	}
 	/*
 	 * Route packet.
@@ -368,8 +369,8 @@ sendit:
 	 * If small enough for mtu of path, can just send directly.
 	 */
 	if ((u_int16_t)ip->ip_len <= mtu) {
-		ip->ip_len = htons((u_int16_t)ip->ip_len);
-		ip->ip_off = htons((u_int16_t)ip->ip_off);
+		HTONS(ip->ip_len);
+		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
@@ -437,7 +438,7 @@ sendit:
 		}
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
-		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
+		HTONS(mhip->ip_off);
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		ipstat.ips_ofragments++;
@@ -451,7 +452,8 @@ sendit:
 	m_adj(m, hlen + firstlen - (u_int16_t)ip->ip_len);
 	m->m_pkthdr.len = hlen + firstlen;
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
-	ip->ip_off = htons((u_int16_t)(ip->ip_off | IP_MF));
+	ip->ip_off |= IP_MF;
+	HTONS(ip->ip_off);
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m, hlen);
 sendorfree:
@@ -1223,8 +1225,8 @@ ip_mloopback(ifp, m, dst)
 		 * than the interface's MTU.  Can this possibly matter?
 		 */
 		ip = mtod(copym, struct ip *);
-		ip->ip_len = htons((u_int16_t)ip->ip_len);
-		ip->ip_off = htons((u_int16_t)ip->ip_off);
+		HTONS(ip->ip_len);
+		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
 		(void) looutput(ifp, copym, sintosa(dst), NULL);
