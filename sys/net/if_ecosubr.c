@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.5 2001/09/15 23:03:11 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.6 2001/09/16 12:16:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.5 2001/09/15 23:03:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.6 2001/09/16 12:16:50 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -340,7 +340,7 @@ static void
 eco_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
-	struct eco_header *eh;
+	struct eco_header ehdr, *eh;
 	int s;
 #ifdef INET
 	struct arphdr *ah;
@@ -355,9 +355,10 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 #endif
 
-	eh = mtod(m, struct eco_header *);
-
-	/* Trim header of front (eh continues to be valid). */
+	/* Copy the mbuf header and trim it off. */
+	/* XXX use m_split? */
+	eh = &ehdr;
+	m_copydata(m, 0, ECO_HDR_LEN, (caddr_t)eh);
 	m_adj(m, ECO_HDR_LEN);
 
 	switch (eh->eco_port) {
@@ -378,6 +379,12 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			 * and we have to infer the rest and build a fake ARP
 			 * packet to pass upwards.
 			 */
+			if (m->m_pkthdr.len != sizeof(struct eco_arp))
+				goto drop;
+			if (m->m_len < sizeof(struct eco_arp)) {
+				m = m_pullup(m, sizeof(struct eco_arp));
+				if (m == NULL) goto drop;
+			}
 			ecah = mtod(m, struct eco_arp *);
 			/* This code derived from arprequest() */
 	       		MGETHDR(m1, M_DONTWAIT, MT_DATA);
