@@ -1,6 +1,8 @@
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
- * adapters.  By David Greenman, 29-April-1993
+ * adapters.
+ *
+ * Copyright (c) 1994 Charles Hannum.
  *
  * Copyright (C) 1993, David Greenman.  This software may be used, modified,
  * copied, distributed, and sold, in both source and binary form provided that
@@ -11,11 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- * Thanks to Charles Hannum for proving to me with example code that the
- * NE1000/2000 support could be added with minimal impact.  Without this, I
- * wouldn't have proceeded in this direction.
- *
- *	$Id: if_ed.c,v 1.23 1994/02/12 07:16:24 mycroft Exp $
+ *	$Id: if_ed.c,v 1.24 1994/02/13 03:49:24 mycroft Exp $
  */
 
 #include "ed.h"
@@ -1177,7 +1175,7 @@ ed_init(sc)
 	if (sc->is790)
 		outb(sc->nic_addr + 0x09, 0);
 
-	/* Initialize receiver (ring-buffer) page stop and boundry. */
+	/* Initialize receiver (ring-buffer) page stop and boundary. */
 	outb(sc->nic_addr + ED_P0_PSTOP, sc->rec_page_stop);
 	outb(sc->nic_addr + ED_P0_BNRY, sc->rec_page_start);
 
@@ -1493,7 +1491,7 @@ static inline void
 ed_rint(sc)
 	struct ed_softc *sc;
 {
-	u_char boundry, current;
+	u_char boundary, current;
 	u_short len;
 	struct ed_ring packet_hdr;
 	caddr_t packet_ptr;
@@ -1549,16 +1547,16 @@ ed_rint(sc)
 		sc->next_packet = packet_hdr.next_packet;
 
 		/*
-		 * Update NIC boundry pointer - being careful to keep it one
+		 * Update NIC boundary pointer - being careful to keep it one
 		 * buffer behind (as recommended by NS databook).
 		 */
-		boundry = sc->next_packet - 1;
-		if (boundry < sc->rec_page_start)
-			boundry = sc->rec_page_stop - 1;
+		boundary = sc->next_packet - 1;
+		if (boundary < sc->rec_page_start)
+			boundary = sc->rec_page_stop - 1;
 
-		/* Set NIC to page 0 registers to update boundry register. */
+		/* Set NIC to page 0 registers to update boundary register. */
 		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
-		outb(sc->nic_addr + ED_P0_BNRY, boundry);
+		outb(sc->nic_addr + ED_P0_BNRY, boundary);
 
 		/*
 		 * Set NIC to page 1 registers before looping to top (prepare
@@ -1988,7 +1986,7 @@ ed_get_packet(sc, buf, len)
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((sc->arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(head);
