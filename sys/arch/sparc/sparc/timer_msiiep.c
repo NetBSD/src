@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.13 2004/05/12 15:44:28 pk Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.14 2004/07/01 10:23:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.13 2004/05/12 15:44:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.14 2004/07/01 10:23:41 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,10 +109,9 @@ timer_init_msiiep(void)
 static int
 clockintr_msiiep(void *cap)
 {
-	volatile int discard;
 
 	/* read the limit register to clear the interrupt */
-	discard = msiiep->pcic_sclr;
+	*((volatile int *)&msiiep->pcic_sclr);
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -124,11 +123,10 @@ static int
 statintr_msiiep(void *cap)
 {
 	struct clockframe *frame = cap;
-	volatile int discard;
 	u_long newint;
 
 	/* read the limit register to clear the interrupt */
-	discard = msiiep->pcic_pclr;
+	*((volatile int *)&msiiep->pcic_pclr);
 
 	statclock(frame);
 
@@ -193,10 +191,10 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	 * Note: ms-IIep clocks ticks every 4 processor cycles.
 	 */
 	for (timerblurb = 1; ; ++timerblurb) {
-		volatile int discard;
-		int t;
+		volatile int t;
 
-		discard = msiiep->pcic_pclr; /* clear the limit bit */
+		/* clear the limit bit */
+		*((volatile int *)&msiiep->pcic_pclr);
 		msiiep->pcic_pclr = 0; /* reset counter to 1, free run */
 		delay(100);
 		t = msiiep->pcic_pccr;
