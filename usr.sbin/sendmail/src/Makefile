@@ -1,7 +1,7 @@
 #
 #  NetBSD Makefile
 #
-#	$Id: Makefile,v 1.18 1994/02/01 05:33:42 glass Exp $
+#	$Id: Makefile,v 1.19 1994/02/02 07:22:49 glass Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 PROG=	sendmail
@@ -28,6 +28,7 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 MAN1=	newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
+MLINKS= sendmail.8 mailq.8
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin
