@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.56 2002/03/21 23:14:03 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.57 2002/03/27 08:53:43 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 22, 2002
+.Dd March 27, 2002
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -140,7 +140,7 @@ If empty or not set, then the contents of
 .El
 .Ss Boottime file-system and swap configuration
 .Bl -tag -width net_interfaces
-.It Sy critical_filesystems_beforenet
+.It Sy critical_filesystems_local
 A string.
 File systems mounted very early in the system boot before networking
 services are available.
@@ -149,7 +149,7 @@ Usually
 is part of this, because it is needed by services such as
 .Xr dhclient 8
 which may be required to get the network operational.
-.It Sy critical_filesystems
+.It Sy critical_filesystems_remote
 A string.
 File systems such as
 .Pa /usr
@@ -393,7 +393,7 @@ to
 you must either have
 .Pa /var
 in
-.Sy critical_filesystems_beforenet ,
+.Sy critical_filesystems_local ,
 as part of
 .Pa / ,
 or direct the DHCP client to store the leases file on the root

@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.46 2002/03/22 04:16:38 lukem Exp $
+# $NetBSD: rc.subr,v 1.47 2002/03/27 08:53:42 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,17 +81,14 @@ reverse_list()
 }
 
 #
-# mount_critical_filesystems
-#	Go through the list of critical filesystems, checking each one
-#	to see if it is mounted, and if it is not, mounting it.
+# mount_critical_filesystems type
+#	Go through the list of critical filesystems as provided in
+#	the rc.conf(5) variable $critical_filesystems_${type}, checking
+#	each one to see if it is mounted, and if it is not, mounting it.
 #
 mount_critical_filesystems()
 {
-	if [ $1 = local ]; then
-		_fslist=$critical_filesystems_beforenet
-	else
-		_fslist=$critical_filesystems
-	fi
+	eval _fslist=\$critical_filesystems_${1}
 	for _fs in $_fslist; do
 		mount | (
 			_ismounted=no

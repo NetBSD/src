@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.6 2002/03/24 15:32:59 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.7 2002/03/27 08:53:43 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 25, 2002
+.Dd March 27, 2002
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -234,24 +234,13 @@ mechanism for an administrator to override the behaviour of a given
 .Xr rc.d 8
 script without requiring the editing of that script.
 .It Ic mount_critical_filesystems Ar type
-Go through a list of critical file systems, mounting each one that
-is not currently mounted.
-If
-.Ar type
-is
-.Sq local ,
-use the
+Go through a list of critical file systems,
+as found in the
 .Xr rc.conf 5
 variable
-.Sy critical_filesystems_beforenet
-for the list of critical file systems.
-Otherwise
-(where
-.Ar type
-should be
-.Sq remote ) ,
-use
-.Sy critical_filesystems .
+.Sy critical_filesystems_ Ns Ar type ,
+mounting each one that
+is not currently mounted.
 .It Ic rc_usage Ar command Op Ar ...
 Print a usage message for
 .Va $0 ,

@@ -1,11 +1,11 @@
-# $NetBSD: form,v 1.5 2002/02/21 20:00:13 garbled Exp $
+# $NetBSD: form,v 1.6 2002/03/27 08:53:43 lukem Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
 escript:15,script2,defaultroute	Default Route, if blank use /etc/mygate
 escript:15,script2,domainname	NIS Domain Name, if blank use /etc/defaultdomain
-escript:15,script2,critical_filesystems_beforenet	Filesystems to mount before network config
-escript:15,script2,critical_filesystems	Filesystems to mount early in boot process
+escript:15,script2,critical_filesystems_local	Filesystems to mount before network config
+escript:15,script2,critical_filesystems_remote	Filesystems to mount early in boot process
 script:script1,no_swap		Set to yes if you have no swap configured
 script:script1,lkm		Run /etc/rc.lkm
 script:script1,savecore		Run savecore at boot?
