@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.35 1997/05/12 23:40:50 lukem Exp $
+#	$NetBSD: netstart,v 1.36 1997/05/15 02:09:27 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.conf ]; then
@@ -78,7 +78,7 @@ if [ "$net_interfaces" != NO ]; then
 fi
 
 # Set the address for the loopback interface if it's not configured
-if [ $configured_lo0 != "yes" ]; then
+if [ "$configured_lo0" != "yes" ]; then
 	ifconfig lo0 inet localhost
 fi
 
