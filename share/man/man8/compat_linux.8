@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.4 1996/10/15 11:41:09 fvdl Exp $
+.\"	$NetBSD: compat_linux.8,v 1.5 1997/02/27 08:05:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Dt COMPAT_LINUX 8
 .Os BSD 4
 .Sh NAME
-.Nm COMPAT_LINUX
+.Nm compat_linux
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 NetBSD supports running Linux binaries. This only applies to i386 systems
@@ -46,20 +46,20 @@ binaries (they will probably run, but not produce any sound).
 
 The Linux compatibility feature is active
 for kernels compiled with the
-.Nm COMPAT_LINUX
+.Dv COMPAT_LINUX
 option enabled.
 If support for Linux a.out executables is desired, the
-.Nm EXEC_AOUT
+.Dv EXEC_AOUT
 option should be enabled in addition to
-.Nm COMPAT_LINUX .
+.Dv COMPAT_LINUX .
 Similarly, if support for Linux 32-bit and/or 64-bit ELF executables
 is desired, the
-.Nm EXEC_ELF32
+.Dv EXEC_ELF32
 and/or
-.Nm EXEC_ELF64
+.Dv EXEC_ELF64
 options (respectively) should be enabled in addition to
-.Nm COMPAT_LINUX .
-
+.Dv COMPAT_LINUX .
+.Pp
 A lot of programs are dynamically linked. This means, that you will
 also need the Linux shared libraries that the program depends on, and
 the runtime linker. Also, you will need to create a "shadow root"
@@ -149,7 +149,7 @@ you with:
 .fi
 .Pp
 Please note that the symbolic link mechanism is
-.Nm only
+.Em only
 needed for Linux binaries, the NetBSD runtime linker takes care of
 looking for matching major revision numbers itself, you
 don't need to worry about that.
@@ -243,8 +243,8 @@ such as YP and DNS. You must create or get a valid copy of this file
 and put it in /emul/linux/etc.
 
 .Ss Finding the necessary files.
-.Nm Note:
-the information below is valid as of the \time this
+.Em Note:
+the information below is valid as of the time this
 document was written (March, 1995), but certain details
 such as names of ftp sites, directories and distribution names
 may have changed by the time you read this.
