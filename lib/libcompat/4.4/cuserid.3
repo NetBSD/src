@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$NetBSD: cuserid.3,v 1.3 1997/10/09 10:21:05 lukem Exp $
+.\"	$NetBSD: cuserid.3,v 1.4 1997/10/16 23:00:26 christos Exp $
 .\"
 .Dd November 28, 1993
 .Dt CUSERID 3
@@ -44,7 +44,9 @@
 .Fn cuserid "char *buf"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is available from the compatibility library, libcompat.
+This interface is available from the compatibility library, libcompat and
+has been obsoleted by
+.Xr getlogin 2
 .Ef
 .Pp
 The
