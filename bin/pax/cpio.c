@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
+/*	$NetBSD: cpio.c,v 1.6 1997/01/11 02:06:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: cpio.c,v 1.6 1997/01/11 02:06:37 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,9 @@ static char rcsid[] = "$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $";
 #include "cpio.h"
 #include "extern.h"
 
-static int rd_nm __P((register ARCHD *, int));
-static int rd_ln_nm __P((register ARCHD *));
-static int com_rd __P((register ARCHD *));
+static int rd_nm __P((ARCHD *, int));
+static int rd_ln_nm __P((ARCHD *));
+static int com_rd __P((ARCHD *));
 
 /*
  * Routines which support the different cpio versions
@@ -102,11 +102,11 @@ cpio_strd()
 
 #if __STDC__
 int
-cpio_trail(register ARCHD *arcn)
+cpio_trail(ARCHD *arcn)
 #else
 int
 cpio_trail(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	/*
@@ -126,11 +126,11 @@ cpio_trail(arcn)
 
 #if __STDC__
 static int
-com_rd(register ARCHD *arcn)
+com_rd(ARCHD *arcn)
 #else
 static int
 com_rd(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	arcn->skip = 0;
@@ -209,11 +209,11 @@ cpio_endwr()
 
 #if __STDC__
 static int
-rd_nm(register ARCHD *arcn, int nsz)
+rd_nm(ARCHD *arcn, int nsz)
 #else
 static int
 rd_nm(arcn, nsz)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	int nsz;
 #endif
 {
@@ -246,11 +246,11 @@ rd_nm(arcn, nsz)
 
 #if __STDC__
 static int
-rd_ln_nm(register ARCHD *arcn)
+rd_ln_nm(ARCHD *arcn)
 #else
 static int
 rd_ln_nm(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	/*
@@ -327,16 +327,16 @@ cpio_id(blk, size)
 
 #if __STDC__
 int
-cpio_rd(register ARCHD *arcn, register char *buf)
+cpio_rd(ARCHD *arcn, char *buf)
 #else
 int
 cpio_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
+	ARCHD *arcn;
+	char *buf;
 #endif
 {
-	register int nsz;
-	register HD_CPIO *hd;
+	int nsz;
+	HD_CPIO *hd;
 
 	/*
 	 * check that this is a valid header, if not return -1
@@ -448,15 +448,15 @@ cpio_stwr()
 
 #if __STDC__
 int
-cpio_wr(register ARCHD *arcn)
+cpio_wr(ARCHD *arcn)
 #else
 int
 cpio_wr(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HD_CPIO *hd;
-	register int nsz;
+	HD_CPIO *hd;
+	int nsz;
 	char hdblk[sizeof(HD_CPIO)];
 
 	/*
@@ -651,18 +651,18 @@ crc_strd()
 
 #if __STDC__
 int
-vcpio_rd(register ARCHD *arcn, register char *buf)
+vcpio_rd(ARCHD *arcn, char *buf)
 #else
 int
 vcpio_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
+	ARCHD *arcn;
+	char *buf;
 #endif
 {
-	register HD_VCPIO *hd;
+	HD_VCPIO *hd;
 	dev_t devminor;
 	dev_t devmajor;
-	register int nsz;
+	int nsz;
 
 	/*
 	 * during the id phase it was determined if we were using CRC, use the
@@ -797,14 +797,14 @@ crc_stwr()
 
 #if __STDC__
 int
-vcpio_wr(register ARCHD *arcn)
+vcpio_wr(ARCHD *arcn)
 #else
 int
 vcpio_wr(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HD_VCPIO *hd;
+	HD_VCPIO *hd;
 	unsigned int nsz;
 	char hdblk[sizeof(HD_VCPIO)];
 
@@ -995,16 +995,16 @@ bcpio_id(blk, size)
 
 #if __STDC__
 int
-bcpio_rd(register ARCHD *arcn, register char *buf)
+bcpio_rd(ARCHD *arcn, char *buf)
 #else
 int
 bcpio_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
+	ARCHD *arcn;
+	char *buf;
 #endif
 {
-	register HD_BCPIO *hd;
-	register int nsz;
+	HD_BCPIO *hd;
+	int nsz;
 
 	/*
 	 * check the header
@@ -1122,15 +1122,15 @@ bcpio_endrd()
 
 #if __STDC__
 int
-bcpio_wr(register ARCHD *arcn)
+bcpio_wr(ARCHD *arcn)
 #else
 int
 bcpio_wr(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HD_BCPIO *hd;
-	register int nsz;
+	HD_BCPIO *hd;
+	int nsz;
 	char hdblk[sizeof(HD_BCPIO)];
 	off_t t_offt;
 	int t_int;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
+/*	$NetBSD: ftree.c,v 1.5 1997/01/11 02:06:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: ftree.c,v 1.5 1997/01/11 02:06:39 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,15 +156,15 @@ ftree_start()
 
 #if __STDC__
 int
-ftree_add(register char *str)
+ftree_add(char *str)
 #else
 int
 ftree_add(str)
-	register char *str;
+	char *str;
 #endif
 {
-	register FTREE *ft;
-	register int len;
+	FTREE *ft;
+	int len;
 
 	/*
 	 * simple check for bad args
@@ -206,11 +206,11 @@ ftree_add(str)
 
 #if __STDC__
 void
-ftree_sel(register ARCHD *arcn)
+ftree_sel(ARCHD *arcn)
 #else
 void
 ftree_sel(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	/*
@@ -251,8 +251,8 @@ void
 ftree_chk()
 #endif
 {
-	register FTREE *ft;
-	register int wban = 0;
+	FTREE *ft;
+	int wban = 0;
 
 	/*
 	 * make sure all dir access times were reset.
@@ -293,7 +293,7 @@ static int
 ftree_arg()
 #endif
 {
-	register char *pt;
+	char *pt;
 
 	/*
 	 * close off the current file tree
@@ -352,14 +352,14 @@ ftree_arg()
 
 #if __STDC__
 int
-next_file(register ARCHD *arcn)
+next_file(ARCHD *arcn)
 #else
 int
 next_file(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register int cnt;
+	int cnt;
 	time_t atime;
 	time_t mtime;
 

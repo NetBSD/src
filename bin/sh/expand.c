@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.24 1996/11/02 18:07:08 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.25 1997/01/11 02:04:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.24 1996/11/02 18:07:08 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.25 1997/01/11 02:04:32 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,10 +195,10 @@ expandarg(arg, arglist, flag)
 
 STATIC void
 argstr(p, flag)
-	register char *p;
+	char *p;
 	int flag;
 {
-	register char c;
+	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
 
@@ -811,7 +811,7 @@ recordregion(start, end, nulonly)
 	int end;
 	int nulonly;
 {
-	register struct ifsregion *ifsp;
+	struct ifsregion *ifsp;
 
 	if (ifslastp == NULL) {
 		ifsp = &ifsfirst;
@@ -841,7 +841,7 @@ ifsbreakup(string, arglist)
 	struct ifsregion *ifsp;
 	struct strlist *sp;
 	char *start;
-	register char *p;
+	char *p;
 	char *q;
 	char *ifs;
 	int ifsspc;
@@ -968,7 +968,7 @@ expmeta(enddir, name)
 	char *enddir;
 	char *name;
 	{
-	register char *p;
+	char *p;
 	char *q;
 	char *start;
 	char *endname;
@@ -1184,8 +1184,8 @@ pmatch(pattern, string)
 	char *pattern;
 	char *string;
 	{
-	register char *p, *q;
-	register char c;
+	char *p, *q;
+	char c;
 
 	p = pattern;
 	q = string;
@@ -1282,7 +1282,7 @@ void
 rmescapes(str)
 	char *str;
 	{
-	register char *p, *q;
+	char *p, *q;
 
 	p = str;
 	while (*p != CTLESC) {

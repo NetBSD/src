@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
+/*	$NetBSD: tar.c,v 1.6 1997/01/11 02:06:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.6 1997/01/11 02:06:45 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,11 @@ static char rcsid[] = "$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $";
  * Routines for reading, writing and header identify of various versions of tar
  */
 
-static u_long tar_chksm __P((register char *, register int));
-static char *name_split __P((register char *, register int));
-static int ul_oct __P((u_long, register char *, register int, int));
+static u_long tar_chksm __P((char *, int));
+static char *name_split __P((char *, int));
+static int ul_oct __P((u_long, char *, int, int));
 #ifndef NET2_STAT
-static int uqd_oct __P((u_quad_t, register char *, register int, int));
+static int uqd_oct __P((u_quad_t, char *, int, int));
 #endif
 
 /*
@@ -124,16 +124,16 @@ tar_endrd()
 
 #if __STDC__
 int
-tar_trail(register char *buf, register int in_resync, register int *cnt)
+tar_trail(char *buf, int in_resync, int *cnt)
 #else
 int
 tar_trail(buf, in_resync, cnt)
-	register char *buf;
-	register int in_resync;
-	register int *cnt;
+	char *buf;
+	int in_resync;
+	int *cnt;
 #endif
 {
-	register int i;
+	int i;
 
 	/*
 	 * look for all zero, trailer is two consecutive blocks of zero
@@ -175,17 +175,17 @@ tar_trail(buf, in_resync, cnt)
 
 #if __STDC__
 static int
-ul_oct(u_long val, register char *str, register int len, int term)
+ul_oct(u_long val, char *str, int len, int term)
 #else
 static int
 ul_oct(val, str, len, term)
 	u_long val;
-	register char *str;
-	register int len;
+	char *str;
+	int len;
 	int term;
 #endif
 {
-	register char *pt;
+	char *pt;
 	
 	/*
 	 * term selects the appropriate character(s) for the end of the string
@@ -239,17 +239,17 @@ ul_oct(val, str, len, term)
 
 #if __STDC__
 static int
-uqd_oct(u_quad_t val, register char *str, register int len, int term)
+uqd_oct(u_quad_t val, char *str, int len, int term)
 #else
 static int
 uqd_oct(val, str, len, term)
 	u_quad_t val;
-	register char *str;
-	register int len;
+	char *str;
+	int len;
 	int term;
 #endif
 {
-	register char *pt;
+	char *pt;
 	
 	/*
 	 * term selects the appropriate character(s) for the end of the string
@@ -302,16 +302,16 @@ uqd_oct(val, str, len, term)
 
 #if __STDC__
 static u_long
-tar_chksm(register char *blk, register int len)
+tar_chksm(char *blk, int len)
 #else
 static u_long
 tar_chksm(blk, len)
-	register char *blk;
-	register int len;
+	char *blk;
+	int len;
 #endif
 {
-	register char *stop;
-	register char *pt;
+	char *stop;
+	char *pt;
 	u_long chksm = BLNKSUM;	/* inital value is checksum field sum */
 
 	/*
@@ -350,16 +350,16 @@ tar_chksm(blk, len)
 
 #if __STDC__
 int
-tar_id(register char *blk, int size)
+tar_id(char *blk, int size)
 #else
 int
 tar_id(blk, size)
-	register char *blk;
+	char *blk;
 	int size;
 #endif
 {
-	register HD_TAR *hd;
-	register HD_USTAR *uhd;
+	HD_TAR *hd;
+	HD_USTAR *uhd;
 
 	if (size < BLKMULT)
 		return(-1);
@@ -433,16 +433,16 @@ tar_opt()
 
 #if __STDC__
 int
-tar_rd(register ARCHD *arcn, register char *buf)
+tar_rd(ARCHD *arcn, char *buf)
 #else
 int
 tar_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
+	ARCHD *arcn;
+	char *buf;
 #endif
 {
-	register HD_TAR *hd;
-	register char *pt;
+	HD_TAR *hd;
+	char *pt;
 
 	/*
 	 * we only get proper sized buffers passed to us
@@ -556,14 +556,14 @@ tar_rd(arcn, buf)
 
 #if __STDC__
 int
-tar_wr(register ARCHD *arcn)
+tar_wr(ARCHD *arcn)
 #else
 int
 tar_wr(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HD_TAR *hd;
+	HD_TAR *hd;
 	int len;
 	char hdblk[sizeof(HD_TAR)];
 
@@ -769,7 +769,7 @@ ustar_id(blk, size)
 	int size;
 #endif
 {
-	register HD_USTAR *hd;
+	HD_USTAR *hd;
 
 	if (size < BLKMULT)
 		return(-1);
@@ -800,17 +800,17 @@ ustar_id(blk, size)
 
 #if __STDC__
 int
-ustar_rd(register ARCHD *arcn, register char *buf)
+ustar_rd(ARCHD *arcn, char *buf)
 #else
 int
 ustar_rd(arcn, buf)
-	register ARCHD *arcn;
-	register char *buf;
+	ARCHD *arcn;
+	char *buf;
 #endif
 {
-	register HD_USTAR *hd;
-	register char *dest;
-	register int cnt = 0;
+	HD_USTAR *hd;
+	char *dest;
+	int cnt = 0;
 	dev_t devmajor;
 	dev_t devminor;
 
@@ -958,15 +958,15 @@ ustar_rd(arcn, buf)
 
 #if __STDC__
 int
-ustar_wr(register ARCHD *arcn)
+ustar_wr(ARCHD *arcn)
 #else
 int
 ustar_wr(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register HD_USTAR *hd;
-	register char *pt;
+	HD_USTAR *hd;
+	char *pt;
 	char hdblk[sizeof(HD_USTAR)];
 
 	/*
@@ -1144,15 +1144,15 @@ ustar_wr(arcn)
 
 #if __STDC__
 static char *
-name_split(register char *name, register int len)
+name_split(char *name, int len)
 #else
 static char *
 name_split(name, len)
-	register char *name;
-	register int len;
+	char *name;
+	int len;
 #endif
 {
-	register char *start;
+	char *start;
 
 	/*
 	 * check to see if the file name is small enough to fit in the name
