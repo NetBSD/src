@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: map.c,v 1.4 1996/02/19 20:57:45 christos Exp $";
+static char *rcsid = "$Id: map.c,v 1.5 1996/12/04 22:59:05 thorpej Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -619,10 +619,10 @@ char *dir;
 		 * Patch up PID to match main server...
 		 */
 		if (!foreground) {
-			long pid = getppid();
+			pid_t pid = getppid();
 			((struct am_fh *) &nfh)->fhh_pid = pid;
 #ifdef DEBUG
-			dlog("root_fh substitutes pid %d", pid);
+			dlog("root_fh substitutes pid %d", (int)pid);
 #endif
 		}
 		return &nfh;

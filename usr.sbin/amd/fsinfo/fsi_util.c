@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_util.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_util.c,v 1.4 1995/05/21 16:59:39 mycroft Exp $
+ *	$Id: fsi_util.c,v 1.5 1996/12/04 22:59:13 thorpej Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
@@ -83,6 +83,7 @@ char *s, *s1, *s2, *s3, *s4;
 	exit(1);
 }
 
+#ifndef __NetBSD__
 /*
  * Dup a string
  */
@@ -97,6 +98,7 @@ char *s;
 
 	return sp;
 }
+#endif /* __NetBSD__ */
 
 /*
  * Debug log
@@ -419,8 +421,8 @@ char *v;
 		free(v);
 	} break;
 	case EF_NETMASK: {
-		u_long nm = 0;
-		if ((sscanf(v, "0x%lx", &nm) == 1 || sscanf(v, "%lx", &nm) == 1) && nm != 0)
+		u_int32_t nm = 0;
+		if ((sscanf(v, "0x%x", &nm) == 1 || sscanf(v, "%x", &nm) == 1) && nm != 0)
 			ep->e_netmask = htonl(nm);
 		else
 			yyerror("malformed netmask: %s", v);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_data.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_data.h,v 1.3 1994/06/13 20:50:09 mycroft Exp $
+ *	$Id: fsi_data.h,v 1.4 1996/12/04 22:59:12 thorpej Exp $
  */
 
 typedef struct auto_tree auto_tree;
@@ -120,7 +120,7 @@ struct ether_if {
 #define	EF_INADDR 0
 	struct in_addr e_inaddr;
 #define	EF_NETMASK 1
-	u_long e_netmask;
+	u_int32_t e_netmask;
 #define	EF_HWADDR 2
 	char *e_hwaddr;
 };

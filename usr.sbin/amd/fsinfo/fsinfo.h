@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.h,v 1.3 1994/06/13 20:50:20 mycroft Exp $
+ *	$Id: fsinfo.h,v 1.4 1996/12/04 22:59:13 thorpej Exp $
  */
 
 /*
@@ -82,11 +82,11 @@ typedef char *voidp;
 #include <net/if.h>
 #include <netinet/if_ether.h>
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "fsi_data.h"
 
-extern char* strchr P((Const char*, int)); /* C */
-extern char* strrchr P((Const char*, int)); /* C */
-extern char *strdup P((char*)); /* C */
 extern void fatal();
 extern void warning();
 extern void error();

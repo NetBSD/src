@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nfs_ops.c,v 1.7 1996/05/12 15:35:09 christos Exp $";
+static char *rcsid = "$Id: nfs_ops.c,v 1.8 1996/12/04 22:59:06 thorpej Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -124,7 +124,8 @@ voidp idv;
 int done;
 {
 	fh_cache *fp, *fp2 = 0;
-	int id = (int) idv;
+	/* XXX EVIL XXX */
+	int id = (int) ((long)idv);
 
 	ITER(fp, fh_cache, &fh_head) {
 		if (fp->fh_id == id) {
@@ -386,9 +387,13 @@ voidp wchan;
 	len = make_rpc_packet(iobuf, sizeof(iobuf), proc,
 			&mnt_msg, (voidp) &fp->fh_path, xdr_nfspath,  nfs_auth);
 
+	/*
+	 * XXX EVIL!  We case fh_id to a pointer, then back to an int
+	 * XXX later.
+	 */
 	if (len > 0) {
 		error = fwd_packet(MK_RPC_XID(RPC_XID_MOUNTD, fp->fh_id),
-			(voidp) iobuf, len, &fp->fh_sin, &fp->fh_sin, (voidp) fp->fh_id, f);
+			(voidp) iobuf, len, &fp->fh_sin, &fp->fh_sin, (voidp) ((long)fp->fh_id), f);
 	} else {
 		error = -len;
 	}

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)host_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: host_ops.c,v 1.4 1996/02/19 20:57:44 christos Exp $
+ *	$Id: host_ops.c,v 1.5 1996/12/04 22:59:02 thorpej Exp $
  */
 
 #include "am.h"
@@ -153,10 +153,11 @@ mntfs *mf;
 	return mount_nfs_fh(fhp, dir, fs_name, opts, mf);
 }
 
-static int sortfun P((exports *a, exports *b));
-static int sortfun(a, b)
-exports *a,*b;
+static int sortfun P((const void *arg1, const void *arg2));
+static int sortfun(arg1, arg2)
+const void *arg1, *arg2;
 {
+	const exports *a = arg1, *b = arg2;
 	return strcmp((*a)->ex_dir, (*b)->ex_dir);
 }
 

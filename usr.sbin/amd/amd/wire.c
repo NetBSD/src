@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.3 1994/06/13 20:48:11 mycroft Exp $
+ *	$Id: wire.c,v 1.4 1996/12/04 22:59:10 thorpej Exp $
  */
 
 /*
@@ -63,8 +63,8 @@
 typedef struct addrlist addrlist;
 struct addrlist {
 	addrlist *ip_next;
-	unsigned long ip_addr;
-	unsigned long ip_mask;
+	u_int32_t ip_addr;
+	u_int32_t ip_mask;
 };
 static addrlist *localnets = 0;
 
@@ -91,7 +91,7 @@ char *getwire()
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	caddr_t cp, cplim;
-	unsigned long address, netmask, subnet;
+	u_int32_t address, netmask, subnet;
 	char buf[GFBUFLEN], *s;
 	int sk = -1;
 	char *netname = 0;
@@ -176,9 +176,9 @@ char *getwire()
 		localnets = al;
 
 		if (netname == 0) {
-			unsigned long net;
-			unsigned long mask;
-			unsigned long subnetshift;
+			u_int32_t net;
+			u_int32_t mask;
+			u_int32_t subnetshift;
 			/*
 			 * Figure out the subnet's network address
 			 */
@@ -260,9 +260,9 @@ char *getwire()
  * Determine whether a network is on a local network
  * (addr) is in network byte order.
  */
-int islocalnet P((unsigned long addr));
+int islocalnet P((u_int32_t addr));
 int islocalnet(addr)
-unsigned long addr;
+u_int32_t addr;
 {
 	addrlist *al;
 
