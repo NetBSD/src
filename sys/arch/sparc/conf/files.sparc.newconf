@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.1 1993/10/10 11:19:28 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.2 1993/10/15 05:59:28 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -95,7 +95,7 @@ file	arch/sparc/sparc/pmap.c		compile-with "${NOOPT_C}"
 # the following overrides the generic "sys_process.c"
 # commented out by deraadt
 #file	arch/sparc/sparc/sys_process.c
-file	arch/sparc/sparc/sys_machdep.c	trace
+file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 
