@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.373 2003/10/18 23:40:36 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.374 2003/10/21 16:36:58 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -714,5 +714,48 @@ X11INCDIR?=		${X11ROOTDIR}/include
 X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
+
+
+#
+# MAKEVERBOSE support.  Levels are:
+#	0	No messages (use with make -s)
+#	1	Enable info messages, suppress command output (use with make -s)
+#	2	Enable all messages including info messages.
+#		
+MAKEVERBOSE?=		2
+
+.if ${MAKEVERBOSE} == 0
+_MKMSG?=	@\#
+_MKSHMSG?=	: echo
+_MKSHECHO?=	: echo
+.elif ${MAKEVERBOSE} == 1
+_MKMSG?=	@echo '   '
+_MKSHMSG?=	echo '   '
+_MKSHECHO?=	: echo
+.else	# MAKEVERBOSE == 2 ?
+_MKMSG?=	@echo '\#  '
+_MKSHMSG?=	echo '\#  '
+_MKSHECHO?=	echo
+.endif
+
+_MKMSG_BUILD?=		${_MKMSG} "  build "
+_MKMSG_CREATE?=		${_MKMSG} " create "
+_MKMSG_COMPILE?=	${_MKMSG} "compile "
+_MKMSG_FORMAT?=		${_MKMSG} " format "
+_MKMSG_INSTALL?=	${_MKMSG} "install "
+_MKMSG_LINK?=		${_MKMSG} "   link "
+_MKMSG_LEX?=		${_MKMSG} "    lex "
+_MKMSG_REMOVE?=		${_MKMSG} " remove "
+_MKMSG_YACC?=		${_MKMSG} "   yacc "
+
+_MKTARGET_BUILD?=	${_MKMSG_BUILD} ${.TARGET}
+_MKTARGET_CREATE?=	${_MKMSG_CREATE} ${.TARGET}
+_MKTARGET_COMPILE?=	${_MKMSG_COMPILE} ${.TARGET}
+_MKTARGET_FORMAT?=	${_MKMSG_FORMAT} ${.TARGET}
+_MKTARGET_INSTALL?=	${_MKMSG_INSTALL} ${.TARGET}
+_MKTARGET_LINK?=	${_MKMSG_LINK} ${.TARGET}
+_MKTARGET_LEX?=		${_MKMSG_LEX} ${.TARGET}
+_MKTARGET_REMOVE?=	${_MKMSG_REMOVE} ${.TARGET}
+_MKTARGET_YACC?=	${_MKMSG_YACC} ${.TARGET}
 
 .endif	# !defined(_BSD_OWN_MK_)

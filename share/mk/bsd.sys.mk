@@ -1,45 +1,9 @@
-#	$NetBSD: bsd.sys.mk,v 1.104 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.105 2003/10/21 16:36:58 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
-
-MAKEVERBOSE?=	2
-
-.if ${MAKEVERBOSE} == 0
-_MKMSG=		@\#
-_MKSHMSG=	: echo
-_MKSHECHO=	: echo
-.elif ${MAKEVERBOSE} == 1
-_MKMSG=		@echo '   '
-_MKSHMSG=	echo '   '
-_MKSHECHO=	: echo
-.else	# MAKEVERBOSE == 2 ?
-_MKMSG=		@echo '\#  '
-_MKSHMSG=	echo '\#  '
-_MKSHECHO=	echo
-.endif
-
-_MKMSG_BUILD=		${_MKMSG} "  build "
-_MKMSG_CREATE=		${_MKMSG} " create "
-_MKMSG_COMPILE=		${_MKMSG} "compile "
-_MKMSG_FORMAT=		${_MKMSG} " format "
-_MKMSG_INSTALL=		${_MKMSG} "install "
-_MKMSG_LINK=		${_MKMSG} "   link "
-_MKMSG_LEX=		${_MKMSG} "    lex "
-_MKMSG_REMOVE=		${_MKMSG} " remove "
-_MKMSG_YACC=		${_MKMSG} "   yacc "
-
-_MKTARGET_BUILD=	${_MKMSG_BUILD} ${.TARGET}
-_MKTARGET_CREATE=	${_MKMSG_CREATE} ${.TARGET}
-_MKTARGET_COMPILE=	${_MKMSG_COMPILE} ${.TARGET}
-_MKTARGET_FORMAT=	${_MKMSG_FORMAT} ${.TARGET}
-_MKTARGET_INSTALL=	${_MKMSG_INSTALL} ${.TARGET}
-_MKTARGET_LINK=		${_MKMSG_LINK} ${.TARGET}
-_MKTARGET_LEX=		${_MKMSG_LEX} ${.TARGET}
-_MKTARGET_REMOVE=	${_MKMSG_REMOVE} ${.TARGET}
-_MKTARGET_YACC=		${_MKMSG_YACC} ${.TARGET}
 
 .if defined(WARNS)
 .if ${WARNS} > 0
