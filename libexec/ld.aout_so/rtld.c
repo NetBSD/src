@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.6 1993/11/03 04:58:57 mycroft Exp $
+ *	$Id: rtld.c,v 1.7 1993/11/03 21:35:54 pk Exp $
  */
 
 #include <sys/param.h>
@@ -648,7 +648,7 @@ jmpslot_t	*jsp;
 
 	np = lookup(sym, &src_map);
 	if (np == NULL)
-		fatal("Undefined symbol called from %s at %#x",
+		fatal("Undefined symbol \"%s\" called from %s at %#x", sym,
 							lmp->lm_name, jsp);
 
 	/* Fixup jmpslot so future calls transfer directly to target */
