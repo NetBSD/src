@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.6 1999/09/17 20:45:48 jsm Exp $	*/
+/*	$NetBSD: extern.c,v 1.7 2002/01/20 00:42:51 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.6 1999/09/17 20:45:48 jsm Exp $");
+__RCSID("$NetBSD: extern.c,v 1.7 2002/01/20 00:42:51 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ const char *const Noose_pict[] = {
 };
 
 int     Errors, Wordnum = 0;
+unsigned int Minlen = MINLEN;
 
 double  Average = 0.0;
 
