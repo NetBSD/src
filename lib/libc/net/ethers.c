@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.10 1997/07/21 14:07:52 jtc Exp $	*/
+/*	$NetBSD: ethers.c,v 1.11 1997/11/02 14:21:27 lukem Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -50,7 +50,7 @@ ether_ntoa(e)
 
 struct ether_addr *
 ether_aton(s)
-	char *s;
+	const char *s;
 {
 	static struct ether_addr n;
 	u_int i[6];
@@ -74,27 +74,30 @@ ether_ntohost(hostname, e)
 	struct ether_addr *e;
 {
 	FILE *f; 
-	char buf[BUFSIZ];
+	char *p;
+	int len;
 	struct ether_addr try;
 
 #ifdef YP
 	char trybuf[sizeof "xx:xx:xx:xx:xx:xx"];
 	int trylen;
 
-	(void)snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
+	trylen = snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
-	trylen = strlen(trybuf);
 #endif
 
 	f = fopen(_PATH_ETHERS, "r");
-	if (f==NULL)
+	if (f == NULL)
 		return -1;
-	while (fgets(buf, sizeof buf, f)) {
+	while ((p = fgetln(f, &len)) != NULL) {
+		if (p[len - 1] != '\n')
+			continue;		/* skip lines w/o \n */
+		p[--len] = '\0';
 #ifdef YP
 		/* A + in the file means try YP now.  */
-		if (!strncmp(buf, "+\n", sizeof buf)) {
+		if (len == 1 && *p == '+') {
 			char *ypbuf, *ypdom;
 			int ypbuflen;
 
@@ -112,8 +115,8 @@ ether_ntohost(hostname, e)
 			continue;
 		}
 #endif
-		if (ether_line(buf, &try, hostname) == 0 &&
-		    bcmp((char *)&try, (char *)e, sizeof try) == 0) {
+		if (ether_line(p, &try, hostname) == 0 &&
+		    memcmp((char *)&try, (char *)e, sizeof try) == 0) {
 			(void)fclose(f);
 			return 0;
 		}     
@@ -125,12 +128,13 @@ ether_ntohost(hostname, e)
 
 int
 ether_hostton(hostname, e)
-	char *hostname;
+	const char *hostname;
 	struct ether_addr *e;
 {
 	FILE *f;
-	char buf[BUFSIZ];
-	char try[MAXHOSTNAMELEN];
+	char *p;
+	int len;
+	char try[MAXHOSTNAMELEN + 1];
 #ifdef YP
 	int hostlen = strlen(hostname);
 #endif
@@ -139,10 +143,13 @@ ether_hostton(hostname, e)
 	if (f==NULL)
 		return -1;
 
-	while (fgets(buf, sizeof buf, f)) {
+	while ((p = fgetln(f, &len)) != NULL) {
+		if (p[len - 1] != '\n')
+			continue;		/* skip lines w/o \n */
+		p[--len] = '\0';
 #ifdef YP
 		/* A + in the file means try YP now.  */
-		if (!strncmp(buf, "+\n", sizeof buf)) {
+		if (len == 1 && *p == '+') {
 			char *ypbuf, *ypdom;
 			int ypbuflen;
 
@@ -160,7 +167,7 @@ ether_hostton(hostname, e)
 			continue;
 		}
 #endif
-		if (ether_line(buf, e, try) == 0 && strcmp(hostname, try) == 0) {
+		if (ether_line(p, e, try) == 0 && strcmp(hostname, try) == 0) {
 			(void)fclose(f);
 			return 0;
 		}
@@ -172,14 +179,19 @@ ether_hostton(hostname, e)
 
 int
 ether_line(l, e, hostname)
-	char *l;
+	const char *l;
 	struct ether_addr *e;
 	char *hostname;
 {
 	u_int i[6];
+	static char buf[sizeof " %x:%x:%x:%x:%x:%x %s\\n" + 21];
+		/* XXX: 21 == strlen (ASCII representation of 2^64) */
 
-	if (sscanf(l, " %x:%x:%x:%x:%x:%x %s\n", &i[0], &i[1],
-	    &i[2], &i[3], &i[4], &i[5], hostname) == 7) {
+	if (! buf[0])
+		snprintf(buf, sizeof buf, " %%x:%%x:%%x:%%x:%%x:%%x %%%ds\\n",
+		    MAXHOSTNAMELEN);
+	if (sscanf(l, buf,
+	    &i[0], &i[1], &i[2], &i[3], &i[4], &i[5], hostname) == 7) {
 		e->ether_addr_octet[0] = (u_char)i[0];
 		e->ether_addr_octet[1] = (u_char)i[1];
 		e->ether_addr_octet[2] = (u_char)i[2];
