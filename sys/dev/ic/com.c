@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.196.2.1 2002/05/16 12:18:37 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.196 2002/04/13 17:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.196.2.1 2002/05/16 12:18:37 gehenna Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -158,9 +158,6 @@ void	com_common_putc	__P((dev_t, bus_space_tag_t, bus_space_handle_t, int));
 int cominit		__P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
 			     bus_space_handle_t *));
 
-/* XXX: This belongs elsewhere */
-cdev_decl(com);
-
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
@@ -183,6 +180,20 @@ integrate void com_schedrx	__P((struct com_softc *));
 void	comdiag		__P((void *));
 
 extern struct cfdriver com_cd;
+
+dev_type_open(comopen);
+dev_type_close(comclose);
+dev_type_read(comread);
+dev_type_write(comwrite);
+dev_type_ioctl(comioctl);
+dev_type_stop(comstop);
+dev_type_tty(comtty);
+dev_type_poll(compoll);
+
+const struct cdevsw com_cdevsw = {
+	comopen, comclose, comread, comwrite, comioctl,
+	comstop, comtty, compoll, nommap, D_TTY
+};
 
 /*
  * Make this an option variable one can patch.
@@ -550,9 +561,7 @@ com_attach_subr(sc)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == comopen)
-				break;
+		maj = cdevsw_lookup_major(&com_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -649,9 +658,7 @@ com_detach(self, flags)
 	int maj, mn;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;

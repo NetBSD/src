@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.79 2002/03/17 19:40:58 atatat Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.79.4.1 2002/05/16 12:18:37 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.79 2002/03/17 19:40:58 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.79.4.1 2002/05/16 12:18:37 gehenna Exp $");
 
 #include "opt_kgdb.h"
 
@@ -221,10 +221,21 @@ struct cfattach zstty_ca = {
 
 extern struct cfdriver zstty_cd;
 
-struct zsops zsops_tty;
+dev_type_open(zsopen);
+dev_type_close(zsclose);
+dev_type_read(zsread);
+dev_type_write(zswrite);
+dev_type_ioctl(zsioctl);
+dev_type_stop(zsstop);
+dev_type_tty(zstty);
+dev_type_poll(zspoll);
 
-/* Routines called from other code. */
-cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
+const struct cdevsw zstty_cdevsw = {
+	zsopen, zsclose, zsread, zswrite, zsioctl,
+	zsstop, zstty, zspoll, nommap, D_TTY
+};
+
+struct zsops zsops_tty;
 
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
@@ -295,7 +306,7 @@ zstty_attach(parent, self, aux)
 	zst->zst_cs = cs;
 	zst->zst_swflags = cf->cf_flags;	/* softcar, etc. */
 	zst->zst_hwflags = args->hwflags;
-	dev = makedev(zs_major, tty_unit);
+	dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), tty_unit);
 
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
