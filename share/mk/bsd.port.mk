@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.11 1997/10/09 10:38:13 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.12 1997/10/17 01:40:49 thorpej Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1199,6 +1199,9 @@ _PORT_USE: .USE
 			${ECHO_MSG} "Copy it from a suitable location (e.g., /usr/src/etc/mtree) and try again."; \
 			exit 1; \
 		else \
+			if [ ! -d ${PREFIX} ]; then \
+				mkdir -p ${PREFIX}; \
+			fi; \
 			${MTREE_CMD} ${MTREE_ARGS} ${PREFIX}/; \
 		fi; \
 	else \
