@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.3 2002/09/24 13:30:42 ad Exp $
+#	$NetBSD: majors.alpha,v 1.4 2002/10/04 18:28:26 elric Exp $
 #
 # Device majors for alpha
 #
@@ -71,3 +71,4 @@ device-major	clockctl	char 69			clockctl
 device-major	systrace	char 70			systrace
 device-major	bktr		char 71			bktr
 device-major	kttcp		char 72			kttcp
+device-major	cgd		char 73  block 18	cgd
