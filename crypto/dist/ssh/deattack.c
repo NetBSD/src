@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.1.1.1.2.4 2001/12/10 23:53:22 he Exp $	*/
+/*	$NetBSD: deattack.c,v 1.1.1.1.2.5 2003/09/17 23:46:41 christos Exp $	*/
 /*	$OpenBSD: deattack.c,v 1.16 2001/12/05 03:56:39 itojun Exp $	*/
 
 /*
@@ -101,12 +101,12 @@ detect_attack(u_char *buf, u_int32_t len, u_char *IV)
 
 	if (h == NULL) {
 		debug("Installing crc compensation attack detector.");
+		h = (u_int16_t *) xmalloc(l * HASH_ENTRYSIZE);
 		n = l;
-		h = (u_int16_t *) xmalloc(n * HASH_ENTRYSIZE);
 	} else {
 		if (l > n) {
+			h = (u_int16_t *) xrealloc(h, l * HASH_ENTRYSIZE);
 			n = l;
-			h = (u_int16_t *) xrealloc(h, n * HASH_ENTRYSIZE);
 		}
 	}
 

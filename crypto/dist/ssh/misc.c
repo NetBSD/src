@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.1.2.3 2001/12/10 23:53:37 he Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.1.2.4 2003/09/17 23:46:41 christos Exp $	*/
 /*	$OpenBSD: misc.c,v 1.13 2001/12/05 10:06:12 deraadt Exp $	*/
 
 /*
@@ -285,18 +285,20 @@ addargs(arglist *args, char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
+	int nalloc;
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	if (args->list == NULL) {
-		args->nalloc = 32;
+		nalloc = 32;
 		args->num = 0;
 	} else if (args->num+2 >= args->nalloc) 
-		args->nalloc *= 2;
+		alloc *= 2;
 
-	args->list = xrealloc(args->list, args->nalloc * sizeof(char *));
-	args->list[args->num++] = xstrdup(buf);
-	args->list[args->num] = NULL;
+	args->list = xrealloc(args->list, nalloc * sizeof(char *));
+	args->nalloc = nalloc;
+	args->list[args->num] = xstrdup(buf);
+	args->list[++(args->num)] = NULL;
 }
