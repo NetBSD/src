@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.7 2001/04/04 21:11:07 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.8 2001/04/05 19:17:17 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -58,7 +58,7 @@ VDU 4, 28, (scwidth%-width%)/2, (scheigth%+heigth%)/2, (scwidth%+width%)/2, (sch
 COLOUR 128:CLS
 
 PRINT''
-PROCcenter("BtNetBSD 0.95")
+PROCcenter("BtNetBSD 0.97")
 PROCcenter("booting NetBSD/arm32 on a RiscPC/RC7500/NC and Imago")
 PRINT''
 
@@ -103,6 +103,12 @@ relocsize% = (MAX_RELOCPAGES+1)*12
 DIM relocinstr% relocsize%
 relocpos% = relocinstr%+4 : REM first word in number of relocations
 relocnr% = 0: relocoff% = 0
+
+REM this memory block contains all information about the memory layout
+REM maybe a bug in BASIC but if I DIM this variable in a procedure it
+REM gets on the stack or so ? It malfunctions if I pass this on as a
+REM procedure variable.
+DIM memoryblock% (totalpages%*12+4)
 
 PROCget_memory_configuration
 PROCget_memory_map
@@ -187,7 +193,7 @@ DEF PROCload_kernel_elf(file%)
   REM read header
   DIM hdr% 52
   SYS "OS_GBPB", 3, file%, hdr%, 52, 0
-  
+ 
   REM check if its a correct kernel to load
   IF hdr%?4 <> 1 THEN ERROR 1, "Not a 32-bit ELF file"
   IF hdr%?5 <> 1 THEN ERROR 1, "Not an LSB ELF file"
@@ -213,7 +219,7 @@ DEF PROCload_kernel_elf(file%)
   freepagesbase% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
   start_kernelpage% = freepagesbase%
   pv_offset% = KERNEL_BASE - DRAM_addr%(0) : REM XXX hardcoded
-  
+ 
   REM load the code blocks ?
   first% = TRUE
   FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
@@ -283,7 +289,7 @@ DEF PROCload_kernel_elf(file%)
   REM XXX
 
   kernelpages% = freepagesbase% - start_kernelpage%
-  
+ 
   PROCfinish_relocationtable
 ENDPROC
 
@@ -302,13 +308,13 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
     IF fragsz% > filesz% THEN fragsz% = filesz%
     fragaddr% = FNblock_vaddr(freepagesbase%)
     SYS "OS_GBPB", 3, file%, fragaddr%, fragsz%, offset%
-    
+ 
     REM create a relocation block
     relocpos%!0 = FNblock_paddr(freepagesbase%)
     relocpos%!4 = vaddr% - pv_offset%
     relocpos%!8 = fragsz%
     relocpos% += 12: relocnr%+=1: relocoff%+=1
-    freepagesbase% += 1 
+    freepagesbase% += 1
 
     offset% += fragsz%
     vaddr% += fragsz%
@@ -328,8 +334,8 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
     relocpos%!4 = vaddr% - pv_offset%
     relocpos%!8 = fragsz%
     relocpos% += 12: relocnr%+=1: relocoff%+=1
-    freepagesbase% += 1 
-    
+    freepagesbase% += 1
+ 
     offset% += fragsz%
     vaddr% += fragsz%
     filesz% -= fragsz%
@@ -395,7 +401,7 @@ DEF PROCload_kernel_aout(file%)
   IF debug% THEN PRINT "Entry point at ";~entry%
 
   REM kernelpages without syms table is :
-  kernelpages% = txtpages% + datapages% + bsspages% : REM 
+  kernelpages% = txtpages% + datapages% + bsspages% : REM
 
   REM  symbasepage% = bssbasepage% + bsspages%-1 : REM REAL size... not in pages
   symoff% = dataoff% + datasize%
@@ -465,7 +471,7 @@ DEF PROCload_kernel_aout(file%)
 
     relocpos%!0 = FNblock_paddr(symbasepage%)
     relocpos%!4 = symDaddr%  : relocnr%+=1: relocoff%+=1
-    relocpos%!8 = nbpp% : REM XXX 
+    relocpos%!8 = nbpp% : REM XXX
     relocpos% += 12
     symDaddr% += 4
  
@@ -583,7 +589,7 @@ ENDPROC
 
 DEF PROCcreate_relocate_mechanism
   REM relocate mechanism relies on a contigunous space of the relocator + tables
-  REM this isn't finished yet
+  REM this isn't finished yet 
 
   relocatesize% = nbpp% + relocsize% : REM just ONE code page + relocation table
   PRINT ;"+";relocatesize%;
@@ -862,7 +868,6 @@ DEF FNblock_paddr(pagenr%)
 
 
 DEF PROCget_memory_map
-  DIM memoryblock% totalpages%*4*3+4
   PRINT '"Getting actual memory mapping ";
   FOR pg%=0 TO totalpages%-1
     pos% = memoryblock% + 12*pg%
@@ -1022,18 +1027,48 @@ ENDPROC
 
 
 DEF PROCsort_memory_map(memoryblock%, totalpages%)
-  LOCAL memarray%, code%, sort_entry%
- 
-  DIM memarray% totalpages%*4+4
-  DIM code% 100
-  P%=code%:[OPT 2
-    .sort_entry%
-      LDR r0, [r0, #8]
-      LDR r1, [r1, #8]
-      CMP r0, r1
-      MOV pc, r14
+  LOCAL out%, in%, outp%, inp%
+  DIM code% 1024
+  FOR opt%=0 TO 2 STEP 2
+    P%=code%
+    [OPT opt%
+     .sortit%
+          STMFD r13!, {r0-r12}
+          ; R0  = A% = memory block%
+          ; R1  = B% = totalpages%
+          ; r2  = out%
+          ; r3  = inp%
+          ; R12 = limit r3
+          SUB r2, r1, #2
+     .loop_outer%
+          MOV r3, r0
+          MOV r4, #12
+          MLA r12, r2, r4, r0
+     .loop_inner%
+          LDR r4, [r3, #8]
+          LDR r5, [r3, #20]
+          CMP r4, r5
+          BLT not_bigger%
+            LDMIA r3, {r6, r7, r8}
+            ADD r4, r3, #12
+            LDMIA r4, {r9, r10, r11}
+            STMIA r3, {r9, r10, r11}
+            STMIA r4, {r6, r7, r8}
+     .not_bigger%
+          ADD r3, r3, #12
+          CMP r3, r12
+          BLE loop_inner%
+          SUBS r2, r2, #1
+          BPL loop_outer%
+          LDMFD r13!, {r0-r12}
+          MOV pc, r14
   ]
-  SYS "OS_HeapSort", totalpages%, memarray% + (1<<30) + (1<<31), sort_entry%, 0, memoryblock%, 12, 0
+  NEXT
+
+  A% = memoryblock%
+  B% = totalpages%
+  CALL sortit%
+
 ENDPROC
 
 
