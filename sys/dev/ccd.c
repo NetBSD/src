@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.11 1995/08/17 16:31:30 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.12 1995/08/21 18:25:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -968,7 +968,7 @@ ccdioctl(dev, cmd, data, flag, p)
 #endif
 			if (error = ccdlookup(cpp[i], p, &vpp[i])) {
 				for (j = 0; j < lookedup; ++j)
-					(void)vn_close(vpp[i], FREAD|FWRITE,
+					(void)vn_close(vpp[j], FREAD|FWRITE,
 					    p->p_ucred, p);
 				free(vpp, M_DEVBUF);
 				free(cpp, M_DEVBUF);
