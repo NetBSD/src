@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 1999/11/13 00:32:20 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -642,7 +642,9 @@ pmap_enter(pmap, v, p, prot, flags)
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
+#ifdef PMAPDEBUG
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+#endif
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
