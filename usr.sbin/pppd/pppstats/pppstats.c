@@ -4,7 +4,7 @@
  *
  *	Brad Parker (brad@cayman.com) 6/92
  *
- * from the original "slstats" by Van Jaconson
+ * from the original "slstats" by Van Jacobson
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -26,26 +26,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pppstats.c,v 1.5 1994/01/25 05:58:38 paulus Exp $";
+static char rcsid[] = "$Id: pppstats.c,v 1.6 1994/05/08 12:16:52 paulus Exp $";
 #endif
 
-#include <sys/param.h>
-#include <sys/mbuf.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/file.h>
-#ifdef sun
-#include <kvm.h>
-#endif
 #include <ctype.h>
 #include <errno.h>
 #include <nlist.h>
 #include <stdio.h>
 #include <signal.h>
-#ifndef sun
+#include <kvm.h>
 #include <paths.h>
-#endif
-
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/file.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -56,36 +51,16 @@ static char rcsid[] = "$Id: pppstats.c,v 1.5 1994/01/25 05:58:38 paulus Exp $";
 #include <net/slcompress.h>
 #include <net/if_ppp.h>
 
-#ifdef STREAMS
-#include <sys/stream.h>
-#include <net/ppp_str.h>
-#endif
+char	*kmemf;
 
-#ifdef STREAMS
-struct nlist nl[] = {
-#define N_SOFTC 0
-	{ "_pii" },
-	"",
-};
-#else
 struct nlist nl[] = {
 #define N_SOFTC 0
 	{ "_ppp_softc" },
 	"",
 };
-#endif
 
-#ifdef sun
-kvm_t	*kd;
-#endif
-
-#ifdef sun
-char	*system = "/vmunix";
-#else
 char	*system = _PATH_UNIX;
-#endif
 
-char	*kmemf;
 int	kflag;
 int	vflag;
 unsigned interval = 5;
@@ -131,27 +106,15 @@ main(argc, argv)
 			kflag++;
 		}
 	}
-#ifdef sun
-	/* SunOS */
-	if ((kd = kvm_open(system, kmemf, (char *)0, O_RDONLY, NULL)) == NULL) {
-	  perror("kvm_open");
-	  exit(1);
-	}
-#else
 	/* BSD4.3+ */
 	if (kvm_openfiles(system, kmemf, (char *)0) == -1) {
-	  fprintf(stderr, "kvm_openfiles: %s", kvm_geterr());
-	  exit(1);
+	    fprintf(stderr, "kvm_openfiles: %s", kvm_geterr());
+	    exit(1);
 	}
-#endif
 
-#ifdef sun
-	if (kvm_nlist(kd, nl)) {
-#else
 	if (kvm_nlist(nl)) {
-#endif
-	  fprintf(stderr, "pppstats: can't find symbols in nlist\n");
-	  exit(1);
+	    fprintf(stderr, "pppstats: can't find symbols in nlist\n");
+	    exit(1);
 	}
 	intpr();
 	exit(0);
@@ -166,6 +129,10 @@ usage()
 u_char	signalled;			/* set if alarm goes off "early" */
 
 #define V(offset) ((line % 20)? sc->offset - osc->offset : sc->offset)
+
+#define STRUCT	struct ppp_softc
+#define	COMP	sc_comp
+#define	STATS	sc_if
 
 /*
  * Print a running summary of interface statistics.
@@ -183,97 +150,71 @@ intpr()
 	void catchalarm();
 #endif
 
-#ifdef STREAMS
-#define STRUCT struct ppp_if_info
-#else
-#define STRUCT struct ppp_softc
-#endif
-
 	STRUCT *sc, *osc;
 
-	nl[N_SOFTC].n_value += unit * sizeof(struct ppp_softc);
+	nl[N_SOFTC].n_value += unit * sizeof(STRUCT);
 	sc = (STRUCT *)malloc(sizeof(STRUCT));
 	osc = (STRUCT *)malloc(sizeof(STRUCT));
 
 	bzero((char *)osc, sizeof(STRUCT));
 
 	while (1) {
-#ifdef sun
-		if (kvm_read(kd, nl[N_SOFTC].n_value,
-#else
-		if (kvm_read(nl[N_SOFTC].n_value,
-#endif
-			     sc, sizeof(STRUCT)) !=
-		    sizeof(STRUCT))
-		  perror("kvm_read");
+	    if (kvm_read((void *) nl[N_SOFTC].n_value, sc,
+			 sizeof(STRUCT)) != sizeof(STRUCT)) {
+		perror("kvm_read");
+		exit(1);
+	    }
 
-		(void)signal(SIGALRM, catchalarm);
-		signalled = 0;
-		(void)alarm(interval);
+	    (void)signal(SIGALRM, catchalarm);
+	    signalled = 0;
+	    (void)alarm(interval);
 
-		if ((line % 20) == 0) {
-			printf("%6.6s %6.6s %6.6s %6.6s %6.6s",
-				"in", "pack", "comp", "uncomp", "err");
-			if (vflag)
-				printf(" %6.6s %6.6s", "toss", "ip");
-			printf(" | %6.6s %6.6s %6.6s %6.6s %6.6s",
-				"out", "pack", "comp", "uncomp", "ip");
-			if (vflag)
-				printf(" %6.6s %6.6s", "search", "miss");
-			putchar('\n');
-		}
-
-#ifdef STREAMS
-#define	COMP	pii_sc_comp
-#define	STATS	pii_ifnet
-#else
-#define	COMP	sc_comp
-#define	STATS	sc_if
-#endif
-
-		printf("%6d %6d %6d %6d %6d",
-#if BSD > 43
-			V(STATS.if_ibytes),
-#else
-			0,
-#endif
-			V(STATS.if_ipackets),
-			V(COMP.sls_compressedin),
-			V(COMP.sls_uncompressedin),
-			V(COMP.sls_errorin));
+	    if ((line % 20) == 0) {
+		printf("%6.6s %6.6s %6.6s %6.6s %6.6s",
+		       "in", "pack", "comp", "uncomp", "err");
 		if (vflag)
-			printf(" %6d %6d",
-				V(COMP.sls_tossed),
-				V(STATS.if_ipackets) -
-				  V(COMP.sls_compressedin) -
-				  V(COMP.sls_uncompressedin) -
-				  V(COMP.sls_errorin));
-		printf(" | %6d %6d %6d %6d %6d",
-#if BSD > 43
-			V(STATS.if_obytes),
-#else
-			0,
-#endif
-			V(STATS.if_opackets),
-			V(COMP.sls_compressed),
-			V(COMP.sls_packets) - V(COMP.sls_compressed),
-			V(STATS.if_opackets) - V(COMP.sls_packets));
+		    printf(" %6.6s %6.6s", "toss", "ip");
+		printf(" | %6.6s %6.6s %6.6s %6.6s %6.6s",
+		       "out", "pack", "comp", "uncomp", "ip");
 		if (vflag)
-			printf(" %6d %6d",
-				V(COMP.sls_searches),
-				V(COMP.sls_misses));
-
+		    printf(" %6.6s %6.6s", "search", "miss");
 		putchar('\n');
-		fflush(stdout);
-		line++;
-		oldmask = sigblock(sigmask(SIGALRM));
-		if (! signalled) {
-			sigpause(0);
-		}
-		sigsetmask(oldmask);
-		signalled = 0;
-		(void)alarm(interval);
-		bcopy((char *)sc, (char *)osc, sizeof(STRUCT));
+	    }
+
+	    printf("%6d %6d %6d %6d %6d",
+		   V(STATS.if_ibytes),
+		   V(STATS.if_ipackets),
+		   V(COMP.sls_compressedin),
+		   V(COMP.sls_uncompressedin),
+		   V(COMP.sls_errorin));
+	    if (vflag)
+		printf(" %6d %6d",
+		       V(COMP.sls_tossed),
+		       V(STATS.if_ipackets) - V(COMP.sls_compressedin) -
+		        V(COMP.sls_uncompressedin) - V(COMP.sls_errorin));
+	    printf(" | %6d %6d %6d %6d %6d",
+		   V(STATS.if_obytes),
+		   V(STATS.if_opackets),
+		   V(COMP.sls_compressed),
+		   V(COMP.sls_packets) - V(COMP.sls_compressed),
+		   V(STATS.if_opackets) - V(COMP.sls_packets));
+	    if (vflag)
+		printf(" %6d %6d",
+		       V(COMP.sls_searches),
+		       V(COMP.sls_misses));
+
+	    putchar('\n');
+	    fflush(stdout);
+	    line++;
+
+	    oldmask = sigblock(sigmask(SIGALRM));
+	    if (! signalled) {
+		sigpause(0);
+	    }
+	    sigsetmask(oldmask);
+	    signalled = 0;
+	    (void)alarm(interval);
+	    bcopy((char *)sc, (char *)osc, sizeof(STRUCT));
 	}
 }
 
