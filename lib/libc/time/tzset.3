@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.7 1996/01/08 22:50:59 jtc Exp $
+.\"	$NetBSD: tzset.3,v 1.8 1996/01/30 19:54:36 jtc Exp $
 .TH TZSET 3
 .SH NAME
 tzset \- initialize time conversion information
@@ -215,9 +215,9 @@ and cannot be interpreted as a direct specification,
 UTC is used.
 .SH FILES
 .ta \w'/usr/share/zoneinfo/posixrules\0\0'u
-/usr/share/zoneinfo	time zone information directory
+/etc/localtime	local time zone file
 .br
-/usr/share/zoneinfo/localtime	local time zone file
+/usr/share/zoneinfo	time zone information directory
 .br
 /usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
 .br

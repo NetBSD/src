@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.9 1996/01/20 02:29:47 jtc Exp $
+.\"	$NetBSD: ctime.3,v 1.10 1996/01/30 19:54:34 jtc Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -177,9 +177,9 @@ from UTC, with positive values indicating east
 of the Prime Meridian.
 .SH FILES
 .ta \w'/usr/share/zoneinfo/posixrules\0\0'u
-/usr/share/zoneinfo	time zone information directory
+/etc/localtime	local time zone file
 .br
-/usr/share/zoneinfo/localtime	local time zone file
+/usr/share/zoneinfo	time zone information directory
 .br
 /usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
 .br
