@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.24 2000/06/28 17:05:22 mrg Exp $ */
+/* $NetBSD: mfb.c,v 1.25 2000/09/13 02:11:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.24 2000/06/28 17:05:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.25 2000/09/13 02:11:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ mfb_getdevconfig(dense_addr, dc)
 	}
 
 	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
 		printf("mfb: couldn't lock font\n");
 		return;
 	}
