@@ -1,11 +1,12 @@
 ./usr/include/i386
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
-./usr/include/machine/bsd_audioio.h
+./usr/include/machine/cdefs.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/cpufunc.h
 ./usr/include/machine/cputypes.h
 ./usr/include/machine/db_machdep.h
+./usr/include/machine/disklabel.h
 ./usr/include/machine/endian.h
 ./usr/include/machine/exec.h
 ./usr/include/machine/float.h
@@ -25,10 +26,12 @@
 ./usr/include/machine/ptrace.h
 ./usr/include/machine/reg.h
 ./usr/include/machine/segments.h
+./usr/include/machine/setjmp.h
 ./usr/include/machine/signal.h
 ./usr/include/machine/specialreg.h
 ./usr/include/machine/spkr.h
 ./usr/include/machine/stdarg.h
+./usr/include/machine/svr4_machdep.h
 ./usr/include/machine/sysarch.h
 ./usr/include/machine/trap.h
 ./usr/include/machine/tss.h
@@ -46,6 +49,7 @@
 ./usr/lib/libi386_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libtelnet_pic.a
