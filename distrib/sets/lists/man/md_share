@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.81 2000/02/05 20:59:08 jdc Exp $
+# $NetBSD: md_share,v 1.82 2000/02/27 17:20:02 augustss Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -118,6 +118,7 @@
 ./usr/share/man/cat4/i386/olms.0
 ./usr/share/man/cat4/i386/omms.0
 ./usr/share/man/cat4/i386/opms.0
+./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pnpbios.0
 ./usr/share/man/cat4/mac68k/adb.0
@@ -458,6 +459,7 @@
 ./usr/share/man/man4/i386/olms.4
 ./usr/share/man/man4/i386/omms.4
 ./usr/share/man/man4/i386/opms.4
+./usr/share/man/man4/i386/pcibios.4
 ./usr/share/man/man4/i386/pcvt.4
 ./usr/share/man/man4/i386/pnpbios.4
 ./usr/share/man/man4/mac68k/adb.4
