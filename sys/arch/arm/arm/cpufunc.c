@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.43 2002/05/03 03:28:48 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.44 2002/05/03 16:45:22 rjs Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -452,14 +452,14 @@ struct cpu_functions sa110_cpufuncs = {
 
 	cpufunc_control,		/* control		*/
 	cpufunc_domains,		/* domain		*/
-	sa110_setttb,			/* setttb		*/
+	sa1_setttb,			/* setttb		*/
 	cpufunc_faultstatus,		/* faultstatus		*/
 	cpufunc_faultaddress,		/* faultaddress		*/
 
 	/* TLB functions */
 
 	armv4_tlb_flushID,		/* tlb_flushID		*/
-	sa110_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	sa1_tlb_flushID_SE,		/* tlb_flushID_SE	*/
 	armv4_tlb_flushI,		/* tlb_flushI		*/
 	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
 	armv4_tlb_flushD,		/* tlb_flushD		*/
@@ -467,16 +467,16 @@ struct cpu_functions sa110_cpufuncs = {
 
 	/* Cache operations */
 
-	sa110_cache_syncI,		/* icache_sync_all	*/
-	sa110_cache_syncI_rng,		/* icache_sync_range	*/
+	sa1_cache_syncI,		/* icache_sync_all	*/
+	sa1_cache_syncI_rng,		/* icache_sync_range	*/
 
-	sa110_cache_purgeD,		/* dcache_wbinv_all	*/
-	sa110_cache_purgeD_rng,		/* dcache_wbinv_range	*/
-/*XXX*/	sa110_cache_purgeD_rng,		/* dcache_inv_range	*/
-	sa110_cache_cleanD_rng,		/* dcache_wb_range	*/
+	sa1_cache_purgeD,		/* dcache_wbinv_all	*/
+	sa1_cache_purgeD_rng,		/* dcache_wbinv_range	*/
+/*XXX*/	sa1_cache_purgeD_rng,		/* dcache_inv_range	*/
+	sa1_cache_cleanD_rng,		/* dcache_wb_range	*/
 
-	sa110_cache_purgeID,		/* idcache_wbinv_all	*/
-	sa110_cache_purgeID_rng,	/* idcache_wbinv_range	*/
+	sa1_cache_purgeID,		/* idcache_wbinv_all	*/
+	sa1_cache_purgeID_rng,		/* idcache_wbinv_range	*/
 
 	/* Other functions */
 
@@ -497,6 +497,63 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_setup			/* cpu setup		*/
 };          
 #endif	/* CPU_SA110 */
+
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
+struct cpu_functions sa11x0_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* domain		*/
+	sa1_setttb,			/* setttb		*/
+	cpufunc_faultstatus,		/* faultstatus		*/
+	cpufunc_faultaddress,		/* faultaddress		*/
+
+	/* TLB functions */
+
+	armv4_tlb_flushID,		/* tlb_flushID		*/
+	sa1_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	armv4_tlb_flushI,		/* tlb_flushI		*/
+	(void *)armv4_tlb_flushI,	/* tlb_flushI_SE	*/
+	armv4_tlb_flushD,		/* tlb_flushD		*/
+	armv4_tlb_flushD_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache operations */
+
+	sa1_cache_syncI,		/* icache_sync_all	*/
+	sa1_cache_syncI_rng,		/* icache_sync_range	*/
+
+	sa1_cache_purgeD,		/* dcache_wbinv_all	*/
+	sa1_cache_purgeD_rng,		/* dcache_wbinv_range	*/
+/*XXX*/	sa1_cache_purgeD_rng,		/* dcache_inv_range	*/
+	sa1_cache_cleanD_rng,		/* dcache_wb_range	*/
+
+	sa1_cache_purgeID,		/* idcache_wbinv_all	*/
+	sa1_cache_purgeID_rng,		/* idcache_wbinv_range	*/
+
+	/* Other functions */
+
+	sa11x0_drain_readbuf,		/* flush_prefetchbuf	*/
+	armv4_drain_writebuf,		/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	sa11x0_cpu_sleep,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_null_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	sa11x0_context_switch,		/* context_switch	*/
+
+	sa11x0_setup			/* cpu setup		*/
+};          
+#endif	/* CPU_SA1100 || CPU_SA1110 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0)
@@ -635,7 +692,8 @@ get_cachetype_cp15()
 #endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110)
+    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110) || \
+    defined(CPU_SA1100) || defined(CPU_SA1110)
 /* Cache information for CPUs without cache type registers. */
 struct cachetab {
 	u_int32_t ct_cpuid;
@@ -693,7 +751,7 @@ get_cachetype_table()
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 
-#endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 */
+#endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 || SA1100 || SA1111 */
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -767,21 +825,32 @@ set_cpufuncs()
 	}
 #endif /* CPU_ARM9 */
 #ifdef CPU_SA110
-	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
-	    cputype == CPU_ID_SA1110) {
+	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
 		pmap_pte_init_generic();
-		/*
-		 * Enable the right variant of sleeping.
-		 */
-		if (cputype == CPU_ID_SA1100 ||
-		    cputype == CPU_ID_SA1110)
-			cpufuncs.cf_sleep = sa11x0_cpu_sleep;
 		return 0;
 	}
 #endif	/* CPU_SA110 */
+#ifdef CPU_SA1100
+	if (cputype == CPU_ID_SA1100) {
+		cpufuncs = sa11x0_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		get_cachetype_table();
+		pmap_pte_init_generic();
+		return 0;
+	}
+#endif	/* CPU_SA1100 */
+#ifdef CPU_SA1110
+	if (cputype == CPU_ID_SA1110) {
+		cpufuncs = sa11x0_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
+		get_cachetype_table();
+		pmap_pte_init_generic();
+		return 0;
+	}
+#endif	/* CPU_SA1110 */
 #ifdef CPU_XSCALE_80200
 	if (cputype == CPU_ID_80200) {
 		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
@@ -1239,6 +1308,7 @@ late_abort_fixup(arg)
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
+	defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(CPU_XSCALE_PXA2X0)
 
@@ -1591,6 +1661,51 @@ sa110_setup(args)
 	__asm ("mcr 15, 0, r0, c15, c1, 2");
 }
 #endif	/* CPU_SA110 */
+
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
+struct cpu_option sa11x0_options[] = {
+#ifdef COMPAT_12
+	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
+#endif	/* COMPAT_12 */
+	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "sa11x0.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
+	{ "sa11x0.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
+	{ "sa11x0.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+	{ "sa11x0.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+sa11x0_setup(args)
+	char *args;
+{
+	int cpuctrl, cpuctrlmask;
+
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
+		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
+		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
+		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
+
+	cpuctrl = parse_cpu_options(args, sa11x0_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_idcache_wbinv_all();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+}
+#endif	/* CPU_SA1100 || CPU_SA1110 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0)
