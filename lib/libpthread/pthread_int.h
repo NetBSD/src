@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.39 2003/01/16 03:35:45 thorpej Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.40 2003/01/16 14:47:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include "pthread_types.h"
 #include "pthread_queue.h"
 #include "pthread_debug.h"
-#include "pthread_md.h"
 
 #include <sa.h>
 #include <signal.h>
@@ -259,6 +258,8 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
 void	pthread__testcancel(pthread_t self);
 int	pthread__find(pthread_t self, pthread_t target);
+
+#include "pthread_md.h"
 
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
