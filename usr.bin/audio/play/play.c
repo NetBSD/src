@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.16 1999/11/08 10:21:20 kleink Exp $	*/
+/*	$NetBSD: play.c,v 1.17 2000/02/27 08:20:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -55,6 +55,7 @@ int	volume;
 int	balance;
 int	port;
 int	fflag;
+int	qflag;
 int	sample_rate;
 int	encoding;
 char	*encoding_str;
@@ -75,7 +76,6 @@ main(argc, argv)
 	int	ch;
 	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
-	int	qflag = 0;
 	int	verbose = 0;
 	char	*device = 0;
 	char	*ctldev = 0;
@@ -221,7 +221,8 @@ main(argc, argv)
 			 * give the VM system a bit of a hint about the type
 			 * of accesses we will make.
 			 */
-			if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0)
+			if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
+			    !qflag)
 				warn("madvise failed, ignoring");
 
 			/*
@@ -247,9 +248,9 @@ main(argc, argv)
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
 				err(1, "final write failed");
 
-			if (ioctl(audiofd, AUDIO_DRAIN) < 0)
+			if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 				warn("audio drain ioctl failed");
-			if (munmap(oaddr, (size_t)filesize) < 0)
+			if (munmap(oaddr, (size_t)filesize) < 0 && !qflag)
 				err(1, "munmap failed");
 
 			close(fd);
@@ -311,7 +312,7 @@ play_fd(fd, file)
 			err(1, "write failed");
 	} while ((n = read(fd, buffer, bufsize)));
 
-	if (ioctl(audiofd, AUDIO_DRAIN) < 0)
+	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
 }
 
