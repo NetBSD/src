@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.21 2002/08/29 12:23:42 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.22 2002/10/16 20:05:20 wennmach Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ After opening the device, the file descriptor must be bound to a
 specific network interface with the
 .Dv BIOSETIF
 ioctl.
-A given interface can be shared be multiple listeners, and the filter
+A given interface can be shared by multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
 The total number of open
 files is limited to the value given in the kernel configuration; the
