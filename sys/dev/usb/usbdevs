@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.208 2001/12/12 15:36:59 augustss Exp $
+$NetBSD: usbdevs,v 1.209 2001/12/14 23:56:42 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 product ABOCOM XX1		0x110c	XX1
 product ABOCOM XX2		0x200c	XX2
 product ABOCOM URE450		0x4000	URE450 Ethernet Adapter
-product ABOCOM XX3		0x4002	XX3
+product ABOCOM UFE1000		0x4002	UFE1000 Fast Ethernet Adapter
 product ABOCOM DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product ABOCOM XX4		0x4004	XX4
 product ABOCOM XX5		0x4007	XX5
@@ -356,6 +356,7 @@ product ABOCOM XX10		0xabc1	XX10
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
+product ACCTON SS1001		0x5046	SpeedStream Ethernet Adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
