@@ -1,4 +1,4 @@
-/*	$NetBSD: colcrt.c,v 1.6 2003/08/07 11:13:24 agc Exp $	*/
+/*	$NetBSD: colcrt.c,v 1.7 2005/02/17 17:17:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: colcrt.c,v 1.6 2003/08/07 11:13:24 agc Exp $");
+__RCSID("$NetBSD: colcrt.c,v 1.7 2005/02/17 17:17:25 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,15 +73,12 @@ char	printall;
 char	*progname;
 FILE	*f;
 
-int	main __P((int, char **));
-void	move __P((int, int));
-void	pflush __P((int));
-int	plus __P((char, char));
+void	move(int, int);
+void	pflush(int);
+int	plus(char, char);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	char *cp, *dp;
@@ -193,8 +190,7 @@ main(argc, argv)
 }
 
 int
-plus(c, d)
-	char c, d;
+plus(char c, char d)
 {
 
 	return ((c == '|' && d == '-') || d == '_');
@@ -203,8 +199,7 @@ plus(c, d)
 int first;
 
 void
-pflush(ol)
-	int ol;
+pflush(int ol)
 {
 	int i;
 	char *cp;
@@ -238,8 +233,7 @@ pflush(ol)
 }
 
 void
-move(l, m)
-	int l, m;
+move(int l, int m)
 {
 	char *cp, *dp;
 
