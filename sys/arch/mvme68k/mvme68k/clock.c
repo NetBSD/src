@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.13 2000/06/04 19:14:52 cgd Exp $	*/
+/*      $NetBSD: clock.c,v 1.14 2001/04/14 13:53:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,7 +164,8 @@ setstatclockrate(newhz)
 /*
  * Return the best possible estimate of the time in the timeval
  * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt (clock.c:clkread).
+ * plus the amount of time, in uSec, since the last clock interrupt
+ * (clock_args->ca_microtime()) was handled.
  *
  * Check that this time is no less than any previously-reported time,
  * which could happen around the time of a clock adjustment.  Just for fun,
@@ -180,6 +181,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
+	tvp->tv_usec += (*clock_args->ca_microtime)(clock_args->ca_arg);
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
