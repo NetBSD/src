@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.10 2003/08/07 09:51:08 agc Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.11 2005/02/06 06:05:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$NetBSD: dbtest.c,v 1.10 2003/08/07 09:51:08 agc Exp $";
+static char rcsid[] = "$NetBSD: dbtest.c,v 1.11 2005/02/06 06:05:18 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,22 +59,22 @@ static char rcsid[] = "$NetBSD: dbtest.c,v 1.10 2003/08/07 09:51:08 agc Exp $";
 
 enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 
-void	 compare __P((DBT *, DBT *));
-DBTYPE	 dbtype __P((char *));
-void	 dump __P((DB *, int));
-void	 err __P((const char *, ...));
-void	 get __P((DB *, DBT *));
-void	 getdata __P((DB *, DBT *, DBT *));
-void	 put __P((DB *, DBT *, DBT *));
-void	 rem __P((DB *, DBT *));
-char	*sflags __P((int));
-void	 synk __P((DB *));
-void	*rfile __P((char *, size_t *));
-void	 seq __P((DB *, DBT *));
-u_int	 setflags __P((char *));
-void	*setinfo __P((DBTYPE, char *));
-void	 usage __P((void));
-void	*xmalloc __P((char *, size_t));
+void	 compare(DBT *, DBT *);
+DBTYPE	 dbtype(char *);
+void	 dump(DB *, int);
+void	 err(const char *, ...);
+void	 get(DB *, DBT *);
+void	 getdata(DB *, DBT *, DBT *);
+void	 put(DB *, DBT *, DBT *);
+void	 rem(DB *, DBT *);
+char	*sflags(int);
+void	 synk(DB *);
+void	*rfile(char *, size_t *);
+void	 seq(DB *, DBT *);
+u_int	 setflags(char *);
+void	*setinfo(DBTYPE, char *);
+void	 usage(void);
+void	*xmalloc(char *, size_t);
 
 DBTYPE type;				/* Database type. */
 void *infop;				/* Iflags. */
@@ -342,8 +342,8 @@ void
 compare(db1, db2)
 	DBT *db1, *db2;
 {
-	register size_t len;
-	register u_char *p1, *p2;
+	size_t len;
+	u_char *p1, *p2;
 
 	if (db1->size != db2->size)
 		printf("compare failed: key->data len %lu != data len %lu\n",
