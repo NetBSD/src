@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.12 1994/11/04 19:01:34 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.13 1994/11/18 22:02:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -555,7 +555,7 @@ struct aic_softc { /* One of these per adapter */
 	struct scsi_link sc_link;	/* prototype for subdevs */
 	int		id_irq;		/* IRQ on the EISA bus */
 	int		id_drq;		/* DRQ on the EISA bus */
-	u_short		iobase;		/* Base I/O port */
+	int		iobase;		/* Base I/O port */
 	/* Lists of command blocks */
 	TAILQ_HEAD(acb_list, acb) free_list, ready_list, nexus_list;
 	struct acb *nexus;	/* current command */
@@ -726,7 +726,7 @@ int
 aic_find(aic)
 	struct aic_softc *aic;
 {	
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 	char chip_id[sizeof(IDSTRING)];	/* For chips that support it */
 	char *start;
 	int i;
@@ -819,7 +819,7 @@ static void
 aic6360_reset(aic)
 	struct aic_softc *aic;
 {
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 
 	outb(SCSITEST, 0);	/* Doc. recommends to clear these two */
 	outb(TEST, 0);		/* registers before operations commence */
@@ -853,7 +853,7 @@ void
 aic_scsi_reset(aic)
 	struct aic_softc *aic;
 {
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 
 	outb(SCSISEQ, SCSIRSTO);
 	delay(500);
@@ -869,7 +869,7 @@ void
 aic_init(aic)
 	struct aic_softc *aic;
 {
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 	struct acb *acb;
 	int r;
 	
@@ -956,7 +956,7 @@ aic_scsi_cmd(xs)
 	struct aic_softc *aic = sc->adapter_softc;
 	struct acb 	*acb;
 	int s, flags;
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 	
 	SC_DEBUG(sc, SDEV_DB2, ("aic_scsi_cmd\n"));
 	AIC_TRACE(("aic_scsi_cmd\n"));
@@ -1046,7 +1046,7 @@ aic_poll(aic, acb)
 	struct aic_softc *aic;
 	struct acb *acb;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	struct scsi_xfer *xs = acb->xs;
 	int count = xs->timeout * 10;
 
@@ -1085,7 +1085,7 @@ static inline u_short
 aicphase(aic)
 	struct aic_softc *aic;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	register u_char sstat0, sstat1, scsisig;
 	
 	sstat1 = inb(SSTAT1);	/* Look for REQINIT (REQ asserted) */
@@ -1116,7 +1116,7 @@ aic_sched(aic)
 	struct scsi_xfer *xs;
 	struct scsi_link *sc;
 	struct acb *acb;
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 	int t, l;
 	u_char simode0, simode1, scsiseq;
 	
@@ -1169,7 +1169,7 @@ aic_done(acb)
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc = xs->sc_link;
 	struct aic_softc *aic = sc->adapter_softc;
-	u_short iobase = aic->iobase;
+	int iobase = aic->iobase;
 	struct acb *acb2;
 
 	AIC_TRACE(("aic_done "));
@@ -1321,7 +1321,7 @@ static void
 aic_msgin(aic)
 	register struct aic_softc *aic;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	int spincount, extlen;
 	u_char sstat1;
 	
@@ -1575,7 +1575,7 @@ static void
 aic_msgout(aic)
 	register struct aic_softc *aic;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	struct aic_tinfo *ti;
 	struct acb *acb;
 	u_char dmastat, scsisig;
@@ -1686,7 +1686,7 @@ void
 aic_dataout(aic)
 	register struct aic_softc *aic;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	register u_char dmastat;
 	struct acb *acb = aic->nexus;
 	int amount, olddleft = aic->dleft;
@@ -1803,7 +1803,7 @@ void
 aic_datain(aic)
 	register struct aic_softc *aic;
 {
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	register u_char dmastat;
 	struct acb *acb = aic->nexus;
 	int amount, olddleft = aic->dleft;
@@ -1929,7 +1929,7 @@ aicintr(aic)
 {
 	register struct acb *acb;
 	register struct scsi_link *sc;
-	register u_short iobase = aic->iobase;
+	register int iobase = aic->iobase;
 	struct scsi_xfer *xs;
 	struct aic_tinfo *ti;
 	int done, amount;
@@ -2345,7 +2345,7 @@ aic_print_active_acb()
 void
 aic_dump6360()
 {
-	u_short iobase = 0x340;
+	int iobase = 0x340;
 
 	printf("aic6360: SCSISEQ=%x SXFRCTL0=%x SXFRCTL1=%x SCSISIGI=%x\n",
 	    inb(SCSISEQ), inb(SXFRCTL0), inb(SXFRCTL1), inb(SCSISIGI));

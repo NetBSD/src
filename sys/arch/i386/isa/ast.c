@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10 1994/11/07 09:03:48 mycroft Exp $	*/
+/*	$NetBSD: ast.c,v 1.11 1994/11/18 22:03:01 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -19,7 +19,7 @@ struct ast_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	u_short sc_iobase;
+	int sc_iobase;
 	int sc_alive;		/* mask of slave units attached */
 	void *sc_slaves[4];	/* com device unit numbers */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 1994/11/04 18:38:18 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 1994/11/18 22:04:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -238,7 +238,7 @@ int
 pci_map_io(tag, reg, iobasep)
 	pcitag_t tag;
 	int reg;
-	u_short *iobasep;
+	int *iobasep;
 {
 
 	panic("pci_map_io: not implemented");
