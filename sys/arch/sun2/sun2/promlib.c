@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.1 2001/04/06 15:05:57 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.2 2001/04/10 12:40:53 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -356,8 +356,8 @@ prom_init()
 	old_bp = *romVectorPtr->bootParam;
 	new_bp = &sunmon_bootparam;
 	*new_bp = *old_bp;
-	bp_shift = new_bp - old_bp;
-	for(i = 0; i < 8; i++) {
+	bp_shift = ((char *) new_bp) - ((char *) old_bp);
+	for(i = 0; i < 8 && new_bp->argPtr[i] != NULL; i++) {
 		new_bp->argPtr[i] += bp_shift;
 	}
 	new_bp->fileName += bp_shift;
