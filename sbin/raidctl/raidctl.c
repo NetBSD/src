@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.7 1999/08/10 18:21:39 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.8 1999/08/15 03:15:00 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -398,6 +398,7 @@ rf_get_device_status(fd)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
+	int is_clean;
 	int i;
 
 	cfg_ptr = &device_config;
@@ -418,6 +419,13 @@ rf_get_device_status(fd)
 		}
 	} else {
 		printf("No spares.\n");
+	}
+	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
+		 "RAIDFRAME_CHECK_PARITY");
+	if (is_clean) {
+		printf("Parity status: clean\n");
+	} else {
+		printf("Parity status: DIRTY\n");
 	}
 }
 
