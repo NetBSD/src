@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.11 1997/02/18 15:30:53 gwr Exp $	*/
+/*	$NetBSD: _startup.c,v 1.12 1997/03/13 17:40:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ _vm_init(kehp)
 	 * Steal some special-purpose, already mapped pages.
 	 * Note: msgbuf is setup in machdep.c:cpu_startup()
 	 */
-	nextva = sun3x_round_page(esym);
+	nextva = _round_page(esym);
 
 	/*
 	 * Setup the u-area pages (stack, etc.) for proc0.

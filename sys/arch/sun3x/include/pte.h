@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 1997/01/23 22:25:56 gwr Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 1997/03/13 17:40:34 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,28 +75,21 @@
 /*
  * Mach derived conversion macros
  */
-#define sun3x_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define sun3x_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define sun3x_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define sun3x_stob(x)		((unsigned)(x) << SEGSHIFT)
+#define _round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
+#define _trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
+#define _btos(x)	((unsigned)(x) >> SEGSHIFT)
+#define _stob(x)	((unsigned)(x) << SEGSHIFT)
 
-#define sun3x_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define sun3x_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define sun3x_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define sun3x_ptob(x)		((unsigned)(x) << PGSHIFT)
-
-#define	sun3x_round_up_page(x)\
-	((unsigned long) ((x) + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
-
+#define _round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define _trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define _btop(x)	((unsigned)(x) >> PGSHIFT)
+#define _ptob(x)	((unsigned)(x) << PGSHIFT)
 
 #ifdef	_KERNEL
 
-/* XXX - Not sure about these.  Use pmap_enter_kernel() instead? */
-#if 1 /* XXX */
 /* defined in pmap.c */
 vm_offset_t get_pte __P((vm_offset_t va));
 void set_pte __P((vm_offset_t, vm_offset_t));
-#endif /* XXX */
 
 #endif	/* _KERNEL */
 #endif	/* !_MACHINE_PTE_H*/
