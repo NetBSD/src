@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.50 1999/12/26 21:46:23 soren Exp $	*/
+/*	$NetBSD: pciide.c,v 1.51 2000/01/16 21:31:28 bouyer Exp $	*/
 
 
 /*
@@ -2135,6 +2135,7 @@ sis_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
+	u_int32_t rev;
 	u_int8_t sis_ctr0 = pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_CTRL0);
 	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
 				    sc->sc_tag, PCI_CLASS_REG));
@@ -2146,14 +2147,20 @@ sis_chip_map(sc, pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	printf("\n");
-	if (sc->sc_dma_ok)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+	rev = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG) & \
+	    PCI_REVISION_MASK;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		if (rev >= 0xd0)
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+	}
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
+	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
+		sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
