@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)buf_subs.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: buf_subs.c,v 1.3 1994/06/14 00:41:25 mycroft Exp $";
+static char *rcsid = "$Id: buf_subs.c,v 1.4 1994/09/23 11:35:07 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -408,7 +408,7 @@ pback(pt, cnt)
 #endif
 {
 	bufpt -= cnt;
-	bcopy(pt, bufpt, cnt);
+	memcpy(bufpt, pt, cnt);
 	return;
 }
 
@@ -504,7 +504,7 @@ wr_fin()
 #endif
 {
 	if (bufpt > buf) {
-		bzero(bufpt, bufend - bufpt);
+		memset(bufpt, 0, bufend - bufpt);
 		bufpt = bufend;
 		(void)buf_flush(blksz);
 	}
@@ -545,7 +545,7 @@ wr_rdbuf(out, outcnt)
 		 * only move what we have space for
 		 */
 		cnt = MIN(cnt, outcnt);
-		bcopy(out, bufpt, cnt);
+		memcpy(bufpt, out, cnt);
 		bufpt += cnt;
 		out += cnt;
 		outcnt -= cnt;
@@ -600,7 +600,7 @@ rd_wrbuf(in, cpcnt)
 		 * state of buffer
 		 */
 		cnt = MIN(cnt, incnt);
-		bcopy(bufpt, in, cnt);
+		memcpy(in, bufpt, cnt);
 		bufpt += cnt;
 		incnt -= cnt;
 		in += cnt;
@@ -638,7 +638,7 @@ wr_skip(skcnt)
 		if ((cnt <= 0) && ((cnt = buf_flush(blksz)) < 0))
 			return(-1);
 		cnt = MIN(cnt, skcnt);
-		bzero(bufpt, cnt);
+		memset(bufpt, 0, cnt);
 		bufpt += cnt;
 		skcnt -= cnt;
 	}
@@ -1030,7 +1030,7 @@ buf_flush(bufcnt)
 				 * check for more than 1 block of push, and if
 				 * so we loop back to write again
 				 */
-				bcopy(bufend, buf, push);
+				memcpy(buf, bufend, push);
 				bufpt = buf + push;
 				if (push >= blksz) {
 					push -= blksz;
@@ -1050,7 +1050,7 @@ buf_flush(bufcnt)
 			wrcnt += cnt;
 			bufpt = buf + cnt;
 			cnt = bufcnt - cnt;
-			bcopy(bufpt, buf, cnt);
+			memcpy(buf, bufpt, cnt);
 			bufpt = buf + cnt;
 			if (!frmt->blkalgn || ((cnt % frmt->blkalgn) == 0))
 				return(totcnt);
