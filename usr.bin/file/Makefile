@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2002/05/18 07:04:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.40.2.1 2004/06/16 01:34:10 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,8 @@ CLEANFILES+=	mkmagic magic magic.mgc magic.mime magic.mime.mgc
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
 
-MAGDIRF:sh=	echo ${.CURDIR}/magdir/[0-9a-z]*
+# Avoid possible collation problems w. LANG set to something else
+MAGDIRF:sh=	LANG=C sh -c 'echo ${.CURDIR}/magdir/[0-9a-z]*'
 MAGFILES=	${.CURDIR}/Header \
 		${.CURDIR}/Localstuff \
 		${.CURDIR}/magdir/netbsd \
