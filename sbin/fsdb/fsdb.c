@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.6 1996/10/11 20:22:43 thorpej Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.6 1996/10/11 20:22:43 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -255,13 +255,13 @@ cmdloop()
 
 	line = strdup(elline);
 	cmd_argv = crack(line, &cmd_argc);
-	/*
-	 * el_parse returns -1 to signal that it's not been handled
-	 * internally.
-	 */
-	if (el_parse(elptr, cmd_argc, cmd_argv) != -1)
-	    continue;
 	if (cmd_argc) {
+	    /*
+	     * el_parse returns -1 to signal that it's not been handled
+	     * internally.
+	     */
+	    if (el_parse(elptr, cmd_argc, cmd_argv) != -1)
+		continue;
 	    known = 0;
 	    for (cmdp = cmds; cmdp->cmd; cmdp++) {
 		if (!strcmp(cmdp->cmd, cmd_argv[0])) {
