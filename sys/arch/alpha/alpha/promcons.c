@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $ */
+/* $NetBSD: promcons.c,v 1.9.4.1 1998/05/08 05:37:32 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.9.4.1 1998/05/08 05:37:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.9 1997/09/02 13:18:35 thorpej Exp $")
 #include <machine/conf.h>
 #include <machine/prom.h>
 
+#define	PROM_POLL_HZ	50
+
 static struct  tty *prom_tty[1];
+static int polltime;
 
 cdev_decl(prom);
 
@@ -100,8 +103,12 @@ promopen(dev, flag, mode, p)
 	splx(s);
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
-	if (error == 0 && setuptimeout)
-		timeout(promtimeout, tp, 1);
+	if (error == 0 && setuptimeout) {
+		polltime = hz / PROM_POLL_HZ;
+		if (polltime < 1)
+			polltime = 1;
+		timeout(promtimeout, tp, polltime);
+	}
 	return error;
 }
  
@@ -224,7 +231,7 @@ promtimeout(v)
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-	timeout(promtimeout, tp, 1);
+	timeout(promtimeout, tp, polltime);
 }
 
 struct tty *
