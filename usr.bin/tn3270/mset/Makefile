@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/05/09 15:04:03 mycroft Exp $
-
-.include "../../Makefile.inc"
-
-CFLAGS+=-I${.CURDIR} -I.
+#	$NetBSD: Makefile,v 1.20.2.1 1997/11/08 10:38:33 lukem Exp $
 
 PROG=	mset
 MAN=	mset.1 map3270.5

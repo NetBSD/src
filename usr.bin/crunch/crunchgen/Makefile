@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1997/08/02 21:30:09 perry Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 1997/11/08 10:36:51 lukem Exp $
 
 PROG=crunchgen
 SRCS=crunchgen.c crunched_skel.c
-#CFLAGS+=-g
 CLEANFILES+= crunched_skel.c
 
 crunched_skel.c: crunched_main.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/20 03:35:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 1997/11/08 10:38:26 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -33,7 +33,7 @@
 
 WARNS=	0
 PROG=	tip
-CFLAGS+=-I${.CURDIR} -ansi -pedantic \
+CPPFLAGS+=-I${.CURDIR} -ansi -pedantic \
 	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
 	-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
 .PATH:	${.CURDIR}/aculib

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/19 03:52:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 1997/11/08 10:37:12 lukem Exp $
 
 PROG=	lesskey
 SRCS=	lesskey.c version.c
-CFLAGS+=-I${.CURDIR}/../less
+CPPFLAGS+=-I${.CURDIR}/../less
 
 .PATH: ${.CURDIR}/../less
 
