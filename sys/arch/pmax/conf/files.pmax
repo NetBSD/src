@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.79 2000/02/03 04:20:05 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.80 2000/02/18 08:41:21 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -88,13 +88,6 @@ file	dev/dec/mcclock_pad32.c		mcclock
 file	arch/pmax/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 
-#
-# Machine-independent SCSI driver.
-#
-
-include "dev/scsipi/files.scsipi"
-#major { cd = 3 }
-#major { sd = 21 }
 major { tz = 10 }
 major { rz = 21 }
 
@@ -108,19 +101,18 @@ major { md = 17 }
 define	oldscsi {}
 device oldscsibus {target = -1, drive = -1}
 attach oldscsibus at oldscsi
+file	arch/pmax/dev/scsi.c
+file	arch/pmax/pmax/conf-glue.c
 
 # asc: SCSI interface in TC option slot or in IOASIC slot
-#device asc: oldscsi,scsi
 device asc: oldscsi
+file	dev/tc/asc.c			asc needs-flag
 attach asc at ioasic with asc_ioasic
 file	dev/tc/asc_ioasic.c		asc_ioasic
 attach asc at tc with asc_tc
 file	dev/tc/asc_tc.c			asc_tc
 
-file	dev/tc/asc.c			asc needs-flag
-
 # sii: kn01 SCSI interface
-#device sii: scsi,oldscsi
 device sii: oldscsi
 file	arch/pmax/dev/sii.c		sii needs-flag
 attach sii at ibus with sii_ds
@@ -205,9 +197,6 @@ device	tt: tty
 attach	tt at tc
 file	arch/pmax/dev/if_tt.c		tt needs-count
 
-## bogus pmax-specific SCSI code. Leave in until new-style config done.
-file	arch/pmax/dev/scsi.c
-
 file	arch/pmax/pmax/autoconf.c
 file	arch/pmax/pmax/bus_dma.c
 file	arch/pmax/pmax/bus_space.c
@@ -247,9 +236,6 @@ file	arch/pmax/dev/bt459.c			cfb | sfb
 #
 defpseudo	fb
 file	arch/pmax/dev/fb.c		fb needs-count
-
-# Glue for old-style config
-file	arch/pmax/pmax/conf-glue.c
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"
