@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.63 2002/10/01 02:50:51 itojun Exp $ */
+/* $NetBSD: user.c,v 1.64 2002/11/08 11:44:37 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.63 2002/10/01 02:50:51 itojun Exp $");
+__RCSID("$NetBSD: user.c,v 1.64 2002/11/08 11:44:37 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,21 +73,21 @@ typedef struct range_t {
 typedef struct user_t {
 	int		u_flags;		/* see below */
 	int		u_uid;			/* uid of user */
-	char		*u_password;		/* encrypted password */
-	char		*u_comment;		/* comment field */
-	char		*u_home;		/* home directory */
-	char		*u_primgrp;		/* primary group */
+	char	       *u_password;		/* encrypted password */
+	char	       *u_comment;		/* comment field */
+	char	       *u_home;			/* home directory */
+	char	       *u_primgrp;		/* primary group */
 	int		u_groupc;		/* # of secondary groups */
 	const char     *u_groupv[NGROUPS_MAX];	/* secondary groups */
-	char		*u_shell;		/* user's shell */
-	char		*u_basedir;		/* base directory for home */
-	char		*u_expire;		/* when password will expire */
-	char		*u_inactive;		/* when account will expire */
-	char		*u_skeldir;		/* directory for startup files */
-	char		*u_class;		/* login class */
+	char	       *u_shell;		/* user's shell */
+	char	       *u_basedir;		/* base directory for home */
+	char	       *u_expire;		/* when password will expire */
+	char	       *u_inactive;		/* when account will expire */
+	char	       *u_skeldir;		/* directory for startup files */
+	char	       *u_class;		/* login class */
 	unsigned	u_rsize;		/* size of range array */
 	unsigned	u_rc;			/* # of ranges */
-	range_t		*u_rv;			/* the ranges */
+	range_t	       *u_rv;			/* the ranges */
 	unsigned	u_defrc;		/* # of ranges in defaults */
 	int		u_preserve;		/* preserve uids on deletion */
 } user_t;
@@ -916,13 +916,34 @@ valid_password_length(char *newpasswd)
 	return 0;
 }
 
+/* look for a valid time, return 0 if it was specified but bad */
+static int
+scantime(time_t *tp, char *s)
+{
+	struct tm	tm;
+
+	*tp = 0;
+	if (s != NULL) {
+		(void) memset(&tm, 0, sizeof(tm));
+		if (strptime(s, "%c", &tm) != NULL) {
+			*tp = mktime(&tm);
+		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
+			*tp = mktime(&tm);
+		} else if (isdigit(s[0]) != NULL) {
+			*tp = atoi(s);
+		} else {
+			return 0;
+		}
+	}
+	return 1;
+}
+
 /* add a user */
 static int
 adduser(char *login_name, user_t *up)
 {
 	struct group	*grp;
 	struct stat	st;
-	struct tm	tm;
 	time_t		expire;
 	time_t		inactive;
 	char		password[PasswordLength + 1];
@@ -1021,33 +1042,13 @@ adduser(char *login_name, user_t *up)
 		/* if home directory hasn't been given, make it up */
 		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir, login_name);
 	}
-	inactive = 0;
-	if (up->u_inactive != NULL) {
-		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_inactive, "%c", &tm) != NULL) {
-			inactive = mktime(&tm);
-		} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) {
-			inactive = mktime(&tm);
-		} else if (isdigit(up->u_inactive[0]) != NULL) {
-			inactive = atoi(up->u_inactive);
-		} else {
-			warnx("Warning: inactive time `%s' invalid, account expiry off",
+	if (!scantime(&inactive, up->u_inactive)) {
+		warnx("Warning: inactive time `%s' invalid, account expiry off",
 				up->u_inactive);
-		}
 	}
-	expire = 0;
-	if (up->u_expire != NULL) {
-		(void) memset(&tm, 0, sizeof(tm));
-		if (strptime(up->u_expire, "%c", &tm) != NULL) {
-			expire = mktime(&tm);
-		} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) {
-			expire = mktime(&tm);
-		} else if (isdigit(up->u_expire[0]) != NULL) {
-			expire = atoi(up->u_expire);
-		} else {
-			warnx("Warning: expire time `%s' invalid, password expiry off",
+	if (!scantime(&expire, up->u_expire)) {
+		warnx("Warning: expire time `%s' invalid, password expiry off",
 				up->u_expire);
-		}
 	}
 	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR)) {
 		warnx("Warning: home directory `%s' doesn't exist, and -m was not specified",
@@ -1240,7 +1241,6 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	struct passwd  *pwp;
 	struct group   *grp;
 	const char     *homedir;
-	struct tm	tm;
 	size_t		colonc;
 	size_t		loginc;
 	size_t		len;
@@ -1343,27 +1343,13 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_flags & F_INACTIVE) {
-			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_inactive, "%c", &tm) != NULL) {
-				pwp->pw_change = mktime(&tm);
-			} else if (strptime(up->u_inactive, "%B %d %Y", &tm) != NULL) { 
-				pwp->pw_change = mktime(&tm);
-			} else if (isdigit(up->u_inactive[0]) != NULL) {
-				pwp->pw_change = atoi(up->u_inactive);
-			} else {
+			if (!scantime(&pwp->pw_change, up->u_inactive)) {
 				warnx("Warning: inactive time `%s' invalid, password expiry off",
 					up->u_inactive);
 			}
 		}
 		if (up->u_flags & F_EXPIRE) {
-			(void) memset(&tm, 0, sizeof(tm));
-			if (strptime(up->u_expire, "%c", &tm) != NULL) {
-				pwp->pw_expire = mktime(&tm);
-			} else if (strptime(up->u_expire, "%B %d %Y", &tm) != NULL) { 
-				pwp->pw_expire = mktime(&tm);
-			} else if (isdigit(up->u_expire[0]) != NULL) {
-				pwp->pw_expire = atoi(up->u_expire);
-			} else {
+			if (!scantime(&pwp->pw_expire, up->u_expire)) {
 				warnx("Warning: expire time `%s' invalid, password expiry off",
 					up->u_expire);
 			}
