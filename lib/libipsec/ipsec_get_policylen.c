@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.4 2003/03/09 01:03:55 lukem Exp $	*/
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ipsec_get_policylen.c,v 1.4 2003/03/09 01:03:55 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

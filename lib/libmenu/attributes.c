@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.6 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: attributes.c,v 1.7 2003/03/09 01:08:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -25,6 +25,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: attributes.c,v 1.7 2003/03/09 01:08:47 lukem Exp $");
 
 #include <menu.h>
 
