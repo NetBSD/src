@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.8 1998/08/10 02:57:24 perry Exp $	*/
+/*	$NetBSD: slc.c,v 1.9 2001/02/04 22:32:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.8 1998/08/10 02:57:24 perry Exp $");
+__RCSID("$NetBSD: slc.c,v 1.9 2001/02/04 22:32:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ static unsigned char	*slcptr;	/* pointer into slc buffer */
 static unsigned char	slcbuf[NSLC*6];	/* buffer for slc negotiation */
 
 void default_slc __P((void));
-int end_slc __P((unsigned char **));
 void process_slc __P((u_int, u_int, cc_t));
 
 /*
