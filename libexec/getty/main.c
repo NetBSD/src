@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1999/01/15 23:44:32 kml Exp $	*/
+/*	$NetBSD: main.c,v 1.28.2.1 1999/12/20 15:01:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 1999/01/15 23:44:32 kml Exp $");
+__RCSID("$NetBSD: main.c,v 1.28.2.1 1999/12/20 15:01:15 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ int crmod, digit, lower, upper;
 
 char	hostname[MAXHOSTNAMELEN + 1];
 struct	utsname kerninfo;
-char	name[16];
+char	name[17];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
 char	lockfile[512];
@@ -465,7 +465,8 @@ getname()
 
 		if (c == EOT)
 			exit(1);
-		if (c == '\r' || c == '\n' || np >= &name[sizeof name]) {
+		if (c == '\r' || c == '\n' || np >= &name[16]) {
+			*np = '\0';
 			putf("\r\n");
 			break;
 		}
