@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.54 2001/02/04 09:00:14 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.55 2001/02/06 17:01:53 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2021,7 +2021,7 @@ netbsd32_execve2(p, uap, retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p);
+	uvmspace_exec(p, VM_MIN_ADDRESS, (vaddr_t)pack.ep_minsaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -4134,8 +4134,10 @@ netbsd32_mmap(p, v, retval)
 	NETBSD32TOX_UAP(pad, long);
 	NETBSD32TOX_UAP(pos, off_t);
 	error = sys_mmap(p, &ua, (register_t *)&rt);
-	if ((long)rt > (long)UINT_MAX)
+	if ((u_long)rt > (u_long)UINT_MAX) {
 		printf("netbsd32_mmap: retval out of range: %p", rt);
+		/* Should try to recover and return an error here. */
+	}
 	*retval = (netbsd32_voidp)(u_long)rt;
 	return (error);
 }
