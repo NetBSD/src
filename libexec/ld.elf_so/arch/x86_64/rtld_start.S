@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 2001/06/19 01:11:44 fvdl Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 2001/06/20 17:58:16 fvdl Exp $	*/
 
 #include <machine/asm.h>
 
@@ -33,8 +33,15 @@ _rtld_bind_start:	# (obj, reloff)
 	pushq	%r10
 	pushq	%r11
 
+	movq	80(%rsp),%rdi
+	movq	88(%rsp),%rsi
+	movq	%rsi,%r11		# multiply by sizeof (Elf64_Rela) (24)
+	shlq	$3,%r11
+	shlq	$4,%rsi			# 16 * index + 8 * index = 24 * index
+	addq	%r11,%rsi
+
 	call	_rtld_bind@PLT		# call the binder
-	movq	%rax,80(%rsp)		# store function in return address
+	movq	%rax,88(%rsp)		# store function in obj
 
 	popq	%r11
 	popq	%r10
@@ -46,5 +53,7 @@ _rtld_bind_start:	# (obj, reloff)
 	popq	%rcx
 	popq	%rax
 	popfq
+
+	leaq	8(%rsp),%rsp
 
 	ret
