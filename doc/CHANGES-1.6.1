@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.53 2002/11/26 08:02:01 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.54 2002/11/26 18:36:04 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1629,4 +1629,16 @@ share/man/man4/pciide.4				1.46
 	Remove the note about Ultra/133 from the bug section. Pointed out by
 	mipam@ibb.net, thanks !
 	[bouyer, ticket #1015]
+
+sys/dev/pci/pcidevs				1.488
+
+	Add Intel i80321 I/O processor.
+	[thorpej, ticket #1017]
+
+sys/dev/pci/pcidevs				1.489
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Add IBM 133 PCI-X Bridge.
+	[thorpej, ticket #1018]
 
