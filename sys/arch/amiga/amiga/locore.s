@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 1996/09/28 15:45:41 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 1996/09/29 21:27:33 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -573,6 +573,38 @@ Ldraciaend:
 	moveml	sp@+,#0x0303
 	addql	#1,_cnt+V_INTR
 	jra	rei
+
+/* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
+	.globl _DraCoLev1intr
+	.globl _amiga_clk_interval
+_DraCoLev1intr:
+	moveml	#0xC0C0,sp@-
+	movl	_draco_ioct,a0
+	btst	#5,a0@(7)
+	jeq	Ldrintrcommon
+	movw	#PSL_HIGHIPL,sr	| run clock at high ipl
+	clrb	a0@(9)		| reset timer irq
+Ldrclockretry:
+	lea	sp@(16),a1	| get pointer to PS
+	movl	a1,sp@-		| push pointer to PS, PC
+	jbsr	_hardclock
+	addql	#4,sp		| pop params
+	addql	#1,_intrcnt+32	| add another system clock interrupt
+
+	movl	_draco_ioct,a0
+	tstb	a0@(9)		| latch timer value
+	movw	a0@(11),d0	| can't use movpw here, might be 68060
+	movb	a0@(13),d0
+	addw	_amiga_clk_interval+2,d0
+	movb	d0,a0@(13)	| low byte: latch write value
+	movw	d0,a0@(11)	| ...and write it into timer
+	tstw	d0		| already positive?
+	jcs	Ldrclockretry	| we lost more than one tick, call us again.
+
+	moveml	sp@+,#0x0303
+	addql	#1,_cnt+V_INTR
+	jra	rei
+
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 	.globl _DraCoIntr
 _DraCoIntr:
@@ -2265,6 +2297,20 @@ nullrp:	.long	0x7fff0001
 zero:	.long	0
 Ldorebootend:
 
+	.align 2
+	.globl _DELAY
+	.globl _delay
+	nop
+_delay:
+_DELAY:
+	movql #10,d1		| 2 +2
+	movl sp@(4),d0		| 4 +4
+	lsll d1,d0		| 8 +2
+	movl _delaydivisor,d1	| A +6
+Ldelay:				| longword aligned again.
+	subl d1,d0
+	jcc Ldelay
+	rts
 
 	.data
 	.space	NBPG
@@ -2278,6 +2324,12 @@ _cold:
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0		| KVA of proc0 u-area
+	.globl _delaydivisor
+_delaydivisor:
+	.long	12		| should be enough for 80 MHz 68060
+				| will be adapted to other CPUs in
+				| start_c_cleanup and calibrated
+				| at clock attach time.
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:
