@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.145 2004/04/29 04:04:42 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.146 2004/04/29 04:07:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1492,3 +1492,9 @@ share/man/man4/options.4			1.237-1.238
 
 	Document the sysctl related options.
 	[atatat, ticket #205]
+
+sys/compat/netbsd32/netbsd32_sysctl.c		1.15
+sys/compat/linux/common/linux_sysctl.c		1.14
+
+	Be consistent about using sysc_init_field()
+	[atatat, ticket #206]
