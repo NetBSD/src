@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.70 2000/08/26 03:34:37 sommerfeld Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.71 2000/08/26 04:01:16 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -528,7 +528,7 @@ hardclock(struct clockframe *frame)
 	if (stathz == 0)
 		statclock(frame);
 	if ((--ci->ci_schedstate.spc_rrticks) <= 0)
-		roundrobin();
+		roundrobin(ci);
 	
 #if defined(MULTIPROCESSOR)
 	/*
