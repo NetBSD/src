@@ -1,4 +1,4 @@
-/*	$NetBSD: gifconfig.c,v 1.2 1999/07/06 13:21:12 itojun Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.3 1999/07/30 18:59:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -149,7 +149,7 @@ struct afswtch {
 	void (*af_status) __P((int));
 	void (*af_getaddr) __P((char *, int));
 	void (*af_getprefix) __P((char *, int));
-	int af_pifaddr;
+	u_long af_pifaddr;
 	caddr_t af_addreq;
 	caddr_t af_req;
 } afs[] = {
@@ -534,7 +534,8 @@ phys_status(force)
 	char psrcaddr[256];
 	char pdstaddr[256];
 	char hostname[NI_MAXHOST];
-	int srccmd, dstcmd, flags = NI_NUMERICHOST;
+	u_long srccmd, dstcmd;
+	int flags = NI_NUMERICHOST;
 	struct ifreq *ifrp;
 	char *ver = "";
 
