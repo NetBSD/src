@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.4 2002/04/16 17:33:56 uch Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.5 2002/04/20 19:59:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,16 @@
 
 #ifndef _SH3_CPUTYPES_H_
 #define _SH3_CPUTYPES_H_
+
 #ifdef _KERNEL
+
+#if defined(_KERNEL_OPT)
+#include "opt_cputype.h"
+#elif defined(_LKM)
+/* If building an LKM, include both SH3 and SH4 support. */
+#define	SH3
+#define	SH4
+#endif
 
 #define CPU_ARCH_SH3		3
 #define CPU_ARCH_SH4		4
@@ -46,6 +55,7 @@
 #define CPU_PRODUCT_7708R	3
 #define CPU_PRODUCT_7709	4
 #define CPU_PRODUCT_7709A	5
+
 /* SH4 series */
 #define CPU_PRODUCT_7750	6
 #define CPU_PRODUCT_7750S	7
@@ -72,5 +82,7 @@ extern int cpu_product;
 #error "define SH3 and/or SH4"
 #endif
 #endif /* !_LOCORE */
+
 #endif /* _KERNEL */
+
 #endif /* !_SH3_CPUTYPES_H_ */
