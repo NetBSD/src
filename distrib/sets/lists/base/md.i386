@@ -1,4 +1,5 @@
 ./sbin/fdisk
+./sbin/ldconfig
 ./usr/bin/fdformat
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
