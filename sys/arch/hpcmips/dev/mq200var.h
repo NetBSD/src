@@ -1,7 +1,7 @@
-/*	$NetBSD: mq200var.h,v 1.4 2001/03/09 08:54:19 sato Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.5 2001/03/25 13:06:53 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2000 Takemura Shin
+ * Copyright (c) 2000, 2001 TAKEMURA Shin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,6 +59,26 @@ struct mq200_softc {
 	int			sc_mq200pwstate; /* mq200 power state */
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
+
+	int			sc_baseclock;
+#define MQ200_SC_GC1_ENABLE	(1<<0)	/* XXX, You can't change this	*/
+#define MQ200_SC_GC2_ENABLE	(1<<1)	/* XXX, You can't change this	*/
+#define MQ200_SC_GC_MASK	(MQ200_SC_GC1_ENABLE|MQ200_SC_GC2_ENABLE)
+	char			sc_flags;
+	int			sc_width[2], sc_height[2];
+	const struct mq200_md_param	*sc_md;
+	const struct mq200_crt_param	*sc_crt;
+
+#define MQ200_I_DCMISC	0
+#define MQ200_I_PLL(n)	(MQ200_I_DCMISC + (n) - 1)	/* 1, 2	*/
+#define MQ200_I_PMC	3
+#define MQ200_I_MM01	4
+#define MQ200_I_GCC(n)	(5 + (n))			/* 5, 6	*/
+#define MQ200_I_MAX	7
+	struct mq200_regctx {
+		int		offset;
+		u_int32_t	val;
+	} sc_regctxs[MQ200_I_MAX];
 };
 
 int	mq200_probe	__P((bus_space_tag_t, bus_space_handle_t));
