@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.2 2002/02/18 03:43:29 uwe Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.3 2002/03/01 11:49:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -77,15 +77,6 @@ struct ebus_regs {
 	u_int32_t	lo;
 	u_int32_t	size;
 };
-
-/*
- * XXX: uwe: on sparc32 it's not really a paddr, so this name is
- * misleading.  Since I don't have a sparc64 to test on, I keep this
- * old define here and add what I think is a correct one below.
- * sparc64 code should be switched to use the new one and the old one
- * (and this comment) shall be removed.
- */
-#define	EBUS_PADDR_FROM_REG(reg)	((((paddr_t)((reg)->hi)) << 32UL) | ((paddr_t)(reg)->lo))
 
 #define	EBUS_ADDR_FROM_REG(reg)		BUS_ADDR((reg)->hi, (reg)->lo)
 
