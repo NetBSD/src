@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.9 1996/10/10 23:22:06 christos Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.10 1996/10/13 02:04:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -132,7 +132,7 @@ tpcons_pcbconnect(v, nam)
 	if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CCONS]) {
-			kprintf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
+			printf("tpcons_pcbconnect: no pklcd; returns 0x%x\n", error);
 		}
 #endif
 		return ENOBUFS;
@@ -186,7 +186,7 @@ tpcons_ctlinput(cmd, siso, v)
 #endif
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_DATA]) {
-					kprintf("FAKE ACK seq 0x%x cdt 1\n", seq);
+					printf("FAKE ACK seq 0x%x cdt 1\n", seq);
 				}
 #endif
 				E.TP_ATTR(AK_TPDU).e_cdt = 1;
@@ -244,7 +244,7 @@ tpcons_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		kprintf("tpcons_input before tp_input(m 0x%x)\n", m);
+		printf("tpcons_input before tp_input(m 0x%x)\n", m);
 		dump_buf(m, 12 + m->m_len);
 	}
 #endif
@@ -288,7 +288,7 @@ tpcons_output(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		kprintf(
+		printf(
 		  "tpcons_output(isop 0x%x, m 0x%x, len 0x%x socket 0x%x\n",
 		       isop, m0, datalen, isop->isop_socket);
 	}
@@ -307,7 +307,7 @@ tpcons_output(m0, va_alist)
 		if ((isop->isop_chan = (caddr_t) pk_attach((struct socket *) 0)) == 0) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CCONS]) {
-				kprintf("tpcons_output: no pklcd\n");
+				printf("tpcons_output: no pklcd\n");
 			}
 #endif
 			error = ENOBUFS;
@@ -317,7 +317,7 @@ tpcons_output(m0, va_alist)
 			isop->isop_chan = 0;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CCONS]) {
-				kprintf("tpcons_output: can't reconnect\n");
+				printf("tpcons_output: can't reconnect\n");
 			}
 #endif
 		}

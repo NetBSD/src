@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.7 1996/10/10 23:21:49 christos Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.8 1996/10/13 02:04:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -111,27 +111,27 @@ main()
 	a.isoa_afi = AFI_37;
 	a.isoa_u.addr_37 = u_37;
 	a.isoa_len = 17;
-	kprintf("type 37: %s\n", clnp_iso_addrp(&a));
+	printf("type 37: %s\n", clnp_iso_addrp(&a));
 
 	a.isoa_afi = AFI_OSINET;
 	a.isoa_u.addr_osinet = u_osinet;
 	a.isoa_len = 14;
-	kprintf("type osinet: %s\n", clnp_iso_addrp(&a));
+	printf("type osinet: %s\n", clnp_iso_addrp(&a));
 
 	a.isoa_afi = AFI_RFC986;
 	a.isoa_u.addr_rfc986 = u_rfc986;
 	a.isoa_len = 9;
-	kprintf("type rfc986: %s\n", clnp_iso_addrp(&a));
+	printf("type rfc986: %s\n", clnp_iso_addrp(&a));
 
 	a.isoa_afi = 12;
 	a.isoa_u.addr_rfc986 = u_rfc986;
 	a.isoa_len = 9;
-	kprintf("type bad afi: %s\n", clnp_iso_addrp(&a));
+	printf("type bad afi: %s\n", clnp_iso_addrp(&a));
 
 	a.isoa_afi = AFI_RFC986;
 	a.isoa_u.addr_rfc986 = u_bad;
 	a.isoa_len = 9;
-	kprintf("type bad idi: %s\n", clnp_iso_addrp(&a));
+	printf("type bad idi: %s\n", clnp_iso_addrp(&a));
 	return 0;
 }
 #endif				/* TESTDEBUG */
@@ -179,7 +179,7 @@ clnp_iso_addrp(isoa)
 #endif
 
 	/* print length */
-	ksprintf(iso_addr_b, "[%d] ", isoa->isoa_len);
+	sprintf(iso_addr_b, "[%d] ", isoa->isoa_len);
 
 	/* set cp to end of what we have */
 	cp = iso_addr_b;
@@ -225,7 +225,7 @@ clnp_iso_addrp(isoa)
 			cp = clnp_hexp(&o986->o986_vers, 1, cp);
 			*cp++ = DELIM;
 #ifdef  vax
-			ksprintf(cp, "%d.%d.%d.%d.%d",
+			sprintf(cp, "%d.%d.%d.%d.%d",
 			    o986->o986_inetaddr[0] & 0xff,
 			    o986->o986_inetaddr[1] & 0xff,
 			    o986->o986_inetaddr[2] & 0xff,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.12 1996/10/10 23:21:57 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.13 1996/10/13 02:04:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -141,7 +141,7 @@ cltp_input(m0, va_alist)
 			continue;
 
 		default:
-			kprintf("clts: unknown option (%x)\n", up[0]);
+			printf("clts: unknown option (%x)\n", up[0]);
 			cltpstat.cltps_hdrops++;
 			goto bad;
 		}
