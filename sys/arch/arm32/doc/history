@@ -415,6 +415,37 @@
 	- Added generic NCR5380 SCSI driver code
 	- integrating in alpha version of the oak SCSI driver
 
-26/01/95
+26/01/96
 	- merged in latest updates from the NetBSD-current source tree
-	-
+
+29/01/96
+	- code updated for merging into NetBSD source tree
+
+02/02/96
+	- assembly symbol file now names assym.h instead of assym.s
+	- The symbol LOCORE has been replaced with _LOCORE
+	- ramdisc loading code in now compiled in conditionally on
+	  RAMDISK_HOOKS
+	- Further development of hydrabus device.
+	- cpus can noe be attached to both the mainbus and the hydrabus
+	- hooks for hydrabus device updated in pmap.c syscall.c and
+	  machdep.c
+	- Extra comments added in exception.S
+	- sizeof(struct trapframe) now defined in assym.h
+	- register fixup for data transfer instruction aborts now handles
+	  LDC/STC instructions i.e. hardware executed LDF/STF
+	- configuration files updated for latest devices
+	- fixed use of mkdepend in makefile
+	- fixed the bug that caused panics when issuing the mode change
+	  ioctl to the vidcvideo device
+	- console code version number updated
+	- Updated armfpe_post_proc() to take a trapframe pointer as the
+	  second argument
+	- updated the armfpe_post_proc_glue() code to fake a trapframe
+	  structure from the FPE frame before calling the post proc handler
+	  so that sendsig has a valid trapframe in p->p_md.md_regs
+	- updated the armfpe_post_proc_glue() code to patch the FPE frame
+	  with data from the trapframe on return from the post proc handler.
+	- signal delivery is now working during FP instructions.
+	- mondef code resurrected and renamed to setdisplay and moved to the
+	  stand directory.
