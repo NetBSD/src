@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.37 2000/04/09 05:29:28 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.38 2000/04/09 06:28:28 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -255,7 +255,8 @@ svr4_to_native_sigaltstack(sss, bss)
 	if ((sss->ss_flags & SVR4_SS_ONSTACK) != 0)
 		bss->ss_flags |= SS_ONSTACK;
 	if ((sss->ss_flags & ~SVR4_SS_ALLBITS) != 0)
-/*XXX*/		printf("svr4_to_native_sigaltstack: extra bits ignored\n");
+/*XXX*/		printf("svr4_to_native_sigaltstack: extra bits %x ignored\n",
+		    sss->ss_flags & ~SVR4_SS_ALLBITS);
 }
 
 void
