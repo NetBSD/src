@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.60 2003/10/05 14:44:55 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.61 2003/10/05 14:50:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.60 2003/10/05 14:44:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.61 2003/10/05 14:50:09 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1031,7 +1031,7 @@ tl_intr(v)
 			Rx = sc->active_Rx;
 			sc->active_Rx = Rx->next;
 			bus_dmamap_sync(sc->tl_dmatag, Rx->m_dmamap, 0,
-			    MCLBYTES, BUS_DMASYNC_POSTREAD);
+			    Rx->m_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->tl_dmatag, Rx->m_dmamap);
 			m = Rx->m;
 			size = le32toh(Rx->hw_list->stat) >> 16;
@@ -1138,7 +1138,7 @@ tl_intr(v)
 #endif
 			Tx->hw_list->stat = 0;
 			bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
-			    MCLBYTES, BUS_DMASYNC_POSTWRITE);
+			    Tx->m_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->tl_dmatag, Tx->m_dmamap);
 			m_freem(Tx->m);
 			Tx->m = NULL;
@@ -1346,7 +1346,8 @@ tbdinit:
 		Tx->hw_list->seg[segment].data_count =
 		    htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
 	}
-	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0, size,
+	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
+	    Tx->m_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* We are at end of mbuf chain. check the size and
 	 * see if it needs to be extended
@@ -1504,7 +1505,7 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 		return 0;
 	}
 	bus_dmamap_sync(sc->tl_dmatag, Rx->m_dmamap, 0,
-	    MCLBYTES, BUS_DMASYNC_PREREAD);
+	    Rx->m_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	/*
 	 * Move the data pointer up so that the incoming data packet
 	 * will be 32-bit aligned.
