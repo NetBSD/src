@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 1995/07/04 18:55:18 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 1995/07/06 03:44:46 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -419,7 +419,7 @@ pmap_bootstrap(nextpa, firstpa)
 
 	if (mac68k_vidlog)
 		mac68k_vidlog = (u_int32_t)
-				mac68k_ptob(nptpages*NPTEPG - NBMAPSIZE);
+				mac68k_ptob(nptpages*NPTEPG - VIDMAPSIZE);
 {
 	int		len;
 	u_long	offset;
