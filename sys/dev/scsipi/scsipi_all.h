@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.9 1998/07/01 17:04:31 mjacob Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.10 1998/07/11 00:52:10 mjacob Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -116,7 +116,7 @@ struct scsipi_sense_data {
 };
 
 #define	SKEY_NO_SENSE		0x00
-#define	SKEY_RECOVERABLE_ERROR	0x01
+#define	SKEY_RECOVERED_ERROR	0x01
 #define	SKEY_NOT_READY		0x02
 #define	SKEY_MEDIUM_ERROR	0x03
 #define	SKEY_HARDWARE_ERROR	0x04
