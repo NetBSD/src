@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#	$NetBSD: veriexec,v 1.1 2004/01/14 06:53:50 blymn Exp $
+#
+
+# PROVIDE: veriexec
+# REQUIRE: mountcritlocal
+# BEFORE:  securelevel
+
+. /etc/rc.subr
+
+name="veriexec"
+start_cmd="veriexec_start"
+
+veriexec_start()
+{
+	echo -n "Loading fingerprints..."
+	/sbin/veriexecctl /etc/signatures
+	echo " done."
+}
+
+load_rc_config $name
+run_rc_command "$1"
