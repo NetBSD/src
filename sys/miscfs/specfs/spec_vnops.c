@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56.2.4 2001/09/27 14:52:26 fvdl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56.2.5 2001/09/28 20:39:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -206,18 +206,14 @@ spec_open(void *v)
 		}
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
-		/*
-		 * XXXXXfvdl why is the vnode unlocked for
-		 * a character device open but not for a block device??
-		 * This can't be right.
-		 */
-		VOP_UNLOCK(vp, 0);
+
 		if (iscloningcdev(dev) && vpp != NULL) {
 			error = spec_clonevnode(vp, vpp, dev, VCHR, p);
 			if (error != 0)
 				return error;
 			vp = *vpp;
-		}
+		} else
+			VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[maj].d_open)(vp, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
@@ -243,7 +239,6 @@ spec_open(void *v)
 		 * a character device open but not for a block device??
 		 * This can't be right.
 		 */
-		VOP_UNLOCK(vp, 0);
 		if (iscloningbdev(dev) && vpp != NULL) {
 			error = spec_clonevnode(vp, vpp, dev, VBLK, p);
 			if (error != 0)
@@ -251,17 +246,14 @@ spec_open(void *v)
 			vp = *vpp;
 		}
 		error = (*bdevsw[maj].d_open)(vp, ap->a_mode, S_IFBLK, p);
-		if (error) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		if (error)
 			return error;
-		}
 		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
 			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;
 		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return 0;
 
 	case VNON:
@@ -605,13 +597,16 @@ spec_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
-	int (*devclose) __P((struct vnode *, int, int, struct proc *));
-	int mode, error, count, flags, flags1;
+	int error, count, flags, fflag;
 
 	count = vcount(vp);
 	simple_lock(&vp->v_interlock);
 	flags = vp->v_flag;
 	simple_unlock(&vp->v_interlock);
+
+	fflag = ap->a_fflag;
+	if (flags & VXLOCK)
+		fflag |= FNONBLOCK;
 
 	switch (vp->v_type) {
 
@@ -640,8 +635,11 @@ spec_close(void *v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		devclose = cdevsw[major(dev)].d_close;
-		mode = S_IFCHR;
+		if ((flags & VXLOCK) == 0)
+			VOP_UNLOCK(vp, 0);
+		error = cdevsw[major(dev)].d_close(vp, fflag, S_IFCHR, ap->a_p);
+		if ((flags & VXLOCK) == 0)
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
 	case VBLK:
@@ -664,15 +662,12 @@ spec_close(void *v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		devclose = bdevsw[major(dev)].d_close;
-		mode = S_IFBLK;
+		error = bdevsw[major(dev)].d_close(vp, fflag, S_IFBLK, ap->a_p);
 		break;
 
 	default:
 		panic("spec_close: not special");
 	}
-
-	error =  (*devclose)(vp, flags1, mode, ap->a_p);
 
 	return (error);
 }
@@ -865,7 +860,8 @@ spec_islocked(void *v)
 
 /*
  * Create a clone of a vnode.
- * vp is passed in unlocked, it's locked on exit.
+ * XXX convoluted locking code, because if the inconsistency between
+ * locking for VCHR and VBLK vnodes.
  */
 static int
 spec_clonevnode(struct vnode *vp, struct vnode **vpp, dev_t dev, int type,
@@ -873,6 +869,8 @@ spec_clonevnode(struct vnode *vp, struct vnode **vpp, dev_t dev, int type,
 {
 	int error;
 	struct vattr *vap;
+
+	VOP_UNLOCK(vp, 0);
 
 	error = type == VCHR ? cdevvp(dev, vpp) : bdevvp(dev, vpp);
 	if (error != 0)
@@ -886,14 +884,18 @@ spec_clonevnode(struct vnode *vp, struct vnode **vpp, dev_t dev, int type,
 	}
 out:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (type == VBLK)
+		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	/*
 	 * XXX check if vnode was revoked while sleeping for the lock.
+	 * Can only happen in the VCHR case.
 	 */
 	if ((*vpp)->v_type == VBAD) {
-		vrele(*vpp);
+		vput(*vpp);
 		free(vap, M_VNODE);
 		return EIO;
 	}
+
 	if (error == 0) {
 		(*vpp)->v_cloneattr = vap;
 		(*vpp)->v_flag |= VCLONED;
