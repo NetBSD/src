@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.5 2000/03/23 07:01:47 thorpej Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.6 2000/05/09 22:51:34 pk Exp $	*/
 
 /*
  *
@@ -152,6 +152,8 @@ struct xdc_softc {
 	struct xd_iorq *reqs;		/* i/o requests */
 	struct xd_iopb *iopbase;	/* iopb base addr (maps iopb->iorq) */
 	struct xd_iopb *dvmaiopb;	/* iopb base in DVMA space, not kvm */
+	bus_dmamap_t iopmap;		/* IOPB DMA handle */
+	bus_dmamap_t auxmap;		/* auxiliary DMA handle */
 	struct buf_queue sc_wq;		/* queued IOPBs for this controller */
 	char freereq[XDC_MAXIOPB];	/* free list (stack) */
 	char waitq[XDC_MAXIOPB];	/* wait queue */

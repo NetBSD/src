@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.6 2000/03/23 07:01:47 thorpej Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.7 2000/05/09 22:51:35 pk Exp $	*/
 
 /*
  *
@@ -137,29 +137,31 @@ struct xy_softc {
  */
 
 struct xyc_softc {
-	struct device sc_dev;            /* device struct, reqd by autoconf */
-	struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
+	struct device sc_dev;		/* device struct, reqd by autoconf */
+	struct evcnt sc_intrcnt;	/* event counter (for vmstat -i) */
 
 	struct callout sc_tick_ch;
 
-	struct xyc *xyc;                 /* vaddr of vme registers */
+	struct xyc *xyc;		/* vaddr of vme registers */
 
 	struct xy_softc *sc_drives[XYC_MAXDEV]; /* drives on this controller */
-	int ipl;                         /* interrupt level */
-	int vector;                      /* interrupt vector */
-	bus_dma_tag_t dmatag;	 	 /* Bus DMA tag */
+	int ipl;			/* interrupt level */
+	int vector;			/* interrupt vector */
+	bus_dma_tag_t dmatag;		/* Bus DMA tag */
 
-	struct xy_iorq *reqs;            /* i/o requests */
-	struct xy_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
-	struct xy_iopb *dvmaiopb;        /* iopb base in DVMA space, not kvm */
+	struct xy_iorq *reqs;		/* i/o requests */
+	struct xy_iopb *iopbase;	/* iopb base addr (maps iopb->iorq) */
+	struct xy_iopb *dvmaiopb;	/* iopb base in DVMA space, not kvm */
+	bus_dmamap_t iopmap;		/* IOPB DMA handle */
+	bus_dmamap_t auxmap;		/* auxiliary DMA handle */
 
-	struct xy_iorq *ciorq;		 /* controller's iorq */
-	struct xy_iopb *ciopb;		 /* controller's iopb */
+	struct xy_iorq *ciorq;		/* controller's iorq */
+	struct xy_iopb *ciopb;		/* controller's iopb */
 
-	int xy_hand;			 /* hand */
+	int xy_hand;			/* hand */
 	struct xy_iorq *xy_chain[XYC_MAXIOPB];
-				   /* current chain */
-	int no_ols;		   /* disable overlap seek for stupid 450s */
+					/* current chain */
+	int no_ols;			/* disable overlap seek for stupid 450s */
 };
 
 /*

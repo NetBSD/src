@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.18 2000/04/10 02:16:16 chs Exp $	*/
+/*	$NetBSD: xy.c,v 1.19 2000/05/09 22:51:34 pk Exp $	*/
 
 /*
  *
@@ -170,6 +170,10 @@ int	xyc_submit_iorq __P((struct xyc_softc *, struct xy_iorq *, int));
 void	xyc_tick __P((void *));
 int	xyc_unbusy __P((struct xyc *, int));
 void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
+int	xy_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int *, bus_size_t, caddr_t *, bus_addr_t *);
+void	xy_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int, bus_size_t, caddr_t);
 
 /* machine interrupt hook */
 int	xycintr __P((void *));
@@ -285,6 +289,62 @@ xygetdisklabel(xy, b)
  */
 
 /*
+ * Shorthand for allocating, mapping and loading a DMA buffer
+ */
+int
+xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			*nsegp;
+	bus_size_t		len;
+	caddr_t			*kvap;
+	bus_addr_t		*dmap;
+{
+	int nseg;
+	int error;
+
+	if ((error = bus_dmamem_alloc(tag, len, NBPG, 0,
+				      seg, 1, &nseg, BUS_DMA_NOWAIT)) != 0) {
+		return (error);
+	}
+
+	if ((error = bus_dmamap_load_raw(tag, map,
+					seg, nseg, len, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	if ((error = bus_dmamem_map(tag, seg, nseg,
+				    len, kvap,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		bus_dmamap_unload(tag, map);
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	*dmap = map->dm_segs[0].ds_addr;
+	*nsegp = nseg;
+	return (0);
+}
+
+void
+xy_dmamem_free(tag, map, seg, nseg, len, kva)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			nseg;
+	bus_size_t		len;
+	caddr_t			kva;
+{
+
+	bus_dmamap_unload(tag, map);
+	bus_dmamem_unmap(tag, kva, len);
+	bus_dmamem_free(tag, seg, nseg);
+}
+
+
+/*
  * a u t o c o n f i g   f u n c t i o n s
  */
 
@@ -341,7 +401,7 @@ xycattach(parent, self, aux)
 	vme_am_t		mod;
 	struct xyc_softc	*xyc = (void *) self;
 	struct xyc_attach_args	xa;
-	int			lcv, res, pbsz, error;
+	int			lcv, res, error;
 	bus_dma_segment_t	seg;
 	int			rseg;
 	vme_mapresc_t resc;
@@ -372,38 +432,45 @@ xycattach(parent, self, aux)
  	 * the same 64K region.
 	 */
 
-	pbsz = XYC_MAXIOPB * sizeof(struct xy_iopb);
-
-	error = bus_dmamem_alloc(
-			xyc->dmatag,
-			pbsz,		/* size */
-			64*1024,	/* boundary */
-			0,		/* alignment */
-			&seg,
-			1,		/* # of segments */
-			&rseg,		/* actual # of segments */
-			BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: DMA buffer map error %d\n",
+	/* Get DMA handle for misc. transfers */
+	if ((error = bus_dmamap_create(
+				xyc->dmatag,
+				MAXPHYS,
+				1,		/* nsegments */
+				MAXPHYS,
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&xyc->auxmap)) != 0) {
+		printf("%s: DMA buffer map create error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
-	xyc->dvmaiopb = (struct xy_iopb *)seg.ds_addr;
 
-	error = bus_dmamem_map(
-			xyc->dmatag,
-			&seg,
-			rseg,
-			XYC_MAXIOPB * sizeof(struct xy_iopb),
-			(caddr_t *)&xyc->iopbase,
-			BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		bus_dmamem_free(xyc->dmatag, &seg, rseg);
-		printf("%s: DMA buffer map error %d\n",
+	/* Get DMA handle for mapping iorq descriptors */
+	if ((error = bus_dmamap_create(
+				xyc->dmatag,
+				XYC_MAXIOPB * sizeof(struct xy_iopb),
+				1,		/* nsegments */
+				XYC_MAXIOPB * sizeof(struct xy_iopb),
+				64*1024,	/* boundary */
+				BUS_DMA_NOWAIT,
+				&xyc->iopmap)) != 0) {
+		printf("%s: DMA buffer map create error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
-	bzero(xyc->iopbase, pbsz);
+
+	/* Get DMA buffer for iorq descriptors */
+	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->iopmap, &seg, &rseg,
+				     XYC_MAXIOPB * sizeof(struct xy_iopb),
+				     (caddr_t *)&xyc->iopbase,
+				     (bus_addr_t *)&xyc->dvmaiopb)) != 0) {
+		printf("%s: DMA buffer alloc error %d\n",
+			xyc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
@@ -583,28 +650,16 @@ xyattach(parent, self, aux)
 	newstate = XY_DRIVE_UNKNOWN;
 
 	buf = NULL;
-	error = bus_dmamem_alloc(xyc->dmatag, XYFM_BPS, NBPG, 0,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->auxmap, &seg, &rseg,
+				     XYFM_BPS,
+				     (caddr_t *)&buf,
+				     (bus_addr_t *)&dmaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
-			xy->sc_dev.dv_xname, error);
-		goto done;
+			xyc->sc_dev.dv_xname, error);
+		return;
 	}
-	dmaddr = (caddr_t)seg.ds_addr;
-
-	error = bus_dmamem_map(xyc->dmatag, &seg, rseg, XYFM_BPS,
-				&buf,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: DMA buffer alloc error %d\n",
-			xy->sc_dev.dv_xname, error);
-		bus_dmamem_free(xyc->dmatag, &seg, rseg);
-		goto done;
-	}
-
 
 	/* first try and reset the drive */
-
 	error = xyc_cmd(xyc, XYCMD_RST, 0, xy->xy_drive, 0, 0, 0, fmode);
 	XYC_DONE(xyc, error);
 	if (error == XY_ERR_DNRY) {
@@ -744,8 +799,8 @@ xyattach(parent, self, aux)
 
 done:
 	if (buf != NULL) {
-		bus_dmamem_unmap(xyc->dmatag, buf, XYFM_BPS);
-		bus_dmamem_free(xyc->dmatag, &seg, rseg);
+		xy_dmamem_free(xyc->dmatag, xyc->auxmap,
+				&seg, rseg, XYFM_BPS, buf);
 	}
 
 	xy->state = newstate;
@@ -2124,20 +2179,13 @@ xyc_ioctlcmd(xy, dev, xio)
 
 	/* create DVMA buffer for request if needed */
 	if (xio->dlen) {
-		error = bus_dmamem_alloc(xycsc->dmatag, xio->dlen, NBPG, 0,
-					 &seg, 1, &rseg, BUS_DMA_WAITOK);
-		if (error) {
+		if ((error = xy_dmamem_alloc(xycsc->dmatag, xycsc->auxmap,
+					     &seg, &rseg,
+					     xio->dlen, &buf,
+					     (bus_addr_t *)&dvmabuf)) != 0) {
 			return (error);
 		}
-		dvmabuf = (caddr_t)seg.ds_addr;
 
-		error = bus_dmamem_map(xycsc->dmatag, &seg, rseg, xio->dlen,
-					&buf,
-					BUS_DMA_WAITOK|BUS_DMA_COHERENT);
-		if (error) {
-			bus_dmamem_free(xycsc->dmatag, &seg, rseg);
-			return (error);
-		}
 		if (xio->cmd == XYCMD_WR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {
 				bus_dmamem_unmap(xycsc->dmatag, buf, xio->dlen);
@@ -2166,8 +2214,8 @@ xyc_ioctlcmd(xy, dev, xio)
 done:
 	splx(s);
 	if (dvmabuf) {
-		bus_dmamem_unmap(xycsc->dmatag, buf, xio->dlen);
-		bus_dmamem_free(xycsc->dmatag, &seg, rseg);
+		xy_dmamem_free(xycsc->dmatag, xycsc->auxmap, &seg, rseg,
+				xio->dlen, buf);
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.10 2000/04/05 05:54:02 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.11 2000/05/09 22:51:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ hme_config(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
+	bus_dma_tag_t dmatag = sc->sc_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
@@ -200,35 +201,43 @@ hme_config(sc)
 		2048 +					/* RX descriptors */
 		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
 		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
-	if ((error = bus_dmamem_alloc(sc->sc_dmatag, size,
+
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, NBPG,
+				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n",
+			sc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/* Allocate DMA buffer */
+	if ((error = bus_dmamem_alloc(dmatag, size,
 				      2048, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			sc->sc_dev.dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
-	/* Map DMA memory in CPU adressable space */
-	if ((error = bus_dmamem_map(sc->sc_dmatag, &seg, rseg, size,
+	/* Load the buffer */
+	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
+				&seg, rseg, size, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			sc->sc_dev.dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
+
+	/* Map DMA memory in CPU addressable space */
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 				    &sc->sc_rb.rb_membase,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			sc->sc_dev.dv_xname, error);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+		bus_dmamap_unload(dmatag, sc->sc_dmamap);
+		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
-
-#if 0
-	/*
-	 * Install default copy routines if not supplied.
-	 */
-	if (sc->sc_copytobuf == NULL)
-		sc->sc_copytobuf = hme_copytobuf_contig;
-
-	if (sc->sc_copyfrombuf == NULL)
-		sc->sc_copyfrombuf = hme_copyfrombuf_contig;
-#endif
 
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.20 2000/04/10 02:16:15 chs Exp $	*/
+/*	$NetBSD: xd.c,v 1.21 2000/05/09 22:51:34 pk Exp $	*/
 
 /*
  *
@@ -228,6 +228,11 @@ int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
 int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
 void	xdc_tick __P((void *));
 void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+int	xd_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int *, bus_size_t, caddr_t *, bus_addr_t *);
+void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int, bus_size_t, caddr_t);
+
 
 /* machine interrupt hook */
 int	xdcintr __P((void *));
@@ -370,6 +375,62 @@ xdgetdisklabel(xd, b)
  */
 
 /*
+ * Shorthand for allocating, mapping and loading a DMA buffer
+ */
+int
+xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			*nsegp;
+	bus_size_t		len;
+	caddr_t			*kvap;
+	bus_addr_t		*dmap;
+{
+	int nseg;
+	int error;
+
+	if ((error = bus_dmamem_alloc(tag, len, NBPG, 0,
+				      seg, 1, &nseg, BUS_DMA_NOWAIT)) != 0) {
+		return (error);
+	}
+
+	if ((error = bus_dmamap_load_raw(tag, map,
+					seg, nseg, len, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	if ((error = bus_dmamem_map(tag, seg, nseg,
+				    len, kvap,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		bus_dmamap_unload(tag, map);
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	*dmap = map->dm_segs[0].ds_addr;
+	*nsegp = nseg;
+	return (0);
+}
+
+void
+xd_dmamem_free(tag, map, seg, nseg, len, kva)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			nseg;
+	bus_size_t		len;
+	caddr_t			kva;
+{
+
+	bus_dmamap_unload(tag, map);
+	bus_dmamem_unmap(tag, kva, len);
+	bus_dmamem_free(tag, seg, nseg);
+}
+
+
+/*
  * a u t o c o n f i g   f u n c t i o n s
  */
 
@@ -458,33 +519,52 @@ xdcattach(parent, self, aux)
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
 
-	/* allocate and zero buffers
+	/*
+	 * allocate and zero buffers
 	 *
 	 * note: we simplify the code by allocating the max number of iopbs and
 	 * iorq's up front.   thus, we avoid linked lists and the costs
-	 * associated with them in exchange for wasting a little memory. */
+	 * associated with them in exchange for wasting a little memory.
+	 */
 
-	error = bus_dmamem_alloc(xdc->dmatag,
-				 XDC_MAXIOPB * sizeof(struct xd_iopb),
-				 NBPG, 0,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+	/* Get DMA handle for misc. transfers */
+	if ((error = bus_dmamap_create(
+				xdc->dmatag,
+				MAXPHYS,
+				1,		/* nsegments */
+				MAXPHYS,
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&xdc->auxmap)) != 0) {
+		printf("%s: DMA buffer map create error %d\n",
+			xdc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/* Get DMA handle for mapping iorq descriptors */
+	if ((error = bus_dmamap_create(
+				xdc->dmatag,
+				XDC_MAXIOPB * sizeof(struct xd_iopb),
+				1,		/* nsegments */
+				XDC_MAXIOPB * sizeof(struct xd_iopb),
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&xdc->iopmap)) != 0) {
+		printf("%s: DMA buffer map create error %d\n",
+			xdc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/* Get DMA buffer for iorq descriptors */
+	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->iopmap, &seg, &rseg,
+				     XDC_MAXIOPB * sizeof(struct xd_iopb),
+				     (caddr_t *)&xdc->iopbase,
+				     (bus_addr_t *)&xdc->dvmaiopb)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
-	xdc->dvmaiopb = (struct xd_iopb *)seg.ds_addr;
 
-	error = bus_dmamem_map(xdc->dmatag, &seg, rseg,
-				XDC_MAXIOPB * sizeof(struct xd_iopb),
-				(caddr_t *)&xdc->iopbase,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
-		printf("%s: DMA buffer map error %d\n",
-			xdc->sc_dev.dv_xname, error);
-		return;
-	}
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
 	xdc->reqs = (struct xd_iorq *)
@@ -541,7 +621,7 @@ xdcattach(parent, self, aux)
 		printf(": couldn't read controller params\n");
 		return;		/* shouldn't ever happen */
 	}
-	ctl = (struct xd_iopb_ctrl *) & xdc->iopbase[rqno];
+	ctl = (struct xd_iopb_ctrl *) &xdc->iopbase[rqno];
 	if (ctl->ctype != XDCT_753) {
 		if (xdc->reqs[rqno].errno)
 			printf(": %s: ", xdc_e2str(xdc->reqs[rqno].errno));
@@ -666,25 +746,14 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_UNKNOWN;
 
 	buf = NULL;
-	error = bus_dmamem_alloc(xdc->dmatag, XDFM_BPS, NBPG, 0,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->auxmap, &seg, &rseg,
+				     XDFM_BPS,
+				     (caddr_t *)&buf,
+				     (bus_addr_t *)&dmaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
-			xd->sc_dev.dv_xname, error);
-		goto done;
+			xdc->sc_dev.dv_xname, error);
+		return;
 	}
-	dmaddr = (caddr_t)seg.ds_addr;
-
-	error = bus_dmamem_map(xdc->dmatag, &seg, rseg, XDFM_BPS,
-				&buf,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: DMA buffer alloc error %d\n",
-			xd->sc_dev.dv_xname, error);
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
-		goto done;
-	}
-
 
 	/* first try and reset the drive */
 
@@ -713,7 +782,7 @@ xdattach(parent, self, aux)
 	/* get drive parameters */
 	rqno = xdc_cmd(xdc, XDCMD_RDP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	if (rqno != XD_ERR_FAIL) {
-		driopb = (struct xd_iopb_drive *) & xdc->iopbase[rqno];
+		driopb = (struct xd_iopb_drive *) &xdc->iopbase[rqno];
 		spt = driopb->sectpertrk;
 	}
 	XDC_DONE(xdc, rqno, error);
@@ -818,8 +887,8 @@ xdattach(parent, self, aux)
 
 done:
 	if (buf != NULL) {
-		bus_dmamem_unmap(xdc->dmatag, buf, XDFM_BPS);
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
+		xd_dmamem_free(xdc->dmatag, xdc->auxmap,
+				&seg, rseg, XDFM_BPS, buf);
 	}
 
 	xd->state = newstate;
@@ -2344,20 +2413,13 @@ xdc_ioctlcmd(xd, dev, xio)
 
 	/* create DVMA buffer for request if needed */
 	if (xio->dlen) {
-		error = bus_dmamem_alloc(xdcsc->dmatag, xio->dlen, NBPG, 0,
-					 &seg, 1, &rseg, BUS_DMA_WAITOK);
-		if (error)
-			return (error);
-
-		dvmabuf = (caddr_t)seg.ds_addr;
-
-		error = bus_dmamem_map(xdcsc->dmatag, &seg, rseg, xio->dlen,
-					&buf,
-					BUS_DMA_WAITOK|BUS_DMA_COHERENT);
-		if (error) {
-			bus_dmamem_free(xdcsc->dmatag, &seg, rseg);
+		if ((error = xd_dmamem_alloc(xdcsc->dmatag, xdcsc->auxmap,
+					     &seg, &rseg,
+					     xio->dlen, &buf,
+					     (bus_addr_t *)&dvmabuf)) != 0) {
 			return (error);
 		}
+
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {
 				bus_dmamem_unmap(xdcsc->dmatag, buf, xio->dlen);
@@ -2387,8 +2449,8 @@ xdc_ioctlcmd(xd, dev, xio)
 done:
 	splx(s);
 	if (dvmabuf) {
-		bus_dmamem_unmap(xdcsc->dmatag, buf, xio->dlen);
-		bus_dmamem_free(xdcsc->dmatag, &seg, rseg);
+		xd_dmamem_free(xdcsc->dmatag, xdcsc->auxmap, &seg, rseg,
+				xio->dlen, buf);
 	}
 	return (error);
 }
