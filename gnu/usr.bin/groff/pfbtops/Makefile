@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/01 01:38:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2002/01/01 05:16:18 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/utils/pfbtops
 .PATH:		${DIST}
 
-PROG_CXX=	pfbtops
+PROG=		pfbtops
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
