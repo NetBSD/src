@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2003/03/23 13:43:42 chris Exp $
+#	$NetBSD: list,v 1.5 2003/12/25 11:14:36 martin Exp $
 
 # usr.bin/less has to be first, otherwise the ramdisk.mk generation fails
 SRCDIRS usr.bin/less bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -67,7 +67,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
 
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
