@@ -1,34 +1,24 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/16 16:54:00 nonaka Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/12 14:44:39 lukem Exp $
 
-TOP=		${.CURDIR}/..
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-.include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
-.include <bsd.subdir.mk>
 
 KERN=		${KERNOBJDIR}/GENERIC/netbsd
 KERNEL=		netbsd.GENERIC.gz
 
 CLEANFILES+=	${KERNEL} netbsd.tmp netbsd.tmp.gz
 
-all:	${KERNEL}
-
 ${KERNEL}: ${KERN}
 	cp ${KERN} netbsd.tmp
-	gzip -9 netbsd.tmp
+	gzip -9f netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
+realall: ${KERNEL}
+
+release: check_RELEASEDIR .WAIT ${KERNEL}
 	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p ${KERNEL} ${RELEASEDIR}/binary/kernel
-.endif
+	${RELINSTALL} ${KERNEL} ${RELEASEDIR}/binary/kernel
 
-clean cleandir distclean:
-	rm -f *.core ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
