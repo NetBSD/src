@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 1997/02/06 21:16:53 gwr Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12 1997/06/26 01:26:57 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -97,6 +97,13 @@ boolean_t	db_phys_eq __P((task_t, vm_offset_t, task_t, vm_offset_t));
 #define DB_TASK_NAME_LEN	23
 #define DB_NULL_TASK_NAME	"?                      "
 
+/*
+ * Constants for KGDB.
+ */
+typedef	long		kgdb_reg_t;
+#define	KGDB_NUMREGS	14
+#define	KGDB_BUFLEN	512
+
 #if 0
 void		db_task_name(/* task_t */);
 #endif
@@ -106,5 +113,10 @@ void		db_task_name(/* task_t */);
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
 int kdb_trap __P((int, int, db_regs_t *));
+
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
 
 #endif	/* _I386_DB_MACHDEP_H_ */
