@@ -1,12 +1,17 @@
-#	$NetBSD: Makefile,v 1.10 2003/07/04 04:53:50 atatat Exp $
+#	$NetBSD: Makefile,v 1.11 2003/10/18 23:46:26 matt Exp $
 
-# XXX Temporary for NO_SENDMAIL
 .include <bsd.own.mk>
 
-SUBDIR=		dbsym mdsetimage postfix
+SUBDIR=		dbsym mdsetimage
 
-.if !defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no"
+.if ${MKPOSTFIX} != "no"
+SUBDIR+=	postfix
+.endif
+
+.if (!defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no")
+.if ${MKSENDMAIL} != "no"
 SUBDIR+=	sendmail
+.endif
 .endif
 
 # Speedup stubs for some subtrees that don't need to run these rules
