@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.44 1998/07/30 12:02:41 leo Exp $
+#	$NetBSD: GENERIC,v 1.45 1998/08/11 07:05:46 leo Exp $
 #
 # Generic atari
 #
@@ -132,7 +132,7 @@ options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 options 	SERCONSOLE		# modem1 console support
-options 	KERNEL_RELOC		# TT/Falcon: relocate kernel to TT-RAM
+options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	UVM			# New UVM VM system
 
 # Try linked commands on all targets
