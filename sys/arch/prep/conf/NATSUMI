@@ -1,32 +1,34 @@
-#	$NetBSD: NATSUMI,v 1.5 2000/09/24 15:59:37 jdolecek Exp $
+#	$NetBSD: NATSUMI,v 1.6 2001/06/20 14:42:39 nonaka Exp $
 #
-#	for IBM 6050/6070
+#	for development
 #
 
 include "arch/prep/conf/std.prep"
 
 maxusers	32
 
-options 	NMBCLUSTERS=1024
+makeoptions	COPTS="-O2 -pipe"
+
+#options 	NEWPMAP
 
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	SHMMAXPGS=8192
 
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
 #makeoptions	DEBUG="-g"
@@ -36,39 +38,39 @@ options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 
-#options 	COMPAT_LINUX	# binary compatibility with Linux
+options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # File systems
-#file-system 	FFS		# UFS
+file-system 	FFS		# UFS
 #file-system	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
-#file-system	OVERLAY		# overlay file system
+file-system	OVERLAY		# overlay file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
+#file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
-options 	NFSSERVER	# Network File System server
+options 	SOFTDEP		# FFS soft updates support.
+#options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPv6
+#options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -80,23 +82,24 @@ options 	INET6		# IPv6
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
-
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
-#options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #
 # wscons options
 #
 # builtin terminal emulations
+
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
@@ -104,14 +107,14 @@ options 	WS_KERNEL_BG=WSCOL_BLACK
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
-options 	WSDISPLAY_DEFAULTSCREENS=4
+#options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
 options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
-#config	netbsd	root on ne0 type nfs
-#config	netbsd	root on ex0 type nfs
+#config	netbsd	root on de0 type nfs
+#config	netbsd	root on le0 type nfs
 
 #
 # Device configuration
@@ -126,12 +129,30 @@ cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 
+options 	PCI_NETBSD_CONFIGURE
+
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
+
+# PCMCIA bus support
+pcmcia* at pcic? controller ? socket ?
+
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+
+options 	PCIC_ISA_INTR_ALLOC_MASK=0x4a00	# irq 9, 11, 14
+options 	PCIC_ISA_ALLOC_IOBASE=0x0400
+options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
+
+# ISA Plug-and-Play bus support
+#isapnp0 at isa?
+
+# on-board I/O for IBM 6050/6070 on-board IDE controller
+#obio0	at mainbus0
 
 # Console Devices
 
@@ -148,12 +169,12 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga*		at pci?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
+#wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
@@ -166,6 +187,9 @@ mcclock0 at isa? port 0x70		# mc146818 and compatible
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
 # Parallel Printer Interfaces
 
 # ISA parallel printer interfaces
@@ -175,10 +199,16 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 
 # PCI SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-#siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+#siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI chips
+
+# PCMCIA SCSI controllers
+#aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
 #scsibus* at ahc?
+#scsibus* at aic?
+#scsibus* at pcscp?
 #scsibus* at siop?
 
 # SCSI devices
@@ -189,19 +219,51 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# IDE and related devices
+# IBM 6050/6070 on-board IDE controller
+#wdc0	at obio? port 0x1f0 irq 13 flags 0x00
+#wdc1	at obio? port 0x170 irq 13 flags 0x00
+
+# PCMCIA IDE controllers
+wdc*	at pcmcia? function ?
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus* at wdc? channel ?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
 # Miscellaneous mass storage devices
 
 # ISA floppy
-#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fd*	at fdc? drive ?
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*	at fdc? drive ?
 
 # Network Interfaces
 
 # PCI network interfaces
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21040
 #options 	TLP_MATCH_21041
@@ -209,7 +271,77 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #options 	TLP_MATCH_21142
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
+# ISA Plug-and-Play network intefaces
+#ep*	at isapnp?			# 3Com 3c509 Ethernet
+
+# PCMCIA network interfaces
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+
 # MII/PHY support
+
+# USB Controller and Devices
+
+# PCI USB controllers
+#uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
+ohci*	at pci? dev ? function ?	# Open Host Controller
+
+# USB bus support
+#usb*	at uhci?
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse* at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+#umodem* at uhub? port ? configuration ?
+#ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass? channel ?
+atapibus* at umass? channel ?
+
+# USB audio
+#uaudio* at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+#upl*	at uhub? port ?
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+#uftdi*	at uhub? port ?
+#ucom*	at uftdi? portno ?
+
+# Diamond Multimedia Rio 500
+#urio*	at uhub? port ?
+
+# USB Handspring Visor
+#uvisor* at uhub? port ?
+#ucom*	at uvisor?
+
+# USB Generic driver
+ugen*	at uhub? port ?
 
 # Audio device
 
@@ -221,6 +353,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 
 # Audio support
 #audio*	at wss?
+#audio*	at uaudio?
 
 # MIDI support
 #midi*	at opl?			# OPL FM synth
@@ -239,21 +372,23 @@ joy0	at isa? port 0x201
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	ppp		1	# Point-to-Point Protocol
+#pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
+#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
