@@ -257,6 +257,7 @@ do {									 \
      %{!pg: \
         %{p:gcrt0%O%s} \
         %{!p:crt0%O%s}}} \
+   %:if-exists(crti%O%s) \
    %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
 
 /* Provide an ENDFILE_SPEC appropriate for NetBSD ELF targets.  Here we
@@ -265,7 +266,8 @@ do {									 \
 
 #undef ENDFILE_SPEC
 #define	ENDFILE_SPEC \
- "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+ "%{!shared:crtend%O%s} %{shared:crtendS%O%s} \
+  %:if-exists(crtn%O%s)"
 
 /* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
 

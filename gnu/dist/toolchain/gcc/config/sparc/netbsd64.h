@@ -56,6 +56,7 @@
      %{!pg: \
         %{p:gcrt0%O%s} \
         %{!p:crt0%O%s}}} \
+   %:if-exists(crti%O%s) \
    %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
 
 #undef STARTFILE_SPEC32
@@ -65,6 +66,7 @@
      %{!pg: \
         %{p:/usr/lib/32/gcrt0%O%s} \
         %{!p:/usr/lib/32/crt0%O%s}}} \
+   %:if-exists(/usr/lib/32/crti%O%s) \
    %{!shared:/usr/lib/32/crtbegin%O%s} %{shared:/usr/lib/32/crtbeginS%O%s}"
 
 #undef STARTFILE_SPEC
@@ -82,11 +84,13 @@
 
 #undef ENDFILE_SPEC64
 #define	ENDFILE_SPEC64 \
- "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+ "%{!shared:crtend%O%s} %{shared:crtendS%O%s} \
+  %:if-exists(crtn%O%s)"
 
 #undef ENDFILE_SPEC32
 #define	ENDFILE_SPEC32 \
- "%{!shared:/usr/lib/32/crtend%O%s} %{shared:/usr/lib/32/crtendS%O%s}"
+ "%{!shared:/usr/lib/32/crtend%O%s} %{shared:/usr/lib/32/crtendS%O%s} \
+  %:if-exists(/usr/lib/32/crtn%O%s)"
 
 #undef ENDFILE_SPEC
 #if DEFAULT_ARCH32_P
