@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.11 1999/04/02 03:11:57 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.12 1999/04/02 03:19:08 cgd Exp $ */
 
 /*
  * Copyright (C) 1998 by Ross Harvey
@@ -73,31 +73,6 @@ errorstatus(const char *msg, u_int64_t val)
 	}
 }
 #endif
-
-static int
-open_dev(fd)
-	int *fd;
-{
-	prom_return_t ret;
-	char devname[64];
-	int devlen;
-
-	/*
-	 * XXX
-         * We don't know what device names look like yet,
-         * so we can't change them.
-         */
-        ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
-        devlen = ret.u.retval;
-
-        ret.bits = prom_open(devname, devlen);
-
-        if (ret.u.status)
-                return 0;
-	*fd = ret.u.retval;
-
-	return 1;
-}
 
 static int
 load_file(fd, bbinfop, loadaddr)
@@ -189,7 +164,7 @@ main()
 	bbinfop = (struct bbinfo *)&_end;
 	loadaddr = (char *)SECONDARY_LOAD_ADDRESS;
 
-	if (!open_dev(&fd)) {
+	if (!booted_dev_open()) {
 		puts("Can't open boot device\n");
 		return;
 	}

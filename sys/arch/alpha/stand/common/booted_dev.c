@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.8 1999/04/02 03:19:08 cgd Exp $ */
+/* $NetBSD: booted_dev.c,v 1.1 1999/04/02 03:19:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -30,31 +30,39 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	alpha_pal_imb()	__asm__("imb")
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-void		OSFpal __P((void));
-void		init_prom_calls __P((void));
-void		halt __P((void));
-u_int64_t	prom_dispatch __P((int, ...));
-void		putstr __P((const char *));
-void		switch_palcode __P((void));
+#include <machine/prom.h>
+#include "common.h"
 
-
-/*
- * booted_dev.c
- */
-
-#define	BOOTED_DEV_MAXNAMELEN	64
+long	booted_dev_fd;
+#if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
+char	booted_dev_name[BOOTED_DEV_MAXNAMELEN];
+#endif /* defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK) */
 
 #if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
-int		booted_dev_open(void);
-#endif
-#define		booted_dev_close()	((void)prom_close(booted_dev_fd))
-#if defined(SECONDARY_BOOTBLOCK)
-#define		booted_dev_setfd(fd)	((void)(booted_dev_fd = fd))
-#endif
+int
+booted_dev_open(void)
+{
+	prom_return_t ret;
+	int devlen;
 
-extern long	booted_dev_fd;
-#if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
-extern char	booted_dev_name[BOOTED_DEV_MAXNAMELEN];
+	/*
+	 * XXX
+	 * We don't know what device names look like yet,
+	 * so we can't change them.
+	 */
+	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, booted_dev_name,
+	    sizeof(booted_dev_name));
+	devlen = ret.u.retval;
+
+	ret.bits = prom_open(booted_dev_name, devlen);
+
+	if (ret.u.status)
+		return 0;
+	booted_dev_fd = ret.u.retval;
+
+	return 1;
+}
 #endif
