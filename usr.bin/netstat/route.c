@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.42 1999/11/24 08:45:43 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.43 1999/11/27 02:19:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.42 1999/11/24 08:45:43 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.43 1999/11/27 02:19:34 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ routepr(rtree)
 			} else if (af == AF_UNSPEC || af == i) {
 				pr_family(i);
 				do_rtent = 1;
-				pr_rthdr(af);
+				pr_rthdr(i);
 				p_tree(head.rnh_treetop);
 			}
 		}
@@ -248,7 +248,6 @@ void
 pr_rthdr(af)
 	int af;
 {
-
 	if (Aflag)
 		printf("%-8.8s ","Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s %6.6s  %s\n",
