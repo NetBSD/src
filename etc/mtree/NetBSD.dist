@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.161 2001/06/08 21:16:15 kim Exp $
+#	$NetBSD: NetBSD.dist,v 1.162 2001/06/13 15:13:24 simonb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1933,6 +1933,11 @@ vax
 # ./usr/share/man/cat8/vax
 ..
 
+# ./usr/share/man/cat8/walnut
+walnut
+# ./usr/share/man/cat8/walnut
+..
+
 # ./usr/share/man/cat8/x68k
 x68k
 # ./usr/share/man/cat8/x68k
@@ -2310,6 +2315,11 @@ sun3
 # ./usr/share/man/man8/vax
 vax
 # ./usr/share/man/man8/vax
+..
+
+# ./usr/share/man/man8/walnut
+walnut
+# ./usr/share/man/man8/walnut
 ..
 
 # ./usr/share/man/man8/x68k
