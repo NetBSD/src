@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.54 1997/01/31 23:18:56 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.55 1997/04/27 18:14:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1004,7 +1004,7 @@ start_c_cleanup()
 		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
 
 	else if (machineid & AMIGA_68030)
-		delaydivisor = (1024 * 3) / 50;	/* 50 MHz 68030 */
+		delaydivisor = (1024 * 8) / 50;	/* 50 MHz 68030 */
 
 	else
 		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
