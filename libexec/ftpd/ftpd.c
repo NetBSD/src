@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.160 2004/11/11 01:14:10 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.161 2004/11/19 16:03:58 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.160 2004/11/11 01:14:10 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.161 2004/11/19 16:03:58 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -3325,14 +3325,16 @@ int
 checkpassword(const struct passwd *pwent, const char *password)
 {
 	char	*orig, *new;
-	time_t	 expire;
+	time_t	 change, expire, now;
 
-	expire = 0;
+	change = expire = 0;
 	if (pwent == NULL)
 		return 1;
 
+	time(&now);
 	orig = pwent->pw_passwd;	/* save existing password */
 	expire = pwent->pw_expire;
+	change = (pwent->pw_change == _PASSWORD_CHGNOW)? now : pwent->pw_change;
 
 	if (orig[0] == '\0')		/* don't allow empty passwords */
 		return 1;
@@ -3341,7 +3343,7 @@ checkpassword(const struct passwd *pwent, const char *password)
 	if (strcmp(new, orig) != 0)	/* compare */
 		return 1;
 
-	if (expire && time(NULL) >= expire)
+	if ((expire && now >= expire) || (change && change >= now))
 		return 2;		/* check if expired */
 
 	return 0;			/* OK! */
