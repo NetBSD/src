@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1999/06/07 05:28:04 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.48 1999/06/21 01:42:36 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
 extern vaddr_t avail_end;
 
 int	physmem;
@@ -142,14 +141,6 @@ extern	caddr_t msgbufaddr;
  * during autoconfiguration or after a panic.
  */
 int   safepri = 0;
-
-/*
- * dvmamap is used to manage DVMA memory. Note: this coincides with
- * the memory range in `phys_map' (which is mostly a place-holder).
- */
-vaddr_t dvma_base, dvma_end;
-struct map *dvmamap;
-static int ndvmamap;	/* # of entries in dvmamap */
 
 void	dumpsys __P((void));
 caddr_t	mdallocsys __P((caddr_t));
@@ -284,26 +275,6 @@ cpu_startup()
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
-	 * Allocate a map for physio.  Others use a submap of the kernel
-	 * map, but we want one completely separate, even though it uses
-	 * the same pmap.
-	 */
-	dvma_base = DVMA_BASE;
-	dvma_end = DVMA_END;
-	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 0);
-	if (phys_map == NULL)
-		panic("unable to create DVMA map");
-	/*
-	 * Allocate DVMA space and dump into a privately managed
-	 * resource map for double mappings which is usable from
-	 * interrupt contexts.
-	 */
-	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
-		panic("unable to allocate from DVMA map");
-	rminit(dvmamap, btoc((dvma_end-dvma_base)),
-		vtorc(dvma_base), "dvmamap", ndvmamap);
-
-	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -346,13 +317,6 @@ mdallocsys(v)
 			nbuf = 16;
 	}
 #endif
-	/*
-	 * Allocate DVMA slots for 1/4 of the number of I/O buffers
-	 * and one for each process too (PHYSIO).
-	 */
-	ndvmamap = maxproc + ((nbuf / 4) &~ 1);
-printf("mdallocsys: v = %p; nbuf = %d\n", v, (int)nbuf);
-	ALLOCSYS(v, dvmamap, struct map, ndvmamap);
 }
 
 /*
@@ -1015,132 +979,6 @@ cpu_exec_aout_makecmds(p, epp)
 	return (ENOEXEC);
 }
 
-#if 0
-void
-wzero(vb, l)
-	void *vb;
-	u_int l;
-{
-	u_char *b = vb;
-	u_char *be = b + l;
-	u_short *sp;
-
-	if (l == 0)
-		return;
-
-	/* front, */
-	if ((u_long)b & 1)
-		*b++ = 0;
-
-	/* back, */
-	if (b != be && ((u_long)be & 1) != 0) {
-		be--;
-		*be = 0;
-	}
-
-	/* and middle. */
-	sp = (u_short *)b;
-	while (sp != (u_short *)be)
-		*sp++ = 0;
-}
-
-void
-wcopy(vb1, vb2, l)
-	const void *vb1;
-	void *vb2;
-	u_int l;
-{
-	const u_char *b1e, *b1 = vb1;
-	u_char *b2 = vb2;
-	u_short *sp;
-	int bstore = 0;
-
-	if (l == 0)
-		return;
-
-	/* front, */
-	if ((u_long)b1 & 1) {
-		*b2++ = *b1++;
-		l--;
-	}
-
-	/* middle, */
-	sp = (u_short *)b1;
-	b1e = b1 + l;
-	if (l & 1)
-		b1e--;
-	bstore = (u_long)b2 & 1;
-
-	while (sp < (u_short *)b1e) {
-		if (bstore) {
-			b2[1] = *sp & 0xff;
-			b2[0] = *sp >> 8;
-		} else
-			*((short *)b2) = *sp;
-		sp++;
-		b2 += 2;
-	}
-
-	/* and back. */
-	if (l & 1)
-		*b2 = *b1e;
-}
-#endif
-
-bus_addr_t dvmamap_alloc __P((int, int));
-
-bus_addr_t
-dvmamap_alloc(size, flags)
-	int size;
-	int flags;
-{
-	int s, pn, npf;
-
-	npf = btoc(size);
-	s = splimp();
-	for (;;) {
-		pn = rmalloc(dvmamap, npf);
-		if (pn != 0)
-			break;
-
-		if (flags & BUS_DMA_WAITOK) {
-			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
-			continue;
-		}
-		splx(s);
-		return ((bus_addr_t)-1);
-	}
-	splx(s);
-
-	return ((bus_addr_t)rctov(pn));
-}
-
-void dvmamap_free __P((bus_addr_t, bus_size_t));
-
-void
-dvmamap_free (addr, size)
-	bus_addr_t addr;
-	bus_size_t size;
-{
-	int s, pn, npf;
-	vaddr_t a = addr;
-	u_int sz = size;
-
-	npf = btoc(sz);
-	pn = vtorc(a);
-#ifdef DEBUG
-	if (npf <= 0 || pn <= 0) {
-		printf("dvmamap_free: npf=%d pn=%p a=%p sz=%d\n");
-		Debugger();
-		return;
-	}
-#endif
-	s = splimp();
-	rmfree(dvmamap, npf, pn);
-	wakeup(dvmamap);
-	splx(s);
-}
-
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -1159,10 +997,6 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	void *mapstore;
 	size_t mapsize;
 
-#ifdef DIAGNOSTIC
-	if (nsegments != 1) 
-		printf("_bus_dmamap_create(): sparc only supports one segment!\n");
-#endif
 	/*
 	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
@@ -1211,6 +1045,12 @@ _bus_dmamap_destroy(t, map)
 /*
  * Common function for loading a DMA map with a linear buffer.  May
  * be called by bus-specific DMA map load functions.
+ *
+ * Most SPARCs have IOMMUs in the bus controllers.  In those cases
+ * they only need one segment and will use virtual addresses for DVMA.
+ * Those bus controllers should intercept these vectors and should
+ * *NEVER* call _bus_dmamap_load() which is used only by devices that
+ * bypass DVMA.
  */
 int
 _bus_dmamap_load(t, map, buf, buflen, p, flags)
@@ -1222,8 +1062,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	bus_size_t sgsize;
-	bus_addr_t dvmaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
+	int i;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -1244,27 +1084,28 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
 	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-	dvmaddr = dvmamap_alloc(sgsize, flags);
-#ifdef DEBUG
-	if (dvmaddr == (bus_addr_t)-1)	
-	{ 
-		printf("_bus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
-		Debugger();
-	}		
-#endif	
-	if (dvmaddr == (bus_addr_t)-1)
-		return (ENOMEM);
-
-	/*
 	 * We always use just one segment.
 	 */
 	map->dm_mapsize = buflen;
-	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
-	map->dm_segs[0].ds_len = sgsize;
+	i = 0;
+	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_len = 0;
+	while (buflen > 0 && i < map->_dm_segcnt) {
+		paddr_t pa;
 
+		pa = pmap_extract(pmap_kernel(), vaddr);
+		buflen -= NBPG;
+		vaddr += NBPG;
+		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
+		    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+			/* Hey, waddyaknow, they're contiguous */
+			map->dm_segs[i].ds_len += NBPG;
+			continue;
+		}
+		map->dm_segs[++i].ds_addr = pa;
+		map->dm_segs[i].ds_len = NBPG;
+	}
+	map->dm_nsegs = i;
 	/* Mapping is bus dependent */
 	return (0);
 }
@@ -1323,23 +1164,16 @@ _bus_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	bus_addr_t dvmaddr;
-	bus_size_t sgsize;
 
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
-	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
-	sgsize = map->dm_segs[0].ds_len;
-
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	
-	/* Unmapping is bus dependent */
-	dvmamap_free(dvmaddr, sgsize);
 
-	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
+	/* Didn't keep track of vaddrs -- dump entire D$ */
+	blast_vcache();
 }
 
 /*
