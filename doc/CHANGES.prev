@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.22 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.23 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7328,7 +7328,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		version to 1.6P.  [matt 20030226]
 	libpthread: Add pthread_{,attr}_{get,set}name_np() API, compatible
 		with Tru64 Unix. [thorpej 20030227]
-	sysctl: Add hw.physmem64 and hw.usermem64 sysctl nodes, which
+	sysctl(9): Add hw.physmem64 and hw.usermem64 sysctl nodes, which
 		return the same data has hw.physmem and hw.usermem, but
 		as a 64-bit byte count, instead of a 32-bit byte count.
 		Required for reporting >=4G RAM.  [thorpej 20030227]
@@ -7336,7 +7336,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libc: Add _Exit(), the C99 name for _exit().  [bjh21 20030301]
 	acorn26: Add support for the 82C710 multi-I/O chip, as found in (some?)
 		A5000s.  [bjh21 20030301]
-	mdsetimage(1): only use libbfd calls to get symbol information; writing
+	mdsetimage(8): only use libbfd calls to get symbol information; writing
 		is now done directly into the file. [dogcow 20030304]
 	x86_64: rearrange the x86_64 code, make it share code with i386, and
 		enable MP [fvdl 20030305]
@@ -7380,7 +7380,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		around 20030403.  [itojun 20030403]
 	pciide(4): add support for i82801DBM (ICH4-M). [kent 20030405]
 	wm(4): add support for i82540EP. [kent 20030405]
-	scsi: Add a MI driver for the Symbios/NCR 53c700 SCSI controller
+	scsi(4): Add a MI driver for the Symbios/NCR 53c700 SCSI controller
 		written by Shuichiro URATA. [tsutsui 20030406]
 	rsh(1), rlogin(1): Add -p flag to allow specifying a non-standard
 		port number. [hubertf 20030407]
@@ -7396,7 +7396,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		performance. [thorpej 20030409]
 	pkg_install: improve bzip2 support, especially for non-NetBSD
 		systems. [grant 20030410]
-	less: update to less-381.  [mrg 20030414]
+	less(1): update to less-381.  [mrg 20030414]
 	kernel: added a sysctl(8) flag to check and reject packets arriving
 		on the "wrong" interface.  [christos 20030412]
 	libc: added slovak language libc message catalog. [salo 20030414]
@@ -7457,9 +7457,9 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libtelnet: no longer shipped under /usr/lib [itojun 20030716]
 	share/mk: Replace MANZ=, UPDATE=, UNPRIVED= with MKMANZ=yes,
 		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
-	ipsec: support hmac-sha2 for AH/ESP auth.  [itojun 20030722]
+	ipsec(4): support hmac-sha2 for AH/ESP auth.  [itojun 20030722]
 	sparc: Update sparc port to use XFree86 4.x base.  [mrg 20030722]
-	GCC: Import GCC 3.3.1-20030720.  [mrg 20030723]
+	gcc(1): Import GCC 3.3.1-20030720.  [mrg 20030723]
 	libcrypto: upgrade to 0.9.7b. [itojun 20030724]
 	ipsec: support hmac-ripemd160 and aes-xcbc-mac for AH/ESP auth.
 		support aes-ctr for ESP. [itojun 20030725]
@@ -7472,7 +7472,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	hp300: Switch to MI SCSI at last. [tsutsui 20030801]
 	evbarm: Add support for the Samsung SMDK2410 eval board for
 		the S3C2410 Processor.  [bsh 20030804]
-	GCC: Import GCC 3.3.1.  [mrg 20030809]
+	gcc(1): Import GCC 3.3.1.  [mrg 20030809]
 	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
 		[christos,skrll 20030812]
 	gdb(1): Import gdb-5.3 and add support for i386 [christos 20030814]
@@ -7524,7 +7524,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	awk(1): Updated gawk to 3.1.3. [wiz 20031006]
 	installboot(8): On i386, preserve BIOS Parameter Block and MBR
 		partition table.  [lukem 20031008]
-	i386 & amd64: Rename /usr/mdec/biosboot to /usr/mdec/boot and
+	i386, amd64: Rename /usr/mdec/biosboot to /usr/mdec/boot and
 		add support for booting off FAT partitions.  Rename
 		/usr/mdec/bootxx_dosfs to /usr/mdec/bootxx_msdos.
 		Deprecate /usr/mdec/bootxx_ufs (use bootxx_ffsv1).
@@ -7541,14 +7541,14 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[lukem 20031017]
 	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
 		when creating a ccd.  [lukem 20031017]
-	GCC: Import GCC 3.3.2.  [mrg 20031018]
+	gcc(1): Import GCC 3.3.2.  [mrg 20031018]
 	hpcsh: Added j6x0tp(4) driver for Jornada 680/690 touch screen.
 		[uwe 20031019]
 	i386: pmap changed from linked list to splay tree for
 		better performance.  [provos 20031022]
 	netinet: change port allocation from linked list to a hash table
 		for better performance. [provos 20031023]
-	MAKEDEV: platform device creation script is now generated from
+	MAKEDEV(8): platform device creation script is now generated from
 		unified template driven by platform config file and
 		MD device major lists. [jdolecek 20031024] 
 	build.sh: Add '-N noisyness', to control how "noisy" the build is.
@@ -7571,10 +7571,10 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[jandberg 20031112]
 	named(8): Upgrade to BIND 8.3.7. [itojun 20031126]
 	binutils: updated to FSF binutils 2.14 release.  [mrg 20031126]
-	GDB: All platforms updated to GDB 5.3.  [mrg 20031127]
+	gdb(1): All platforms updated to GDB 5.3.  [mrg 20031127]
 	m68k: Switch to GCC 3.3.1.  [matt 20031127]
 	binutils: Switch all platforms to binutils 2.14.  [mrg 20031203]
-	sysctl: Switch to dynamic implementation.  [atatat 20031204]
+	sysctl(9): Switch to dynamic implementation.  [atatat 20031204]
 	editline(3): Provide public interfaces to the internal line
 		tokenization routines.  [lukem 20031205]
 	sh5: Switch sh5 to the in-tree toolchain, albeit somewhat hobbled.
@@ -7650,11 +7650,11 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		/etc/locate.conf.  [itohy 20040206]
 	kernel: add underlying support needed to support multiple mbuf cluster
 		sizes.  [matt 20040209]
-	GCC: Import GCC 3.3.3-20040209.  [mrg 20040210]
+	gcc(1): Import GCC 3.3.3-20040209.  [mrg 20040210]
 	sh3: Switch to GCC 3.3. [uwe 20040222]
 	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
 	amiga: Add wsfont pseudo-device to amidisplaycc(4). [jandberg 20040223]
-	GCC: Import GCC 3.3.3.  [mrg 20040301]
+	gcc(1): Import GCC 3.3.3.  [mrg 20040301]
 	progress(1): Allow printing custom text before (left of) the progress
 		bar. [hubertf 20040309]
 	dge(4): add support for Intel PRO/10GbE ethernet adapter.
@@ -7674,7 +7674,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libcurses: add KEY_RESIZE, SIGWINCH handler and support for more
 		colour pairs. [jdc 20040322]
 	file(1): update to 4.08.  [pooka 20040323]
-	sysctl: Update dynamic implementation.  Solves netbsd32 compat issue
+	sysctl(9): Update dynamic implementation.  Solves netbsd32 compat issue
 		and adds support for descriptions.  [atatat 20040324]
 	sendmail(8): update to 8.12.11.  [atatat 20040325]
 	gzip(1):  Switch to non GPL gzip.  [mrg 20040326]
@@ -7690,11 +7690,11 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		so that now it's actually functional. [tsutsui 20040410]
 	sgimips: Add IP12 support.  [pooka 20040411]
 	cvs(1): update to 1.11.15.  [itojun 20040416]
-	cvs: cvs-1.11.16 via patch [christos 20040519]
+	cvs(1): cvs-1.11.16 via patch [christos 20040519]
 	wscons(4): Added scrolling support [christos 20040531]
 	acorn32: Generate sparkive with new bootloader for install
 		[gavan/abs 20040608]
-	cvs: cvs upgraded to 1.11.17 [christos 20040616]
+	cvs(1): cvs upgraded to 1.11.17 [christos 20040616]
 	libc: Add strcasestr(3), case insensitive version of strstr(3).
 		[junyoung 20040703]
 	geodeide(4): Added driver for the AMD Geode CS5530A IDE controller
