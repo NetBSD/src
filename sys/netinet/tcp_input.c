@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.36 1997/11/21 06:41:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.37 1997/12/11 06:33:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -111,6 +111,20 @@ extern u_long sb_max;
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
 
 /*
+ * Macro to compute ACK transmission behavior.  Delay the ACK unless
+ * the other side PUSH'd or we have already delayed an ACK (must send
+ * an ACK every two segments).
+ */
+#define	TCP_SETUP_ACK(tp, ti) \
+do { \
+	if ((ti)->ti_flags & TH_PUSH || \
+	    (tp)->t_flags & TF_DELACK) \
+		tp->t_flags |= TF_ACKNOW; \
+	else \
+		tp->t_flags |= TF_DELACK; \
+} while (0)
+
+/*
  * Insert segment ti into reassembly queue of tcp with
  * control block tp.  Return TH_FIN if reassembly now includes
  * a segment with FIN.  The macro form does the common case inline
@@ -124,10 +138,7 @@ extern u_long sb_max;
 	if ((ti)->ti_seq == (tp)->rcv_nxt && \
 	    (tp)->segq.lh_first == NULL && \
 	    (tp)->t_state == TCPS_ESTABLISHED) { \
-		if ((ti)->ti_flags & TH_PUSH) \
-			tp->t_flags |= TF_ACKNOW; \
-		else \
-			tp->t_flags |= TF_DELACK; \
+		TCP_SETUP_ACK(tp, ti); \
 		(tp)->rcv_nxt += (ti)->ti_len; \
 		flags = (ti)->ti_flags & TH_FIN; \
 		tcpstat.tcps_rcvpack++;\
@@ -606,10 +617,9 @@ after_listen:
 			m->m_len -= sizeof(struct tcpiphdr)+off-sizeof(struct tcphdr);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
-			if (ti->ti_flags & TH_PUSH)
-				tp->t_flags |= TF_ACKNOW;
-			else
-				tp->t_flags |= TF_DELACK;
+			TCP_SETUP_ACK(tp, ti);
+			if (tp->t_flags & TF_ACKNOW)
+				(void) tcp_output(tp);
 			return;
 		}
 	}
