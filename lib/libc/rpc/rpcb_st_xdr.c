@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.1 2000/06/02 23:11:15 fvdl Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.1.2.1 2000/07/14 16:48:12 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -115,12 +115,12 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 			return (FALSE);
 		}
 	} else {
-		IXDR_PUT_U_LONG(buf, objp->prog);
-		IXDR_PUT_U_LONG(buf, objp->vers);
-		IXDR_PUT_U_LONG(buf, objp->proc);
-		IXDR_PUT_LONG(buf, objp->success);
-		IXDR_PUT_LONG(buf, objp->failure);
-		IXDR_PUT_LONG(buf, objp->indirect);
+		IXDR_PUT_U_INT32(buf, objp->prog);
+		IXDR_PUT_U_INT32(buf, objp->vers);
+		IXDR_PUT_U_INT32(buf, objp->proc);
+		IXDR_PUT_INT32(buf, objp->success);
+		IXDR_PUT_INT32(buf, objp->failure);
+		IXDR_PUT_INT32(buf, objp->indirect);
 	}
 	if (!xdr_string(xdrs, &objp->netid, ~0)) {
 		return (FALSE);
@@ -153,12 +153,12 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 			return (FALSE);
 		}
 	} else {
-		objp->prog = IXDR_GET_U_LONG(buf);
-		objp->vers = IXDR_GET_U_LONG(buf);
-		objp->proc = IXDR_GET_U_LONG(buf);
-		objp->success = IXDR_GET_LONG(buf);
-		objp->failure = IXDR_GET_LONG(buf);
-		objp->indirect = IXDR_GET_LONG(buf);
+		objp->prog = IXDR_GET_U_INT32(buf);
+		objp->vers = IXDR_GET_U_INT32(buf);
+		objp->proc = IXDR_GET_U_INT32(buf);
+		objp->success = IXDR_GET_INT32(buf);
+		objp->failure = IXDR_GET_INT32(buf);
+		objp->indirect = IXDR_GET_INT32(buf);
 	}
 	if (!xdr_string(xdrs, &objp->netid, ~0)) {
 		return (FALSE);
