@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1994/12/12 19:00:02 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 1994/12/13 18:42:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,17 +54,17 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/pmap.h>
-#include <vm/vm_prot.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/pte.h>
+#include <machine/pmap.h>
 
 extern int eeprom_uio();
 
+extern vm_offset_t avail_start;
 extern int physmem;
-extern caddr_t vmempage;
 caddr_t zeropage;
 
 /*
@@ -86,19 +86,6 @@ mmrw(dev, uio, flags)
 	register caddr_t v;
 	register struct iovec *iov;
 	int error = 0;
-	static struct {
-		int	locked;
-		int	wanted;
-	} physlock;
-
-	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmempage */
-		while (physlock.locked) {
-			physlock.wanted = 1;
-			(void)tsleep((caddr_t)&physlock, PZERO, "mmrw", 0);
-		}
-		physlock.locked = 1;
-	}
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -119,22 +106,36 @@ mmrw(dev, uio, flags)
 			if (o >= (u_int)physmem)
 				return (EFAULT);
 #endif
-			v = vmempage;
-			pmap_enter(kernel_pmap, (vm_offset_t)v,
-				(vm_offset_t)trunc_page(o),
-				uio->uio_rw == UIO_READ ?
-					VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (u_int)(NBPG - o));
-			error = uiomove(&v[o], (int)c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)v,
-				(vm_offset_t)v + NBPG);
-			continue;
+			if (o >= avail_start) {
+				vm_offset_t kva, pa;
+
+				pa = trunc_page(o);
+				o &= PGOFSET;
+				kva = kmem_alloc_wait(phys_map, 1);
+				pmap_enter(kernel_pmap, kva, pa | PMAP_NC,
+					uio->uio_rw == UIO_READ ?
+						VM_PROT_READ : VM_PROT_WRITE, TRUE);
+				v = (caddr_t) kva + o;
+				c = min(uio->uio_resid, (u_int)(NBPG - o));
+				error = uiomove(v, (int)c, uio);
+				pmap_remove(kernel_pmap, kva, kva + NBPG);
+				kmem_free_wakeup(phys_map, kva, 1);
+				continue;
+			}
+			/*
+			 * The offset was below avail_start, where the pmap
+			 * will refuse to create mappings.  Everything below
+			 * there is mapped linearly with physical zero at
+			 * virtual KERNBASE, so use kmem! (hack alert! 8-)
+			 */
+			v = (caddr_t)KERNBASE + o;
+			goto use_kmem;
 
 /* minor device 1 is kernel memory */
 		case 1:
 			v = (caddr_t)(long)uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
+		use_kmem:
+			c = min(iov->iov_len, NBPG);	/* MAXPHYS? */
 			if (!kernacc(v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
@@ -180,12 +181,6 @@ mmrw(dev, uio, flags)
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
-	}
-	if (minor(dev) == 0) {
-unlock:
-		physlock.locked = 0;
-		if (physlock.wanted)
-			wakeup((caddr_t)&physlock);
 	}
 	return (error);
 }
