@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.51 2001/02/03 12:46:55 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.52 2001/02/04 06:35:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -127,6 +127,7 @@ static __inline void netbsd32_to_shmid_ds __P((struct netbsd32_shmid_ds *, struc
 static __inline void netbsd32_from_shmid_ds __P((struct shmid_ds *, struct netbsd32_shmid_ds *));
 static __inline void netbsd32_to_semid_ds __P((struct  netbsd32_semid_ds *, struct  semid_ds *));
 static __inline void netbsd32_from_semid_ds __P((struct  semid_ds *, struct  netbsd32_semid_ds *));
+static __inline void netbsd32_from_loadavg __P((struct netbsd32_loadavg *, struct loadavg *));
 
 
 /* note that the netbsd32_msghdr's iov really points to a struct iovec, not a netbsd32_iovec. */
@@ -607,6 +608,18 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 	s32dsp->sem_nsems = dsp->sem_nsems;
 	s32dsp->sem_otime = dsp->sem_otime;
 	s32dsp->sem_ctime = dsp->sem_ctime;
+}
+
+static __inline void
+netbsd32_from_loadavg(av32, av)
+	struct netbsd32_loadavg *av32;
+	struct loadavg *av;
+{
+
+	av32->ldavg[0] = av->ldavg[0];
+	av32->ldavg[1] = av->ldavg[1];
+	av32->ldavg[2] = av->ldavg[2];
+	av32->fscale = (netbsd32_long)av->fscale;
 }
 
 /*
@@ -4256,6 +4269,40 @@ netbsd32_ftruncate(p, v, retval)
 	return (sys_ftruncate(p, &ua, retval));
 }
 
+int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+
+/*
+ * uvm_sysctl32: sysctl hook into UVM system, handling special 32-bit
+ * sensitive calls.
+ */
+int
+uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	struct netbsd32_loadavg av32;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case VM_LOADAVG:
+		netbsd32_from_loadavg(&av32, &averunnable);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &av32,
+		    sizeof(av32)));
+
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
 int
 netbsd32___sysctl(p, v, retval)
 	struct proc *p;
@@ -4303,7 +4350,14 @@ netbsd32___sysctl(p, v, retval)
 		fn = hw_sysctl;
 		break;
 	case CTL_VM:
-		fn = uvm_sysctl;
+		switch (name[1]) {
+		case VM_LOADAVG:
+			fn = uvm_sysctl32;	/* need to convert a `long' */
+			break;
+		default:
+			fn = uvm_sysctl;
+			break;
+		}
 		break;
 	case CTL_NET:
 		fn = net_sysctl;
