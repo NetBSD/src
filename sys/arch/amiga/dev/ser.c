@@ -31,31 +31,32 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.9 1994/02/11 07:02:15 chopps Exp $
+ *	$Id: ser.c,v 1.10 1994/02/13 21:11:01 chopps Exp $
  */
 
 #include "ser.h"
 
 #if NSER > 0
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/malloc.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "device.h"
-#include "serreg.h"
-#include "machine/cpu.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/serreg.h>
+#include <machine/cpu.h>
 
-#include "../amiga/custom.h"
-#include "../amiga/cia.h"
-#include "../amiga/cc.h"
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
+#include <amiga/amiga/dlists.h>
+#include <amiga/amiga/cc.h>
 
 int	serprobe();
 struct	driver serdriver = {
@@ -124,7 +125,7 @@ u_char last_ciab_pra;
 
 extern	struct tty *constty;
 #ifdef KGDB
-#include "machine/remote-sl.h"
+#include <machine/remote-sl.h>
 
 extern dev_t kgdb_dev;
 extern int kgdb_rate;
@@ -881,7 +882,7 @@ sermctl(dev, bits, how)
 /*
  * Following are all routines needed for SER to act as console
  */
-#include "../amiga/cons.h"
+#include <amiga/amiga/cons.h>
 
 sercnprobe(cp)
 	struct consdev *cp;

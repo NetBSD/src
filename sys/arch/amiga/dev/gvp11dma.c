@@ -31,32 +31,32 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gvp11dma.c,v 1.4 1994/02/11 07:01:46 chopps Exp $
+ *	$Id: gvp11dma.c,v 1.5 1994/02/13 21:10:37 chopps Exp $
  */
 
 /*
  * GVP11 (Series II) DMA driver
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_statistics.h"
-#include "machine/pmap.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_statistics.h>
+#include <machine/pmap.h>
 
-#include "device.h"
-#include "gvp11dmareg.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/gvp11dmareg.h>
 #include "gvp11scsi.h"
-#include "dmavar.h"
-#include "scsivar.h"
+#include <amiga/dev/dmavar.h>
+#include <amiga/dev/scsivar.h>
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
 extern void timeout();
 

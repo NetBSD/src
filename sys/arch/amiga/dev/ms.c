@@ -44,27 +44,27 @@
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- * $Id: ms.c,v 1.1 1994/01/26 21:06:05 mw Exp $
+ * $Id: ms.c,v 1.2 1994/02/13 21:10:50 chopps Exp $
  */
 
 /*
  * Mouse driver.
  */
 
-#include "param.h"
-#include "conf.h"
-#include "ioctl.h"
-#include "kernel.h"
-#include "proc.h"
-#include "syslog.h"
-#include "systm.h"
-#include "tty.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
 
-#include "event_var.h"
-#include "vuid_event.h"
+#include <amiga/dev/event_var.h>
+#include <amiga/dev/vuid_event.h>
 
-#include "../amiga/custom.h"
-#include "../amiga/cia.h"
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
 
 #include "mouse.h"
 #if NMOUSE > 0

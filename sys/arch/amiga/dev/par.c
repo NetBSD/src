@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.5 1994/02/11 05:02:43 chopps Exp $
+ *	$Id: par.c,v 1.6 1994/02/13 21:10:52 chopps Exp $
  */
 
 /*
@@ -41,16 +41,16 @@
 #include "par.h"
 #if NPAR > 0
 
-#include "sys/param.h"
-#include "sys/errno.h"
-#include "sys/uio.h"
-#include "sys/malloc.h"
-#include "sys/file.h"
-#include "sys/systm.h"
+#include <sys/param.h>
+#include <sys/errno.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/file.h>
+#include <sys/systm.h>
 
-#include "device.h"
-#include "parioctl.h"
-#include "../amiga/cia.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/parioctl.h>
+#include <amiga/amiga/cia.h>
 
 int	parattach(), parstart(), partimo();
 void    parintr();

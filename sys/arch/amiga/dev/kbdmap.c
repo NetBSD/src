@@ -1,8 +1,8 @@
 /*
- *	$Id: kbdmap.c,v 1.5 1994/02/11 07:01:56 chopps Exp $
+ *	$Id: kbdmap.c,v 1.6 1994/02/13 21:10:49 chopps Exp $
  */
 
-#include "kbdmap.h"
+#include <amiga/dev/kbdmap.h>
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
    (later at least..) */

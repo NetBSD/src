@@ -38,7 +38,7 @@
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
  *      @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.10 1994/02/11 07:02:22 chopps Exp $
+ *	$Id: st.c,v 1.11 1994/02/13 21:11:04 chopps Exp $
  */
 
 /*
@@ -95,20 +95,20 @@
 #define NST	4
 #endif
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "device.h"
-#include "scsidefs.h"
-#include "file.h"
-#include "tty.h"
-#include "proc.h"
-#include "mtio.h"
-#include "ioctl.h"
-#include "kernel.h"
-#include "tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <amiga/dev/device.h>
+#include <amiga/dev/scsidefs.h>
+#include <sys/file.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/mtio.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/tprintf.h>
 
-#include "stvar.h"
+#include <amiga/dev/stvar.h>
 
 #define ADD_DELAY
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.7 1994/02/11 07:02:09 chopps Exp $
+ *	$Id: scsi.c,v 1.8 1994/02/13 21:10:56 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -51,31 +51,31 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.7 1994/02/11 07:02:09 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.8 1994/02/13 21:10:56 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
 #include "st.h"
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_statistics.h"
-#include "machine/pmap.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_statistics.h>
+#include <machine/pmap.h>
 
-#include "device.h"
+#include <amiga/dev/device.h>
 
-#include "dmavar.h"
-#include "scsidefs.h"
-#include "scsivar.h"
-#include "scsireg.h"
+#include <amiga/dev/dmavar.h>
+#include <amiga/dev/scsidefs.h>
+#include <amiga/dev/scsivar.h>
+#include <amiga/dev/scsireg.h>
 
-#include "../amiga/custom.h"
+#include <amiga/amiga/custom.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 extern u_int kvtop();
 

@@ -12,24 +12,24 @@
          a real /dev/rtclock device, that would allow reading
 	 and setting of the clock very easily. 
  *
- *	$Id: rtclocka.c,v 1.3 1994/02/11 07:02:05 chopps Exp $
+ *	$Id: rtclocka.c,v 1.4 1994/02/13 21:10:53 chopps Exp $
  */
 
 #include "rtclocka.h"
 #if NRTCLOCKA > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/disklabel.h"
-#include "sys/malloc.h"
-#include "sys/proc.h"
-#include "sys/reboot.h"
-#include "sys/file.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/file.h>
 
-#include "device.h"
-#include "rtclocka_var.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/rtclocka_var.h>
 
 int	rtclockainit (register struct amiga_device *ad);
 

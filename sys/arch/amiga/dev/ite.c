@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.7 1994/02/11 05:02:36 chopps Exp $
+ *	$Id: ite.c,v 1.8 1994/02/13 21:10:42 chopps Exp $
  *
  * Original author: unknown
  * Amiga author:: Markus Wild
@@ -58,20 +58,20 @@
 #undef NITE
 #define NITE	NGRF
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "itevar.h"
-#include "iteioctl.h"
-#include "kbdmap.h"
+#include <amiga/dev/itevar.h>
+#include <amiga/dev/iteioctl.h>
+#include <amiga/dev/kbdmap.h>
 
-#include "machine/cpu.h"
-#include "../amiga/cons.h"
+#include <machine/cpu.h>
+#include <amiga/amiga/cons.h>
 
 #ifdef __STDC__
 /* automatically generated, as you might guess:-) */
@@ -2168,8 +2168,8 @@ itecheckwrap(ip, sp)
 /*
  * Console functions
  */
-#include "grfioctl.h"
-#include "grfvar.h"
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
 
 #ifdef DEBUG
 /*

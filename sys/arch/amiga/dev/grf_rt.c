@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.6 1994/02/11 07:01:41 chopps Exp $
+ *	$Id: grf_rt.c,v 1.7 1994/02/13 21:10:27 chopps Exp $
  */
 
 #include "grf.h"
@@ -11,11 +11,11 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include "grfioctl.h"
-#include "grfvar.h"
-#include "grf_rtreg.h"
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
+#include <amiga/dev/grf_rtreg.h>
 #include <machine/cpu.h>
-#include "device.h"
+#include <amiga/dev/device.h>
 
 extern caddr_t ZORRO2ADDR;
 

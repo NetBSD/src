@@ -1,8 +1,8 @@
 /*
- *	$Id: grf_tg.c,v 1.4 1994/02/11 07:01:43 chopps Exp $
+ *	$Id: grf_tg.c,v 1.5 1994/02/13 21:10:29 chopps Exp $
  */
 
-#include "errno.h"
+#include <sys/errno.h>
 
 /* to be written.. */
 

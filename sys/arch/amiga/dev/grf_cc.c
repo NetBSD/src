@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_cc.c,v 1.8 1994/02/11 07:01:37 chopps Exp $
+ *	$Id: grf_cc.c,v 1.9 1994/02/13 21:10:26 chopps Exp $
  */
 
 #include "grf.h"
@@ -11,20 +11,21 @@
          view driver. Due to some design problems with RTG view can't
 	 currently replace grf, but that's an option for the future. */
 
-#include "param.h"
-#include "vm/vm_param.h"
-#include "sys/errno.h"
-#include "ioctl.h"
-#include "grfioctl.h"
-#include "grfvar.h"
-#include "grf_ccreg.h"
-#include "../include/cpu.h"
-#include "../amiga/custom.h"
-#include "../amiga/cia.h"
-#include "../amiga/cc_types.h"
-#include "grf/grf_types.h"
-#include "grf/grf_bitmap.h"
-#include "viewioctl.h"
+#include <sys/param.h>
+#include <vm/vm_param.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <machine/cpu.h>
+
+#include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
+#include <amiga/amiga/dlists.h>
+
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
+#include <amiga/dev/grf_ccreg.h>
+#include <amiga/dev/grfabs_reg.h>
+#include <amiga/dev/viewioctl.h>
 
 /* Initialize hardware.
  * Must point g_display at a grfinfo structure describing the hardware.
