@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_coredump.9,v 1.5 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: cpu_coredump.9,v 1.6 2003/04/16 13:35:26 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm cpu_coredump
 .Nd machine-dependent process core dump interface
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/signalvar.h\*[Gt]
+.In sys/signalvar.h
 .Ft int
 .Fn cpu_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" \
 "struct core *chdr"

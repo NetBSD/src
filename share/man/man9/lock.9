@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.16 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: lock.9,v 1.17 2003/04/16 13:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Nm spinlockmgr
 .Nd kernel lock functions
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/lock.h\*[Gt]
+.In sys/lock.h
 .Ft void
 .Fn simple_lock_init "struct simplelock *slock"
 .Ft void

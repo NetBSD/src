@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet6_rthdr_space.3,v 1.7 2002/02/07 09:24:06 ross Exp $
+.\"	$NetBSD: inet6_rthdr_space.3,v 1.8 2003/04/16 13:34:42 wiz Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.8 2000/05/17 14:30:15 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -48,7 +48,7 @@
 .Nd IPv6 Routing Header Options manipulation
 .\"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]netinet/in.h\*[Gt]
+.In netinet/in.h
 .Ft size_t
 .Fn inet6_rthdr_space "int type" "int segments"
 .Ft "struct cmsghdr *"

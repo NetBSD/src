@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.6 2002/02/13 08:18:59 ross Exp $
+.\"	$NetBSD: bioscall.9,v 1.7 2003/04/16 13:35:36 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm bioscall
 .Nd call system BIOS function from real mode
 .Sh SYNOPSIS
-.Fd #include \*[Lt]i386/bioscall.h\*[Gt]
+.In i386/bioscall.h
 .Ft void
 .Fn bioscall "int function" "struct bioscallregs *regs"
 .Sh DESCRIPTION

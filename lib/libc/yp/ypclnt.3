@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.20 2002/10/01 19:03:15 wiz Exp $
+.\"	$NetBSD: ypclnt.3,v 1.21 2003/04/16 13:34:58 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,10 +53,10 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
-.Fd #include \*[Lt]rpcsvc/ypclnt.h\*[Gt]
-.Fd #include \*[Lt]rpcsvc/yp_prot.h\*[Gt]
+.In sys/types.h
+.In rpc/rpc.h
+.In rpcsvc/ypclnt.h
+.In rpcsvc/yp_prot.h
 .Ft int
 .Fn yp_all "const char *indomain" "const char *inmap" "struct ypall_callback *incallback"
 .Ft int

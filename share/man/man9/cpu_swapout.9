@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_swapout.9,v 1.2 2002/10/14 13:43:20 wiz Exp $
+.\"     $NetBSD: cpu_swapout.9,v 1.3 2003/04/16 13:35:27 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Nm cpu_swapin ,
 .Nd machine-dependent swap interface
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]machine/cpu.h\*[Gt]
+.In sys/proc.h
+.In machine/cpu.h
 .Ft void
 .Fn cpu_swapout "struct proc *p"
 .Ft void

@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.9 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: isa.9,v 1.10 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,9 +61,9 @@
 .Nm isa_mappage
 .Nd Industry-standard Architecture
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/isa/isareg.h\*[Gt]
-.Fd #include \*[Lt]dev/isa/isavar.h\*[Gt]
+.In machine/bus.h
+.In dev/isa/isareg.h
+.In dev/isa/isavar.h
 .Ft int
 .Fn isa_intr_alloc "isa_chipset_tag_t ic" "int mask" "int type" \
 "int *irq"
@@ -74,8 +74,8 @@
 "int level" "int (*handler)(void *)" "void *arg"
 .Ft void
 .Fn isa_intr_disestablish "isa_chipset_tag_t ic" "void *ih"
-.Fd #include \*[Lt]dev/isa/isadmareg.h\*[Gt]
-.Fd #include \*[Lt]dev/isa/isadmavar.h\*[Gt]
+.In dev/isa/isadmareg.h
+.In dev/isa/isadmavar.h
 .Ft int
 .Fn isa_dmamap_create "isa_chipset_tag_t ic" "int chan" "bus_size_t size" \
 "int flags"

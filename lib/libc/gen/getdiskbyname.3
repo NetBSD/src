@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdiskbyname.3,v 1.10 2002/10/01 16:59:46 wiz Exp $
+.\"	$NetBSD: getdiskbyname.3,v 1.11 2003/04/16 13:34:36 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,9 +43,9 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/disklabel.h\*[Gt]
-.Fd #include \*[Lt]disktab.h\*[Gt]
+.In sys/types.h
+.In sys/disklabel.h
+.In disktab.h
 .Ft int
 .Fn setdisktab "char *name"
 .Ft struct disklabel *

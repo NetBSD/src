@@ -1,4 +1,4 @@
-.\" $NetBSD: ratecheck.9,v 1.8 2002/10/14 13:43:31 wiz Exp $
+.\" $NetBSD: ratecheck.9,v 1.9 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm ratecheck
 .Nd function to help implement rate-limited actions
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/time.h\*[Gt]
+.In sys/time.h
 .Ft int
 .Fn ratecheck "struct timeval *lasttime" "const struct timeval *mininterval"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.21 2002/05/22 09:42:39 kleink Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.22 2003/04/16 13:34:42 wiz Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -46,7 +46,7 @@
 .Lb libc
 .\"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]netdb.h\*[Gt]
+.In netdb.h
 .Ft int
 .Fn getnameinfo "const struct sockaddr *sa" "socklen_t salen" \
 "char *host" "socklen_t hostlen" "char *serv" "socklen_t servlen" \

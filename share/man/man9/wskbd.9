@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.9 2003/04/06 16:00:28 wiz Exp $
+.\"     $NetBSD: wskbd.9,v 1.10 2003/04/16 13:35:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,10 +46,10 @@
 .Nm wskbddevprint
 .Nd wscons keyboard support
 .Sh SYNOPSIS
-.Fd #include \*[Lt]dev/wscons/wsconsio.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wskbdvar.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsksymdef.h\*[Gt]
-.Fd #include \*[Lt]dev/wscons/wsksymvar.h\*[Gt]
+.In dev/wscons/wsconsio.h
+.In dev/wscons/wskbdvar.h
+.In dev/wscons/wsksymdef.h
+.In dev/wscons/wsksymvar.h
 .Ft void
 .Fn wskbd_input "struct device *kbddev" "u_int type" "int value"
 .Ft void

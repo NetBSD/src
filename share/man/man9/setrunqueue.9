@@ -1,4 +1,4 @@
-.\"	$NetBSD: setrunqueue.9,v 1.6 2002/09/27 08:38:58 wiz Exp $
+.\"	$NetBSD: setrunqueue.9,v 1.7 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,8 @@
 .Nm nextrunqueue
 .Nd manipulate system run queue
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/sched.h\*[Gt]
+.In sys/proc.h
+.In sys/sched.h
 .Ft void
 .Fn setrunqueue "struct proc *p"
 .Ft void

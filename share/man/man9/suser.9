@@ -1,4 +1,4 @@
-.\"     $NetBSD: suser.9,v 1.4 2003/01/25 19:27:43 kleink Exp $
+.\"     $NetBSD: suser.9,v 1.5 2003/04/16 13:35:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,9 +41,9 @@
 .Nm suser
 .Nd test for super-user credentials
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/ucred.h\*[Gt]
-.Fd #include \*[Lt]sys/acct.h\*[Gt]
+.In sys/param.h
+.In sys/ucred.h
+.In sys/acct.h
 .Ft int
 .Fn suser "struct ucred *cred" "u_short *acflag"
 .Sh DESCRIPTION

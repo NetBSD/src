@@ -1,4 +1,4 @@
-.\"     $NetBSD: preempt.9,v 1.2 2002/09/27 08:38:59 wiz Exp $
+.\"     $NetBSD: preempt.9,v 1.3 2003/04/16 13:35:32 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm preempt
 .Nd general preempt function
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/sched.h\*[Gt]
+.In sys/proc.h
+.In sys/sched.h
 .Ft void
 .Fn preempt "struct proc *p"
 .Sh DESCRIPTION

@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bcopy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bcopy.9,v 1.7 2002/10/14 13:43:15 wiz Exp $
+.\"	$NetBSD: bcopy.9,v 1.8 2003/04/16 13:35:25 wiz Exp $
 .\"
 .Dd July 7, 2001
 .Dt BCOPY 9
@@ -42,7 +42,7 @@
 .Nm bcopy
 .Nd copy byte string
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/systm.h
 .Ft void
 .Fn bcopy "const void *src" "void *dst" "size_t len"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_fork.9,v 1.3 2002/10/14 13:43:19 wiz Exp $
+.\"     $NetBSD: cpu_fork.9,v 1.4 2003/04/16 13:35:26 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nm proc_trampoline
 .Nd finish a fork operation
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
+.In sys/proc.h
 .Ft void
 .Fn cpu_fork "struct proc *p1" "struct proc *p2" "void *stack" \
 "size_t stacksize" "void (*func)(void *)" "void *arg"

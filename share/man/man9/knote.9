@@ -1,4 +1,4 @@
-.\"	$NetBSD: knote.9,v 1.8 2003/02/23 21:43:31 wiz Exp $
+.\"	$NetBSD: knote.9,v 1.9 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm KNOTE
 .Nd raise kernel event
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/event.h\*[Gt]
+.In sys/event.h
 .Ft void
 .Fn knote "struct klist *list" "long hint"
 .Fn KNOTE "struct klist *list" "long hint"

@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.24 2003/02/14 15:20:21 grant Exp $
+.\" $NetBSD: extent.9,v 1.25 2003/04/16 13:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,8 +48,8 @@
 .Nm extent_print
 .Nd general purpose extent manager
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/malloc.h\*[Gt]
-.Fd #include \*[Lt]sys/extent.h\*[Gt]
+.In sys/malloc.h
+.In sys/extent.h
 .Ft struct extent *
 .Fn extent_create "char *name" "u_long start" "u_long end" "int mtype" "caddr_t storage" "size_t storagesize" "int flags"
 .Ft void

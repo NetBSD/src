@@ -1,4 +1,4 @@
-.\" $NetBSD: sigtimedwait.2,v 1.2 2003/03/03 07:00:57 wiz Exp $
+.\" $NetBSD: sigtimedwait.2,v 1.3 2003/04/16 13:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]signal.h\*[Gt]
+.In signal.h
 .Ft int
 .Fn sigtimedwait "const sigset_t * restrict set" "siginfo_t * restrict info" "const struct timespec * restrict timeout"
 .Ft int

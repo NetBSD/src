@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmat.2,v 1.15 2003/01/18 11:33:13 thorpej Exp $
+.\"	$NetBSD: shmat.2,v 1.16 2003/04/16 13:34:56 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/shm.h\*[Gt]
+.In sys/shm.h
 .Ft void *
 .Fn shmat "int shmid" "const void *shmaddr" "int shmflg"
 .Ft int

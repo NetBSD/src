@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.28 2002/06/15 21:49:18 itojun Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.29 2003/04/16 13:34:41 wiz Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -48,7 +48,7 @@
 .Lb libc
 .\"
 .Sh SYNOPSIS
-.Fd #include \*[Lt]netdb.h\*[Gt]
+.In netdb.h
 .Ft int
 .Fn getaddrinfo "const char *nodename" "const char *servname" \
 "const struct addrinfo *hints" "struct addrinfo **res"

@@ -1,7 +1,7 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.8 2003/01/18 11:29:06 thorpej Exp $
+.\"	$NetBSD: rpcbind.3,v 1.9 2003/04/16 13:34:43 wiz Exp $
 .Dd May 7, 1993
 .Dt RPCBIND 3
 .Os
@@ -16,7 +16,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
+.In rpc/rpc.h
 .Ft "struct rpcblist *"
 .Fn rpcb_getmaps "const struct netconfig *netconf" "const char *host"
 .Ft bool_t

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.22 2003/03/31 03:05:43 perry Exp $
+.\"	$NetBSD: ptrace.2,v 1.23 2003/04/16 13:34:55 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -10,8 +10,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/ptrace.h\*[Gt]
+.In sys/types.h
+.In sys/ptrace.h
 .Ft int
 .Fn ptrace "int request" "pid_t pid" "caddr_t addr" "int data"
 .Sh DESCRIPTION

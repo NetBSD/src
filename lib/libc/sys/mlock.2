@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.14 2003/01/18 11:33:08 thorpej Exp $
+.\"	$NetBSD: mlock.2,v 1.15 2003/04/16 13:34:54 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/mman.h\*[Gt]
+.In sys/mman.h
 .Ft int
 .Fn mlock "void *addr" "size_t len"
 .Ft int

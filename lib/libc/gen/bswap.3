@@ -1,4 +1,4 @@
-.\" $NetBSD: bswap.3,v 1.6 2002/02/07 07:00:10 ross Exp $
+.\" $NetBSD: bswap.3,v 1.7 2003/04/16 13:34:35 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -40,8 +40,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]machine/bswap.h\*[Gt]
+.In sys/types.h
+.In machine/bswap.h
 .Ft u_int16_t
 .Fn bswap16 "u_int16_t"
 .Ft u_int32_t

@@ -1,4 +1,4 @@
-.\"	$NetBSD: statfs.2,v 1.21 2003/01/18 11:33:15 thorpej Exp $
+.\"	$NetBSD: statfs.2,v 1.22 2003/04/16 13:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/mount.h\*[Gt]
+.In sys/param.h
+.In sys/mount.h
 .Ft int
 .Fn statfs "const char *path" "struct statfs *buf"
 .Ft int

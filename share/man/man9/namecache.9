@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.7 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: namecache.9,v 1.8 2003/04/16 13:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,10 +47,10 @@
 .Nm namecache_print
 .Nd name lookup cache
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/namei.h\*[Gt]
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/uio.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/namei.h
+.In sys/proc.h
+.In sys/uio.h
+.In sys/vnode.h
 .Ft int
 .Fn cache_lookup "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"

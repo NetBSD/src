@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.14 2002/10/01 16:48:35 wiz Exp $
+.\"	$NetBSD: syslog.3,v 1.15 2003/04/16 13:34:39 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]syslog.h\*[Gt]
+.In syslog.h
 .Ft void
 .Fn syslog "int priority" "const char *message" "..."
 .Ft void
@@ -55,7 +55,7 @@
 .Fn closelog void
 .Ft int
 .Fn setlogmask "int maskpri"
-.Fd #include \*[Lt]stdarg.h\*[Gt]
+.In stdarg.h
 .Ft void
 .Fn vsyslog "int priority" "const char *message" "va_list args"
 .Sh DESCRIPTION

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)stty.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: stty.3,v 1.7 2002/02/07 07:00:35 ross Exp $
+.\"	$NetBSD: stty.3,v 1.8 2003/04/16 13:34:59 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt STTY 3
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libcompat
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sgtty.h\*[Gt]
+.In sgtty.h
 .Fn stty "int fd" "struct sgttyb *buf"
 .Fn gtty "int fd" "struct sgttyb *buf"
 .Sh DESCRIPTION

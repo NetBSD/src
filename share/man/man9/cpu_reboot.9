@@ -1,4 +1,4 @@
-.\" $NetBSD: cpu_reboot.9,v 1.15 2003/04/04 20:58:27 wiz Exp $
+.\" $NetBSD: cpu_reboot.9,v 1.16 2003/04/16 13:35:27 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Nm cpu_reboot
 .Nd halt or reboot the system
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/reboot.h\*[Gt]
+.In sys/reboot.h
 .Ft void
 .Fn cpu_reboot "int howto" "char *bootstr"
 .Sh DESCRIPTION

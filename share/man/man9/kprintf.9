@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.16 2003/01/02 10:17:27 wiz Exp $
+.\"     $NetBSD: kprintf.9,v 1.17 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm printf, snprintf, vprintf, vsnprintf, uprintf, ttyprintf, tprintf
 .Nd kernel formatted output conversion
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/systm.h
 .Ft void
 .Fn "printf" "const char *format" "..."
 .Ft void
@@ -56,7 +56,7 @@
 .Fn "uprintf" "const char *format" "..."
 .Ft void
 .Fn "ttyprintf" "struct tty *tty" "const char *format" "..."
-.Fd #include \*[Lt]sys/tprintf.h\*[Gt]
+.In sys/tprintf.h
 .Ft tpr_t
 .Fn "tprintf_open" "struct proc *p"
 .Ft void

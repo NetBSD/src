@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.11 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: driver.9,v 1.12 2003/04/16 13:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,9 +41,9 @@
 .Nm driver
 .Nd description of a device driver
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/device.h\*[Gt]
-.Fd #include \*[Lt]sys/errno.h\*[Gt]
+.In sys/param.h
+.In sys/device.h
+.In sys/errno.h
 .Ft static int
 .Fn foo_match "struct device *parent" "struct cfdata *match" "void *aux"
 .Ft static void

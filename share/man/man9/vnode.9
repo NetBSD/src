@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.17 2003/04/07 07:08:48 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.18 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,8 +68,8 @@
 .Nm vprint
 .Nd kernel representation of a file or directory
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/param.h
+.In sys/vnode.h
 .Ft int
 .Fn vcount "struct vnode *vp"
 .Ft void

@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.7 2003/04/13 07:15:20 dbj Exp $
+.\"     $NetBSD: namei.9,v 1.8 2003/04/16 13:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,10 +44,10 @@
 .Nm NDINIT
 .Nd pathname lookup
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/namei.h\*[Gt]
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/uio.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/namei.h
+.In sys/proc.h
+.In sys/uio.h
+.In sys/vnode.h
 .Ft int
 .Fn namei "struct nameidata *ndp"
 .Ft int

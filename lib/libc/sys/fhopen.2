@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.8 2003/01/18 11:33:03 thorpej Exp $
+.\"	$NetBSD: fhopen.2,v 1.9 2003/04/16 13:34:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/stat.h\*[Gt]
+.In sys/types.h
+.In sys/stat.h
 .Ft int
 .Fn fhopen "const fhandle_t *fhp" "int flags"
 .Ft int

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.13 2003/02/04 22:38:16 perry Exp $
+.\"	$NetBSD: tp.4,v 1.14 2003/04/16 13:35:20 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,10 +42,10 @@
 .Tn ISO
 Transport Protocol
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
-.Fd #include \*[Lt]netiso/iso_errno.h\*[Gt]
-.Fd #include \*[Lt]netiso/tp_param.h\*[Gt]
-.Fd #include \*[Lt]netiso/tp_user.h\*[Gt]
+.In sys/socket.h
+.In netiso/iso_errno.h
+.In netiso/tp_param.h
+.In netiso/tp_user.h
 .Ft int
 .Fn socket "[AF_INET, AF_ISO]" SOCK_SEQPACKET 0
 .Sh DESCRIPTION

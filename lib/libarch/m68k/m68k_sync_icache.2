@@ -1,4 +1,4 @@
-.\" $NetBSD: m68k_sync_icache.2,v 1.8 2002/10/01 15:58:39 wiz Exp $
+.\" $NetBSD: m68k_sync_icache.2,v 1.9 2003/04/16 13:34:34 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libm68k
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]m68k/sync_icache.h\*[Gt]
+.In sys/types.h
+.In m68k/sync_icache.h
 .Ft void
 .Fn m68k_sync_icache "void *start" "size_t size"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"     $NetBSD: userret.9,v 1.4 2003/04/07 07:08:47 wiz Exp $
+.\"     $NetBSD: userret.9,v 1.5 2003/04/16 13:35:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm userret
 .Nd return path to user-mode execution
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/sched.h\*[Gt]
+.In sys/proc.h
+.In sys/sched.h
 .Ft void
 .Fn userret "struct proc *p"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$NetBSD: iso_addr.3,v 1.6 2002/02/07 07:00:21 ross Exp $
+.\"	$NetBSD: iso_addr.3,v 1.7 2003/04/16 13:34:42 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]netiso/iso.h\*[Gt]
+.In sys/types.h
+.In netiso/iso.h
 .Ft struct iso_addr *
 .Fn iso_addr "const char *cp"
 .Ft char *

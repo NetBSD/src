@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.30 2003/01/18 11:29:56 thorpej Exp $
+.\"	$NetBSD: printf.3,v 1.31 2003/04/16 13:34:44 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]stdio.h\*[Gt]
+.In stdio.h
 .Ft int
 .Fn printf "const char * restrict format" ...
 .Ft int
@@ -66,7 +66,7 @@
 .Fn snprintf "char * restrict str" "size_t size" "const char * restrict format" ...
 .Ft int
 .Fn asprintf "char ** restrict ret" "const char * restrict format" ...
-.Fd #include \*[Lt]stdarg.h\*[Gt]
+.In stdarg.h
 .Ft int
 .Fn vprintf "const char * restrict format" "va_list ap"
 .Ft int

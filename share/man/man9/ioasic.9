@@ -1,4 +1,4 @@
-.\"     $NetBSD: ioasic.9,v 1.7 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: ioasic.9,v 1.8 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,10 +46,10 @@
 .Nm ioasic_submatch
 .Nd baseboard I/O control ASIC for DEC TURBOchannel systems
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/tc/tcvar.h\*[Gt]
-.Fd #include \*[Lt]dev/tc/ioasicreg.h\*[Gt]
-.Fd #include \*[Lt]dev/tc/ioasicvar.h\*[Gt]
+.In machine/bus.h
+.In dev/tc/tcvar.h
+.In dev/tc/ioasicreg.h
+.In dev/tc/ioasicvar.h
 .Ft void
 .Fn ioasic_intr_establish "struct device *dev" "void *cookie" "int level" \
 "int (*handler)(void *)" "void *arg"

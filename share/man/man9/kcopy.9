@@ -1,4 +1,4 @@
-.\"     $NetBSD: kcopy.9,v 1.1 2002/05/25 02:16:37 gmcgarry Exp $
+.\"     $NetBSD: kcopy.9,v 1.2 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm kcopy
 .Nd copy data with abort on page fault
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/systm.h
 .Ft int
 .Fn kcopy "const void *src" "void *dst" "size_t len"
 .Sh DESCRIPTION

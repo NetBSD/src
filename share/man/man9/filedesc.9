@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.4 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: filedesc.9,v 1.5 2003/04/16 13:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,8 +57,8 @@
 .Nm fdunshare
 .Nd file descriptor tables and operations
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/file.h\*[Gt]
-.Fd #include \*[Lt]sys/filedesc.h\*[Gt]
+.In sys/file.h
+.In sys/filedesc.h
 .Ft int
 .Fn falloc "struct proc *p" "struct file **resultfp" "int *resultfd"
 .Ft struct file *

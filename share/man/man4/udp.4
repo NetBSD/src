@@ -1,4 +1,4 @@
-.\"	$NetBSD: udp.4,v 1.8 2002/02/13 08:17:49 ross Exp $
+.\"	$NetBSD: udp.4,v 1.9 2003/04/16 13:35:20 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@
 .Nm udp
 .Nd Internet User Datagram Protocol
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
-.Fd #include \*[Lt]netinet/in.h\*[Gt]
+.In sys/socket.h
+.In netinet/in.h
 .Ft int
 .Fn socket AF_INET SOCK_DGRAM 0
 .Ft int

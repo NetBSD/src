@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.14 2002/09/27 15:53:33 wiz Exp $
+.\"     $NetBSD: panic.9,v 1.15 2003/04/16 13:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
 .\" All rights reserved.
@@ -36,8 +36,8 @@
 .Nm panic
 .Nd Bring down system on fatal error
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/types.h
+.In sys/systm.h
 .Ft void
 .Fn panic "const char *fmt" "..."
 .Sh DESCRIPTION

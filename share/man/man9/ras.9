@@ -1,4 +1,4 @@
-.\"     $NetBSD: ras.9,v 1.4 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: ras.9,v 1.5 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,9 @@
 .Nm ras_purgeall
 .Nd restartable atomic sequences
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/proc.h\*[Gt]
-.Fd #include \*[Lt]sys/ras.h\*[Gt]
+.In sys/types.h
+.In sys/proc.h
+.In sys/ras.h
 .Ft caddr_t
 .Fn ras_lookup "struct proc *p" "caddr_t addr"
 .Ft int

@@ -1,4 +1,4 @@
-.\"     $NetBSD: tc.9,v 1.7 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: tc.9,v 1.8 2003/04/16 13:35:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,9 +50,9 @@
 .Nm TC_PHYS_TO_UNCACHED
 .Nd TURBOchannel bus
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/tc/tcvar.h\*[Gt]
-.Fd #include \*[Lt]dev/tc/tcdevs.h\*[Gt]
+.In machine/bus.h
+.In dev/tc/tcvar.h
+.In dev/tc/tcdevs.h
 .Ft void
 .Fn tc_intr_establish "struct device *dev" "void *cookie" \
 "int level" "int (*handler)(void *)" "void *arg"
