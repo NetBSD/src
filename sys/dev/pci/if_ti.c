@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.1.2.5 2000/06/01 18:04:43 he Exp $ */
+/* $NetBSD: if_ti.c,v 1.1.2.6 2000/07/06 10:42:25 he Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,7 +75,7 @@
  *   for testing
  * - Raymond Lee of Netgear, for providing a pair of Netgear
  *   GA620 Tigon 2 boards for testing
- * - Ulf Zimmermann, for bringing the GA260 to my attention and
+ * - Ulf Zimmermann, for bringing the GA620 to my attention and
  *   convincing me to write this driver.
  * - Andrew Gallatin for providing FreeBSD/Alpha support.
  */
@@ -1810,8 +1810,8 @@ static void ti_attach(parent, self, aux)
 	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
 	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_FX, 0, NULL);
-	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_FX|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
+	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX|IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->ifmedia, IFM_ETHER|IFM_AUTO);
 
@@ -2392,7 +2392,7 @@ static int ti_ifmedia_upd(ifp)
 		TI_DO_CMD(TI_CMD_LINK_NEGOTIATION,
 		    TI_CMD_CODE_NEGOTIATE_BOTH, 0);
 		break;
-	case IFM_1000_FX:
+	case IFM_1000_SX:
 		CSR_WRITE_4(sc, TI_GCR_GLINK, TI_GLNK_PREF|TI_GLNK_1000MB|
 		    TI_GLNK_FULL_DUPLEX|TI_GLNK_RX_FLOWCTL_Y|TI_GLNK_ENB);
 		CSR_WRITE_4(sc, TI_GCR_LINK, 0);
@@ -2441,7 +2441,7 @@ static void ti_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_status |= IFM_ACTIVE;
 
 	if (sc->ti_linkstat == TI_EV_CODE_GIG_LINK_UP)
-		ifmr->ifm_active |= IFM_1000_FX|IFM_FDX;
+		ifmr->ifm_active |= IFM_1000_SX|IFM_FDX;
 	else if (sc->ti_linkstat == TI_EV_CODE_LINK_UP) {
 		u_int32_t		media;
 		media = CSR_READ_4(sc, TI_GCR_LINK_STAT);
