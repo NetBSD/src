@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22 1998/02/22 00:05:00 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.23 1998/04/01 23:12:32 mark Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,30 +40,18 @@
 #include <sys/syscall.h>
 
 /* What size should this really be ? It is only used by init_arm() */
-
 #define INIT_ARM_STACK_SIZE	2048
 
-/* register equates */
-fp	.req	r11
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-.text
-	.align	0
-
-/* This is for kvm_mkdb, and should be the address of the beginning
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 
-	.global _kernel_text
-_kernel_text:
+ENTRY_NP(kernel_text)
 
-	.global	start
-start:
+ASENTRY_NP(start)
 	add	r1, pc, #(Lstart - . - 8)
-	ldmia	r1, { r1, r2, r13 }		/* Set initial stack and */
+	ldmia	r1, {r1, r2, sp}		/* Set initial stack and */
 	sub	r2, r2, r1			/* get zero init data */
 	mov	r3, #0
 
@@ -75,8 +63,7 @@ L1:
 	mov	fp, #0x00000000			/* trace back starts here */
 	bl	_initarm			/* Off we go */
 
-/* init arm will return the new stack pointer. */
-
+	/* init arm will return the new stack pointer. */
 	mov	sp, r0
 
 	mov	fp, #0x00000000		/* trace back starts here */
@@ -84,12 +71,11 @@ L1:
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 
-/* Setup an initial trap frame for start_init to use */
+	/* Setup an initial trap frame for start_init to use */
 
 	PUSHFRAME
 
-/*	mov	fp, #0x00000000*/		/* trace back starts here */
-	mov	r0, sp			/* parameter to main is trap frame*/ 
+	mov	r0, sp			/* parameter to main is trap frame */ 
 
 	bl	_main			/* Lets light the flame and start her up */
 
@@ -97,7 +83,7 @@ L1:
 
 	movs	pc, lr			/* Exit to user process */
 
-/* Never gets here */
+	/* Never gets here */
 
 	b	.
 
@@ -106,13 +92,9 @@ Lstart:
 	.word	_end
 	.word	svcstk + INIT_ARM_STACK_SIZE
 
-Lproc0:
-	.word	_proc0
-
-/* What size should this really be ? It is only used by init_arm() */
-
 	.bss
-svcstk:	.space	INIT_ARM_STACK_SIZE
+svcstk:
+	.space	INIT_ARM_STACK_SIZE
 
 /*
  * Instructions to copy to the bottom of zero page
@@ -146,74 +128,46 @@ Laddrexc:
 	.word	addrexc
 Lirq:
 	.word	irq_entry
-
 Lfiq:
 	.word	fiq
 _page0_end =	.
 
-#if 0
-reset:
-	add	r0, pc, #Wreset - . - 8
-	ldmia	r0, {r0, pc}
-resetmsg:
-	.asciz	"reset"
-	.align	0
-Wreset:
-	.word	resetmsg
-	.word	_panic
-#endif
+/* vector 0x00000000 - RESET */
 
-reset_entry:
+ASENTRY_NP(reset_entry)
 	PUSHFRAME
 
- 	mov	r0, sp			/* Pass the frame to any function */
+ 	mov	r0, sp			/* Pass the frame to function */
+	b	_resethandler		/* It's a branch throught zero ! */
 
-	bl	_resethandler		/* It's a branch throught zero ! */
+/* vector 0x00000008 - ADDRESS EXCEPTION */
 
-	PULLFRAME
-
-	movs	pc, lr			/* Exit */
-
-
-addrexc:
+ASENTRY_NP(addrexc)
 	mrs	r1, cpsr_all
 	mrs	r2, spsr_all
 	mov	r3, lr
-	add	r0, pc, #addrexcmsg - . - 8
+	add	r0, pc, #Laddrexcmsg - . - 8
 	bl	_printf
 	b	data_abort_entry
 
-addrexcmsg:
+Laddrexcmsg:
 	.asciz	"address exception CPSR=%08x SPSR=%08x lr=%08x\n"
 	.align	0
-Waddrexc:
-	.word	addrexcmsg
-	.word	_panic
 
-irq:
-	add	r0, pc, #Wirq - . - 8
-	ldmia	r0, {r0, pc}
-irqmsg:
-	.asciz	"irq"
-	.align	0
-Wirq:
-	.word	irqmsg
-	.word	_panic
+/* vector 0x0000001C - FIQ */
 
-fiq:
-	add	r0, pc, #Wfiq - . - 8
-	ldmia	r0, {r0, pc}
-fiqmsg:
+ASENTRY_NP(fiq)
+	ldr	r0, Lfiqmsg
+	b	_panic
+
+Lfiqmsg:
 	.asciz	"fiq"
 	.align	0
-Wfiq:
-	.word	fiqmsg
-	.word	_panic
 
 Lcpufuncs:	
 	.word	_cpufuncs
 
-ENTRY(cpu_reset)
+ENTRY_NP(cpu_reset)
 	mrs     r2, cpsr_all
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
@@ -235,6 +189,7 @@ Lboot_cache_purged:
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
+	mcr     15, 0, r0, c8, c7, 0
 	mov     pc, r4
 
 	/*
@@ -413,8 +368,8 @@ Lusertb2:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-	.global	_sigcode
-_sigcode:
+
+ENTRY_NP(sigcode)
 /*
  * r0-r2 are our signal handler parameters
  * r3 is the handler address
@@ -445,8 +400,7 @@ _esigcode:
  * ipkdbfbyte and ipkdbsbyte are now in ipkdb_glue.c and do not tweak
  * the abort handler anymore
  */
-	.global	_ipkdbfbyte
-_ipkdbfbyte:
+ENTRY_NP(ipkdbfbyte)
 	ldr	ip, abortp
 	ldr	r2, [ip]
 	add	r3, pc, #ipkdbfault - . - 8
@@ -455,8 +409,7 @@ _ipkdbfbyte:
 	str	r2, [ip]
 	mov	pc, lr
 
-	.global	_ipkdbsbyte
-_ipkdbsbyte:
+ENTRY_NP(ipkdbsbyte)
 	ldr	ip, abortp
 	ldr	r2, [ip]
 	add	r3, pc, #ipkdbfault - . - 8
@@ -484,7 +437,7 @@ ipkdbfault:
  *
  * Move the instruction onto the stack and jump to it.
  */
-ENTRY(Execute)
+ENTRY_NP(Execute)
 	mov	ip, sp
 	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
 	sub	fp, ip, #4
@@ -529,9 +482,7 @@ ENTRY(longjmp)
 	.global _esym
 _esym:	.word	_end
 
-	.text
-	.global	_abort
-_abort:
+ENTRY_NP(abort)
 	b	_abort
 
 
