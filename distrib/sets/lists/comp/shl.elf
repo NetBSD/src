@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.26 2002/01/01 11:55:25 augustss Exp $
+# $NetBSD: shl.elf,v 1.27 2002/03/17 22:14:08 tshiozak Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -47,9 +47,9 @@
 ./usr/lib/libutil.so		comp-c-lib
 ./usr/lib/libwrap.so		comp-c-lib
 ./usr/lib/libz.so		comp-c-lib
-./usr/lib/runemodule/libBIG5.so	comp-rune-lib
-./usr/lib/runemodule/libEUC.so	comp-rune-lib
-./usr/lib/runemodule/libEUCTW.so	comp-rune-lib
-./usr/lib/runemodule/libISO2022.so	comp-rune-lib
-./usr/lib/runemodule/libMSKanji.so	comp-rune-lib
-./usr/lib/runemodule/libUTF8.so	comp-rune-lib
+./usr/lib/i18n/libBIG5.so	comp-i18n-lib
+./usr/lib/i18n/libEUC.so	comp-i18n-lib
+./usr/lib/i18n/libEUCTW.so	comp-i18n-lib
+./usr/lib/i18n/libISO2022.so	comp-i18n-lib
+./usr/lib/i18n/libMSKanji.so	comp-i18n-lib
+./usr/lib/i18n/libUTF8.so	comp-i18n-lib

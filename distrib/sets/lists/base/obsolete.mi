@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.36 2002/03/17 10:55:03 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.37 2002/03/17 22:14:05 tshiozak Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -19,6 +19,30 @@
 /usr/lib/runemodule/libUTF2.so
 /usr/lib/runemodule/libUTF2.so.3
 /usr/lib/runemodule/libUTF2.so.3.0
+/usr/lib/runemodule/libBIG5.so.3
+/usr/lib/runemodule/libEUC.so.3
+/usr/lib/runemodule/libMSKanji.so.3
+/usr/lib/runemodule/libUTF8.so.3
+/usr/lib/runemodule/libEUCTW.so.3
+/usr/lib/runemodule/libISO2022.so.3
+/usr/lib/runemodule/libBIG5.so.3.0
+/usr/lib/runemodule/libEUC.so.3.0
+/usr/lib/runemodule/libEUCTW.so.3.0
+/usr/lib/runemodule/libISO2022.so.3.0
+/usr/lib/runemodule/libMSKanji.so.3.0
+/usr/lib/runemodule/libUTF8.so.3.0
+/usr/lib/runemodule/libBIG5.a
+/usr/lib/runemodule/libEUC.a
+/usr/lib/runemodule/libEUCTW.a
+/usr/lib/runemodule/libISO2022.a
+/usr/lib/runemodule/libMSKanji.a
+/usr/lib/runemodule/libUTF8.a
+/usr/lib/runemodule/libBIG5.so
+/usr/lib/runemodule/libEUC.so
+/usr/lib/runemodule/libEUCTW.so
+/usr/lib/runemodule/libISO2022.so
+/usr/lib/runemodule/libMSKanji.so
+/usr/lib/runemodule/libUTF8.so
 /usr/lib/libusb.a
 /usr/lib/libusb.so
 /usr/lib/libusb.so.0

@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.4 2001/10/20 05:59:35 jmc Exp $	*/
+/*	$NetBSD: rune.h,v 1.5 2002/03/17 22:14:30 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,27 +41,9 @@
 #ifndef	_RUNE_H_
 #define	_RUNE_H_
 
-#include "runetype.h"
 #include <stdio.h>
-
-/* note the tree underlines! */
-#define ___INVALID_RUNE(rl)	(rl)->__invalid_rune
-#define ___mbrtowc(rl)		(rl)->__rune_mbrtowc
-#define ___wcrtomb(rl)		(rl)->__rune_wcrtomb
-#define ___CurrentRuneState(rl)	(rl)->__rune_RuneState
-#define ___rune_initstate(rl)	___CurrentRuneState(rl)->__initstate
-#define ___rune_sizestate(rl)	___CurrentRuneState(rl)->__sizestate
-#define ___rune_packstate(rl)	___CurrentRuneState(rl)->__packstate
-#define ___rune_unpackstate(rl)	___CurrentRuneState(rl)->__unpackstate
-
-#define _INVALID_RUNE   	___INVALID_RUNE(_CurrentRuneLocale)
-#define __mbrtowc		___mbrtowc(_CurrentRuneLocale)
-#define __wcrtomb		___wcrtomb(_CurrentRuneLocale)
-#define _CurrentRuneState	___CurrentRuneState(_CurrentRuneLocale)
-#define __rune_initstate	___rune_initstate(_CurrentRuneLocale)
-#define __rune_sizestate	___rune_sizestate(_CurrentRuneLocale)
-#define __rune_packstate	___rune_packstate(_CurrentRuneLocale)
-#define __rune_unpackstate	___rune_unpackstate(_CurrentRuneLocale)
+#include <wchar.h>
+#include "runetype.h"
 
 #define _DEFAULT_INVALID_RUNE	-3
 
