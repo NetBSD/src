@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.3.10.1 2001/10/01 12:46:24 fvdl Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.3.10.2 2001/10/11 12:33:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #include <dev/sun/msvar.h>
 
 static void ms_zs_rxint __P((struct zs_chanstate *));
-static void ms_zs_stint __P((struct zs_chanstate *, int));
+static void ms_zs_stint __P((struct zs_chanstate *, int, dev_t));
 static void ms_zs_txint __P((struct zs_chanstate *));
 static void ms_zs_softint __P((struct zs_chanstate *));
 
@@ -221,9 +221,10 @@ ms_zs_txint(cs)
 }
 
 static void
-ms_zs_stint(cs, force)
+ms_zs_stint(cs, force, dev)
 	struct zs_chanstate *cs;
 	int force;
+	dev_t dev;
 {
 	struct ms_softc *ms;
 	int rr0;

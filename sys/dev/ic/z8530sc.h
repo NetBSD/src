@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.15 2001/05/11 01:40:48 thorpej Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.15.4.1 2001/10/11 12:33:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,7 +53,7 @@ struct zs_chanstate;
 struct zsops {
 	void	(*zsop_rxint) __P((struct zs_chanstate *));
 					/* receive char available */
-	void	(*zsop_stint) __P((struct zs_chanstate *, int));
+	void	(*zsop_stint) __P((struct zs_chanstate *, int, dev_t));
 					/* external/status */
 	void	(*zsop_txint) __P((struct zs_chanstate *));
 					/* xmit buffer empty */
