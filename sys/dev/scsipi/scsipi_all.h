@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.22 2001/11/19 17:18:09 soren Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.23 2003/09/08 03:24:12 mycroft Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -83,15 +83,8 @@ struct scsipi_mode_sense {
 #define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
 #define	SMS_PAGE_CTRL_DEFAULT 		0x80
 #define	SMS_PAGE_CTRL_SAVED 		0xC0
-	union {
-		struct {
-			u_int8_t unused;
-			u_int8_t length;
-		} scsi __attribute__((packed));
-		struct {
-			u_int8_t length[2];
-		} atapi __attribute__((packed));
-	} u_len;
+	u_int8_t unused;
+	u_int8_t length;
 	u_int8_t control;
 } __attribute__((packed));
 
