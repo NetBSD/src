@@ -1,4 +1,4 @@
-.\" $NetBSD: ksyms.4,v 1.1 2003/04/29 11:35:55 augustss Exp $
+.\" $NetBSD: ksyms.4,v 1.2 2003/05/11 18:09:49 ragge Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,12 +36,91 @@
 .Os
 .Sh NAME
 .Nm ksyms
-.Nd unknown
+.Nd kernel symbol table interface
 .Sh SYNOPSIS
 .Cd "pseudo-device ksyms"
 .Sh DESCRIPTION
-No description.
+The
+.Pa /dev/ksyms
+character device provides a read-only interface to the current
+kernel symbol table.  It can be accessed either as a sequential
+file, where it looks like an executable file but with zero-sized
+text and data segments, or via
+.Xr ioctl 2 .
+.Pp
+.Pa /dev/ksyms
+represents the symbol table at the time when the device is opened,
+and may not change until it os closed.
+.Pp
+The in-kernel symbol manager is designed to be able to handle 
+any type of symbol table. However, only
+.Xr elf 5
+symbol tables are currently dealt with.
+.Sh IOCTLS
+The
+.Xr ioctl 2
+command codes below are defined in \*[Lt]sys/ksyms.h\*[Gt].
+.Pp
+The (third) argument to the
+.Xr ioctl 2
+should be a pointer to the type indicated.
+.Bl -tag -width indent -offset indent
+.It Dv "KIOCGSIZE (int)"
+Returns the total size of the current symbol table.
+This should be used when allocating a buffer to read in the
+whole symbol table to memory.
+.It Dv KIOCGVALUE (struct ksyms_gsymbol)
+Returns the value for the given symbol name in a symtab-independent 
+fashion.
+.Bd -literal -offset indent
+struct ksyms_gsymbol {
+	const char *kg_name;
+	unsigned long *kg_value;
+};
+.Ed
+.Pp
+The struct element
+.Va kg_name
+should be set to the name of the requested value, and the address that
+.Va kg_value
+points to will receive the symbol value.
+.It Dv KIOCGSYMBOL (struct ksyms_gsymbol)
+Returns the complete symbol for the given symbol name.
+.Bd -literal -offset indent
+struct ksyms_gsymbol {
+	const char *kg_name;
+        void *kg_sym;
+}; 
+.Ed
+.Pp
+The struct element
+.Va kg_name
+should be set to the name of the requested symbol, and the found
+symbol will be written to the
+.Va kg_sym
+address.  It is the callers responsibility to ensure that enough space
+for the symbol is allocated.
+.El
 .Sh SEE ALSO
-Nothing
+.Xr ioctl 2 ,
+.Xr elf 5 ,
+.Xr nlist 3
+.Sh HISTORY
+A
+.Nm
+device exists in many different operating systems.  This implementation
+is modelled in function after Solaris
+.Nm .
+This
+.Nm
+driver was written by Anders Magnusson for
+.Nx .
+.Pp
+The
+.Nm
+driver first appeared in
+.Nx 2.0 .
 .Sh BUGS
-ragge@netbsd.org has not yet written this man page.
+No LKM modules can be loaded or unloaded while
+.Pa /dev/ksyms
+is open.
