@@ -1,4 +1,4 @@
-/*	$Id: if_ex_cardbus.c,v 1.1 1999/10/15 06:07:23 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter

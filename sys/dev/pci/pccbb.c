@@ -1,3 +1,5 @@
+/*	$NetBSD: pccbb.c,v 1.2 1999/10/15 06:42:39 haya Exp $	*/
+
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -27,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: pccbb.c,v 1.1 1999/10/15 06:07:28 haya Exp $ */
+/* $Id: pccbb.c,v 1.2 1999/10/15 06:42:39 haya Exp $ */
 
 /*
 #define CBB_DEBUG

@@ -1,4 +1,4 @@
-/*	$Id: cardbusvar.h,v 1.1 1999/10/15 06:07:19 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
