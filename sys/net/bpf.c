@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.16 1994/10/30 21:48:43 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.17 1995/02/23 07:19:49 glass Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -69,6 +69,7 @@
 #include <sys/errno.h>
 
 #include <netinet/in.h>
+#include <netinet/if_arc.h>
 #include <netinet/if_ether.h>
 #include <sys/kernel.h>
 
@@ -167,6 +168,11 @@ bpf_movein(uio, linktype, mp, sockp, datlen)
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX Would MAXLINKHDR be better? */
 		hlen = sizeof(struct ether_header);
+		break;
+
+	case DLT_ARCNET:
+		sockp->sa_family = AF_UNSPEC;
+		hlen = ARC_HDRLEN;
 		break;
 
 	case DLT_FDDI:

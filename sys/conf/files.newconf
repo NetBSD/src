@@ -1,4 +1,4 @@
-#	$NetBSD: files.newconf,v 1.35 1995/02/21 01:35:58 brezak Exp $
+#	$NetBSD: files.newconf,v 1.36 1995/02/23 07:19:57 glass Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -9,9 +9,10 @@ define	ifnet
 define	tty
 define	audio
 
-# net device attributes - we have generic code for ether.
+# net device attributes - we have generic code for ether and arc.
 # we should have imp but right now it is a pseudo-device.
 define	ether
+define 	arc
 # define	imp
 pseudo-device imp
 
@@ -170,6 +171,7 @@ file msdosfs/msdosfs_vnops.c 		msdosfs
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
 file net/if.c		
+file net/if_arcsubr.c	 	arc needs-flag
 file net/if_ethersubr.c	 	ether needs-flag
 file net/if_loop.c		loop needs-count
 file net/if_sl.c		sl needs-count
