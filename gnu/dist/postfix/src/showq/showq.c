@@ -273,6 +273,7 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 		} else if (errno != ENOENT)
 		    msg_fatal("open %s %s: %m", *queue, id);
 		file_count++;
+		vstream_fflush(client);
 	    }
 	    vstream_fflush(client);
 	}

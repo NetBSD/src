@@ -1,16 +1,22 @@
-This is the first official Postfix release that is not called BETA.
-May it help the people who cannot get BETA software past their
-management.
-
-Release 20010228 differs from snapshot 20010228 in that the virtual
-delivery agent and nqmgr queue manager are left out. That software
-will become part of the official release when it has not changed
-in a while.
+Release 20010228 is the first official Postfix release that is not
+called BETA.  May it help the people who cannot get BETA software
+past their management.
 
 In the text below, incompatible changes are labeled with the Postfix
 version that introduced the change. If you upgrade from a later
 Postfix version, then you do not have to worry about that particular
 incompatibility.
+
+Major incompatible changes with release-20010228 Patch 01
+=========================================================
+
+This release changes the names of the "fast ETRN" logfiles with
+delayed mail per destination. These files are maintained by the
+Postfix "fast flush" daemon. The old scheme failed with addresses
+of the form user@[ip.address] and user@a.domain.name.  In order to
+populate the new "fast ETRN" logfiles, execute the command "sendmail
+-q".  The old "fast ETRN" logfiles go away by themselves (default:
+after 7 days).
 
 Major incompatible changes with release-20010228
 ================================================
