@@ -1,4 +1,4 @@
-.\"	$NetBSD: sd.4,v 1.6 1998/06/10 11:15:21 fair Exp $
+.\"	$NetBSD: sd.4,v 1.7 1998/12/02 11:05:59 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Cd sd* at scsibus? target ? lun ?
 .Cd sd3 at scsibus0 target 3 lun 0
-.Cd "sd* at atapibus? drive ?"
+.Cd "sd* at atapibus? drive ? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,6 +74,9 @@ Any devices found which answer as
 type devices will be attached to the
 .Nm
 driver.
+.Pp
+For the use of flags with ATAPI devices, see
+.Xr wd 4 .
 .\"In
 .\".Tn FreeBSD
 .\"releases prior to 2.1, the first found was attached as
