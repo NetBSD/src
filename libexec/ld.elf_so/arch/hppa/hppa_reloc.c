@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.3 2002/09/05 16:33:57 junyoung Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.4 2002/09/05 18:25:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -332,4 +332,147 @@ void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	__rtld_setup_hppa_pltgot(obj, HPPA_OBJ_GOT(obj));
+}
+
+int
+_rtld_relocate_nonplt_object(obj, rela, dodebug)
+	Obj_Entry *obj;
+	const Elf_Rela *rela;
+	bool dodebug;
+{
+	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+	const Elf_Sym   *def;
+	const Obj_Entry *defobj;
+	Elf_Addr         tmp;
+
+	switch (ELF_R_TYPE(rela->r_info)) {
+
+	case R_TYPE(NONE):
+		break;
+
+	case R_TYPE(DIR32):
+		if (ELF_R_SYM(rela->r_info)) {
+			/*
+			 * This is either a DIR32 against a symbol
+			 * (def->st_name != 0), or against a local 
+			 * section (def->st_name == 0).
+			 */
+			def = obj->symtab + ELF_R_SYM(rela->r_info);
+			defobj = obj;
+			if (def->st_name != 0)
+				/*
+		 		 * While we're relocating self, _rtld_objlist
+				 * is NULL, so we just pass in self.
+				 */
+				def = _rtld_find_symdef(rela->r_info, obj,
+				    &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("DIR32 %s in %s --> %p in %s",
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		} else {
+			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
+			extern Elf_Addr	_GOT_END_[];
+
+			tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+
+			/* This is the ...iffy hueristic. */
+			if (!dodebug ||
+			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+			    (caddr_t)where >= (caddr_t)_GOT_END_) {
+				if (*where != tmp)
+					*where = tmp;
+				rdbg(dodebug, ("DIR32 in %s --> %p", obj->path,
+				    (void *)*where));
+			} else
+				rdbg(dodebug, ("DIR32 in %s stays at %p",
+				    obj->path, (void *)*where));
+		}
+		break;
+
+	case R_TYPE(PLABEL32):
+		if (ELF_R_SYM(rela->r_info)) {
+			/*
+	 		 * While we're relocating self, _rtld_objlist
+			 * is NULL, so we just pass in self.
+			 */
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
+			if (def == NULL)
+				return -1;
+
+			tmp = _rtld_function_descriptor_alloc(defobj, def, 
+			    rela->r_addend);
+			if (tmp == (Elf_Addr)-1)
+				return -1;
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("PLABEL32 %s in %s --> %p in %s",
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		} else {
+			/*
+			 * This is a PLABEL for a static function, and the
+			 * dynamic linker has both allocated a PLT entry
+			 * for this function and told us where it is.  We
+			 * can safely use the PLT entry as the PLABEL
+			 * because there should be no other PLABEL reloc
+			 * referencing this function.  This object should
+			 * also have an IPLT relocation to initialize the
+			 * PLT entry.
+			 *
+			 * The dynamic linker should also have ensured
+			 * that the addend has the next-least-significant
+			 * bit set; the $$dyncall millicode uses this to
+			 * distinguish a PLABEL pointer from a plain
+			 * function pointer.
+			 */
+			tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("PLABEL32 in %s --> %p",
+			    obj->path, (void *)*where));
+		}
+		break;
+
+	case R_TYPE(COPY):
+		/*
+		 * These are deferred until all other relocations have
+		 * been done.  All we do here is make sure that the COPY
+		 * relocation is not in a shared library.  They are allowed
+		 * only in executable files.
+		 */
+		if (!obj->mainprog) {
+			_rtld_error(
+			"%s: Unexpected R_COPY relocation in shared library",
+			    obj->path);
+			return -1;
+		}
+		rdbg(dodebug, ("COPY (avoid in main)"));
+		break;
+
+	default:
+		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+		    "addend = %p, contents = %p, symbol = %s",
+		    (u_long)ELF_R_SYM(rela->r_info),
+		    (u_long)ELF_R_TYPE(rela->r_info),
+		    (void *)rela->r_offset, (void *)rela->r_addend,
+		    (void *)*where,
+		    def ? defobj->strtab + def->st_name : "??"));
+		_rtld_error("%s: Unsupported relocation type %ld "
+		    "in non-PLT relocations\n",
+		    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
+		return -1;
+	}
+	return 0;
 }
