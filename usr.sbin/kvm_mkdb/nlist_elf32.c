@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.3 1997/10/17 10:15:28 lukem Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.4 1997/10/18 08:49:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_elf32.c,v 1.3 1997/10/17 10:15:28 lukem Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.4 1997/10/18 08:49:34 lukem Exp $");
 #endif /* not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -145,7 +145,7 @@ ELFNAMEEND(create_knlist)(name, db)
 		BADUNMAP;
 	ehdrp = (Elf_Ehdr *)&mappedfile[0];
 
-	if (bcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
 		BADUNMAP;
 
 	switch (ehdrp->e_machine) {

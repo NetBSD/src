@@ -1,4 +1,4 @@
-/*	$NetBSD: testdb.c,v 1.6 1997/10/17 10:15:36 lukem Exp $	*/
+/*	$NetBSD: testdb.c,v 1.7 1997/10/18 08:49:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: testdb.c,v 1.6 1997/10/17 10:15:36 lukem Exp $");
+__RCSID("$NetBSD: testdb.c,v 1.7 1997/10/18 08:49:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: testdb.c,v 1.6 1997/10/17 10:15:36 lukem Exp $");
 int
 testdb()
 {
-	register DB *db;
-	register int cc, kd, ret, dbversionlen;
+	DB *db;
+	int cc, kd, ret, dbversionlen;
 	DBT rec;
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
@@ -82,7 +82,7 @@ testdb()
 		goto close;
 	if (rec.data == 0 || rec.size == 0 || rec.size > sizeof(dbversion))
 		goto close;
-	bcopy(rec.data, dbversion, rec.size);
+	memmove(dbversion, rec.data, rec.size);
 	dbversionlen = rec.size;
 
 	/* Read version string from kernel memory */
@@ -92,7 +92,7 @@ testdb()
 		goto close;
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
-	bcopy(rec.data, &nitem, sizeof(nitem));
+	memmove(&nitem, rec.data, sizeof(nitem));
 	/*
 	 * Theoretically possible for lseek to be seeking to -1.  Not
 	 * that it's something to lie awake nights about, however.
@@ -105,7 +105,7 @@ testdb()
 		goto close;
 
 	/* If they match, we win */
-	ret = bcmp(dbversion, kversion, dbversionlen) == 0;
+	ret = memcmp(dbversion, kversion, dbversionlen) == 0;
 
 close:	if (kd >= 0)
 		(void)close(kd);
