@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.5 2001/12/24 19:24:33 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.6 2001/12/24 21:36:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -183,23 +183,8 @@ Static const struct umass_quirk umass_quirks[] = {
 const struct umass_quirk *
 umass_lookup(u_int16_t vendor, u_int16_t product)
 {
-	const struct usb_devno *udev;
-	int n, i;
-
-	n = sizeof(umass_quirks) / sizeof(umass_quirks[0]);
-
-	udev = usb_match_device((const struct usb_devno *)umass_quirks, n,
-				sizeof(struct umass_quirk), vendor, product);
-	if (udev != NULL)
-		return ((const struct umass_quirk *)udev);
-
-	for (i = 0 ; i < n ; i++) {
-		if (umass_quirks[i].uq_dev.ud_vendor == vendor &&
-		    umass_quirks[i].uq_dev.ud_product == USB_PRODUCT_ANY)
-			return (&umass_quirks[i]);
-	}
-
-	return (NULL);
+	return ((const struct umass_quirk *)
+		usb_lookup(umass_quirks, vendor, product));
 }
 
 Static usbd_status
