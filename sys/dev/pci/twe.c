@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.43 2003/09/21 19:27:27 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.44 2003/09/21 19:46:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.43 2003/09/21 19:27:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.44 2003/09/21 19:46:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1461,7 +1461,8 @@ static void
 twe_describe_controller(struct twe_softc *sc)
 {
 	struct twe_param *p[6];
-	int rv = 0;
+	int i, rv = 0;
+	uint32_t dsize;
 	uint8_t ports;
 
 	/* get the port count */
@@ -1504,4 +1505,36 @@ twe_describe_controller(struct twe_softc *sc)
 	free(p[3], M_DEVBUF);
 	free(p[4], M_DEVBUF);
 	free(p[5], M_DEVBUF);
+
+	rv = twe_param_get(sc, TWE_PARAM_DRIVESUMMARY,
+	    TWE_PARAM_DRIVESUMMARY_Status, 16, NULL, &p[0]);
+	if (rv) {
+		aprint_error("%s: failed to get drive status summary\n",
+		    sc->sc_dv.dv_xname);
+		return;
+	}
+	for (i = 0; i < ports; i++) {
+		if (p[0]->tp_data[i] != TWE_PARAM_DRIVESTATUS_Present)
+			continue;
+		rv = twe_param_get_4(sc, TWE_PARAM_DRIVEINFO + i,
+		    TWE_PARAM_DRIVEINFO_Size, &dsize);
+		if (rv) {
+			aprint_error(
+			    "%s: unable to get drive size for port %d\n",
+			    sc->sc_dv.dv_xname, i);
+			continue;
+		}
+		rv = twe_param_get(sc, TWE_PARAM_DRIVEINFO + i,
+		    TWE_PARAM_DRIVEINFO_Model, 40, NULL, &p[1]);
+		if (rv) {
+			aprint_error(
+			    "%s: unable to get drive model for port %d\n",
+			    sc->sc_dv.dv_xname, i);
+			continue;
+		}
+		aprint_verbose("%s: port %d: %.40s %d MB\n", sc->sc_dv.dv_xname,
+		    i, p[1]->tp_data, dsize / 2048);
+		free(p[1], M_DEVBUF);
+	}
+	free(p[0], M_DEVBUF);
 }
