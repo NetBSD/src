@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.22 2003/08/02 14:31:10 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.23 2003/08/25 09:12:46 cb Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -118,9 +118,6 @@ make_output(char *output, size_t outlen, const char *binname,
 	p = output + strlen(output);
 	size = outlen - strlen(output);
 
-	if (repl != NULL)
-		intercept_replace_init(repl);
-
 	if (tls == NULL)
 		return;
 
@@ -137,19 +134,21 @@ make_output(char *output, size_t outlen, const char *binname,
 
 		if (repl != NULL && tl->trans_size)
 			intercept_replace_add(repl, tl->off,
-			    tl->trans_data, tl->trans_size);
+			    tl->trans_data, tl->trans_size,
+			    tl->trans_flags);
 	}
 }
 
 short
 trans_cb(int fd, pid_t pid, int policynr,
     const char *name, int code, const char *emulation,
-    void *args, int argsize, struct intercept_tlq *tls, void *cbarg)
+    void *args, int argsize,
+    struct intercept_replace *repl,
+    struct intercept_tlq *tls, void *cbarg)
 {
 	short action, future;
 	struct policy *policy;
 	struct intercept_pid *ipid;
-	struct intercept_replace repl;
 	struct intercept_tlq alitls;
 	struct intercept_translate alitl[SYSTRACE_MAXALIAS];
 	struct systrace_alias *alias = NULL;
@@ -176,14 +175,14 @@ trans_cb(int fd, pid_t pid, int policynr,
 	/* Required to set up replacements */
 	make_output(output, sizeof(output), binname, pid, ppid, policynr,
 	    policy->name, policy->nfilters, emulation, name, code,
-	    tls, &repl);
+	    tls, repl);
 
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
 	action = filter_evaluate(tls, pflq, ipid);
 	if (action != ICPOLICY_ASK)
-		goto replace;
+		goto done;
 
 	/* Do aliasing here */
 	if (!noalias)
@@ -210,7 +209,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 
 		action = filter_evaluate(tls, pflq, ipid);
 		if (action != ICPOLICY_ASK)
-			goto replace;
+			goto done;
 
 		make_output(output, sizeof(output), binname, pid, ppid,
 		    policynr, policy->name, policy->nfilters,
@@ -236,20 +235,19 @@ trans_cb(int fd, pid_t pid, int policynr,
 		kill(pid, SIGKILL);
 		return (ICPOLICY_NEVER);
 	}
- replace:
+
+ done:
+	/* Log the result if requested */
 	if (ipid->uflags & SYSCALL_LOG)
 		dolog = 1;
 
-	if (action < ICPOLICY_NEVER) {
-		/* If we can not rewrite the arguments, system call fails */
-		if (intercept_replace(fd, pid, &repl) == -1)
-			action = ICPOLICY_NEVER;
-	}
  out:
 	if (dolog)
 		syslog(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
 		    ipid->username, output);
+
+	/* Argument replacement in intercept might still fail */
 
 	return (action);
 }

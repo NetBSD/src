@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.12 2003/08/02 14:29:33 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.13 2003/08/25 09:12:45 cb Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -57,7 +57,7 @@ struct intercept_system {
 	int (*newpolicy)(int);
 	int (*assignpolicy)(int, pid_t, int);
 	int (*policy)(int, int, int, short);
-	int (*replace)(int, pid_t, struct intercept_replace *);
+	int (*replace)(int, pid_t, u_int16_t, struct intercept_replace *);
 	void (*clonepid)(struct intercept_pid *, struct intercept_pid *);
 	void (*freepid)(struct intercept_pid *);
 };
@@ -75,6 +75,8 @@ struct intercept_system {
 #define ICLINK_NOLAST	2	/* do not resolve last component */
 
 #define ICFLAGS_RESULT	1
+
+#define ICTRANS_NOLINKS	1	/* translation should have no symlinks */
 
 /* Privilege elevation */
 struct elevate {
@@ -122,6 +124,7 @@ struct intercept_translate {
 	void *trans_data;
 	size_t trans_size;
 	char *trans_print;
+	u_int trans_flags;
 	TAILQ_ENTRY(intercept_translate) next;
 };
 
@@ -130,6 +133,7 @@ struct intercept_replace {
 	int ind[INTERCEPT_MAXSYSCALLARGS];
 	u_char *address[INTERCEPT_MAXSYSCALLARGS];
 	size_t len[INTERCEPT_MAXSYSCALLARGS];
+	u_int flags[INTERCEPT_MAXSYSCALLARGS];
 };
 
 TAILQ_HEAD(intercept_tlq, intercept_translate);
@@ -148,12 +152,12 @@ void intercept_child_info(pid_t, pid_t);
 void intercept_policy_free(int);
 
 int intercept_replace_init(struct intercept_replace *);
-int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t);
-int intercept_replace(int, pid_t, struct intercept_replace *);
+int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t, u_int);
+int intercept_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 
 int intercept_register_sccb(char *, char *,
     short (*)(int, pid_t, int, const char *, int, const char *, void *, int,
-	struct intercept_tlq *, void *),
+	struct intercept_replace *, struct intercept_tlq *, void *),
     void *);
 void *intercept_sccb_cbarg(char *, char *);
 

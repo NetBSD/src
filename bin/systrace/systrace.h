@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.14 2003/06/03 04:33:45 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15 2003/08/25 09:12:46 cb Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -213,7 +213,7 @@ void make_output(char *, size_t, const char *, pid_t, pid_t, int,
     const char *, int, const char *, const char *, int, struct intercept_tlq *,
     struct intercept_replace *);
 short trans_cb(int, pid_t, int, const char *, int, const char *, void *,
-    int, struct intercept_tlq *, void *);
+    int, struct intercept_replace *, struct intercept_tlq *, void *);
 short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
     int, void *);
 void execres_cb(int, pid_t, int, const char *, const char *, void *);
