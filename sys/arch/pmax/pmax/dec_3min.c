@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.28 1999/12/01 08:35:27 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.29 1999/12/03 03:06:11 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.28 1999/12/01 08:35:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.29 1999/12/03 03:06:11 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -166,7 +166,7 @@ dec_3min_init()
 	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
 	/* calibrate cpu_mhz value */ 
-	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
+	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_3);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
