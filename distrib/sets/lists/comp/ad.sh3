@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.16 2002/08/07 21:20:51 briggs Exp $
+# $NetBSD: ad.sh3,v 1.17 2003/01/18 17:50:20 thorpej Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/sh3/limits.h	comp-c-include
 ./usr/include/sh3/lock.h	comp-c-include
 ./usr/include/sh3/math.h	comp-c-include
+./usr/include/sh3/mcontext.h	comp-c-include
 ./usr/include/sh3/param.h	comp-c-include
 ./usr/include/sh3/pcb.h	comp-c-include
 ./usr/include/sh3/pmap.h	comp-c-include

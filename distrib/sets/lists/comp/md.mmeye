@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.17 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.mmeye,v 1.18 2003/01/18 17:50:26 thorpej Exp $
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
@@ -28,6 +28,7 @@
 ./usr/include/mmeye/limits.h	comp-c-include
 ./usr/include/mmeye/lock.h	comp-c-include
 ./usr/include/mmeye/math.h	comp-c-include
+./usr/include/mmeye/mcontext.h	comp-c-include
 ./usr/include/mmeye/mmeye.h	comp-c-include
 ./usr/include/mmeye/param.h	comp-c-include
 ./usr/include/mmeye/pcb.h	comp-c-include

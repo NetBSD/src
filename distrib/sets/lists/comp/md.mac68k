@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.48 2002/08/07 21:20:57 briggs Exp $
+# $NetBSD: md.mac68k,v 1.49 2003/01/18 17:50:25 thorpej Exp $
 ./usr/include/mac68k	comp-c-include
 ./usr/include/mac68k/_G_config.h	comp-c-include
 ./usr/include/mac68k/adbsys.h	comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/mac68k/limits.h	comp-c-include
 ./usr/include/mac68k/lock.h	comp-c-include
 ./usr/include/mac68k/math.h	comp-c-include
+./usr/include/mac68k/mcontext.h	comp-c-include
 ./usr/include/mac68k/param.h	comp-c-include
 ./usr/include/mac68k/pcb.h	comp-c-include
 ./usr/include/mac68k/pio.h	comp-c-include

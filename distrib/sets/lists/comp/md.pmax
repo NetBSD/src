@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.49 2002/09/07 12:48:53 gehenna Exp $
+# $NetBSD: md.pmax,v 1.50 2003/01/18 17:50:28 thorpej Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/pmax/lock.h	comp-c-include
 ./usr/include/pmax/locore.h	comp-c-include
 ./usr/include/pmax/math.h	comp-c-include
+./usr/include/pmax/mcontext.h	comp-c-include
 ./usr/include/pmax/mips_opcode.h	comp-c-include
 ./usr/include/pmax/param.h	comp-c-include
 ./usr/include/pmax/pcb.h	comp-c-include
