@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.26 1998/09/05 04:00:30 mark Exp $	*/
+/*	$NetBSD: stubs.c,v 1.27 1998/10/05 00:51:21 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -251,24 +251,6 @@ dumpsys()
 	printf("\n\n");
 	delay(1000000);
 }
-
-/*
- * Dummy function is case no audio device has been configured
- * Need to fix the code that uses this function (console) to check NBEEP.
- */
-
-#include "beep.h"
-#include "vidcaudio.h"
-#if NBEEP == 0
-void
-beep_generate()
-{
-#if NVIDCAUDIO > 0
-	vidcaudio_beep_generate();
-#endif /* NVIDCAUDIO */
-}
-#endif /* NBEEP */
-
 
 /* This is interrupt / SPL related */
 
