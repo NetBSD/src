@@ -1,4 +1,5 @@
 #include <sys/param.h>
+#include <lib/libkern/libkern.h>
 
 #ifndef ULONG_MAX
 #define	ULONG_MAX	((u_long)(~0L))		/* 0xFFFFFFFF */
@@ -50,7 +51,7 @@ strtoul(s, ptr, base)
 	maxrem = ULONG_MAX % base;
 
 	while ((digit = *s) != '\0') {
-		if (digit >= '0' && digit < ('0'+base))
+		if (digit >= '0' && digit < ('0' + min(base, 10)))
 			digit -= '0';
 		else
 			if (base > 10) {
