@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.16 2002/05/15 09:44:55 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.17 2002/05/20 16:05:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.16 2002/05/15 09:44:55 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.17 2002/05/20 16:05:27 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -59,7 +59,7 @@ static struct bbinfo_params bbparams = {
 	SUN68K_BOOT_BLOCK_BLOCKSIZE,
 	SUN68K_BOOT_BLOCK_MAX_SIZE,
 	0,
-	0,
+	BBINFO_BIG_ENDIAN,
 };
 
 int
@@ -73,7 +73,7 @@ sun68k_clearboot(ib_params *params)
 		    params->machine->name);
 		return (0);
 	}
-	return (shared_bbinfo_clearboot(params, &bbparams));
+	return (shared_bbinfo_clearboot(params, &bbparams, NULL));
 }
 
 int
