@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.2 1993/08/01 19:24:08 mycroft Exp $
+ *	$Id: grf.c,v 1.3 1993/09/06 02:24:08 mycroft Exp $
  */
 
 /*
@@ -621,7 +621,8 @@ grfmmap(dev, addrp, p)
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags,
+			(caddr_t)&vn, 0);
 	return(error);
 }
 
