@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1995/05/08 17:34:20 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.16 1995/05/19 06:57:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
  */
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_swapin(p)	/* nothing */
+#define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 
 /*
