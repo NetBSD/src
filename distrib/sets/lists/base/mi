@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.378 2003/01/26 22:17:49 wiz Exp $
+# $NetBSD: mi,v 1.379 2003/01/27 00:07:19 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -963,6 +963,7 @@
 ./usr/share/locale				base-locale-share
 ./usr/share/locale/cs				base-locale-cs
 ./usr/share/locale/cs/LC_MESSAGES		base-locale-cs
+./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs
 ./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2		base-locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs
@@ -1015,6 +1016,7 @@
 ./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en
 ./usr/share/locale/eo				base-locale-eo
 ./usr/share/locale/eo/LC_MESSAGES		base-locale-eo
+./usr/share/locale/eo/LC_MESSAGES/grep.mo	base-util_locale-eo
 ./usr/share/locale/eo/LC_MESSAGES/texinfo.mo	base-texinfo_locale-eo
 ./usr/share/locale/es				base-locale-es
 ./usr/share/locale/es/LC_MESSAGES		base-locale-es
@@ -1025,6 +1027,7 @@
 ./usr/share/locale/es_ES.ISO8859-15/LC_CTYPE	base-locale-es
 ./usr/share/locale/et				base-locale-et
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
+./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et
 ./usr/share/locale/fi_FI.ISO8859-1		base-locale-fi
 ./usr/share/locale/fi_FI.ISO8859-1/LC_CTYPE	base-locale-fi
 ./usr/share/locale/fi_FI.ISO8859-15		base-locale-fi
@@ -1051,11 +1054,13 @@
 ./usr/share/locale/fr_FR.ISO8859-15/LC_CTYPE	base-locale-fr
 ./usr/share/locale/gl				base-locale-gl
 ./usr/share/locale/gl/LC_MESSAGES		base-locale-gl
+./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl
 ./usr/share/locale/he				base-locale-he
 ./usr/share/locale/he/LC_MESSAGES		base-locale-he
 ./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he
 ./usr/share/locale/hr				base-locale-hr
 ./usr/share/locale/hr/LC_MESSAGES		base-locale-hr
+./usr/share/locale/hr/LC_MESSAGES/grep.mo	base-util_locale-hr
 ./usr/share/locale/hr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-hr
 ./usr/share/locale/hr_HR.ISO8859-2		base-locale-hr
 ./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr
@@ -1063,12 +1068,14 @@
 ./usr/share/locale/hu_HU.ISO8859-2/LC_CTYPE	base-locale-hu
 ./usr/share/locale/id				base-locale-id
 ./usr/share/locale/id/LC_MESSAGES		base-locale-id
+./usr/share/locale/id/LC_MESSAGES/grep.mo	base-util_locale-id
 ./usr/share/locale/is_IS.ISO8859-1		base-locale-is
 ./usr/share/locale/is_IS.ISO8859-1/LC_CTYPE	base-locale-is
 ./usr/share/locale/is_IS.ISO8859-15		base-locale-is
 ./usr/share/locale/is_IS.ISO8859-15/LC_CTYPE	base-locale-is
 ./usr/share/locale/it				base-locale-it
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
+./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it
 ./usr/share/locale/it_CH.ISO8859-1		base-locale-it
 ./usr/share/locale/it_CH.ISO8859-1/LC_CTYPE	base-locale-it
 ./usr/share/locale/it_CH.ISO8859-15		base-locale-it
@@ -1079,6 +1086,7 @@
 ./usr/share/locale/it_IT.ISO8859-15/LC_CTYPE	base-locale-it
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
+./usr/share/locale/ja/LC_MESSAGES/grep.mo	base-util_locale-ja
 ./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP		base-locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-locale-ja
