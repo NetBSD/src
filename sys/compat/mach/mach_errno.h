@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.h,v 1.7 2003/02/09 22:13:46 manu Exp $ */
+/*	$NetBSD: mach_errno.h,v 1.8 2003/02/20 22:39:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ extern int native_to_mach_errno[];
 #define MACH_IOKIT_EAGAIN       0xe00002be
 #define MACH_IOKIT_EPERM        0xe00002c1
 #define MACH_IOKIT_EINVAL       0xe00002c2
+#define MACH_IOKIT_ENOENT	0xe00002f0
 
 typedef struct {
 	mach_msg_header_t rep_msgh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.21 2003/02/16 15:02:05 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.22 2003/02/20 22:39:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ struct mach_port {
 #define	MACH_MP_NONE		0x0	/* No data */
 #define MACH_MP_DEVICE		0x1	/* struct device */
 #define MACH_MP_DEVICE_ITERATOR	0x2	/* struct mach_device_iterator */
-#define MACH_MP_DARWIN_FAKEDEV	0x3	/* (struct darwin_iokit_class *) */
+#define MACH_MP_IOKIT_DEVCLASS	0x3	/* (struct mach_iokit_devclass *) */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);

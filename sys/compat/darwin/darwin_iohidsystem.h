@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.1 2003/02/16 15:02:06 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.2 2003/02/20 22:39:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef	_DARWIN_IOHIDSYSTEM_H_
 #define	_DARWIN_IOHIDSYSTEM_H_
 
-int darwin_iokit_iohidsystem(struct mach_trap_args *);
+extern struct mach_iokit_devclass darwin_iohidsystem_devclass;
+
+int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
 
 #endif /* _DARWIN_IOHIDSYSTEM_H_ */
