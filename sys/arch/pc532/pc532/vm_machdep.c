@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1997/02/08 09:34:12 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1997/03/20 12:01:03 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -52,6 +52,7 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/ptrace.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -119,7 +120,6 @@ cpu_set_kpc(p, pc)
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
-	extern void proc_trampoline();
 
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *) pcbp->pcb_ksp;
@@ -328,7 +328,6 @@ vmapbuf(bp, len)
 {
 	vm_offset_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
