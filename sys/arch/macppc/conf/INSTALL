@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.44 2001/03/23 09:30:49 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.45 2001/05/27 23:52:41 wiz Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -8,6 +8,8 @@ include		"arch/macppc/conf/std.macppc"
 makeoptions 	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
 
 maxusers	12
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # Change base address to 0x800000 to use large memory disk.
 makeoptions 	TEXTADDR=0x800000
