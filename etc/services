@@ -8,7 +8,7 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.12 1994/03/16 23:03:01 cgd Exp $
+#	$Id: services,v 1.13 1994/12/28 19:25:15 mycroft Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp
@@ -136,9 +136,6 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
-klogin		543/tcp				# Kerberized `rlogin' (v5)
-kshell		544/tcp				# Kerberized `rsh' (v5)
-kerberos-adm	749/tcp				# Kerberos `kadmin' (v5)
 #
 webster		765/tcp				# Network dictionary
 webster		765/udp
@@ -169,13 +166,14 @@ rfe		5002/udp		# Actually uses UDP only
 # Note that these are for Kerberos v4, and are unofficial.  Sites running
 # v4 should uncomment these and comment out the v5 entries above.
 #
+klogin		543/tcp			# Kerberos `rlogin'
+kshell		544/tcp			# Kerberos `rsh'
+kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 #kerberos	750/udp		kdc	# Kerberos (server) udp
 #kerberos	750/tcp		kdc	# Kerberos (server) tcp
 krbupdate	760/tcp		kreg	# Kerberos registration
-kpasswd		761/tcp		kpwd	# Kerberos "passwd"
-#klogin		543/tcp			# Kerberos rlogin
-eklogin		2105/tcp		# Kerberos encrypted rlogin
-#kshell		544/tcp		krcmd	# Kerberos remote shell
+kpasswd		761/tcp		kpwd	# Kerberos `passwd'
+eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 #
 # Unofficial but necessary (for NetBSD) services
 #
