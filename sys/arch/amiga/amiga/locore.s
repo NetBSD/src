@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.13 1994/03/08 07:52:07 chopps Exp $
+ *	$Id: locore.s,v 1.14 1994/03/20 10:02:32 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -813,7 +813,8 @@ _esym:	.long	0
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
-	.word	0x0001			| loadbsd version required
+	.word	0x0002			| loadbsd version required
+					| 2: needs a4 = esym
 					| XXX should be a symbol?
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
@@ -821,9 +822,10 @@ start:
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
-	movel	d1,sp@-
-	movel	d0,sp@-
-	movel	a0,sp@-			| pass fastmem_start and _len and chipmem-len
+	movel	a4,sp@-			| pass address of _esym
+	movel	d1,sp@-			| pass chipmem-size
+	movel	d0,sp@-			| pass fastmem-size
+	movel	a0,sp@-			| pass fastmem_start
 	movel	d5,sp@-			| pass machine id
 
 	movl	#CACHE_OFF,d0		| 68020/030 cache
@@ -2135,7 +2137,7 @@ Ldoreset:
 /*
  * Reboot directly into a new kernel image.
  * kernel_reload(image, image_size, entry,
- *		 fastram_start, fastram_size, chipram_start)
+ *		 fastram_start, fastram_size, chipram_start, esym)
  */
 	.globl	_kernel_reload
 _kernel_reload:
@@ -2159,8 +2161,9 @@ Lreload1:
 	movel	sp@(16),a0		| load memory parameters
 	movel	sp@(20),d0
 	movel	sp@(24),d1
+	movel	sp@(28),a4		| esym
 
-	movel	sp@(12),a4		| find entrypoint (a4)
+	movel	sp@(12),a6		| find entrypoint (a6)
 
 	movel	sp@(4),a2		| copy kernel to low chip memory
 	movel	sp@(8),d2
@@ -2186,7 +2189,7 @@ Lreload040:
 	.word	0x4e7b,0x3807	| movc d3,SRP
 Lreload2:
 
-	jmp	a4@			| start new kernel
+	jmp	a6@			| start new kernel
 
 
 | A do-nothing MMU root pointer (includes the following long as well)
