@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: cerror.s,v 1.3 92/07/02 04:17:59 torek Exp
- * $Id: cerror.S,v 1.1 1993/10/07 00:22:15 cgd Exp $
+ * $Id: cerror.S,v 1.2 1994/02/10 20:15:57 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -43,11 +43,21 @@
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
+#include "SYS.h"
 
 	.globl	_errno
+#ifdef PIC
+FUNC(cerror)
+	ld	[%g1 + _errno], %g1
+	st	%o0, [%g1]
+	mov	-1, %o0
+	retl
+	 mov	-1, %o1
+#else
 FUNC(cerror)
 	sethi	%hi(_errno), %g1
 	st	%o0, [%g1 + %lo(_errno)]
 	mov	-1, %o0
 	retl
 	 mov	-1, %o1
+#endif

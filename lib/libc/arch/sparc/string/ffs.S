@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $Id: ffs.S,v 1.1 1993/10/07 00:22:05 cgd Exp $
+ * $Id: ffs.S,v 1.2 1994/02/10 20:15:50 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -59,7 +59,11 @@
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
 ENTRY(ffs)
+#ifdef PIC
+	PICCY_SET(ffstab, %o2, %o5)
+#else
 	set	ffstab, %o2
+#endif
 	andcc	%o0, 0xff, %o1	! get low byte
 	be,a	1f		! try again if 0
 	 srl	%o0, 8, %o0	! delay slot, get ready for next byte

@@ -35,22 +35,8 @@
  * SUCH DAMAGE.
  *
  *	From: @(#)DEFS.h	8.1 (Berkeley) 6/4/93
- *	$Id: DEFS.h,v 1.2 1994/01/23 07:26:16 deraadt Exp $
+ *	$Id: DEFS.h,v 1.3 1994/02/10 20:15:28 pk Exp $
  */
 
-#ifdef PROF
-#define	FUNC(x) \
-	.align 4; .globl x; .proc 1; x:; .data; .align 4; 1: .long 0; \
-	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
-	or %lo(1b),%o0,%o0; restore
-#else
-#define	FUNC(x) \
-	.align 4; .globl x; .proc 1; x:
-#endif
-
-#ifdef __STDC__
-#define ENTRY(x) FUNC(_##x)
-#else
-#define ENTRY(x) FUNC(_/**/x)
-#endif
+#include <machine/asm.h>
 

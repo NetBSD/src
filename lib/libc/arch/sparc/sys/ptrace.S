@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: ptrace.s,v 1.2 91/12/20 01:59:00 leres Exp
- * $Id: ptrace.S,v 1.1 1993/10/07 00:22:21 cgd Exp $
+ * $Id: ptrace.S,v 1.2 1994/02/10 20:15:58 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -45,8 +45,14 @@
 #include "SYS.h"
 
 ENTRY(ptrace)
+#ifdef PIC
+	PIC_PROLOGUE(%g1,%g2)
+	ld	[%g1 +_errno], %g1
+	st	%g0, [%g1]
+#else
 	sethi	%hi(_errno), %g1
 	st	%g0, [%g1 + %lo(_errno)]
+#endif
 	mov	SYS_ptrace, %g1
 	t	ST_SYSCALL
 	bcc	1f
