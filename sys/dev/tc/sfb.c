@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.32 1999/12/16 15:07:00 ad Exp $ */
+/* $NetBSD: sfb.c,v 1.33 2000/01/07 02:57:17 enami Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.32 1999/12/16 15:07:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.33 2000/01/07 02:57:17 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ sfb_getdevconfig(dense_addr, dc)
 
 	/* the accelerated sfb_putchar() needs LSbit left */
 	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
-			WSFONT_R2L, WSFONT_L2R) <= 0) {
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
 		printf("sfb: couldn't lock font\n");
 		return;
 	}
