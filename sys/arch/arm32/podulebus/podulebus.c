@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.40 2001/03/24 00:10:43 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.41 2001/03/25 00:56:58 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -599,6 +599,7 @@ podulebusattach(parent, self, aux)
 				    podules[loop].product);
 				podules[loop].slottype = SLOT_POD;
 				pa.pa_podule_number = loop;
+				pa.pa_ih = pa.pa_podule_number;
 				pa.pa_podule = &podules[loop];
 				pa.pa_iot = &podulebus_bs_tag;
 				config_found_sm(self, &pa, podulebusprint,
@@ -613,6 +614,7 @@ podulebusattach(parent, self, aux)
 		
 		if (podules[loop].slottype != SLOT_NONE) {
 			pa.pa_podule_number = loop;
+			pa.pa_ih = pa.pa_podule_number;
 			pa.pa_podule = &podules[loop];
 			pa.pa_iot = &podulebus_bs_tag;
 			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
