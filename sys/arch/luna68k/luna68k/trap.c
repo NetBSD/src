@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.9 2000/06/29 08:17:26 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.10 2000/11/22 11:47:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.9 2000/06/29 08:17:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2000/11/22 11:47:17 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
@@ -901,7 +901,7 @@ syscall(code, frame)
 	struct frame frame;
 {
 	caddr_t params;
-	struct sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
