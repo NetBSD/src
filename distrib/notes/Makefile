@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/11/17 01:39:33 carrel Exp $
+#	$NetBSD: Makefile,v 1.6 1997/11/24 22:38:42 lukem Exp $
+
+NOPROG=	notreally
 
 M?=	${MACHINE}
 V!=	/bin/sh ${.CURDIR}/../../sys/conf/osrelease.sh
@@ -11,9 +13,12 @@ DEP=	${SRC} ${.CURDIR}/mirrors ${.CURDIR}/$M/whatis ${.CURDIR}/$M/contents \
 	${.CURDIR}/$M/install ${.CURDIR}/$M/upgrade ${.CURDIR}/donations \
 	${.CURDIR}/legal.common ${.CURDIR}/$M/legal
 
+CLEANFILES+=${TARG}
+
+all:	${TARG}
+
 ${TARG}: ${DEP}
 	cpp -I${.CURDIR}/$M -D_MACH=$M -D_VER=$V -Uunix -U$M -C -P ${SRC} \
 		| sed 's/_SVER_S/'${V_S}'/g ' > $@
 
-clean cleandir:
-	/bin/rm INSTALL.*
+.include <bsd.prog.mk>
