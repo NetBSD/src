@@ -1,7 +1,0 @@
-	$NetBSD: whatis,v 1.8 1998/01/09 18:45:49 perry Exp $	
-
-This is the fourth public release of NetBSD for the Amiga and DraCo
-line of computers. Several additional SCSI boards are now supported,
-as well as Amiga audio and FPU-less 68020/68030 systems; the DraCo
-port supports the on-board serial and parallel interface and the
-battery backed clock now.
