@@ -772,7 +772,7 @@ xmrealloc (md, ptr, size)
 
 PTR
 xmalloc (size)
-     long size;
+     size_t size;
 {
   return (xmmalloc ((PTR) NULL, size));
 }
@@ -782,7 +782,7 @@ xmalloc (size)
 PTR
 xrealloc (ptr, size)
      PTR ptr;
-     long size;
+     size_t size;
 {
   return (xmrealloc ((PTR) NULL, ptr, size));
 }
