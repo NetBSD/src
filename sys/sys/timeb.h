@@ -1,4 +1,4 @@
-/*	$NetBSD: timeb.h,v 1.7 1994/06/29 06:45:46 cgd Exp $	*/
+/*	$NetBSD: timeb.h,v 1.8 1994/09/16 02:16:42 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,6 +40,9 @@
  *	@(#)timeb.h	8.2 (Berkeley) 1/21/94
  */
 
+#ifndef _SYS_TIMEB_H_
+#define _SYS_TIMEB_H_
+
 /* The ftime(2) system call structure -- deprecated. */
 struct timeb {
 	time_t	time;			/* seconds since the Epoch */
@@ -47,3 +50,5 @@ struct timeb {
 	short	timezone;		/* minutes west of CUT */
 	short	dstflag;		/* DST == non-zero */
 };
+
+#endif
