@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16.4.3 1999/07/04 02:02:32 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.4 1999/07/11 05:48:34 chs Exp $	*/
 
 /*
  *
@@ -754,32 +754,47 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 	}
 }
 
+/*
+ * interrupt-context iodone handler for nested i/o bufs.
+ *
+ * => must be at splbio().
+ */
+
 void
 uvm_aio_biodone1(bp)
 	struct buf *bp;
 {
 	struct buf *mbp = bp->b_private;
 
+#ifdef DIAGNOSTIC
 	if (mbp == bp) {
 		panic("uvm_aio_biodone1: mbp == bp %p", bp);
 	}
+#endif
 
 	if (bp->b_flags & B_ERROR) {
 		mbp->b_flags |= B_ERROR;
 		mbp->b_error = bp->b_error;
 	}
-	mbp->b_bcount -= bp->b_bcount;
+	mbp->b_resid -= bp->b_bcount;
 	pool_put(&bufpool, bp);
-	if (mbp->b_bcount == 0) {
+	if (mbp->b_resid == 0) {
 		biodone(mbp);
 	}
 }
+
+/*
+ * interrupt-context iodone handler for single-buf i/os
+ * or the top-level buf of a nested-buf i/o.
+ *
+ * => must be at splbio().
+ */
 
 void
 uvm_aio_biodone(bp)
 	struct buf *bp;
 {
-	/* XXX for single-buf aios */
+	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = uvm_aio_aiodone;
 
 	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
@@ -787,6 +802,11 @@ uvm_aio_biodone(bp)
 	wakeup(&uvm.aiodoned);
 	simple_unlock(&uvm.aiodoned_lock);
 }
+
+/*
+ * do iodone processing for normal async i/os.
+ * this should be called in thread context, not interrupt context.
+ */
 
 void
 uvm_aio_aiodone(bp)
@@ -818,4 +838,30 @@ uvm_aio_aiodone(bp)
 	s = splbio();
 	pool_put(&bufpool, bp);
 	splx(s);
+}
+
+/*
+ * translate unix errno values to VM_PAGER_*.
+ */
+
+int
+uvm_errno2vmerror(errno)
+	int errno;
+{
+	switch (errno) {
+	case 0:
+		return VM_PAGER_OK;
+	case EINVAL:
+		return VM_PAGER_BAD;
+	case EINPROGRESS:
+		return VM_PAGER_PEND;
+	case EIO:
+		return VM_PAGER_ERROR;
+	case EAGAIN:
+		return VM_PAGER_AGAIN;
+	case EBUSY:
+		return VM_PAGER_UNLOCK;
+	default:
+		return VM_PAGER_ERROR;
+	}
 }
