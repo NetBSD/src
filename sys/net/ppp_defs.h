@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.4 1998/02/09 17:43:55 perry Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.5 1998/05/04 12:54:23 christos Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -70,11 +70,14 @@
  */
 #define PPP_IP		0x21	/* Internet Protocol */
 #define PPP_AT		0x29	/* AppleTalk Protocol */
+#define PPP_IPX		0x2b	/* IPX protocol */
 #define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
 #define	PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
+#define PPP_IPV6	0x57	/* Internet Protocol Version 6 */
 #define PPP_COMP	0xfd	/* compressed packet */
 #define PPP_IPCP	0x8021	/* IP Control Protocol */
 #define PPP_ATCP	0x8029	/* AppleTalk Control Protocol */
+#define PPP_IPXCP	0x802b	/* IPX Control Protocol */
 #define PPP_CCP		0x80fd	/* Compression Control Protocol */
 #define PPP_LCP		0xc021	/* Link Control Protocol */
 #define PPP_PAP		0xc023	/* Password Authentication Protocol */

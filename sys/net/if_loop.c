@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.21 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.22 1998/05/04 12:54:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,6 +68,11 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#endif
+
+#ifdef IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
 #endif
 
 #ifdef ISO
@@ -172,6 +177,12 @@ looutput(ifp, m, dst, rt)
 	case AF_ISO:
 		ifq = &clnlintrq;
 		isr = NETISR_ISO;
+		break;
+#endif
+#ifdef IPX
+	case AF_IPX:
+		ifq = &ipxintrq;
+		isr = NETISR_IPX;
 		break;
 #endif
 #ifdef NETATALK
