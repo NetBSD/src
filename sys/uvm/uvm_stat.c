@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.8 1998/02/13 05:34:30 thorpej Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.9 1998/03/10 14:36:55 chuck Exp $	 */
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -152,4 +152,8 @@ uvm_dump()
 	    uvmexp.pdpending, uvmexp.nswget);
 	printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
 	    uvmexp.nanon, uvmexp.nfreeanon);
+
+	printf("  kernel pointers:\n");
+	printf("    objs(kern/kmem/mb)=%p/%p/%p\n", uvm.kernel_object,
+	    uvmexp.kmem_object, uvmexp.mb_object);
 }
