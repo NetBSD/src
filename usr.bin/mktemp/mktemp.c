@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.3 2002/03/31 18:11:51 bjh21 Exp $ */
+/* $NetBSD: mktemp.c,v 1.4 2002/04/01 13:54:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -44,16 +44,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#if defined(__RCSID) && !defined(lint)
+#ifndef lint
 #if 0
 static const char rcsid[] =
 	"$FreeBSD: src/usr.bin/mktemp/mktemp.c,v 1.2 1998/05/05 06:13:47 charnier Exp $";
 #else
-__RCSID("$NetBSD: mktemp.c,v 1.3 2002/03/31 18:11:51 bjh21 Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.4 2002/04/01 13:54:01 bjh21 Exp $");
 #endif
 #endif /* not lint */
 

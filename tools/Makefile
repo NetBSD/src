@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2002/03/31 18:11:50 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.44 2002/04/01 13:54:00 bjh21 Exp $
 
 # XXX Note: NO_DBSYM is a stopgap temporary variable for use
 # with the development of non-NetBSD hosting support.  This will go away.
@@ -21,7 +21,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile cksum compile_et config lint1 \
-		makefs menuc mklocale mktemp msgc pax pwd_mkdb zic
+		makefs menuc mklocale msgc pax pwd_mkdb zic
 
 .if ${MKMAN} != "no"
 SUBDIR+=	groff
