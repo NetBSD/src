@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bdf,v 1.2 2003/09/13 00:24:52 lukem Exp $
+#	$NetBSD: Makefile.bdf,v 1.3 2003/11/08 13:57:30 lukem Exp $
 
 FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
@@ -15,6 +15,7 @@ UCS2ANY=	${UCS2ANYDIR}/ucs2any
 
 .for _F _M in ${UCSFILES}						# {
 ${_F}-${_M}.bdf: ${_F}.bdf
+	${_MKTARGET_CREATE}
 	${UCS2ANY} ${.ALLSRC} ${DESTDIR}${X11FONTDIR}/util/map-${_M} ${_M}
 
 CLEANFILES+=	${_F}-${_M}.bdf
@@ -24,6 +25,7 @@ BDFFILES+=	${_F}-${_M}.bdf
 .SUFFIXES: .bdf .pcf${FONTSUFFIX}
 
 .bdf.pcf${FONTSUFFIX}:
+	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${BDFTOPCF} -t ${.IMPSRC} ${FONTGZIP} > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
