@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.28 1999/01/11 21:28:28 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.29 1999/01/14 01:16:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -177,7 +177,7 @@ struct protosw inetsw[] = {
 };
 
 struct domain inetdomain =
-    { AF_INET, "internet", 0, 0, 0, 
+    { PF_INET, "internet", 0, 0, 0, 
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.9 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.10 1999/01/14 01:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -165,7 +165,7 @@ struct protosw  isosw[] = {
 
 
 struct domain   isodomain = {
-	AF_ISO,			/* family */
+	PF_ISO,			/* family */
 	"iso-domain",		/* name */
 	0,			/* initialize routine */
 	0,			/* externalize access rights */
