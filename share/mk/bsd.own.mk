@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.324 2002/12/23 06:52:50 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.325 2003/03/07 01:21:56 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -166,6 +166,7 @@ FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
 GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 #GRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
 GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
+HEXDUMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 INDXBIB=	${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}install
