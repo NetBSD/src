@@ -1,4 +1,4 @@
-/*	$NetBSD: awd.c,v 1.7 1997/07/17 03:16:39 jtk Exp $	*/
+/*	$NetBSD: awd.c,v 1.8 1997/07/19 06:39:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -593,21 +593,21 @@ wdcstart(wdc)
 		panic("wdcstart: controller still active");
 #endif
 
-	/*
-	 * XXX
-	 * This is a kluge.  See comments in wd_get_parms().
-	 */
-	if ((wdc->sc_flags & WDCF_WANTED) != 0) {
-		wdc->sc_flags &= ~WDCF_WANTED;
-		wakeup(wdc);
-		return;
-	}
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
 	wd = wdc->sc_drives.tqh_first;
-	if (wd == NULL)
+	if (wd == NULL) {
+	/*
+	 * XXX
+	 * This is a kluge.  See comments in wd_get_parms().
+	 */
+		if ((wdc->sc_flags & WDCF_WANTED) != 0) {
+			wdc->sc_flags &= ~WDCF_WANTED;
+			wakeup(wdc);
+		}
 		return;
+	}
     
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
 	bp = wd->sc_q.b_actf;
