@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.43 2000/09/16 04:54:44 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.44 2000/09/18 18:17:32 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1248,27 +1248,31 @@ END(mips1_wbflush)
  */
 
 /*
- * void mips1_ConfigCache(void)
+ * int mips1_icsize()  R3900/R3920 special
  */
-LEAF(mips1_ConfigCache)
+LEAF(mips1_icsize)	
 	mfc0	t0, R3900_COP_0_CONFIG
 	li	t1, R3900_CONFIG_ICS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_ICS_SHIFT
 	li	t2, R3900_C_SIZE_MIN
 	sllv	t1, t2, t1
-	sw	t1, _C_LABEL(mips_L1ICacheSize)
+	j	ra
+	move	v0, t1
+END(mips1_icsize)	
 
+/*
+ * int mips1_dcsize() R3900/R3920 special
+ */
+LEAF(mips1_dcsize)	
 	li	t1, R3900_CONFIG_DCS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_DCS_SHIFT
 	li	t2, R3900_C_SIZE_MIN
 	sllv	t1, t2, t1
-	sw	t1, _C_LABEL(mips_L1DCacheSize)
-
-	j	ra
-	nop
-END(mips1_ConfigCache)
+	j	ra	
+	move	v0, t1
+END(mips1_dcsize)	
 
 /*
  *	void mips1_FlushDCache(vaddr_t addr, vsize_t len)	
