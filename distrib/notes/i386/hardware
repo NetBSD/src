@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.82 2001/01/09 11:39:35 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.83 2001/01/22 02:00:44 augustss Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -448,6 +448,8 @@ S3 SonicVibes [*] [+]
 .It
 ESS Technology ES1777/1868/1869/1887/1888/888 and Solo-1 ES1938/1946
 audio [*] [+]
+.It
+Cirrus Logic CS4280 and CS4281 [*] [+]
 .bullet)
 .It
 Game Ports (Joysticks) [*] [+]
