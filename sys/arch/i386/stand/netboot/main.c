@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1997/03/22 09:18:12 thorpej Exp $	 */
+/*	$NetBSD: main.c,v 1.3 1997/06/13 13:25:25 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -43,8 +43,6 @@
 
 #include <libi386.h>
 
-extern char    *strerror __P((int));	/* XXX missing in stand.h */
-
 int             errno;
 static char    *consdev;
 
@@ -85,7 +83,7 @@ bootit(filename, howto)
 	const char     *filename;
 	int             howto;
 {
-	if (exec_netbsd(filename, 0, howto, etherdev, "pc") < 0)
+	if (exec_netbsd(filename, 0, howto, etherdev, consdev) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
