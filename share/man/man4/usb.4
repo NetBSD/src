@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.54 2002/08/11 13:24:55 isaki Exp $
+.\" $NetBSD: usb.4,v 1.55 2002/08/11 19:28:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,7 @@
 .Cd "ehci*   at pci? dev ? function ?"
 .Cd "ohci*   at cardbus? dev ? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
+.Cd "slhci*  at isa? port ? irq ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
 .Cd "usb*    at ohci? flags X"
@@ -478,6 +479,7 @@ specifications can be found at:
 .Xr cardbus 4 ,
 .Xr cue 4 ,
 .Xr ehci 4 ,
+.Xr isa 4 ,
 .Xr kue 4 ,
 .Xr ohci 4 ,
 .Xr pci 4 ,
