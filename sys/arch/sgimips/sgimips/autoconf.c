@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2000/06/14 16:02:41 soren Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2001/05/11 04:53:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -41,6 +41,10 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/sysconf.h>
+#include <machine/machtype.h>
+
+extern struct platform platform;
 
 static void	findroot(struct device **, int *);
 
@@ -49,10 +53,17 @@ cpu_configure()
 {
 	int s;
 
-	s = splhigh();
+	softintr_init();
 
+	s = splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
+
+	/* 
+	 * Clear latched bus error registers which may have been
+	 * caused by probes for non-existent devices.
+	 */
+	(*platform.bus_reset)();
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
 	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);

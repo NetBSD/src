@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/04/24 15:41:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2001/05/11 04:53:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,6 +34,7 @@
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +63,8 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/machtype.h>
+#include <machine/sysconf.h>
 #include <machine/intr.h>
 #include <machine/arcs.h>
 #include <mips/locore.h>
@@ -85,6 +88,8 @@ char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
 char cpu_model[] = "SGI";
 
+struct sgi_intrhand intrtab[NINTR];
+
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
@@ -95,15 +100,58 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
+int mach_type;		/* IPxx type */
+int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
+int mach_boardrev;	/* machine board revision, in case it matters */
+
 int physmem;		/* Total physical memory */
 int arcsmem;		/* Memory used by the ARCS firmware */
+
+/* CPU interrupt masks */
+u_int32_t biomask;
+u_int32_t netmask;
+u_int32_t ttymask;
+u_int32_t clockmask;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(int, char **, char **);
+#ifdef IP20
+void	ip20_init(void);
+#endif
 
+#ifdef IP22
+void	ip22_init(void);
+#endif
+
+#ifdef IP32
+void	ip32_init(void);
+#endif
+
+void * cpu_intr_establish(int, int, int (*)(void *), void *);
+
+void	mach_init(int, char **, char **);
+void	unconfigured_system_type(int);
+
+extern int 	atoi(char *);	/* For parsing IP (archictecture) number */
 extern void	arcsinit(void);
+
+/* Motherboard or system-specific initialization vector */
+static void	unimpl_bus_reset(void);
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static void	unimpl_intr_establish(int, int, int (*)(void *), void *);
+static unsigned	nullwork(void);
+
+struct platform platform = {
+	1000000,
+	unimpl_bus_reset,
+	unimpl_cons_init,
+	unimpl_iointr,
+	unimpl_intr_establish,
+	(void *)nullwork,
+};
+
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -112,6 +160,7 @@ extern void	arcsinit(void);
 int	safepri = MIPS1_PSL_LOWIPL;
 
 extern caddr_t esym;
+extern u_int32_t ssir;
 extern struct user *proc0paddr;
 
 /*
@@ -129,6 +178,7 @@ mach_init(argc, argv, envp)
 	vsize_t size;
 	extern char edata[], end[];
 	struct arcs_mem *mem;
+	struct arcs_component *root;
 	char *cpufreq;
 	int i;
 
@@ -148,17 +198,6 @@ mach_init(argc, argv, envp)
 		kernend = (caddr_t)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
         }
-
-#if 1	/* XXX Enable watchdog timer for testing kernels. */
-	if ((unsigned long)kernend > 0x88000000) {		/* XXX Indy */
-		*(volatile u_int32_t *)0xbfa00004 |= 0x100;
-		/* Clear watchdog timer. */
-		*(volatile u_int32_t *)0xbfa00014 = 0;
-	} else {
-		*(volatile u_int32_t *)0xb400000c |= 0x200;	/* XXX O2 */
-		*(volatile u_int32_t *)0xb4000034 = 0;	/* prime timer */
-	}
-#endif
 
 	arcsinit();
 	consinit();
@@ -205,10 +244,66 @@ mach_init(argc, argv, envp)
 		Debugger();
 #endif
 
+	root = ARCS->GetChild(NULL);
+	for (i = 0; root->Identifier[i] != '\0'; i++) {
+		if (root->Identifier[i] >= '0' &&
+		    root->Identifier[i] <= '9') {
+			mach_type = atoi(&root->Identifier[i]);
+			break;
+		}
+	}
+
+	if (mach_type <= 0)
+		panic("invalid architecture");
+
+	switch (mach_type) {
+	  case MACH_SGI_IP20:
+#ifdef IP20
+	    ip20_init();
+#else
+	    unconfigured_system_type(mach_type);
+#endif
+	    break;
+	    
+	  case MACH_SGI_IP22:
+#ifdef IP22
+	    ip22_init();
+#else
+	    unconfigured_system_type(mach_type);
+#endif
+	    break;
+
+	  case MACH_SGI_IP32:
+#ifdef IP32
+	    ip32_init();
+#else
+	    unconfigured_system_type(mach_type);
+#endif
+	    break;
+
+	  default:
+	    panic("IP%d architecture not yet supported\n", mach_type);
+	    break;
+	}
+
 	physmem = arcsmem = 0;
 	mem_cluster_cnt = 0;
 	mem = NULL;
 
+#ifdef DEBUG
+	i = 0;
+	mem = NULL;
+
+	do {
+	    if ((mem = ARCS->GetMemoryDescriptor(mem)) != NULL) {
+		i++;
+		printf("Mem block %d: type %d, base %d, size %d\n", 
+				i, mem->Type, mem->BasePage, mem->PageCount);
+	    }
+	} while (mem != NULL);
+#endif
+
+	mem = NULL;
 	for (i = 0; i < VM_PHYSSEG_MAX; i++) { 
 		mem = ARCS->GetMemoryDescriptor(mem);
 
@@ -230,9 +325,6 @@ mach_init(argc, argv, envp)
 			mem_clusters[mem_cluster_cnt].size = size;
 			mem_cluster_cnt++;
 
-#if 1
-printf("memory 0x%lx 0x%lx\n", first, last);
-#endif
 			uvm_page_physload(atop(first), atop(last), atop(first),
 					atop(last), VM_FREELIST_DEFAULT);
 
@@ -411,6 +503,21 @@ cpu_reboot(howto, bootstr)
 	if (curproc)
 		savectx((struct user *)curpcb);
 
+#if 1	
+	/* Clear and disable watchdog timer. */
+	switch (mach_type) {
+	  case MACH_SGI_IP22:
+		*(volatile u_int32_t *)0xbfa00014 = 0;
+		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
+		break;
+
+	  case MACH_SGI_IP32:
+		*(volatile u_int32_t *)0xb4000034 = 0;
+		*(volatile u_int32_t *)0xb400000c &= ~0x200;
+		break;
+	}
+#endif
+
 	if (cold) {
 		howto |= RB_HALT;
 		goto haltsys;
@@ -438,6 +545,7 @@ cpu_reboot(howto, bootstr)
 		dumpsys();
 
 haltsys:
+
 	doshutdownhooks();
 
 #if 0
@@ -491,7 +599,61 @@ delay(n)
 	while (--N > 0);
 }
 
-extern int     crime_intr(void *);		/* XXX */
+/*
+ *  Ensure all platform vectors are always initialized.
+ */
+static void
+unimpl_bus_reset()
+{
+
+	panic("target init didn't set bus_reset");
+}
+
+static void
+unimpl_cons_init()
+{
+
+	panic("target init didn't set cons_init");
+}
+
+static void
+unimpl_iointr(mask, pc, statusreg, causereg)
+	u_int mask;
+	u_int pc;
+	u_int statusreg;
+	u_int causereg;
+{
+
+	panic("target init didn't set intr");
+}
+
+static void
+unimpl_intr_establish(level, ipl, handler, arg)
+	int level;
+	int ipl;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	panic("target init didn't set intr_establish");
+}
+
+static unsigned
+nullwork()
+{
+
+	return (0);
+}
+
+void *
+cpu_intr_establish(level, ipl, func, arg)
+	int level;
+	int ipl;
+	int (*func)(void *);
+	void *arg;
+{
+	(*platform.intr_establish)(level, ipl, func, arg);
+	return (void *) -1;
+}
 
 void
 cpu_intr(status, cause, pc, ipending)
@@ -500,85 +662,27 @@ cpu_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	struct clockframe cf;
-	int i;
-	unsigned long cycles;
 	uvmexp.intrs++;
 
-#if 0
-printf("crm: %llx %llx %llx %llx\n", *(volatile u_int64_t *)0xb4000010,
-				*(volatile u_int64_t *)0xb4000018,
-				*(volatile u_int64_t *)0xb4000020,
-				*(volatile u_int64_t *)0xb4000028);
-#endif
+	if (ipending & MIPS_HARD_INT_MASK)
+		(*platform.iointr)(status, cause, pc, ipending);
 
-#if 1
-	/* XXX soren Reset O2 watchdog timer */ 
-	*(volatile u_int32_t *)0xb4000034 = 0;
-#endif
-
-#if 1
-if ((*(volatile u_int32_t *)0xbf080004 & ~0x00100000) != 6)
-panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
-    *(volatile u_int32_t *)0xbf080000);
-#endif
-
-	*(volatile u_int64_t *)0xbf310018 = 0xffffffff;
-	*(volatile u_int64_t *)0xb4000018 = 0x000000000000ffff;
-
-#if 1
-	if (ipending & 0x7800)
-		panic("interesting cpu_intr, pending 0x%x\n", ipending);
-#endif
-
-
-	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + 900000);	/* XXX */
-
-		cf.pc = pc;
-		cf.sr = status;
-
-		hardclock(&cf);
-
-		cause &= ~MIPS_INT_MASK_5;
-	}
-else
-	if (ipending & 0x7c00)
-		crime_intr(NULL);
-
-        for (i = 0; i < 5; i++) {
-                if (ipending & (MIPS_INT_MASK_0 << i))
-#if 0
-                        if (intrtab[i].func != NULL)
-                                if ((*intrtab[i].func)(intrtab[i].arg))
-#endif
-                                        cause &= ~(MIPS_INT_MASK_0 << i);
-        }
-
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
-	/* 'softnet' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_1) {
-		clearsoftnet();
-		uvmexp.softs++;
-		netintr();
-	}
-
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		clearsoftclock();
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
+	/* software simulated interrupt */
+	if ((ipending & MIPS_SOFT_INT_MASK_1)
+		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+	    _clrsoftintr(MIPS_SOFT_INT_MASK_1);
+	    softintr_dispatch();
 	}
 }
 
-#define SPLSOFT		MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1
+void unconfigured_system_type(int ipnum)
+{
+	printf("Kernel not configured for IP%d support.  Add options `IP%d'\n",
+								ipnum, ipnum);
+	printf("to kernel configuration file to enable IP%d support!\n", 
+								ipnum);
+	printf("\n");
 
-#if 1
-u_int32_t biomask = 0x7f00;
-u_int32_t netmask = 0x7f00;
-u_int32_t ttymask = 0x7f00;
-u_int32_t clockmask = 0xff00;
-#endif
+	panic("Kernel not configured for current hardware!");
+}
+
