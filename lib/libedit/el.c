@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.17 2000/06/28 20:37:44 sommerfeld Exp $	*/
+/*	$NetBSD: el.c,v 1.18 2000/08/02 03:36:39 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.17 2000/06/28 20:37:44 sommerfeld Exp $");
+__RCSID("$NetBSD: el.c,v 1.18 2000/08/02 03:36:39 chuck Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,6 +69,8 @@ el_init(prog, fin, fout, ferr)
     const char *prog;
     FILE *fin, *fout, *ferr;
 {
+    extern char *rl_readline_name;
+
     EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
 #ifdef DEBUG
     char *tty;
@@ -88,6 +90,17 @@ el_init(prog, fin, fout, ferr)
      * Initialize all the modules. Order is important!!!
      */
     el->el_flags = 0;
+
+    /* readline compat hack to make xxgdb work */
+    if (prog == rl_readline_name) {
+        struct termios t;
+
+        if (tcgetattr(el->el_infd, &t) == 0) {
+	    if ((t.c_lflag & ECHO) == 0)
+        	el->el_flags |= EDIT_DISABLED;
+	}
+    }
+
     (void) term_init(el);
     (void) key_init(el);
     (void) map_init(el);
