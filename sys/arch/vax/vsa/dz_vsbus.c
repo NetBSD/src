@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.2 1998/05/21 13:02:21 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.3 1998/05/23 12:49:31 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -138,6 +138,10 @@ dzcngetc(dev)
 	dev_t dev;
 {
 	int c;
+	u_char mask;
+
+	mask = vs_cpu->vc_intmsk;	/* save old state */
+	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
 
 	do {
 		while ((dz->csr & 0x80) == 0)
@@ -147,6 +151,10 @@ dzcngetc(dev)
 
 	if (c == 13)
 		c = 10;
+
+	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
+	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
+
 	return (c);
 }
 
@@ -195,14 +203,24 @@ dzcnputc(dev,ch)
 	int	ch;
 {
 	int timeout = 1<<15;            /* don't hang the machine! */
+	u_short tcr;
+	u_char mask;
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
+
+	mask = vs_cpu->vc_intmsk;	/* save old state */
+	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
+	tcr = dz->tcr;	/* remember which lines to scan */
+	dz->tcr = 8; /* XXX */
 
 	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
 		if (--timeout < 0)
 			break;
 	dz->tdr = ch;                    /* Put the  character */
+
+	dz->tcr = tcr;
+	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
 }
 
 void 
@@ -210,11 +228,4 @@ dzcnpollc(dev, pollflag)
 	dev_t dev;
 	int pollflag;
 {
-	if (pollflag)  {
-		vsbus_intr_disable(INR_SR);
-		vsbus_intr_disable(INR_ST);
-	} else {
-		vsbus_intr_enable(INR_SR);
-		vsbus_intr_enable(INR_ST);
-	}
 }

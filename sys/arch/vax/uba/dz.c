@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.8 1998/05/21 13:02:21 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.9 1998/05/23 12:49:30 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -182,8 +182,7 @@ dzrint(cntlr)
 			cc |= TTY_PE;
 
 #if DDB && (VAX410 || VAX43)
-#define	DZMAJOR 1 /* XXX */
-		if (makedev(DZMAJOR, line + NDZLINE*cntlr) == cn_tab->cn_dev) {
+		if (tp->t_dev == cn_tab->cn_dev) {
 			int j = kdbrint(cc);
 
 			if (j == 1)	/* Escape received, just return */
