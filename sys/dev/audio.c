@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135 2001/01/25 15:25:34 toshii Exp $	*/
+/*	$NetBSD: audio.c,v 1.136 2001/05/02 12:49:41 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2220,8 +2220,11 @@ audio_check_params(p)
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_ALAW:
-	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
+			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_ADPCM:
+		if (p->precision != 4 && p->precision != 8)
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
