@@ -26,12 +26,12 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: flexdef.h,v 1.13 2001/01/06 02:09:48 christos Exp $ */
+/* $NetBSD: flexdef.h,v 1.14 2002/01/29 10:20:34 tv Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
 
-#include "config.h"
+#include <config.h>
 
 #ifdef __TURBOC__
 #define HAVE_STRING_H 1
@@ -980,7 +980,7 @@ extern void line_pinpoint PROTO(( char[], int ));
 extern void format_synerr PROTO((char [], char[]));
 extern void synerr PROTO((char []));	/* report a syntax error */
 extern void format_warn PROTO((char [], char[]));
-extern void warn PROTO((char []));	/* report a warning */
+extern void lwarn PROTO((char []));	/* report a warning */
 extern void yyerror PROTO((char []));	/* report a parse error */
 #ifndef YYRECOVERING
 extern int yyparse PROTO((void));	/* the YACC parser */

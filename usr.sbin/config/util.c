@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 2000/10/11 20:23:50 is Exp $	*/
+/*	$NetBSD: util.c,v 1.15 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include "config.h"
+#include "defs.h"
 
 static void nomem(void);
 static void vxerror(const char *, int, const char *, va_list)
