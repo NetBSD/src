@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.64 1998/07/23 16:39:24 drochner Exp $
+#	$NetBSD: files.isa,v 1.65 1998/07/27 01:22:41 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -173,6 +173,13 @@ file	dev/isa/if_ep_isa.c		ep_isa
 device	ate: arp, ether, ifnet, mb86960
 attach	ate at isa
 file	dev/isa/if_ate.c		ate
+
+# Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
+device	cs: arp, ether, ifnet, isadma
+file	dev/isa/cs89x0.c		cs
+
+attach	cs at isa with cs_isa
+file	dev/isa/if_cs_isa.c		cs_isa
 
 # Fujitsu MB86960-based boards
 # (Fujitsu FMV-180 series)
