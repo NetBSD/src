@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.1 2001/02/11 00:39:37 eeh Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.2 2001/05/11 16:49:22 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ typedef struct {
 	svr4_32_greg_t	rwin_in[8];
 } svr4_32_rwindow_t;
 
+typedef u_int32_t svr4_32_gwindowp_t;
 typedef struct {
 	int		 cnt;
 	u_int		*sp[SVR4_SPARC_MAXWIN];
@@ -80,7 +81,7 @@ typedef struct {
 
 typedef struct svr4_32_mcontext {
 	svr4_32_gregset_t	 greg;
-	svr4_32_gwindow_t  *gwin;
+	svr4_32_gwindowp_t	 gwin;
 	svr4_32_fregset_t	 freg;
 	svr4_32_xrs_t	 xrs;
 	netbsd32_long		 pad[19];
