@@ -560,7 +560,7 @@ edit(char *name, int ask_logical_size)
 	    break;
 	case 'Q':
 	case 'q':
-	    if (map->changed) {
+	    if (map && map->changed) {
 		if (get_okay("Discard changes? [n/y]: ", 0) != 1) {
 		    break;
 		}
