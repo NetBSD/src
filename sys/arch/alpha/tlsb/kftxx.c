@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.8 1998/05/13 23:22:08 thorpej Exp $ */
+/* $NetBSD: kftxx.c,v 1.9 1998/05/14 00:01:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.8 1998/05/13 23:22:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.9 1998/05/14 00:01:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,6 @@ struct cfattach kft_ca = {
 };
 
 static int	kftprint __P((void *, const char *));
-void	kft_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	kft_intr_disestablish __P((struct confargs *));
-caddr_t	kft_cvtaddr __P((struct confargs *));
-int	kft_matchname __P((struct confargs *, char *));
 
 static int
 kftprint(aux, pnp)

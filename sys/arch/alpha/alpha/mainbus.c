@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.25 1998/05/13 23:38:26 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.26 1998/05/14 00:01:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 1998/05/13 23:38:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 1998/05/14 00:01:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs nca;
+	struct mainbus_attach_args ma;
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
 	extern int ncpus;
@@ -91,10 +91,9 @@ mbattach(parent, self, aux)
 		if ((pcsp->pcs_flags & PCS_PP) == 0)
 			continue;
 
-		nca.ca_name = "cpu";
-		nca.ca_slot = i;
-		nca.ca_offset = 0;
-		if (config_found(self, &nca, mbprint) != NULL)
+		ma.ma_name = "cpu";
+		ma.ma_slot = i;
+		if (config_found(self, &ma, mbprint) != NULL)
 			cpuattachcnt++;
 	}
 	if (ncpus != cpuattachcnt)
@@ -102,10 +101,9 @@ mbattach(parent, self, aux)
 			ncpus, cpuattachcnt);
 
 	if (platform.iobus != NULL) {
-		nca.ca_name = (char *) platform.iobus;
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		config_found(self, &nca, mbprint);
+		ma.ma_name = platform.iobus;
+		ma.ma_slot = 0;			/* meaningless */
+		config_found(self, &ma, mbprint);
 	}
 }
 
@@ -114,10 +112,10 @@ mbprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
+		printf("%s at %s", ma->ma_name, pnp);
 
 	return (UNCONF);
 }
