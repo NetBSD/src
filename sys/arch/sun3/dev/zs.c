@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.57 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.58 1999/10/17 09:32:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
  * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -81,8 +83,6 @@
 #undef  NZS
 #define NZS 2
 #endif
-
-extern void Debugger __P((void));
 
 /*
  * Some warts needed by z8530tty.c -
@@ -634,8 +634,9 @@ zs_abort(cs)
 		ZS_DELAY();
 	} while (rr0 & ZSRR0_BREAK);
 
-	/* This is always available on the Sun3. */
+#ifdef DDB
 	Debugger();
+#endif
 }
 
 /*
