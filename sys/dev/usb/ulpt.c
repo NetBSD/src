@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.32 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.33 2000/03/06 20:58:39 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 /*
  * Printer Class spec: http://www.usb.org/developers/data/usbprn10.pdf
  */
-
-/* XXX Note in the manpage the ULPT_NOPRIME version of the printer */
 
 #include <sys/param.h>
 #include <sys/systm.h>
