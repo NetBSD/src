@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dump.h	5.21 (Berkeley) 7/16/92
- *	$Id: dump.h,v 1.6 1993/12/22 10:24:39 cgd Exp $
+ *	from: @(#)dump.h	8.1 (Berkeley) 6/5/93
+ *	$Id: dump.h,v 1.7 1994/06/08 18:57:33 mycroft Exp $
  */
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
@@ -74,6 +74,7 @@ long	tapesize;	/* estimated tape size, blocks */
 long	tsize;		/* tape size in 0.1" units */
 long	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
+int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
 
 int	notify;		/* notify operator flag */
 int	blockswritten;	/* number of blocks written on current tape */
@@ -84,6 +85,10 @@ char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
+
+#ifndef __P
+#include <sys/cdefs.h>
+#endif
 
 /* operator interface functions */
 void	broadcast __P((char *message));
@@ -113,17 +118,24 @@ void	writeheader __P((ino_t ino));
 int	alloctape __P((void));
 void	close_rewind __P((void));
 void	dumpblock __P((daddr_t blkno, int size));
-void	flushtape __P((void));
 void	startnewtape __P((int top));
 void	trewind __P((void));
 void	writerec __P((char *dp, int isspcl));
 
-void	Exit __P((int status));
+__dead void Exit __P((int status));
 void	dumpabort __P((int signo));
 void	getfstab __P((void));
 
 char	*rawname __P((char *cp));
 struct	dinode *getino __P((ino_t inum));
+
+/* rdump routines */
+#ifdef RDUMP
+void	rmtclose __P((void));
+int	rmthost __P((char *host));
+int	rmtopen __P((char *tape, int mode));
+int	rmtwrite __P((char *buf, int count));
+#endif /* RDUMP */
 
 void	interrupt __P((int signo));	/* in case operator bangs on console */
 
@@ -171,12 +183,19 @@ void	sig __P((int signo));
 /*
  * Compatibility with old systems.
  */
-#ifndef __STDC__
+#ifdef COMPAT
 #include <sys/file.h>
-#define _PATH_FSTAB	"/etc/fstab"
-extern char *index(), *strdup();
+extern char *index(), *rindex(), *strdup();
 extern char *ctime();
+extern int read(), write();
 extern int errno;
+#endif
+
+#ifndef	_PATH_UTMP
+#define	_PATH_UTMP	"/etc/utmp"
+#endif
+#ifndef	_PATH_FSTAB
+#define	_PATH_FSTAB	"/etc/fstab"
 #endif
 
 #ifdef sunos
@@ -188,7 +207,7 @@ extern char *strncpy();
 extern char *strcat();
 extern time_t time();
 extern void endgrent();
-extern void exit();
+extern __dead void exit();
 extern off_t lseek();
-extern char *strerror();
+extern const char *strerror();
 #endif

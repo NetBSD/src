@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pass4.c	5.10 (Berkeley) 7/20/90";*/
-static char rcsid[] = "$Id: pass4.c,v 1.5 1994/04/25 18:28:54 cgd Exp $";
+/*static char sccsid[] = "from: @(#)pass4.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: pass4.c,v 1.6 1994/06/08 19:00:29 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fsck.h"

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fsck.h	5.17 (Berkeley) 7/27/90
- *	$Id: fsck.h,v 1.5 1994/05/02 10:18:21 pk Exp $
+ *	from: @(#)fsck.h	8.1 (Berkeley) 6/5/93
+ *	$Id: fsck.h,v 1.6 1994/06/08 19:00:21 mycroft Exp $
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
@@ -78,6 +78,7 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
+struct bufarea *getdatablk();
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -99,7 +100,7 @@ struct inodesc {
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
 	int id_numfrags;	/* number of frags contained in block */
-	long id_filesize;	/* for DATA nodes, the size of the directory */
+	quad_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
@@ -161,14 +162,17 @@ struct inoinfo {
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
-char	*devname;		/* name of device being checked */
+char	*cdevname;		/* name of device being checked */
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */
 int	bflag;			/* location of alternate super block */
 int	debug;			/* output debugging info */
-int	cvtflag;		/* convert to old file system format */
+int	cvtlevel;		/* convert to newer file system format */
+int	doinglevel1;		/* converting to new cylinder group format */
+int	doinglevel2;		/* converting to new inode format */
+int	newinofmt;		/* filesystem has new inode format */
 char	preen;			/* just fix normal inconsistencies */
 char	hotroot;		/* checking root device */
 char	havesb;			/* superblock has been read */
@@ -181,6 +185,7 @@ char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
 char	*statemap;		/* ptr to inode state table */
+char	*typemap;		/* ptr to inode type table */
 short	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
@@ -203,32 +208,9 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-int		ckinode __P((struct dinode *, struct inodesc *));
-int		iblock __P((struct inodesc *, long, u_long));
-int		chkrange __P((daddr_t, int));
-struct dinode	*ginode __P((ino_t));
-struct dinode	*getnextinode __P((ino_t));
-void		cacheino __P((struct dinode *, ino_t));
-struct inoinfo	*getinoinfo __P((ino_t));
-void		resetinodebuf __P((void));
-void		freeinodebuf __P((void));
-void		inocleanup __P((void));
-void		inodirty __P((void));
-void		clri __P((struct inodesc *, char *, int));
-int		findname __P((struct inodesc *));
-int		findino __P((struct inodesc *));
-void		pinode __P((ino_t));
-void		blkerror __P((ino_t, char *, daddr_t));
-ino_t		allocino __P((ino_t, int));
-void		freeino __P((ino_t));
-
-int		ftypeok __P((struct dinode *));
-struct bufarea *getdatablk __P((daddr_t, long));
-void		getblk __P((struct bufarea *, daddr_t, long));
-void		flush __P((int, struct bufarea *));
-int		bread __P((int, char *, daddr_t, long));
-int		bwrite __P((int, char *, daddr_t, long));
-int		allocblk __P((long));
-void		freeblk __P((daddr_t, long));
-void		getpathname __P((char *, ino_t, ino_t));
-
+time_t time();
+struct dinode *ginode();
+struct inoinfo *getinoinfo();
+void getblk();
+ino_t allocino();
+int findino();

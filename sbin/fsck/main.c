@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +32,21 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1986 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1986, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.12 1994/04/25 18:28:29 cgd Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.2 (Berkeley) 1/23/94";*/
+static char *rcsid = "$Id: main.c,v 1.13 1994/06/08 19:00:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <sys/mount.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #include <fstab.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,11 +64,11 @@ main(argc, argv)
 	int ch;
 	int ret, maxrun = 0;
 	extern int docheck(), checkfilesys();
-	extern char *optarg;
+	extern char *optarg, *blockcheck();
 	extern int optind;
 
 	sync();
-	while ((ch = getopt(argc, argv, "cdpnNyYb:l:m:")) != EOF) {
+	while ((ch = getopt(argc, argv, "dpnNyYb:c:l:m:")) != EOF) {
 		switch (ch) {
 		case 'p':
 			preen++;
@@ -79,9 +80,9 @@ main(argc, argv)
 			break;
 
 		case 'c':
-			cvtflag++;
+			cvtlevel = argtoi('c', "conversion level", optarg, 10);
 			break;
-
+		
 		case 'd':
 			debug++;
 			break;
@@ -121,7 +122,7 @@ main(argc, argv)
 		(void)signal(SIGQUIT, catchquit);
 	if (argc) {
 		while (argc-- > 0)
-			(void)checkfilesys(*argv++, (char *)0, 0L, 0);
+			(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
 		exit(0);
 	}
 	ret = checkfstab(preen, maxrun, docheck, checkfilesys);
@@ -170,11 +171,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
-	int clean;
+	int cylno;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
-	devname = filesys;
+	cdevname = filesys;
 	if (debug && preen)
 		pwarn("starting\n");
 	if (setup(filesys) == 0) {
@@ -182,70 +183,54 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
 		return (0);
 	}
+	/*
+	 * 1: scan inodes tallying blocks used
+	 */
+	if (preen == 0) {
+		printf("** Last Mounted on %s\n", sblock.fs_fsmnt);
+		if (hotroot)
+			printf("** Root file system\n");
+		printf("** Phase 1 - Check Blocks and Sizes\n");
+	}
+	pass1();
 
 	/*
-	 * 0: check whether file system is already clean
+	 * 1b: locate first references to duplicates, if any
 	 */
-	clean = preen && (sblock.fs_state == FSOKAY) && sblock.fs_clean;
-
-#ifdef notyet
-	if (clean) {
-#else
-	if (0) {
-#endif
-		printf("** filesystem clean -- skipping checks\n");
-	} else {
-		/*
-		 * 1: scan inodes tallying blocks used
-		 */
-		if (preen == 0) {
-			printf("** Last Mounted on %s\n", sblock.fs_fsmnt);
-			if (hotroot)
-				printf("** Root file system\n");
-			printf("** Phase 1 - Check Blocks and Sizes\n");
-		}
-		pass1();
-
-		/*
-		 * 1b: locate first references to duplicates, if any
-		 */
-		if (duplist) {
-			if (preen)
-				pfatal("INTERNAL ERROR: dups with -p");
-			printf("** Phase 1b - Rescan For More DUPS\n");
-			pass1b();
-		}
-
-		/*
-		 * 2: traverse directories from root to mark all connected
-		 * directories
-		 */
-		if (preen == 0)
-			printf("** Phase 2 - Check Pathnames\n");
-		pass2();
-
-		/*
-		 * 3: scan inodes looking for disconnected directories
-		 */
-		if (preen == 0)
-			printf("** Phase 3 - Check Connectivity\n");
-		pass3();
-
-		/*
-		 * 4: scan inodes looking for disconnected files; check
-		 * reference counts
-		 */
-		if (preen == 0)
-			printf("** Phase 4 - Check Reference Counts\n");
-		pass4();
-
-		/*
-		 * 5: check and repair resource counts in cylinder groups
-		 */
-		if (preen == 0)
-			printf("** Phase 5 - Check Cyl groups\n");
-		pass5();
+	if (duplist) {
+		if (preen)
+			pfatal("INTERNAL ERROR: dups with -p");
+		printf("** Phase 1b - Rescan For More DUPS\n");
+		pass1b();
 	}
+
+	/*
+	 * 2: traverse directories from root to mark all connected directories
+	 */
+	if (preen == 0)
+		printf("** Phase 2 - Check Pathnames\n");
+	pass2();
+
+	/*
+	 * 3: scan inodes looking for disconnected directories
+	 */
+	if (preen == 0)
+		printf("** Phase 3 - Check Connectivity\n");
+	pass3();
+
+	/*
+	 * 4: scan inodes looking for disconnected files; check reference counts
+	 */
+	if (preen == 0)
+		printf("** Phase 4 - Check Reference Counts\n");
+	pass4();
+
+	/*
+	 * 5: check and repair resource counts in cylinder groups
+	 */
+	if (preen == 0)
+		printf("** Phase 5 - Check Cyl groups\n");
+	pass5();
 
 	/*
 	 * print out summary statistics
@@ -254,8 +239,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	n_bfree = sblock.fs_cstotal.cs_nbfree;
 	pwarn("%ld files, %ld used, %ld free ",
 	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
-	printf("(%ld frags, %ld blocks, %.1f%% fragmentation)\n",
-	    n_ffree, n_bfree, (float)(n_ffree * 100) / sblock.fs_dsize);
+	printf("(%ld frags, %ld blocks, %d.%d%% fragmentation)\n",
+	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
+	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock.fs_cstotal.cs_nifree))
 		printf("%ld files missing\n", n_files);
@@ -281,17 +267,19 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	}
 	zlnhead = (struct zlncnt *)0;
 	duplist = (struct dups *)0;
+	muldup = (struct dups *)0;
 	inocleanup();
-#ifdef notyet
-	if (!clean && !nflag && fswritefd != -1) {
-		sblock.fs_state = FSOKAY;
-		sblock.fs_clean = FS_CLEANFREQ;
-		fsmodified = 1;
-	}
-#endif
 	if (fsmodified) {
 		(void)time(&sblock.fs_time);
 		sbdirty();
+	}
+	if (cvtlevel && sblk.b_dirty) {
+		/* 
+		 * Write out the duplicate super blocks
+		 */
+		for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
+			bwrite(fswritefd, (char *)&sblock,
+			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
 	ckfini();
 	free(blockmap);
@@ -299,12 +287,31 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	free((char *)lncntp);
 	if (!fsmodified)
 		return (0);
-	if (!preen) {
+	if (!preen)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
-		if (hotroot)
-			printf("\n***** REBOOT NETBSD *****\n");
-	}
 	if (hotroot) {
+		struct statfs stfs_buf;
+		/*
+		 * We modified the root.  Do a mount update on
+		 * it, unless it is read-write, so we can continue.
+		 */
+		if (statfs("/", &stfs_buf) == 0) {
+			long flags = stfs_buf.f_flags;
+			struct ufs_args args;
+			int ret;
+
+			if (flags & MNT_RDONLY) {
+				args.fspec = 0;
+				args.export.ex_flags = 0;
+				args.export.ex_root = 0;
+				flags |= MNT_UPDATE | MNT_RELOAD;
+				ret = mount(MOUNT_UFS, "/", flags, &args);
+				if (ret == 0)
+					return(0);
+			}
+		}
+		if (!preen)
+			printf("\n***** REBOOT NOW *****\n");
 		sync();
 		return (4);
 	}
