@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.12 1996/03/31 21:37:15 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.13 1996/04/02 15:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -183,7 +183,7 @@ void	closelog __P((void));
 void	openlog __P((const char *, int, int));
 int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...))
-    __attribute__((__format__(__kprintf__,2,3)));
+    __attribute__((__format__(__printf__,2,3)));
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
 __END_DECLS
 
