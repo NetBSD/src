@@ -1,9 +1,0 @@
-#	from: @(#)Makefile.stellix	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile.stellix,v 1.3 1994/06/13 20:48:42 mycroft Exp $
-#
-# Extra Makefile definitions for STELLIX
-#
-
-DEBUG = #-g -DDEBUG
-CCOPTS = -DSTELLIX
-RESOLV = -lrpcsvc

@@ -1,9 +1,0 @@
-NetBSD 1.2 is the second public release of NetBSD for the DECstation
-and DECsystem family of computers.  This release includes kernel
-support for ELF shared libraries, much of which is due to work by Per
-Fogelstrom (pefo@OpenBSD.ORG).  Note that NetBSD/1.2 pmax still ships
-with statically-linked user binaries.  Ultrix emulation for tty-aware
-applications is improved over NetBSD 1.1.  Many NetBSD/pmax bugs have
-been fixed, including annoying bugs in the 4.4bsd-Lite/pmax SCSI
-drivers.
-

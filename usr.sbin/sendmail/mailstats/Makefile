@@ -1,8 +1,0 @@
-#	@(#)Makefile	8.2 (Berkeley) 9/21/96
-
-PROG=	mailstats
-MAN=	mailstats.8
-CFLAGS+=-I${.CURDIR}/../src
-
-.include "../../Makefile.inc"
-.include <bsd.prog.mk>

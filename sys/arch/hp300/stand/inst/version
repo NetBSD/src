@@ -1,6 +1,0 @@
-$NetBSD: version,v 1.4 1997/02/04 19:36:29 thorpej Exp $
-
-1.1:		Initial version
-1.2:		Added support for HP-IB cartridge tapes
-1.3:		Reorganization of boot block code
-1.4:		Add support for reading gzip'd miniroot images

@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.2 1996/10/09 00:13:36 jtc Exp $
-
-# copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/i386/compile/INSTADP/netbsd	netbsd

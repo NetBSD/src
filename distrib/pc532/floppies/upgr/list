@@ -1,8 +1,0 @@
-#	$Id: list,v 1.2 1995/09/26 21:25:20 phil Exp $
-
-# and the upgrade tools
-COPY	dot.profile			.profile
-COPY	dot.upgrutils			.upgrutils
-COPY	upgrade.sh			upgrade
-COPY	dot.hdprofile			tmp/.hdprofile
-SPECIAL	chmod 755 upgrade
