@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.44 2001/08/17 14:26:32 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.45 2001/09/09 17:08:16 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -399,11 +399,48 @@ the release cycle for 1.5 was started, and during the release cycle of
 imported from the main development trunk.
 So, there are features in 1.5.2 which were not in, e.g. 1.5B, and vice
 versa.
-.Ss Major Changes Between 1.5 and 1.5.2
+.Ss Major Changes Between 1.5.1 and 1.5.2
+The main purpose of
+.Nx
+1.5.2 is to fix some problems discovered shortly after the release of
+.Nx
+1.5.1.
+Some highlights are:
+.Bl -bullet
+.It
+.Xr telnetd 8
+has been fixed to deal with a security issue (SA2001-012).
+.It
+A weakness in the OpenSSL libcrypto's pseudo random number generator
+has been fixed (SA2001-013). 
+.It
+Floating point emulation on i386 (to run on FPU-less CPUs) which was
+broken late in 1.5.1's cycle has been restored to working order.
+.It
+Bugs in the compiler have been worked around to produce a working
+miniroot image on sparc64.
+.It
+The script-based installers on amiga, atari and mvme68k have been
+updated to deal with new behaviour from
+.Xr mount 8 .
+.It
+.Xr dump 8
+has been fixed to deal with a local security issue (SA2001-014).
+.It
+Several system calls have had defensive length checks applied on
+their arguments (SA2001-015).
+.It
+The DHCP software has been upgraded to ISC Version 3, Release
+Candidate 10.
+.El
+.Pp
+Additionally, a few more bugs have been fixed.
+See the CHANGES-1.5.2 file for the complete list of changes.
+.Ss Major Changes Between 1.5 and 1.5.1
 The complete list of changes between
 .Nx
-1.5 and 1.5.2 can be found in the files CHANGES-1.5.1 and CHANGES-1.5.2
-in the top directory of the source tree.
+1.5 and 1.5.1 can be found in the file CHANGES-1.5.1 in the top directory
+of the source tree.
 The following are highlights only:
 .Bl -bullet
 .It
@@ -487,7 +524,7 @@ Support for the Socket Communications LP-E Type II PCMCIA NE2000
 clone card has been added to
 .Xr ne 4 .
 .It
-The DHCP software has been upgraded to ISC Version 3, Release Candidate 10,
+The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
 to fix core dumps in
 .Xr dhclient 8 ,
 among other things.  Please note that the new
@@ -529,7 +566,7 @@ and Cirrus Logic CrystalClear PCI Audio CS4281 (see
 In addition, many bugs have been fixed\(emmore than 95 problems
 reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
-See the CHANGES-1.5.1 and CHANGES-1.5.2 files for the complete list.
+See the CHANGES-1.5.1 file for the complete list.
 .Pp
 The NetBSD Packages Collection (pkgsrc) which is used to maintain,
 build, track dependencies, and maintain NetBSD-specific fixes to
