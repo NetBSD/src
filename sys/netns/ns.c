@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.15 1998/07/05 06:49:18 jonathan Exp $	*/
+/*	$NetBSD: ns.c,v 1.16 1998/09/13 15:21:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -218,8 +218,8 @@ ns_control(so, cmd, data, ifp, p)
 }
 
 /*
-* Delete any previous route for an old address.
-*/
+ * Delete any previous route for an old address.
+ */
 void
 ns_ifscrub(ifp, ia)
 	register struct ifnet *ifp;
