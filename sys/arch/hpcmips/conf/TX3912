@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.4 2000/01/07 15:19:14 uch Exp $
+#	$NetBSD: TX3912,v 1.5 2000/01/08 21:07:04 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -91,13 +91,13 @@ options	IT8368E_LEGACY_MODE	# Mobilon HC-4100 requires this
 it8368e*	at	txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 161 irq2 168 irq3 98
 
 # PHILIPS UCB1200 modem/audio analog front-end
-#ucb*		at	tx39sib? slot 0
+ucb*		at	tx39sib? slot 0
 
 # WS console uses SUN or VT100 terminal emulation
 fb*		at	tx3912video?
 wsdisplay*	at	fb?
 wskbd*		at	skbd? mux 1
-#wsmouse*	at	ucb? mux 0
+wsmouse*	at	ucb? mux 0
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
