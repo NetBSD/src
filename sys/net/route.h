@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.15 1998/08/25 04:22:33 thorpej Exp $	*/
+/*	$NetBSD: route.h,v 1.16 1998/12/10 15:52:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -228,6 +228,7 @@ struct rt_addrinfo {
 
 struct route_cb {
 	int	ip_count;
+	int	ipx_count;
 	int	ns_count;
 	int	iso_count;
 	int	any_count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.26 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.27 1998/12/10 15:52:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -65,6 +65,7 @@ struct walkarg {
 static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *));
 static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *));
 static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
+static __inline void rt_adjustcount __P((int, int));
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -74,6 +75,27 @@ static void rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 #define ifpaddr	info.rti_info[RTAX_IFP]
 #define ifaaddr	info.rti_info[RTAX_IFA]
 #define brdaddr	info.rti_info[RTAX_BRD]
+
+static __inline void
+rt_adjustcount(af, cnt)
+	int af, cnt;
+{
+	route_cb.any_count--;
+	switch (af) {
+	case AF_INET:
+		route_cb.ip_count += cnt;
+		return;
+	case AF_IPX:
+		route_cb.ipx_count += cnt;
+		return;
+	case AF_NS:
+		route_cb.ns_count += cnt;
+		return;
+	case AF_ISO:
+		route_cb.iso_count += cnt;
+		return;
+	}
+}
 
 /*ARGSUSED*/
 int
@@ -93,17 +115,8 @@ route_usrreq(so, req, m, nam, control, p)
 			bzero(so->so_pcb, sizeof(*rp));
 
 	}
-	if (req == PRU_DETACH && rp) {
-		int af = rp->rcb_proto.sp_protocol;
-		if (af == AF_INET)
-			route_cb.ip_count--;
-		else if (af == AF_NS)
-			route_cb.ns_count--;
-		else if (af == AF_ISO)
-			route_cb.iso_count--;
-		route_cb.any_count--;
-	}
-
+	if (req == PRU_DETACH && rp)
+		rt_adjustcount(rp->rcb_proto.sp_protocol, -1);
 	s = splsoftnet();
 
 	/*
@@ -121,19 +134,12 @@ route_usrreq(so, req, m, nam, control, p)
 
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
-		int af = rp->rcb_proto.sp_protocol;
 		if (error) {
 			free((caddr_t)rp, M_PCB);
 			splx(s);
 			return (error);
 		}
-		if (af == AF_INET)
-			route_cb.ip_count++;
-		else if (af == AF_NS)
-			route_cb.ns_count++;
-		else if (af == AF_ISO)
-			route_cb.iso_count++;
-		route_cb.any_count++;
+		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &route_src;
 		rp->rcb_faddr = &route_dst;
 		soisconnected(so);
