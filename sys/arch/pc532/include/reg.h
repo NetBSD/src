@@ -70,6 +70,25 @@
 
 #define	PS	PSR
 
+/* The reg struct .. in the order of above. */
+
+struct reg {
+	unsigned int 	r_r7;
+	unsigned int 	r_r6;
+	unsigned int 	r_r5;
+	unsigned int 	r_r4;
+	unsigned int 	r_r3;
+	unsigned int 	r_r2;
+	unsigned int 	r_r1;
+	unsigned int 	r_r0;
+
+	unsigned int 	r_sp;
+	unsigned int 	r_fp;
+	unsigned int 	r_pc;
+	unsigned int 	r_psr;
+}
+
+
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  */

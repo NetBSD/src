@@ -39,6 +39,13 @@
 #define _MACHINE_ENDIAN_H_
 
 /*
+ * Define the order of 32-bit words in 64-bit words.
+ */
+#define _QUAD_HIGHWORD 1
+#define _QUAD_LOWWORD 0
+
+#ifndef _POSIX_SOURCE
+/*
  * Definitions for byte order, according to byte significance from low
  * address to high.
  */
@@ -79,4 +86,6 @@ __END_DECLS
 #define	HTONS(x)	(x) = htons((u_short)x)
 #endif
 
-#endif
+#endif /* _POSIX_SOURCE */
+
+#endif /* _MACHINE_ENDIAN_H_ */
