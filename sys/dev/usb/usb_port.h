@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.45 2001/11/10 16:53:32 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.46 2001/12/20 17:41:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
 #define EHCI_DEBUG 1
+#define UIRDA_DEBUG 1
 #define Static
 #else
 #define Static static
