@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.8 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.9 1999/03/25 22:26:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ lfs_bwrite_ext(bp, flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-		if ((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL))
+		if (bp->b_flags & B_CALL)
 		{
 			if(!(ip->i_flag & IN_CLEANING))
 				++fs->lfs_uinodes;
@@ -256,9 +256,10 @@ lfs_bwrite_ext(bp, flags)
 		s = splbio();
 		reassignbuf(bp, bp->b_vp);
 		splx(s);
+
 	}
 	
-	if((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL))
+	if(bp->b_flags & B_CALL)
 		bp->b_flags &= ~B_BUSY;
 	else
 		brelse(bp);

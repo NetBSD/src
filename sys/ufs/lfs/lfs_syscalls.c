@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.24 1999/03/25 21:54:10 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.25 1999/03/25 22:26:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ int debug_cleaner = 0;
 int clean_vnlocked = 0;
 int clean_inlocked = 0;
 int verbose_debug = 0;
-int lfs_clean_vnhead = 1;
     
 pid_t lfs_cleaner_pid = 0;
 
@@ -649,7 +648,7 @@ lfs_bmapv(p, v, retval)
 					v_daddr = LFS_UNUSED_DADDR;
 					need_unlock = 0;
 #ifdef DEBUG_LFS
-					printf("lfs_bmapv: vget of ino %d failed with %d)",blkp->bi_inode,error);
+					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);
 #endif
 					continue;
 				} else {
@@ -1037,20 +1036,22 @@ lfs_fakebuf(vp, lbn, size, uaddr)
 	caddr_t uaddr;
 {
 	struct buf *bp;
+	int error;
 	
-#ifdef DEBUG
-	/* Check for duplicates too */
-	if(incore(vp,lbn)) {
-		printf("Fake buffer (%d/%d) is in core\n", VTOI(vp)->i_number,
-		       lbn);
-		if(bread(vp, lbn, size, NOCRED, &bp))
-			return NULL;
+#ifndef ALLOW_VFLUSH_CORRUPTION
+	bp = lfs_newbuf(vp, lbn, size);
+	error = copyin(uaddr, bp->b_data, size);
+	if(error) {
+		lfs_freebuf(bp);
+		return NULL;
 	}
-#endif
+#else
 	bp = lfs_newbuf(vp, lbn, 0);
+	bp->b_flags |= B_INVAL;
 	bp->b_saveaddr = uaddr;
+#endif
+
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
-	bp->b_flags |= B_INVAL;
 	return (bp);
 }

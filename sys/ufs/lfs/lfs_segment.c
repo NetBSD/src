@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.18 1999/03/25 22:02:36 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.19 1999/03/25 22:26:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -186,7 +186,25 @@ lfs_vflush(vp)
 	struct lfs *fs;
 	struct segment *sp;
 	int error;
-	struct buf *bp;
+
+	if(ip->i_flag & IN_CLEANING) {
+#ifdef DEBUG_LFS
+		ivndebug(vp,"vflush/in_cleaning");
+#endif
+		ip->i_flag &= ~IN_CLEANING;
+		if(ip->i_flag & IN_MODIFIED) {
+			fs->lfs_uinodes--;
+		} else
+			ip->i_flag |= IN_MODIFIED;
+	}
+
+	/* If the node is being written, wait until that is done */
+	if(WRITEINPROG(vp)) {
+#ifdef DEBUG_LFS
+		ivndebug(vp,"vflush/writeinprog");
+#endif
+		tsleep(vp, PRIBIO+1, "lfs_vw", 0);
+	}
 
 	/* Protect against VXLOCK deadlock in vinvalbuf() */
 	fs = VFSTOUFS(vp->v_mount)->um_lfs;
@@ -203,44 +221,29 @@ lfs_vflush(vp)
 	ip = VTOI(vp);
 	if (vp->v_dirtyblkhd.lh_first == NULL) {
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_EMPTY);
+	} else if((ip->i_flag & IN_CLEANING) && (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
+#ifdef DEBUG_LFS
+		ivndebug(vp,"vflush/clean");
+#endif
+		lfs_writevnodes(fs, vp->v_mount, sp, VN_CLEAN);
 	}
 	else if(lfs_dostats) {
 		if(vp->v_dirtyblkhd.lh_first || (VTOI(vp)->i_flag & (IN_MODIFIED|IN_UPDATE|IN_ACCESS|IN_CHANGE|IN_CLEANING)))
 			++lfs_stats.vflush_invoked;
 #ifdef DEBUG_LFS
-		printf("V");
+		ivndebug(vp,"vflush");
 #endif
 	}
 
-	/* XXX KS - can this ever happen?  I think so.... */
-	if(ip->i_flag & IN_CLEANING) {
-#ifdef DEBUG_LFS
-		printf("C");
-#endif
-		ip->i_flag &= ~IN_CLEANING;
-		/*
-		 * XXX Copyin all of the fake buffers *now* to avoid
-		 * a later panic; and take off B_INVAL.
-		 */
-		for(bp=vp->v_dirtyblkhd.lh_first; bp; bp=bp->b_vnbufs.le_next) {
-			if((bp->b_flags & (B_CALL|B_INVAL))==(B_CALL|B_INVAL)) {
-				bp->b_data = malloc(bp->b_bufsize, M_SEGMENT, M_WAITOK);
-				copyin(bp->b_saveaddr, bp->b_data, bp->b_bcount);
-				bp->b_flags &= ~B_INVAL;
-			}
-		}
-
-		if(ip->i_flag & IN_MODIFIED) {
-			fs->lfs_uinodes--;
-#ifdef DEBUG_LFS
-			if((int32_t)fs->lfs_uinodes<0) {
-				printf("U4");
-				fs->lfs_uinodes=0;
-			}
-#endif
-		} else
-			ip->i_flag |= IN_MODIFIED;
+#ifdef DIAGNOSTIC
+	if(vp->v_flag & VDIROP) {
+		panic("VDIROP being freed...this can\'t happen");
 	}
+	if(vp->v_usecount<0) {
+		printf("usecount=%d\n",vp->v_usecount);
+		panic("lfs_vflush: usecount<0");
+	}
+#endif
 
 	do {
 		do {
@@ -1248,6 +1251,8 @@ lfs_writeseg(fs, sp)
 				bp->b_flags &= ~B_NEEDCOMMIT;
 				wakeup(bp);
 			}
+			/* if(vn->v_dirtyblkhd.lh_first == NULL) */
+				wakeup(vn);
 			bpp++;
 		}
 		++cbp->b_vp->v_numoutput;
@@ -1347,7 +1352,7 @@ lfs_match_fake(fs, bp)
 	struct lfs *fs;
 	struct buf *bp;
 {
-	return (bp->b_flags & (B_CALL|B_INVAL))==(B_CALL|B_INVAL);
+	return (bp->b_flags & B_CALL);
 }
 
 int
