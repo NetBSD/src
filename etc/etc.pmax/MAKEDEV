@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.43 2001/12/19 18:30:09 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.44 2002/01/13 14:27:09 manu Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -32,6 +32,7 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	audio*	phone-quality audio on Personal DECstations
 #	bpf*	packet filter
 #	ch*	SCSI media changer
@@ -72,6 +73,7 @@ all)
 	sh $0 local
 	sh $0 audio
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 clockctl
 	;;
 
 minimal)
@@ -380,6 +382,13 @@ scsibus*)
 	mknod scsibus$unit c 95 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 100 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
