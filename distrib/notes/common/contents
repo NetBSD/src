@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.80 2002/08/05 07:44:06 lukem Exp $
+.\"	$NetBSD: contents,v 1.81 2002/08/07 04:35:45 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -761,7 +761,7 @@ all related programs, and their manual pages.
 .Nx
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
-.ie \n[sun2] \{\
+.ie \n[hpcsh]:\n[sun2] \{\
 .Nx*M
 currently does not ship with an X server or X clients.
 .\}
