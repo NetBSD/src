@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/20 06:20:53 lukem Exp $
-
-XTODO=	acts as #define InstallEmptyHostDef
+#	$NetBSD: Makefile,v 1.3 2004/01/10 23:35:55 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +26,8 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 	svr4.cf ultrix.cf usl.cf version.def x386.cf xf86.rules \
 	xf86.tmpl xf86site.def xfree86.cf
 
+# Note: acts as '#define InstallEmptyHostDef'
+#
 FILES+=	host.def
 
 BUILDSYMLINKS=\
