@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.23 2004/01/04 12:41:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.24 2004/08/09 18:51:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -205,7 +205,6 @@ isic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct isic_pcmcia_card_entry * cde;
-	int s;
 
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
@@ -222,34 +221,28 @@ isic_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
+	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
 	pcmcia_function_enable(pa->pf);
 
 	if (!cde->attach(psc, cfe, pa)) {
-		pcmcia_function_disable(psc->sc_pf);
 		printf("%s: attach failed, card-specific attach unsuccesful\n",
 		    psc->sc_isic.sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
-
-	/* XXX - we generate interrupts during card initialization.
-	   Block them for now, until the handler is established. */
-	s = splhigh();
 
 	/* MI initilization */
 	sc->sc_cardtyp = cde->card_type;
-	if (isic_pcmcia_isdn_attach(sc, cde->name) == 0) {
-		/* setup interrupt */
-		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
-	} else {
-		pcmcia_function_disable(psc->sc_pf);
-		splx(s);
-		printf("%s: attach failed, couldn't establish interrupt\n",
+	if (isic_pcmcia_isdn_attach(sc, cde->name)) {
+		printf("%s: attach failed, generic attach unsuccesful\n",
 		    psc->sc_isic.sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
 
-	splx(s);
 	return;
+
+fail:
+	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
 
 static int
