@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1999/02/06 23:17:07 is Exp $
+#	$NetBSD: Makefile,v 1.18 1999/03/03 20:32:58 tron Exp $
 
 ### what we need:
 
@@ -33,6 +33,8 @@ DEFS = -D_STANDALONE -DINSECURE
 
 all: ${FILES}
 
+.include <bsd.prog.mk>
+
 ### special  rules for bootblocks ###
 
 INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../aout2bb
@@ -41,50 +43,47 @@ AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
 COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
-CFLAGS = ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
+CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:
-	$(CC) $(CFLAGS) -S $< -o $*.s
-	$(TXLT) < $*.s | $(AS) $(AFLAGS) -o $*.o
+	${CC} ${CFLAGS} -S $< -o $*.s
+	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $*.o
 	rm $*.s
 
-.s.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $@ -c $<
+.s.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
-.S.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $@ -c $<
+.S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 CLEANFILES += xxboot fdboot x.out f.out xxstart.o fdstart.o libboot.a
 
 xxboot: x.out
-	$(AOUT2BB) x.out $@ || nm -u x.out
+	${AOUT2BB} x.out $@ || nm -u x.out
 
 fdboot: f.out
-	$(AOUT2BB) f.out $@ || nm -u f.out
+	${AOUT2BB} f.out $@ || nm -u f.out
 
 x.out: xxstart.o libboot.a
-	$(LD) $(LDFLAGS) -r -dc -e _start -o $@ $>
+	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
 	size $@
 	nm -u $@
 
 f.out: fdstart.o libboot.a
-	$(LD) $(LDFLAGS) -r -dc -e _start -o $@ $>
+	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
 	size $@
 	nm -u $@
 
 xxstart.o: ${.CURDIR}/bbstart.s
-	$(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp \
+	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
 		-o $@ -c $>
 
 fdstart.o: ${.CURDIR}/bbstart.s
-	$(CC) -DAUTOLOAD=8192 $(CAFLAGS) $(COPTS) -x assembler-with-cpp \
+	${CC} -DAUTOLOAD=8192 ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
 		-o $@ -c $>
 
-libboot.a: $(OBJS)
-	$(AR) r $@ $> && $(RANLIB) $@
-
-.include <bsd.prog.mk>
+libboot.a: ${OBJS}
+	${AR} r $@ $> && ${RANLIB} $@
 
 # make sure these are built:
 
 ${COBJS}: ${TXLT}
 ${FILES}: ${AOUT2BB}
-
