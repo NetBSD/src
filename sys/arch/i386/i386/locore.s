@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 1995/10/24 16:27:54 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 1996/01/07 02:04:31 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -101,8 +101,6 @@
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
-#define	INTREXIT \
-	jmp	_Xdoreti
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
@@ -1877,7 +1875,7 @@ IDTVEC(fpu)
 	incl	_cnt+V_TRAP
 	call	_npxintr
 	addl	$4,%esp
-	INTREXIT
+	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
 #endif
