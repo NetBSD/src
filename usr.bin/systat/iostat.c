@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
+/*	$NetBSD: iostat.c,v 1.6 1996/10/25 18:30:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $";
+static char rcsid[] = "$NetBSD: iostat.c,v 1.6 1996/10/25 18:30:52 scottr Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ numlabels(row)
 					break;
 			}
 			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
-			mvwaddstr(wnd, row + 1, col, "Kps tps  sec");
+			mvwaddstr(wnd, row + 1, col, "KBps tps  sec");
 			col += COLWIDTH;
 		}
 	if (col)
@@ -177,7 +177,7 @@ barlabels(row)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (row > wnd->maxy - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%3.3s   Kps|", cur.dk_name[i]);
+			mvwprintw(wnd, row++, 0, "%3.3s  KBps|", cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "      tps|");
 			if (secs)
 				mvwaddstr(wnd, row++, 0, "     msec|");
@@ -253,7 +253,7 @@ stats(row, col, dn)
 
 	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
 	if (numbers) {
-		mvwprintw(wnd, row, col, "%3.0f%4.0f%5.1f",
+		mvwprintw(wnd, row, col, " %3.0f%4.0f%5.1f",
 		    words / etime, cur.dk_xfer[dn] / etime, atime / etime);
 		return (row);
 	}
