@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -170,7 +170,8 @@ via82c586_get_intr(v, clink, irqp)
 
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, VP3_CFG_PIRQ_REG);
 	val = VP3_PIRQ(reg, clink);
-	*irqp = (val == VP3_PIRQ_NONE) ? 0xff : val;
+	*irqp = (val == VP3_PIRQ_NONE) ?
+	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }
