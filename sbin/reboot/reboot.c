@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.14 1997/07/19 23:03:54 perry Exp $	*/
+/*	$NetBSD: reboot.c,v 1.15 1997/09/15 07:38:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.14 1997/07/19 23:03:54 perry Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.15 1997/09/15 07:38:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: reboot.c,v 1.14 1997/07/19 23:03:54 perry Exp $");
 int main __P((int, char *[]));
 void usage __P((void));
 
+extern char *__progname;
+
 int dohalt;
 
 int
@@ -73,16 +75,15 @@ main(argc, argv)
 	int i;
 	struct passwd *pw;
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
-	char *p, *user, *bootstr, **av;
+	char *user, *bootstr, **av;
 
-	p = (p = rindex(*argv, '/')) ? p + 1 : *argv;
-	if (!strcmp(p, "halt") || !strcmp(p, "-halt")) {
+	if (!strcmp(__progname, "halt") || !strcmp(__progname, "-halt")) {
 		dohalt = 1;
 		howto = RB_HALT;
 	} else
 		howto = 0;
 	lflag = nflag = qflag = 0;
-	while ((ch = getopt(argc, argv, "lnqd")) != EOF)
+	while ((ch = getopt(argc, argv, "lnqd")) != -1)
 		switch(ch) {
 		case 'l':		/* Undocumented; used by shutdown. */
 			lflag = 1;
@@ -208,6 +209,7 @@ restart:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-nqd] [-- <boot string>]\n", dohalt ? "halt" : "reboot");
+	(void)fprintf(stderr, "usage: %s [-nqd] [-- <boot string>]\n",
+	    __progname);
 	exit(1);
 }
