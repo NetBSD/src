@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 1999/03/30 14:26:42 soda Exp $	*/
+/*	$NetBSD: asm.h,v 1.20 1999/03/30 16:50:04 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,7 +142,7 @@ _C_LABEL(x): ;				\
  */
 #define XLEAF(x)			\
 	.globl	_C_LABEL(x);		\
-	AENT (_C_LABEL(x))		\
+	AENT (_C_LABEL(x));		\
 _C_LABEL(x):
 
 /*
@@ -173,7 +173,7 @@ _C_LABEL(x): ;				\
  */
 #define XNESTED(x)			\
 	.globl	_C_LABEL(x);		\
-	AENT (_C_LABEL(x))		\
+	AENT (_C_LABEL(x));		\
 _C_LABEL(x):
 
 /*
@@ -187,7 +187,7 @@ _C_LABEL(x):
  * IMPORT -- import external symbol
  */
 #define IMPORT(sym, size)		\
-	.extern sym,size
+	.extern _C_LABEL(sym),size
 
 /*
  * EXPORT -- export definition of symbol
@@ -199,6 +199,7 @@ _C_LABEL(x):
 /*
  * VECTOR
  *	exception vector entrypoint
+ *	XXX: regmask should be used to generate .mask
  */
 #define VECTOR(x, regmask)		\
 	.ent	_C_LABEL(x),0;		\
@@ -206,12 +207,12 @@ _C_LABEL(x):
 
 #ifdef __STDC__
 #define VECTOR_END(x)			\
-	.end	_C_LABEL(x);		\
-	EXPORT(_C_LABEL(x) ## End)
+	EXPORT(x ## End);		\
+	END(x)
 #else
 #define VECTOR_END(x)			\
-	.end	_C_LABEL(x);		\
-	EXPORT(_C_LABEL(x)/**/End)
+	EXPORT(x/**/End);		\
+	END(x)
 #endif
 
 /*
