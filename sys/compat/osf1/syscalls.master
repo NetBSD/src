@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 1999/05/04 04:59:21 cgd Exp $
+	$NetBSD: syscalls.master,v 1.26 1999/05/04 05:17:22 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -108,7 +108,8 @@
 50	NOARGS		{ int sys_setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
 52	UNIMPL		sigpending
-53	UNIMPL		classcntl
+53	STD		{ int osf1_sys_classcntl(int opcode, int arg1, \
+			    int arg2, int arg3); }
 54	STD		{ int osf1_sys_ioctl(int fd, int com, caddr_t data); }
 55	STD		{ int osf1_sys_reboot(int opt); }
 56	NOARGS		{ int sys_revoke(const char *path); }
