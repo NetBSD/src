@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.13 2001/01/02 04:14:34 simonb Exp $
+#	$NetBSD: Makefile.buildboot,v 1.14 2001/05/12 23:55:07 gmcgarry Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -77,5 +77,5 @@ LIBSA=		${SALIB}
 ${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -e begin -o ${PROGAOUT} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	@size ${PROGAOUT}
+	@${SIZE} ${PROGAOUT}
 	@echo ${PROGAOUT} total size should not exceed 1044480 bytes
