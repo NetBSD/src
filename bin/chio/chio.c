@@ -1,7 +1,7 @@
-/*	$NetBSD: chio.c,v 1.6 1998/01/04 23:53:58 thorpej Exp $	*/
+/*	$NetBSD: chio.c,v 1.7 1998/07/13 12:06:18 hpeyerl Exp $	*/
 
 /*
- * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
+ * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,13 +37,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.6 1998/01/04 23:53:58 thorpej Exp $");
+__COPYRIGHT(
+    "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
+__RCSID("$NetBSD: chio.c,v 1.7 1998/07/13 12:06:18 hpeyerl Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/chio.h> 
+#include <sys/cdio.h>	/* for ATAPI CD changer; too bad it uses a lame API */
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -75,6 +77,7 @@ static	int do_getpicker __P((char *, int, char **));
 static	int do_setpicker __P((char *, int, char **));
 static	int do_status __P((char *, int, char **));
 static	int do_ielem __P((char *, int, char **));
+static	int do_cdlu __P((char *, int, char **));
 
 /* Valid changer element types. */
 const struct element_type elements[] = {
@@ -95,6 +98,7 @@ const struct changer_command commands[] = {
 	{ "setpicker",		do_setpicker },
 	{ "status",		do_status },
 	{ "ielem", 		do_ielem },
+	{ "cdlu",		do_cdlu },
 	{ NULL,			0 },
 };
 
@@ -602,6 +606,62 @@ do_ielem(cname, argc, argv)
 	return (0);
 }
 
+static int
+do_cdlu(cname, argc, argv)
+	char *cname;
+	int argc;
+	char **argv;
+{
+	struct ioc_load_unload cmd;
+	int i;
+	static const struct special_word cdlu_subcmds[] = {
+		{ "load",	CD_LU_LOAD },
+		{ "unload",	CD_LU_UNLOAD },
+		{ "abort",	CD_LU_ABORT },
+		{ NULL,		0 },
+	};
+
+	/*
+	 * This command is a little different, since we are mostly dealing
+	 * with ATAPI CD changers, which have a lame API (since ATAPI doesn't
+	 * have LUNs).
+	 *
+	 * We have 3 sub-commands: "load", "unload", and "abort".  The
+	 * first two take a slot number.  The latter does not.
+	 */
+
+	if (argc < 1 || argc > 2)
+		goto usage;
+
+	for (i = 0; cdlu_subcmds[i].sw_name != NULL; i++) {
+		if (strcmp(argv[0], cdlu_subcmds[i].sw_name) == 0) {
+			cmd.options = cdlu_subcmds[i].sw_value;
+			break;
+		}
+	}
+	if (cdlu_subcmds[i].sw_name == NULL)
+		goto usage;
+
+	if (strcmp(argv[0], "abort") == 0)
+		cmd.slot = 0;
+	else
+		cmd.slot = parse_element_unit(argv[1]);
+
+	/*
+	 * XXX Should maybe do something different with the device
+	 * XXX handling for cdlu; think about this some more.
+	 */
+	if (ioctl(changer_fd, CDIOCLOADUNLOAD, &cmd))
+		err(1, "%s: CDIOCLOADUNLOAD", changer_name);
+
+	return (0);
+
+ usage:
+	fprintf(stderr, "usage: %s %s load|unload <slot>\n",
+	    __progname, cname);
+	fprintf(stderr, "       %s %s abort\n", __progname, cname);
+	return (1);
+}
 
 static int
 parse_element_type(cp)
@@ -700,5 +760,6 @@ usage()
 	(void) fprintf(stderr, "\tchio -f /dev/ch0 move slot 1 drive 0\n");
 	(void) fprintf(stderr, "\tchio ielem\n");
 	(void) fprintf(stderr, "\tchio -f /dev/ch1 status\n");
+	(void) fprintf(stderr, "\tchio -f /dev/cd0a cdlu load 1\n");
 	exit(1);
 }
