@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6_proto.c,v 1.2 1999/08/19 17:31:07 itojun Exp $	*/
+/*	$NetBSD: mld6_proto.c,v 1.3 1999/12/10 06:13:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -64,7 +64,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: mld6_proto.c,v 1.1.1.1 1999/08/08 23:30:52 itojun Exp
+ *  KAME Id: mld6_proto.c,v 1.2 1999/09/12 17:00:09 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -116,7 +116,7 @@ query_groups(v)
 	if (v->uv_flags & VIFF_QUERIER && (v->uv_flags & VIFF_NOLISTENER) == 0)
 		send_mld6(MLD6_LISTENER_QUERY, 0, &v->uv_linklocal->pa_addr,
 			  NULL, (struct in6_addr *)&in6addr_any,
-			  v->uv_ifindex, MLD6_QUERY_RESPONSE_INTERVAL, 0);
+			  v->uv_ifindex, MLD6_QUERY_RESPONSE_INTERVAL, 0, 1);
 
 	/*
 	 * Decrement the old-hosts-present timer for each
@@ -399,7 +399,7 @@ accept_listener_done(src, dst, group)
 					  &v->uv_linklocal->pa_addr, NULL,
 					  &g->al_addr.sin6_addr,
 					  v->uv_ifindex,
-					  MLD6_LAST_LISTENER_QUERY_INTERVAL, 0);
+					  MLD6_LAST_LISTENER_QUERY_INTERVAL, 0, 1);
 			g->al_query = SetQueryTimer(g, mifi,
 						    MLD6_LAST_LISTENER_QUERY_INTERVAL/MLD6_TIMER_SCALE,
 						    MLD6_LAST_LISTENER_QUERY_INTERVAL);
@@ -487,7 +487,7 @@ SendQuery(arg)
 	if (v->uv_flags & VIFF_QUERIER && (v->uv_flags & VIFF_NOLISTENER) == 0)
 		send_mld6(MLD6_LISTENER_QUERY, 0, &v->uv_linklocal->pa_addr,
 			  NULL, &cbk->g->al_addr.sin6_addr,
-			  v->uv_ifindex, cbk->q_time, 0);
+			  v->uv_ifindex, cbk->q_time, 0, 1);
 	cbk->g->al_query = 0;
 	free(cbk);
 }
