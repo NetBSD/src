@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.72 2002/11/25 06:32:37 itojun Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.73 2002/11/25 08:31:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.72 2002/11/25 06:32:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.73 2002/11/25 08:31:59 itojun Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -1035,10 +1035,6 @@ sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 		 * enough external storage to hold the argument.
 		 */
 		MEXTMALLOC(m, buflen, M_WAITOK);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			return (ENOBUFS);
-		}
 	}
 	m->m_len = buflen;
 	error = copyin(buf, mtod(m, caddr_t), buflen);
