@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.61 2000/11/12 07:58:36 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.62 2000/11/17 19:14:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,6 +142,9 @@ int	lfs_dirvcount = 0;		/* # active dirops */
 int lfs_dostats = 1;
 struct lfs_stats lfs_stats;
 
+extern int locked_queue_count;
+extern long locked_queue_bytes;
+
 /* op values to lfs_writevnodes */
 #define	VN_REG	        0
 #define	VN_DIROP	1
@@ -216,6 +219,8 @@ lfs_vflush(vp)
 					   && tbp->b_lblkno == bp->b_lblkno
 					   && tbp != bp)
 					{
+						fs->lfs_avail += btodb(bp->b_bcount);
+						wakeup(&fs->lfs_avail);
 						lfs_freebuf(bp);
 					}
 				}
@@ -243,14 +248,19 @@ lfs_vflush(vp)
 		s = splbio();
 		for(bp=vp->v_dirtyblkhd.lh_first; bp; bp=nbp) {
 			nbp = bp->b_vnbufs.le_next;
+			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
+				fs->lfs_avail += btodb(bp->b_bcount);
+				wakeup(&fs->lfs_avail);
+			}
 			/* Copied from lfs_writeseg */
 			if (bp->b_flags & B_CALL) {
 				/* if B_CALL, it was created with newbuf */
 				lfs_freebuf(bp);
 			} else {
 				bremfree(bp);
+				LFS_UNLOCK_BUF(bp);
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-                                         B_LOCKED | B_GATHERED);
+                                         B_GATHERED);
 				bp->b_flags |= B_DONE;
 				reassignbuf(bp, vp);
 				brelse(bp);  
@@ -810,7 +820,7 @@ lfs_writeinode(fs, sp, ip)
 		sp->idp = ((struct dinode *)bp->b_data) + 
 			(sp->ninodes % INOPB(fs));
 	if(gotblk) {
-		bp->b_flags |= B_LOCKED;
+		LFS_LOCK_BUF(bp);
 		brelse(bp);
 	}
 	
@@ -1278,8 +1288,6 @@ lfs_writeseg(fs, sp)
 	struct lfs *fs;
 	struct segment *sp;
 {
-	extern int locked_queue_count;
-	extern long locked_queue_bytes;
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
@@ -1413,10 +1421,18 @@ lfs_writeseg(fs, sp)
 					if (bp->b_flags & B_WANTED)
 						wakeup(bp);
 				 	splx(s);
+					/*
+					 * We have to re-decrement lfs_avail
+					 * since this block is going to come
+					 * back around to us in the next
+					 * segment.
+					 */
+					fs->lfs_avail -= btodb(bp->b_bcount);
 				}
 			} else {
 				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-						 B_LOCKED | B_GATHERED);
+						 B_GATHERED);
+				LFS_UNLOCK_BUF(bp);
 				if (bp->b_flags & B_CALL)
 					lfs_freebuf(bp);
 				else {
@@ -1523,12 +1539,9 @@ lfs_writeseg(fs, sp)
 				bcopy(bp->b_data, p, bp->b_bcount);
 			p += bp->b_bcount;
 			cbp->b_bcount += bp->b_bcount;
-			if (bp->b_flags & B_LOCKED) {
-				--locked_queue_count;
-				locked_queue_bytes -= bp->b_bufsize;
-			}
+			LFS_UNLOCK_BUF(bp);
 			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-					 B_LOCKED | B_GATHERED);
+					 B_GATHERED);
 			vn = bp->b_vp;
 			if (bp->b_flags & B_CALL) {
 				/* if B_CALL, it was created with newbuf */
@@ -1587,17 +1600,16 @@ lfs_writeseg(fs, sp)
 		vop_strategy_a.a_bp = cbp;
 		(strategy)(&vop_strategy_a);
 	}
+#if 1 || defined(DEBUG)
 	/*
-	 * XXX
-	 * Vinvalbuf can move locked buffers off the locked queue
-	 * and we have no way of knowing about this.  So, after
-	 * doing a big write, we recalculate how many buffers are
+	 * After doing a big write, we recalculate how many buffers are
 	 * really still left on the locked queue.
 	 */
 	s = splbio();
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes);
 	splx(s);
 	wakeup(&locked_queue_count);
+#endif /* 1 || DEBUG */
 	if(lfs_dostats) {
 		++lfs_stats.psegwrites;
 		lfs_stats.blocktot += nblocks - 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.51 2000/10/21 13:53:25 toshii Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.52 2000/11/17 19:14:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -503,7 +503,6 @@ sys_lfs_markv(p, v, retval)
 	splx(s);
 	free(start, M_SEGMENT);
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp);
 	return (error);
 	
  err1:	
