@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.136 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: if.c,v 1.137 2003/12/10 11:46:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.136 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.137 2003/12/10 11:46:33 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -255,8 +255,9 @@ if_nulldrain(ifp)
 	/* Nothing. */
 }
 
-u_int if_index = 1;
+static u_int if_index = 1;
 struct ifnet_head ifnet;
+size_t if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 
@@ -354,7 +355,6 @@ void
 if_attach(ifp)
 	struct ifnet *ifp;
 {
-	static size_t if_indexlim = 0;
 	int indexlim = 0;
 
 	if (if_indexlim == 0) {
@@ -980,7 +980,8 @@ ifa_ifwithnet(addr)
 
 	if (af == AF_LINK) {
 		sdl = (struct sockaddr_dl *)addr;
-		if (sdl->sdl_index && sdl->sdl_index <= if_index &&
+		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
+		    ifindex2ifnet[sdl->sdl_index] &&
 		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput)
 			return (ifnet_addrs[sdl->sdl_index]);
 	}
@@ -1296,7 +1297,7 @@ ifunit(name)
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
 	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_index)
+		if (unit >= if_indexlim)
 			return (NULL);
 		ifp = ifindex2ifnet[unit];
 		if (ifp == NULL || ifp->if_output == if_nulloutput)

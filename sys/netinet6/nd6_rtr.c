@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.46 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.47 2003/12/10 11:46:33 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.46 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.47 2003/12/10 11:46:33 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1983,7 +1983,7 @@ nd6_setdefaultiface(ifindex)
 {
 	int error = 0;
 
-	if (ifindex < 0 || if_index < ifindex)
+	if (ifindex < 0 || if_indexlim <= ifindex || !ifindex2ifnet[ifindex])
 		return (EINVAL);
 
 	if (nd6_defifindex != ifindex) {
