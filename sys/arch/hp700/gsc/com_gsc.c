@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.6 2003/06/14 17:01:12 thorpej Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.7 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.7 2003/07/15 02:29:25 lukem Exp $");
 
 #include "opt_kgdb.h"
 

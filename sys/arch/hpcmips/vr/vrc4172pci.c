@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.9 2003/06/15 23:09:00 fvdl Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.10 2003/07/15 02:29:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.10 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

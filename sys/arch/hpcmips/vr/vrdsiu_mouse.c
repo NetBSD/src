@@ -31,6 +31,9 @@
  * Template for interrupt/device registration taken from vrdsu.c.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.4 2003/07/15 02:29:35 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfrem.c,v 1.1 2002/06/05 01:04:26 fredette Exp $	*/
+/*	$NetBSD: sfrem.c,v 1.2 2003/07/15 02:29:43 lukem Exp $	*/
 
 /*	$OpenBSD: sfrem.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -41,6 +41,8 @@
  * suitability of this software for any purpose.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sfrem.c,v 1.2 2003/07/15 02:29:43 lukem Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"

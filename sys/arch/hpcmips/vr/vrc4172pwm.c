@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.17 2002/10/02 05:26:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.18 2003/07/15 02:29:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.18 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

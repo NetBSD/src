@@ -23,6 +23,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrdcu.c,v 1.4 2003/07/15 02:29:35 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfmpy.c,v 1.1 2002/06/05 01:04:26 fredette Exp $	*/
+/*	$NetBSD: sfmpy.c,v 1.2 2003/07/15 02:29:43 lukem Exp $	*/
 
 /*	$OpenBSD: sfmpy.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -40,6 +40,9 @@
  * Hewlett-Packard Company makes no representations about the
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sfmpy.c,v 1.2 2003/07/15 02:29:43 lukem Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"

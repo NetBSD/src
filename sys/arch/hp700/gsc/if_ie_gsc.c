@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.8 2003/04/01 20:48:27 thorpej Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.9 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -40,6 +40,10 @@
  * 2. 712 I/O Subsystem ERS Rev 1.0
  *    Hewlett-Packard, June 17 1992, Dwg No. A-A2263-66510-31
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.9 2003/07/15 02:29:25 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.31 2002/10/02 05:26:47 thorpej Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.32 2003/07/15 02:29:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.32 2003/07/15 02:29:30 lukem Exp $");
+
 #undef PLUMVIDEODEBUG
+
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 #include "bivideo.h"
 
