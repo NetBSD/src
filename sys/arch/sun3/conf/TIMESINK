@@ -13,7 +13,7 @@ options		"TCP_COMPAT_42"
 
 # Options for all SUN3 machines
 options		KTRACE
-options		DDB
+#options		DDB
 
 config		netbsd swap generic
 
