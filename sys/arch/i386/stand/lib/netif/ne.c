@@ -1,4 +1,4 @@
-/* $NetBSD: ne.c,v 1.2 2001/11/03 09:36:47 yamt Exp $ */
+/* $NetBSD: ne.c,v 1.3 2001/11/03 12:02:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,10 @@ void DELAY(x)
 
 u_char eth_myaddr[6];
 
+#ifdef _STANDALONE
+static struct btinfo_netif bi_netif;
+#endif
+
 int
 EtherInit(unsigned char *myadr)
 {
@@ -178,6 +182,13 @@ EtherInit(unsigned char *myadr)
 	if (dp8390_config())
 		goto out;
 
+#ifdef _STANDALONE
+	strncpy(bi_netif.ifname, "ne", sizeof(bi_netif.ifname));
+	bi_netif.bus = BI_BUS_ISA;
+	bi_netif.addr.iobase = NE_BASEREG;
+
+	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+#endif
 	return 1;
 out:
 	return 0;
