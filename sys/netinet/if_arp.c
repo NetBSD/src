@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.46 1998/05/29 15:34:25 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.47 1998/06/25 20:47:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -544,6 +544,8 @@ in_arpinput(m)
 				if (ia == NULL) goto out;
 			}
 	}
+	if (ia->ia_ifp != m->m_pkthdr.rcvif)
+		goto out;
 	myaddr = ia->ia_addr.sin_addr;
 
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
