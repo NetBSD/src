@@ -1,7 +1,0 @@
-#	$NetBSD: MANIFEST,v 1.2 1998/01/05 20:52:25 perry Exp $
-#
-Makefile.test	test Makefile for Berkeley make
-main.c		test main() routine
-gzip.h		header file
-inflate.c	decompression routine (originally written by Mark Adler)
-unzip.c		interface routine
