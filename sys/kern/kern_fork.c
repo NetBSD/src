@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.72 2000/08/25 02:55:49 sommerfeld Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.73 2000/09/06 14:06:42 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -365,12 +365,12 @@ again:
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	s = splstatclock();
+	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
-	splx(s);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Now can be swapped.
