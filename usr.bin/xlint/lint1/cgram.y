@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.9 1996/12/22 11:30:49 cgd Exp $	*/
+/*	$NetBSD: cgram.y,v 1.10 1997/05/09 18:07:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.9 1996/12/22 11:30:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.10 1997/05/09 18:07:23 mycroft Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1576,6 +1576,27 @@ yyerror(msg)
 	return (0);
 }
 
+static inline int uq_gt(u_quad_t, u_quad_t);
+static inline int q_gt(quad_t, quad_t);
+
+static inline int
+uq_gt(a, b)
+	u_quad_t a, b;
+{
+
+	return (a > b);
+}
+
+static inline int
+q_gt(a, b)
+	quad_t a, b;
+{
+
+	return (a > b);
+}
+
+#define	q_lt(a, b)	q_gt(b, a)
+
 /*
  * Gets a node for a constant and returns the value of this constant
  * as integer.
@@ -1609,12 +1630,13 @@ toicon(tn)
 	} else {
 		i = (int)v->v_quad;
 		if (isutyp(t)) {
-			if ((u_quad_t)v->v_quad > INT_MAX) {
+			if (uq_gt((u_quad_t)v->v_quad, (u_quad_t)INT_MAX)) {
 				/* integral constant too large */
 				warning(56);
 			}
 		} else {
-			if (v->v_quad > INT_MAX || v->v_quad < INT_MIN) {
+			if (q_gt(v->v_quad, (quad_t)INT_MAX) ||
+			    q_lt(v->v_quad, (quad_t)INT_MIN)) {
 				/* integral constant too large */
 				warning(56);
 			}
