@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 2003/04/09 22:28:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -310,10 +310,37 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	first = 1;
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next) {
-		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    NULL, flags, &lastaddr, &seg, first);
-		first = 0;
+	for (m = m0; m != NULL && error == 0; m = m->m_next, first = 0) {
+#ifdef POOL_VTOPHYS
+		/* XXX Could be better about coalescing. */
+		/* XXX Doesn't check boundaries. */
+		switch (m->m_flags & (M_EXT|M_CLUSTER)) {
+		case M_EXT|M_CLUSTER:
+			/* XXX KDASSERT */
+			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_ext.ext_paddr +
+			    (m->m_data - m->m_ext.ext_buf);
+ have_addr:
+			if (first == 0 && ++seg >= map->_dm_segcnt) {
+				error = EFBIG;
+				continue;
+			}
+			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_len = m->m_len;
+			lastaddr += m->m_len;
+			continue;
+
+		case 0:
+			lastaddr = m->m_paddr + M_BUFOFFSET(m) +
+			    (m->m_data - M_BUFADDR(m));
+			goto have_addr;
+
+		default:
+			break;
+		}
+#endif
+		error = _bus_dmamap_load_buffer(t, map, m->m_data,
+		    m->m_len, NULL, flags, &lastaddr, &seg, first);
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -447,12 +474,22 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		ds++;
 	}
 	__asm __volatile("eieio");
-	for (; len > 0; ds++) {
+	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
 		bus_addr_t addr = ds->ds_addr + offset;
 		if (seglen > len)
 			seglen = len;
+		len -= seglen;
 		KASSERT(ds < &map->dm_segs[map->dm_nsegs]);
+		/*
+		 * Readjust things to start on cacheline boundarys
+		 */
+		offset = (addr & (dcache_line_size-1));
+		seglen += offset;
+		addr -= offset;
+		/*
+		 * Now do the appropriate thing.
+		 */
 		switch (ops) {
 		case BUS_DMASYNC_PREWRITE:
 			/*
@@ -463,25 +500,50 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		case BUS_DMASYNC_PREREAD:
 			/*
 			 * If the region to be invalidated doesn't fall on
-			 * cacheline boundary, store that cacheline so we
+			 * cacheline boundary, flush that cacheline so we
 			 * preserve the leading content.
 			 */
-			if (addr & (dcache_line_size-1))
-				dcbst(addr, 1, 1);
+			if (offset) {
+				dcbf(addr, 1, 1);
+				/*
+				 * If we are doing <= one cache line, stop now.
+				 */
+				if (seglen <= dcache_line_size)
+					break;
+				/*
+				 * Advance one cache line since we've flushed
+				 * this one.
+				 */
+				addr += dcache_line_size;
+				seglen -= dcache_line_size;
+			}
 			/*
 			 * If the byte after the region to be invalidated
-			 * doesn't fall on cacheline boundary, store that
+			 * doesn't fall on cacheline boundary, flush that
 			 * cacheline so we preserve the trailing content.
 			 */
-			if ((addr + seglen) & (dcache_line_size-1))
-				dcbst(addr + seglen, 1, 1);
+			if (seglen & (dcache_line_size-1)) {
+				dcbf(addr + seglen, 1, 1);
+				if (seglen <= dcache_line_size)
+					break;
+				/*
+				 * Truncate the length to a multiple of a
+				 * dcache line size.  No reason to flush
+				 * the last entry again.
+				 */
+				seglen &= ~(dcache_line_size - 1);
+			}
 			__asm __volatile("sync; eieio"); /* is this needed? */
 			/* FALLTHROUGH */
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		case BUS_DMASYNC_POSTREAD:
 			/*
 			 * The contents will have changed, make sure to remove
-			 * them from the cache.
+			 * them from the cache.  Note: some implementation
+			 * implement dcbi identically to dcbf.  Thus if the
+			 * cacheline has data, it will be written to memory.
+			 * If the DMA is updaing the same cacheline at the
+			 * time, bad things can happen.
 			 */
 			dcbi(addr, seglen, dcache_line_size);
 			break;
@@ -497,8 +559,6 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			dcbf(addr, seglen, dcache_line_size);
 			break;
 		}
-		len -= seglen;
-		offset = 0;
 	}
 	__asm __volatile("sync");
 }
