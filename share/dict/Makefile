@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.8 1997/03/24 21:57:01 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1997/03/26 07:14:31 mikel Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing: connectives, words
 
