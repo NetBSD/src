@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.23 1994/09/28 11:31:33 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.24 1994/12/14 16:33:18 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -86,20 +86,13 @@ msdosfs_mount(mp, path, data, ndp, p)
 	struct msdosfsmount *pmp; /* msdosfs specific mount control block */
 	u_int size;
 	int error, flags;
-	struct ucred *cred, *scred;
-	struct vattr va;
+	mode_t accessmode;
 
-	/*
-	 * Copy in the args for the mount request.
-	 */
 	if (error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args)))
 		return (error);
-
 	/*
-	 * If they just want to update then be sure we can do what is
-	 * asked.  Can't change a filesystem from read/write to read only.
-	 * Why? And if they've supplied a new device file name then we
-	 * continue, otherwise return.
+	 * If updating, check whether changing from read-only to
+	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		pmp = VFSTOMSDOSFS(mp);
@@ -118,8 +111,23 @@ msdosfs_mount(mp, path, data, ndp, p)
 			error = EOPNOTSUPP;
 		if (error)
 			return (error);
-		if (pmp->pm_ronly && (mp->mnt_flag & MNT_WANTRDWR))
+		if (pmp->pm_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+			/*
+			 * If upgrade to read-write by non-root, then verify
+			 * that user has necessary permissions on the device.
+			 */
+			if (p->p_ucred->cr_uid != 0) {
+				devvp = pmp->pm_devvp;
+				VOP_LOCK(devvp);
+				if (error = VOP_ACCESS(devvp, VREAD | VWRITE,
+				    p->p_ucred, p)) {
+					VOP_UNLOCK(devvp);
+					return (error);
+				}
+				VOP_UNLOCK(devvp);
+			}
 			pmp->pm_ronly = 0;
+		}
 		if (args.fspec == 0) {
 			/*
 			 * Process export requests.
@@ -127,46 +135,15 @@ msdosfs_mount(mp, path, data, ndp, p)
 			return (vfs_export(mp, &pmp->pm_export, &args.export));
 		}
 	}
-
-	/*
-	 * Check to see that the user in owns the target directory.
-	 * Note the very XXX trick to make sure we're checking as the
-	 * real user -- were mount() executable by anyone, this wouldn't
-	 * be a problem.
-	 *
-	 * XXX there should be one consistent error out.
-	 */
-	cred = crdup(p->p_ucred);			/* XXX */
-	cred->cr_uid = p->p_cred->p_ruid;		/* XXX */
-	if (error = VOP_GETATTR(mp->mnt_vnodecovered, &va, cred, p)) {
-		crfree(cred);				/* XXX */
-		return (error);
-	}
-	if (suser(p->p_ucred, &p->p_acflag)) {
-		if (va.va_uid != cred->cr_uid) {
-			error = EACCES;
-			crfree(cred);			/* XXX */
-			return (error);
-		}
-		/* a user mounted it; we'll verify permissions when unmounting */
-		mp->mnt_flag |= MNT_USER;
-	}
-
 	/*
 	 * Not an update, or updating the name: look up the name
-	 * and verify that it refers to a sensible block device,
-	 * and is accessible by the user doing the mount.
+	 * and verify that it refers to a sensible block device.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	scred = p->p_ucred;				/* XXX */
-	p->p_ucred = cred;				/* XXX */
-	error = namei(ndp);
-	p->p_ucred = scred;				/* XXX */
-	crfree(cred);					/* XXX */
-	if (error)
+	if (error = namei(ndp))
 		return (error);
-	
 	devvp = ndp->ni_vp;
+
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
 		return (ENOTBLK);
@@ -175,41 +152,37 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
-
 	/*
-	 * If this is an update, then make sure the vnode for the block
-	 * special device is the same as the one our filesystem is in.
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		VOP_LOCK(devvp);
+		if (error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p)) {
+			vput(devvp);
+			return (error);
+		}
+		VOP_UNLOCK(devvp);
+	}
+	if ((mp->mnt_flag & MNT_UPDATE) == 0)
+		error = msdosfs_mountfs(devvp, mp, p);
+	else {
 		if (devvp != pmp->pm_devvp)
-			error = EINVAL;
+			error = EINVAL;	/* needs translation */
 		else
 			vrele(devvp);
-	} else
-		error = msdosfs_mountfs(devvp, mp, p);
+	}
 	if (error) {
 		vrele(devvp);
 		return (error);
 	}
-
-	/*
-	 * Record the credentials of the process that mounted the file
-	 * system, and the permission mask.
-	 */
 	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_mounter = p->p_cred->p_ruid;
 	pmp->pm_gid = args.gid;
 	pmp->pm_uid = args.uid;
 	pmp->pm_mask = args.mask;
-
-	/*
-	 * Copy in the name of the directory the filesystem is to be
-	 * mounted on. Then copy in the name of the block special file
-	 * representing the filesystem being mounted. And we clear the
-	 * remainder of the character strings to be tidy. Then, we try to
-	 * fill in the filesystem statfs structure as best we can with
-	 * whatever applies from a dos file system.
-	 */
 	(void) copyinstr(path, (caddr_t)mp->mnt_stat.f_mntonname,
 	    sizeof(mp->mnt_stat.f_mntonname) - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size,
@@ -472,13 +445,8 @@ msdosfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	struct msdosfsmount *pmp;
 	int error, flags;
-
-	/* only the mounter, or superuser can unmount */
-	if ((p->p_cred->p_ruid != pmp->pm_mounter) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
-		return (error);
 
 	flags = 0;
 	if (mntflags & MNT_FORCE) {
@@ -490,6 +458,7 @@ msdosfs_unmount(mp, mntflags, p)
 #endif
 	if (error = vflush(mp, NULLVP, flags))
 		return (error);
+	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
