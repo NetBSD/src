@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 1994/10/27 04:15:24 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 1994/11/05 02:47:02 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1415,27 +1415,6 @@ ENTRY(rtcin)
 	outb	%al,$0x70
 	xorl	%eax,%eax		# clear eax
 	inb	$0x71,%al
-	ret
-
-	# ssdtosd(*ssdp,*sdp)
-ENTRY(ssdtosd)
-	pushl	%ebx
-	movl	8(%esp),%ecx
-	movl	8(%ecx),%ebx
-	shll	$16,%ebx
-	movl	(%ecx),%edx
-	roll	$16,%edx
-	movb	%dh,%bl
-	movb	%dl,%bh
-	rorl	$8,%ebx
-	movl	4(%ecx),%eax
-	movw	%ax,%dx
-	andl	$0xf0000,%eax
-	orl	%eax,%ebx
-	movl	12(%esp),%ecx
-	movl	%edx,(%ecx)
-	movl	%ebx,4(%ecx)
-	popl	%ebx
 	ret
 
 ENTRY(setjmp)

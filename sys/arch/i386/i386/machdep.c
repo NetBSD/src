@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 1994/11/04 00:44:32 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 1994/11/05 02:47:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -1056,10 +1056,40 @@ extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
 	IDTVEC(syscall), IDTVEC(osyscall);
 
 void
+sdtossd(sd, ssd)
+	struct segment_descriptor *sd;
+	struct soft_segment_descriptor *ssd;
+{
+	ssd->ssd_base = (sd->sd_hibase << 24) | sd->sd_lobase;
+	ssd->ssd_limit = (sd->sd_hilimit << 16) | sd->sd_lolimit;
+	ssd->ssd_type = sd->sd_type;
+	ssd->ssd_dpl = sd->sd_dpl;
+	ssd->ssd_p = sd->sd_p;
+	ssd->ssd_def32 = sd->sd_def32;
+	ssd->ssd_gran = sd->sd_gran;
+}
+
+void
+ssdtosd(ssd, sd)
+	struct soft_segment_descriptor *ssd;
+	struct segment_descriptor *sd;
+{
+	sd->sd_lobase = ssd->ssd_base;
+	sd->sd_hibase = ssd->ssd_base >> 24;
+	sd->sd_lolimit = ssd->ssd_limit;
+	sd->sd_hilimit = ssd->ssd_limit >> 16;
+	sd->sd_type = ssd->ssd_type;
+	sd->sd_dpl = ssd->ssd_dpl;
+	sd->sd_p = ssd->ssd_p;
+	sd->sd_def32 = ssd->ssd_def32;
+	sd->sd_gran = ssd->ssd_gran;
+}
+
+void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern ssdtosd(), lgdt(), etext;
+	extern lgdt(), etext;
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
