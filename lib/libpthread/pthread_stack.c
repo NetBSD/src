@@ -1,4 +1,4 @@
-/* $Id: pthread_stack.c,v 1.1.2.1 2001/03/05 23:52:00 nathanw Exp $ */
+/* $Id: pthread_stack.c,v 1.1.2.2 2001/07/13 02:20:27 nathanw Exp $ */
 
 /* Copyright */
 
@@ -83,20 +83,16 @@ static pthread_t
 pthread__stackid_setup(void *base, int size)
 {
 	pthread_t t;
-	int pagesize;
-#if 0
+	int pagesize, ret;
 	void *addr;
-#endif
+
 	/* Deallocate the bottom page but one as a red zone. */
 	/* XXX assumes that the stack grows down. */
 	pagesize = sysconf(_SC_PAGESIZE);
-#if 0 
-	addr = mmap( ((char *)base + pagesize), pagesize, PROT_NONE, 
-	    MAP_FIXED|MAP_ANON|MAP_PRIVATE, -1, 0);
-	if (addr == MAP_FAILED)
-		err(2, "Couldn't mmap()-protect stack redzone at %p\n",
+	ret = munmap( ((char *)base + pagesize), pagesize);
+	if (ret == -1)
+		err(2, "Couldn't munmap()-protect stack redzone at %p\n",
 		    (char *)base + pagesize);
-#endif
 	/* Put a pointer to the pthread in the bottom (but
          *  redzone-protected section) of the stack. 
 	 */
