@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2000/11/06 14:05:54 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.8 2000/11/06 14:05:54 jdolecek Exp $");
+__RCSID("$NetBSD: conf.c,v 1.9 2001/01/10 03:33:16 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ xmalloc(siz)
 	void *p = malloc(siz);
 	if (p)
 		return (p);
-	syslog(LOG_ALERT, "malloc: failed to get %lu bytes", (u_long)siz);
+	syslog(LOG_ERR, "malloc: failed to get %lu bytes", (u_long)siz);
 	exit(1);
 }
 
@@ -221,7 +221,7 @@ palloc(cline, lno, conf_file)
 			char buf[200];
 			regerror(errcode, &p->p_re, buf, sizeof(buf));
 			
-			syslog(LOG_ERR, "%s, line %d: regcomp \"%s\": %s",
+			syslog(LOG_WARNING, "%s, line %d: regcomp \"%s\": %s",
 	  		  conf_file, p->p_lno, p->p_key, buf);
 		}
 	}
@@ -323,7 +323,7 @@ conf_read(q, conf)
 		readfp(q, fp, conf);
 		(void) fclose(fp);
 	} else
-		syslog(LOG_ERR, "open config file \"%s\": %m", conf);
+		syslog(LOG_WARNING, "open config file \"%s\": %m", conf);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.12 2000/01/15 06:21:40 bgrayson Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.13 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.12 2000/01/15 06:21:40 bgrayson Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.13 2001/01/10 03:33:16 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,13 +78,13 @@ lose_credentials(pcr)
 	if (getuid() == 0) {
 		/* Set groups first ... */
 		if (setgroups(pcr->pcr_ngroups, pcr->pcr_groups) < 0) {
-			syslog(LOG_ERR,
+			syslog(LOG_WARNING,
 			    "lose_credentials: setgroups() failed (%m)");
 			return (errno);
 		}
 		/* ... then gid ... */
 		if (setgid(pcr->pcr_gid) < 0) {
-			syslog(LOG_ERR,
+			syslog(LOG_WARNING,
 				"lose_credentials: setgid(%d) failed (%m)",
 				pcr->pcr_gid);
 		}
@@ -93,23 +93,24 @@ lose_credentials(pcr)
 		 * powers (both real and effective userid).
 		 */
 		if (setuid(pcr->pcr_uid) < 0) {
-			syslog(LOG_ERR,
+			syslog(LOG_WARNING,
 				"lose_credentials: setuid(%d) failed (%m)",
 				pcr->pcr_uid);
 		}
 		/* The credential change was successful! */
-		DEBUG_SYSLOG(LOG_ERR, "Root-owned mount process lowered credentials -- returning successfully!\n");
+		DEBUG_SYSLOG(LOG_DEBUG, "Root-owned mount process lowered credentials -- returning successfully!\n");
 		return 0;
 	}
-	DEBUG_SYSLOG(LOG_ERR, "Actual/effective/caller's creds are:");
-	DEBUG_SYSLOG(LOG_ERR, "%d/%d %d/%d %d/%d", getuid(),
+	DEBUG_SYSLOG(LOG_DEBUG, "Actual/effective/caller's creds are:");
+	DEBUG_SYSLOG(LOG_DEBUG, "%d/%d %d/%d %d/%d", getuid(),
 	    getgid(), geteuid(), getegid(), pcr->pcr_uid, pcr->pcr_gid);
 	/*
 	 * Else, fail if the uid is neither actual or effective
 	 * uid of mount process...
 	 */
 	if ((getuid() != pcr->pcr_uid) && (geteuid() != pcr->pcr_uid)) {
-		syslog(LOG_ERR, "lose_credentials: uid %d != uid %d, or euid %d != uid %d",
+		syslog(LOG_WARNING,
+		    "lose_credentials: uid %d != uid %d, or euid %d != uid %d",
 		    getuid(), pcr->pcr_uid, geteuid(), pcr->pcr_uid);
 		return EPERM;
 	}
@@ -118,7 +119,8 @@ lose_credentials(pcr)
 	 * gid of the mount process.
 	 */
 	if ((getgid() != pcr->pcr_gid) && (getegid() != pcr->pcr_gid)) {
-		syslog(LOG_ERR, "lose_credentials: gid %d != gid %d, or egid %d != gid %d",
+		syslog(LOG_WARNING,
+		    "lose_credentials: gid %d != gid %d, or egid %d != gid %d",
 		    getgid(), pcr->pcr_gid, getegid(), pcr->pcr_gid);
 		return EPERM;
 	}
@@ -126,7 +128,7 @@ lose_credentials(pcr)
 	 * If we make it here, we have a uid _and_ gid match! Allow the
 	 * access.
 	 */
-	DEBUG_SYSLOG(LOG_ERR, "Returning successfully!\n");
+	DEBUG_SYSLOG(LOG_DEBUG, "Returning successfully!\n");
 	return 0;
 }
 
@@ -147,11 +149,11 @@ portal_file(pcr, key, v, so, fdp)
 	origgid = getgid();
 	pbuf[0] = '/';
 	strcpy(pbuf + 1, key + (v[1] ? strlen(v[1]) : 0));
-	DEBUG_SYSLOG(LOG_ERR, "path = %s, uid = %d, gid = %d",
+	DEBUG_SYSLOG(LOG_DEBUG, "path = %s, uid = %d, gid = %d",
 	    pbuf, pcr->pcr_uid, pcr->pcr_gid);
 
 	if ((error = lose_credentials(pcr)) != 0) {
-		DEBUG_SYSLOG(LOG_ERR, "portal_file: Credential err %d", error);
+		DEBUG_SYSLOG(LOG_DEBUG, "portal_file: Credential err %d", error);
 		return error;
 	}
 	error = 0;
@@ -164,27 +166,27 @@ portal_file(pcr, key, v, so, fdp)
 	if (fd < 0) {
 		error = errno;
 		if (error == EACCES) {
-			DEBUG_SYSLOG(LOG_ERR, "Error:  could not open '%s' "
+			DEBUG_SYSLOG(LOG_DEBUG, "Error:  could not open '%s' "
 			    "read/write with create flag.  "
 			    "Trying read-only open...", pbuf);
 			/* Try opening read-only. */
 			fd = open(pbuf, O_RDONLY, 0);
 			if (fd < 0) {
 				error = errno;
-				DEBUG_SYSLOG(LOG_ERR, "That failed too!  %m");
+				DEBUG_SYSLOG(LOG_DEBUG, "That failed too!  %m");
 			} else {
 				/* Clear the error indicator. */
 				error = 0;
 			}
 		} else {
-			DEBUG_SYSLOG(LOG_ERR, "Error:  could not open '%s': %m", pbuf);
+			DEBUG_SYSLOG(LOG_DEBUG, "Error:  could not open '%s': %m", pbuf);
 		}
 
 	}
 	if (seteuid((uid_t) origuid) < 0) {	/* XXX - should reset gidset
 						 * too */
 		error = errno;
-		syslog(LOG_ERR, "setcred: %m");
+		syslog(LOG_WARNING, "setcred: %m");
 		if (fd >= 0) {
 			(void) close(fd);
 			fd = -1;
@@ -193,7 +195,7 @@ portal_file(pcr, key, v, so, fdp)
 	if (error == 0)
 		*fdp = fd;
 
-	DEBUG_SYSLOG(LOG_ERR, "pt_file returns *fdp = %d, error = %d", *fdp,
+	DEBUG_SYSLOG(LOG_DEBUG, "pt_file returns *fdp = %d, error = %d", *fdp,
 	    error);
 	return (error);
 }

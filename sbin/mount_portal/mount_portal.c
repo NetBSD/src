@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.17 2000/11/06 14:00:38 jdolecek Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.18 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.17 2000/11/06 14:00:38 jdolecek Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.18 2001/01/10 03:33:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ main(argc, argv)
 	/*
 	 * Start logging (and change name)
 	 */
-	openlog("portald", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("portald", LOG_PID, LOG_DAEMON);
 
 	q.q_forw = q.q_back = &q;
 	readcf = 1;
@@ -292,7 +292,7 @@ main(argc, argv)
 				sleep(1);
 				goto eagain;
 			}
-			syslog(LOG_ERR, "fork: %m");
+			syslog(LOG_WARNING, "fork: %m");
 			break;
 		case 0:
 			(void) close(so);
