@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.70 2002/03/27 19:07:32 wrstuden Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.70.4.1 2002/07/22 04:39:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -470,8 +470,8 @@ struct partinfo {
 #ifdef _KERNEL
 struct buf_queue;
 
-void	 diskerr
-	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
+void	 diskerr __P((const struct buf *, const char *, const char *, int,
+	    int, const struct disklabel *));
 void	 disksort_cylinder __P((struct buf_queue *, struct buf *));
 void	 disksort_blkno __P((struct buf_queue *, struct buf *));
 void	 disksort_tail __P((struct buf_queue *, struct buf *));
