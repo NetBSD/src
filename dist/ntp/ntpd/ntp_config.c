@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.3 2001/09/16 07:51:54 manu Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.4 2001/11/08 20:06:22 manu Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -911,8 +911,8 @@ getconfig(
 			user = malloc(strlen(ntp_optarg) + 1);
 			if ((user == NULL) || (ntp_optarg == NULL))
 				errflg++;
-			(void) strncpy (user, ntp_optarg, strlen(ntp_optarg));
-			group = rindex (user, ':');
+			(void)strncpy(user, ntp_optarg, strlen(ntp_optarg) + 1);
+			group = rindex(user, ':');
 			if (group)
 				*group++ = '\0'; /* get rid of the ':' */
 			break;
