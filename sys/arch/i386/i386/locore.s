@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.25 1993/08/03 06:34:35 mycroft Exp $
+ *	$Id: locore.s,v 1.26 1993/08/03 07:03:01 mycroft Exp $
  */
 
 
@@ -67,7 +67,6 @@
  * will have more pleasant appearance.
  */
 
-	.set	IDXSHIFT,PGSHIFT-2
 	.set	SYSPDROFF,0x3F8		# Page dir index of System Base
 
 #define	ALIGN_DATA	.align	2
@@ -374,7 +373,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	subl	$0xfe0a0000,%eax
 	movl	_atdevphys,%edx	# get pte PA
 	subl	_KPTphys,%edx	# remove base of ptes, now have phys offset
-	shll	$IDXSHIFT,%edx	# corresponding to virt offset
+	shll	$PGSHIFT-2,%edx	# corresponding to virt offset
 	addl	$KERNBASE,%edx	# add virtual base
 	movl	%edx,_atdevbase
 	addl	%eax,%edx
@@ -822,11 +821,10 @@ ENTRY(copyout)
 
 			/* compute PTE offset for start address */
 	movl	%edi,%edx
-	shrl	$IDXSHIFT,%edx
-	andb	$0xfc,%dl
+	shrl	$PGSHIFT,%edx
 
 1:			/* check PTE for each page */
-	movb	_PTmap(%edx),%al
+	movb	_PTmap(,%edx,4),%al
 	andb	$0x07,%al	/* Pages must be VALID + USERACC + WRITABLE */
 	cmpb	$0x05,%al
 	jne	2f
@@ -834,7 +832,7 @@ ENTRY(copyout)
 			/* simulate a trap */
 	pushl	%edx
 	pushl	%ecx
-	shll	$IDXSHIFT,%edx
+	shll	$PGSHIFT,%edx
 	pushl	%edx
 	call	_trapwrite	/* trapwrite(addr) */
 	popl	%edx
@@ -964,9 +962,8 @@ ENTRY(copyoutstr)
 
 1:
 	movl	%edi,%eax
-	shrl	$IDXSHIFT,%eax
-	andb	$0xfc,%al
-	movb	_PTmap(%eax),%al
+	shrl	$PGSHIFT,%eax
+	movb	_PTmap(,%eax,4),%al
 	andb	$7,%al
 	cmpb	$5,%al
 	jne	2f
@@ -1192,10 +1189,8 @@ ALTENTRY(suiword)
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$IDXSHIFT,%edx	/* fetch pte associated with address */
-	andb	$0xfc,%dl
-	movb	_PTmap(%edx),%dl
-
+	shrl	$PGSHIFT,%edx	/* fetch pte associated with address */
+	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl		/* if we are the one case that won't trap... */
 	cmpb	$5,%dl
 	jne	1f
@@ -1235,9 +1230,8 @@ ENTRY(susword)
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$IDXSHIFT,%edx	/* calculate pte address */
-	andb	$0xfc,%dl
-	movb	_PTmap(%edx),%dl
+	shrl	$PGSHIFT,%edx	/* calculate pte address */
+	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl		/* if we are the one case that won't trap... */
 	cmpb	$5,%dl
 	jne	1f
@@ -1278,9 +1272,8 @@ ALTENTRY(suibyte)
 #endif	/* I486_CPU || I586_CPU */
 
 	movl	%edx,%eax
-	shrl	$IDXSHIFT,%edx	/* calculate pte address */
-	andb	$0xfc,%dl
-	movb	_PTmap(%edx),%dl
+	shrl	$PGSHIFT,%edx	/* calculate pte address */
+	movb	_PTmap(,%edx,4),%dl
 	andb	$7,%dl		/* if we are the one case that won't trap... */
 	cmpb	$5,%dl
 	jne	1f
