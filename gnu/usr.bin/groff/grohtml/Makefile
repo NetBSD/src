@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/01 00:27:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2002/01/01 01:38:26 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/devices/grohtml
 .PATH:		${DIST}
 
-PROG=		grohtml
-PROG_CXX=
+PROG_CXX=	grohtml
 SRCS=		html.cc output.cc
 LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
 DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBM)

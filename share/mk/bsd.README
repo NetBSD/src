@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.87 2002/01/01 00:34:26 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.88 2002/01/01 01:38:25 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -396,8 +396,10 @@ MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 PROG		The name of the program to build.  If not supplied, nothing
 		is built.
 
-PROG_CXX	If defined, causes <bsd.prog.mk> to link the program with
-		the C++ compiler rather than the C compiler.
+PROG_CXX	If defined, the name of the program to build.  Also
+		causes <bsd.prog.mk> to link the program with the C++
+		compiler rather than the C compiler.  PROG_CXX overrides
+		the value of PROG if PROG is also set.
 
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.

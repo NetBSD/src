@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2002/01/01 00:27:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2002/01/01 01:38:26 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/devices/grodvi
 .PATH:		${DIST}
 
-PROG=		grodvi
-PROG_CXX=
+PROG_CXX=	grodvi
 SRCS=		dvi.cc
 LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
 DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBM)
