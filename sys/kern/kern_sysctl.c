@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.167 2004/03/25 18:36:49 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.168 2004/03/25 22:16:04 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.167 2004/03/25 18:36:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.168 2004/03/25 22:16:04 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2454,7 +2454,7 @@ sysctl_teardown(struct sysctllog **logp)
 		name = &log->log_num[log->log_left];
 
 		node.sysctl_num = name[namelen - 1];
-		node.sysctl_flags = t;
+		node.sysctl_flags = SYSCTL_VERSION|t;
 		node.sysctl_ver = v;
 
 		rnode = log->log_root;
