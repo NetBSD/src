@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.5 2000/11/14 20:28:22 pooka Exp $
+#	$NetBSD: files.sgimips,v 1.6 2000/11/21 00:17:33 soren Exp $
 
 maxpartitions 16
 
@@ -62,7 +62,7 @@ file arch/sgimips/sgimips/console.c
 file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
 
-file arch/sgimips/sgimips/md_root.c	memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
 major {raid = 5} 
