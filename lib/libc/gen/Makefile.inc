@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.75 1996/11/07 05:37:34 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.76 1997/01/17 07:26:18 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -16,7 +16,7 @@ SRCS+=	_errno.c alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	popen.c psignal.c pwcache.c raise.c readdir.c rewinddir.c scandir.c \
 	seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
-	sigsetops.c sleep.c sysconf.c sysctl.c syslog.c telldir.c \
+	sigsetops.c sleep.c stringlist.c sysconf.c sysctl.c syslog.c telldir.c \
 	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
 	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
 	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
