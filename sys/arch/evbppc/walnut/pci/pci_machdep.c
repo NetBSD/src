@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2003/07/25 14:34:33 scw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2003/07/29 08:18:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2003/07/25 14:34:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2003/07/29 08:18:03 scw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,7 +70,7 @@ static struct powerpc_bus_space pci_iot = {
 	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
 	0x00000000,
 	IBM405GP_PCIC0_BASE,		/* extent base */
-	IBM405GP_PCIC0_BASE + 7,	/* extent limit */
+	IBM405GP_PCIC0_BASE + 8,	/* extent limit */
 };
 
 static bus_space_handle_t pci_ioh;
