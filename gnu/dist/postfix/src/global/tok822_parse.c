@@ -6,9 +6,18 @@
 /* SYNOPSIS
 /*	#include <tok822.h>
 /*
+/*	TOK822 *tok822_scan_limit(str, tailp, limit)
+/*	const char *str;
+/*	TOK822	**tailp;
+/*	int	limit;
+/*
 /*	TOK822 *tok822_scan(str, tailp)
 /*	const char *str;
 /*	TOK822	**tailp;
+/*
+/*	TOK822	*tok822_parse_limit(str, limit)
+/*	const char *str;
+/*	int	limit;
 /*
 /*	TOK822	*tok822_parse(str)
 /*	const char *str;
@@ -37,10 +46,18 @@
 /*	to a linear token list. The \fItailp\fR argument is a null pointer
 /*	or receives the pointer value of the last result list element.
 /*
+/*	tok822_scan_limit() implements tok822_scan(), which is a macro.
+/*	The \fIlimit\fR argument is either zero or an upper bound on the
+/*	number of tokens produced.
+/*
 /*	tok822_parse() converts the external-form address list in
 /*	\fIstr\fR to the corresponding token tree. The parser is permissive
 /*	and will not throw away information that it does not understand.
 /*	The parser adds missing commas between addresses.
+/*
+/*	tok822_parse_limit() implements tok822_parse(), which is a macro.
+/*	The \fIlimit\fR argument is either zero or an upper bound on the
+/*	number of tokens produced.
 /*
 /*	tok822_scan_addr() converts the external-form string in
 /*	\fIstr\fR to an address token tree. This is just string to
@@ -107,6 +124,7 @@
 
 /* Global library. */
 
+#include "lex_822.h"
 #include "quote_822_local.h"
 #include "tok822.h"
 
@@ -121,7 +139,7 @@
 	    } else if (!(cond)) { \
 		break; \
 	    } \
-	    VSTRING_ADDCH(t->vstr, ISSPACE(c) ? ' ' : c); \
+	    VSTRING_ADDCH(t->vstr, IS_SPACE_TAB_CR_LF(c) ? ' ' : c); \
 	    s++; \
 	} \
 	VSTRING_TERMINATE(t->vstr); \
@@ -155,10 +173,9 @@
  /*
   * Single-character operators. We include the % and ! operators because not
   * all the world is RFC822. XXX Make this operator list configurable when we
-  * have a real rewriting language.
+  * have a real rewriting language. Include | for aliases file parsing.
   */
-static char tok822_opchar[] = "|\"(),.:;<>@[]%!";
-
+static char tok822_opchar[] = "|%!" LEX_822_SPECIALS;
 static void tok822_quote_atom(TOK822 *);
 static const char *tok822_comment(TOK822 *, const char *);
 static TOK822 *tok822_group(int, TOK822 *, TOK822 *, int);
@@ -314,14 +331,15 @@ static int tok822_append_space(TOK822 *tp)
     return (NON_OPERATOR(tp) && NON_OPERATOR(next));
 }
 
-/* tok822_scan - tokenize string */
+/* tok822_scan_limit - tokenize string */
 
-TOK822 *tok822_scan(const char *str, TOK822 **tailp)
+TOK822 *tok822_scan_limit(const char *str, TOK822 **tailp, int tok_count_limit)
 {
     TOK822 *head = 0;
     TOK822 *tail = 0;
     TOK822 *tp;
     int     ch;
+    int     tok_count = 0;
 
     /*
      * XXX 2822 new feature: Section 4.1 allows "." to appear in a phrase (to
@@ -331,7 +349,7 @@ TOK822 *tok822_scan(const char *str, TOK822 **tailp)
      * white space as part of the token stream. Thanks a lot, people.
      */
     while ((ch = *(unsigned char *) str++) != 0) {
-	if (ISSPACE(ch))
+	if (IS_SPACE_TAB_CR_LF(ch))
 	    continue;
 	if (ch == '(') {
 	    tp = tok822_alloc(TOK822_COMMENT, (char *) 0);
@@ -347,7 +365,7 @@ TOK822 *tok822_scan(const char *str, TOK822 **tailp)
 	} else {
 	    tp = tok822_alloc(TOK822_ATOM, (char *) 0);
 	    str -= 1;				/* \ may be first */
-	    COLLECT(tp, str, ch, !ISSPACE(ch) && !strchr(tok822_opchar, ch));
+	    COLLECT(tp, str, ch, !IS_SPACE_TAB_CR_LF(ch) && !strchr(tok822_opchar, ch));
 	    tok822_quote_atom(tp);
 	}
 	if (head == 0) {
@@ -357,15 +375,17 @@ TOK822 *tok822_scan(const char *str, TOK822 **tailp)
 	} else {
 	    tail = tok822_append(tail, tp);
 	}
+	if (tok_count_limit > 0 && ++tok_count >= tok_count_limit)
+	    break;
     }
     if (tailp)
 	*tailp = tail;
     return (head);
 }
 
-/* tok822_parse - translate external string to token tree */
+/* tok822_parse_limit - translate external string to token tree */
 
-TOK822 *tok822_parse(const char *str)
+TOK822 *tok822_parse_limit(const char *str, int tok_count_limit)
 {
     TOK822 *head;
     TOK822 *tail;
@@ -381,7 +401,7 @@ TOK822 *tok822_parse(const char *str)
      * token list that contains all tokens, we can always convert back to
      * string form.
      */
-    if ((first_token = tok822_scan(str, &last_token)) == 0)
+    if ((first_token = tok822_scan_limit(str, &last_token, tok_count_limit)) == 0)
 	return (0);
 
     /*
@@ -463,7 +483,7 @@ static void tok822_quote_atom(TOK822 *tp)
      * (and still passing it on as 8-bit data) we leave 8-bit data alone.
      */
     for (cp = vstring_str(tp->vstr); (ch = *(unsigned char *) cp) != 0; cp++) {
-	if ( /* !ISASCII(ch) || */ ISSPACE(ch)
+	if ( /* !ISASCII(ch) || */ ch == ' '
 	    || ISCNTRL(ch) || strchr(tok822_opchar, ch)) {
 	    tp->type = TOK822_QSTRING;
 	    break;
@@ -580,6 +600,8 @@ int     main(int unused_argc, char **unused_argv)
     TOK822 *list;
     VSTRING *buf = vstring_alloc(100);
 
+#define TEST_TOKEN_LIMIT 20
+
     while (readlline(buf, VSTREAM_IN, (int *) 0)) {
 	while (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\n') {
 	    vstring_end(buf)[-1] = 0;
@@ -587,7 +609,7 @@ int     main(int unused_argc, char **unused_argv)
 	}
 	if (!isatty(vstream_fileno(VSTREAM_IN)))
 	    vstream_printf(">>>%s<<<\n\n", vstring_str(buf));
-	list = tok822_parse(vstring_str(buf));
+	list = tok822_parse_limit(vstring_str(buf), TEST_TOKEN_LIMIT);
 	vstream_printf("Parse tree:\n");
 	tok822_print(list, 0);
 	vstream_printf("\n");
