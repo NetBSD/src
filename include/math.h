@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.36 2004/06/30 17:51:09 drochner Exp $	*/
+/*	$NetBSD: math.h,v 1.37 2004/07/01 16:09:21 drochner Exp $	*/
 
 /*
  * ====================================================
@@ -313,6 +313,12 @@ long int	lrintf __P((float));
 long long int	llrint __P((double));
 /* LONGLONG */
 long long int	llrintf __P((float));
+long int	lround __P((double));
+long int	lroundf __P((float));
+/* LONGLONG */
+long long int	llround __P((double));
+/* LONGLONG */
+long long int	llroundf __P((float));
 
 /* 7.12.10 remainder */
 
