@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_lex.c,v 1.5 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_lex.c,v 1.6 2004/10/29 21:23:52 dsl Exp $	*/
 /*
  * Lexical analyser for GSP assembler
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_lex.c,v 1.5 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gsp_lex.c,v 1.6 2004/10/29 21:23:52 dsl Exp $");
 #endif
 
 #include <stdio.h>
@@ -124,7 +124,7 @@ yylex()
 		lp = end;
 		c = *lp;
 		if( (c == 'f' || c == 'F' || c == 'b' || c == 'B')
-		   && !(isalnum(lp[1]) || lp[1] == '_') ){
+		   && !(isalnum((unsigned char)lp[1]) || lp[1] == '_') ){
 			/* reference to numeric label */
 			c = toupper(c);
 			sprintf(idptr, "%ld%c", (long)yylval.y_int, c);
