@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 1998/05/19 09:14:34 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.117 1998/05/19 09:17:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3248,7 +3248,6 @@ pmap_bootstrap4m(void)
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
 	p += (0 - DVMA4M_BASE) / 1024;
-	bzero(kernel_iopte_table, p - (caddr_t) kernel_iopte_table);
 
 	pagetables_start = p;
 	/*
