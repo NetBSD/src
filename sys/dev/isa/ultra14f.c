@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.29 1994/05/11 02:28:42 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.30 1994/06/08 11:16:49 mycroft Exp $
  */
 
 /*
@@ -102,22 +102,24 @@ typedef struct {
 /*
  * I/O Port Interface
  */
-#define UHA_LMASK		(0x000)	/* local doorbell mask reg */
-#define UHA_LINT		(0x001)	/* local doorbell int/stat reg */
-#define UHA_SMASK		(0x002)	/* system doorbell mask reg */
-#define UHA_SINT		(0x003)	/* system doorbell int/stat reg */
-#define UHA_ID0			(0x004)	/* product id reg 0 */
-#define UHA_ID1			(0x005)	/* product id reg 1 */
-#define UHA_CONF1		(0x006)	/* config reg 1 */
-#define UHA_CONF2		(0x007)	/* config reg 2 */
-#define UHA_OGM0		(0x008)	/* outgoing mail ptr 0 least sig */
-#define UHA_OGM1		(0x009)	/* outgoing mail ptr 1 least mid */
-#define UHA_OGM2		(0x00a)	/* outgoing mail ptr 2 most mid  */
-#define UHA_OGM3		(0x00b)	/* outgoing mail ptr 3 most sig  */
-#define UHA_ICM0		(0x00c)	/* incoming mail ptr 0 */
-#define UHA_ICM1		(0x00d)	/* incoming mail ptr 1 */
-#define UHA_ICM2		(0x00e)	/* incoming mail ptr 2 */
-#define UHA_ICM3		(0x00f)	/* incoming mail ptr 3 */
+#define U14_LMASK		0x0000	/* local doorbell mask reg */
+#define U14_LINT		0x0001	/* local doorbell int/stat reg */
+#define U14_SMASK		0x0002	/* system doorbell mask reg */
+#define U14_SINT		0x0003	/* system doorbell int/stat reg */
+#define U14_ID			0x0004	/* product id reg (2 ports) */
+#define U14_CONFIG		0x0006	/* config reg (2 ports) */
+#define U14_OGMPTR		0x0008	/* outgoing mail ptr (4 ports) */
+#define U14_ICMPTR		0x000c	/* incoming mail ptr (4 ports) */
+
+#define	U24_CONFIG		0x0c85	/* config reg (3 ports) */
+#define	U24_LMASK		0x0c8c	/* local doorbell mask reg */
+#define	U24_LINT		0x0c8d	/* local doorbell int/stat reg */
+#define	U24_SMASK		0x0c8e	/* system doorbell mask reg */
+#define	U24_SINT		0x0c8f	/* system doorbell int/stat reg */
+#define	U24_OGMCMD		0x0c96	/* outgoing commands */
+#define	U24_OGMPTR		0x0c97	/* outgoing mail ptr (4 ports) */
+#define	U24_ICMCMD		0x0c9b	/* incoming commands */
+#define	U24_ICMPTR		0x0c9c	/* incoming mail ptr (4 ports) */
 
 /*
  * UHA_LMASK bits (read only) 
@@ -130,16 +132,24 @@ typedef struct {
 /*
  * UHA_LINT bits (read)
  */
-#define UHA_LDIP		0x80	/* local doorbell int pending */
+#define U14_LDIP		0x80	/* local doorbell int pending */
+
+#define	U24_LDIP		0x02	/* local doorbell int pending */
 
 /*
  * UHA_LINT bits (write)
  */
-#define UHA_ADRST		0x40	/* adapter soft reset */
-#define UHA_SBRST		0x20	/* scsi bus reset */
-#define UHA_ASRST		0x60	/* adapter and scsi reset */
-#define UHA_ABORT		0x10	/* abort MSCP */
-#define UHA_OGMINT		0x01	/* tell adapter to get mail */
+#define U14_OGMINT		0x01	/* tell adapter to get mail */
+#define U14_ABORT		0x10	/* abort MSCP */
+#define U14_SBRST		0x20	/* scsi bus reset */
+#define U14_ADRST		0x40	/* adapter soft reset */
+#define U14_ASRST		0x60	/* adapter and scsi reset */
+
+#define	U24_OGMINT		0x02	/* tell adapter to get mail */
+#define	U24_ABORT		0x10	/* abort MSCP */
+#define	U24_SBRST		0x40	/* scsi bus reset */
+#define	U24_ADRST		0x80	/* adapter soft reset */
+#define	U24_ASRST		0xc0	/* adapter and scsi reset */
 
 /*
  * UHA_SMASK bits (read)
@@ -158,26 +168,62 @@ typedef struct {
 /*
  * UHA_SINT bits (read)
  */
-#define UHA_SINTP		0x80	/* system doorbell int pending */
-#define UHA_ABORT_SUCC		0x10	/* abort MSCP successful */
-#define UHA_ABORT_FAIL		0x18	/* abort MSCP failed */
+#define U14_ABORT_SUCC		0x10	/* abort MSCP successful */
+#define U14_ABORT_FAIL		0x18	/* abort MSCP failed */
+#define U14_SINTP		0x80	/* system doorbell int pending */
+
+#define	U24_SINTP		0x02	/* system doorbell int pending */
+#define	U24_ABORT_SUCC		0x10	/* abort MSCP successful */
+#define	U24_ABORT_FAIL		0x18	/* abort MSCP failed */
 
 /*
  * UHA_SINT bits (write)
  */
-#define UHA_ABORT_ACK		0x18	/* acknowledge status and clear */
-#define UHA_ICM_ACK		0x01	/* acknowledge ICM and clear */
+#define U14_ICM_ACK		0x01	/* acknowledge ICM and clear */
+#define U14_ABORT_ACK		0x18	/* acknowledge status and clear */
+
+#define	U24_ICM_ACK		0x02	/* acknowledge ICM and clear */
+#define	U24_ABORT_ACK		0x18	/* acknowledge status and clear */
 
 /* 
- * UHA_CONF1 bits (read only)
+ * U14_CONFIG bits (read only)
  */
-#define UHA_DMA_CH5		0x00	/* DMA channel 5 */
-#define UHA_DMA_CH6		0x40	/* 6 */
-#define UHA_DMA_CH7		0x80	/* 7 */
-#define UHA_IRQ15		0x00	/* IRQ 15 */
-#define UHA_IRQ14		0x10	/* 14 */
-#define UHA_IRQ11		0x20	/* 11 */
-#define UHA_IRQ10		0x30	/* 10 */
+#define U14_DMA_CH5		0x00	/* DMA channel 5 */
+#define U14_DMA_CH6		0x40	/* 6 */
+#define U14_DMA_CH7		0x80	/* 7 */
+#define	U14_DMA_MASK		0xc0
+#define U14_IRQ15		0x00	/* IRQ 15 */
+#define U14_IRQ14		0x10	/* 14 */
+#define U14_IRQ11		0x20	/* 11 */
+#define U14_IRQ10		0x30	/* 10 */
+#define	U14_IRQ_MASK		0x30
+#define	U14_HOSTID_MASK		0x07
+
+/*
+ * U24_CONFIG bits (read only)
+ */
+#define	U24_MAGIC1		0x08
+#define	U24_IRQ15		0x10
+#define	U24_IRQ14		0x20
+#define	U24_IRQ11		0x40
+#define	U24_IRQ10		0x80
+#define	U24_IRQ_MASK		0xf0
+
+#define	U24_MAGIC2		0x04
+
+#define	U24_HOSTID_MASK		0x07
+
+/*
+ * EISA registers (offset from slot base)
+ */
+#define EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
+#define	EISA_MODEL		0x0c82	/* model number (2 ports) */
+#define	EISA_CONTROL		0x0c84
+#define  EISA_DISABLE		0x01
+
+#define CHAR1(x) ('@' | ((x >> 10) & 0x1f))
+#define CHAR2(x) ('@' | ((x >>  5) & 0x1f))
+#define CHAR3(x) ('@' | ((x >>  0) & 0x1f))
 
 /*
  * ha_status error codes
@@ -245,6 +291,12 @@ struct uha_softc {
 
 	u_short sc_iobase;
 
+	void (*send_mbox)();
+	int (*abort)();
+	int (*poll)();
+	int (*intr)();
+	void (*init)();
+
 	struct mscp *mscphash[MSCP_HASH_SIZE];
 	struct mscp *free_mscp;
 	int our_id;		/* our scsi id */
@@ -254,17 +306,23 @@ struct uha_softc {
 	struct scsi_link sc_link;
 };
 
-void uha_send_mbox __P((struct uha_softc *, struct mscp *));
-int uha_abort __P((struct uha_softc *, struct mscp *));
-int uha_poll __P((struct uha_softc *, int));
+void u14_send_mbox __P((struct uha_softc *, struct mscp *));
+void u24_send_mbox __P((struct uha_softc *, struct mscp *));
+int u14_abort __P((struct uha_softc *, struct mscp *));
+int u24_abort __P((struct uha_softc *, struct mscp *));
+int u14_poll __P((struct uha_softc *, int));
+int u24_poll __P((struct uha_softc *, int));
 u_int uha_adapter_info __P((struct uha_softc *));
-int uhaintr __P((struct uha_softc *));
+int u14intr __P((struct uha_softc *));
+int u24intr __P((struct uha_softc *));
 void uha_done __P((struct uha_softc *, struct mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct mscp *, int flags));
 struct mscp *uha_get_mscp __P((struct uha_softc *, int));
 struct mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
-int uha_find __P((struct uha_softc *));
-void uha_init __P((struct uha_softc *));
+int u14_find __P((struct uha_softc *, struct isa_attach_args *));
+int u24_find __P((struct uha_softc *, struct isa_attach_args *));
+void u14_init __P((struct uha_softc *));
+void u24_init __P((struct uha_softc *));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
 void uha_timeout __P((void *arg));
@@ -309,7 +367,7 @@ struct cfdriver uhacd = {
  * Function to send a command out through a mailbox
  */
 void
-uha_send_mbox(uha, mscp)
+u14_send_mbox(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
@@ -318,7 +376,7 @@ uha_send_mbox(uha, mscp)
 	int s = splbio();
 
 	while (--spincount) {
-		if ((inb(iobase + UHA_LINT) & UHA_LDIP) == 0)
+		if ((inb(iobase + U14_LINT) & U14_LDIP) == 0)
 			break;
 		delay(100);
 	}
@@ -328,27 +386,54 @@ uha_send_mbox(uha, mscp)
 		Debugger();
 	}
 
-	outl(iobase + UHA_OGM0, KVTOPHYS(mscp));
-	outb(iobase + UHA_LINT, UHA_OGMINT);
+	outl(iobase + U14_OGMPTR, KVTOPHYS(mscp));
+	outb(iobase + U14_LINT, U14_OGMINT);
+
+	splx(s);
+}
+
+void
+u24_send_mbox(uha, mscp)
+	struct uha_softc *uha;
+	struct mscp *mscp;
+{
+	u_short iobase = uha->sc_iobase;
+	int spincount = 100000;	/* 1s should be enough */
+	int s = splbio();
+
+	while (--spincount) {
+		if ((inb(iobase + U24_LINT) & U24_LDIP) == 0)
+			break;
+		delay(100);
+	}
+	if (!spincount) {
+		printf("%s: uha_send_mbox, board not responding\n",
+			uha->sc_dev.dv_xname);
+		Debugger();
+	}
+
+	outl(iobase + U24_OGMPTR, KVTOPHYS(mscp));
+	outb(iobase + U24_OGMCMD, 1);
+	outb(iobase + U24_LINT, U24_OGMINT);
 
 	splx(s);
 }
 
 /*
- * Function to send abort to 14f
+ * Function to send abort
  */
 int
-uha_abort(uha, mscp)
+u14_abort(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
 	u_short iobase = uha->sc_iobase;
 	int spincount = 100;		/* 1 mSec */
-	int abortcount = 200000;	/*2 secs */
+	int abortcount = 200000;	/* 2 secs */
 	int s = splbio();
 
 	while (--spincount) {
-		if ((inb(iobase + UHA_LINT) & UHA_LDIP) == 0)
+		if ((inb(iobase + U14_LINT) & U14_LDIP) == 0)
 			break;
 		delay(10);
 	}
@@ -358,11 +443,11 @@ uha_abort(uha, mscp)
 		Debugger();
 	}
 
-	outl(iobase + UHA_OGM0, KVTOPHYS(mscp));
-	outb(iobase + UHA_LINT, UHA_ABORT);
+	outl(iobase + U14_OGMPTR, KVTOPHYS(mscp));
+	outb(iobase + U14_LINT, U14_ABORT);
 
 	while (--abortcount) {
-		if (inb(iobase + UHA_SINT) & UHA_ABORT_FAIL)
+		if (inb(iobase + U14_SINT) & U14_ABORT_FAIL)
 			break;
 		delay(10);
 	}
@@ -372,12 +457,61 @@ uha_abort(uha, mscp)
 		Debugger();
 	}
 
-	if ((inb(iobase + UHA_SINT) & UHA_ABORT_FAIL) == UHA_ABORT_SUCC) {
-		outb(iobase + UHA_SINT, UHA_ABORT_ACK);
+	if ((inb(iobase + U14_SINT) & (U14_ABORT_FAIL | U14_ABORT_SUCC)) ==
+	    U14_ABORT_SUCC) {
+		outb(iobase + U14_SINT, U14_ABORT_ACK);
 		splx(s);
 		return 1;
 	} else {
-		outb(iobase + UHA_SINT, UHA_ABORT_ACK);
+		outb(iobase + U14_SINT, U14_ABORT_ACK);
+		splx(s);
+		return 0;
+	}
+}
+
+int
+u24_abort(uha, mscp)
+	struct uha_softc *uha;
+	struct mscp *mscp;
+{
+	u_short iobase = uha->sc_iobase;
+	int spincount = 100;		/* 1 mSec */
+	int abortcount = 200000;	/* 2 secs */
+	int s = splbio();
+
+	while (--spincount) {
+		if ((inb(iobase + U24_LINT) & U24_LDIP) == 0)
+			break;
+		delay(10);
+	}
+	if (!spincount) {
+		printf("%s: uha_abort, board not responding\n",
+			uha->sc_dev.dv_xname);
+		Debugger();
+	}
+
+	outl(iobase + U24_OGMPTR, KVTOPHYS(mscp));
+	outb(iobase + U24_OGMCMD, 1);
+	outb(iobase + U24_LINT, U24_ABORT);
+
+	while (--abortcount) {
+		if (inb(iobase + U24_SINT) & U24_ABORT_FAIL)
+			break;
+		delay(10);
+	}
+	if (!abortcount) {
+		printf("%s: uha_abort, board not responding\n",
+			uha->sc_dev.dv_xname);
+		Debugger();
+	}
+
+	if ((inb(iobase + U24_SINT) & (U24_ABORT_FAIL | U24_ABORT_SUCC)) ==
+	    U24_ABORT_SUCC) {
+		outb(iobase + U24_SINT, U24_ABORT_ACK);
+		splx(s);
+		return 1;
+	} else {
+		outb(iobase + U24_SINT, U24_ABORT_ACK);
 		splx(s);
 		return 0;
 	}
@@ -389,14 +523,14 @@ uha_abort(uha, mscp)
  *	wait = timeout in msec
  */
 int
-uha_poll(uha, wait)
+u14_poll(uha, wait)
 	struct uha_softc *uha;
 	int wait;
 {
 	u_short iobase = uha->sc_iobase;
 
 	while (--wait) {
-		if (inb(iobase + UHA_SINT) & UHA_SINTP)
+		if (inb(iobase + U14_SINT) & U14_SINTP)
 			break;
 		delay(1000);	/* 1 mSec per loop */
 	}
@@ -406,7 +540,29 @@ uha_poll(uha, wait)
 		return EIO;
 	}
 
-	uhaintr(uha);
+	u14intr(uha);
+	return 0;
+}
+
+int
+u24_poll(uha, wait)
+	struct uha_softc *uha;
+	int wait;
+{
+	u_short iobase = uha->sc_iobase;
+
+	while (--wait) {
+		if (inb(iobase + U24_SINT) & U24_SINTP)
+			break;
+		delay(1000);	/* 1 mSec per loop */
+	}
+	if (!wait) {
+		printf("%s: uha_poll, board not responding\n",
+			uha->sc_dev.dv_xname);
+		return EIO;
+	}
+
+	u24intr(uha);
 	return 0;
 }
 
@@ -423,18 +579,13 @@ uhaprobe(parent, self, aux)
 	struct uha_softc *uha = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-#endif
-
 	uha->sc_iobase = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads uha->vect
 	 */
-	if (uha_find(uha) != 0)
+	if (u24_find(uha, ia) != 0 && u14_find(uha, ia) != 0)
 		return 0;
 
 #ifdef NEWCONFIG
@@ -461,7 +612,6 @@ uhaprobe(parent, self, aux)
 #endif
 
 	ia->ia_msize = 0;
-	ia->ia_iosize = 4;
 	return 1;
 }
 
@@ -481,7 +631,7 @@ uhaattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *uha = (void *)self;
 
-	uha_init(uha);
+	(uha->init)(uha);
 
 	/*
 	 * fill in the prototype scsi_link.
@@ -496,7 +646,7 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih.ih_fun = uhaintr;
+	uha->sc_ih.ih_fun = uha->intr;
 	uha->sc_ih.ih_arg = uha;
 	uha->sc_ih.ih_level = IPL_BIO;
 	intr_establish(ia->ia_irq, &uha->sc_ih);
@@ -523,7 +673,7 @@ uha_adapter_info(uha)
  * Catch an interrupt from the adaptor
  */
 int
-uhaintr(uha)
+u14intr(uha)
 	struct uha_softc *uha;
 {
 	struct mscp *mscp;
@@ -535,7 +685,7 @@ uhaintr(uha)
 	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
 #endif /*UHADEBUG */
 
-	if ((inb(iobase + UHA_SINT) & UHA_SINTP) == 0)
+	if ((inb(iobase + U14_SINT) & U14_SINTP) == 0)
 		return 0;
 
 	do {
@@ -543,9 +693,9 @@ uhaintr(uha)
 		 * First get all the information and then
 		 * acknowledge the interrupt
 		 */
-		uhastat = inb(iobase + UHA_SINT);
-		mboxval = inl(iobase + UHA_ICM0);
-		outb(iobase + UHA_SINT, UHA_ICM_ACK);
+		uhastat = inb(iobase + U14_SINT);
+		mboxval = inl(iobase + U14_ICMPTR);
+		outb(iobase + U14_SINT, U14_ICM_ACK);
 
 #ifdef	UHADEBUG
 		printf("status = 0x%x ", uhastat);
@@ -562,7 +712,53 @@ uhaintr(uha)
 		untimeout(uha_timeout, mscp);
 
 		uha_done(uha, mscp);
-	} while (inb(iobase + UHA_SINT) & UHA_SINTP);
+	} while (inb(iobase + U14_SINT) & U14_SINTP);
+
+	return 1;
+}
+
+int
+u24intr(uha)
+	struct uha_softc *uha;
+{
+	struct mscp *mscp;
+	u_char uhastat;
+	u_long mboxval;
+	u_short iobase = uha->sc_iobase;
+
+#ifdef	UHADEBUG
+	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
+#endif /*UHADEBUG */
+
+	if ((inb(iobase + U24_SINT) & U24_SINTP) == 0)
+		return 0;
+
+	do {
+		/*
+		 * First get all the information and then
+		 * acknowledge the interrupt
+		 */
+		uhastat = inb(iobase + U24_SINT);
+		mboxval = inl(iobase + U24_ICMPTR);
+		outb(iobase + U24_SINT, U24_ICM_ACK);
+		outb(iobase + U24_ICMCMD, 0);
+
+#ifdef	UHADEBUG
+		printf("status = 0x%x ", uhastat);
+#endif /*UHADEBUG*/
+
+		/*
+		 * Process the completed operation
+		 */
+		mscp = uha_mscp_phys_kv(uha, mboxval);
+		if (!mscp) {
+			printf("uha: BAD MSCP RETURNED\n");
+			return 0;	/* whatever it was, it'll timeout */
+		}
+		untimeout(uha_timeout, mscp);
+
+		uha_done(uha, mscp);
+	} while (inb(iobase + U24_SINT) & U24_SINTP);
 
 	return 1;
 }
@@ -750,8 +946,9 @@ uha_mscp_phys_kv(uha, mscp_phys)
  * Start the board, ready for normal operation
  */
 int
-uha_find(uha)
+u14_find(uha, ia)
 	struct uha_softc *uha;
+	struct isa_attach_args *ia;
 {
 	u_char ad[4];
 	volatile u_char model;
@@ -765,25 +962,28 @@ uha_find(uha)
 	int i;
 	int resetcount = 4000;	/* 4 secs? */
 
-	model = inb(iobase + UHA_ID0);
-	submodel = inb(iobase + UHA_ID1);
+	if (ia->ia_iobase == IOBASEUNK)
+		return ENXIO;
+
+	model = inb(iobase + U14_ID);
+	submodel = inb(iobase + U14_ID + 1);
 	if ((model != 0x56) & (submodel != 0x40))
 		return ENXIO;
 
-	config_reg1 = inb(iobase + UHA_CONF1);
-	config_reg2 = inb(iobase + UHA_CONF2);
-	dma_ch = (config_reg1 & 0xc0);
-	irq_ch = (config_reg1 & 0x30);
-	uha_id = (config_reg2 & 0x07);
+	config_reg1 = inb(iobase + U14_CONFIG);
+	config_reg2 = inb(iobase + U14_CONFIG + 1);
+	dma_ch = (config_reg1 & U14_DMA_MASK);
+	irq_ch = (config_reg1 & U14_IRQ_MASK);
+	uha_id = (config_reg2 & U14_HOSTID_MASK);
 
 	switch (dma_ch) {
-	case UHA_DMA_CH5:
+	case U14_DMA_CH5:
 		uha->dma = 5;
 		break;
-	case UHA_DMA_CH6:
+	case U14_DMA_CH6:
 		uha->dma = 6;
 		break;
-	case UHA_DMA_CH7:
+	case U14_DMA_CH7:
 		uha->dma = 7;
 		break;
 	default:
@@ -792,16 +992,16 @@ uha_find(uha)
 	}
 
 	switch (irq_ch) {
-	case UHA_IRQ10:
+	case U14_IRQ10:
 		uha->vect = 10;
 		break;
-	case UHA_IRQ11:
+	case U14_IRQ11:
 		uha->vect = 11;
 		break;
-	case UHA_IRQ14:
+	case U14_IRQ14:
 		uha->vect = 14;
 		break;
-	case UHA_IRQ15:
+	case U14_IRQ15:
 		uha->vect = 15;
 		break;
 	default:
@@ -812,10 +1012,10 @@ uha_find(uha)
 	/* who are we on the scsi bus */
 	uha->our_id = uha_id;
 
-	outb(iobase + UHA_LINT, UHA_ASRST);
+	outb(iobase + U14_LINT, U14_ASRST);
 
 	while (--resetcount) {
-		if (inb(iobase + UHA_LINT))
+		if (inb(iobase + U14_LINT))
 			break;
 		delay(1000);	/* 1 mSec per loop */
 	}
@@ -825,19 +1025,125 @@ uha_find(uha)
 		return ENXIO;
 	}
 
-	/*
-	 * Note that we are going and return (to probe)
-	 */
+	/* Save function pointers for later use. */
+	uha->send_mbox = u14_send_mbox;
+	uha->abort = u14_abort;
+	uha->poll = u14_poll;
+	uha->intr = u14intr;
+	uha->init = u14_init;
+
 	return 0;
 }
 
+int
+u24_find(uha, ia)
+	struct uha_softc *uha;
+	struct isa_attach_args *ia;
+{
+	static int uha_slot = 0;
+	u_short iobase;
+	u_short vendor, model;
+	u_char config0, config1, config2;
+	u_char irq_ch, uha_id;
+	int resetcount = 4000;	/* 4 secs? */
+
+	if (ia->ia_iobase != IOBASEUNK)
+		return ENXIO;
+
+	while (uha_slot < 15) {
+		uha_slot++;
+		iobase = 0x1000 * uha_slot;
+		
+		vendor = htons(inw(iobase + EISA_VENDOR));
+		if (vendor != 0x5663)	/* `USC' */
+			continue;
+
+		model = htons(inw(iobase + EISA_MODEL));
+		if ((model & 0xfff0) != 0x0240) {
+#ifndef trusted
+			printf("u24_find: ignoring model %04x\n", model);
+#endif
+			continue;
+		}
+
+		if (inb(iobase + EISA_CONTROL) & EISA_DISABLE)
+			continue;
+
+		config0 = inb(iobase + U24_CONFIG);
+		config1 = inb(iobase + U24_CONFIG + 1);
+		config2 = inb(iobase + U24_CONFIG + 2);
+		if ((config0 & U24_MAGIC1) == 0 ||
+		    (config1 & U24_MAGIC2) == 0)
+			continue;
+
+		irq_ch = config0 & U24_IRQ_MASK;
+		uha_id = config2 & U24_HOSTID_MASK;
+
+		switch (irq_ch) {
+		case U24_IRQ10:
+			uha->vect = 10;
+			break;
+		case U24_IRQ11:
+			uha->vect = 11;
+			break;
+		case U24_IRQ14:
+			uha->vect = 14;
+			break;
+		case U24_IRQ15:
+			uha->vect = 15;
+			break;
+		default:
+			printf("illegal int setting %x\n", irq_ch);
+			continue;
+		}
+
+		/* who are we on the scsi bus */
+		uha->our_id = uha_id;
+
+		outb(iobase + U24_LINT, U24_ASRST);
+
+		while (--resetcount) {
+			if (inb(iobase + U24_LINT))
+				break;
+			delay(1000);	/* 1 mSec per loop */
+		}
+		if (!resetcount) {
+			printf("%s: board timed out during reset\n",
+				uha->sc_dev.dv_xname);
+			continue;
+		}
+
+		/* Save function pointers for later use. */
+		uha->send_mbox = u24_send_mbox;
+		uha->abort = u24_abort;
+		uha->poll = u24_poll;
+		uha->intr = u24intr;
+		uha->init = u24_init;
+
+		return 0;
+	}
+
+	return ENXIO;
+}
+
 void
-uha_init(uha)
+u14_init(uha)
 	struct uha_softc *uha;
 {
 	u_short iobase = uha->sc_iobase;
 
-	outb(iobase + UHA_SMASK, 0x81);	/* make sure interrupts are enabled */
+	/* make sure interrupts are enabled */
+	outb(iobase + U14_SMASK, UHA_SINTEN | UHA_ICM_ENABLED);
+}
+
+void
+u24_init(uha)
+	struct uha_softc *uha;
+{
+	u_short iobase = uha->sc_iobase;
+
+	/* make sure interrupts are enabled */
+	outb(iobase + U24_SMASK, 0xc2);		/* XXXX */
 }
 
 void
@@ -1056,7 +1362,7 @@ uha_scsi_cmd(xs)
 	 */
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
-		uha_send_mbox(uha, mscp);
+		(uha->send_mbox)(uha, mscp);
 		timeout(uha_timeout, mscp, (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
@@ -1066,13 +1372,13 @@ uha_scsi_cmd(xs)
 	/*
 	 * If we can't use interrupts, poll on completion
 	 */
-	uha_send_mbox(uha, mscp);
+	(uha->send_mbox)(uha, mscp);
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_wait\n"));
 	do {
-		if (uha_poll(uha, xs->timeout)) {
+		if ((uha->poll)(uha, xs->timeout)) {
 			if (!(xs->flags & SCSI_SILENT))
 				printf("%s: cmd fail\n", uha->sc_dev.dv_xname);
-			if (!uha_abort(uha, mscp)) {
+			if (!(uha->abort)(uha, mscp)) {
 				printf("%s: abort failed in wait\n",
 					uha->sc_dev.dv_xname);
 				uha_free_mscp(uha, mscp, flags);
@@ -1101,14 +1407,14 @@ uha_timeout(arg)
 	uha_print_active_mscp(uha);
 #endif /*UHADEBUG */
 
-	if (!uha_abort(uha, mscp) || (mscp->flags == MSCP_ABORTED)) {
+	if (!(uha->abort)(uha, mscp) || (mscp->flags == MSCP_ABORTED)) {
 		printf(" AGAIN\n");
 		mscp->xs->retries = 0;	/* I MEAN IT ! */
 		uha_done(uha, mscp);
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
-		timeout(uha_timeout, mscp, 2 * hz);
 		mscp->flags = MSCP_ABORTED;
+		timeout(uha_timeout, mscp, 2 * hz);
 	}
 	splx(s);
 }
