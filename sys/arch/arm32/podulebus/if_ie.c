@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.4 1996/03/20 18:49:56 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.5 1996/03/27 21:49:36 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -451,6 +451,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	sc->sc_ih.ih_func = ieintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
+	sc->sc_ih.ih_name = "net: ie";
 
 	if (irq_claim(IRQ_PODULE, &sc->sc_ih))
 	{
