@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.h,v 1.2 1996/03/14 23:11:43 mark Exp $ */
+/* $NetBSD: rtc.h,v 1.3 1996/04/19 19:51:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -45,10 +45,16 @@
  * Based of kate/display/iiccontrol.c
  */
 
-/* IIC addresses for RTC chip */
+/*
+ * IIC addresses for RTC chip
+ * Two PCF8583 chips are supported on the IIC bus
+ */
 
-#define RTC_Write 160
-#define RTC_Read  161
+#define IIC_PCF8583_MASK 0xfc
+#define IIC_PCF8583_ADDR 0xa0
+
+#define RTC_Write (IIC_PCF8583_ADDR | IIC_WRITE)
+#define RTC_Read  (IIC_PCF8583_ADDR | IIC_READ)
 
 typedef struct {
 	u_char rtc_micro;
@@ -67,10 +73,11 @@ typedef struct {
 #define RTC_ADDR_YEAR     	0xc0
 #define RTC_ADDR_CENT     	0xc1
 
-int iic_control __P((u_char, u_char *, int));
+#ifdef _KERNEL
 int cmos_read __P((int));
 int cmos_write __P((int, int));
 int rtc_read __P((rtc_t *));
 int rtc_write __P((rtc_t *));
+#endif /* _KERNEL */
 
 /* End of rtc.h */
