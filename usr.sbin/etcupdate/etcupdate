@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.18 2003/07/10 10:34:48 lukem Exp $
+# $NetBSD: etcupdate,v 1.19 2003/07/14 23:16:19 lukem Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -412,6 +412,7 @@ if [ -z "${CONTINUE}" ]; then
 		MAKE_ENV=" 			\
 			DESTDIR=${TEMPROOT}	\
 			MAKE=make		\
+			MTREE=mtree		\
 			TOOL_MTREE=mtree	\
 			INSTALL_DONE=1		\
 			USETOOLS=never"
