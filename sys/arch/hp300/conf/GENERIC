@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.22 1997/01/31 05:56:12 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -35,7 +35,7 @@ options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
 # Filesystems
 file-system 	FFS		# fast filesystem
 file-system 	CD9660		# CD-ROM ISO-9660 filesystem
-file-system 	NFSCLIENT	# Network filesystem client
+file-system 	NFS		# Network filesystem client
 file-system 	UNION		# Union filesystem (req. for FDESC)
 file-system 	KERNFS		# kernel data-structure filesystem
 file-system 	FDESC		# user file descriptor filesystem
