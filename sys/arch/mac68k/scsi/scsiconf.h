@@ -14,12 +14,11 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.2 1993/11/29 00:45:28 briggs Exp $
+ *	$Id: scsiconf.h,v 1.3 1994/01/30 01:21:40 briggs Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
 typedef	int			boolean;
-typedef	int			errval;
 typedef	long int		int32;
 typedef	short int		int16;
 typedef	char 			int8;
@@ -27,6 +26,11 @@ typedef	unsigned long int	u_int32;
 typedef	unsigned short int	u_int16;
 typedef	unsigned char 		u_int8;
 
+#ifdef	__NetBSD__
+#define DELAY delay
+#endif
+
+#include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
 /*
@@ -66,13 +70,13 @@ typedef	unsigned char 		u_int8;
  */
 struct scsi_adapter
 {
-/* 04*/	int32		(*scsi_cmd)();
-/* 08*/	void		(*scsi_minphys)();
-/* 12*/	int32		(*open_target_lu)();
-/* 16*/	int32		(*close_target_lu)();
-/* 20*/	u_int32		(*adapter_info)(); /* see definitions below */
-/* 24*/	char		*name; /* name of scsi bus controller */
-/* 32*/	u_long	spare[2];
+/* 4*/	int		(*scsi_cmd)();
+/* 8*/	void		(*scsi_minphys)();
+/*12*/	int32		(*open_target_lu)();
+/*16*/	int32		(*close_target_lu)();
+/*20*/	u_int		(*adapter_info)(); /* see definitions below */
+/*24*/	char		*name; /* name of scsi bus controller */
+/*32*/	u_long	spare[2];
 };
 
 /*
@@ -98,7 +102,7 @@ struct scsi_adapter
  */
 struct scsi_device
 {
-/*  4*/	errval	(*err_handler)(); /* returns -1 to say err processing complete */
+/*  4*/	int	(*err_handler)(); /* returns -1 to say err processing complete */
 /*  8*/	void	(*start)();
 /* 12*/	int32	(*async)();
 /* 16*/	int32	(*done)();	/* returns -1 to say done processing complete */
@@ -115,21 +119,21 @@ struct scsi_device
  */
 struct scsi_link
 {
-/*  1*/	u_int8	target;			/* targ of this dev */
-/*  2*/	u_int8	lun;			/* lun of this dev */
-/*  3*/	u_int8	adapter_targ;		/* what are we on the scsi bus */
-/*  4*/	u_int8	adapter_unit;		/* e.g. the 0 in aha0 */
-/*  5*/	u_int8	scsibus;		/* the Nth scsibus	*/
-/*  6*/	u_int8	dev_unit;		/* e.g. the 0 in sd0 */
-/*  7*/	u_int8	opennings;		/* available operations */
-/*  8*/	u_int8	active;			/* operations in progress */
+/*  1*/	u_int8	scsibus;		/* the Nth scsibus */
+/*  2*/	u_int8	target;			/* targ of this dev */
+/*  3*/	u_int8	lun;			/* lun of this dev */
+/*  4*/	u_int8	adapter_targ;		/* what are we on the scsi bus */
+/*  5*/	u_int8	dev_unit;		/* e.g. the 0 in sd0 */
+/*  6*/	u_int8	opennings;		/* available operations */
+/*  7*/	u_int8	active;			/* operations in progress */
+/*  8*/ u_int8	sparea[1];
 /* 10*/	u_int16	flags;			/* flags that all devices have */
-/* 12*/	u_int8	spareb[2];		/* unused		*/
+/* 12*/	u_int8	spareb[2];
 /* 16*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 /* 20*/	struct	scsi_device *device;	/* device entry points etc. */
 /* 24*/	struct	scsi_xfer *active_xs;	/* operations under way */
-/* 28*/	void *	fordriver;		/* for private use by the driver */
-/* 32*/	u_int32	spare;
+/*  4*/	void	*adapter_softc;		/* e.g. the 0 in aha0 */
+/* 28*/	void	*fordriver;		/* for private use by the driver */
 };
 #define	SDEV_MEDIA_LOADED 	0x01	/* device figures are still valid */
 #define	SDEV_WAITING	 	0x02	/* a process is waiting for this */
@@ -145,6 +149,7 @@ struct scsi_link
  * the others, before they have the rest of the fields filled in
  */
 struct scsibus_data {
+	struct device sc_dev;
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
 	struct scsi_link *sc_link[8][8];
 };
@@ -153,12 +158,12 @@ struct scsibus_data {
  * Each scsi transaction is fully described by one of these structures
  * It includes information about the source of the command and also the
  * device and adapter for which the command is destined.
- * (via the scsi_link structure)						*
+ * (via the scsi_link structure)
  */
 struct scsi_xfer
 {
-/*04*/	struct	scsi_xfer *next;	/* when free */
-/*08*/	u_int32	flags;
+/* 4*/	struct	scsi_xfer *next;	/* when free */
+/* 8*/	u_int32	flags;
 /*12*/	struct	scsi_link *sc_link;	/* all about our device and adapter */
 /*13*/	u_int8	retries;		/* the number of times to retry */
 /*16*/	u_int8	spare[3];
@@ -217,27 +222,27 @@ struct scsi_xfer
 #define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		0x08	/* The device busy, try again later?	  */
 
-void scsi_attachdevs __P((struct scsi_link *sc_link_proto));
-struct scsi_xfer *get_xs( struct scsi_link *sc_link, u_int32 flags);
-void free_xs(struct scsi_xfer *xs, struct scsi_link *sc_link,u_int32 flags);
-u_int32 scsi_size( struct scsi_link *sc_link,u_int32 flags);
-errval scsi_test_unit_ready( struct scsi_link *sc_link, u_int32 flags);
-errval scsi_change_def( struct scsi_link *sc_link, u_int32 flags);
-errval scsi_inquire( struct scsi_link *sc_link,
-			struct scsi_inquiry_data *inqbuf, u_int32 flags);
-errval scsi_prevent( struct scsi_link *sc_link, u_int32 type,u_int32 flags);
-errval scsi_start_unit( struct scsi_link *sc_link, u_int32 flags);
-void scsi_done(struct scsi_xfer *xs);
-errval scsi_scsi_cmd( struct scsi_link *sc_link, struct scsi_generic *scsi_cmd,
+int scsi_targmatch __P((struct device *, struct cfdata *, void *));
+
+struct scsi_xfer *get_xs __P((struct scsi_link *, u_int32));
+void free_xs __P((struct scsi_xfer *, struct scsi_link *, u_int32));
+u_int32 scsi_size __P((struct scsi_link *, u_int32));
+int scsi_test_unit_ready __P((struct scsi_link *, u_int32));
+int scsi_change_def __P((struct scsi_link *, u_int32));
+int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, u_int32));
+int scsi_prevent __P((struct scsi_link *, u_int32, u_int32));
+int scsi_start_unit __P((struct scsi_link *, u_int32));
+void scsi_done __P((struct scsi_xfer *));
+int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 cmdlen, u_char *data_addr,
 			u_int32 datalen, u_int32 retries,
 			u_int32 timeout, struct buf *bp,
-			u_int32 flags);
-errval	scsi_do_ioctl __P((struct scsi_link *sc_link, int cmd, caddr_t addr, int f));
+			u_int32 flags));
+int scsi_do_ioctl __P((struct scsi_link *, int, caddr_t, int));
 
-void show_scsi_xs(struct scsi_xfer *xs);
-void show_scsi_cmd(struct scsi_xfer *xs);
-void show_mem(unsigned char * , u_int32);
+void show_scsi_xs __P((struct scsi_xfer *));
+void show_scsi_cmd __P((struct scsi_xfer *));
+void show_mem __P((unsigned char *, u_int32));
 
 void	lto3b __P((int val, u_char *bytes));
 int	_3btol __P((u_char *bytes));

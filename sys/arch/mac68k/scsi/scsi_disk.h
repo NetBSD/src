@@ -46,7 +46,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsi_disk.h,v 1.2 1993/11/29 00:45:22 briggs Exp $
+ *	$Id: scsi_disk.h,v 1.3 1994/01/30 01:21:30 briggs Exp $
  */
 
 /*
