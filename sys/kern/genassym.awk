@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.4 1997/11/04 20:45:22 gwr Exp $
+#	$NetBSD: genassym.awk,v 1.5 1998/11/25 06:10:19 castor Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,9 +75,9 @@ BEGIN {
 /^\t\.ascii/ {
 	if (!translate)
 		next;
-	# Get NAME from "NAME\0"
-	len = length($2);
-	str = substr($2,2,len-4);
+	# Get NAME from '"NAME\*"'
+	len = index($2, "\\");
+	str = substr($2,2,len-2);
 	printf("#define\t%s\t", str);
 	next;
 }
