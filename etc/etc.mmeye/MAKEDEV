@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 2002/06/17 16:21:09 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.22 2002/06/18 05:01:09 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,7 +67,6 @@
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
-#	apm	power management device
 #	tun*	network tunnel driver
 #	joy*	joystick device
 #	satlink* PlanetConnect satellite receiver driver
@@ -106,7 +105,7 @@ all)
 	makedev st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
 	makedev lpt0 lpt1 lpt2 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	makedev speaker lkm audio joy0 joy1 apm local satlink0
+	makedev speaker lkm audio joy0 joy1 local satlink0
 	makedev scsibus0 scsibus1
 	makedev clockctl
 	makedev systrace
@@ -392,13 +391,6 @@ audio*)
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
 	chmod 666 $audio $sound $mixer $audioctl
-	;;
-
-apm*)
-	rm -f apm apmctl
-	mknod apm c 21 0
-	mknod apmctl c 21 8
-	chmod 644 apm apmctl
 	;;
 
 satlink*)
