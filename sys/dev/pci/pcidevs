@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.94 1998/11/30 19:47:16 jtk Exp $
+$NetBSD: pcidevs,v 1.95 1998/12/05 19:02:14 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -991,6 +991,9 @@ product	S3 SONICVIBES	0xca00	SonicVibes
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
 product SGSTHOMSON 1764	0x1746	STG 1764X
+
+/* Sigma Designs products */
+product SIGMA HOLLYWOODPLUS	0x8300	REALmagic Hollywood-Plus MPEG-2 Decoder
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201
