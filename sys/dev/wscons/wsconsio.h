@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.31 2000/06/09 16:07:55 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.32 2000/07/06 16:29:49 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -139,8 +139,8 @@ struct wskbd_map_data {
 };
 #define WSKBDIO_GETMAP		_IOWR('W', 13, struct wskbd_map_data)
 #define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map_data)
-#define WSKBDIO_GETENCODING	_IOR('W', 15, int)
-#define WSKBDIO_SETENCODING	_IOW('W', 16, int)
+#define WSKBDIO_GETENCODING	_IOR('W', 15, kbd_t)
+#define WSKBDIO_SETENCODING	_IOW('W', 16, kbd_t)
 
 /* internal use only */
 #define WSKBDIO_SETMODE		_IOW('W', 19, int)
