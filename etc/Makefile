@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.213 2002/04/15 03:01:31 perry Exp $
+#	$NetBSD: Makefile,v 1.214 2002/04/21 00:06:03 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -355,13 +355,13 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES}"; \
 	cd $${kerndir} && ( \
-		echo ". type=dir uname=root gname=wheel"; \
+		echo "/set uname=${BINOWN} gname=${BINGRP}"; \
+		echo ". type=dir optional"; \
 		for kernel in $${kernlist}; do \
-			echo "./$${kernel} type=file uname=root gname=wheel"; \
+			echo "./$${kernel} type=file"; \
 			for s in $${kernsuffixes}; do \
 				if [ -f $${kernel}.$${s} ]; then \
-					echo \
-		    "./$${kernel}.$${s} type=file uname=root gname=wheel"; \
+					echo "./$${kernel}.$${s} type=file"; \
 				fi; \
 			done; \
 		done ) | GZIP=-9 ${PAX} -zwM ${UNPRIVED:D-N${_SRC_TOP_}/etc} \
