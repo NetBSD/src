@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.26 2001/08/23 00:56:03 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.27 2001/10/29 19:15:48 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -27,12 +27,10 @@
  * From: Id: if_spppsubr.c,v 1.23 1999/02/23 14:47:50 hm Exp
  */
 
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include "opt_inet.h"
 #include "opt_ipx.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#endif
 
 #include <sys/param.h>
 
@@ -41,17 +39,10 @@
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <machine/random.h>
-#endif
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
-#if defined (__OpenBSD__)
-#include <sys/md5k.h>
-#else
 #include <sys/md5.h>
-#endif
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -68,11 +59,7 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #endif
-#if defined (__FreeBSD__) || defined (__OpenBSD__)
-#include <netinet/if_ether.h>
-#else
 #include <net/ethertypes.h>
-#endif
 
 #ifdef IPX
 #include <netipx/ipx.h>
@@ -91,14 +78,7 @@
 #include <netiso/iso_snpac.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <net/if_sppp.h>
-#else
-#include <i4b/sppp/if_sppp.h>
-#endif
-#if defined(__NetBSD__) || defined (__OpenBSD__)
-#include <machine/cpu.h> /* XXX for softnet */
-#endif
 
 #define MAXALIVECNT     3               /* max. alive packets */
 
@@ -241,12 +221,7 @@ struct cp {
 };
 
 static struct sppp *spppq;
-#if defined(__NetBSD__)
 static struct callout keepalive_ch;
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-static struct callout_handle keepalive_ch;
-#endif
 
 #ifdef __FreeBSD__
 #define	SPP_FMT		"%s%d: "
@@ -924,15 +899,8 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-#if defined(__NetBSD__)
 		callout_init(&keepalive_ch);
 		callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		keepalive_ch = 
-#endif
-		timeout(sppp_keepalive, 0, hz * 10);
-#endif /* __NetBSD__ */
 	}
 
 	/* Insert new entry into the keepalive list. */
@@ -975,37 +943,13 @@ sppp_detach(struct ifnet *ifp)
 
 	/* Stop keepalive handler. */
 	if (! spppq) {
-#if defined(__NetBSD__)
 		callout_stop(&keepalive_ch);
-#else
-		untimeout(sppp_keepalive, 0
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		,keepalive_ch
-#endif
-		);
-#endif /* __NetBSD__ */
 	}
 
 	for (i = 0; i < IDX_COUNT; i++) {
-#if defined(__NetBSD__)
 		callout_stop(&sp->ch[i]);
-#else
-		untimeout((cps[i])->TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		, sp->ch[i]
-#endif
-		);
-#endif /* __NetBSD__ */
 	}
-#if defined(__NetBSD__)
 	callout_stop(&sp->pap_my_to_ch);
-#else
-	untimeout(sppp_pap_my_TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	, sp->pap_my_to_ch
-#endif
-	);
-#endif /* __NetBSD__ */
 
 	if_free_sadl(ifp);
 }
@@ -1236,11 +1180,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 			sp->pp_seq[IDX_LCP] = random();
-#else
-			sp->pp_seq[IDX_LCP] ^= time.tv_sec ^ time.tv_usec;
-#endif
 			break;
 		}
 		sp->pp_loopcnt = 0;
@@ -1268,16 +1208,8 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	struct timeval tv;
-#else
 	u_long t = (time.tv_sec - boottime.tv_sec) * 1000;
-#endif
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	getmicrouptime(&tv);
-#endif
-	
 	MGETHDR (m, M_DONTWAIT, MT_DATA);
 	if (! m)
 		return;
@@ -1295,13 +1227,8 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	ch->par2 = htonl (par2);
 	ch->rel = -1;
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	ch->time0 = htons ((u_short) (tv.tv_sec >> 16));
-	ch->time1 = htons ((u_short) tv.tv_sec);
-#else
 	ch->time0 = htons ((u_short) (t >> 16));
 	ch->time1 = htons ((u_short) t);
-#endif
 
 	if (debug)
 		log(LOG_DEBUG,
@@ -1968,15 +1895,8 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 		case STATE_STOPPING:
 			sppp_cp_send(sp, cp->proto, TERM_REQ,
 			    ++sp->pp_seq[cp->protoidx], 0, 0);
-#if defined(__NetBSD__)
 			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
 			    cp->TO, sp);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-			sp->ch[cp->protoidx] =
-#endif
-			timeout(cp->TO, (void *)sp, sp->lcp.timeout);
-#endif /* __NetBSD__ */
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
@@ -1986,15 +1906,8 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 			break;
 		case STATE_ACK_SENT:
 			(cp->scr)(sp);
-#if defined(__NetBSD__)
 			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
 			    cp->TO, sp);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-			sp->ch[cp->protoidx] = 
-#endif
-			timeout(cp->TO, (void *)sp, sp->lcp.timeout);
-#endif /* __NetBSD__ */
 			break;
 		}
 
@@ -2009,16 +1922,7 @@ void
 sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 {
 	sp->state[cp->protoidx] = newstate;
-
-#if defined(__NetBSD__)
 	callout_stop(&sp->ch[cp->protoidx]);
-#else
-	untimeout(cp->TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	, sp->ch[cp->protoidx]
-#endif
-	);
-#endif /* __NetBSD__ */
 	switch (newstate) {
 	case STATE_INITIAL:
 	case STATE_STARTING:
@@ -2031,15 +1935,8 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 	case STATE_REQ_SENT:
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
-#if defined(__NetBSD__)
 		callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
 		    cp->TO, sp);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		sp->ch[cp->protoidx]  =
-#endif
-		timeout(cp->TO, (void *)sp, sp->lcp.timeout);
-#endif /* __NetBSD__ */
 		break;
 	}
 }
@@ -2073,12 +1970,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-#if defined(__NetBSD__)
 	callout_init(&sp->ch[IDX_LCP]);
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	callout_handle_init(&sp->ch[IDX_LCP]);
-#endif
 }
 
 static void
@@ -2487,11 +2379,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				if (magic == ~sp->lcp.magic) {
 					if (debug)
 						addlog(" magic glitch");
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 					sp->lcp.magic = random();
-#else
-					sp->lcp.magic = time.tv_sec + time.tv_usec;
-#endif
 				} else {
 					sp->lcp.magic = magic;
 					if (debug)
@@ -2668,11 +2556,7 @@ sppp_lcp_scr(struct sppp *sp)
 
 	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 			sp->lcp.magic = random();
-#else
-			sp->lcp.magic = time.tv_sec + time.tv_usec;
-#endif
 		opt[i++] = LCP_OPT_MAGIC;
 		opt[i++] = 6;
 		opt[i++] = sp->lcp.magic >> 24;
@@ -2752,12 +2636,7 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPCP] = 0;
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
-#if defined(__NetBSD__)
 	callout_init(&sp->ch[IDX_IPCP]);
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	callout_handle_init(&sp->ch[IDX_IPCP]);
-#endif
 }
 
 static void
@@ -3205,12 +3084,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPV6CP] = 0;
 	sp->pp_seq[IDX_IPV6CP] = 0;
 	sp->pp_rseq[IDX_IPV6CP] = 0;
-#if defined(__NetBSD__)
 	callout_init(&sp->ch[IDX_IPV6CP]);
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	callout_handle_init(&sp->ch[IDX_IPV6CP]);
-#endif
 }
 
 static void
@@ -4008,12 +3882,7 @@ sppp_chap_init(struct sppp *sp)
 	sp->fail_counter[IDX_CHAP] = 0;
 	sp->pp_seq[IDX_CHAP] = 0;
 	sp->pp_rseq[IDX_CHAP] = 0;
-#if defined(__NetBSD__)
 	callout_init(&sp->ch[IDX_CHAP]);
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	callout_handle_init(&sp->ch[IDX_CHAP]);
-#endif
 }
 
 static void
@@ -4097,14 +3966,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 */
 		i = 300 + ((unsigned)(random() & 0xff00) >> 7);
 
-#if defined(__NetBSD__)
 		callout_reset(&sp->ch[IDX_CHAP], i * hz, chap.TO, sp);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		sp->ch[IDX_CHAP] =
-#endif
-		timeout(chap.TO, (void *)sp, i * hz);
-#endif /* __NetBSD__ */
 	}
 
 	if (debug) {
@@ -4148,15 +4010,7 @@ sppp_chap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "chap tld\n", SPP_ARGS(ifp));
-#if defined(__NetBSD__)
 	callout_stop(&sp->ch[IDX_CHAP]);
-#else
-	untimeout(chap.TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	, sp->ch[IDX_CHAP]
-#endif
-	);
-#endif /* __NetBSD__ */
 	sp->lcp.protos &= ~(1 << IDX_CHAP);
 
 	lcp.Close(sp);
@@ -4171,12 +4025,8 @@ sppp_chap_scr(struct sppp *sp)
 
 	/* Compute random challenge. */
 	ch = (u_long *)sp->myauth.challenge;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	read_random(&seed, sizeof seed);
-#else
 	microtime(&tv);
 	seed = tv.tv_sec ^ tv.tv_usec;
-#endif
 	ch[0] = seed ^ random();
 	ch[1] = seed ^ random();
 	ch[2] = seed ^ random();
@@ -4290,15 +4140,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 
 	/* ack and nak are his authproto */
 	case PAP_ACK:
-#if defined(__NetBSD__)
 		callout_stop(&sp->pap_my_to_ch);
-#else
-		untimeout(sppp_pap_my_TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		, sp->pap_my_to_ch
-#endif
-		);
-#endif /* __NetBSD__ */
 		if (debug) {
 			log(LOG_DEBUG, SPP_FMT "pap success",
 			    SPP_ARGS(ifp));
@@ -4327,15 +4169,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		break;
 
 	case PAP_NAK:
-#if defined(__NetBSD__)
 		callout_stop(&sp->pap_my_to_ch);
-#else
-		untimeout(sppp_pap_my_TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		, sp->pap_my_to_ch
-#endif
-		);
-#endif /* __NetBSD__ */
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "pap failure",
 			    SPP_ARGS(ifp));
@@ -4375,14 +4209,8 @@ sppp_pap_init(struct sppp *sp)
 	sp->fail_counter[IDX_PAP] = 0;
 	sp->pp_seq[IDX_PAP] = 0;
 	sp->pp_rseq[IDX_PAP] = 0;
-#if defined(__NetBSD__)
 	callout_init(&sp->ch[IDX_PAP]);
 	callout_init(&sp->pap_my_to_ch);
-#endif
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	callout_handle_init(&sp->ch[IDX_PAP]);
-	callout_handle_init(&sp->pap_my_to_ch);
-#endif
 }
 
 static void
@@ -4397,15 +4225,8 @@ sppp_pap_open(struct sppp *sp)
 	if (sp->myauth.proto == PPP_PAP) {
 		/* we are peer, send a request, and start a timer */
 		pap.scr(sp);
-#if defined(__NetBSD__)
 		callout_reset(&sp->pap_my_to_ch, sp->lcp.timeout,
 		    sppp_pap_my_TO, sp);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		sp->pap_my_to_ch =
-#endif
-		timeout(sppp_pap_my_TO, (void *)sp, sp->lcp.timeout);
-#endif /* __NetBSD__ */
 	}
 }
 
@@ -4508,25 +4329,8 @@ sppp_pap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "pap tld\n", SPP_ARGS(ifp));
-#if defined(__NetBSD__)
 	callout_stop(&sp->ch[IDX_PAP]);
-#else
-	untimeout(pap.TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	, sp->ch[IDX_PAP]
-#endif
-	);
-#endif /* __NetBSD__ */
-
-#if defined(__NetBSD__)
 	callout_stop(&sp->pap_my_to_ch);
-#else
-	untimeout(sppp_pap_my_TO, (void *)sp
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	, sp->pap_my_to_ch
-#endif
-	);
-#endif /* __NetBSD__ */
 	sp->lcp.protos &= ~(1 << IDX_PAP);
 
 	lcp.Close(sp);
@@ -4692,14 +4496,7 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
-#if defined(__NetBSD__)
 	callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
-#else
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	keepalive_ch =
-#endif
-	timeout(sppp_keepalive, 0, hz * 10);
-#endif /* __NetBSD__ */
 }
 
 /*
@@ -4719,19 +4516,9 @@ sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	for (ifa = ifp->if_addrhead.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#elif defined(__NetBSD__) || defined (__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
 	     ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#else
-	for (ifa = ifp->if_addrlist, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_next)
-#endif
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			sm = (struct sockaddr_in *)ifa->ifa_netmask;
@@ -4769,19 +4556,9 @@ sppp_set_ip_addr(struct sppp *sp, u_long src)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	for (ifa = ifp->if_addrhead.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#elif defined(__NetBSD__) || defined (__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
 	     ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#else
-	for (ifa = ifp->if_addrlist, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET)
 		{
@@ -4794,7 +4571,6 @@ sppp_set_ip_addr(struct sppp *sp, u_long src)
 	if (ifa && si)
 	{
 		int error;
-#if __NetBSD_Version__ >= 103080000
 		struct sockaddr_in new_sin = *si;
 
 		new_sin.sin_addr.s_addr = htonl(src);
@@ -4804,26 +4580,6 @@ sppp_set_ip_addr(struct sppp *sp, u_long src)
 			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addr: in_ifinit "
 			" failed, error=%d\n", SPP_ARGS(ifp), error);
 		}
-#else
-		/* delete old route */
-		error = rtinit(ifa, (int)RTM_DELETE, RTF_HOST);
-		if(debug && error)
-		{
-			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addr: rtinit DEL failed, error=%d\n",
-		    		SPP_ARGS(ifp), error);
-		}
-
-		/* set new address */
-		si->sin_addr.s_addr = htonl(src);
-
-		/* add new route */
-		error = rtinit(ifa, (int)RTM_ADD, RTF_HOST);		
-		if (debug && error)
-		{
-			log(LOG_DEBUG, SPP_FMT "sppp_set_ip_addr: rtinit ADD failed, error=%d",
-		    		SPP_ARGS(ifp), error);
-		}
-#endif
 	}
 }			
 
@@ -4847,19 +4603,9 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	for (ifa = ifp->if_addrhead.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#elif defined(__NetBSD__) || defined (__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
 	     ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#else
-	for (ifa = ifp->if_addrlist, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_next)
-#endif
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			si = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -4912,17 +4658,9 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	for (ifa = ifp->if_addrhead.tqh_first;
-	     ifa;
-	     ifa = ifa->ifa_link.tqe_next)
-#elif defined(__NetBSD__) || defined (__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first;
 	     ifa;
 	     ifa = ifa->ifa_list.tqe_next)
-#else
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#endif
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{
