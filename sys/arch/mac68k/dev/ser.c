@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.27 1995/08/11 03:00:15 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.28 1995/08/11 03:02:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -237,6 +237,7 @@ serinit(int running_interrupts)
 		}
 	}
 
+	initted++;
 	splx(s);
 }
 
