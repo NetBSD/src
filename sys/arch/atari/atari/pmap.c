@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1998/06/11 08:36:54 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1998/06/12 09:27:37 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -421,6 +421,9 @@ pmap_init()
 	struct pv_entry *pv;
 	char            *attr;
 	int		rv, bank;
+#ifdef M68060
+	struct kpt_page	*kptp;
+#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
