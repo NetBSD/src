@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.297 2005/01/19 12:01:52 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.297.2.1 2005/02/12 15:09:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2005/01/19 12:01:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297.2.1 2005/02/12 15:09:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -922,8 +922,7 @@ pgt_page_alloc(struct pool *pp, int flags)
 		return (NULL);
 
 	/* Allocate virtual memory */
-	va = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE,
-		UVM_KMF_VALLOC |
+	va = uvm_km_alloc(kmem_map, PAGE_SIZE, 0, UVM_KMF_VAONLY |
 		((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK));
 	if (va == 0) {
 		uvm_pagefree(pg);
@@ -960,7 +959,7 @@ pgt_page_free(struct pool *pp, void *v)
 	KASSERT(rv);
 	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	pmap_kremove(va, PAGE_SIZE);
-	uvm_km_free(kmem_map, va, PAGE_SIZE);
+	uvm_km_free(kmem_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 #endif /* SUN4M || SUN4D */
 
@@ -4019,7 +4018,7 @@ pmap_alloc_cpu(sc)
 	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
 
 	/* Allocate virtual memory */
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		panic("pmap_alloc_cpu: no memory");
 
