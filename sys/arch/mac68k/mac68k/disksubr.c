@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 1998/10/30 05:27:15 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 1998/10/30 06:48:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -95,6 +95,14 @@
 #define HFS_PART 4
 #define SCRATCH_PART 5
 
+#define	MBRSIGOFS	0x1fe
+#define	MBRSIG		0x55aa
+
+int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
+		    DOSPTYP_FAT16B, DOSPTYP_FAT32,
+		    DOSPTYP_FAT32L, DOSPTYP_FAT16L,
+		    -1 };
+
 static int getFreeLabelEntry __P((struct disklabel *));
 static int whichType __P((struct part_map_entry *));
 static void fixPartTable __P((struct part_map_entry *, long, char *, int *));
@@ -106,6 +114,8 @@ static void setScratch __P((struct part_map_entry *, struct disklabel *, int));
 static int getNamedType
 __P((struct part_map_entry *, int, struct disklabel *, int, int, int *));
 static char *read_mac_label __P((dev_t, void (*)(struct buf *),
+		struct disklabel *, struct cpu_disklabel *));
+static char *read_dos_label __P((dev_t, void (*)(struct buf *),
 		struct disklabel *, struct cpu_disklabel *));
 
 /*
@@ -458,6 +468,73 @@ done:
 	return msg;
 }
 
+/* Read MS-DOS partition table.
+ *
+ * XXX -
+ * Since FFS is endian sensitive, we pay no effort in attempting to
+ * dig up *BSD/i386 disk labels that may be present on the disk.
+ * Hence anything but DOS partitions is treated as unknown FS type, but
+ * this should suffice to mount_msdos Zip and other removable media.
+ */
+static char *
+read_dos_label(dev, strat, lp, osdep)
+	dev_t dev;
+	void (*strat)(struct buf *);
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+{
+	struct dos_partition *dp;
+	struct partition *pp;
+	struct buf *bp;
+	char *msg = NULL;
+	int i, *ip, slot, maxslot = 0;
+
+	/* get a buffer and initialize it */
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+
+	/* read master boot record */
+	bp->b_blkno = DOSBBSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
+
+	/* if successful, wander through dos partition table */
+	if (biowait(bp)) {
+		msg = "dos partition I/O error";
+		goto done;
+	} else {
+		/* XXX */
+		dp = (struct dos_partition *)(bp->b_data + DOSPARTOFF);
+		for (i = 0; i < NDOSPART; i++, dp++) {
+			if (dp->dp_typ != 0) {
+				slot = getFreeLabelEntry(lp);
+				if (slot > maxslot)
+					maxslot = slot;
+
+				pp = &lp->d_partitions[slot];
+				pp->p_fstype = FS_OTHER;
+				pp->p_offset = bswap32(dp->dp_start);
+				pp->p_size = bswap32(dp->dp_size);
+
+				for (ip = fat_types; *ip != -1; ip++) {
+					if (dp->dp_typ == *ip) {
+						pp->p_fstype = FS_MSDOS;
+						break;
+					}
+				}
+			}
+		}
+	}
+	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
+
+ done:
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+	return (msg);
+}
+
 /*
  * Attempt to read a disk label from a device using the indicated stategy
  * routine.  The label must be partly set up before this: secpercyl and
@@ -505,6 +582,8 @@ readdisklabel(dev, strat, lp, osdep)
 		sbSigp = (u_int16_t *)bp->b_un.b_addr;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
+		} else if (*(u_int16_t *)(bp->b_data + MBRSIGOFS) == MBRSIG) {
+			msg = read_dos_label(dev, strat, lp, osdep);
 		} else {
 			dlp = (struct disklabel *)(bp->b_un.b_addr + 0);
 			if (dlp->d_magic == DISKMAGIC) {
