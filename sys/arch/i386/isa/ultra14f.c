@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.17 1994/01/03 23:53:37 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.18 1994/01/21 06:26:00 glass Exp $
  */
  
 #include <sys/types.h>
@@ -633,7 +633,7 @@ struct mscp *mscp;
 	* one to come free, starting with queued entries*
 	\***********************************************/
 	if (!mscp->next) {
-		wakeup(&uha_data[unit].free_mscp);
+		wakeup((caddr_t) &uha_data[unit].free_mscp);
 	}
 	if (!(flags & SCSI_NOMASK)) 
 		splx(opri);
@@ -658,7 +658,7 @@ uha_get_mscp(unit,flags)
 	\***********************************************/
 	while ((!(rc = uha_data[unit].free_mscp)) && (!(flags & SCSI_NOSLEEP)))
 	{
-		sleep(&uha_data[unit].free_mscp, PRIBIO);
+		sleep((caddr_t) &uha_data[unit].free_mscp, PRIBIO);
 	}
 	if (rc) 
 	{
