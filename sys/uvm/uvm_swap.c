@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.48 2001/05/09 19:21:02 fvdl Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.49 2001/05/09 23:20:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -177,27 +177,27 @@ struct vndbuf {
 /*
  * We keep a of pool vndbuf's and vndxfer structures.
  */
-struct pool *vndxfer_pool;
-struct pool *vndbuf_pool;
+static struct pool vndxfer_pool;
+static struct pool vndbuf_pool;
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
-	vnx = pool_get(vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vnx = pool_get(&vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
 	splx(s);							\
 } while (0)
 
 #define putvndxfer(vnx) {						\
-	pool_put(vndxfer_pool, (void *)(vnx));				\
+	pool_put(&vndxfer_pool, (void *)(vnx));				\
 }
 
 #define	getvndbuf(vbp)	do {						\
 	int s = splbio();						\
-	vbp = pool_get(vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vbp = pool_get(&vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
 	splx(s);							\
 } while (0)
 
 #define putvndbuf(vbp) {						\
-	pool_put(vndbuf_pool, (void *)(vbp));				\
+	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
 
 /* /dev/drum */
@@ -276,17 +276,12 @@ uvm_swap_init()
 	 * allocate pools for structures used for swapping to files.
 	 */
 
-	vndxfer_pool =
-		pool_create(sizeof(struct vndxfer), 0, 0, 0, "swp vnx", 0,
-			    NULL, NULL, 0);
-	if (vndxfer_pool == NULL)
-		panic("swapinit: pool_create failed");
+	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0,
+	    "swp vnx", 0, NULL, NULL, 0);
 
-	vndbuf_pool =
-		pool_create(sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
-			    NULL, NULL, 0);
-	if (vndbuf_pool == NULL)
-		panic("swapinit: pool_create failed");
+	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0,
+	    "swp vnd", 0, NULL, NULL, 0);
+
 	/*
 	 * done!
 	 */
