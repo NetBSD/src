@@ -1,11 +1,11 @@
-/*	$NetBSD: mach_exec.c,v 1.21 2002/12/31 15:47:37 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.22 2003/01/01 15:18:25 manu Exp $	 */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.21 2002/12/31 15:47:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.22 2003/01/01 15:18:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,30 +122,27 @@ exec_mach_copyargs(p, pack, arginfo, stackp, argp)
 	void *argp;
 {
 	struct exec_macho_emul_arg *emea;
+	struct exec_macho_object_header *macho_hdr;
 	size_t len;
 	size_t zero = 0;
-	int pagelen = PAGE_SIZE;
 	int error;
 	
-	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
-	
-	*stackp -= 16;
+	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
-	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0) {
-		DPRINTF(("mach: copyout pagelen failed\n"));
+	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
+	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
+	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0) 
 		return error;
-	}
-	*stackp += sizeof(pagelen);
+	
+	*stackp += sizeof(macho_hdr);
 
 	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
 		return error;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
-		DPRINTF(("mach: copyout first zero failed\n"));
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0)
 		return error;
-	}
 	*stackp += sizeof(zero);
 
 	if ((error = copyoutstr(emea->filename, 
@@ -161,17 +158,13 @@ exec_mach_copyargs(p, pack, arginfo, stackp, argp)
 
 	len = len % sizeof(zero);
 	if (len) {
-		if ((error = copyout(&zero, *stackp, len)) != 0) {
-			DPRINTF(("mach: zero align %d failed\n", len));
+		if ((error = copyout(&zero, *stackp, len)) != 0) 
 			return error;
-		}
 		*stackp += len;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
-		DPRINTF(("mach: copyout second zero failed\n"));
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) 
 		return error;
-	}
 	*stackp += sizeof(zero);
 
 	return 0;
