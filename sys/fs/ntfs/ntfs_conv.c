@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.2 2004/11/15 17:18:12 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.3 2004/11/21 16:29:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,12 +35,10 @@
 
 /*
  * File name recode stuff.
- *
- * The utf-8 routines were derived from src/lib/libc/locale/utf2.c.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.2 2004/11/15 17:18:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.3 2004/11/21 16:29:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,11 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.2 2004/11/15 17:18:12 jdolecek Exp $
 #include <fs/ntfs/ntfs_ihash.h>
 
 /* UTF-8 encoding stuff */
-
-static const int _utf_count[16] = {
-        1, 1, 1, 1, 1, 1, 1, 1,
-        0, 0, 0, 0, 2, 2, 3, 0,
-};
+#include <fs/unicode.h>
 
 /*
  * Read one wide character off the string, shift the string pointer
@@ -82,36 +76,7 @@ static const int _utf_count[16] = {
 wchar
 ntfs_utf8_wget(const char **str)
 {
-	int c;
-	wchar rune = 0;
-	const char *s = *str;
-
-	c = _utf_count[(s[0] >> 4) & 0xf];
-	if (c == 0) {
-		c = 1;
-		goto encoding_error;
-	}
-
-	switch (c) {
-	case 1:
-		rune = s[0] & 0xff;
-		break;
-	case 2:
-		if ((s[1] & 0xc0) != 0x80)
-			goto encoding_error;
-		rune = ((s[0] & 0x1F) << 6) | (s[1] & 0x3F);
-		break;
-	case 3:
-		if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80)
-			goto encoding_error;
-		rune = ((s[0] & 0x1F) << 12) | ((s[1] & 0x3F) << 6)
-		    | (s[2] & 0x3F);
-		break;
-	}
-
-encoding_error:
-	*str = *str + c;
-	return rune;
+	return (wchar) wget_utf8(str);
 }
 
 /*
@@ -122,39 +87,7 @@ encoding_error:
 int
 ntfs_utf8_wput(char *s, size_t n, wchar wc)
 {
-        if (wc & 0xf800) {
-                if (n < 3) {
-                        /* bound check failure */
-			ddprintf(("ntfs_utf8_wput: need 3 bytes\n"));
-                        return 0;
-                }
-
-                s[0] = 0xE0 | ((wc >> 12) & 0x0F);
-                s[1] = 0x80 | ((wc >> 6) & 0x3F);
-                s[2] = 0x80 | ((wc) & 0x3F);
-                return 3;
-        } else {
-                if (wc & 0x0780) {
-                        if (n < 2) {
-                                /* bound check failure */
-				ddprintf(("ntfs_utf8_wput: need 2 bytes\n"));
-                                return 0;
-                        }
-
-                        s[0] = 0xC0 | ((wc >> 6) & 0x1F);
-                        s[1] = 0x80 | ((wc) & 0x3F);
-                        return 2;
-                } else {
-                        if (n < 1) {
-                                /* bound check failure */
-				ddprintf(("ntfs_utf8_wput: need 1 byte\n"));
-                                return 0;
-                        }
-
-                        s[0] = wc;
-                        return 1;
-                }
-        }
+	return wput_utf8(s, n, (u_int16_t) wc);
 }
 
 /*
