@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.241 2003/11/13 05:56:30 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.242 2003/12/07 12:56:45 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -136,6 +136,15 @@ APICFLAGS?= -k
 # XXX libraries often need the millicode functions in libgcc.a,
 # so we have to work around the -nostdlib:
 LDADD+= -L${_GCC_LIBGCCDIR} -lgcc_pic
+
+.elif ${MACHINE_ARCH} == "ns32k"
+
+# XXX no shared libraries yet on ns32k
+FPICFLAGS?=
+CPICFLAGS?=
+CPPPICFLAGS?=
+CAPICFLAGS?=
+APICFLAGS?=
 
 .else
 
