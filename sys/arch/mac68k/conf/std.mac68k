@@ -6,6 +6,7 @@ machine	mac68k m68k
 mainbus0 at root
 
 nubus0	at mainbus0
+ite0	at mainbus0
 adb0	at mainbus0
 
 ser0	at mainbus0
