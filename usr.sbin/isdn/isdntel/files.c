@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: files.c,v 1.4 2003/10/06 09:43:27 itojun Exp $ 
+ *      $Id: files.c,v 1.5 2004/10/30 08:31:39 dsl Exp $ 
  *
  * $FreeBSD$
  *
@@ -112,7 +112,7 @@ fill_list(void)
 
 	for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp))
 	{
-		if (!isdigit(*(dp->d_name)))
+		if (!isdigit((unsigned char)*(dp->d_name)))
 			continue;
 
 		if ((new_entry = (struct onefile *) malloc(sizeof(struct onefile))) == NULL)
