@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.7 2002/02/04 23:59:49 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.8 2002/02/06 19:48:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -487,17 +487,18 @@ lwp_exit(struct lwp *l)
 		exit1(l, 0); 
 	}
 
-	if (l->l_flag & L_SA) {
+	if ((l->l_flag & L_SA) && ((p->p_flag & P_WEXIT) == 0)) {
 		/* Recycle, don't exit */
 		SCHED_LOCK(s);
 		p->p_nrlwps--;
 		sa_putcachelwp(p, l);
 		mi_switch(l, NULL);
-		/* NOTREACHED; this LWP shouldn't be run again unless
-                 * cpu_setfunc() has been called on it. 
+		/* This isn't quite a NOTREACHED; we may get here
+		 * if the process exits before this LWP is reused. In
+		 * that case, we want to run lwp_exit()... conveniently,
+		 * we're already there!
 		 */
-		panic("lwp_exit: %d.%d returned from the dead!", p->p_pid, 
-		    l->l_lid);
+		KDASSERT(p->p_flag & P_WEXIT);
 	}
 
 	s = proclist_lock_write();
