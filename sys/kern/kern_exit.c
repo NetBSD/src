@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.76 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.77 2000/05/08 19:06:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -239,7 +239,6 @@ exit1(p, rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
-	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	(void)acct_process(p);
 #ifdef KTRACE
 	/* 
@@ -327,6 +326,7 @@ exit1(p, rv)
 	 */
 	curproc = NULL;
 	limfree(p->p_limit);
+	p->p_limit = NULL;
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
