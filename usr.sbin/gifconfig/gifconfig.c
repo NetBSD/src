@@ -1,4 +1,4 @@
-/*	$NetBSD: gifconfig.c,v 1.5 1999/12/09 15:30:43 itojun Exp $	*/
+/*	$NetBSD: gifconfig.c,v 1.6 2000/01/22 10:16:23 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -95,7 +95,6 @@ int	mtu;
 int	setpsrc = 0;
 int	s;
 kvm_t	*kvmd;
-extern	int errno;
 
 #ifdef INET6
 char ntop_buf[INET6_ADDRSTRLEN];	/*inet_ntop()*/
@@ -686,8 +685,6 @@ void
 Perror(cmd)
 	char *cmd;
 {
-	extern int errno;
-
 	switch (errno) {
 
 	case ENXIO:
