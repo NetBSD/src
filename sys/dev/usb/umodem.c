@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.23 2000/02/29 21:37:01 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.24 2000/03/15 22:40:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ umodem_ioctl(addr, portno, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct umodem_softc *sc = addr;
-	int error;
+	int error = 0;
 
 	if (sc->sc_dying)
 		return (EIO);
