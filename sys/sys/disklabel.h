@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.21 1994/05/08 18:21:37 chopps Exp $
+ *	$Id: disklabel.h,v 1.22 1994/05/19 03:43:33 mycroft Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -366,25 +366,20 @@ struct cpu_disklabel {
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 
-#if defined(KERNEL)
-
+#ifdef KERNEL
 #ifdef i386
 int bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #endif
-
-void diskerr __P((struct buf *, char *, char *, int, int, struct disklabel *));
-void disksort __P((struct buf *, struct buf *));
-int dkcksum __P((struct disklabel *));
-
-int setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
-	struct cpu_disklabel *));
-
-char *readdisklabel __P((int, void (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-
-int writedisklabel __P((int, void (*)(), struct disklabel *,
-	struct cpu_disklabel *));
-
+void	 diskerr
+	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
+void	 disksort __P((struct buf *, struct buf *));
+u_int	 dkcksum __P((struct disklabel *));
+int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
+		struct cpu_disklabel *));
+char	*readdisklabel
+	    __P((int, void (*)(), struct disklabel *, struct cpu_disklabel *));
+int	 writedisklabel
+	    __P((int, void (*)(), struct disklabel *, struct cpu_disklabel *));
 #endif
 #endif /* LOCORE */
 
