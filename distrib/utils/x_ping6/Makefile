@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2001/08/20 12:19:46 martin Exp $
+# $NetBSD: Makefile,v 1.7 2001/10/05 01:17:32 jmc Exp $
 # Build ping6 without IPSEC
 
 SRCDIR= ${.CURDIR}/../../../sbin/ping6
@@ -8,7 +8,7 @@ MKMAN=	no
 CPPFLAGS+=-I${SRCDIR}
 CPPFLAGS+=-DINET6
 .if ${MACHINE_ARCH} != "sparc64"
-COPTS+= -Os
+DBG= -Os
 .endif
 LDSTATIC?=-static
 
