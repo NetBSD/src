@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.71 2001/09/10 04:24:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.72 2001/09/10 04:43:35 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -166,7 +166,7 @@ extern struct mbuf *m_copypack();
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
-int	tcp_cwm = 0;
+int	tcp_cwm = 1;
 int	tcp_cwm_burstsize = 4;
 
 static
