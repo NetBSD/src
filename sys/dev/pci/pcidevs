@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp $
+$NetBSD: pcidevs,v 1.170 1999/11/17 00:09:17 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -826,6 +826,7 @@ product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 
 /* Creative Labs products */
 product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
+product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
