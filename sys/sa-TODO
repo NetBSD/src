@@ -1,4 +1,4 @@
-#	$NetBSD: sa-TODO,v 1.1.2.34 2003/01/05 06:54:16 wdk Exp $
+#	$NetBSD: sa-TODO,v 1.1.2.35 2003/01/05 22:42:48 thorpej Exp $
 
 Things to do for scheduler activations/LWP code.
 
@@ -123,7 +123,7 @@ Platform status:
 
 - shark: GENERIC compiles, otherwise untested.
 
-- sparc: GENERIC compiles.  LWPs have worked.  Upcall trampoline not done.
+- sparc: GENERIC compiles.  LWPs have worked.  Needs verification.
 
 - sparc64: Works?
 
