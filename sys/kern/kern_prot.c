@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.49 1998/08/04 04:03:13 perry Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.50 1998/09/25 06:04:48 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -70,7 +70,7 @@ sys_getpid(p, v, retval)
 
 	*retval = p->p_pid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD)
+    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(alpha))
 	retval[1] = p->p_pptr->p_pid;
 #endif
 	return (0);
@@ -152,7 +152,7 @@ sys_getuid(p, v, retval)
 
 	*retval = p->p_cred->p_ruid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2) || \
-    defined(COMPAT_FREEBSD)
+    defined(COMPAT_FREEBSD) || (defined(COMPAT_LINUX) && defined(alpha))
 	retval[1] = p->p_ucred->cr_uid;
 #endif
 	return (0);
@@ -179,7 +179,8 @@ sys_getgid(p, v, retval)
 {
 
 	*retval = p->p_cred->p_rgid;
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD) || \
+    (defined(COMPAT_LINUX) && defined(alpha))
 	retval[1] = p->p_ucred->cr_gid;
 #endif
 	return (0);
