@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.5 2002/12/28 08:14:39 jmcneill Exp $ */
+/* $NetBSD: com_acpi.c,v 1.6 2002/12/28 10:19:06 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.5 2002/12/28 08:14:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.6 2002/12/28 10:19:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ static const char * const com_acpi_ids[] = {
 	"PNP0501",	/* 16550A-compatible COM port */
 	"PNP0510",	/* Generic IRDA-compatible device */
 	"PNP0511",	/* Generic IRDA-compatible device */
+	"IBM0071",	/* IBM ThinkPad IRDA device */
 	NULL
 };
 
