@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2000/06/01 00:49:52 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2000/06/01 15:38:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -79,7 +79,7 @@ void dumpconf __P((void));
 void isa_intr_init __P((void));
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device __P((char *name, struct device **devpp, int *partp));
+static void get_device __P((char *name));
 static void set_root_device __P((void));
 #endif
 
@@ -87,18 +87,13 @@ static void set_root_device __P((void));
 /* Decode a device name to a major and minor number */
 
 static void
-get_device(name, devpp, partp)
+get_device(name)
 	char *name;
-	struct device **devpp;
-	int *partp;
 {
 	int loop, unit, part;
 	char buf[32], *cp;
 	struct device *dv;
 
-	*devpp = NULL;
-	*partp = 0;
-    
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
@@ -122,8 +117,8 @@ get_device(name, devpp, partp)
 			for (dv = alldevs.tqh_first; dv != NULL;
 			    dv = dv->dv_list.tqe_next) {
 				if (strcmp(buf, dv->dv_xname) == 0) {
-					*devpp = dv;
-					*partp = part;
+					booted_device = dv;
+					booted_partition = part;
 					return;
 				}
 			}

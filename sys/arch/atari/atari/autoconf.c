@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2000/06/01 00:49:53 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2000/06/01 15:38:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -70,7 +70,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot(&booted_device, &booted_partition);
+	findroot();
 	setroot(booted_device, booted_partition);
 }
 
@@ -178,22 +178,12 @@ struct cfdriver *genericconf[] = {
 };
 
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-
-	/* Always partition `a'. */
-	*partp = 0;
 
 	if (boothowto & RB_ASKNAME)
 		return;		/* Don't bother looking */
@@ -231,9 +221,9 @@ findroot(devpp, partp)
 			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 			
-			pp = &dkp->dk_label->d_partitions[*partp];
+			pp = &dkp->dk_label->d_partitions[booted_partition];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
-				*devpp = devs[unit];
+				booted_device = devs[unit];
 				return;
 			}
 		}

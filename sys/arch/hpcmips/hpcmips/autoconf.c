@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2000/06/01 00:49:54 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2000/06/01 15:38:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2000/06/01 00:49:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2000/06/01 15:38:24 matt Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -76,7 +76,7 @@ struct device *booted_device;
 int booted_partition;
 
 static char booted_device_name[16];
-static void get_device __P((char *name, struct device **devpp, int *partp));
+static void get_device __P((char *name));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -106,7 +106,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	get_device(booted_device_name, &booted_device, &booted_partition);
+	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -122,17 +122,12 @@ makebootdev(cp)
 }
 
 static void
-get_device(name, devpp, partp)
+get_device(name)
 	char *name;
-	struct device **devpp;
-	int *partp;
 {
 	int loop, unit, part;
 	char buf[32], *cp;
 	struct device *dv;
-
-	*devpp = NULL;
-	*partp = 0;
 
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
@@ -157,8 +152,8 @@ get_device(name, devpp, partp)
 			for (dv = alldevs.tqh_first; dv != NULL;
 			    dv = dv->dv_list.tqe_next) {
 				if (strcmp(buf, dv->dv_xname) == 0) {
-					*devpp = dv;
-					*partp = part;
+					booted_device = dv;
+					booted_partition = part;
 					return;
 				}
 			}
