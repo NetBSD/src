@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.9 2001/06/14 20:32:44 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.10 2001/06/19 00:36:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -50,8 +50,10 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#ifdef __sparc__
 #include <machine/fbio.h>
 #include <machine/openpromio.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -67,12 +69,14 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* prototypes for the converters */
+#ifdef __sparc__
 static __inline void
 netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *, u_long);
 static __inline void
 netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *, u_long);
 static __inline void
 netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *, u_long);
+#endif
 static __inline void
 netbsd32_to_partinfo(struct netbsd32_partinfo *, struct partinfo *, u_long);
 static __inline void
@@ -88,12 +92,14 @@ netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *, struct sioc_vif_req *, 
 static __inline void
 netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *, struct sioc_sg_req *, u_long);
 
+#ifdef __sparc__
 static __inline void
 netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
 static __inline void
 netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
 static __inline void
 netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
+#endif
 static __inline void
 netbsd32_from_partinfo(struct partinfo *, struct netbsd32_partinfo *);
 static __inline void
@@ -110,6 +116,8 @@ static __inline void
 netbsd32_from_sioc_sg_req(struct sioc_sg_req *, struct netbsd32_sioc_sg_req *);
 
 /* convert to/from different structures */
+
+#ifdef __sparc__
 
 static __inline void
 netbsd32_to_fbcmap(s32p, p, cmd)
@@ -155,6 +163,7 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 	p->op_buflen = s32p->op_buflen;
 	p->op_buf = (char *)(u_long)s32p->op_buf;
 }
+#endif
 
 static __inline void
 netbsd32_to_partinfo(s32p, p, cmd)
@@ -264,6 +273,8 @@ netbsd32_to_sioc_sg_req(s32p, p, cmd)
  * handle ioctl conversions from sparc64 -> netbsd32
  */
 
+#ifdef __sparc__
+
 static __inline void
 netbsd32_from_fbcmap(p, s32p)
 	struct fbcmap *p;
@@ -311,6 +322,8 @@ netbsd32_from_opiocdesc(p, s32p)
 	s32p->op_buflen = p->op_buflen;
 	s32p->op_buf = (netbsd32_charp)(u_long)p->op_buf;
 }
+
+#endif
 
 static __inline void
 netbsd32_from_partinfo(p, s32p)
@@ -588,6 +601,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		*(int *)data32 = -*(int *)data32;
 		break;
 
+#ifdef __sparc__
 /*
  * Here are calls that need explicit conversion.
  */
@@ -607,6 +621,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(OPIOCSET, opiocdesc);
 	case OPIOCNEXTPROP32:
 		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
+#endif
 
 	case DIOCGPART32:
 		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);

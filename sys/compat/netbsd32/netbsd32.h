@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.18 2001/06/06 21:45:56 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.19 2001/06/19 00:36:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -436,7 +436,11 @@ struct netbsd32_stat {
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 	int64_t	  st_qspare[2];
-};
+}
+#ifdef __x86_64__
+__attribute__((packed))
+#endif
+;
 
 /* from <sys/timex.h> */
 typedef u_int32_t netbsd32_ntptimevalp_t;
@@ -529,7 +533,7 @@ typedef struct firm_event32 {
 #define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
-/* hook for coredump() */
+/* hook for coredump */
 extern	int coredump32(struct proc *, struct vnode *);
 
 /*

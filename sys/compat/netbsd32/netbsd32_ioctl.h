@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.4 2000/08/19 14:38:18 eeh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.5 2001/06/19 00:36:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -34,6 +34,7 @@
 #define	FBIOGINFO	_IOR('F', 2, struct fbinfo)
 #endif
 
+#ifdef __sparc__
 struct netbsd32_fbcmap {
 	int	index;		/* first element (0 origin) */
 	int	count;		/* number of elements */
@@ -74,6 +75,8 @@ struct netbsd32_opiocdesc {
 #define	OPIOCSET32	_IOW('O', 2, struct netbsd32_opiocdesc) /* set openprom field */
 #define	OPIOCNEXTPROP32	_IOWR('O', 3, struct netbsd32_opiocdesc) /* get next property */
 #endif
+
+#endif /* __sparc__ */
  
 /* from <sys/audioio.h> */
 #if 0
