@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.9 1998/09/13 13:49:29 christos Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.10 1999/02/12 01:38:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -705,8 +705,8 @@ bootp_extract(bootp, replylen, nd)
 			break;
 		    case TAG_HOST_NAME:
 			if (len >= sizeof(hostname)) {
-				printf("nfs_boot: host name >=%d bytes",
-				       sizeof(hostname));
+				printf("nfs_boot: host name >= %lu bytes",
+				       (u_long)sizeof(hostname));
 				break;
 			}
 			myname = p;
@@ -714,8 +714,8 @@ bootp_extract(bootp, replylen, nd)
 			break;
 		    case TAG_DOMAIN_NAME:
 			if (len >= sizeof(domainname)) {
-				printf("nfs_boot: domain name >=%d bytes",
-				       sizeof(domainname));
+				printf("nfs_boot: domain name >= %lu bytes",
+				       (u_long)sizeof(domainname));
 				break;
 			}
 			mydomain = p;
