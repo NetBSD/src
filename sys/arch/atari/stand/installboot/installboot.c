@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.15 2002/08/09 10:08:13 soren Exp $	*/
+/*	$NetBSD: installboot.c,v 1.16 2003/04/01 13:31:24 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -300,8 +300,8 @@ install_sd (devnm, label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (%u)\n", devnm,
-								    bbsec);
+			printf("Boot block installed on %s (%llu)\n", devnm,
+								      bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
 				err(EXIT_FAILURE, "%s", devnm);
@@ -369,8 +369,8 @@ install_wd (devnm, label)
 		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
 			err(EXIT_FAILURE, "%s", devnm);
 		if (verbose)
-			printf("Boot block installed on %s (%u)\n", devnm,
-								    bbsec);
+			printf("Boot block installed on %s (%llu)\n", devnm,
+								      bbsec);
 		if (xxb00t) {
 			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
 				err(EXIT_FAILURE, "%s", devnm);
