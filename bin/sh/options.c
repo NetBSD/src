@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)options.c	8.1 (Berkeley) 5/31/93";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include <unistd.h>
 
 char *arg0;			/* value of $0 */
 struct shparam shellparam;	/* current positional parameters */

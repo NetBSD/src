@@ -44,6 +44,7 @@ static char sccsid[] = "@(#)memalloc.c	8.1 (Berkeley) 5/31/93";
 #include "error.h"
 #include "machdep.h"
 #include "mystring.h"
+#include <unistd.h>
 
 /*
  * Like malloc, but returns an error when out of space.

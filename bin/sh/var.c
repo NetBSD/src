@@ -55,6 +55,7 @@ static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 5/31/93";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include <unistd.h>
 
 
 #define VTABSIZE 39

@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)cd.c	8.1 (Berkeley) 5/31/93";
 #include "mystring.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <errno.h>
 
 
