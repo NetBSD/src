@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.369 2001/09/10 11:05:03 fvdl Exp $
+#	$NetBSD: mi,v 1.370 2001/09/10 20:16:46 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3165,6 +3165,7 @@
 ./usr/share/man/cat9/pci_configure_bus.0	comp-sys-catman
 ./usr/share/man/cat9/pci_decompose_tag.0		comp-sys-catman
 ./usr/share/man/cat9/pci_devinfo.0		comp-sys-catman
+./usr/share/man/cat9/pci_find_device.0		comp-sys-catman
 ./usr/share/man/cat9/pci_findvendor.0		comp-sys-catman
 ./usr/share/man/cat9/pci_get_capability.0		comp-sys-catman
 ./usr/share/man/cat9/pci_intr.0		comp-sys-catman
@@ -5314,6 +5315,7 @@
 ./usr/share/man/man9/pci_configure_bus.9	comp-sys-man
 ./usr/share/man/man9/pci_decompose_tag.9		comp-sys-man
 ./usr/share/man/man9/pci_devinfo.9		comp-sys-man
+./usr/share/man/man9/pci_find_device.9		comp-sys-man
 ./usr/share/man/man9/pci_findvendor.9		comp-sys-man
 ./usr/share/man/man9/pci_get_capability.9		comp-sys-man
 ./usr/share/man/man9/pci_intr.9		comp-sys-man
