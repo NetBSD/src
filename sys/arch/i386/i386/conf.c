@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.110 1998/11/29 06:56:30 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.111 1998/12/08 15:52:32 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,6 +353,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 61: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 62: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 63: HIPPI (esh) raw device */
+	cdev_ugen_init(NUGEN,ugen),	/* 64: USB generic driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -458,6 +459,7 @@ static int chrtoblktbl[] = {
 	/* 61 */	NODEV,
 	/* 62 */	18,
 	/* 63 */	NODEV,
+	/* 64 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.206 1998/12/02 10:54:26 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.207 1998/12/08 15:52:32 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -451,29 +451,30 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ?
+uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*	at uhub? port ?
+ums*	at uhub? port ? configuration ? interface ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ?
+ukbd*	at uhub? port ? configuration ? interface ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ?
+uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
-ulpt*	at uhub? port ?
+ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
-#ugen*	at uhub? port ?
+ugen*	at uhub? port ? configuration ? interface ?
 
 # Audio Devices
 
 # PCI audio devices
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -497,7 +498,7 @@ opl*	at ess?
 opl*	at sb?
 
 # USB Audio devices
-#uaudio*	at uhub? port ?
+#uaudio*	at uhub? port ? configuration ? interface ?
 
 # Audio support
 audio*	at aria?
@@ -508,6 +509,7 @@ audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
 audio*	at sp?
+audio*	at sv?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
