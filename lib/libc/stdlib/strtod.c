@@ -1,8 +1,3 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strtod.c	5.1 (Berkeley) 11/13/92";*/
-static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -66,6 +61,7 @@ static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
  *	significant byte has the lowest address.
  * #define IEEE_MC68k for IEEE-arithmetic machines where the most
  *	significant byte has the lowest address.
+ * #define Long int on machines with 32-bit ints and 64-bit longs.
  * #define Sudden_Underflow for IEEE-format machines without gradual
  *	underflow (i.e., that flush to zero on underflow).
  * #define IBM for IBM mainframe-style floating-point arithmetic.
@@ -80,7 +76,7 @@ static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
  * #define ROUND_BIASED for IEEE-format with biased rounding.
  * #define Inaccurate_Divide for IEEE-format with correctly rounded
  *	products but inaccurate quotients, e.g., for Intel i860.
- * #define Just_16 to store 16 bits per 32-bit long when doing high-precision
+ * #define Just_16 to store 16 bits per 32-bit Long when doing high-precision
  *	integer arithmetic.  Whether this speeds things up or slows things
  *	down depends on the machine and the number being converted.
  * #define KR_headers for old-style C function headers.
@@ -88,6 +84,10 @@ static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
  *	define some or all of DBL_DIG, DBL_MAX_10_EXP, DBL_MAX_EXP,
  *	FLT_RADIX, FLT_ROUNDS, and DBL_MAX.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$Id: strtod.c,v 1.6 1993/11/10 01:58:57 jtc Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
 #define IEEE_8087
@@ -97,6 +97,10 @@ static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
 #endif
 #ifdef vax
 #define VAX
+#endif
+
+#ifndef Long
+#define Long long
 #endif
 
 #ifdef DEBUG
@@ -126,6 +130,7 @@ static char *rcsid = "$Id: strtod.c,v 1.5 1993/10/19 08:34:29 deraadt Exp $";
 #ifdef IEEE_8087
 #define IEEE_ARITHMETIC
 #endif
+
 #ifdef IEEE_ARITHMETIC
 #define DBL_DIG 15
 #define DBL_MAX_10_EXP 308
@@ -186,11 +191,11 @@ Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 #endif
 
 #ifdef IEEE_8087
-#define word0(x) ((unsigned long *)&x)[1]
-#define word1(x) ((unsigned long *)&x)[0]
+#define word0(x) ((unsigned Long *)&x)[1]
+#define word1(x) ((unsigned Long *)&x)[0]
 #else
-#define word0(x) ((unsigned long *)&x)[0]
-#define word1(x) ((unsigned long *)&x)[1]
+#define word0(x) ((unsigned Long *)&x)[0]
+#define word1(x) ((unsigned Long *)&x)[1]
 #endif
 
 /* The following definition of Storeinc is appropriate for MIPS processors.
@@ -313,10 +318,10 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #define Big1 0xffffffff
 
 #ifndef Just_16
-/* When Pack_32 is not defined, we store 16 bits per 32-bit long.
+/* When Pack_32 is not defined, we store 16 bits per 32-bit Long.
  * This makes some inner loops simpler and sometimes saves work
  * during multiplications, but it often seems to make things slightly
- * slower.  Hence the default is now to store 32 bits per long.
+ * slower.  Hence the default is now to store 32 bits per Long.
  */
 #ifndef Pack_32
 #define Pack_32
@@ -335,8 +340,8 @@ extern "C" char *dtoa(double d, int mode, int ndigits,
 Bigint {
 	struct Bigint *next;
 	int k, maxwds, sign, wds;
-	unsigned long x[1];
-};
+	unsigned Long x[1];
+	};
 
  typedef struct Bigint Bigint;
 
@@ -355,15 +360,16 @@ Balloc
 
 	if (rv = freelist[k]) {
 		freelist[k] = rv->next;
-	} else {
+		}
+	else {
 		x = 1 << k;
-		rv = (Bigint *)malloc(sizeof(Bigint) + (x-1)*sizeof(long));
+		rv = (Bigint *)malloc(sizeof(Bigint) + (x-1)*sizeof(Long));
 		rv->k = k;
 		rv->maxwds = x;
-	}
+		}
 	rv->sign = rv->wds = 0;
 	return rv;
-}
+	}
 
  static void
 Bfree
@@ -376,11 +382,11 @@ Bfree
 	if (v) {
 		v->next = freelist[v->k];
 		freelist[v->k] = v;
+		}
 	}
-}
 
 #define Bcopy(x,y) memcpy((char *)&x->sign, (char *)&y->sign, \
-y->wds*sizeof(long) + 2*sizeof(int))
+y->wds*sizeof(Long) + 2*sizeof(int))
 
  static Bigint *
 multadd
@@ -391,9 +397,9 @@ multadd
 #endif
 {
 	int i, wds;
-	unsigned long *x, y;
+	unsigned Long *x, y;
 #ifdef Pack_32
-	unsigned long xi, z;
+	unsigned Long xi, z;
 #endif
 	Bigint *b1;
 
@@ -412,7 +418,8 @@ multadd
 		a = (int)(y >> 16);
 		*x++ = y & 0xffff;
 #endif
-	} while (++i < wds);
+		}
+		while(++i < wds);
 	if (a) {
 		if (wds >= b->maxwds) {
 			b1 = Balloc(b->k+1);
@@ -422,24 +429,24 @@ multadd
 			}
 		b->x[wds++] = a;
 		b->wds = wds;
-	}
+		}
 	return b;
-}
+	}
 
  static Bigint *
 s2b
 #ifdef KR_headers
-	(s, nd0, nd, y9) CONST char *s; int nd0, nd; unsigned long y9;
+	(s, nd0, nd, y9) CONST char *s; int nd0, nd; unsigned Long y9;
 #else
-	(CONST char *s, int nd0, int nd, unsigned long y9)
+	(CONST char *s, int nd0, int nd, unsigned Long y9)
 #endif
 {
 	Bigint *b;
 	int i, k;
-	long x, y;
+	Long x, y;
 
 	x = (nd + 8) / 9;
-	for (k = 0, y = 1; x > y; y <<= 1, k++) ;
+	for(k = 0, y = 1; x > y; y <<= 1, k++) ;
 #ifdef Pack_32
 	b = Balloc(k);
 	b->x[0] = y9;
@@ -453,23 +460,23 @@ s2b
 	i = 9;
 	if (9 < nd0) {
 		s += 9;
-		do
-			b = multadd(b, 10, *s++ - '0');
-		while (++i < nd0);
+		do b = multadd(b, 10, *s++ - '0');
+			while(++i < nd0);
 		s++;
-	} else
+		}
+	else
 		s += 10;
-	for (; i < nd; i++)
+	for(; i < nd; i++)
 		b = multadd(b, 10, *s++ - '0');
 	return b;
-}
+	}
 
  static int
 hi0bits
 #ifdef KR_headers
-	(x) register unsigned long x;
+	(x) register unsigned Long x;
 #else
-	(register unsigned long x)
+	(register unsigned Long x)
 #endif
 {
 	register int k = 0;
@@ -477,37 +484,37 @@ hi0bits
 	if (!(x & 0xffff0000)) {
 		k = 16;
 		x <<= 16;
-	}
+		}
 	if (!(x & 0xff000000)) {
 		k += 8;
 		x <<= 8;
-	}
+		}
 	if (!(x & 0xf0000000)) {
 		k += 4;
 		x <<= 4;
-	}
+		}
 	if (!(x & 0xc0000000)) {
 		k += 2;
 		x <<= 2;
-	}
+		}
 	if (!(x & 0x80000000)) {
 		k++;
 		if (!(x & 0x40000000))
 			return 32;
-	}
+		}
 	return k;
-}
+	}
 
  static int
 lo0bits
 #ifdef KR_headers
-	(y) unsigned long *y;
+	(y) unsigned Long *y;
 #else
-	(unsigned long *y)
+	(unsigned Long *y)
 #endif
 {
 	register int k;
-	register unsigned long x = *y;
+	register unsigned Long x = *y;
 
 	if (x & 7) {
 		if (x & 1)
@@ -515,36 +522,36 @@ lo0bits
 		if (x & 2) {
 			*y = x >> 1;
 			return 1;
-		}
+			}
 		*y = x >> 2;
 		return 2;
-	}
+		}
 	k = 0;
 	if (!(x & 0xffff)) {
 		k = 16;
 		x >>= 16;
-	}
+		}
 	if (!(x & 0xff)) {
 		k += 8;
 		x >>= 8;
-	}
+		}
 	if (!(x & 0xf)) {
 		k += 4;
 		x >>= 4;
-	}
+		}
 	if (!(x & 0x3)) {
 		k += 2;
 		x >>= 2;
-	}
+		}
 	if (!(x & 1)) {
 		k++;
 		x >>= 1;
 		if (!x & 1)
 			return 32;
-	}
+		}
 	*y = x;
 	return k;
-}
+	}
 
  static Bigint *
 i2b
@@ -572,17 +579,17 @@ mult
 {
 	Bigint *c;
 	int k, wa, wb, wc;
-	unsigned long carry, y, z;
-	unsigned long *x, *xa, *xae, *xb, *xbe, *xc, *xc0;
+	unsigned Long carry, y, z;
+	unsigned Long *x, *xa, *xae, *xb, *xbe, *xc, *xc0;
 #ifdef Pack_32
-	unsigned long z2;
+	unsigned Long z2;
 #endif
 
 	if (a->wds < b->wds) {
 		c = a;
 		a = b;
 		b = c;
-	}
+		}
 	k = a->k;
 	wa = a->wds;
 	wb = b->wds;
@@ -590,7 +597,7 @@ mult
 	if (wc > a->maxwds)
 		k++;
 	c = Balloc(k);
-	for (x = c->x, xa = x + wc; x < xa; x++)
+	for(x = c->x, xa = x + wc; x < xa; x++)
 		*x = 0;
 	xa = a->x;
 	xae = xa + wa;
@@ -598,7 +605,7 @@ mult
 	xbe = xb + wb;
 	xc0 = c->x;
 #ifdef Pack_32
-	for (; xb < xbe; xb++, xc0++) {
+	for(; xb < xbe; xb++, xc0++) {
 		if (y = *xb & 0xffff) {
 			x = xa;
 			xc = xc0;
@@ -609,9 +616,10 @@ mult
 				z2 = (*x++ >> 16) * y + (*xc >> 16) + carry;
 				carry = z2 >> 16;
 				Storeinc(xc, z2, z);
-			} while (x < xae);
+				}
+				while(x < xae);
 			*xc = carry;
-		}
+			}
 		if (y = *xb >> 16) {
 			x = xa;
 			xc = xc0;
@@ -623,12 +631,13 @@ mult
 				Storeinc(xc, z, z2);
 				z2 = (*x++ >> 16) * y + (*xc & 0xffff) + carry;
 				carry = z2 >> 16;
-			} while (x < xae);
+				}
+				while(x < xae);
 			*xc = z2;
+			}
 		}
-	}
 #else
-	for (; xb < xbe; xc0++) {
+	for(; xb < xbe; xc0++) {
 		if (y = *xb++) {
 			x = xa;
 			xc = xc0;
@@ -637,15 +646,16 @@ mult
 				z = *x++ * y + *xc + carry;
 				carry = z >> 16;
 				*xc++ = z & 0xffff;
-			} while (x < xae);
+				}
+				while(x < xae);
 			*xc = carry;
+			}
 		}
-	}
 #endif
-	for (xc0 = c->x, xc = xc0 + wc; wc > 0 && !*--xc; --wc) ;
+	for(xc0 = c->x, xc = xc0 + wc; wc > 0 && !*--xc; --wc) ;
 	c->wds = wc;
 	return c;
-}
+	}
 
  static Bigint *p5s;
 
@@ -670,23 +680,23 @@ pow5mult
 		/* first time */
 		p5 = p5s = i2b(625);
 		p5->next = 0;
-	}
-	for (;;) {
+		}
+	for(;;) {
 		if (k & 1) {
 			b1 = mult(b, p5);
 			Bfree(b);
 			b = b1;
-		}
+			}
 		if (!(k >>= 1))
 			break;
 		if (!(p51 = p5->next)) {
 			p51 = p5->next = mult(p5,p5);
 			p51->next = 0;
-		}
+			}
 		p5 = p51;
-	}
+		}
 	return b;
-}
+	}
 
  static Bigint *
 lshift
@@ -698,7 +708,7 @@ lshift
 {
 	int i, k1, n, n1;
 	Bigint *b1;
-	unsigned long *x, *x1, *xe, z;
+	unsigned Long *x, *x1, *xe, z;
 
 #ifdef Pack_32
 	n = k >> 5;
@@ -707,11 +717,11 @@ lshift
 #endif
 	k1 = b->k;
 	n1 = n + b->wds + 1;
-	for (i = b->maxwds; n1 > i; i <<= 1)
+	for(i = b->maxwds; n1 > i; i <<= 1)
 		k1++;
 	b1 = Balloc(k1);
 	x1 = b1->x;
-	for (i = 0; i < n; i++)
+	for(i = 0; i < n; i++)
 		*x1++ = 0;
 	x = b->x;
 	xe = x + b->wds;
@@ -722,10 +732,11 @@ lshift
 		do {
 			*x1++ = *x << k | z;
 			z = *x++ >> k1;
-		} while (x < xe);
+			}
+			while(x < xe);
 		if (*x1 = z)
 			++n1;
-	}
+		}
 #else
 	if (k &= 0xf) {
 		k1 = 16 - k;
@@ -733,19 +744,19 @@ lshift
 		do {
 			*x1++ = *x << k  & 0xffff | z;
 			z = *x++ >> k1;
-		} while (x < xe);
+			}
+			while(x < xe);
 		if (*x1 = z)
 			++n1;
-	}
+		}
 #endif
-	else
-		do
-			*x1++ = *x++;
-		while (x < xe);
+	else do
+		*x1++ = *x++;
+		while(x < xe);
 	b1->wds = n1 - 1;
 	Bfree(b);
 	return b1;
-}
+	}
 
  static int
 cmp
@@ -755,7 +766,7 @@ cmp
 	(Bigint *a, Bigint *b)
 #endif
 {
-	unsigned long *xa, *xa0, *xb, *xb0;
+	unsigned Long *xa, *xa0, *xb, *xb0;
 	int i, j;
 
 	i = a->wds;
@@ -772,14 +783,14 @@ cmp
 	xa = xa0 + j;
 	xb0 = b->x;
 	xb = xb0 + j;
-	for (;;) {
+	for(;;) {
 		if (*--xa != *--xb)
 			return *xa < *xb ? -1 : 1;
 		if (xa <= xa0)
 			break;
-	}
+		}
 	return 0;
-}
+	}
 
  static Bigint *
 diff
@@ -791,10 +802,10 @@ diff
 {
 	Bigint *c;
 	int i, wa, wb;
-	long borrow, y;	/* We need signed shifts here. */
-	unsigned long *xa, *xae, *xb, *xbe, *xc;
+	Long borrow, y;	/* We need signed shifts here. */
+	unsigned Long *xa, *xae, *xb, *xbe, *xc;
 #ifdef Pack_32
-	long z;
+	Long z;
 #endif
 
 	i = cmp(a,b);
@@ -803,13 +814,14 @@ diff
 		c->wds = 1;
 		c->x[0] = 0;
 		return c;
-	}
+		}
 	if (i < 0) {
 		c = a;
 		a = b;
 		b = c;
 		i = 1;
-	} else
+		}
+	else
 		i = 0;
 	c = Balloc(a->k);
 	c->sign = i;
@@ -830,8 +842,9 @@ diff
 		borrow = z >> 16;
 		Sign_Extend(borrow, z);
 		Storeinc(xc, z, y);
-	} while (xb < xbe);
-	while (xa < xae) {
+		}
+		while(xb < xbe);
+	while(xa < xae) {
 		y = (*xa & 0xffff) + borrow;
 		borrow = y >> 16;
 		Sign_Extend(borrow, y);
@@ -839,26 +852,27 @@ diff
 		borrow = z >> 16;
 		Sign_Extend(borrow, z);
 		Storeinc(xc, z, y);
-	}
+		}
 #else
 	do {
 		y = *xa++ - *xb++ + borrow;
 		borrow = y >> 16;
 		Sign_Extend(borrow, y);
 		*xc++ = y & 0xffff;
-	} while (xb < xbe);
-	while (xa < xae) {
+		}
+		while(xb < xbe);
+	while(xa < xae) {
 		y = *xa++ + borrow;
 		borrow = y >> 16;
 		Sign_Extend(borrow, y);
 		*xc++ = y & 0xffff;
-	}
+		}
 #endif
-	while (!*--xc)
+	while(!*--xc)
 		wa--;
 	c->wds = wa;
 	return c;
-}
+	}
 
  static double
 ulp
@@ -868,7 +882,7 @@ ulp
 	(double x)
 #endif
 {
-	register long L;
+	register Long L;
 	double a;
 
 	L = (word0(x) & Exp_mask) - (P-1)*Exp_msk1;
@@ -881,20 +895,22 @@ ulp
 		word0(a) = L;
 		word1(a) = 0;
 #ifndef Sudden_Underflow
-	} else {
+		}
+	else {
 		L = -L >> Exp_shift;
 		if (L < Exp_shift) {
 			word0(a) = 0x80000 >> L;
 			word1(a) = 0;
-		} else {
+			}
+		else {
 			word0(a) = 0;
 			L -= Exp_shift;
 			word1(a) = L >= 31 ? 1 : 1 << 31 - L;
+			}
 		}
-	}
 #endif
 	return a;
-}
+	}
 
  static double
 b2d
@@ -904,11 +920,11 @@ b2d
 	(Bigint *a, int *e)
 #endif
 {
-	unsigned long *xa, *xa0, w, y, z;
+	unsigned Long *xa, *xa0, w, y, z;
 	int k;
 	double d;
 #ifdef VAX
-	unsigned long d0, d1;
+	unsigned Long d0, d1;
 #else
 #define d0 word0(d)
 #define d1 word1(d)
@@ -934,10 +950,11 @@ b2d
 		d0 = Exp_1 | y << k | z >> 32 - k;
 		y = xa > xa0 ? *--xa : 0;
 		d1 = z << k | y >> 32 - k;
-	} else {
+		}
+	else {
 		d0 = Exp_1 | y;
 		d1 = z;
-	}
+		}
 #else
 	if (k < Ebits + 16) {
 		z = xa > xa0 ? *--xa : 0;
@@ -946,7 +963,7 @@ b2d
 		y = xa > xa0 ? *--xa : 0;
 		d1 = z << k + 16 - Ebits | w << k - Ebits | y >> 16 + Ebits - k;
 		goto ret_d;
-	}
+		}
 	z = xa > xa0 ? *--xa : 0;
 	w = xa > xa0 ? *--xa : 0;
 	k -= Ebits + 16;
@@ -963,7 +980,7 @@ b2d
 #undef d1
 #endif
 	return d;
-}
+	}
 
  static Bigint *
 d2b
@@ -975,9 +992,9 @@ d2b
 {
 	Bigint *b;
 	int de, i, k;
-	unsigned long *x, y, z;
+	unsigned Long *x, y, z;
 #ifdef VAX
-	unsigned long d0, d1;
+	unsigned Long d0, d1;
 	d0 = word0(d) >> 16 | word0(d) << 16;
 	d1 = word1(d) >> 16 | word1(d) << 16;
 #else
@@ -1012,7 +1029,8 @@ d2b
 		else
 			x[0] = y;
 		i = b->wds = (x[1] = z) ? 2 : 1;
-	} else {
+		}
+	else {
 #ifdef DEBUG
 		if (!z)
 			Bug("Zero passed to d2b");
@@ -1021,7 +1039,7 @@ d2b
 		x[0] = z;
 		i = b->wds = 1;
 		k += 32;
-	}
+		}
 #else
 	if (y = d1) {
 		if (k = lo0bits(&y))
@@ -1030,21 +1048,23 @@ d2b
 				x[1] = z >> k - 16 & 0xffff;
 				x[2] = z >> k;
 				i = 2;
-			} else {
+				}
+			else {
 				x[0] = y & 0xffff;
 				x[1] = y >> 16 | z << 16 - k & 0xffff;
 				x[2] = z >> k & 0xffff;
 				x[3] = z >> k+16;
 				i = 3;
-			}
+				}
 		else {
 			x[0] = y & 0xffff;
 			x[1] = y >> 16;
 			x[2] = z & 0xffff;
 			x[3] = z >> 16;
 			i = 3;
+			}
 		}
-	} else {
+	else {
 #ifdef DEBUG
 		if (!z)
 			Bug("Zero passed to d2b");
@@ -1053,14 +1073,15 @@ d2b
 		if (k >= 16) {
 			x[0] = z;
 			i = 0;
-		} else {
+			}
+		else {
 			x[0] = z & 0xffff;
 			x[1] = z >> 16;
 			i = 1;
-		}
+			}
 		k += 32;
-	}
-	while (!x[i])
+		}
+	while(!x[i])
 		--i;
 	b->wds = i + 1;
 #endif
@@ -1075,17 +1096,18 @@ d2b
 		*bits = P - k;
 #endif
 #ifndef Sudden_Underflow
-	} else {
+		}
+	else {
 		*e = de - Bias - (P-1) + 1 + k;
 #ifdef Pack_32
 		*bits = 32*i - hi0bits(x[i-1]);
 #else
 		*bits = (i+2)*16 - hi0bits(x[i]);
 #endif
-	}
+		}
 #endif
 	return b;
-}
+	}
 #undef d0
 #undef d1
 
@@ -1112,22 +1134,23 @@ ratio
 		word0(da) += (k >> 2)*Exp_msk1;
 		if (k &= 3)
 			da *= 1 << k;
-	} else {
+		}
+	else {
 		k = -k;
 		word0(db) += (k >> 2)*Exp_msk1;
 		if (k &= 3)
 			db *= 1 << k;
-	}
+		}
 #else
 	if (k > 0)
 		word0(da) += k*Exp_msk1;
 	else {
 		k = -k;
 		word0(db) += k*Exp_msk1;
-	}
+		}
 #endif
 	return da / db;
-}
+	}
 
  static double
 tens[] = {
@@ -1168,12 +1191,12 @@ strtod
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
 	double aadj, aadj1, adj, rv, rv0;
-	long L;
-	unsigned long y, z;
+	Long L;
+	unsigned Long y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
 	sign = nz0 = nz = 0;
 	rv = 0.;
-	for (s = s00;;s++) switch(*s) {
+	for(s = s00;;s++) switch(*s) {
 		case '-':
 			sign = 1;
 			/* no break */
@@ -1193,17 +1216,17 @@ strtod
 			continue;
 		default:
 			goto break2;
-	}
+		}
  break2:
 	if (*s == '0') {
 		nz0 = 1;
-		while (*++s == '0') ;
+		while(*++s == '0') ;
 		if (!*s)
 			goto ret;
-	}
+		}
 	s0 = s;
 	y = z = 0;
-	for (nd = nf = 0; (c = *s) >= '0' && c <= '9'; nd++, s++)
+	for(nd = nf = 0; (c = *s) >= '0' && c <= '9'; nd++, s++)
 		if (nd < 9)
 			y = 10*y + c - '0';
 		else if (nd < 16)
@@ -1212,22 +1235,22 @@ strtod
 	if (c == '.') {
 		c = *++s;
 		if (!nd) {
-			for (; c == '0'; c = *++s)
+			for(; c == '0'; c = *++s)
 				nz++;
 			if (c > '0' && c <= '9') {
 				s0 = s;
 				nf += nz;
 				nz = 0;
 				goto have_dig;
-			}
+				}
 			goto dig_done;
-		}
-		for (; c >= '0' && c <= '9'; c = *++s) {
+			}
+		for(; c >= '0' && c <= '9'; c = *++s) {
  have_dig:
 			nz++;
 			if (c -= '0') {
 				nf += nz;
-				for (i = 1; i < nz; i++)
+				for(i = 1; i < nz; i++)
 					if (nd++ < 9)
 						y *= 10;
 					else if (nd <= DBL_DIG + 1)
@@ -1237,16 +1260,16 @@ strtod
 				else if (nd <= DBL_DIG + 1)
 					z = 10*z + c;
 				nz = 0;
+				}
 			}
 		}
-	}
  dig_done:
 	e = 0;
 	if (c == 'e' || c == 'E') {
 		if (!nd && !nz && !nz0) {
 			s = s00;
 			goto ret;
-		}
+			}
 		s00 = s;
 		esign = 0;
 		switch(c = *++s) {
@@ -1254,14 +1277,14 @@ strtod
 				esign = 1;
 			case '+':
 				c = *++s;
-		}
+			}
 		if (c >= '0' && c <= '9') {
-			while (c == '0')
+			while(c == '0')
 				c = *++s;
 			if (c > '0' && c <= '9') {
 				L = c - '0';
 				s1 = s;
-				while ((c = *++s) >= '0' && c <= '9')
+				while((c = *++s) >= '0' && c <= '9')
 					L = 10*L + c - '0';
 				if (s - s1 > 8 || L > 19999)
 					/* Avoid confusion from exponents
@@ -1272,16 +1295,18 @@ strtod
 					e = (int)L;
 				if (esign)
 					e = -e;
-			} else
+				}
+			else
 				e = 0;
-		} else
+			}
+		else
 			s = s00;
-	}
+		}
 	if (!nd) {
 		if (!nz && !nz0)
 			s = s00;
 		goto ret;
-	}
+		}
 	e1 = e -= nf;
 
 	/* Now we have nd0 digits, starting at s0, followed by a
@@ -1333,15 +1358,15 @@ strtod
 				/* rv = */ rounded_product(rv, tens[e]);
 #endif
 				goto ret;
+				}
 			}
-		}
 #ifndef Inaccurate_Divide
 		else if (e >= -Ten_pmax) {
 			/* rv = */ rounded_quotient(rv, tens[-e]);
 			goto ret;
-		}
+			}
 #endif
-	}
+		}
 	e1 += nd - k;
 
 	/* Get starting approximation = rv * 10**e1 */
@@ -1366,9 +1391,9 @@ strtod
 #endif
 #endif
 				goto ret;
-			}
+				}
 			if (e1 >>= 4) {
-				for (j = 0; e1 > 1; j++, e1 >>= 1)
+				for(j = 0; e1 > 1; j++, e1 >>= 1)
 					if (e1 & 1)
 						rv *= bigtens[j];
 			/* The last multiplication could overflow. */
@@ -1385,15 +1410,17 @@ strtod
 					}
 				else
 					word0(rv) += P*Exp_msk1;
+				}
+
 			}
 		}
-	} else if (e1 < 0) {
+	else if (e1 < 0) {
 		e1 = -e1;
 		if (i = e1 & 15)
 			rv /= tens[i];
 		if (e1 &= ~15) {
 			e1 >>= 4;
-			for (j = 0; e1 > 1; j++, e1 >>= 1)
+			for(j = 0; e1 > 1; j++, e1 >>= 1)
 				if (e1 & 1)
 					rv *= tinytens[j];
 			/* The last multiplication could underflow. */
@@ -1413,9 +1440,9 @@ strtod
 				/* The refinement below will clean
 				 * this approximation up.
 				 */
+				}
 			}
 		}
-	}
 
 	/* Now the hard part -- adjusting rv to the correct value.*/
 
@@ -1423,7 +1450,7 @@ strtod
 
 	bd0 = s2b(s0, nd0, nd, y);
 
-	for (;;) {
+	for(;;) {
 		bd = Balloc(bd0->k);
 		Bcopy(bd, bd0);
 		bb = d2b(rv, &bbe, &bbbits);	/* rv = bb * 2^bbe */
@@ -1432,10 +1459,11 @@ strtod
 		if (e >= 0) {
 			bb2 = bb5 = 0;
 			bd2 = bd5 = e;
-		} else {
+			}
+		else {
 			bb2 = bb5 = -e;
 			bd2 = bd5 = 0;
-		}
+			}
 		if (bbe >= 0)
 			bb2 += bbe;
 		else
@@ -1492,7 +1520,7 @@ strtod
 			if (cmp(delta, bs) > 0)
 				goto drop_down;
 			break;
-		}
+			}
 		if (i == 0) {
 			/* exactly half-way between */
 			if (dsign) {
@@ -1507,8 +1535,9 @@ strtod
 						;
 					word1(rv) = 0;
 					break;
+					}
 				}
-			} else if (!(word0(rv) & Bndry_mask) && !word1(rv)) {
+			else if (!(word0(rv) & Bndry_mask) && !word1(rv)) {
  drop_down:
 				/* boundary case -- decrement exponent */
 #ifdef Sudden_Underflow
@@ -1530,7 +1559,7 @@ strtod
 #else
 				break;
 #endif
-			}
+				}
 #ifndef ROUND_BIASED
 			if (!(word1(rv) & LSB))
 				break;
@@ -1544,10 +1573,10 @@ strtod
 				if (!rv)
 					goto undfl;
 #endif
-			}
+				}
 #endif
 			break;
-		}
+			}
 		if ((aadj = ratio(delta, bs)) <= 2.) {
 			if (dsign)
 				aadj = aadj1 = 1.;
@@ -1558,7 +1587,8 @@ strtod
 #endif
 				aadj = 1.;
 				aadj1 = -1.;
-			} else {
+				}
+			else {
 				/* special case -- power of FLT_RADIX to be */
 				/* rounded down... */
 
@@ -1567,8 +1597,9 @@ strtod
 				else
 					aadj *= 0.5;
 				aadj1 = -aadj;
+				}
 			}
-		} else {
+		else {
 			aadj *= 0.5;
 			aadj1 = dsign ? aadj : -aadj;
 #ifdef Check_FLT_ROUNDS
@@ -1579,12 +1610,12 @@ strtod
 				case 0: /* towards 0 */
 				case 3: /* towards -infinity */
 					aadj1 += 0.5;
-			}
+				}
 #else
 			if (FLT_ROUNDS == 0)
 				aadj1 += 0.5;
 #endif
-		}
+			}
 		y = word0(rv) & Exp_mask;
 
 		/* Check for overflow */
@@ -1601,9 +1632,11 @@ strtod
 				word0(rv) = Big0;
 				word1(rv) = Big1;
 				goto cont;
-			} else
+				}
+			else
 				word0(rv) += P*Exp_msk1;
-		} else {
+			}
+		else {
 #ifdef Sudden_Underflow
 			if ((word0(rv) & Exp_mask) <= P*Exp_msk1) {
 				rv0 = rv;
@@ -1615,19 +1648,21 @@ strtod
 #else
 				if ((word0(rv) & Exp_mask) <= P*Exp_msk1)
 #endif
-				{
+					{
 					if (word0(rv0) == Tiny0
 					 && word1(rv0) == Tiny1)
 						goto undfl;
 					word0(rv) = Tiny0;
 					word1(rv) = Tiny1;
 					goto cont;
-				} else
+					}
+				else
 					word0(rv) -= P*Exp_msk1;
-			} else {
+				}
+			else {
 				adj = aadj1 * ulp(rv);
 				rv += adj;
-			}
+				}
 #else
 			/* Compute adj so that the IEEE rounding rules will
 			 * correctly round rv + adj in some half-way cases.
@@ -1640,11 +1675,11 @@ strtod
 				aadj1 = (double)(int)(aadj + 0.5);
 				if (!dsign)
 					aadj1 = -aadj1;
-			}
+				}
 			adj = aadj1 * ulp(rv);
 			rv += adj;
 #endif
-		}
+			}
 		z = word0(rv) & Exp_mask;
 		if (y == z) {
 			/* Can we stop now? */
@@ -1654,15 +1689,16 @@ strtod
 			if (dsign || word1(rv) || word0(rv) & Bndry_mask) {
 				if (aadj < .4999999 || aadj > .5000001)
 					break;
-			} else if (aadj < .4999999/FLT_RADIX)
+				}
+			else if (aadj < .4999999/FLT_RADIX)
 				break;
-		}
+			}
  cont:
 		Bfree(bb);
 		Bfree(bd);
 		Bfree(bs);
 		Bfree(delta);
-	}
+		}
 	Bfree(bb);
 	Bfree(bd);
 	Bfree(bs);
@@ -1672,7 +1708,7 @@ strtod
 	if (se)
 		*se = (char *)s;
 	return sign ? -rv : rv;
-}
+	}
 
  static int
 quorem
@@ -1683,12 +1719,12 @@ quorem
 #endif
 {
 	int n;
-	long borrow, y;
-	unsigned long carry, q, ys;
-	unsigned long *bx, *bxe, *sx, *sxe;
+	Long borrow, y;
+	unsigned Long carry, q, ys;
+	unsigned Long *bx, *bxe, *sx, *sxe;
 #ifdef Pack_32
-	long z;
-	unsigned long si, zs;
+	Long z;
+	unsigned Long si, zs;
 #endif
 
 	n = S->wds;
@@ -1731,14 +1767,15 @@ quorem
 			Sign_Extend(borrow, y);
 			*bx++ = y & 0xffff;
 #endif
-		} while (sx <= sxe);
+			}
+			while(sx <= sxe);
 		if (!*bxe) {
 			bx = b->x;
-			while (--bxe > bx && !*bxe)
+			while(--bxe > bx && !*bxe)
 				--n;
 			b->wds = n;
+			}
 		}
-	}
 	if (cmp(b, S) >= 0) {
 		q++;
 		borrow = 0;
@@ -1766,17 +1803,18 @@ quorem
 			Sign_Extend(borrow, y);
 			*bx++ = y & 0xffff;
 #endif
-		} while (sx <= sxe);
+			}
+			while(sx <= sxe);
 		bx = b->x;
 		bxe = bx + n;
 		if (!*bxe) {
-			while (--bxe > bx && !*bxe)
+			while(--bxe > bx && !*bxe)
 				--n;
 			b->wds = n;
+			}
 		}
-	}
 	return q;
-}
+	}
 
 /* dtoa for IEEE arithmetic (dmg): convert double to ASCII string.
  *
@@ -1808,12 +1846,12 @@ quorem
  *	   guarantee that the floating-point calculation has given
  *	   the correctly rounded result.  For k requested digits and
  *	   "uniformly" distributed input, the probability is
- *	   something like 10^(k-15) that we must resort to the long
+ *	   something like 10^(k-15) that we must resort to the Long
  *	   calculation.
  */
 
-char *
-__dtoa
+ char *
+dtoa
 #ifdef KR_headers
 	(d, mode, ndigits, decpt, sign, rve)
 	double d; int mode, ndigits, *decpt, *sign; char **rve;
@@ -1858,10 +1896,10 @@ __dtoa
 	int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
 		j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
 		spec_case, try_quick;
-	long L;
+	Long L;
 #ifndef Sudden_Underflow
 	int denorm;
-	unsigned long x;
+	unsigned Long x;
 #endif
 	Bigint *b, *b1, *delta, *mlo, *mhi, *S;
 	double d2, ds, eps;
@@ -1874,13 +1912,13 @@ __dtoa
 		result->maxwds = 1 << result_k;
 		Bfree(result);
 		result = 0;
-	}
+		}
 
 	if (word0(d) & Sign_bit) {
 		/* set sign for everything, including 0's and NaNs */
 		*sign = 1;
 		word0(d) &= ~Sign_bit;	/* clear sign bit */
-	}
+		}
 	else
 		*sign = 0;
 
@@ -1890,7 +1928,7 @@ __dtoa
 #else
 	if (word0(d)  == 0x8000)
 #endif
-	{
+		{
 		/* Infinity or NaN */
 		*decpt = 9999;
 		s =
@@ -1905,7 +1943,7 @@ __dtoa
 #endif
 						s + 3;
 		return s;
-	}
+		}
 #endif
 #ifdef IBM
 	d += 0; /* normalize */
@@ -1916,7 +1954,7 @@ __dtoa
 		if (rve)
 			*rve = s + 1;
 		return s;
-	}
+		}
 
 	b = d2b(d, &be, &bbits);
 #ifdef Sudden_Underflow
@@ -1961,7 +1999,8 @@ __dtoa
 #endif
 #ifndef Sudden_Underflow
 		denorm = 0;
-	} else {
+		}
+	else {
 		/* d is denormalized */
 
 		i = bbits + be + (Bias + (P-1) - 1);
@@ -1971,7 +2010,7 @@ __dtoa
 		word0(d2) -= 31*Exp_msk1; /* adjust exponent */
 		i -= (Bias + (P-1) - 1) + 1;
 		denorm = 1;
-	}
+		}
 #endif
 	ds = (d2-1.5)*0.289529654602168 + 0.1760912590558 + i*0.301029995663981;
 	k = (int)ds;
@@ -1982,31 +2021,33 @@ __dtoa
 		if (d < tens[k])
 			k--;
 		k_check = 0;
-	}
+		}
 	j = bbits - i - 1;
 	if (j >= 0) {
 		b2 = 0;
 		s2 = j;
-	} else {
+		}
+	else {
 		b2 = -j;
 		s2 = 0;
-	}
+		}
 	if (k >= 0) {
 		b5 = 0;
 		s5 = k;
 		s2 += k;
-	} else {
+		}
+	else {
 		b2 -= k;
 		b5 = -k;
 		s5 = 0;
-	}
+		}
 	if (mode < 0 || mode > 9)
 		mode = 0;
 	try_quick = 1;
 	if (mode > 5) {
 		mode -= 4;
 		try_quick = 0;
-	}
+		}
 	leftright = 1;
 	switch(mode) {
 		case 0:
@@ -2032,9 +2073,9 @@ __dtoa
 			ilim1 = i - 1;
 			if (i <= 0)
 				i = 1;
-	}
-	j = sizeof(unsigned long);
-	for (result_k = 0; sizeof(Bigint) - sizeof(unsigned long) + j < i;
+		}
+	j = sizeof(unsigned Long);
+	for(result_k = 0; sizeof(Bigint) - sizeof(unsigned Long) + j <= i;
 		j <<= 1) result_k++;
 	result = Balloc(result_k);
 	s = s0 = (char *)result;
@@ -2056,21 +2097,22 @@ __dtoa
 				j &= Bletch - 1;
 				d /= bigtens[n_bigtens-1];
 				ieps++;
-			}
-			for (; j; j >>= 1, i++)
+				}
+			for(; j; j >>= 1, i++)
 				if (j & 1) {
 					ieps++;
 					ds *= bigtens[i];
-				}
+					}
 			d /= ds;
-		} else if (j1 = -k) {
+			}
+		else if (j1 = -k) {
 			d *= tens[j1 & 0xf];
-			for (j = j1 >> 4; j; j >>= 1, i++)
+			for(j = j1 >> 4; j; j >>= 1, i++)
 				if (j & 1) {
 					ieps++;
 					d *= bigtens[i];
-				}
-		}
+					}
+			}
 		if (k_check && d < 1. && ilim > 0) {
 			if (ilim1 <= 0)
 				goto fast_failed;
@@ -2078,7 +2120,7 @@ __dtoa
 			k--;
 			d *= 10.;
 			ieps++;
-		}
+			}
 		eps = ieps*d + 7.;
 		word0(eps) -= (P-1)*Exp_msk1;
 		if (ilim == 0) {
@@ -2089,14 +2131,14 @@ __dtoa
 			if (d < -eps)
 				goto no_digits;
 			goto fast_failed;
-		}
+			}
 #ifndef No_leftright
 		if (leftright) {
 			/* Use Steele & White method of only
 			 * generating digits needed.
 			 */
 			eps = 0.5/tens[ilim-1] - eps;
-			for (i = 0;;) {
+			for(i = 0;;) {
 				L = d;
 				d -= L;
 				*s++ = '0' + (int)L;
@@ -2108,12 +2150,13 @@ __dtoa
 					break;
 				eps *= 10.;
 				d *= 10.;
+				}
 			}
-		} else {
+		else {
 #endif
 			/* Generate ilim digits, then fix them up. */
 			eps *= tens[ilim-1];
-			for (i = 1;; i++, d *= 10.) {
+			for(i = 1;; i++, d *= 10.) {
 				L = d;
 				d -= L;
 				*s++ = '0' + (int)L;
@@ -2121,22 +2164,22 @@ __dtoa
 					if (d > 0.5 + eps)
 						goto bump_up;
 					else if (d < 0.5 - eps) {
-						while (*--s == '0');
+						while(*--s == '0');
 						s++;
 						goto ret1;
-					}
+						}
 					break;
+					}
 				}
-			}
 #ifndef No_leftright
-		}
+			}
 #endif
  fast_failed:
 		s = s0;
 		d = d2;
 		k = k0;
 		ilim = ilim0;
-	}
+		}
 
 	/* Do we have a "small" integer? */
 
@@ -2148,8 +2191,8 @@ __dtoa
 			if (ilim < 0 || d <= 5*ds)
 				goto no_digits;
 			goto one_digit;
-		}
-		for (i = 1;; i++) {
+			}
+		for(i = 1;; i++) {
 			L = d / ds;
 			d -= L*ds;
 #ifdef Check_FLT_ROUNDS
@@ -2157,28 +2200,28 @@ __dtoa
 			if (d < 0) {
 				L--;
 				d += ds;
-			}
+				}
 #endif
 			*s++ = '0' + (int)L;
 			if (i == ilim) {
 				d += d;
 				if (d > ds || d == ds && L & 1) {
  bump_up:
-					while (*--s == '9')
+					while(*--s == '9')
 						if (s == s0) {
 							k++;
 							*s = '0';
 							break;
-						}
+							}
 					++*s++;
-				}
+					}
 				break;
-			}
+				}
 			if (!(d *= 10.))
 				break;
-		}
+			}
 		goto ret1;
-	}
+		}
 
 	m2 = b2;
 	m5 = b5;
@@ -2194,7 +2237,8 @@ __dtoa
 #else
 				1 + P - bbits;
 #endif
-		} else {
+			}
+		else {
 			j = ilim - 1;
 			if (m5 >= j)
 				m5 -= j;
@@ -2202,22 +2246,22 @@ __dtoa
 				s5 += j -= m5;
 				b5 += j;
 				m5 = 0;
-			}
+				}
 			if ((i = ilim) < 0) {
 				m2 -= i;
 				i = 0;
+				}
 			}
-		}
 		b2 += i;
 		s2 += i;
 		mhi = i2b(1);
-	}
+		}
 	if (m2 > 0 && s2 > 0) {
 		i = m2 < s2 ? m2 : s2;
 		b2 -= i;
 		m2 -= i;
 		s2 -= i;
-	}
+		}
 	if (b5 > 0) {
 		if (leftright) {
 			if (m5 > 0) {
@@ -2228,9 +2272,10 @@ __dtoa
 				}
 			if (j = b5 - m5)
 				b = pow5mult(b, j);
-		} else
+			}
+		else
 			b = pow5mult(b, b5);
-	}
+		}
 	S = i2b(1);
 	if (s5 > 0)
 		S = pow5mult(S, s5);
@@ -2247,9 +2292,10 @@ __dtoa
 			b2 += Log2P;
 			s2 += Log2P;
 			spec_case = 1;
-		} else
+			}
+		else
 			spec_case = 0;
-	}
+		}
 
 	/* Arrange for convenient computation of quotients:
 	 * shift left if necessary so divisor has 4 leading 0 bits.
@@ -2270,12 +2316,13 @@ __dtoa
 		b2 += i;
 		m2 += i;
 		s2 += i;
-	} else if (i < 4) {
+		}
+	else if (i < 4) {
 		i += 28;
 		b2 += i;
 		m2 += i;
 		s2 += i;
-	}
+		}
 	if (b2 > 0)
 		b = lshift(b, b2);
 	if (s2 > 0)
@@ -2287,20 +2334,20 @@ __dtoa
 			if (leftright)
 				mhi = multadd(mhi, 10, 0);
 			ilim = ilim1;
+			}
 		}
-	}
 	if (ilim <= 0 && mode > 2) {
 		if (ilim < 0 || cmp(b,S = multadd(S,5,0)) <= 0) {
 			/* no digits, fcvt style */
  no_digits:
 			k = -1 - ndigits;
 			goto ret;
-		}
+			}
  one_digit:
 		*s++ = '1';
 		k++;
 		goto ret;
-	}
+		}
 	if (leftright) {
 		if (m2 > 0)
 			mhi = lshift(mhi, m2);
@@ -2314,9 +2361,9 @@ __dtoa
 			mhi = Balloc(mhi->k);
 			Bcopy(mhi, mlo);
 			mhi = lshift(mhi, Log2P);
-		}
+			}
 
-		for (i = 1;;i++) {
+		for(i = 1;;i++) {
 			dig = quorem(b,S) + '0';
 			/* Do we yet have the shortest decimal string
 			 * that will round to d?
@@ -2333,7 +2380,7 @@ __dtoa
 					dig++;
 				*s++ = dig;
 				goto ret;
-			}
+				}
 #endif
 			if (j < 0 || j == 0 && !mode
 #ifndef ROUND_BIASED
@@ -2346,19 +2393,19 @@ __dtoa
 					if ((j1 > 0 || j1 == 0 && dig & 1)
 					&& dig++ == '9')
 						goto round_9_up;
-				}
+					}
 				*s++ = dig;
 				goto ret;
-			}
+				}
 			if (j1 > 0) {
 				if (dig == '9') { /* possible if i == 1 */
  round_9_up:
 					*s++ = '9';
 					goto roundoff;
-				}
+					}
 				*s++ = dig + 1;
 				goto ret;
-			}
+				}
 			*s++ = dig;
 			if (i == ilim)
 				break;
@@ -2368,15 +2415,16 @@ __dtoa
 			else {
 				mlo = multadd(mlo, 10, 0);
 				mhi = multadd(mhi, 10, 0);
+				}
 			}
 		}
-	} else
-		for (i = 1;; i++) {
+	else
+		for(i = 1;; i++) {
 			*s++ = dig = quorem(b,S) + '0';
 			if (i >= ilim)
 				break;
 			b = multadd(b, 10, 0);
-		}
+			}
 
 	/* Round off last digit */
 
@@ -2384,30 +2432,27 @@ __dtoa
 	j = cmp(b, S);
 	if (j > 0 || j == 0 && dig & 1) {
  roundoff:
-		while (*--s == '9')
+		while(*--s == '9')
 			if (s == s0) {
 				k++;
 				*s++ = '1';
 				goto ret;
-			}
+				}
 		++*s++;
-	} else {
-		while (*--s == '0');
+		}
+	else {
+		while(*--s == '0');
 		s++;
-	}
+		}
  ret:
 	Bfree(S);
 	if (mhi) {
 		if (mlo && mlo != mhi)
 			Bfree(mlo);
 		Bfree(mhi);
-	}
+		}
  ret1:
 	Bfree(b);
-	if (s == s0) {	/* don't return empty string */
-		*s++ = '0';
-		k = 0;
-	}
 	*s = 0;
 	*decpt = k + 1;
 	if (rve)
