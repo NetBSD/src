@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.52 2000/05/13 20:50:14 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.53 2000/05/13 21:11:45 elric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.52 2000/05/13 20:50:14 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.53 2000/05/13 21:11:45 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,9 @@ __RCSID("$NetBSD: eval.c,v 1.52 2000/05/13 20:50:14 elric Exp $");
 #include <paths.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 /*
  * Evaluate a command.
