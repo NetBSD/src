@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.3 2000/12/20 01:05:22 cgd Exp $	*/
+/*	$NetBSD: setkey.c,v 1.4 2001/05/07 14:51:47 kleink Exp $	*/
 /*	$KAME: setkey.c,v 1.15 2000/08/31 06:09:27 sakane Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ main(ac, av)
 
 	if (ac == 1) Usage();
 
-	while ((c = getopt(ac, av, "acdf:hlvxDFP")) != EOF) {
+	while ((c = getopt(ac, av, "acdf:hlvxDFP")) != -1) {
 		switch (c) {
 		case 'c':
 			f_mode = MODE_SCRIPT;
