@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.6 2002/01/13 11:57:38 aymeric Exp $	*/
+/*	$NetBSD: exf.c,v 1.7 2002/02/09 19:33:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -187,7 +187,7 @@ file_init(sp, frp, rcv_name, flags)
 		/*
 		 * Don't try to create a temporary support file twice.
 		 */
-		if (frp->tname != NULL)
+		if (frp->tname != NULL && LF_ISSET(FS_OPENERR))
 			goto err;
 		if (opts_empty(sp, O_DIRECTORY, 0))
 			goto err;
