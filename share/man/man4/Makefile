@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2000/07/24 11:53:49 ad Exp $
+#	$NetBSD: Makefile,v 1.163 2000/07/25 21:02:56 pk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 \
@@ -6,9 +6,9 @@ MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 \
 	cd.4 ch.4 clcs.4 clnp.4 cltp.4 cmpci.4 cms.4 cnw.4 ddb.4 \
 	de.4 dpt.4 drum.4 eap.4 en.4 envsys.4 ep.4 esh.4 \
 	esis.4 eso.4 exphy.4 fd.4 fpa.4 fms.4 fxp.4 gre.4 icmp.4 \
-	icsphy.4 idp.4 ifmedia.4 inet.4 inphy.4 ioat.4 iophy.4 ip.4 \
-	ipip.4 ipkdb.4 iso.4 isp.4 lc.4 lkm.4 lo.4 lxtphy.4 \
-	mainbus.4 mbe.4 mca.4 md.4 mhzc.4 midi.4 mii.4 mpu.4 \
+	icsphy.4 idp.4 ifmedia.4 inet.4 inphy.4 intersil7170.4 ioat.4 \
+	iophy.4 ip.4 ipip.4 ipkdb.4 iso.4 isp.4 lc.4 lkm.4 lo.4 lxtphy.4 \
+	mainbus.4 mbe.4 mca.4 md.4 mhzc.4 midi.4 mii.4 mk48txx.4 mpu.4 \
 	mtio.4 ncr.4 ne.4 netintro.4 ns.4 nsip.4 \
 	nsphy.4 ntwoc.4 null.4 opl.4 options.4 pas.4 pcdisplay.4 \
 	pciide.4 pckbc.4 pckbd.4 pcppi.4 pcscp.4 pms.4 ppp.4 \
@@ -26,7 +26,7 @@ MAN+=	uaudio.4 ucom.4 uftdi.4 ugen.4 uhid.4 ukbd.4 ulpt.4 \
 	aue.4 cue.4 kue.4 upl.4 \
 	uhci.4 ohci.4
 
-# machine-independent buses
+# machine-independent busses
 MAN+=	eisa.4 isa.4 isapnp.4 pci.4 pcmcia.4
 
 # machine-independent PCI devices
