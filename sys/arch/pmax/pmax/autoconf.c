@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1995/05/04 19:48:46 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1995/08/02 07:19:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,8 +179,10 @@ configure()
 				 * can't disable the vertical retrace interrupt
 				 * and we might want to ignore it).
 				 */
+#ifdef DIAGNOSTIC
 				printf("autoenable %s pri %d\n",
 					drp->d_name, i);
+#endif
 				(*tc_enable_interrupt)(i, 1);
 				/*cp->pmax_alive = 1;*/ /*XXX*/
 			}
