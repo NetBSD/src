@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.1 1999/05/01 02:57:09 cgd Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.2 1999/05/01 04:47:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -163,9 +163,6 @@ const struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
     {	0								}
 };
 
-#define	bsd2osf_dev(dev)	osf1_makedev(major(dev), minor(dev))
-#define	osf2bsd_dev(dev)	makedev(osf1_major(dev), osf1_minor(dev))
-
 /*
  * Convert from a stat structure to an osf1 stat structure.
  */
@@ -175,13 +172,13 @@ osf1_cvt_stat_from_native(st, ost)
 	struct osf1_stat *ost;
 {
 
-	ost->st_dev = bsd2osf_dev(st->st_dev);
+	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode;
 	ost->st_nlink = st->st_nlink;
 	ost->st_uid = st->st_uid == -2 ? (u_int16_t) -2 : st->st_uid;
 	ost->st_gid = st->st_gid == -2 ? (u_int16_t) -2 : st->st_gid;
-	ost->st_rdev = bsd2osf_dev(st->st_rdev);
+	ost->st_rdev = osf1_cvt_dev_from_native(st->st_rdev);
 	ost->st_size = st->st_size;
 	ost->st_atime_sec = st->st_atime;
 	ost->st_spare1 = 0;
