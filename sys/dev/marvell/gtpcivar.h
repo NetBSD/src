@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.3 2003/03/18 19:32:46 matt Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.4 2003/04/01 19:11:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,6 +45,7 @@
 struct gtpci_chipset {
 	struct pci_chipset gtpc_pc;
 	int gtpc_busno;
+	pcitag_t gtpc_self;
 	bus_space_tag_t gtpc_io_bs;
 	bus_space_tag_t gtpc_mem_bs;
 	bus_space_tag_t gtpc_gt_memt;
