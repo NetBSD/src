@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1999/08/16 02:49:20 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2000/10/18 17:23:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 1999/08/16 02:49:20 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2000/10/18 17:23:18 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,7 +459,7 @@ macro()
  * combo with lookup to speed things up.
  */
 ndptr
-inspect(tp) 
+inspect(tp)
 	char *tp;
 {
 	char c;
@@ -483,9 +483,9 @@ inspect(tp)
 }
 
 /*
- * initkwds - initialise m4 keywords as fast as possible. 
+ * initkwds - initialise m4 keywords as fast as possible.
  * This very similar to install, but without certain overheads,
- * such as calling lookup. Malloc is not used for storing the 
+ * such as calling lookup. Malloc is not used for storing the
  * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */

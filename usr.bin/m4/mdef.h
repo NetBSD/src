@@ -1,4 +1,4 @@
-/*	$NetBSD: mdef.h,v 1.8 1997/12/02 22:34:04 cgd Exp $	*/
+/*	$NetBSD: mdef.h,v 1.9 2000/10/18 17:23:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,13 +71,13 @@
 #define SYSVTYPE        31
 #define EXITTYPE        32
 #define DEFNTYPE        33
- 
+
 #define STATIC          128
 
 /*
  * m4 special characters
  */
- 
+
 #define ARGFLAG         '$'
 #define LPAREN          '('
 #define RPAREN          ')'
@@ -108,7 +108,7 @@
  
 #define ALL             1
 #define TOP             0
- 
+
 #define TRUE            1
 #define FALSE           0
 #define cycle           for(;;)
@@ -116,18 +116,18 @@
 /*
  * m4 data structures
  */
- 
+
 typedef struct ndblock *ndptr;
- 
+
 struct ndblock {                /* hastable structure         */
         char    *name;          /* entry name..               */
         char    *defn;          /* definition..               */
         int     type;           /* type of the entry..        */
         ndptr   nxtptr;         /* link to next entry..       */
 };
- 
+
 #define nil     ((ndptr) 0)
- 
+
 struct keyblk {
         char    *knam;          /* keyword name */
         int     ktyp;           /* keyword type */
@@ -147,9 +147,9 @@ typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
  *      pushf() - push a call frame entry onto stack
  *      pushs() - push a string pointer onto stack
  */
-#define gpbc() 	 (bp > bufbase) ? *--bp : getc(infile[ilevel])
-#define pushf(x) if (sp < STACKMAX) mstack[++sp].sfra = (x)
-#define pushs(x) if (sp < STACKMAX) mstack[++sp].sstr = (x)
+#define gpbc()		(bp > bufbase) ? *--bp : getc(infile[ilevel])
+#define pushf(x)	if (sp < STACKMAX) mstack[++sp].sfra = (x)
+#define pushs(x)	if (sp < STACKMAX) mstack[++sp].sstr = (x)
 
 /*
  *	    .				   .
