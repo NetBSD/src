@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/02/13 06:06:48 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2005/02/13 22:42:24 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,23 +18,11 @@ SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 WARNS=	1
 
 SSHDIST=	${NETBSDSRCDIR}/crypto/dist/ssh
-CPPFLAGS+=	-I${SSHDIST} -DHAVE_LOGIN_CAP
+CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
 
 LIBDPLIBS=	crypto	${.CURDIR}/../libcrypto \
 		z	${.CURDIR}/../libz
-
-.if (${USE_KERBEROS} != "no")
-CPPFLAGS+=	-DKRB5 -I${DESTDIR}/usr/include/krb5
-.if (${USE_KERBEROS4} != "no")
-SRCS+=		radix.c
-CPPFLAGS+=	-DKRB4 -DAFS -I${DESTDIR}/usr/include/kerberosIV
-LIBDPLIBS+=	krb	${.CURDIR}/../libkrb \
-		des	${.CURDIR}/../libdes
-.endif	# ${USE_KERBEROS4} != "no"
-LIBDPLIBS+=	com_err	${.CURDIR}/../libcom_err \
-		roken	${.CURDIR}/../libroken
-.endif	# ${USE_KERBEROS} != "no"
 
 .include <bsd.lib.mk>
