@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.188 2004/10/30 18:08:41 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.189 2004/11/26 17:55:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.188 2004/10/30 18:08:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.189 2004/11/26 17:55:41 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2954,7 +2954,7 @@ wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 		/*
 		 * XXX only supported on 3.x ?
 		 */
-		val[0] = BSCAN_BCAST | BSCAN_ONETIME;
+		val[0] = htole16(BSCAN_BCAST | BSCAN_ONETIME);
 		error = wi_write_rid(sc, WI_RID_BCAST_SCAN_REQ,
 		    val, sizeof(val[0]));
 		break;
