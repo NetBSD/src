@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.1 2003/03/01 13:01:56 pk Exp $	*/
+/*	$NetBSD: mmu.c,v 1.2 2003/06/27 21:27:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ int pmap_map4(vaddr_t va, paddr_t pa, psize_t size)
 		}
 	}
 	if (boothowto & AB_VERBOSE)
-		printf("\n", scookie);
+		printf("\n");
 	return (0);
 }
 
@@ -160,7 +160,7 @@ int pmap_map_srmmu(vaddr_t va, paddr_t pa, psize_t size)
 			printf("%d ", n);
 	}
 	if (boothowto & AB_VERBOSE)
-		printf("\n", scookie);
+		printf("\n");
 	return (0);
 }
 
