@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2002/07/05 13:32:07 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 2002/08/26 10:32:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -182,18 +182,14 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		panic("cpu_fork: curproc");
 #endif
 
-	/*
-	 * Save parent's FPU state, if necessary, so we have something
-	 * to copy to the child
-	 */
-	if (p1->p_md.md_flags & MDP_FPUSED) {
-		sh5_fpsave(p1->p_md.md_regs->tf_state.sf_usr,
-		    &p1->p_addr->u_pcb);
-		p1->p_md.md_flags |= MDP_FPSAVED;
+	if (p1 == curproc) {
+		p1->p_md.md_flags =
+		    sh5_savectx(p1->p_md.md_regs->tf_state.sf_usr,
+		    p1->p_md.md_flags, &p1->p_addr->u_pcb);
 	}
 
 	/* Child inherits parent's md_flags and pcb */
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_FPSAVED;
+	p2->p_md.md_flags = p1->p_md.md_flags;
 	memcpy(pcb, &p1->p_addr->u_pcb, sizeof(*pcb));
 
 	/* Setup the child's initial kernel stack.  */
@@ -207,7 +203,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * If the child is to have a different user-mode stack, fix it up now.
 	 */
 	if (stack != NULL)
-		tf->tf_caller.r15 = (register_t)(uintptr_t)stack + stacksize;
+		tf->tf_caller.r15 = (register_t)(intptr_t)stack + stacksize;
 
 	/*
 	 * Set the child's syscall return parameters to the values
@@ -220,10 +216,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	/*
 	 * Set up a switchframe which will vector through proc_trampoline
 	 */
-	pcb->pcb_ctx.sf_pc = (register_t)(uintptr_t)proc_trampoline;
-	pcb->pcb_ctx.sf_sp = (register_t)(uintptr_t)tf;
-	pcb->pcb_ctx.sf_regs.r10 = (register_t)(uintptr_t)func;
-	pcb->pcb_ctx.sf_regs.r11 = (register_t)(uintptr_t)arg;
+	pcb->pcb_ctx.sf_pc = (register_t)(intptr_t)proc_trampoline;
+	pcb->pcb_ctx.sf_sp = (register_t)(intptr_t)tf;
+	pcb->pcb_ctx.sf_regs.r10 = (register_t)(intptr_t)func;
+	pcb->pcb_ctx.sf_regs.r11 = (register_t)(intptr_t)arg;
 }
 
 /*
