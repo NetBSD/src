@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.70 1999/10/05 01:16:11 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.71 1999/10/05 13:05:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.70 1999/10/05 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.71 1999/10/05 13:05:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1287,27 +1287,24 @@ shell(argc, argv)
 	char *argv[];
 {
 	pid_t pid;
-	sig_t old1, old2;
+	sig_t old1;
 	char shellnam[MAXPATHLEN], *shell, *namep;
 	int wait_status;
 
 	old1 = xsignal(SIGINT, SIG_IGN);
-	old2 = xsignal(SIGQUIT, SIG_IGN);
 	if ((pid = fork()) == 0) {
 		for (pid = 3; pid < 20; pid++)
 			(void)close(pid);
 		(void)xsignal(SIGINT, SIG_DFL);
-		(void)xsignal(SIGQUIT, SIG_DFL);
 		shell = getenv("SHELL");
 		if (shell == NULL)
 			shell = _PATH_BSHELL;
 		namep = strrchr(shell, '/');
 		if (namep == NULL)
 			namep = shell;
-		shellnam[0] = '-';
-		(void)strlcpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
-		if (strcmp(namep, "sh") != 0)
-			shellnam[0] = '+';
+		else
+			namep++;
+		(void)strlcpy(shellnam, namep, sizeof(shellnam));
 		if (debug) {
 			fputs(shell, ttyout);
 			putc('\n', ttyout);
@@ -1326,7 +1323,6 @@ shell(argc, argv)
 		while (wait(&wait_status) != pid)
 			;
 	(void)xsignal(SIGINT, old1);
-	(void)xsignal(SIGQUIT, old2);
 	if (pid == -1) {
 		warn("Try again later");
 		code = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 1999/10/05 01:16:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.60 1999/10/05 13:05:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.59 1999/10/05 01:16:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.60 1999/10/05 13:05:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,7 @@ main(argc, argv)
 	el = NULL;
 	hist = NULL;
 #endif
+	bytes = 0;
 	mark = HASHBYTES;
 	rate_get = 0;
 	rate_get_incr = DEFAULTINCR;
@@ -399,9 +400,13 @@ main(argc, argv)
 		(void)strlcpy(home, "/", sizeof(home));
 
 	setttywidth(0);
-	(void)xsignal(SIGWINCH, setttywidth);
+#ifdef SIGINFO
+	(void)xsignal(SIGINFO, psummary);
+#endif
+	(void)xsignal(SIGQUIT, psummary);
 	(void)xsignal(SIGUSR1, crankrate);
 	(void)xsignal(SIGUSR2, crankrate);
+	(void)xsignal(SIGWINCH, setttywidth);
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&argc;
