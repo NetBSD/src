@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.51 1997/10/10 01:19:37 explorer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.52 1997/10/13 00:47:39 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -55,7 +55,10 @@
 #endif
 
 #if defined(__NetBSD__)
+#include "rnd.h"
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 #endif
 
 #include <net/if.h>
@@ -3603,7 +3606,9 @@ tulip_intr_handler(
     while ((csr = TULIP_CSR_READ(sc, csr_status)) & sc->tulip_intrmask) {
 #if defined(__NetBSD__) && !defined(TULIP_USE_SOFTINTR)
         if (only_once == 1) {
+#if NRND > 0
 	    rnd_add_uint32(&sc->tulip_rndsource, csr);
+#endif
 	    only_once = 0;
 	}
 #endif
@@ -3731,7 +3736,7 @@ tulip_hardintr_handler(
      */
     tulip_softintr_mask |= (1U << sc->tulip_unit);
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && NRND > 0
     /*
      * This isn't all that random (the value we feed in) but it is
      * better than a constant probably.  It isn't used in entropy
@@ -4607,7 +4612,7 @@ tulip_attach(
     TULIP_BPF_ATTACH(sc);
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && NRND > 0
     rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,
 		      RND_TYPE_NET);
 #endif

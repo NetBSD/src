@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.105 1997/10/10 01:09:03 explorer Exp $	*/
+/*	$NetBSD: cd.c,v 1.106 1997/10/13 00:47:49 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,8 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include "rnd.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +65,9 @@
 #include <sys/cdio.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_cd.h>
@@ -161,7 +165,9 @@ cdattach(parent, cd, sc_link, ops)
 
 	printf("\n");
 
+#if NRND > 0
 	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif
 }
 
 /*
@@ -576,7 +582,9 @@ cddone(xs)
 
 	if (xs->bp != NULL) {
 		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+#if NRND > 0
 		rnd_add_uint32(&cd->rnd_source, xs->bp->b_blkno);
+#endif
 	}
 }
 

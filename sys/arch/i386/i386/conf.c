@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.90 1997/10/09 23:59:15 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.91 1997/10/13 00:46:31 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -189,6 +189,8 @@ cdev_decl(apm);
 #include "satlink.h"
 cdev_decl(satlink);
 
+#include "rnd.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -241,7 +243,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 44: ip-filter device */
 	cdev_satlink_init(NSATLINK,satlink), /* 45: planetconnect satlink */
-	cdev_rnd_init(1,rnd),		/* 46: random source pseudo-device */
+	cdev_rnd_init(NRND,rnd),	/* 46: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.110 1997/10/10 01:49:12 explorer Exp $	*/
+/*	$NetBSD: fd.c,v 1.111 1997/10/13 00:46:34 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -57,6 +57,8 @@
  *  dufault@hda.com (Peter Dufault)
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -73,7 +75,9 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -212,7 +216,9 @@ struct fd_softc {
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
 
+#if NRND > 0
 	rndsource_element_t	rnd_source;
+#endif
 };
 
 /* floppy driver configuration */
@@ -503,7 +509,9 @@ fdattach(parent, self, aux)
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 
+#if NRND > 0
 	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif
 }
 
 /*
@@ -662,7 +670,9 @@ fdfinish(fd, bp)
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
 
+#if NRND > 0
 	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
+#endif
 
 	biodone(bp);
 	/* turn off motor 5s from now */

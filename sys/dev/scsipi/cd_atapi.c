@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.4 1997/10/10 01:09:06 explorer Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.5 1997/10/13 00:47:52 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -46,6 +46,8 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include "rnd.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +57,9 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <sys/cdio.h>
 

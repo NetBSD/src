@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.112 1997/10/10 01:17:26 explorer Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.113 1997/10/13 00:47:28 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -18,6 +18,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,7 +29,9 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#if NRND > 0
 #include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -118,7 +121,9 @@ struct ed_softc {
 
 	u_int8_t sc_enaddr[6];
 
+#if NRND > 0
 	rndsource_element_t rnd_source;
+#endif
 };
 
 int edprobe __P((struct device *, void *, void *));
@@ -1331,8 +1336,10 @@ edattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, edintr, sc);
 
+#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET);
+#endif
 }
 
 /*
@@ -2033,7 +2040,9 @@ edintr(arg)
 			(void) NIC_GET(iot, ioh, nicbase, ED_P0_CNTR2);
 		}
 
+#if NRND > 0
 		rnd_add_uint32(&sc->rnd_source, isr);
+#endif
 
 		isr = NIC_GET(iot, ioh, nicbase, ED_P0_ISR);
 		if (!isr)

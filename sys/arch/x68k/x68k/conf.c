@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1997/10/10 21:42:38 oki Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1997/10/13 00:47:08 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -180,6 +180,7 @@ cdev_decl(ch);
 #include "uk.h"
 cdev_decl(uk);
 #include "ipfilter.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -222,6 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 36: SCSI changer device */
 	cdev_ch_init(NUK,uk),		/* 37: SCSI unknown device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 38: IP filter device */
+	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -279,7 +281,9 @@ static int chrtoblktbl[] = {
 	/* 28 */	NODEV,		/* 29 */	NODEV,
 	/* 30 */	NODEV,		/* 31 */	NODEV,
 	/* 32 */	NODEV,		/* 33 */	NODEV,
-	/* 34 */	15,		/* 33 */	NODEV,
+	/* 34 */	15,		/* 35 */	NODEV,
+	/* 36 */	NODEV,		/* 37 */	NODEV,
+	/* 38 */	NODEV,		/* 39 */	NODEV,
 };
 
 /*
