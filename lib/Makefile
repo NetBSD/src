@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.66 2000/11/01 01:21:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.67 2000/11/04 15:35:43 itojun Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit \
-	libkvm libl libm libmenu libossaudio libpcap libposix \
+	libintl libkvm libl libm libmenu libossaudio libpcap libposix \
 	libresolv librmt librpcsvc libskey libterm libusb libutil libwrap \
 	liby libz
 
@@ -36,9 +36,5 @@ SUBDIR+=	libtelnet
 
 # IPv6/IPsec
 SUBDIR+=	libipsec
-
-.if (${MKNLS} != "no")
-SUBDIR+=	libintl
-.endif
 
 .include <bsd.subdir.mk>
