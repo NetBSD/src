@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.5 2004/03/20 14:16:32 dsl Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.6 2004/03/21 12:46:57 dsl Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -50,9 +50,15 @@ try_ffs()
 #ifdef DEBUG_WITH_STDIO
 		printf("FFS: sblk: pos %d magic 0x%x\n", btodb(*sbl), magic);
 #endif
-		if (*sbl != buf.sblk.fs_sblockloc)
-			/* must be an alternate suberblock */
-			continue;
+		if (buf.sblk.fs_old_flags & FS_FLAGS_UPDATED) {
+			if (*sbl != buf.sblk.fs_sblockloc)
+				/* must be an alternate suberblock */
+				continue;
+		} else {
+			if (*sbl == SBLOCK_UFS2)
+				/* might be an alternate suberblock */
+				continue;
+		}
 
 #ifdef USE_UFS1
 		if (magic == FS_UFS1_MAGIC)
