@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.5 2000/06/16 23:41:34 cgd Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.6 2000/06/28 17:13:04 mrg Exp $	*/
 
 #undef	TCICDEBUG
 
@@ -39,8 +39,6 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
