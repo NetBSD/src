@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.4 1996/02/22 22:44:58 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.5 1996/03/08 21:37:01 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -43,9 +43,6 @@
  * This file needs a lot of work. 
  *
  * Created      : 17/09/94
- * Last updated : 25/12/95
- *
- *    $Id: machdep.c,v 1.4 1996/02/22 22:44:58 mark Exp $
  */
 
 #include <sys/types.h>
@@ -104,8 +101,6 @@
 #define HALT_ACTION	ACTION_HALT | ACTION_KSHELL	/* boot(RB_HALT) */
 #define REBOOT_ACTION	ACTION_REBOOT			/* boot(0) */
 #define PANIC_ACTION	ACTION_HALT | ACTION_KSHELL	/* panic() */
-
-extern int boothowto;
 
 BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
@@ -167,8 +162,6 @@ extern char *kstack;
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 extern u_int undefined_handler_address;
-
-volatile int undefined_test;
 
 extern int pmap_debug_level;
 
@@ -246,6 +239,8 @@ void pmap_debug	__P((int /*level*/));
 void dumpsys	__P((void));
 void hydrastop	__P((void));
 
+void vtbugreport __P((void));
+
 /*
  * Debug function just to park the CPU
  *
@@ -275,8 +270,6 @@ halt()
 
 /* NOTE: These variables will be removed, well some of them */
 
-extern int kbdinited;
-extern int rawkbd_device;
 extern u_int spl_mask;
 extern u_int current_mask;
 struct pcb dumppcb;
@@ -295,11 +288,11 @@ boot(howto)
 	if (curproc == NULL)
 		printf("curproc = 0 - must have been in cpu_idle()\n");
 
-	if (panicstr)
-		printf("ioctlconsolebug=%d %08x\n", ioctlconsolebug, ioctlconsolebug);
+/*	if (panicstr)
+		printf("ioctlconsolebug=%d %08x\n", ioctlconsolebug, ioctlconsolebug);*/
 
-	if (curpcb)
-		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);
+/*	if (curpcb)
+		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
 
 #if NHYDRABUS > 0
 /*
@@ -315,14 +308,32 @@ boot(howto)
 
 	printf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
 
+	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
             irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
             irqmasks[IPL_CLOCK], irqmasks[IPL_IMP]);
+
+	dump_spl_masks();
+
+/*	vtbugreport();*/
 
 /* Did we encounter the ARM700 bug we discovered ? */
 
 	if (arm700bugcount > 0)
 		printf("ARM700 PREFETCH/SWI bug count = %d\n", arm700bugcount);
+
+/* Disable console buffering */
+
+	cnpollc(1);
+
+/* If we are still cold then hit the air brakes */
+
+	if (cold) {
+		printf("Halted while still in the ICE age.\n");
+		printf("Hit a key to reboot\n");
+		cngetc();
+		boot0();
+	}
 
 /*
  * Depending on how we got here and with what intructions, choose
@@ -336,49 +347,34 @@ boot(howto)
 	else
 		action = REBOOT_ACTION;
 
-	if ((!(howto & RB_NOSYNC)) && cold == 0) {
-		cold = 1;
-		bootsync();
-	}
-	
 /*
- * System is falling apart on at this point so make it known
- * Technically halting should be a controlled proceedure ...
- * but use of the halt and reboot commands tends to be rare I find.
- * chances are we have paniced but we would still like to get to the debug
- * shell if possible.
+ * If RB_NOSYNC was not specified sync the discs.
+ * Note: Unless cold is set to 1 here, syslogd will die during the unmount.
+ * It looks like syslogd is getting woken up only to find that it cannot
+ * page part of the binary in as the filesystem has been unmounted.
  */
 
-	rawkbd_device = -1;	/* bypass the tty code for input */
-	cold = 1;		/* no sleeping etc. */
 
+	if (!(howto & RB_NOSYNC)) {
+		cold = 1;		/* no sleeping etc. */
+		bootsync();
+	}
+
+/* Say NO to interrupts */
+
+	splhigh();
+	
 #ifdef KSHELL
 
-/* Now enter the shell if required */
+/* Now enter our crude debug shell if required. Soon to be replaced with DDB */
 
-	if (kbdinited && (action & ACTION_KSHELL)) {
-
-/* Kill IRQs, patch the spl_mask to allow KBD IRQs only, then enable IRQs */
-
-		IRQdisable;
-		current_mask = (1 << IRQ_KBDRX);
-		(void)splx((1 << IRQ_KBDRX));
-		IRQenable;
-
-/* Dive into the kshell */
-
-		shell((caddr_t) 0);
-	}
+	if (action & ACTION_KSHELL)
+		shell();
 #else
 	if (action & ACTION_KSHELL) {
-		IRQdisable;
-		current_mask = (1 << IRQ_KBDRX);
-		(void)splx((1 << IRQ_KBDRX));
-		IRQenable;
-
-		printf("Halted\n");
+		printf("Halted.\n");
 		printf("Hit a key to reboot ");
-		WaitForKey((caddr_t) 0);		
+		cngetc();
 	}
 #endif
 
@@ -386,14 +382,17 @@ boot(howto)
 
 /*
  * This code stops the kernel entering an endless loop of reboot - panic
- * cycles. Ok this should not happen but the kernel is prone to panics
- * during multiuser startup at the moment. This will only effect kernels
- * that have been configured to reboot on a panic and will have the effect of
- * stopping further reboots after it has rebooted 16 times after panics.
- * and clean halt or reboot will reset the counter.
+ * cycles. This will only effect kernels that have been configured to
+ * reboot on a panic and will have the effect of stopping further reboots
+ * after it has rebooted 16 times after panics and clean halt or reboot
+ * will reset the counter.
  */
 
-/* Have we done 16 reboots in a row ? If so halt rather than reboot */
+/*
+ * Have we done 16 reboots in a row ? If so halt rather than reboot
+ * since 16 panics in a row without 1 clean halt means something is
+ * seriously wrong
+ */
 
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 16)
 		action = (action & ~ACTION_REBOOT) | ACTION_HALT;
@@ -410,7 +409,11 @@ boot(howto)
 	else
 		cmos_write(RTC_ADDR_REBOOTCNT, 0);
 
-/* If we need a RiscBSD reboot, request it */
+/*
+ * If we need a RiscBSD reboot, request it but setting a bit in the CMOS RAM
+ * This can be detected by the RiscBSD boot loader during a RISC OS boot
+ * No other way to do this as RISC OS is in ROM.
+ */
 
 	if (action & ACTION_REBOOT)
 		cmos_write(RTC_ADDR_BOOTOPTS,
@@ -436,7 +439,7 @@ boot(howto)
 
 	printf("boot...");
 
-/* Wait to allow the user to read the panic text etc. */
+/* Give the user time to read the last couple of lines of text. */
 
 	for (loop = 5; loop > 0; --loop) {
 		printf("%d..", loop);
@@ -447,6 +450,7 @@ boot(howto)
 }
 
 
+/* Sync the discs and unmount the filesystems */
 
 void
 bootsync(void)
@@ -460,62 +464,20 @@ bootsync(void)
 
 	bootsyncdone = 1;
 
+/* Make sure we can still manage to do things */
+
 	if (GetCPSR() & I32_bit) {
+/*
+ * If we get then boot has been called with out RB_NOSYNC and interrupts were
+ * disabled. This means the boot() call did not come from a user process e.g.
+ * shutdown, but must have come from somewhere in the kernel.
+ */
+
 		IRQenable;
 		printf("Warning IRQ's disabled during boot()\n");
 	}
 
-#if 0
-/*
- * Hmmmm
- *
- * Just spotted that kern/vfs_subr.c provides a vfs_shutdown()
- * routine that does all the stuff I do here ...
- * This stuff is still here is case I want to drop extra debugging code in
- */
-
-	(void) spl0();
-	printf("syncing disks... ");
-
-	delay(100000);
-
-	/*
-	 * Release inodes held by texts before update.
-	 */
-
-	if (panicstr == 0)
-		vnode_pager_umount(NULL);
-
-	sys_sync(&proc0, (void *)NULL, (int *)NULL);
-
-	/*
-	 * Unmount filesystems
-	 */
-
-	if (panicstr == 0) {
-		printf("unmounting filesystems... ");
-		vfs_unmountall();
-	}
-
-	for (iter = 0; iter < 20; iter++) {
-		nbusy = 0;
-		for (bp = &buf[nbuf]; --bp >= buf; )
-			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-				nbusy++;
-		if (nbusy == 0)
-			break;
-		printf("%d ", nbusy);
-		delay(40000 * iter);
-	}
-	if (nbusy)
-		printf("giving up\n");
-	else
-		printf("done\n");
-#endif
-
 	vfs_shutdown();
-
-	delay(1000000);
 }
 
 
@@ -1245,6 +1207,9 @@ initarm(bootconf)
 	printf("ddb: ");
 	db_machine_init();
 	ddb_init();
+
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
@@ -1464,6 +1429,8 @@ cpu_startup()
 /* Set the root, swap and dump devices from the boot args */
 
 	set_boot_devs();
+
+	dump_spl_masks();
 
 	cold = 0;	/* We are warm now ... */
 }
@@ -2156,5 +2123,22 @@ vmem_cachectl(flag)
 
 	return(0);
 }
+
+#if 0
+extern int vtvalbug;
+extern char *vtlastbug;
+extern u_int vtbugaddr;
+extern u_int vtbugcaddr;
+
+void
+vtbugreport()
+{
+	printf("vtvalbug = %d\n", vtvalbug);
+	if (vtlastbug)
+		printf("vtlastbug = %s\n", vtlastbug);
+	printf("vtbugaddr = %08x\n", vtbugaddr);
+	printf("vtbugcaddr = %08x\n", vtbugcaddr);
+}
+#endif
 
 /* End of machdep.c */
