@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.13 1996/11/06 20:19:25 cgd Exp $ */
+/*	$NetBSD: cpuswitch.S,v 1.14 1997/02/04 07:12:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -259,6 +259,8 @@ Lcurpcb:
 Lwant_resched:
 	.word	_want_resched
 
+Lcpufuncs:	
+	.word	_cpufuncs
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -578,11 +580,13 @@ switch_exited:
 
 /*	IRQdisable*/
 
-#ifdef	CPU_SA110
 	stmfd	sp!, {r0-r3}
-	bl	_cache_clean
+	ldr	r0, Lcpufuncs
+	add	lr, pc, #Lcs_cache_purged - . - 8
+	ldr	pc, [r0, #CF_CACHE_PURGE_ID]
+
+Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
-#endif
 
 /* Get the user structure for the new process in r1 */
 
@@ -593,42 +597,11 @@ switch_exited:
 	ldr	r0, [r1, #(PCB_PAGEDIR)]
 
 /* Switch the memory to the new process */
-
-/* For good measure we will flush the IDC as well */
-#ifndef CPU_SA110
-        mcr     15, 0, r0, c7, c0, 0		/* flush cache */
-#else	/* CPU_SA110 */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
-#endif	/* CPU_SA110 */
-
-/* Write the TTB */
-        mcr     15, 0, r0, c2, c0, 0
-
-#ifndef CPU_SA110
-
-/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c5, c0, 0
-
-/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0
-
-/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-#else	/* CPU_SA110 */
-
-/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
-
-/* For good measure we will flush the IDC as well */	
-        mcr     15, 0, r0, c7, c7, 0		/* flush the i+d cache */
-
-/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-        mov     r0, r0
-#endif	/* CPU_SA110 */
+	ldr	r3, Lcpufuncs
+	add	lr, pc, #Lcs_context_switched - . - 8
+	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
+       
+Lcs_context_switched:
 
 /*
  * This can be optimised... We know we want to go from SVC32 mode to UND32
@@ -708,65 +681,40 @@ _switch_exit:
  * r1 = proc0
  */
 
+	mov	r3, r0
  	ldr	r1, Lproc0
 
 /* In case we fault */
 
 	mov	r2, #0x00000000
-	ldr	r3, Lcurproc
-	str	r2, [r3]
+	ldr	r0, Lcurproc
+	str	r2, [r0]
 
-/*	ldr	r3, Lcurpcb
-	str	r2, [r3]*/
+/*	ldr	r0, Lcurpcb
+	str	r2, [r0]*/
 
 /* Switch to proc0 context */
 
 	IRQdisable
 
-#ifdef	CPU_SA110
 	stmfd	sp!, {r0-r3}
-	bl	_cache_clean
+
+	ldr	r0, Lcpufuncs
+	add	lr, pc, #Lse_cache_purged - . - 8
+	ldr	pc, [r0, #CF_CACHE_PURGE_ID]
+
+Lse_cache_purged:
 	ldmfd	sp!, {r0-r3}
-#endif
 
 	ldr	r2, [r1, #(P_ADDR)]
-	ldr	r3, [r2, #(PCB_PAGEDIR)]
+	ldr	r0, [r2, #(PCB_PAGEDIR)]
 
-/* For good measure we will flush the IDC as well */
-#ifndef CPU_SA110
-        mcr     15, 0, r0, c7, c0, 0
-#else	/* CPU_SA110 */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
-#endif	/* CPU_SA110 */
-
-/* Write the TTB */
-        mcr     15, 0, r3, c2, c0, 0
-
-#ifndef CPU_SA110
-
-/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c5, c0, 0
-
-/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0
-
-/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-#else	/* CPU_SA110 */
-
-/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0		/* flush i+d tlb */
-
-/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c7, 0		/* flush i+d cache */
-
-/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-        mov     r0, r0
-#endif	/* CPU_SA110 */
+/* Switch the memory to the new process */
+	ldr	r4, Lcpufuncs
+	add	lr, pc, #Lse_context_switched - . - 8
+	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
+       
+Lse_context_switched:
 
 /* Restore all the save registers */
 
@@ -776,12 +724,12 @@ _switch_exit:
 /* This is not really needed ! */
 /* Yes it is for the su and fu routines */
 
-	ldr	r3, Lcurpcb
-	str	r2, [r3]
+	ldr	r0, Lcurpcb
+	str	r2, [r0]
 
 /*	IRQenable*/
 
-	str	r0, [sp, #-0x0004]!
+	str	r3, [sp, #-0x0004]!
 
 /* Thoroughly nuke the old process's resources. */
 
@@ -789,7 +737,7 @@ _switch_exit:
 
 	mov	r1, #0x00000000
 	add	r2, r1, #NBPG
-	ldr	r0, [r0, #(P_VMSPACE)]
+	ldr	r0, [r3, #(P_VMSPACE)]
 	add	r0, r0, #(VM_PMAP)
 	bl	_pmap_remove
 	ldr	r0, [sp]
