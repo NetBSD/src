@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.10 2004/07/25 16:07:08 christos Exp $	*/
+/*	$NetBSD: viapm.c,v 1.11 2004/07/25 18:04:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.10 2004/07/25 16:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.11 2004/07/25 18:04:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,9 @@ viapm_match(struct device * parent, struct cfdata * match, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+#ifdef notyet
 	case PCI_PRODUCT_VIATECH_VT8231_PWR:
+#endif
 		return 1;
 	default:
 		return 0;
