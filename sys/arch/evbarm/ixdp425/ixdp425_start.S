@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_start.S,v 1.3 2003/12/08 16:15:31 scw Exp $ */
+/*	$NetBSD: ixdp425_start.S,v 1.4 2004/02/12 23:26:48 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -151,7 +151,8 @@ Lunmapped:
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Get ready to jump to the "real" kernel entry point... */
-	ldr	r0, Lstart
+	ldr	r1, Lstart
+	mov	r1, r1			/* Make sure the load completes! */
 
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0
@@ -166,7 +167,7 @@ Lunmapped:
 	/* CPWAIT sequence to make sure the MMU is on... */
 	mrc	p15, 0, r2, c2, c0, 0	/* arbitrary read of CP15 */
 	mov	r2, r2			/* force it to complete */
-	mov	pc, r0			/* leap to kernel entry point! */
+	mov	pc, r1			/* leap to kernel entry point! */
 
 Ltable:
 	.word	0x10200000 - 0x4000
