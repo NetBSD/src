@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.15 1998/10/08 22:25:42 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.16 1998/10/11 14:46:45 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,10 +195,19 @@ struct cpu_info {
 	 * The following pointers point to processes that are somehow
 	 * associated with this CPU--running on it, using its FPU,
 	 * etc.
-	 *
-	 * XXXMP: much more needs to go here
 	 */
+
+	struct	proc	*curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
+
+	/*
+	 * Idle PCB and Interrupt stack;
+	 */
+	void		*eintstack;		/* End of interrupt stack */
+#define INT_STACK_SIZE	(128 * 128)		/* 128 128-byte stack frames */
+	struct	pcb	*idle_u;
+	void		*redzone;		/* DEBUG: stack red zone */
+#define REDSIZE		(8*96)			/* some room for bouncing */
 
 	/*
 	 * The following are function pointers to do interesting CPU-dependent
