@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.26 1995/12/09 04:23:07 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.27 1995/12/10 08:26:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -250,7 +250,7 @@ again:
 	 * may be invalid after vm_fork returns in the child process.
 	 */
 	retval[0] = 0;
-	retval[1] = 0;
+	retval[1] = 1;
 	if (vm_fork(p1, p2))
 		return (0);
 #else
