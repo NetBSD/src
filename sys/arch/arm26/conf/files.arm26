@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.8 2000/12/09 18:54:01 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.9 2000/12/20 10:57:38 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -118,7 +118,9 @@ device	unixbp
 attach	unixbp at ioc
 device	podulebus { [slot = -1] }
 attach	podulebus at ioc
+define	podloader
 file	arch/arm26/podulebus/podulebus.c	podulebus
+file	arch/arm26/podulebus/podloader_asm.S	podloader	needs-flag
 file	arch/arm26/podulebus/unixbp.c		unixbp		needs-flag
 
 # Acorn ST506 interface (usually at bank 5 irq 11, or sometimes on a podule)
@@ -172,7 +174,7 @@ attach	ea at podulebus
 file	arch/arm26/podulebus/if_ea.c		ea
 
 # i-cubed EtherLAN 100, 200 and 500
-device	eh: ether, ifnet, arp, dp8390nic
+device	eh: ether, ifnet, arp, dp8390nic, podloader
 attach	eh at podulebus
 file	arch/arm26/podulebus/if_eh.c		eh
 
