@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.2 2001/05/23 21:21:43 chris Exp $
+#	$NetBSD: files.cats,v 1.3 2001/05/29 23:03:20 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -64,7 +64,6 @@ major   {sd = 24}
 major   {cd = 26}
 
 # Generic MD files
-file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
