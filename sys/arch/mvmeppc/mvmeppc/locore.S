@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2003/02/02 20:43:20 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2003/03/18 16:40:21 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -202,3 +202,8 @@ _C_LABEL(disable_intr):
  * Pull in common trap vector code.
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Pull in common pio / bus_space code.
+ */
+#include <powerpc/powerpc/pio_subr.S>
