@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.11 2001/10/26 05:44:29 lukem Exp $	*/
+/*	$NetBSD: quota.h,v 1.12 2001/11/06 06:40:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -71,7 +71,7 @@
 	"user",		/* USRQUOTA */ \
 	"group",	/* GRPQUOTA */ \
 	"undefined", \
-};
+}
 #define	QUOTAFILENAME	"quota"
 #define	QUOTAGROUP	"operator"
 
