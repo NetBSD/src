@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.5 1999/10/20 11:54:56 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.6 1999/10/20 20:40:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.5 1999/10/20 11:54:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.6 1999/10/20 20:40:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,29 +897,30 @@ dpt_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat, xfer,
 				    (struct uio *)xs->data,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			} else
 #endif /*TFS */
 			{
 				error = bus_dmamap_load(dmat, xfer,
 				    xs->data, xs->datalen, NULL,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			}
 
-			if (error) {
-				printf("%s: dpt_scsipi_request: ",
-				    sc->sc_dv.dv_xname); 
-				if (error == EFBIG)
-					printf("more than %d dma segs\n",
-					    DPT_SG_SIZE);
-				else
-					printf("error %d loading dma map\n",
-					    error);
-		
-				dpt_free_ccb(sc, ccb);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				printf("%s: error %d loading DMA map\n",
+				    sc->sc_dv.dv_xname, error); 
+ out_bad:
+				dpt_free_ccb(sc, ccb);
 				scsipi_done(xs);
 				return;
 			}

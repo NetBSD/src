@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.12.2.2 1999/10/19 22:53:43 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.12.2.3 1999/10/20 20:40:51 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -582,30 +582,30 @@ adw_build_req(sc, ccb)
 		if (xs->xs_control & SCSI_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 			    ccb->dmamap_xfer, (struct uio *) xs->data,
-			    (xs->xs_control & XS_CTL_NOSLEEP) ?
-			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    BUS_DMA_NOWAIT);
 		} else
 #endif /* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (xs->xs_control & XS_CTL_NOSLEEP) ?
-			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    BUS_DMA_NOWAIT);
 		}
 
-		if (error) {
-			if (error == EFBIG) {
-				printf("%s: adw_scsipi_request, more than "
-				    "%d dma segments\n",
-				    sc->sc_dev.dv_xname, ADW_MAX_SG_LIST);
-			} else {
-				printf("%s: adw_scsipi_request, error %d "
-				    "loading dma map\n",
-				    sc->sc_dev.dv_xname, error);
-			}
+		switch (error) {
+		case 0:
+			break;
 
-			adw_free_ccb(sc, ccb);
+		case ENOMEM:
+		case EAGAIN:
+			xs->error = XS_RESOURCE_SHORTAGE;
+			goto out_bad;
+
+		default:
 			xs->error = XS_DRIVER_STUFFUP;
+			printf("%s: error %d loading DMA map\n",
+			    sc->sc_dev.dv_xname, error);
+ out_bad:
+			adw_free_ccb(sc, ccb);
 			scsipi_done(xs);
 			return (0);
 		}
