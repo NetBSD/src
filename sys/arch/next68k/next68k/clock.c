@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1999/01/27 11:27:17 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -150,8 +150,6 @@ void
 cpu_initclocks()
 {
   rtc_init();
-
-  printf("WARNING: cpu_initclocks() is mostly not yet implemented.\n");
 
   hz = 100;
 
