@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.1 1997/10/11 02:56:23 cjs Exp $ */
+/*	$NetBSD: pidlock.c,v 1.2 1997/10/12 09:58:23 cjs Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.1 1997/10/11 02:56:23 cjs Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.2 1997/10/12 09:58:23 cjs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>
@@ -53,79 +53,102 @@ pidlock(lockfile, flags, locker, info)
 	char	tempfile[MAXPATHLEN];
 	char	hostname[256];
 	pid_t	pid2 = -1;
+	struct	stat st;
+	int	err;
 	int	f;
 	char	s[256];
 	char	*p;
 
-	/* Build a path to the temporary file. */
-	snprintf(s, sizeof(s), "%d", getpid());
-	/* XXX This breaks if PIDs can be longer than ten decimal digits. */
-	/* XXX But then again, so does the lockfile format. :-) */
-	strncpy(tempfile, lockfile, sizeof(tempfile)-26);
-	if (strlen(tempfile) < strlen(lockfile))  {
+	if (gethostname(hostname, sizeof(hostname)))
+		return -1;
+
+	/*
+	 * Build a path to the temporary file.
+	 * We use the path with the PID and hostname appended.
+	 * XXX This is not thread safe.
+	 */
+	if (snprintf(tempfile, sizeof(tempfile), "%s.%d.%s", lockfile,
+	    (int) getpid(), hostname) >= sizeof(tempfile))  {
 		errno = ENAMETOOLONG;
 		return -1;
 	}
-	strcat(tempfile, ".tmp.");
-	strcat(tempfile, s);
 
 	/* Open it, write pid, hostname, info. */
 	if ( (f = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC, 0600)) == -1 )  {
+		err = errno;
 		unlink(tempfile);
+		errno = err;
 		return -1;
 	}
 	snprintf(s, sizeof(s), "%10d\n", getpid());	/* pid */
 	if (write(f, s, 11) != 11)  {
-		close(f); unlink(tempfile); return -1;
-	}
-	if (gethostname(hostname, sizeof(hostname)))	/* hostname */
+		err = errno;
+		close(f);
+		unlink(tempfile);
+		errno = err;
 		return -1;
-	if ((flags & PIDLOCK_USEHOSTNAME))  {
+	}
+	if ((flags & PIDLOCK_USEHOSTNAME))  {		/* hostname */
 		if ((write(f, hostname, strlen(hostname)) != strlen(hostname))
 		    || (write(f, "\n", 1) != 1))  {
-			close(f); unlink(tempfile); return -1;
+			err = errno;
+			close(f);
+			unlink(tempfile);
+			errno = err;
+			return -1;
 		}
 	}
 	if (info)  {					/* info */
 		if (!(flags & PIDLOCK_USEHOSTNAME))  {
 			/* write blank line because there's no hostname */
 			if (write(f, "\n", 1) != 1)  {
-				close(f); unlink(tempfile); return -1;
+				err = errno;
+				close(f);
+				unlink(tempfile);
+				errno = err;
+				return -1;
 			}
 		}
 		if (write(f, info, strlen(info)) != strlen(info) ||
 		    (write(f, "\n", 1) != 1))  {
-			close(f); unlink(tempfile); return -1;
+			err = errno;
+			close(f);
+			unlink(tempfile);
+			errno = err;
+			return -1;
 		}
 	}
 	close(f);
 
 	/* Hard link the temporary file to the real lock file. */
 	/* This is an atomic operation. */
+lockfailed:
 	while (link(tempfile, lockfile) != 0)  {
 		if (errno != EEXIST)  {
+			err = errno;
 			unlink(tempfile);
+			errno = err;
 			return -1;
 		}
 		/* Find out who has this lockfile. */
-		if (!(f = open(lockfile, O_RDONLY, 0)))
-			goto retry;
-		read(f, s, 11);
-		pid2 = atoi(s);
-		read(f, s, sizeof(s)-2);
-		s[sizeof(s)-1] = '\0';
-		if ((p=strchr(s, '\n')))
-			*p = '\0';
-		close(f);
+		if ((f = open(lockfile, O_RDONLY, 0)) != 0)  {
+			read(f, s, 11);
+			pid2 = atoi(s);
+			read(f, s, sizeof(s)-2);
+			s[sizeof(s)-1] = '\0';
+			if ((p=strchr(s, '\n')))
+				*p = '\0';
+			close(f);
 
-		if (!((flags & PIDLOCK_USEHOSTNAME) && strcmp(s, hostname)))  {
-			if ((kill(pid2, 0) != 0) && (errno == ESRCH))  {
-				/* process doesn't exist */
-				unlink(lockfile);
-				continue;
+			if (!((flags & PIDLOCK_USEHOSTNAME) &&
+			    strcmp(s, hostname)))  {
+				if ((kill(pid2, 0) != 0) && (errno == ESRCH))  {
+					/* process doesn't exist */
+					unlink(lockfile);
+					continue;
+				}
 			}
 		}
-retry:
 		if (flags & PIDLOCK_NONBLOCK)  {
 			if (locker)
 				*locker = pid2;
@@ -135,12 +158,28 @@ retry:
 		} else
 			sleep(5);
 	}
+	/*
+	 * Check to see that we really were successful (in case we're
+	 * using NFS) by making sure that something really is linked
+	 * to our tempfile (reference count is two).
+	 */
+	if (stat(tempfile, &st) != 0)  {
+		err = errno;
+		/*
+		 * We don't know if lockfile was really created by us,
+		 * so we can't remove it.
+		 */
+		unlink(tempfile);
+		errno = err;
+		return -1;
+	}
+	if (st.st_nlink != 2)
+		goto lockfailed;
 
-	/* return this process's PID on lock */
-	if (locker)
-		*locker = getpid();
 	unlink(tempfile);
-
+ 	if (locker)
+ 		*locker = getpid();	/* return this process's PID on lock */
+	errno = 0;
 	return 0;
 }
 
