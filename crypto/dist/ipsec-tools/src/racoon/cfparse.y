@@ -1,6 +1,6 @@
-/*	$NetBSD: cfparse.y,v 1.1.1.3 2005/02/24 20:52:46 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.1.1.4 2005/03/16 23:52:08 manu Exp $	*/
 
-/* Id: cfparse.y,v 1.37.2.1 2005/02/24 18:31:55 manubsd Exp */
+/* Id: cfparse.y,v 1.37.2.2 2005/03/14 16:36:44 manubsd Exp */
 
 %{
 /*
@@ -627,6 +627,7 @@ modecfg_stmt
 			isakmp_cfg_config.port_pool = racoon_malloc(len);
 			if (isakmp_cfg_config.port_pool == NULL)
 				yyerror("cannot allocate memory for pool");
+			bzero(isakmp_cfg_config.port_pool, len);
 #else /* ENABLE_HYBRID */
 			yyerror("racoon not configured with --enable-hybrid");
 #endif /* ENABLE_HYBRID */
