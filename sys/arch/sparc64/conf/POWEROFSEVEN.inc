@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.23 2003/12/13 23:13:41 thorpej Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.24 2003/12/14 01:32:02 thorpej Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -293,6 +293,7 @@ ms0	at com?					# mouse
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?	# Acard IDE controllers
 aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.46 2003/12/13 23:13:40 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.47 2003/12/14 01:32:01 thorpej Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.46 $"
+#ident		"GENERIC-$Revision: 1.47 $"
 
 maxusers	32		# estimated number of users
 
@@ -277,6 +277,7 @@ trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 #aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers

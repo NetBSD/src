@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.54 2003/12/13 23:13:41 thorpej Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.55 2003/12/14 01:32:02 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -348,6 +348,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
