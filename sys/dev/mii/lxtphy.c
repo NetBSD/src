@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.21 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.22 2001/05/17 17:29:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@ struct cfattach lxtphy_ca = {
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	lxtphy_status __P((struct mii_softc *));
 void	lxtphy_reset __P((struct mii_softc *));
+static void lxtphy_set_tp __P((struct mii_softc *));
+static void lxtphy_set_fx __P((struct mii_softc *));
 
 const struct mii_phy_funcs lxtphy_funcs = {
 	lxtphy_service, lxtphy_status, lxtphy_reset,
@@ -135,13 +137,25 @@ lxtphyattach(parent, self, aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = mii->mii_flags | ma->mii_flags;
 
 	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->mii_dev.dv_xname);
+
+	if (sc->mii_flags & MIIF_HAVEFIBER) {
+#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, 0, sc->mii_inst),
+		    MII_MEDIA_100_TX);
+		printf("100baseFX, ");
+		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, sc->mii_inst),
+		    MII_MEDIA_100_TX_FDX);
+		printf("100baseFX-FDX, ");
+#undef ADD
+	}
+
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
@@ -186,6 +200,11 @@ lxtphy_service(sc, mii, cmd)
 		 */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
+
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_100_FX)
+			lxtphy_set_fx(sc);
+		else
+			lxtphy_set_tp(sc);
 
 		mii_phy_setmedia(sc);
 		break;
@@ -269,4 +288,26 @@ lxtphy_reset(sc)
 	mii_phy_reset(sc);
 	PHY_WRITE(sc, MII_LXTPHY_IER,
 	    PHY_READ(sc, MII_LXTPHY_IER) & ~IER_INTEN);
+}
+
+static void
+lxtphy_set_tp(sc)
+	struct mii_softc *sc;
+{
+	int cfg;
+
+	cfg = PHY_READ(sc, MII_LXTPHY_CONFIG);
+	cfg &= ~CONFIG_100BASEFX;
+	PHY_WRITE(sc, MII_LXTPHY_CONFIG, cfg);
+}
+
+static void
+lxtphy_set_fx(sc)
+	struct mii_softc *sc;
+{
+	int cfg;
+
+	cfg = PHY_READ(sc, MII_LXTPHY_CONFIG);
+	cfg |= CONFIG_100BASEFX;
+	PHY_WRITE(sc, MII_LXTPHY_CONFIG, cfg);
 }
