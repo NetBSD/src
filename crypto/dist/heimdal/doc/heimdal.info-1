@@ -1,5 +1,5 @@
-This is heimdal.info, produced by makeinfo version 4.0 from
-heimdal.texi.
+This is Info file heimdal.info, produced by Makeinfo version 1.68 from
+the input file heimdal.texi.
 
 INFO-DIR-SECTION Heimdal
 START-INFO-DIR-ENTRY
@@ -123,7 +123,7 @@ Heimdal source code, binaries and the manual
 
 The source code for heimdal, links to binaries and the manual (this
 document) can be found on our web-page at
-<http://www.pdc.kth.se/heimdal/>.
+`http://www.pdc.kth.se/heimdal/'.
 
 
 File: heimdal.info,  Node: What is Kerberos?,  Next: Building and Installing,  Prev: Introduction,  Up: Top
@@ -177,7 +177,6 @@ The reply to A consists of the ticket (T<AB>), B's name, the current
 time, the lifetime of the ticket, and the session key, all encrypted in
 A's secret key ({B, T<ISSUE>, LIFE, K<AB>, T<AB>}K<A>). A decrypts the
 reply and retains it for later use.
-
 
 Before sending a message to B, A creates an authenticator consisting of
 A's name, A's address, the current time, and a "checksum" chosen by A,
@@ -242,7 +241,7 @@ Authentication System: a Dialogue in Four Scenes' by Bill Bryant, also
 from 1988.
 
 These documents can be found on our web-page at
-<http://www.pdc.kth.se/kth-krb/>.
+`http://www.pdc.kth.se/kth-krb/'.
 
 
 File: heimdal.info,  Node: Building and Installing,  Next: Setting up a realm,  Prev: What is Kerberos?,  Up: Top
@@ -325,8 +324,8 @@ following options:
 
 `--with-openldap'
      Compile Heimdal with support for storing the database in LDAP.
-     Requires OpenLDAP <http://www.openldap.org>.  See
-     <http://www.padl.com/~lukeh/heimdal/> for more information.
+     Requires OpenLDAP `http://www.openldap.org'.  See
+     `http://www.padl.com/~lukeh/heimdal/' for more information.
 
 `--enable-bigendian'
 
@@ -615,7 +614,7 @@ corresponds to the different commands in `kadmin'.
 If a GLOB-PATTERN is given on a line, it restricts the right for the
 principal to only apply for the subjects that match the pattern.  The
 patters are of the same type as those used in shell globbing, see
-<none,,fnmatch(3)>.
+`none,,fnmatch(3)'.
 
 In the example below `lha/admin' can change every principal in the
 database. `jimmy/admin' can only modify principals that belong to the
@@ -669,7 +668,7 @@ Code for a password quality checking function that uses the cracklib
 library can be found in `lib/kadm5/sample_password_check.c' in the
 source code distribution.  It requires the cracklib library built with
 the patch available at
-<ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch>.
+`ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch'.
 
 If no password quality checking function is configured, it is only
 verified that it is at least six characters of length.
@@ -826,7 +825,6 @@ Common types of salting includes
 
      `afs3-salt' is the salting that is used with Transarc kaserver. Its
      the cell appended to the password.
-
 
 
 File: heimdal.info,  Node: Cross realm,  Next: Transit policy,  Prev: Salting,  Up: Setting up a realm
@@ -1249,7 +1247,7 @@ big problem, but if you have run your kerberos realm for a few years,
 chances are big that you have quite a few `junk' principals.
 
 If you don't want this you can remove the `default_domain' statement,
-but then you will have to add entries for _all_ your hosts in the
+but then you will have to add entries for *all* your hosts in the
 `v4_instance_convert' section.
 
 Instead of doing this you can use DNS to convert instances. This is not
@@ -1287,6 +1285,6 @@ and you can't set any flags or do any other fancy stuff.
 To get this to work, you have to add another entry to inetd (since
 version 4 uses port 751, not 749).
 
-_And then there are a many more things you can do; more on this in a
-later version of this manual. Until then, UTSL._
+*And then there are a many more things you can do; more on this in a
+later version of this manual. Until then, UTSL.*
 
