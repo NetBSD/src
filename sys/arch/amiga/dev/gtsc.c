@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.20 1996/12/23 09:10:11 veego Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.21 1997/01/21 05:44:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -193,6 +193,7 @@ gtscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &gtsc_scsiswitch;
 	sc->sc_link.device = &gtsc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	sbicinit(sc);
 
