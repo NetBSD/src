@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.12 2001/02/21 12:39:17 minoura Exp $	*/
+/*	$NetBSD: bus.c,v 1.13 2001/03/21 18:40:32 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -633,7 +633,7 @@ x68k_bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
+			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("x68k_bus_dmamem_alloc_range");
 		}
