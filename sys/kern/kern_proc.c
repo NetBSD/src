@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.61 2003/03/19 11:36:34 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.62 2003/03/19 16:02:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.61 2003/03/19 11:36:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.62 2003/03/19 16:02:31 christos Exp $");
 
 #include "opt_kstack.h"
 
@@ -849,7 +849,7 @@ pg_free(pid_t pg_id)
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
 #ifdef DIAGNOSTIC
-	if (!pgrp || pgrp->pg_id != pg_id || !LIST_EMPTY(pgrp->pg_members))
+	if (!pgrp || pgrp->pg_id != pg_id || !LIST_EMPTY(&pgrp->pg_members))
 		panic("pg_free: process group absent or has members");
 #endif
 	pt->pt_pgrp = 0;
