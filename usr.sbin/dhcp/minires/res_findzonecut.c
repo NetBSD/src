@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.2.2.2 2000/07/22 05:05:31 mellon Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.2.2.3 2000/10/18 04:11:29 tv Exp $";
 #endif /* not lint */
 
 /*
@@ -175,6 +175,9 @@ res_findzonecut(res_state statp, const char *dname, ns_class class, int opts,
 	if ((rcode = get_glue(statp, class, &nsrrs)) == ns_r_noerror)
 		n = satisfy(statp, mname, &nsrrs, addrs, naddrs);
 
+	/* If we found the zone, cache it. */
+	if (n > 0)
+		cache_found_zone (class, zname, addrs, n);
  done:
 	DPRINTF(("FINISH n=%d (%s)", n, (n < 0) ? strerror(errno) : "OK"));
 	free_nsrrset(&nsrrs);
@@ -262,7 +265,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 		/* Is there an SOA? */
 		rcode = do_query(statp, dname, class, ns_t_soa,
 				 resp, &msg, &n);
-		if (rcode != ns_r_noerror) {
+		if (n < 0) {
 			DPRINTF(("get_soa: do_query('%s', %s) failed (%d)",
 				 dname, p_class(class), n));
 			return rcode;

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.2 2000/05/28 01:27:52 matt Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.2.2.1 2000/10/18 04:11:12 tv Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -238,6 +238,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
   static int udp_packets_length_checked;
   static int udp_packets_length_overflow;
   unsigned len;
+  unsigned ulen;
 
   ip = (struct ip *)(buf + bufix);
   udp = (struct udphdr *)(buf + bufix + ip_len);
@@ -251,6 +252,13 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
   if (udp -> uh_dport != local_port)
 	  return -1;
 #endif /* USERLAND_FILTER */
+
+  ulen = ntohs (udp -> uh_ulen);
+  if (ulen < sizeof *udp ||
+      ((unsigned char *)udp) + ulen > buf + bufix + buflen) {
+	  log_info ("bogus UDP packet length: %d", ulen);
+	  return -1;
+  }
 
   /* Check the IP header checksum - it should be zero. */
   ++ip_packets_seen;
@@ -279,7 +287,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 
   if (!data) {
 	  data = buf + bufix + ip_len + sizeof *udp;
-	  len = ntohs (udp -> uh_ulen) - sizeof *udp;
+	  len = ulen - sizeof *udp;
 	  ++udp_packets_length_checked;
 	  if (len + data > buf + bufix + buflen) {
 		  ++udp_packets_length_overflow;
@@ -294,8 +302,13 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 		  }
 		  return -1;
 	  }
-	  if (len + data != buf + bufix + buflen)
+	  if (len + data < buf + bufix + buflen)
 		  log_debug ("accepting packet with data after udp payload.");
+	  if (len + data > buf + bufix + buflen) {
+		  log_debug ("dropping packet with bogus uh_ulen %d",
+			     len + sizeof *udp);
+		  return -1;
+	  }
   }
 
   usum = udp -> uh_sum;
@@ -307,8 +320,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
 					       &ip -> ip_src,
 					       2 * sizeof ip -> ip_src,
 					       IPPROTO_UDP +
-					       (u_int32_t)
-					       ntohs (udp -> uh_ulen)))));
+					       (u_int32_t)ulen))));
 
   udp_packets_seen++;
   if (usum && usum != sum) {

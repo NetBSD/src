@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.4.2.1 2000/07/10 19:58:47 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.4.2.2 2000/10/18 04:11:03 tv Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -69,6 +69,14 @@ omapi_object_type_t *dhcp_type_interface;
 
 OMAPI_OBJECT_ALLOC (interface, struct interface_info, dhcp_type_interface)
 
+isc_result_t interface_initialize (omapi_object_t *ipo,
+				   const char *file, int line)
+{
+	struct interface_info *ip = (struct interface_info *)ipo;
+	ip -> rfdesc = ip -> wfdesc = -1;
+	return ISC_R_SUCCESS;
+}
+
 /* Use the SIOCGIFCONF ioctl to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
    register that interface with the network I/O software, figure out what
@@ -79,7 +87,7 @@ void discover_interfaces (state)
 {
 	struct interface_info *tmp, *ip;
 	struct interface_info *last, *next;
-	char buf [8192];
+	char buf [2048];
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
@@ -95,6 +103,7 @@ void discover_interfaces (state)
 #endif
 	isc_result_t status;
 	static int setup_fallback = 0;
+	int wifcount = 0;
 
 	if (!dhcp_type_interface) {
 		status = omapi_object_type_register
@@ -102,7 +111,8 @@ void discover_interfaces (state)
 			 interface_set_value, interface_get_value,
 			 interface_destroy, interface_signal_handler,
 			 interface_stuff_values, 0, 0, 0, 0, 0, 0,
-			 sizeof (struct interface_info));
+			 sizeof (struct interface_info),
+			 interface_initialize);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("Can't create interface object type: %s",
 				   isc_result_totext (status));
@@ -115,11 +125,22 @@ void discover_interfaces (state)
 	/* Get the interface configuration information... */
 	ic.ifc_len = sizeof buf;
 	ic.ifc_ifcu.ifcu_buf = (caddr_t)buf;
+      gifconf_again:
 	i = ioctl(sock, SIOCGIFCONF, &ic);
 
 	if (i < 0)
 		log_fatal ("ioctl: SIOCGIFCONF: %m");
 
+	/* If the SIOCGIFCONF resulted in more data than would fit in
+	   a buffer, allocate a bigger buffer. */
+	if (ic.ifc_ifcu.ifcu_buf == buf &&
+	    ic.ifc_len > sizeof buf) {
+		ic.ifc_ifcu.ifcu_buf = dmalloc ((size_t)ic.ifc_len, MDL);
+		if (!ic.ifc_ifcu.ifcu_buf)
+			log_fatal ("Can't allocate SIOCGIFCONF buffer.");
+		goto gifconf_again;
+	}
+		
 	/* If we already have a list of interfaces, and we're running as
 	   a DHCP server, the interfaces were requested. */
 	if (interfaces && (state == DISCOVER_SERVER ||
@@ -269,6 +290,10 @@ void discover_interfaces (state)
 				(*dhcp_interface_setup_hook) (tmp, &addr);
 		}
 	}
+
+	/* If we allocated a buffer, free it. */
+	if (ic.ifc_ifcu.ifcu_buf != buf)
+		dfree (ic.ifc_ifcu.ifcu_buf, MDL);
 
 #if defined (LINUX_SLASHPROC_DISCOVERY)
 	/* On Linux, interfaces that don't have IP addresses don't
@@ -496,12 +521,30 @@ void discover_interfaces (state)
 
 		/* We must have a subnet declaration for each interface. */
 		if (!tmp -> shared_network && (state == DISCOVER_SERVER)) {
+			log_error ("%s", "");
 			log_error ("No subnet declaration for %s (%s).",
 				   tmp -> name, inet_ntoa (foo.sin_addr));
-			log_error ("Please write a subnet declaration in %s",
-				   "your dhcpd.conf file for the");
-			log_fatal ("network segment to which interface %s %s",
-				   tmp -> name, "is attached.");
+			if (supports_multiple_interfaces (tmp)) {
+				log_error ("Ignoring requests on %s.",
+					   tmp -> name);
+				log_error ("If this is not what you want, %s",
+				   "please write");
+				log_error ("a subnet declaration in your %s",
+				   "dhcpd.conf file for");
+				log_error ("the network segment to %s %s %s",
+					   "which interface",
+					   tmp -> name, "is attached.");
+				goto next;
+			} else {
+				log_error ("You must write a subnet %s",
+					   " declaration for this");
+				log_error ("subnet.   You cannot prevent %s",
+					   "the DHCP server");
+				log_error ("from listening on this subnet %s",
+					   "because your");
+				log_fatal ("operating system does not %s.",
+					   "support this capability");
+			}
 		}
 
 		/* Find subnets that don't have valid interface
@@ -522,6 +565,7 @@ void discover_interfaces (state)
 		/* Register the interface... */
 		if_register_receive (tmp);
 		if_register_send (tmp);
+		wifcount++;
 #if defined (HAVE_SETFD)
 		if (fcntl (tmp -> rfdesc, F_SETFD, 1) < 0)
 			log_error ("Can't set close-on-exec on %s: %m",
@@ -532,6 +576,7 @@ void discover_interfaces (state)
 					   tmp -> name);
 		}
 #endif
+	      next:
 		interface_dereference (&tmp, MDL);
 		if (next)
 			interface_reference (&tmp, next, MDL);
@@ -542,6 +587,8 @@ void discover_interfaces (state)
 		/* not if it's been registered before */
 		if (tmp -> flags & INTERFACE_RUNNING)
 			continue;
+		if (tmp -> rfdesc == -1)
+			continue;
 		status = omapi_register_io_object ((omapi_object_t *)tmp,
 						   if_readsocket, 0,
 						   got_one, 0, 0);
@@ -551,6 +598,11 @@ void discover_interfaces (state)
 	}
 
 	close (sock);
+
+	if (state == DISCOVER_SERVER && wifcount == 0) {
+		log_info ("%s", "");
+		log_fatal ("Not configured to listen on any interfaces!");
+	}
 
 	if (!setup_fallback) {
 		setup_fallback = 1;

@@ -368,6 +368,17 @@ any, and also called once if no valid lease can be identified.   For
 more information, see
 .B dhclient-script(8).
 .PP
+ \fBvendor option space "\fIname\fB";\fR
+.PP
+The
+.B vendor option space
+statement is used to specify which option space should be used for
+decoding the vendor-encapsulate-options option if one is received.
+The \fIdhcp-vendor-identifier\fR can be used to request a specific
+class of vendor options from the server.   See
+.B dhcp-options(5)
+for details.
+.PP
  \fBmedium "\fImedia setup\fB";\fR
 .PP
 The

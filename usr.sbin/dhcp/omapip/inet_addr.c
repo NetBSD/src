@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.3 2000/04/22 07:11:35 mellon Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -37,16 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: inet_addr.c,v 1.1.1.3 2000/04/22 07:11:35 mellon Exp $";
+static char rcsid[] = "$NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef lint
 static char copyright[] =
-"$Id: inet_addr.c,v 1.1.1.3 2000/04/22 07:11:35 mellon Exp $ Copyright (c) 1983, 1990, 1993 The Regents of the University of California.  All rights reserved.\n";
+"$Id: inet_addr.c,v 1.1 2000/09/20 00:01:50 mellon Exp $ Copyright (c) 1983, 1990, 1993 The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#include "dhcpd.h"
+#include "omapip/omapip_p.h"
 
 #ifdef NEED_INET_ATON
 /* 

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.5.2.1 2000/07/10 19:58:47 mellon Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.5.2.2 2000/10/18 04:11:04 tv Exp $ Copyright (c) 2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -138,19 +138,11 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 {
 	isc_result_t status;
 	ns_tsig_key *tkey;
-#if 0
-	struct dns_zone *zone;
 
-	zone = (struct dns_zone *)0;
-	status = dns_zone_lookup (&zone, zname);
-	if (status != ISC_R_SUCCESS)
-		return status;
-#else
 	if (!zone)
 		return ISC_R_NOTFOUND;
-#endif
+
 	if (!zone -> key) {
-		dns_zone_dereference (&zone, MDL);
 		return ISC_R_KEY_UNKNOWN;
 	}
 	
@@ -158,18 +150,16 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 	     strlen (zone -> key -> name) > NS_MAXDNAME) ||
 	    (!zone -> key -> algorithm ||
 	     strlen (zone -> key -> algorithm) > NS_MAXDNAME) ||
-	    (!zone -> key -> key.len)) {
-		dns_zone_dereference (&zone, MDL);
+	    (!zone -> key)) {
 		return ISC_R_INVALIDKEY;
 	}
 	tkey = dmalloc (sizeof *tkey, MDL);
 	if (!tkey) {
 	      nomem:
-		dns_zone_dereference (&zone, MDL);
 		return ISC_R_NOMEMORY;
 	}
 	memset (tkey, 0, sizeof *tkey);
-	tkey -> data = dmalloc (zone -> key -> key.len, MDL);
+	tkey -> data = dmalloc (zone -> key -> key -> len, MDL);
 	if (!tkey -> data) {
 		dfree (tkey, MDL);
 		goto nomem;
@@ -177,8 +167,8 @@ isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 	strcpy (tkey -> name, zone -> key -> name);
 	strcpy (tkey -> alg, zone -> key -> algorithm);
 	memcpy (tkey -> data,
-		zone -> key -> key.data, zone -> key -> key.len);
-	tkey -> len = zone -> key -> key.len;
+		zone -> key -> key -> value, zone -> key -> key -> len);
+	tkey -> len = zone -> key -> key -> len;
 	*key = tkey;
 	return ISC_R_SUCCESS;
 }
@@ -249,44 +239,6 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 	return status;
 }
 
-isc_result_t enter_tsig_key (struct tsig_key *tkey)
-{
-	struct tsig_key *tk = (struct tsig_key *)0;
-
-	if (tsig_key_hash) {
-		tsig_key_hash_lookup (&tk, tsig_key_hash,
-				      tkey -> name, 0, MDL);
-		if (tk == tkey) {
-			tsig_key_dereference (&tk, MDL);
-			return ISC_R_SUCCESS;
-		}
-		if (tk) {
-			tsig_key_hash_delete (tsig_key_hash,
-					      tkey -> name, 0, MDL);
-			tsig_key_dereference (&tk, MDL);
-		}
-	} else {
-		tsig_key_hash =
-			new_hash ((hash_reference)tsig_key_reference,
-				  (hash_dereference)tsig_key_dereference, 1);
-		if (!tsig_key_hash)
-			return ISC_R_NOMEMORY;
-	}
-	tsig_key_hash_add (tsig_key_hash, tkey -> name, 0, tkey, MDL);
-	return ISC_R_SUCCESS;
-	
-}
-
-isc_result_t tsig_key_lookup (struct tsig_key **tkey, const char *name) {
-	struct tsig_key *tk;
-
-	if (!tsig_key_hash)
-		return ISC_R_NOTFOUND;
-	if (!tsig_key_hash_lookup (tkey, tsig_key_hash, name, 0, MDL))
-		return ISC_R_NOTFOUND;
-	return ISC_R_SUCCESS;
-}
-
 int dns_zone_dereference (ptr, file, line)
 	struct dns_zone **ptr;
 	const char *file;
@@ -326,7 +278,7 @@ int dns_zone_dereference (ptr, file, line)
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
 	if (dns_zone -> key)
-		tsig_key_dereference (&dns_zone -> key, file, line);
+		omapi_auth_key_dereference (&dns_zone -> key, file, line);
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
@@ -444,7 +396,70 @@ void repudiate_zone (struct dns_zone **zone)
 	(*zone) -> timeout = cur_time - 1;
 	dns_zone_dereference (zone, MDL);
 }
+
+void cache_found_zone (ns_class class,
+		       char *zname, struct in_addr *addrs, int naddrs)
+{
+	isc_result_t status = ISC_R_NOTFOUND;
+	const char *np;
+	struct dns_zone *zone = (struct dns_zone *)0;
+	struct data_string nsaddrs;
+	int ix = strlen (zname);
+
+	if (zname [ix - 1] == '.')
+		ix = 0;
+
+	/* See if there's already such a zone. */
+	if (dns_zone_lookup (&zone, np) == ISC_R_SUCCESS) {
+		/* If it's not a dynamic zone, leave it alone. */
+		if (!zone -> timeout)
+			return;
+		/* Address may have changed, so just blow it away. */
+		if (zone -> primary)
+			option_cache_dereference (&zone -> primary, MDL);
+		if (zone -> secondary)
+			option_cache_dereference (&zone -> secondary, MDL);
+	}
+
+	if (!dns_zone_allocate (&zone, MDL))
+		return;
+
+	if (!zone -> name) {
+		zone -> name =
+			dmalloc (strlen (zname) + 1 + (ix != 0), MDL);
+		if (!zone -> name) {
+			dns_zone_dereference (&zone, MDL);
+			return;
+		}
+		strcpy (zone -> name, zname);
+		/* Add a trailing '.' if it was missing. */
+		if (ix) {
+			zone -> name [ix] = '.';
+			zone -> name [ix + 1] = 0;
+		}
+	}
+
+	/* XXX Need to get the lower-level code to push the actual zone
+	   XXX TTL up to us. */
+	zone -> timeout = cur_time + 1800;
+	
+	if (!option_cache_allocate (&zone -> primary, MDL)) {
+		dns_zone_dereference (&zone, MDL);
+		return;
+	}
+	if (!buffer_allocate (&zone -> primary -> data.buffer,
+			      naddrs * sizeof (struct in_addr), MDL)) {
+		dns_zone_dereference (&zone, MDL);
+		return;
+	}
+	memcpy (zone -> primary -> data.buffer -> data,
+		addrs, naddrs * sizeof *addrs);
+	zone -> primary -> data.data =
+		&zone -> primary -> data.buffer -> data [0];
+	zone -> primary -> data.len = naddrs * sizeof *addrs;
+
+	enter_dns_zone (zone);
+}
 #endif /* NSUPDATE */
 
 HASH_FUNCTIONS (dns_zone, const char *, struct dns_zone)
-HASH_FUNCTIONS (tsig_key, const char *, struct tsig_key)
