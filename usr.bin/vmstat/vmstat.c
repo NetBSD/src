@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vmstat.c,v 1.16 1994/10/06 15:54:02 mycroft Exp $";
+static char *rcsid = "$Id: vmstat.c,v 1.17 1994/12/24 17:02:20 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -393,7 +393,8 @@ dovmstat(interval, reps)
 	struct vmtotal total;
 	time_t uptime, halfuptime;
 	void needhdr();
-	int mib[2], size;
+	int mib[2];
+	size_t size;
 
 	uptime = getuptime();
 	halfuptime = uptime / 2;
