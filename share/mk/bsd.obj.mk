@@ -1,4 +1,9 @@
-#	$NetBSD: bsd.obj.mk,v 1.16 1999/02/12 01:10:07 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.17 1999/02/12 04:13:26 lukem Exp $
+
+.if !target(__initialized_obj__)
+__initialized_obj__:
+.include <bsd.own.mk>
+.endif
 
 .if ${MKOBJ} == "no"
 obj:
