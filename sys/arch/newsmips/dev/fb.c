@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.14 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.15 2003/04/19 14:56:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -207,11 +207,11 @@ fb_common_init(dc)
 	xoff = ((width - cols * ri->ri_font->fontwidth) / 2 / 8) & ~3;
 	yoff = (height - rows * ri->ri_font->fontheight) / 2;
 	rasops_reconfig(ri, rows, cols);
- 
+
 	ri->ri_xorigin = xoff;
 	ri->ri_yorigin = yoff;
 	ri->ri_bits = dc->dc_fbbase + xoff + ri->ri_stride * yoff;
- 
+
 	fb_stdscreen.nrows = ri->ri_rows;
 	fb_stdscreen.ncols = ri->ri_cols; 
 	fb_stdscreen.textops = &ri->ri_ops;
