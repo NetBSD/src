@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.44 2001/10/30 01:11:54 lukem Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.45 2001/11/06 07:11:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.44 2001/10/30 01:11:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.45 2001/11/06 07:11:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ ffs_fsync(v)
 	int s, num, error, i;
 	struct indir ia[NIADDR + 1];
 	int bsize;
-	daddr_t blk_low, blk_high;
+	daddr_t blk_high;
 	struct vnode *vp;
 
 	/*
@@ -262,7 +262,6 @@ ffs_fsync(v)
 	vp = ap->a_vp;
 
 	bsize = ap->a_vp->v_mount->mnt_stat.f_iosize;
-	blk_low = ap->a_offlo / bsize;
 	blk_high = ap->a_offhi / bsize;
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;

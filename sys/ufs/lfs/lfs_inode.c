@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.53 2001/09/15 20:36:43 chs Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.54 2001/11/06 07:11:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@ lfs_update(void *v)
 				  } */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
-	int oflag;
 	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	
@@ -172,7 +171,6 @@ lfs_update(void *v)
 #endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
-	oflag = ip->i_flag;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip,
 		   ap->a_access ? ap->a_access : &ts,
