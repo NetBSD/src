@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: inet.c,v 1.9 1994/05/13 08:08:11 mycroft Exp $";
+static char *rcsid = "$Id: inet.c,v 1.10 1994/12/24 17:21:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>

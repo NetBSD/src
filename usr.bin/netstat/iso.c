@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: iso.c,v 1.10 1994/10/06 16:30:57 mycroft Exp $";
+static char *rcsid = "$Id: iso.c,v 1.11 1994/12/24 17:21:55 cgd Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -64,6 +64,7 @@ SOFTWARE.
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/domain.h>
