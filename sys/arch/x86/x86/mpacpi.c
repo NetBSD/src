@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.1 2003/05/11 18:21:50 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.2 2003/05/11 21:51:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -48,7 +48,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
-#include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/bus.h>
 #include <machine/mpacpi.h>
