@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.61 2003/09/23 14:54:53 wiz Exp $ */
+/* $NetBSD: lib.h,v 1.62 2003/10/03 15:40:27 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -258,7 +258,7 @@ void    format_cmd(char *, size_t, char *, char *, char *);
 int	expandURL(char *, const char *);
 int	unpackURL(const char *, const char *);
 int	ftp_cmd(const char *, const char *);
-int	ftp_start(char *);
+int	ftp_start(const char *);
 void	ftp_stop(void);
 
 /* Packing list */
