@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,44 +32,47 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)tftpd.c	5.13 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 /*
  * Trivial file transfer protocol server.
  *
- * This version includes many modifications by Jim Guyton <guyton@rand-unix>
+ * This version includes many modifications by Jim Guyton
+ * <guyton@rand-unix>.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <signal.h>
-#include <fcntl.h>
-
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/tftp.h>
-#include <netdb.h>
+#include <arpa/inet.h>
 
-#include <setjmp.h>
-#include <syslog.h>
-#include <stdio.h>
-#include <errno.h>
 #include <ctype.h>
-#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include "tftpsubs.h"
 
 #define	TIMEOUT		5
 
-extern	int errno;
-struct	sockaddr_in sin = { AF_INET };
 int	peer;
 int	rexmtval = TIMEOUT;
 int	maxtimeout = 5*TIMEOUT;
@@ -80,20 +83,65 @@ char	ackbuf[PKTSIZE];
 struct	sockaddr_in from;
 int	fromlen;
 
-#define MAXARG	4
-char	*dirs[MAXARG+1];
+void	tftp __P((struct tftphdr *, int));
 
-main(ac, av)
-	char **av;
+/*
+ * Null-terminated directory prefix list for absolute pathname requests and
+ * search list for relative pathname requests.
+ *
+ * MAXDIRS should be at least as large as the number of arguments that
+ * inetd allows (currently 20).
+ */
+#define MAXDIRS	20
+static struct dirlist {
+	char	*name;
+	int	len;
+} dirs[MAXDIRS+1];
+static int	suppress_naks;
+static int	logging;
+
+static char *errtomsg __P((int));
+static void  nak __P((int));
+static char *verifyhost __P((struct sockaddr_in *));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	register struct tftphdr *tp;
-	register int n = 0;
-	int on = 1;
+	register int n;
+	int ch, on;
+	struct sockaddr_in sin;
 
-	ac--; av++;
-	while (ac-- > 0 && n < MAXARG)
-		dirs[n++] = *av++;
-	openlog("tftpd", LOG_PID, LOG_DAEMON);
+	openlog("tftpd", LOG_PID, LOG_FTP);
+	while ((ch = getopt(argc, argv, "ln")) != EOF) {
+		switch (ch) {
+		case 'l':
+			logging = 1;
+			break;
+		case 'n':
+			suppress_naks = 1;
+			break;
+		default:
+			syslog(LOG_WARNING, "ignoring unknown option -%c", ch);
+		}
+	}
+	if (optind < argc) {
+		struct dirlist *dirp;
+
+		/* Get list of directory prefixes. Skip relative pathnames. */
+		for (dirp = dirs; optind < argc && dirp < &dirs[MAXDIRS];
+		     optind++) {
+			if (argv[optind][0] == '/') {
+				dirp->name = argv[optind];
+				dirp->len  = strlen(dirp->name);
+				dirp++;
+			}
+		}
+	}
+
+	on = 1;
 	if (ioctl(0, FIONBIO, &on) < 0) {
 		syslog(LOG_ERR, "ioctl(FIONBIO): %m\n");
 		exit(1);
@@ -164,6 +212,8 @@ main(ac, av)
 		syslog(LOG_ERR, "socket: %m\n");
 		exit(1);
 	}
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
 	if (bind(peer, (struct sockaddr *)&sin, sizeof (sin)) < 0) {
 		syslog(LOG_ERR, "bind: %m\n");
 		exit(1);
@@ -179,14 +229,16 @@ main(ac, av)
 	exit(1);
 }
 
-int	validate_access();
-int	sendfile(), recvfile();
+struct formats;
+int	validate_access __P((char **, int));
+void	sendfile __P((struct formats *));
+void	recvfile __P((struct formats *));
 
 struct formats {
 	char	*f_mode;
-	int	(*f_validate)();
-	int	(*f_send)();
-	int	(*f_recv)();
+	int	(*f_validate) __P((char **, int));
+	void	(*f_send) __P((struct formats *));
+	void	(*f_recv) __P((struct formats *));
 	int	f_convert;
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
@@ -200,6 +252,7 @@ struct formats {
 /*
  * Handle initial connection protocol.
  */
+void
 tftp(tp, size)
 	struct tftphdr *tp;
 	int size;
@@ -235,8 +288,20 @@ again:
 		nak(EBADOP);
 		exit(1);
 	}
-	ecode = (*pf->f_validate)(filename, tp->th_opcode);
+	ecode = (*pf->f_validate)(&filename, tp->th_opcode);
+	if (logging) {
+		syslog(LOG_INFO, "%s: %s request for %s: %s",
+			verifyhost(&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			filename, errtomsg(ecode));
+	}
 	if (ecode) {
+		/*
+		 * Avoid storms of naks to a RRQ broadcast for a relative
+		 * bootfile pathname from a diskless Sun.
+		 */
+		if (suppress_naks && *filename != '/' && ecode == ENOTFOUND)
+			exit(0);
 		nak(ecode);
 		exit(1);
 	}
@@ -261,35 +326,81 @@ FILE *file;
  * Note also, full path name must be
  * given as we have no login directory.
  */
-validate_access(filename, mode)
-	char *filename;
+int
+validate_access(filep, mode)
+	char **filep;
 	int mode;
 {
 	struct stat stbuf;
 	int	fd;
-	char *cp, **dirp;
+	struct dirlist *dirp;
+	static char pathname[MAXPATHLEN];
+	char *filename = *filep;
 
-	if (*filename != '/')
-		return (EACCESS);
 	/*
-	 * prevent tricksters from getting around the directory restrictions
+	 * Prevent tricksters from getting around the directory restrictions
 	 */
-	for (cp = filename + 1; *cp; cp++)
-		if(*cp == '.' && strncmp(cp-1, "/../", 4) == 0)
-			return(EACCESS);
-	for (dirp = dirs; *dirp; dirp++)
-		if (strncmp(filename, *dirp, strlen(*dirp)) == 0)
-			break;
-	if (*dirp==0 && dirp!=dirs)
+	if (strstr(filename, "/../"))
 		return (EACCESS);
-	if (stat(filename, &stbuf) < 0)
-		return (errno == ENOENT ? ENOTFOUND : EACCESS);
-	if (mode == RRQ) {
-		if ((stbuf.st_mode&(S_IREAD >> 6)) == 0)
+
+	if (*filename == '/') {
+		/*
+		 * Allow the request if it's in one of the approved locations.
+		 * Special case: check the null prefix ("/") by looking
+		 * for length = 1 and relying on the arg. processing that
+		 * it's a /.
+		 */
+		for (dirp = dirs; dirp->name != NULL; dirp++) {
+			if (dirp->len == 1 ||
+			    (!strncmp(filename, dirp->name, dirp->len) &&
+			     filename[dirp->len] == '/'))
+				    break;
+		}
+		/* If directory list is empty, allow access to any file */
+		if (dirp->name == NULL && dirp != dirs)
 			return (EACCESS);
+		if (stat(filename, &stbuf) < 0)
+			return (errno == ENOENT ? ENOTFOUND : EACCESS);
+		if ((stbuf.st_mode & S_IFMT) != S_IFREG)
+			return (ENOTFOUND);
+		if (mode == RRQ) {
+			if ((stbuf.st_mode & S_IROTH) == 0)
+				return (EACCESS);
+		} else {
+			if ((stbuf.st_mode & S_IWOTH) == 0)
+				return (EACCESS);
+		}
 	} else {
-		if ((stbuf.st_mode&(S_IWRITE >> 6)) == 0)
+		int err;
+
+		/*
+		 * Relative file name: search the approved locations for it.
+		 * Don't allow write requests or ones that avoid directory
+		 * restrictions.
+		 */
+
+		if (mode != RRQ || !strncmp(filename, "../", 3))
 			return (EACCESS);
+
+		/*
+		 * If the file exists in one of the directories and isn't
+		 * readable, continue looking. However, change the error code
+		 * to give an indication that the file exists.
+		 */
+		err = ENOTFOUND;
+		for (dirp = dirs; dirp->name != NULL; dirp++) {
+			sprintf(pathname, "%s/%s", dirp->name, filename);
+			if (stat(pathname, &stbuf) == 0 &&
+			    (stbuf.st_mode & S_IFMT) == S_IFREG) {
+				if ((stbuf.st_mode & S_IROTH) != 0) {
+					break;
+				}
+				err = EACCESS;
+			}
+		}
+		if (dirp->name == NULL)
+			return (err);
+		*filep = filename = pathname;
 	}
 	fd = open(filename, mode == RRQ ? 0 : 1);
 	if (fd < 0)
@@ -317,16 +428,19 @@ timer()
 /*
  * Send the requested file.
  */
+void
 sendfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp, *r_init();
 	register struct tftphdr *ap;    /* ack packet */
-	register int block = 1, size, n;
+	register int size, n;
+	volatile int block;
 
 	signal(SIGALRM, timer);
 	dp = r_init();
 	ap = (struct tftphdr *)ackbuf;
+	block = 1;
 	do {
 		size = readit(file, &dp, pf->f_convert);
 		if (size < 0) {
@@ -336,7 +450,7 @@ sendfile(pf)
 		dp->th_opcode = htons((u_short)DATA);
 		dp->th_block = htons((u_short)block);
 		timeout = 0;
-		(void) setjmp(timeoutbuf);
+		(void)setjmp(timeoutbuf);
 
 send_data:
 		if (send(peer, dp, size + 4, 0) != size + 4) {
@@ -357,16 +471,14 @@ send_data:
 
 			if (ap->th_opcode == ERROR)
 				goto abort;
-			
+
 			if (ap->th_opcode == ACK) {
-				if (ap->th_block == block) {
+				if (ap->th_block == block)
 					break;
-				}
 				/* Re-synchronize with the other side */
 				(void) synchnet(peer);
-				if (ap->th_block == (block -1)) {
+				if (ap->th_block == (block -1))
 					goto send_data;
-				}
 			}
 
 		}
@@ -386,16 +498,19 @@ justquit()
 /*
  * Receive a file.
  */
+void
 recvfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp, *w_init();
 	register struct tftphdr *ap;    /* ack buffer */
-	register int block = 0, n, size;
+	register int n, size;
+	volatile int block;
 
 	signal(SIGALRM, timer);
 	dp = w_init();
 	ap = (struct tftphdr *)ackbuf;
+	block = 0;
 	do {
 		timeout = 0;
 		ap->th_opcode = htons((u_short)ACK);
@@ -473,12 +588,28 @@ struct errmsg {
 	{ -1,		0 }
 };
 
+static char *
+errtomsg(error)
+	int error;
+{
+	static char buf[20];
+	register struct errmsg *pe;
+	if (error == 0)
+		return "success";
+	for (pe = errmsgs; pe->e_code >= 0; pe++)
+		if (pe->e_code == error)
+			return pe->e_msg;
+	sprintf(buf, "error %d", error);
+	return buf;
+}
+
 /*
  * Send a nak packet (error message).
  * Error code passed in is one of the
  * standard TFTP codes, or a UNIX errno
  * offset by 100.
  */
+static void
 nak(error)
 	int error;
 {
@@ -502,4 +633,18 @@ nak(error)
 	length += 5;
 	if (send(peer, buf, length, 0) != length)
 		syslog(LOG_ERR, "nak: %m\n");
+}
+
+static char *
+verifyhost(fromp)
+	struct sockaddr_in *fromp;
+{
+	struct hostent *hp;
+
+	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof (fromp->sin_addr),
+			    fromp->sin_family);
+	if (hp)
+		return hp->h_name;
+	else
+		return inet_ntoa(fromp->sin_addr);
 }

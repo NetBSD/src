@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)talkd.8	6.5 (Berkeley) 3/16/91
+.\"     @(#)talkd.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 16, 1991
+.Dd December 11, 1993
 .Dt TALKD 8
 .Os BSD 4.3
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm Talkd
 is the server that notifies a user that someone else wants to
 initiate a conversation.
-It acts a repository of invitations, responding to requests
+It acts as a repository of invitations, responding to requests
 by clients wishing to rendezvous to hold a conversation.
 In normal operation, a client, the caller,
 initiates a rendezvous by sending a
