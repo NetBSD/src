@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1997/09/09 23:07:06 is Exp $
+#	$NetBSD: list,v 1.2 1997/09/19 14:17:22 chopps Exp $
 
 # Amiga extra's
 #LINK	instbin			sbin/edahdi
@@ -14,9 +14,8 @@ LINK	instbin			usr/sbin/loadkmap
 ARGVLINK mount_ados		ados
 
 # crunchgen source directory specials
-#CRUNCHSPECIAL	edahdi srcdir /usr/src/sys/arch/atari/stand/edahdi/
-CRUNCHSPECIAL	loadkmap srcdir /usr/src/sys/arch/amiga/stand/loadkmap/
-CRUNCHSPECIAL	vi srcdir /usr/src/usr.bin/vi/build/
+CRUNCHSPECIAL	loadkmap srcdir sys/arch/amiga/stand/loadkmap
+CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
