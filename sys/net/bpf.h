@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.8 1995/01/13 00:34:09 jtc Exp $	*/
+/*	$NetBSD: bpf.h,v 1.9 1995/03/06 10:56:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -85,7 +85,7 @@ struct bpf_version {
 	u_short bv_major;
 	u_short bv_minor;
 };
-/* Current version number. */
+/* Current version number of filter architecture. */
 #define BPF_MAJOR_VERSION 1
 #define BPF_MINOR_VERSION 1
 
@@ -131,8 +131,8 @@ struct bpf_version {
  */
 struct bpf_hdr {
 	struct timeval	bh_tstamp;	/* time stamp */
-	u_long		bh_caplen;	/* length of captured portion */
-	u_long		bh_datalen;	/* original length of packet */
+	u_int32_t	bh_caplen;	/* length of captured portion */
+	u_int32_t	bh_datalen;	/* original length of packet */
 	u_short		bh_hdrlen;	/* length of bpf header (this struct
 					   plus alignment padding) */
 };
@@ -147,7 +147,6 @@ struct bpf_hdr {
 
 /*
  * Data-link level type codes.
- * Currently, only DLT_EN10MB and DLT_SLIP are supported.
  */
 #define DLT_NULL	0	/* no link-layer encapsulation */
 #define DLT_EN10MB	1	/* Ethernet (10Mb) */
@@ -224,7 +223,7 @@ struct bpf_insn {
 	u_short	code;
 	u_char 	jt;
 	u_char 	jf;
-	long	k;
+	int32_t	k;
 };
 
 /*
