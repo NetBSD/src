@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.14 1998/07/28 11:41:54 mycroft Exp $	*/
+/*	$NetBSD: exec.h,v 1.15 1999/07/09 03:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,13 +57,14 @@ struct cmdentry {
 #define DO_ERR	1		/* find_command prints errors */
 #define DO_ABS	2		/* find_command checks absolute paths */
 
-extern char *pathopt;		/* set by padvance */
+extern const char *pathopt;	/* set by padvance */
 extern int exerrno;		/* last exec error */
 
-void shellexec __P((char **, char **, char *, int)) __attribute__((noreturn));
-char *padvance __P((char **, char *));
+void shellexec __P((char **, char **, const char *, int))
+    __attribute__((noreturn));
+char *padvance __P((const char **, const char *));
 int hashcmd __P((int, char **));
-void find_command __P((char *, struct cmdentry *, int, char *));
+void find_command __P((char *, struct cmdentry *, int, const char *));
 int find_builtin __P((char *));
 void hashcd __P((void));
 void changepath __P((const char *));

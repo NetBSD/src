@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.8 1996/10/16 14:47:49 christos Exp $
+#	$NetBSD: mktokens,v 1.9 1999/07/09 03:05:50 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -80,14 +80,15 @@ const char tokendlist[] = {'
 awk '{print "\t" $2 ","}' /tmp/ka$$
 echo '};
 
-char *const tokname[] = {'
+const char *const tokname[] = {'
 sed -e 's/"/\\"/g' \
     -e 's/[^	 ]*[	 ][	 ]*[^	 ]*[	 ][	 ]*\(.*\)/	"\1",/' \
     /tmp/ka$$
 echo '};
 '
 sed 's/"//g' /tmp/ka$$ | awk '
-/TIF/{print "#define KWDOFFSET " NR-1; print ""; print "char *const parsekwd[] = {"}
+/TIF/{print "#define KWDOFFSET " NR-1; print ""; 
+      print "const char *const parsekwd[] = {"}
 /TIF/,/neverfound/{print "	\"" $3 "\","}'
 echo '	0
 };'
