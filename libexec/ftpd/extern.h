@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1997/11/11 12:42:30 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1998/06/30 20:18:52 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@ struct ftpclass {
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
 	int		 modify;	/* Allow dele, mkd, rmd, umask, chmod */
 	char		*notify;	/* Files to notify about upon chdir */
+	int		 passive;	/* Allow pasv */
 	unsigned int	 timeout;	/* Default timeout */
 	mode_t		 umask;		/* Umask to use */
 };
