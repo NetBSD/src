@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/11/05 14:35:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 2003/01/19 21:37:04 ragge Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -45,8 +45,11 @@ machine-links:
 CLEANFILES+= machine ${MACHINE_ARCH}
 .endif
 
-
+.if ${OBJECT_FMT} == "ELF"
+START=start
+.else
 START=nisse
+.endif
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
