@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.11 1997/07/13 19:58:01 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.12 1997/07/17 21:25:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.11 1997/07/13 19:58:01 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.12 1997/07/17 21:25:18 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -874,8 +874,8 @@ __p_rr(cp, msg, file)
 	putc('\n', file);
 #endif
 	if (cp - cp1 != dlen) {
-		fprintf(file,";; packet size error (found %d, dlen was %d)\n",
-			cp - cp1, dlen);
+		fprintf(file,";; packet size error (found %ld, dlen was %d)\n",
+			(long)(cp - cp1), dlen);
 		cp = NULL;
 	}
 	return (cp);
