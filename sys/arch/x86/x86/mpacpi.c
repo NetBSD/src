@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.19 2004/03/24 09:15:38 martin Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.20 2004/04/10 14:17:21 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.19 2004/03/24 09:15:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.20 2004/04/10 14:17:21 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -183,7 +183,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		ioapic->sc_pins[pin].ip_map = mpi;
 		mpi->ioapic_ih = APIC_INT_VIA_APIC |
 		    (ioapic->sc_apicid << APIC_INT_APIC_SHIFT) |
-		    (pin << APIC_INT_PIN_SHIFT); 
+		    (pin << APIC_INT_PIN_SHIFT);
 		mpi->flags = ioapic_nmi->Polarity |
 		    (ioapic_nmi->TriggerMode << 2);
 		mpi->global_int = ioapic_nmi->Interrupt;
@@ -298,7 +298,7 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 			caa.cpu_func = &mp_cpu_funcs;
 			config_found_sm(parent, &caa, mpacpi_print,
 			    mpacpi_match);
-			
+
 		}
 	}
 	return AE_OK;
@@ -599,7 +599,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 			if (mpr->mpr_bus != -1) {
 				mpw.mpw_acpi = acpi;
 				mpw.mpw_mpr = mpr;
-				AcpiWalkNamespace(ACPI_TYPE_DEVICE, 
+				AcpiWalkNamespace(ACPI_TYPE_DEVICE,
 				    mpr->mpr_handle, 1, mpacpi_pcihier_cb,
 				    &mpw, NULL);
 			}
@@ -674,7 +674,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		ioapic->sc_pins[i].ip_map = mpi;
 		index++;
 	}
-	
+
 	mpacpi_intr_index = index;
 	if (acpi_madt_map() != AE_OK)
 		panic("failed to map the MADT a second time");
