@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.28 2001/02/12 19:12:10 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.29 2001/02/18 15:03:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -877,7 +877,11 @@ out:
 			}
 			if (pgs[i]->flags & PG_FAKE) {
 				uvm_pagefree(pgs[i]);
+				continue;
 			}
+			uvm_pageactivate(pgs[i]);
+			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pgs[i], NULL);
 		}
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
@@ -946,7 +950,7 @@ genfs_putpages(v)
 		int *a_rtvals;
 	} */ *ap = v;
 
-	int s, error, error2, npages, run;
+	int s, error, npages, run;
 	int fs_bshift, dev_bshift, dev_bsize;
 	vaddr_t kva;
 	off_t eof, offset, startoffset;
@@ -957,6 +961,8 @@ genfs_putpages(v)
 	struct vnode *vp = ap->a_vp;
 	boolean_t async = (ap->a_flags & PGO_SYNCIO) == 0;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p offset 0x%x count %d",
+		    vp, ap->a_m[0]->offset, ap->a_count, 0);
 
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 
@@ -965,7 +971,7 @@ genfs_putpages(v)
 		return error;
 	}
 
-	error = error2 = 0;
+	error = 0;
 	npages = ap->a_count;
 	fs_bshift = vp->v_mount->mnt_fs_bshift;
 	dev_bshift = vp->v_mount->mnt_dev_bshift;
@@ -1045,9 +1051,13 @@ genfs_putpages(v)
 		VOP_STRATEGY(bp);
 	}
 	if (skipbytes) {
-		UVMHIST_LOG(ubchist, "skipbytes %d", bytes, 0,0,0);
+		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 		s = splbio();
 		mbp->b_resid -= skipbytes;
+		if (error) {
+			mbp->b_flags |= B_ERROR;
+			mbp->b_error = error;
+		}
 		if (mbp->b_resid == 0) {
 			biodone(mbp);
 		}
@@ -1059,7 +1069,7 @@ genfs_putpages(v)
 	}
 	if (bp != NULL) {
 		UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
-		error2 = biowait(mbp);
+		error = biowait(mbp);
 	}
 	if (bioops.io_pageiodone) {
 		(*bioops.io_pageiodone)(mbp);
@@ -1070,7 +1080,7 @@ genfs_putpages(v)
 	splx(s);
 	uvm_pagermapout(kva, npages);
 	UVMHIST_LOG(ubchist, "returning, error %d", error,0,0,0);
-	return error ? error : error2;
+	return error;
 }
 
 int
