@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.27 2002/10/06 12:09:34 lukem Exp $
+#	$NetBSD: configure.ac,v 1.28 2002/10/07 18:12:36 briggs Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -30,14 +30,14 @@ AC_CHECK_LIB(z, gzdopen,,
 AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 	sys/stat.h sys/time.h sys/types.h sys/utsname.h sys/wait.h \
 	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
-	netdb.h poll.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
+	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
 	termios.h unistd.h,,
 	AC_MSG_ERROR([standard system header file not found]))
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
-	features.h malloc.h stddef.h)
+	features.h malloc.h poll.h stddef.h)
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])

@@ -2293,7 +2293,7 @@ fi
 for ac_header in sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 	sys/stat.h sys/time.h sys/types.h sys/utsname.h sys/wait.h \
 	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
-	netdb.h poll.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
+	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
 	termios.h unistd.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -2514,7 +2514,7 @@ fi
 fi
 
 for ac_header in sys/sysmacros.h sys/syslimits.h \
-	features.h malloc.h stddef.h
+	features.h malloc.h poll.h stddef.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 echo "$as_me:2520: checking for $ac_header" >&5
