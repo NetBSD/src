@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.44 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.sun3,v 1.45 2001/05/28 21:06:19 chs Exp $
 ./usr/include/sun3	comp-c-include
 ./usr/include/sun3/_G_config.h	comp-c-include
 ./usr/include/sun3/ansi.h	comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/sun3/int_limits.h	comp-c-include
 ./usr/include/sun3/int_mwgwtypes.h	comp-c-include
 ./usr/include/sun3/int_types.h	comp-c-include
+./usr/include/sun3/intr.h	comp-c-include
 ./usr/include/sun3/kbd.h	comp-c-include
 ./usr/include/sun3/kbio.h	comp-c-include
 ./usr/include/sun3/kcore.h	comp-c-include
