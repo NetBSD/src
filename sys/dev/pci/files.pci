@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.131 2001/06/19 23:00:47 thorpej Exp $
+#	$NetBSD: files.pci,v 1.132 2001/07/07 16:34:33 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -118,11 +118,6 @@ file	dev/pci/if_fpa.c		fpa
 # device declaration in sys/conf/files
 attach	le at pci with le_pci: le32
 file	dev/pci/if_le_pci.c		le_pci
-
-# NCR 53c8xx SCSI chips
-device	ncr: scsi
-attach	ncr at pci
-file	dev/pci/ncr.c			ncr
 
 # common code for siop/esiop pci front end
 define	siop_pci_common
