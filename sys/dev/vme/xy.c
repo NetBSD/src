@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.37 2001/09/24 23:49:34 eeh Exp $	*/
+/*	$NetBSD: xy.c,v 1.38 2001/11/13 06:17:08 lukem Exp $	*/
 
 /*
  *
@@ -49,6 +49,9 @@
  *	       [6] David Jones <dej@achilles.net>'s unfinished 450/451 driver
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.38 2001/11/13 06:17:08 lukem Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.38 2001/09/24 23:49:34 eeh Exp $	*/
+/*	$NetBSD: xd.c,v 1.39 2001/11/13 06:17:08 lukem Exp $	*/
 
 /*
  *
@@ -49,6 +49,9 @@
  * different sizes.   the 753 is a 6U VME card, while the 7053 is a 9U
  * VME card (found in many VME based suns).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.39 2001/11/13 06:17:08 lukem Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */

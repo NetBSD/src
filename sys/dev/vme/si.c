@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.5 2001/09/11 07:03:56 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.6 2001/11/13 06:17:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  * for the sake of testing.  Andrew Gillham helped work out the bugs
  * the 4/100 DMA code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.6 2001/11/13 06:17:07 lukem Exp $");
 
 #include "opt_ddb.h"
 
