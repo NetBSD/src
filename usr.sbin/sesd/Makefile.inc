@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2000/02/22 01:16:48 erh Exp $
+# $NetBSD: Makefile.inc,v 1.4 2000/02/22 05:10:53 erh Exp $
 # $OpenBSD: $
 # $FreeBSD: $
 #
@@ -43,6 +43,9 @@ COPTS	+=	-I${DESTDIR}/usr/include/dev/scsipi -DSESINC="<ses.h>"
 .else
 COPTS	+=	-I${DESTDIR}/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
 .endif
-BINDIR	?=	${DESTDIR}/usr/sbin
+
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
+.endif
 
 .PATH:	${.CURDIR}/../srcs
