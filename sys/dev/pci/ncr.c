@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.58 1997/04/13 20:14:34 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.59 1997/04/17 07:21:14 mikel Exp $	*/
 
 /**************************************************************************
 **
@@ -1326,7 +1326,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.58 1997/04/13 20:14:34 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.59 1997/04/17 07:21:14 mikel Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4890,10 +4890,8 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 	**	Bells and whistles   ;-)
 	*/
 	PRINT_ADDR(xp);
-	if (scntl3 & EWS)
-		printf ("WIDE SCSI (16 bit) enabled");
-	else
-		printf ("WIDE SCSI disabled");
+	printf ("WIDE SCSI %sabled\n",
+	    (scntl3 & EWS) ? "(16 bit) en" : "dis");
 
 	/*
 	**	set actual value and sync_status
