@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/01/05 19:24:09 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.9 2003/07/29 02:45:23 lukem Exp $
 
 NOMAN=		# defined
 
@@ -14,5 +14,5 @@ RPC_XDRFILES=	${RPCSRCS:.x=_xdr.c}
 regress: ${PROG}
 	./${PROG}
 
-.include <bsd.prog.mk>
 .include <bsd.rpc.mk>
+.include <bsd.prog.mk>
