@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.65 2001/01/09 05:04:23 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.66 2001/01/10 23:29:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -686,38 +686,23 @@ sl_btom(sc, len)
 		return (NULL);
 
 	/*
-	 * We always prepend enough space for the SLIP "header".
+	 * Allocate a new input buffer and swap.
 	 */
-	sc->sc_pktstart -= SLIP_HDRLEN;
-	len += SLIP_HDRLEN;
-
-	/*
-	 * If the packet will fit into the header mbuf we allocated
-	 * above, copy it there and re-use the input buffer we already
-	 * have.
-	 */
-	if (len < MHLEN)
-		memcpy(mtod(m, caddr_t), sc->sc_pktstart, len);
-	else {
-		/*
-		 * Allocate a new input buffer and swap.
-		 */
-		m = sc->sc_mbuf;
-		MGETHDR(sc->sc_mbuf, M_DONTWAIT, MT_DATA);
-		if (sc->sc_mbuf == NULL) {
-			sc->sc_mbuf = m;
-			return (NULL);
-		}
-		MCLGET(sc->sc_mbuf, M_DONTWAIT);
-		if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
-			sc->sc_mbuf = m;
-			return (NULL);
-		}
-		sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
-		    sc->sc_mbuf->m_ext.ext_size;
-
-		m->m_data = sc->sc_pktstart;
+	m = sc->sc_mbuf;
+	MGETHDR(sc->sc_mbuf, M_DONTWAIT, MT_DATA);
+	if (sc->sc_mbuf == NULL) {
+		sc->sc_mbuf = m;
+		return (NULL);
 	}
+	MCLGET(sc->sc_mbuf, M_DONTWAIT);
+	if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
+		sc->sc_mbuf = m;
+		return (NULL);
+	}
+	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    sc->sc_mbuf->m_ext.ext_size;
+
+	m->m_data = sc->sc_pktstart;
 
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = &sc->sc_if;
@@ -736,9 +721,6 @@ slinput(c, tp)
 	struct mbuf *m;
 	int len;
 	int s;
-#if NBPFILTER > 0
-	u_char chdr[CHDR_LEN];
-#endif
 
 	tk_nin++;
 	sc = (struct sl_softc *)tp->t_sc;
@@ -805,73 +787,14 @@ slinput(c, tp)
 			/* less than min length packet - ignore */
 			goto newpack;
 
-#if NBPFILTER > 0
-		if (sc->sc_if.if_bpf) {
-			/*
-			 * Save the compressed header, so we
-			 * can tack it on later.  Note that we
-			 * will end up copying garbage in some
-			 * cases but this is okay.  We remember
-			 * where the buffer started so we can
-			 * compute the new header length.
-			 */
-			bcopy(sc->sc_pktstart, chdr, CHDR_LEN);
-		}
-#endif
-
-		if ((c = (*sc->sc_pktstart & 0xf0)) != (IPVERSION << 4)) {
-			if (c & 0x80)
-				c = TYPE_COMPRESSED_TCP;
-			else if (c == TYPE_UNCOMPRESSED_TCP)
-				*sc->sc_pktstart &= 0x4f; /* XXX */
-			/*
-			 * We've got something that's not an IP packet.
-			 * If compression is enabled, try to decompress it.
-			 * Otherwise, if `auto-enable' compression is on and
-			 * it's a reasonable packet, decompress it and then
-			 * enable compression.  Otherwise, drop it.
-			 */
-			if (sc->sc_if.if_flags & SC_COMPRESS) {
-				len = sl_uncompress_tcp(&sc->sc_pktstart, len,
-							(u_int)c, &sc->sc_comp);
-				if (len <= 0)
-					goto error;
-			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
-			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-				len = sl_uncompress_tcp(&sc->sc_pktstart, len,
-							(u_int)c, &sc->sc_comp);
-				if (len <= 0)
-					goto error;
-				sc->sc_if.if_flags |= SC_COMPRESS;
-			} else
-				goto error;
-		}
-
 		m = sl_btom(sc, len);
 		if (m == NULL)
 			goto error;
-
-#if NBPFILTER > 0
-		if (sc->sc_if.if_bpf) {
-			/*
-			 * Put the SLIP pseudo-"link header" in place.
-			 * Note the space for it has already been
-			 * allocated in sl_btom().
-			 */
-			u_char *hp = mtod(m, u_char *);
-
-			hp[SLX_DIR] = SLIPDIR_IN;
-			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
-
-			bpf_mtap(sc->sc_if.if_bpf, m);
-		}
-#endif
 
 		IF_ENQUEUE(&sc->sc_inq, m);
 		s = splimp();
 		schednetisr(NETISR_SLIP);
 		splx(s);
-
 		goto newpack;
 	}
 	if (sc->sc_mp < sc->sc_ep) {
@@ -896,7 +819,11 @@ slintr(void)
 {
 	struct sl_softc *sc;
 	struct mbuf *m;
-	int i, s;
+	int i, s, len;
+	u_char *pktstart, c;
+#if NBPFILTER > 0
+	u_char chdr[CHDR_LEN];
+#endif
 
 	for (i = 0; i < NSL; i++) {
 		sc = &sl_softc[i];
@@ -906,16 +833,103 @@ slintr(void)
 			splx(s);
 			if (m == NULL)
 				break;
+			pktstart = mtod(m, u_char *);
+			len = m->m_pkthdr.len;
 #if NBPFILTER > 0
 			if (sc->sc_if.if_bpf) {
+				/*
+				 * Save the compressed header, so we
+				 * can tack it on later.  Note that we
+				 * will end up copying garbage in some
+				 * cases but this is okay.  We remember
+				 * where the buffer started so we can
+				 * compute the new header length.
+				 */
+				memcpy(chdr, pktstart, CHDR_LEN);
+			}
+#endif /* NBPFILTER > 0 */
+			if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
+				if (c & 0x80)
+					c = TYPE_COMPRESSED_TCP;
+				else if (c == TYPE_UNCOMPRESSED_TCP)
+					*pktstart &= 0x4f; /* XXX */
+				/*
+				 * We've got something that's not an IP
+				 * packet.  If compression is enabled,
+				 * try to decompress it.  Otherwise, if
+				 * `auto-enable' compression is on and
+				 * it's a reasonable packet, decompress
+				 * it and then enable compression.
+				 * Otherwise, drop it.
+				 */
+				if (sc->sc_if.if_flags & SC_COMPRESS) {
+					len = sl_uncompress_tcp(&pktstart, len,
+					    (u_int)c, &sc->sc_comp);
+					if (len <= 0) {
+						m_freem(m);
+						continue;
+					}
+				} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
+				    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
+					len = sl_uncompress_tcp(&pktstart, len,
+					    (u_int)c, &sc->sc_comp);
+					if (len <= 0) {
+						m_freem(m);
+						continue;
+					}
+					sc->sc_if.if_flags |= SC_COMPRESS;
+				} else {
+					m_freem(m);
+					continue;
+				}
+			}
+			m->m_data = (caddr_t) pktstart;
+			m->m_pkthdr.len = m->m_len = len;
+#if NBPFILTER > 0
+			if (sc->sc_if.if_bpf) {
+				/*
+				 * Put the SLIP pseudo-"link header" in place.
+				 * Note this M_PREPEND() should bever fail,
+				 * since we know we always have enough space
+				 * in the input buffer.
+				 */
+				u_char *hp;
+
+				M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
+				if (m == NULL)
+					continue;
+
+				hp = mtod(m, u_char *);
+				hp[SLX_DIR] = SLIPDIR_IN;
+				memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
 				s = splnet();
 				bpf_mtap(sc->sc_if.if_bpf, m);
 				splx(s);
+
+				m_adj(m, SLIP_HDRLEN);
 			}
-#endif
-			m_adj(m, SLIP_HDRLEN);
+#endif /* NBPFILTER > 0 */
+			/*
+			 * If the packet will fit into a single
+			 * header mbuf, copy it into one, to save
+			 * memory.
+			 */
+			if (m->m_pkthdr.len < MHLEN) {
+				struct mbuf *n;
+
+				MGETHDR(n, M_DONTWAIT, MT_DATA);
+				M_COPY_PKTHDR(n, m);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t),
+				    m->m_pkthdr.len);
+				n->m_len = m->m_len;
+				m_freem(m);
+				m = n;
+			}
+
 			sc->sc_if.if_ipackets++;
 			sc->sc_if.if_lastchange = time;
+
 			s = splimp();
 			if (IF_QFULL(&ipintrq)) {
 				IF_DROP(&ipintrq);
