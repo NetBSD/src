@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.6 2002/12/31 05:27:44 explorer Exp $ */
+/*	$NetBSD: envstat.c,v 1.7 2003/01/01 12:14:21 augustss Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.6 2002/12/31 05:27:44 explorer Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.7 2003/01/01 12:14:21 augustss Exp $");
 #endif
 
 #include <fcntl.h>
@@ -55,17 +55,16 @@ const char E_CANTENUM[] = "cannot enumerate sensors";
 
 #define	_PATH_SYSMON	"/dev/sysmon"
 
-int main __P((int, char **));
-void listsensors __P((envsys_basic_info_t *, int));
-int numsensors __P((int));
-int fillsensors __P((int, envsys_tre_data_t *, envsys_basic_info_t *, int));
-int longestname __P((envsys_basic_info_t *, int));
-int marksensors __P((envsys_basic_info_t *, int *, char *, int));
-int strtosnum __P((envsys_basic_info_t *, const char *, int));
-void header __P((unsigned, int, envsys_basic_info_t *, const int * const,
-		 int));
-void values __P((unsigned, int, envsys_tre_data_t *, const int * const, int));
-void usage __P((void));
+int main(int, char **);
+void listsensors(envsys_basic_info_t *, int);
+int numsensors(int);
+int fillsensors(int, envsys_tre_data_t *, envsys_basic_info_t *, int);
+int longestname(envsys_basic_info_t *, int);
+int marksensors(envsys_basic_info_t *, int *, char *, int);
+int strtosnum(envsys_basic_info_t *, const char *, int);
+void header(unsigned, int, envsys_basic_info_t *, const int * const, int);
+void values(unsigned, int, envsys_tre_data_t *, const int * const, int);
+void usage(void);
 
 int rflag = 0;
 
@@ -73,9 +72,7 @@ static const char *unit_str[] = {"degC", "RPM", "VAC", "V", "Ohms", "W",
 				 "A", "Wh", "Ah", "bool", "Unk"};
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c, fd, ns, ls, celsius;
 	unsigned int interval, width, headrep, headcnt;
@@ -240,12 +237,8 @@ main(argc, argv)
  * post: a column header line is displayed on stdout
  */
 void
-header(width, celsius, ebis, cetds, ns)
-	unsigned width;
-	int celsius;
-	envsys_basic_info_t *ebis;
-	const int * const cetds;
-	int ns;
+header(unsigned width, int celsius, envsys_basic_info_t *ebis,
+       const int * const cetds, int ns)
 {
 	int i;
 	const char *s;
@@ -274,12 +267,8 @@ header(width, celsius, ebis, cetds, ns)
 }
 
 void
-values(width, celsius, etds, cetds, ns)
-	unsigned width;
-	int celsius;
-	envsys_tre_data_t *etds;
-	const int * const cetds;
-	int ns;
+values(unsigned width, int celsius, envsys_tre_data_t *etds,
+       const int * const cetds, int ns)
 {
 	int i;
 	double temp;
@@ -322,7 +311,7 @@ values(width, celsius, etds, cetds, ns)
  * post: displays usage on stderr
  */
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-c] [-s s1,s2,...]", getprogname());
@@ -336,9 +325,7 @@ usage()
  * post: a list of sensor names supported by the device is displayed on stdout
  */
 void
-listsensors(ebis, ns)
-	envsys_basic_info_t *ebis;
-	int ns;
+listsensors(envsys_basic_info_t *ebis, int ns)
 {
 	int i;
 
@@ -354,8 +341,7 @@ listsensors(ebis, ns)
  *       or -1 on error
  */
 int
-numsensors(fd)
-	int fd;
+numsensors(int fd)
 {
 	int count = 0, valid = 1;
 	envsys_tre_data_t etd;
@@ -385,11 +371,7 @@ numsensors(fd)
  *       or returns -1 on failure
  */
 int
-fillsensors(fd, etds, ebis, ns)
-	int fd;
-	envsys_tre_data_t *etds;
-	envsys_basic_info_t *ebis;
-	int ns;
+fillsensors(int fd, envsys_tre_data_t *etds, envsys_basic_info_t *ebis, int ns)
 {
 	int i;
 
@@ -411,9 +393,7 @@ fillsensors(fd, etds, ebis, ns)
  * post: returns the strlen() of the longest sensor name
  */
 int
-longestname(ebis, ns)
-	envsys_basic_info_t *ebis;
-	int ns;
+longestname(envsys_basic_info_t *ebis, int ns)
 {
 	int i, maxlen, cur;
 
@@ -433,11 +413,7 @@ longestname(ebis, ns)
  *       or returns -1
  */
 int
-marksensors(ebis, cetds, sensors, ns)
-	envsys_basic_info_t *ebis;
-	int *cetds;
-	char *sensors;
-	int ns;
+marksensors(envsys_basic_info_t *ebis, int *cetds, char *sensors, int ns)
 {
 	int i;
 	char *s;
@@ -480,10 +456,7 @@ marksensors(ebis, cetds, sensors, ns)
  *       or the sensor number of a sensor which has that name
  */
 int
-strtosnum(ebis, s, ns)
-	envsys_basic_info_t *ebis;
-	const char *s;
-	int ns;
+strtosnum(envsys_basic_info_t *ebis, const char *s, int ns)
 {
 	int i;
 
