@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.1 2003/10/20 09:07:44 mbw Exp $
+.\" $NetBSD: boot.8,v 1.2 2003/10/20 11:55:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,18 +48,18 @@ as described in
 .Xr fsck 8 ,
 and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
-The boot ROM performs a Power On Self Test (POST) then loads Open 
+The boot ROM performs a Power On Self Test (POST) then loads Open
 Firmware.  Depending on the Open Firmware variable
-.Sq Ev auto-boot? 
-it will either stop at the Open Firmware 
-prompt or attempt to boot an operating system.  Depending on the contents 
+.Sq Ev auto-boot?
+it will either stop at the Open Firmware
+prompt or attempt to boot an operating system.  Depending on the contents
 of the
 .Sq Ev use-nvramrc? ,
 .Sq Ev boot-command ,
 .Sq Ev boot-device ,
 and
-.Sq Ev boot-file 
-Open Firmware variables, it will attempt to boot 
+.Sq Ev boot-file
+Open Firmware variables, it will attempt to boot
 .Tn MacOS ,
 .Tn "MacOS X" ,
 or
@@ -74,13 +74,13 @@ from the specified
 The bootloader then loads the kernel from the
 .Sq Ev boot-file ,
 (if it exists).  Otherwise, it tries to load (in the following order):
-.Pa netbsd , netbsd.gz , No or Pa netbsd.macppc
-on the 
+.Pa netbsd , netbsd.gz ,
+or
+.Pa netbsd.macppc
+on the
 .Dq a
 partition of the same device that had the bootloader.
-.Pp
 .Ss "Open Firmware Commands"
-.Pp
 An essential but incomplete list of Open Firmware commands follows.
 A more thorough list is contained in the FAQ.
 .Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-use
@@ -164,7 +164,6 @@ on an Open Firmware 3 system.
 Attempt to boot
 .Tn MacOS
 on an Open Firmware 1.0.5, 2.0.x, or 2.4 system.
-.Pp
 .Ss "Open Firmware Variables"
 An essential but incomplete list of Open Firmware variables follows.
 A more thorough list is contained in the FAQ.
@@ -185,20 +184,20 @@ stop at the Open Firmware prompt.
 .El
 .Pp
 .It Ev use-nvramrc?
-If 
+If
 .Sq Ev true
-runs commands in variable 
+runs commands in variable
 .Sq Ev nvramrc .
 .Pp
 .It Ev real-base
-Kernel memory location. 
+Kernel memory location.
 .Em "Do not modify this value on Open Firmware 3 systems \(em you may"
 .Em "damage your computer" .
 All other Open Firmware versions should use
 .Li F00000 .
 .Pp
 .It Ev load-base
-Bootloader memory location. 
+Bootloader memory location.
 .Em "Do not modify this value on Open Firmware 3 systems \(em you may"
 .Em "damage your computer" .
 All other Open Firmware versions should use
@@ -211,24 +210,24 @@ is used.
 .Pp
 .It Ev boot-device
 Device from which to load primary bootloader.  Value depends on a variety
-of factors.  See 
+of factors.  See
 .Xr ofwboot 8 .
 .It Ev boot-file
 Kernel location.  Value depends on a variety of factors.  See
 .Xr ofwboot 8 .
 .Pp
 .It Ev input-device
-What type of console input device (ADB keyboard, USB keyboard, or serial 
+What type of console input device (ADB keyboard, USB keyboard, or serial
 port).
 .Bl -tag -width ttya
 .It Ar kbd
-ADB keyboard on models with ADB, USB keyboard on models with USB, and 
-built-in keyboard on laptops.  This is the default on some Open Firmware 
+ADB keyboard on models with ADB, USB keyboard on models with USB, and
+built-in keyboard on laptops.  This is the default on some Open Firmware
 2.0.x machines and all Open Firmware 2.4 and 3 machines.
 .It Ar ttya
 .Sq Modem
-serial port on machines with serial ports.  Properties are 38400 bps, 8 
-bits, no parity, 1 stop bit, no handshaking.  This is the default on all 
+serial port on machines with serial ports.  Properties are 38400 bps, 8
+bits, no parity, 1 stop bit, no handshaking.  This is the default on all
 Open Firmware 1.0.5 systems and some Open Firmware 2.0.x systems.
 .It Ar ttyb
 .Sq Printer
@@ -236,28 +235,28 @@ serial port on machines with serial ports.  Properties are the same as the
 .Sq Modem
 port.
 .It Ar scca
-Serial port on Xserve models.  Properties are 57600 bps, 8 bits, no 
+Serial port on Xserve models.  Properties are 57600 bps, 8 bits, no
 parity, 1 stop bit, no handshaking.
 .El
 .Pp
 .It output-device
-What type of console output device (On-board video, AGP video, PCI video, 
-built-in LCD, or serial console). 
+What type of console output device (On-board video, AGP video, PCI video,
+built-in LCD, or serial console).
 Value depends on a variety of factors.  See
 .Xr ofwboot 8
 and
 .Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-input-output-devices
 .Pp
 .It nvramrc
-If 
-.Sq Ev use-nvramrc? 
-is set to true, these 
+If
+.Sq Ev use-nvramrc?
+is set to true, these
 .Tn FORTH
 commands will be run when the computer is reset
 .Pp
 .El
 .Ss "Normal Operation"
-When Open Firmware loads the primary bootloader, it will print something 
+When Open Firmware loads the primary bootloader, it will print something
 like the following:
 .Bd -unfilled -offset indent
  loading XCOFF
@@ -279,7 +278,7 @@ is started, it prints something like the following:
  \*[Gt]\*[Gt] (autobuild@tgm.daemon.org, Thu Feb  6 17:50:27 UTC 2003)
 .Ed
 .Pp
-When 
+When
 .Xr ofwboot 8
 is loading the kernel, it prints something like the following:
 .Bd -unfilled -offset indent
@@ -290,7 +289,7 @@ is loading the kernel, it prints something like the following:
 When the
 .Nx
 kernel has started it prints a banner similar to the following:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
  Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
      The NetBSD Foundation, Inc.  All rights reserved.
  Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -347,7 +346,7 @@ primary bootstrap for netboot and
 .Dq MS-DOS ,
 .Dq HFS ,
 and
-.Dq HFS+ 
+.Dq HFS+
 file systems.
 .El
 .Sh SEE ALSO
@@ -366,15 +365,15 @@ file systems.
 .br
 .Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Sh STANDARDS
-IEEE 1275 for OpenFirmware
+.St -ieee1275-94
 .Lk http://playground.sun.com/1275/home.html
 .Sh BUGS
 The device names used by
 .Nx Ns Tn /macppc
 and Open Firmware often have no relation to each other.
 .Pp
-Open Firmware is easily confused.  It is best to reboot your computer 
-after a failed boot attempt, 
+Open Firmware is easily confused.  It is best to reboot your computer
+after a failed boot attempt,
 .Ic halt ,
 or
 .Ic "shutdown -h" .
@@ -382,10 +381,10 @@ Use the Open Firmware
 .Ic reset-all
 command.
 .Pp
-Open Firmware is notoriously bad.  Thorough instructions for installing 
+Open Firmware is notoriously bad.  Thorough instructions for installing
 and booting
 .Nx
 are in the install notes
-.Pq INSTALL.html
+.Pq Pa INSTALL.html
 included with every release of
 .Nx .
