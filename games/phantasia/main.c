@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1999/09/08 21:57:19 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/09/13 17:15:43 jsm Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -287,6 +287,8 @@ initialstate()
 	if ((Playersfp = fopen(_PATH_PEOPLE, "r+")) == NULL)
 		error(_PATH_PEOPLE);
 	/* NOTREACHED */
+	if (fileno(Playersfp) < 3)
+		exit(1);
 
 	if ((Monstfp = fopen(_PATH_MONST, "r+")) == NULL)
 		error(_PATH_MONST);
