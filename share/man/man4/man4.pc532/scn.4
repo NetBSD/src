@@ -1,4 +1,4 @@
-.\"	$NetBSD: scn.4,v 1.1 1997/09/30 04:50:58 phil Exp $
+.\"	$NetBSD: scn.4,v 1.2 1998/03/25 02:13:32 fair Exp $
 .\"
 .\" Copyright (c) 1997 Philip L. Budne.
 .\" All rights reserved.
@@ -34,8 +34,7 @@
 .Os NetBSD 1.2
 .Sh NAME
 .Nm scn
-.Nd
-Signetics serial communications interface
+.Nd Signetics DUART serial communications interface
 .Sh SYNOPSIS
 .Cd "scn0 at mainbus? flags 0x1"
 .Cd "scn1 at mainbus? flags 0x0"
@@ -53,33 +52,49 @@ driver provides support for Signetics SCN2681, SCN2692, and SC26C92
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-DUARTs on the pc532.  The MC68681 DUART and SCC2698 OCTART are
-similar.  The SCN2681 and SCN2692 have 3 character FIFOs; the SC26C92
+DUARTs on the pc532.
+The MC68681 DUART and SCC2698 OCTART are similar.
+The SCN2681 and SCN2692 have 3 character FIFOs; the SC26C92
 has a 16-character FIFO.
 .Pp
-Separate speeds for input and output are supported on each line.  The
-SCN2681 and SCN2692 baud rate generator (BRG) supports the following
-speeds; 50, 75, 110, 134.5, 150, 200, 300, 600, 1050, 1200, 1800,
+Separate speeds for input and output are supported on each line.
+The SCN2681 and SCN2692 baud rate generator (BRG) supports the following
+speeds: 50, 75, 110, 134.5, 150, 200, 300, 600, 1050, 1200, 1800,
 2000, 2400, 4800, 7200, 9600, 19200, and 38400 bits per second.
-However, because the BRG table has two seperate columns of 16 speeds,
+However, because the BRG table has two separate columns of 16 speeds,
 and the table in use is shared between the input and output sides of
-the two channels, not all speeds are available at all times. The
-Counter/Timer will be used, when available to generate additional,
-arbitrary speeds upto 57600 bps but only one C/T is present in each
-DUART.
+the two channels, not all speeds are available at all times.
+The Counter/Timer will be used, when available to generate additional,
+arbitrary speeds upto 57600 bps but only one C/T is present in each DUART.
 .Pp
 The SC26C92 DUART adds two additional BRG modes (each containing two
 16 entry tables with two columns) supporting additional speeds of 450,
 880, 900, 1076, 3600, 14400, 28800, 57600, 115200, and 230400 bits per
 second (as well as some of the speeds listed above).
 .Pp
-Opens on tty0? (dialin) devices will wait for the presence of carrier
-detect and are generally used in the /etc/ttys file.  Opens on cu0?
-(callout) devices will succeed when carrier is not present and are
-meant for use for dialing out on a modem (for ppp, tip, kermit, etc).
-Dialout opens when the dialin device is in use will fail with EBUSY.
-Dialin opens with O_NONBLOCK will fail with EBUSY if the line is in
-use for dialout.  Other opens will wait until the line is available.
+Attempts to
+.Xr open 2
+tty0? (dialin) devices will block for the presence of Carrier
+Detect (DCD) and are generally used by
+.Xr getty 8 .
+.Pp
+Attempts to
+.Xr open 2
+cu0? (callout) devices will succeed when Carrier Detect (DCD) is
+not present and are meant for use for dialing out on a modem (for
+.Xr pppd 8 ,
+.Xr tip 1 ,
+kermit, etc).
+When the dialin device is in use, attempts to
+.Xr open 2
+callout device will fail with
+.Dv EBUSY .
+.Pp
+When the callout device is in use, dialin device opens with
+.Dv O_NONBLOCK
+will fail with
+.Dv EBUSY .
+Other opens will block until the line is available.
 .Pp
 An optional config file argument
 .Ar flags
@@ -87,13 +102,17 @@ is supported with the following valued OR-ed together;
 .Bl -tag -width 0x4 -offset indent
 .It 0x1
 Sets software carrier (SOFTCAR); The line will be treated as
-hard-wired, with carrier always present. DTR is not dropped on close.
+hard-wired, with Carrier Detect (DCD) always present.
+DTR is not dropped on
+.Xr close 2 .
 .It 0x2
-Sets local line (CLOCAL).  Opens will not wait for carrier.
+Sets local line (CLOCAL).
+Opens will not block for Carrier Detect (DCD).
 .It 0x4
 Sets RTS/CTS hardware flow control (CRTSCTS).
 .It 0x8
-Sets DTR/DCD hardware flow control (MDMBUF).  [Not yet implemented].
+Sets DTR/DCD hardware flow control (MDMBUF).
+[Not yet implemented].
 .El
 .Pp
 Various config options exist for the
@@ -136,7 +155,8 @@ driver first appeared in
 .Nx 0.9 .
 Original version by Philip Nelson (starting with Minix driver by Philip
 Nelson), majorly mangled by Phil Budne (using ideas and code from Dave
-Rand and Chris Torek).  Improvements by Ian Dall and Matthias Pfaller.
+Rand and Chris Torek).
+Improvements by Ian Dall and Matthias Pfaller.
 .Sh BUGS
 Configuration should be done on two levels: DUARTs and TTYs.
 .Pp
@@ -151,5 +171,3 @@ The driver should reset SC26C92's to mode 0 on shutdown since the
 pc532 monitor PROM does not know about the additional BRG modes.
 .Pp
 The SOFTCAR flag forced on for the console line.
-
-
