@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.39 2002/05/12 18:30:32 jschauma Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.40 2002/11/28 23:46:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39 2002/05/12 18:30:32 jschauma Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.40 2002/11/28 23:46:15 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -561,20 +561,20 @@ linux_sys_setsockopt(p, v, retval)
 	SCARG(&bsa, valsize) = SCARG(uap, optlen);
 
 	switch (SCARG(&bsa, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)
@@ -609,20 +609,20 @@ linux_sys_getsockopt(p, v, retval)
 	SCARG(&bga, avalsize) = SCARG(uap, optlen);
 
 	switch (SCARG(&bga, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(SCARG(uap, optname));
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)
