@@ -1,4 +1,4 @@
-/*	$NetBSD: saframe.h,v 1.1.2.2 2001/11/17 18:18:23 scw Exp $ */
+/*	$NetBSD: saframe.h,v 1.1.2.3 2002/08/02 20:59:38 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
  * Scheduler activations upcall frame
  */
 struct saframe {
+	int		sa_ra;
 	int		sa_type;
 	struct sa_t**	sa_sas;
 	int		sa_events;
 	int		sa_interrupted;
 	void*		sa_arg;
-	sa_upcall_t	sa_upcall;
 };
 
 #endif
