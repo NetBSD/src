@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.1 2002/12/12 17:41:53 christos Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.2 2003/12/05 20:34:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,6 +70,10 @@ struct darwin_sigframe {
 	int	sig;
 	int	code;
 	struct darwin_i386_sigcontext * scp;
+};
+
+struct darwin_slock {
+	int	dummy;
 };
 
 #endif /* !_DARWIN_MACHDEP_H_ */
