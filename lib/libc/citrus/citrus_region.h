@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_region.h,v 1.2 2003/06/29 17:30:07 tshiozak Exp $	*/
+/*	$NetBSD: citrus_region.h,v 1.3 2003/07/21 07:10:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -29,6 +29,10 @@
 
 #ifndef _CITRUS_REGION_H_
 #define _CITRUS_REGION_H_
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 struct _citrus_region {
 /* private: */
