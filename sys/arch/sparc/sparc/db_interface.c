@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2001/03/18 14:06:10 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.38 2001/03/18 14:10:34 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -386,10 +386,10 @@ db_simple_lock_cmd(addr, have_addr, count, modif)
 	l = (simple_lock_t)addr;
 	db_printf("lock_data=%d", l->lock_data);
 #ifdef LOCKDEBUG
-	db_printf(" lock_file=%s unlock_file=%s\n lock_line=%d "
-	    "unlock_line=%d\n lock_holder=%ld\n",
-	    l->lock_file, l->unlock_file, l->lock_line, l->unlock_line,
-	    l->lock_holder);
+	db_printf(" holder=%ld\n"
+	    " last locked=%s:%d\n last unlocked=%s:%d\n",
+	    l->lock_holder, l->lock_file, l->lock_line, l->unlock_file,
+	    l->unlock_line);
 #endif
 	db_printf("\n");
 }
