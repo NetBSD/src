@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.7 1999/12/12 16:19:40 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.8 2000/01/06 07:31:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -35,9 +35,7 @@
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

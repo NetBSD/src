@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.7 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.8 2000/01/06 07:31:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,15 +33,8 @@
  * in_gif.c
  */
 
-#ifdef __FreeBSD__
-#include "opt_mrouting.h"
-#endif
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +42,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/kernel.h>
-#include <sys/sysctl.h>
-#endif
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
-#endif
 #include <sys/protosw.h>
 
 #include <net/if.h>
@@ -89,10 +76,6 @@
 int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
-#endif
-#ifdef __FreeBSD__
-SYSCTL_INT(_net_inet_ip, IPCTL_GIF_TTL, gifttl, CTLFLAG_RW,
-	&ip_gif_ttl,	0, "");
 #endif
 
 int
