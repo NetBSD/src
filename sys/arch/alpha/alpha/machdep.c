@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1996/10/01 14:25:47 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1996/10/01 18:41:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -51,6 +51,9 @@
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 #include <sys/sysctl.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
+#include <machine/kcore.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -597,6 +600,13 @@ alpha_init(pfn, ptb)
 			boothowto &= ~RB_SINGLE;
 			break;
 
+#ifdef DEBUG
+		case 'c': /* crash dump immediately after autoconfig */
+		case 'C':
+			boothowto |= RB_DUMP;
+			break;
+#endif
+
 		case 'h': /* always halt, never reboot */
 		case 'H':
 			boothowto |= RB_HALT;
@@ -834,6 +844,55 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
+ * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	if (roundup(size, dbtob(1)) != dbtob(1))
+		return -1;
+
+	return (1);
+}
+
+/*
+ * cpu_dump: dump machine-dependent kernel core dump headers.
+ */
+int
+cpu_dump()
+{
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	long buf[dbtob(1) / sizeof (long)];
+	kcore_seg_t	*segp;
+	cpu_kcore_hdr_t	*cpuhdrp;
+
+        dump = bdevsw[major(dumpdev)].d_dump;
+
+	segp = (kcore_seg_t *)buf;
+	cpuhdrp =
+	    (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp)) / sizeof (long)];
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/*
+	 * Add the machine-dependent header info
+	 */
+	cpuhdrp->lev1map_pa = (u_int64_t)Lev1map;
+	cpuhdrp->page_size = PAGE_SIZE;
+	cpuhdrp->core_seg.start = ctob(firstusablepage);
+	cpuhdrp->core_seg.size = ctob(physmem);
+
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+}
+
+/*
  * This is called by configure to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
@@ -843,31 +902,40 @@ long	dumplo = 0; 		/* blocks */
 void
 dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
-		return;
+		goto bad;
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdevsw[maj].d_psize == NULL)
-		return;
+		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
-		return;
+		goto bad;
 
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)
+		goto bad;
+	dumpblks += ctod(physmem);
+
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
+
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
 	dumpsize = physmem;
+	return;
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+bad:
+	dumpsize = 0;
+	dumplo = -1;
+	return;
 }
 
 /*
@@ -897,8 +965,10 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0)
+	if (dumplo < 0) {
+		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;
+	}
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
@@ -910,9 +980,12 @@ dumpsys()
 
 	/* XXX should purge all outstanding keystrokes. */
 
-	bytes = ctob(1 + lastusablepage - firstusablepage);
+	if ((error = cpu_dump()) != 0)
+		goto err;
+
+	bytes = ctob(physmem);
 	maddr = ctob(firstusablepage);
-	blkno = dumplo;
+	blkno = dumplo + cpu_dumpsize();
 	dump = bdevsw[major(dumpdev)].d_dump;
 	error = 0;
 	for (i = 0; i < bytes; i += n) {
@@ -936,6 +1009,7 @@ dumpsys()
 		/* XXX should look for keystrokes, to cancel. */
 	}
 
+err:
 	switch (error) {
 
 	case ENXIO:
@@ -1341,6 +1415,14 @@ setregs(p, pack, stack, retval)
 	struct trapframe *tfp = p->p_md.md_tf;
 	int i;
 	extern struct proc *fpcurproc;
+
+#ifdef DEBUG
+	/*
+	 * Crash and dump, if the user requested it.
+	 */
+	if (boothowto & RB_DUMP)
+		panic("crash requested by boot flags");
+#endif
 
 #ifdef DEBUG
 	for (i = 0; i < FRAME_SIZE; i++)
