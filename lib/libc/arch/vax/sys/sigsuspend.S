@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.1 1995/04/17 12:24:10 ragge Exp $"
+	.asciz "$NetBSD: sigsuspend.S,v 1.2 1997/02/04 18:38:23 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -41,7 +41,7 @@
 err:
 	jmp	cerror
 
-ENTRY(sigsuspend)
+ENTRY(sigsuspend, 0)
 	movl	*4(ap),4(ap)		# indirect to mask arg
 	chmk	$ SYS_sigsuspend
 	jcs	err

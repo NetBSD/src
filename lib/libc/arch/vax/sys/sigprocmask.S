@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigprocmask.S,v 1.1 1995/04/17 12:24:08 ragge Exp $"
+	.asciz "$NetBSD: sigprocmask.S,v 1.2 1997/02/04 18:38:21 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -41,7 +41,7 @@
 err:
 	jmp	cerror
 
-ENTRY(sigprocmask)
+ENTRY(sigprocmask, 0)
 	tstl	8(ap)			# check new sigset pointer
 	bneq	1f			# if not null, indirect
 /*	movl	$0,8(ap)		# null mask pointer: block empty set */
