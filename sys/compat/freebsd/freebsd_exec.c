@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.4 1999/02/09 20:17:50 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.4.10.1 1999/11/15 00:40:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -104,7 +104,7 @@ ELFNAME2(freebsd,probe)(p, epp, eh, itp, pos)
 	size_t phsize;
 	Elf_Phdr *ph;
 	Elf_Phdr *ephp;
-	Elf_Note *np;
+	Elf_Nhdr *np;
 	const char *bp;
 
         static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
@@ -127,14 +127,14 @@ ELFNAME2(freebsd,probe)(p, epp, eh, itp, pos)
 			goto bad1;
 
 		for (ephp = ph; i--; ephp++) {
-			if (ephp->p_type != Elf_pt_interp)
+			if (ephp->p_type != PT_INTERP)
 				continue;
 
 			/* Check for "legal" intepreter name. */
 			if (ephp->p_filesz < sizeof wantInterp)
 				goto bad1;
 
-			np = (Elf_Note *) malloc(ephp->p_filesz+1,
+			np = (Elf_Nhdr *) malloc(ephp->p_filesz+1,
 			    M_TEMP, M_WAITOK);
 
 			if (((error = ELFNAME(read_from)(p, epp->ep_vp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.13.10.1 1999/11/15 00:40:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -153,6 +153,7 @@ void wdc_reset_channel __P((struct ata_drive_datas *));
 
 int wdc_ata_addref __P((struct ata_drive_datas *));
 void wdc_ata_delref __P((struct ata_drive_datas *));
+void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,

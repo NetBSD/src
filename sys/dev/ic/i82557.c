@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.8 1999/08/05 01:35:40 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.8.4.1 1999/11/15 00:40:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -187,8 +187,12 @@ void	fxp_tick __P((void *));
 void	fxp_mc_setup __P((struct fxp_softc *));
 
 void	fxp_shutdown __P((void *));
+void	fxp_power __P((int, void *));
 
 int	fxp_copy_small = 0;
+
+int	fxp_enable __P((struct fxp_softc*));
+void	fxp_disable __P((struct fxp_softc*));
 
 struct fxp_phytype {
 	int	fp_phy;		/* type of PHY, -1 for MII at the end. */
@@ -344,6 +348,13 @@ fxp_attach(sc)
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
+	/* 
+  	 * Add suspend hook, for similar reasons..
+	 */
+	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
+	if (sc->sc_powerhook == NULL) 
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -386,7 +397,8 @@ fxp_mii_initmedia(sc)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -424,7 +436,36 @@ fxp_shutdown(arg)
 {
 	struct fxp_softc *sc = arg;
 
-	fxp_stop(sc, 1);
+	/*
+	 * Since the system's going to halt shortly, don't bother
+	 * freeing mbufs.
+	 */
+	fxp_stop(sc, 0);
+}
+/*
+ * Power handler routine. Called when the system is transitioning
+ * into/out of power save modes.  As with fxp_shutdown, the main
+ * purpose of this routine is to shut off receiver DMA so it doesn't
+ * clobber kernel memory at the wrong time.
+ */
+void
+fxp_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct fxp_softc *sc = arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	if (why != PWR_RESUME)
+		fxp_stop(sc, 0);
+	else {
+		ifp = &sc->sc_ethercom.ec_if;
+		if (ifp->if_flags & IFF_UP)
+			fxp_init(sc);
+	}
+	splx(s);
 }
 
 /*
@@ -442,6 +483,34 @@ fxp_get_info(sc, enaddr)
 	 */
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
 	DELAY(10);
+
+	/*
+	 * Figure out EEPROM size.
+	 *
+	 * Cards can have either 64-word or 256-word EEPROMs, with
+	 * addresses fed in using a bit-at-a-time protocol, MSB first.
+	 *
+	 * XXX this is probably not the best way to do this; the linux
+	 * driver does a checksum of the eeprom, but there is
+	 * (AFAIK) no on-line documentation on what this checksum
+	 * should look like (you could just steal the code from
+	 * linux, but that's cheating); for now we just use the fact
+	 * that the upper two bits of word 10 should be 01
+	 */
+	for(sc->sc_eeprom_size = 6; 
+	    sc->sc_eeprom_size <= 8; 
+	    sc->sc_eeprom_size += 2) {
+		fxp_read_eeprom(sc, &data, 10, 1);
+		if((data & 0xc000) == 0x4000)
+			break;
+	}
+	if(sc->sc_eeprom_size > 8)
+		panic("%s: failed to get EEPROM size", sc->sc_dev.dv_xname);
+#ifdef DEBUG
+	printf("%s: assuming %d word EEPROM\n", 
+	       sc->sc_dev.dv_xname, 
+	       1 << sc->sc_eeprom_size);
+#endif
 
 	/*
 	 * Get info about the primary PHY
@@ -496,7 +565,7 @@ fxp_read_eeprom(sc, data, offset, words)
 		/*
 		 * Shift in address.
 		 */
-		for (x = 6; x > 0; x--) {
+		for (x = sc->sc_eeprom_size; x > 0; x--) {
 			if ((i + offset) & (1 << (x - 1))) {
 				reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
 			} else {
@@ -728,6 +797,19 @@ fxp_intr(arg)
 	int i, claimed = 0;
 	u_int16_t len;
 	u_int8_t statack;
+
+	/*
+	 * If the interface isn't running, don't try to
+	 * service the interrupt.. just ack it and bail.
+	 */
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK);
+		if (statack) {
+			claimed = 1;
+			CSR_WRITE_1(sc, FXP_CSR_SCB_STATACK, statack);
+		}
+		return claimed;
+	}
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
 		claimed = 1;
@@ -1032,9 +1114,20 @@ fxp_stop(sc, drain)
 	int i;
 
 	/*
+	 * Turn down interface (done early to avoid bad interactions
+	 * between panics, shutdown hooks, and the watchdog timer)
+	 */
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/*
 	 * Cancel stats updater.
 	 */
 	untimeout(fxp_tick, sc);
+	if (sc->sc_flags & FXPF_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
+	}
 
 	/*
 	 * Issue software reset
@@ -1062,8 +1155,6 @@ fxp_stop(sc, drain)
 		fxp_rxdrain(sc);
 	}
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 }
 
 /*
@@ -1325,6 +1416,12 @@ fxp_mii_mediastatus(ifp, ifmr)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
+	if(sc->sc_enabled == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
+	
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
@@ -1466,6 +1563,8 @@ fxp_ioctl(ifp, command, data)
 
 	switch (command) {
 	case SIOCSIFADDR:
+		if ((error = fxp_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -1513,24 +1612,33 @@ fxp_ioctl(ifp, command, data)
 			 * stop it.
 			 */
 			fxp_stop(sc, 1);
+			fxp_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if((error = fxp_enable(sc)) != 0)
+				break;
 			error = fxp_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up change in any other
 			 * flags that affect the hardware state.
 			 */
+			if((error = fxp_enable(sc)) != 0)
+				break;
 			error = fxp_init(sc);
 		}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if(sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
@@ -1644,4 +1752,32 @@ fxp_mc_setup(sc)
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0);
+}
+
+int
+fxp_enable(sc)
+	struct fxp_softc *sc;
+{
+
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			       sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+	
+	sc->sc_enabled = 1;
+
+	return 0;
+}
+
+void
+fxp_disable(sc)
+	struct fxp_softc *sc;
+{
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 }

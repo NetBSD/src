@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1999/09/14 10:22:37 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2.4.1 1999/11/15 00:39:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -318,7 +318,7 @@ vmapbuf(bp, len)
 		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 			     faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

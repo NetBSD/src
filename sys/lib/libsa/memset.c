@@ -1,4 +1,4 @@
-/* $NetBSD: memset.c,v 1.1 1999/03/30 22:01:15 cgd Exp $ */
+/* $NetBSD: memset.c,v 1.1.10.1 1999/11/15 00:42:02 fvdl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

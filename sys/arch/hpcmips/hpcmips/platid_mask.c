@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.2 1999/09/25 10:52:50 uch Exp $ */
+/* $Id: platid_mask.c,v 1.2.4.1 1999/11/15 00:37:50 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -66,12 +66,8 @@ platid_t platid_mask_CPU_MIPS_TX = {{
 	PLATID_CPU_MIPS_TX,
 	PLATID_WILD
 }};
-platid_t platid_mask_CPU_MIPS_TX_391X = {{
-	PLATID_CPU_MIPS_TX_391X,
-	PLATID_WILD
-}};
-platid_t platid_mask_CPU_MIPS_TX_3910 = {{
-	PLATID_CPU_MIPS_TX_3910,
+platid_t platid_mask_CPU_MIPS_TX_3900 = {{
+	PLATID_CPU_MIPS_TX_3900,
 	PLATID_WILD
 }};
 platid_t platid_mask_CPU_MIPS_TX_3911 = {{
@@ -82,8 +78,8 @@ platid_t platid_mask_CPU_MIPS_TX_3912 = {{
 	PLATID_CPU_MIPS_TX_3912,
 	PLATID_WILD
 }};
-platid_t platid_mask_CPU_MIPS_TX_392X = {{
-	PLATID_CPU_MIPS_TX_392X,
+platid_t platid_mask_CPU_MIPS_TX_3920 = {{
+	PLATID_CPU_MIPS_TX_3920,
 	PLATID_WILD
 }};
 platid_t platid_mask_CPU_MIPS_TX_3922 = {{
@@ -242,6 +238,18 @@ platid_t platid_mask_MACH_SHARP_TRIPAD_PV6000 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_SHARP_TRIPAD_PV6000
 }};
+platid_t platid_mask_MACH_SHARP_TELIOS = {{
+	PLATID_WILD,
+	PLATID_MACH_SHARP_TELIOS
+}};
+platid_t platid_mask_MACH_SHARP_TELIOS_HC = {{
+	PLATID_WILD,
+	PLATID_MACH_SHARP_TELIOS_HC
+}};
+platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ1 = {{
+	PLATID_CPU_MIPS_TX_3922,
+	PLATID_MACH_SHARP_TELIOS_HCAJ1
+}};
 platid_t platid_mask_MACH_FUJITSU = {{
 	PLATID_WILD,
 	PLATID_MACH_FUJITSU
@@ -321,4 +329,20 @@ platid_t platid_mask_MACH_COMPAQ_AERO_2130 = {{
 platid_t platid_mask_MACH_COMPAQ_AERO_2140 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_COMPAQ_AERO_2140
+}};
+platid_t platid_mask_MACH_VICTOR = {{
+	PLATID_WILD,
+	PLATID_MACH_VICTOR
+}};
+platid_t platid_mask_MACH_VICTOR_INTERLINK = {{
+	PLATID_WILD,
+	PLATID_MACH_VICTOR_INTERLINK
+}};
+platid_t platid_mask_MACH_VICTOR_INTERLINK_MP = {{
+	PLATID_WILD,
+	PLATID_MACH_VICTOR_INTERLINK_MP
+}};
+platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101 = {{
+	PLATID_CPU_MIPS_TX_3922,
+	PLATID_MACH_VICTOR_INTERLINK_MPC101
 }};

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io_asm.S,v 1.3 1998/06/28 07:27:52 thorpej Exp $	*/
+/*	$NetBSD: iomd_io_asm.S,v 1.3.16.1 1999/11/15 00:37:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -84,7 +84,7 @@ ENTRY(iomd_bs_rm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_insw16
+	b	_C_LABEL(insw16)
 
 /*
  * write multiple
@@ -94,4 +94,4 @@ ENTRY(iomd_bs_wm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_outsw16
+	b	_C_LABEL(outsw16)

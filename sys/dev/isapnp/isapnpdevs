@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.28 1999/08/24 12:46:55 rh Exp $
+$NetBSD: isapnpdevs,v 1.28.4.1 1999/11/15 00:40:44 fvdl Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ devlogic	ess	ESS1869		0	ESS1869
 devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
 devlogic	joy	CSC0001		0	CS4235
 devlogic	joy	CSCA801		0	Terratec EWS64XL
+devlogic	joy	CTL7001		0	Creative Awe64
 devlogic	joy	CTL7002		0	Creative Vibra16CL
 devlogic	joy	ESS0001		0	ESS1868
 devlogic	joy	OPT0001		0	OPTi Audio 16

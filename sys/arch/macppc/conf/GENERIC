@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1999/10/15 12:27:06 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.39.4.1 1999/11/15 00:38:33 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -153,7 +153,7 @@ ex*	at cardbus?			# 3Com 3C575TX
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
-wsmouse0 at ams? mux 0
+wsmouse0 at ams?
 
 scsibus* at adv?
 scsibus* at ahc?
@@ -191,11 +191,11 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhub? port ? configuration ? interface ?
-wsmouse* at ums? mux 0
+wsmouse* at ums?
 
 # USB Keyboards
 ukbd*	at uhub? port ? configuration ? interface ?
-wskbd*	at ukbd? console ? mux 1
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
 uhid*	at uhub? port ? configuration ? interface ?
@@ -229,7 +229,6 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	pty		64	# pseudo-terminals
-pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

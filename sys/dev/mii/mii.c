@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.13 1999/09/25 00:10:13 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.13.4.1 1999/11/15 00:40:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,19 +62,31 @@ int	mii_submatch __P((struct device *, struct cfdata *, void *));
  * to the network interface driver parent.
  */
 void
-mii_phy_probe(parent, mii, capmask)
+mii_phy_probe(parent, mii, capmask, phyloc, offloc)
 	struct device *parent;
 	struct mii_data *mii;
-	int capmask;
+	int capmask, phyloc, offloc;
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
 	int bmsr, offset = 0;
+	int phymin, phymax;
 
-	LIST_INIT(&mii->mii_phys);
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_phy_probe: phyloc and offloc specified");
 
-	for (ma.mii_phyno = 0; ma.mii_phyno < MII_NPHY; ma.mii_phyno++) {
-#if 0 /* XXX not yet --thorpej */
+	if (phyloc == MII_PHY_ANY) {
+		phymin = 0;
+		phymax = MII_NPHY - 1;
+	} else
+		phymin = phymax = phyloc;
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0) {
+		LIST_INIT(&mii->mii_phys);
+		mii->mii_flags |= MIIF_INITDONE;
+	}
+
+	for (ma.mii_phyno = phymin; ma.mii_phyno <= phymax; ma.mii_phyno++) {
 		/*
 		 * Make sure we haven't already configured a PHY at this
 		 * address.  This allows mii_phy_probe() to be called
@@ -87,11 +99,10 @@ mii_phy_probe(parent, mii, capmask)
 				 * Yes, there is already something
 				 * configured at this address.
 				 */
-				continue;
 				offset++;
+				continue;
 			}
 		}
-#endif
 
 		/*
 		 * Check to see if there is a PHY at this address.  Note,
@@ -102,6 +113,15 @@ mii_phy_probe(parent, mii, capmask)
 		if (bmsr == 0 || bmsr == 0xffff ||
 		    (bmsr & BMSR_MEDIAMASK) == 0) {
 			/* Assume no PHY at this address. */
+			continue;
+		}
+
+		/*
+		 * There is a PHY at this address.  If we were given an
+		 * `offset' locator, skip this PHY if it doesn't match.
+		 */
+		if (offloc != MII_OFFSET_ANY && offloc != offset) {
+			offset++;
 			continue;
 		}
 
@@ -213,4 +233,18 @@ mii_pollstat(mii)
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
 		(void) (*child->mii_service)(child, mii, MII_POLLSTAT);
+}
+
+/*
+ * Inform the PHYs that the interface is down.
+ */
+void
+mii_down(mii)
+	struct mii_data *mii;
+{
+	struct mii_softc *child;
+
+	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+	     child = LIST_NEXT(child, mii_list))
+		(void) (*child->mii_service)(child, mii, MII_DOWN);
 }

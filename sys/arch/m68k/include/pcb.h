@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1998/01/06 06:46:05 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.16.1 1999/11/15 00:38:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
+#ifndef _M68K_PCB_H_
+#define _M68K_PCB_H_
 
 #include <machine/frame.h>
 
@@ -65,3 +67,4 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for HP-UX core dumps */
 };
+#endif /* _M68K_PCB_H_ */

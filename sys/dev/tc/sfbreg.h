@@ -1,4 +1,4 @@
-/* $NetBSD: sfbreg.h,v 1.1 1998/11/14 16:31:34 drochner Exp $ */
+/* $NetBSD: sfbreg.h,v 1.1.12.1 1999/11/15 00:41:29 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  * ``DEC 3000 300/400/500/600/700/800/900 AXP Models System Prgrammer's Manual''
  * (DEC order number EK-D3SYS-PM), section 6.
  *
- * All definitions are in "dense" TurboChannel space.
+ * All definitions are in "dense" TURBOchannel space.
  */
 
 /*
@@ -45,7 +45,7 @@
  */
 #define	SFB_ASIC_OFFSET		0x0100000	/* SFB ASIC Control Registers */
 #define	SFB_ASIC_SIZE		0x0020000
-#define	SFB_RAMDAC_OFFSET	0x01c0000	/* Bt495 RAMDAC Registers */
+#define	SFB_RAMDAC_OFFSET	0x01c0000	/* BrookTree RAMDAC */
 #define	SFB_RAMDAC_SIZE		0x0040000
 #define	SFB_FB_OFFSET		0x0200000	/* Frame buffer */
 #define	SFB_FB_SIZE		0x0200000
@@ -73,7 +73,7 @@
 #define	SFB_ASIC_ADDRESS	0x003c	/* Address (R/W) */
 #define	SFB_ASIC_BRES1		0x0040	/* Bresenham register 1 (R/W) */
 #define	SFB_ASIC_BRES2		0x0044	/* Bresenham register 2 (R/W) */
-#define	SFB_ASIC_BRES3		0x0048	/* Bresenham register 3 (R) (?) */
+#define	SFB_ASIC_BRES3		0x0048	/* Bresenham register 3 (R/W) */
 #define	SFB_ASIC_BCONT		0x004c	/* Bcont (W) */
 #define	SFB_ASIC_DEEP		0x0050	/* Deep (R/W) */
 #define	SFB_ASIC_START		0x0054	/* Start (W) */
@@ -86,11 +86,3 @@
 #define	SFB_ASIC_ENABLE_INTR	0x0074	/* Enable/Disable Interrupts (W) */
 #define	SFB_ASIC_TCCLK		0x0078	/* TCCLK count (R/W) */
 #define	SFB_ASIC_VIDCLK		0x007c	/* VIDCLK count (R/W) */
-
-/*
- * Bt459 RAMDAC registers (offsets from SFB_RAMDAC_OFFSET)
- */
-#define	SFB_RAMDAC_ADDRLOW	0x0000	/* Address register low byte */
-#define	SFB_RAMDAC_ADDRHIGH	0x0004	/* Address register high byte */
-#define	SFB_RAMDAC_REGDATA	0x0008	/* Register addressed by addr reg */
-#define	SFB_RAMDAC_CMAPDATA	0x000c	/* Colormap loc addressed by addr reg */

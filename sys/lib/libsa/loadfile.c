@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.3 1999/10/08 03:55:06 itohy Exp $ */
+/* $NetBSD: loadfile.c,v 1.3.4.1 1999/11/15 00:42:02 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,7 +149,8 @@ loadfile(fname, marks, flags)
 	} else
 #endif
 #ifdef BOOT_ELF
-	if (memcmp(Elf_e_ident, hdr.elf.e_ident, Elf_e_siz) == 0) {
+	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
+	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
 		rval = elf_exec(fd, &hdr.elf, marks, flags);
 	} else
 #endif
@@ -288,12 +289,12 @@ elf_exec(fd, elf, marks, flags)
 			WARN(("read phdr"));
 			return 1;
 		}
-		if (phdr.p_type != Elf_pt_load ||
-		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
+		if (phdr.p_type != PT_LOAD ||
+		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
-#define IS_TEXT(p)	(p.p_type & Elf_pf_x)
-#define IS_DATA(p)	(p.p_type & Elf_pf_w)
+#define IS_TEXT(p)	(p.p_type & PF_X)
+#define IS_DATA(p)	(p.p_type & PF_W)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 		/*
 		 * XXX: Assume first address is lowest
@@ -375,12 +376,12 @@ elf_exec(fd, elf, marks, flags)
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(long));
 
 		for (havesyms = i = 0; i < elf->e_shnum; i++)
-			if (shp[i].sh_type == Elf_sht_symtab)
+			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
-			if (shp[i].sh_type == Elf_sht_symtab ||
-			    shp[i].sh_type == Elf_sht_strtab) {
+			if (shp[i].sh_type == SHT_SYMTAB ||
+			    shp[i].sh_type == SHT_STRTAB) {
 				if (havesyms && (flags & LOAD_SYM)) {
 					PROGRESS(("%s%ld", first ? " [" : "+",
 					    (u_long)shp[i].sh_size));

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 1999/06/28 08:20:48 itojun Exp $ */
+/*	$NetBSD: intr.c,v 1.16.4.1 1999/11/15 00:39:31 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@
  */
 struct intrhand *intrlev[MAXINTNUM];
 
-void	strayintr __P((const struct trapframe *));
+void	strayintr __P((const struct trapframe64 *));
 int	soft01intr __P((void *));
 
 /*
@@ -114,7 +114,7 @@ int	soft01intr __P((void *));
  */
 void
 strayintr(fp)
-	const struct trapframe *fp;
+	const struct trapframe64 *fp;
 {
 	static int straytime, nstray;
 	int timesince;

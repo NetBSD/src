@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
+/*	$NetBSD: bicons.c,v 1.1.1.1.4.1 1999/11/15 00:37:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,11 +38,13 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 #include <dev/cons.h>
 
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/platid.h>
+#include <machine/stdarg.h>
 
 #include <hpcmips/dev/biconsvar.h>
 #include <hpcmips/dev/bicons.h>
@@ -206,6 +208,23 @@ bicons_putn(char *s, int n)
 	}
 }
 
+void
+#ifdef __STDC__
+bicons_printf(const char *fmt, ...)
+#else
+bicons_printf(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	char buf[1000];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	bicons_puts(buf);
+}
 
 int
 bicons_getc(dev_t dev)
@@ -223,9 +242,10 @@ bicons_putc(dev_t dev, int c)
 	switch (c) {
 	case 0x08: /* back space */
 		if (--curs_x < 0) {
-			/* erase character ar cursor position */
-			draw_char(curs_x, curs_y, ' ');
+			curs_x = 0;
 		}
+		/* erase character ar cursor position */
+		draw_char(curs_x, curs_y, ' ');
 		break;
 	case '\r':
 		curs_x = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17 1997/06/28 07:17:56 thorpej Exp $	*/
+/*	$NetBSD: exec.c,v 1.17.24.1 1999/11/15 00:42:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.16 1999/02/12 10:56:18 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.16.10.1 1999/11/15 00:41:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.12 1998/05/14 18:08:58 drochner Exp $	*/
+/*	$NetBSD: ether.c,v 1.12.16.1 1999/11/15 00:42:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

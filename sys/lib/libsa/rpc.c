@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.18 1998/01/23 19:27:45 thorpej Exp $	*/
+/*	$NetBSD: rpc.c,v 1.18.16.1 1999/11/15 00:42:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.59 1999/10/11 17:48:20 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.59.4.1 1999/11/15 00:40:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,11 +202,11 @@ void	ep_509_probemedia __P((struct ep_softc *sc));
 
 static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
-void epinit __P((struct ep_softc *));
-int epioctl __P((struct ifnet *, u_long, caddr_t));
-void epstart __P((struct ifnet *));
-void epwatchdog __P((struct ifnet *));
-void epreset __P((struct ep_softc *));
+void	epinit __P((struct ep_softc *));
+int	epioctl __P((struct ifnet *, u_long, caddr_t));
+void	epstart __P((struct ifnet *));
+void	epwatchdog __P((struct ifnet *));
+void	epreset __P((struct ep_softc *));
 static void epshutdown __P((void *));
 void	epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
@@ -277,12 +277,12 @@ static inline void
 ep_finish_reset(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-
 {
 	int i;
 
 	for (i = 0; i < 10000; i++) {
-		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) & S_COMMAND_IN_PROGRESS) == 0)
+		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
+		    S_COMMAND_IN_PROGRESS) == 0)
 			break;
 		DELAY(10);
 	}
@@ -321,7 +321,8 @@ ep_discard_rxtop(iot, ioh)
 	 * is about right.
 	 */
 	for (i = 0; i < 8000; i++) {
-		if  ((bus_space_read_2(iot, ioh, ELINK_STATUS) & S_COMMAND_IN_PROGRESS) == 0)
+		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
+		    S_COMMAND_IN_PROGRESS) == 0)
 		    return;
 	}
 
@@ -378,7 +379,7 @@ epconfig(sc, chipset, enaddr)
 	 * threshold value was shifted or not.
 	 */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-			  SET_TX_AVAIL_THRESH | ELINK_LARGEWIN_PROBE ); 
+	    SET_TX_AVAIL_THRESH | ELINK_LARGEWIN_PROBE); 
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, ELINK_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
@@ -468,7 +469,8 @@ epconfig(sc, chipset, enaddr)
 		 * we don't, just treat the Boomerang like the Vortex.
 		 */
 		if (sc->ep_flags & ELINK_FLAGS_MII) {
-			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, MII_OFFSET_ANY);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
 				    IFM_ETHER|IFM_NONE, 0, NULL);
@@ -494,13 +496,12 @@ epconfig(sc, chipset, enaddr)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
+	    RND_TYPE_NET, 0);
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
@@ -537,7 +538,8 @@ ep_internalconfig(sc)
 
 	GO_WINDOW(3);
 	config0 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
-	config1 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2);
+	config1 = (u_int)bus_space_read_2(iot, ioh,
+	    ELINK_W3_INTERNAL_CONFIG + 2);
 	GO_WINDOW(0);
 
 	ram_size  = (config0 & CONFIG_RAMSIZE) >> CONFIG_RAMSIZE_SHIFT;
@@ -644,7 +646,8 @@ ep_vortex_probemedia(sc)
 	const char *sep = "", *defmedianame = NULL;
 
 	GO_WINDOW(3);
-	config1 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2);
+	config1 = (u_int)bus_space_read_2(iot, ioh,
+	    ELINK_W3_INTERNAL_CONFIG + 2);
 	reset_options = (int)bus_space_read_1(iot, ioh, ELINK_W3_RESET_OPTIONS);
 	GO_WINDOW(0);
 
@@ -737,11 +740,16 @@ epinit(sc)
 	/* Make sure any pending reset has completed before touching board. */
 	ep_finish_reset(iot, ioh);
 
+	/*
+	 * Cance any pending I/O.
+	 */
+	epstop(sc);
 
 	if (sc->bustype != ELINK_BUS_PCI) {
 		GO_WINDOW(0);
 		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL, 0);
-		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
+		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL,
+		    ENABLE_DRQ_IRQ);
 	}
 
 	if (sc->bustype == ELINK_BUS_PCMCIA) {
@@ -799,10 +807,12 @@ epinit(sc)
 	}
 
 	/* Enable interrupts. */
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RD_0_MASK | S_CARD_FAILURE |
-				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK | S_CARD_FAILURE |
-				S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
+	    S_TX_AVAIL);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
+	    S_TX_AVAIL);
 
 	/*
 	 * Attempt to get rid of any stray interrupts that occured during
@@ -846,10 +856,10 @@ epsetfilter(sc)
 	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, SET_RX_FILTER |
-	    FIL_INDIVIDUAL | FIL_BRDCST |
-	    ((ifp->if_flags & IFF_MULTICAST) ? FIL_MULTICAST : 0 ) |
-	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND,
+	    SET_RX_FILTER | FIL_INDIVIDUAL | FIL_BRDCST |
+	    ((ifp->if_flags & IFF_MULTICAST) ? FIL_MULTICAST : 0) |
+	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0));
 }
 
 int
@@ -915,16 +925,14 @@ epsetmedia(sc)
 
 		GO_WINDOW(3);
 
-#if 0
 		if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER) {
 			int resopt;
 
 			resopt = bus_space_read_2(iot, ioh,
 			    ELINK_W3_RESET_OPTIONS);
-			bus_space_write_2(iot, ioh,
-			    ELINK_W3_RESET_OPTIONS, resopt|ELINK_RUNNER_ENABLE_MII);
+			bus_space_write_2(iot, ioh, ELINK_W3_RESET_OPTIONS,
+			    resopt | ELINK_RUNNER_ENABLE_MII);
 		}
-#endif
 
 		config0 = (u_int)bus_space_read_2(iot, ioh,
 		    ELINK_W3_INTERNAL_CONFIG);
@@ -935,7 +943,8 @@ epsetmedia(sc)
 		config1 |= (ELINKMEDIA_MII << CONFIG_MEDIAMASK_SHIFT);
 
 		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG, config0);
-		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2, config1);
+		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2,
+		    config1);
 		GO_WINDOW(1);	/* back to operating window */
 
 		mii_mediachg(&sc->sc_mii);
@@ -1141,7 +1150,7 @@ startagain:
 		return;
 	} else {
 		bus_space_write_2(iot, ioh, ELINK_COMMAND,
-		    SET_TX_AVAIL_THRESH | ELINK_THRESH_DISABLE );
+		    SET_TX_AVAIL_THRESH | ELINK_THRESH_DISABLE);
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m0);
@@ -1149,7 +1158,7 @@ startagain:
 		return;
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_TX_START_THRESH |
-	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/) );
+	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/));
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -1179,7 +1188,7 @@ startagain:
 	bus_space_write_2(iot, ioh, txreg, len);
 	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
 	if (ELINK_IS_BUS_32(sc->bustype)) {
-		for (m = m0; m; ) {
+		for (m = m0; m;) {
 			if (m->m_len > 3)  {
 				/* align our reads from core */
 				if (mtod(m, u_long) & 3)  {
@@ -1205,7 +1214,7 @@ startagain:
 			m = m0;
 		}
 	} else {
-		for (m = m0; m; ) {
+		for (m = m0; m;) {
 			if (m->m_len > 1)  {
 				if (mtod(m, u_long) & 1)  {
 					bus_space_write_1(iot, ioh,
@@ -1328,8 +1337,8 @@ eptxstat(sc)
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
 	 */
-	while ((i = bus_space_read_1(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS)))
-	    & TXS_COMPLETE) {
+	while ((i = bus_space_read_1(iot, ioh,
+	     ep_w1_reg(sc, ELINK_W1_TX_STATUS))) & TXS_COMPLETE) {
 		bus_space_write_1(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS),
 		    0x0);
 
@@ -1338,11 +1347,7 @@ eptxstat(sc)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
-#if 1
-			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
-#else
 			epreset(sc);
-#endif
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -1353,11 +1358,7 @@ eptxstat(sc)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
-#if 1
-			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
-#else
 			epreset(sc);
-#endif
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
@@ -1536,7 +1537,7 @@ again:
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
+		        sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
 		}
@@ -1850,7 +1851,6 @@ epreset(sc)
 	int s;
 
 	s = splnet();
-	epstop(sc);
 	epinit(sc);
 	splx(s);
 }
@@ -1877,6 +1877,9 @@ epstop(sc)
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Stop the one second clock. */
 		untimeout(ep_tick, sc);
+
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
 	}
 
 	if (sc->ep_chipset == ELINK_CHIPSET_ROADRUNNER) {

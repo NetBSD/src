@@ -1,7 +1,8 @@
-/*	$NetBSD: cardbus.c,v 1.3 1999/10/15 10:59:56 augustss Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.3.4.1 1999/11/15 00:40:16 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1997 and 1998 HAYAKAWA Koichi.  All rights reserved.
+ * Copyright (c) 1997, 1998 and 1999
+ *     HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define CARDBUS_DEBUG */
+#include "opt_cardbus.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,16 +44,15 @@
 
 #include <machine/bus.h>
 
-#if pccard
-#include <dev/pccard/cardbusvar.h>
-#include <dev/pccard/pccardcis.h>
-#else
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/pccardcis.h>
-#endif
+
+#include <dev/cardbus/cardbus_exrom.h>
 
 #include <dev/pci/pcivar.h>	/* XXX */
 #include <dev/pci/pcireg.h>	/* XXX */
+
+#include <dev/pcmcia/pcmciareg.h> /* XXX */
 
 #if defined CARDBUS_DEBUG
 #define STATIC
@@ -78,7 +78,18 @@ static int cardbussubmatch __P((struct device *, void *, void *));
 #endif
 static int cardbusprint __P((void *, const char *));
 
-static int decode_tuples __P((u_int8_t *, int));
+typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
+
+static int decode_tuples __P((u_int8_t *, int, tuple_decode_func, void*));
+#ifdef CARDBUS_DEBUG
+static void print_tuple __P((u_int8_t*, int, void*));
+#endif
+
+static int cardbus_read_tuples __P((struct cardbus_attach_args *,
+				    cardbusreg_t, u_int8_t *, size_t));
+
+static void enable_function __P((struct cardbus_softc *, int, int));
+static void disable_function __P((struct cardbus_softc *, int));
 
 
 struct cfattach cardbus_ca = {
@@ -116,13 +127,15 @@ cardbusmatch(parent, cf, aux)
     return 0;
   }
 
+#if 0
   /* which function? */
   if (cf->cbslotcf_func != CBSLOT_UNK_FUNC &&
       cf->cbslotcf_func != cba->cba_function) {
-    DPRINTF(("pccardmatch: function differs %d <=> %d\n",
+    DPRINTF(("cardbusmatch: function differs %d <=> %d\n",
 	     cf->cbslotcf_func, cba->cba_function));
     return 0;
   }
+#endif
 
   if (cba->cba_function < 0 || cba->cba_function > 255) {
     return 0;
@@ -168,8 +181,214 @@ cardbusattach(parent, self, aux)
   cdstatus = 0;
 }
 
+static int
+cardbus_read_tuples(ca, cis_ptr, tuples, len)
+     struct cardbus_attach_args *ca;
+     cardbusreg_t cis_ptr;
+     u_int8_t *tuples;
+     size_t len;
+{
+    struct cardbus_softc *sc = ca->ca_ct->ct_sc;
+    cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
+    cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
+    cardbustag_t tag = ca->ca_tag;
+    cardbusreg_t command;
+    int found = 0;
+
+    int i, j;
+    int cardbus_space = cis_ptr & CARDBUS_CIS_ASIMASK;
+    bus_space_handle_t bar_memh;
+    bus_size_t bar_size;
+    bus_addr_t bar_addr;
+    
+    int reg;
+      
+    memset(tuples, 0, len);
+
+    cis_ptr = cis_ptr & CARDBUS_CIS_ADDRMASK;
+
+    switch(cardbus_space) {
+    case CARDBUS_CIS_ASI_TUPLE:
+	DPRINTF(("%s: reading CIS data from configuration space\n", 
+		 sc->sc_dev.dv_xname));
+	for (i = cis_ptr, j = 0; i < 0xff; i += 4) {
+	    u_int32_t e = (cf->cardbus_conf_read)(cc, tag, i);
+	    tuples[j] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 1] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 2] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 3] = 0xff & e;
+	    j += 4;
+	}
+	found++;
+	break;
+
+    case CARDBUS_CIS_ASI_BAR0:
+    case CARDBUS_CIS_ASI_BAR1:
+    case CARDBUS_CIS_ASI_BAR2:
+    case CARDBUS_CIS_ASI_BAR3:
+    case CARDBUS_CIS_ASI_BAR4:
+    case CARDBUS_CIS_ASI_BAR5:
+    case CARDBUS_CIS_ASI_ROM:
+	if(cardbus_space == CARDBUS_CIS_ASI_ROM) {
+	    reg = CARDBUS_ROM_REG;
+	    DPRINTF(("%s: reading CIS data from ROM\n",
+		     sc->sc_dev.dv_xname));
+	} else {
+	    reg = CARDBUS_BASE0_REG + (cardbus_space - 1) * 4;
+	    DPRINTF(("%s: reading CIS data from BAR%d\n",
+		     sc->sc_dev.dv_xname, cardbus_space - 1));
+	}
+
+	/* XXX zero register so mapreg_map doesn't get confused by old
+           contents */
+	cardbus_conf_write(cc, cf, tag, reg, 0);
+	if(Cardbus_mapreg_map(ca->ca_ct, reg,
+			      CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+			      0, 
+			      NULL, &bar_memh, &bar_addr, &bar_size)) {
+	    printf("%s: failed to map memory\n", sc->sc_dev.dv_xname);
+	    return 1;
+	}
 
 
+	if(cardbus_space == CARDBUS_CIS_ASI_ROM) {
+	    cardbusreg_t exrom;
+	    int save;
+	    struct cardbus_rom_image_head rom_image;
+	    struct cardbus_rom_image *p;
+		    
+	    save = splhigh();
+	    /* enable rom address decoder */
+	    exrom = cardbus_conf_read(cc, cf, tag, reg);
+	    cardbus_conf_write(cc, cf, tag, reg, exrom | 1);
+	    
+	    command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	    cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			       command | CARDBUS_COMMAND_MEM_ENABLE);
+
+	    if(cardbus_read_exrom(ca->ca_memt, bar_memh, &rom_image))
+		goto out;
+
+	    for(p = SIMPLEQ_FIRST(&rom_image);
+		p;
+		p = SIMPLEQ_NEXT(p, next)) {
+		if(p->rom_image == CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
+		    bus_space_read_region_1(p->romt, p->romh,
+					    CARDBUS_CIS_ADDR(cis_ptr),
+					    tuples, 256);
+		    found++;
+		}
+		break;
+	    }
+	    while((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rom_image, p, next);
+		free(p, M_DEVBUF);
+	    }
+	out:
+	    exrom = cardbus_conf_read(cc, cf, tag, reg);
+	    cardbus_conf_write(cc, cf, tag, reg, exrom & ~1);
+	    splx(save);
+	} else {
+	    command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	    cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			       command | CARDBUS_COMMAND_MEM_ENABLE);
+	    /* XXX byte order? */
+	    bus_space_read_region_1(ca->ca_memt, bar_memh, 
+				    cis_ptr, tuples, 256);
+	    found++;
+	}
+	command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			   command & ~CARDBUS_COMMAND_MEM_ENABLE);
+	cardbus_conf_write(cc, cf, tag, reg, 0);
+#if 0
+	/* XXX unmap memory */
+	(*ca->ca_ct->ct_cf->cardbus_space_free)(ca->ca_ct, 
+						ca->ca_ct->ct_sc->sc_rbus_memt, 
+						bar_memh, bar_size);
+#endif
+	break;
+
+#ifdef DIAGNOSTIC
+    default:
+	panic("%s: bad CIS space (%d)", sc->sc_dev.dv_xname, cardbus_space);
+#endif
+    }
+    return !found;
+}
+
+static void
+parse_tuple(u_int8_t *tuple, int len, void *data)
+{
+#ifdef CARDBUS_DEBUG
+    static const char __func__[] = "parse_tuple";
+#endif
+    struct cardbus_cis_info *cis = data;
+    int bar_index;
+    int i;
+    char *p;
+    switch(tuple[0]) {
+    case PCMCIA_CISTPL_MANFID:
+	if(tuple[1] != 5) {
+	    DPRINTF(("%s: wrong length manufacturer id (%d)\n", 
+		     __func__, tuple[1]));
+	    break;
+	}
+	cis->manufacturer = tuple[2] | (tuple[3] << 8);
+	cis->product = tuple[4] | (tuple[5] << 8);
+	break;
+    case PCMCIA_CISTPL_VERS_1:
+	memcpy(cis->cis1_info_buf, tuple + 2, tuple[1]);
+	i = 0;
+	p = cis->cis1_info_buf + 2;
+	while(i < sizeof(cis->cis1_info) / sizeof(cis->cis1_info[0])) {
+	    cis->cis1_info[i++] = p;
+	    while(*p != '\0' && *p != '\xff')
+		p++;
+	    if(*p == '\xff')
+		break;
+	    p++;
+	}
+	break;
+    case PCMCIA_CISTPL_BAR:
+	if(tuple[1] != 6) {
+	    DPRINTF(("%s: BAR with short length (%d)\n", __func__, tuple[1]));
+	    break;
+	}
+	bar_index = tuple[2] & 7;
+	if(bar_index == 0) {
+	    DPRINTF(("%s: invalid ASI in BAR tuple\n", __func__));
+	    break;
+	}
+	bar_index--;
+	cis->bar[bar_index].flags = tuple[2];
+	cis->bar[bar_index].size = (tuple[4] << 0) |
+				   (tuple[5] << 8) |
+				   (tuple[6] << 16) |
+				   (tuple[7] << 24);
+	break;
+    case PCMCIA_CISTPL_FUNCID:
+	cis->funcid = tuple[2];
+	break;
+	
+    case PCMCIA_CISTPL_FUNCE:
+	if(cis->funcid == PCMCIA_FUNCTION_NETWORK && tuple[1] >= 8) {
+	    if(tuple[2] == PCMCIA_TPLFE_TYPE_LAN_NID) {
+		if(tuple[3] > sizeof(cis->funce.network.netid)) {
+		    DPRINTF(("%s: unknown network id type (len = %d)\n", 
+			     __func__, tuple[3]));
+		} else {
+		    memcpy(cis->funce.network.netid, 
+			   tuple + 4, tuple[3]);
+		}
+	    }
+	}
+	break;
+    }
+}
 
 /*
  * int cardbus_attach_card(struct cardbus_softc *sc)
@@ -208,13 +427,9 @@ cardbus_attach_card(sc)
     return 0;
   }
 
-  if (cdstatus & CARDBUS_3V_CARD) {
-    cf->cardbus_power(cc, CARDBUS_VCC_3V);
-    sc->sc_poweron_func = 1;	/* function 0 on */
-  }
-
-  (cf->cardbus_ctrl)(cc, CARDBUS_RESET);
-
+  enable_function(sc, cdstatus, 8); /* XXX use fake function 8 to
+				       keep power on during whole
+				       configuration */
   function = 0;
 
   tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
@@ -238,96 +453,92 @@ cardbus_attach_card(sc)
   
   bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
   if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-    bhlc &= (CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+    bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
     bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
     cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
   }
 
   nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
-  /*
-   *           XXX multi-function card
-   *
-   * I don't know how to process CIS information for
-   * multi-function cards.
-   */
+  for(function = 0; function < nfunction; function++) {
+      struct cardbus_attach_args ca;
 
-  id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-  class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
-  cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
+      tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, function);
+      
+      id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+      class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
+      cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
+      
+      /* Invalid vendor ID value? */
+      if (CARDBUS_VENDOR(id) == 0xffff)
+	  continue;
+      
+      DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
+	       CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
+      
+      enable_function(sc, cdstatus, function);
 
-  DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
-	   CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
+      /* we need to allocate the ct here, since we might 
+	 need it when reading the CIS */
+      if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
+						  M_DEVBUF, M_NOWAIT))) {
+	  panic("no room for cardbus_tag");
+      }
 
-  bzero(tuple, 2048);
+      ct->ct_cc = sc->sc_cc;
+      ct->ct_cf = sc->sc_cf;
+      ct->ct_bus = sc->sc_bus;
+      ct->ct_dev = sc->sc_device;
+      ct->ct_func = function;
+      ct->ct_sc = sc;
+      ct->ct_next = NULL;
+      *previous_next = ct;
 
-  if (CARDBUS_CIS_ASI_TUPLE == (CARDBUS_CIS_ASI(cis_ptr))) {
-				/* Tuple is in Cardbus config space */
-    int i = cis_ptr & CARDBUS_CIS_ADDRMASK;
-    int j = 0;
+      ca.ca_unit = sc->sc_dev.dv_unit;
+      ca.ca_ct = ct;
 
-    for (; i < 0xff; i += 4) {
-      u_int32_t e = (cf->cardbus_conf_read)(cc, tag, i);
-      tuple[j] = 0xff & e;
-      e >>= 8;
-      tuple[j + 1] = 0xff & e;
-      e >>= 8;
-      tuple[j + 2] = 0xff & e;
-      e >>= 8;
-      tuple[j + 3] = 0xff & e;
-      j += 4;
-    }
-  } else if (CARDBUS_CIS_ASI(cis_ptr) <= CARDBUS_CIS_ASI_BAR5) {
-    /*    int bar = CARDBUS_CIS_ASI_BAR(cis_ptr);*/
+      ca.ca_iot = sc->sc_iot;
+      ca.ca_memt = sc->sc_memt;
+      ca.ca_dmat = sc->sc_dmat;
+
+      ca.ca_tag = tag;
+      ca.ca_device = sc->sc_device;
+      ca.ca_function = function;
+      ca.ca_id = id;
+      ca.ca_class = class;
+
+      ca.ca_intrline = sc->sc_intrline;
+
+      bzero(tuple, 2048);
+
+      if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+	  printf("cardbus_attach_card: failed to read CIS\n");
+	  free(ct, M_DEVBUF);
+	  disable_function(sc, function);
+	  continue;
+      }
+    
+#ifdef CARDBUS_DEBUG
+      decode_tuples(tuple, 2048, print_tuple, NULL);
+#endif
+      decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+    
+    
+      if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
+	  /* do not match */
+	  disable_function(sc, function);
+	  free(ct, M_DEVBUF);
+	  *previous_next = NULL;
+      } else {
+	  /* found */
+	  previous_next = &(ct->ct_next);
+	  ct->ct_device = csc;
+	  ++no_work_funcs;
+      }
   }
-
-
-  decode_tuples(tuple, 2048);
-
-  {
-    struct cardbus_attach_args ca;
-
-    if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
-						M_DEVBUF, M_NOWAIT))) {
-      panic("no room for cardbus_tag");
-    }
-
-    ct->ct_cc = sc->sc_cc;
-    ct->ct_cf = sc->sc_cf;
-    ct->ct_bus = sc->sc_bus;
-    ct->ct_dev = sc->sc_device;
-    ct->ct_func = function;
-    ct->ct_sc = sc;
-    ct->ct_next = NULL;
-    *previous_next = ct;
-
-    ca.ca_unit = sc->sc_dev.dv_unit;
-    ca.ca_ct = ct;
-
-    ca.ca_iot = sc->sc_iot;
-    ca.ca_memt = sc->sc_memt;
-    ca.ca_dmat = sc->sc_dmat;
-
-    ca.ca_tag = tag;
-    ca.ca_device = sc->sc_device;
-    ca.ca_function = function;
-    ca.ca_id = id;
-    ca.ca_class = class;
-
-    ca.ca_intrline = sc->sc_intrline;
-
-    if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
-      /* do not match */
-      cf->cardbus_power(cc, CARDBUS_VCC_0V);
-      sc->sc_poweron_func = 0;	/* no functions on */
-      free(cc, M_DEVBUF);
-    } else {
-      /* found */
-      previous_next = &(ct->ct_next);
-      ct->ct_device = csc;
-      ++no_work_funcs;
-    }
-  }
+  /* XXX power down pseudo function 8 (this will power down the card
+     if no functions were attached) */
+  disable_function(sc, 8);
 
   return no_work_funcs;
 }
@@ -371,16 +582,27 @@ cardbusprint(aux, pnp)
      void *aux;
      const char *pnp;
 {
-  register struct cardbus_attach_args *ca = aux;
-  char devinfo[256];
+    struct cardbus_attach_args *ca = aux;
+    char devinfo[256];
+    int i;
+    if (pnp) {
+	pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
+	for (i = 0; i < 4; i++) {
+	    if (ca->ca_cis.cis1_info[i] == NULL)
+		break;
+	    if (i)
+		printf(", ");
+	    printf("%s", ca->ca_cis.cis1_info[i]);
+	}
+	if (i)
+	    printf(" ");
+	printf("(manufacturer 0x%x, product 0x%x)", ca->ca_cis.manufacturer,
+	       ca->ca_cis.product);
+	printf(" %s at %s", devinfo, pnp);
+    }
+    printf(" dev %d function %d", ca->ca_device, ca->ca_function);
 
-  if (pnp) {
-    pci_devinfo(ca->ca_id, ca->ca_class, 1, devinfo);
-    printf("%s at %s", devinfo, pnp);
-  }
-  printf(" dev %d function %d", ca->ca_device, ca->ca_function);
-
-  return UNCONF;
+    return UNCONF;
 }
 
 
@@ -431,18 +653,47 @@ cardbus_intr_disestablish(cc, cf, handler)
 
 
 
+/* XXX this should be merged with cardbus_function_{enable,disable},
+   but we don't have a ct when these functions are called */
+
+static void
+enable_function(sc, cdstatus, function)
+     struct cardbus_softc *sc;
+     int cdstatus;
+     int function;
+{
+    if(sc->sc_poweron_func == 0) {
+	if (cdstatus & CARDBUS_3V_CARD) {
+	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_3V);
+	}
+	(sc->sc_cf->cardbus_ctrl)(sc->sc_cc, CARDBUS_RESET);
+    }
+    sc->sc_poweron_func |= (1 << function);
+}
+
+static void
+disable_function(sc, function)
+     struct cardbus_softc *sc; 
+     int function;
+{
+    sc->sc_poweron_func &= ~(1 << function);
+    if(sc->sc_poweron_func == 0) {
+	/* power-off because no functions are enabled */
+	sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_0V);
+    }
+}
+
 /*
- * int cardbus_function_enable(cardbus_devfunc_t ct)
+ * int cardbus_function_enable(struct cardbus_softc *sc, int func)
  *
  *   This function enables a function on a card.  When no power is
  *  applied on the card, power will be applied on it.
  */
 int
-cardbus_function_enable(ct)
-     cardbus_devfunc_t ct;
+cardbus_function_enable(sc, func)
+     struct cardbus_softc *sc;
+     int func;
 {
-  struct cardbus_softc *sc = ct->ct_sc;
-  int func = ct->ct_func;
   cardbus_chipset_tag_t cc = sc->sc_cc;
   cardbus_function_tag_t cf = sc->sc_cf;
   cardbusreg_t command;
@@ -452,22 +703,18 @@ cardbus_function_enable(ct)
 
   /* entering critical area */
 
-  if (sc->sc_poweron_func == 0) {
-    /* no functions are enabled */
-    (*cf->cardbus_power)(cc, CARDBUS_VCC_3V); /* XXX: sc_vold should be used */
-    (*cf->cardbus_ctrl)(cc, CARDBUS_RESET);
-  }
-
-  sc->sc_poweron_func |= (1 << func);
+  enable_function(sc, CARDBUS_3V_CARD, func); /* XXX: sc_vold should be used */
 
   /* exiting critical area */
 
-  tag = Cardbus_make_tag(ct);
+  tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device, func);
+
   command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
   command |= (CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
-  cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
-  Cardbus_free_tag(ct, tag);
 
+  cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
+
+  cardbus_free_tag(cc, cf, tag);
 
   DPRINTF(("%x\n", sc->sc_poweron_func));
 
@@ -476,30 +723,20 @@ cardbus_function_enable(ct)
 
 
 /*
- * int cardbus_function_disable(cardbus_devfunc_t ct)
+ * int cardbus_function_disable(struct cardbus_softc *, int func)
  *
  *   This function disable a function on a card.  When no functions are
  *  enabled, it turns off the power.
  */
 int
-cardbus_function_disable(ct)
-     cardbus_devfunc_t ct;
+cardbus_function_disable(sc, func)
+     struct cardbus_softc *sc;
+     int func;
 {
-  struct cardbus_softc *sc = ct->ct_sc;
-  int func = ct->ct_func;
-  cardbus_chipset_tag_t cc = sc->sc_cc;
-  cardbus_function_tag_t cf = sc->sc_cf;
 
-  DPRINTF(("entering cardbus_enable_disable...  "));
+  DPRINTF(("entering cardbus_function_disable...  "));
 
-  sc->sc_poweron_func &= ~(1 << func);
-
-  DPRINTF(("%x\n", sc->sc_poweron_func));
-
-  if (sc->sc_poweron_func == 0) {
-    /* power-off because no functions are enabled */
-    (*cf->cardbus_power)(cc, CARDBUS_VCC_0V);
-  }
+  disable_function(sc, func);
 
   return 0;
 }
@@ -515,15 +752,15 @@ cardbus_function_disable(ct)
  * They should go out from this file.
  */
 
-static u_int8_t *decode_tuple __P((u_int8_t *));
-#ifdef CARDBUS_DEBUG
-static char *tuple_name __P((int));
-#endif
+static u_int8_t *
+decode_tuple __P((u_int8_t *tuple, tuple_decode_func func, void *data));
 
 static int
-decode_tuples(tuple, buflen)
+decode_tuples(tuple, buflen, func, data)
      u_int8_t *tuple;
      int buflen;
+     tuple_decode_func func;
+     void *data;
 {
   u_int8_t *tp = tuple;
 
@@ -532,7 +769,7 @@ decode_tuples(tuple, buflen)
     return 0;
   }
 
-  while (NULL != (tp = decode_tuple(tp))) {
+  while (NULL != (tp = decode_tuple(tp, func, data))) {
     if (tuple + buflen < tp) {
       break;
     }
@@ -543,45 +780,30 @@ decode_tuples(tuple, buflen)
 
 
 static u_int8_t *
-decode_tuple(tuple)
+decode_tuple(tuple, func, data)
      u_int8_t *tuple;
+     tuple_decode_func func;
+     void *data;
 {
-  u_int8_t type;
-  u_int8_t len;
-#ifdef CARDBUS_DEBUG
-  int i;
-#endif
+    u_int8_t type;
+    u_int8_t len;
 
-  type = tuple[0];
-  len = tuple[1] + 2;
+    type = tuple[0];
+    len = tuple[1] + 2;
 
-#ifdef CARDBUS_DEBUG
-  printf("tuple: %s len %d\n", tuple_name(type), len);
-#endif
-  if (CISTPL_END == type) {
-    return NULL;
-  }
+    (*func)(tuple, len, data);
 
-#ifdef CARDBUS_DEBUG
-  for (i = 0; i < len; ++i) {
-    if (i % 16 == 0) {
-      printf("  0x%2x:", i);
+    if (CISTPL_END == type) {
+	return NULL;
     }
-    printf(" %x",tuple[i]);
-    if (i % 16 == 15) {
-      printf("\n");
-    }
-  }
-  if (i % 16 != 0) {
-    printf("\n");
-  }
-#endif
 
-  return tuple + len;
+    return tuple + len;
 }
 
 
 #ifdef CARDBUS_DEBUG
+static char *tuple_name __P((int type));
+
 static char *
 tuple_name(type)
      int type;
@@ -616,4 +838,30 @@ tuple_name(type)
     return "Reserved";
   }
 }
+
+static void
+print_tuple(tuple, len, data)
+     u_int8_t *tuple;
+     int len;
+     void *data;
+{
+    int i;
+
+    printf("tuple: %s len %d\n", tuple_name(tuple[0]), len);
+
+    for (i = 0; i < len; ++i) {
+	if (i % 16 == 0) {
+	    printf("  0x%2x:", i);
+	}
+	printf(" %x",tuple[i]);
+	if (i % 16 == 15) {
+	    printf("\n");
+	}
+    }
+    if (i % 16 != 0) {
+	printf("\n");
+    }
+}
+
 #endif
+

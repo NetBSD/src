@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 1999/07/08 18:05:29 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.74.4.1 1999/11/15 00:38:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -266,9 +266,6 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
-#endif
 	struct proc *p;
 	int i, s;
 	u_int ucode;
@@ -455,42 +452,33 @@ copyfault:
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
-	 * XXX: because locore.s now gives them special treatment.
+	 * XXX: We should never get kernel-mode T_TRAP15 because
+	 * XXX: locore.s now gives it special treatment.
 	 */
-	case T_TRACE:		/* Kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
-#ifdef DDB
-		if (type == T_TRAP15 ||
-		    ((caddr_t) frame.f_pc != trap0 &&
-		     (caddr_t) frame.f_pc != trap1 &&
-		     (caddr_t) frame.f_pc != trap2 &&
-		     (caddr_t) frame.f_pc != trap12 &&
-		     (caddr_t) frame.f_pc != trap15 &&
-		     (caddr_t) frame.f_pc != illinst)) {
-			if (kdb_trap(type, (db_regs_t *) &frame))
-				return;
-		}
+#ifdef DEBUG
+		printf("unexpected kernel trace trap, type = %d\n", type);
+		printf("program counter = 0x%x\n", frame.f_pc);
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* Sun user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
-		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * SunOS uses Trap #2 for a "CPU cache flush".
 		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad NetBSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIU();
-			/* get out fast */
-			goto done;
+			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -669,10 +657,6 @@ copyfault:
 		return;
 out:
 	userret(p, &frame, sticks, v, 1); 
-
-#ifdef COMPAT_SUNOS
-done:
-#endif
 }
 
 #if defined(M68040)
@@ -741,8 +725,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
-			    VM_PROT_WRITE);
+			    trunc_page(f->f_fa), VM_PROT_WRITE,
+			    VM_PROT_WRITE|PMAP_WIRED);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);

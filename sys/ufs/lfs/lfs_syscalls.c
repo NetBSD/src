@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.33 1999/07/08 01:06:06 wrstuden Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.33.4.1 1999/11/15 00:42:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

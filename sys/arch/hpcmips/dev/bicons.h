@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.h,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
+/*	$NetBSD: bicons.h,v 1.1.1.1.4.1 1999/11/15 00:37:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,3 +37,4 @@
 void bicons_init __P((void));
 void bicons_puts __P((char *s));
 void bicons_putn __P((char *s, int n));
+void bicons_printf __P((const char *, ...));

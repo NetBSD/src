@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.2 1999/09/28 22:46:43 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.2.4.1 1999/11/15 00:41:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -316,11 +316,7 @@ mhzc_alloc_ethernet(sc)
 	bus_addr_t addr, maxaddr;
 
 	maxaddr = sc->sc_pf->sc->iobase + sc->sc_pf->sc->iosize;
-
-	/*
-	 * Start with the first address past the Modem.
-	 */
-	addr = sc->sc_modem_pcioh.addr + sc->sc_modem_pcioh.size;
+	addr = sc->sc_pf->sc->iobase;
 
 	/*
 	 * Now round it up so that it starts on a 16-byte boundary.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.27 1999/08/18 21:33:50 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.27.4.1 1999/11/15 00:42:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993

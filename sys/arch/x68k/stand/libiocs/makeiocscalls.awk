@@ -5,7 +5,7 @@
 #	written by Yasha (ITOH Yasufumi)
 #	public domain
 #
-#	$NetBSD: makeiocscalls.awk,v 1.1 1998/09/01 19:53:54 itohy Exp $
+#	$NetBSD: makeiocscalls.awk,v 1.1.16.1 1999/11/15 00:39:58 fvdl Exp $
 
 BEGIN {
 	argsiz["l"] = 4; argsiz["w"] = 2
@@ -15,11 +15,13 @@ BEGIN {
 		reg = substr("d0d1d2d3d4d5d6d7a0a1a2a3a4a5a6a7", i*2+1, 2)
 		regno[reg] = i
 	}
+	print "#include <machine/asm.h>"
 }
 
 $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	funcnam=""
 	iocsno=$2
+	ptrval=0
 	narg=0
 	retd2=0
 	err_d0=0
@@ -75,8 +77,10 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 		printf " %s", $i
 		if ($i ~ /^\**IOCS_[A-Z0-9_]*$/) {
 			funcnam = $i
-			while (funcnam ~ /^\*/)
+			while (funcnam ~ /^\*/) {
 				funcnam = substr(funcnam, 2, length(funcnam) -1)
+				ptrval = 1
+			}
 		}
 	}
 	print ""
@@ -86,9 +90,7 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	}
 
 	# output assembly code
-	print "\t.text\n\t.even"
-	print "\t.globl\t_" funcnam
-	print "_" funcnam ":"
+	print "ENTRY_NOPROFILE(" funcnam ")"
 
 	# SAVE REGISTERS
 	for (i = 0; i < 16; i++) {
@@ -115,23 +117,23 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	}
 
 	if (iocs_trap15) {
-		print "\tmoveml\td2-d7/a2-a6,sp@-"
+		print "\tmoveml\t%d2-%d7/%a2-%a6,%sp@-"
 		nsave = 11
 	} else if (nsave == 1 || nsave == 2){
 		# use movel
 		for (i = 0; i < 16; i++) {
 			if (savereg[i])
-				print "\tmovel\t" savereg[i] ",sp@-"
+				print "\tmovel\t%" savereg[i] ",%sp@-"
 		}
 	} else if (nsave > 2) {
 		# use moveml
 		saveregs = ""
 		for (i = 0; i < 16; i++) {
 			if (savereg[i])
-				saveregs = saveregs "/" savereg[i]
+				saveregs = saveregs "/%" savereg[i]
 		}
 		saveregs = substr(saveregs, 2, length(saveregs) - 1)
-		print "\tmoveml\t" saveregs ",sp@-"
+		print "\tmoveml\t" saveregs ",%sp@-"
 	}
 
 	# LOAD ARGS
@@ -139,6 +141,7 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	argoff = nsave * 4 + 4
 	# input arguments for IOCS call
 	iarg = ""
+	iargreglist = ""
 	niarg = 0
 	iarg_incorder = 1
 	immarg = ""
@@ -155,6 +158,7 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 			}
 			a1 = a
 			iarg = iarg "/" a
+			iargreglist = iargreglist "/%" a
 			niarg++
 		}
 	}
@@ -171,76 +175,77 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	}
 	# remove leading char
 	iarg = substr(iarg, 2, length(iarg) - 1);
+	iargreglist = substr(iargreglist, 2, length(iargreglist) - 1);
 	immarg = substr(immarg, 2, length(immarg) - 1);
 	oarg = substr(oarg, 2, length(oarg) - 1);
 	# load input args
 	if (niarg == 0)
 		;
 	else if (niarg == 1 && iarg !~ /\=/) {
-		print "\tmovel\tsp@(" argoff ")," iarg	"\t| 1arg"
+		print "\tmovel\t%sp@(" argoff "),%" iarg	"\t| 1arg"
 	} else if (iarg_incorder && iarg !~ /\=/) {
-		print "\tmoveml\tsp@(" argoff ")," iarg	"\t| inc order"
+		print "\tmoveml\t%sp@(" argoff ")," iargreglist	"\t| inc order"
 	} else if (iarg == "a1/d1") {
-		print "\tmoveal\tsp@(" argoff "),a1"
-		print "\tmovel\tsp@(" argoff + 4 "),d1"
+		print "\tmoveal\t%sp@(" argoff "),%a1"
+		print "\tmovel\t%sp@(" argoff + 4 "),%d1"
 	} else if (iarg == "d1/a1/d2") {
-		print "\tmoveml\tsp@(" argoff "),d1-d2/a1"
-		print "\texg\td2,a1"
+		print "\tmoveml\t%sp@(" argoff "),%d1-%d2/%a1"
+		print "\texg\t%d2,%a1"
 	} else if (iarg == "a1/a2/d1") {
-		print "\tmoveml\tsp@(" argoff "),a1/a2"
-		print "\tmovel\tsp@(" argoff + 8 "),d1"
+		print "\tmoveml\t%sp@(" argoff "),%a1/%a2"
+		print "\tmovel\t%sp@(" argoff + 8 "),%d1"
 	} else if (iarg == "a1/a2/d1/d2") {
-		print "\tmoveml\tsp@(" argoff "),d1-d2/a1-a2"
-		print "\texg\td1,a1"
-		print "\texg\td2,a2"
+		print "\tmoveml\t%sp@(" argoff "),%d1-%d2/%a1-%a2"
+		print "\texg\t%d1,%a1"
+		print "\texg\t%d2,%a2"
 	} else if (iarg == "a1/d1/d2") {
-		print "\tmoveml\tsp@(" argoff "),d0-d2"
-		print "\tmovel\td0,a1"
+		print "\tmoveml\t%sp@(" argoff "),%d0-%d2"
+		print "\tmovel\t%d0,%a1"
 	} else if (iarg == "d1=bb") {
-		print "\tmoveq\t#0,d1"
-		print "\tmoveb\tsp@(" argoff + 3 "),d1"
-		print "\tlslw\t#8,d1"
-		print "\tmoveb\tsp@(" argoff + 7 "),d1"
+		print "\tmoveq\t#0,%d1"
+		print "\tmoveb\t%sp@(" argoff + 3 "),%d1"
+		print "\tlslw\t#8,%d1"
+		print "\tmoveb\t%sp@(" argoff + 7 "),%d1"
 		niarg = 2
 	} else if (iarg == "d1=ww") {
-		print "\tmovew\tsp@(" argoff + 2 "),d1"
-		print "\tswap\td1"
-		print "\tmovew\tsp@(" argoff + 6 "),d1"
+		print "\tmovew\t%sp@(" argoff + 2 "),%d1"
+		print "\tswap\t%d1"
+		print "\tmovew\t%sp@(" argoff + 6 "),%d1"
 		niarg = 2
 	} else if (iarg == "d1=hsv") {
-		print "\tmoveb\tsp@(" argoff + 3 "),d1"
-		print "\tswap\td1"
-		print "\tmoveb\tsp@(" argoff + 7 "),d1"
-		print "\tlslw\t#8,d1"
-		print "\tmoveb\tsp@(" argoff + 11 "),d1"
-		print "\tandl\t#0x00ff1f1f,d1"
+		print "\tmoveb\t%sp@(" argoff + 3 "),%d1"
+		print "\tswap\t%d1"
+		print "\tmoveb\t%sp@(" argoff + 7 "),%d1"
+		print "\tlslw\t#8,%d1"
+		print "\tmoveb\t%sp@(" argoff + 11 "),%d1"
+		print "\tandl\t#0x00ff1f1f,%d1"
 		niarg = 3
 	} else if (iarg == "a1/d1=bb") {
-		print "\tmoveal\tsp@(" argoff "),a1"
-		print "\tmoveq\t#0,d1"
-		print "\tmoveb\tsp@(" argoff + 7 "),d1"
-		print "\tlslw\t#8,d1"
-		print "\tmoveb	sp@(" argoff + 11 "),d1"
+		print "\tmoveal\t%sp@(" argoff "),%a1"
+		print "\tmoveq\t#0,%d1"
+		print "\tmoveb\t%sp@(" argoff + 7 "),%d1"
+		print "\tlslw\t#8,%d1"
+		print "\tmoveb	%sp@(" argoff + 11 "),%d1"
 		niarg = 3
 	} else if (iarg == "d1/d2=ww") {
-		print "\tmovel\tsp@(" argoff "),d1"
-		print "\tmovew\tsp@(" argoff + 6 "),d2"
-		print "\tswap\td2"
-		print "\tmovew\tsp@(" argoff + 10 "),d2"
+		print "\tmovel\t%sp@(" argoff "),%d1"
+		print "\tmovew\t%sp@(" argoff + 6 "),%d2"
+		print "\tswap\t%d2"
+		print "\tmovew\t%sp@(" argoff + 10 "),%d2"
 		niarg = 3
 	} else if (iarg == "d1=ww/a1") {
-		print "\tmoveml\tsp@(" argoff "),d0-d1/a1"
-		print "\tswap\td1"
-		print "\tmovew\td0,d1"
-		print "\tswap\td1"
+		print "\tmoveml\t%sp@(" argoff "),%d0-%d1/%a1"
+		print "\tswap\t%d1"
+		print "\tmovew\t%d0,%d1"
+		print "\tswap\t%d1"
 		niarg = 3
 	} else if (iarg == "d1=ww/d2=ww") {
-		print "\tmoveml\tsp@(" argoff "),d1-d2"
-		print "\tswap\td1"
-		print "\tmovew\td2,d1"
-		print "\tmovew\tsp@(" argoff + 10 "),d2"
-		print "\tswap\td2"
-		print "\tmovew\tsp@(" argoff + 14 "),d2"
+		print "\tmoveml\t%sp@(" argoff "),%d1-%d2"
+		print "\tswap\t%d1"
+		print "\tmovew\t%d2,%d1"
+		print "\tmovew\t%sp@(" argoff + 10 "),%d2"
+		print "\tswap\t%d2"
+		print "\tmovew\t%sp@(" argoff + 14 "),%d2"
 		niarg = 4
 	} else {
 		print "unsupported iarg:", iarg
@@ -249,26 +254,26 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	argoff += niarg * 4
 
 	if (sp_regst) {
-		print "\tandl\t#0x80000000,d1"
-		print "\tmoveb\td0,d1"
+		print "\tandl\t#0x80000000,%d1"
+		print "\tmoveb\t%d0,%d1"
 	}
 
 	if (b_curmod) {
-		print "\tmoveq\t#1,d0"
-		print "\tcmpl\td1,d0"
+		print "\tmoveq\t#1,%d0"
+		print "\tcmpl\t%d1,%d0"
 #		print "\tbcss\tLerr"
 		print "\tbcss\t6f"
 	}
 
 	if (b_curpat) {
-		print "\ttstw\td2"
+		print "\ttstw\t%d2"
 #		print "\tbeqs\tLerr"
 		print "\tbeqs\t6f"
 	}
 
 	if (b_super) {
-		print "\tmoval\tsp@+,a0"
-		print "\tmoval\tsp@,a1"
+		print "\tmoval\t%sp@+,%a0"
+		print "\tmoval\t%sp@,%a1"
 	}
 
 	# load imm args
@@ -278,51 +283,51 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 			if (a ~ /^d[1-7]=[0-9][0-9]*$/) {
 				r = substr(a, 1, 2)
 				v = substr(a, 4, length(a)-3)
-				print "\tmoveq\t#" v "," r
+				print "\tmoveq\t#" v ",%" r
 			}
 		}
 	}
 
 	if (c_md) {
 		# -1: flush(3), -2: set default(2), other: set by the value(4)
-		print "\tmovel\td2,d0"
-		print "\taddql\t#1,d0"
+		print "\tmovel\t%d2,%d0"
+		print "\taddql\t#1,%d0"
 		print "\tbeqs\tLcachemd"
-		print "\tmoveq\t#2,d1"
-		print "\taddql\t#1,d0"
+		print "\tmoveq\t#2,%d1"
+		print "\taddql\t#1,%d0"
 		print "\tbnes\tLcachemd"
-		print "\tmoveq\t#4,d1"
+		print "\tmoveq\t#4,%d1"
 		print "Lcachemd:"
 	}
 
 	if (b_scroll) {
 		# d1 has 16
-		print "\tcmpl\td1,d2"
+		print "\tcmpl\t%d1,%d2"
 		print "\tbcss\tLscriocs"
-		print "\tmovel\td2,d1"
+		print "\tmovel\t%d2,%d1"
 		print "Lscriocs:"
 	}
 
 	if (iocs_trap15) {
-		print "\tmoveal\tsp@(" argoff "),a0	| inregs"
-		print "\tmoveml\ta0@,d0-d7/a1-a6"
+		print "\tmoveal\t%sp@(" argoff "),%a0	| inregs"
+		print "\tmoveml\t%a0@,%d0-%d7/%a1-%a6"
 		argoff += 4
 	}
 
 	if (iocsno != "(none)") {
 		if (iocsno ~ /^[89abcdef]./)
 			iocsno = "ffffff" iocsno
-		print "\tmoveq\t#0x" iocsno ",d0"
+		print "\tmoveq\t#0x" iocsno ",%d0"
 	}
 	print "\ttrap\t#15"
 
 	if (iocs_trap15) {
-		print "\tmoveal\tsp@(" argoff "),a0	| outregs"
-		print "\tmoveml\td0-d7/a1-a6,a0@"
+		print "\tmoveal\t%sp@(" argoff "),%a0	| outregs"
+		print "\tmoveml\t%d0-%d7/%a1-%a6,%a0@"
 	}
 
 	if (err_d0 && noarg) {
-		print "\ttstl\td0"
+		print "\ttstl\t%d0"
 #		print "\tbnes\tLerr"
 		print "\tbnes\t6f"
 	}
@@ -332,31 +337,31 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 	if (noarg == 0)
 		;
 	else if (oarg == "od2") {
-		print "\tmoveal\tsp@(" argoff "),a0"
+		print "\tmoveal\t%sp@(" argoff "),%a0"
 		argoff += 4
-		print "\tmovel\td2,a0@"
+		print "\tmovel\t%d2,%a0@"
 	} else if (oarg == "od1 od2 od0") {
-		print "\tmoveml\tsp@(" argoff "),a0/a1"
+		print "\tmoveml\t%sp@(" argoff "),%a0/%a1"
 		argoff += 8
-		print "\tmovel\td1,a0@"
-		print "\tmovel\td2,a1@"
-		print "\tmoveal\tsp@(" argoff "),a0"
+		print "\tmovel\t%d1,%a0@"
+		print "\tmovel\t%d2,%a1@"
+		print "\tmoveal\t%sp@(" argoff "),%a0"
 		argoff += 4
-		print "\tmovel\td0,a0@"
+		print "\tmovel\t%d0,%a0@"
 	} else if (oarg == "od2 od3") {
-		print "\tmoveml\tsp@(" argoff "),a0/a1"
+		print "\tmoveml\t%sp@(" argoff "),%a0/%a1"
 		argoff += 8
-		print "\tmovel\td2,a0@"
-		print "\tmovel\td3,a1@"
+		print "\tmovel\t%d2,%a0@"
+		print "\tmovel\t%d3,%a1@"
 	} else if (oarg == "od2 od3 od4 od5") {
-		print "\tmoveml\tsp@(" argoff "),a0/a1"
+		print "\tmoveml\t%sp@(" argoff "),%a0/%a1"
 		argoff += 8
-		print "\tmovel\td2,a0@"
-		print "\tmovel\td3,a1@"
-		print "\tmoveml\tsp@(" argoff "),a0/a1"
+		print "\tmovel\t%d2,%a0@"
+		print "\tmovel\t%d3,%a1@"
+		print "\tmoveml\t%sp@(" argoff "),%a0/%a1"
 		argoff += 8
-		print "\tmovel\td4,a0@"
-		print "\tmovel\td5,a1@"
+		print "\tmovel\t%d4,%a0@"
+		print "\tmovel\t%d5,%a1@"
 	} else {
 		print "unsupported oarg:", oarg
 		exit(1)
@@ -368,25 +373,28 @@ $1 == "/*" && ($2 ~ /^[0-9a-f][0-9a-f]$/ || $2 == "(none)") {
 
 	# return value
 	if (retd2)
-		print "\tmovel\td2,d0"
+		print "\tmovel\t%d2,%d0"
 
 	# RESTORE REGISTERS
 	if (iocs_trap15) {
-		print "\tmoveml\tsp@+,d2-d7/a2-a6"
+		print "\tmoveml\t%sp@+,%d2-%d7/%a2-%a6"
 	} else if (nsave == 1 || nsave == 2){
 		# use movel
 		for (i = 16 - 1; i >= 0; i--) {
 			if (savereg[i])
-				print "\tmovel\tsp@+," savereg[i]
+				print "\tmovel\t%sp@+,%" savereg[i]
 		}
 	} else if (nsave > 2) {
 		# use moveml
-		print "\tmoveml\tsp@+," saveregs
+		print "\tmoveml\t%sp@+," saveregs
 	}
 
 
 	if (b_super)
-		print "\tjmp\ta0@"
-	else if (!noret)
+		print "\tjmp\t%a0@"
+	else if (!noret) {
+		if (ptrval)
+			print "#ifdef __SVR4_ABI__\n\tmoveal\t%d0,%a0\n#endif"
 		print "\trts"
+	}
 }

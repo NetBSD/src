@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.8 1999/08/24 17:47:44 tron Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.8.4.1 1999/11/15 00:41:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,10 @@ struct mbe_pcmcia_product {
 	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA501,
 	  0,				0x20,
 	  PCMCIA_STR_FUJITSU_LA501 },
+
+	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA10S,
+	  0,				0,
+	  PCMCIA_STR_FUJITSU_LA10S },
 
 	{ 0,				0,
 	  0,				0,

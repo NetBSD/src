@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.10 1999/09/09 12:26:44 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.10.4.1 1999/11/15 00:41:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ struct ucom_softc {
 	usbd_interface_handle sc_iface;	/* interface */
 };
 
-void ucom_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
+void ucom_intr __P((usbd_xfer_handle, usbd_private_handle, usbd_status));
 void ucom_disco __P((void *));
 
 USB_DECLARE_DRIVER(ucom);

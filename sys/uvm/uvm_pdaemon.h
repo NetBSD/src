@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.7 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.7.4.1 1999/11/15 00:42:31 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -79,7 +79,7 @@
  * prototypes
  */
 
-void uvm_wait __P((char *));
+void uvm_wait __P((const char *));
 
 #endif /* _KERNEL */
 

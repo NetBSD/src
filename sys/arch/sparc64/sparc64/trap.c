@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 1999/09/17 20:07:17 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.30.4.1 1999/11/15 00:39:36 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <uvm/uvm_fault.h>
+/* #include <uvm/uvm_fault.h> */
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -170,7 +170,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * seems to imply that we should do this, and it does make sense.
  */
 __asm(".align 64");
-struct	fpstate initfpstate = {
+struct	fpstate64 initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
 };
@@ -363,20 +363,20 @@ const char *trap_type[] = {
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
 static __inline void userret __P((struct proc *, int,  u_quad_t));
-void trap __P((unsigned, long, long, struct trapframe *));
-static __inline void share_fpu __P((struct proc *, struct trapframe *));
-void mem_access_fault __P((unsigned, int, u_long, int, int, struct trapframe *));
-void data_access_fault __P((unsigned type, u_long va, u_long pc, struct trapframe *));
-void data_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe *));
-void text_access_fault __P((unsigned, u_long, struct trapframe *));
-void text_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe *));
-void syscall __P((register_t, struct trapframe *, register_t));
+void trap __P((unsigned, long, long, struct trapframe64 *));
+static __inline void share_fpu __P((struct proc *, struct trapframe64 *));
+void mem_access_fault __P((unsigned, int, u_long, int, int, struct trapframe64 *));
+void data_access_fault __P((unsigned type, u_long va, u_long pc, struct trapframe64 *));
+void data_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe64 *));
+void text_access_fault __P((unsigned, u_long, struct trapframe64 *));
+void text_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe64 *));
+void syscall __P((register_t, struct trapframe64 *, register_t));
 
 #ifdef DEBUG
-void print_trapframe __P((struct trapframe *));
+void print_trapframe __P((struct trapframe64 *));
 void
 print_trapframe(tf)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 
 	printf("Trapframe %p:\ttstate: %x\tpc: %x\tnpc: %x\n",
@@ -469,7 +469,7 @@ userret(p, pc, oticks)
  */
 static __inline void share_fpu(p, tf)
 	struct proc *p;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	if (!(tf->tf_tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) &&
 	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fpproc != p)
@@ -484,7 +484,7 @@ void
 trap(type, tstate, pc, tf)
 	register unsigned type;
 	register long tstate, pc;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	register struct proc *p;
 	register struct pcb *pcb;
@@ -650,7 +650,7 @@ badtrap:
 		break;
 
 	case T_FPDISABLED: {
-		register struct fpstate *fs = p->p_md.md_fpstate;
+		register struct fpstate64 *fs = p->p_md.md_fpstate;
 
 		if (fs == NULL) {
 			/* NOTE: fpstate must be 64-bit aligned */
@@ -831,7 +831,7 @@ rwindow_save(p)
 	register u_int64_t rwdest;
 	register int i, j;
 #ifndef TRAPWIN
-	register struct trapframe *tf = p->p_md.md_tf;
+	register struct trapframe64 *tf = p->p_md.md_tf;
 #endif
 
 	/* Make sure our D$ is not polluted w/bad data */
@@ -941,14 +941,13 @@ data_access_fault(type, addr, pc, tf)
 	unsigned type;
 	u_long addr;
 	u_long pc;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
 	register vaddr_t va;
 	register int rv;
-	vm_prot_t ftype;
 	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
@@ -1030,7 +1029,6 @@ data_access_fault(type, addr, pc, tf)
 	/* Now munch on protections... */
 
 	access_type = (type == T_FDMMU_PROT) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
-	ftype = (type == T_FDMMU_PROT) ? VM_FAULT_PROTECT : VM_FAULT_INVALID;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
 		/*
@@ -1049,18 +1047,18 @@ data_access_fault(type, addr, pc, tf)
 			goto kfault;
 		if (!(addr&TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
-			if ((rv=uvm_fault(kernel_map, va, ftype, access_type)) == KERN_SUCCESS) {
+			if ((rv=uvm_fault(kernel_map, va, 0, access_type)) == KERN_SUCCESS) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 					printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- success\n",
-					       kernel_map, (vaddr_t)va, ftype, rv);
+					       kernel_map, (vaddr_t)va, 0, rv);
 #endif
 				return;
 			}
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 				printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- failure\n",
-				       kernel_map, (vaddr_t)va, ftype, rv);
+				       kernel_map, (vaddr_t)va, 0, rv);
 #endif
 			goto kfault;
 		}
@@ -1069,12 +1067,12 @@ data_access_fault(type, addr, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("data_access_fault: user uvm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vaddr_t)va, ftype, rv);
+		       &vm->vm_map, (vaddr_t)va, 0, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1163,7 +1161,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register u_long sfsr;
 	register u_long afva;
 	register u_long afsr;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	register u_long pc;
 	register u_int64_t tstate;
@@ -1171,7 +1169,6 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register struct vmspace *vm;
 	register vaddr_t va = 0; /* Stupid GCC warning */
 	register int rv;
-	vm_prot_t ftype;
 	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
@@ -1309,7 +1306,6 @@ DEBUGGER(type, tf);
 	/* Now munch on protections... */
 
 	access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
-	ftype = VM_FAULT_PROTECT; /* Mapping must exist... */
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
 		/*
@@ -1328,7 +1324,7 @@ DEBUGGER(type, tf);
 			goto kfault;
 		if (SFSR_CTXT_IS_PRIM(sfsr) || SFSR_CTXT_IS_NUCLEUS(sfsr)) {
 			/* NUCLEUS context */
-			if (uvm_fault(kernel_map, va, ftype, access_type) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, access_type) == KERN_SUCCESS)
 				return;
 			if (SFSR_CTXT_IS_NUCLEUS(sfsr))
 				goto kfault;
@@ -1342,7 +1338,7 @@ DEBUGGER(type, tf);
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("data_access_error: calling uvm_fault\n");
 #endif
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1416,14 +1412,13 @@ void
 text_access_fault(type, pc, tf)
 	register unsigned type;
 	register u_long pc;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
 	register vaddr_t va;
 	register int rv;
-	vm_prot_t ftype;
 	vm_prot_t access_type;
 	u_quad_t sticks;
 
@@ -1469,7 +1464,6 @@ text_access_fault(type, pc, tf)
 	/* Now munch on protections... */
 
 	access_type = /* VM_PROT_EXECUTE| */VM_PROT_READ;
-	ftype = VM_FAULT_INVALID;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		(void) splhigh();
 		printf("text_access_fault: pc=%x\n", pc);
@@ -1481,12 +1475,12 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("text_access_fault: uvm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vaddr_t)va, ftype, rv);
+		       &vm->vm_map, (vaddr_t)va, 0, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1549,14 +1543,13 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	register u_long sfsr;
 	register u_long afva;
 	register u_long afsr;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	register int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
 	register vaddr_t va;
 	register int rv;
-	vm_prot_t ftype;
 	vm_prot_t access_type;
 	u_quad_t sticks;
 #if DEBUG
@@ -1641,7 +1634,6 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	/* Now munch on protections... */
 
 	access_type = /* VM_PROT_EXECUTE| */ VM_PROT_READ;
-	ftype = VM_FAULT_PROTECT; /* Protection fault? */
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		(void) splhigh();
 		printf("text error: pc=%lx sfsr=%%qb\n", pc, (long)sfsr, SFSR_BITS);
@@ -1653,7 +1645,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1740,7 +1732,7 @@ out:
 void
 syscall(code, tf, pc)
 	register_t code;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	register_t pc;
 {
 	register int i, nsys, nap;
@@ -1786,7 +1778,7 @@ syscall(code, tf, pc)
 		panic("syscall from kernel");
 	if (cpcb != &p->p_addr->u_pcb)
 		panic("syscall: cpcb/ppcb mismatch");
-	if (tf != (struct trapframe *)((caddr_t)cpcb + USPACE) - 1)
+	if (tf != (struct trapframe64 *)((caddr_t)cpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
 	sticks = p->p_sticks;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.16 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.16.4.1 1999/11/15 00:40:09 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,6 +43,7 @@
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 
 
 /*
@@ -62,11 +63,6 @@ int		db_onpanic = DDB_ONPANIC;
 #endif
 int		db_fromconsole = DDB_FROMCONSOLE;
 
-
-extern int	db_radix;
-extern int	db_max_width;
-extern int	db_tab_stop_width;
-extern int	db_max_line;
 
 static int	db_rw_internal_variable __P((struct db_variable *, db_expr_t *,
 		    int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.196 1999/09/23 11:04:29 enami Exp $ */
+/*	$NetBSD: wd.c,v 1.196.4.1 1999/11/15 00:40:14 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -601,6 +601,11 @@ retry:		/* Just reset and retry. Can we do more ? */
 noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			printf("%s: soft error (corrected)\n",
 			    wd->sc_dev.dv_xname);
+		break;
+	case ERR_NODEV:
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
+		break;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
 #if NRND > 0
@@ -833,16 +838,11 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_ncylinders = wd->sc_params.atap_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-#if 0
-	if (strcmp(wd->sc_params.atap_model, "ST506") == 0) {
+	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
 		lp->d_type = DTYPE_ST506;
-		strncpy(lp->d_typename, "ST506 disk", 16);
-	} else {
+	else
 		lp->d_type = DTYPE_ESDI;
-		strncpy(lp->d_typename, "ESDI/IDE",
-		sizeof lp->d_typename);
-	}
-#endif
+
 	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = wd->sc_capacity;

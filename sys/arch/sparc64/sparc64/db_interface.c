@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 1999/10/12 17:08:59 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22.4.1 1999/11/15 00:39:30 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -108,7 +108,7 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap __P((struct trapframe *));
+void kdb_kbd_trap __P((struct trapframe64 *));
 void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_ctx_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -136,7 +136,7 @@ static void db_dump_pmap __P((struct pmap*));
  */
 void
 kdb_kbd_trap(tf)
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
@@ -153,7 +153,7 @@ int traptrace_enabled = 0;
 int
 kdb_trap(type, tf)
 	int	type;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 {
 	int i, s, tl;
 	struct trapstate {
@@ -294,7 +294,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-cpu_Debugger()
+Debugger()
 {
 	/* We use the breakpoint to trap into DDB */
 	asm("ta 1; nop");
@@ -838,25 +838,25 @@ db_uvmhistdump(addr, have_addr, count, modif)
 }
 
 struct db_command sparc_db_command_table[] = {
+	{ "buf",	db_dump_buf,	0,	0 },
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
-	{ "buf",	db_dump_buf,	0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
-	{ "pctx",	db_setpcb,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
-	{ "pmap",	db_pmap_cmd,	0,	0 },
+	{ "pctx",	db_setpcb,	0,	0 },
 	{ "phys",	db_pload_cmd,	0,	0 },
+	{ "pmap",	db_pmap_cmd,	0,	0 },
 	{ "proc",	db_proc_cmd,	0,	0 },
 	{ "prom",	db_prom_cmd,	0,	0 },
 	{ "pv",		db_dump_pv,	0,	0 },
 	{ "stack",	db_dump_stack,	0,	0 },
 	{ "tf",		db_dump_trap,	0,	0 },
-	{ "window",	db_dump_window,	0,	0 },
 	{ "traptrace",	db_traptrace,	0,	0 },
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 	{ "watch",	db_watch,	0,	0 },
+	{ "window",	db_dump_window,	0,	0 },
 	{ (char *)0, }
 };
 

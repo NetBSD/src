@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.2.4.1 1999/11/15 00:40:19 fvdl Exp $	*/
 /*
  * Copyright (c) 1999
  *       HAYAKAWA Koichi.  All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define CARDSLOT_DEBUG */
+#include "opt_cardslot.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,10 +198,17 @@ cardslotattach(parent, self, aux)
 
 
 STATIC int
-cardslot_cb_print(aux, pcic)
+cardslot_cb_print(aux, pnp)
      void *aux;
-     const char *pcic;
+     const char *pnp;
 {
+  struct cbslot_attach_args *cba = aux;
+
+  if (pnp) {
+    printf("cardbus at %s", pnp);
+    printf(" function %d subordinate bus %d", cba->cba_function, cba->cba_bus);
+  }
+
   return UNCONF;
 }
 
@@ -231,8 +238,9 @@ cardslot_16_print(arg, pnp)
      void *arg;
      const char *pnp;
 {
+
   if (pnp) {
-    printf("pcmcia at %s", pnp);
+    printf("pcmciabus at %s", pnp);
   }
 
   return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.1 1999/03/06 16:36:06 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.1.10.1 1999/11/15 00:39:48 fvdl Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -186,4 +186,17 @@ ENTRY(hoppabort, 0)
 	mnegl	$1, ap		# Hack to figure out boot device.
 	jmp	2(r6)
 #	calls   $0,(r6)
+	halt
+
+# A bunch of functions unwanted in boot blocks.
+ENTRY(getchar, 0)
+	halt
+
+ENTRY(putchar, 0)
+	ret
+
+ENTRY(printf, 0)
+	ret
+
+ENTRY(panic, 0)
 	halt

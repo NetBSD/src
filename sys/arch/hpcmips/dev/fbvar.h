@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.1.1.1 1999/09/16 12:23:19 takemura Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.1.1.1.4.1 1999/11/15 00:37:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,8 +34,12 @@
  *
  */
 
+#ifdef USE_RASTERCONS
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
+#else
+#include <dev/rasops/rasops.h>
+#endif
 
 struct fb_devconfig {
 	int		dc_width;	/* width of frame buffer */
@@ -43,8 +47,13 @@ struct fb_devconfig {
 	int		dc_rowbytes;	/* bytes in a FB scan line */
 	vaddr_t		dc_fbaddr;	/* base of flat frame buffer */
 
+#ifdef USE_RASTERCONS
 	struct raster	dc_raster;	/* raster description */
 	struct rcons	dc_rcons;	/* raster blitter control info */
+#else
+	struct rasops_info	dc_rinfo;	/* rasops infomation */
+#endif
+
 
 	int		dc_blanked;	/* currently had video disabled */
 };
@@ -54,3 +63,6 @@ struct fb_softc {
 	struct	fb_devconfig *sc_dc;	/* device configuration */
 	int nscreens;
 };
+
+int	fb_cnattach(bus_space_tag_t iot, int iobase,
+		    int type, int check);

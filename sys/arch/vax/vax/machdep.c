@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.87 1999/09/17 20:07:20 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.87.4.1 1999/11/15 00:39:52 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -134,7 +134,6 @@ static	struct map iomap[IOMAPSZ];
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
@@ -225,7 +224,7 @@ cpu_startup()
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += CLBYTES;
 			curbufsize -= CLBYTES;
 		}
@@ -238,13 +237,6 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
-#if VAX410 || VAX43
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
-#endif
 	/*
 	 * Initialize callouts
 	 */
@@ -314,8 +306,6 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
-	extern int smgprobe(void), smgcninit(void);
-
 	/*
 	 * Init I/O memory resource map. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
@@ -324,20 +314,12 @@ consinit()
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
-
 	cninit();
-#if NSMG
-	/* XXX - do this probe after everything else due to wscons trouble */
-	if (smgprobe())
-		smgcninit();
-#endif
 #ifdef DDB
 	{
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-//		extern void ksym_init(int *, int *);
-//		ksym_init(&end, esym);
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef DEBUG

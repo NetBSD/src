@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.52 1999/06/30 15:18:58 drochner Exp $	*/
+/*	$NetBSD: si.c,v 1.52.4.1 1999/11/15 00:39:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -736,7 +736,7 @@ found:
 	dh->dh_maplen  = xlen;
 
 	/* Copy the "write" flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if ((xs->xs_control & XS_CTL_DATA_OUT) != 0)
 		dh->dh_flags |= SIDH_OUT;
 
 	/*

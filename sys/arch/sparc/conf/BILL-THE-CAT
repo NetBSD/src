@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.8 1999/07/29 10:37:22 augustss Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.8.4.1 1999/11/15 00:39:12 fvdl Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -23,9 +23,9 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	RASTERCONSOLE		# fast rasterop console
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 #options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 

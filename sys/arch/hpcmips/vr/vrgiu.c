@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.1.1.1.4.1 1999/11/15 00:37:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -509,6 +509,9 @@ vrgiu_intr(arg)
 		printf ("\n");
 	}
 #endif
+	/* Clear interrupt */
+	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, vrgiu_regread_4(sc, GIUINTSTAT_REG));
+
 	/* Dispatch handler */
 	for (i = 0; i < MAX_GPIO_INOUT; i++) {
 		if (reg & (1 << i)) {
@@ -518,7 +521,6 @@ vrgiu_intr(arg)
 			}
 		}
 	}
-	/* Clear interrupt */
-	vrgiu_regwrite_4(sc, GIUINTSTAT_REG, vrgiu_regread_4(sc, GIUINTSTAT_REG));
+
 	return 0;
 }

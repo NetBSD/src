@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90 1999/10/05 03:48:27 itohy Exp $
+#	$NetBSD: files.isa,v 1.90.4.1 1999/11/15 00:40:42 fvdl Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -224,7 +224,7 @@ file	dev/isa/if_depca_isa.c	depca
 
 # DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
 attach  lc at isa with lc_isa
-file    dev/isa/if_lc_isa.c		lc
+file    dev/isa/if_lc_isa.c		lc_isa
 
 # Novell NE1000, NE2000, and clones
 attach	ne at isa with ne_isa: rtl80x9
@@ -255,6 +255,10 @@ file	dev/isa/if_tr_isa.c		tr_isa
 attach	tr at isa with tr_isa: tr_isa, elink
 file	dev/isa/if_tribm_isa.c		tr_isa
 file	dev/isa/if_trtcm_isa.c		tr_isa
+
+# ISA NCR/AT&T/Lucent WaveLAN (non-802.11) card
+attach	wl at isa with wl_isa: i82586, wavelan
+file	dev/isa/if_wl_isa.c		wl_isa
 
 #
 # ISA Sound hardware

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54 1999/10/15 14:41:43 augustss Exp $
+$NetBSD: usbdevs,v 1.54.4.1 1999/11/15 00:41:39 fvdl Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,10 +61,12 @@ vendor CONNECTIX	0x0478	Connectix Corp.
 vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
+vendor CANON		0x04a9	Canon Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
+vendor ALTEC		0x04d2	Altec Lansing
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
@@ -73,6 +75,7 @@ vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor APC		0x051d	American Power Conversion
 vendor AKS		0x0529	Fast Security AG
+vendor UNIACCESS	0x0540	Universal Access
 vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
@@ -89,6 +92,7 @@ vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor QTRONIX		0x05c7	Qtronix Corp
+vendor ELSA		0x05cc	ELSA Gmbh
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
@@ -98,6 +102,7 @@ vendor ADS		0x06e1	ADS Technologies
 vendor MIDIMAN		0x0763	Midiman
 vendor SANDISK		0x0781	SanDisk Corp
 vendor SIIG		0x07cc	SIIG
+vendor HANDSPRING	0x082d	Handspring Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
@@ -120,6 +125,7 @@ product NEC HUB_B		0x55ab	hub
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
 product KODAK DC240		0x0120	Digital Science DC240
+product KODAK DC280		0x0130	Digital Science DC280
 
 /* CATC products */
 product CATC ANDROMEDA		0x1237	Andromeda hub
@@ -174,6 +180,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
+/* Canon Inc. products */
+product CANON S10		0x3041	PowerShot S10
+
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
@@ -186,6 +195,9 @@ product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
 product KONICA CAMERA		0x0720	Digital Color Camera
+
+/* Altec Lansing products */
+product	ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
@@ -207,6 +219,9 @@ product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Universal Access products */
+product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
@@ -255,10 +270,14 @@ product INSYSTEM ISD110		0x0200  IDE adapter
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
+/* Elsa products */
+product ELSA MODEM1		0x2265	ELSA Modem Board
+
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH QUICKCAM	0x0801	QuickCam
+product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 
@@ -286,6 +305,7 @@ product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+product ENTREGA SERIAL_DB9	0x8093	DB9 Serial connector
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
@@ -295,6 +315,9 @@ product	SANDISK IMAGEMATE	0x0001	USB ImageMate
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+
+/* Handspring Inc. */
+product	HANDSPRING VISOR	0x0100	Handspring Visor
 
 /* ActiveWire Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.4 1998/09/02 11:16:32 leo Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.4.14.1 1999/11/15 00:38:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ TBIA_30()
 	int tmp = DC_CLEAR;
 
 	__asm __volatile (" pflusha;"
-			  " movc %0,cacr" : : "d" (tmp));
+			  " movc %0,%%cacr" : : "d" (tmp));
 }
 	
 /*
@@ -58,7 +58,7 @@ TBIS_30(va)
 	vaddr_t	va;
 {
 	__asm __volatile (" pflush #0,#0,%0@;"
-			  " movc   %1,cacr" : : "a" (va), "d" (DC_CLEAR));
+			  " movc   %1,%%cacr" : : "a" (va), "d" (DC_CLEAR));
 }
 
 /*
@@ -69,7 +69,7 @@ extern __inline void
 TBIAS_30()
 {
 	__asm __volatile (" pflush #4,#4;"
-			  " movc   %0,cacr;" :: "d" (DC_CLEAR));
+			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
 /*
@@ -80,7 +80,7 @@ extern __inline void
 TBIAU_30()
 {
 	__asm __volatile (" pflush #0,#4;"
-			  " movc   %0,cacr;" :: "d" (DC_CLEAR));
+			  " movc   %0,%%cacr;" :: "d" (DC_CLEAR));
 }
 
 /*
@@ -90,14 +90,14 @@ void ICIA_30 __P((void));
 extern __inline void
 ICIA_30()
 {
-	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
+	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 void ICPA_30 __P((void));
 extern __inline void
 ICPA_30()
 {
-	__asm __volatile (" movc %0,cacr;" : : "d" (IC_CLEAR));
+	__asm __volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
 /*
@@ -119,5 +119,5 @@ void PCIA_30 __P((void));
 extern __inline void
 PCIA_30()
 {
-	__asm __volatile (" movc %0,cacr;" : : "d" (DC_CLEAR));
+	__asm __volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
 }

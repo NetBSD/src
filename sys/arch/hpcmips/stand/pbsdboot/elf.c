@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.2 1999/09/22 12:49:48 uch Exp $	*/
+/*	$NetBSD: elf.c,v 1.2.4.1 1999/11/15 00:37:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -187,7 +187,7 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 	byte_count = 0;
 	progress = 0;
 	for (i = 0; i < elf->e_phnum; i++) {
-		if (phtbl[i].p_type != Elf_pt_load) {
+		if (phtbl[i].p_type != PT_LOAD) {
 			continue;
 		}
 
@@ -243,10 +243,10 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 		sh_symidx = -1;
 		sh_stridx = -1;
 		for (i = 0; i < elf->e_shnum; i++) {
-			if (shtbl[i].sh_type == Elf_sht_symtab) {
+			if (shtbl[i].sh_type == SHT_SYMTAB) {
 				sh_symidx = i;
 			}
-			if ((shtbl[i].sh_type == Elf_sht_strtab)
+			if ((shtbl[i].sh_type == SHT_STRTAB)
 			    && (shtbl[i].sh_size >= 0x4000)) {
 				sh_stridx = i;
 			}

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.45 1999/10/17 02:40:26 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.45.4.1 1999/11/15 00:41:03 fvdl Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -31,7 +31,6 @@
  */
 
 #include <dev/ic/isp_netbsd.h>
-#include <dev/microcode/isp/asm_pci.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -62,9 +61,9 @@ static struct ispmdvec mdvec = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP_RISC_CODE,
-	ISP_CODE_LENGTH,
-	ISP_CODE_ORG,
+	0,
+	0,
+	0,
 	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
@@ -81,9 +80,9 @@ static struct ispmdvec mdvec_1080 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP1080_RISC_CODE,
-	ISP1080_CODE_LENGTH,
-	ISP1080_CODE_ORG,
+	0,
+	0,
+	0,
 	0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
@@ -100,9 +99,9 @@ static struct ispmdvec mdvec_2100 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP2100_RISC_CODE,
-	ISP2100_CODE_LENGTH,
-	ISP2100_CODE_ORG,
+	0,
+	0,
+	0,
 	0,
 	0,
 	0
@@ -119,9 +118,9 @@ static struct ispmdvec mdvec_2200 = {
 	NULL,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	ISP2200_RISC_CODE,
-	ISP2200_CODE_LENGTH,
-	ISP2200_CODE_ORG,
+	0,
+	0,
+	0,
 	0,
 	0,
 	0

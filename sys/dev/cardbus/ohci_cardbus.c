@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.1 1999/10/15 11:52:45 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.1.4.1 1999/11/15 00:40:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,13 +56,9 @@
 #if defined pciinc
 #include <dev/pci/pcidevs.h>
 #endif
-#if pccard
-#include <dev/pccard/cardbusvar.h>
-#include <dev/pccard/pccardcis.h>
-#else
+
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -132,7 +128,7 @@ ohci_cardbus_attach(parent, self, aux)
 	       CARDBUS_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
-	if (cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
+	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;

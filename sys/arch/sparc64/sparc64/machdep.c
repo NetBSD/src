@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1999/10/11 01:57:46 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.4.1 1999/11/15 00:39:32 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 				    "not enough RAM for buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -341,8 +341,8 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	vaddr_t stack;
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
+	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct fpstate64 *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
@@ -418,7 +418,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	int chosen;
+	u_int chosen;
 	char bootargs[256];
 	char *cp = NULL;
 
@@ -429,12 +429,26 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
 		if (((chosen = OF_finddevice("/chosen")) != -1) &&
-		    (OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs) < 0)) {
+		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
+		      >= 0)) {
+			/*
+			 * bootargs is of the form: [kernelname] [args...]
+			 * It can be the empty string if we booted from the default
+			 * kernel name.
+			 */
 			for (cp = bootargs; 
 			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
 			     cp++);
 			*cp = 0;
+			/* Now we've separated out the kernel name from the args */
 			cp = bootargs;
+			if (*cp == 0 || *cp == '-') 
+				/*
+				 * We can leave it NULL && let userland handle
+				 * the failure or set it to the default name,
+				 * `netbsd' 
+				 */
+				cp = "netbsd";
 		}
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
@@ -458,7 +472,7 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp;
 #ifdef NOT_DEBUG
@@ -616,7 +630,7 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 #ifndef TRAPWIN
 	int i;
 #endif
@@ -893,7 +907,7 @@ dumpsys()
 				printf("%d ", i / (1024*1024));
 
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
-					VM_PROT_READ, 1, VM_PROT_READ);
+					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
@@ -932,13 +946,13 @@ dumpsys()
 	}
 }
 
-void trapdump __P((struct trapframe*));
+void trapdump __P((struct trapframe64*));
 /*
  * dump out a trapframe.
  */
 void
 trapdump(tf)
-	struct trapframe* tf;
+	struct trapframe64* tf;
 {
 	printf("TRAPFRAME: tstate=%x:%x pc=%x:%x npc=%x:%x y=%x\n",
 	       tf->tf_tstate, tf->tf_pc, tf->tf_npc, tf->tf_y);
@@ -1367,8 +1381,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			   VM_PROT_READ | VM_PROT_WRITE);
+			   VM_PROT_READ | VM_PROT_WRITE,
+			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
@@ -1517,7 +1531,7 @@ static	vaddr_t iobase = IODEV_BASE;
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.324.4.1 1999/10/19 12:49:58 fvdl Exp $
+#	$NetBSD: files,v 1.324.4.2 1999/11/15 00:40:06 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -7,6 +7,7 @@
 defopt	INSECURE
 defopt	KMEMSTATS
 defopt	KTRACE
+defopt	MAXUPRC
 defopt	LOCKDEBUG
 defopt	RTC_OFFSET
 defopt	DEFCORENAME
@@ -50,7 +51,8 @@ defopt	opt_inet.h	INET INET6
 defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
-defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
+defopt	opt_ns.h	NS NSIP	 	# NS network stack,
+					# XNS tunneled over IP
 defopt	opt_iso.h	ISO TPIP	# ISO network stack
 defopt  IPX				# IPX network stack
 defopt	EON				# ISO clnp over IP
@@ -360,6 +362,10 @@ file	dev/ic/am7930.c			audioamd
 device	audiocs: audio, auconv, ad1848
 file	dev/ic/cs4231.c			audiocs
 
+# AC-97 CODECs
+define	ac97
+file	dev/ic/ac97.c			ac97
+
 # LSI64854 DMA controller back-end
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
@@ -371,6 +377,11 @@ file	dev/ic/rtl80x9.c		rtl80x9
 # Common code for ESDI/IDE/etc. controllers
 device  wdc: ata, atapi, wdc_base
 file    dev/ic/wdc.c wdc_base
+
+# Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
+define	wavelan
+device	wl: ether, ifnet, arp
+file	dev/ic/wavelan.c		wavelan
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 device	tlp: arp, ether, ifnet, mii
@@ -841,7 +852,7 @@ file netns/idp_usrreq.c			ns
 file netns/ns.c				ns
 file netns/ns_error.c			ns
 file netns/ns_input.c			ns
-file netns/ns_ip.c			ns
+file netns/ns_ip.c			ns & nsip
 file netns/ns_output.c			ns
 file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns

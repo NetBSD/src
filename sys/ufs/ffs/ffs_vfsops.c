@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.53.4.2 1999/11/03 23:40:32 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.53.4.3 1999/11/15 00:42:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -744,7 +744,8 @@ ffs_unmount(mp, mntflags, p)
 		fs->fs_clean = FS_ISCLEAN;
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
-	ump->um_devvp->v_specmountpoint = NULL;
+	if (ump->um_devvp->v_type != VBAD)
+		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);

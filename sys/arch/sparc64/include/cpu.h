@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1999/10/11 01:57:44 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.13.4.1 1999/11/15 00:39:27 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 extern int eintstack[];
 struct clockframe {
-	struct trapframe t;
+	struct trapframe64 t;
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
@@ -171,9 +171,9 @@ int	tickintr __P((void *)); /* level 10 (tick) interrupt code */
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
-struct fpstate;
-void	savefpstate __P((struct fpstate *));
-void	loadfpstate __P((struct fpstate *));
+struct fpstate64;
+void	savefpstate __P((struct fpstate64 *));
+void	loadfpstate __P((struct fpstate64 *));
 int	probeget __P((paddr_t, int, int));
 int	probeset __P((paddr_t, int, int, u_int64_t));
 #if 0
@@ -216,8 +216,8 @@ void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
 /* emul.c */
-int	fixalign __P((struct proc *, struct trapframe *));
-int	emulinstr __P((vaddr_t, struct trapframe *));
+int	fixalign __P((struct proc *, struct trapframe64 *));
+int	emulinstr __P((vaddr_t, struct trapframe64 *));
 
 /*
  *

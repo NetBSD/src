@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52 1999/10/11 17:51:45 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.4.1 1999/11/15 00:41:16 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.49 1999/10/11 17:51:24 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp 
  */
 
 /*-
@@ -164,6 +164,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Fujitsu Towa LA501 Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA10S,
+	    PCMCIA_CIS_FUJITSU_LA10S,
+	    0,
+	    "Fujitsu Corporation",
+	    "Fujitsu Compact Flash Ethernet"	},
+	},
+	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
@@ -199,11 +206,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM EtherJet Ethernet PC Card"	},
 	},
 	{
-	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
-	    PCMCIA_CIS_IODATA_PCLAT,
+	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
+	    PCMCIA_CIS_IODATA_PCLATE,
 	    0,
 	    "I-O DATA",
-	    "I-O DATA PCLA/T"	},
+	    "I-O DATA PCLA/TE"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -297,6 +304,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications Dual RS232"	},
 	},
 	{
+	    PCMCIA_VENDOR_SOCEKT, PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF,
+	    PCMCIA_CIS_SOCEKT_LP_ETHER_CF,
+	    0,
+	    "",
+	    "Socket Communications Low Power Ethernet CF"	},
+	},
+	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX,
 	    0,
@@ -386,6 +400,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Lucent Technologies",
 	    "WaveLAN/IEEE"	},
+	},
+	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
+	    PCMCIA_CIS_BAY_STACK_650,
+	    0,
+	    "Bay Networks",
+	    "BayStack 650 Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -486,6 +507,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
+	    PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
+	    0,
+	    "Corega K.K.",
+	    "Corega"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
 	    PCMCIA_CIS_SVEC_COMBOCARD,
 	    0,
@@ -505,6 +533,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "AmbiCom Inc",
 	    "AmbiCom AMB8002T"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_PCLAT,
+	    PCMCIA_CIS_IODATA_PCLAT,
+	    0,
+	    "I-O DATA",
+	    "IO-DATA PCLA/T"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
@@ -623,6 +658,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Dayna Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BAY, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Bay Networks",
 	    NULL,
 	},
 	{

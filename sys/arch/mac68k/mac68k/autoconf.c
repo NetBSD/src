@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 1999/09/17 20:04:35 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53.4.1 1999/11/15 00:38:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,8 @@ cpu_configure()
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
+
+	(void)spl0();
 }
 
 void

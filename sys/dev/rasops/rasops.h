@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.7 1999/08/24 11:07:32 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.7.4.1 1999/11/15 00:41:18 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,6 +121,14 @@ struct rasops_info {
  * ri_wsfcookie >= 0, you must call wsfont_unlock() on it, and reset it
  * to -1 (or a new, valid cookie).
  */
+
+/* Per-depth initalization functions */
+void	rasops1_init __P((struct rasops_info *));
+void	rasops2_init __P((struct rasops_info *));
+void	rasops8_init __P((struct rasops_info *));
+void	rasops15_init __P((struct rasops_info *));
+void	rasops24_init __P((struct rasops_info *));
+void	rasops32_init __P((struct rasops_info *));
 
 /* rasops.c */
 int	rasops_init __P((struct rasops_info *, int, int));

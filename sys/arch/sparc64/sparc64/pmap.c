@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1999/09/12 01:17:23 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.4.1 1999/11/15 00:39:33 fvdl Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /* #define BOOT_DEBUG */
@@ -1396,7 +1396,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	return pmap_enter(pmap_kernel(), va, pa, prot, 1, prot);
+	return pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
 }
 #else
 void
@@ -1612,20 +1612,20 @@ pmap_kremove(va, size)
  * Insert physical page at pa into the given pmap at virtual address va.
  * Supports 64-bit pa so we can map I/O space.
  */
-void
-pmap_enter(pm, va, pa, prot, wired, access_type)
+int
+pmap_enter(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	u_int64_t pa;
 	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pte_t tte;
 	int s, i, aliased = 0;
 	register pv_entry_t pv=NULL, npv;
 	paddr_t pg;
 	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
 	 * Is this part of the permanent 4MB mapping?
@@ -1635,7 +1635,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 		prom_printf("pmap_enter: va=%08x pa=%x:%08x in locked TLB\r\n", 
 			    va, (int)(pa>>32), (int)pa);
 		OF_enter();
-		return;
+		return (KERN_SUCCESS);
 	}
 #endif
 
@@ -1667,13 +1667,13 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 		pv = pa_to_pvh(pa);
 		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
 #ifdef DIAGNOSTIC
-		if (access_type & ~prot)
+		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
-		if (access_type & VM_PROT_ALL)
+		if (flags & VM_PROT_ALL)
 			pv->pv_va |= PV_REF;
-		if (access_type & VM_PROT_WRITE)
+		if (flags & VM_PROT_WRITE)
 			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
@@ -1693,7 +1693,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 #endif
 /*	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va); /* Not used any more. */
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 (access_type & VM_PROT_WRITE),
+				 (flags & VM_PROT_WRITE),
 				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
 #ifdef HWREF
 	if (prot & VM_PROT_WRITE) tte.data.data |= TLB_REAL_W;
@@ -1914,6 +1914,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 #endif
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
+	return (KERN_SUCCESS);
 }
 
 /*
@@ -2169,7 +2170,8 @@ pmap_map(va, pa, endpa, prot)
 			page_size_map[i].use++;
 #endif
 			pmap_enter(pmap_kernel(), va, pa|page_size_map[i].code, 
-				   prot, 1, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+				   prot,
+				   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			va += pgsize;
 			pa += pgsize;
 		} while (pa & page_size_map[i].mask);
@@ -3502,7 +3504,7 @@ pmap_testout()
 
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0, VM_PROT_ALL);
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);

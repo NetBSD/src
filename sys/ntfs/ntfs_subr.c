@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.20 1999/10/10 14:48:37 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.20.4.1 1999/11/15 00:42:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -225,12 +225,11 @@ ntfs_ntvattrget(
 		dprintf(("ntfs_ntvattrget: attribute in ino: %d\n",
 				 aalp->al_inumber));
 
-/*
-		error = VFS_VGET(ntmp->ntm_mountp, aalp->al_inumber, &newvp);
-*/
+		/* this is not a main record, so we can't use just plain
+		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-					VG_EXT, curproc, &newvp);
+				VG_EXT, curproc, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -353,7 +352,7 @@ out:
 		
 /*
  * Routine locks ntnode and increase usecount, just opposite of
- * ntfs_ntput.
+ * ntfs_ntput().
  */
 int
 ntfs_ntget(ip)
@@ -364,7 +363,7 @@ ntfs_ntget(ip)
 
 	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE|LK_INTERLOCK, &ip->i_interlock);
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
 
 	return 0;
 }
@@ -394,7 +393,7 @@ ntfs_ntlookup(
 			*ipp = ip;
 			return (0);
 		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL));
+	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -406,9 +405,6 @@ ntfs_ntlookup(
 	ip->i_dev = ntmp->ntm_dev;
 	ip->i_number = ino;
 	ip->i_mp = ntmp;
-	ip->i_uid = ntmp->ntm_uid;
-	ip->i_gid = ntmp->ntm_gid;
-	ip->i_mode = ntmp->ntm_mode;
 
 	LIST_INIT(&ip->i_fnlist);
 
@@ -436,8 +432,8 @@ ntfs_ntlookup(
  * ntnode should be locked on entry, and unlocked on return.
  */
 void
-ntfs_ntput(
-	   struct ntnode *ip)
+ntfs_ntput(ip)
+	struct ntnode *ip;
 {
 	struct ntvattr *vap;
 

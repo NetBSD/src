@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.8 1999/08/14 21:19:29 augustss Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.8.4.1 1999/11/15 00:40:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -110,7 +110,7 @@ wssfind(parent, sc, ia)
     struct wss_softc *sc;
     struct isa_attach_args *ia;
 {
-    struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
+    struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };

@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.1 1998/02/22 08:43:28 mycroft Exp $	*/
+/*	$NetBSD: strchr.S,v 1.1.16.1 1999/11/15 00:41:55 fvdl Exp $	*/
 
 #define STRCHR
 #include "index.S"

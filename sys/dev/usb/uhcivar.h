@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.16 1999/10/13 08:10:56 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.16.4.1 1999/11/15 00:41:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ typedef union {
  */
 typedef struct uhci_intr_info {
 	struct uhci_softc *sc;
-	usbd_request_handle reqh;
+	usbd_xfer_handle xfer;
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
@@ -148,7 +148,7 @@ typedef struct uhci_softc {
 	char sc_isreset;
 
 	char sc_suspend;
-	usbd_request_handle sc_has_timo;
+	usbd_xfer_handle sc_has_timo;
 
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2 1999/10/11 01:57:45 eeh Exp $ */
+/*	$NetBSD: pcb.h,v 1.2.4.1 1999/11/15 00:39:28 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,9 +150,45 @@ struct pcb {
  * from the top of the kernel stack (included here so that the kernel
  * stack itself need not be dumped).
  */
-struct md_coredump {
+struct md_coredump32 {
 	struct	trapframe32 md_tf;
-	struct	fpstate md_fpstate;
+	struct	fpstate32 md_fpstate;
+};
+
+struct md_coredump {
+	struct	trapframe64 md_tf;
+	struct	fpstate64 md_fpstate;
+};
+
+/*
+ * A core file consists of a header followed by a number of segments.
+ * Each segment is preceeded by a `coreseg' structure giving the
+ * segment's type, the virtual address where the bits resided in
+ * process address space and the size of the segment.
+ *
+ * The core header specifies the lengths of the core header itself and
+ * each of the following core segment headers to allow for any machine
+ * dependent alignment requirements.
+ */
+
+struct core32 {
+	u_int32_t c_midmag;		/* magic, id, flags */
+	u_int16_t c_hdrsize;		/* Size of this header (machdep algn) */
+	u_int16_t c_seghdrsize;		/* Size of a segment header */
+	u_int32_t c_nseg;		/* # of core segments */
+	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
+	u_int32_t c_signo;		/* Killing signal */
+	u_int	c_ucode;		/* Hmm ? */
+	u_int	c_cpusize;		/* Size of machine dependent segment */
+	u_int	c_tsize;		/* Size of traditional text segment */
+	u_int	c_dsize;		/* Size of traditional data segment */
+	u_int	c_ssize;		/* Size of traditional stack segment */
+};
+
+struct coreseg32 {
+	u_int32_t c_midmag;		/* magic, id, flags */
+	u_int	c_addr;			/* Virtual address of segment */
+	u_int	c_size;			/* Size of this segment */
 };
 
 #ifdef _KERNEL

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164 1999/10/11 17:33:52 hannken Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.4.1 1999/11/15 00:41:09 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp 
+ *	NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp 
  */
 
 /*
@@ -374,6 +374,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AIC-7860",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_APA1480,
+	    0,
+	    "Adaptec",
+	    "APA-1480 Ultra",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU,
@@ -758,6 +764,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
+	    0,
+	    "Auravision",
+	    "VxP524 PCI Video Processor",
+	},
+	{
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
+	    0,
+	    "Aureal Semiconductor",
+	    "AU8820 Vortex Digital Audio Processor",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -1204,6 +1222,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "\"C-Bus II\"-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
+	    0,
+	    "Creative Labs",
+	    "SBLive! EMU 10000",
+	},
+	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
 	    0,
 	    "Cyclades",
@@ -1360,6 +1384,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-SCI Bridge",
 	},
 	{
+	    PCI_VENDOR_DOMEX, PCI_PRODUCT_DOMEX_PCISCSI,
+	    0,
+	    "Domex",
+	    "DMX-3191D",
+	},
+	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
 	    0,
 	    "Elsa",
@@ -1430,6 +1460,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200e",
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
+	    0,
+	    "Forte Media",
+	    "Forte Media 801 Sound",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
@@ -2410,37 +2446,37 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "8139 10/100 Ethernet",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
 	    0,
 	    "Ricoh",
 	    "5C465 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C466,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C466,
 	    0,
 	    "Ricoh",
 	    "5C466 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C475,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C475,
 	    0,
 	    "Ricoh",
 	    "5C475 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C476,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RL5C476,
 	    0,
 	    "Ricoh",
 	    "5C476 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C477,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C477,
 	    0,
 	    "Ricoh",
 	    "5C477 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C478,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C478,
 	    0,
 	    "Ricoh",
 	    "5C478 PCI-CardBus bridge",
@@ -3488,6 +3524,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W89C940F Ethernet",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
@@ -6118,6 +6166,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_AURAVISION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Auravision",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_ZORAN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Zoran Corporation",
@@ -6286,9 +6340,27 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_AUREAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Aureal Semiconductor",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_ADMTEK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ADMtek",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Forte Media",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DOMEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Domex",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.3 1999/07/08 18:09:00 thorpej Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.3.4.1 1999/11/15 00:39:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -1007,7 +1007,7 @@ psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

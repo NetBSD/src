@@ -69,11 +69,6 @@
 #include <netinet/ip.h>
 #endif
 
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
-#endif
-
 #ifdef INET6
 #ifndef INET
 #include <netinet/in.h>
@@ -81,22 +76,6 @@
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
 #endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-#endif
-
-#ifdef NETATALK
-#include <netinet/if_ether.h>
-#include <netatalk/at.h>
-#include <netatalk/at_var.h>
-#endif NETATALK
 
 #include "bpfilter.h"
 

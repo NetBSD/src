@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.25 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: nfs.c,v 1.25.10.1 1999/11/15 00:42:04 fvdl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.3.10.1 1999/11/15 00:39:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,8 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <string.h>
-#include <time.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -50,6 +48,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+#include <lib/libkern/libkern.h>
 
 #include <sparc/stand/common/promdev.h>
 

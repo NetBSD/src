@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.6 1999/08/05 01:35:41 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.6.4.1 1999/11/15 00:40:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ struct fxp_softc {
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct ethercom sc_ethercom;	/* ethernet common part */
 	void *sc_sdhook;		/* shutdown hook */
+	void *sc_powerhook;		/* power hook */
 	void *sc_ih;			/* interrupt handler cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -198,9 +199,16 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+
+	int	sc_enabled;	/* boolean; power enabled on interface */
+	int	(*sc_enable) __P((struct fxp_softc *));
+	void	(*sc_disable) __P((struct fxp_softc *));
+
+	int sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
+	
 };
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
@@ -306,3 +314,7 @@ do {									\
 
 void	fxp_attach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
+
+int	fxp_enable __P((struct fxp_softc*));
+void	fxp_disable __P((struct fxp_softc*));
+

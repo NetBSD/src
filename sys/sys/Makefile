@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/08/24 16:32:46 christos Exp $
+#	$NetBSD: Makefile,v 1.13.4.1 1999/11/15 00:42:20 fvdl Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -6,7 +6,7 @@ INCSDIR= /usr/include/sys
 INCS=	acct.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clist.h conf.h core.h device.h dir.h \
 	dirent.h disk.h disklabel.h disklabel_mbr.h dkbad.h dkio.h dkstat.h \
-	domain.h endian.h errno.h exec.h exec_aout.h exec_ecoff.h \
+	domain.h dvdio.h endian.h errno.h exec.h exec_aout.h exec_ecoff.h \
 	exec_elf.h exec_script.h extent.h fcntl.h fdio.h featuretest.h \
 	file.h filedesc.h filio.h gmon.h inttypes.h ioccom.h ioctl.h \
 	ioctl_compat.h ipc.h kcore.h kernel.h kgdb.h ktrace.h lkm.h \
@@ -21,7 +21,8 @@ INCS=	acct.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h cdefs_aout.h \
 	un.h unistd.h unpcb.h user.h utsname.h vadvise.h vmmeter.h vnode.h \
 	vnode_if.h vsio.h wait.h
 
-SYMLINKS= sys/fcntl.h /usr/include/fcntl.h \
+SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
+	sys/fcntl.h /usr/include/fcntl.h \
 	sys/inttypes.h /usr/include/inttypes.h \
 	sys/md5.h /usr/include/md5.h \
 	sys/poll.h /usr/include/poll.h \

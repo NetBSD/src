@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.26 1999/09/20 17:40:58 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.26.4.1 1999/11/15 00:41:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1507,6 +1507,9 @@ vr_stop(sc, drain)
 	/* Cancel one second timer. */
 	untimeout(vr_tick, sc);
 
+	/* Down the MII. */
+	mii_down(&sc->vr_mii);
+
 	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
 
@@ -1823,7 +1826,8 @@ vr_attach(parent, self, aux)
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
 	ifmedia_init(&sc->vr_mii.mii_media, 0, vr_ifmedia_upd, vr_ifmedia_sts);
-	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff);
+	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);

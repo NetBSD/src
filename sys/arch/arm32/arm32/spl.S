@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6 1998/09/05 04:01:53 mark Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.14.1 1999/11/15 00:37:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -46,13 +46,13 @@
 	.align	0
 
 Lcurrent_spl_level:
-	.word	_current_spl_level
+	.word	_C_LABEL(current_spl_level)
 
 Lspl_masks:
-	.word	_spl_masks
+	.word	_C_LABEL(spl_masks)
 
 Lspl_mask:
-	.word	_spl_mask
+	.word	_C_LABEL(spl_mask)
 
 ENTRY(raisespl)
 	mov	r3, r0			/* Save the new value */
@@ -70,7 +70,7 @@ ENTRY(raisespl)
 	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
-	bl	_irq_setmasks		/* Update the actual masks */
+	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(lowerspl)
@@ -89,8 +89,8 @@ ENTRY(lowerspl)
 	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
-	bl	_irq_setmasks		/* Update the actual masks */
-	bl	_dosoftints		/* Process any pending soft ints */
+	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(splx)
@@ -109,6 +109,6 @@ ENTRY(splx)
 	str	r2, [r1]
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
-	bl	_irq_setmasks		/* Update the actual masks */
-	bl	_dosoftints		/* Process any pending soft ints */
+	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, pc}		/* Exit */

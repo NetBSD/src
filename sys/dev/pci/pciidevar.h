@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.2 1998/10/12 16:09:22 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.2.14.1 1999/11/15 00:41:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,40 @@
  * Author: Christopher G. Demetriou, March 2, 1998.
  */
 
+#include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
+#include <dev/ic/wdcvar.h>
+
 struct device;
+
+struct pciide_softc {
+	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
+	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
+	pcitag_t		sc_tag;
+	void			*sc_pci_ih;	/* PCI interrupt handle */
+	int			sc_dma_ok;	/* bus-master DMA info */
+	bus_space_tag_t		sc_dma_iot;
+	bus_space_handle_t	sc_dma_ioh;
+	bus_dma_tag_t		sc_dmat;
+	/* Chip description */
+	const struct pciide_product_desc *sc_pp;
+	/* common definitions */
+	struct channel_softc *wdc_chanarray[PCIIDE_NUM_CHANNELS];
+	/* internal bookkeeping */
+	struct pciide_channel {			/* per-channel data */
+		struct channel_softc wdc_channel; /* generic part */
+		char		*name;
+		int		hw_ok;		/* hardware mapped & OK? */
+		int		compat;		/* is it compat? */
+		void		*ih;		/* compat or pci handle */
+		/* DMA tables and DMA map for xfer, for each drive */
+		struct pciide_dma_maps {
+			bus_dmamap_t    dmamap_table;
+			struct idedma_table *dma_table;
+			bus_dmamap_t    dmamap_xfer;
+		} dma_maps[2];
+	} pciide_channels[PCIIDE_NUM_CHANNELS];
+};
 
 /*
  * Functions defined by machine-dependent code.

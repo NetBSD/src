@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 1999/04/24 08:01:12 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.4.1 1999/11/15 00:39:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -127,7 +127,7 @@ compat_label(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	Dec_DiskLabel *dlp;
+	dec_disklabel *dlp;
 	struct buf *bp = NULL;
 	char *msg = NULL;
 
@@ -144,9 +144,9 @@ compat_label(dev, strat, lp, osdep)
 		goto done;
 	}
 
-	for (dlp = (Dec_DiskLabel *)bp->b_un.b_addr;
-	     dlp <= (Dec_DiskLabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	     dlp = (Dec_DiskLabel *)((char *)dlp + sizeof(long))) {
+	for (dlp = (dec_disklabel *)bp->b_un.b_addr;
+	     dlp <= (dec_disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	     dlp = (dec_disklabel *)((char *)dlp + sizeof(long))) {
 
 		int part;
 
@@ -166,8 +166,8 @@ compat_label(dev, strat, lp, osdep)
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
 		     part++) {
-			lp->d_partitions[part].p_size = dlp->map[part].numBlocks;
-			lp->d_partitions[part].p_offset = dlp->map[part].startBlock;
+			lp->d_partitions[part].p_size = dlp->map[part].num_blocks;
+			lp->d_partitions[part].p_offset = dlp->map[part].start_block;
 			lp->d_partitions[part].p_fsize = 1024;
 			lp->d_partitions[part].p_fstype =
 			  (part==1) ? FS_SWAP : FS_BSDFFS;

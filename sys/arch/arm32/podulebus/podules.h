@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.12 1998/09/26 03:30:50 mark Exp $	*/
+/*	$NetBSD: podules.h,v 1.12.14.1 1999/11/15 00:37:21 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.9 1998/09/26 03:29:36 mark Exp 
+ *	NetBSD: podules,v 1.10 1999/11/12 07:37:21 mark Exp 
  */
 
 /*
@@ -82,6 +82,7 @@
 #define	PODULE_ACORN_ST506	0x000b		/* ST506 HD interface */
 #define	PODULE_ACORN_MIDI	0x0013		/* MIDI interface */
 #define	PODULE_ACORN_ETHER2	0x0061		/* ether 2 interface */
+#define	PODULE_ACORN_ETHERI	0x0139		/* EtherI interface */
 
 #define	PODULE_CCONCEPTS_LASERDIRECT	0x0014		/* laser direct (Canon LBP-4) */
 
@@ -103,6 +104,7 @@
 #define	PODULE_LINGENUITY_SCSI8SHARE	0x008c		/* 8 bit SCSIShare interface */
 
 #define	PODULE_IRLAM_24I16	0x00e6		/* 24i16 digitiser */
+#define	PODULE_IRLAM_ETHERN	0x5678		/* EtherN interface */
 
 #define	PODULE_OAK_SCSI	0x0058		/* 16 bit SCSI interface */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.1.1.4.1 1999/11/15 00:37:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,12 +43,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.4.1 1999/11/15 00:37:49 fvdl Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_rtc_offset.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +142,7 @@ unsigned (*clkread) __P((void)); /* high resolution timer if available */
 unsigned nullclkread __P((void));
 
 int	initcpu __P((void));
-#ifdef notyet /*__hpcmips__*/
-volatile struct chiptime *mcclock_addr;
-#endif
+void	consinit __P((void));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -194,7 +193,8 @@ mach_init(argc, argv, bi)
 
 	/* clear the BSS segment */
 #ifdef DDB
-	if (!strncmp(end,Elf_e_ident,Elf_e_siz)) {
+	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
+	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
 		kernend = (caddr_t)mips_round_page(esym);
@@ -254,18 +254,28 @@ mach_init(argc, argv, bi)
 	printf("\n");
 	printf("platform ID: %08lx %08lx\n", platid.dw.dw0, platid.dw.dw1);
 
+#ifndef RTC_OFFSET
+	/*
+	 * rtc_offset from bootinfo.timezone set by pbsdboot.exe
+	 */
+	if (rtc_offset == 0 && bootinfo
+	   && bootinfo->timezone > (-12*60)
+	   && bootinfo->timezone <= (12*60))
+		rtc_offset = bootinfo->timezone;
+#endif /* RTC_OFFSET */
+
 	/* Compute bootdev */
 	makebootdev("wd0"); /* XXX Should be passed up from boot lorder */
 
-	boothowto = RB_SINGLE;
+	boothowto = 0;
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
-			case 'a': /* autoboot */
-				boothowto &= ~RB_SINGLE;
+			case 's': /* single-user */
+				boothowto |= RB_SINGLE;
 				break;
 
 			case 'd': /* break into the kernel debugger ASAP */
@@ -276,16 +286,13 @@ mach_init(argc, argv, bi)
 				boothowto |= RB_MINIROOT;
 				break;
 
-			case 'n': /* ask for names */
+			case 'a': /* ask for names */
 				boothowto |= RB_ASKNAME;
 				break;
 
 			case 'h': /* XXX, serial console */
 				bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
 				break;
-
-			case 'N': /* don't ask for names */
-				boothowto &= ~RB_ASKNAME;
 			}
 		}
 	}
@@ -660,9 +667,6 @@ microtime(tvp)
 int
 initcpu()
 {
-#ifdef notyet /*__hpcmips__*/
-	volatile struct chiptime *c;
-#endif
 	int i = 0;
 
 	/*
@@ -672,25 +676,19 @@ initcpu()
 
 	(*platform.bus_reset)();	/* XXX_cf_alpha */
 
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#ifdef notyet /*__hpcmips__*/
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
-#else
 	return i;
-#endif
 }
 
+void
+consinit()
+{
+	/*
+	 *	Nothing to do.
+	 *	Console is alredy initialized in platform.cons_init().
+	 */
+
+	return;
+}
 
 /*
  * Wait "n" microseconds. (scsi code needs this).

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.1 1999/10/15 06:24:25 haya Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.1.4.1 1999/11/15 00:40:18 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	Id: cardbusdevs,v 1.1 1999/10/15 06:07:18 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.4 1999/11/08 19:57:13 joda Exp 
  */
 
 /*
@@ -76,6 +76,18 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "82C861 USB Host Controller (OHCI)",
 	},
 	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3_21143,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Digital Equipment",
@@ -103,6 +115,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_OPTI, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Opti",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Xircom",
 	    NULL,
 	},
 	{

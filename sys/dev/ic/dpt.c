@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.4.1 1999/11/15 00:40:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,12 +65,11 @@
  * o Test with a bunch of different boards.
  * o dpt_readcfg() should not be using CP_PIO_GETCFG.
  * o An interface to userland applications.
- * o A port of DPT Storage Manager included in the base system would be nice.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.4.1 1999/11/15 00:40:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8 1999/10/04 23:57:32 thorpej Exp $");
 #include <sys/buf.h>
 
 #include <machine/endian.h>
+#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -126,27 +126,6 @@ static char *dpt_cname[] = {
 	NULL,     "unknown adapter, please report using send-pr(1)",
 };
 
-void	dpt_shutdown __P((void *));
-void	dpt_timeout __P((void *));
-void	dpt_minphys __P((struct buf *));
-int	dpt_scsi_cmd __P((struct scsipi_xfer *));
-int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
-int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
-void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
-
-void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
-
-struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
-
-#if 0 && defined(DEBUG)
-static void	dpt_dump_sp __P((struct eata_sp *));
-#endif
-
 /*
  * Handle an interrupt from the HBA.
  */
@@ -157,6 +136,7 @@ dpt_intr(xxx_sc)
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sp *sp;
+	static int moretimo;
 	int more;
 
 	sc = xxx_sc;
@@ -168,6 +148,10 @@ dpt_intr(xxx_sc)
 		printf("%s: spurious intr\n", sc->sc_dv.dv_xname);
 #endif
 	
+	/* Don't get stalled by HA_ST_MORE */
+	if (moretimo < DPT_MORE_TIMEOUT / 100)
+		moretimo = 0;
+	
 	for (;;) {
 		/*
 		 * HBA might have interrupted while we were dealing with the
@@ -177,7 +161,7 @@ dpt_intr(xxx_sc)
 		 * around. 
 		 */ 
 		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0) {
-			if (more != 0) {
+			if (more != 0 && moretimo++ < DPT_MORE_TIMEOUT / 100) {
 				DELAY(10);
 				continue;
 			}
@@ -215,7 +199,7 @@ dpt_intr(xxx_sc)
 			    CCB_OFF(sc, ccb), sizeof(struct dpt_ccb), 
 			    BUS_DMASYNC_POSTWRITE);
 
-			ccb->ccb_hba_status = sp->sp_hba_status;
+			ccb->ccb_hba_status = sp->sp_hba_status & 0x7F;
 			ccb->ccb_scsi_status = sp->sp_scsi_status;
 
 			/* 
@@ -235,6 +219,10 @@ dpt_intr(xxx_sc)
 			sp->sp_ccbid = -1;
 			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
 		}
+		
+		/* Don't get stalled by HA_ST_MORE */
+		if (moretimo < DPT_MORE_TIMEOUT / 100)
+			moretimo = 0;
 	}
 
 	return (0);
@@ -335,7 +323,7 @@ dpt_init(sc, intrstr)
 	model[i] = '\0';
 
 	/* Find the cannonical name for the board */
-	for (i = 0; dpt_cname[i]; i += 2)
+	for (i = 0; dpt_cname[i] != NULL; i += 2)
 		if (memcmp(ei->ei_model, dpt_cname[i], 6) == 0)
 			break;
 			
@@ -478,9 +466,10 @@ dpt_poll(sc, ccb)
 		panic("dpt_poll: called for non-CCB_PRIVATE request\n");
 #endif
 
+ 	if ((ccb->ccb_flg & CCB_INTR) != 0)
+        	return (0);                
+
         for (i = ccb->ccb_timeout * 20; i; i--) {
-                if ((ccb->ccb_flg & CCB_INTR) != 0)
-                	return (0);                
                 if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0)
                 	dpt_intr(sc);
                 if ((ccb->ccb_flg & CCB_INTR) != 0)
@@ -545,7 +534,8 @@ dpt_readcfg(sc)
 	p = (u_int16_t *)ec;
 	
 	if (dpt_wait(sc, 0xFF, HA_ST_DATA_RDY, 2000)) {
-		printf("%s: cfg data didn't appear\n", sc->sc_dv.dv_xname);
+		printf("%s: cfg data didn't appear (status:%02x)\n", 
+		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
   		return (-1);
   	}
 
@@ -687,9 +677,9 @@ dpt_create_ccbs(sc, ccbstore, count)
 }
 
 /*
- * Get a free ccb. If there are none, see if we can allocate a new one. 
- * Otherwise either return an error or if we are permitted to, sleep until
- * one becomes free.
+ * Get a free ccb. If there are none, see if we can allocate a new one. If 
+ * none are available right now and we are permitted to sleep, then wait 
+ * until one becomes free, otherwise return an error.
  */
 struct dpt_ccb *
 dpt_alloc_ccb(sc, flg)
@@ -702,7 +692,7 @@ dpt_alloc_ccb(sc, flg)
 	s = splbio();
 
 	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
 			break;
@@ -803,10 +793,10 @@ dpt_done_ccb(sc, ccb)
 	scsipi_done(xs);
 
 	/*
-	 * If there are queue entries in the software queue, try to run the 
-	 * first one.  We should be more or less guaranteed to succeed, since 
-	 * we just freed an CCB. NOTE: dpt_scsi_cmd() relies on our calling 
-	 * it with the first entry in the queue.
+	 * If there are entries in the software queue, try to run the first
+	 * one. We should be more or less guaranteed to succeed, since we
+	 * just freed an CCB. NOTE: dpt_scsi_cmd() relies on our calling it
+	 * with the first entry in the queue.
 	 */
 	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		dpt_scsi_cmd(xs);
@@ -819,13 +809,14 @@ int
 dpt_scsi_cmd(xs)
 	struct scsipi_xfer *xs;
 {
-	int error, seg, flags, s, fromqueue, dontqueue;
+	int error, i, flags, s, fromqueue, dontqueue;
 	struct scsipi_link *sc_link;
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sg *sg;
 	struct eata_cp *cp;
 	bus_dma_tag_t dmat;
+	bus_dmamap_t xfer;
 
 	sc_link = xs->sc_link;
 	flags = xs->xs_control;
@@ -866,8 +857,8 @@ dpt_scsi_cmd(xs)
 		/* If there are jobs in the queue, run them first */
 		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
 			/*
-			 * If we can't queue, we have to abort, since we have 
-			 * to preserve the queue order.
+			 * If we can't queue we abort, since we must 
+			 * preserve the queue order.
 			 */
 			if (dontqueue) {
 				splx(s);
@@ -883,10 +874,7 @@ dpt_scsi_cmd(xs)
 		}
 	}
 
-	/*
-	 * Get a CCB. If the transfer is from a buf (possibly from interrupt 
-	 * time) then we can't allow it to sleep.
-	 */
+	/* Get a CCB */
 	if ((ccb = dpt_alloc_ccb(sc, flags)) == NULL) {
 		/* If we can't queue, we lose */
 		if (dontqueue) {
@@ -897,7 +885,7 @@ dpt_scsi_cmd(xs)
 		
 		/* 
 		 * Stuff request into the queue, in front if we came off 
-		 * in the first place.
+		 * it in the first place.
 		 */
 		if (fromqueue)
 			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
@@ -908,10 +896,6 @@ dpt_scsi_cmd(xs)
 	}
 
 	splx(s);
-
-	/* Synchronous xfers musn't write-back through the cache */
-	if (xs->bp != NULL && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
-			ccb->ccb_flg |= CCB_SYNC;
 
 	ccb->ccb_xs = xs;
 	ccb->ccb_timeout = xs->timeout;
@@ -927,32 +911,33 @@ dpt_scsi_cmd(xs)
 	cp->cp_dispri = 1;
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
-	cp->cp_nocache = ((ccb->ccb_flg & CCB_SYNC) != 0);
 	cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
 	cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
 	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
 	    sc_link->scsipi_scsi.target);
 
+	/* Synchronous xfers musn't write-back through the cache */
+	if (xs->bp != NULL && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
+		cp->cp_nocache = 1;
+	else
+		cp->cp_nocache = 0;
+
 	cp->cp_senseaddr = SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
 	    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
 	    
 	if (xs->datalen) {
-		sg = ccb->ccb_sg;
-		seg = 0;
+		xfer = ccb->ccb_dmamap_xfer;
 #ifdef	TFS
-		if (flags & XS_CTL_DATA_UIO) {
-			error = bus_dmamap_load_uio(dmat,
-			    ccb->ccb_dmamap_xfer, (struct uio *)xs->data,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
+		if ((flags & XS_CTL_DATA_UIO) != 0) {
+			error = bus_dmamap_load_uio(dmat, xfer, 
+			    (struct uio *)xs->data, (flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		} else
 #endif /*TFS */
 		{
-			error = bus_dmamap_load(dmat, 
-			    ccb->ccb_dmamap_xfer, 
-			    xs->data, xs->datalen, NULL,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
+			error = bus_dmamap_load(dmat, xfer, xs->data, 
+			    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		}
 
 		if (error) {
@@ -967,26 +952,31 @@ dpt_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 
-		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
-		    ccb->ccb_dmamap_xfer->dm_mapsize,
+		bus_dmamap_sync(dmat, xfer, 0, xfer->dm_mapsize,
 		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
-		/*
-		 * Load the hardware scatter/gather map with the
-		 * contents of the DMA map.
-		 */
-		for (seg = 0; seg < ccb->ccb_dmamap_xfer->dm_nsegs; seg++) {
-			ccb->ccb_sg[seg].sg_addr =
-			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_addr);
-			ccb->ccb_sg[seg].sg_len =
-			    SWAP32(ccb->ccb_dmamap_xfer->dm_segs[seg].ds_len);
+		/* Don't bother using scatter/gather for just 1 segment */
+		if (xfer->dm_nsegs == 1) {
+			cp->cp_dataaddr = SWAP32(xfer->dm_segs[0].ds_addr);
+			cp->cp_datalen = SWAP32(xfer->dm_segs[0].ds_len);
+			cp->cp_scatter = 0;
+		} else {
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			sg = ccb->ccb_sg;
+			for (i = 0; i < xfer->dm_nsegs; i++, sg++) {
+				sg->sg_addr = SWAP32(xfer->dm_segs[i].ds_addr);
+				sg->sg_len = SWAP32(xfer->dm_segs[i].ds_len);
+			}
+			cp->cp_dataaddr = SWAP32(CCB_OFF(sc, ccb) + 
+			    sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+			    offsetof(struct dpt_ccb, ccb_sg));
+			cp->cp_datalen = SWAP32(i * sizeof(struct eata_sg));
+			cp->cp_scatter = 1;
 		}
-		
-		cp->cp_dataaddr = SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr 
-		    + CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sg));
-		cp->cp_datalen = SWAP32(seg * sizeof(struct eata_sg));
-		cp->cp_scatter = 1;
 	} else {
 		cp->cp_dataaddr = 0;
 		cp->cp_datalen = 0;
@@ -1010,8 +1000,8 @@ dpt_scsi_cmd(xs)
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
 		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
 		xs->error = XS_DRIVER_STUFFUP;
-		dpt_done_ccb(sc, ccb);
-		return (COMPLETE);
+		dpt_free_ccb(sc, ccb);
+		return (TRY_AGAIN_LATER);
 	}
 
 	if (dontqueue == 0)
@@ -1073,18 +1063,17 @@ dpt_timeout(arg)
 	splx(s);
 }
 
-#if 0 && defined(DEBUG)
+#ifdef DEBUG
 /*
  * Dump the contents of an EATA status packet.
  */
-static void
+void
 dpt_dump_sp(sp)
 	struct eata_sp *sp;
 {
 	int i;
 	
 	printf("\thba_status\t%02x\n", sp->sp_hba_status);
-	printf("\teoc\t\t%d\n", sp->sp_eoc);
 	printf("\tscsi_status\t%02x\n", sp->sp_scsi_status);	
 	printf("\tinv_residue\t%d\n", sp->sp_inv_residue);	
 	printf("\tccbid\t\t%d\n", sp->sp_ccbid);
@@ -1162,7 +1151,7 @@ dpt_hba_inquire(sc, ei)
 	if (dpt_poll(sc, ccb))
 		panic("%s: inquiry timed out", sc->sc_dv.dv_xname);
 
-	if (ccb->ccb_hba_status != HA_NO_ERROR || 
+	if (ccb->ccb_hba_status != HA_NO_ERROR ||
 	    ccb->ccb_scsi_status != SCSI_OK)
 	    	panic("%s: inquiry failed (hba:%02x scsi:%02x", 
 	    	    sc->sc_dv.dv_xname, ccb->ccb_hba_status,

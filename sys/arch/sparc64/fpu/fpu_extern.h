@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.4 1998/11/24 12:48:14 mrg Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.4.12.1 1999/11/15 00:39:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 struct proc;
-struct fpstate;
-struct trapframe;
+struct fpstate64;
+struct trapframe64;
 union instr;
 struct fpemu;
 struct fpn;
 
 /* fpu.c */
-void fpu_cleanup __P((struct proc *, struct fpstate *));
-int fpu_emulate __P((struct proc *, struct trapframe *, struct fpstate *));
+void fpu_cleanup __P((struct proc *, struct fpstate64 *));
+int fpu_emulate __P((struct proc *, struct trapframe64 *, struct fpstate64 *));
 int fpu_execute __P((struct fpemu *, union instr));
 
 /* fpu_add.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: icside_io_asm.S,v 1.6 1998/09/22 00:40:37 mark Exp $	*/
+/*	$NetBSD: icside_io_asm.S,v 1.6.14.1 1999/11/15 00:37:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -47,7 +47,7 @@ ENTRY(icside_bs_rm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_inswm8
+	b	_C_LABEL(inswm8)
 
 /*
  * write multiple
@@ -57,4 +57,4 @@ ENTRY(icside_bs_wm_2)
 	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
-	b	_outswm8
+	b	_C_LABEL(outswm8)
