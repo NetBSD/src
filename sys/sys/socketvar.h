@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.40 2000/03/28 05:06:20 simonb Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.41 2000/12/10 23:13:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -276,7 +276,7 @@ int	sb_lock __P((struct sockbuf *sb));
 void	soinit __P((void));
 int	soabort __P((struct socket *so));
 int	soaccept __P((struct socket *so, struct mbuf *nam));
-int	sobind __P((struct socket *so, struct mbuf *nam));
+int	sobind __P((struct socket *so, struct mbuf *nam, struct proc *));
 void	socantrcvmore __P((struct socket *so));
 void	socantsendmore __P((struct socket *so));
 int	soclose __P((struct socket *so));
