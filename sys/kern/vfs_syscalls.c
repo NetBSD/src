@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.166 2001/06/14 20:32:48 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.167 2001/06/28 08:04:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,38 +86,29 @@ int dovfsusermount = 0;
  * Mount a file system.
  */
 
+#if defined(COMPAT_09) || defined(COMPAT_43)
 /*
  * This table is used to maintain compatibility with 4.3BSD
  * and NetBSD 0.9 mount syscalls.  Note, the order is important!
  *
- * Also note that not all of these had actual numbers in 4.3BSD
- * or NetBSD 0.9!
+ * Do not modify this table. It should only contain filesystems
+ * supported by NetBSD 0.9 and 4.3BSD.
  */
-const char *mountcompatnames[] = {
+const char * const mountcompatnames[] = {
 	NULL,		/* 0 = MOUNT_NONE */
-	MOUNT_FFS,	/* 1 */
+	MOUNT_FFS,	/* 1 = MOUNT_UFS */
 	MOUNT_NFS,	/* 2 */
 	MOUNT_MFS,	/* 3 */
 	MOUNT_MSDOS,	/* 4 */
-	MOUNT_LFS,	/* 5 */
-	NULL,		/* 6 = MOUNT_LOFS */
-	MOUNT_FDESC,	/* 7 */
-	MOUNT_PORTAL,	/* 8 */
-	MOUNT_NULL,	/* 9 */
-	MOUNT_UMAP,	/* 10 */
-	MOUNT_KERNFS,	/* 11 */
-	MOUNT_PROCFS,	/* 12 */
-	MOUNT_AFS,	/* 13 */
-	MOUNT_CD9660,	/* 14 = MOUNT_ISOFS */
-	MOUNT_UNION,	/* 15 */
-	MOUNT_ADOSFS,	/* 16 */
-	MOUNT_EXT2FS,	/* 17 */
-	MOUNT_CODA,	/* 18 */
-	MOUNT_FILECORE,	/* 19 */
-	MOUNT_NTFS,	/* 20 */
+	MOUNT_CD9660,	/* 5 = MOUNT_ISOFS */
+	MOUNT_FDESC,	/* 6 */
+	MOUNT_KERNFS,	/* 7 */
+	NULL,		/* 8 = MOUNT_DEVFS */
+	MOUNT_AFS,	/* 9 */
 };
 const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
+#endif /* COMPAT_09 || COMPAT_43 */
 
 /* ARGSUSED */
 int
