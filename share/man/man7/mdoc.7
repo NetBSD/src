@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.7,v 1.20 2000/09/24 09:52:26 kleink Exp $
+.\"	$NetBSD: mdoc.7,v 1.21 2001/03/21 20:26:27 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -198,7 +198,8 @@ is used.
 End-display (matches \&.Bd).
 .It Li \&.Bl
 Begin-list.
-Create lists or columns. Options:
+Create lists or columns.
+Options:
 .Bl -tag -width flag -compact
 .It Em List-types
 .Bl -column "xbullet " -compact
@@ -412,10 +413,10 @@ The extended list macros are used when the number of macro arguments
 would exceed the
 .Xr troff
 limitation of nine arguments.
-.Sh CONFIGURATION
-For site specific configuration of the macro package,
-see the file
-.Pa /usr/src/share/tmac/README .
+.\" .Sh CONFIGURATION
+.\" For site specific configuration of the macro package,
+.\" see the file
+.\" .Pa /usr/src/share/tmac/README .
 .Sh FILES
 .Bl -tag -width "tmac.doc-ditroff" -compact
 .It Pa tmac.doc
