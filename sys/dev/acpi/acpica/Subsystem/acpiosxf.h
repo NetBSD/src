@@ -12,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -33,7 +33,8 @@
  * license (with the right to sublicense), under only those claims of Intel
  * patents that are infringed by the Original Intel Code, to make, use, sell,
  * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
+ * solely to the minimum extent necessary to exer
+ se the above copyright
  * license, and in no event shall the patent license extend to any additions
  * to or modifications of the Original Intel Code.  No other license or right
  * is granted directly or by implication, estoppel or otherwise;
@@ -153,12 +154,12 @@ typedef struct AcpiFatalInfo
  * Types specific to the OS service interfaces
  */
 
-typedef
-UINT32 (*OSD_HANDLER) (
+typedef UINT32 
+(ACPI_SYSTEM_XFACE *OSD_HANDLER) (
     void                    *Context);
 
-typedef
-void (*OSD_EXECUTION_CALLBACK) (
+typedef void 
+(ACPI_SYSTEM_XFACE *OSD_EXECUTION_CALLBACK) (
     void                    *Context);
 
 
@@ -174,10 +175,20 @@ ACPI_STATUS
 AcpiOsTerminate (
     void);
 
+
+/*
+ * ACPI Table interfaces
+ */
+
 ACPI_STATUS
 AcpiOsGetRootPointer (
     UINT32                  Flags,
-    ACPI_PHYSICAL_ADDRESS   *RsdpPhysicalAddress);
+    ACPI_POINTER            *Address);
+
+ACPI_STATUS
+AcpiOsTableOverride (
+    ACPI_TABLE_HEADER       *ExistingTable,
+    ACPI_TABLE_HEADER       **NewTable);
 
 
 /*
@@ -212,11 +223,7 @@ AcpiOsSignalSemaphore (
 
 void *
 AcpiOsAllocate (
-    UINT32                  Size);
-
-void *
-AcpiOsCallocate (
-    UINT32                  Size);
+    ACPI_SIZE               Size);
 
 void
 AcpiOsFree (
@@ -225,13 +232,13 @@ AcpiOsFree (
 ACPI_STATUS
 AcpiOsMapMemory (
     ACPI_PHYSICAL_ADDRESS   PhysicalAddress,
-    UINT32                  Length,
+    ACPI_SIZE               Size,
     void                    **LogicalAddress);
 
 void
 AcpiOsUnmapMemory (
     void                    *LogicalAddress,
-    UINT32                  Length);
+    ACPI_SIZE               Size);
 
 ACPI_STATUS
 AcpiOsGetPhysicalAddress (
@@ -293,7 +300,7 @@ AcpiOsReadPort (
 ACPI_STATUS
 AcpiOsWritePort (
     ACPI_IO_ADDRESS         Address,
-    NATIVE_UINT             Value,
+    ACPI_INTEGER            Value,
     UINT32                  Width);
 
 
@@ -311,7 +318,7 @@ AcpiOsReadMemory (
 ACPI_STATUS
 AcpiOsWriteMemory (
     ACPI_PHYSICAL_ADDRESS   Address,
-    NATIVE_UINT             Value,
+    ACPI_INTEGER            Value,
     UINT32                  Width);
 
 
@@ -331,7 +338,7 @@ ACPI_STATUS
 AcpiOsWritePciConfiguration (
     ACPI_PCI_ID             *PciId,
     UINT32                  Register,
-    NATIVE_UINT             Value,
+    ACPI_INTEGER            Value,
     UINT32                  Width);
 
 
@@ -363,12 +370,12 @@ AcpiOsSignal (
  * Debug print routines
  */
 
-INT32
+void ACPI_INTERNAL_VAR_XFACE
 AcpiOsPrintf (
     const NATIVE_CHAR       *Format,
     ...);
 
-INT32
+void
 AcpiOsVprintf (
     const NATIVE_CHAR       *Format,
     va_list                 Args);

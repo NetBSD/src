@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              xRevision: 19 $
+ *              $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,20 +116,12 @@
 
 
 #include "acpi.h"
-#include "acparser.h"
-#include "acdispat.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acparser.h"
-#include "acevents.h"
-#include "acinterp.h"
 #include "acdebug.h"
-#include "actables.h"
 
 #ifdef ENABLE_DEBUGGER
 
 #define _COMPONENT          ACPI_DEBUGGER
-        MODULE_NAME         ("dbhistry")
+        ACPI_MODULE_NAME    ("dbhistry")
 
 
 #define HI_NO_HISTORY       0
@@ -145,11 +137,11 @@ typedef struct HistoryInfo
 } HISTORY_INFO;
 
 
-HISTORY_INFO                AcpiGbl_HistoryBuffer[HISTORY_SIZE];
-UINT16                      AcpiGbl_LoHistory = 0;
-UINT16                      AcpiGbl_NumHistory = 0;
-UINT16                      AcpiGbl_NextHistoryIndex = 0;
-UINT32                      AcpiGbl_NextCmdNum = 1;
+static HISTORY_INFO         AcpiGbl_HistoryBuffer[HISTORY_SIZE];
+static UINT16               AcpiGbl_LoHistory = 0;
+static UINT16               AcpiGbl_NumHistory = 0;
+static UINT16               AcpiGbl_NextHistoryIndex = 0;
+static UINT32               AcpiGbl_NextCmdNum = 1;
 
 
 /*******************************************************************************
@@ -169,10 +161,9 @@ AcpiDbAddToHistory (
     NATIVE_CHAR             *CommandLine)
 {
 
-
     /* Put command into the next available slot */
 
-    STRCPY (AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].Command, CommandLine);
+    ACPI_STRCPY (AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].Command, CommandLine);
 
     AcpiGbl_HistoryBuffer[AcpiGbl_NextHistoryIndex].CmdNum = AcpiGbl_NextCmdNum;
 
@@ -194,13 +185,11 @@ AcpiDbAddToHistory (
         AcpiGbl_NextHistoryIndex = 0;
     }
 
-
     AcpiGbl_NextCmdNum++;
     if (AcpiGbl_NumHistory < HISTORY_SIZE)
     {
         AcpiGbl_NumHistory++;
     }
-
 }
 
 
@@ -270,9 +259,8 @@ AcpiDbGetFromHistory (
 
     else
     {
-        CmdNum = STRTOUL (CommandNumArg, NULL, 0);
+        CmdNum = ACPI_STRTOUL (CommandNumArg, NULL, 0);
     }
-
 
     /* Search history buffer */
 
