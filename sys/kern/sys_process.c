@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.93 2005/01/09 19:22:55 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.94 2005/01/09 20:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.93 2005/01/09 19:22:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.94 2005/01/09 20:25:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,8 +362,8 @@ sys_ptrace(l, v, retval)
 				free(dst, M_TEMP);
 				return error;
 			}
-			path[len] = '\0';
 			path = dst;
+			path[len] = '\0';
 		}
 		error = coredump(lt, path);
 		if (path)
