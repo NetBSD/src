@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.30 2001/08/22 06:59:41 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.31 2001/08/22 09:20:38 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.30 2001/08/22 06:59:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.31 2001/08/22 09:20:38 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ dec_5100_memintr()
 	/* read icsr and clear error  */
 	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 
 #ifdef DIAGNOSTIC
