@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.4 1995/06/21 03:46:52 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.5 1995/06/25 03:24:12 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -63,36 +63,48 @@
 
 
 	/* Mac Rom Glue global variables */
-u_char mrg_adbstore[512]; /* ADB Storage - what size does this need to be? */
-u_char mrg_adbstore2[512]; /* ADB Storage - what size does this need to be? */
-u_char mrg_adbstore3[512]; /* ADB Storage - what size does this need to be? */
-caddr_t	mrg_romadbintr = (caddr_t)0x40807002; /* ROM ADB interrupt */
-caddr_t	mrg_rompmintr = 0; /* ROM PM (?) interrupt */
-char *mrg_romident = NULL; /* identifying string for ROMs */
+/*
+ * ADB Storage.  Is 512 bytes enough?  Too much?
+ */
+u_char mrg_adbstore[512];
+u_char mrg_adbstore2[512];
+u_char mrg_adbstore3[512];
 
+caddr_t	mrg_romadbintr = (caddr_t)0x40807002;	/* ROM ADB interrupt */
+caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
+char *mrg_romident = NULL;			/* ident string for ROMs */
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
  * When someone sees these called, we can finally go back and
  * bother to implement them.
  */
-void mrg_lvl1dtpanic()		/* Lvl1DT stopper */
-{ printf("Agh!  I was called from Lvl1DT!!!\n"); Debugger(); }
+void
+mrg_lvl1dtpanic()		/* Lvl1DT stopper */
+{ /*
+   * The timer tick from the Egret triggers the routine via
+   * Lvl1DT[2] (addr 0x19a) every second.
+   */
+}
 
-void mrg_lvl2dtpanic()		/* Lvl2DT stopper */
+void
+mrg_lvl2dtpanic()		/* Lvl2DT stopper */
 { printf("Agh!  I was called from Lvl2DT!!!\n"); Debugger(); }
 
-void mrg_jadbprocpanic()	/* JADBProc stopper */
+void
+mrg_jadbprocpanic()	/* JADBProc stopper */
 {printf("Agh!  Called JADBProc!\n"); Debugger(); }
 
-void mrg_jswapmmupanic()	/* jSwapMMU stopper */
+void
+mrg_jswapmmupanic()	/* jSwapMMU stopper */
 {printf("Agh!  Called jSwapMMU!\n"); Debugger(); }
 
-void mrg_jkybdtaskpanic()	/* JKybdTask stopper */
+void
+mrg_jkybdtaskpanic()	/* JKybdTask stopper */
 {printf("Agh!  Called JKybdTask!\n"); Debugger(); }
 
-
-long mrg_adbintr()	/* Call ROM ADB Interrupt */
+long
+mrg_adbintr()	/* Call ROM ADB Interrupt */
 {
 	if(mrg_romadbintr != NULL)
 	{
@@ -103,7 +115,7 @@ long mrg_adbintr()	/* Call ROM ADB Interrupt */
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
 		asm("
-			movml	#0xffff, sp@-	| better save all registers! 
+			movml	#0xffff, sp@-	| better save all registers!
 			movl	%0, a0
 			movl	_VIA, a1
 			jbsr	a0@
@@ -119,8 +131,8 @@ long mrg_adbintr()	/* Call ROM ADB Interrupt */
 	return(1);
 }
 
-
-long mrg_pmintr()	/* Call ROM PM Interrupt */
+long
+mrg_pmintr()	/* Call ROM PM Interrupt */
 {
 	if(mrg_rompmintr != NULL)
 	{
@@ -131,7 +143,7 @@ long mrg_pmintr()	/* Call ROM PM Interrupt */
 		/* Gotta load a1 with VIA address. */
 		/* ADB int expects it from Mac intr routine. */
 		asm("
-			movml	#0xffff, sp@-	| better save all registers! 
+			movml	#0xffff, sp@-	| better save all registers!
 			movl	%0, a0
 			movl	_VIA, a1
 			jbsr	a0@
@@ -142,27 +154,28 @@ long mrg_pmintr()	/* Call ROM PM Interrupt */
 #if defined(MRG_TRACE)
 		troff();
 #endif
-
 	}
 	return(1);
 }
 
 
-void mrg_notrap()
+void
+mrg_notrap()
 {
 	printf("Aigh!\n");
-	panic("We're doomed!\n");
+	panic("mrg_notrap: We're doomed!\n");
 }
 
-
-int myowntrap()
+int
+myowntrap()
 {
 	printf("Oooo!  My Own Trap Routine!\n");
 	return(50);
 }
 
 
-int mrg_NewPtr()
+int
+mrg_NewPtr()
 {
 	int result = noErr;
 	u_int numbytes;
@@ -201,8 +214,8 @@ int mrg_NewPtr()
 	return(result);
 }
 
-
-int mrg_DisposPtr()
+int
+mrg_DisposPtr()
 {
 	int result = noErr;
 	caddr_t ptr;
@@ -222,8 +235,8 @@ int mrg_DisposPtr()
 	return(result);
 }
 
-
-int mrg_GetPtrSize()
+int
+mrg_GetPtrSize()
 {
 	int result = noErr;
 	caddr_t ptr;
@@ -240,8 +253,8 @@ int mrg_GetPtrSize()
 		return(*(int *)(ptr - 4));
 }
 
-
-int mrg_SetPtrSize()
+int
+mrg_SetPtrSize()
 {
 	int result = noErr;
 	caddr_t ptr;
@@ -292,15 +305,16 @@ caddr_t mrg_OStraps[256] = {
 #endif
 };
 
-
 caddr_t mrg_ToolBoxtraps[1024] = {
 	[0x1a0] (caddr_t)mrg_GetResource,
 	[0x1af] (caddr_t)mrg_ResError,
 };
 
-
-	/* handle a supervisor mode A-line trap */
-void mrg_aline_super(struct frame *frame)
+/*
+ * Handle a supervisor mode A-line trap.
+ */
+void
+mrg_aline_super(struct frame *frame)
 {
 	caddr_t trapaddr;
 	u_short trapword;
@@ -308,17 +322,29 @@ void mrg_aline_super(struct frame *frame)
 	int trapnum;
 	int a0passback;
 	u_long a0bucket, d0bucket;
+        int danprint=0; /* This shouldn't be necessary, but seems to be.  */
 
 #if defined(MRG_DEBUG)
 	printf("mrg: a super");
 #endif
 
 	trapword = *(u_short *)frame->f_pc;
+
+        if (trapword == 0xa71e)
+          danprint = 1;
+
 #if defined(MRG_DEBUG)
 	printf(" wd 0x%x", trapword);
 #endif
 	isOStrap = ! TRAP_TOOLBOX(trapword);
 	trapnum = TRAP_NUM(trapword);
+
+        if (danprint)
+          {
+	   /* Without these print statements, ADBReInit fails on IIsi */
+            printf(""); printf("");
+          }
+
 #if defined(MRG_DEBUG)
 	printf(" %s # 0x%x", isOStrap? "OS" :
 		"ToolBox", trapnum);
@@ -389,9 +415,9 @@ void mrg_aline_super(struct frame *frame)
 #endif
 }
 
-
 	/* handle a user mode A-line trap */
-void mrg_aline_user()
+void
+mrg_aline_user()
 {
 #if 1
 	/* send process a SIGILL; aline traps are illegal as yet */
@@ -403,14 +429,12 @@ void mrg_aline_user()
 #endif
 }
 
-
 extern u_long traceloopstart[];
 extern u_long traceloopend;
 extern u_long *traceloopptr;
 
-
-void dumptrace(
-	void)
+void
+dumptrace()
 {
 #if defined(MRG_TRACE)
 	u_long *traceindex;
@@ -428,10 +452,10 @@ void dumptrace(
 #endif
 }
 
-
 	/* Set ROM Vectors */
-void mrg_setvectors(
-	romvec_t *rom)
+void
+mrg_setvectors(rom)
+	romvec_t *rom;
 {
 	if(rom == NULL)
 		return;		/* whoops!  ROM vectors not defined! */
@@ -441,6 +465,20 @@ void mrg_setvectors(
 	mrg_rompmintr = rom->pmintr;
 		/* mrg_adbstore becomes ADBBase */
 	*((unsigned long *)(mrg_adbstore + 0x130)) = (unsigned long)rom->adb130intr;
+
+/* in MacIIvi otherwise uninitialized when ADBReInit() runs */
+        if(current_mac_model->class == MACH_CLASSIIsi)
+        {
+	    int i;
+
+	    *((unsigned long *)(0x0dd0)) = 0x0000773f;	/* Egret and ADBReInit look into these */
+	    *((unsigned long *)(0x0dd4)) = 0x000001a6;
+
+	    for (i=0; i<4; i++)				/* some basic inits */
+		*((unsigned long *)(0x174 + 4*i)) = 0;
+	    *((unsigned short *)(0x216)) = 0;
+	    *((unsigned short *)(mrg_adbstore + 0x184)) = 0xff01;
+        }
 
 		/* IIsi crap */
 	*((unsigned long *)(mrg_adbstore + 0x180)) = 0x4081517c;
@@ -470,21 +508,19 @@ void mrg_setvectors(
 #endif
 }
 
-
 	/* To find out if we're okay calling ROM vectors */
-int mrg_romready(
-	void)
+int
+mrg_romready()
 {
 	return(mrg_romident != NULL);
 }
 
-
 extern unsigned long		IOBase;
 extern volatile unsigned char	*sccA;
 
-
 	/* initialize Mac ROM Glue */
-void mrg_init()
+void
+mrg_init()
 {
 	int i;
 	char *findername = "MacBSD FakeFinder";
@@ -619,23 +655,34 @@ void mrg_init()
 #endif
 }
 
-
-void mrg_initadbintr()
+void
+mrg_initadbintr()
 {
 	int i;
 
-	via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
-
-	via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
+	if(current_mac_model->class == MACH_CLASSIIsi) {
+		/* _vSetupTags initializes ADBState (mrg_ADBStore2) and
+                   enables interrupts */
+		asm("	movml	a0-a2, sp@-
+			movl	0x0de0, a0      /* ADBState, mrg_ADBStore2 */
+			movl	_ROMBase,a1
+			addl	#0x147c4,a1	/* _vSetUpTags + 0x04 */
+						/* avoids calling _NewPtr */
+			jbsr	a1@
+			movml	sp@+, a0-a2 ");
+	} else {
+	    via_reg(VIA1, vIFR) = 0x4; /* XXX - why are we setting the flag?  */
+            via_reg(VIA1, vIER) = 0x84; /* enable ADB interrupt. */
+	}	
 }
 
 void
 mrg_fixupROMBase(obase, nbase)
-	caddr_t	obase;
-	caddr_t	nbase;
+	caddr_t obase;
+	caddr_t nbase;
 {
-	int	i;
-	u_long	temp, *p, oldbase, newbase;
+	int     i;
+	u_long  temp, *p, oldbase, newbase;
 
 	oldbase = (u_long) obase;
 	newbase = (u_long) nbase;
