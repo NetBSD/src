@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.26 2002/08/03 00:14:53 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.27 2002/08/05 08:37:47 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -796,7 +796,7 @@ This does not include the X servers.
 .if \n[powerpc] .setsize 3 9
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
-.if \n[sparc] .setsize -unknown- -unknown-
+.if \n[sparc] .setsize 3 8
 .if \n[sparc64] .setsize 3 9
 .if \n[vax] .setsize -unknown- -unknown-
 .if \n[x86_64] .setsize -unknown- -unknown-
@@ -817,7 +817,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[powerpc] .setsize 2 9
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
-.if \n[sparc] .setsize -unknown- -unknown-
+.if \n[sparc] .setsize 2 8
 .if \n[sparc64] .setsize 2 10
 .if \n[vax] .setsize -unknown- -unknown-
 .if \n[x86_64] .setsize -unknown- -unknown-
@@ -857,7 +857,7 @@ The Xarm32VIDC and Xprt servers.
 .
 .if \n[amiga] \{\
 .It Sy xserver
-.showsize -unknown- -unknown-
+.showsize 2 4
 .\}
 .
 .if \n[atari] \{\
@@ -908,7 +908,7 @@ The Xpmax server with man page.
 .if \n[sparc] \{\
 .It Sy xserver
 The Xsun, Xsun24, XsunMono and Xprt servers with man pages.
-.showsize -unknown- -unknown-
+.showsize 4 9
 .\}
 .
 .if \n[sparc64] \{\
