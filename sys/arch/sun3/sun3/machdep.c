@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.34 1994/07/11 03:41:32 gwr Exp $
+ *	$Id: machdep.c,v 1.35 1994/07/13 18:04:46 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -1205,18 +1205,13 @@ straytrap(pc, evec)
 	       evec & 0xFFF, pc);
 }
 
-struct sysarch_args {
-	int op;
-	char *parms;
-};
-
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	register struct sysarch_args *uap;
+	void *uap;
 	int *retval;
 {
-    return EINVAL;
+	return ENOSYS;
 }
 
 /* XXX should be in an include file somewhere */
