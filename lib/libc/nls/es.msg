@@ -157,6 +157,12 @@ $ ENOSYS
 78 Función no realizada
 $ EFTYPE
 79 Tipo de fichero o formato inapropiado
+$ EAUTH
+80 Error de la autentificación
+$ ENEEDAUTH
+81 Authenticator de la necesidad
+$ EIDRM
+82 Identificador quitado
 $set 2
 $ SIGHUP
 1 Bloqueo del sistema
