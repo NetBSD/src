@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.3 1997/10/17 17:47:41 drochner Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.4 1999/07/26 00:28:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_msdos.c,v 1.3 1997/10/17 17:47:41 drochner Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.4 1999/07/26 00:28:57 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,6 +153,7 @@ findformat(fd)
 		    (offs = lseek(fd, (off_t) 0, SEEK_CUR)) == -1)
 			/* Hmm, hmm.  Hard luck. */
 			return 0;
+		(void) lseek(fd, (off_t) 0, SEEK_SET);
 		return (size_t) (offs / 1024);
 	} else if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
 		char            b[512];
