@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 2000/06/23 19:50:54 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 2000/06/24 04:38:21 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -54,8 +54,8 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#undef	NO_VCACHE		/* Map w/D$ disabled */
-#undef	TRAPTRACE		/* Keep history of all traps (unsafe) */
+#define	NO_VCACHE		/* Map w/D$ disabled */
+#define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
 #define	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
@@ -80,7 +80,6 @@
 #include <machine/param.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
-#include <sparc64/sparc64/vaddrs.h>
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
 #include <machine/signal.h>
@@ -721,28 +720,40 @@ _C_LABEL(trapbase):
 	VTRAP(T_FP_IEEE_754, fp_exception)		! 021 = ieee 754 exception
 	VTRAP(T_FP_OTHER, fp_exception)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
-	TRACEWIN			! DEBUG
-	clr	%l0
-!	set	0xbadcafe, %l0		! DEBUG
-	mov %l0,%l1; mov %l0,%l2	! 024-027 = clean window trap
-	rdpr %cleanwin, %o7		!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done	
-	inc %o7; mov %l0,%l3; mov %l0,%l4	!	This handler is in-lined and cannot fault
+	TRACEWIN			! DEBUG -- 4 insns
+	rdpr %cleanwin, %o7		! 024-027 = clean window trap
+	inc %o7				!	This handler is in-lined and cannot fault
 	wrpr %g0, %o7, %cleanwin	!       Nucleus (trap&IRQ) code does not need clean windows
 	
-	mov %l0,%l5
-#ifdef NOT_DEBUG
+	clr	%l0
+!	set	0xbadcafe, %l0		! DEBUG
+	mov %l0,%l1; mov %l0,%l2	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done	
+	mov %l0,%l3; mov %l0,%l4
+#if 0
+#ifdef DIAGNOSTIC
 	!! 
 	!! Check the sp redzone
 	!!
-	rdpr	%wstate, t1	! User stack?
-	cmp	t1, WSTATE_KERN
-	bne,pt	%icc, 7f
-	 sethi	%hi(_C_LABEL(redzone)), t1
-	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
-	cmp	%sp, t2			! if sp >= t2, not in red zone
-	blu	panic_red		! and can continue normally
-7:
+	!! Since we can't spill the current window, we'll just keep
+	!! track of the frame pointer.  Problems occur when the routine
+	!! allocates and uses stack storage.
+	!! 
+!	rdpr	%wstate, %l5	! User stack?
+!	cmp	%l5, WSTATE_KERN
+!	bne,pt	%icc, 7f
+	 sethi	%hi(CPCB), %l5
+	LDPTR	[%l5 + %lo(CPCB)], %l5	! If pcb < fp < pcb+sizeof(pcb)
+	inc	PCB_SIZE, %l5		! then we have a stack overflow
+	btst	%fp, 1			! 64-bit stack?
+	sub	%fp, %l5, %l7
+	bnz,a,pt	%icc, 1f
+	 inc	BIAS, %l7		! Remove BIAS
+1:	
+	cmp	%l7, PCB_SIZE		
+	blu	%xcc, cleanwin_overflow
 #endif
+#endif
+	mov %l0, %l5
 	mov %l0, %l6; mov %l0, %l7; mov %l0, %o0; mov %l0, %o1
 	
 	mov %l0, %o2; mov %l0, %o3; mov %l0, %o4; mov %l0, %o5; 
@@ -1232,6 +1243,32 @@ TABLE/**/syscall:
 	UTRAP(0x1f0); UTRAP(0x1f1); UTRAP(0x1f2); UTRAP(0x1f3); UTRAP(0x1f4); UTRAP(0x1f5); UTRAP(0x1f6); UTRAP(0x1f7)
 	UTRAP(0x1f8); UTRAP(0x1f9); UTRAP(0x1fa); UTRAP(0x1fb); UTRAP(0x1fc); UTRAP(0x1fd); UTRAP(0x1fe); UTRAP(0x1ff)
 
+/*
+ * If the cleanwin trap handler detects an overfow we come here.
+ * We need to fix up the window registers, switch to the interrupt
+ * stack, and then trap to the debugger.
+ */
+cleanwin_overflow:
+	!! We've already incremented %cleanwin
+	!! So restore %cwp
+	rdpr	%cwp, %l0
+	dec	%l0
+	wrpr	%l0, %g0, %cwp
+	set	EINTSTACK-STKB-CC64FSZ, %l0
+	save	%l0, 0, %sp
+	
+	ta	1		! Enter debugger
+	sethi	%hi(1f), %o0
+	call	_C_LABEL(panic)
+	 or	%o0, %lo(1f), %o0
+	restore
+	retry
+	.data
+1:
+	.asciz	"Kernel stack overflow!"
+	_ALIGN
+	.text
+	
 #ifdef DEBUG
 #define CHKREG(r) \
 	ldx	[%o0 + 8*1], %o1; \
@@ -1965,6 +2002,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	DLFLUSH2(%g5)
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
 	 srlx	%g3, PDSHIFT, %g5
@@ -1973,6 +2011,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	DLFLUSH2(%g5)
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
 	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
@@ -1981,6 +2020,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g6
+	DLFLUSH2(%g5)
 	brgez,pn %g6, 1f				! Entry invalid?  Punt
 	 srlx	%g6, 32, %o0	
 	retl
@@ -2030,6 +2070,7 @@ dmmu_write_fault:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -2038,14 +2079,16 @@ dmmu_write_fault:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
@@ -2176,6 +2219,7 @@ Ludata_miss:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -2184,18 +2228,20 @@ Ludata_miss:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 bset	TTE_ACCESS, %g4				! Update the modified bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
-	DLFLUSH(%g6, %g6)
+	DLFLUSH(%g6, %g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
@@ -2509,6 +2555,7 @@ winfixspill:
 	add	%g7, %g1, %g1
 	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
+	DLFLUSH2(%g7)
 	
 	srlx	%g6, PDSHIFT, %g7			! Do page directory
 	and	%g7, PDMASK, %g7
@@ -2517,6 +2564,7 @@ winfixspill:
 	 add	%g7, %g1, %g1
 	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	DLFLUSH2(%g7)
 	
 	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
 	and	%g7, PTMASK, %g7
@@ -2525,6 +2573,7 @@ winfixspill:
 	add	%g1, %g7, %g7
 	DLFLUSH(%g7,%g1)
 	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
+	DLFLUSH2(%g1)
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
@@ -2540,8 +2589,9 @@ winfixspill:
 	 */
 #ifdef NOTDEF_DEBUG
 	add	%g6, PCB_NSAVED, %g7
-	DLFLUSH(%g6,%g7)	
+	DLFLUSH(%g7,%g5)	
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! make sure that pcb_nsaved
+	DLFLUSH2(%g5)
 	brz,pt	%g7, 1f					! is zero, else
 	 nop
 	wrpr	%g0, 4, %tl
@@ -2564,6 +2614,7 @@ winfixspill:
 	add	%g6, PCB_NSAVED, %g7
 	DLFLUSH(%g7,%g5)
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Start incrementing pcb_nsaved
+	DLFLUSH2(%g5)
 
 #ifdef DEBUG
 	wrpr	%g0, 5, %tl
@@ -3110,6 +3161,7 @@ Lutext_miss:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -3118,18 +3170,20 @@ Lutext_miss:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, textfault			
 	 bset	TTE_ACCESS, %g4				! Update accessed bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and store it
-	DLFLUSH(%g6,%g6)
+	DLFLUSH(%g6,%g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
@@ -3853,6 +3907,7 @@ interrupt_vector:
 	add	%g3, %g5, %g5
 	DLFLUSH(%g5, %g6)
 	LDPTR	[%g5], %g5		! We have a pointer to the handler
+	DLFLUSH2(%g6)
 #ifdef DEBUG
 	tst	%g5
 	tz	56
@@ -3861,8 +3916,9 @@ interrupt_vector:
 	 nop
 setup_sparcintr:
 	add	%g5, IH_PIL, %g6
-	DLFLUSH(%g6, %g6)
+	DLFLUSH(%g6, %g7)
 	lduh	[%g5+IH_PIL], %g6	! Read interrupt mask
+	DLFLUSH2(%g7)
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
@@ -8290,8 +8346,9 @@ ENTRY(pmap_zero_page)
 	!! 
 	set	NBPG, %o4
 1:	
-	DLFLUSH(%o0,%o1)
+	DLFLUSH(%o0,%o2)
 	ldxa	[%o0] ASI_PHYS_CACHED, %o1
+	DLFLUSH2(%o2)
 	dec	8, %o4
 	tst	%o1
 	tnz	%icc, 1
@@ -8632,10 +8689,12 @@ ENTRY(pmap_copy_page)
 	set	NBPG, %o3
 	
 1:	
-	DLFLUSH(%o0,%o4)
+	DLFLUSH(%o0,%o2)
 	ldxa	[%o0] ASI_PHYS_CACHED, %o4
-	DLFLUSH(%o1,%o5)
+	DLFLUSH2(%o2)	
+	DLFLUSH(%o1,%o2)
 	ldxa	[%o1] ASI_PHYS_CACHED, %o5
+	DLFLUSH2(%o2)
 	dec	8, %o3
 	cmp	%o4, %o5
 	tne	%icc, 1
@@ -8827,6 +8886,7 @@ ENTRY(pseg_get)
 	add	%o2, %o3, %o2
 	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page directory pointer
+	DLFLUSH2(%o3)
 
 	srlx	%o1, PDSHIFT, %o3
 	and	%o3, PDMASK, %o3
@@ -8835,14 +8895,16 @@ ENTRY(pseg_get)
 	 add	%o2, %o3, %o2
 	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page table pointer
+	DLFLUSH2(%o3)
 
 	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
 	and	%o3, PTMASK, %o3
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
-	DLFLUSH(%o2,%o0)
+	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o0
+	DLFLUSH2(%o3)
 	brgez,pn %o0, 1f				! Entry invalid?  Punt
 	 btst	1, %sp
 	bz,pn	%icc, 0f				! 64-bit mode?
@@ -8850,14 +8912,16 @@ ENTRY(pseg_get)
 	retl						! Yes, return full value
 	 nop
 0:
-#if 0
+#if 1
 	srl	%o0, 0, %o1
 	retl						! No, generate a %o0:%o1 double
 	 srlx	%o0, 32, %o0
 #else
-	DLFLUSH(%o2,%o0)
+	DLFLUSH(%o2,%o3)
+	ldda	[%o2] ASI_PHYS_CACHED, %o0
+	DLFLUSH2(%o3)
 	retl						! No, generate a %o0:%o1 double
-	 ldda	[%o2] ASI_PHYS_CACHED, %o0
+	 nop
 #endif
 1:
 	clr	%o1
@@ -8929,8 +8993,9 @@ ENTRY(pseg_set)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-	DLFLUSH(%o4,%o5)
+	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	DLFLUSH2(%g1)
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -8945,8 +9010,9 @@ ENTRY(pseg_set)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-	DLFLUSH(%o4,%o5)
+	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	DLFLUSH2(%g1)
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -10648,7 +10714,40 @@ ENTRY(longjmp)
 	flush	%o2
 	retl
 	 nop
+
+#ifndef _LP64
+	/*
+	 * Convert to 32-bit stack then call OF_sym2val()
+	 */
+	ENTRY(_C_LABEL(OF_sym2val32))
+	save	%sp, -CC64FSZ, %sp
+	btst	7, %i0
+	bnz,pn	%icc, 1f
+	 add	%sp, BIAS, %o1
+	btst	1, %sp
+	movnz	%icc, %o1, %sp
+	call	_C_LABEL(OF_sym2val)
+	 mov	%i0, %o0
+1:	
+	ret
+	 restore	%o0, 0, %o0
 	
+	/*
+	 * Convert to 32-bit stack then call OF_val2sym()
+	 */
+	ENTRY(_C_LABEL(OF_val2sym32))
+	save	%sp, -CC64FSZ, %sp
+	btst	7, %i0
+	bnz,pn	%icc, 1f
+	 add	%sp, BIAS, %o1
+	btst	1, %sp
+	movnz	%icc, %o1, %sp
+	call	_C_LABEL(OF_val2sym)
+	 mov	%i0, %o0
+1:	
+	ret
+	 restore	%o0, 0, %o0
+#endif /* _LP64 */
 #endif /* DDB */
 		
 	.data
