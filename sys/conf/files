@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.395 2000/09/27 23:02:02 thorpej Exp $
+#	$NetBSD: files,v 1.396 2000/10/02 17:21:24 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -588,6 +588,8 @@ file crypto/des/des_setkey.c		ipsec & ipsec_esp
 file crypto/blowfish/bf_enc.c		ipsec & ipsec_esp
 file crypto/blowfish/bf_skey.c		ipsec & ipsec_esp
 file crypto/cast128/cast128.c		ipsec & ipsec_esp
+file crypto/rijndael/rijndael-alg-fst.c		ipsec & ipsec_esp
+file crypto/rijndael/rijndael-api-fst.c		ipsec & ipsec_esp
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
@@ -895,13 +897,13 @@ file netinet/ip_output.c		inet
 file netinet/ip_proxy.c			ipfilter
 file netinet/ip_state.c			ipfilter
 file netinet/raw_ip.c			inet
-file netinet/tcp_debug.c		inet
-file netinet/tcp_input.c		inet
-file netinet/tcp_output.c		inet
-file netinet/tcp_subr.c			inet
-file netinet/tcp_timer.c		inet
-file netinet/tcp_usrreq.c		inet
-file netinet/udp_usrreq.c		inet
+file netinet/tcp_debug.c		inet | inet6
+file netinet/tcp_input.c		inet | inet6
+file netinet/tcp_output.c		inet | inet6
+file netinet/tcp_subr.c			inet | inet6
+file netinet/tcp_timer.c		inet | inet6
+file netinet/tcp_usrreq.c		inet | inet6
+file netinet/udp_usrreq.c		inet | inet6
 file netinet6/ah_core.c			ipsec
 file netinet6/ah_input.c		ipsec
 file netinet6/ah_output.c		ipsec
@@ -909,6 +911,7 @@ file netinet6/dest6.c			inet6
 file netinet6/esp_core.c		ipsec & ipsec_esp
 file netinet6/esp_output.c		ipsec & ipsec_esp
 file netinet6/esp_input.c		ipsec & ipsec_esp
+file netinet6/esp_rijndael.c		ipsec & ipsec_esp
 file netinet6/frag6.c			inet6
 file netinet6/icmp6.c			inet6
 file netinet6/in6.c			inet6
