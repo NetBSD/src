@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.25 1998/11/25 17:19:09 bouyer Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.26 1998/12/17 23:25:29 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +84,10 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -481,6 +486,11 @@ fxp_attach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET);
 #endif
 
 	/*
@@ -1008,6 +1018,11 @@ fxp_intr(arg)
 				fxp_start(ifp);
 		}
 	}
+
+#if NRND > 0
+	if (claimed)
+		rnd_add_uint32(&sc->rnd_source, statack);
+#endif
 	return (claimed);
 }
 

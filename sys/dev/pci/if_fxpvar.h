@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.6 1998/08/11 00:11:39 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.7 1998/12/17 23:25:29 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -174,6 +174,9 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 /* Macros to ease CSR access. */
