@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.8 1995/08/20 13:28:10 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.9 1995/09/23 20:29:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -54,6 +54,7 @@
  * This driver knows far too much about chip to usage mappings.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>

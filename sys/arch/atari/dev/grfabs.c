@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.6 1995/09/04 19:41:39 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.7 1995/09/23 20:29:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -34,6 +34,7 @@
  *  atari abstract graphics driver.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
