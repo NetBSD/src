@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.20 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.20.2.1 1999/06/08 06:34:28 scottr Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -77,8 +77,7 @@ static void	sonicrxint __P((struct sn_softc *));
 static __inline__ u_int	sonicput __P((struct sn_softc *sc, struct mbuf *m0,
 			    int mtd_next));
 static __inline__ int	sonic_read __P((struct sn_softc *, caddr_t, int));
-static __inline__ struct mbuf *sonic_get __P((struct sn_softc *,
-			    struct ether_header *, int));
+static __inline__ struct mbuf *sonic_get __P((struct sn_softc *, caddr_t, int));
 
 #undef assert
 #undef _assert
@@ -601,10 +600,10 @@ sonicput(sc, m0, mtd_next)
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FPTRHI,
 	    UPPER(mtdp->mtd_vbuf));
 
-	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
-		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
+	if (totlen < ETHERMIN + ETHER_HDR_LEN) {
+		int pad = ETHERMIN + ETHER_HDR_LEN - totlen;
 		bzero(mtdp->mtd_buf + totlen, pad);
-		totlen = ETHERMIN + sizeof(struct ether_header);
+		totlen = ETHERMIN + ETHER_HDR_LEN;
 	}
 
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FSIZE,
@@ -1020,8 +1019,7 @@ sonicrxint(sc)
 
 		orra = RBASEQ(SRO(bitmode, rda, RXPKT_SEQNO)) & RRAMASK;
 		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
-		len = SRO(bitmode, rda, RXPKT_BYTEC) -
-			sizeof(struct ether_header) - FCSSIZE;
+		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
 			caddr_t pkt =
 			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
@@ -1099,13 +1097,13 @@ sonic_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *et;
+	struct ether_header *eh;
 	struct mbuf *m;
 
 	/*
 	 * Get pointer to ethernet header (in input buffer).
 	 */
-	et = (struct ether_header *)pkt;
+	eh = (struct ether_header *)pkt;
 
 #ifdef SNDEBUG
 	{
@@ -1116,7 +1114,8 @@ sonic_read(sc, pkt, len)
 	}
 #endif /* SNDEBUG */
 
-	if (len < ETHERMIN || len > ETHERMTU) {
+	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
+	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
 		    sc->sc_dev.dv_xname, len);
 		return (0);
@@ -1129,36 +1128,32 @@ sonic_read(sc, pkt, len)
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
 	if (ifp->if_bpf) {
-		bpf_tap(ifp->if_bpf, pkt,
-		    len + sizeof(struct ether_header));
+		bpf_tap(ifp->if_bpf, pkt, len);
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, LLADDR(ifp->if_sadl),
-		    sizeof(et->ether_dhost)) != 0)
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+		    sizeof(eh->ether_dhost)) != 0)
 			return (0);
 	}
 #endif
-	m = sonic_get(sc, et, len);
+	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
 		return (0);
-	ether_input(ifp, et, m);
+	(*ifp->if_input)(ifp, m);
 	return (1);
 }
-
-#define sonicdataaddr(eh, off, type)	((type)(((caddr_t)((eh) + 1) + (off))))
 
 /*
  * munge the received packet into an mbuf chain
  */
 static __inline__ struct mbuf *
-sonic_get(sc, eh, datalen)
+sonic_get(sc, pkt, datalen)
 	struct sn_softc *sc;
-	struct ether_header *eh;
+	caddr_t pkt;
 	int datalen;
 {
 	struct	mbuf *m, *top, **mp;
 	int	len;
-	caddr_t	pkt = sonicdataaddr(eh, 0, caddr_t);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
@@ -1186,6 +1181,15 @@ sonic_get(sc, eh, datalen)
 			}
 			len = MCLBYTES;
 		}
+
+		if (mp == &top) {
+			caddr_t newdata = (caddr_t)
+			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			    sizeof(struct ether_header);
+			len -= newdata - m->m_data; 
+			m->m_data = newdata;
+		}
+
 		m->m_len = len = min(datalen, len);
 
 		bcopy(pkt, mtod(m, caddr_t), (unsigned) len);
