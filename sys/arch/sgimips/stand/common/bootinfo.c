@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.1 2001/11/21 19:09:08 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.2 2001/11/21 23:33:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,41 +42,26 @@
 
 #include "bootinfo.h"
 
-static char *bootinfo = NULL;
-static char *bi_next;
-static int bi_size;
+struct btinfo_common *bootinfo;
 
-void bi_init(addr)
-	paddr_t addr;
+static struct btinfo_magic bi_magic;
+
+void
+bi_init(void)
 {
-	struct btinfo_common *bi;
-	struct btinfo_magic bi_magic;
 
-	bootinfo = (char *)addr;
-	bi = (struct btinfo_common *)bootinfo;
-	bi->next = bi->type = 0;
-	bi_next = bootinfo;
-	bi_size = 0;
+	bootinfo = NULL;
 
 	bi_magic.magic = BOOTINFO_MAGIC;
-	bi_add(&bi_magic, BTINFO_MAGIC, sizeof(bi_magic));
+	bi_add(&bi_magic, BTINFO_MAGIC);
 }
 
-void bi_add(new, type, size)
-	void *new;
-	int type, size;
+void
+bi_add(void *new, int type)
 {
-	struct btinfo_common *bi;
+	struct btinfo_common *bi = new;
 
-	if (bi_size + size > BOOTINFO_SIZE)
-		return;				/* XXX error? */
-
-	bi = new;
-	bi->next = size;
 	bi->type = type;
-	memcpy(bi_next, new, size);
-	bi_next += size;
-
-	bi = (struct btinfo_common *)bi_next;
-	bi->next = bi->type = 0;
+	bi->next = bootinfo;
+	bootinfo = bi;
 }
