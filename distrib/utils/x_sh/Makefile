@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/29 09:22:06 christos Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/13 14:10:05 lukem Exp $
 # Build a smaller sh (e.g. for boot media)
 
 NOMAN=1
 SRCDIR=${.CURDIR}/../../../bin/sh
 
-CPPFLAGS+=	-I${SRCDIR}
-CFLAGS+=	-DSMALL
+CPPFLAGS+=	-I${SRCDIR} -DSMALL
 
 .PATH: ${SRCDIR} ${SRCDIR}/bltin ${SRCDIR}/../../usr.bin/printf
 .include "${SRCDIR}/Makefile"
