@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2005/03/09 23:40:08 xtraeme Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2005/03/09 23:40:08 xtraeme Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2054,8 +2054,9 @@ init386(paddr_t first_avail)
 #if !defined(XEN)
 	cpu_init_idt();
 #else
+#ifdef DDB
 	db_trap_callback = ddb_trap_hook;
-
+#endif
 	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
