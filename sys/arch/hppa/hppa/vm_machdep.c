@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 2003/10/25 17:49:57 jdolecek Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2003/08/31 01:26:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2003/10/25 17:49:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,14 +268,6 @@ cpu_exit(l, proc)
 	hppa_fpu_flush(l);
 	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
-
-#if 0
-void
-cpu_wait(p)
-	struct proc *p;
-{
-}
-#endif
 
 /*
  * Map an IO request into kernel virtual address space.
