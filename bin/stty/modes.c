@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.13 1998/02/13 21:53:47 kleink Exp $	*/
+/*	$NetBSD: modes.c,v 1.14 1998/07/28 11:40:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: modes.c,v 1.13 1998/02/13 21:53:47 kleink Exp $");
+__RCSID("$NetBSD: modes.c,v 1.14 1998/07/28 11:40:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: modes.c,v 1.13 1998/02/13 21:53:47 kleink Exp $");
 
 struct modes {
 	const char *name;
-	long set;
-	long unset;
+	tcflag_t set;
+	tcflag_t unset;
 };
 
 /*

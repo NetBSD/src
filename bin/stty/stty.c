@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $	*/
+/*	$NetBSD: stty.c,v 1.15 1998/07/28 11:40:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $");
+__RCSID("$NetBSD: stty.c,v 1.15 1998/07/28 11:40:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ args:	argc -= optind;
 		print(&i.t, &i.win, i.ldisc, fmt);
 		break;
 	case GFLAG:
-		gprint(&i.t, &i.win, i.ldisc);
+		gprint(&i.t);
 		break;
 	}
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.13 1997/10/20 08:08:01 scottr Exp $	*/
+/*	$NetBSD: key.c,v 1.14 1998/07/28 11:40:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-__RCSID("$NetBSD: key.c,v 1.13 1997/10/20 08:08:01 scottr Exp $");
+__RCSID("$NetBSD: key.c,v 1.14 1998/07/28 11:40:58 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,8 @@ void	f_speed __P((struct info *));
 void	f_tty __P((struct info *));
 __END_DECLS
 
-static struct key {
-	char *name;				/* name */
+static const struct key {
+	const char *name;			/* name */
 	void (*f) __P((struct info *));		/* function */
 #define	F_NEEDARG	0x01			/* needs an argument */
 #define	F_OFFOK		0x02			/* can turn off */
@@ -106,7 +106,8 @@ c_key(a, b)
         const void *a, *b;
 {
 
-        return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
+        return (strcmp(((const struct key *)a)->name,
+	    ((const struct key *)b)->name));
 }
 
 int
@@ -297,6 +298,7 @@ f_speed(ip)
 	(void)printf("%d\n", cfgetospeed(&ip->t));
 }
 
+/* ARGSUSED */
 void
 f_tty(ip)
 	struct info *ip;
