@@ -1,15 +1,16 @@
-.\"	$NetBSD: legal,v 1.10 2000/10/10 12:55:19 lukem Exp $
+.\"	$NetBSD: legal,v 1.11 2002/05/20 23:48:46 itojun Exp $
 .
+.It
 This product includes software developed by the Alice Group.
-.Pp
+.It
 This product includes software developed by Allen Briggs.
-.Pp
+.It
 This product includes software developed by Bradley A. Grantham.
-.Pp
+.It
 This product includes software developed by Takashi Hamada.
-.Pp
+.It
 This product includes software developed by Scott Reynolds.
-.Pp
+.It
 This product includes software developed by John P. Wittkoski.
-.Pp
+.It
 This product includes software developed by Colin Wood.

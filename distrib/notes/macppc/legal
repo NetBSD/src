@@ -1,19 +1,35 @@
-.\"	$NetBSD: legal,v 1.3 2002/04/14 14:32:19 tsutsui Exp $
+.\"	$NetBSD: legal,v 1.4 2002/05/20 23:48:47 itojun Exp $
 .
+.It
 This product includes software developed by Allen K. Briggs.
+.It
 This product includes software developed by Apple Computer, Inc.
+.It
 This product includes software developed by Bill Studenmund.
+.It
 This product includes software developed by Bradley A. Grantham.
+.It
 This product includes software developed by Carnegie-Mellon University.
+.It
 This product includes software developed by Chris P. Cputo.
+.It
 This product includes software developed by Colin Wood.
+.It
 This product includes software developed by David Huang.
+.It
 This product includes software developed by Internet Research Institute, Inc.
+.It
 This product includes software developed by John P. Wittkoski.
+.It
 This product includes software developed by Open Software Foundation, Inc.
+.It
 This product includes software developed by Per Fogelstrom, Opsycon AB and
 RTMX Inc, USA.
+.It
 This product includes software developed by Takashi Hamada.
+.It
 This product includes software developed by Tsubai Masanari.
+.It
 This product includes software developed by University of Utah.
+.It
 This product includes software developed by Wolfgang Solfrank.
