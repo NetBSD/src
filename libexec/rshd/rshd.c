@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $	*/
+/*	$NetBSD: rshd.c,v 1.27 2002/09/23 03:32:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.27 2002/09/23 03:32:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,6 @@ __RCSID("$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -105,6 +104,7 @@ __RCSID("$NetBSD: rshd.c,v 1.26 2002/09/18 20:44:38 mycroft Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <poll.h>
 #ifdef  LOGIN_CAP
 #include <login_cap.h>
 #endif
