@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: smb.h,v 1.2 2001/06/19 13:45:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -96,7 +96,7 @@ enum smb_dialects {
  * Security mode bits
  */
 #define SMB_SM_USER		0x01		/* server in the user security mode */
-#define	SMB_SM_ENCRYPT		0x02		/* use challenge/responce */
+#define	SMB_SM_ENCRYPT		0x02		/* use challenge/response */
 
 /*
  * NTLM capabilities

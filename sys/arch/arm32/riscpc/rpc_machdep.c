@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.47 2001/06/19 12:59:14 wiz Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.48 2001/06/19 13:45:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -359,7 +359,7 @@ cpu_reboot(howto, bootstr)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
- * It should be responcible for setting up everything that must be
+ * It should be responsible for setting up everything that must be
  * in place when main is called.
  * This includes
  *   Taking a copy of the boot configuration structure.
@@ -514,7 +514,7 @@ initarm_new_bootloader(bootconf)
 	 * execution, all I/O is mapped 1:1 virtual to physical and
 	 * physical memory is accessible.
 	 *
-	 * The initarm() has the responcibility for creating the kernel
+	 * The initarm() has the responsibility for creating the kernel
 	 * page tables.
 	 * It must also set up various memory pointers that are used
 	 * by pmap etc. 
@@ -1096,7 +1096,7 @@ rpc_sa110_cc_setup(void)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
- * It should be responcible for setting up everything that must be
+ * It should be responsible for setting up everything that must be
  * in place when main is called.
  * This includes
  *   Taking a copy of the boot configuration structure.
@@ -1433,7 +1433,7 @@ initarm_old_bootloader(bootconf)
 	 * This should be the stage we are at at the end of the bootstrap when
 	 * we have a two stage booter.
 	 *
-	 * The secondary bootstrap has the responcibility to sort locating the
+	 * The secondary bootstrap has the responsibility to sort locating the
 	 * kernel to the correct address and for creating the kernel page tables.
 	 * It must also set up various memory pointers that are used by pmap etc.  
 	 */

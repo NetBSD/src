@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.5 2001/06/19 12:59:16 wiz Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6 2001/06/19 13:45:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -323,7 +323,7 @@ struct l1_sec_map {
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
- * It should be responcible for setting up everything that must be
+ * It should be responsible for setting up everything that must be
  * in place when main is called.
  * This includes
  *   Taking a copy of the boot configuration structure.
@@ -414,7 +414,7 @@ initarm(bootinfo)
 	 * execution, all I/O is mapped 1:1 virtual to physical and
 	 * physical memory is accessible.
 	 *
-	 * The initarm() has the responcibility for creating the kernel
+	 * The initarm() has the responsibility for creating the kernel
 	 * page tables.
 	 * It must also set up various memory pointers that are used
 	 * by pmap etc. 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.33 2001/03/04 19:05:57 matt Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.34 2001/06/19 13:45:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -485,7 +485,7 @@ initarm(prom_id)
 	 * This should be the stage we are at at the end of the bootstrap when
 	 * we have a two stage booter.
 	 *
-	 * The secondary bootstrap has the responcibility to sort locating the
+	 * The secondary bootstrap has the responsibility to sort locating the
 	 * kernel to the correct address and for creating the kernel page
 	 * tables. It must also set up various memory pointers that are used
 	 * by pmap etc.  
