@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.26 1996/04/10 05:44:49 mycroft Exp $
+#	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -139,7 +139,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .s:
 	${LINK.s} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .s.o:
-	${COMPILE.s} -o ${.TARGET} ${.IMPSRC} 
+	${COMPILE.s} ${.IMPSRC}
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
@@ -147,7 +147,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .S.o:
-	${COMPILE.S} -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.S} ${.IMPSRC}
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
