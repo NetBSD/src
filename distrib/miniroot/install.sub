@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.2 1996/02/28 00:47:43 thorpej Exp $
+#	$NetBSD: install.sub,v 1.3 1996/05/20 00:32:25 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,6 +64,7 @@ isin() {
 
 rmel() {
 # remove first argument from list formed by the remaining arguments
+	local _a
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" != "$1" ]; then
@@ -71,6 +72,35 @@ rmel() {
 		fi
 		shift
 	done
+}
+
+cutword () {
+# read a line of data, return Nth element.
+	local _a
+	local _n
+	_n=$1
+	read _a; set -- $_a
+	if [ "$1" = "" ]; then return; fi
+	eval echo \$$_n
+}
+
+cutlast () {
+# read a line of data, return last element. Equiv. of awk '{print $NF}'.
+	local _a
+	read _a; set -- $_a
+	if [ "$1" = "" ]; then return; fi
+	if [ "$#" -gt 10 ]; then shift 10; fi
+	eval echo \$$#
+}
+
+firstchar () {
+# return first character of argument
+	local _a
+	_a=$1
+	while [ ${#_a} != 1 ]; do
+		_a=${_a%?}
+	done
+	echo $_a
 }
 
 twiddle() {
@@ -82,8 +112,6 @@ twiddle() {
 		sleep 1; echo -n "|";
 	done > /dev/tty & echo $!
 }
-
-. install.md
 
 do_mfs_mount() {
 	# $1 is the mount point
@@ -143,7 +171,7 @@ __labelmoredisks_1
 			;;
 
 		*)
-			if echo "$_DKDEVS" | grep "^$resp" > /dev/null ; then
+			if isin $resp $_DKDEVS > /dev/null ; then
 				md_labeldisk $resp
 			else
 				echo ""
@@ -164,10 +192,8 @@ addhostent() {
 		echo "127.0.0.1 localhost" > /tmp/hosts
 	fi
 
-	if grep "^$1 " /tmp/hosts > /dev/null; then
-		grep -v "^$1 " /tmp/hosts > /tmp/hosts.new
-		mv /tmp/hosts.new /tmp/hosts
-	fi
+	sed "/^$1 /d" < /tmp/hosts > /tmp/hosts.new
+	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$1 $2 $2.$FQDN" >> /tmp/hosts
 }
@@ -421,7 +447,7 @@ __install_ftp_2
 			break
 		fi
 
-		_ftp_file=`echo ${resp} | awk '{print $1}'`
+		_ftp_file=`echo ${resp} | cutword 1'`
 		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
@@ -746,8 +772,8 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/timezone 2>/dev/null | awk '{print $NF}' |
-			sed -e 's?/usr/share/zoneinfo/??'`
+		TZ=`ls -l /etc/localtime 2>/dev/null | cutlast`
+		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
 		echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
@@ -886,17 +912,19 @@ munge_fstab()
 {
 	local _fstab
 	local _fstab_shadow
+	local _dev, _mp, _rest
 	# Now that the 'real' fstab is configured, we munge it into a 'shadow'
 	# fstab which we'll use for mounting and unmounting all of the target
 	# filesystems relative to /mnt.  Mount all filesystems.
 	_fstab=$1
 	_fstab_shadow=$2
-	awk '{
-		if ($2 == "/")
-		    printf("%s /mnt %s %s %s %s\n", $1, $3, $4, $5, $6)
+	( while read _dev _mp _rest; do
+		if [ "$_mp" = "/" ]; then
+			echo $_dev /mnt $_rest
 		else
-		    printf("%s /mnt%s %s %s %s %s\n", $1, $2, $3, $4, $5, $6)
-	}' < $_fstab > $_fstab_shadow
+			echo $_dev /mnt$_mp $_rest
+		fi
+	done ) < $_fstab > $_fstab_shadow
 }
 
 mount_fs()
@@ -909,10 +937,10 @@ mount_fs()
 	_fstab=$1
 
 	( while read line; do
-		_dev=`echo $line | awk '{print $1}'`
-		_mp=`echo $line | awk '{print $2}'`
-		_fstype=`echo $line | awk '{print $3}'`
-		_opt=`echo $line | awk '{print $4}'`
+		_dev=`echo $line | cutword 1`
+		_mp=`echo $line | cutword 2`
+		_fstype=`echo $line | cutword 3`
+		_opt=`echo $line | cutword 4`
 
 		# If not the root filesystem, make sure the mount
 		# point is present.
@@ -958,8 +986,9 @@ unmount_fs()
 		_mps=""
 		# maintain reverse order
 		while read line; do
-			_devs="`echo $line | awk '{print $1}'` ${_devs}"
-			_mps="`echo $line | awk '{print $2}'` ${_mps}"
+			set -- $line
+			_devs="$1 ${_devs}"
+			_mps="$2 ${_mps}"
 		done
 		echo -n "Umounting filesystems... "
 		for _mp in ${_mps}; do
@@ -989,8 +1018,9 @@ check_fs()
 		_devs=""
 		_mps=""
 		while read line; do
-			_devs="`echo $line | awk '{print $1}'` ${_devs}"
-			_mps="`echo $line | awk '{print $2}'` ${_mps}"
+			set -- $line
+			_devs="$1 ${_devs}"
+			_mps="$2 ${_mps}"
 		done
 
 		echo "Checking filesystem integrity..."
