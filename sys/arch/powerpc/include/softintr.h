@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.1 2004/03/24 23:39:39 matt Exp $	*/
+/*	$NetBSD: softintr.h,v 1.2 2004/03/25 18:46:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,20 +41,11 @@
 #ifdef _KERNEL
 #include <sys/queue.h>
 
-SIMPLEQ_HEAD(softintr_qh, softintr);
-
-struct softintr {
-	SIMPLEQ_ENTRY(softintr) si_link;
-	void (*si_func)(void *);		/* callback */
-	void *si_arg;				/* argument to si_func */
-	int si_ipl;				/* IPL_SOFT* */
-	int si_refs;				/* either 1 or 2 */
-};
-
 /*
  * Override the standard schednetisr and have one softintr per netisr.
  * Note that this allows for eventually doing dynamic registration of netisr's.
  */
+struct softintr;
 extern struct softintr *softnet_handlers[];
 #define	schednetisr(an_isr)	softintr_schedule(softnet_handlers[(an_isr)])
 
@@ -62,9 +53,11 @@ void *softintr_establish(int, void (*)(void *), void *);
 void softintr_disestablish(void *);
 void softintr_schedule(void *);
 
-void softintr__init(void);
-void softintr__run(int);
-
+/*
+ * These are *not* part of API.
+ */
+void softintr__init(void);		/* initialize the softintr framework */
+void softintr__run(int);		/* run the softintr list for an IPL */
 #endif
 
 #endif /* __POWERPC_SOFTINTR_H_ */

@@ -34,13 +34,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1 2004/03/24 23:39:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2004/03/25 18:46:27 matt Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
 #include <sys/pool.h>
 #include <machine/intr.h>
 #include <net/netisr.h>
+
+SIMPLEQ_HEAD(softintr_qh, softintr);
+
+struct softintr {
+	SIMPLEQ_ENTRY(softintr) si_link;
+	void (*si_func)(void *);		/* callback */
+	void *si_arg;				/* argument to si_func */
+	int si_ipl;				/* IPL_SOFT* */
+	int si_refs;				/* either 1 or 2 */
+};
 
 static struct softintr_qh
 #ifdef IPL_SOFTI2C
@@ -50,7 +60,7 @@ static struct softintr_qh
      softintr_softclock = SIMPLEQ_HEAD_INITIALIZER(softintr_softclock),
     softintr_softserial = SIMPLEQ_HEAD_INITIALIZER(softintr_softserial);
 
-static struct pool softintr_pool;
+struct pool softintr_pool;
 struct softintr *softnet_handlers[32];
 
 static __inline struct softintr_qh *
@@ -138,7 +148,7 @@ softintr_schedule(void *cookie)
 	case IPL_SOFTCLOCK:	setsoftclock(); break;
 	case IPL_SOFTNET:	setsoftnet(); break;
 #ifdef IPL_SOFTI2C
-	case IPL_SOFTNET:	setsofti2c(); break;
+	case IPL_SOFTI2C:	setsofti2c(); break;
 #endif
 	}
 	splx(s);
@@ -157,13 +167,12 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	s = splvm();
 	si = pool_get(&softintr_pool, PR_WAITOK);
 	splx(s);
-	if (si == NULL)
-		return NULL;
 
 	si->si_ipl = ipl;
 	si->si_func = func;
 	si->si_arg = arg;
 	si->si_refs = 1;
+
 	return si;
 }
 
