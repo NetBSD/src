@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixdp425.c,v 1.1 2003/05/23 00:57:27 ichiro Exp $ */
+/*	$NetBSD: ixpcom_ixdp425.c,v 1.2 2003/06/01 01:49:57 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixdp425.c,v 1.1 2003/05/23 00:57:27 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixdp425.c,v 1.2 2003/06/01 01:49:57 ichiro Exp $");
 
 /* Front-end of ixpcom */
 
@@ -65,6 +65,19 @@ static void	ixpcom_ixdp_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(ixpcom_ixdp, sizeof(struct ixp4xx_com_softc),
     ixpcom_ixdp_match, ixpcom_ixdp_attach, NULL, NULL);
 
+const struct uart_info comcn_config[] = {
+	{ "HighSpeed Serial (UART0)",
+	  IXP425_UART0_HWBASE,
+	  IXP425_UART0_VBASE,
+	  IXP425_INT_UART0,
+	},
+	{ "Console (UART1)",
+	  IXP425_UART1_HWBASE,
+	  IXP425_UART1_VBASE,
+	  IXP425_INT_UART1,
+	},
+};
+
 static int
 ixpcom_ixdp_match(parent, match, aux)
 	struct device *parent;
@@ -85,6 +98,7 @@ ixpcom_ixdp_attach(parent, self, aux)
 	struct ixpcom_ixdp_softc *isc = (struct ixpcom_ixdp_softc *)self;
 	struct ixp4xx_com_softc *sc = &isc->sc_ixpcom;
 	struct ixpsip_attach_args *sa = aux;
+	int unit = sa->sa_index;
 
 	isc->sc_iot = sa->sa_iot;
 	sc->sc_iot = sa->sa_iot;
@@ -98,13 +112,15 @@ ixpcom_ixdp_attach(parent, self, aux)
 		return;
 	}
 
+	ixp425_intr_establish(comcn_config[unit].intr, IPL_SERIAL, ixp4xxcomintr, sc);
+
 	ixp4xx_com_attach_subr(sc);
+}
 
-	printf("%s: IXP425 UART\n", sc->sc_dev.dv_xname);
-
-#ifdef POLLING_COM
-	{ void* d; d = d = ixp4xxcomintr; }
-#else
-	ixp425_intr_establish(IXP425_INT_UART0, IPL_SERIAL, ixp4xxcomintr, sc);
-#endif
+int
+ixdp_ixp4xx_comcnattach(bus_space_tag_t iot, int unit, int rate,
+    int frequency, tcflag_t cflag)
+{
+	return ixp4xx_comcnattach(iot, comcn_config + unit,
+		rate, frequency, cflag);
 }
