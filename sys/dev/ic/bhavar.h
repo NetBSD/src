@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.4 1996/11/05 03:04:33 jonathan Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.5 1996/12/20 21:35:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -72,6 +72,7 @@ struct bha_softc {
 	int sc_numccbs, sc_mbofull;
 	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
+	int sc_iswide;			/* adapter is wide */
 };
 
 int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
