@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.75 2002/12/22 10:15:17 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.76 2002/12/23 06:24:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.75 2002/12/22 10:15:17 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.76 2002/12/23 06:24:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -950,13 +950,14 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	p = buf;					/* remove destdir */
 	if (destdir) {
 		destlen = strlen(destdir);
-		if (strncmp(p, destdir, destlen) == 0 && p[destlen] == '/')
+		if (strncmp(p, destdir, destlen) == 0 &&
+		    (p[destlen] == '/' || p[destlen] == '\0'))
 			p += destlen;
 	}
 	while (*p && *p == '/')				/* remove leading /s */
 		p++;
 							/* print details */
-	fprintf(metafp, "./%s type=%s mode=%#o", p, type, mode);
+	fprintf(metafp, ".%s%s type=%s mode=%#o", *p ? "/" : "", p, type, mode);
 	if (link)
 		fprintf(metafp, " link=%s", link);
 	if (owner)
