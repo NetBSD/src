@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.400 2001/02/04 17:36:03 perry Exp $
+#	$NetBSD: GENERIC,v 1.401 2001/03/28 18:45:07 ichiro Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.400 $"
+#ident 		"GENERIC-$Revision: 1.401 $"
 
 maxusers	32		# estimated number of users
 
@@ -708,6 +708,9 @@ ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ? 
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
