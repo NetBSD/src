@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.9 1999/03/29 06:16:34 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.10 1999/03/31 14:29:33 mycroft Exp $
 # From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
 #
 # Mycroft's AS200.
@@ -337,5 +337,5 @@ pseudo-device	vnd		4
 pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too

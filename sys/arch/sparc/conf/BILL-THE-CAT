@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.1 1999/01/21 10:06:03 mycroft Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.2 1999/03/31 14:29:58 mycroft Exp $
 # 	From: GENERIC,v 1.76 1999/01/17 20:45:26 pk Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -532,4 +532,4 @@ pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 ## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
-#pseudo-device	rnd
+pseudo-device	rnd
