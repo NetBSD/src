@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.10 1995/01/18 09:34:29 mycroft Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.11 1995/03/08 01:34:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ portal_mount(mp, path, data, ndp, p)
 	struct portalmount *fmp;
 	struct socket *so;
 	struct vnode *rvp;
-	u_int size;
+	u_long size;
 	int error;
 
 	/*
