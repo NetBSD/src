@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.223 2004/05/25 01:30:55 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.224 2004/05/25 01:32:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3059,3 +3059,9 @@ distrib/sparc64/xminiroot/Makefile		1.24
 
 	Do not fail if directory sysinst exists.
 	[hannken, ticket #383]
+
+sys/dev/pci/if_sk.c				1.10
+
+	Fix a glitch in the initial import: The XMAC hash function is actually
+	based on CRC32-_LE_.
+	[kleink, ticket #384]
