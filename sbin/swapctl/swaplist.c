@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.4 1997/10/10 05:39:55 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.4.2.1 1998/09/25 17:27:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -69,7 +69,7 @@ list_swap(pri, kflag, pflag, tflag, dolong)
 	if (sep == NULL)
 		err(1, "malloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
-	if (nswap < 0)
+	if (rnswap < 0)
 		errx(1, "SWAP_STATS");
 	if (nswap != rnswap)
 		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
