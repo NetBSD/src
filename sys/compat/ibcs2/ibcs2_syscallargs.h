@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscallargs.h,v 1.16 1998/02/19 03:34:17 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_syscallargs.h,v 1.17 1998/03/05 04:36:08 scottb Exp $	*/
 
 /*
  * System call argument lists.
@@ -273,6 +273,16 @@ struct ibcs2_sys_readlink_args {
 	syscallarg(int) count;
 };
 
+struct ibcs2_sys_statvfs_args {
+	syscallarg(char *) path;
+	syscallarg(struct ibcs2_statvfs *) buf;
+};
+
+struct ibcs2_sys_fstatvfs_args {
+	syscallarg(int) fd;
+	syscallarg(struct ibcs2_statvfs *) buf;
+};
+
 struct ibcs2_sys_mmap_args {
 	syscallarg(ibcs2_caddr_t) addr;
 	syscallarg(ibcs2_size_t) len;
@@ -463,6 +473,9 @@ int	ibcs2_sys_lstat	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_readlink	__P((struct proc *, void *, register_t *));
 int	sys_fchmod	__P((struct proc *, void *, register_t *));
 int	sys___posix_fchown	__P((struct proc *, void *, register_t *));
+int	sys_sigreturn	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_statvfs	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_fstatvfs	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_mmap	__P((struct proc *, void *, register_t *));
 int	sys_mprotect	__P((struct proc *, void *, register_t *));
 int	sys_munmap	__P((struct proc *, void *, register_t *));
