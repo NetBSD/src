@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 1996/04/07 04:48:46 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.21 1996/04/07 05:50:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -159,7 +159,7 @@ cpu_attach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	register int node, clk, bug = 0, i, l;
+	register int node, clk, bug = 0, i;
 	register int impl, vers, fver;
 	register char *fpuname;
 	struct confargs *ca = aux;
@@ -167,6 +167,7 @@ cpu_attach(parent, dev, aux)
 	char *sep;
 	char fpbuf[40];
 #if defined(SUN4C) || defined(SUN4M)
+	register int l;
 	char iubuf[40];
 #endif
 
