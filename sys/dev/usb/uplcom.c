@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.34.2.2 2004/07/28 10:32:24 tron Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.34.2.3 2004/07/28 10:40:40 tron Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.34.2.2 2004/07/28 10:32:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.34.2.3 2004/07/28 10:40:40 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
 	/* HAL Corporation Crossam2+USB */
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+	/* Sitecom USB to serial cable */
+	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_SERIAL },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
