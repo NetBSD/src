@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.65 1998/03/22 05:41:37 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.66 1998/03/22 07:27:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,12 +124,6 @@
  *
  *		- There is no locking protocol to speak of.
  *
- *		- pmap_activate() and pmap_deactivate() are called
- *		  from a critical section in locore, and cannot lock
- *		  the pmap (because doing so may sleep).  Thus, they
- *		  must be rewritten to use ldq_l and stq_c to update
- *		  the CPU mask.
- *
  *		- ASN logic needs minor adjustments for multiple processors:
  *
  *			- pmap_next_asn and pmap_asn_generation need
@@ -173,7 +167,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.65 1998/03/22 05:41:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.66 1998/03/22 07:27:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1963,13 +1957,16 @@ pmap_activate(p)
 
 	/*
 	 * Allocate an ASN.
+	 *
+	 * XXX This checks a non-per-cpu value (pm_lev1map), but we can't
+	 * XXX lock!
 	 */
 	pmap_alloc_asn(pmap);
 
 	/*
 	 * Mark the pmap in use by this processor.
 	 */
-	pmap->pm_cpus |= (1UL << alpha_pal_whami());
+	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << alpha_pal_whami()));
 
 	PMAP_ACTIVATE(pmap, p);
 }
@@ -1997,7 +1994,7 @@ pmap_deactivate(p)
 	/*
 	 * Mark the pmap no longer in use by this processor.
 	 */
-	pmap->pm_cpus &= ~(1UL << alpha_pal_whami());
+	alpha_atomic_clearbits_q(&pmap->pm_cpus, (1UL << alpha_pal_whami()));
 }
 
 /*
