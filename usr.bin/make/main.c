@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.49 1999/09/15 08:48:17 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 1999/09/15 10:47:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -781,6 +781,11 @@ main(argc, argv)
 	 * time to add the default search path to their lists...
 	 */
 	Suff_DoPaths();
+
+	/*
+	 * Propagate attributes through :: dependency lists.
+	 */
+	Targ_Propagate();
 
 	/* print the initial graph, if the user requested it */
 	if (DEBUG(GRAPH1))
