@@ -1,9 +1,9 @@
-.\"	$NetBSD: wscons.conf.5,v 1.3 2000/11/17 10:14:21 lukem Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.4 2001/04/09 16:53:57 wiz Exp $
 .\"
 .\" Copyright notice
 .\"
 .\" The following requests are required for all man pages.
-.Dd September 2nd, 2000
+.Dd September 2, 2000
 .Dt WSCONS.CONF 5
 .Os
 .Sh NAME
@@ -17,7 +17,8 @@ The
 file defines parameters regarding to the workstation console (wscons).
 The file consists of lines starting with a keyword, and one or more arguments.
 Empty lines and lines starting with a hash
-.Pq Dq \&# are ignored.
+.Pq Dq \&#
+are ignored.
 
 The following keywords and arguments are recognized:
 .Pp
@@ -39,7 +40,7 @@ Used to load a font via
 .Sy name
 gives a font name that can be used later,
 .Sy width
-can be used to specify the width of a font character in pixel, 
+can be used to specify the width of a font character in pixel,
 .Sy height
 is the same, just for the font characters' height.
 .Sy enc
@@ -75,6 +76,6 @@ documentation of the utilities.
 .It Pa /etc/wscons.conf
 .El
 .Sh SEE ALSO
-.Xr wscons 4 , 
+.Xr wscons 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsfontload 8
