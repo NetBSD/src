@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.27 2001/01/19 12:22:56 martin Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.28 2001/01/22 09:52:21 jdolecek Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -170,7 +170,7 @@ echo '#include "opt_vnode_op_noinline.h"'
 echo '#endif'
 echo '#endif /* _KERNEL */'
 echo '
-extern struct vnodeop_desc vop_default_desc;
+extern const struct vnodeop_desc vop_default_desc;
 '
 
 # Body stuff
@@ -179,12 +179,12 @@ sed -e "$sed_prep" $src | $awk "$toupper"'
 function doit() {
 	# Declare arg struct, descriptor.
 	printf("\nstruct %s_args {\n", name);
-	printf("\tstruct vnodeop_desc * a_desc;\n");
+	printf("\tconst struct vnodeop_desc * a_desc;\n");
 	for (i=0; i<argc; i++) {
 		printf("\t%s a_%s;\n", argtype[i], argname[i]);
 	}
 	printf("};\n");
-	printf("extern struct vnodeop_desc %s_desc;\n", name);
+	printf("extern const struct vnodeop_desc %s_desc;\n", name);
 	# Prototype it.
 	printf("#ifndef VNODE_OP_NOINLINE\n");
 	printf("static __inline\n");
@@ -228,9 +228,11 @@ function doit() {
 	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
 		argname[0], arg0special, name);
 	printf("#endif\n");
+	vops++;
 }
 BEGIN	{
 	arg0special="";
+	vops = 1; # start at 1, to count the 'default' op
 }
 END	{
 	printf("\n/* Special cases: */\n#include <sys/buf.h>\n");
@@ -242,6 +244,8 @@ END	{
 	doit();
 	name="vop_bwrite";
 	doit();
+
+	printf("\n#define VNODE_OPS_COUNT\t%d\n", vops);
 }
 '"$awk_parser" | sed -e "$anal_retentive"
 
@@ -316,9 +320,9 @@ function doit() {
 	print "\tVDESC_NO_OFFSET";
 	print "};";
 	# Define F_desc
-	printf("struct vnodeop_desc %s_desc = {\n", name);
+	printf("const struct vnodeop_desc %s_desc = {\n", name);
 	# offset
-	printf ("\t0,\n");
+	printf ("\t%d,\n", vop_offset++);
 	# printable name
 	printf ("\t\"%s\",\n", name);
 	# flags
@@ -376,10 +380,9 @@ function doit() {
 	printf("#endif\n");
 }
 BEGIN	{
-	arg0special="";
-}
-END	{
 	printf("\n/* Special cases: */\n");
+	# start from 1 (vop_default is at 0)
+	vop_offset=1;
 	argc=1;
 	argdir[0]="IN";
 	argtype[0]="struct buf *";
@@ -390,6 +393,9 @@ END	{
 	doit();
 	name="vop_bwrite";
 	doit();
+	printf("\n/* End of special cases */\n");
+
+	arg0special="";
 }
 '"$awk_parser" | sed -e "$anal_retentive"
 
@@ -400,7 +406,7 @@ echo '
 # Add the vfs_op_descs array to the C file.
 # Begin stuff
 echo '
-struct vnodeop_desc * const vfs_op_descs[] = {
+const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_default_desc,	/* MUST BE FIRST */
 	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
