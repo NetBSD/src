@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.9 2000/12/16 19:42:18 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.10 2000/12/19 21:59:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -874,7 +874,8 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			ti->flags |= T_NEGOTIATE;
 			ti->period = sc->sc_minsync;
 		}
-
+		printf("target %d flags 0x%x sc_minsync %d period %d\n", 
+		    xm->xm_target, ti->flags, sc->sc_minsync, ti->period);
 		/*
 		 * If we're not going to negotiate, send the notification
 		 * now, since it won't happen later.
@@ -1466,6 +1467,8 @@ gotit:
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
 				ncr53c9x_setsync(sc, ti);
+				ncr53c9x_update_xfer_mode(sc,
+				    ecb->xs->xs_periph->periph_target);
 				break;
 			case SEND_INIT_DET_ERR:
 				goto abort;
@@ -1530,19 +1533,14 @@ gotit:
 					printf("async mode\n");
 #endif
 #endif
+					ti->flags &= ~T_SYNCMODE;
 					if ((sc->sc_flags&NCR_SYNCHNEGO) == 0) {
 						/*
 						 * target initiated negotiation
 						 */
 						ti->offset = 0;
-						ti->flags &= ~T_SYNCMODE;
 						ncr53c9x_sched_msgout(
 						    SEND_SDTR);
-					} else {
-						/* we are async */
-						ti->flags &= ~T_SYNCMODE;
-						ncr53c9x_update_xfer_mode(sc,
-					    ecb->xs->xs_periph->periph_target);
 					}
 				} else {
 #if 0
@@ -1576,10 +1574,10 @@ gotit:
 					} else {
 						/* we are sync */
 						ti->flags |= T_SYNCMODE;
-						ncr53c9x_update_xfer_mode(sc,
-					    ecb->xs->xs_periph->periph_target);
 					}
 				}
+				ncr53c9x_update_xfer_mode(sc,
+				    ecb->xs->xs_periph->periph_target);
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
 				ncr53c9x_setsync(sc, ti);
 				break;
@@ -1735,6 +1733,8 @@ ncr53c9x_msgout(sc)
 			ecb = sc->sc_nexus;
 			ti = &sc->sc_tinfo[ecb->xs->xs_periph->periph_target];
 			ti->flags &= ~T_SYNCMODE;
+			ncr53c9x_update_xfer_mode(sc,
+			    ecb->xs->xs_periph->periph_target);
 			if ((ti->flags & T_SYNCHOFF) == 0)
 				/* We can re-start sync negotiation */
 				ti->flags |= T_NEGOTIATE;
@@ -2665,6 +2665,7 @@ ncr53c9x_timeout(arg)
 			scsipi_printaddr(periph);
 			printf("sync negotiation disabled\n");
 			sc->sc_cfflags |= (1<<(periph->periph_target+8));
+			ncr53c9x_update_xfer_mode(sc, periph->periph_target);
 		}
 	}
 
