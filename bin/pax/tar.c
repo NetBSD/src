@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.12 1998/10/15 00:07:34 mycroft Exp $	*/
+/*	$NetBSD: tar.c,v 1.13 1999/01/20 14:45:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.12 1998/10/15 00:07:34 mycroft Exp $");
+__RCSID("$NetBSD: tar.c,v 1.13 1999/01/20 14:45:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: tar.c,v 1.12 1998/10/15 00:07:34 mycroft Exp $");
 #include <sys/param.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -1209,4 +1210,55 @@ name_split(name, len)
 	 * ok have a split point, return it to the caller
 	 */
 	return(start);
+}
+
+/*
+ * deal with GNU tar -X switch.  basically, we go through each line of
+ * the file, building a string from the "glob" lines in the file into
+ * RE lines, of the form `/^RE$//', which we pass to rep_add(), which
+ * will add a empty replacement (exclusion), for the named files.
+ */
+int
+tar_gnutar_X_compat(path)
+	const char *path;
+{
+	char *line, sbuf[MAXPATHLEN * 2 + 1 + 5];
+	FILE *fp;
+	int lineno = 0, len, i, j;
+
+	fp = fopen(path, "r");
+	if (fp == NULL) {
+		tty_warn(1, "can not open %s: %s", path,
+		    strerror(errno));
+		return(-1);
+	}
+
+	while ((line = fgetln(fp, &len))) {
+		lineno++;
+		if (len > MAXPATHLEN) {
+			tty_warn(0, "pathname too long, line %d of %s",
+			    lineno, path);
+		}
+		if (line[len - 1] == '\n')
+			len--;
+		for (i = 0, j = 2; i < len; i++) {
+			/*
+			 * convert glob to regexp, escaping everything
+			 */
+			if (line[i] == '*')
+				sbuf[j++] = '.';
+			else if (line[i] == '?')
+				line[i] = '.';
+			else if (!isalnum(line[i]) && !isblank(line[i]))
+				sbuf[j++] = '\\';
+			sbuf[j++] = line[i];
+		}
+		sbuf[0] = sbuf[j + 1] = sbuf[j + 2] = '/';
+		sbuf[1] = '^';
+		sbuf[j] = '$';
+		sbuf[j + 3] = '\0';
+		if (rep_add(sbuf) < 0)
+			return (-1);
+	}
+	return (0);
 }

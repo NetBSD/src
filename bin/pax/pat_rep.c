@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.7 1997/07/20 20:32:37 christos Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.8 1999/01/20 14:45:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.7 1997/07/20 20:32:37 christos Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.8 1999/01/20 14:45:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,9 +131,13 @@ rep_add(str)
 
 	/*
 	 * first character in the string specifies what the delimiter is for
-	 * this expression
+	 * this expression.  find the end and middle, from the end.  this
+	 * allows the string to be something like /foo\/bar//, but will still
+	 * fail on /foo\/bar/foo\/baz/.  XXX need to parse the RE to properly
+	 * do this!
 	 */
-	if ((pt1 = strchr(str+1, *str)) == NULL) {
+	if ((pt2 = strrchr(str+1, *str)) == NULL || pt2 == str+1 ||
+	    (*pt2 = '\0') || (pt1 = strrchr(str+1, *str)) == NULL) {
 		tty_warn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -166,18 +170,6 @@ rep_add(str)
 	 * we then point the node at the new substitution string
 	 */
 	*pt1++ = *str;
-	if ((pt2 = strchr(pt1, *str)) == NULL) {
-#		ifdef NET2_REGEX
-		(void)free((char *)rep->rcmp);
-#		else
-		regfree(&(rep->rcmp));
-#		endif
-		(void)free((char *)rep);
-		tty_warn(1, "Invalid replacement string %s", str);
-		return(-1);
-	}
-
-	*pt2 = '\0';
 	rep->nstr = pt1;
 	pt1 = pt2++;
 	rep->flgs = 0;
