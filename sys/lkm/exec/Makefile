@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/06/05 14:48:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2001/06/06 21:21:30 mrg Exp $
 
 # XXX only linux_elf is actually tested for now; build LKMs on all platforms
 # as appropriate, but only install linux_elf on i386
@@ -30,7 +30,7 @@ SUBDIR+=	sunos_aout svr4_elf
 .endif
 
 .if ${MACHINE_ARCH} == "sparc64"
-SUBDIR+=	netbsd32_aout netbsd32_elf sunos32_aout svr4_32_elf
+SUBDIR+=	elf netbsd32_aout netbsd32_elf sunos32_aout svr4_32_elf
 .endif
 
 .if ${MACHINE_ARCH} == "vax"
