@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.4 1997/01/07 11:56:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: battlestar.c,v 1.4 1997/01/07 11:56:32 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static char rcsid[] = "$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $
  * on the Cory PDP-11/70, University of California, Berkeley.
  */
 
-#include "externs.h"
+#include "extern.h"
 
 main(argc,argv)
 int  argc;

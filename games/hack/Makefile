@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 1996/10/18 02:47:18 thorpej Exp $
-#	@(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$NetBSD: Makefile,v 1.18 1997/01/07 12:09:53 tls Exp $
+#	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
 CFLAGS+=-I.

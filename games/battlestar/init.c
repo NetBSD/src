@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.5 1997/01/07 11:56:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,14 +35,14 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.5 1997/01/07 11:56:45 tls Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include "externs.h"
+#include "extern.h"
 #include <pwd.h>
 
 initialize(startup)
@@ -54,11 +54,11 @@ initialize(startup)
 	puts("Version 4.2, fall 1984.");
 	puts("First Adventure game written by His Lordship, the honorable");
 	puts("Admiral D.W. Riggle\n");
+	location = dayfile;
 	srand(getpid());
 	getutmp(uname);
 	wordinit();
 	if (startup) {
-		location = dayfile;
 		direction = NORTH;
 		time = 0;
 		snooze = CYCLE * 1.5;

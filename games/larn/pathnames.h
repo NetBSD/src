@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1995/04/22 07:34:10 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 1997/01/07 12:12:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.1 (Berkeley) 5/2/90
+ *	@(#)pathnames.h	5.2 (Berkeley) 4/27/95
  */
 
 #define	_PATH_LOG		"/var/games/larn/llog12.0"

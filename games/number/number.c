@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.3 1995/03/23 08:35:30 cgd Exp $	*/
+/*	$NetBSD: number.c,v 1.4 1997/01/07 12:16:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,19 +41,20 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)number.c	8.2 (Berkeley) 3/31/94";
+static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: number.c,v 1.3 1995/03/23 08:35:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: number.c,v 1.4 1997/01/07 12:16:57 tls Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 
 #define	MAXNUM		65		/* Biggest number we handle. */
 

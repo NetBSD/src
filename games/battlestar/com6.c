@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
+/*	$NetBSD: com6.c,v 1.6 1997/01/07 11:56:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,13 +35,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)com6.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $";
+static char rcsid[] = "$NetBSD: com6.c,v 1.6 1997/01/07 11:56:38 tls Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 #include "pathnames.h"
 
 launch()
