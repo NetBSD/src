@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.18 2001/03/05 16:53:13 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2001/03/18 03:20:28 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2001/03/05 16:53:13 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2001/03/18 03:20:28 hubertf Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.18 2001/03/05 16:53:13 wiz Exp $");
 #include "lib.h"
 #include "add.h"
 
-static char Options[] = "hVvIRfnp:SMt:";
+static char Options[] = "hVvIRfnp:SMt:u";
 
 char   *Prefix = NULL;
 Boolean NoInstall = FALSE;
@@ -48,12 +48,13 @@ char   *PkgName = NULL;
 char   *Directory = NULL;
 char    FirstPen[FILENAME_MAX];
 add_mode_t AddMode = NORMAL;
+int	upgrade = 0;
 
 static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n",
-	    "usage: pkg_add [-hVvInfRMS] [-t template] [-p prefix]",
+	    "usage: pkg_add [-hVvInfRMSu] [-t template] [-p prefix]",
 	    "               pkg-name [pkg-name ...]");
 	exit(1);
 }
@@ -110,6 +111,9 @@ main(int argc, char **argv)
 			show_version();
 			/* NOTREACHED */
 
+		case 'u':
+			upgrade = 1;
+			break;
 		case 'h':
 		case '?':
 		default:
