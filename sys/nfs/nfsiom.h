@@ -36,6 +36,9 @@
  *	@(#)nfsiom.h	7.3 (Berkeley) 6/28/90
  */
 
+#ifndef _NFS_NFSIOM_H_
+#define _NFS_NFSIOM_H_
+
 /*
  * Size of the resource map and system page table pte's that are mapped
  * by nfs for i/o much like a bus adapter
@@ -43,3 +46,5 @@
 #define	NFS_MAPREG	512	/* Num. of kernel pte's for i/o mapping */
 				/* Must be >= MAXPHYS/NBPG */
 #define	NFS_MSIZ	100	/* Size of alloc. map for pte's */
+
+#endif /* !_NFS_NFSIOM_H_ */
