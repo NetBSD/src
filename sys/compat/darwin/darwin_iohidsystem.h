@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.7 2003/09/11 23:16:19 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.8 2003/10/18 13:27:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -269,8 +269,13 @@ struct  darwin_iohidsystem_shmem {
 #define DARWIN_IOHIDCREATESHMEM 0
 #define DARWIN_IOHIDSETEVENTSENABLE 1
 #define DARWIN_IOHIDSETCURSORENABLE 2
+#define DARWIN_IOHIDPOSTEVENT 3
+#define DARWIN_IOHIDSETMOUSELOCATION 4
+#define DARWIN_IOHIDGETBUTTONEVENTNUM 5
+
 
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
+int darwin_iohidsystem_connect_method_structi_structo(struct mach_trap_args *);
 int darwin_iohidsystem_connect_map_memory(struct mach_trap_args *);
 
 /* I/O notifications: XXX not checked on Darwin */
