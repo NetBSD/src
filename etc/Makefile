@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.184 2001/10/13 14:22:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.185 2001/10/19 15:07:48 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -262,7 +262,6 @@ distribution: distrib-dirs
 		${DESTDIR}/var/games/larn/playerids
 	(cd etc.${MACHINE}; ${INSTALL} ${INSTPRIV} -c -o ${BINOWN} \
 	    -g ${BINGRP} -m 444 fstab.* ${DESTDIR}/etc)
-	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
