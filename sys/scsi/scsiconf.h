@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.36 1997/07/07 22:45:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -309,19 +309,31 @@ void show_mem __P((u_char *, int));
 int scsi_probe_busses __P((int, int, int));
 void scsi_strvis __P((u_char *, u_char *, int));
 
-static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes));
-static __inline u_int32_t _2btol __P((u_int8_t *bytes));
-static __inline u_int32_t _3btol __P((u_int8_t *bytes));
-static __inline u_int32_t _4btol __P((u_int8_t *bytes));
+static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _2btol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _3btol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _4btol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
 
-static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes));
-static __inline u_int32_t _2ltol __P((u_int8_t *bytes));
-static __inline u_int32_t _3ltol __P((u_int8_t *bytes));
-static __inline u_int32_t _4ltol __P((u_int8_t *bytes));
+static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _2ltol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _3ltol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
+static __inline u_int32_t _4ltol __P((u_int8_t *bytes))
+    __attribute__ ((unused));
 
 static __inline void
 _lto2b(val, bytes)
