@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.9 2003/05/20 08:34:52 wiz Exp $	*/
+/*	$NetBSD: db.c,v 1.10 2003/06/23 20:02:54 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.9 2003/05/20 08:34:52 wiz Exp $");
+#ifdef __RCSID
+__RCSID("$NetBSD: db.c,v 1.10 2003/06/23 20:02:54 aymeric Exp $");
+#endif /* __RCSID */
 #endif /* not lint */
 
 #include <db.h>
