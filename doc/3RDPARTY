@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.41 2003/01/21 13:57:14 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.42 2003/01/26 00:56:51 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -213,12 +213,12 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	diffutils
-Version:	2.7
+Version:	2.8.1
 Current Vers:	2.8.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Mailing List:	bug-gnu-utils@gnu.org
-Responsible:
+Responsible:	wiz
 Notes:
 
 Package:	dtoa.c
@@ -575,7 +575,7 @@ and more.
 
 Package:	postfix
 Version:	2.0.0.1
-Current Vers:	2.0.2
+Current Vers:	2.0.3
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Mailing List:	postfix-users@postfix.org
