@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.343 2000/05/28 02:42:16 tv Exp $
+#	$NetBSD: GENERIC,v 1.344 2000/05/28 20:11:59 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.343 $"
+#ident 		"GENERIC-$Revision: 1.344 $"
 
 maxusers	32		# estimated number of users
 
@@ -205,6 +205,34 @@ mainbus0 at root
 
 # Basic Bus Support
 
+# Plug-and-Play BIOS and attached devices
+
+#pnpbios*	at mainbus?
+
+# mainboard audio chips
+#ess*		at pnpbios0 index ?	# ESS AudioDrive
+#sb*		at pnpbios0 index ?	# NeoMagic 256AV in sb mode
+#wss*		at pnpbios0 index ?	# NeoMagic 256AV in wss mode
+#ym*		at pnpbios0 index ?	# OPL3-SA3
+
+# com port
+# If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
+# Interfaces" to "com*", otherwise com2 will attach at pnpbios0 and there
+# will be no com0.  A side effect is pcmcia (and other) com? previously
+# starting at com3 may attach as com1 or com2.
+#com*		at pnpbios? index ?	# serial ports
+
+# parallel port
+# The above "com*" comments apply, cf. "lpt0" under "ISA parallel
+# "printer interfaces".
+#lpt*		at pnpbios? index ?	# parallel ports
+
+#pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
+#fdc*		at pnpbios? index ?	# floppy controller
+
+# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
+#pciide* at pnpbios0 index ?
+
 # PCI bus support
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
@@ -214,10 +242,10 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00"	# PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 #options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O address
+#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -254,10 +282,11 @@ isapnp0	at isa?
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
 
-# CardBus bus support
+# CardBus bridge support
 #cbb*		at pci? dev ? function ?
 #cardslot*	at cbb?	
 
+# CardBus bus support
 #cardbus*	at cardslot?
 #pcmcia* 	at cardslot?
 
@@ -356,7 +385,7 @@ lpt2	at isa? port 0x3bc
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
-#viaenv*	at viapm?
+#viaenv* at viapm?
 
 # SCSI Controllers and Devices
 
@@ -368,6 +397,7 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI (experimental)
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -421,6 +451,7 @@ scsibus* at isp?
 scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
+#scsibus at siop?
 scsibus* at uha?
 scsibus* at wds?
 
@@ -518,6 +549,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21040
@@ -567,8 +599,8 @@ lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
 #le*	at depca?
 nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
-#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 le*	at nele?
+#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
@@ -587,6 +619,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
@@ -665,33 +698,6 @@ ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
-
-
-# Plug-and-Play BIOS and attached devices
-
-#pnpbios0 at mainbus0
-
-# mainboard audio chips
-#ess*	at pnpbios0 index ?	# ESS AudioDrive
-#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*	at pnpbios0 index ?	# OPL3-SA3
-
-# com port
-# If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
-# Interfaces" to "com*", otherwise com2 will attach at pnpbios0 and there
-# will be no com0.  A side effect is pcmcia (and other) com? previously
-# starting at com3 may attach as com1 or com2.
-#com*	at pnpbios0 index ?
-
-# parallel port
-# The above "com*" comments apply, cf. "lpt0" under "ISA parallel
-# "printer interfaces".
-#lpt*	at pnpbios0 index ?
-
-# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
-
 
 # Audio Devices
 
