@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.1 2002/02/03 16:22:22 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.2 2002/02/05 11:22:28 lukem Exp $
 
 .include "../Makefile.inc"
 .include <bsd.own.mk>
@@ -11,7 +11,12 @@ CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.ramdisk
 MTREECONF=	${.CURDIR}/../common/mtree.conf
 IMAGEENDIAN=	le
-IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini
+IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/services ${_SRC_TOP_}/etc/etc.i386/MAKEDEV \
+		${DESTDIR}/usr/mdec/biosboot.sym ${DESTDIR}/usr/mdec/mbr \
+		${DESTDIR}/usr/mdec/mbr_bootsel
 POPULATEENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
 
