@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.37 2004/04/18 18:55:19 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.38 2004/05/22 18:06:14 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -428,8 +428,7 @@ potrzebom. Przegladnij /etc/defaults/rc.conf aby poznac domyslne wartosci.
 message upgrcomplete
 {Aktualizacja NetBSD-@@VERSION@@ zostala zakonczona. Bedziesz teraz
 musial wykonac polecenia zawarte w pliku INSTALL, aby uzyskac system 
-odpowiadajacy twoim potrzebom. Twoj stary katalog /etc zostal zapisany
-jako /etc.old.
+odpowiadajacy twoim potrzebom.
 
 Musisz przynajmniej dostosowac rc.conf do swojego lokalnego srodowiska
 i zmienic rc_configured=NO na rc_configured=YES inaczej start systemu
@@ -441,8 +440,7 @@ zostac utworzone dla tej wersji), jesli uzywales lokalnych plikow hasel.
 
 message unpackcomplete
 {Rozpakowywanie dodatkowych pakietow NetBSD-@@VERSION@@ zostalo zakonczone. 
-Rozpakowywanie nadpisalo docelowy /etc. Jakikolwiek /etc.old zapisany
-przez wczesniejsza aktualizacje zostal nietkniety. Musisz teraz wykonac
+Musisz teraz wykonac
 polecenia zawarte w pliku INSTALL aby przekonfigurowac system do swoich
 potrzeb.
 
@@ -707,19 +705,6 @@ message noetcfstab
 message badetcfstab
 {Pomocy! Nie moge przeczytac /etc/fdstab na dysku %s. Przerywamy aktualizacje.
 }
-
-message etc_oldexists
-{Nie moge zapisac /etc jako /etc.old, poniewaz docelowy dysk juz posiada
-/etc.old. Napraw to przed kontynuacja.
-
-Jedyna mozliwosc to uruchomienie powloki z menu Narzedziowego,
-sprawdzenie docelowego /etc i /etc.old. Jesli /etc.old pochodzi z
-zakonczonej aktualizacji mozesz to usunac (rm -rf /etc.old), a potem
-zresetowac komputer. Albo jesli /etc.old jest z aktualnej niekompletnej
-aktualizacji mozesz usunac /etc (rm -rf /etc) a potem przeniesc /etc.old
-na /etc (mv /etc.old /etc).
-
-Przerywamy aktualizacje.}
 
 message X_oldexists
 {Nie moge zapisac /usr/X11R6/bin/X jako /usr/X11R6/bin/X.old, poniewaz

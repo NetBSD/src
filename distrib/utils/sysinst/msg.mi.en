@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.126 2004/04/17 18:55:35 atatat Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.127 2004/05/22 18:06:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -438,7 +438,7 @@ message upgrcomplete
 now need to follow the instructions in the INSTALL document as to
 what you need to do to get your system reconfigured for your situation.
 Remember to (re)read the afterboot(8) manpage as it may contain new
-items since your last upgrade.  Your old /etc has been saved as /etc.old.
+items since your last upgrade.
 
 At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user,
@@ -449,12 +449,10 @@ password files.
 
 
 message unpackcomplete
-{Unpacking additional release sets of NetBSD-@@VERSION@@ is now
-complete.  Unpacking sets has clobbered the target /etc.  Any /etc.old
-saved by an earlier upgrade was not touched.  You will now need to
-follow the instructions in the INSTALL document to get your system
-reconfigured for your situation.  The afterboot(8) manpage can also be
-of some help.
+{Unpacking additional release sets of NetBSD-@@VERSION@@ is now complete.  
+You will now need to follow the instructions in the INSTALL document
+to get your system reconfigured for your situation.
+The afterboot(8) manpage can also be of some help.
 
 At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
@@ -717,17 +715,6 @@ message noetcfstab
 message badetcfstab
 {Help! Can't parse /etc/fstab in target disk %s.  Aborting upgrade.
 }
-
-message etc_oldexists
-{I cannot save /etc as /etc.old, because the target disk already has an
-/etc.old. Please fix this before continuing.
-
-One way is to start a shell from the Utilities menu, examine the
-target /etc and /etc.old.  If /etc.old is from a completed upgrade,
-you can rm -f etc.old and restart.  Or if /etc.old is from a recent,
-incomplete upgrade, you can rm -f /etc and mv etc.old to /etc.
-
-Aborting upgrade.}
 
 message X_oldexists
 {I cannot save /usr/X11R6/bin/X as /usr/X11R6/bin/X.old, because the

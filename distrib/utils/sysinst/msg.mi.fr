@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.75 2004/03/29 16:08:20 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.76 2004/05/22 18:06:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -445,7 +445,6 @@ message unpackcomplete
 {La mise à jour de NetBSD-@@VERSION@@ est terminée.
 Suivez les instructions du document d'installation (INSTALL) pour finir
 de reconfigurer votre ordinateur.
-Votre ancien /etc a été sauvegardé sous /etc.old .
 
 Vous devez éditer /etc/rc.conf et ajouter la variable
 "RC_CONFIGURED=yes" pour redémarrer en mode multi-utilisateur.
@@ -453,8 +452,7 @@ Vous devez éditer /etc/rc.conf et ajouter la variable
 
 message upgrcomplete
 { L'installation de composants de NetBSD-@@VERSION@@ supplémentaires est
-terminée. L'installation a modifié le /etc de destination.
-Un /etc.old sauvé par une mise à jour précédente n'a pas été touché.
+terminée.
 Suivez les instructions du document d'installation (INSTALL) afin de
 reconfigurer votre ordinateur.
 
@@ -731,20 +729,6 @@ Arrêt de la mise à jour.
 
 message badetcfstab
 {Erreur fatale ! Impossible de décoder /etc/fstab sur le disque cible %s.
-Arrêt de la mise à jour.
-}
-
-message etc_oldexists
-{Impossible de sauvegarder /etc en /etc.old. Le disque cible a déjà un /etc.old.
-Veuillez corriger avant de continuer.
-
-Une solution est de démarrer un shell depuis le menu `Utilitaires'
-et d'examiner les répertoires /etc et /etc.old sur le disque destination.
-Si /etc.old provient d'une mise à jour précédente,
-vous pouvez l'effacer.
-Si /etc.old provient d'une mise à jour récente et incomplete,
-vous pouvez effacer /etc et renommer /etc.old en /etc.
-
 Arrêt de la mise à jour.
 }
 
