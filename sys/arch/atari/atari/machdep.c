@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2001/06/02 18:09:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2001/08/24 04:34:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -260,9 +260,8 @@ cpu_startup()
 			if (pg == NULL) 
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
