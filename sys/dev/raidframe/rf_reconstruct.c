@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.43 2002/09/19 22:52:52 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.44 2002/09/21 01:25:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.43 2002/09/19 22:52:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.44 2002/09/21 01:25:10 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -158,28 +158,6 @@ SignalReconDone(RF_Raid_t * raidPtr)
 	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
 }
 
-int 
-rf_RegisterReconDoneProc(
-    RF_Raid_t * raidPtr,
-    void (*proc) (RF_Raid_t *, void *),
-    void *arg,
-    RF_ReconDoneProc_t ** handlep)
-{
-	RF_ReconDoneProc_t *p;
-
-	RF_FREELIST_GET(rf_rdp_freelist, p, next, (RF_ReconDoneProc_t *));
-	if (p == NULL)
-		return (ENOMEM);
-	p->proc = proc;
-	p->arg = arg;
-	RF_LOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	p->next = raidPtr->recon_done_procs;
-	raidPtr->recon_done_procs = p;
-	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	if (handlep)
-		*handlep = p;
-	return (0);
-}
 /**************************************************************************
  *
  * sets up the parameters that will be used by the reconstruction process
