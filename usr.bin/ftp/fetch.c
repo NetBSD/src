@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.128 2001/11/25 11:24:45 yamt Exp $	*/
+/*	$NetBSD: fetch.c,v 1.129 2001/11/25 11:41:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.128 2001/11/25 11:24:45 yamt Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.129 2001/11/25 11:41:09 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -1060,10 +1060,18 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 		closefunc = pclose;
 	} else {
-		if (restart_point){
+		if ((rangeend != -1 && rangeend <= restart_point) ||
+		    (rangestart == -1 && filesize != -1 && filesize <= restart_point)) {
+			/* already done */
+			if (verbose)
+				fprintf(ttyout, "already done\n");
+			rval = 0;
+			goto cleanup_fetch_url;
+		}
+		if (restart_point && rangestart != -1) {
 			if (entitylen != -1)
 				filesize = entitylen;
-			if (rangestart != -1 && rangestart != restart_point) {
+			if (rangestart != restart_point) {
 				warnx(
 				    "Size of `%s' differs from save file `%s'",
 				    url, savefile);
