@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2000/12/05 16:07:39 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.50 2000/12/20 16:53:50 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1810,9 +1810,10 @@ pmap_zero_page_uncached(phys)
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
-		DCPP(phys);
-	}
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+		DCPP_40(phys);	/* Works on 060 too */
 #endif
 
 	npte = phys | PG_V | PG_CI;
@@ -2623,16 +2624,24 @@ pmap_enter_ptpage(pmap, va)
 	 * release them.  We also avoid the overhead of vm_map_pageable.
 	 */
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+#endif
+	{
 		st_entry_t *este;
 
 		for (este = &ste[NPTEPG/SG4_LEV3SIZE]; ste < este; ste++) {
 			*ste = ptpa | SG_U | SG_RW | SG_V;
 			ptpa += SG4_LEV3SIZE * sizeof(st_entry_t);
 		}
-	} else
+	}
+#if defined(M68020) || defined(M68030)
+	else
+		*ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
 #endif
+#else
 	*ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
+#endif
 	if (pmap != pmap_kernel()) {
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 		    ("enter: stab %p refcnt %d\n",

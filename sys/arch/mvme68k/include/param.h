@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2000/12/05 18:46:10 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.24 2000/12/20 16:53:50 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,8 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 #if defined(M68030) && !defined(M68040) && !defined(M68060)
 #define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#elif (defined(M68040) || defined(M68060)) && !defined(M68030)
+#define	NBSEG		((32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
 #else
 #define	NBSEG		((mmutype == MMU_68040) ? \
 				(32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
