@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_create.2,v 1.2 2003/09/13 22:31:04 kleink Exp $
+.\"	$NetBSD: timer_create.2,v 1.3 2003/09/13 23:00:38 kleink Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ must be a valid clock id as defined in
 The timer is created in a disarmed state.
 .Pp
 An optional (non-
-.Dv NULL
+.Dv NULL )
 sigevent argument can be specified by the
 .Ar evp
 argument. If the
@@ -89,12 +89,14 @@ Timers are not inherited after a
 and are disarmed and deleted by an
 .Xr exec 2 .
 .Sh RETURN VALUES
-If the
+If successful, the
 .Fn timer_create
-call succeed, it returns 0, and fills in the
+function returns 0, and fills in the
 .Ar timerid
 argument with the id of the new timer that was created.
-If the call fails, it returns -1, and sets errno to indicate the error.
+Otherwise, it returns \-1, and sets
+.Dv errno
+to indicate the error.
 .Sh ERRORS
 The 
 .Fn timer_create
@@ -104,9 +106,9 @@ function will fail if:
 The system is out of resources to satisfy this request, or the process has
 created all the timers it is allowed.
 .It Bq Er EINVAL
-The clock id in the
+The argument
 .Ar clockid
-is invalid.
+is not a valid clock id.
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
 .Xr clock_settime 2 ,
