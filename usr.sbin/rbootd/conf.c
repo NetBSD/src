@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1997/07/28 05:39:18 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1999/06/06 03:11:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: conf.c,v 1.6 1997/07/28 05:39:18 thorpej Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7 1999/06/06 03:11:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: conf.c,v 1.6 1997/07/28 05:39:18 thorpej Exp $");
 */
 
 char	MyHost[MAXHOSTNAMELEN+1];		/* host name */
-pid_t	MyPid;					/* process id */
 int	DebugFlg = 0;				/* set true if debugging */
 int	BootAny = 0;				/* set true if we boot anyone */
 

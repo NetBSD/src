@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.9 1998/07/06 06:57:52 mrg Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.10 1999/06/06 03:11:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.9 1998/07/06 06:57:52 mrg Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.10 1999/06/06 03:11:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: rbootd.c,v 1.9 1998/07/06 06:57:52 mrg Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 #include "defs.h"
 
 int	main __P((int, char *[]));
@@ -137,6 +138,7 @@ main(argc, argv)
 	} else {
 		if (daemon(0, 0))
 			err(1, "can't detach from terminal");
+		pidfile(NULL);
 
 		(void) signal(SIGUSR1, DebugOn);
 		(void) signal(SIGUSR2, DebugOff);
@@ -176,22 +178,6 @@ main(argc, argv)
 		Exit(0);
 	}
 	MyHost[sizeof(MyHost) - 1] = '\0';
-
-	MyPid = getpid();
-
-	/*
-	 *  Write proc's pid to a file.
-	 */
-	{
-		FILE *fp;
-
-		if ((fp = fopen(PidFile, "w")) != NULL) {
-			(void) fprintf(fp, "%d\n", (int) MyPid);
-			(void) fclose(fp);
-		} else {
-			syslog(LOG_WARNING, "fopen: failed (%s)", PidFile);
-		}
-	}
 
 	/*
 	 *  All boot files are relative to the boot directory, we might
