@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 1997/02/11 22:44:26 scottr Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 1997/02/13 19:01:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,6 +107,8 @@ obio_search(parent, cf, aux)
 	struct obio_attach_args oa;
 
 	oa.oa_addr = cf->cf_loc[0];
+	oa.oa_drq = cf->cf_loc[1];
+	oa.oa_hsk = cf->cf_loc[2];
 	oa.oa_tag = MAC68K_BUS_SPACE_MEM;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
