@@ -1,6 +1,6 @@
-#	$NetBSD: files.hpcsh,v 1.35 2004/03/25 12:38:49 wiz Exp $
+#	$NetBSD: files.hpcsh,v 1.36 2004/03/25 15:26:35 wiz Exp $
 #
-maxpartitions 16
+maxpartitions 8
 
 maxusers 2 16 64
 

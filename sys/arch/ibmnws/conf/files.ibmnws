@@ -1,8 +1,8 @@
-#	$NetBSD: files.ibmnws,v 1.4 2004/03/25 12:38:50 wiz Exp $
+#	$NetBSD: files.ibmnws,v 1.5 2004/03/25 15:26:35 wiz Exp $
 #
 # ibmnws-specific configuration info
 #
-maxpartitions 16
+maxpartitions 8
 
 maxusers 2 8 64
 
