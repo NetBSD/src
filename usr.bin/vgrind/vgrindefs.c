@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrindefs.c,v 1.6 1997/10/20 03:01:29 lukem Exp $	*/
+/*	$NetBSD: vgrindefs.c,v 1.7 1998/10/08 01:32:23 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vgrindefs.c,v 1.6 1997/10/20 03:01:29 lukem Exp $");
+__RCSID("$NetBSD: vgrindefs.c,v 1.7 1998/10/08 01:32:23 wsanchez Exp $");
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: vgrindefs.c,v 1.6 1997/10/20 03:01:29 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <sys/fcntl.h>
 /*
  * grindcap - routines for dealing with the language definitions data base
  *	(code stolen almost totally from termcap)
@@ -69,11 +71,15 @@ static	char *tskip();
 static	char *tdecode();
 char	*tgetstr();
 
+int tnamatch __P((char *np));
+int tnchktc __P((void));
+
 /*
  * Get an entry for terminal name in buffer bp,
  * from the termcap file.  Parse is very rudimentary;
  * we just notice escaped newlines.
  */
+int
 tgetent(bp, name, file)
 	char *bp, *name, *file;
 {
@@ -81,7 +87,6 @@ tgetent(bp, name, file)
 	int c;
 	int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
-	char *cp2;
 	int tf;
 
 	tbuf = bp;
@@ -134,6 +139,7 @@ tgetent(bp, name, file)
  * entries to say "like an HP2621 but doesn't turn on the labels".
  * Note that this works because of the left to right scan.
  */
+int
 tnchktc()
 {
 	char *p, *q;
@@ -181,6 +187,7 @@ tnchktc()
  * against each such name.  The normal : terminator after the last
  * name (before the first field) stops us.
  */
+int
 tnamatch(np)
 	char *np;
 {
@@ -227,6 +234,7 @@ tskip(bp)
  * a # character.  If the option is not found we return -1.
  * Note that we handle octal numbers beginning with 0.
  */
+int
 tgetnum(id)
 	char *id;
 {
@@ -260,6 +268,7 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
+int
 tgetflag(id)
 	char *id;
 {
@@ -318,7 +327,6 @@ tdecode(str, area)
 {
 	char *cp;
 	int c;
-	int i;
 
 	cp = *area;
 	while (c = *str++) {
