@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.23 1997/04/07 05:19:03 cgd Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.24 1997/04/07 06:09:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>

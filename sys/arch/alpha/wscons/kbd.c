@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.4 1997/04/06 20:09:05 cgd Exp $ */
+/* $NetBSD: kbd.c,v 1.5 1997/04/07 06:09:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
 #include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -64,6 +63,7 @@
 #include <sys/signalvar.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include <machine/vuid_event.h>
 #include <machine/kbio.h>			/* XXX FOR KIOCSDIRECT */
