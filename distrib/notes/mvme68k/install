@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.11 2000/11/01 10:58:29 scw Exp $
+.\"	$NetBSD: install,v 1.12 2000/11/21 12:38:59 scw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.11 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.12 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -386,7 +386,7 @@ You can now shutdown the system.
 .Dl Cold/Warm Reset flag [C,W] = C?
 .Dl Execute Soft Reset [Y,N] N? Ic y
 .Pp
-Resetting the MVME162-LX and MVME167 boards are very similar.
+Resetting the other types of MVME boards are very similar.
 You should now reboot from that just installed miniroot. See the section
 entitled
 .Sx "Booting the miniroot"
@@ -469,22 +469,22 @@ Download was a success!
 .Pp
 See below for the next step in booting MVME147.
 .Pp
-The MVME162-LX and MVME167 boards are able to download netboot
+The MVME162, MVME167, MVME172 and MVME177 boards are able to download netboot
 directly using TFTP.
 To enable this, you must first configure the networking parameters
 on the board as described in the section entitled "Preparing your System
 for
 .Nx
-Installation. On a properly configured MVME162-LX or MVME167, all you need
+Installation. On a properly configured MVME162/172 or MVME167/177, all you need
 to type is:
 .Pp
-.Dl 16x-Bug\*> Ic nbo
+.Dl 1xx-Bug\*> Ic nbo
 .Pp
 For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.11 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.12 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -534,7 +534,7 @@ The command:
 .Pp
 .Dl ssh: Ic "ifconfig ie0 inet 192.168.1.4 up"
 .Pp
-will bring up the MVME162-LX or MVME167 network interface
+will bring up the MVME162/172 or MVME167/177 network interface
 .Li ie0
 with that address.
 The next
@@ -596,9 +596,9 @@ SCSI-ID 0, then the 147Bug boot command is:
 .Pp
 .Dl 147-Bug\*> Ic "bo 0,,b:"
 .Pp
-The corresponding 162Bug or 167Bug boot command is:
+The corresponding 162Bug, 167Bug, 172Bug or 177Bug boot command is:
 .Pp
-.Dl 16x-Bug\*> Ic "bo 0,,,b:"
+.Dl 1xx-Bug\*> Ic "bo 0,,,b:"
 .Pp
 The command line parameters above are:
 .Pp
