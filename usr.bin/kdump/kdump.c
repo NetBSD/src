@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.18 1997/10/19 03:38:29 lukem Exp $	*/
+/*	$NetBSD: kdump.c,v 1.19 1997/10/20 04:21:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.18 1997/10/19 03:38:29 lukem Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.19 1997/10/20 04:21:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ struct ktr_header ktr_header;
 
 #include <sys/syscall.h>
 
+#include "../../sys/compat/freebsd/freebsd_syscall.h"
 #include "../../sys/compat/hpux/hpux_syscall.h"
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
@@ -86,6 +87,7 @@ struct ktr_header ktr_header;
 #define KTRACE
 #include "../../sys/kern/syscalls.c"
 
+#include "../../sys/compat/freebsd/freebsd_syscalls.c"
 #include "../../sys/compat/hpux/hpux_syscalls.c"
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
@@ -102,15 +104,16 @@ struct emulation {
 };
 
 static struct emulation emulations[] = {
-	{ "netbsd",	     syscallnames,        SYS_MAXSYSCALL },
-	{ "hpux",	hpux_syscallnames,   HPUX_SYS_MAXSYSCALL },
-	{ "ibcs2",     ibcs2_syscallnames,  IBCS2_SYS_MAXSYSCALL },
-	{ "linux",     linux_syscallnames,  LINUX_SYS_MAXSYSCALL },
-	{ "osf1",       osf1_syscallnames,   OSF1_SYS_MAXSYSCALL },
-	{ "sunos",     sunos_syscallnames,  SUNOS_SYS_MAXSYSCALL },
-	{ "svr4",       svr4_syscallnames,   SVR4_SYS_MAXSYSCALL },
-	{ "ultrix",   ultrix_syscallnames, ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,			     NULL,		    0    }
+	{ "netbsd",	     syscallnames,         SYS_MAXSYSCALL },
+	{ "freebsd", freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL },
+	{ "hpux",	hpux_syscallnames,    HPUX_SYS_MAXSYSCALL },
+	{ "ibcs2",     ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL },
+	{ "linux",     linux_syscallnames,   LINUX_SYS_MAXSYSCALL },
+	{ "osf1",       osf1_syscallnames,    OSF1_SYS_MAXSYSCALL },
+	{ "sunos",     sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL },
+	{ "svr4",       svr4_syscallnames,    SVR4_SYS_MAXSYSCALL },
+	{ "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL },
+	{ NULL,			     NULL,		     0    }
 };
 
 struct emulation *current;
