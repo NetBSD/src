@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.127 1995/01/13 10:22:58 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.128 1995/01/13 10:46:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -137,9 +137,8 @@ struct wd_softc {
 #define	WDF_LOCKED	0x01
 #define	WDF_WANTED	0x02
 #define	WDF_LOADED	0x04
-#define	WDF_BSDLABEL	0x08		/* has a BSD disk label */
-#define	WDF_WLABEL	0x10		/* label is writable */
-#define	WDF_32BIT	0x20		/* can do 32-bit transfer */
+#define	WDF_WLABEL	0x08		/* label is writable */
+#define	WDF_32BIT	0x10		/* can do 32-bit transfer */
 
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
 	daddr_t	sc_badsect[127];	/* 126 plus trailing -1 marker */
@@ -407,21 +406,13 @@ wdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	/* Have partitions and want to use them? */
-	if (WDPART(bp->b_dev) != RAW_PART) {
-		if ((wd->sc_flags & WDF_BSDLABEL) == 0) {
-			bp->b_error = EIO;
-			goto bad;
-		}
-		/*
-		 * Do bounds checking, adjust transfer. if error, process.
-		 * If end of partition, just return.
-		 */
-		if (bounds_check_with_label(bp, &wd->sc_dk.dk_label,
-		    (wd->sc_flags & WDF_WLABEL) != 0) <= 0)
-			goto done;
-		/* Otherwise, process transfer request. */
-	}
+	/*
+	 * Do bounds checking, adjust transfer. if error, process.
+	 * If end of partition, just return.
+	 */
+	if (bounds_check_with_label(bp, &wd->sc_dk.dk_label,
+	    (wd->sc_flags & WDF_WLABEL) != 0) <= 0)
+		goto done;
     
 	/* Don't bother doing rotational optimization. */
 	bp->b_cylin = 0;
@@ -890,7 +881,6 @@ wdopen(dev, flag, fmt)
 		wd->sc_flags |= WDF_LOCKED;
 
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
-			wd->sc_flags &= ~WDF_BSDLABEL;
 			wd->sc_flags |= WDF_LOADED;
 
 			/* Load the physical device parameters. */
@@ -952,9 +942,6 @@ wdgetdisklabel(wd)
 {
 	char *errstring;
 
-	if ((wd->sc_flags & WDF_BSDLABEL) != 0)
-		return;
-
 	bzero(&wd->sc_dk.dk_label, sizeof(struct disklabel));
 	bzero(&wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
@@ -1014,8 +1001,6 @@ wdgetdisklabel(wd)
 		wd->sc_state = GEOMETRY;
 	if ((wd->sc_dk.dk_label.d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
-
-	wd->sc_flags |= WDF_BSDLABEL;
 }
 
 /*
@@ -1343,11 +1328,9 @@ wdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&wd->sc_dk.dk_label,
-		    (struct disklabel *)addr,
-		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openmask : */0,
+		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
 		    &wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
-			wd->sc_flags |= WDF_BSDLABEL;
 			if (wd->sc_state > GEOMETRY)
 				wd->sc_state = GEOMETRY;
 		}
@@ -1366,11 +1349,9 @@ wdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&wd->sc_dk.dk_label,
-		    (struct disklabel *)addr,
-		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openmask : */0,
+		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
 		    &wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
-			wd->sc_flags |= WDF_BSDLABEL;
 			if (wd->sc_state > GEOMETRY)
 				wd->sc_state = GEOMETRY;
 	    
@@ -1446,8 +1427,7 @@ wdsize(dev)
 		return -1;
 	wd = wdcd.cd_devs[WDUNIT(dev)];
 	part = WDPART(dev);
-	if ((wd->sc_flags & WDF_BSDLABEL) == 0 ||
-	    wd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+	if (wd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = wd->sc_dk.dk_label.d_partitions[part].p_size;
