@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.60 2003/08/07 01:10:53 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.61 2003/09/27 03:43:08 tls Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.60 2003/08/07 01:10:53 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.61 2003/09/27 03:43:08 tls Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -130,7 +130,9 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
 	if (IS_FC(isp)) {
+#if 0	/* XXX channel "settle" time seems to sidestep some nasty race */
         	isp->isp_osinfo._chan.chan_flags = SCSIPI_CHAN_NOSETTLE;
+#endif
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
 		isp->isp_osinfo.threadwork = 1;
