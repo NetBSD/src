@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.46 2004/08/09 13:30:16 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.47 2004/08/12 18:23:50 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -54,15 +54,8 @@
  * A driver for Xircom CreditCard PCMCIA Ethernet adapters.
  */
 
-/*
- * Known Bugs:
- *
- * 1) Promiscuous mode doesn't work on at least the CE2.
- * 2) Slow. ~450KB/s.  Memory access would be better.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.46 2004/08/09 13:30:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.47 2004/08/12 18:23:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -75,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.46 2004/08/09 13:30:16 mycroft Exp $");
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1197,13 +1192,13 @@ xi_cycle_power(sc)
 	PAGE(sc, 4);
 	DELAY(1);
 	bus_space_write_1(bst, bsh, offset + GP1, 0);
-	DELAY(40000);
+	tsleep(&xi_cycle_power, PWAIT, "xipwr1", hz * 40 / 1000);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
 		bus_space_write_1(bst, bsh, offset + GP1, POWER_UP);
 	else
 		/* XXX What is bit 2 (aka AIC)? */
 		bus_space_write_1(bst, bsh, offset + GP1, POWER_UP | 4);
-	DELAY(20000);
+	tsleep(&xi_cycle_power, PWAIT, "xipwr2", hz * 20 / 1000);
 }
 
 STATIC void
@@ -1220,9 +1215,9 @@ xi_full_reset(sc)
 	/* Do an as extensive reset as possible on all functions. */
 	xi_cycle_power(sc);
 	bus_space_write_1(bst, bsh, offset + CR, SOFT_RESET);
-	DELAY(20000);
+	tsleep(&xi_full_reset, PWAIT, "xirst1", hz * 20 / 1000);
 	bus_space_write_1(bst, bsh, offset + CR, 0);
-	DELAY(20000);
+	tsleep(&xi_full_reset, PWAIT, "xirst2", hz * 20 / 1000);
 	PAGE(sc, 4);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK) {
 		/*
@@ -1232,7 +1227,7 @@ xi_full_reset(sc)
 		bus_space_write_1(bst, bsh, offset + GP0,
 		    GP1_OUT | GP2_OUT | GP2_WR);
 	}
-	DELAY(500000);
+	tsleep(&xi_full_reset, PWAIT, "xirst3", hz * 500 / 1000);
 
 	/* Get revision information.  XXX Symbolic constants. */
 	sc->sc_rev = bus_space_read_1(bst, bsh, offset + BV) &
@@ -1247,7 +1242,7 @@ xi_full_reset(sc)
 		 */
 		bus_space_write_1(bst, bsh, offset + GP0, GP1_OUT);
 	}
-	DELAY(40000);
+	tsleep(&xi_full_reset, PWAIT, "xirst4", hz * 40 / 1000);
 
 	/*
 	 * Disable source insertion.
@@ -1293,7 +1288,7 @@ xi_full_reset(sc)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys))
 		x |= SELECT_MII;
 	bus_space_write_1(bst, bsh, offset + MSR, x);
-	DELAY(20000);
+	tsleep(&xi_full_reset, PWAIT, "xirst5", hz * 20 / 1000);
 
 	/* Configure the LED registers. */
 	/* XXX This is not good for 10base2. */
