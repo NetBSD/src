@@ -1,19 +1,19 @@
-#	$NetBSD: TRINITY,v 1.41 1994/10/27 04:15:00 cgd Exp $
+#	$NetBSD: TRINITY,v 1.42 1994/11/03 18:14:52 mycroft Exp $
 #
 # TRINITY -- Mycroft's 386 box
 #
 
 machine		"i386"
-cpu		"I386_CPU"
-cpu		"I486_CPU"
-options		"DUMMY_NOPS"
-options		"MACHINE_NONCONTIG"
+options		I386_CPU
+options		I486_CPU
+options		DUMMY_NOPS
+options		MACHINE_NONCONTIG
 options		XSERVER,UCONSOLE
-options		"USER_LDT"
+options		USER_LDT
 
-ident		TRINITY
 maxusers	16
-timezone	5 dst
+options		TIMEZONE=300
+options		DST=1
 
 options		SWAPPAGER
 options		VNODEPAGER,DEVPAGER
@@ -21,17 +21,17 @@ options		DDB
 options		DIAGNOSTIC
 options		KTRACE
 options		SYSVSHM,SYSVSEM,SYSVMSG
-#options	"SHMMAXPGS=1024"
+#options	SHMMAXPGS=1024
 options		LKM
 
-options		"COMPAT_NOMID"
-options		"COMPAT_09"
-options		"COMPAT_10"
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
+options		COMPAT_NOMID
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_43
+options		TCP_COMPAT_42
 
-options		"COMPAT_SVR4"
-options		"COMPAT_IBCS2"
+options		COMPAT_SVR4
+#options	COMPAT_IBCS2
 
 options		FFS,QUOTA
 options		LFS
@@ -40,7 +40,7 @@ options		MFS
 options		NFSCLIENT
 options		NFSSERVER
 
-options		"CD9660"
+options		CD9660
 options		MSDOSFS
 options		FDESC
 options		FIFO
@@ -54,76 +54,57 @@ options		UNION
 options		GATEWAY
 options		INET
 
-options		SCSI
-
-config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1 and vnd0c and vnd1c and vnd2c and vnd3c
+config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1
 #config		netbsd	swap generic
 #options	GENERIC
 
-controller	isa0
+isa0 at root
+eisa0 at root
 
-#device		pc0	at isa? port "IO_KBD" irq 1
-device		vt0	at isa? port "IO_KBD" irq 1
+#pc0	at isa? port 0x60 irq 1
+vt0	at isa? port 0x60 irq 1
 
-device		com0	at isa? port "IO_COM1" irq 4
-device		com1	at isa? port "IO_COM2" irq 3
-device		lpt0	at isa? port "IO_LPT1" irq 7
+com0	at isa? port 0x3f8 irq 4
+com1	at isa? port 0x2f8 irq 3
+lpt0	at isa? port 0x378 irq 7
 
-device		lms0	at isa? port "IO_BMS1" irq 5
-#device		mms0	at isa? port "IO_BMS1" irq 5
-#device		pms0	at isa? port "IO_KBD" irq 12
+lms0	at isa? port 0x23c irq 5
+#mms0	at isa? port 0x23c irq 5
+#pms0	at isa? port 0x60 irq 12
 
-#controller	ahb0	at isa? irq ?
-#master		scsibus0 at ahb0
-#controller	bt0	at isa? port "IO_BT0" irq ? drq ?
-#master		scsibus0 at bt0
-#controller	uha0	at isa? port "IO_UHA0" irq ? drq ?
-#master		scsibus0 at uha0
-#controller	aic0	at isa? port 0x340 irq 12
-#master		scsibus1 at aic0
+#ahb0	at eisa? slot ? irq ?
+#scsibus0 at ahb0
+#bt0	at isa? port 0x330 irq ? drq ?
+#scsibus0 at bt0
+#uha0	at isa? port 0x330 irq ? drq ?
+#scsibus0 at uha0
+#aic0	at isa? port 0x340 irq 12
+#scsibus1 at aic0
 
-controller	aha0	at isa? port "IO_AHA0" irq ? drq ?
-master		scsibus0 at aha0
-disk		sd0	at scsibus0 slave ?
-disk		sd1	at scsibus0 slave ?
-disk		sd2	at scsibus0 slave ?
-disk		sd3	at scsibus0 slave ?
-tape		st0	at scsibus0 slave ?
-tape		st1	at scsibus0 slave ?
-disk		cd0	at scsibus0 slave ?
-disk		cd1	at scsibus0 slave ?
+aha0	at isa? port 0x330 irq ? drq ?
+scsibus0 at aha0
+sea0	at isa? iomem 0xc8000 irq 5
+scsibus1 at sea0
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
 
-controller	sea0	at isa? iomem 0xc8000 irq 5
-master		scsibus1 at sea0
-disk		sd0	at scsibus1 slave ?
-disk		sd1	at scsibus1 slave ?
-disk		sd2	at scsibus1 slave ?
-disk		sd3	at scsibus1 slave ?
-tape		st0	at scsibus1 slave ?
-tape		st1	at scsibus1 slave ?
-disk		cd0	at scsibus1 slave ?
-disk		cd1	at scsibus1 slave ?
+wdc0	at isa? port 0x1f0 irq 14
+wd*	at wdc? drive ?
 
-controller	wdc0	at isa? port "IO_WD1" irq 14
-disk		wd0	at wdc0 drive ?
-disk		wd1	at wdc0 drive ?
+fdc0	at isa? port 0x3f0 irq 6 drq 2
+fd*	at fdc? drive ?
 
-controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
-disk		fd0	at fdc0 drive ?
-disk		fd1	at fdc0 drive ?
+#mcd0	at isa? port 0x300 irq 10
 
-#device		mcd0	at isa? port 0x300 irq 10
+ed0	at isa? port 0x300 iomem 0xc8000 iosiz 8192 irq 9
+ep0	at isa? port ? irq ?
+le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5
 
-device		ed0	at isa? port 0x300 iomem 0xc8000 iosiz 8192 irq 9
-device		ep0	at isa? port ? irq ?
-device		le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5
-
-device		npx0	at isa? port "IO_NPX" irq 13
+npx0	at isa? port 0xf0 irq 13
 
 pseudo-device	loop
-pseudo-device	ether
 pseudo-device	bpfilter 8
-pseudo-device	log
 pseudo-device	pty	32
 pseudo-device	vn	4
 pseudo-device	ppp	2
