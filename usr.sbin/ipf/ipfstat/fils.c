@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.6 1997/05/25 12:05:03 darrenr Exp $	*/
+/*	$NetBSD: fils.c,v 1.7 1997/05/27 22:37:29 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -36,7 +36,7 @@
 #include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
-#include "ip_proxy.h"
+#include <netinet/ip_proxy.h>
 #include <netinet/ip_nat.h>
 #include <netinet/ip_frag.h>
 #include <netinet/ip_state.h>
@@ -47,7 +47,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.6 1997/05/25 12:05:03 darrenr Exp $";
+static	char	rcsid[] = "Id: fils.c,v 2.0.2.9 1997/05/08 10:11:31 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
