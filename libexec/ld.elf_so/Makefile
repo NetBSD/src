@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2002/09/13 18:28:58 mycroft Exp $
+#	$NetBSD: Makefile,v 1.54 2002/09/26 12:59:29 mycroft Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -38,11 +38,11 @@ CPPFLAGS+= -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -I${.CURDIR}
 CPPFLAGS+= -DRTLD_LOADER
 CPPFLAGS+= -D_RTLD_SOURCE
-CPPFLAGS+= -DDEBUG
+#CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DRTLD_DEBUG
 #CPPFLAGS+= -DRTLD_DEBUG_RELOC
 #DBG=	-g
-DBG=	-O3
+DBG=	-O3 -fomit-frame-pointer
 
 .if ${SHLIBDIR} != ${LIBDIR}
 CPPFLAGS+= -DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
