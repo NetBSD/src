@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.2 1997/04/13 10:30:46 mrg Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.3 1997/07/07 17:11:05 christos Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: inet_pton.c,v 1.2 1997/04/13 10:30:46 mrg Exp $";
+static char rcsid[] = "$NetBSD: inet_pton.c,v 1.3 1997/07/07 17:11:05 christos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,39 +86,94 @@ inet_pton4(src, dst)
 	const char *src;
 	u_char *dst;
 {
-	static const char digits[] = "0123456789";
-	int saw_digit, octets, ch;
-	u_char tmp[INADDRSZ], *tp;
+	u_int32_t val;
+	int base, n;
+	unsigned char c;
+	u_int parts[4];
+	register u_int *pp = parts;
 
-	saw_digit = 0;
-	octets = 0;
-	*(tp = tmp) = 0;
-	while ((ch = *src++) != '\0') {
-		const char *pch;
-
-		if ((pch = strchr(digits, ch)) != NULL) {
-			u_int new = *tp * 10 + (pch - digits);
-
-			if (new > 255)
-				return (0);
-			*tp = new;
-			if (! saw_digit) {
-				if (++octets > 4)
-					return (0);
-				saw_digit = 1;
-			}
-		} else if (ch == '.' && saw_digit) {
-			if (octets == 4)
-				return (0);
-			*++tp = 0;
-			saw_digit = 0;
-		} else
+	c = *src;
+	for (;;) {
+		/*
+		 * Collect number up to ``.''.
+		 * Values are specified as for C:
+		 * 0x=hex, 0=octal, isdigit=decimal.
+		 */
+		if (!isdigit(c))
 			return (0);
+		val = 0; base = 10;
+		if (c == '0') {
+			c = *++src;
+			if (c == 'x' || c == 'X')
+				base = 16, c = *++src;
+			else
+				base = 8;
+		}
+		for (;;) {
+			if (isdigit(c)) {
+				val = (val * base) + (c - '0');
+				c = *++src;
+			} else if (base == 16 && isxdigit(c)) {
+				val = (val << 4) |
+					(c + 10 - (islower(c) ? 'a' : 'A'));
+				c = *++src;
+			} else
+			break;
+		}
+		if (c == '.') {
+			/*
+			 * Internet format:
+			 *	a.b.c.d
+			 *	a.b.c	(with c treated as 16 bits)
+			 *	a.b	(with b treated as 24 bits)
+			 */
+			if (pp >= parts + 3)
+				return (0);
+			*pp++ = val;
+			c = *++src;
+		} else
+			break;
 	}
-	if (octets < 4)
+	/*
+	 * Check for trailing characters.
+	 */
+	if (c != '\0' && !isspace(c))
 		return (0);
+	/*
+	 * Concoct the address according to
+	 * the number of parts specified.
+	 */
+	n = pp - parts + 1;
+	switch (n) {
 
-	memcpy(dst, tmp, INADDRSZ);
+	case 0:
+		return (0);		/* initial nondigit */
+
+	case 1:				/* a -- 32 bits */
+		break;
+
+	case 2:				/* a.b -- 8.24 bits */
+		if (val > 0xffffff)
+			return (0);
+		val |= parts[0] << 24;
+		break;
+
+	case 3:				/* a.b.c -- 8.8.16 bits */
+		if (val > 0xffff)
+			return (0);
+		val |= (parts[0] << 24) | (parts[1] << 16);
+		break;
+
+	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
+		if (val > 0xff)
+			return (0);
+		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+		break;
+	}
+	if (dst) {
+		val = htonl(val);
+		memcpy(dst, &val, INADDRSZ);
+	}
 	return (1);
 }
 
@@ -218,4 +273,34 @@ inet_pton6(src, dst)
 		return (0);
 	memcpy(dst, tmp, IN6ADDRSZ);
 	return (1);
+}
+
+/*
+ * Ascii internet address interpretation routine.
+ * The value returned is in network order.
+ */
+u_long
+inet_addr(cp)
+	register const char *cp;
+{
+	struct in_addr val;
+
+	if (inet_pton4(cp, (u_char *) &val.s_addr))
+		return (val.s_addr);
+	return (INADDR_NONE);
+}
+
+/* 
+ * Check whether "cp" is a valid ascii representation
+ * of an Internet address and convert to a binary address.
+ * Returns 1 if the address is valid, 0 if not.
+ * This replaces inet_addr, the return value from which
+ * cannot distinguish between failure and a local broadcast address.
+ */
+int
+inet_aton(cp, addr)
+	register const char *cp;
+	struct in_addr *addr;
+{
+	return inet_pton4(cp, (u_char *) &addr->s_addr);
 }
