@@ -6,7 +6,7 @@ mainbus0 at root
 cpu* at mainbus0
 
 # set CPU architecture level for kernel target
-options 	CPU_R4000		# ARC machines use r4000 or r4400
+options 	MIPS3
 
 # Standard (non-optional) system "options"
 options 	SWAPPAGER		# swap pager (anonymous and swap space)
