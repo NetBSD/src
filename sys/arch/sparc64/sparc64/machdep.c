@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2000/09/28 19:56:14 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.91 2000/12/04 16:01:19 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1007,15 +1007,26 @@ void
 trapdump(tf)
 	struct trapframe64* tf;
 {
-	printf("TRAPFRAME: tstate=%x:%x pc=%x:%x npc=%x:%x y=%x\n",
-	       tf->tf_tstate, tf->tf_pc, tf->tf_npc, tf->tf_y);
-	printf("%%g1-7: %x:%x %x:%x %x:%x %x:%x %x:%x %x:%x %x:%x\n",
-	       tf->tf_global[1], tf->tf_global[2], tf->tf_global[3], 
-	       tf->tf_global[4], tf->tf_global[5], tf->tf_global[6], 
-	       tf->tf_global[7]);
-	printf("%%o0-7: %x:%x %x:%x %x:%x %x:%x\n %x:%x %x:%x %x:%x %x:%x\n",
-	       tf->tf_out[0], tf->tf_out[1], tf->tf_out[2], tf->tf_out[3], 
-	       tf->tf_out[4], tf->tf_out[5], tf->tf_out[6], tf->tf_out[7]);
+	printf("TRAPFRAME: tstate=%llx pc=%llx npc=%llx y=%x\n",
+	       (unsigned long long)tf->tf_tstate, (unsigned long long)tf->tf_pc,
+	       (unsigned long long)tf->tf_npc, (unsigned)tf->tf_y);
+	printf("%%g1-7: %llx %llx %llx %llx %llx %llx %llx\n",
+	       (unsigned long long)tf->tf_global[1],
+	       (unsigned long long)tf->tf_global[2],
+	       (unsigned long long)tf->tf_global[3], 
+	       (unsigned long long)tf->tf_global[4],
+	       (unsigned long long)tf->tf_global[5],
+	       (unsigned long long)tf->tf_global[6], 
+	       (unsigned long long)tf->tf_global[7]);
+	printf("%%o0-7: %llx %llx %llx %llx\n %llx %llx %llx %llx\n",
+	       (unsigned long long)tf->tf_out[0],
+	       (unsigned long long)tf->tf_out[1],
+	       (unsigned long long)tf->tf_out[2],
+	       (unsigned long long)tf->tf_out[3], 
+	       (unsigned long long)tf->tf_out[4],
+	       (unsigned long long)tf->tf_out[5],
+	       (unsigned long long)tf->tf_out[6],
+	       (unsigned long long)tf->tf_out[7]);
 }
 /*
  * get the fp and dump the stack as best we can.  don't leave the
@@ -1034,14 +1045,20 @@ stackdump()
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%x(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %p\n",
-			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
-			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
-			       fp64->fr_fp);
+			printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %llx\n",
+			       (unsigned long long)fp64->fr_pc,
+			       (unsigned long long)fp64->fr_arg[0],
+			       (unsigned long long)fp64->fr_arg[1],
+			       (unsigned long long)fp64->fr_arg[2],
+			       (unsigned long long)fp64->fr_arg[3],
+			       (unsigned long long)fp64->fr_arg[4],
+			       (unsigned long long)fp64->fr_arg[5],	
+			       (unsigned long long)fp64->fr_arg[6],
+			       (unsigned long long)fp64->fr_fp);
 			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
-			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
+			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %x\n",
 			       fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 			       fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 			       fp->fr_fp);
