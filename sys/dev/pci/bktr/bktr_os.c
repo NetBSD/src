@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.4 2000/05/07 14:43:32 veego Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.5 2000/05/21 15:43:57 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
 
@@ -1378,8 +1378,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	DPR(("pci_mapreg_map: memt %x, memh %x, size %x\n",
 	     bktr->memt, (u_int)bktr->memh, (u_int)bktr->obmemsz));
 	if (retval) {
-		printf("%s: couldn't map memory\n",
-		       bktr->bktr_dev.dv_xname);
+		printf("%s: couldn't map memory\n", bktr_name(bktr));
 		return;
 	}
 
@@ -1395,7 +1394,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n",
-		       bktr->bktr_dev.dv_xname);
+		       bktr_name(bktr));
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -1403,14 +1402,14 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 				      bktr_intr, bktr);
 	if (bktr->ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		       bktr->bktr_dev.dv_xname);
+		       bktr_name(bktr));
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", bktr->bktr_dev.dv_xname,
+		printf("%s: interrupting at %s\n", bktr_name(bktr),
 		       intrstr);
 #endif /* __NetBSD__ */
 	
@@ -1427,8 +1426,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	if (!latency) {
 		if (bootverbose) {
 			printf("%s: PCI bus latency was 0 changing to %d",
-			       bktr->bktr_dev.dv_xname, 
-			       BROOKTREE_DEF_LATENCY_VALUE);
+			       bktr_name(bktr), BROOKTREE_DEF_LATENCY_VALUE);
 		}
 		latency = BROOKTREE_DEF_LATENCY_VALUE;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 
@@ -1475,15 +1473,15 @@ get_bktr_mem(bktr, dmapp, size)
                 align = PAGE_SIZE;
                 if (bus_dmamem_alloc(dmat, size, align, 0, &seg, 1,
                                      &rseg, BUS_DMA_NOWAIT)) {
-                        printf("bktr%d: Unable to dmamem_alloc of %d bytes\n",
-                                bktr->bktr_dev.dv_unit, size);
+                        printf("%s: Unable to dmamem_alloc of %d bytes\n",
+			       bktr_name(bktr), size);
                         return 0;
                 }
         }
         if (bus_dmamem_map(dmat, &seg, rseg, size,
                            &kva, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-                printf("bktr%d: Unable to dmamem_map of %d bytes\n",
-                        bktr->bktr_dev.dv_unit, size);
+                printf("%s: Unable to dmamem_map of %d bytes\n",
+                        bktr_name(bktr), size);
                 bus_dmamem_free(dmat, &seg, rseg);
                 return 0;
         }
@@ -1494,15 +1492,15 @@ get_bktr_mem(bktr, dmapp, size)
          * Create and locd the DMA map for the DMA area
          */
         if (bus_dmamap_create(dmat, size, 1, size, 0, BUS_DMA_NOWAIT, dmapp)) {
-                printf("bktr%d: Unable to dmamap_create of %d bytes\n",
-                        bktr->bktr_dev.dv_unit, size);
+                printf("%s: Unable to dmamap_create of %d bytes\n",
+                        bktr_name(bktr), size);
                 bus_dmamem_unmap(dmat, kva, size);
                 bus_dmamem_free(dmat, &seg, rseg);
                 return 0;
         }
         if (bus_dmamap_load(dmat, *dmapp, kva, size, NULL, BUS_DMA_NOWAIT)) {
-                printf("bktr%d: Unable to dmamap_load of %d bytes\n",
-                        bktr->bktr_dev.dv_unit, size);
+                printf("%s: Unable to dmamap_load of %d bytes\n",
+                        bktr_name(bktr), size);
                 bus_dmamem_unmap(dmat, kva, size);
                 bus_dmamem_free(dmat, &seg, rseg);
                 bus_dmamap_destroy(dmat, *dmapp);
