@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_optimize.c,v 1.2 2004/11/14 11:26:48 yamt Exp $	*/
-/*	$OpenBSD: pfctl_optimize.c,v 1.2 2004/08/08 19:04:25 deraadt Exp $ */
+/*	$NetBSD: pfctl_optimize.c,v 1.3 2004/12/19 10:27:46 yamt Exp $	*/
+/*	$OpenBSD: pfctl_optimize.c,v 1.2.2.1 2004/12/17 02:51:35 brad Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -1319,7 +1319,7 @@ addrs_equal(struct pf_rule_addr *a, struct pf_rule_addr *b)
 int
 addrs_combineable(struct pf_rule_addr *a, struct pf_rule_addr *b)
 {
-	if (a->addr.type != PF_ADDR_ADDRMASK &&
+	if (a->addr.type != PF_ADDR_ADDRMASK ||
 	    b->addr.type != PF_ADDR_ADDRMASK)
 		return (0);
 	if (a->neg != b->neg || a->port_op != b->port_op ||
