@@ -239,7 +239,13 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 				OPENSSL_free(tmp);
 				goto err;
 				}
-			M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
+			if (!M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj))
+				{
+				PKCS7err(PKCS7_F_PKCS7_DATAINIT,
+					ERR_R_MALLOC_FAILURE);
+				OPENSSL_free(tmp);
+				goto err;
+				}
 			}
 		OPENSSL_free(tmp);
 		OPENSSL_cleanse(key, keylen);
@@ -257,10 +263,15 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			bio=BIO_new(BIO_s_null());
 		else
 			{
-			ASN1_OCTET_STRING *os;
-			os = PKCS7_get_octet_string(p7->d.sign->contents);
-			if (os && os->length > 0)
-				bio = BIO_new_mem_buf(os->data, os->length);
+			if (PKCS7_type_is_signed(p7))
+				{
+				ASN1_OCTET_STRING *os;
+				os = PKCS7_get_octet_string(
+							p7->d.sign->contents);
+				if (os && os->length > 0)
+					bio = BIO_new_mem_buf(os->data,
+								os->length);
+				}
 			if(bio == NULL)
 				{
 				bio=BIO_new(BIO_s_mem());
@@ -515,12 +526,20 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	case NID_pkcs7_signedAndEnveloped:
 		/* XXXXXXXXXXXXXXXX */
 		si_sk=p7->d.signed_and_enveloped->signer_info;
-		os=M_ASN1_OCTET_STRING_new();
+		if (!(os=M_ASN1_OCTET_STRING_new()))
+			{
+			PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		p7->d.signed_and_enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_enveloped:
 		/* XXXXXXXXXXXXXXXX */
-		os=M_ASN1_OCTET_STRING_new();
+		if (!(os=M_ASN1_OCTET_STRING_new()))
+			{
+			PKCS7err(PKCS7_F_PKCS7_DATASIGN,ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
 		p7->d.enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_signed:
@@ -594,7 +613,12 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				if (!PKCS7_get_signed_attribute(si,
 							NID_pkcs9_signingTime))
 					{
-					sign_time=X509_gmtime_adj(NULL,0);
+					if (!(sign_time=X509_gmtime_adj(NULL,0)))
+						{
+						PKCS7err(PKCS7_F_PKCS7_DATASIGN,
+							ERR_R_MALLOC_FAILURE);
+						goto err;
+						}
 					PKCS7_add_signed_attribute(si,
 						NID_pkcs9_signingTime,
 						V_ASN1_UTCTIME,sign_time);
@@ -603,8 +627,19 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				/* Add digest */
 				md_tmp=EVP_MD_CTX_md(&ctx_tmp);
 				EVP_DigestFinal_ex(&ctx_tmp,md_data,&md_len);
-				digest=M_ASN1_OCTET_STRING_new();
-				M_ASN1_OCTET_STRING_set(digest,md_data,md_len);
+				if (!(digest=M_ASN1_OCTET_STRING_new()))
+					{
+					PKCS7err(PKCS7_F_PKCS7_DATASIGN,
+						ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
+				if (!M_ASN1_OCTET_STRING_set(digest,md_data,
+								md_len))
+					{
+					PKCS7err(PKCS7_F_PKCS7_DATASIGN,
+						ERR_R_MALLOC_FAILURE);
+					goto err;
+					}
 				PKCS7_add_signed_attribute(si,
 					NID_pkcs9_messageDigest,
 					V_ASN1_OCTET_STRING,digest);
