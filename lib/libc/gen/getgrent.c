@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.11 1995/02/27 04:12:39 cgd Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.12 1995/03/16 11:48:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.11 1995/02/27 04:12:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.12 1995/03/16 11:48:01 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -228,10 +228,47 @@ grscan(search, gid, name)
 			continue;
 		}
 #ifdef YP
-		if ((strcmp("+\n", line) == 0) || (strncmp("+:", line, 2) == 0)) {
+		if ((strcmp("+\n", line) == 0) ||
+		    (strncmp("+:", line, 2) == 0)) {
 			if(_yp_check(NULL)) {
-				__ypmode = 1;
-				continue;
+				char gidbuf[20], *data;
+				int r, datalen;
+
+				if (!search) {
+					__ypmode = 1;
+					continue;
+				}
+
+				if(!__ypdomain) {
+					if(_yp_check(&__ypdomain) == 0) {
+						continue;
+					}
+				}
+				if (name == NULL) {
+					sprintf(gidbuf, "%d", gid);
+					r = yp_match(__ypdomain, "group.bygid",
+						gidbuf, strlen(gidbuf),
+						&data, &datalen);
+				} else {
+					r = yp_match(__ypdomain, "group.byname",
+						name, strlen(name),
+						&data, &datalen);
+				}
+				switch(r) {
+				case 0:
+					break;
+				case YPERR_MAP:
+					/*
+					 * No "group.bygid" map on server,
+					 * try enumeration of "group.byname".
+					 */
+					if (name == NULL)
+						__ypmode = 1;
+				default:
+					continue;
+				}
+				bcopy(data, line, datalen);
+				free(data);
 			}
 		}
 parse:
