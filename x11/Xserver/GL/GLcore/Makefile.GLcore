@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.4 2004/03/06 03:31:05 rtr Exp $
+#	$NetBSD: Makefile.GLcore,v 1.5 2004/03/07 13:50:25 rtr Exp $
 
 LIB=	GLcore
 
@@ -13,6 +13,7 @@ SRCS+=	accum.c api_arrayelt.c api_eval.c api_loopback.c api_noop.c \
 	texformat.c teximage.c texobj.c texstate.c texstore.c \
 	texutil.c varray.c vtxfmt.c vpexec.c vpexec.h vpparse.c \
 	vpstate.c
+
 
 .PATH:	${X11SRCDIR.xc}/extras/Mesa/src/array_cache
 SRCS+=	ac_context.c ac_import.c
@@ -45,22 +46,17 @@ SRCS+=	t_array_api.c t_array_import.c t_context.c t_eval_api.c \
 	t_vb_points.c t_vb_program.c t_vb_render.c t_vb_texgen.c \
 	t_vb_texmat.c t_vb_vertex.c
 
-#.if ${MACHINE} == "i386"
-#.PATH:	${X11SRCDIR.xc}/extras/Mesa/src/X86
-#SRCS+=	common_x86.c common_x86_asm.S glapi_x86.S x86.c \
-#	x86_cliptest.S x86_xform2.S x86_xform3.S x86_xform4.S
-#.endif
 
 
 .PATH:	${X11SRCDIR.xc}/extras/Mesa/src/X
 SRCS+=	xm_api.c xm_dd.c xm_line.c xm_span.c xm_tri.c
 
-#.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X
-#.PATH:		${X11SRCDIR.xc}/programs/Xserver/GL/mesa/src/X
-#.PATH:		${X11SRCDIR.xc}/lib/GL/glx
+
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/GL/mesa/src/X
 .PATH:	${X11SRCDIR.xc}/lib/GL/glx
 SRCS+=		compsize.c xf86glx.c xf86glx_util.c
+
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
