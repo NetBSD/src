@@ -1,53 +1,18 @@
-# $NetBSD: Makefile,v 1.2 2000/09/24 05:56:04 simonb Exp $
+# $NetBSD: Makefile,v 1.3 2001/01/28 18:45:59 veego Exp $
 
-FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
-		vt220l.816 vt220h.816 vt220l.810 vt220h.810
+FONTS=	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
+	vt220l.816 vt220h.816 vt220l.810 vt220h.810
+
+FILES=${FONTS}
 
 CLEANFILES= 	${FONTS}
-FONTDIR=	/usr/share/wscons/fonts
+FILESDIR=	/usr/share/wscons/fonts
 
-all: $(FONTS)
+realall:	${FONTS}
 
-install: ${FONTS}
-	for i in ${FONTS}; do \
-		${INSTALL} ${RENAME} ${COPY} ${PRESERVE} ${INSTPRIV} \
-			-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-			${.OBJDIR}/$$i ${DESTDIR}${FONTDIR}; \
-	done
-
-clean:
-	rm -f ${CLEANFILES}
+.for i in ${FONTS}
+$i: ${.CURDIR}/$i.uu
+	uudecode ${.CURDIR}/$i.uu
+.endfor
 
 .include <bsd.prog.mk>
-
-# this seems to be the lowest common denominator
-
-vt100pc.814: ${.CURDIR}/vt100pc.814.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt100sg.814: ${.CURDIR}/vt100sg.814.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220l.814: ${.CURDIR}/vt220l.814.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220h.814: ${.CURDIR}/vt220h.814.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220l.808: ${.CURDIR}/vt220l.808.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220h.808: ${.CURDIR}/vt220h.808.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220l.816: ${.CURDIR}/vt220l.816.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220h.816: ${.CURDIR}/vt220h.816.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220l.810: ${.CURDIR}/vt220l.810.uu
-	uudecode ${.CURDIR}/$@.uu
-
-vt220h.810: ${.CURDIR}/vt220h.810.uu
-	uudecode ${.CURDIR}/$@.uu
