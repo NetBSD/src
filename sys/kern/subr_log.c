@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_log.c,v 1.4 1993/12/18 04:21:25 mycroft Exp $
+ *	$Id: subr_log.c,v 1.5 1994/04/12 19:41:48 deraadt Exp $
  */
 
 /*
@@ -210,7 +210,7 @@ logioctl(dev, com, data, flag)
 		splx(s);
 		if (l < 0)
 			l += MSG_BSIZE;
-		*(off_t *)data = l;
+		*(int *)data = l;
 		break;
 
 	case FIONBIO:
