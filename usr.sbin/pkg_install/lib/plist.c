@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.12 1998/10/09 18:27:35 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.13 1998/10/09 19:51:21 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.12 1998/10/09 18:27:35 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.13 1998/10/09 19:51:21 agc Exp $");
 #endif
 #endif
 
@@ -32,6 +32,36 @@ __RCSID("$NetBSD: plist.c,v 1.12 1998/10/09 18:27:35 agc Exp $");
 #include "lib.h"
 #include <err.h>
 #include <md5.h>
+
+/* this struct defines a plist command type */
+typedef struct cmd_t {
+	char		*c_s;		/* string to recognise */
+	pl_ent_t	c_type;		/* type of command */
+	int		c_argc;		/* # of arguments */
+} cmd_t;
+
+/* commands to recognise */
+static cmd_t	cmdv[] = {
+	{	"cwd",		PLIST_CWD,		1	},
+	{	"src",		PLIST_SRC,		1	},
+	{	"cd",		PLIST_CWD,		1	},
+	{	"exec",		PLIST_CMD,		1	},
+	{	"unexec",	PLIST_UNEXEC,		1	},
+	{	"mode",		PLIST_CHMOD,		1	},
+	{	"owner",	PLIST_CHOWN,		1	},
+	{	"group",	PLIST_CHGRP,		1	},
+	{	"comment",	PLIST_COMMENT,		1	},
+	{	"ignore",	PLIST_IGNORE,		0	},
+	{	"ignore_inst",	PLIST_IGNORE_INST,	0	},
+	{	"name",		PLIST_NAME,		1	},
+	{	"display",	PLIST_DISPLAY,		1	},
+	{	"pkgdep",	PLIST_PKGDEP,		1	},
+	{	"pkgcfl",	PLIST_PKGCFL,		1	},
+	{	"mtree",	PLIST_MTREE,		1	},
+	{	"dirrm",	PLIST_DIR_RM,		1	},
+	{	"option",	PLIST_OPTION,		1	},
+	{	NULL,		FAIL,			0	}
+};
 
 /* Add an item to the end of a packing list */
 void
@@ -102,14 +132,14 @@ find_plist(package_t *pkg, pl_ent_t type)
 char *
 find_plist_option(package_t *pkg, char *name)
 {
-	plist_t *p = pkg->head;
+	plist_t	*p;
 
-	while (p) {
-		if (p->type == PLIST_OPTION && !strcmp(p->name, name))
+	for (p = pkg->head ; p ; p = p->next) {
+		if (p->type == PLIST_OPTION && strcmp(p->name, name) == 0) {
 			return p->name;
-		p = p->next;
+		}
 	}
-	return NULL;
+	return (char *) NULL;
 }
 
 /*
@@ -148,11 +178,13 @@ delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name)
 plist_t *
 new_plist_entry(void)
 {
-    plist_t *ret;
+	plist_t *ret;
 
-    ret = (plist_t *)malloc(sizeof(plist_t));
-    memset(ret, 0, sizeof(plist_t));
-    return ret;
+	if ((ret = (plist_t *)malloc(sizeof(plist_t))) == (plist_t *) NULL) {
+		err(1, "can't allocate %d bytes", sizeof(plist_t));
+	}
+	memset(ret, 0, sizeof(plist_t));
+	return ret;
 }
 
 /* Free an entire packing list */
@@ -170,35 +202,6 @@ free_plist(package_t *pkg)
     }
     pkg->head = pkg->tail = NULL;
 }
-
-/* this struct defines a plist command type */
-typedef struct cmd_t {
-	char		*c_s;		/* string to recognise */
-	pl_ent_t	c_type;		/* type of command */
-} cmd_t;
-
-/* commands to recognise */
-static cmd_t	cmdv[] = {
-	{	"cwd",		PLIST_CWD		},
-	{	"src",		PLIST_SRC		},
-	{	"cd",		PLIST_CWD		},
-	{	"exec",		PLIST_CMD		},
-	{	"unexec",	PLIST_UNEXEC		},
-	{	"mode",		PLIST_CHMOD		},
-	{	"owner",	PLIST_CHOWN		},
-	{	"group",	PLIST_CHGRP		},
-	{	"comment",	PLIST_COMMENT		},
-	{	"ignore",	PLIST_IGNORE		},
-	{	"ignore_inst",	PLIST_IGNORE_INST	},
-	{	"name",		PLIST_NAME		},
-	{	"display",	PLIST_DISPLAY		},
-	{	"pkgdep",	PLIST_PKGDEP		},
-	{	"pkgcfl",	PLIST_PKGCFL		},
-	{	"mtree",	PLIST_MTREE		},
-	{	"dirrm",	PLIST_DIR_RM		},
-	{	"option",	PLIST_OPTION		},
-	{	NULL,		FAIL			}
-};
 
 /*
  * For an ascii string denoting a plist command, return its code and
@@ -263,86 +266,26 @@ read_plist(package_t *pkg, FILE *fp)
 void
 write_plist(package_t *pkg, FILE *fp)
 {
-    plist_t *plist = pkg->head;
+	plist_t	*p;
+	cmd_t	*cmdp;
 
-    while (plist) {
-	switch(plist->type) {
-	case PLIST_FILE:
-	    fprintf(fp, "%s\n", plist->name);
-	    break;
-
-	case PLIST_CWD:
-	    fprintf(fp, "%ccwd %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_SRC:
-	    fprintf(fp, "%csrcdir %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_CMD:
-	    fprintf(fp, "%cexec %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_UNEXEC:
-	    fprintf(fp, "%cunexec %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_CHMOD:
-	    fprintf(fp, "%cmode %s\n", CMD_CHAR, plist->name ? plist->name : "");
-	    break;
-
-	case PLIST_CHOWN:
-	    fprintf(fp, "%cowner %s\n", CMD_CHAR, plist->name ? plist->name : "");
-	    break;
-
-	case PLIST_CHGRP:
-	    fprintf(fp, "%cgroup %s\n", CMD_CHAR, plist->name ? plist->name : "");
-	    break;
-
-	case PLIST_COMMENT:
-	    fprintf(fp, "%ccomment %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_IGNORE:
-	case PLIST_IGNORE_INST:		/* a one-time non-ignored file */
-	    fprintf(fp, "%cignore\n", CMD_CHAR);
-	    break;
-
-	case PLIST_NAME:
-	    fprintf(fp, "%cname %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_DISPLAY:
-	    fprintf(fp, "%cdisplay %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_PKGDEP:
-	    fprintf(fp, "%cpkgdep %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_PKGCFL:
-	    fprintf(fp, "%cpkgcfl %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_MTREE:
-	    fprintf(fp, "%cmtree %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_DIR_RM:
-	    fprintf(fp, "%cdirrm %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	case PLIST_OPTION:
-	    fprintf(fp, "%coption %s\n", CMD_CHAR, plist->name);
-	    break;
-
-	default:
-	    cleanup(0);
-	    errx(2, "unknown command type %d (%s)", plist->type, plist->name);
-	    break;
+	for (p = pkg->head ; p ; p = p->next) {
+		if (p->type == PLIST_FILE) {
+			/* Fast-track files - these are the most common */
+			(void) fprintf(fp, "%s\n", p->name);
+			continue;
+		}
+		for (cmdp = cmdv ; cmdp->c_type != FAIL && cmdp->c_type != p->type ; cmdp++) {
+		}
+		if (cmdp->c_type == FAIL) {
+			warnx("Unknown PLIST command type %d (%s)", p->type, p->name);
+		} else if (cmdp->c_argc == 0) {
+			(void) fprintf(fp, "%c%s\n", CMD_CHAR, cmdp->c_s);
+		} else {
+			(void) fprintf(fp, "%c%s %s\n", CMD_CHAR, cmdp->c_s,
+					(p->name) ? p->name : "");
+		}
 	}
-	plist = plist->next;
-    }
 }
 
 /*
