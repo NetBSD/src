@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.5 2003/07/15 00:04:43 lukem Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.5 2003/07/15 00:04:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_ms_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -86,7 +86,7 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	{{ "pms",	7, 0, },	(void *)PICA_SYS_KBD, }, /* XXX */
 	{{ "COM1",	8, 0, },	(void *)PICA_SYS_COM1, },
 	{{ "COM2",	9, 0, },	(void *)PICA_SYS_COM2, },
-	{{ NULL,	-1, 0, },	(void *)NULL, },
+	{{ NULL,	-1, 0, },	NULL, },
 };
 
 /*

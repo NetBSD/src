@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.5 2003/07/15 00:04:41 lukem Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.5 2003/07/15 00:04:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ struct pica_dev nec_rd94_cpu[] = {
 	{{ "pms",	7, 0, },	(void *)RD94_SYS_KBD, }, /* XXX */
 	{{ "COM1",	8, 0, },	(void *)RD94_SYS_COM1, },
 	{{ "COM2",	9, 0, },	(void *)RD94_SYS_COM2, },
-	{{ NULL,	-1, 0, },	(void *)NULL, },
+	{{ NULL,	-1, 0, },	NULL, },
 };
 
 void
