@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.35 2000/11/06 00:50:13 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.36 2000/12/09 01:29:50 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
 
 /*
@@ -539,6 +539,7 @@ udp6_ctlinput(cmd, sa, d)
 			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
 
 		if (cmd == PRC_MSGSIZE) {
+			int valid = 0;
 			/*
 			 * Check to see if we have a valid UDP socket
 			 * corresponding to the address in the ICMPv6 message
@@ -546,7 +547,7 @@ udp6_ctlinput(cmd, sa, d)
 			 */
 			if (in6_pcblookup_connect(&udb6, &finaldst,
 			    uhp->uh_dport, &s, uhp->uh_sport, 0))
-				;
+				valid++;
 #if 0
 			/*
 			 * As the use of sendto(2) is fairly popular,
@@ -557,10 +558,8 @@ udp6_ctlinput(cmd, sa, d)
 			 */
 			else if (in6_pcblookup_bind(&udb6, &finaldst,
 			    uhp->uh_dport, 0))
-				;
+				valid++;
 #endif
-			else
-				return;
 
 			/*
 			 * Now that we've validated that we are actually
@@ -568,7 +567,7 @@ udp6_ctlinput(cmd, sa, d)
 			 * message, recalculate the new MTU, and create the
 			 * corresponding routing entry.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			return;
 		}

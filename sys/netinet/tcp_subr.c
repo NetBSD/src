@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.103 2000/10/29 06:33:59 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.104 2000/12/09 01:29:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1179,14 +1179,16 @@ tcp6_ctlinput(cmd, sa, d)
 			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
 
 		if (cmd == PRC_MSGSIZE) {
+			int valid = 0;
+
 			/*
 			 * Check to see if we have a valid TCP connection
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (!in6_pcblookup_connect(&tcb6, &finaldst,
+			if (in6_pcblookup_connect(&tcb6, &finaldst,
 			    thp->th_dport, &s, thp->th_sport, 0))
-				return;
+				valid++;
 
 			/*
 			 * Now that we've validated that we are actually
@@ -1194,7 +1196,7 @@ tcp6_ctlinput(cmd, sa, d)
 			 * message, recalculate the new MTU, and create the
 			 * corresponding routing entry.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			return;
 		}
