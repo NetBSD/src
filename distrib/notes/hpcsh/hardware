@@ -1,9 +1,9 @@
-.\"	$NetBSD: hardware,v 1.2 2002/06/16 16:00:31 itojun Exp $
+.\"	$NetBSD: hardware,v 1.3 2002/06/29 22:41:53 lukem Exp $
 .
 A H/PC machine contains a keyboard and a touch screen and
-generally has 8 MB or more of RAM.  The port supports the HPC
-form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
-form factors.
+generally has 8 MB or more of RAM.
+The port supports the HPC form factor,
+as well as the H/PC Pro and PsPC (Palmsized PC) form factors.
 .
 .Ss2 Supported WindowsCE machines
 .(bullet -offset indent

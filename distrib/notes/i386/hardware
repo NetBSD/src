@@ -1,16 +1,18 @@
-.\"	$NetBSD: hardware,v 1.105 2002/06/01 17:38:53 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.106 2002/06/29 22:45:29 lukem Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors. The
-minimal configuration is said to require 4 MB of RAM and 50 MB of disk
+with 386-family processors, with or without math coprocessors.
+The minimal configuration is said to require 4 MB of RAM and 50 MB of disk
 space, though we do not know of anyone running with a system quite
-this minimal today. To install the entire system requires much more
-disk space (the unpacked binary distribution, without sources,
+this minimal today.
+To install the entire system requires much more disk space
+(the unpacked binary distribution, without sources,
 requires at least 65 MB without counting space needed for swap space,
 etc), and to run X or compile the system, more RAM is recommended.
 (4 MB of RAM will actually allow you to run X and/or compile, but it
-won't be speedy. Note that until you have around 16 MB of RAM, getting
+won't be speedy.
+Note that until you have around 16 MB of RAM, getting
 more RAM is more important than getting a faster CPU.)
 .
 .Ss2 Supported devices
@@ -276,7 +278,7 @@ Znyx ZX34X
 .It
 Digital EtherWORKS III ISA adapters (DE203/DE204/DE205) [*]
 .It
-Digital DEPCM-BA (PCMCIA) and DE305 (ISA) NE2000-compat. cards
+Digital DEPCM-BA (PCMCIA) and DE305 (ISA) NE2000-compatible cards
 .It
 BICC Isolan [* and not recently tested]
 .It
@@ -394,7 +396,7 @@ Aironet 4500/4800 and Cisco 340 series PCMCIA cards
 BayStack 650 802.11FH PCMCIA cards [*] [+]
 .It
 Corega Wireless LAN PCC-11 cards [*] [+]
-.It 
+.It
 DEC/Cabletron RoamAbout 802.11 DS High Rate cards [*] [+]
 .It
 ELSA AirLancer MC-11 card [*] [+]
@@ -522,7 +524,7 @@ Generic support for HID devices [*] [+]
 Ethernet adapters [*] [+]
 .It
 Audio devices [*] [+]
-.It 
+.It
 driver for FTDI based serial adapters [*] [+]
 .It
 Mass storage devices such as disks, ZIP drives and digital cameras [*] [+]
@@ -586,7 +588,8 @@ Drivers are
 .Em not
 present in kernels on the distribution floppies.
 Except as noted above, all drivers are present
-on all disks.  Also, at the present time, the distributed kernels
+on all disks.
+Also, at the present time, the distributed kernels
 support only one SCSI host adapter per machine.
 .Nx
 normally
@@ -697,8 +700,8 @@ SCSI tapes      st0, st1, ...
 SCSI and ATAPI CD-ROMs cd0, cd1, ...
         For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
         present on the bus are probed in increasing ID order for SCSI and
-        master/slave order for ATA(PI). So the first SCSI drive found will
-        be called sd0, the second sd1, and so on ...
+        master/slave order for ATA(PI).  So the first SCSI drive found will
+	be called sd0, the second sd1, and so on ...
 
 StarLAN cards
                 ai0     0x360   7       any     iomem 0xd0000

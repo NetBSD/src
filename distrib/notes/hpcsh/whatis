@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.1 2002/06/15 21:31:38 itojun Exp $
+.\"	$NetBSD: whatis,v 1.2 2002/06/29 22:41:54 lukem Exp $
 .
 This is the non-official release of
 .Nx*M .
@@ -8,7 +8,8 @@ brings the
 NetBSD operating system to
 Hitachi SH-3/4 based
 .Tn "Windows CE"
-PDA machines.  Currently, the
+PDA machines.
+Currently, the
 SH7709, SH7709R, SH7709A and SH7750V processors are supported.
 .Pp
 The port name
