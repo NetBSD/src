@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.15 2002/10/14 23:43:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.16 2002/10/14 23:46:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -500,7 +500,7 @@ pthread__signal(pthread_t t, int sig, int code)
 	    STACKSPACE - sizeof(ucontext_t));
 
 	_getcontext_u(uc);
-	uc->uc_flags &= ~UC_USER;
+	uc->uc_flags &= ~_UC_USER;
 
 	uc->uc_stack.ss_sp = maskp;
 	uc->uc_stack.ss_size = 0;
