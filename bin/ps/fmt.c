@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.15 2001/03/20 19:05:11 itojun Exp $	*/
+/*	$NetBSD: fmt.c,v 1.16 2001/03/23 01:06:02 enami Exp $	*/
 
 #include <kvm.h>
 #include <stdio.h>
@@ -25,6 +25,8 @@ fmt_puts(s, leftp)
 	if (len > maxlen) {
 		if (maxlen == 0)
 			nlen = getpagesize();
+		else
+			nlen = maxlen;
 		while (len > nlen)
 			nlen *= 2;
 		nv = realloc(v, nlen);
