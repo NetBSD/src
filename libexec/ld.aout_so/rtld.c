@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.66 1998/09/05 13:08:41 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.67 1998/09/12 15:03:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -576,15 +576,18 @@ alloc_link_map(path, sodp, parent, addr, size, dp)
 	smp->som_dynamic = dp;
 	smp->som_spd = (caddr_t)smpp;
 
-/*XXX*/	if (addr == 0) main_map = smp;
-
 	smpp->spd_refcount = 0;
 	smpp->spd_flags = 0;
 	smpp->spd_parent = parent;
 	smpp->spd_size = size;
+	if (dp == NULL)
+		return (smp);
+
+/*XXX*/	if (addr == 0) main_map = smp;
+
 #ifdef SUN_COMPAT
 	smpp->spd_offset =
-		(addr==0 && dp && dp->d_version==LD_VERSION_SUN) ? PAGSIZ : 0;
+		(addr==0 && dp->d_version==LD_VERSION_SUN) ? PAGSIZ : 0;
 #endif
 
 	/*
@@ -597,7 +600,7 @@ alloc_link_map(path, sodp, parent, addr, size, dp)
 	smpp->spd_symbolbase = LM_SYMBOLBASE(smp);
 	smpp->spd_stringbase = LM_STRINGBASE(smp);
 
-	return smp;
+	return (smp);
 }
 
 /*
