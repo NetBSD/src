@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.17 2003/08/07 16:42:43 agc Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.17.2.1 2004/04/30 03:46:39 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbm.c,v 1.17 2003/08/07 16:42:43 agc Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.17.2.1 2004/04/30 03:46:39 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ndbm.c,v 1.17 2003/08/07 16:42:43 agc Exp $");
 #include "namespace.h"
 #include <sys/param.h>
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -89,6 +90,10 @@ dbm_open(file, flags, mode)
 	info.lorder = 0;
 	(void)strncpy(path, file, sizeof(path) - 1);
 	(void)strncat(path, DBM_SUFFIX, sizeof(path) - strlen(path) - 1);
+	if ((flags & O_ACCMODE) == O_WRONLY) {
+		flags &= ~O_WRONLY;
+		flags |= O_RDWR;
+	}
 	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 }
 
