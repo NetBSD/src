@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.13 2002/04/04 17:43:32 jdolecek Exp $	*/
+/*	$NetBSD: wivar.h,v 1.14 2002/04/05 00:54:52 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -49,9 +49,10 @@ struct wi_softc	{
 	int sc_attached;
 	int sc_enabled;
 	int sc_firmware_type;
-#define	WI_LUCENT	0
-#define	WI_INTERSIL	1
-#define	WI_SYMBOL	2
+#define	WI_NOTYPE	0
+#define	WI_LUCENT	1
+#define	WI_INTERSIL	2
+#define	WI_SYMBOL	3
 	int sc_pri_firmware_ver;	/* Primary firmware version */
 	int sc_sta_firmware_ver;	/* Station firmware version */
 	int sc_pci;			/* attach to PCI-Bus */
