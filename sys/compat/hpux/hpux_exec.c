@@ -1,7 +1,7 @@
-/*	$NetBSD: hpux_exec.c,v 1.7 1997/03/16 09:16:11 thorpej Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,6 +106,13 @@ exec_hpux_makecmds(p, epp)
 	if (sysid != MID_HPUX)
 		return (ENOEXEC);
 
+	/*
+	 * HP-UX is a 4k page size system, and executables assume
+	 * this.
+	 */
+	if (NBPG != HPUX_LDPGSZ)
+		return (ENOEXEC);
+
 	switch (magic) {
 	case OMAGIC:
 		error = exec_hpux_prep_omagic(p, epp);
@@ -139,7 +146,7 @@ exec_hpux_prep_nmagic(p, epp)
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->ha_text;
-	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX__LDPGSZ);
+	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX_LDPGSZ);
 	epp->ep_dsize = execp->ha_data + execp->ha_bss;
 	epp->ep_entry = execp->ha_entry;
 
@@ -171,7 +178,6 @@ exec_hpux_prep_zmagic(p, epp)
 	struct hpux_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 	long nontext;
-	int (*vm_func) __P((struct proc *, struct exec_vmcmd *));
 
 	/*
 	 * Check if vnode is in open for writing, because we want to
@@ -196,26 +202,17 @@ exec_hpux_prep_zmagic(p, epp)
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->ha_text;
-	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX__LDPGSZ);
+	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX_LDPGSZ);
 	epp->ep_dsize = execp->ha_data + execp->ha_bss;
 	epp->ep_entry = execp->ha_entry;
 
-	/*
-	 * If our __LDPGSZ doesn't match HP-UX's, we can't demand-page
-	 * the executable.
-	 */
-	if (__LDPGSZ == HPUX__LDPGSZ)
-		vm_func = vmcmd_map_pagedvn;
-	else
-		vm_func = vmcmd_map_readvn;
-
 	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vm_func, execp->ha_text,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->ha_text,
 	    epp->ep_taddr, epp->ep_vp, HPUX_TXTOFF(*execp, ZMAGIC),
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vm_func, execp->ha_data,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->ha_data,
 	    epp->ep_daddr, epp->ep_vp, HPUX_DATAOFF(*execp, ZMAGIC),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
@@ -242,7 +239,7 @@ exec_hpux_prep_omagic(p, epp)
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->ha_text;
-	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX__LDPGSZ);
+	epp->ep_daddr = epp->ep_taddr + roundup(execp->ha_text, HPUX_LDPGSZ);
 	epp->ep_dsize = execp->ha_data + execp->ha_bss;
 	epp->ep_entry = execp->ha_entry;
 
