@@ -228,6 +228,8 @@ parse.o : $(PARSE_C) $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h lex.h \
 CONFLICTS = expect 30 shift/reduce conflicts and 42 reduce/reduce conflicts.
 $(PARSE_H) : $(PARSE_C)
 $(PARSE_C) : $(srcdir)/parse.y
+	@echo "===> Makefile: NOT UPDATING $@"
+DISABLED_parse.c:
 	@echo $(CONFLICTS)
 	cd $(srcdir); $(BISON) $(BISONFLAGS) -d -o parse.c parse.y
 	cd $(srcdir); grep '^#define[ 	]*YYEMPTY' parse.c >>parse.h
