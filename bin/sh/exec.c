@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.35 2003/01/22 20:36:04 dsl Exp $	*/
+/*	$NetBSD: exec.c,v 1.36 2003/02/04 08:51:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.35 2003/01/22 20:36:04 dsl Exp $");
+__RCSID("$NetBSD: exec.c,v 1.36 2003/02/04 08:51:30 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -352,7 +352,8 @@ hashcmd(int argc, char **argv)
 	if (*argptr == NULL) {
 		for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
 			for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
-				printentry(cmdp, verbose);
+				if (verbose || cmdp->cmdtype == CMDNORMAL)
+					printentry(cmdp, verbose);
 			}
 		}
 		return 0;
@@ -405,9 +406,10 @@ printentry(struct tblentry *cmdp, int verbose)
 			struct procstat ps;
 			INTOFF;
 			commandtext(&ps, cmdp->param.func);
-			out1c(' ');
-			out1str(ps.cmd);
 			INTON;
+			out1str("() { ");
+			out1str(ps.cmd);
+			out1str("; }");
 		}
 		break;
 	default:
@@ -597,6 +599,9 @@ builtin_success:
 		cmdp = &loc_cmd;
 	else
 		cmdp = cmdlookup(name, 1);
+	if (cmdp->cmdtype == CMDFUNCTION)
+		/* DO_NOFUNC must have been set */
+		cmdp = &loc_cmd;
 	cmdp->cmdtype = CMDBUILTIN;
 	cmdp->param.bltin = bltin;
 	INTON;
