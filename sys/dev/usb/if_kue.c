@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.10 2000/03/01 19:00:51 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.11 2000/03/02 12:37:51 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -941,8 +941,13 @@ kue_rxeof(xfer, priv, status)
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		printf("%s: usb error on rx: %s\n", USBDEVNAME(sc->kue_dev),
-		    usbd_errstr(status));
+		sc->kue_rx_errs++;
+		if (usbd_ratecheck(&sc->kue_rx_notice)) {
+			printf("%s: %u usb errors on rx: %s\n",
+			    USBDEVNAME(sc->kue_dev), sc->kue_rx_errs,
+			    usbd_errstr(status));
+			sc->kue_rx_errs = 0;
+		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall(sc->kue_ep[KUE_ENDPT_RX]);
 		goto done;
