@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.16 2002/03/08 02:00:56 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.16.2.1 2002/06/10 18:05:04 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,21 +43,11 @@ extern char *__progname;
 static const char *
 sockaddr_ntop(struct sockaddr *sa)
 {
-	void *addr;
-	static char addrbuf[INET6_ADDRSTRLEN];
+	static char addrbuf[NI_MAXHOST];
 
-	switch (sa->sa_family) {
-	case AF_INET:
-		addr = &((struct sockaddr_in *)sa)->sin_addr;
-		break;
-	case AF_INET6:
-		addr = &((struct sockaddr_in6 *)sa)->sin6_addr;
-		break;
-	default:
-		/* This case should be protected against elsewhere */
+	if (getnameinfo(sa, sa->sa_len, addrbuf, sizeof(addrbuf), NULL, 0,
+	    NI_NUMERICHOST) != 0)
 		abort();	/* XXX abort is bad -- do something else */
-	}
-	inet_ntop(sa->sa_family, addr, addrbuf, sizeof(addrbuf));
 	return addrbuf;
 }
 
