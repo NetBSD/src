@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2001/10/31 17:20:49 thorpej Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.5 2001/12/04 18:54:34 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,13 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define BOOT_AOUT
-#ifdef __sparc_v9__
-#define	BOOT_ELF64
-#else
-#define	BOOT_ELF32
-#endif
 
 #define LOAD_KERNEL	LOAD_ALL
 #define COUNT_KERNEL	COUNT_ALL
