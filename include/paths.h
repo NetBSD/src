@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.20 2003/01/01 12:15:16 augustss Exp $	*/
+/*	$NetBSD: paths.h,v 1.21 2003/04/24 20:13:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,6 +67,7 @@
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_I18NMODULE "/usr/lib/i18n"
 #define	_PATH_KMEM	"/dev/kmem"
+#define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
 #define	_PATH_LOCALE	"/usr/share/locale"
 #define	_PATH_MAILDIR	"/var/mail"
