@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.32 1997/04/28 21:48:25 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.32.8.1 1997/11/15 00:58:18 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ isr_add_custom(level, handler)
  * a bitmask to avoid atomicity locking issues.
  */
 
-#include "ether.h"	/* for NETHER */
+#include "arp.h"	/* for NARP */
 #include "ppp.h"
 
 /*
@@ -122,7 +122,7 @@ void netintr()
 	netisr = 0;
 	splx(s);
 
-#if	NETHER > 0
+#if	NARP > 0
 	if (n & (1 << NETISR_ARP))
 		arpintr();
 #endif
