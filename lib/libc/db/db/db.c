@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.9 1997/07/21 14:06:39 jtc Exp $	*/
+/*	$NetBSD: db.c,v 1.10 1998/05/07 19:24:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: db.c,v 1.9 1997/07/21 14:06:39 jtc Exp $");
+__RCSID("$NetBSD: db.c,v 1.10 1998/05/07 19:24:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,8 @@ __weak_alias(dbopen,_dbopen);
 DB *
 dbopen(fname, flags, mode, type, openinfo)
 	const char *fname;
-	int flags, mode;
+	int flags;
+	mode_t mode;
 	DBTYPE type;
 	const void *openinfo;
 {

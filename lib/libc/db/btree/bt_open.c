@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.11 1998/04/07 10:40:21 fair Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.12 1998/05/07 19:24:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.11 1998/04/07 10:40:21 fair Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.12 1998/05/07 19:24:20 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,8 +98,10 @@ static int tmp __P((void));
 DB *
 __bt_open(fname, flags, mode, openinfo, dflags)
 	const char *fname;
-	int flags, mode, dflags;
+	int flags;
+	mode_t mode;
 	const BTREEINFO *openinfo;
+	int dflags;
 {
 	struct stat sb;
 	BTMETA m;
