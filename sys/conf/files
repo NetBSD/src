@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.286 1999/04/29 17:41:45 scottr Exp $
+#	$NetBSD: files,v 1.287 1999/05/05 23:57:31 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -376,11 +376,11 @@ define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 # use them in an 'attach-with'.
 # UHCI USB controller
 device	uhci: usbus
-file	dev/usb/uhci.c			uhci
+file	dev/usb/uhci.c			uhci	needs-flag
 
 # OHCI USB controller
 device	ohci: usbus
-file	dev/usb/ohci.c			ohci
+file	dev/usb/ohci.c			ohci	needs-flag
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
