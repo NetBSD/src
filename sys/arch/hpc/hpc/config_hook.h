@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.2 2001/07/19 11:36:07 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.3 2001/07/19 11:38:01 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -297,8 +297,8 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_BATT_10P		1
 #define CONFIG_HOOK_BATT_20P		2
 #define CONFIG_HOOK_BATT_30P		3
-#define CONFIG_HOOK_BATT_40P		4
-#define CONFIG_HOOK_BATT_LOW		5
+#define CONFIG_HOOK_BATT_LOW		4
+#define CONFIG_HOOK_BATT_40P		5
 #define CONFIG_HOOK_BATT_50P		6
 #define CONFIG_HOOK_BATT_60P		7
 #define CONFIG_HOOK_BATT_70P		8
