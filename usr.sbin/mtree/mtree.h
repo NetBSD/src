@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtree.h	5.9 (Berkeley) 2/19/92
- *	$Id: mtree.h,v 1.3 1993/11/02 07:51:12 cgd Exp $
+ *	$Id: mtree.h,v 1.4 1994/04/25 18:21:23 cgd Exp $
  */
 
 #include <string.h>
@@ -46,7 +46,7 @@ typedef struct _node {
 	struct _node	*parent, *child;	/* up, down */
 	struct _node	*prev, *next;		/* left, right */
 	off_t	st_size;			/* size */
-	time_t	st_mtime;			/* last modification time */
+	struct timespec st_mtimespec;		/* last modification time */
 	u_long	cksum;				/* check sum */
 	char	*slink;				/* symbolic link reference */
 	uid_t	st_uid;				/* uid */
