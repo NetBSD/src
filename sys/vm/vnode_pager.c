@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: vnode_pager.c,v 1.5 1993/12/20 12:40:29 cgd Exp $
+ *	$Id: vnode_pager.c,v 1.6 1994/01/07 18:12:12 mycroft Exp $
  */
 
 /*
@@ -80,7 +80,7 @@ static boolean_t	 vnode_pager_haspage __P((vm_pager_t, vm_offset_t));
 static void		 vnode_pager_init __P((void));
 static int		 vnode_pager_io
 			    __P((vn_pager_t, vm_page_t, enum uio_rw));
-static boolean_t	 vnode_pager_putpage
+static int		 vnode_pager_putpage
 			    __P((vm_pager_t, vm_page_t, boolean_t));
 
 struct pagerops vnodepagerops = {
@@ -231,7 +231,7 @@ vnode_pager_getpage(pager, m, sync)
 	return(vnode_pager_io((vn_pager_t)pager->pg_data, m, UIO_READ));
 }
 
-static boolean_t
+static int
 vnode_pager_putpage(pager, m, sync)
 	vm_pager_t pager;
 	vm_page_t m;
@@ -244,7 +244,7 @@ vnode_pager_putpage(pager, m, sync)
 		printf("vnode_pager_putpage(%x, %x)\n", pager, m);
 #endif
 	if (pager == NULL)
-		return (FALSE);			/* ??? */
+		return (VM_PAGER_OK);			/* ??? */
 	err = vnode_pager_io((vn_pager_t)pager->pg_data, m, UIO_WRITE);
 	if (err == VM_PAGER_OK) {
 		m->flags |= PG_CLEAN;			/* XXX - wrong place */
