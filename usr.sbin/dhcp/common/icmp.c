@@ -1,10 +1,10 @@
-/* dhcp.c
+/* icmp.c
 
    ICMP Protocol engine - for sending out pings and receiving
    responses. */
 
 /*
- * Copyright (c) 1997 The Internet Software Consortium.
+ * Copyright (c) 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.4 1997/06/04 21:04:10 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.5 1999/02/18 21:48:50 mellon Exp $ Copyright (c) 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -86,7 +86,8 @@ void icmp_startup (routep, handler)
 			(char *)&state, sizeof state) < 0)
 		error ("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
-	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply, handler);
+	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply,
+		      (void *)handler);
 }
 
 int icmp_echorequest (addr)
@@ -136,14 +137,14 @@ void icmp_echoreply (protocol)
 {
 	struct icmp *icfrom;
 	struct sockaddr_in from;
-	unsigned char icbuf [1500];
+	u_int8_t icbuf [1500];
 	int status;
 	int len;
 	struct iaddr ia;
 	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
 
 	len = sizeof from;
-	status = recvfrom (protocol -> fd, icbuf, sizeof icbuf, 0,
+	status = recvfrom (protocol -> fd, (char *)icbuf, sizeof icbuf, 0,
 			  (struct sockaddr *)&from, &len);
 	if (status < 0) {
 		warn ("icmp_echoreply: %m");
@@ -165,7 +166,9 @@ void icmp_echoreply (protocol)
 
 	/* If we were given a second-stage handler, call it. */
 	if (protocol -> local) {
-		handler = protocol -> local;
+		handler = ((void (*) PROTO ((struct iaddr,
+					    u_int8_t *, int)))
+			   protocol -> local);
 		memcpy (ia.iabuf, &from.sin_addr, sizeof from.sin_addr);
 		ia.len = sizeof from.sin_addr;
 

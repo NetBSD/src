@@ -1,0 +1,132 @@
+
+
+
+dhcrelay(8)                                           dhcrelay(8)
+
+
+NNAAMMEE
+       dhcrelay - Dynamic Host Configuration Protocol Relay Agent
+
+SSYYNNOOPPSSIISS
+       ddhhccrreellaayy [ --pp _p_o_r_t ] [ --dd ] [ --qq ] [ --ii _i_f_0 [ ......  --ii  _i_f_N
+       ] ] _s_e_r_v_e_r_0 [ _._._._s_e_r_v_e_r_N ]
+
+DDEESSCCRRIIPPTTIIOONN
+       The  Internet Software Consortium DHCP Relay Agent, dhcre­
+       lay, provides a means for relaying DHCP and BOOTP requests
+       from  a  subnet to which no DHCP server is directly to one
+       or more DHCP servers on other subnets.
+
+OOPPEERRAATTIIOONN
+       The DHCP Relay Agent listens  for  DHCP  requests  on  all
+       interfaces  attached  to a host, unless one or more inter­
+       faces are specified on the command line with the _-_i  flag.
+
+       When a query is received, dhcrelay forwards it to the list
+       of DHCP servers specified on the command  line.    When  a
+       reply  is received, it is broadcast or unicast on the net­
+       work from whence the original request came.
+
+       It is possible to specify a set  of  interfaces  on  which
+       dhcrelay  will  listen,  so  that if dhcrelay is connected
+       through one interface to a network on which  there  is  no
+       DHCP  server,  but  is connected on another interface to a
+       network on which there is a DHCP server, it will not relay
+       DHCP  and  BOOTP  requests  from  the network on which the
+       server exists to that server.   This is an imperfect solu­
+       tion.
+
+CCOOMMMMAANNDD LLIINNEE
+       The  names  of the network interfaces that dhcrelay should
+       attempt to configure may be specified on the command  line
+       using  the _-_i option.  If no interface names are specified
+       on the command line dhcrelay  will  identify  all  network
+       interfaces, elimininating non-broadcast interfaces if pos­
+       sible, and attempt to configure each interface.
+
+       If dhcrelay should listen and transmit  on  a  port  other
+       than  the  standard  (port  67), the --pp flag may used.  It
+       should be followed by the udp port  number  that  dhcrelay
+       should use.  This is mostly useful for debugging purposes.
+
+       Dhcrelay will normally run in the foreground until it  has
+       configured  an  interface, and then will revert to running
+       in the background.  To run force dhcrelay to always run as
+       a  foreground  process,  the  --dd flag should be specified.
+       This is useful when running dhcrelay under a debugger,  or
+       when running it out of inittab on System V systems.
+
+       Dhcrelay  will normally print its network configuration on
+       startup.  This can be annoying in a system startup  script
+
+
+
+                                                                1
+
+
+
+
+
+dhcrelay(8)                                           dhcrelay(8)
+
+
+       - to disable this behaviour, specify the _-_q flag.
+
+       The  name  of  at  least one DHCP server to which DHCP and
+       BOOTP requests should be relayed must be specified on  the
+       command line.
+
+
+SSEEEE AALLSSOO
+       dhclient(8), dhcpd(8), RFC2132, RFC2131.
+
+AAUUTTHHOORR
+       ddhhccrreellaayy((88))  has  been  written  for the Internet Software
+       Consortium by Ted Lemon <mellon@fugue.com> in  cooperation
+       with  Vixie Enterprises.  To learn more about the Internet
+       Software Consortium, see hhttttpp::////wwwwww..vviixx..ccoomm//iisscc..  To learn
+       more about Vixie Enterprises, see hhttttpp::////wwwwww..vviixx..ccoomm..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                2
+
+

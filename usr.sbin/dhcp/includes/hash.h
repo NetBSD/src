@@ -3,7 +3,8 @@
    Definitions for hashing... */
 
 /*
- * Copyright (c) 1995 The Internet Software Consortium.  All rights reserved.
+ * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +44,7 @@
 
 struct hash_bucket {
 	struct hash_bucket *next;
-	char *name;
+	unsigned char *name;
 	int len;
 	unsigned char *value;
 };

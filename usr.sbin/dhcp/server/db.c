@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.6 1998/05/18 06:54:01 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.7 1999/02/18 21:48:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -61,6 +61,7 @@ int write_lease (lease)
 	struct tm *t;
 	char tbuf [64];
 	int errors = 0;
+	int i;
 
 	if (counting)
 		++count;
@@ -134,6 +135,10 @@ int write_lease (lease)
 		}
 	}
 	if (lease -> client_hostname) {
+		for (i = 0; lease -> client_hostname [i]; i++)
+			if (lease -> client_hostname [i] < 33 ||
+			    lease -> client_hostname [i] > 126)
+				goto bad_client_hostname;
 		errno = 0;
 		fprintf (db_file, "\n\tclient-hostname \"%s\";",
 			 lease -> client_hostname);
@@ -141,7 +146,13 @@ int write_lease (lease)
 			++errors;
 		}
 	}
+       bad_client_hostname:
 	if (lease -> hostname) {
+		for (i = 0; lease -> hostname [i]; i++)
+			if (lease -> hostname [i] < 33 ||
+			    lease -> hostname [i] > 126)
+				goto bad_hostname;
+		errno = 0;
 		errno = 0;
 		fprintf (db_file, "\n\thostname \"%s\";",
 			 lease -> hostname);
@@ -149,6 +160,7 @@ int write_lease (lease)
 			++errors;
 		}
 	}
+       bad_hostname:
 	errno = 0;
 	fputs ("\n}\n", db_file);
 	if (errno) {

@@ -3,7 +3,7 @@
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.2 1997/06/03 02:49:31 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.3 1999/02/18 21:48:51 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -222,6 +222,9 @@ void parse_hardware_param (cfile, hardware)
 	      case TOKEN_RING:
 		hardware -> htype = HTYPE_IEEE802;
 		break;
+	      case FDDI:
+		hardware -> htype = HTYPE_FDDI;
+		break;
 	      default:
 		parse_warn ("expecting a network hardware type");
 		skip_to_semi (cfile);
@@ -247,6 +250,9 @@ void parse_hardware_param (cfile, hardware)
 		hardware -> hlen = hlen;
 		memcpy ((unsigned char *)&hardware -> haddr [0],
 			t, hardware -> hlen);
+		if (hlen < sizeof hardware -> haddr)
+			memset (&hardware -> haddr [hlen], 0,
+				(sizeof hardware -> haddr) - hlen);
 		free (t);
 	}
 	
@@ -297,7 +303,8 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 {
 	char *val;
 	int token;
-	unsigned char *bufp = buf, *s, *t;
+	unsigned char *bufp = buf, *s;
+	char *t;
 	int count = 0;
 	pair c = (pair)0;
 
@@ -343,7 +350,7 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 			convert_num (s, val, base, size);
 			s += size / 8;
 		} else {
-			t = (unsigned char *)malloc (strlen (val) + 1);
+			t = (char *)malloc (strlen (val) + 1);
 			if (!t)
 				error ("no temp space for number.");
 			strcpy (t, val);

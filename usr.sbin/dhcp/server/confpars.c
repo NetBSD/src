@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.4 1997/11/22 09:14:33 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.5 1999/02/18 21:48:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -73,6 +73,7 @@ int readconf ()
 	root_group.boot_unknown_clients = 1;
 	root_group.allow_bootp = 1;
 	root_group.allow_booting = 1;
+	root_group.authoritative = 1;
 
 	if ((cfile = fopen (path_dhcpd_conf, "r")) == NULL)
 		error ("Can't open %s: %m", path_dhcpd_conf);
@@ -155,6 +156,7 @@ void read_leases ()
 	       | fixed-address-parameter
 	       | ALLOW allow-deny-keyword
 	       | DENY allow-deny-keyword
+	       | USE_LEASE_ADDR_FOR_DEFAULT_ROUTE boolean
 
    declaration :== host-declaration
 		 | group-declaration
@@ -239,16 +241,24 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		share -> group -> shared_network = share;
 
 		parse_subnet_declaration (cfile, share);
+
+		/* share -> subnets is the subnet we just parsed. */
 		if (share -> subnets) {
 			share -> interface =
 				share -> subnets -> interface;
 
+			/* Make the shared network name from network number. */
 			n = piaddr (share -> subnets -> net);
 			t = malloc (strlen (n) + 1);
 			if (!t)
 				error ("no memory for subnet name");
 			strcpy (t, n);
 			share -> name = t;
+
+			/* Copy the authoritative parameter from the subnet,
+			   since there is no opportunity to declare it here. */
+			share -> group -> authoritative =
+				share -> subnets -> group -> authoritative;
 			enter_shared_network (share);
 		}
 		return 1;
@@ -301,6 +311,34 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		group -> use_host_decl_names = parse_boolean (cfile);
 		break;
 
+	      case USE_LEASE_ADDR_FOR_DEFAULT_ROUTE:
+		group -> use_lease_addr_for_default_route =
+			parse_boolean (cfile);
+		break;
+
+	      case TOKEN_NOT:
+		token = next_token (&val, cfile);
+		switch (token) {
+		      case AUTHORITATIVE:
+			if (type == HOST_DECL)
+			    parse_warn ("authority makes no sense here."); 
+			group -> authoritative = 0;
+			parse_semi (cfile);
+			break;
+		      default:
+			parse_warn ("expecting assertion");
+			skip_to_semi (cfile);
+			break;
+		}
+		break;
+			
+	      case AUTHORITATIVE:
+		if (type == HOST_DECL)
+		    parse_warn ("authority makes no sense here."); 
+		group -> authoritative = 1;
+		parse_semi (cfile);
+		break;
+
 	      case NEXT_SERVER:
 		tree = parse_ip_addr_or_hostname (cfile, 0);
 		if (!tree)
@@ -319,17 +357,11 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 		break;
 
 	      case SERVER_IDENTIFIER:
-		if (type != ROOT_GROUP)
-			parse_warn ("server-identifier only allowed at top %s",
-				    "level.");
 		tree = parse_ip_addr_or_hostname (cfile, 0);
 		if (!tree)
 			return declaration;
-		cache = tree_cache (tree);
-		if (type == ROOT_GROUP) {
-			if (!tree_evaluate (cache))
-				error ("server-identifier is not known");
-		}
+		group -> options [DHO_DHCP_SERVER_IDENTIFIER] =
+			tree_cache (tree);
 		token = next_token (&val, cfile);
 		break;
 			
@@ -664,7 +696,7 @@ void parse_subnet_declaration (cfile, share)
 {
 	char *val;
 	int token;
-	struct subnet *subnet, *t;
+	struct subnet *subnet, *t, *u;
 	struct iaddr iaddr;
 	unsigned char addr [4];
 	int len = sizeof addr;
@@ -731,9 +763,19 @@ void parse_subnet_declaration (cfile, share)
 	if (!share -> subnets)
 		share -> subnets = subnet;
 	else {
+		u = (struct subnet *)0;
 		for (t = share -> subnets;
-		     t -> next_sibling; t = t -> next_sibling)
-			;
+		     t -> next_sibling; t = t -> next_sibling) {
+			if (subnet_inner_than (subnet, t, 0)) {
+				if (u)
+					u -> next_sibling = subnet;
+				else
+					share -> subnets = subnet;
+				subnet -> next_sibling = t;
+				return;
+			}
+			u = t;
+		}
 		t -> next_sibling = subnet;
 	}
 }
@@ -890,8 +932,9 @@ void parse_option_param (cfile, group)
 
 		/* Look up the option name hash table for the specified
 		   vendor. */
-		universe = (struct universe *)hash_lookup (&universe_hash,
-							   vendor, 0);
+		universe = ((struct universe *)
+			    hash_lookup (&universe_hash,
+					 (unsigned char *)vendor, 0));
 		/* If it's not there, we can't parse the rest of the
 		   declaration. */
 		if (!universe) {
@@ -907,7 +950,8 @@ void parse_option_param (cfile, group)
 	}
 
 	/* Look up the actual option info... */
-	option = (struct option *)hash_lookup (universe -> hash, val, 0);
+	option = (struct option *)hash_lookup (universe -> hash,
+					       (unsigned char *)val, 0);
 
 	/* If we didn't get an option structure, it's an undefined option. */
 	if (!option) {
@@ -958,7 +1002,8 @@ void parse_option_param (cfile, group)
 					token = next_token (&val, cfile);
 					tree = tree_concat
 						(tree,
-						 tree_const (val,
+						 tree_const ((unsigned char *)
+							     val,
 							     strlen (val)));
 				} else {
 					parse_warn ("expecting string %s.",
@@ -977,9 +1022,10 @@ void parse_option_param (cfile, group)
 						skip_to_semi (cfile);
 					return;
 				}
-				tree = tree_concat (tree,
-						    tree_const (val,
-								strlen (val)));
+				tree = tree_concat
+					(tree,
+					 tree_const ((unsigned char *)val,
+						     strlen (val)));
 				break;
 
 			      case 'I': /* IP address or hostname. */

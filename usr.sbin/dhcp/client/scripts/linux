@@ -1,5 +1,6 @@
 #!/bin/sh
 # dhclient-script for Linux. Dan Halbert, March, 1997.
+# Updated for Linux 2.[12] by Brian J. Murrell, January 1999.
 # No guarantees about this. I'm a novice at the details of Linux
 # networking.
 
@@ -21,6 +22,32 @@
 # 4. TIMEOUT not tested. ping has a flag I don't know, and I'm suspicious
 # of the $1 in its args.
 
+# Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
+function exit_with_hooks() {
+  exit_status=$1
+  if [ -x /etc/dhclient-exit-hooks ]; then
+    . /etc/dhclient-exit-hooks
+  fi
+# probably should do something with exit status of the local script
+  exit $exit_status
+}
+
+# Invoke the local dhcp client enter hooks, if they exist.
+if [ -x /etc/dhclient-enter-hooks ]; then
+  exit_status=0
+  . /etc/dhclient-enter-hooks
+  # allow the local script to abort processing of this state
+  # local script must set exit_status variable to nonzero.
+  if [ $exit_status -ne 0 ]; then
+    exit $exit_status
+  fi
+fi
+
+release=`uname -r`
+release=`expr $release : '\(.*\)\..*'`
+relmajor=`echo $release |sed -e 's/^\([^\.]*\)\..*$/\1/'`
+relminor=`echo $release |sed -e 's/^.*\.\([^\.]*\)$/\1/'`
+
 if [ x$new_broadcast_address != x ]; then
   new_broadcast_arg="broadcast $new_broadcast_address"
 fi
@@ -39,7 +66,7 @@ fi
 
 if [ x$reason = xMEDIUM ]; then
   # Linux doesn't do mediums (ok, ok, media).
-  exit 0
+  exit_with_hooks 0
 fi
 
 if [ x$reason = xPREINIT ]; then
@@ -47,15 +74,24 @@ if [ x$reason = xPREINIT ]; then
     # Bring down alias interface. Its routes will disappear too.
     ifconfig $interface:0- inet 0
   fi
-  ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
+  if [ $relmajor -lt 2 ] || ( [ $relmajor -eq 2 ] && [ $relminor -eq 0 ] )
+   then
+    ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
 		broadcast 255.255.255.255 up
-  # Add route to make broadcast work. Do not omit netmask.
-  route add default dev $interface netmask 0.0.0.0
-  exit 0
+    # Add route to make broadcast work. Do not omit netmask.
+    route add default dev $interface netmask 0.0.0.0
+  else
+    ifconfig $interface up
+  fi
+
+  # We need to give the kernel some time to get the interface up.
+  sleep 1
+
+  exit_with_hooks 0
 fi
 
 if [ x$reason = xARPCHECK ] || [ x$reason = xARPSEND ]; then
-  exit 0;
+  exit_with_hooks 0
 fi
   
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
@@ -75,9 +111,12 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
      [ x$reason = xBOUND ] || [ x$reason = xREBOOT ]; then
 
     ifconfig $interface inet $new_ip_address $new_subnet_arg \
-					$new_broadcast_arg
+							$new_broadcast_arg
     # Add a network route to the computed network address.
-    route add -net $new_network_number $new_subnet_arg dev $interface
+    if [ $relmajor -lt 2 ] || \
+		( [ $relmajor -eq 2 ] && [ $relminor -eq 0 ] ); then
+      route add -net $new_network_number $new_subnet_arg dev $interface
+    fi
     for router in $new_routers; do
       route add default gw $router
     done
@@ -88,11 +127,11 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
     route add -host $alias_ip_address $interface:0
   fi
-  echo domain $new_domain_name >/etc/resolv.conf
+  echo search $new_domain_name >/etc/resolv.conf
   for nameserver in $new_domain_name_servers; do
     echo nameserver $nameserver >>/etc/resolv.conf
   done
-  exit 0
+  exit_with_hooks 0
 fi
 
 if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
@@ -108,7 +147,7 @@ if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
     ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
     route add -host $alias_ip_address $interface:0
   fi
-  exit 0
+  exit_with_hooks 0
 fi
 
 if [ x$reason = xTIMEOUT ]; then
@@ -119,17 +158,20 @@ if [ x$reason = xTIMEOUT ]; then
 					$new_broadcast_arg
   set $new_routers
   ############## what is -w in ping?
-  if ping -q -c 1 -w 1 $1; then
+  if ping -q -c 1 $1; then
     if [ x$new_ip_address != x$alias_ip_address ] && \
 			[ x$alias_ip_address != x ]; then
       ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
       route add -host $alias_ip_address dev $interface:0
     fi
-    route add -net $new_network_number
+    if [ $relmajor -lt 2 ] || \
+		( [ $relmajor -eq 2 ] && [ $relminor -eq 0 ] ); then
+      route add -net $new_network_number
+    fi
     for router in $new_routers; do
       route add default gw $router
     done
-    echo domain $new_domain_name >/etc/resolv.conf.std
+    echo search $new_domain_name >/etc/resolv.conf.std
     for nameserver in $new_domain_name_servers; do
       echo nameserver $nameserver >>/etc/resolv.conf.std
     done
@@ -137,10 +179,10 @@ if [ x$reason = xTIMEOUT ]; then
       rm -f /etc/resolv.conf
       ln /etc/resolv.conf.std /etc/resolv.conf
     fi
-    exit 0
+    exit_with_hooks 0
   fi
   ifconfig $interface inet down
-  exit 1
+  exit_with_hooks 1
 fi
 
-exit 0
+exit_with_hooks 0

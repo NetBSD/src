@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: nit.c,v 1.1.1.3 1997/10/20 23:28:40 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: nit.c,v 1.1.1.4 1999/02/18 21:48:50 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -264,6 +264,10 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	int hw_end;
 	struct sockaddr_in foo;
 
+	if (!strcmp (interface -> name, "fallback"))
+		return send_fallback (interface, packet, raw,
+				      len, from, to, hto);
+
 	/* Start with the sockaddr struct... */
 	junk = (struct sockaddr *)&buf [0];
 	bufp = ((unsigned char *)&junk -> sa_data [0]) - &buf [0];
@@ -343,5 +347,21 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	/* Copy out the data in the packet... */
 	memcpy (buf, &ibuf [bufix], length);
 	return length;
+}
+
+int can_unicast_without_arp ()
+{
+	return 1;
+}
+
+void maybe_setup_fallback ()
+{
+	struct interface_info *fbi;
+	fbi = setup_fallback ();
+	if (fbi) {
+		if_register_fallback (fbi);
+		add_protocol ("fallback", fallback_interface -> wfdesc,
+			      fallback_discard, fallback_interface);
+	}
 }
 #endif
