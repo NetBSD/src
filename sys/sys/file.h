@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.36 2003/02/23 14:37:38 pk Exp $	*/
+/*	$NetBSD: file.h,v 1.37 2003/02/23 16:38:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,7 @@
 #define	_SYS_FILE_H_
 
 #include <sys/fcntl.h>
+#include <sys/lock.h>
 #include <sys/unistd.h>
 
 #ifdef _KERNEL
