@@ -1,4 +1,4 @@
-.\"	$NetBSD: fts.3,v 1.26 2004/03/31 00:14:30 snj Exp $
+.\"	$NetBSD: fts.3,v 1.27 2004/03/31 01:25:46 snj Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,11 @@
 .In sys/stat.h
 .In fts.h
 .Ft FTS *
-.Fn fts_open "char * const *path_argv" "int options" "int (*compar)(const FTSENT **, const FTSENT **)"
+.Fo fts_open
+.Fa "char * const *path_argv"
+.Fa "int options"
+.Fa "int (*compar)(const FTSENT **, const FTSENT **)"
+.Fc
 .Ft FTSENT *
 .Fn fts_read "FTS *ftsp"
 .Ft FTSENT *
@@ -58,15 +62,17 @@
 .Fn fts_close "FTS *ftsp"
 .Sh DESCRIPTION
 The
-.Nm fts
+.Nm
 functions are provided for traversing
 .Ux
 file hierarchies.
 A simple overview is that the
 .Fn fts_open
-function returns a ``handle'' on a file hierarchy, which is then supplied to
+function returns a
+.Dq handle
+on a file hierarchy, which is then supplied to
 the other
-.Nm fts
+.Nm
 functions.
 The function
 .Fn fts_read
@@ -80,7 +86,9 @@ In general, directories are visited two distinguishable times; in pre-order
 (before any of their descendants are visited) and in post-order (after all
 of their descendants have been visited).
 Files are visited once.
-It is possible to walk the hierarchy ``logically'' (ignoring symbolic links)
+It is possible to walk the hierarchy
+.Dq logically
+(ignoring symbolic links)
 or physically (visiting symbolic links), order the walk of the hierarchy or
 prune and/or re-visit portions of the hierarchy.
 .Pp
@@ -97,7 +105,9 @@ Normally, an
 .Fa FTSENT
 structure is returned for every file in the file
 hierarchy.
-In this manual page, ``file'' and
+In this manual page,
+.Dq file
+and
 .Dq Fa FTSENT No structure
 are generally
 interchangeable.
@@ -172,7 +182,7 @@ A directory being visited in post-order.
 The contents of the
 .Fa FTSENT
 structure will be unchanged from when
-it was returned in pre-order, i.e. with the
+it was returned in pre-order, i.e., with the
 .Fa fts_info
 field set to
 .Dv FTS_D .
@@ -260,13 +270,13 @@ field are undefined.
 .It Fa fts_number
 This field is provided for the use of the application program and is
 not modified by the
-.Nm fts
+.Nm
 functions.
 It is initialized to 0.
 .It Fa fts_pointer
 This field is provided for the use of the application program and is
 not modified by the
-.Nm fts
+.Nm
 functions.
 It is initialized to
 .Dv NULL .
@@ -274,7 +284,7 @@ It is initialized to
 A pointer to the
 .Fa FTSENT
 structure referencing the file in the hierarchy
-immediately above the current file, i.e. the directory of which this
+immediately above the current file, i.e., the directory of which this
 file is a member.
 A parent structure for the initial entry point is provided as well,
 however, only the
@@ -367,7 +377,7 @@ followed immediately whether or not
 is also specified.
 .It Dv FTS_LOGICAL
 This option causes the
-.Nm fts
+.Nm
 routines to return
 .Fa FTSENT
 structures for the targets of symbolic links
@@ -386,14 +396,14 @@ be provided to the
 function.
 .It Dv FTS_NOCHDIR
 As a performance optimization, the
-.Nm fts
+.Nm
 functions change directories as they walk the file hierarchy.
 This has the side-effect that an application cannot rely on being
 in any particular directory during the traversal.
 The
 .Dv FTS_NOCHDIR
 option turns off this optimization, and the
-.Nm fts
+.Nm
 functions will not change the current directory.
 Note that applications should not themselves change their current directory
 and try to access files unless
@@ -409,7 +419,7 @@ structures reference file characteristic information (the
 field) for each file visited.
 This option relaxes that requirement as a performance optimization,
 allowing the
-.Nm fts
+.Nm
 functions to set the
 .Fa fts_info
 field to
@@ -419,7 +429,7 @@ and leave the contents of the
 field undefined.
 .It Dv FTS_PHYSICAL
 This option causes the
-.Nm fts
+.Nm
 routines to return
 .Fa FTSENT
 structures for symbolic links themselves instead
@@ -445,7 +455,7 @@ or
 .Ql ..
 encountered in the file hierarchy are ignored.
 This option causes the
-.Nm fts
+.Nm
 routines to return
 .Fa FTSENT
 structures for them.
@@ -453,7 +463,7 @@ structures for them.
 Return whiteout entries, which are normally hidden.
 .It Dv FTS_XDEV
 This option prevents
-.Nm fts
+.Nm
 from descending into directories that have a different device number
 than the file from which the descent began.
 .El
@@ -573,7 +583,7 @@ has not yet been called for a hierarchy,
 .Fn fts_children
 will return a pointer to the files in the logical directory specified to
 .Fn fts_open ,
-i.e. the arguments specified to
+i.e., the arguments specified to
 .Fn fts_open .
 Otherwise, if the
 .Fa FTSENT
@@ -754,7 +764,7 @@ The options were invalid.
 .Xr symlink 7
 .Sh STANDARDS
 The
-.Nm fts
+.Nm
 utility is expected to be included in a future
 .St -p1003.1-88
 revision.
