@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_clnt.c,v 1.1.1.1 1997/07/24 21:22:50 christos Exp $
+ * $Id: amq_clnt.c,v 1.1.1.2 1997/09/22 21:12:47 christos Exp $
  *
  */
 
@@ -186,6 +186,21 @@ amqproc_getvers_1(voidp argp, CLIENT *clnt)
   memset((char *) &res, 0, sizeof(res));
   if (clnt_call(clnt, AMQPROC_GETVERS, (XDRPROC_T_TYPE) xdr_void, argp,
 		(XDRPROC_T_TYPE) xdr_amq_string, (SVC_IN_ARG_TYPE) & res,
+		TIMEOUT) != RPC_SUCCESS) {
+    return (NULL);
+  }
+  return (&res);
+}
+
+
+int *
+amqproc_getpid_1(voidp argp, CLIENT *clnt)
+{
+  static int res;
+
+  memset((char *) &res, 0, sizeof(res));
+  if (clnt_call(clnt, AMQPROC_GETPID, (XDRPROC_T_TYPE) xdr_void, argp,
+		(XDRPROC_T_TYPE) xdr_int, (SVC_IN_ARG_TYPE) & res,
 		TIMEOUT) != RPC_SUCCESS) {
     return (NULL);
   }

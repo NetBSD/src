@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: restart.c,v 1.1.1.2 1997/07/24 21:21:56 christos Exp $
+ * $Id: restart.c,v 1.1.1.3 1997/09/22 21:12:19 christos Exp $
  *
  */
 
@@ -73,7 +73,9 @@ restart(void)
    * For each entry, find nfs, ufs or auto mounts
    * and create a partial am_node to represent it.
    */
-  for (mlp = ml = read_mtab("restart"); mlp; mlp = mlp->mnext) {
+  for (mlp = ml = read_mtab("restart", mnttab_file_name);
+       mlp;
+       mlp = mlp->mnext) {
     mntent_t *me = mlp->mnt;
     am_ops *fs_ops = 0;
     if (STREQ(me->mnt_type, MNTTAB_TYPE_UFS)) {

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amd.c,v 1.1.1.2 1997/07/24 21:20:28 christos Exp $
+ * $Id: amd.c,v 1.1.1.3 1997/09/22 21:11:42 christos Exp $
  *
  */
 
@@ -228,6 +228,10 @@ daemon_mode(void)
 static void
 init_global_options(void)
 {
+#if defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_UNAME)
+  static struct utsname un;
+#endif /* defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_UNAME) */
+
   memset(&gopt, 0, sizeof(struct amu_global_options));
 
   /* name of current architecture */
@@ -239,8 +243,15 @@ init_global_options(void)
   /* cluster name */
   gopt.cluster = NULL;
 
-  /* kernel architecture */
-  gopt.karch = HOST_ARCH;
+  /*
+   * kernel architecture: this you must get from uname() if possible.
+   */
+#if defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_UNAME)
+  if (uname(&un) >= 0)
+    gopt.karch = un.machine;
+  else
+#endif /* defined(HAVE_SYS_UTSNAME_H) && defined(HAVE_UNAME) */
+    gopt.karch = HOST_ARCH;
 
   /* amd log file */
   gopt.logfile = NULL;
@@ -266,8 +277,11 @@ init_global_options(void)
   /* dismount interval */
   gopt.am_timeo_w = AM_TTL_W;
 
-  /* various CFM_* flags */
-  gopt.flags = 0;
+  /*
+   * various CFM_* flags.
+   * by default, only the "plock" option is on (if available).
+   */
+  gopt.flags = CFM_PROCESS_LOCK;
 
 #ifdef HAVE_MAP_LDAP
   /* LDAP base */
@@ -275,6 +289,10 @@ init_global_options(void)
 
   /* LDAP host ports */
   gopt.ldap_hostports = NULL;
+
+  /* LDAP cache */
+  gopt.ldap_cache_seconds = 0;
+  gopt.ldap_cache_maxmem = 131072;
 #endif /* HAVE_MAP_LDAP */
 
 #ifdef HAVE_MAP_NIS
@@ -287,7 +305,7 @@ init_global_options(void)
 int
 main(int argc, char *argv[])
 {
-  char *domdot;
+  char *domdot, *verstr;
   int ppid = 0;
   int error;
 #ifdef HAVE_SIGACTION
@@ -443,6 +461,16 @@ main(int argc, char *argv[])
   get_args(argc, argv);
 
   /*
+   * Log version information.
+   */
+  verstr = strtok(get_version_string(), "\n");
+  plog(XLOG_INFO, "AM-UTILS VERSION INFORMATION:");
+  while (verstr) {
+    plog(XLOG_INFO, verstr);
+    verstr = strtok(NULL, "\n");
+  }
+
+  /*
    * Get our own IP address so that we
    * can mount the automounter.
    */
@@ -461,11 +489,11 @@ main(int argc, char *argv[])
    * Lock process text and data segment in memory.
    */
 #ifdef HAVE_PLOCK
-  if (gopt.flags & CFM_NOSWAP)
+  if (gopt.flags & CFM_PROCESS_LOCK)
     if (plock(PROCLOCK) != 0) {
       plog(XLOG_WARNING, "Couldn't lock process text and data segment in memory: %m");
     } else {
-      plog(XLOG_INFO, "Locked process text and data segment in memory: %m");
+      plog(XLOG_INFO, "Locked process text and data segment in memory");
     }
 #endif /* HAVE_PLOCK */
 

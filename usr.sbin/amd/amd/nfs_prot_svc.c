@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_prot_svc.c,v 1.1.1.1 1997/07/24 21:21:27 christos Exp $
+ * $Id: nfs_prot_svc.c,v 1.1.1.2 1997/09/22 21:12:02 christos Exp $
  *
  */
 
@@ -91,7 +91,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
     am_nfs_fh		nfsproc_statfs_2_arg;
   } argument;
   char *result;
-  bool_t(*xdr_argument) (), (*xdr_result) ();
+  bool_t (*xdr_argument)(), (*xdr_result)();
   char *(*local) ();
 
   nfs_program_2_transp = NULL;
@@ -220,7 +220,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
   memset((char *) &argument, 0, sizeof(argument));
   if (!svc_getargs(transp,
 		   (XDRPROC_T_TYPE) xdr_argument,
-		   (SVC_IN_ARG_TYPE) & argument)) {
+		   (SVC_IN_ARG_TYPE) &argument)) {
     plog(XLOG_ERROR,
 	 "NFS xdr decode failed for %d %d %d",
 	 rqstp->rq_prog, rqstp->rq_vers, rqstp->rq_proc);
@@ -239,7 +239,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
   if (!svc_freeargs(transp,
 		    (XDRPROC_T_TYPE) xdr_argument,
 		    (SVC_IN_ARG_TYPE) & argument)) {
-    plog(XLOG_FATAL, "unable to free rpc arguments in nfs_program_1");
+    plog(XLOG_FATAL, "unable to free rpc arguments in nfs_program_2");
     going_down(1);
   }
 }

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_nis.c,v 1.1.1.2 1997/07/24 21:20:57 christos Exp $
+ * $Id: info_nis.c,v 1.1.1.3 1997/09/22 21:11:52 christos Exp $
  *
  */
 
@@ -51,6 +51,11 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
+/*
+ * NIS+ servers in NIS compat mode don't have yp_order()
+ */
+static int has_yp_order = FALSE;
 
 struct nis_callback_data {
   mnt_map *ncd_m;
@@ -156,7 +161,7 @@ nis_reload(mnt_map *m, char *map, void (*fn) (int, char *, int, char *, int, cha
    * If you are using NIS and your yp_all function is "broken", you have to
    * get it fixed.  The bug in yp_all() is that it does not close a TCP
    * connection to ypserv, and this ypserv runs out of open filedescriptors,
-   * getting into an infinite loop, thus all YP clients enevtually unbind
+   * getting into an infinite loop, thus all YP clients eventually unbind
    * and hang too.
    */
   error = yp_all(gopt.nis_domain, map, &cbinfo);
@@ -187,14 +192,27 @@ nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
       return error;
   }
 
-  /*
-   * Check if map has changed
-   */
-  if (yp_order(gopt.nis_domain, map, &order))
-    return EIO;
-  if ((time_t) order > *tp) {
-    *tp = (time_t) order;
-    return -1;
+
+  if (has_yp_order) {
+    /*
+     * Check if map has changed
+     */
+    if (yp_order(gopt.nis_domain, map, &order))
+      return EIO;
+    if ((time_t) order > *tp) {
+      *tp = (time_t) order;
+      return -1;
+    }
+  } else {
+    /*
+     * NIS+ server without yp_order
+     * Check if timeout has expired to invalidate the cache
+     */
+    order = time(NULL);
+    if ((time_t)order - *tp > gopt.am_timeo) {
+      *tp = (time_t)order;
+      return(-1);
+    }
   }
 
   /*
@@ -223,22 +241,45 @@ int
 nis_init(mnt_map *m, char *map, time_t *tp)
 {
   YP_ORDER_OUTORDER_TYPE order;
+  int yp_order_result;
+  char *master;
 
   if (!gopt.nis_domain) {
     int error = determine_nis_domain();
     if (error)
       return error;
   }
+
   /*
    * To see if the map exists, try to find
    * a master for it.
    */
-  if (yp_order(gopt.nis_domain, map, &order))
-    return ENOENT;
-  *tp = (time_t) order;
+  yp_order_result = yp_order(gopt.nis_domain, map, &order);
+  switch (yp_order_result) {
+  case 0:
+    has_yp_order = TRUE;
+    *tp = (time_t) order;
 #ifdef DEBUG
-  dlog("NIS master for %s@%s has order %d", map, gopt.nis_domain, order);
+    dlog("NIS master for %s@%s has order %d", map, gopt.nis_domain, order);
 #endif /* DEBUG */
+    break;
+  case YPERR_YPERR:
+    /* NIS+ server found ! */
+    has_yp_order = FALSE;
+    /* try yp_master() instead */
+    if (yp_master(gopt.nis_domain, map, &master)) {
+      return ENOENT;
+    } else {
+#ifdef DEBUG
+      dlog("NIS master for %s@%s is a NIS+ server", map, gopt.nis_domain);
+#endif /* DEBUG */
+      /* Use fake timestamps */
+      *tp = time(NULL);
+    }
+    break;
+  default:
+    return ENOENT;
+  }
   return 0;
 }
 

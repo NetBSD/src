@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: autil.c,v 1.1.1.1 1997/07/24 21:20:37 christos Exp $
+ * $Id: autil.c,v 1.1.1.2 1997/09/22 21:11:46 christos Exp $
  *
  */
 
@@ -334,10 +334,11 @@ int
 mount_node(am_node *mp)
 {
   mntfs *mf = mp->am_mnt;
-  int error;
+  int error = 0;
 
   mf->mf_flags |= MFF_MOUNTING;
   error = (*mf->mf_ops->mount_fs) (mp);
+
   mf = mp->am_mnt;
   if (error >= 0)
     mf->mf_flags &= ~MFF_MOUNTING;
@@ -345,6 +346,7 @@ mount_node(am_node *mp)
     /* ...but see ifs_mount */
     am_mounted(mp);
   }
+
   return error;
 }
 
@@ -409,45 +411,8 @@ top:
   if (pid == 0) {		/* child process (foreground==false) */
     mypid = getpid();
     foreground = 0;
-#ifdef HAVE_TRANSPORT_TYPE_TLI_off
-    /*
-     * The sleep() right here is a hacky solution to some race conditions on
-     * some systems, esp. Solaris with TLI on fast CPUs.  Without it, all
-     * top-level mounts bombard the system very fast, and some of them,
-     * possibly the non-blocking RPCs, get lost.  It is not guaranteed who
-     * and how many get lost; sometimes none, sometimes all but one.  I've
-     * seen things like that under older systems like Mach-3 Either way.
-     * This hack seems to solve the problem.  Note that the sleep() is
-     * progressively greater as there are more children, so as to
-     * "randomize" the order in which they will reply back to the parent amd
-     * process.  It helps in getting the replies delivered back in order.
-     * These hopefully don't slow down amd by much overall.  For the time
-     * being, I'm going to make this code dependent on TLI, because I have
-     * no evidence that it is needed on any other system.  Anyone is welcome
-     * to figure out the bug or race condition.
-     *
-     * It is also possible that if there are too many children sending out
-     * their (unreliable) UDP datagrams over the fwd_sock, that some of them
-     * simply get lost.  Then there's always the possibility that this is a
-     * kernel networking bug.
-     *
-     * -Erez Zadok <ezk@cs.columbia.edu>
-     */
-    if (NumChild > 0) {
-      plog(XLOG_INFO,"too many background children(%d). sleep %d mSec...",
-	   NumChild, PARENT_USLEEP_TIME*NumChild);
-      usleep(PARENT_USLEEP_TIME*NumChild);
-    }
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
   } else {			/* parent process, has one more child */
     NumChild++;
-#ifdef HAVE_TRANSPORT_TYPE_TLI_off
-    if (NumChild > 1) {
-      plog(XLOG_INFO,"parent sleeps for %d mSec...",
-	   PARENT_USLEEP_TIME*NumChild);
-      usleep(PARENT_USLEEP_TIME*NumChild);
-    }
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
   }
 
   return pid;

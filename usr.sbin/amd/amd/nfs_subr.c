@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_subr.c,v 1.1.1.2 1997/07/24 21:21:36 christos Exp $
+ * $Id: nfs_subr.c,v 1.1.1.3 1997/09/22 21:12:05 christos Exp $
  *
  */
 
@@ -49,9 +49,16 @@
 #include <amd.h>
 
 /*
- * Convert from UN*X to NFS error code
+ * Convert from UN*X to NFS error code.
+ * Some systems like linux define their own (see
+ * conf/mount/mount_linux.h).
  */
-#define nfs_error(e) ((nfsstat)(e))
+#ifndef nfs_error
+# define nfs_error(e) ((nfsstat)(e))
+#endif /* nfs_error */
+
+/* forward declarations */
+static void count_map_entries(const am_node *mp, u_int *out_blocks, u_int *out_bfree, u_int *out_bavail);
 
 
 static char *
@@ -221,7 +228,7 @@ quick_reply(am_node *mp, int error)
 {
   SVCXPRT *transp = mp->am_transp;
   nfsdiropres res;
-  bool_t(*xdr_result) () = xdr_diropres;
+  bool_t (*xdr_result)() = xdr_diropres;
 
   /*
    * If there's a transp structure then we can reply to the client's
@@ -510,6 +517,7 @@ nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   static nfsstatfsres res;
   am_node *mp;
   int retry;
+  mntent_t mnt;
 
 #ifdef DEBUG
   amuDebug(D_TRACE)
@@ -534,14 +542,69 @@ nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     fp = &res.sfr_u.sfr_reply_u;
 
     fp->sfrok_tsize = 1024;
-    fp->sfrok_bsize = 4096;
-    fp->sfrok_blocks = 0; /* set to 1 if you don't want empty automounts */
-    fp->sfrok_bfree = 0;
-    fp->sfrok_bavail = 0;
+    fp->sfrok_bsize = 1024;
+
+    /* check if map is browsable and show_statfs_entries=yes  */
+    if ((gopt.flags & CFM_SHOW_STATFS_ENTRIES) &&
+	mp->am_mnt && mp->am_mnt->mf_mopts) {
+      mnt.mnt_opts = mp->am_mnt->mf_mopts;
+      if (hasmntopt(&mnt, "browsable")) {
+	count_map_entries(mp,
+			  &fp->sfrok_blocks,
+			  &fp->sfrok_bfree,
+			  &fp->sfrok_bavail);
+      }
+    } else {
+      fp->sfrok_blocks = 0; /* set to 1 if you don't want empty automounts */
+      fp->sfrok_bfree = 0;
+      fp->sfrok_bavail = 0;
+    }
 
     res.sfr_status = NFS_OK;
     mp->am_stats.s_statfs++;
   }
 
   return &res;
+}
+
+
+/*
+ * count how many total entries there are in a map, and how many
+ * of them are in use.
+ */
+static void
+count_map_entries(const am_node *mp, u_int *out_blocks, u_int *out_bfree, u_int *out_bavail)
+{
+  u_int blocks, bfree, bavail, i;
+  mntfs *mf;
+  mnt_map *mmp;
+  kv *k;
+
+  blocks = bfree = bavail = 0;
+  if (!mp)
+    goto out;
+  mf = mp->am_mnt;
+  if (!mf)
+    goto out;
+  mmp = (mnt_map *) mf->mf_private;
+  if (!mmp)
+    goto out;
+
+  /* iterate over keys */
+  for (i = 0; i < NKVHASH; i++) {
+    for (k = mmp->kvhash[i]; k ; k = k->next) {
+      if (!k->key)
+	continue;
+      blocks++;
+      /*
+       * XXX: Need to count how many are actively in use and recompute
+       * bfree and bavail based on it.
+       */
+    }
+  }
+
+out:
+  *out_blocks = blocks;
+  *out_bfree = bfree;
+  *out_bavail = bavail;
 }

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_cdfs.c,v 1.1.1.1 1997/07/24 21:21:42 christos Exp $
+ * $Id: ops_cdfs.c,v 1.1.1.2 1997/09/22 21:12:08 christos Exp $
  *
  */
 
@@ -140,7 +140,7 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) &cdfs_args, 0, type, 0, NULL);
+  return mount_fs(&mnt, flags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 
@@ -162,5 +162,5 @@ cdfs_fmount(mntfs *mf)
 static int
 cdfs_fumount(mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount);
+  return UMOUNT_FS(mf->mf_mount, mnttab_file_name);
 }

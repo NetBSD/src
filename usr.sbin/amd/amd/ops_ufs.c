@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_ufs.c,v 1.1.1.1 1997/07/24 21:21:47 christos Exp $
+ * $Id: ops_ufs.c,v 1.1.1.2 1997/09/22 21:12:17 christos Exp $
  *
  */
 
@@ -135,7 +135,7 @@ mount_ufs(char *dir, char *fs_name, char *opts)
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) &ufs_args, 0, type, 0, NULL);
+  return mount_fs(&mnt, flags, (caddr_t) &ufs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 
@@ -159,5 +159,5 @@ ufs_fmount(mntfs *mf)
 static int
 ufs_fumount(mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount);
+  return UMOUNT_FS(mf->mf_mount, mnttab_file_name);
 }
