@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.77 2002/09/17 21:37:13 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.78 2002/11/16 23:34:30 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.77 2002/09/17 21:37:13 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.78 2002/11/16 23:34:30 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -370,7 +370,7 @@ failed:
 	 * Copy out the error if doing sane error semantics.
 	 */
 	if (errout != 0)
-		(void)strncpy(errout, kd->errbuf, _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, kd->errbuf, _POSIX2_LINE_MAX);
 	(void)kvm_close(kd);
 	return (0);
 }
@@ -667,7 +667,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
-		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, strerror(errno), _POSIX2_LINE_MAX);
 		return (0);
 	}
 	kd->program = 0;
