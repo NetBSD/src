@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.11 1997/10/29 00:18:21 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.12 1997/11/04 06:31:16 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -136,6 +136,9 @@ struct ahb_softc {
 	struct ahb_ecb *sc_immed_ecb;	/* an outstanding immediete command */
 	int sc_numecbs;
 	struct scsipi_link sc_link;
+
+	LIST_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_xfer *sc_queuelast;
 };
 
 struct ahb_probe_data {
@@ -157,6 +160,8 @@ int	ahb_scsi_cmd __P((struct scsipi_xfer *));
 int	ahb_poll __P((struct ahb_softc *, struct scsipi_xfer *, int));
 void	ahb_timeout __P((void *));
 int	ahb_create_ecbs __P((struct ahb_softc *));
+void	ahb_enqueue __P((struct ahb_softc *, struct scsipi_xfer *, int));
+struct scsipi_xfer *ahb_dequeue __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
@@ -275,6 +280,7 @@ ahbattach(parent, self, aux)
 
 	ahb_init(sc);
 	TAILQ_INIT(&sc->sc_free_ecb);
+	LIST_INIT(&sc->sc_queue);
 
 	/*
 	 * fill in the prototype scsipi_link.
@@ -312,6 +318,47 @@ ahbattach(parent, self, aux)
 	 * ask the adapter what subunits are present
 	 */
 	config_found(self, &sc->sc_link, scsiprint);
+}
+
+/*
+ * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
+ * to avoid having to allocate additional resources (since we're used
+ * only during resource shortages anyhow.
+ */
+void
+ahb_enqueue(sc, xs, infront)
+	struct ahb_softc *sc;
+	struct scsipi_xfer *xs;
+	int infront;
+{
+
+	if (infront || sc->sc_queue.lh_first == NULL) {
+		if (sc->sc_queue.lh_first == NULL)
+			sc->sc_queuelast = xs;
+		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
+		return;
+	}
+
+	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
+	sc->sc_queuelast = xs;
+}
+
+/*
+ * Pull a scsipi_xfer off the front of the software queue.
+ */
+struct scsipi_xfer *
+ahb_dequeue(sc)
+	struct ahb_softc *sc;
+{
+	struct scsipi_xfer *xs;
+
+	xs = sc->sc_queue.lh_first;
+	LIST_REMOVE(xs, free_list);
+
+	if (sc->sc_queue.lh_first == NULL)
+		sc->sc_queuelast = NULL;
+
+	return (xs);
 }
 
 /*
@@ -744,6 +791,17 @@ done:
 	ahb_free_ecb(sc, ecb);
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+
+	/*
+	 * If there are queue entries in the software queue, try to
+	 * run the first one.  We should be more or less guaranteed
+	 * to succeed, since we just freed an ECB.
+	 *
+	 * NOTE: ahb_scsi_cmd() relies on our calling it with
+	 * the first entry in the queue.
+	 */
+	if ((xs = sc->sc_queue.lh_first) != NULL)
+		(void) ahb_scsi_cmd(xs);
 }
 
 /*
@@ -870,9 +928,48 @@ ahb_scsi_cmd(xs)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct ahb_ecb *ecb;
 	int error, seg, flags, s;
+	int fromqueue = 0, dontqueue = 0;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
 
+	s = splbio();		/* protect the queue */
+
+	/*
+	 * If we're running the queue from ahb_done(), we've been
+	 * called with the first queue entry as our argument.
+	 */
+	if (xs == sc->sc_queue.lh_first) {
+		xs = ahb_dequeue(sc);
+		fromqueue = 1;
+		goto get_ecb;
+	}
+
+	/* Polled requests can't be queued for later. */
+	dontqueue = xs->flags & SCSI_POLL;
+
+	/*
+	 * If there are jobs in the queue, run them first.
+	 */
+	if (sc->sc_queue.lh_first != NULL) {
+		/*
+		 * If we can't queue, we have to abort, since
+		 * we have to preserve order.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Swap with the first queue entry.
+		 */
+		ahb_enqueue(sc, xs, 0);
+		xs = ahb_dequeue(sc);
+		fromqueue = 1;
+	}
+
+ get_ecb:
 	/*
 	 * get a ecb (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -880,9 +977,26 @@ ahb_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
+		/*
+		 * If we can't queue, we lose.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Stuff ourselves into the queue, in front
+		 * if we came off in the first place.
+		 */
+		ahb_enqueue(sc, xs, fromqueue);
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	splx(s);		/* done playing with the queue */
+
 	ecb->xs = xs;
 	ecb->timeout = xs->timeout;
 
