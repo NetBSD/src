@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.1 1997/03/10 06:28:31 scottr Exp $	*/
+/*	$NetBSD: statd.c,v 1.2 1997/05/17 15:52:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -54,7 +54,7 @@
 #include "statd.h"
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: statd.c,v 1.1 1997/03/10 06:28:31 scottr Exp $";
+static char rcsid[] = "$NetBSD: statd.c,v 1.2 1997/05/17 15:52:52 christos Exp $";
 #endif				/* not lint */
 
 int     	debug = 0;		/* Controls syslog() for debug msgs */
@@ -63,8 +63,8 @@ FileLayout	*status_info;		/* Pointer to mmap()ed status file */
 static int	status_fd;		/* File descriptor for the open file */
 static off_t	status_file_len;	/* Current on-disc length of file */
 
-extern void sm_prog_1(struct svc_req * rqstp, SVCXPRT * transp);
-static void handle_sigchld();
+extern void sm_prog_1 __P((struct svc_req *, SVCXPRT *));
+static void handle_sigchld __P((int));
 
 main(argc, argv)
 	int argc;
@@ -148,9 +148,8 @@ main(argc, argv)
  *		children to exit when they have done their work.
  */
 static void 
-handle_sigchld(sig, code, scp)
-	int sig, code;
-	struct sigcontext *scp;
+handle_sigchld(sig)
+	int sig;
 {
 	int     pid, status;
 	pid = wait4(-1, &status, WNOHANG, (struct rusage *) 0);
