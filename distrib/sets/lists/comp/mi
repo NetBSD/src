@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.211 2000/04/15 18:12:46 mrg Exp $
+#	$NetBSD: mi,v 1.212 2000/04/16 23:38:48 perry Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -148,6 +148,7 @@
 ./usr/include/dev/ic/midwayvar.h		comp-c-include
 ./usr/include/dev/ic/ncr5380reg.h		comp-c-include
 ./usr/include/dev/ic/ncr5380var.h		comp-c-include
+./usr/include/dev/ic/ncr53c400reg.h		comp-c-include
 ./usr/include/dev/ic/ncr53c9xreg.h		comp-c-include
 ./usr/include/dev/ic/ncr53c9xvar.h		comp-c-include
 ./usr/include/dev/ic/ne2000reg.h		comp-c-include
@@ -1037,10 +1038,12 @@
 ./usr/include/vm/vm_pager.h		comp-c-include
 ./usr/include/vm/vm_param.h		comp-c-include
 ./usr/include/vm/vm_prot.h		comp-c-include
+./usr/include/wchar.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
 ./usr/include/zlib.h		comp-c-include
 ./usr/lib/crt0.o		comp-c-lib
 ./usr/lib/gcrt0.o		comp-c-lib
+./usr/lib/libbfd_pic.a		comp-c-lib
 ./usr/lib/libbz2.a		comp-c-lib
 ./usr/lib/libbz2_p.a		comp-c-proflib
 ./usr/lib/libc.a		comp-c-lib
