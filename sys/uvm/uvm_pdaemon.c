@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.15.4.2 1999/06/21 01:47:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.15.4.3 1999/07/04 02:04:29 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -254,7 +254,11 @@ uvm_pageout()
 		 * if there's any free memory to be had,
 		 * wake up any waiters.
 		 */
-		wakeup(&uvmexp.free);
+
+		if (uvmexp.free > uvmexp.reserve_kernel ||
+		    uvmexp.paging == 0) {
+			wakeup(&uvmexp.free);
+		}
 
 		/*
 		 * done scan.  unlock page queues (the only lock we are holding)
@@ -273,7 +277,7 @@ void
 uvm_aiodone_daemon()
 {
 	int s;
-	struct uvm_aiodesc *aio, *nextaio;
+	struct buf *bp, *nbp;
 	UVMHIST_FUNC("uvm_aiodoned"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm aiodone daemon>", 0, 0, 0, 0);
@@ -307,8 +311,8 @@ uvm_aiodone_daemon()
 		 * check for done aio structures
 		 */
 
-		aio = TAILQ_FIRST(&uvm.aio_done);
-		if (aio) {
+		bp = TAILQ_FIRST(&uvm.aio_done);
+		if (bp) {
 			TAILQ_INIT(&uvm.aio_done);
 		}
 
@@ -319,12 +323,12 @@ uvm_aiodone_daemon()
 		 * process each i/o that's done.
 		 */
 
-		for (/*null*/; aio != NULL ; aio = nextaio) {
-			if (aio->flags & UVM_AIO_PAGEDAEMON) {
-				uvmexp.paging -= aio->npages;
+		for (/*null*/; bp != NULL ; bp = nbp) {
+			if (bp->b_flags & B_PDAEMON) {
+				uvmexp.paging -= bp->b_bufsize >> PAGE_SHIFT;
 			}
-			nextaio = TAILQ_NEXT(aio, aioq);
-			aio->aiodone(aio);
+			nbp = TAILQ_NEXT(bp, b_freelist);
+			(*bp->b_iodone)(bp);
 		}
 	}
 }
