@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.2 2004/06/22 22:19:36 itojun Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.3 2004/06/30 13:29:43 darrenr Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
@@ -173,7 +173,10 @@ static void
 usage(void)
 {
 	syslog(LOG_NOTICE,
-	    "usage: %s [-AnrVw] [-a address] [-D debuglevel [-g group]"
+	    "usage: %s -i [-AnrVw] [-a address] [-D debuglevel [-g group]"
+	    " [-M maxport] [-m minport] [-t timeout] [-u user]", __progname);
+	syslog(LOG_NOTICE,
+	    "usage: %s -p [-AnrVw] [-a address] [-D debuglevel [-g group]"
 	    " [-M maxport] [-m minport] [-t timeout] [-u user]", __progname);
 	exit(EX_USAGE);
 }
@@ -441,7 +444,7 @@ new_dataconn(int server)
 			exit(EX_OSERR);
 		}
 		if (listen(server_listen_socket, 5) != 0) {
-			syslog(LOG_INFO, "server socket listen() failed (%m)");
+			syslog(LOG_INFO, "server socket Listen() failed (%m)");
 			exit(EX_OSERR);
 		}
 	} else {
@@ -460,6 +463,10 @@ new_dataconn(int server)
 			exit(EX_OSERR);
 		}
 	}
+	/*
+	 * XXX - If we were doing completely transparent proxying, this is
+	 *       where we would make a call to add a dynamic redirect rule.
+	 */
 	return(0);
 }
 
@@ -496,6 +503,10 @@ connect_pasv_backchannel(void)
 		syslog(LOG_NOTICE, "get_backchannel_socket() failed (%m)");
 		exit(EX_OSERR);
 	}
+	/*
+	 * XXX - If we were doing completely transparent proxying, this is
+	 *       another location to call _tconnect().
+	 */
 	if (connect(server_data_socket, (struct sockaddr *) &server_listen_sa,
 	    sizeof(server_listen_sa)) != 0) {
 		syslog(LOG_NOTICE, "connect() failed (%m)");
@@ -572,6 +583,10 @@ connect_port_backchannel(void)
 		}
 	}
 
+	/*
+	 * XXX - If we were doing completely transparent proxying, this is
+	 *       another location to create a NAT instance.
+	 */
 	if (connect(client_data_socket, (struct sockaddr *) &client_listen_sa,
 	    sizeof(client_listen_sa)) != 0) {
 		syslog(LOG_INFO, "cannot connect data channel (%m)");
@@ -965,16 +980,18 @@ main(int argc, char *argv[])
 {
 	struct csiob client_iob, server_iob;
 	struct sigaction new_sa, old_sa;
-	int sval, ch, flags, i;
+	int sval, ch, flags, i, err;
 	socklen_t salen;
 	int one = 1;
+	int ipf = 0;
+	int pf = 0;
 	long timeout_seconds = 0;
 	struct timeval tv;
 #ifdef LIBWRAP
 	int use_tcpwrapper = 0;
 #endif /* LIBWRAP */
 
-	while ((ch = getopt(argc, argv, "a:D:g:m:M:t:u:AnVwr")) != -1) {
+	while ((ch = getopt(argc, argv, "a:D:g:m:M:t:T:u:AinpVwr")) != -1) {
 		char *p;
 		switch (ch) {
 		case 'a':
@@ -997,6 +1014,11 @@ main(int argc, char *argv[])
 		case 'g':
 			Group = optarg;
 			break;
+		case 'i' :
+			if (pf)
+				usage();
+			ipf = 1;
+			break;
 		case 'm':
 			min_port = strtol(optarg, &p, 10);
 			if (!*optarg || *p)
@@ -1014,6 +1036,11 @@ main(int argc, char *argv[])
 		case 'n':
 			NatMode = 1; /* pass all passives, we're using NAT */
 			break;
+		case 'p' :
+			if (ipf)
+				usage();
+			pf = 1;
+			break;
 		case 'r':
 			Use_Rdns = 1; /* look up hostnames */
 			break;
@@ -1022,6 +1049,13 @@ main(int argc, char *argv[])
 			if (!*optarg || *p)
 				usage();
 			break;
+#if 0
+		case 'T':
+			if (!ipf)
+				usage();
+			extif = optarg;
+			break;
+#endif
 		case 'u':
 			User = optarg;
 			break;
@@ -1041,7 +1075,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (max_port < min_port)
+	if ((max_port < min_port) || (!ipf && !pf))
 		usage();
 
 	openlog(__progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
@@ -1052,7 +1086,9 @@ main(int argc, char *argv[])
 	memset(&client_iob, 0, sizeof(client_iob));
 	memset(&server_iob, 0, sizeof(server_iob));
 
-	if (get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+	if (pf && pf_get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+		exit(EX_PROTOCOL);
+	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
 		exit(EX_PROTOCOL);
 
 	/*
@@ -1065,7 +1101,7 @@ main(int argc, char *argv[])
 	drop_privs();
 
 	/*
-	 * We check_host after get_proxy_env so that checks are done
+	 * We check_host after *_get_proxy_env so that checks are done
 	 * against the original destination endpoint, not the endpoint
 	 * of our side of the rdr. This allows the use of tcpwrapper
 	 * rules to restrict destinations as well as sources of connections
@@ -1108,8 +1144,16 @@ main(int argc, char *argv[])
 	server_iob.fd = get_backchannel_socket(SOCK_STREAM, min_port, max_port,
 	    -1,	1, &server_iob.sa);
 
-	if (connect(server_iob.fd, (struct sockaddr *)&real_server_sa,
-	    sizeof(real_server_sa)) != 0) {
+#if 0
+	if (ipf && extif)
+		err = ipf_tconnect(extif, server_iob.fd,
+		    (struct sockaddr *)&real_server_sa,
+		    sizeof(real_server_sa));
+	else
+#endif
+		err = connect(server_iob.fd, (struct sockaddr *)&real_server_sa,
+		    sizeof(real_server_sa));
+	if (err != 0) {
 		syslog(LOG_INFO, "cannot connect to %s:%u (%m)", RealServerName,
 		    ntohs(real_server_sa.sin_port));
 		exit(EX_NOHOST);

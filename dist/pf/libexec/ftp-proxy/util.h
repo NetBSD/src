@@ -54,8 +54,15 @@ struct csiob {
 extern int telnet_getline(struct csiob *iobp,
     struct csiob *telnet_passthrough);
 
-extern int get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
+extern int pf_get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
     struct sockaddr_in *client_sa_ptr);
+extern int ipf_get_proxy_env(int fd, struct sockaddr_in *server_sa_ptr,
+    struct sockaddr_in *client_sa_ptr);
+#if 0
+extern int ipf_tconnect(const char *extif, const int fd,
+    const struct sockaddr *sock, socklen_t socklen);
+#endif
+
 
 extern int get_backchannel_socket(int type, int min_port, int max_port,
     int start_port, int direction, struct sockaddr_in *sap);
