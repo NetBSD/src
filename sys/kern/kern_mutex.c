@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.8 2002/03/22 01:45:51 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.9 2002/03/22 18:49:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,8 +44,10 @@
  *	    Richard McDougall.
  */
 
+#define	__MUTEX_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.8 2002/03/22 01:45:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.9 2002/03/22 18:49:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
