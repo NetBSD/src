@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.25 2000/05/31 22:48:44 christos Exp $	*/
+/*	$NetBSD: csh.c,v 1.26 2000/09/04 17:48:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.25 2000/05/31 22:48:44 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.26 2000/09/04 17:48:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,12 +261,12 @@ main(argc, argv)
      */
     if ((ecp = getenv("PATH")) == NULL) {
 #ifdef _PATH_DEFPATH
-	importpath(SAVE(_PATH_DEFPATH));
+	importpath(str2short(_PATH_DEFPATH));
 #else
 	setq(STRpath, defaultpath(), &shvhed);
 #endif
     } else {
-	importpath(SAVE(ecp));
+	importpath(str2short(ecp));
     }
 
     set(STRshell, Strsave(STR_SHELLPATH));
@@ -647,7 +647,7 @@ importpath(cp)
 	    dp++;
 	}
     pv[i] = 0;
-    set1(STRpath, pv, &shvhed);
+    setq(STRpath, pv, &shvhed);
 }
 
 /*
