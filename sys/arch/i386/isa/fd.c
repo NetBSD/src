@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73 1995/04/17 12:07:06 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.74 1995/05/04 19:39:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -60,11 +60,9 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <i386/isa/fdreg.h>
-#ifdef NEWCONFIG
+
+#include <dev/ic/mc146818.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
-#else
-#include <i386/isa/rtc.h>
-#endif
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -315,11 +313,7 @@ fdcattach(parent, self, aux)
 	 * `primary' floppy controller.
 	 */
 	if (fdc->sc_dev.dv_unit == 0)
-#ifdef NEWCONFIG
-		type = nvram(NVRAM_DISKETTE);
-#else
-		type = rtcin(RTC_FDISKETTE);
-#endif
+		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
 		type = -1;
 
@@ -422,32 +416,19 @@ fd_nvtotype(fdc, nvraminfo, drive)
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
 	switch (type) {
-#ifdef NEWCONFIG
 	case NVRAM_DISKETTE_NONE:
 		return NULL;
 	case NVRAM_DISKETTE_12M:
 		return &fd_types[1];
+	case NVRAM_DISKETTE_TYPE5:
+	case NVRAM_DISKETTE_TYPE6:
+		/* XXX We really ought to handle 2.88MB format. */
 	case NVRAM_DISKETTE_144M:
 		return &fd_types[0];
 	case NVRAM_DISKETTE_360K:
 		return &fd_types[3];
 	case NVRAM_DISKETTE_720K:
 		return &fd_types[4];
-#else
-	case RTCFDT_NONE:
-		return NULL;
-	case RTCFDT_12M:
-		return &fd_types[1];
-	case RTCFDT_TYPE5:
-	case RTCFDT_TYPE6:
-		/* XXX We really ought to handle 2.88MB format. */
-	case RTCFDT_144M:
-		return &fd_types[0];
-	case RTCFDT_360K:
-		return &fd_types[3];
-	case RTCFDT_720K:
-		return &fd_types[4];
-#endif
 	default:
 		printf("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
