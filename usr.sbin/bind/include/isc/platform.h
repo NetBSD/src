@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $ */
+/* $Id: platform.h,v 1.2 2004/05/21 16:05:51 christos Exp $ */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -156,7 +156,7 @@
 /*
  * Defined if we are using threads.
  */
-#define ISC_PLATFORM_USETHREADS 1
+/* #define ISC_PLATFORM_USETHREADS 1 */
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
