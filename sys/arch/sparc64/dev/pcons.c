@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.5 2000/11/08 23:40:31 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.6 2000/11/10 17:47:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -54,7 +54,6 @@
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
-#include <machine/z8530var.h>
 
 #include <dev/cons.h>
 
