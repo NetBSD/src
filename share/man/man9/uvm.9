@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.1 1998/05/04 07:10:46 mrg Exp $
+.\"	$NetBSD: uvm.9,v 1.2 1998/05/08 16:00:49 kleink Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -128,11 +128,11 @@ initialises the swap sub-system.
 .Ft int
 .Fn uvm_deallocate "vm_map_t map" "vm_offset_t start" "vm_size_t size"
 
-.Ft struct vmspace
+.Ft struct vmspace *
 .Fn uvmspace_alloc "vm_offset_t min" "vm_offset_t max" "int pageable"
 .Ft void
 .Fn uvmspace_exec "struct proc *p"
-.Ft struct vmspace
+.Ft struct vmspace *
 .Fn uvmspace_fork "struct vmspace *vm"
 .Ft void
 .Fn uvmspace_free "struct vmspace *vm1"
@@ -388,7 +388,7 @@ returns a standard UVM return value.
 
 .Pp
 .nr nS 1
-.Ft struct uvm_object
+.Ft struct uvm_object *
 .Fn uvn_attach "void *arg" "vm_prot_t accessprot"
 .Ft void
 .Fn uvm_vnp_setsize "struct vnode *vp" "u_quad_t newsize"
@@ -476,8 +476,8 @@ on the memory described in
 .Fn uvm_km_valloc "vm_map_t map" "vm_size_t size"
 .Ft vm_offset_t
 .Fn uvm_km_valloc_wait "vm_map_t map" "vm_size_t size"
-.Ft struct vm_map
-.Fn *uvm_km_suballoc "vm_map_t map" "vm_offset_t *min" "vm_offset_t *max " "vm_size_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
+.Ft struct vm_map *
+.Fn uvm_km_suballoc "vm_map_t map" "vm_offset_t *min" "vm_offset_t *max " "vm_size_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
 .Ft void
 .Fn uvm_km_free "vm_map_t map" "vm_offset_t addr" "vm_size_t size"
 .Ft void
@@ -683,6 +683,8 @@ on the map before unlocking the map.
 .Fn uvm_scheduler
 .Ft void
 .Fn uvm_swapin "struct proc *p"
+.Ft void
+.Fn uvm_swapout "struct proc *p"
 .nr nS 0
 
 .Pp
@@ -699,6 +701,10 @@ order.
 .Pp
 .Fn uvm_swapin
 swaps in the named process.
+
+.Pp
+.Fn uvm_swapout
+swaps out the named process.
 
 .Pp
 .Sh MISCELLANEOUS FUNCTIONS
@@ -720,9 +726,9 @@ swaps in the named process.
 .Fn uvm_useracc "caddr_t addr" "int len" "int rw"
 
 .Ft void
-.Fn uvm_vslock "caddr_t addr" "u_int len"
+.Fn uvm_vslock "struct proc *p" "caddr_t addr" "u_int len"
 .Ft void
-.Fn uvm_vsunlock "caddr_t addr" "u_int len"
+.Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "u_int len"
 
 .Ft void
 .Fn uvm_meter
@@ -790,7 +796,9 @@ address space respectively.
 .Fn uvm_vslock
 and
 .Fn uvm_vsunlock
-control the wiring and unwiring of pages for the current processes from
+control the wiring and unwiring of pages for process
+.Fa p
+from
 .Fa addr
 to
 .Fa addr + len .
@@ -1004,5 +1012,5 @@ UVM to support System V shared memory and process swapping.
 .Sh SEE ALSO
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
-.Xr sysctl 3
+.Xr sysctl 3 ,
 .Xr ddb 4
