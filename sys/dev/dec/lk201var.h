@@ -1,4 +1,4 @@
-/* $NetBSD: lk201var.h,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
+/* $NetBSD: lk201var.h,v 1.3 2001/09/18 23:25:27 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -43,9 +43,11 @@ struct lk201_state {
 	int down_keys_list[LK_KLL];
 	int bellvol;
 	int leds_state;
+	int kcvol;
 };
 
 int lk201_init __P((struct lk201_state *));
 int lk201_decode __P((struct lk201_state *, int, u_int *, int *));
 void lk201_bell __P((struct lk201_state *, struct wskbd_bell_data *));
 void lk201_set_leds __P((struct lk201_state *, int));
+void lk201_set_keyclick __P((struct lk201_state *, int));
