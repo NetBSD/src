@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.10 2002/03/29 20:29:53 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.11 2002/03/30 07:08:13 martin Exp $
  *
  * $FreeBSD$
  *
@@ -96,9 +96,12 @@ typedef struct
 	
 	u_char	dst_telno[TELNO_MAX];	/* destination number	*/
 	u_char	src_telno[TELNO_MAX];	/* source number	*/
+	u_char	src_subaddr[SUBADDR_MAX];
+	u_char	dest_subaddr[SUBADDR_MAX];
 
 	int	scr_ind;		/* screening ind for incoming call */
 	int	prs_ind;		/* presentation ind for incoming call */
+	int	type_plan;		/* type and plan for incoming number */
 	
 	int	Q931state;		/* Q.931 state for call	*/
 	int	event;			/* event to be processed */

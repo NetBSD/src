@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.8 2002/03/24 20:36:02 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.9 2002/03/30 07:08:14 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.8 2002/03/24 20:36:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.9 2002/03/30 07:08:14 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -434,6 +434,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			break;
 
 		case IEI_CALLINGPN:	/* calling party no */
+			cd->type_plan = msg_ptr[2] & 0x7f;
 			if(msg_ptr[2] & 0x80) /* no presentation/screening indicator ? */
 			{
 				memcpy(cd->src_telno, &msg_ptr[3], min(TELNO_MAX, msg_ptr[1]-1));
@@ -453,6 +454,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLINGPS:	/* calling party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLINGPS");
+			memcpy(cd->src_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 			
 		case IEI_CALLEDPN:	/* called party number */
@@ -463,6 +465,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLEDPS:	/* called party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLEDPS");
+			memcpy(cd->dest_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 
 		case IEI_REDIRNO:	/* redirecting number */

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.17 2002/03/29 20:29:53 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.18 2002/03/30 07:08:13 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.17 2002/03/29 20:29:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.18 2002/03/30 07:08:13 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -561,6 +561,9 @@ i4b_l4_connect_ind(call_desc_t *cd)
 			strcpy(mp->src_telno, cd->src_telno);
 		else
 			strcpy(mp->src_telno, TELNO_EMPTY);
+		mp->type_plan = cd->type_plan;
+		memcpy(mp->src_subaddr, cd->src_subaddr, sizeof(mp->src_subaddr));
+		memcpy(mp->dest_subaddr, cd->dest_subaddr, sizeof(mp->dest_subaddr));
 			
 		strcpy(mp->display, cd->display);
 
