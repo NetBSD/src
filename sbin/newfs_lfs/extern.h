@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2000/12/05 19:51:14 perseant Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2001/07/13 20:30:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,15 +37,14 @@
 
 struct dlfs;
 
-u_long  lfs_sb_cksum __P((struct dlfs *));
-u_long	cksum __P((void *, size_t));
-u_short	dkcksum __P((struct disklabel *));
-void	fatal __P((const char *fmt, ...))
+u_long  lfs_sb_cksum(struct dlfs *);
+u_long	cksum(void *, size_t);
+u_short	dkcksum(struct disklabel *);
+void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
-u_int	log2 __P((u_int));
-int	make_lfs
-	    __P((int, struct disklabel *, struct partition *, int,
-		int, int, int, int));
+u_int	log2(u_int);
+int	make_lfs(int, struct disklabel *, struct partition *, int,
+		int, int, int, int, int, int, int, int, u_int32_t);
 
 extern char	*progname;
 extern char	*special;

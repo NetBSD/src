@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1999/03/14 11:39:28 drochner Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 2001/07/13 20:30:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1999/03/14 11:39:28 drochner Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 2001/07/13 20:30:22 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,7 @@ __RCSID("$NetBSD: misc.c,v 1.6 1999/03/14 11:39:28 drochner Exp $");
 extern char *special;
 
 void
-get(fd, off, p, len)
-	int fd;
-	off_t off;
-	void *p;
-	size_t len;
+get(int fd, off_t off, void *p, size_t len)
 {
 	int rbytes;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1998/03/01 02:26:12 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2001/07/13 20:30:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,6 +35,6 @@
  *	@(#)extern.h	8.2 (Berkeley) 4/28/95
  */
 
-void	get __P((int, off_t, void *, size_t));
+void	get(int, off_t, void *, size_t);
 
 extern char *special;
