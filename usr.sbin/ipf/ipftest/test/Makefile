@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:55 jhawk Exp $
+#	$NetBSD: Makefile,v 1.8 2002/04/09 17:17:24 jdolecek Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -40,4 +40,4 @@ clean cleandir:
 	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f14
 	/bin/rm -f i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11
 	/bin/rm -f n1 n2 n3 n4 n5 n6 n7
-	/bin/rm -rf results
+	-/bin/rm -rf results
