@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.75 2004/04/18 04:02:27 dbj Exp $
+# $NetBSD: postinstall,v 1.76 2004/05/16 11:19:28 lukem Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -578,6 +578,51 @@ do_ssh()
 	if rcconf_is_set ${op} sshd sshd_conf_dir 1; then
 		failed=1
 	fi
+
+	return ${failed}
+}
+
+#
+#	X11
+#
+additem x11 "x11 configuration update"
+do_x11()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_x11  fix|check"
+	op=$1
+
+	failed=0
+	_etcx11=${DEST_DIR}/etc/X11
+	if [ ! -d "${_etcx11}" ]; then
+		msg "${_etcx11} is not a directory; skipping check"
+		return 1
+	fi
+	_libx11=${DEST_DIR}/usr/X11R6/lib/X11
+	if [ ! -d "${_libx11}" ]; then
+		msg "${_libx11} is not a directory; skipping check"
+		return 1
+	fi
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed=${NOT_FIXED}
+	fi
+
+	for d in \
+		    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
+	    ; do
+		sd=${_libx11}/${d}
+		ld=/etc/X11/${d}
+		td=${DEST_DIR}${ld}
+		if [ -h ${sd} ]; then
+			continue;
+		elif [ -d ${sd} ]; then
+			msg "Migrate ${sd} to ${td}${_notfixed}"
+			failed=1
+		elif [ -e ${sd} ]; then
+			msg "Unexpected file ${sd}${_notfixed}"
+		fi
+	done
 
 	return ${failed}
 }
