@@ -1,4 +1,4 @@
-/*	$NetBSD: percent_m.c,v 1.2 1997/10/11 21:41:40 christos Exp $	*/
+/*	$NetBSD: percent_m.c,v 1.3 1998/05/09 17:22:09 kleink Exp $	*/
 
  /*
   * Replace %m by system error message.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) percent_m.c 1.1 94/12/28 17:42:37";
 #else
-__RCSID("$NetBSD: percent_m.c,v 1.2 1997/10/11 21:41:40 christos Exp $");
+__RCSID("$NetBSD: percent_m.c,v 1.3 1998/05/09 17:22:09 kleink Exp $");
 #endif
 #endif
 
@@ -37,11 +37,7 @@ const char   *ibuf;
 
     while ((*bp = *cp) != '\0')
 	if (*cp == '%' && cp[1] == 'm') {
-	    if (errno < sys_nerr && errno > 0) {
-		strcpy(bp, sys_errlist[errno]);
-	    } else {
-		sprintf(bp, "Unknown error %d", errno);
-	    }
+	    strcpy(bp, strerror(errno));
 	    bp += strlen(bp);
 	    cp += 2;
 	} else {
