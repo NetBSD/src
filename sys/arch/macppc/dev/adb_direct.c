@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.18 2001/06/19 12:02:55 simonb Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.19 2001/08/03 23:09:42 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -286,7 +286,6 @@ int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
 void	adb_read_II __P((u_char *));
 void	adb_hw_setup __P((void));
 void	adb_hw_setup_IIsi __P((u_char *));
-void	adb_comp_exec __P((void));
 int	adb_cmd_result __P((u_char *));
 int	adb_cmd_extra __P((u_char *));
 int	adb_guess_next_device __P((void));
@@ -577,6 +576,7 @@ switch_start:
 		if (adb_debug)
 			printf_intr("intr: unknown ADB state\n");
 #endif
+		break;
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1013,32 +1013,6 @@ adb_soft_intr(void)
 			    (void (*)(caddr_t, caddr_t, int))comprout;
 
 			(*f)(buffer, compdata, cmd);
-#if 0
-#ifdef __NetBSD__
-			asm("	movml #0xffff,sp@-	| save all registers
-				movl %0,a2 		| compdata
-				movl %1,a1 		| comprout
-				movl %2,a0 		| buffer
-				movl %3,d0 		| cmd
-				jbsr a1@ 		| go call the routine
-				movml sp@+,#0xffff	| restore all registers"
-			    :
-			    : "g"(compdata), "g"(comprout),
-				"g"(buffer), "g"(cmd)
-			    : "d0", "a0", "a1", "a2");
-#else					/* for macos based testing */
-			asm
-			{
-				movem.l a0/a1/a2/d0, -(a7)
-				move.l compdata, a2
-				move.l comprout, a1
-				move.l buffer, a0
-				move.w cmd, d0
-				jsr(a1)
-				movem.l(a7)+, d0/a2/a1/a0
-			}
-#endif
-#endif
 		}
 
 		s = splhigh();
@@ -1496,46 +1470,6 @@ adb_reinit(void)
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
 		splx(s);
 }
-
-
-#if 0
-/*
- * adb_comp_exec
- * This is a general routine that calls the completion routine if there is one.
- * NOTE: This routine is now only used by pm_direct.c
- *       All the code in this file (adb_direct.c) uses 
- *       the adb_pass_up routine now.
- */
-void
-adb_comp_exec(void)
-{
-	if ((long)0 != adbCompRout) /* don't call if empty return location */
-#ifdef __NetBSD__
-		asm("	movml #0xffff,sp@-	| save all registers
-			movl %0,a2		| adbCompData
-			movl %1,a1		| adbCompRout
-			movl %2,a0		| adbBuffer
-			movl %3,d0		| adbWaitingCmd
-			jbsr a1@		| go call the routine
-			movml sp@+,#0xffff	| restore all registers"
-		    :
-		    : "g"(adbCompData), "g"(adbCompRout),
-			"g"(adbBuffer), "g"(adbWaitingCmd)
-		    : "d0", "a0", "a1", "a2");
-#else /* for Mac OS-based testing */
-		asm {
-			movem.l a0/a1/a2/d0, -(a7)
-			move.l adbCompData, a2
-			move.l adbCompRout, a1
-			move.l adbBuffer, a0
-			move.w adbWaitingCmd, d0
-			jsr(a1)
-			movem.l(a7) +, d0/a2/a1/a0
-		}
-#endif
-}
-#endif
-
 
 /*
  * adb_cmd_result
