@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.4 2002/12/28 07:37:51 matt Exp $ */
+/* $NetBSD: com_acpi.c,v 1.5 2002/12/28 08:14:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.4 2002/12/28 07:37:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.5 2002/12/28 08:14:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,12 +133,14 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (com_is_console(aa->aa_iot, io->ar_base, &sc->sc_ioh))
-		sc->sc_iot = aa->aa_iot;
-	else if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
+	sc->sc_iot = aa->aa_iot;
+	if (!com_is_console(aa->aa_iot, io->ar_base, &sc->sc_ioh)) {
+		if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &sc->sc_ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		return;
+			printf("%s: can't map i/o space\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 	}
 	sc->sc_iobase = io->ar_base;
 
