@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.161 2002/11/12 14:33:49 itohy Exp $
+#	$NetBSD: bsd.prog.mk,v 1.162 2002/11/22 06:44:57 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -17,14 +17,14 @@ CFLAGS+=	${COPTS}
 CFLAGS+=	-mcmodel=medlow
 .endif
 
-# ELF platforms depend on crtbegin.o and crtend.o
+# ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .if ${OBJECT_FMT} == "ELF"
 .ifndef LIBCRTBEGIN
-LIBCRTBEGIN=	${DESTDIR}/usr/lib/crtbegin.o
+LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${DESTDIR}/usr/lib/crtbegin.o
 .MADE: ${LIBCRTBEGIN}
 .endif
 .ifndef LIBCRTEND
-LIBCRTEND=	${DESTDIR}/usr/lib/crtend.o
+LIBCRTEND=	${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtn.o
 .MADE: ${LIBCRTEND}
 .endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
