@@ -17,11 +17,7 @@
 *
 * 
 */
-#ifdef WIN32
-#define SW_EXPORT	__declspec ( dllexport )
-#else
 #define SW_EXPORT
-#endif
 
 /*
 *	List of exposed SureWare errors
