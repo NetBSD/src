@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 1999/06/21 01:39:06 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.21 1999/07/22 21:12:19 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -588,6 +588,7 @@ db_ctx_cmd(addr, have_addr, count, modif)
 {
 	struct proc *p;
 
+	/* XXX LOCKING XXX */
 	p = allproc.lh_first;
 	while (p != 0) {
 		if (p->p_stat) {
