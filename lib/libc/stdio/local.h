@@ -1,6 +1,8 @@
+/*	$NetBSD: local.h,v 1.5 1995/02/02 02:10:05 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)local.h	5.3 (Berkeley) 5/6/93
- *	$Id: local.h,v 1.4 1994/01/04 05:38:22 cgd Exp $
+ *	@(#)local.h	8.2 (Berkeley) 1/2/94
  */
 
 /*

@@ -1,6 +1,8 @@
+/*	$NetBSD: fsetpos.c,v 1.5 1995/02/02 02:09:41 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fsetpos.c	5.2 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: fsetpos.c,v 1.4 1993/12/31 19:14:19 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fsetpos.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: fsetpos.c,v 1.5 1995/02/02 02:09:41 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

@@ -1,6 +1,8 @@
+/*	$NetBSD: tmpfile.c,v 1.5 1995/02/02 02:10:43 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)tmpfile.c	5.4 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: tmpfile.c,v 1.4 1993/12/28 19:45:46 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: tmpfile.c,v 1.5 1995/02/02 02:10:43 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,8 +60,8 @@ tmpfile()
 #define	TRAILER	"tmp.XXXXXX"
 	char buf[sizeof(_PATH_TMP) + sizeof(TRAILER)];
 
-	bcopy(_PATH_TMP, buf, sizeof(_PATH_TMP) - 1);
-	bcopy(TRAILER, buf + sizeof(_PATH_TMP) - 1, sizeof(TRAILER));
+	(void)memcpy(buf, _PATH_TMP, sizeof(_PATH_TMP) - 1);
+	(void)memcpy(buf + sizeof(_PATH_TMP) - 1, TRAILER, sizeof(TRAILER));
 
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
@@ -71,7 +75,7 @@ tmpfile()
 	if (fd == -1)
 		return (NULL);
 
-	if (!(fp = fdopen(fd, "w+"))) {
+	if ((fp = fdopen(fd, "w+")) == NULL) {
 		sverrno = errno;
 		(void)close(fd);
 		errno = sverrno;

@@ -1,6 +1,8 @@
+/*	$NetBSD: fwrite.c,v 1.5 1995/02/02 02:09:51 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fwrite.c	5.5 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fwrite.c,v 1.4 1993/10/04 18:51:13 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: fwrite.c,v 1.5 1995/02/02 02:09:51 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

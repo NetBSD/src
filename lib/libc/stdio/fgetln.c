@@ -1,3 +1,5 @@
+/*	$NetBSD: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)fgetln.c	8.2 (Berkeley) 1/2/94";
+/* from: static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: fgetln.c,v 1.2 1995/02/02 02:09:10 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,6 +53,7 @@ static char sccsid[] = "@(#)fgetln.c	8.2 (Berkeley) 1/2/94";
  * so we add 1 here.
 #endif
  */
+int
 __slbexpand(fp, newsize)
 	FILE *fp;
 	size_t newsize;
@@ -70,7 +74,7 @@ __slbexpand(fp, newsize)
 
 /*
  * Get an input line.  The returned pointer often (but not always)
- * points into a stdio buffer.  Fgetln does not alter the text of
+ * points into a stdio buffer.  Fgetline does not alter the text of
  * the returned line (which is thus not a C string because it will
  * not necessarily end with '\0'), but does allow callers to modify
  * it if they wish.  Thus, we set __SMOD in case the caller does.

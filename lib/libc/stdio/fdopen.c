@@ -1,6 +1,8 @@
+/*	$NetBSD: fdopen.c,v 1.5 1995/02/02 02:09:05 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fdopen.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fdopen.c,v 1.4 1994/12/30 04:40:13 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: fdopen.c,v 1.5 1995/02/02 02:09:05 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
