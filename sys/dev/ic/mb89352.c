@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.22 2003/08/01 00:38:38 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.23 2003/08/29 02:45:57 isaki Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.22 2003/08/01 00:38:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.23 2003/08/29 02:45:57 isaki Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1194,10 +1194,8 @@ nextbyte:
 	goto nextmsg;
 
 out:
-#ifndef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
-#endif
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
 }
 
