@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.h,v 1.10 2003/11/15 23:10:31 manu Exp $	*/
+/*	$NetBSD: setemul.h,v 1.11 2003/11/18 13:21:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,11 +79,12 @@ struct emulation {
 	int nsignalmap;		/* number of elements in array */
 };
 
-extern const struct emulation *current;
-extern const struct emulation *previous;
+extern const struct emulation *cur_emul;
+extern const struct emulation *prev_emul;
 
 void setemul(const char *, pid_t, int);
 void ectx_sanify(pid_t);
+void ectx_delete(void);
 int mach_traps_dispatch(int *, const struct emulation **);
 void mach_lookup_emul(void);
 const char *mach_service_name(int);
