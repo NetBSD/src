@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp_quick.c,v 1.6 2003/07/12 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: isakmp_quick.c,v 1.7 2003/10/21 03:03:39 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ quick_i1prep(iph2, msg)
 	iph2->msgid = isakmp_newmsgid2(iph2->ph1);
 	iph2->ivm = oakley_newiv2(iph2->ph1, iph2->msgid);
 	if (iph2->ivm == NULL)
-		return NULL;
+		return 0;
 
 	iph2->status = PHASE2ST_GETSPISENT;
 
