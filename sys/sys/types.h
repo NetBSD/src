@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.27 1996/07/16 17:04:17 explorer Exp $	*/
+/*	$NetBSD: types.h,v 1.28 1996/07/18 20:01:43 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -134,7 +134,7 @@ typedef	_BSD_TIME_T_	time_t;
  * be enough for most uses.
  */
 #ifndef	FD_SETSIZE
-#define	FD_SETSIZE	2048
+#define	FD_SETSIZE	256
 #endif
 
 typedef int32_t	fd_mask;
