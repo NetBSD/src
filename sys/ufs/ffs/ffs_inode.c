@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.24 1998/10/23 00:31:28 thorpej Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.24.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -224,10 +224,13 @@ ffs_truncate(v)
 		vnode_pager_setsize(ovp, length);
 		(void) vnode_pager_uncache(ovp);
 #endif
+#ifdef UBC
+#else
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
 			bawrite(bp);
+#endif
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, &ts, &ts, 1));
 	}

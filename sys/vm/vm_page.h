@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.29 1998/08/24 22:36:36 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.29.2.1 1998/11/09 06:06:40 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -133,12 +133,26 @@ struct vm_page {
   struct uvm_object	*uobject;	/* object (O,P) */
   struct vm_anon	*uanon;		/* anon (O,P) */
   u_short		flags;		/* object flags [O] */
+#ifdef UBC
+  u_char		version;	/* version count [O] */
+  u_char		wire_count;	/* wired down map refs [P] */
+  u_char		pqflags;	/* page queue flags [P] */
+  u_char		loan_count;	/* number of active loans
+					 * to read: [O or P]
+					 * to modify: [O _and_ P] */
+/* XXX make type MD */
+  u_char		valid;		/* partial-page valid bits */
+  daddr_t		blkno;		/* disk-address for page */
+
+
+#else
   u_short		version;	/* version count [O] */
   u_short		wire_count;	/* wired down map refs [P] */
   u_short 		pqflags;	/* page queue flags [P] */
   u_int			loan_count;	/* number of active loans
 					 * to read: [O or P]
 					 * to modify: [O _and_ P] */
+#endif
 #else
   u_short		wire_count;	/* wired down maps refs (P) */
   u_short		flags;		/* see below */

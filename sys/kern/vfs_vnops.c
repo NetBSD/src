@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.31 1998/08/02 18:39:14 kleink Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.31.2.1 1998/11/09 06:06:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,6 +158,14 @@ vn_open(ndp, fmode, cmode)
 		goto bad;
 	if (fmode & FWRITE)
 		vp->v_writecount++;
+
+#ifdef UBC
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, fmode & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
+#endif
 	return (0);
 bad:
 	vput(vp);

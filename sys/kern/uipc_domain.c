@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.24 1998/07/05 22:48:07 jonathan Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.24.4.1 1998/11/09 06:06:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,7 +77,6 @@ domaininit()
 	register struct domain *dp;
 	register struct protosw *pr;
 
-#undef unix
 #ifndef lint
 	ADDDOMAIN(unix);
 	ADDDOMAIN(route);

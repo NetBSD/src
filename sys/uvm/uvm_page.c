@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.15 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.15.2.1 1998/11/09 06:06:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -984,6 +984,13 @@ struct vm_page *pg;
 	int s;
 	int saved_loan_count = pg->loan_count;
 
+#ifdef DEBUG
+	if (pg->uobject == (void *)0xdeadbeef &&
+	    pg->uanon == (void *)0xdeadbeef) {
+		panic("uvm_pagefree: freeing free page %p\n", pg);
+	}
+#endif
+
 	/*
 	 * if the page was an object page (and thus "TABLED"), remove it
 	 * from the object.
@@ -992,7 +999,7 @@ struct vm_page *pg;
 	if (pg->flags & PG_TABLED) {
 
 		/*
-		 * if the object page is on loan we are going to drop ownership.  
+		 * if the object page is on loan we are going to drop ownership.
 		 * it is possible that an anon will take over as owner for this
 		 * page later on.   the anon will want a !PG_CLEAN page so that
 		 * it knows it needs to allocate swap if it wants to page the 
@@ -1122,3 +1129,29 @@ uvm_page_own(pg, tag)
 	return;
 }
 #endif
+
+
+void show_all_pages(void);
+void
+show_all_pages()
+{
+	struct vm_page *pg;
+
+	printf("active pages:\n");
+
+	for (pg = TAILQ_FIRST(&uvm.page_active);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, pageq))
+	{
+		printf("0x%08x  0x%08x\n", (int)pg->uobject, (int)pg->offset);
+	}
+
+	printf("inactive pages:\n");
+
+	for (pg = TAILQ_FIRST(&uvm.page_inactive_obj);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, pageq))
+	{
+		printf("0x%08x  0x%08x\n", (int)pg->uobject, (int)pg->offset);
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.18 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.18.2.1 1998/11/09 06:06:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -426,6 +426,7 @@ uvm_km_init(start, end)
 	 */
 
 	/* kernel_object: for pageable anonymous kernel memory */
+	uao_init();
 	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
@@ -685,7 +686,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 
 	if (uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	      UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) 
+			  UVM_ADV_RANDOM,
+			  (flags & UVM_KMF_TRYLOCK)))
 			!= KERN_SUCCESS) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);

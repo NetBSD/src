@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.8 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.8.2.1 1998/11/09 06:06:37 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -118,23 +118,25 @@ AMAP_INLINE struct vm_anon *amap_lookup __P((struct vm_aref *, vaddr_t));
 AMAP_INLINE void amap_lookups __P((struct vm_aref *, vaddr_t, 
 				   struct vm_anon **, int));
 #ifdef VM_AMAP_PPREF
-void amap_pp_adjref __P((struct vm_amap *, int, vsize_t, int));
+void amap_pp_adjref __P((struct vm_amap *, int, int, int));
 void amap_pp_establish __P((struct vm_amap *));
 #endif
-AMAP_INLINE void amap_ref __P((vm_map_entry_t, int));
+AMAP_INLINE void amap_ref __P((struct vm_amap *, vaddr_t, vsize_t, int));
 void amap_share_protect __P((vm_map_entry_t, vm_prot_t));
 void amap_splitref __P((struct vm_aref *, struct vm_aref *, vaddr_t));
 AMAP_INLINE void amap_unadd __P((struct vm_amap *, vaddr_t));
-AMAP_INLINE void amap_unref __P((vm_map_entry_t, int));
+AMAP_INLINE void amap_unref __P((struct vm_amap *, vaddr_t,
+				 vsize_t, boolean_t));
 void amap_wipeout __P((struct vm_amap *));
 #ifdef VM_AMAP_PPREF
 void amap_wiperange __P((struct vm_amap *, int, int));
 #endif
+boolean_t anon_swap_off __P((int, int));
 
 struct vm_anon *uvm_analloc __P((void));
 void uvm_anfree __P((struct vm_anon *));
 void uvm_anon_init __P((void));
-void uvm_anon_add __P((int));
+void uvm_anon_add __P((int, boolean_t));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
 
 #endif /* _UVM_UVM_AMAP_H_ */

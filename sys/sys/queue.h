@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.16 1998/07/10 23:28:31 nathanw Exp $	*/
+/*	$NetBSD: queue.h,v 1.16.4.1 1998/11/09 06:06:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -262,6 +262,7 @@ struct {								\
  * Tail queue access methods.
  */
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
+#define	TAILQ_LAST(head)		((head)->tqh_last)
 
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.56 1998/09/12 15:05:47 rvb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.56.2.1 1998/11/09 06:06:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,6 +44,11 @@
 
 #include <sys/lock.h>
 #include <sys/queue.h>
+
+#include <sys/types.h>
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+
 #ifdef UVM			/* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
 #include <vm/vm_param.h>	/* XXX */
@@ -91,8 +96,15 @@ struct vnode {
 #ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
 #endif
+#ifdef UBC
+	u_long	v_unused1;			/* logical blocksize */
+#define v_flag v_uvm.u_flags
+	short	v_unused2;
+#define v_usecount v_uvm.u_obj.uo_refs
+#else
 	u_long	v_flag;				/* vnode flags (see below) */
 	short	v_usecount;			/* reference count of users */
+#endif
 	short	v_writecount;			/* reference count of writers */
 	long	v_holdcnt;			/* page & buffer references */
 	daddr_t	v_lastr;			/* last read (read-ahead) */
@@ -108,7 +120,10 @@ struct vnode {
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
+#ifdef UBC
+#else
 		caddr_t		vu_vmdata;	/* private data for vm (VREG) */
+#endif
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
@@ -119,7 +134,12 @@ struct vnode {
 	int	v_clen;				/* length of current cluster */
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
+#ifdef UBC
+#define v_interlock v_uvm.u_obj.vmobjlock
+#else
 	struct	simplelock v_interlock;		/* lock on usecount and flag */
+#endif
+	/* v_vnlock is not used yet */
 	struct	lock *v_vnlock;			/* used for non-locking fs's */
 #ifdef UVM
 #else
@@ -130,7 +150,10 @@ struct vnode {
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
+#ifdef UBC
+#else
 #define	v_vmdata	v_un.vu_vmdata
+#endif
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
 
@@ -139,13 +162,21 @@ struct vnode {
  */
 #define	VROOT		0x0001	/* root of its file system */
 #define	VTEXT		0x0002	/* vnode is a pure text prototype */
+	/* VSYSTEM only used to skip vflush()ing quota files */
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
+	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VBWAIT		0x0400	/* waiting for output to complete */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
+
+#ifdef UBC
+#define VDIRTY		0x4000	/* vnode possibly has dirty pages */
+
+#define VSIZENOTSET	((vsize_t)-1)
+#endif
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -412,6 +443,10 @@ struct vop_generic_args {
  * vclean changes the ops vector and then wants to call ops with the old
  * vector.
  */
+/*
+ * actually, vclean doesn't use it anymore, but nfs does,
+ * for device specials and fifos.
+ */
 #define VOCALL(OPSV,OFF,AP) (( *((OPSV)[(OFF)])) (AP))
 
 /*
@@ -488,6 +523,11 @@ void 	vput __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));
+
+#ifdef DDB
+void	vfs_vnode_print __P((struct vnode *, int, void (*)(const char *, ...)));
+#endif /* DDB */
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

@@ -1,7 +1,0 @@
-	$NetBSD: upgrade,v 1.2 1998/01/09 18:46:01 perry Exp $	
-
-Upgrading from a previous version of NetBSD isn't currently supported by
-NetBSD/arm32.  If you are currently running NetBSD/arm32 then make a
-FULL BACKUP of your current installation, and install NetBSD _VER from
-scratch.  Obviously some of the steps can be skipped (in particular,
-hard disk partitioning) as they will already be done.

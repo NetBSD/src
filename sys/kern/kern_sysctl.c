@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.42 1998/10/19 22:19:26 tron Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.42.2.1 1998/11/09 06:06:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -64,10 +64,6 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
-
-#if defined(UVM)
-#include <uvm/uvm_extern.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.13 1998/10/11 22:59:53 chuck Exp $	*/
+/*	$NetBSD: uvm.h,v 1.13.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -116,15 +116,6 @@ struct uvm {
 	struct uvm_object *kernel_object;
 };
 
-extern struct uvm uvm;
-
-/*
- * historys
- */
-
-UVMHIST_DECL(maphist);
-UVMHIST_DECL(pdhist);
-
 /*
  * vm_map_entry etype bits:
  */
@@ -138,6 +129,18 @@ UVMHIST_DECL(pdhist);
 #define UVM_ET_ISSUBMAP(E)	(((E)->etype & UVM_ET_SUBMAP) != 0)
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
+
+
+#ifdef _KERNEL
+
+extern struct uvm uvm;
+
+/*
+ * historys
+ */
+
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
 
 /*
  * macros
@@ -183,5 +186,7 @@ UVMHIST_DECL(pdhist);
 #include <uvm/uvm_map_i.h>
 #include <uvm/uvm_page_i.h>
 #include <uvm/uvm_pager_i.h>
+
+#endif
 
 #endif /* _UVM_UVM_H_ */

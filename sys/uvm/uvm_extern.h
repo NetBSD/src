@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21 1998/09/08 23:44:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.1 1998/11/09 06:06:37 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -135,6 +135,12 @@
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
 /*
+ * the following defines are for ubc_alloc's flags
+ */
+#define UBC_READ	0
+#define UBC_WRITE	1
+
+/*
  * structures
  */
 
@@ -180,9 +186,11 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
+	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 	int nanon;	/* number total of anon's in system */
+	int nanonneeded;/* number of anons currently needed */
 	int nfreeanon;	/* number of free anon's */
 
 	/* stat counters */
@@ -262,7 +270,15 @@ typedef int vm_fault_t;
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));
 void			uao_detach __P((struct uvm_object *));
+void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
+void			uao_reference_locked __P((struct uvm_object *));
+
+/* uvm_bio.c */
+void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t,
+				       int));
+void			ubc_release __P((void *, vsize_t));
+void			ubc_flush __P((struct uvm_object *, vaddr_t, vaddr_t));
 
 /* uvm_fault.c */
 int			uvm_fault __P((vm_map_t, vaddr_t, 
@@ -380,6 +396,10 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+int			uvm_vnp_relocate __P((struct vnode *, vaddr_t,
+					      vsize_t, daddr_t));
+void			uvn_findpage __P((struct uvm_object *, vaddr_t,
+					  struct vm_page **));
 
 #endif /* _UVM_UVM_EXTERN_H_ */
 

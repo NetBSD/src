@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.15 1998/10/11 23:18:20 chuck Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.15.2.1 1998/11/09 06:06:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -909,6 +909,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		
 		if (uobj == NULL)
 			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
+
+		/* XXX for now, attach doesn't gain a ref */
+		VREF(vp);
 
 		if ((flags & MAP_SHARED) == 0)
 			uvmflag |= UVM_FLAG_COPYONW;

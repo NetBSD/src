@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.15 1998/08/04 04:03:11 perry Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.15.2.1 1998/11/09 06:06:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -174,6 +174,8 @@ vmcmd_map_pagedvn(p, cmd)
         uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
         if (uobj == NULL)
                 return(ENOMEM);
+	/* XXX for now, attaching doesn't gain a ref */
+	VREF(cmd->ev_vp);
 
 	/*
 	 * do the map

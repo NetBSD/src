@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.17 1998/11/07 05:50:19 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.17.2.1 1998/11/09 06:06:37 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -173,9 +173,16 @@ struct uvm_advice {
  */
 
 static struct uvm_advice uvmadvice[] = {
+#ifdef UBC
+	/* XXX no read-ahead for now */
+	{ MADV_NORMAL, 0, 0 },
+	{ MADV_RANDOM, 0, 0 },
+	{ MADV_SEQUENTIAL, 0, 0 },
+#else
 	{ MADV_NORMAL, 3, 4 },
 	{ MADV_RANDOM, 0, 0 },
 	{ MADV_SEQUENTIAL, 8, 7},
+#endif
 };
 
 #define UVM_MAXRANGE 16	/* must be max() of nback+nforw+1 */
@@ -238,7 +245,6 @@ static void
 uvmfault_amapcopy(ufi)
 	struct uvm_faultinfo *ufi;
 {
-
 	/*
 	 * while we haven't done the job
 	 */
@@ -257,7 +263,7 @@ uvmfault_amapcopy(ufi)
 		 */
 
 		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
-			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE, 
+			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE,
 				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
 
 		/*
@@ -759,7 +765,7 @@ ReFault:
 		/* now forget about the backpages */
 		if (amap)
 			anons += nback;
-		startva = startva + (nback << PAGE_SHIFT);
+		startva += (nback << PAGE_SHIFT);
 		npages -= nback;
 		nback = centeridx = 0;
 	}
@@ -847,13 +853,22 @@ ReFault:
 
 	if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
 
+		/*
+		 * XXXCHS this splhigh is horribly wrong, but it will mask
+		 * some simple_lock problems until I get around to fixing it.
+		 */
+		int s = splhigh();
+
 		simple_lock(&uobj->vmobjlock);
 
 		/* locked: maps(read), amap (if there), uobj */
 		result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
 				    centeridx, fault_type, access_type,
 				    PGO_LOCKED);
+		splx(s);
+
 		/* locked: nothing, pgo_fault has unlocked everything */
+		simple_lock_assert(&uobj->vmobjlock, 0);
 
 		if (result == VM_PAGER_OK)
 			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
@@ -889,6 +904,8 @@ ReFault:
 				UVM_ET_ISCOPYONWRITE(ufi.entry) ?
 				VM_PROT_READ : access_type,
 				ufi.entry->advice, PGO_LOCKED);
+
+		simple_lock_assert(&uobj->vmobjlock, 1);
 
 		/*
 		 * check for pages to map, if we got any
@@ -964,6 +981,7 @@ ReFault:
 		}   /* "gotpages" != 0 */
 
 		/* note: object still _locked_ */
+		simple_lock_assert(&uobj->vmobjlock, 1);
 	} else {
 		
 		uobjpage = NULL;
@@ -1008,6 +1026,9 @@ ReFault:
 
 	/* locked: maps(read), amap, anon */
 
+	simple_lock_assert(&amap->am_l, 1);
+	simple_lock_assert(&anon->an_lock, 1);
+
 	/*
 	 * no matter if we have case 1A or case 1B we are going to need to
 	 * have the anon's memory resident.   ensure that now.
@@ -1027,7 +1048,7 @@ ReFault:
 		goto ReFault;
 
 	if (result == VM_PAGER_AGAIN) {
-		tsleep((caddr_t)&lbolt, PVM, "fltagain1", 0);
+		tsleep(&lbolt, PVM, "fltagain1", 0);
 		goto ReFault;
 	}
 
@@ -1041,6 +1062,11 @@ ReFault:
 	uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
 
 	/* locked: maps(read), amap, anon, uobj(if one) */
+	simple_lock_assert(&amap->am_l, 1);
+	simple_lock_assert(&anon->an_lock, 1);
+	if (uobj) {
+		simple_lock_assert(&uobj->vmobjlock, 1);
+	}
 
 	/*
 	 * special handling for loaned pages 
@@ -1145,16 +1171,19 @@ ReFault:
 
 		/* check for out of RAM */
 		if (anon == NULL || pg == NULL) {
-			if (anon)
+			if (anon) {
 				uvm_anfree(anon);
+			}
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			if (anon == NULL) {
+
+			if (anon == NULL || uvmexp.swpages == uvmexp.swpguniq) {
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
 				/* XXX: OUT OF VM, ??? */
 				return (KERN_RESOURCE_SHORTAGE);
 			}
+
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
 			goto ReFault;
@@ -1178,7 +1207,7 @@ ReFault:
 		 */
 
 	} else {
-		
+
 		uvmexp.flt_anon++;
 		oanon = anon;		/* old, locked anon is same as anon */
 		pg = anon->u.an_page;
@@ -1187,7 +1216,9 @@ ReFault:
 
 	}
 
-	/* locked: maps(read), amap, anon */
+	/* locked: maps(read), amap, oanon */
+	simple_lock_assert(&amap->am_l, 1);
+	simple_lock_assert(&oanon->an_lock, 1);
 
 	/*
 	 * now map the page in ...
@@ -1234,6 +1265,9 @@ Case2:
 	 * locked:
 	 * maps(read), amap(if there), uobj(if !null), uobjpage(if !null)
 	 */
+	if (uobj) {
+		simple_lock_assert(&uobj->vmobjlock, 1);
+	}
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1272,6 +1306,7 @@ Case2:
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);
 		/* locked: uobj */
+		simple_lock_assert(&uobj->vmobjlock, 1);
 
 		uvmexp.fltget++;
 		gotpages = 1;
@@ -1283,6 +1318,7 @@ Case2:
 			ufi.entry->advice, 0);
 
 		/* locked: uobjpage(if result OK) */
+		simple_lock_assert(&uobj->vmobjlock, 0);
 		
 		/*
 		 * recover from I/O
@@ -1292,13 +1328,15 @@ Case2:
 			
 #ifdef DIAGNOSTIC 
 			if (result == VM_PAGER_PEND)
-	panic("uvm_fault: pgo_get got PENDing on non-async I/O");
+				panic("uvm_fault: pgo_get got PENDing "
+				      "on non-async I/O");
 #endif
 
 			if (result == VM_PAGER_AGAIN) {
-	UVMHIST_LOG(maphist, "  pgo_get says TRY AGAIN!",0,0,0,0);
-	tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
-	goto ReFault;
+				UVMHIST_LOG(maphist, "  pgo_get says AGAIN!",
+					    0,0,0,0);
+				tsleep(&lbolt, PVM, "fltagain2", 0);
+				goto ReFault;
 			}
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
@@ -1320,6 +1358,7 @@ Case2:
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
 		/* locked(!locked): uobj, uobjpage */
+		simple_lock_assert(&uobj->vmobjlock, 1);
 
 		/*
 		 * verify that the page has not be released and re-verify
@@ -1381,13 +1420,19 @@ Case2:
 		 */
 
 		/* locked: maps(read), amap(if !null), uobj, uobjpage */
-
+		simple_lock_assert(&uobj->vmobjlock, 1);
 	}
 
 	/*
 	 * locked:
 	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
 	 */
+	if (amap) {
+		simple_lock_assert(&amap->am_l, 1);
+	}
+	if (uobj) {
+		simple_lock_assert(&uobj->vmobjlock, 1);
+	}
 
 	/*
 	 * notes:
@@ -1524,22 +1569,22 @@ Case2:
 			 * arg!  must unbusy our page and fail or sleep.
 			 */
 			if (uobjpage != PGO_DONTCARE) {
+				/* still holding object lock */
+				simple_lock_assert(&uobj->vmobjlock, 1);
+
 				if (uobjpage->flags & PG_WANTED)
-					/* still holding object lock */
 					thread_wakeup(uobjpage);
 
 				uvm_lock_pageq();
-				/* make sure it is in queues */
 				uvm_pageactivate(uobjpage);
 				uvm_unlock_pageq();
-				/* un-busy! (still locked) */
 				uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 				UVM_PAGE_OWN(uobjpage, NULL);
 			}
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			if (anon == NULL) {
+			if (anon == NULL || uvmexp.swpages == uvmexp.swpguniq) {
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1559,6 +1604,8 @@ Case2:
 		 */
 
 		if (uobjpage != PGO_DONTCARE) {
+			simple_lock_assert(&uobj->vmobjlock, 1);
+
 			uvmexp.flt_prcopy++;
 			/* copy page [pg now dirty] */
 			uvm_pagecopy(uobjpage, pg);
@@ -1574,20 +1621,20 @@ Case2:
 			
 			/*
 			 * dispose of uobjpage.  it can't be PG_RELEASED
-			 * since we still hold the object lock.   drop
-			 * handle to uobj as well.
+			 * since we still hold the object lock.
+			 * drop handle to uobj as well.
 			 */
 
 			if (uobjpage->flags & PG_WANTED)
-				/* still have the obj lock */
 				thread_wakeup(uobjpage);
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			uvm_lock_pageq();
-			uvm_pageactivate(uobjpage);	/* put it back */
+			uvm_pageactivate(uobjpage);
 			uvm_unlock_pageq();
 			simple_unlock(&uobj->vmobjlock);
 			uobj = NULL;
+
 			UVMHIST_LOG(maphist,
 			    "  promote uobjpage 0x%x to anon/page 0x%x/0x%x",
 			    uobjpage, anon, pg, 0);
@@ -1623,20 +1670,16 @@ Case2:
 	    enter_prot, wired);
 
 	uvm_lock_pageq();
-
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
 	} else {
-		
-		/* activate it */
 		uvm_pageactivate(pg);
-
 	}
-
 	uvm_unlock_pageq();
 
-	if (pg->flags & PG_WANTED)
-		thread_wakeup(pg);		/* lock still held */
+	if (pg->flags & PG_WANTED) {
+		thread_wakeup(pg);
+	}
 
 	/* 
 	 * note that pg can't be PG_RELEASED since we did not drop the object 

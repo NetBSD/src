@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.7 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.7.2.1 1998/11/09 06:06:39 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -118,6 +118,8 @@ struct uvm_pagerops {
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
 #define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
+
+#define PGO_OVERWRITE	0x200	/* page will be overwritten immediately */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */

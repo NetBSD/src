@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27 1998/08/10 08:11:13 matthias Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.2.1 1998/11/09 06:06:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -226,6 +226,8 @@ int	nfs_vget	__P((struct mount *, ino_t, struct vnode **));
 #define	nfs_vfree	genfs_nullop
 int	nfs_truncate	__P((void *));
 int	nfs_update	__P((void *));
+int	nfs_getpages	__P((void *));
+int	nfs_putpages	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
 

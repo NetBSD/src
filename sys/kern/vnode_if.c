@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.14 1998/09/13 14:45:22 christos Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.14.2.1 1998/11/09 06:06:33 chs Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -738,6 +738,38 @@ struct vnodeop_desc vop_whiteout_desc = {
 	NULL,
 };
 
+int vop_getpages_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_getpages_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_getpages_desc = {
+	0,
+	"vop_getpages",
+	0,
+	vop_getpages_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int vop_putpages_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_putpages_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_putpages_desc = {
+	0,
+	"vop_putpages",
+	0,
+	vop_putpages_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
 /* Special cases: */
 
 int vop_strategy_vp_offsets[] = {
@@ -819,6 +851,8 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_update_desc,
 	&vop_lease_desc,
 	&vop_whiteout_desc,
+	&vop_getpages_desc,
+	&vop_putpages_desc,
 	NULL
 };
 

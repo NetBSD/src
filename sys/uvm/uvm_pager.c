@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.13 1998/11/04 07:07:22 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13.2.1 1998/11/09 06:06:39 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -64,11 +64,17 @@
 extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
+#ifdef UBC
+extern struct uvm_pagerops ubc_pager;
+#endif
 
 struct uvm_pagerops *uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
+#ifdef UBC
+	&ubc_pager,
+#endif
 };
 
 /*
@@ -288,7 +294,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 		if (hi > mhi)
 			hi = mhi;
 	}
-	if ((hi - lo) >> PAGE_SHIFT > *npages) {  /* pps too small, bail out! */
+	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
 #ifdef DIAGNOSTIC
 	    printf("uvm_mk_pcluster: provided page array too small (fixed)\n");
 #endif
@@ -508,11 +514,13 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 ReTry:
 	if (uobj) {
 		/* object is locked */
-		result = uobj->pgops->pgo_put(uobj, ppsp, *npages,
-		    flags & PGO_SYNCIO);
+		simple_lock_assert(&uobj->vmobjlock, 1);
+		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
 		/* object is now unlocked */
+		simple_lock_assert(&uobj->vmobjlock, 0);
 	} else {
 		/* nothing locked */
+/* XXX should we pass more than just PGO_SYNCIO here too? */
 		result = uvm_swap_put(swblk, ppsp, *npages, flags & PGO_SYNCIO);
 		/* nothing locked */
 	}

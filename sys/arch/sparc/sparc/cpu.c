@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86 1998/10/24 08:12:55 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.86.2.1 1998/11/09 06:06:29 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -428,6 +428,7 @@ extern void cpu_hatch __P((void));
 void
 mp_pause_cpus()
 {
+#ifdef MULTIPROCESSOR
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -439,11 +440,13 @@ mp_pause_cpus()
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		raise_ipi(cpi);
 	}
+#endif
 }
 
 void
 mp_resume_cpus()
 {
+#ifdef MULTIPROCESSOR
 	int n;
 
 	for (n = 0; n < ncpu; n++) {
@@ -455,6 +458,7 @@ mp_resume_cpus()
 		cpi->msg.tag = XPMSG_RESUMECPU;
 		raise_ipi(cpi);
 	}
+#endif
 }
 
 /*

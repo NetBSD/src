@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 1998/10/24 08:12:55 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.36.2.1 1998/11/09 06:06:29 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,6 +210,7 @@ nmi_hard()
 	/*
 	 * A level 15 hard interrupt.
 	 */
+#ifdef SUN4M
 	int fatal = 0;
 	u_int32_t si;
 	char bits[64];
@@ -267,6 +268,7 @@ nmi_hard()
 	nmisync2 = 0;
 	if (fatal)
 		panic("nmi");
+#endif
 }
 
 void

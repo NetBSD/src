@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.16 1998/09/01 03:11:08 thorpej Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.16.2.1 1998/11/09 06:06:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -121,7 +121,11 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+#ifdef UBC
+	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
+	{ &vop_putpages_desc, ffs_putpages },		/* putpages */
+#endif
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
@@ -249,6 +253,7 @@ ffs_reclaim(v)
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
+
 	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
@@ -257,3 +262,263 @@ ffs_reclaim(v)
 	vp->v_data = NULL;
 	return (0);
 }
+
+
+#ifdef UBC
+#include "opt_uvmhist.h"
+#include <uvm/uvm.h>
+UVMHIST_DECL(ubchist); /* XXX */
+
+int
+ffs_getpages(v)
+	void *v;
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		vaddr_t a_offset;
+		vm_page_t *a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	int error;
+	struct uio uio;
+	struct iovec iov;
+	vm_page_t m;
+	vaddr_t kva;
+	struct buf tmpbuf, *bp;
+	struct vnode *vp = ap->a_vp;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	UVMHIST_FUNC("ffs_getpages"); UVMHIST_CALLED(ubchist);
+
+	/* XXX don't deal with PGO_LOCKED yet */
+	if (ap->a_flags & PGO_LOCKED) {
+		*ap->a_count = 0;
+		return 0;
+	}
+
+	/* vnode is VOP_LOCKed, uobj is locked */
+
+	/* XXX for now, just do one page at a time */
+	if (*ap->a_count != 1) {
+	    panic("ffs_getpages: one at a time, please\n");
+	}
+
+#ifdef DIAGNOSTIC
+	if (ap->a_centeridx < 0 || ap->a_centeridx > *ap->a_count) {
+		panic("ffs_getpages: centeridx %d out of range",
+		      ap->a_centeridx);
+	}
+#endif
+
+	uvn_findpage(uobj, ap->a_offset, ap->a_m);
+	m = ap->a_m[ap->a_centeridx];
+
+	simple_unlock(&uobj->vmobjlock);
+
+	if ((m->flags & PG_FAKE) == 0) {
+		UVMHIST_LOG(ubchist, "page was valid",0,0,0,0);
+		return 0;
+	}
+
+	kva = uvm_pagermapin(ap->a_m, *ap->a_count, NULL, M_WAITOK);
+	if (kva == 0) {
+	    printf("uvm_pagermapin failed\n");
+	    return EAGAIN;
+	}
+
+	uio.uio_iov = &iov;
+	iov.iov_len = 0;
+
+	bp = &tmpbuf;
+	bzero(bp, sizeof *bp);
+
+	bp->b_bufsize = PAGE_SIZE;
+	bp->b_data = (void *)kva;
+	bp->b_lblkno = lblkno(fs, m->offset);
+	bp->b_bcount = bp->b_lblkno < 0 ? PAGE_SIZE :
+		min(PAGE_SIZE, fragroundup(fs, vp->v_uvm.u_size - m->offset));
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY|B_READ;
+
+UVMHIST_LOG(ubchist, "bp %p vp %p blkno 0x%x",
+       bp, vp, bp->b_lblkno, 0);
+
+	error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
+	if (error) {
+UVMHIST_LOG(ubchist, "VOP_BMAP error %d", error,0,0,0);
+		return (error);
+	}
+UVMHIST_LOG(ubchist, "VOP_BMAP gave 0x%x", bp->b_blkno,0,0,0);
+	if ((long)bp->b_blkno == -1) {
+		/*
+		 * XXX pre-allocate blocks here someday?
+		 */
+		bzero((void *)kva, PAGE_SIZE);
+		uvm_pagermapout(kva, *ap->a_count);
+		return 0;
+	}
+
+	/* adjust physical blkno for partial blocks */
+	bp->b_blkno += (m->offset - lblktosize(fs, bp->b_lblkno)) >> DEV_BSHIFT;
+	m->blkno = bp->b_blkno;
+
+	UVMHIST_LOG(ubchist, "old vp %p blkno 0x%x new blkno 0x%x",
+		    vp, bp->b_lblkno, bp->b_blkno, 0);
+
+	VOP_STRATEGY(bp);
+	error = biowait(bp);
+
+UVMHIST_LOG(ubchist, "error %d", error,0,0,0);
+
+	uvm_pagermapout(kva, *ap->a_count);
+
+	if (error) {
+		simple_lock(&uobj->vmobjlock);
+		if (m->flags & PG_WANTED)
+			thread_wakeup(m);	/* object lock still held */
+
+		m->flags &= ~(PG_WANTED|PG_BUSY);
+		UVM_PAGE_OWN(m, NULL);
+		uvm_lock_pageq();
+		uvm_pagefree(m);
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
+	} else { 
+		m->flags &= ~PG_FAKE;
+		pmap_clear_modify(PMAP_PGARG(m));
+	}
+
+	return error;
+}
+
+/*
+ * Vnode op for VM putpages.
+ */
+int
+ffs_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		vm_page_t *a_m;
+		int a_count;
+		int a_sync;
+		int *a_rtvals;
+	} */ *ap = v;
+
+	int error;
+	struct uio uio;
+	struct iovec iov;
+	vm_page_t m;
+	vaddr_t kva;
+	struct buf tmpbuf, *bp;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	struct ucred *cred = curproc->p_ucred;	/* XXX curproc */
+	UVMHIST_FUNC("ffs_putpages"); UVMHIST_CALLED(ubchist);
+
+	/* XXX for now, just do one page at a time */
+	if (ap->a_count != 1)
+	    panic("ffs_putpages: one at a time, please\n");
+
+	m = ap->a_m[0];
+	kva = uvm_pagermapin(ap->a_m, ap->a_count, NULL, M_WAITOK);
+	if (kva == 0)
+	{
+	    printf("uvm_pagermapin failed\n");
+	    return EAGAIN;
+	}
+
+	uio.uio_iov = &iov;
+	iov.iov_len = 0;
+
+	bp = &tmpbuf;
+	bzero(bp, sizeof *bp);
+
+	bp->b_bufsize = PAGE_SIZE;
+	bp->b_data = (void *)kva;
+	bp->b_lblkno = lblkno(fs, m->offset);
+	bp->b_bcount = min(PAGE_SIZE,
+			   fragroundup(fs, vp->v_uvm.u_size - m->offset));
+
+	bp->b_vp = vp;
+	bp->b_flags = B_BUSY|B_WRITE|B_WRITEINPROG;
+
+UVMHIST_LOG(ubchist, "bp %p vp %p blkno 0x%x",
+       bp, vp, bp->b_lblkno, 0);
+
+	/*
+	 * if the blkno wasn't set in the page, do a bmap to find it.
+	 * currently this should only happen if the block is unallocated.
+	 * we'll always want to set the page's blkno if it's allocated
+	 * to help prevent memory deadlocks.  we probably even want to
+	 * allocate blocks in getpage for this same reason.
+	 * 
+	 * once we switch to doing that, the page should always have a blkno.
+	 * but for now, we'll handle allocating blocks here too.
+	 */
+
+	bp->b_blkno = m->blkno;
+	if (bp->b_blkno == 0) {
+		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
+		if (error) {
+UVMHIST_LOG(ubchist, "VOP_BMAP error %d", error,0,0,0);
+			return (error);
+		}
+UVMHIST_LOG(ubchist, "VOP_BMAP gave 0x%x", bp->b_blkno,0,0,0);
+	}
+
+	if ((long)bp->b_blkno == -1) {
+		int bsize;
+
+printf("ffs_putpages: bmap failed, vp %p bp %p lblkno %d\n",
+       vp, bp, bp->b_lblkno);
+
+		bsize = blksize(fs, ip, lblkno(fs, m->offset));
+		error = ffs_balloc(ip, bp->b_lblkno, bsize, cred, NULL, 0);
+		if (error) {
+			printf("ffs_balloc -> %d\n", error);
+			return error;
+		}
+
+		/*
+		 * XXX we need to set the blkno in the page now,
+		 * how do we retrieve that?  maybe ffs_balloc sets these?
+		 */
+	}
+
+	if (m->blkno == 0) {
+		/* adjust physical blkno for partial blocks */
+		bp->b_blkno += ((m->offset - lblktosize(fs, bp->b_lblkno))
+				>> DEV_BSHIFT);
+		m->blkno = bp->b_blkno;
+	}
+
+	UVMHIST_LOG(ubchist, "old vp %p blkno 0x%x new blkno 0x%x",
+		    vp, bp->b_lblkno, bp->b_blkno, 0);
+
+	vp->v_numoutput++;
+
+	VOP_STRATEGY(bp);
+
+	/*
+	 * XXX
+	 * should only have to wait if (ap->a_sync),
+	 * but there's no async vnode io yet.
+	 */
+	error = biowait(bp);
+
+UVMHIST_LOG(ubchist, "error %d", error,0,0,0);
+
+	uvm_pagermapout(kva, ap->a_count);
+
+	return error;
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.12 1998/11/04 07:07:22 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.12.2.1 1998/11/09 06:06:38 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -644,7 +644,7 @@ uvm_loanzero(ufi, output, flags)
 
 	/* loaning to an anon */
 	while ((anon = uvm_analloc()) == NULL || 
-	    (pg = uvm_pagealloc(NULL, 0, anon)) == NULL) {
+	       (pg = uvm_pagealloc(NULL, 0, anon)) == NULL) {
 		
 		/* unlock everything */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
