@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.17 2000/06/03 07:14:55 blymn Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.18 2000/12/13 22:14:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.17 2000/06/03 07:14:55 blymn Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.18 2000/12/13 22:14:40 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: tgoto.c,v 1.17 2000/06/03 07:14:55 blymn Exp $");
 
 #define MAXRETURNSIZE 64
 
-char	*UP = NULL;
-char	*BC = NULL;
+char	*UP;
+char	*BC;
 
 /*
  * Routine to perform cursor addressing.
