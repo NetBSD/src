@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.499 2002/12/05 10:01:56 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.500 2002/12/05 16:19:08 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.499 2002/12/05 10:01:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.500 2002/12/05 16:19:08 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -959,19 +959,20 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			NULL,
 			NULL,
 		},
-		/* Family 6, not yet available from IDT */
+		/* Family 6, VIA acquired IDT Centaur design subsidiary */
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				0, 0, 0, 0, 0, 0, "C3 Samuel",
+				"C3 Samuel 2/Ezra", "C3 Ezra-T",
+				0, 0, 0, 0, 0, 0, 0,
+				"C3"	/* Default */
 			},
 			NULL,
 			NULL,
 			NULL,
 		},
-		/* Family > 6, not yet available from IDT */
+		/* Family > 6, not yet available from VIA */
 		{
 			CPUCLASS_686,
 			{
@@ -1686,7 +1687,7 @@ identifycpu(struct cpu_info *ci)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
 #ifdef CPUDEBUG
-		step = ci->ci_signature & 0xf;
+		step = CPUID2STEPPING(ci->ci_signature);
 		printf("%s: family %x model %x step %x\n", cpuname, family,
 			model, step);
 #endif
@@ -1750,6 +1751,9 @@ identifycpu(struct cpu_info *ci)
 				else
 					brand = amd_brand_name;
 			}
+			
+			if (vendor == CPUVENDOR_IDT && family >= 6)
+				vendorname = "VIA";
 		}
 	}
 
