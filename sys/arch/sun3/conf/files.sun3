@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.56 2000/03/14 15:56:58 oster Exp $
+#	$NetBSD: files.sun3,v 1.57 2000/03/27 21:47:47 scottr Exp $
 
 #
 # sun3-specific configuration info
@@ -158,7 +158,6 @@ attach si at obio with si_obio
 file	arch/sun3/dev/si_obio.c		si_obio
 
 # Sun3/80 on-board SCSI
-device esp: scsi, ncr53c9x
 attach esp at obio
 file arch/sun3/dev/esp.c		esp
 device dma
