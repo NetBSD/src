@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.10 2001/01/08 18:35:49 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.11 2001/01/08 18:58:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.10 2001/01/08 18:35:49 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.11 2001/01/08 18:58:56 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 
 int REC_D = '\n';
 u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
@@ -108,6 +109,8 @@ main(argc, argv)
 	union f_handle filelist;
 	FILE *outfp = NULL;
 
+	setlocale(LC_ALL, "");
+
 	memset(fldtab, 0, (ND+2)*sizeof(struct field));
 	memset(d_mask, 0, NBINS);
 	d_mask[REC_D = '\n'] = REC_D_F;
@@ -121,13 +124,14 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:ux")) != -1) {
 		switch (ch) {
-		case 'b': fldtab->flags |= BI | BT;
+		case 'b':
+			fldtab->flags |= BI | BT;
 			break;
-		case 'd':
-		case 'i':
-		case 'f':
-		case 'n':
-		case 'r': tmp |= optval(ch, 0);
+		case 'c':
+			cflag = 1;
+			break;
+		case 'd': case 'f': case 'i': case 'n': case 'r':
+			tmp |= optval(ch, 0);
 			if (tmp & R && tmp & F)
 				fldtab->weights = RFtable;
 			else if (tmp & F)
@@ -136,11 +140,17 @@ main(argc, argv)
 				fldtab->weights = Rascii;
 			fldtab->flags |= tmp;
 			break;
-		case 'o':
-			outpath = optarg;
+		case 'H':
+			PANIC = 0;
 			break;
 		case 'k':
-			 setfield(optarg, ++ftpos, fldtab->flags);
+			setfield(optarg, ++ftpos, fldtab->flags);
+			break;
+		case 'm':
+			mflag = 1;
+			break;
+		case 'o':
+			outpath = optarg;
 			break;
 		case 's':
 			/* for GNU sort compatibility (this is our default) */
@@ -169,15 +179,6 @@ main(argc, argv)
 			break;
 		case 'u':
 			UNIQUE = 1;
-			break;
-		case 'c':
-			cflag = 1;
-			break;
-		case 'm':
-			mflag = 1;
-			break;
-		case 'H':
-			PANIC = 0;
 			break;
 		case '?':
 		default:
