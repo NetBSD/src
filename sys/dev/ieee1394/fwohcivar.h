@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.8 2001/03/15 23:03:43 enami Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.9 2001/05/01 04:48:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct fwohci_pkt {
 	struct uio fp_uio;
 	struct iovec fp_iov[6];
 	u_int32_t *fp_trail;
-	struct mbuf *fp_m;
+        struct mbuf *fp_m;
 	void (*fp_callback)(struct device *, struct mbuf *);
 };
 
@@ -145,14 +145,22 @@ struct fwohci_softc {
 	struct fwohci_ctx **sc_ctx_ir;
 	struct fwohci_buf sc_buf_cnfrom;
 	struct fwohci_buf sc_buf_selfid;
+        
+        struct proc *sc_event_thread;
 
-	u_int8_t sc_csr[CSR_SB_END];
+        int sc_dying;
+        u_int32_t sc_intmask;
+        u_int32_t sc_iso;
+    
+        u_int8_t sc_csr[CSR_SB_END];
 
 	struct fwohci_uidtbl *sc_uidtbl;
 	u_int16_t sc_nodeid;			/* Full Node ID of this node */
 	u_int8_t sc_rootid;			/* Phy ID of Root */
 	u_int8_t sc_irmid;			/* Phy ID of IRM */
 	u_int8_t sc_tlabel;			/* Transaction Label */
+
+	LIST_HEAD(, ieee1394_softc) sc_nodelist;
 };
 
 int fwohci_init (struct fwohci_softc *, const struct evcnt *);
