@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.5 1995/10/07 06:27:24 mycroft Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.6 1996/02/17 23:08:36 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -158,7 +158,7 @@ bsd2osf_statfs(bsfs, osfs)
 {
 
 	bzero(osfs, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_UFS, bsfs->f_fstypename, MFSNAMELEN))
+	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_UFS;
 	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_NFS;
