@@ -51,14 +51,13 @@
 ./usr/include/machine/frame.h
 ./usr/include/machine/idprom.h
 ./usr/include/machine/ieeefp.h
-./usr/include/machine/isr.h
 ./usr/include/machine/kbd.h
 ./usr/include/machine/kbio.h
 ./usr/include/machine/kcore.h
 ./usr/include/machine/leds.h
 ./usr/include/machine/limits.h
+./usr/include/machine/machdep.h
 ./usr/include/machine/mon.h
-./usr/include/machine/obctl.h
 ./usr/include/machine/obio.h
 ./usr/include/machine/obmem.h
 ./usr/include/machine/param.h
@@ -70,7 +69,6 @@
 ./usr/include/machine/pte.h
 ./usr/include/machine/ptrace.h
 ./usr/include/machine/reg.h
-./usr/include/machine/remote-sl.h
 ./usr/include/machine/saio.h
 ./usr/include/machine/setjmp.h
 ./usr/include/machine/signal.h
