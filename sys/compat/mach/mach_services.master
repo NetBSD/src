@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.7 2003/11/30 20:42:03 manu Exp $
+ $NetBSD: mach_services.master,v 1.8 2003/12/09 12:13:44 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -16,6 +16,7 @@
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_exception.h>
 #include <compat/mach/mach_vm.h>
 #include <compat/mach/mach_services.h>
 
