@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.36 1997/03/20 12:03:01 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.37 1997/04/01 16:31:45 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -49,13 +49,13 @@
 /*
  * Function declarations:
  */
-static int ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
-static int ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-static void ncr_intr __P((void *));
-static void ncr_attach __P((struct device *, struct device *, void *));
-static int ncr_match __P((struct device *, struct cfdata *, void *));
-static int ncr_ready __P((struct ncr5380_softc *sc));
-static void ncr_wait_not_req __P((struct ncr5380_softc *sc));
+static int	ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
+static int	ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
+static void	ncr_intr __P((void *));
+static void	ncr_attach __P((struct device *, struct device *, void *));
+static int	ncr_match __P((struct device *, struct cfdata *, void *));
+static int	ncr_ready __P((struct ncr5380_softc *sc));
+static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
 
 /*
  * Some constants.
@@ -164,8 +164,8 @@ ncr_attach(parent, self, aux)
 
 	/*
 	 * We only have to set the sc_pio_in and sc_pio_out
-	 * function pointers. The rest of the MD functions is
-	 * not used and defaults to NULL.
+	 * function pointers. The rest of the MD functions are
+	 * not used and default to NULL.
 	 */
 	sc->sc_pio_in	= ncr_pdma_in;
 	sc->sc_pio_out	= ncr_pdma_out;
