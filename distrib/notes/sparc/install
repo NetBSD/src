@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.25 2000/08/24 16:41:04 abs Exp $	
+.\"	$NetBSD: install,v 1.26 2000/09/04 16:08:50 abs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,32 +32,51 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-Installing NetBSD is a relatively complex process, but if you have
+Installing
+.Nx
+is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 .Pp
-There are several ways to install NetBSD onto a disk. The easiest way
-in terms of preliminary setup is to use the NetBSD miniroot that can
-be booted off your local disk's swap partition. Alternatively, if your
-Sparcstation is hooked up in a network you can find a server and arrange
-for a diskless setup which is a convenient way to install on a machine
-whose disk does not currently hold a usable operating system (see the
-section `Installing NetBSD by using a diskless setup' below).  There is
+NetBSD/sparc has two installation systems, an easy to use 'sysinst',
+and a more flexible miniroot script based system.
+.Pp
+There are several ways to install 
+.Nx
+onto a disk. The easiest way is to use the 'syboot.fs' image copied to
+a floppy or your local disk's swap partition.
+More advanced users may prefer booting the
+.Nx
+miniroot from the local disk's swap partition.
+Alternatively, if your Sparcstation is hooked up in a network you
+can find a server and arrange for a diskless setup which is a
+convenient way to install on a machine whose disk does not currently
+hold a usable operating system (see the section `Installing
+.Nx
+by using a diskless setup' below).  There is
 also a bootable 1.4MB floppy available that contains a slightly less
 featureful miniroot environment.
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot.
 .
-The miniroot is a self-contained NetBSD filesystem holding all utilities
-necessary to install NetBSD on a local disk. It is distributed as a plain
+If you wish to use the more flexible 'miniroot.fs', use in place
+of 'syboot.fs' below.
+.Pp
+The miniroot is a self-contained
+.Nx
+filesystem holding all utilities
+necessary to install
+.Nx
+on a local disk. It is distributed as a plain
 file designed to be transferred to a raw disk partition from which it can
 be booted using the appropriate PROM command. Usually, the miniroot will
 be loaded into the swap partition of a disk. If needed, you can use any
-other unused partition, but remember that the partition will then not
-available during the installation process.
+other unused partition, but remember that in the case of 'miniroot.fs'
+the partition will then not available during the installation process.
 .Pp
-Loading the miniroot onto your raw partition is simple. On NetBSD as well
-as SunOS you use a command like:
-.Dl # Ic dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync
+Loading the miniroot onto your raw partition is simple. On
+.Nx
+as well as SunOS you use a command like:
+.Dl # Ic dd if=syboot.fs of=/dev/rsd0b bs=4k conv=sync
 (Here, `/dev/rsd0b' is assumed to be your swap partition.) There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
 partition by your currently running system. If you don't have another
@@ -91,22 +110,33 @@ the expression `(8 * TARGET) + LUN'
 the partition number from which to boot (0=`a', 1=`b', etc).
 .El
 .Pp
-The monitor boot command will cause the NetBSD kernel contained in the
+The monitor boot command will cause the
+.Nx
+kernel contained in the
 miniroot image to be booted. After the initial probe messages you'll be
 asked to start the install or upgrade procedure. Proceed to the section
-.Sx Running the installation scripts
+.Sx Running the installation scripts.
 below.
 .
 .Ss2 Installing NetBSD by using the bootable floppy.
 .
-The NetBSD install floppy works only on the sun4c and sun4m class.
+The
+.Nx
+install floppy works only on the sun4c and sun4m class.
 Making the install floppy is simple:
 .Pp
-On NetBSD as well as SunOS you use the following two commands:
+If you wish to use the more flexible 'boot.fs', use in place
+of 'syboot.fs' below.
+.Pp
+On
+.Nx
+as well as SunOS you use the following two commands:
 .Dl # Ic "fdformat"
-.Dl # Ic "dd if=boot-142.fs of=/dev/rfd0a bs=36k"
+.Dl # Ic "dd if=syboot.fs of=/dev/rfd0a bs=36k"
 (Be sure that the `fdformat' command completes successfully before proceeding
-to the `dd' step; on NetBSD, a string of all `V's, and on SunOS, a string of
+to the `dd' step; on
+.Nx
+, a string of all `V's, and on SunOS, a string of
 all `.'s.).
 .Pp
 On a Windows system you can use the
@@ -114,19 +144,21 @@ On a Windows system you can use the
 command provided with the NetBSD/i386 install tools.
 .Pp
 From the OpenBOOT prompt, the following should boot the floppy.
-.Dl ok Ic "boot fd(,,1)                 # for version 1 OpenBOOT ROMs
-.Dl ok Ic "boot /fd                     # either of these for version
-.Dl ok Ic "boot floppy                  # 2 OpenBOOT ROMs
+.Dl ok Ic "boot fd(,,1)                 # Version 1 OpenBOOT ROMs
+.Dl ok Ic "boot /fd                     # or
+.Dl ok Ic "boot floppy                  # Version 2 OpenBOOT ROMs
 .Pp
 After the initial probe messages you'll be asked to start
 the install or upgrade procedure. Proceed to the section
-.Sx Running the installation scripts
+.Sx Running the installation scripts.
 below.
 .
 .Ss2 Installing NetBSD by using a diskless setup.
 .
 First, you must setup a diskless client configuration on a server. If
-you are using a NetBSD system as the boot-server, have a look at the
+you are using a
+.Nx
+system as the boot-server, have a look at the
 .Xr diskless 8
 manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
@@ -175,13 +207,47 @@ filesets. However, the easiest way is to put the
 files you want
 to install into the root directory for your client on the server.
 .Pp
-Next, unpack `base.tar.gz', `etc.tar.gz', and 'kern.tgz' on the server in
+Next you must select whether to use the easier 'sysinst' or more flexible
+script based install.
+.
+.Ss2 Diskless sysinst installation
+.
+Follow this section and skip the next if you wish to use the easier 'sysinst'
+installation method.
+.Pp
+Copy the installation/netboot/netbsd.ram.gz image into the exported
+root directory for your machine, then boot your workstation from the
+server by entering the appropriate `boot' command at the monitor prompt.
+Depending on the PROM version in your machine, this command takes one of
+the following forms:
+.Dl "\*> b le()netbsd.ram.gz             # for sun4 monitors
+.Dl "ok boot le()netbsd.ram.gz           # for version 1 OpenBOOT ROMs
+.Dl "ok boot net netbsd.ram.gz           # for version 2 OpenBOOT ROMs
+.Pp
+This will boot the
+.Nx
+kernel in single-user mode.
+.(Note
+The latter two examples assume you operate the OpenBOOT ROM in
+"new command mode". If your machine comes up and gives you a `\*>' prompt
+instead of `ok', type:
+.Dl "\*>n                                  # enter native OpenBOOT mode
+.Dl "ok setenv sunmon-compat? false      # make it permanent
+.Dl "ok
+.
+.Ss2 Diskless script installation
+.
+Follow this section and skip the previous if you wish to use the more
+flexible 'miniroot' script installation method.
+.Pp
+Unpack `base.tar.gz', `etc.tar.gz', and 'kern.tgz' on the server in
 the root directory for your machine. If you elect to use a separately
 NFS-mounted filesystem for `/usr' with your diskless setup, make sure the
 "./usr" base files in base.tar.gz end up in the correct location. One way
 to do this is to temporarily use a loopback mount on the server, re-routing
 .Ar root Ns Pa /usr
-to your server's exported NetBSD
+to your server's exported
+.Nx
 .Pa /usr
 directory. Also put 'install.*' and 'upgrade.sh' from the
 .Pa installation/netboot/
@@ -211,9 +277,13 @@ and run the MAKEDEV script:
 .Pp
 On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
 messages about unknown user and groups. These errors are inconsequential
-for the purpose of installing NetBSD. However, you may want to correct them
+for the purpose of installing
+.Nx .
+However, you may want to correct them
 if you plan to use the diskless setup regularly. In that case, you may re-run
-MAKEDEV on your NetBSD machine once it has booted.
+MAKEDEV on your
+.Nx
+machine once it has booted.
 .Pp
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
@@ -222,7 +292,9 @@ this command takes one of the following forms:
 .Dl "ok boot le()netbsd -s           # for version 1 OpenBOOT ROMs
 .Dl "ok boot net netbsd -s           # for version 2 OpenBOOT ROMs
 .Pp
-This will boot the NetBSD kernel in single-user mode.
+This will boot the
+.Nx
+kernel in single-user mode.
 .(Note
 The latter two examples assume you operate the OpenBOOT ROM in
 "new command mode". If your machine comes up and gives you a `\*>' prompt
@@ -247,19 +319,25 @@ to edit disklabels the -e switch will invoke the editor on the
 label.  The -i switch will run an interactive session.
 .Pp
 At this point, it's worth checking the disk label and partition sizes on
-the disk you want to install NetBSD onto. NetBSD understands SunOS-style
+the disk you want to install
+.Nx
+onto.
+.Nx
+understands SunOS-style
 disklabels, so if your disk was previously used by SunOS there will be
 a usable label on it. Use `disklabel -e \*<disk\*>' or `disklabel -i
-\*<disk\*>' (where \*<disk\*> is the device name assigned by the NetBSD
-kernel, e.g. `sd0') to view and
-modify the partition sizes. See the section
+\*<disk\*>' (where \*<disk\*> is the device name assigned by the
+.Nx
+kernel, e.g. `sd0') to view and modify the partition sizes. See
+the section
 .Sx Preparing your System for NetBSD Installation
 above for suggestions about disk partition sizes.
 .Pp
 If you are installing on a SCSI disk that does
 .Em not
 have a SunOS or
-NetBSD label on it, you may still be able to use disklabel(8) but you'll
+.Nx
+label on it, you may still be able to use disklabel(8) but you'll
 have to create all partitions from scratch. If your disk is listed in
 `/etc/disktab', you may use the entry (which in most cases only defines
 a `c' partition to describe the whole disk) to put an initial label on
@@ -320,16 +398,18 @@ drivedata: 0
   d:   525504   114688    4.2BSD   0   0   0   # (Cyl.  256 - 1428)
 .Ed
 .Pp
-If you are upgrading a NetBSD installation, start the upgrade script:
+If you are upgrading a
+.Nx
+installation, start the upgrade script:
 .Dl netbsd# Ic sh upgrade.sh
 else, start the installation script:
 .Dl netbsd# Ic sh install.sh
 .
 .Ss2 Running the installation scripts.
 .
-The installation scripts will do most of the work of transferring the
+The installation system will do most of the work of transferring the
 system from the distribution sets onto your disk. You will frequently be
-asked for confirmation before the script proceeds with each phase of the
+asked for confirmation before the system proceeds with each phase of the
 installation process.
 .Pp
 Occasionally, you will have to provide a piece of information such as the
@@ -341,11 +421,14 @@ have been identified by the kernel.
 The installation script goes through the following phases:
 .Bl -bullet -compact
 .	It
-	determination of the disk to install NetBSD on
+	determination of the disk on to install
+.Nx
 .	It
 	checking of the partition information on the disk
 .	It
-	creating and mounting the NetBSD filesystems
+	creating and mounting the
+.Nx
+filesystems
 .	It
 	setup of IP configuration
 .	It
@@ -355,8 +438,9 @@ The installation script goes through the following phases:
 .El
 .Pp
 Now try a reboot.  Initially I'd suggest you "boot sd()netbsd -bs", then
-try multiuser after that. If you boot single-user the NetBSD incantation
-to make the root filesystem writable is
+try multiuser after that. If you boot single-user the
+.Nx
+incantation to make the root filesystem writable is
 .Dl netbsd# Ic mount -u /dev/sd0a /
 The Sun monitor might have been setup to instruct the boot program to load
 a file called "vmunix". On OpenBOOT ROM systems you can change it to load
@@ -372,4 +456,5 @@ On version 2 OpenBOOT ROMs:
 .Dl ok Ic setenv boot-device /sbus/esp/sd@0,0
 .Pp
 .Em Congratulations ,
-you have successfully installed NetBSD \*V. 
+you have successfully installed
+.Nx \*V. 
