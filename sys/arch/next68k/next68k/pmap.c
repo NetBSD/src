@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2001/01/14 03:27:19 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.27 2001/03/15 06:10:45 chs Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -422,28 +422,28 @@ pmap_init()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)) != 0)
 		goto bogons;
 	addr = (vaddr_t) monobase;
 	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
 				NULL, UVM_UNKNOWN_OFFSET, 0,
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)) != 0)
 		goto bogons;
 	addr = (vaddr_t) colorbase;
 	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
 				NULL, UVM_UNKNOWN_OFFSET, 0,
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)) != 0)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, HP_MAX_PTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+				UVM_FLAG_FIXED)) != 0) {
 		/*
 		 * If this fails, it is probably because the static
 		 * portion of the kernel page tabel isn't big enough
@@ -521,11 +521,9 @@ bogons:
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
+	if (rv != 0 || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
+	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -1228,9 +1226,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		       pmap, va, pa, prot, wired);
 #endif
-	if (pmap == NULL)
-		return (KERN_SUCCESS);
-
 #ifdef PMAPSTATS
 	if (pmap == pmap_kernel())
 		enter_stats.kernel++;
@@ -1528,7 +1523,7 @@ validate:
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
 #endif
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void
@@ -2047,9 +2042,9 @@ pmap_mapmulti(pmap, va)
 	if (*ste == SG_NV && (*bste & SG_V)) {
 		*ste = *bste;
 		TBIAU();
-		return (KERN_SUCCESS);
+		return 0;
 	}
-	return (KERN_INVALID_ADDRESS);
+	return EFAULT;
 }
 #endif
 
@@ -2678,7 +2673,7 @@ pmap_enter_ptpage(pmap, va)
 #endif
 		s = uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-		if (s != KERN_SUCCESS) {
+		if (s != 0) {
 			printf("uvm_fault_wire(pt_map, 0x%lx, 0x%lx, RW) "
 			    "-> %d\n", va, va + PAGE_SIZE, s);
 			panic("pmap_enter: uvm_fault_wire failed");

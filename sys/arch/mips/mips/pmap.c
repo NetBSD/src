@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2001/01/14 03:28:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2001/03/15 06:10:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2001/01/14 03:28:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2001/03/15 06:10:43 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1233,7 +1233,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * Update the same virtual address entry.
 		 */
 		MachTLBUpdate(va, npte);
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	if (!(pte = pmap_segmap(pmap, va))) {
@@ -1241,7 +1241,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 		if (mem == NULL) {
 			if (flags & PMAP_CANFAIL)
-				return (KERN_RESOURCE_SHORTAGE);
+				return ENOMEM;
 			panic("pmap_enter: cannot allocate segmap");
 		}
 
@@ -1325,7 +1325,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 #endif
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 void
