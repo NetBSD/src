@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.9 2001/12/21 04:11:24 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.10 2004/04/18 21:00:35 matt Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.6 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
@@ -49,11 +49,11 @@
 #define ECN_NOCARE	(-1)	/* no consideration to ECN */
 
 #if defined(KERNEL) || defined(_KERNEL)
-extern void ip_ecn_ingress __P((int, u_int8_t *, const u_int8_t *));
-extern void ip_ecn_egress __P((int, const u_int8_t *, u_int8_t *));
+extern void ip_ecn_ingress (int, u_int8_t *, const u_int8_t *);
+extern void ip_ecn_egress (int, const u_int8_t *, u_int8_t *);
 #ifdef INET6
-extern void ip6_ecn_ingress __P((int, u_int32_t *, const u_int32_t *));
-extern void ip6_ecn_egress __P((int, const u_int32_t *, u_int32_t *));
+extern void ip6_ecn_ingress (int, u_int32_t *, const u_int32_t *);
+extern void ip6_ecn_egress (int, const u_int32_t *, u_int32_t *);
 #endif
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.3 2003/01/17 08:11:57 itojun Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.4 2004/04/18 21:00:36 matt Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ struct encaptab {
 	struct sockaddr *srcmask;
 	struct sockaddr *dst;		/* remote addr */
 	struct sockaddr *dstmask;
-	int (*func) __P((const struct mbuf *, int, int, void *));
+	int (*func) (const struct mbuf *, int, int, void *);
 	const struct protosw *psw;	/* only pr_input will be used */
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
