@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.39 2002/01/28 09:56:58 aymeric Exp $ */
+/*	$NetBSD: if_ed.c,v 1.39.10.1 2003/01/28 05:42:00 jmc Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.39 2002/01/28 09:56:58 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.39.10.1 2003/01/28 05:42:00 jmc Exp $");
 
 #include "bpfilter.h"
 
@@ -124,6 +124,7 @@ static inline caddr_t ed_ring_copy(struct ed_softc *, caddr_t, caddr_t,
 static inline void NIC_PUT(struct ed_softc *, int, u_char);
 static inline u_char NIC_GET(struct ed_softc *, int);
 static inline void word_copy(caddr_t, caddr_t, int);
+static inline void word_zero(caddr_t, int);
 struct mbuf *ed_ring_to_mbuf(struct ed_softc *, caddr_t, struct mbuf *,
 					u_short);
 
@@ -174,6 +175,19 @@ word_copy(caddr_t a, caddr_t b, int len)
 	len >>= 1;
 	while (len--)
 		*y++ = *x++;
+}
+
+/*
+ * zero memory, one word at time.
+ */
+static inline void
+word_zero(caddr_t a, int len)
+{
+	u_short *x = (u_short *)a;
+
+	len >>= 1;
+	while (len--)
+		*x++ = 0;
 }
 
 int
@@ -525,7 +539,7 @@ outloop:
 
 	len = ed_put(sc, m, buffer);
 
-	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
+	sc->txb_len[sc->txb_new] = len;
 	sc->txb_inuse++;
 
 	/* Point to next buffer slot and wrap if necessary. */
@@ -1196,6 +1210,11 @@ ed_put(struct ed_softc *sc, struct mbuf *m, caddr_t buf)
 		savebyte[1] = 0;
 		word_copy(savebyte, buf, 2);
 		buf += 2;
+		totlen++;
+	}
+	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		word_zero(buf, ETHER_MIN_LEN - ETHER_CRC_LEN - totlen);
+		totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 	}
 
 	return (totlen);
