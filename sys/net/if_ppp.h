@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ppp.h,v 1.13 1997/04/16 12:54:43 is Exp $	*/
-/*	Id: if_ppp.h,v 1.15 1997/03/04 03:32:26 paulus Exp 	*/
+/*	$NetBSD: if_ppp.h,v 1.14 1997/05/17 21:12:02 christos Exp $	*/
+/*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
  * if_ppp.h - Point-to-Point Protocol definitions.
@@ -22,12 +22,6 @@
 
 #ifndef _IF_PPP_H_
 #define _IF_PPP_H_
-
-/*
- * Packet sizes
- */
-#define	PPP_MTU		1500	/* Default MTU (size of Info field) */
-#define PPP_MAXMRU	65000	/* Largest MRU we allow */
 
 /*
  * Bit definitions for flags.
@@ -135,7 +129,5 @@ struct ifpppcstatsreq {
 #if defined(_KERNEL) || defined(KERNEL)
 void pppattach __P((void));
 void pppintr __P((void));
-int pppoutput __P((struct ifnet *, struct mbuf *,
-		       struct sockaddr *, struct rtentry *));
 #endif
 #endif /* _IF_PPP_H_ */

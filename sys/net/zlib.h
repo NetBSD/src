@@ -1,5 +1,5 @@
-/*	$NetBSD: zlib.h,v 1.2 1997/03/12 20:27:11 christos Exp $	*/
-/*	Id: zlib.h,v 1.4 1997/03/04 03:26:36 paulus Exp 	*/
+/*	$NetBSD: zlib.h,v 1.3 1997/05/17 21:12:17 christos Exp $	*/
+/*	Id: zlib.h,v 1.5 1997/04/30 05:41:20 paulus Exp 	*/
 
 /*
  * This file is derived from zlib.h and zconf.h from the zlib-0.95
@@ -9,7 +9,7 @@
  */
 
 /*
- *  ==FILEVERSION 960122==
+ *  ==FILEVERSION 970421==
  *
  * This marker is used by the Linux installation script to determine
  * whether an up-to-date version of this file is already installed.
@@ -177,6 +177,7 @@ typedef struct z_stream_s {
     struct internal_state FAR *state; /* not visible by applications */
 
     alloc_func zalloc;  /* used to allocate the internal state */
+    alloc_func zalloc_init;  /* used to allocate the internal state during initialization */
     free_func  zfree;   /* used to free the internal state */
     voidp      opaque;  /* private data object passed to zalloc and zfree */
 

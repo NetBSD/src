@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.38 1997/04/16 12:54:42 is Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -234,7 +234,7 @@ pppalloc(pid)
     MALLOC(sc->sc_comp, struct slcompress *, sizeof(struct slcompress),
 	   M_DEVBUF, M_NOWAIT);
     if (sc->sc_comp)
-	sl_compress_init(sc->sc_comp, -1);
+	sl_compress_init(sc->sc_comp);
 #endif
 #ifdef PPP_COMPRESS
     sc->sc_xc_state = NULL;
@@ -383,7 +383,7 @@ pppioctl(sc, cmd, data, flag, p)
 	    return (error);
 	if (sc->sc_comp) {
 	    s = splsoftnet();
-	    sl_compress_init(sc->sc_comp, *(int *)data);
+	    sl_compress_init(sc->sc_comp);
 	    splx(s);
 	}
 	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.4 1997/03/12 20:26:56 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.5 1997/05/17 21:12:06 christos Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -149,6 +149,7 @@ z_comp_alloc(options, opt_len)
 
     state->strm.next_in = NULL;
     state->strm.zalloc = zalloc;
+    state->strm.zalloc_init = zalloc;
     state->strm.zfree = zfree;
     if (deflateInit2(&state->strm, Z_DEFAULT_COMPRESSION, DEFLATE_METHOD_VAL,
 		     -w_size, 8, Z_DEFAULT_STRATEGY, DEFLATE_OVHD+2) != Z_OK) {
@@ -380,6 +381,7 @@ z_decomp_alloc(options, opt_len)
 
     state->strm.next_out = NULL;
     state->strm.zalloc = zalloc;
+    state->strm.zalloc_init = zalloc;
     state->strm.zfree = zfree;
     if (inflateInit2(&state->strm, -w_size) != Z_OK) {
 	FREE(state, M_DEVBUF);

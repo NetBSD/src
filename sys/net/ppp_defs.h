@@ -1,5 +1,5 @@
-/*	$NetBSD: ppp_defs.h,v 1.2 1997/03/12 20:26:59 christos Exp $	*/
-/*	Id: ppp_defs.h,v 1.10 1997/03/04 03:32:37 paulus Exp 	*/
+/*	$NetBSD: ppp_defs.h,v 1.3 1997/05/17 21:12:08 christos Exp $	*/
+/*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
  * ppp_defs.h - PPP definitions.
@@ -36,7 +36,21 @@
  */
 #define PPP_HDRLEN	4	/* octets for standard ppp header */
 #define PPP_FCSLEN	2	/* octets for FCS */
+
+/*
+ * Packet sizes
+ *
+ * Note - lcp shouldn't be allowed to negotiate stuff outside these
+ *	  limits.  See lcp.h in the pppd directory.
+ * (XXX - these constants should simply be shared by lcp.c instead
+ *	  of living in lcp.h)
+ */
+#define	PPP_MTU		1500	/* Default MTU (size of Info field) */
+#define PPP_MAXMTU	65535 - (PPP_HDRLEN + PPP_FCSLEN)
+#define PPP_MINMTU	64
 #define PPP_MRU		1500	/* default MRU = max length of info field */
+#define PPP_MAXMRU	65000	/* Largest MRU we allow */
+#define PPP_MINMRU	128
 
 #define PPP_ADDRESS(p)	(((u_char *)(p))[0])
 #define PPP_CONTROL(p)	(((u_char *)(p))[1])
