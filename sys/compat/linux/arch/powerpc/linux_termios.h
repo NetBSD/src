@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.4 2001/05/19 14:31:00 manu Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.5 2001/08/26 17:26:31 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _POWERPC_LINUX_TERMIOS_H
 
 #define LINUX_NCC 10
+#define LINUX_NCCS 19
 
 /*
  * Enable optional part of struct termios 
