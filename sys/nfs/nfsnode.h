@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.50 2004/10/26 04:34:48 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.51 2004/12/14 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -267,19 +267,13 @@ int	nfs_readlink	__P((void *));
 int	nfs_inactive	__P((void *));
 int	nfs_reclaim	__P((void *));
 #define nfs_lock	genfs_lock
-int nfs_unlock	__P((void *));
+int	nfs_unlock	__P((void *));
 #define nfs_islocked	genfs_islocked
 int	nfs_bmap	__P((void *));
 int	nfs_strategy	__P((void *));
 int	nfs_print	__P((void *));
 int	nfs_pathconf	__P((void *));
 int	nfs_advlock	__P((void *));
-#define	nfs_blkatoff	genfs_eopnotsupp
-int	nfs_bwrite	__P((void *));
-#define	nfs_valloc	genfs_eopnotsupp
-#define nfs_reallocblks	genfs_eopnotsupp
-#define	nfs_vfree	genfs_nullop
-int	nfs_truncate	__P((void *));
 int	nfs_getpages	__P((void *));
 int	nfs_putpages	__P((void *));
 int	nfs_gop_write(struct vnode *, struct vm_page **, int, int);
