@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.256 1999/08/29 16:59:19 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.257 1999/09/09 12:33:45 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -534,6 +534,9 @@ umodem*	at uhub? port ? configuration ?
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass? channel ?
 
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
 # USB Generic driver
 ugen*	at uhub? port ?
 
@@ -581,6 +584,7 @@ audio*	at pas?
 audio*	at sb?
 audio*	at sp?
 audio*	at sv?
+audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
 
