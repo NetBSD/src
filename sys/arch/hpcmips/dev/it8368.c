@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.6 2000/01/06 18:14:25 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.7 2000/03/03 17:09:57 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -56,7 +56,7 @@ int	it8368_submatch __P((struct device*, struct cfdata*, void*));
 
 #define IT8368_LASTSTATE_PRESENT	0x0002
 #define IT8368_LASTSTATE_HALF		0x0001
-#define IT8368_LASTSTATE_EMPTY	0x0000
+#define IT8368_LASTSTATE_EMPTY		0x0000
 
 struct it8368e_softc {
 	struct device	sc_dev;
@@ -96,9 +96,6 @@ struct it8368e_softc {
 void	it8368_init_socket __P((struct it8368e_softc*));
 void	it8368_attach_socket __P((struct it8368e_softc*));
 int	it8368_intr __P((void*));
-
-void	it8368_dump __P((struct it8368e_softc*));
-
 int	it8368_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t, 
 				   struct pcmcia_mem_handle*));
 void	it8368_chip_mem_free __P((pcmcia_chipset_handle_t, 
@@ -145,16 +142,19 @@ struct cfattach it8368e_ca = {
 /*
  *	IT8368 configuration register is big-endian.
  */
-__inline u_int16_t	it8368_reg_read __P((bus_space_tag_t, 
+__inline__ u_int16_t	it8368_reg_read __P((bus_space_tag_t, 
 					     bus_space_handle_t, int));
-__inline void		it8368_reg_write __P((bus_space_tag_t, 
+__inline__ void		it8368_reg_write __P((bus_space_tag_t, 
 					      bus_space_handle_t, int, 
 					      u_int16_t));
 
+#ifdef IT8368DEBUG
+void	it8368_dump __P((struct it8368e_softc*));
 #define PRINTGPIO(m) __bitdisp(it8368_reg_read(csregt, csregh, \
 	IT8368_GPIO##m##_REG), 0, IT8368_GPIO_MAX, #m, 1)
 #define PRINTMFIO(m) __bitdisp(it8368_reg_read(csregt, csregh, \
 	IT8368_MFIO##m##_REG), 0, IT8368_MFIO_MAX, #m, 1)
+#endif
 
 int
 it8368e_match(parent, cf, aux)
@@ -243,8 +243,9 @@ it8368e_attach(parent, self, aux)
 	sc->sc_csmemsize = sc->sc_csiosize;
 	sc->sc_csmembase = sc->sc_csiosize;
 
+#ifdef IT8368DEBUG
 	it8368_dump(sc);
-
+#endif
 	/* Enable card and interrupt driving. */
 	reg = it8368_reg_read(csregt, csregh, IT8368_CTRL_REG);
 	reg |= (IT8368_CTRL_GLOBALEN | IT8368_CTRL_CARDEN);
@@ -258,7 +259,7 @@ it8368e_attach(parent, self, aux)
 	it8368_attach_socket(sc);
 }
 
-__inline u_int16_t
+__inline__ u_int16_t
 it8368_reg_read(t, h, ofs)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -270,7 +271,7 @@ it8368_reg_read(t, h, ofs)
 	return 0xffff & (((val >> 8) & 0xff)|((val << 8) & 0xff00));
 }
 
-__inline void
+__inline__ void
 it8368_reg_write(t, h, ofs, v)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -308,11 +309,15 @@ it8368_intr(arg)
 		it8368_reg_write(csregt, csregh, IT8368_GPIONEGINTSTAT_REG,
 				 IT8368_PIN_CRDDET2);
 		printf("[CSC]\n");
+#ifdef IT8368DEBUG
 		it8368_dump(sc);
+#endif
 		it8368_chip_socket_disable(sc);
 	} else {
 		printf("unknown it8368 interrupt\n");
+#ifdef IT8368DEBUG
 		it8368_dump(sc);
+#endif
 	}
 
 	return 0;
@@ -719,11 +724,11 @@ it8368_chip_socket_disable(pch)
 	DPRINTF(("it8368_chip_socket_disable: socket disabled\n"));
 }
 
+#ifdef IT8368DEBUG
 void
 it8368_dump(sc)
 	struct it8368e_softc *sc;
 {
-#ifdef IT8368DEBUG
 	bus_space_tag_t csregt = sc->sc_csregt;
 	bus_space_handle_t csregh = sc->sc_csregh;
 
@@ -748,5 +753,5 @@ it8368_dump(sc)
 		  "CTRL", 1);
 	__bitdisp(it8368_reg_read(csregt, csregh, IT8368_GPIODATAIN_REG),
 		  8, 11, "]CRDDET/SENSE[", 1);
-#endif
 }
+#endif /* IT8368DEBUG */
