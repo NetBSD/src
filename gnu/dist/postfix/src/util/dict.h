@@ -35,7 +35,8 @@ typedef struct DICT {
     int     (*delete) (struct DICT *, const char *);
     int     (*sequence) (struct DICT *, int, const char **, const char **);
     void    (*close) (struct DICT *);
-    int     fd;				/* for dict_update() lock */
+    int     lock_fd;			/* for dict_update() lock */
+    int     stat_fd;			/* change detection */
     time_t  mtime;			/* mod time at open */
 } DICT;
 

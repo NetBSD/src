@@ -158,7 +158,7 @@ static const char *dict_db_lookup(DICT *dict, const char *name)
      * Acquire a shared lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_SHARED) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_db->dict.name);
 
     /*
@@ -198,7 +198,7 @@ static const char *dict_db_lookup(DICT *dict, const char *name)
      * Release the shared lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_db->dict.name);
 
     return (result);
@@ -246,7 +246,7 @@ static void dict_db_update(DICT *dict, const char *name, const char *value)
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_db->dict.name);
 
     /*
@@ -271,7 +271,7 @@ static void dict_db_update(DICT *dict, const char *name, const char *value)
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_db->dict.name);
 }
 
@@ -289,7 +289,7 @@ static int dict_db_delete(DICT *dict, const char *name)
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_db->dict.name);
 
     /*
@@ -325,7 +325,7 @@ static int dict_db_delete(DICT *dict, const char *name)
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_db->dict.name);
 
     return status;
@@ -367,7 +367,7 @@ static int dict_db_sequence(DICT *dict, const int function,
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_EXCLUSIVE) < 0)
 	msg_fatal("%s: lock dictionary: %m", dict_db->dict.name);
 
     if ((status = db->seq(db, &db_key, &db_value, db_function)) < 0)
@@ -377,7 +377,7 @@ static int dict_db_sequence(DICT *dict, const int function,
      * Release the exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
-	&& myflock(dict->fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
+	&& myflock(dict->lock_fd, INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
 	msg_fatal("%s: unlock dictionary: %m", dict_db->dict.name);
 
     if (status == 0) {
@@ -537,8 +537,9 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     dict_db->dict.delete = dict_db_delete;
     dict_db->dict.sequence = dict_db_sequence;
     dict_db->dict.close = dict_db_close;
-    dict_db->dict.fd = dbfd;
-    if (fstat(dict_db->dict.fd, &st) < 0)
+    dict_db->dict.lock_fd = dbfd;
+    dict_db->dict.stat_fd = dbfd;
+    if (fstat(dict_db->dict.stat_fd, &st) < 0)
 	msg_fatal("dict_db_open: fstat: %m");
     dict_db->dict.mtime = st.st_mtime;
 
@@ -552,7 +553,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	&& st.st_mtime < time((time_t *) 0) - 100)
 	msg_warn("database %s is older than source file %s", db_path, path);
 
-    close_on_exec(dict_db->dict.fd, CLOSE_ON_EXEC);
+    close_on_exec(dict_db->dict.lock_fd, CLOSE_ON_EXEC);
+    close_on_exec(dict_db->dict.stat_fd, CLOSE_ON_EXEC);
     dict_db->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if ((dict_flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	dict_db->dict.flags |= (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL);
