@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 2002/01/08 02:46:14 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2002/01/13 14:17:49 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -88,6 +88,7 @@
 #	i4btrc*	trace device
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
@@ -124,6 +125,7 @@ all)
 	sh $0 wscons
 	sh $0 ttyTX0 ttyTX1 ucbsnd
 #	sh $0 local
+	sh $0 clockctl
 	;;
 
 floppy)
@@ -575,6 +577,13 @@ i4btrc*)
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 44 $unit
 	chmod 600 i4btrc$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 46 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)

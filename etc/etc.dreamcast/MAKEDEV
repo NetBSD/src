@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 2001/12/19 17:57:06 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.7 2002/01/13 14:16:21 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,6 +64,7 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
@@ -90,6 +91,7 @@ all)
 	sh $0 ttyE0 ttyEcfg wsmouse0 wskbd0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 random
 	sh $0 wscons lkm audio local
+	sh $0 clockctl
 	;;
 
 ramdisk)
@@ -358,6 +360,13 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 59 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
