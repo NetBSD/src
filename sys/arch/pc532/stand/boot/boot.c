@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1997/05/17 13:56:01 matthias Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2000/07/29 20:06:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,7 +107,7 @@ getbootdev(howto)
 {
 	char c, *ptr = line;
 
-	printf("Boot: [[[%s%d%c:]%s][-abdrs]] :- ",
+	printf("Boot: [[[%s%d%c:]%s][-abds]] :- ",
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
@@ -127,9 +127,6 @@ getbootdev(howto)
 						continue;
 					case 'd':
 						*howto |= RB_KDB;
-						continue;
-					case 'r':
-						*howto |= RB_DFLTROOT;
 						continue;
 					case 's':
 						*howto |= RB_SINGLE;
