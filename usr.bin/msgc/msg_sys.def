@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.24 2003/07/25 07:48:02 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.25 2003/07/28 09:55:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,7 +142,6 @@ msg_clear(void)
 {
 
 	wclear(msg_win);
-	wrefresh(msg_win);
 	last_o_was_punct = 0;
 	last_o_was_space = 1;
 }
