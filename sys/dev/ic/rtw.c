@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.26 2004/12/27 06:12:28 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.27 2004/12/27 09:40:18 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.26 2004/12/27 06:12:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.27 2004/12/27 09:40:18 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -1512,7 +1512,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
 		    stx->stx_first, ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if ((htc->htc_desc[stx->stx_first].htx_stat &
+		if ((htc->htc_desc[stx->stx_last].htx_stat &
 		    htole32(RTW_TXSTAT_OWN)) != 0) 
 			break;
 
@@ -2353,8 +2353,8 @@ rtw_init(struct ifnet *ifp)
 	RTW_WRITE8(regs, RTW_MSR, 0x0);	/* no link */
 	RTW_WBW(regs, RTW_MSR, RTW_BRSR);
 
-	/* long PLCP header, 1Mbps basic rate */
-	RTW_WRITE16(regs, RTW_BRSR, 0x0f);
+	/* long PLCP header, 1Mb/2Mb basic rate */
+	RTW_WRITE16(regs, RTW_BRSR, RTW_BRSR_MBR8180_2MBPS);
 	RTW_SYNC(regs, RTW_BRSR, RTW_BRSR);
 
 	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
@@ -2500,7 +2500,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
 		DPRINTF(sc, RTW_DEBUG_XMIT,
 		    ("%s: dequeue pwrsave frame\n", __func__));
 	} else {
-		IFQ_POLL(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
 			DPRINTF(sc, RTW_DEBUG_XMIT,
 			    ("%s: no frame\n", __func__));
@@ -2508,7 +2508,6 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
 		}
 		DPRINTF(sc, RTW_DEBUG_XMIT,
 		    ("%s: dequeue data frame\n", __func__));
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		ifp->if_opackets++;
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
