@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.60 2003/05/13 02:41:27 lukem Exp $
+# $NetBSD: postinstall,v 1.61 2003/05/15 05:25:24 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,6 +50,7 @@
 #	- support quiet/verbose mode ?
 #	- differentiate between failures caused by missing source
 #	  and real failures
+#	- install moduli into usr/share/examples/ssh and use from there?
 #
 
 #
@@ -285,7 +286,7 @@ find_file_in_dirlist()
 		if [ -f "${dir}/${_file}" ]; then
 			if [ "${_dir1st}" != "${dir}" ]; then
 				msg \
-				  "(Checking from ${dir} instead of ${_dir1st})"
+		  "(Checking for ${_msg} from ${dir} instead of ${_dir1st})"
 			fi
 			return 0
 		fi
@@ -549,24 +550,11 @@ do_ssh()
 		fi
 	fi
 
-	dirsrc=${SRC_DIR}/crypto/dist/ssh
-	diretc=${SRC_DIR}/etc
-	modulidir=
-	if [ -f "${dirsrc}"/moduli ]; then
-		modulidir=$dirsrc
-	elif [ -f "${diretc}"/moduli ]; then
-		modulidir=$diretc
-		msg \
-		  "(Checking for moduli from ${modulidir} instead of ${dirsrc})"
-	else
-		msg "Can't find source directory for etc/moduli"
+	if ! find_file_in_dirlist moduli "moduli" \
+	    ${SRC_DIR}/crypto/dist/ssh ${SRC_DIR}/etc ; then
 		failed=1
-	fi
-	if [ -n "${modulidir}" ]; then
-		if ! compare_dir ${op} ${modulidir} \
-		    ${DEST_DIR}/etc 444 moduli; then
-			failed=1
-		fi
+	elif ! compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 moduli; then
+		failed=1
 	fi
 
 	if ! check_dir "${op}" "${DEST_DIR}/var/chroot/sshd" 755 ; then
