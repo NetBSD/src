@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.11 1993/06/16 10:39:35 andrew Exp $
+ *	$Id: st.c,v 1.12 1993/06/27 06:59:23 andrew Exp $
  */
 
 /*
@@ -414,7 +414,7 @@ ststart(int unit)
 
 trynext:
 	if(st->blockwait) {
-		wakeup(&st->blockwait);
+		wakeup((caddr_t)&st->blockwait);
 		return;
 	}
 
@@ -488,7 +488,7 @@ trynext:
 	xs->targ = st->targ;
 	xs->lu = st->lu;
 	xs->retries = 1;	/* can't retry on tape*/
-	xs->timeout = 100000; /* allow 100 secs for retension */
+	xs->timeout = 200000; /* allow 200 secs for retension */
 	xs->cmd = (struct scsi_generic *)&cmd;
 	xs->cmdlen = sizeof(cmd);
 	xs->data = (u_char *)bp->b_un.b_addr;
@@ -670,7 +670,7 @@ st_done(int unit, struct scsi_xfer *xs)
 		xs->flags = 0;	/* no longer in use */
 		ststart(unit);		/* If there's another waiting.. do it */
 	} else
-		wakeup(xs);
+		wakeup((caddr_t)xs);
 }
 
 /*
@@ -1111,7 +1111,7 @@ st_scsi_cmd(int unit, struct scsi_generic *scsi_cmd, int cmdlen,
 		s = splbio();
 	st->blockwait++;	/* there is someone waiting */
 	while (xs->flags & INUSE)
-		sleep(&st->blockwait, PRIBIO+1);
+		sleep((caddr_t)&st->blockwait, PRIBIO+1);
 	st->blockwait--;
 	xs->flags = INUSE;
 	if(!(flags & SCSI_NOMASK))
@@ -1142,7 +1142,7 @@ retry:
 	case SUCCESSFULLY_QUEUED:
 		s = splbio();
 		while(!(xs->flags & ITSDONE))
-			sleep(xs,PRIBIO+1);
+			sleep((caddr_t)xs,PRIBIO+1);
 		splx(s);
 	case HAD_ERROR:
 	case COMPLETE:

@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.13 1993/06/17 12:18:29 brezak Exp $
+ *	$Id: cd.c,v 1.14 1993/06/27 07:01:17 andrew Exp $
  */
 
 #define SPLCD splbio
@@ -612,7 +612,7 @@ struct	scsi_xfer	*xs;
 	}
 	else /* special has finished */
 	{
-		wakeup(xs);
+		wakeup((caddr_t)xs);
 	}
 }
 /*******************************************************\
@@ -1426,7 +1426,7 @@ retry:		xs->error	=	XS_NOERROR;
 		case	SUCCESSFULLY_QUEUED:
 			s = splbio();
 			while(!(xs->flags & ITSDONE))
-				sleep(xs,PRIBIO+1);
+				sleep((caddr_t)xs,PRIBIO+1);
 			splx(s);
 
 		case	HAD_ERROR:
