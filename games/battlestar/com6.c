@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.13 1999/09/13 17:15:42 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.14 1999/09/13 17:18:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.13 1999/09/13 17:15:42 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.14 1999/09/13 17:18:56 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -134,7 +134,7 @@ post(ch)
 	date = ctime(&tvsec);
 	date[24] = '\0';
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
+		fprintf(score_fp, "%s  %8s  %c%20s", date, username, ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
 		else
