@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.2 1995/07/03 21:24:54 cgd Exp $	*/
+/*	$NetBSD: mem2.c,v 1.3 1995/10/02 17:27:11 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: mem2.c,v 1.2 1995/07/03 21:24:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: mem2.c,v 1.3 1995/10/02 17:27:11 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$NetBSD: mem2.c,v 1.2 1995/07/03 21:24:54 cgd Exp $";
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string.h>
+#include <err.h>
 
 #include "lint2.h"
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.5 1995/10/02 17:18:53 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.6 1995/10/02 17:26:52 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.5 1995/10/02 17:18:53 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.6 1995/10/02 17:26:52 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -57,6 +57,7 @@ int	mblklev;
 
 static	int	toicon __P((tnode_t *));
 static	void	idecl __P((sym_t *, int));
+static	void	ignuptorp __P((void));
 
 %}
 
@@ -127,6 +128,7 @@ static	void	idecl __P((sym_t *, int));
 %token			T_CONTINUE
 %token			T_BREAK
 %token			T_RETURN
+%token			T_ASM
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASS
@@ -471,7 +473,7 @@ struct_spec:
 		 * STDC requires that "struct a;" always introduces
 		 * a new tag if "a" is not declared at current level
 		 *
-		 * yychar is valid because otherwise the parse would
+		 * yychar is valid because otherwise the parser would
 		 * not been able to deceide if he must shift or reduce
 		 */
 		$$ = mktag($2, $1, 0, yychar == T_SEMI);
@@ -753,11 +755,11 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	  notype_decl {
+	  notype_decl opt_asm_spec {
 		idecl($1, 0);
 		chksz($1);
 	  }
-	| notype_decl {
+	| notype_decl opt_asm_spec {
 		idecl($1, 1);
 	  } T_ASSIGN initializer {
 		chksz($1);
@@ -765,11 +767,11 @@ notype_init_decl:
 	;
 
 type_init_decl:
-	  type_decl {
+	  type_decl opt_asm_spec {
 		idecl($1, 0);
 		chksz($1);
 	  }
-	| type_decl {
+	| type_decl opt_asm_spec {
 		idecl($1, 1);
 	  } T_ASSIGN initializer {
 		chksz($1);
@@ -1011,10 +1013,10 @@ vararg_parameter_type_list:
 	;
 
 parameter_type_list:
-	  parameter_declaration {
+	  parameter_declaration opt_asm_spec {
 		$$ = $1;
 	  }
-	| parameter_type_list T_COMMA parameter_declaration {
+	| parameter_type_list T_COMMA parameter_declaration opt_asm_spec {
 		$$ = lnklst($1, $3);
 	  }
 	;
@@ -1044,6 +1046,13 @@ parameter_declaration:
 	  }
 	| declspecs deftyp abs_decl {
 		$$ = decl1arg($3, 0);
+	  }
+	;
+
+opt_asm_spec:
+	  /* empty */
+	| T_ASM T_LPARN T_STRING T_RPARN {
+		freeyyv(&$3, T_STRING);
 	  }
 	;
 
@@ -1150,6 +1159,7 @@ stmnt:
 	| jump_stmnt {
 		ftflg = 0;
 	  }
+	| asm_stmnt
 	;
 
 labeled_stmnt:
@@ -1332,6 +1342,17 @@ jump_stmnt:
 goto:
 	  T_GOTO {
 		symtyp = FLAB;
+	  }
+	;
+
+asm_stmnt:
+	  T_ASM T_LPARN read_until_rparn T_SEMI
+	| T_ASM T_QUAL T_LPARN read_until_rparn T_SEMI
+	;
+
+read_until_rparn:
+	  /* empty */ {
+		ignuptorp();
 	  }
 	;
 
@@ -1604,4 +1625,30 @@ idecl(decl, initflg)
 
 	if (initflg && !initerr)
 		prepinit();
+}
+
+/*
+ * Discard all input tokens up to and including the next
+ * unmatched right paren
+ */
+void
+ignuptorp()
+{
+	int	level;
+
+	if (yychar < 0)
+		yychar = yylex();
+	freeyyv(&yylval, yychar);
+
+	level = 1;
+	while (yychar != T_RPARN || --level > 0) {
+		if (yychar == T_LPARN) {
+			level++;
+		} else if (yychar <= 0) {
+			break;
+		}
+		freeyyv(&yylval, yychar = yylex());
+	}
+
+	yyclearin;
 }

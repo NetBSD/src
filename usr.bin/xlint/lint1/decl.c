@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.7 1995/10/02 17:22:46 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.8 1995/10/02 17:26:54 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.7 1995/10/02 17:22:46 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.8 1995/10/02 17:26:54 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -2121,7 +2121,6 @@ chkosdef(rdsym, dsym)
 	sym_t	*args, *pargs, *arg, *parg;
 	int	narg, nparg, n;
 	int	warn, msg;
-	pos_t	cpos;
 
 	args = rdsym->s_args;
 	pargs = dsym->s_type->t_args;
@@ -2283,7 +2282,6 @@ cluparg()
 {
 	sym_t	*args, *arg, *pargs, *parg;
 	int	narg, nparg, n, msg;
-	pos_t	cpos;
 	tspec_t	t;
 
 	args = funcsym->s_args;
