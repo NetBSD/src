@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.206 2001/12/07 06:59:44 cjs Exp $
+$NetBSD: usbdevs,v 1.207 2001/12/10 03:36:12 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -361,6 +361,9 @@ product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
 product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
+
+/* ACTiSYS products */
+product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
 
 /* ActiveWire, Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
@@ -818,6 +821,7 @@ product MUSTEK 1200CU		0x0001	1200 CU scanner
 product MUSTEK 600CU		0x0002	600 CU scanner
 product MUSTEK 1200USB		0x0003	1200 USB scanner
 product MUSTEK 1200UB		0x0006	1200 UB scanner
+product MUSTEK 1200CUPLUS	0x0008	1200 CU Plus scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
 /* M-Systems products */
@@ -842,6 +846,7 @@ product NETGEAR EA101X		0x1001	Ethernet adapter
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
+product NIKON E880		0x0103	Digital Camera E880
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
