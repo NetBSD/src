@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.10 1997/03/22 19:17:06 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.11 1997/05/24 20:16:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -152,7 +152,7 @@ iommu_attach(parent, self, aux)
 	 *     other fields for?
 	 */
 	sc->sc_reg = (struct iommureg *)
-		mapdev(ra->ra_reg, 0, 0, ra->ra_len, ra->ra_iospace);
+		mapiodev(ra->ra_reg, 0, ra->ra_len);
 #endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
