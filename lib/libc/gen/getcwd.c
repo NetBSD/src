@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.17 1999/03/26 22:23:57 sommerfe Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.18 1999/05/03 14:33:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.17 1999/03/26 22:23:57 sommerfe Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.18 1999/05/03 14:33:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -389,7 +389,8 @@ getcwd(pt, size)
 	char *pt;
 	size_t size;
 {
-	int ptsize, bufsize, len;
+	size_t ptsize, bufsize;
+	int len;
 	
 	/*
 	 * If no buffer specified by the user, allocate one as necessary.
@@ -408,7 +409,7 @@ getcwd(pt, size)
 			return (NULL);
 		bufsize = ptsize;
 	}
-	do {
+	for (;;) {
 		len = __getcwd(pt, bufsize);
 		if ((len < 0) && (size == 0) && (errno == ERANGE)) {
 			if ((pt = realloc(pt, ptsize *= 2)) == NULL)
@@ -416,7 +417,8 @@ getcwd(pt, size)
 			bufsize = ptsize;
 			continue;
 		}
-	} while (0);
+		break;
+	}
 	if (len < 0)
 		return NULL;
 	else
