@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.5 1996/05/22 15:39:43 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.6 1996/07/25 18:59:12 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -73,8 +73,8 @@
 #include <vm/vm.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -90,7 +90,9 @@ struct iy_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	int sc_iobase;
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
+
 	struct arpcom sc_arpcom;
 
 #define MAX_MBS 8
@@ -124,10 +126,7 @@ void iy_intr_rx __P((struct iy_softc *));
 void iy_intr_tx __P((struct iy_softc *));
 void eepro_reset_595 __P((struct iy_softc *));
 int eepro_probe __P((struct iy_softc *, struct isa_attach_args *));
-void eepro_eeprom_outbits __P((struct iy_softc *, int, int));
-void eepro_eeprom_clock __P((struct iy_softc *, int));
 u_short eepro_read_eeprom __P((struct iy_softc *, int));
-int eepro_eeprom_inbits __P((struct iy_softc *));
 
 void iyreset __P((struct iy_softc *));
 void iy_readframe __P((struct iy_softc *, int));
@@ -136,7 +135,7 @@ void iy_find_mem_size __P((struct iy_softc *));
 void iyrint __P((struct iy_softc *));
 void iytint __P((struct iy_softc *));
 void iyxmit __P((struct iy_softc *));
-void iyget __P((struct iy_softc *, int, int));
+void iyget __P((struct iy_softc *, bus_chipset_tag_t, bus_io_handle_t, int));
 void iymbuffill __P((void *)); 
 void iymbufempty __P((void *));
 void iyprobemem __P((struct iy_softc *));
@@ -156,7 +155,8 @@ int in_iftint = 0;
 int iyprobe __P((struct device *, void *, void *));
 void iyattach __P((struct device *, struct device *, void *));
 
-static u_int16_t eepromread __P((int, int));
+static u_int16_t eepromread __P((bus_chipset_tag_t, bus_io_handle_t, 
+				 bus_io_size_t, int));
 
 struct cfattach iy_ca = {
 	sizeof(struct iy_softc), iyprobe, iyattach
@@ -178,61 +178,64 @@ iyprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 
 	u_int16_t eaddr[8];
-	int iobase;
+
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
 	int i;
 
 	u_int16_t checksum = 0;
 	u_int16_t eepromtmp;
 	u_int8_t c, d;
 
+	bc = ia->ia_bc;
 	
-	iobase = ia->ia_iobase;
-
-	if (iobase == -1)
-		return 0;
-
-	/* try to find the round robin sig: */
+	if (bus_io_map(bc, ia->ia_iobase, 16, &ioh))
+		goto out;
 
 	/* check here for addresses already given to other devices */
 
-	c = inb(iobase + ID_REG);
-	if (c & ID_REG_MASK != ID_REG_SIG)
-		return 0;
 
-	d = inb(iobase + ID_REG);
+	/* try to find the round robin sig: */
+
+	c = bus_io_read_1(bc, ioh, ID_REG);
+	if (c & ID_REG_MASK != ID_REG_SIG)
+		goto out;
+
+	d = bus_io_read_1(bc, ioh, ID_REG);
 	if (d & ID_REG_MASK != ID_REG_SIG)
-		return 0;
+		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x40)
-		return 0;
+		goto out;
 		
-	d = inb(iobase + ID_REG);
+	d = bus_io_read_1(bc, ioh, ID_REG);
 	if (d & ID_REG_MASK != ID_REG_SIG)
-		return 0;
+		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x80)
-		return 0;
+		goto out;
 		
-	d = inb(iobase + ID_REG);
+	d = bus_io_read_1(bc, ioh, ID_REG);
 	if (d & ID_REG_MASK != ID_REG_SIG)
-		return 0;
+		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0xC0)
-		return 0;
+		goto out;
 		
-	d = inb(iobase + ID_REG);
+	d = bus_io_read_1(bc, ioh, ID_REG);
 	if (d & ID_REG_MASK != ID_REG_SIG)
-		return 0;
+		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x00)
-		return 0;
+		goto out;
 		
 #ifdef IYDEBUG
 		printf("eepro_probe verified working ID reg.\n");
 #endif
 	
 	for (i=0; i<64; ++i) {
-		eepromtmp = eepromread(iobase, i);
+		eepromtmp = eepromread(bc, ioh, EEPROM_REG, i);
 		checksum += eepromtmp;
 		if (i<(sizeof(eaddr)/sizeof(*eaddr)))
 			eaddr[i] = eepromtmp;
@@ -242,9 +245,9 @@ iyprobe(parent, match, aux)
 		    checksum, EEPP_CHKSUM);
 		
 	
-	if ((eaddr[EEPPEther0] != eepromread(iobase, EEPPEther0a)) &&
-	    (eaddr[EEPPEther1] != eepromread(iobase, EEPPEther1a)) &&
-	    (eaddr[EEPPEther2] != eepromread(iobase, EEPPEther2a)))
+	if ((eaddr[EEPPEther0] != eepromread(bc, ioh, EEPROM_REG, EEPPEther0a)) &&
+	    (eaddr[EEPPEther1] != eepromread(bc, ioh, EEPROM_REG, EEPPEther1a)) &&
+	    (eaddr[EEPPEther2] != eepromread(bc, ioh, EEPROM_REG, EEPPEther2a)))
 		printf("EEPROM Ethernet address differs from copy\n");
 	
         sc->sc_arpcom.ac_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
@@ -258,21 +261,30 @@ iyprobe(parent, match, aux)
 		ia->ia_irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
 
 	if (ia->ia_irq >= sizeof(eepro_revirqmap))
-		return 0;
+		goto out;
 
 	if ((sc->mappedirq = eepro_revirqmap[ia->ia_irq]) == -1)
-		return 0;
+		goto out;
 
 	sc->hard_vers = eaddr[EEPW6] & EEPP_BoardRev;
 
 	/* now lets reset the chip */
 	
-	outb(iobase + COMMAND_REG, RESET_CMD);
+	bus_io_write_1(bc, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 	
-       	ia->ia_iobase = iobase;
+	/*
+	 * XXX Sould always unmap, but we can't yet.
+	 * XXX Need to squish "indirect" first.
+	 */
        	ia->ia_iosize = 16;
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
 	return 1;		/* found */
+out:
+	bus_io_unmap(bc, ioh, 16);
+	return 0;
 }
 
 void
@@ -283,13 +295,21 @@ iyattach(parent, self, aux)
 	struct iy_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
+	/*
+	 * XXX Should re-map io and mem, but can't
+	 * XXX until we squish "indirect" brokenness.
+	 */
+	bc = sc->sc_bc;			/* XXX */
+	ioh = sc->sc_ioh;		/* XXX */
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iystart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 					/* XXX todo: | IFF_MULTICAST */
-	sc->sc_iobase = ia->ia_iobase;
 
 	iyprobemem(sc);
 
@@ -315,19 +335,21 @@ void
 iystop(sc)
 struct iy_softc *sc;
 {
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 #ifdef IYDEBUG
 	u_int p, v;
 #endif
 
-	iobase = sc->sc_iobase;
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 	
-	outb(iobase + COMMAND_REG, RCV_DISABLE_CMD);
+	bus_io_write_1(bc, ioh, COMMAND_REG, RCV_DISABLE_CMD);
 
-	outb(iobase + INT_MASK_REG, ALL_INTS);
-	outb(iobase + STATUS_REG, ALL_INTS);
+	bus_io_write_1(bc, ioh, INT_MASK_REG, ALL_INTS);
+	bus_io_write_1(bc, ioh, STATUS_REG, ALL_INTS);
 
-	outb(iobase + COMMAND_REG, RESET_CMD);
+	bus_io_write_1(bc, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 #ifdef IYDEBUG 
 	printf("%s: dumping tx chain (st 0x%x end 0x%x last 0x%x)\n", 
@@ -336,14 +358,14 @@ struct iy_softc *sc;
 	if (!p)
 		p = sc->tx_start;
 	do {
-		outw(iobase + HOST_ADDR_REG, p);
-		v = inw(iobase + MEM_PORT_REG);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, p);
+		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		printf("0x%04x: %b ", p, v, "\020\006Ab\010Dn");
-		v = inw(iobase + MEM_PORT_REG);
+		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		printf("0x%b", v, "\020\6MAX_COL\7HRT_BEAT\010TX_DEF\011UND_RUN\012JERR\013LST_CRS\014LTCOL\016TX_OK\020COLL");
-		p = inw(iobase + MEM_PORT_REG);
+		p = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		printf(" 0x%04x", p);
-		v = inw(iobase + MEM_PORT_REG);
+		v = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		printf(" 0x%b\n", v, "\020\020Ch");
 		
 	} while (v & 0x8000);
@@ -373,30 +395,33 @@ struct iy_softc *sc;
 	int i;
 	unsigned temp;
 	struct ifnet *ifp;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 
 	ifp = &sc->sc_arpcom.ac_if;
 #ifdef IYDEBUG
 	printf("ifp is %p\n", ifp);
 #endif
-	iobase = sc->sc_iobase;
 
-	outb(iobase, BANK_SEL(2));
+	bus_io_write_1(bc, ioh, 0, BANK_SEL(2));
 
-	temp = inb(iobase + EEPROM_REG);
+	temp = bus_io_read_1(bc, ioh, EEPROM_REG);
 	if (temp & 0x10)
-		outb(iobase + EEPROM_REG, temp & ~0x10);
+		bus_io_write_1(bc, ioh, EEPROM_REG, temp & ~0x10);
 	
 	for (i=0; i<6; ++i) {
-		outb(iobase + I_ADD(i), sc->sc_arpcom.ac_enaddr[i]);
+		bus_io_write_1(bc, ioh, I_ADD(i), sc->sc_arpcom.ac_enaddr[i]);
 	}
 
-	temp = inb(iobase + REG1);
-	outb(iobase + REG1, temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP |
+	temp = bus_io_read_1(bc, ioh, REG1);
+	bus_io_write_1(bc, ioh, REG1, temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP |
 	    RCV_DISCARD_BAD);
 	
-	temp = inb(iobase + RECV_MODES_REG);
-	outb(iobase + RECV_MODES_REG, temp | MATCH_BRDCST);
+	temp = bus_io_read_1(bc, ioh, RECV_MODES_REG);
+	bus_io_write_1(bc, ioh, RECV_MODES_REG, temp | MATCH_BRDCST);
 #ifdef IYDEBUG
 	printf("%s: RECV_MODES were %b set to %b\n",
 	    sc->sc_dev.dv_xname, 
@@ -408,85 +433,86 @@ struct iy_softc *sc;
 
 	DELAY(500000); /* for the hardware to test for the connector */
 
-	temp = inb(iobase + MEDIA_SELECT);
+	temp = bus_io_read_1(bc, ioh, MEDIA_SELECT);
 #ifdef IYDEBUG
 	printf("%s: media select was 0x%b ", sc->sc_dev.dv_xname,
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
 	temp = (temp & TEST_MODE_MASK);
-
+ 
 	switch(ifp->if_flags & (IFF_LINK0 | IFF_LINK1)) {
 	case IFF_LINK0:
-	    temp &= ~ (BNC_BIT | TPE_BIT);
-	    break;
+		temp &= ~ (BNC_BIT | TPE_BIT);
+		break;
 
 	case IFF_LINK1:
-	    temp = temp & ~TPE_BIT | BNC_BIT;
-	    break;
-
+		temp = temp & ~TPE_BIT | BNC_BIT;
+		break;
+ 
 	case IFF_LINK0|IFF_LINK1:
-	    temp = temp & ~BNC_BIT | TPE_BIT;
-	    break;
+		temp = temp & ~BNC_BIT | TPE_BIT;
+		break;
 	default:
-	    /* nothing; leave as it is */
+		/* nothing; leave as it is */
 	}
 
-	outb(iobase + MEDIA_SELECT, temp);
+
+	bus_io_write_1(bc, ioh, MEDIA_SELECT, temp);
 #ifdef IYDEBUG
 	printf("changed to 0x%b\n", 
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
 
-	outb(iobase, BANK_SEL(1));
+	bus_io_write_1(bc, ioh, 0, BANK_SEL(1));
 
-	temp = inb(iobase + INT_NO_REG);
-	outb(iobase + INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
+	temp = bus_io_read_1(bc, ioh, INT_NO_REG);
+	bus_io_write_1(bc, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
 
 #ifdef IYDEBUG
 	printf("%s: int no was %b\n", sc->sc_dev.dv_xname,
 	    temp, "\020\4bad_irq\010flash/boot present");
-	temp = inb(iobase + INT_NO_REG);
+	temp = bus_io_read_1(bc, ioh, INT_NO_REG);
 	printf("%s: int no now 0x%02x\n", sc->sc_dev.dv_xname,
 	    temp, "\020\4BAD IRQ\010flash/boot present");
 #endif
 
 
-	outb(iobase + RCV_LOWER_LIMIT_REG, 0);
-	outb(iobase + RCV_UPPER_LIMIT_REG, (sc->rx_size - 2) >> 8);
-	outb(iobase + XMT_LOWER_LIMIT_REG, sc->rx_size >> 8);
-	outb(iobase + XMT_UPPER_LIMIT_REG, sc->sram >> 8);
+	bus_io_write_1(bc, ioh, RCV_LOWER_LIMIT_REG, 0);
+	bus_io_write_1(bc, ioh, RCV_UPPER_LIMIT_REG, (sc->rx_size - 2) >> 8);
+	bus_io_write_1(bc, ioh, XMT_LOWER_LIMIT_REG, sc->rx_size >> 8);
+	bus_io_write_1(bc, ioh, XMT_UPPER_LIMIT_REG, sc->sram >> 8);
 
-	temp = inb(iobase + REG1);
+	temp = bus_io_read_1(bc, ioh, REG1);
 #ifdef IYDEBUG
 	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
-	outb(iobase + REG1, temp | INT_ENABLE); /* XXX what about WORD_WIDTH? */
+	bus_io_write_1(bc, ioh, REG1, temp | INT_ENABLE); /* XXX what about WORD_WIDTH? */
 
 #ifdef IYDEBUG
-	temp = inb(iobase + REG1);
+	temp = bus_io_read_1(bc, ioh, REG1);
 	printf("%s: HW access is %b\n", sc->sc_dev.dv_xname, 
 	    temp, "\020\2WORD_WIDTH\010INT_ENABLE");
 #endif
 
-	outb(iobase, BANK_SEL(0));
+	bus_io_write_1(bc, ioh, 0, BANK_SEL(0));
 
-	outb(iobase + INT_MASK_REG, ALL_INTS & ~(RX_BIT|TX_BIT));
-	outb(iobase + STATUS_REG, ALL_INTS); /* clear ints */
+	bus_io_write_1(bc, ioh, INT_MASK_REG, ALL_INTS & ~(RX_BIT|TX_BIT));
+	bus_io_write_1(bc, ioh, STATUS_REG, ALL_INTS); /* clear ints */
 
-	outw(iobase + RCV_START_LOW, 0);
-	outw(iobase + RCV_STOP_LOW,  sc->rx_size - 2);
+	bus_io_write_2(bc, ioh, RCV_START_LOW, 0);
+	bus_io_write_2(bc, ioh, RCV_STOP_LOW,  sc->rx_size - 2);
 	sc->rx_start = 0;
 
-	outb(iobase, SEL_RESET_CMD);
+	bus_io_write_1(bc, ioh, 0, SEL_RESET_CMD);
 	DELAY(200);
 
-	outw(iobase + XMT_ADDR_REG, sc->rx_size);
+	bus_io_write_2(bc, ioh, XMT_ADDR_REG, sc->rx_size);
 
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
 
-	outb(iobase, RCV_ENABLE_CMD);
+	bus_io_write_1(bc, ioh, 0, RCV_ENABLE_CMD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -497,7 +523,7 @@ iystart(ifp)
 struct ifnet *ifp;
 {
 	struct iy_softc *sc;
-	int iobase;
+
 
 	struct mbuf *m0, *m;
 	u_int len, pad, last, end;
@@ -505,6 +531,8 @@ struct ifnet *ifp;
 	int avail;
 	caddr_t data;
 	u_int16_t resval, stat;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 
 #ifdef IYDEBUG
 	printf("iystart called\n");
@@ -513,7 +541,8 @@ struct ifnet *ifp;
                 return;
 
 	sc = ifp->if_softc;
-	iobase = sc->sc_iobase;
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 
 	while ((m0 = ifp->if_snd.ifq_head) != NULL) {
 #ifdef IYDEBUG
@@ -584,11 +613,11 @@ struct ifnet *ifp;
 				end -= sc->tx_size;
 		}
 
-		outw(iobase + HOST_ADDR_REG, last);
-		outw(iobase + MEM_PORT_REG, XMT_CMD);
-		outw(iobase + MEM_PORT_REG, 0);
-		outw(iobase + MEM_PORT_REG, 0);
-		outw(iobase + MEM_PORT_REG, len + pad);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, last);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, XMT_CMD);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, len + pad);
 
 		residual = resval = 0;
 
@@ -601,12 +630,13 @@ struct ifnet *ifp;
 				    sc->sc_dev.dv_xname);
 #endif
 				resval |= *data << 8;
-				outw(iobase + MEM_PORT_REG, resval);
+				bus_io_write_2(bc, ioh, MEM_PORT_REG, resval);
 				--llen;
 				++data;
 			}
 			if (llen > 1)
-				outsw(iobase + MEM_PORT_REG, data, llen>>1);
+				bus_io_write_multi_2(bc, ioh, MEM_PORT_REG, 
+				    data, llen>>1);
 			residual = llen & 1;
 			if (residual) {
 				resval = *(data + llen - 1);
@@ -620,11 +650,11 @@ struct ifnet *ifp;
 		}
 
 		if (residual)
-			outw(iobase + MEM_PORT_REG, resval);
+			bus_io_write_2(bc, ioh, MEM_PORT_REG, resval);
 
 		pad >>= 1;
 		while (pad-- > 0)
-			outw(iobase + MEM_PORT_REG, 0);
+			bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
 			
 #ifdef IYDEBUG
 		printf("%s: new last = 0x%x, end = 0x%x.\n",
@@ -634,34 +664,34 @@ struct ifnet *ifp;
 #endif
 
 		if (sc->tx_start != sc->tx_end) {
-			outw(iobase + HOST_ADDR_REG, sc->tx_last + XMT_COUNT);
-			stat = inw(iobase + MEM_PORT_REG);
+			bus_io_write_2(bc, ioh, HOST_ADDR_REG, sc->tx_last + XMT_COUNT);
+			stat = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 
-			outw(iobase + HOST_ADDR_REG, sc->tx_last + XMT_CHAIN);
-			outw(iobase + MEM_PORT_REG, last);
-			outw(iobase + MEM_PORT_REG, stat | CHAIN);
+			bus_io_write_2(bc, ioh, HOST_ADDR_REG, sc->tx_last + XMT_CHAIN);
+			bus_io_write_2(bc, ioh, MEM_PORT_REG, last);
+			bus_io_write_2(bc, ioh, MEM_PORT_REG, stat | CHAIN);
 #ifdef IYDEBUG
 			printf("%s: setting 0x%x to 0x%x\n",
 			    sc->sc_dev.dv_xname, sc->tx_last + XMT_COUNT, 
 			    stat | CHAIN);
 #endif
 		}
-		stat = inw(iobase + MEM_PORT_REG); /* dummy read */
+		stat = bus_io_read_2(bc, ioh, MEM_PORT_REG); /* dummy read */
 
 		/* XXX todo: enable ints here if disabled */
 		
 		++ifp->if_opackets;
 
 		if (sc->tx_start == sc->tx_end) {
-			outw(iobase + XMT_ADDR_REG, last);
-			outb(iobase, XMT_CMD);
+			bus_io_write_2(bc, ioh, XMT_ADDR_REG, last);
+			bus_io_write_1(bc, ioh, 0, XMT_CMD);
 			sc->tx_start = last;
 #ifdef IYDEBUG
 			printf("%s: writing 0x%x to XAR and giving XCMD\n",
 			    sc->sc_dev.dv_xname, last);
 #endif
 		} else {
-			outb(iobase, RESUME_XMT_CMD);
+			bus_io_write_1(bc, ioh, 0, RESUME_XMT_CMD);
 #ifdef IYDEBUG
 			printf("%s: giving RESUME_XCMD\n",
 			    sc->sc_dev.dv_xname);
@@ -674,67 +704,74 @@ struct ifnet *ifp;
 
 
 static __inline void
-eepromwritebit(eio, what) 
-	int eio, what;
+eepromwritebit(bc, ioh, ioff, what) 
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	bus_io_size_t ioff;
+	int what;
 {
-	outb(eio, what);
+	bus_io_write_1(bc, ioh, ioff, what);
 	delay(1);
-	outb(eio, what|EESK);
+	bus_io_write_1(bc, ioh, ioff, what|EESK);
 	delay(1);
-	outb(eio, what);
+	bus_io_write_1(bc, ioh, ioff, what);
 	delay(1);
 }
 
 static __inline int
-eepromreadbit(eio) 
-	int eio;
+eepromreadbit(bc, ioh, ioff) 
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	bus_io_size_t ioff;
 {
 	int b; 
 
-	outb(eio, EECS|EESK); 
+	bus_io_write_1(bc, ioh, ioff, EECS|EESK); 
 	delay(1);
-	b = inb(eio);
-	outb(eio, EECS);
+	b = bus_io_read_1(bc, ioh, ioff);
+	bus_io_write_1(bc, ioh, ioff, EECS);
 	delay(1);
 
 	return ((b & EEDO) != 0);
 }
 
 static u_int16_t
-eepromread(io, offset)
-	int io, offset;
+eepromread(bc, ioh, ioff, offset)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	bus_io_size_t ioff;
+	int offset;
 {
 	volatile int i;
 	volatile int j;
 	volatile u_int16_t readval;
-	int eio = io+EEPROM_REG;
 
-	outb(io, BANK_SEL(2));
+	bus_io_write_1(bc, ioh, 0, BANK_SEL(2));
 	delay(1);
-	outb(io, EECS);
+	bus_io_write_1(bc, ioh, ioff, EECS); /* XXXX??? */
 	delay(1);
 	
-	eepromwritebit(eio, EECS|EEDI);
-	eepromwritebit(eio, EECS|EEDI);
-	eepromwritebit(eio, EECS);
+	eepromwritebit(bc, ioh, ioff, EECS|EEDI);
+	eepromwritebit(bc, ioh, ioff, EECS|EEDI);
+	eepromwritebit(bc, ioh, ioff, EECS);
 	
 	for (j=5; j>=0; --j) {
 		if ((offset>>j) & 1) 
-			eepromwritebit(eio, EECS|EEDI);
+			eepromwritebit(bc, ioh, ioff, EECS|EEDI);
 		else
-			eepromwritebit(eio, EECS);
+			eepromwritebit(bc, ioh, ioff, EECS);
 	}
 
 	for (readval=0, i=0; i<16; ++i) {
 		readval<<=1;
-		readval |= eepromreadbit(eio);
+		readval |= eepromreadbit(bc, ioh, ioff);
 	}
 
-	outb(eio, 0|EESK);
+	bus_io_write_1(bc, ioh, ioff, 0|EESK);
 	delay(1);
-	outb(eio, 0);
+	bus_io_write_1(bc, ioh, ioff, 0);
 
-	outb(eio, BANK_SEL(0));
+	bus_io_write_1(bc, ioh, ioff, BANK_SEL(0));
 
 	return readval;
 }
@@ -762,17 +799,21 @@ iyintr(arg)
 	void *arg;
 {
 	struct iy_softc *sc = arg;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
 	register u_short status;
 
-	iobase = sc->sc_iobase;
-	status = inb(iobase + STATUS_REG);
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
+
+	status = bus_io_read_1(bc, ioh, STATUS_REG);
 #ifdef IYDEBUG
 	if (status & ALL_INTS) {
 		printf("%s: got interupt %b", sc->sc_dev.dv_xname, status,
 		    "\020\1RX_STP\2RX\3TX\4EXEC");
 		if (status & EXEC_INT)
-			printf(" event %b\n", inb(iobase),
+			printf(" event %b\n", bus_io_read_1(bc, ioh, 0),
 			    "\020\6ABORT");
 		else
 			printf("\n");
@@ -783,18 +824,20 @@ iyintr(arg)
 
 	if (status & RX_INT) {
 		iy_intr_rx(sc);
-		outb(iobase + STATUS_REG, RX_INT);
+		bus_io_write_1(bc, ioh, STATUS_REG, RX_INT);
 	} else if (status & TX_INT) {
 		iy_intr_tx(sc);
-		outb(iobase + STATUS_REG, TX_INT);
+		bus_io_write_1(bc, ioh, STATUS_REG, TX_INT);
 	}
 	return 1;
 }
 
 void
-iyget(sc, iobase, rxlen)
-struct iy_softc *sc;
-int iobase, rxlen;
+iyget(sc, bc, ioh, rxlen)
+	struct iy_softc *sc;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	int rxlen;
 {
 	struct mbuf *m, *top, **mp;
 	struct ether_header *eh;
@@ -845,12 +888,15 @@ int iobase, rxlen;
 		len = min(rxlen, len);
 		if (len > 1) {
 			len &= ~1;
-			insw(iobase + MEM_PORT_REG, mtod(m, caddr_t), len/2);
+
+			bus_io_read_multi_2(bc, ioh, MEM_PORT_REG, 
+			    mtod(m, caddr_t), len/2);
 		} else {
 #ifdef IYDEBUG
 			printf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
 #endif
-			*(mtod(m, caddr_t)) = inw(iobase + MEM_PORT_REG);
+			*(mtod(m, caddr_t)) = bus_io_read_2(bc, ioh, 
+			    MEM_PORT_REG);
 		}
 		m->m_len = len;
 		rxlen -= len;
@@ -887,21 +933,24 @@ iy_intr_rx(sc)
 struct iy_softc *sc;
 {
 	struct ifnet *ifp;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
 	u_int rxadrs, rxevnt, rxstatus, rxnext, rxlen;
 
-	iobase = sc->sc_iobase;
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 	ifp = &sc->sc_arpcom.ac_if;
 
 	rxadrs = sc->rx_start;
-	outw(iobase + HOST_ADDR_REG, rxadrs);
-	rxevnt = inw(iobase + MEM_PORT_REG);
+	bus_io_write_2(bc, ioh, HOST_ADDR_REG, rxadrs);
+	rxevnt = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 	rxnext = 0;
 	
 	while (rxevnt == RCV_DONE) {
-		rxstatus = inw(iobase + MEM_PORT_REG);
-		rxnext = inw(iobase + MEM_PORT_REG);
-		rxlen = inw(iobase + MEM_PORT_REG);
+		rxstatus = bus_io_read_2(bc, ioh, MEM_PORT_REG);
+		rxnext = bus_io_read_2(bc, ioh, MEM_PORT_REG);
+		rxlen = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 #ifdef IYDEBUG
 		printf("%s: pck at 0x%04x stat %b next 0x%x len 0x%x\n",
 		    sc->sc_dev.dv_xname, rxadrs, rxstatus,
@@ -909,15 +958,15 @@ struct iy_softc *sc;
 		    "\014CRCERR\015LENERR\016RCVOK\020TYP",
 		    rxnext, rxlen);
 #endif
-		iyget(sc, iobase, rxlen);
+		iyget(sc, bc, ioh, rxlen);
 
 		/* move stop address */
-		outw(iobase + RCV_STOP_LOW,
+		bus_io_write_2(bc, ioh, RCV_STOP_LOW,
 			    rxnext == 0 ? sc->rx_size - 2 : rxnext - 2);
 
-		outw(iobase + HOST_ADDR_REG, rxnext);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, rxnext);
 		rxadrs = rxnext;
-		rxevnt = inw(iobase + MEM_PORT_REG);
+		rxevnt = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 	}
 	sc->rx_start = rxnext;
 }
@@ -926,22 +975,24 @@ void
 iy_intr_tx(sc)
 struct iy_softc *sc;
 {
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct ifnet *ifp;
 	u_int txstatus, txstat2, txlen, txnext;
 
 	ifp = &sc->sc_arpcom.ac_if;
-	iobase = sc->sc_iobase;
-	
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
+
 	while (sc->tx_start != sc->tx_end) {
-		outw(iobase + HOST_ADDR_REG, sc->tx_start);
-		txstatus = inw(iobase + MEM_PORT_REG);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, sc->tx_start);
+		txstatus = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 		if ((txstatus & (TX_DONE|CMD_MASK)) != (TX_DONE|XMT_CMD))
 			break;
 
-		txstat2 = inw(iobase + MEM_PORT_REG);
-		txnext = inw(iobase + MEM_PORT_REG);
-		txlen = inw(iobase + MEM_PORT_REG);
+		txstat2 = bus_io_read_2(bc, ioh, MEM_PORT_REG);
+		txnext = bus_io_read_2(bc, ioh, MEM_PORT_REG);
+		txlen = bus_io_read_2(bc, ioh, MEM_PORT_REG);
 #ifdef IYDEBUG
 		printf("txstat 0x%x stat2 0x%b next 0x%x len 0x%x\n",
 		    txstatus, txstat2, "\020\6MAX_COL\7HRT_BEAT\010TX_DEF"
@@ -1299,19 +1350,21 @@ void
 iyprobemem(sc)
 	struct iy_softc *sc;
 {
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	int testing;
 
-	iobase = sc->sc_iobase;
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 
-	outw(iobase + HOST_ADDR_REG, 4096-2);
-	outw(iobase + MEM_PORT_REG, 0);
+	bus_io_write_2(bc, ioh, HOST_ADDR_REG, 4096-2);
+	bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
 
 	for (testing=65536; testing >= 4096; testing >>= 1) {
-		outw(iobase + HOST_ADDR_REG, testing-2);
-		outw(iobase + MEM_PORT_REG, 0xdead);
-		outw(iobase + HOST_ADDR_REG, testing-2);
-		if (inw(iobase + MEM_PORT_REG) != 0xdead) {
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, 0xdead);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
+		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) != 0xdead) {
 #ifdef IYMEMDEBUG
 			printf("%s: Didn't keep 0xdead at 0x%x\n",
 			    sc->sc_dev.dv_xname, testing-2);
@@ -1319,10 +1372,10 @@ iyprobemem(sc)
 			continue;
 		}
 
-		outw(iobase + HOST_ADDR_REG, testing-2);
-		outw(iobase + MEM_PORT_REG, 0xbeef);
-		outw(iobase + HOST_ADDR_REG, testing-2);
-		if (inw(iobase + MEM_PORT_REG) != 0xbeef) {
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, 0xbeef);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing-2);
+		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) != 0xbeef) {
 #ifdef IYMEMDEBUG
 			printf("%s: Didn't keep 0xbeef at 0x%x\n",
 			    sc->sc_dev.dv_xname, testing-2);
@@ -1330,12 +1383,12 @@ iyprobemem(sc)
 			continue;
 		}
 
-		outw(iobase + HOST_ADDR_REG, 0);
-		outw(iobase + MEM_PORT_REG, 0);
-		outw(iobase + HOST_ADDR_REG, testing >> 1);
-		outw(iobase + MEM_PORT_REG, testing >> 1);
-		outw(iobase + HOST_ADDR_REG, 0);
-		if (inw(iobase + MEM_PORT_REG) == (testing >> 1)) {
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, 0);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, 0);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, testing >> 1);
+		bus_io_write_2(bc, ioh, MEM_PORT_REG, testing >> 1);
+		bus_io_write_2(bc, ioh, HOST_ADDR_REG, 0);
+		if (bus_io_read_2(bc, ioh, MEM_PORT_REG) == (testing >> 1)) {
 #ifdef IYMEMDEBUG
 			printf("%s: 0x%x alias of 0x0\n",
 			    sc->sc_dev.dv_xname, testing >> 1);
