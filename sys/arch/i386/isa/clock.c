@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.10 1993/07/03 12:32:38 cgd Exp $
+ *	$Id: clock.c,v 1.11 1993/07/06 06:06:28 deraadt Exp $
  */
 
 /*
@@ -49,6 +49,8 @@
 #include "i386/isa/isa.h"
 #include "i386/isa/rtc.h"
 #include "i386/isa/timerreg.h"
+
+void spinwait __P((int));
 
 /* XXX all timezone stuff should be moved out of the kernel */
 #if 1

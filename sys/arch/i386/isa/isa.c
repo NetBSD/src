@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.23 1993/07/06 00:31:52 cgd Exp $
+ *	$Id: isa.c,v 1.24 1993/07/06 06:06:31 deraadt Exp $
  */
 
 /*
@@ -55,6 +55,7 @@
 #include "uio.h"
 #include "syslog.h"
 #include "malloc.h"
+#include "rlist.h"
 #include "machine/segments.h"
 #include "machine/cpufunc.h"
 #include "vm/vm.h"
@@ -467,7 +468,7 @@ isa_allocphysmem(caddr_t va, unsigned length, void (*func)()) {
 	isaphysmemunblock = func;
 	while (isaphysmemflag & B_BUSY) {
 		isaphysmemflag |= B_WANTED;
-		sleep(&isaphysmemflag, PRIBIO);
+		sleep((caddr_t)&isaphysmemflag, PRIBIO);
 	}
 	isaphysmemflag |= B_BUSY;
 
@@ -484,7 +485,7 @@ isa_freephysmem(caddr_t va, unsigned length) {
 	isaphysmemflag &= ~B_BUSY;
 	if (isaphysmemflag & B_WANTED) {
 		isaphysmemflag &= B_WANTED;
-		wakeup(&isaphysmemflag);
+		wakeup((caddr_t)&isaphysmemflag);
 		if (isaphysmemunblock)
 			(*isaphysmemunblock)();
 	}
@@ -634,7 +635,7 @@ sysbeepstop(int f)
 	outb(0x61, inb(0x61) & 0xFC);
 	enable_intr();
 	if (f)
-		timeout(sysbeepstop, 0, f);
+		timeout((timeout_t)sysbeepstop, (caddr_t)0, f);
 	else
 		beeping = 0;
 
@@ -648,8 +649,8 @@ sysbeep(int pitch, int period)
 	static int last_pitch, last_period;
 
 	if (beeping) {
-		untimeout(sysbeepstop, last_period/2);
-		untimeout(sysbeepstop, 0);
+		untimeout((timeout_t)sysbeepstop, (caddr_t)(last_period/2));
+		untimeout((timeout_t)sysbeepstop, (caddr_t)0);
 	}
 	if (!beeping || last_pitch != pitch) {
 		/*
@@ -664,7 +665,7 @@ sysbeep(int pitch, int period)
 	}
 	last_pitch = pitch;
 	beeping = last_period = period;
-	timeout(sysbeepstop, period/2, period);
+	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
 
 	splx(s);
 }
