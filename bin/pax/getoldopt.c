@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: getoldopt.c,v 1.1 1994/06/14 01:16:07 jtc Exp $";
+static char *rcsid = "$Id: getoldopt.c,v 1.2 1994/12/04 07:11:53 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 int
 getoldopt(argc, argv, optstring)

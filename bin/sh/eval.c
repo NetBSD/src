@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.15 1994/08/24 05:48:26 mycroft Exp $";
+static char *rcsid = "$Id: eval.c,v 1.16 1994/12/04 07:12:10 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,7 @@ static char *rcsid = "$Id: eval.c,v 1.15 1994/08/24 05:48:26 mycroft Exp $";
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
+#include "extern.h"
 #include <signal.h>
 #include <unistd.h>
 
@@ -136,7 +137,9 @@ SHELLPROC {
  * The eval commmand.
  */
 
+int
 evalcmd(argc, argv)  
+	int argc;
 	char **argv; 
 {
         char *p;
@@ -370,7 +373,8 @@ out:
 STATIC void
 evalcase(n, flags)
 	union node *n;
-	{
+	int flags;
+{
 	union node *cp;
 	union node *patp;
 	struct arglist arglist;
@@ -402,7 +406,8 @@ out:
 STATIC void
 evalsubshell(n, flags)
 	union node *n;
-	{
+	int flags;
+{
 	struct job *jp;
 	int backgnd = (n->type == NBACKGND);
 
@@ -581,8 +586,9 @@ out:
 STATIC void
 evalcommand(cmd, flags, backcmd)
 	union node *cmd;
+	int flags;
 	struct backcmd *backcmd;
-	{
+{
 	struct stackmark smark;
 	union node *argp;
 	struct arglist arglist;
@@ -883,7 +889,11 @@ prehash(n)
  * specified variables.
  */
 
-bltincmd(argc, argv)  char **argv; {
+int
+bltincmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	listsetvar(cmdenviron);
 	return 0;
 }
@@ -900,7 +910,11 @@ bltincmd(argc, argv)  char **argv; {
  * in the standard shell so we don't make it one here.
  */
 
-breakcmd(argc, argv)  char **argv; {
+int
+breakcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	int n;
 
 	n = 1;
@@ -920,7 +934,11 @@ breakcmd(argc, argv)  char **argv; {
  * The return command.
  */
 
-returncmd(argc, argv)  char **argv; {
+int
+returncmd(argc, argv) 
+	int argc;
+	char **argv; 
+{
 	int ret;
 
 	ret = exitstatus;
@@ -934,17 +952,29 @@ returncmd(argc, argv)  char **argv; {
 }
 
 
-falsecmd(argc, argv)  char **argv; {
+int
+falsecmd(argc, argv) 
+	int argc;
+	char **argv; 
+{
 	return 1;
 }
 
 
-truecmd(argc, argv)  char **argv; {
+int
+truecmd(argc, argv)  
+	int argc;
+	char **argv; 
+{
 	return 0;
 }
 
 
-execcmd(argc, argv)  char **argv; {
+int
+execcmd(argc, argv) 
+	int argc;
+	char **argv; 
+{
 	if (argc > 1) {
 		iflag = 0;		/* exit on error */
 		mflag = 0;

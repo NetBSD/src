@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)options.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: options.c,v 1.8 1994/06/11 16:12:23 mycroft Exp $";
+static char *rcsid = "$Id: options.c,v 1.9 1994/12/04 07:12:26 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: options.c,v 1.8 1994/06/11 16:12:23 mycroft Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "extern.h"
 #include <unistd.h>
 
 char *arg0;			/* value of $0 */
@@ -116,7 +117,9 @@ procargs(argc, argv)
 }
 
 
-optschanged() {
+void
+optschanged()
+{
 	setinteractive(iflag);
 #ifndef NO_HISTORY
 	histedit();

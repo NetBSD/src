@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)alias.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: alias.c,v 1.3 1994/09/23 11:28:39 mycroft Exp $";
+static char *rcsid = "$Id: alias.c,v 1.4 1994/12/04 07:12:06 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -55,9 +55,10 @@ struct alias *atab[ATABSIZE];
 STATIC struct alias **hashalias __P((char *));
 
 STATIC
+void
 setalias(name, val)
 	char *name, *val;
-	{
+{
 	struct alias *ap, **app;
 
 	app = hashalias(name);
@@ -172,7 +173,8 @@ rmaliases() {
 struct alias *
 lookupalias(name, check)
 	char *name;
-	{
+	int check;
+{
 	struct alias *ap = *hashalias(name);
 
 	for (; ap; ap = ap->next) {
@@ -189,9 +191,11 @@ lookupalias(name, check)
 /*
  * TODO - sort output
  */
+int
 aliascmd(argc, argv)
+	int argc;
 	char **argv;
-	{
+{
 	char *n, *v;
 	int ret = 0;
 	struct alias *ap;
@@ -222,9 +226,11 @@ aliascmd(argc, argv)
 	return (ret);
 }
 
+int
 unaliascmd(argc, argv)
+	int argc;
 	char **argv;
-	{
+{
 	int i;
 	
 	while ((i = nextopt("a")) != '\0') {

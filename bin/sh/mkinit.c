@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkinit.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mkinit.c,v 1.9 1994/06/15 04:13:46 mycroft Exp $";
+static char *rcsid = "$Id: mkinit.c,v 1.10 1994/12/04 07:12:20 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -151,20 +151,23 @@ int amiddecls;				/* for formatting */
 
 void readfile(), doevent(), doinclude(), dodecl(), output();
 void addstr(), addchar(), writetext();
+FILE *ckfopen();
+void *ckmalloc __P((int));
+void error();
+int file_changed();
+int match __P((char *, char *));
+int gooddefine __P((char *));
+char *savestr();
+int touch __P((char *));
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
-FILE *ckfopen();
-char *savestr();
-void *ckmalloc __P((int));
-void error();
-
+int
 main(argc, argv)
+	int argc;
 	char **argv;
-	{
+{
 	char **ap;
-	int fd;
-	char c;
 
 	if (argc < 2)
 		error("Usage:  mkinit command file...");
@@ -185,6 +188,8 @@ main(argc, argv)
 	printf("%s\n", argv[1]);
 	execl("/bin/sh", "sh", "-c", argv[1], (char *)0);
 	error("Can't exec shell");
+
+	exit(1);
 }
 
 
@@ -227,7 +232,7 @@ int
 match(name, line)
 	char *name;
 	char *line;
-	{
+{
 	register char *p, *q;
 
 	p = name, q = line;
@@ -244,7 +249,7 @@ match(name, line)
 int
 gooddefine(line)
 	char *line;
-	{
+{
 	register char *p;
 
 	if (! match("#define", line))
@@ -406,7 +411,8 @@ output() {
  */
 
 int
-file_changed() {
+file_changed() 
+{
 	register FILE *f1, *f2;
 	register int c;
 
@@ -428,7 +434,7 @@ file_changed() {
 int
 touch(file)
 	char *file;
-	{
+{
 	int fd;
 	char c;
 
@@ -468,8 +474,9 @@ addstr(s, text)
 
 void
 addchar(c, text)
+	int c;
 	register struct text *text;
-	{
+{
 	struct block *bp;
 
 	if (--text->nleft < 0) {
@@ -517,7 +524,9 @@ ckfopen(file, mode)
 }
 
 void *
-ckmalloc(nbytes) {
+ckmalloc(nbytes) 
+	int nbytes;
+{
 	register char *p;
 	char *malloc();
 

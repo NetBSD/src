@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)func.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: func.c,v 1.7 1994/09/21 00:10:54 mycroft Exp $";
+static char *rcsid = "$Id: func.c,v 1.8 1994/12/04 07:11:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1137,11 +1137,11 @@ static struct limits {
     { -1,		NULL,		0,	NULL }
 };
 
-static struct limits *findlim();
-static RLIM_TYPE getval();
-static void limtail();
-static void plim();
-static int setlim();
+static struct limits *findlim __P((Char *));
+static RLIM_TYPE getval __P((struct limits *, Char **));
+static void limtail __P((Char *, char *));
+static void plim __P((struct limits *, Char));
+static int setlim __P((struct limits *, Char, RLIM_TYPE));
 
 static struct limits *
 findlim(cp)

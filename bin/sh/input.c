@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)input.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: input.c,v 1.10 1994/06/11 16:11:59 mycroft Exp $";
+static char *rcsid = "$Id: input.c,v 1.11 1994/12/04 07:12:14 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char *rcsid = "$Id: input.c,v 1.10 1994/06/11 16:11:59 mycroft Exp $";
 #include "error.h"
 #include "alias.h"
 #include "parser.h"
+#include "extern.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
@@ -109,6 +110,8 @@ STATIC void pushfile(void);
 STATIC void pushfile();
 #endif
 
+void popstring();
+
 
 
 #ifdef mkinit
@@ -140,7 +143,8 @@ SHELLPROC {
 char *
 pfgets(line, len)
 	char *line;
-	{
+	int len;
+{
 	register char *p = line;
 	int nleft = len;
 	int c;
@@ -336,6 +340,7 @@ pushstring(s, len, ap)
 	INTON;
 }
 
+void
 popstring()
 {
 	struct strpush *sp = parsefile->strpush;
@@ -360,7 +365,8 @@ popstring()
 void
 setinputfile(fname, push)
 	char *fname;
-	{
+	int push;
+{
 	int fd;
 	int fd2;
 
@@ -385,7 +391,10 @@ setinputfile(fname, push)
  */
 
 void
-setinputfd(fd, push) {
+setinputfd(fd, push)
+	int fd;
+	int push;
+{
 	if (push) {
 		pushfile();
 		parsefile->buf = ckmalloc(BUFSIZ);
@@ -407,7 +416,8 @@ setinputfd(fd, push) {
 void
 setinputstring(string, push)
 	char *string;
-	{
+	int push;
+{
 	INTOFF;
 	if (push)
 		pushfile();

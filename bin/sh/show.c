@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)show.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: show.c,v 1.6 1994/06/11 16:12:36 mycroft Exp $";
+static char *rcsid = "$Id: show.c,v 1.7 1994/12/04 07:12:27 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: show.c,v 1.6 1994/06/11 16:12:36 mycroft Exp $";
 #include "parser.h"
 #include "nodes.h"
 #include "mystring.h"
+#include "extern.h"
 
 
 #ifdef DEBUG
@@ -271,9 +272,10 @@ trace(fmt, a1, a2, a3, a4, a5, a6, a7, a8)
 }
 
 
+void
 trputs(s)
 	char *s;
-	{
+{
 #ifdef DEBUG
 	if (tracefile == NULL)
 		return;
@@ -326,9 +328,10 @@ backslash:	  putc('\\', tracefile);
 }
 
 
+void
 trargs(ap)
 	char **ap;
-	{
+{
 #ifdef DEBUG
 	if (tracefile == NULL)
 		return;
@@ -344,6 +347,7 @@ trargs(ap)
 }
 
 
+void
 opentrace() {
 	char s[100];
 	char *p;

@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mknodes.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mknodes.c,v 1.7 1994/06/11 16:12:14 mycroft Exp $";
+static char *rcsid = "$Id: mknodes.c,v 1.8 1994/12/04 07:12:22 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -87,21 +87,29 @@ struct str *nodestr[MAXTYPES];	/* type of structure used by the node */
 int nstr;			/* number of structures */
 struct str str[MAXTYPES];	/* the structures */
 struct str *curstr;		/* current structure */
-
-
 FILE *infp = stdin;
 char line[1024];
 int linno;
 char *linep;
 
-
+void indent __P((int, FILE *));
+int nextfield __P((char *));
+void outfunc __P((FILE *, int));
+void output __P((char *));
+void outsizes __P((FILE *));
+void parsefield();
+void parsenode();
+int readline();
 char *savestr();
+void skipbl();
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
 
+int
 main(argc, argv)
+	int argc;
 	char **argv;
-	{
+{
 	if (argc != 3)
 		error("usage: mknodes file\n");
 	if ((infp = fopen(argv[1], "r")) == NULL)
@@ -118,6 +126,7 @@ main(argc, argv)
 
 
 
+void
 parsenode() {
 	char name[BUFLEN];
 	char tag[BUFLEN];
@@ -146,6 +155,7 @@ parsenode() {
 }
 
 
+void
 parsefield() {
 	char name[BUFLEN];
 	char type[BUFLEN];
@@ -197,9 +207,10 @@ char writer[] = "\
  */\n\
 \n";
 
+void
 output(file)
 	char *file;
-	{
+{
 	FILE *hfile;
 	FILE *cfile;
 	FILE *patfile;
@@ -259,9 +270,10 @@ output(file)
 
 
 
+void
 outsizes(cfile)
 	FILE *cfile;
-	{
+{
 	int i;
 
 	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
@@ -272,9 +284,11 @@ outsizes(cfile)
 }
 
 
+void
 outfunc(cfile, calcsize)
 	FILE *cfile;
-	{
+	int calcsize;
+{
 	struct str *sp;
 	struct field *fp;
 	int i;
@@ -351,9 +365,11 @@ outfunc(cfile, calcsize)
 }
 
 
+void
 indent(amount, fp)
+	int amount;
 	FILE *fp;
-	{
+{
 	while (amount >= 8) {
 		putc('\t', fp);
 		amount -= 8;
@@ -367,7 +383,7 @@ indent(amount, fp)
 int
 nextfield(buf)
 	char *buf;
-	{
+{
 	register char *p, *q;
 
 	p = linep;
@@ -382,6 +398,7 @@ nextfield(buf)
 }
 
 
+void
 skipbl() {
 	while (*linep == ' ' || *linep == '\t')
 		linep++;
@@ -409,7 +426,7 @@ readline() {
 
 error(msg, a1, a2, a3, a4, a5, a6)
 	char *msg;
-	{
+{
 	fprintf(stderr, "line %d: ", linno);
 	fprintf(stderr, msg, a1, a2, a3, a4, a5, a6);
 	putc('\n', stderr);

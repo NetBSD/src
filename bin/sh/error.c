@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)error.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: error.c,v 1.8 1994/06/11 16:11:47 mycroft Exp $";
+static char *rcsid = "$Id: error.c,v 1.9 1994/12/04 07:12:08 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -76,7 +76,9 @@ char *commandname;
  */
 
 void
-exraise(e) {
+exraise(e) 
+	int e;
+{
 	if (handler == NULL)
 		abort();
 	exception = e;

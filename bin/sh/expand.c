@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.11 1994/08/29 01:54:39 mycroft Exp $";
+static char *rcsid = "$Id: expand.c,v 1.12 1994/12/04 07:12:11 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -146,7 +146,8 @@ void
 expandarg(arg, arglist, flag)
 	union node *arg;
 	struct arglist *arglist;
-	{
+	int flag;
+{
 	struct strlist *sp;
 	char *p;
 
@@ -203,7 +204,8 @@ expandarg(arg, arglist, flag)
 STATIC void
 argstr(p, flag)
 	register char *p;
-	{
+	int flag;
+{
 	register char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
@@ -259,7 +261,8 @@ breakloop:;
 STATIC char *
 exptilde(p, flag)
 	char *p;
-	{
+	int flag;
+{
 	char c, *startp = p;
 	struct passwd *pw;
 	char *home;
@@ -309,7 +312,8 @@ lose:
  */
 void
 expari(flag)
-	{
+	int flag;
+{
 	char *p, *start;
 	int result;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
@@ -354,7 +358,9 @@ expari(flag)
 STATIC void
 expbackq(cmd, quoted, flag)
 	union node *cmd;
-	{
+	int quoted;
+	int flag;
+{
 	struct backcmd in;
 	int i;
 	char buf[128];
@@ -431,7 +437,8 @@ expbackq(cmd, quoted, flag)
 STATIC char *
 evalvar(p, flag)
 	char *p;
-	{
+	int flag;
+{
 	int subtype;
 	int varflags;
 	char *var;
@@ -566,7 +573,9 @@ varisset(name)
 STATIC void
 varvalue(name, quoted, allow_split)
 	char name;
-	{
+	int quoted;
+	int allow_split;
+{
 	int num;
 	char temp[32];
 	char *p;
@@ -654,7 +663,11 @@ allargs:
  */
 
 STATIC void
-recordregion(start, end, nulonly) {
+recordregion(start, end, nulonly) 
+	int start;
+	int end;
+	int nulonly;
+{
 	register struct ifsregion *ifsp;
 
 	if (ifslastp == NULL) {
@@ -752,7 +765,8 @@ char *expdir;
 STATIC void
 expandmeta(str, flag)
 	struct strlist *str;
-	{
+	int flag;
+{
 	char *p;
 	struct strlist **savelastp;
 	struct strlist *sp;
@@ -959,7 +973,8 @@ expsort(str)
 STATIC struct strlist *
 msort(list, len)
 	struct strlist *list;
-	{
+	int len;
+{
 	struct strlist *p, *q;
 	struct strlist **lpp;
 	int half;

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mail.c,v 1.6 1994/06/11 16:12:04 mycroft Exp $";
+static char *rcsid = "$Id: mail.c,v 1.7 1994/12/04 07:12:17 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -68,7 +68,9 @@ STATIC time_t mailtime[MAXMBOXES];	/* times of mailboxes */
  */
 
 void
-chkmail(silent) {
+chkmail(silent)
+	int silent;
+{
 	register int i;
 	char *mpath;
 	char *p;
