@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.3 1997/10/18 12:12:47 lukem Exp $	*/
+/*	$NetBSD: banner.c,v 1.3.10.1 2000/06/23 16:30:13 minoura Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.3 1997/10/18 12:12:47 lukem Exp $");
+__RCSID("$NetBSD: banner.c,v 1.3.10.1 2000/06/23 16:30:13 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,14 @@ __RCSID("$NetBSD: banner.c,v 1.3 1997/10/18 12:12:47 lukem Exp $");
 #include "banner.h"
 
 static long PW = LINELEN;
+/*
+ * <sjg> lpd makes chars out of the letter in question.
+ * the results are somewhat mixed.  Sticking to '#' as
+ * banner(1) does is more consistent.
+ */
+static int ForeGnd = '#';
+static int BackGnd = ' ';
+static int Drop = 0;				/* 3 for the LPD font */
 
 static	int	dropit __P((int));
 	int	main __P((int, char **));
@@ -89,18 +97,12 @@ scnline(key, p, c)
 {
 	int scnwidth;
 
-	/*
-	 * <sjg> lpd makes chars out of the letter in question.
-	 * the results are somewhat mixed.  Sticking to '#' as
-	 * banner(1) does is more consistent.
-	 */
-#ifndef NOHASH_ONLY
-	c = '#';
-#endif
+	if (ForeGnd)
+	    c = ForeGnd;
 	
 	for (scnwidth = WIDTH; --scnwidth;) {
 		key <<= 1;
-		*p++ = key & 0200 ? c : BACKGND;
+		*p++ = key & 0200 ? c : BackGnd;
 	}
 	return (p);
 }
@@ -122,7 +124,7 @@ dropit(c)
 	case TRC('p'):
 	case TRC('q'):
 	case TRC('y'):
-		return (DROP);
+		return (Drop);
 
 	default:
 		return (0);
@@ -139,29 +141,34 @@ scan_out(scfd, scsp, dlm)
 	int nchrs, j;
 	char outbuf[LINELEN+1], *sp, c, cc;
 	int d, scnhgt;
-	extern char scnkey[][HEIGHT];	/* in lpdchar.c */
 
-	for (scnhgt = 0; scnhgt++ < HEIGHT+DROP; ) {
+	for (scnhgt = 0; scnhgt++ < HEIGHT+Drop; ) {
 		strp = &outbuf[0];
+		if (BackGnd != ' ')
+		    *strp++ = BackGnd;
 		sp = scsp;
 		for (nchrs = 0; ; ) {
 			d = dropit(c = TRC(cc = *sp++));
-			if ((!d && scnhgt > HEIGHT) || (scnhgt <= DROP && d))
+			if ((!d && scnhgt > HEIGHT) || (scnhgt <= Drop && d))
 				for (j = WIDTH; --j;)
-					*strp++ = BACKGND;
+					*strp++ = BackGnd;
+			else if (Drop == 0)
+				strp = scnline(
+				    scnkey_def[(int)c][scnhgt-1-d], strp, cc);
 			else
 				strp = scnline(
-				    scnkey[(int)c][scnhgt-1-d], strp, cc);
+				    scnkey_lpd[(int)c][scnhgt-1-d], strp, cc);
 			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
 				break;
-			*strp++ = BACKGND;
-#ifdef LPD_CHSET				/* <sjg> */
-			*strp++ = BACKGND;
-#endif
+			*strp++ = BackGnd;
 		}
-		while (*--strp == BACKGND && strp >= outbuf)
+		if (BackGnd != ' ')
+		    *strp++ = BackGnd;
+		else {
+		    while (*--strp == ' ' && strp >= outbuf)
 			;
-		strp++;
+		    strp++;
+		}
 		*strp++ = '\n';	
 		(void) write(scfd, outbuf, strp-outbuf);
 	}
@@ -175,10 +182,28 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char word[10+1];			/* strings limited to 10 chars */
-	
-	while (*++argv) {
-		(void)strncpy(word, *argv, sizeof (word) - 1);
+	char word[10+1];		/* strings limited to 10 chars */
+	int c;
+
+	while ((c = getopt(argc, argv, "b:f:l")) != EOF) {
+	    switch (c) {
+	    case 'f':
+		if (*optarg == '-')
+		    ForeGnd = 0;
+		else
+		    ForeGnd = *optarg;
+		break;
+	    case 'b':
+		BackGnd = *optarg;
+		break;
+	    case 'l':
+		Drop = 3;			/* for LPD font */
+		break;
+	    }
+	}
+
+	for (; optind < argc; ++optind) {
+		(void)strncpy(word, argv[optind], sizeof (word) - 1);
 		word[sizeof (word) - 1] = '\0';
 		scan_out(1, word, '\0');
 	}

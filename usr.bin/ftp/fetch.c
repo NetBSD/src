@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.112.2.1 2000/06/23 16:30:22 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -6,6 +6,9 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Luke Mewburn.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Scott Aaron Bamford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.112.2.1 2000/06/23 16:30:22 minoura Exp $");
 #endif /* not lint */
 
 /*
@@ -733,6 +736,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 		s = -1;
 		for (res = res0; res; res = res->ai_next) {
+			/*
+			 * see comment in hookup()
+			 */
+			ai_unmapped(res);
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
 					hbuf, sizeof(hbuf), NULL, 0,
 					NI_NUMERICHOST) != 0)
@@ -1501,12 +1508,12 @@ fetch_ftp(const char *url)
 		xargc = 3;
 	}
 	oautologin = autologin;
-	if (user != NULL)
-		autologin = 0;
+		/* don't autologin in setpeer(), use ftp_login() below */
+	autologin = 0;
 	setpeer(xargc, xargv);
 	autologin = oautologin;
-	if ((connected == 0) || ((connected == 1)
-	    && !ftp_login(host, user, pass))) {
+	if ((connected == 0) ||
+	    (connected == 1 && !ftp_login(host, user, pass))) {
 		warnx("Can't connect or login to host `%s'", host);
 		goto cleanup_fetch_ftp;
 	}
@@ -1715,8 +1722,14 @@ go_fetch(const char *url)
 "NetBSD is a freely available and redistributable UNIX-like operating system.\n"
 "For more information, see http://www.netbsd.org/index.html\n", ttyout);
 		} else if (strcasecmp(url, "version") == 0) {
-			fprintf(ttyout, "Version: %s %s\n",
-			    FTP_PRODUCT, FTP_VERSION);
+			fprintf(ttyout, "Version: %s %s%s\n",
+			    FTP_PRODUCT, FTP_VERSION,
+#ifdef INET6
+			    ""
+#else
+			    " (-IPv6)"
+#endif
+			);
 		} else {
 			fprintf(ttyout, "`%s' is an interesting topic.\n", url);
 		}
@@ -1791,5 +1804,82 @@ auto_fetch(int argc, char *argv[])
 
 	if (connected && rval != -1)
 		disconnect(0, NULL);
+	return (rval);
+}
+
+
+int
+auto_put(int argc, char **argv, const char *uploadserver)
+{
+	char	*uargv[4], *path, *pathsep;
+	int	 uargc, rval, len;
+
+	uargc = 0;
+	uargv[uargc++] = "mput";
+	uargv[uargc++] = argv[0];
+	uargv[2] = uargv[3] = NULL;
+	pathsep = NULL;
+	rval = 1;
+
+	if (debug)
+		fprintf(ttyout, "auto_put: target `%s'\n", uploadserver);
+
+	path = xstrdup(uploadserver);
+	len = strlen(path);
+	if (path[len - 1] != '/' && path[len - 1] != ':') {
+			/*
+			 * make sure we always pass a directory to auto_fetch
+			 */
+		if (argc > 1) {		/* more than one file to upload */
+			int len;
+
+			len = strlen(uploadserver) + 2;	/* path + "/" + "\0" */
+			free(path);
+			path = (char *)xmalloc(len);
+			(void)strlcpy(path, uploadserver, len);
+			(void)strlcat(path, "/", len);
+		} else {		/* single file to upload */
+			uargv[0] = "put";
+			pathsep = strrchr(path, '/');
+			if (pathsep == NULL) {
+				pathsep = strrchr(path, ':');
+				if (pathsep == NULL) {
+					warnx("Invalid URL `%s'", path);
+					goto cleanup_auto_put;
+				}
+				pathsep++;
+				uargv[2] = xstrdup(pathsep);
+				pathsep[0] = '/';
+			} else 
+				uargv[2] = xstrdup(pathsep + 1);
+			pathsep[1] = '\0';
+			uargc++;
+		}
+	}
+	if (debug)
+		fprintf(ttyout, "autoput: url `%s' argv[2] `%s'\n",
+		    path, uargv[2] ? uargv[2] : "<null>");
+		
+			/* connect and cwd */		 
+	rval = auto_fetch(1, &path);
+	free(path);
+	if(rval >= 0)
+		goto cleanup_auto_put;
+
+			/* XXX : is this the best way? */
+	if (uargc == 3) {
+		uargv[1] = argv[0];
+		put(uargc, uargv);
+		goto cleanup_auto_put;
+	}
+
+	for(; argv[0] != NULL; argv++) {
+		uargv[1] = argv[0];	
+		mput(uargc, uargv);
+	}
+	rval = 0;
+
+cleanup_auto_put:
+	FREEPTR(uargv[2]);
 	return (rval);
 }

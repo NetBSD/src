@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.2 2000/04/10 09:34:18 jdolecek Exp $	*/
+/*	$NetBSD: setemul.c,v 1.2.2.1 2000/06/23 16:30:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.2 2000/04/10 09:34:18 jdolecek Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.2.2.1 2000/06/23 16:30:28 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -143,6 +143,8 @@ static struct emulation emulations[] = {
 	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
 	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
 	        NULL,			0 },
+	{   "pecoff",	       syscallnames,         SYS_MAXSYSCALL,
+	        NULL,		        0 },
 	{       NULL,		       NULL,		          0,
 	        NULL,			0 }
 };

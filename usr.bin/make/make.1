@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.40 2000/04/29 12:18:52 sjg Exp $
+.\"	$NetBSD: make.1,v 1.40.2.1 2000/06/23 16:39:43 minoura Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -664,6 +664,48 @@ is the value.
 .It Cm sh
 If the variable is non-empty it is run as a command and the output
 becomes the new value.
+.It Cm \&:= Ar str
+The variable is assigned the value 
+.Ar str
+after substitution.  This modifier and its variations are useful in 
+obscure situations such as wanting to apply modifiers to 
+.Cm \&.for
+loop iteration variables which won't work due to the way 
+.Cm \&.for
+loops are implemented.  These assignment modifiers always expand to
+nothing, so if appearing in a rule line by themselves should be
+preceded with something to keep 
+.Nm
+happy.  As in:
+.Bd -literal
+use_foo: \&.USE
+\&.for i in ${\&.TARGET} ${\&.TARGET:R}\&.gz
+	@: ${t::=$i}
+	@echo t:R:T=${t:R:T}
+\&.endfor
+
+.Ed
+The double
+.Cm \&:
+helps avoid false matches with the
+.At V
+style 
+.Cm \&=
+modifier and since substitution always occurs the 
+.Cm \&:=
+form is vaguely appropriate.
+.It Cm \&:?= Ar str
+As for
+.Cm \&:=
+but only if the variable does not already have a value.
+.It Cm \&:+= Ar str
+Append 
+.Ar str
+to the variable.
+.It Cm \&:!= Ar cmd
+Assign the output of 
+.Ar cmd
+to the variable.
 .El
 .El
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS

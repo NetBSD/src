@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.15 1998/12/19 21:19:12 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.15.8.1 2000/06/23 16:39:53 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.15 1998/12/19 21:19:12 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.15.8.1 2000/06/23 16:39:53 minoura Exp $");
 #endif
 #endif
 
@@ -130,7 +130,7 @@ int     timerflag;		/* TRUE if !indefinite && !exitnow */
 int     newstyle;		/* newstyle of passing arguments (by value) */
 int     Cflag = 0;		/* ANSI C syntax */
 static int allfiles;		/* generate all files */
-int     tirpcflag = 0;		/* generating code for tirpc, by default */
+int     tirpcflag = 1;		/* generating code for tirpc, by default */
 
 #ifdef __MSDOS__
 static char *dos_cppfile = NULL;
@@ -643,8 +643,6 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 		f_print(fout, "#include <sys/types.h>\n");
 
 	f_print(fout, "#include <memory.h>\n");
-	if (tirpcflag)
-		f_print(fout, "#include <stropts.h>\n");
 
 	if (inetdflag || !tirpcflag) {
 		f_print(fout, "#include <sys/socket.h>\n");

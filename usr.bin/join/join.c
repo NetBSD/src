@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.16 1999/08/10 20:09:02 tron Exp $	*/
+/*	$NetBSD: join.c,v 1.16.6.1 2000/06/23 16:30:27 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.16 1999/08/10 20:09:02 tron Exp $");
+__RCSID("$NetBSD: join.c,v 1.16.6.1 2000/06/23 16:30:27 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ void
 slurp(F)
 	INPUT *F;
 {
-	LINE *lp, *lastlp;
+	LINE *lp;
 	LINE tmp;
 	size_t len;
 	int cnt;
@@ -304,8 +304,7 @@ slurp(F)
 	 * Read all of the lines from an input file that have the same
 	 * join field.
 	 */
-	F->setcnt = 0;
-	for (lastlp = NULL;; ++F->setcnt, lastlp = lp) {
+	for (F->setcnt = 0;; ++F->setcnt) {
 		/*
 		 * If we're out of space to hold line structures, allocate
 		 * more.  Initialize the structure so that we know that this
@@ -313,11 +312,15 @@ slurp(F)
 		 */
 		if (F->setcnt == F->setalloc) {
 			cnt = F->setalloc;
-			F->setalloc += 100;
+			if (F->setalloc == 0)
+				F->setalloc = 64;
+			else
+				F->setalloc <<= 1;
 			if ((F->set = realloc(F->set,
 			    F->setalloc * sizeof(LINE))) == NULL)
 				enomem();
-			memset(F->set + cnt, 0, 100 * sizeof(LINE));
+			memset(F->set + cnt, 0,
+			    (F->setalloc - cnt) * sizeof(LINE));
 		}
 			
 		/*
@@ -341,8 +344,7 @@ slurp(F)
 			if (lp->linealloc == 0)
 				lp->linealloc = 128;
 			while (lp->linealloc <= len + 1)
-				lp->linealloc *= 2;
-
+				lp->linealloc <<= 1;
 			if ((lp->line = realloc(lp->line,
 			    lp->linealloc * sizeof(char))) == NULL)
 				enomem();
@@ -362,7 +364,10 @@ slurp(F)
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
-				lp->fieldalloc += 100;
+				if (lp->fieldalloc == 0)
+					lp->fieldalloc = 16;
+				else
+					lp->fieldalloc <<= 1;
 				if ((lp->fields = realloc(lp->fields,
 				    lp->fieldalloc * sizeof(char *))) == NULL)
 					enomem();
@@ -371,7 +376,7 @@ slurp(F)
 		}
 
 		/* See if the join field value has changed. */
-		if (lastlp != NULL && cmp(lp, F->joinf, lastlp, F->joinf)) {
+		if (F->setcnt && cmp(lp, F->joinf, lp - 1, F->joinf)) {
 			F->pushback = F->setcnt;
 			break;
 		}
@@ -385,7 +390,7 @@ cmp(lp1, fieldno1, lp2, fieldno2)
 {
 
 	if (lp1->fieldcnt <= fieldno1)
-		return (lp2->fieldcnt < fieldno2 ? 0 : 1);
+		return (lp2->fieldcnt <= fieldno2 ? 0 : 1);
 	if (lp2->fieldcnt <= fieldno2)
 		return (-1);
 	return (strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]));
@@ -479,7 +484,7 @@ outfield(lp, fieldno)
 	if (needsep++)
 		(void)printf("%c", *tabchar);
 	if (!ferror(stdout)) {
-		if (lp->fieldcnt < fieldno) {
+		if (lp->fieldcnt <= fieldno) {
 			if (empty != NULL)
 				(void)printf("%s", empty);
 		} else {
@@ -503,7 +508,7 @@ fieldarg(option)
 	u_long fieldno;
 	char *end, *token;
 
-	while ((token = strsep(&option, " \t")) != NULL) {
+	while ((token = strsep(&option, ", \t")) != NULL) {
 		if (*token == '\0')
 			continue;
 		if ((token[0] != '1' && token[0] != '2') || token[1] != '.')

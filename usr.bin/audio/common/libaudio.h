@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.3 1999/03/27 17:46:00 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.3.8.1 2000/06/23 16:30:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -163,21 +163,11 @@ void	decode_encoding __P((const char *, int *));
 #define getbe16(v)	(v)
 #define getbe32(v)	(v)
 
-#define putle16(v)	bswap16(v)
-#define putle32(v)	bswap32(v)
-#define putbe16(v)	(v)
-#define putbe32(v)	(v)
-
 #else
 
 #define getle16(v)	(v)
 #define getle32(v)	(v)
 #define getbe16(v)	bswap16(v)
 #define getbe32(v)	bswap32(v)
-
-#define putle16(v)	(v)
-#define putle32(v)	(v)
-#define putbe16(v)	bswap16(v)
-#define putbe32(v)	bswap32(v)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.20 2000/04/14 06:11:09 simonb Exp $	*/
+/*	$NetBSD: rup.c,v 1.20.2.1 2000/06/23 16:39:54 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.20 2000/04/14 06:11:09 simonb Exp $");
+__RCSID("$NetBSD: rup.c,v 1.20.2.1 2000/06/23 16:39:54 minoura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,15 +62,21 @@ int printtime;			/* print the remote host(s)'s time */
 
 struct host_list {
 	struct host_list *next;
-	struct in_addr addr;
+	int family;
+	union {
+		struct in6_addr _addr6;
+		struct in_addr _addr4;
+	} addr;
 } *hosts;
 
-int search_host __P((struct in_addr));
-void remember_host __P((struct in_addr));
+#define addr6 addr._addr6
+#define addr4 addr._addr4
+
+int search_host(struct sockaddr *);
+void remember_host(struct sockaddr *);
 
 int
-search_host(addr)
-	struct in_addr addr;
+search_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
 	
@@ -78,15 +84,27 @@ search_host(addr)
 		return(0);
 
 	for (hp = hosts; hp != NULL; hp = hp->next) {
-		if (hp->addr.s_addr == addr.s_addr)
-			return(1);
+		switch (hp->family) {
+		case AF_INET6:
+			if (!memcmp(&hp->addr6,
+			    &((struct sockaddr_in6 *)sa)->sin6_addr,
+			    sizeof (struct in6_addr)))
+				return 1;
+			break;
+		case AF_INET:
+			if (!memcmp(&hp->addr4,
+			    &((struct sockaddr_in *)sa)->sin_addr,
+			    sizeof (struct in_addr)))
+				return 1;
+			break;
+		default:
+		}
 	}
 	return(0);
 }
 
 void
-remember_host(addr)
-	struct in_addr addr;
+remember_host(struct sockaddr *sa)
 {
 	struct host_list *hp;
 
@@ -94,8 +112,21 @@ remember_host(addr)
 		err(1, "malloc");
 		/* NOTREACHED */
 	}
-	hp->addr.s_addr = addr.s_addr;
+	hp->family = sa->sa_family;
 	hp->next = hosts;
+	switch (sa->sa_family) {
+	case AF_INET6:
+		memcpy(&hp->addr6, &((struct sockaddr_in6 *)sa)->sin6_addr,
+		    sizeof (struct in6_addr));
+		break;
+	case AF_INET:
+		memcpy(&hp->addr4, &((struct sockaddr_in *)sa)->sin_addr,
+		    sizeof (struct in_addr));
+		break;
+	default:
+		err(1, "unknown address family");
+		/* NOTREACHED */
+	}
 	hosts = hp;
 }
 
@@ -115,19 +146,17 @@ enum sort_type {
 };
 enum sort_type sort_type;
 
-int compare __P((struct rup_data *, struct rup_data *));
-void remember_rup_data __P((const char *, struct statstime *));
-int rstat_reply __P((char *, struct sockaddr_in *));
-int print_rup_data __P((const char *, statstime *));
-void onehost __P((char *));
-void allhosts __P((void));
-int main __P((int, char *[]));
-void usage __P((void));
+int compare(struct rup_data *, struct rup_data *);
+void remember_rup_data(const char *, struct statstime *);
+int rstat_reply(char *, struct netbuf *, struct netconfig *);
+int print_rup_data(const char *, statstime *);
+void onehost(char *);
+void allhosts(void);
+int main(int, char *[]);
+void usage(void);
 
 int
-compare(d1, d2)
-	struct rup_data *d1;
-	struct rup_data *d2;
+compare(struct rup_data *d1, struct rup_data *d2)
 {
 	switch(sort_type) {
 	case SORT_HOST:
@@ -145,9 +174,7 @@ compare(d1, d2)
 }
 
 void
-remember_rup_data(host, st)
-	const char *host;
-	struct statstime *st;
+remember_rup_data(const char *host, struct statstime *st)
 {
         if (rup_data_idx >= rup_data_max) {
                 rup_data_max += 16;
@@ -166,24 +193,17 @@ remember_rup_data(host, st)
 
 
 int
-rstat_reply(replyp, raddrp)
-	char *replyp;
-	struct sockaddr_in *raddrp;
+rstat_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 {
-	struct hostent *hp;
-	char *host;
+	char host[NI_MAXHOST];
 	statstime *host_stat = (statstime *)replyp;
+	struct sockaddr *sa = raddrp->buf;
 
-	if (!search_host(raddrp->sin_addr)) {
-		hp = gethostbyaddr((char *)&raddrp->sin_addr.s_addr,
-			sizeof(struct in_addr), AF_INET);
+	if (!search_host(sa)) {
+		if (getnameinfo(sa, sa->sa_len, host, sizeof host, NULL, 0, 0))
+			return 0;
 
-		if (hp)
-			host = hp->h_name;
-		else
-			host = inet_ntoa(raddrp->sin_addr);
-
-		remember_host(raddrp->sin_addr);
+		remember_host(sa);
 
 		if (sort_type != SORT_NONE) {
 			remember_rup_data(host, host_stat);
@@ -197,9 +217,7 @@ rstat_reply(replyp, raddrp)
 
 
 int
-print_rup_data(host, host_stat)
-	const char *host;
-	statstime *host_stat;
+print_rup_data(const char *host, statstime *host_stat)
 {
 	struct tm *tmp_time;
 	struct tm host_time;
@@ -256,8 +274,7 @@ print_rup_data(host, host_stat)
 
 
 void
-onehost(host)
-	char *host;
+onehost(char *host)
 {
 	CLIENT *rstat_clnt;
 	statstime host_stat;
@@ -291,9 +308,10 @@ allhosts()
 		fflush(stdout);
 	}
 
-	clnt_stat = clnt_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
+	clnt_stat = rpc_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
 				   xdr_void, NULL,
-				   xdr_statstime, (char*)&host_stat, rstat_reply);
+				   xdr_statstime, (char*)&host_stat,
+				   (resultproc_t)rstat_reply, "udp");
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
 		warnx("%s", clnt_sperrno(clnt_stat));
 		exit(1);
@@ -311,9 +329,7 @@ allhosts()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.15 2000/04/14 06:11:09 simonb Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.15.2.1 2000/06/23 16:39:50 minoura Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.15 2000/04/14 06:11:09 simonb Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.15.2.1 2000/06/23 16:39:50 minoura Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,16 +77,19 @@ struct nlist nl[] = {
 	{ "_nfsstats" },
 	{ "" },
 };
-kvm_t *kd;
+
 
 void	catchalarm __P((int));
-void	intpr __P((u_long));
+void	getstats __P((struct nfsstats *));
+void	intpr __P((void));
 int	main __P((int, char **));
 void	printhdr __P((void));
-void	sidewaysintpr __P((u_int, u_long));
+void	sidewaysintpr __P((u_int));
 void	usage __P((void));
 
+kvm_t  *kd;
 int     printall, clientinfo, serverinfo;
+u_long	nfsstataddr;
 
 int
 main(argc, argv)
@@ -97,9 +100,7 @@ main(argc, argv)
 	int ch;
 	char *memf, *nlistf;
 	char errbuf[_POSIX2_LINE_MAX];
-	gid_t egid = getegid();
 
-	(void)setegid(getgid());
 	interval = 0;
 	memf = nlistf = NULL;
 	printall = 1;
@@ -140,46 +141,56 @@ main(argc, argv)
 		}
 	}
 #endif
-	/*
-	 * Discard setgid privileges.  If not the running kernel, we toss
-	 * them away totally so that bad guys can't print interesting stuff
-	 * from kernel memory, otherwise switch back to kmem for the
-	 * duration of the kvm_openfiles() call.
-	 */
-	if (nlistf != NULL || memf != NULL)
-		(void)setgid(getgid());
-	else
-		(void)setegid(egid);
+	if (nlistf || memf) {
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf))
+		    == 0)
+			errx(1, "kvm_openfiles: %s", errbuf);
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == 0)
-		errx(1, "kvm_openfiles: %s", errbuf);
-
-	/* get rid of it now anyway */
-	if (nlistf == NULL && memf == NULL)
-		(void)setgid(getgid());
-
-	if (kvm_nlist(kd, nl) != 0)
-		errx(1, "kvm_nlist: can't get names");
+		if (kvm_nlist(kd, nl) != 0)
+			errx(1, "kvm_nlist: can't get names");
+		nfsstataddr = nl[N_NFSSTAT].n_value;
+	} else {
+		kd = NULL;
+	}
 
 	if (interval)
-		sidewaysintpr(interval, nl[N_NFSSTAT].n_value);
+		sidewaysintpr(interval);
 	else
-		intpr(nl[N_NFSSTAT].n_value);
+		intpr();
 	exit(0);
+}
+
+void
+getstats(ns)
+	struct nfsstats *ns;
+{
+	size_t size;
+	int mib[3];
+
+	if (kd) {
+		if (kvm_read(kd, (u_long)nfsstataddr, ns, sizeof(*ns))
+		    != sizeof(*ns))
+			errx(1, "kvm_read failed");
+	} else {
+		mib[0] = CTL_VFS;
+		mib[1] = 2;	/* XXX from CTL_VFS_NAMES in <sys/mount.h> */
+		mib[2] = NFS_NFSSTATS;
+
+		size = sizeof(*ns);
+		if (sysctl(mib, 3, ns, &size, NULL, 0) == -1)
+			err(1, "sysctl(NFS_NFSSTATS) failed");
+	}
 }
 
 /*
  * Print a description of the nfs stats.
  */
 void
-intpr(nfsstataddr)
-	u_long nfsstataddr;
+intpr()
 {
 	struct nfsstats nfsstats;
 
-	if (kvm_read(kd, (u_long)nfsstataddr, (char *)&nfsstats,
-	     sizeof(struct nfsstats)) != sizeof(struct nfsstats))
-		errx(1, "kvm_read failed");
+	getstats(&nfsstats);
 	if (printall || clientinfo) {
 		printf("Client Info:\n");
 		printf("Rpc Counts:\n");
@@ -331,9 +342,8 @@ u_char	signalled;			/* set if alarm goes off "early" */
  * First line printed at top of screen is always cumulative.
  */
 void
-sidewaysintpr(interval, off)
+sidewaysintpr(interval)
 	u_int interval;
-	u_long off;
 {
 	struct nfsstats nfsstats, lastst;
 	int hdrcnt, oldmask;
@@ -348,9 +358,7 @@ sidewaysintpr(interval, off)
 			printhdr();
 			hdrcnt = 20;
 		}
-		if (kvm_read(kd, off, (char *)&nfsstats, sizeof(nfsstats))
-			!= sizeof(nfsstats))
-			errx(1, "kvm_read failed");
+		getstats(&nfsstats);
 		if (printall || clientinfo)
 			printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
 			    nfsstats.rpccnt[NFSPROC_GETATTR] -

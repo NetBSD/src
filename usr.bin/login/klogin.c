@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.14 1999/07/30 01:56:49 mycroft Exp $	*/
+/*	$NetBSD: klogin.c,v 1.14.6.1 2000/06/23 16:30:34 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.14 1999/07/30 01:56:49 mycroft Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.14.6.1 2000/06/23 16:30:34 minoura Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: klogin.c,v 1.14 1999/07/30 01:56:49 mycroft Exp $");
 int notickets;
 char *krbtkfile_env;
 char *tty;
+extern int has_ccache;
 
 static char tkt_location[MAXPATHLEN];  /* a pointer to this is returned... */
 
@@ -114,6 +115,7 @@ klogin(pw, instance, localhost, password)
 		(void)snprintf(tkt_location, sizeof tkt_location,
 		    "%s_root_%d.%s", TKT_ROOT, pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
+	has_ccache = 1;
 	(void)krb_set_tkt_string(tkt_location);
 
 	/*
