@@ -7,4 +7,6 @@ CFLAGS+= -DBSD42 -DSTDC_MSG -DNEED_TZSET -DNEEDPAD
 CFLAGS+= -DDEF_AR_FILE=\"/dev/rmt8\" -DDEFBLOCKING=20
 NOMAN=noman
 
+CLEANFILES += y.tab.h
+
 .include <bsd.prog.mk>
