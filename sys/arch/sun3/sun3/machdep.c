@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2000/06/26 14:21:03 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2000/06/29 07:19:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -71,8 +71,6 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2000/06/26 14:21:04 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2000/06/29 07:19:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,8 +69,6 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

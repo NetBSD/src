@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.15 2000/06/26 04:56:11 simonb Exp $	*/
+/*	$NetBSD: bw2.c,v 1.16 2000/06/29 07:18:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.32 1999/08/20 03:52:38 chs Exp $ */
+/*	$NetBSD: if_ie.c,v 1.33 2000/06/29 07:18:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -135,7 +135,7 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

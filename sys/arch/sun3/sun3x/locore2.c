@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.21 1998/07/04 22:18:44 jonathan Exp $	*/
+/*	$NetBSD: locore2.c,v 1.22 2000/06/29 07:19:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/user.h>
 #include <sys/exec_aout.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>

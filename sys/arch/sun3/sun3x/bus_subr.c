@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.17 2000/06/26 14:21:03 mrg Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.18 2000/06/29 07:19:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 2000/06/27 04:19:03 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2000/06/29 07:19:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,8 +67,6 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

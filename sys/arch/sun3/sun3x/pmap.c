@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2000/06/26 14:21:04 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2000/06/29 07:19:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,8 +120,6 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

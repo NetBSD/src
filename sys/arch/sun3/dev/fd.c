@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 2000/06/04 19:15:07 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 2000/06/29 07:18:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -62,8 +62,6 @@
 #include <sys/conf.h>
 
 #include <dev/cons.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

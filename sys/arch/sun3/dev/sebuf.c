@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.5 1999/04/09 04:26:27 gwr Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.6 2000/06/29 07:19:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #include <sys/proc.h>
 #include <sys/tty.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
