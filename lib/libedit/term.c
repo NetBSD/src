@@ -947,18 +947,22 @@ term_init_arrow(el)
     fkey_t *arrow = el->el_term.t_fkey;
 
     arrow[A_K_DN].name    = "down";
+    arrow[A_K_DN].key	  = T_kd;
     arrow[A_K_DN].fun.cmd = ED_NEXT_HISTORY;
     arrow[A_K_DN].type    = XK_CMD;
 
     arrow[A_K_UP].name    = "up";
+    arrow[A_K_UP].key	  = T_ku;
     arrow[A_K_UP].fun.cmd = ED_PREV_HISTORY;
     arrow[A_K_UP].type    = XK_CMD;
 
     arrow[A_K_LT].name    = "left";
+    arrow[A_K_LT].key	  = T_kl;
     arrow[A_K_LT].fun.cmd = ED_PREV_CHAR;
     arrow[A_K_LT].type    = XK_CMD;
 
     arrow[A_K_RT].name    = "right";
+    arrow[A_K_RT].key	  = T_kr;
     arrow[A_K_RT].fun.cmd = ED_NEXT_CHAR;
     arrow[A_K_RT].type    = XK_CMD;
 
@@ -1085,6 +1089,38 @@ term_bind_arrow(el)
     dmap = el->el_map.type == MAP_VI ? el->el_map.vic : el->el_map.emacs;
 
     term_reset_arrow(el);
+
+    for (i = 0; i < 4; i++) {
+	p = el->el_term.t_str[arrow[i].key];
+	if (p && *p) {
+	    j = (unsigned char) *p;
+	    /*
+	     * Assign the arrow keys only if:
+	     *
+	     * 1. They are multi-character arrow keys and the user 
+	     *    has not re-assigned the leading character, or 
+	     *    has re-assigned the leading character to be
+	     *	  ED_SEQUENCE_LEAD_IN
+	     * 2. They are single arrow keys pointing to an unassigned key.
+	     */
+	    if (arrow[i].type == XK_NOD)
+		key_clear(el, map, p);
+	    else {
+		if (p[1] && (dmap[j] == map[j] || 
+			     map[j] == ED_SEQUENCE_LEAD_IN)) {
+		    key_add(el, p, &arrow[i].fun, arrow[i].type);
+		    map[j] = ED_SEQUENCE_LEAD_IN;
+		}
+		else if (map[j] == ED_UNASSIGNED) {
+		    key_clear(el, map, p);
+		    if (arrow[i].type == XK_CMD)
+			map[j] = arrow[i].fun.cmd;
+		    else
+			key_add(el, p, &arrow[i].fun, arrow[i].type);
+		}
+	    }
+	}
+    }
 }
 
 
