@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.2.2 1998/02/07 00:49:34 mellon Exp $
+#	$NetBSD: Makefile,v 1.42.2.3 1998/02/20 01:41:41 mellon Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -43,20 +43,21 @@ afterinstall:
 .ifndef NOMAN
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
-.ifmake build
-	@echo -n "Build finished at: "
-	@date
-.endif
 
 build: beforeinstall
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
+	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined (EXPORTABLE_SYSTEM)
+.if exists(domestic/usr.bin/compile_et)
 	(cd ${.CURDIR}/domestic/usr.bin/compile_et && \
 	    ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
+.endif
+.if exists(domestic/usr.bin/make_cmds)
 	(cd ${.CURDIR}/domestic/usr.bin/make_cmds && \
 	    ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
+.endif
 .endif
 	${MAKE} includes
 .if !defined(UPDATE)
@@ -72,11 +73,25 @@ build: beforeinstall
 	(cd ${.CURDIR}/usr.bin/xlint && \
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+# libtelnet depends on libdes and libkrb.  libkrb depends on
+# libcom_err.
+.if exists(domestic/lib/libdes)
+	(cd ${.CURDIR}/domestic/lib/libdes && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.endif
+.if exists(domestic/lib/libcom_err)
+	(cd ${.CURDIR}/domestic/lib/libcom_err && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.endif
+.if exists(domestic/lib/libkrb)
 	(cd ${.CURDIR}/domestic/lib/libkrb && \
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.endif
 	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
+	@echo -n "Build finished at: "
+	@date
 
 .include <bsd.subdir.mk>
