@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.38 2004/08/08 08:42:03 jdolecek Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.39 2004/10/01 16:30:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.38 2004/08/08 08:42:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.39 2004/10/01 16:30:52 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -199,7 +199,7 @@ irix_e_proc_exit(p)
 	 * Send SIGHUP to child process as requested using prctl(2)
 	 */
 	proclist_lock_read();
-	LIST_FOREACH(pp, &allproc, p_list) {
+	PROCLIST_FOREACH(pp, &allproc) {
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
 			continue;
