@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.25 2003/05/02 23:22:36 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.26 2003/05/03 03:29:12 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -209,11 +209,7 @@ static ofw_handle_t ofw_client_services_handle;
 
 
 static void ofw_callbackhandler __P((void *));
-#ifndef ARM32_PMAP_NEW
-static void ofw_construct_proc0_addrspace __P((pv_addr_t *, pv_addr_t *));
-#else
 static void ofw_construct_proc0_addrspace __P((pv_addr_t *));
-#endif
 static void ofw_getphysmeminfo __P((void));
 static void ofw_getvirttranslations __P((void));
 static void *ofw_malloc(vm_size_t size);
@@ -759,17 +755,10 @@ void
 ofw_configmem(void)
 {
 	pv_addr_t proc0_ttbbase;
-#ifndef ARM32_PMAP_NEW
-	pv_addr_t proc0_ptpt;
-#endif
 	int i;
 
 	/* Set-up proc0 address space. */
-#ifndef ARM32_PMAP_NEW
-	ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
-#else
 	ofw_construct_proc0_addrspace(&proc0_ttbbase);
-#endif
 
 	/*
 	 * Get a dump of OFW's picture of physical memory.
@@ -790,9 +779,6 @@ ofw_configmem(void)
 	OF_set_callback(ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
-#ifndef ARM32_PMAP_NEW
-	setttb(proc0_ttbbase.pv_pa);
-#else
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(proc0_ttbbase.pv_pa);
 	cpu_tlb_flushID();
@@ -807,7 +793,6 @@ ofw_configmem(void)
 		proc0paddr = (struct user *)kernelstack.pv_va;
 		lwp0.l_addr = proc0paddr;
 	}
-#endif
 
 	/* Aaaaaaaah, running in the proc0 address space! */
 	/* I feel good... */
@@ -971,11 +956,7 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
-#ifndef ARM32_PMAP_NEW
-	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, proc0_ptpt);
-#else
 	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va);
-#endif
 }
 
 
@@ -1298,23 +1279,9 @@ ofw_callbackhandler(v)
 }
 
 static void
-#ifndef ARM32_PMAP_NEW
-ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase, pv_addr_t *proc0_ptpt)
-#else
 ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
-#endif
 {
 	int i, oft;
-#ifndef ARM32_PMAP_NEW
-	pv_addr_t proc0_pagedir;
-	pv_addr_t proc0_pt_pte;
-	pv_addr_t proc0_pt_sys;
-	pv_addr_t proc0_pt_kernel[KERNEL_IMG_PTS];
-	pv_addr_t proc0_pt_vmdata[KERNEL_VMDATA_PTS];
-	pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
-	pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
-	pv_addr_t msgbuf;
-#else
 	static pv_addr_t proc0_pagedir;
 	static pv_addr_t proc0_pt_sys;
 	static pv_addr_t proc0_pt_kernel[KERNEL_IMG_PTS];
@@ -1322,7 +1289,6 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	static pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
 	static pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
 	static pv_addr_t msgbuf;
-#endif
 	vm_offset_t L1pagetable;
 	struct mem_translation *tp;
 
@@ -1354,9 +1320,6 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
 	/* page tables that we will be switching to soon. */
 	ofw_claimpages(&virt_freeptr, &proc0_pagedir, L1_TABLE_SIZE);
-#ifndef ARM32_PMAP_NEW
-	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, L2_TABLE_SIZE);
-#endif
 	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_kernel[i], L2_TABLE_SIZE);
@@ -1386,9 +1349,6 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_BASE + i * 0x00400000,
 		    &proc0_pt_kernel[i]);
-#ifndef ARM32_PMAP_NEW
-	pmap_link_l2pt(L1pagetable, PTE_BASE, &proc0_pt_pte);
-#endif
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
 		    &proc0_pt_vmdata[i]);
@@ -1472,74 +1432,8 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 	 * we don't want aliases to physical addresses that the kernel
 	 * has-mapped/will-map elsewhere.
 	 */
-#ifndef ARM32_PMAP_NEW
-	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-	    proc0_pt_sys.pv_va, L2_TABLE_SIZE);
-	for (i = 0; i < KERNEL_IMG_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_kernel[i].pv_va, L2_TABLE_SIZE);
-	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_vmdata[i].pv_va, L2_TABLE_SIZE);
-	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_ofw[i].pv_va, L2_TABLE_SIZE);
-	for (i = 0; i < KERNEL_IO_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_io[i].pv_va, L2_TABLE_SIZE);
-#endif
 	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    msgbuf.pv_va, MSGBUFSIZE);
-
-#ifndef ARM32_PMAP_NEW
-	/*
-	 * We did not throw away the proc0_pt_pte and proc0_pagedir
-	 * mappings as well still want them. However we don't want them
-	 * cached ...
-	 * Really these should be uncached when allocated.
-	 */
-	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
-	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	for (i = 0; i < (L1_TABLE_SIZE / PAGE_SIZE); ++i)
-		pmap_map_entry(L1pagetable,
-		    proc0_pagedir.pv_va + PAGE_SIZE * i,
-		    proc0_pagedir.pv_pa + PAGE_SIZE * i,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	/*
-	 * Construct the proc0 L2 pagetables that map page tables.
-	 */
-
-	/* Map entries in the L2pagetable used to map L2PTs. */
-	pmap_map_entry(L1pagetable,
-	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
-	    proc0_pt_sys.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	for (i = 0; i < KERNEL_IMG_PTS; i++)
-		pmap_map_entry(L1pagetable,
-		    PTE_BASE + ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2)),
-		    proc0_pt_kernel[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_entry(L1pagetable,
-	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-	    proc0_pt_pte.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		pmap_map_entry(L1pagetable,
-		    PTE_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		pmap_map_entry(L1pagetable,
-		    PTE_BASE + ((OFW_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	for (i = 0; i < KERNEL_IO_PTS; i++)
-		pmap_map_entry(L1pagetable,
-		    PTE_BASE + ((IO_VIRT_BASE + i * 0x00400000)
-		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -1570,9 +1464,6 @@ ofw_construct_proc0_addrspace(pv_addr_t *proc0_ttbbase)
 
 	/* OUT parameters are the new ttbbase and the pt which maps pts. */
 	*proc0_ttbbase = proc0_pagedir;
-#ifndef ARM32_PMAP_NEW
-	*proc0_ptpt = proc0_pt_pte;
-#endif
 }
 
 
