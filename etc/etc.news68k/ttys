@@ -1,11 +1,11 @@
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.4 2003/10/03 14:54:21 dsl Exp $
+#	$NetBSD: ttys,v 1.5 2003/10/04 07:41:12 dsl Exp $
 #
 # name	getty				type	status		comments
 #
 # Note: the console redirects to one of: kd, ttya, ttyb
-constty	"/usr/libexec/getty std.9600"	vt100	on  secure
+console	"/usr/libexec/getty std.9600"	vt100	on  secure
 tty00	"/usr/libexec/getty std.9600"	vt100	off secure
 tty01	"/usr/libexec/getty std.9600"	unknown	on secure
 ttyp0	none				network
