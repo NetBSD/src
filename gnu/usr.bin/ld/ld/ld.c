@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.68 2000/01/13 00:05:32 mycroft Exp $	*/
+/*	$NetBSD: ld.c,v 1.69 2000/04/26 02:49:04 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.68 2000/01/13 00:05:32 mycroft Exp $");
+__RCSID("$NetBSD: ld.c,v 1.69 2000/04/26 02:49:04 mrg Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -690,8 +690,9 @@ classify_arg(arg)
 
 	/* GNU binutils 2.x  forward-compatible flags. */
 	case 'r':
-		/* Ignore "-rpath" and hope ld.so.conf will cover our sins. */
-		if (!strcmp(&arg[1], "rpath"))
+		/* Ignore "-rpath" and "-rpath-link" hope ld.so.conf will cover
+		   our sins. */
+		if (!strcmp(&arg[1], "rpath") || !strcmp(&arg[1], "rpath-link"))
 			return 2;
 		return 1;
 
@@ -917,7 +918,8 @@ decode_option(swt, arg)
 			warnx("-soname %s ignored", arg);
 		return;
 	}
-	if (strcmp(swt + 1, "rpath") == 0) {
+	if (strcmp(swt + 1, "rpath") == 0 ||
+	    strcmp(swt + 1, "rpath-link") == 0) {
 		if (warn_forwards_compatible_inexact)
 			warnx("%s %s ignored", swt, arg);
 		goto do_rpath;
