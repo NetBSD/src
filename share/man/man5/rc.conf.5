@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.59 2002/04/29 05:56:25 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.60 2002/04/29 10:27:14 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -491,10 +491,10 @@ option.
 A string.
 An IPv6 node can be a router
 .Pq nodes that forward packet for others
-or host
+or a host
 .Pq nodes that do not forward .
 A host can be autoconfigured
-based on the information advertised by adjacent IPv6 router.
+based on the information advertised by adjacent IPv6 routers.
 By setting
 .Sy ip6mode
 to
@@ -516,25 +516,27 @@ as well, if you set the variable to
 .Sq YES
 or
 .Sq NO .
-If you intend to use IPv6 site-local address in your site, set it to
+If you intend to use IPv6 site-local addresses in your site, set it to
 .Sq YES .
-Otherwise, reject route will get installed on boot to avoid misconfiguration
-regarding to site-local addresses.
+Otherwise, reject routes will get installed on boot to avoid misconfiguration
+relating to site-local addresses.
 .It Sy rtsol
 .Sq YES
 or
 .Sq NO .
 Run
 .Xr rtsol 8 ,
-router solicitation command for IPv6 host.
-On nomadic host like notebook computers, you may want to enable
+router solicitation command for IPv6 hosts.
+On nomadic hosts like notebook computers, you may want to enable
 .Sy rtsold
 as well.
 Passes
 .Sy rtsol_flags .
-This is only for autoconfigured IPv6 host, so set
+This is only for autoconfigured IPv6 hosts, so set
 .Sy ip6mode
-to autohost if you use it.
+to
+.Dq Li autohost
+if you use it.
 .It Sy ifwatchd
 .Sq YES
 or
@@ -748,17 +750,18 @@ Runs
 .Xr rtsold 8 ,
 the IPv6 router solicitation daemon.
 .Xr rtsold 8
-periodically transmits router solicitation packet
-to find IPv6 router on the network.
-This configuration is mainly for nomadic host like notebook computers.
-Stationary host should work fine with
-.Sy rtsol
-only.
+periodically transmits router solicitation packets
+to find IPv6 routers on the network.
+This configuration is mainly for nomadic hosts like notebook computers.
+Stationary hosts should work fine with just
+.Sy rtsol .
 Passes
 .Sy rtsold_flags .
-This is only for autoconfigured IPv6 host, so set
+This is only for autoconfigured IPv6 hosts, so set
 .Sy ip6mode
-to autohost if you use it.
+to
+.Dq Li autohost
+if you use it.
 .El
 .Ss Daemons used to boot other hosts over a network
 .Bl -tag -width net_interfaces
@@ -853,10 +856,10 @@ the IPv6 router advertisement daemon, which is used to advertise
 information about the subnet to IPv6 end hosts.
 Passes
 .Sy rtadvd_flags .
-This is only for IPv6 router, so set
-.Sy ip6forwarding
+This is only for IPv6 routers, so set
+.Sy ip6mode
 to
-.Sq YES
+.Dq Li router
 if you use it.
 .El
 .Ss X Window System daemons
