@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.142 2004/05/25 04:33:59 atatat Exp $	*/
+/*	$NetBSD: if.c,v 1.143 2004/06/22 12:50:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.142 2004/05/25 04:33:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.143 2004/06/22 12:50:41 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -137,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.142 2004/05/25 04:33:59 atatat Exp $");
 #include <netatalk/at_extern.h>
 #include <netatalk/at.h>
 #endif
+#include <net/pfil.h>
 
 #ifdef INET6
 #include <netinet/in.h>
@@ -160,6 +161,10 @@ int if_clone_list __P((struct if_clonereq *));
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
+#ifdef PFIL_HOOKS
+struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
+#endif
+
 #if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
     defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues __P((struct ifnet *, struct ifqueue *));
@@ -177,6 +182,12 @@ ifinit()
 
 	callout_init(&if_slowtimo_ch);
 	if_slowtimo(NULL);
+#ifdef PFIL_HOOKS
+	if_pfil.ph_type = PFIL_TYPE_IFNET;
+	if_pfil.ph_ifnet = NULL;
+	if (pfil_head_register(&if_pfil) != 0)
+		printf("WARNING: unable to register pfil hook\n");
+#endif
 }
 
 /*
@@ -464,6 +475,7 @@ if_attach(ifp)
 	if (pfil_head_register(&ifp->if_pfil) != 0)
 		printf("%s: WARNING: unable to register pfil hook\n",
 		    ifp->if_xname);
+	pfil_run_hooks(&if_pfil, NULL, ifp, PFIL_NEWIF);
 #endif
 
 	if (domains)

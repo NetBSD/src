@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.22 2003/06/23 12:57:08 martin Exp $	*/
+/*	$NetBSD: pfil.h,v 1.23 2004/06/22 12:50:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -55,8 +55,10 @@ struct packet_filter_hook {
 
 #define PFIL_IN		0x00000001
 #define PFIL_OUT	0x00000002
-#define PFIL_WAITOK	0x00000004
 #define PFIL_ALL	(PFIL_IN|PFIL_OUT)
+#define PFIL_WAITOK	0x00000004
+#define PFIL_IFADDR	0x00000008
+#define PFIL_NEWIF	0x00000010
 
 typedef	TAILQ_HEAD(pfil_list, packet_filter_hook) pfil_list_t;
 
@@ -66,6 +68,8 @@ typedef	TAILQ_HEAD(pfil_list, packet_filter_hook) pfil_list_t;
 struct pfil_head {
 	pfil_list_t	ph_in;
 	pfil_list_t	ph_out;
+	pfil_list_t	ph_ifaddr;
+	pfil_list_t	ph_newif;
 	int		ph_type;
 	union {
 		u_long		phu_val;
@@ -98,6 +102,10 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 		return (TAILQ_FIRST(&ph->ph_in));
 	else if (dir == PFIL_OUT)
 		return (TAILQ_FIRST(&ph->ph_out));
+	else if (dir == PFIL_IFADDR)
+		return (TAILQ_FIRST(&ph->ph_ifaddr));
+	else if (dir == PFIL_NEWIF)
+		return (TAILQ_FIRST(&ph->ph_newif));
 	else
 		return (NULL);
 }
@@ -113,5 +121,10 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 #endif
 #define PFIL_HOOKS
 #endif /* NIPFILTER */
+
+#ifdef _KERNEL
+/* in sys/net/if.c */
+extern struct pfil_head if_pfil; /* packet filtering hook for interfaces */
+#endif
 
 #endif /* _NET_PFIL_H_ */

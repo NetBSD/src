@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.95 2004/05/30 06:37:07 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.96 2004/06/22 12:50:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,11 +98,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.95 2004/05/30 06:37:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.96 2004/06/22 12:50:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -129,8 +130,11 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.95 2004/05/30 06:37:07 itojun Exp $");
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
 
-#ifdef INET
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
+#ifdef INET
 static u_int in_mask2len __P((struct in_addr *));
 static void in_len2mask __P((struct in_addr *, u_int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
@@ -464,6 +468,11 @@ in_control(so, cmd, data, ifp, p)
 
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
+#ifdef PFIL_HOOK
+		if (!error)
+			(void)pfil_run_hooks(&if_pfil,
+			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
+#endif
 		return error;
 
 	case SIOCSIFNETMASK:
@@ -514,10 +523,18 @@ in_control(so, cmd, data, ifp, p)
 		else
 			bzero(&ifra->ifra_broadaddr,
 			      sizeof(ifra->ifra_broadaddr));
+#ifdef PFIL_HOOK
+		(void)pfil_run_hooks(&if_pfil,
+		    (struct mbuf **)SIOCGIFALIAS, ifp, PFIL_IFADDR);
+#endif
 		return 0;
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa, ifp);
+#ifdef PFIL_HOOK
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
+		    ifp, PFIL_IFADDR);
+#endif
 		break;
 
 #ifdef MROUTING
