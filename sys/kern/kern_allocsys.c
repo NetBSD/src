@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.12 2000/06/27 17:41:14 mrg Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.13 2000/07/14 07:14:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -125,9 +125,7 @@ int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
  */
 
 caddr_t
-allocsys(v, mdcallback)
-	caddr_t	v;
-	caddr_t (*mdcallback) __P((caddr_t));
+allocsys(caddr_t v, caddr_t (*mdcallback)(caddr_t))
 {
 
 	/* Calculate the number of callwheels if necessary. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.31 2000/06/07 16:37:24 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.32 2000/07/14 07:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -273,12 +273,11 @@ struct lock {
 
 struct proc;
 
-void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
-			int flags));
-int	lockmgr __P((__volatile struct lock *, u_int flags,
-			struct simplelock *));
-int	lockstatus __P((struct lock *));
-void	lockmgr_printinfo __P((__volatile struct lock *));
+void	lockinit(struct lock *, int prio, const char *wmesg, int timo,
+			int flags);
+int	lockmgr(__volatile struct lock *, u_int flags, struct simplelock *);
+int	lockstatus(struct lock *);
+void	lockmgr_printinfo(__volatile struct lock *);
 
 #define	spinlockinit(lkp, name, flags)					\
 	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
@@ -287,18 +286,17 @@ void	lockmgr_printinfo __P((__volatile struct lock *));
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 
 #if defined(LOCKDEBUG)
-void	_simple_lock __P((__volatile struct simplelock *, const char *, int));
-int	_simple_lock_try __P((__volatile struct simplelock *, const char *,
-	    int));
-void	_simple_unlock __P((__volatile struct simplelock *, const char *, int));
+void	_simple_lock(__volatile struct simplelock *, const char *, int);
+int	_simple_lock_try(__volatile struct simplelock *, const char *, int);
+void	_simple_unlock(__volatile struct simplelock *, const char *, int);
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
 #define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
 
-void	simple_lock_init __P((struct simplelock *));
-void	simple_lock_dump __P((void));
-void	simple_lock_freecheck __P((void *, void *));
+void	simple_lock_init(struct simplelock *);
+void	simple_lock_dump(void);
+void	simple_lock_freecheck(void *, void *);
 #elif defined(MULTIPROCESSOR)
 #define	simple_lock_init(alp)	__cpu_simple_lock_init(&(alp)->lock_data)
 #define	simple_lock(alp)	__cpu_simple_lock(&(alp)->lock_data)
