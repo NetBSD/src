@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.14 (Berkeley) 4/1/91
- *	$Id: unistd.h,v 1.5 1993/10/12 21:58:49 jtc Exp $
+ *	$Id: unistd.h,v 1.6 1994/03/16 01:40:21 glass Exp $
  */
 
 #ifndef _SYS_UNISTD_H_
@@ -47,8 +47,9 @@
 #define _POSIX2_VERSION         199209L
 
 /* execution-time symbolic constants */
-#define	_POSIX_CHOWN_RESTRICTED	/* chown requires appropriate privileges */
-#define	_POSIX_NO_TRUNC		/* too-long path components generate errors */
+                                   
+#define	_POSIX_CHOWN_RESTRICTED	1 /* chown requires appropriate privileges */
+#define	_POSIX_NO_TRUNC	        1 /* too-long path components generate errors*/
 				/* may disable terminal special characters */
 #define	_POSIX_VDISABLE	((unsigned char)'\377')
 
