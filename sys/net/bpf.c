@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.56 2000/05/28 02:49:35 matt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.57 2000/05/28 18:17:09 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -499,7 +499,7 @@ bpf_wakeup(d)
 	if (d->bd_async) {
 		if (d->bd_pgid > 0)
 			gsignal (d->bd_pgid, SIGIO);
-		else if ((p = pfind (-d->bd_pgid)) != NULL)
+		else if (d->bd_pgid && (p = pfind (-d->bd_pgid)) != NULL)
 			psignal (p, SIGIO);
 	}
 
