@@ -1,3 +1,4 @@
+/*	$NetBSD: lpt_lbus.c,v 1.9 2000/02/22 11:26:00 soda Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*

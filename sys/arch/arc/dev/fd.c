@@ -1,5 +1,5 @@
-/*	$NetBSD: fd.c,v 1.16 2000/02/07 20:16:49 thorpej Exp $	*/
-/*	$OpenBSD: fd.c,v 1.5 1997/04/19 17:19:52 pefo Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 2000/02/22 11:26:00 soda Exp $	*/
+/*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
 /*-
@@ -92,6 +92,7 @@
 #include <sys/queue.h>
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
@@ -922,8 +923,8 @@ loop:
 #endif
 		 }}
 #endif
-		mips3_FlushDCache((vm_offset_t) (bp->b_data + fd->sc_skip),
-				(vm_offset_t) fd->sc_nbytes);
+		mips3_FlushDCache((vaddr_t) (bp->b_data + fd->sc_skip),
+				  (vsize_t) fd->sc_nbytes);
 		read = bp->b_flags & B_READ ? DMA_FROM_DEV : DMA_TO_DEV;
 		DMA_START(fdc->dma, bp->b_data + fd->sc_skip, fd->sc_nbytes, read);
 		outb(iobase + fdctl, type->rate);

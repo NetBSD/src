@@ -1,5 +1,5 @@
-/*	$NetBSD: dma.c,v 1.11 2000/01/23 21:01:53 soda Exp $	*/
-/*	$OpenBSD: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $	*/
+/*	$NetBSD: dma.c,v 1.12 2000/02/22 11:26:00 soda Exp $	*/
+/*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,14 +71,12 @@ void picaDmaReset __P((dma_softc_t *sc));
 void picaDmaEnd __P((dma_softc_t *sc));
 void picaDmaNull __P((dma_softc_t *sc));
 
-
 extern vm_map_t phys_map;
 
 #define dma_pte_to_pa(x)	(((x) - first_dma_pte) * R4030_DMA_PAGE_SIZE)
 
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
-
 
 /*
  *  Initialize the dma mapping register area and pool.
@@ -88,7 +86,7 @@ picaDmaInit()
 {
 	int map = PICA_TL_BASE;
 
-	mips3_FlushCache();	/* Make shure no map entries are cached */
+	mips3_FlushCache();	/* Make sure no map entries are cached */
 
 	bzero((char *)map, PICA_TL_SIZE);
 	free_dma_pte = (dma_pte_t *)map;
@@ -194,8 +192,8 @@ picaDmaTLBFree(dma_softc_t *dma)
 void
 picaDmaTLBMap(dma_softc_t *sc)
 {
-	vm_offset_t pa;
-	vm_offset_t va;
+	paddr_t pa;
+	vaddr_t va;
 	dma_pte_t *dma_pte;
 	int nbytes;
 
@@ -278,7 +276,7 @@ picaDmaMap(sc, addr, size, offset)
 {
 	/* Remap request space va into dma space va */
 
-	sc->req_va = (int)addr;
+	sc->req_va = (vaddr_t)addr;
 	sc->next_va = sc->dma_va + dma_page_offs(addr) + offset;
 	sc->next_size = size;
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: pccons.c,v 1.13 2000/01/23 21:01:54 soda Exp $	*/
-/*	$OpenBSD: pccons.c,v 1.15 1997/05/19 16:01:07 pefo Exp $	*/
+/*	$NetBSD: pccons.c,v 1.14 2000/02/22 11:26:00 soda Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -49,6 +49,8 @@
  * code to work keyboard & display for PC-style console
  */
 
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -85,8 +87,6 @@
 #include <machine/kbdreg.h>
 
 #include <dev/cons.h>
-
-extern int cputype;
 
 #define	XFREE86_BUG_COMPAT
 
@@ -213,8 +213,6 @@ void sput __P((u_char *, int));
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
 static __inline void wcopy __P((void *, void *, u_int));
-
-char	partab[];
 
 extern void fillw __P((int, u_int16_t *, int));
 
@@ -867,14 +865,15 @@ pccnattach()
 		break;
 
 	case DESKSTATION_TYNE:
-		mono_base += TYNE_V_ISA_IO;
-		mono_buf += TYNE_V_ISA_MEM;
-		cga_base += TYNE_V_ISA_IO;
-		cga_buf += TYNE_V_ISA_MEM;
-		kbd_cmdp = TYNE_V_ISA_IO + 0x64;
-		kbd_datap = TYNE_V_ISA_IO + 0x60;
-		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
-		outb(TYNE_V_ISA_IO + 0x3cf, inb(TYNE_V_ISA_IO + 0x3cf) | 0xc);
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
+		outb(arc_bus_io.bus_base + 0x3ce, 6);	/* Correct video mode */
+		outb(arc_bus_io.bus_base + 0x3cf,
+			inb(arc_bus_io.bus_base + 0x3cf) | 0xc);
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 
@@ -886,6 +885,15 @@ pccnattach()
 		kbd_cmdp = arc_bus_io.bus_base + 0x64;
 		kbd_datap = arc_bus_io.bus_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
+		break;
+
+	case SNI_RM200:
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
 		break;
 	}
 
@@ -1893,6 +1901,15 @@ pcmmap(dev, offset, nprot)
 			return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
 		if (offset >= 0x40000000 && offset < 0x40800000)
 			return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
+		return -1;
+
+	case DESKSTATION_RPC44:
+		if (offset >= 0xa0000 && offset < 0xc0000)
+			return mips_btop(RPC44_P_ISA_MEM + offset);
+		if (offset >= 0x0000 && offset < 0x10000)
+			return mips_btop(RPC44_P_ISA_IO + offset);
+		if (offset >= 0x40000000 && offset < 0x40800000)
+			return mips_btop(RPC44_P_ISA_MEM + offset - 0x40000000);
 		return -1;
 
 	case DESKSTATION_TYNE:
