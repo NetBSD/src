@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2000/07/17 17:06:00 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2000/07/18 12:52:56 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4287,7 +4287,7 @@ sparc_intr_retry:
 
 	mov	%l4, %o5
 	mov	%l1, %o3
-	save	%sp, -CC64FSZ, %sp
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	mov	%i5, %o1
 	mov	%i3, %o3
 	LOAD_ASCIZ(%o0, "sparc_interrupt:  ih %p fun %p has %p clear\r\n")
@@ -4464,7 +4464,7 @@ intrcmplt:
 	bz,a,pt	%icc, 7f
 	 nop
 	
-	save	%sp, -CC64FSZ, %sp
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "sparc_interrupt:  done\r\n")
 	GLOBTOLOC
 	call	prom_printf
@@ -5811,12 +5811,15 @@ _C_LABEL(cpu_initialize):
 _C_LABEL(openfirmware):
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
+
 	 sethi	%hi(romp), %l7
-	
 	LDPTR	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
-	rdpr	%pil, %i2
-	wrpr	%g0, PIL_IMP, %pil
+	rdpr	%pil, %i2	! s = splx(level)
+	cmp	%i2, PIL_IMP
+	blu,a,pt	%icc, 0f
+	 wrpr	%g0, PIL_IMP, %pil
+0:
 #if 0
 !!!
 !!! Since prom addresses overlap user addresses
@@ -5864,14 +5867,14 @@ _C_LABEL(openfirmware):
 	ret
 	 restore	%o0, %g0, %o0
 
-1:						! v8 -- need to screw with stack & params
+1:	! v8 -- need to screw with stack & params
 #ifdef NOTDEF_DEBUG
 	mov	%o7, %o5
 	call	globreg_check
 	 nop
 	mov	%o5, %o7
 #endif
-	save	%sp, -CC64FSZ, %sp			! Get a new 64-bit stack frame
+	save	%sp, -CC64FSZ, %sp		! Get a new 64-bit stack frame
 #if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
@@ -5881,21 +5884,26 @@ _C_LABEL(openfirmware):
 	rdpr	%pstate, %l0
 	LDPTR	[%o1+%lo(romp)], %o1		! Do the actual call
 	srl	%sp, 0, %sp
-	rdpr	%pil, %i2
+	rdpr	%pil, %i2	! s = splx(level)
 	mov	%i0, %o0
 	mov	%g1, %l1
 	mov	%g2, %l2
 	mov	%g3, %l3
-	wrpr	%g0, PIL_IMP, %pil
+
+	cmp	%i2, PIL_IMP
+	blu,a,pt	%icc, 0f
+	 wrpr	%g0, PIL_IMP, %pil
+0:
 	mov	%g4, %l4
 	mov	%g5, %l5
 	mov	%g6, %l6
 	mov	%g7, %l7
 	jmpl	%o1, %o7
+	! Enable 64-bit addresses for the prom
 #if !defined(_LP64) || defined(TRAPTRACE)
-	 wrpr	%g0, PSTATE_PROM, %pstate		! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM, %pstate
 #else
-	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate	! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate
 #endif
 	wrpr	%l0, 0, %pstate
 	wrpr	%i2, 0, %pil
@@ -10464,7 +10472,7 @@ ENTRY(send_softint)
 	bge,pt	%icc, 1f
 	 nop
 	wrpr	%o1, 0, %pil
-1:	
+1:
 #ifdef	VECTORED_INTERRUPTS
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
