@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.29 1994/04/20 22:39:33 mycroft Exp $
+ *      $Id: aha1742.c,v 1.30 1994/04/29 23:15:54 cgd Exp $
  */
 
 /*
@@ -1028,7 +1028,8 @@ ahb_scsi_cmd(xs)
 		if (!(flags & SCSI_NOMASK)) {
 			s = splbio();
 			ahb_send_immed(ahb, sc_link->target, AHB_TARG_RESET);
-			timeout(ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
+			timeout((timeout_t)ahb_timeout, ecb,
+			    (xs->timeout * hz) / 1000);
 			splx(s);
 			return SUCCESSFULLY_QUEUED;
 		} else {
@@ -1164,7 +1165,7 @@ ahb_scsi_cmd(xs)
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
 		ahb_send_mbox(ahb, OP_START_ECB, sc_link->target, ecb);
-		timeout(ahb_timeout, (caddr_t)ecb, (xs->timeout * hz) / 1000);
+		timeout((timeout_t)ahb_timeout, ecb, (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 		return SUCCESSFULLY_QUEUED;
@@ -1234,7 +1235,7 @@ ahb_timeout(arg)
 	} else {		/* abort the operation that has timed out */
 		printf("\n");
 		ahb_send_mbox(ahb, OP_ABORT_ECB, ecb->xs->sc_link->target, ecb);
-		timeout(ahb_timeout, (caddr_t)ecb, 2 * hz);
+		timeout((timeout_t)ahb_timeout, ecb, 2 * hz);
 		ecb->flags = ECB_ABORTED;
 	}
 	splx(s);

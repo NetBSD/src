@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.11 1994/02/10 17:25:04 mycroft Exp $
+ *	$Id: if.c,v 1.12 1994/04/29 23:16:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -385,7 +385,7 @@ if_slowtimo(caddr_t arg)
 			(*ifp->if_watchdog)(ifp->if_unit);
 	}
 	splx(s);
-	timeout(if_slowtimo, (caddr_t)0, hz / IFNET_SLOWHZ);
+	timeout((timeout_t)if_slowtimo, (caddr_t)0, hz / IFNET_SLOWHZ);
 }
 
 /*
