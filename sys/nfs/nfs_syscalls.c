@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *	$Id: nfs_syscalls.c,v 1.5 1993/05/22 11:43:03 cgd Exp $
+ *	$Id: nfs_syscalls.c,v 1.6 1993/07/17 15:56:59 mycroft Exp $
  */
 
 #include "param.h"
@@ -105,13 +105,15 @@ static int compressreply[NFS_NPROCS] = {
 /*
  * Get file handle system call
  */
+struct getfh_args {
+	char	*fname;
+	fhandle_t *fhp;
+};
+
 /* ARGSUSED */
 getfh(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		char	*fname;
-		fhandle_t *fhp;
-	} *uap;
+	register struct getfh_args *uap;
 	int *retval;
 {
 	register struct nameidata *ndp;
@@ -150,16 +152,18 @@ getfh(p, uap, retval)
  * Nfs server psuedo system call for the nfsd's
  * Never returns unless it fails or gets killed
  */
+struct nfssvc_args {
+	int s;
+	caddr_t mskval;
+	int msklen;
+	caddr_t mtchval;
+	int mtchlen;
+};
+
 /* ARGSUSED */
 nfssvc(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int s;
-		caddr_t mskval;
-		int msklen;
-		caddr_t mtchval;
-		int mtchlen;
-	} *uap;
+	register struct nfssvc_args *uap;
 	int *retval;
 {
 	register struct mbuf *m;

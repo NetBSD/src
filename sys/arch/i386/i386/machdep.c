@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.38 1993/07/12 12:00:45 cgd Exp $
+ *	$Id: machdep.c,v 1.39 1993/07/17 16:06:44 mycroft Exp $
  */
 
 #include "npx.h"
@@ -517,11 +517,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
+struct sigreturn_args {
+	struct sigcontext *sigcntxp;
+};
+
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct sigcontext *sigcntxp;
-	} *uap;
+	struct sigreturn_args *uap;
 	int *retval;
 {
 	register struct sigcontext *scp;
