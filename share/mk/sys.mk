@@ -1,9 +1,9 @@
 #	from: @(#)sys.mk	5.11 (Berkeley) 3/13/91
-#	$Id: sys.mk,v 1.8 1993/09/08 13:13:46 brezak Exp $
+#	$Id: sys.mk,v 1.9 1993/12/29 18:44:36 jtc Exp $
 
 unix=		We run UNIX.
 
-.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .S .cl .p .h 
+.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .e .r .y .l .s .S .cl .p .h .sh
 .SUFFIXES: .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .LIBS:		.a
@@ -47,19 +47,48 @@ RFLAGS=
 SHELL=		sh
 
 YACC=		yacc
-YFLAGS=-d
+YFLAGS=		-d
 
+# single suffix rules
+.c:
+	${CC} ${CFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.cc .C:
+	${CXX} ${CXXFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.e .r .F .f:
+	${FC} ${RFLAGS} ${EFLAGS} ${FFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.p:
+	${PC} ${PFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+
+.y:
+	${YACC} ${YFLAGS} ${.IMPSRC}
+	${CC} ${CFLAGS} y.tab.c ${LDLIBS} -ly -o ${.TARGET}
+	rm -f y.tab.c
+
+.l:
+	${LEX} ${LFLAGS} ${.IMPSRC}
+	${CC} ${CFLAGS} lex.yy.c ${LDLIBS} -ll -o ${.TARGET}
+	rm -f lex.yy.c
+
+.sh:
+	rm -f ${.TARGET}
+	cp ${.IMPSRC} ${.TARGET}
+
+
+# double suffix rules
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC}
 
 .cc.o .C.o:
 	${CXX} ${CXXFLAGS} -c ${.IMPSRC}
 
-.p.o:
-	${PC} ${PFLAGS} -c ${.IMPSRC}
-
 .e.o .r.o .F.o .f.o:
 	${FC} ${RFLAGS} ${EFLAGS} ${FFLAGS} -c ${.IMPSRC}
+
+.p.o:
+	${PC} ${PFLAGS} -c ${.IMPSRC}
 
 .s.o:
 	${AS} ${AFLAGS} -o ${.TARGET} ${.IMPSRC}
@@ -84,6 +113,17 @@ YFLAGS=-d
 .l.c:
 	${LEX} ${LFLAGS} ${.IMPSRC}
 	mv lex.yy.c ${.TARGET}
+
+.c.a:
+	${CC} -c ${CFLAGS} $<
+	${AR} ${ARFLAGS} $@ $*.o
+	rm -f $*.o
+
+.f.a:
+	${CC} -c ${FFLAGS} $<
+	${AR} ${ARFLAGS} $@ $*.o
+	rm -f $*.o
+	
 
 .s.out .c.out .o.out:
 	${CC} ${CFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
