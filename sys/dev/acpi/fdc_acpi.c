@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.6 2003/01/09 12:23:28 jdolecek Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.7 2003/01/13 06:26:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.6 2003/01/09 12:23:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.7 2003/01/13 06:26:10 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -251,7 +251,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &buf);
 	if (rv != AE_OK) {
 #ifdef ACPI_FDC_DEBUG
-		printf("%s: failed to evalulate _FDE: %x\n",
+		printf("%s: failed to evaluate _FDE: %x\n",
 		    sc->sc_dev.dv_xname, rv);
 #endif
 		return drives;
@@ -314,7 +314,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &buf);
 		if (rv != AE_OK) {
 #ifdef ACPI_FDC_DEBUG
-			printf("%s: failed to evalulate _FDI: %x on drive %d\n",
+			printf("%s: failed to evaluate _FDI: %x on drive %d\n",
 			    sc->sc_dev.dv_xname, rv, i);
 #endif
 			/* XXX if _FDI fails, assume 1.44MB floppy */
