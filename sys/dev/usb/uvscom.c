@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.3 2002/03/20 16:39:39 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.4 2002/03/23 15:38:22 taca Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -266,8 +266,8 @@ USB_ATTACH(uvscom)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfo;
-	const char *devname;
+	char devinfo[1024];
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
