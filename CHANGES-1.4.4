@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.15 2001/07/19 13:54:05 perry Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.16 2001/07/29 20:55:19 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -347,3 +347,10 @@ sys/kern/uipc_syscalls.c			patch
 
   fix overflow in sendmsg()
 
+sys/arch/i386/i386/sys_machdep.c		1.58 via patch
+
+  Copy in segment descriptors all at once rather than one at a time.
+
+sys/kern/uipc_syscalls.c			patch
+
+  Add required include files to make this compile again.
