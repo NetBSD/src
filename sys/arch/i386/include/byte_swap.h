@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.5 2001/11/03 06:22:54 lukem Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.6 2001/11/29 02:46:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,14 +59,14 @@ __byte_swap_long_variable(u_int32_t x)
 	    "rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1"
 #endif
 	    : "=r" (x) : "0" (x));
-	return x;
+	return (x);
 }
 
 static __inline u_int16_t
 __byte_swap_word_variable(u_int16_t x)
 {
 	__asm __volatile ("rorw $8, %w1" : "=r" (x) : "0" (x)); 
-	return x;
+	return (x);
 }
 
 #ifdef __OPTIMIZE__
