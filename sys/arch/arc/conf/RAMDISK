@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.12 2000/12/24 09:25:25 ur Exp $
+#	$NetBSD: RAMDISK,v 1.13 2001/05/21 03:37:31 soda Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -141,11 +141,16 @@ sn0		at jazzio?
 fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-asc0		at jazzio?
+asc0		at jazzio?			# NCR53C9x SCSI
 scsibus* 	at asc?
 
-#siop0		at jazzio?
-#scsibus* 	at siop?
+osiop0		at jazzio? flags 0x00000	# NCR53C710 SCSI
+osiop1		at jazzio? flags 0x00000
+scsibus* 	at osiop?
+
+#oosiop0 	at jazzio?			# NCR53C700 SCSI
+#oosiop1 	at jazzio?
+#scsibus* 	at oosiop?
 
 #### ISA bus devices
 
@@ -305,6 +310,8 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
