@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.16 1996/02/02 20:09:45 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.17 1996/02/03 00:44:30 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -67,8 +67,8 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
