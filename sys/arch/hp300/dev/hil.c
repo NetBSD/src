@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.12 1994/05/04 03:47:12 mycroft Exp $
+ *	$Id: hil.c,v 1.13 1994/05/04 04:05:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -381,7 +381,7 @@ hilioctl(dev, cmd, data, flag, p)
 		}
 	}
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
 		return(hpuxhilioctl(dev, cmd, data, flag));
 #endif
@@ -501,7 +501,7 @@ hilioctl(dev, cmd, data, flag, p)
 	return(error);
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 /* ARGSUSED */
 hpuxhilioctl(dev, cmd, data, flag)
 	dev_t dev;

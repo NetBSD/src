@@ -39,7 +39,7 @@ options		KTRACE
 
 # More standard options for the HPs
 options		MAPMEM,SYSVSHM
-#options		HPUXCOMPAT
+#options		COMPAT_HPUX
 
 
 config		netbsd swap generic

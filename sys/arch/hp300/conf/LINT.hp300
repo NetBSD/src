@@ -24,7 +24,7 @@ options		"COMPAT_42","TCP_COMPAT_42"
 
 # More standard options for the HPs
 options		MAPMEM,SYSVSHM
-options		HPUXCOMPAT
+options		COMPAT_HPUX
 
 # KTRACE: various kernel event traces
 options		KTRACE

@@ -1,4 +1,4 @@
-# $Id: files.hp300,v 1.10 1994/02/06 00:53:26 mycroft Exp $
+# $Id: files.hp300,v 1.11 1994/05/04 04:04:19 mycroft Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
@@ -40,11 +40,11 @@ arch/hp300/dev/dcm.c			optional dcm device-driver
 arch/hp300/dev/scsi.c			optional scsi device-driver
 arch/hp300/dev/sd.c			optional sd device-driver # XXX add dd
 arch/hp300/dev/st.c			optional st device-driver # XXX add dd
-arch/hp300/hpux/hpux_compat.c		optional hpuxcompat
-arch/hp300/hpux/hpux_net.c		optional hpuxcompat
-arch/hp300/hpux/hpux_sig.c		optional hpuxcompat
-arch/hp300/hpux/hpux_syscalls.c		optional hpuxcompat
-arch/hp300/hpux/hpux_sysent.c		optional hpuxcompat
-arch/hp300/hpux/hpux_tty.c		optional hpuxcompat
+arch/hp300/hpux/hpux_compat.c		optional compat_hpux
+arch/hp300/hpux/hpux_net.c		optional compat_hpux
+arch/hp300/hpux/hpux_sig.c		optional compat_hpux
+arch/hp300/hpux/hpux_syscalls.c		optional compat_hpux
+arch/hp300/hpux/hpux_sysent.c		optional compat_hpux
+arch/hp300/hpux/hpux_tty.c		optional compat_hpux
 dev/cons.c				standard
 thisisfor_in_proto.c			optional hy

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.8 1994/05/04 03:47:10 mycroft Exp $
+ *	$Id: grf.c,v 1.9 1994/05/04 04:05:47 mycroft Exp $
  */
 
 /*
@@ -63,7 +63,7 @@
 
 #include <machine/cpu.h>
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 #include <hp300/hpux/hpux.h>
 #endif
 
@@ -216,7 +216,7 @@ grfopen(dev, flags)
 		return(ENXIO);
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
@@ -266,7 +266,7 @@ grfioctl(dev, cmd, data, flag, p)
 	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
 	int error;
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
 		return(hpuxgrfioctl(dev, cmd, data, flag, p));
 #endif
@@ -329,7 +329,7 @@ grflock(gp, block)
 		       p->p_pid, gp-grf_softc, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (gp->g_pid) {
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
@@ -357,7 +357,7 @@ grflock(gp, block)
 		} while (gp->g_lockp);
 	}
 	gp->g_lockp = p;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (gp->g_pid) {
 		int slot = grffindpid(gp);
 #ifdef DEBUG
@@ -382,7 +382,7 @@ grfunlock(gp)
 #endif
 	if (gp->g_lockp != curproc)
 		return(EBUSY);
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (gp->g_pid) {
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
@@ -409,7 +409,7 @@ grfmap(dev, off, prot)
 	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 
 /*ARGSUSED*/
 hpuxgrfioctl(dev, cmd, data, flag, p)
@@ -562,7 +562,7 @@ grfaddr(gp, off)
 	return(-1);
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 /*
  * Convert a BSD style minor devno to HPUX style.
  * We cannot just create HPUX style nodes as they require 24 bits
@@ -648,7 +648,7 @@ grfunmmap(dev, addr, p)
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 iommap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -777,6 +777,6 @@ grflckunmmap(dev, addr)
 #endif
 	return(EINVAL);
 }
-#endif	/* HPUXCOMPAT */
+#endif	/* COMPAT_HPUX */
 
 #endif	/* NGRF > 0 */

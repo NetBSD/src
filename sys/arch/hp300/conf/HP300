@@ -24,7 +24,7 @@ options		"TCP_COMPAT_42"
 
 # Options for all HP machines
 options		SYSVSHM
-options		HPUXCOMPAT
+options		COMPAT_HPUX
 
 # Options specific to this host.
 options		DEBUG,DIAGNOSTIC
