@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc. 1997 1996 1995 1994 1993 1992 1991  
@@ -105,7 +105,7 @@ scan_pci_devs()
 	int n = 0;
 	u_int reg[2];
 
-	bzero(bandits, sizeof(bandits));
+	bzero(pci_bridges, sizeof(pci_bridges));
 
 	node = OF_peer(0);
 	node = OF_child(node);
@@ -119,9 +119,10 @@ scan_pci_devs()
 			if (OF_getprop(node, "reg", reg, sizeof(reg)) != 8)
 				continue;
 
-			bandits[n].iot  = (bus_space_tag_t)reg[0];
-			bandits[n].addr = mapiodev(reg[0] + 0x800000, 4);
-			bandits[n].data = mapiodev(reg[0] + 0xc00000, 4);
+			pci_bridges[n].iot  = (bus_space_tag_t)reg[0];
+			pci_bridges[n].addr = mapiodev(reg[0] + 0x800000, 4);
+			pci_bridges[n].data = mapiodev(reg[0] + 0xc00000, 4);
+			pci_bridges[n].pc = n;
 			bandit_init(n++);
 
 			child = OF_child(node);
@@ -130,6 +131,18 @@ scan_pci_devs()
 				child = OF_peer(child);
 			}
 		}
+		if (strcmp(name, "pci") == 0) {	/* XXX This is not a bandit :) */
+			int child;
+
+			if (OF_getprop(node, "reg", reg, sizeof(reg)) != 8)
+				continue;
+
+			pci_bridges[n].iot  = (bus_space_tag_t)reg[0];
+			pci_bridges[n].addr = mapiodev(0xfec00000, 4); /* XXX */
+			pci_bridges[n].data = mapiodev(0xfee00000, 4); /* XXX */
+			pci_bridges[n].pc = PCI_CHIPSET_MPC106; /* for now */
+		}
+
 		node = OF_peer(node);
 	}
 }
