@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.68 2001/04/09 23:51:28 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.69 2001/04/14 19:37:17 ross Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4484,7 +4484,7 @@ ahc_download_instr(struct ahc_softc *ahc, int instrptr, u_int8_t *dconsts)
 	u_int	opcode;
 
 	/* Structure copy */
-	instr = *(union ins_formats*)&seqprog[instrptr * 4];
+	memcpy(&instr, &seqprog[instrptr * 4], sizeof instr);
 
 	instr.integer = le32toh(instr.integer);
 
