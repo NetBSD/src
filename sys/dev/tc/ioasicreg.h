@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.4 2000/07/17 01:28:16 thorpej Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.5 2000/07/17 02:17:13 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -180,12 +180,6 @@
 
 /* DMA pointer registers (SCSI, Comm, ...) */
 
-#define IOASIC_DMAPTR_MASK		0xffffffe0
-#define IOASIC_DMAPTR_SHIFT		5
-#define IOASIC_DMAPTR_SET(reg,val) \
-    (reg) = (((val)<<IOASIC_DMAPTR_SHIFT)&IOASIC_DMAPTR_MASK)
-#define IOASIC_DMAPTR_GET(reg,val) \
-    (val) = (((reg)&IOASIC_DMAPTR_MASK)>>IOASIC_DMAPTR_SHIFT)
 #define	IOASIC_DMA_ADDR(p) \
     ((((p) << 3) & ~0x1f) | (((p) >> 29) & 0x1f))
 
