@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 2001/07/15 17:29:00 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 2001/07/17 06:39:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -65,7 +65,7 @@ _start:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 2001/07/15 17:29:00 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 2001/07/17 06:39:14 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -73,9 +73,7 @@ __start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 	const Obj_Entry *obj, void (*cleanup)(void))
 {
 	char *ap;
-	static pid_t xpid;
 
-	xpid = getpid();
  	environ = envp;
 	__ps_strings = ps_strings;
 
@@ -99,6 +97,9 @@ __start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif	/* MCRT0 */
+
+	atexit(_fini);
+	_init();
 
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, envp));
