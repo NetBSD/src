@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2001/12/12 00:51:04 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/27 11:39:20 lukem Exp $
 
 LIB=		l
 SRCS=		libmain.c libyywrap.c
 NOPIC=		# defined
 
-LINKS=		/usr/lib/libl.a /usr/lib/libfl.a
+LINKS=		${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 
 .PATH:		${.CURDIR}/../../usr.bin/lex
 .include <bsd.lib.mk>
