@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.7.2.3 1994/07/26 18:17:58 cgd Exp $
+ *	$Id: if_le.c,v 1.7.2.4 1994/08/07 00:56:31 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -170,7 +170,7 @@ found:
 #define MAXMEM ((NRBUF + NTBUF) * (BUFSIZE + sizeof(struct mds)) + \
 		sizeof(struct init_block))
 	if (sc->sc_card == DEPCA) {
-		u_char *mem;
+		u_char *mem, val;
 		int i;
 
 		mem = sc->sc_mem = ia->ia_maddr;
@@ -181,41 +181,20 @@ found:
 			return 0;
 		}
 
-		for (i = 0; i < ia->ia_msize; i++)
-			mem[i] = 0xff;
-		for (i = 0; i < ia->ia_msize; i++)
-			if (mem[i] != 0xff) {
-				printf("%s: failed to clear memory\n",
-				    sc->sc_dev.dv_xname);
-				return 0;
-			}
-
-		for (i = 0; i < ia->ia_msize; i++)
-			mem[i] = 0xaa;
-		for (i = 0; i < ia->ia_msize; i++)
-			if (mem[i] != 0xaa) {
-				printf("%s: failed to clear memory\n",
-				    sc->sc_dev.dv_xname);
-				return 0;
-			}
-
-		for (i = 0; i < ia->ia_msize; i++)
-			mem[i] = 0x55;
-		for (i = 0; i < ia->ia_msize; i++)
-			if (mem[i] != 0x55) {
-				printf("%s: failed to clear memory\n",
-				    sc->sc_dev.dv_xname);
-				return 0;
-			}
-
-		for (i = 0; i < ia->ia_msize; i++)
-			mem[i] = 0x00;
-		for (i = 0; i < ia->ia_msize; i++)
-			if (mem[i] != 0x00) {
-				printf("%s: failed to clear memory\n",
-				    sc->sc_dev.dv_xname);
-				return 0;
-			}
+		val = 0xff;
+		for (;;) {
+			for (i = 0; i < ia->ia_msize; i++)
+				mem[i] = val;
+			for (i = 0; i < ia->ia_msize; i++)
+				if (mem[i] != val) {
+					printf("%s: failed to clear memory\n",
+					    sc->sc_dev.dv_xname);
+					return 0;
+				}
+			if (val == 0x00)
+				break;
+			val -= 0x55;
+		}
 	} else {
 		sc->sc_mem = malloc(MAXMEM, M_TEMP, M_NOWAIT);
 		if (!sc->sc_mem) {
@@ -233,7 +212,8 @@ depca_probe(sc, ia)
 	struct le_softc *sc;
 	struct isa_attach_args *ia;
 {
-	u_short iobase = ia->ia_iobase;
+	u_short iobase = ia->ia_iobase, port;
+	u_long sum, rom_sum;
 	u_char x;
 	int i;
 
@@ -249,37 +229,58 @@ depca_probe(sc, ia)
 
 	/*
 	 * Extract the physical MAC address from the ROM.
+	 *
+	 * The address PROM is 32 bytes wide, and we access it through
+	 * a single I/O port.  On each read, it rotates to the next
+	 * position.  We find the ethernet address by looking for a
+	 * particular sequence of bytes (0xff, 0x00, 0x55, 0xaa, 0xff,
+	 * 0x00, 0x55, 0xaa), and then reading the next 8 bytes (the
+	 * ethernet address and a checksum).
+	 *
+	 * It appears that the PROM can be at one of two locations, so
+	 * we just try both.
 	 */
+	port = iobase + DEPCA_ADP;
 	for (i = 0; i < 32; i++)
-		if (inb(iobase + DEPCA_ADP) == 0xff &&
-		    inb(iobase + DEPCA_ADP) == 0x00 &&
-		    inb(iobase + DEPCA_ADP) == 0x55 &&
-		    inb(iobase + DEPCA_ADP) == 0xaa &&
-		    inb(iobase + DEPCA_ADP) == 0xff &&
-		    inb(iobase + DEPCA_ADP) == 0x00 &&
-		    inb(iobase + DEPCA_ADP) == 0x55 &&
-		    inb(iobase + DEPCA_ADP) == 0xaa)
+		if (inb(port) == 0xff && inb(port) == 0x00 &&
+		    inb(port) == 0x55 && inb(port) == 0xaa &&
+		    inb(port) == 0xff && inb(port) == 0x00 &&
+		    inb(port) == 0x55 && inb(port) == 0xaa)
 			goto found;
+	port = iobase + DEPCA_ADP + 1;
 	for (i = 0; i < 32; i++)
-		if (inb(iobase + DEPCA_ADP + 1) == 0xff &&
-		    inb(iobase + DEPCA_ADP + 1) == 0x00 &&
-		    inb(iobase + DEPCA_ADP + 1) == 0x55 &&
-		    inb(iobase + DEPCA_ADP + 1) == 0xaa &&
-		    inb(iobase + DEPCA_ADP + 1) == 0xff &&
-		    inb(iobase + DEPCA_ADP + 1) == 0x00 &&
-		    inb(iobase + DEPCA_ADP + 1) == 0x55 &&
-		    inb(iobase + DEPCA_ADP + 1) == 0xaa)
+		if (inb(port) == 0xff && inb(port) == 0x00 &&
+		    inb(port) == 0x55 && inb(port) == 0xaa &&
+		    inb(port) == 0xff && inb(port) == 0x00 &&
+		    inb(port) == 0x55 && inb(port) == 0xaa)
 			goto found;
-	printf("%s: address not found; data:", sc->sc_dev.dv_xname);
-	for (i = 0; i < 32; i++)
-		printf(" %02x", inb(iobase + DEPCA_ADP));
-	for (i = 0; i < 32; i++)
-		printf(" %02x", inb(iobase + DEPCA_ADP + 1));
-	printf("\n");
+	printf("%s: address not found\n", sc->sc_dev.dv_xname);
 	return 0;
+
 found:
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + DEPCA_ADP);
+		sc->sc_arpcom.ac_enaddr[i] = inb(port);
+
+#if 0
+	sum =
+	    (sc->sc_arpcom.ac_enaddr[0] <<  2) +
+	    (sc->sc_arpcom.ac_enaddr[1] << 10) +
+	    (sc->sc_arpcom.ac_enaddr[2] <<  1) +
+	    (sc->sc_arpcom.ac_enaddr[3] <<  9) +
+	    (sc->sc_arpcom.ac_enaddr[4] <<  0) +
+	    (sc->sc_arpcom.ac_enaddr[5] <<  8);
+	sum = (sum & 0xffff) + (sum >> 16);
+	sum = (sum & 0xffff) + (sum >> 16);
+
+	rom_sum = inb(port);
+	rom_sum |= inb(port) << 8;
+
+	if (sum != rom_sum) {
+		printf("%s: checksum mismatch; calculated %04x != read %04x",
+		    sc->sc_dev.dv_xname, sum, rom_sum);
+		return 0;
+	}
+#endif
 
 	outb(iobase + DEPCA_CSR, DEPCA_CSR_NORMAL);
 
