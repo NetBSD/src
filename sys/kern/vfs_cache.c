@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.41 2003/03/02 13:26:22 enami Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.42 2003/05/21 09:36:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.41 2003/03/02 13:26:22 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.42 2003/05/21 09:36:06 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -323,6 +323,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 				bp -= ncp->nc_nlen;
 				if (bp <= bufp) {
 					*dvpp = NULL;
+					simple_unlock(&namecache_slock);
 					return (ERANGE);
 				}
 				memcpy(bp, ncp->nc_name, ncp->nc_nlen);
