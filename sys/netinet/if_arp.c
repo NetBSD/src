@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.56.2.3 1999/06/20 19:20:33 perry Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.56.2.4 2000/07/02 21:45:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,10 +223,15 @@ arp_rtrequest(req, rt, sa)
 	register struct rtentry *rt;
 	struct sockaddr *sa;
 {
-	register struct sockaddr *gate = rt->rt_gateway;
-	register struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	register struct sockaddr *gate;
+	register struct llinfo_arp *la;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	size_t allocsize;
+	int s;
+
+	s = splnet();
+	gate = rt->rt_gateway;
+	la = (struct llinfo_arp *)rt->rt_llinfo;
 
 	if (!arpinit_done) {
 		arpinit_done = 1;
@@ -239,8 +244,11 @@ arp_rtrequest(req, rt, sa)
 		}
 		timeout(arptimer, (caddr_t)0, hz);
 	}
-	if (rt->rt_flags & RTF_GATEWAY)
+	if (rt->rt_flags & RTF_GATEWAY) {
+	  	splx(s);	  
 		return;
+	}
+
 	switch (req) {
 
 	case RTM_ADD:
@@ -344,6 +352,7 @@ arp_rtrequest(req, rt, sa)
 			m_freem(la->la_hold);
 		Free((caddr_t)la);
 	}
+	splx(s);
 }
 
 /*
@@ -403,6 +412,8 @@ arpresolve(ifp, rt, m, dst, desten)
 {
 	register struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
+	struct mbuf *om;
+	int s;
 
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -431,9 +442,14 @@ arpresolve(ifp, rt, m, dst, desten)
 	 * response yet.  Replace the held mbuf with this
 	 * latest one.
 	 */
-	if (la->la_hold)
-		m_freem(la->la_hold);
+	s = splnet();
+	om = la->la_hold;
 	la->la_hold = m;
+	splx(s);
+
+	if (om)
+		m_freem(om);
+
 	/*
 	 * Re-send the ARP request when appropriate.
 	 */
@@ -524,7 +540,8 @@ in_arpinput(m)
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
-	int op;
+	struct mbuf *om;
+	int op, s;
 
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
@@ -660,11 +677,14 @@ in_arpinput(m)
 			rt->rt_expire = time.tv_sec + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
-		if (la->la_hold) {
-			(*ifp->if_output)(ifp, la->la_hold,
-				rt_key(rt), rt);
-			la->la_hold = 0;
-		}
+
+		s = splnet();
+		om = la->la_hold;
+		la->la_hold = 0;
+		splx(s);
+
+		if (om)
+			(*ifp->if_output)(ifp, om, rt_key(rt), rt);
 	}
 reply:
 	if (op != ARPOP_REQUEST) {
