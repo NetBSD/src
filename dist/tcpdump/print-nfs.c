@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.10 2002/12/04 18:06:36 mycroft Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.11 2002/12/04 18:07:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.92 2002/05/31 09:47:23 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.10 2002/12/04 18:06:36 mycroft Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.11 2002/12/04 18:07:47 mycroft Exp $");
 #endif
 #endif
 
@@ -1544,7 +1544,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 				return;
 			if (vflag) {
 				TCHECK(dp[1]);
-				printf("%u bytes", (u_int32_t) ntohl(dp[0]));
+				printf(" %u bytes", (u_int32_t) ntohl(dp[0]));
 				if (ntohl(dp[1]))
 					printf(" EOF");
 			}
@@ -1568,7 +1568,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 				return;
 			if (vflag) {
 				TCHECK(dp[0]);
-				printf("%u bytes", (u_int32_t) ntohl(dp[0]));
+				printf(" %u bytes", (u_int32_t) ntohl(dp[0]));
 				if (vflag > 1) {
 					TCHECK(dp[1]);
 					printf(" <%s>",
