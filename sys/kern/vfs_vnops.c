@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.54 2002/03/17 19:41:08 atatat Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.54.6.1 2003/10/02 09:51:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.54 2002/03/17 19:41:08 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.54.6.1 2003/10/02 09:51:51 tron Exp $");
 
 #include "fs_union.h"
 
@@ -207,6 +207,24 @@ vn_markexec(vp)
 		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag |= VEXECMAP;
+}
+
+/*
+ * Mark a vnode as being the text of a process.
+ * Fail if the vnode is currently writable.
+ */
+int
+vn_marktext(vp)
+	struct vnode *vp;
+{
+
+	if (vp->v_writecount != 0) {
+		KASSERT((vp->v_flag & VTEXT) == 0);
+		return (ETXTBSY);
+	}
+	vp->v_flag |= VTEXT;
+	vn_markexec(vp);
+	return (0);
 }
 
 /*
