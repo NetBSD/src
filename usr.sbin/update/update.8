@@ -1,5 +1,5 @@
-.\" Copyright (c) 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)update.8	6.5 (Berkeley) 8/5/91
-.\"	$Id: update.8,v 1.4 1994/01/14 16:23:09 jtc Exp $
+.\"	@(#)update.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd August 5, 1991
+.Dd April 19, 1994
 .Dt UPDATE 8
 .Os
 .Sh NAME
@@ -63,9 +62,9 @@ when the system goes multi-user.
 .Xr rc 8 ,
 .Xr sync 8
 .Sh BUGS
-It is possible on some systems, that a
+It is possible on some systems that a
 .Xr sync
-occuring simultaneously with a crash may cause
+occurring simultaneously with a crash may cause
 file system damage. See
 .Xr fsck 8 .
 .Sh HISTORY
