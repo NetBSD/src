@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 2003/01/01 01:26:40 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.6 2003/01/28 12:35:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ zs_config(zsc, base)
 			cs->cs_defspeed = 9600;
 		}
 		zsc->zsc_cs[channel] = cs;
+		simple_lock_init(&cs->cs_lock);
 
 		cs->cs_defcflag = CREAD | CS8 | HUPCL;
 
