@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.94 2000/02/20 22:19:29 sommerfeld Exp $	*/
+/*	$NetBSD: ncr.c,v 1.95 2000/03/17 11:30:14 soren Exp $	*/
 
 /**************************************************************************
 **
@@ -250,6 +250,13 @@
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
 #define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
+#endif
+
+#if defined(__NetBSD__) && defined(__mips__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
+extern paddr_t kvtophys __P((vaddr_t)); /* XXX */
+#define	vtophys(va)	kvtophys((vaddr_t)(va))
 #endif
 
 /*==========================================================
@@ -1525,7 +1532,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.94 2000/02/20 22:19:29 sommerfeld Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.95 2000/03/17 11:30:14 soren Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
