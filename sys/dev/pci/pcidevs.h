@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.8 2004/07/23 21:59:05 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.9 2004/07/28 10:54:40 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.7 2004/07/23 21:58:08 he Exp 
+ *	NetBSD: pcidevs,v 1.615.2.8 2004/07/28 10:52:40 tron Exp 
  */
 
 /*
@@ -1937,10 +1937,10 @@
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
+#define	PCI_PRODUCT_NS_SC1100_IDE	0x0502		/* SC1100 PCI IDE */
+#define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0503		/* SC1100 XpressAUDIO */
 #define	PCI_PRODUCT_NS_SC1100_ISA	0x0510		/* SC1100 PCI-ISA bridge */
 #define	PCI_PRODUCT_NS_SC1100_ACPI	0x0511		/* SC1100 SMI/ACPI */
-#define	PCI_PRODUCT_NS_SC1100_IDE	0x0512		/* SC1100 PCI IDE */
-#define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0513		/* SC1100 XpressAUDIO */
 #define	PCI_PRODUCT_NS_SC1100_XBUS	0x0515		/* SC1100 X-Bus */
 
 /* Philips products */
