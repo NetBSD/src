@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.3 1999/05/15 14:24:45 drochner Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -52,8 +52,8 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-		      "Usage: %s [-f wsdev] [-d [-F]] [-k] [-t type] [-e emul]"
-		      " {vt | [kbd]}\n", __progname);
+		      "Usage: %s [-f wsdev] [-d [-F]] [-k] [-m] [-t type]"
+		      "[-e emul] {vt | [kbd] | [mux]}\n", __progname);
 	exit(1);
 }
 
@@ -63,19 +63,20 @@ main(argc, argv)
 	char **argv;
 {
 	char *wsdev;
-	int c, delete, kbd, idx, wsfd, res;
+	int c, delete, kbd, idx, wsfd, res, mux;
 	struct wsdisplay_addscreendata asd;
 	struct wsdisplay_delscreendata dsd;
-	struct wsdisplay_kbddata kd;
+	struct wsmux_device wmd;
 
 	wsdev = DEFDEV;
 	delete = 0;
 	kbd = 0;
+	mux = 0;
 	asd.screentype = 0;
 	asd.emul = 0;
 	dsd.flags = 0;
 
-	while ((c = getopt(argc, argv, "f:dkt:e:F")) != -1) {
+	while ((c = getopt(argc, argv, "f:dkmt:e:F")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
@@ -84,6 +85,10 @@ main(argc, argv)
 			delete++;
 			break;
 		case 'k':
+			kbd++;
+			break;
+		case 'm':
+			mux++;
 			kbd++;
 			break;
 		case 't':
@@ -116,11 +121,20 @@ main(argc, argv)
 		err(2, wsdev);
 
 	if (kbd) {
-		kd.op = delete ? WSDISPLAY_KBD_DEL : WSDISPLAY_KBD_ADD;
-		kd.idx = idx;
-		res = ioctl(wsfd, WSDISPLAYIO_SETKEYBOARD, &kd);
-		if (res < 0)
-			err(3, "WSDISPLAYIO_SETKEYBOARD");
+		if (mux)
+			wmd.type = WSMUX_MUX;
+		else
+			wmd.type = WSMUX_KBD;
+		wmd.idx = idx;
+		if (delete) {
+			res = ioctl(wsfd, WSMUX_REMOVE_DEVICE, &wmd);
+			if (res < 0)
+				err(3, "WSMUX_REMOVE_DEVICE");
+		} else {
+			res = ioctl(wsfd, WSMUX_ADD_DEVICE, &wmd);
+			if (res < 0)
+				err(3, "WSMUX_ADD_DEVICE");
+		}
 	} else if (delete) {
 		dsd.idx = idx;
 		res = ioctl(wsfd, WSDISPLAYIO_DELSCREEN, &dsd);
