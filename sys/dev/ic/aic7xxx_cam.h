@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx_cam.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+
 /*
  * Data structures and definitions for the CAM system.
  *
@@ -29,7 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_cam.h,v 1.1 2003/04/19 19:33:30 fvdl Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003

@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx_osm.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+
 /*
  * FreeBSD platform specific driver option settings, data structures,
  * function declarations and includes.
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: aic7xxx_osm.h,v 1.1 2003/04/19 19:33:30 fvdl Exp $
  *
  * //depot/aic7xxx/freebsd/dev/aic7xxx/aic7xxx_osm.h#14 $
  *
