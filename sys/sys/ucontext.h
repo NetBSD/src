@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.1.2.1 2001/03/05 22:50:04 nathanw Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.1.2.2 2001/09/25 16:32:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 #ifndef _SYS_UCONTEXT_H_
 #define _SYS_UCONTEXT_H_
 
-#include <machine/mcontext.h>
 #ifndef _KERNEL
 #include <signal.h> /* FIXME: too much. */
 #endif
+#include <machine/mcontext.h>
 
 typedef struct __ucontext	ucontext_t;
 
