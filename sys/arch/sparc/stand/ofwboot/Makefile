@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:52 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2003/05/17 02:26:27 nakayama Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -35,7 +35,7 @@ RELOC=		800000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c sparc machine
+CLEANFILES+=	vers.c sparc64 machine
 
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR} -I.
 CPPFLAGS+=	-DRELOC=0x${RELOC}
