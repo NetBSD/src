@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.203 2004/08/06 19:07:13 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -263,8 +263,10 @@ product LINKSYS2 IWN		0x1612 Instant Wireless Network PC Card
 product LINKSYS2 IWN3		0x1613 Instant Wireless Network PC Card, Versin 3
 product LINKSYS2 WCF11		0x3301 Instant Wireless Network CF Card
 
-/* Lucent WaveLAN/IEEE */
-product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
+/* Lucent */
+product LUCENT HERMES		0x0002 Hermes
+product LUCENT HERMES2		0x0003 Hermes II
+product LUCENT HERMES25		0x0004 Hermes II.5
 
 /* MACNICA */
 product MACNICA ME1_JEIDA	0x3300	MACNICA ME1 for JEIDA
