@@ -1,0 +1,106 @@
+The gss-api authentication mechanism implementation for racoon was
+based on the ietf draft draft-ietf-ipsec-isakmp-gss-auth-06.txt.
+
+The implementation uses the Heimdal gss-api library, i.e. gss-api
+on top of Kerberos 5. The Heimdal gss-api library had to be modified
+to meet the requirements of using gss-api in a daemon. More specifically,
+the gss_acquire_cred() call did not work for other cases than
+GSS_C_NO_CREDENTIAL ("use default creds"). Daemons are often started
+as root, and have no Kerberos 5 credentials, so racoon explicitly
+needs to acquire its credentials. The usual method (already used
+by login authentication daemons) in these situations is to add
+a set of special credentials to be used. For example, authentication
+by daemons concerned with login credentials, uses 'host/fqdn' as
+its credential, where fqdn is the hostname on the interface that
+is being used. These special credentials need to be extracted into
+a local keytab from the kdc. The default value used in racoon
+is 'ike/fqdn', but it can be overridden in the racoon config file.
+
+The modification to the Heimdal gss-api library implements the
+mechanism above. If a credential other than GSS_C_NO_CREDENTIAL
+is specified to gss_acquire_cred(), it first looks in the default
+credential cache if it its principal matches the desired credential.
+If not, it extracts it from the default keytab file, and stores
+it in a memory-based credential cache, part of the gss credential
+structure.
+
+
+
+The modifcations to racoon itself are as follows:
+
+	* The racoon.conf config file accepts a new keyword, "gssapi_id",
+	  to be used inside a proposal specification. It specifies
+	  a string (a Kerberos 5 principal in this case), specifying the
+	  credential that racoon will try to acquire. The default value
+	  is 'ike/fqdn', where fqdn is the hostname for the interface
+	  being used for the exchange. If the id is not specified, no
+	  GSS endpoint attribute will be specified in the first SA sent.
+	  However, if the initiator does specify a GSS endpoint attribute,
+	  racoon will always respond with its own GSS endpoint name
+	  in the SA (the default one if not specified by this option).
+
+	* The racoon.conf file accepts "gssapi_krb" as authentication
+	  method inside a proposal specification. The number used
+	  for this method is 65001, which is a temporary number as
+	  specified in the draft.
+
+	* The cftoken.l and cfparse.y source files were modified to
+	  pick up the configuration options. The original sources
+	  stored algorithms in bitmask, which unfortunately meant
+	  that the maximum value was 32, clearly not enough for 65001.
+	  After consulting with the author (sakane@kame.net), it turned
+	  out that method was a leftover, and no longer needed. I replaced
+	  it with plain integers.
+
+	* The gss-api specific code was concentrated as much as possible
+	  in gssapi.c and gssapi.h. The code to call functions defined
+	  in these files is conditional on HAVE_GSSAPI, except for the
+	  config scan code. Specifying this flag on the compiler commandline
+	  is conditional on the --enable-gssapi option to the configure
+	  script.
+
+	* Racoon seems to want to send accepted SA proposals back to
+	  the initiator in a verbatim fashion, leaving no room to
+	  insert the (variable-length) GSS endpoint name attribute.
+	  I worked around this by re-assembling the extracted SA
+	  into a new SA if the gssapi_krb method is used, and the
+	  initiator sent the name attribute. This scheme should
+	  possibly be re-examined by the racoon maintainers, storing
+	  the SAs (the transformations, to be more precise) in a different
+	  fashion to allow for variable-length attributes to be
+	  re-inserted would be a good change, but I considered it to be
+	  beyond the scope of this project.
+
+	* The various state functions for aggressive and main mode
+	  (in isakmp_agg.c and isakmp_ident.c respectively) were
+	  changed to conditionally change their behavior if the
+	  gssapi_krb method is specified.
+
+
+This implementation tried to follow the specification in the ietf draft
+as close as possible. However, it has not been tested against other
+IKE daemon implementations. The only other one I know of is Windows 2000,
+and it has some caveats. I attempted to be Windows 2000 compatible.
+Should racoon be tried against Windows 2000, the gssapi_id option in
+the config file must be used, as Windows 2000 expects the GSS endpoint
+name to be sent at all times. I have my doubts as to the W2K compatibility,
+because the spec describes the GSS endpoint name sent by W2K as
+an unicode string 'xxx@domain', which doesn't seem to match the
+required standard for gss-api + kerberos 5 (i.e. I am fairly certain
+that such a string will be rejected by the Heimdal gss-api library, as it
+is not a valid Kerberos 5 principal).
+
+With the Heimdal gss-api implementation, the gssapi_krb authentication
+method will only work in main mode. Aggressive mode does not allow
+for the extra round-trips needed by gss_init_sec_context and
+gss_accept_sec_context when mutual authentication is requested.
+The draft specifies that the a fallback should be done to main mode,
+through the return of INVALID-EXCHANGE-TYPE if it turns out that
+the gss-api mechanisms needs more roundtrips. This is implemented.
+Unfortunately, racoon does not seem to properly fall back to
+its next mode, and this is not specific to the gssapi_krb method.
+So, to avoid problems, only specify main mode in the config file.
+
+
+	-- Frank van der Linden <fvdl@wasabisystems.com>
+
