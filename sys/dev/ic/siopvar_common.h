@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.6 2000/10/18 17:06:52 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.7 2000/10/23 14:56:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -45,6 +45,9 @@ typedef struct scr_table {
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)
 
+/* Number of tag */
+#define SIOP_NTAG 16
+
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
  * transfer. 
@@ -59,18 +62,17 @@ struct siop_xfer_common {
 	scr_table_t t_msgin;	/* 32 */
 	scr_table_t t_extmsgin;	/* 40 */
 	scr_table_t t_extmsgdata; /* 48 */
-	scr_table_t t_msgtag;	/* 56 */
-	scr_table_t t_msgout;	/* 64 */
-	scr_table_t cmd;	/* 72 */
-	scr_table_t t_status;	/* 80 */
-	scr_table_t data[SIOP_NSG]; /* 88 */
+	scr_table_t t_msgout;	/* 56 */
+	scr_table_t cmd;	/* 64 */
+	scr_table_t t_status;	/* 72 */
+	scr_table_t data[SIOP_NSG]; /* 80 */
 } __attribute__((__packed__));
 
 /* xfer description of the script: tables and reselect script */
 struct siop_xfer {
 	struct siop_xfer_common tables;
 	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
-	u_int32_t resel[14];
+	u_int32_t resel[24];
 } __attribute__((__packed__));
 
 /*
@@ -90,9 +92,10 @@ struct siop_cmd {
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
 	struct scsipi_sense rs_cmd; /* request sense command buffer */
-	int       status;
-	int       flags;
-	int       reselslot; /* the reselect slot used */
+	int status;
+	int flags;
+	int reselslot; /* the reselect slot used */
+	int tag;	/* tag used for tagged command queuing */
 };
 
 /* command block descriptors: an array of siop_cmd + an array of siop_xfer */
@@ -116,20 +119,29 @@ struct siop_cbd {
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */
 
+/* per-tag struct */
+struct siop_tag {
+	struct siop_cmd *active; /* active command */
+	u_int reseloff; /* XXX */
+};
+
 /* per lun struct */
 struct siop_lun {
-	struct siop_cmd *active; /* active command */
-	int reseloff; /* XXX tmp */
+	struct siop_tag siop_tag[SIOP_NTAG]; /* tag array */
+	int lun_flags; /* per-lun flags, see below */
+	u_int reseloff; /* XXX */
 };
+
+#define SIOP_LUNF_FULL 0x01 /* queue full message */
 
 /* per-target struct */
 struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
 	u_int32_t id;	/* for SELECT FROM */
-	struct siop_lun siop_lun[8]; /* per-lun state, XXX should be dynamic */
-	int reseloff; /* XXX tmp */
-	struct siop_lunsw *lunsw; /* XXX tmp */
+	struct siop_lun *siop_lun[8]; /* per-lun state */
+	u_int reseloff; /* XXX */
+	struct siop_lunsw *lunsw; /* XXX */
 };
 
 /* target status */
@@ -148,13 +160,32 @@ struct siop_target {
 struct siop_lunsw {
 	TAILQ_ENTRY (siop_lunsw) next;
 	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
+	u_int32_t lunsw_size; /* size of this lun sw */
 };
 
+static __inline__ void siop_table_sync __P((struct siop_cmd *, int));
+static __inline__ void
+siop_table_sync(siop_cmd, ops)
+	struct siop_cmd *siop_cmd;
+	int ops;
+{
+	struct siop_softc *sc  = siop_cmd->siop_sc;
+	bus_addr_t offset;
+	
+	offset = siop_cmd->dsa -
+	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
+	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
+	    sizeof(struct siop_xfer), ops);
+}
+
 void	siop_common_reset __P((struct siop_softc *));
+void	siop_setuptables __P((struct siop_cmd *));
 int	siop_modechange __P((struct siop_softc *));
 
-int	siop_wdtr_neg __P((struct siop_cmd *siop_cmd));
-int	siop_sdtr_neg __P((struct siop_cmd *siop_cmd));
+int	siop_wdtr_neg __P((struct siop_cmd *));
+int	siop_sdtr_neg __P((struct siop_cmd *));
+void	siop_sdtr_msg __P((struct siop_cmd *, int, int, int));
+void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
@@ -166,3 +197,6 @@ int	siop_ioctl __P((struct scsipi_link *, u_long,
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));
 void	siop_resetbus __P((struct siop_softc *));
+/* XXXX should be  callbacks */
+void	siop_add_dev __P((struct siop_softc *, int, int));
+void	siop_del_dev __P((struct siop_softc *, int, int));
