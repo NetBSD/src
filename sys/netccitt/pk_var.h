@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.12 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.13 2001/05/30 11:42:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 Computing Centre, University of British Columbia.
@@ -49,7 +49,7 @@
  *
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 # include "opt_ccitt.h"
 #endif
 
