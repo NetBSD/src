@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2000/09/18 11:40:48 wdk Exp $	*/
+/*	$NetBSD: start.S,v 1.2 2002/11/16 08:55:05 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #include <mips/cpuregs.h>
 #include <machine/prom.h>
 
-	.set	noreorder
 LEAF(start)
+	.set	noreorder
 #ifdef __GP_SUPPORT__
 	la      gp, _C_LABEL (_gp)
 #endif
@@ -62,6 +62,7 @@ LEAF(start)
 	move	a1, s1				# restore argv
 
 XLEAF(_rtt)	
-	j	_C_LABEL(prom_restart)		# restart...
-	nop
+	la	t9, _C_LABEL(prom_restart)		# restart...
+	j	t9
+	move	a0, zero
 END(start)
