@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.57.2.1 2002/10/03 05:01:16 itojun Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.57.2.2 2002/10/03 05:19:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -239,7 +239,7 @@ dosetrlimit(p, cred, which, limp)
 	struct plimit *newplim;
 	int error;
 
-	if (which < 0 || (u_int)which >= RLIM_NLIMITS)
+	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 
 	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
@@ -342,7 +342,7 @@ sys_getrlimit(p, v, retval)
 	} */ *uap = v;
 	int which = SCARG(uap, which);
 
-	if (which < 0 || (u_int)which >= RLIM_NLIMITS)
+	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
 	    sizeof(struct rlimit)));
