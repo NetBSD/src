@@ -44,7 +44,7 @@
  * 15 Aug 92    William Jolitz          Large memory bug
  * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.6 1993/04/10 13:47:49 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.7 1993/05/07 05:22:14 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -558,6 +558,11 @@ dumpsys()
 }
 
 #ifdef HZ
+/*
+ * If HZ is defined we use this code, otherwise the code in
+ * /sys/i386/i386/microtime.s is used.  The othercode only works
+ * for HZ=100.
+ */
 microtime(tvp)
 	register struct timeval *tvp;
 {
@@ -571,7 +576,7 @@ microtime(tvp)
 	}
 	splx(s);
 }
-#endif
+#endif /* HZ */
 
 physstrat(bp, strat, prio)
 	struct buf *bp;

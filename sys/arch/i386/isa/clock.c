@@ -76,6 +76,8 @@ startrtclock() {
 					to find the cpu speed */
 	/* initialize 8253 clock */
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+
+	/* Correct rounding will buy us a better precision in timekeeping */
 	outb (IO_TIMER1, (XTALSPEED+hz/2)/hz);
 	outb (IO_TIMER1, ((XTALSPEED+hz/2)/hz)/256);
 
