@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.2 2001/02/23 04:31:18 ichiro Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.3 2001/02/24 12:48:58 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -85,9 +85,9 @@
 
 #include "opt_ipkdb.h"
 
-#if 1 /* XXX for fakecninit(), should not be here */
+/* XXX for consinit related hacks */
 #include <sys/conf.h>
-#endif
+
 /*
  * Address to call from cpu_reset() to reset the machine.
  * This is machine architecture dependant as it varies depending
@@ -194,7 +194,9 @@ u_int cpu_get_control		__P((void));
 
 void rpc_sa110_cc_setup(void);
 
+#ifdef DEBUG_BEFOREMMU
 static void fakecninit();
+#endif
 
 #ifdef BOOT_DUMP
 void dumppages(char *, int);
@@ -312,13 +314,14 @@ initarm(bi)
 	__asm("bic r2, r2, #31; orr r2, r2, #19;");
 	__asm("msr cpsr_all, r2; mov sp, r0; mov ip, r1;");
 
+#ifdef DEBUG_BEFOREMMU
 	/*
 	 * At this point, we cannot call real consinit().
 	 * Just call a faked up version of consinit(), which does the thing
 	 * with MMU disabled.
 	 */
 	fakecninit();
-
+#endif
 
 	/*
 	 * XXX for now, overwrite bootconfig to hardcoded values.
@@ -567,15 +570,7 @@ initarm(bi)
 	/* Map any I/O modules here, as we don't have real bus_space_map() */
 	printf("mapping IO...");
 	l2pagetable = kernel_pt_table[KERNEL_PT_IO];
-	map_entry_nc(l2pagetable, SAIPIC_BASE, SAIPIC_HW_BASE);
-	map_entry_nc(l2pagetable, SAOST_BASE, SAOST_HW_BASE);
-	map_entry_nc(l2pagetable, SARTC_BASE, SARTC_HW_BASE);
-	map_entry_nc(l2pagetable, SAPMR_BASE, SAPMR_HW_BASE);
-	map_entry_nc(l2pagetable, SARCR_BASE, SARCR_HW_BASE);
-	map_entry_nc(l2pagetable, SAGPIO_BASE, SAGPIO_HW_BASE);
 	map_entry_nc(l2pagetable, SACOM3_BASE, SACOM3_HW_BASE);
-	map_entry_nc(l2pagetable, SALCD_BASE, SALCD_HW_BASE);
-	map_entry_nc(l2pagetable, SADMAC_BASE, SADMAC_HW_BASE);
 
 #ifdef FRAMEBUF_HW_BASE
 	/* map framebuffer if its address is known */
@@ -724,6 +719,7 @@ initarm(bi)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+#ifdef DEBUG_BEFOREMMU
 cons_decl(sacom);
 void
 fakecninit()
@@ -734,6 +730,7 @@ fakecninit()
 	(*cn_tab->cn_init)(0);
 	cn_tab->cn_pri = CN_REMOTE;
 }
+#endif
 
 #ifdef CPU_SA110
 
