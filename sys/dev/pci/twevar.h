@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.10 2002/05/18 20:59:20 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.11 2002/05/24 15:58:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,13 +42,6 @@
 #include "locators.h"
 
 #define	TWE_MAX_QUEUECNT	129
-
-#if TWE_SG_SIZE > (((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1)
-#define	TWE_MAX_SEGS	(((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1)
-#else
-#define	TWE_MAX_SEGS	TWE_SG_SIZE
-#endif
-#define	TWE_MAX_XFER	((TWE_MAX_SEGS - 1) * PAGE_SIZE)
 
 /* Per-controller state. */
 struct twe_softc {
