@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.5 1997/05/09 13:25:49 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.6 1998/09/28 08:13:37 christos Exp $
 
 .PHONY:		filesinstall
 realinstall:	filesinstall
@@ -29,7 +29,7 @@ ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: .MADE
 
 .PRECIOUS: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
 ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
-	${INSTALL} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
+	${INSTALL} ${PRESERVE} ${COPY} -o ${FILESOWN_${F}} -g ${FILESGRP_${F}} \
 		-m ${FILESMODE_${F}} ${.ALLSRC} ${.TARGET}
 .endfor
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.139 1998/09/13 23:25:18 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.140 1998/09/28 08:13:38 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -200,8 +200,8 @@ __archivebuild: .USE
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 ${.ALLSRC} \
-		${.TARGET}
+	${INSTALL} ${PRESERVE} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+		${.ALLSRC} ${.TARGET}
 	${RANLIB} -t ${.TARGET}
 	chmod ${LIBMODE} ${.TARGET}
 
@@ -316,8 +316,8 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} \
-		${.TARGET}
+	${INSTALL} ${PRESERVE} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+		${.ALLSRC} ${.TARGET}
 .if (${OBJECT_FMT} == "ELF")
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
@@ -341,7 +341,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${PRESERVE} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif
 .endif

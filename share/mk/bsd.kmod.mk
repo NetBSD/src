@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.27 1998/08/09 14:46:19 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.28 1998/09/28 08:13:37 christos Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -68,8 +68,8 @@ ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 
 .PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
 ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
-	${INSTALL} ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
-		${.ALLSRC} ${.TARGET}
+	${INSTALL} ${PRESERVE} ${COPY} -o ${KMODOWN} -g ${KMODGRP} \
+		-m ${KMODMODE} ${.ALLSRC} ${.TARGET}
 .endif
 
 lint: ${LOBJS}
