@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.24 2002/01/05 22:41:46 chris Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.25 2002/01/23 21:03:07 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -60,6 +60,7 @@
 
 #ifdef CPU_XSCALE
 #include <arm/xscale/i80200reg.h>
+#include <arm/xscale/i80200var.h>
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -872,18 +873,7 @@ set_cpufuncs()
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
-		/*
-		 * Reset the Interrupt Controller Unit to a pristine
-		 * state:
-		 *	- all interrupt sources disabled
-		 *	- PMU/BCU sterred to IRQ
-		 */
-		__asm __volatile("mcr p13, 0, %0, c0, c0, 0"
-			:
-			: "r" (0));
-		__asm __volatile("mcr p13, 0, %0, c2, c0, 0"
-			:
-			: "r" (0));
+		i80200_intr_init();
 
 		/*
 		 * Reset the Performance Monitoring Unit to a
