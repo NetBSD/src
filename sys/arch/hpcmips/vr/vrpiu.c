@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.3 2000/01/10 14:08:03 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.4 2000/05/04 06:14:05 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -358,32 +358,6 @@ vrpiu_intr(arg)
 		DPRINTF((" PENCHG"));
 	DPRINTF(("\n"));
 #endif
-	if (cnt & PIUCNT_PENSTC) {
-		if (sc->sc_stat == VRPIU_STAT_RELEASE) {
-			/*
-			 * pen touch
-			 */
-			DPRINTF(("PEN TOUCH\n"));
-			sc->sc_stat = VRPIU_STAT_TOUCH;
-			/* button 0 DOWN */
-			wsmouse_input(sc->sc_wsmousedev,
-				      (1 << 0),
-				      0, 0, 0, 0);
-		}
-	} else {
-		if (sc->sc_stat == VRPIU_STAT_TOUCH) {
-			/*
-			 * pen release
-			 */
-			DPRINTF(("RELEASE\n"));
-			sc->sc_stat = VRPIU_STAT_RELEASE;
-			/* button 0 UP */
-			wsmouse_input(sc->sc_wsmousedev,
-				      0,
-				      0, 0, 0, 0);
-		}
-	}
-
 	if (intrstat & (PIUINT_PADPAGE0INTR | PIUINT_PADPAGE1INTR)) {
 		if (!((tpx0 & PIUPB_VALID) && (tpx1 & PIUPB_VALID) &&
 		      (tpy0 & PIUPB_VALID) && (tpy1 & PIUPB_VALID))) {
@@ -400,7 +374,7 @@ vrpiu_intr(arg)
 				DPRINTF(("%04x %04x %04x %04x\n",
 					 tpx0, tpx1, tpy0, tpy1));
 				DPRINTF(("%3d %3d (%4d %4d)->", tpx0, tpy0,
-					 tpx0 + tpx1, tpy0 + tpy1);
+					 tpx0 + tpx1, tpy0 + tpy1));
 #endif
 				xraw = tpy1 * 1024 / (tpy0 + tpy1);
 				yraw = tpx1 * 1024 / (tpx0 + tpx1);
@@ -419,6 +393,32 @@ vrpiu_intr(arg)
 					      WSMOUSE_INPUT_ABSOLUTE_Y);
 				DPRINTF(("\n"));
 			}
+		}
+	}
+
+	if (cnt & PIUCNT_PENSTC) {
+		if (sc->sc_stat == VRPIU_STAT_RELEASE) {
+			/*
+			 * pen touch
+			 */
+			DPRINTF(("PEN TOUCH\n"));
+			sc->sc_stat = VRPIU_STAT_TOUCH;
+			/*
+			 * We should not report button down event while
+			 * we don't know where it occur.
+			 */
+		}
+	} else {
+		if (sc->sc_stat == VRPIU_STAT_TOUCH) {
+			/*
+			 * pen release
+			 */
+			DPRINTF(("RELEASE\n"));
+			sc->sc_stat = VRPIU_STAT_RELEASE;
+			/* button 0 UP */
+			wsmouse_input(sc->sc_wsmousedev,
+				      0,
+				      0, 0, 0, 0);
 		}
 	}
 
