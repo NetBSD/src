@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.4 1998/09/13 16:02:48 eeh Exp $ */
+/*	$NetBSD: stdarg.h,v 1.5 1999/01/09 23:15:39 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,11 +68,11 @@ typedef _BSD_VA_LIST_	va_list;
 #endif
 
 #define	__va_arg(ap, type) \
-	((type)*(u_int64_t *)((ap) += 8, (ap) - 8))
+	((type)*(unsigned long *)((ap) += 8, (ap) - 8))
 
 /* Like __va_arg(), except when the type must be 16-byte aligned. */
 #define	__va_arg16(ap, type) \
-	((type)*(u_int64_t *)((__alignof__(type) == 16 ?				\
+	((type)*(unsigned long *)((__alignof__(type) == 16 ?				\
 		    (ap) = (va_list)(((unsigned long)(ap) + 31) & -16) :\
 			((ap) += 16)), (ap) - 16))
 
