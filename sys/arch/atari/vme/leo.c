@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.3 2000/06/26 04:55:35 simonb Exp $	*/
+/*	$NetBSD: leo.c,v 1.3.16.1 2002/05/17 15:41:01 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -99,20 +99,23 @@ static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
 			  u_int, u_int));
 static int leo_init __P((struct leo_softc *, int));
 static int leo_scroll __P((struct leo_softc *, int));
-static int leomove __P((dev_t, struct uio *, int));
-
-dev_decl(leo,open);
-dev_decl(leo,close);
-dev_decl(leo,read);
-dev_decl(leo,write);
-dev_decl(leo,ioctl);
-dev_decl(leo,mmap);
 
 struct cfattach leo_ca = {
 	sizeof(struct leo_softc), leo_match, leo_attach
 };
 
 extern struct cfdriver leo_cd;
+
+dev_type_open(leoopen);
+dev_type_close(leoclose);
+dev_type_read(leomove);
+dev_type_ioctl(leoioctl);
+dev_type_mmap(leommap);
+
+const struct cdevsw leo_cdevsw = {
+	leoopen, leoclose, leomove, leomove, leoioctl,
+	nostop, notty, nopoll, leommap,
+};
 
 static int
 leo_match(parent, cfp, aux)
@@ -362,7 +365,7 @@ leoclose(dev, flags, devtype, p)
 
 #define SMALLBSIZE      32
 
-static int
+int
 leomove(dev, uio, flags)
         dev_t dev;
         struct uio *uio;
@@ -395,26 +398,6 @@ leomove(dev, uio, flags)
                                         offset, smallbuf, size);
         }
         return 0;
-}
-
-int
-leoread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return leomove(dev, uio, flags);
-}
-
-int
-leowrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return leomove(dev, uio, flags);
 }
 
 int

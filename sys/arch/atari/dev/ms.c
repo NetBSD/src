@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: ms.c,v 1.10.20.1 2002/05/17 15:41:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -89,6 +89,11 @@ dev_type_close(msclose);
 dev_type_read(msread);
 dev_type_ioctl(msioctl);
 dev_type_poll(mspoll);
+
+const struct cdevsw ms_cdevsw = {
+	msopen, msclose, msread, nowrite, msioctl,
+	nostop, notty, mspoll, nommap,
+};
 
 static	void	ms_3b_delay __P((struct ms_softc *));
 

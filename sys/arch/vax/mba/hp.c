@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.24 2000/06/04 18:04:38 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.24.18.1 2002/05/17 15:40:48 gehenna Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -81,11 +81,26 @@ void    hpattach(struct device *, struct device *, void *);
 void	hpstart(struct mba_device *);
 int	hpattn(struct mba_device *);
 enum	xfer_action hpfinish(struct mba_device *, int, int *);
-bdev_decl(hp);
-cdev_decl(hp);
 
 struct	cfattach hp_ca = {
 	sizeof(struct hp_softc), hpmatch, hpattach
+};
+
+dev_type_open(hpopen);
+dev_type_close(hpclose);
+dev_type_read(hpread);
+dev_type_write(hpwrite);
+dev_type_ioctl(hpioctl);
+dev_type_strategy(hpstrategy);
+dev_type_size(hpsize);
+
+const struct bdevsw hp_bdevsw = {
+	hpopen, hpclose, hpstrategy, hpioctl, nulldump, hpsize, D_DISK
+};
+
+const struct cdevsw hp_cdevsw = {
+	hpopen, hpclose, hpread, hpwrite, hpioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 #define HP_WCSR(reg, val) \
@@ -422,12 +437,6 @@ hpsize(dev_t dev)
 	    (sc->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
 	return size;
-}
-
-int
-hpdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-	return 0;
 }
 
 int

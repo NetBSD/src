@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.35 2001/09/05 14:03:49 tsutsui Exp $	*/
+/*	$NetBSD: xy.c,v 1.35.14.1 2002/05/17 15:40:48 gehenna Exp $	*/
 
 /*
  *
@@ -180,10 +180,6 @@ void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
 /* machine interrupt hook */
 int	xycintr __P((void *));
 
-/* bdevsw, cdevsw */
-bdev_decl(xy);
-cdev_decl(xy);
-
 /* autoconf */
 static int	xycmatch __P((struct device *, struct cfdata *, void *));
 static void	xycattach __P((struct device *, struct device *, void *));
@@ -212,6 +208,24 @@ extern struct cfdriver xy_cd;
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */
+};
+
+dev_type_open(xyopen);
+dev_type_close(xyclose);
+dev_type_read(xyread);
+dev_type_write(xywrite);
+dev_type_ioctl(xyioctl);
+dev_type_strategy(xystrategy);
+dev_type_dump(xydump);
+dev_type_size(xysize);
+
+const struct bdevsw xy_bdevsw = {
+	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+};
+
+const struct cdevsw xy_cdevsw = {
+	xyopen, xyclose, xyread, xywrite, xyioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 /*

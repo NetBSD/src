@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6 2001/09/16 05:32:19 uch Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6.12.1 2002/05/17 15:40:57 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -146,13 +146,21 @@ static const char *apm_strerror(int);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
 
-cdev_decl(apmdev);
-
 struct cfattach apmdev_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 
 extern struct cfdriver apmdev_cd;
+
+dev_type_open(apmdevopen);
+dev_type_close(apmdevclose);
+dev_type_ioctl(apmdevioctl);
+dev_type_poll(apmdevpoll);
+
+const struct cdevsw apmdev_cdevsw = {
+	apmdevopen, apmdevclose, noread, nowrite, apmdevioctl,
+	nostop, notty, apmdevpoll, nommap,
+};
 
 /* configurable variables */
 int	apm_bogus_bios = 0;

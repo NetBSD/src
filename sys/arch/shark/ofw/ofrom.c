@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.3 2002/03/24 03:37:26 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.3.2.1 2002/05/17 15:40:53 gehenna Exp $	*/
 
 /*
  * Copyright 1998
@@ -64,7 +64,14 @@ struct cfattach ofrom_ca = {
 
 extern struct cfdriver ofrom_cd;
 
-cdev_decl(ofrom);
+dev_type_open(ofromopen);
+dev_type_read(ofromrw);
+dev_type_mmap(ofrommmap);
+
+const struct cdevsw ofrom_cdevsw = {
+	ofromopen, nullclose, ofromrw, ofromrw, noioctl,
+	nostop, notty, nopoll, ofrommmap,
+};
 
 int
 ofromprobe(parent, cf, aux)
@@ -121,16 +128,6 @@ ofromopen(dev, oflags, devtype, p)
 
 	if (oflags & FWRITE)
 		return (EINVAL);
-
-	return (0);
-}
-
-int
-ofromclose(dev, fflag, devtype, p)
-	dev_t dev;
-	int fflag, devtype;
-	struct proc *p;
-{
 
 	return (0);
 }
@@ -200,18 +197,6 @@ ofromrw(dev, uio, flags)
 	physlock = 0;
 
 	return (error);
-}
-
-int
-ofromioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-
-	return (ENOTTY);
 }
 
 paddr_t

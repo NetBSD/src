@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.5 2001/09/16 16:34:29 wiz Exp $	*/
+/*	$NetBSD: lms.c,v 1.5.12.1 2002/05/17 15:41:00 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -36,12 +36,12 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -80,6 +80,17 @@ struct cfattach lms_ca = {
 };
 
 extern struct cfdriver lms_cd;
+
+dev_type_open(lmsopen);
+dev_type_close(lmsclose);
+dev_type_read(lmsread);
+dev_type_ioctl(lmsioctl);
+dev_type_poll(lmspoll);
+
+const struct cdevsw lms_cdevsw = {
+	lmsopen, lmsclose, lmsread, nowrite, lmsioctl,
+	nostop, notty, lmspoll, nommap,
+};
 
 #define	LMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.6 2001/09/16 16:34:29 wiz Exp $	*/
+/*	$NetBSD: mms.c,v 1.6.12.1 2002/05/17 15:41:00 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -36,12 +36,12 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -76,6 +76,17 @@ struct cfattach mms_ca = {
 };
 
 extern struct cfdriver mms_cd;
+
+dev_type_open(mmsopen);
+dev_type_close(mmsclose);
+dev_type_read(mmsread);
+dev_type_ioctl(mmsioctl);
+dev_type_poll(mmspoll);
+
+const struct cdevsw mms_cdevsw = {
+	mmsopen, mmsclose, mmsread, nowrite, mmsioctl,
+	nostop, notty, mmspoll, nommap,
+};
 
 #define	MMSUNIT(dev)	(minor(dev))
 

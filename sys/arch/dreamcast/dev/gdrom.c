@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8 2002/03/25 18:59:39 uch Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.2.1 2002/05/17 15:41:00 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -50,14 +50,23 @@
 
 int	gdrommatch(struct device *, struct cfdata *, void *);
 void	gdromattach(struct device *, struct device *, void *);
-int	gdromopen(dev_t, int, int, struct proc *);
-int	gdromclose(dev_t, int, int, struct proc *);
-void	gdromstrategy(struct buf *);
-int	gdromioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	gdromdump(dev_t, daddr_t, caddr_t, size_t);
-int	gdromsize(dev_t);
-int	gdromread(dev_t, struct uio *, int);
-int	gdromwrite(dev_t, struct uio *, int);
+
+dev_type_open(gdromopen);
+dev_type_close(gdromclose);
+dev_type_read(gdromread);
+dev_type_write(gdromwrite);
+dev_type_ioctl(gdromioctl);
+dev_type_strategy(gdromstrategy);
+
+const struct bdevsw gdrom_bdevsw = {
+	gdromopen, gdromclose, gdromstrategy, gdromioctl, nodump,
+	nosize, D_DISK
+};
+
+const struct cdevsw gdrom_cdevsw = {
+	gdromopen, gdromclose, gdromread, gdromwrite, gdromioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct gdrom_softc {
 	struct device sc_dv;	/* generic device info; must come first */
@@ -559,23 +568,6 @@ gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 }
 
-
-/*
- * Can't dump to CD; read only media...
- */
-int
-gdromdump(dev_t	dev, daddr_t blkno, caddr_t va, size_t size)
-{
-
-	return (EINVAL);
-}
-
-int
-gdromsize(dev_t dev)
-{
-
-	return (-1);
-}
 
 int
 gdromread(dev_t dev, struct uio *uio, int flags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.9 2002/03/17 19:40:51 atatat Exp $	*/
+/*	$NetBSD: pcons.c,v 1.9.4.1 2002/05/17 15:40:50 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -49,7 +49,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -66,6 +65,20 @@ struct cfattach pcons_ca = {
 };
 
 extern struct cfdriver pcons_cd;
+
+dev_type_open(pconsopen);
+dev_type_close(pconsclose);
+dev_type_read(pconsread);
+dev_type_write(pconswrite);
+dev_type_ioctl(pconsioctl);
+dev_type_tty(pconstty);
+dev_type_poll(pconspoll);
+
+const struct cdevsw pcons_cdevsw = {
+	pconsopen, pconsclose, pconsread, pconswrite, pconsioctl,
+	nostop, pconstty, pconspoll, nommap, D_TTY
+};
+
 static struct cnm_state pcons_cnm_state;
 
 static int pconsprobe __P((void));
@@ -224,13 +237,6 @@ pconstty(dev)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
-}
-
-void
-pconsstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
 }
 
 static void

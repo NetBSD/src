@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.34 2001/09/05 14:03:49 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.34.14.1 2002/05/17 15:40:48 gehenna Exp $	*/
 
 /*
  *
@@ -238,10 +238,6 @@ void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
 /* machine interrupt hook */
 int	xdcintr __P((void *));
 
-/* bdevsw, cdevsw */
-bdev_decl(xd);
-cdev_decl(xd);
-
 /* autoconf */
 static int	xdcmatch __P((struct device *, struct cfdata *, void *));
 static void	xdcattach __P((struct device *, struct device *, void *));
@@ -273,6 +269,24 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	char	*dvmabuf;	/* scratch buffer for reading disk label */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
+};
+
+dev_type_open(xdopen);
+dev_type_close(xdclose);
+dev_type_read(xdread);
+dev_type_write(xdwrite);
+dev_type_ioctl(xdioctl);
+dev_type_strategy(xdstrategy);
+dev_type_dump(xddump);
+dev_type_size(xdsize);
+
+const struct bdevsw xd_bdevsw = {
+	xdopen, xdclose, xdstrategy, xdioctl, xddump, xdsize, D_DISK
+};
+
+const struct cdevsw xd_cdevsw = {
+	xdopen, xdclose, xdread, xdwrite, xdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 /*

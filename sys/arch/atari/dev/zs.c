@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35 2002/03/17 19:40:36 atatat Exp $	*/
+/*	$NetBSD: zs.c,v 1.35.4.1 2002/05/17 15:41:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -202,9 +202,15 @@ dev_type_open(zsopen);
 dev_type_close(zsclose);
 dev_type_read(zsread);
 dev_type_write(zswrite);
-dev_type_poll(zspoll);
 dev_type_ioctl(zsioctl);
+dev_type_stop(zsstop);
 dev_type_tty(zstty);
+dev_type_poll(zspoll);
+
+const struct cdevsw zs_cdevsw = {
+	zsopen, zsclose, zsread, zswrite, zsioctl,
+	zsstop, zstty, zspoll, nommap, D_TTY
+};
 
 /* Interrupt handlers. */
 int		zshard __P((long));
@@ -217,7 +223,6 @@ static struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
 static void	zsstart __P((struct tty *));
-void		zsstop __P((struct tty *, int));
 
 /* Routines purely local to this driver. */
 static void	zsoverrun __P((int, long *, char *));

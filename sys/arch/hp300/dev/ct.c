@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.28 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: ct.c,v 1.28.4.1 2002/05/17 15:40:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28.4.1 2002/05/17 15:40:59 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,22 @@ struct cfattach ct_ca = {
 
 extern struct cfdriver ct_cd;
 
+dev_type_open(ctopen);
+dev_type_close(ctclose);
+dev_type_read(ctread);
+dev_type_write(ctwrite);
+dev_type_ioctl(ctioctl);
+dev_type_strategy(ctstrategy);
+
+const struct bdevsw ct_bdevsw = {
+	ctopen, ctclose, ctstrategy, ctioctl, nodump, nosize, D_TAPE
+};
+
+const struct cdevsw ct_cdevsw = {
+	ctopen, ctclose, ctread, ctwrite, ctioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
+
 int	ctident __P((struct device *, struct ct_softc *,
 	    struct hpibbus_attach_args *));
 
@@ -170,9 +186,6 @@ void	ctgo __P((void *));
 void	ctintr __P((void *));
 
 void	ctcommand __P((dev_t, int, int));
-
-cdev_decl(ct);
-bdev_decl(ct);
 
 struct	ctinfo {
 	short	hwid;
@@ -955,18 +968,6 @@ ctioctl(dev, cmd, data, flag, p)
 		return(EINVAL);
 	}
 	return(0);
-}
-
-/* ARGSUSED */
-int
-ctdump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	return (ENODEV);
 }
 
 void

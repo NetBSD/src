@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.3 2002/02/18 11:59:16 bjh21 Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3.8.1 2002/05/17 15:41:02 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,7 +50,6 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <machine/conf.h>
 #include <machine/rtc.h>
 #include <arm/iomd/iic.h>
 #include <arm/iomd/todclockvar.h>
@@ -254,6 +253,16 @@ struct cfattach rtc_ca = {
 };
 
 extern struct cfdriver rtc_cd;
+
+dev_type_open(rtcopen);
+dev_type_close(rtcclose);
+dev_type_read(rtcread);
+dev_type_write(rtcwrite);
+
+const struct cdevsw rtc_cdevsw = {
+	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*
  * rtcmatch()
@@ -474,25 +483,6 @@ rtcwrite(dev, uio, flag)
 	(void)splx(s);
 
 	return(0);
-}
-
-
-int
-rtcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];*/
-
-/*	switch (cmd) {
-	case RTCIOC_READ:
-		return(0);
-	}*/
-
-	return(EINVAL);
 }
 
 /* End of rtc.c */

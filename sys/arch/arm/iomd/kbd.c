@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1 2001/10/05 22:27:41 reinoud Exp $	*/
+/*	$NetBSD: kbd.c,v 1.1.14.1 2002/05/17 15:41:03 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -66,7 +66,6 @@
 
 #include <machine/bus.h>
 #include <machine/kbd.h>
-#include <machine/conf.h>
 #include <arm/iomd/kbdvar.h>
 #include "vt.h"
 #include "kbd.h"
@@ -154,6 +153,16 @@ extern void pmap_debug		__P((int level));
 extern void halt		__P((void));
 
 extern struct cfdriver kbd_cd;
+
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+
+const struct cdevsw kbd_cdevsw = {
+	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /* keyboard commands */
 

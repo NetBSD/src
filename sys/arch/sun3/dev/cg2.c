@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.16 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.16.12.1 2002/05/17 15:40:49 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,6 @@
 
 #include "fbvar.h"
 
-cdev_decl(cg2);
-
 #define	CMSIZE 256
 
 /* offset to and size of mapped part of frame buffer */
@@ -105,6 +103,15 @@ struct cfattach cgtwo_ca = {
 
 extern struct cfdriver cgtwo_cd;
 
+dev_type_open(cg2open);
+dev_type_ioctl(cg2ioctl);
+dev_type_mmap(cg2mmap);
+
+const struct cdevsw cgtwo_cdevsw = {
+	cg2open, nullclose, noread, nowrite, cg2ioctl,
+	nostop, notty, nopoll, cg2mmap,
+};
+
 static int  cg2gattr __P((struct fbdevice *,  void *));
 static int  cg2gvideo __P((struct fbdevice *, void *));
 static int	cg2svideo __P((struct fbdevice *, void *));
@@ -112,7 +119,7 @@ static int	cg2getcmap __P((struct fbdevice *, void *));
 static int	cg2putcmap __P((struct fbdevice *, void *));
 
 static struct fbdriver cg2fbdriver = {
-	cg2open, cg2close, cg2mmap, cg2gattr,
+	cg2open, nullclose, cg2mmap, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 
@@ -204,16 +211,6 @@ cg2open(dev, flags, mode, p)
 
 	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
-	return (0);
-}
-
-int
-cg2close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
 	return (0);
 }
 
