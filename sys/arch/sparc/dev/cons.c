@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.23 1996/05/19 13:00:43 mrg Exp $ */
+/*	$NetBSD: cons.c,v 1.23.4.1 1996/06/02 09:07:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -284,6 +284,7 @@ cnopen(dev, flag, mode, p)
 		clalloc(&tp->t_canq, 1024, 1);
 		/* output queue doesn't need quoting */
 		clalloc(&tp->t_outq, 1024, 0);
+		tty_attach(tp);
 		/*
 		 * get the console struct winsize.
 		 */
@@ -471,7 +472,7 @@ cnstop(tp, flag)
 	register struct tty *tp;
 	int flag;
 {
-	(*fcnstop)(tp, flag);
+	(void)(*fcnstop)(tp, flag);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.82 1996/05/12 23:52:00 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -528,9 +528,10 @@ comopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
-	if (!sc->sc_tty)
+	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty;
 
 	tp->t_oproc = comstart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37 1996/04/01 17:29:44 christos Exp $ */
+/*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,7 +287,6 @@ zsattach(parent, dev, aux)
 	zi->zi_zs = addr;
 	unit = zs * 2;
 	cs = zi->zi_cs;
-	cs->cs_ttyp = tp = ttymalloc();
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
@@ -297,15 +296,18 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
-	tp->t_dev = makedev(ZSMAJOR, unit);
-	tp->t_oproc = zsstart;
-	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		cs->cs_ttyp = tp = ctp;
+		tp = ctp;
+	else {
+		tp = ttymalloc();
+		tp->t_dev = makedev(ZSMAJOR, unit);
+		tp->t_oproc = zsstart;
+		tp->t_param = zsparam;
 #ifdef KGDB
-	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	}
+	cs->cs_ttyp = tp;
 	if (unit == ZS_KBD) {
 		/*
 		 * Keyboard: tell /dev/kbd driver how to talk to us.
@@ -315,27 +317,32 @@ zsattach(parent, dev, aux)
 		kbd_serial(tp, zsiopen, zsiclose);
 		cs->cs_conk = 1;		/* do L1-A processing */
 		ringsize = 128;
-	} else
+	} else {
+		if (tp != ctp)
+			tty_attach(tp);
 		ringsize = 4096;
+	}
 
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
 			      M_DEVBUF, M_NOWAIT);
 	unit++;
 	cs++;
-	cs->cs_ttyp = tp = ttymalloc();
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
-	tp->t_dev = makedev(ZSMAJOR, unit);
-	tp->t_oproc = zsstart;
-	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		cs->cs_ttyp = tp = ctp;
+		tp = ctp;
+	else {
+		tp = ttymalloc();
+		tp->t_dev = makedev(ZSMAJOR, unit);
+		tp->t_oproc = zsstart;
+		tp->t_param = zsparam;
 #ifdef KGDB
-	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	}
+	cs->cs_ttyp = tp;
 	if (unit == ZS_MOUSE) {
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
@@ -344,8 +351,11 @@ zsattach(parent, dev, aux)
 		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
 		ringsize = 128;
-	} else
+	} else {
+		if (tp != ctp)
+			tty_attach(tp);
 		ringsize = 4096;
+	}
 	cs->cs_ringmask = ringsize - 1;
 	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
 			      M_DEVBUF, M_NOWAIT);

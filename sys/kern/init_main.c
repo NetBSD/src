@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.84 1996/04/22 01:38:12 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #ifdef REAL_CLISTS
@@ -178,6 +179,7 @@ main(framep)
 	vm_mem_init();
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
+	tty_init();		/* initialise tty's */
 	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
