@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 1999/03/13 17:09:51 ragge Exp $	*/
+/*	$NetBSD: md.c,v 1.15 1999/06/28 17:28:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ md_make_jmpslot(sp, offset, index)
 	 */
 	u_long fudge = - (offset + 9);
 
-	sp->mask = 0x0000;			/* no registers */
+	sp->mask = (1 << 6);			/* Just R6 (for setjmp) */
 	sp->insn[0] = 0x01;			/* nop */
 	sp->insn[1] = 0x16;			/* jsb */
 	sp->insn[2] = 0xef;			/* L^(pc) */
