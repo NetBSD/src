@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.97 2000/10/18 07:21:10 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.98 2000/10/18 17:09:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -192,6 +192,13 @@ int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
 
 int	tcp_freeq __P((struct tcpcb *));
 
+void	tcp_mtudisc_callback __P((struct in_addr));
+
+void	tcp_mtudisc __P((struct inpcb *, int));
+#if defined(INET6) && !defined(TCP6)
+void	tcp6_mtudisc __P((struct in6pcb *, int));
+#endif
+
 struct pool tcpcb_pool;
 
 /*
@@ -219,7 +226,9 @@ tcp_init()
 		max_protohdr = hlen;
 	if (max_linkhdr + hlen > MHLEN)
 		panic("tcp_init");
-	
+
+	icmp_mtudisc_callback_register(tcp_mtudisc_callback);
+
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
 }
@@ -1182,6 +1191,7 @@ tcp_ctlinput(cmd, sa, v)
 {
 	struct ip *ip = v;
 	struct tcphdr *th;
+	struct icmp *icp;
 	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
@@ -1197,9 +1207,30 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
-		notify = tcp_mtudisc, ip = 0;
-	else if (cmd == PRC_HOSTDEAD)
+	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
+		/*
+		 * Check to see if we have a valid TCP connection
+		 * corresponding to the address in the ICMP message
+		 * payload.
+		 */
+		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		if (in_pcblookup_connect(&tcbtable,
+					 ip->ip_dst, th->th_dport,
+					 ip->ip_src, th->th_sport) == NULL)
+			return NULL;
+
+		/*
+		 * Now that we've validated that we are actually communicating
+		 * with the host indicated in the ICMP message, locate the
+		 * ICMP header, recalculate the new MTU, and create the
+		 * corresponding routing entry.
+		 */
+		icp = (struct icmp *)((caddr_t)ip -
+		    offsetof(struct icmp, icmp_ip));
+		icmp_mtudisc(icp, ip->ip_dst);
+
+		return NULL;
+	} else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
 		return NULL;
@@ -1221,11 +1252,9 @@ tcp_ctlinput(cmd, sa, v)
 		}
 
 		/* XXX mapped address case */
-	}
-	else {
-		(void)in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
+	} else
+		in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
 		    notify);
-	}
 	return NULL;
 }
 
@@ -1258,6 +1287,17 @@ tcp6_quench(in6p, errno)
 		tp->snd_cwnd = tp->t_segsz;
 }
 #endif
+
+/*
+ * Path MTU Discovery handlers.
+ */
+void
+tcp_mtudisc_callback(faddr)
+	struct in_addr faddr;
+{
+
+	in_pcbnotifyall(&tcbtable, faddr, EMSGSIZE, tcp_mtudisc);
+}
 
 /*
  * On receipt of path MTU corrections, flush old route and replace it
@@ -1346,7 +1386,7 @@ tcp6_mtudisc(in6p, errno)
 		tcp_output(tp);
 	}
 }
-#endif
+#endif /* INET6 && !TCP6 */
 
 /*
  * Compute the MSS to advertise to the peer.  Called only during
