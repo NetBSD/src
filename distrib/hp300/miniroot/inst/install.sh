@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.2.4 1995/11/13 18:43:38 thorpej Exp $
+#	$NetBSD: install.sh,v 1.1.2.5 1995/11/14 01:28:42 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -36,6 +36,7 @@
 #	user interface.
 
 VERSION=1.1
+export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
 FQDN=""					# domain name
