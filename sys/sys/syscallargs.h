@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallargs.h,v 1.88 2000/04/17 14:33:12 mrg Exp $	*/
+/*	$NetBSD: syscallargs.h,v 1.89 2000/04/21 16:16:16 minoura Exp $	*/
 
 /*
  * System call argument lists.
@@ -1499,4 +1499,5 @@ int	sys___shmctl13	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	sys_lchflags	__P((struct proc *, void *, register_t *));
+int	sys_issetugid	__P((struct proc *, void *, register_t *));
 #endif /* _SYS__SYSCALLARGS_H_ */

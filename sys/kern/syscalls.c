@@ -1,4 +1,4 @@
-/*	$NetBSD: syscalls.c,v 1.108 2000/04/17 14:33:12 mrg Exp $	*/
+/*	$NetBSD: syscalls.c,v 1.109 2000/04/21 16:16:15 minoura Exp $	*/
 
 /*
  * System call names.
@@ -405,4 +405,5 @@ char *syscallnames[] = {
 	"#303 (excluded __shmctl13)",		/* 303 = excluded __shmctl13 */
 #endif
 	"lchflags",			/* 304 = lchflags */
+	"issetugid",			/* 305 = issetugid */
 };
