@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.116 2002/07/17 15:53:50 hannken Exp $
+#       $NetBSD: Makefile,v 1.117 2002/07/20 03:58:26 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -111,7 +111,8 @@ MLINKS+=cardbus.9 cardbus_attach_card.9 \
 MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
-	copy.9 copyinstr.9 copy.9 copyoutstr.9
+	copy.9 copyinstr.9 copy.9 copyoutstr.9 \
+	copy.9 copyin_proc.9 copy.9 copyout_proc.9
 MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
 MLINKS+=cpu_fork.9 child_return.9 cpu_fork.9 proc_trampoline.9
