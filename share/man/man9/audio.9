@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.26 2004/01/31 00:07:56 fredb Exp $
+.\"	$NetBSD: audio.9,v 1.27 2004/01/31 21:33:08 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2003
+.Dd January 31, 2004
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -535,8 +535,9 @@ rather,
 that various sources in class
 .Dv AudioCrecord
 will be combined and presented to the single recording output,
-in the same fasion that the sources of class
-.Dv AudioCinputs are combined and presented to the playback output(s).
+in the same fashion that the sources of class
+.Dv AudioCinputs
+are combined and presented to the playback output(s).
 If the overall recording level can be changed,
 regardless of the input source,
 then this control should be named
@@ -547,7 +548,8 @@ and be of class
 Controls for various sources that affect only the playback output,
 as opposed to recording,
 should be in the
-.Dv AudioCinputs class.
+.Dv AudioCinputs
+class.
 .Pp
 If the play
 mixer is capable of output to more than one destination,
