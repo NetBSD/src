@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.7 2000/06/17 07:29:07 soda Exp $
+#	$NetBSD: ARCTIC,v 1.8 2000/07/23 10:06:43 ur Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -106,6 +106,9 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
+
+# wscons terminal emulation
+options 	WSEMUL_VT100	# VT100 emulation
 
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
