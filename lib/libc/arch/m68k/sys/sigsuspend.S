@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsuspend.S,v 1.4 1995/12/13 22:18:18 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$Id: sigsuspend.S,v 1.3 1994/08/04 05:02:48 chopps Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
+#else
+	RCSID("$NetBSD: sigsuspend.S,v 1.4 1995/12/13 22:18:18 thorpej Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 ENTRY(sigsuspend)
 	movl	sp@(4),a0
