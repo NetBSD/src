@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.58 1998/04/10 15:59:35 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.59 1998/04/14 20:18:08 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -77,9 +77,7 @@ extern char *esym;
 extern u_long aga_enable;
 #endif
 
-#ifdef MACHINE_NONCONTIG
 extern u_long noncontig_enable;
-#endif
 
 /*
  * some addresses used in locore
@@ -239,10 +237,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	if (flags & 1)
 		RELOC(aga_enable, u_long) |= 1;
 #endif
-#ifdef MACHINE_NONCONTIG
 	if (flags & (3 << 1))
 		RELOC(noncontig_enable, u_long) = (flags >> 1) & 3;
-#endif
+
 	RELOC(scsi_nosync, u_long) = inh_sync;
 
 	/*
