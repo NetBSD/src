@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.46 2000/07/28 09:33:28 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.47 2000/09/19 08:35:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -95,7 +95,11 @@ typedef	__off_t		off_t;		/* file offset */
 #define	off_t		__off_t
 #endif
 
-typedef	int32_t		pid_t;		/* process id */
+#ifndef	pid_t
+typedef	__pid_t		pid_t;		/* process id */
+#define	pid_t		__pid_t
+#endif
+
 typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */

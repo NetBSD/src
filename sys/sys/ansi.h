@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.5 2000/06/26 17:11:32 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6 2000/09/19 08:35:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 typedef __uint32_t	__mode_t;	/* file permissions */
 typedef __int64_t	__off_t;	/* file offset */
+typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef unsigned int	__socklen_t;	/* socket-related datum length */
 
