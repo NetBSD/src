@@ -36,7 +36,7 @@ extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
 extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_kcore_nbsd;
-extern initialize_file_ftype _initialize_core_alphanbsd;
+extern initialize_file_ftype _initialize_alphanbsd_nat;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_sr_support;
@@ -108,7 +108,7 @@ initialize_all_files (void)
   _initialize_inftarg ();
   _initialize_corelow ();
   _initialize_kcore_nbsd ();
-  _initialize_core_alphanbsd ();
+  _initialize_alphanbsd_nat ();
   _initialize_remote ();
   _initialize_dcache ();
   _initialize_sr_support ();
