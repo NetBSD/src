@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2004/06/23 04:38:43 itojun Exp $	*/
 /*	$OpenBSD: parse.y,v 1.449 2004/03/20 23:20:20 david Exp $	*/
 
 /*
@@ -1287,8 +1287,10 @@ cbqflags_list	: cbqflags_item				{ $$ |= $1; }
 cbqflags_item	: STRING	{
 			if (!strcmp($1, "default"))
 				$$ = CBQCLF_DEFCLASS;
+#ifdef CBQCLF_BORROW
 			else if (!strcmp($1, "borrow"))
 				$$ = CBQCLF_BORROW;
+#endif
 			else if (!strcmp($1, "red"))
 				$$ = CBQCLF_RED;
 			else if (!strcmp($1, "ecn"))

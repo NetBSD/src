@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_altq.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
+/*	$NetBSD: pfctl_altq.c,v 1.3 2004/06/23 04:38:43 itojun Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.83 2004/03/14 21:51:44 dhartmei Exp $	*/
 
 /*
@@ -560,8 +560,10 @@ print_cbq_opts(const struct pf_altq *a)
 			printf(" cleardscp");
 		if (opts->flags & CBQCLF_FLOWVALVE)
 			printf(" flowvalve");
+#ifdef CBQCLF_BORROW
 		if (opts->flags & CBQCLF_BORROW)
 			printf(" borrow");
+#endif
 		if (opts->flags & CBQCLF_WRR)
 			printf(" wrr");
 		if (opts->flags & CBQCLF_EFFICIENT)
