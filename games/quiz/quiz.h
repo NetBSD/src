@@ -1,3 +1,5 @@
+/*	$NetBSD: quiz.h,v 1.4 1995/04/22 10:16:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
