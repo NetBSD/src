@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.2.2.2 1997/11/11 05:47:47 thorpej Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2.2.3 1997/11/17 16:27:23 mrg Exp $	*/
 
 %{
 /*
@@ -8,7 +8,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.0.2.18 1997/10/29 12:49:21 darrenr Exp 
+ * Id: iplang_y.y,v 2.0.2.18.2.2 1997/11/05 11:04:19 darrenr Exp 
  */
  
 #include <stdio.h>
@@ -599,6 +599,50 @@ struct	statetoopt	tosecopts[] = {
 	{ IL_IPS_RESERV1,	IPSO_CLASS_RES1 },
 	{ 0, 0 }
 };
+
+#ifdef	bsdi
+struct ether_addr *
+ether_aton(s)
+	char *s;   
+{
+	static struct ether_addr n;
+	u_int i[6];
+
+	if (sscanf(s, " %x:%x:%x:%x:%x:%x ", &i[0], &i[1],
+	    &i[2], &i[3], &i[4], &i[5]) == 6) {
+		n.ether_addr_octet[0] = (u_char)i[0];
+		n.ether_addr_octet[1] = (u_char)i[1];
+		n.ether_addr_octet[2] = (u_char)i[2];
+		n.ether_addr_octet[3] = (u_char)i[3];
+		n.ether_addr_octet[4] = (u_char)i[4];
+		n.ether_addr_octet[5] = (u_char)i[5];
+		return &n;
+	}
+	return NULL;
+}
+#endif
+
+#ifdef	bsdi
+struct ether_addr *
+ether_aton(s)
+	char *s;
+{
+	static struct ether_addr n;
+	u_int i[6];
+
+	if (sscanf(s, " %x:%x:%x:%x:%x:%x ", &i[0], &i[1],
+	    &i[2], &i[3], &i[4], &i[5]) == 6) {
+		n.ether_addr_octet[0] = (u_char)i[0];
+		n.ether_addr_octet[1] = (u_char)i[1];
+		n.ether_addr_octet[2] = (u_char)i[2];
+		n.ether_addr_octet[3] = (u_char)i[3];
+		n.ether_addr_octet[4] = (u_char)i[4];
+		n.ether_addr_octet[5] = (u_char)i[5];
+		return &n;
+	}
+	return NULL;
+}
+#endif
 
 
 struct in_addr getipv4addr(arg)
@@ -1288,11 +1332,11 @@ void packet_done()
 				t = (u_char *)outline;
 				*t = '\0';
 			}
-			sprintf(t, "%02x", *s & 0xff);
+			sprintf((char *)t, "%02x", *s & 0xff);
 			t += 2;
 			if (!((j + 1) & 0xf)) {
 				s -= 15;
-				sprintf(t, "        ");
+				sprintf((char *)t, "	");
 				t += 8;
 				for (k = 16; k; k--, s++)
 					*t++ = (isprint(*s) ? *s : '.');
@@ -1309,7 +1353,7 @@ void packet_done()
 				*t++ = ' ';
 				*t++ = ' ';
 			}
-			sprintf(t, "       ");
+			sprintf((char *)t, "       ");
 			t += 7;
 			s -= j & 0xf;
 			for (k = j & 0xf; k; k--, s++)
@@ -1737,9 +1781,9 @@ void end_udp()
 	ip_t	iptmp;
 
 	bzero((char *)&iptmp, sizeof(iptmp));
-        iptmp.ip_p = ip->ip_p;
-        iptmp.ip_src = ip->ip_src;
-        iptmp.ip_dst = ip->ip_dst;
+	iptmp.ip_p = ip->ip_p;
+	iptmp.ip_src = ip->ip_src;
+	iptmp.ip_dst = ip->ip_dst;
 	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
 	udp->uh_sum = c_chksum((u_short *)udp, (u_int)iptmp.ip_len, sum);
@@ -1757,9 +1801,9 @@ void end_tcp()
 	ip_t	iptmp;
 
 	bzero((char *)&iptmp, sizeof(iptmp));
-        iptmp.ip_p = ip->ip_p;
-        iptmp.ip_src = ip->ip_src;
-        iptmp.ip_dst = ip->ip_dst;
+	iptmp.ip_p = ip->ip_p;
+	iptmp.ip_src = ip->ip_src;
+	iptmp.ip_dst = ip->ip_dst;
 	iptmp.ip_len = ip->ip_len - (ip->ip_hl << 2);
 	sum = p_chksum((u_short *)&iptmp, (u_int)sizeof(iptmp));
 	tcp->th_sum = 0;

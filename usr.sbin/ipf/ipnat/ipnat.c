@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.9.2.1 1997/10/30 07:16:57 mrg Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.9.2.2 1997/11/17 16:27:10 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -56,7 +56,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21 1997/10/29 12:16:32 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21.2.1 1997/11/08 04:55:55 darrenr Exp ";
 #endif
 
 
@@ -184,6 +184,7 @@ int verbose;
 void *ptr;
 {
 	int	bits;
+	struct	protoent	*pr;
 
 	switch (np->in_redir)
 	{
@@ -243,8 +244,12 @@ void *ptr;
 			printf(" proxy port");
 			if (np->in_dport)
 				printf(" %hu", ntohs(np->in_dport));
-			printf(" %.*s/%d", (int)sizeof(np->in_plabel),
-				np->in_plabel, np->in_p);
+			printf(" %.*s/", (int)sizeof(np->in_plabel),
+				np->in_plabel);
+			if ((pr = getprotobynumber(np->in_p)))
+				fputs(pr->p_name, stdout);
+			else
+				printf("%d", np->in_p);
 		} else if (np->in_pmin || np->in_pmax) {
 			printf(" portmap");
 			if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
