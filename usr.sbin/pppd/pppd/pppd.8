@@ -1,7 +1,7 @@
-.\" $NetBSD: pppd.8,v 1.27.4.3 2000/09/30 06:21:44 simonb Exp $
+.\" $NetBSD: pppd.8,v 1.27.4.4 2001/04/26 09:42:42 he Exp $
 .\"
 .\" manual page [] for pppd 2.4
-.\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp 
+.\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -163,7 +163,7 @@ bytes of data).  (Note that for IPv6 MRU must be at least 1280)
 Set the MTU [Maximum Transmit Unit] value to \fIn\fR.  Unless the
 peer requests a smaller value via MRU negotiation, pppd will
 request that the kernel networking code send data packets of no more
-than \fIn\fR bytes through the PPP network interface.  (Note that for 
+than \fIn\fR bytes through the PPP network interface.  (Note that for
 IPv6 MTU must be at least 1280)
 .TP
 .B passive
@@ -195,7 +195,7 @@ IPv6 addresses (e.g. ::dead:beef). If the
 option is given, the local identifier is the local IPv4 address (see above).
 On systems which supports a unique persistent id, such as EUI-48 derived
 from the Ethernet MAC address, \fIipv6cp-use-persistent\fR option can be
-used to replace the \fIipv6 <local>,<remote>\fR option. Otherwise the 
+used to replace the \fIipv6 <local>,<remote>\fR option. Otherwise the
 identifier is randomized.
 .TP
 .B active-filter \fIfilter-expression
@@ -206,7 +206,7 @@ mode.  This option is useful in conjunction with the
 \fBidle\fR option if there are packets being sent or received
 regularly over the link (for example, routing information packets)
 which would otherwise prevent the link from ever appearing to be idle.
-The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+The \fIfilter-expression\fR syntax is as described for tcpdump(8),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
@@ -481,7 +481,7 @@ Enable debugging code in the kernel-level PPP driver.  The argument
 enable general debug messages, 2 to request that the contents of
 received packets be printed, and 4 to request that the contents of
 transmitted packets be printed.  On most systems, messages printed by
-the kernel are logged by syslog(1) to a file as directed in the
+the kernel are logged by syslogd(8) to a file as directed in the
 /etc/syslog.conf configuration file.
 .TP
 .B ktune
@@ -1459,7 +1459,7 @@ invoked in the same manner and with the same parameters as the ip-up
 script.
 .TP
 .B /etc/ppp/ipv6-up
-Like /etc/ppp/ip-up, except that it is executed when the link is available 
+Like /etc/ppp/ip-up, except that it is executed when the link is available
 for sending and receiving IPv6 packets. It is executed with the parameters
 .IP
 \fIinterface-name tty-device speed local-link-local-address
@@ -1467,7 +1467,7 @@ remote-link-local-address ipparam\fR
 .TP
 .B /etc/ppp/ipv6-down
 Similar to /etc/ppp/ip-down, but it is executed when IPv6 packets can no
-longer be transmitted on the link. It is executed with the same parameters 
+longer be transmitted on the link. It is executed with the same parameters
 as the ipv6-up script.
 .TP
 .B /etc/ppp/ipx-up
@@ -1477,7 +1477,7 @@ executed with the parameters
 .IP
 \fIinterface-name tty-device speed network-number local-IPX-node-address
 remote-IPX-node-address local-IPX-routing-protocol remote-IPX-routing-protocol
-local-IPX-router-name remote-IPX-router-name ipparam pppd-pid\fR 
+local-IPX-router-name remote-IPX-router-name ipparam pppd-pid\fR
 .IP
 The local-IPX-routing-protocol and remote-IPX-routing-protocol field
 may be one of the following:
