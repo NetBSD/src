@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.33 2005/01/09 16:42:44 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.34 2005/01/15 15:10:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.33 2005/01/09 16:42:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.34 2005/01/15 15:10:49 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -238,13 +238,23 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 
 	va = ufi->orig_rvaddr;
 	ubc_offset = va - (vaddr_t)ubc_object.kva;
-
-	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx at %d",
-	    va, ubc_offset, access_type, 0);
-
 	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
 	slot_offset = ubc_offset & (ubc_winsize - 1);
+
+	/*
+	 * some platforms cannot write to individual bytes atomically, so
+	 * software has to do read/modify/write of larger quantities instead.
+	 * this means that the access_type for "write" operations
+	 * can be VM_PROT_READ, which confuses us mightily.
+	 * 
+	 * deal with this by resetting access_type based on the info
+	 * that ubc_alloc() stores for us.
+	 */
+
+	access_type = umap->writelen ? VM_PROT_WRITE : VM_PROT_READ;
+	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx access_type %d",
+	    va, ubc_offset, access_type, 0);
 
 #ifdef DIAGNOSTIC
 	if ((access_type & VM_PROT_WRITE) != 0) {
@@ -296,6 +306,7 @@ again:
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
+
 		/*
 		 * for virtually-indexed, virtually-tagged caches we should
 		 * avoid creating writable mappings when we don't absolutely
@@ -324,9 +335,11 @@ again:
 			continue;
 		}
 		if (pg->loan_count != 0) {
+
 			/*
 			 * avoid unneeded loan break if possible.
 			 */
+
 			if ((access_type & VM_PROT_WRITE) == 0)
 				prot &= ~VM_PROT_WRITE;
 
@@ -397,6 +410,7 @@ ubc_alloc(uobj, offset, lenp, flags)
 	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
 	    uobj, offset, *lenp, 0);
 
+	KASSERT(*lenp > 0);
 	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
 	*lenp = MIN(*lenp, ubc_winsize - slot_offset);
