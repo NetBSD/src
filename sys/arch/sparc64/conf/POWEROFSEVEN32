@@ -1,3 +1,0 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.12 2001/10/24 18:49:40 thorpej Exp $
-
-include "arch/sparc64/conf/POWEROFSEVEN.inc"

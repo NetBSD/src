@@ -1,7 +1,0 @@
-# $NetBSD: md.pmax,v 1.39 2002/07/09 19:59:41 mycroft Exp $
-./boot.pmax			base-sysutil-bin
-./usr/mdec/boot.pmax		base-sysutil-bin
-./usr/mdec/bootxx_cd9660	base-sysutil-bin
-./usr/mdec/bootxx_ffs		base-sysutil-bin
-./usr/mdec/bootxx_lfs		base-sysutil-bin
-./usr/mdec/netboot		base-sysutil-bin

@@ -1,2 +1,0 @@
-# $NetBSD: md.mvme68k,v 1.6 2002/05/04 19:44:30 jdolecek Exp $
-./etc/ld.so.conf	etc-sys-etc
