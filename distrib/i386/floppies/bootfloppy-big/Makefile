@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2000/09/27 16:04:13 fvdl Exp $
+#	$NetBSD: Makefile,v 1.10 2000/10/17 21:08:43 fvdl Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
+COMMONDIR=	${TOP}/bootfloppy-common
 IMAGE=	boot-big.fs
 KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL.gz\n" | \
@@ -29,4 +30,63 @@ METAFILE!=	printf "USTAR.volsize.%o" ${DISKSIZE}
 BLOCK8K=	359
 PAD=yes
 
-.include "${TOP}/bootfloppy-common/Makefile.inc"
+MOUNT_POINT?=	/mnt
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CDEV=	/dev/${VND}d
+VND_CRDEV=	/dev/r${VND}d
+MDEC=		${DESTDIR}/usr/mdec
+BOOTCODE=	${MDEC}/biosboot.sym
+STRIP?=		strip
+
+LISTS?=		${COMMONDIR}/list
+
+# Some reasonable values for the -i parameter to newfs are:
+#
+#   6144	1147k, 189 inodes free
+#  16384	1159k,  93 inodes free
+# on 1.44M:
+# 204800	1407k,  27 inodes free
+# (with a 4k blocksize, one cannot get fewer than ~32 inodes allocated)
+
+INO_BYTES?=	204800
+
+CLEANFILES+=	netbsd
+
+realall:	netbsd
+	-rm -f ${IMAGE}.tmp
+	dd if=/dev/zero of=${IMAGE}.tmp count=${DISKSIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}.tmp
+	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
+	${MDEC}/installboot -v -f ${BOOTCODE} ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND_CDEV}
+	mv -f ${IMAGE}.tmp ${IMAGE}
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV}
+	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
+
+netbsd: ${KERN}
+	rm -f netbsd
+	cp ${KERN} netbsd
+
+release:
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip <${IMAGE} >${RELEASEDIR}/installation/floppy/${IMAGE}.gz
+
+clean cleandir distclean:
+	/bin/rm -f *.core ${CLEANFILES} ${IMAGE} ${IMAGE}.tmp
+
+.include <bsd.own.mk>
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
