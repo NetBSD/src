@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.87 2003/04/07 15:09:23 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.88 2003/04/14 03:06:20 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -402,7 +402,7 @@ Responsible:	assar, joda
 Notes:
 
 Package:	less
-Version:	less374
+Version:	less381
 Current Vers:	less381
 Maintainer:	Mark Nudleman <marknu@flash.net>
 Archive Site:	ftp://ftp.gnu.org/gnu/less/
@@ -412,7 +412,9 @@ Notes:
 Many changes to make less act as more when invoked as more.  Beware.
 Use the src/usr.bin/less/less2netbsd script to prepare source tree
 for importation.  Run ./configure before hand to generate "defines.h".
-Talk to mrg before importing any new vesrion.
+Talk to mrg before importing any new vesrion.  (less 381's configure
+does not detect NetBSD has a sigset_t due to a bad test; this is fixed
+by hand in defines.h.)
 
 Package:	libcdk
 Version:	4.9.9-20000407-myc3
