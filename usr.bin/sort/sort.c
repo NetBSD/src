@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.5 2000/10/07 21:13:56 bjh21 Exp $	*/
+/*	$NetBSD: sort.c,v 1.6 2000/10/07 21:46:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.5 2000/10/07 21:13:56 bjh21 Exp $");
+__RCSID("$NetBSD: sort.c,v 1.6 2000/10/07 21:46:39 bjh21 Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ main(argc, argv)
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
 	int ch, i, stdinflag = 0, tmp = 0;
-	char cflag = 0, mflag = 0, nflag = 0;
+	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
 	struct field fldtab[ND+2], *ftpos;
 	union f_handle filelist;
@@ -120,6 +120,7 @@ main(argc, argv)
 		case 'd':
 		case 'i':
 		case 'f':
+		case 'n':
 		case 'r': tmp |= optval(ch, 0);
 			if (tmp & R && tmp & F)
 				fldtab->weights = RFtable;
@@ -131,10 +132,6 @@ main(argc, argv)
 			break;
 		case 'o':
 			outpath = optarg;
-			break;
-		case 'n':
-			nflag = 1;
-			setfield("1n", ++ftpos, fldtab->flags&(~R));
 			break;
 		case 'k':
 			 setfield(optarg, ++ftpos, fldtab->flags);
@@ -194,7 +191,7 @@ main(argc, argv)
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, argv[i]);
 	}
-	if (!(fldtab->flags & (I|D) || fldtab[1].icol.num)) {
+	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
 		fldtab[0].icol.num = 1;
 	} else {
@@ -202,8 +199,6 @@ main(argc, argv)
 			fldtab[0].flags &= ~(BI|BT);
 			setfield("1", ++ftpos, fldtab->flags);
 		}
-		if (nflag)
-			fldtab[1].flags |= fldtab->flags;
 		fldreset(fldtab);
 		fldtab[0].flags &= ~F;
 	}
