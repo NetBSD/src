@@ -1,3 +1,5 @@
+/*	$NetBSD: radix.h,v 1.3 1996/10/16 15:41:06 perry Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
