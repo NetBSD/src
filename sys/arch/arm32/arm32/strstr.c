@@ -1,4 +1,4 @@
-/* $NetBSD: strstr.c,v 1.2 1996/03/27 22:42:28 mark Exp $ */
+/* $NetBSD: strstr.c,v 1.3 1998/02/21 22:56:58 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,10 +47,10 @@
 
 char *
 strstr(s, find)
-	register const char *s, *find;
+	const char *s, *find;
 {
-	register char c, sc;
-	register size_t len;
+	char c, sc;
+	size_t len;
 
 	if ((c = *find++) != 0) {
 		len = strlen(find);
