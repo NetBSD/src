@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.9 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.10 2000/02/06 11:21:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: addrtoname.c,v 1.61 97/06/15 13:20:18 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.9 1999/12/10 05:45:07 itojun Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.10 2000/02/06 11:21:52 itojun Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ struct rtentry;
 #include <arpa/inet.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.3 2000/01/31 14:22:44 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.4 2000/02/06 11:21:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -37,7 +37,7 @@
 #include <err.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
 #include <netinet6/ipsec.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace6.c,v 1.1 2000/01/28 19:32:54 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.2 2000/02/06 11:21:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -42,9 +42,8 @@
 
 #include <netinet/in.h>
 
-#include <netinet6/in6.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include <string.h>
 #include <stdio.h>
