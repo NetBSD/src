@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/11/28 05:01:59 jmc Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/09 06:12:26 jmc Exp $
 
 MODULE=		groff
 
@@ -20,14 +20,16 @@ build/Makefile: .configure_done
 .for F in andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
 afterinstall:	${TMACDIR}/tmac.${F}
 .PHONY:		${TMACDIR}/tmac.${F}
+# Get the hard coded path out of any files and put ${TMACDIR} in it's place
 ${TMACDIR}/tmac.${F}: ${F}
+	@sed -e "s:/usr/share/tmac:${TMACDIR}:g" < ${.ALLSRC} > build/tmac/${F}.sed
 .if defined(UPDATE)
-	@if ! cmp ${.ALLSRC} ${.TARGET} 2>/dev/null; then \
-		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
+	@if ! cmp build/tmac/${F}.sed ${.TARGET} 2>/dev/null; then \
+		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}; \
+		${HOST_INSTALL_FILE} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}; \
 	fi
 .else
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}
 .endif
 .endfor
 
