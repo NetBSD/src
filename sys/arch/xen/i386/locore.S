@@ -1,5 +1,5 @@
-/*	$NetBSD: locore.S,v 1.3 2004/04/06 15:56:32 cl Exp $	*/
-/*	NetBSD: locore.S,v 1.25 2004/03/26 19:05:33 drochner Exp 	*/
+/*	$NetBSD: locore.S,v 1.4 2004/04/25 19:01:27 cl Exp $	*/
+/*	NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -430,9 +430,6 @@ start:
 	movl	%esi,RELOC(PTDpaddr)
 
     	call	xpmap_init
-
-	movl	$__HYPERVISOR_fpu_taskswitch,%eax
-	TRAP_INSTR
 
 	/* cr0 is 0x8005003b */
 
@@ -1564,48 +1561,9 @@ ENTRY(cpu_switch)
 	movl	PCB_ESP(%edi),%esp
 	movl	PCB_EBP(%edi),%ebp
 
-#ifdef XENDEBUG_LOW
-	movl	_C_LABEL(xen_once),%ecx
-	testl	%ecx,%ecx
-	jz	1f
-	movl	$2,%ecx
-	movl	%ecx,_C_LABEL(xen_once)
-1:
-	call	_C_LABEL(xen_dbg2)
-#endif
-
-#ifdef XENDEBUG_LOW
-	#call	_C_LABEL(xen_dbg2)
-	movl	%ds,%ecx
-	movl	%cs,%ebx
-	pushl	%ecx
-	pushl	%ebx
-	call	_C_LABEL(xen_dbg3)
-	addl	$8,%esp
-#endif
-
-	/* Switch TSS. */
-	movl	PCB_TSS_ESP0(%edi),%ecx
-	movl	PCB_TSS_SS0(%edi),%ebx
-	movl	$__HYPERVISOR_stack_switch,%eax
-	TRAP_INSTR
-
-#ifdef XENDEBUG_LOW
-	pushl	PCB_TSS_SS0(%edi)
-	pushl	PCB_TSS_ESP0(%edi)
-	call	_C_LABEL(xen_dbg1)
-	addl	$8,%esp
-#endif
-
-	/* Reset FPU state if necessary. */
-	movl	PCB_CR0(%edi),%ecx
-	testl	$CR0_TS,%ecx
-	jz	1f
-	andl	$~CR0_TS,%ecx
-	movl	%ecx,PCB_CR0(%edi)
-	movl	$__HYPERVISOR_fpu_taskswitch,%eax
-	TRAP_INSTR
-1:
+	pushl	%edi
+	call	_C_LABEL(i386_switch_context)
+	addl	$4,%esp
 
 	/* Record new pcb. */
 	SET_CURPCB(%edi)
@@ -1765,31 +1723,17 @@ switch_exited:
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
-	jnz	switch_restored
+	jnz	switch_restored	; XXX skip stack_switch+pmap_activate
 #endif
-
-	/* Switch TSS. */
-	movl	PCB_TSS_ESP0(%esi),%ecx
-	movl	PCB_TSS_SS0(%esi),%ebx
-	movl	$__HYPERVISOR_stack_switch,%eax
-	TRAP_INSTR
 
 	pushl	%edi
 	call	_C_LABEL(pmap_activate)		# pmap_activate(p)
 	addl	$4,%esp
 
-#if 0
-switch_restored:
-#endif
-	/* Reset FPU state if necessary. */
-	movl	PCB_CR0(%esi),%ecx
-	testl	$CR0_TS,%ecx
-	jz	1f
-	andl	$~CR0_TS,%ecx
-	movl	%ecx,PCB_CR0(%esi)
-	movl	$__HYPERVISOR_fpu_taskswitch,%eax
-	TRAP_INSTR
-1:
+	pushl	%esi
+	call	_C_LABEL(i386_switch_context)
+	addl	$4,%esp
+
 	/* Record new pcb. */
 	SET_CURPCB(%esi)
 
@@ -1909,21 +1853,9 @@ ENTRY(cpu_exit)
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
-	/* Switch TSS. */
-    	movl	PCB_TSS_ESP0(%esi),%ecx
-	movl	PCB_TSS_SS0(%esi),%ebx
-	movl	$__HYPERVISOR_stack_switch,%eax
-	TRAP_INSTR
-
-	/* Reset FPU state if necessary. */
-	movl	PCB_CR0(%esi),%ecx
-	testl	$CR0_TS,%ecx
-	jz	1f
-	andl	$~CR0_TS,%ecx
-	movl	%ecx,PCB_CR0(%esi)
-	movl	$__HYPERVISOR_fpu_taskswitch,%eax
-	TRAP_INSTR
-1:
+	pushl	%esi
+	call	_C_LABEL(i386_switch_context)
+	addl	$4,%esp
 
 	/* Record new pcb. */
 	SET_CURPCB(%esi)

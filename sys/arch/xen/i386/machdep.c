@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2004/04/11 00:44:15 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2004/04/25 19:01:27 cl Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2004/04/11 00:44:15 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2004/04/25 19:01:27 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -408,6 +408,7 @@ i386_proc0_tss_ldt_init()
 	ltr(lwp0.l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 #else
+	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
 		      (void *)pcb->pcb_tss.tss_esp0,
 		      pcb->pcb_tss.tss_ss0, IDXSEL(pcb->pcb_tss.tss_ss0)));
@@ -434,6 +435,19 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	pcb->pcb_cr0 = rcr0();
 
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
+}
+
+/*
+ * Switch context:
+ * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
+ * - switch stack pointer for user->kernel transition
+ */
+void
+i386_switch_context(struct pcb *new)
+{
+	if (new->pcb_cr0 & CR0_TS)
+		HYPERVISOR_fpu_taskswitch();
+	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
 }
 
 /*
