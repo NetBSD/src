@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
-.\"	$NetBSD: hypot.3,v 1.13 2003/04/16 13:35:09 wiz Exp $
+.\"	$NetBSD: hypot.3,v 1.14 2003/05/20 10:15:16 wiz Exp $
 .\"
 .Dd May 6, 1991
 .Dt HYPOT 3
@@ -59,7 +59,7 @@ The
 and
 .Fn cabs
 functions
-computes the
+compute the
 sqrt(x*x+y*y)
 in such a way that underflow will not happen, and overflow
 occurs only if the final result deserves it.
@@ -97,7 +97,7 @@ same is true on a
 .Tn VAX .
 But programmers on machines other than a
 .Tn VAX
-(if has no \*(If)
+(it has no \*(If)
 might be surprised at first to discover that
 .Fn hypot "\(+-\*(If" "\*(Na"
 = +\*(If.
