@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/11/11 11:54:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.2 2005/02/22 14:40:02 peter Exp $
 #	$OpenBSD: Makefile,v 1.4 2003/11/20 23:23:09 avsm Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
@@ -10,9 +10,13 @@ WARNS?=	2
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys
 
-# ipfilter support
+.include <bsd.own.mk>
+
+# IP Filter support
+.if (${MKIPFILTER} != "no")
 SRCS+=	ipf.c
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/ipf
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/ipf -DWITH_IPF
+.endif
 
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap

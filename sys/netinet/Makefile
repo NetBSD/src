@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/10/05 04:55:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.11 2005/02/22 14:40:01 peter Exp $
 
 INCSDIR= /usr/include/netinet
 
@@ -11,9 +11,14 @@ INCS=	icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
 
 # ipfilter headers
 # XXX shouldn't be here
-INCS+=	ip_auth.h ip_compat.h ip_fil.h ip_frag.h ip_htable.h ip_nat.h \
+.include <bsd.own.mk>
+
+INCS+=	ip_compat.h	# always needed by kdump(1)
+
+.if (${MKIPFILTER} != "no")
+INCS+=	ip_auth.h ip_fil.h ip_frag.h ip_htable.h ip_nat.h \
 	ip_lookup.h ip_pool.h ip_proxy.h ip_scan.h ip_state.h ip_sync.h
- 
+.endif
 
 .include <bsd.kinc.mk>
 

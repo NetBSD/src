@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.21 2004/11/05 12:40:06 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.22 2005/02/22 14:40:01 peter Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2004
+.Dd February 21, 2005
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -303,6 +303,13 @@ most of the compilation tools, will be created and installed during a
 build.
 .DFLTy
 .
+.It Sy MKIPFILTER
+.YorN
+Indicates wether the 
+.Xr ipf 4
+programs, headers and LKM will be compiled and installed during a build.
+.DFLTy
+.
 .It Sy MKKERBEROS4
 .YorN
 Indicates whether the Kerberos v4 infrastructure
@@ -396,6 +403,13 @@ Indicates whether object directories will be created automatically
 .Dq make obj
 pass) at the start of a build.
 .DFLTn
+.
+.It Sy MKPF
+.YorN
+Indicates wether the
+.Xr pf 4
+programs, headers, LKM and spamd will be compiled and installed during a build.
+.DFLTy
 .
 .It Sy MKPIC
 .YorN

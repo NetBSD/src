@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2005/02/22 07:39:25 lukem Exp $
+# $NetBSD: mi,v 1.149 2005/02/22 14:40:00 peter Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -101,8 +101,8 @@
 ./etc/pam.d/xdm					etc-sys-etc
 ./etc/passwd					etc-sys-etc
 ./etc/passwd.conf				etc-sys-etc
-./etc/pf.conf					etc-net-etc
-./etc/pf.os					etc-net-etc
+./etc/pf.conf					etc-net-etc		pf
+./etc/pf.os					etc-net-etc		pf
 ./etc/phones					etc-uucp-etc
 ./etc/postfix/README				etc-postfix-etc		postfix
 ./etc/postfix/main.cf				etc-postfix-etc		postfix
@@ -246,7 +246,7 @@
 ./etc/skel/.logout				etc-sys-etc
 ./etc/skel/.profile				etc-sys-etc
 ./etc/skeykeys					etc-sys-etc
-./etc/spamd.conf				etc-net-etc
+./etc/spamd.conf				etc-net-etc		pf
 ./etc/spwd.db					etc-sys-etc
 ./etc/ssh/ssh_config				etc-secsh-etc		crypto
 ./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto

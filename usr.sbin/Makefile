@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.198 2005/02/19 16:55:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.199 2005/02/22 14:40:02 peter Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig etcupdate fssconfig grfconfig \
 	grfinfo gspa hilinfo ifwatchd inetd installboot \
-	iopctl iostat ipf ipwctl irdaattach isdn iteconfig iwictl \
+	iopctl iostat ipwctl irdaattach isdn iteconfig iwictl\
 	kgmon lastlogin link lpr mailwrapper makefs \
 	map-mbone mdconfig memswitch mlxctl mopd mountd moused \
 	mrinfo mrouted mscdlabel mtrace \
@@ -46,7 +46,14 @@ SUBDIR+=pvcsif pvctxctl
 SUBDIR+= racoon racoonctl
 .endif
 
+# IP Filter
+.if (${MKIPFILTER} != "no")
+SUBDIR+=ipf
+.endif
+
 # PF
+.if (${MKPF} != "no")
 SUBDIR+=pf
+.endif
 
 .include <bsd.subdir.mk>
