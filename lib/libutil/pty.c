@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.14 1999/09/20 04:48:08 lukem Exp $	*/
+/*	$NetBSD: pty.c,v 1.14.8.1 2000/07/26 17:26:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.14 1999/09/20 04:48:08 lukem Exp $");
+__RCSID("$NetBSD: pty.c,v 1.14.8.1 2000/07/26 17:26:10 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,12 +56,7 @@ __RCSID("$NetBSD: pty.c,v 1.14 1999/09/20 04:48:08 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#ifdef i386
-/* PCVT conflicts with ttyv*. */
-#define TTY_LETTERS "pqrstuwxyzPQRST"
-#else
-#define TTY_LETTERS "pqrstuvwxyzPQRST"
-#endif
+#define TTY_LETTERS	"pqrstuvwxyzPQRST"
 
 int
 openpty(amaster, aslave, name, termp, winp)
