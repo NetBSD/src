@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.6 2000/11/15 14:29:41 tsubai Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.6.18.1 2003/06/16 21:54:14 grant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ consinit()
 		if (*dipsw & SW_CONSOLE) {
 			fb_cnattach();
 			kb_hb_cnattach();
-			return;
+			break;
 		}
 #endif
 
@@ -103,6 +103,7 @@ consinit()
 		cn_tab = &consdev_zs;
 		(*cn_tab->cn_init)(cn_tab);
 #endif
+		break;
 
 #endif /* news3400 */
 
@@ -114,15 +115,15 @@ consinit()
 		if (*dipsw & SW_CONSOLE) {
 			xafb_cnattach();
 			kb_ap_cnattach();
-			return;
+			break;
 		}
 #endif
 
 #if NZSC > 0
 		cn_tab = &consdev_zs_ap;
 		(*cn_tab->cn_init)(cn_tab);
-		return;
 #endif
+		break;
 
 #endif /* news5000 */
 	}
