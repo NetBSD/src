@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/06/17 16:39:19 matt Exp $
+# $NetBSD: Makefile,v 1.4 2000/06/17 16:41:09 matt Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../include/heimdal
@@ -39,6 +39,6 @@ print_version.h: make-print-version
 
 print_version.o print_version.so print_version.po print_version.So print_version.ln: print_version.h
 
-CLEANFILES+= print_version.h make-print-version make-print-version.o
+CLEANFILES+= print_version.h make-print-version make-print-version.lo
 
 .include <bsd.lib.mk>
