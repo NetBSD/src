@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 1996/03/29 02:00:52 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 1996/04/01 04:30:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -436,22 +436,6 @@ again:
 	 * Configure the system.
 	 */
 	configure();
-
-	if (current_mac_model->class == MACH_CLASSII) {
-		/*
-		 * For the bloody Mac II ROMs, we have to map this space
-		 * so that the PRam functions will work.
-		 * Gee, Apple, is that a hard-coded hardware address in
-		 * your code?  I think so! (_ReadXPRam + 0x0062)  We map
-		 * the first 
-		 */
-#ifdef DIAGNOSTIC
-		printf("I/O map kludge for old ROMs that use hardware %s",
-			"addresses directly.\n");
-#endif
-		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
-			 VM_PROT_READ|VM_PROT_WRITE);
-	}
 }
 
 /*
