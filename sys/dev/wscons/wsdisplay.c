@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.51 2001/05/18 11:49:21 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.51.2.1 2001/07/10 14:02:21 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.51 2001/05/18 11:49:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.51.2.1 2001/07/10 14:02:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -871,6 +871,26 @@ wsdisplaypoll(dev, events, p)
 
 	tp = scr->scr_tty;
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
+int
+wsdisplaykqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct wsdisplay_softc *sc =
+	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+	struct wsscreen *scr;
+
+	if (ISWSDISPLAYCTL(dev))
+		return (0);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+
+	if (WSSCREEN_HAS_TTY(scr))
+		return (ttykqfilter(dev, kn));
+	else
+		return (0);
 }
 
 struct tty *
