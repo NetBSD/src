@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.4 2003/09/07 22:12:05 kleink Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.5 2003/09/08 22:37:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -159,8 +159,8 @@ ENTRY_NOPROFILE(bsw4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
-/* LINTSTUB: Func: void bsw8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
+/* LINTSTUB: Func: void bsw8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
+/* LINTSTUB: Func: void bsw8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
 
 ENTRY_NOPROFILE(bsw8rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -235,8 +235,8 @@ ENTRY_NOPROFILE(bsr4)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr8_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr8(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr8_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -291,8 +291,8 @@ ENTRY_NOPROFILE(bsr4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr8rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -307,8 +307,8 @@ ENTRY_NOPROFILE(bsr8rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void outs8(volatile u_int8_t *dst, const u_int8_t *src, size_t len) */
 
 ENTRY_NOPROFILE(bswm1_s)
@@ -332,8 +332,8 @@ ENTRY_NOPROFILE(outs8)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void outs16(volatile u_int16_t *dst, const u_int16_t *src, size_t len) */
 
 ENTRY_NOPROFILE(bswm2_s)
@@ -358,8 +358,8 @@ ENTRY_NOPROFILE(outs16)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void outs32(volatile u_int32_t *dst, const u_int32_t *src, size_t len) */
 
 ENTRY_NOPROFILE(bswm4_s)
@@ -384,8 +384,8 @@ ENTRY_NOPROFILE(outs32)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, bus_size_t len) */
 
 #ifdef _LP64
 ENTRY_NOPROFILE(bswm8_s)
@@ -415,8 +415,8 @@ ENTRY_NOPROFILE(bswm8)
 	trap			/* die */
 #endif
 
-/* LINTSTUB: Func: void bswm2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void outs16rb(volatile u_int16_t *dst, const u_int16_t *src, size_t len) */
 
 ENTRY_NOPROFILE(bswm2rb_s)
@@ -441,8 +441,8 @@ ENTRY_NOPROFILE(outs16rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void outs32rb(volatile u_int32_t *dst, const u_int32_t *src, size_t len) */
 
 ENTRY_NOPROFILE(bswm4rb_s)
@@ -467,14 +467,14 @@ ENTRY_NOPROFILE(outs32rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswm8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
-/* LINTSTUB: Func: void bswm8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *addr, size_t len) */
+/* LINTSTUB: Func: void bswm8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bswm8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *addr, bus_size_t len) */
 ENTRY_NOPROFILE(bswm8rb_s)
 ENTRY_NOPROFILE(bswm8rb)
 	trap
 
-/* LINTSTUB: Func: void bsrm1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void ins8(const volatile u_int8_t *src, u_int8_t *dst, size_t len) */
 
 ENTRY_NOPROFILE(bsrm1_s)
@@ -498,8 +498,8 @@ ENTRY_NOPROFILE(ins8)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrm2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void ins16(const volatile u_int16_t *src, u_int16_t *dst, size_t len) */
 
 ENTRY_NOPROFILE(bsrm2_s)
@@ -524,8 +524,8 @@ ENTRY_NOPROFILE(ins16)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrm4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void ins32(const volatile u_int32_t *src, u_int32_t *dst, size_t len) */
 
 ENTRY_NOPROFILE(bsrm4_s)
@@ -550,13 +550,13 @@ ENTRY_NOPROFILE(ins32)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrm8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, bus_size_t len) */
 ENTRY_NOPROFILE(bsrm8_s)
 ENTRY_NOPROFILE(bsrm8)
 	trap
 
-/* LINTSTUB: Func: void bsrm2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void ins16rb(const volatile u_int16_t *src, u_int16_t *dst, size_t len) */
 
 ENTRY_NOPROFILE(bsrm2rb_s)
@@ -581,8 +581,8 @@ ENTRY_NOPROFILE(ins16rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrm4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *addr, bus_size_t len) */
 /* LINTSTUB: Func: void ins32rb(const volatile u_int32_t *src, u_int32_t *dst, size_t len) */
 ENTRY_NOPROFILE(bsrm4rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -606,14 +606,14 @@ ENTRY_NOPROFILE(ins32rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrm8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, size_t len) */
-/* LINTSTUB: Func: void bsrm8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, size_t len) */
+/* LINTSTUB: Func: void bsrm8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, bus_size_t len) */
+/* LINTSTUB: Func: void bsrm8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *addr, bus_size_t len) */
 ENTRY_NOPROFILE(bsrm8rb_s)
 ENTRY_NOPROFILE(bsrm8rb)
 	trap
 
-/* LINTSTUB: Func: void bswr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr1_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,1		/* distance between dst bytes */
@@ -638,8 +638,8 @@ ENTRY_NOPROFILE(bswr1)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr2_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,2		/* distance between dst halfwords */
@@ -665,8 +665,8 @@ ENTRY_NOPROFILE(bswr2)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr2rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,2		/* distance between dst halfwords */
@@ -692,8 +692,8 @@ ENTRY_NOPROFILE(bswr2rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr4_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,4		/* distance between dst halfwords */
@@ -719,8 +719,8 @@ ENTRY_NOPROFILE(bswr4)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr4rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,4		/* distance between dst halfwords */
@@ -746,10 +746,10 @@ ENTRY_NOPROFILE(bswr4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bswr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
+/* LINTSTUB: Func: void bswr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bswr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bswr8_s)
 ENTRY_NOPROFILE(bswr8rb_s)
 	lwz	0,0(3)
@@ -758,8 +758,8 @@ ENTRY_NOPROFILE(bswr8)
 ENTRY_NOPROFILE(bswr8rb)
 	trap
 
-/* LINTSTUB: Func: void bsrr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr1_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,1		/* distance between src bytes */
@@ -784,8 +784,8 @@ ENTRY_NOPROFILE(bsrr1)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr2_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,2		/* distance between src halfwords */
@@ -811,8 +811,8 @@ ENTRY_NOPROFILE(bsrr2)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr2rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,2		/* distance between source halfwords */
@@ -838,8 +838,8 @@ ENTRY_NOPROFILE(bsrr2rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr4_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,4		/* distance between src words */
@@ -865,8 +865,8 @@ ENTRY_NOPROFILE(bsrr4)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr4rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	li	8,4		/* distance between src words */
@@ -893,10 +893,10 @@ ENTRY_NOPROFILE(bsrr4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsrr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
+/* LINTSTUB: Func: void bsrr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c); */
+/* LINTSTUB: Func: void bsrr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, bus_size_t c); */
 ENTRY_NOPROFILE(bsrr8_s)
 ENTRY_NOPROFILE(bsrr8rb_s)
 	lwz	0,0(3)
@@ -905,18 +905,18 @@ ENTRY_NOPROFILE(bsrr8)
 ENTRY_NOPROFILE(bsrr8rb)
 	trap
 
-/* LINTSTUB: Func: void bssr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
-/* LINTSTUB: Func: void bssr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v); */
+/* LINTSTUB: Func: void bssr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v, bus_size_t c); */
 ENTRY_NOPROFILE(bssr1_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
 ENTRY_NOPROFILE(bssr1)
 	trap
 
-/* LINTSTUB: Func: void bssr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v); */
-/* LINTSTUB: Func: void bssr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v); */
-/* LINTSTUB: Func: void bssr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v); */
-/* LINTSTUB: Func: void bssr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v); */
+/* LINTSTUB: Func: void bssr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t v, bus_size_t c); */
 ENTRY_NOPROFILE(bssr2_s)
 ENTRY_NOPROFILE(bssr2rb_s)
 	lwz	0,0(3)
@@ -925,10 +925,10 @@ ENTRY_NOPROFILE(bssr2)
 ENTRY_NOPROFILE(bssr2rb)
 	trap
 
-/* LINTSTUB: Func: void bssr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v); */
-/* LINTSTUB: Func: void bssr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v); */
-/* LINTSTUB: Func: void bssr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v); */
-/* LINTSTUB: Func: void bssr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v); */
+/* LINTSTUB: Func: void bssr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t v, bus_size_t c); */
 ENTRY_NOPROFILE(bssr4_s)
 ENTRY_NOPROFILE(bssr4rb_s)
 	lwz	0,0(3)
@@ -937,10 +937,10 @@ ENTRY_NOPROFILE(bssr4)
 ENTRY_NOPROFILE(bssr4rb)
 	trap
 
-/* LINTSTUB: Func: void bssr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v); */
-/* LINTSTUB: Func: void bssr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v); */
-/* LINTSTUB: Func: void bssr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v); */
-/* LINTSTUB: Func: void bssr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v); */
+/* LINTSTUB: Func: void bssr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
+/* LINTSTUB: Func: void bssr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t v, bus_size_t c); */
 ENTRY_NOPROFILE(bssr8_s)
 ENTRY_NOPROFILE(bssr8rb_s)
 	lwz	0,0(3)
@@ -949,8 +949,8 @@ ENTRY_NOPROFILE(bssr8)
 ENTRY_NOPROFILE(bssr8rb)
 	trap
 
-/* LINTSTUB: Func: void bscr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
-/* LINTSTUB: Func: void bscr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
+/* LINTSTUB: Func: void bscr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
+/* LINTSTUB: Func: void bscr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr1_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
@@ -958,8 +958,8 @@ ENTRY_NOPROFILE(bscr1)
 	trap
 
 
-/* LINTSTUB: Func: void bscr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
-/* LINTSTUB: Func: void bscr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
+/* LINTSTUB: Func: void bscr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
+/* LINTSTUB: Func: void bscr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr2_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
@@ -967,8 +967,8 @@ ENTRY_NOPROFILE(bscr2)
 	trap
 
 
-/* LINTSTUB: Func: void bscr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
-/* LINTSTUB: Func: void bscr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
+/* LINTSTUB: Func: void bscr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
+/* LINTSTUB: Func: void bscr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr4_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
@@ -976,8 +976,8 @@ ENTRY_NOPROFILE(bscr4)
 	trap
 
 
-/* LINTSTUB: Func: void bscr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
-/* LINTSTUB: Func: void bscr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, size_t len); */
+/* LINTSTUB: Func: void bscr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
+/* LINTSTUB: Func: void bscr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, bus_space_handle_t h2, bus_size_t o2, bus_size_t len); */
 ENTRY_NOPROFILE(bscr8_s)
 	lwz	0,0(3)
 	rotlw	5,5,0
