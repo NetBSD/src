@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.7 2000/02/25 02:52:11 assar Exp $
+#	$NetBSD: mi,v 1.8 2000/04/04 03:12:22 itojun Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./usr/bin/compile_et
@@ -137,12 +137,9 @@
 ./usr/libexec/kfd
 ./usr/libexec/kpasswdd
 ./usr/libexec/nt_gss_server
-./usr/sbin/eaytest
 ./usr/sbin/kadmin
-./usr/sbin/kmpstat
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
-./usr/sbin/racoon
 ./usr/share/examples/openssl/CA.pl
 ./usr/share/examples/openssl/CA.sh
 ./usr/share/examples/openssl/der_chop
@@ -160,13 +157,11 @@
 ./usr/share/man/cat3/krb5_sname_to_principal.0
 ./usr/share/man/cat3/krb5_unparse_name.0
 ./usr/share/man/cat5/krb5.conf.0
-./usr/share/man/cat5/racoon.conf.0
 ./usr/share/man/cat8/hprop.0
 ./usr/share/man/cat8/hpropd.0
 ./usr/share/man/cat8/kdc.0
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/ktutil.0
-./usr/share/man/cat8/racoon.0
 ./usr/share/man/man1/kdestroy.1
 ./usr/share/man/man1/kinit.1
 ./usr/share/man/man1/klist.1
@@ -180,11 +175,9 @@
 ./usr/share/man/man3/krb5_unparse_name.3
 ./usr/share/man/man3/krb5_warn.3
 ./usr/share/man/man5/krb5.conf.5
-./usr/share/man/man5/racoon.conf.5
 ./usr/share/man/man8/hprop.8
 ./usr/share/man/man8/hpropd.8
 ./usr/share/man/man8/kdc.8
 ./usr/share/man/man8/kpasswdd.8
 ./usr/share/man/man8/ktutil.8
-./usr/share/man/man8/racoon.8
 ./usr/share/man/whatis.db
