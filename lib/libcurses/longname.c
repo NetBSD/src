@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: longname.c,v 1.13 2000/04/20 09:36:11 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: longname.c,v 1.13 2000/04/20 09:36:11 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,11 +54,22 @@ __RCSID("$NetBSD: longname.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 char   *
 __longname(char *bp, char *def)
 {
-	char   *cp;
+	char   *cp, *last_bp;
 	int	i = 0;
 
-	while (*bp && *bp != ':' && *bp != '|')
-		bp++;
+	last_bp = NULL;
+	do {
+		while (*bp && *bp != ':' && *bp != '|')
+			bp++;
+		if (*bp == '|') {
+			last_bp = bp;
+			bp++;
+		}
+	} while (*bp && *bp != ':');
+
+	if (last_bp != NULL)
+		bp = last_bp;
+
 	if (*bp == '|') {
 		for (cp = def, ++bp; *bp && *bp != ':' && *bp != '|' &&
 		    i < 127;)
