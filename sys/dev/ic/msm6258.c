@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.6 2002/03/16 09:00:42 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.7 2002/04/02 15:19:00 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.6 2002/03/16 09:00:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.7 2002/04/02 15:19:00 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -55,8 +55,8 @@ static inline void adpcm2pcm_step(u_char, short *, char *);
 
 
 static int adpcm_estimindex[16] = {
-	 125,  375,  625,  875,  1125,  1375,  1625,  1875,
-	-125, -375, -625, -875, -1125, -1375, -1625, -1875
+	 1,  3,  5,  7,  9,  11,  13,  15,
+	-1, -3, -5, -7, -9, -11, -13, -15
 };
 
 static int adpcm_estim[49] = {
@@ -104,21 +104,20 @@ pcm2adpcm_step(short a, short *y, char *x)
 
 	a -= *y;
 	d = adpcm_estim[(int) *x];
-	c = a * 4 * 1000;
-	c /= d;
+	c = a * 4  / d;
 
 	if (c < 0) {
-		b = (unsigned char)(-c/1000);
+		b = (unsigned char)-c;
 		if (b >= 8)
 			b = 7;
 		b |= 0x08;
 	} else {
-		b = (unsigned char)(c/1000);
+		b = (unsigned char)c;
 		if (b >= 8)
 			b = 7;
 	}
 
-	*y += (short)(adpcm_estimindex[b] * d / 1000);
+	*y += (short)(adpcm_estimindex[b] * d / 8);
 	*x += adpcm_estimindex_correct[b];
 	if (*x < 0)
 		*x = 0;
@@ -154,12 +153,20 @@ msm6258_mulaw_to_adpcm(void *hdl, u_char *p, int cc)
 static inline void
 adpcm2pcm_step(u_char b, short *y, char *x)
 {
-	*y += (short)(adpcm_estimindex[b] * adpcm_estim[(int) *x]);
-	*x += adpcm_estimindex_correct[b];
-	if (*x < 0)
-		*x = 0;
-	else if (*x > 48)
-		*x = 48;
+	short dl;
+	short pcm = *y;
+	int estim = *x;
+
+	dl = adpcm_estim[estim] * adpcm_estimindex[b] / 8;
+	pcm += dl;
+	*y = pcm / 256;
+
+	estim += adpcm_estimindex_correct[b];
+	if (estim < 0)
+		estim = 0;
+	if (estim > 48)
+		estim = 48;
+	*x = estim;
 }
 
 /* ADPCM stream must be converted in order. */
@@ -175,17 +182,17 @@ msm6258_adpcm_to_ulinear8(void *hdl, u_char *p, int cc)
 	u_char a, b;
 	int i;
 
-	for (i = 0; i < cc;) {
-		a = *p;
-		p++;
+	/* cc may be even. XXX alignment? */
+	memcpy(tmpbuf, p, cc/2);
+	for (i = 0; i < cc/2;) {
+		a = tmpbuf[i++];
 		b = a & 0x0f;
 		adpcm2pcm_step(b, y, x);
-		tmpbuf[i++] = *y;
+		*p++ = *y;
 		b = a >> 4;
 		adpcm2pcm_step(b, y, x);
-		tmpbuf[i++] = *y;
+		*p++ = *y;
 	}
-	memcpy(p, tmpbuf, cc*2);
 }
 
 void
