@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.54 2004/06/30 13:57:32 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.55 2004/07/01 19:05:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -140,11 +140,11 @@
  * from gcc -Wcast-qual; it should be used with caution because it
  * can hide valid errors; in particular most valid uses are in
  * situations where the API requires it, not to cast away string
- * constants. We don't use intptr_t on purpose here and we are
+ * constants. We don't use *intptr_t on purpose here and we are
  * explicit about unsigned long so that we don't have additional
  * dependencies.
  */
-#define __DECONST(a)	((void *)(unsigned long)(const void *)(a))
+#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
 
 /*
  * GCC2 provides __extension__ to suppress warnings for various GNU C
