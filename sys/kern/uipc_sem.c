@@ -1,4 +1,40 @@
-/* $NetBSD: uipc_sem.c,v 1.2 2003/01/20 20:24:22 christos Exp $ */
+/*	$NetBSD: uipc_sem.c,v 1.3 2003/01/24 01:46:27 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -24,8 +60,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$FreeBSD: src/sys/kern/uipc_sem.c,v 1.4 2003/01/10 23:13:16 alfred Exp $
  */
 
 #include "opt_posix.h"
@@ -53,125 +87,174 @@
 #define SEM_VALUE_MAX (~0U)
 
 #define SEM_TO_ID(x)	((intptr_t)(x))
-#define ID_TO_SEM(x)	ksem_id_to_sem(x)
 
-struct kuser {
-	pid_t ku_pid;
-	LIST_ENTRY(kuser) ku_next;
-};
-
-/* For sysctl eventually */
-int nsems = 0;
-
+/*
+ * Note: to read the ks_name member, you need either the ks_interlock
+ * or the ksem_slock.  To write the ks_name member, you need both.  Make
+ * sure the order is ksem_slock -> ks_interlock.
+ */
 struct ksem {
 	LIST_ENTRY(ksem) ks_entry;	/* global list entry */
-	int ks_onlist;			/* boolean if on a list (ks_entry) */
+	struct simplelock ks_interlock;	/* lock on this ksem */
 	char *ks_name;			/* if named, this is the name */
-	int ks_ref;			/* number of references */
+	unsigned int ks_ref;		/* number of references */
 	mode_t ks_mode;			/* protection bits */
 	uid_t ks_uid;			/* creator uid */
 	gid_t ks_gid;			/* creator gid */
 	unsigned int ks_value;		/* current value */
-	int ks_waiters;			/* number of waiters */
-	LIST_HEAD(, kuser) ks_users;	/* pids using this sem */
+	unsigned int ks_waiters;	/* number of waiters */
+};
+
+struct ksem_ref {
+	LIST_ENTRY(ksem_ref) ksr_list;
+	struct ksem *ksr_ksem;
+};
+
+struct ksem_proc {
+	struct lock kp_lock;
+	LIST_HEAD(, ksem_ref) kp_ksems;
 };
 
 /*
- * available semaphores go here, this includes sys__ksem_init and any semaphores
- * created via sys__ksem_open that have not yet been unlinked.
+ * ksem_slock protects ksem_head and nsems.  Only named semaphores go
+ * onto ksem_head.
  */
-LIST_HEAD(, ksem) ksem_head = LIST_HEAD_INITIALIZER(&ksem_head);
-/*
- * semaphores still in use but have been ksem_unlink()'d go here.
- */
-LIST_HEAD(, ksem) ksem_deadhead = LIST_HEAD_INITIALIZER(&ksem_deadhead);
-
 static struct simplelock ksem_slock;
+static LIST_HEAD(, ksem) ksem_head = LIST_HEAD_INITIALIZER(&ksem_head);
+static int nsems = 0;
 
-#ifdef SEM_DEBUG
-#define DP(x)	printf x
-#else
-#define DP(x)
-#endif
-
-static __inline void ksem_ref(struct ksem *ks);
-static __inline void ksem_rel(struct ksem *ks);
-static __inline struct ksem *ksem_id_to_sem(semid_t id);
-static __inline struct kuser *ksem_getuser(struct proc *p, struct ksem *ks);
-
-static struct ksem *ksem_lookup_byname(const char *name);
-static int ksem_create(struct lwp *l, const char *name,
-    struct ksem **ksret, mode_t mode, unsigned int value);
-static void ksem_free(struct ksem *ksnew);
-static int ksem_perm(struct proc *p, struct ksem *ks);
-static void ksem_enter(struct proc *p, struct ksem *ks);
-static int ksem_leave(struct proc *p, struct ksem *ks);
-static void ksem_exithook(struct proc *p, void *arg);
-static int ksem_hasopen(struct proc *p, struct ksem *ks);
-static int ksem_wait(struct lwp *l, semid_t id, int tryflag);
-
-
-static __inline void
-ksem_ref(struct ksem *ks)
+static void
+ksem_free(struct ksem *ks)
 {
 
-	ks->ks_ref++;
-	DP(("ksem_ref: ks = %p, ref = %d\n", ks, ks->ks_ref));
-}
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	/*
+	 * If the ksem is anonymous (or has been unlinked), then
+	 * this is the end if its life.
+	 */
+	if (ks->ks_name == NULL) {
+		simple_unlock(&ks->ks_interlock);
+		free(ks, M_SEM);
 
-static __inline void
-ksem_rel(struct ksem *ks)
-{
-
-	DP(("ksem_rel: ks = %p, ref = %d\n", ks, ks->ks_ref - 1));
-	if (--ks->ks_ref == 0)
-		ksem_free(ks);
-}
-
-static __inline struct ksem *
-ksem_id_to_sem(id)
-	semid_t id;
-{
-	struct ksem *ks;
-
-	DP(("id_to_sem: id = 0x%ld\n", id));
-	LIST_FOREACH(ks, &ksem_head, ks_entry) {
-		DP(("id_to_sem: ks = %p\n", ks));
-		if (ks == (struct ksem *)id)
-			return (ks);
+		simple_lock(&ksem_slock);
+		nsems--;
+		simple_unlock(&ksem_slock);
+		return;
 	}
-	return (NULL);
+	simple_unlock(&ks->ks_interlock);
 }
 
-static struct ksem *
-ksem_lookup_byname(name)
-	const char *name;
+static __inline void
+ksem_addref(struct ksem *ks)
 {
-	struct ksem *ks;
 
-	LIST_FOREACH(ks, &ksem_head, ks_entry)
-		if (ks->ks_name != NULL && strcmp(ks->ks_name, name) == 0)
-			return (ks);
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	ks->ks_ref++;
+	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
+}
+
+static __inline void
+ksem_delref(struct ksem *ks)
+{
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
+	if (--ks->ks_ref == 0) {
+		ksem_free(ks);
+		return;
+	}
+	simple_unlock(&ks->ks_interlock);
+}
+
+static struct ksem_proc *
+ksem_proc_alloc(void)
+{
+	struct ksem_proc *kp;
+
+	kp = malloc(sizeof(*kp), M_SEM, M_WAITOK);
+	lockinit(&kp->kp_lock, PWAIT, "ksproc", 0, 0);
+	LIST_INIT(&kp->kp_ksems);
+
+	return (kp);
+}
+
+static void
+ksem_add_proc(struct proc *p, struct ksem *ks)
+{
+	struct ksem_proc *kp;
+	struct ksem_ref *ksr;
+
+	if (p->p_ksems == NULL) {
+		kp = ksem_proc_alloc();
+		p->p_ksems = kp;
+	} else
+		kp = p->p_ksems;
+
+	ksr = malloc(sizeof(*ksr), M_SEM, M_WAITOK);
+	ksr->ksr_ksem = ks;
+
+	lockmgr(&kp->kp_lock, LK_EXCLUSIVE, NULL);
+	LIST_INSERT_HEAD(&kp->kp_ksems, ksr, ksr_list);
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+}
+
+/* We MUST have a write lock on the ksem_proc list! */
+static struct ksem_ref *
+ksem_drop_proc(struct ksem_proc *kp, struct ksem *ks)
+{
+	struct ksem_ref *ksr;
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	LIST_FOREACH(ksr, &kp->kp_ksems, ksr_list) {
+		if (ksr->ksr_ksem == ks) {
+			ksem_delref(ks);
+			LIST_REMOVE(ksr, ksr_list);
+			return (ksr);
+		}
+	}
+#ifdef DIAGNOSTIC
+	panic("ksem_drop_proc: ksem_proc %p ksem %p", kp, ks);
+#endif
 	return (NULL);
 }
 
 static int
-ksem_create(l, name, ksret, mode, value)
-	struct lwp *l;
-	const char *name;
-	struct ksem **ksret;
-	mode_t mode;
-	unsigned int value;
+ksem_perm(struct proc *p, struct ksem *ks)
+{
+	struct ucred *uc;
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	uc = p->p_ucred;
+	if ((uc->cr_uid == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
+	    (uc->cr_gid == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
+	    (ks->ks_mode & S_IWOTH) != 0 || suser(uc, &p->p_acflag) == 0)
+		return (0);
+	return (EPERM);
+}
+
+static struct ksem *
+ksem_lookup_byname(const char *name)
+{
+	struct ksem *ks;
+
+	LOCK_ASSERT(simple_lock_held(&ksem_slock));
+	LIST_FOREACH(ks, &ksem_head, ks_entry) {
+		if (strcmp(ks->ks_name, name) == 0) {
+			simple_lock(&ks->ks_interlock);
+			return (ks);
+		}
+	}
+	return (NULL);
+}
+
+static int
+ksem_create(struct proc *p, const char *name, struct ksem **ksret,
+    mode_t mode, unsigned int value)
 {
 	struct ksem *ret;
-	struct proc *p;
 	struct ucred *uc;
 	size_t len;
-	int error;
 
-	DP(("ksem_create %s %p %d %u\n", name ? name : "(null)", ksret, mode,
-	    value));
-	p = l->l_proc;
 	uc = p->p_ucred;
 	if (value > SEM_VALUE_MAX)
 		return (EINVAL);
@@ -189,31 +272,29 @@ ksem_create(l, name, ksret, mode, value)
 		}
 		ret->ks_name = malloc(len + 1, M_SEM, M_WAITOK);
 		strcpy(ret->ks_name, name);
-	} else {
+	} else
 		ret->ks_name = NULL;
-	}
 	ret->ks_mode = mode;
 	ret->ks_value = value;
 	ret->ks_ref = 1;
 	ret->ks_waiters = 0;
 	ret->ks_uid = uc->cr_uid;
 	ret->ks_gid = uc->cr_gid;
-	ret->ks_onlist = 0;
-	LIST_INIT(&ret->ks_users);
-	if (name != NULL)
-		ksem_enter(l->l_proc, ret);
-	*ksret = ret;
+	simple_lock_init(&ret->ks_interlock);
+
 	simple_lock(&ksem_slock);
 	if (nsems >= SEM_MAX) {
-		ksem_leave(l->l_proc, ret);
-		ksem_free(ret);
-		error = ENFILE;
-	} else {
-		nsems++;
-		error = 0;
+		simple_unlock(&ksem_slock);
+		if (ret->ks_name != NULL)
+			free(ret->ks_name, M_SEM);
+		free(ret, M_SEM);
+		return (ENFILE);
 	}
+	nsems++;
 	simple_unlock(&ksem_slock);
-	return (error);
+
+	*ksret = ret;
+	return (0);
 }
 
 int
@@ -227,22 +308,21 @@ sys__ksem_init(struct lwp *l, void *v, register_t *retval)
 	semid_t id;
 	int error;
 
-	error = ksem_create(l, NULL, &ks, S_IRWXU | S_IRWXG, SCARG(uap, value));
+	/* Note the mode does not matter for anonymous semaphores. */
+	error = ksem_create(l->l_proc, NULL, &ks, 0, SCARG(uap, value));
 	if (error)
 		return (error);
 	id = SEM_TO_ID(ks);
 	error = copyout(&id, SCARG(uap, idp), sizeof(id));
 	if (error) {
-		simple_lock(&ksem_slock);
-		ksem_rel(ks);
-		simple_unlock(&ksem_slock);
+		simple_lock(&ks->ks_interlock);
+		ksem_delref(ks);
 		return (error);
 	}
-	simple_lock(&ksem_slock);
-	LIST_INSERT_HEAD(&ksem_head, ks, ks_entry);
-	ks->ks_onlist = 1;
-	simple_unlock(&ksem_slock);
-	return (error);
+
+	ksem_add_proc(l->l_proc, ks);
+
+	return (0);
 }
 
 int
@@ -268,175 +348,112 @@ sys__ksem_open(struct lwp *l, void *v, register_t *retval)
 	ksnew = NULL;
 	simple_lock(&ksem_slock);
 	ks = ksem_lookup_byname(name);
-	/*
-	 * If we found it but O_EXCL is set, error.
-	 */
-	if (ks != NULL && (SCARG(uap, oflag) & O_EXCL) != 0) {
-		simple_unlock(&ksem_slock);
-		return (EEXIST);
-	}
-	/*
-	 * If we didn't find it...
-	 */
-	if (ks == NULL) {
-		/*
-		 * didn't ask for creation? error.
-		 */
-		if ((SCARG(uap, oflag) & O_CREAT) == 0) {
+
+	/* Found one? */
+	if (ks != NULL) {
+		/* Check for exclusive create. */
+		if (SCARG(uap, oflag) & O_EXCL) {
+			simple_unlock(&ks->ks_interlock);
 			simple_unlock(&ksem_slock);
-			return (ENOENT);
+			return (EEXIST);
 		}
+ found_one:
 		/*
-		 * We may block during creation, so drop the lock.
+		 * Verify permissions.  If we can access it, add
+		 * this process's reference.
 		 */
-		simple_unlock(&ksem_slock);
-		error = ksem_create(l, name, &ksnew, SCARG(uap, mode),
-		    SCARG(uap, value));
-		if (error != 0)
-			return (error);
-		id = SEM_TO_ID(ksnew);
-		DP(("about to copyout! 0x%lx to %p\n", id, SCARG(uap, idp)));
-		error = copyout(&id, SCARG(uap, idp), sizeof(id));
-		if (error) {
-			simple_lock(&ksem_slock);
-			ksem_leave(l->l_proc, ksnew);
-			ksem_rel(ksnew);
-			simple_unlock(&ksem_slock);
-			return (error);
-		}
-		/*
-		 * We need to make sure we haven't lost a race while
-		 * allocating during creation.
-		 */
-		simple_lock(&ksem_slock);
-		ks = ksem_lookup_byname(name);
-		if (ks != NULL) {
-			/* we lost... */
-			ksem_leave(l->l_proc, ksnew);
-			ksem_rel(ksnew);
-			/* we lost and we can't loose... */
-			if ((SCARG(uap, oflag) & O_EXCL) != 0) {
-				simple_unlock(&ksem_slock);
-				return (EEXIST);
-			}
-		} else {
-			DP(("ksem_create: about to add to list...\n"));
-			LIST_INSERT_HEAD(&ksem_head, ksnew, ks_entry); 
-			DP(("ksem_create: setting list bit...\n"));
-			ksnew->ks_onlist = 1;
-			DP(("ksem_create: done, about to unlock...\n"));
-		}
-		simple_unlock(&ksem_slock);
-	} else {
-		/*
-		 * if we aren't the creator, then enforce permissions.
-		 */
+		LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
 		error = ksem_perm(l->l_proc, ks);
-		if (!error)
-			ksem_ref(ks);
+		if (error == 0)
+			ksem_addref(ks);
+		simple_unlock(&ks->ks_interlock);
 		simple_unlock(&ksem_slock);
 		if (error)
 			return (error);
+
 		id = SEM_TO_ID(ks);
 		error = copyout(&id, SCARG(uap, idp), sizeof(id));
 		if (error) {
-			simple_lock(&ksem_slock);
-			ksem_rel(ks);
-			simple_unlock(&ksem_slock);
+			simple_lock(&ks->ks_interlock);
+			ksem_delref(ks);
 			return (error);
 		}
-		ksem_enter(l->l_proc, ks);
-		simple_lock(&ksem_slock);
-		ksem_rel(ks);
+
+		ksem_add_proc(l->l_proc, ks);
+
+		return (0);
+	}
+
+	/*
+	 * didn't ask for creation? error.
+	 */
+	if ((SCARG(uap, oflag) & O_CREAT) == 0) {
 		simple_unlock(&ksem_slock);
+		return (ENOENT);
+	}
+
+	/*
+	 * We may block during creation, so drop the lock.
+	 */
+	simple_unlock(&ksem_slock);
+	error = ksem_create(l->l_proc, name, &ksnew, SCARG(uap, mode),
+	    SCARG(uap, value));
+	if (error != 0)
+		return (error);
+
+	id = SEM_TO_ID(ksnew);
+	error = copyout(&id, SCARG(uap, idp), sizeof(id));
+	if (error) {
+		free(ksnew->ks_name, M_SEM);
+		ksnew->ks_name = NULL;
+
+		simple_lock(&ksnew->ks_interlock);
+		ksem_delref(ksnew);
+		return (error);
+	}
+
+	/*
+	 * We need to make sure we haven't lost a race while
+	 * allocating during creation.
+	 */
+	simple_lock(&ksem_slock);
+	if ((ks = ksem_lookup_byname(name)) != NULL) {
+		if (SCARG(uap, oflag) & O_EXCL) {
+			simple_unlock(&ks->ks_interlock);
+			simple_unlock(&ksem_slock);
+
+			free(ksnew->ks_name, M_SEM);
+			ksnew->ks_name = NULL;
+
+			simple_lock(&ksnew->ks_interlock);
+			ksem_delref(ksnew);
+			return (EEXIST);
+		}
+		goto found_one;
+	} else {
+		/* ksnew already has its initial reference. */
+		LIST_INSERT_HEAD(&ksem_head, ksnew, ks_entry); 
+		simple_unlock(&ksem_slock);
+
+		ksem_add_proc(l->l_proc, ksnew);
 	}
 	return (error);
 }
 
-static int
-ksem_perm(p, ks)
-	struct proc *p;
-	struct ksem *ks;
+/* We must have a read lock on the ksem_proc list! */
+static struct ksem *
+ksem_lookup_proc(struct ksem_proc *kp, semid_t id)
 {
-	struct ucred *uc;
+	struct ksem_ref *ksr;
 
-	uc = p->p_ucred;
-	DP(("ksem_perm: uc(%d,%d) ks(%d,%d,%o)\n",
-	    uc->cr_uid, uc->cr_gid,
-	     ks->ks_uid, ks->ks_gid, ks->ks_mode));
-	if ((uc->cr_uid == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
-	    (uc->cr_gid == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
-	    (ks->ks_mode & S_IWOTH) != 0 || suser(uc, &p->p_acflag) == 0)
-		return (0);
-	return (EPERM);
-}
+	LIST_FOREACH(ksr, &kp->kp_ksems, ksr_list) {
+		if (id == (semid_t) ksr->ksr_ksem) {
+			simple_lock(&ksr->ksr_ksem->ks_interlock);
+			return (ksr->ksr_ksem);
+		}
+	}
 
-static void
-ksem_free(struct ksem *ks)
-{
-	nsems--;
-	if (ks->ks_onlist)
-		LIST_REMOVE(ks, ks_entry);
-	if (ks->ks_name != NULL)
-		free(ks->ks_name, M_SEM);
-	free(ks, M_SEM);
-}
-
-static __inline struct kuser *
-ksem_getuser(struct proc *p, struct ksem *ks)
-{
-	struct kuser *k;
-
-	LIST_FOREACH(k, &ks->ks_users, ku_next)
-		if (k->ku_pid == p->p_pid)
-			return (k);
 	return (NULL);
-}
-
-static int
-ksem_hasopen(struct proc *p, struct ksem *ks)
-{
-	
-	return ((ks->ks_name == NULL && ksem_perm(p, ks))
-	    || ksem_getuser(p, ks) != NULL);
-}
-
-static int
-ksem_leave(struct proc *p, struct ksem *ks)
-{
-	struct kuser *k;
-
-	DP(("ksem_leave: ks = %p\n", ks));
-	k = ksem_getuser(p, ks);
-	DP(("ksem_leave: ks = %p, k = %p\n", ks, k));
-	if (k != NULL) {
-		LIST_REMOVE(k, ku_next);
-		ksem_rel(ks);
-		DP(("ksem_leave: about to free k\n"));
-		free(k, M_SEM);
-		DP(("ksem_leave: returning\n"));
-		return (0);
-	}
-	return (EINVAL);
-}
-
-static void
-ksem_enter(struct proc *p, struct ksem *ks)
-{
-	struct kuser *ku, *k;
-
-	ku = malloc(sizeof(*ku), M_SEM, M_WAITOK);
-	ku->ku_pid = p->p_pid;
-	simple_lock(&ksem_slock);
-	k = ksem_getuser(p, ks);
-	if (k != NULL) {
-		simple_unlock(&ksem_slock);
-		free(ku, M_TEMP);
-		return;
-	}
-	LIST_INSERT_HEAD(&ks->ks_users, ku, ku_next);
-	ksem_ref(ks);
-	simple_unlock(&ksem_slock);
 }
 
 int
@@ -445,7 +462,7 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 	struct sys__ksem_unlink_args /* {
 		const char *name;
 	} */ *uap = v;
-	char name[SEM_MAX_NAMELEN + 1];
+	char name[SEM_MAX_NAMELEN + 1], *cp;
 	size_t done;
 	struct ksem *ks;
 	int error;
@@ -456,18 +473,27 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 
 	simple_lock(&ksem_slock);
 	ks = ksem_lookup_byname(name);
-	if (ks == NULL)
-		error = ENOENT;
-	else
-		error = ksem_perm(l->l_proc, ks);
-	DP(("ksem_unlink: '%s' ks = %p, error = %d\n", name, ks, error));
-	if (error == 0) {
-		LIST_REMOVE(ks, ks_entry);
-		LIST_INSERT_HEAD(&ksem_deadhead, ks, ks_entry); 
-		ksem_rel(ks);
+	if (ks == NULL) {
+		simple_unlock(&ksem_slock);
+		return (ENOENT);
 	}
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+
+	LIST_REMOVE(ks, ks_entry);
+	cp = ks->ks_name;
+	ks->ks_name = NULL;
+
 	simple_unlock(&ksem_slock);
-	return (error);
+
+	if (ks->ks_ref == 0)
+		ksem_free(ks);
+	else
+		simple_unlock(&ks->ks_interlock);
+
+	free(cp, M_SEM);
+
+	return (0);
 }
 
 int
@@ -476,17 +502,33 @@ sys__ksem_close(struct lwp *l, void *v, register_t *retval)
 	struct sys__ksem_close_args /* {
 		semid_t id;
 	} */ *uap = v;
+	struct ksem_proc *kp;
+	struct ksem_ref *ksr;
 	struct ksem *ks;
-	int error;
 
-	error = EINVAL;
-	simple_lock(&ksem_slock);
-	ks = ID_TO_SEM(SCARG(uap, id));
-	/* this is not a valid operation for unnamed sems */
-	if (ks != NULL && ks->ks_name != NULL)
-		error = ksem_leave(l->l_proc, ks);
-	simple_unlock(&ksem_slock);
-	return (error);
+	if ((kp = l->l_proc->p_ksems) == NULL)
+		return (EINVAL);
+
+	lockmgr(&kp->kp_lock, LK_EXCLUSIVE, NULL);
+
+	ks = ksem_lookup_proc(kp, SCARG(uap, id));
+	if (ks == NULL) {
+		lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+		return (EINVAL);
+	}
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	if (ks->ks_name == NULL) {
+		simple_unlock(&ks->ks_interlock);
+		lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+		return (EINVAL);
+	}
+
+	ksr = ksem_drop_proc(kp, ks);
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+	free(ksr, M_SEM);
+
+	return (0);
 }
 
 int
@@ -495,25 +537,63 @@ sys__ksem_post(struct lwp *l, void *v, register_t *retval)
 	struct sys__ksem_post_args /* {
 		semid_t id;
 	} */ *uap = v;
+	struct ksem_proc *kp;
 	struct ksem *ks;
 	int error;
 
-	simple_lock(&ksem_slock);
-	ks = ID_TO_SEM(SCARG(uap, id));
-	if (ks == NULL || !ksem_hasopen(l->l_proc, ks)) {
-		error = EINVAL;
-		goto err;
-	}
+	if ((kp = l->l_proc->p_ksems) == NULL)
+		return (EINVAL);
+
+	lockmgr(&kp->kp_lock, LK_SHARED, NULL);
+	ks = ksem_lookup_proc(kp, SCARG(uap, id));
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+	if (ks == NULL)
+		return (EINVAL);
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
 	if (ks->ks_value == SEM_VALUE_MAX) {
 		error = EOVERFLOW;
-		goto err;
+		goto out;
 	}
 	++ks->ks_value;
-	if (ks->ks_waiters > 0)
+	if (ks->ks_waiters)
 		wakeup(ks);
 	error = 0;
-err:
-	simple_unlock(&ksem_slock);
+ out:
+	simple_unlock(&ks->ks_interlock);
+	return (error);
+}
+
+static int
+ksem_wait(struct lwp *l, semid_t id, int tryflag)
+{
+	struct ksem_proc *kp;
+	struct ksem *ks;
+	int error;
+
+	if ((kp = l->l_proc->p_ksems) == NULL)
+		return (EINVAL);
+
+	lockmgr(&kp->kp_lock, LK_SHARED, NULL);
+	ks = ksem_lookup_proc(kp, id);
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+	if (ks == NULL)
+		return (EINVAL);
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+	ksem_addref(ks);
+	while (ks->ks_value == 0) {
+		ks->ks_waiters++;
+		error = tryflag ? EAGAIN : ltsleep(ks, PCATCH, "psem", 0, 
+		    &ks->ks_interlock);
+		ks->ks_waiters--;
+		if (error)
+			goto out;
+	}
+	ks->ks_value--;
+	error = 0;
+ out:
+	ksem_delref(ks);
 	return (error);
 }
 
@@ -537,45 +617,6 @@ sys__ksem_trywait(struct lwp *l, void *v, register_t *retval)
 	return ksem_wait(l, SCARG(uap, id), 1);
 }
 
-static int
-ksem_wait(struct lwp *l, semid_t id, int tryflag)
-{
-	struct ksem *ks;
-	int error;
-
-	DP((">>> kern_sem_wait entered!\n"));
-	simple_lock(&ksem_slock);
-	ks = ID_TO_SEM(id);
-	if (ks == NULL) {
-		DP(("kern_sem_wait ks == NULL\n"));
-		error = EINVAL;
-		goto err;
-	}
-	ksem_ref(ks);
-	if (!ksem_hasopen(l->l_proc, ks)) {
-		DP(("kern_sem_wait hasopen failed\n"));
-		error = EINVAL;
-		goto err;
-	}
-	DP(("kern_sem_wait value = %d, tryflag %d\n", ks->ks_value, tryflag));
-	if (ks->ks_value == 0) {
-		ks->ks_waiters++;
-		error = tryflag ? EAGAIN : ltsleep(ks, PCATCH, "psem", 0, 
-		    &ksem_slock);
-		ks->ks_waiters--;
-		if (error)
-			goto err;
-	}
-	ks->ks_value--;
-	error = 0;
-err:
-	if (ks != NULL)
-		ksem_rel(ks);
-	simple_unlock(&ksem_slock);
-	DP(("<<< kern_sem_wait leaving, error = %d\n", error));
-	return (error);
-}
-
 int
 sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 {
@@ -583,18 +624,24 @@ sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 		semid_t id;
 		unsigned int *value;
 	} */ *uap = v;
+	struct ksem_proc *kp;
 	struct ksem *ks;
 	unsigned int val;
 
-	simple_lock(&ksem_slock);
-	ks = ID_TO_SEM(SCARG(uap, id));
-	if (ks == NULL || !ksem_hasopen(l->l_proc, ks)) {
-		simple_unlock(&ksem_slock);
+	if ((kp = l->l_proc->p_ksems) == NULL)
 		return (EINVAL);
-	}
+
+	lockmgr(&kp->kp_lock, LK_SHARED, NULL);
+	ks = ksem_lookup_proc(kp, SCARG(uap, id));
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+	if (ks == NULL)
+		return (EINVAL);
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
 	val = ks->ks_value;
-	simple_unlock(&ksem_slock);
-	return copyout(&val, SCARG(uap, value), sizeof(val));
+	simple_unlock(&ks->ks_interlock);
+
+	return (copyout(&val, SCARG(uap, value), sizeof(val)));
 }
 
 int
@@ -603,52 +650,101 @@ sys__ksem_destroy(struct lwp *l, void *v, register_t *retval)
 	struct sys__ksem_destroy_args /*{
 		semid_t id;
 	} */ *uap = v;
+	struct ksem_proc *kp;
+	struct ksem_ref *ksr;
 	struct ksem *ks;
-	int error;
 
-	simple_lock(&ksem_slock);
-	ks = ID_TO_SEM(SCARG(uap, id));
-	if (ks == NULL || !ksem_hasopen(l->l_proc, ks) ||
-	    ks->ks_name != NULL) {
-		error = EINVAL;
-		goto err;
+	if ((kp = l->l_proc->p_ksems) == NULL)
+		return (EINVAL);
+
+	lockmgr(&kp->kp_lock, LK_EXCLUSIVE, NULL);
+
+	ks = ksem_lookup_proc(kp, SCARG(uap, id));
+	if (ks == NULL) {
+		lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+		return (EINVAL);
 	}
-	if (ks->ks_waiters != 0) {
-		error = EBUSY;
-		goto err;
+
+	LOCK_ASSERT(simple_lock_held(&ks->ks_interlock));
+
+	/*
+	 * XXX This misses named semaphores which have been unlink'd,
+	 * XXX but since behavior of destroying a named semaphore is
+	 * XXX undefined, this is technically allowed.
+	 */
+	if (ks->ks_name != NULL) {
+		simple_unlock(&ks->ks_interlock);
+		lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+		return (EINVAL);
 	}
-	ksem_rel(ks);
-	error = 0;
-err:
-	simple_unlock(&ksem_slock);
-	return (error);
+
+	if (ks->ks_waiters) {
+		simple_unlock(&ks->ks_interlock);
+		lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+		return (EBUSY);
+	}
+
+	ksr = ksem_drop_proc(kp, ks);
+	lockmgr(&kp->kp_lock, LK_RELEASE, NULL);
+	free(ksr, M_SEM);
+
+	return (0);
+}
+
+static void
+ksem_forkhook(struct proc *p2, struct proc *p1)
+{
+	struct ksem_proc *kp1, *kp2;
+	struct ksem_ref *ksr, *ksr1;
+
+	if ((kp1 = p1->p_ksems) == NULL) {
+		p2->p_ksems = NULL;
+		return;
+	}
+
+	p2->p_ksems = kp2 = ksem_proc_alloc();
+
+	lockmgr(&kp1->kp_lock, LK_SHARED, NULL);
+
+	if (!LIST_EMPTY(&kp1->kp_ksems)) {
+		LIST_FOREACH(ksr, &kp1->kp_ksems, ksr_list) {
+			ksr1 = malloc(sizeof(*ksr), M_SEM, M_WAITOK);
+			ksr1->ksr_ksem = ksr->ksr_ksem;
+			simple_lock(&ksr->ksr_ksem->ks_interlock);
+			ksem_addref(ksr->ksr_ksem);
+			simple_unlock(&ksr->ksr_ksem->ks_interlock);
+			LIST_INSERT_HEAD(&kp2->kp_ksems, ksr1, ksr_list);
+		}
+	}
+
+	lockmgr(&kp1->kp_lock, LK_RELEASE, NULL);
 }
 
 static void
 ksem_exithook(struct proc *p, void *arg)
 {
-	struct ksem *ks, *ksnext;
+	struct ksem_proc *kp;
+	struct ksem_ref *ksr;
 
-	simple_lock(&ksem_slock);
-	ks = LIST_FIRST(&ksem_head);
-	while (ks != NULL) {
-		ksnext = LIST_NEXT(ks, ks_entry);
-		ksem_leave(p, ks);
-		ks = ksnext;
+	if ((kp = p->p_ksems) == NULL)
+		return;
+
+	/* Don't bother locking; process is dying. */
+
+	while ((ksr = LIST_FIRST(&kp->kp_ksems)) != NULL) {
+		LIST_REMOVE(ksr, ksr_list);
+		simple_lock(&ksr->ksr_ksem->ks_interlock);
+		ksem_delref(ksr->ksr_ksem);
+		free(ksr, M_SEM);
 	}
-	ks = LIST_FIRST(&ksem_deadhead);
-	while (ks != NULL) {
-		ksnext = LIST_NEXT(ks, ks_entry);
-		ksem_leave(p, ks);
-		ks = ksnext;
-	}
-	simple_unlock(&ksem_slock);
 }
 
 void
 ksem_init(void)
 {
+
 	simple_lock_init(&ksem_slock);
 	exithook_establish(ksem_exithook, NULL);
 	exechook_establish(ksem_exithook, NULL);
+	forkhook_establish(ksem_forkhook);
 }
