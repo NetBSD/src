@@ -1,10 +1,12 @@
-#	$NetBSD: ALL,v 1.33 1999/11/18 14:09:40 minoura Exp $
+#	$NetBSD: ALL,v 1.34 2000/02/05 14:35:41 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
 #
 
 include "arch/x68k/conf/std.x68k"
+
+#ident 		"ALL-$Revision: 1.34 $"
 
 maxusers	32
 
@@ -137,6 +139,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem (buggy)
+file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -154,10 +157,10 @@ options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP         # FFS soft updates support.
 
-## Pull in config fragments for kernel crypto.  This is required for
-## options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-## one of these, based on whether you use crypto-us or crypto-intl, and
-## adjust the prefixes as necessary.
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
 
 #prefix ../crypto-us/sys
 #cinclude "conf/files.crypto-us"
@@ -306,12 +309,9 @@ pseudo-device	bpfilter	8
 ## one example of the use of the IP Filter.
 pseudo-device	ipfilter
 
-## Generic tunnel interface; IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	gif		4
-
-## IPv6-to-IPv4 TCP relay capturing interface
-pseudo-device	faith		1
-
+## for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 #### Other device configuration
 
