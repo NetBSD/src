@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2002/04/10 17:39:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2002/04/12 21:52:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2002/04/10 17:39:31 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2002/04/12 21:52:47 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3814,6 +3814,23 @@ pmap_pte_init_xscale(void)
 	pte_l2_s_cache_mode = L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X);
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
 
+#ifdef XSCALE_CACHE_WRITE_THROUGH
+	/*
+	 * Some versions of the XScale core have various bugs in
+	 * their cache units, the work-around for which is to run
+	 * the cache in write-through mode.  Unfortunately, this
+	 * has a major (negative) impact on performance.  So, we
+	 * go ahead and run fast-and-loose, in the hopes that we
+	 * don't line up the planets in a way that will trip the
+	 * bugs.
+	 *
+	 * However, we give you the option to be slow-but-correct.
+	 */
+	pte_l1_s_cache_mode = L1_S_C;
+	pte_l2_l_cache_mode = L2_C;
+	pte_l2_s_cache_mode = L2_C;
+#endif /* XSCALE_CACHE_WRITE_THROUGH */
+
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_xscale;
@@ -3825,22 +3842,6 @@ pmap_pte_init_xscale(void)
 	pmap_copy_page_func = pmap_copy_page_xscale;
 	pmap_zero_page_func = pmap_zero_page_xscale;
 }
-
-#if defined(CPU_XSCALE_80200)
-void
-pmap_pte_init_i80200(void)
-{
-
-	/*
-	 * Use write-through caching on the i80200 to work around
-	 * bugs in its cache unit.
-	 */
-	pmap_pte_init_xscale();
-	pte_l1_s_cache_mode = L1_S_C;
-	pte_l2_l_cache_mode = L2_C;
-	pte_l2_s_cache_mode = L2_C;
-}
-#endif /* CPU_XSCALE_80200 */
 
 /*
  * xscale_setup_minidata:
