@@ -1,4 +1,4 @@
-.\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
+.\"	$NetBSD: getitimer.2,v 1.7 1998/02/02 05:20:28 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
+.\"     @(#)getitimer.2	8.3 (Berkeley) 5/16/95
 .\"
-.Dd December 11, 1993
+.Dd May 16, 1995
 .Dt GETITIMER 2
 .Os BSD 4.2
 .Sh NAME
@@ -134,8 +134,7 @@ sets a time value to zero,
 .Fa timerisset
 tests if a time value is non-zero, and
 .Fa timercmp
-compares two time values (beware that >= and <= do not
-work with this macro).
+compares two time values.
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.  If an error occurs,
 the value -1 is returned, and a more precise error code is placed
