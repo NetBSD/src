@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.12 1997/11/12 05:49:24 mjacob Exp $	*/
+/*	$NetBSD: ethers.c,v 1.13 1998/07/26 13:14:04 mycroft Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -39,7 +39,7 @@ char *
 ether_ntoa(e)
 	struct ether_addr *e;
 {
-	static char a[] = "xx:xx:xx:xx:xx:xx";
+	static char a[18];
 
 	snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
