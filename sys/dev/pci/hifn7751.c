@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.18 2003/08/28 15:15:43 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.19 2003/08/28 18:13:33 thorpej Exp $	*/
 /* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.18 2003/08/28 15:15:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.19 2003/08/28 18:13:33 thorpej Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -272,7 +272,6 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
