@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.63 2000/01/24 17:57:34 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.64 2000/03/22 17:42:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -71,6 +71,7 @@ struct filelist filehead;	/* head of list of open files */
 int nfiles;			/* actual number of open files */
 struct pool file_pool;		/* memory pool for file structures */
 struct pool cwdi_pool;		/* memory pool for cwdinfo structures */
+struct pool filedesc0_pool;	/* memory pool for filedesc0 structures */
 
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
@@ -607,8 +608,7 @@ fdalloc(p, want, result)
 			nfiles = NDEXTENT;
 		else
 			nfiles = 2 * fdp->fd_nfiles;
-		MALLOC(newofile, struct file **, nfiles * OFILESIZE,
-		    M_FILEDESC, M_WAITOK);
+		newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
 		newofileflags = (char *) &newofile[nfiles];
 		/*
 		 * Copy the existing ofile and ofileflags arrays
@@ -621,7 +621,7 @@ fdalloc(p, want, result)
 			(i = sizeof(char) * fdp->fd_nfiles));
 		memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
 		if (fdp->fd_nfiles > NDFILE)
-			FREE(fdp->fd_ofiles, M_FILEDESC);
+			free(fdp->fd_ofiles, M_FILEDESC);
 		fdp->fd_ofiles = newofile;
 		fdp->fd_ofileflags = newofileflags;
 		fdp->fd_nfiles = nfiles;
@@ -662,6 +662,8 @@ finit()
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILE);
 	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
+	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
 }
 
@@ -817,8 +819,7 @@ fdinit(p)
 {
 	struct filedesc0 *newfdp;
 
-	MALLOC(newfdp, struct filedesc0 *, sizeof(struct filedesc0),
-	    M_FILEDESC, M_WAITOK);
+	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	memset(newfdp, 0, sizeof(struct filedesc0));
 
 	fdinit1(newfdp);
@@ -895,8 +896,7 @@ fdcopy(p)
 	register struct file **fpp;
 	register int i;
 
-	MALLOC(newfdp, struct filedesc *, sizeof(struct filedesc0),
-	    M_FILEDESC, M_WAITOK);
+	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
 	memcpy(newfdp, fdp, sizeof(struct filedesc));
 	newfdp->fd_refcnt = 1;
 
@@ -920,8 +920,7 @@ fdcopy(p)
 		i = newfdp->fd_nfiles;
 		while (i >= 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
 			i /= 2;
-		MALLOC(newfdp->fd_ofiles, struct file **, i * OFILESIZE,
-		    M_FILEDESC, M_WAITOK);
+		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
 	newfdp->fd_nfiles = i;
@@ -958,8 +957,8 @@ fdfree(p)
 	}
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
-		FREE(fdp->fd_ofiles, M_FILEDESC);
-	FREE(fdp, M_FILEDESC);
+		free(fdp->fd_ofiles, M_FILEDESC);
+	pool_put(&filedesc0_pool, fdp);
 }
 
 /*
