@@ -3,9 +3,6 @@
 
 #ifdef _KERNEL
 void initppc (u_int, u_int, char *);
-void install_extint (void (*)(void)); 
-void dumpsys (void);
-void softnet (void);
 void strayintr (int);
 
 void inittodr (time_t);

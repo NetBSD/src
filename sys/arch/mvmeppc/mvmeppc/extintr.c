@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.2 2002/03/04 02:19:10 simonb Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3 2002/07/05 18:45:18 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -93,6 +93,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/malloc.h>
 #include <sys/device.h>
 
+#include <net/netisr.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
@@ -105,7 +107,7 @@ int fakeintr(void *);
 void ext_intr(void);
 
 int imen = 0xffffffff;
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
@@ -398,8 +400,10 @@ do_pending_int(void)
 		softclock(NULL);
 	}
 	if ((ipending & ~pcpl) & SINT_NET) {
+		int pisr = netisr;
 		ipending &= ~SINT_NET;
-		softnet();
+		netisr = 0;
+		softnet(pisr);
 	}
 	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2002/06/17 21:08:56 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2002/07/05 18:45:20 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -111,8 +111,6 @@
 volatile int astpending;
 volatile int want_resched;
 #endif
-
-void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 
@@ -250,91 +248,9 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->srr0, frame));
 		trapsignal(p, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(p);
 		break;
+
 	case EXC_SC|EXC_USER:
-		{
-			const struct sysent *callp;
-			size_t argsize;
-			register_t code, error;
-			register_t *params, rval[2];
-			int n;
-			register_t args[10];
-
-			KERNEL_PROC_LOCK(p);
-
-			uvmexp.syscalls++;
-
-			code = frame->fixreg[0];
-			callp = p->p_emul->e_sysent;
-			params = frame->fixreg + FIRSTARG;
-			n = NARGREG;
-
-			switch (code) {
-			case SYS_syscall:
-				/*
-				 * code is first argument,
-				 * followed by actual args.
-				 */
-				code = *params++;
-				n -= 1;
-				break;
-			case SYS___syscall:
-				params++;
-				code = *params++;
-				n -= 2;
-				break;
-			default:
-				break;
-			}
-
-			code &= (SYS_NSYSENT - 1);
-			callp += code;
-			argsize = callp->sy_argsize;
-
-			if (argsize > n * sizeof(register_t)) {
-				memcpy(args, params, n * sizeof(register_t));
-				error = copyin(MOREARGS(frame->fixreg[1]),
-					       args + n,
-					       argsize - n * sizeof(register_t));
-				if (error)
-					goto syscall_bad;
-				params = args;
-			}
-
-
-			if ((error = trace_enter(p, code, params, rval)) != 0)
-				goto syscall_bad;
-
-			rval[0] = 0;
-			rval[1] = 0;
-
-			error = (*callp->sy_call)(p, params, rval);
-			switch (error) {
-			case 0:
-				frame->fixreg[FIRSTARG] = rval[0];
-				frame->fixreg[FIRSTARG + 1] = rval[1];
-				frame->cr &= ~0x10000000;
-				break;
-			case ERESTART:
-				/*
-				 * Set user's pc back to redo the system call.
-				 */
-				frame->srr0 -= 4;
-				break;
-			case EJUSTRETURN:
-				/* nothing to do */
-				break;
-			default:
-syscall_bad:
-				if (p->p_emul->e_errno)
-					error = p->p_emul->e_errno[error];
-				frame->fixreg[FIRSTARG] = error;
-				frame->cr |= 0x10000000;
-				break;
-			}
-			KERNEL_PROC_UNLOCK(p);
-
-			trace_exit(p, code, args, rval, error);
-		}
+		(*p->p_md.md_syscall)(frame);
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -457,29 +373,6 @@ ctx_setup(int ctx, int srr1)
 		ctx = KERNEL_PID;
 	}
 	return (ctx);
-}
-
-void
-child_return(void *arg)
-{
-	struct proc *p = arg;
-	struct trapframe *tf = trapframe(p);
-
-	KERNEL_PROC_UNLOCK(p);
-
-	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
-	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
-	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 /*

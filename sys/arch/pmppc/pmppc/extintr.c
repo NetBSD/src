@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3 2002/06/13 15:29:16 augustss Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4 2002/07/05 18:45:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,9 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <uvm/uvm.h>
+#include <net/netisr.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/intrpriv.h>
@@ -112,7 +114,7 @@ long eintrcnt[32];
 
 
 u_int32_t imen = 0xffffffff;
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, tickspending;
 int imask[NIPL];		/* XXX type */
 u_int32_t intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
@@ -453,8 +455,6 @@ do_pending_int(void)
 		intrcnt[CNT_SINT_CLOCK]++;
 	}
 	if ((ipending & ~pcpl) & SINT_NET) {
-		extern int netisr;
-		void softnet(int);
 		int pisr = netisr;
 		netisr = 0;
 		ipending &= ~SINT_NET;

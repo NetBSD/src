@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.23 2002/06/26 20:00:17 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.24 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,25 @@
  *
  *	#include <powerpc/powerpc/trap_subr.S>
  */
+#include "opt_altivec.h"
+
+#ifdef ALTIVEC
+#define DSSALL			/* assumes PSL is in cr registers */ \
+	bc+	4,6,86f;	/* branch is PSL_VEC is false */	\
+	dssall;			/* stop datastreams */			\
+86:
+#define	SAVE_VRSAVE(tf,b) \
+	mfspr	b,SPR_VRSAVE;						\
+	stw	b,FRAME_VRSAVE+8(tf);
+
+#define RESTORE_VRSAVE(tf,b) \
+	lwz	b,FRAME_VRSAVE+8(tf);					\
+	mtspr	SPR_VRSAVE,b;
+#else
+#define DSSALL			86:
+#define SAVE_VRSAVE(tf,b)
+#define RESTORE_VRSAVE(tf,b)
+#endif
 #define	RESTORE_SRS(pmap,sr)	mtsr	0,sr; \
 	lwz	sr,4(pmap);	mtsr	1,sr; \
 	lwz	sr,8(pmap);	mtsr	2,sr; \
@@ -630,7 +649,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	28,FRAME_LR+8(1);					\
 	stw	29,FRAME_CR+8(1);					\
 	lmw	28,savearea(0);						\
-	stmw	2,FRAME_2+8(1);						\
+	stmw	2,FRAME_2+8(1);	 /* after this, r2-r31 can be used */	\
 	lmw	28,savearea+16(0);					\
 	mfxer	3;							\
 	mfctr	4;							\
@@ -639,6 +658,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	3,FRAME_XER+8(1);					\
 	stw	4,FRAME_CTR+8(1);					\
 	stw	5,FRAME_EXC+8(1);					\
+	SAVE_VRSAVE(1,6);						\
 	stw	28,FRAME_DAR+8(1);					\
 	stw	29,FRAME_DSISR+8(1);					\
 	stw	30,FRAME_SRR0+8(1);					\
@@ -652,6 +672,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
 	lwz	7,FRAME_CR+8(1);					\
+	RESTORE_VRSAVE(1,8);						\
 	stw	2,savearea(0);						\
 	stw	3,savearea+4(0);					\
 	mtctr	4;							\
@@ -659,8 +680,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtlr	6;							\
 	mtsprg	1,7;			/* save cr */			\
 	lmw	2,FRAME_2+8(1);						\
-	lwz	0,FRAME_0+8(1);						\
-	lwz	1,FRAME_1+8(1);						\
+	lwz	0,FRAME_0+8(1);		/* restore r0 */		\
+	lwz	1,FRAME_1+8(1);		/* restore old sp in r1 */	\
 	mtsprg	2,2;			/* save r2 & r3 */		\
 	mtsprg	3,3;							\
 /* Disable translation, machine check and recoverability: */		\
@@ -671,7 +692,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Decide whether we return to user mode: */				\
 	lwz	3,savearea+4(0);					\
 	mtcr	3;							\
-	bc	4,17,1f;		/* branch if PSL_PR is false */	\
+	bc	4,17,1f;	/* branch if PSL_PR is false */		\
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(2,3);						\
 	RESTORE_USER_SRS(2,3);						\
@@ -695,6 +716,8 @@ disitrap:
 	mfdar	30
 	mfdsisr	31
 	stmw	30,tempsave+16(0)
+	.globl	trapstart
+trapstart:
 realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
@@ -703,6 +726,7 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
+	DSSALL				/* stop AltiVec data streams */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -861,6 +885,7 @@ s_isitrap:
 	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
+	DSSALL;			/* stop AltiVec datastreams */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(3,4);						\
 	CPU601_KERN_ENTRY(3,4);						\
@@ -1108,3 +1133,5 @@ _C_LABEL(ipkdbsbyte):
 	icbi	0,9			/* and instruction caches */	
 	blr
 #endif	/* IPKDB */
+	.globl	trapend
+trapend:
