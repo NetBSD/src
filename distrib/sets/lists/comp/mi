@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153 1999/08/23 22:32:27 thorpej Exp $
+# $NetBSD: mi,v 1.154 1999/08/26 08:02:10 mrg Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -213,9 +213,6 @@
 ./usr/include/dev/md.h
 ./usr/include/dev/microcode/aic7xxx
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
-./usr/include/dev/microcode/isp
-./usr/include/dev/microcode/isp/asm_pci.h
-./usr/include/dev/microcode/isp/asm_sbus.h
 ./usr/include/dev/mii
 ./usr/include/dev/mii/inphyreg.h
 ./usr/include/dev/mii/mii.h
