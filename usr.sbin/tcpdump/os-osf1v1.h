@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994
+ * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,18 +18,39 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: os-osf1v1.h,v 1.3 94/06/14 20:16:02 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+#ifndef	IPPROTO_ND
+/* Trying to compile this not on a Sun system */
+#define	IPPROTO_ND 77	/* From <netinet/in.h> on a Sun somewhere */
+#endif
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+#ifndef ETHERTYPE_REVARP
+/* some systems don't define this */
+#define ETHERTYPE_REVARP	0x8035
+#define REVARP_REQUEST		3
+#define REVARP_REPLY		4
+#endif
 
-extern void init_addrtoname(int, u_int32, u_int32);
+/* Map things in the ether_arp struct */
+#define SHA(ap) ((ap)->arp_sha)
+#define SPA(ap) ((ap)->arp_spa)
+#define THA(ap) ((ap)->arp_tha)
+#define TPA(ap) ((ap)->arp_tpa)
 
-#define ipaddr_string(p) getname((const u_char *)(p))
+#define EDST(ep) ((ep)->ether_dhost)
+#define ESRC(ep) ((ep)->ether_shost)
+
+/* Map protocol types */
+#define ETHERPUP_IPTYPE ETHERTYPE_IP
+#define ETHERPUP_REVARPTYPE ETHERTYPE_REVARP
+#define ETHERPUP_ARPTYPE ETHERTYPE_ARP
+
+/* newish RIP commands */
+#ifndef	RIPCMD_POLL
+#define	RIPCMD_POLL 5
+#endif
+#ifndef	RIPCMD_POLLENTRY
+#define	RIPCMD_POLLENTRY 6
+#endif

@@ -1,0 +1,26 @@
+@(#) Header: INSTALL,v 1.14 94/06/20 18:47:45 leres Exp (LBL)
+
+If you have not built libpcap, do so first.  See the README
+file in this directory for the ftp location.
+
+After libpcap has been built (either install it or make sure it's
+in ../libpcap), edit the BINDEST and MANDEST paths in Makefile.in
+and run ./configure (a shell script).  "configure" will determine
+your system attributes and generate an appropriate Makefile from
+Makefile.in.  Now build tcpdump by running "make".  (If you're system
+is not listed in the README as one which we have tested, you may have
+to modify the configure script and Makefile.in.  Please send us patches
+for any modifications you need to make.)
+
+If everything builds ok, su and type "make install".  This will install
+tcpdump and the manual entry.  Note that since the system's packet
+capture facility can only be used by root, tcpdump is installed setuid
+to root.  As a security measure, we install it executable only by group
+"wheel".  On the other hand, BPF packet access is controlled by permissions
+to /dev/bpf0 etc., and in this case, tcpdump does not have to be setuid.
+In any case, DO NOT give untrusted users the capability of running tcpdump.
+Tcpdump can capture any traffic on your net, including passwords.
+
+Note that tcpdump is shipped with some systems, for example, DEC/OSF
+and BSD/386.  Remember to remove or rename the installed binary
+when upgrading.
