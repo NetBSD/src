@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.66 2001/07/14 06:53:44 matt Exp $	*/
+/*	$NetBSD: print.c,v 1.67 2001/08/07 14:46:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.66 2001/07/14 06:53:44 matt Exp $");
+__RCSID("$NetBSD: print.c,v 1.67 2001/08/07 14:46:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,20 +310,30 @@ command(ki, ve, mode)
 					p++;
 					fmt_putc(' ', &left);
 				}
-			}
-			/*
-			 * append the real command name within
-			 * parentheses, if the command name does
-			 * not match the one in the argument vector
-			 */
-			if (titlecmp(name, argv)) {
-				fmt_putc('(', &left);
+				if (titlecmp(name, argv)) {
+					/*
+					 * append the real command name within
+					 * parentheses, if the command name 
+					 * does not match the one in the
+					 * argument vector
+					 */
+					fmt_putc('(', &left);
+					fmt_puts(name, &left);
+					fmt_putc(')', &left);
+				}
+				if (use_procfs) {
+					free(argv[0]);
+					free(argv);
+				}
+			} else {
+				/*
+				 * Commands that don't set an argv vector
+				 * (usually system processes) are printed
+				 * with angled brackets.
+				 */
+				fmt_putc('[', &left);
 				fmt_puts(name, &left);
-				fmt_putc(')', &left);
-			}
-			if (use_procfs && argv) {
-				free(argv[0]);
-				free(argv);
+				fmt_putc(']', &left);
 			}
 		} else {
 			fmt_puts(name, &left);
