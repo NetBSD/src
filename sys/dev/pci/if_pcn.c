@@ -1,7 +1,7 @@
-/*	$NetBSD: if_pcn.c,v 1.6 2001/11/27 13:49:03 onoe Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.7 2001/11/29 17:15:44 thorpej Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.6 2001/11/27 13:49:03 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.7 2001/11/29 17:15:44 thorpej Exp $");
 
 #include "bpfilter.h"
 
