@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.32 2000/03/14 01:29:30 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.33 2000/03/14 10:20:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -911,7 +911,7 @@ pccbbintr(arg)
 
 	if (sockevent == 0) {
 		/* This intr is not for me: it may be for my child devices. */
-		return pccbbintr_function(sc);
+		return (pccbbintr_function(sc));
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
@@ -923,9 +923,8 @@ pccbbintr(arg)
 				    sockevent));
 				DPRINTF((" card removed, 0x%08x\n", sockstate));
 				sc->sc_flags &= ~CBB_CARDEXIST;
-				if (sc->
-				    sc_csc->sc_status & CARDSLOT_STATUS_CARD_16)
-				{
+				if (sc->sc_csc->sc_status &
+				    CARDSLOT_STATUS_CARD_16) {
 #if 0
 					struct pcic_handle *ph =
 					    &sc->sc_pcmcia_h;
@@ -937,9 +936,8 @@ pccbbintr(arg)
 #endif
 					cardslot_event_throw(sc->sc_csc,
 					    CARDSLOT_EVENT_REMOVAL_16);
-				} else if (sc->
-				    sc_csc->sc_status & CARDSLOT_STATUS_CARD_CB)
-				{
+				} else if (sc->sc_csc->sc_status &
+				    CARDSLOT_STATUS_CARD_CB) {
 					/* Cardbus intr removed */
 					cardslot_event_throw(sc->sc_csc,
 					    CARDSLOT_EVENT_REMOVAL_CB);
@@ -954,7 +952,7 @@ pccbbintr(arg)
 		}
 	}
 
-	return 1;
+	return (1);
 }
 
 /*
