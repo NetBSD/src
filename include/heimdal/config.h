@@ -345,6 +345,10 @@
 /* Define if you have the setsockopt function.  */
 #define HAVE_SETSOCKOPT 1
 
+/* Define if you have the getifaddrs function. */
+/* XXX manually added   --thorpej@netbsd.org */
+#define HAVE_GETIFADDRS 1
+
 /* Define if you have the setutent function.  */
 /* #undef HAVE_SETUTENT */
 
