@@ -1,4 +1,4 @@
-.\" $NetBSD: user.8,v 1.5.4.1 2000/10/20 20:00:32 tv Exp $ */
+.\" $NetBSD: user.8,v 1.5.4.2 2002/06/26 17:19:55 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd September 5, 2001
 .Dt USER 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm user
 .Nd manage user login information on the system
@@ -43,8 +43,9 @@
 .Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
+.Op Fl L Ar login-class
 .Op Fl r Ar low..high
 .Nm ""
 .Cm add
@@ -54,9 +55,10 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
+.Op Fl L Ar login-class
 .Op Fl p Ar password
 .Op Fl r Ar low..high
 .Op Fl s Ar shell
@@ -81,8 +83,9 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Op Fl g Ar gid/name/=uid
+.Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password
 .Op Fl s Ar shell
@@ -103,19 +106,19 @@ For a full explanation of the options, please see the relevant manual page.
 .Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh FILES
-.Bl -tag -width /etc/usermgmt.conf -compact
+.Bl -tag -width /usr/share/examples/usermgmt -compact
 .It Pa /etc/skel/.[A-z]*
 Skeleton files for new user
 .It Pa /etc/usermgmt.conf
 Configuration file for
-.Xr user 8 ,
+.Nm "" ,
 .Xr group 8
 and those backend commands
 .It Pa /usr/share/examples/usermgmt
-A directory hopefully containing examples for
-.Xr user 8
+A directory containing examples for
+.Nm
 and
 .Xr group 8
 .El
@@ -123,6 +126,7 @@ and
 .Xr chpass 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
 .Xr useradd 8 ,
 .Xr userdel 8 ,
 .Xr userinfo 8 ,
@@ -135,7 +139,7 @@ utility first appeared in
 It is based on the
 .Ar addnerd
 package by the same author.
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
