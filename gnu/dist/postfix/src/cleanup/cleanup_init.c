@@ -6,6 +6,8 @@
 /* SYNOPSIS
 /*	#include "cleanup.h"
 /*
+/*	CONFIG_BOOL_TABLE cleanup_bool_table[];
+/*
 /*	CONFIG_INT_TABLE cleanup_int_table[];
 /*
 /*	CONFIG_STR_TABLE cleanup_str_table[];
@@ -28,7 +30,7 @@
 /*	for one-time initializations that must be done before any message
 /*	processing can take place.
 /*
-/*	cleanup_{int,str,time}_table[] specify configuration
+/*	cleanup_{bool,int,str,time}_table[] specify configuration
 /*	parameters that must be initialized before calling any functions
 /*	in this module. These tables satisfy the interface as specified in
 /*	single_service(3).
@@ -107,6 +109,7 @@ char   *var_prop_extension;		/* propagate unmatched extension */
 char   *var_always_bcc;			/* big brother */
 int     var_extra_rcpt_limit;		/* recipient extract limit */
 char   *var_rcpt_witheld;		/* recipients not disclosed */
+bool    var_canon_env_rcpt;		/* canonicalize envelope recipient */
 char   *var_masq_classes;		/* what to masquerade */
 
 CONFIG_INT_TABLE cleanup_int_table[] = {
@@ -136,6 +139,11 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
     VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
     VAR_MASQ_CLASSES, DEF_MASQ_CLASSES, &var_masq_classes, 0, 0,
+    0,
+};
+
+CONFIG_BOOL_TABLE cleanup_bool_table[] = {
+    VAR_CANON_ENV_RCPT, DEF_CANON_ENV_RCPT, &var_canon_env_rcpt,
     0,
 };
 
