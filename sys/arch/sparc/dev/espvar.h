@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.12 1996/03/31 22:38:38 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.13 1996/05/16 20:31:30 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -103,7 +103,8 @@ struct esp_tinfo {
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
 #define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
 #define T_SYNCMODE	0x08	/* sync mode has been negotiated */
-#define T_SYNCHNEGO	0x10	/* .. */
+#define T_SYNCHOFF	0x10	/* .. */
+#define T_RSELECTOFF	0x20	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
