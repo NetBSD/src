@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.51 1998/08/23 22:42:32 pk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.52 1998/08/31 02:47:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -437,8 +437,8 @@ tprintf(tpr, fmt, va_alist)
  * ttyprintf: send a message to a specific tty
  *
  * => should be used only by tty driver or anything that knows the
- *	underlying tty will not be revoked(2)'d away.  [otherwise,
- *	use tprintf]
+ *    underlying tty will not be revoked(2)'d away.  [otherwise,
+ *    use tprintf]
  */
 void
 #ifdef __STDC__
