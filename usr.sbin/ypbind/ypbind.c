@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.20.4.1 1996/05/26 06:20:09 jtc Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.20.4.2 1996/06/03 20:38:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.1 1996/05/26 06:20:09 jtc Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.2 1996/06/03 20:38:41 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -116,25 +116,26 @@ ypbindproc_null_2(transp, argp, clnt)
 struct ypbind_resp *
 ypbindproc_domain_2(transp, argp, clnt)
 	SVCXPRT *transp;
-	char *argp;
+	char **argp;
 	CLIENT *clnt;
 {
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
 	char path[MAXPATHLEN];
+	char *arg = *argp;
 	time_t now;
 
 	memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
-		if (!strcmp(ypdb->dom_domain, argp))
+		if (!strcmp(ypdb->dom_domain, arg))
 			break;
 
 	if (ypdb == NULL) {
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
 		memset(ypdb, 0, sizeof *ypdb);
-		strncpy(ypdb->dom_domain, argp, sizeof ypdb->dom_domain);
+		strncpy(ypdb->dom_domain, arg, sizeof ypdb->dom_domain);
 		ypdb->dom_vers = YPVERS;
 		ypdb->dom_alive = 0;
 		ypdb->dom_lockfd = -1;
@@ -226,7 +227,7 @@ ypbindprog_2(rqstp, transp)
 	register SVCXPRT *transp;
 {
 	union {
-		char ypbindproc_domain_2_arg[MAXHOSTNAMELEN];
+		char ypbindproc_domain_2_arg[YPMAXDOMAIN + 1];
 		struct ypbind_setdom ypbindproc_setdom_2_arg;
 	} argument;
 	struct authunix_parms *creds;
