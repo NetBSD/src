@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.85 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: mount.h,v 1.85.2.1 2002/02/09 23:11:20 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -387,7 +387,7 @@ struct netexport {
 struct export_args {
 	int	ex_flags;		/* export related flags */
 	uid_t	ex_root;		/* mapping for root uid */
-	struct	ucred ex_anon;		/* mapping for anonymous user */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
 	struct	sockaddr *ex_addr;	/* net address to which exported */
 	int	ex_addrlen;		/* and the net address length */
 	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
