@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.17 2002/06/24 05:48:37 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.18 2002/12/06 03:39:11 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -413,7 +413,7 @@ do_upload(struct passwd *pw, const char *sc_reader_id)
 	key_free(prv);
 	if (ret < 0)
 		exit(1);
-	log("loading key done");
+	logit("loading key done");
 	exit(0);
 }
 

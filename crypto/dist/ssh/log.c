@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.4 2002/10/01 14:07:32 itojun Exp $	*/
+/*	$NetBSD: log.c,v 1.5 2002/12/06 03:39:09 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -125,7 +125,7 @@ error(const char *fmt,...)
 /* Log this message (information that usually should go to the log). */
 
 void
-log(const char *fmt,...)
+logit(const char *fmt,...)
 {
 	va_list args;
 

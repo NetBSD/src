@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.11 2002/05/27 13:45:17 itojun Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.12 2002/12/06 03:39:07 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -221,7 +221,7 @@ auth_rhosts2_raw(struct passwd *pw, const char *client_user, const char *hostnam
 	 * not group or world writable.
 	 */
 	if (stat(pw->pw_dir, &st) < 0) {
-		log("Rhosts authentication refused for %.100s: "
+		logit("Rhosts authentication refused for %.100s: "
 		    "no home directory %.200s", pw->pw_name, pw->pw_dir);
 		auth_debug_add("Rhosts authentication refused for %.100s: "
 		    "no home directory %.200s", pw->pw_name, pw->pw_dir);
@@ -230,7 +230,7 @@ auth_rhosts2_raw(struct passwd *pw, const char *client_user, const char *hostnam
 	if (options.strict_modes &&
 	    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
 	    (st.st_mode & 022) != 0)) {
-		log("Rhosts authentication refused for %.100s: "
+		logit("Rhosts authentication refused for %.100s: "
 		    "bad ownership or modes for home directory.", pw->pw_name);
 		auth_debug_add("Rhosts authentication refused for %.100s: "
 		    "bad ownership or modes for home directory.", pw->pw_name);
@@ -257,7 +257,7 @@ auth_rhosts2_raw(struct passwd *pw, const char *client_user, const char *hostnam
 		if (options.strict_modes &&
 		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
 		    (st.st_mode & 022) != 0)) {
-			log("Rhosts authentication refused for %.100s: bad modes for %.200s",
+			logit("Rhosts authentication refused for %.100s: bad modes for %.200s",
 			    pw->pw_name, buf);
 			auth_debug_add("Bad file modes for %.200s", buf);
 			continue;
