@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.23 2005/02/23 16:27:42 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.24 2005/03/05 18:18:18 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -638,3 +638,33 @@ sys/kern/kern_systrace.c			1.41
 	Fix the fcntl entry points; ``cmd'' is a command, not the
 	flags themselves.
 	[thorpej, ticket #1008]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/common/compiler.h		1.18
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/drivers/chips/util/AsmMacros.h 1.3
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/int10/generic.c	1.1.1.7 -> 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c		1.8
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/arm_video.c	1.5
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/mips_video.c	1.2
+x11/Xserver/hw/xfree86/bin/kbd_mode/Makefile	1.2
+x11/Xserver/hw/xfree86/bin/xf86cfg/Makefile	1.5
+x11/Xserver/hw/xfree86/bin/xf86config/Makefile	1.5
+x11/Xserver/hw/xfree86/xf86/Makefile		1.6
+x11/Xserver/hw/xfree86/xf86_os/Makefile		1.9
+x11/bin/xdm/config/Makefile			1.11
+
+	Fixes for NetBSD/cats:
+	 o Make sure IOPortBase is defined in the server
+	 o Stop the int10 module from trying to do unaligned accesses
+	 o Add VT switching support to cats port
+	Also, make sure x11 still builds for sgimips.
+	[skrll, ticket #1009]
+
+etc/etc.amiga/Makefile.inc			1.24
+
+	Ensure ISDN kernels are built for future releases.
+	[is, ticket #1010]
+
+sys/arch/amiga/conf/MDINSTALL			1.18
+
+	Remove use of ``idesc'', use ``wdc'' instead.
+	[is, ticket #1011]
