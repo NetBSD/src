@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.27 2002/10/16 03:46:07 christos Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.28 2002/12/05 01:38:05 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.27 2002/10/16 03:46:07 christos Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.28 2002/12/05 01:38:05 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,11 +433,6 @@ ar_close(void)
 	if (strcmp(NM_CPIO, argv0) == 0) {
 		(void)fprintf(listf, OFFT_F " blocks\n",
 		    (rdcnt ? rdcnt : wrcnt) / 5120);
-	} else if (strcmp(NM_TAR, argv0) != 0) {
-		(void)fprintf(listf,
-		    "%s: %s vol %d, %lu files, " OFFT_F " bytes read, "
-		    OFFT_F " bytes written.\n",
-		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
 	}
 
 	ar_summary(0);
