@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.12 2002/07/20 03:58:26 thorpej Exp $
+.\"	$NetBSD: copy.9,v 1.13 2002/10/14 13:43:18 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 Jason R. Thorpe.
 .\" All rights reserved.
@@ -64,7 +64,8 @@
 The
 .Nm
 functions are designed to copy contiguous data from one address
-to another.  All but
+to another.
+All but
 .Fn copystr
 copy data from user-space to kernel-space or vice-versa.
 .Pp
@@ -120,7 +121,8 @@ bytes long, from kernel-space address
 .Fa kaddr
 to user-space address
 .Fa uaddr
-in the current process.  If the
+in the current process.
+If the
 .Fa done
 argument is non-NULL,
 the number of bytes actually copied, including the terminating

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.10 2002/05/15 11:17:32 bouyer Exp $
+.\"	$NetBSD: scsipi.9,v 1.11 2002/10/14 13:43:32 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -66,10 +66,11 @@
 The
 .Nm
 system is the middle layer interface between SCSI/ATAPI host bus
-adapters (HBA) and high-level SCSI/ATAPI drivers.  This document
-describes the interfaces provided by the
+adapters (HBA) and high-level SCSI/ATAPI drivers.
+This document describes the interfaces provided by the
 .Nm
-layer towards the HBA layer.  An HBA has to provide a pointer to a
+layer towards the HBA layer.
+An HBA has to provide a pointer to a
 .Va struct scsipi_adapter
 and one pointer per channel to a
 .Va struct scsipi_channel .
@@ -77,13 +78,15 @@ Once the SCSI or ATAPI bus is attached, the
 .Nm
 system will scan the bus and allocate a
 .Va struct scsipi_periph
-for each device found on the bus.  A high-level command (command sent from
-the high-level SCSI/ATAPI layer to the low-level HBA layer) is described by a
+for each device found on the bus.
+A high-level command (command sent from the high-level SCSI/ATAPI
+layer to the low-level HBA layer) is described by a
 .Va struct scsipi_xfer .
 .Pp
 A request is sent to the HBA driver though the
 .Fn adapt_request
-callback.  The HBA driver signals completion (with or without errors) of the
+callback.
+The HBA driver signals completion (with or without errors) of the
 request though
 .Fn scsipi_done .
 .Nm
@@ -191,10 +194,12 @@ number of LUNs per target
 .It Va int chan_id
 adapter's ID on this channel
 .It Va int chan_defquirks
-default device quirks.  Quirks are defined in
+default device quirks.
+Quirks are defined in
 .Pa \*[Lt]dev/scsipi/scsipiconf.h\*[Gt]
 and are usually set in the middle layer based on the device's inquiry
-data.  For some kinds of adapters it may be convenient to have a set of
+data.
+For some kinds of adapters it may be convenient to have a set of
 quirks applied to all devices, regardless of the inquiry data.
 .El
 .Pp
@@ -204,7 +209,8 @@ by passing a pointer to the
 .Va struct scsipi_channel
 to the
 .Xr autoconf 4
-machinery.  The print function shall be either
+machinery.
+The print function shall be either
 .Fn scsiprint
 or
 .Fn atapiprint .
@@ -213,7 +219,8 @@ When scanning the bus, the
 .Nm
 system allocates a
 .Va struct scsipi_periph
-for each device probed.  The interesting fields are:
+for each device probed.
+The interesting fields are:
 .Bl -tag -width int_periph_openings -compact -offset indent
 .It Va struct device *periph_dev
 pointer to the device's
@@ -270,9 +277,10 @@ mask of flags reserved for HBA's use (0xf0000000)
 .It Va struct scsipi_periph *xs_periph
 periph doing the xfer
 .It Va int timeout
-command timeout, in milliseconds.  The HBA should start the timeout at the time
-the command is accepted by the device.  If the timeout happens, the HBA shall
-terminate the command through
+command timeout, in milliseconds.
+The HBA should start the timeout at the time the command is accepted
+by the device.
+If the timeout happens, the HBA shall terminate the command through
 .Fn scsipi_done
 with a XS_TIMEOUT error
 .It Va struct scsipi_generic *cmd
@@ -288,7 +296,8 @@ difference between
 .Fa datalen
 and how much data was really transferred
 .It Va scsipi_xfer_result_t error
-error value returned by the HBA driver to mid-layer.  See description of
+error value returned by the HBA driver to mid-layer.
+See description of
 .Fn scsipi_done
 for valid values
 .It Va union {struct scsipi_sense_data scsi_sense; u_int32_t atapi_sense;} sense
@@ -331,13 +340,14 @@ ask the adapter to increase resources of the channel (grow
 .Va adapt_openings
 or
 .Va chan_openings )
-if possible.  Support of this feature is optional.  This request is called from
-the kernel completion thread.
+if possible.
+Support of this feature is optional.
+This request is called from the kernel completion thread.
 .Fa arg
 must be ignored.
 .It Dv ADAPTER_REQ_SET_XFER_MODE
-set the xfer mode for a for I_T Nexus.  This will be called once all
-LUNs of a target have been probed.
+set the xfer mode for a for I_T Nexus.
+This will be called once all LUNs of a target have been probed.
 .Fa arg
 points to a
 .Va struct scsipi_xfer_mode
@@ -380,34 +390,37 @@ to notify the mid-layer.
 .Fn adapt_request
 may be called from interrupt context.
 .It Fn adapt_minphys
-pointer to the driver's minphys function.  If the driver can handle
-transfers of size
+pointer to the driver's minphys function.
+If the driver can handle transfers of size
 .Dv MAXPHYS ,
 this can point to
 .Fn minphys .
 .It Fn adapt_ioctl
-ioctl function for the channel.  The only ioctl supported at this level is
+ioctl function for the channel.
+The only ioctl supported at this level is
 .Dv SCBUSIORESET
 for which the HBA driver shall issue a SCSI reset on the channel.
 .It int Fn adapt_enable "struct device *dev" "int enable"
 Disable the adapter if
 .Va enable
-is zero, or enable it if non-zero.  Returns 0 if operation is successful,
-or error from
+is zero, or enable it if non-zero.
+Returns 0 if operation is successful, or error from
 .Pa \*[Lt]sys/errno.h\*[Gt] .
 This callback is optional, and is useful mostly for hot-plug devices.
 For example, this callback would power on or off
 the relevant PCMCIA socket for a PCMCIA controller.
 .It int Fn adapt_getgeom "struct scsipi_periph *periph" "struct disk_parms *params" "u_long sectors"
 Optional callback, used by high-level drivers to get the fictitious geometry
-used by the controller's firmware for the specified periph.  Returns 0 if
-successful.  See adaptec drivers for details.
+used by the controller's firmware for the specified periph.
+Returns 0 if successful.
+See adaptec drivers for details.
 .It int Fn adapt_accesschk "struct scsipi_periph *periph" "struct scsipi_inquiry_pattern *inqbuf"
 Optional callback; if present the mid-layer uses it to check if it can
-attach a driver to the specified periph.  If the callback returns a non-zero
-value, the periph is ignored by the
+attach a driver to the specified periph.
+If the callback returns a non-zero value, the periph is ignored by the
 .Nm
-code.  This callback is used by adapters which want to drive some devices
+code.
+This callback is used by adapters which want to drive some devices
 themselves, for example hardware RAID controllers.
 .It Fn scsipi_async_event "struct scsipi_channel *chan" "scsipi_async_event_t event" "void *arg"
 Asynchronous event notification for the mid-layer.
@@ -415,7 +428,8 @@ Asynchronous event notification for the mid-layer.
 can be one of:
 .Bl -tag -width xxxxxxxx -compact
 .It Dv ASYNC_EVENT_MAX_OPENINGS
-set max openings for a periph.  Argument is a
+set max openings for a periph.
+Argument is a
 .Va struct scsipi_max_openings
 with at least the following members:
 .Bl -tag -width xxxxxxxx -compact
@@ -427,9 +441,11 @@ with at least the following members:
 Not all periphs may allow openings to increase; if not allowed the request is
 silently ignored.
 .It Dv ASYNC_EVENT_XFER_MODE
-update the xfer mode for an I_T nexus.  Argument is a
+update the xfer mode for an I_T nexus.
+Argument is a
 .Va struct scsipi_xfer_mode
-properly filled in.  An
+properly filled in.
+An
 .Fa Dv ASYNC_EVENT_XFER_MODE
 call with
 .Fa Dv PERIPH_CAP_TQING
@@ -437,7 +453,8 @@ set in
 .Va xm_mode
 is mandatory to activate tagged queuing.
 .It Dv ASYNC_EVENT_RESET
-channel has been reset.  No argument.
+channel has been reset.
+No argument.
 HBA drivers have to issue
 .Dv ASYNC_EVENT_RESET events if they rely on the
 mid-layer for SCSI CHECK CONDITION handling.
@@ -458,8 +475,8 @@ Check the ATAPI sense for the error.
 .It Dv XS_DRIVER_STUFFUP
 Driver failed to perform operation.
 .It Dv XS_RESOURCE_SHORTAGE
-Adapter resource shortage.  The mid-layer will retry the command after some
-delay.
+Adapter resource shortage.
+The mid-layer will retry the command after some delay.
 .It Dv XS_SELTIMEOUT
 The device timed out while trying to send the command
 .It Dv XS_TIMEOUT
@@ -470,10 +487,11 @@ The mid-layer will check
 for additional details:
 .Bl -tag -width SCSI_QUEUE_FULL -compact
 .It Dv SCSI_CHECK
-SCSI check condition.  The mid-layer will freeze the periph queue and issue
-a REQUEST SENSE command.  If the HBA supports tagged queuing, it shall remove
-and requeue any command not yet accepted by the HBA (or at last make sure no
-more commands will be sent to the device before the REQUEST SENSE is complete).
+SCSI check condition.
+The mid-layer will freeze the periph queue and issue a REQUEST SENSE command.
+If the HBA supports tagged queuing, it shall remove and requeue any command
+not yet accepted by the HBA (or at last make sure no more commands will
+be sent to the device before the REQUEST SENSE is complete).
 .It Dv SCSI_QUEUE_FULL
 The mid layer will adjust the periph's openings and requeue the command.
 .It Dv SCSI_BUSY
@@ -506,20 +524,21 @@ and
 .Fa xfer
 doesn't have
 .Dv XS_CTL_POLL
-set.  All other error conditions are handled by a kernel thread
+set.
+All other error conditions are handled by a kernel thread
 (once the HBA's interrupt handler has returned).
 .It Fn scsipi_printaddr "struct scsipi_periph *periph"
 print a kernel message with the periph's name, in the form
 device(controller:channel:target:lun).
 .It Fn scsipi_channel_freeze "struct scsipi_channel *chan" "int count"
-Freeze the specified channel (requests are queued but not sent to HBA).  The
-channel's freeze counter is increased by
+Freeze the specified channel (requests are queued but not sent to HBA).
+The channel's freeze counter is increased by
 .Fa count .
 .It Fn scsipi_channel_thaw "struct scsipi_channel *chan" "int count"
 Decrement the channel's freeze counter by
 .Fa count
-and process the queue if the counter goes to 0. In order to preserve command
-ordering, HBA drivers should not call
+and process the queue if the counter goes to 0.
+In order to preserve command ordering, HBA drivers should not call
 .Fn scsipi_channel_thaw
 before calling
 .Fn scsipi_done
@@ -535,7 +554,8 @@ callback.
 .It Fn scsipi_periph_timed_thaw "void *arg"
 Same as the channel counterparts, but only for one specific peripheral.
 .It Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
-detach the periph associated with this I_T_L nexus. Both
+detach the periph associated with this I_T_L nexus.
+Both
 .Fa target
 and
 .Fa lun
@@ -551,11 +571,12 @@ will be called with
 .Fa chan
 and
 .Fa arg
-as arguments, from the channel completion thread.  The callback is run at
-splbio.
+as arguments, from the channel completion thread.
+The callback is run at splbio.
 .Fn scsipi_thread_call_callback
 will freeze the channel by one, it's up to the caller to thaw it when
-appropriate.  Returns 0 if the callback was properly recorded, or EBUSY if the
+appropriate.
+Returns 0 if the callback was properly recorded, or EBUSY if the
 channel has already a callback pending.
 .El
 .Sh FILES
@@ -570,7 +591,8 @@ Both header files include
 .Pa sys/dev/scsipiconf.h
 which contains most structure definitions, function prototypes and macros.
 .Sh EXAMPLES
-The best examples are existing HBA drivers.  Most of them sit in the
+The best examples are existing HBA drivers.
+Most of them sit in the
 .Pa sys/dev/ic
 directory.
 .Sh HISTORY
@@ -581,5 +603,5 @@ interface appeared in
 .Sh AUTHORS
 The
 .Nm
-interface was designed and implemented by Jason R. Thorpe.  Manuel Bouyer
-converted most drivers to the new interface.
+interface was designed and implemented by Jason R. Thorpe.
+Manuel Bouyer converted most drivers to the new interface.

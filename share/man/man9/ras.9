@@ -1,4 +1,4 @@
-.\"     $NetBSD: ras.9,v 1.2 2002/08/29 11:27:03 wiz Exp $
+.\"     $NetBSD: ras.9,v 1.3 2002/10/14 13:43:30 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@
 .Fn ras_purgeall "struct proc *p"
 .Sh DESCRIPTION
 Restartable atomic sequences are user code sequences which are
-guaranteed to execute without preemption.  This property is assured by
-checking the set of restartable atomic sequences registered for a
-process during
+guaranteed to execute without preemption.
+This property is assured by checking the set of restartable atomic
+sequences registered for a process during
 .Xr cpu_switch 9 .
 If a process is found to have been preempted during a restartable
 sequence, then its execution is rolled-back to the start of the
@@ -75,10 +75,11 @@ for machine-independent code to conditionally provide RAS support.
 A complicated side-effect of restartable atomic sequences is their
 interaction with the machine-dependent
 .Xr ptrace 2
-support.  Specifically, single-step traps and/or the emulation of
-single-stepping must carefully consider the effect on restartable
-atomic sequences.  A general solution is to ignore these traps or
-disable them within restartable atomic sequences.
+support.
+Specifically, single-step traps and/or the emulation of single-stepping
+must carefully consider the effect on restartable atomic sequences.
+A general solution is to ignore these traps or disable them within
+restartable atomic sequences.
 .Sh FUNCTIONS
 The functions which operate on restartable atomic sequences are:
 .Pp
@@ -116,7 +117,8 @@ and by
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the RAS
-functionality can be found.  All pathnames are relative to
+functionality can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The RAS framework itself is implemented within the file

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rt_timer.9,v 1.8 2002/02/13 08:18:50 ross Exp $
+.\"	$NetBSD: rt_timer.9,v 1.9 2002/10/14 13:43:32 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,11 +68,13 @@ This was originally intended to be used to remove routes added
 by path MTU discovery code.
 .Pp
 For maximum efficiency, a separate queue should be defined for each
-timeout period.  For example, one queue should be created for the
-10 minute path MTU discovery timeouts, another for 20 minute ARP
-timeouts after 20 minutes, and so on.  This permits extremely fast
-queue manipulations so that the timeout functions remain scalable,
-even in the face of thousands of route manipulations per minute.
+timeout period.
+For example, one queue should be created for the 10 minute path MTU
+discovery timeouts, another for 20 minute ARP timeouts after 20
+minutes, and so on.
+This permits extremely fast queue manipulations so that the timeout
+functions remain scalable, even in the face of thousands of route
+manipulations per minute.
 .Pp
 It is possible to create only a single timeout queue for all possible
 timeout values, but doing so is not scalable as queue manipulations
@@ -88,13 +90,13 @@ This function creates a new timer queue with the specified timeout period
 expressed in seconds.
 .It Fn rt_timer_queue_change "rttimer_queue *q" "time_t timeout"
 This function modifies the timeout period for a timer queue.
-Any value, including 0, is valid.  The next time the timer queue's
-timeout expires (based on the previous timeout value), all entries
-which are valid to execute based on the new timeout will be executed,
-and the new timeout period scheduled.
+Any value, including 0, is valid.
+The next time the timer queue's timeout expires (based on the previous
+timeout value), all entries which are valid to execute based on the new
+timeout will be executed, and the new timeout period scheduled.
 .It Fn rt_timer_queue_destroy "rttimer_queue *q" "int destroy"
-This function destroys a timeout queue.  All entries are removed,
-and if the
+This function destroys a timeout queue.
+All entries are removed, and if the
 .Fa destroy
 argument is non-zero, the timeout action is performed for each entry.
 .It Fn rt_timer_add "struct rtentry *rt" \
@@ -112,16 +114,18 @@ the route will be deleted when the timeout expires.
 .It Fn rt_timer_remove_all "struct rtentry *rt"
 This function removes all references to the given route from the
 .Nm
-subsystem.  This is used when a route is deleted to ensure that no
-dangling references remain.
+subsystem.
+This is used when a route is deleted to ensure that no dangling
+references remain.
 .El
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr arp 9
 .Sh AUTHORS
 This interface is roughly based on (but, alas, not compatible with) one
-designed by David Borman of BSDI.  This implementation is by Kevin Lahey
-of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
+designed by David Borman of BSDI.
+This implementation is by Kevin Lahey of the Numerical Aerospace
+Simulation Facility, NASA Ames Research Center.
 .Sh CODE REFERENCES
 The
 .Nm

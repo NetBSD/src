@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.5 2002/02/13 08:18:38 ross Exp $
+.\"     $NetBSD: cardbus.9,v 1.6 2002/10/14 13:43:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,12 +147,13 @@ It introduces several new capabilities such as 32-bit addressing,
 It remains compatible with all features of the PC-Card standard.
 .Pp
 The Cardbus interface signaling protocol is derived from the PCI
-signaling protocol.  There are some differences between PCI and
-Cardbus, however operations are identical for most functions
-implemented.  Since a 32-bit Cardbus interface is also defined for
-16-bit PC-Cards, the same Card Services client to be used to manage
-both Cardbus and PCMCIA PC-Cards.  By interrogating the card upon
-detection of an insertion event,
+signaling protocol.
+There are some differences between PCI and Cardbus, however operations
+are identical for most functions implemented.
+Since a 32-bit Cardbus interface is also defined for 16-bit PC-Cards,
+the same Card Services client to be used to manage both Cardbus and
+PCMCIA PC-Cards.
+By interrogating the card upon detection of an insertion event,
 .Nx
 determines whether the card requires
 .Nm
@@ -163,8 +164,8 @@ Drivers attached to the Cardbus bus will make use of the following
 data types:
 .Bl -tag -width compact
 .It struct cardbus_attach_args
-Devices have their identity recorded in this structure.  It contains
-the following members:
+Devices have their identity recorded in this structure.
+It contains the following members:
 .Bd -literal
 	cardbus_devfunc_t ca_ct;
 	bus_space_tag_t ca_iot;       /* Cardbus I/O space tag */
@@ -182,21 +183,23 @@ the following members:
 .Bl -tag -width compact
 .It Fn cardbus_attach_card "csc"
 Attaches the card on the slot by turning on the power, read and
-analyse the tuple and sets configuration index.  This function returns
-the number of recognised device functions.  If no device functions are
-recognised it returns zero.
+analyse the tuple and sets configuration index.
+This function returns the number of recognised device functions.
+If no device functions are recognised it returns zero.
 .It Fn cardbus_detach_card "csc"
 Detaches the card on the slot by release resources and turning off the
-power. This function must not be called under interrupt context.
+power.
+This function must not be called under interrupt context.
 .It Fn cardbus_function_enable "csc" "function"
 Enables device function
 .Fa function
-on the card.  Power will be applied if it hasn't already.
+on the card.
+Power will be applied if it hasn't already.
 .It Fn cardbus_function_disable "csc" "function"
 Disables device function
 .Fa function
-on the card.  When no device functions are enabled, the turn is turned
-off.
+on the card.
+When no device functions are enabled, the turn is turned off.
 .It Fo cardbus_mapreg_map
 .Fa "csc" "cf" "reg" "type" "busflags"
 .Fa "tagp" "handlep" "basep" "sizep"
@@ -231,18 +234,20 @@ Returns the capability in
 and
 .Fa valuep .
 .It Fn cardbus_make_tag "cc" "cf" "bus" "device" "function"
-Make a tag to access config space of a Cardbus card.  It works the
-same as
+Make a tag to access config space of a Cardbus card.
+It works the same as
 .Fn pci_make_tag .
 .It Fn cardbus_free_tag "cc" "cf" "tag"
-Release a tag used to access the config space of a Cardbus card.  It
-works the same as
+Release a tag used to access the config space of a Cardbus card.
+It works the same as
 .Fn pci_free_tag .
 .It Fn cardbus_conf_read "cc" "cf" "tag" "offs"
-Read the config space of a Cardbus card.  It works the same as
+Read the config space of a Cardbus card.
+It works the same as
 .Fn pci_conf_read .
 .It Fn cardbus_conf_write "cc" "cf" "tag" "offs" "val"
-Write to the config space of a Cardbus card.  It works same as
+Write to the config space of a Cardbus card.
+It works same as
 .Fn pci_conf_write .
 .It Fn cardbus_intr_establish "cc" "cf" "irq" "level" "handler" "arg"
 Establish an interrupt handler for device function
@@ -283,8 +288,8 @@ During autoconfiguration, a
 .Nm
 driver will receive a pointer to
 .Fa struct isapnp_attach_args
-describing the device attaches to the Cardbus bus.  Drivers match the
-device using the
+describing the device attaches to the Cardbus bus.
+Drivers match the device using the
 .Fa ca_id
 member using
 .Fn CARDBUS_VENDOR
@@ -301,8 +306,8 @@ applied to the device with
 .Fn cardbus_function_enable
 or
 .Fn Cardbus_function_enable .
-so that device-specific interrogation can be performed.  Finally,
-power should be removed from the device using
+so that device-specific interrogation can be performed.
+Finally, power should be removed from the device using
 .Fn cardbus_function_disable
 or
 .Fn Cardbus_function_disable .
@@ -321,8 +326,8 @@ interface.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent Cardbus subsystem can be found.  All pathnames are
-relative to
+machine-independent Cardbus subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The Cardbus subsystem itself is implemented within the files
@@ -334,8 +339,8 @@ The database of known devices exists within the file
 .Pa sys/dev/cardbus/cardbus_data.h
 and is generated automatically from the file
 .Pa sys/dev/cardbus/cardbusdevs .
-New vendor and product identifiers should be added to this
-file.  The database can be regenerated using the Makefile
+New vendor and product identifiers should be added to this file.
+The database can be regenerated using the Makefile
 .Pa sys/dev/cardbus/Makefile.cardbusdevs .
 .Sh SEE ALSO
 .Xr cardbus 4 ,

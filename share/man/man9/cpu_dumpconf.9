@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_dumpconf.9,v 1.2 2002/05/25 11:08:21 wiz Exp $
+.\"     $NetBSD: cpu_dumpconf.9,v 1.3 2002/10/14 13:43:19 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,8 @@
 .Fn cpu_dumpconf
 is the machine-dependent interface invoked during system bootstrap to
 determine the dump device and initialize machine-dependent kernel core
-dump state.  Internally,
+dump state.
+Internally,
 .Fn cpu_dumpconf
 will invoke
 .Fn cpu_dumpsize

@@ -1,4 +1,4 @@
-.\"     $NetBSD: wscons.9,v 1.4 2002/09/20 03:35:33 uebayasi Exp $
+.\"     $NetBSD: wscons.9,v 1.5 2002/10/14 13:43:37 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,24 +44,25 @@
 The
 .Nm
 driver provides a machine-independent framework for workstation
-consoles.  It consists of several cooperating modules:
+consoles.
+It consists of several cooperating modules:
 .Bl -bullet
 .It
- display adapters (see
+display adapters (see
 .Xr wsdisplay 9 )
 .It
- keyboards (see
+keyboards (see
 .Xr wskbd 9 )
 .It
- pointers and mice (see
+pointers and mice (see
 .Xr wsmouse 9 )
 .It
- input event multiplexor
+input event multiplexor
 .It
- font handling (see
+font handling (see
 .Xr wsfont 9 )
 .It
- terminal emulation (see
+terminal emulation (see
 .Xr wsdisplay 9 )
 .El
 .Pp
@@ -71,8 +72,8 @@ the various machine-dependent console implementations.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent wscons subsystem can be found.  All pathnames are
-relative to
+machine-independent wscons subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The wscons subsystem is implemented within the directory

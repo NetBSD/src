@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.1 2002/08/07 04:48:56 briggs Exp $
+.\" $NetBSD: pmc.9,v 1.2 2002/10/14 13:43:29 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -93,19 +93,19 @@
 .Fn PMC_ENABLED "struct proc *p"
 .Sh DESCRIPTION
 Provides a machine-independent interface to the hardware performance counters
-which are available on several CPU families.  The capabilities of these
-counters vary from CPU to CPU, but they basically count hardware events
-such as data cache hits or misses, branches taken, branched mispredicted,
-and so forth.  Some can interrupt the processor when a certain threshold
-has been reached.  Some can count events in user space and kernel space
-independently.
+which are available on several CPU families.
+The capabilities of these counters vary from CPU to CPU, but they
+basically count hardware events such as data cache hits or misses,
+branches taken, branched mispredicted, and so forth.
+Some can interrupt the processor when a certain threshold has been reached.
+Some can count events in user space and kernel space independently.
 .Pp
 The
 .Nm
 interface is intended to allow monitoring from within the kernel as well
-as monitoring of userland applications.  If the hardware can interrupt the
-CPU in a specific implementation, then it may also be used as a profiling
-source instead of the clock.
+as monitoring of userland applications.
+If the hardware can interrupt the CPU in a specific implementation,
+then it may also be used as a profiling source instead of the clock.
 .Sh NOTES
 All function calls in this interface may be defined as
 .Xr cpp 1
@@ -150,7 +150,8 @@ are currently unused.
 .Sh FUNCTIONS
 .Bl -tag -width width -compact
 .It Fn pmc_get_num_counters "void"
-Returns the number of counters present on the current system.  Valid values for
+Returns the number of counters present on the current system.
+Valid values for
 .Fa ctr
 in the interface entry points below are from zero to one less than the
 return value from this function.
@@ -158,26 +159,28 @@ return value from this function.
 .It Fn pmc_get_counter_type "int ctr"
 Returns an implementation-dependent type describing the specified counter.
 If ctr is specified as -1, returns a machine-dependent type describing the
-CPU or counter configuration.  For example, on an ia32 architecture, it may
-distinguish between 586-, 686-, and K7-style counters.
+CPU or counter configuration.
+For example, on an ia32 architecture, it may distinguish between
+586-, 686-, and K7-style counters.
 .sp
 .It Fn pmc_save_context "struct proc *p"
-Saves the PMC context for the current process.  This is called just before
+Saves the PMC context for the current process.
+This is called just before
 .Xr cpu_switch 9 .
 If there is kernel PMC state, it must be maintained across this call.
 .sp
 .It Fn pmc_restore_context "struct proc *p"
-Restores the PMC context for the current process.  This is called just
-after
+Restores the PMC context for the current process.
+This is called just after
 .Xr cpu_switch 9
-returns.  If there is kernel PMC state, it must be maintained across
-this call.
+returns.
+If there is kernel PMC state, it must be maintained across this call.
 .sp
 .It Fn pmc_enable_counter "struct proc *p" "int ctr"
 Enables counter
 .Fa ctr
-for the specified process.  The counter should have already been configured
-with a call to
+for the specified process.
+The counter should have already been configured with a call to
 .Fn pmc_configure_counter .
 This starts the counter running if it is not already started and enables
 any interrupts, as appropriate.
@@ -185,8 +188,9 @@ any interrupts, as appropriate.
 .It Fn pmc_disable_counter "struct proc *p" "int ctr"
 Disables counter
 .Fa ctr
-for the specified process.  This stops the counter from running, and
-disables any interrupts, as appropriate.
+for the specified process.
+This stops the counter from running, and disables any interrupts,
+as appropriate.
 .sp
 .It Fn pmc_counter_isrunning "struct proc *p" "int ctr"
 Returns non-zero if the specified counter in the specified process is
