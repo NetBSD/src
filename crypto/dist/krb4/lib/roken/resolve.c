@@ -45,7 +45,7 @@
 
 #include <assert.h>
 
-RCSID("$Id: resolve.c,v 1.1.1.3 2001/09/17 12:09:56 assar Exp $");
+RCSID("$Id: resolve.c,v 1.2 2002/01/08 03:27:59 simonb Exp $");
 
 #if defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND)
 
@@ -385,7 +385,8 @@ dns_srv_order(struct dns_reply *r)
     int num_srv = 0;
 
 #if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    char state[256], *oldstate;
+    int state[256 / sizeof(int)];
+    char *oldstate;
 #endif
 
     for(rr = r->head; rr; rr = rr->next) 
@@ -414,7 +415,7 @@ dns_srv_order(struct dns_reply *r)
     qsort(srvs, num_srv, sizeof(*srvs), compare_srv);
 
 #if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    oldstate = initstate(time(NULL), state, sizeof(state));
+    oldstate = initstate(time(NULL), (char *) state, sizeof(state));
 #endif
 
     headp = &r->head;
