@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 1997/02/25 07:37:19 mikel Exp $
+#	$NetBSD: Makefile,v 1.67 1997/03/13 04:32:11 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -63,7 +63,7 @@ distribution: distrib-dirs
 	(cd mtree; \
 		${INSTALL} -c -o root -g wheel -m 600 special \
 		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
+		${INSTALL} -c -o root -g wheel -m 444 NetBSD.dist \
 		    ${DESTDIR}/etc/mtree)
 	(cd namedb; \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
@@ -105,7 +105,7 @@ distribution: distrib-dirs
 
 distrib-dirs:
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}
-	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
+	-mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -u
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 snapshot: distribution snap_pre snap_tar snap_md
