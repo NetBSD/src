@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.2 1997/10/29 00:32:49 fvdl Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -19,6 +19,7 @@
 #define KC_CMD_WIN	0xd0		/* read  output port */
 #define KC_CMD_WOUT	0xd1		/* write output port */
 #define KB_A20		0x9f		/* enable A20,
+					   reset (!),
 					   enable output buffer full interrupt
 					   enable data line
 					   disable clock line */
@@ -29,6 +30,7 @@
 static unsigned char	x_20 = KB_A20;
 void gateA20()
 {
+	__asm("pushfl ; cli");
 #ifdef	IBM_L40
 	outb(0x92, 0x2);
 #else	IBM_L40
@@ -37,8 +39,11 @@ void gateA20()
 		(void)inb(K_RDWR);
 
 	outb(K_CMD, KC_CMD_WOUT);
+	delay(100);
 	while (inb(K_STATUS) & K_IBUF_FUL);
 	outb(K_RDWR, x_20);
+	delay(100);
 	while (inb(K_STATUS) & K_IBUF_FUL);
 #endif	IBM_L40
+	__asm("popfl");
 }
