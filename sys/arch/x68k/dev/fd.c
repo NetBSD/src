@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1996/05/21 15:32:02 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.2.2.1 1996/06/05 16:43:43 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -369,7 +369,7 @@ fdcattach(parent, self, aux)
 	dmac->scr = 0x04;
 	dmac->csr = 0xff;
 	dmac->cpr = 0x00;
-	dmac->dar = (unsigned long) kvtop(&(infdc.data));
+	dmac->dar = (unsigned long) kvtop((void *)&infdc.data);
 	dmac->mfc = 0x05;
 	dmac->dfc = 0x05;
 	dmac->bfc = 0x05;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 1996/05/21 15:33:26 oki Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2.2.1 1996/06/05 16:43:41 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -274,7 +274,7 @@ dma_cachectl(addr, len)
 			 * Convert to physical address.
 			 */
 			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
-				pa = kvtop ((vm_offset_t)addr);
+				pa = kvtop(addr);
 			}
 			if (inc == 16) {
 				DCFL(pa);
