@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.18 2002/01/27 14:18:13 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.19 2002/01/31 17:56:35 uch Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
@@ -52,7 +52,6 @@
 #include <dev/hpc/hpcbatteryvar.h>
 #include <dev/hpc/hpcbatterytable.h>
 
-#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/cmureg.h>

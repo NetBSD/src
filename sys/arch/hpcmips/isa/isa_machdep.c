@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.23 2002/01/29 18:53:14 uch Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.24 2002/01/31 17:56:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 
 #include <dev/hpc/hpciovar.h>
 
-#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripif.h>
 
 #include "locators.h"
