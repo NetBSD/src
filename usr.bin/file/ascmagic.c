@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.20 2002/07/10 16:15:53 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.21 2002/12/22 16:31:21 is Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -51,7 +51,7 @@
 #if 0
 FILE_RCSID("@(#)Id: ascmagic.c,v 1.32 2002/07/03 18:26:37 christos Exp ")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.20 2002/07/10 16:15:53 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.21 2002/12/22 16:31:21 is Exp $");
 #endif
 #endif	/* lint */
 
@@ -540,6 +540,10 @@ done:
 	return gotone;   /* don't claim it's UTF-8 if it's all 7-bit */
 }
 
+/*
+ * returns 1 for little-endian, 2 for big-endian UTF-16
+ * 0 for neither
+ */
 static int
 looks_unicode(const unsigned char *buf, int nbytes, unichar *ubuf, int *ulen)
 {
@@ -572,7 +576,7 @@ looks_unicode(const unsigned char *buf, int nbytes, unichar *ubuf, int *ulen)
 			return 0;
 	}
 
-	return 1;
+	return (1+bigend);
 }
 
 #undef F
