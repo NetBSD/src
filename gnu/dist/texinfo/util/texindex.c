@@ -1,7 +1,10 @@
-/* Process TeX index dribble output into an actual index.
-   $Id: texindex.c,v 1.3 2001/07/25 16:46:20 assar Exp $
+/*	$NetBSD: texindex.c,v 1.4 2003/01/17 15:25:57 wiz Exp $	*/
 
-   Copyright (C) 1987, 91, 92, 96, 97, 98, 99 Free Software Foundation, Inc.
+/* texindex -- sort TeX index dribble output into an actual index.
+   Id: texindex.c,v 1.6 2002/11/05 19:33:07 karl Exp
+
+   Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
+   2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -96,9 +99,6 @@ long nlines;
 /* Directory to use for temporary files.  On Unix, it ends with a slash.  */
 char *tempdir;
 
-/* Start of filename to use for temporary files.  */
-char *tempbase;
-
 /* Number of last temporary file.  */
 int tempcount;
 
@@ -109,6 +109,13 @@ int last_deleted_tempcount;
 /* During in-core sort, this points to the base of the data block
    which contains all the lines of data.  */
 char *text_base;
+
+/* Initially 0; changed to 1 if we want initials in this index.  */
+int need_initials;
+
+/* Remembers the first initial letter seen in this index, so we can
+   determine whether we need initials in the sorted form.  */
+char first_initial;
 
 /* Additional command switches .*/
 
@@ -161,6 +168,9 @@ main (argc, argv)
   textdomain (PACKAGE);
 #endif
 
+  /* In case we write to a redirected stdout that fails.  */
+  /* not ready atexit (close_stdout); */
+  
   /* Describe the kind of sorting to do. */
   /* The first keyfield uses the first braced field and folds case. */
   keyfields[0].braced = 1;
@@ -181,8 +191,6 @@ main (argc, argv)
   keyfields[2].endchars = -1;
 
   decode_command (argc, argv);
-
-  tempbase = mktemp (concat ("txiXXXXXX", "", ""));
 
   /* Process input files completely, one by one.  */
 
@@ -218,9 +226,12 @@ main (argc, argv)
           outfile = concat (infiles[i], "s", "");
         }
 
+      need_initials = 0;
+      first_initial = '\0';
+
       if (ptr < MAX_IN_CORE_SORT)
         /* Sort a small amount of data. */
-        sort_in_core (infiles[i], ptr, outfile);
+        sort_in_core (infiles[i], (int)ptr, outfile);
       else
         sort_offline (infiles[i], ptr, outfile);
     }
@@ -287,7 +298,8 @@ _("Usually FILE... is specified as `foo.%c%c\' for a document `foo.texi'.\n"),
   fputs (_("\n\
 Email bug reports to bug-texinfo@gnu.org,\n\
 general questions and discussion to help-texinfo@gnu.org.\n\
-"), f);
+Texinfo home page: http://www.gnu.org/software/texinfo/"), f);
+  fputs ("\n", f);
 
   xexit (result_value);
 }
@@ -339,7 +351,7 @@ decode_command (argc, argv)
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-                  "1999");
+                  "2002");
               xexit (0);
             }
           else if ((strcmp (arg, "--keep") == 0) ||
@@ -381,16 +393,32 @@ For more information about these matters, see the files named COPYING.\n"),
     usage (1);
 }
 
-/* Return a name for a temporary file. */
+/* Return a name for temporary file COUNT. */
 
 static char *
 maketempname (count)
      int count;
 {
+  static char *tempbase = NULL;
   char tempsuffix[10];
+
+  if (!tempbase)
+    {
+      int fd;
+      char *tmpdir = getenv ("TEMPDIR");
+      if (!tmpdir)
+        tmpdir = "/tmp";
+      tempbase = concat (tmpdir, "/txidxXXXXXX");
+
+      fd = mkstemp (tempbase);
+      if (fd == -1) 
+        pfatal_with_name (tempbase);
+    }
+
   sprintf (tempsuffix, ".%d", count);
   return concat (tempdir, tempbase, tempsuffix);
 }
+
 
 /* Delete all temporary files up to TO_COUNT. */
 
@@ -861,9 +889,8 @@ readline (linebuffer, stream)
 /* Sort an input file too big to sort in core.  */
 
 void
-sort_offline (infile, nfiles, total, outfile)
+sort_offline (infile, total, outfile)
      char *infile;
-     int nfiles;
      off_t total;
      char *outfile;
 {
@@ -942,7 +969,7 @@ fail:
   for (i = 0; i < ntemps; i++)
     {
       char *newtemp = maketempname (++tempcount);
-      sort_in_core (&tempfiles[i], MAX_IN_CORE_SORT, newtemp);
+      sort_in_core (tempfiles[i], MAX_IN_CORE_SORT, newtemp);
       if (!keep_tempfiles)
         unlink (tempfiles[i]);
       tempfiles[i] = newtemp;
@@ -963,7 +990,7 @@ fail:
 void
 sort_in_core (infile, total, outfile)
      char *infile;
-     off_t total;
+     int total;
      char *outfile;
 {
   char **nextline;
@@ -1101,6 +1128,23 @@ parsefile (filename, nextline, data, size)
         return 0;
 
       *line = p;
+
+      /* Find the first letter of the first field of this line.  If it
+         is different from the first letter of the first field of the
+         first line, we need initial headers in the output index.  */
+      while (*p && *p != '{')
+        p++;
+      if (p == end)
+        return 0;
+      p++;
+      if (first_initial)
+        {
+          if (first_initial != toupper (*p))
+            need_initials = 1;
+        }
+      else
+        first_initial = toupper (*p);
+      
       while (*p && *p != '\n')
         p++;
       if (p != end)
@@ -1210,12 +1254,9 @@ indexify (line, ostream)
   else
     {
       initial = initial1;
-      initial1[0] = *p;
+      initial1[0] = toupper (*p);
       initial1[1] = 0;
       initiallength = 1;
-
-      if (initial1[0] >= 'a' && initial1[0] <= 'z')
-        initial1[0] -= 040;
     }
 
   pagenumber = find_braced_pos (line, 1, 0, 0);
@@ -1243,8 +1284,9 @@ indexify (line, ostream)
 
       /* If this primary has a different initial, include an entry for
          the initial. */
-      if (initiallength != lastinitiallength ||
-          strncmp (initial, lastinitial, initiallength))
+      if (need_initials &&
+          (initiallength != lastinitiallength ||
+           strncmp (initial, lastinitial, initiallength)))
         {
           fprintf (ostream, "\\initial {");
           fwrite (initial, 1, initiallength, ostream);
