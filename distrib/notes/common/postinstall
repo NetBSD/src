@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.45 2002/07/25 19:49:27 rafal Exp $
+.\"	$NetBSD: postinstall,v 1.46 2002/07/26 00:11:29 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,7 @@ furthermore add an
 for your
 .Aq int
 network interface,
-.ie rmac68k \{\
+.ie \n[mac68k] \{\
 where your on-board, NuBus or PDS interface may be
 .Li ae0 ,
 .Li mc0
@@ -169,7 +169,7 @@ or
 For example:
 .\}
 .el \{\
-.ie rmacppc \{\
+.ie \n[macppc] \{\
 where your on-board interfaces may be one of
 .Li mc0 ,
 .Li bm0 ,
@@ -211,7 +211,7 @@ for more information.
 Other files in
 .Pa /etc
 that may require modification or setting up include
-.ie rsgimips \{\
+.ie \n[sgimips] \{\
 .Pa /etc/mailer.conf
 and
 .Pa /etc/nsswitch.conf .
@@ -222,7 +222,7 @@ and
 and
 .Pa /etc/wscons.conf .
 .\}
-.ie rshark \{\
+.ie \n[shark] \{\
 .Pp
 For Digital DNARD machines you will need to edit
 .Pa /etc/ttys
