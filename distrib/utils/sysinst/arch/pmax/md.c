@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1997/11/07 08:43:46 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.9 1997/11/10 01:07:12 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -354,17 +354,35 @@ void	md_post_disklabel (void)
 
 void	md_copy_filesystem (void)
 {
+	/*
+	 * Make sure any binaries in a diskimage /usrbin get copied 
+	 * into the current root's /usr/bin. (may be same as target /usr/bin.)
+	 * The rest of sysinst uses /usr/bin/{tar,ftp,chgrp}.
+	 * We cannot ship those in /usr/bin, because if we did
+	 * an install with target root == current root, they'd
+	 * be be hidden under the  target's /usr filesystem.
+	 */
+ 	run_prog ("(cd /usrbin ; tar --one-one-file-system -cf - / ) |"
+		  "(cd /usr/bin ; tar --unlink  -xpf - )"
+		  );
 
 	if (target_already_root()) {
+
+	  	/* the /usr/bin has served its purpose. */
+		run_prog("rm -fr /usr/bin 2> /dev/null");
+
 		return;
 	}
 
-	/* Copy the instbin(s) to the disk. */
+	/* Copy the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
 	run_prog ("tar --one-file-system -cf - / |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
-#if 0
+
+	/* make sure target has a copy of install kernel. */
+	dup_file_into_target("/netsbd");
 	/* pmax diskimage does not yet have a .hdprofile. */
+#if 0
 	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
 #endif
 }
