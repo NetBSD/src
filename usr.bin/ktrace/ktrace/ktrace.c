@@ -51,6 +51,8 @@ static char sccsid[] = "@(#)ktrace.c	5.2 (Berkeley) 3/5/91";
 #include <stdio.h>
 #include "ktrace.h"
 
+void no_ktrace();
+
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -113,7 +115,7 @@ main(argc, argv)
 			
 	if (inherit)
 		trpoints |= KTRFAC_INHERIT;
-
+	(void) signal(SIGSYS, no_ktrace);
 	if (clear != NOTSET) {
 		if (clear == CLEARALL) {
 			ops = KTROP_CLEAR | KTRFLAG_DESCEND;
@@ -172,4 +174,11 @@ usage()
 	(void)fprintf(stderr,
 "usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [acgn]\n\tktrace [-aCcid] [-f trfile] [-t [acgn] command\n");
 	exit(1);
+}
+
+void no_ktrace()
+{
+    (void) fprintf(stderr,
+"error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'options KTRACE'\n");
+    exit(1);
 }
