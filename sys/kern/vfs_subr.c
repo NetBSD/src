@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.123 2000/03/30 09:27:15 augustss Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.124 2000/03/30 09:32:25 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2322,14 +2322,19 @@ vfs_shutdown()
 	}
 	if (nbusy) {
 fail:
-#ifdef DEBUG
+#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
 		printf("giving up\nPrinting vnodes for busy buffers\n");
 		for (bp = &buf[nbuf]; --bp >= buf; )
 			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
 				vprint(NULL, bp->b_vp);
-#else
-		printf("giving up\n");
+
+#if defined(DDB) && defined(DEBUG_HALT_BUSY)
+		Debugger();
 #endif
+
+#else  /* defined(DEBUG) || defined(DEBUG_HALT_BUSY) */
+		printf("giving up\n");
+#endif /* defined(DEBUG) || defined(DEBUG_HALT_BUSY) */
 		return;
 	} else
 		printf("done\n");
