@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/06/24 05:48:26 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2002/07/28 23:43:12 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ LDADD+=	-lkrb5 -lkafs -lasn1
 DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
+CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 SRCS+=	auth-krb4.c
 LDADD+=	-lkrb -lcom_err -lroken
 DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
