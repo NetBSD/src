@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.2,v 1.26 2002/02/08 01:28:19 ross Exp $
+.\"	$NetBSD: mount.2,v 1.27 2002/09/21 18:19:30 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,15 +107,24 @@ Never update modification time of device files.
 Use soft dependencies.
 .El
 .Pp
-The flag
+The
 .Dv MNT_UPDATE
-indicates that the mount command is being applied
+and the
+.Dv MNT_GETARGS
+flags indicate that the mount command is being applied
 to an already mounted file system.
-This allows the mount flags to be changed without requiring
+The
+.Dv MNT_UPDATE
+flag allows the mount flags to be changed without requiring
 that the file system be unmounted and remounted.
 Some file systems may not allow all flags to be changed.
 For example,
 most file systems will not allow a change from read-write to read-only.
+The 
+.Dv MNT_GETARGS
+flag does not alter any of the mounted filesystem's properties,
+but returns the filesystem-specific arguments for the currently mounted
+filesystem.
 .Pp
 The
 .Fa type
