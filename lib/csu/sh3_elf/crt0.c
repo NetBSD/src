@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.5 2002/02/03 23:57:19 thorpej Exp $ */
+/* $NetBSD: crt0.c,v 1.6 2002/06/08 17:27:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -40,15 +40,6 @@
 void _start __P((int, char **, char **, void (*cleanup) __P((void)),
 			const Obj_Entry *, struct ps_strings *));
 
-#ifdef __LEADING_UNDERSCORE
-__asm(	"	.text			\n"
-	"	.align 2		\n"
-	"	.globl start		\n"
-	"start:				\n"
-	"	mov.l	r9,@-r15	\n"
-	"	bra __start		\n"
-	"	mov.l	r8,@-r15");
-#else
 __asm(	"	.text			\n"
 	"	.align 2		\n"
 	"	.globl __start		\n"
@@ -56,7 +47,6 @@ __asm(	"	.text			\n"
 	"	mov.l	r9,@-r15	\n"
 	"	bra _start		\n"
 	"	mov.l	r8,@-r15");
-#endif
 
 void
 _start(argc, argv, envp, cleanup, obj, ps_strings)
@@ -99,7 +89,7 @@ _start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 2002/02/03 23:57:19 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 2002/06/08 17:27:25 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
