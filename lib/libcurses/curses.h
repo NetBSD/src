@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.45 2000/04/27 19:54:40 mycroft Exp $	*/
+/*	$NetBSD: curses.h,v 1.46 2000/05/01 12:30:30 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -78,8 +78,6 @@ typedef	char	bool;
 /* Old-style terminal modes access. */
 #define	baudrate()	(cfgetospeed(&__baset))
 #define	crmode()	cbreak()
-#define	erasechar()	(__baset.c_cc[VERASE])
-#define	killchar()	(__baset.c_cc[VKILL])
 #define	nocrmode()	nocbreak()
 #define	ospeed		(cfgetospeed(&__baset))
 #endif /* _CURSES_PRIVATE */
@@ -506,6 +504,7 @@ WINDOW	*dupwin(WINDOW *win);
 int	 doupdate(void);
 int	 echo(void);
 int	 endwin(void);
+char     erasechar(void);
 int	 flash(void);
 int	 flushinp(void);
 int	 flushok(WINDOW *win, bool bf);
@@ -530,6 +529,7 @@ bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *win, int line);
 bool	 is_wintouched(WINDOW *win);
 void	 keypad(WINDOW *win, bool bf);
+char     killchar(void);
 int	 leaveok(WINDOW *win, bool bf);
 char	*longname(void);
 int	 meta(WINDOW *win, bool bf);
