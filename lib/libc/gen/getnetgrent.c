@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.13 1997/07/21 14:07:10 jtc Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.14 1998/02/26 03:13:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.13 1997/07/21 14:07:10 jtc Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.14 1998/02/26 03:13:18 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -93,6 +93,7 @@ getstring(pp, del, str)
 	int	  del;
 	char	**str;
 {
+	size_t len;
 	char *sp, *ep, *dp;
 
 	/* skip leading blanks */
@@ -114,13 +115,13 @@ getstring(pp, del, str)
 
 	*pp = ++dp;
 
-	del = (ep - sp) + 1;
-	if (del > 1) {
-		dp = malloc(del);
+	len = (ep - sp) + 1;
+	if (len > 1) {
+		dp = malloc(len);
 		if (dp == NULL)
 			err(1, _ngoomem);
-		memcpy(dp, sp, del);
-		dp[del - 1] = '\0';
+		memcpy(dp, sp, len);
+		dp[len - 1] = '\0';
 	} else
 		dp = NULL;
 
@@ -237,7 +238,7 @@ lookup(ypdom, name, line, bywhat)
 		}
 
 
-		if (yp_match(ypdom, map, name, strlen(name), line, &i) == 0)
+		if (yp_match(ypdom, map, name, (int)strlen(name), line, &i) == 0)
 			return 1;
 	}
 #endif
@@ -275,8 +276,8 @@ _ng_parse(p, name, ng)
 			}
 			return _NG_GROUP;
 		} else {
-			char           *np;
-			int             i;
+			char *np;
+			size_t i;
 
 			for (np = *p; **p && !_NG_ISSPACE(**p); (*p)++)
 				continue;
