@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.31 1998/10/12 16:09:18 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.32 1998/10/13 08:59:45 bouyer Exp $ */
 
 
 /*
@@ -125,7 +125,7 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
-int wdcdebug_mask = DEBUG_PROBE;
+int wdcdebug_mask = 0;
 int wdc_nxfer = 0;
 #define WDCDEBUG_PRINT(args, level)  if (wdcdebug_mask & (level)) printf args
 #else
@@ -361,6 +361,17 @@ wdcattach(chp)
 		aa_link.aa_drv_data = &chp->ch_drive[i];
 		if (config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint))
 			wdc_probe_caps(&chp->ch_drive[i]);
+	}
+
+	/*
+	 * reset drive_flags for unnatached devices, reset state for attached
+	 *  ones
+	 */
+	for (i = 0; i < 2; i++) {
+		if (chp->ch_drive[i].drv_softc == NULL)
+			chp->ch_drive[i].drive_flags = 0;
+		else
+			chp->ch_drive[i].state = 0;
 	}
 
 	/*

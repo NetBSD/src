@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.2 1998/10/12 16:09:23 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.3 1998/10/13 08:59:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -72,7 +72,7 @@
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
-int wdcdebug_atapi_mask = DEBUG_PROBE;
+int wdcdebug_atapi_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
@@ -250,6 +250,7 @@ wdc_atapi_start(chp, xfer)
 	if (wait_for_unbusy(chp, ATAPI_DELAY) < 0) {
 		printf("wdc_atapi_start: not ready, st = %02x\n",
 		    chp->ch_status);
+		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return;
 	}
@@ -277,6 +278,7 @@ wdc_atapi_start(chp, xfer)
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
 		if (wdc_atapi_intr(chp, xfer) == 0) {
+			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
 			return;
 		}
@@ -322,6 +324,7 @@ wdc_atapi_intr(chp, xfer)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
+		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
@@ -411,6 +414,7 @@ again:
 				printf(", falling back to PIO\n");
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			}
+			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
@@ -477,6 +481,7 @@ again:
 				printf(", falling back to PIO\n");
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			}
+			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
 			return 1;
 		}
@@ -650,17 +655,17 @@ timeout:
 	}
 	printf("%s:%d:%d: %s timed out\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, errstring);
+	sc_xfer->error = XS_TIMEOUT;
 	wdc_atapi_reset(chp, xfer);
 	return 1;
 error:
 	printf("%s:%d:%d: %s ",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    errstring);
-	printf("error (%x)\n", chp->ch_error);
+	printf("error (0x%x)\n", chp->ch_error);
 	sc_xfer->error = XS_SENSE;
 	sc_xfer->sense.atapi_sense = chp->ch_error;
-	drvp->state = 0;
-	wdc_atapi_done(chp, xfer);
+	wdc_atapi_reset(chp, xfer);
 	return 1;
 }
 
@@ -707,7 +712,6 @@ wdc_atapi_reset(chp, xfer)
 		wdc_atapi_done(chp, xfer);
 		return;
 	}
-	sc_xfer->error = XS_TIMEOUT;
 	wdc_atapi_done(chp, xfer);
 	return;
 }
