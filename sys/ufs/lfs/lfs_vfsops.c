@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.99 2003/02/25 20:35:40 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.100 2003/03/01 05:07:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.99 2003/02/25 20:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.100 2003/03/01 05:07:52 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1806,7 +1806,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 				uvmexp.paging--;
 			if (pg->flags & PG_DELWRI) {
 				uvm_pageunwire(pg);
-				uvm_pagedeactivate(pg);
+				uvm_pageactivate(pg);
 			}
 			pg->flags &= ~(PG_BUSY|PG_CLEAN|PG_WANTED|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
 			UVM_PAGE_OWN(pg, NULL);
