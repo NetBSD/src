@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.1 2001/07/10 16:31:52 ichiro Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.2 2001/07/10 17:23:18 ichiro Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ ipaqpcic_attach(parent, self, aux)
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
-		sc->sc_socket[i].saip_sc = psc;
+		sc->sc_socket[i].sapcic_cookie = psc;
 		sc->sc_socket[i].pcictag_cookie = NULL;
 		sc->sc_socket[i].pcictag = &ipaqpcic_functions;
 		sc->sc_socket[i].event_thread = NULL;
@@ -240,7 +240,7 @@ ipaqpcic_set_power(so, arg)
 	int arg;
 {
 	int value, s;
-	struct ipaqpcic_softc *sc = (struct ipaqpcic_softc *)so->sc;
+	struct ipaqpcic_softc *sc = so->sapcic_cookie;
 
 	s = splbio();
 	switch (arg) {
@@ -277,7 +277,7 @@ ipaqpcic_intr_establish(so, level, ih_fun, ih_arg)
 	int irq;
 
 	irq = so->socket ? IRQ_IRQ0 : IRQ_IRQ1;
-	return (sa11x0_intr_establish((sa11x0_chipset_tag_t)so->saip_sc,
+	return (sa11x0_intr_establish((sa11x0_chipset_tag_t)so->sapcic_cookie,
 				    irq-16, 1, level, ih_fun, ih_arg));
 }
 
@@ -286,5 +286,5 @@ ipaqpcic_intr_disestablish(so, ih)
 	struct sapcic_socket *so;
 	void *ih;
 {
-	sa11x0_intr_disestablish((sa11x0_chipset_tag_t)so->saip_sc, ih);
+	sa11x0_intr_disestablish((sa11x0_chipset_tag_t)so->sapcic_cookie, ih);
 }
