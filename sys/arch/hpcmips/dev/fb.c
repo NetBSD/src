@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.12 2000/01/05 15:12:42 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.13 2000/01/16 21:39:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.12 2000/01/05 15:12:42 takemura Exp $";
+    "$Id: fb.c,v 1.13 2000/01/16 21:39:36 uch Exp $";
 
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <arch/hpcmips/dev/fbvar.h>
 
 #ifdef FBDEBUG
-int	fb_debug = 1;
+int	fb_debug = 0;
 #define	DPRINTF(arg) if (fb_debug) printf arg;
 #else
 #define	DPRINTF(arg)
