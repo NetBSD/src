@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.9 2002/03/07 18:28:47 tv Exp $
+#	$NetBSD: configure.ac,v 1.10 2002/03/07 19:18:25 tv Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -30,9 +30,9 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h features.h inttypes.h malloc.h stddef.h stdint.h)
+AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h features.h malloc.h stddef.h stdint.h)
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/featuretest.h \
-	err.h libgen.h paths.h util.h,, [touch include/$ac_header])
+	err.h inttypes.h libgen.h paths.h util.h,, [touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h netconfig.h vis.h,,
 	[echo '#include "'$srcdir/../../include/$ac_header'"' >include/$ac_header])
 
