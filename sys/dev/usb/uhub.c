@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.16 1999/01/10 19:13:15 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.17 1999/06/14 16:59:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,9 +278,6 @@ uhub_init_port(up)
 		r = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (r);
-		r = usbd_get_port_status(dev, port, &up->status);
-		if (r != USBD_NORMAL_COMPLETION)
-			return (r);
 		DPRINTF(("usb_init_port: turn on port %d power status=0x%04x "
 			 "change=0x%04x\n",
 			 port, UGETW(up->status.wPortStatus),
@@ -288,6 +285,15 @@ uhub_init_port(up)
 		/* Wait for stable power. */
 		usbd_delay_ms(dev, dev->hub->hubdesc.bPwrOn2PwrGood * 
 			           UHD_PWRON_FACTOR);
+		/* Get the port status again. */
+		r = usbd_get_port_status(dev, port, &up->status);
+		if (r != USBD_NORMAL_COMPLETION)
+			return (r);
+		pstatus = UGETW(up->status.wPortStatus);
+		if ((pstatus & UPS_PORT_POWER) == 0)
+			printf("%s: port %d did not power up\n",
+ USBDEVNAME(((struct uhub_softc *)dev->hub->hubsoftc)->sc_dev), port);
+
 	}
 	if (dev->self_powered)
 		/* Self powered hub, give ports maximum current. */
