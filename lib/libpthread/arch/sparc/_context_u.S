@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2002/11/23 14:14:47 martin Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2002/11/28 17:18:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,38 +48,41 @@
 	* saved are frame pointer and return address
 	*/
 
-#define GETC(reg)					  \
-	st	%i6, [ reg + UC_GREG + _REG_O6 * 4 ]	; \
+#define GETC(uc)					  \
+	st	%i6, [uc + UC_GREG + _REG_O6 * 4]	; \
 	add	%i7, 8, %l0				; \
-	st	%l0, [ reg + UC_GREG + _REG_PC * 4 ]	; \
+	st	%l0, [uc + UC_GREG + _REG_PC * 4]	; \
+	/* save nPC too, so that setcontext(2) works */	  \
+	add	%i7, 12, %l0				; \
+	st	%l0, [uc + UC_GREG + _REG_nPC * 4]	; \
 							  \
-	sethi	%hi(0x40000000), %l1			; \
-	or	%l1, _UC_CPU, %l1			; \
-							  \
-	st	%l1, [ reg + UC_FLAGS ]
+	set	0x40000000 | _UC_CPU, %l1		; \
+	st	%l1, [uc + UC_FLAGS]
 
-#define SETC(reg)					  \
-	ld	[ reg + UC_FLAGS ], %l0			; \
-	sethi	%hi(0x40000000), %l1			; \
-	andcc	%l0, %l1, %g0				; \
+#define SETC(uc)					  \
+	ld	[uc + UC_FLAGS], %l0			; \
+	set	0x40000000, %l1				; \
+	btst	%l1, %l0				; \
 	bz	1f					; \
 	 nop						; \
 							  \
-	ld	[ reg + UC_GREG + _REG_PC * 4 ], %i7	; \
-	ld	[ reg + UC_GREG + _REG_O6 * 4 ], %i6	; \
+	ld	[uc + UC_GREG + _REG_PC * 4], %i7	; \
+	ld	[uc + UC_GREG + _REG_O6 * 4], %i6	; \
 							; \
 	jmp	%i7					; \
 	 restore					; \
+	NOTREACHED					; \
+							  \
 1:	call _C_LABEL(setcontext)			; \
-	 mov	reg, %o0
+	 mov	uc, %o0
+
 
 ENTRY(_getcontext_u)
 	save	%sp, -CCFSZ, %sp
 	FLUSHW				! XXX
 	GETC(%i0)
-	clr	%i0
 	ret
-	 restore
+	 restore %g0, 0, %o0		! return (0);
 
 ENTRY(_setcontext_u)
 	save	%sp, -CCFSZ, %sp
@@ -92,7 +95,7 @@ ENTRY(_swapcontext_u)
 	save	%sp, -CCFSZ, %sp
 	FLUSHW
 	GETC(%i0)
-	mov %i1, %o0
+	mov	%i1, %o0
 	SETC(%o0)
 	NOTREACHED
 
