@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2002/06/09 19:21:08 matt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.21 2003/12/08 07:33:12 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -140,7 +140,7 @@ extern int jbuf[10];
 static void
 mcheck(void *arg)
 {
-	int off, *mfp = (int *)&arg;
+	int off, *mfp = (int *)(void *)&arg;
 
 	off = (mfp[7]/4 + 8);
 	printf("Machine check, pc=%x, psl=%x\n", mfp[off], mfp[off+1]);
