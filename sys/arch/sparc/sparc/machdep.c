@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1994/11/23 07:00:10 deraadt Exp $ */
+/*	$NetBSD: machdep.c,v 1.36 1994/11/25 23:10:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -531,8 +531,8 @@ sigreturn(p, uap, retval)
 		sigexit(p, SIGILL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], scp %x\n",
-		    p->p_comm, p->p_pid, SCARG(uap, scp));
+		printf("sigreturn: %s[%d], sigcntxp %x\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
 	if ((int)scp & 3 || useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
@@ -1036,4 +1036,74 @@ caddr_t addr;
 
 	splx(s);
 	return (res);
+}
+
+void
+wzero(vb, l)
+	void *vb;
+	u_int l;
+{
+	u_char *b = vb;
+	u_char *be = b + l;
+	u_short *sp;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b & 1)
+		*b++ = 0;
+
+	/* back, */
+	if (b != be && ((u_long)be & 1) != 0) {
+		be--;
+		*be = 0;
+	}
+
+	/* and middle. */
+	sp = (u_short *)b;
+	while (sp != (u_short *)be)
+		*sp++ = 0;
+}
+
+void
+wcopy(vb1, vb2, l)
+	const void *vb1;
+	void *vb2;
+	u_int l;
+{
+	const u_char *b1e, *b1 = vb1;
+	u_char *b2 = vb2;
+	u_short *sp;
+	int bstore = 0;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b1 & 1) {
+		*b2++ = *b1++;
+		l--;
+	}
+
+	/* middle, */
+	sp = (u_short *)b1;
+	b1e = b1 + l;
+	if (l & 1)
+		b1e--;
+	bstore = (u_long)b2 & 1;
+
+	while (sp < (u_short *)b1e) {
+		if (bstore) {
+			b2[1] = *sp & 0xff;
+			b2[0] = *sp >> 8;
+		} else
+			*((short *)b2) = *sp;
+		sp++;
+		b2 += 2;
+	}
+
+	/* and back. */
+	if (l & 1)
+		*b2 = *b1e;
 }
