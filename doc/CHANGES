@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.30 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.31 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -154,3 +154,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		storage, rather than modifying their input arguments.
 		The new behavior is explicitly allowed by IEEE Std
 		1003.1-2001.  [thorpej 20021016]
+	build.sh: add '-k kernel', to configure and build the given
+		kernel using the new toolchain.
+		From Alan Barrett in PR#18739.  [lukem 20021021]
