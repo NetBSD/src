@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2000/08/26 00:05:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2000/08/26 00:38:15 mrg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -82,7 +82,7 @@ sparc:
 	ln -s ${.CURDIR}/../../../sparc/include sparc
 
 vers.c: version
-	sh ${.CURDIR}/../common/newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
+	MACHINE=${MACHINE} sh ${.CURDIR}/../common/newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
