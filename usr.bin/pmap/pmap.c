@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2002/09/19 02:43:51 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.6 2002/10/12 03:08:27 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.5 2002/09/19 02:43:51 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.6 2002/10/12 03:08:27 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -198,6 +198,7 @@ struct nlist nl[] = {
 	{ NULL }
 };
 
+void check(int);
 void load_symbols(kvm_t *);
 void process_map(kvm_t *, pid_t, struct kinfo_proc2 *);
 void dump_vm_map(kvm_t *, struct kbit *, struct kbit *, char *);
@@ -217,6 +218,10 @@ main(int argc, char *argv[])
 	char errbuf[_POSIX2_LINE_MAX + 1];
 	struct kinfo_proc2 *kproc;
 	char *kmem, *kernel;
+
+	check(STDIN_FILENO);
+	check(STDOUT_FILENO);
+	check(STDERR_FILENO);
 
 	pid = -1;
 	verbose = debug = 0;
@@ -337,6 +342,25 @@ main(int argc, char *argv[])
 		err(1, "kvm_close");
 
 	return (0);
+}
+
+void
+check(int fd)
+{
+	struct stat st;
+	int n;
+
+	if (fstat(fd, &st) == -1) {
+		(void)close(fd);
+		n = open("/dev/null", O_RDWR);
+		if (n == fd || n == -1)
+			/* we're either done or we can do no more */
+			return;
+		/* if either of these fail, there's not much we can do */
+		(void)dup2(n, fd);
+		(void)close(n);
+		/* XXX should we exit if it fails? */
+	}
 }
 
 void
@@ -465,7 +489,10 @@ dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
-#if VM_MAP_TOPDOWN > 0
+#ifdef VM_MAP_DYING
+		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" : "",
+#endif
+#ifdef VM_MAP_TOPDOWN
 		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
 #endif
 		       "");
@@ -613,9 +640,11 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       vme->max_protection);
 		printf(" inheritance = %d,", vme->inheritance);
 		printf(" wired_count = %d,\n", vme->wired_count);
-		printf("%*s    aref = <struct vm_aref>,", indent(2), "");
-		printf(" advice = %d,", vme->advice);
-		printf(" flags = %x <%s%s > }\n", vme->flags,
+		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
+		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
+		printf(" advice = %d,\n", vme->advice);
+		printf("%*s    flags = %x <%s%s > }\n", indent(2), "",
+		       vme->flags,
 		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
 		       vme->flags & UVM_MAP_KMEM ? " KMEM" : "");
 	}
