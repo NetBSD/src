@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.5 2001/05/15 04:27:22 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.6 2001/05/15 09:01:27 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1404,13 +1404,16 @@ wi_init(ifp)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * Prism firm version < ver.0.8.3
+			 * Prism2 Firmware version < ver 0.8c3
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
 			 * (ichiro@netbsd.org)
 			 */
-			WI_SETVAL(WI_RID_PROMISC, 1); /* XXX firm ver < 0.8.3 */
+			if (sc->sc_prism2_ver < 803 ) {
+				/* firm ver < 0.8c3 */
+				WI_SETVAL(WI_RID_PROMISC, 1);
+			}
 			WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
 		}
 	}
@@ -1662,41 +1665,39 @@ wi_get_id(sc)
 {
 	struct wi_ltv_ver       ver;
 
-#if 0
-        DELAY(10*1000); /* 10 m sec */
-#endif
+	/* getting chip identity */
         memset(&ver, 0, sizeof(ver));
         ver.wi_type = WI_RID_CARDID;
         ver.wi_len = 5;
         wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	switch (ver.wi_ver[0]) {
 		case WI_NIC_EVB2:
-			printf("%s: using PRISM2 HFA3841(EVB2) chip.\n",
+			printf("%s: using PRISM2 HFA3841(EVB2)",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3763:
-			printf("%s: using PRISM2 HWB3763 rev.B chip.\n",
+			printf("%s: using PRISM2 HWB3763 rev.B",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163:
-			printf("%s: using PRISM2 HWB3163 rev.A chip.\n",
+			printf("%s: using PRISM2 HWB3163 rev.A",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163B:
-			printf("%s: using PRISM2 HWB3163 rev.B chip.\n",
+			printf("%s: using PRISM2 HWB3163 rev.B",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_EVB3:
-			printf("%s: using PRISM2 HFA3842(EVB3) chip.\n",
+			printf("%s: using PRISM2 HFA3842(EVB3)",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB1153:
-			printf("%s: using PRISM2 HFA1153 chip.\n",
+			printf("%s: using PRISM2 HFA1153",
 			       sc->sc_dev.dv_xname);
 			sc->sc_prism2 = 1;
 			break;
@@ -1706,6 +1707,19 @@ wi_get_id(sc)
 			sc->sc_prism2 = 0;
 			break;  
 	}
+
+	if (sc->sc_prism2) {
+		/* try to get prism2 firm version */
+		memset(&ver, 0, sizeof(ver));
+		ver.wi_type = WI_RID_IDENT;
+		ver.wi_len = 5;
+		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+			printf(" ,Firmware Ver: %i.%i.%i \n", ver.wi_ver[1],
+			       ver.wi_ver[2], ver.wi_ver[3]); 
+		sc->sc_prism2_ver = ver.wi_ver[1] * 100 +
+				    ver.wi_ver[2] *  10 + ver.wi_ver[3];
+	}
+
 	return;
 }
 
