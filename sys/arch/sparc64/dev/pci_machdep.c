@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.47 2004/06/11 03:52:00 petrov Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.48 2004/07/29 16:53:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2004/06/11 03:52:00 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.48 2004/07/29 16:53:15 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -265,7 +265,7 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 }
 
 int
-pci_enumerate_bus(struct pci_softc *sc,
+sparc64_pci_enumerate_bus(struct pci_softc *sc,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	struct ofw_pci_register reg;
