@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.3 2001/10/18 21:26:23 bjh21 Exp $	*/
+/*	$NetBSD: trap.h,v 1.4 2003/04/28 01:54:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,14 +41,16 @@
 /*
  * Instructions used for breakpoints.
  *
- * These are an undefined instructions.
- * Technically the userspace breakpoint could be a SWI
- * but we want to keep this the same as IPKDB which
- * needs an undefined instruction as a break point.
- * Ideally ARM would define several standard instruction
- * sequences for use as breakpoints.
- * The BKPT instruction isn't much use to us, since its
- * behaviour is unpredictable on ARMv3 and lower.
+ * These are undefined instructions.
+ * Technically the userspace breakpoint could be a SWI but we want to
+ * keep this the same as IPKDB which needs an undefined instruction as
+ * a break point.
+ *
+ * Ideally ARM would define several standard instruction sequences for
+ * use as breakpoints.
+ *
+ * The BKPT instruction isn't much use to us, since its behaviour is
+ * unpredictable on ARMv3 and lower.
  *
  * The ARM ARM says that for maximum compatibility, we should use undefined
  * instructions that look like 0x.7f...f. .
@@ -58,6 +60,8 @@
 #define IPKDB_BREAKPOINT	0xe6000010	/* Used by IPKDB */
 #define GDB5_BREAKPOINT		0xe7ffdefe	/* Used by GDB 5.0 */
 #define KERNEL_BREAKPOINT	0xe7ffffff	/* Used by DDB */
+
+#define KBPT_ASM		".word 0xe7ffffff"
 
 #define USER_BREAKPOINT		GDB_BREAKPOINT
 
