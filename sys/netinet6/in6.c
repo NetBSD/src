@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.36 2000/10/28 03:46:21 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.37 2000/11/05 17:17:16 onoe Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -790,6 +790,7 @@ in6_control(so, cmd, data, ifp, p)
 		case IFT_ARCNET:
 		case IFT_ETHER:
 		case IFT_FDDI:
+		case IFT_IEEE1394:
 #if 0
 		case IFT_ATM:
 		case IFT_SLIP:
@@ -1220,6 +1221,7 @@ in6_ifinit(ifp, ia, sin6, scrub)
 	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
+	case IFT_IEEE1394:
 		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
 		ia->ia_ifa.ifa_flags |= RTF_CLONING;
 		break;
