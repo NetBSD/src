@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.17 2003/11/09 23:07:05 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.18 2003/11/09 23:17:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -234,6 +234,7 @@ typedef struct {
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_obj_handle;
 	mach_ndr_record_t rep_ndr;
+	int rep_pad1;
 	mach_vm_size_t rep_size;
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_make_memory_entry_reply_t;
