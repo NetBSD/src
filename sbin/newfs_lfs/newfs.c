@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.14 1999/03/10 00:43:34 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.14 1999/03/10 00:43:34 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ usage()
 		    "usage: mfs [ -fsoptions ] special-device mount-point\n");
 	} else
 		fprintf(stderr,
-		    "usage: newlfs [ -fsoptions ] special-device%s\n",
+		    "usage: newfs_lfs [ -fsoptions ] special-device%s\n",
 #ifdef COMPAT
 		    " [device-type]");
 #else

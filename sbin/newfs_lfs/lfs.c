@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.19 1999/03/18 07:14:53 is Exp $	*/
+/*	$NetBSD: lfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.19 1999/03/18 07:14:53 is Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $");
 #endif
 #endif /* not lint */
 

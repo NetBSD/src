@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1999/03/10 00:43:33 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
