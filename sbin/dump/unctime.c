@@ -1,4 +1,4 @@
-/*	$NetBSD: unctime.c,v 1.9 1995/03/18 14:55:11 cgd Exp $	*/
+/*	$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-static char rcsid[] = "$NetBSD: unctime.c,v 1.9 1995/03/18 14:55:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ static int
 lookup(str)
 	char *str;
 {
-	register char *cp, *cp2;
+	char *cp, *cp2;
 
 	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
 		if (strncmp(cp, cp2, 3) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.6 1997/04/10 05:36:25 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.7 1997/04/15 01:09:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.6 1997/04/10 05:36:25 lukem Exp $";
+static char rcsid[] = "$NetBSD: optr.c,v 1.7 1997/04/15 01:09:52 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ sendmes(tty, message)
 	char *tty, *message;
 {
 	char t[50], buf[BUFSIZ];
-	register char *cp;
+	char *cp;
 	int lmsg = 1;
 	FILE *f_tty;
 
@@ -406,9 +406,9 @@ quit(fmt, va_alist)
 
 struct fstab *
 allocfsent(fs)
-	register struct fstab *fs;
+	struct fstab *fs;
 {
-	register struct fstab *new;
+	struct fstab *new;
 
 	new = (struct fstab *)malloc(sizeof (*fs));
 	if (new == NULL ||
@@ -431,8 +431,8 @@ static	struct pfstab *table;
 void
 getfstab()
 {
-	register struct fstab *fs;
-	register struct pfstab *pf;
+	struct fstab *fs;
+	struct pfstab *pf;
 
 	if (setfsent() == 0) {
 		msg("Can't open %s for dump table information: %s\n",
@@ -472,8 +472,8 @@ struct fstab *
 fstabsearch(key)
 	char *key;
 {
-	register struct pfstab *pf;
-	register struct fstab *fs;
+	struct pfstab *pf;
+	struct fstab *fs;
 	char *rn;
 
 	for (pf = table; pf != NULL; pf = pf->pf_next) {
@@ -503,9 +503,9 @@ void
 lastdump(arg)
 	char	arg;	/* w ==> just what to do; W ==> most recent dumps */
 {
-	register int i;
-	register struct fstab *dt;
-	register struct dumpdates *dtwalk;
+	int i;
+	struct fstab *dt;
+	struct dumpdates *dtwalk;
 	char *lastname, *date;
 	int dumpme;
 	time_t tnow;

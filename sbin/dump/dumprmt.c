@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.11 1996/11/05 23:59:01 thorpej Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.12 1997/04/15 01:09:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.11 1996/11/05 23:59:01 thorpej Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.12 1997/04/15 01:09:49 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ rmtconnaborted()
 void
 rmtgetconn()
 {
-	register char *cp;
+	char *cp;
 	static struct servent *sp = NULL;
 	static struct passwd *pwd = NULL;
 #ifdef notdef
@@ -179,8 +179,8 @@ static int
 okname(cp0)
 	char *cp0;
 {
-	register char *cp;
-	register int c;
+	char *cp;
+	int c;
 
 	for (cp = cp0; *cp; cp++) {
 		c = *cp;
@@ -292,8 +292,8 @@ struct	mtget mts;
 struct mtget *
 rmtstatus()
 {
-	register int i;
-	register char *cp;
+	int i;
+	char *cp;
 
 	if (rmtstate != TS_OPEN)
 		return (NULL);
@@ -329,7 +329,7 @@ static int
 rmtreply(cmd)
 	char *cmd;
 {
-	register char *cp;
+	char *cp;
 	char code[30], emsg[BUFSIZ];
 
 	rmtgets(code, sizeof (code));
@@ -371,7 +371,7 @@ rmtgets(line, len)
 	char *line;
 	int len;
 {
-	register char *cp = line;
+	char *cp = line;
 
 	while (len > 1) {
 		*cp = rmtgetb();
