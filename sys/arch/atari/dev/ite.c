@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.9 1996/03/17 01:26:49 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.10 1996/03/19 13:15:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -941,7 +941,6 @@ enum caller	caller;
 	}
 	else if(key_mod == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x43) {
 		/* ALT + LSHIFT + F9 */
-		extern int Debugger();
 		Debugger();
 		splx(s);
 		return;
