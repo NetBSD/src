@@ -1,5 +1,5 @@
-/* $NetBSD: isp_pci.c,v 1.32 1998/12/28 19:12:04 mjacob Exp $ */
-/* release_12_28_98_A */
+/* $NetBSD: isp_pci.c,v 1.33 1999/01/10 03:41:47 mjacob Exp $ */
+/* release_12_28_98_A+ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -66,7 +66,7 @@ static struct ispmdvec mdvec = {
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
 	ISP_CODE_VERSION,
-	BIU_BURST_ENABLE,	/* default to 8 byte burst */
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
 	0
 };
 
@@ -83,8 +83,8 @@ static struct ispmdvec mdvec_2100 = {
 	ISP2100_CODE_LENGTH,
 	ISP2100_CODE_ORG,
 	ISP2100_CODE_VERSION,
-	BIU_BURST_ENABLE,	/* default to 8 byte burst */
-	0			/* Not relevant to the 2100 */
+	0,				/* Irrelevant to the 2100 */
+	0
 };
 
 #define	PCI_QLOGIC_ISP	\
