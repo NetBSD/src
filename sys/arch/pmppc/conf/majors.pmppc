@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmppc,v 1.1.2.1 2002/05/31 01:10:56 gehenna Exp $
+#	$NetBSD: majors.pmppc,v 1.1.2.2 2002/09/03 15:37:22 gehenna Exp $
 #
 # Device majors for pmppc
 #
@@ -49,3 +49,4 @@ device-major	isdnbchan	char 55			isdnbchan
 device-major	isdntrc		char 56			isdntrc
 device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
+device-major	systrace	char 59			systrace
