@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.494 2002/12/11 21:35:20 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.495 2002/12/26 01:52:00 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.492 2002/12/26 01:51:27 matt Exp 
  */
 
 /*
@@ -982,6 +982,10 @@
 /* Broadcom Corporation products */
 #define	PCI_PRODUCT_BROADCOM_BCM5700	0x1644		/* BCM5700 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5701	0x1645		/* BCM5701 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5702	0x1646		/* BCM5702 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5703	0x1647		/* BCM5703 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5702X	0x16a6		/* BCM5702X 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5703X	0x16a7		/* BCM5703X 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 
 /* Brooktree products */
