@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1998/12/28 04:54:00 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1999/02/05 21:40:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.16 1998/12/28 04:54:00 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.17 1999/02/05 21:40:49 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -307,7 +307,7 @@ parse_conf(findclass)
 /*
  * Show file listed in curclass.display first time in, and list all the
  * files named in curclass.notify in the current directory.  Send back
- * responses with the "reply" prefix.
+ * responses with the prefix `code' + "-".
  */
 void
 show_chdir_messages(code)
