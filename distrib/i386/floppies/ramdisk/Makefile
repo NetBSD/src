@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/23 21:29:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/07/29 18:07:53 phil Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -11,9 +11,12 @@ AUXCLEAN=	${AUXTARGETS}
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
+# DEV/RDEV file system device, CDEV/RDEV vnconfig device
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
+VND_CDEV=	/dev/${VND}d
+VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -34,7 +37,8 @@ start.sh: start.tmpl
 
 all: ${AUXTARGETS} ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=2880
-	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
@@ -44,7 +48,7 @@ all: ${AUXTARGETS} ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND_CDEV}
 	cat /*bin/* > /dev/null
 
 unconfig:
