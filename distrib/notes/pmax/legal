@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.8 2002/05/20 23:48:48 itojun Exp $
+.\"	$NetBSD: legal,v 1.9 2002/06/15 14:41:10 itojun Exp $
 .
 .It
 This product includes software developed by Ted Lemon.
@@ -29,7 +29,7 @@ This product includes software developed by Tohru Nishimura
 for the NetBSD Project.
 .It
 Some files have the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
 Mach Operating System
 .br
 Copyright (c) 1991,1990,1989 Carnegie Mellon University
@@ -61,7 +61,7 @@ rights to redistribute these changes.
 .item)
 .It
 Some files have the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
 Copyright (c) 1994, 1995 Carnegie-Mellon University.
 .br
 All rights reserved.
@@ -93,7 +93,7 @@ rights to redistribute these changes.
 .item)
 .It
 Some files have the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
       Copyright (C) 1989 Digital Equipment Corporation.
 .br
 Permission to use, copy, modify, and distribute this software and
