@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,53 +32,59 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dmesg.c	5.9 (Berkeley) 5/2/91";*/
-static char rcsid[] = "$Id: dmesg.c,v 1.5 1993/10/13 18:33:58 jtc Exp $";
+static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/msgbuf.h>
-#include <time.h>
-#include <nlist.h>
+
+#include <fcntl.h>
 #include <kvm.h>
-#include <stdlib.h>
+#include <limits.h>
+#include <nlist.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
+#include <vis.h>
 
 struct nlist nl[] = {
-#define	X_MSGBUFP	0
+#define	X_MSGBUF	0
 	{ "_msgbufp" },
 	{ NULL },
 };
 
-void usage(), vputc();
-void err __P((const char *, ...));
+void usage __P((void));
 
+#define	KREAD(addr, var) \
+	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	register int ch, newl, skip;
 	register char *p, *ep;
-	struct msgbuf cur;
-	int msgbufat;
-	char *core, *namelist;
+	struct msgbuf *bufp, cur;
+	char *memf, *nlistf;
+	kvm_t *kd;
+	char buf[5];
 
-	core = namelist = NULL;
+	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "M:N:")) != EOF)
 		switch(ch) {
 		case 'M':
-			core = optarg;
+			memf = optarg;
 			break;
 		case 'N':
-			namelist = optarg;
+			nlistf = optarg;
 			break;
 		case '?':
 		default:
@@ -87,18 +93,25 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/* Read in kernel message buffer, do sanity checks. */
-	if (kvm_openfiles(namelist, core, NULL) == -1)
-		err("kvm_openfiles: %s", kvm_geterr());
-	if (kvm_nlist(nl) == -1)
-		err("kvm_nlist: %s", kvm_geterr());
-	if (nl[X_MSGBUFP].n_type == 0)
-		err("msgbufp not found namelist");
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (memf != NULL || nlistf != NULL)
+		setgid(getgid());
 
-        kvm_read((void *)nl[X_MSGBUFP].n_value, (void *)&msgbufat, sizeof(msgbufat));
-        kvm_read((void *)msgbufat, (void *)&cur, sizeof(cur));
+	/* Read in kernel message buffer, do sanity checks. */
+	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg")) == NULL)
+		exit (1);
+	if (kvm_nlist(kd, nl) == -1)
+		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+	if (nl[X_MSGBUF].n_type == 0)
+		errx(1, "%s: msgbufp not found", nlistf ? nlistf : "namelist");
+	if (KREAD(nl[X_MSGBUF].n_value, bufp) || KREAD((long)bufp, cur))
+		errx(1, "kvm_read: %s", kvm_geterr(kd));
+	kvm_close(kd);
 	if (cur.msg_magic != MSG_MAGIC)
-		err("magic number incorrect");
+		errx(1, "magic number incorrect");
 	if (cur.msg_bufx >= MSG_BSIZE)
 		cur.msg_bufx = 0;
 
@@ -124,62 +137,16 @@ main(argc, argv)
 		}
 		if (ch == '\0')
 			continue;
-		newl = (ch = *p) == '\n';
-		vputc(ch);
+		newl = ch == '\n';
+		(void)vis(buf, ch, 0, 0);
+		if (buf[1] == 0)
+			(void)putchar(buf[0]);
+		else
+			(void)printf("%s", buf);
 	}
 	if (!newl)
 		(void)putchar('\n');
 	exit(0);
-}
-
-void
-vputc(ch)
-	register int ch;
-{
-	int meta;
-
-	if (!isascii(ch)) {
-		(void)putchar('M');
-		(void)putchar('-');
-		ch = toascii(ch);
-		meta = 1;
-	} else
-		meta = 0;
-	if (isprint(ch) || !meta && (ch == ' ' || ch == '\t' || ch == '\n'))
-		(void)putchar(ch);
-	else {
-		(void)putchar('^');
-		(void)putchar(ch == '\177' ? '?' : ch | 0100);
-	}
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "dmesg: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
 
 void
