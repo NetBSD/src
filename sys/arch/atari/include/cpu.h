@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1995/04/22 20:25:24 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1995/04/30 11:56:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,18 +107,8 @@ struct clockframe {
 extern int	astpending;	/* need trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-
+/* include support for software interrupts */
+#include <machine/mtpr.h>
 
 /*
  * The rest of this should probably be moved to ../atari/ataricpu.h,
@@ -135,6 +125,8 @@ extern unsigned char ssir;
 #define ATARI_68881	(1L<<8)
 #define ATARI_68882	(1L<<9)
 #define	ATARI_FPU40	(1L<<10)
+#define	ATARI_TT	(1L<<11)
+#define	ATARI_FALCON	(1L<<12)
 
 
 /*
@@ -143,13 +135,6 @@ extern unsigned char ssir;
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851	*/
 #define	MMU_68851	 1	/* Motorola 68851			*/
 #define MMU_68040	-2	/* 68040 on-chip subsubset		*/
-
-/* values for cpuspeed (not really related to clock speed due to caches) */
-#define	MHZ_8		1
-#define	MHZ_16		2
-#define	MHZ_25		3
-#define	MHZ_33		4
-#define	MHZ_50		6
 
 #ifdef _KERNEL
 extern int machineid, mmutype, cpu040;
