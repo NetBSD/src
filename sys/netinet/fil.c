@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.60 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.61 2004/03/28 09:01:26 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.60 2004/03/28 09:00:56 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.61 2004/03/28 09:01:26 martti Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.7 2004/03/23 12:06:56 darrenr Exp";
@@ -1118,7 +1118,7 @@ fr_info_t *fin;
 {
 	u_short optmsk = 0, secmsk = 0, auth = 0;
 	int hlen, ol, mv, p, i;
-	struct optlist *op;
+	const struct optlist *op;
 	u_char *s, opt;
 	u_short off;
 	fr_ip_t *fi;
@@ -1240,7 +1240,7 @@ fr_info_t *fin;
 			if ((opt == (u_char)op->ol_val) && (ol > 4)) {
 				optmsk |= op->ol_bit;
 				if (opt == IPOPT_SECURITY) {
-					struct optlist *sp;
+					const struct optlist *sp;
 					u_char	sec;
 					int j, m;
 

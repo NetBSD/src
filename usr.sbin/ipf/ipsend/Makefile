@@ -1,21 +1,28 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/18 03:54:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2004/03/28 09:01:28 martti Exp $
 
 .include <bsd.own.mk>
 
-PROG=	ipsend
-SRCS=	ipsend.c ip.c ipsopt.c iplang_l.l iplang_y.y sbpf.c sock.c 44arp.c
-YHEADER=1
-LDADD=	-ll
-DPADD=	${LIBL}
+PROG=		ipsend
+SRCS=		ipsend.c ip.c ipsopt.c iplang_y.c iplang_l.c sbpf.c \
+		sock.c 44arp.c
+MAN=		ipsend.1 ipsend.5
+DPADD+=		${LIBL}
+LDADD+=		-ll -lipf
 
-CPPFLAGS+= -I.  -I${NETBSDSRCDIR}/dist/ipf \
-		-I${NETBSDSRCDIR}/dist/ipf/ipsend \
-		-I${NETBSDSRCDIR}/dist/ipf/iplang
+NOGCCERROR=	# defined
 
-MAN=	ipsend.1 ipsend.5
+CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/ipsend
+CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/iplang
 
-.PATH:	${NETBSDSRCDIR}/dist/ipf/ipsend \
-	${NETBSDSRCDIR}/dist/ipf/iplang
+CLEANFILES+=	iplang_y.c iplang_y.h
+
+.PATH:		${NETBSDSRCDIR}/dist/ipf/ipsend \
+		${NETBSDSRCDIR}/dist/ipf/iplang
+
+iplang_y.c iplang_y.h: iplang_y.y
+	yacc -d ${NETBSDSRCDIR}/dist/ipf/iplang/iplang_y.y
+	mv y.tab.c iplang_y.c
+	mv y.tab.h iplang_y.h
 
 # XXX
 # We have a problem with make and linking ipsend
