@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.30 1995/06/18 05:13:09 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.31 1995/06/24 01:22:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -281,6 +281,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEAC    ", "CD-ROM          ", "1.06", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM          ", "1.06", SDEV_NOLUNS},
+	{T_CDROM, T_REMOV,
+	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.31", SDEV_NOLUNS},
 
