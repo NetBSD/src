@@ -1,3 +1,3 @@
-/*	$NetBSD: setjmp.h,v 1.1 1998/05/15 10:15:56 tsubai Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.2 1998/05/29 10:32:54 tsubai Exp $	*/
 
-#define	_JBLEN	100
+#include <powerpc/setjmp.h>
