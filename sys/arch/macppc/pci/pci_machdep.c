@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2001/06/19 12:02:57 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 2001/07/22 11:29:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -377,13 +377,13 @@ find_node_intr(node, addr, intr)
 #endif
 
 	/* mask addr by "interrupt-map-mask" */
-	bcopy(addr, maskedaddr, mlen);
+	memcpy(maskedaddr, addr, mlen);
 	for (i = 0; i < mlen / 4; i++)
 		maskedaddr[i] &= imask[i];
 
 	mp = map;
 	while (len > mlen) {
-		match = bcmp(maskedaddr, mp, mlen);
+		match = memcmp(maskedaddr, mp, mlen);
 		mp += mlen / 4;
 		len -= mlen;
 
@@ -398,7 +398,7 @@ find_node_intr(node, addr, intr)
 
 		/* Found. */
 		if (match == 0) {
-			bcopy(mp, intr, icells * 4);
+			memcpy(intr, mp, icells * 4);
 			return icells * 4;
 		}
 
@@ -412,7 +412,7 @@ nomap:
 	 * pci-bridge, use parent's interrupt.  This occurs on a PCI
 	 * slot.  (e.g. AHA-3940)
 	 */
-	bzero(name, sizeof(name));
+	memset(name, 0, sizeof(name));
 	OF_getprop(parent, "name", name, sizeof(name));
 	if (strcmp(name, "pci-bridge") == 0) {
 		len = OF_getprop(parent, "AAPL,interrupts", intr, 4) ;
