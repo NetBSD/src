@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.8 2003/12/05 22:17:47 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.9 2003/12/26 16:00:53 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,19 +44,21 @@ extern int darwin_ioframebuffer_unit;
 extern int darwin_ioframebuffer_screen;
 extern int darwin_iohidsystem_mux;
 
-#define EMUL_DARWIN_INIT_PID			1
-#define EMUL_DARWIN_IOFRAMEBUFFER_UNIT		2
-#define EMUL_DARWIN_IOFRAMEBUFFER_SCREEN	3
-#define EMUL_DARWIN_IOHIDSYSTEM_MUX		4
-#define EMUL_DARWIN_MAXID			5
+#define EMUL_DARWIN_INIT			1
+#define EMUL_DARWIN_IOFRAMEBUFFER		2
+#define EMUL_DARWIN_IOHIDSYSTEM			3
+#define EMUL_DARWIN_MAXID			4
 
-#define EMUL_DARWIN_NAMES { \
-	{ 0, 0 }, \
-	{ "init_pid", CTLTYPE_INT }, \
-	{ "ioframebuffer_unit", CTLTYPE_INT }, \
-	{ "ioframebuffer_screen", CTLTYPE_INT }, \
-	{ "iohidsystem_mux", CTLTYPE_INT }, \
-}
+#define EMUL_DARWIN_INIT_PID			1
+#define EMUL_DARWIN_INIT_MAXID			2
+
+#define EMUL_DARWIN_IOFRAMEBUFFER_UNIT		1
+#define EMUL_DARWIN_IOFRAMEBUFFER_SCREEN	2
+#define EMUL_DARWIN_IOFRAMEBUFFER_MAXID		3
+
+#define EMUL_DARWIN_IOHIDSYSTEM_MUX		1
+#define EMUL_DARWIN_IOHIDSYSTEM_MAXID		2
+
 
 #define DARWIN_CTL_UNSPEC	0
 #define DARWIN_CTL_KERN		1
