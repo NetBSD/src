@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.3 1994/10/26 08:02:47 cgd Exp $	*/
+/*	$NetBSD: uda.c,v 1.4 1995/02/13 00:44:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -87,16 +87,14 @@
 #include "sys/user.h"
 #include "sys/map.h"
 #include "sys/device.h"
-/* #include "sys/vm.h" */
 #include "sys/dkstat.h"
-/* #include "sys/cmap.h" */
 #include "sys/disklabel.h"
 #include "sys/syslog.h"
 #include "sys/stat.h"
 
-#include "vax/include/pte.h"
-#include "vax/include/sid.h"
-#include "vax/include/cpu.h"
+#include "machine/pte.h"
+#include "machine/sid.h"
+#include "machine/cpu.h"
 
 #include "vax/uba/ubareg.h"
 #include "vax/uba/ubavar.h"
@@ -107,13 +105,9 @@
 #include "vax/uba/udareg.h"
 #include "vax/vax/mscp.h"
 #include "vax/vax/mscpvar.h"
-#include "vax/include/mtpr.h"
+#include "machine/mtpr.h"
 
 extern int cold;
-
-struct cfdriver udacd;
-struct cfdriver racd;
-
 
 /*
  * UDA communications area and MSCP packet pools, per controller.
@@ -222,7 +216,7 @@ struct	uba_ctlr *udaminfo[NUDA];
 struct	uba_device *udadinfo[NRA];
 struct	disklabel udalabel[NRA];
 
-u_short	udastd[] = { 0772150, 0772550, 0777550, 0 };
+u_short	udastd[] = { 0172150, 0172550, 0177550, 0 };
 struct	uba_driver udadriver =
  { udaprobe, udaslave, udaattach, udadgo, udastd, "ra", udadinfo, "uda",
    udaminfo };
@@ -260,7 +254,8 @@ static struct uba_ctlr *probeum;/* this is a hack---autoconf should pass ctlr
 				   info to slave routine; instead, we remember
 				   the last ctlr argument to probe */
 
-int	udawstart, udawatch();	/* watchdog timer */
+int	udawstart;
+void	udawatch();	/* watchdog timer */
 
 /*
  * Externals
@@ -278,9 +273,9 @@ udaprobe(reg, ctlr, um)
 	int ctlr;
 	struct uba_ctlr *um;
 {
-	int br, cvec;
+/*	int br, cvec; */
 	struct uda_softc *sc;
-	struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	struct mscp_info *mi;
 	extern int cpu_type;
 	int timeout, tries;
@@ -299,7 +294,7 @@ udaprobe(reg, ctlr, um)
 	if (MACHID(cpu_type) == VAX_750)
 		udadriver.ud_keepbdp = 1;
 #endif
-
+/* printf("udaprobe\n"); */
 	probeum = um;			/* remember for udaslave() */
 	/*
 	 * Set up the controller-specific generic MSCP driver info.
@@ -310,7 +305,7 @@ udaprobe(reg, ctlr, um)
 	mi = &sc->sc_mi;
 	mi->mi_md = &udamscpdriver;
 	mi->mi_ctlr = um->um_ctlr;
-	mi->mi_tab = &um->um_tab;
+	mi->mi_tab = (void*)&um->um_tab;
 	mi->mi_ip = udaip[ctlr];
 	mi->mi_cmd.mri_size = NCMD;
 	mi->mi_cmd.mri_desc = uda[ctlr].uda_ca.ca_cmddsc;
@@ -395,10 +390,11 @@ udaslave(ui, reg)
 	caddr_t reg;
 {
 	register struct uba_ctlr *um = probeum;
-	register struct mscp *mp;
-	register struct uda_softc *sc;
-	int next = 0, timeout, tries, i;
-
+	volatile struct mscp *mp;
+	volatile struct uda_softc *sc;
+	int next = 0, timeout, tries;
+	volatile int i;
+/* printf("udaslave\n"); */
 #ifdef lint
 	i = 0; i = i;
 #endif
@@ -415,7 +411,6 @@ again:
 		return (0);
 	timeout = todr() + 1000;		/* 10 seconds */
 	while (todr() < timeout) {
-/*		printf("hjagdsfhsafdahsdfasfga %d\n",sc->sc_state); */
 		if (sc->sc_state == ST_RUN)	/* made it */
 			goto findunit;
 	}
@@ -445,8 +440,10 @@ findunit:
 		mp->mscp_modifier = 0;
 	}
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
+/* printf("dags f|r polling:\n"); */
 	i = ((struct udadevice *) reg)->udaip;	/* initiate polling */
 	mp = &udaslavereply;
+/* printf("&mp->mscp_opcode %x, reg %x\n",&mp->mscp_opcode,reg); */
 	timeout = todr() + 1000;
 	while (todr() < timeout)
 		if (mp->mscp_opcode)
@@ -560,7 +557,7 @@ udaattach(ui)
 	register struct uba_device *ui;
 {
 	register int unit = ui->ui_unit;
-
+/* printf("udaattach\n"); */
 	if (udawstart == 0) {
 		timeout(udawatch, (caddr_t) 0, hz);
 		udawstart++;
@@ -604,7 +601,7 @@ udainit(ctlr)
 	register struct udadevice *udaddr;
 	struct uba_ctlr *um;
 	int timo, ubinfo;
-
+/* printf("udainit\n"); */
 	sc = &uda_softc[ctlr];
 	um = udaminfo[ctlr];
 	if ((sc->sc_flags & SC_MAPPED) == 0) {
@@ -678,7 +675,7 @@ udaopen(dev, flag, fmt)
 	register struct ra_info *ra;
 	int s, i, part, mask, error = 0;
 	daddr_t start, end;
-
+/* printf("udaopen\n"); */
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
@@ -782,7 +779,7 @@ udaclose(dev, flags, fmt)
 	register int unit = udaunit(dev);
 	register struct ra_info *ra = &ra_info[unit];
 	int s, mask = (1 << udapart(dev));
-
+/* printf("udaclose\n"); */
 	switch (fmt) {
 	case S_IFCHR:
 		ra->ra_copenpart &= ~mask;
@@ -814,7 +811,7 @@ udaclose(dev, flags, fmt)
  * When on line, read in the pack label.
  */
 uda_rainit(ui, flags)
-	register struct uba_device *ui;
+	volatile struct uba_device *ui;
 	int flags;
 {
 	register struct uda_softc *sc = &uda_softc[ui->ui_ctlr];
@@ -823,9 +820,11 @@ uda_rainit(ui, flags)
 	register int unit = ui->ui_unit;
 	register struct ra_info *ra;
 	char *msg, *readdisklabel();
-	int s, i, udastrategy();
+	int s, i;
+	volatile int hej;
+	void udastrategy();
 	extern int cold;
-
+/* printf("uda_rainit\n"); */
 	ra = &ra_info[unit];
 	if ((ui->ui_flags & UNIT_ONLINE) == 0) {
 		mp = mscp_getcp(&sc->sc_mi, MSCP_WAIT);
@@ -836,7 +835,7 @@ uda_rainit(ui, flags)
 		ra->ra_state = WANTOPEN;
 		if (!cold)
 			s = splbio();
-		i = ((struct udadevice *)ui->ui_addr)->udaip;
+		hej = ((struct udadevice *)ui->ui_addr)->udaip;
 
 		if (cold) {
 			i = todr() + 1000;
@@ -910,7 +909,7 @@ uda_rasave(unit, mp, check)
 	int check;
 {
 	register struct ra_info *ra = &ra_info[unit];
-
+/* printf("uda_rasave\n"); */
 	if (check && ra->ra_mediaid != mp->mscp_guse.guse_mediaid) {
 		printf("ra%d: changed types! was %d now %d\n", unit,
 			ra->ra_mediaid, mp->mscp_guse.guse_mediaid);
@@ -937,6 +936,7 @@ uda_rasave(unit, mp, check)
  * udastrat1() can be called by the (nonexistent, as yet) bad block
  * revectoring routine.
  */
+void
 udastrategy(bp)
 	register struct buf *bp;
 {
@@ -946,7 +946,7 @@ udastrategy(bp)
 	struct partition *pp;
 	int p;
 	daddr_t sz, maxsz;
-
+/* printf("udastrategy\n"); */
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -1020,7 +1020,7 @@ udastrat1(bp)
 	register struct buf *dp;
 	struct uba_device *ui;
 	int s = splbio();
-
+/* printf("udastrat1\n"); */
 	/*
 	 * Append the buffer to the drive queue, and if it is not
 	 * already there, the drive to the controller queue.  (However,
@@ -1057,14 +1057,15 @@ udastrat1(bp)
 udastart(um)
 	register struct uba_ctlr *um;
 {
-	register struct uda_softc *sc = &uda_softc[um->um_ctlr];
+	volatile struct uda_softc *sc = &uda_softc[um->um_ctlr];
 	register struct buf *bp, *dp;
 	register struct mscp *mp;
 	struct uba_device *ui;
-	struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	struct partition *pp;
-	int i, sz;
-
+	int sz;
+	volatile int i;
+/* printf("udastart\n"); */
 #ifdef lint
 	i = 0; i = i;
 #endif
@@ -1205,7 +1206,7 @@ udadgo(um)
 {
 	struct uda_softc *sc = &uda_softc[um->um_ctlr];
 	struct mscp *mp = (struct mscp *)um->um_cmd;
-
+/* printf("udago\n"); */
 	um->um_tab.b_active++;	/* another transfer going */
 
 	/*
@@ -1232,7 +1233,7 @@ udaiodone(mi, bp, info)
 	int info;
 {
 	register struct uba_ctlr *um = udaminfo[mi->mi_ctlr];
-
+/* printf("udaiodone\n"); */
 	um->um_ubinfo = info;
 	ubadone(um);
 	biodone(bp);
@@ -1298,7 +1299,7 @@ udasaerror(um, doreset)
 {
 	register int code = ((struct udadevice *)um->um_addr)->udasa;
 	register struct saerr *e;
-
+/*printf("udasaerror\n"); */
 	if ((code & UDA_ERR) == 0)
 		return;
 	for (e = saerr; e->code; e++)
@@ -1322,14 +1323,14 @@ udaintr(/*ctlr*/)
 /*	int ctlr; */
 {
 	struct uba_ctlr *um = udaminfo[/*ctlr*/0];
-	struct uda_softc *sc = &uda_softc[/*ctlr*/0];
-	struct udadevice *udaddr = (struct udadevice *)um->um_addr;
+	volatile struct uda_softc *sc = &uda_softc[/*ctlr*/0];
+	volatile struct udadevice *udaddr = (struct udadevice *)um->um_addr;
 	struct uda *ud;
 	struct mscp *mp;
-	int i;
+	volatile int i;
 	extern int cpu_type;
-
 	int ctlr=0; /* XXX Fult f|r att testa interrupter :-/ */
+/*printf("udaintr\n"); */
 #ifdef QBA
 	splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
@@ -1433,21 +1434,17 @@ initfailed:
 		 * SCC packet).
 		 */
 		sc->sc_mi.mi_credits = MSCP_MINCREDITS + 1;
-/*		printf("&sc->sc_mi: %x\n",&sc->sc_mi); */
 		mp = mscp_getcp(&sc->sc_mi, MSCP_DONTWAIT);
 		if (mp == NULL)	/* `cannot happen' */
 			panic("udaintr");
-/*		printf("Kom f|rbi mscp_getcp()\n"); */
 		sc->sc_mi.mi_credits = 0;
 		mp->mscp_opcode = M_OP_SETCTLRC;
 		mp->mscp_unit = 0;
 		mp->mscp_sccc.sccc_ctlrflags = M_CF_ATTN | M_CF_MISC |
 			M_CF_THIS;
 		*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-/*		printf("udaddr l{ngre ner: %x\n",udaddr); */
 		i = udaddr->udaip;
 		sc->sc_state = ST_SETCHAR;
-/*		printf("ST_SETCHAR satt. %x\n", sc->sc_state); */
 		return;
 
 	case ST_SETCHAR:
@@ -1503,7 +1500,7 @@ udainitds(ctlr)
 	register struct uda *uud = uda_softc[ctlr].sc_uda;
 	register struct mscp *mp;
 	register int i;
-
+/* printf("udainitds\n"); */
 	for (i = 0, mp = ud->uda_rsp; i < NRSP; i++, mp++) {
 		ud->uda_ca.ca_rspdsc[i] = MSCP_OWN | MSCP_INT |
 			(long)&uud->uda_rsp[i].mscp_cmdref;
@@ -1525,7 +1522,7 @@ udadgram(mi, mp)
 	struct mscp_info *mi;
 	struct mscp *mp;
 {
-
+/* printf("udadgram\n"); */
 	mscp_decodeerror(mi->mi_md->md_mname, mi->mi_ctlr, mp);
 	/*
 	 * SDI status information bytes 10 and 11 are the microprocessor
@@ -1547,7 +1544,7 @@ udactlrdone(mi, mp)
 	struct mscp *mp;
 {
 	register struct uda_softc *sc = &uda_softc[mi->mi_ctlr];
-
+/* printf("udactlrdone\n"); */
 	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS)
 		sc->sc_state = ST_RUN;
 	else {
@@ -1570,14 +1567,15 @@ udaunconf(mi, mp)
 	struct mscp_info *mi;
 	register struct mscp *mp;
 {
-
+/* printf("udaunconf\n"); */
 	/*
 	 * If it is a slave response, copy it to udaslavereply for
 	 * udaslave() to look at.
 	 */
 	if (mp->mscp_opcode == (M_OP_GETUNITST | M_OP_END) &&
 	    (uda_softc[mi->mi_ctlr].sc_flags & SC_INSLAVE) != 0) {
-		udaslavereply = *mp;
+		bcopy(mp, &udaslavereply, sizeof(struct mscp));
+/*		udaslavereply = *mp; */
 		return (MSCP_DONE);
 	}
 
@@ -1601,7 +1599,7 @@ udaonline(ui, mp)
 	struct mscp *mp;
 {
 	register struct ra_info *ra = &ra_info[ui->ui_unit];
-
+/* printf("udaonline\n"); */
 	wakeup((caddr_t)&ui->ui_flags);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		if (!cold)
@@ -1630,7 +1628,7 @@ udagotstatus(ui, mp)
 	register struct uba_device *ui;
 	register struct mscp *mp;
 {
-
+/* printf("udagotstatus\n"); */
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("uda%d: attempt to get status for ra%d failed: ",
 			ui->ui_ctlr, ui->ui_unit);
@@ -1652,7 +1650,7 @@ udaioerror(ui, mp, bp)
 	register struct mscp *mp;
 	struct buf *bp;
 {
-
+/* printf("udaioerror\n"); */
 	if (mp->mscp_flags & M_EF_BBLKR) {
 		/*
 		 * A bad block report.  Eventually we will
@@ -1714,7 +1712,7 @@ udaioctl(dev, cmd, data, flag)
 	register struct disklabel *lp;
 	register struct ra_info *ra = &ra_info[unit];
 	int error = 0;
-
+/* printf("udaioctl\n"); */
 	lp = &udalabel[unit];
 
 	switch (cmd) {
@@ -1797,7 +1795,7 @@ udareset(uban)
 	register struct uba_ctlr *um;
 	register struct uda_softc *sc;
 	register int ctlr;
-
+/* printf("udareset\n"); */
 	for (ctlr = 0, sc = uda_softc; ctlr < NUDA; ctlr++, sc++) {
 		if ((um = udaminfo[ctlr]) == NULL || um->um_ubanum != uban ||
 		    um->um_alive == 0)
@@ -1836,12 +1834,12 @@ udareset(uban)
  * Watchdog timer:  If the controller is active, and no interrupts
  * have occurred for 30 seconds, assume it has gone away.
  */
+void
 udawatch()
 {
 	register int i;
 	register struct uba_ctlr *um;
 	register struct uda_softc *sc;
-
 	timeout(udawatch, (caddr_t) 0, hz);	/* every second */
 	for (i = 0, sc = uda_softc; i < NUDA; i++, sc++) {
 		if ((um = udaminfo[i]) == 0 || !um->um_alive)
@@ -1913,7 +1911,7 @@ udadump(dev)
 	 */
 	num = btoc(sizeof(struct uda1)) + 1;
 	reg = NUBMREG - num;
-	io = &uba->uba_map[reg];
+	io = (void *)&uba->uba_map[reg];
 	for (i = 0; i < num; i++)
 		*(int *)io++ = UBAMR_MRV | (vax_btop(ud) + i);
 	ud_ubaddr = (struct uda1 *)(((int)ud & PGOFSET) | (reg << 9));
@@ -1976,7 +1974,7 @@ udadump(dev)
 	 */
 	while (num > 0) {
 		blk = num > DBSIZE ? DBSIZE : num;
-		io = uba->uba_map;
+		io = (void *)uba->uba_map;
 		/*
 		 * Map in the pages to write, leaving an invalid entry
 		 * at the end to guard against wild Unibus transfers.
@@ -2191,6 +2189,24 @@ struct size {
 	-1,	699390,		/* F=blk 699390 thru end */
 	-1,	375345,		/* G=blk 375345 thru end */
 	291346,	83790,		/* H=blk 83790 thru 375135 */
+}, ra90_sizes[8] = {
+        15884,  0,              /* A=sectors 0 thru 15883 */
+        66880,  16146,          /* B=sectors 16146 thru 83025 */
+        2376153,0,              /* C=sectors 0 thru 2376152 */
+        15884,  374946,         /* D=sectors 374946 thru 390829 */
+        307200, 391092,         /* E=sectors 391092 thru 698291 */
+        1677390,698763,         /* F=sectors 698763 thru 2376152 */
+        2001207,374946,         /* G=sectors 374946 thru 2376152 */
+        291346, 83421,          /* H=sectors 83421 thru 374766 */
+}, ra92_sizes[8] = {
+        15884,  0,              /* A=sectors 0 thru 15883 */
+        66880,  16146,          /* B=sectors 16146 thru 83025 */
+        2941263,0,              /* C=sectors 0 thru 2941262 */
+        15884,  374946,         /* D=sectors 374946 thru 390829 */
+        307200, 391092,         /* E=sectors 391092 thru 698291 */
+        2242500,698763,         /* F=sectors 698763 thru 2941262 */
+        2566317,374946,         /* G=sectors 374946 thru 2941262 */
+        291346, 83421,          /* H=sectors 83421 thru 374766 */
 }, rc25_sizes[8] = {
 	15884,	0,		/* A=blk 0 thru 15883 */
 	10032,	15884,		/* B=blk 15884 thru 49323 */
@@ -2252,6 +2268,8 @@ struct	udatypes {
 	{ MSCP_MKDRIVE2('R', 'A', 80), "ra80", ra80_sizes, 31, 14, 559 },
 	{ MSCP_MKDRIVE2('R', 'A', 81), "ra81", ra81_sizes, 51, 14, 1248 },
 	{ MSCP_MKDRIVE2('R', 'A', 82), "ra82", ra82_sizes, 57, 15, 1423 },
+	{ MSCP_MKDRIVE2('R', 'A', 90), "ra90", ra90_sizes, 69, 13, 2649 },
+	{ MSCP_MKDRIVE2('R', 'A', 92), "ra92", ra92_sizes, 69, 13, 3279 },
 	{ MSCP_MKDRIVE2('R', 'C', 25), "rc25-removable",
 						rc25_sizes, 42, 4, 302 },
 	{ MSCP_MKDRIVE3('R', 'C', 'F', 25), "rc25-fixed",

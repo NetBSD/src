@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.2 1994/10/26 08:02:45 cgd Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.3 1995/02/13 00:44:25 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -46,7 +46,7 @@
 
 #ifndef LOCORE
 
-#include "buf.h"
+#include "sys/buf.h"
 /*
  * Per-uba structure.
  *
