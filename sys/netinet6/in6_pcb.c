@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.14 2000/01/31 14:19:02 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.15 2000/02/01 00:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -234,11 +234,13 @@ in6_pcbbind(in6p, nam)
 			 * XXX: bind to an anycast address might accidentally
 			 * cause sending a packet with anycast source address.
 			 */
-			if (ia &&
-			    ((struct in6_ifaddr *)ia)->ia6_flags &
-			    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-			     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
-				return(EADDRNOTAVAIL);
+			if (ia != NULL) {
+				struct in6_ifaddr *ia6 = (void *)ia;
+				
+				if (ia6->ia6_flags &
+				    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
+				     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED))
+					return (EADDRNOTAVAIL);
 			}
 		}
 		if (lport) {
