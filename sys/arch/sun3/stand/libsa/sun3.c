@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.2 1998/02/05 04:57:16 gwr Exp $	*/
+/*	$NetBSD: sun3.c,v 1.3 1999/03/04 07:56:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #define set_segmap sun3_set_segmap
 
 #include <sys/param.h>
+#include <machine/idprom.h>
 #include <machine/mon.h>
 #include <machine/pte.h>
 
@@ -258,13 +259,22 @@ set_segmap(va, sme)
 	set_control_byte(va, sme);
 }
 
+/*
+ * Copy the IDPROM contents into the passed buffer.
+ * The caller (idprom.c) will do the checksum.
+ */
 void
-sun3_etheraddr(u_char *ea)
+sun3_getidprom(u_char *dst)
 {
-	vm_offset_t ca; 	/* control space address */
+	vm_offset_t src;	/* control space address */
+	int len, x;
 
-	for (ca = 2; ca < 8; ca++)
-		*ea++ = get_control_byte(ca);
+	src = IDPROM_BASE;
+	len = sizeof(struct idprom);
+	do {
+		x = get_control_byte(src++);
+		*dst++ = x;
+	} while (--len > 0);
 }
 
 /*****************************************************************
