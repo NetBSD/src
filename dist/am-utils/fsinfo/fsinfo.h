@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.h,v 1.6 2003/03/09 01:38:46 christos Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.7 2004/11/27 01:24:36 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.h,v 1.9 2002/12/27 22:44:07 ezk Exp
+ * Id: fsinfo.h,v 1.12 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -94,7 +94,7 @@ extern void init_que(qelem *);
 extern void ins_que(qelem *, qelem *);
 extern void lerror(ioloc *l, char *fmt, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-extern void logit(char *fmt, ...)
+extern void fsi_log(char *fmt, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 extern void lwarning(ioloc *l, char *fmt, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
@@ -116,7 +116,6 @@ extern void domain_strip(char *otherdom, char *localdom);
  */
 #ifndef yywrap
 extern int yywrap(void);
-# define yywrap() 1
 #endif /* not yywrap */
 extern int yyparse(void);
 extern int write_atab(qelem *q);

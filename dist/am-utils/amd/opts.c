@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.6 2003/07/15 09:01:16 itojun Exp $	*/
+/*	$NetBSD: opts.c,v 1.7 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: opts.c,v 1.25 2002/12/27 22:43:52 ezk Exp
+ * Id: opts.c,v 1.29 2004/08/07 17:01:50 ezk Exp
  *
  */
 
@@ -123,7 +123,7 @@ static char *literal_dollar = "$"; /* ${dollar}: a literal '$' in maps */
 /*
  * GLOBALS
  */
-struct am_opts fs_static;	/* copy of the options to play with */
+static struct am_opts fs_static;      /* copy of the options to play with */
 
 
 /*
@@ -193,6 +193,8 @@ static struct opt opt_fields[] = {
 	&fs_static.opt_mount,	0,		0,		FALSE	},
   { S("unmount"),
 	&fs_static.opt_unmount,	0,		0,		FALSE	},
+  { S("umount"),
+	&fs_static.opt_umount,	0,		0,		FALSE	},
   { S("cache"),
 	&fs_static.opt_cache,	0,		0,		FALSE	},
   { S("user"),
@@ -268,6 +270,7 @@ static opt_apply expansions[] =
   {&fs_static.opt_remopts, "${opts}"},
   {&fs_static.opt_mount, 0},
   {&fs_static.opt_unmount, 0},
+  {&fs_static.opt_umount, 0},
   {&fs_static.opt_cachedir, 0},
   {&fs_static.opt_addopts, 0},
   {0, 0},
@@ -289,6 +292,7 @@ static opt_apply to_free[] =
   {&fs_static.opt_remopts, 0},
   {&fs_static.opt_mount, 0},
   {&fs_static.opt_unmount, 0},
+  {&fs_static.opt_umount, 0},
   {&fs_static.opt_cachedir, 0},
   {&fs_static.opt_addopts, 0},
   {&vars[0], 0},
@@ -305,6 +309,7 @@ static opt_apply to_free[] =
 
 /*
  * expand backslash escape sequences
+ * (escaped slash is handled separately in normalize_slash)
  */
 static char
 backslash(char **p)
@@ -927,6 +932,9 @@ normalize_slash(char *p)
       /* assert(*f != '/'); */
       /* keep copying up to next / */
       while (*f && *f != '/') {
+	/* support escaped slashes '\/' */
+	if (f[0] == '\\' && f[1] == '/')
+	  f++;			/* skip backslash */
 	*t++ = *f++;
       }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ldap.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.3 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ldap.c,v 1.20 2002/12/27 22:43:49 ezk Exp
+ * Id: info_ldap.c,v 1.23 2004/07/29 22:50:53 ezk Exp
  *
  */
 
@@ -242,11 +242,11 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
 
   aldh = ALLOC(ALD);
   creds = ALLOC(CR);
-  aldh->ldap = NULL ;
+  aldh->ldap = NULL;
   aldh->hostent = string2he(gopt.ldap_hostports);
   if (aldh->hostent == NULL) {
     plog(XLOG_USER, "Unable to parse hostport %s for ldap map %s",
-	 gopt.ldap_hostports, map);
+	 gopt.ldap_hostports ? gopt.ldap_hostports : "(null)", map);
     return (ENOENT);
   }
   creds->who = "";
@@ -319,11 +319,11 @@ amu_ldap_rebind(ALD *a)
 	break;
       }
       if (gopt.ldap_cache_seconds > 0) {
-#ifdef HAVE_LDAP_ENABLE_CACHE
+#if defined(HAVE_LDAP_ENABLE_CACHE) && defined(HAVE_EXTERN_LDAP_ENABLE_CACHE)
 	ldap_enable_cache(ld, gopt.ldap_cache_seconds, gopt.ldap_cache_maxmem);
-#else /* HAVE_LDAP_ENABLE_CACHE */
-	plog(XLOG_WARNING, "ldap_enable_cache(%ld) does not exist on this system!\n", gopt.ldap_cache_seconds);
-#endif /* HAVE_LDAP_ENABLE_CACHE */
+#else /* not defined(HAVE_LDAP_ENABLE_CACHE) && defined(HAVE_EXTERN_LDAP_ENABLE_CACHE) */
+	plog(XLOG_WARNING, "ldap_enable_cache(%ld) is not available on this system!\n", gopt.ldap_cache_seconds);
+#endif /* not defined(HAVE_LDAP_ENABLE_CACHE) && defined(HAVE_EXTERN_LDAP_ENABLE_CACHE) */
       }
       a->ldap = ld;
       a->timestamp = now;

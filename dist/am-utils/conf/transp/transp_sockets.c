@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.5 2003/03/09 01:38:42 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.6 2004/11/27 01:24:35 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_sockets.c,v 1.21 2002/12/27 22:44:03 ezk Exp
+ * Id: transp_sockets.c,v 1.28 2004/01/22 05:01:06 ezk Exp
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -65,10 +65,13 @@
  * find the IP address that can be used to connect to the local host
  */
 void
-amu_get_myaddress(struct in_addr *iap)
+amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
 {
+  struct hostent *hp;
 
-#ifdef DEBUG
+#ifdef DEBUG_off
+#error this code is old and probably not useful any longer.
+#error Erez, Jan 21, 2004.
   struct sockaddr_in sin;
 
   /*
@@ -86,8 +89,34 @@ amu_get_myaddress(struct in_addr *iap)
   if (sin.sin_addr.s_addr != htonl(INADDR_LOOPBACK))
     dlog("amu_get_myaddress: myaddress conflict (0x%x vs. 0x%lx)",
 	 sin.sin_addr.s_addr, (u_long) htonl(INADDR_LOOPBACK));
-#endif /* DEBUG */
+#endif /* DEBUG_off */
 
+  if (preferred_localhost == NULL)
+    goto out;
+
+  /* if specified preferred locahost, then try to use it */
+  hp = gethostbyname(preferred_localhost);
+  if (hp == NULL) {
+    /* XXX: if hstrerror()/h_errno aren't portable, then need to port the next statement */
+    plog(XLOG_ERROR, "Unable to resolve localhost_address \"%s\" (%s): using default",
+	 preferred_localhost, hstrerror(h_errno));
+    goto out;
+  }
+  if (hp->h_addr_list == NULL) {
+    plog(XLOG_ERROR, "localhost_address \"%s\" has no IP addresses: using default",
+	 preferred_localhost);
+    goto out;
+  }
+  if (hp->h_addr_list[1] != NULL) {
+    plog(XLOG_ERROR, "localhost_address \"%s\" has more than one IP addresses: using first",
+	 preferred_localhost);
+    goto out;
+  }
+  memmove((voidp) &iap->s_addr, (voidp) hp->h_addr_list[0], sizeof(iap->s_addr));
+  plog(XLOG_INFO, "localhost_address \"%s\" requested", preferred_localhost);
+  return;
+
+ out:
   iap->s_addr = htonl(INADDR_LOOPBACK);
 }
 
@@ -271,9 +300,21 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
       plog(XLOG_FATAL, "cannot create tcp service for amq: soAMQp=%d", *tcp_soAMQp);
       return 2;
     }
+
 #ifdef SVCSET_CONNMAXREC
-    SVC_CONTROL(*tcp_amqpp, SVCSET_CONNMAXREC, &maxrec);
-#endif
+    /*
+     * This is *BSD at its best.
+     * They just had to do things differently than everyone else
+     * so they fixed a library DoS issue by forcing client-side changes...
+     */
+# ifndef RPC_MAXDATASIZE
+#  define RPC_MAXDATASIZE 9000
+# endif /* not RPC_MAXDATASIZE */
+    {
+      int maxrec = RPC_MAXDATASIZE;
+      SVC_CONTROL(*tcp_amqpp, SVCSET_CONNMAXREC, &maxrec);
+    }
+#endif /* not SVCSET_CONNMAXREC */
   }
 
   /* next create UDP service */
@@ -297,10 +338,9 @@ create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
 
 
 /*
- * Ping the portmapper on a remote system by calling the nullproc
+ * Check if the portmapper is running and reachable
  */
-enum clnt_stat
-pmap_ping(struct sockaddr_in *address)
+int check_pmap_up(char *host, struct sockaddr_in* sin)
 {
   CLIENT *client;
   enum clnt_stat clnt_stat = RPC_TIMEDOUT; /* assume failure */
@@ -309,9 +349,10 @@ pmap_ping(struct sockaddr_in *address)
 
   timeout.tv_sec = 3;
   timeout.tv_usec = 0;
-  address->sin_port = htons(PMAPPORT);
-  client = clntudp_create(address, PMAPPROG, PMAPVERS, timeout, &socket);
+  sin->sin_port = htons(PMAPPORT);
+  client = clntudp_create(sin, PMAPPROG, PMAPVERS, timeout, &socket);
   if (client != (CLIENT *) NULL) {
+    /* Ping the portmapper on a remote system by calling the nullproc */
     clnt_stat = clnt_call(client,
 			  PMAPPROC_NULL,
 			  (XDRPROC_T_TYPE) xdr_void,
@@ -322,9 +363,13 @@ pmap_ping(struct sockaddr_in *address)
     clnt_destroy(client);
   }
   close(socket);
-  address->sin_port = 0;
+  sin->sin_port = 0;
 
-  return clnt_stat;
+  if (clnt_stat == RPC_TIMEDOUT) {
+    plog(XLOG_ERROR, "check_pmap_up: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
+    return 0;
+  }
+  return 1;
 }
 
 
@@ -339,6 +384,7 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
   enum clnt_stat clnt_stat;
   struct timeval tv;
   int sock;
+  char *errstr;
 
   /*
    * If not set or set wrong, then try from NFS_VERS_MAX on down. If
@@ -351,20 +397,12 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
   tv.tv_sec = 3;		/* retry every 3 seconds, but also timeout */
   tv.tv_usec = 0;
 
-  /*
-   * First check if remote portmapper is up (verify if remote host is up).
-   */
-  clnt_stat = pmap_ping(sin);
-  if (clnt_stat == RPC_TIMEDOUT) {
-    plog(XLOG_ERROR, "get_nfs_version: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
-    return 0;
-  }
-
 #ifdef HAVE_FS_NFS3
 try_again:
 #endif /* HAVE_FS_NFS3 */
 
   sock = RPC_ANYSOCK;
+  errstr = NULL;
   if (STREQ(proto, "tcp"))
     clnt = clnttcp_create(sin, NFS_PROGRAM, nfs_version, &sock, 0, 0);
   else if (STREQ(proto, "udp"))
@@ -372,45 +410,47 @@ try_again:
   else
     clnt = NULL;
 
-  if (clnt == NULL) {
+  if (clnt != NULL) {
+    /* Try a couple times to verify the CLIENT handle. */
+    tv.tv_sec = 6;
+    clnt_stat = clnt_call(clnt,
+			  NFSPROC_NULL,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  0,
+			  (XDRPROC_T_TYPE) xdr_void,
+			  0,
+			  tv);
+
+    if (clnt_stat != RPC_SUCCESS)
+      errstr = clnt_sperrno(clnt_stat);
+
+    close(sock);
+    clnt_destroy(clnt);
+  } else {
 #ifdef HAVE_CLNT_SPCREATEERROR
-    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s: %s",
-	 (int) nfs_version, proto, host, clnt_spcreateerror(""));
+    errstr = clnt_spcreateerror("");
 #else /* not HAVE_CLNT_SPCREATEERROR */
-    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s",
-	 (int) nfs_version, proto, host);
+    errstr = "";
 #endif /* not HAVE_CLNT_SPCREATEERROR */
-    return 0;
   }
 
-  /* Try a couple times to verify the CLIENT handle. */
-  tv.tv_sec = 6;
-  clnt_stat = clnt_call(clnt,
-			NFSPROC_NULL,
-			(XDRPROC_T_TYPE) xdr_void,
-			0,
-			(XDRPROC_T_TYPE) xdr_void,
-			0,
-			tv);
-  close(sock);
-  clnt_destroy(clnt);
-  if (clnt_stat != RPC_SUCCESS) {
+  if (errstr) {
+    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s%s",
+ 	 (int) nfs_version, proto, host, errstr);
     if (again) {
 #ifdef HAVE_FS_NFS3
       if (nfs_version == NFS_VERSION3) {
-	plog(XLOG_INFO, "get_nfs_version trying a lower version");
 	nfs_version = NFS_VERSION;
 	again = 0;
+	plog(XLOG_INFO, "get_nfs_version trying a lower version: NFS(%d,%s)", (int) nfs_version, proto);
       }
       goto try_again;
 #endif /* HAVE_FS_NFS3 */
     }
-    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s",
- 	 (int) nfs_version, proto, host);
     return 0;
   }
 
-  plog(XLOG_INFO, "get_nfs_version: returning (%d,%s) on host %s",
+  plog(XLOG_INFO, "get_nfs_version: returning NFS(%d,%s) on host %s",
        (int) nfs_version, proto, host);
   return nfs_version;
 }
@@ -424,6 +464,7 @@ int
 register_autofs_service(char *autofs_conftype, void (*autofs_dispatch)(struct svc_req *rqstp, SVCXPRT *transp))
 {
   int autofs_socket;
+  SVCXPRT *autofs_xprt = NULL;
 
   autofs_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
