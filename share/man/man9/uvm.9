@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.22 2001/05/12 17:10:05 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.23 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -152,7 +152,7 @@ and
 is
 .Dv UVM_UNKNOWN_OFFSET ,
 .Fn uvm_map
-does not use the machine-dependant
+does not use the machine-dependent
 .Dv PMAP_PREFER
 function.  If
 .Fa uoffset
@@ -167,7 +167,7 @@ and
 is
 .Dv UVM_UNKNOWN_OFFSET ,
 .Fn uvm_map
-finds the offset based upon the virtual address, passed as 
+finds the offset based upon the virtual address, passed as
 .Fa startp .
 If
 .Fa uoffset
@@ -279,7 +279,7 @@ or
 .Dv FALSE .
 .Pp
 .Fn uvm_map_protect
-changes the protection 
+changes the protection
 .Fa start
 to
 .Fa end
@@ -307,7 +307,7 @@ allocates and returns a new address space, with ranges from
 to
 .Fa max ,
 setting the pageability of the address space to
-.Fa pageable.
+.Fa pageable .
 .Pp
 .Fn uvmspace_exec
 either reuses the address space of process
@@ -543,7 +543,7 @@ at a new offset
 .Fa newoff .
 .Pp
 .Fn uvm_pagefree
-free's the physical page
+frees the physical page
 .Fa pg .
 .Pp
 .Fn uvm_pglistalloc
@@ -592,7 +592,7 @@ The addresses of the submap can be specified exactly by setting the
 .Fa fixed
 argument to non-zero, which causes the
 .Fa min
-argument specify the beginning of the address in thes submap.  If
+argument specify the beginning of the address in the submap.  If
 .Fa fixed
 is zero, any address of size
 .Fa size
@@ -611,7 +611,7 @@ and
 .Fn uvm_km_free_wakeup
 free
 .Fa size
-bytes of memory in the kernal map, starting at address
+bytes of memory in the kernel map, starting at address
 .Fa addr .
 .Fn uvm_km_free_wakeup
 calls
@@ -676,7 +676,7 @@ swaps in the named process.
 .Pp
 The
 .Fn uao_create ,
-.Fn uao_detach 
+.Fn uao_detach
 and
 .Fn uao_reference
 functions operate on anonymous memory objects, such as those used to support
@@ -824,13 +824,13 @@ int pdwoke;     /* number of times daemon woke up */
 int pdrevs;     /* number of times daemon rev'd clock hand */
 int pdswout;    /* number of times daemon called for swapout */
 int pdfreed;    /* number of pages daemon freed since boot */
-int pdscans;    /* number of pages daemon scaned since boot */
+int pdscans;    /* number of pages daemon scanned since boot */
 int pdanscan;   /* number of anonymous pages scanned by daemon */
 int pdobscan;   /* number of object pages scanned by daemon */
 int pdreact;    /* number of pages daemon reactivated since boot */
 int pdbusy;     /* number of times daemon found a busy page */
 int pdpageouts; /* number of times daemon started a pageout */
-int pdpending;  /* number of times daemon got a pending pagout */
+int pdpending;  /* number of times daemon got a pending pageout */
 int pddeact;    /* number of pages daemon deactivates */
 .Ed
 .Pp
@@ -867,7 +867,7 @@ and core header description in
 is only available if the kernel has been compiled with options
 .Dv KGDB .
 .Pp
-All structure and types whose names begin with 
+All structure and types whose names begin with
 .Dq vm_
 will be renamed to
 .Dq uvm_ .

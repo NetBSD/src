@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.12 2001/04/21 08:22:44 jdolecek Exp $
+.\"	$NetBSD: disk.9,v 1.13 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nm disk ,
 .Nm disk_init ,
 .Nm disk_attach ,
-.Nm disk_detatch ,
+.Nm disk_detach ,
 .Nm disk_busy ,
 .Nm disk_unbusy ,
 .Nm disk_find ,
@@ -126,7 +126,7 @@ before autoconfiguration.
 .It Fn disk_attach
 Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
-timestamp, insert the disk into the disklist, and intrement the
+timestamp, insert the disk into the disklist, and increment the
 system disk count.
 .It Fn disk_detach
 Detach a disk; free storage for the disklabel, remove the disk
@@ -177,7 +177,7 @@ Each device in the system uses a
 .Dq softc
 structure which contains autoconfiguration and state information for that
 device.  In the case of disks, the softc should also contain one instance
-of the disk stucture, eg:
+of the disk structure, e.g.:
 .Bd -literal
 struct foo_softc {
 	struct	device sc_dev;		/* generic device information */
@@ -227,7 +227,7 @@ above is the disk's
 .Dq driver
 switch.  This switch currently includes a pointer to the disk's
 .Dq strategy
-routine.  This switch needs to have global scope and sould be initialized
+routine.  This switch needs to have global scope and should be initialized
 as follows:
 .Bd -literal
 void	foostrategy __P((struct buf *));
@@ -243,7 +243,7 @@ and
 routines.  The
 .Fn disk_busy
 routine should be called immediately before a command to the disk is
-sent, eg:
+sent, e.g.:
 .Bd -literal
 void
 foostart(sc)

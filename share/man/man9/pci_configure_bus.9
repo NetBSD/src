@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.1 2001/02/10 02:50:37 briggs Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.2 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .Fc
 .Sh DESCRIPTION
 .Pp
-The 
+The
 .Fn pci_configure_bus
 function configures a PCI bus for use.  This involves:
 .Bl -bullet
@@ -72,14 +72,14 @@ should be called prior to the auto-configuration of the bus.
 .Pp
 The
 .Fa pc
-argument is a machine-dependant tag used to specify the PCI chipset to the
+argument is a machine-dependent tag used to specify the PCI chipset to the
 system.  This should be the same value used with
 .Fn pci_make_tag .
 The extent arguments
 define memory extents from which the address space for the cards will be
 taken.  These addresses should be in the PCI address space.  The
 .Fa ioext
-extent is for PCI I/O accesses.  The 
+extent is for PCI I/O accesses.  The
 .Fa memext
 extent is for PCI memory accesses that might have side effects.  I.e.,
 that can not be cached.  The
@@ -124,7 +124,8 @@ See chapter 9 of the
 for more information on swizzling (also known as interrupt routing).
 .Sh EXAMPLES
 The
-.Fn pci_conf_interrupt function in the sandpoint implementation looks like:
+.Fn pci_conf_interrupt
+function in the sandpoint implementation looks like:
 .Pp
 .Bd -literal -compact
 void

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.4 2001/04/09 19:12:44 wiz Exp $
+.\"	$NetBSD: ucom.9,v 1.5 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,11 +50,11 @@ It basically takes two bulk pipes, input and output, and makes
 a tty out of them.
 This is useful for a number of device types, e.g., serial ports
 (see
-.Xr uftdi 4 ),
+.Xr uftdi 4 ) ,
 modems (see
-.Xr umodem 4 ),
+.Xr umodem 4 ) ,
 and devices that traditionally look like a tty (see
-.Xr uvisor 4 ).
+.Xr uvisor 4 ) .
 .Pp
 Communication between the real driver and the
 .Nm
@@ -81,7 +81,7 @@ struct ucom_attach_args {
 
 .Bl -tag -width indent
 .It Dv int portno
-identifies the port if the devices should havce more than one
+identifies the port if the devices should have more than one
 .Nm
 attached.  Use the value
 .Dv UCOM_UNK_PORTNO
