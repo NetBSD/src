@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.8 1994/01/07 16:05:42 mycroft Exp $";
+static char rcsid[] = "$Id: su.c,v 1.9 1994/02/12 07:06:07 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -195,14 +195,14 @@ main(argc, argv)
 		iscsh = NO;
 	}
 
+	if (p = rindex(shell, '/'))
+		avshell = p+1;
+	else
+		avshell = shell;
+
 	/* if we're forking a csh, we want to slightly muck the args */
-	if (iscsh == UNSET) {
-		if (p = rindex(shell, '/'))
-			avshell = p+1;
-		else
-			avshell = shell;
+	if (iscsh == UNSET)
 		iscsh = strcmp(avshell, "csh") ? NO : YES;
-	}
 
 	/* set permissions */
 	if (setgid(pwd->pw_gid) < 0) {
