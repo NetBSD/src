@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.66 2000/02/20 14:45:05 jdolecek Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.67 2000/03/13 23:52:37 soren Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -956,7 +956,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	dev->langid = USBD_NOLANG;
 	dev->cookie.cookie = ++usb_cookie_no;
 
-	/* Establish the the default pipe. */
+	/* Establish the default pipe. */
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 			      &dev->default_pipe);
 	if (err) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.32 2000/03/13 23:52:27 soren Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -645,7 +645,7 @@ initarm(bootconf)
 
 	/*
 	 * Since we have mapped the VRAM up into kernel space we must
-	 * now update the the bootconfig and display structures by hand.
+	 * now update the bootconfig and display structures by hand.
 	 */
 	if (bootconfig.vram[0].pages != 0) {
 		bootconfig.display_start = VMEM_VBASE;
@@ -730,7 +730,7 @@ initarm(bootconf)
 	/*
 	 * Right We have the bottom meg of memory mapped to 0x00000000
 	 * so was can get at it. The kernel will ocupy the start of it.
-	 * After the kernel/args we allocate some the the fixed page tables
+	 * After the kernel/args we allocate some of the fixed page tables
 	 * we need to get the system going.
 	 * We allocate one page directory and 8 page tables and store the
 	 * physical addresses in the kernel_pt_table array.	

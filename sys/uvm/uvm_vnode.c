@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.28 2000/01/28 08:02:48 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.29 2000/03/13 23:52:42 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -555,7 +555,7 @@ uvm_vnp_terminate(vp)
 
 	/*
 	 * must be a valid uvn that is not already dying (because XLOCK
-	 * protects us from that).   the uvn can't in the the ALOCK state
+	 * protects us from that).   the uvn can't in the ALOCK state
 	 * because it is valid, and uvn's that are in the ALOCK state haven't
 	 * been marked valid yet.
 	 */

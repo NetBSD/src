@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.33 2000/02/15 09:00:07 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.34 2000/03/13 23:52:28 soren Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -722,7 +722,7 @@ struct fd_softc	*sc;
 
 /*
  * The current transaction is finished (for good or bad). Let go of
- * the the dma-resources. Call biodone() to finish the transaction.
+ * the dma-resources. Call biodone() to finish the transaction.
  * Find a new transaction to work on.
  */
 static void

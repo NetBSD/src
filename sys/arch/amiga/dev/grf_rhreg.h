@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.8 1997/07/29 17:42:09 veego Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.9 2000/03/13 23:52:26 soren Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -178,7 +178,7 @@ struct MonDef {
 
 /*
  * This routine initialises the Retina Z3 hardware, opens a
- * text- or gfx-mode screen, depending on the the value of
+ * text- or gfx-mode screen, depending on the value of
  * MonDef.DEP, and sets the cursor to position 0. 
  * It takes as arguments a pointer to the hardware-base
  * address as it is denoted in the DevConf structure

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.40 2000/01/19 00:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.41 2000/03/13 23:52:41 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1281,7 +1281,7 @@ lfs_writeseg(fs, sp)
 	 * written.  To avoid this problem, we allocate memory in chunks, copy
 	 * the buffers into the chunk and write the chunk.  CHUNKSIZE is the
 	 * largest size I/O devices can handle.
-	 * When the data is copied to the chunk, turn off the the B_LOCKED bit
+	 * When the data is copied to the chunk, turn off the B_LOCKED bit
 	 * and brelse the buffer (which will move them to the LRU list).  Add
 	 * the B_CALL flag to the buffer header so we can count I/O's for the
 	 * checkpoints and so we can release the allocated memory.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.10 1998/10/01 20:05:11 thorpej Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.11 2000/03/13 23:52:34 soren Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -41,7 +41,7 @@ enum ie_hardware {
  * the board ignores the chip's top 4 address lines).
  * For example:
  *   if the register is @ 0xffe88000, then the top 12 bits are 0xffe00000.
- *   to get the 4 bits from the the status word just do status & IEVME_HADDR.
+ *   to get the 4 bits from the status word just do status & IEVME_HADDR.
  *   suppose the value is "4".   Then just shift it left 16 bits to get
  *   it into bits 17-20 (e.g. 0x40000).    Then or it to get the
  *   address of RAM (in our example: 0xffe40000).   see the attach routine!

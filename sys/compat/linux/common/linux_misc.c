@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.64 2000/02/17 12:34:26 abs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.65 2000/03/13 23:52:35 soren Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -364,7 +364,7 @@ linux_sys_uname(p, v, retval)
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
-	/* This part taken from the the uname() in libc */
+	/* This part taken from the uname() in libc */
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp) {
 		if (*cp == '\n' || *cp == '\t') {

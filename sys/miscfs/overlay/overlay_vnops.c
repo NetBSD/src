@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.1 2000/01/20 19:06:15 wrstuden Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.2 2000/03/13 23:52:41 soren Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the the name of the National Aeronautics & Space Administration
+ * 3. Neither the name of the National Aeronautics & Space Administration
  *    nor the names of its contributors may be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.1 2000/01/20 19:06:15 wrstuden Exp $
+ *	$Id: overlay_vnops.c,v 1.2 2000/03/13 23:52:41 soren Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */

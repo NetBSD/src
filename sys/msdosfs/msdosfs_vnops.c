@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.91 2000/02/01 21:33:57 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.92 2000/03/13 23:52:42 soren Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1481,7 +1481,7 @@ msdosfs_readdir(v)
 
 	/*
 	 * msdosfs_readdir() won't operate properly on regular files since
-	 * it does i/o only with the the filesystem vnode, and hence can
+	 * it does i/o only with the filesystem vnode, and hence can
 	 * retrieve the wrong block from the buffer cache for a plain file.
 	 * So, fail attempts to readdir() on a plain file.
 	 */

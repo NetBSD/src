@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.8 1997/07/29 17:42:12 veego Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.9 2000/03/13 23:52:27 soren Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -186,7 +186,7 @@ extern unsigned char NCRStdPalette[];
 	unsigned char * InitNCR(volatile void * BoardAdress, struct MonDef * md = &MON_640_512_60);
 
    This routine initialises the Retina hardware, opens a
-   text- or gfx-mode screen, depending on the the value of MonDef.DEP,
+   text- or gfx-mode screen, depending on the value of MonDef.DEP,
    and sets the cursor to position 0. 
    It takes as arguments a pointer to the hardware-base
    address as it is denoted in the DevConf structure

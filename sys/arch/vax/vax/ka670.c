@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.3 1999/08/08 11:47:54 ragge Exp $	*/
+/*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -137,7 +137,7 @@ ka670_mchk(addr)
 
 	/*
 	 * If either the Restart flag is set or the First-Part-Done flag
-	 * is set, and the TRAP2 (double error) bit is not set, the the
+	 * is set, and the TRAP2 (double error) bit is not set, then the
 	 * error is recoverable.
 	 */
 	if (mfpr(PR_PCSTS) & KA670_PCS_TRAP2) {

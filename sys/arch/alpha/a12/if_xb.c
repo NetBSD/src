@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.1 1998/09/23 21:14:58 ross Exp $ */
+/* $NetBSD: if_xb.c,v 1.2 2000/03/13 23:52:25 soren Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.1 1998/09/23 21:14:58 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.2 2000/03/13 23:52:25 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.1 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.2 $", xbi.if_mtu);
 }
 
 static void
@@ -333,7 +333,7 @@ int	s = 0;	/* XXX gcc */
 			DIE();
 		/*
 		 * The extra word when frames are of an aligned size is due
-		 * to the way the the output routines work. After the mbuf is
+		 * to the way the output routines work. After the mbuf is
 		 * sent xb_put_blk(NULL) is called. If there is a leftover
 		 * 127-bit-or-less fragment then the close word rides on it,
 		 * otherwise it gets an entire 128 bits of zeroes.

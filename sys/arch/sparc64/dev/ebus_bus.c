@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_bus.c,v 1.4 1999/11/13 00:32:16 thorpej Exp $	*/
+/*	$NetBSD: ebus_bus.c,v 1.5 2000/03/13 23:52:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -902,7 +902,7 @@ ebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		cbit |= PMAP_NC;
 	/*
 	 * Now take this and map it into the CPU since it should already
-	 * be in the the IOMMU.
+	 * be in the IOMMU.
 	 */
 	*kvap = (caddr_t)va = segs[0].ds_addr;
 	mlist = segs[0]._ds_mlist;

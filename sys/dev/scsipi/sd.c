@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.157 2000/02/07 20:16:57 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.158 2000/03/13 23:52:37 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -279,7 +279,7 @@ sddetach(self, flags)
 
 	splx(s);
 
-	/* Nuke the the vnodes for any open instances */
+	/* Nuke the vnodes for any open instances */
 	mn = SDMINOR(self->dv_unit, 0);
 	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
 	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.38 1999/08/13 11:40:46 bad Exp $	*/
+/*	$NetBSD: hil.c,v 1.39 2000/03/13 23:52:28 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1488,7 +1488,7 @@ hilreset(hilp)
 	db = LPC_RECONF | LPC_KBDCOOK | LPC_NOERROR | LPC_AUTOPOLL;
 	send_hil_cmd(hildevice, HIL_WRITELPCTRL, &db, 1, NULL);
 	/*
-	 * Delay one second for reconfiguration and then read the the
+	 * Delay one second for reconfiguration and then read the
 	 * data to clear the interrupt (if the loop reconfigured).
 	 */
 	DELAY(1000000);

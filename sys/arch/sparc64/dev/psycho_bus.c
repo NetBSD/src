@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.5 1999/11/24 01:53:38 mrg Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.6 2000/03/13 23:52:34 soren Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -995,7 +995,7 @@ psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		cbit |= PMAP_NC;
 	/*
 	 * Now take this and map it into the CPU since it should already
-	 * be in the the IOMMU.
+	 * be in the IOMMU.
 	 */
 	*kvap = (caddr_t)va = segs[0].ds_addr;
 	mlist = segs[0]._ds_mlist;

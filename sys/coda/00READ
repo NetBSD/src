@@ -56,7 +56,7 @@ to the cdev switch.
 
 	3. src/etc/xxx/MAKEDEV
 
-Something like the the code below should work;  The chr device
+Something like the code below should work;  The chr device
 that is appropriate for your platform should be used instead of 60.
 cfs0)
 	name=cfs; unit=${i#cfs};  chr=60
