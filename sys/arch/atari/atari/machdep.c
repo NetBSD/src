@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2000/05/26 21:19:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2000/06/05 23:44:57 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -557,7 +557,7 @@ dumpsys()
 	int	nbytes;		/* Bytes left to dump		*/
 	int	i, n, error;
 
-	error = msgbufenabled = segnum = 0;
+	error = segnum = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
