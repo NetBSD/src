@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.8 1994/05/14 22:12:06 cgd Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.9 1994/05/25 19:40:40 pk Exp $";
 #endif
 
 /*
@@ -42,6 +42,9 @@ static char rcsid[] = "$Id: rstat_proc.c,v 1.8 1994/05/14 22:12:06 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <nlist.h>
@@ -66,6 +69,11 @@ static char rcsid[] = "$Id: rstat_proc.c,v 1.8 1994/05/14 22:12:06 cgd Exp $";
 #undef if_oerrors
 #undef if_collisions
 #include <rpcsvc/rstat.h>
+
+#ifdef BSD
+#define BSD_CPUSTATES	5	/* Use protocol's idea of CPU states */
+int	cp_xlat[CPUSTATES] = { CP_USER, CP_NICE, CP_SYS, CP_IDLE };
+#endif
 
 struct nlist nl[] = {
 #define	X_CPTIME	0
@@ -92,6 +100,7 @@ int stats_service();
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
 extern int closedown;
+kvm_t *kfd;
 
 union {
     struct stats s1;
@@ -114,7 +123,8 @@ extern int errno;
  */
 int kmem;
 
-kvm_read(off, addr, size)
+kvm_read(kfd, off, addr, size)
+	void *kfd;
         unsigned long off, size;
         char *addr;
 {
@@ -124,7 +134,8 @@ kvm_read(off, addr, size)
 	return(read(kmem, addr, size));
 }
 
-kvm_nlist(nl)
+kvm_nlist(kfd, nl)
+	void *kfd;
         struct nlist *nl;
 {
 	int n = nlist("/vmunix", nl);
@@ -205,6 +216,9 @@ updatestat()
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
+#ifdef BSD
+	int cp_time[BSD_CPUSTATES];
+#endif
 
 #ifdef DEBUG
 	fprintf(stderr, "entering updatestat\n");
@@ -222,17 +236,32 @@ updatestat()
 	}
 	sincelastreq++;
 
-	if (kvm_read((long)nl[X_HZ].n_value, (char *)&hz, sizeof hz) != sizeof hz) {
+	if (kvm_read(kfd, (long)nl[X_HZ].n_value, (char *)&hz, sizeof hz) !=
+	    sizeof hz) {
 		syslog(LOG_ERR, "rstat: can't read hz from kmem\n");
 		exit(1);
 	}
- 	if (kvm_read((long)nl[X_CPTIME].n_value, (char *)stats_all.s1.cp_time, sizeof (stats_all.s1.cp_time))
+#ifdef BSD
+ 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value, (char *)cp_time,
+		     sizeof (cp_time))
+	    != sizeof (cp_time)) {
+		syslog(LOG_ERR, "rstat: can't read cp_time from kmem\n");
+		exit(1);
+	}
+	for (i = 0; i < CPUSTATES; i++)
+		stats_all.s1.cp_time[i] = cp_time[cp_xlat[i]];
+#else
+ 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
+		     (char *)stats_all.s1.cp_time,
+		     sizeof (stats_all.s1.cp_time))
 	    != sizeof (stats_all.s1.cp_time)) {
 		syslog(LOG_ERR, "rstat: can't read cp_time from kmem\n");
 		exit(1);
 	}
+#endif
 #ifdef vax
- 	if (kvm_read((long)nl[X_AVENRUN].n_value, (char *)avrun, sizeof (avrun)) != sizeof (avrun)) {
+ 	if (kvm_read(kfd, (long)nl[X_AVENRUN].n_value, (char *)avrun,
+		     sizeof (avrun)) != sizeof (avrun)) {
 		syslog(LOG_ERR, "rstat: can't read avenrun from kmem\n");
 		exit(1);
 	}
@@ -243,7 +272,8 @@ updatestat()
 	stats_all.s2.avenrun[0] = avrun[0] * FSCALE;
 	stats_all.s2.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s2.avenrun[2] = avrun[2] * FSCALE;
- 	if (kvm_read((long)nl[X_BOOTTIME].n_value, (char *)&btm, sizeof (stats_all.s2.boottime))
+ 	if (kvm_read(kfd, (long)nl[X_BOOTTIME].n_value,
+		     (char *)&btm, sizeof (stats_all.s2.boottime))
 	    != sizeof (stats_all.s2.boottime)) {
 		syslog(LOG_ERR, "rstat: can't read boottime from kmem\n");
 		exit(1);
@@ -257,7 +287,8 @@ updatestat()
 	    stats_all.s1.cp_time[1], stats_all.s1.cp_time[2], stats_all.s1.cp_time[3]);
 #endif
 
- 	if (kvm_read((long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) != sizeof cnt) {
+ 	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
+	    sizeof cnt) {
 		syslog(LOG_ERR, "rstat: can't read cnt from kmem\n");
 		exit(1);
 	}
@@ -271,7 +302,9 @@ updatestat()
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
 	stats_all.s2.v_swtch = cnt.v_swtch;
 
- 	if (kvm_read((long)nl[X_DKXFER].n_value, (char *)stats_all.s1.dk_xfer, sizeof (stats_all.s1.dk_xfer))
+ 	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
+		     (char *)stats_all.s1.dk_xfer,
+		     sizeof (stats_all.s1.dk_xfer))
 	    != sizeof (stats_all.s1.dk_xfer)) {
 		syslog(LOG_ERR, "rstat: can't read dk_xfer from kmem\n");
 		exit(1);
@@ -283,7 +316,8 @@ updatestat()
 	stats_all.s1.if_oerrors = 0;
 	stats_all.s1.if_collisions = 0;
 	for (off = firstifnet, i = 0; off && i < numintfs; i++) {
-		if (kvm_read(off, (char *)&ifnet, sizeof ifnet) != sizeof ifnet) {
+		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
+		    sizeof ifnet) {
 			syslog(LOG_ERR, "rstat: can't read ifnet from kmem\n");
 			exit(1);
 		}
@@ -303,13 +337,20 @@ setup()
 {
 	struct ifnet ifnet;
 	int off;
+	char errbuf[_POSIX2_LINE_MAX];
 
-	if (kvm_nlist(nl) != 0) {
+	kfd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	if (kfd == NULL) {
+		syslog(LOG_ERR, "rstat: %s", errbuf);
+		exit (1);
+	}
+
+	if (kvm_nlist(kfd, nl) != 0) {
 		syslog(LOG_ERR, "rstatd: Can't get namelist.");
 		exit (1);
         }
 
-	if (kvm_read((long)nl[X_IFNET].n_value, &firstifnet,
+	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &firstifnet,
                      sizeof(int)) != sizeof(int))  {
 		syslog(LOG_ERR, "rstat: can't read firstifnet from kmem\n");
 		exit(1);
@@ -317,7 +358,8 @@ setup()
 
 	numintfs = 0;
 	for (off = firstifnet; off;) {
-		if (kvm_read(off, (char *)&ifnet, sizeof ifnet) != sizeof ifnet) {
+		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
+		    sizeof ifnet) {
 			syslog(LOG_ERR, "rstat: can't read ifnet from kmem\n");
 			exit(1);
 		}
@@ -329,17 +371,19 @@ setup()
 /*
  * returns true if have a disk
  */
+int
 havedisk()
 {
 	int i, cnt;
 	long  xfer[DK_NDRIVE];
 
-	if (kvm_nlist(nl) != 0) {
+	if (kvm_nlist(kfd, nl) != 0) {
 		syslog(LOG_ERR, "rstatd: Can't get namelist.");
 		exit (1);
         }
 
-	if (kvm_read((long)nl[X_DKXFER].n_value, (char *)xfer, sizeof xfer)!= sizeof xfer) {
+	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
+		     (char *)xfer, sizeof xfer) != sizeof xfer) {
 		syslog(LOG_ERR, "rstat: can't read kmem\n");
 		exit(1);
 	}
