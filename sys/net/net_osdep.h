@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.5 2001/07/07 14:45:46 itojun Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.6 2001/07/07 18:26:26 perry Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -164,7 +164,7 @@
  *
  * - ovbcopy()
  *	in NetBSD 1.4 or later, ovbcopy() is not supplied in the kernel.
- *	we have updated sys/systm.h to include declaration.
+ *	we provide a version here as a macro for memmove.
  *
  * - splnet()
  *	NetBSD 1.4 or later requires splsoftnet().
@@ -257,6 +257,10 @@ extern char *if_name __P((struct ifnet *));
 #define ifa_list	ifa_link
 #define if_addrlist	if_addrhead
 #define if_list		if_link
+#endif
+
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 104000000
+#define ovbcopy(src, dst, len)	memmove((dst), (src), (len))
 #endif
 
 #if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
