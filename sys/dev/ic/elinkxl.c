@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.34.2.6 2002/01/01 12:07:38 he Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.34.2.7 2002/02/13 22:15:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ ex_config(sc)
 	/* Add a suspend hook to make sure we come back up after a resume. */
 	sc->sc_powerhook = powerhook_establish(ex_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("s: WARNING: unable to establish power hook\n",
+		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
 	/* The attach is successful. */
