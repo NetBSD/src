@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.50.2.1 2000/11/20 18:08:57 bouyer Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.50.2.2 2000/12/13 15:50:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1260,10 +1260,10 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);			
 		}
 	}
+	p = curproc;
 	if (CLKF_USERMODE(frame)) {
-		p = curproc;
 		if (p->p_flag & P_PROFIL)
-			addupc_intr(p, CLKF_PC(frame), 1);
+			addupc_intr(p, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*
@@ -1289,6 +1289,10 @@ statclock(struct clockframe *frame)
 			}
 		}
 #endif
+#ifdef PROC_PC
+		if (p && p->p_flag & P_PROFIL)
+			addupc_intr(p, PROC_PC(p));
+#endif
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*
@@ -1303,7 +1307,6 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		p = curproc;
 		if (CLKF_INTR(frame)) {
 			if (p != NULL)
 				p->p_iticks++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.6 2000/12/08 09:12:24 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.7 2000/12/13 15:50:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -574,6 +574,8 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
+	int selatn3 = 1;
+	int selandstop = 0;
 	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x,tag:%x,%x)] ",
@@ -603,6 +605,18 @@ ncr53c9x_select(sc, ecb)
 	 */
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
+
+	/* 
+	 * Check to see if we can use SELATN3.
+	 */
+	switch (sc->sc_rev) {
+	case NCR_VARIANT_ESP100:
+		/* Don't have NCRCMD_SELATN3 */
+		selatn3 = 0;
+		break;
+	default:	
+		break;
+	}
 
 	if ((ecb->flags & ECB_SENSE) != 0) {
 		/*
@@ -643,6 +657,7 @@ ncr53c9x_select(sc, ecb)
 		return;
 	}
 
+	if (tiflags & T_NEGOTIATE) selandstop = 1;
 	if (ecb->tag[0]) {
 		/* We'll use tags */
 		ecb->cmd.msg[0] = MSG_IDENTIFY(lun, 1);
@@ -650,6 +665,9 @@ ncr53c9x_select(sc, ecb)
 		ecb->cmd.msg[2] = ecb->tag[1];
 		cmd = (u_char *)&ecb->cmd.msg[0];
 		clen = ecb->clen + 3;
+
+		if (!selatn3)
+			selandstop = 1;
 	} else {
 		ecb->cmd.msg[2] = 
 			MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
@@ -657,7 +675,7 @@ ncr53c9x_select(sc, ecb)
 		clen = ecb->clen + 1;
 	}
 
-	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
+	if (ncr53c9x_dmaselect && !selandstop) {
 
 		/* setup DMA transfer for command */
 		dmasize = clen;
@@ -691,7 +709,7 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
 	clen --;
 
-	if (ti->flags & T_NEGOTIATE) {
+	if (selandstop) {
 		/* Arbitrate, select and stop after IDENTIFY message */
 		NCRCMD(sc, NCRCMD_SELATNS);
 		return;
@@ -2258,7 +2276,8 @@ printf("<<RESELECT CONT'd>>");
 				NCRCMD(sc, NCRCMD_RSTATN);
 				break;
 			case 1:
-				if ((ti->flags & T_NEGOTIATE) == 0) {
+				if ((ti->flags & T_NEGOTIATE) == 0 && 
+				    ecb->tag[0] == 0) {
 					printf("%s: step 1 & !NEG\n",
 						sc->sc_dev.dv_xname);
 					goto reset;
@@ -2268,14 +2287,19 @@ printf("<<RESELECT CONT'd>>");
 						sc->sc_dev.dv_xname);
 					goto reset;
 				}
-				/* Start negotiating */
-				ti->period = sc->sc_minsync;
-				ti->offset = 15;
-				sc->sc_flags |= NCR_SYNCHNEGO;
-				if (ecb->tag[0])
-					ncr53c9x_sched_msgout(SEND_TAG|SEND_SDTR);
-				else
-					ncr53c9x_sched_msgout(SEND_SDTR);
+				if (ti->flags & T_NEGOTIATE) {
+					/* Start negotiating */
+					ti->period = sc->sc_minsync;
+					ti->offset = 15;
+					sc->sc_flags |= NCR_SYNCHNEGO;
+					if (ecb->tag[0])
+						ncr53c9x_sched_msgout(SEND_TAG|SEND_SDTR);
+					else
+						ncr53c9x_sched_msgout(SEND_SDTR);
+				} else {
+					/* Could not do ATN3 so send TAG */
+					ncr53c9x_sched_msgout(SEND_TAG);
+				}
 				sc->sc_prevphase = MESSAGE_OUT_PHASE; /* XXXX */
 				break;
 			case 3:

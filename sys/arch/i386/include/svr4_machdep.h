@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.9 1999/01/21 23:11:45 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.9.8.1 2000/12/13 15:49:30 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -124,5 +124,7 @@ struct svr4_ssd {
 #define	SVR4_TRAP_GETHRTIME	3
 #define	SVR4_TRAP_GETHRVTIME	4
 #define	SVR4_TRAP_CLOCK_SETTIME	5
+
+void svr4_syscall_intern __P((struct proc *));
 
 #endif /* !_I386_SVR4_MACHDEP_H_ */

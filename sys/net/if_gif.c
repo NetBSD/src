@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.2.4.2 2000/11/22 16:05:51 bouyer Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.2.4.3 2000/12/13 15:50:30 bouyer Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -169,11 +169,7 @@ gif_clone_create(ifc, unit)
 	sc->gif_if.if_type   = IFT_GIF;
 	if_attach(&sc->gif_if);
 #if NBPFILTER > 0
-#ifdef HAVE_OLD_BPF
 	bpfattach(&sc->gif_if, DLT_NULL, sizeof(u_int));
-#else
-	bpfattach(&sc->gif_if.if_bpf, &sc->gif_if, DLT_NULL, sizeof(u_int));
-#endif
 #endif
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22.2.2 2000/12/08 09:30:36 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22.2.3 2000/12/13 15:49:36 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -59,6 +59,7 @@
 #include <machine/pmap.h>
 
 #include "fb.h"
+#include "esp_sbus.h"
 
 extern void OF_enter __P((void));
 
@@ -657,7 +658,7 @@ db_dump_pcb(addr, have_addr, count, modif)
 		pcb = (struct pcb*) addr;
 
 	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
-		  pcb, pcb->pcb_sp, pcb->pcb_pc, pcb->pcb_cwp,
+		  pcb, (void*)pcb->pcb_sp, (void*)pcb->pcb_pc, pcb->pcb_cwp,
 		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
@@ -858,13 +859,17 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	uvmhist_dump(uvm_histories.lh_first);
 }
 
+#if NESP_SBUS
 extern void db_esp(db_expr_t, int, db_expr_t, char*);
+#endif
 
 struct db_command sparc_db_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
+#if NESP_SBUS
 	{ "esp",	db_esp,		0,	0 },
+#endif
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15.2.2 2000/12/13 14:49:53 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.2.3 2000/12/13 15:49:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

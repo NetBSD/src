@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.20.2.1 2000/11/20 18:10:00 bouyer Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.20.2.2 2000/12/13 15:50:29 bouyer Exp $       */
 
 /*
  *
@@ -40,6 +40,8 @@
 #include "opt_gateway.h"
 #include "opt_natm.h"
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -60,6 +62,10 @@
 #include <net/if_types.h>
 #include <net/if_atm.h>
 #include <net/ethertypes.h> /* XXX: for ETHERTYPE_* */
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
@@ -369,6 +375,9 @@ atm_ifattach(ifp)
 			break;
 		}
 
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
+#endif
 }
 
 #ifdef ATM_PVCEXT

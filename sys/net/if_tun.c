@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.38.2.1 2000/11/20 18:10:08 bouyer Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.38.2.2 2000/12/13 15:50:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -103,7 +103,7 @@ tunattach(unused)
 		ifp->if_opackets = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&tunctl[i].tun_bpf, ifp, DLT_NULL, sizeof(u_int32_t));
+		bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
 #endif
 	}
 }
@@ -315,7 +315,7 @@ tun_output(ifp, m0, dst, rt)
 	}
 
 #if NBPFILTER > 0
-	if (tp->tun_bpf) {
+	if (ifp->if_bpf) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
@@ -330,7 +330,7 @@ tun_output(ifp, m0, dst, rt)
 		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
 
-		bpf_mtap(tp->tun_bpf, &m);
+		bpf_mtap(ifp->if_bpf, &m);
 	}
 #endif
 
@@ -615,7 +615,7 @@ tunwrite(dev, uio, ioflag)
 	top->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (tp->tun_bpf) {
+	if (ifp->if_bpf) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
@@ -630,7 +630,7 @@ tunwrite(dev, uio, ioflag)
 		m.m_len = sizeof(af);
 		m.m_data = (char *)&af;
 
-		bpf_mtap(tp->tun_bpf, &m);
+		bpf_mtap(ifp->if_bpf, &m);
 	}
 #endif
 

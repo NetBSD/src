@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36.2.3 2000/12/08 09:08:24 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.36.2.4 2000/12/13 15:49:47 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -33,9 +33,9 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_43.h"
-endif
+#endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -51,6 +51,7 @@ endif
 
 #include <compat/linux/linux_syscallargs.h>
 
+%%
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -316,3 +317,34 @@ endif
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
 190	NOARGS		{ int sys___vfork14(void); }
+191	UNIMPL		getrlimit
+192	UNIMPL		mmap2
+193	STD		{ int linux_sys_truncate64(const char *path, \
+				off_t length); }
+194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, off_t length); }
+195	STD		{ int linux_sys_stat64(const char *path, \
+				struct linux_stat64 *sp); }
+196	STD		{ int linux_sys_lstat64(const char *path, \
+				struct linux_stat64 *sp); }
+197	STD		{ int linux_sys_fstat64(int fd, \
+				struct linux_stat64 *sp); }
+198	UNIMPL		lchown
+199	UNIMPL		getuid
+200	UNIMPL		getgid
+201	UNIMPL		geteuid
+202	UNIMPL		getegid
+203	UNIMPL		getreuid
+204	UNIMPL		getregid
+205	UNIMPL		getgroups
+206	UNIMPL		setgroups
+207	UNIMPL		fchown
+208	UNIMPL		setresuid
+209	UNIMPL		getresuid
+210	UNIMPL		setresgid
+211	UNIMPL		getresgid
+212	UNIMPL		chown
+213	UNIMPL		setuid
+214	UNIMPL		setgid
+215	UNIMPL		setfsuid
+216	UNIMPL		setfsgid
+217	UNIMPL		pivot_root

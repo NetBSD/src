@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.53.2.3 2000/12/08 09:08:48 bouyer Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.53.2.4 2000/12/13 15:49:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -82,7 +82,6 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
-#include "opt_execfmt.h"
 #endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
@@ -142,11 +141,6 @@
 
 #include <compat/ultrix/ultrix_flock.h>
 
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
-#include <compat/ultrix/ultrix_exec.h>
-#endif
-
 static int ultrix_to_bsd_flock __P((struct ultrix_flock *, struct flock *));
 static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));
 
@@ -170,6 +164,7 @@ extern const char * const ultrix_syscallnames[];
 
 
 extern char ultrix_sigcode[], ultrix_esigcode[];
+void syscall __P((void));
 
 const struct emul emul_ultrix = {
 	"ultrix",
@@ -182,6 +177,11 @@ const struct emul emul_ultrix = {
 	ultrix_syscallnames,
 	ultrix_sigcode,
 	ultrix_esigcode,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	syscall
 };
 
 #define GSI_PROG_ENV 1
@@ -914,21 +914,3 @@ ultrix_sys_fcntl(p, v, retval)
 
 	return (error);
 }
-
-#ifdef EXEC_ECOFF
-/*
- * cpu_exec_ecoff_probe():
- *	cpu-dependent ECOFF format hook for execve().
- *
- * Do any machine-dependent diddling of the exec package when doing ECOFF.
- *
- */
-int
-ultrix_exec_ecoff_probe(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	/* XXX should add some check here */
-	return 0;
-}
-#endif

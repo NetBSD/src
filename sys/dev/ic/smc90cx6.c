@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.33.2.1 2000/11/20 11:40:56 bouyer Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.33.2.2 2000/12/13 15:50:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -210,9 +210,6 @@ bah_attach_subr(sc)
 
 	arc_ifattach(ifp, linkaddress);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_ARCNET, ARC_HDRLEN);
-#endif
 #ifdef BAHSOFTCOPY
 	sc->sc_rxcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
 	sc->sc_txcookie = softintr_establish(IPL_SOFTNET,

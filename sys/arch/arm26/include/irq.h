@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.2.2.3 2000/12/13 14:49:41 bouyer Exp $ */
+/* $NetBSD: irq.h,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.

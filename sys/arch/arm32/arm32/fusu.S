@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.6.12.2 2000/12/13 14:49:52 bouyer Exp $	*/
+/*	$NetBSD: fusu.S,v 1.6.12.3 2000/12/13 15:49:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.14 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.14.2.1 2000/12/13 15:50:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -81,12 +81,16 @@ struct plimit {
 
 /* add user profiling from AST */
 #define	ADDUPROF(p)							\
-	addupc_task(p,							\
-	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
+	do {								\
+		addupc_task(p,						\
+		    (p)->p_stats->p_prof.pr_addr,			\
+		    (p)->p_stats->p_prof.pr_ticks);			\
+		(p)->p_stats->p_prof.pr_ticks = 0;			\
+	} while (0)
 
 #ifdef _KERNEL
 extern char defcorename[];
-void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
+void	 addupc_intr __P((struct proc *p, u_long pc));
 void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
 	    struct timeval *ip));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.28.2.1 2000/11/20 18:10:01 bouyer Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.28.2.2 2000/12/13 15:50:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,6 +74,8 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -93,6 +95,10 @@
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -874,6 +880,9 @@ fddi_ifattach(ifp)
 	    bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
 	ifp->if_broadcastaddr = fddibroadcastaddr;
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_FDDI, sizeof(struct fddi_header));
+#endif /* NBPFILTER > 0 */
 #else
 	for (ifa = ifp->if_addrlist; ifa != NULL; ifa = ifa->ifa_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&

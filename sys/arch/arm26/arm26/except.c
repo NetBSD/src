@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13.2.3 2000/12/13 14:49:23 bouyer Exp $ */
+/* $NetBSD: except.c,v 1.13.2.4 2000/12/13 15:49:18 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.3 2000/12/13 14:49:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.4 2000/12/13 15:49:18 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52.2.3 2000/12/08 09:13:55 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52.2.4 2000/12/13 15:50:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 
 /* XXX these should eventually move to subr_autoconf.c */
 static int findblkmajor __P((const char *));
-static const char *findblkname __P((int));
+const char *findblkname __P((int));
 static struct device *finddevice __P((const char *));
 static struct device *getdisk __P((char *, int, int, dev_t *, int));
 static struct device *parsedisk __P((char *, int, int, dev_t *));

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2.2.3 2000/12/13 14:49:46 bouyer Exp $ */
+/* $NetBSD: podulebus.c,v 1.2.2.4 2000/12/13 15:49:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.2.2.3 2000/12/13 14:49:46 bouyer Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.2.2.4 2000/12/13 15:49:20 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>

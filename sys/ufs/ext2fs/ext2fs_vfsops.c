@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.28.2.3 2000/12/08 09:20:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.28.2.4 2000/12/13 15:50:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -778,10 +778,11 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
-		if (vp->v_type == VNON ||
+		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		     LIST_EMPTY(&vp->v_dirtyblkhd)))
+		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		     vp->v_uvm.u_obj.uo_npages == 0))
 		{   
 			simple_unlock(&vp->v_interlock);
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.37.2.2 2000/12/08 09:13:54 bouyer Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.37.2.3 2000/12/13 15:50:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -80,7 +80,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 {
 	struct iovec *iovp;
 	struct proc *p = curproc;
-	int error, done, i, nobuf, s, todo;
+	int error, done, i, nobuf, s;
+	long todo;
 
 	error = 0;
 	flags &= B_READ | B_WRITE | B_ORDERED;
@@ -167,9 +168,10 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
 			if (todo <= 0)
-				panic("todo <= 0; minphys broken");
+				panic("todo(%ld) <= 0; minphys broken", todo);
 			if (todo > MAXPHYS)
-				panic("todo > MAXPHYS; minphys broken");
+				panic("todo(%ld) > MAXPHYS; minphys broken",
+				      todo);
 #endif
 
 			/*

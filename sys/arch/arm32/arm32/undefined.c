@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.16.8.2 2000/12/13 14:49:55 bouyer Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16.8.3 2000/12/13 15:49:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

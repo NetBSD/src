@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.17.2.3 2000/12/08 09:08:42 bouyer Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.17.2.4 2000/12/13 15:49:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -47,12 +47,13 @@ extern struct sysent sunos_sysent[];
 extern const char * const sunos_syscallnames[];
 #endif
 extern char sunos_sigcode[], sunos_esigcode[];
+void syscall __P((void));
 
 struct emul emul_sunos = {
 	"sunos",
 	"/emul/sunos",
+	0,
 	NULL,
-	sunos_sendsig,
 	SUNOS_SYS_syscall,
 	SUNOS_SYS_MAXSYSCALL,
 	sunos_sysent,
@@ -61,10 +62,11 @@ struct emul emul_sunos = {
 #else
 	NULL,
 #endif
+	sunos_sendsig,
 	sunos_sigcode,
 	sunos_esigcode,
 	NULL,
 	NULL,
 	NULL,
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
+	syscall
 };

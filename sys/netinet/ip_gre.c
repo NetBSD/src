@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.8.8.1 2000/11/20 18:10:27 bouyer Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.8.8.2 2000/12/13 15:50:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	m->m_pkthdr.len -= hlen;
 
 #if NBPFILTER > 0
-	if (sc->gre_bpf) {
+	if (sc->sc_if.if_bpf) {
 		struct mbuf m0;
 		u_int32_t af = AF_INET;
 
@@ -220,7 +220,7 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
-		bpf_mtap(sc->gre_bpf, &m0);
+		bpf_mtap(sc->sc_if.if_bpf, &m0);
 		}
 #endif /*NBPFILTER > 0*/
 
@@ -302,7 +302,7 @@ gre_mobile_input(m, va_alist)
 	ip->ip_sum=in_cksum(m,(ip->ip_hl << 2));
 
 #if NBPFILTER > 0
-	if (sc->gre_bpf) {
+	if (sc->sc_if.if_bpf) {
 		struct mbuf m0;
 		u_int af = AF_INET; 
 
@@ -310,7 +310,7 @@ gre_mobile_input(m, va_alist)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
-		bpf_mtap(sc->gre_bpf, &m0);
+		bpf_mtap(sc->sc_if.if_bpf, &m0);
 		}
 #endif /*NBPFILTER > 0*/
 

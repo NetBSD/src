@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.48.2.2 2000/12/08 09:28:18 bouyer Exp $	*/
+/*	$NetBSD: nubus.h,v 1.48.2.3 2000/12/13 15:49:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -127,14 +127,14 @@
 #define  NUBUS_TYPE_68030	0x0004
 #define  NUBUS_TYPE_68040	0x0005
 
-#define NUBUS_CATEGORY_INTBUS	0x000C
-#define  NUBUS_TYPE_SCSI	0x0008
-#define   NUBUS_DRSW_AWGSPDS	0x0006
-#define    NUBUS_DRHW_AWGSPDS	0x0100
-#define   NUBUS_DRSW_PLI	0x0108
-#define    NUBUS_DRHW_PLI	0x0100
-#define   NUBUS_DRSW_FWB	0x010C
-#define    NUBUS_DRHW_FWB	0x0100
+#define NUBUS_CATEGORY_INTBUS		0x000C
+#define  NUBUS_TYPE_SCSI		0x0008
+#define   NUBUS_DRSW_AWGSPDS_SCSI	0x0006
+#define    NUBUS_DRHW_AWGSPDS_SCSI	0x0100
+#define   NUBUS_DRSW_PLI		0x0108
+#define    NUBUS_DRHW_PLI		0x0100
+#define   NUBUS_DRSW_FWB		0x010C
+#define    NUBUS_DRHW_FWB		0x0100
 
 /*
  * This is the same as Apple's Format Block for a card, with the

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.2 2000/12/08 09:08:34 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.3 2000/12/13 15:49:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -100,6 +100,7 @@
 
 /* this is provided by kern/kern_exec.c */
 extern int exec_maxhdrsz;
+extern struct lock exec_lock;
 
 static __inline void netbsd32_from_timeval __P((struct timeval *, struct netbsd32_timeval *));
 static __inline void netbsd32_to_timeval __P((struct netbsd32_timeval *, struct timeval *));
@@ -141,22 +142,38 @@ extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
 #endif
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern __P((struct proc *));
+#else
+void syscall __P((void));
+#endif
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
 	"/emul/netbsd32",
+#ifndef __HAVE_MINIMAL_EMUL
+	0,
 	NULL,
-	netbsd32_sendsig,
 	netbsd32_SYS_syscall,
 	netbsd32_SYS_MAXSYSCALL,
+#endif
 	netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
 	netbsd32_syscallnames,
 #else
 	NULL,
 #endif
+	netbsd32_sendsig,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	NULL,
+	NULL,
+	NULL,
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };
 
 /* converters for structures that we need */
@@ -1808,18 +1825,6 @@ netbsd32_execve(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
-	/*
-	 * figure out the maximum size of an exec header, if necessary.
-	 * XXX should be able to keep LKM code from modifying exec switch
-	 * when we're still using it, but...
-	 */
-	if (exec_maxhdrsz == 0) {
-		for (i = 0; i < nexecs; i++)
-			if (execsw[i].es_check != NULL
-			    && execsw[i].es_hdrsz > exec_maxhdrsz)
-				exec_maxhdrsz = execsw[i].es_hdrsz;
-	}
-
 	/* init the namei data to point the file user's program name */
 	/* XXX cgd 960926: why do this here?  most will be clobbered. */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(&ua, path), p);
@@ -1837,6 +1842,8 @@ netbsd32_execve(p, v, retval)
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
+
+	lockmgr(&exec_lock, LK_SHARED, NULL);
 
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0)
@@ -2142,6 +2149,8 @@ netbsd32_execve(p, v, retval)
 		ktremul(p);
 #endif
 
+	lockmgr(&exec_lock, LK_RELEASE, NULL);
+
 	return (EJUSTRETURN);
 
 bad:
@@ -2160,10 +2169,14 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
+	lockmgr(&exec_lock, LK_RELEASE, NULL);
+
 	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
+	lockmgr(&exec_lock, LK_RELEASE, NULL);
+
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
 	 * get rid of the (new) address space we have created, if any, get rid

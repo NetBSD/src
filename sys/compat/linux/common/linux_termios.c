@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.6.12.1 2000/11/20 18:08:26 bouyer Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.6.12.2 2000/12/13 15:49:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -462,6 +462,7 @@ linux_ioctl_termios(p, uap, retval)
 	int idat;
 	struct sys_ioctl_args ia;
 	int error;
+	char tioclinux;
 
 	fdp = p->p_fd;
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -611,6 +612,29 @@ linux_ioctl_termios(p, uap, retval)
 		if (error)
 			return error;
 		return 0;
+	case LINUX_TIOCLINUX:
+		error = copyin(SCARG(uap, data), &tioclinux, sizeof tioclinux);
+		if (error != 0)
+			return error;
+		switch (tioclinux) {
+		case LINUX_TIOCLINUX_KERNMSG:
+			/*
+			 * XXX needed to not fail for some things. Could
+			 * try to use TIOCCONS, but the char argument
+			 * specifies the VT #, not an fd.
+			 */
+			return 0;
+		case LINUX_TIOCLINUX_COPY:
+		case LINUX_TIOCLINUX_PASTE:
+		case LINUX_TIOCLINUX_UNBLANK:
+		case LINUX_TIOCLINUX_LOADLUT:
+		case LINUX_TIOCLINUX_READSHIFT:
+		case LINUX_TIOCLINUX_READMOUSE:
+		case LINUX_TIOCLINUX_VESABLANK:
+		case LINUX_TIOCLINUX_CURCONS:	/* could use VT_GETACTIVE */
+			return EINVAL;
+		}
+		break;
 	case LINUX_TIOCGWINSZ:
 		SCARG(&ia, com) = TIOCGWINSZ;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.8.2.1 2000/11/20 11:43:30 bouyer Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.8.2.2 2000/12/13 15:50:16 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -49,8 +49,7 @@ struct usbd_quirks {
 #define UQ_BAD_AUDIO	0x0040	/* device claims audio class, but isn't */
 #define UQ_SPUR_BUT_UP	0x0080	/* spurious mouse button up events */
 #define UQ_NO_XU	0x0100	/* audio device has broken extension unit */
-#define UQ_ASSUME_CM_OVER_DATA 0x0200 /* modem device breaks on cm over data */
-#define UQ_POWER_CLAIM	0x0400	/* hub lies about power status */
+#define UQ_POWER_CLAIM	0x0200	/* hub lies about power status */
 };
 
 extern struct usbd_quirks usbd_no_quirk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.23.2.3 2000/12/08 09:08:17 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.23.2.4 2000/12/13 15:49:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -56,6 +56,9 @@ static void ibcs2_e_proc_exec __P((struct proc *, struct exec_package *));
 extern struct sysent ibcs2_sysent[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
+#ifndef __HAVE_SYSCALL_INTERN
+void syscall __P((void));
+#endif
 
 #ifdef IBCS2_DEBUG
 int ibcs2_debug = 1;
@@ -66,22 +69,24 @@ int ibcs2_debug = 0;
 const struct emul emul_ibcs2 = {
 	"ibcs2",
 	"/emul/ibcs2",
-	native_to_ibcs2_errno,
-	ibcs2_sendsig,
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
+	native_to_ibcs2_errno,
+	IBCS2_SYS_syscall,
 	IBCS2_SYS_MAXSYSCALL,
+#endif
 	ibcs2_sysent,
 	ibcs2_syscallnames,
+	ibcs2_sendsig,
 	ibcs2_sigcode,
 	ibcs2_esigcode,
 	ibcs2_e_proc_exec,
 	NULL,
 	NULL,
-	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
-#ifdef IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
-	ibcs2_syscall,
+#ifdef __HAVE_SYSCALL_INTERN
+	ibcs2_syscall_intern,
 #else
-	NULL,
+	syscall,
 #endif
 #
 };

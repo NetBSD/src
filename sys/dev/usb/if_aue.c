@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.48.2.3 2000/11/22 16:05:01 bouyer Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.48.2.4 2000/12/13 15:50:13 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -186,7 +186,8 @@ struct aue_type {
 
 Static struct aue_type aue_devs[] = {
   { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX, 	0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	0 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	1 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	1 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	1 },

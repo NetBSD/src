@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.1.6.3 2000/12/13 14:49:46 bouyer Exp $ */
+/* $NetBSD: unixbp.c,v 1.1.6.4 2000/12/13 15:49:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.3 2000/12/13 14:49:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.4 2000/12/13 15:49:20 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>

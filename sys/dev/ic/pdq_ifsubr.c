@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.25.2.1 2000/11/20 11:40:51 bouyer Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.25.2.2 2000/12/13 15:50:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -574,9 +574,6 @@ pdq_ifattach(
     fddi_ifattach(ifp, (caddr_t)&sc->sc_pdq->pdq_hwaddr);
 #else
     fddi_ifattach(ifp);
-#endif
-#if NBPFILTER > 0
-    PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif
 }
 

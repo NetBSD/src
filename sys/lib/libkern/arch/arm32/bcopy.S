@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 1997/10/12 21:24:01 mark Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1.18.1 2000/12/13 15:50:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 /* bcopy = memcpy/memmove with arguments reversed. */
 
-TWOENTRY(bcopy,ovbcopy)
+ENTRY(bcopy)
 	/* switch the source and destination registers */
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 

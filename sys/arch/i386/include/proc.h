@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10.32.1 2000/11/20 20:09:30 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.10.32.2 2000/12/13 15:49:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,6 +35,8 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
+#include <machine/frame.h>
+
 /*
  * Machine-dependent part of the proc structure for i386.
  */
@@ -42,6 +44,8 @@ struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
+					/* Syscall handling function */
+	void	(*md_syscall) __P((struct trapframe));
 };
 
 /* md_flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.15.2.4 2000/12/13 14:50:22 bouyer Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.15.2.5 2000/12/13 15:49:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.15.2.4 2000/12/13 14:50:22 bouyer Exp $";
+    "$Id: hpcfb.c,v 1.15.2.5 2000/12/13 15:49:23 bouyer Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>

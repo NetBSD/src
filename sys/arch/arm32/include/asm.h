@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12.2.2 2000/12/13 14:50:07 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.12.2.3 2000/12/13 15:49:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

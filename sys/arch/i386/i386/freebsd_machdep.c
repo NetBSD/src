@@ -1,7 +1,7 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.22.12.1 2000/12/08 09:26:35 bouyer Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.22.12.2 2000/12/13 15:49:25 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,44 +34,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*-
- * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
 #if defined(_KERNEL) && !defined(_LKM)
@@ -164,6 +126,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
+		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
 	{
@@ -251,9 +214,12 @@ freebsd_sys_sigreturn(p, v, retval)
 	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
 		set_vflags(p, context.sc_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{

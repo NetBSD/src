@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44.2.2 2000/12/08 09:08:47 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.44.2.3 2000/12/13 15:49:56 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -31,10 +31,10 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ntp.h"
 #include "opt_sysv.h"
-endif
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ endif
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_resource.h>
 #include <compat/svr4/svr4_acl.h>
+
+%%
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19.2.2 2000/12/13 14:50:08 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.2.3 2000/12/13 15:49:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.

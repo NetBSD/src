@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.2.4 2000/12/13 14:50:21 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.2.5 2000/12/13 15:49:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

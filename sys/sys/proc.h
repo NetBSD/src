@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84.2.3 2000/12/08 09:19:43 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.84.2.4 2000/12/13 15:50:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -83,18 +83,21 @@ struct	pgrp {
  */
 struct exec_package;
 struct ps_strings;
-struct trapframe;
 
 struct	emul {
 	char	e_name[8];		/* Symbolic name */
 	const char *e_path;		/* Extra emulation path (NULL if none)*/
+#ifndef __HAVE_MINIMAL_EMUL
+	int	e_flags;		/* Miscellaneous flags */
+					/* Syscall handling function */
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
-	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
+#endif
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames;	/* System call name array */
+	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 
@@ -103,16 +106,15 @@ struct	emul {
 	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
 	void	(*e_proc_exit) __P((struct proc *));
 
-	int	e_flags;		/* Miscellaneous flags */
-					/* Syscall handling function */
-	void	(*e_syscall) __P((struct trapframe *));
-
+#ifdef __HAVE_SYSCALL_INTERN
+	void	(*e_syscall_intern) __P((struct proc *));
+#else
+	void	(*e_syscall) __P((void));
+#endif
 };
 
 #define EMUL_HAS_SYS___syscall	0x001	/* has SYS___syscall */
-#define EMUL_GETPID_PASS_PPID	0x002	/* pass parent pid in getpid() */
-#define EMUL_GETID_PASS_EID	0x003	/* pass also effective id in
-					 * get[ug]id() */
+
 /*
  * Description of a process.
  *

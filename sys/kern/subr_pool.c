@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.30.2.3 2000/12/08 09:13:56 bouyer Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.30.2.4 2000/12/13 15:50:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1377,10 +1377,12 @@ static void
 pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
+	struct pool_cache *pc;
+	struct pool_cache_group *pcg;
 #ifdef DIAGNOSTIC
 	struct pool_item *pi;
 #endif
-	int print_log = 0, print_pagelist = 0;
+	int i, print_log = 0, print_pagelist = 0, print_cache = 0;
 	char c;
 
 	while ((c = *modif++) != '\0') {
@@ -1388,6 +1390,8 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 			print_log = 1;
 		if (c == 'p')
 			print_pagelist = 1;
+		if (c == 'c')
+			print_cache = 1;
 		modif++;
 	}
 
@@ -1443,6 +1447,25 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 		pr_printlog(pp, NULL, pr);
 
  skip_log:
+
+	if (print_cache == 0)
+		goto skip_cache;
+
+	for (pc = TAILQ_FIRST(&pp->pr_cachelist); pc != NULL;
+	     pc = TAILQ_NEXT(pc, pc_poollist)) {
+		(*pr)("\tcache %p: allocfrom %p freeto %p\n", pc,
+		    pc->pc_allocfrom, pc->pc_freeto);
+		(*pr)("\t    hits %lu misses %lu ngroups %lu nitems %lu\n",
+		    pc->pc_hits, pc->pc_misses, pc->pc_ngroups, pc->pc_nitems);
+		for (pcg = TAILQ_FIRST(&pc->pc_grouplist); pcg != NULL;
+		     pcg = TAILQ_NEXT(pcg, pcg_list)) {
+			(*pr)("\t\tgroup %p: avail %d\n", pcg, pcg->pcg_avail);
+			for (i = 0; i < PCG_NOBJECTS; i++)
+				(*pr)("\t\t\t%p\n", pcg->pcg_objects[i]);
+		}
+	}
+
+ skip_cache:
 
 	pr_enter_check(pp, pr);
 }
@@ -1536,6 +1559,13 @@ pool_cache_init(struct pool_cache *pc, struct pool *pp,
 	pc->pc_dtor = dtor;
 	pc->pc_arg  = arg;
 
+	pc->pc_hits   = 0;
+	pc->pc_misses = 0;
+
+	pc->pc_ngroups = 0;
+
+	pc->pc_nitems = 0;
+
 	simple_lock(&pp->pr_slock);
 	TAILQ_INSERT_TAIL(&pp->pr_cachelist, pc, pc_poollist);
 	simple_unlock(&pp->pr_slock);
@@ -1567,6 +1597,7 @@ pcg_get(struct pool_cache_group *pcg)
 	u_int idx;
 
 	KASSERT(pcg->pcg_avail <= PCG_NOBJECTS);
+	KASSERT(pcg->pcg_avail != 0);
 	idx = --pcg->pcg_avail;
 
 	KASSERT(pcg->pcg_objects[idx] != NULL);
@@ -1616,6 +1647,7 @@ pool_cache_get(struct pool_cache *pc, int flags)
 		 * the caller.  We will allocate a group, if necessary,
 		 * when the object is freed back to the cache.
 		 */
+		pc->pc_misses++;
 		simple_unlock(&pc->pc_slock);
 		object = pool_get(pc->pc_pool, flags);
 		if (object != NULL && pc->pc_ctor != NULL) {
@@ -1628,11 +1660,13 @@ pool_cache_get(struct pool_cache *pc, int flags)
 	}
 
  have_group:
+	pc->pc_hits++;
+	pc->pc_nitems--;
 	object = pcg_get(pcg);
 
 	if (pcg->pcg_avail == 0)
 		pc->pc_allocfrom = NULL;
-	
+
 	simple_unlock(&pc->pc_slock);
 
 	return (object);
@@ -1661,18 +1695,19 @@ pool_cache_put(struct pool_cache *pc, void *object)
 
 		/*
 		 * No empty groups to free the object to.  Attempt to
-		 * allocate one.  We don't unlock the cache here, since
-		 * we never block.
+		 * allocate one.
 		 */
+		simple_unlock(&pc->pc_slock);
 		pcg = pool_get(&pcgpool, PR_NOWAIT);
 		if (pcg != NULL) {
 			memset(pcg, 0, sizeof(*pcg));
+			simple_lock(&pc->pc_slock);
+			pc->pc_ngroups++;
 			TAILQ_INSERT_TAIL(&pc->pc_grouplist, pcg, pcg_list);
-			pc->pc_freeto = pcg;
+			if (pc->pc_freeto == NULL)
+				pc->pc_freeto = pcg;
 			goto have_group;
 		}
-
-		simple_unlock(&pc->pc_slock);
 
 		/*
 		 * Unable to allocate a cache group; destruct the object
@@ -1685,6 +1720,7 @@ pool_cache_put(struct pool_cache *pc, void *object)
 	}
 
  have_group:
+	pc->pc_nitems++;
 	pcg_put(pcg, object);
 
 	if (pcg->pcg_avail == PCG_NOBJECTS)
@@ -1710,13 +1746,19 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 	     pcg = npcg) {
 		npcg = TAILQ_NEXT(pcg, pcg_list);
 		while (pcg->pcg_avail != 0) {
+			pc->pc_nitems--;
 			object = pcg_get(pcg);
+			if (pcg->pcg_avail == 0 && pc->pc_allocfrom == pcg)
+				pc->pc_allocfrom = NULL;
 			if (pc->pc_dtor != NULL)
 				(*pc->pc_dtor)(pc->pc_arg, object);
 			(*putit)(pc->pc_pool, object, __FILE__, __LINE__);
 		}
 		if (free_groups) {
+			pc->pc_ngroups--;
 			TAILQ_REMOVE(&pc->pc_grouplist, pcg, pcg_list);
+			if (pc->pc_freeto == pcg)
+				pc->pc_freeto = NULL;
 			pool_put(&pcgpool, pcg);
 		}
 	}
@@ -1746,13 +1788,7 @@ static void
 pool_cache_reclaim(struct pool_cache *pc)
 {
 
-	/*
-	 * We're locking in the opposite order (pool already
-	 * locked in pool_reclaim()), so use a try-lock instead.
-	 */
-
-	if (simple_lock_try(&pc->pc_slock) == 0)
-		return;
+	simple_lock(&pc->pc_slock);
 	pool_cache_do_invalidate(pc, 1, pool_do_put);
 	simple_unlock(&pc->pc_slock);
 }

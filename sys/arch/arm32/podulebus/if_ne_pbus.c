@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.2.12.1 2000/12/13 14:50:16 bouyer Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.2.12.2 2000/12/13 15:49:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

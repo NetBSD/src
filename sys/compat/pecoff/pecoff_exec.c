@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.3.2.4 2000/12/08 09:08:42 bouyer Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.3.2.5 2000/12/13 15:49:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -82,23 +82,39 @@ int pecoff_read_from __P((struct proc *p, struct vnode *vp, int pos,
 
 
 extern char sigcode[], esigcode[];
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern __P((void));
+#else
+void syscall __P((void));
+#endif
 
 #if notyet
 const struct emul emul_pecoff = {
 	"pecoff",
 	"/emul/pecoff",
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
-	sendsig,
+	0,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
+#endif
 	sysent,
 #ifdef SYSCALL_DEBUG
 	syscallnames,
 #else
 	0,
 #endif
+	sendsig,
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: intrnames.S,v 1.1.6.3 2000/12/13 14:49:24 bouyer Exp $ */
+/* $NetBSD: intrnames.S,v 1.1.6.4 2000/12/13 15:49:18 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: intrnames.S,v 1.1.6.3 2000/12/13 14:49:24 bouyer Exp $")
+RCSID("$NetBSD: intrnames.S,v 1.1.6.4 2000/12/13 15:49:18 bouyer Exp $")
 
 	.text
 	.global _C_LABEL(intrnames)

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.52.2.1 2000/11/20 11:43:30 bouyer Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.52.2.2 2000/12/13 15:50:16 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -75,7 +75,8 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status	usbd_set_config(usbd_device_handle, int);
+Static usbd_status usbd_set_config(usbd_device_handle, int);
+Static void usbd_devinfo_vp(usbd_device_handle, char *, char *, int);
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
@@ -209,7 +210,7 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 }
 
 void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
@@ -222,8 +223,13 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
 		return;
 	}
 
-	vendor = usbd_get_string(dev, udd->iManufacturer, v);
-	product = usbd_get_string(dev, udd->iProduct, p);
+	if (usedev) {
+		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		product = usbd_get_string(dev, udd->iProduct, p);
+	} else {
+		vendor = NULL;
+		product = NULL;
+	}
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
 		for(kdp = usb_knowndevs;
@@ -267,7 +273,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp)
 	char product[USB_MAX_STRING_LEN];
 	int bcdDevice, bcdUSB;
 
-	usbd_devinfo_vp(dev, vendor, product);
+	usbd_devinfo_vp(dev, vendor, product, 1);
 	cp += sprintf(cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
@@ -1148,7 +1154,8 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 #endif
 
 void
-usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di)
+usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
+		     int usedev)
 {
 	struct usbd_port *p;
 	int i, err, s;
@@ -1156,7 +1163,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di)
 	di->bus = USBDEVUNIT(dev->bus->bdev);
 	di->addr = dev->address;
 	di->cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->vendor, di->product);
+	usbd_devinfo_vp(dev, di->vendor, di->product, usedev);
 	usbd_printBCD(di->release, UGETW(dev->ddesc.bcdDevice));
 	di->vendorNo = UGETW(dev->ddesc.idVendor);
 	di->productNo = UGETW(dev->ddesc.idProduct);

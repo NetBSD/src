@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 1997/05/19 22:11:19 jtc Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.22.1 2000/12/13 15:50:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,21 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
-#include <sys/exec.h>
 #include <sys/lkm.h>
-#include <sys/file.h>
-#include <sys/errno.h>
 
-struct execsw sunos_lkm_execsw = { sizeof(struct exec), exec_aout_makecmds };
+extern const struct emul emul_sunos;
+
+int compat_sunos_lkmentry __P((struct lkm_table *, int, int));
 
 /*
- * declare the filesystem
+ * declare the emulation
  */
-MOD_EXEC("sunos", -1, &sunos_lkm_execsw);
+MOD_COMPAT("sunos", -1, &emul_sunos);
 
 /*
  * entry point

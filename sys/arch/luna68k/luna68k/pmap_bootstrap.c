@@ -1,5 +1,4 @@
-/* $NetBSD: pmap_bootstrap.c,v 1.2.2.2 2000/11/20 20:10:36 bouyer Exp $ */
-/*	$NetBSD: pmap_bootstrap.c,v 1.2.2.2 2000/11/20 20:10:36 bouyer Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2.2.3 2000/12/13 15:49:31 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -93,7 +92,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -120,8 +119,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
-	 *	lkptpa		last kernel PT page	1 page
-	 *
 	 *	p0upa		proc 0 u-area		UPAGES pages
 	 *
 	 * The KVA corresponding to any of these PAs is:
@@ -144,16 +141,8 @@ pmap_bootstrap(nextpa, firstpa)
 	iiopa = nextpa - iiomapsize * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
-	lkptpa = nextpa;
-	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-
-	/*
-	 * Clear all PTEs to zero
-	 */
-	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nextpa; pte++)
-		*pte = 0;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -169,20 +158,12 @@ pmap_bootstrap(nextpa, firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
-	 * to the last physical page of RAM to give us a region in which
-	 * PA == VA.  We use the first part of this page for enabling
-	 * and disabling mapping.  The last part of this page also contains
-	 * info left by the boot ROM.
-	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
 	 * working.  The 224mb of address space that this allows will most
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
+#if defined(M68040)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		int num;
 
@@ -253,12 +234,13 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entry.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
-	} else {
+	} else
+#endif
+	{
 		/*
 		 * Map the page table pages in both the HW segment table
 		 * and the software Sysptmap.  Note that Sysptmap is also
@@ -278,27 +260,12 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entries in both.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
-		/*
-		 * Initialize the last to point to point to the page
-		 * table page allocated earlier.
-		 */
-		*ste = lkptpa | SG_RW | SG_V;
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
-	/*
-	 * Invalidate all but the final entry in the last kernel PT page
-	 * (u-area PTEs will be validated later).  The final entry maps
-	 * the last page of physical memory.
-	 */
-	pte = (u_int *)lkptpa;
-	epte = &pte[NPTEPG-1];
-	while (pte < epte)
-		*pte++ = PG_NV;
 
 	/*
 	 * Initialize kernel page table.

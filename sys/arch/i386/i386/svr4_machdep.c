@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_machdep.c,v 1.45.2.2 2000/12/08 09:26:38 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.45.2.3 2000/12/13 15:49:29 bouyer Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -208,11 +208,14 @@ svr4_setmcontext(p, mc, flags)
 	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (r[SVR4_X86_EFL] & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = r[SVR4_X86_GS];
 		tf->tf_vm86_fs = r[SVR4_X86_FS];
 		tf->tf_vm86_es = r[SVR4_X86_ES];
 		tf->tf_vm86_ds = r[SVR4_X86_DS];
 		set_vflags(p, r[SVR4_X86_EFL]);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -229,6 +232,10 @@ svr4_setmcontext(p, mc, flags)
 		/* %fs and %gs were restored by the trampoline. */
 		tf->tf_es = r[SVR4_X86_ES];
 		tf->tf_ds = r[SVR4_X86_DS];
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM)
+			(*p->p_emul->e_syscall_intern)(p);
+#endif
 		tf->tf_eflags = r[SVR4_X86_EFL];
 	}
 	tf->tf_edi = r[SVR4_X86_EDI];

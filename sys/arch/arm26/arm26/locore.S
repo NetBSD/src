@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.4.2.3 2000/12/13 14:49:27 bouyer Exp $ */
+/* $NetBSD: locore.S,v 1.4.2.4 2000/12/13 15:49:18 bouyer Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.4.2.3 2000/12/13 14:49:27 bouyer Exp $")
+RCSID("$NetBSD: locore.S,v 1.4.2.4 2000/12/13 15:49:18 bouyer Exp $")
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>

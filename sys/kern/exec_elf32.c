@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_elf32.c,v 1.45.2.3 2000/12/08 09:13:52 bouyer Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.45.2.4 2000/12/13 15:50:18 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,8 +67,6 @@
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
-
-#include "opt_compat_ibcs2.h"	/* XXX quirk for PT_SHLIB section */ 
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -514,7 +512,6 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * interp[] with a changed path (/emul/xxx/<path>).
 	 */
 	if (!epp->ep_esch->u.elf_probe_func) {
-		p->p_emul = epp->ep_esch->es_emul;
 		pos = ELFDEFNNAME(NO_ADDR);
 	} else {
 		error = (*epp->ep_esch->u.elf_probe_func)(p, epp, eh, interp,
@@ -563,13 +560,9 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			break;
 
 		case PT_SHLIB:
-#ifndef COMPAT_IBCS2			/* SCO has these sections */
-			error = ENOEXEC;
-			goto bad;
-#endif
-
+			/* SCO has these sections. */
 		case PT_INTERP:
-			/* Already did this one */
+			/* Already did this one. */
 		case PT_DYNAMIC:
 		case PT_NOTE:
 			break;

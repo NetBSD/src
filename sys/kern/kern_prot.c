@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.55.2.2 2000/12/08 09:13:55 bouyer Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.55.2.3 2000/12/13 15:50:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -58,6 +58,13 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+int	sys_getpid(struct proc *, void *, register_t *);
+int	sys_getpid_with_ppid(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_getuid_with_euid(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	sys_getgid_with_egid(struct proc *, void *, register_t *);
+
 /* ARGSUSED */
 int
 sys_getpid(p, v, retval)
@@ -67,11 +74,19 @@ sys_getpid(p, v, retval)
 {
 
 	*retval = p->p_pid;
-#ifndef COMPAT_43
-	if (p->p_emul->e_flags & EMUL_GETPID_PASS_PPID)
-#endif
-	
-		retval[1] = p->p_pptr->p_pid;
+	return (0);
+}
+
+/* ARGSUSED */
+int
+sys_getpid_with_ppid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	retval[0] = p->p_pid;
+	retval[1] = p->p_pptr->p_pid;
 	return (0);
 }
 
@@ -150,10 +165,19 @@ sys_getuid(p, v, retval)
 {
 
 	*retval = p->p_cred->p_ruid;
-#ifndef COMPAT_43
-	if (p->p_emul->e_flags & EMUL_GETID_PASS_EID)
-#endif
-		retval[1] = p->p_ucred->cr_uid;
+	return (0);
+}
+
+/* ARGSUSED */
+int
+sys_getuid_with_euid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	retval[0] = p->p_cred->p_ruid;
+	retval[1] = p->p_ucred->cr_uid;
 	return (0);
 }
 
@@ -178,10 +202,19 @@ sys_getgid(p, v, retval)
 {
 
 	*retval = p->p_cred->p_rgid;
-#ifndef COMPAT_43
-	if (p->p_emul->e_flags & EMUL_GETID_PASS_EID)
-#endif
-		retval[1] = p->p_ucred->cr_gid;
+	return (0);
+}
+
+/* ARGSUSED */
+int
+sys_getgid_with_egid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	retval[0] = p->p_cred->p_rgid;
+	retval[1] = p->p_ucred->cr_gid;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56.2.2 2000/11/22 16:00:24 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56.2.3 2000/12/13 15:49:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,6 +88,12 @@ extern struct cpu_info cpu_info_store;
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
+
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
 
 /*
  * Preempt the current process if in interrupt from user mode,

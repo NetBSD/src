@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.55.2.2 2000/11/22 16:05:54 bouyer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.55.2.3 2000/12/13 15:50:31 bouyer Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -213,7 +213,7 @@ pppattach()
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_NULL, 0);
+	bpfattach(&sc->sc_if, DLT_NULL, 0);
 #endif
     }
 }
@@ -854,8 +854,8 @@ pppoutput(ifp, m0, dst, rtp)
     /*
      * See if bpf wants to look at the packet.
      */
-    if (sc->sc_bpf)
-	bpf_mtap(sc->sc_bpf, m0);
+    if (sc->sc_if.if_bpf)
+	bpf_mtap(sc->sc_if.if_bpf, m0);
 #endif
 
     /*
@@ -1494,8 +1494,8 @@ ppp_inproc(sc, m)
 
 #if NBPFILTER > 0
     /* See if bpf wants to look at the packet. */
-    if (sc->sc_bpf)
-	bpf_mtap(sc->sc_bpf, m);
+    if (sc->sc_if.if_bpf)
+	bpf_mtap(sc->sc_if.if_bpf, m);
 #endif
 
     rv = 0;

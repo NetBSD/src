@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.13.2.1 2000/11/20 11:40:52 bouyer Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.13.2.2 2000/12/13 15:50:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -420,10 +420,6 @@ eshconfig(sc)
 	sc->sc_misaligned_bufs = sc->sc_bad_lens = 0;
 	sc->sc_fp_rings = 0;
 
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_if.if_bpf, ifp, DLT_HIPPI,
-		  sizeof(struct hippi_header));
-#endif
 	return;
 
 bad_ring_dmamap_create:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.42.2.1 2000/11/20 18:10:37 bouyer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.42.2.2 2000/12/13 15:50:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -332,9 +332,13 @@ tcp_usrreq(so, req, m, nam, control, p)
 #ifdef INET6
 		case PF_INET6:
 			error = in6_pcbbind(in6p, nam, p);
-			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
-				tp->t_family = AF_INET;
+			if (!error) {
+				/* mapped addr case */
+				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
+					tp->t_family = AF_INET;
+				else
+					tp->t_family = AF_INET6;
+			}
 			break;
 #endif
 		}
@@ -391,9 +395,13 @@ tcp_usrreq(so, req, m, nam, control, p)
 					break;
 			}
 			error = in6_pcbconnect(in6p, nam);
-			/* mapped addr case */
-			if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
-				tp->t_family = AF_INET;
+			if (!error) {
+				/* mapped addr case */
+				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
+					tp->t_family = AF_INET;
+				else
+					tp->t_family = AF_INET6;
+			}
 		}
 #endif
 		if (error)

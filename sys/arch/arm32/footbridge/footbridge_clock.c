@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2.2.2 2000/12/13 14:49:57 bouyer Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2.2.3 2000/12/13 15:49:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.4 2000/12/08 09:12:46 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.5 2000/12/13 15:50:16 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ vendor SIIG		0x07cc	SIIG
 vendor APTIO		0x07d2	Aptio Products, Inc.
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable Corp.
+vendor STSN		0x07ef	STSN
 vendor ZOOM		0x0803	Zoom Telephonics, Inc.
 vendor BROADLOGIC	0x0827	BroadLogic, Inc.
 vendor HANDSPRING	0x082d	Handspring, Inc.
@@ -596,7 +597,8 @@ product MCT HUB0100		0x0100	Hub
 product MCT USB232		0x0210	USB-232 Interface
 
 /* Melco, Inc products */
-product MELCO LUATX		0x0001	LU-ATX Ethernet
+product MELCO LUATX1		0x0001	LUA-TX Ethernet
+product MELCO LUATX5		0x0005	LUA-TX Ethernet
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -740,6 +742,9 @@ product SONY MSC		0x0032	Sony MSC memory stick slot
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
+
+/* STSN products */
+product STSN STSN0001		0x0001	Internet Access Device
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB

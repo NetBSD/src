@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12.2.3 2000/12/08 09:08:22 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.12.2.4 2000/12/13 15:49:45 bouyer Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -57,11 +57,11 @@
 ; UNIMPL osf_*   = osf functions implemented in linux, not here.
 ;
 
-if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
-endif
+#endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -81,6 +81,8 @@ endif
 ;#include <compat/linux/common/linux_machdep.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+%%
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -106,12 +108,12 @@ endif
 18	UNIMPL
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	NODEF		{ int osf1_sys_mount(int type, const char *path, \
 			    int flags, caddr_t data); }
 22	UNIMPL		umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL
 26	STD		{ int linux_sys_ptrace(long request, long pid, \
 			  long addr, long data); }
@@ -137,7 +139,7 @@ endif
 44	UNIMPL
 45	STD		{ int linux_sys_open(const char *path, int flags, int mode); }
 46	UNIMPL
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 ; ALIAS osf1_sys_sigprocmask(int how, unsigned long mask);
 ; XXX <- copied from osf1/syscalls.master
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
@@ -590,3 +592,7 @@ endif
 368	UNIMPL		capget
 369	UNIMPL		capset
 370	UNIMPL		sendfile
+371	UNIMPL		setresgid
+372	UNIMPL		getresgid
+373	UNIMPL		sys_dipc
+374	UNIMPL		shmget

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.2.2 2000/12/08 09:26:35 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.17.2.3 2000/12/13 15:49:25 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ define	P_STAT			offsetof(struct proc, p_stat)
 define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	P_SYSTEM		P_SYSTEM
 

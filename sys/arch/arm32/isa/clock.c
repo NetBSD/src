@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3.8.2 2000/12/13 14:50:13 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.8.3 2000/12/13 15:49:22 bouyer Exp $	*/
 
 /*
  * Copyright 1997

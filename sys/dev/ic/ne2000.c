@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.23.2.2 2000/12/08 09:12:24 bouyer Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.23.2.3 2000/12/13 15:50:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,12 +314,12 @@ ne2000_detect(nict, nich, asict, asich)
 	/* Reset the board. */
 #ifdef GWETHER
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, 0);
-	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(200);
 #endif /* GWETHER */
 	tmp = bus_space_read_1(asict, asich, NE2000_ASIC_RESET);
-	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(10000);
 
@@ -332,7 +332,7 @@ ne2000_detect(nict, nich, asict, asich)
 	 * the invasive thing for now.  Yuck.]
 	 */
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, tmp);
-	bus_space_barrier(asict, asich, 0, NE2000_ASIC_NPORTS,
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
 			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	delay(5000);
 
@@ -722,8 +722,9 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
 	NIC_BARRIER(nict, nich);
 	bus_space_write_1(nict, nich, ED_P0_CR,
 	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
-	NIC_BARRIER(nict, nich);
 
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
+			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	if (useword)
 		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)dst, amount >> 1);
@@ -772,8 +773,9 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 	NIC_BARRIER(nict, nich);
 	bus_space_write_1(nict, nich, ED_P0_CR,
 	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
-	NIC_BARRIER(nict, nich);
 
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
+			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	if (useword)
 		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)src, len >> 1);
@@ -788,6 +790,8 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 	 * waiting causes really bad things to happen - like the NIC wedging
 	 * the bus.
 	 */
+	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
+			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait)
 		DELAY(1);

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 1997/05/19 22:11:22 jtc Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.22.1 2000/12/13 15:50:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,22 +40,17 @@
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/mount.h>
-#include <sys/exec.h>
+#include <sys/proc.h>
 #include <sys/lkm.h>
-#include <sys/file.h>
-#include <sys/errno.h>
 
-#include <compat/svr4/svr4_exec.h>
+extern const struct emul emul_svr4;
 
-
-struct execsw svr4_lkm_execsw = { ELF_HDR_SIZE, exec_elf_makecmds };
-
+int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
 
 /*
- * declare the filesystem
+ * declare the emulation
  */
-MOD_EXEC("svr4", -1, &svr4_lkm_execsw);
+MOD_COMPAT("svr4", -1, &emul_svr4);
 
 /*
  * entry point
