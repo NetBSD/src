@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_table.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
+/*	$NetBSD: pfctl_table.c,v 1.3 2004/10/29 19:46:27 dsl Exp $	*/
 /*	$OpenBSD: pfctl_table.c,v 1.59 2004/03/15 15:25:44 dhartmei Exp $ */
 
 /*
@@ -549,7 +549,7 @@ pfctl_show_ifaces(const char *filter, int opts)
 	struct pfi_if		*p;
 	int			 i = 0, f = PFI_FLAG_GROUP|PFI_FLAG_INSTANCE;
 
-	if (filter != NULL && *filter && !isdigit(filter[strlen(filter)-1]))
+	if (filter != NULL && *filter && !isdigit((unsigned char)filter[strlen(filter)-1]))
 		f &= ~PFI_FLAG_INSTANCE;
 	bzero(&b, sizeof(b));
 	b.pfrb_type = PFRB_IFACES;

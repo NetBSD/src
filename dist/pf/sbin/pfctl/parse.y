@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.3 2004/06/23 04:38:43 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.4 2004/10/29 19:46:27 dsl Exp $	*/
 /*	$OpenBSD: parse.y,v 1.449 2004/03/20 23:20:20 david Exp $	*/
 
 /*
@@ -386,7 +386,7 @@ typedef struct {
 
 #define DYNIF_MULTIADDR(addr) ((addr).type == PF_ADDR_DYNIFTL && \
 	(!((addr).iflags & PFI_AFLAG_NOALIAS) ||		 \
-	!isdigit((addr).v.ifname[strlen((addr).v.ifname)-1])))
+	!isdigit((unsigned char)(addr).v.ifname[strlen((addr).v.ifname)-1])))
 
 %}
 
