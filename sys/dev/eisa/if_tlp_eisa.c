@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.4 1999/12/11 00:33:00 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.5 2000/03/15 18:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -210,6 +210,11 @@ tlp_eisa_attach(parent, self, aux)
 	 * space registers are interleaved in the I/O space.
 	 */
 	sc->sc_regshift = 4;
+
+	/*
+	 * No power management hooks.
+	 */
+	sc->sc_flags |= TULIPF_ENABLED;
 
 	/*
 	 * CBIO must map the EISA slot, and I/O access and Bus Mastering
