@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.21 2002/11/08 00:16:39 fvdl Exp $	*/
+/*	$NetBSD: statd.c,v 1.22 2004/01/14 10:28:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.21 2002/11/08 00:16:39 fvdl Exp $");
+__RCSID("$NetBSD: statd.c,v 1.22 2004/01/14 10:28:17 yamt Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -405,6 +405,7 @@ reset_host(key, hi, ptr)
 		hi->notifyReqd = *(time_t *) ptr;
 		hi->attempts = 0;
 		hi->monList = NULL;
+		change_host((char *)key->data, hi);
 	}
 	return 0;
 }
