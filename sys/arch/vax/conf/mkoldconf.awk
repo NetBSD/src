@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: mkoldconf.awk,v 1.4 1995/12/16 15:05:03 ragge Exp $
+# $NetBSD: mkoldconf.awk,v 1.5 1996/02/13 06:56:58 mycroft Exp $
 #
 
 /tmscd/{
@@ -91,12 +91,12 @@
 
 END{
 
-printf "#include \"sys/param.h\"\n"
-printf "#include \"machine/pte.h\"\n"
-printf "#include \"sys/buf.h\"\n"
-printf "#include \"sys/map.h\"\n"
+printf "#include <sys/param.h>\n"
+printf "#include <machine/pte.h>\n"
+printf "#include <sys/buf.h>\n"
+printf "#include <sys/map.h>\n"
 
-printf "#include \"vax/uba/ubavar.h\"\n"
+printf "#include <vax/uba/ubavar.h>\n"
 
 printf "int antal_ra=%d;\n",nra-1
 printf "int antal_uda=%d;\n",nuda-1
