@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.9 1997/10/17 06:42:11 mikel Exp $	*/
+/*	$NetBSD: man.c,v 1.9.2.1 1997/11/26 04:22:35 mellon Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.9 1997/10/17 06:42:11 mikel Exp $");
+__RCSID("$NetBSD: man.c,v 1.9.2.1 1997/11/26 04:22:35 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,13 +516,15 @@ build_page(fmt, pathp)
        for (b = buf, p = *pathp; (*b++ = *p++) != '\0';)
                continue;
  
-       /* skip the last two path components, page name and man[n] */
-       for (--b, n = 2; b != buf; b--)
-               if (*b == '/')
-                       if (--n == 0) {
-                               *b = '\0';
-                               (void) chdir(buf);
-                       }
+	/* skip the last two path components, page name and man[n] */
+	for (--b, --p, n = 2; b != buf; b--, p--)
+		if (*b == '/')
+			if (--n == 0) {
+				*b = '\0';
+				(void) chdir(buf);
+				p++;
+				break;
+			}
 
 
 	/* Add a remove-when-done list. */
@@ -543,7 +545,7 @@ build_page(fmt, pathp)
 		exit(1);
 	}
 	(void)snprintf(buf, sizeof(buf), "%s > %s", fmt, tpath);
-	(void)snprintf(cmd, sizeof(cmd), buf, *pathp);
+	(void)snprintf(cmd, sizeof(cmd), buf, p);
 	(void)system(cmd);
 	(void)close(fd);
 	if ((*pathp = strdup(tpath)) == NULL) {
