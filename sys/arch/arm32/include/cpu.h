@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.9 1996/06/12 19:48:48 mark Exp $ */
+/* $NetBSD: cpu.h,v 1.10 1996/10/15 00:33:03 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,7 +50,7 @@
 
 #ifndef _LOCORE
 #include <machine/frame.h>
-#endif
+#endif	/* !_LOCORE */
 #include <machine/psl.h>
 
 /*
@@ -60,9 +60,30 @@
  * This reduces the overheads of LDR/STR aborts and no correction is required.
  */
 
-#ifndef CPU_ARM6
-#define CPU_LATE_ABORTS
+#if (defined(CPU_ARM7) || defined(CPU_ARM7500)) && !defined(CPU_LATE_ABORT)
+#error "option CPU_LATE_ABORT is required for ARM7 configurations"
 #endif
+
+#ifdef CPU_ARM7500
+#ifdef CPU_ARM6
+#error "CPU options CPU_ARM6 and CPU_ARM7500 are not compatible"
+#endif
+#ifdef CPU_SA110
+#error "CPU options CPU_SA110 and CPU_ARM7500 are not compatible"
+#endif
+#endif /* CPU_ARM7500 */
+
+#ifdef CPU_SA110
+#ifdef CPU_ARM6
+#error "CPU options CPU_SA110 and CPU_ARM6 are not compatible"
+#endif
+#ifdef CPU_ARM7
+#error "CPU options CPU_SA110 and CPU_ARM7 are not compatible"
+#endif
+#ifdef CPU_LATE_ABORT
+#error "cpu options CPU_SA110 and CPU_LATE_ABORT are not compatible"
+#endif
+#endif	/* CPU_SA110 */
 
 #define COPY_SIGCODE    /* copy sigcode above user stack in exec */
  
@@ -102,13 +123,14 @@
 #define CPU_ID_DESIGNER_MASK	0xff000000
 #define CPU_ID_ARM_LTD		0x41000000
 #define CPU_ID_DEC		0x44000000
-#define CPU_ID_MAKER_MASK	0x00ff0000
-#define CPU_ID_GPS		0x00560000
-#define CPU_ID_VLSI		0x00000000
+#define CPU_ID_TYPE_MASK	0x00ff0000
+#define CPU_ID_ARM		0x00560000
+#define CPU_ID_ARM7500		0x00020000
 #define CPU_ID_CPU_MASK		0x0000fff0
 #define ID_ARM610		0x00000610
 #define ID_ARM700		0x00007000
 #define ID_ARM710		0x00007100
+#define ID_ARM810		0x00008100
 #define ID_SARM110		0x0000a100
 #define CPU_ID_REVISION_MASK	0x0000000f
 
@@ -131,7 +153,7 @@
 #define CPU_CONTROL_IDC_ENABLE	(CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE)
 #else
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
-#endif
+#endif	/* CPU_SA */
 
 #define FAULT_TYPE_MASK 0x0f
 #define FAULT_USER      0x10
@@ -180,14 +202,19 @@
  
 #define CLKF_USERMODE(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 
-#define CLKF_BASEPRI(frame) (0) /* Always set a soft clock interrupt */
+/*
+ * This needs straighening, prob is the frame does not have info on the priority
+ * a guess that needs trying is (current_spl_level == SPL0)
+ */
+
+#define CLKF_BASEPRI(frame) ((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 
 #define CLKF_PC(frame) (frame->if_pc)
 
-/*#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_IRQ32_MODE)*/
+/*#define CLKF_INTR(frame) (current_intr_depth > 1)*/
 
 /* Hack to treat FPE time as interrupt time so we can measure it */
-#define CLKF_INTR(frame) ((frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
+#define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
 /*
  * definitions of cpu-dependent requirements
@@ -200,7 +227,9 @@
 void tlbflush __P(());
 void need_resched __P(());
 void need_proftick __P((struct proc *p));
-#endif
+
+extern int current_intr_depth;
+#endif	/* !_LOCORE */
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -209,6 +238,6 @@ void need_proftick __P((struct proc *p));
 
 #define signotify(p)            setsoftast()
     
-#endif /* _ARM32_CPU_H_ */
+#endif /* !_ARM32_CPU_H_ */
 
 /* End of cpu.h */
