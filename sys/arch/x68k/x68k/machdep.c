@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2003/01/18 07:14:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2003/03/23 05:01:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,6 +126,7 @@ extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail;
 extern u_int lowram;
 extern int end, *esym;
+extern psize_t mem_size;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
