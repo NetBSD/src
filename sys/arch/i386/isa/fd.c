@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 1994/11/03 22:55:58 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.59 1994/11/03 23:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -190,7 +190,7 @@ void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
-int fdcintr __P((void *arg));
+int fdcintr __P((struct fdc_softc *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 
@@ -763,12 +763,11 @@ fdcpseudointr(arg)
 }
 
 int
-fdcintr(arg)
-	void *arg;
+fdcintr(fdc)
+	struct fdc_softc *fdc;
 {
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
-	struct fdc_softc *fdc = arg;
 	struct fd_softc *fd;
 	struct buf *bp;
 	u_short iobase = fdc->sc_iobase;

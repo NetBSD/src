@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.102 1994/11/03 22:56:06 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.103 1994/11/03 23:23:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -159,7 +159,7 @@ struct dkdriver wddkdriver = { wdstrategy };
 
 void wdfinish __P((struct wd_softc *, struct buf *));
 static void wdstart __P((struct wd_softc *));
-int wdcintr __P((void *));
+int wdcintr __P((struct wdc_softc *));
 static void wdcstart __P((struct wdc_softc *));
 static int wdcommand __P((struct wd_softc *, int, int, int, int, int));
 static int wdcontrol __P((struct wd_softc *));
@@ -698,10 +698,9 @@ loop:
  * the next chunk if so.
  */
 int
-wdcintr(arg)
-	void *arg;
+wdcintr(wdc)
+	struct wdc_softc *wdc;
 {
-	struct wdc_softc *wdc = arg;
 	struct wd_softc *wd;
 	struct buf *bp;
 
