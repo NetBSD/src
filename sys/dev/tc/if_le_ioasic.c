@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.16 2000/07/11 04:10:25 nisimura Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.17 2000/07/17 01:29:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.16 2000/07/11 04:10:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.17 2000/07/17 01:29:02 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -156,8 +156,7 @@ le_ioasic_attach(parent, self, aux)
 	/*
 	 * Bind 128KB buffer with IOASIC DMA.
 	 */
-	tca = (tc_addr_t)sc->sc_dmamap->dm_segs[0].ds_addr;
-	tca = ((tca << 3) & ~0x1f) | ((tca >> 29) & 0x1f);
+	tca = IOASIC_DMA_ADDR(sc->sc_dmamap->dm_segs[0].ds_addr);
 	bus_space_write_4(ioasic_bst, ioasic_bsh, IOASIC_LANCE_DMAPTR, tca);
 	ssr = bus_space_read_4(ioasic_bst, ioasic_bsh, IOASIC_CSR);
 	ssr |= IOASIC_CSR_DMAEN_LANCE;
