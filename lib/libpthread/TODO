@@ -15,7 +15,6 @@ Interfaces/features to implement:
 - priority scheduling
 - libc integration: 
    - foo_r interfaces
-   - flockfile()/funlockfile()/ftrylockfile()
 - system integration
    - some macros and prototypes belong in headers other than pthread.h
 
@@ -28,7 +27,6 @@ Features that need more/better regression tests:
 
 
 Things that need fixing:
-- Correct [non]resumption of PT_IDLED thread.
 - Recycle dead threads for new threads.
 
 Ideas to play with:
