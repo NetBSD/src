@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.9 2001/02/19 23:22:51 cgd Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.10 2002/07/06 01:00:15 wiz Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.9 2001/02/19 23:22:51 cgd Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.10 2002/07/06 01:00:15 wiz Exp $");
 #endif
 
 #include <ctype.h>
@@ -56,8 +56,8 @@ __RCSID("$NetBSD: revnetgroup.c,v 1.9 2001/02/19 23:22:51 cgd Exp $");
 #include "hash.h"
 #include "protos.h"
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
 
 
@@ -74,7 +74,7 @@ struct group_entry *gtable[TABLESIZE];
 struct member_entry *mtable[TABLESIZE];
 
 void
-usage()
+usage(void)
 {
 
 	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n", getprogname());
@@ -82,9 +82,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct group_entry *gcur;
 	struct member_entry *mcur;
