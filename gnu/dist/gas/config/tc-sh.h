@@ -20,7 +20,10 @@
 
 #define TC_SH
 
+/* Set the endianness we are using.  Default to little endian.  */
+#ifndef TARGET_BYTES_BIG_ENDIAN
 #define TARGET_BYTES_BIG_ENDIAN 0
+#endif
 
 #define TARGET_ARCH bfd_arch_sh
 
@@ -134,7 +137,11 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *));
 /* Whether or not the target is big endian */
 extern int target_big_endian;
 
+#ifdef TE_NetBSD
+#define TARGET_FORMAT (shl ? "elf32-shl-unx" : "elf32-sh-unx")
+#else
 #define TARGET_FORMAT (shl ? "elf32-shl" : "elf32-sh")
+#endif
 
 #endif /* OBJ_ELF */
 
