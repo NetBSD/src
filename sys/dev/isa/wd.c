@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.64 1994/03/10 05:18:33 mycroft Exp $
+ *	$Id: wd.c,v 1.65 1994/03/10 19:57:20 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -146,6 +146,10 @@ struct	isa_driver wdcdriver = {
 	wdprobe, wdattach, "wdc",
 };
 
+struct	isa_driver wddriver = {
+	wdprobe, wdattach, "wd",
+};
+
 void wdfinish __P((struct wd_softc *, struct buf *));
 static void wdstart __P((struct wd_softc *));
 static void wdcstart __P((struct wdc_softc *));
@@ -169,22 +173,22 @@ int wdcwait __P((struct wdc_softc *, int));
  * Probe for controller.
  */
 int
-wdprobe(isa_dev)
-	struct isa_device *isa_dev;
+wdprobe(dev)
+	struct isa_device *dev;
 {
 	struct wd_softc *wd;
 	struct wdc_softc *wdc;
 	u_short iobase;
 
-	if (isa_dev->id_unit >= NWDC)
+	if (dev->id_unit >= NWDC)
 		return 0;
-	wdc = &wdc_softc[isa_dev->id_unit];
+	wdc = &wdc_softc[dev->id_unit];
 
 	/* XXX HACK */
-	sprintf(wdc->sc_dev.dv_xname, "%s%d", "wdc", isa_dev->id_unit);
-	wdc->sc_dev.dv_unit = isa_dev->id_unit;
+	sprintf(wdc->sc_dev.dv_xname, "%s%d", wdcdriver.name, dev->id_unit);
+	wdc->sc_dev.dv_unit = dev->id_unit;
 
-	wdc->sc_iobase = iobase = isa_dev->id_iobase;
+	wdc->sc_iobase = iobase = dev->id_iobase;
 
 	/* Check if we have registers that work. */
 	outb(iobase+wd_error, 0x5a);	/* Error register not writable. */
@@ -226,20 +230,18 @@ lose:
  * Called for the controller too.  Attach each drive if possible.
  */
 int
-wdattach(isa_dev)
-	struct isa_device *isa_dev;
+wdattach(dev)
+	struct isa_device *dev;
 {
 	int lunit;
 	struct wd_softc *wd;
 	struct wdc_softc *wdc;
 	int i, blank;
 
-	if (isa_dev->id_masunit == -1)
-		return 0;
-	if (isa_dev->id_masunit >= NWDC)
+	if (dev->id_masunit >= NWDC)
 		return 0;
     
-	lunit = isa_dev->id_unit;
+	lunit = dev->id_unit;
 	if (lunit == -1) {
 		printf("%s: cannot support unit ?\n", wdc->sc_dev.dv_xname);
 		return 0;
@@ -247,24 +249,24 @@ wdattach(isa_dev)
 	if (lunit >= NWD)
 		return 0;
 	
-	wdc = &wdc_softc[isa_dev->id_masunit];
+	wdc = &wdc_softc[dev->id_masunit];
 
 	wd_softc[lunit] = wd =
 	    (void *)malloc(sizeof(struct wd_softc), M_TEMP, M_NOWAIT);
 	bzero(wd, sizeof(struct wd_softc));
-	wd->sc_unit = isa_dev->id_physid;
+	wd->sc_unit = dev->id_physid;
 	wd->sc_lunit = lunit;
 
 	/* XXX HACK */
-	sprintf(wd->sc_dev.dv_xname, "%s%d", "wd", isa_dev->id_unit);
-	wd->sc_dev.dv_unit = isa_dev->id_unit;
+	sprintf(wd->sc_dev.dv_xname, "%s%d", wddriver.name, dev->id_unit);
+	wd->sc_dev.dv_unit = dev->id_unit;
 	wd->sc_dev.dv_parent = (void *)wdc;
 
 	if (wdgetctlr(wd) != 0)
 		return 0;
 
 	printf("%s at %s targ %d: ", wd->sc_dev.dv_xname, wdc->sc_dev.dv_xname,
-	    isa_dev->id_physid);
+	    dev->id_physid);
 	if (wd->sc_params.wdp_heads == 0)
 		printf("(unknown size) <");
 	else
