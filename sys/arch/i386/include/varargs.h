@@ -1,7 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
- *
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -36,20 +35,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)varargs.h	5.3 (Berkeley) 4/3/91
- *	$Id: varargs.h,v 1.2 1994/05/16 10:58:29 cgd Exp $
+ *	from: @(#)varargs.h	8.2 (Berkeley) 3/22/94
+ *	$Id: varargs.h,v 1.3 1994/05/21 06:48:14 cgd Exp $
  */
 
-#ifndef _MACHINE_VARARGS_H_
-#define	_MACHINE_VARARGS_H_
+#ifndef _VARARGS_H_
+#define	_VARARGS_H_
 
-#include <machine/stdarg.h>
+typedef char *va_list;
 
-#undef	va_dcl
 #define	va_dcl	int va_alist;
 
-#undef	va_start
 #define	va_start(ap) \
 	ap = (char *)&va_alist
 
-#endif /* !_MACHINE_VARARGS_H_ */
+#ifdef KERNEL
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type)))[-1]
+#else
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type) < sizeof(int) ? \
+		(abort(), 0) : sizeof(type)))[-1]
+#endif
+
+#define	va_end(ap)
+
+#endif /* !_VARARGS_H_ */
