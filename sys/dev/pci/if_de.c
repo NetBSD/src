@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.73 1998/08/13 02:10:53 eeh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.74 1998/08/18 18:23:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3473,11 +3473,12 @@ tulip_rx_intr(
 
 	    eh = *mtod(ms, struct ether_header *);
 #if NBPFILTER > 0
-	    if (sc->tulip_bpf != NULL)
+	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    TULIP_BPF_TAP(sc, mtod(ms, caddr_t), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
+	    }
 #endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))

@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
+/* $NetBSD: wsevent.c,v 1.2 1998/08/18 18:25:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsevent.c,v 1.1 1998/03/22 14:24:03 drochner Exp $";
+    "$NetBSD: wsevent.c,v 1.2 1998/08/18 18:25:36 thorpej Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,11 +191,12 @@ wsevent_poll(ev, events, p)
 	int revents = 0;
 	int s = splwsevent();
 
-        if (events & (POLLIN | POLLRDNORM))
+        if (events & (POLLIN | POLLRDNORM)) {
 		if (ev->get != ev->put)
-                        revents |= events & (POLLIN | POLLRDNORM);
-                else
-                        selrecord(p, &ev->sel);
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &ev->sel);
+	}
 
 	splx(s);
 	return (revents);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.32 1998/08/05 02:45:08 perry Exp $ */
+/*	$NetBSD: apm.c,v 1.33 1998/08/18 18:27:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1283,11 +1283,12 @@ apmpoll(dev, events, p)
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int revents = 0;
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	return (revents);
 }
