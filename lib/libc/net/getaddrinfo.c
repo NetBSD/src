@@ -1,5 +1,5 @@
-/*	$NetBSD: getaddrinfo.c,v 1.47 2000/08/09 14:41:00 itojun Exp $	*/
-/*	$KAME: getaddrinfo.c,v 1.28 2000/07/09 04:37:24 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.48 2000/08/31 17:32:39 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.47 2000/08/09 14:41:00 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.48 2000/08/31 17:32:39 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1340,7 +1340,7 @@ _gethtent(name, pai)
 	const struct addrinfo *pai;
 {
 	char *p;
-	char *cp, *tname;
+	char *cp, *tname, *cname;
 	struct addrinfo hints, *res0, *res;
 	int error;
 	const char *addr;
@@ -1361,11 +1361,14 @@ _gethtent(name, pai)
 	*cp++ = '\0';
 	addr = p;
 	/* if this is not something we're looking for, skip it. */
+	cname = NULL;
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
 			continue;
 		}
+		if (!cname)
+			cname = cp;
 		tname = cp;
 		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
@@ -1385,7 +1388,7 @@ found:
 		res->ai_flags = pai->ai_flags;
 
 		if (pai->ai_flags & AI_CANONNAME) {
-			if (get_canonname(pai, res, name) != 0) {
+			if (get_canonname(pai, res, cname) != 0) {
 				freeaddrinfo(res0);
 				goto again;
 			}
