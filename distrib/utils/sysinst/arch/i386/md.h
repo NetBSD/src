@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 1997/10/29 01:07:08 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.5 1997/11/09 04:14:16 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,7 +53,15 @@ EXTERN int activepart;
 EXTERN int bsdpart;
 EXTERN int usefull;
 
-/* Definition of files to retreive from ftp. */
+/*
+ *  Default filesets to fetch and install during installation
+ *  or upgrade. The standard sets are:
+ *      base, etc, comp, games, man, misc, text,
+ *      xbase, xfont, xserver, xcontrib, xcomp.
+ *
+ * i386 has the  MD set kern first, because generic kernels are  too
+ * big to fit on install floppies. i386 does not yet include the x sets. 
+ */
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
 EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
@@ -71,21 +79,54 @@ EXTERN distinfo dist_list[]
 #endif
 ;
 
-/* Disk information */
-
+/*
+ * Disk names accepted as valid targets for a from-scratch installation.
+ *
+ * On  i386, we allow "wd"  ST-506/IDE disks and  "sd" scsi disks.
+ */
 EXTERN	char *disk_names[]
 #ifdef MAIN
 = {"wd", "sd", NULL}
 #endif
 ;
 
-EXTERN	char *fdtype INIT("msdos");
 
-/* Legal start character for a disk for checking input. */
+/*
+ * Legal start character for a disk for checking input. 
+ * this must return 1 for a character that matches the first
+ * characters of each member of disk_names.
+ *
+ * On  i386, that means matching 'w' for st-506/ide and 's' for sd.
+ */
 #define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
+/*
+ * Machine-specific command to write a new label to a disk.
+ * For example, i386  uses "/sbin/disklabel -w -r", just like i386
+ * miniroot scripts, though this may leave a bogus incore label.
+ * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
+ * to get incore  to ondisk inode translation for the Sun proms.
+ * If not defined, we assume the port does not support disklabels and
+ * hand-edited disklabel will NOT be written by MI code.
+ *
+ * On i386, do what the 1.2 install scripts did. 
+ */
+#define DISKLABEL_CMD "disklabel -w -r"
 
-/* prototypes */
+
+/*
+ * Default fileystem type for floppy disks.
+ * On i386, that is  msdos.
+ */
+EXTERN	char *fdtype INIT("msdos");
+
+
+
+
+/*
+ *  prototypes for MD code.
+ */
+
 
 /* from fdisk.c */
 void	set_fdisk_geom (void);

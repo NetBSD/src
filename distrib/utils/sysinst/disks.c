@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.12 1997/11/05 22:49:06 mhitch Exp $ */
+/*	$NetBSD: disks.c,v 1.13 1997/11/09 04:14:10 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,17 +57,6 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-
-/*
- *  Default command to use for disklabel. Some ports may need to override this.
- */
-#ifndef DISLABEL_CMD
-#if 1
-# define DISKLABEL_CMD "/sbin/disklabel -w -r"	/* Works on i386. */
-#else
-# define DISKLABEL_CMD "/sbin/disklabel -w"	/* On sun proms, -r loses. */
-#endif
-#endif
 
 
 /* Local prototypes */
@@ -272,11 +261,26 @@ void scsi_fake (void)
 }
 
 
+/*
+ * Label a disk using an MD-specific string DISKLABEL_CMD for
+ * to invoke  disklabel.
+ * if MD code does not define DISKLABEL_CMD, this is a no-op.
+ *
+ * i386  port uses "/sbin/disklabel -w -r", just like i386
+ * miniroot scripts, though this may leave a bogus incore label.
+ *
+ * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"	
+ * to get incore  to ondisk inode translation for the Sun proms.
+ */
 void write_disklabel (void)
 {
+
+#ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	printf ("%s", msg_string (MSG_dodisklabel));
 	run_prog_or_continue ("%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
+#endif
+
 }
 
 
