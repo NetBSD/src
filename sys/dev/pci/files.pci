@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.38 1998/05/31 06:03:44 cgd Exp $
+#	$NetBSD: files.pci,v 1.39 1998/06/02 01:29:41 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -114,3 +114,7 @@ file	dev/pci/tga_bt485.c	tga
 device	eap: audio, auconv, mulaw
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+# SMC EPIC/100 Fast Ethernet on PCI
+attach	epic at pci with epic_pci
+file	dev/pci/if_epic_pci.c		epic_pci
