@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.8 1997/10/23 23:16:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1997/11/08 08:09:05 lukem Exp $
 #
 
 SRCS=kernfsmod.c
@@ -59,7 +59,7 @@ unload:
 	modunload -n $(KMOD)
 
 kernfs_vfsops.o: /sys/miscfs/kernfs/kernfs_vfsops.c vnode_if.h
-	${CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 kernfs_vnops.o: /sys/miscfs/kernfs/kernfs_vnops.c vnode_if.h
 	$(CC) $(CFLAGS) -c -o $@ $<
