@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.2 2001/02/08 18:28:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ fpsetround(rnd_dir)
 	fp_rnd old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = fpscr & 0x3;
+	old = (fp_rnd)(fpscr & 0x3);
 	fpscr = (fpscr & 0xfffffffc) | rnd_dir;
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.2 2001/02/08 18:28:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,5 +45,5 @@ fpgetround()
 	u_int64_t fpscr;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	return (fpscr & 0x3);
+	return ((fp_rnd)(fpscr & 0x3));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.2 2001/02/08 18:28:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ fpsetmask(mask)
 	fp_rnd old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = (fpscr >> 3) & 0x1f;
+	old = (fp_rnd)((fpscr >> 3) & 0x1f);
 	fpscr = (fpscr & 0xffffff07) | (mask << 3);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);

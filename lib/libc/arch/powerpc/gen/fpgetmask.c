@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.c,v 1.1 1999/07/07 01:55:07 danw Exp $	*/
+/*	$NetBSD: fpgetmask.c,v 1.2 2001/02/08 18:28:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,5 +45,5 @@ fpgetmask()
 	u_int64_t fpscr;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	return ((fpscr >> 3) & 0x1f);
+	return ((fp_except)((fpscr >> 3) & 0x1f));
 }
