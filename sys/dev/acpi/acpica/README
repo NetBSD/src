@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.2 2001/09/28 01:24:44 thorpej Exp $
+#	$NetBSD: README,v 1.3 2003/02/06 00:27:06 perry Exp $
 
 This is the Intel ACPI Component Architecture, Intel's reference
 implementation of the core operating system ACPI support.  The
@@ -15,6 +15,10 @@ in the following document:
 
 	ACPI Component Architecture Programmer Reference
 	Intel Corp.
+
+Copies of the document may be retrieved from:
+
+	http://developer.intel.com/technology/iapc/acpi/downloads.htm
 
 Machine-dependent code must provide the following routines for Osd:
 
