@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.20 2002/11/10 10:01:04 jdolecek Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.21 2002/11/10 14:02:13 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.20 2002/11/10 10:01:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.21 2002/11/10 14:02:13 fvdl Exp $");
 
 #include "opt_systrace.h"
 
@@ -206,14 +206,6 @@ const struct cdevsw systrace_cdevsw = {
 #endif
 
 #define DPRINTF(y)	if (systrace_debug) printf y;
-
-#ifndef ISSET
-
-#define	SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
-
-#endif /* !ISSET */
 
 /* ARGSUSED */
 int
