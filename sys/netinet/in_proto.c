@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.16 1996/10/10 23:04:26 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.17 1997/07/23 21:26:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -197,3 +197,15 @@ struct domain hydomain =
     { AF_HYLINK, "hy", 0, 0, 0, hysw, &hysw[sizeof (hysw)/sizeof(hysw[0])] };
 #endif
 #endif
+
+
+#define	TCP_SYN_HASH_SIZE	293
+#define	TCP_SYN_BUCKET_SIZE	35
+
+int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
+int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
+int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
+struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
+struct	syn_cache_head *tcp_syn_cache_first;
+int	tcp_syn_cache_interval = 8;	/* runs timer every 4 seconds */
+int	tcp_syn_cache_timeo = TCPTV_KEEP_INIT;
