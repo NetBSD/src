@@ -29,10 +29,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	$Id: init.c,v 1.7 1993/06/10 01:03:02 cgd Exp $
  */
-
-/* $Header: /cvsroot/src/sbin/init/init.c,v 1.6 1993/04/26 14:54:43 cgd Exp $ */
-
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -44,6 +43,10 @@
 
 #ifdef SECURE_CONSOLE
 #include <pwd.h>
+#endif
+
+#ifdef USE_DEVFS
+#include <sys/mount.h>
 #endif
 
 #define NTTY 32			/* max ttys */
@@ -175,6 +178,15 @@ char **argv;
 			sflag++;
 		else if(!strcmp(argv[1], "-f"))
 			Reboot = 0;
+
+#ifdef USE_DEVFS
+	if (mount(MOUNT_DEVFS, "/dev", 0, (caddr_t) 0) < 0) {
+		writes(2, "init: couldn't mount /dev\n");
+		perror(   "      mount");
+		writes(2, "      trying to continue...\n");
+	}
+#endif
+
 top:
 	/* Single user mode? */
 	if(sflag) {
