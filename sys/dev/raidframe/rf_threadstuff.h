@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.12 2002/08/08 02:54:30 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.13 2002/10/02 21:48:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -105,6 +105,10 @@ typedef void *RF_ThreadArg_t;
 #define	RF_CREATE_THREAD(_handle_, _func_, _arg_, _name_) \
 	kthread_create1((void (*)(void *))(_func_), (void *)(_arg_), \
 	    (struct proc **)&(_handle_), _name_)
+
+#define	RF_CREATE_ENGINE_THREAD(_handle_, _func_, _arg_, _fmt_, _fmt_arg_) \
+	kthread_create1((void (*)(void *))(_func_), (void *)(_arg_), \
+	    (struct proc **)&(_handle_), _fmt_, _fmt_arg_)
 
 struct RF_ThreadGroup_s {
 	int     created;
