@@ -1,3 +1,4 @@
+/* NetBSD $Id: swap_pager.h,v 1.5 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)swap_pager.h	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.h,v 1.4 1993/12/20 12:40:01 cgd Exp $
+ *	@(#)swap_pager.h	8.1 (Berkeley) 6/11/93
  */
 
 #ifndef	_SWAP_PAGER_

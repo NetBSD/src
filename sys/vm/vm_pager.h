@@ -1,3 +1,4 @@
+/* NetBSD $Id: vm_pager.h,v 1.8 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993
@@ -35,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_pager.h	8.4 (Berkeley) 1/12/94
- *	$Id: vm_pager.h,v 1.7 1994/06/27 04:03:17 cgd Exp $
+ *	@(#)vm_pager.h	8.4 (Berkeley) 1/12/94
  */
 
 /*
