@@ -1,4 +1,4 @@
-/*	$NetBSD: strncasecmp.S,v 1.1 2002/12/08 09:48:37 scw Exp $	*/
+/*	$NetBSD: strncasecmp.S,v 1.2 2003/12/07 19:37:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,10 +47,10 @@
  */
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(_strncasecmp,strncasecmp)
+WEAK_ALIAS(strncasecmp,_strncasecmp)
 #endif
 
-ENTRY(strncasecmp)
+ENTRY(_strncasecmp)
 #ifndef _LP64
 	add.l	r2, r63, r5
 	add.l	r3, r63, r3
