@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1997/02/19 10:04:09 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1997/02/26 18:38:23 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -63,6 +63,7 @@ int	mastercpu;	/* chief of the system */
 struct devnametobdevmaj vax_nam2blk[] = {
 	{ "hp",		0 },
 	{ "ra",		9 },
+	{ "rd",		19 },
 	{ "sd",		20 },
 	{ "cd",		22 },
 	{ "md",		23 },

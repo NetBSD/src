@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1997/02/19 10:04:25 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.33 1997/02/26 18:38:21 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -276,6 +276,10 @@ pmap_bootstrap()
 	 */
 	mtpr(sysptsize, PR_SLR);
 	mtpr(1, PR_MAPEN);
+#ifdef VAX410
+	if (vax_boardtype == VAX_BTYP_410)
+		dzcons_vminit(); /* XXX */
+#endif
 }
 
 

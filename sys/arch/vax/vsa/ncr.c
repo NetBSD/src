@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.6 1997/02/12 17:55:54 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.7 1997/02/26 18:38:19 ragge Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -650,8 +650,10 @@ si_dma_alloc(ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
+#ifdef DEBUG
 		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
 		Debugger();
+#endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 
