@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.39 1994/10/20 14:05:08 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.40 1994/10/20 14:09:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -217,7 +217,7 @@ sdopen(dev, flag, fmt, p)
 		/*
 		 * If somebody still has it open, then forbid re-entry.
 		 */
-		if (sd->sc_dk.dk_openpart != 0)
+		if (sd->sc_dk.dk_openmask != 0)
 			return ENXIO;
 	}
 
@@ -279,20 +279,20 @@ sdopen(dev, flag, fmt, p)
 	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
-		sd->sc_dk.dk_copenpart |= (1 << part);
+		sd->sc_dk.dk_copenmask |= (1 << part);
 		break;
 	case S_IFBLK:
-		sd->sc_dk.dk_bopenpart |= (1 << part);
+		sd->sc_dk.dk_bopenmask |= (1 << part);
 		break;
 	}
-	sd->sc_dk.dk_openpart = sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
+	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 
 bad:
-	if (sd->sc_dk.dk_openpart == 0) {
+	if (sd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -313,15 +313,15 @@ sdclose(dev, flag, fmt)
 
 	switch (fmt) {
 	case S_IFCHR:
-		sd->sc_dk.dk_copenpart &= ~(1 << part);
+		sd->sc_dk.dk_copenmask &= ~(1 << part);
 		break;
 	case S_IFBLK:
-		sd->sc_dk.dk_bopenpart &= ~(1 << part);
+		sd->sc_dk.dk_bopenmask &= ~(1 << part);
 		break;
 	}
-	sd->sc_dk.dk_openpart = sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
+	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
-	if (sd->sc_dk.dk_openpart == 0) {
+	if (sd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sd->sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -580,7 +580,7 @@ sdioctl(dev, cmd, addr, flag)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
 		    (struct disklabel *)addr,
-		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openpart : */0,
+		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
 		if (error == 0)
 			sd->flags |= SDF_BSDLABEL;
@@ -602,17 +602,17 @@ sdioctl(dev, cmd, addr, flag)
 			return EBADF;
 		error = setdisklabel(&sd->sc_dk.dk_label,
 		    (struct disklabel *)addr,
-		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openpart : */0,
+		    /*(sd->flags & SDF_BSDLABEL) ? sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			sd->flags |= SDF_BSDLABEL;
 
 			/* simulate opening partition 0 so write succeeds */
-			sd->sc_dk.dk_openpart |= (1 << 0);	/* XXX */
+			sd->sc_dk.dk_openmask |= (1 << 0);	/* XXX */
 			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
 			    &sd->sc_dk.dk_label, &sd->sc_dk.dk_cpulabel);
-			sd->sc_dk.dk_openpart =
-			    sd->sc_dk.dk_copenpart | sd->sc_dk.dk_bopenpart;
+			sd->sc_dk.dk_openmask =
+			    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 		}
 		return error;
 

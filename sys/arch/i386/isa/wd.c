@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.93 1994/10/20 13:44:46 mycroft Exp $
+ *	$Id: wd.c,v 1.94 1994/10/20 14:08:07 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -48,11 +48,12 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/syslog.h>
 #ifdef INSTRUMENT
 #include <sys/dkstat.h>
@@ -889,7 +890,7 @@ wdopen(dev, flag, fmt, p)
 	 * Warn if a partition is opened that overlaps another partition which
 	 * is open unless one is the "raw" partition (whole disk).
 	 */
-	if ((wd->sc_dk.dk_openpart & (1 << part)) == 0 && part != RAW_PART) {
+	if ((wd->sc_dk.dk_openmask & (1 << part)) == 0 && part != RAW_PART) {
 		int start, end;
 	
 		pp = &wd->sc_dk.dk_label.d_partitions[part];
@@ -903,7 +904,7 @@ wdopen(dev, flag, fmt, p)
 				continue;
 			if (pp - wd->sc_dk.dk_label.d_partitions == RAW_PART)
 				continue;
-			if (wd->sc_dk.dk_openpart & (1 << (pp - wd->sc_dk.dk_label.d_partitions)))
+			if (wd->sc_dk.dk_openmask & (1 << (pp - wd->sc_dk.dk_label.d_partitions)))
 				log(LOG_WARNING,
 				    "%s%c: overlaps open partition (%c)\n",
 				    wd->sc_dev.dv_xname, part + 'a',
@@ -920,13 +921,13 @@ wdopen(dev, flag, fmt, p)
 	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
-		wd->sc_dk.dk_copenpart |= (1 << part);
+		wd->sc_dk.dk_copenmask |= (1 << part);
 		break;
 	case S_IFBLK:
-		wd->sc_dk.dk_bopenpart |= (1 << part);
+		wd->sc_dk.dk_bopenmask |= (1 << part);
 		break;
 	}
-	wd->sc_dk.dk_openpart = wd->sc_dk.dk_copenpart | wd->sc_dk.dk_bopenpart;
+	wd->sc_dk.dk_openmask = wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	return 0;
 
@@ -1140,13 +1141,13 @@ wdclose(dev, flag, fmt)
     
 	switch (fmt) {
 	case S_IFCHR:
-		wd->sc_dk.dk_copenpart &= ~(1 << part);
+		wd->sc_dk.dk_copenmask &= ~(1 << part);
 		break;
 	case S_IFBLK:
-		wd->sc_dk.dk_bopenpart &= ~(1 << part);
+		wd->sc_dk.dk_bopenmask &= ~(1 << part);
 		break;
 	}
-	wd->sc_dk.dk_openpart = wd->sc_dk.dk_copenpart | wd->sc_dk.dk_bopenpart;
+	wd->sc_dk.dk_openmask = wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	return 0;
 }
@@ -1187,7 +1188,7 @@ wdioctl(dev, cmd, addr, flag, p)
 			return EBADF;
 		error = setdisklabel(&wd->sc_dk.dk_label,
 		    (struct disklabel *)addr,
-		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openpart : */0,
+		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openmask : */0,
 		    &wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			wd->sc_flags |= WDF_BSDLABEL;
@@ -1212,7 +1213,7 @@ wdioctl(dev, cmd, addr, flag, p)
 			return EBADF;
 		error = setdisklabel(&wd->sc_dk.dk_label,
 		    (struct disklabel *)addr,
-		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openpart : */0,
+		    /*(wd->sc_flags & WDF_BSDLABEL) ? wd->sc_dk.dk_openmask : */0,
 		    &wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			wd->sc_flags |= WDF_BSDLABEL;
@@ -1220,11 +1221,11 @@ wdioctl(dev, cmd, addr, flag, p)
 				wd->sc_state = GEOMETRY;
 	    
 			/* Simulate opening partition 0 so write succeeds. */
-			wd->sc_dk.dk_openpart |= (1 << 0);	/* XXX */
+			wd->sc_dk.dk_openmask |= (1 << 0);	/* XXX */
 			error = writedisklabel(WDLABELDEV(dev), wdstrategy,
 			    &wd->sc_dk.dk_label, &wd->sc_dk.dk_cpulabel);
-			wd->sc_dk.dk_openpart =
-			    wd->sc_dk.dk_copenpart | wd->sc_dk.dk_bopenpart;
+			wd->sc_dk.dk_openmask =
+			    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 		}
 		return error;
 	
