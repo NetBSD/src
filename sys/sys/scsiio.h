@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiio.h,v 1.6 1998/10/10 02:37:28 thorpej Exp $	*/
+/*	$NetBSD: scsiio.h,v 1.7 1998/10/10 03:18:51 thorpej Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -87,5 +87,7 @@ struct scbusioscan_args {
 	int	sa_lun;		/* lun to scan; -1 for wildcard */
 };
 #define	SCBUSIOSCAN	_IOW('U', 0, struct scbusioscan_args)
+
+#define	SCBUSIORESET	_IO('U', 1)	/* reset SCSI bus */
 
 #endif /* _SYS_SCSIIO_H_ */
