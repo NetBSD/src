@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.698 2004/05/07 00:55:15 jonathan Exp $
+#	$NetBSD: mi,v 1.699 2004/05/07 12:41:08 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -986,7 +986,6 @@
 ./usr/include/netinet6/raw_ip6.h		comp-c-include
 ./usr/include/netinet6/udp6.h			comp-c-include
 ./usr/include/netinet6/udp6_var.h		comp-c-include
-
 ./usr/include/netipsec/ah_var.h			comp-c-include
 ./usr/include/netipsec/esp_var.h		comp-c-include
 ./usr/include/netipsec/ipcomp_var.h		comp-c-include
