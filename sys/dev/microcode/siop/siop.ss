@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.13 2002/04/18 11:56:11 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.14 2002/04/23 12:55:28 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -30,15 +30,15 @@
 
 ARCH 720
 
-; offsets in sym_xfer
-ABSOLUTE t_id = 24;
-ABSOLUTE t_msg_in = 32;
-ABSOLUTE t_ext_msg_in = 40;
-ABSOLUTE t_ext_msg_data = 48;
-ABSOLUTE t_msg_out = 56;
-ABSOLUTE t_cmd = 64;
-ABSOLUTE t_status = 72;
-ABSOLUTE t_data = 80;
+; offsets in siop_common_xfer
+ABSOLUTE t_id = 40;
+ABSOLUTE t_msg_in = 48;
+ABSOLUTE t_ext_msg_in = 56;
+ABSOLUTE t_ext_msg_data = 64;
+ABSOLUTE t_msg_out = 72;
+ABSOLUTE t_cmd = 80;
+ABSOLUTE t_status = 88;
+ABSOLUTE t_data = 96;
 
 ;; interrupt codes
 ; interrupts that need a valid DSA

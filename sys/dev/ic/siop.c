@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.56 2002/04/23 10:38:37 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.57 2002/04/23 12:55:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.56 2002/04/23 10:38:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.57 2002/04/23 12:55:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -859,7 +859,8 @@ scintr:
 			    siop_cmd->cmd_tables->msg_in[2], 
 			    siop_cmd->cmd_tables->msg_in[1]);
 #endif
-			if (siop_cmd->cmd_tables->msg_in[1] > 6)
+			if (siop_cmd->cmd_tables->msg_in[1] >
+			    sizeof(siop_cmd->cmd_tables->msg_in) - 2)
 				printf("%s: extended message too big (%d)\n",
 				    sc->sc_c.sc_dev.dv_xname,
 				    siop_cmd->cmd_tables->msg_in[1]);
@@ -1705,13 +1706,16 @@ siop_morecbd(sc)
 		xfer->siop_tables.t_msgout.count= htole32(1);
 		xfer->siop_tables.t_msgout.addr = htole32(dsa);
 		xfer->siop_tables.t_msgin.count= htole32(1);
-		xfer->siop_tables.t_msgin.addr = htole32(dsa + 8);
+		xfer->siop_tables.t_msgin.addr = htole32(dsa +
+				offsetof(struct siop_common_xfer, msg_in));
 		xfer->siop_tables.t_extmsgin.count= htole32(2);
-		xfer->siop_tables.t_extmsgin.addr = htole32(dsa + 9);
-		xfer->siop_tables.t_extmsgdata.addr = htole32(dsa + 11);
+		xfer->siop_tables.t_extmsgin.addr = htole32(dsa +
+				offsetof(struct siop_common_xfer, msg_in) + 1);
+		xfer->siop_tables.t_extmsgdata.addr = htole32(dsa +
+				offsetof(struct siop_common_xfer, msg_in) + 3);
 		xfer->siop_tables.t_status.count= htole32(1);
-		xfer->siop_tables.t_status.addr = htole32(dsa + 16);
-
+		xfer->siop_tables.t_status.addr = htole32(dsa +
+				offsetof(struct siop_common_xfer, status));
 		/* The select/reselect script */
 		scr = &xfer->resel[0];
 		for (j = 0; j < sizeof(load_dsa) / sizeof(load_dsa[0]); j++)
