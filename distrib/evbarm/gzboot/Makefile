@@ -1,18 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/28 22:03:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/11 12:19:42 lukem Exp $
 
-# List the kernels you want to Gzip Boot here.
-SUBDIR+= kern_IQ80310
-SUBDIR+= kern_IQ80321
+SUBDIR=
 
 # List the Gzip Boot ELF images you want to create here.
 SUBDIR+= gzboot_IQ80310_flash_0x00080000
 SUBDIR+= gzboot_IQ80321_flash_0xf0080000
 
-SUBDIR+= .WAIT
-
-# List the Gzip Boot binary images (which include the kernels) you
-# want to create here.
-SUBDIR+= gzimg_IQ80310_flash_0x00080000
-SUBDIR+= gzimg_IQ80321_flash_0xf0080000
+SUBDIR+= .WAIT gzimg
 
 .include <bsd.subdir.mk>
