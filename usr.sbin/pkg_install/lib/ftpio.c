@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.8 2000/02/28 18:58:33 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.9 2000/07/31 18:19:04 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.8 2000/02/28 18:58:33 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.9 2000/07/31 18:19:04 he Exp $");
 #endif
 
 /*
@@ -452,10 +452,10 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	char best[FILENAME_MAX];
 	int tfd;
 
-	strcpy(tmpname, "/tmp/pkg.XXXXXX");
+	strcpy(tmpname, "/var/tmp/pkg.XXXXXX");
 	tfd=mkstemp(tmpname);
 	if (tfd == -1) {
-		warnx("Cannot generate temp file for ftp(1)'s ls output");
+		warnx("Cannot generate temp file for ftp(1)'s nlist output");
 		return -1; /* error */
 	}
 	close(tfd); /* We don't need the file descriptor, but will use 
@@ -467,20 +467,20 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		/* This should only happen when getting here with (only) a package
 		 * name specified to pkg_add, and PKG_PATH containing some URL.
 		 */
-		snprintf(buf,FILENAME_MAX, "ls %s %s\n", pkg, tmpname);
+		(void) snprintf(buf, sizeof(buf), "nlist %s %s\n", pkg, tmpname);
 	} else {
 		/* replace possible version(wildcard) given with "-*".
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		snprintf(buf, FILENAME_MAX, "ls %*.*s*.tgz %s\n",
+		(void) snprintf(buf, sizeof(buf), "nlist %*.*s*.tgz %s\n",
                          (int)(s-pkg), (int)(s-pkg), pkg, tmpname);
 	}
 	
 	rc = ftp_cmd(buf, "\n(550|226).*\n"); /* catch errors */
 	if (rc != 226) {
 	    if (Verbose)
-		    warnx("ls failed!");
+		    warnx("nlist failed!");
 	    unlink(tmpname);	/* remove clutter */
 	    return -1;
 	}
@@ -647,7 +647,7 @@ miscstuff(const char *url)
 	char cmd[256];
 	char tmpdir[256];
 
-	snprintf(tmpdir, sizeof(tmpdir), "/tmp/dir%s",
+	(void) snprintf(tmpdir, sizeof(tmpdir), "/var/tmp/dir%s",
 		 (getenv(PKG_FTPIO_CNT))?getenv(PKG_FTPIO_CNT):"");
 
 	mkdir(tmpdir, 0755);
@@ -664,11 +664,11 @@ miscstuff(const char *url)
     /* check if one more file(s) exist */
     if (0) {
 	char buf[FILENAME_MAX];
-	snprintf(buf,FILENAME_MAX, "ls %s /tmp/xxx\n", pkg);
+	(void) snprintf(buf, sizeof(buf), "nlist %s /var/tmp/xxx\n", pkg);
 	rc = ftp_cmd(buf, "\n(226|550).*\n"); /* catch errors */
 	if (rc != 226) {
 	    if (Verbose)
-		warnx("ls failed!");
+		warnx("nlist failed!");
 	    return -1;
 	}
 
@@ -679,15 +679,15 @@ miscstuff(const char *url)
 	    return -1;
 	}
 	
-	if (access("/tmp/xxx", R_OK)==0) {
-	    system("cat /tmp/xxx");
+	if (access("/var/tmp/xxx", R_OK)==0) {
+	    system("cat /var/tmp/xxx");
 	    
 	    {
 		/* count lines - >0 -> fexists() == true */
 		int len, count;
 		FILE *f;
 		
-		f=fopen("/tmp/xxx", "r");
+		f=fopen("/var/tmp/xxx", "r");
 		if (f == NULL) {
 		    warn("fopen");
 		    return -1;
@@ -702,7 +702,7 @@ miscstuff(const char *url)
 	} else
 	    printf("NO MATCH\n");
 	
-	unlink("/tmp/xxx");
+	unlink("/var/tmp/xxx");
     }
 
     /* for a given wildcard URL, find the best matching pkg */
