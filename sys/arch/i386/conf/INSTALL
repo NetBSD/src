@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.51 1997/10/14 23:31:12 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.52 1997/10/17 07:07:30 enami Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -202,7 +202,7 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 atapibus* at wdc?
-cd* at atapibus? drive ?
+cd*	at atapibus? drive ?
 
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't
