@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.28 1995/05/10 16:52:57 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.29 1995/06/24 20:34:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -197,56 +197,6 @@ donice(curp, chgp, n)
 	(void)resetpriority(chgp);
 	return (0);
 }
-
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) \
-    || defined(COMPAT_LINUX) || defined(COMPAT_HPUX)
-/* ARGSUSED */
-int
-compat_43_setrlimit(p, uap, retval)
-	struct proc *p;
-	struct compat_43_setrlimit_args /* {
-		syscallarg(u_int) which;
-		syscallarg(struct ogetrlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
-	struct orlimit olim;
-	struct rlimit lim;
-	int error;
-
-	if (error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
-	    sizeof (struct orlimit)))
-		return (error);
-	lim.rlim_cur = olim.rlim_cur;
-	lim.rlim_max = olim.rlim_max;
-	return (dosetrlimit(p, SCARG(uap, which), &lim));
-}
-
-/* ARGSUSED */
-int
-compat_43_getrlimit(p, uap, retval)
-	struct proc *p;
-	register struct compat_43_getrlimit_args /* {
-		syscallarg(u_int) which;
-		syscallarg(struct ogetrlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
-	struct orlimit olim;
-
-	if (SCARG(uap, which) >= RLIM_NLIMITS)
-		return (EINVAL);
-	olim.rlim_cur = p->p_rlimit[SCARG(uap, which)].rlim_cur;
-	if (olim.rlim_cur == -1)
-		olim.rlim_cur = 0x7fffffff;
-	olim.rlim_max = p->p_rlimit[SCARG(uap, which)].rlim_max;
-	if (olim.rlim_max == -1)
-		olim.rlim_max = 0x7fffffff;
-	return (copyout((caddr_t)&olim, (caddr_t)SCARG(uap, rlp),
-	    sizeof(olim)));
-}
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 || COMPAT_LINUX || 
-	  COMPAT_HPUX */
 
 /* ARGSUSED */
 int
