@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.4 1997/06/21 14:41:13 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.5 1997/07/15 11:23:07 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -59,6 +59,7 @@ static struct mtabentry {
     {3, 0x10, "BNC"},
     {0, 0x08, "UTP"},
     {1, 0x20, "AUI"},
+    {6, 0x40, "MII"},
 };
 
 /**************************************************************************
@@ -86,7 +87,8 @@ char *myadr;
 	}
 
 	if(pcifinddev(0x10b7, 0x5900, &hdl) &&
-	   pcifinddev(0x10b7, 0x9001, &hdl)) {
+	   pcifinddev(0x10b7, 0x9001, &hdl) &&
+	   pcifinddev(0x10b7, 0x9050, &hdl)) {
 	    printf("cannot find 3c590 / 3c900\n");
 	    return(0);
 	}
