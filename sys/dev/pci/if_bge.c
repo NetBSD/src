@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.57 2003/12/14 03:08:12 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.58 2004/01/22 02:29:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.57 2003/12/14 03:08:12 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.58 2004/01/22 02:29:46 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2760,6 +2760,21 @@ bge_intr(xsc)
 		bge_txeof(sc);
 	}
 
+	if (sc->bge_pending_rxintr_change) {
+		uint32_t rx_ticks = sc->bge_rx_coal_ticks;
+		uint32_t rx_bds = sc->bge_rx_max_coal_bds;
+		uint32_t junk;
+
+		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, rx_ticks);
+		DELAY(10);
+		junk = CSR_READ_4(sc, BGE_HCC_RX_COAL_TICKS);
+		
+		CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, rx_bds);
+		DELAY(10);
+		junk = CSR_READ_4(sc, BGE_HCC_RX_MAX_COAL_BDS);
+
+		sc->bge_pending_rxintr_change = 0;
+	}
 	bge_handle_events(sc);
 
 	/* Re-enable interrupts. */
