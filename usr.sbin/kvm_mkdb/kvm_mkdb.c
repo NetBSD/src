@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mkdb.c,v 1.17 2000/06/14 06:49:25 cgd Exp $ */
+/* $NetBSD: kvm_mkdb.c,v 1.18 2003/05/02 16:25:22 ragge Exp $ */
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.17 2000/06/14 06:49:25 cgd Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.18 2003/05/02 16:25:22 ragge Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,9 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	char *p, *nlistpath, *nlistname;
+	char *nlistpath;
 	int docheck = 0;
+	int fd;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
@@ -119,9 +120,19 @@ main(argc, argv)
 			exit(0);
 	}
 
-#define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
-	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
-	nlistname = basename(nlistpath);
+	if (argc <= 0) {
+		/*
+		 * Check for useability of _PATH_KSYMS, if not
+		 * then fallback to _PATH_UNIX.
+		 * Should we complain if failure?
+		 */
+		if ((fd = open(_PATH_KSYMS, O_RDONLY)) >= 0) {
+			close(fd);
+			nlistpath = _PATH_KSYMS;
+		} else
+			nlistpath = _PATH_UNIX;
+	} else
+		nlistpath = argv[0];
 
 	(void)snprintf(dbtemp, sizeof(dbtemp), "%s.tmp", dbname);
 	(void)umask(0);
