@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.9 2000/10/02 03:55:42 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.10 2000/10/18 17:09:16 thorpej Exp $	*/
 /*	$KAME: esp_input.c,v 1.34 2000/10/01 12:37:19 itojun Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_ecn.h>
+#include <netinet/ip_icmp.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -443,6 +444,61 @@ bad:
 		m_freem(m);
 	return;
 }
+
+/* assumes that ip header and esp header are contiguous on mbuf */
+void *
+esp4_ctlinput(cmd, sa, v)
+	int cmd;
+	struct sockaddr *sa;
+	void *v;
+{
+	struct ip *ip = v;
+	struct esp *esp;
+	struct icmp *icp;
+	struct secasvar *sav;
+
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return NULL;
+	if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
+		/*
+		 * Check to see if we have a valid SA corresponding to
+		 * the address in the ICMP message payload.
+		 */
+		esp = (struct esp *)((caddr_t)ip + (ip->ip_hl << 2));
+		if ((sav = key_allocsa(AF_INET,
+				       (caddr_t) &ip->ip_src,
+				       (caddr_t) &ip->ip_dst,
+				       IPPROTO_ESP, esp->esp_spi)) == NULL)
+			return NULL;
+		if (sav->state != SADB_SASTATE_MATURE &&
+		    sav->state != SADB_SASTATE_DYING) {
+			key_freesav(sav);
+			return NULL;
+		}
+
+		/* XXX Further validation? */
+
+		key_freesav(sav);
+
+		/*
+		 * Now that we've validated that we are actually communicating
+		 * with the host indicated in the ICMP message, locate the
+		 * ICMP header, recalculate the new MTU, and create the
+		 * corresponding routing entry.
+		 */
+		icp = (struct icmp *)((caddr_t)ip -
+		    offsetof(struct icmp, icmp_ip));
+		icmp_mtudisc(icp, ip->ip_dst);
+
+		return NULL;
+	}
+
+	return NULL;
+}
+
 #endif /* INET */
 
 #ifdef INET6

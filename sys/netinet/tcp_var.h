@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.75 2000/08/15 22:13:02 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.76 2000/10/18 17:09:15 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -651,10 +651,6 @@ int	 tcp6_input __P((struct mbuf **, int *, int));
 void	 tcp_input __P((struct mbuf *, ...));
 u_long	 tcp_mss_to_advertise __P((const struct ifnet *, int));
 void	 tcp_mss_from_peer __P((struct tcpcb *, int));
-void	 tcp_mtudisc __P((struct inpcb *, int));
-#if defined(INET6) && !defined(TCP6)
-void	 tcp6_mtudisc __P((struct in6pcb *, int));
-#endif
 struct tcpcb *
 	 tcp_newtcpcb __P((int, void *));
 void	 tcp_notify __P((struct inpcb *, int));
