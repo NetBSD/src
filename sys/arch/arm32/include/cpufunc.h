@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 1997/02/04 05:50:19 mark Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 1997/07/29 01:18:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -100,11 +100,11 @@ struct cpu_functions {
 	/* Soft functions */
 
 	void	(*cf_cache_syncI)	__P((void));
-	void	(*cf_cache_cleanID_rng)	__P((u_int start, u_int end));
-	void	(*cf_cache_cleanD_rng)	__P((u_int start, u_int end));
-	void	(*cf_cache_purgeID_rng)	__P((u_int start, u_int end));
-	void	(*cf_cache_purgeD_rng)	__P((u_int start, u_int end));
-	void	(*cf_cache_syncI_rng)	__P((u_int start, u_int end));
+	void	(*cf_cache_cleanID_rng)	__P((u_int start, u_int len));
+	void	(*cf_cache_cleanD_rng)	__P((u_int start, u_int len));
+	void	(*cf_cache_purgeID_rng)	__P((u_int start, u_int len));
+	void	(*cf_cache_purgeD_rng)	__P((u_int start, u_int len));
+	void	(*cf_cache_syncI_rng)	__P((u_int start, u_int len));
 
 	int	(*cf_dataabt_fixup)	__P((void *arg));
 	int	(*cf_prefetchabt_fixup)	__P((void *arg));
@@ -153,11 +153,11 @@ extern u_int cputype;
 #define cpu_sleep(m)		cpufuncs.cf_sleep(m)
 
 #define	cpu_cache_syncI()		cpufuncs.cf_cache_syncI()
-#define	cpu_cache_cleanID_rng(s,e)	cpufuncs.cf_cache_cleanID_rng(s,e)
-#define	cpu_cache_cleanD_rng(s,e)	cpufuncs.cf_cache_cleanD_rng(s,e)
-#define	cpu_cache_purgeID_rng(s,e)	cpufuncs.cf_cache_purgeID_rng(s,e)
-#define	cpu_cache_purgeD_rng(s,e)	cpufuncs.cf_cache_purgeD_rng(s,e)
-#define	cpu_cache_syncI_rng(s,e)	cpufuncs.cf_cache_syncI_rng(s,e)
+#define	cpu_cache_cleanID_rng(s,l)	cpufuncs.cf_cache_cleanID_rng(s,l)
+#define	cpu_cache_cleanD_rng(s,l)	cpufuncs.cf_cache_cleanD_rng(s,l)
+#define	cpu_cache_purgeID_rng(s,l)	cpufuncs.cf_cache_purgeID_rng(s,l)
+#define	cpu_cache_purgeD_rng(s,l)	cpufuncs.cf_cache_purgeD_rng(s,l)
+#define	cpu_cache_syncI_rng(s,l)	cpufuncs.cf_cache_syncI_rng(s,l)
 
 #define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
 #define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
