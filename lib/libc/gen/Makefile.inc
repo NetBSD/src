@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.44 1994/05/19 06:27:11 jtc Exp $
+#	$Id: Makefile.inc,v 1.45 1994/05/21 09:17:49 chopps Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -62,7 +62,7 @@ MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 \
 	initgroups.0 isalnum.0 \
 	isalpha.0 isascii.0 isblank.0 iscntrl.0 isdigit.0 isgraph.0 isinf.0 \
 	islower.0 isprint.0 ispunct.0 isspace.0 isupper.0 isxdigit.0 \
-	ldexp.0 lsearch.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
+	ldexp.0 modf.0 nice.0 nlist.0 pause.0 popen.0 psignal.0 \
 	pwcache.0 raise.0 scandir.0 setjmp.0 setmode.0 setproctitle.0 \
 	siginterrupt.0 signal.0 sigsetops.0 sleep.0 sysconf.0 sysctl.0 \
 	syslog.0 tcgetpgrp.0 \
