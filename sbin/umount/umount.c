@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: umount.c,v 1.7 1994/06/08 19:34:40 mycroft Exp $";
+static char *rcsid = "$Id: umount.c,v 1.8 1994/08/23 20:57:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ main(argc, argv)
 		errs = umountall();
 	} else
 		for (errs = 0; *argv != NULL; ++argv)
-			if (umountfs(*argv) == 0)
+			if (umountfs(*argv) != 0)
 				errs = 1;
 	exit(errs);
 }
