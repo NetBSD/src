@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.26 1996/05/13 02:26:15 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.27 1996/09/01 21:33:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -127,6 +127,7 @@ int	audio_read __P((dev_t, struct uio *, int));
 int	audio_write __P((dev_t, struct uio *, int));
 int	audio_ioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int	audio_select __P((dev_t, int, struct proc *));
+int	audio_mmap __P((dev_t, int, int));
 
 int	mixer_open __P((dev_t, int, int, struct proc *));
 int	mixer_close __P((dev_t, int, int, struct proc *));
@@ -308,39 +309,34 @@ audioopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_open(dev, flags, ifmt, p);
-	    /*NOTREACHED*/
+		return (audio_open(dev, flags, ifmt, p));
 	case MIXER_DEVICE:
-	    return mixer_open(dev, flags, ifmt, p);
-	    /*NOTREACHED*/
+		return (mixer_open(dev, flags, ifmt, p));
 	default:
-	    break;
+		return (ENXIO);
 	}
-	return EIO;
 }
 
-/* ARGSUSED */
 int
 audioclose(dev, flags, ifmt, p)
 	dev_t dev;
 	int flags, ifmt;
 	struct proc *p;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_close(dev, flags, ifmt, p);
-	    /*NOTREACHED*/
+		return (audio_close(dev, flags, ifmt, p));
 	case MIXER_DEVICE:
-	    return mixer_close(dev, flags, ifmt, p);
-	    /*NOTREACHED*/
+		return (mixer_close(dev, flags, ifmt, p));
 	default:
-	    break;
+		return (ENXIO);
 	}
-	return EIO;
 }
 
 int
@@ -349,18 +345,16 @@ audioread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_read(dev, uio, ioflag);
-	    /*NOTREACHED*/
+		return (audio_read(dev, uio, ioflag));
 	case MIXER_DEVICE:
-	    return ENODEV;
-	    /*NOTREACHED*/
+		return (ENODEV);
 	default:
-	    break;
+		return (ENXIO);
 	}
-	return EIO;
 }
 
 int
@@ -369,18 +363,16 @@ audiowrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_write(dev, uio, ioflag);
-	    /*NOTREACHED*/
+		return (audio_write(dev, uio, ioflag));
 	case MIXER_DEVICE:
-	    return ENODEV;
-	    /*NOTREACHED*/
+		return (ENODEV);
 	default:
-	    break;
+		return (ENXIO);
 	}
-	return EIO;
 }
 
 int
@@ -391,18 +383,16 @@ audioioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_ioctl(dev, cmd, addr, flag, p);
-	    /*NOTREACHED*/
+		return (audio_ioctl(dev, cmd, addr, flag, p));
 	case MIXER_DEVICE:
-	    return mixer_ioctl(dev, cmd, addr, flag, p);
-	    /*NOTREACHED*/
+		return (mixer_ioctl(dev, cmd, addr, flag, p));
 	default:
-	    break;
+		return (ENXIO;
 	}
-	return EIO;
 }
 
 int
@@ -411,18 +401,33 @@ audioselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	switch(AUDIODEV(dev)) {
+
+	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-	    return audio_select(dev, rw, p);
-	    /*NOTREACHED*/
+		return (audio_select(dev, rw, p));
 	case MIXER_DEVICE:
-	    return 1;
-	    /*NOTREACHED*/
+		return (0);
 	default:
-	    break;
+		return (0);
 	}
-	return EIO;
+}
+
+int
+audiommap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+
+	switch (AUDIODEV(dev)) {
+	case SOUND_DEVICE:
+	case AUDIO_DEVICE:
+		return (audio_mmap(dev, off, prot));
+	case MIXER_DEVICE:
+		return (ENODEV);
+	default:
+		return (ENXIO);
+	}
 }
 
 /*
@@ -1223,6 +1228,16 @@ audio_select(dev, rw, p)
 	}
 	splx(s);
 	return (0);
+}
+
+int
+audio_mmap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+
+	/* XXX placeholder */
+	return (-1);
 }
 
 void
