@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.29 2004/01/11 18:42:25 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.30 2004/03/24 07:50:49 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.29 2004/01/11 18:42:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.30 2004/03/24 07:50:49 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -72,8 +72,8 @@ static fixpt_t cexp[3] = {
  * prototypes
  */
 
-static void uvm_loadav __P((struct loadavg *));
-static void uvm_total __P((struct vmtotal *));
+static void uvm_loadav(struct loadavg *);
+static void uvm_total(struct vmtotal *);
 
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)
@@ -388,7 +388,7 @@ uvm_total(totalp)
 	 */
 
 	proclist_lock_read();
-	    LIST_FOREACH(l, &alllwp, l_list) {    
+	    LIST_FOREACH(l, &alllwp, l_list) {
 		if (l->l_proc->p_flag & P_SYSTEM)
 			continue;
 		switch (l->l_stat) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.77 2004/02/09 13:11:21 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.77 2004/02/09 13:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.78 2004/03/24 07:50:48 junyoung Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.77 2004/02/09 13:11:21 yamt Exp $");
  * local prototypes
  */
 
-static void uvm_swapout __P((struct lwp *));
+static void uvm_swapout(struct lwp *);
 
 #define UVM_NUAREA_MAX 16
 void *uvm_uareas;
@@ -250,7 +250,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct user *up = l2->l_addr;
@@ -321,7 +321,7 @@ uvm_proc_exit(p)
 	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
-	
+
 	uvmspace_free(ovm);
 }
 
@@ -742,7 +742,7 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		state.prot = entry->protection;
 		state.flags = 0;
 
-		if (state.start >= VM_MAXUSER_ADDRESS)  
+		if (state.start >= VM_MAXUSER_ADDRESS)
 			continue;
 
 		if (state.end > VM_MAXUSER_ADDRESS)
