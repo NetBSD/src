@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.12 2003/02/24 01:04:45 atatat Exp $
+# $NetBSD: sysdb,v 1.13 2003/05/11 18:17:30 ragge Exp $
 #
 
 # PROVIDE: sysdb
@@ -12,27 +12,15 @@
 name="sysdb"
 start_cmd="sysdb_start"
 stop_cmd=":"
-extra_commands="kvmdb devdb utmp"
-kvmdb_cmd="build_kvmdb"
+extra_commands="devdb utmp"
 devdb_cmd="build_devdb"
 utmp_cmd="build_utmp"
 
 sysdb_start()
 {
 	echo "Building databases..."
-	$kvmdb_cmd
 	$devdb_cmd
 	$utmp_cmd
-}
-
-build_kvmdb()
-{
-	#	Build ps databases. If this kernel supports
-	#	machdep.booted_kernel, use that to build the KVM db so dmesg
-	#	will run work when we boot /netbsd.new, etc.
-	#
-	booted_kernel=`sysctl -n machdep.booted_kernel 2>/dev/null`
-	kvm_mkdb "${booted_kernel:-/netbsd}"
 }
 
 build_devdb()
