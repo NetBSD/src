@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 1997/07/29 09:42:11 fair Exp $ */
+/*	$NetBSD: pmap.c,v 1.91.2.1 1997/08/23 07:12:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -637,7 +637,7 @@ setptesw4m(pm, va, pte)
 	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
-/* Set the page table entry for va to pte. Flushes cache. */
+/* Set the page table entry for va to pte. */
 __inline void
 setpte4m(va, pte)
 	register vm_offset_t va;
@@ -648,11 +648,9 @@ setpte4m(va, pte)
 	register struct segmap *sm;
 	register union ctxinfo *c;
 
-	cache_flush_page(va);
-
 	/*
-	 * Now walk tables to find pte. We use ctxinfo to locate the pmap
-	 * from the current context
+	 * Walk tables to find pte. We use ctxinfo to locate the pmap
+	 * from the current context.
 	 */
 #if 0
 #ifdef DEBUG
@@ -5729,7 +5727,7 @@ pmap_extract4m(pm, va)
 	if (rm == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
-			printf("getptesw4m: no regmap entry");
+			printf("pmap_extract: no regmap entry");
 #endif
 		return (0);
 	}
@@ -5737,7 +5735,7 @@ pmap_extract4m(pm, va)
 	if (sm == NULL) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_FOLLOW)
-			panic("getptesw4m: no segmap");
+			panic("pmap_extract: no segmap");
 #endif
 		return (0);
 	}
@@ -5764,6 +5762,7 @@ pmap_extract4m(pm, va)
  * This routine is only advisory and need not do anything.
  */
 /* ARGSUSED */
+int pmap_copy_disabled=0;
 void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	struct pmap *dst_pmap, *src_pmap;
@@ -5771,17 +5770,44 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vm_size_t len;
 	vm_offset_t src_addr;
 {
-#if 0
+#if notyet
+	struct regmap *rm;
+	struct segmap *sm;
+
+	if (pmap_copy_disabled)
+		return;
+#ifdef DIAGNOSTIC
+	if (VA_OFF(src_addr) != 0)
+		printf("pmap_copy: addr not page aligned: 0x%lx\n", src_addr);
+	if ((len & (NBPG-1)) != 0)
+		printf("pmap_copy: length not page aligned: 0x%lx\n", len);
+#endif
+
+	if (src_pmap == NULL)
+		return;
+
 	if (CPU_ISSUN4M) {
-		register int i, pte;
-		for (i = 0; i < len/NBPG; i++) {
-			pte = getptesw4m(src_pmap, src_addr);
+		int i, npg, pte;
+		vm_offset_t pa;
+
+		npg = len >> PGSHIFT;
+		for (i = 0; i < npg; i++) {
+			tlb_flush_page(src_addr);
+			rm = &src_pmap->pm_regmap[VA_VREG(src_addr)];
+			if (rm == NULL)
+				continue;
+			sm = &rm->rg_segmap[VA_VSEG(src_addr)];
+			if (sm == NULL || sm->sg_npte == 0)
+				continue;
+			pte = sm->sg_pte[VA_SUN4M_VPG(src_addr)];
+			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
+				continue;
+
+			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			pmap_enter(dst_pmap, dst_addr,
-				   ptoa((pte & SRMMU_PPNMASK) >>
-					SRMMU_PPNSHIFT) |
-				    VA_OFF(src_addr),
+				   pa,
 				   (pte & PPROT_WRITE)
-					? VM_PROT_WRITE| VM_PROT_READ
+					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
 				   0);
 			src_addr += NBPG;
@@ -6582,6 +6608,52 @@ out:
 		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
 
 	return (error);
+}
+
+/*
+ * Helper function for debuggers.
+ */
+void
+pmap_writetext(dst, ch)
+	unsigned char *dst;
+	int ch;
+{
+	int s, pte0, pte;
+	vm_offset_t va;
+
+	s = splpmap();
+	va = (unsigned long)dst & (~PGOFSET);
+	cpuinfo.cache_flush(dst, 1);
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		pte0 = getpte4m(va);
+		if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
+			splx(s);
+			return;
+		}
+		pte = pte0 | PPROT_WRITE;
+		setpte4m(va, pte);
+		*dst = (unsigned char)ch;
+		setpte4m(va, pte0);
+
+	}
+#endif
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4C || CPU_ISSUN4) {
+		pte0 = getpte4(va);
+		if ((pte0 & PG_V) == 0) {
+			splx(s);
+			return;
+		}
+		pte = pte0 | PG_W;
+		setpte4(va, pte);
+		*dst = (unsigned char)ch;
+		setpte4(va, pte0);
+	}
+#endif
+	cpuinfo.cache_flush(dst, 1);
+	splx(s);
 }
 
 #ifdef EXTREME_DEBUG

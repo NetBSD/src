@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.35 1997/07/28 20:56:11 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.35.2.1 1997/08/23 07:13:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -66,11 +66,6 @@
  * Portions also supplied from the SoundBlaster driver for NetBSD.
  */
 
-/*
- * Todo:
- * - Need datasheet for CS4231 (for use with GUS MAX)
- * - Use fast audio_dma
- */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -88,7 +83,7 @@
 #include <vm/vm.h>
 
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
+#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -483,6 +478,14 @@ bad:
     return 0;
 }
 
+/* Unmap the I/O ports */
+void
+ad1848_unmap(sc)
+    struct ad1848_softc *sc;
+{
+    bus_space_unmap(sc->sc_iot, sc->sc_ioh, AD1848_NPORT);
+}
+
 /*
  * Attach hardware to driver, attach hardware driver to audio
  * pseudo-device driver .
@@ -494,7 +497,7 @@ ad1848_attach(sc)
     int i;
     struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
-    struct audio_params xparams;
+    struct audio_params params, xparams;
     
     sc->sc_locked = 0;
     sc->sc_playrun = NOTRUNNING;
@@ -529,8 +532,10 @@ ad1848_attach(sc)
     }
     ad1848_reset(sc);
 
-    (void) ad1848_set_params(sc, AUMODE_RECORD, &audio_default, &xparams);
-    (void) ad1848_set_params(sc, AUMODE_PLAY,   &audio_default, &xparams);
+    params = audio_default;
+    (void) ad1848_set_params(sc, AUMODE_RECORD, &params, &xparams);
+    params = audio_default;
+    (void) ad1848_set_params(sc, AUMODE_PLAY,   &params, &xparams);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -556,10 +561,10 @@ ad1848_attach(sc)
  */
 int
 ad1848_set_rec_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
-    register u_char reg, gain;
+    u_char reg, gain;
     
     DPRINTF(("ad1848_set_rec_gain: %d:%d\n", gp->left, gp->right));
 
@@ -580,7 +585,7 @@ ad1848_set_rec_gain(sc, gp)
 
 int
 ad1848_get_rec_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->rec_gain;
@@ -589,7 +594,7 @@ ad1848_get_rec_gain(sc, gp)
 
 int
 ad1848_set_out_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg;
@@ -614,7 +619,7 @@ ad1848_set_out_gain(sc, gp)
 
 int
 ad1848_get_out_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->out_gain;
@@ -623,7 +628,7 @@ ad1848_get_out_gain(sc, gp)
 
 int
 ad1848_set_mon_gain(sc, gp)		/* monitor gain */
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg;
@@ -642,7 +647,7 @@ ad1848_set_mon_gain(sc, gp)		/* monitor gain */
 
 int
 ad1848_get_mon_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->mon_gain;
@@ -651,7 +656,7 @@ ad1848_get_mon_gain(sc, gp)
 
 int
 cs4231_set_mono_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg, oreg;
@@ -671,7 +676,7 @@ cs4231_set_mono_gain(sc, gp)
 
 int
 cs4231_get_mono_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->mono_gain;
@@ -680,7 +685,7 @@ cs4231_get_mono_gain(sc, gp)
 
 int
 ad1848_set_mic_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg;
@@ -702,7 +707,7 @@ ad1848_set_mic_gain(sc, gp)
 
 int
 ad1848_get_mic_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
 	if (sc->mic_gain_on)
@@ -717,7 +722,7 @@ ad1848_mute_monitor(addr, mute)
 	void *addr;
 	int mute;
 {
-	register struct ad1848_softc *sc = addr;
+	struct ad1848_softc *sc = addr;
 
 	DPRINTF(("ad1848_mute_monitor: %smuting\n", mute ? "" : "un"));
 	if (sc->mode == 2) {
@@ -732,7 +737,7 @@ ad1848_mute_monitor(addr, mute)
 
 void
 cs4231_mute_monitor(sc, mute)
-	register struct ad1848_softc *sc;
+	struct ad1848_softc *sc;
 	int mute;
 {
 	u_char reg;
@@ -753,7 +758,7 @@ cs4231_mute_monitor(sc, mute)
 
 void
 cs4231_mute_mono(sc, mute)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     int mute;
 {
 	u_char reg;
@@ -770,7 +775,7 @@ cs4231_mute_mono(sc, mute)
 
 void
 cs4231_mute_line(sc, mute)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     int mute;
 {
 	u_char reg;
@@ -791,7 +796,7 @@ cs4231_mute_line(sc, mute)
 
 void
 ad1848_mute_aux1(sc, mute)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     int mute;
 {
 	u_char reg;
@@ -812,7 +817,7 @@ ad1848_mute_aux1(sc, mute)
 
 void
 ad1848_mute_aux2(sc, mute)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     int mute;
 {
 	u_char reg;
@@ -833,7 +838,7 @@ ad1848_mute_aux2(sc, mute)
 
 int
 ad1848_set_aux1_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg;
@@ -858,7 +863,7 @@ ad1848_set_aux1_gain(sc, gp)
 
 int
 ad1848_get_aux1_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->aux1_gain;
@@ -867,7 +872,7 @@ ad1848_get_aux1_gain(sc, gp)
 
 int
 cs4231_set_linein_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg, oregl, oregr;
@@ -893,7 +898,7 @@ cs4231_set_linein_gain(sc, gp)
 
 int
 cs4231_get_linein_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->line_gain;
@@ -902,7 +907,7 @@ cs4231_get_linein_gain(sc, gp)
 
 int
 ad1848_set_aux2_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     u_char reg;
@@ -927,7 +932,7 @@ ad1848_set_aux2_gain(sc, gp)
 
 int
 ad1848_get_aux2_gain(sc, gp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     struct ad1848_volume *gp;
 {
     *gp = sc->aux2_gain;
@@ -971,7 +976,7 @@ ad1848_query_encoding(addr, fp)
 	strcpy(fp->name, AudioElinear_be);
 	fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 	fp->precision = 16;
-	fp->flags = sc->mode == 1;
+	fp->flags = sc->mode == 1 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
 	break;
 
     /* emulate some modes */
@@ -979,16 +984,22 @@ ad1848_query_encoding(addr, fp)
 	strcpy(fp->name, AudioElinear);
 	fp->encoding = AUDIO_ENCODING_SLINEAR;
 	fp->precision = 8;
-	fp->flags = 1;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
     case 6:
 	strcpy(fp->name, AudioEulinear_le);
 	fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 	fp->precision = 16;
-	fp->flags = 1;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+	break;
+    case 7:
+	strcpy(fp->name, AudioEulinear_le);
+	fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+	fp->precision = 16;
+	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
 
-    case 7: /* only on CS4231 */
+    case 8: /* only on CS4231 */
 	if (sc->mode == 1)
 	    return EINVAL;
 	strcpy(fp->name, AudioEadpcm);
@@ -1103,7 +1114,7 @@ ad1848_set_params(addr, mode, p, q)
 
 int
 ad1848_set_rec_port(sc, port)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     int port;
 {
     u_char inp, reg;
@@ -1140,7 +1151,7 @@ ad1848_set_rec_port(sc, port)
 
 int
 ad1848_get_rec_port(sc)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
 {
     return(sc->rec_port);
 }
@@ -1150,7 +1161,7 @@ ad1848_round_blocksize(addr, blk)
     void *addr;
     int blk;
 {
-    register struct ad1848_softc *sc = addr;
+    struct ad1848_softc *sc = addr;
 
     sc->sc_lastcc = -1;
 
@@ -1161,11 +1172,12 @@ ad1848_round_blocksize(addr, blk)
 }
 
 int
-ad1848_open(sc, dev, flags)
-    struct ad1848_softc *sc;
-    dev_t dev;
+ad1848_open(addr, flags)
+    void *addr;
     int flags;
 {
+    struct ad1848_softc *sc = addr;
+
     DPRINTF(("ad1848_open: sc=%p\n", sc));
 
     sc->sc_intr = 0;
@@ -1192,7 +1204,7 @@ ad1848_close(addr)
     void *addr;
 {
     struct ad1848_softc *sc = addr;
-    register u_char r;
+    u_char r;
     
     sc->sc_intr = 0;
 
@@ -1307,7 +1319,7 @@ ad1848_commit_settings(addr)
 
 void
 ad1848_reset(sc)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
 {
     u_char r;
     
@@ -1332,7 +1344,7 @@ ad1848_reset(sc)
 
 int
 ad1848_set_speed(sc, argp)
-    register struct ad1848_softc *sc;
+    struct ad1848_softc *sc;
     u_long *argp;
 {
     /*
@@ -1410,7 +1422,7 @@ int
 ad1848_halt_out_dma(addr)
     void *addr;
 {
-    register struct ad1848_softc *sc = addr;
+    struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_halt_out_dma\n"));
@@ -1426,7 +1438,7 @@ int
 ad1848_halt_in_dma(addr)
     void *addr;
 {
-    register struct ad1848_softc *sc = addr;
+    struct ad1848_softc *sc = addr;
     u_char reg;
     
     DPRINTF(("ad1848: ad1848_halt_in_dma\n"));
@@ -1442,7 +1454,7 @@ int
 ad1848_cont_out_dma(addr)
     void *addr;
 {
-    register struct ad1848_softc *sc = addr;
+    struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_cont_out_dma %s\n", sc->sc_locked?"(locked)":""));
@@ -1457,7 +1469,7 @@ int
 ad1848_cont_in_dma(addr)
     void *addr;
 {
-    register struct ad1848_softc *sc = addr;
+    struct ad1848_softc *sc = addr;
     u_char reg;
 	
     DPRINTF(("ad1848: ad1848_cont_in_dma %s\n", sc->sc_locked?"(locked)":""));
@@ -1497,8 +1509,8 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     void (*intr) __P((void *));
     void *arg;
 {
-    register struct ad1848_softc *sc = addr;
-    register u_char reg;
+    struct ad1848_softc *sc = addr;
+    u_char reg;
     
     if (sc->sc_locked) {
 	DPRINTF(("ad1848_dma_input: locked\n"));
@@ -1582,8 +1594,8 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     void (*intr) __P((void *));
     void *arg;
 {
-    register struct ad1848_softc *sc = addr;
-    register u_char reg;
+    struct ad1848_softc *sc = addr;
+    u_char reg;
     
     if (sc->sc_locked) {
 	DPRINTF(("ad1848_dma_output: locked\n"));
@@ -1637,7 +1649,7 @@ int
 ad1848_intr(arg)
 	void *arg;
 {
-    register struct ad1848_softc *sc = arg;
+    struct ad1848_softc *sc = arg;
     int retval = 0;
     u_char status;
     
@@ -1707,4 +1719,11 @@ ad1848_mappage(addr, mem, off, prot)
 	int prot;
 {
 	return isa_mappage(mem, off, prot);
+}
+
+int
+ad1848_get_props(addr)
+	void *addr;
+{
+	return AUDIO_PROP_MMAP;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.27 1997/06/16 06:35:27 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.27.4.1 1997/08/23 07:09:54 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -38,8 +38,8 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include "adbvar.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
 
 extern	struct mac68k_machine_S mac68k_machine;
 
@@ -317,16 +317,55 @@ adb_init()
 		/* Print out the glory */
 		printf("adb: ");
 		switch (adbdata.origADBAddr) {
+		case ADBADDR_SECURE:
+			printf("security dongle (%d)", adbdata.devType);
+			break;
 		case ADBADDR_MAP:
 			switch (adbdata.devType) {
 			case ADB_STDKBD:
-				printf("keyboard");
+				printf("standard keyboard");
 				break;
 			case ADB_EXTKBD:
 				printf("extended keyboard");
 				break;
+			case ADB_EXTISOKBD:
+				printf("extended keyboard (ISO layout)");
+				break;
+			case ADB_KBDII:
+				printf("keyboard II");
+				break;
+			case ADB_ISOKBDII:
+				printf("keyboard II (ISO layout)");
+				break;
 			case ADB_PBKBD:
 				printf("PowerBook keyboard");
+				break;
+			case ADB_PBISOKBD:
+				printf("PowerBook keyboard (ISO layout)");
+				break;
+			case ADB_ADJKPD:
+				printf("adjustable keypad");
+				break;
+			case ADB_ADJKBD:
+				printf("adjustable keyboard");
+				break;
+			case ADB_ADJISOKBD:
+				printf("adjustable keyboard (ISO layout)");
+				break;
+			case ADB_ADJJAPKBD:
+				printf("adjustable keyboard (Japanese layout)");
+				break;
+			case ADB_PBEXTISOKBD:
+				printf("PowerBook extended keyboard (ISO layout)");
+				break;
+			case ADB_PBEXTJAPKBD:
+				printf("PowerBook extended keyboard (Japanese layout)");
+				break;
+			case ADB_PBEXTKBD:
+				printf("PowerBook extended keyboard");
+				break;
+			case ADB_DESIGNKBD:
+				printf("extended keyboard");
 				break;
 			default:
 				printf("mapped device (%d)",
@@ -381,11 +420,16 @@ adb_init()
 			}
 			break;
 		case ADBADDR_ABS:
-			printf("absolute positioning device (tablet?) (%d)", adbdata.devType);
+			printf("absolute positioning device (tablet?) (%d)",
+			    adbdata.devType);
+			break;
+		case ADBADDR_DATATX:
+			printf("data transfer device (modem?) (%d)",
+			    adbdata.devType);
 			break;
 		default:
-			printf("unknown type device, (def %d, handler %d)", adbdata.origADBAddr,
-			    adbdata.devType);
+			printf("unknown type device, (def %d, handler %d)",
+			    adbdata.origADBAddr, adbdata.devType);
 			break;
 		}
 		printf(" at %d\n", adbaddr);

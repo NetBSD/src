@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1997/07/10 02:36:46 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.1 1997/08/23 07:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -73,6 +73,10 @@
 
 #include <machine/pio.h>
 
+#ifndef __BUS_SPACE_COMPAT_OLDDEFS
+#define	__BUS_SPACE_COMPAT_OLDDEFS
+#endif
+
 /*
  * Values for the i386 bus space tag, not to be used directly by MI code.
  */
@@ -93,19 +97,22 @@ typedef	u_long bus_space_handle_t;
 
 /*
  *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
- *	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
  *
  * Map a region of bus space.
  */
 
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
+
 int	i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+	    bus_size_t size, int flags, bus_space_handle_t *bshp));
 /* like map, but without extent map checking/allocation */
 int	_i386_memio_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+	    bus_size_t size, int flags, bus_space_handle_t *bshp));
 
-#define	bus_space_map(t, a, s, c, hp)					\
-	i386_memio_map((t), (a), (s), (c), (hp))
+#define	bus_space_map(t, a, s, f, hp)					\
+	i386_memio_map((t), (a), (s), (f), (hp))
 
 /*
  *	int bus_space_unmap __P((bus_space_tag_t t,
@@ -137,7 +144,7 @@ int	i386_memio_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
- *	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+ *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
  *	    bus_space_handle_t *bshp));
  *
  * Allocate a region of bus space.
@@ -145,11 +152,11 @@ int	i386_memio_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 int	i386_memio_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_size_t boundary, int flags, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp));
 
-#define bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
-	i386_memio_alloc((t), (rs), (re), (s), (a), (b), (c), (ap), (hp))
+#define bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
+	i386_memio_alloc((t), (rs), (re), (s), (a), (b), (f), (ap), (hp))
 
 /*
  *	int bus_space_free __P((bus_space_tag_t t,
@@ -416,7 +423,7 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*
@@ -648,7 +655,7 @@ bus_space_set_region_4(t, h, o, v, c)
 #endif
 
 /*
- *	void bus_space_copy_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
  *	    size_t count));
@@ -657,18 +664,18 @@ bus_space_set_region_4(t, h, o, v, c)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static __inline void bus_space_copy_1 __P((bus_space_tag_t,
+static __inline void bus_space_copy_region_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
-static __inline void bus_space_copy_2 __P((bus_space_tag_t,
+static __inline void bus_space_copy_region_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
-static __inline void bus_space_copy_4 __P((bus_space_tag_t,
+static __inline void bus_space_copy_region_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
 
 static __inline void
-bus_space_copy_1(t, h1, o1, h2, o2, c)
+bus_space_copy_region_1(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -679,17 +686,35 @@ bus_space_copy_1(t, h1, o1, h2, o2, c)
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
 
-	if (t == I386_BUS_SPACE_IO)
-		for (; c != 0; c--, addr1++, addr2++)
-			outb(addr2, inb(addr1));
-	else
-		for (; c != 0; c--, addr1++, addr2++)
-			*(volatile u_int8_t *)(addr2) =
-			    *(volatile u_int8_t *)(addr1);
+	if (t == I386_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1++, addr2++)
+				outb(addr2, inb(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += (c - 1), addr2 += (c - 1);
+			    c != 0; c--, addr1--, addr2--)
+				outb(addr2, inb(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1++, addr2++)
+				*(volatile u_int8_t *)(addr2) =
+				    *(volatile u_int8_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += (c - 1), addr2 += (c - 1);
+			    c != 0; c--, addr1--, addr2--)
+				*(volatile u_int8_t *)(addr2) =
+				    *(volatile u_int8_t *)(addr1);
+		}
+	}
 }
 
 static __inline void
-bus_space_copy_2(t, h1, o1, h2, o2, c)
+bus_space_copy_region_2(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -700,17 +725,35 @@ bus_space_copy_2(t, h1, o1, h2, o2, c)
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
 
-	if (t == I386_BUS_SPACE_IO)
-		for (; c != 0; c--, addr1 += 2, addr2 += 2)
-			outw(addr2, inw(addr1));
-	else
-		for (; c != 0; c--, addr1 += 2, addr2 += 2)
-			*(volatile u_int16_t *)(addr2) =
-			    *(volatile u_int16_t *)(addr1);
+	if (t == I386_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 2, addr2 += 2)
+				outw(addr2, inw(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+			    c != 0; c--, addr1 -= 2, addr2 -= 2)
+				outw(addr2, inw(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 2, addr2 += 2)
+				*(volatile u_int16_t *)(addr2) =
+				    *(volatile u_int16_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
+			    c != 0; c--, addr1 -= 2, addr2 -= 2)
+				*(volatile u_int16_t *)(addr2) =
+				    *(volatile u_int16_t *)(addr1);
+		}
+	}
 }
 
 static __inline void
-bus_space_copy_4(t, h1, o1, h2, o2, c)
+bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
 	bus_size_t o1;
@@ -721,18 +764,49 @@ bus_space_copy_4(t, h1, o1, h2, o2, c)
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
 
-	if (t == I386_BUS_SPACE_IO)
-		for (; c != 0; c--, addr1 += 4, addr2 += 4)
-			outl(addr2, inl(addr1));
-	else
-		for (; c != 0; c--, addr1 += 4, addr2 += 4)
-			*(volatile u_int32_t *)(addr2) =
-			    *(volatile u_int32_t *)(addr1);
+	if (t == I386_BUS_SPACE_IO) {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 4, addr2 += 4)
+				outl(addr2, inl(addr1));
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+			    c != 0; c--, addr1 -= 4, addr2 -= 4)
+				outl(addr2, inl(addr1));
+		}
+	} else {
+		if (addr1 >= addr2) {
+			/* src after dest: copy forward */
+			for (; c != 0; c--, addr1 += 4, addr2 += 4)
+				*(volatile u_int32_t *)(addr2) =
+				    *(volatile u_int32_t *)(addr1);
+		} else {
+			/* dest after src: copy backwards */
+			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
+			    c != 0; c--, addr1 -= 4, addr2 -= 4)
+				*(volatile u_int32_t *)(addr2) =
+				    *(volatile u_int32_t *)(addr1);
+		}
+	}
 }
 
 #if 0	/* Cause a link error for bus_space_copy_8 */
-#define	bus_space_copy_8	!!! bus_space_copy_8 unimplemented !!!
+#define	bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
 #endif
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#endif
+
 
 /*
  * Bus read/write barrier methods.
@@ -746,8 +820,15 @@ bus_space_copy_4(t, h1, o1, h2, o2, c)
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
-#define	BUS_BARRIER_READ	0x01		/* force read barrier */
-#define	BUS_BARRIER_WRITE	0x02		/* force write barrier */
+#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
+#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+#endif
+
 
 /*
  * Flags used in various bus DMA methods.

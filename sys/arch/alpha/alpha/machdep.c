@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.81 1997/07/24 23:52:10 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.81.2.1 1997/08/23 07:06:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 1997/07/24 23:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.1 1997/08/23 07:06:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ alpha_init(pfn, ptb, bim, bip)
 			break;
 
 		default:
-			printf("warning: bogus bootinfo version %d\n",
+			printf("warning: unknown bootinfo version %d\n",
 			    bootinfo.version);
 		}
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.6 1997/06/16 06:36:28 scottr Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.6.4.1 1997/08/23 07:10:37 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -83,22 +83,44 @@ typedef struct adb_dev_s{
 
 
 	/* Interesting default addresses */
-#define ADBADDR_MAP	2
-#define ADBADDR_REL	3
-#define ADBADDR_ABS	4
+#define	ADBADDR_SECURE	1		/* Security dongles */
+#define ADBADDR_MAP	2		/* Mapped devices (keyboards/pads) */
+#define ADBADDR_REL	3		/* Relative positioning devices
+					   (mice, trackballs/pads) */
+#define ADBADDR_ABS	4		/* Absolute positioning devices
+					   (graphics tablets) */
+#define ADBADDR_DATATX	5
+#define ADBADDR_RSRVD	6		/* Reserved by Apple */
+#define ADBADDR_MISC	7		/* Miscellaneous appliances */
+#define ADBADDR_DONGLE	ADBADDR_SECURE
 #define ADBADDR_KBD	ADBADDR_MAP
 #define ADBADDR_MS	ADBADDR_REL
 #define ADBADDR_TABLET	ADBADDR_ABS
+#define ADBADDR_MODEM	ADBADDR_DATATX
 
 
-	/* Interesting handler IDs */
+	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_EXTISOKBD	5
+#define ADB_KBDII	8
+#define ADB_ISOKBDII	9
 #define ADB_PBKBD	12
+#define ADB_PBISOKBD	13
+#define ADB_ADJKPD	14
+#define ADB_ADJKBD	16
+#define ADB_ADJISOKBD	17
+#define ADB_ADJJAPKBD	18
+#define ADB_PBEXTISOKBD	20
+#define ADB_PBEXTJAPKBD	21
+#define ADB_PBEXTKBD	24
+#define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
+
+	/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
 #define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
-#define ADBMS_EXTENDED	4
+#define ADBMS_EXTENDED	4	/* Extended mouse protocol */
 #define ADBMS_USPEED	47	/* MicroSpeed mouse */
 
 

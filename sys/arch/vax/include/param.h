@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.23 1997/02/24 23:23:06 fvdl Exp $    */
+/*      $NetBSD: param.h,v 1.23.4.1 1997/08/23 07:12:25 thorpej Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -189,11 +189,13 @@
 #define vunmapbuf(p,q)
 #endif
 
+#ifdef _KERNEL
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
 void	delay __P((int));
 #endif
 
 #define	DELAY(x) delay(x)
+#endif /* _KERNEL */
 
 #endif /* _VAX_PARAM_H_ */

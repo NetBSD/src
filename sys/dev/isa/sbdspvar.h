@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.26 1997/07/28 20:56:23 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.26.2.1 1997/08/23 07:13:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -127,7 +127,9 @@ struct sbdsp_softc {
 #define SBM_NONE	0
 #define SBM_CT1335	1
 #define SBM_CT1345	2
-#define SBM_CT1745	3
+#define SBM_CT1XX5	3
+#define SBM_CT1745	4
+#define ISSBM1745(x) ((x)->sc_mixer_model >= SBM_CT1XX5)
 
 	u_int	sc_model;		/* DSP model */
 #define SB_UNK	-1
@@ -137,6 +139,10 @@ struct sbdsp_softc {
 #define SB_PRO	3			/* SB Pro */
 #define SB_JAZZ	4			/* Jazz 16 */
 #define SB_16	5			/* SB 16 */
+#define SB_32	6			/* SB AWE 32 */
+#define SB_64	7			/* SB AWE 64 */
+
+#define SB_NAMES { "SB_1", "SB_2.0", "SB_2.x", "SB_Pro", "Jazz_16", "SB_16", "SB_AWE_32", "SB_AWE_64" }
 
 	u_int	sc_version;		/* DSP version */
 #define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
@@ -145,10 +151,10 @@ struct sbdsp_softc {
 
 #define ISSBPRO(sc) ((sc)->sc_model == SB_PRO || (sc)->sc_model == SB_JAZZ)
 #define ISSBPROCLASS(sc) ((sc)->sc_model >= SB_PRO)
-#define ISSB16CLASS(sc) ((sc)->sc_model == SB_16)
+#define ISSB16CLASS(sc) ((sc)->sc_model >= SB_16)
 
 #ifdef _KERNEL
-int	sbdsp_open __P((struct sbdsp_softc *, dev_t, int));
+int	sbdsp_open __P((void *, int));
 void	sbdsp_close __P((void *));
 
 int	sbdsp_probe __P((struct sbdsp_softc *));
@@ -206,5 +212,7 @@ void 	*sb_malloc __P((void *, unsigned long, int, int));
 void	sb_free __P((void *, void *, int));
 unsigned long sb_round __P((void *, unsigned long));
 int	sb_mappage __P((void *, void *, int, int));
+
+int	sbdsp_get_props __P((void *));
 
 #endif

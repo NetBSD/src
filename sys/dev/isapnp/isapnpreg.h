@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.4 1997/03/20 10:48:02 mycroft Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.4.4.1 1997/08/23 07:13:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -48,6 +48,7 @@
 #define ISAPNP_RDDATA_MAX	0x3ff
 
 #define ISAPNP_LFSR_INIT	0x6A	/* Initial value of LFSR sequence */
+#define ISAPNP_LFSR_LENGTH	32	/* Number of values in LFSR sequence */
 				/* Formula to compute the next value */
 #define ISAPNP_LFSR_NEXT(v) (((v) >> 1) | (((v) & 1) ^ (((v) & 2) >> 1)) << 7)
 

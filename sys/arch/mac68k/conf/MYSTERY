@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.15 1997/07/23 06:42:40 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.15.2.1 1997/08/23 07:09:47 thorpej Exp $
 #
 # MYSTERY
 
@@ -34,7 +34,7 @@ file-system	PROCFS		# Process filesystem
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	QUOTA		# fast filesystem with user and group quotas
-options 	NFSSERVER	# Sun NFS-compatible filesystem
+#options 	NFSSERVER	# Sun NFS-compatible filesystem
 
 #options 	SCSIDEBUG
 options 	NCR5380_DEBUG

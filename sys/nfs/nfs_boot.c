@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.33 1997/05/27 23:37:39 gwr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.33.4.1 1997/08/23 07:14:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -115,6 +115,7 @@ nfs_boot_init(nd, procp)
 	struct proc *procp;
 {
 	struct ifreq ireq;
+	struct ifaliasreq iareq;
 	struct in_addr my_ip, gw_ip;
 	struct sockaddr_in bp_sin;
 	struct sockaddr_in *sin;
@@ -183,12 +184,19 @@ nfs_boot_init(nd, procp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
 	 */
-	sin = (struct sockaddr_in *)&ireq.ifr_addr;
-	bzero((caddr_t)sin, sizeof(*sin));
+	bzero(&iareq, sizeof(iareq));
+	bcopy(ifp->if_xname, iareq.ifra_name, IFNAMSIZ);
+	sin = (struct sockaddr_in *)&iareq.ifra_addr;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
-	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
+#ifdef NFS_BOOT_NETMASK
+	sin = (struct sockaddr_in *)&iareq.ifra_mask;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = htonl(NFS_BOOT_NETMASK);
+#endif
+	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
 	if (error) {
 		printf("nfs_boot: set if addr, error=%d\n", error);
 		goto out;
@@ -268,11 +276,13 @@ nfs_boot_init(nd, procp)
 		goto out;
 	}
 
+#if 0
 	error = bp_getfile(&nd->nd_boot, "swap", &nd->nd_swap);
 	if (error) {
 		printf("nfs_boot: bootparam get swap: %d", error);
 		error = 0;
 	}
+#endif
 
  out:
 	if (so) soclose(so);

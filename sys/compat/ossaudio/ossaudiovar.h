@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.2 1997/07/27 01:16:42 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.2.2.1 1997/08/23 07:12:33 thorpej Exp $	*/
 struct oss_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
@@ -107,9 +107,11 @@ struct oss_sys_ioctl_args {
 #define OSS_SOUND_MIXER_READ_STEREODEVS	OSS_MIXER_READ(OSS_SOUND_MIXER_STEREODEVS)
 #define OSS_SOUND_MIXER_READ_CAPS	OSS_MIXER_READ(OSS_SOUND_MIXER_CAPS)
 
-#define OSS_MIXER_WRITE(dev)		_OSS_IOWR('M', dev, int)
+#define OSS_MIXER_WRITE(dev)		_OSS_IOW('M', dev, int)
+#define OSS_MIXER_WRITE_R(dev)		_OSS_IOWR('M', dev, int)
 
 #define OSS_SOUND_MIXER_WRITE_RECSRC	OSS_MIXER_WRITE(OSS_SOUND_MIXER_RECSRC)
+#define OSS_SOUND_MIXER_WRITE_R_RECSRC	OSS_MIXER_WRITE_R(OSS_SOUND_MIXER_RECSRC)
 
 #define OSS_GET_DEV(com) ((com) & 0xff)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.32 1997/07/28 20:56:19 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.32.2.1 1997/08/23 07:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -175,8 +175,6 @@ int	pcdprobe __P((struct device *, void *, void *));
 void	pcdattach __P((struct device *, struct device *, void *));
 #endif
 
-int	spopen __P((dev_t, int));
-
 int	pssintr __P((void *));
 #ifdef notyet
 int	mpuintr __P((void *));
@@ -230,7 +228,7 @@ void	wss_dump_regs __P((struct ad1848_softc *));
  */
 
 struct audio_hw_if pss_audio_if = {
-	spopen,
+	ad1848_open,
 	ad1848_close,
 	NULL,
 	ad1848_query_encoding,
@@ -259,7 +257,7 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_free,
 	ad1848_round,
         ad1848_mappage,
-	AUDIO_PROP_MMAP
+	ad1848_get_props,
 };
 
 
@@ -1038,7 +1036,6 @@ pssattach(parent, self, aux)
     int iobase = ia->ia_iobase;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
-    int err;
     
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
@@ -1063,8 +1060,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc)) != 0)
-	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
+    audio_attach_mi(&pss_audio_if, 0, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
 }
 
 void
@@ -1179,24 +1175,6 @@ pss_from_vol(cp, vol)
 	return(1);
     }
     return(0);
-}
-
-int
-spopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct ad1848_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= sp_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = sp_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return ad1848_open(sc, dev, flags);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.21 1997/05/23 21:20:18 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.21.4.1 1997/08/23 07:13:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -135,9 +135,11 @@
 
 #define SB_STEREO_GAIN(left, right) ((left) | ((right) >> 4))
 #define SB_MIC_GAIN(v) ((v) >> 5)
-#define SB_ADJUST_MIC_GAIN(sc, x) (ISSB16CLASS(sc) ? (x) & 0xf8 : (x) & 0xc0)
-#define SB_ADJUST_GAIN(sc, x) (ISSB16CLASS(sc) ? (x) & 0xf8 : (x) & 0xe0)
-#define SB_ADJUST_2_GAIN(sc, x) (x & 0xc0)
+
+#define SB_ADJUST_MIC_GAIN(sc, x) sbdsp_adjust((x), ISSB16CLASS(sc) ? 0xf8 : 0xc0)
+#define SB_ADJUST_GAIN(sc, x)     sbdsp_adjust((x), ISSB16CLASS(sc) ? 0xf8 : 0xe0)
+#define SB_ADJUST_2_GAIN(sc, x)   sbdsp_adjust((x), 0xc0)
+
 #define SB_1335_GAIN(x) ((x) >> 4)
 #define SB_1335_MASTER_GAIN(x) ((x) >> 5)
 
@@ -203,6 +205,10 @@
 #define 	SB_SPKR_OFF	0x00
 #define 	SB_SPKR_ON	0xff
 #define SB_DSP_VERSION		0xe1	/* get version number */
+
+#define SB_BMODE_UNSIGNED	0x00
+#define SB_BMODE_SIGNED		0x10
+#define SB_BMODE_STEREO		0x20
 
 /* Some of these come from linux driver (It serves as convenient unencumbered
    documentation) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.10 1997/06/15 20:20:10 scottr Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.10.4.1 1997/08/23 07:10:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -52,9 +52,9 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include "obiovar.h"
-#include "if_snreg.h"
-#include "if_snvar.h"
+#include <mac68k/dev/obiovar.h>
+#include <mac68k/dev/if_snreg.h>
+#include <mac68k/dev/if_snvar.h>
 
 #define SONIC_REG_BASE	0x50F0A000
 #define SONIC_PROM_BASE	0x50F08000

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.3 1997/06/06 23:46:42 thorpej Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.3.4.1 1997/08/23 07:13:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -51,9 +51,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 
 #ifndef _KERNEL
 
+# include <stdlib.h>
 # include <string.h>
 # include <unistd.h>
-# include <stdlib.h>
 
 # define ISAPNP_WRITE_ADDR(sc, v) outb(ISAPNP_ADDR, v)
 # define ISAPNP_WRITE_DATA(sc, v) outb(ISAPNP_WRDATA, v)
@@ -63,8 +63,6 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 # define ISAPNP_MALLOC(a) malloc(a)
 # define ISAPNP_FREE(a) free(a)
 
-# define bus_space_map(a, b, c, d, e)	0
-# define bus_space_unmap(a, b, c)
 # define panic printf
 
 #else
@@ -74,13 +72,13 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 
 # define ISAPNP_WRITE_ADDR(sc, v) \
     bus_space_write_1(sc->sc_iot, sc->sc_addr_ioh, 0, v)
-#define ISAPNP_WRITE_DATA(sc, v) \
+# define ISAPNP_WRITE_DATA(sc, v) \
     bus_space_write_1(sc->sc_iot, sc->sc_wrdata_ioh, 0, v)
-#define ISAPNP_READ_DATA(sc) \
+# define ISAPNP_READ_DATA(sc) \
     bus_space_read_1(sc->sc_iot, sc->sc_read_ioh, 0)
 
-#define ISAPNP_MALLOC(a) malloc(a, M_DEVBUF, M_WAITOK)
-#define ISAPNP_FREE(a)	free(a, M_DEVBUF)
+# define ISAPNP_MALLOC(a) malloc(a, M_DEVBUF, M_WAITOK)
+# define ISAPNP_FREE(a) free(a, M_DEVBUF)
 
 #endif
 
@@ -133,6 +131,7 @@ struct isapnp_attach_args {
 
 	char	ipa_devident[ISAPNP_MAX_IDENT];
 	char	ipa_devlogic[ISAPNP_MAX_DEVCLASS];
+	char	ipa_devcompat[ISAPNP_MAX_DEVCLASS];
 	char	ipa_devclass[ISAPNP_MAX_DEVCLASS];
 
 	u_char	ipa_pref;

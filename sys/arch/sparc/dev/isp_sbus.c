@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.6 1997/06/08 06:35:45 thorpej Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.6.4.1 1997/08/23 07:12:05 thorpej Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -69,19 +69,23 @@ static struct ispmdvec mdvec = {
 	isp_sbus_dmateardown,
 	NULL,
 	NULL,
+	NULL,
 	ISP_RISC_CODE,
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
+	ISP_CODE_VERSION,
+	0,
 	0
 };
 
 struct isp_sbussoftc {
 	struct ispsoftc sbus_isp;
+	sdparam sbus_dev;
 	struct intrhand sbus_ih;
 	volatile u_char *sbus_reg;
 	int sbus_node;
 	int sbus_pri;
-	vm_offset_t sbus_kdma_allocs[RQUEST_QUEUE_LEN];
+	vm_offset_t sbus_kdma_allocs[MAXISPREQUEST];
 };
 
 
@@ -136,6 +140,9 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_node = ca->ca_ra.ra_node;
 
 	sbc->sbus_isp.isp_mdvec = &mdvec;
+	sbc->sbus_isp.isp_type = ISP_HA_SCSI_UNKNOWN;
+	sbc->sbus_isp.isp_param = &sbc->sbus_dev;
+	bzero(sbc->sbus_isp.isp_param, sizeof (sdparam));
 	isp_reset(&sbc->sbus_isp);
 	if (sbc->sbus_isp.isp_state != ISP_RESETSTATE) {
 		return;
@@ -223,7 +230,7 @@ isp_sbus_mbxdma(isp)
 	/*
 	 * Allocate and map the request queue.
 	 */
-	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
+	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	isp->isp_rquest = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_rquest == 0)
 		return (1);
@@ -235,7 +242,7 @@ isp_sbus_mbxdma(isp)
 	/*
 	 * Allocate and map the result queue.
 	 */
-	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
+	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
 	isp->isp_result = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_result == 0)
 		return (1);
@@ -265,11 +272,11 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
-		rq->req_flags |= REQFLAG_DATA_IN;
 		return (0);
 	}
 
-	if (rq->req_handle >= RQUEST_QUEUE_LEN) {
+	if (rq->req_handle > RQUEST_QUEUE_LEN(isp) ||
+	    rq->req_handle < 1) {
 		panic("%s: bad handle (%d) in isp_sbus_dmasetup\n",
 			isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
@@ -284,11 +291,11 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		kdvma = (vm_offset_t) xs->data;
 	}
 
-	if (sbc->sbus_kdma_allocs[rq->req_handle] != (vm_offset_t) 0) {
+	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vm_offset_t) 0) {
 		panic("%s: kdma handle already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	sbc->sbus_kdma_allocs[rq->req_handle] = kdvma;
+	sbc->sbus_kdma_allocs[rq->req_handle - 1] = kdvma;
 	if (xs->flags & SCSI_DATA_IN) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
@@ -313,7 +320,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
 	}
 
-	if (handle >= RQUEST_QUEUE_LEN) {
+	if (handle >= RQUEST_QUEUE_LEN(isp)) {
 		panic("%s: bad handle (%d) in isp_sbus_dmateardown\n",
 			isp->isp_name, handle);
 		/* NOTREACHED */
