@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.36 2003/11/18 01:40:18 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.37 2003/11/18 14:11:33 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.36 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.37 2003/11/18 14:11:33 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -227,6 +227,7 @@ mach_e_proc_init(p, vmspace)
 	struct vmspace *vmspace;
 {
 	struct mach_emuldata *med;
+	struct mach_right *mr;
 
 	/* 
 	 * Initialize various things if needed. 
@@ -235,11 +236,36 @@ mach_e_proc_init(p, vmspace)
 	if (mach_cold == 1)
 		mach_init();
 
-	if (!p->p_emuldata)
+	/*
+	 * For Darwin binaries, p->p_emuldata is aways allocated:
+	 * from the previous programm if it had the same emulation,
+	 * or from darwin_e_proc_exec(). In the latter situation, 
+	 * everything has been set to zero.
+	 */
+	if (!p->p_emuldata) 
 		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
 	med = (struct mach_emuldata *)p->p_emuldata;
+
+	/*
+	 * p->p_emudata has med_inited set if we inherited it from 
+	 * the program that called exec(). In that situation, we
+	 * must free anything that will not be used anymore.
+	 */
+	if (med->med_inited != 0) {
+		lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
+		while ((mr = LIST_FIRST(&med->med_right)) != NULL)
+			mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
+		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
+
+		if (--med->med_bootstrap->mp_refcount == 0)
+			mach_port_put(med->med_bootstrap);
+		if (--med->med_kernel->mp_refcount == 0) 
+			mach_port_put(med->med_kernel);
+		if (--med->med_host->mp_refcount == 0)  
+			mach_port_put(med->med_host);  
+	}
 
 	LIST_INIT(&med->med_right);
 	lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
@@ -270,10 +296,18 @@ mach_e_proc_init(p, vmspace)
 	med->med_bootstrap = mach_bootstrap_port;
 	med->med_bootstrap->mp_refcount++;
 
-	bzero(med->med_exc, sizeof(med->med_exc));
+	/* 
+	 * Exception ports are inherited accross exec() calls.
+	 * If the structure is initialized, the ports are just 
+	 * here, so leave them untouched. If the structure is
+	 * uninitalized, the ports are all set to zero, so do
+	 * not touch them either.
+	 */
 
 	med->med_dirty_thid = 1;
 	med->med_suspend = 0;
+	med->med_inited = 1;
+
 	return;
 }
 
@@ -291,7 +325,6 @@ mach_e_proc_exit(p)
 	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
 	while ((mr = LIST_FIRST(&med->med_right)) != NULL)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
-	
 	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
 	if (--med->med_bootstrap->mp_refcount == 0)
@@ -300,6 +333,12 @@ mach_e_proc_exit(p)
 		mach_port_put(med->med_kernel);
 	if (--med->med_host->mp_refcount == 0)  
 		mach_port_put(med->med_host);  
+
+	/*
+	 * Exceptions ports have been released when we
+	 * released all the ports rights asociated with
+	 * the process, so do not touch them now. 
+	 */
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;
