@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $	*/
+/*	$NetBSD: elf.c,v 1.9 2002/04/03 19:03:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $");
+__RCSID("$NetBSD: elf.c,v 1.9 2002/04/03 19:03:09 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -253,7 +253,8 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	ssize_t off = 0;
 	size_t data_hole = 0;
 	char *shstrtab, *strtab;
-	struct elf_section *head, *s, *symtab;
+	struct elf_section *head, *s;
+	extern int symtab;
 	
 	if (read_elf_header(fd, &ehdr) < 0)
 		return -1;
@@ -295,14 +296,16 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	free(strtab);
 
 	/* get symbol table sections */
-	get_symtab(&head);
-	symtab = head;
 	resrvp->sym_symsize = 0;
-	while (symtab) {
-		resrvp->sym_symsize += symtab->size;
-		symtab = symtab->next;
-	}
-	resrvp->sym_size = resrvp->sym_symsize + *strtablen;
+	if (symtab) {
+		struct elf_section *st;
+
+		get_symtab(&head);
+		for(st = head; st; st = st->next)
+			resrvp->sym_symsize += st->size;
+		resrvp->sym_size = resrvp->sym_symsize + *strtablen;
+	} else
+		resrvp->sym_size = 0;
 	free_sections(head);
 
 	return (0);
