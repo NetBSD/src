@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.29 1994/12/27 18:49:09 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.30 1995/01/04 06:03:15 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -208,7 +208,7 @@ msdosfs_close(ap)
 	struct denode *dep = VTODE(vp);
 
 	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED))
-		DE_TIMES(dep, NULL);
+		DE_TIMES(dep);
 	return (0);
 }
 
@@ -247,7 +247,7 @@ msdosfs_getattr(ap)
 	struct denode *dep = VTODE(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
 
-	DE_TIMES(dep, NULL);
+	DE_TIMES(dep);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
