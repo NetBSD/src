@@ -1,71 +1,35 @@
-/*	$NetBSD: bus.h,v 1.2 1997/06/16 04:22:15 jonathan Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.4.1 1997/09/01 20:13:28 thorpej Exp $	*/
 
 /*
- * Copyright Notice:
+ * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
+ * All rights reserved.
  *
- * Copyright (c) 1995, 1996, 1997
- *     Jonathan R. Stone.  All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Jonathan Stone for
+ *      the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * License:
- *
- * This License applies to this software ("Software"), created
- * by Jonathan Stone ("Author").
- *
- * You may use, copy, modify and redistribute this Software without
- * charge, in either source code form, binary form, or both, on the
- * following conditions:
- *
- * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
- * must be included within each copy of the Software in binary code form,
- * and (ii) a complete copy of the above copyright notice and all terms
- * of this License as presented here must be included within each copy of
- * all documentation accompanying or associated with binary code, in any
- * medium, along with a list of the software modules to which the license
- * applies.
- *
- * (b) Source Code: A complete copy of the above copyright notice and all
- * terms of this License as presented here must be included within: (i)
- * each copy of the Software in source code form, and (ii) each copy of
- * all accompanying or associated documentation, in any medium.
- *
- * 2. The following Acknowledgment must be used in communications
- * involving the Software as described below:
- *
- *      This product includes software developed by
- *      Jonathan Stone for the NetBSD Project.
- *
- * The Acknowledgment must be conspicuously and completely displayed
- * whenever the Software, or any software, products or systems containing
- * the Software, are mentioned in advertising, marketing, informational
- * or publicity materials of any kind, whether in print, electronic or
- * other media (except for information provided to support use of
- * products containing the Software by existing users or customers).
- *
- * 3. The name of the Author may not be used to endorse or promote
- * products derived from this Software without specific prior written
- * permission (conditions (1) and (2) above are not considered
- * endorsement or promotion).
- *
- * 4.  This license applies to: (a) all copies of the Software, whether
- * partial or whole, original or modified, and (b) your actions, and the
- * actions of all those who may act on your behalf.  All uses not
- * expressly permitted are reserved to the Author.
- *
- * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
- * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
- * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
- * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
- * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
- * RELATION TO ITS USE OR PERFORMANCE.
- *
- * 6.  If you have a special need for a change in one or more of these
- * license conditions, please contact the Author via electronic mail to
- *
- *     jonathan@NetBSD.ORG
- *
- * or via the contact information on
- *
- *     http://www.NetBSD.ORG/People/Pages/jonathan.html
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 

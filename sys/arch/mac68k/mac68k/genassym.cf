@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 1997/05/13 18:01:06 gwr Exp $
+#	$NetBSD: genassym.cf,v 1.2.4.1 1997/09/01 20:11:59 thorpej Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -182,3 +182,7 @@ define	MMU_68040		MMU_68040
 define	FPU_68881		FPU_68881
 define	FPU_68882		FPU_68882
 define	FPU_68040		FPU_68040
+
+define	MACH_CLASSAV		MACH_CLASSAV
+
+define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)

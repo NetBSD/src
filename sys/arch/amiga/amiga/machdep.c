@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 1997/07/16 00:01:44 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94.2.1 1997/09/01 20:06:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,6 +146,7 @@ void initcpu __P((void));
 void straytrap __P((int, u_short));
 static void netintr __P((void));
 static void call_sicallbacks __P((void));
+static void _softintr_callit __P((void *, void *));
 void intrhand __P((int));
 #if NSER > 0
 void ser_outintr __P((void));
@@ -1503,6 +1504,45 @@ static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
+/*
+ * these are __GENERIC_SOFT_INTERRUPT wrappers; will be replaced
+ * once by the real thing once all drivers are converted.
+ *
+ * to help performance for converted drivers, the YYY_sicallback() function
+ * family can be implemented in terms of softintr_XXX() as an intermediate
+ * measure.
+ */
+
+static void
+_softintr_callit(rock1, rock2)
+	void *rock1, *rock2;
+{
+	(*(void (*)(void *))rock1)(rock2);
+}
+
+void *
+softintr_establish(ipl, func, arg)
+	int ipl;
+	void func __P((void *));
+	void *arg;
+{
+	struct si_callback *si;
+
+	(void)ipl;
+
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	if (si == NULL)
+		return (si);
+
+	si->function = (void *)0;
+	si->rock1 = (void *)func;
+	si->rock2 = arg;
+
+	alloc_sicallback();
+	return ((void *)si);
+}
+
+
 void
 alloc_sicallback()
 {
@@ -1519,6 +1559,16 @@ alloc_sicallback()
 #ifdef DIAGNOSTIC
 	++ncb;
 #endif
+}
+
+void
+softintr_schedule(vsi)
+	void *vsi;
+{
+	struct si_callback *si;
+	si = vsi;
+
+	add_sicallback(_softintr_callit, si->rock1, si->rock2);
 }
 
 void

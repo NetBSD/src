@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.44.2.1 1997/08/23 07:08:47 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.44.2.2 1997/09/01 20:09:59 thorpej Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -17,7 +17,7 @@ options 	MATH_EMULATE	# floating point emulation
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options 	BIOSEXTMEM=... # size of extended memory
+#options 	BIOSEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
 options 	XSERVER,UCONSOLE
@@ -28,9 +28,12 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	DDB		# in-kernel debugger
+#options 	KGDB		# remote debugger
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC	# internal consistency checks
-options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	KTRACE		# system call tracing via ktrace(1)
+options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -41,7 +44,7 @@ options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_12
+options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
@@ -56,6 +59,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 options 	LKM		# loadable kernel modules
 
 #file-system	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
@@ -69,9 +73,11 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 
+#options 	QUOTA		# UFS quotas
+#options 	NFSSERVER	# Network File System server
 options 	FIFO		# FIFOs; RECOMMENDED
-#options  	NFSSERVER	# Network File System server
-#options  	QUOTA		# UFS quotas
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -81,9 +87,14 @@ options 	NS		# XNS
 options 	ISO,TPIP	# OSI
 options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 config		netbsd	root on ? type nfs
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=9600
+
+options 	EISAVERBOSE	# verbose EISA device messages
+options 	PCIVERBOSE	# verbose PCI device messages
+options 	SCSIVERBOSE	# verbose SCSI error messages
 
 mainbus0 at root
 
@@ -93,10 +104,12 @@ eisa0	at mainbus0
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pci*	at pchb?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at mainbus0			# all other ISA
+#isapnp0	at isa?				# ISA Plug-and-Play
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -105,11 +118,12 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+#options 	COM_HAYESP		# adds Hayes ESP serial board support
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
 #com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
@@ -155,6 +169,8 @@ mms1	at isa? port 0x238 irq 5
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 #scsibus* at wds?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -172,7 +188,12 @@ mms1	at isa? port 0x238 irq 5
 #wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq 15
 #wd*	at wdc? drive ?
+#atapibus* at wdc?
+#cd* at atapibus? drive ?
 
+# note: the wt driver conflicts unpleasantly with ed devices at the
+# same I/O address. The probe reprograms their eeproms. Don't
+# uncomment it unless you are actually using it.
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
@@ -181,32 +202,40 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+#ep*	at isapnp?
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
+fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 #audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#audio*	at sb0
+#sb*	at isapnp?
+#audio*	at sb?
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #audio*	at wss0
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #audio*	at pas0
-#gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+#gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis Ultra Sound
 #audio*	at gus0
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+#joy*	at isapnp?
+
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
 
 include	"arch/i386/conf/GENERIC.local"
 
@@ -215,6 +244,7 @@ pseudo-device	bpfilter 4		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipfilter		# IP filter
 
 pseudo-device	pty	16		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

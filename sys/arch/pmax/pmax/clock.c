@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.21 1997/07/22 04:49:58 jonathan Exp $ */
+/* $NetBSD: clock.c,v 1.21.2.1 1997/09/01 20:13:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 1997/07/22 04:49:58 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21.2.1 1997/09/01 20:13:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,6 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 1997/07/22 04:49:58 jonathan Exp $");
 struct device *clockdev;
 const struct clockfns *clockfns;
 int clockinitted;
+#ifdef NTP
+extern int fixtick;
+#endif
 
 void
 clockattach(dev, fns)
@@ -115,6 +118,9 @@ cpu_initclocks()
 	hz = CLOCK_RATE;	/* 256 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
+#ifdef NTP
+	fixtick = tickfix;
+#endif
 	if (tickfix) {
 		int ftp;
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.15.4.1 1997/08/23 07:08:26 thorpej Exp $
+#	$NetBSD: BOOTX,v 1.15.4.2 1997/09/01 20:08:48 thorpej Exp $
 #
 # BOOTX
 #
@@ -95,7 +95,7 @@ pseudo-device	ppp			# ppp
 pseudo-device	pty		16	# Pseudo-tty support
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md		1	# Boot memory disk
+pseudo-device	md		2	# Boot memory disk
 
 #
 # The following sections describe various hardware options.
