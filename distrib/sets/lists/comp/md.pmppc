@@ -1,4 +1,4 @@
-# $NetBSD: md.pmppc,v 1.4 2003/10/24 06:49:37 matt Exp $
+# $NetBSD: md.pmppc,v 1.5 2003/11/07 14:11:21 augustss Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/pmppc			comp-c-include
 ./usr/include/pmppc/ansi.h		comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/pmppc/proc.h		comp-c-include
 ./usr/include/pmppc/profile.h		comp-c-include
 ./usr/include/pmppc/psl.h		comp-c-include
+./usr/include/pmppc/pte.h		comp-c-include
 ./usr/include/pmppc/ptrace.h		comp-c-include
 ./usr/include/pmppc/reg.h		comp-c-include
 ./usr/include/pmppc/reloc.h		comp-c-include
