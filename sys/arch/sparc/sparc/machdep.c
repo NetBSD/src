@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2001/09/24 23:49:32 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.186 2001/10/03 09:37:23 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1448,7 +1448,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_size_t sgsize;
 	vaddr_t va = (vaddr_t)buf;
 	int pagesz = PAGE_SIZE;
-	bus_addr_t dva;
+	vaddr_t dva;
 	pmap_t pmap;
 
 	/*
@@ -1495,7 +1495,7 @@ no_fit:
 
 	if (extent_alloc(dvmamap24, sgsize, pagesz, map->_dm_boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dva) != 0) {
+			 &dva) != 0) {
 		return (ENOMEM);
 	}
 
@@ -1561,7 +1561,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 {
 	struct vm_page *m;
 	paddr_t pa;
-	bus_addr_t dva;
+	vaddr_t dva;
 	bus_size_t sgsize;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
@@ -1576,7 +1576,7 @@ sun4_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)&dva);
+					&dva);
 		if (error)
 			return (error);
 	} else {
@@ -1629,7 +1629,7 @@ sun4_dmamap_unload(t, map)
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
 	int flags = map->_dm_flags;
-	bus_addr_t dva;
+	vaddr_t dva;
 	bus_size_t len;
 	int i, s, error;
 
