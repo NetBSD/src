@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.8 1998/02/12 01:53:24 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.9 1998/08/07 10:38:37 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,6 +103,11 @@ main()
 	if (boot_file[0] != 0)
 		(void)printf("Boot file: %s\n", boot_file);
 	(void)printf("Boot flags: %s\n", boot_flags);
+
+	if (strchr(boot_flags, 'i') || strchr(boot_flags, 'I')) {
+		printf("Boot file: ");
+		gets(boot_file);
+	}
 
 	if (boot_file[0] != '\0')
 		win = (loadfile(name = boot_file, &entry) == 0);
