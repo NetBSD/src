@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.11 2001/01/09 05:06:14 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.12 2001/01/09 06:07:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.11 2001/01/09 05:06:14 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.12 2001/01/09 06:07:01 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -792,7 +792,7 @@ static void
 replydirname(const char *name, const char *message)
 {
 	char *p, *ep;
-	char npath[MAXPATHLEN];
+	char npath[MAXPATHLEN * 2];
 
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
