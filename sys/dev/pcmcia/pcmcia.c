@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.69 2004/08/12 17:31:06 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.70 2004/08/12 19:59:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.69 2004/08/12 17:31:06 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.70 2004/08/12 19:59:07 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -392,25 +392,12 @@ pcmcia_product_lookup(pa, tab, nent, ent_size, matchfn)
 }
 
 void
-pcmcia_socket_settype(dev)
-	struct device  *dev;
+pcmcia_socket_settype(dev, type)
+	struct device *dev;
+	int type;
 {
 	struct pcmcia_softc *sc = (void *)dev;
-	struct pcmcia_function *pf;
-	int type;
 
-	/*
-	 * set the iftype to memory if this card has no functions (not yet
-	 * probed), or only one function, and that is not initialized yet or
-	 * that is memory.
-	 */
-	pf = SIMPLEQ_FIRST(&sc->card.pf_head);
-	if (pf == NULL ||
-	    (SIMPLEQ_NEXT(pf, pf_list) == NULL &&
-	    (pf->cfe == NULL || pf->cfe->iftype == PCMCIA_IFTYPE_MEMORY)))
-		type = PCMCIA_IFTYPE_MEMORY;
-	else
-		type = PCMCIA_IFTYPE_IO;
 	pcmcia_chip_socket_settype(sc->pct, sc->pch, type);
 }
 
@@ -575,7 +562,7 @@ pcmcia_function_enable(pf)
 	}
 #endif
 
-	pcmcia_socket_settype(&sc->dev);
+	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
 
 #ifdef IT8368E_LEGACY_MODE
 	/* return to I/O mode */
