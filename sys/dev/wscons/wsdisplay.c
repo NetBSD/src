@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.43 2000/12/04 13:22:17 ad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.44 2000/12/30 01:41:51 sato Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.43 2000/12/04 13:22:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.44 2000/12/30 01:41:51 sato Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -988,6 +988,10 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			    scr->scr_flags |= SCR_GRAPHICS;
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
+
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+		    flag, p);
+
 	    return (0);
 #undef d
 
@@ -1783,9 +1787,15 @@ wsdisplay_pollc(dev, on)
 	dev_t dev;
 	int on;
 {
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 
 	wsdisplay_cons_pollmode = on;
 
+	/* notify to fb drivers */
+	if (sc->sc_accessops->pollc != NULL)
+		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
+
+	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
 		(*wsdisplay_cons_kbd_pollc)(dev, on);
 }
