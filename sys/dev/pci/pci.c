@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.59 2002/05/15 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.60 2002/05/15 18:39:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.59 2002/05/15 18:13:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.60 2002/05/15 18:39:47 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -407,8 +407,18 @@ pci_enumerate_bus_generic(struct pci_softc *sc,
 	const struct pci_quirkdata *qd;
 	pcireg_t id, bhlcr;
 	pcitag_t tag;
+#ifdef __PCI_BUS_DEVORDER
+	char devs[32];
+	int i;
+#endif
 
-	for (device = 0; device < sc->sc_maxndevs; device++) {
+#ifdef __PCI_BUS_DEVORDER
+	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
+	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
+#else
+	for (device = 0; device < sc->sc_maxndevs; device++)
+#endif
+	{
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
