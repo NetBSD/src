@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1997/10/01 02:17:06 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1997/11/02 01:42:44 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 1997/10/01 02:17:06 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 1997/11/02 01:42:44 mjacob Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+#include <sys/resource.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -81,9 +82,14 @@ main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
+	struct rlimit r;
 	int ch;
 	int ret = 0;
 
+	if (getrlimit(RLIMIT_DATA, &r) == 0) {
+		r.rlim_cur = r.rlim_max;
+		(void) setrlimit(RLIMIT_DATA, &r);
+	}
 	sync();
 	skipclean = 1;
 	while ((ch = getopt(argc, argv, "b:c:dfm:npy")) != -1) {
