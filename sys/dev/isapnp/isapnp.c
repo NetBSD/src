@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.27 1998/09/05 14:15:25 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.28 1998/10/08 19:59:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  * ISA PnP bus autoconfiguration.
  */
 
+#include "isadma.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,7 +50,6 @@
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
@@ -262,6 +263,7 @@ isapnp_alloc_drq(ic, i)
 	isa_chipset_tag_t ic;
 	struct isapnp_pin *i;
 {
+#if NISADMA > 1
 	int b;
 
 	if (i->bits == 0) {
@@ -274,6 +276,7 @@ isapnp_alloc_drq(ic, i)
 			i->num = b;
 			return 0;
 		}
+#endif /* NISADMA > 1 */
 
 	return EINVAL;
 }
