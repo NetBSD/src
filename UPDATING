@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.57 2002/04/10 05:26:15 itojun Exp $
+$NetBSD: UPDATING,v 1.58 2002/04/26 15:54:41 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -291,14 +291,14 @@ for anyone who uses any make(1) features in /etc/mk.conf.
 #!/bin/sh
 . /etc/mk.conf
 
-if [ -z $BSDSRCDIR ] ; then
-    BSDSRCDIR=/usr/src
+if [ -z $NETBSDSRCDIR ] ; then
+    NETBSDSRCDIR=/usr/src
 fi
-if [ \! -d $BSDSRCDIR ] ; then
+if [ \! -d $NETBSDSRCDIR ] ; then
     echo Unable to find sources
     exit 1
 fi
-find $BSDSRCDIR -name \*.o -o -name obj.\* -o -name obj -exec rm \{\} \;
+find $NETBSDSRCDIR -name \*.o -o -name obj.\* -o -name obj -exec rm \{\} \;
 
 if [ -z $BSDOBJDIR ] ; then
     BSDOBJDIR=/usr/obj
@@ -307,7 +307,7 @@ if [ -d $BSDOBJDIR ] ; then
     rm -rf $BSDOBJDIR
 fi
 
-cd $BSDSRCDIR && make cleandir
+cd $NETBSDSRCDIR && make cleandir
 
 ---cut here---
 
