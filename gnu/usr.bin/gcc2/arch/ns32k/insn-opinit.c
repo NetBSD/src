@@ -193,4 +193,7 @@ init_all_optabs ()
   setcc_gen_code[(int) GEU] = CODE_FOR_sgeu;
   setcc_gen_code[(int) LE] = CODE_FOR_sle;
   setcc_gen_code[(int) LEU] = CODE_FOR_sleu;
+  ffs_optab->handlers[(int) QImode].insn_code = CODE_FOR_ffsqi2;
+  ffs_optab->handlers[(int) HImode].insn_code = CODE_FOR_ffshi2;
+  ffs_optab->handlers[(int) SImode].insn_code = CODE_FOR_ffssi2;
 }

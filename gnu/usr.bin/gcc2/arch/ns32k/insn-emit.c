@@ -1532,6 +1532,30 @@ gen_sleu (operand0)
   return gen_rtx (SET, VOIDmode, operand0, gen_rtx (LEU, SImode, cc0_rtx, const0_rtx));
 }
 
+rtx
+gen_ffsqi2 (operand0, operand1)
+     rtx operand0;
+     rtx operand1;
+{
+  return gen_rtx (SET, VOIDmode, operand0, gen_rtx (FFS, QImode, operand1));
+}
+
+rtx
+gen_ffshi2 (operand0, operand1)
+     rtx operand0;
+     rtx operand1;
+{
+  return gen_rtx (SET, VOIDmode, operand0, gen_rtx (FFS, HImode, operand1));
+}
+
+rtx
+gen_ffssi2 (operand0, operand1)
+     rtx operand0;
+     rtx operand1;
+{
+  return gen_rtx (SET, VOIDmode, operand0, gen_rtx (FFS, SImode, operand1));
+}
+
 
 
 void

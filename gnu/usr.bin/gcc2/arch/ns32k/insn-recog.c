@@ -660,8 +660,9 @@ recog_1 (x0, insn, pnum_clobbers)
   if (general_operand (x2, SImode))
     {
       ro[3] = x2;
-      return 157;
-    }
+      if (! TARGET_32532)
+	return 157;
+      }
   goto ret0;
 
   L731:
@@ -678,8 +679,9 @@ recog_1 (x0, insn, pnum_clobbers)
   if (general_operand (x2, SImode))
     {
       ro[3] = x2;
-      return 158;
-    }
+      if (! TARGET_32532)
+	return 158;
+      }
   goto ret0;
  ret0: return -1;
 }
@@ -3580,6 +3582,8 @@ recog_5 (x0, insn, pnum_clobbers)
       goto L1132;
     case LEU:
       goto L1147;
+    case FFS:
+      goto L1170;
     }
   goto ret0;
 
@@ -3712,6 +3716,15 @@ recog_5 (x0, insn, pnum_clobbers)
     return 225;
   goto ret0;
 
+  L1170:
+  x2 = XEXP (x1, 0);
+  if (general_operand (x2, SImode))
+    {
+      ro[1] = x2;
+      return 230;
+    }
+  goto ret0;
+
   L990:
   x1 = XEXP (x0, 1);
   if (GET_MODE (x1) != HImode)
@@ -3740,6 +3753,8 @@ recog_5 (x0, insn, pnum_clobbers)
       goto L1137;
     case LEU:
       goto L1152;
+    case FFS:
+      goto L1166;
     }
   goto ret0;
 
@@ -3872,6 +3887,15 @@ recog_5 (x0, insn, pnum_clobbers)
     return 226;
   goto ret0;
 
+  L1166:
+  x2 = XEXP (x1, 0);
+  if (general_operand (x2, SImode))
+    {
+      ro[1] = x2;
+      return 229;
+    }
+  goto ret0;
+
   L994:
   x1 = XEXP (x0, 1);
   if (GET_MODE (x1) != QImode)
@@ -3900,6 +3924,8 @@ recog_5 (x0, insn, pnum_clobbers)
       goto L1142;
     case LEU:
       goto L1157;
+    case FFS:
+      goto L1162;
     }
   goto ret0;
 
@@ -4030,6 +4056,15 @@ recog_5 (x0, insn, pnum_clobbers)
   x2 = XEXP (x1, 1);
   if (GET_CODE (x2) == CONST_INT && XWINT (x2, 0) == 0 && 1)
     return 227;
+  goto ret0;
+
+  L1162:
+  x2 = XEXP (x1, 0);
+  if (general_operand (x2, SImode))
+    {
+      ro[1] = x2;
+      return 228;
+    }
   goto ret0;
 
   L999:
@@ -4220,7 +4255,7 @@ recog (x0, insn, pnum_clobbers)
 
   L1005:
   x3 = XEXP (x2, 1);
-  if (general_operand (x3, HImode))
+  if (general_operand (x3, SImode))
     {
       ro[0] = x3;
       goto L1006;

@@ -120,7 +120,7 @@ from the machine description file `md'.  */
 #define HAVE_rotrsi3 1
 #define HAVE_rotrhi3 1
 #define HAVE_rotrqi3 1
-#define HAVE_extzv 1
+#define HAVE_extzv (! TARGET_32532)
 #define HAVE_insv 1
 #define HAVE_jump 1
 #define HAVE_beq 1
@@ -156,6 +156,9 @@ from the machine description file `md'.  */
 #define HAVE_sgeu 1
 #define HAVE_sle 1
 #define HAVE_sleu 1
+#define HAVE_ffsqi2 1
+#define HAVE_ffshi2 1
+#define HAVE_ffssi2 1
 
 #ifndef NO_MD_PROTOTYPES
 extern rtx gen_tstsi            PROTO((rtx));
@@ -311,6 +314,9 @@ extern rtx gen_sge              PROTO((rtx));
 extern rtx gen_sgeu             PROTO((rtx));
 extern rtx gen_sle              PROTO((rtx));
 extern rtx gen_sleu             PROTO((rtx));
+extern rtx gen_ffsqi2           PROTO((rtx, rtx));
+extern rtx gen_ffshi2           PROTO((rtx, rtx));
+extern rtx gen_ffssi2           PROTO((rtx, rtx));
 
 #ifdef MD_CALL_PROTOTYPES
 extern rtx gen_call             PROTO((rtx, rtx));
@@ -475,6 +481,9 @@ extern rtx gen_sge ();
 extern rtx gen_sgeu ();
 extern rtx gen_sle ();
 extern rtx gen_sleu ();
+extern rtx gen_ffsqi2 ();
+extern rtx gen_ffshi2 ();
+extern rtx gen_ffssi2 ();
 extern rtx gen_call ();
 extern rtx gen_call_value ();
 #endif  /* NO_MD_PROTOTYPES */

@@ -1,5 +1,5 @@
-/* Configuration for GNU C-compiler for Vax.
-   Copyright (C) 1987 Free Software Foundation, Inc.
+/* Configuration for GNU C-compiler for the ns32532.
+   Copyright (C) 1987, 1993 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -15,7 +15,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	$Id: tconfig.h,v 1.2 1994/06/09 18:59:09 phil Exp $
+*/
 
 /* #defines that need visibility everywhere.  */
 #define FALSE 0
@@ -35,12 +38,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Arguments to use with `exit'.  */
 #define SUCCESS_EXIT_CODE 0
 #define FATAL_EXIT_CODE 33
- 
-#define memcpy(src,dst,len) bcopy ((dst),(src),(len))
-#define memset gcc_memset
-#define memcmp(left,right,len) bcmp ((left),(right),(len))
 
-/* If compiled with GNU C, use the built-in alloca */
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#endif
+/* NetBSD does have atexit.  */
+
+#define HAVE_ATEXIT
+
