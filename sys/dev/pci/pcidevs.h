@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.552 2003/07/14 06:52:40 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.553 2003/07/14 08:01:45 jmmv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.551 2003/07/14 06:51:57 wiz Exp 
+ *	NetBSD: pcidevs,v 1.552 2003/07/14 08:00:43 jmmv Exp 
  */
 
 /*
@@ -980,6 +980,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
 #define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
+#define	PCI_PRODUCT_ATI_RADEON_9200	0x5961		/* Radeon 9200 */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
