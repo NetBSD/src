@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.11 2002/07/19 17:28:29 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.12 2002/08/14 18:50:48 soren Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -248,9 +248,9 @@ operations vector, the corresponding invocation macro, and a
 description of the element.
 .Pp
 .nf
-.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'rearrange blocks as contiguous'u
+.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'Map file into user address space'u
 \fIVector element\fP	\fIMacro\fP	\fIDescription\fP
-.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'rearrange blocks as contiguous'u+6nC
+.ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'Map file into user address space'u+6nC
 .sp 5p
 int (*vop_lookup)() 	VOP_LOOKUP	Lookup file name in name cache
 int (*vop_create)() 	VOP_CREATE	Create a new file
@@ -285,12 +285,12 @@ int (*vop_unlock)() 	VOP_UNLOCK	Wake up process sleeping on lock
 int (*vop_islocked)() 	VOP_ISLOCKED	Test if vnode is locked
 int (*vop_bmap)() 	VOP_BMAP	Logical block number conversion
 int (*vop_print)() 	VOP_PRINT	Print debugging information
-int (*vop_pathconf)() 	VOP_PATHCONF	Implement POSIX pathconf support
+int (*vop_pathconf)() 	VOP_PATHCONF	Return POSIX pathconf data
 int (*vop_advlock)() 	VOP_ADVLOCK	Advisory record locking
 int (*vop_blkatoff)() 	VOP_BLKATOFF	Retrieve buffer from offset
 int (*vop_valloc)() 	VOP_VALLOC	Allocate fs-specific data
 int (*vop_balloc)() 	VOP_BALLOC	Allocate physical blocks
-int (*vop_reallocblks)() 	VOP_REALLOCBLKS	rearrange blocks as contiguous
+int (*vop_reallocblks)() 	VOP_REALLOCBLKS	Rearrange blocks contiguously
 int (*vop_vfree)() 	VOP_VFREE	Release file resources
 int (*vop_truncate)() 	VOP_TRUNCATE	Truncate file and free blocks
 int (*vop_update)() 	VOP_UPDATE	Update time on a file
@@ -1338,6 +1338,7 @@ the filesystem is read-only
 .Xr namei 9 ,
 .Xr vattr 9 ,
 .Xr vfs 9 ,
+.Xr vfsops 9 ,
 .Xr vnode 9
 .Sh HISTORY
 The vnode operations vector, its functions and the corresponding
