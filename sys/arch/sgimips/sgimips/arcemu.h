@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.1 2004/04/10 19:53:48 pooka Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.2 2004/06/08 22:51:21 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -55,12 +55,6 @@ static void *	arcemu_ip12_GetMemoryDescriptor(void *mem);
 
 static void	arcemu_ip12_eeprom_read(void);
 static void	arcemu_ip12_putc(dev_t, int);
-
-/* Prom Vectors */ 
-#define IP12_PROM_REBOOT		(void *)MIPS_PHYS_TO_KSEG1(0x1fc00000)
-#define IP12_PROM_POWER_DOWN		(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018)
-#define IP12_PROM_INTERACTIVE_MODE	(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018)
-#define IP12_PROM_PRINT			(void *)MIPS_PHYS_TO_KSEG1(0x1fc00080)
 
 /* ARCBIOS Component Tree. Represented in linear fashion. */
 static struct arcbios_component ip12_tree[] = {
