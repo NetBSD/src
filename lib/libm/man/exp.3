@@ -30,15 +30,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
-.\"	$Id: exp.3,v 1.4 1993/10/04 18:03:41 jtc Exp $
+.\"	$Id: exp.3,v 1.5 1993/10/29 22:57:27 jtc Exp $
 .\"
 .Dd July 31, 1991
 .Dt EXP 3
 .Os BSD 4
 .Sh NAME
 .Nm exp ,
+.Nm exp2 ,
+.Nm exp10 ,
 .Nm expm1 ,
 .Nm log ,
+.Nm log2 ,
 .Nm log10 ,
 .Nm log1p ,
 .Nm pow
@@ -48,9 +51,15 @@
 .Ft double
 .Fn exp "double x"
 .Ft double
+.Fn exp2 "double x"
+.Ft double
+.Fn exp10 "double x"
+.Ft double
 .Fn expm1 "double x"
 .Ft double
 .Fn log "double x"
+.Ft double
+.Fn log2 "double x"
 .Ft double
 .Fn log10 "double x"
 .Ft double
@@ -70,13 +79,18 @@ function computes the value exp(x)\-1 accurately even for tiny argument
 .Pp
 The
 .Fn log
-function computes the value for the natural logarithm of
-the argument x.
+function computes the value of the natural logarithm of argument 
+.Fa x.
+.Pp
+The
+.Fn log2
+function computes the value of the logarithm of argument
+.Fa x
+to base 2.
 .Pp
 The
 .Fn log10
-function computes the value for the logarithm of
-argument
+function computes the value of the logarithm of argument
 .Fa x
 to base 10.
 .Pp
@@ -96,11 +110,11 @@ to the exponent
 .Sh ERROR (due to Roundoff etc.)
 exp(x), log(x), expm1(x) and log1p(x) are accurate to within 
 an
-.Em up ,
+.Em ulp ,
 and log10(x) to within about 2
-.Em ups ;
+.Em ulps ;
 an
-.Em up
+.Em ulp
 is one
 .Em Unit
 in the
@@ -109,7 +123,7 @@ in the
 The error in
 .Fn pow x y
 is below about 2
-.Em ups
+.Em ulps
 when its
 magnitude is moderate, but increases as
 .Fn pow x y
@@ -121,11 +135,11 @@ field; that is 8 bits for
 and 11 bits for IEEE 754 Double.
 No such drastic loss has been exposed by testing; the worst
 errors observed have been below 20
-.Em ups
+.Em ulps
 for
 .Tn "VAX D" ,
 300
-.Em ups
+.Em ulps
 for
 .Tn IEEE
 754 Double.
@@ -269,7 +283,7 @@ A
 .Fn log
 and
 .Fn pow
-function
+functions
 appeared in
 .At v6 .
 A
