@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.3 2002/05/31 09:28:27 itojun Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.4 2004/09/27 17:06:29 dyoung Exp $	*/
 
 /* "generated automatically" means DO NOT MAKE CHANGES TO config.h.in --
  * make them to acconfig.h and rerun autoheader */
@@ -67,6 +67,27 @@
 /* define if you have ether_ntohost() and it works */
 #undef USE_ETHER_NTOHOST
 
+/* define if libpcap has pcap_version */
+#undef HAVE_PCAP_VERSION
+
+/* define if libpcap has pcap_debug */
+#undef HAVE_PCAP_DEBUG
+
+/* define if libpcap has yydebug */
+#undef HAVE_YYDEBUG
+
+/* define if libpcap has pcap_list_datalinks() */
+#undef HAVE_PCAP_LIST_DATALINKS
+
+/* define if libpcap has pcap_set_datalink() */
+#undef HAVE_PCAP_SET_DATALINK
+
+/* define if libpcap has pcap_datalink_name_to_val() */
+#undef HAVE_PCAP_DATALINK_NAME_TO_VAL
+
+/* define if libpcap has pcap_datalink_val_to_description() */
+#undef HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION
+
 /* define if unaligned memory accesses fail */
 #undef LBL_ALIGN
 
@@ -84,6 +105,7 @@
 
 /* Workaround for missing sized types */
 /* XXX this should move to the more standard uint*_t */
+#undef int8_t
 #undef int16_t
 #undef int32_t
 #undef u_int16_t
