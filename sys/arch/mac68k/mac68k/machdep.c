@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 1997/02/10 22:06:20 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 1997/02/11 07:37:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -95,8 +95,9 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/extent.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -199,6 +200,19 @@ int     physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int     safepri = PSL_LOWIPL;
+
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ *
+ * The extent maps are not static!  Machine-dependent NuBus and on-board
+ * I/O routines need access to them for bus address space allocation.
+ */
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct	extent *iomem_ex;
+static	iomem_malloc_safe;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
@@ -440,6 +454,7 @@ again:
 	/*
 	 * Configure the system.
 	 */
+	iomem_malloc_safe = 1;
 	configure();
 }
 
@@ -2490,6 +2505,20 @@ mac68k_set_io_offsets(base)
 {
 	extern volatile u_char *sccA;
 
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *) base;
@@ -2864,6 +2893,12 @@ printstar(void)
 				movl sp@+,a0");
 }
 
+/*
+ * Console bell callback; modularizes the console terminal emulator
+ * and the audio system, so neither requires direct knowledge of the
+ * other.
+ */
+
 void
 mac68k_set_bell_callback(callback, cookie)
 	int (*callback) __P((void *, int, int, int));
@@ -2896,8 +2931,18 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-	vm_offset_t	va;
-	u_long		pa, endpa;
+	vm_offset_t va;
+	u_long pa, endpa;
+	int error;
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0));
+	if (error)
+		return (error);
 
 	pa = mac68k_trunc_page(bpa + t);
 	endpa = mac68k_round_page((bpa + t + size) - 1);
@@ -2908,9 +2953,17 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 #endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-	if (va == 0)
+	if (va == 0) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
 		return 1;
-	*bshp = (caddr_t)(va + (bpa & PGOFSET));
+	}
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for(; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
@@ -2928,6 +2981,7 @@ bus_space_unmap(t, bsh, size)
 	bus_size_t size;
 {
 	vm_offset_t	va, endva;
+	bus_addr_t bpa;
 
 	va = mac68k_trunc_page(bsh);
 	endva = mac68k_round_page((bsh + size) - 1);
@@ -2937,7 +2991,19 @@ bus_space_unmap(t, bsh, size)
 		panic("bus_space_unmap: overflow");
 #endif
 
+	bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+
+	/*
+	 * Free the kernel virtual mapping.
+	 */
 	kmem_free(kernel_map, va, endva - va);
+
+	if (extent_free(iomem_ex, bpa, size,
+	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n",
+		    bpa, size);
+		printf("bus_space_unmap: can't free region\n");
+	}
 }
 
 int
