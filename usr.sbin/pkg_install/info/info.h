@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.2 1997/06/05 12:59:38 agc Exp $ */
+/* $NetBSD: info.h,v 1.3 1998/10/08 12:57:59 agc Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -51,6 +51,7 @@ extern Boolean AllInstalled;
 extern Boolean Quiet;
 extern char *InfoPrefix;
 extern char PlayPen[];
+extern size_t PlayPenSize;
 extern char *CheckPkg;
 
 extern void	show_file(char *, char *);

@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.8 1998/01/19 00:24:03 hubertf Exp $	*/
+/*	$NetBSD: extract.c,v 1.9 1998/10/08 12:57:58 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.8 1998/01/19 00:24:03 hubertf Exp $");
+__RCSID("$NetBSD: extract.c,v 1.9 1998/10/08 12:57:58 agc Exp $");
 #endif
 #endif
 
@@ -201,7 +201,7 @@ extract_plist(char *home, Package *pkg)
 	    if (last_file == NULL)
 		cleanup(0), errx(2, "no last file specified for '%s' command",
 					p->name);
-	    format_cmd(cmd, p->name, Directory, last_file);
+	    format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
 	    PUSHOUT(Directory);
 	    if (Verbose)
 		printf("extract: execute '%s'\n", cmd);

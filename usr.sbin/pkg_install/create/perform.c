@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.9 1998/08/25 00:54:09 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.10 1998/10/08 12:57:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.9 1998/08/25 00:54:09 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.10 1998/10/08 12:57:59 agc Exp $");
 #endif
 #endif
 
@@ -141,7 +141,7 @@ pkg_perform(char **pkgs)
     }
 
     /* Make a directory to stomp around in */
-    home = make_playpen(PlayPen, 0);
+    home = make_playpen(PlayPen, PlayPenSize, 0);
     signal(SIGINT, cleanup);
     signal(SIGHUP, cleanup);
 
