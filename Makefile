@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 1996/03/18 09:53:11 tls Exp $
+#	$NetBSD: Makefile,v 1.31 1996/03/18 09:55:25 tls Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -26,6 +26,8 @@ regression-tests:
 beforeinstall:
 .ifndef DESTDIR
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+.else
+	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
 .endif
 
 afterinstall:
