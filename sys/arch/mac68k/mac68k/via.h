@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.10 1995/03/25 22:30:48 briggs Exp $	*/
+/*	$NetBSD: via.h,v 1.11 1995/04/13 04:05:13 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -175,7 +175,7 @@ void		VIA_initialize   (void);
 unsigned char	VIA_get_SR       (long vianum);
 long		VIA_set_SR       (long vianum, unsigned char data);
 int		rbv_vidstatus    (void);
-int		add_nubus_intr   (int addr, int (*func)(), int unit);
+int		add_nubus_intr   (int addr, void (*func)(), void *client_data);
 
 extern long	(*via1itab[7])();
 extern long	(*via2itab[7])();
