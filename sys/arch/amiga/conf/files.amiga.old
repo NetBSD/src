@@ -24,7 +24,6 @@ arch/amiga/dev/view.c			optional view device-driver
 arch/amiga/dev/a3000dma.c		optional a3000scsi device-driver
 arch/amiga/dev/a2091dma.c		optional a2091scsi device-driver
 arch/amiga/dev/gvp11dma.c		optional gvp11scsi device-driver
-arch/amiga/dev/vn.c			optional vn device-driver
 arch/amiga/dev/scsi.c			optional a3000scsi or a2091scsi or gvp11scsi
 arch/amiga/dev/sd.c			optional sd device-driver
 arch/amiga/dev/st.c			optional st device-driver
