@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$NetBSD: inetd.8,v 1.9 1997/01/12 06:55:42 mikel Exp $
+.\"	$NetBSD: inetd.8,v 1.10 1997/06/30 20:55:06 phil Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -155,7 +155,6 @@ is the RPC version number. This
 can simply be a single numeric argument or a range of versions.
 A range is bounded by the low version to the high version \-
 .Dq rusers/1-3 .
-
 .Pp
 The
 .Em socket-type
@@ -182,14 +181,14 @@ Rpc based services are specified with the
 or
 .Dq rpc/udp
 service type.
-
 .Pp
 The
 .Em wait/nowait
-entry is applicable to datagram sockets only (other sockets should
-have a
-.Dq nowait
-entry in this space).  If a datagram server connects
+entry is used to tell
+.Nm
+if it should wait for the server program to return,
+or continue processing connections on the socket.
+If a datagram server connects
 to its peer, freeing the socket so
 .Nm
 can receive further messages on the socket, it is said to be
@@ -230,6 +229,21 @@ spawned from
 within an interval of 60 seconds. When omitted,
 .Dq max
 defaults to 40.
+.Pp
+Stream servers are usually marked as
+.Dq nowait
+but if a single server process is to handle multiple connections, it may be
+marked as
+.Dq wait .
+The master socket will then be passed as fd 0 to the server, which will then
+need to accept the incoming connection.  The server should eventually time
+out and exit when no more connections are active.
+.Nm
+will continue to
+listen on the master socket for connections, so the server should not close
+it when it exits. 
+.Xr identd 8
+is usually the only stream server marked as wait.
 .Pp
 The
 .Em user
