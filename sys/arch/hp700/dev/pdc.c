@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1.4.3 2002/08/31 13:44:38 gehenna Exp $	*/
+/*	$NetBSD: pdc.c,v 1.1.4.4 2002/09/02 14:45:30 gehenna Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -39,10 +39,10 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/callout.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
-#include <machine/conf.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
