@@ -79,11 +79,13 @@ config(fname)
 	for (lcnt = 1; (p = fgetline(cfp, &len)) != NULL; ++lcnt) {
 		if (!len)			/* Skip empty lines. */
 			continue;
+#ifdef notdef /* XXX -- cgd */
 		if (p[len - 1] != '\n') {	/* Skip corrupted lines. */
 			warnx("%s: line %d corrupted", fname, lcnt);
 			continue;
 		}
 		p[len - 1] = '\0';		/* Terminate the line. */
+#endif
 
 						/* Skip leading space. */
 		for (; *p != '\0' && isspace(*p); ++p);
