@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2.4.2 1999/05/12 05:46:42 nisimura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.4.3 1999/05/26 05:24:55 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@ struct platform {
 	/*
 	 * Platform Information.
 	 */
-	char	*iobus;		/* Primary iobus name */
+	const char	*iobus;		/* Primary iobus name */
 
 	/*
 	 * Platform Specific Function Hooks
