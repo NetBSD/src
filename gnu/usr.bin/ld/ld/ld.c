@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.66 1999/11/08 21:58:00 lukem Exp $	*/
+/*	$NetBSD: ld.c,v 1.67 1999/12/01 03:45:54 phil Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.66 1999/11/08 21:58:00 lukem Exp $");
+__RCSID("$NetBSD: ld.c,v 1.67 1999/12/01 03:45:54 phil Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -1264,7 +1264,7 @@ file_open(entry)
 	} else
 		fd = open(entry->filename, O_RDONLY, 0);
 
-	if (fd > 0) {
+	if (fd >= 0) {
 		input_file = entry;
 		input_desc = fd;
 		return fd;
