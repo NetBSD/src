@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: morse.c,v 1.13 2004/02/13 23:16:11 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.12 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: morse.c,v 1.13 2004/02/13 23:16:11 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: morse.c,v 1.12 2004/01/27 20:30:30 jsm Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define MORSE_COLON	"--..--"
-#define MORSE_PERIOD	".-.-.-"
-
 
 static const char
 	*const digit[] = {
@@ -95,6 +91,25 @@ static const char
 	"--..",
 };
 
+const struct punc {
+	char c;
+	const char *morse;
+} other[] = {
+	{ '.', ".-.-.-" },
+	{ ',', "--..--" },
+	{ ':', "---..." },
+	{ '?', "..--.." },
+	{ '\'', ".----." },
+	{ '-', "-....-" },
+	{ '/', "-..-." },
+	{ '(', "-.--." },
+	{ ')', "-.--.-" },
+	{ '"', ".-..-." },
+	{ '=', "-...-" },
+	{ '+', ".-.-." },
+	{ '\0', NULL }
+};
+
 int	main(int, char *[]);
 void	morse(int);
 void	decode(const char *);
@@ -109,7 +124,7 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
-	char *s, *p;
+	char *p;
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
@@ -133,46 +148,53 @@ main(argc, argv)
 	if (dflag) {
 		if (*argv) {
 			do {
-				s=strchr(*argv, ',');
-				
-				if (s)
-					*s='\0';
-				
 				decode(*argv);
 			} while (*++argv);
-		}else{
-			char buf[1024];
+		} else {
+			char foo[10];	/* All morse chars shorter than this */
+			int isblank, i;
 
-			while (fgets(buf, 1024, stdin)) {
-				s=buf;
-
-				while (*s && isspace(*s))
-					s++;
-
-				if (*s) {
-					p=strtok(s, " \n\t");
-					
-					while (p) {
-						s=strchr(p, ',');
-
-						if (s)
-							*s='\0';
-						
-						decode(p);
-						p=strtok(NULL, " \n\t");
+			i = 0;
+			isblank = 0;
+			while ((ch = getchar()) != EOF) {
+				if (ch == '-' || ch == '.') {
+					foo[i++] = ch;
+					if (i == 10) {
+						/* overrun means gibberish--print 'x' and
+						 * advance */
+						i = 0;
+						putchar('x');
+						while ((ch = getchar()) != EOF &&
+						    (ch == '.' || ch == '-'))
+							;
+						isblank = 1;
 					}
+				} else if (i) {
+					foo[i] = '\0';
+					decode(foo);
+					i = 0;
+					isblank = 0;
+				} else if (isspace(ch)) {
+					if (isblank) {
+						/* print whitespace for each double blank */
+						putchar(' ');
+						isblank = 0;
+					} else
+						isblank = 1;
 				}
 			}
 		}
 		putchar('\n');
-	}else{
+	} else {
 		if (*argv)
 			do {
 				for (p = *argv; *p; ++p)
 					morse((int)*p);
+				show("");
 			} while (*++argv);
 		else while ((ch = getchar()) != EOF)
 			morse(ch);
+		show("...-.-");	/* SK */
 	}
 	
 	return 0;
@@ -182,62 +204,54 @@ void
 decode(s)
 	const char *s;
 {
-	if (strcmp(s, MORSE_COLON) == 0){
-		putchar(',');
-	} else if (strcmp(s, MORSE_PERIOD) == 0){
-		putchar('.');
-	} else {
-		int found;
-		const char *const *a;
-		int size;
-		int i;
-
-		found=0;
-		a=digit;
-		size=sizeof(digit)/sizeof(digit[0]);
-		for (i=0; i<size; i++) {
-			if (strcmp(a[i], s) == 0) {
-				found = 1;
-				break;
-			}
-		}
-
-		if (found) {
-			putchar('0'+i);
+	int i;
+	
+	for (i = 0; i < 10; i++)
+		if (strcmp(digit[i], s) == 0) {
+			putchar('0' + i);
 			return;
 		}
-
-		found=0;
-		a=alph;
-		size=sizeof(alph)/sizeof(alph[0]);
-		for (i=0; i<size; i++) {
-			if (strcmp(a[i], s) == 0) {
-				found = 1;
-				break;
-			}
+	
+	for (i = 0; i < 26; i++)
+		if (strcmp(alph[i], s) == 0) {
+			putchar('A' + i);
+			return;
 		}
-
-		if (found)
-			putchar('a'+i);
-		else
-			putchar(' ');
+	i = 0;
+	while (other[i].c) {
+		if (strcmp(other[i].morse, s) == 0) {
+			putchar(other[i].c);
+			return;
+		}
+		i++;
 	}
+	if (strcmp("...-.-", s) == 0)
+		return;
+	putchar('x');	/* line noise */
 }
 
 void
 morse(c)
 	int c;
 {
+	int i;
+
 	if (isalpha(c))
 		show(alph[c - (isupper(c) ? 'A' : 'a')]);
 	else if (isdigit(c))
 		show(digit[c - '0']);
-	else if (c == ',')
-		show(MORSE_COLON);
-	else if (c == '.')
-		show(MORSE_PERIOD);
 	else if (isspace(c))
-		show(" ...\n");
+		show("");  /* could show BT for a pause */
+	else {
+		i = 0;
+		while (other[i].c) {
+			if (other[i].c == c) {
+				show(other[i].morse);
+				break;
+			}
+			i++;
+		}
+	}
 }
 
 void
@@ -248,5 +262,5 @@ show(s)
 		printf(" %s", s);
 	else for (; *s; ++s)
 		printf(" %s", *s == '.' ? "dit" : "daw");
-	printf(",\n");
+	printf("\n");
 }
