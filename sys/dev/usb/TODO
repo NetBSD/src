@@ -38,6 +38,14 @@ uaudio problems:
 	implement input
 	test with more devices
 
+Stylistic changes:
+	use NULL not 0
+	declare all local definitions static
+	rename s/request/xfer/
+	use usb_ and usbd_ consistently
+	indent continuation lines according to KNF
+	rearrange the contents and names of some files (Nick)
+
 Document device driver API.
 
 Document HC driver API.

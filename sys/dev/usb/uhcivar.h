@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.12 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.13 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,6 @@ typedef struct uhci_softc {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 
-	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
 #endif /* defined(__FreeBSD__) */
 
@@ -156,7 +155,6 @@ typedef struct uhci_softc {
 	char sc_suspend;
 	usbd_request_handle sc_has_timo;
 
-	int sc_intrs;
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 
 	/* Info for the root hub interrupt channel. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.38 1999/09/12 08:23:42 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.39 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -859,7 +859,7 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 	usbd_status r;
 
 #ifdef DIAGNOSTIC
-	if (!curproc) {
+	if (dev->bus->intr_context) {
 		printf("usbd_do_request: not in process context\n");
 		return (USBD_INVAL);
 	}

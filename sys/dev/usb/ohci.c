@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.43 1999/09/11 08:19:26 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.44 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ ohci_alloc_sed(sc)
 
 	if (!sc->sc_freeeds) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
-		r = usb_allocmem(sc->sc_dmatag, OHCI_SED_SIZE * OHCI_SED_CHUNK,
+		r = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
 				 OHCI_ED_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (0);
@@ -333,7 +333,7 @@ ohci_alloc_std(sc)
 
 	if (!sc->sc_freetds) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
-		r = usb_allocmem(sc->sc_dmatag, OHCI_STD_SIZE * OHCI_STD_CHUNK,
+		r = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
 				 OHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (0);
@@ -390,7 +390,7 @@ ohci_init(sc)
 		LIST_INIT(&sc->sc_hash_tds[i]);
 
 	/* Allocate the HCCA area. */
-	r = usb_allocmem(sc->sc_dmatag, OHCI_HCCA_SIZE, 
+	r = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE, 
 			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
@@ -548,7 +548,7 @@ ohci_init(sc)
  bad2:
 	ohci_free_sed(sc, sc->sc_bulk_head);
  bad1:
-	usb_freemem(sc->sc_dmatag, &sc->sc_hccadma);
+	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
 	return (r);
 }
 
@@ -560,7 +560,7 @@ ohci_allocm(bus, dma, size)
 {
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
 
-	return (usb_allocmem(sc->sc_dmatag, size, 0, dma));
+	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
 }
 
 void
@@ -570,7 +570,7 @@ ohci_freem(bus, dma)
 {
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
 
-	usb_freemem(sc->sc_dmatag, dma);
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 #if !defined(__OpenBSD__)
@@ -668,7 +668,8 @@ ohci_intr(p)
 	if (!eintrs)
 		return (0);
 
-	sc->sc_intrs++;
+	sc->sc_bus.intr_context = 1;
+	sc->sc_bus.no_intrs++;
 	DPRINTFN(7, ("ohci_intr: sc=%p intrs=%x(%x) eintr=%x\n", 
 		     sc, (u_int)intrs, OREAD4(sc, OHCI_INTERRUPT_STATUS),
 		     (u_int)eintrs));
@@ -702,6 +703,8 @@ ohci_intr(p)
 		 */
 		ohci_rhsc_able(sc, 0);
 	}
+
+	sc->sc_bus.intr_context = 0;
 
 	/* Block unprocessed interrupts. XXX */
 	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, intrs);
@@ -1304,7 +1307,7 @@ ohci_open(pipe)
 		switch (ed->bmAttributes & UE_XFERTYPE) {
 		case UE_CONTROL:
 			pipe->methods = &ohci_device_ctrl_methods;
-			r = usb_allocmem(sc->sc_dmatag, 
+			r = usb_allocmem(&sc->sc_bus, 
 					 sizeof(usb_device_request_t), 
 					 0, &opipe->u.ctl.reqdma);
 			if (r != USBD_NORMAL_COMPLETION)
@@ -1408,11 +1411,12 @@ ohci_abort_req(reqh, status)
 	DPRINTFN(1,("ohci_abort_req: stop ed=%p\n", sed));
 	sed->ed.ed_flags |= LE(OHCI_ED_SKIP); /* force hardware skip */
 
-	if (curproc) {
+	if (reqh->device->bus->intr_context) {
+		/* We have no process context, so we can't use tsleep(). */
+		timeout(ohci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
+	} else {
 		usb_delay_ms(opipe->pipe.device->bus, 1);
 		ohci_abort_req_end(reqh);
-	} else {
-		timeout(ohci_abort_req_end, reqh, hz / USB_FRAMES_PER_SECOND);
 	}
 }
 

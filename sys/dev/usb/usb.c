@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.19 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.20 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,8 @@ MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 
 #include "usb_if.h"
 #endif /* defined(__FreeBSD__) */
+
+#include <machine/bus.h>
 
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_quirks.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.45 1999/09/09 12:26:47 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.46 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #endif
 #include <sys/proc.h>
 #include <sys/select.h>
+
+#include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 
