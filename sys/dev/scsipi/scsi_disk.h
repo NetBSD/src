@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.24 2003/09/05 09:00:08 mycroft Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.25 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -159,9 +159,9 @@ struct scsi_rezero_unit {
 	u_int8_t control;
 };
 
-#define	SCSI_READ_COMMAND		0x08
-#define SCSI_WRITE_COMMAND		0x0a
-struct scsi_rw {
+#define	SCSI_READ_6_COMMAND		0x08
+#define SCSI_WRITE_6_COMMAND		0x0a
+struct scsi_rw_6 {
 	u_int8_t opcode;
 	u_int8_t addr[3];
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
