@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.20 1998/01/21 10:47:40 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.21 1998/01/31 12:37:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.20 1998/01/21 10:47:40 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.21 1998/01/31 12:37:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,111 +218,96 @@ freestdout() {
 }
 
 
+void
 #ifdef __STDC__
-void
-outfmt(struct output *file, char *fmt, ...) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	doformat(file, fmt, ap);
-	va_end(ap);
-}
-
-
-void
-out1fmt(char *fmt, ...) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	doformat(out1, fmt, ap);
-	va_end(ap);
-}
-
-void
-dprintf(char *fmt, ...) {
-	va_list ap;
-
-	va_start(ap, fmt);
-	doformat(out2, fmt, ap);
-	va_end(ap);
-	flushout(out2);
-}
-
-void
-fmtstr(char *outbuf, int length, char *fmt, ...) {
-	va_list ap;
-	struct output strout;
-
-	va_start(ap, fmt);
-	strout.nextc = outbuf;
-	strout.nleft = length;
-	strout.fd = BLOCK_OUT;
-	strout.flags = 0;
-	doformat(&strout, fmt, ap);
-	outc('\0', &strout);
-	if (strout.flags & OUTPUT_ERR)
-		outbuf[length - 1] = '\0';
-}
-
-#else /* not __STDC__ */
-
+outfmt(struct output *file, const char *fmt, ...)
+#else
 void
 outfmt(va_alist)
 	va_dcl
-	{
+#endif
+{
 	va_list ap;
+#ifndef __STDC__
 	struct output *file;
-	char *fmt;
+	const char *fmt;
 
 	va_start(ap);
 	file = va_arg(ap, struct output *);
-	fmt = va_arg(ap, char *);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
 	doformat(file, fmt, ap);
 	va_end(ap);
 }
 
 
 void
+#ifdef __STDC__
+out1fmt(const char *fmt, ...)
+#else
 out1fmt(va_alist)
 	va_dcl
-	{
+#endif
+{
 	va_list ap;
-	char *fmt;
+#ifndef __STDC__
+	const char *fmt;
 
 	va_start(ap);
-	fmt = va_arg(ap, char *);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
 	doformat(out1, fmt, ap);
 	va_end(ap);
 }
 
 void
+#ifdef __STDC__
+dprintf(const char *fmt, ...)
+#else
 dprintf(va_alist)
 	va_dcl
-	{
+#endif
+{
 	va_list ap;
-	char *fmt;
+#ifndef __STDC__
+	const char *fmt;
 
 	va_start(ap);
-	fmt = va_arg(ap, char *);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
 	doformat(out2, fmt, ap);
 	va_end(ap);
 	flushout(out2);
 }
 
 void
+#ifdef __STDC__
+fmtstr(char *outbuf, size_t length, const char *fmt, ...)
+#else
 fmtstr(va_alist)
 	va_dcl
-	{
+#endif
+{
 	va_list ap;
 	struct output strout;
+#ifndef __STDC__
 	char *outbuf;
-	int length;
-	char *fmt;
+	size_t length;
+	const char *fmt;
 
 	va_start(ap);
 	outbuf = va_arg(ap, char *);
-	length = va_arg(ap, int);
-	fmt = va_arg(ap, char *);
+	length = va_arg(ap, size_t);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
 	strout.nextc = outbuf;
 	strout.nleft = length;
 	strout.fd = BLOCK_OUT;
@@ -332,12 +317,10 @@ fmtstr(va_alist)
 	if (strout.flags & OUTPUT_ERR)
 		outbuf[length - 1] = '\0';
 }
-#endif /* __STDC__ */
-
 
 /*
  * Formatted output.  This routine handles a subset of the printf formats:
- * - Formats supported: d, u, o, X, s, and c.
+ * - Formats supported: d, u, o, p, X, s, and c.
  * - The x format is also accepted but is treated like X.
  * - The l and q modifiers are accepted.
  * - The - and # flags are accepted; # only works with the o format.
@@ -356,7 +339,7 @@ static const char digit[] = "0123456789ABCDEF";
 void
 doformat(dest, f, ap)
 	struct output *dest;
-	char *f;		/* format string */
+	const char *f;		/* format string */
 	va_list ap;
 	{
 	char c;
@@ -452,6 +435,10 @@ doformat(dest, f, ap)
 		case 'o':
 			base = 8;
 			goto uns_number;
+		case 'p':
+			outc('0', dest);
+			outc('x', dest);
+			/*FALLTHROUGH*/
 		case 'x':
 			/* we don't implement 'x'; treat like 'X' */
 		case 'X':
