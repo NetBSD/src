@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.14 2002/01/30 17:56:09 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.15 2002/02/02 00:03:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,8 +64,6 @@ int	sadebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
-	    size_t, void *, struct sadata_upcall *);
 
 /*
  * sadata_upcall_alloc:
@@ -299,7 +297,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct proc *p = l->l_proc;
 	struct sadata *sd = p->p_sa;
 
-	KDASSERT(event != interrupted);
+	KDASSERT((event == NULL) || (event != interrupted));
 
 	s->sau_type = type;
 	s->sau_argsize = argsize;
@@ -373,24 +371,21 @@ sa_switch(struct lwp *l, int type)
 		 * LWP. The first thing that this new LWP must do is
 		 * allocate another LWP for the cache.  
 		 */
-		if (sa->sa_ncached == 0) {
+		l2 = sa_getcachelwp(p);
+		if (l2 == NULL) {
 			/* XXXSMP */
 			/* No upcall for you! */
 			/* XXX The consequences of this are more subtle and
 			 * XXX the recovery from this situation deserves
 			 * XXX more thought.
 			 */
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d): out of upcall resources\n",
+			    p->p_pid, l->l_lid);
+#endif
 			mi_switch(l, NULL);
 			return;
 		}
-
-		/* XXX lock sadata */
-		sa->sa_ncached--;
-		l2 = LIST_FIRST(&sa->sa_lwpcache);
-		LIST_REMOVE(l2, l_sibling);
-		DPRINTFN(5,("sa_switch(%d.%d) Got LWP %d(%x) from cache.\n",
-		    p->p_pid,l->l_lid, l2->l_lid, l2->l_flag));
-		/* XXX unlock */
 		
 		/*
 		 * XXX We need to allocate the sadata_upcall structure here,
@@ -403,24 +398,21 @@ sa_switch(struct lwp *l, int type)
 		if (sd == NULL)
 			goto sa_upcall_failed;
 
-		cpu_setfunc(l2, sa_switchcall, l);
+		cpu_setfunc(l2, sa_switchcall, NULL);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, 
 		    sd);
 		if (error) {
 		sa_upcall_failed:
 			/* Put the lwp back */
-			/* XXX lock sadata */
-			DPRINTFN(4,("sa_switch(%d.%d) Error %d in sa_upcall!\n",
-			    p->p_pid, l->l_lid, error));
-			LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
-			sa->sa_ncached++;
-			/* XXX unlock */
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
+			    p->p_pid, l->l_lid, error);
+#endif
+			sa_putcachelwp(p, l2);
 			mi_switch(l, NULL);
 			return;
 		}
 		
-		LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
-		p->p_nlwps++;
 		p->p_nrlwps++;
 		l->l_flag |= L_SA_BLOCKING;
 		l2->l_priority = l2->l_usrpri;
@@ -505,21 +497,62 @@ sa_newcachelwp(struct lwp *l)
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
 		 */
-		LIST_REMOVE(l2, l_sibling);
-		p->p_nlwps--;
-		l2->l_stat = LSSUSPENDED;
-		l2->l_flag |= (L_DETACHED | L_SA);
-		PHOLD(l2);
-		/* XXX lock sadata */	
-		DPRINTFN(5,("sa_newcachelwp(%d.%d) Adding LWP %d(%x) to cache\n",
-		    p->p_pid, l->l_lid, l2->l_lid, l2->l_flag));
-		LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
-		sa->sa_ncached++;
-		/* XXX unlock */
+		sa_putcachelwp(p, l2);
 	}
 
 	return (0);
 }
+
+/*
+ * Take a normal process LWP and place it in the SA cache. 
+ * LWP must not be running!
+ */
+void
+sa_putcachelwp(struct proc *p, struct lwp *l)
+{
+	struct sadata *sa;
+
+	sa = p->p_sa;
+
+	LIST_REMOVE(l, l_sibling);
+	p->p_nlwps--;
+	l->l_stat = LSSUSPENDED;
+	l->l_flag |= (L_DETACHED | L_SA);
+	PHOLD(l);
+	/* XXX lock sadata */	
+	DPRINTFN(5,("sa_addcachelwp(%d) Adding LWP %d to cache\n",
+	    p->p_pid, l->l_lid));
+	LIST_INSERT_HEAD(&sa->sa_lwpcache, l, l_sibling);
+	sa->sa_ncached++;
+	/* XXX unlock */
+}
+
+/*
+ * Fetch a LWP from the cache.
+ */
+struct lwp *
+sa_getcachelwp(struct proc *p)
+{
+	struct sadata *sa;
+	struct lwp *l;
+
+	l = NULL;
+	sa = p->p_sa;
+	/* XXX lock sadata */
+	if (sa->sa_ncached > 0) {
+		sa->sa_ncached--;
+		l = LIST_FIRST(&sa->sa_lwpcache);
+		LIST_REMOVE(l, l_sibling);
+		LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+		p->p_nlwps++;
+		DPRINTFN(5,("sa_getcachelwp(%d) Got LWP %d from cache.\n",
+		    p->p_pid,l->l_lid));
+
+	}
+	/* XXX unlock */
+	return l;
+}
+
 
 void
 sa_upcall_userret(struct lwp *l)
