@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.452 2002/03/16 17:31:23 martin Exp $
+# $NetBSD: mi,v 1.453 2002/03/17 10:57:14 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -535,6 +535,7 @@
 ./usr/share/man/cat4/atari/rtc.0		man-sys-catman
 ./usr/share/man/cat4/ate.0			man-sys-catman
 ./usr/share/man/cat4/audio.0			man-sys-catman
+./usr/share/man/cat4/audiocs.0			man-sys-catman
 ./usr/share/man/cat4/aue.0			man-sys-catman
 ./usr/share/man/cat4/auich.0			man-sys-catman
 ./usr/share/man/cat4/autri.0			man-sys-catman
@@ -586,6 +587,7 @@
 ./usr/share/man/cat4/ea.0			man-sys-catman
 ./usr/share/man/cat4/eap.0			man-sys-catman
 ./usr/share/man/cat4/eb.0			man-sys-catman
+./usr/share/man/cat4/ebus.0			man-sys-catman
 ./usr/share/man/cat4/ec.0			man-sys-catman
 ./usr/share/man/cat4/edc.0			man-sys-catman
 ./usr/share/man/cat4/ef.0			man-sys-catman
