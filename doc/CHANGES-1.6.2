@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.181 2003/10/10 18:07:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.182 2003/10/11 23:25:46 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2349,4 +2349,11 @@ sys/dev/usb/ohci.c				1.141
 	Update actlen even in the case where a TD returns an error -- this is
 	critical for the umass bulk-only STALL case.
 	[bad, ticket #1515]
+
+lib/libc/net/gethnamaddr.c			1.58
+
+	Back out rev. 1.56; `pointer points the byte just after the valid
+	region'	is normal case.  If the parser wants something more, there
+	should be another bounds check for it.
+	[bad, ticket #1521]
 
