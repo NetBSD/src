@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.696 2005/03/07 02:27:17 christos Exp $
+$NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1418,13 +1418,13 @@ product EMULEX LP9000	0xf900	LP9000 FibreChannel adapter
 product EMULEX LP9802	0xf980	LP9802 FibreChannel adapter
 
 /* ENE Technology products */
-product ENE MCR510	0x510	MCR510 PCI Memory Card Reader Controller
-product ENE CB710	0x710	CB710 CardBus Controller
-product ENE CB720	0x720	CB720 CardBus Controller
+product ENE MCR510	0x0510	MCR510 PCI Memory Card Reader Controller
 product ENE CB1211	0x1211	CB1211 CardBus Controller
 product ENE CB1225	0x1225	CB1225 CardBus Controller
 product ENE CB1410	0x1410	CB1410 CardBus Controller
+product ENE CB710	0x1411	CB710 CardBus Controller
 product ENE CB1420	0x1420	CB1420 CardBus Controller
+product ENE CB720	0x1421	CB720 CardBus Controller
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
