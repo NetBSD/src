@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.171 2004/05/04 21:33:40 pk Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.172 2004/05/19 22:02:05 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.171 2004/05/04 21:33:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.172 2004/05/19 22:02:05 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3573,11 +3573,13 @@ uvmspace_free(struct vmspace *vm)
 {
 	struct vm_map_entry *dead_entries;
 	struct vm_map *map = &vm->vm_map;
+	int n;
+
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=0x%x) ref=%d", vm, vm->vm_refcnt,0,0);
 	simple_lock(&map->ref_lock);
-	int n = --vm->vm_refcnt;
+	n = --vm->vm_refcnt;
 	simple_unlock(&map->ref_lock);
 	if (n > 0)
 		return;
