@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.52 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.53 2004/01/03 19:31:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -50,22 +50,25 @@
 
 #define WDC_NREG	8 /* number of command registers */
 
-struct wdc_channel { /* Per channel data */
-	/* Our timeout callout */
-	struct callout ch_callout;
-	/* Our location */
-	int channel;
-	/* Our controller's softc */
-	struct wdc_softc *wdc;
+/*
+ * Per-channel data
+ */
+struct wdc_channel {
+	struct callout ch_callout;	/* callout handle */
+	int channel;			/* location */
+	struct wdc_softc *wdc;		/* controller's softc */
+
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
 	bus_space_handle_t    cmd_baseioh;
 	bus_space_handle_t    cmd_iohs[WDC_NREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
+
 	/* data32{iot,ioh} are only used for 32 bit data xfers */
 	bus_space_tag_t         data32iot;
 	bus_space_handle_t      data32ioh;
+
 	/* Our state */
 	int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
@@ -75,32 +78,38 @@ struct wdc_channel { /* Per channel data */
 #define	WDCF_DISABLED 0x80	/* channel is disabled */
 #define WDCF_TH_RUN   0x100	/* the kenrel thread is working */
 #define WDCF_TH_RESET 0x200	/* someone ask the thread to reset */
-	u_int8_t ch_status;         /* copy of status register */
-	u_int8_t ch_error;          /* copy of error register */
-	/* per-drive infos */
+	u_int8_t ch_status;	/* copy of status register */
+	u_int8_t ch_error;	/* copy of error register */
+
+	/* per-drive info */
 	struct ata_drive_datas ch_drive[2];
 
 	struct device *atabus;	/* self */
-	struct device *atapibus; /* children */
+
+	/* ATAPI children */
+	struct device *atapibus;
 	struct scsipi_channel ch_atapi_channel;
 
-	struct device *ata_drives[2]; /* children */
+	/* ATA children */
+	struct device *ata_drives[2];
 
 	/*
-	 * channel queues. May be the same for all channels, if hw channels
-	 * are not independent.
+	 * Channel queues.  May be the same for all channels, if hw
+	 * channels are not independent.
 	 */
 	struct ata_queue *ch_queue;
 
-	/* the channel kernel thread */
+	/* The channel kernel thread */
 	struct proc *thread;
 };
 
-struct wdc_softc { /* Per controller state */
-	struct device sc_dev;
-	/* mandatory fields */
-	int           cap;
-/* Capabilities supported by the controller */
+/*
+ * Per-controller data
+ */
+struct wdc_softc {
+	struct device sc_dev;		/* generic device info */
+
+	int           cap;		/* controller capabilities */
 #define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
 #define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
 #define WDC_CAPABILITY_MODE   0x0004	/* controller knows its PIO/DMA modes */
@@ -110,16 +119,16 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
-#define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
+#define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
-	u_int8_t      PIO_cap; /* highest PIO mode supported */
-	u_int8_t      DMA_cap; /* highest DMA mode supported */
-	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
-	int nchannels;	/* Number of channels on this controller */
-	struct wdc_channel **channels;  /* channels-specific datas (array) */
+	u_int8_t      PIO_cap;		/* highest PIO mode supported */
+	u_int8_t      DMA_cap;		/* highest DMA mode supported */
+	u_int8_t      UDMA_cap;		/* highest UDMA mode supported */
+	int nchannels;			/* # channels on this controller */
+	struct wdc_channel **channels;  /* channel-specific data (array) */
 
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
