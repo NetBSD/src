@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.72 2003/08/07 16:31:48 agc Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.73 2003/08/24 17:52:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.72 2003/08/07 16:31:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.73 2003/08/24 17:52:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ dosetrlimit(p, cred, which, limp)
 			vm_prot_t prot;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {
-				prot = VM_PROT_ALL;
+				prot = VM_PROT_READ | VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
 				addr = USRSTACK - limp->rlim_cur;
 			} else {

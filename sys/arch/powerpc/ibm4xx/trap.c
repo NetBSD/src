@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 2003/07/15 02:54:44 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 2003/08/24 17:52:34 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2003/08/24 17:52:34 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -246,13 +246,13 @@ trap(struct trapframe *frame)
 		}
 		KERNEL_PROC_UNLOCK(l);
 		break;
+
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
-		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
-		    ("trap(EXC_ISI|EXC_USER) at %lx %s fault on %lx tf %p\n",
-		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
+		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
 		    frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);

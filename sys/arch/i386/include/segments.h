@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.37 2003/08/07 16:28:00 agc Exp $	*/
+/*	$NetBSD: segments.h,v 1.38 2003/08/24 17:52:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -288,7 +288,8 @@ void idt_vec_free __P((int));
 #define	GPNPBIOSTRAMP_SEL 17
 #define GTRAPTSS_SEL	18
 #define GIPITSS_SEL	19
-#define	NGDT		20
+#define GUCODEBIG_SEL	20	/* User code with executable stack */
+#define	NGDT		21
 
 /*
  * Entries in the Local Descriptor Table (LDT)
@@ -298,6 +299,7 @@ void idt_vec_free __P((int));
 #define	LUCODE_SEL	2	/* User code descriptor */
 #define	LUDATA_SEL	3	/* User data descriptor */
 #define	LSOL26CALLS_SEL	4	/* Solaris 2.6 system call gate */
+#define	LUCODEBIG_SEL	5	/* User code with executable stack */
 #define	LBSDICALLS_SEL	16	/* BSDI system call gate */
 #define	NLDT		17
 

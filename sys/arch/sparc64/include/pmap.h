@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2003/08/10 02:30:51 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2003/08/24 17:52:37 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -199,6 +199,7 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
                                  daddr_t));
 int		pmap_pa_exists __P((paddr_t));
 void		switchexit __P((struct lwp *, int));
+void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
 int	ctx_alloc __P((struct pmap *));

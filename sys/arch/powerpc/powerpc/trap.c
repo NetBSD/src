@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2003/08/12 05:06:56 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 2003/08/24 17:52:35 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/08/12 05:06:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2003/08/24 17:52:35 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -122,7 +122,7 @@ trap(struct trapframe *frame)
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_evictions > 0 &&
 				    pmap_pte_spill(vm_map_pmap(map),
-					    trunc_page(va))) {
+					    trunc_page(va), FALSE)) {
 					/* KERNEL_PROC_UNLOCK(l); */
 					KERNEL_UNLOCK();
 					return;
@@ -179,6 +179,7 @@ trap(struct trapframe *frame)
 			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
+
 		/*
 		 * Try to spill an evicted pte into the page table
 		 * if this wasn't a protection fault and the pmap
@@ -187,7 +188,8 @@ trap(struct trapframe *frame)
 		map = &p->p_vmspace->vm_map;
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
-		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar))) {
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar),
+				   FALSE)) {
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
@@ -232,20 +234,20 @@ trap(struct trapframe *frame)
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
 		ci->ci_ev_isi.ev_count++;
+
 		/*
 		 * Try to spill an evicted pte into the page table
 		 * if this wasn't a protection fault and the pmap
 		 * has some evicted pte's.
 		 */
 		map = &p->p_vmspace->vm_map;
-		if ((frame->srr1 & DSISR_NOTFOUND) &&
-		    vm_map_pmap(map)->pm_evictions > 0 &&
-		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0))) {
+		if (pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
+				   TRUE)) {
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 
-		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+		ftype = VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(l);
@@ -254,7 +256,7 @@ trap(struct trapframe *frame)
 		ci->ci_ev_isi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d.%d (%s): user ISI trap @ %#lx "
-			    "(SSR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
+			    "(SRR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
 		trapsignal(l, SIGSEGV, EXC_ISI);
