@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.9 1993/10/22 17:52:28 jtc Exp $
+ *	$Id: stdlib.h,v 1.10 1993/11/13 01:44:59 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -56,6 +56,10 @@ typedef struct {
 	long quot;		/* quotient */
 	long rem;		/* remainder */
 } ldiv_t;
+
+#ifndef	NULL
+#define	NULL	0
+#endif
 
 #define	EXIT_FAILURE	1
 #define	EXIT_SUCCESS	0
