@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.21 2003/11/14 19:03:17 scw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.21 2003/11/14 19:03:17 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -78,6 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.21 2003/11/14 19:03:17 scw Exp $");
 #include <machine/trap.h>
 
 #include <arch/arm/arm/disassem.h>
+
+#ifdef DDB
+#include <ddb/db_output.h>
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef acorn26
 #include <machine/machdep.h>
@@ -294,9 +299,11 @@ undefinedinstruction(trapframe_t *frame)
 #endif
         
 		if ((fault_code & FAULT_USER) == 0) {
-			printf("Undefined instruction in kernel\n");
 #ifdef DDB
-			Debugger();
+			db_printf("Undefined instruction in kernel\n");
+			kdb_trap(T_FAULT, frame);
+#else
+			panic("undefined instruction in kernel");
 #endif
 		}
 		KSI_INIT_TRAP(&ksi);
