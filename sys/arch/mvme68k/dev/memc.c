@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.8 2001/07/27 21:56:10 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.9 2001/07/28 08:30:23 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,10 @@ struct memc_softc {
 	bus_space_handle_t	sc_bush;
 	struct evcnt		sc_evcnt;
 };
+
+#define MEMC_NDEVS	2
+static struct memc_softc	*memc_softcs[MEMC_NDEVS];
+static int memc_softc_count;
 
 int memc_match(struct device *, struct cfdata *, void *);
 void memc_attach(struct device *, struct device *, void *);
@@ -416,6 +420,11 @@ memc_attach(parent, self, aux)
 	u_int8_t chipid;
 	u_int8_t memcfg;
 
+	if (memc_softc_count == MEMC_NDEVS)
+		panic("memc_attach: too many memc devices!");
+
+	memc_softcs[memc_softc_count++] = sc;
+
 	sc->sc_bust = ma->ma_bust;
 
 	/* Map the memory controller's registers */
@@ -503,7 +512,8 @@ memecc_attach(struct memc_softc *sc)
 	/*
 	 * Now hook the ECC error interrupt
 	 */
-	memc_hook_error_intr(sc, memecc_err_intr);
+	if (memc_softc_count == 1)
+		memc_hook_error_intr(sc, memecc_err_intr);
 
 	/*
 	 * Enable bus-error and interrupt on uncorrectable ECC
@@ -555,32 +565,44 @@ memc_hook_error_intr(struct memc_softc *sc, int (*func)(void *))
 		    VME2_VEC_PARITY_ERROR, func, sc, &sc->sc_evcnt);
 }
 
+/* ARGSUSED */
 static int
 memecc_err_intr(void *arg)
 {
-	struct memc_softc *sc = arg;
+	struct memc_softc *sc;
 	u_int8_t rv;
-	int cnt = 0;
+	int i, j, cnt = 0;
 
-	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER);
-	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0) {
-		memecc_log_error(sc, rv, 0, 1);
-		memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER,
-		    MEMECC_ERROR_LOGGER_ERRLOG);
-		cnt++;
-	}
+	/*
+	 * For each memory controller we found ...
+	 */
+	for (i = 0; i < memc_softc_count; i++) {
+		sc = memc_softcs[i];
 
-	rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + 2);
-	if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0) {
-		memecc_log_error(sc, rv, 2, 1);
-		memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + 2,
-		    MEMECC_ERROR_LOGGER_ERRLOG);
-		cnt++;
+		/*
+		 * There are two error loggers per controller, the registers of
+		 * the 2nd are offset from the 1st by 2 bytes.
+		 */
+		for (j = 0; j <= 2; j += 2) {
+			rv = memc_reg_read(sc, MEMECC_REG_ERROR_LOGGER + j);
+			if ((rv & MEMECC_ERROR_LOGGER_MASK) != 0) {
+				memecc_log_error(sc, rv, j, 1);
+				memc_reg_write(sc, MEMECC_REG_ERROR_LOGGER + j,
+				    MEMECC_ERROR_LOGGER_ERRLOG);
+				cnt++;
+			}
+		}
 	}
 
 	return (cnt);
 }
 
+/*
+ * Log an ECC error to the console.
+ * Note: Since this usually runs at an elevated ipl (above clock), we
+ * should probably schedule a soft interrupt to log the error details.
+ * (But only for errors where we would not normally panic.)
+ */
 static void
 memecc_log_error(struct memc_softc *sc, u_int8_t errlog, int off, int mbepanic)
 {
