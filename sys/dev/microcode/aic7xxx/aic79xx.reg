@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.4 2003/08/29 00:10:01 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.5 2003/08/29 01:28:53 thorpej Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.11 2003/05/04 00:20:07 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.13 2003/05/26 21:26:51 gibbs Exp $
  */
-VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#67 $"
+VERSION = "Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#69 $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -3844,10 +3844,15 @@ scb {
 	}
 	SCB_LUN {
 		size	1
-		field	LID				0xff
+		field	LID	0xff
 	}
 	SCB_TASK_ATTRIBUTE {
 		size	1
+		/*
+		 * Overloaded field for non-packetized
+		 * ignore wide residue message handling.
+		 */
+		field	SCB_XFERLEN_ODD	0x01
 	}
 	SCB_CDB_LEN {
 		size	1
