@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.6 1997/07/20 20:32:28 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.7 1997/10/08 22:57:52 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.6 1997/07/20 20:32:28 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.7 1997/10/08 22:57:52 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -436,8 +436,7 @@ node_creat(arcn)
 			    arcn->name);
 			return(-1);
 		case PAX_SLK:
-			if ((res = symlink(arcn->ln_name, arcn->name)) == 0)
-				return(0);
+			res = symlink(arcn->ln_name, arcn->name);
 			break;
 		case PAX_CTG:
 		case PAX_HLK:
@@ -732,7 +731,7 @@ set_ftime(fnm, mtime, atime, frc)
 	/*
 	 * set the times
 	 */
-	if (utimes(fnm, tv) < 0)
+	if (lutimes(fnm, tv) < 0)
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 	return;
@@ -756,7 +755,7 @@ set_ids(fnm, uid, gid)
 	gid_t gid;
 #endif
 {
-	if (chown(fnm, uid, gid) < 0) {
+	if (lchown(fnm, uid, gid) < 0) {
 		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
 		return(-1);
 	}
@@ -779,7 +778,7 @@ set_pmode(fnm, mode)
 #endif
 {
 	mode &= ABITS;
-	if (chmod(fnm, mode) < 0)
+	if (lchmod(fnm, mode) < 0)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 	return;
 }
