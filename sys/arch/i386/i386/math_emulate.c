@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.10 1994/10/27 04:15:32 cgd Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.11 1994/11/04 20:47:07 mycroft Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -590,7 +590,7 @@ char * ea(struct trapframe * info, u_short code)
 			break;
 #ifdef notyet
 		case 3:
-			math_abort(info,1<<(SIGILL-1));
+			math_abort(info,SIGILL);
 #endif
 	}
 	I387.foo = offset;
