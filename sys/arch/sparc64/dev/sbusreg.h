@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.5 1999/05/23 07:24:03 mrg Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.6 1999/05/24 00:25:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,13 +123,7 @@ struct sysioreg {
 
 	u_int64_t	pad4[125];
 
-	struct strbuf {
-		u_int64_t	strbuf_ctl;		/* streaming buffer control reg */	/* 1fe.0000.2800 */
-#define STRBUF_EN		0x000000000000000001LL
-#define STRBUF_D		0x000000000000000002LL
-		u_int64_t	strbuf_pgflush;		/* streaming buffer page flush */	/* 1fe.0000.2808 */
-		u_int64_t	strbuf_flushsync;	/* streaming buffer flush sync */	/* 1fe.0000.2810 */
-	} sys_strbuf;
+	struct iommu_strbuf	sys_strbuf;						/* 1fe.0000.2800-2810 */
 
 	u_int64_t	pad5[125];
 
