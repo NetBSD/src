@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.18 2003/08/07 11:13:41 agc Exp $	*/
+/*	$NetBSD: find.c,v 1.18.2.1 2004/03/31 18:07:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.18 2003/08/07 11:13:41 agc Exp $");
+__RCSID("$NetBSD: find.c,v 1.18.2.1 2004/03/31 18:07:46 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,10 +215,6 @@ find_execute(plan, paths)
 			    g_entry->fts_path, strerror(g_entry->fts_errno));
 			rval = 1;
 			continue;
-#ifdef FTS_W
-		case FTS_W:
-			continue;
-#endif /* FTS_W */
 		}
 #define	BADCH	" \t\n\\'\""
 		if (isxargs && strpbrk(g_entry->fts_path, BADCH)) {
