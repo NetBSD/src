@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.4.2.1 1997/10/31 20:53:16 mellon Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.4.2.2 1997/11/06 22:17:32 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -82,6 +82,8 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "SANYO CRD-256P", "", "1.02"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "SANYO CRD-254P", "", "1.02"},           ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "SANYO CRD-S54P", "", "1.08"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "UJDCD8730", "", "1.14"},                ADEV_NODOORLOCK},
 	{{T_CDROM, T_REMOV,
