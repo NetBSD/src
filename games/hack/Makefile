@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1995/03/23 08:29:07 cgd Exp $
+#	$NetBSD: Makefile,v 1.17 1996/10/18 02:47:18 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	hack
@@ -30,11 +30,11 @@ makedefs: makedefs.c
 	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
-	install -c -o games -g games -m 600 /dev/null \
+	${INSTALL} -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	install -c -o games -g games -m 600 /dev/null \
+	${INSTALL} -c -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
 	    ${.CURDIR}/hh ${.CURDIR}/data ${DESTDIR}/var/games/hackdir
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
