@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.70 2000/08/15 16:26:42 eeh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.71 2000/08/15 17:54:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -303,7 +303,7 @@ sys_fcntl(p, v, retval)
 				error = ESRCH;
 				goto out;
 			}
-			tmp = (void *)(long)p1->p_pgrp->pg_id;
+			tmp = (long)p1->p_pgrp->pg_id;
 		}
 		error = (*fp->f_ops->fo_ioctl)
 		    (fp, TIOCSPGRP, (caddr_t)&tmp, p);
