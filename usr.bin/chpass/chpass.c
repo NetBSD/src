@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.18.10.2 2000/10/30 22:45:09 tv Exp $	*/
+/*	$NetBSD: chpass.c,v 1.18.10.3 2000/11/15 18:54:39 tv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.18.10.2 2000/10/30 22:45:09 tv Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.18.10.3 2000/11/15 18:54:39 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,13 +187,23 @@ main(argc, argv)
 
 	if (op == EDITENTRY || op == NEWSH) {
 		if (username != NULL) {
-			pw = getpwnam(username);
+#ifdef YP
+			if (use_yp)
+				pw = ypgetpwnam(username);
+			else
+#endif /* YP */
+				pw = getpwnam(username);
 			if (pw == NULL)
 				errx(1, "unknown user: %s", username);
 			if (uid && uid != pw->pw_uid)
 				baduser();
 		} else {
-			pw = getpwuid(uid);
+#ifdef YP
+			if (use_yp)
+				pw = ypgetpwuid(uid);
+			else
+#endif /* YP */
+				pw = getpwuid(uid);
 			if (pw == NULL)
 				errx(1, "unknown user: uid %u\n", uid);
 		}
