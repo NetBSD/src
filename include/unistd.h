@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.35 1997/06/23 01:13:43 mrg Exp $	*/
+/*	$NetBSD: unistd.h,v 1.36 1997/07/04 09:14:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,7 +127,7 @@ int	 getpagesize __P((void));
 char	*getpass __P((const char *));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
-int	 initgroups __P((const char *, int));
+int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
