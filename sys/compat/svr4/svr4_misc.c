@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.77 1999/05/08 01:23:01 kleink Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.78 1999/07/20 21:54:06 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1218,12 +1218,6 @@ loop:
 			if (q->p_textvp)
 				vrele(q->p_textvp);
 
-			/*
-			 * Give machine-dependent layer a chance
-			 * to free anything that cpu_exit couldn't
-			 * release while still running in process context.
-			 */
-			cpu_wait(q);
 			pool_put(&proc_pool, q);
 			nprocs--;
 			return 0;

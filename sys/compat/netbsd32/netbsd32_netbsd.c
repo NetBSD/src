@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.15 1999/06/17 15:47:23 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.16 1999/07/20 21:54:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -748,12 +748,6 @@ loop:
 			if (p->p_textvp)
 				vrele(p->p_textvp);
 
-			/*
-			 * Give machine-dependent layer a chance
-			 * to free anything that cpu_exit couldn't
-			 * release while still running in process context.
-			 */
-			cpu_wait(p);
 			pool_put(&proc_pool, p);
 			nprocs--;
 			return (0);
