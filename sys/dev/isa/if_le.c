@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1995/01/02 20:39:37 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 1995/01/03 01:30:46 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -419,7 +419,7 @@ leattach(parent, self, aux)
 	sc->sc_ih.ih_fun = leintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 void

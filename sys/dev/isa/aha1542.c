@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.39 1994/12/28 19:43:42 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.40 1995/01/03 01:30:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -584,7 +584,7 @@ ahaattach(parent, self, aux)
 	aha->sc_ih.ih_fun = ahaintr;
 	aha->sc_ih.ih_arg = aha;
 	aha->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &aha->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &aha->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present

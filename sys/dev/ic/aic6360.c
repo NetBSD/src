@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.22 1994/12/31 05:34:00 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.23 1995/01/03 01:30:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -752,7 +752,7 @@ aicattach(parent, self, aux)
 	aic->sc_ih.ih_fun = aicintr;
 	aic->sc_ih.ih_arg = aic;
 	aic->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &aic->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &aic->sc_ih);
 	
 	config_found(self, &aic->sc_link, aicprint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.64 1994/12/28 16:47:50 hpeyerl Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.65 1995/01/03 01:30:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -342,7 +342,7 @@ epattach(parent, self, aux)
 	sc->sc_ih.ih_fun = epintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 /*

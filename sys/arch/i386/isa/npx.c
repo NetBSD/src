@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.31 1994/11/30 04:42:07 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.32 1995/01/03 01:30:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -351,7 +351,7 @@ npxattach(parent, self, aux)
 		npxhand.ih_fun = npxintr;
 		npxhand.ih_arg = 0;
 		npxhand.ih_level = IPL_NONE;
-		intr_establish(ia->ia_irq, &npxhand);
+		intr_establish(ia->ia_irq, IST_EDGE, &npxhand);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
