@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.6 1999/03/30 07:09:42 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.7 1999/03/31 04:50:13 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.6 1999/03/30 07:09:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.7 1999/03/31 04:50:13 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ ioasicattach(parent, self, aux)
 	/*
 	 * Try to configure each device.
 	 */
-	ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs);
+	ioasic_attach_devs(sc, ioasic_devs, builtin_ndevs);
 }
 
 void
