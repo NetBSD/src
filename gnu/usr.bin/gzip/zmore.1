@@ -1,4 +1,4 @@
-.\" $Id: zmore.1,v 1.3 1993/10/15 23:06:03 jtc Exp $
+.\" $Id: zmore.1,v 1.4 1996/11/12 08:11:06 mikel Exp $
 .TH ZMORE 1
 .SH NAME
 zmore \- file perusal filter for crt viewing of compressed text
@@ -28,7 +28,7 @@ another screenful is displayed.  Other possibilities are enumerated later.
 .PP
 .I Zmore
 looks in the file
-.I /etc/termcap
+.I /usr/share/misc/termcap
 to determine terminal characteristics,
 and to determine the default window size.
 On a terminal capable of displaying 24 lines,
@@ -141,6 +141,6 @@ acts just like
 except that a header is printed before each file.
 .SH FILES
 .DT
-/etc/termcap		Terminal data base
+/usr/share/misc/termcap		Terminal data base
 .SH "SEE ALSO"
 more(1), gzip(1), zdiff(1), zgrep(1), znew(1), zforce(1), gzexe(1)
