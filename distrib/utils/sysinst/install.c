@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.19 1999/06/22 06:57:00 cgd Exp $	*/
+/*	$NetBSD: install.c,v 1.20 2000/08/15 01:08:00 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,6 +125,8 @@ do_install()
 	if (get_and_unpack_sets(MSG_instcomplete, MSG_abortinst) != 0)
 		return;
 
+	set_timezone();
+	
 	sanity_check();
 
 	md_cleanup_install();
