@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/09/05 14:46:16 lukem Exp $ 
+#	$NetBSD: Makefile.inc,v 1.11 1999/03/04 20:32:20 wrstuden Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -33,8 +33,8 @@ all: netbsd.gz
 	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3 2>/dev/null
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} \
-	    ${DISKTYPE}
+	newfs -B le -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 \
+	    ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp netbsd.gz ${MOUNT_POINT}/netbsd.gz
 	@df -i ${MOUNT_POINT}
@@ -51,11 +51,11 @@ ramdisk.fs: ${CBIN} ${LISTS}
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -t ${RAMDISKTYPE} -v -c ${VND_CDEV} ${.TARGET}
 	disklabel -rw ${VND_CDEV} ${RAMDISKTYPE}
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} \
-	    ${RAMDISKTYPE}
+	newfs -B le -b 8192 -f 1024 -O -m 0 -o space -i 7168 \
+	    ${VND_RDEV} ${RAMDISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 .else
-	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \
+	newfs -B le -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \
 		-t 1 -u 256 /dev/r${SD}
 	mount /dev/${SD} ${MOUNT_POINT}
 .endif

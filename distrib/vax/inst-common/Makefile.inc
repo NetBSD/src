@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/09/05 14:46:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/03/04 20:32:21 wrstuden Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -23,7 +23,7 @@ BOOTDISKTYPE=	bootroot
 all: ${CBIN} bootroot
 	dd if=/dev/zero of=${IMAGE} bs=64k count=32
 	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} ${DISKTYPE}
+	newfs -B le -O -m 0 -o space -i 8192 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -37,7 +37,7 @@ all: ${CBIN} bootroot
 bootroot: edlabel copy xxboot boot
 	dd if=/dev/zero of=${BOOTSYS} bs=64k count=4
 	vnconfig -t ${BOOTDISKTYPE} -v -c ${VND_DEV} ${BOOTSYS}
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} ${BOOTDISKTYPE}
+	newfs -B le -O -m 0 -o space -i 8192 ${VND_RDEV} ${BOOTDISKTYPE}
 	dd if=xxboot of=/dev/rvnd0a count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp edlabel copy boot ${MOUNT_POINT}
