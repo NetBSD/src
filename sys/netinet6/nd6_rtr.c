@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.30 2002/06/07 03:05:18 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.31 2002/06/08 00:07:00 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.30 2002/06/07 03:05:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.31 2002/06/08 00:07:00 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1213,7 +1213,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	int s, error;
 	struct in6_addr mask;
 
-	in6_len2mask(&mask, prefixlen);
+	in6_prefixlen2mask(&mask, prefixlen);
 
 	/* find link-local address (will be interface ID) */
 	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0);/* 0 is OK? */

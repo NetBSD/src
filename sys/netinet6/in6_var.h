@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.30 2002/06/07 18:19:30 fvdl Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.31 2002/06/08 00:07:00 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -567,7 +567,6 @@ int	in6_leavegroup __P((struct in6_multi_mship *));
 void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
 int	in6_ifindex2scopeid __P((int));
 int	in6_mask2len __P((struct in6_addr *));
-void	in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	struct proc *));
 void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
