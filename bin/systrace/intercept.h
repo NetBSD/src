@@ -1,6 +1,5 @@
-/*	$NetBSD: intercept.h,v 1.2 2002/06/18 02:49:09 thorpej Exp $	*/
-/*	$OpenBSD: intercept.h,v 1.2 2002/06/10 19:16:26 provos Exp $	*/
-
+/*	$NetBSD: intercept.h,v 1.3 2002/07/30 16:29:30 itojun Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.9 2002/07/22 04:02:39 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -36,9 +35,10 @@
 #include <sys/queue.h>
 
 struct intercept_pid;
+struct intercept_replace;
 
 struct intercept_system {
-	const char *name;
+	char *name;
 	int (*init)(void);
 	int (*open)(void);
 	int (*attach)(int, pid_t);
@@ -47,12 +47,14 @@ struct intercept_system {
 	int (*read)(int);
 	int (*getsyscallnumber)(const char *, const char *);
 	char *(*getcwd)(int, pid_t, char *, size_t);
+	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
-	int (*answer)(int, pid_t, short, int, short);
+	int (*answer)(int, pid_t, u_int32_t, short, int, short);
 	int (*newpolicy)(int);
 	int (*assignpolicy)(int, pid_t, int);
 	int (*policy)(int, int, int, short);
+	int (*replace)(int, pid_t, struct intercept_replace *);
 	void (*clonepid)(struct intercept_pid *, struct intercept_pid *);
 	void (*freepid)(struct intercept_pid *);
 };
@@ -63,7 +65,7 @@ struct intercept_system {
 #define ICPOLICY_ASK	0
 #define ICPOLICY_PERMIT	-1
 #define ICPOLICY_KILL	-2
-#define ICPOLICY_NEVER	1
+#define ICPOLICY_NEVER	1	/* overloaded with errno values > 1 */
 
 #define ICFLAGS_RESULT	1
 
@@ -74,8 +76,15 @@ struct intercept_pid {
 	short policynr;
 	int execve_code;
 	short execve_policy;
-	char *name;
-	char *newname;
+	char *name;		/* name of current process image */
+	char *newname;		/* image name to be committed by execve */
+
+#define ICFLAGS_UIDKNOWN	0x01
+#define ICFLAGS_GIDKNOWN	0x02
+	int flags;
+
+	uid_t uid;		/* current uid */
+	gid_t gid;		/* current gid */
 
 	void *data;
 
@@ -85,7 +94,7 @@ struct intercept_pid {
 #define INTERCEPT_MAXSYSCALLARGS	10
 
 struct intercept_translate {
-	const char *name;
+	char *name;
 	int (*translate)(struct intercept_translate *, int, pid_t, void *);
 	int (*print)(char *, size_t, struct intercept_translate *);
 	int off2;
@@ -99,10 +108,17 @@ struct intercept_translate {
 	TAILQ_ENTRY(intercept_translate) next;
 };
 
+struct intercept_replace {
+	int num;
+	int ind[INTERCEPT_MAXSYSCALLARGS];
+	u_char *address[INTERCEPT_MAXSYSCALLARGS];
+	size_t len[INTERCEPT_MAXSYSCALLARGS];
+};
+
 TAILQ_HEAD(intercept_tlq, intercept_translate);
 
 int intercept_init(void);
-pid_t intercept_run(int, char *, char * const *);
+pid_t intercept_run(int, int, char *, char * const *);
 int intercept_open(void);
 int intercept_attach(int, pid_t);
 int intercept_attachpid(int, pid_t, char *);
@@ -111,8 +127,13 @@ int intercept_read(int);
 int intercept_newpolicy(int);
 int intercept_assignpolicy(int, pid_t, int);
 int intercept_modifypolicy(int, int, const char *, const char *, short);
+void intercept_child_info(pid_t, pid_t);
 
-int intercept_register_sccb(const char *, const char *,
+int intercept_replace_init(struct intercept_replace *);
+int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t);
+int intercept_replace(int, pid_t, struct intercept_replace *);
+
+int intercept_register_sccb(char *, char *,
     short (*)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_tlq *, void *),
     void *);
@@ -121,8 +142,8 @@ void *intercept_sccb_cbarg(char *, char *);
 int intercept_register_gencb(short (*)(int, pid_t, int, const char *, int, const char *, void *, int, void *), void *);
 int intercept_register_execcb(void (*)(int, pid_t, int, const char *, const char *, void *), void *);
 
-int intercept_register_translation(char *, char *, int,
-    struct intercept_translate *);
+struct intercept_translate *intercept_register_translation(char *, char *,
+    int, struct intercept_translate *);
 int intercept_translate(struct intercept_translate *, int, pid_t, int, void *, int);
 char *intercept_translate_print(struct intercept_translate *);
 
@@ -143,13 +164,10 @@ struct intercept_pid *intercept_getpid(pid_t);
 int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
-char *intercept_filename(int, pid_t, void *);
-
-void intercept_syscall(int, pid_t, int, const char *, int, const char *, void *,
-    int);
-void intercept_child_info(pid_t, pid_t);
-void intercept_syscall_result(int, pid_t, int, const char *, int, const char *,
-    void *, int, int, void *);
-
+char *intercept_filename(int, pid_t, void *, int);
+void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
+    const char *, void *, int);
+void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,
+    const char *, void *, int, int, void *);
 
 #endif /* _INTERCEPT_H_ */

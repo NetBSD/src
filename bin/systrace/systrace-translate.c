@@ -1,6 +1,5 @@
-/*	$NetBSD: systrace-translate.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $	*/
-/*	$OpenBSD: systrace-translate.c,v 1.2 2002/06/04 19:09:45 provos Exp $	*/
-
+/*	$NetBSD: systrace-translate.c,v 1.3 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.9 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -30,20 +29,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace-translate.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <err.h>
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+#include "../../sys/compat/linux/common/linux_types.h"
+#include "../../sys/compat/linux/common/linux_fcntl.h"
+#else
 #include "../../sys/compat/linux/linux_types.h"
 #include "../../sys/compat/linux/linux_fcntl.h"
 #endif
@@ -57,22 +60,26 @@ __RCSID("$NetBSD: systrace-translate.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $")
 } while (0)
 
 static int print_oflags(char *, size_t, struct intercept_translate *);
-#ifndef __NetBSD__
 static int linux_print_oflags(char *, size_t, struct intercept_translate *);
-#endif
 static int print_modeflags(char *, size_t, struct intercept_translate *);
 static int print_number(char *, size_t, struct intercept_translate *);
+static int print_uname(char *, size_t, struct intercept_translate *);
+static int print_uname(char *, size_t, struct intercept_translate *);
+static int get_argv(struct intercept_translate *, int, pid_t, void *);
+static int print_argv(char *, size_t, struct intercept_translate *);
 
 static int
 print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
-	int flags = (intptr_t) tl->trans_addr;
+	int flags = (intptr_t)tl->trans_addr;
+	int isread = 0;
 
 	p = str;
 	switch (flags & O_ACCMODE) {
 	case O_RDONLY:
 		strcpy(p, "ro");
+		isread = 1;
 		break;
 	case O_WRONLY:
 		strcpy(p, "wo");
@@ -84,6 +91,19 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 		strcpy(p, "--");
 		break;
 	}
+
+	/* XXX - Open handling of alias */
+#ifdef __NetBSD__
+	if (isread)
+		systrace_switch_alias("netbsd", "open", "netbsd", "fsread");
+	else
+		systrace_switch_alias("netbsd", "open", "netbsd", "fswrite");
+#else
+	if (isread)
+		systrace_switch_alias("native", "open", "native", "fsread");
+	else
+		systrace_switch_alias("native", "open", "native", "fswrite");
+#endif
 
 	p += 2;
 
@@ -99,17 +119,18 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-#ifndef __NetBSD__
 static int
 linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
-	int flags = (int)tl->trans_addr;
+	int flags = (intptr_t)tl->trans_addr;
+	int isread = 0;
 
 	p = str;
 	switch (flags & LINUX_O_ACCMODE) {
 	case LINUX_O_RDONLY:
 		strcpy(p, "ro");
+		isread = 1;
 		break;
 	case LINUX_O_WRONLY:
 		strcpy(p, "wo");
@@ -121,6 +142,12 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 		strcpy(p, "--");
 		break;
 	}
+
+	/* XXX - Open handling of alias */
+	if (isread)
+		systrace_switch_alias("linux", "open", "linux", "fsread");
+	else
+		systrace_switch_alias("linux", "open", "linux", "fswrite");
 
 	p += 2;
 
@@ -134,12 +161,11 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	return (0);
 }
-#endif /* !NetBSD */
 
 static int
 print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int mode = (intptr_t) tl->trans_addr;
+	int mode = (intptr_t)tl->trans_addr;
 
 	mode &= 00007777;
 	snprintf(buf, buflen, "%o", mode);
@@ -150,24 +176,88 @@ print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 static int
 print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int number = (intptr_t) tl->trans_addr;
+	int number = (intptr_t)tl->trans_addr;
 
 	snprintf(buf, buflen, "%d", number);
 
 	return (0);
 }
 
+static int
+print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	struct passwd *pw;
+	uid_t uid = (intptr_t)tl->trans_addr;
+
+	pw = getpwuid(uid);
+	snprintf(buf, buflen, "%s", pw != NULL ? pw->pw_name : "<unknown>");
+
+	return (0);
+}
+
+static int
+get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
+{
+	char *arg;
+	char buf[_POSIX2_LINE_MAX], *p;
+	int i, off = 0, len;
+	extern struct intercept_system intercept;
+
+	buf[0] = '\0';
+	while (1) {
+		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
+			(void *)&arg, sizeof(char *)) == -1) {
+			warn("%s: ioctl", __func__);
+			return (NULL);
+		}
+		if (arg == NULL)
+			break;
+
+		p = intercept_get_string(fd, pid, arg);
+		if (p == NULL)
+			return (-1);
+
+		if (i > 0)
+			strlcat(buf, " ", sizeof(buf));
+		strlcat(buf, p, sizeof(buf));
+
+		off += sizeof(char *);
+	}
+	
+	len = strlen(buf) + 1;
+	trans->trans_data = malloc(len);
+	if (trans->trans_data == NULL)
+		return (-1);
+
+	/* XXX - No argument replacement */
+	trans->trans_size = 0;
+	memcpy(trans->trans_data, buf, len);
+
+	return (0);
+}
+
+static int
+print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	snprintf(buf, buflen, "%s", (char *)tl->trans_data);
+
+	return (0);
+}
+
+struct intercept_translate trargv = {
+	"argv",
+	get_argv, print_argv,
+};
+
 struct intercept_translate oflags = {
 	"oflags",
 	NULL, print_oflags,
 };
 
-#ifndef __NetBSD__
 struct intercept_translate linux_oflags = {
 	"oflags",
 	NULL, linux_print_oflags,
 };
-#endif
 
 struct intercept_translate modeflags = {
 	"mode",
@@ -177,6 +267,11 @@ struct intercept_translate modeflags = {
 struct intercept_translate uidt = {
 	"uid",
 	NULL, print_number,
+};
+
+struct intercept_translate uname = {
+	"uname",
+	NULL, print_uname,
 };
 
 struct intercept_translate gidt = {

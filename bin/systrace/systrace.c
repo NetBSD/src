@@ -1,6 +1,5 @@
-/*	$NetBSD: systrace.c,v 1.3 2002/07/03 22:54:38 atatat Exp $	*/
-/*	$OpenBSD: systrace.c,v 1.16 2002/06/12 22:14:51 provos Exp $	*/
-
+/*	$NetBSD: systrace.c,v 1.4 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.30 2002/07/30 05:52:50 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,20 +30,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace.c,v 1.3 2002/07/03 22:54:38 atatat Exp $");
+__RCSID("$NetBSD: systrace.c,v 1.4 2002/07/30 16:29:31 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <string.h>
 #include <syslog.h>
+#include <string.h>
 #include <err.h>
 #include <errno.h>
 
@@ -59,30 +59,70 @@ int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
 int allow = 0;			/* Allow all and generate */
 int userpolicy = 1;		/* Permit user defined policies */
+int noalias = 0;		/* Do not do system call aliasing */
 char *username = NULL;		/* Username in automatic mode */
 char cwd[MAXPATHLEN];		/* Current working directory of process */
 
-static short trans_cb(int, pid_t, int, const char *, int, const char *, void *,
-    int, struct intercept_tlq *, void *);
-static short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
-    int, void *);
-static void execres_cb(int, pid_t, int, const char *, const char *, void *);
-static void systrace_initcb(void);
+static void child_handler(int);
 static void usage(void);
 static int requestor_start(char *);
 
-static short
+/*
+ * Generate human readable output and setup replacements if available.
+ */
+
+void
+make_output(char *output, size_t outlen, const char *binname, pid_t pid,
+    int policynr, const char *policy, int nfilters, const char *emulation,
+    const char *name, int code, struct intercept_tlq *tls,
+    struct intercept_replace *repl)
+{
+	struct intercept_translate *tl;
+	char *p, *line;
+	int size;
+
+	snprintf(output, outlen,
+	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d)",
+	    binname, pid, policynr, policy, nfilters,
+	    emulation, name, code);
+
+	p = output + strlen(output);
+	size = outlen - strlen(output);
+
+	if (repl != NULL)
+		intercept_replace_init(repl);
+	TAILQ_FOREACH(tl, tls, next) {
+		if (!tl->trans_valid)
+			break;
+		line = intercept_translate_print(tl);
+		if (line == NULL)
+			continue;
+
+		snprintf(p, size, ", %s: %s", tl->name, line);
+		p = output + strlen(output);
+		size = sizeof(output) - strlen(output);
+
+		if (repl != NULL && tl->trans_size)
+			intercept_replace_add(repl, tl->off,
+			    tl->trans_data, tl->trans_size);
+	}
+}
+
+short
 trans_cb(int fd, pid_t pid, int policynr,
     const char *name, int code, const char *emulation,
     void *args, int argsize, struct intercept_tlq *tls, void *cbarg)
 {
 	short action, future;
 	struct policy *policy;
-	struct intercept_translate *tl;
 	struct intercept_pid *ipid;
+	struct intercept_replace repl;
+	struct intercept_tlq alitls;
+	struct intercept_translate alitl[SYSTRACE_MAXALIAS];
+	struct systrace_alias *alias = NULL;
 	struct filterq *pflq = NULL;
-	char output[1024], *p, *line;
-	int size;
+	const char *binname = NULL;
+	char output[_POSIX2_LINE_MAX];
 
 	action = ICPOLICY_PERMIT;
 
@@ -93,32 +133,54 @@ trans_cb(int fd, pid_t pid, int policynr,
 		errx(1, "%s:%d: find %d", __func__, __LINE__,
 		    policynr);
 
+	ipid = intercept_getpid(pid);
+	ipid->uflags = 0;
+	binname = ipid->name != NULL ? ipid->name : policy->name;
+
+	/* Required to set up replacements */
+	make_output(output, sizeof(output), binname, pid, policynr,
+	    policy->name, policy->nfilters, emulation, name, code,
+	    tls, &repl);
+
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
-	ipid = intercept_getpid(pid);
-	ipid->uflags = 0;
-	snprintf(output, sizeof(output),
-	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d)",
-	    ipid->name != NULL ? ipid->name : policy->name, pid, policynr,
-	    policy->name, policy->nfilters, emulation, name, code);
-	p = output + strlen(output);
-	size = sizeof(output) - strlen(output);
-
-	TAILQ_FOREACH(tl, tls, next) {
-		if (!tl->trans_valid)
-			break;
-		line = intercept_translate_print(tl);
-		if (line != NULL) {
-			snprintf(p, size, ", %s: %s", tl->name, line);
-			p = output + strlen(output);
-			size = sizeof(output) - strlen(output);
-		}
-	}
-
 	action = filter_evaluate(tls, pflq, &ipid->uflags);
 	if (action != ICPOLICY_ASK)
-		goto out;
+		goto replace;
+
+	/* Do aliasing here */
+	if (!noalias)
+		alias = systrace_find_alias(emulation, name);
+	if (alias != NULL) {
+		int i;
+
+		/* Set up variables for further filter actions */
+		tls = &alitls;
+		emulation = alias->aemul;
+		name = alias->aname;
+
+		/* Create an aliased list for filter_evaluate */
+		TAILQ_INIT(tls);
+		for (i = 0; i < alias->nargs; i++) {
+			memcpy(&alitl[i], alias->arguments[i], 
+			    sizeof(struct intercept_translate));
+			TAILQ_INSERT_TAIL(tls, &alitl[i], next);
+		}
+
+		if ((pflq = systrace_policyflq(policy,
+			 alias->aemul, alias->aname)) == NULL)
+			errx(1, "%s:%d: no filter queue", __func__, __LINE__);
+
+		action = filter_evaluate(tls, pflq, &ipid->uflags);
+		if (action != ICPOLICY_ASK)
+			goto replace;
+
+		make_output(output, sizeof(output), binname, pid, policynr,
+		    policy->name, policy->nfilters,
+		    alias->aemul, alias->aname, code, tls, NULL);
+	}
+
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
 		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
@@ -128,24 +190,31 @@ trans_cb(int fd, pid_t pid, int policynr,
 	action = filter_ask(tls, pflq, policynr, emulation, name,
 	    output, &future, &ipid->uflags);
 	if (future != ICPOLICY_ASK)
-		systrace_modifypolicy(fd, policynr, name, future);
+		filter_modifypolicy(fd, policynr, emulation, name, future);
 
 	if (policy->flags & POLICY_DETACHED) {
 		if (intercept_detach(fd, pid) == -1)
 			err(1, "intercept_detach");
+		return (action);
 	} else if (action == ICPOLICY_KILL) {
 		kill(pid, SIGKILL);
-		action = ICPOLICY_NEVER;
+		return (ICPOLICY_NEVER);
+	}
+ replace:
+	if (action < ICPOLICY_NEVER) {
+		/* If we can not rewrite the arguments, system call fails */
+		if (intercept_replace(fd, pid, &repl) == -1)
+			action = ICPOLICY_NEVER;
 	}
  out:
 	return (action);
 }
 
-static short
+short
 gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
     const char *emulation, void *args, int argsize, void *cbarg)
 {
-	char output[1024];
+	char output[_POSIX2_LINE_MAX];
 	struct policy *policy;
 	struct intercept_pid *ipid;
 	short action = ICPOLICY_PERMIT;
@@ -187,7 +256,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	return (action);
 }
 
-static void
+void
 execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
     const char *name, void *arg)
 {
@@ -196,10 +265,15 @@ execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
 	if (policynr != -1) {
 		struct intercept_pid *ipid;
 
+		ipid = intercept_getpid(pid);
+		if (ipid->uflags & PROCESS_DETACH) {
+			if (intercept_detach(fd, pid) == -1)
+				err(1, "%s: intercept_detach", __func__);
+			return;
+		}
 		if (inherit)
 			return;
 
-		ipid = intercept_getpid(pid);
 		if (ipid->uflags & PROCESS_INHERIT_POLICY)
 			return;
 	}
@@ -241,172 +315,26 @@ execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
 	fprintf(stderr, "Terminating %d: %s\n", pid, name);
 }
 
-#define X(x)	if ((x) == -1) \
-	err(1, "%s:%d: intercept failed", __func__, __LINE__)
-
 static void
-systrace_initcb(void)
+child_handler(int sig)
 {
-	X(intercept_init());
+	int s = errno, status;
 
-	X(intercept_register_gencb(gen_cb, NULL));
-#ifdef __NetBSD__
-	X(intercept_register_sccb("netbsd", "open", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "open", 0));
-	X(intercept_register_translation("netbsd", "open", 1, &oflags));
+	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
+		close(trfd);
+	}
 
-	X(intercept_register_sccb("netbsd", "connect", trans_cb, NULL));
-	X(intercept_register_translation("netbsd", "connect", 1,
-	      &ic_translate_connect));
-	X(intercept_register_sccb("netbsd", "sendto", trans_cb, NULL));
-	X(intercept_register_translation("netbsd", "sendto", 4,
-	      &ic_translate_connect));
-	X(intercept_register_sccb("netbsd", "bind", trans_cb, NULL));
-	X(intercept_register_translation("netbsd", "bind", 1,
-	      &ic_translate_connect));
-	X(intercept_register_sccb("netbsd", "execve", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "execve", 0));
+	while (wait4(-1, &status, WNOHANG, NULL) > 0)
+		;
 
-	X(intercept_register_sccb("netbsd", "__stat13", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "__stat13", 0));
-	X(intercept_register_sccb("netbsd", "__lstat13", trans_cb, NULL));
-	X(intercept_register_translink("netbsd", "__lstat13", 0));
-	X(intercept_register_sccb("netbsd", "unlink", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "unlink", 0));
-
-	X(intercept_register_sccb("netbsd", "chown", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "chown", 0));
-	X(intercept_register_translation("netbsd", "chown", 1, &uidt));
-	X(intercept_register_translation("netbsd", "chown", 2, &gidt));
-
-	X(intercept_register_sccb("netbsd", "__posix_chown", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "__posix_chown", 0));
-	X(intercept_register_translation("netbsd", "__posix_chown", 1, &uidt));
-	X(intercept_register_translation("netbsd", "__posix_chown", 2, &gidt));
-
-	X(intercept_register_sccb("netbsd", "fchown", trans_cb, NULL));
-	X(intercept_register_translation("netbsd", "fchown", 0, &fdt));
-	X(intercept_register_translation("netbsd", "fchown", 1, &uidt));
-	X(intercept_register_translation("netbsd", "fchown", 2, &gidt));
-
-	X(intercept_register_sccb("netbsd", "__posix_fchown", trans_cb, NULL));
-	X(intercept_register_translation("netbsd", "__posix_fchown", 0, &fdt));
-	X(intercept_register_translation("netbsd", "__posix_fchown", 1, &uidt));
-	X(intercept_register_translation("netbsd", "__posix_fchown", 2, &gidt));
-
-	X(intercept_register_sccb("netbsd", "chmod", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "chmod", 0));
-	X(intercept_register_translation("netbsd", "chmod", 1, &modeflags));
-	X(intercept_register_sccb("netbsd", "readlink", trans_cb, NULL));
-	X(intercept_register_translink("netbsd", "readlink", 0));
-	X(intercept_register_sccb("netbsd", "chdir", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "chdir", 0));
-	X(intercept_register_sccb("netbsd", "access", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "access", 0));
-	X(intercept_register_sccb("netbsd", "mkdir", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "mkdir", 0));
-	X(intercept_register_sccb("netbsd", "rmdir", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "rmdir", 0));
-	X(intercept_register_sccb("netbsd", "rename", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "rename", 0));
-	X(intercept_register_transfn("netbsd", "rename", 1));
-
-	X(intercept_register_sccb("netbsd", "__posix_rename", trans_cb, NULL));
-	X(intercept_register_transfn("netbsd", "__posix_rename", 0));
-	X(intercept_register_transfn("netbsd", "__posix_rename", 1));
-
-	X(intercept_register_sccb("netbsd", "symlink", trans_cb, NULL));
-	X(intercept_register_transstring("netbsd", "symlink", 0));
-	X(intercept_register_translink("netbsd", "symlink", 1));
-#else
-	X(intercept_register_sccb("native", "open", trans_cb, NULL));
-	X(intercept_register_transfn("native", "open", 0));
-	X(intercept_register_translation("native", "open", 1, &oflags));
-
-	X(intercept_register_sccb("native", "connect", trans_cb, NULL));
-	X(intercept_register_translation("native", "connect", 1,
-	    &ic_translate_connect));
-	X(intercept_register_sccb("native", "sendto", trans_cb, NULL));
-	X(intercept_register_translation("native", "sendto", 4,
-	    &ic_translate_connect));
-	X(intercept_register_sccb("native", "bind", trans_cb, NULL));
-	X(intercept_register_translation("native", "bind", 1,
-	    &ic_translate_connect));
-	X(intercept_register_sccb("native", "execve", trans_cb, NULL));
-	X(intercept_register_transfn("native", "execve", 0));
-	X(intercept_register_sccb("native", "stat", trans_cb, NULL));
-	X(intercept_register_transfn("native", "stat", 0));
-	X(intercept_register_sccb("native", "lstat", trans_cb, NULL));
-	X(intercept_register_translink("native", "lstat", 0));
-	X(intercept_register_sccb("native", "unlink", trans_cb, NULL));
-	X(intercept_register_transfn("native", "unlink", 0));
-	X(intercept_register_sccb("native", "chown", trans_cb, NULL));
-	X(intercept_register_transfn("native", "chown", 0));
-	X(intercept_register_translation("native", "chown", 1, &uidt));
-	X(intercept_register_translation("native", "chown", 2, &gidt));
-	X(intercept_register_sccb("native", "fchown", trans_cb, NULL));
-	X(intercept_register_translation("native", "fchown", 0, &fdt));
-	X(intercept_register_translation("native", "fchown", 1, &uidt));
-	X(intercept_register_translation("native", "fchown", 2, &gidt));
-	X(intercept_register_sccb("native", "chmod", trans_cb, NULL));
-	X(intercept_register_transfn("native", "chmod", 0));
-	X(intercept_register_translation("native", "chmod", 1, &modeflags));
-	X(intercept_register_sccb("native", "readlink", trans_cb, NULL));
-	X(intercept_register_translink("native", "readlink", 0));
-	X(intercept_register_sccb("native", "chdir", trans_cb, NULL));
-	X(intercept_register_transfn("native", "chdir", 0));
-	X(intercept_register_sccb("native", "access", trans_cb, NULL));
-	X(intercept_register_transfn("native", "access", 0));
-	X(intercept_register_sccb("native", "mkdir", trans_cb, NULL));
-	X(intercept_register_transfn("native", "mkdir", 0));
-	X(intercept_register_sccb("native", "rmdir", trans_cb, NULL));
-	X(intercept_register_transfn("native", "rmdir", 0));
-	X(intercept_register_sccb("native", "rename", trans_cb, NULL));
-	X(intercept_register_transfn("native", "rename", 0));
-	X(intercept_register_transfn("native", "rename", 1));
-	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
-	X(intercept_register_transstring("native", "symlink", 0));
-	X(intercept_register_translink("native", "symlink", 1));
-
-	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
-	X(intercept_register_translink("linux", "open", 0));
-	X(intercept_register_translation("linux", "open", 1, &linux_oflags));
-	X(intercept_register_sccb("linux", "stat", trans_cb, NULL));
-	X(intercept_register_translink("linux", "stat", 0));
-	X(intercept_register_sccb("linux", "lstat", trans_cb, NULL));
-	X(intercept_register_translink("linux", "lstat", 0));
-	X(intercept_register_sccb("linux", "execve", trans_cb, NULL));
-	X(intercept_register_translink("linux", "execve", 0));
-	X(intercept_register_sccb("linux", "access", trans_cb, NULL));
-	X(intercept_register_translink("linux", "access", 0));
-	X(intercept_register_sccb("linux", "symlink", trans_cb, NULL));
-	X(intercept_register_transstring("linux", "symlink", 0));
-	X(intercept_register_translink("linux", "symlink", 1));
-	X(intercept_register_sccb("linux", "readlink", trans_cb, NULL));
-	X(intercept_register_translink("linux", "readlink", 0));
-	X(intercept_register_sccb("linux", "rename", trans_cb, NULL));
-	X(intercept_register_translink("linux", "rename", 0));
-	X(intercept_register_translink("linux", "rename", 1));
-	X(intercept_register_sccb("linux", "mkdir", trans_cb, NULL));
-	X(intercept_register_translink("linux", "mkdir", 0));
-	X(intercept_register_sccb("linux", "rmdir", trans_cb, NULL));
-	X(intercept_register_translink("linux", "rmdir", 0));
-	X(intercept_register_sccb("linux", "unlink", trans_cb, NULL));
-	X(intercept_register_translink("linux", "unlink", 0));
-	X(intercept_register_sccb("linux", "chmod", trans_cb, NULL));
-	X(intercept_register_translink("linux", "chmod", 0));
-	X(intercept_register_translation("linux", "chmod", 1, &modeflags));
-#endif
-
-	X(intercept_register_execcb(execres_cb, NULL));
+	errno = s;
 }
 
 static void
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "Usage: %s [-ait] [-g gui] [-f policy] [-p pid] command ...\n",
-	    getprogname());
+	fprintf(stderr,
+	    "Usage: systrace [-aituU] [-g gui] [-f policy] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -466,14 +394,18 @@ main(int argc, char **argv)
 	char *guipath = _PATH_XSYSTRACE;
 	pid_t pidattach = 0;
 	int usex11 = 1;
+	int background;
 
-	while ((c = getopt(argc, argv, "aAitUg:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "aAituUg:f:p:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
 			break;
 		case 'A':
 			allow = 1;
+			break;
+		case 'u':
+			noalias = 1;
 			break;
 		case 'i':
 			inherit = 1;
@@ -515,11 +447,15 @@ main(int argc, char **argv)
 		err(1, "getcwd");
 
 	/* Local initalization */
+	systrace_initalias();
 	systrace_initpolicy(filename);
 	systrace_initcb();
 
 	if ((trfd = intercept_open()) == -1)
 		exit(1);
+
+	/* See if we can run the systrace process in the background */
+	background = usex11 || automatic || allow;
 
 	if (pidattach == 0) {
 		/* Run a command and attach to it */
@@ -530,13 +466,7 @@ main(int argc, char **argv)
 			args[i] = argv[i];
 		args[i] = NULL;
 
-		/*
-		 * We will run in the background if using X11, or
-		 * doing fixed policy enforcement, or doing automatic
-		 * policy generation.
-		 */
-		trpid = intercept_run(usex11 || automatic || allow,
-		    args[0], args);
+		trpid = intercept_run(background, trfd, args[0], args);
 		if (trpid == -1)
 			err(1, "fork");
 
@@ -549,7 +479,15 @@ main(int argc, char **argv)
 		/* Attach to a running command */
 		if (intercept_attachpid(trfd, pidattach, argv[0]) == -1)
 			err(1, "attachpid");
+
+		if (background) {
+			if (daemon(0, 1) == -1)
+				err(1, "daemon");
+		}
 	}
+
+	if (signal(SIGCHLD, child_handler) == SIG_ERR)
+		err(1, "signal");
 
 	/* Start the policy gui if necessary */
 	if (usex11 && !automatic && !allow)
