@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.3 1994/01/08 07:14:58 cgd Exp $
+ *	$Id: exec_aout.c,v 1.4 1994/01/08 15:24:02 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -149,7 +149,7 @@ exec_aout_prep_zmagic(p, epp)
 	/* set up command for bss segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
 	    epp->ep_daddr + execp->a_data, 0, 0,
-	    VM_PROT_READ|VM_PROT_WRITE |VM_PROT_EXECUTE);
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
@@ -187,7 +187,7 @@ exec_aout_prep_nmagic(p, epp)
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+		    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
 }
