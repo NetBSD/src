@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.140 2004/05/04 21:23:39 pk Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.141 2004/05/31 15:33:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.140 2004/05/04 21:23:39 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.141 2004/05/31 15:33:38 pk Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -265,7 +265,7 @@ exit1(struct lwp *l, int rv)
 	 * This may block!
 	 */
 	fdfree(p);
-	cwdfree(p);
+	cwdfree(p->p_cwdi);
 
 	doexithooks(p);
 
