@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.25 1999/03/25 22:26:52 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26 1999/03/29 22:13:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -765,21 +765,27 @@ lfs_segclean(p, v, retval)
 	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
 		sup->su_ninos * btodb(fs->lfs_bsize);
 	sup->su_flags &= ~SEGUSE_DIRTY;
-#if 1
+#ifdef DEBUG_LFS
 	/* XXX KS - before we return, really empty the segment (i.e., fill
 	   it with zeroes).  This is only for debugging purposes. */
 	{
 		daddr_t start;
 		int offset, sizeleft, bufsize;
 		struct buf *zbp;
+		int s;
 
 		start = sntoda(fs, SCARG(uap, segment));
 		offset = (sup->su_flags & SEGUSE_SUPERBLOCK) ? LFS_SBPAD : 0;
-		sizeleft = fs->lfs_ssize / DEV_BSIZE - offset;
+		sizeleft = fs->lfs_ssize * fs->lfs_bsize - offset;
 		while(sizeleft > 0) {
 			bufsize = (sizeleft < MAXPHYS) ? sizeleft : MAXPHYS;
-			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+offset, bufsize);
+			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+(offset/DEV_BSIZE), bufsize);
 			memset(zbp->b_data, 'Z', bufsize);
+			zbp->b_saveaddr = (caddr_t)fs;
+			s = splbio();
+			++zbp->b_vp->v_numoutput;
+			++fs->lfs_iocount;
+			splx(s);
 			VOP_STRATEGY(zbp);
 			offset += bufsize;
 			sizeleft -= bufsize;
