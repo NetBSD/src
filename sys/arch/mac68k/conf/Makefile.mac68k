@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.73 2000/01/24 20:36:13 tron Exp $
+#	$NetBSD: Makefile.mac68k,v 1.74 2000/02/01 05:25:35 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
 SIZE?=	size
-STRIPPROG?=strip
+STRIP?=	strip
 TSORT?=	tsort -q
 
 COPTS?= -O2
@@ -108,8 +108,8 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif
