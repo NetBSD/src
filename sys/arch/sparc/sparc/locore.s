@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.195 2003/11/08 14:04:26 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.196 2003/11/16 14:56:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -73,9 +73,6 @@
 #include <machine/trap.h>
 #include <sys/syscall.h>
 
-#ifdef MULTIPROCESSOR
-#define ALT_SWITCH_CODE 1
-#endif
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler
  * gripes about labels without it.  To allow cross-compilation using
@@ -4036,10 +4033,9 @@ startmap_done:
 	/*
 	 * Some sun4/sun4c models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
-	 * The save/restore code has 7 "save"'s followed by 7
+	 * The save/restore code has 6 "save"'s followed by 6
 	 * "restore"'s -- we "nop" out the last "save" and first
 	 * "restore"
-	 * ALT_SWITCH_CODE: there are 6 saves/restores
 	 */
 	cmp	%o0, 8
 	be	1f
@@ -4047,13 +4043,8 @@ noplab:	 nop
 	sethi	%hi(noplab), %l0
 	ld	[%l0 + %lo(noplab)], %l1
 	set	wb1, %l0
-#if ALT_SWITCH_CODE
 	st	%l1, [%l0 + 5*4]
 	st	%l1, [%l0 + 6*4]
-#else
-	st	%l1, [%l0 + 6*4]
-	st	%l1, [%l0 + 7*4]
-#endif
 1:
 #endif
 
@@ -4282,19 +4273,12 @@ _C_LABEL(cpu_hatch):
 	be	1b
 	 ld	[%l1], %l0
 
-#if ALT_SWITCH_CODE
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	clr	%l4
 	sethi	%hi(cpcb), %l6
 	b	idle_enter
 	 sethi	%hi(curlwp), %l7
-#else /* ALT_SWITCH_CODE */
-	/* Idle here .. */
-9:	ba 9b
-	 nop
-	/*NOTREACHED*/
-#endif /* ALT_SWITCH_CODE */
 
 #endif /* MULTIPROCESSOR */
 
@@ -4549,7 +4533,6 @@ ENTRY(write_user_windows)
 	.comm	_C_LABEL(nswitchdiff), 4
 	.comm	_C_LABEL(nswitchexit), 4
 
-#if ALT_SWITCH_CODE
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
@@ -4983,6 +4966,7 @@ Lsw_load:
 	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
 #if defined(MULTIPROCESSOR)
+	/* Add this CPU to the pmap's cpu set */
 	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
 	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
 	mov	1, %o2
@@ -5107,581 +5091,6 @@ ENTRY(proc_trampoline)
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
-#else /* ALT_SWITCH_CODE */
-/*
- * REGISTER USAGE IN cpu_switch AND switchexit:
- * This is split into two phases, more or less
- * `before we locate a new proc' and `after'.
- * Some values are the same in both phases.
- * Note that the %o0-registers are not preserved across
- * the psr change when entering a new process, since this
- * usually changes the CWP field (hence heavy usage of %g's).
- *
- *	%g1 = oldpsr (excluding ipl bits)
- *	%g2 = %hi(whichqs); newpsr
- *	%g3 = p
- *	%g4 = lastproc
- *	%g5 = <free>; newpcb
- *	%g6 = %hi(cpcb)
- *	%g7 = %hi(curlwp)
- *	%o0 = tmp 1
- *	%o1 = tmp 2
- *	%o2 = tmp 3
- *	%o3 = tmp 4; whichqs; vm
- *	%o4 = tmp 4; which; sswap
- *	%o5 = tmp 5; q; <free>
- */
-
-/*
- * When calling external functions from cpu_switch() and idle(), we must
- * preserve the global registers mentioned above across the call.  We also
- * set up a stack frame since we will be running in our caller's frame
- * in cpu_switch().
- */
-#define SAVE_GLOBALS_AND_CALL(name)	\
-	save	%sp, -CCFSZ, %sp;	\
-	mov	%g1, %i0;		\
-	mov	%g2, %i1;		\
-	mov	%g3, %i2;		\
-	mov	%g4, %i3;		\
-	mov	%g6, %i4;		\
-	call	_C_LABEL(name);		\
-	 mov	%g7, %i5;		\
-	mov	%i5, %g7;		\
-	mov	%i4, %g6;		\
-	mov	%i3, %g4;		\
-	mov	%i2, %g3;		\
-	mov	%i1, %g2;		\
-	mov	%i0, %g1;		\
-	restore
-
-
-/*
- * switchexit is called only from cpu_exit() before the current process
- * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curlwp is already NULL.)
- *
- * We lay the process to rest by changing to the `idle' kernel stack,
- * and note that the `last loaded process' is nonexistent.
- */
-ENTRY(switchexit)
-	mov	%o0, %g2		! save proc for exit2() call
-	mov	%o1, %g1		! exit2() or lwp_exit2()
-
-	/*
-	 * Change pcb to idle u. area, i.e., set %sp to top of stack
-	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to idle_u.
-	 * Once we have left the old stack, we can call exit2() to
-	 * destroy it.  Call it any sooner and the register windows
-	 * go bye-bye.
-	 */
-#if defined(MULTIPROCESSOR)
-	sethi	%hi(IDLE_UP), %g5
-	ld	[%g5 + %lo(IDLE_UP)], %g5
-#else
-	set	_C_LABEL(idle_u), %g5
-#endif
-	sethi	%hi(cpcb), %g6
-	mov	1, %g7
-	wr	%g0, PSR_S, %psr	! change to window 0, traps off
-	wr	%g0, 2, %wim		! and make window 1 the trap window
-	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = &idle_u
-	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-#if defined(MULTIPROCESSOR)
-	set	USPACE-CCFSZ, %o1	!
-	add	%g5, %o1, %sp		! set new %sp
-#else
-	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %sp	! set new %sp
-#endif
-
-#ifdef DEBUG
-	mov	%g5, %l6		! %l6 = _idle_u
-	SET_SP_REDZONE(%l6, %l5)
-#endif
-
-	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call	%g1			! {lwp}exit2(p)
-	 mov	%g2, %o0
-
-	/*
-	 * Now fall through to `the last switch'.  %g6 was set to
-	 * %hi(cpcb), but may have been clobbered in exit2(),
-	 * so all the registers described below will be set here.
-	 *
-	 * REGISTER USAGE AT THIS POINT:
-	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(whichqs)
-	 *	%g4 = lastproc
-	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curlwp)
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o3 = whichqs
-	 */
-
-	INCR(_C_LABEL(nswitchexit))	! nswitchexit++;
-	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
-
-	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
-	clr	%g4			! lastproc = NULL;
-	sethi	%hi(cpcb), %g6
-	sethi	%hi(curlwp), %g7
-	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
-	b,a	idle_enter_no_schedlock
-	/* FALLTHROUGH */
-
-
-/* Macro used for register window flushing in the context switch code */
-#define	SAVE save %sp, -64, %sp
-
-/*
- * When no processes are on the runq, switch
- * idles here waiting for something to come ready.
- * The registers are set up as noted above.
- */
-idle:
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Change pcb to idle u. area, i.e., set %sp to top of stack
-	 * and %psr to PSR_S, and set cpcb to point to idle_u.
-	 */
-	/* XXX: FIXME
-	 * 7 of each:
-	 */
-	SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE
-	restore; restore; restore; restore; restore; restore; restore
-
-	mov	1, %g3
-	sethi	%hi(IDLE_UP), %g5
-	ld	[%g5 + %lo(IDLE_UP)], %g5
-	wr	%g0, PSR_S|PSR_PS, %psr	! change to window 0, traps off
-	wr	%g0, 2, %wim		! and make window 1 the trap window
-	st	%g3, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	!rd	%psr, %g1		! oldpsr = %psr;
-	!andn	%g1, PSR_PIL|PSR_PS, %g1! oldpsr &= ~(PSR_PIL|PSR_PS);
-	!and	%g1, PSR_S|PSR_ET, %g1	! oldpsr |= PSR_S|PSR_ET;
-	mov	PSR_S|PSR_ET, %g1
-	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = &idle_u
-	set	USPACE-CCFSZ, %o1
-	add	%g5, %o1, %sp		! set new %sp
-	clr	%g4			! lastproc = NULL;
-
-#ifdef DEBUG
-	mov	%g5, %o2		! %o2 = _idle_u
-	SET_SP_REDZONE(%o2, %o1)
-#endif /* DEBUG */
-#endif /* MULTIPROCESSOR */
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Release the scheduler lock */
-	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
-#endif
-
-idle_enter_no_schedlock:
-	wr	%g1, 0, %psr		! spl0();
-1:					! spin reading whichqs until nonzero
-	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
-	tst	%o3
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	bnz,a	idle_leave
-#else
-	bnz,a	Lsw_scan
-#endif
-	! NB: annulled delay slot (executed when we leave the idle loop)
-	 wr	%g1, PSR_PIL, %psr	! (void) splhigh();
-
-	! Check uvm.page_idle_zero
-	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
-	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
-	tst	%o3
-	bz	1b
-	 nop
-
-	SAVE_GLOBALS_AND_CALL(uvm_pageidlezero)
-	b,a	1b
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-idle_leave:
-	/* Before we leave the idle loop, detain the scheduler lock */
-	nop;nop;nop;	/* just wrote to %psr; delay before doing a `save' */
-	SAVE_GLOBALS_AND_CALL(sched_lock_idle)
-	b,a	Lsw_scan
-#endif
-
-Lsw_panic_rq:
-	sethi	%hi(1f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(1f), %o0, %o0
-Lsw_panic_wchan:
-	sethi	%hi(2f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(2f), %o0, %o0
-Lsw_panic_srun:
-	sethi	%hi(3f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(3f), %o0, %o0
-1:	.asciz	"switch rq"
-2:	.asciz	"switch wchan"
-3:	.asciz	"switch SRUN"
-	_ALIGN
-
-/*
- * cpu_switch() picks a process to run and runs it, saving the current
- * one away.  On the assumption that (since most workstations are
- * single user machines) the chances are quite good that the new
- * process will turn out to be the current process, we defer saving
- * it here until we have found someone to load.  If that someone
- * is the current process we avoid both store and load.
- *
- * cpu_switch() is always entered at splstatclock or splhigh.
- *
- * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
- * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
- */
-	.globl	_C_LABEL(__ffstab)
-ENTRY(cpu_switch)
-	/*
-	 * REGISTER USAGE AT THIS POINT:
-	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(whichqs)
-	 *	%g3 = p
-	 *	%g4 = lastproc
-	 *	%g5 = tmp 0
-	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curlwp)
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o2 = tmp 3
-	 *	%o3 = tmp 4, then at Lsw_scan, whichqs
-	 *	%o4 = tmp 5, then at Lsw_scan, which
-	 *	%o5 = tmp 6, then at Lsw_scan, q
-	 */
-	mov	%o0, %g4			! lastproc = p;
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
-	sethi	%hi(cpcb), %g6
-	ld	[%g6 + %lo(cpcb)], %o0
-	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
-	rd	%psr, %g1			! oldpsr = %psr;
-	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
-	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
-	sethi	%hi(curlwp), %g7
-	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
-
-Lsw_scan:
-	nop; nop; nop				! paranoia
-	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
-
-	/*
-	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
-	 * branches to idle if ffs(whichqs) was 0.
-	 */
-	set	_C_LABEL(__ffstab), %o2
-	andcc	%o3, 0xff, %o1		! byte 0 zero?
-	bz,a	1f			! yes, try byte 1
-	 srl	%o3, 8, %o0
-	b	2f			! ffs = ffstab[byte0]; which = ffs - 1;
-	 ldsb	[%o2 + %o1], %o0
-1:	andcc	%o0, 0xff, %o1		! byte 1 zero?
-	bz,a	1f			! yes, try byte 2
-	 srl	%o0, 8, %o0
-	ldsb	[%o2 + %o1], %o0	! which = ffstab[byte1] + 7;
-	b	3f
-	 add	%o0, 7, %o4
-1:	andcc	%o0, 0xff, %o1		! byte 2 zero?
-	bz,a	1f			! yes, try byte 3
-	 srl	%o0, 8, %o0
-	ldsb	[%o2 + %o1], %o0	! which = ffstab[byte2] + 15;
-	b	3f
-	 add	%o0, 15, %o4
-1:	ldsb	[%o2 + %o0], %o0	! ffs = ffstab[byte3] + 24
-	addcc	%o0, 24, %o0		! (note that ffstab[0] == -24)
-	bz	idle			! if answer was 0, go idle
-	 EMPTY
-2:	sub	%o0, 1, %o4		! which = ffs(whichqs) - 1
-3:	/* end optimized inline expansion */
-
-	/*
-	 * We found a nonempty run queue.  Take its first process.
-	 */
-	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
-	sll	%o4, 3, %o0
-	add	%o0, %o5, %o5
-	ld	[%o5], %g3		! p = q->ph_link;
-	cmp	%g3, %o5		! if (p == q)
-	be	Lsw_panic_rq		!	panic("switch rq");
-	 EMPTY
-	ld	[%g3], %o0		! tmp0 = p->p_forw;
-	st	%o0, [%o5]		! q->ph_link = tmp0;
-	st	%o5, [%o0 + 4]		! tmp0->p_back = q;
-	cmp	%o0, %o5		! if (tmp0 == q)
-	bne	1f
-	 EMPTY
-	mov	1, %o1			!	whichqs &= ~(1 << which);
-	sll	%o1, %o4, %o1
-	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
-1:
-cpu_switch0:
-	/*
-	 * PHASE TWO: NEW REGISTER USAGE:
-	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = newpsr
-	 *	%g3 = p
-	 *	%g4 = lastproc
-	 *	%g5 = newpcb
-	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curlwp)
-	 *	%o0 = tmp 1
-	 *	%o1 = tmp 2
-	 *	%o2 = tmp 3
-	 *	%o3 = vm
-	 */
-
-	/* firewalls */
-	ld	[%g3 + L_WCHAN], %o0	! if (p->p_wchan)
-	tst	%o0
-	bne	Lsw_panic_wchan		!	panic("switch wchan");
-	 EMPTY
-	ld	[%g3 + L_STAT], %o0	! if (p->p_stat != LSRUN)
-	cmp	%o0, LSRUN
-	bne	Lsw_panic_srun		!	panic("switch SRUN");
-	 EMPTY
-
-	/*
-	 * Committed to running process p.
-	 * It may be the same as the one we were running before.
-	 */
-	mov	LSONPROC, %o0			! p->p_stat = LSONPROC;
-	st	%o0, [%g3 + L_STAT]
-
-	/* p->p_cpu initialized in fork1() for single-processor */
-#if defined(MULTIPROCESSOR)
-	sethi	%hi(_CISELFP), %o0		! p->p_cpu = cpuinfo.ci_self;
-	ld	[%o0 + %lo(_CISELFP)], %o0
-	st	%o0, [%g3 + L_CPU]
-#endif
-
-	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
-	st	%g0, [%o0 + %lo(_WANT_RESCHED)]
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Done with the run queues; release the scheduler lock */
-	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
-#endif
-	ld	[%g3 + L_ADDR], %g5		! newpcb = p->p_addr;
-	st	%g0, [%g3 + 4]			! p->p_back = NULL;
-	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
-	st	%g3, [%g7 + %lo(curlwp)]	! curlwp = p;
-
-	cmp	%g3, %g4		! p == lastproc?
-	be,a	Lsw_sameproc		! yes, go return 0
-	 wr	%g2, 0, %psr		! (after restoring ipl)
-
-	/*
-	 * Not the old process.  Save the old process, if any;
-	 * then load p.
-	 */
-	tst	%g4
-	be,a	Lsw_load		! if no old process, go load
-	 wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr
-
-	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
-	/*
-	 * save: write back all windows (including the current one).
-	 * XXX	crude; knows nwindows <= 8
-	 */
-wb1:	/* 7 of each: */
-	SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE
-	restore; restore; restore; restore; restore; restore; restore
-
-	/*
-	 * Load the new process.  To load, we must change stacks and
-	 * alter cpcb and %wim, hence we must disable traps.  %psr is
-	 * currently equal to oldpsr (%g1) ^ (PIL_CLOCK << 8);
-	 * this means that PSR_ET is on.  Likewise, PSR_ET is on
-	 * in newpsr (%g2), although we do not know newpsr's ipl.
-	 *
-	 * We also must load up the `in' and `local' registers.
-	 */
-	wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr
-Lsw_load:
-!	wr	%g1, (PIL_CLOCK << 8) | PSR_ET, %psr	! done above
-	/* compute new wim */
-	ld	[%g5 + PCB_WIM], %o0
-	mov	1, %o1
-	sll	%o1, %o0, %o0
-	wr	%o0, 0, %wim		! %wim = 1 << newpcb->pcb_wim;
-	/* now must not change %psr for 3 more instrs */
-	/* Clear FP & CP enable bits; continue new process at splclock() */
-/*1,2*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
-/*3*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
-	/* set new psr, but with traps disabled */
-	wr	%g2, (PIL_CLOCK << 8)|PSR_ET, %psr ! %psr = newpsr ^ PSR_ET;
-	/* set new cpcb */
-	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = newpcb;
-	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
-	/* load window */
-	ldd	[%sp + (0*8)], %l0
-	ldd	[%sp + (1*8)], %l2
-	ldd	[%sp + (2*8)], %l4
-	ldd	[%sp + (3*8)], %l6
-	ldd	[%sp + (4*8)], %i0
-	ldd	[%sp + (5*8)], %i2
-	ldd	[%sp + (6*8)], %i4
-	ldd	[%sp + (7*8)], %i6
-#ifdef DEBUG
-	mov	%g5, %o0
-	SET_SP_REDZONE(%o0, %o1)
-	CHECK_SP_REDZONE(%o0, %o1)
-#endif
-	/* finally, enable traps */
-	wr	%g2, PIL_CLOCK << 8, %psr	! psr = newpsr;
-
-	/*
-	 * Now running p.  Make sure it has a context so that it
-	 * can talk about user space stuff.  (Its pcb_uw is currently
-	 * zero so it is safe to have interrupts going here.)
-	 */
-	mov	1, %o0			! return value
-	ld	[%g3 + L_PROC], %o3	! p = l->l_proc;
-	ld	[%o3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
-	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
-	ld	[%o3 + PMAP_CTX], %o1	! if (pm->pm_ctx != NULL)
-	tst	%o1
-	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + PMAP_CTXNUM], %o1	! load context number
-
-	/* p does not have a context: call ctx_alloc to get one */
-	save	%sp, -CCFSZ, %sp
-	call	_C_LABEL(ctx_alloc)	! ctx_alloc(pm);
-	 mov	%i3, %o0
-
-	ret
-	 restore	%g0, 1, %o0	! set return value to 1
-
-	/* p does have a context: just switch to it */
-Lsw_havectx:
-	! context is in %o1
-#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-NOP_ON_4M_15:
-	b,a	1f
-	b,a	2f
-#endif
-1:
-#if defined(SUN4) || defined(SUN4C)
-	set	AC_CONTEXT, %o2
-	retl
-	 stba	%o1, [%o2] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
-#endif
-2:
-#if defined(SUN4M)
-	/*
-	 * Flush caches that need to be flushed on context switch.
-	 * We know this is currently only necessary on the sun4m hypersparc.
-	 */
-	set	CPUINFO_VA+CPUINFO_PURE_VCACHE_FLS, %o2
-	ld	[%o2], %o2
-	mov	%o7, %g7	! save return address
-	jmpl	%o2, %o7	! this function must not clobber %o0,%o1 and %g7
-	 nop
-
-	set	SRMMU_CXR, %o2
-	jmp	%g7 + 8
-	 sta	%o1, [%o2] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
-#endif
-
-Lsw_sameproc:
-	/*
-	 * We are resuming the process that was running at the
-	 * call to switch().  Just set psr ipl and return.
-	 */
-!	wr	%g2, 0 %psr		! %psr = newpsr; (done earlier)
-	nop
-	retl
-	 mov	%g0, %o0	! return value = 0
-
-ENTRY(cpu_switchto)
-	/*
-	 * Like cpu_switch, but we're passed the process to switch to.
-	 *
-	 * Use the same register usage convention as in cpu_switch().
-	 */
-	mov	%o0, %g4			! lastproc = arg1;
-	mov	%o1, %g3			! newproc = arg2;
-	sethi	%hi(cpcb), %g6
-	ld	[%g6 + %lo(cpcb)], %o0
-	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
-	rd	%psr, %g1			! oldpsr = %psr;
-	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
-	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
-	sethi	%hi(curlwp), %g7
-	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
-	b,a	cpu_switch0
-
-/*
- * Snapshot the current process so that stack frames are up to date.
- * Only used just before a crash dump.
- */
-ENTRY(snapshot)
-	std	%o6, [%o0 + PCB_SP]	! save sp
-	rd	%psr, %o1		! save psr
-	st	%o1, [%o0 + PCB_PSR]
-
-	/*
-	 * Just like switch(); same XXX comments apply.
-	 * 7 of each.  Minor tweak: the 7th restore is
-	 * done after a ret.
-	 */
-	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
-	restore; restore; restore; restore; restore; restore; ret; restore
-
-
-/*
- * cpu_fork() arrange for proc_trampoline() to run after a process gets
- * chosen in switch(). The stack frame will contain a function pointer
- * in %l0, and an argument to pass to it in %l2.
- *
- * If the function *(%l0) returns, we arrange for an immediate return
- * to user mode. This happens in two known cases: after execve(2) of init,
- * and when returning a child to user mode after a fork(2).
- *
- * If were setting up a kernel thread, the function *(%l0) will not return.
- */
-ENTRY(proc_trampoline)
-	/*
-	 * Note: cpu_fork() has set up a stack frame for us to run in,
-	 * so we can call other functions from here without using
-	 * `save ... restore'.
-	 */
-#if defined(MULTIPROCESSOR)
-	/* Finish setup in SMP environment: acquire locks etc. */
-	call _C_LABEL(proc_trampoline_mp)
-	 nop
-#endif
-
-	/* Reset interrupt level */
-	rd	%psr, %o0
-	andn	%o0, PSR_PIL, %o0	! psr &= ~PSR_PIL;
-	wr	%o0, 0, %psr		! (void) spl0();
-	 nop				! psr delay; the next 2 instructions
-					! can safely be made part of the
-					! required 3 instructions psr delay
-	call	%l0
-	 mov	%l1, %o0
-
-	/*
-	 * Here we finish up as in syscall, but simplified.
-	 * cpu_fork() or sendsig() (if we took a pending signal
-	 * in child_return()) will have set the user-space return
-	 * address in tf_pc. In both cases, %npc should be %pc + 4.
-	 */
-	mov	PSR_S, %l0		! user psr (no need to load it)
-	!?wr	%g0, 2, %wim		! %wim = 2
-	ld	[%sp + CCFSZ + 4], %l1	! pc = tf->tf_pc from cpu_fork()
-	b	return_from_syscall
-	 add	%l1, 4, %l2		! npc = pc+4
-
-#endif /* ALT_SWITCH_CODE */
 /*
  * {fu,su}{,i}{byte,word}
  */
