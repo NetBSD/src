@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2000/03/13 23:52:33 soren Exp $ */
+/*	$NetBSD: pmap.h,v 1.45 2000/04/30 21:09:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -300,6 +300,7 @@ void		pmap_changeprot4_4c __P((pmap_t, vaddr_t, vm_prot_t, int));
 boolean_t	pmap_clear_modify4m __P((struct vm_page *));
 boolean_t	pmap_clear_reference4m __P((struct vm_page *));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
+void		pmap_copy_page_viking_mxcc(paddr_t, paddr_t);
 int		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    int));
 boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
@@ -311,6 +312,7 @@ void		pmap_kremove4m __P((vaddr_t, vsize_t));
 void		pmap_page_protect4m __P((struct vm_page *, vm_prot_t));
 void		pmap_protect4m __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
 void		pmap_zero_page4m __P((paddr_t));
+void		pmap_zero_page_viking_mxcc(paddr_t);
 void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 
 #endif /* defined SUN4M */
@@ -319,7 +321,6 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 
 #define		pmap_clear_modify	pmap_clear_modify4_4c
 #define		pmap_clear_reference	pmap_clear_reference4_4c
-#define		pmap_copy_page		pmap_copy_page4_4c
 #define		pmap_enter		pmap_enter4_4c
 #define		pmap_extract		pmap_extract4_4c
 #define		pmap_is_modified	pmap_is_modified4_4c
@@ -329,14 +330,12 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_kremove		pmap_kremove4_4c
 #define		pmap_page_protect	pmap_page_protect4_4c
 #define		pmap_protect		pmap_protect4_4c
-#define		pmap_zero_page		pmap_zero_page4_4c
 #define		pmap_changeprot		pmap_changeprot4_4c
 
 #elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
 
 #define		pmap_clear_modify	pmap_clear_modify4m
 #define		pmap_clear_reference	pmap_clear_reference4m
-#define		pmap_copy_page		pmap_copy_page4m
 #define		pmap_enter		pmap_enter4m
 #define		pmap_extract		pmap_extract4m
 #define		pmap_is_modified	pmap_is_modified4m
@@ -346,14 +345,12 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_kremove		pmap_kremove4m
 #define		pmap_page_protect	pmap_page_protect4m
 #define		pmap_protect		pmap_protect4m
-#define		pmap_zero_page		pmap_zero_page4m
 #define		pmap_changeprot		pmap_changeprot4m
 
 #else  /* must use function pointers */
 
 extern boolean_t(*pmap_clear_modify_p) __P((struct vm_page *));
 extern boolean_t(*pmap_clear_reference_p) __P((struct vm_page *));
-extern void	(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 extern int	(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    int));
 extern boolean_t (*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
@@ -364,12 +361,10 @@ extern void	(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **, int));
 extern void	(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 extern void	(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
 extern void	(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-extern void	(*pmap_zero_page_p) __P((paddr_t));
 extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 
 #define		pmap_clear_modify	(*pmap_clear_modify_p)
 #define		pmap_clear_reference	(*pmap_clear_reference_p)
-#define		pmap_copy_page		(*pmap_copy_page_p)
 #define		pmap_enter		(*pmap_enter_p)
 #define		pmap_extract		(*pmap_extract_p)
 #define		pmap_is_modified	(*pmap_is_modified_p)
@@ -379,10 +374,13 @@ extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_kremove		(*pmap_kremove_p)
 #define		pmap_page_protect	(*pmap_page_protect_p)
 #define		pmap_protect		(*pmap_protect_p)
-#define		pmap_zero_page		(*pmap_zero_page_p)
 #define		pmap_changeprot		(*pmap_changeprot_p)
 
 #endif
+
+/* pmap_{zero,copy}_page() may be assisted by specialized hardware */
+#define		pmap_zero_page		(*cpuinfo.zero_page)
+#define		pmap_copy_page		(*cpuinfo.copy_page)
 
 #endif /* _KERNEL */
 

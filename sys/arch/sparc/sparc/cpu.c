@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.97 1999/12/16 20:24:58 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.98 2000/04/30 21:09:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -632,7 +632,9 @@ struct module_info module_sun4 = {
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
-	0
+	0,
+	pmap_zero_page4_4c,
+	pmap_copy_page4_4c
 };
 
 void
@@ -758,7 +760,9 @@ struct module_info module_sun4c = {
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
-	0
+	0,
+	pmap_zero_page4_4c,
+	pmap_copy_page4_4c
 };
 
 void
@@ -956,7 +960,9 @@ struct module_info module_ms1 = {
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
-	memerr4m
+	memerr4m,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 void
@@ -984,11 +990,13 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
-	memerr4m
+	memerr4m,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 
-struct module_info module_swift = {		/* UNTESTED */
+struct module_info module_swift = {
 	CPUTYP_MS2,
 	VAC_WRITETHROUGH,
 	0,
@@ -1007,7 +1015,9 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
-	memerr4m
+	memerr4m,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 void
@@ -1026,7 +1036,7 @@ swift_mmu_enable()
 {
 }
 
-struct module_info module_viking = {		/* UNTESTED */
+struct module_info module_viking = {
 	CPUTYP_UNKNOWN,		/* set in cpumatch() */
 	VAC_NONE,
 	cpumatch_viking,
@@ -1046,7 +1056,9 @@ struct module_info module_viking = {		/* UNTESTED */
 	viking_pcache_flush_line,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
-	viking_memerr
+	viking_memerr,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 void
@@ -1069,6 +1081,8 @@ viking_hotfix(sc)
 	if ((pcr & VIKING_PCR_MB) == 0) {
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
+		sc->zero_page = pmap_zero_page_viking_mxcc;
+		sc->copy_page = pmap_copy_page_viking_mxcc;
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
 		 * uncache in pmap_bootstrap().
@@ -1108,7 +1122,7 @@ viking_mmu_enable()
 
 
 /* ROSS Hypersparc */
-struct module_info module_hypersparc = {		/* UNTESTED */
+struct module_info module_hypersparc = {
 	CPUTYP_UNKNOWN,
 	VAC_WRITEBACK,
 	cpumatch_hypersparc,
@@ -1127,7 +1141,9 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_pcache_flush_line,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
-	hypersparc_memerr
+	hypersparc_memerr,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 void
@@ -1156,7 +1172,7 @@ hypersparc_mmu_enable()
 }
 
 /* Cypress 605 */
-struct module_info module_cypress = {		/* UNTESTED */
+struct module_info module_cypress = {
 	CPUTYP_CYPRESS,
 	VAC_WRITEBACK,
 	0,
@@ -1175,11 +1191,13 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
-	memerr4m
+	memerr4m,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 /* Fujitsu Turbosparc */
-struct module_info module_turbosparc = {	/* UNTESTED */
+struct module_info module_turbosparc = {
 	CPUTYP_MS2,
 	VAC_WRITEBACK,
 	cpumatch_turbosparc,
@@ -1198,7 +1216,9 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_pcache_flush_line,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
-	memerr4m
+	memerr4m,
+	pmap_zero_page4m,
+	pmap_copy_page4m
 };
 
 void
@@ -1422,6 +1442,8 @@ getcpuinfo(sc, node)
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);
+		MPCOPY(zero_page);
+		MPCOPY(copy_page);
 #undef MPCOPY
 		/*
 		 * On the boot cpu we use the single-processor cache flush
