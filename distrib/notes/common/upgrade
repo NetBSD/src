@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.5 2000/10/04 00:45:45 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.6 2000/10/10 12:24:27 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,20 +35,21 @@
 .
 .ie r_arm32 \{\
 .
-.
 Upgrading from a previous version of
 .Nx
 isn't currently supported by
-NetBSD/arm32. If you are currently running NetBSD/arm32 then make a
+.Nx*M .
+If you are currently running
+.Nx*M
+then make a
 FULL BACKUP of your current installation, and install
 .Nx \*V
 from scratch. Obviously some of the steps can be skipped (in particular,
 hard disk partitioning) as they will already be done.
 .
-.
 .\}
-.el \{\
 .
+.el \{\
 .
 .Pp
 The upgrade to
@@ -140,5 +141,5 @@ of the version of
 .Nx
 that you upgraded from and have since been removed from the
 .Nx
-distribution. 
+distribution.
 .\}
