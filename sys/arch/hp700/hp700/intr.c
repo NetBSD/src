@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2003/11/01 18:23:37 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2003/11/24 02:51:35 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2003/11/01 18:23:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2003/11/24 02:51:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -102,7 +102,7 @@ static struct hp700_int_bit {
 	 * bit.  If the argument is NULL, the handler 
 	 * gets the trapframe.
 	 */
-	int (*int_bit_handler) __P((void *));
+	int (*int_bit_handler)(void *);
 	void *int_bit_arg;
 
 } hp700_int_bits[HP700_INT_BITS];
@@ -182,9 +182,8 @@ hp700_intr_bootstrap(void)
  * This establishes a new interrupt handler.
  */
 void *
-hp700_intr_establish(struct device *dv, int ipl,
-		     int (*handler) __P((void *)), void *arg,
-		     struct hp700_int_reg *int_reg, int bit_pos)
+hp700_intr_establish(struct device *dv, int ipl, int (*handler)(void *),
+    void *arg, struct hp700_int_reg *int_reg, int bit_pos)
 {
 	struct hp700_int_bit *int_bit;
 	int idx;
@@ -399,7 +398,7 @@ hppa_intr(struct trapframe *frame)
 {
 	int eirr;
 	int ipending_new;
-	int hp700_intr_ipending_new __P((struct hp700_int_reg *, int));
+	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
 
 	/*
 	 * Read the CPU interrupt register and acknowledge
