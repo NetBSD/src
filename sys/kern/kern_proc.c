@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.63 2003/03/19 16:47:36 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.64 2003/03/19 20:35:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.63 2003/03/19 16:47:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64 2003/03/19 20:35:04 dsl Exp $");
 
 #include "opt_kstack.h"
 
@@ -389,13 +389,13 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 
 	if (pg_id < 0) {
 		struct proc *p1 = pfind(-pg_id);
-	if (p1 == NULL)
-		return EINVAL;
+		if (p1 == NULL)
+			return EINVAL;
 		pgrp = p1->p_pgrp;
 	} else {
 		pgrp = pgfind(pg_id);
 		if (pgrp == NULL)
-		    return EINVAL;
+			return EINVAL;
 	}
 	if (pgrp->pg_session != p->p_pgrp->pg_session)
 		return EPERM;
@@ -887,7 +887,7 @@ pg_delete(pid_t pg_id)
 	s = proclist_lock_write();
 	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
 	if (pgrp == NULL || pgrp->pg_id != pg_id ||
-	     !LIST_EMPTY(&pgrp->pg_members)) {
+	    !LIST_EMPTY(&pgrp->pg_members)) {
 		proclist_unlock_write(s);
 		return;
 	}
