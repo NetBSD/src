@@ -38,7 +38,7 @@
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
  *      @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.11 1994/02/13 21:11:04 chopps Exp $
+ *	$Id: st.c,v 1.12 1994/02/14 18:22:58 chopps Exp $
  */
 
 /*
@@ -551,8 +551,8 @@ stopen(dev, flag, type, p)
 #ifdef DEBUG
 	    printf("st: stat = %d, blklen = %d\n", stat, 
 		   (mode.md.blklen2 << 16 | mode.md.blklen1 << 8 | mode.md.blklen0));
-	}
 #endif
+	}
 
 	/* XXX - use tape table data? */
 	/* set record length */
