@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.32 1996/09/07 12:40:54 mycroft Exp $	*/
+/*	$NetBSD: cons.c,v 1.33 1999/08/04 14:40:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,15 @@ cnopen(dev, flag, mode, p)
 	 * open() calls.
 	 */
 	dev = cn_tab->cn_dev;
+	if (dev == NODEV) {
+		/*
+		 * This is most likely an error in the console attach
+		 * code. Panicing looks better than jumping into nowhere
+		 * through cdevsw below....
+		 */
+		panic("cnopen: cn_tab->cn_dev == NODEV\n");
+	}
+
 	if (cn_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(dev, &cn_devvp);
