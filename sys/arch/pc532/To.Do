@@ -1,8 +1,8 @@
-$NetBSD: To.Do,v 1.8 1996/10/23 07:55:10 matthias Exp $
+$NetBSD: To.Do,v 1.9 1997/11/10 01:58:10 phil Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
-  (Last updated, 12/6/95)
+  (Last updated, 11/9/97)
 
 - write an aic scsi driver
 
@@ -13,7 +13,6 @@ This is the "To Do" list for NetBSD/pc532
 - mods to better support ffs boot loader
 
 - improve bim (detect a non-writeable disklabel, ...)
-  write a bim.8
 
 - find or write a "usable" comm package to replace kermit for
 	initial downloading.
