@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.27 1995/01/22 00:12:39 mycroft Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.28 1995/01/26 07:35:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -190,37 +190,26 @@ lptprobe(parent, match, aux)
 	port = iobase + lpt_data;
 	mask = 0xff;
 
-	for (;;) {
-		data = 0x55;				/* Alternating zeros */
+	data = 0x55;				/* Alternating zeros */
+	if (!lpt_port_test(port, data, mask))
+		ABORT;
+
+	data = 0xaa;				/* Alternating ones */
+	if (!lpt_port_test(port, data, mask))
+		ABORT;
+
+	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
+		data = ~(1 << i);
 		if (!lpt_port_test(port, data, mask))
 			ABORT;
-
-		data = 0xaa;				/* Alternating ones */
-		if (!lpt_port_test(port, data, mask))
-			ABORT;
-
-		for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
-			data = ~(1 << i);
-			if (!lpt_port_test(port, data, mask))
-				ABORT;
-		}
-
-		for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
-			data = (1 << i);
-			if (!lpt_port_test(port, data, mask))
-				ABORT;
-		}
-
-		if (port == iobase + lpt_data) {
-			port = iobase + lpt_control;
-#if 1 /* XXX */
-			mask = 0x04;
-#else
-			mask = 0x1e;
-#endif
-		} else
-			break;
 	}
+
+	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
+		data = (1 << i);
+		if (!lpt_port_test(port, data, mask))
+			ABORT;
+	}
+
 	outb(iobase + lpt_data, 0);
 	outb(iobase + lpt_control, 0);
 
