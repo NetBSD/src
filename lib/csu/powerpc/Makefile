@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/04/16 19:38:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/26 03:57:14 cjs Exp $
 
 CFLAGS+=	-DLIBC_SCCS -DPIC # -DDYNAMIC
 CFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
@@ -14,24 +14,52 @@ crt0.o: crt0.c
 	@${CC} ${CFLAGS} -DCRT0 -c ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 gcrt0.o: crt0.c
 	@echo ${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}
 	@${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 crtbegin.o: crtbegin.c
 	@echo ${CC} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${CC} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 crtend.o: crtend.c
 	@echo ${CC} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}
 	@${CC} ${CFLAGS} -c ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
+.if defined(OBJDIR)
+	@echo install -d ${BUILDDIR}${LIBDIR}
+	@install -d ${BUILDDIR}${LIBDIR}
+	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
+	@rm -f ${BUILDDIR}${LIBDIR}/${.TARGET};
+	@ln -s `pwd`/${.TARGET} ${BUILDDIR}${LIBDIR}/${.TARGET};
+.endif
 
 install:
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \

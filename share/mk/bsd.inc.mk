@@ -1,11 +1,39 @@
-#	$NetBSD: bsd.inc.mk,v 1.7 1997/05/09 05:43:41 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.8 1997/05/26 03:58:00 cjs Exp $
+#
+# If an include file is already installed, this always compares the
+# installed file to the one we are about to install. If they are the
+# same, it doesn't do the install. This is to avoid triggering massive
+# amounts of rebuilding.
+#
+# Targets:
+#
+# includes:
+#	Installs the include files in BUILDDIR if we are using one, DESTDIR
+#	otherwise. This is to be run before `make depend' or `make'.
+#
+# install:
+#	Installs the include files in DESTDIR.
+#
 
-.PHONY:		incinstall
-includes:	${INCS} incinstall
+.PHONY:		incbuild incinstall
 
 .if defined(INCS)
+
 .for I in ${INCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
+
+.if defined(OBJDIR)
+.PRECIOUS: ${BUILDDIR}${INCSDIR}/$I
+${BUILDDIR}${INCSDIR}/$I: $I
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
+	    (echo "${INSTALL} -d `dirname ${.TARGET}`" && \
+	    ${INSTALL} -d `dirname ${.TARGET}` && \
+	    echo "${INSTALL} -c -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
+	     ${INSTALL} -c -m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+
+incbuild:: ${BUILDDIR}${INCSDIR}/$I
+.else
+incbuild:: ${DESTDIR}${INCSDIR}/$I
+.endif	# defined(OBJDIR)
 
 .PRECIOUS: ${DESTDIR}${INCSDIR}/$I
 ${DESTDIR}${INCSDIR}/$I: $I
@@ -14,7 +42,18 @@ ${DESTDIR}${INCSDIR}/$I: $I
 		${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.ALLSRC} ${.TARGET})
+
+incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endfor
+
+includes:	${INCS} incbuild
+
+install:	${INCS} incinstall
+
+.endif	# defined(INCS)
+
+.if !target(incbuild)
+incbuild::
 .endif
 
 .if !target(incinstall)
