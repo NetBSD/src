@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.8 1999/07/02 15:37:35 simonb Exp $
+.\"	$NetBSD: math.3,v 1.9 2001/11/10 06:29:57 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -617,14 +617,15 @@ Inexact is signaled only when
 greater range or precision would be needed to represent the exact result.
 .RE
 .RE
-.SH BUGS
-When signals are appropriate, they are emitted by certain
-operations within the codes, so a subroutine\-trace may be
-needed to identify the function with its signal in case
-method 5) above is in use.  And the codes all take the
-IEEE 754 defaults for granted; this means that a decision to
-trap all divisions by zero could disrupt a code that would
-otherwise get correct results despite division by zero.
+.\" .Sh FILES
+.\" .Bl -tag -width /usr/lib/libm_p.a -compact
+.\" .It Pa /usr/lib/libm.a
+.\" the static math library
+.\" .It Pa /usr/lib/libm.so
+.\" the dynamic math library
+.\" .It Pa /usr/lib/libm_p.a
+.\" the static math library compiled for profiling
+.\" .El
 .SH SEE ALSO
 An explanation of IEEE 754 and its proposed extension p854
 was published in the IEEE magazine MICRO in August 1984 under
@@ -636,3 +637,11 @@ Articles in the IEEE magazine COMPUTER vol. 14 no. 3 (Mar.
 1981), and in the ACM SIGNUM Newsletter Special Issue of
 Oct. 1979, may be helpful although they pertain to
 superseded drafts of the standard.
+.SH BUGS
+When signals are appropriate, they are emitted by certain
+operations within the codes, so a subroutine\-trace may be
+needed to identify the function with its signal in case
+method 5) above is in use.  And the codes all take the
+IEEE 754 defaults for granted; this means that a decision to
+trap all divisions by zero could disrupt a code that would
+otherwise get correct results despite division by zero.
