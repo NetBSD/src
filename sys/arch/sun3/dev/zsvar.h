@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.6 1994/11/21 21:31:32 gwr Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.7 1995/04/11 02:41:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -135,6 +135,13 @@ struct zs_chanstate {
 	volatile u_int cs_rbput;	/* ring buffer `put' index */
 	int	cs_rbuf[ZLRB_RING_SIZE];/* type, value pairs */
 };
+
+/*
+ * N.B.: the keyboard is channel 1, the mouse channel 0; ttyb is 1, ttya
+ * is 0.  In other words, the things are BACKWARDS.
+ */
+#define	ZS_CHAN_A	1
+#define	ZS_CHAN_B	0
 
 /*
  * Macros to read and write individual registers (except 0) in a channel.
