@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.17 1995/06/03 23:23:52 mycroft Exp $	*/
+/*	$NetBSD: ping.c,v 1.18 1995/06/26 23:26:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.17 1995/06/03 23:23:52 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.18 1995/06/26 23:26:23 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ static char rcsid[] = "$NetBSD: ping.c,v 1.17 1995/06/03 23:23:52 mycroft Exp $"
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/signal.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -82,6 +81,7 @@ static char rcsid[] = "$NetBSD: ping.c,v 1.17 1995/06/03 23:23:52 mycroft Exp $"
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
