@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.18 2004/07/22 03:36:29 atatat Exp $
+# $NetBSD: sendmail,v 1.19 2004/08/08 17:41:15 atatat Exp $
 #
 
 # PROVIDE: mail
@@ -32,7 +32,7 @@ sendmail_precmd()
 
 	# check modifications on /etc/mail/aliases
 	if [ -f "/etc/mail/aliases.db" ]; then
-		if [ "/etc/mail/aliases" -nt "/etc/mail/aliases.db" ]; then
+		if [ ! "/etc/mail/aliases" -ot "/etc/mail/aliases.db" ]; then
 			echo \
 	    "${name}: /etc/mail/aliases newer than /etc/mail/aliases.db, regenerating"
 			/usr/bin/newaliases
@@ -46,7 +46,7 @@ sendmail_precmd()
 	# check couple of common db files, too
 	for f in access genericstable virtusertable domaintable mailertable; do
 		if [ -r "/etc/mail/$f" -a \
-		    "/etc/mail/$f" -nt "/etc/mail/$f.db" ]; then
+		    ! "/etc/mail/$f" -ot "/etc/mail/$f.db" ]; then
 			echo \
     "${name}: /etc/mail/$f newer than /etc/mail/$f.db, regenerating"
 			/usr/sbin/makemap hash /etc/mail/$f < /etc/mail/$f
