@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.4 2001/06/22 05:57:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct p4032_config {
 	struct algor_bus_space ac_memt;
 
 	struct algor_bus_dma_tag ac_pci_dmat;
+	struct algor_bus_dma_tag ac_pci_pf_dmat;
 
 	struct algor_pci_chipset ac_pc;
 
