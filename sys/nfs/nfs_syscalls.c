@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.60 2003/05/07 16:18:54 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.61 2003/05/21 13:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.60 2003/05/07 16:18:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.61 2003/05/21 13:50:55 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -120,9 +120,6 @@ int nfssvc_sockhead_flag;
 int nfsd_head_flag;
 
 MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
-
-#define	TRUE	1
-#define	FALSE	0
 
 #ifdef NFS
 struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.63 2003/05/07 13:16:35 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.64 2003/05/21 13:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.63 2003/05/07 13:16:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.64 2003/05/21 13:50:54 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -74,9 +74,6 @@ MALLOC_DEFINE(M_NFSBIGFH, "NFS bigfh", "NFS big filehandle");
 MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
 
 extern int prtactive;
-
-#define TRUE	1
-#define	FALSE	0
 
 #define	nfs_hash(x,y)	hash32_buf((x), (y), HASH32_BUF_INIT)
 

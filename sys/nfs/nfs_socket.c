@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.84 2003/05/21 13:31:04 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.85 2003/05/21 13:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.84 2003/05/21 13:31:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.85 2003/05/21 13:50:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -86,9 +86,6 @@ MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
 #ifdef MBUFTRACE
 struct mowner nfs_mowner = { "nfs" };
 #endif
-
-#define	TRUE	1
-#define	FALSE	0
 
 /*
  * Estimate rto for an nfs rpc sent via. an unreliable datagram.
