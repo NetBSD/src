@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 2001/02/05 06:56:45 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.111 2001/02/10 20:00:24 pk Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6812,7 +6812,7 @@ _C_LABEL(sunos_sigcode):
 _C_LABEL(sunos_esigcode):
 #endif /* COMPAT_SUNOS */
 
-#if (defined(_LP64) && defined(COMPAT_SVR4)) || defined(COMPAT_SVR4_32)
+#if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
 /*
  * This code is still 32-bit only.
  */
