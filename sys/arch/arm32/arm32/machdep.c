@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 1997/01/06 04:47:54 mark Exp $ */
+/*	$NetBSD: machdep.c,v 1.18 1997/02/04 07:12:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -501,12 +501,12 @@ delay(n)
 {
 	u_int i;
 
-	while (--n > 0)
-#ifndef CPU_SA110
-		for (i = 8; --i;);
-#else	/* CPU_SA110 */
-		for (i = 50; --i;);
-#endif	/* CPU_SA110 */
+	while (--n > 0) {
+		if (cputype == ID_SA110)
+			for (i = 50; --i;);
+		else
+			for (i = 8; --i;);
+	}
 }
 
 
@@ -615,6 +615,12 @@ initarm(bootconf)
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_BASE;
 	int id;
+
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+
+	set_cpufuncs();
 
 	/* Copy the boot configuration structure */
 
@@ -856,10 +862,8 @@ initarm(bootconf)
 	if (bootconfig.vram[0].pages == 0)
 		vidcconsole_blank(vconsole_current, BLANK_OFF);
 
-#ifdef CPU_SA110
 	/* XXX - Is this really needed ? - no as the setttb() function cleans the caches */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	/* If we don't have VRAM ..
 	 * Ahhhhhhhhhhhhhhhhhhhhhh
@@ -1281,10 +1285,8 @@ initarm(bootconf)
 
 	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
 
-#ifdef CPU_SA110
 	/* XXX - Is this really needed ? - no as the setttb() function cleans the caches */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	/* Switch tables */
 
@@ -1307,10 +1309,8 @@ initarm(bootconf)
 
 	bcopy(page0, (char *)0x00000000, page0_end - page0);
 
-#ifdef CPU_SA110
 	/* We have modified a text page so sync the icache */
-	sync_icache();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 /*
  * Pages were allocated during the secondary bootstrap for the
@@ -1360,10 +1360,8 @@ initarm(bootconf)
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 	console_flush();
 
-#ifdef CPU_SA110
 	/* XXX - Is this really needed */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 /* Diagnostic stuff. while writing the boot code */
 
@@ -1400,10 +1398,8 @@ initarm(bootconf)
 	undefined_init();
 	console_flush();
 
-#ifdef CPU_SA110
 	/* XXX - Is this really needed */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	/* Boot strap pmap telling it where the kernel page table is */
 
@@ -1411,10 +1407,8 @@ initarm(bootconf)
 	pmap_bootstrap(PAGE_DIRS_BASE);
 	console_flush();
 
-#ifdef CPU_SA110
 	/* XXX - Is this really needed */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	/* Setup the IRQ system */
 
@@ -1465,6 +1459,12 @@ initarm(prom_id)
 	u_int reserv_mem;
 	extern char page0[], page0_end[];
 	struct exec *kernexec = (struct exec *)KERNEL_BASE;
+
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+
+	set_cpufuncs();
 
 	/*
 	 * XXXX - FIX ME
@@ -2164,24 +2164,22 @@ cpu_startup()
 	cpu_ctrl |= CPU_CONTROL_LABT_ENABLE;
 #endif
 
-#ifdef CPU_SA110
-	cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
-		   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE;
-	if (cpu_cache & 1)
-		cpu_ctrl |= (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE);
-	if (cpu_cache & 2)
-		cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
-	if (cpu_cache & 8)
-		cpu_ctrl |= CPU_CONTROL_IC_ENABLE;
-	if (cpu_cache & 16)
-		cpu_ctrl |= CPU_CONTROL_DC_ENABLE;
-#endif	/* CPU_SA110 */
+	if (cputype == ID_SA110) {
+		cpu_ctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+			   | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE;
+		if (cpu_cache & 1)
+			cpu_ctrl |= (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE);
+		if (cpu_cache & 2)
+			cpu_ctrl |= CPU_CONTROL_WBUF_ENABLE;
+		if (cpu_cache & 8)
+			cpu_ctrl |= CPU_CONTROL_IC_ENABLE;
+		if (cpu_cache & 16)
+			cpu_ctrl |= CPU_CONTROL_DC_ENABLE;
+	}
 
 	/* Clear out the cache */
 
-#ifdef CPU_SA110
-	cache_clean();
-#endif	/* CPU_SA110 */
+	cpu_cache_purgeID();
     
 	cpu_control(cpu_ctrl);
 
@@ -2232,7 +2230,7 @@ cpu_startup()
 	if ((caddr_t)((allocsys(sysbase) - sysbase)) != size)
 		panic("cpu_startup: system table size inconsistency");
 
-	/*
+   	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
@@ -2502,9 +2500,11 @@ process_kernel_args()
 				printf("Maximum \"in memory\" processes = %d\n",
 				    max_processes);
 		}
-		ptr = strstr(args, "memory disc=");
+		ptr = strstr(args, "memorydisc=");
+		if (!ptr)
+			ptr = strstr(args, "memorydisk=");
 		if (ptr) {
-			memory_disc_size = (u_int)strtoul(ptr + 8, NULL, 10);
+			memory_disc_size = (u_int)strtoul(ptr + 11, NULL, 10);
 			memory_disc_size *= 1024;
 			if (memory_disc_size < 32*1024)
 				memory_disc_size = 32*1024;
@@ -2754,10 +2754,8 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 
-#ifdef CPU_SA110
 	/* XXX - should just be a data purge and icache flush */
-	sync_icache();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	if (pmap_debug_level >= 0)
 		printf("Sendsig: sig=%d pc=%08x\n", sig, tf->tf_pc);
@@ -2863,8 +2861,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	printf("cpu_sysctl: Currently stoned - Cannot support the operation\n");
-	return(EOPNOTSUPP);
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 
@@ -2890,7 +2895,7 @@ vmem_mapdram()
 
 	/* flush existing video data */
 
-	cache_clean();
+	cpu_cache_purgeD();
 
 	/* Get the level 2 pagetable for the video memory */
 
@@ -2908,7 +2913,7 @@ vmem_mapdram()
 
 	/* Flush the TLB so we pick up the new mappings */
 
-	tlb_flush();
+	cpu_tlb_flushD();
 
 	/* Rebuild the video memory descriptor */
 
@@ -2937,7 +2942,7 @@ vmem_mapvram()
 
 	/* flush existing video data */
 
-	cache_clean();
+	cpu_cache_purgeD();
 
 	/* Get the level 2 pagetable for the video memory */
 
@@ -2955,7 +2960,7 @@ vmem_mapvram()
 
 	/* Flush the TLB so we pick up the new mappings */
 
-	tlb_flush();
+	cpu_tlb_flushD();
 
 	/* Rebuild the video memory descriptor */
 
@@ -3030,11 +3035,11 @@ vmem_cachectl(flag)
 
 	/* clean out any existing cached video data */
 
-	cache_clean();
+	cpu_cache_purgeD();
 
 	/* Flush the TLB so we pick up the new mappings */
 
-	tlb_flush();
+	cpu_tlb_flushD();
 
 	return(0);
 }
