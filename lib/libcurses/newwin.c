@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.30 2002/10/22 11:37:34 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.31 2002/11/25 09:11:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.30 2002/10/22 11:37:34 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.31 2002/11/25 09:11:26 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -125,7 +125,10 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx)
 			sp->ch = ' ';
 			sp->bch = ' ';
 			sp->attr = 0;
-			sp->battr = 0;
+			if (__using_color)
+				sp->battr = __default_color;
+			else
+				sp->battr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
 		    (size_t) (ncols * __LDATASIZE));
@@ -286,17 +289,22 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub)
 	win->delay = -1;
 	win->wattr = 0;
 	win->bch = ' ';
-	win->battr = 0;
+	if (__using_color)
+		win->battr = __default_color;
+	else
+		win->battr = 0;
 	win->scr_t = 0;
 	win->scr_b = win->maxy - 1;
 	__swflags(win);
 #ifdef DEBUG
-	__CTRACE("makenew: win->wattr = %0.2o\n", win->wattr);
+	__CTRACE("makenew: win->wattr = %08x\n", win->wattr);
 	__CTRACE("makenew: win->flags = %0.2o\n", win->flags);
 	__CTRACE("makenew: win->maxy = %d\n", win->maxy);
 	__CTRACE("makenew: win->maxx = %d\n", win->maxx);
 	__CTRACE("makenew: win->begy = %d\n", win->begy);
 	__CTRACE("makenew: win->begx = %d\n", win->begx);
+	__CTRACE("makenew: win->bch = %s\n", unctrl(win->bch));
+	__CTRACE("makenew: win->battr = %08x\n", win->battr);
 	__CTRACE("makenew: win->scr_t = %d\n", win->scr_t);
 	__CTRACE("makenew: win->scr_b = %d\n", win->scr_b);
 #endif
