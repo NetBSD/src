@@ -1,12 +1,27 @@
 #
 # GENERIC
 #
-#	$NetBSD: GENERIC,v 1.30.4.4 1999/05/11 06:43:16 nisimura Exp $
+#	$NetBSD: GENERIC,v 1.30.4.5 1999/08/04 07:23:03 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
-maxusers	64
 
+### 
+### System Options
+### ===========================================================================
+###
+
+
+## Sizing and Tuning parameters
+## ----------------------------------------------------------------------------
+
+maxusers	32		# estimated number of users
+
+
+## CPU types and options
+## ----------------------------------------------------------------------------
+
+# CPU support.  At least one is REQUIRED.
 options 	MIPS1		# R2000/R3000 CPUs
 options 	MIPS3		# R4000/R4400 CPUs
 
@@ -23,83 +38,128 @@ options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 #options	DEC_5500
 
 #options		NEWSPL		# for fine grain spl control
-options		DDB_TRACE	# for new ddb_stack_trace_cmd()
 
-# Standard system options
-options 	DDB			# in-kernel debugger
-#options	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options	DDB_ONPANIC=0		# don't enter debugger on panic
-#options	DIAGNOSTIC		# extra kernel debugging checks
-#options	DEBUG			# extra kernel debugging support
-options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
-options 	KTRACE			# system call tracing support
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+## Standard system options
+## ----------------------------------------------------------------------------
 
-#options	SCSIVERBOSE		# Verbose SCSI errors
+options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+options 	INSECURE	# disable kernel security levels
 
-#Old 4.4bsd/pmax kgdb options
-#options	KGDB			# support for kernel gdb
-#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
 
-options 	NTP			# network time protocol
-#options	UCONSOLE		# users can redirect console (unsafe)
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+options 	LKM		# loadable kernel modules
 
 
-# Filesystem options
-file-system	FFS             # fast filesystem with user and group quotas
-#file-system	MFS		# memory-based filesystem
-file-system	NFS		# Sun NFS-compatible filesystem (client)
-#file-system	LFS		# Log-based filesystem (still experimental)
-file-system	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system	FDESC		# /dev/fd
-file-system	KERNFS		# /kern (kernel informational filesystem)
-file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
-#file-system	PROCFS		# /proc
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION
+## Diagnostic/debugging support options
+## ----------------------------------------------------------------------------
 
-options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-#options	QUOTA		# UFS quotas
-#options	FFS_EI		# FFS Endian Independant support
+options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
-# Networking options
-options 	INET		# Internet protocols
-options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-#options	GATEWAY		# IP packet forwarding
-#options	MULTICAST	# Multicast support
-#options	MROUTING	# Multicast routing support
-#options	ISO		# OSI networking
-#options	TPIP		# TPIP
-#options	EON		# OSI tunneling over IP
-#options	CCITT,LLC,HDLC	# X.25
-options		NETATALK	# AppleTalk networking protocols
-#options	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options	PPP_DEFLATE	# Deflate compression support for PPP
-#options	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options	PFIL_HOOKS	# pfil(9) packet filter hooks
-options		IPFILTER_LOG	# ipmon(8) log support
-
-# NetBSD backwards compatibility
-#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options	COMPAT_11	# NetBSD 1.1,
-#options	COMPAT_12	# Netbsd 1.2 reboot()
-options 	COMPAT_13	# Netbsd 1.3
+# Verbose output:
+#   These options enable verbose messages for several subsystems.
+#   Warning, these may compile large string tables into the kernel!
+options 	SCSIVERBOSE	# human readable SCSI error messages
 
 
-# pmax specific
-options 	COMPAT_ULTRIX	# Ultrix compatibility
-options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+## Compatibility options
+## ----------------------------------------------------------------------------
+
+#options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+#options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_10	# NetBSD 1.0,
+#options 	COMPAT_11	# NetBSD 1.1,
+#options 	COMPAT_12	# NetBSD 1.2,
+#options 	COMPAT_13	# NetBSD 1.3,
+#options 	COMPAT_43	# and 4.3BSD
+
+options 	COMPAT_ULTRIX	# binary compatibility with Ultrix RISC
+options 	EXEC_ECOFF	# Required fro Ultrix RISC binaries compatiblity
+
 options 	"HZ=256"	# RTC rate required
 
-# The pmax proms need bootp anyway, so just use bootp.
-options 	NFS_BOOT_BOOTP
 
-config		netbsd		root on ? type ?
+## Networking options
+## -------------------------------------------------------------------------- 
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
+#options 	TCP_COMPAT_42
+
+# Options for network-booted kernels to find IP addresses and root fs
+options 	NFS_BOOT_BOOTP # ,NFS_BOOT_BOOTPARAM
+
+
+## File Systems
+## ----------------------------------------------------------------------------
+
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	PORTAL		# portal filesystem (still experimental)
+file-system 	PROCFS		# /proc
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
+file-system	CODA		# Coda FS; needs "pseudo-device vcoda" (below)
+
+# File system options
+options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
+options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+
+## Kernel root file system and dump configuration.
+## -------------------------------------------------------------------------- 
+
+config		netbsd	root on ? type ?
+
+### 
+### Device configuration
+### =========================================================================
+###
+
+## System Bus
+## ----------------------------------------------------------------------------
 
 mainbus0	at root
 cpu*		at mainbus0
+
+## Peripheral Bus Support (for devices to attach to)
+## ----------------------------------------------------------------------------
 
 # TURBOchannel bus support
 tc*	at	mainbus0
@@ -107,15 +167,15 @@ tc*	at	mainbus0
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
 mcclock0 at	ioasic? offset ?	# DS1287 RTC
-asc0	at	ioasic?	offset ?	# NCR53C94 SCSI with IOASIC
-le0	at	ioasic?	offset ?	# LANCE
+asc0	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
+le0	at	ioasic? offset ?	# LANCE
 zsc*	at	ioasic? offset ?	# Z85C30
 zstty*	at	zsc? channel 1
 lkkbd0	at	zsc? channel ?
 vsms0	at	zsc? channel ?
-dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
-#isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
-#fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)
+dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
+#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
+#fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? # slot ? offset ?	# 3MAX system slot
@@ -123,15 +183,15 @@ mcclock0 at	ibus0			# DS1287 RTC
 dc0	at	ibus0			# DC7085 quad line serial device
 
 # TURBOchannel devices
-mfb*	at	tc? # slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
-cfb*	at	tc? # slot ? offset ?	# PMAG-B CX Color Framebuffer
-tfb*	at	tc? # slot ? offset ?	# PMAG-RO TX True Color Framebuffer
-sfb*	at	tc? # slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-xcfb0	at	tc? # slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
-asc*	at	tc? # slot ? offset ?	# PMAZ-A single channel SCSI
-le*	at	tc? # slot ? offset ?	# PMAD-A LANCE
-fta*	at	tc? # slot ? offset ?	# PMAF-F FDDI
-tcds*	at	tc? # slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
+mfb*	at	tc?			# PMAG-A MX Monochrome Framebuffer
+cfb*	at	tc?			# PMAG-B CX Color Framebuffer
+tfb*	at	tc?			# PMAG-RO TX True Color Framebuffer
+sfb*	at	tc?			# PMAGB-B HX Smart Framebuffer
+xcfb0	at	tc?			# PMAG-DV Color Framebuffer at MAXINE
+asc*	at	tc?			# PMAZ-A single channel SCSI
+le*	at	tc?			# PMAD-A LANCE
+fta*	at	tc?			# PMAF-F FDDI
+tcds*	at	tc?			# PMAZB/PMAZC dual channel SCSI
 asc*	at	tcds? chip ?
 
 # PMAX and MIPSMATE
@@ -149,36 +209,85 @@ dctty0	at	dc0 line 2
 dctty1	at	dc0 line 3
 dctty*	at	dc? line ?
 
-# SCSI bus support
-scsibus*	at asc?
-#scsibus*	at sii?
+## Workstation Console
+## ----------------------------------------------------------------------------
 
-# SCSI devices
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
+# wscons compatibility to other console drivers
+#options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
-# Workstation Console attachments
 wsdisplay* at	pm?
 wsdisplay* at	mfb?
 wsdisplay* at	cfb?
 wsdisplay* at	sfb?
 wsdisplay* at	tfb?
 wsdisplay* at	xcfb?
-wskbd0 at lkkbd?
-wsmouse0 at vsms?
+
+# wscons display options:
+#   builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#   allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+#   different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+
+wskbd0	at lkkbd? console ? mux 1
+wsmouse0 at vsms? mux 0
+
+
+## SCSI Controllers and Devices
+## ----------------------------------------------------------------------------
+
+# SCSI bus support
+scsibus*	at asc?
+#scsibus*	at sii?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
 
 # Pseudo-devices
-pseudo-device	loop		1	# network loopback
-#pseudo-device	sl		2	# serial-line IP ports
-#pseudo-device	ppp		2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
-pseudo-device	bpfilter	4	# packet filter ports
-#pseudo-device	ipfilter		# IP filter, NAT
-#pseudo-device	gre		 2	# generic L3 over IP tunnel
+# disk/mass storage pseudo-devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd		4	# disk-like interface to files
 
-#pseudo-device	vnd		4	# virtual disk ick
-#pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	raid			# RAIDframe disk driver
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#options 	IPFILTER_LOG		# ipmon(8) log support for ipfilter
+pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
+#options 	PPP_BSDCOMP		# BSD-Compress compression for PPP
+#options 	PPP_DEFLATE		# Deflate compression for PPP
+#options 	PPP_FILTER		# Active filter for PPP (requires bpf)
+pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+
+## Miscellaneous Devices
+## ----------------------------------------------------------------------------
+
+pseudo-device	pty		64	# pseudo-terminals (for eg. telnetd)
+pseudo-device	tb		1	# tablet line discipline
+
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# CODA support; also needs "options CODA" (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.

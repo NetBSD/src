@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.13 1999/05/21 01:17:30 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.14 1999/08/04 07:23:03 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -99,7 +99,7 @@ file	arch/alpha/tc/tcds_dma.c	asc_tcds
 include "dev/scsipi/files.scsipi"
 major { sd = 19 }
 major { cd = 25 }
-major { st = 18 }
+#major { st = 18 }
 
 # Memory Disk
 file	arch/pmax/pmax/md_root.c	memory_disk_hooks
@@ -164,7 +164,7 @@ device	lkkbd: wskbddev
 file	dev/dec/lk201_ws.c		lkkbd
 file	dev/dec/wskbdmap_lk201.c	lkkbd
 device	vsms: wsmousedev
-file	dev/dec/vsxxx.c			vsms
+#file	dev/dec/vsxxx.c			vsms
 
 attach	lkkbd at zsc with zskbd
 file	dev/dec/zskbd.c			zskbd needs-flag
