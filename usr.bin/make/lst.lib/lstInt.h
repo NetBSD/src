@@ -1,8 +1,8 @@
-/*	$NetBSD: lstInt.h,v 1.6 1995/11/10 21:27:27 cgd Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lstInt.h	5.4 (Berkeley) 12/28/90
+ *	from: @(#)lstInt.h	8.1 (Berkeley) 6/6/93
  */
 
 /*-

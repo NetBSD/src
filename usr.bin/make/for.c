@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.3 1995/06/14 15:19:13 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)for.c	5.6 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: for.c,v 1.3 1995/06/14 15:19:13 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char rcsid[] = "$NetBSD: for.c,v 1.3 1995/06/14 15:19:13 christos Exp $";
  * The trick is to look for the matching end inside for for loop
  * To do that, we count the current nesting level of the for loops.
  * and the .endfor statements, accumulating all the statements between
- * the initial .for loop and the matching .endfor; 
+ * the initial .for loop and the matching .endfor;
  * then we evaluate the for loop for each variable in the varlist.
  */
 
@@ -131,18 +131,18 @@ For_Eval (line)
 	    !isspace((unsigned char) ptr[3]))
 	    return FALSE;
 	ptr += 3;
-	
+
 	/*
 	 * we found a for loop, and now we are going to parse it.
 	 */
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
-	
+
 	/*
 	 * Grab the variable
 	 */
 	buf = Buf_Init(0);
-	for (wrd = ptr; *ptr && !isspace((unsigned char) *ptr); ptr++) 
+	for (wrd = ptr; *ptr && !isspace((unsigned char) *ptr); ptr++)
 	    continue;
 	Buf_AddBytes(buf, ptr - wrd, (Byte *) wrd);
 
@@ -175,12 +175,12 @@ For_Eval (line)
 	 */
 	forLst = Lst_Init(FALSE);
 	buf = Buf_Init(0);
-	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE); 
+	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
 #define ADDWORD() \
 	Buf_AddBytes(buf, ptr - wrd, (Byte *) wrd), \
 	Buf_AddByte(buf, (Byte) '\0'), \
-	Lst_AtEnd(forLst, (ClientData) Buf_GetAll(buf, &varlen)), \
+	Lst_AtFront(forLst, (ClientData) Buf_GetAll(buf, &varlen)), \
 	Buf_Destroy(buf, FALSE)
 
 	for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
@@ -196,12 +196,12 @@ For_Eval (line)
 	    }
 	if (DEBUG(FOR))
 	    (void) fprintf(stderr, "For: Iterator %s List %s\n", forVar, sub);
-	if (ptr - wrd > 0) 
+	if (ptr - wrd > 0)
 	    ADDWORD();
 	else
 	    Buf_Destroy(buf, TRUE);
 	free((Address) sub);
-	    
+
 	forBuf = Buf_Init(0);
 	forLevel++;
 	return 1;
@@ -262,7 +262,7 @@ ForExec(namep, argp)
     Var_Set(arg->var, name, VAR_GLOBAL);
     if (DEBUG(FOR))
 	(void) fprintf(stderr, "--- %s = %s\n", arg->var, name);
-    Parse_FromString(Var_Subst(arg->var, (char *) Buf_GetAll(arg->buf, &len), 
+    Parse_FromString(Var_Subst(arg->var, (char *) Buf_GetAll(arg->buf, &len),
 			       VAR_GLOBAL, FALSE));
     Var_Delete(arg->var, VAR_GLOBAL);
 
