@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+##	$NetBSD: named-bootconf.pl,v 1.2 1999/11/20 19:03:48 veego Exp $
+##
 ## Copyright (c) 1996-1999 by Internet Software Consortium
 ##
 ## Permission to use, copy, modify, and distribute this software for any
