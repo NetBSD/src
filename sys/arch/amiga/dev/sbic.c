@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.8 1995/01/05 07:22:43 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.9 1995/01/26 12:30:18 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -112,7 +112,7 @@ int sbic_init_wait = SBIC_INIT_WAIT;
  * was broken before.. now if you want this you get it for all drives
  * on sbic controllers.
  */
-int sbic_inhibit_sync = 1;
+int sbic_inhibit_sync = 0;
 int sbic_clock_override = 0;
 int sbic_no_dma = 0;
 
@@ -913,7 +913,8 @@ new_phase:
 			SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK);
 			WAIT_CIP(regs);
 			phase = CMD_PHASE;  /* or whatever */
-		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE) {
+		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE
+		    || dev->sc_msg[0] == 0xff) {
 			/* !! KLUDGE ALERT !! quite a few drives don't seem to 
 			 * really like the current way of sending the
 			 * sync-handshake together with the ident-message, and 
