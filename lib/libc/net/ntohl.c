@@ -27,25 +27,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ntohl.c,v 1.2 1994/01/28 20:36:39 jtc Exp $
+ *	$Id: ntohl.c,v 1.3 1994/10/19 03:27:55 cgd Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: ntohl.c,v 1.2 1994/01/28 20:36:39 jtc Exp $";
+static char *rcsid = "$Id: ntohl.c,v 1.3 1994/10/19 03:27:55 cgd Exp $";
 #endif
 
+#include <sys/types.h>
 #include <machine/endian.h>
 
 #undef ntohl
 
 unsigned long
-ntohl (x)
+ntohl(x)
 	unsigned long x;
 {
+	u_int32_t y = x;
+
 #if BYTE_ORDER == LITTLE_ENDIAN
-	char *s = (char *) &x;
+	u_char *s = (u_char *)&y;
 	return s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3];
 #else
-	return x;
+	return y;
 #endif
 }
