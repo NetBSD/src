@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.24 2002/06/10 14:25:41 fredette Exp $
+$NetBSD: README,v 1.25 2002/07/05 13:31:37 scw Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm)
@@ -16,6 +16,7 @@ dreamcast:	SEGA Dreamcast (sh3)
 evbarm:		ARM-based eval boards (arm)
 evbmips:	MIPS-based eval boards (mips)
 evbsh3:		Hitachi SuperH(TM) sh3 and sh4 eval boards (sh3)
+evbsh5:		Hitachi SuperH(TM) sh5 eval boards (sh5)
 hp300:		Hewlett Packard 300- and 400-series machines (m68k)
 hp700:		Hewlett Packard 700-series machines (hppa)
 hpcarm:		ARM based handheld PCs (arm)
@@ -63,5 +64,6 @@ m68k:		Motorola 680x0 cpu based platform files
 m88k:		Motorola 88xxx cpu based platform files
 mips:		MIPS cpu based platform files
 powerpc:	PowerPC cpu based platform files
-sh3:		Hitachi SuperH cpu based platform files
+sh3:		Hitachi SuperH(TM) sh3 and sh4 cpu based platform files
+sh5:		Hitachi SuperH(TM) sh5 cpu based platform files
 sun68k:		Sun Motorola 680x0 cpu based platform files

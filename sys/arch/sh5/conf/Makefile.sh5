@@ -1,0 +1,102 @@
+#	$NetBSD: Makefile.sh5,v 1.1 2002/07/05 13:31:50 scw Exp $
+
+# Makefile for NetBSD/sh5
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/<machine>/conf/``machineid''
+# after which you should do
+#	config machineid
+# CPU generic makefile changes should be made in
+#	/sys/arch/sh5/conf/Makefile.sh5
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=sh5
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+THISSH5=	$S/arch/${MACHINE}
+SH5=		$S/arch/sh5
+GENASSYM=	${SH5}/sh5/genassym.cf
+.-include "${THISSH5}/conf/Makefile.${MACHINE}.inc"
+
+##
+## (2) compile settings
+##
+## The kernel must be compiled to *not* use FPU registers.
+##
+CC=		sh5gcc -D__NetBSD__ -ml -m5-32media-nofpu
+AS=		sh5gcc -D__NetBSD__ -ml -m5-32media-nofpu
+LD=		sh5ld -m shlelf32
+AR=		sh5ar
+RANLIB=		sh5ranlib
+SIZE=		sh5size
+CPPFLAGS+=	-D${MACHINE}
+CWARNFLAGS+=	-Wno-parentheses
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+COPTS?=		-O2
+
+##
+## (3) libkern and compat
+##
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+## locore.S must be assembled with the -no-expand option to prevent
+## the assembler from synthesising instructions which use r25.
+## Otherwise, interrupt/tlb handlers will lose.
+##
+MD_OBJS=	locore.o
+MD_CFILES=
+MD_SFILES=	${THISSH5}/${MACHINE}/locore.S
+
+locore.o: ${THISSH5}/${MACHINE}/locore.S assym.h
+	${NORMAL_S} -Wa,-no-expand
+
+##
+## (5) link settings
+##
+# LINKTEXT possibly set by individual sh5 port
+LINKTEXT?=	-Ttext 0xc0000000
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+locore.o machdep.o: Makefile
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
