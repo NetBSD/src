@@ -10,11 +10,14 @@
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC ""
 
+#define NETBSD_ELF
+#include <netbsd.h>
+
 #undef SIZE_TYPE
-#define SIZE_TYPE "unsigned long"
+#define SIZE_TYPE "long unsigned int"
 
 #undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "long"
+#define PTRDIFF_TYPE "long int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -56,16 +59,12 @@
   sprintf ((LABEL), "*.L%s%ld", (PREFIX), (long)(NUM))
 
 #undef ASM_SPEC
-#define ASM_SPEC "\
-%%{fpic:-K PIC} %{fPIC:-K PIC} \
+#define ASM_SPEC "%{fpic:-K PIC} %{fPIC:-K PIC} \
 %{mlittle-endian:-EL} \
-%(asm_cpu) %(asm_arch) \
+%(asm_cpu) \
 "
 
 #undef STDC_0_IN_SYSTEM_HEADERS
-
-#define NETBSD_ELF
-#include <netbsd.h>
 
 /* Name the port. */
 #undef TARGET_NAME
