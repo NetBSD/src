@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.40 2001/11/30 07:05:55 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.41 2002/03/22 03:57:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.40 2001/11/30 07:05:55 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.41 2002/03/22 03:57:35 chs Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -266,6 +266,7 @@ WRITE(void *v)
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
+	origoff = uio->uio_offset;
 	resid = uio->uio_resid;
 	osize = ip->i_ffs_size;
 	bsize = fs->fs_bsize;
@@ -305,7 +306,6 @@ WRITE(void *v)
 	}
 
 	ubc_alloc_flags = UBC_WRITE;
-	origoff = uio->uio_offset;
 	while (uio->uio_resid > 0) {
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
@@ -382,6 +382,9 @@ WRITE(void *v)
 	goto out;
 
  bcache:
+	simple_lock(&vp->v_interlock);
+	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
+	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
