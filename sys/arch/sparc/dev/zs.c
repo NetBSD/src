@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.77 2000/03/19 14:58:02 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.78 2000/03/21 11:24:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -946,7 +946,6 @@ zs_console_flags(promunit, node, channel)
 		break;
 	}
 
-prom_printf("zs_console flags: %x\n", flags);
 	return (flags);
 }
 
