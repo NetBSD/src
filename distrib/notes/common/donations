@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.13.4.4 2001/05/21 01:48:14 jhawk Exp $
+.\"	$NetBSD: donations,v 1.13.4.5 2001/05/21 02:34:48 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,6 +88,7 @@ Jason R. Thorpe
 Steve Wadlow
 Krister Walfridsson
 Jim Wise
+Reinoud Zandijk
 Christos Zoulas
 .Ed
 .Pp
@@ -109,6 +110,7 @@ Internet Software Consortium
 MS Macro System GmbH, Germany
 Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Piermont Information Systems Inc.
+Precedence Technologies Ltd
 Salient Systems Inc.
 VMC Harald Frank, Germany
 Warped Communications, Inc.
