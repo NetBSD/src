@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.8 1994/12/08 18:33:19 dean Exp $	*/
+/*	$NetBSD: rz.c,v 1.9 1995/07/14 01:05:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,21 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	   115712,       0,	/* H */
 #endif
 };
+
+extern char *readdisklabel __P((dev_t dev, void (*strat)(),
+		  struct disklabel *lp, struct cpu_disklabel *osdep));
+
+/*
+ * Ultrix disklabel declarations
+ */
+ #ifdef COMPAT_ULTRIX
+#include "../../stand/dec_boot.h"
+
+extern char *
+compat_label __P((dev_t dev, void (*strat)(),
+		  struct disklabel *lp, struct cpu_disklabel *osdep));
+#endif
+
 
 #define	RAWPART		2	/* 'c' partition */	/* XXX */
 
@@ -714,9 +729,6 @@ rzdone(unit, error, resid, status)
 	}
 }
 
-#ifdef COMPAT_ULTRIX
-#include "../../stand/dec_boot.h"
-#endif
 
 /*
  * Read or constuct a disklabel
@@ -731,7 +743,6 @@ rzgetinfo(dev)
 	register int i;
 	char *msg;
 	int part;
-	extern char *readdisklabel();
 	struct cpu_disklabel cd;
 
 	part = rzpart(dev);
@@ -771,8 +782,23 @@ rzgetinfo(dev)
 	msg = readdisklabel(dev, rzstrategy, lp, &cd);
 	if (msg == NULL)
 		return;
-
 	printf("rz%d: WARNING: %s\n", unit, msg);
+
+#ifdef	COMPAT_ULTRIX
+	/*
+	 * No native label, try and substitute  Ultrix label
+	 */
+	msg = compat_label(dev, rzstrategy, lp, &cd);
+	if (msg == NULL) {
+	  	printf("rz%d: WARNING: using ULTRIX partition information",
+		       unit);
+		return;
+	}
+	printf("rz%d: WARNING: Ultrix label, %s\n", unit, msg);
+#endif
+	/*
+	 * No label found. Concoct one from compile-time default.
+	 */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_type = DTYPE_SCSI;
@@ -783,16 +809,11 @@ rzgetinfo(dev)
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
-#ifdef COMPAT_ULTRIX
-	if(sc->sc_label.d_magic != DEC_LABEL_MAGIC){
-#endif
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		lp->d_partitions[i].p_size = rzdefaultpart[i].nblocks;
 		lp->d_partitions[i].p_offset = rzdefaultpart[i].strtblk;
 	}
-#ifdef COMPAT_ULTRIX
-	}
-#endif
+
 	lp->d_partitions[RAWPART].p_size = sc->sc_blks;
 }
 
@@ -829,7 +850,8 @@ rzopen(dev, flags, mode, p)
 		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
 			unit, "abcdefg"[part],  unit, part);
 		printf("# partions %d, size of %d = %d\n",
-			lp->d_npartitions, lp->d_partitions[part].p_size);
+		       lp->d_npartitions, part,
+		       lp->d_partitions[part].p_size);
 		return (ENXIO);
 	}
 
