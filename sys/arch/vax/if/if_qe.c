@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.25 1998/03/13 11:40:19 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.26 1998/06/20 21:01:43 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -749,9 +749,11 @@ qerint(unit)
 		sc->rindex = (sc->rindex + 1) % NRCV;
 		nrcv++;
 	}
+#ifndef QE_NO_OVERRUN_WARNINGS
 	if (nrcv && nrcv < NRCV)
 		log(LOG_ERR, "qe%d: ring overrun, resync'd by skipping %d\n",
 		    unit, nrcv);
+#endif
 
 	for (; sc->rring[sc->rindex].qe_status1 != QE_NOTYET;
 	    sc->rindex = ++sc->rindex % NRCV) {
@@ -995,7 +997,6 @@ qeread(sc, ifrw, len)
 	struct ifrw *ifrw;
 	int len;
 {
-	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	struct ether_header *eh;
 	struct mbuf *m;
 
@@ -1048,7 +1049,7 @@ if (m) {
 		 * there are no BPF listeners.	And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
+		if ((sc->qe_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, LLADDR(sc->qe_if.if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.27 1998/06/08 18:42:40 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.28 1998/06/20 21:01:43 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -93,7 +93,6 @@ start()
 {
 	extern char cpu_model[];
 	extern void *scratch;
-	int tmpptr;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
@@ -190,15 +189,23 @@ start()
 			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
 			dep_call = &ka650_calls;
 			strcpy(cpu_model,"MicroVAX ");
-			tmpptr = (vax_siedata >> 8) & 255;
-			if (tmpptr == VAX_SIE_KA640)
+			switch ((vax_siedata >> 8) & 255) {
+			case VAX_SIE_KA640:
 				strcat(cpu_model, "3300/3400");
-			else if (tmpptr == VAX_SIE_KA650)
+				break;
+
+			case VAX_SIE_KA650:
 				strcat(cpu_model, "3500/3600");
-			else if (tmpptr == VAX_SIE_KA655)
+				break;
+
+			case VAX_SIE_KA655:
 				strcat(cpu_model, "3800/3900");
-			else 
+				break;
+
+			default:
 				strcat(cpu_model, "III");
+				break;
+			}
 			break;
 #endif
 		default:
