@@ -1,7 +1,0 @@
-#	$NetBSD: devices.pc532,v 1.2 1994/10/26 08:24:03 cgd Exp $
-#
-# Swap device numbers
-#
-sd	0
-st	2
-rd	3

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1994/11/23 08:15:58 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1994/10/26 09:12:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -58,13 +58,12 @@ int	ttselect	__P((dev_t, int, struct proc *));
 /*
  * macros for function declarations
  */
-#define decl_open(f)     int f __P((dev_t, int, int, struct proc *, \
-				    struct file *))
+#define decl_open(f)     int f __P((dev_t, int, int, struct proc *))
 #define decl_close(f)    int f __P((dev_t, int, int, struct proc *))
 #define decl_read(f)     int f __P((dev_t, struct uio *, int))
 #define decl_write(f)    int f __P((dev_t, struct uio *, int))
-#define decl_ioctl(f)    int f __P((dev_t dev, u_long cmd, caddr_t data, \
-				     int fflag, struct proc *p))
+#define decl_ioctl(f)    int f __P((dev_t dev, int cmd, caddr_t data, \
+				     int fflag, struct proc *))
 #define	decl_stop(f)     int f __P((struct tty *, int))
 #define	decl_reset(f)    int f __P((int))
 #define	decl_select(f)   int f __P((dev_t, int, struct proc*))
@@ -845,20 +844,18 @@ int promcnprobe(), promcninit(), promcngetc(), promcnputc();
 int zscnprobe_a(), zscnprobe_b(), zscninit(), zscngetc(), zscnputc();
 #endif
 
-extern void nullcnpollc();
-
 struct	consdev constab[] = {
 #if	NKD
-	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc, nullcnpollc },
+	{ kdcnprobe, kdcninit, kdcngetc, kdcnputc },
 #endif
 #if NZS
-	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
+	{ zscnprobe_a, zscninit, zscngetc, zscnputc },
 #endif
 #if	NZS
-	{ zscnprobe_b, zscninit, zscngetc, zscnputc, nullcnpollc },
+	{ zscnprobe_b, zscninit, zscngetc, zscnputc },
 #endif
 #if NPROM
-	{ promcnprobe, promcninit, promcngetc, promcnputc, nullcnpollc },
+	{ promcnprobe, promcninit, promcngetc, promcnputc },
 #endif
     { 0 }	/* End marker. */
 };

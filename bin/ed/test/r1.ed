@@ -1,8 +1,0 @@
-#!/bin/sh -
-../ed - <<\EOT
-r \r1.d
-1;r !echo hello world
-1
-r !echo hello world
-w \r1.o
-EOT

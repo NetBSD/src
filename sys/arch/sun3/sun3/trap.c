@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1994/11/28 19:17:12 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.31.2.1 1994/11/30 22:35:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,9 +67,9 @@
 #include <machine/reg.h>
 
 #ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-extern struct	sysent	sunos_sysent[];
-extern int	nsunos_sysent;
+#include <compat/sunos/sun_syscall.h>
+extern struct	sysent	sun_sysent[];
+extern int	nsun_sysent;
 #endif
 
 
@@ -127,16 +127,13 @@ short	exframesize[] = {
 #define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
 #define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
 
-/* #define	DEBUG XXX */
-
 #ifdef DEBUG
 int mmudebug = 0;
 int mmupid = -1;
-#define MDB_ISPID(p)	((p) == mmupid)
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_CPFAULT 	8
+#define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
 /*
@@ -228,10 +225,12 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 	dopanic:
-		if (panicstr == NULL) {
-			printf("trap type %x, code=%x, v=%x\n", type, code, v);
-			regdump(&frame, 128);
-		}
+		printf("trap type %x, code=%x, v=%x\n", type, code, v);
+#ifdef DDB
+		if (kdb_trap(type, &frame))
+			return;
+#endif
+		regdump(&frame, 128);
 		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
@@ -369,12 +368,6 @@ trap(type, code, v, frame)
 		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)
 		{
-#ifdef	DEBUG
-			if (mmudebug & MDB_CPFAULT) {
-				printf("trap: copyfault fu/su bail\n");
-				Debugger();
-			}
-#endif
 			goto copyfault;
 		}
 		/*FALLTHROUGH*/
@@ -425,15 +418,8 @@ trap(type, code, v, frame)
 		if (map == kernel_map) {
 			/* Do not allow faults outside the "managed" space. */
 			if (va < virtual_avail) {
-				if (p->p_addr->u_pcb.pcb_onfault) {
-#ifdef	DEBUG
-					if (mmudebug & MDB_CPFAULT) {
-						printf("trap: copyfault kernel_map va < avail\n");
-						Debugger();
-					}
-#endif
+				if (p->p_addr->u_pcb.pcb_onfault)
 					goto copyfault;
-				}
 				goto dopanic;
 			}
 		} else {
@@ -482,15 +468,8 @@ trap(type, code, v, frame)
 			goto finish;
 
 		if (type == T_MMUFLT) {
-			if (p->p_addr->u_pcb.pcb_onfault) {
-#ifdef	DEBUG
-				if (mmudebug & MDB_CPFAULT) {
-					printf("trap: copyfault pcb_onfault\n");
-					Debugger();
-				}
-#endif
+			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			}
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
@@ -545,8 +524,8 @@ syscall(code, frame)
 	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
 	case EMUL_SUNOS:
-		systab = sunos_sysent;
-		numsys = nsunos_sysent;
+		systab = sun_sysent;
+		numsys = nsun_sysent;
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
 		 * BSD passes it in D0. So, we have to get the real "code"
@@ -561,7 +540,7 @@ syscall(code, frame)
 		 * XXX stored pc on the stack to skip, the argument follows
 		 * XXX the syscall number without a gap.
 		 */
-		if (code != SUNOS_SYS_sigreturn) {
+		if (code != SUN_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, might have to
@@ -618,13 +597,13 @@ syscall(code, frame)
 	else
 		callp += SYS_syscall;		/* => nosys */
 
-	argsize = callp->sy_argsize;
+	argsize = callp->sy_narg * sizeof(int);
 	if (argsize != 0)
 		error = copyin(params, (caddr_t)args, argsize);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
 #endif
 
 	if (error)
@@ -675,8 +654,7 @@ syscall(code, frame)
 		p->p_md.md_flags &= ~MDP_STACKADJ;
 	}
 #endif
-
-	userret(p, &frame, sticks, (u_int)0, 0);
+	userret(p, &frame, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

@@ -1,3 +1,0 @@
-# list of users given ftp access to a chrooted area.
-# read by ftpd(8).
-joeuser
