@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_start.S,v 1.3 2003/08/29 12:07:33 bsh Exp $ */
+/*	$NetBSD: smdk2410_start.S,v 1.4 2003/08/29 12:41:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -38,6 +38,7 @@
 #include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
 
 #include <arm/s3c2xx0/s3c2410reg.h>	/* for S3C2410_SDRAM_START */
+#include "opt_smdk2xx0.h"		/* SMDK2XX0_CLOCK_CONFIG */
 
 /*
  * Kernel start routine for Samsung SMDK2410.
@@ -57,6 +58,26 @@ _C_LABEL(smdk2410_start):
 	mrs	r0, cpsr
 	orr	r0, r0, #I32_bit
 	msr	cpsr, r0
+
+#ifdef SMDK2XX0_CLOCK_CONFIG
+	adr	r4, clock_config_data
+	
+	mov	r2, #S3C2410_CLKMAN_BASE
+	ldr	r1, [r2, #CLKMAN_CLKSLOW]
+	orr	r0, r1, #CLKSLOW_SLOW
+	str	r0, [r2, #CLKMAN_CLKSLOW]
+	nop
+	nop
+
+	ldmia	r4, {r0,r3}
+	str	r0, [r2, #CLKMAN_CLKDIVN]
+
+	str	r3, [r2, #CLKMAN_MPLLCON]
+	nop
+	nop
+	
+	str	r1, [r2, #CLKMAN_CLKSLOW]
+#endif
 
 	/* Are we running on right place ? */
 	adr r0, _C_LABEL(smdk2410_start)
@@ -151,6 +172,15 @@ smdk2410_start_ram:
 
 Lstart:
 	.word	start
+	
+	.macro clock_data  hdivn, pdivn, mdiv, pdiv, sdiv
+	.word	(\hdivn)<<1 | \pdivn
+	.word	(\mdiv)<<PLLCON_MDIV_SHIFT | (\pdiv)<<PLLCON_PDIV_SHIFT | (\sdiv)<<PLLCON_SDIV_SHIFT
+	.endm
+#ifdef	SMDK2XX0_CLOCK_CONFIG
+clock_config_data:
+	clock_data SMDK2XX0_CLOCK_CONFIG
+#endif
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \
