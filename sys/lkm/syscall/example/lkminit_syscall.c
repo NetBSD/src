@@ -1,4 +1,4 @@
-/*	$NetSBD$	*/
+/*	$NetBSD: lkminit_syscall.c,v 1.5 2003/12/30 07:08:08 simonb Exp $	*/
 
 /*
  * Makefile for newsyscall
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.5 2003/12/30 07:08:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
