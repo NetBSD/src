@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.108 2004/03/03 05:59:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.109 2004/03/30 19:58:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.108 2004/03/03 05:59:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.109 2004/03/30 19:58:14 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1116,11 +1116,11 @@ send:
 		 */
 		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_una) {
-			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
 				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 				tp->t_rxtshift = 0;
 			}
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		}
 	} else
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
