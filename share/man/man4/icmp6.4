@@ -1,4 +1,4 @@
-.\"	$NetBSD: icmp6.4,v 1.7 2003/04/16 13:35:17 wiz Exp $
+.\"	$NetBSD: icmp6.4,v 1.8 2003/06/26 11:51:46 wiz Exp $
 .\"	$KAME: icmp6.4,v 1.3 2000/11/24 08:44:40 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -145,17 +145,23 @@ and an option name of
 Six macros operate on an icmp6_filter structure:
 .\" is "Fn" legal for macros?
 .Bl -item -compact -offset indent
-.It Ft void
+.It
+.Ft void
 .Fn ICMP6_FILTER_SETPASSALL "struct icmp6_filter *"
-.It Ft void
+.It
+.Ft void
 .Fn ICMP6_FILTER_SETBLOCKALL "struct icmp6_filter *"
-.It Ft void
+.It
+.Ft void
 .Fn ICMP6_FILTER_SETPASS "int" "struct icmp6_filter *"
-.It Ft void
+.It
+.Ft void
 .Fn ICMP6_FILTER_SETBLOCK "int" "struct icmp6_filter *"
-.It Ft int
+.It
+.Ft int
 .Fn ICMP6_FILTER_WILLPASS "int" "const struct icmp6_filter *"
-.It Ft int
+.It
+.Ft int
 .Fn ICMP6_FILTER_WILLBLOCK "int" "const struct icmp6_filter *"
 .El
 .Pp
