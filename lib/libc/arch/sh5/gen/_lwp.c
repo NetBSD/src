@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.2 2003/01/20 20:09:59 scw Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.3 2003/01/21 11:29:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,13 +40,14 @@
 #include <ucontext.h>
 #include <lwp.h>
 #include <stdlib.h>
-#include <machine/fpu.h>
+#include <sh5/fpu.h>
 
 void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *),
     void *arg, void *private, caddr_t stack_base, size_t stack_size)
 {
 	__greg_t *gr;
+	register_t r;
 
 	getcontext(u);
 	gr = u->uc_mcontext.__gregs;
@@ -59,10 +60,9 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	gr[_REG_PC] = (register_t)(intptr_t)start;
 	gr[_REG_R(18)] = (register_t)(intptr_t)_lwp_exit;
 	gr[_REG_R(2)] = (register_t)(intptr_t)arg;
-	gr[_REG_SP] = (register_t)((stack_base + stack_size) & ~0x7);
+	gr[_REG_SP] = (register_t)(((intptr_t)stack_base + stack_size) & ~0x7);
 	gr[_REG_FP] = 0;
 	gr[_REG_USR] = 0x000f;	/* r0-r31 are dirty */
-	gr[_REG_R(24)] = 0x12345678ACEBABE5ULL;	/* magic number */
 
 	/*
 	 * The new context inherits the global variable/constant pointers
