@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/08/28 16:23:40 dsl Exp $
+#	$NetBSD: Makefile,v 1.21 2003/08/28 22:04:23 dsl Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
@@ -36,6 +36,9 @@ MLINKS=	vi.1 ex.1 vi.1 view.1
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 
 CFLAGS+= -I.
+
+DPSRCS+=options_def.h
+CLEANFILES+=options_def.h
 
 options_def.h: options.awk options.c
 	awk -f ${.ALLSRC} >${.TARGET}
