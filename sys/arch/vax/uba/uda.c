@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.19 1996/07/20 19:00:22 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.20 1996/08/20 13:49:20 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -44,9 +44,11 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <machine/sid.h>
 #include <machine/pte.h>
+#include <machine/cpu.h>
 
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
@@ -57,11 +59,26 @@
 #include <vax/mscp/mscpreg.h>
 
 /*
+ * Variants of SIMPLEQ macros for use with buf structs.
+ */
+#define BUFQ_INSERT_TAIL(head, elm) {					\
+	(elm)->b_actf = NULL;						\
+	*(head)->sqh_last = (elm);					\
+	(head)->sqh_last = &(elm)->b_actf;				\
+}
+
+#define BUFQ_REMOVE_HEAD(head, elm) {					\
+	if (((head)->sqh_first = (elm)->b_actf) == NULL)		\
+		(head)->sqh_last = &(head)->sqh_first;			\
+}
+
+/*
  * Software status, per controller.
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
+	SIMPLEQ_HEAD(, buf) sc_bufq;	/* bufs awaiting for resources */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
 	struct	udadevice *sc_udadev;	/* pointer to ip/sa regs */
@@ -71,16 +88,27 @@ struct	uda_softc {
 	int	sc_wticks;	/* watchdog timer ticks */
 };
 
-int	udamatch __P((struct device *, void *, void *));
-void	udaattach __P((struct device *, struct device *, void *));
-void	udareset __P((int));
-void	udaintr __P((int));
-void	udadgo __P((struct uba_unit *));
+static	int	udamatch __P((struct device *, void *, void *));
+static	void	udaattach __P((struct device *, struct device *, void *));
+static	void	udareset __P((int));
+static	void	mtcreset __P((int));
+static	void	reset __P((struct uda_softc *));
+static	void	udaintr __P((int));
+static	void	mtcintr __P((int));
+static	void	intr __P((struct uda_softc *));
+int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *, int));
 int	udaprint __P((void *, char *));
 void	udasaerror __P((struct device *, int));
-void	udastart  __P((struct uba_unit *));
-int	udago __P((struct device *));
+int	udago __P((struct device *, struct buf *));
+
+struct	cfdriver mtc_cd = {
+	NULL, "mtc", DV_DULL
+};
+
+struct	cfattach mtc_ca = {
+	sizeof(struct uda_softc), udamatch, udaattach
+};
 
 struct	cfdriver uda_cd = {
 	NULL, "uda", DV_DULL
@@ -102,7 +130,6 @@ struct	mscp_ctlr uda_mscp_ctlr = {
 /*
  * Miscellaneous private variables.
  */
-static	char	udasr_bits[] = UDASR_BITS;
 static	int	ivec_no;
 
 int
@@ -124,10 +151,11 @@ udamatch(parent, match, aux)
 	void	*match, *aux;
 {
 	struct	uba_attach_args *ua = aux;
+	struct	device *dev = match;
 	struct	mscp_softc mi;	/* Nice hack */
 	struct	uba_softc *ubasc;
-	int	tries, count;
-#ifdef QBA
+	int	tries;
+#if QBA && notyet
 	extern volatile int rbr;
 	int s;
 #endif
@@ -169,8 +197,14 @@ again:
 #if 0
 	rbr = qbgetpri();
 #endif
-	ua->ua_ivec = udaintr;
-	ua->ua_reset = udareset;
+	if (strcmp(dev->dv_cfdata->cf_driver->cd_name, mtc_cd.cd_name)) {
+		ua->ua_ivec = udaintr;
+		ua->ua_reset = udareset;
+	} else {
+		ua->ua_ivec = mtcintr;
+		ua->ua_reset = mtcreset;
+	}
+
 	return 1;
 bad:
 	if (++tries < 2)
@@ -186,15 +220,11 @@ udaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	volatile struct udadevice *udaddr;
-	volatile struct mscp *mp;
 	struct	uda_softc *sc = (void *)self;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
-	struct	mscp_info *mi;
 	struct	mscp_attach_args ma;
-	int	tries, ctlr, timo, next = 0, ubinfo;
-	volatile int i;
+	int	ctlr, ubinfo;
 
 	printf("\n");
 
@@ -205,70 +235,105 @@ udaattach(parent, self, aux)
 
 	ctlr = sc->sc_dev.dv_unit;
 	sc->sc_udadev = (struct udadevice *)ua->ua_addr;
+	SIMPLEQ_INIT(&sc->sc_bufq);
 
 	/*
 	 * Fill in the uba_unit struct, so we can communicate with the uba.
 	 */
 	sc->sc_unit.uu_softc = sc;	/* Backpointer to softc */
-	sc->sc_unit.uu_dgo = udadgo;	/* go routine called from adapter */
+	sc->sc_unit.uu_ready = udaready;/* go routine called from adapter */
 	sc->sc_unit.uu_keepbdp = vax_cputype == VAX_750 ? 1 : 0;
 
 	/*
 	 * Map the communication area and command and
 	 * response packets into Unibus space.
 	 */
-	ubinfo = uballoc(sc->sc_dev.dv_parent->dv_unit,
-		(caddr_t) &sc->sc_uda,
-		sizeof (struct mscp_pack), UBA_CANTWAIT);
+	ubinfo = uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
+	    (caddr_t) &sc->sc_uda, sizeof (struct mscp_pack), UBA_CANTWAIT);
+
+#ifdef DIAGNOSTIC
 	if (ubinfo == 0) {
 		printf("%s: uballoc map failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
+#endif
 	sc->sc_uuda = (struct mscp_pack *) UBAI_ADDR(ubinfo);
 
 	bzero(&sc->sc_uda, sizeof (struct mscp_pack));
 
+	/*
+	 * The only thing that differ UDA's and Tape ctlr's is
+	 * their vcid. Beacuse there are no way to determine which
+	 * ctlr type it is, we check what is generated and later
+	 * set the correct vcid.
+	 */
+	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name,
+	    mtc_cd.cd_name) ? MSCPBUS_DISK : MSCPBUS_TAPE);
+
 	ma.ma_mc = &uda_mscp_ctlr;
-	ma.ma_type = MSCPBUS_DISK|MSCPBUS_UDA;
-	ma.ma_cbuf = &sc->sc_unit.uu_tab;
+	ma.ma_type |= MSCPBUS_UDA;
 	ma.ma_uuda = sc->sc_uuda;
 	ma.ma_uda = &sc->sc_uda;
+	ma.ma_softc = &sc->sc_softc;
 	ma.ma_ip = &sc->sc_udadev->udaip;
 	ma.ma_sa = ma.ma_sw = &sc->sc_udadev->udasa;
-	ma.ma_softc = &sc->sc_softc;
 	ma.ma_ivec = ivec_no;
 	ma.ma_ctlrnr = (ua->ua_iaddr == 0772150 ? 0 : 1);	/* XXX */
 	ma.ma_adapnr = uh->uh_nr;
 	config_found(&sc->sc_dev, &ma, udaprint);
 }
 
-
+/*
+ * Start a transfer if there are free resources available, otherwise
+ * let it go in udaready, forget it for now.
+ */
 int
-udago(usc)
+udago(usc, bp)
 	struct device *usc;
+	struct buf *bp;
 {
 	struct uda_softc *sc = (void *)usc;
+	struct uba_unit *uu = &sc->sc_unit;
 
-	return ubago(&sc->sc_unit);
+	/*
+	 * If we already are queued for resources, don't call ubaqueue
+	 * again. (Then we would trash the wait queue). Just queue the
+	 * buf and let the rest be done in udaready.
+	 */
+	if (sc->sc_bufq.sqh_first)
+		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp)
+	else {
+		if (ubaqueue(uu, bp))
+			mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |
+			    (UBAI_BDP(uu->uu_ubinfo) << 24)),uu->uu_ubinfo,bp);
+		else
+			BUFQ_INSERT_TAIL(&sc->sc_bufq, bp)
+	}
+		
+	return 0;
 }
 
 /*
- * Start a transfer.
- *
- * If we are not called from within udastart(), we must have been
- * blocked, so call udastart to do more requests (if any).  If
- * this calls us again immediately we will not recurse, because
- * that time we will be in udastart().	Clever....
+ * Called if we have been blocked for resources, and resources
+ * have been freed again. Return 1 if we could start all 
+ * transfers again, 0 if we still are waiting.
  */
-void
-udadgo(uu)
-	register struct uba_unit *uu;
+int
+udaready(uu)
+	struct uba_unit *uu;
 {
 	struct uda_softc *sc = uu->uu_softc;
-	struct mscp *mp = sc->sc_mscp;
+	struct buf *bp;
 
-	mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |
-	    (UBAI_BDP(uu->uu_ubinfo) << 24)), uu->uu_ubinfo);
+	while ((bp = sc->sc_bufq.sqh_first)) {
+		if (ubaqueue(uu, bp)) {
+			BUFQ_REMOVE_HEAD(&sc->sc_bufq, bp);
+			mscp_dgo(sc->sc_softc, (UBAI_ADDR(uu->uu_ubinfo) |
+			    (UBAI_BDP(uu->uu_ubinfo) << 24)),uu->uu_ubinfo,bp);
+		} else
+			return 0;
+	}
+	return 1;
 }
 
 static struct saerr {
@@ -348,11 +413,24 @@ udasaerror(usc, doreset)
  * continue initialisation, or acknowledge command and response
  * interrupts, and process responses.
  */
-void
+static void
 udaintr(ctlr)
-	int	ctlr;
+	int ctlr;
 {
-	struct uda_softc *sc = uda_cd.cd_devs[ctlr];
+	intr(uda_cd.cd_devs[ctlr]);
+}
+
+static void
+mtcintr(ctlr)
+	int ctlr;
+{
+	intr(mtc_cd.cd_devs[ctlr]);
+}
+
+static void
+intr(sc)
+	struct uda_softc *sc;
+{
 	volatile struct udadevice *udaddr = sc->sc_udadev;
 	struct	uba_softc *uh;
 	struct mscp_pack *ud;
@@ -373,7 +451,8 @@ udaintr(ctlr)
 	 */
 	uh = (void *)sc->sc_dev.dv_parent;
 	if (ud->mp_ca.ca_bdp) {
-		UBAPURGE(uh->uh_uba, ud->mp_ca.ca_bdp);
+		if (uh->uh_ubapurge)
+			(*uh->uh_ubapurge)(uh, ud->mp_ca.ca_bdp);
 		ud->mp_ca.ca_bdp = 0;
 		udaddr->udasa = 0;	/* signal purge complete */
 	}
@@ -389,10 +468,21 @@ void
 udareset(ctlr)
 	int ctlr;
 {
-	register struct uda_softc *sc;
+	reset(uda_cd.cd_devs[ctlr]);
+}
 
-	sc = uda_cd.cd_devs[ctlr];
-	printf(" uda%d", ctlr);
+void
+mtcreset(ctlr)
+	int ctlr;
+{
+	reset(mtc_cd.cd_devs[ctlr]);
+}
+
+static void
+reset(sc)
+	struct uda_softc *sc;
+{
+	printf(" %s", sc->sc_dev.dv_xname);
 
 	/*
 	 * Our BDP (if any) is gone; our command (if any) is
