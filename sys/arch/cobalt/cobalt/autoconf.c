@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2000/06/02 22:09:02 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2000/06/06 18:00:13 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -65,7 +65,7 @@ cpu_rootconf()
 extern char	bootstring[];
 extern int	netboot;
 
-void
+static void
 findroot(void)
 {
 	struct device *dv;
