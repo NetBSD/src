@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.5 2001/03/12 03:27:18 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.6 2001/04/17 15:53:04 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -1519,9 +1519,7 @@ sacomcninit(cp)
 {
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
-		if (sacominit(&sa11x0_bs_tag, SACOM3_HW_BASE,
-				  CONSPEED, CONMODE, &sacomconsioh))
-			panic("can't init serial console @%x", CONADDR);
+		sacomconsioh = SACOM3_HW_BASE;
 		sacomconstag = &sa11x0_bs_tag;
 		cn_tab = &sacomcons;
 		return;
