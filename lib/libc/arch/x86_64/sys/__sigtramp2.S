@@ -1,11 +1,10 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/10/06 22:57:23 fvdl Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/06 22:57:23 fvdl Exp $	*/
 
-/*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,16 +16,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -36,20 +35,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
+#include "SYS.h"
 
-#include <sys/types.h>
-#include <signal.h>
-
-#include "extern.h"
-
- __weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern int __sigtramp_siginfo_2[];
-
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_siginfo_2, 2));
-}
+/*
+ * The x86-64 signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, the stack looks like:
+ *
+ *	sp->	sigcontext structure
+ */
+NENTRY(__sigtramp_siginfo_2)
+	movq	%rsp,%r10
+	pushq	%r10			/* fake return address */
+	movq	$SYS_setcontext, %rax
+	syscall
+	movq	$SYS_exit, %rax
+	syscall
