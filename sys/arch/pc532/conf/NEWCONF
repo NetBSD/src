@@ -1,4 +1,4 @@
-#	$NetBSD: NEWCONF,v 1.4 1994/10/26 08:24:01 cgd Exp $
+#	$NetBSD: NEWCONF,v 1.5 1994/12/05 19:26:56 phil Exp $
 #
 # TINY 532 Distribution, used only for early testing and initial distribution.
 #
@@ -22,18 +22,19 @@ options		FIFO			# fifos; recommended
 options		"COMPAT_43"		# 4.3 system calls
 options		"TCP_COMPAT_42"		# 4.2 networking ABI
 options		"COMPAT_09"		# NetBSD-0.9
+options		"COMPAT_10"		# NetBSD-1.0
 
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
 #options	FASTLINKS		# fast symbolic links in FFS
 #options	MFS			# memory file system; uses RAM and swap
-#options	NFSSERVER		# Network File System server
-#options	NFSCLIENT		# Network File System client
+options		NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
 #options	ISOFS			# ISO 9660 CD-ROM file system, with RR
 #options	MSDOSFS			# MS-DOS FAT file system
-#options	FDESC			# /dev/fd
-#options	KERNFS			# kernel file system; recommended
+options		FDESC			# /dev/fd
+options		KERNFS			# kernel file system; recommended
 
 # networking options
 #options	GATEWAY			# packet forwarding
@@ -50,7 +51,7 @@ options		"COMDEF_SPEED=B19200"	# default baud on the scn chips
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 options		"CONFIG_NEW"		# Use config.new stuff
 
-config		"netbsd"	root on sd1 swap on sd1
+config		"netbsd"	root on sd0 swap on sd0
 
 membus0 at root
 #clock0 at membus?
@@ -81,4 +82,5 @@ pseudo-device	loop 1			# loopback network
 pseudo-device	bpfilter 4		# packet filter
 pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
+pseudo-device   vn  4			# Vnode devices
 
