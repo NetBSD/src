@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.28 2000/05/19 20:42:21 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.29 2000/10/13 16:53:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -309,6 +309,11 @@ mfs_start(mp, flags, p)
 		 * "processed"), otherwise we will loop here, as tsleep
 		 * will always return EINTR/ERESTART.
 		 */
+		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+			mfs_doio(bp, base);
+			wakeup((caddr_t)bp);
+		}
 		if (sleepreturn != 0) {
 			if (vfs_busy(mp, LK_NOWAIT, 0) ||
 			    dounmount(mp, 0, p) != 0)
@@ -317,11 +322,6 @@ mfs_start(mp, flags, p)
 			continue;
 		}
 
-		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
-			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
-			mfs_doio(bp, base);
-			wakeup((caddr_t)bp);
-		}
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
 	return (sleepreturn);
