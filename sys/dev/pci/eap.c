@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.37 2000/04/30 21:59:58 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.38 2000/05/01 17:15:41 augustss Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -327,26 +327,28 @@ eap1370_write_codec(sc, a, d)
 
 /*
  * Reading and writing the CODEC is very convoluted.  This mimics the
- * Linux driver.
+ * FreeBSD and Linux drivers.
  */
 
-int
-eap1371_read_codec(sc_, a, d)
-	void *sc_;
+static __inline void eap1371_ready_codec 
+		__P((struct eap_softc *sc, u_int8_t a, u_int32_t wd));
+static __inline void
+eap1371_ready_codec(sc, a, wd)
+	struct eap_softc *sc;
 	u_int8_t a;
-	u_int16_t *d;
+	u_int32_t wd;
 {
-	struct eap_softc *sc = sc_;
-
-	int to;
+	int to, s;
 	u_int32_t src, t;
-	int s;
 
 	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
 		if (!(EREAD4(sc, E1371_CODEC) & E1371_CODEC_WIP))
 			break;
+		delay(1);
 	}
-	/* ignore timeout */
+	if (to > EAP_WRITE_TIMEOUT)
+		printf("%s: eap1371_ready_codec timeout 1\n", 
+		       sc->sc_dev.dv_xname);
 
 	s = splaudio();
 	src = eap1371_src_wait(sc) & E1371_SRC_CTLMASK;
@@ -358,30 +360,56 @@ eap1371_read_codec(sc_, a, d)
 			break;
 		delay(1);
 	}
+	if (to > EAP_WRITE_TIMEOUT)
+		printf("%s: eap1371_ready_codec timeout 2\n", 
+		       sc->sc_dev.dv_xname);
+
 	for (to = 0; to < EAP_READ_TIMEOUT; to++) {
 		t = EREAD4(sc, E1371_SRC);
 		if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
 			break;
 		delay(1);
 	}
+	if (to > EAP_WRITE_TIMEOUT)
+		printf("%s: eap1371_ready_codec timeout 3\n", 
+		       sc->sc_dev.dv_xname);
 
-	EWRITE4(sc, E1371_CODEC, E1371_SET_CODEC(a, 0) | E1371_CODEC_READ);
+	EWRITE4(sc, E1371_CODEC, wd);
 
 	eap1371_src_wait(sc);
 	EWRITE4(sc, E1371_SRC, src);
 
 	splx(s);
+}
+
+int
+eap1371_read_codec(sc_, a, d)
+	void *sc_;
+	u_int8_t a;
+	u_int16_t *d;
+{
+	struct eap_softc *sc = sc_;
+	int to;
+	u_int32_t t;
+
+	eap1371_ready_codec(sc, a, E1371_SET_CODEC(a, 0) | E1371_CODEC_READ);
 
 	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
 		if (!(EREAD4(sc, E1371_CODEC) & E1371_CODEC_WIP))
 			break;
 	}
+	if (to > EAP_WRITE_TIMEOUT)
+		printf("%s: eap1371_read_codec timeout 1\n", 
+		       sc->sc_dev.dv_xname);
 
 	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
 		t = EREAD4(sc, E1371_CODEC);
 		if (t & E1371_CODEC_VALID)
 			break;
 	}
+	if (to > EAP_WRITE_TIMEOUT)
+		printf("%s: eap1371_read_codec timeout 2\n", 
+		       sc->sc_dev.dv_xname);
 
 	*d = (u_int16_t)t;
 
@@ -397,39 +425,8 @@ eap1371_write_codec(sc_, a, d)
 	u_int16_t d;
 {
 	struct eap_softc *sc = sc_;
-	int to;
-	u_int32_t src, t;
-	int s;
 
-	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
-		if (!(EREAD4(sc, E1371_CODEC) & E1371_CODEC_WIP))
-			break;
-	}
-	/* ignore timeout */
-
-	s = splaudio();
-	src = eap1371_src_wait(sc) & E1371_SRC_CTLMASK;
-	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
-
-	for (to = 0; to < EAP_READ_TIMEOUT; to++) {
-		t = EREAD4(sc, E1371_SRC);
-		if ((t & E1371_SRC_STATE_MASK) == 0)
-			break;
-		delay(1);
-	}
-	for (to = 0; to < EAP_READ_TIMEOUT; to++) {
-		t = EREAD4(sc, E1371_SRC);
-		if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
-			break;
-		delay(1);
-	}
-
-	EWRITE4(sc, E1371_CODEC, E1371_SET_CODEC(a, d));
-
-	eap1371_src_wait(sc);
-	EWRITE4(sc, E1371_SRC, src);
-
-	splx(s);
+	eap1371_ready_codec(sc, a, E1371_SET_CODEC(a, d));
 
         DPRINTFN(10, ("eap1371: writing codec %x --> %x\n", d, a));
 
@@ -449,8 +446,7 @@ eap1371_src_wait(sc)
 			return (src);
 		delay(1);
 	}
-	printf("%s: timeout waiting for sample rate converter\n", 
-	       sc->sc_dev.dv_xname);
+	printf("%s: eap1371_src_wait timeout\n", sc->sc_dev.dv_xname);
 	return (src);
 }
 
