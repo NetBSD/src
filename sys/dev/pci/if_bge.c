@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.62 2004/03/20 01:58:51 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.63 2004/03/20 02:04:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.62 2004/03/20 01:58:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.63 2004/03/20 02:04:07 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -124,6 +124,51 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.62 2004/03/20 01:58:51 jonathan Exp $")
 #include <uvm/uvm_extern.h>
 
 #define ETHER_MIN_NOPAD (ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
+
+
+/*
+ * Tunable thresholds for rx-side bge interrupt mitigation.
+ */
+
+/*
+ * The pairs of values below were obtained from empirical measurement
+ * on bcm5700 rev B2; they ar designed to give roughly 1 receive
+ * interrupt for every N packets received, where N is, approximately,
+ * the second value (rx_max_bds) in each pair.  The values are chosen
+ * such that moving from one pair to the succeeding pair was observed
+ * to roughly halve interrupt rate under sustained input packet load.
+ * The values were empirically chosen to avoid overflowing internal
+ * limits on the  bcm5700: inreasing rx_ticks much beyond 600
+ * results in internal wrapping and higher interrupt rates.
+ * The limit of 46 frames was chosen to match NFS workloads.
+ * 
+ * These values also work well on bcm5701, bcm5704C, and (less
+ * tested) bcm5703.  On other chipsets, (including the Altima chip
+ * family), the larger values may overflow internal chip limits,
+ * leading to increasing interrupt rates rather than lower interrupt
+ * rates.
+ *
+ * Applications using heavy interrupt mitigation (interrupting every
+ * 32 or 46 frames) in both directions may need to increase the TCP
+ * windowsize to above 131072 bytes (e.g., to 199608 bytes) to sustain
+ * full link bandwidth, due to ACKs and window updates lingering 
+ * in the RX queue during the 30-to-40-frame interrupt-mitigation window.
+ */
+struct bge_load_rx_thresh {
+	int rx_ticks;
+	int rx_max_bds; }
+bge_rx_threshes[] = {
+	{ 32,   2 },
+	{ 50,   4 },
+	{ 100,  8 },
+	{ 192, 16 },
+	{ 416, 32 },
+	{ 598, 46 }
+};
+#define NBGE_RX_THRESH (sizeof(bge_rx_threshes) / sizeof(bge_rx_threshes[0]))
+
+/* XXX patchable; should be sysctl'able */
+int	bge_auto_thresh = 0;
 
 int bge_probe(struct device *, struct cfdata *, void *);
 void bge_attach(struct device *, struct device *, void *);
@@ -188,6 +233,9 @@ void bge_miibus_writereg(struct device *, int, int, int);
 void bge_miibus_statchg(struct device *);
 
 void bge_reset(struct bge_softc *);
+
+void	bge_set_thresh(struct ifnet *  /*ifp*/, int /*lvl*/);
+void	bge_update_all_threshes(int /*lvl*/);
 
 void bge_dump_status(struct bge_softc *);
 void bge_dump_rxbd(struct bge_rx_bd *);
@@ -540,6 +588,60 @@ bge_miibus_statchg(dev)
 		BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
 	} else {
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
+	}
+}
+
+/*
+ * Update rx threshold levels to values in a particular slot
+ * of the interrupt-mitigation table bge_rx_threshes.
+ */
+void
+bge_set_thresh(struct ifnet *ifp, int lvl)
+{
+	struct bge_softc *sc = ifp->if_softc;
+	int s;
+
+	/* For now, just save the new Rx-intr thresholds and record
+	 * that a threshold update is pending.  Updating the hardware
+	 * registers here (even at splhigh()) is observed to
+	 * occasionaly cause glitches where Rx-interrupts are not
+	 * honoured for up to 10 seconds. jonathan@netbsd.org, 2003-04-05
+	 */
+	s = splnet();
+	sc->bge_rx_coal_ticks = bge_rx_threshes[lvl].rx_ticks;
+	sc->bge_rx_max_coal_bds = bge_rx_threshes[lvl].rx_max_bds;
+	sc->bge_pending_rxintr_change = 1;
+	splx(s);
+
+	 return;
+}
+
+
+/*
+ * Update Rx thresholds of all bge devices
+ */
+void
+bge_update_all_threshes(int lvl)
+{
+	struct ifnet *ifp;
+	const char * const namebuf = "bge";
+	int namelen;
+
+	if (lvl < 0)
+		lvl = 0;
+	else if( lvl >= NBGE_RX_THRESH)
+		lvl = NBGE_RX_THRESH - 1;
+    
+	namelen = strlen(namebuf);
+	/*
+	 * Now search all the interfaces for this name/number
+	 */
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (strncmp(ifp->if_xname, namebuf, namelen) != 0 ) 
+		      continue;
+		/* We got a match: update if doing auto-threshold-tuning */
+		if (bge_auto_thresh)
+			bge_set_thresh(ifp->if_softc, lvl);
 	}
 }
 
