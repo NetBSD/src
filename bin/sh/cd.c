@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.32 2003/08/25 20:08:12 jmmv Exp $	*/
+/*	$NetBSD: cd.c,v 1.33 2003/10/30 09:40:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.32 2003/08/25 20:08:12 jmmv Exp $");
+__RCSID("$NetBSD: cd.c,v 1.33 2003/10/30 09:40:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: cd.c,v 1.32 2003/08/25 20:08:12 jmmv Exp $");
 STATIC int docd(char *, int);
 STATIC char *getcomponent(void);
 STATIC void updatepwd(char *);
+STATIC char *find_pwd(int noerror);
 
 char *curdir = NULL;		/* current working directory */
 char *prevdir;			/* previous working directory */
@@ -302,8 +303,22 @@ updatepwd(char *dir)
 int
 pwdcmd(int argc, char **argv)
 {
-	getpwd(0);
-	out1str(curdir);
+	int i;
+	char opt = 'L';
+	char *pwd;
+
+	while ((i = nextopt("LP")) != '\0')
+		opt = i;
+	if (*argptr)
+		error("unexpected argument");
+
+	if (opt == 'L') {
+		getpwd(0);
+		pwd = curdir;
+	} else
+		pwd = find_pwd(0);
+
+	out1str(pwd);
 	out1c('\n');
 	return 0;
 }
@@ -323,12 +338,12 @@ getpwd(int noerror)
 	char *pwd;
 	struct stat stdot, stpwd;
 	static int first = 1;
-	int i;
 
 	if (curdir)
 		return;
 
 	if (first) {
+		first = 0;
 		pwd = getenv("PWD");
 		if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&
 		    stat(pwd, &stpwd) != -1 &&
@@ -338,7 +353,19 @@ getpwd(int noerror)
 			return;
 		}
 	}
-	first = 0;
+
+	pwd = find_pwd(noerror);
+
+	if (pwd != NULL)
+		curdir = savestr(pwd);
+	return;
+}
+
+STATIC char *
+find_pwd(int noerror)
+{
+	int i;
+	char *pwd;
 
 	/*
 	 * Things are a bit complicated here; we could have just used
@@ -357,26 +384,23 @@ getpwd(int noerror)
 	for (i = MAXPWD;; i *= 2) {
 		pwd = stalloc(i);
 		if (getcwd(pwd, i) != NULL)
-			break;
+			return pwd;
 		stunalloc(pwd);
 		if (errno == ERANGE)
 			continue;
 		if (!noerror)
 			error("getcwd() failed: %s", strerror(errno));
-		pwd = 0;
-		break;
+		return NULL;
 	}
-
-	if (pwd)
-		curdir = savestr(pwd);
 #else
 	{
 		char *p;
 		int status;
 		struct job *jp;
 		int pip[2];
-		char buf[MAXPWD];
+		char *buf;
 
+		buf = stalloc(MAXPWD);
 		INTOFF;
 		if (pipe(pip) < 0)
 			error("Pipe call failed");
@@ -407,13 +431,13 @@ getpwd(int noerror)
 		if (i < 0 || p == buf || p[-1] != '\n') {
 			if (noerror) {
 				INTON;
-				return;
+				return NULL;
 			}
 			error("pwd command failed");
 		}
 		p[-1] = '\0';
-		curdir = savestr(buf);
+		INTON;
+		return buf;
 	}
-	INTON;
 #endif
 }
