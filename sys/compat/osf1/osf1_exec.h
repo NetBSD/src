@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.h,v 1.1 2000/11/21 00:37:54 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.h,v 1.2 2000/11/22 03:48:33 itojun Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD foundation, Inc.
@@ -37,5 +37,7 @@
 
 void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *, u_long));
 int osf1_exec_ecoff_probe __P((struct proc *, struct exec_package *));
+void *osf1_copyargs(struct exec_package *pack,
+    struct ps_strings *arginfo, void *stack, void *argp);
 
 #endif /* OSF1_EXEC_H */
