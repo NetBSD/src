@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.8 1994/05/04 03:42:18 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.9 1994/05/07 01:15:38 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -147,7 +147,7 @@ procfs_control(curp, p, op)
 		
 		/* not being traced any more */
 		p->p_flag &= ~(P_TRACED|P_FSTRACE);
-		setrun(p);
+		setrunnable(p);
 		return 0;
 		
 	/*
@@ -162,7 +162,7 @@ procfs_control(curp, p, op)
 	case PROCFS_CTL_RUN:
 		if (error = process_sstep(p, op == PROCFS_CTL_STEP))
 			return error;
-		setrun(p);
+		setrunnable(p);
 		break;
 
 	default:
