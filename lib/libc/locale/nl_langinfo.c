@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_langinfo.c,v 1.7 2001/03/26 19:55:42 tshiozak Exp $	*/
+/*	$NetBSD: nl_langinfo.c,v 1.8 2002/03/17 22:14:30 tshiozak Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nl_langinfo.c,v 1.7 2001/03/26 19:55:42 tshiozak Exp $");
+__RCSID("$NetBSD: nl_langinfo.c,v 1.8 2002/03/17 22:14:30 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -108,7 +108,7 @@ nl_langinfo(item)
 		s = "";
 		break;
 	case CODESET:
-		s = _CurrentRuneLocale->__rune_codeset;
+		s = _CurrentRuneLocale->rl_codeset;
 		if (!s)
 			s = "";
 		break;

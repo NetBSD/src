@@ -39,6 +39,7 @@ SUBDIR += comp-util-bin
 SUBDIR += comp-util-catman
 SUBDIR += comp-util-man
 SUBDIR += comp-util-share
+SUBDIR += comp-i18n-lib
 
 TARGETS+=package
 TARGETS+=register

@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.8 2002/01/31 22:43:56 tv Exp $	*/
+/*	$NetBSD: yacc.y,v 1.9 2002/03/17 22:14:38 tshiozak Exp $	*/
 
 %{
 /*-
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.8 2002/01/31 22:43:56 tv Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.9 2002/03/17 22:14:38 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,12 +134,12 @@ table	:	entry
 	;
 
 entry	:	ENCODING STRING
-		{ strncpy(new_locale.__encoding, $2, sizeof(new_locale.__encoding)); }
+		{ strncpy(new_locale.rl_encoding, $2, sizeof(new_locale.rl_encoding)); }
 	|	VARIABLE
-		{ new_locale.__variable_len = strlen($1) + 1;
-		  new_locale.__rune_variable =
-			malloc(new_locale.__variable_len);
-		  strcpy((char *)new_locale.__rune_variable, $1);
+		{ new_locale.rl_variable_len = strlen($1) + 1;
+		  new_locale.rl_variable =
+			malloc(new_locale.rl_variable_len);
+		  strcpy((char *)new_locale.rl_variable, $1);
 		}
 	|	CHARSET RUNE
 		{ charsetbits = $2; charsetmask = 0x0000007f; }
@@ -178,7 +178,7 @@ entry	:	ENCODING STRING
 		  }
 		}
 	|	INVALID RUNE
-		{ new_locale.__invalid_rune = $2; }
+		{ new_locale.rl_invalid_rune = $2; }
 	|	LIST list
 		{ set_map(&types, $2, $1); }
 	|	MAPLOWER map
@@ -298,8 +298,8 @@ main(ac, av)
 	mapupper.map[x] = x;
 	maplower.map[x] = x;
     }
-    new_locale.__invalid_rune = _DEFAULT_INVALID_RUNE;
-    memcpy(new_locale.__magic, _RUNE_MAGIC_1, sizeof(new_locale.__magic));
+    new_locale.rl_invalid_rune = _DEFAULT_INVALID_RUNE;
+    memcpy(new_locale.rl_magic, _RUNE_MAGIC_1, sizeof(new_locale.rl_magic));
 
     yyparse();
 
@@ -622,12 +622,12 @@ dump_tables()
 	}
     }
 
-    memcpy(&file_new_locale.__magic, new_locale.__magic,
-	sizeof(file_new_locale.__magic));
-    memcpy(&file_new_locale.__encoding, new_locale.__encoding,
-	sizeof(file_new_locale.__encoding));
+    memcpy(&file_new_locale.frl_magic, new_locale.rl_magic,
+	sizeof(file_new_locale.frl_magic));
+    memcpy(&file_new_locale.frl_encoding, new_locale.rl_encoding,
+	sizeof(file_new_locale.frl_encoding));
 
-    file_new_locale.__invalid_rune = htonl(new_locale.__invalid_rune);
+    file_new_locale.frl_invalid_rune = htonl(new_locale.rl_invalid_rune);
 
     /*
      * Fill in our tables.  Do this in network order so that
@@ -636,9 +636,9 @@ dump_tables()
      *  word size.  Sigh.  We tried.)
      */
     for (x = 0; x < _CACHED_RUNES; ++x) {
-	file_new_locale.__runetype[x] = htonl(types.map[x]);
-	file_new_locale.__maplower[x] = htonl(maplower.map[x]);
-	file_new_locale.__mapupper[x] = htonl(mapupper.map[x]);
+	file_new_locale.frl_runetype[x] = htonl(types.map[x]);
+	file_new_locale.frl_maplower[x] = htonl(maplower.map[x]);
+	file_new_locale.frl_mapupper[x] = htonl(mapupper.map[x]);
     }
 
     /*
@@ -647,31 +647,31 @@ dump_tables()
     list = types.root;
 
     while (list) {
-	new_locale.__runetype_ext.__nranges++;
+	new_locale.rl_runetype_ext.rr_nranges++;
 	list = list->next;
     }
-    file_new_locale.__runetype_ext.__nranges =
-	htonl(new_locale.__runetype_ext.__nranges);
+    file_new_locale.frl_runetype_ext.frr_nranges =
+	htonl(new_locale.rl_runetype_ext.rr_nranges);
 
     list = maplower.root;
 
     while (list) {
-	new_locale.__maplower_ext.__nranges++;
+	new_locale.rl_maplower_ext.rr_nranges++;
 	list = list->next;
     }
-    file_new_locale.__maplower_ext.__nranges =
-	htonl(new_locale.__maplower_ext.__nranges);
+    file_new_locale.frl_maplower_ext.frr_nranges =
+	htonl(new_locale.rl_maplower_ext.rr_nranges);
 
     list = mapupper.root;
 
     while (list) {
-	new_locale.__mapupper_ext.__nranges++;
+	new_locale.rl_mapupper_ext.rr_nranges++;
 	list = list->next;
     }
-    file_new_locale.__mapupper_ext.__nranges =
-	htonl(new_locale.__mapupper_ext.__nranges);
+    file_new_locale.frl_mapupper_ext.frr_nranges =
+	htonl(new_locale.rl_mapupper_ext.rr_nranges);
 
-    file_new_locale.__variable_len = htonl(new_locale.__variable_len);
+    file_new_locale.frl_variable_len = htonl(new_locale.rl_variable_len);
 
     /*
      * Okay, we are now ready to write the new locale file.
@@ -688,9 +688,9 @@ dump_tables()
     for (list = types.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
-	re.__min = htonl(list->min);
-	re.__max = htonl(list->max);
-	re.__map = htonl(list->map);
+	re.fre_min = htonl(list->min);
+	re.fre_max = htonl(list->max);
+	re.fre_map = htonl(list->map);
 
 	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
 	    err(1, "writing runetype_ext #%d to %s", n, locale_file);
@@ -701,9 +701,9 @@ dump_tables()
     for (list = maplower.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
-	re.__min = htonl(list->min);
-	re.__max = htonl(list->max);
-	re.__map = htonl(list->map);
+	re.fre_min = htonl(list->min);
+	re.fre_max = htonl(list->max);
+	re.fre_map = htonl(list->map);
 
 	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
 	    err(1, "writing maplower_ext #%d to %s", n, locale_file);
@@ -714,9 +714,9 @@ dump_tables()
     for (list = mapupper.root, n = 0; list != NULL; list = list->next, n++) {
 	_FileRuneEntry re;
 
-	re.__min = htonl(list->min);
-	re.__max = htonl(list->max);
-	re.__map = htonl(list->map);
+	re.fre_min = htonl(list->min);
+	re.fre_max = htonl(list->max);
+	re.fre_map = htonl(list->map);
 
 	if (fwrite((char *)&re, sizeof(re), 1, fp) != 1)
 	    err(1, "writing mapupper_ext #%d to %s", n, locale_file);
@@ -738,20 +738,20 @@ dump_tables()
     /*
      * PART 5: And finally the variable data
      */
-    if (new_locale.__variable_len != 0 &&
-	fwrite((char *)new_locale.__rune_variable,
-	       new_locale.__variable_len, 1, fp) != 1)
+    if (new_locale.rl_variable_len != 0 &&
+	fwrite((char *)new_locale.rl_variable,
+	       new_locale.rl_variable_len, 1, fp) != 1)
 	err(1, "writing variable data to %s", locale_file);
     fclose(fp);
 
     if (!debug)
 	return;
 
-    if (new_locale.__encoding[0])
-	fprintf(stderr, "ENCODING	%s\n", new_locale.__encoding);
-    if (new_locale.__rune_variable)
+    if (new_locale.rl_encoding[0])
+	fprintf(stderr, "ENCODING	%s\n", new_locale.rl_encoding);
+    if (new_locale.rl_variable)
 	fprintf(stderr, "VARIABLE	%s\n",
-		(char *)new_locale.__rune_variable);
+		(char *)new_locale.rl_variable);
 
     fprintf(stderr, "\nMAPLOWER:\n\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ___tolower_mb.c,v 1.3 2001/01/20 17:40:10 itojun Exp $	*/
+/*	$NetBSD: ___tolower_mb.c,v 1.4 2002/03/17 22:14:24 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ___tolower_mb.c,v 1.3 2001/01/20 17:40:10 itojun Exp $");
+__RCSID("$NetBSD: ___tolower_mb.c,v 1.4 2002/03/17 22:14:24 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
@@ -50,17 +50,17 @@ ___tolower_mb(c)
 	wint_t c;
 {
 	int x;
-	_RuneRange *rr = &_CurrentRuneLocale->__maplower_ext;
-	_RuneEntry *re = rr->__rune_ranges;
+	_RuneRange *rr = &_CurrentRuneLocale->rl_maplower_ext;
+	_RuneEntry *re = rr->rr_rune_ranges;
 
 	if (c < 0 || c == EOF)
 		return(c);
 
-	for (x = 0; x < rr->__nranges; ++x, ++re) {
-		if (c < re->__min)
+	for (x = 0; x < rr->rr_nranges; ++x, ++re) {
+		if (c < re->re_min)
 			return(c);
-		if (c <= re->__max)
-			return(re->__map + c - re->__min);
+		if (c <= re->re_max)
+			return(re->re_map + c - re->re_min);
 	}
 	return(c);
 }

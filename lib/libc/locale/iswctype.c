@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.8 2002/03/14 21:18:46 yamt Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.9 2002/03/17 22:14:28 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.8 2002/03/14 21:18:46 yamt Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.9 2002/03/17 22:14:28 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
@@ -66,7 +66,7 @@ __maskrune_w(c, f)
 	unsigned long f;
 {
 	return (int)(((c < 0 || c >= _CACHED_RUNES) ? ___runetype_mb(c) :
-		_CurrentRuneLocale->__runetype[c]) & f);
+		_CurrentRuneLocale->rl_runetype[c]) & f);
 }
 
 static __inline wint_t
@@ -74,7 +74,7 @@ __toupper_w(c)
 	wint_t c;
 {
 	return (c < 0 || c >= _CACHED_RUNES) ? ___toupper_mb(c) :
-	       _CurrentRuneLocale->__mapupper[c];
+	       _CurrentRuneLocale->rl_mapupper[c];
 }
 
 static __inline wint_t
@@ -82,7 +82,7 @@ __tolower_w(c)
 	wint_t c;
 {
 	return (c < 0 || c >= _CACHED_RUNES) ? ___tolower_mb(c) :
-	       _CurrentRuneLocale->__maplower[c];
+	       _CurrentRuneLocale->rl_maplower[c];
 }
 
 #undef iswalnum
