@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.179 1998/04/15 19:55:09 drochner Exp $
+#	$NetBSD: files,v 1.180 1998/04/17 11:51:40 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -216,7 +216,7 @@ define	wsmousedev { }
 define	wsrasteremulops
 # VGA graphics
 device	vga: wsemuldisplaydev
-file	dev/ic/vga.c		vga
+file	dev/ic/vga.c		vga	needs-flag
 file	dev/ic/vga_subr.c	vga
 
 # Attributes which machine-independent bus support can be attached to.
