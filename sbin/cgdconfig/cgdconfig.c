@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.1 2002/10/04 18:37:20 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.1 2002/10/04 18:37:20 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $");
 #endif
 
 #include <errno.h>
@@ -87,12 +87,14 @@ static int	do_all(const char *, int, char **, int (*)(int, char **, int));
 #define CONFIG_FLAGS_FROMALL	1	/* called from configure_all() */
 #define CONFIG_FLAGS_FROMMAIN	2	/* called from main() */
 
-static int	 configure_params(const char *, const char *, struct params *);
+static int	 configure_params(int, const char *, const char *,
+				  struct params *);
 static void	 key_print(FILE *, const u_int8_t *, int);
 static char	*getrandbits(int);
 static int	 getkey(const char *, struct params *);
 static int	 getkeyfrompassphrase(const char *, struct params *);
 static int	 getkeyfromfile(FILE *, struct params *);
+static int	 opendisk_werror(const char *, char *, int);
 
 static void	usage(void);
 
@@ -315,8 +317,10 @@ static int
 configure(int argc, char **argv, int flags)
 {
 	struct params	params;
+	int		fd;
 	int		ret;
 	char		pfile[FILENAME_MAX];
+	char		cgdname[PATH_MAX];
 
 	params_init(&params);
 
@@ -343,11 +347,17 @@ configure(int argc, char **argv, int flags)
 	ret = params_filldefaults(&params);
 	if (ret)
 		return ret;
+
+	fd = opendisk_werror(argv[0], cgdname, sizeof(cgdname));
+	if (fd == -1)
+		return -1;
+
 	ret = getkey(argv[1], &params);
 	if (ret)
 		return ret;
 
-	ret = configure_params(argv[0], argv[1], &params);
+	ret = configure_params(fd, cgdname, argv[1], &params);
+
 	params_free(&params);
 	return ret;
 }
@@ -355,7 +365,9 @@ configure(int argc, char **argv, int flags)
 static int
 configure_stdin(struct params *p, int argc, char **argv)
 {
+	int	fd;
 	int	ret;
+	char	cgdname[PATH_MAX];
 
 	if (argc < 3 || argc > 4)
 		usage();
@@ -373,20 +385,43 @@ configure_stdin(struct params *p, int argc, char **argv)
 	if (ret)
 		return ret;
 
+	fd = opendisk_werror(argv[0], cgdname, sizeof(cgdname));
+	if (fd == -1)
+		return -1;
+
 	ret = getkeyfromfile(stdin, p);
 	if (ret)
 		return -1;
 
-	return configure_params(argv[0], argv[1], p);
+	return configure_params(fd, cgdname, argv[1], p);
 }
 
 static int
-configure_params(const char *cgd, const char *dev, struct params *p)
+opendisk_werror(const char *cgd, char *buf, int buflen)
+{
+	int	fd;
+
+	/* sanity */
+	if (!cgd || !buf)
+		return -1;
+
+	if (nflag) {
+		strncpy(buf, cgd, buflen);
+		return 0;
+	}
+
+	fd = opendisk(cgd, O_RDWR, buf, buflen, 1);
+	if (fd == -1)
+		fprintf(stderr, "can't open cgd \"%s\", \"%s\": %s\n",
+		    cgd, buf, strerror(errno));
+	return fd;
+}
+
+static int
+configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 {
 	struct cgd_ioctl ci;
-	int	  fd;
 	int	  ret;
-	char	  buf[MAXPATHLEN] = "";
 
 	/* sanity */
 	if (!cgd || !dev)
@@ -400,17 +435,7 @@ configure_params(const char *cgd, const char *dev, struct params *p)
 	ci.ci_keylen = p->keylen;
 	ci.ci_blocksize = p->bsize;
 
-	fd = opendisk(cgd, O_RDWR, buf, sizeof(buf), 1);
-	if (fd == -1) {
-		fprintf(stderr, "can't open cgd \"%s\", \"%s\": %s\n",
-		    cgd, buf, strerror(errno));
-
-		/* with nflag, this is not necessarily a fatal error */
-		if (!nflag)
-			return errno;
-	}
-
-	VPRINTF(1, ("attaching: %s (%s) attach to %s\n", cgd, buf, dev));
+	VPRINTF(1, ("attaching: %s attach to %s\n", cgd, dev));
 	VPRINTF(1, ("    with alg %s keylen %d blocksize %d ivmethod %s\n",
 	    p->alg, p->keylen, p->bsize, p->ivmeth));
 	VERBOSE(2, key_print(stdout, p->key, p->keylen));
