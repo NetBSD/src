@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3 1996/10/11 00:25:05 christos Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.4 1996/10/13 03:21:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -107,4 +107,4 @@ void zsmd_setclock  __P((struct zs_chanstate *cs));
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
 
-#define zsprintf kprintf
+#define zsprintf printf
