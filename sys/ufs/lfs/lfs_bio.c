@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.23 2000/06/06 20:19:15 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.24 2000/06/27 20:57:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -247,8 +247,7 @@ lfs_bwrite_ext(bp, flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-		if (bp->b_flags & B_CALL)
-		{
+		if (bp->b_flags & B_CALL) {
 			if(!(ip->i_flag & IN_CLEANING))
 				++fs->lfs_uinodes;
 			ip->i_flag |= IN_CLEANING;
@@ -276,18 +275,15 @@ lfs_bwrite_ext(bp, flags)
 	return (0);
 }
 
-void lfs_flush_fs(mp, flags)
-	struct mount *mp;
+void
+lfs_flush_fs(fs, flags)
+	struct lfs *fs;
 	int flags;
 {
-	struct lfs *lfsp;
-
-	lfsp = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
-	if((mp->mnt_flag & MNT_RDONLY) == 0 &&
-	   lfsp->lfs_dirops==0)
+	if(fs->lfs_ronly == 0 && fs->lfs_dirops == 0)
 	{
 		/* disallow dirops during flush */
-		lfsp->lfs_writer++;
+		fs->lfs_writer++;
 
 		/*
 		 * We set the queue to 0 here because we
@@ -300,11 +296,11 @@ void lfs_flush_fs(mp, flags)
 		 */
 		if(lfs_dostats)
 			++lfs_stats.flush_invoked;
-		lfs_segwrite(mp, flags);
+		lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
 
 		/* XXX KS - allow dirops again */
-		if(--lfsp->lfs_writer==0)
-			wakeup(&lfsp->lfs_dirops);
+		if(--fs->lfs_writer==0)
+			wakeup(&fs->lfs_dirops);
 	}
 }
 
@@ -340,7 +336,7 @@ lfs_flush(fs, flags)
 			continue;
 		}
 		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN)==0)
-			lfs_flush_fs(mp, flags);
+			lfs_flush_fs(((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs, flags);
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp);

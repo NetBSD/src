@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.51 2000/06/27 20:00:03 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.52 2000/06/27 20:57:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ lfs_writevnodes(fs, mp, sp, op)
 #endif
 
 		needs_unlock = 0;
-		if(VOP_ISLOCKED(vp)) {
+		if (VOP_ISLOCKED(vp)) {
 			if (vp != fs->lfs_ivnode &&
 			    vp->v_lock.lk_lockholder != curproc->p_pid) {
 #ifdef DEBUG_LFS
@@ -456,10 +456,10 @@ lfs_writevnodes(fs, mp, sp, op)
 			inodes_written++;
 		}
 
-		if(needs_unlock)
-			VOP_UNLOCK(vp,0);
+		if (needs_unlock)
+			VOP_UNLOCK(vp, 0);
 
-		if(lfs_clean_vnhead && only_cleaning)
+		if (lfs_clean_vnhead && only_cleaning)
 			lfs_vunref_head(vp);
 		else
 			lfs_vunref(vp);
@@ -1296,6 +1296,7 @@ lfs_writeseg(fs, sp)
 	sup->su_lastmod = time.tv_sec;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
+	fs->lfs_dmeta += (LFS_SUMMARY_SIZE / DEV_BSIZE + fsbtodb(fs, ninos));
 
 	do_again = !(bp->b_flags & B_GATHERED);
 	(void)VOP_BWRITE(bp);
@@ -1346,10 +1347,7 @@ lfs_writeseg(fs, sp)
 	ssp->ss_sumsum =
 	    cksum(&ssp->ss_datasum, LFS_SUMMARY_SIZE - sizeof(ssp->ss_sumsum));
 	free(datap, M_SEGMENT);
-#ifdef DIAGNOSTIC
-	if (fs->lfs_bfree < fsbtodb(fs, ninos) + LFS_SUMMARY_SIZE / DEV_BSIZE)
-		panic("lfs_writeseg: No diskspace for summary");
-#endif
+
 	fs->lfs_bfree -= (fsbtodb(fs, ninos) + LFS_SUMMARY_SIZE / DEV_BSIZE);
 
 	strategy = devvp->v_op[VOFFSET(vop_strategy)];
@@ -1554,6 +1552,7 @@ lfs_writesuper(fs, daddr)
 	vop_strategy_a.a_bp = bp;
 	s = splbio();
 	++bp->b_vp->v_numoutput;
+	++fs->lfs_iocount;
 	splx(s);
 	(strategy)(&vop_strategy_a);
 }
@@ -1651,13 +1650,15 @@ void
 lfs_supercallback(bp)
 	struct buf *bp;
 {
-#ifdef LFS_CANNOT_ROLLFW
 	struct lfs *fs;
 
 	fs = (struct lfs *)bp->b_saveaddr;
+#ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = 0;
 	wakeup(&fs->lfs_sbactive);
 #endif
+	if (--fs->lfs_iocount < LFS_THROTTLE)
+		wakeup(&fs->lfs_iocount);
 	lfs_freebuf(bp);
 }
 
@@ -1740,6 +1741,7 @@ lfs_vunref(vp)
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if(vp->v_usecount<=0) {
+		printf("lfs_vunref: inum is %d\n", VTOI(vp)->i_number);
 		printf("lfs_vunref: flags are 0x%lx\n", vp->v_flag);
 		printf("lfs_vunref: usecount = %ld\n", vp->v_usecount);
 		panic("lfs_vunref: v_usecount<0");

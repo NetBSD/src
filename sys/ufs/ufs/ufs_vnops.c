@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.68 2000/05/30 17:40:12 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.69 2000/06/27 20:57:19 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,6 +41,7 @@
  */
 
 #include "opt_quota.h"
+#include "fs_lfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +72,7 @@
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
+#include <ufs/lfs/lfs_extern.h>
 
 static int ufs_chmod __P((struct vnode *, int, struct ucred *, struct proc *));
 static int ufs_chown
@@ -1317,6 +1319,10 @@ bad:
 		ip->i_ffs_effnlink = 0;
 		ip->i_ffs_nlink = 0;
 		ip->i_flag |= IN_CHANGE;
+#ifdef LFS
+		/* If IN_ADIROP, account for it */
+		lfs_unmark_vnode(tvp);
+#endif
 		if (DOINGSOFTDEP(tvp))
 			softdep_change_linkcnt(ip);
 		vput(tvp);
@@ -2028,6 +2034,10 @@ bad:
 	ip->i_ffs_effnlink = 0;
 	ip->i_ffs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
+#ifdef LFS
+	/* If IN_ADIROP, account for it */
+	lfs_unmark_vnode(tvp);
+#endif
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
 	vput(tvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.15 2000/06/06 22:56:54 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.16 2000/06/27 20:57:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -213,14 +213,24 @@ lfs_segunlock(fs)
 				goto loop;
 			if (vp->v_type == VNON)
 				continue;
+			if (lfs_vref(vp))
+				continue;
+			if (VOP_ISLOCKED(vp) &&
+                            vp->v_lock.lk_lockholder != curproc->p_pid) {
+				lfs_vunref(vp);
+				continue;
+			}
 			if ((vp->v_flag & VDIROP) &&
 			    !(VTOI(vp)->i_flag & IN_ADIROP)) {
 				--lfs_dirvcount;
 				vp->v_flag &= ~VDIROP;
 				wakeup(&lfs_dirvcount);
 				fs->lfs_unlockvp = vp;
+				lfs_vunref(vp);
 				vrele(vp);
 				fs->lfs_unlockvp = NULL;
+			} else {
+				lfs_vunref(vp);
 			}
 		}
 	}

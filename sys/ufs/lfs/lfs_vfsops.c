@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.52 2000/05/27 00:19:53 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.53 2000/06/27 20:57:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -581,30 +581,14 @@ lfs_statfs(mp, sbp, p)
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statfs: magic");
+
 	sbp->f_type = 0;
 	sbp->f_bsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = dbtofrags(fs, fs->lfs_dsize);
-	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
-	/*
-	 * To compute the available space.  Subtract the minimum free
-	 * from the total number of blocks in the file system.	Set avail
-	 * to the smaller of this number and fs->lfs_bfree.
-	 *
-	 * XXX KS - is my modification below what is desired?  (This
-	 * will, e.g., change the report when the cleaner runs.)
-	 */
-#if 0
-        sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-		(100 - fs->lfs_minfree) / (u_int64_t) 100);
-	sbp->f_bavail =
-	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
-#else
-	sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-				(100 - fs->lfs_minfree) / (u_int64_t) 100)
-		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
-#endif
-	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
+	sbp->f_blocks = dbtofrags(fs, LFS_EST_NONMETA(fs));
+	sbp->f_bfree = dbtofrags(fs, LFS_EST_BFREE(fs));
+	sbp->f_bavail = dbtofrags(fs, (long)LFS_EST_BFREE(fs) -
+				  (long)LFS_EST_RSVD(fs));
 	sbp->f_files = dbtofsb(fs,fs->lfs_bfree) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	if (sbp != &mp->mnt_stat) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.25 2000/06/06 20:19:14 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.26 2000/06/27 20:57:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
 }
 #endif
 
-#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & (IN_MODIFIED|IN_CLEANING)))
+#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & (IN_MODIFIED|IN_ACCESSED|IN_CLEANING)))
 
 /* Here begins the berkeley code */
 
@@ -220,9 +220,10 @@ struct dlfs {
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
-        int8_t    dlfs_pad[184];  /* 324: round to 512 bytes */
+	u_int32_t dlfs_dmeta;     /* 324: total number of dirty summaries */
+        int8_t    dlfs_pad[180];  /* 328: round to 512 bytes */
 /* Checksum -- last valid disk field. */
-        u_int32_t dlfs_cksum;     /* 328: checksum for superblock checking */
+        u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
 };
 
 /* Maximum number of io's we can have pending at once */
@@ -279,6 +280,8 @@ struct lfs {
 #define lfs_clean lfs_dlfs.dlfs_clean
 #define lfs_fsmnt lfs_dlfs.dlfs_fsmnt
 #define lfs_nclean lfs_dlfs.dlfs_nclean
+#define lfs_dmeta lfs_dlfs.dlfs_dmeta
+
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
@@ -494,15 +497,36 @@ struct segment {
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 };
 
+/*
+ * Mecros for determining free space on the disk, with the variable metadata
+ * of segment summaries and inode blocks taken into account.
+ */
+/* Estimate number of clean blocks not available for writing */
+#define LFS_EST_CMETA(F) ((u_int32_t)(((F)->lfs_dmeta *                     \
+				       (u_int64_t)(F)->lfs_nclean) /        \
+				      ((F)->lfs_nseg - (F)->lfs_nclean)))
+
+/* Estimate total size of the disk not including metadata */
+#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - fsbtodb((F), MIN_FREE_SEGS *   \
+						     (F)->lfs_ssize) -      \
+			    (F)->lfs_dmeta - LFS_EST_CMETA(F))
+
+/* Estimate number of blocks actually available for writing */
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F))
+
+/* Amount of non-meta space not available to mortal man */
+#define LFS_EST_RSVD(F) ((u_int32_t)(((LFS_EST_NONMETA(F) *         \
+				       (u_int64_t)(F)->lfs_minfree)) / 100))
+
+/* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	(((C)->cr_uid == 0 && (F)->lfs_bfree >= (BB)) ||		\
-	((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+          LFS_EST_BFREE(F) >= (BB)) ||					\
+	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
 
+/* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\
-	((F)->lfs_bfree > ((F)->lfs_dsize * (F)->lfs_minfree / 100 + (BB)))
-
-#define ISSPACE_XXX(F, BB)						\
-	((F)->lfs_bfree >= (BB))
+          (LFS_EST_BFREE(F) >= (BB) + LFS_EST_RSVD(F))
 
 /* Statistics Counters */
 struct lfs_stats {

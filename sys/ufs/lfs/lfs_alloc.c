@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_alloc.c,v 1.37 2000/06/22 18:46:57 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.38 2000/06/27 20:57:12 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -94,6 +94,7 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
+extern int lfs_dirvcount;
 extern struct lock ufs_hashlock;
 
 /* Allocate a new inode. */
@@ -121,6 +122,9 @@ lfs_valloc(v)
 	extern int lfs_dirvcount;
 
 	fs = VTOI(ap->a_pvp)->i_lfs;
+	if (fs->lfs_ronly)
+		return EROFS;
+	*ap->a_vpp = NULL;
 	
 	/*
 	 * Use lfs_seglock here, instead of fs->lfs_freelock, to ensure that
@@ -166,17 +170,21 @@ lfs_valloc(v)
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
-		VOP_LOCK(vp,LK_EXCLUSIVE);
+		(void)lfs_vref(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_ffs_size);
 		if ((error = VOP_BALLOC(vp, ip->i_ffs_size, fs->lfs_bsize,
-		    NULL, 0, &bp)) != 0) {
+					ap->a_cred, 0, &bp)) != 0) {
+			VOP_UNLOCK(vp, 0);
 			lfs_segunlock(fs);
+			fs->lfs_free = new_ino;
 			return (error);
 		}
 		ip->i_ffs_size += fs->lfs_bsize;
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		(void)uvm_vnp_uncache(vp);
+		VOP_UNLOCK(vp, 0);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 			fs->lfs_ifpb;
@@ -193,11 +201,8 @@ lfs_valloc(v)
 		}
 		ifp--;
 		ifp->if_nextfree = LFS_UNUSED_INUM;
-		VOP_UNLOCK(vp,0);
-		if ((error = VOP_BWRITE(bp)) != 0) {
-			lfs_segunlock(fs);
-			return (error);
-		}
+		VOP_BWRITE(bp);
+		lfs_vunref(vp);
 	}
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
@@ -210,7 +215,7 @@ lfs_valloc(v)
 	/* Create a vnode to associate with the inode. */
 	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0) {
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-		return (error);
+		goto errout;
 	}
 	
 	ip = VTOI(vp);
@@ -228,26 +233,38 @@ lfs_valloc(v)
 	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
 		vput(vp);
-		*ap->a_vpp = NULL;
-		return (error);
+		goto errout;
 	}
 	
 	*ap->a_vpp = vp;
+#if 1
 	if(!(vp->v_flag & VDIROP)) {
 		(void)lfs_vref(vp);
 		++lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
-	VREF(ip->i_devvp);
 	
 	if(!(ip->i_flag & IN_ADIROP))
 		++fs->lfs_nadirop;
 	ip->i_flag |= IN_ADIROP;
-
+#endif
+	VREF(ip->i_devvp);
 	/* Set superblock modified bit and increment file count. */
 	fs->lfs_fmod = 1;
 	++fs->lfs_nfiles;
 	return (0);
+
+    errout:
+	/*
+	 * Put the new inum back on the free list.
+	 */
+	LFS_IENTRY(ifp, fs, new_ino, bp);
+	ifp->if_daddr = LFS_UNUSED_DADDR;
+	ifp->if_nextfree = fs->lfs_free;
+	fs->lfs_free = new_ino;
+	VOP_BWRITE(bp);
+
+	return (error);
 }
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
@@ -340,6 +357,10 @@ lfs_vfree(v)
 		vp->v_flag &= ~VDIROP;
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
+	}
+	if (ip->i_flag & IN_ADIROP) {
+		--fs->lfs_nadirop;
+		ip->i_flag &= ~IN_ADIROP;
 	}
 
 	if (ip->i_flag & IN_CLEANING) {

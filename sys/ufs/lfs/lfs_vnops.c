@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.39 2000/06/22 18:11:46 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.40 2000/06/27 20:57:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -185,7 +185,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* readdir */
 	{ &vop_readlink_desc, spec_readlink },		/* readlink */
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -236,7 +236,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
 	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
-	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
+	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -281,6 +281,25 @@ lfs_fsync(v)
 }
 
 /*
+ * Take IN_ADIROP off, then call ufs_inactive.
+ */
+int
+lfs_inactive(v)
+	void *v;
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+
+	if (ip->i_flag & IN_ADIROP)
+		--ip->i_lfs->lfs_nadirop;
+	ip->i_flag &= ~IN_ADIROP;
+	return ufs_inactive(v);
+}
+
+/*
  * These macros are used to bracket UFS directory ops, so that we can
  * identify all the pages touched during directory ops which need to
  * be ordered and flushed atomically, so that they may be recovered.
@@ -292,16 +311,20 @@ lfs_fsync(v)
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
  * is decremented during segment write, when VDIROP is taken off.
  */
-#define	SET_DIROP(fs) lfs_set_dirop(fs)
-static int lfs_set_dirop __P((struct lfs *));
+#define	SET_DIROP(vp) lfs_set_dirop(vp)
+static int lfs_set_dirop __P((struct vnode *));
 extern int lfs_dirvcount;
 
-static int lfs_set_dirop(fs)
-	struct lfs *fs;
+static int lfs_set_dirop(vp)
+	struct vnode *vp;
 {
+	struct lfs *fs;
 	int error;
 
-	while (fs->lfs_writer || lfs_dirvcount>LFS_MAXDIROP) {
+	fs = VTOI(vp)->i_lfs;
+	if (fs->lfs_dirops == 0)
+		lfs_check(vp, LFS_UNUSED_LBN, 0);
+	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
 		if(fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
 		if(lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops==0) {
@@ -328,8 +351,10 @@ static int lfs_set_dirop(fs)
 #define	SET_ENDOP(fs,vp,str) {						\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
-		if ((fs)->lfs_nadirop)					\
-			panic("no dirops but nadirop=%d\n", (fs)->lfs_nadirop);\
+		if ((fs)->lfs_nadirop) {				\
+			panic("SET_ENDOP: %s: no dirops but nadirop=%d\n", \
+			      (str), (fs)->lfs_nadirop);		\
+		}							\
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
@@ -347,12 +372,19 @@ static int lfs_set_dirop(fs)
 	VTOI(dvp)->i_flag |= IN_ADIROP;					\
 } while(0)
 
-#define UNMARK_VNODE(vp) do {						\
-	if (VTOI(vp)->i_flag & IN_ADIROP) {				\
-		--VTOI(vp)->i_lfs->lfs_nadirop;				\
-	}								\
-	VTOI(vp)->i_flag &= ~IN_ADIROP;					\
-} while(0)
+#define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
+
+void lfs_unmark_vnode(vp)
+	struct vnode *vp;
+{
+	struct inode *ip;
+
+	ip = VTOI(vp);
+
+	if (ip->i_flag & IN_ADIROP)
+		--ip->i_lfs->lfs_nadirop;
+	ip->i_flag &= ~IN_ADIROP;
+}
 
 int
 lfs_symlink(v)
@@ -367,14 +399,14 @@ lfs_symlink(v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_symlink(ap);
 	UNMARK_VNODE(ap->a_dvp);
-	if (error == 0)
+	if (*(ap->a_vpp))
 		UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symlink");
 	return (error);
@@ -395,7 +427,7 @@ lfs_mknod(v)
         struct inode *ip;
         int error;
 
-	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
@@ -403,7 +435,7 @@ lfs_mknod(v)
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
             ap->a_dvp, vpp, ap->a_cnp);
 	UNMARK_VNODE(ap->a_dvp);
-        if (error == 0)
+        if (*(ap->a_vpp))
                 UNMARK_VNODE(*(ap->a_vpp));
 
 	/* Either way we're done with the dirop at this point */
@@ -434,15 +466,18 @@ lfs_mknod(v)
 	 * return.  But, that leaves this vnode in limbo, also not good.
 	 * Can this ever happen (barring hardware failure)?
 	 */
-	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, curproc)) != 0)
+	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, curproc)) != 0) {
+		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
+		       VTOI(*vpp)->i_number);
 		return (error);
+	}
         /*
-         * Remove inode so that it will be reloaded by VFS_VGET and
+         * Remove vnode so that it will be reloaded by VFS_VGET and
          * checked to see if it is an alias of an existing entry in
          * the inode cache.
          */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
-	VOP_UNLOCK(*vpp,0);
+	VOP_UNLOCK(*vpp, 0);
 	lfs_vunref(*vpp);
         (*vpp)->v_type = VNON;
         vgone(*vpp);
@@ -462,14 +497,14 @@ lfs_create(v)
 	} */ *ap = v;
 	int error;
 
-	if((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_create(ap);
 	UNMARK_VNODE(ap->a_dvp);
-        if (error == 0)
+        if (*(ap->a_vpp))
                 UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
 	return (error);
@@ -486,7 +521,7 @@ lfs_whiteout(v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0)
+	if ((error = SET_DIROP(ap->a_dvp)) != 0)
 		/* XXX no unlock here? */
 		return error;
 	MARK_VNODE(ap->a_dvp);
@@ -508,14 +543,14 @@ lfs_mkdir(v)
 	} */ *ap = v;
 	int error;
 
-	if((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_mkdir(ap);
 	UNMARK_VNODE(ap->a_dvp);
-        if (error == 0)
+        if (*(ap->a_vpp))
                 UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
 	return (error);
@@ -535,7 +570,7 @@ lfs_remove(v)
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
-	if ((error = SET_DIROP(VTOI(dvp)->i_lfs)) != 0) {
+	if ((error = SET_DIROP(dvp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
 		else
@@ -549,6 +584,18 @@ lfs_remove(v)
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(vp);
 	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
+
+	/*
+	 * If ufs_remove failed, vp doesn't need to be VDIROP any more.
+	 * If it succeeded, we can go ahead and wipe out vp, since
+	 * its loss won't appear on disk until checkpoint, and by then
+	 * dvp will have been written, completing the dirop.
+	 */
+	--lfs_dirvcount;
+	vp->v_flag &= ~VDIROP;
+	wakeup(&lfs_dirvcount);
+	vrele(vp);
+
 	return (error);
 }
 
@@ -564,7 +611,7 @@ lfs_rmdir(v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp->v_mountedhere != NULL)
 			VOP_UNLOCK(ap->a_dvp, 0);
@@ -577,6 +624,18 @@ lfs_rmdir(v)
 	UNMARK_VNODE(ap->a_dvp);
 	UNMARK_VNODE(ap->a_vp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
+
+	/*
+	 * If ufs_rmdir failed, vp doesn't need to be VDIROP any more.
+	 * If it succeeded, we can go ahead and wipe out vp, since
+	 * its loss won't appear on disk until checkpoint, and by then
+	 * dvp will have been written, completing the dirop.
+	 */
+	--lfs_dirvcount;
+	ap->a_vp->v_flag &= ~VDIROP;
+	wakeup(&lfs_dirvcount);
+	vrele(ap->a_vp);
+
 	return (error);
 }
 
@@ -591,7 +650,7 @@ lfs_link(v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
+	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
@@ -637,7 +696,7 @@ lfs_rename(v)
 		error = EXDEV;
 		goto errout;
 	}
-	if ((error = SET_DIROP(fs))!=0)
+	if ((error = SET_DIROP(fdvp))!=0)
 		goto errout;
 	MARK_VNODE(fdvp);
 	MARK_VNODE(tdvp);
