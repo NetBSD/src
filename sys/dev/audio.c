@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.147 2002/03/08 02:30:54 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.148 2002/03/09 07:25:41 toshii Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.147 2002/03/08 02:30:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.148 2002/03/09 07:25:41 toshii Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1187,8 +1187,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		return (error);
 	}
 	while (uio->uio_resid > 0 && !error) {
-		s = splaudio();
 		if (sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin <= 0) {
+			s = splaudio();
 			while (cb->used < hw_bytes_per_sample) {
 				if (!sc->sc_rbus) {
 					error = audiostartr(sc);
