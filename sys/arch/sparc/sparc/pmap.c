@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: pmap.c,v 1.277 2004/04/03 23:11:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2004/04/03 23:11:14 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1595,6 +1595,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 		case SRMMU_TEPTE:
 			sp->sg_npte++;
 			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
+			pmap_kernel()->pm_stats.resident_count++;
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
@@ -3474,6 +3475,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		npte = ++scookie < zseg ? NPTESG : lastpage;
 		sp->sg_npte = npte;
 		sp->sg_nwired = npte;
+		pmap_kernel()->pm_stats.resident_count += npte;
 		rp->rg_nsegmap += 1;
 		for (i = 0; i < npte; i++)
 			sp->sg_pte[i] = getpte4(p + i * NBPG) | PG_WIRED;
@@ -3599,6 +3601,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 			sp = &rp->rg_segmap[VA_VSEG(p)];
 			sp->sg_nwired--;
 			sp->sg_npte--;
+			pmap_kernel()->pm_stats.resident_count--;
 			sp->sg_pte[VA_VPG(p)] = 0;
 			setpte4(p, 0);
 		}
@@ -3911,6 +3914,7 @@ pmap_bootstrap4m(top)
 			pte |= PPROT_WRITE;
 
 		setpgt4m(ptep, pte);
+		pmap_kernel()->pm_stats.resident_count++;
 	}
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
@@ -4750,6 +4754,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		if (inmmu)
 			setpte4(va, 0);
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
 #ifdef DIAGNOSTIC
@@ -4822,6 +4827,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		}
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		    SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
+		pm->pm_stats.resident_count--;
 		nleft--;
 #ifdef DIAGNOSTIC
 		if (nleft < 0)
@@ -4925,6 +4931,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		if (pte & PG_WIRED)
 			sp->sg_nwired--;
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
 #ifdef DIAGNOSTIC
@@ -5016,6 +5023,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 #endif
 		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
@@ -5136,6 +5144,7 @@ pmap_page_protect4_4c(pg, prot)
 		}
 
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 		if (nleft == 0)
 			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
 		npv = pv->pv_next;
@@ -5424,6 +5433,8 @@ pmap_page_protect4m(pg, prot)
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
+
+		pm->pm_stats.resident_count--;
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V: pg %p va %lx", pg, va);
@@ -5729,6 +5740,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 		}
 		if (pte & PG_WIRED)
 			sp->sg_nwired--;
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		if (sp->sg_npte++ == 0) {
@@ -5754,6 +5766,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 	*ptep = pteproto;
 	if (pteproto & PG_WIRED)
 		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
 	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
@@ -5914,6 +5927,7 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			}
 			if (pte & PG_WIRED)
 				sp->sg_nwired--;
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5934,6 +5948,7 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	*ptep = pteproto;
 	if (pteproto & PG_WIRED)
 		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
 	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
@@ -6344,6 +6359,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 			SRMMU_TEINVALID, pm->pm_ctx != NULL,
 			pm->pm_ctxnum, PMAP_CPUSET(pm));
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		sp->sg_npte++;
@@ -6360,6 +6376,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	}
 
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 out:
 	simple_unlock(&pm->pm_lock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -6536,6 +6553,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 				SRMMU_TEINVALID, pm->pm_ctx != NULL,
 				pm->pm_ctxnum, PMAP_CPUSET(pm));
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -6562,6 +6580,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	 * Update PTEs, flush TLB as necessary.
 	 */
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 
 out:
 	simple_unlock(&pm->pm_lock);
@@ -7494,33 +7513,6 @@ kvm_iocache(va, npages)
 		setpte4(va, pte);
 	}
 #endif
-}
-
-int
-pmap_count_ptes(pm)
-	struct pmap *pm;
-{
-	int idx, vs, total;
-	struct regmap *rp;
-	struct segmap *sp;
-
-	if (pm == pmap_kernel()) {
-		rp = &pm->pm_regmap[NUREG];
-		idx = NKREG;
-	} else {
-		rp = pm->pm_regmap;
-		idx = NUREG;
-	}
-	for (total = 0; idx;) {
-		if ((sp = rp[--idx].rg_segmap) == NULL) {
-			continue;
-		}
-		for (vs = 0; vs < NSEGRG; vs++) {
-			total += sp[vs].sg_npte;
-		}
-	}
-	pm->pm_stats.resident_count = total;
-	return (total);
 }
 
 /*
