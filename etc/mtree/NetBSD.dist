@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.124 2000/12/11 13:44:01 jdolecek Exp $
+#	$NetBSD: NetBSD.dist,v 1.125 2000/12/22 01:31:50 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1095,6 +1095,11 @@ ldscripts
 # ./usr/share/locale
 locale
 
+# ./usr/share/locale/cs_CZ.ISO8859-2
+cs_CZ.ISO8859-2
+# ./usr/share/locale/cs_CZ.ISO8859-2
+..
+
 # ./usr/share/locale/da
 da
 
@@ -1104,6 +1109,16 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/da
+..
+
+# ./usr/share/locale/da_DK.ISO8859-1
+da_DK.ISO8859-1
+# ./usr/share/locale/da_DK.ISO8859-1
+..
+
+# ./usr/share/locale/da_DK.ISO8859-15
+da_DK.ISO8859-15
+# ./usr/share/locale/da_DK.ISO8859-15
 ..
 
 # ./usr/share/locale/de
@@ -1117,6 +1132,36 @@ LC_MESSAGES
 # ./usr/share/locale/de
 ..
 
+# ./usr/share/locale/de_AT.ISO8859-1
+de_AT.ISO8859-1
+# ./usr/share/locale/de_AT.ISO8859-1
+..
+
+# ./usr/share/locale/de_AT.ISO8859-15
+de_AT.ISO8859-15
+# ./usr/share/locale/de_AT.ISO8859-15
+..
+
+# ./usr/share/locale/de_CH.ISO8859-1
+de_CH.ISO8859-1
+# ./usr/share/locale/de_CH.ISO8859-1
+..
+
+# ./usr/share/locale/de_CH.ISO8859-15
+de_CH.ISO8859-15
+# ./usr/share/locale/de_CH.ISO8859-15
+..
+
+# ./usr/share/locale/de_DE.ISO8859-1
+de_DE.ISO8859-1
+# ./usr/share/locale/de_DE.ISO8859-1
+..
+
+# ./usr/share/locale/de_DE.ISO8859-15
+de_DE.ISO8859-15
+# ./usr/share/locale/de_DE.ISO8859-15
+..
+
 # ./usr/share/locale/el
 el
 
@@ -1126,6 +1171,51 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/el
+..
+
+# ./usr/share/locale/en_AU.ISO8859-1
+en_AU.ISO8859-1
+# ./usr/share/locale/en_AU.ISO8859-1
+..
+
+# ./usr/share/locale/en_AU.ISO8859-15
+en_AU.ISO8859-15
+# ./usr/share/locale/en_AU.ISO8859-15
+..
+
+# ./usr/share/locale/en_CA.ISO8859-1
+en_CA.ISO8859-1
+# ./usr/share/locale/en_CA.ISO8859-1
+..
+
+# ./usr/share/locale/en_CA.ISO8859-15
+en_CA.ISO8859-15
+# ./usr/share/locale/en_CA.ISO8859-15
+..
+
+# ./usr/share/locale/en_GB.ISO8859-1
+en_GB.ISO8859-1
+# ./usr/share/locale/en_GB.ISO8859-1
+..
+
+# ./usr/share/locale/en_GB.ISO8859-15
+en_GB.ISO8859-15
+# ./usr/share/locale/en_GB.ISO8859-15
+..
+
+# ./usr/share/locale/en_US.ISO8859-1
+en_US.ISO8859-1
+# ./usr/share/locale/en_US.ISO8859-1
+..
+
+# ./usr/share/locale/en_US.ISO8859-15
+en_US.ISO8859-15
+# ./usr/share/locale/en_US.ISO8859-15
+..
+
+# ./usr/share/locale/en_US.UTF-8
+en_US.UTF-8
+# ./usr/share/locale/en_US.UTF-8
 ..
 
 # ./usr/share/locale/es
@@ -1139,6 +1229,26 @@ LC_MESSAGES
 # ./usr/share/locale/es
 ..
 
+# ./usr/share/locale/es_ES.ISO8859-1
+es_ES.ISO8859-1
+# ./usr/share/locale/es_ES.ISO8859-1
+..
+
+# ./usr/share/locale/es_ES.ISO8859-15
+es_ES.ISO8859-15
+# ./usr/share/locale/es_ES.ISO8859-15
+..
+
+# ./usr/share/locale/fi_FI.ISO8859-1
+fi_FI.ISO8859-1
+# ./usr/share/locale/fi_FI.ISO8859-1
+..
+
+# ./usr/share/locale/fi_FI.ISO8859-15
+fi_FI.ISO8859-15
+# ./usr/share/locale/fi_FI.ISO8859-15
+..
+
 # ./usr/share/locale/fr
 fr
 
@@ -1148,6 +1258,111 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/fr
+..
+
+# ./usr/share/locale/fr_BE.ISO8859-1
+fr_BE.ISO8859-1
+# ./usr/share/locale/fr_BE.ISO8859-1
+..
+
+# ./usr/share/locale/fr_BE.ISO8859-15
+fr_BE.ISO8859-15
+# ./usr/share/locale/fr_BE.ISO8859-15
+..
+
+# ./usr/share/locale/fr_CA.ISO8859-1
+fr_CA.ISO8859-1
+# ./usr/share/locale/fr_CA.ISO8859-1
+..
+
+# ./usr/share/locale/fr_CA.ISO8859-15
+fr_CA.ISO8859-15
+# ./usr/share/locale/fr_CA.ISO8859-15
+..
+
+# ./usr/share/locale/fr_CH.ISO8859-1
+fr_CH.ISO8859-1
+# ./usr/share/locale/fr_CH.ISO8859-1
+..
+
+# ./usr/share/locale/fr_CH.ISO8859-15
+fr_CH.ISO8859-15
+# ./usr/share/locale/fr_CH.ISO8859-15
+..
+
+# ./usr/share/locale/fr_FR.ISO8859-1
+fr_FR.ISO8859-1
+# ./usr/share/locale/fr_FR.ISO8859-1
+..
+
+# ./usr/share/locale/fr_FR.ISO8859-15
+fr_FR.ISO8859-15
+# ./usr/share/locale/fr_FR.ISO8859-15
+..
+
+# ./usr/share/locale/hr_HR.ISO8859-2
+hr_HR.ISO8859-2
+# ./usr/share/locale/hr_HR.ISO8859-2
+..
+
+# ./usr/share/locale/hu_HU.ISO8859-2
+hu_HU.ISO8859-2
+# ./usr/share/locale/hu_HU.ISO8859-2
+..
+
+# ./usr/share/locale/is_IS.ISO8859-1
+is_IS.ISO8859-1
+# ./usr/share/locale/is_IS.ISO8859-1
+..
+
+# ./usr/share/locale/is_IS.ISO8859-15
+is_IS.ISO8859-15
+# ./usr/share/locale/is_IS.ISO8859-15
+..
+
+# ./usr/share/locale/it_CH.ISO8859-1
+it_CH.ISO8859-1
+# ./usr/share/locale/it_CH.ISO8859-1
+..
+
+# ./usr/share/locale/it_CH.ISO8859-15
+it_CH.ISO8859-15
+# ./usr/share/locale/it_CH.ISO8859-15
+..
+
+# ./usr/share/locale/it_IT.ISO8859-1
+it_IT.ISO8859-1
+# ./usr/share/locale/it_IT.ISO8859-1
+..
+
+# ./usr/share/locale/it_IT.ISO8859-15
+it_IT.ISO8859-15
+# ./usr/share/locale/it_IT.ISO8859-15
+..
+
+# ./usr/share/locale/ja_JP.ISO2022-JP
+ja_JP.ISO2022-JP
+# ./usr/share/locale/ja_JP.ISO2022-JP
+..
+
+# ./usr/share/locale/ja_JP.ISO2022-JP2
+ja_JP.ISO2022-JP2
+# ./usr/share/locale/ja_JP.ISO2022-JP2
+..
+
+# ./usr/share/locale/ja_JP.SJIS
+ja_JP.SJIS
+# ./usr/share/locale/ja_JP.SJIS
+..
+
+# ./usr/share/locale/ja_JP.ct
+ja_JP.ct
+# ./usr/share/locale/ja_JP.ct
+..
+
+# ./usr/share/locale/ja_JP.eucJP
+ja_JP.eucJP
+# ./usr/share/locale/ja_JP.eucJP
 ..
 
 # ./usr/share/locale/ko
@@ -1161,6 +1376,16 @@ LC_MESSAGES
 # ./usr/share/locale/ko
 ..
 
+# ./usr/share/locale/ko_KR.eucKR
+ko_KR.eucKR
+# ./usr/share/locale/ko_KR.eucKR
+..
+
+# ./usr/share/locale/lt_LT.ISO8859-4
+lt_LT.ISO8859-4
+# ./usr/share/locale/lt_LT.ISO8859-4
+..
+
 # ./usr/share/locale/nl
 nl
 
@@ -1170,6 +1395,26 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/nl
+..
+
+# ./usr/share/locale/nl_BE.ISO8859-1
+nl_BE.ISO8859-1
+# ./usr/share/locale/nl_BE.ISO8859-1
+..
+
+# ./usr/share/locale/nl_BE.ISO8859-15
+nl_BE.ISO8859-15
+# ./usr/share/locale/nl_BE.ISO8859-15
+..
+
+# ./usr/share/locale/nl_NL.ISO8859-1
+nl_NL.ISO8859-1
+# ./usr/share/locale/nl_NL.ISO8859-1
+..
+
+# ./usr/share/locale/nl_NL.ISO8859-15
+nl_NL.ISO8859-15
+# ./usr/share/locale/nl_NL.ISO8859-15
 ..
 
 # ./usr/share/locale/no
@@ -1194,6 +1439,16 @@ LC_MESSAGES
 # ./usr/share/locale/no@nynorsk
 ..
 
+# ./usr/share/locale/no_NO.ISO8859-1
+no_NO.ISO8859-1
+# ./usr/share/locale/no_NO.ISO8859-1
+..
+
+# ./usr/share/locale/no_NO.ISO8859-15
+no_NO.ISO8859-15
+# ./usr/share/locale/no_NO.ISO8859-15
+..
+
 # ./usr/share/locale/pl
 pl
 
@@ -1203,6 +1458,11 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/pl
+..
+
+# ./usr/share/locale/pl_PL.ISO8859-2
+pl_PL.ISO8859-2
+# ./usr/share/locale/pl_PL.ISO8859-2
 ..
 
 # ./usr/share/locale/pt
@@ -1227,6 +1487,16 @@ LC_MESSAGES
 # ./usr/share/locale/pt_BR
 ..
 
+# ./usr/share/locale/pt_PT.ISO8859-1
+pt_PT.ISO8859-1
+# ./usr/share/locale/pt_PT.ISO8859-1
+..
+
+# ./usr/share/locale/pt_PT.ISO8859-15
+pt_PT.ISO8859-15
+# ./usr/share/locale/pt_PT.ISO8859-15
+..
+
 # ./usr/share/locale/ru
 ru
 
@@ -1236,6 +1506,21 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/ru
+..
+
+# ./usr/share/locale/ru_SU.CP866
+ru_SU.CP866
+# ./usr/share/locale/ru_SU.CP866
+..
+
+# ./usr/share/locale/ru_SU.ISO8859-5
+ru_SU.ISO8859-5
+# ./usr/share/locale/ru_SU.ISO8859-5
+..
+
+# ./usr/share/locale/ru_SU.KOI8-R
+ru_SU.KOI8-R
+# ./usr/share/locale/ru_SU.KOI8-R
 ..
 
 # ./usr/share/locale/sl
@@ -1249,6 +1534,11 @@ LC_MESSAGES
 # ./usr/share/locale/sl
 ..
 
+# ./usr/share/locale/sl_SI.ISO8859-2
+sl_SI.ISO8859-2
+# ./usr/share/locale/sl_SI.ISO8859-2
+..
+
 # ./usr/share/locale/sv
 sv
 
@@ -1258,6 +1548,36 @@ LC_MESSAGES
 ..
 
 # ./usr/share/locale/sv
+..
+
+# ./usr/share/locale/sv_SE.ISO8859-1
+sv_SE.ISO8859-1
+# ./usr/share/locale/sv_SE.ISO8859-1
+..
+
+# ./usr/share/locale/sv_SE.ISO8859-15
+sv_SE.ISO8859-15
+# ./usr/share/locale/sv_SE.ISO8859-15
+..
+
+# ./usr/share/locale/uk_UA.KOI8-U
+uk_UA.KOI8-U
+# ./usr/share/locale/uk_UA.KOI8-U
+..
+
+# ./usr/share/locale/zh_CN.eucCN
+zh_CN.eucCN
+# ./usr/share/locale/zh_CN.eucCN
+..
+
+# ./usr/share/locale/zh_TW.Big5
+zh_TW.Big5
+# ./usr/share/locale/zh_TW.Big5
+..
+
+# ./usr/share/locale/zh_TW.eucTW
+zh_TW.eucTW
+# ./usr/share/locale/zh_TW.eucTW
 ..
 
 # ./usr/share/locale

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.294 2000/12/20 21:27:12 bjh21 Exp $
+# $NetBSD: mi,v 1.295 2000/12/22 01:31:49 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -203,6 +203,7 @@
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
 ./usr/share/man/cat1/mkfilters.0
+./usr/share/man/cat1/mklocale.0
 ./usr/share/man/cat1/mktemp.0
 ./usr/share/man/cat1/mopa.out.0
 ./usr/share/man/cat1/mopchk.0
@@ -264,6 +265,7 @@
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
+./usr/share/man/cat1/pmc.0
 ./usr/share/man/cat1/popd.0
 ./usr/share/man/cat1/postalias.0
 ./usr/share/man/cat1/postcat.0
@@ -276,7 +278,6 @@
 ./usr/share/man/cat1/postmap.0
 ./usr/share/man/cat1/postsuper.0
 ./usr/share/man/cat1/pr.0
-./usr/share/man/cat1/pmc.0
 ./usr/share/man/cat1/printenv.0
 ./usr/share/man/cat1/printf.0
 ./usr/share/man/cat1/ps.0
@@ -1024,7 +1025,6 @@
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/adduser.0
-./usr/share/man/cat8/altqd.0
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -1032,6 +1032,7 @@
 ./usr/share/man/cat8/alpha/makedev.0
 ./usr/share/man/cat8/alpha/mkbootimage.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
+./usr/share/man/cat8/altqd.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
@@ -1639,6 +1640,7 @@
 ./usr/share/man/man1/mkdir.1
 ./usr/share/man/man1/mkfifo.1
 ./usr/share/man/man1/mkfilters.1
+./usr/share/man/man1/mklocale.1
 ./usr/share/man/man1/mktemp.1
 ./usr/share/man/man1/mopa.out.1
 ./usr/share/man/man1/mopchk.1
@@ -1700,6 +1702,7 @@
 ./usr/share/man/man1/pkg_create.1
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
+./usr/share/man/man1/pmc.1
 ./usr/share/man/man1/popd.1
 ./usr/share/man/man1/postalias.1
 ./usr/share/man/man1/postcat.1
@@ -1712,7 +1715,6 @@
 ./usr/share/man/man1/postmap.1
 ./usr/share/man/man1/postsuper.1
 ./usr/share/man/man1/pr.1
-./usr/share/man/man1/pmc.1
 ./usr/share/man/man1/printenv.1
 ./usr/share/man/man1/printf.1
 ./usr/share/man/man1/ps.1
@@ -2460,7 +2462,6 @@
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
 ./usr/share/man/man8/adduser.8
-./usr/share/man/man8/altqd.8
 ./usr/share/man/man8/alpha/MAKEDEV.8
 ./usr/share/man/man8/alpha/boot.8
 ./usr/share/man/man8/alpha/installboot.8
@@ -2468,6 +2469,7 @@
 ./usr/share/man/man8/alpha/makedev.8
 ./usr/share/man/man8/alpha/mkbootimage.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
+./usr/share/man/man8/altqd.8
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amiga/MAKEDEV.8
 ./usr/share/man/man8/amiga/binpatch.8
