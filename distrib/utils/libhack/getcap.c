@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $	*/
+/*	$NetBSD: getcap.c,v 1.4 2002/02/02 15:08:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.4 2002/02/02 15:08:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,17 @@ __RCSID("$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $");
 #define cgetset			_cgetset
 #define cgetstr			_cgetstr
 #define cgetustr		_cgetustr
+
+__weak_alias(cgetcap,_cgetcap)
+__weak_alias(cgetclose,_cgetclose)
+__weak_alias(cgetent,_cgetent)
+__weak_alias(cgetfirst,_cgetfirst)
+__weak_alias(cgetmatch,_cgetmatch)
+__weak_alias(cgetnext,_cgetnext)
+__weak_alias(cgetnum,_cgetnum)
+__weak_alias(cgetset,_cgetset)
+__weak_alias(cgetstr,_cgetstr)
+__weak_alias(cgetustr,_cgetustr)
 #endif
 
 #include <sys/types.h>
@@ -83,25 +94,12 @@ __RCSID("$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $");
 #define TCERR	(char)1
 #define	SHADOW	(char)2
 
-#ifdef __weak_alias
-__weak_alias(cgetcap,_cgetcap)
-__weak_alias(cgetclose,_cgetclose)
-__weak_alias(cgetent,_cgetent)
-__weak_alias(cgetfirst,_cgetfirst)
-__weak_alias(cgetmatch,_cgetmatch)
-__weak_alias(cgetnext,_cgetnext)
-__weak_alias(cgetnum,_cgetnum)
-__weak_alias(cgetset,_cgetset)
-__weak_alias(cgetstr,_cgetstr)
-__weak_alias(cgetustr,_cgetustr)
-#endif
-
 static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int 	getent __P((char **, size_t *, char **, int, const char *, int, char *));
-static int	nfcmp __P((char *, char *));
+static int getent(char **, size_t *, char **, int, const char *, int, char *);
+static int nfcmp(char *, char *);
 
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
@@ -109,8 +107,7 @@ static int	nfcmp __P((char *, char *));
  * virtual database. 0 is returned on success, -1 on failure.
  */
 int
-cgetset(ent)
-	const char *ent;
+cgetset(const char *ent)
 {
 	if (ent == NULL) {
 		if (toprec)
@@ -142,10 +139,7 @@ cgetset(ent)
  * return NULL.
  */
 char *
-cgetcap(buf, cap, type)
-	char *buf;
-	const char *cap;
-	int type;
+cgetcap(char *buf, const char *cap, int type)
 {
 	char *bp;
 	const char *cp;
@@ -196,9 +190,7 @@ cgetcap(buf, cap, type)
  * reference loop is detected.
  */
 int
-cgetent(buf, db_array, name)
-	char **buf, **db_array;
-	const char *name;
+cgetent(char **buf, char **db_array, const char *name)
 {
 	size_t dummy;
 
@@ -224,11 +216,8 @@ cgetent(buf, db_array, name)
  *	  MAX_RECURSION.
  */
 static int
-getent(cap, len, db_array, fd, name, depth, nfield)
-	char **cap, **db_array, *nfield;
-	const char *name;
-	size_t *len;
-	int fd, depth;
+getent(char **cap, size_t *len, char **db_array, int fd, const char *name,
+	int depth, char *nfield)
 {
 	char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
 	int myfd = 0, eof, foundit;
@@ -580,8 +569,7 @@ tc_exp:	{
  * record buf, -1 if not.
  */
 int
-cgetmatch(buf, name)
-	const char *buf, *name;
+cgetmatch(const char *buf, const char *name)
 {
 	const char *np, *bp;
 
@@ -618,8 +606,7 @@ cgetmatch(buf, name)
 }
 
 int
-cgetfirst(buf, db_array)
-	char **buf, **db_array;
+cgetfirst(char **buf, char **db_array)
 {
 	(void)cgetclose();
 	return (cgetnext(buf, db_array));
@@ -630,7 +617,7 @@ static int slash;
 static char **dbp;
 
 int
-cgetclose()
+cgetclose(void)
 {
 	if (pfp != NULL) {
 		(void)fclose(pfp);
@@ -648,9 +635,7 @@ cgetclose()
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-cgetnext(bp, db_array)
-        char **bp;
-	char **db_array;
+cgetnext(char **bp, char **db_array)
 {
 	size_t len;
 	int status, done;
@@ -777,10 +762,7 @@ cgetnext(bp, db_array)
  * allocation failure).
  */
 int
-cgetstr(buf, cap, str)
-	char *buf;
-	const char *cap;
-	char **str;
+cgetstr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	const char *bp;
@@ -904,10 +886,7 @@ cgetstr(buf, cap, str)
  * error was encountered (storage allocation failure).
  */
 int
-cgetustr(buf, cap, str)
-	char *buf;
-	const char *cap;
-	char **str;
+cgetustr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	const char *bp;
@@ -976,10 +955,7 @@ cgetustr(buf, cap, str)
  * numeric capability couldn't be found.
  */
 int
-cgetnum(buf, cap, num)
-	char *buf;
-	const char *cap;
-	long *num;
+cgetnum(char *buf, const char *cap, long *num)
 {
 	long n;
 	int base, digit;
@@ -1041,8 +1017,7 @@ cgetnum(buf, cap, num)
  * Compare name field of record.
  */
 static int
-nfcmp(nf, rec)
-	char *nf, *rec;
+nfcmp(char *nf, char *rec)
 {
 	char *cp, tmp;
 	int ret;
