@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.24 1997/02/15 11:07:08 tls Exp $
+$NetBSD: pcidevs,v 1.25 1997/02/16 17:17:30 veego Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -61,7 +61,7 @@ vendor DEC		0x1011	Digital Equipment
 vendor MICRONICS	0x1012	Micronics Computers
 vendor CIRRUS		0x1013	Cirrus Logic
 vendor IBM		0x1014	IBM
-vendor LSIL		0x1015	LSI Logic
+vendor LSIL		0x1015	LSI Logic Corp of Canada
 vendor ICLPERSONAL	0x1016	ICL Personal Systems
 vendor SPEA		0x1017	SPEA Software
 vendor UNISYS		0x1018	Unisys Systems
@@ -78,7 +78,7 @@ vendor TRIDENT		0x1023	Trident Microsystems
 vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
 vendor DELL		0x1028	Dell Computer
-vendor SIEMENS		0x1029	Siemens Nixdorf
+vendor SNI		0x1029	Siemens Nixdorf AG
 vendor LSILOGIC		0x102a	LSI Logic, Headland div.
 vendor MATROX		0x102b	Matrox
 vendor CHIPS		0x102c	Chips and Technologies
@@ -87,6 +87,7 @@ vendor OLIVETTI		0x102e	Olivetti Advanced Technology
 vendor TOSHIBA		0x102f	Toshiba America
 vendor TMCRESEARCH	0x1030	TMC Research
 vendor MIRO		0x1031	Miro Computer Products
+vendor COMPAQ2		0x1032	Compaq (2nd PCI Vendor ID)
 vendor NEC		0x1033	NEC
 vendor BURNDY		0x1034	Burndy
 vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
@@ -137,7 +138,7 @@ vendor OCEANOA		0x1063	Ocean Office Automation
 vendor ALCATEL		0x1064	Alcatel CIT
 vendor TEXASMICRO	0x1065	Texas Microsystems
 vendor PICOPOWER	0x1066	Picopower Technology
-vendor MITSUBISHI	0x1067	Mitsubishi
+vendor MITSUBISHI	0x1067	Mitsubishi Electronics
 vendor DIVERSIFIED	0x1068	Diversified Technology
 vendor MYLEX		0x1069	Mylex
 vendor ATEN		0x106a	Aten Research
@@ -173,7 +174,7 @@ vendor CACHECOMP	0x1087	Cache Computer
 vendor MICROCOMP	0x1088	Microcomputer Systems
 vendor DG		0x1089	Data General Corporation
 vendor BIT3		0x108a	Bit3 Computer Corp.
-vendor OAKLEIGH		0x108c	Oakleigh Systems
+vendor ELONEX		0x108c	Elonex PLC c/o Oakleigh Systems
 vendor OLICOM		0x108d	Olicom
 vendor SUN		0x108e	Sun Microsystems
 vendor SYSTEMSOFT	0x108f	Systemsoft
@@ -206,6 +207,7 @@ vendor SGI		0x10a9	Silicon Graphics
 vendor ACC		0x10aa	ACC Microelectronics
 vendor DIGICOM		0x10ab	Digicom
 vendor HONEYWELL	0x10ac	Honeywell IASD
+vendor SYMPHONY		0x10ad	Symphony Labs
 vendor CORNERSTONE	0x10ae	Cornerstone Technology
 vendor MICROCOMPSON	0x10af	Micro Computer Sysytems (M) SON
 vendor CARDEXPER	0x10b0	CardExpert Technology
@@ -240,7 +242,7 @@ vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYSPROD	0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJUTSU		0x10d0	Fujitsu Limited
+vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd PCI Vendor ID)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -277,7 +279,7 @@ vendor TYAN		0x10f1	Tyan Computer
 vendor ACHME		0x10f2	Achme Computer
 vendor ALARIS		0x10f3	Alaris
 vendor SMOS		0x10f4	S-MOS Systems
-vendor MKK		0x10f5	NKK Corporation
+vendor NKK		0x10f5	NKK Corporation
 vendor CREATIVE		0x10f6	Creative Electronic Systems
 vendor MATSUSHITA	0x10f7	Matsushita
 vendor ALTOS		0x10f8	Altos India
@@ -298,7 +300,7 @@ vendor VIATECH		0x1106	VIA Technologies
 vendor STRATIS		0x1107	Stratus Computer
 vendor PROTEON		0x1108	Proteon
 vendor COGENT		0x1109	Cogent Data Technologies
-vendor SIEMENS 		0x110a	Siemens Nixdorf AG
+vendor SIEMENS 		0x110a	Siemens AG / Siemens Nixdorf AG
 vendor XENON		0x110b	Xenon Microsystems
 vendor MINIMAX		0x110c	Mini-Max Technology
 vendor ZNYX		0x110d	Znyx Advanced Systems
@@ -306,7 +308,7 @@ vendor CPUTECH		0x110e	CPU Technology
 vendor ROSS		0x110f	Ross Technology
 vendor POWERHOUSE	0x1110	Powerhouse Systems
 vendor SCO		0x1111	Santa Cruz Operation
-vendor ROCKWELL		0x1112	Rockwell Network Systems
+vendor RNS		0x1112	RNS
 vendor ACCTON		0x1113	Accton Technology
 vendor ATMEL		0x1114	Atmel
 vendor DUPONT		0x1115	DuPont Pixel Systems
@@ -400,8 +402,8 @@ vendor BRIDGEPORT	0x1174	Bridgeport Machines
 vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
-vendor ALFA		0x1178	Alfa Inc
-vendor TOSHIBA		0x1179	Toshiba Info Systems
+vendor ALFA		0x1178	Alfa
+vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd PCI Vendor ID)
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -413,7 +415,7 @@ vendor DATAWORLD	0x1185	Dataworld
 vendor DLINK		0x1186	D-Link Systems
 vendor ATL		0x1187	Advanced Techonoloy Labratories
 vendor SHIMA		0x1188	Shima Seiki Manufacturing
-vendor MATSUSHITA	0x1189	Matsushita Electronics
+vendor MATSUSHITA2	0x1189	Matsushita Electronics (2nd PCI Vendor ID)
 vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
@@ -431,11 +433,11 @@ vendor MINDSHARE	0x119a	Mind Share
 vendor OMEGA		0x119b	Omega Micro
 vendor ITI		0x119c	Information Technology Institute
 vendor BUG		0x119d	Bug Sapporo
-vendor FUJITSU		0x119e	Fujitsu
+vendor FUJITSU3		0x119e	Fujitsu (3th PCI Vendor ID)
 vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
-vendor SIERRA		0x11a2	Sierra Research & Technology
+vendor SIERRA2		0x11a2	Sierra Research & Technology (2nd PCI Vendor ID)
 vendor BARCO		0x11a4	Barco
 vendor MICROUNITY	0x11a5	MicroUnity Systems Engineering
 vendor PUREDATA		0x11a6 	Pure Data
@@ -454,12 +456,15 @@ vendor BARR		0x11b3	Barr Systems
 vendor LEITECH		0x11b4	Leitch Technology
 vendor RADSTONE		0x11b5	Radstone Technology
 vendor UNITEDVIDEO	0x11b6	United Video
+vendor MOT2		0x11b7	Motorola (2nd PCI Vendor ID)
 vendor XPOINT		0x11b8	Xpoint Technologies
 vendor PATHLIGHT	0x11b9	Pathlight Technology
 vendor VIDEOTRON	0x11ba	VideoTron
 vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
-vendor IMI		0x11bd	International Microcircuts
+vendor PINNACLE		0x11bd	Pinnacle Systems
+vendor IMI		0x11be	International Microcircuts
+vendor NEC2		0x11c3	NEC (2nd PCI Vendor ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
 vendor DCMDATA		0x11c7	DCM Data Systems
@@ -467,28 +472,37 @@ vendor DOLPHIN		0x11c8	Dolphin Interconnect Solutions
 vendor MRTMAGMA		0x11c9	Mesa Ridge Technologies (MAGMA)
 vendor LSISYS		0x11ca	LSI Systems
 vendor SPECIALIX	0x11cb	Specialix Research
-vendor HALCS		0x11cd 	HAL Computer Systems
+vendor MKC		0x11cc	Michels & Kleberhoff Computer
+vendor HAL		0x11cd 	HAL Computer Systems
 vendor ZORAN		0x11de	Zoran Corporation
 vendor PMCSIERRA	0x11f8	PMC-Sierra
-vendor SYMPHONY		0x1c1c	Symphony Labs
-vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor CYCLADES		0x120e	Cyclades
+vendor ARIEL		0x1220	Ariel
+vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
-vendor STALLION		Ox124d	Stallion Technologies
+vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor AURORA		0x125c	Aurora Technologies
 vendor NETAPP		0x1275	Network Appliance
+vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor KOFAX		0x1296	Kofax Image Products
+vendor PICTUREEL	0x12c5	Picture Elements
+vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
+vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor 3DLABS		0x3d3d	3D Labs
+vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
+vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor S3		0x5333	S3
-vendor NETPOWER		0x5700	NetPower
+vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
+vendor C4T		0x6374	c't Magazin
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
-vendor TRIGEM		0x8800	Trigem Computer
+vendor TRIGEM2		0x8800	Trigem Computer (2nd PCI Vendor ID)
 vendor COMPUTONE	0x8e0e	Computone Corperation
 vendor ADP		0x9004	Adaptec
 vendor ATRONICS		0x907f	Atronics
-vendor NETPOWERNEW	0xdead	NetPower
-vendor ARK		0xedd8	ARK Logic
+vendor ARC		0xedd8	ARC Logic
+vendor BAD		0xffff	ILLEGITIMATE VENDOR ID
 
 /*
  * List of known products.  Grouped by vendor.
@@ -528,6 +542,7 @@ product ADP 2940AU	0x6178	AHA-2940A Ultra
 product ADP AIC7870	0x7078	AIC-7870
 product ADP 2940	0x7178	AHA-2940
 product ADP 3940	0x7278	AHA-3940
+product ADP 3985	0x7378	AHA-3985
 product ADP 2944	0x7478	AHA-2944
 product ADP AIC7880	0x8078	AIC-7880 Ultra
 product ADP 2940U	0x8178	AHA-2940 Ultra
@@ -537,11 +552,12 @@ product ADP 2944U	0x8478	AHA-2944 Ultra
 /* AMD products */
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
 product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
+product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
 
-/* ARK Logic products */
-product ARK 1000PV	0xa091	1000PV
-product ARK 2000PV	0xa099	2000PV
-product ARK 2000MT	0xa0a1	2000MT
+/* ARC Logic products */
+product ARC 1000PV	0xa091	1000PV
+product ARC 2000PV	0xa099	2000PV
+product ARC 2000MT	0xa0a1	2000MT
 
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
@@ -560,13 +576,18 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
 /* Avance Logic products */
-product AVANCE ALG2301	0x2301	ALG2301
-product AVANCE ALG2302	0x2302	ALG2302
+product AVANCE AVL2301	0x2301	AVL2301
+product AVANCE AVG2302	0x2302	AVG2302
+product AVANCE2 ALG2301	0x2301	ALG2301
+product AVANCE2 ALG2302	0x2302	ALG2302
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
 product BUSLOGIC MULTIMASTER	0x1040	MultiMaster
 product BUSLOGIC FLASHPOINT	0x8130	FlashPoint
+
+/* c't Magazin products */
+product C4T GPPCI		0x6773	GPPCI
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
@@ -581,9 +602,9 @@ product CIRRUS CL_GD5434_8	0x00a8	CL-GD5434-8
 product CIRRUS CL_GD5436	0x00ac	CL-GD5436
 product CIRRUS CL_GD5446	0x00b8	CL-GD5446
 product CIRRUS CL_GD6729	0x1100	CL-GD6729
-product CIRRUS CL_GD7541	0x1204	CL-GD7541
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
+product CIRRUS CL_GD7541	0x1204	CL-GD7541
 
 /* CMD Technology products */
 product CMDTECH 640A		0x0640	640A
@@ -599,7 +620,9 @@ product	COMPAQ PCI_EISA_BRIDGE	0x0001	PCI-EISA Bridge
 product COMPAQ PCI_ISA_BRIDGE	0x0002	PCI-ISA Bridge
 product COMPAQ TRIFLEX1		0x1000	Triflex Host-PCI Bridge
 product COMPAQ TRIFLEX2		0x2000	Triflex Host-PCI Bridge
+product	COMPAQ QVISION_V0	0x3032	QVision
 product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
+product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
 
 /* Contaq Microsystems products */
@@ -626,6 +649,12 @@ product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
 product DEC 21041	0x0014  DECchip 21041 (\"Tulip Pass 3\")
 product DEC DGLPB	0x0016	DGLPB (\"OPPO\")
+product DEC 21142	0x0019	DECchip 21142/3
+product DEC 21052	0x0021	DECchip 21052 PCI-PCI Bridge
+product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
+product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
+product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
+product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
@@ -653,8 +682,16 @@ product EFFICIENTNETS ENI155P	0x0002	155P-MF1 ATM
 product HP J2585A	0x1030	J2585A
 
 /* IBM products */
-product IBM 82351	0x0022	82351 PCI-PCI Bridge
+product IBM 0x0002 	0x0002	MCA Bridge
+product IBM 0x0005 	0x0005	CPU Bridge - Alta Lite
+product IBM 0x0007 	0x0007	CPU Bridge - Alta MP
+product IBM 0x000a 	0x000a	ISA Bridge w/PnP
+product IBM 0x0017 	0x0017	CPU Bridge
+product IBM 0x0018 	0x0018	Auto LANStreamer
 product IBM GXT150P	0x001B	GXT-150P 2D Accelerator
+product IBM 0x0020	0x0020	MCA Bridge
+product IBM 82351	0x0022	82351 PCI-PCI Bridge
+product IBM 0x0036	0x0036	Miami/PCI
 
 /* Integrated Micro Solutions products */
 product IMS 8849	0x8849	8849
@@ -682,6 +719,7 @@ product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
 product INTEL 82430VX	0x7030	82430VX (Triton VX) Host Bridge
+product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
 product INTEL 82450KX	0x84c4	82450KX (Orion) PCI Memory Controller
 product INTEL 82454GX	0x84c5	82454GX (Orion) Host-PCI bridge
 
@@ -699,7 +737,7 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 /* Matrox products */
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
-product MATROX MILLENIUM	0x0519	MGA 2064W (\"Storm\")
+product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (\"Storm\")
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
@@ -709,6 +747,7 @@ product MYLEX 960P	0x0001	DAC960P RAID controller
 product MUTECH MV1000	0x0001	MV1000
 
 /* National Semiconductor products */
+product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
 
 /* NCR/Symbios Logic products */
@@ -731,7 +770,7 @@ product NUMBER9 I128	0x2309	Imagine-128
 product NUMBER9 I128_2	0x2339	Imagine-128 II
 
 /* Oak Technologies products */
-product OAK OTI1007	0x0107	OTI107
+product OAKTECH OTI1007	0x0107	OTI107
 
 /* Opti products */
 product OPTI 82C557	0xc557	82C557
@@ -760,8 +799,8 @@ product	REALTEK	RT8029	0x8029	Ethernet
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
-product S3 AURORA64P	0x8812	Aurora64V\+
-product S3 TRIO64UVP	0x8814	Trio64UV\+
+product S3 AURORA64P	0x8812	Aurora64V+
+product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 868		0x8880	868
 product S3 VIRGE_VX	0x883d	ViRGE/VX
 product S3 928		0x88b0	86C928
@@ -779,8 +818,8 @@ product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
 product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
 
 /* SGS Thomson products */
-product SGS 2000	0x0008	STG 2000X
-product SGS 1764	0x1746	STG 1764X
+product SGSTHOMSON 2000	0x0008	STG 2000X
+product SGSTHOMSON 1764	0x1746	STG 1764X
 
 /* Silicon Integrated System products */
 product SIS 86C201	0x0001	86C201
@@ -797,6 +836,9 @@ product SMC 37C922	0x1001	FDC 37C922
 
 /* Symphony Labs products */
 product SYMPHONY 82C101	0x0001	82C101
+product SYMPHONY 82C103	0x0103	82C103
+product SYMPHONY 82C105	0x0105	82C105
+product SYMPHONY2 82C101	0x0001	82C101
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 product TEKRAM 	DC290	0xdc29	DC-290(M)
@@ -809,6 +851,8 @@ product TOSHIBA R4X00	0x102f	R4x00 Host-PCI Bridge
 
 /* Trident products */
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
+product TRIDENT	TGUI_9350	0x9350	TGUI 9350
+product TRIDENT	TGUI_9360	0x9360	TGUI 9360
 product TRIDENT	TGUI_9420	0x9420	TGUI 9420
 product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
@@ -823,10 +867,15 @@ product TSENG ET4000_W32P_D	0x3207	ET4000w32p rev D
 product TSENG ET6000		0x3208	ET6000
 
 /* UMC products */
-product UMC UM8673F	0x0101	UM8673F
-product UMC UM8891A	0x0891	UM8891A
+product UMC UM82C881	0x0001	UM82C881 486 Chipset
+product UMC UM82C886	0x0002	UM82C886 ISA Bridge
+product UMC UM8673F	0x0101	UM8673F EIDE Controller
+product UMC UM8881	0x0881	UM8881 HB4 486 PCI Chipset
+product UMC UM82C891	0x0891	UM82C891
+product UMC UM886A	0x1001	UM886A
 product UMC UM8886BF	0x673a	UM8886BF
-product UMC UM8886A	0x886a	UM8886A
+product UMC UM8710	0x8710	UM8710
+product UMC UM8886	0x886a	UM8886
 product UMC UM8881F	0x8881	UM8881F PCI-Host bridge
 product UMC UM8886F	0x8886	UM8886F PCI-ISA bridge
 product UMC UM8886A	0x888a	UM8886A
@@ -835,13 +884,16 @@ product UMC UM9017F	0x9017	UM9017F
 product UMC UM8886N	0xe88a	UM8886N
 product UMC UM8891N	0xe891	UM8891N
 
+/* ULSI Systems products */
+product ULSI US201	0x0201	US201
+
 /* V3 Semiconductor products */
 product V3 V292PBC	0x0292	V292PBC AMD290x0 Host-PCI Bridge
 product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products */
-product VIATECH VT82C505	0x0505	VT82C505 (\"Pluto"\) 
+product VIATECH VT82C505	0x0505	VT82C505 (\"Pluto\") 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH	VT82C570M	0x1000	VT82C570M (\"Apollo\") Host-PCI Bridge
@@ -852,13 +904,32 @@ product VIATECH VT82C416MV	0x1571	VT82C416MV
 product VORTEX GDT_6000B	0x0001	GDT 6000b
 
 /* VLSI products */
-product VLSI 82C592_FC1	0x0005	82C592-FC1
-product VLSI 82C593_FC1	0x0006	82C593-FC1
-product VLSI 82C593_FC1 0x
+product VLSI 82C592	0x0005	82C592 CPU Bridge
+product VLSI 82C593	0x0006	82C593 ISA Bridge
+product VLSI 82C594	0x0007	82C594 Wildcat System Controller
+product VLSI 82C596597	0x0008	82C596/597 Wildcat ISA Bridge
+product VLSI 82C541	0x000c	82C541
+product VLSI 82C543	0x000d	82C543
+product VLSI 82C532	0x0101	82C532
+product VLSI 82C534	0x0102	82C534
+product VLSI 82C535	0x0104	82C535
+product VLSI 82C147	0x0105	82C147
+product VLSI 82C975	0x0200	82C975
+product VLSI 82C925	0x0280	82C925
 
 /* Weitek products */
 product WEITEK P9000	0x9001	P9000
 product WEITEK P9100	0x9100	P9100
+
+/* Western Digital products */
+product	WD WD33C193A	0x0193	WD33C193A
+product WD WD33C196A	0x0196	WD33C196A
+product WD WD33C197A	0x0197	WD33C197A
+product WD WD7193	0x3193	WD7193
+product WD WD7197	0x3197	WD7197
+product WD WD33C296A	0x3296	WD33C296A
+product WD WD34C296	0x4296	WD34C296
+product WD 90C		0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
