@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.64 2004/06/26 14:21:29 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.65 2004/06/26 20:48:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.64 2004/06/26 14:21:29 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.65 2004/06/26 20:48:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -903,9 +903,6 @@ STATIC void
 recordregion(int start, int end, int inquotes)
 {
 	struct ifsregion *ifsp;
-
-	if (start == end)
-		return;
 
 	if (ifslastp == NULL) {
 		ifsp = &ifsfirst;
