@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 1999/06/20 06:42:07 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 1999/07/04 08:01:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,8 +73,12 @@ you have completed your partition setups.
 
 Shall we continue?}
 
-message part_head
-{Part        size      offset  fstype      use  mount point (name)\n}
+message part_header
+{Part size       offset     fstype use       mount point (name)
+---- ---------- ---------- ------ --------- ------------------\n}
+
+message part_row
+{%3s%c %-10d %-10d %-6s %-9s %s\n}
 
 message ovrwrite
 {Your disk currently has at least one MacOS HFS partition.  Overwriting

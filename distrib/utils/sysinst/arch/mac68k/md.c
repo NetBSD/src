@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1999/06/22 00:57:09 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.9 1999/07/04 08:01:40 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -402,13 +402,13 @@ disp_selected_part(sel)
     char name[64], use[16], fstyp[16];
     EBZB *bzb;
 
-    msg_display_add (MSG_part_head);
+    msg_display_add(MSG_part_header);
     for (i=0;i<map.usable_cnt;i++) {
         if (i == sel) msg_standout();
         j = map.mblk[i];
         part_type(j, fstyp, use, name);
         bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-        msg_printf_add ("%s%c%12d%12d%8s%9s  %s\n", diskdev,
+        msg_printf_add(MSG_part_row, diskdev,
             bzb->flags.part, map.blk[j].pmPartBlkCnt,
             map.blk[j].pmPyPartStart, fstyp, use, name);
         if (i == sel) msg_standend();

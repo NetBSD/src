@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.16 1999/06/20 06:08:14 cgd Exp $ */
+/*	$NetBSD: mbr.c,v 1.17 1999/07/04 08:01:39 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -366,12 +366,12 @@ disp_cur_part(part, sel, disp)
 		start = 0, stop = 4;
 	else
 		start = disp, stop = disp+1;
-	msg_display_add(MSG_part_head, multname, multname, multname);
+	msg_table_add(MSG_part_header, multname, multname, multname);
 	for (i = start; i < stop; i++) {
 		if (sel == i)
 			msg_standout();
 		if (part[i].mbrp_size == 0 && part[i].mbrp_start == 0)
-			msg_printf_add("%d %36s  ", i, "");
+			msg_table_add(MSG_part_row_start_unused, i);
 		else {
 			rsize = part[i].mbrp_size / sizemult;
 			if (part[i].mbrp_size % sizemult)
@@ -379,10 +379,10 @@ disp_cur_part(part, sel, disp)
 			rend = (part[i].mbrp_start + part[i].mbrp_size) / sizemult;
 			if ((part[i].mbrp_size + part[i].mbrp_size) % sizemult)
 				rend++;
-			msg_printf_add("%d %12d%12d%12d  ", i,
+			msg_table_add(MSG_part_row_start_used, i,
 			    part[i].mbrp_start / sizemult, rsize, rend);
 		}
-		msg_printf_add("%s\n", get_partname(i));
+		msg_table_add(MSG_part_row_end, get_partname(i));
 		if (sel == i)
 			msg_standend();
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.24 1999/06/23 22:55:14 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.25 1999/07/04 08:01:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -219,12 +219,25 @@ La taille de la partition a été tronquée à %d %s.
 
 message fspart
 {Vos partitions NetBSD sont les suivantes (taille et offset en %s) :
+
 }
 
-message fspart_head
-{id:      Size    Offset       End FStype Bsize Fsize Mount point
----      ----    ------       --- ------ ----- ----- -----------
+message fspart_header
+{   Size      Offset    End       FStype Bsize Fsize Mount point
+   --------- --------- --------- ------ ----- ----- -----------
 }
+
+message fspart_row_start
+{%c: %-9d %-9d %-9d %-6s }
+
+message fspart_row_end_bsd
+{%-5d %-5d %s\n}
+
+message fspart_row_end_msdos
+{            %s\n}
+
+message fspart_row_end_other
+{\n}
 
 
 message edfspart

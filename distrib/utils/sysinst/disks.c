@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.27 1999/06/20 06:08:14 cgd Exp $ */
+/*	$NetBSD: disks.c,v 1.28 1999/07/04 08:01:39 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,7 +187,7 @@ void disp_cur_fspart(int disp, int showall)
 		stop = disp+1;
 	}
 
-	msg_display_add (MSG_fspart_head);
+	msg_table_add (MSG_fspart_header);
 	for (i = start; i < stop; i++) {
 		if (showall || bsdlabel[i].pi_size > 0) {
 			poffset = bsdlabel[i].pi_offset / sizemult;
@@ -197,17 +197,19 @@ void disp_cur_fspart(int disp, int showall)
 			else
 				pend = (bsdlabel[i].pi_offset +
 				bsdlabel[i].pi_size) / sizemult - 1;
-			msg_printf_add(" %c: %9d %9d %9d %6s",
+			msg_table_add(MSG_fspart_row_start,
 					'a'+i, psize, poffset, pend,
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (bsdlabel[i].pi_fstype == FS_BSDFFS)
-				msg_printf_add("%6d%6d %s",
+				msg_table_add(MSG_fspart_row_end_bsd,
 						bsdlabel[i].pi_bsize,
 						bsdlabel[i].pi_fsize,
 						fsmount[i]);
 			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
-				msg_printf_add("%12s %s", "", fsmount[i]);
-			msg_printf_add("\n");
+				msg_table_add(MSG_fspart_row_end_msdos,
+						fsmount[i]);
+			else
+				msg_table_add(MSG_fspart_row_end_other);
 		}
 	}
 	msg_printf_add("\n");
