@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.15 1996/09/07 12:12:18 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.16 1996/10/10 21:27:25 christos Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -191,7 +191,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: aha_cmd, host not idle(0x%x)\n",
+			kprintf("%s: aha_cmd, host not idle(0x%x)\n",
 			    name, sts);
 			return (1);
 		}
@@ -217,7 +217,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 		}
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
-				printf("%s: aha_cmd, cmd/data port full\n", name);
+				kprintf("%s: aha_cmd, cmd/data port full\n", name);
 			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
 			return (1);
 		}
@@ -236,7 +236,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 		}
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
-				printf("%s: aha_cmd, cmd/data port empty %d\n",
+				kprintf("%s: aha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
 			bus_io_write_1(bc, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
 			return (1);
@@ -257,7 +257,7 @@ aha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: aha_cmd, host not finished(0x%x)\n",
+			kprintf("%s: aha_cmd, host not finished(0x%x)\n",
 			    name, sts);
 			return (1);
 		}
@@ -281,7 +281,6 @@ aha_isa_probe(parent, match, aux)
 	struct aha_softc sc;
 	bus_chipset_tag_t bc = ia->ia_bc;
 	bus_io_handle_t ioh;
-	isa_chipset_tag_t ic = ia->ia_ic;
 	int rv;
 
 	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
@@ -318,7 +317,7 @@ aha_isa_attach(parent, self, aux)
 	bus_io_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
-	printf("\n");
+	kprintf("\n");
 
 	if (bus_io_map(bc, ia->ia_iobase, AHA_ISA_IOSIZE, &ioh))
 		panic("aha_attach: bus_io_map failed!");
@@ -334,7 +333,7 @@ aha_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
+		kprintf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -381,14 +380,14 @@ aha_finish_ccbs(sc)
 	if (wmbi->stat == AHA_MBI_FREE) {
 		for (i = 0; i < AHA_MBX_SIZE; i++) {
 			if (wmbi->stat != AHA_MBI_FREE) {
-				printf("%s: mbi not in round-robin order\n",
+				kprintf("%s: mbi not in round-robin order\n",
 				    sc->sc_dev.dv_xname);
 				goto AGAIN;
 			}
 			aha_nextmbx(wmbi, wmbx, mbi);
 		}
 #ifdef AHADIAGnot
-		printf("%s: mbi interrupt with no full mailboxes\n",
+		kprintf("%s: mbi interrupt with no full mailboxes\n",
 		    sc->sc_dev.dv_xname);
 #endif
 		return;
@@ -398,7 +397,7 @@ AGAIN:
 	do {
 		ccb = aha_ccb_phys_kv(sc, phystol(wmbi->ccb_addr));
 		if (!ccb) {
-			printf("%s: bad mbi ccb pointer; skipping\n",
+			kprintf("%s: bad mbi ccb pointer; skipping\n",
 			    sc->sc_dev.dv_xname);
 			goto next;
 		}
@@ -406,11 +405,11 @@ AGAIN:
 #ifdef AHADEBUG
 		if (aha_debug) {
 			u_char *cp = &ccb->scsi_cmd;
-			printf("op=%x %x %x %x %x %x\n",
+			kprintf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			kprintf("stat %x for mbi addr = 0x%08x, ",
 			    wmbi->stat, wmbi);
-			printf("ccb addr = 0x%x\n", ccb);
+			kprintf("ccb addr = 0x%x\n", ccb);
 		}
 #endif /* AHADEBUG */
 
@@ -439,7 +438,7 @@ AGAIN:
 			break;
 
 		default:
-			printf("%s: bad mbi status %02x; skipping\n",
+			kprintf("%s: bad mbi status %02x; skipping\n",
 			    sc->sc_dev.dv_xname, wmbi->stat);
 			goto next;
 		}
@@ -468,7 +467,7 @@ aha_intr(arg)
 	u_char sts;
 
 #ifdef AHADEBUG
-	printf("%s: aha_intr ", sc->sc_dev.dv_xname);
+	kprintf("%s: aha_intr ", sc->sc_dev.dv_xname);
 #endif /*AHADEBUG */
 
 	/*
@@ -587,7 +586,7 @@ aha_get_ccb(sc, flags)
 			ccb = (struct aha_ccb *) malloc(sizeof(struct aha_ccb),
 			    M_TEMP, M_NOWAIT);
 			if (!ccb) {
-				printf("%s: can't malloc ccb\n",
+				kprintf("%s: can't malloc ccb\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
@@ -647,7 +646,9 @@ aha_collect_mbo(sc)
 	struct aha_softc *sc;
 {
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
+#ifdef AHADIAG
 	struct aha_ccb *ccb;
+#endif
 
 	wmbo = wmbx->cmbo;
 
@@ -741,13 +742,13 @@ aha_done(sc, ccb)
 	 */
 #ifdef AHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
@@ -758,7 +759,7 @@ aha_done(sc, ccb)
 				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
-				printf("%s: host_stat %x\n",
+				kprintf("%s: host_stat %x\n",
 				    sc->sc_dev.dv_xname, ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
@@ -776,7 +777,7 @@ aha_done(sc, ccb)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				printf("%s: target_stat %x\n",
+				kprintf("%s: target_stat %x\n",
 				    sc->sc_dev.dv_xname, ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
@@ -820,7 +821,7 @@ aha_find(bc, ioh, sc)
 	if (!i) {
 #ifdef AHADEBUG
 		if (aha_debug)
-			printf("aha_find: No answer from adaptec board\n");
+			kprintf("aha_find: No answer from adaptec board\n");
 #endif /* AHADEBUG */
 		return (0);
 	}
@@ -851,7 +852,7 @@ aha_find(bc, ioh, sc)
 		drq = 7;
 		break;
 	default:
-		printf("aha_find: illegal drq setting %x\n", config.reply.chan);
+		kprintf("aha_find: illegal drq setting %x\n", config.reply.chan);
 		return (0);
 	}
 
@@ -875,7 +876,7 @@ aha_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		printf("aha_find: illegal irq setting %x\n", config.reply.intr);
+		kprintf("aha_find: illegal irq setting %x\n", config.reply.intr);
 		return (0);
 	}
 
@@ -913,14 +914,14 @@ aha_init(sc)
 		struct aha_extbios extbios;
 		struct aha_unlock unlock;
 
-		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
+		kprintf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
 		extbios.cmd.opcode = AHA_EXT_BIOS;
 		aha_cmd(bc, ioh, sc,
 		    sizeof(extbios.cmd), (u_char *)&extbios.cmd,
 		    sizeof(extbios.reply), (u_char *)&extbios.reply);
 
 #ifdef AHADEBUG
-		printf("%s: flags=%02x, mailboxlock=%02x\n",
+		kprintf("%s: flags=%02x, mailboxlock=%02x\n",
 		    sc->sc_dev.dv_xname,
 		    extbios.reply.flags, extbios.reply.mailboxlock);
 #endif /* AHADEBUG */
@@ -954,7 +955,7 @@ aha_init(sc)
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
-	printf("%s: %s, %s\n",
+	kprintf("%s: %s, %s\n",
 	    sc->sc_dev.dv_xname,
 	    setup.reply.sync_neg ? "sync" : "async",
 	    setup.reply.parity ? "parity" : "no parity");
@@ -963,7 +964,7 @@ aha_init(sc)
 		if (!setup.reply.sync[i].valid ||
 		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
 			continue;
-		printf("%s targ %d: sync, offset %d, period %dnsec\n",
+		kprintf("%s targ %d: sync, offset %d, period %dnsec\n",
 		    sc->sc_dev.dv_xname, i,
 		    setup.reply.sync[i].offset, setup.reply.sync[i].period * 50 + 200);
 	}
@@ -1023,18 +1024,18 @@ aha_inquire_setup_information(sc)
 		}
 		if (!i) {
 #ifdef AHADEBUG
-			printf("aha_init: soft reset failed\n");
+			kprintf("aha_init: soft reset failed\n");
 #endif /* AHADEBUG */
 			return;
 		}
 #ifdef AHADEBUG
-		printf("aha_init: inquire command failed\n");
+		kprintf("aha_init: inquire command failed\n");
 #endif /* AHADEBUG */
 		goto noinquire;
 	}
 
 #ifdef AHADEBUG
-	printf("%s: inquire %x, %x, %x, %x\n",
+	kprintf("%s: inquire %x, %x, %x, %x\n",
 	    sc->sc_dev.dv_xname,
 	    revision.reply.boardid, revision.reply.spec_opts,
 	    revision.reply.revision_1, revision.reply.revision_2);
@@ -1069,7 +1070,7 @@ aha_inquire_setup_information(sc)
 	*p = '\0';
 
 noinquire:
-	printf(": model AHA-%s, firmware %s\n", sc->sc_model, sc->sc_firmware);
+	kprintf(": model AHA-%s, firmware %s\n", sc->sc_model, sc->sc_firmware);
 }
 
 void
@@ -1180,7 +1181,7 @@ aha_scsi_cmd(xs)
 					 */
 					/* check it fits on the ISA bus */
 					if (thisphys > 0xFFFFFF) {
-						printf("%s: DMA beyond"
+						kprintf("%s: DMA beyond"
 							" end of ISA\n",
 							sc->sc_dev.dv_xname);
 						goto bad;
@@ -1215,7 +1216,7 @@ aha_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			printf("%s: aha_scsi_cmd, more than %d dma segs\n",
+			kprintf("%s: aha_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, AHA_NSEG);
 			goto bad;
 		}
@@ -1302,7 +1303,7 @@ aha_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("timed out");
+	kprintf("timed out");
 
 	s = splbio();
 
@@ -1312,7 +1313,7 @@ aha_timeout(arg)
 	 */
 	aha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 #endif
@@ -1324,11 +1325,11 @@ aha_timeout(arg)
 	 */
 	if (ccb->flags & CCB_ABORT) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		kprintf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		printf("\n");
+		kprintf("\n");
 		ccb->xs->error = XS_TIMEOUT;
 		ccb->timeout = AHA_ABORT_TIMEOUT;
 		ccb->flags |= CCB_ABORT;
