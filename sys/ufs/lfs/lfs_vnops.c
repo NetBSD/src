@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.94 2003/03/08 02:55:50 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.95 2003/03/08 21:46:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.94 2003/03/08 02:55:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.95 2003/03/08 21:46:06 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.94 2003/03/08 02:55:50 perseant Exp 
 #include <ufs/ufs/ufs_extern.h>
 
 #include <uvm/uvm.h>
-#ifdef LFS_UBC
-# include <uvm/uvm_pmap.h>
-# include <uvm/uvm_stat.h>
-# include <uvm/uvm_pager.h>
-#endif
+#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_stat.h>
+#include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
@@ -131,11 +129,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
-#ifdef LFS_UBC
 	{ &vop_mmap_desc, lfs_mmap },			/* mmap */
-#else
-	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
-#endif
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
@@ -164,11 +158,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-#ifdef LFS_UBC
-	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
-#else
 	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
-#endif
 	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
@@ -1302,7 +1292,6 @@ lfs_fcntl(void *v)
 	return 0;
 }
 
-#ifndef LFS_UBC
 int
 lfs_getpages(void *v)
 {
@@ -1320,19 +1309,8 @@ lfs_getpages(void *v)
 	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
 		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
 	}
-	return genfs_compat_getpages(v);
+	return genfs_getpages(v);
 }
-
-int
-lfs_putpages(void *v)
-{
-	int error;
-
-	error = genfs_putpages(v);
-	return error;
-}
-
-#else /* LFS_UBC */
 
 /*
  * Make sure that for all pages in every block in the given range,
@@ -1526,9 +1504,10 @@ lfs_putpages(void *v)
 	struct lfs *fs;
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
-	off_t max_endoffset;
+	off_t off, max_endoffset;
 	int pages_per_block;
 	int s, sync, dirty, pagedaemon;
+	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	vp = ap->a_vp;
@@ -1568,6 +1547,19 @@ lfs_putpages(void *v)
 	 */
 	if (!sync && ap->a_offlo >= ip->i_ffs_size && ap->a_offlo < blkeof) {
 		origoffset = ap->a_offlo;
+		for (off = origoffset; off < blkeof; off += fs->lfs_bsize) {
+			pg = uvm_pagelookup(&vp->v_uobj, off);
+			KASSERT(pg != NULL);
+			while (pg->flags & PG_BUSY) {
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
+						    "lfsput2", 0);
+				simple_lock(&vp->v_interlock);
+			}
+			uvm_lock_pageq();
+			uvm_pageactivate(pg);
+			uvm_unlock_pageq();
+		}
 		ap->a_offlo = blkeof;
 		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
 			simple_unlock(&vp->v_interlock);
@@ -1969,4 +1961,3 @@ lfs_mmap(void *v)
 		return EOPNOTSUPP;
 	return ufs_mmap(v);
 }
-#endif /* LFS_UBC */

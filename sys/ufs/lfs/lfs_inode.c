@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.69 2003/03/04 19:10:35 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.70 2003/03/08 21:46:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.69 2003/03/04 19:10:35 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.70 2003/03/08 21:46:05 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -231,9 +231,7 @@ lfs_truncate(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
-#ifdef LFS_UBC
 	struct genfs_node *gp = VTOG(ovp);
-#endif
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
@@ -247,6 +245,7 @@ lfs_truncate(void *v)
 	int i;
 	int aflags, error, allerror = 0;
 	off_t osize;
+	voff_t eoz;
 	long lastseg;
 	size_t bc;
 	int obufsize, odb;
@@ -287,9 +286,7 @@ lfs_truncate(void *v)
 	lfs_imtime(fs);
 	osize = oip->i_ffs_size;
 	needunlock = usepc = 0;
-#ifdef LFS_UBC
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
-#endif
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -302,7 +299,6 @@ lfs_truncate(void *v)
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-#ifdef LFS_UBC
 		if (usepc) {
 			if (lblkno(fs, osize) < NDADDR &&
 			    lblkno(fs, osize) != lblkno(fs, length) &&
@@ -336,7 +332,6 @@ lfs_truncate(void *v)
 			KASSERT(ovp->v_size == oip->i_ffs_size);
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		} else {
-#endif /* !LFS_UBC */
 			error = lfs_reserve(fs, ovp, NULL,
 			    btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
 			if (error)
@@ -352,9 +347,7 @@ lfs_truncate(void *v)
 			(void) VOP_BWRITE(bp);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
-#ifdef LFS_UBC
 		}
-#endif
 	}
 
 	if ((error = lfs_reserve(fs, ovp, NULL,
@@ -374,11 +367,7 @@ lfs_truncate(void *v)
 	bc = 0;
 	if (offset == 0) {
 		oip->i_ffs_size = length;
-	} else
-#ifdef LFS_UBC
-	if (!usepc)
-#endif
-	{
+	} else if (!usepc) {
 		lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
@@ -405,26 +394,21 @@ lfs_truncate(void *v)
 			fs->lfs_avail += odb - btofsb(fs, size);
 		(void) VOP_BWRITE(bp);
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
-	}
-#ifdef LFS_UBC
-	/*
-	 * When truncating a regular file down to a non-block-aligned size,
-	 * we must zero the part of last block which is past the new EOF.
-	 * We must synchronously flush the zeroed pages to disk
-	 * since the new pages will be invalidated as soon as we
-	 * inform the VM system of the new, smaller size.
-	 * We must do this before acquiring the GLOCK, since fetching
-	 * the pages will acquire the GLOCK internally.
-	 * So there is a window where another thread could see a whole
-	 * zeroed page past EOF, but that's life.
-	 */
-
-	else { /* vp->v_type == VREG && length < osize && offset != 0 */
-		voff_t eoz;
-
+	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
+		/*
+		 * When truncating a regular file down to a non-block-aligned
+		 * size, we must zero the part of last block which is past
+		 * the new EOF.  We must synchronously flush the zeroed pages
+		 * to disk since the new pages will be invalidated as soon
+		 * as we inform the VM system of the new, smaller size.
+		 * We must do this before acquiring the GLOCK, since fetching
+		 * the pages will acquire the GLOCK internally.
+		 * So there is a window where another thread could see a whole
+		 * zeroed page past EOF, but that's life.
+		 */
 		aflags = ap->a_flags & IO_SYNC ? B_SYNC : 0;
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-			aflags);
+					 aflags);
 		if (error) {
 			return error;
 		}
@@ -439,7 +423,6 @@ lfs_truncate(void *v)
 	}
 
 	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
-#endif
 
 	oip->i_ffs_size = length;
 	uvm_vnp_setsize(ovp, length);
@@ -599,9 +582,7 @@ done:
 	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 	if (needunlock)
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
-#ifdef LFS_UBC
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-#endif
 	return (allerror);
 }
 
