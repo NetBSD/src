@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.19 2003/08/07 16:44:35 agc Exp $	*/
+/*	$NetBSD: vi.c,v 1.20 2004/08/13 12:10:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.19 2003/08/07 16:44:35 agc Exp $");
+__RCSID("$NetBSD: vi.c,v 1.20 2004/08/13 12:10:39 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -583,18 +583,12 @@ protected el_action_t
 /*ARGSUSED*/
 vi_delete_prev_char(EditLine *el, int c __attribute__((__unused__)))
 {
-	char *cp;
 
-	cp = el->el_line.cursor;
-	if (cp <= el->el_line.buffer)
+	if (el->el_line.cursor <= el->el_line.buffer)
 		return (CC_ERROR);
 
-	/* do the delete here so we dont mess up the undo and paste buffers */
-	el->el_line.cursor = --cp;
-	for (; cp < el->el_line.lastchar; cp++)
-		cp[0] = cp[1];
-	el->el_line.lastchar = cp - 1;
-
+	c_delbefore1(el);
+	el->el_line.cursor--;
 	return (CC_REFRESH);
 }
 
