@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.23 2002/03/17 19:40:44 atatat Exp $	*/
+/*	$NetBSD: akbd.c,v 1.23.6.1 2003/06/19 11:37:00 grant Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -452,6 +452,10 @@ akbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct akbd_softc *sc = (struct akbd_softc *) v;
+#endif
+
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
@@ -462,6 +466,11 @@ akbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0;
 		return 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return 0;
+#endif
 	}
 	/* kbdioctl(...); */
 
@@ -484,6 +493,25 @@ kbd_passup(sc,key)
 		else {
 			printf("akbd: dumping polled key 0x%02x\n",key);
 		}
+#endif
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	} else if (sc->sc_rawkbd) {
+		char cbuf[2];
+		int s;
+		int j = 0;
+		int c = keyboard[ADBK_KEYVAL(key)][3];
+
+		if (c == 0)			/* XXX */
+			return;
+
+		if (c & 0x80)
+			cbuf[j++] = 0xe0;
+
+		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(key)? 0 : 0x80);
+
+		s = spltty();
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
 #endif
 	} else {
 		int press, val;
