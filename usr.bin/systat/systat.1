@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.16 1999/11/15 06:16:57 simonb Exp $
+.\"	$NetBSD: systat.1,v 1.17 1999/12/22 14:46:15 kleink Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -281,6 +281,19 @@ by the command
 .Xr ps 1
 with the flags
 .Fl aux .
+.Pp
+The following command is specific to the
+.Ic ps
+display; the minimum unambiguous prefix may be supplied.
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm user Ar name
+Limit the list of processes displayed to those owned by user
+.Ar name .
+If
+.Ar name
+is specified as `+', processes owned by any user are displayed (default).
+.El
 .It Ic swap
 Show information about swap space usage on all the 
 swap areas configured with
