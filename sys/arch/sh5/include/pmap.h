@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2002/09/22 07:53:49 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2002/09/28 10:53:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@ pmap_remove_all(struct pmap *pmap)
 extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
-extern void	pmap_unmap_device(vaddr_t, u_int);
+extern int	pmap_page_is_cacheable(pmap_t, vaddr_t);
 
 extern void (*__cpu_tlbinv)(pteh_t, pteh_t);
 extern void (*__cpu_tlbinv_cookie)(pteh_t, u_int);

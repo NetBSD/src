@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 2002/09/22 20:46:32 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 2002/09/28 10:53:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1097,6 +1097,31 @@ pmap_map_device(paddr_t pa, u_int len)
 	return (rv);
 }
 
+/*
+ * Returns non-zero if the specified mapping is cacheable
+ */
+int
+pmap_page_is_cacheable(pmap_t pm, vaddr_t va)
+{
+	struct pvo_entry *pvo;
+	ptel_t ptel = 0;
+	int s;
+
+	s = splhigh();
+	pvo = pmap_pvo_find_va(pm, va, NULL);
+	if (pvo != NULL)
+		ptel = pvo->pvo_ptel;
+	else
+	if (pm == pmap_kernel()) {
+		int idx = kva_to_iptidx(va);
+		if (idx >= 0 && pmap_kernel_ipt[idx])
+			ptel = pmap_kernel_ipt[idx];
+	}
+	splx(s);
+
+	return ((ptel & SH5_PTEL_CB_MASK) > SH5_PTEL_CB_NOCACHE);
+}
+
 void
 pmap_init(void)
 {
@@ -1439,16 +1464,12 @@ pmap_pa_unmap_kva(vaddr_t kva, ptel_t *ptel)
 		ptel = &pmap_kernel_ipt[idx];
 	}
 
+	oldptel = *ptel;
+
 	/*
 	 * Synchronise the cache before deleting the mapping.
 	 */
-	pmap_cache_sync_unmap(kva, *ptel);
-
-	/*
-	 * Re-fetch the PTEL, as the cache-sync may have caused a TLB
-	 * miss which changed the Ref/Mod bits.
-	 */
-	oldptel = *((volatile ptel_t *)ptel);
+	pmap_cache_sync_unmap(kva, oldptel);
 
 	/*
 	 * Now safe to delete the mapping.
@@ -1680,6 +1701,7 @@ int
 pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct pvo_head *pvo_head;
+	struct mem_region *mp;
 	struct vm_page *pg;
 	ptel_t ptel;
 	int error;
@@ -1704,14 +1726,14 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * available memory array.
 	 */
 	ptel = SH5_PTEL_CB_DEVICE;
-	if ((flags & PMAP_NC) == 0) {
-		struct mem_region *mp;
-		for (mp = mem; mp->mr_size; mp++) {
-			if (pa >= mp->mr_start &&
-			    pa < (mp->mr_start + mp->mr_size)) {
+	for (mp = mem; mp->mr_size; mp++) {
+		if (pa >= mp->mr_start &&
+		    pa < (mp->mr_start + mp->mr_size)) {
+			if ((flags & PMAP_NC) == 0)
 				ptel = SH5_PTEL_CB_WRITEBACK;
-				break;
-			}
+			else
+				ptel = SH5_PTEL_CB_NOCACHE;
+			break;
 		}
 	}
 
