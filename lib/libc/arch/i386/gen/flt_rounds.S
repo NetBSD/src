@@ -16,7 +16,7 @@ _map:
 ENTRY(__flt_rounds)
 	subl $4,%esp
 	fnstcw (%esp)
-	movw (%esp),%ax
+	movl (%esp),%eax
 	shrl $10,%eax
 	andl $3,%eax
 	movb _map(,%eax,1),%al
