@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.375 2004/08/11 19:48:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.376 2004/08/11 19:49:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6359,3 +6359,8 @@ sys/dev/ata/wd.c				1.282-1.283
 	wdopen(): check for DVF_ACTIVE.
 
 	[bouyer, ticket #735]
+
+gnu/lib/libgcc3/libgcc_s/Makefile		1.8
+
+	Look for libgcc.map in ${.OBJDIR}. PR#26515
+	[skrll, ticket #736]
