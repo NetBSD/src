@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2005/03/09 01:55:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.39 2005/03/25 20:14:40 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -84,6 +84,10 @@ INCS+=	rc5.h
 
 # MDC2 - patented, but we install the header anyways
 INCS+=	mdc2.h
+
+# FIPS
+.PATH: ${OPENSSLSRC}/fips ${OPENSSLSRC}/fips/rand
+INCS+=	fips.h fips_rand.h
 
 INCSDIR=/usr/include/openssl
 
