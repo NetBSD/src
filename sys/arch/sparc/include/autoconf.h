@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.17 1996/12/10 23:19:13 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.18 1997/04/08 20:06:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,6 @@
 #define	RA_MAXVADDR	8		/* max (virtual) addresses per device */
 #define	RA_MAXREG	16		/* max # of register banks per device */
 #define	RA_MAXINTR	8		/* max interrupts per device */
-#define RA_MAXRANGE	16		/* max # of bus translations */
 
 struct romaux {
 	const char *ra_name;		/* name from FORTH PROM */
@@ -85,16 +84,15 @@ struct romaux {
 	} ra_intr[RA_MAXINTR];
 	int	ra_nintr;		/* number of interrupt info elements */
 
-	struct rom_range {		/* Only used on v3 PROMs */
-		u_int32_t	cspace;		/* Client space */
-		u_int32_t	coffset;	/* Client offset */
-		u_int32_t	pspace;		/* Parent space */
-		u_int32_t	poffset;	/* Parent offset */
-		u_int32_t	size;		/* Size in bytes of this range */
-	} ra_range[RA_MAXRANGE];
-	int	ra_nrange;
-
 	struct	bootpath *ra_bp;	/* used for locating boot device */
+};
+
+struct rom_range {		/* Only used on v3 PROMs */
+	u_int32_t	cspace;		/* Client space */
+	u_int32_t	coffset;	/* Client offset */
+	u_int32_t	pspace;		/* Parent space */
+	u_int32_t	poffset;	/* Parent offset */
+	u_int32_t	size;		/* Size in bytes of this range */
 };
 
 
@@ -142,6 +140,7 @@ void	bus_untmp __P((void));
  * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
  */
+int	getproplen __P((int node, char *name));
 int	getprop __P((int node, char *name, void *buf, int bufsiz));
 char	*getpropstring __P((int node, char *name));
 int	getpropint __P((int node, char *name, int deflt));
