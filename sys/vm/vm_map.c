@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.35 1998/03/19 04:19:21 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.36 1998/03/19 06:37:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -235,14 +235,19 @@ vmspace_unshare(p)
 	struct proc *p;
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
+	int s;
 
 	if (ovm->vm_refcnt == 1)
 		return;
 
 	nvm = vmspace_fork(ovm);
+
+	s = splhigh();
 	pmap_deactivate(p);
 	p->p_vmspace = nvm;
 	pmap_activate(p);
+	splx(s);
+
 	vmspace_free(ovm);
 }
 
@@ -255,6 +260,7 @@ vmspace_exec(p)
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
+	int s;
 
 #ifdef sparc
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
@@ -292,9 +298,12 @@ vmspace_exec(p)
 		    VM_INHERIT_NONE);
 		}
 #endif
+		s = splhigh();
 		pmap_deactivate(p);
 		p->p_vmspace = nvm;
 		pmap_activate(p);
+		splx(s);
+
 		vmspace_free(ovm);
 	}
 }
