@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.29 1998/09/10 02:16:28 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.30 1999/03/24 12:41:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,6 @@
  */
 
 #include "opt_armfpe.h"
-#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/param.h>
