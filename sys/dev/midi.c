@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.15 2000/03/23 07:01:26 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.16 2000/05/06 14:35:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ midiprobe(parent, match, aux)
 
 	DPRINTFN(6,("midiprobe: type=%d sa=%p hw=%p\n", 
 		 sa->type, sa, sa->hwif));
-	return (sa->type == AUDIODEV_TYPE_MIDI) ? 1 : 0;
+	return (sa->type == AUDIODEV_TYPE_MIDI);
 }
 
 void
