@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 1999/05/01 09:12:47 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 1999/05/01 09:26:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -581,55 +581,49 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 #if 0
-	int labelsect = lp->d_partitions[0].p_offset;
+	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;
 #endif
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int sz;
 
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-#if 0				/* MF this is crap, especially on swap !! */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
-#if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
-#endif
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-#endif
+	sz = howmany(bp->b_bcount, lp->d_secsize);
 
-#if defined(MBR_BBSECTOR) && defined(notyet)
-	/* overwriting master boot record? */
-	if (bp->b_blkno + p->p_offset <= MBR_BBSECTOR &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-#endif
-
-	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
+	if (bp->b_blkno + sz > p->p_size) {
+		sz = p->p_size - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			return (0);
+			goto done;
 		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
+
+#if 0
+	/* Overwriting disk label? */
+	if (bp->b_blkno + p->p_offset <= labelsector &&
+#if LABELSECTOR != 0
+	    bp->b_blkno + p->p_offset + sz > labelsector &&
+#endif
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
+#endif
+
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return (-1);
+done:
+	return (0);
 }
 
 void
