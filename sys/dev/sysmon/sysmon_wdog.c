@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.10 2005/01/09 22:51:32 smb Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.11 2005/01/12 16:14:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.10 2005/01/09 22:51:32 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.11 2005/01/12 16:14:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
 	 */
 	SYSMON_WDOG_LOCK(s);
 	if ((smw = sysmon_armed_wdog) != NULL) {
-		if (smw->smw_mode == WDOG_MODE_UTICKLE) {
+		if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_UTICKLE) {
 			error = sysmon_wdog_setmode(smw,
 			    WDOG_MODE_DISARMED, smw->smw_period);
 			if (error) {
