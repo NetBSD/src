@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.4 2002/03/15 01:54:20 mjl Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.5 2002/03/15 08:54:40 hannken Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -388,7 +388,7 @@ Int32 main ( Int32 argc, Char** argv )
    if (strlen(argv[1]) >= BZ_MAX_FILENAME-20) {
       fprintf ( stderr, 
                 "%s: supplied filename is suspiciously (>= %d chars) long.  Bye!\n",
-                progName, strlen(argv[1]) );
+                progName, (int)strlen(argv[1]) );
       exit(1);
    }
 
