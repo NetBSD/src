@@ -1,4 +1,4 @@
-.\"	$NetBSD: chat.8,v 1.4 1997/03/12 20:18:34 christos Exp $
+.\"	$NetBSD: chat.8,v 1.5 1997/05/13 04:55:33 mikel Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
 .\" Id: chat.8,v 1.4 1996/06/26 00:51:05 paulus Exp 
@@ -61,7 +61,7 @@ mode. The \fIchat\fR program will then log all text received from the
 modem and the output strings which it sends to the stderr device. This
 device is usually the local console at the station running the chat or
 pppd program. This option will not work properly if the stderr is
-redirected to the /dev/null locaiton as is the case should pppd be run
+redirected to the /dev/null location as is the case should pppd be run
 in the 'detached' mode. In that case, use the '-v' option to record
 the session on the SYSLOG device.
 .TP
@@ -115,7 +115,7 @@ In actual practice, simple scripts are rare. At the vary least, you
 should include sub-expect sequences should the original string not be
 received. For example, consider the following script:
 .IP
-ogin:--ogin: ppp ssowrd: hello2u2
+ogin:--ogin: ppp ssword: hello2u2
 .LP
 This would be a better script than the simple one used earlier. This would look
 for the same login: prompt, however, if one was not received, a single
@@ -182,7 +182,7 @@ script:
 .IP
 ABORT   'BUSY'
 .br
-ABORT   'NO CARIER'
+ABORT   'NO CARRIER'
 .br
 ''      ATZ
 .br
@@ -206,7 +206,7 @@ parameter.
 To change the timeout value for the next expect string, the following
 example may be used:
 .IP
-ATZ OK ATDT5551212 CONNECT TIMEOUT 10 ogin:--ogin: TIMEOUT 5 assowrd: hello2u2
+ATZ OK ATDT5551212 CONNECT TIMEOUT 10 ogin:--ogin: TIMEOUT 5 assword: hello2u2
 .LP
 This will change the timeout to 10 seconds when it expects the login:
 prompt. The timeout is then changed to 5 seconds when it looks for the
