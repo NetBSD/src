@@ -1,4 +1,4 @@
-#	$Id: ZEUS,v 1.6 1994/04/12 15:44:32 chopps Exp $
+#	$Id: ZEUS,v 1.7 1994/04/15 02:33:08 chopps Exp $
 
 machine		"amiga"
 cpu		"M68040"
@@ -12,6 +12,7 @@ maxusers	16
 maxfdescs	2048
 
 # Standard options
+options		"COMPAT_09"
 #options	QUOTA
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET

@@ -1,4 +1,4 @@
-#	$Id: ZEUSONLY,v 1.4 1994/04/12 15:44:33 chopps Exp $
+#	$Id: ZEUSONLY,v 1.5 1994/04/15 02:33:09 chopps Exp $
 
 machine		"amiga"
 cpu		"M68040"
@@ -11,6 +11,7 @@ maxusers	16
 options		FPSP
 
 # Standard options
+options		"COMPAT_09"
 #options	QUOTA
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
