@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 1997/06/29 19:13:04 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.5 1998/07/04 19:31:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.4 1997/06/29 19:13:04 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.5 1998/07/04 19:31:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,6 @@ __RCSID("$NetBSD: table.c,v 1.4 1997/06/29 19:13:04 christos Exp $");
 
 #define NIL ((TABLE_ENTRY *)0)
 
-extern	int debug;
 struct	timeval tp;
 struct	timezone txp;
 

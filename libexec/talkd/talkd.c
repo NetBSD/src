@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.8 1998/07/03 11:54:08 mrg Exp $	*/
+/*	$NetBSD: talkd.c,v 1.9 1998/07/04 19:31:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.8 1998/07/03 11:54:08 mrg Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.9 1998/07/04 19:31:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ CTL_RESPONSE	response;
 
 int	sockt = STDIN_FILENO;
 int	debug = 0;
+int	logging = 0;
 long	lastmsgtime;
 
 char	hostname[MAXHOSTNAMELEN + 1];
@@ -92,9 +93,23 @@ main(argc, argv)
 	char *argv[];
 {
 	CTL_MSG *mp = &request;
-	int cc;
+	int cc, ch;
+	extern char *__progname;
 
 	openlog("talkd", LOG_PID, LOG_DAEMON);
+	while ((ch = getopt(argc, argv, "dl")) != -1)
+		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
+		case 'l':
+			logging = 1;
+			break;
+		default:
+			syslog(LOG_ERR, "usage: %s [-dl]", __progname);
+			exit(1);
+		}
+
 	if (gethostname(hostname, sizeof (hostname) - 1) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
@@ -104,13 +119,9 @@ main(argc, argv)
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_DEV);
 		_exit(1);
 	}
-	if (argc > 1 && strcmp(argv[1], "-d") == 0)
-		debug = 1;
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
 	for (;;) {
-		extern int errno;
-
 		cc = recv(0, (char *)mp, sizeof (*mp), 0);
 		if (cc != sizeof (*mp)) {
 			if (cc < 0 && errno != EINTR)
