@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.16 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.17 2000/03/29 04:05:47 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -158,8 +158,6 @@ int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
 void		uvm_unmap_detach __P((vm_map_entry_t,int));
 int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 				      vm_map_entry_t *));
-
-struct vmspace *uvmspace_fork __P((struct vmspace *));
 
 #endif /* _KERNEL */
 
