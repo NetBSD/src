@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2000/09/16 08:27:17 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2000/11/20 08:24:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -90,7 +90,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_dev = dev;
 	bp->b_blkno = MIPS_VHSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -103,14 +103,14 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags &= ~(B_DONE);
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp))
 		goto ioerror;
 
-	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 
 	/* Check for NetBSD label in second sector */
@@ -141,7 +141,6 @@ readdisklabel(dev, strat, lp, clp)
 	return "no disk label";
 
   ioerror:
-	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return "disk label read error";
 }
@@ -228,7 +227,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = MIPS_VHSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_WRITE;
+	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
 	
@@ -238,7 +237,8 @@ writedisklabel(dev, strat, lp, clp)
 		bcopy(lp, bp->b_data, sizeof(*lp));
 		bp->b_blkno = LABELSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_WRITE;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_WRITE;
 		(*strat)(bp);
 		error = biowait(bp);
 	}
