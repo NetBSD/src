@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.28 1998/09/27 18:16:00 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.29 1999/01/25 03:38:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.28 1998/09/27 18:16:00 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.29 1999/01/25 03:38:57 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,6 +108,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.28 1998/09/27 18:16:00 christos Exp $");
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_amap.h>
 #endif
 
 #include <sys/sysctl.h>
@@ -209,7 +210,7 @@ _kvm_uread(kd, p, va, cnt)
 		return NULL;
 
 	offset = va - vme.start;
-	slot = offset / kd->nbpg + vme.aref.ar_slotoff;
+	slot = offset / kd->nbpg + vme.aref.ar_pageoff;
 	/* sanity-check slot number */
 	if (slot  > amap.am_nslot)
 		return NULL;
