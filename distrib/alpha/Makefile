@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/10 15:28:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/11 06:41:55 lukem Exp $
 
-.include <bsd.own.mk>		# Use /etc/mk.conf.
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-SUBDIR=	instkernel	# floppy-GENERIC
+SUBDIR=		instkernel	# floppy-GENERIC
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 CDHDTAPEOBJ!=	cd ${.CURDIR}/instkernel/cd-hd-tape && ${PRINTOBJDIR}
 FDSETOBJ!=	cd ${.CURDIR}/instkernel/fdset && ${PRINTOBJDIR}
@@ -14,12 +14,12 @@ GENERICOBJ!=	cd ${.CURDIR}/floppy-GENERIC && ${PRINTOBJDIR}
 
 release: check_RELEASEDIR
 .for i in floppy diskimage instkernel tapeimage
-	${IINST} ${.CURDIR}/README.files ${ITARGET}/$i/.
+	${RELINSTALL} ${.CURDIR}/README.files ${ITARGET}/$i/.
 .endfor
-	${IINST} ${CDHDTAPEOBJ}/cdhdtape ${ITARGET}/diskimage/.
-	${IINST} ${FDSETOBJ}/disk1of2 ${ITARGET}/floppy/.
-	${IINST} ${FDSETOBJ}/disk2of2 ${ITARGET}/floppy/.
-	${IINST} ${INSTKERNOBJ}/netbsd.gz ${ITARGET}/instkernel/.
-#	${IINST} ${GENERICOBJ}/GENERIC.fs ${ITARGET}/misc/.
+	${RELINSTALL} ${CDHDTAPEOBJ}/cdhdtape ${ITARGET}/diskimage/.
+	${RELINSTALL} ${FDSETOBJ}/disk1of2 ${ITARGET}/floppy/.
+	${RELINSTALL} ${FDSETOBJ}/disk2of2 ${ITARGET}/floppy/.
+	${RELINSTALL} ${INSTKERNOBJ}/netbsd.gz ${ITARGET}/instkernel/.
+#	${RELINSTALL} ${GENERICOBJ}/GENERIC.fs ${ITARGET}/misc/.
 
 .include <bsd.subdir.mk>
