@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 2002/01/15 16:15:25 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.9 2002/01/15 16:38:29 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,20 +48,20 @@ and unless this fails, the system will resume multi-user operations.
 The X68000/X68030 system boots from the device
 which is determined by the configuration of
 battery-backuped SRAM.
-By default, the boot rom attempt to boot from
-floppy disk drive (from 0 to 3) first,
-and then attempt to boot from hard disk (SASI or SCSI).
+By default, the boot ROM attempts to boot from
+floppy disk drives (from 0 to 3) first,
+and then attempts to boot from hard disk (SASI or SCSI).
 On the
-.Nx Ns Tn /x68k Ns ,
+.Nx Ns Tn /x68k ,
 booting from SCSI disks (sd??)
 and 2HD floppy disks (fd?a, fd?c) is currently supported.
-.Ss Bootstrappinging from a floppy
+.Ss Bootstrapping from a floppy
 When the floppy disk is selected as the boot device, the initial
-program loader of the IOCS (firmware) reads
+program loader of the IOCS (firmware) reads the
 .Pa fdboot_ufs
 program at the top of the disk, and then the fdboot_ufs program loads the
 .Pa /boot
-program from the FFS or LFS filesystem.  Normally, the
+program from the FFS or LFS file system.  Normally, the
 .Pa /boot
 program then loads the
 .Nx
@@ -69,16 +69,18 @@ kernel
 .Pa /netbsd
 from the same floppy.  In addition, the
 .Pa /boot
-program has abilities to uncompress gzip'ed kernel, to read
-the kernel from other disks of other filesystems etc (see below).
+program has abilities to uncompress gzip'ed kernels, to read
+the kernel from other disks of other file systems etc (see below).
 .Pp
-For floppy disks, fdboot_ustar is also provided to read a large
-kernel which does not fit with a single floppy.
+For floppy disks,
+.Pa fdboot_ustar
+is also provided to read large
+kernels which do not fit one a single floppy.
 .Ss Bootstrapping from a SCSI hard disk
 When a SCSI hard disk is selected as the boot device, the initial
 program loader on the SCSI host adapter's ROM reads the
-operationg system-independent IPL menu program at the top of the disk.
-IPL menu program recognizes the partition table, and selects the partition
+operating system-independent IPL menu program at the top of the disk.
+The IPL menu program recognizes the partition table, and selects the partition
 to read the operating system kernel.  During this phase, when the
 HELP key on the keyboard is pressed, the IPL menu program displays
 the partition menu of that disk to prompt the user to select the boot
@@ -86,14 +88,14 @@ partition (although the
 .Nx
 implementation of the IPL menu,
 .Pa /usr/mdec/mboot ,
-does not have this functionallity).
+does not have this functionality).
 .Pp
 Next, the IPL menu reads the OS-dependent boot program from the
 top of the selected partition.  For
 .Nx
-FFS/LFS filesystem
+FFS/LFS file systems
 .Pa sdboot_ufs
-program is used.  The
+is used.  The
 .Pa sdboot_ufs
 program then loads the
 .Pa /boot
@@ -108,7 +110,7 @@ booting sd0a:netbsd - starting in 5
 .Ed
 .Pp
 After a countdown, the system image listed will be loaded. (In the
-above example, it will be
+example above, it will be
 .Dq Li sd0a:netbsd
 which is the file
 .Nm netbsd
@@ -121,29 +123,29 @@ Pressing a key within the time limit will enter interactive mode.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
-.Bl -tag -width 04n -offset 04n
+.Bl -tag -width 10n -offset indent
 .It Xo Ic boot
-.Op Va device : Ns
-.Op Va filename
+.Op Ar device : Ns
+.Op Ar filename
 .Op Fl adqsv
 .Xc
 The default
-.Va device
+.Ar device
 will be set to the disk that the boot loader was
 loaded from.
 To boot from an alternate disk, the full name of the device should
 be given at the prompt.
-.Va device
+.Ar device
 is of the form
-.Xo Va xd
-.Op Va N Ns Op Va x
+.Xo Ar xd
+.Op Ar N Ns Op Ar x
 .Xc
 where
-.Va xd
+.Ar xd
 is the device from which to boot,
-.Va N
+.Ar N
 is the unit number, and
-.Va x
+.Ar x
 is the partition letter.
 .Pp
 The following list of supported devices may vary from installation to
@@ -158,19 +160,20 @@ Floppy drives as numbered by the IOCS.
 .El
 .Pp
 The default
-.Va filename
+.Ar filename
 is
 .Pa netbsd ;
 if the boot loader fails to successfully
 open that image, it then tries
 .Pa netbsd.gz
-(expected to be a kernel image compressed by gzip).
+(expected to be a kernel image compressed by
+.Xr gzip 1 ) .
 Alternate system images can be loaded by just specifying the name of the image.
 .Pp
 Options are:
 .Bl -tag -width xxx
 .It Fl a
-Prompt for the location of the root filesystem and the system crash
+Prompt for the location of the root file system and the system crash
 dump device.
 .It Fl d
 Bring the system up in debug mode.  Here it waits for a kernel
