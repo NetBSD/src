@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.41 2003/06/29 22:32:19 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.42 2003/07/23 13:52:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -300,6 +300,9 @@ void nfsrvw_sort __P((gid_t *, int));
 void nfsrv_setcred __P((struct ucred *, struct ucred *));
 void nfs_cookieheuristic __P((struct vnode *, int *, struct proc *,
 			      struct ucred *));
+
+u_int32_t nfs_getxid __P((void));
+void nfs_renewxid __P((struct nfsreq *));
 
 /* nfs_syscalls.c */
 int sys_getfh __P((struct lwp *, void *, register_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125 2003/06/29 22:32:18 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.126 2003/07/23 13:52:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125 2003/06/29 22:32:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.126 2003/07/23 13:52:24 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -133,7 +133,6 @@ u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 u_int32_t nfs_prog, nqnfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
-static u_int32_t nfs_xid = 0;
 const nfstype nfsv2_type[9] =
 	{ NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON, NFCHR, NFNON };
 const nfstype nfsv3_type[9] =
@@ -665,8 +664,6 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	int i;
 	struct mbuf *mreq;
 	int siz, grpsiz, authsiz;
-	struct timeval tv;
-	static u_int32_t base;
 
 	authsiz = nfsm_rndup(auth_len);
 	mb = m_gethdr(M_WAIT, MT_DATA);
@@ -687,22 +684,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	 */
 	nfsm_build(tl, u_int32_t *, 8 * NFSX_UNSIGNED);
 
-	/*
-	 * derive initial xid from system time
-	 * XXX time is invalid if root not yet mounted
-	 */
-	if (!base && (rootvp)) {
-		microtime(&tv);
-		base = tv.tv_sec << 12;
-		nfs_xid = base;
-	}
-	/*
-	 * Skip zero xid if it should ever happen.
-	 */
-	if (++nfs_xid == 0)
-		nfs_xid++;
-
-	*tl++ = *xidp = txdr_unsigned(nfs_xid);
+	*tl++ = *xidp = nfs_getxid();
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
 	if (nmflag & NFSMNT_NQNFS) {
@@ -2771,4 +2753,56 @@ nfsrv_setcred(incred, outcred)
 	for (i = 0; i < incred->cr_ngroups; i++)
 		outcred->cr_groups[i] = incred->cr_groups[i];
 	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
+}
+
+u_int32_t
+nfs_getxid()
+{
+	static u_int32_t base;
+	static u_int32_t nfs_xid = 0;
+	static struct simplelock nfs_xidlock = SIMPLELOCK_INITIALIZER;
+	u_int32_t newxid;
+
+	simple_lock(&nfs_xidlock);
+	/*
+	 * derive initial xid from system time
+	 * XXX time is invalid if root not yet mounted
+	 */
+	if (__predict_false(!base && (rootvp))) {
+		struct timeval tv;
+
+		microtime(&tv);
+		base = tv.tv_sec << 12;
+		nfs_xid = base;
+	}
+
+	/*
+	 * Skip zero xid if it should ever happen.
+	 */
+	if (__predict_false(++nfs_xid == 0))
+		nfs_xid++;
+	newxid = nfs_xid;
+	simple_unlock(&nfs_xidlock);
+
+	return txdr_unsigned(newxid);
+}
+
+/*
+ * assign a new xid for existing request.
+ * used for NFSERR_JUKEBOX handling.
+ */
+void
+nfs_renewxid(struct nfsreq *req)
+{
+	u_int32_t xid;
+	int off;
+
+	xid = nfs_getxid();
+	if (req->r_nmp->nm_sotype == SOCK_STREAM)
+		off = sizeof(u_int32_t); /* RPC record mark */
+	else
+		off = 0;
+
+	m_copyback(req->r_mreq, off, sizeof(xid), (void *)&xid);
+	req->r_xid = xid;
 }
