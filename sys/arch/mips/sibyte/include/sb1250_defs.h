@@ -67,8 +67,8 @@
     *			position for the register.
     *
     *  A_xxx		ADDRESS constant.  This will be a physical
-    *			address.  Use the PHYS_TO_K1 macro to generate
-    *			a K1SEG address.
+    *			address.  Use the MIPS_PHYS_TO_KSEG1 macro to
+    *			generate a K1SEG address.
     *
     *  R_xxx		RELATIVE offset constant.  This is an offset from
     *			an A_xxx constant (usually the first register in
@@ -132,13 +132,13 @@
 
 /*
  * Macros to read/write on-chip registers
- * XXX should we do the PHYS_TO_K1 here?
+ * XXX should we do the MIPS_PHYS_TO_KSEG1 here?
  */
 
 
 #if !defined(__ASSEMBLER__)
-#define	SBWRITECSR(csr,val) *((volatile uint64_t *) PHYS_TO_K1(csr)) = (val)
-#define	SBREADCSR(csr) (*((volatile uint64_t *) PHYS_TO_K1(csr)))
+#define	SBWRITECSR(csr,val) *((volatile uint64_t *) MIPS_PHYS_TO_KSEG1(csr)) = (val)
+#define	SBREADCSR(csr) (*((volatile uint64_t *) MIPS_PHYS_TO_KSEG1(csr)))
 #endif /* __ASSEMBLER__ */
 
 #endif
