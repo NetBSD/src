@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.18 2003/08/07 11:25:47 agc Exp $	*/
+/*	$NetBSD: timed.c,v 1.19 2003/08/18 05:39:53 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.18 2003/08/07 11:25:47 agc Exp $");
+__RCSID("$NetBSD: timed.c,v 1.19 2003/08/18 05:39:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: timed.c,v 1.18 2003/08/07 11:25:47 agc Exp $");
 #include <sys/types.h>
 #include <sys/times.h>
 #include <util.h>
+#include <ifaddrs.h>
 
 #ifdef HAVENIS
 #include <netgroup.h>
@@ -124,9 +125,6 @@ main(int argc, char *argv[])
 	int nflag, iflag;
 	struct timeval ntime;
 	struct servent *srvp;
-	char buf[BUFSIZ], *cp, *cplim;
-	struct ifconf ifc;
-	struct ifreq ifreq, ifreqf, *ifr;
 	register struct netinfo *ntp;
 	struct netinfo *ntip;
 	struct netinfo *savefromnet;
@@ -137,6 +135,7 @@ main(int argc, char *argv[])
 	int c;
 	extern char *optarg;
 	extern int optind, opterr;
+	struct ifaddrs *ifap, *ifa;
 
 #define	IN_MSG "timed: -i and -n make no sense together\n"
 #ifdef HAVENIS
@@ -296,64 +295,38 @@ main(int argc, char *argv[])
 		if (0 == (nt->net & 0xff000000))
 		    nt->net <<= 8;
 	}
-	ifc.ifc_len = sizeof(buf);
-	ifc.ifc_buf = buf;
-	if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
+	if (getifaddrs(&ifap) != 0) {
 		perror("timed: get interface configuration");
 		exit(1);
 	}
 	ntp = NULL;
-#define size(p)	max((p).sa_len, sizeof(p))
-	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = buf; cp < cplim;
-			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
-		ifr = (struct ifreq *)cp;
-		if (ifr->ifr_addr.sa_family != AF_INET)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		if (!ntp)
 			ntp = (struct netinfo*)malloc(sizeof(struct netinfo));
 		bzero(ntp,sizeof(*ntp));
-		ntp->my_addr=((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr;
+		ntp->my_addr=((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
 		ntp->status = NOMASTER;
-		ifreq = *ifr;
-		ifreqf = *ifr;
 
-		if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreqf) < 0) {
-			perror("get interface flags");
+		if ((ifa->ifa_flags & IFF_UP) == 0)
 			continue;
-		}
-		if ((ifreqf.ifr_flags & IFF_UP) == 0)
-			continue;
-		if ((ifreqf.ifr_flags & IFF_BROADCAST) == 0 &&
-		    (ifreqf.ifr_flags & IFF_POINTOPOINT) == 0) {
+		if ((ifa->ifa_flags & IFF_BROADCAST) == 0 &&
+		    (ifa->ifa_flags & IFF_POINTOPOINT) == 0) {
 			continue;
 		}
 
-
-		if (ioctl(sock, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
-			perror("get netmask");
-			continue;
-		}
 		ntp->mask = ((struct sockaddr_in *)
-			&ifreq.ifr_addr)->sin_addr.s_addr;
+		    ifa->ifa_netmask)->sin_addr.s_addr;
 
-		if (ifreqf.ifr_flags & IFF_BROADCAST) {
-			if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
-				perror("get broadaddr");
-				continue;
-			}
-			ntp->dest_addr = *(struct sockaddr_in *)&ifreq.ifr_broadaddr;
+		if (ifa->ifa_flags & IFF_BROADCAST) {
+			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_broadaddr;
 			/* What if the broadcast address is all ones?
 			 * So we cannot just mask ntp->dest_addr.  */
 			ntp->net = ntp->my_addr;
 			ntp->net.s_addr &= ntp->mask;
 		} else {
-			if (ioctl(sock, SIOCGIFDSTADDR,
-						(char *)&ifreq) < 0) {
-				perror("get destaddr");
-				continue;
-			}
-			ntp->dest_addr = *(struct sockaddr_in *)&ifreq.ifr_dstaddr;
+			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_dstaddr;
 			ntp->net = ntp->dest_addr.sin_addr;
 		}
 
@@ -375,6 +348,7 @@ main(int argc, char *argv[])
 		ntip = ntp;
 		ntp = NULL;
 	}
+	freeifaddrs(ifap);
 	if (ntp)
 		(void) free((char *)ntp);
 	if (nettab == NULL) {
