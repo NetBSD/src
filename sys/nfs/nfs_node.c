@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.59 2003/02/12 14:50:52 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.60 2003/02/15 18:00:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.59 2003/02/12 14:50:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.60 2003/02/15 18:00:25 drochner Exp $");
 
 #include "opt_nfs.h"
 
@@ -262,8 +262,6 @@ nfs_inactive(v)
 		FREE(sp, M_NFSREQ);
 	}
 
-	LIST_REMOVE(np, n_hash);
-
 	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
@@ -289,6 +287,8 @@ nfs_reclaim(v)
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
+
+	LIST_REMOVE(np, n_hash);
 
 	/*
 	 * Free up any directory cookie structures and
