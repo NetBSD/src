@@ -1,7 +1,7 @@
-/*	$NetBSD: macros.h,v 1.17 1998/11/07 17:22:58 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.18 2000/04/09 16:37:09 ragge Exp $	*/
 
 /*
- * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -278,4 +278,62 @@ skpc(int mask, size_t size, u_char *cp)
 #define cpu_switch(p) \
 	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
 	    ::"g"(p):"r0","r1","r2","r3");
+
+/*
+ * Interlock instructions. Used both in multiprocessor environments to
+ * lock between CPUs and in uniprocessor systems when locking is required
+ * between I/O devices and the master CPU.
+ */
+/*
+ * Insqti() locks and inserts an element into the end of a queue.
+ * Returns -1 if interlock failed, 1 if inserted OK and 0 if first in queue.
+ */
+static __inline__ int
+insqti(void *entry, void *header) {
+	register int ret;
+
+	__asm__ __volatile("
+			mnegl $1,%0;
+			insqti (%1),(%2);
+			bcs 1f;			# failed insert
+			beql 2f;		# jump if first entry
+			movl $1,%0;
+			brb 1f;
+		2:	clrl %0;
+			1:;"
+			: "&=g"(ret)
+			: "r"(entry), "r"(header)
+			: "memory");
+
+	return ret;
+}
+
+/*
+ * Remqhi() removes an element from the head of the queue.
+ * Returns -1 if interlock failed, 0 if queue empty, address of the 
+ * removed element otherwise.
+ */
+static __inline__ void *
+remqhi(void *header) {
+	register void *ret;
+
+	__asm__ __volatile("
+			remqhi (%1),%0;
+			bcs 1f;			# failed interlock
+			bvs 2f;			# nothing was removed
+			brb 3f;
+		1:	mnegl $1,%0;
+			brb 3f;
+		2:	clrl %0;
+			3:;"
+			: "&=g"(ret)
+			: "r"(header)
+			: "memory");
+
+	return ret;
+}
+#define	ILCK_FAILED	-1	/* Interlock failed */
+#define	Q_EMPTY		0	/* Queue is/was empty */
+#define	Q_OK		1	/* Inserted OK */
+
 #endif	/* _VAX_MACROS_H_ */
