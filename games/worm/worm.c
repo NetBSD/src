@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.21 2001/08/30 10:49:50 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.22 2001/08/31 07:15:44 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.21 2001/08/30 10:49:50 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.22 2001/08/31 07:15:44 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ int running = 0;
 int slow = 0;
 int score = 0;
 int start_len = LENGTH;
+int visible_len;
 int lastch;
 char outbuf[BUFSIZ];
 
@@ -189,6 +190,7 @@ life()
 	}
 	tail = np;
 	tail->prev = NULL;
+	visible_len = start_len + 1;
 }
 
 void
@@ -233,6 +235,13 @@ void
 newpos(bp)
 	struct body * bp;
 {
+	if (visible_len == (LINES-3) * (COLS-3) - 1) {
+		endwin();
+
+		printf("\nYou won!\n");
+		printf("Your final score was %d\n\n", score);
+		exit(0);
+	}
 	do {
 		bp->y = rnd(LINES-3)+ 1;
 		bp->x = rnd(COLS-3) + 1;
@@ -310,6 +319,7 @@ process(ch)
 		nh = tail->next;
 		free(tail);
 		tail = nh;
+		visible_len--;
 	}
 	else growing--;
 	display(head, BODY);
@@ -335,6 +345,7 @@ process(ch)
 	nh->x = x;
 	display(nh, HEAD);
 	head = nh;
+	visible_len++;
 	if (!(slow && running))
 	{
 		wmove(tv, head->y, head->x);
