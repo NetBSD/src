@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.11 1999/03/04 02:40:20 mjacob Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.12 2000/02/25 03:41:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -198,6 +198,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			m->m_nextpkt = MNULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
+			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
