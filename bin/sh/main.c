@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1994/01/25 21:05:34 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1994/01/26 19:50:03 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -294,8 +294,7 @@ find_dot_file(basename) char *basename; {
 	while ((fullname = padvance(&path, basename)) != NULL) {
 		strcpy(localname, fullname);
 		stunalloc(fullname);
-		if ((stat(fullname, &statb) == 0) &&
-		    (S_ISREG(statb.st_mode) || S_ISLNK(statb.st_mode)))
+		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode))
 			return localname;
 	}
 	return basename;
