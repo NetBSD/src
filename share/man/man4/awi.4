@@ -1,6 +1,6 @@
-.\"     $NetBSD: awi.4,v 1.14 2001/09/11 17:39:01 wiz Exp $
+.\"     $NetBSD: awi.4,v 1.15 2001/09/18 09:19:31 onoe Exp $
 .\"
-.Dd October 31, 1999
+.Dd September 18, 2001
 .Dt AWI 4
 .Os
 .Sh NAME
@@ -38,9 +38,15 @@ the coverage is limited spatially due to lack of roaming capability.
 In addition to these two mode in IEEE 802.11 specification, the
 .Nm
 driver also supports a variant of adhoc mode out of spec for DS radio cards,
-which makes possible to communicate with adhoc mode of
+which makes possible to communicate with WaveLAN adhoc mode of
 .Xr wi 4
 driver.  The NWID doesn't affect in this mode.
+.Pp
+Another mode added to the
+.Nm
+driver can be used with old Melco access point with 2Mbps card,
+which actually use IEEE 802.11 adhoc mode with encapsulation of
+raw ethernet packet including header in 802.11 frames.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
@@ -51,7 +57,7 @@ Cards supported by the
 .Nm
 driver include:
 .Pp
-.Bl -tag -width BayStack_650x -offset indent
+.Bl -tag -width BayStack_650x -offset indent -compact
 .It BayStack 650
 1Mbps Frequency Hopping PCCARD adapter
 .It BayStack 660
@@ -78,7 +84,10 @@ driver, and the PRISM-II cards are supported by the
 .Xr wi 4
 driver.
 .Sh MEDIA SELECTION
-The DS cards support
+In addition to default
+.Em Auto
+media type,
+the DS cards support
 .Em DS1
 and
 .Em DS2
@@ -87,11 +96,15 @@ media types, while the FH cards support
 media type.  For each media type,
 .Em adhoc
 mediaopt can be used to indicate the driver to operate in adhoc mode.
+The
+.Em flag0
+mediaopt
+should be used only with old access point which operates in IBSS mode.
 For DS radio cards,
 .Em adhoc,flag0
 mediaopt can be used for
 .Xr wi 4
-compatible adhoc mode.
+compatible WaveLAN adhoc mode.
 .Pp
 To configure more detailed parameters for the
 .Nm
@@ -115,17 +128,15 @@ for information on how to increase the memory available to the PCMCIA
 controller.
 .It "awi0: failed to complete selftest (%s)"
 The device failed to complete its self test.
-.It "awi0: synced with no-bssid at channel %d"
-The device is ready to relay traffic at specified channel.
-.It "awi0: synced with %s ssid %s at channel %d"
-The device has successfully synchronized with at least one of the
-identified stations and is ready to relay traffic.
+In some circumstances, resetting device after power on fails.
+Re-inserting the card or down-then-up interface may be helpful.
 .It "awi0: associated with %s ssid %s channel %d signal %d"
 The device has successfully synchronized with the identified Access
-Point and is ready to relay traffic.
+Point or BSS and is ready to relay traffic.
 .It "awi0: authentication failed (reason %d)"
 .It "awi0: association failed (reason %d)"
-The access point refuses the association request from the device.
+The access point refuses the authentication or association request
+from the device.
 .It "awi0: no recent beacons from %s; rescanning"
 The device has not heard a beacon from its currently associated Access
 Point recently, and is looking for a new access point.
@@ -165,5 +176,3 @@ Then the
 driver module completely rewritten to support cards with DS phy and
 to support adhoc mode by
 .An Atsushi Onoe Aq onoe@netbsd.org .
-.Sh BUGS
-Doesn't create IBSS itself.
