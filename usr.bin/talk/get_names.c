@@ -1,6 +1,8 @@
+/*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)get_names.c	5.9 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: get_names.c,v 1.3 1994/04/17 12:31:05 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
