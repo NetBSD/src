@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.15 2004/01/01 01:19:36 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.16 2004/01/01 07:02:27 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -35,10 +35,9 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 			-DBUILDDEBUG -DXResExtension -DNDEBUG
 
 #	 OS_DEFINES
-X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
-			-DDDXOSVERRORF
+X11FLAGS.OS_DEFINES=	-DDDXOSINIT
 
-.if ${MACHINE} != "sparc"
+.if ${MACHINE} != "sparc" && ${MACHINE} != "hpcmips"
 #	EXT_DEFINES
 X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 
@@ -52,6 +51,10 @@ X11FLAGS.OS_DEFINES+=	-DDDXTIME
 #	ServerDefines
 X11FLAGS.SERVER+=	-D_XSERVER64
 .endif
+.endif
+
+.if ${MACHINE} == "hpcmips"
+X11FLAGS.SERVER+=	-DSTATIC_COLOR -DXINPUT
 .endif
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "macppc"
@@ -127,9 +130,9 @@ cleanx11man:
 	rm -f ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
-.SUFFIXES:	.man .1 .3 .7
+.SUFFIXES:	.man .1 .3 .4 .5 .7
 
-.man.1 .man.3 .man.7:
+.man.1 .man.3 .man4 .man5 .man.7:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${CPP} -undef -traditional \
