@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39 2004/09/04 23:29:46 manu Exp $
+#	$NetBSD: INSTALL,v 1.40 2004/10/23 14:00:51 augustss Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -334,9 +334,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-#uax*	at uhub? port ?		# ASIX AX88172 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Generic driver
