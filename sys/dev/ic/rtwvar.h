@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.4 2004/12/13 01:15:07 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.5 2004/12/19 08:19:26 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -117,6 +117,8 @@ struct rtw_txctl {
 	struct ieee80211_node		*stx_ni;	/* destination node */
 	u_int				stx_first;	/* 1st hw descriptor */
 	u_int				stx_last;	/* last hw descriptor */
+	struct ieee80211_duration	stx_d0;
+	struct ieee80211_duration	stx_dn;
 };
 
 #define RTW_NTXPRI	4	/* number of Tx priorities */
@@ -166,9 +168,11 @@ struct rtw_txdesc_blk {
 	struct rtw_txdesc	*htc_desc;
 };
 
-#define RTW_NEXT_DESC(htc, idx) \
-    (htc->htc_physbase + \
-     sizeof(struct rtw_txdesc) * ((idx + 1) % htc->htc_ndesc))
+#define RTW_NEXT_IDX(__htc, __idx)	(((__idx) + 1) % (__htc)->htc_ndesc)
+
+#define RTW_NEXT_DESC(__htc, __idx) \
+    ((__htc)->htc_physbase + \
+     sizeof(struct rtw_txdesc) * RTW_NEXT_IDX((__htc), (__idx)))
 
 SIMPLEQ_HEAD(rtw_txq, rtw_txctl);
 
@@ -177,6 +181,7 @@ struct rtw_txctl_blk {
 	struct rtw_txq		stc_dirtyq;
 	struct rtw_txq		stc_freeq;
 	u_int			stc_ndesc;
+	int			stc_tx_timer;
 	struct rtw_txctl	*stc_desc;
 };
 
