@@ -1,10 +1,12 @@
-# $NetBSD: mi,v 1.264 2000/08/09 10:34:38 tv Exp $
+# $NetBSD: mi,v 1.265 2000/09/04 22:49:12 christos Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
+./usr/share/info/cvs.info
+./usr/share/info/cvsclient.info
 ./usr/share/info/dc.info
 ./usr/share/info/diff.info
 ./usr/share/info/dir
