@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.31 1997/09/30 23:16:03 hubertf Exp $
+#	$NetBSD: bsd.README,v 1.31.2.1 1998/02/24 05:34:00 mellon Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -179,7 +179,7 @@ NLSOWN		National Language Support files owner. [bin]
 
 NLSMODE		National Language Support files mode. [${NONBINMODE}]
 
-STRIP		The flag passed to the install program to cause the binary
+STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
 		own install script so that the entire system can be made
 		stripped/not-stripped using a single knob. [-s]
