@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.6 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.7 2000/01/07 03:25:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -724,7 +724,6 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 
-	rf_assign_threadid();
 	if (rf_engineDebug) {
 		rf_get_threadid(tid);
 		printf("[%d] Engine thread is running\n", tid);

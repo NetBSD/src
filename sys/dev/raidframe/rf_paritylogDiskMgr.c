@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.5 2000/01/07 03:25:35 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -553,8 +553,6 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 {
 	RF_ParityLog_t *reintQueue, *flushQueue;
 	int     workNeeded, done = RF_FALSE;
-
-	rf_assign_threadid();	/* don't remove this line */
 
 	/* Main program for parity logging disk thread.  This routine waits
 	 * for work to appear in either the flush or reintegration queues and
