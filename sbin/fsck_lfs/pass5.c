@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.13 2004/05/14 10:41:12 yamt Exp $	 */
+/* $NetBSD: pass5.c,v 1.14 2005/01/19 19:41:59 xtraeme Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ extern SEGUSE *seg_table;
 extern off_t locked_queue_bytes;
 
 void
-pass5()
+pass5(void)
 {
 	SEGUSE *su;
 	struct ubuf *bp;
