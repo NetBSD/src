@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.110 1998/08/18 06:29:32 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.111 1998/09/01 00:23:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -57,6 +57,7 @@
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
@@ -169,6 +170,8 @@ char const char_type[] = {
 
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
+
+struct pool tty_pool;
 
 int
 ttyopen(tp, dialout, nonblock)
@@ -2148,6 +2151,9 @@ tty_init()
 
 	TAILQ_INIT(&ttylist);
 	tty_count = 0;
+
+	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TTYS);
 }
 
 /*
@@ -2195,7 +2201,7 @@ ttymalloc()
 {
 	struct tty *tp;
 
-	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
+	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
@@ -2219,5 +2225,5 @@ ttyfree(tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	FREE(tp, M_TTYS);
+	pool_put(&tty_pool, tp);
 }
