@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.66 2002/11/26 18:44:35 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.67 2003/01/19 23:11:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.66 2002/11/26 18:44:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.67 2003/01/19 23:11:46 simonb Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -557,7 +557,7 @@ ptcread(dev, uio, flag)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
-	char buf[BUFSIZ];
+	u_char buf[BUFSIZ];
 	int error = 0, cc;
 
 	/*
@@ -652,7 +652,7 @@ again:
 					return (EIO);
 			}
 			if (cc)
-				(void) b_to_q((char *)cp, cc, &tp->t_canq);
+				(void) b_to_q(cp, cc, &tp->t_canq);
 			cc = 0;
 		}
 		(void) putc(0, &tp->t_canq);
