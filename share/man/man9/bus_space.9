@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.28 2002/10/14 13:43:16 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.29 2003/01/01 21:58:39 jschauma Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -444,7 +444,7 @@ The important thing to note is that they create specific ordering
 constraint surrounding bus accesses but do not necessarily force any
 synchronization themselves.
 So, if there is enough distance between the memory operations being
-ordered, the preceeding ones could complete by themselves resulting
+ordered, the preceding ones could complete by themselves resulting
 in no performance penalty.
 .Pp
 For instance, a write before read barrier will force any writes
