@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.94 1996/08/31 20:27:55 mycroft Exp $
+#	$NetBSD: files,v 1.95 1996/09/01 23:57:15 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -182,6 +182,7 @@ file miscfs/deadfs/dead_vnops.c
 file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
+file miscfs/genfs/genfs_vnops.c
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
 file miscfs/nullfs/null_subr.c		nullfs
