@@ -391,14 +391,17 @@ void if_register_receive (info)
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 6;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (ETHERTYPE_IP);
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
+#if defined(i386) || defined(__i386)
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHFF00 + ENF_AND;
+#else
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
+#endif
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 18;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
+	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
 #else
 	/*
 	 * The packets that will be received on this file descriptor
@@ -409,14 +412,17 @@ void if_register_receive (info)
 	 * to the local port.  All offsets are relative to the start
 	 * of an IP packet.
 	 */
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 4;
+#if defined(i386) || defined(__i386)
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHFF00 + ENF_AND;
+#else
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSH00FF + ENF_AND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
+#endif
+	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (IPPROTO_UDP);
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 11;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = htons (local_port);
+	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
 #endif
 
 	/* Install the filter... */
