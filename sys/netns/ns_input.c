@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.11 1996/10/10 23:25:53 christos Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.12 1996/10/13 01:59:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -326,11 +326,11 @@ struct mbuf *m;
 	int ok_back = 0;
 
 	if (idpprintfs) {
-		kprintf("forward: src ");
+		printf("forward: src ");
 		ns_printhost(&idp->idp_sna);
-		kprintf(", dst ");
+		printf(", dst ");
 		ns_printhost(&idp->idp_dna);
-		kprintf("hop count %d\n", idp->idp_tc);
+		printf("hop count %d\n", idp->idp_tc);
 	}
 	if (idpforwarding == 0) {
 		/* can't tell difference between net and host */

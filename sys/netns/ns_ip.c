@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.18 1996/10/10 23:22:59 christos Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.19 1996/10/13 01:59:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -97,7 +97,7 @@ nsipattach()
 
 	if (nsipif.if_mtu == 0) {
 		ifp = &nsipif;
-		ksprintf(ifp->if_xname, "nsip%d", nsipif_unit);
+		sprintf(ifp->if_xname, "nsip%d", nsipif_unit);
 		ifp->if_mtu = LOMTU;
 		ifp->if_ioctl = nsipioctl;
 		ifp->if_output = nsipoutput;
@@ -111,7 +111,7 @@ nsipattach()
 	nsip_list = m;
 	ifp = &m->ifen_ifnet;
 
-	ksprintf(ifp->if_xname, "nsip%d", nsipif_unit++);
+	sprintf(ifp->if_xname, "nsip%d", nsipif_unit++);
 	ifp->if_mtu = LOMTU;
 	ifp->if_ioctl = nsipioctl;
 	ifp->if_output = nsipoutput;
@@ -124,7 +124,7 @@ nsipattach()
 	 * XXX in the days before if_xname.
 	 */
 	bzero(nsipif.if_xname, sizeof(nsipif.if_xname));
-	ksprintf(nsipif.if_xname, "nsip%d", nsipif_unit);
+	sprintf(nsipif.if_xname, "nsip%d", nsipif_unit);
 
 	return (m);
 }
@@ -409,7 +409,7 @@ nsip_route(m)
 	 * now configure this as a point to point link
 	 */
 	bzero(ifr.ifr_name, sizeof(ifr.ifr_name));
-	ksprintf(ifr.ifr_name, "nsip%d", nsipif_unit - 1);
+	sprintf(ifr.ifr_name, "nsip%d", nsipif_unit - 1);
 	ifr.ifr_dstaddr = *snstosa(ns_dst);
 	(void)ns_control((struct socket *)0, SIOCSIFDSTADDR, (caddr_t)&ifr,
 	    (struct ifnet *)ifn, NULL);
