@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.15 2003/12/07 20:59:00 is Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.16 2003/12/31 02:44:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.15 2003/12/07 20:59:00 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.16 2003/12/31 02:44:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.15 2003/12/07 20:59:00 is Exp $");
 
 struct wdc_amiga_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanptr;
+	struct	channel_softc wdc_chanlist[1];
 	struct  channel_softc wdc_channel;
+	struct	channel_queue wdc_chqueue;
 	struct isr sc_isr;
 	volatile u_char *sc_intreg;
 	struct bus_space_tag cmd_iot;
@@ -136,18 +137,12 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
-	}
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 	sc->sc_isr.isr_intr = wdc_amiga_intr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
