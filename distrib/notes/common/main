@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.136 2001/08/17 07:04:41 mbw Exp $
+.\"	$NetBSD: main,v 1.137 2001/09/16 19:26:12 gendalia Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1515,6 +1515,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
 .It Ta Rob Deker Ta Mt deker@netbsd.org
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
+.It Ta Tracy Di Marco White Ta Mt gendalia@netbsd.org
 .It Ta Jarom\('ir Dolecek Ta Mt jdolecek@netbsd.org
 .It Ta Andy Doran Ta Mt ad@netbsd.org
 .It Ta Roland Dowdeswell Ta Mt elric@netbsd.org
