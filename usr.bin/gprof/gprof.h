@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.4 1993/12/02 19:12:21 pk Exp $
+ *	$Id: gprof.h,v 1.5 1993/12/06 05:28:39 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@
 #if tahoe
 #   include "tahoe.h"
 #endif
-#if hp300
-#   include "hp300.h"
+#if m68k
+#   include "m68k.h"
 #endif
 #if i386
 #   include "i386.h"
