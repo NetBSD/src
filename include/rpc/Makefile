@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/31 20:58:28 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/01 15:03:08 tv Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -12,5 +12,11 @@ INCSDIR=	/usr/include/rpc
 
 .include <bsd.prog.mk>
 
-rpcb_prot.h: rpcb_prot.x ${RPCGEN}
+# Resolve rpcgen's path, to allow it to be a dependency.
+_RPCGEN:=	${RPCGEN}
+.if ${_RPCGEN:M/*} == ""
+_RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
+.endif
+
+rpcb_prot.h: rpcb_prot.x ${_RPCGEN}
 	${RPCGEN} -C -h ${.CURDIR}/rpcb_prot.x -o ${.TARGET}
