@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.5 2002/02/04 20:26:34 manu Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.6 2002/03/09 13:13:09 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.5 2002/02/04 20:26:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.6 2002/03/09 13:13:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -224,7 +224,7 @@ irix_sys_getdents(p, v, retval)
 
 /*
  * The 64 versions are very close to the 
- * 32 bit versions (only 3 lines of diff 
+ * 32 bit versions (only 3 lines of diff)
  */
 int
 irix_sys_ngetdents64(p, v, retval)
