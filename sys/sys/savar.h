@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.10 2003/11/02 16:26:10 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.11 2003/11/03 22:34:51 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,9 +82,8 @@ struct sadata {
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	struct lwp	*sa_vp;		/* "virtual processor" allocation */
-	struct lwp	*sa_old_lwp;	/*  XXXUPSXXX hack: lwp that used to be on  sa_vp */
-	int    sa_vp_wait_count;        /*  XXXUPSXXX hack: number of LWPs waiting on VP */
-
+	struct lwp	*sa_wokenq_head;	/* list of woken lwps */
+	struct lwp	**sa_wokenq_tailp;	/* list of woken lwps */
 	vaddr_t	sa_vp_stacks_low;	/* SA upcall stack lowest address */
 	vaddr_t	sa_vp_stacks_high;	/* SA upcall stack highest address */
 	vaddr_t	sa_vp_faultaddr;	/* page fault address */
