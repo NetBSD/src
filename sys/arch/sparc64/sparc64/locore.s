@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 2000/09/25 21:02:38 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 2000/09/28 19:27:49 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,8 +53,8 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
-#define	DIAGNOSTIC
-
+#define TEST_DEBUG
+	
 #undef	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
@@ -68,7 +68,7 @@
 #define	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
-#define	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
+#undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 #define	TICK_IS_TIME		/* Keep %tick synchronized with time */
 #undef	SCHED_DEBUG
@@ -1865,6 +1865,7 @@ intr_setup_msg:
 	flush	%g5;						/* Some convenient address that won't trap */ \
 1:
 
+
 /*
  * Interrupt setup is almost exactly like trap setup, but we need to
  * go to the interrupt stack if (a) we came from user mode or (b) we
@@ -1873,24 +1874,25 @@ intr_setup_msg:
  * We don't guarantee any registers are preserved during this operation.
  */
 #define	INTR_SETUP(stackspace) \
-	sethi	%hi(EINTSTACK-BIAS), %g6; \
+	sethi	%hi(EINTSTACK-BIAS), %g1; \
 	sethi	%hi((stackspace)), %g5; \
 	btst	1, %sp; \
-	bnz,pt	%icc, 0f; \
-	 mov	%sp, %g1; \
-	add	%sp, -BIAS, %g1; \
-0: \
-	or	%g6, %lo(EINTSTACK-BIAS), %g6; \
-	set	(EINTSTACK-INTSTACK), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	add	%sp, -BIAS, %g6; \
+	movnz	%icc, %sp, %g6; \
+	or	%g1, %lo(EINTSTACK-BIAS), %g1; \
+	set	(EINTSTACK-INTSTACK), %g7; \
 	or	%g5, %lo((stackspace)), %g5; \
-	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
+	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
-	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	andncc	%g2, %g7, %g0;					/* Is %sp in the interrupt stack? */ \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	srl	%g1, 0, %g1;					/* XXXXX truncate at 32-bits */ \
-	movz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	movnz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
+	movnz	%icc, %g1, %g6;					/* Go to interrupt base */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
+       \
 	stx	%l0, [%g6 + CC64FSZ + BIAS + TF_L + (0*8)];		/* Save local registers to trap frame */ \
 	stx	%l1, [%g6 + CC64FSZ + BIAS + TF_L + (1*8)]; \
 	stx	%l2, [%g6 + CC64FSZ + BIAS + TF_L + (2*8)]; \
@@ -1922,7 +1924,7 @@ intr_setup_msg:
 	be,pn	%icc, 1f;					/* If we were in kernel mode start saving globals */ \
 	/* came from user mode -- switch to kernel mode stack */ \
 	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
-	/* mov %g5, %g5; tst %g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
+	mov %g5, %g5; tst %g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
 	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
 	wrpr	%g0, 0, %canrestore; \
@@ -2006,22 +2008,23 @@ intr_setup_msg:
  * We don't guarantee any registers are preserved during this operation.
  */
 #define	INTR_SETUP(stackspace) \
-	sethi	%hi(EINTSTACK), %g6; \
+	sethi	%hi(EINTSTACK), %g1; \
 	sethi	%hi((stackspace)), %g5; \
 	btst	1, %sp; \
-	bz,pt	%icc, 0f; \
-	 mov	%sp, %g1; \
-	add	%sp, BIAS, %g1; \
-0: \
-	srl	%g1, 0, %g1;					/* truncate at 32-bits */ \
-	or	%g6, %lo(EINTSTACK), %g6; \
+	add	%sp, BIAS, %g6; \
+	movz	%icc, %sp, %g6; \
+	or	%g1, %lo(EINTSTACK), %g1; \
+	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
 	set	(EINTSTACK-INTSTACK), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
 	or	%g5, %lo((stackspace)), %g5; \
-	sub	%g6, %g1, %g2;					/* Determine if we need to switch to intr stack or not */ \
+	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
 	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	movz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	movz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
+	movnz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
 	\
 	stx	%l0, [%g6 + CC64FSZ + STKB + TF_L + (0*8)];		/* Save local registers to trap frame */ \
@@ -2055,7 +2058,7 @@ intr_setup_msg:
 	be,pn	%icc, 1f;					/* If we were in kernel mode start saving globals */ \
 	/* came from user mode -- switch to kernel mode stack */ \
 	 rdpr	%otherwin, %g5;					/* Has this already been done? */ \
-	/* tst	%g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
+	tst	%g5; tnz %xcc, 1; nop; /* DEBUG -- this should _NEVER_ happen */ \
 	brnz,pn	%g5, 1f;					/* Don't set this twice */ \
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
 	wrpr	%g0, 0, %canrestore; \
@@ -2419,11 +2422,15 @@ winfix:
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	set	EINTSTACK+1024-STKB, %sp		! Set the stack pointer to the middle of the idle stack
+	mov	%fp, %l6				! Save the frame pointer
+	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp	! Set the frame pointer to the middle of the idle stack
+	add	%fp, -CC64FSZ, %sp			! Create a stackframe
 	wrpr	%g0, 15, %pil				! Disable interrupts, too
 	wrpr	%g0, %g0, %canrestore			! Our stack is hozed and our PCB
 	wrpr	%g0, 7, %cansave			!  probably is too, so blow away
 	ta	1					!  all our register windows.
+	ba	slowtrap
+	 wrpr	%g0, 0x101, %tt
 #endif
 
 winfixfill:
@@ -3562,7 +3569,7 @@ softtrap:
 	stx	%i5, [%g6 + CC64FSZ + STKB + TF_O + (5*8)]
 	stx	%i6, [%g6 + CC64FSZ + STKB + TF_O + (6*8)]
 	stx	%i7, [%g6 + CC64FSZ + STKB + TF_O + (7*8)]
-#ifdef DEBUG
+#ifdef TEST_DEBUG
 	ldx	[%sp + CC64FSZ + STKB + TF_I + (0*8)], %l0	! Copy over the rest of the regs
 	ldx	[%sp + CC64FSZ + STKB + TF_I + (1*8)], %l1	! But just dirty the locals
 	ldx	[%sp + CC64FSZ + STKB + TF_I + (2*8)], %l2
@@ -3988,6 +3995,9 @@ interrupt_vector:
 	ldxa	[%g0] ASI_IRSR, %g1
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
+	membar	#Sync
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 #if NOT_DEBUG
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	mov	%g1, %o1
@@ -4006,8 +4016,6 @@ interrupt_vector:
 	bz,pn	%icc, 3f		! spurious interrupt
 	 cmp	%g2, MAXINTNUM
 
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
-	membar	#Sync			! Should not be needed due to retry
 #ifdef DEBUG
 	tgeu	55
 #endif
@@ -4134,7 +4142,7 @@ ret_from_intr_vector:
 	btst	INTRDEBUG_SPUR, %g7
 	bz,pt	%icc, 97f
 	 nop
-
+#endif
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g2, %o1
@@ -4145,7 +4153,6 @@ ret_from_intr_vector:
 	LOCTOGLOB
 	restore
 97:
-#endif
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
 
@@ -4367,10 +4374,11 @@ sparc_intr_check_slot:
 	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
 #endif
 
-	STPTR	%g0, [%l4]		! Clear the slot
+!	STPTR	%g0, [%l4]		! Clear the slot
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
 	clrb	[%l2 + IH_PEND]		! Clear pending flag
+	STPTR	%g0, [%l4]		! Clear the slot
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
@@ -5546,11 +5554,19 @@ _C_LABEL(cpu_initialize):
 
 !	call	print_dtlb			! Debug printf
 !	 nop					! delay
-#ifdef NODEF_DEBUG
-	set	1f, %o0		! Debug printf
+#ifdef DEBUG
+	set	1f, %o0		! Debug printf for TEXT page
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
 	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
+	srlx	%l2, 32, %o3
+	call	_C_LABEL(prom_printf)
+	 srl	%l2, 0, %o4
+	
+	set	1f, %o0		! Debug printf for DATA page
+	srlx	%g3, 32, %o1
+	srl	%g3, 0, %o2
+	or	%g1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
 	srlx	%l2, 32, %o3
 	call	_C_LABEL(prom_printf)
 	 srl	%l2, 0, %o4
@@ -5604,7 +5620,7 @@ _C_LABEL(cpu_initialize):
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5				! Make IMMU see this too
 1:
-#ifdef NODEF_DEBUG
+#ifdef DEBUG
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
@@ -5808,7 +5824,7 @@ _C_LABEL(cpu_initialize):
 	or	%l0, %l1, %l0			! Make a TSB pointer
 !	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
 
-#ifdef NODEF_DEBUG
+#ifdef DEBUG
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -5831,7 +5847,7 @@ _C_LABEL(cpu_initialize):
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 	wrpr	%g0, WSTATE_KERN, %wstate
 
-#ifdef NODEF_DEBUG
+#ifdef DEBUG
 	wrpr	%g0, 1, %tl			! Debug -- start at tl==3 so we'll watchdog
 	wrpr	%g0, 0x1ff, %tt			! Debug -- clear out unused trap regs
 	wrpr	%g0, 0, %tpc
@@ -6025,10 +6041,6 @@ _C_LABEL(tlb_flush_pte):
 	call	_C_LABEL(printf)
 	 mov	%i0, %o2
 	restore
-	set	KERNBASE, %o4
-	brz,pt	%o1, 2f					! If ctx != 0
-	 cmp	%o0, %o4				! and va > KERNBASE
-	tgu	1; nop					! Debugger
 	.data
 1:
 	.asciz	"tlb_flush_pte:	demap ctx=%x va=%08x res=%x\r\n"
@@ -8467,6 +8479,7 @@ ENTRY(subyte)
  */
 
 /*
+ * u_int64_t
  * probeget(addr, asi, size)
  *	paddr_t addr;
  *	int asi;
@@ -8547,6 +8560,7 @@ _C_LABEL(Lfsprobe):
 	wrpr	%g1, 0, %pstate
 #endif
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	mov	-1, %o1
 	retl				! and return error indicator
 	 mov	-1, %o0
 
@@ -11008,6 +11022,7 @@ microtick:
 /*
  * The following code only works if %tick is synchronized with time.
  */
+2:	
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
 	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
 	rdpr	%tick, %o4					! Load usec timer value
@@ -11035,10 +11050,10 @@ microtick:
 
 	udivx	%o4, %o5, %o2					! Now %o2 has seconds
 
-	mulx	%o3, %o5, %o5					! Now calculate usecs -- damn no remainder insn
-	sub	%o2, %o5, %o1					! %o1 has the remainder
+	mulx	%o2, %o5, %o5					! Now calculate usecs -- damn no remainder insn
+	sub	%o4, %o5, %o1					! %o1 has the remainder
 
-	add	%o1, %o4, %o1
+	add	%o1, %o3, %o1	! I think this is wrong
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif
