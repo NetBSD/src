@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.39 1999/09/27 23:19:14 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.40 1999/10/28 06:38:51 jun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -223,6 +223,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
       PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
       0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COREGA_FAST_ETHER_PCC_TX,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
+      PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
+      0, -1, { 0x00, 0x00, 0xf4 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
