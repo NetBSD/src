@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.20 1999/06/10 20:48:28 kim Exp $
+#	$NetBSD: bsd.obj.mk,v 1.21 1999/08/21 00:41:41 sommerfeld Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -9,7 +9,9 @@ __initialized_obj__:
 obj:
 .else
 
-.if defined(OBJMACHINE)
+.if defined(MAKEOBJDIR)
+__objdir=	${MAKEOBJDIR}
+.elif defined(OBJMACHINE)
 __objdir=	obj.${MACHINE}
 .else
 __objdir=	obj
