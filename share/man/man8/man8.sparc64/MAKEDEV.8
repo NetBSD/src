@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.5 2000/12/05 21:25:38 wrstuden Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.6 2001/01/08 22:27:54 martin Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -75,6 +75,8 @@ the device.  There are several special device names:
 Standard devices
 .It Ar local
 Configuration specific devices
+.It Ar isdn
+Make ISDN devices
 .El
 .Pp
 The Sparc64 port supports the following devices.
@@ -124,6 +126,19 @@ Memory pseudo-disk devices, see
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr pty 4 
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
