@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.22 1999/07/10 19:59:28 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.22.8.1 2001/12/09 17:42:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.22 1999/07/10 19:59:28 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.22.8.1 2001/12/09 17:42:15 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: compare.c,v 1.22 1999/07/10 19:59:28 christos Exp $");
 #include "mtree.h"
 #include "extern.h"
 
-extern int iflag, mflag, tflag, uflag;
+extern int iflag, lflag, mflag, tflag, uflag;
 
 static char *ftype __P((u_int));
 
@@ -203,6 +203,22 @@ typeerr:		LABEL;
 	}
 	if (s->flags & F_MODE &&
 	    s->st_mode != (p->fts_statp->st_mode & MBITS)) {
+		if (lflag) {
+			mode_t tmode, mode;
+
+			tmode = s->st_mode;
+			mode = p->fts_statp->st_mode & MBITS;
+			/*
+			 * if none of the suid/sgid/etc bits are set,
+			 * then if the mode is a subset of the target,
+			 * skip.
+			 */
+			if (!((tmode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) ||
+			    (mode & ~(S_IRWXU|S_IRWXG|S_IRWXO))))
+				if ((mode | tmode) == tmode)
+					goto skip;
+		}
+		
 		LABEL;
 		(void)printf("%spermissions (%#lo, %#lo",
 		    tab, (u_long)s->st_mode,
@@ -217,6 +233,7 @@ typeerr:		LABEL;
 		else
 			(void)printf(")\n");
 		tab = "\t";
+	skip:
 	}
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {
