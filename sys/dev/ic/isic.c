@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.5 2002/03/25 12:07:33 martin Exp $ 
+ *	$Id: isic.c,v 1.6 2002/03/25 14:44:46 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.5 2002/03/25 12:07:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.6 2002/03/25 14:44:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -273,9 +273,13 @@ isic_recover(struct isic_softc *sc)
 int
 isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver)
 {
-	sc->sc_l3token = isdn_attach_bri(sc->sc_dev.dv_xname, cardname, &sc->sc_l2, &isic_l3_driver);
+	struct isdn_l3_driver * drv;
+
+	drv = isdn_attach_bri(sc->sc_dev.dv_xname, cardname, &sc->sc_l2, &isic_l3_driver);
+	sc->sc_l3token = drv;
 	sc->sc_l2.driver = dchan_driver;
 	sc->sc_l2.l1_token = sc;
+	sc->sc_l2.bri = drv->bri;
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
 	return 1;
 }
