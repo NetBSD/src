@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.23.4.4 2002/04/17 00:03:23 nathanw Exp $	*/
+/*	$NetBSD: vm86.c,v 1.23.4.5 2002/04/17 01:58:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.23.4.4 2002/04/17 00:03:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.23.4.5 2002/04/17 01:58:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,23 +192,24 @@ vm86_return(l, retval)
 	struct lwp *l;
 	int retval;
 {
+	struct proc *p = l->l_proc;
 
 	/*
 	 * We can't set the virtual flags in our real trap frame,
 	 * since it's used to jump to the signal handler.  Instead we
 	 * let sendsig() pull in the vm86_eflags bits.
 	 */
-	if (sigismember(&l->l_proc->p_sigctx.ps_sigmask, SIGURG)) {
+	if (sigismember(&p->p_sigctx.ps_sigmask, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
-		    l->l_proc->p_pid);
+		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
-	} else if (sigismember(&l->l_proc->p_sigctx.ps_sigignore, SIGURG)) {
+	} else if (sigismember(&p->p_sigctx.ps_sigignore, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG ignored)\n",
-		    l->l_proc->p_pid);
+		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
 	}
@@ -238,6 +239,7 @@ vm86_gpfault(l, type)
 	int type;
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	struct proc *p = l->l_proc;
 	/*
 	 * we want to fetch some stuff from the current user virtual
 	 * address space for checking.  remember that the frame's
