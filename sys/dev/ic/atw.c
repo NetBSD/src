@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.81 2004/12/27 01:51:49 mycroft Exp $	*/
+/*	$NetBSD: atw.c,v 1.82 2005/01/04 00:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.81 2004/12/27 01:51:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82 2005/01/04 00:56:51 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2205,7 +2205,8 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
-		if (ieee80211_ibss_merge(ic, ni, atw_get_tsft(sc)) == ENETRESET)
+		if (le64toh(ni->ni_tsf) >= atw_get_tsft(sc) &&
+		    ieee80211_ibss_merge(ic, ni) == ENETRESET)
 			atw_change_ibss(sc);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.35 2004/08/10 00:57:21 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.36 2005/01/04 00:56:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.35 2004/08/10 00:57:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.36 2005/01/04 00:56:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1598,52 +1598,15 @@ do_slow_print(struct ieee80211com *ic, int *did_print)
  * in ieee80211_ibss_merge.
  */
 int
-ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
-    uint64_t local_tsft)
+ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	uint64_t beacon_tsft;
-	int did_print = 0, sign;
-	union {
-		uint64_t	word;
-		uint8_t		tstamp[8];
-	} u;
+	int did_print = 0;
 
-	/* ensure alignment */
-	(void)memcpy(&u, &ni->ni_tstamp[0], sizeof(u));
-	beacon_tsft = le64toh(u.word);
-
-	/* we are faster, let the other guy catch up */
-	if (beacon_tsft < local_tsft)
-		sign = -1;
-	else
-		sign = 1;
-
-	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid,
-	    IEEE80211_ADDR_LEN) == 0) {
-		if (!do_slow_print(ic, &did_print))
-			return 0;
-		printf("%s: tsft offset %s%" PRIu64 "\n", ic->ic_if.if_xname,
-		    (sign < 0) ? "-" : "",
-		    (sign < 0)
-			? (local_tsft - beacon_tsft)
-			: (beacon_tsft - local_tsft));
-		return 0;
-	}
-
-	if (sign < 0)
+	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN) == 0)
 		return 0;
 
 	if (ieee80211_match_bss(ic, ni) != 0)
 		return 0;
-
-	if (do_slow_print(ic, &did_print)) {
-		printf("%s: atw_recv_beacon: bssid mismatch %s\n",
-		    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
-		printf("%s: my tsft %" PRIu64 " beacon tsft %" PRIu64 "\n",
-		    ic->ic_if.if_xname, local_tsft, beacon_tsft);
-		printf("%s: sync TSF with %s\n",
-		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
-	}
 
 	ic->ic_flags &= ~IEEE80211_F_SIBSS;
 
@@ -1658,15 +1621,12 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return 0;
 	}
 
-	if (do_slow_print(ic, &did_print)) {
-		printf("%s: sync BSSID %s -> ",
-		    ic->ic_if.if_xname, ether_sprintf(ic->ic_bss->ni_bssid));
-		printf("%s ", ether_sprintf(ni->ni_bssid));
-		printf("(from %s)\n", ether_sprintf(ni->ni_macaddr));
-	}
+	printf("%s: bss merge %s -> ", ic->ic_if.if_xname,
+	    ether_sprintf(ic->ic_bss->ni_bssid));
+	printf("%s\n", ether_sprintf(ni->ni_bssid));
 
-	ieee80211_node_newstate(ni, IEEE80211_STA_BSS);
 	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
+	ieee80211_node_newstate(ic->ic_bss, IEEE80211_STA_BSS);
 
 	return ENETRESET;
 }
