@@ -9,7 +9,7 @@ rm -f $T
 if [ -f /kern/version ]; then
 	head -1 /kern/version > $T
 else
-	echo "386BSD 0.1 (UNKNOWN)" > $T
+	echo "NetBSD ?.? (UNKNOWN)" > $T
 fi
 echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
