@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1999/03/18 03:23:53 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.14 1999/04/25 16:18:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,9 +64,6 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
-#if 0
-#include <sys/user.h>
-#endif
 
 #include <net/if.h>
 
@@ -594,112 +591,6 @@ findnode(first, name)
 	return (0);
 }
 
-#if 0
-/*
- * Fill in a romaux.  Returns 1 on success, 0 if the register property
- * was not the right size.
- */
-int
-romprop(rp, cp, node)
-	register struct romaux *rp;
-	const char *cp;
-	register int node;
-{
-	register int len;
-	static union { char regbuf[256]; struct rom_reg rr[RA_MAXREG]; struct rom_reg64 rr64[RA_MAXREG]; } u;
-	static const char pl[] = "property length";
-
-	bzero(u.regbuf, sizeof u);
-	len = getprop(node, "reg", (void *)u.regbuf, sizeof(u.regbuf));
-	if (len == -1 &&
-	    node_has_property(node, "device_type") &&
-	    strcmp(getpropstring(node, "device_type"), "hierarchical") == 0)
-		len = 0;
-	if (len > RA_MAXREG * sizeof(struct rom_reg))
-		printf("warning: %s \"reg\" %s %d > %d, excess ignored\n",
-		       cp, pl, len, RA_MAXREG * sizeof(struct rom_reg));
-	if (len % sizeof(struct rom_reg) && len % sizeof(struct rom_reg64)) {
-		printf("%s \"reg\" %s = %d (need multiple of %d)\n",
-		       cp, pl, len, sizeof(struct rom_reg));
-		return (0);
-	}
-#ifdef NOTDEF_DEBUG
-	printf("romprop: reg len=%d; len % sizeof(struct rom_reg64)=%d; len % sizeof(struct rom_reg)=%d\n",
-	       len, len % sizeof(struct rom_reg), len % sizeof(struct rom_reg64));
-#endif
-	if (len % sizeof(struct rom_reg64) == 0) {
-		rp->ra_node = node;
-		rp->ra_name = cp;
-		rp->ra_nreg = len / sizeof(struct rom_reg64);
-		for( len=0; len<rp->ra_nreg; len++ ) {
-			/* Convert to 32-bit format */
-			rp->ra_reg[len].rr_iospace = (u.rr64[len].rr_paddr>>32);
-			rp->ra_reg[len].rr_paddr = (void*)(u.rr64[len].rr_paddr);
-			rp->ra_reg[len].rr_len = u.rr64[len].rr_len;
-#ifdef NOTDEF_DEBUG
-			printf("romprop: reg[%d]=(%x,%x,%x)\n",
-			       len, rp->ra_reg[len].rr_iospace, 
-			       rp->ra_reg[len].rr_paddr,
-			       rp->ra_reg[len].rr_len);
-#endif
-		}
-	} else {
-		rp->ra_node = node;
-		rp->ra_name = cp;
-		rp->ra_nreg = len / sizeof(struct rom_reg);
-		bcopy(u.rr, rp->ra_reg, len);
-	}
-
-	len = getprop(node, "address", (void *)rp->ra_vaddrs,
-		      sizeof(rp->ra_vaddrs));
-	if (len == -1) {
-		rp->ra_vaddr = 0;	/* XXX - driver compat */
-		len = 0;
-	}
-	if (len & 3) {
-		printf("%s \"address\" %s = %d (need multiple of 4)\n",
-		       cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nvaddrs = len >> 2;
-	
-	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
-	if (len == -1)
-		len = 0;
-	if (len & 7) {
-		printf("%s \"intr\" %s = %d (need multiple of 8)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_nintr = len >>= 3;
-	/* SPARCstation interrupts are not hardware-vectored */
-	while (--len >= 0) {
-		if (rp->ra_intr[len].int_vec) {
-			printf("WARNING: %s interrupt %d has nonzero vector\n",
-			    cp, len);
-			break;
-		}
-	}
-	/* Sun4u interrupts */
-	len = getprop(node, "interrupts", (void *)&rp->ra_interrupt, sizeof rp->ra_interrupt);
-	if (len == -1)
-		len = 0;
-	if (len & 2) {
-		printf("%s \"interrupts\" %s = %d (need multiple of 4)\n",
-		    cp, pl, len);
-		len = 0;
-	}
-	rp->ra_ninterrupt = len >>= 2;
-	len = getprop(node, "ranges", (void *)&rp->ra_range,
-		      sizeof rp->ra_range);
-	if (len == -1)
-		len = 0;
-	rp->ra_nrange = len / sizeof(struct rom_range);
-
-	return (1);
-}
-#endif
-
 int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
@@ -893,105 +784,6 @@ panic("mainbus_attach(): %s has no \"address\"\n", sp);
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
-
-/*
- * findzs() is called from the zs driver (which is, at least in theory,
- * generic to any machine with a Zilog ZSCC chip).  It should return the
- * address of the corresponding zs channel.  It may not fail, and it
- * may be called before the VM code can be used.  Here we count on the
- * FORTH PROM to map in the required zs chips.
- */
-void *
-findzs(zs)
-	int zs;
-{
-	int node, n;
-	unsigned int addr;
-
-	node = firstchild(findroot());
-	/* Ultras have zs on the sbus */
-	node = findnode(node, "sbus");
-	if (!node)
-		panic("findzs: no sbus node");
-	node = firstchild(node);
-	n=0;
-	while ((node = findnode(node, "zs")) != 0) {
-		/* There is no way to identify a node by its number */
-		if ( n++ == zs ) { 
-			if ((addr = getpropint(node, "address", 0)) == 0)
-				/* We really should just map it in ourselves */
-				panic("findzs: zs%d not mapped by PROM", zs);
-			return ((void *)(unsigned long)addr);
-		}
-		node = nextsibling(node);
-	}
-	panic("findzs: cannot find zs%d", zs);
-	/* NOTREACHED */
-}
-
-#if 0
-int
-makememarr(ap, max, which)
-	register struct memarr *ap;
-	int max, which;
-{
-	struct v2rmi {
-		int	zero;
-		int	addr;
-		int	len;
-	} v2rmi[200];		/* version 2 rom meminfo layout */
-#define	MAXMEMINFO (sizeof(v2rmi) / sizeof(*v2rmi))
-	register int i, node, len;
-	char *prop;
-
-	/*
-	 * Version 2 PROMs use a property array to describe them.
-	 */
-	if (max > MAXMEMINFO) {
-		printf("makememarr: limited to %d\n", MAXMEMINFO);
-		max = MAXMEMINFO;
-	}
-	if ((node = findnode(firstchild(findroot()), "memory")) == 0)
-		panic("makememarr: cannot find \"memory\" node");
-	switch (which) {
-		
-	case MEMARR_AVAILPHYS:
-		prop = "available";
-		break;
-		
-	case MEMARR_TOTALPHYS:
-		prop = "reg";
-		break;
-		
-	default:
-		panic("makememarr");
-	}
-	len = getprop(node, prop, (void *)v2rmi, sizeof v2rmi) /
-		sizeof(struct v2rmi);
-	for (i = 0; i < len; i++) {
-		if (i >= max)
-			goto overflow;
-		ap->addr = v2rmi[i].addr;
-		ap->len = v2rmi[i].len;
-		ap++;
-	}
-
-	/*
-	 * Success!  (Hooray)
-	 */
-	if (i == 0)
-		panic("makememarr: no memory found");
-	return (i);
-
-overflow:
-	/*
-	 * Oops, there are more things in the PROM than our caller
-	 * provided space for.  Truncate any extras.
-	 */
-	printf("makememarr: WARNING: lost some memory\n");
-	return (i);
-}
-#endif
 
 int
 getprop(node, name, size, nitem, bufp)
