@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.9 1996/10/09 01:46:13 jtc Exp $	*/
+/*	$NetBSD: catgets.c,v 1.10 1997/06/19 07:41:32 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ _catgets(catd, set_id, msg_id, s)
 	}
 
 	cat_hdr = (struct _nls_cat_hdr *) catd->__data; 
-	set_hdr = (struct _nls_set_hdr *) (catd->__data
+	set_hdr = (struct _nls_set_hdr *) ((char *) catd->__data
 		+ sizeof(struct _nls_cat_hdr));
 
 	/* binary search, see knuth algorithm b */
@@ -72,7 +72,7 @@ _catgets(catd, set_id, msg_id, s)
 		r = set_id - ntohl(set_hdr[i].__setno);
 
 		if (r == 0) {
-			msg_hdr = (struct _nls_msg_hdr *) (catd->__data
+			msg_hdr = (struct _nls_msg_hdr *) ((char *)catd->__data
 				+ sizeof(struct _nls_cat_hdr)
 				+ ntohl(cat_hdr->__msg_hdr_offset));
 
@@ -82,7 +82,7 @@ _catgets(catd, set_id, msg_id, s)
 				i = (l + u) / 2;
 				r = msg_id - ntohl(msg_hdr[i].__msgno);
 				if (r == 0) {
-					return (char *) (catd->__data 
+					return ((char *) catd->__data 
 					    + sizeof(struct _nls_cat_hdr)
 					    + ntohl(cat_hdr->__msg_txt_offset)
 					    + ntohl(msg_hdr[i].__offset));
