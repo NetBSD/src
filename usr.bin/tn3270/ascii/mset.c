@@ -1,4 +1,4 @@
-/*	$NetBSD: mset.c,v 1.4 1998/02/04 21:33:31 thorpej Exp $	*/
+/*	$NetBSD: mset.c,v 1.5 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mset.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mset.c,v 1.4 1998/02/04 21:33:31 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)mset.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: mset.c,v 1.5 1998/03/04 13:16:06 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -53,6 +57,11 @@ static char rcsid[] = "$NetBSD: mset.c,v 1.4 1998/02/04 21:33:31 thorpej Exp $";
 
 #include <stdio.h>
 #include <string.h>
+#ifdef __STDC__
+#include <stdlib.h>
+#else
+extern char *getenv();
+#endif
 #include "../ctlr/function.h"
 
 #include "state.h"
@@ -74,6 +83,16 @@ static struct regstate regstates[500], *rptr= 0;	/* for sorting states */
 static char array[5000];		/* lot's of room */
 static int toshell = 0;			/* export to shell */
 static int numbchars = 0;		/* number of chars in envir. var */
+
+static int MyStrcmp __P((char *, char *));
+static void forwRegister __P((struct regstate *, struct regstate *));
+static void backRegister __P((struct regstate *, struct regstate *));
+static struct regstate *doRegister __P((struct regstate *));
+static char *addString __P((int, int));
+static void printString __P((char *, char *, char *));
+static void recurse __P((int, state *));
+
+int main __P((int, char *[]));
 
 static int
 MyStrcmp(str1, str2)
@@ -110,10 +129,10 @@ struct regstate *regptr, *sptr;
 
 static struct regstate *
 doRegister(regptr)
-register struct regstate *regptr;
+struct regstate *regptr;
 {
     static struct regstate *pivot = regstates;
-    register struct regstate *sptr = pivot;
+    struct regstate *sptr = pivot;
     int check;
 
     if (pivot == regstates) {		/* first time called */
@@ -175,15 +194,14 @@ static char savename[20] = " ";  /* for deciding if name is new */
 
 static void
 printString(string, begin, tc_name)
-register char *string;
+char *string;
 char *begin, *tc_name;
 {
-    register char *st1, *st2;
-    register int pchar;
+    char *st1, *st2;
+    int pchar;
     static char suffix = 'A';
     int new = strcmp(savename, tc_name);
     char delim = new ? ';' : '|';
-    char *uncontrol();
 
     st1 = begin;
 
@@ -341,6 +359,7 @@ int strcount;
 }
 
 
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -348,7 +367,6 @@ char *argv[];
     state *head;
     char *keybdPointer = (char *) 0;
     char *commandName = argv[0];
-    extern char *getenv();
     int picky = 0;
 
     while ((argc > 1) && (argv[1][0] == '-')) {

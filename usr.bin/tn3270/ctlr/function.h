@@ -1,4 +1,4 @@
-/*	$NetBSD: function.h,v 1.3 1997/01/09 20:22:09 tls Exp $	*/
+/*	$NetBSD: function.h,v 1.4 1998/03/04 13:16:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)function.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: function.h,v 1.3 1997/01/09 20:22:09 tls Exp $
  */
 
 /*

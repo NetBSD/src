@@ -1,4 +1,4 @@
-/*	$NetBSD: hostctlr.h,v 1.3 1997/01/09 20:22:10 tls Exp $	*/
+/*	$NetBSD: hostctlr.h,v 1.4 1998/03/04 13:16:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hostctlr.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: hostctlr.h,v 1.3 1997/01/09 20:22:10 tls Exp $
  */
 
 #define	INCLUDED_HOST3270
@@ -68,18 +67,18 @@ struct orders_def {
 };
 
 #define	ORDERS_DEF { \
-			    ORDER_SF, "SF", "Start Field", \
-			    ORDER_SFE, "SFE", "Start Field Extended", \
-			    ORDER_SBA, "SBA", "Set Buffer Address", \
-			    ORDER_SA, "SA", "Set Attribute", \
-			    ORDER_MF, "MF", "Modify Field", \
-			    ORDER_IC, "IC", "Insert Cursor", \
-			    ORDER_PT, "PT", "Program Tab", \
-			    ORDER_RA, "RA", "Repeat to Address", \
-			    ORDER_EUA, "EUA", "Erase Unprotected to Address", \
-			    ORDER_GE, "GE", "Graphics Escape", \
-			    ORDER_YALE, "YALE", "Yale Order" \
-			}
+	{ ORDER_SF, "SF", "Start Field" }, \
+	{ ORDER_SFE, "SFE", "Start Field Extended" }, \
+	{ ORDER_SBA, "SBA", "Set Buffer Address" }, \
+	{ ORDER_SA, "SA", "Set Attribute" }, \
+	{ ORDER_MF, "MF", "Modify Field" }, \
+	{ ORDER_IC, "IC", "Insert Cursor" }, \
+	{ ORDER_PT, "PT", "Program Tab" }, \
+	{ ORDER_RA, "RA", "Repeat to Address" }, \
+	{ ORDER_EUA, "EUA", "Erase Unprotected to Address" }, \
+	{ ORDER_GE, "GE", "Graphics Escape" }, \
+	{ ORDER_YALE, "YALE", "Yale Order" } \
+}
 
 
 #define	ATTR_RESET		0x00		/* SA only - reset to default */

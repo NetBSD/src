@@ -1,4 +1,4 @@
-/*	$NetBSD: outbound.c,v 1.3 1997/01/09 20:22:16 tls Exp $	*/
+/*	$NetBSD: outbound.c,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)outbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: outbound.c,v 1.3 1997/01/09 20:22:16 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)outbound.c	4.3 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: outbound.c,v 1.4 1998/03/04 13:16:08 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,7 +49,10 @@ static char rcsid[] = "$NetBSD: outbound.c,v 1.3 1997/01/09 20:22:16 tls Exp $";
 #include "hostctlr.h"
 #include "oia.h"
 #include "screen.h"
+#include "options.h"
 #include "../api/ebc_disp.h"
+#include "../ascii/state.h"
+#include "../sys_curses/telextrn.h"
 
 #include "../general/globals.h"
 #include "externs.h"
@@ -98,10 +105,11 @@ init_ctlr()
 }
 
 
+int
 FieldInc(position)
-register int	position;		/* Position in previous field */
+int	position;		/* Position in previous field */
 {
-    register ScreenImage *ptr;
+    ScreenImage *ptr;
 
     ptr = (ScreenImage *)memNSchr((char *)Host+position+1, ATTR_MASK,
 			HighestScreen()-position, ATTR_MASK, sizeof Host[0]);
@@ -115,10 +123,11 @@ register int	position;		/* Position in previous field */
     return ptr-Host;
 }
 
+int
 FieldDec(position)
 int	position;
 {
-    register ScreenImage *ptr;
+    ScreenImage *ptr;
 
     ptr = (ScreenImage *)memNSchr((char *)(Host+position)-1, ATTR_MASK,
 			position-LowestScreen(), ATTR_MASK, -sizeof Host[0]);
@@ -183,13 +192,13 @@ char	character;
 int
 DataFromNetwork(Buffer, count, control)
 char	*Buffer;				/* what the data is */
-register int	count;				/* and how much there is */
+int	count;				/* and how much there is */
 int	control;				/* this buffer ended block? */
 {
     int origCount;
-    register unsigned char *buffer = (unsigned char *)Buffer;
-    register int c;
-    register int i;
+    unsigned char *buffer = (unsigned char *)Buffer;
+    int c;
+    int i;
     static int Command;
     static int Wcc;
 
