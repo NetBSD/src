@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.43.2.1 1994/07/16 06:44:26 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.43.2.2 1994/08/15 22:05:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -69,7 +69,7 @@ struct ps_strings {
  * address of this gap may need alignment, so use this to reference it:
  *	(caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
  */
-#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX)
+#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
