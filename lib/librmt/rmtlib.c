@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.6 1997/06/20 04:24:23 mikel Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.7 1997/10/09 11:58:19 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -51,6 +51,34 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+static	int	_rmt_close __P((int));
+static	int	_rmt_ioctl __P((int, unsigned long, char *));
+static	off_t	_rmt_lseek __P((int, off_t, int));
+static	int	_rmt_open __P((const char *, int, int));
+static	int	_rmt_read __P((int, char *, unsigned int));
+static	int	_rmt_write __P((int, const void *, unsigned int));
+static	int	command __P((int, char *));
+static	int	remdev __P((const char *));
+static	void	rmtabort __P((int));
+static	int	status __P((int));
+
+	int	isrmt __P((int));
+	int	rmtaccess __P((const char *, int));
+	int	rmtclose __P((int));
+	int	rmtcreat __P((const char *, mode_t));
+	int	rmtdup __P((int));
+	int	rmtfcntl __P((int, int, int));
+	int	rmtfstat __P((int, struct stat *));
+	int	rmtioctl __P((int, unsigned long, char *));
+	int	rmtisatty __P((int));
+	off_t	rmtlseek __P((int, off_t, int));
+	int	rmtlstat __P((const char *, struct stat *));
+	int	rmtopen __P((const char *, int, mode_t));
+	ssize_t	rmtread __P((int, void *, size_t));
+	int	rmtstat __P((const char *, struct stat *));
+	ssize_t	rmtwrite __P((int, const void *, size_t));
+
+
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
 #define MAXUNIT	4
 
@@ -65,8 +93,9 @@ static int Ptc[MAXUNIT][2] = { {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1} };
  *	rmtabort --- close off a remote tape connection
  */
 
-static void rmtabort(fildes)
-int fildes;
+static void
+rmtabort(fildes)
+	int fildes;
 {
 	close(READ(fildes));
 	close(WRITE(fildes));
@@ -80,12 +109,13 @@ int fildes;
  *	command --- attempt to perform a remote tape command
  */
 
-static int command(fildes, buf)
-int fildes;
-char *buf;
+static int
+command(fildes, buf)
+	int fildes;
+	char *buf;
 {
-	register int blen;
-	void (*pstat)();
+	int blen;
+	void (*pstat) __P((int));
 
 /*
  *	save current pipe status and try to make the request
@@ -116,8 +146,9 @@ char *buf;
  *	status --- retrieve the status from the pipe
  */
 
-static int status(fildes)
-int fildes;
+static int
+status(fildes)
+	int fildes;
 {
 	int i;
 	char c, *cp;
@@ -200,10 +231,12 @@ int fildes;
  * with rsh are much more common on BSD systems.
  */
 
+static	int	_rmt_rexec __P((const char *, const char *));
+
 static int
 _rmt_rexec(host, user)
-char *host;
-char *user;		/* may be NULL */
+	const char *host;
+	const char *user;		/* may be NULL */
 {
 	struct servent *rexecserv;
 
@@ -230,10 +263,11 @@ char *user;		/* may be NULL */
 
 #define MAXHOSTLEN	257	/* BSD allows very long host names... */
 
-static int _rmt_open (path, oflag, mode)
-char *path;
-int oflag;
-int mode;
+static int
+_rmt_open(path, oflag, mode)
+	const char *path;
+	int oflag;
+	int mode;
 {
 	int i, rc;
 	char buffer[BUFMAGIC];
@@ -372,8 +406,9 @@ int mode;
  *	_rmt_close --- close a remote magtape unit and shut down
  */
 
-static int _rmt_close(fildes)
-int fildes;
+static int
+_rmt_close(fildes)
+	int fildes;
 {
 	int rc;
 
@@ -394,10 +429,11 @@ int fildes;
  *	_rmt_read --- read a buffer from a remote tape
  */
 
-static int _rmt_read(fildes, buf, nbyte)
-int fildes;
-char *buf;
-unsigned int nbyte;
+static int
+_rmt_read(fildes, buf, nbyte)
+	int fildes;
+	char *buf;
+	unsigned int nbyte;
 {
 	int rc, i;
 	char buffer[BUFMAGIC];
@@ -426,14 +462,14 @@ unsigned int nbyte;
  *	_rmt_write --- write a buffer to the remote tape
  */
 
-static int _rmt_write(fildes, buf, nbyte)
-int fildes;
-char *buf;
-unsigned int nbyte;
+static int
+_rmt_write(fildes, buf, nbyte)
+	int fildes;
+	const void *buf;
+	unsigned int nbyte;
 {
-	int rc;
 	char buffer[BUFMAGIC];
-	void (*pstat)();
+	void (*pstat) __P((int));
 
 	(void)snprintf(buffer, sizeof buffer, "W%d\n", nbyte);
 	if (command(fildes, buffer) == -1)
@@ -458,14 +494,15 @@ unsigned int nbyte;
  *	_rmt_lseek --- perform an imitation lseek operation remotely
  */
 
-static long _rmt_lseek(fildes, offset, whence)
-int fildes;
-long offset;
-int whence;
+static off_t
+_rmt_lseek(fildes, offset, whence)
+	int fildes;
+	off_t offset;
+	int whence;
 {
 	char buffer[BUFMAGIC];
 
-	(void)snprintf(buffer, sizeof buffer, "L%ld\n%d\n", offset, whence);
+	(void)snprintf(buffer, sizeof buffer, "L%qd\n%d\n", offset, whence);
 	if (command(fildes, buffer) == -1)
 		return(-1);
 
@@ -478,10 +515,11 @@ int whence;
  */
 
 #ifdef RMTIOCTL
-static int _rmt_ioctl(fildes, op, arg)
-int fildes;
-unsigned long op;
-char *arg;
+static int
+_rmt_ioctl(fildes, op, arg)
+	int fildes;
+	unsigned long op;
+	char *arg;
 {
 	char c;
 	int rc, cnt;
@@ -597,8 +635,9 @@ char *arg;
  *	0 otherwise.
  */
  
-static int remdev (path)
-register char *path;
+static int
+remdev(path)
+	const char *path;
 {
 	if ((path = strchr (path, ':')) != NULL)
 	{
@@ -616,10 +655,11 @@ register char *path;
  *	caller.
  */
  
-int rmtopen (path, oflag, mode)
-char *path;
-int oflag;
-int mode;
+int
+rmtopen(path, oflag, mode)
+	const char *path;
+	int oflag;
+	mode_t mode;
 {
 	int fd;
 
@@ -640,9 +680,10 @@ int mode;
  *	to caller.
  */
  
-int rmtaccess (path, amode)
-char *path;
-int amode;
+int
+rmtaccess(path, amode)
+	const char *path;
+	int amode;
 {
 	if (remdev (path))
 	{
@@ -659,8 +700,9 @@ int amode;
  *	Isrmt. Let a programmer know he has a remote device.
  */
 
-int isrmt (fd)
-int fd;
+int
+isrmt(fd)
+	int fd;
 {
 	return (fd >= REM_BIAS);
 }
@@ -670,10 +712,11 @@ int fd;
  *	Read from stream.  Looks just like read(2) to caller.
  */
   
-int rmtread (fildes, buf, nbyte)
-int fildes;
-char *buf;
-unsigned int nbyte;
+ssize_t
+rmtread(fildes, buf, nbyte)
+	int fildes;
+	void *buf;
+	size_t nbyte;
 {
 	if (isrmt (fildes))
 	{
@@ -690,10 +733,11 @@ unsigned int nbyte;
  *	Write to stream.  Looks just like write(2) to caller.
  */
  
-int rmtwrite (fildes, buf, nbyte)
-int fildes;
-char *buf;
-unsigned int nbyte;
+ssize_t
+rmtwrite(fildes, buf, nbyte)
+	int fildes;
+	const void *buf;
+	size_t nbyte;
 {
 	if (isrmt (fildes))
 	{
@@ -709,10 +753,11 @@ unsigned int nbyte;
  *	Perform lseek on file.  Looks just like lseek(2) to caller.
  */
 
-long rmtlseek (fildes, offset, whence)
-int fildes;
-long offset;
-int whence;
+off_t
+rmtlseek(fildes, offset, whence)
+	int fildes;
+	off_t offset;
+	int whence;
 {
 	if (isrmt (fildes))
 	{
@@ -729,8 +774,9 @@ int whence;
  *	Close a file.  Looks just like close(2) to caller.
  */
  
-int rmtclose (fildes)
-int fildes;
+int
+rmtclose(fildes)
+	int fildes;
 {
 	if (isrmt (fildes))
 	{
@@ -746,10 +792,11 @@ int fildes;
  *	Do ioctl on file.  Looks just like ioctl(2) to caller.
  */
  
-int rmtioctl (fildes, request, arg)
-int fildes;
-unsigned long request;
-char *arg;
+int
+rmtioctl(fildes, request, arg)
+	int fildes;
+	unsigned long request;
+	char *arg;
 {
 	if (isrmt (fildes))
 	{
@@ -772,8 +819,9 @@ char *arg;
  *	to caller.
  */
  
-int rmtdup (fildes)
-int fildes;
+int
+rmtdup(fildes)
+	int fildes;
 {
 	if (isrmt (fildes))
 	{
@@ -790,9 +838,10 @@ int fildes;
  *	Get file status.  Looks just like fstat(2) to caller.
  */
  
-int rmtfstat (fildes, buf)
-int fildes;
-struct stat *buf;
+int
+rmtfstat(fildes, buf)
+	int fildes;
+	struct stat *buf;
 {
 	if (isrmt (fildes))
 	{
@@ -810,9 +859,10 @@ struct stat *buf;
  *	Get file status.  Looks just like stat(2) to caller.
  */
  
-int rmtstat (path, buf)
-char *path;
-struct stat *buf;
+int
+rmtstat(path, buf)
+	const char *path;
+	struct stat *buf;
 {
 	if (remdev (path))
 	{
@@ -831,9 +881,10 @@ struct stat *buf;
  *	Create a file from scratch.  Looks just like creat(2) to the caller.
  */
 
-int rmtcreat (path, mode)
-char *path;
-int mode;
+int
+rmtcreat(path, mode)
+	const char *path;
+	mode_t mode;
 {
 	if (remdev (path))
 	{
@@ -849,8 +900,9 @@ int mode;
  *	Rmtfcntl. Do a remote fcntl operation.
  */
 
-int rmtfcntl (fd, cmd, arg)
-int fd, cmd, arg;
+int
+rmtfcntl(fd, cmd, arg)
+	int fd, cmd, arg;
 {
 	if (isrmt (fd))
 	{
@@ -867,8 +919,9 @@ int fd, cmd, arg;
  *	Rmtisatty.  Do the isatty function.
  */
 
-int rmtisatty (fd)
-int fd;
+int
+rmtisatty(fd)
+	int fd;
 {
 	if (isrmt (fd))
 		return (0);
@@ -881,9 +934,10 @@ int fd;
  *	Get file status, even if symlink.  Looks just like lstat(2) to caller.
  */
  
-int rmtlstat (path, buf)
-char *path;
-struct stat *buf;
+int
+rmtlstat(path, buf)
+	const char *path;
+	struct stat *buf;
 {
 	if (remdev (path))
 	{
