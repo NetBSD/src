@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael.c,v 1.1 2003/08/26 14:24:05 thorpej Exp $	*/
+/*	$NetBSD: rijndael.c,v 1.2 2003/08/26 19:58:36 thorpej Exp $	*/
 
 /**             
  * rijndael-alg-fst.c 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.1 2003/08/26 14:24:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.2 2003/08/26 19:58:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.1 2003/08/26 14:24:05 thorpej Exp $")
 #include <crypto/rijndael/rijndael.h>
 
 void
-rijndael_set_key(rijndael_ctx *ctx, u_char *key, int bits, int encrypt)
+rijndael_set_key(rijndael_ctx *ctx, const u_char *key, int bits, int encrypt)
 {
 
 	ctx->Nr = rijndaelKeySetupEnc(ctx->ek, key, bits);
@@ -49,14 +49,14 @@ rijndael_set_key(rijndael_ctx *ctx, u_char *key, int bits, int encrypt)
 }
 
 void
-rijndael_decrypt(rijndael_ctx *ctx, u_char *src, u_char *dst)
+rijndael_decrypt(rijndael_ctx *ctx, const u_char *src, u_char *dst)
 {
 
 	rijndaelDecrypt(ctx->dk, ctx->Nr, src, dst);
 }
 
 void
-rijndael_encrypt(rijndael_ctx *ctx, u_char *src, u_char *dst)
+rijndael_encrypt(rijndael_ctx *ctx, const u_char *src, u_char *dst)
 {
 
 	rijndaelEncrypt(ctx->ek, ctx->Nr, src, dst);
