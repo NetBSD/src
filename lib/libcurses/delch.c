@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.13 2000/04/18 22:45:24 jdc Exp $	*/
+/*	$NetBSD: delch.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.13 2000/04/18 22:45:24 jdc Exp $");
+__RCSID("$NetBSD: delch.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -103,6 +103,6 @@ wdelch(WINDOW *win)
 	temp1->bch = win->bch;
 	temp1->attr = 0;
 	temp1->battr = win->battr;
-	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1, 0);
+	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	return (OK);
 }

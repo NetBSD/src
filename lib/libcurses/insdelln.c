@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.6 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.7 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.6 2000/04/24 14:09:43 blymn Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.7 2000/05/20 15:12:15 mycroft Exp $");
 #endif				/* not lint */
 
 /* 
@@ -110,7 +110,7 @@ winsdelln(WINDOW *win, int lines)
 				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = win->maxy - 1; y >= win->cury; --y)
-			__touchline(win, y, 0, (int) win->maxx - 1, 0);
+			__touchline(win, y, 0, (int) win->maxx - 1);
 	} else {
 		/* Delete lines */
 		lines = 0 - lines;
@@ -138,7 +138,7 @@ winsdelln(WINDOW *win, int lines)
 				win->lines[y]->line[i].battr = win->battr;
 			}
 		for (y = win->cury; y < win->maxy; y++)
-			__touchline(win, y, 0, (int) win->maxx - 1, 0);
+			__touchline(win, y, 0, (int) win->maxx - 1);
 	}
 	if (win->orig != NULL)
 		__id_subwins(win->orig);

@@ -1,4 +1,4 @@
-/*	$NetBSD: toucholap.c,v 1.11 2000/04/15 13:17:05 blymn Exp $	*/
+/*	$NetBSD: toucholap.c,v 1.12 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)toucholap.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: toucholap.c,v 1.11 2000/04/15 13:17:05 blymn Exp $");
+__RCSID("$NetBSD: toucholap.c,v 1.12 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -78,6 +78,6 @@ touchoverlap(WINDOW *win1, WINDOW *win2)
 	endy -= win2->begy;
 	endx -= win2->begx;
 	for (--endx, y = starty; y < endy; y++)
-		__touchline(win2, y, startx, endx, 0);
+		__touchline(win2, y, startx, endx);
 	return (OK);
 }

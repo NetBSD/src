@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.13 2000/04/18 22:45:24 jdc Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.13 2000/04/18 22:45:24 jdc Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.14 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,8 +94,7 @@ wclrtobot(WINDOW *win)
 				sp->battr = win->battr;
 			}
 		if (minx != -1)
-			__touchline(win, y, minx, maxx - win->lines[y]->line,
-			    0);
+			__touchline(win, y, minx, maxx - win->lines[y]->line);
 		startx = 0;
 	}
 	return (OK);

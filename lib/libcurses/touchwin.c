@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.14 2000/05/19 07:39:20 mycroft Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.14 2000/05/19 07:39:20 mycroft Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.15 2000/05/20 15:12:15 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ is_linetouched(WINDOW *win, int line)
 	if (line > win->maxy)
 		return FALSE;
 	
-	return ((win->lines[line]->flags & (__ISDIRTY | __FORCEPAINT)) != 0);
+	return ((win->lines[line]->flags & __ISDIRTY) != 0);
 }
 	
 
@@ -124,7 +124,7 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 
 	for (y = line; y < line + n; y++) {
 		if (changed == 1)
-			__touchline(win, y, 0, (int) win->maxx - 1, 0);
+			__touchline(win, y, 0, (int) win->maxx - 1);
 		else {
 			wlp = win->lines[y];
 			if (*wlp->firstchp >= win->ch_off &&
@@ -133,7 +133,7 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 			if (*wlp->lastchp >= win->ch_off &&
 			    *wlp->lastchp < win->maxx + win->ch_off)
 				*wlp->lastchp = win->ch_off;
-			wlp->flags &= ~(__FORCEPAINT | __ISDIRTY);
+			wlp->flags &= ~__ISDIRTY;
 		}
 	}
 
@@ -151,20 +151,18 @@ __touchwin(WINDOW *win)
 #endif
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++)
-		__touchline(win, y, 0, (int) win->maxx - 1, 0);
+		__touchline(win, y, 0, (int) win->maxx - 1);
 	return (OK);
 }
 
 int
-__touchline(WINDOW *win, int y, int sx, int ex, int force)
+__touchline(WINDOW *win, int y, int sx, int ex)
 {
 #ifdef DEBUG
-	__CTRACE("touchline: (%0.2o, %d, %d, %d, %d)\n", win, y, sx, ex, force);
+	__CTRACE("touchline: (%0.2o, %d, %d, %d)\n", win, y, sx, ex);
 	__CTRACE("touchline: first = %d, last = %d\n",
 	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
-	if (force)
-		win->lines[y]->flags |= __FORCEPAINT;
 	sx += win->ch_off;
 	ex += win->ch_off;
 	if (!(win->lines[y]->flags & __ISDIRTY))
