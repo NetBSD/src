@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.4 2001/01/07 13:56:42 jdc Exp $	*/
+/*	$NetBSD: pause.c,v 1.5 2001/01/07 14:44:03 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,10 +38,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pause.c,v 1.4 2001/01/07 13:56:42 jdc Exp $");
+__RCSID("$NetBSD: pause.c,v 1.5 2001/01/07 14:44:03 augustss Exp $");
 #endif				/* not lint */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
 #include "curses.h"
