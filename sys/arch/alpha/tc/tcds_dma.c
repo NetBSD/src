@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.6 1995/12/20 00:40:32 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.7 1996/07/09 00:55:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -121,9 +121,9 @@ tcds_dma_start(sc, addr, len, datain)
 	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
 		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
 	} else {
-		*sc->sc_sda = k0segtophys((u_long)*addr) >> 2;
+		*sc->sc_sda = ALPHA_K0SEG_TO_PHYS((u_long)*addr) >> 2;
 	}
-	wbflush();
+	alpha_mb();
 	dic = *sc->sc_dic;
 	dic &= ~TCDS_DIC_ADDRMASK;
 	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
@@ -132,7 +132,7 @@ tcds_dma_start(sc, addr, len, datain)
 	else
 		dic &= ~TCDS_DIC_WRITE;
 	*sc->sc_dic = dic;
-	wbflush();
+	alpha_mb();
 
 	/* Program the SCSI counter */
 	ESP_WRITE_REG(sc->sc_esp, ESP_TCL, size);
@@ -245,7 +245,7 @@ tcds_dma_intr(sc)
 #endif
 			ESP_DMA(("dud0 at 0x%lx dudmask 0x%x\n",
 			    addr, dudmask));
-			addr = (u_int32_t *)phystok0seg(addr);
+			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		dud = *sc->sc_dud1;
@@ -266,7 +266,7 @@ tcds_dma_intr(sc)
 #endif
 			ESP_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
 			    addr, dudmask));
-			addr = (u_int32_t *)phystok0seg(addr);
+			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		/* XXX deal with saved residual byte? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.8 1996/04/12 02:09:24 cgd Exp $	*/
+/*	$NetBSD: pmap.old.c,v 1.9 1996/07/09 00:54:07 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -305,7 +305,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * This will be used until processes get their own.
 	 */
 	valloc(Segtabzero, pt_entry_t, NPTEPG);
-        Segtabzeropte = (k0segtophys(Segtabzero) >> PGSHIFT) << PG_SHIFT;
+        Segtabzeropte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Segtabzero) >> PGSHIFT) << PG_SHIFT;
 	Segtabzeropte |= PG_V | PG_KRE | PG_KWE | PG_WIRED;
 
 	/*
@@ -359,7 +359,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = 1 + lastusablepage - alpha_btop(k0segtophys(firstaddr));
+	i = 1 + lastusablepage - alpha_btop(ALPHA_K0SEG_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
@@ -378,7 +378,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 
 	/* Second, map all of the level 2 pte pages */
 	for (i = 0; i < howmany(Sysptmapsize, NPTEPG); i++) {
-		pte = (k0segtophys(Sysptmap + (i*PAGE_SIZE)) >> PGSHIFT)
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) + (i*PAGE_SIZE)) >> PGSHIFT)
 		    << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		Lev1map[kvtol1pte(VM_MIN_KERNEL_ADDRESS +
@@ -386,7 +386,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	}
 
 	/* Finally, map the virtual page table */
-	pte = (k0segtophys(Lev1map) >> PGSHIFT) << PG_SHIFT;
+	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT) << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	Lev1map[kvtol1pte(VPTBASE)] = pte;
 	
@@ -395,7 +395,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 	/* Map all of the level 3 pte pages */
 	for (i = 0; i < howmany(Sysmapsize, NPTEPG); i++) {
-		pte = (k0segtophys(((caddr_t)Sysmap)+(i*PAGE_SIZE)) >> PGSHIFT)
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysmap)+(i*PAGE_SIZE)) >> PGSHIFT)
 		    << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		Sysptmap[vatoste(VM_MIN_KERNEL_ADDRESS+
@@ -407,7 +407,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 	/* Nothing to do; it's already zero'd */
 
-	avail_start = k0segtophys(firstaddr);
+	avail_start = ALPHA_K0SEG_TO_PHYS(firstaddr);
 #if 1
 	avail_end = alpha_ptob(lastusablepage + 1);
 	mem_size = avail_end - avail_start;
@@ -432,7 +432,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * Set up curproc's (i.e. proc 0's) PCB such that the ptbr
 	 * points to the right place.
 	 */
-	curproc->p_addr->u_pcb.pcb_ptbr = k0segtophys(Lev1map) >> PGSHIFT;
+	curproc->p_addr->u_pcb.pcb_ptbr = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
 }
 
 /*
@@ -490,7 +490,7 @@ pmap_bootstrap_alloc(size)
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
 
-	val = phystok0seg(avail_start);
+	val = ALPHA_PHYS_TO_K0SEG(avail_start);
 	size = round_page(size);
 	avail_start += size;
 
@@ -884,7 +884,7 @@ pmap_protect(pmap, sva, eva, prot)
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, bits)) {
 				pmap_pte_set_prot(pte, bits);
 				if (needtflush)
-					TBIS((caddr_t)sva);
+					TBIS(sva);
 #ifdef PMAPSTATS
 				protect_stats.changed++;
 #endif
@@ -1128,7 +1128,7 @@ validate:
 	wired = ((*pte ^ npte) == PG_WIRED);
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
-		TBIS((caddr_t)va);
+		TBIS(va);
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
@@ -1420,7 +1420,7 @@ pmap_zero_page(phys)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
-	p = (caddr_t)phystok0seg(phys);
+	p = (caddr_t)ALPHA_PHYS_TO_K0SEG(phys);
 	bzero(p, PAGE_SIZE);
 }
 
@@ -1440,8 +1440,8 @@ pmap_copy_page(src, dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (caddr_t)phystok0seg(src);
-        d = (caddr_t)phystok0seg(dst);
+        s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
+        d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	bcopy(s, d, PAGE_SIZE);
 }
 
@@ -1717,7 +1717,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 	*pte = PG_NV;
 	if ((flags & PRM_TFLUSH) && active_pmap(pmap))
-		TBIS((caddr_t)va);
+		TBIS(va);
 	/*
 	 * For user mappings decrement the wiring count on
 	 * the PT page.  We do this after the PTE has been
@@ -1919,7 +1919,7 @@ pmap_changebit(pa, bit, setem)
 			if (*pte != npte) {
 				*pte = npte;
 				if (active_pmap(pv->pv_pmap))
-					TBIS((caddr_t)va);
+					TBIS(va);
 #ifdef PMAPSTATS
 				if (setem)
 					chgp->sethits++;
@@ -2213,7 +2213,7 @@ pmap_emulate_reference(p, v, user, write)
 		printf("warning: pmap_changebit didn't.");
 #endif
 		*pte &= ~faultoff;
-		TBIS((caddr_t)v);
+		TBIS(v);
 	}
 }
 

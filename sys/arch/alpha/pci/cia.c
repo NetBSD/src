@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.6 1996/06/10 00:02:31 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.7 1996/07/09 00:54:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -60,8 +60,6 @@ struct cfdriver cia_cd = {
 };
 
 static int	ciaprint __P((void *, char *pnp));
-
-#define	REGVAL(r)	(*(int32_t *)phystok0seg(r))
 
 /* There can be only one. */
 int ciafound;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.1 1996/05/01 21:15:50 cgd Exp $	*/
+/*	$NetBSD: sfb.c,v 1.2 1996/07/09 00:55:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -91,7 +91,6 @@ sfbmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct tc_attach_args *ta = aux;
 
 	if (strncmp("PMAGB-BA", ta->ta_modname, TC_ROM_LLEN) != 0)
@@ -111,7 +110,7 @@ sfb_getdevconfig(dense_addr, dc)
 	int i;
 
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = k0segtophys(dc->dc_vaddr);		/* XXX */
+	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 	dc->dc_size = SFB_SIZE;
 
 	regp = (char *)dc->dc_vaddr + SFB_ASIC_OFFSET;
@@ -208,7 +207,6 @@ sfbattach(parent, self, aux)
 	struct wscons_attach_args waa;
 	struct wscons_odev_spec *wo;
 	int console;
-	char *x;
 
 	console = 0;					/* XXX */
 	if (console)

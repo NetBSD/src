@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1996/04/23 15:26:10 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1996/07/09 00:54:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -70,9 +70,9 @@ cpu_coredump(p, vp, cred, chdr)
 	cpustate.regs = *p->p_md.md_tf;
 	if (p->p_md.md_flags & MDP_FPUSED)
 		if (p == fpcurproc) {
-			pal_wrfen(1);
+			alpha_pal_wrfen(1);
 			savefpstate(&cpustate.fpstate);
-			pal_wrfen(0);
+			alpha_pal_wrfen(0);
 		} else
 			cpustate.fpstate = p->p_addr->u_pcb.pcb_fp;
 	else
@@ -166,9 +166,9 @@ cpu_fork(p1, p2)
 	 * if this process has state stored there.
 	 */
 	if (p1 == fpcurproc) {
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 	}
 
 	/*
@@ -307,9 +307,9 @@ cpu_swapout(p)
 	if (p != fpcurproc)
 		return;
 
-	pal_wrfen(1);
+	alpha_pal_wrfen(1);
 	savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-	pal_wrfen(0);
+	alpha_pal_wrfen(0);
 	fpcurproc = NULL;
 }
 
@@ -332,7 +332,7 @@ pagemove(from, to, size)
 	tpte = kvtopte(to);
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
-		TBIS(from);
+		TBIS((vm_offset_t)from);
 		*tpte++ = *fpte;
 		*fpte = 0;
 		fpte++;

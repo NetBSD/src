@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.5 1996/04/23 14:00:53 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.6 1996/07/09 00:54:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -124,7 +124,7 @@ lca_init(lcp)
 	/* Turn off DMA window enables in Window Base Registers */
 /*	REGVAL(LCA_IOC_W_BASE0) = 0;
 	REGVAL(LCA_IOC_W_BASE1) = 0; */
-	wbflush();
+	alpha_mb();
 }
 
 #ifdef notdef
@@ -138,7 +138,7 @@ lca_init_sgmap(lcp)
 	bzero(lcp->lc_sgmap, 1024 * 8);		/* clear all entries. */
 
 	REGVAL(LCA_IOC_W_BASE0) = 0;
-	wbflush();
+	alpha_mb();
 
 	/* Set up Translated Base Register 1; translate to sybBus addr 0. */
 	/* check size against APEC XXX JH */
@@ -149,7 +149,7 @@ lca_init_sgmap(lcp)
 
         /* Enable window 1; from PCI address 8MB, direct mapped. */
         REGVAL(LCA_IOC_W_BASE0) = 0x300800000;
-        wbflush();
+        alpha_mb();
 }
 #endif
 

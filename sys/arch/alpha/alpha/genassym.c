@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1996/05/17 18:29:41 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5 1996/07/09 00:53:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -118,18 +118,17 @@ main(argc, argv)
 	off("TF_A2", struct trapframe, tf_a2);
 
 	/* bits of the PS register */
-	def("PSL_U", PSL_U);
-	def("PSL_IPL", PSL_IPL);
-	def("PSL_IPL_0", PSL_IPL_0);
-	def("PSL_IPL_SOFT", PSL_IPL_SOFT);
-	def("PSL_IPL_HIGH", PSL_IPL_HIGH);
+	def("ALPHA_PSL_USERMODE", ALPHA_PSL_USERMODE);
+	def("ALPHA_PSL_IPL_MASK", ALPHA_PSL_IPL_MASK);
+	def("ALPHA_PSL_IPL_0", ALPHA_PSL_IPL_0);
+	def("ALPHA_PSL_IPL_SOFT", ALPHA_PSL_IPL_SOFT);
+	def("ALPHA_PSL_IPL_HIGH", ALPHA_PSL_IPL_HIGH);
 
 	/* pte bits */
-	def("PG_V", PG_V);
-	def("PG_ASM", PG_ASM);
-	def("PG_KRE", PG_KRE);
-	def("PG_KWE", PG_KWE);
-	def("PG_SHIFT", PG_SHIFT);
+	def("ALPHA_PTE_VALID", ALPHA_PTE_VALID);
+	def("ALPHA_PTE_ASM", ALPHA_PTE_ASM);
+	def("ALPHA_PTE_KR", ALPHA_PTE_KR);
+	def("ALPHA_PTE_KW", ALPHA_PTE_KW);
 
 	/* Important offsets into the proc struct & associated constants */
 	off("P_FORW", struct proc, p_forw);

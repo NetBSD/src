@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 1995/11/23 02:34:37 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 1996/07/09 00:54:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -113,7 +113,7 @@ trap(type, code, v, framep)
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
-	if (USERMODE(framep->tf_ps)) {
+	if ((framep->tf_ps & ALPHA_PSL_USERMODE) != 0) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
@@ -187,12 +187,12 @@ sigfpe:		i = SIGFPE;
 		if (fpcurproc == p)
 			panic("fp disabled for fpcurproc == %lx", p);
 
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		if (fpcurproc)
 			savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
 		fpcurproc = p;
 		restorefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
@@ -284,7 +284,7 @@ sigfpe:		i = SIGFPE;
 		}
 		if (rv == KERN_SUCCESS)
 			goto out;
-		if (!USERMODE(framep->tf_ps)) {
+		if ((framep->tf_ps & ALPHA_PSL_USERMODE) == 0) {
 			if (p != NULL &&
 			    p->p_addr->u_pcb.pcb_onfault != NULL) {
 				framep->tf_pc =
@@ -350,7 +350,7 @@ syscall(code, framep)
 #endif
 
 #if notdef				/* can't happen, ever. */
-	if (!USERMODE(framep->tf_ps))
+	if ((framep->tf_ps & ALPHA_PSL_USERMODE) == 0) {
 		panic("syscall");
 #endif
 	cnt.v_syscall++;
