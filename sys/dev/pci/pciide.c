@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.49 1999/12/12 02:53:56 thorpej Exp $	*/
 
 
 /*
@@ -97,6 +97,8 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/endian.h>
+
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
@@ -113,15 +115,6 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_sis_reg.h>
 #include <dev/pci/pciide_acer_reg.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h> 
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else 
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -819,17 +812,17 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		}
 #endif
 		dma_maps->dma_table[seg].base_addr =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
 		dma_maps->dma_table[seg].byte_count =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
 		    IDEDMA_BYTE_COUNT_MASK);
 		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
-		   seg, pcitoh(dma_maps->dma_table[seg].byte_count),
-		   pcitoh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
+		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
+		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
 	}
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
-	    htopci(IDEDMA_BYTE_COUNT_EOT);
+	    htole32(IDEDMA_BYTE_COUNT_EOT);
 
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 0,
 	    dma_maps->dmamap_table->dm_mapsize,

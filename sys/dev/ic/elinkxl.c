@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.20 1999/11/19 10:42:48 bouyer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.21 1999/12/12 03:00:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,15 +81,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
+#include <machine/endian.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -363,7 +355,7 @@ ex_config(sc)
 		sc->sc_rxdescs[i].rx_dmamap = sc->sc_rx_dmamaps[i];
 		sc->sc_rxdescs[i].rx_upd = &sc->sc_upd[i];
 		sc->sc_upd[i].upd_frags[0].fr_len =
-		    htopci((MCLBYTES - 2) | EX_FR_LAST);
+		    htole32((MCLBYTES - 2) | EX_FR_LAST);
 		if (ex_add_rxbuf(sc, &sc->sc_rxdescs[i]) != 0) {
 			printf("%s: can't allocate or map rx buffers\n",
 			    sc->sc_dev.dv_xname);
@@ -1024,12 +1016,12 @@ ex_start(ifp)
 		fr = &txp->tx_dpd->dpd_frags[0];
 		totlen = 0;
 		for (segment = 0; segment < dmamap->dm_nsegs; segment++, fr++) {
-			fr->fr_addr = htopci(dmamap->dm_segs[segment].ds_addr);
-			fr->fr_len = htopci(dmamap->dm_segs[segment].ds_len);
+			fr->fr_addr = htole32(dmamap->dm_segs[segment].ds_addr);
+			fr->fr_len = htole32(dmamap->dm_segs[segment].ds_len);
 			totlen += dmamap->dm_segs[segment].ds_len;
 		}
 		fr--;
-		fr->fr_len |= htopci(EX_FR_LAST);
+		fr->fr_len |= htole32(EX_FR_LAST);
 		txp->tx_mbhead = mb_head;
 
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1037,7 +1029,7 @@ ex_start(ifp)
 
 		dpd = txp->tx_dpd;
 		dpd->dpd_nextptr = 0;
-		dpd->dpd_fsh = htopci(totlen);
+		dpd->dpd_fsh = htole32(totlen);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
@@ -1057,7 +1049,7 @@ ex_start(ifp)
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-			prevdpd->dpd_nextptr = htopci(DPD_DMADDR(sc, txp));
+			prevdpd->dpd_nextptr = htole32(DPD_DMADDR(sc, txp));
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); 
@@ -1077,7 +1069,7 @@ ex_start(ifp)
 	}
  out:
 	if (sc->tx_head) {
-		sc->tx_tail->tx_dpd->dpd_fsh |= htopci(EX_DPD_DNIND);
+		sc->tx_tail->tx_dpd->dpd_fsh |= htole32(EX_DPD_DNIND);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)sc->tx_tail->tx_dpd - (caddr_t)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
@@ -1185,7 +1177,7 @@ ex_intr(arg)
 			rxmap = rxd->rx_dmamap;
 			m = rxd->rx_mbhead;
 			upd = rxd->rx_upd;
-			pktstat = pcitoh(upd->upd_pktstatus);
+			pktstat = le32toh(upd->upd_pktstatus);
 
 			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
 			    rxmap->dm_mapsize,
@@ -1665,9 +1657,9 @@ ex_add_rxbuf(sc, rxd)
 	m->m_data += 2;
 
 	rxd->rx_mbhead = m;
-	rxd->rx_upd->upd_pktstatus = htopci(MCLBYTES - 2);
+	rxd->rx_upd->upd_pktstatus = htole32(MCLBYTES - 2);
 	rxd->rx_upd->upd_frags[0].fr_addr =
-	    htopci(rxmap->dm_segs[0].ds_addr + 2);
+	    htole32(rxmap->dm_segs[0].ds_addr + 2);
 	rxd->rx_upd->upd_nextptr = 0;
 
 	/*
@@ -1675,7 +1667,7 @@ ex_add_rxbuf(sc, rxd)
 	 */
 	if (sc->rx_head != NULL) {
 		sc->rx_tail->rx_next = rxd;
-		sc->rx_tail->rx_upd->upd_nextptr = htopci(sc->sc_upddma +
+		sc->rx_tail->rx_upd->upd_nextptr = htole32(sc->sc_upddma +
 		    ((caddr_t)rxd->rx_upd - (caddr_t)sc->sc_upd));
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
 		    (caddr_t)sc->rx_tail->rx_upd - (caddr_t)sc->sc_upd,
