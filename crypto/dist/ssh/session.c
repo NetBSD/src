@@ -369,6 +369,47 @@ do_authenticated(struct passwd * pw)
 				success = 1;
 			break;
 
+#if defined(KRB4) || defined(KRB5)
+		/*
+		 * Sucks to do this here, but we're authenticated
+		 * by the time this happens.
+		 *
+		 * XXX Add Krb4 TGT and AFS Token passing.
+		 */
+		case SSH_CMSG_HAVE_KERBEROS_TGT:
+		    {
+			extern int ssh_krb_auth;
+
+#ifdef KRB5
+			if (ssh_krb_auth == 5) {
+				extern krb5_principal tkt_client;
+				extern char *ssh_krb_user;
+				krb5_data tgt;
+				u_int tgtlen; 
+
+				if (options.krb5_tgt_passing == 0) {
+					log("Kerberos 5 TGT passing disabled\n");
+					break;
+				}
+
+				tgt.data = packet_get_string(&tgtlen);
+				tgt.length = tgtlen;
+
+				if (!auth_krb5_tgt(ssh_krb_user, &tgt,
+				    tkt_client))
+					verbose("Kerberos 5 TGT refused for %.100s", ssh_krb_user);
+				else
+					success = 1;
+
+				xfree(tgt.data);
+			}
+#endif /* KRB5 */
+			else
+				log("Got TGT but didn't use Kerberos\n");
+			break;
+		    }
+#endif /* KRB4 || KRB5 */
+
 		case SSH_CMSG_EXEC_SHELL:
 		case SSH_CMSG_EXEC_CMD:
 			if (type == SSH_CMSG_EXEC_CMD) {
