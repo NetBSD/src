@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.27 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: print.c,v 1.28 2000/06/17 16:11:26 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.27 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: print.c,v 1.28 2000/06/17 16:11:26 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,11 @@ printlong(dp)
 			printtime(sp->st_ctime);
 		else
 			printtime(sp->st_mtime);
-		(void)printf("%s", p->fts_name);
+		if (f_nonprint)
+			printescaped(p->fts_name);
+		else
+			(void)printf("%s", p->fts_name);
+
 		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
 		if (S_ISLNK(sp->st_mode))
@@ -379,5 +383,9 @@ printlink(p)
 		return;
 	}
 	path[lnklen] = '\0';
-	(void)printf(" -> %s", path);
+	(void)printf(" -> ");
+	if (f_nonprint)
+		printescaped(path);
+	else
+		(void)printf("%s", path);
 }
