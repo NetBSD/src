@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.1 2003/03/11 10:57:54 hannken Exp $
+#	$NetBSD: EXPLORA451,v 1.2 2003/04/10 22:06:55 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -19,7 +19,6 @@ maxusers	32
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

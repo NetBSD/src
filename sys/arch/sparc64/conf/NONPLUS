@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.37 2002/09/18 02:44:09 lukem Exp $
+# 	$NetBSD: NONPLUS,v 1.38 2003/04/10 22:07:04 christos Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -111,10 +111,6 @@ options 	SCSIVERBOSE
 ## and other insecurities good only for development work.  Do not use this
 ## option on a production machine.
 #options 	INSECURE
-
-## Allow non-root users to grab /dev/console with programs such as xconsole.
-## `xconsole' therefore does not need setuid root with this option enabled.
-#options 	UCONSOLE
 
 ## `FDSCRIPTS' allows non-readable but executable scripts by providing a
 ## pre-opened opaque file to the script interpreter.  `SETUIDSCRIPTS',

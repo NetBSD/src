@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2003/02/27 19:22:39 perseant Exp $
+# $NetBSD: GENERIC,v 1.46 2003/04/10 22:06:54 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,6 @@ maxusers	32
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.40 2002/09/18 02:44:10 lukem Exp $
+# $NetBSD: DISKLESS,v 1.41 2003/04/10 22:07:05 christos Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -24,7 +24,6 @@ maxusers	2
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
-#options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 

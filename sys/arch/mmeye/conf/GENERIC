@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2003/02/27 19:22:43 perseant Exp $
+# $NetBSD: GENERIC,v 1.49 2003/04/10 22:07:00 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	16		# estimated number of users
 
@@ -36,7 +36,6 @@ options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
 # Standard system options
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 
 options 	HZ=50		# clock interrupt generates every 1/HZ sec

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.70 2003/02/10 08:04:40 grant Exp $
+# $NetBSD: INSTALL,v 1.71 2003/04/10 22:06:52 christos Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -71,7 +71,6 @@ options 	COMPAT_14
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
-options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

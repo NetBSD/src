@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.95 2003/04/08 18:58:21 abs Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.96 2003/04/10 22:06:58 christos Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -54,7 +54,6 @@ options 	PIC_DELAY
 #options 	REALBASEMEM=...	# size of base memory
 #options 	REALEXTMEM=...	# size of extended memory
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

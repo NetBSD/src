@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.5 2003/04/08 19:35:24 matt Exp $
+#	$NetBSD: EV64260,v 1.6 2003/04/10 22:06:55 christos Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -37,7 +37,6 @@ options 	OBIO0_STRIDE=0,OBIO1_STRIDE=2,OBIO2_STRIDE=2,OBIO3_STRIDE=2
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
