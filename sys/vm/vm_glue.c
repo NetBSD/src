@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.4 1993/06/21 10:18:20 cgd Exp $
+ *	$Id: vm_glue.c,v 1.5 1993/06/27 06:34:39 andrew Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -252,6 +252,7 @@ vm_fork(p1, p2, isvfork)
  * Set default limits for VM system.
  * Called for proc 0, and then inherited by all others.
  */
+void
 vm_init_limits(p)
 	register struct proc *p;
 {
@@ -288,6 +289,7 @@ int	swapdebug = 0;
  *	2. If not enough memory, wake the pageout daemon and let it
  *	   clear some space.
  */
+void
 sched()
 {
 	register struct proc *p;

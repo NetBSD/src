@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.2 1993/05/20 03:59:32 cgd Exp $
+ *	$Id: vm_meter.c,v 1.3 1993/06/27 06:34:40 andrew Exp $
  */
 
 #include "param.h"
@@ -48,6 +48,7 @@ int	maxslp = MAXSLP;
 int	saferss = SAFERSS;
 
 
+void
 vmmeter()
 {
 	register unsigned *cp, *rp, *sp;
