@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.1 2000/06/02 23:11:10 fvdl Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.1 2000/06/02 23:11:10 fvdl Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $");
 #endif
 #endif
  
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: clnt_vc.c,v 1.1 2000/06/02 23:11:10 fvdl Exp $");
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <signal.h>
 
