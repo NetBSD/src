@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memcmp.S,v 1.3 1994/01/28 20:34:42 jtc Exp $
+ *	$Id: memcmp.S,v 1.4 1994/02/07 20:57:05 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: memcmp.S,v 1.3 1994/01/28 20:34:42 jtc Exp $"
+	.asciz "$Id: memcmp.S,v 1.4 1994/02/07 20:57:05 jtc Exp $"
 #endif
 
 #include "DEFS.h"
@@ -74,8 +74,8 @@ L5:	movl	$4,%ecx			/* We know that one of the next	*/
 	subl	%ecx,%esi		/* match.			*/
 	repe
 	cmpsb
-L6:	movsbl  -1(%edi),%eax		/* Perform unsigned comparison	*/
-        movsbl  -1(%esi),%edx
+L6:	movzbl  -1(%edi),%eax		/* Perform unsigned comparison	*/
+        movzbl  -1(%esi),%edx
         subl    %edx,%eax
 	popl	%esi
 	popl	%edi
