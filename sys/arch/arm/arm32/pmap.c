@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2002/03/25 17:33:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2002/03/25 17:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2002/03/25 17:33:26 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2002/03/25 17:50:12 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3008,34 +3008,32 @@ pmap_dump_pvlist(phys, m)
 static pt_entry_t *
 pmap_map_ptes(struct pmap *pmap)
 {
-    	struct proc *p;
+	struct proc *p;
 
     	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
-		return (pt_entry_t *)PTE_BASE ;
+		return (pt_entry_t *)PTE_BASE;
 	}
 	
 	if (pmap_is_curpmap(pmap)) {
 		simple_lock(&pmap->pm_obj.vmobjlock);
 		return (pt_entry_t *)PTE_BASE;
 	}
-	
+
 	p = curproc;
-	
-	if (p == NULL)
-		p = &proc0;
+	KDASSERT(p != NULL);
 
 	/* need to lock both curpmap and pmap: use ordered locking */
-	if ((unsigned) pmap < (unsigned) curproc->p_vmspace->vm_map.pmap) {
+	if ((vaddr_t) pmap < (vaddr_t) p->p_vmspace->vm_map.pmap) {
 		simple_lock(&pmap->pm_obj.vmobjlock);
-		simple_lock(&curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
+		simple_lock(&p->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
 	} else {
-		simple_lock(&curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
+		simple_lock(&p->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
 		simple_lock(&pmap->pm_obj.vmobjlock);
 	}
     
-	pmap_map_in_l1(p->p_vmspace->vm_map.pmap, APTE_BASE,
-			pmap->pm_pptpt, FALSE);
+	pmap_map_in_l1(p->p_vmspace->vm_map.pmap, APTE_BASE, pmap->pm_pptpt,
+	    FALSE);
 	cpu_tlb_flushD();
 	cpu_cpwait();
 	return (pt_entry_t *)APTE_BASE;
@@ -3049,14 +3047,17 @@ static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
+
 	if (pmap == pmap_kernel()) {
 		return;
 	}
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
+		KDASSERT(curproc != NULL);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
-		simple_unlock(&curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
+		simple_unlock(
+		    &curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
 	}
 }
 
