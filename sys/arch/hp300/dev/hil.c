@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.56 2003/02/02 14:08:04 wiz Exp $	*/
+/*	$NetBSD: hil.c,v 1.57 2003/04/01 20:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.56 2003/02/02 14:08:04 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.57 2003/04/01 20:41:37 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.56 2003/02/02 14:08:04 wiz Exp $");
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -1377,7 +1379,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 	bus_space_handle_t bsh;
 	u_char lang;
 
-	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+	if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
 		return (1);
 
 	va = bus_space_vaddr(bst, bsh);

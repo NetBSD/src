@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.25 2003/01/28 22:19:25 wiz Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.26 2003/04/01 20:41:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.25 2003/01/28 22:19:25 wiz Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.26 2003/04/01 20:41:37 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.25 2003/01/28 22:19:25 wiz Exp $");
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
  
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -714,13 +716,13 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         u_int8_t *dioiidev;
         int size;
 
-        if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+        if (bus_space_map(bst, addr, PAGE_SIZE, 0, &bsh))
                 return (1);
         va = bus_space_vaddr(bst, bsh);
         grf = (struct grfreg *)va;
 
         if (grf->gr_id != GRFHWID) {
-		bus_space_unmap(bst, bsh, NBPG);
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
                 return (1);
 	}
 
@@ -742,7 +744,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
                 break;
 
         default:
-		bus_space_unmap(bst, bsh, NBPG);
+		bus_space_unmap(bst, bsh, PAGE_SIZE);
                 return (1);
         }
 
@@ -752,7 +754,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	} else
 		size = DIOCSIZE;
 
-        bus_space_unmap(bst, bsh, NBPG);
+        bus_space_unmap(bst, bsh, PAGE_SIZE);
         if (bus_space_map(bst, addr, size, 0, &bsh))
                 return (1);
         va = bus_space_vaddr(bst, bsh);

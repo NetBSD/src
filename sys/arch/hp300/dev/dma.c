@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $	*/
+/*	$NetBSD: dma.c,v 1.29 2003/04/01 20:41:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.29 2003/04/01 20:41:36 thorpej Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -97,11 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $");
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
+ * at most MAXPHYS/PAGE_SIZE+1 chain elements to describe, i.e. if none of
+ * the buffer pages are physically contiguous (MAXPHYS/PAGE_SIZE) and the
  * buffer is not page aligned (+1).
  */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
+#define	DMAMAXIO	(MAXPHYS/PAGE_SIZE+1)
 
 struct dma_chain {
 	int	dc_count;
@@ -446,7 +448,7 @@ dmago(unit, addr, count, flags)
 		if (mmutype == MMU_68040)
 			DCFP((paddr_t)dc->dm_chain[seg].dc_addr);
 #endif
-		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
+		if (count < (tcount = PAGE_SIZE - ((int)addr & PGOFSET)))
 			tcount = count;
 		dc->dm_chain[seg].dc_count = tcount;
 		addr += tcount;
