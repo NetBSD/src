@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_conf.c,v 1.1 2000/02/26 18:59:36 thorpej Exp $	*/
+/*	$NetBSD: alpha_pci_conf.c,v 1.2 2001/07/17 17:46:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,9 +46,8 @@
 
 #include <machine/sysarch.h>
 
-u_int32_t
-alpha_pci_conf_read(bus, device, func, reg)
-	u_int bus, device, func, reg;
+uint32_t
+alpha_pci_conf_read(u_int bus, u_int device, u_int func, u_int reg)
 {
 	struct alpha_pci_conf_readwrite_args args;
 
@@ -65,9 +64,8 @@ alpha_pci_conf_read(bus, device, func, reg)
 }
 
 void
-alpha_pci_conf_write(bus, device, func, reg, val)
-	u_int bus, device, func, reg;
-	u_int32_t val;
+alpha_pci_conf_write(u_int bus, u_int device, u_int func, u_int reg,
+    uint32_t val)
 {
 	struct alpha_pci_conf_readwrite_args args;
 
