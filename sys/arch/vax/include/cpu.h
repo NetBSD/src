@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.48 2000/05/29 20:00:56 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.49 2000/05/31 23:55:52 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -109,7 +109,6 @@ struct cpu_info {
 #define	cpu_number() (curcpu()->ci_cpunumber)
 #define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
 
-extern struct device *booted_from;
 extern int mastercpu;
 
 #define	setsoftnet()	mtpr(12,PR_SIRR)
