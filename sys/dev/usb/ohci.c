@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.138 2003/02/08 03:32:50 ichiro Exp $	*/
+/*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.138 2003/02/08 03:32:50 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1728,7 +1728,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 	splx(s);
@@ -2897,7 +2897,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	sed->ed.ed_flags &= htole32(~OHCI_ED_SKIP);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+                usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    ohci_timeout, xfer);
 	}
 
