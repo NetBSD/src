@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.161 2004/06/06 05:32:17 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.162 2004/07/02 21:20:10 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.161 2004/06/06 05:32:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.162 2004/07/02 21:20:10 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -919,12 +919,12 @@ wi_start(struct ifnet *ifp)
 	cur = sc->sc_txnext;
 	for (;;) {
 		ni = ic->ic_bss;
+		if (sc->sc_txd[cur].d_len != 0 ||
+		    SLIST_EMPTY(&sc->sc_rssdfree)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 		if (!IF_IS_EMPTY(&ic->ic_mgtq)) {
-			if (sc->sc_txd[cur].d_len != 0 ||
-			    SLIST_EMPTY(&sc->sc_rssdfree)) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
 			    (caddr_t)&frmhdr.wi_ehdr);
@@ -932,7 +932,9 @@ wi_start(struct ifnet *ifp)
                         wh = mtod(m0, struct ieee80211_frame *);
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-		} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
+		} else if (ic->ic_state != IEEE80211_S_RUN)
+                                break;
+		else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 			struct llc *llc;
 
 			/* 
@@ -944,14 +946,6 @@ wi_start(struct ifnet *ifp)
 			 * sleep as quickly as possible to save power...
 			 */
 
-			if (ic->ic_state != IEEE80211_S_RUN)
-				break;
-
-			if (sc->sc_txd[cur].d_len != 0 ||
-			    SLIST_EMPTY(&sc->sc_rssdfree)) {
-				ifp->if_flags |= IFF_OACTIVE;
-				break;
-			}
 			IF_DEQUEUE(&ic->ic_pwrsaveq, m0);
                         wh = mtod(m0, struct ieee80211_frame *);
 			llc = (struct llc *) (wh + 1);
@@ -961,16 +955,8 @@ wi_start(struct ifnet *ifp)
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
 		} else {
-			if (ic->ic_state != IEEE80211_S_RUN) {
-				break;
-			}
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL) {
-				break;
-			}
-			if (sc->sc_txd[cur].d_len != 0 ||
-			    SLIST_EMPTY(&sc->sc_rssdfree)) {
-				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
