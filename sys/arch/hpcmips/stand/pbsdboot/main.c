@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2000/03/11 09:05:17 shin Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2000/03/19 11:10:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,6 +38,38 @@
 #include <pbsdboot.h>
 #include <commctrl.h>
 #include <res/resource.h>
+
+/*
+ * If you modify this program and update pbsdboot.uu,
+ * change version string which is coded in main.c
+ * appropriately.
+ * 
+ * The version string is in format:
+ *
+ *   Version A.B.C YYYY.MM.DD
+ *
+ * in where:
+ *
+ *   A: Don't change this.
+ *   B: Increment this number if you change program's behavior,
+ *      fix some bugs or add new features.
+ *   C: Increment this number if you change/add some
+ *      parameters, constants, windows' resources.
+ *   YYYY.MM.DD: date
+ */
+TCHAR *version_string = 
+	TEXT("PocketBSD boot loader\r\n")
+	TEXT("Version 1.11.0 2000.03.19\r\n")
+#if ( _WIN32_WCE < 200 )
+	TEXT("Compiled for WinCE 1.01\r\n")
+#else
+	TEXT("Compiled for WinCE 2.00\r\n")
+#endif
+	TEXT("\r\n")
+	TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
+	TEXT("All rights reserved.\r\n")
+	TEXT("\r\n")
+	TEXT("http://www.netbsd.org/Ports/hpcmips\r\n");
 
 /*-----------------------------------------------------------------------------
 
@@ -81,6 +113,15 @@ int		user_define_idx;
 -----------------------------------------------------------------------------*/
 TCHAR szAppName[ ] = TEXT("PocketBSD boot");
 TCHAR szTitle[ ]   = TEXT("Welcome to PocketBSD!");
+
+/*
+ * Wince_conf  identify executable binary file.
+ */
+#if ( _WIN32_WCE < 200 )
+static char *wince_conf = "Compiled for WinCE 1.01";
+#else
+static char *wince_conf = "Compiled for WinCE 2.00";
+#endif
 
 struct fb_type fb_types[] = {
 	{ BIFB_D2_M2L_3,	TEXT(BIFBN_D2_M2L_3)	},
@@ -238,18 +279,29 @@ TCHAR unicode_memory_card1[] = { UNICODE_MEMORY_CARD,  TEXT('1'), TEXT('\\') };
 TCHAR unicode_memory_card2[] = { UNICODE_MEMORY_CARD,  TEXT('2'), TEXT('\\') };
 #endif
 
-TCHAR* path_list[] = {
-	TEXT("/"),
-	TEXT("2:/"),
-	TEXT("\\"),
-	TEXT("\\My Documents\\"),
-	TEXT("\\Storage Card\\"),
-	TEXT("\\Storage Card1\\"),
-	TEXT("\\Storage Card2\\"),
+#define LANGID_DEFAULT MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT)
+struct path_s path_list[] = {
+	{ TEXT("/"),
+	  LANGID_DEFAULT, 0 },
+	{ TEXT("2:/"),
+	  LANGID_DEFAULT, 0 },
+	{ TEXT("\\"),
+	  LANGID_DEFAULT, 0 },
+	{ TEXT("\\My Documents\\"),
+	  LANGID_DEFAULT, 0 },
+	{ TEXT("\\Storage Card\\"),
+	  LANGID_DEFAULT, PATH_SAVE },
+	{ TEXT("\\Storage Card1\\"),
+	  LANGID_DEFAULT, PATH_SAVE },
+	{ TEXT("\\Storage Card2\\"),
+	  LANGID_DEFAULT, PATH_SAVE },
 #ifdef UNDER_CE
-	unicode_memory_card,
-	unicode_memory_card1,
-	unicode_memory_card2,
+	{ unicode_memory_card,
+	  MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), PATH_SAVE },
+	{ unicode_memory_card1,
+	  MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), PATH_SAVE },
+	{ unicode_memory_card2,
+	  MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), PATH_SAVE },
 #endif
 };
 int path_list_items = ARRAYSIZEOF(path_list);
@@ -384,7 +436,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		fb_settings[0].platid_machine = pref.platid_machine;
 	} else {
 		TCHAR tmpbuf[PATHBUFLEN];
-		wsprintf(tmpbuf, TEXT("%s%S"), path_list[0], "netbsd");
+		wsprintf(tmpbuf, TEXT("%s%S"), path_list[0].name, "netbsd");
 		SetDlgItemText(hWndMain, IDC_STATUS,
 			       TEXT("preferences not loaded."));
 
@@ -410,10 +462,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	 *  initialize kernel file name list.
 	 */
 	for (i = 0; i < path_list_items; i++) {
-		TCHAR tmpbuf[1024];
-		wsprintf(tmpbuf, TEXT("%s%S"), path_list[i], "netbsd");
-		SendDlgItemMessage(hWndMain, IDC_KERNEL, CB_ADDSTRING, 0,
-				   (LPARAM)tmpbuf);
+		if (path_list[i].langid == LANGID_DEFAULT ||
+		    path_list[i].langid == GetSystemDefaultLangID()) {
+			TCHAR tmpbuf[1024];
+			wsprintf(tmpbuf, TEXT("%s%S"),
+			    path_list[i].name, "netbsd");
+			SendDlgItemMessage(hWndMain, IDC_KERNEL,
+			    CB_ADDSTRING, 0, (LPARAM)tmpbuf);
+		}
 	}
 #ifdef ADDITIONAL_KERNELS
 	for (i = 0; i < kernel_list_items; i++) {
@@ -474,6 +530,10 @@ BOOL CALLBACK DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		return (1);
 
+	case WM_PALETTECHANGED:
+		palette_check(hWnd);
+		break;
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDCANCEL:
@@ -490,34 +550,12 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
 	case WM_INITDIALOG:
-		/*
-		 * If you modify this program and update pbsdboot.uu,
-		 * change version string which is coded in main.c
-		 * appropriately.
-		 * 
-		 * The version string is in format:
-		 *
-		 *   Version A.B.C YYYY.MM.DD
-		 *
-		 * in where:
-		 *
-		 *   A: Don't change this.
-		 *   B: Increment this number if you change program's behavior,
-		 *      fix some bugs or add new features.
-		 *   C: Increment this number if you change/add some
-		 *      parameters, constants, windows' resources.
-		 *   YYYY.MM.DD: date
-		 */
-		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
-			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.10.2 2000.02.27\r\n")
-			       TEXT("\r\n")
-			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
-			       TEXT("All rights reserved.\r\n")
-			       TEXT("\r\n")
-			       TEXT("http://www02.u-page.so-net.ne.jp/ca2/takemura/\r\n")
-			       );
+		SetDlgItemText(hWnd, IDC_ABOUT_EDIT, version_string);
 		return (1);
+
+	case WM_PALETTECHANGED:
+		palette_check(hWnd);
+		break;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
@@ -691,6 +729,10 @@ BOOL CALLBACK FbDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		return (1);
 
+	case WM_PALETTECHANGED:
+		palette_check(hWnd);
+		break;
+
 	case WM_VSCROLL:
 		if ((HWND)lParam == GetDlgItem(hWnd, IDC_FB_ADDRSPIN)) {
 			long addr;
@@ -790,12 +832,19 @@ BOOL CheckCancel(int progress)
 	if (0 <= progress) {
 		SendDlgItemMessage(hDlgLoad, IDC_PROGRESS, 
 				   PBM_SETPOS, (WPARAM)progress, (LPARAM)NULL);
-	} else
-	if (pref.check_last_chance) {
-		if (msg_printf(MB_YESNO | MB_ICONHAND,
-			       TEXT("Last chance..."),
-			       TEXT("Push OK to boot.")) != IDYES) {
-			dlgStatus = IDCANCEL;
+	} else {
+		if (pref.check_last_chance) {
+			if (msg_printf(MB_YESNO | MB_ICONHAND,
+			    TEXT("Last chance..."),
+			    TEXT("Push OK to boot.")) != IDYES) {
+				dlgStatus = IDCANCEL;
+			}
+		}
+		palette_set(hDlgLoad);
+		if (palette_succeeded == -1) {
+			msg_printf(MSG_ERROR,
+			    TEXT("Warning"),
+			    TEXT("Sorry, palette failed"));
 		}
 	}
 
@@ -827,10 +876,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 	switch (message) {
 	case WM_CREATE:
 		sndPlaySound(TEXT("OpenProg"), SND_NODEFAULT | SND_ASYNC);
-
 		hWndCB = CommandBar_Create(hInst, hWnd, 1);
 		CommandBar_AddAdornments(hWndCB, STD_HELP, (DWORD)NULL);
-
+		palette_init(hWnd);
 		break;
 
 	case WM_PAINT:
@@ -841,6 +889,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 		hdc = BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);
 		}
+		break;
+
+	case WM_PALETTECHANGED:
+		palette_check(hWnd);
 		break;
 
 	case WM_HELP:
@@ -969,28 +1021,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 				wstrcpy(pref.kernel_name, wkernel_name);
 				wstrcpy(pref.options, woptions);
 
-				if (where_pref_load_from) {
-					pref_write(where_pref_load_from, &pref);
-				} else {
-					TCHAR *p, t;
-					TCHAR *last_separator = NULL;
-					TCHAR tmpbuf[PATHBUFLEN];
-					for (p = wkernel_name; *p != 0; p++) {
-						if (*p == TEXT('\\')) {
-							last_separator = p;
-						}
-					}
-					if (last_separator != NULL) {
-						p = last_separator + 1;
-					}
-					t = *p;
-					*p = 0;
-					wsprintf(tmpbuf,
-						 TEXT("%s%s"),
-						 wkernel_name, PREFNAME);
-					*p = t;
-					pref_write(tmpbuf, &pref);
-				}
+				pref_save(path_list, path_list_items);
 
 				SetBootInfo(&bi, &fb_settings[pref.setting_idx]);
 				debug_printf(TEXT("Args: "));

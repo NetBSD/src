@@ -121,6 +121,10 @@ SOURCE=.\mips.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\palette.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\pbsdboot.c
 # End Source File
 # Begin Source File
