@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5.2.1 1997/08/01 21:17:48 cjs Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 1997/08/03 20:32:16 cjs Exp $
+
+.include <bsd.own.mk>  # for BUILDDIR
 
 .if ${MACHINE} == "alpha"
 PROG=	ld.elf_so
