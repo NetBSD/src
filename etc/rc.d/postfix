@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.8 2004/04/08 06:15:27 lukem Exp $
+# $NetBSD: postfix,v 1.9 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: mail
@@ -8,7 +8,7 @@
 #	we make mail start late, so that things like .forward's are not
 #	processed until the system is fully operational
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="postfix"
 rcvar=$name

@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: pwcheck,v 1.4 2002/03/22 04:33:59 thorpej Exp $
+# $NetBSD: pwcheck,v 1.5 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: pwcheck
 # REQUIRE: mountcritremote syslogd
 # BEFORE:  DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="pwcheck"
 start_cmd="pwcheck_start"

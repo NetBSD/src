@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: wscons,v 1.9 2002/04/26 00:06:54 lukem Exp $
+# $NetBSD: wscons,v 1.10 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: wscons
 # REQUIRE: mountcritremote
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="wscons"
 rcvar=$name

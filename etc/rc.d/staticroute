@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: staticroute,v 1.1 2003/01/09 15:57:02 christos Exp $
+# $NetBSD: staticroute,v 1.2 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: staticroute
 # REQUIRE: network
 # BEFORE:  NETWORKING
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="staticroute"
 start_cmd="staticroute_doit Adding add"

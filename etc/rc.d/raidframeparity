@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: raidframeparity,v 1.1 2002/09/03 15:35:55 abs Exp $
+# $NetBSD: raidframeparity,v 1.2 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # REQUIRE: quota
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="raidframeparity"
 start_cmd="raidframeparity_start"

@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: poffd,v 1.1 2001/01/14 15:37:22 minoura Exp $
+# $NetBSD: poffd,v 1.2 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: poffd
 # REQUIRE: DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="poffd"
 rcvar=$name

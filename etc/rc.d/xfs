@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: xfs,v 1.7 2004/05/17 23:41:27 lukem Exp $
+# $NetBSD: xfs,v 1.8 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: xfs
 # REQUIRE: mountall cleartmp
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="xfs"
 rcvar=$name
