@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.12 1995/08/14 02:19:54 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.13 1995/08/27 20:56:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -51,6 +51,7 @@
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+#include <sys/filedesc.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_signal.h>
@@ -65,6 +66,14 @@
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/linux_machdep.h>
+
+/*
+ * To see whether pcvt is configured (for virtual console ioctl calls).
+ */
+#include "vt.h"
+#if NVT > 0
+#include <arch/i386/isa/pcvt/pcvt_ioctl.h>
+#endif
 
 /*
  * Deal with some i386-specific things in the Linux emulation code.
@@ -377,4 +386,200 @@ linux_modify_ldt(p, uap, retval)
 	default:
 		return (ENOSYS);
 	}
+}
+
+/*
+ * XXX Pathetic hack to make svgalib work. This will fake the major
+ * device number of an opened VT so that svgalib likes it. grmbl.
+ * Should probably do it 'wrong the right way' and use a mapping
+ * array for all major device numbers, and map linux_mknod too.
+ */
+dev_t
+linux_fakedev(dev)
+	dev_t dev;
+{
+	if (major(dev) == NETBSD_CONS_MAJOR)
+		return makedev(LINUX_CONS_MAJOR, minor(dev));
+	return dev;
+}
+
+/*
+ * We come here in a last attempt to satisfy a Linux ioctl() call
+ */
+int
+linux_machdepioctl(p, uap, retval)
+	struct proc *p;
+	struct linux_ioctl_args /* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(caddr_t) data;
+	} */ *uap;
+	register_t *retval;
+{
+	struct ioctl_args bia, tmparg;
+	int error, mode;
+	struct vt_mode lvt;
+	caddr_t bvtp, sg;
+	u_int fd;
+	struct file *fp;
+	struct filedesc *fdp;
+	u_long com;
+
+	SCARG(&bia, fd) = SCARG(uap, fd);
+	SCARG(&bia, data) = SCARG(uap, data);
+	com = SCARG(uap, com);
+
+	switch (com) {
+#if NVT > 0
+	case LINUX_KDGKBMODE:
+		/*
+		 * The keyboard mode isn't saved anywhere. This is just
+		 * here to make the keyboard stuff in the Linux svgalib
+		 * work most of the time.
+		 */
+		mode = K_XLATE;
+		return copyout(&mode, SCARG(uap, data), sizeof mode);
+	case LINUX_KDSKBMODE:
+		com = KDSKBMODE;
+		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
+			SCARG(&bia, data) = (caddr_t)K_RAW;
+		/*
+		 * Another kluge: Linux doesn't do VT switching
+		 * when the keyboard is in raw mode. pcvt does.
+		 * Simply disable VT switching when the mode
+		 * is set to K_RAW, and re-enable when setting
+		 * to K_XLATE.  XXX
+		 */
+		lvt.mode = SCARG(&bia, data) == K_RAW ? VT_PROCESS : VT_AUTO;
+		lvt.waitv = lvt.relsig = lvt.acqsig = lvt.frsig = 0;
+		fdp = p->p_fd;
+		if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+		    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+			return EBADF;
+		if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+			return EBADF;
+		/*
+		 * Setting relsig to 0 left pcvt in a state where it
+		 * waits for an acknowledgement. Send it now, ignore
+		 * the result.
+		 */
+		if (SCARG(&bia, data) == (caddr_t)K_XLATE) {
+			mode = VT_FALSE;
+			(*fp->f_ops->fo_ioctl)(fp, VT_RELDISP,
+			    (caddr_t)&mode, p);
+		}
+
+		if ((error = (*fp->f_ops->fo_ioctl)(fp, VT_SETMODE,
+		    (caddr_t)&lvt, p)))
+			return error;
+		break;
+	case LINUX_KDMKTONE:
+		com = KDMKTONE;
+		break;
+	case LINUX_KDSETMODE:
+		com = KDSETMODE;
+		break;
+	case LINUX_KDENABIO:
+		com = KDENABIO;
+		break;
+	case LINUX_KDDISABIO:
+		com = KDDISABIO;
+		break;
+	case LINUX_KDGETLED:
+		com = KDGETLED;
+		break;
+	case LINUX_KDSETLED:
+		com = KDSETLED;
+		break;
+	case LINUX_VT_OPENQRY:
+		com = VT_OPENQRY;
+		break;
+	case LINUX_VT_GETMODE:
+		SCARG(&bia, com) = VT_GETMODE;
+		if ((error = ioctl(p, &bia, retval)))
+			return error;
+		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
+		    sizeof (struct vt_mode))))
+			return error;
+		lvt.relsig = bsd_to_linux_sig[lvt.relsig];
+		lvt.acqsig = bsd_to_linux_sig[lvt.acqsig];
+		lvt.frsig = bsd_to_linux_sig[lvt.frsig];
+		return copyout((caddr_t)&lvt, SCARG(uap, data),
+		    sizeof (struct vt_mode));
+	case LINUX_VT_SETMODE:
+		com = VT_SETMODE;
+		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
+		    sizeof (struct vt_mode))))
+			return error;
+		lvt.relsig = linux_to_bsd_sig[lvt.relsig];
+		lvt.acqsig = linux_to_bsd_sig[lvt.acqsig];
+		lvt.frsig = linux_to_bsd_sig[lvt.frsig];
+		sg = stackgap_init(p->p_emul);
+		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
+		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
+			return error;
+		SCARG(&bia, data) = bvtp;
+		break;
+	case LINUX_VT_RELDISP:
+		com = VT_RELDISP;
+		break;
+	case LINUX_VT_ACTIVATE:
+		com = VT_ACTIVATE;
+		break;
+	case LINUX_VT_WAITACTIVE:
+		com = VT_WAITACTIVE;
+		SCARG(&bia, data) = (caddr_t)((int)SCARG(uap, data) + 1);
+		break;
+#endif
+	default:
+		return EINVAL;
+	}
+	SCARG(&bia, com) = com;
+	return ioctl(p, &bia, retval);
+}
+
+/*
+ * Set I/O permissions for a process. Just set the maximum level
+ * right away (ignoring the argument), otherwise we would have
+ * to rely on I/O permission maps, which are not implemented.
+ */
+int
+linux_iopl(p, uap, retval)
+	struct proc *p;
+	struct linux_iopl_args /* {
+		syscallarg(int) level;
+	} */ *uap;
+	register_t *retval;
+{
+	struct trapframe *fp = p->p_md.md_regs;
+
+	if (suser(p->p_ucred, &p->p_acflag) != 0)
+		return EPERM;
+	fp->tf_eflags |= PSL_IOPL;
+	*retval = 0;
+	return 0;
+}
+
+/*
+ * See above. If a root process tries to set access to an I/O port,
+ * just let it have the whole range.
+ */
+int
+linux_ioperm(p, uap, retval)
+	struct proc *p;
+	struct linux_ioperm_args /* {
+		syscallarg(unsigned int) lo;
+		syscallarg(unsigned int) hi;
+		syscallarg(int) val;
+	} */ *uap;
+	register_t *retval;
+{
+	struct trapframe *fp = p->p_md.md_regs;
+
+	if (suser(p->p_ucred, &p->p_acflag) != 0)
+		return EPERM;
+	if (SCARG(uap, val))
+		fp->tf_eflags |= PSL_IOPL;
+	*retval = 0;
+	return 0;
 }
