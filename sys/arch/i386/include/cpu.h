@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2002/11/02 07:15:07 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.89 2002/11/22 15:23:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@
 #include <machine/frame.h>
 #include <machine/segments.h>
 #include <machine/tss.h>
+#include <machine/intrdefs.h>
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
@@ -75,7 +76,7 @@ struct i386_cache_info {
 
 #define	CAI_COUNT	7
 
-struct mp_intr_map;
+struct intrsource;
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -104,9 +105,18 @@ struct cpu_info {
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 
+	volatile u_int32_t	ci_tlb_ipi_mask;
+
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
+
+	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+	u_int32_t	ci_ipending;
+	int		ci_ilevel;
+	int		ci_idepth;
+	u_int32_t	ci_imask[NIPL];
+	u_int32_t	ci_iunmask[NIPL];
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_int32_t ci_flags;		/* flags; see below */
@@ -144,13 +154,13 @@ struct cpu_info {
 
 	union descriptor *ci_gdt;
 
-	volatile u_int32_t	ci_tlb_ipi_mask;
-
 	struct i386tss	ci_doubleflt_tss;
 	struct i386tss	ci_ddbipi_tss;
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
+
+	struct evcnt ci_ipi_events[I386_NIPI];
 };
 
 /*
@@ -234,6 +244,7 @@ extern struct cpu_info cpu_info_primary;
  * referenced in generic code
  */
 #define	cpu_number()		0
+#define CPU_IS_PRIMARY(ci)	1
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -244,7 +255,7 @@ do {									\
 	struct cpu_info *__ci = (ci);					\
 	__ci->ci_want_resched = 1;					\
 	aston(__ci);							\
-} while (/*CONSTCOND*/ 0)
+} while (/*CONSTCOND*/0)
 
 #define aston(ci)		(curcpu()->ci_astpending = 1)
 
@@ -267,7 +278,7 @@ do {									\
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
-#define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
+#define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
