@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.124 2001/07/26 20:02:21 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.125 2001/07/28 12:07:11 tsutsui Exp $	*/
 
 
 /*
@@ -525,9 +525,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_AMD, pciide_amd_products },
 	{ PCI_VENDOR_OPTI, pciide_opti_products },
 	{ PCI_VENDOR_TRIONES, pciide_triones_products },
-#ifdef PCIIDE_ACARD_ENABLE
 	{ PCI_VENDOR_ACARD, pciide_acard_products },
-#endif
 #ifdef PCIIDE_SERVERWORKS_ENABLE
 	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
 #endif
