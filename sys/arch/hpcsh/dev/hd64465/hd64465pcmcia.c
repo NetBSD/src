@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.16 2004/08/11 06:30:15 mycroft Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.16.6.1 2005/02/13 10:34:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.16 2004/08/11 06:30:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.16.6.1 2005/02/13 10:34:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,9 +231,11 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_area5 == 0 || sc->sc_area6 == 0) {
 		printf("%s: can't map memory.\n", sc->sc_dev.dv_xname);
 		if (sc->sc_area5)
-			uvm_km_free(kernel_map, sc->sc_area5, 0x03000000);
+			uvm_km_free(kernel_map, sc->sc_area5, 0x03000000,
+			    UVM_KMF_VAONLY);
 		if (sc->sc_area6)
-			uvm_km_free(kernel_map, sc->sc_area6, 0x03000000);
+			uvm_km_free(kernel_map, sc->sc_area6, 0x03000000,
+			    UVM_KMF_VAONLY);
 
 		return;
 	}
@@ -814,7 +816,7 @@ __sh_hd64465_map_2page(paddr_t pa)
 	int i;
 
 	/* allocate kernel virtual */
-	v = va = uvm_km_valloc(kernel_map, 0x03000000);
+	v = va = uvm_km_alloc(kernel_map, 0x03000000, 0, UVM_KMF_VAONLY);
 	if (va == 0) {
 		PRINTF("can't allocate virtual for paddr 0x%08x\n",
 		    (unsigned)pa);
@@ -825,7 +827,9 @@ __sh_hd64465_map_2page(paddr_t pa)
  	/* map to physical addreess with specified memory type. */
 	for (i = 0; i < 3; i++, pa += 0x01000000, va += 0x01000000) {
 		if (__sh_hd64465_map(va, pa, 0x2000, mode[i]) != 0) {
-			uvm_km_free(kernel_map, v, 0x03000000);
+			pmap_kremove(v, 0x03000000);
+			uvm_km_free(kernel_map, v, 0x03000000, 0,
+			    UVM_KMF_VAONLY);
 			return (0);
 		}
 	}
