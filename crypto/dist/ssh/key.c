@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.7 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.8 2001/09/27 00:12:42 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -358,7 +358,7 @@ write_bignum(FILE *f, BIGNUM *num)
 	return 1;
 }
 
-/* returns 1 ok, -1 error, 0 type mismatch */
+/* returns 1 ok, -1 error */
 int
 key_read(Key *ret, char **cpp)
 {
@@ -413,7 +413,7 @@ key_read(Key *ret, char **cpp)
 		} else if (ret->type != type) {
 			/* is a key, but different type */
 			debug3("key_read: type mismatch");
-			return 0;
+			return -1;
 		}
 		len = 2*strlen(cp);
 		blob = xmalloc(len);
