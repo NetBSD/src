@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.10 1998/06/04 18:11:23 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.10 1998/06/04 18:11:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,82 +167,80 @@ cia_dma_init(ccp)
 	 */
 
 	/*
-	 * Initialize the SGMAP if safe to do so.  Must align page
-	 * table to 32k (hardware bug?).
+	 * Initialize the SGMAP.  Must align page table to 32k
+	 * (hardware bug?).
 	 */
-	if (ccp->cc_mallocsafe) {
-		alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
-		    CIA_SGMAP_MAPPED_BASE, 0, CIA_SGMAP_MAPPED_SIZE,
-		    sizeof(u_int64_t), NULL, (32*1024*1024));
+	alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
+	    CIA_SGMAP_MAPPED_BASE, 0, CIA_SGMAP_MAPPED_SIZE,
+	    sizeof(u_int64_t), NULL, (32*1024*1024));
 
-		/*
-		 * Set up window 0 as an 8MB SGMAP-mapped window
-		 * starting at 8MB.
-		 */
-		REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_BASE |
+	/*
+	 * Set up window 0 as an 8MB SGMAP-mapped window
+	 * starting at 8MB.
+	 */
+	REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_BASE |
+	    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
+	alpha_mb();
+
+	REGVAL(CIA_PCI_W0MASK) = CIA_PCI_WnMASK_8M;
+	alpha_mb();
+
+	tbase = ccp->cc_sgmap.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
+	if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
+		panic("cia_dma_init: bad page table address");
+	REGVAL(CIA_PCI_T0BASE) = tbase;
+	alpha_mb();
+
+	/*
+	 * Pass 1 and 2 (i.e. revision <= 1) of the Pyxis have a
+	 * broken scatter/gather TLB; it cannot be invalidated.  To
+	 * work around this problem, we configure window 2 as an SG
+	 * 2M window at 128M, which we use in DMA loopback mode to
+	 * read a spill page.  This works by causing TLB misses,
+	 * causing the old entries to be purged to make room for
+	 * the new entries coming in for the spill page.
+	 */
+	if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev <= 1) {
+		u_int64_t *page_table;
+		int i;
+
+		cia_tlb_invalidate_fn =
+		    cia_broken_pyxis_tlb_invalidate;
+
+		alpha_sgmap_init(t, &cia_pyxis_bug_sgmap,
+		    "pyxis_bug_sgmap", CIA_PYXIS_BUG_BASE, 0,
+		    CIA_PYXIS_BUG_SIZE, sizeof(u_int64_t), NULL,
+		    (32*1024*1024));
+
+		REGVAL(CIA_PCI_W2BASE) = CIA_PYXIS_BUG_BASE |
 		    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
 		alpha_mb();
 
-		REGVAL(CIA_PCI_W0MASK) = CIA_PCI_WnMASK_8M;
+		REGVAL(CIA_PCI_W2MASK) = CIA_PCI_WnMASK_2M;
 		alpha_mb();
 
-		tbase = ccp->cc_sgmap.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
+		tbase = cia_pyxis_bug_sgmap.aps_ptpa >>
+		    CIA_PCI_TnBASE_SHIFT;
 		if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
 			panic("cia_dma_init: bad page table address");
-		REGVAL(CIA_PCI_T0BASE) = tbase;
+		REGVAL(CIA_PCI_T2BASE) = tbase;
 		alpha_mb();
 
 		/*
-		 * Pass 1 and 2 (i.e. revision <= 1) of the Pyxis have a
-		 * broken scatter/gather TLB; it cannot be invalidated.  To
-		 * work around this problem, we configure window 2 as an SG
-		 * 2M window at 128M, which we use in DMA loopback mode to
-		 * read a spill page.  This works by causing TLB misses,
-		 * causing the old entries to be purged to make room for
-		 * the new entries coming in for the spill page.
+		 * Initialize the page table to point at the spill
+		 * page.  Leave the last entry invalid.
 		 */
-		if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev <= 1) {
-			u_int64_t *page_table;
-			int i;
+		pci_sgmap_pte64_init_spill_page_pte();
+		for (i = 0, page_table = cia_pyxis_bug_sgmap.aps_pt;
+		     i < (CIA_PYXIS_BUG_SIZE / PAGE_SIZE) - 1; i++) {
+			page_table[i] =
+			    pci_sgmap_pte64_prefetch_spill_page_pte;
+		}
+		alpha_mb();
+	} else
+		cia_tlb_invalidate_fn = cia_tlb_invalidate;
 
-			cia_tlb_invalidate_fn =
-			    cia_broken_pyxis_tlb_invalidate;
-
-			alpha_sgmap_init(t, &cia_pyxis_bug_sgmap,
-			    "pyxis_bug_sgmap", CIA_PYXIS_BUG_BASE, 0,
-			    CIA_PYXIS_BUG_SIZE, sizeof(u_int64_t), NULL,
-			    (32*1024*1024));
-
-			REGVAL(CIA_PCI_W2BASE) = CIA_PYXIS_BUG_BASE |
-			    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
-			alpha_mb();
-
-			REGVAL(CIA_PCI_W2MASK) = CIA_PCI_WnMASK_2M;
-			alpha_mb();
-
-			tbase = cia_pyxis_bug_sgmap.aps_ptpa >>
-			    CIA_PCI_TnBASE_SHIFT;
-			if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
-				panic("cia_dma_init: bad page table address");
-			REGVAL(CIA_PCI_T2BASE) = tbase;
-			alpha_mb();
-
-			/*
-			 * Initialize the page table to point at the spill
-			 * page.  Leave the last entry invalid.
-			 */
-			pci_sgmap_pte64_init_spill_page_pte();
-			for (i = 0, page_table = cia_pyxis_bug_sgmap.aps_pt;
-			     i < (CIA_PYXIS_BUG_SIZE / PAGE_SIZE) - 1; i++) {
-				page_table[i] =
-				    pci_sgmap_pte64_prefetch_spill_page_pte;
-			}
-			alpha_mb();
-		} else
-			cia_tlb_invalidate_fn = cia_tlb_invalidate;
-
-		CIA_TLB_INVALIDATE();
-	}
+	CIA_TLB_INVALIDATE();
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */

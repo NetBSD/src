@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.2 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.3 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.2 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.3 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ mcpciaattach(parent, self, aux)
 	printf("\n");
 
 	mcpcia_init(mcp);
-
+	mcpcia_dma_init(&mcp->mcpcia_cc);
 
 	mcp->mcpcia_next = NULL;
 	if (mcpcia_lt == NULL) {
@@ -184,11 +184,6 @@ mcpcia_init(mcp)
 	REGVAL(MCPCIA_INT_MASK1(mcp)) = 0;
 	REGVAL(MCPCIA_CAP_ERR(mcp)) = 0xFFFFFFFF;
 	alpha_mb();
-
-	/*
-	 * Set up DMA stuff for this MCPCIA.
-	 */
-	mcpcia_dma_init(ccp);
 
 	/*
 	 * Clean up any post probe errors (W1TC).

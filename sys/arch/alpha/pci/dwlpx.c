@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.15 1998/03/26 18:17:13 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.16 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.15 1998/03/26 18:17:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.16 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ dwlpxattach(parent, self, aux)
 	sc->dwlpx_hosenum = ka->ka_hosenum;
 	dwlps[sc->dwlpx_node - 4][sc->dwlpx_hosenum] = sc;
 	dwlpx_init(sc);
+	dwlpx_dma_init(ccp);
 
 	pcia_present = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
 	printf(": PCIA rev. %d, STD I/O %spresent, %s DMA maps.\n",
@@ -227,11 +228,6 @@ dwlpx_init(sc)
 	 * Establish a precalculated base for convenience's sake.
 	 */
 	ccp->cc_sysbase = ls;
-
-	/*
-	 * Set up DMA stuff for this DWLPX.
-	 */
-	dwlpx_dma_init(ccp);
 
 	/*
 	 * If there are only 2 HPCs, then the 'present' register is not
