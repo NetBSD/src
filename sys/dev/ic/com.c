@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.131 1998/02/01 23:33:01 marc Exp $	*/
+/*	$NetBSD: com.c,v 1.132 1998/02/02 22:54:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -513,6 +513,8 @@ com_attach_subr(sc)
 		sc->enabled = 1;
 
 	com_config(sc);
+
+	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 }
 
 void
@@ -590,7 +592,7 @@ comopen(dev, flag, mode, p)
 	if (unit >= com_cd.cd_ndevs)
 		return (ENXIO);
 	sc = com_cd.cd_devs[unit];
-	if (!sc)
+	if (!sc || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -1590,7 +1592,7 @@ comsoft(arg)
 
 	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
 		sc = com_cd.cd_devs[unit];
-		if (sc == NULL)
+		if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
 			continue;
 
 		if (!sc->enabled)
