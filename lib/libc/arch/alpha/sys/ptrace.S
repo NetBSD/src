@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.3 1996/10/17 03:08:19 cgd Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.4 1996/11/08 00:51:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,8 +28,6 @@
  */
 
 #include "SYS.h"
-
-IMPORT(errno, 4)
 
 LEAF(ptrace, 4)
 	LDGP(pv)
