@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.36 2000/03/30 11:27:20 augustss Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.37 2000/04/07 07:02:11 chs Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_socket.h>
 
-#ifdef sparc
+#ifdef __sparc__
 /* 
  * Solaris-2.4 on the sparc has the old stat call using the new
  * stat data structure...
