@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: installboot.sh,v 1.1 1998/11/23 08:15:12 mrg Exp $
+#	$NetBSD: installboot.sh,v 1.2 1998/11/24 00:03:19 mrg Exp $
 #
 # Copyright (c) 1998 Matthew R. Green
 # All rights reserved.
@@ -64,7 +64,7 @@ if [ -z "$blk" -o -z "$disk" ]; then
 	exit 1
 fi
 
-cmd="dd if=$blk of=$disk bs=512 conv=notrunc seek=1"
+cmd="dd if=$blk of=$disk bs=512 count=15 conv=notrunc seek=1"
 
 if [ $verbose = 1 ]; then
 	echo $cmd
