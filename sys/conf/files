@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.471 2001/11/26 19:17:05 yamt Exp $
+#	$NetBSD: files,v 1.472 2001/11/27 00:50:46 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -44,6 +44,7 @@ defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64
 defopt	COMPAT_FREEBSD
 defopt	COMPAT_HPUX
 defopt	COMPAT_IBCS2
+defopt	COMPAT_IRIX
 defopt	COMPAT_LINUX
 defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
