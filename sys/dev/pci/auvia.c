@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.40 2004/07/09 01:02:32 mycroft Exp $	*/
+/*	$NetBSD: auvia.c,v 1.41 2004/07/09 02:42:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.40 2004/07/09 01:02:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.41 2004/07/09 02:42:45 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,6 +765,7 @@ auvia_halt_output(void *addr)
 	struct auvia_softc_chan *ch = &(sc->sc_play);
 
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
+	ch->sc_intr = NULL;
 	return 0;
 }
 
@@ -776,6 +777,7 @@ auvia_halt_input(void *addr)
 	struct auvia_softc_chan *ch = &(sc->sc_record);
 
 	CH_WRITE1(sc, ch, AUVIA_RP_CONTROL, AUVIA_RPCTRL_TERMINATE);
+	ch->sc_intr = NULL;
 	return 0;
 }
 
