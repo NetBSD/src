@@ -17,6 +17,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: main.c,v 1.6 1993/11/10 01:34:22 paulus Exp $";
+#endif
+
 #define SETSID
 
 #include <stdio.h>
@@ -226,11 +230,12 @@ main(argc, argv)
 	!parse_args(argc-1, argv+1))
 	die(1);
     check_auth_options();
+    setipdefault();
 
     p = getlogin();
     if (p == NULL)
 	p = "(unknown)";
-    syslog(LOG_NOTICE, "pppd %s patch level %d started by %s, uid %d",
+    syslog(LOG_NOTICE, "pppd %s.%d started by %s, uid %d",
 	   VERSION, PATCHLEVEL, p, getuid());
 
 #ifdef SETSID

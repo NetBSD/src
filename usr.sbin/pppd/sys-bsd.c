@@ -18,6 +18,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: sys-bsd.c,v 1.2 1993/11/10 01:34:34 paulus Exp $";
+#endif
+
 /*
  * TODO:
  */
