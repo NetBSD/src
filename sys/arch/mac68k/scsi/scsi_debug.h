@@ -2,7 +2,7 @@
 /*
  * Written by Julian Elischer (julian@tfs.com)
  *
- *	$Id: scsi_debug.h,v 1.1 1993/11/29 00:45:21 briggs Exp $
+ *	$Id: scsi_debug.h,v 1.2 1994/01/30 01:21:28 briggs Exp $
  */
 #ifndef	_SCSI_SCSI_DEBUG_H
 #define _SCSI_SCSI_DEBUG_H 1
@@ -33,7 +33,7 @@
 			sc_link->device->name,	\
 			sc_link->dev_unit,	\
 			sc_link->adapter->name,	\
-			sc_link->adapter_unit,	\
+			sc_link->scsibus,	\
 			sc_link->target,	\
 			sc_link->lun);		\
  		printf Printstuff;		\
