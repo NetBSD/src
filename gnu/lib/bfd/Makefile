@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/10 16:06:22 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1997/10/17 20:01:26 gwr Exp $
 
 LIB=	bfd
 
@@ -51,18 +51,27 @@ SRCS = $(BFD_SRCS) $(OPCODE_SRCS) $(IBERTY_SRCS)
 OBJS = misc.o
 .include <bsd.lib.mk>
 
+
+# Add $(ARCH_DEFS) when compiling these...
+archures.o: $(dist)/bfd/archures.c
+	$(CC) $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+
+archures.so: $(dist)/bfd/archures.c
+	$(CC) -o $@ $(CPICFLAGS) \
+	    $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+
+disassemble.o: $(dist)/opcodes/disassemble.c
+	$(CC) $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+
+disassemble.so: $(dist)/opcodes/disassemble.c
+	$(CC) -o $@ $(CPICFLAGS) \
+	    $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+
 # Add $(TDEFAULTS) when compiling these...
 targets.o: $(dist)/bfd/targets.c
 	$(CC) $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
 
-archures.o: $(dist)/bfd/archures.c
-	$(CC) $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
-
 targets.so: $(dist)/bfd/targets.c
-	$(CC) -o $@ $(CPICFLAGS) \
-	    $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
-
-archures.so: $(dist)/bfd/archures.c
 	$(CC) -o $@ $(CPICFLAGS) \
 	    $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
 
