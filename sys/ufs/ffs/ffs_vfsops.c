@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.107 2003/02/17 23:48:14 perseant Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.108 2003/03/21 23:11:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.107 2003/02/17 23:48:14 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.108 2003/03/21 23:11:29 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -198,7 +198,7 @@ ffs_mount(mp, path, data, ndp, p)
 		vfs_showexport(mp, &args.export, &ump->um_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
 
@@ -469,7 +469,7 @@ ffs_reload(mountp, cred, p)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -513,7 +513,7 @@ ffs_reload(mountp, cred, p)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) == 0) &&
+	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) == 0) &&
 		(dpart.part->p_fstype == FS_APPLEUFS)) {
 		VFSTOUFS(mountp)->um_flags |= UFS_ISAPPLEUFS;
 	}
@@ -692,7 +692,7 @@ ffs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
@@ -754,7 +754,7 @@ ffs_mountfs(devvp, mp, p)
 	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	memset((caddr_t)ump, 0, sizeof *ump);
+	memset(ump, 0, sizeof *ump);
 	ump->um_fs = fs;
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
@@ -764,7 +764,7 @@ ffs_mountfs(devvp, mp, p)
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
-	if ((VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) == 0) &&
+	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) == 0) &&
 		(dpart.part->p_fstype == FS_APPLEUFS)) {
 		ump->um_flags |= UFS_ISAPPLEUFS;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.67 2003/03/21 21:13:52 dsl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.68 2003/03/21 23:11:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.67 2003/03/21 21:13:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.68 2003/03/21 23:11:27 dsl Exp $");
 
 #include "fs_union.h"
 
@@ -461,7 +461,7 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		fp->f_data = (caddr_t) vp;
+		fp->f_data = vp;
 		fp->f_offset = 0;
 		vrele(tvp);
 		goto unionread;
