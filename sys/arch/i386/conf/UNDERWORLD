@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.1 1999/03/28 01:09:48 abs Exp $
+#	$NetBSD: UNDERWORLD,v 1.2 1999/04/26 18:30:45 abs Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -166,7 +166,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#apm0	at mainbus0			# Advanced power management
+apm0	at mainbus0			# Advanced power management
 
 
 # Basic Bus Support
