@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.373.2.2 2000/07/14 14:36:22 onoe Exp $
+#	$NetBSD: files,v 1.373.2.3 2000/07/30 17:54:11 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -189,6 +189,10 @@ file	ipkdb/ipkdb_if.c		ipkdb
 # XXX been included yet.
 define	mii_bitbang
 file	dev/mii/mii_bitbang.c		mii_bitbang
+
+# Central clearing house for system monitoring.
+define	sysmon
+file	dev/sysmon/sysmon.c		sysmon	needs-flag
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -394,7 +398,7 @@ define  i2c
 define  i2c_eeprom
 
 # National Semiconductor LM7[89]
-device  lm
+device  lm: sysmon
 file	dev/ic/nslm7x.c		lm	needs-flag
 
 # Essential Communications Corp. HIPPI Interface
