@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.62 2002/08/10 22:54:54 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.63 2002/08/10 22:57:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -76,13 +76,11 @@
  *
  * TODO:
  *
- *	- Support the 10-bit interface on the DP83820 (for fiber).
- *
  *	- Reduce the Rx interrupt load.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.62 2002/08/10 22:54:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.63 2002/08/10 22:57:15 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -923,21 +921,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_statchg = sip->sip_variant->sipv_mii_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, SIP_DECL(mediachange),
 	    SIP_DECL(mediastatus));
-#ifdef DP83820
-	if (sc->sc_cfg & CFG_TBI_EN) {
-		/* Using ten-bit interface. */
-		printf("%s: TBI -- FIXME\n", sc->sc_dev.dv_xname);
-	} else {
-		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-		    MII_OFFSET_ANY, 0);
-		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE,
-			    0, NULL);
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-		} else
-			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
-#else
+
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -945,7 +929,6 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-#endif /* DP83820 */
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -2861,6 +2844,40 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 int
 SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 {
+	struct sip_softc *sc = (void *) self;
+
+	if (sc->sc_cfg & CFG_TBI_EN) {
+		bus_addr_t tbireg;
+		int rv;
+
+		if (phy != 0)
+			return (0);
+
+		switch (reg) {
+		case MII_BMCR:		tbireg = SIP_TBICR; break;
+		case MII_BMSR:		tbireg = SIP_TBISR; break;
+		case MII_ANAR:		tbireg = SIP_TANAR; break;
+		case MII_ANLPAR:	tbireg = SIP_TANLPAR; break;
+		case MII_ANER:		tbireg = SIP_TANER; break;
+		case MII_EXTSR:		tbireg = SIP_TESR; break;
+		default:
+			return (0);
+		}
+
+		rv = bus_space_read_4(sc->sc_st, sc->sc_sh, tbireg) & 0xffff;
+		if (tbireg == SIP_TBISR) {
+			/* LINK and ACOMP are switched! */
+			int val = rv;
+
+			rv = 0;
+			if (val & TBISR_MR_LINK_STATUS)
+				rv |= BMSR_LINK;
+			if (val & TBISR_MR_AN_COMPLETE)
+				rv |= BMSR_ACOMP;
+		}
+
+		return (rv);
+	}
 
 	return (mii_bitbang_readreg(self, &SIP_DECL(dp83820_mii_bitbang_ops),
 	    phy, reg));
@@ -2874,6 +2891,25 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 void
 SIP_DECL(dp83820_mii_writereg)(struct device *self, int phy, int reg, int val)
 {
+	struct sip_softc *sc = (void *) self;
+
+	if (sc->sc_cfg & CFG_TBI_EN) {
+		bus_addr_t tbireg;
+
+		if (phy != 0)
+			return;
+
+		switch (reg) {
+		case MII_BMCR:		tbireg = SIP_TBICR; break;
+		case MII_ANAR:		tbireg = SIP_TANAR; break;
+		case MII_ANLPAR:	tbireg = SIP_TANLPAR; break;
+		default:
+			return;
+		}
+
+		bus_space_write_4(sc->sc_st, sc->sc_sh, tbireg, val);
+		return;
+	}
 
 	mii_bitbang_writereg(self, &SIP_DECL(dp83820_mii_bitbang_ops),
 	    phy, reg, val);
