@@ -329,6 +329,26 @@ openpam_configure(pam_handle_t *pamh,
 		if (openpam_load_chain(pamh, PAM_OTHER, fclt) < 0)
 			goto load_err;
 	}
+#ifdef __NetBSD__
+	/*
+	 * On NetBSD we require the AUTH chain to have a binding
+	 * or a required module.
+	 */
+	{
+		pam_chain_t *this = pamh->chains[PAM_AUTH];
+		for (; this != NULL; this = this->next)
+			if (this->flag == PAM_BINDING ||
+			    this->flag == PAM_REQUIRED)
+				break;
+		if (this == NULL) {
+			openpam_log(PAM_LOG_ERROR,
+			    "No required or binding component "
+			    "in service %s, facility %s",
+			    service, _pam_facility_name[PAM_AUTH]);
+			goto load_err;
+		}
+	}
+#endif
 	return (PAM_SUCCESS);
  load_err:
 	openpam_clear_chains(pamh->chains);
