@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.121 2000/03/30 00:00:56 augustss Exp $ */
+/*	$NetBSD: st.c,v 1.122 2000/05/19 06:55:42 kleink Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -291,6 +291,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0},				/* minor 4-7 */
 		{0, 0, 0},				/* minor 8-11 */
 		{0, 0, 0}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "OnStream", "ADR50 Drive", ""},	  {ST_Q_UNIMODAL, 0, {
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 4-7 */
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 8-11 */
+		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 12-15 */
 	}}},
 };
 
