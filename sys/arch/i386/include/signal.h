@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19 2003/09/10 16:48:16 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.20 2003/09/11 19:16:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -84,8 +84,6 @@ struct sigcontext13 {
 #if defined(COMPAT_16) || defined(_KERNEL)
 /*
  * We limit this to kernel use only, so that legacy code will break.
- * XXX: We need to fix vm86 syscall, not to use sigcontext but __gregset_t
- * + sigset_t, but that is an API change.
  */
 struct sigcontext {
 	int	sc_gs;
