@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 1997/10/11 09:12:18 mycroft Exp $
+# $NetBSD: Makefile,v 1.11 1998/06/12 23:22:32 cgd Exp $
 
 # Makefile for alpha tags file and boot blocks
 
@@ -24,6 +24,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	stand
+SUBDIR=	include stand
 
 .include <bsd.subdir.mk>

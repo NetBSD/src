@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.1 1997/12/10 14:14:21 drochner Exp $
+# $NetBSD: Makefile,v 1.2 1998/06/12 23:22:37 cgd Exp $
 
-INCS= pcvt_ioctl.h
-INCSDIR= /usr/include/machine
+INCSDIR= /usr/include/i386
 
-NOOBJ=
+INCS=   pcvt_ioctl.h
 
-.include <bsd.prog.mk>
+.include <bsd.kinc.mk>

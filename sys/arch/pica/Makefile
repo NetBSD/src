@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/11 09:10:29 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1998/06/12 23:22:43 cgd Exp $
 
 # Makefile for pica tags file and boot blocks
 
@@ -13,7 +13,7 @@ APICA=	../pica/pica/*.s
 # Directories in which to place tags links
 DPICA=	dev dist include pica
 
-.include "../kern/Make.tags.inc"
+.include "../../kern/Make.tags.inc"
 
 tags:
 	-ctags -wdtf ${TPICA} ${SPICA} ${SMIPS} ${COMM}
@@ -27,6 +27,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	
+SUBDIR=	include
 
 .include <bsd.subdir.mk>
