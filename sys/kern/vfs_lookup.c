@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.53 2003/12/06 14:17:13 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.54 2003/12/08 14:23:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.53 2003/12/06 14:17:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.54 2003/12/08 14:23:33 hannken Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -678,7 +678,7 @@ relookup(dvp, vpp, cnp)
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 #ifdef DEBUG
-	int newhash;			/* DEBUG: check name hash */
+	u_long newhash;			/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
 #endif /* DEBUG */
 
