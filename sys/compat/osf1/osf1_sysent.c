@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.41 2000/12/09 07:11:20 mycroft Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.42 2000/12/13 01:29:35 mycroft Exp $ */
 
 /*
  * System call switch table.
@@ -546,5 +546,505 @@ struct sysent osf1_sysent[] = {
 	    sys_nosys },			/* 260 = unimplemented memcntl */
 	{ 0, 0,
 	    sys_nosys },			/* 261 = unimplemented fdatasync */
+	{ 0, 0,
+	    sys_nosys },			/* 262 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 263 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 264 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 265 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 266 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 267 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 268 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 269 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 270 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 271 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 272 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 273 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 274 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 275 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 276 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 277 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 278 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 279 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 280 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 281 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 282 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 283 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 284 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 285 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 286 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 287 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 288 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 289 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 290 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 291 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 292 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 293 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 294 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 295 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 296 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 297 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 298 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 299 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 300 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 301 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 302 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 303 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 304 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 305 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 306 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 307 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 308 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 309 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 310 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 311 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 312 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 313 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 314 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 315 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 316 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 317 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 318 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 319 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 320 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 321 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 322 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 323 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 324 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 325 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 326 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 327 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 328 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 329 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 330 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 331 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 332 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 333 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 334 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 335 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 336 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 337 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 338 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 339 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 340 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 341 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 342 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 343 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 344 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 345 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 346 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 347 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 348 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 349 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 350 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 351 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 352 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 353 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 354 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 355 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 356 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 357 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 358 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 359 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 360 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 361 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 362 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 363 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 364 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 365 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 366 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 367 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 368 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 369 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 370 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 371 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 372 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 373 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 374 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 375 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 376 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 377 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 378 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 379 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 380 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 381 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 382 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 383 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 384 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 385 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 386 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 387 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 388 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 389 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 390 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 391 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 392 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 393 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 394 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 395 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 396 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 397 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 398 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 399 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 400 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 401 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 402 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 403 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 404 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 405 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 406 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 407 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 408 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 409 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 410 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 411 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 412 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 413 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 414 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 415 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 416 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 417 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 418 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 419 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 420 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 421 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 422 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 423 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 424 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 425 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 426 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 427 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 428 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 429 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 430 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 431 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 432 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 433 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 434 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 435 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 436 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 437 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 438 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 439 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 440 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 441 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 442 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 443 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 444 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 445 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 446 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 447 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 448 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 449 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 450 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 451 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 452 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 453 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 454 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 455 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 456 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 457 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 458 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 459 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 460 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 461 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 462 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 463 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 464 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 465 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 466 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 467 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 468 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 469 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 470 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 471 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 472 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 473 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 474 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 475 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 476 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 477 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 478 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 479 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 480 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 481 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 482 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 483 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 484 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 485 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 486 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 487 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 488 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 489 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 490 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 491 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 492 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 493 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 494 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 495 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 496 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 497 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 498 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 499 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 500 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 501 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 502 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 503 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 504 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 505 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 506 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 507 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 508 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 509 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 510 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 511 = filler */
 };
 
