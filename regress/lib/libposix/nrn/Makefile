@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/21 00:20:11 mjl Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/19 03:10:15 tv Exp $
 
-PROG=   prn
+PROG=   prename
 NOMAN=  t
 CLEANFILES+= t1 t2
 
@@ -10,6 +10,6 @@ CPPFLAGS+= -DBSD_RENAME
 
 regress:
 	@echo Testing BSD rename
-	./prn
+	./prename
 
 .include <bsd.prog.mk>
