@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.197 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.198 2004/04/01 22:47:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.197 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.198 2004/04/01 22:47:55 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1288,9 +1288,9 @@ static u_int	fragttl_histo[(IPFRAGTTL+1)];
 static u_int
 ip_reass_ttl_decr(u_int ticks)
 {
-	u_int i, nfrags, median;
+	u_int nfrags, median, dropfraction, keepfraction;
 	struct ipq *fp, *nfp;
-	u_int dropfraction, keepfraction;
+	int i;
 	
 	nfrags = 0;
 	memset(fragttl_histo, 0, sizeof fragttl_histo);
