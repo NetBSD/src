@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.14 2003/10/14 11:33:36 martti Exp $	*/
+/*	$NetBSD: amr.c,v 1.15 2003/10/21 03:22:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.14 2003/10/14 11:33:36 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.15 2003/10/21 03:22:25 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
 
-	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, NULL,
+	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, 0,
 	    &amr->amr_dmaseg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to allocate buffer, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
