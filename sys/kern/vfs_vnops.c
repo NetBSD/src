@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.12 1994/06/29 06:34:04 cgd Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.12.2.1 1994/09/14 00:37:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -347,7 +347,7 @@ vn_stat(vp, sb, p)
 	sb->st_rdev = vap->va_rdev;
 	sb->st_size = vap->va_size;
 	sb->st_atimespec = vap->va_atime;
-	sb->st_mtimespec = vap->va_mtime;
+	sb->st_mtimespec= vap->va_mtime;
 	sb->st_ctimespec = vap->va_ctime;
 	sb->st_blksize = vap->va_blocksize;
 	sb->st_flags = vap->va_flags;
@@ -391,6 +391,8 @@ vn_ioctl(fp, com, data, p)
 	case VBLK:
 		error = VOP_IOCTL(vp, com, data, fp->f_flag, p->p_ucred, p);
 		if (error == 0 && com == TIOCSCTTY) {
+			if (p->p_session->s_ttyvp)
+				vrele(p->p_session->s_ttyvp);
 			p->p_session->s_ttyvp = vp;
 			VREF(vp);
 		}
