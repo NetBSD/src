@@ -97,7 +97,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define LINK_SPEC \
  "-m elf64alpha \
   %{O*:-O3} %{!O*:-O1} \
-  %{assert*} \
+  %{assert*} %{R*} \
   %{shared:-shared} \
   %{!shared: \
     -dc -dp \

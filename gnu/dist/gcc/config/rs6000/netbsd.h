@@ -53,7 +53,7 @@
 #undef	LINK_SPEC
 #define LINK_SPEC " \
   %{O*:-O3} %{!O*:-O1}						\
-  %{assert*}							\
+  %{assert*} %{R*}						\
   %{shared:-shared}						\
   %{!shared:							\
     -dc -dp							\
