@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.57 2000/07/02 10:01:30 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.58 2000/07/20 21:03:36 jeffs Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 maxusers	8
 
@@ -22,6 +22,7 @@ options 	MIPS3_L2CACHE_ABSENT
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
+#options	KGDB			# remote debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
