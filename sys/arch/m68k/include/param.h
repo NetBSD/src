@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1997/07/10 08:22:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,6 @@
 
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
@@ -84,10 +83,6 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-/* mac68k, mvme68k and x68k 3 pages of  u-area */
-#ifndef	UPAGES
-# define UPAGES		2		/* pages of u-area */
-#endif
 #define	USPACE		(UPAGES * NBPG)
 
 /*
