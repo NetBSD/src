@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2003/05/11 21:54:49 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2003/05/15 02:20:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,7 +76,9 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
+#if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
+#endif
 	struct apic_attach_args aaa_caa;
 };
 
