@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.43 2005/01/31 23:06:42 reinoud Exp $	*/
+/*	$NetBSD: uk.c,v 1.44 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.43 2005/01/31 23:06:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.44 2005/02/01 00:19:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,10 +216,9 @@ ukclose(dev_t dev, int flag, int fmt, struct proc *p)
  * Only does generic scsi ioctls.
  */
 static int
-ukioctl(dev_t dev, ulong cmd, caddr_t addr, int flag, struct proc *p)
+ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, p));
 }
-

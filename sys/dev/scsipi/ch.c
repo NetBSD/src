@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.66 2005/01/31 23:39:02 reinoud Exp $	*/
+/*	$NetBSD: ch.c,v 1.67 2005/02/01 00:19:34 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.66 2005/01/31 23:39:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.67 2005/02/01 00:19:34 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct ch_softc {
 	struct device	sc_dev;		/* generic device info */
 	struct scsipi_periph *sc_periph;/* our periph data */
 
-	uint		sc_events;	/* event bitmask */
+	u_int		sc_events;	/* event bitmask */
 	struct selinfo	sc_selq;	/* select/poll queue for events */
 
 	int		sc_flags;	/* misc. info */
@@ -88,12 +88,12 @@ struct ch_softc {
 	 * The following mask defines the legal combinations
 	 * of elements for the MOVE MEDIUM command.
 	 */
-	uint8_t	sc_movemask[4];
+	u_int8_t	sc_movemask[4];
 
 	/*
 	 * As above, but for EXCHANGE MEDIUM.
 	 */
-	uint8_t	sc_exchangemask[4];
+	u_int8_t	sc_exchangemask[4];
 
 	/*
 	 * Quirks; see below.
@@ -147,7 +147,7 @@ static int	ch_exchange(struct ch_softc *,
 static int	ch_position(struct ch_softc *,
 		    struct changer_position_request *);
 static int	ch_ielem(struct ch_softc *);
-static int	ch_ousergetelemstatus(struct ch_softc *, int, uint8_t *);
+static int	ch_ousergetelemstatus(struct ch_softc *, int, u_int8_t *);
 static int	ch_usergetelemstatus(struct ch_softc *,
 		    struct changer_element_status_request *);
 static int	ch_getelemstatus(struct ch_softc *, int, int, void *,
@@ -157,8 +157,8 @@ static int	ch_setvoltag(struct ch_softc *,
 static int	ch_get_params(struct ch_softc *, int);
 static void	ch_get_quirks(struct ch_softc *,
 		    struct scsipi_inquiry_pattern *);
-static void	ch_event(struct ch_softc *, uint);
-static int	ch_map_element(struct ch_softc *, uint16_t, int *, int *);
+static void	ch_event(struct ch_softc *, u_int);
+static int	ch_map_element(struct ch_softc *, u_int16_t, int *, int *);
 
 static void	ch_voltag_convert_in(const struct changer_volume_tag *,
 		    struct changer_voltag *);
@@ -342,7 +342,7 @@ chread(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-chioctl(dev_t dev, ulong cmd, caddr_t data, int flags, struct proc *p)
+chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
@@ -519,7 +519,7 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
 	struct ch_softc *sc = (void *)periph->periph_dev;
-	uint16_t asc_ascq;
+	u_int16_t asc_ascq;
 
 	/*
 	 * If the periph is already recovering, just do the
@@ -543,7 +543,7 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 	 * We use ASC/ASCQ codes for this.
 	 */
 
-	asc_ascq = (((uint16_t) sense->add_sense_code) << 8) |
+	asc_ascq = (((u_int16_t) sense->add_sense_code) << 8) |
 	    sense->add_sense_code_qual;
 
 	switch (asc_ascq) {
@@ -567,7 +567,7 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 }
 
 static void
-ch_event(struct ch_softc *sc, uint event)
+ch_event(struct ch_softc *sc, u_int event)
 {
 
 	sc->sc_events |= event;
@@ -578,7 +578,7 @@ static int
 ch_move(struct ch_softc *sc, struct changer_move_request *cm)
 {
 	struct scsi_move_medium cmd;
-	uint16_t fromelem, toelem;
+	u_int16_t fromelem, toelem;
 
 	/*
 	 * Check arguments.
@@ -623,7 +623,7 @@ static int
 ch_exchange(struct ch_softc *sc, struct changer_exchange_request *ce)
 {
 	struct scsi_exchange_medium cmd;
-	uint16_t src, dst1, dst2;
+	u_int16_t src, dst1, dst2;
 
 	/*
 	 * Check arguments.
@@ -677,7 +677,7 @@ static int
 ch_position(struct ch_softc *sc, struct changer_position_request *cp)
 {
 	struct scsi_position_to_element cmd;
-	uint16_t dst;
+	u_int16_t dst;
 
 	/*
 	 * Check arguments.
@@ -715,7 +715,7 @@ ch_position(struct ch_softc *sc, struct changer_position_request *cp)
  * old data format.
  */
 static int
-ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
+ch_ousergetelemstatus(struct ch_softc *sc, int chet, u_int8_t *uptr)
 {
 	struct read_element_status_header *st_hdrp, st_hdr;
 	struct read_element_status_page_header *pg_hdrp;
@@ -723,7 +723,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 	size_t size, desclen;
 	caddr_t data;
 	int avail, i, error = 0;
-	uint8_t user_data;
+	u_int8_t user_data;
 
 	/*
 	 * If there are no elements of the requested type in the changer,
@@ -765,7 +765,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		goto done;
 
 	st_hdrp = (struct read_element_status_header *)data;
-	pg_hdrp = (struct read_element_status_page_header *)((char *) st_hdrp +
+	pg_hdrp = (struct read_element_status_page_header *)((u_long)st_hdrp +
 	    sizeof(struct read_element_status_header));
 	desclen = _2btol(pg_hdrp->edl);
 
@@ -778,7 +778,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
 		    sc->sc_dev.dv_xname);
 
-	desc = (struct read_element_status_descriptor *)((char *) data +
+	desc = (struct read_element_status_descriptor *)((u_long)data +
 	    sizeof(struct read_element_status_header) +
 	    sizeof(struct read_element_status_page_header));
 	for (i = 0; i < avail; ++i) {
@@ -786,7 +786,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		error = copyout(&user_data, &uptr[i], avail);
 		if (error)
 			break;
-		desc = (struct read_element_status_descriptor *)((char *) desc
+		desc = (struct read_element_status_descriptor *)((u_long)desc
 		    + desclen);
 	}
 
@@ -863,7 +863,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		goto done;
 
 	st_hdrp = (struct read_element_status_header *)data;
-	pg_hdrp = (struct read_element_status_page_header *)((char *) st_hdrp +
+	pg_hdrp = (struct read_element_status_page_header *)((u_long)st_hdrp +
 	    sizeof(struct read_element_status_header));
 	desclen = _2btol(pg_hdrp->edl);
 
@@ -1003,7 +1003,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 			    sizeof(uvendptr));
 			if (error)
 				goto done;
-			error = copyout((void *)((char *) desc + stddesclen),
+			error = copyout((void *)((u_long)desc + stddesclen),
 			    uvendptr, ces.ces_vendor_len);
 			if (error)
 				goto done;
@@ -1057,7 +1057,7 @@ ch_setvoltag(struct ch_softc *sc, struct changer_set_voltag_request *csvr)
 	void *data = NULL;
 	size_t datalen = 0;
 	int error;
-	uint16_t dst;
+	u_int16_t dst;
 
 	/*
 	 * Check arguments.
@@ -1165,7 +1165,7 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 		} pages;
 	} sense_data;
 	int error, from;
-	uint8_t *moves, *exchanges;
+	u_int8_t *moves, *exchanges;
 
 	/*
 	 * Grab info from the element address assignment page.
@@ -1250,7 +1250,7 @@ ch_get_quirks(struct ch_softc *sc, struct scsipi_inquiry_pattern *inqbuf)
 }
 
 static int
-ch_map_element(struct ch_softc *sc, uint16_t elem, int *typep, int *unitp)
+ch_map_element(struct ch_softc *sc, u_int16_t elem, int *typep, int *unitp)
 {
 	int chet;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.11 2005/01/31 23:06:42 reinoud Exp $ */
+/*	$NetBSD: stvar.h,v 1.12 2005/02/01 00:19:34 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,13 +71,13 @@
 #define	ST_RETRIES	4	/* only on non IO commands */
 
 struct modes {
-	uint quirks;			/* same definitions as in quirkdata */
+	u_int quirks;			/* same definitions as in quirkdata */
 	int blksize;
-	uint8_t density;
+	u_int8_t density;
 };
 
 struct quirkdata {
-	uint quirks;
+	u_int quirks;
 #define	ST_Q_FORCE_BLKSIZE	0x0001
 #define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
 #define	ST_Q_IGNORE_LOADS	0x0004
@@ -86,7 +86,7 @@ struct quirkdata {
 #define	ST_Q_NOPREVENT		0x0020	/* does not support PREVENT */
 #define	ST_Q_ERASE_NOIMM	0x0040	/* drive rejects ERASE/w Immed bit */
 #define	ST_Q_NOFILEMARKS	0x0080	/* can only write 0 filemarks */
-	uint page_0_size;
+	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
 };
@@ -107,21 +107,21 @@ struct st_softc {
 #define ST_OPS_CMPRSS_OFF 	0x04	/* turn off compression */
 /*--------------------present operating parameters, flags etc.---------------*/
 	int flags;		/* see below                         */
-	uint quirks;		/* quirks for the open mode          */
+	u_int quirks;		/* quirks for the open mode          */
 	int blksize;		/* blksize we are using              */
-	uint8_t density;	/* present density                   */
-	uint page_0_size;	/* size of page 0 data		     */
-	uint last_dsty;	/* last density opened               */
-	int16_t mt_resid;		/* last (short) resid                */
-	int16_t mt_erreg;		/* last error (sense key) seen       */
+	u_int8_t density;	/* present density                   */
+	u_int page_0_size;	/* size of page 0 data		     */
+	u_int last_dsty;	/* last density opened               */
+	short mt_resid;		/* last (short) resid                */
+	short mt_erreg;		/* last error (sense key) seen       */
 	/* relative to BOT location */
 	daddr_t fileno;
 	daddr_t blkno;
 	int32_t last_io_resid;
 	int32_t last_ctl_resid;
 #define	mt_key	mt_erreg
-	uint8_t asc;		/* last asc code seen		     */
-	uint8_t ascq;		/* last asc code seen		     */
+	u_int8_t asc;		/* last asc code seen		     */
+	u_int8_t ascq;		/* last asc code seen		     */
 /*--------------------device/scsi parameters---------------------------------*/
 	struct scsipi_periph *sc_periph;/* our link to the adpter etc.       */
 /*--------------------parameters reported by the device ---------------------*/
@@ -129,20 +129,20 @@ struct st_softc {
 	int blkmax;		/* max blk size                       */
 	struct quirkdata *quirkdata;	/* if we have a rogue entry          */
 /*--------------------parameters reported by the device for this media-------*/
-	uint32_t numblks;		/* nominal blocks capacity            */
+	u_long numblks;		/* nominal blocks capacity            */
 	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
-	uint8_t media_density;	/* this is what it said when asked    */
+	u_int8_t media_density;	/* this is what it said when asked    */
 /*--------------------quirks for the whole drive-----------------------------*/
-	uint drive_quirks;	/* quirks of this drive               */
+	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
 	struct modes modes[4];	/* plus more for each mode            */
-	uint8_t  modeflags[4];	/* flags for the modes                */
+	u_int8_t  modeflags[4];	/* flags for the modes                */
 #define DENSITY_SET_BY_USER	0x01
 #define DENSITY_SET_BY_QUIRK	0x02
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 /*--------------------storage for sense data returned by the drive-----------*/
-	uint8_t sense_data[MAX_PAGE_0_SIZE];	/*
+	u_char sense_data[MAX_PAGE_0_SIZE];	/*
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */
