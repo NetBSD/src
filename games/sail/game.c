@@ -1,4 +1,4 @@
-/*	$NetBSD: game.c,v 1.5 1997/10/13 19:44:09 christos Exp $	*/
+/*	$NetBSD: game.c,v 1.6 1999/09/17 17:07:11 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)game.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: game.c,v 1.5 1997/10/13 19:44:09 christos Exp $");
+__RCSID("$NetBSD: game.c,v 1.6 1999/09/17 17:07:11 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,8 @@ char *af;
 	int turns;
 
 	turns = ship->specs->ta;
-	if ((*af = (ship->file->drift > 1 && turns)) != NULL) {
+	*af = (ship->file->drift > 1 && turns);
+	if (*af != '\0') {
 		turns--;
 		if (ship->file->FS == 1)
 			turns = 0;

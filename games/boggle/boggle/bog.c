@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.12 1999/09/08 21:17:44 jsm Exp $	*/
+/*	$NetBSD: bog.c,v 1.13 1999/09/17 17:07:11 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.12 1999/09/08 21:17:44 jsm Exp $");
+__RCSID("$NetBSD: bog.c,v 1.13 1999/09/17 17:07:11 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -604,7 +604,7 @@ checkdict()
 		}
 		mword[nmwords++] = mwordsp;
 		p = w;
-		while ((*mwordsp++ = *p++) != NULL)
+		while ((*mwordsp++ = *p++) != '\0')
 		    	;
 	}
 }
