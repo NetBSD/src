@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.10 1998/12/30 13:54:03 augustss Exp $ */
+/* $NetBSD: wsconsio.h,v 1.11 1998/12/30 19:15:11 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -81,6 +81,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_LK401	2	/* lk-401 */
 #define		WSKBD_TYPE_PC_XT	3	/* PC-ish, XT scancode */
 #define		WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode */
+#define		WSKBD_TYPE_USB		5	/* USB, XT scancode */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {

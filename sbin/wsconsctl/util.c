@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1998/12/30 13:54:04 augustss Exp $ */
+/*	$NetBSD: util.c,v 1.4 1998/12/30 19:15:11 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_LK401,	"lk401" },
 	{ WSKBD_TYPE_PC_XT,	"pc-xt" },
 	{ WSKBD_TYPE_PC_AT,	"pc-at" },
+	{ WSKBD_TYPE_USB,	"usb" },
 };
 
 static struct nameint mstype_tab[] = {
