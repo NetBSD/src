@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.5 2005/02/17 11:23:36 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.6 2005/02/17 15:16:26 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.5 2005/02/17 11:23:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.6 2005/02/17 15:16:26 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -188,7 +188,7 @@ iee_intr(void *intarg)
 	struct mbuf *new_mbuf;
 	int scb_status;
 	int scb_cmd;
-	int n;
+	int n, col;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
@@ -296,10 +296,15 @@ iee_intr(void *intarg)
 				bus_dmamap_unload(sc->sc_dmat,sc->sc_tx_map[n]);
 				if ((SC_CB(n)->cb_status & IEE_CB_COL) != 0 && 
 				    (SC_CB(n)->cb_status & IEE_CB_MAXCOL) == 0)
-					sc->sc_tx_col += 16;
+					col = 16;
 				else
-					sc->sc_tx_col += SC_CB(n)->cb_status 
+					col = SC_CB(n)->cb_status 
 					    & IEE_CB_MAXCOL;
+				sc->sc_tx_col += col;
+				if ((SC_CB(n)->cb_status & IEE_CB_OK) != 0) {
+					ifp->if_opackets++;
+					ifp->if_collisions += col;
+				}
 			}
 			sc->sc_next_tbd = 0;
 			ifp->if_flags &= ~IFF_OACTIVE;
