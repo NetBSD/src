@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.55 2000/04/29 12:15:16 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -474,11 +474,12 @@ main(argc, argv)
 	char cdpath[MAXPATHLEN + 1];
     	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
+	char *syspath = getenv("MAKESYSPATH");
 	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
-	static char syspath[] = _PATH_DEFSYSPATH;
-
+	static char defsyspath[] = _PATH_DEFSYSPATH;
+	
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
 	else
@@ -711,6 +712,11 @@ main(argc, argv)
 	 * as dir1:...:dirn) to the system include path.
 	 */
 	if (!mkIncPath) {
+		if (syspath == NULL || *syspath == '\0')
+			syspath = defsyspath;
+		else
+			syspath = strdup(syspath);
+	    
 		for (start = syspath; *start != '\0'; start = cp) {
 			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 				continue;
@@ -721,6 +727,8 @@ main(argc, argv)
 				(void) Dir_AddDir(sysIncPath, start);
 			}
 		}
+		if (syspath != defsyspath)
+		    free(syspath);
 	}
 
 	/*
