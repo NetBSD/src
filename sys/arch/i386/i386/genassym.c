@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
- *	$Id: genassym.c,v 1.6 1993/06/02 19:25:00 cgd Exp $
+ *	$Id: genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -103,6 +103,7 @@ main()
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
+	printf("#define\tKERNBASE %d\n", KERNBASE);
 	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);
