@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.17 1999/06/23 15:41:48 carrel Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.18 1999/07/12 20:17:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.17 1999/06/23 15:41:48 carrel Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.18 1999/07/12 20:17:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ int	maxtimeout = 5*TIMEOUT;
 #define	PKTSIZE	SEGSIZE+4
 char	buf[PKTSIZE];
 char	ackbuf[PKTSIZE];
-struct	sockaddr_in from;
+struct	sockaddr_storage from;
 int	fromlen;
 
 /*
@@ -116,7 +116,7 @@ struct formats;
 static void tftp __P((struct tftphdr *, int));
 static const char *errtomsg __P((int));
 static void nak __P((int));
-static char *verifyhost __P((struct sockaddr_in *));
+static char *verifyhost __P((struct sockaddr *));
 static void usage __P((void));
 void timer __P((int));
 void sendfile __P((struct formats *));
@@ -157,7 +157,7 @@ main(argc, argv)
 	int n = 0;
 	int ch, on;
 	int fd = 0;
-	struct sockaddr_in sin;
+	struct sockaddr_storage me;
 	int len;
 	char *tgtuser, *tgtgroup, *ep;
 	uid_t curuid, tgtuid;
@@ -344,34 +344,42 @@ main(argc, argv)
 		}
 	}
 
-	from.sin_len = sizeof(struct sockaddr_in);
-	from.sin_family = AF_INET;
-
 	/*
 	 * remember what address this was sent to, so we can respond on the
 	 * same interface
 	 */
-	len = sizeof(sin);
-	if (getsockname(fd, (struct sockaddr *)&sin, &len) == 0)
-		sin.sin_port = 0;
-	else {
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
+	len = sizeof(me);
+	if (getsockname(fd, (struct sockaddr *)&me, &len) == 0) {
+		switch (me.ss_family) {
+		case AF_INET:
+			((struct sockaddr_in *)&me)->sin_port = 0;
+			break;
+		case AF_INET6:
+			((struct sockaddr_in6 *)&me)->sin6_port = 0;
+			break;
+		default:
+			/* unsupported */
+			break;
+		}
+	} else {
+		memset(&me, 0, sizeof(me));
+		me.ss_family = from.ss_family;
+		me.ss_len = from.ss_len;
 	}
 
 	alarm(0);
 	close(fd);
 	close(1);
-	peer = socket(AF_INET, SOCK_DGRAM, 0);
+	peer = socket(from.ss_family, SOCK_DGRAM, 0);
 	if (peer < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-	if (bind(peer, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	if (bind(peer, (struct sockaddr *)&me, me.ss_len) < 0) {
 		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
-	if (connect(peer, (struct sockaddr *)&from, sizeof(from)) < 0) {
+	if (connect(peer, (struct sockaddr *)&from, from.ss_len) < 0) {
 		syslog(LOG_ERR, "connect: %m");
 		exit(1);
 	}
@@ -424,7 +432,7 @@ again:
 	ecode = (*pf->f_validate)(&filename, tp->th_opcode);
 	if (logging) {
 		syslog(LOG_INFO, "%s: %s request for %s: %s",
-			verifyhost(&from),
+			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			filename, errtomsg(ecode));
 	}
@@ -788,14 +796,10 @@ nak(error)
 
 static char *
 verifyhost(fromp)
-	struct sockaddr_in *fromp;
+	struct sockaddr *fromp;
 {
-	struct hostent *hp;
+	static char hbuf[MAXHOSTNAMELEN];
 
-	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof (fromp->sin_addr),
-			    fromp->sin_family);
-	if (hp)
-		return hp->h_name;
-	else
-		return inet_ntoa(fromp->sin_addr);
+	getnameinfo(fromp, fromp->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0);
+	return hbuf;
 }
