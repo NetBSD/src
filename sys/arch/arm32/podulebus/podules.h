@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.10 1998/01/09 06:58:05 thorpej Exp $	*/
+/*	$NetBSD: podules.h,v 1.11 1998/01/18 04:02:53 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp 
+ *	NetBSD: podules,v 1.8 1998/01/18 04:01:42 mark Exp 
  */
 
 /*
@@ -63,6 +63,7 @@
 #define	MANUFACTURER_ICUBED	0x0046		/* I-Cubed */
 #define	MANUFACTURER_BRINI	0x0050		/* Brini */
 #define	MANUFACTURER_ANT	0x0053		/* ANT */
+#define	MANUFACTURER_CASTLE	0x0055		/* Castle Technology */
 #define	MANUFACTURER_ALSYSTEMS	0x005b		/* Alsystems */
 #define	MANUFACTURER_SIMTEC	0x005f		/* Simtec Electronics */
 #define	MANUFACTURER_YES	0x0060		/* Yellowstone Educational Solutions */
@@ -93,9 +94,12 @@
 
 #define	PODULE_ATOMWIDE_ETHER3	0x00A4		/* ether 3/5 interface */
 
-#define	PODULE_ATOMWIDE2_SERIAL	0x0090		/* serial interface */
+#define	PODULE_ATOMWIDE2_SERIAL	0x0090		/* multiport serial interface */
 
 #define	PODULE_LINGENUITY_SCSI	0x0095		/* 16 bit SCSI interface */
+#define	PODULE_LINGENUITY_SCSISHARE	0x0096		/* 16 bit SCSIShare interface */
+#define	PODULE_LINGENUITY_SCSI8	0x0040		/* 8 bit SCSI interface */
+#define	PODULE_LINGENUITY_SCSI8SHARE	0x008c		/* 8 bit SCSIShare interface */
 
 #define	PODULE_IRLAM_24I16	0x00e6		/* 24i16 digitiser */
 
@@ -132,6 +136,12 @@
 #define	PODULE_ANT_ETHER3	0x00a4		/* ether 3/5 interface */
 #define	PODULE_ANT_ETHERB	0x00e4		/* ether B network slot interface */
 #define	PODULE_ANT_ETHERM	0x00d8		/* ether M dual interface NIC */
+
+#define	PODULE_CASTLE_SCSI16	0x00f6		/* 8 or 16 bit SCSI2 interface */
+#define	PODULE_CASTLE_SCSI16SHARE	0x00f3		/* 8 or 16 bit SCSI2Share interface */
+#define	PODULE_CASTLE_ETHERSCSI	0x00f5		/* 8 or 16 bit SCSI2 interface, possibly with Ethernet */
+#define	PODULE_CASTLE_ETHERSCSISHARE	0x00f4		/* 8 or 16 bit SCSI2Share interface, possibly with Ethernet */
+#define	PODULE_CASTLE_SCSI32	0x012b		/* 32 bit SCSI2 + DMA interface */
 
 #define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI II host adapter */
 
