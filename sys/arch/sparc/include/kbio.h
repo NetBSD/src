@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.4 1995/05/10 16:07:27 pk Exp $ */
+/*	$NetBSD: kbio.h,v 1.5 1997/10/18 00:01:23 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,46 +66,53 @@
  * Keyboard commands and types are defined in kbd.h as they are actually
  * real hardware commands and type numbers.
  */
+
 struct okiockey { /* Out-dated key translation structure */
-	int	kio_tablemask;	/* whatever */
+	int	kio_tablemask;  	/* whatever */
 	u_char	kio_station;	/* key number */
-	u_char	kio_entry;	/* HOLE if not present */
+	u_char	kio_entry;  	/* 0xA2 (HOLE) if not present */
 	char	kio_text[10];	/* the silly escape sequences (unsupported) */
 };
 
-struct kiockey {
-	int	kio_tablemask;	/* whatever */
+struct kiockeymap {
+	int	kio_tablemask;  	/* whatever */
 	u_char	kio_station;	/* key number */
-	u_short	kio_entry;	/* HOLE if not present */
+	u_short	kio_entry;  	/* keymap entry - see kbd_map.h */
 	char	kio_text[10];	/* the silly escape sequences (unsupported) */
 };
 
 /*
  * Values for kio_tablemask. These determine which table to read/modify
- * in KIOC[SG]KEY ioctls. Currently, we only have "non-shift" and "shift"
- * tables.
+ * in KIOC[SG]KEY ioctls. Currently handle: {NO,SHIFT,CTRL,UP}MASK
+ * Note: these are SunOS-4.1 compatible values
  */
-#define KIOC_NOMASK	0x0
-#define KIOC_CAPSMASK	0x1
-#define KIOC_SHIFTMASK	0xe
+#define KIOC_NOMASK 	0x00
+#define KIOC_CAPSMASK	0x01
+#define KIOC_SHIFTMASK	0x0E
 #define KIOC_CTRLMASK	0x30
+#define KIOC_UPMASK 	0x80
 #define KIOC_ALTGMASK	0x200
+#define KIOC_ALTMASK	0x400
 #define KIOC_NUMLMASK	0x800
 
+#if 0	/* XXX - This is wrong.  Programs testing this expect 0xA2 */
 #define	HOLE	0x302		/* value for kio_entry to say `really type 3' */
+#endif
 
 #define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */
-			/* (we only accept TR_UNTRANS_EVENT) */
+
+#define	KIOCSETKEY	_IOWR('k', 1, struct okiockey) /* fill in kio_entry */
 #define	KIOCGETKEY	_IOWR('k', 2, struct okiockey) /* fill in kio_entry */
+
 #define	KIOCGTRANS	_IOR('k', 5, int)	/* get translation mode */
 #define	KIOCCMD		_IOW('k', 8, int)	/* X uses this to ring bell */
 #define	KIOCTYPE	_IOR('k', 9, int)	/* get keyboard type */
 #define	KIOCSDIRECT	_IOW('k', 10, int)	/* keys to console? */
-#define KIOCSKEY	_IOW('k', 12, struct kiockey) /* set xlat mode */
-#define KIOCGKEY	_IOWR('k', 13, struct kiockey) /* get xlat mode */
-#define	KIOCLAYOUT	_IOR('k', 20, int)	/* get keyboard layout */
+#define KIOCSKEY	_IOW('k', 12, struct kiockeymap) /* set xlat mode */
+#define KIOCGKEY	_IOWR('k', 13, struct kiockeymap) /* get xlat mode */
 #define	KIOCSLED	_IOW('k', 14, char)	/* set LED state */
 #define	KIOCGLED	_IOR('k', 15, char)	/* get LED state */
+#define	KIOCLAYOUT	_IOR('k', 20, int)	/* get keyboard layout */
 
 #define	TR_NONE			0	/* X compat, unsupported */
 #define	TR_ASCII		1	/* X compat, unsupported */
