@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.36 1998/08/21 13:50:30 ragge Exp $
+#	$NetBSD: GENERIC,v 1.37 1998/10/06 04:04:30 matt Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -78,16 +78,16 @@ options 	LKM
 # Kernel(s) to compile
 config          netbsd root on ? type ?
 
-backplane0	at root
+mainbus0	at root
 
-# Devices directly attached to backplane.
-cpu0		at backplane0	# Only one CPU so far.
-sbi*		at backplane0	# SBI's are always at backplane (Abus).
-mem*		at backplane0	# Some machines have memory at backplane.
-bi*		at backplane0	# VAXBI bus
-cmi0		at backplane0	# 11/750 internal bus.
-uba0		at backplane0	# MicroVAXen only have QBUS.
-vsbus0		at backplane0	# Internal "virtual" VAXstation bus
+# Devices directly attached to mainbus.
+cpu0		at mainbus0	# Only one CPU so far.
+sbi*		at mainbus0	# SBI's are always at mainbus (Abus).
+mem*		at mainbus0	# Some machines have memory at mainbus.
+bi*		at mainbus0	# VAXBI bus
+cmi0		at mainbus0	# 11/750 internal bus.
+uba0		at mainbus0	# MicroVAXen only have QBUS.
+vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
 
 # Devices connected at VAXBI
 cpu0		at bi? node?	# KA820/KA825 cpu
