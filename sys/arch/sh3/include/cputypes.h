@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.3 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.4 2002/04/16 17:33:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,6 +49,12 @@
 /* SH4 series */
 #define CPU_PRODUCT_7750	6
 #define CPU_PRODUCT_7750S	7
+
+#ifdef _LKM
+/* Assume all CPU architectures are valid for LKM's */
+#define	SH3	1
+#define	SH4	1
+#endif /* _LKM */
 
 #ifndef _LOCORE
 extern int cpu_arch;
