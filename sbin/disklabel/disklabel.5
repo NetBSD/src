@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.8 1999/08/13 10:23:39 bouyer Exp $
+.\"	$NetBSD: disklabel.5,v 1.9 2000/02/11 02:05:28 oster Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -305,6 +305,7 @@ static char *dktypenames[] = {
 #define	FS_FILECORE	16	/* Acorn Disk Filing System */
 #define FS_EX2FS	17	/* Linux Extended 2 file system */
 #define FS_NTFS		18	/* Windows/NT file system */
+#define	FS_RAID		19	/* RAIDframe component */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -327,6 +328,7 @@ static char *fstypenames[] = {
 	"FILECORE",
 	"Linux Ext2",
 	"NTFS",
+	"RAID",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
