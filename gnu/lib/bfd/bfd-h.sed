@@ -1,4 +1,4 @@
-#	$NetBSD: bfd-h.sed,v 1.2 1998/08/22 20:24:31 tv Exp $
+#	$NetBSD: bfd-h.sed,v 1.3 1998/08/22 20:32:02 tv Exp $
 # Preparse bfd.h such that it can be used on multiple machines.
 
 s/@VERSION@/2.8.1/
@@ -17,10 +17,9 @@ s/@VERSION@/2.8.1/
 #define BFD_HOST_64BIT_LONG 1\
 #else\
 #define BFD_HOST_64BIT_LONG 1\
-#endif\
-#include <sys/types.h>
+#endif
 	d
 }
 s/@BFD_HOST_64_BIT_DEFINED@/1/
-s/@BFD_HOST_64_BIT@/int64_t/
-s/@BFD_HOST_U_64_BIT@/u_int64_t/
+s/@BFD_HOST_64_BIT@/long long/
+s/@BFD_HOST_U_64_BIT@/unsigned long long/
