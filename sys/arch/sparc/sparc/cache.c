@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.89 2004/04/19 08:50:21 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.90 2004/04/27 16:37:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.89 2004/04/19 08:50:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.90 2004/04/27 16:37:43 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -77,7 +77,21 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.89 2004/04/19 08:50:21 pk Exp $");
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/cpuvar.h>
 
-struct cachestats cachestats;
+struct evcnt vcache_flush_pg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","pg");
+EVCNT_ATTACH_STATIC(vcache_flush_pg);
+struct evcnt vcache_flush_seg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","seg");
+EVCNT_ATTACH_STATIC(vcache_flush_seg);
+struct evcnt vcache_flush_reg =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","reg");
+EVCNT_ATTACH_STATIC(vcache_flush_reg);
+struct evcnt vcache_flush_ctx =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","ctx");
+EVCNT_ATTACH_STATIC(vcache_flush_ctx);
+struct evcnt vcache_flush_range =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","rng");
+EVCNT_ATTACH_STATIC(vcache_flush_range);
 
 int cache_alias_dist;		/* Cache anti-aliasing constants */
 int cache_alias_bits;
@@ -361,7 +375,7 @@ sun4_vcache_flush_context(ctx)
 	char *p;
 	int i, ls;
 
-	cachestats.cs_ncxflush++;
+	vcache_flush_ctx.ev_count++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	if (CACHEINFO.c_hwflush) {
 		ls = PAGE_SIZE;
@@ -394,7 +408,7 @@ sun4_vcache_flush_region(vreg, ctx)
 	int i, ls;
 	char *p;
 
-	cachestats.cs_nrgflush++;
+	vcache_flush_reg.ev_count++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -419,7 +433,7 @@ sun4_vcache_flush_segment(vreg, vseg, ctx)
 	int i, ls;
 	char *p;
 
-	cachestats.cs_nsgflush++;
+	vcache_flush_seg.ev_count++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	if (CACHEINFO.c_hwflush) {
 		ls = PAGE_SIZE;
@@ -452,7 +466,7 @@ sun4_vcache_flush_page(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
 	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
@@ -478,7 +492,7 @@ sun4_vcache_flush_page_hw(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
 	sta(p, ASI_HWFLUSHPG, 0);
 }
@@ -525,10 +539,7 @@ sun4_cache_flush(base, len)
 	baseoff = (int)base & PGOFSET;
 	i = (baseoff + len + PGOFSET) >> PGSHIFT;
 
-	cachestats.cs_nraflush++;
-#ifdef notyet
-	cachestats.cs_ra[min(i, MAXCACHERANGE)]++;
-#endif
+	vcache_flush_range.ev_count++;
 
 	if (__predict_true(i < CACHE_FLUSH_MAGIC)) {
 		/* cache_flush_page, for i pages */
@@ -580,7 +591,7 @@ srmmu_vcache_flush_context(ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_ncxflush++;
+	vcache_flush_ctx.ev_count++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -608,7 +619,7 @@ srmmu_vcache_flush_region(vreg, ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_nrgflush++;
+	vcache_flush_reg.ev_count++;
 	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -638,7 +649,7 @@ srmmu_vcache_flush_segment(vreg, vseg, ctx)
 	int i, ls, octx;
 	char *p;
 
-	cachestats.cs_nsgflush++;
+	vcache_flush_seg.ev_count++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	ls = CACHEINFO.c_linesize;
 	i = CACHEINFO.c_nlines;
@@ -669,7 +680,7 @@ srmmu_vcache_flush_page(va, ctx)
 		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
-	cachestats.cs_npgflush++;
+	vcache_flush_pg.ev_count++;
 	p = (char *)va;
 
 	/*
@@ -721,6 +732,8 @@ srmmu_vcache_flush_range(int va, int len, int ctx)
 	 */
 	if ((ls = CACHEINFO.c_linesize) == 0)
 		ls = 8;
+
+	vcache_flush_range.ev_count++;
 
 	/* Compute # of cache lines covered by this range */
 	offset = va & (ls - 1);
@@ -794,8 +807,6 @@ srmmu_cache_flush(base, len)
 #endif
 		return;
 	}
-
-	cachestats.cs_nraflush++;
 
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;

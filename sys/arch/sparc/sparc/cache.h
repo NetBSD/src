@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.31 2004/04/17 23:45:40 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.32 2004/04/27 16:37:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -276,17 +276,4 @@ struct cacheinfo {
 
 #define CACHEINFO cpuinfo.cacheinfo
 
-/*
- * Cache control statistics.
- */
-struct cachestats {
-	int	cs_npgflush;		/* # page flushes */
-	int	cs_nsgflush;		/* # seg flushes */
-	int	cs_nrgflush;		/* # seg flushes */
-	int	cs_ncxflush;		/* # context flushes */
-	int	cs_nraflush;		/* # range flushes */
-#ifdef notyet
-	int	cs_ra[65];		/* pages/range */
-#endif
-};
 #endif /* SPARC_CACHE_H */
