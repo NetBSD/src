@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.46 1995/04/26 23:12:02 gwr Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.47 1995/04/27 12:05:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1061,7 +1061,7 @@ sunos_reboot(p, uap, retval)
 		convp++;
 	}
 
-#if defined(SUN3)
+#ifdef sun3
 	/*
 	 * Sun RB_STRING (Get user supplied bootstring.)
 	 * If the machine supports passing a string to the
@@ -1071,12 +1071,13 @@ sunos_reboot(p, uap, retval)
 	if (sun_howto & SUNOS_RB_STRING) {
 		char bs[128];
 
-		error = copyinstr(uap->bootstr, bs, sizeof(bs), 0);
-		if (error) return error;
+		error = copyinstr(SCARG(uap, bootstr), bs, sizeof(bs), 0);
+		if (error)
+			return error;
 
 		return (reboot2(bsd_howto, bs));
 	}
-#endif	/* sun3, ... */
+#endif	/* sun3 */
 
 	return (boot(bsd_howto));
 }
