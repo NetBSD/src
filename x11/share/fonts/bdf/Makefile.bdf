@@ -1,4 +1,17 @@
-#	$NetBSD: Makefile.bdf,v 1.5 2004/03/06 03:13:06 rtr Exp $
+#	$NetBSD: Makefile.bdf,v 1.6 2004/03/08 22:33:00 cgd Exp $
+
+# Font files built using this makefile are cleaned in two ways:
+#
+#   * temporary build files are cleaned by 'make clean' (via CLEANFILES).
+#
+#   * Actual finished BDF and PCF files (BDFFILES and PCFFILES,
+#     respectively) are removed only by "cleandir" because they
+#     take a long time to build.  (See the 'cleanfonts' target.)
+#
+# Also, we *must* split these operations into multiple 'rm' commands
+# because of the number of files being removed.  Trying to 'rm' all of
+# these files with one command will cause some host systems to fail
+# (rm arg list too long).
 
 FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
@@ -14,7 +27,6 @@ ${_F}-${_M}.bdf: ${_F}.bdf
 	${_MKTARGET_CREATE}
 	${UCS2ANY} ${.ALLSRC} ${DESTDIR}${X11FONTDIR}/util/map-${_M} ${_M}
 
-CLEANFILES+=	${_F}-${_M}.bdf
 BDFFILES+=	${_F}-${_M}.bdf
 .endfor									# }
 
@@ -27,7 +39,6 @@ BDFFILES+=	${_F}-${_M}.bdf
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
 PCFFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}/}
-CLEANFILES+=	${PCFFILES}
 CLEANFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}.tmp/}
 
 FILES+=		${PCFFILES}
@@ -37,5 +48,10 @@ FILES+=		fonts.alias
 
 realall:	${PCFFILES}
 
+cleandir: cleanfonts
+
+cleanfonts: .PHONY .NOTMAIN
+	rm -f ${BDFFILES}
+	rm -f ${PCFFILES}
 
 .include "../Makefile.mkfontscale"
