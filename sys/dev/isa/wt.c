@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.11 1994/04/07 06:51:21 mycroft Exp $
+ *	$Id: wt.c,v 1.12 1994/04/21 00:41:52 mycroft Exp $
  */
 
 /*
@@ -201,8 +201,10 @@ wtprobe(parent, self, aux)
 	sc->RESETMASK = WT_RESETMASK;	sc->RESETVAL = WT_RESETVAL;
 	sc->ONLINE = WT_ONLINE;		sc->RESET = WT_RESET;
 	sc->REQUEST = WT_REQUEST;	sc->IEN = WT_IEN;
-	if (wtreset(sc))
-		return WT_NPORT;
+	if (wtreset(sc)) {
+		ia->ia_iosize = WT_NPORT;
+		return 1;
+	}
 
 	/* Try Archive. */
 	sc->type = ARCHIVE;
@@ -216,8 +218,10 @@ wtprobe(parent, self, aux)
 	sc->RESETMASK = AV_RESETMASK;	sc->RESETVAL = AV_RESETVAL;
 	sc->ONLINE = 0;			sc->RESET = AV_RESET;
 	sc->REQUEST = AV_REQUEST;	sc->IEN = AV_IEN;
-	if (wtreset(sc))
-		return AV_NPORT;
+	if (wtreset(sc)) {
+		ia->ia_iosize = AV_NPORT;
+		return 1;
+	}
 
 	/* Tape controller not found. */
 	sc->type = UNKNOWN;
