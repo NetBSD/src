@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.1 2002/11/30 14:09:50 jdolecek Exp $
+.\"	$NetBSD: afterboot.8,v 1.2 2002/12/18 20:51:53 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .\" Adapted to NetBSD by Julio Merino -- 2002-05-10, jmmv@hispabsd.org
 .\"
-.Dd Nov 30, 2002
+.Dd November 30, 2002
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@ file
 to have it stick around for the next reboot. Note that
 hostname is supposed to be FQDN commonly and should
 not be confused with YP
-.Xr domainname 8 .
+.Xr domainname 1 .
 .Ss Verify network interface configuration
 The first thing to do is an
 .Ic ifconfig -a
@@ -215,11 +215,11 @@ ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
 .Ed
 .Pp
 See
-.Xr netstart 8
+.Xr mrouted 8
 for instructions on configuring multicast routing.
 .Pp
 See
-.Xr dhcp 8
+.Xr dhcpd 8
 for instructions on configuring interfaces with DHCP.
 .Ss Check routing tables
 Issue a
@@ -374,7 +374,7 @@ to include
 for the
 .Dq passwd
 entry. A traditional way to accomplish the same thing is to
-add following entry to local passwd database via 
+add following entry to local passwd database via
 .Xr vipw 8 :
 .Bd -literal -offset indent
 .Li +:*::::::::
@@ -457,7 +457,7 @@ You then
 and edit
 .Pa /etc/fstab
 as needed.
-.Sh CHANGING /etc FILES
+.Ss CHANGING /etc FILES
 The system should be usable now, but you may wish to do more
 customization, such as adding users, etc.
 Many of the following sections may be skipped
@@ -526,7 +526,7 @@ and
 contains configuration for various daemons included with
 the system.
 Script
-.Xr rc.local 5
+.Pa /etc/rc.local
 is run as the last thing during multiuser boot, and is provided
 to allow any other local hooks necessary for the system.
 .Pp
@@ -591,7 +591,7 @@ and update appropriately if you want e-mail to be routed
 to non-local address or to different users.
 .Pp
 Run
-.Xr newaliases 8
+.Xr newaliases 1
 after changes.
 .Ss Sendmail
 .Nx
@@ -766,7 +766,7 @@ yet, because licensing restrictions make binary redistribution
 impossible, or simply because you want to build your own binaries.
 This group is called pkgsrc. Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
-.Sh COMPILING A KERNEL
+.Ss COMPILING A KERNEL
 First, review the system message buffer using the
 .Xr dmesg 8
 command to find out information on your system's devices as probed by the
@@ -853,6 +853,7 @@ and issuing
 .Xr make 1 ,
 .Xr man 1 ,
 .Xr netstat 1 ,
+.Xr newaliases 1 ,
 .Xr passwd 1 ,
 .Xr su 1 ,
 .Xr ccd 4 ,
@@ -874,17 +875,14 @@ and issuing
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
 .Xr config 8 ,
-.Xr dhcp 8 ,
 .Xr dhcpd 8 ,
-.Xr ext_srvtab 8 ,
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
 .Xr kerberos 8 ,
 .Xr mount 8 ,
+.Xr mrouted 8 ,
 .Xr mtree 8 ,
 .Xr named 8 ,
-.Xr netstart 8 ,
-.Xr newaliases 8 ,
 .Xr rbootd 8 ,
 .Xr rc 8 ,
 .Xr rmt 8 ,
