@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.7 2001/11/12 23:49:42 lukem Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.8 2001/11/13 00:49:35 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.7 2001/11/12 23:49:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.8 2001/11/13 00:49:35 lukem Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.7 2001/11/12 23:49:42 lukem Exp $");
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#if NPPPOE > 0
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
@@ -1004,5 +1002,3 @@ pppoe_start(struct ifnet *ifp)
 		pppoe_output(sc, m);
 	}
 }
-
-#endif	/* NPPPOE > 0 */

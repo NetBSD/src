@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.40 2001/11/12 23:49:44 lukem Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.41 2001/11/13 00:49:35 lukem Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,10 +91,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.40 2001/11/12 23:49:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.41 2001/11/13 00:49:35 lukem Exp $");
 
 #include "strip.h"
-#if NSTRIP > 0
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2068,5 +2067,3 @@ RecvErr_Message(strip_info, sendername, msg)
 		RecvErr("unparsed radio error message:", strip_info);
 	}
 }
-
-#endif /* NSTRIP > 0 */

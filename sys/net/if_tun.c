@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.48 2001/11/12 23:49:45 lukem Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.49 2001/11/13 00:49:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,10 +15,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.48 2001/11/12 23:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.49 2001/11/13 00:49:36 lukem Exp $");
 
 #include "tun.h"
-#if NTUN > 0
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -867,5 +866,3 @@ tunpoll(dev, events, p)
 	simple_unlock(&tp->tun_lock);
 	return (revents);
 }
-
-#endif  /* NTUN */

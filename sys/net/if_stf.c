@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.21 2001/11/12 23:49:43 lukem Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.21 2001/11/12 23:49:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $");
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
@@ -146,8 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.21 2001/11/12 23:49:43 lukem Exp $");
 #if NGIF > 0
 #include <net/if_gif.h>
 #endif
-
-#if NSTF > 0
 
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
 #define GET_V4(x)	((struct in_addr *)(&(x)->s6_addr16[1]))
@@ -794,5 +792,3 @@ stf_ioctl(ifp, cmd, data)
 
 	return error;
 }
-
-#endif /* NSTF > 0 */
