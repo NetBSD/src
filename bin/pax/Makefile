@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/05/18 07:57:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2003/07/18 02:18:49 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -55,8 +55,6 @@ SYMLINKS+=${BINDIR}/tar /usr/bin/tar
 LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 SYMLINKS+=${BINDIR}/cpio /usr/bin/cpio
 .endif	# }	! HOSTPROG
-
-NOHTML=doc2html-error
 
 .if !defined(HOSTPROG) && !defined(SMALLPROG)
 CPPFLAGS+=	-DSUPPORT_RMT
