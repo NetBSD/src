@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.59 1995/12/24 02:31:56 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.60 1995/12/26 17:16:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -535,8 +535,6 @@ uhaprobe(parent, match, aux)
 	struct uha_softc *uha = match;
 	struct isa_attach_args *ia = aux;
 
-	uha->sc_iobase = ia->ia_iobase;
-
 	/*
 	 * Try initialise a unit at this location
 	 * sets up dma and bus speed, loads uha->sc_irq
@@ -911,7 +909,7 @@ u14_find(uha, ia)
 	struct uha_softc *uha;
 	struct isa_attach_args *ia;
 {
-	int iobase = uha->sc_iobase;
+	int iobase = ia->ia_iobase;
 	u_short model, config;
 	int resetcount = 4000;	/* 4 secs? */
 
@@ -979,7 +977,7 @@ u14_find(uha, ia)
 	}
 	if (!resetcount) {
 		printf("%s: board timed out during reset\n",
-			uha->sc_dev.dv_xname);
+		    uha->sc_dev.dv_xname);
 		return ENXIO;
 	}
 
@@ -990,6 +988,7 @@ u14_find(uha, ia)
 	uha->intr = u14intr;
 	uha->init = u14_init;
 
+	uha->sc_iobase = iobase;
 	return 0;
 }
 
@@ -1075,7 +1074,7 @@ u24_find(uha, ia)
 		}
 		if (!resetcount) {
 			printf("%s: board timed out during reset\n",
-				uha->sc_dev.dv_xname);
+			    uha->sc_dev.dv_xname);
 			continue;
 		}
 
@@ -1086,6 +1085,7 @@ u24_find(uha, ia)
 		uha->intr = u24intr;
 		uha->init = u24_init;
 
+		uha->sc_iobase = ia->ia_iobase = iobase;
 		return 0;
 	}
 
@@ -1103,8 +1103,8 @@ u14_init(uha)
 	printf("u14_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U14_LMASK), inb(iobase + U14_SMASK));
 #endif
-	outb(0xd1, iobase + U14_LMASK);	/* XXX */
-	outb(0x91, iobase + U14_SMASK);	/* XXX */
+	outb(iobase + U14_LMASK, 0xd1);	/* XXX */
+	outb(iobase + U14_SMASK, 0x91);	/* XXX */
 }
 
 void
@@ -1121,8 +1121,8 @@ u24_init(uha)
 	printf("u24_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U24_LMASK), inb(iobase + U24_SMASK));
 #endif
-	outb(0xd2, iobase + U24_LMASK);	/* XXX */
-	outb(0x92, iobase + U24_SMASK);	/* XXX */
+	outb(iobase + U24_LMASK, 0xd2);	/* XXX */
+	outb(iobase + U24_SMASK, 0x92);	/* XXX */
 }
 
 void
