@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2000/04/30 21:22:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.159 2000/05/01 14:06:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6622,6 +6622,9 @@ pmap_zero_page4m(pa)
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 }
 
+/*
+ * Viking/MXCC specific version of pmap_zero_page
+ */
 void
 pmap_zero_page_viking_mxcc(pa)
 	paddr_t pa;
@@ -6641,6 +6644,46 @@ pmap_zero_page_viking_mxcc(pa)
 	for (offset = 0; offset < NBPG; offset += MXCC_STREAM_BLKSZ) {
 		stda(MXCC_STREAM_DST, ASI_CONTROL, v | offset);
 	}
+}
+
+/*
+ * HyperSPARC/RT625 specific version of pmap_zero_page
+ */
+void
+pmap_zero_page_hypersparc(pa)
+	paddr_t pa;
+{
+	caddr_t va;
+	int pte;
+	int offset;
+
+	/*
+	 * We still have to map the page, since ASI_BLOCKFILL
+	 * takes virtual addresses. This also means we have to
+	 * consider cache aliasing; therefore we still need
+	 * to flush the cache here. All we gain is the speed-up
+	 * in zero-fill loop itself..
+	 */
+	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
+		/*
+		 * The following might not be necessary since the page
+		 * is being cleared because it is about to be allocated,
+		 * i.e., is in use by no one.
+		 */
+		if (CACHEINFO.c_vactype != VAC_NONE)
+			pv_flushcache(pvhead(pa));
+	}
+	pte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX |
+		(atop(pa) << SRMMU_PPNSHIFT);
+
+	va = vpage[0];
+	setpgt4m(vpage_pte[0], pte);
+	for (offset = 0; offset < NBPG; offset += 32) {
+		sta(va + offset, ASI_BLOCKFILL, 0);
+	}
+	/* Remove temporary mapping */
+	tlb_flush_page(va);
+	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 }
 
 /*
@@ -6689,6 +6732,9 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
 
+/*
+ * Viking/MXCC specific version of pmap_copy_page
+ */
 void
 pmap_copy_page_viking_mxcc(src, dst)
 	paddr_t src, dst;
@@ -6706,6 +6752,57 @@ pmap_copy_page_viking_mxcc(src, dst)
 		stda(MXCC_STREAM_SRC, ASI_CONTROL, v1 | offset);
 		stda(MXCC_STREAM_DST, ASI_CONTROL, v2 | offset);
 	}
+}
+
+/*
+ * HyperSPARC/RT625 specific version of pmap_copy_page
+ */
+void
+pmap_copy_page_hypersparc(src, dst)
+	paddr_t src, dst;
+{
+	caddr_t sva, dva;
+	int spte, dpte;
+	int offset;
+
+	/*
+	 * We still have to map the pages, since ASI_BLOCKCOPY
+	 * takes virtual addresses. This also means we have to
+	 * consider cache aliasing; therefore we still need
+	 * to flush the cache here. All we gain is the speed-up
+	 * in copy loop itself..
+	 */
+
+	if (managed(src)) {
+		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
+			pv_flushcache(pvhead(src));
+	}
+
+	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RX |
+		(atop(src) << SRMMU_PPNSHIFT);
+
+	if (managed(dst)) {
+		/* similar `might not be necessary' comment applies */
+		if (CACHEINFO.c_vactype != VAC_NONE)
+			pv_flushcache(pvhead(dst));
+	}
+
+	dpte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_N_RWX |
+		(atop(dst) << SRMMU_PPNSHIFT);
+
+	sva = vpage[0];
+	dva = vpage[1];
+	setpgt4m(vpage_pte[0], spte);
+	setpgt4m(vpage_pte[1], dpte);
+
+	for (offset = 0; offset < NBPG; offset += 32) {
+		sta(dva + offset, ASI_BLOCKCOPY, sva + offset);
+	}
+
+	tlb_flush_page(sva);
+	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
+	tlb_flush_page(dva);
+	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
 #endif /* SUN4M */
 
