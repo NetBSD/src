@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.11 2003/02/17 23:32:33 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.12 2003/02/21 16:30:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.11 2003/02/17 23:32:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.12 2003/02/21 16:30:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ sa_yield(struct lwp *l)
 		/*
 		 * If we were told to make an upcall or exit before
 		 * the splsched(), make sure we process it instead of
-		 * doing to sleep. It might make more sense for this to
+		 * going to sleep. It might make more sense for this to
 		 * be handled inside of tsleep....
 		 */
 		if (p->p_userret == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.110 2003/02/17 23:45:47 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.111 2003/02/21 16:32:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.110 2003/02/17 23:45:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.111 2003/02/21 16:32:19 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -455,7 +455,7 @@ exit_lwps(struct lwp *l)
 	
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
-	 * LWPs, make detached LWPs undeached (so we can wait for
+	 * LWPs, make detached LWPs undetached (so we can wait for
 	 * them) and then wait for everyone else to finish.  
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
