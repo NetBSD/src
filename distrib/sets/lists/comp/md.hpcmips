@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.13 2001/04/15 17:14:27 kleink Exp $
+# $NetBSD: md.hpcmips,v 1.14 2001/09/27 08:01:25 shin Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
@@ -12,7 +12,6 @@
 ./usr/include/hpcmips/bswap.h	comp-c-include
 ./usr/include/hpcmips/bus.h	comp-c-include
 ./usr/include/hpcmips/cdefs.h	comp-c-include
-./usr/include/hpcmips/clock_machdep.h	comp-c-include
 ./usr/include/hpcmips/cpu.h	comp-c-include
 ./usr/include/hpcmips/db_machdep.h	comp-c-include
 ./usr/include/hpcmips/disklabel.h	comp-c-include
