@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.678 2005/01/08 16:07:20 fredb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.679 2005/01/13 18:25:49 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.679 2005/01/08 16:00:03 fredb Exp 
+ *	NetBSD: pcidevs,v 1.680 2005/01/13 18:25:19 jdolecek Exp 
  */
 
 /*
@@ -9348,6 +9348,10 @@ const struct pci_product pci_products[] = {
 	    "VT6105 (Rhine III) 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT61XX,
+	    "VT61XX (Velocity) 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA,
 	    "VT8623 (Apollo CLE266) VGA Controller",
 	},
@@ -9892,4 +9896,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1894;
+const int pci_nproducts = 1895;
