@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.3 1999/01/18 13:29:01 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.4 1999/02/19 14:57:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -187,7 +187,6 @@ static void	be_mii_writereg __P((struct device *, int, int, int));
 static void	be_statchg __P((struct device *));
 
 /* MII helpers */
-static int	be_mii_readreg1 __P((struct device *, int, int));
 static void	be_mii_sync __P((struct be_softc *));
 static void	be_mii_sendbits __P((struct be_softc *, int, u_int32_t, int));
 static int	be_mii_reset __P((struct be_softc *, int));
@@ -1248,6 +1247,14 @@ be_tcvr_init(sc)
 		       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
 	}
 #endif
+{
+	char bits[64];
+	printf("be_tcvr_init: MGMTPAL=%s\n",
+	       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
+	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
+		printf("EXTERNAL\n");
+	}
+}
 	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
 		sc->sc_conf |= BE_CONF_MII;
 		/*sc->sc_tcvr_type = BE_TCVR_EXTERNAL;*/
@@ -1340,18 +1347,21 @@ be_mii_sendbits(sc, phy, data, nbits)
 	}
 }
 
-static __inline__ int
-be_mii_readreg1(self, phy, reg)
+static int
+be_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
 
+	/* The `be' internal PHY is not treated as an MII device */
+	if (phy == BE_PHY_INTERNAL)
+		return (0);
+
 	/*
 	 * Read the PHY register by manually driving the MII control lines.
 	 */
-
 	be_mii_sync(sc);
 	be_mii_sendbits(sc, phy, MII_COMMAND_START, 2);
 	be_mii_sendbits(sc, phy, MII_COMMAND_READ, 2);
@@ -1368,33 +1378,7 @@ be_mii_readreg1(self, phy, reg)
 	(void) be_tcvr_read_bit(sc, phy);
 	(void) be_tcvr_read_bit(sc, phy);
 
-#if 0
-	if (phy == BE_PHY_INTERNAL) {
-		/*
-		 * Feign capabilities for imaginary MII.
-		 */
-		if (reg == MII_BMSR)
-			val |=	BMSR_100TXFDX | BMSR_100TXHDX |
-				BMSR_10TFDX | BMSR_10THDX | BMSR_ANEG;
-
-		if (reg == MII_BMCR)
-			;
-	}
-#endif
 	return (val);
-}
-
-int
-be_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
-{
-	if (phy == BE_PHY_INTERNAL)
-		return (be_mii_readreg1(self, BE_PHY_INTERNAL, reg));
-	else if (phy == BE_PHY_EXTERNAL)
-		return (be_mii_readreg1(self, BE_PHY_EXTERNAL, reg));
-	else
-		return (0);
 }
 
 void
@@ -1492,15 +1476,15 @@ be_internal_phy_auto(sc)
 		return;
 
 	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
+	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
+	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
 
 	if ((bmsr & BMSR_LINK) != 0) {
 		/* We have a carrier */
 		return;
 	}
 
-	bmcr = be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
+	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
 	/* Just flip the fast speed bit */
 	bmcr ^= BMCR_S100;
 	be_mii_writereg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
@@ -1527,7 +1511,7 @@ be_ifmedia_sts(ifp, ifmr)
 	/*
 	 * Internal transceiver; do the work here.
 	 */
-	bmcr = be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
+	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
 
 	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
 	case (BMCR_S100 | BMCR_FDX):
@@ -1545,8 +1529,8 @@ be_ifmedia_sts(ifp, ifmr)
 	}
 
 	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg1((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
+	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
+	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		ifmr->ifm_status |=  IFM_AVALID | IFM_ACTIVE;
 	else {
