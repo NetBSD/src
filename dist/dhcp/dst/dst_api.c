@@ -1,6 +1,6 @@
 #ifndef LINT
 #if 0
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.2 2002/06/15 01:32:13 matt Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.3 2002/12/06 04:02:49 thorpej Exp $";
 #endif
 #endif
 
@@ -868,7 +868,7 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, unsigned in_id,
 	len = cnt;
 	p = in_buff;
 
-	if (!dst_s_verify_str((const char **) &p, "Private-key-format: v")) {
+	if (!dst_s_verify_str((void *) &p, "Private-key-format: v")) {
 		EREPORT(("dst_s_read_private_key_file(): Not a Key file/Decrypt failed %s\n", name));
 		goto fail;
 	}
@@ -886,7 +886,7 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, unsigned in_id,
 
 	while (*p++ != '\n') ;	/* skip to end of line */
 
-	if (!dst_s_verify_str((const char **) &p, "Algorithm: "))
+	if (!dst_s_verify_str((void *) &p, "Algorithm: "))
 		goto fail;
 
 	if (sscanf((char *)p, "%d", &alg) != 1)
