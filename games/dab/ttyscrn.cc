@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
+/*	$NetBSD: ttyscrn.cc,v 1.2 2003/12/27 18:24:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include "defs.h"
-RCSID("$NetBSD: ttyscrn.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
+RCSID("$NetBSD: ttyscrn.cc,v 1.2 2003/12/27 18:24:51 martin Exp $")
 
 #include <stdio.h>
 #include <curses.h>
@@ -177,25 +177,25 @@ int TTYSCRN::getinput(void)
 
 void TTYSCRN::score(size_t s, const PLAYER& p)
 {
-    mvwprintw(stdscr, _sy + s + TTYSCRN::offsscore, _sx, "S %c:%5d", p.getWho(),
+    mvwprintw(stdscr, _sy + s + TTYSCRN::offsscore, _sx, "S %c:%5zd", p.getWho(),
 	      p.getScore());
 }
 
 void TTYSCRN::total(size_t s, const PLAYER& p)
 {
-    mvwprintw(stdscr, _sy + s + TTYSCRN::offstotal, _sx, "T %c:%5d", p.getWho(),
+    mvwprintw(stdscr, _sy + s + TTYSCRN::offstotal, _sx, "T %c:%5zd", p.getWho(),
 	      p.getTotal());
 }
 
 void TTYSCRN::games(size_t s, const PLAYER& p)
 {
-    mvwprintw(stdscr, _sy + s + TTYSCRN::offsgames, _sx, "G %c:%5d", p.getWho(),
+    mvwprintw(stdscr, _sy + s + TTYSCRN::offsgames, _sx, "G %c:%5zd", p.getWho(),
 	      p.getGames());
 }
 
 void TTYSCRN::ties(const PLAYER& p)
 {
-    mvwprintw(stdscr, _sy + TTYSCRN::offsties, _sx, "G =:%5d", p.getTies());
+    mvwprintw(stdscr, _sy + TTYSCRN::offsties, _sx, "G =:%5zd", p.getTies());
 }
 
 TTYSCRN* TTYSCRN::create(int acs, size_t y, size_t x)
