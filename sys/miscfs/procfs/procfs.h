@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.43 2003/04/18 10:00:19 jdolecek Exp $	*/
+/*	$NetBSD: procfs.h,v 1.44 2003/05/28 18:03:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -55,6 +55,7 @@ typedef enum {
 	Pregs,		/* the process's register set */
 	Pfpregs,	/* the process's FP register set */
 	Pctl,		/* process control */
+	Pstat,		/* process status (if -o linux) */
 	Pstatus,	/* process status */
 	Pnote,		/* process notifier */
 	Pnotepg,	/* process group notifier */
@@ -148,6 +149,8 @@ int procfs_dofpregs __P((struct proc *, struct lwp *, struct pfsnode *,
 int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_doctl __P((struct proc *, struct lwp *, struct pfsnode *,
+    struct uio *));
+int procfs_do_pid_stat __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_dostatus __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
