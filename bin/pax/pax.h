@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.15 2002/10/12 18:49:29 thorpej Exp $	*/
+/*	$NetBSD: pax.h,v 1.16 2002/10/13 00:34:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -266,7 +266,7 @@ typedef struct oplist {
 /*
  * Macros to manipulate off_t as a unsigned long or unsigned long long
  */
-#ifdef NET2_STAT
+#if defined(NET2_STAT) || defined(_LP64)
 #define	OFFT_F			"%lu"
 #define	OFFT_FP(x)		"%" x "lu"
 #define	OFFT_T			u_long
