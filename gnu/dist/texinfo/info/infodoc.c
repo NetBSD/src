@@ -1,9 +1,9 @@
-/*	$NetBSD: infodoc.c,v 1.1.1.4 2003/07/03 14:58:56 wiz Exp $	*/
+/*	$NetBSD: infodoc.c,v 1.1.1.5 2004/07/12 23:26:55 wiz Exp $	*/
 
 /* infodoc.c -- functions which build documentation nodes.
-   Id: infodoc.c,v 1.6 2003/05/13 16:22:11 karl Exp
+   Id: infodoc.c,v 1.3 2004/03/14 00:57:29 karl Exp
 
-   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003 Free Software
+   Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -187,12 +187,10 @@ static char *info_help_keys_text[][2] = {
 
 #endif /* !INFOKEY */
 
-static char *where_is_internal ();
+static char *where_is_internal (Keymap map, InfoCommand *cmd);
 
 void
-dump_map_to_message_buffer (prefix, map)
-     char *prefix;
-     Keymap map;
+dump_map_to_message_buffer (char *prefix, Keymap map)
 {
   register int i;
   unsigned prefix_len = strlen (prefix);
@@ -228,13 +226,16 @@ dump_map_to_message_buffer (prefix, map)
 
           if (last - 1 != i)
             {
-              printf_to_message_buffer ("%s .. ", pretty_keyseq (new_prefix));
+              printf_to_message_buffer ("%s .. ", pretty_keyseq (new_prefix),
+                  NULL, NULL);
               new_prefix[prefix_len] = last - 1;
-              printf_to_message_buffer ("%s\t", pretty_keyseq (new_prefix));
+              printf_to_message_buffer ("%s\t", pretty_keyseq (new_prefix),
+                  NULL, NULL);
               i = last - 1;
             }
           else
-            printf_to_message_buffer ("%s\t", pretty_keyseq (new_prefix));
+            printf_to_message_buffer ("%s\t", pretty_keyseq (new_prefix),
+                NULL, NULL);
 
 #if defined (NAMED_FUNCTIONS)
           /* Print the name of the function, and some padding before the
@@ -243,22 +244,23 @@ dump_map_to_message_buffer (prefix, map)
             int length_so_far;
             int desired_doc_start = 40; /* Must be multiple of 8. */
 
-            printf_to_message_buffer ("(%s)", name);
+            printf_to_message_buffer ("(%s)", name, NULL, NULL);
             length_so_far = message_buffer_length_this_line ();
 
-            if ((desired_doc_start + strlen (doc)) >= the_screen->width)
-              printf_to_message_buffer ("\n     ");
+            if ((desired_doc_start + strlen (doc))
+                >= (unsigned int) the_screen->width)
+              printf_to_message_buffer ("\n     ", NULL, NULL, NULL);
             else
               {
                 while (length_so_far < desired_doc_start)
                   {
-                    printf_to_message_buffer ("\t");
+                    printf_to_message_buffer ("\t", NULL, NULL, NULL);
                     length_so_far += character_width ('\t', length_so_far);
                   }
               }
           }
 #endif /* NAMED_FUNCTIONS */
-          printf_to_message_buffer ("%s\n", doc);
+          printf_to_message_buffer ("%s\n", doc, NULL, NULL);
         }
     }
   free (new_prefix);
@@ -271,8 +273,7 @@ dump_map_to_message_buffer (prefix, map)
    make q do the right thing in both cases.  */
 
 static void
-create_internal_info_help_node (help_is_only_window_p)
-     int help_is_only_window_p;
+create_internal_info_help_node (int help_is_only_window_p)
 {
   register int i;
   NODE *node;
@@ -293,8 +294,9 @@ create_internal_info_help_node (help_is_only_window_p)
       for (i = 0; info_internal_help_text[i]; i++)
         {
 #ifdef INFOKEY
-          printf_to_message_buffer (replace_in_documentation (
-           _(info_internal_help_text[i]), help_is_only_window_p));
+          printf_to_message_buffer (replace_in_documentation
+              ((char *) _(info_internal_help_text[i]), help_is_only_window_p),
+              NULL, NULL, NULL);
 #else
           /* Don't translate blank lines, gettext outputs the po file
              header in that case.  We want a blank line.  */
@@ -308,18 +310,21 @@ create_internal_info_help_node (help_is_only_window_p)
           if (STREQ (key, "CTRL-x 0") && help_is_only_window_p)
             key = "l";
 
-          printf_to_message_buffer (msg, key);
+          printf_to_message_buffer (msg, key, NULL, NULL);
 #endif /* !INFOKEY */
         }
 
-      printf_to_message_buffer ("---------------------\n\n");
-      printf_to_message_buffer (_("The current search path is:\n"));
-      printf_to_message_buffer ("  %s\n", infopath);
-      printf_to_message_buffer ("---------------------\n\n");
-      printf_to_message_buffer (_("Commands available in Info windows:\n\n"));
+      printf_to_message_buffer ("---------------------\n\n", NULL, NULL, NULL);
+      printf_to_message_buffer ((char *) _("The current search path is:\n"),
+          NULL, NULL, NULL);
+      printf_to_message_buffer ("  %s\n", infopath, NULL, NULL);
+      printf_to_message_buffer ("---------------------\n\n", NULL, NULL, NULL);
+      printf_to_message_buffer ((char *) _("Commands available in Info windows:\n\n"),
+          NULL, NULL, NULL);
       dump_map_to_message_buffer ("", info_keymap);
-      printf_to_message_buffer ("---------------------\n\n");
-      printf_to_message_buffer (_("Commands available in the echo area:\n\n"));
+      printf_to_message_buffer ("---------------------\n\n", NULL, NULL, NULL);
+      printf_to_message_buffer ((char *) _("Commands available in the echo area:\n\n"),
+          NULL, NULL, NULL);
       dump_map_to_message_buffer ("", echo_area_keymap);
 
 #if defined (NAMED_FUNCTIONS)
@@ -331,19 +336,22 @@ create_internal_info_help_node (help_is_only_window_p)
         {
           InfoCommand *cmd = DocInfoCmd(&function_doc_array[i]);
 
-          if (InfoFunction(cmd) != info_do_lowercase_version
+          if (InfoFunction(cmd) != (VFunction *) info_do_lowercase_version
               && !where_is_internal (info_keymap, cmd)
               && !where_is_internal (echo_area_keymap, cmd))
             {
               if (!printed_one_mx)
                 {
-                  printf_to_message_buffer ("---------------------\n\n");
+                  printf_to_message_buffer ("---------------------\n\n",
+                      NULL, NULL, NULL);
                   if (exec_keys && exec_keys[0])
                       printf_to_message_buffer
-                        (_("The following commands can only be invoked via %s:\n\n"), exec_keys);
+                        ((char *) _("The following commands can only be invoked via %s:\n\n"),
+                         exec_keys, NULL, NULL);
                   else
                       printf_to_message_buffer
-                        (_("The following commands cannot be invoked at all:\n\n"));
+                        ((char *) _("The following commands cannot be invoked at all:\n\n"),
+                         NULL, NULL, NULL);
                   printed_one_mx = 1;
                 }
 
@@ -352,22 +360,22 @@ create_internal_info_help_node (help_is_only_window_p)
                  exec_keys,
                  function_doc_array[i].func_name,
                  replace_in_documentation (strlen (function_doc_array[i].doc)
-                                           ? _(function_doc_array[i].doc)
-                                           : "")
+                   ? (char *) _(function_doc_array[i].doc) : "", 0)
                 );
 
             }
         }
 
       if (printed_one_mx)
-        printf_to_message_buffer ("\n");
+        printf_to_message_buffer ("\n", NULL, NULL, NULL);
 
       maybe_free (exec_keys);
 #endif /* NAMED_FUNCTIONS */
 
       printf_to_message_buffer
         ("%s", replace_in_documentation
-         (_("--- Use `\\[history-node]' or `\\[kill-node]' to exit ---\n")));
+         ((char *) _("--- Use `\\[history-node]' or `\\[kill-node]' to exit ---\n"), 0),
+         NULL, NULL);
       node = message_buffer_to_node ();
       internal_info_help_node_contents = node->contents;
     }
@@ -406,7 +414,7 @@ create_internal_info_help_node (help_is_only_window_p)
 #define HELP_SPLIT_SIZE 24
 
 static WINDOW *
-info_find_or_create_help_window ()
+info_find_or_create_help_window (void)
 {
   int help_is_only_window_p;
   WINDOW *eligible = NULL;
@@ -440,9 +448,8 @@ info_find_or_create_help_window ()
      argument is false if help will be the only window (so l must be used
      to quit help), true if help will be one of several visible windows
      (so CTRL-x 0 must be used to quit help).  */
-  help_is_only_window_p
-     = ((help_window && !windows->next)
-        || !help_window && eligible->height < HELP_SPLIT_SIZE);
+  help_is_only_window_p = ((help_window && !windows->next)
+        || (!help_window && eligible->height < HELP_SPLIT_SIZE));
   create_internal_info_help_node (help_is_only_window_p);
 
   /* Either use the existing window to display the help node, or create
@@ -489,7 +496,7 @@ DECLARE_INFO_COMMAND (info_get_help_window, _("Display help message"))
     }
   else
     {
-      info_error (msg_cant_make_help);
+      info_error ((char *) msg_cant_make_help, NULL, NULL);
     }
 }
 
@@ -531,9 +538,9 @@ DECLARE_INFO_COMMAND (info_get_info_help_node, _("Visit Info node `(info)Help'")
   if (!node)
     {
       if (info_recent_file_error)
-        info_error (info_recent_file_error);
+        info_error (info_recent_file_error, NULL, NULL);
       else
-        info_error (msg_cant_file_node, "Info", nodename);
+        info_error ((char *) msg_cant_file_node, "Info", nodename);
     }
   else
     {
@@ -561,8 +568,7 @@ DECLARE_INFO_COMMAND (info_get_info_help_node, _("Visit Info node `(info)Help'")
 
 /* Return the documentation associated with the Info command FUNCTION. */
 char *
-function_documentation (cmd)
-     InfoCommand *cmd;
+function_documentation (InfoCommand *cmd)
 {
   char *doc;
 
@@ -582,15 +588,14 @@ function_documentation (cmd)
 
 #endif /* !INFOKEY */
 
-  return replace_in_documentation ((strlen (doc) == 0) ? doc : _(doc));
+  return replace_in_documentation ((strlen (doc) == 0) ? doc : (char *) _(doc), 0);
 }
 
 #if defined (NAMED_FUNCTIONS)
 /* Return the user-visible name of the function associated with the
    Info command FUNCTION. */
 char *
-function_name (cmd)
-     InfoCommand *cmd;
+function_name (InfoCommand *cmd)
 {
 #if defined (INFOKEY)
 
@@ -611,8 +616,7 @@ function_name (cmd)
 
 /* Return a pointer to the info command for function NAME. */
 InfoCommand *
-named_function (name)
-     char *name;
+named_function (char *name)
 {
   register int i;
 
@@ -626,9 +630,7 @@ named_function (name)
 
 /* Return the documentation associated with KEY in MAP. */
 char *
-key_documentation (key, map)
-     char key;
-     Keymap map;
+key_documentation (char key, Keymap map)
 {
   InfoCommand *function = map[key].function;
 
@@ -650,7 +652,8 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
 
   for (;;)
     {
-      message_in_echo_area (_("Describe key: %s"), pretty_keyseq (keys));
+      message_in_echo_area ((char *) _("Describe key: %s"),
+          pretty_keyseq (keys), NULL);
       keystroke = info_get_input_char ();
       unmessage_in_echo_area ();
 
@@ -676,7 +679,8 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
 
       if (map[keystroke].function == (InfoCommand *)NULL)
         {
-          message_in_echo_area (_("%s is undefined."), pretty_keyseq (keys));
+          message_in_echo_area ((char *) _("%s is undefined."),
+              pretty_keyseq (keys), NULL);
           return;
         }
       else if (map[keystroke].type == ISKMAP)
@@ -695,7 +699,8 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
              edit keys that emit an escape sequence: it's terribly
              confusing to see a message "Home (do-lowercase-version)"
              or some such when Home is unbound.  */
-          if (InfoFunction(map[keystroke].function) == info_do_lowercase_version)
+          if (InfoFunction(map[keystroke].function)
+              == (VFunction *) info_do_lowercase_version)
             {
               unsigned char lowerkey = Meta_p(keystroke)
                                        ? Meta (tolower (UnMeta (keystroke)))
@@ -703,8 +708,8 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
 
               if (map[lowerkey].function == (InfoCommand *)NULL)
                 {
-                  message_in_echo_area (_("%s is undefined."),
-                                        pretty_keyseq (keys));
+                  message_in_echo_area ((char *) _("%s is undefined."),
+                                        pretty_keyseq (keys), NULL);
                   return;
                 }
             }
@@ -727,7 +732,7 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
           sprintf (message, _("%s is defined to %s."), keyname, fundoc);
 #endif /* !NAMED_FUNCTIONS */
 
-          window_message_in_echo_area ("%s", message);
+          window_message_in_echo_area ("%s", message, NULL);
           free (message);
           break;
         }
@@ -736,8 +741,7 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
 
 /* Return the pretty printable name of a single character. */
 char *
-pretty_keyname (key)
-     unsigned char key;
+pretty_keyname (unsigned char key)
 {
   static char rep_buffer[30];
   char *rep;
@@ -787,11 +791,10 @@ pretty_keyname (key)
 
 /* Return the pretty printable string which represents KEYSEQ. */
 
-static void pretty_keyseq_internal ();
+static void pretty_keyseq_internal (char *keyseq, char *rep);
 
 char *
-pretty_keyseq (keyseq)
-     char *keyseq;
+pretty_keyseq (char *keyseq)
 {
   static char keyseq_rep[200];
 
@@ -802,8 +805,7 @@ pretty_keyseq (keyseq)
 }
 
 static void
-pretty_keyseq_internal (keyseq, rep)
-     char *keyseq, *rep;
+pretty_keyseq_internal (char *keyseq, char *rep)
 {
   if (term_kP && strncmp(keyseq, term_kP, strlen(term_kP)) == 0)
     {
@@ -871,8 +873,7 @@ pretty_keyseq_internal (keyseq, rep)
 
 /* Return a pointer to the last character in s that is found in f. */
 static char *
-strrpbrk (s, f)
-     const char *s, *f;
+strrpbrk (const char *s, const char *f)
 {
   register const char *e = s + strlen(s);
   register const char *t;
@@ -888,9 +889,7 @@ strrpbrk (s, f)
 
 /* Replace the names of functions with the key that invokes them. */
 char *
-replace_in_documentation (string, help_is_only_window_p)
-     char *string;
-     int help_is_only_window_p;
+replace_in_documentation (char *string, int help_is_only_window_p)
 {
   unsigned reslen = strlen (string);
   register int i, start, next;
@@ -1060,9 +1059,7 @@ static int where_is_rep_index = 0;
 static int where_is_rep_size = 0;
 
 char *
-where_is (map, cmd)
-     Keymap map;
-     InfoCommand *cmd;
+where_is (Keymap map, InfoCommand *cmd)
 {
   char *rep;
 
@@ -1095,9 +1092,7 @@ where_is (map, cmd)
 /* Return the printed rep of the keystrokes that invoke FUNCTION,
    as found in MAP, or NULL. */
 static char *
-where_is_internal (map, cmd)
-     Keymap map;
-     InfoCommand *cmd;
+where_is_internal (Keymap map, InfoCommand *cmd)
 {
 #if defined(INFOKEY)
 
@@ -1156,14 +1151,12 @@ where_is_internal (map, cmd)
 #endif /* INFOKEY */
 }
 
-extern char *read_function_name ();
-
 DECLARE_INFO_COMMAND (info_where_is,
    _("Show what to type to execute a given command"))
 {
   char *command_name;
 
-  command_name = read_function_name (_("Where is command: "), window);
+  command_name = read_function_name ((char *) _("Where is command: "), window);
 
   if (!command_name)
     {
@@ -1185,20 +1178,24 @@ DECLARE_INFO_COMMAND (info_where_is,
 
           if (!location || !location[0])
             {
-              info_error (_("`%s' is not on any keys"), command_name);
+              info_error ((char *) _("`%s' is not on any keys"),
+                  command_name, NULL);
             }
           else
             {
               if (strstr (location, function_name (command)))
                 window_message_in_echo_area
-                  (_("%s can only be invoked via %s."), command_name, location);
+                  ((char *) _("%s can only be invoked via %s."),
+                   command_name, location);
               else
                 window_message_in_echo_area
-                  (_("%s can be invoked via %s."), command_name, location);
+                  ((char *) _("%s can be invoked via %s."),
+                   command_name, location);
             }
         }
       else
-        info_error (_("There is no function named `%s'"), command_name);
+        info_error ((char *) _("There is no function named `%s'"),
+            command_name, NULL);
     }
 
   free (command_name);

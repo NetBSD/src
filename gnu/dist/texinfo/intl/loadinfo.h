@@ -1,6 +1,6 @@
-/*	$NetBSD: loadinfo.h,v 1.1.1.3 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: loadinfo.h,v 1.1.1.4 2004/07/12 23:27:17 wiz Exp $	*/
 
-/* Copyright (C) 1996-1999, 2000-2002 Free Software Foundation, Inc.
+/* Copyright (C) 1996-1999, 2000-2003 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -33,14 +33,6 @@
    The main function _nl_find_domain() in finddomain.c is declared
    in gettextP.h.
  */
-
-#ifndef PARAMS
-# if __STDC__ || defined __GNUC__ || defined __SUNPRO_C || defined __cplusplus || __PROTOTYPES
-#  define PARAMS(args) args
-# else
-#  define PARAMS(args) ()
-# endif
-#endif
 
 #ifndef internal_function
 # define internal_function
@@ -91,8 +83,8 @@ struct loaded_l10nfile
    names.  Normalization allows the user to use any of the common
    names.  The return value is dynamically allocated and has to be
    freed by the caller.  */
-extern const char *_nl_normalize_codeset PARAMS ((const char *codeset,
-						  size_t name_len));
+extern const char *_nl_normalize_codeset (const char *codeset,
+					  size_t name_len);
 
 /* Lookup a locale dependent file.
    *L10NFILE_LIST denotes a pool of lookup results of locale dependent
@@ -109,19 +101,18 @@ extern const char *_nl_normalize_codeset PARAMS ((const char *codeset,
    furthermore its ->successor[] field contains a list of other lookup
    results from which this lookup result inherits.  */
 extern struct loaded_l10nfile *
-_nl_make_l10nflist PARAMS ((struct loaded_l10nfile **l10nfile_list,
-			    const char *dirlist, size_t dirlist_len, int mask,
-			    const char *language, const char *territory,
-			    const char *codeset,
-			    const char *normalized_codeset,
-			    const char *modifier, const char *special,
-			    const char *sponsor, const char *revision,
-			    const char *filename, int do_allocate));
+_nl_make_l10nflist (struct loaded_l10nfile **l10nfile_list,
+		    const char *dirlist, size_t dirlist_len, int mask,
+		    const char *language, const char *territory,
+		    const char *codeset, const char *normalized_codeset,
+		    const char *modifier, const char *special,
+		    const char *sponsor, const char *revision,
+		    const char *filename, int do_allocate);
 
 /* Lookup the real locale name for a locale alias NAME, or NULL if
    NAME is not a locale alias (but possibly a real locale name).
    The return value is statically allocated and must not be freed.  */
-extern const char *_nl_expand_alias PARAMS ((const char *name));
+extern const char *_nl_expand_alias (const char *name);
 
 /* Split a locale name NAME into its pieces: language, modifier,
    territory, codeset, special, sponsor, revision.
@@ -141,18 +132,16 @@ extern const char *_nl_expand_alias PARAMS ((const char *name));
      CEN_SPONSOR                 for *SPONSOR,
      CEN_REVISION                for *REVISION.
  */
-extern int _nl_explode_name PARAMS ((char *name, const char **language,
-				     const char **modifier,
-				     const char **territory,
-				     const char **codeset,
-				     const char **normalized_codeset,
-				     const char **special,
-				     const char **sponsor,
-				     const char **revision));
+extern int _nl_explode_name (char *name, const char **language,
+			     const char **modifier, const char **territory,
+			     const char **codeset,
+			     const char **normalized_codeset,
+			     const char **special, const char **sponsor,
+			     const char **revision);
 
 /* Split a locale name NAME into a leading language part and all the
    rest.  Return a pointer to the first character after the language,
    i.e. to the first byte of the rest.  */
-extern char *_nl_find_language PARAMS ((const char *name));
+extern char *_nl_find_language (const char *name);
 
 #endif	/* loadinfo.h */

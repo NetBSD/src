@@ -1,4 +1,4 @@
-/*	$NetBSD: relocatable.h,v 1.1.1.1 2003/07/03 14:59:13 wiz Exp $	*/
+/*	$NetBSD: relocatable.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
 
 /* Provide relocatable packages.
    Copyright (C) 2003 Free Software Foundation, Inc.
@@ -21,6 +21,11 @@
 
 #ifndef _RELOCATABLE_H
 #define _RELOCATABLE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* This can be enabled through the configure --enable-relocatable option.  */
 #if ENABLE_RELOCATABLE
@@ -64,6 +69,11 @@ extern const char * compute_curr_prefix (const char *orig_installprefix,
 /* By default, we use the hardwired pathnames.  */
 #define relocate(pathname) (pathname)
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _RELOCATABLE_H */

@@ -1,9 +1,10 @@
 #!/bin/sh
-# Id: twofiles,v 1.2 2003/05/29 22:54:17 karl Exp
+# Id: twofiles,v 1.2 2003/12/14 15:18:38 karl Exp
 # Test that an existing and nonexisting file doesn't cause a
 # segmentation fault.
 # From: Arkadiusz Miskiewicz <misiek@pld.ORG.PL>, 15 Feb 2003 13:22:49 +0100.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 
 outfile=outfile

@@ -1,9 +1,9 @@
-/*	$NetBSD: xexit.c,v 1.1.1.3 2003/07/03 14:58:58 wiz Exp $	*/
+/*	$NetBSD: xexit.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
 
 /* xexit.c -- exit with attention to return values and closing stdout.
-   Id: xexit.c,v 1.4 2003/05/19 13:10:59 karl Exp
+   Id: xexit.c,v 1.2 2004/02/19 00:13:00 karl Exp
 
-   Copyright (C) 1999, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -49,8 +49,7 @@
    unsuccessfully.  */
 
 void
-xexit (exit_status)
-     int exit_status;
+xexit (int exit_status)
 {
   if (ferror (stdout))
     {

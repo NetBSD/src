@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.3 2003/04/05 23:09:26 karl Exp
+# Id: Makefile.am,v 1.6 2004/03/08 22:45:54 karl Exp
 # Makefile.am for texinfo/makeinfo.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -18,13 +18,11 @@ LDADD = ../lib/libtxi.a $(LIBINTL)
 
 makeinfo_SOURCES = \
   cmds.c cmds.h defun.c defun.h \
-  files.c files.h footnote.c footnote.h \
+  files.c files.h float.c float.h footnote.c footnote.h \
   html.c html.h index.c index.h insertion.c insertion.h lang.c lang.h \
-  macro.c macro.h makeinfo.c makeinfo.h multi.c node.c node.h \
-  sectioning.c sectioning.h toc.c toc.h xml.c xml.h
+  macro.c macro.h makeinfo.c makeinfo.h multi.c multi.h node.c node.h \
+  sectioning.c sectioning.h toc.c toc.h xml.c xml.h xref.c xref.h
 
-pkgdata_DATA = texinfo.dtd texinfo.xsl
-
-EXTRA_DIST = README $(pkgdata_DATA)
+EXTRA_DIST = README
 
 SUBDIRS = tests
