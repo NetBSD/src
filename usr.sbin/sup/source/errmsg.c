@@ -1,4 +1,4 @@
-/*	$NetBSD: errmsg.c,v 1.7 2002/07/10 20:19:38 wiz Exp $	*/
+/*	$NetBSD: errmsg.c,v 1.8 2003/04/03 17:14:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -52,7 +52,7 @@ itoa(char *p, unsigned n)
 const char *
 errmsg(int cod)
 {
-#ifndef __NetBSD__
+#ifndef errno
 	extern int errno;
 	extern int sys_nerr;
 	extern char *sys_errlist[];
@@ -63,7 +63,7 @@ errmsg(int cod)
 	if (cod < 0)
 		cod = errno;
 
-#ifndef __NetBSD__
+#ifndef errno
 	if ((cod >= 0) && (cod < sys_nerr))
 		return (sys_errlist[cod]);
 

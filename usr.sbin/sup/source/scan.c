@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.16 2002/07/10 23:55:06 wiz Exp $	*/
+/*	$NetBSD: scan.c,v 1.17 2003/04/03 17:14:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -85,7 +85,9 @@
 
 #include "libc.h"
 #include "c.h"
+#ifdef HAS_VIS
 #include <vis.h>
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -809,7 +811,11 @@ static int
 getscanfile(char *scanfile)
 {
 	char buf[STRINGLENGTH];
+#ifdef HAS_VIS
 	char fname[MAXPATHLEN];
+#else
+	char *fname;
+#endif
 	struct stat sbuf;
 	FILE *f;
 	TREE ts;
@@ -882,7 +888,11 @@ getscanfile(char *scanfile)
 			goaway("scanfile format inconsistent");
 		*q++ = 0;
 		ts.Tmtime = atoi(p);
+#ifdef HAS_VIS
 		(void) strunvis(fname, q);
+#else
+		fname = q;
+#endif
 		if (ts.Tctime > lasttime)
 			ts.Tflags |= FNEW;
 		else if (newonly) {
@@ -958,13 +968,17 @@ static int
 recordone(TREE * t, void *v)
 {
 	FILE *scanF = v;
+#ifdef HAS_VIS
 	char fname[MAXPATHLEN * 4 + 1];
+	strvis(fname, t->Tname, VIS_WHITE);
+#else
+	char *fname = t->Tname;
+#endif
 
 	if (t->Tflags & FBACKUP)
 		fprintf(scanF, "B");
 	if (t->Tflags & FNOACCT)
 		fprintf(scanF, "N");
-	strvis(fname, t->Tname, VIS_WHITE);
 	fprintf(scanF, "%o %d %d %s\n",
 	    t->Tmode, t->Tctime, t->Tmtime, fname);
 	(void) Tprocess(t->Texec, recordexec, scanF);
@@ -975,8 +989,12 @@ static int
 recordexec(TREE * t, void *v)
 {
 	FILE *scanF = v;
+#ifdef HAS_VIS
 	char fname[MAXPATHLEN * 4 + 1];
 	strvis(fname, t->Tname, VIS_WHITE);
+#else
+	char *fname = t->Tname;
+#endif
 	fprintf(scanF, "X%s\n", fname);
 	return (SCMOK);
 }

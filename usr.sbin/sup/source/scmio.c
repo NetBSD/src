@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.13 2002/12/22 13:50:35 wiz Exp $	*/
+/*	$NetBSD: scmio.c,v 1.14 2003/04/03 17:14:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -165,6 +165,9 @@
 #include "supcdefs.h"
 #include "supextern.h"
 #include "supmsg.h"
+#ifndef INFTIM
+#define INFTIM -1
+#endif
 
 /*************************
  ***    M A C R O S    ***
