@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.11 2004/12/23 05:44:39 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.12 2004/12/23 05:47:42 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.11 2004/12/23 05:44:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.12 2004/12/23 05:47:42 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2892,8 +2892,10 @@ rtw_set80211props(struct ieee80211com *ic)
 	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 
 	nrate = 0;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 2;
-	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 4;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =
+	    IEEE80211_RATE_BASIC | 2;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] =
+	    IEEE80211_RATE_BASIC | 4;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 11;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 22;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
