@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2003/04/08 06:02:17 jdc Exp $
+#	$NetBSD: Makefile,v 1.43 2003/05/20 06:54:44 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -38,8 +38,8 @@ CPPFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS+=	termcap.c tgoto.c tputs.c
 .PATH: ${NETBSDSRCDIR}/lib/libterm
 
-MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addstr.3 \
-	 curses_addstr.3 addnstr.3 \
+MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addnstr.3 \
+	 curses_addstr.3 addstr.3 \
 	 curses_default_colors.3 assume_default_colors.3 \
 	 curses_attributes.3 attr_get.3 curses_attributes.3 attr_off.3 \
 	 curses_attributes.3 attr_on.3 curses_attributes.3 attr_set.3 \
@@ -85,9 +85,13 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addstr.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
 	 curses_refresh.3 leaveok.3 curses_termcap.3 longname.3 \
 	 curses_tty.3 meta.3 curses_cursor.3 move.3 \
+	 curses_addch.3 mvaddch.3 curses_addstr.3 mvaddnstr.3 \
+	 curses_addstr.3 mvaddstr.3 \
 	 curses_cursor.3 mvcur.3 curses_window.3 mvderwin.3 \
 	 curses_input.3 mvgetnstr.3 curses_input.3 mvgetstr.3 \
 	 curses_line.3 mvhline.3 curses_line.3 mvvline.3 \
+	 curses_addch.3 mvwaddch.3 curses_addstr.3 mvwaddnstr.3 \
+	 curses_addstr.3 mvwaddstr.3 \
 	 curses_input.3 mvwgetnstr.3 curses_input.3 mvwgetstr.3 \
 	 curses_line.3 mvwhline.3 curses_line.3 mvwvline.3 \
 	 curses_window.3 mvwin.3 curses_tty.3 napms.3 \
@@ -114,7 +118,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addstr.3 \
 	 curses_underscore.3 underend.3 curses_underscore.3 underscore.3 \
 	 curses_input.3 ungetch.3 curses_touch.3 untouchwin.3 \
 	 curses_default_colors.3 use_default_colors.3 curses_line.3 vline.3 \
-	 curses_addch.3 waddch.3 curses_addstr.3 waddstr.3 \
+	 curses_addch.3 waddch.3 curses_addstr.3 waddnstr.3 \
+	 curses_addstr.3 waddstr.3 \
 	 curses_attributes.3 wattr_get.3 curses_attributes.3 wattr_off.3 \
 	 curses_attributes.3 wattr_on.3 curses_attributes.3 wattr_set.3 \
 	 curses_attributes.3 wattron.3 curses_attributes.3 wattroff.3 \
