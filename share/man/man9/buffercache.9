@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.9 2003/09/15 13:15:31 yamt Exp $
+.\"     $NetBSD: buffercache.9,v 1.10 2003/09/15 13:19:10 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd September 7, 2003
+.Dd September 15, 2003
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -162,10 +162,11 @@ The
 interface is used by each filesystems to improve I/O performance using
 in-core caches of filesystem blocks.
 .Pp
-The kernel memory used to cache a block is called a buffer and described by
+The kernel memory used to cache a block is called a buffer and
+described by a
 .Em buf
 structure.
-In addition to describing a cached block,
+In addition to describing a cached block, a
 .Em buf
 structure is also used to describe an I/O request as a part of
 the disk driver interface.
