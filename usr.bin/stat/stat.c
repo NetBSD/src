@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.20 2004/12/31 03:24:31 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.21 2005/01/13 00:53:14 jmc Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,13 +42,14 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.20 2004/12/31 03:24:31 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.21 2005/01/13 00:53:14 jmc Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #define HAVE_STRUCT_STAT_ST_GEN 1
 #define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
+#define HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC 1
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 #define HAVE_DEVNAME 1
 #endif /* HAVE_NBTOOL_CONFIG_H */
@@ -708,7 +709,9 @@ format1(const struct stat *st,
 		if (!gottime) {
 			gottime = 1;
 			secs = st->st_birthtime;
+#if HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC
 			nsecs = st->st_birthtimensec;
+#endif /* HAVE_STRUCT_STAT_ST_BIRTHTIMENSEC */
 		}
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 		small = (sizeof(secs) == 4);
