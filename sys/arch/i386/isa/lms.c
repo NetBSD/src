@@ -19,12 +19,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6 1993/08/02 17:52:34 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.1 1993/09/29 05:20:16 mycroft Exp $
  */
-
-#include "lms.h"
-
-#if NLMS > 0
 
 #include "param.h"
 #include "kernel.h"
@@ -34,395 +30,369 @@
 #include "ioctl.h"
 #include "tty.h"
 #include "file.h"
-#ifdef NetBSD
 #include "select.h"
-#endif
 #include "proc.h"
 #include "vnode.h"
+#include "sys/device.h"
 
+#include "i386/isa/isavar.h"
 #include "i386/include/mouse.h"
-#include "i386/include/pio.h"		/* Julian's fast IO macros */
-#include "i386/isa/isa_device.h"
+#include "i386/include/pio.h"
 
-#define DATA	0       /* Offset for data port, read-only */
-#define SIGN	1       /* Offset for signature port, read-write */
-#define INTR	2       /* Offset for interrupt port, read-only */
-#define CNTRL	2       /* Offset for control port, write-only */
-#define CONFIG	3	/* for configuration port, read-write */
+#define LMS_DATA	0       /* Offset for data port, read-only */
+#define LMS_SIGN	1       /* Offset for signature port, read-write */
+#define LMS_INTR	2       /* Offset for interrupt port, read-only */
+#define LMS_CNTRL	2       /* Offset for control port, write-only */
+#define LMS_CONFIG	3	/* for configuration port, read-write */
+#define	LMS_NPORTS	4
 
-#define LMSUNIT(dev)	(minor(dev) >> 1)
+#define	LMS_CHUNK	128	/* chunk size for read */
+#define	LMS_BSIZE	1024	/* buffer size */
 
-#ifndef min
-#define min(x,y) (x < y ? x : y)
-#endif  min
-
-int lmsprobe (struct isa_device *);
-int lmsattach (struct isa_device *);
-
-static int lmsaddr[NLMS];	/* Base I/O port addresses per unit */
-
-#define MSBSZ	1024		/* Output queue size (pwr of 2 is best) */
-
-struct ringbuf {
-	int count, first, last;
-	char queue[MSBSZ];
-};
-
-static struct lms_softc {	/* Driver status information */
-	struct ringbuf inq;	/* Input queue */
-#ifdef NetBSD
-	struct selinfo rsel;
-#else
-	pid_t	rsel;		/* Process selecting for Input */
-#endif
-	unsigned char state;	/* Mouse driver state */
-	unsigned char status;	/* Mouse button status */
-	unsigned char button;	/* Previous mouse button status bits */
-	int x, y;		/* accumulated motion in the X,Y axis */
-} lms_softc[NLMS];
-
+struct lms_softc {		/* Driver status information */
+	struct ringbuf {	/* Input queue */
+		int rb_count, rb_first, rb_last;
+		char rb_data[LMS_BSIZE];
+	} sc_q;
+	struct	selinfo sc_rsel;
+	u_short	sc_iobase;	/* I/O port base */
+	u_char	sc_flags;	/* Driver flags */
+#define	LMS_BLOCK	0x01
+	u_char	sc_state;	/* Mouse driver state */
 #define OPEN	1		/* Device is open */
 #define ASLP	2		/* Waiting for mouse data */
+	u_char	sc_status;	/* Mouse button status */
+	u_char	sc_button;	/* Previous mouse button status bits */
+	int	sc_x, sc_y;	/* accumulated motion in the X,Y axis */
+};
 
-struct isa_driver lmsdriver = { lmsprobe, lmsattach, "lms" };
+static int lmsprobe __P((struct device *, struct cfdata *, void *));
+static void lmsforceintr __P((void *));
+static void lmsattach __P((struct device *, struct device *, void *));
+static int lmsintr __P((void *));
 
-int lmsprobe(struct isa_device *dvp)
+struct cfdriver lmscd =
+{ NULL, "lms", lmsprobe, lmsattach, sizeof (struct lms_softc) };
+
+#define LMSUNIT(dev)	(minor(dev) >> 1)
+#define	LMSFLAGS(dev)	(minor(dev) & 0x01)
+
+static int
+lmsprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	int ioport = dvp->id_iobase;
-	int val;
+	struct	isa_attach_args *ia = aux;
+	u_short	iobase = ia->ia_iobase;
 
 	/* Configure and check for port present */
+	outb(iobase + LMS_CONFIG, 0x91);
+	delay(10);
+	outb(iobase + LMS_SIGN, 0x0c);
+	delay(10);
+	if (inb(iobase + LMS_SIGN) != 0x0c)
+		return 0;
+	outb(iobase + LMS_SIGN, 0x50);
+	delay(10);
+	if (inb(iobase + LMS_SIGN) != 0x50)
+		return 0;
 
-	outb(ioport+CONFIG, 0x91);
-	DELAY(10);
-	outb(ioport+SIGN, 0x0C);
-	DELAY(10);
-	val = inb(ioport+SIGN);
-	DELAY(10);
-	outb(ioport+SIGN, 0x50);
+	/* XXXX isa_discoverintr */
 
-	/* Check if something is out there */
+	/* disable interrupts */
+	outb(iobase + LMS_CNTRL, 0x10);
 
-	if (val == 0x0C && inb(ioport+SIGN) == 0x50)
-		return(4);
-
-	/* Not present */
-
-	return(0);
+	ia->ia_iosize = LMS_NPORTS;
+	ia->ia_drq = DRQUNK;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int lmsattach(struct isa_device *dvp)
+static void
+lmsforceintr(aux)
+	void *aux;
 {
-	int unit = dvp->id_unit;
-	int ioport = dvp->id_iobase;
-	struct lms_softc *sc = &lms_softc[unit];
+	struct	isa_attach_args *ia = aux;
 
-	/* Save I/O base address */
-
-	lmsaddr[unit] = ioport;
-
-	/* Disable mouse interrupts */
-
-	outb(ioport+CNTRL, 0x10);
-
-	/* Setup initial state */
-
-	sc->state = 0;
-
-	/* Done */
-
-	return(0);
+	/* enable interrupts; expect to get one in 1/60 second */
+	outb(ia->ia_iobase + LMS_CNTRL, 0);
 }
 
-int lmsopen(dev_t dev, int flag, int fmt, struct proc *p)
+static void
+lmsattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int unit = LMSUNIT(dev);
-	struct lms_softc *sc;
-	int ioport;
+	struct	lms_softc *sc = (struct lms_softc *)self;
+	struct	isa_attach_args *ia = aux;
+	u_short	iobase = ia->ia_iobase;
 
-	/* Validate unit number */
+	/* other initialization done by lmsprobe */
+	sc->sc_iobase = iobase;
+	sc->sc_state = 0;
 
-	if (unit >= NLMS)
-		return(ENXIO);
-
-	/* Get device data */
-
-	sc = &lms_softc[unit];
-	ioport = lmsaddr[unit];
-
-	/* If device does not exist */
-
-	if (ioport == 0)
-		return(ENXIO);
-
-	/* Disallow multiple opens */
-
-	if (sc->state & OPEN)
-		return(EBUSY);
-
-	/* Initialize state */
-
-	sc->state |= OPEN;
-#ifdef NetBSD
-	sc->rsel.si_pid = 0;
-	sc->rsel.si_coll = 0;
-#else
-	sc->rsel = 0;
-#endif
-	sc->status = 0;
-	sc->button = 0;
-	sc->x = 0;
-	sc->y = 0;
-
-	/* Allocate and initialize a ring buffer */
-
-	sc->inq.count = sc->inq.first = sc->inq.last = 0;
-
-	/* Enable Bus Mouse interrupts */
-
-	outb(ioport+CNTRL, 0);
-
-	/* Successful open */
-
-	return(0);
+	/* XXXX isa_establishintr */
 }
 
-int lmsclose(dev_t dev, int flag, int fmt, struct proc *p)
+int
+lmsopen(dev, flag)
+	dev_t dev;
+	int flag;
 {
-	int unit, ioport;
-	struct lms_softc *sc;
+	int	unit = LMSUNIT(dev);
+	struct	lms_softc *sc;
 
-	/* Get unit and associated info */
+	if (unit >= lmscd.cd_ndevs)
+		return ENXIO;
+	sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	if (!sc)
+		return ENXIO;
 
-	unit = LMSUNIT(dev);
-	sc = &lms_softc[unit];
-	ioport = lmsaddr[unit];
+	if (sc->sc_state & OPEN)
+		return EBUSY;
 
-	/* Disable further mouse interrupts */
+	sc->sc_state |= OPEN;
+	sc->sc_status = 0;
+	sc->sc_button = 0;
+	sc->sc_x = sc->sc_y = 0;
+	sc->sc_q.rb_count = sc->sc_q.rb_first = sc->sc_q.rb_last = 0;
 
-	outb(ioport+CNTRL, 0x10);
+	/* enable interrupts */
+	outb(sc->sc_iobase + LMS_CNTRL, 0);
 
-	/* Complete the close */
-
-	sc->state &= ~OPEN;
-
-	/* close is almost always successful */
-
-	return(0);
+	return 0;
 }
 
-int lmsread(dev_t dev, struct uio *uio, int flag)
+int
+lmsclose(dev, flag)
+	dev_t dev;
+	int flag;
 {
-	int s;
-	int error = 0;	/* keep compiler quiet, even though initialisation
-			   is unnecessary */
-	unsigned length;
-	struct lms_softc *sc;
-	unsigned char buffer[100];
+	int	unit = LMSUNIT(dev);
+	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
 
-	/* Get device information */
+	/* disable interrupts */
+	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
 
-	sc = &lms_softc[LMSUNIT(dev)];
+	sc->sc_state &= ~OPEN;
+
+	return 0;
+}
+
+int
+lmsread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	int	unit = LMSUNIT(dev);
+	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	int	s;
+	int	error;
+	size_t	length;
+	u_char	buffer[LMS_CHUNK];
 
 	/* Block until mouse activity occured */
 
 	s = spltty();
-	while (sc->inq.count == 0) {
-		if (minor(dev) & 0x1) {
+	while (sc->sc_q.rb_count == 0) {
+		if (sc->sc_flags & LMS_BLOCK) {
 			splx(s);
-			return(EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
-		sc->state |= ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0);
-		if (error != 0) {
+		sc->sc_state |= ASLP;
+		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0)) {
 			splx(s);
-			return(error);
+			return error;
 		}
 	}
 
 	/* Transfer as many chunks as possible */
 
-	while (sc->inq.count > 0 && uio->uio_resid > 0) {
-		length = min(sc->inq.count, uio->uio_resid);
+	while (sc->sc_q.rb_count > 0 && uio->uio_resid > 0) {
+		length = min(sc->sc_q.rb_count, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
 		/* Remove a small chunk from input queue */
 
-		if (sc->inq.first + length >= MSBSZ) {
-			bcopy(&sc->inq.queue[sc->inq.first], 
-		 	      buffer, MSBSZ - sc->inq.first);
-			bcopy(sc->inq.queue, &buffer[MSBSZ-sc->inq.first], 
-			      length - (MSBSZ - sc->inq.first));
-		}
-		else
-			bcopy(&sc->inq.queue[sc->inq.first], buffer, length);
+		if (sc->sc_q.rb_first + length >= LMS_BSIZE) {
+			size_t	left = LMS_BSIZE - sc->sc_q.rb_first;
+			bcopy(&sc->sc_q.rb_data[sc->sc_q.rb_first], buffer,
+			      left);
+			bcopy(sc->sc_q.rb_data, &buffer[left], length - left);
+		} else
+			bcopy(&sc->sc_q.rb_data[sc->sc_q.rb_first], buffer,
+			      length);
 	
-		sc->inq.first = (sc->inq.first + length) % MSBSZ;
-		sc->inq.count -= length;
+		sc->sc_q.rb_first = (sc->sc_q.rb_first + length) % LMS_BSIZE;
+		sc->sc_q.rb_count -= length;
 
 		/* Copy data to user process */
 
-		error = uiomove(buffer, length, uio);
-		if (error)
+		if (error = uiomove(buffer, length, uio))
 			break;
 	}
 
-	sc->x = sc->y = 0;
-
-	/* Allow interrupts again */
+	/* reset counters */
+	sc->sc_x = sc->sc_y = 0;
 
 	splx(s);
-	return(error);
+	return error;
 }
 
-int lmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
+int
+lmsioctl(dev, cmd, addr, flag)
+	dev_t dev;
+	int cmd;
+	caddr_t addr;
+	int flag;
 {
-	struct lms_softc *sc;
-	struct mouseinfo info;
-	int s, error;
-
-	/* Get device information */
-
-	sc = &lms_softc[LMSUNIT(dev)];
-
-	/* Perform IOCTL command */
+	int	unit = LMSUNIT(dev);
+	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	struct	mouseinfo info;
+	int	s;
+	int	error;
 
 	switch (cmd) {
-
-	case MOUSEIOCREAD:
-
-		/* Don't modify info while calculating */
-
+	    case MOUSEIOCREAD:
 		s = spltty();
 
-		/* Build mouse status octet */
-
-		info.status = sc->status;
-		if (sc->x || sc->y)
+		info.status = sc->sc_status;
+		if (sc->sc_x || sc->sc_y)
 			info.status |= MOVEMENT;
 
-		/* Encode X and Y motion as good as we can */
-
-		if (sc->x > 127)
+		if (sc->sc_x > 127)
 			info.xmotion = 127;
-		else if (sc->x < -127)
+		else if (sc->sc_x < -127)
+			/* bounding at -127 avoids a bug in XFree86 */
 			info.xmotion = -127;
 		else
-			info.xmotion = sc->x;
+			info.xmotion = sc->sc_x;
 
-		if (sc->y > 127)
+		if (sc->sc_y > 127)
 			info.ymotion = 127;
-		else if (sc->y < -127)
+		else if (sc->sc_y < -127)
 			info.ymotion = -127;
 		else
-			info.ymotion = sc->y;
+			info.ymotion = sc->sc_y;
 
-		/* Reset historical information */
-
-		sc->x = 0;
-		sc->y = 0;
-		sc->status &= ~BUTCHNGMASK;
-
-		/* Allow interrupts and copy result buffer */
+		sc->sc_x = 0;
+		sc->sc_y = 0;
+		sc->sc_status &= ~BUTCHNGMASK;
 
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
 		break;
 
-	default:
+	    default:
 		error = EINVAL;
 		break;
-		}
+	}
 
-	/* Return error code */
-
-	return(error);
+	return error;
 }
 
-void lmsintr(unit)
-	int unit;
+int
+lmsintr(arg)
+	void *arg;
 {
-	struct lms_softc *sc = &lms_softc[unit];
-	int ioport = lmsaddr[unit];
-	char hi, lo, dx, dy, buttons, changed;
+	struct	lms_softc *sc = (struct lms_softc *)arg;
+	u_short	iobase = sc->sc_iobase;
+	u_char	hi, lo, buttons, changed;
+	char	dx, dy;
 
-	outb(ioport+CNTRL, 0xAB);
-	hi = inb(ioport+DATA) & 15;
-	outb(ioport+CNTRL, 0x90);
-	lo = inb(ioport+DATA) & 15;
-	dx = (hi << 4) | lo;
+	if ((sc->sc_state & OPEN) == 0)
+		/* interrupts not expected */
+		return 0;
+
+	outb(iobase + LMS_CNTRL, 0xab);
+	hi = inb(iobase + LMS_DATA);
+	outb(iobase + LMS_CNTRL, 0x90);
+	lo = inb(iobase + LMS_DATA);
+	dx = ((hi & 0x0f) << 4) | (lo & 0x0f);
+	/* bounding at -127 avoids a bug in XFree86 */
 	dx = (dx == -128) ? -127 : dx;
 
-	outb(ioport+CNTRL, 0xF0);
-	hi = inb(ioport+DATA);
-	outb(ioport+CNTRL, 0xD0);
-	lo = inb(ioport+DATA);
-	outb(ioport+CNTRL, 0);
-	dy = ((hi & 15) << 4) | (lo & 15);
+	outb(iobase + LMS_CNTRL, 0xf0);
+	hi = inb(iobase + LMS_DATA);
+	outb(iobase + LMS_CNTRL, 0xd0);
+	lo = inb(iobase + LMS_DATA);
+	dy = ((hi & 0x0f) << 4) | (lo & 0x0f);
 	dy = (dy == -128) ? 127 : -dy;
 
+	outb(iobase + LMS_CNTRL, 0);
+
 	buttons = (~hi >> 5) & 7;
-	changed = buttons ^ sc->button;
-	sc->button = buttons;
-	sc->status = buttons | (sc->status & ~BUTSTATMASK) | (changed << 3);
+	changed = buttons ^ sc->sc_button;
+	sc->sc_button = buttons;
+	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) |
+			(changed << 3);
 
-	/* Update accumulated movements */
+	if ((sc->sc_state & OPEN) && (dx || dy || changed)) {
+		int	last = sc->sc_q.rb_last;
+		char	*cp = &sc->sc_q.rb_data[last];
+		int	count = sc->sc_q.rb_count;
 
-	sc->x += dx;
-	sc->y += dy;
+		/* Update accumulated movements */
+		sc->sc_x += dx;
+		sc->sc_y += dy;
 
-	/* If device in use and a change occurred... */
+		if ((count += 5) > LMS_BSIZE)
+			return 1;
+		sc->sc_q.rb_count = count;
 
-	if (sc->state & OPEN && (dx || dy || changed)) {
-		sc->inq.queue[sc->inq.last++] = 0x80 | (buttons ^ BUTSTATMASK);
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dx;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = dy;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.queue[sc->inq.last++ % MSBSZ] = 0;
-		sc->inq.last = sc->inq.last % MSBSZ;
-		sc->inq.count += 5;
+#define	next() \
+		if (++last >= LMS_BSIZE) {	\
+			last = 0;		\
+			cp = sc->sc_q.rb_data;	\
+		} else				\
+			cp++;
+		*cp = 0x80 | (buttons ^ BUTSTATMASK);
+		next();
+		*cp = dx;
+		next();
+		*cp = dy;
+		next();
+		*cp = 0;
+		next();
+		*cp = 0;
+		next();
+		sc->sc_q.rb_last = last;
 
-		if (sc->state & ASLP) {
-			sc->state &= ~ASLP;
+		if (sc->sc_state & ASLP) {
+			sc->sc_state &= ~ASLP;
 			wakeup((caddr_t)sc);
 		}
-#ifdef NetBSD
-		selwakeup(&sc->rsel);
-#else
-		if (sc->rsel) {
-			selwakeup(sc->rsel, 0);
-			sc->rsel = 0;
-		}
-#endif
+		selwakeup(&sc->sc_rsel);
 	}
+
+	return 1;
 }
 
-int lmsselect(dev_t dev, int rw, struct proc *p)
+int
+lmsselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
 {
-	int s, ret;
-	struct lms_softc *sc = &lms_softc[LMSUNIT(dev)];
-
-	/* Silly to select for output */
+	int	unit = LMSUNIT(dev);
+	struct	lms_softc *sc = (struct lms_softc *)lmscd.cd_devs[unit];
+	int	s;
+	int	ret;
 
 	if (rw == FWRITE)
-		return(0);
-
-	/* Return true if a mouse event available */
+		return 0;
 
 	s = spltty();
-	if (sc->inq.count)
+	if (sc->sc_q.rb_count)
 		ret = 1;
 	else {
-#ifdef NetBSD
-		selrecord(p, &sc->rsel);
-#else
-		sc->rsel = p->p_pid;
-#endif
+		selrecord(p, &sc->sc_rsel);
 		ret = 0;
 	}
 	splx(s);
 
-	return(ret);
+	return ret;
 }
-#endif

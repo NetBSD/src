@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.2 1993/09/24 08:49:23 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.3 1993/09/29 05:20:37 mycroft Exp $
  */
 
 /*
@@ -1313,11 +1313,11 @@ static Scan_def	scan_codes[] =
 	ASCII,	"m",		"M",		"\r",		/* 50 m */
 	ASCII,	",",		"<",		"<",		/* 51 , */
 	ASCII,	".",		">",		">",		/* 52 . */
-	ASCII,	"/",		"?",		"\177",		/* 53 / */
+	ASCII,	"/",		"?",		"\037",		/* 53 / */
 	SHIFT,	"",		"",		"",		/* 54 shift */
 	KP,	"*",		"*",		"*",		/* 55 kp * */
 	ALT,	"",		"",		"",		/* 56 alt */
-	ASCII,	" ",		" ",		" ",		/* 57 space */
+	ASCII,	" ",		" ",		"\000",		/* 57 space */
 	CAPS,	"",		"",		"",		/* 58 caps */
 	FUNC,	"\033[M",	"\033[Y",	"\033[k",	/* 59 f1 */
 	FUNC,	"\033[N",	"\033[Z",	"\033[l",	/* 60 f2 */
@@ -1761,7 +1761,6 @@ pc_xmode_on ()
 		return;
 	pc_xmode = 1;
 
-	/* XXXX use /dev/io instead? */
 	fp = (struct trapframe *)curproc->p_regs;
 	fp->tf_eflags |= PSL_IOPL;
 }
@@ -1776,7 +1775,6 @@ pc_xmode_off ()
 
 	cursor(0);
 
-	/* XXXX use /dev/io instead? */
 	fp = (struct trapframe *)curproc->p_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }

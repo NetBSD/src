@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)lptreg.h	1.1 (Berkeley) 12/19/90
- *	$Id: lptreg.h,v 1.2 1993/05/22 08:01:32 cgd Exp $
+ *	$Id: lptreg.h,v 1.2.4.1 1993/09/29 05:20:31 mycroft Exp $
  */
 
 /*
@@ -59,3 +59,5 @@
 #define	LPC_NINIT		0x04	/* initialize printer */
 #define	LPC_SEL			0x08	/* printer selected */
 #define	LPC_ENA			0x10	/* printer out of paper */
+
+#define	LPT_NPORTS	8
