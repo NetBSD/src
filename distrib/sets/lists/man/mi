@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.582 2003/05/15 13:13:21 wiz Exp $
+# $NetBSD: mi,v 1.583 2003/05/15 18:53:34 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -701,7 +701,6 @@
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman
 ./usr/share/man/cat4/i386/autoconf.0		man-sys-catman
-./usr/share/man/cat4/i386/busmouse.0		man-sys-catman
 ./usr/share/man/cat4/i386/cons.0		man-sys-catman
 ./usr/share/man/cat4/i386/console.0		man-sys-catman
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman
@@ -2509,7 +2508,6 @@
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man
 ./usr/share/man/man4/i386/apm.4			man-sys-man
 ./usr/share/man/man4/i386/autoconf.4		man-sys-man
-./usr/share/man/man4/i386/busmouse.4		man-sys-man
 ./usr/share/man/man4/i386/cons.4		man-sys-man
 ./usr/share/man/man4/i386/console.4		man-sys-man
 ./usr/share/man/man4/i386/ed.4			man-sys-man
