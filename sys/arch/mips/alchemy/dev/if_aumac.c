@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.9 2003/01/17 12:40:20 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.10 2003/03/27 01:21:52 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.9 2003/01/17 12:40:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.10 2003/03/27 01:21:52 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -349,7 +349,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txintr");
+	    NULL, sc->sc_dev.dv_xname, "rxintr");
 #endif
 
 	/* Make sure the interface is shutdown during reboot. */
