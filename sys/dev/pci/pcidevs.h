@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.294 2001/01/09 23:20:22 rh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.295 2001/01/12 05:14:36 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1237,6 +1237,7 @@
 #define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI Interface */
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 Interface */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
+#define	PCI_PRODUCT_LMC_T1	0x0006		/* T1 Interface */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
