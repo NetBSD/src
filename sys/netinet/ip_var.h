@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.62 2003/11/26 21:15:47 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.63 2003/12/06 23:56:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -192,7 +192,7 @@ struct ipflow {
 #endif
 
 extern struct ipstat ipstat;		/* ip statistics */
-extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
+extern LIST_HEAD(ipqhead, ipq) ipq[];	/* ip reass. queue */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
 extern int   ip_mtudisc;		/* mtu discovery */
@@ -227,7 +227,7 @@ int	 ip_output __P((struct mbuf *, ...));
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct mbuf *
-	 ip_reass __P((struct ipqent *, struct ipq *));
+	 ip_reass __P((struct ipqent *, struct ipq *, struct ipqhead *));
 struct in_ifaddr *
 	 ip_rtaddr __P((struct in_addr));
 void	 ip_savecontrol __P((struct inpcb *, struct mbuf **, struct ip *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.189 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.190 2003/12/06 23:56:10 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.189 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.190 2003/12/06 23:56:10 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -236,7 +236,16 @@ uint16_t ip_id;
 struct pfil_head inet_pfil_hook;
 #endif
 
-struct ipqhead ipq;
+/* IP datagram reassembly queues (hashed) */
+#define IPREASS_NHASH_LOG2      6
+#define IPREASS_NHASH           (1 << IPREASS_NHASH_LOG2)
+#define IPREASS_HMASK           (IPREASS_NHASH - 1)
+#define IPREASS_HASH(x,y) \
+	(((((x) & 0xF) | ((((x) >> 8) & 0xF) << 4)) ^ (y)) & IPREASS_HMASK)
+struct ipqhead ipq[IPREASS_NHASH];
+#ifdef notyet
+static int    nipq = 0;         /* total # of reass queues */
+#endif
 int	ipq_locked;
 int	ip_nfragpackets = 0;
 int	ip_maxfragpackets = 200;
@@ -363,7 +372,9 @@ ip_init()
 		if (pr->pr_domain->dom_family == PF_INET &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
-	LIST_INIT(&ipq);
+	for (i = 0; i < IPREASS_NHASH; i++)
+	    	LIST_INIT(&ipq[i]);
+
 	ip_id = time.tv_sec & 0xfffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddrhead);
@@ -437,6 +448,7 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
+	u_int hash;
 #ifdef FAST_IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -823,12 +835,17 @@ ours:
 		 * of this datagram.
 		 */
 		IPQ_LOCK();
-		LIST_FOREACH(fp, &ipq, ipq_q)
+		hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
+		/* XXX LIST_FOREACH(fp, &ipq[hash], ipq_q) */
+		for (fp = LIST_FIRST(&ipq[hash]); fp != NULL;
+		     fp = LIST_NEXT(fp, ipq_q)) {
 			if (ip->ip_id == fp->ipq_id &&
 			    in_hosteq(ip->ip_src, fp->ipq_src) &&
 			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
 			    ip->ip_p == fp->ipq_p)
 				goto found;
+
+		}
 		fp = 0;
 found:
 
@@ -869,7 +886,7 @@ found:
 			ipqe->ipqe_mff = mff;
 			ipqe->ipqe_m = m;
 			ipqe->ipqe_ip = ip;
-			m = ip_reass(ipqe, fp);
+			m = ip_reass(ipqe, fp, &ipq[hash]);
 			if (m == 0) {
 				IPQ_UNLOCK();
 				return;
@@ -966,9 +983,10 @@ badcsum:
  * is given as fp; otherwise have to make a chain.
  */
 struct mbuf *
-ip_reass(ipqe, fp)
+ip_reass(ipqe, fp, ipqhead)
 	struct ipqent *ipqe;
 	struct ipq *fp;
+	struct ipqhead *ipqhead;
 {
 	struct mbuf *m = ipqe->ipqe_m;
 	struct ipqent *nq, *p, *q;
@@ -1005,7 +1023,7 @@ ip_reass(ipqe, fp)
 		    M_FTABLE, M_NOWAIT);
 		if (fp == NULL)
 			goto dropfrag;
-		LIST_INSERT_HEAD(&ipq, fp, ipq_q);
+		LIST_INSERT_HEAD(ipqhead, fp, ipq_q);
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
 		fp->ipq_id = ipqe->ipqe_ip->ip_id;
@@ -1171,27 +1189,47 @@ ip_freef(fp)
 void
 ip_slowtimo()
 {
+	static unsigned dropscanidx = 0;
+	unsigned i;
 	struct ipq *fp, *nfp;
 	int s = splsoftnet();
 
 	IPQ_LOCK();
-	for (fp = LIST_FIRST(&ipq); fp != NULL; fp = nfp) {
-		nfp = LIST_NEXT(fp, ipq_q);
-		if (--fp->ipq_ttl == 0) {
-			ipstat.ips_fragtimeout++;
-			ip_freef(fp);
+	for (i = 0; i < IPREASS_NHASH; i++) {
+		for (fp = LIST_FIRST(&ipq[i]); fp != NULL; fp = nfp) {
+			nfp = LIST_NEXT(fp, ipq_q);
+			if (--fp->ipq_ttl == 0) {
+				ipstat.ips_fragtimeout++;
+				ip_freef(fp);
+			}
 		}
 	}
 	/*
 	 * If we are over the maximum number of fragments
 	 * (due to the limit being lowered), drain off
-	 * enough to get down to the new limit.
+	 * enough to get down to the new limit. Start draining
+	 * from the reassembly hashqueue most recently drained.
 	 */
 	if (ip_maxfragpackets < 0)
 		;
 	else {
-		while (ip_nfragpackets > ip_maxfragpackets && LIST_FIRST(&ipq))
-			ip_freef(LIST_FIRST(&ipq));
+		int wrapped = 0;
+
+		i = dropscanidx;
+		while (ip_nfragpackets > ip_maxfragpackets && wrapped == 0) {
+			while (LIST_FIRST(&ipq[i]) != NULL)
+				ip_freef(LIST_FIRST(&ipq[i]));
+			if (++i >= IPREASS_NHASH) {
+				i = 0;
+			}
+			/*
+			 * Dont scan forever even if fragment counters are
+			 * wrong: stop after scanning entire reassembly queue.
+			 */
+			if (i == dropscanidx)
+			    wrapped = 1;
+		}
+		dropscanidx = i;
 	}
 	IPQ_UNLOCK();
 #ifdef GATEWAY
@@ -1206,6 +1244,7 @@ ip_slowtimo()
 void
 ip_drain()
 {
+	int i;
 
 	/*
 	 * We may be called from a device's interrupt context.  If
@@ -1214,9 +1253,14 @@ ip_drain()
 	if (ipq_lock_try() == 0)
 		return;
 
-	while (LIST_FIRST(&ipq) != NULL) {
-		ipstat.ips_fragdropped++;
-		ip_freef(LIST_FIRST(&ipq));
+	for (i = 0; i < IPREASS_NHASH; i++) {
+		struct ipqhead *ipqh = &ipq[i];
+		struct ipq *fp, *nfp;
+		for (fp = LIST_FIRST(ipqh); fp != NULL; fp = nfp) {
+			nfp = LIST_NEXT(fp, ipq_q);
+			ip_freef(fp);
+			ipstat.ips_fragdropped++;
+		}
 	}
 
 	IPQ_UNLOCK();
