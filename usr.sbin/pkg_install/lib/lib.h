@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.26 1999/09/09 01:31:44 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.27 1999/11/29 19:48:47 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -83,6 +83,8 @@
 #define MTREE_FNAME		"+MTREE_DIRS"
 #define BUILD_VERSION_FNAME	"+BUILD_VERSION"
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
+#define SIZE_PKG_FNAME		"+SIZE_PKG"
+#define SIZE_ALL_FNAME		"+SIZE_ALL"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
@@ -109,14 +111,13 @@ typedef enum pl_ent_t {
 	PLIST_IGNORE,		/*  7 */
 	PLIST_NAME,		/*  8 */
 	PLIST_UNEXEC,		/*  9 */
-	PLIST_SRC,		/* 10 */
-	PLIST_DISPLAY,		/* 11 */
-	PLIST_PKGDEP,		/* 12 */
-	PLIST_MTREE,		/* 13 */
-	PLIST_DIR_RM,		/* 14 */
-	PLIST_IGNORE_INST,	/* 15 */
-	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL		/* 17 */
+	PLIST_DISPLAY,		/* 10 */
+	PLIST_PKGDEP,		/* 11 */
+	PLIST_MTREE,		/* 12 */
+	PLIST_DIR_RM,		/* 13 */
+	PLIST_IGNORE_INST,	/* 14 */
+	PLIST_OPTION,		/* 15 */
+	PLIST_PKGCFL		/* 16 */
 }       pl_ent_t;
 
 /* Types */
