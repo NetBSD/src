@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.9 2002/10/23 09:13:08 jdolecek Exp $	*/
+/*	$NetBSD: bthci.c,v 1.10 2002/10/24 01:36:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -254,22 +254,6 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = 0;
 		break;
 
-	case IRDA_SET_PARAMS:
-		error = irf_set_params(sc, vaddr);
-		break;
-
-	case IRDA_RESET_PARAMS:
-		error = irf_reset_params(sc);
-		break;
-
-	case IRDA_GET_SPEEDMASK:
-		error = sc->sc_methods->im_get_speeds(sc->sc_handle, vaddr);
-		break;
-
-	case IRDA_GET_TURNAROUNDMASK:
-		error = sc->sc_methods->im_get_turnarounds(sc->sc_handle,vaddr);
-		break;
-
 	default:
 		error = EINVAL;
 		break;
@@ -303,5 +287,5 @@ bthcikqfilter(dev_t dev, struct knote *kn)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
-	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, events, p));
+	return (sc->sc_methods->bt_kqfilter(sc->sc_handle, kn));
 }
