@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.19 1997/12/10 23:12:17 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.20 1997/12/23 23:57:23 tv Exp $ */
 
 /*
  * Mach Operating System
@@ -57,6 +57,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 
+#include "fb.h"
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -182,9 +183,9 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
-
+#if NFB > 0
 	fb_unblank();
-
+#endif
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
 	case -1:		/* keyboard interrupt */
