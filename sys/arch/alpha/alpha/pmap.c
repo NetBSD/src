@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.95 1999/05/21 23:07:59 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.96 1999/05/23 16:54:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 1999/05/21 23:07:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 1999/05/23 16:54:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ pa_to_pvh(pa)
  */
 void	alpha_protection_init __P((void));
 boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
-	    boolean_t, long));
+	    boolean_t, long, struct pv_entry **));
 void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t, long));
 #ifndef PMAP_NEW
 /* It's an interface function if PMAP_NEW. */
@@ -497,7 +497,8 @@ void	pmap_l1pt_delref __P((pmap_t, pt_entry_t *, long));
  * PV table management functions.
  */
 void	pmap_pv_enter __P((pmap_t, paddr_t, vaddr_t, boolean_t));
-void	pmap_pv_remove __P((pmap_t, paddr_t, vaddr_t, boolean_t));
+void	pmap_pv_remove __P((pmap_t, paddr_t, vaddr_t, boolean_t,
+	    struct pv_entry **));
 struct	pv_entry *pmap_pv_alloc __P((void));
 void	pmap_pv_free __P((struct pv_entry *));
 void	*pmap_pv_page_alloc __P((u_long, int, int));
@@ -1307,7 +1308,7 @@ pmap_remove(pmap, sva, eva)
 		l3pte = pmap_l3pte(pmap, sva, l2pte);
 		if (pmap_pte_v(l3pte))
 			needisync |= pmap_remove_mapping(pmap, sva, l3pte,
-			    TRUE, cpu_id);
+			    TRUE, cpu_id, NULL);
 		sva += PAGE_SIZE;
 	}
 
@@ -1407,7 +1408,7 @@ pmap_page_protect(pa, prot)
 #endif
 		if (!pmap_pte_w(pte))
 			needisync |= pmap_remove_mapping(pv->pv_pmap,
-			    pv->pv_va, pte, FALSE, cpu_id);
+			    pv->pv_va, pte, FALSE, cpu_id, NULL);
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1714,7 +1715,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		 */
 		pmap_physpage_addref(pte);
 	}
-	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE, cpu_id);
+	needisync |= pmap_remove_mapping(pmap, va, pte, TRUE, cpu_id, NULL);
 
  validate_enterpv:
 	/*
@@ -1950,7 +1951,7 @@ pmap_kremove(va, size)
 		pte = PMAP_KERNEL_PTE(va);
 		if (pmap_pte_v(pte))
 			needisync |= pmap_remove_mapping(pmap_kernel(), va,
-			    pte, TRUE, cpu_id);
+			    pte, TRUE, cpu_id, NULL);
 	}
 
 	if (needisync)
@@ -2604,12 +2605,13 @@ alpha_protection_init()
  *	be synchronized.
  */
 boolean_t
-pmap_remove_mapping(pmap, va, pte, dolock, cpu_id)
+pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, pvp)
 	pmap_t pmap;
 	vaddr_t va;
 	pt_entry_t *pte;
 	boolean_t dolock;
 	long cpu_id;
+	struct pv_entry **pvp;
 {
 	paddr_t pa;
 	int s;
@@ -2620,8 +2622,8 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld)\n",
-		       pmap, va, pte, dolock, cpu_id);
+		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld, %p)\n",
+		       pmap, va, pte, dolock, cpu_id, pvp);
 #endif
 
 	/*
@@ -2681,15 +2683,20 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id)
 	/*
 	 * If the mapping wasn't enterd on the PV list, we're all done.
 	 */
-	if (onpv == FALSE)
+	if (onpv == FALSE) {
+#ifdef DIAGNOSTIC
+		if (pvp != NULL)
+			panic("pmap_removing_mapping: onpv / pvp inconsistent");
+#endif
 		return (needisync);
+	}
 
 	/*
 	 * Otherwise remove it from the PV table
 	 * (raise IPL since we may be called at interrupt time).
 	 */
 	s = splimp();		/* XXX needed w/ PMAP_NEW? */
-	pmap_pv_remove(pmap, pa, va, dolock);
+	pmap_pv_remove(pmap, pa, va, dolock, pvp);
 	splx(s);
 
 	return (needisync);
@@ -3031,11 +3038,12 @@ pmap_pv_enter(pmap, pa, va, dolock)
  *	Remove a physical->virtual entry from the pv_table.
  */
 void
-pmap_pv_remove(pmap, pa, va, dolock)
+pmap_pv_remove(pmap, pa, va, dolock, pvp)
 	pmap_t pmap;
 	paddr_t pa;
 	vaddr_t va;
 	boolean_t dolock;
+	struct pv_entry **pvp;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
@@ -3064,9 +3072,14 @@ pmap_pv_remove(pmap, pa, va, dolock)
 		simple_unlock(&pvh->pvh_slock);
 
 	/*
-	 * ...and free the pv_entry.
+	 * If pvp is not NULL, this is pmap_pv_alloc() stealing an
+	 * entry from another mapping, and we return the now unused
+	 * entry in it.  Otherwise, free the pv_entry.
 	 */
-	pmap_pv_free(pv);
+	if (pvp != NULL)
+		*pvp = pv;
+	else
+		pmap_pv_free(pv);
 }
 
 /*
@@ -3077,16 +3090,79 @@ pmap_pv_remove(pmap, pa, va, dolock)
 struct pv_entry *
 pmap_pv_alloc()
 {
+	struct pv_head *pvh;
 	struct pv_entry *pv;
+	int bank, npg, pg;
+	pt_entry_t *pte;
+	pmap_t pvpmap;
+	u_long cpu_id;
 
 	pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 	if (pv != NULL)
 		return (pv);
 
 	/*
-	 * XXX Should try to steal a pv_entry from another mapping.
+	 * We were unable to allocate one from the pool.  Try to
+	 * steal one from another mapping.  At this point we know that:
+	 *
+	 *	(1) We have not locked the pv table, and we already have
+	 *	    the map-to-head lock, so it is safe for us to do so here.
+	 *
+	 *	(2) The pmap that wants this entry *is* locked.  We must
+	 *	    use simple_lock_try() to prevent deadlock from occurring.
+	 *
+	 * XXX Note that in case #2, there is an exception; it *is* safe to
+	 * steal a mapping from the pmap that wants this entry!  We may want
+	 * to consider passing the pmap to this function so that we can take
+	 * advantage of this.
 	 */
-	panic("pmap_pv_alloc: unable to allocate a pv_entry");
+
+	/* XXX This search could probably be improved. */
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		npg = vm_physmem[bank].end - vm_physmem[bank].start;
+		for (pg = 0; pg < npg; pg++) {
+			pvh = &vm_physmem[bank].pmseg.pvhead[pg];
+			simple_lock(&pvh->pvh_slock);
+			for (pv = LIST_FIRST(&pvh->pvh_list);
+			     pv != NULL; pv = LIST_NEXT(pv, pv_list)) {
+				pvpmap = pv->pv_pmap;
+
+				/* Don't steal from kernel pmap. */
+				if (pvpmap == pmap_kernel())
+					continue;
+
+				if (simple_lock_try(&pvpmap->pm_slock) == 0)
+					continue;
+
+				pte = pmap_l3pte(pvpmap, pv->pv_va, NULL);
+
+				/* Don't steal wired mappings. */
+				if (pmap_pte_w(pte)) {
+					simple_unlock(&pvpmap->pm_slock);
+					continue;
+				}
+
+				cpu_id = alpha_pal_whami();
+
+				/*
+				 * Okay!  We have a mapping we can steal;
+				 * remove it and grab the pv_entry.
+				 */
+				if (pmap_remove_mapping(pvpmap, pv->pv_va,
+				    pte, FALSE, cpu_id, &pv))
+					alpha_pal_imb();
+
+				/* Unlock everything and return. */
+				simple_unlock(&pvpmap->pm_slock);
+				simple_unlock(&pvh->pvh_slock);
+				return (pv);
+			}
+			simple_unlock(&pvh->pvh_slock);
+		}
+	}
+
+	/* Nothing else we can do. */
+	panic("pmap_pv_alloc: unable to allocate or steal pv_entry");
 }
 
 /*
