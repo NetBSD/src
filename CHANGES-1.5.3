@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.69 2002/06/06 22:00:07 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.70 2002/06/12 20:46:23 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2896,3 +2896,13 @@ sys/isofs/cd9660/cd9660_vfsops.c		1.60
 
   Add actual session offset to the volume size, so that ``df'' does
   not underestimate, and other checks against volume size succeed.
+
+sys/kern/uipc_socket.c				1.67 via patch
+
+  Make sure to preserve atomicity of receive operation when instructed
+  to do so.  Make sure to drop rest of partial record if an error
+  occurs.  Fixes PR#16990.
+
+sys/conf/osrelease.sh				patch
+
+  Mark this as NetBSD 1.5.3.
