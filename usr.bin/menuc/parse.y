@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+/*	$NetBSD: parse.y,v 1.1.1.1.2.1 1997/11/09 21:14:42 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,7 @@ static optn_info *cur_optn;
 
 
 %token <i_value> X Y W H NO BOX SUB MENU NEXT EXIT ACTION ENDWIN OPTION TITLE 
-%token <i_value> DEFAULT DISPLAY
+%token <i_value> DEFAULT DISPLAY ERROR
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
 %type <s_value> init_code system
@@ -82,7 +82,11 @@ init_code : /* empty */ { $$ = ""; }
 menu_list :  /* empty */
 	  |  menu_list menu_def
 	  |  menu_list default_def
+	  |  menu_list initerror_def
 	  ;
+
+initerror_def : ERROR action ';'
+		{ error_act = $2; }
 
 default_def : DEFAULT
 		{ cur_menu = &default_menu; }

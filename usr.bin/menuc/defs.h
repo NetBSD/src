@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	 */
+/*	$NetBSD: defs.h,v 1.1.1.1.2.1 1997/11/09 21:12:22 mellon Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,6 +69,8 @@ EXTERN id_rec *root INIT(NULL);
 
 EXTERN struct menu_info default_info;
 EXTERN id_rec default_menu;
+
+EXTERN action error_act INIT({NULL});
 
 /* Prototypes. */
 
