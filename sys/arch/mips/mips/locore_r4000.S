@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.45 1998/09/11 16:46:33 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.46 1998/12/28 00:31:03 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -124,12 +124,8 @@ _C_LABEL(mips3_TLBMiss):
 	.set	mips3
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, _C_LABEL(curpcb)
-	bltz	k0, 1f				# kernel address space ->
+	bltz	k0, 1f				# kernel address space
 	nop
-	bnez	k1, 2f
-	nop
-	la	k1, _C_LABEL(proc0paddr)
-2:
 	lw	k1, U_PCB_SEGTAB(k1)		# get the current segment table
 	srl	k0, k0, SEGSHIFT - 2		# compute segment table index
 	andi	k0, k0, 0x7fc			# PMAP_SEGTABSIZ-1
