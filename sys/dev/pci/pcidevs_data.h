@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.642 2004/08/04 19:13:20 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.643 2004/08/04 19:29:05 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.642 2004/08/04 19:13:06 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.643 2004/08/04 19:28:52 mycroft Exp 
  */
 
 /*
@@ -3289,7 +3289,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID,
-	    "MAC-IO I/O Controller (Intrepid)",
+	    "Intrepid I/O Controller",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -6437,7 +6437,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
-	    "FW322/323 IEEE 1394 OHCI Controller",
+	    "FW322/323 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -6821,7 +6821,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
-	    "uPD72872 IEEE 1394 OHCI Host Controller",
+	    "uPD72872 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU,
@@ -6833,11 +6833,11 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
-	    "uPD72870 IEEE 1394 OHCI Host Controller",
+	    "uPD72870 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
-	    "uPD72871 IEEE 1394 OHCI Host Controller",
+	    "uPD72871 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A,
@@ -8313,7 +8313,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
-	    "CXD3222 OHCI IEEE 1394 Host Controller",
+	    "CXD3222 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
@@ -8469,55 +8469,55 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
-	    "TSB12LV22 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV22 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
-	    "PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4450 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
-	    "PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4410 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
-	    "TSB12LV23 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV23 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
-	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
+	    "TSB12LV26 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22,
-	    "TSB43AA22 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA22 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22A,
-	    "TSB43AA22/A OHCI IEEE 1394 Host Controller",
+	    "TSB43AA22/A IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA23,
-	    "TSB43AA23 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA23 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21,
-	    "TSB43AA21 OHCI IEEE 1394 Host Controller",
+	    "TSB43AA21 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
-	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510LYNX,
-	    "PCI4510 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520LYNX,
-	    "PCI4520 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410LYNX,
-	    "PCI7[4-6]10 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
@@ -8581,35 +8581,35 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
-	    "PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4450 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
-	    "PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
-	    "PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4451 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510YENTA,
-	    "PCI4510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA,
-	    "PCI4520 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI4520 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510YENTA,
-	    "PCI7510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610YENTA,
-	    "PCI7610 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7610 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410YENTA,
-	    "PCI7410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	    "PCI7410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM,
@@ -8949,7 +8949,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
-	    "VT6305 OHCI IEEE 1394 Controller",
+	    "VT6305 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
@@ -9053,7 +9053,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
-	    "VT3606 OHCI IEEE 1394 Controller",
+	    "VT3606 IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
