@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.2 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.3 2000/03/04 07:28:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -56,7 +56,7 @@ vax1k_map_readvn(p, cmd)
 	struct proc *p;
 	struct exec_vmcmd *cmd;
 {
-	vm_offset_t oaddr;
+	vaddr_t oaddr;
 	int error;
 
 	if (cmd->ev_len == 0)
