@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.66 2002/02/22 04:58:39 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.67 2002/02/22 05:04:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.66 2002/02/22 04:58:39 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.67 2002/02/22 05:04:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,6 +296,7 @@ main(argc, argv)
 
 #define	VPTRSZ  sizeof(struct vnode *)
 #define	VNODESZ sizeof(struct vnode)
+#define	PTRSTRWIDTH ((int)sizeof(void *) * 2)
 
 void
 vnodemode()
@@ -367,7 +368,7 @@ vnode_header()
 {
 
 	(void)printf("%-*s TYP VFLAG  USE HOLD TAG NPAGE",
-	    (int)sizeof(void *) * 2, "ADDR");
+	    PTRSTRWIDTH, "ADDR");
 }
 
 int
@@ -437,7 +438,7 @@ vnode_print(avnode, vp)
 	*fp = '\0';
 
 	ovflw = 0;
-	PRWORD(ovflw, "%*lx", (int)sizeof(void *) * 2, 0, (long)avnode);
+	PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)avnode);
 	PRWORD(ovflw, " %*s", 4, 1, type);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
 	PRWORD(ovflw, " %*ld", 5, 1, (long)vp->v_usecount);
@@ -622,7 +623,7 @@ void
 layer_header()
 {
 
-	(void)printf("    LOWER");
+	(void)printf(" %*s", PTRSTRWIDTH, "LOWER");
 }
 
 int
@@ -634,8 +635,7 @@ layer_print(vp, ovflw)
 
 	KGETRET(VTOLAYER(vp), &lnode, sizeof(lnode), "layer vnode");
 
-	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
-	    (long)lp->layer_lowervp);
+	PRWORD(ovflw, " %*lx", PTRSTRWIDTH + 1, 1, (long)lp->layer_lowervp);
 	return (0);
 }
 
@@ -643,7 +643,7 @@ void
 union_header()
 {
 
-	(void)printf("    UPPER    LOWER");
+	(void)printf(" %*s %*s", PTRSTRWIDTH, "UPPER", PTRSTRWIDTH, "LOWER");
 }
 
 int
@@ -655,10 +655,8 @@ union_print(vp, ovflw)
 
 	KGETRET(VTOUNION(vp), &unode, sizeof(unode), "vnode's unode");
 
-	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
-	    (long)up->un_uppervp);
-	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
-	    (long)up->un_lowervp);
+	PRWORD(ovflw, " %*lx", PTRSTRWIDTH + 1, 1, (long)up->un_uppervp);
+	PRWORD(ovflw, " %*lx", PTRSTRWIDTH + 1, 1, (long)up->un_lowervp);
 	return (0);
 }
 
