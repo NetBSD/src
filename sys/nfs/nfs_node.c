@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.43 2001/04/20 11:19:16 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.44 2001/05/03 15:53:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,9 +218,13 @@ nfs_inactive(v)
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
-		sp = (struct sillyrename *)0;
-	if (sp) {
+		sp = NULL;
+	if (sp != NULL)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
+		NQNFSNONCACHE | NQNFSWRITE);
+	VOP_UNLOCK(vp, 0);
+	if (sp != NULL) {
 
 		/*
 		 * Remove the silly file that was rename'd earlier
@@ -232,9 +236,6 @@ nfs_inactive(v)
 		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
-		NQNFSNONCACHE | NQNFSWRITE);
-	VOP_UNLOCK(vp, 0);
 	return (0);
 }
 
