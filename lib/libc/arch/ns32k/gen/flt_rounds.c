@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.3 1997/07/13 18:45:30 christos Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.4 1997/10/27 05:28:46 phil Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.3 1997/07/13 18:45:30 christos Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.4 1997/10/27 05:28:46 phil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <machine/cpufunc.h>
@@ -19,8 +19,10 @@ static const int map[] = {
 	3	/* round to negative infinity */
 };
 
+int __flt_rounds __P((void));
+
 int
-__flt_rounds()
+__flt_rounds(void)
 {
 	int x;
 
