@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.22 2002/12/11 19:28:41 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.23 2003/04/21 14:32:25 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.22 2002/12/11 19:28:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.23 2003/04/21 14:32:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -228,6 +228,13 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 			epp->ep_dsize = round_page(ls->vmsize);
 		}
 	}
+
+	/* 
+	 * Some libraries do not have a load base address. The Darwin
+	 * kernel seems to skip them, and dyld will do the job.
+	 */
+	if (addr == 0)
+		return ENOMEM;
 
 	if (ls->filesize > 0) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_pagedvn, size, 
@@ -507,11 +514,20 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 
 		switch (lc.cmd) {
 		case MACHO_LC_SEGMENT:
-			if ((error = exec_macho_load_segment(epp, vp, aoffs, 
-			    (struct exec_macho_segment_command *)buf,
-			    type)) != 0) {
-				DPRINTF(("load segment failed\n"));
+			error = exec_macho_load_segment(epp, vp, aoffs, 
+			    (struct exec_macho_segment_command *)buf, type);
+
+			switch(error) {
+			case ENOMEM:	/* Just skip, dyld will load it */
+				DPRINTF(("load segment failed, skipping\n"));
+				i = hdr.ncmds;
+				break;
+			case 0:		/* No error, carry on loading file */
+				break;
+			default:	/* Abort file load */
+				DPRINTF(("load segment failed, aborting\n"));
 				goto bad;
+				break;
 			}
 			break;
 		case MACHO_LC_LOAD_DYLINKER:
