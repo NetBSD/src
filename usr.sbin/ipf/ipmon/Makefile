@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1997/03/29 02:49:46 darrenr Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
-CFLAGS+=	-DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../../../sbin/ipf
+CFLAGS+=        -DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../../sbin/ipf
 
+.PATH: .${CURDIR}/../../sbin/ipf
 .include <bsd.prog.mk>
