@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.24 2003/02/25 10:36:22 wiz Exp $
+.\"	$NetBSD: vnconfig.8,v 1.25 2003/03/27 15:36:02 yamt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@
 .\"
 .\"     @(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 8, 1993
+.Dd February 6, 2003
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@
 .Op Fl c
 .Op Fl f Ar disktab
 .Op Fl t Ar typename
-.Op Fl v
+.Op Fl rv
 .Ar vnode_disk
 .Ar regular_file
 .Op Ar geomspec
@@ -163,6 +163,8 @@ and use the geometry specified in the entry.  This option and the
 argument are mutually exclusive.
 .It Fl u
 Unconfigures the device.
+.It Fl r
+Configure the device as read-only.
 .It Fl v
 Print messages to stdout describing actions taken.
 .El
