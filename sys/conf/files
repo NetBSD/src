@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.554 2002/10/04 15:22:27 tsutsui Exp $
+#	$NetBSD: files,v 1.555 2002/10/04 18:25:51 elric Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -902,6 +902,7 @@ file	dev/ic/daic.c			daic
 #
 defpseudo vnd:		disk
 defpseudo ccd:		disk
+defpseudo cgd:		disk
 defpseudo md:		disk
 defpseudo netsmb
 
@@ -974,14 +975,16 @@ include "ufs/files.ufs"
 file	crypto/arc4/arc4.c		wlan
 file	crypto/des/des_ecb.c		ipsec & ipsec_esp
 file	crypto/des/des_setkey.c		ipsec & ipsec_esp
-file	crypto/des/des_enc.c		ipsec & ipsec_esp & !crypto_md_des_enc
-#file    crypto/des/des_cbc.c		ipsec & ipsec_esp & !crypto_md_des_cbc
-file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp & !crypto_md_bf_enc
-#file	crypto/blowfish/bf_cbc.c	ipsec & ipsec_esp & !crypto_md_bf_cbc
+file	crypto/des/des_enc.c		((ipsec & ipsec_esp) | cgd) &
+					    !crypto_md_des_enc
+file    crypto/des/des_cbc.c		cgd & !crypto_md_des_cbc
+file	crypto/blowfish/bf_enc.c	((ipsec & ipsec_esp) | cgd) &
+					    !crypto_md_bf_enc
+file	crypto/blowfish/bf_cbc.c	cgd & !crypto_md_bf_cbc
 file	crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
 file	crypto/cast128/cast128.c	ipsec & ipsec_esp
-file	crypto/rijndael/rijndael-alg-fst.c ipsec & ipsec_esp
-file	crypto/rijndael/rijndael-api-fst.c ipsec & ipsec_esp
+file	crypto/rijndael/rijndael-alg-fst.c (ipsec & ipsec_esp) | cgd
+file	crypto/rijndael/rijndael-api-fst.c (ipsec & ipsec_esp) | cgd
 file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_aout.c			ddb
 file	ddb/db_break.c			ddb
@@ -1005,7 +1008,10 @@ file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/bluetooth/bluetooth.c	bthcidrv
 file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
+file	dev/cgd.c			cgd			needs-flag
+file	dev/cgd_crypto.c		cgd
 file	dev/clockctl.c			clockctl		needs-flag
+file	dev/dksubr.c			cgd
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
 file	dev/ir/cir.c			cir			needs-flag
