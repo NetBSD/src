@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 1997/01/31 23:18:58 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 1997/02/02 07:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -939,28 +939,39 @@ LisDraco1:
 	RELOC(_eclockfreq, a0)
 	movl	d4,a0@
 
-	RELOC(_mmutype, a0)
 	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
 	andl	d5,d1
 	jeq	Ltestfor020
-	movl	#-1,a0@			| assume 020 means 851
+	RELOC(_mmutype, a0)
+	movl	#MMU_68030,a0@		| assume 020 means 851
+	RELOC(_cputype, a0)
+	movl	#CPU_68030,a0@
 	jra	Lsetcpu040		| skip to init.
 Ltestfor020:
 	movl	#AMIGA_68020,d1		| 68020 Attn flag from exec
 	andl	d5,d1
 	jeq	Lsetcpu040
-	movl	#1,a0@
+	RELOC(_mmutype, a0)
+	movl	#MMU_68851,a0@
+	RELOC(_cputype, a0)
+	movl	#CPU_68020,a0@
 Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
 	jeq	Lstartnot040		| it is not 68040
+	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| same as hp300 for compat
+	RELOC(_cputype, a0)
+	movl	#CPU_68040,a0@
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	btst	#7,sp@(3)		| XXX
 	jeq	Lstartnot040
 	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
+	/*
+	 * XXX need to set MMU_68060 and CPU_68060 in here!
+	 */
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#Lvectab,a0
@@ -1113,36 +1124,6 @@ _esigcode:
  */
 #include <m68k/asm.h>
 
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- * dbra will work better perhaps.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
-	cmpl	#MMU_68040,_mmutype
-	jne	Lmlloop			| no, use movl
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
 /*
  * update profiling information for the user
  * addupc(pc, &u.u_prof, ticks)
@@ -2345,11 +2326,15 @@ _fpeaemu60:
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_mmutype,_fputype,_protorp
+	.globl	_mmutype,_fputype,_cputype,_ectype,_protorp
 _mmutype:
-	.long	0
+	.long	MMU_68851
+_cputype:
+	.long	CPU_68020
+_ectype:
+	.long	EC_NONE
 _fputype:
-	.long	0
+	.long	FPU_NONE
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
 	.globl	_cold
