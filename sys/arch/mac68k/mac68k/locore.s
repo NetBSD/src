@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 1999/06/28 01:56:57 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 1999/08/05 12:35:55 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -842,7 +842,7 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(rtclock_intr)
 	movl	d2,sp@-			| save d2
 	movw	sr,d2			| save SPL
-	movw	_C_LABEL(mac68k_clockipl),sr
+	movw	_C_LABEL(mac68k_ipls)+MAC68K_IPL_CLOCK*2,sr
 					| raise SPL to splclock()
 	movl	a6@,a1			| unwind to frame in intr_dispatch
 	lea	a1@(28),a1		| push pointer to interrupt frame
