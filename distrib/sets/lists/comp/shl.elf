@@ -1,8 +1,7 @@
-# $NetBSD: shl.elf,v 1.44 2003/07/16 19:39:06 itojun Exp $
+# $NetBSD: shl.elf,v 1.45 2003/07/24 10:42:40 dsl Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
-./lib/libdes.so			comp-c-lib
 ./lib/libedit.so		comp-c-lib
 ./lib/libevent.so		comp-c-lib
 ./lib/libipsec.so		comp-c-lib
