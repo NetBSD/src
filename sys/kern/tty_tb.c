@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	8.1 (Berkeley) 6/10/93
- *	$Id: tty_tb.c,v 1.12 1994/05/12 03:25:27 cgd Exp $
+ *	$Id: tty_tb.c,v 1.13 1994/05/18 00:10:10 cgd Exp $
  */
 
 #include "tb.h"
@@ -42,7 +42,9 @@
  */
 #include <sys/param.h>
 #include <sys/tablet.h>
+#include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/proc.h>
 
 /*
  * Tablet configuration table.
@@ -332,18 +334,18 @@ tbtioctl(tp, cmd, data, flag, p)
 		tc = &tbconf[tbp->tbflags & TBTYPE];
 		if (tbp->tbflags&TBSTOP) {
 			if (tc->tbc_stop)
-				for (c = tc->tbc_stop; *c != '\0'; c++);
-					ttyout(c, tp);
+				for (c = tc->tbc_stop; *c != '\0'; c++)
+					ttyoutput(c, tp);
 		} else if (tc->tbc_start)
-			for (c = tc->tbc_start; *c != '\0'; c++);
-				ttyout(c, tp);
+			for (c = tc->tbc_start; *c != '\0'; c++)
+				ttyoutput(c, tp);
 		if (tbp->tbflags&TBPOINT) {
 			if (tc->tbc_point)
-				for (c = tc->tbc_point; *c != '\0'; c++);
-					ttyout(c, tp);
+				for (c = tc->tbc_point; *c != '\0'; c++)
+					ttyoutput(c, tp);
 		} else if (tc->tbc_run)
-			for (c = tc->tbc_run; *c != '\0'; c++);
-				ttyout(c, tp);
+			for (c = tc->tbc_run; *c != '\0'; c++)
+				ttyoutput(c, tp);
 		ttstart(tp);
 		break;
 	}
