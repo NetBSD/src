@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 1998/03/24 10:00:14 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.108 1998/03/28 19:44:08 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1862,9 +1862,10 @@ sparc_bus_unmap(cookie, bh, size)
 	bus_space_handle_t bh;
 	bus_size_t size;
 {
-	vm_offset_t vaddr = (vm_offset_t)bh;
+	vm_offset_t va = trunc_page((vm_offset_t)bh);
+	vm_offset_t endva = va + round_page(size);
 
-	pmap_remove(pmap_kernel(), vaddr, vaddr + size);
+	pmap_remove(pmap_kernel(), va, endva);
 	return (0);
 }
 
@@ -1878,6 +1879,34 @@ sparc_bus_mmap(cookie, iospace, paddr, flags)
 	return (paddr | PMAP_IOENC(iospace) | PMAP_NC);
 }
 
+/*
+ * Establish a temporary bus mapping for device probing.
+ */
+int
+bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
+	bus_space_tag_t tag;
+	bus_type_t	btype;
+	bus_addr_t	paddr;
+	bus_size_t	size;
+	size_t		offset;
+	int		flags;
+	int		(*callback) __P((void *, void *));
+	void		*arg;
+{
+	bus_space_handle_t bh;
+	caddr_t tmp;
+	int result;
+
+	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
+		return (0);
+
+	tmp = (caddr_t)bh;
+	result = (probeget(tmp + offset, size) != -1);
+	if (result && callback != NULL)
+		result = (*callback)(tmp, arg);
+	bus_space_unmap(tag, bh, size);
+	return (result);
+}
 
 static void *sparc_mainbus_intr_establish __P((
 		void *,			/*cookie*/
