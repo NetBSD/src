@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_si.c,v 1.4 1996/02/12 05:19:09 gwr Exp $	*/
+/*	$NetBSD: ncr_si.c,v 1.5 1996/02/16 20:33:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -72,7 +72,6 @@
  * The autoconfiguration boilerplate came from Adam Glass.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
