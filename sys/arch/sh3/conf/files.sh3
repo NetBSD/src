@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.4 1999/09/21 13:16:17 tsubai Exp $
+#	$NetBSD: files.sh3,v 1.5 2000/01/14 19:20:32 msaitoh Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -16,7 +16,8 @@ file	arch/sh3/sh3/db_interface.c	ddb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
 file	arch/sh3/sh3/disksubr.c		disk
-file	arch/sh3/sh3/in_cksum.c		inet
+file	arch/sh3/sh3/in_cksum.S		inet
+#file	arch/sh3/sh3/in_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/Locore.c
 file	arch/sh3/sh3/math_emulate.c	math_emulate
