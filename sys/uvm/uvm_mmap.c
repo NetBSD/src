@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.13 1998/09/30 12:07:51 tv Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.14 1998/09/30 15:44:10 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -142,11 +142,7 @@ sys_madvise(p, v, retval)
 			     } */ *uap = v;
 #endif
 
-	/*
-	 * Not supported, but harmless to declare "success".
-	 * Some emulations expect a working madvise().
-	 */
-	return (0);
+	return (EOPNOTSUPP);
 }
 
 /*
