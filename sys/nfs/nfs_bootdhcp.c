@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.26 2004/05/06 12:32:59 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.27 2004/05/22 22:52:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.26 2004/05/06 12:32:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.27 2004/05/22 22:52:15 jonathan Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -451,7 +451,7 @@ bootpc_call(nd, procp)
 	int vcilen;
 #endif
 
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, procp);
 	if (error) {
 		printf("bootp: socreate, error=%d\n", error);
 		return (error);
@@ -538,7 +538,7 @@ bootpc_call(nd, procp)
 	/*
 	 * Bind the local endpoint to a bootp client port.
 	 */
-	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC))) {
+	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC, procp))) {
 		DPRINT("bind failed\n");
 		goto out;
 	}
@@ -607,7 +607,7 @@ bootpc_call(nd, procp)
 #endif
 
 	error = nfs_boot_sendrecv(so, nam, bootpset, m,
-				  bootpcheck, 0, 0, &bpc);
+				  bootpcheck, 0, 0, &bpc, procp);
 	if (error)
 		goto out;
 
@@ -633,7 +633,7 @@ bootpc_call(nd, procp)
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
 		error = nfs_boot_sendrecv(so, nam, bootpset, m,
-					  bootpcheck, 0, 0, &bpc);
+					  bootpcheck, 0, 0, &bpc, procp);
 		if (error)
 			goto out;
 	}

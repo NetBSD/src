@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.77 2004/04/18 22:20:32 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.78 2004/05/22 22:52:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.77 2004/04/18 22:20:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.78 2004/05/22 22:52:13 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,9 +834,8 @@ unp_drain(void)
 #endif
 
 int
-unp_externalize(struct mbuf *rights)
+unp_externalize(struct mbuf *rights, struct proc *p)
 {
-	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	int i, *fdp;
 	struct file **rp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.55 2004/04/21 02:22:49 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.56 2004/05/22 22:52:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.55 2004/04/21 02:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.56 2004/05/22 22:52:15 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -270,7 +270,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		} else {
 			lp->lc_flag |= LC_NONCACHABLE;
 			nqsrv_locklease(lp);
-			nqsrv_send_eviction(vp, lp, slp, nam, cred);
+			nqsrv_send_eviction(vp, lp, slp, nam, cred, procp);
 			nqsrv_waitfor_expiry(lp);
 			nqsrv_unlocklease(lp);
 		}
@@ -453,12 +453,13 @@ nqsrv_cmpnam(slp, nam, lph)
  * Send out eviction notice messages to all other hosts for the lease.
  */
 void
-nqsrv_send_eviction(vp, lp, slp, nam, cred)
+nqsrv_send_eviction(vp, lp, slp, nam, cred, p)
 	struct vnode *vp;
 	struct nqlease *lp;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	struct ucred *cred;
+	struct proc *p;
 {
 	struct nqhost *lph = &lp->lc_host;
 	struct mbuf *m;
@@ -549,7 +550,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				if (solockp)
 					*solockp |= NFSMNT_SNDLOCK;
 				(void) nfs_send(so, nam2, m,
-						(struct nfsreq *)0);
+						(struct nfsreq *)0, p);
 				if (solockp)
 					nfs_sndunlock(solockp);
 			}
@@ -888,9 +889,10 @@ nqnfs_getlease(vp, rwflag, cred, p)
  * Client vacated message function.
  */
 int
-nqnfs_vacated(vp, cred)
+nqnfs_vacated(vp, cred, p)
 	struct vnode *vp;
 	struct ucred *cred;
+	struct proc *p;
 {
 	caddr_t cp;
 	struct mbuf *m;
@@ -927,7 +929,7 @@ nqnfs_vacated(vp, cred)
 	myrep.r_nmp = nmp;
 	if (nmp->nm_soflags & PR_CONNREQUIRED)
 		(void) nfs_sndlock(&nmp->nm_iflag, (struct nfsreq *)0);
-	(void) nfs_send(nmp->nm_so, nmp->nm_nam, m, &myrep);
+	(void) nfs_send(nmp->nm_so, nmp->nm_nam, m, &myrep, p);
 	if (nmp->nm_soflags & PR_CONNREQUIRED)
 		nfs_sndunlock(&nmp->nm_iflag);
 nfsmout:
@@ -1081,7 +1083,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		    myrep.r_nmp = nmp;
 		    myrep.r_mrep = (struct mbuf *)0;
 		    myrep.r_procp = (struct proc *)0;
-		    (void) nfs_reply(&myrep);
+		    (void) nfs_reply(&myrep, p);
 		}
 
 		/*
@@ -1105,7 +1107,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 						(void) nfs_vinvalbuf(vp,
 						       V_SAVE, cred, p, 0);
 						np->n_flag &= ~NQNFSEVICTED;
-						(void) nqnfs_vacated(vp, cred);
+						(void) nqnfs_vacated(vp, cred, p);
 					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
 						    FSYNC_WAIT, 0, 0, p);

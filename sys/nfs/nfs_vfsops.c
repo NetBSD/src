@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.137 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.138 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.137 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.138 2004/05/22 22:52:16 jonathan Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -415,9 +415,10 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 }
 
 void
-nfs_decode_args(nmp, argp)
+nfs_decode_args(nmp, argp, p)
 	struct nfsmount *nmp;
 	struct nfs_args *argp;
+	struct proc *p;
 {
 	int s;
 	int adjsock;
@@ -538,7 +539,7 @@ nfs_decode_args(nmp, argp)
 	if (nmp->nm_so && adjsock) {
 		nfs_safedisconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
-			while (nfs_connect(nmp, (struct nfsreq *)0)) {
+			while (nfs_connect(nmp, (struct nfsreq *)0, p)) {
 				printf("nfs_args: retrying connect\n");
 				(void) tsleep((caddr_t)&lbolt,
 					      PSOCK, "nfscn3", 0);
@@ -629,7 +630,7 @@ nfs_mount(mp, path, data, ndp, p)
 		    ~(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE)) |
 		    (nmp->nm_flag &
 			(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE));
-		nfs_decode_args(nmp, &args);
+		nfs_decode_args(nmp, &args, p);
 		return (0);
 	}
 	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
@@ -752,7 +753,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_sotype = argp->sotype;
 	nmp->nm_soproto = argp->proto;
 
-	nfs_decode_args(nmp, argp);
+	nfs_decode_args(nmp, argp, p);
 
 	mp->mnt_fs_bshift = ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
@@ -762,7 +763,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 * the first request, in case the server is not responding.
 	 */
 	if (nmp->nm_sotype == SOCK_DGRAM &&
-		(error = nfs_connect(nmp, (struct nfsreq *)0)))
+		(error = nfs_connect(nmp, (struct nfsreq *)0, p)))
 		goto bad;
 
 	/*

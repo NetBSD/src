@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.35 2004/04/18 21:43:45 matt Exp $	*/
+/*	$NetBSD: un.h,v 1.36 2004/05/22 22:52:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,7 +79,7 @@ void	unp_gc (void);
 void	unp_mark (struct file *);
 void	unp_scan (struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown (struct unpcb *);
-int 	unp_externalize (struct mbuf *);
+int 	unp_externalize (struct mbuf *, struct proc *);
 int	unp_internalize (struct mbuf *, struct proc *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.74 2004/03/17 10:43:35 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.75 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.74 2004/03/17 10:43:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.75 2004/05/22 22:52:16 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -750,7 +750,7 @@ nfssvc_nfsd(nsd, argp, l)
 					(void) nfs_sndlock(solockp, NULL);
 				if (slp->ns_flag & SLP_VALID) {
 					error =
-					    nfs_send(so, nd->nd_nam2, m, NULL);
+					    nfs_send(so, nd->nd_nam2, m, NULL, p);
 				} else {
 					error = EPIPE;
 					m_freem(m);

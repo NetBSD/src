@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.15 2003/06/29 22:32:11 fvdl Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.16 2004/05/22 22:52:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.15 2003/06/29 22:32:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.16 2004/05/22 22:52:15 jonathan Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ SYSCTL_INT(_net_smb, OID_AUTO, tcprcvbuf, CTLFLAG_RW, &nb_tcprcvbuf, 0, "");
 				    so, NULL, 0, m, 0, flags, p)
 #else
 #define nb_sosend(so,m,flags,p) (*(so)->so_send)(so, NULL, (struct uio *)0, \
-					m, (struct mbuf *)0, flags)
+					m, (struct mbuf *)0, flags, p)
 #endif
 
 static int  nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
@@ -267,7 +267,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct proc *p)
 	struct mbuf *m;
 #endif
 
-	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP);
+	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP, p);
 	if (error)
 		return error;
 	nbp->nbp_tso = so;
@@ -289,7 +289,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct proc *p)
 	m = m_get(M_WAIT, MT_SONAME);
 	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
 	m->m_len = sizeof(struct sockaddr);
-	error = soconnect(so, m);
+	error = soconnect(so, m, p);
 	m_free(m);
 #endif
 	if (error)

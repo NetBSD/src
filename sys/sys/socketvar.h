@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.74 2004/04/22 01:01:42 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.75 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -122,7 +122,7 @@ struct socket {
 	caddr_t		so_upcallarg;	/* Arg for above */
 	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
-					struct mbuf *, int);
+					struct mbuf *, int, struct proc *);
 	int		(*so_receive) (struct socket *,
 					struct mbuf **,
 					struct uio *, struct mbuf **,
@@ -303,9 +303,9 @@ int	sobind(struct socket *, struct mbuf *, struct proc *);
 void	socantrcvmore(struct socket *);
 void	socantsendmore(struct socket *);
 int	soclose(struct socket *);
-int	soconnect(struct socket *, struct mbuf *);
+int	soconnect(struct socket *, struct mbuf *, struct proc *);
 int	soconnect2(struct socket *, struct socket *);
-int	socreate(int, struct socket **, int, int);
+int	socreate(int, struct socket **, int, int, struct proc *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, int, int, struct mbuf **);
@@ -324,7 +324,7 @@ int	soreceive(struct socket *, struct mbuf **, struct uio *,
 int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
 int	sosend(struct socket *, struct mbuf *, struct uio *,
-	    struct mbuf *, struct mbuf *, int);
+	    struct mbuf *, struct mbuf *, int, struct proc *);
 int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);

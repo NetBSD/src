@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.44 2004/05/10 10:40:42 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.45 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ void nqsrv_instimeq __P((struct nqlease *, u_int32_t));
 int nqsrv_cmpnam __P((struct nfssvc_sock *, struct mbuf *, struct nqhost *));
 void nqsrv_send_eviction __P((struct vnode *, struct nqlease *,
 			      struct nfssvc_sock *, struct mbuf *,
-			      struct ucred *));
+			      struct ucred *, struct proc *));
 void nqsrv_waitfor_expiry __P((struct nqlease *));
 void nqnfs_serverd __P((void));
 int nqnfsrv_getlease __P((struct nfsrv_descript *, struct nfssvc_sock *,
@@ -152,7 +152,7 @@ int nqnfsrv_getlease __P((struct nfsrv_descript *, struct nfssvc_sock *,
 int nqnfsrv_vacated __P((struct nfsrv_descript *, struct nfssvc_sock *,
 			 struct proc *, struct mbuf **));
 int nqnfs_getlease __P((struct vnode *, int, struct ucred *, struct proc *));
-int nqnfs_vacated __P((struct vnode *, struct ucred *));
+int nqnfs_vacated __P((struct vnode *, struct ucred *, struct proc *));
 int nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
 			caddr_t));
 
@@ -210,14 +210,15 @@ int nfsrv_access __P((struct vnode *, int, struct ucred *, int, struct proc *,
 		      int));
 
 /* nfs_socket.c */
-int nfs_connect __P((struct nfsmount *, struct nfsreq *));
-int nfs_reconnect __P((struct nfsreq *));
+int nfs_connect __P((struct nfsmount *, struct nfsreq *, struct proc *));
+int nfs_reconnect __P((struct nfsreq *, struct proc *));
 void nfs_disconnect __P((struct nfsmount *));
 void nfs_safedisconnect __P((struct nfsmount *));
 int nfs_send __P((struct socket *, struct mbuf *, struct mbuf *,
-		  struct nfsreq *));
-int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **));
-int nfs_reply __P((struct nfsreq *));
+		  struct nfsreq *, struct proc *));
+int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **,
+		     struct proc *));
+int nfs_reply __P((struct nfsreq *, struct proc *));
 int nfs_request __P((struct nfsnode *, struct mbuf *, int, struct proc *,
 		     struct ucred *, struct mbuf **, struct mbuf **,
 		     caddr_t *, int *));

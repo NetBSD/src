@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.31 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.32 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -180,7 +180,8 @@ int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
 		struct vnode **vpp, struct proc *p));
 int	nfs_mountroot __P((void));
-void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
+void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
+		struct proc *p));
 int	nfs_start __P((struct mount *mp, int flags, struct proc *p));
 int	nfs_unmount __P((struct mount *mp, int mntflags, struct proc *p));
 int	nfs_root __P((struct mount *mp, struct vnode **vpp));
