@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.19 2005/02/14 16:16:24 agc Exp $ */
+/* $NetBSD: info.h,v 1.20 2005/02/16 08:35:26 agc Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -71,6 +71,6 @@ extern void show_plist(char *, package_t *, pl_ent_t);
 extern void show_files(char *, package_t *);
 extern void show_depends(char *, package_t *);
 extern void show_bld_depends(char *, package_t *);
-extern void show_index(char *, char *);
+extern void show_index(char *, char *, char *);
 
 #endif				/* _INST_INFO_H_INCLUDE */
