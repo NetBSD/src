@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.41 2003/07/06 20:01:18 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.42 2003/07/06 20:24:51 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.41 2003/07/06 20:01:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.42 2003/07/06 20:24:51 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -834,6 +834,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	};
 
 	switch (cmd) {
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
+		break;
 	case SIOCS80211NWID:
 		if ((error = copyin(ifr->ifr_data, &nwid, sizeof(nwid))) != 0)
 			break;
