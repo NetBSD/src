@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.15 2000/02/17 03:06:12 itohy Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.16 2000/02/17 03:08:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.15 2000/02/17 03:06:12 itohy Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.16 2000/02/17 03:08:40 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -991,7 +991,7 @@ ar_fow(sksz, skipped)
 	 * number of physical blocks to skip (we do not know physical block
 	 * size at this point), so we must only read foward on tapes!
 	 */
-	if (artyp != ISREG) 
+	if (artyp == ISTAPE || artyp == ISPIPE)
 		return(0);
 
 	/*
@@ -1004,13 +1004,16 @@ ar_fow(sksz, skipped)
 		 * deal with the end of file (it will go to next volume by
 		 * itself)
 	 	 */
-		if ((mpos = cpos + sksz) > arsb.st_size) {
-			*skipped = arsb.st_size - cpos;
+		mpos = cpos + sksz;
+		if (artyp == ISREG && mpos > arsb.st_size)
 			mpos = arsb.st_size;
-		} else
-			*skipped = sksz;
-		if (lseek(arfd, mpos, SEEK_SET) >= 0)
+		if ((mpos = lseek(arfd, mpos, SEEK_SET)) >= 0) {
+			*skipped = mpos - cpos;
 			return(0);
+		}
+	} else {
+		if (artyp != ISREG)
+			return(0);		/* non-seekable device */
 	}
 	syswarn(1, errno, "Foward positioning operation on archive failed");
 	lstrval = -1;
