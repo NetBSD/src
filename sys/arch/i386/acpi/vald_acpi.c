@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.9 2003/05/20 12:50:27 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.10 2003/06/19 10:13:14 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,14 +83,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.9 2003/05/20 12:50:27 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.10 2003/06/19 10:13:14 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/callout.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -120,7 +119,6 @@ struct vald_acpi_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
-	struct callout sc_callout; 	/* XXX temporary polling */
 	
 	ACPI_HANDLE lcd_handle;		/* lcd handle */
 	int *lcd_level;			/* lcd brightness table */
@@ -129,7 +127,6 @@ struct vald_acpi_softc {
 
 	int	sc_ac_status;		/* AC adaptor status when attach */
 	
-	int	sc_timer;		/* event timer setting */
 
 	/* for GHCI Method */
 	ACPI_OBJECT sc_Arg[GHCI_WORDS];		/* Input Arg */
@@ -146,8 +143,7 @@ int	vald_acpi_match(struct device *, struct cfdata *, void *);
 void	vald_acpi_attach(struct device *, struct device *, void *);
 
 void		vald_acpi_event(void *);
-static void	vald_acpi_tick(void *);
-static void	vald_acpi_notifyhandler(ACPI_HANDLE, UINT32, void *);
+static void	vald_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 #define ACPI_NOTIFY_ValdStatusChanged	0x80
 
@@ -206,7 +202,6 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Toshiba VALD\n");
 
 	sc->sc_node = aa->aa_node;
-	sc->sc_timer = 5 * hz;
 
 	/* Initialize input Arg */ 
 	for (i = 0; i < GHCI_WORDS; i++) {
@@ -261,40 +256,29 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	vald_acpi_libright_set(sc, LIBRIGHT_HOLD);
 
 	/* enable vald notify */
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
-	if (rv == AE_OK) {
-		rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-		    ACPI_DEVICE_NOTIFY, vald_acpi_notifyhandler, sc);
-		if (rv != AE_OK)
-			printf("%s: Can't install notify handler (%04x)\n",
-			    sc->sc_dev.dv_xname, (uint)rv);
-	} else {
-		/*
-		 * XXX poll hotkey event in the driver for now.
-		 * in the future, when we have an API, let userland do this
-		 * polling
-		 */
-		callout_init(&sc->sc_callout);
-		callout_reset(&sc->sc_callout, sc->sc_timer,
-		    vald_acpi_tick, sc);
-	}
+	AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
+	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
+	if (rv != AE_OK)
+		printf("%s: Can't install notify handler (%04x)\n",
+		    sc->sc_dev.dv_xname, (uint)rv);
 }
 
 /*
- * vald_acpi_notifyhandler:
+ * vald_acpi_notify_handler:
  *
  *	Notify handler.
  */
 static void
-vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
+vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct vald_acpi_softc *sc = context;
 	ACPI_STATUS rv;
 	
-	switch (value) {
+	switch (notify) {
 	case ACPI_NOTIFY_ValdStatusChanged:
 #ifdef VALD_ACPI_DEBUG
-		printf("%s: received ValdStatusChanged message. \n",
+		printf("%s: received ValdStatusChanged message.\n",
 		    sc->sc_dev.dv_xname);
 #endif /* VALD_ACPI_DEBUG */
 
@@ -307,23 +291,10 @@ vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
 		break;
 
 	default:
-		printf("vald_acpi_notifyhandler: unknown event: %04"
-		    PRIu32 "\n", value);
+		printf("vald_acpi_notify_handler: unknown event: %04"
+		    PRIu32 "\n", notify);
 		break;
 	}
-}
-
-/*
- * vald_acpi_tick:
- *
- *	Poll hotkey event.
- */
-static void
-vald_acpi_tick(void *arg)
-{
-	struct vald_acpi_softc *sc = arg;
-	callout_reset(&sc->sc_callout, sc->sc_timer, vald_acpi_tick, arg);
-	AcpiOsQueueForExecution(OSD_PRIORITY_LO, vald_acpi_event, sc);
 }
 
 /*
@@ -348,14 +319,6 @@ vald_acpi_event(void *arg)
 #endif
 			switch (value) {
 			case 0x1c3: /* Fn + F9 */
-				if (sc->sc_timer > hz/2)
-					sc->sc_timer = hz/2;
-				else
-					sc->sc_timer = 5*hz;
-#ifdef ACPI_DEBUG
-				printf("%s: Change poll time to %x\n",
-				    sc->sc_dev.dv_xname, sc->sc_timer);	
-#endif
 				break;
 			case 0x1c2: /* Fn + F8 */
 				vald_acpi_fan_switch(sc);
