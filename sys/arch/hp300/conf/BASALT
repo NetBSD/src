@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.16 1997/03/12 02:08:02 thorpej Exp $
+#	$NetBSD: BASALT,v 1.17 1997/03/31 00:03:10 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -53,6 +53,7 @@ options		COMPAT_M68K4K	# m68k4k executables
 options 	DIAGNOSTIC	# Kernel sanity checks
 options 	DDB		# Kernel Dynamic Debugger
 options 	DDB_ONPANIC=0	# Don't go into DDB on panic
+makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
 config		netbsd root on ? type ?
 
