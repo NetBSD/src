@@ -1,0 +1,140 @@
+#	$NetBSD: GENERIC,v 1.1 2000/12/11 18:19:12 marcus Exp $
+#
+#	GENERIC -- everything that's currently supported
+#
+
+include "arch/dreamcast/conf/std.dreamcast"
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MINIROOTSIZE=2880	# size of memory disk, in blocks
+
+options 	DONT_INIT_BSC
+
+maxusers	16		# estimated number of users
+
+# CPU support
+options 	SH7750
+options		SH4
+# options		SH4_PCMCIA
+options 	EVBSH4
+options 	MMEYE
+options		PCLOCK=50000000		# 50MHz
+options		IOM_ROM_BEGIN=0x00000000
+options		IOM_ROM_SIZE=0x00100000	#  1MB
+options		IOM_RAM_BEGIN=0x8c000000
+options		IOM_RAM_SIZE=0x01000000	# 16MB
+options		INITTODR_ALWAYS_USE_RTC
+options		BRAINS
+options		USE_RTCCLK
+options		SYNC_CLOCK_TO_RTC
+
+makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
+
+options		LED_ADDR=0xa8000000
+
+# Standard system options
+#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+#options 	INSECURE	# disable kernel security levels
+
+#options		RTC_OFFSET=-540
+options 	HZ=64		# clock interrupt generates every 1/HZ sec
+#options 	NTP		# NTP phase/frequency locked loop
+
+#options 	KTRACE		# system call tracing via ktrace(1)
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	SYSCALL_DEBUG
+#options 	UVMHIST
+#options	UVMHIST_PRINT
+
+# Compatibility options
+options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_43	# and 4.3BSD
+
+# Executable format options
+options 	EXEC_COFF	# COFF executables
+options 	EXEC_ELF32	# 32-bit ELF executables
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	MFS		# memory file system
+#file-system 	NFS		# Network File System client
+file-system 	PROCFS		# /proc
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+
+# File system options
+#options 	QUOTA		# UFS quotas
+#options 	NFSSERVER	# Network File System server
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+
+# Kernel root file system and dump configuration.
+#config		netbsd	root on ? type nfs
+#config		netbsd	root on wd0a type ffs
+config		netbsd	root on ? type ffs
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+shb*	at mainbus?
+
+# Serial Devices
+
+options	SCIFCN_SPEED=57600
+scif0 at shb? port 0xffe80000 irq 12
+
+# SH PCMCIA controllers
+#shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
+#shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
+
+# PCMCIA bus support
+#pcmcia*	at shpcic? controller ? socket ?
+
+#com*	at pcmcia? function ?		# Modems and serial cards
+#wdc*	at pcmcia? function ?
+#wd*	at wdc? drive ?			# the drives themselves
+
+#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+#sm*	at pcmcia? function ?		# Megahertz Ethernet
+
+#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	tun		2	# network tunneling over tty
+
+# Enable the hooks used for initializing the root memory-disk.
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+
+pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,0 +1,33 @@
+OUTPUT_FORMAT("coff-shl")
+OUTPUT_ARCH(sh)
+MEMORY
+{
+  ram : o = 0x80010000, l = 16M
+}
+SECTIONS
+{
+  .text 0xa0000000 :
+  {
+    *(.text)
+    *(.rodata)
+    *(.strings)
+     _etext = . ; 
+  }  
+  .data :
+  {
+    *(.data)
+     _edata = . ; 
+  }  
+  .bss 0x8c010000 :
+  {
+     _bss_start = . ; 
+    *(.bss)
+    *(COMMON)
+     _end = . ;  
+  }  
+  .stack   :
+  {
+     _stack = . ; 
+    *(.stack)
+  }  
+}
