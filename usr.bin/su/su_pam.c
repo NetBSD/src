@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.5.2.1 2005/03/27 16:34:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.5.2.1 2005/03/27 16:34:55 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $");
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +68,7 @@ __RCSID("$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $");
  
 static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
 
+static void logit(const char *, ...);
 static int chshell(const char *);
 static char *ontty(void);
 
@@ -305,9 +307,9 @@ main(int argc, char **argv)
 	 */
 	if (asthem) {
 		pid_t pid, xpid;
-		void *oint;
-		void *oabrt;
-		int status;
+		int status = 1;
+		struct sigaction sa, sa_int, sa_pipe, sa_quit;
+		int fds[2];
 
  		if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS)
 			PAM_END("pam_open_session");
@@ -315,64 +317,83 @@ main(int argc, char **argv)
 		/*
 		 * In order to call pam_close_session after the
 		 * command terminates, we need to fork. 
-		 * Make sure signals cannot kill the parent.
-		 * This is copied from crontab(8), which has to
-		 * cope with a similar situation. XXX FreeBSD 
-		 * has a much more complicated code (CVS logs 
-		 * tell about workaround in libpthread, but we 
-		 * might miss useful stuff)
 		 */
-		oint = signal(SIGINT, SIG_IGN);
-		oabrt = signal(SIGABRT, SIG_IGN);
+		sa.sa_flags = SA_RESTART;
+		sa.sa_handler = SIG_IGN;
+		sigemptyset(&sa.sa_mask);
+		(void)sigaction(SIGINT, &sa, &sa_int);
+		(void)sigaction(SIGQUIT, &sa, &sa_quit);
+		(void)sigaction(SIGPIPE, &sa, &sa_pipe);
+		sa.sa_handler = SIG_DFL;
+		(void)sigaction(SIGTSTP, &sa, NULL);
+		/*
+		 * Use a pipe to guarantee the order of execution of
+		 * the parent and the child.
+		 */
+		if (pipe(fds) == -1) {
+			warn("pipe failed");
+			goto out;
+		}
 		
 		switch (pid = fork()) {
 		case -1:
-			pam_err = pam_close_session(pamh, 0);
-			if (pam_err != PAM_SUCCESS) {
-				syslog(LOG_ERR, "pam_close_session: %s", 
-				    pam_strerror(pamh, pam_err));
-				warnx("pam_close_session: %s", 
-				    pam_strerror(pamh, pam_err));
-			}
-			ERR_PAM_END((1, "fork"));
-			break;
+			logit("fork failed (%s)", strerror(errno));
+			goto out;
 
 		case 0:	/* Child */
+			(void)close(fds[1]);
+			(void)read(fds[0], &status, 1);
+			(void)close(fds[0]);
+			(void)sigaction(SIGINT, &sa_int, NULL);
+			(void)sigaction(SIGQUIT, &sa_quit, NULL);
+			(void)sigaction(SIGPIPE, &sa_pipe, NULL);
 			break;
 
 		default:
+			sa.sa_handler = SIG_IGN;
+			(void)sigaction(SIGTTOU, &sa, NULL);
+			(void)close(fds[0]);
+			(void)setpgid(pid, pid);
+			(void)tcsetpgrp(STDERR_FILENO, pid);
+			(void)close(fds[1]);
+			(void)sigaction(SIGPIPE, &sa_pipe, NULL);
 			/*
 			 * Parent: wait for the child to terminate
 			 * and call pam_close_session.
 			 */
-			if ((xpid = waitpid(pid, &status, 0)) != pid) {
-				pam_err = pam_close_session(pamh, 0);
-				if (pam_err != PAM_SUCCESS) {
-					syslog(LOG_ERR, 
-					    "pam_close_session: %s", 
-					    pam_strerror(pamh, pam_err));
-					warnx("pam_close_session: %s", 
-					    pam_strerror(pamh, pam_err));
+			while ((xpid = waitpid(pid, &status, WUNTRACED))
+			    == pid) {
+				if (WIFSTOPPED(status)) {
+					(void)kill(getpid(), SIGSTOP);
+					(void)tcsetpgrp(STDERR_FILENO,
+					    getpgid(pid));
+					(void)kill(pid, SIGCONT);
+					status = 1;
+					continue;
 				}
-				if (xpid == -1) {
-					ERR_PAM_END((1, 
-					    "error waiting for pid %d", pid));
-				} else {
-					// Can't happen.
-					ERRX_PAM_END((1, 
-					    "wrong PID: %d != %d", pid, xpid));
-				}
+				break;
 			}
-		
-			(void)signal(SIGINT, oint);
-			(void)signal(SIGABRT, oabrt);
 
- 			pam_err = pam_close_session(pamh, 0);
+			(void)tcsetpgrp(STDERR_FILENO, getpgid(0));
+
+			if (xpid == -1) {
+			    logit("Error waiting for pid %d (%s)", pid,
+				strerror(errno));
+			} else if (xpid != pid) {
+			    /* Can't happen. */
+			    logit("Wrong PID: %d != %d", pid, xpid);
+			}
+out:
+			pam_err = pam_setcred(pamh, PAM_DELETE_CRED);
 			if (pam_err != PAM_SUCCESS)
-				PAM_END("pam_open_session");
-
-			pam_end(pamh, PAM_SUCCESS);
-			exit(0);
+				logit("pam_setcred: %s", 
+				    pam_strerror(pamh, pam_err));
+			pam_err = pam_close_session(pamh, 0);
+			if (pam_err != PAM_SUCCESS)
+				logit("pam_close_session: %s", 
+				    pam_strerror(pamh, pam_err));
+			pam_end(pamh, pam_err);
+			exit(WEXITSTATUS(status));
 			break;	
 		}
 	}
@@ -481,11 +502,22 @@ main(int argc, char **argv)
 	(void)execv(shell, np);
 	err(1, "%s", shell);
 done:
-	syslog(LOG_ERR, "%s: %s", func, pam_strerror(pamh, pam_err));
-	warnx("%s: %s", func, pam_strerror(pamh, pam_err));
+	logit("%s: %s", func, pam_strerror(pamh, pam_err));
 	pam_end(pamh, pam_err);
 	return 1;
 }
+
+static void
+logit(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+}
+
 
 static int
 chshell(const char *sh)
