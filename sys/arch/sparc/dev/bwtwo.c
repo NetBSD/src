@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.32 1996/12/10 22:54:47 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -210,14 +210,13 @@ bwtwoattach(parent, self, args)
 	 * Map the control register.
 	 */
 	if (fb->fb_flags & FB_PFOUR) {
-		fb->fb_pfour =
-		    (volatile u_int32_t *)mapiodev(ca->ca_ra.ra_reg, 0,
-		    sizeof(u_int32_t), ca->ca_bustype);
+		fb->fb_pfour = (volatile u_int32_t *)
+		    mapiodev(ca->ca_ra.ra_reg, 0, sizeof(u_int32_t));
 		sc->sc_reg = NULL;
 	} else {
-		sc->sc_reg =
-		    (volatile struct fbcontrol *)mapiodev(ca->ca_ra.ra_reg,
-		    BWREG_REG, sizeof(struct fbcontrol), ca->ca_bustype);
+		sc->sc_reg = (volatile struct fbcontrol *)
+		    mapiodev(ca->ca_ra.ra_reg, BWREG_REG,
+			     sizeof(struct fbcontrol));
 		fb->fb_pfour = NULL;
 	}
 
@@ -314,8 +313,7 @@ bwtwoattach(parent, self, args)
 	if ((fb->fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen (on sun4c), but what the heck */
 		fb->fb_pixels =
-		    mapiodev(ca->ca_ra.ra_reg, sc->sc_pixeloffset,
-		    ramsize, ca->ca_bustype);
+		    mapiodev(ca->ca_ra.ra_reg, sc->sc_pixeloffset, ramsize);
 	}
 
 	/* Insure video is enabled */
@@ -473,8 +471,7 @@ bwtwommap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return (REG2PHYS(&sc->sc_phys, sc->sc_pixeloffset + off,
-	    sc->sc_bustype) | PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, sc->sc_pixeloffset + off) | PMAP_NC);
 }
 
 static int
