@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.58 1999/05/13 00:59:04 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.59 1999/05/13 21:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -77,7 +77,7 @@ sys_fork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 0, SIGCHLD, retval, NULL));
+	return (fork1(p, 0, SIGCHLD, NULL, 0, retval, NULL));
 }
 
 /*
@@ -92,7 +92,7 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT, SIGCHLD, retval, NULL));
+	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, retval, NULL));
 }
 
 /*
@@ -107,14 +107,17 @@ sys___vfork14(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, retval, NULL));
+	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
+	    retval, NULL));
 }
 
 int
-fork1(p1, flags, exitsig, retval, rnewprocp)
+fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	register struct proc *p1;
 	int flags;
 	int exitsig;
+	void *stack;
+	size_t stacksize;
 	register_t *retval;
 	struct proc **rnewprocp;
 {
@@ -344,7 +347,8 @@ again:
 	 * different path later.
 	 */
 	p2->p_addr = (struct user *)uaddr;
-	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
+	    stack, stacksize);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.

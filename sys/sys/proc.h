@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.76 1999/05/13 00:59:03 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.77 1999/05/13 21:58:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -357,7 +357,8 @@ void	wakeup __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
-int	fork1 __P((struct proc *, int, int, register_t *, struct proc **));
+int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *,
+	    struct proc **));
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.19 1999/04/30 21:23:50 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.20 1999/05/13 21:58:38 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -256,6 +256,8 @@ uvm_vsunlock(p, addr, len)
  * - the address space is copied as per parent map's inherit values
  * - a new "user" structure is allocated for the child process
  *	[filled in by MD layer...]
+ * - if specified, the child gets a new user stack described by
+ *	stack and stacksize
  * - NOTE: the kernel stack may be at a different location in the child
  *	process, and thus addresses of automatic variables may be invalid
  *	after cpu_fork returns in the child process.  We do nothing here
@@ -264,9 +266,11 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared)
+uvm_fork(p1, p2, shared, stack, stacksize)
 	struct proc *p1, *p2;
 	boolean_t shared;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	int rv;
@@ -304,7 +308,7 @@ uvm_fork(p1, p2, shared)
 	 * the child ready to run.  The child will exit directly to user
 	 * mode on its first time slice, and will not return here.
 	 */
-	cpu_fork(p1, p2);
+	cpu_fork(p1, p2, stack, stacksize);
 }
 
 /*

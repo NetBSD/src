@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.150 1999/05/13 00:59:04 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.151 1999/05/13 21:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -404,7 +404,7 @@ main()
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, 0, SIGCHLD, NULL, &initproc))
+	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
 		panic("fork init");
 	cpu_set_kpc(initproc, start_init, initproc);
 

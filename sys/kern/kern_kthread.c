@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.6 1999/05/13 00:59:04 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.7 1999/05/13 21:58:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 
 	/* First, create the new process. */
 	error = fork1(&proc0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
-	    FORK_SHARESIGS, SIGCHLD, NULL, &p2);
+	    FORK_SHARESIGS, SIGCHLD, NULL, 0, NULL, &p2);
 	if (error)
 		return (error);
 
