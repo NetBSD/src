@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.416 2004/08/25 22:12:03 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.417 2004/08/29 13:19:39 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6855,3 +6855,21 @@ distrib/notes/common/list-setsizes.sh		1.1 (new)
 	Updates to installation notes and some tools for handling
 	certain sections, to better describe the netbsd-2-0 state.
 	[hubertf, ticket #788]
+
+etc/MAKEDEV.tmpl				1.25,1.26 via patch
+
+	Don't depend on printf.
+	Rework the sequence that ptys get allocated so that we don't end up
+	with gaps in the sequence of minor numbers as we allocate ptys.
+	Having gaps has 2 bad side effects:
+	- ptm does not like it
+	- we allocate a lot of storage that we'll never use in the pty array
+	  (the current scheme allocated 62 ptys 0-15,256-301, so we needed
+	   302 entries to get 64).
+	Now we allocate ptys in groups of 16 or 14 instead of 64, and we follow
+	the minor number order.
+	We default to 64 pty's by building pty0-3, which is all using the old
+	traditional pty names. Of course to do this, the shell code is a bit
+	convoluted.
+	[christos, ticket #776]
+
