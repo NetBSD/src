@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcorder.8,v 1.2 2000/07/05 15:45:30 msaitoh Exp $
+.\"	$NetBSD: rcorder.8,v 1.3 2000/07/17 14:16:22 mrg Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 22, 1998
+.Dd July 17, 2000
 .Dt RCORDER 8
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@
 .Nd print a dependency ordering of interdependent files
 .Sh SYNOPSIS
 .Nm
+.Op Fl k Ar keep
+.Op Fl s Ar skip
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -58,27 +60,46 @@ may be expected to be filled by that file.
 .Pp
 Within each file, a block containing a series of
 .Dq REQUIRE ,
-.Dq PROVIDE
-and
+.Dq PROVIDE ,
 .Dq BEFORE
+and
+.Dq KEYWORD
 lines must appear.
 The format of the lines is rigid. Each line must begin with a single
 .Dq # ,
 followed by a single space, followed by
 .Dq PROVIDE: ,
-.Dq REQUIRE: 
+.Dq REQUIRE: ,
+.Dq BEFORE: ,
 or
-.Dq BEFORE: .
+.Dq KEYWORD: .
 No deviation is permitted.
 Each dependency line is then followed by a series of conditions,
 separated by whitespace. Multiple
 .Dq PROVIDE ,
-.Dq REQUIRE
-and
+.Dq REQUIRE ,
 .Dq BEFORE
+and
+.Dq KEYWORD
 lines may appear, but all such lines must appear in a sequence without 
 any intervening lines, as once a line that does not follow the format
 is reached, parsing stops.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl k
+Add the specified keyword to the
+.Dq keep list .
+If any
+.Fl k
+option is given, only those files containing the matching keyword are listed.
+.It Fl s
+Add the specified keyword to the
+.Dq skip list .
+If any
+.Fl s
+option is given, files containing the matching keyword are not listed.
+.El
 .Pp
  An example block follows:
 .Bd -literal -offset indent
@@ -107,8 +128,6 @@ There must be at least one file with no dependencies in the set of
 arguments passed to
 .Nm
 in order for it to find a starting place in the dependency ordering.
-.\" .Sh FILES
-.\" .Sh EXAMPLES
 .Sh DIAGNOSTICS
 .Nm
 may print one of the following error messages and exit with a non-zero
@@ -137,4 +156,3 @@ program first appeared in
 .Sh AUTHORS
 Written by Perry E. Metzger (perry@piermont.com) and Matthew R.
 Green (mrg@eterna.com.au).
-.\" .Sh BUGS
