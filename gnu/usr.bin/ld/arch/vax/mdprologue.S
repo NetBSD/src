@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.8 1998/10/23 00:51:36 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.9 1998/10/31 08:59:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -30,8 +30,6 @@
 /*
  * i386 run-time link editor entry points.
  */
-
-#include <sys/syscall.h>
 
 	.text
 	.globl	_binder, _binder_entry
