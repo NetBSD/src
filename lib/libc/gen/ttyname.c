@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.10 1997/07/13 19:35:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-static char rcsid[] = "$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $";
+__RCSID("$NetBSD: ttyname.c,v 1.10 1997/07/13 19:35:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +75,7 @@ ttyname(fd)
 	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
 		return (NULL);
 
-	if (db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) {
+	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) != NULL) {
 		memset(&bkey, 0, sizeof(bkey));
 		bkey.type = S_IFCHR;
 		bkey.dev = sb.st_rdev;
@@ -103,7 +104,7 @@ oldttyname(fd, sb)
 	if ((dp = opendir(_PATH_DEV)) == NULL)
 		return (NULL);
 
-	while (dirp = readdir(dp)) {
+	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
 		bcopy(dirp->d_name, buf + sizeof(_PATH_DEV) - 1,
