@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.6 2003/12/28 15:45:58 lukem Exp $
+# $NetBSD: shl.elf,v 1.7 2004/03/05 20:07:27 tron Exp $
 ./usr/X11R6/lib/X11/locale/lib
 ./usr/X11R6/lib/X11/locale/lib/common
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
@@ -13,6 +13,8 @@
 ./usr/X11R6/lib/libGL.so.1
 ./usr/X11R6/lib/libGLU.so
 ./usr/X11R6/lib/libGLU.so.1
+./usr/X11R6/lib/libGLw.so
+./usr/X11R6/lib/libGLw.so.1.0
 ./usr/X11R6/lib/libICE.so.6
 ./usr/X11R6/lib/libOSMesa.so
 ./usr/X11R6/lib/libOSMesa.so.4
@@ -65,12 +67,19 @@
 ./usr/X11R6/lib/libdpstk.so
 ./usr/X11R6/lib/libdpstk.so.1
 ./usr/X11R6/lib/libexpat.so
+./usr/X11R6/lib/libexpat.so.0
 ./usr/X11R6/lib/libexpat.so.1
+./usr/X11R6/lib/libexpat.so.2
+./usr/X11R6/lib/libexpat.so.3
+./usr/X11R6/lib/libexpat.so.4
 ./usr/X11R6/lib/libfontconfig.so
 ./usr/X11R6/lib/libfontconfig.so.1
 ./usr/X11R6/lib/libfontenc.so
 ./usr/X11R6/lib/libfontenc.so.1
 ./usr/X11R6/lib/libfreetype.so
+./usr/X11R6/lib/libfreetype.so.6
+./usr/X11R6/lib/libfreetype.so.7
+./usr/X11R6/lib/libfreetype.so.8
 ./usr/X11R6/lib/libfreetype.so.9
 ./usr/X11R6/lib/liboldX.so.6
 ./usr/X11R6/lib/libpsres.so
