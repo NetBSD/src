@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85.2.5 2002/04/01 07:41:14 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.85.2.6 2002/06/21 06:24:37 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.5 2002/04/01 07:41:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.6 2002/06/21 06:24:37 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.5 2002/04/01 07:41:14 nathanw 
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
