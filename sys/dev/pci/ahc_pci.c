@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.32 2001/11/21 19:01:33 wiz Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.32.10.1 2003/08/23 06:44:46 tron Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.32 2001/11/21 19:01:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.32.10.1 2003/08/23 06:44:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define ID_AHA_2950U2B		0x00109005E1009005ull
 
 #define ID_AIC7892		0x008F9005FFFF9005ull
+#define ID_AHA_2915LP		0x0082900502109005ull
 #define ID_AHA_29160		0x00809005E2A09005ull
 #define ID_AHA_29160_CPQ	0x00809005E2A00E11ull
 #define ID_AHA_29160N		0x0080900562A09005ull
@@ -378,6 +379,12 @@ const struct ahc_pci_identity ahc_pci_ident_table [] =
 		ID_AHA_19160B,
 		ID_ALL_MASK,
 		"Adaptec 19160B Ultra160 SCSI adapter",
+		ahc_aic7892_setup
+	},
+	{
+		ID_AHA_2915LP,
+		ID_ALL_MASK,
+		"Adaptec 2915LP Ultra160 SCSI adapter",
 		ahc_aic7892_setup
 	},
 	/* aic7895 based controllers */	
