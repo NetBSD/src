@@ -1,4 +1,4 @@
-/*	$NetBSD: krcmd.c,v 1.6 1999/06/24 22:43:35 tls Exp $	*/
+/*	$NetBSD: krcmd.c,v 1.7 2002/06/14 00:55:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: krcmd.c,v 1.6 1999/06/24 22:43:35 tls Exp $");
+__RCSID("$NetBSD: krcmd.c,v 1.7 2002/06/14 00:55:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,9 @@ __RCSID("$NetBSD: krcmd.c,v 1.6 1999/06/24 22:43:35 tls Exp $");
 
 #define	SERVICE_NAME	"rcmd"
 
-int	kcmd __P((int *, char **, u_short, char *, char *, char *, int *,
+int	kcmd(int *, char **, u_short, char *, char *, char *, int *,
 	    KTEXT, char *, char *, CREDENTIALS *, Key_schedule, MSG_DAT *,
-	    struct sockaddr_in *, struct sockaddr_in *, long));
+	    struct sockaddr_in *, struct sockaddr_in *, long);
 
 /*
  * krcmd: simplified version of Athena's "kcmd"
