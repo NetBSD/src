@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.102 2004/05/07 00:04:38 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.103 2004/07/01 04:39:30 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.102 2004/05/07 00:04:38 ross Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.103 2004/07/01 04:39:30 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.102 2004/05/07 00:04:38 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.103 2004/07/01 04:39:30 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1075,7 +1075,11 @@ main(int argc, char **argv)
  *	lots
  */
 static Boolean
+#if __GNUC__
+ReadMakefile(ClientData p, ClientData q __attribute__((unused)))
+#else
 ReadMakefile(ClientData p, ClientData q)
+#endif
 {
 	char *fname = p;		/* makefile to read */
 	FILE *stream;
