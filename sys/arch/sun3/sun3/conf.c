@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1995/03/10 02:22:21 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1995/03/26 19:24:16 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -553,6 +553,24 @@ decl_select(bpfselect);
 #define	bpfselect	ndef_select
 #endif
 
+/* network TUNnel device */
+#include "tun.h"
+#if NTUN > 0
+decl_open(tunopen);
+decl_close(tunclose);
+decl_read(tunread);
+decl_write(tunwrite);
+decl_ioctl(tunioctl);
+decl_select(tunselect);
+#else
+#define	tunopen		ndef_open
+#define	tunclose	ndef_close
+#define	tunread		ndef_read
+#define	tunwrite	ndef_write
+#define	tunioctl	ndef_ioctl
+#define	tunselect	ndef_select
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	/*  0: virtual console (/dev/console) -- XXX should be a tty */
@@ -662,8 +680,10 @@ struct cdevsw	cdevsw[] =
 		nsup_ioctl, null_stop, null_reset, nsup_ttys,
 		nsup_select, nsup_mmap, nsup_strategy },
 
-	/* 24: /dev/sky (Sky FPA) */
-	cdev_notdef,
+	/* 24: /dev/sky (was Sky FPA) */
+	{	tunopen, tunclose, tunread, tunwrite,
+		tunioctl, null_stop, null_reset, nsup_ttys,
+		tunselect, nsup_mmap, nsup_strategy },
 
 	/* 25: sun pi? */
 	cdev_notdef,
