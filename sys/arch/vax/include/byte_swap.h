@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.3 2001/11/29 22:32:45 thorpej Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.4 2001/12/23 02:21:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -37,6 +37,8 @@
 
 #ifndef _VAX_BYTE_SWAP_H_
 #define _VAX_BYTE_SWAP_H_
+
+#include <sys/types.h>
 
 static __inline uint32_t __attribute__((__unused__))
 __byte_swap_long_variable(uint32_t x)
