@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.99 2002/06/03 01:45:15 jmcneill Exp $
+# $NetBSD: mi,v 1.100 2002/06/27 15:18:21 christos Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -151,6 +151,7 @@
 ./etc/rc.d/ttys				etc-sys-rc
 ./etc/rc.d/virecover			etc-sys-rc
 ./etc/rc.d/wscons			etc-sys-rc
+./etc/rc.d/wsmoused			etc-sys-rc
 ./etc/rc.d/xdm				etc-x11-rc
 ./etc/rc.d/xfs				etc-x11-rc
 ./etc/rc.d/ypbind			etc-nis-rc
