@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
+/* $NetBSD: pckbd.c,v 1.25 2001/06/01 00:38:31 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isavar.h>		/* XXX XXX XXX */
-
 #include <dev/ic/pckbcvar.h>
 
 #include <dev/pckbc/pckbdreg.h>
@@ -98,10 +96,6 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-
-#if defined(__i386__) || defined(__alpha__)
-#include <sys/kernel.h> /* XXX for hz */
-#endif
 
 #include "locators.h"
 
