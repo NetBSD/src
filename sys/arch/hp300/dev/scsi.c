@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.4 1994/10/26 07:24:57 cgd Exp $	*/
+/*	$NetBSD: scsi.c,v 1.5 1995/10/09 08:07:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,10 +46,6 @@
  */
 #include "scsi.h"
 #if NSCSI > 0
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/scsi.c,v 1.4 1994/10/26 07:24:57 cgd Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
