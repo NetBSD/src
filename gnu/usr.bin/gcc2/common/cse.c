@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: cse.c,v 1.2 1993/08/02 17:33:55 mycroft Exp $";
+#endif /* not lint */
 
 #include "config.h"
 #include "rtl.h"

@@ -1,3 +1,5 @@
+/*	$Id: cp-parse.h,v 1.2 1993/08/02 17:32:05 mycroft Exp $ */
+
 typedef union {long itype; tree ttype; char *strtype; enum tree_code code; } YYSTYPE;
 #define	IDENTIFIER	258
 #define	TYPENAME	259

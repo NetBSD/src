@@ -1,5 +1,8 @@
 /* Generated automatically by the program `genconfig'
-from the machine description file `md'.  */
+from the machine description file `md'. 
+
+	$Id: insn-config.h,v 1.2 1993/08/02 17:36:58 mycroft Exp $
+*/
 
 
 #define MAX_RECOG_OPERANDS 10

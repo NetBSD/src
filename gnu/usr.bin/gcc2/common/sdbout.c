@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: sdbout.c,v 1.2 1993/08/02 17:36:05 mycroft Exp $";
+#endif /* not lint */
+
 /*  mike@tredysvr.Tredydev.Unisys.COM says:
 I modified the struct.c example and have a nm of a .o resulting from the
 AT&T C compiler.  From the example below I would conclude the following:

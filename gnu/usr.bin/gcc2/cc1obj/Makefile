@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.4 1993/08/02 17:30:31 mycroft Exp $
+
 PROG=           cc1obj
 BINDIR=         /usr/libexec
 SRCS=		objc-parse.c objc-act.c  \

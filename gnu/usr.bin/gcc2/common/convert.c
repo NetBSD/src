@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: convert.c,v 1.2 1993/08/02 17:33:50 mycroft Exp $";
+#endif /* not lint */
 
 /* These routines are somewhat language-independent utility function
    intended to be called by the language-specific convert () functions. */

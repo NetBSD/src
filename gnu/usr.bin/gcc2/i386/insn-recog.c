@@ -1,6 +1,10 @@
 /* Generated automatically by the program `genrecog'
 from the machine description file `md'.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: insn-recog.c,v 1.2 1993/08/02 17:37:08 mycroft Exp $";
+#endif /* not lint */
+
 #include "config.h"
 #include "rtl.h"
 #include "insn-config.h"

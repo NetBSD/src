@@ -1,3 +1,5 @@
+/*	$Id: _op_delete.c,v 1.2 1993/08/02 17:38:31 mycroft Exp $ */
+
 extern int target_flags;
   
 enum reg_class

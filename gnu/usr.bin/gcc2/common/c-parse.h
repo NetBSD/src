@@ -1,3 +1,5 @@
+/*	$Id: c-parse.h,v 1.2 1993/08/02 17:33:32 mycroft Exp $ */
+
 typedef union {long itype; tree ttype; enum tree_code code;
 	char *filename; int lineno; } YYSTYPE;
 #define	IDENTIFIER	258

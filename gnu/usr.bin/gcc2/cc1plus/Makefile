@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.4 1993/08/02 17:31:18 mycroft Exp $
+
 PROG=		cc1plus
 BINDIR=		/usr/libexec
 SRCS=		cp-parse.c cp-decl.c cp-decl2.c cp-typeck.c cp-type2.c \

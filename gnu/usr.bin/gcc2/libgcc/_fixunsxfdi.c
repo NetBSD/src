@@ -1,3 +1,5 @@
+/*	$Id: _fixunsxfdi.c,v 1.2 1993/08/02 17:38:01 mycroft Exp $ */
+
 extern int target_flags;
   
 enum reg_class

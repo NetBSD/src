@@ -1,3 +1,5 @@
+/*	$Id: _ashlsi3.c,v 1.2 1993/08/02 17:37:38 mycroft Exp $ */
+
 extern int target_flags;
   
 enum reg_class

@@ -1,4 +1,7 @@
-/* Configuration for an i386 running 386BSD as the target machine.  */
+/* Configuration for an i386 running 386BSD as the target machine. 
+
+	$Id: tm.h,v 1.2 1993/08/02 17:37:11 mycroft Exp $
+*/
 
 /* This is tested by i386gas.h.  */
 #define YES_UNDERSCORES

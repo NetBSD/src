@@ -21,6 +21,8 @@
  * You should have received a copy of the GNU General Public License
  * along with GAWK; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *	$Id: awk.h,v 1.2 1993/08/02 17:29:26 mycroft Exp $
  */
 
 /* ------------------------------ Includes ------------------------------ */
