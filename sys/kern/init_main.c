@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.202 2002/08/23 06:17:08 lukem Exp $	*/
+/*	$NetBSD: init_main.c,v 1.203 2002/08/24 00:47:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.202 2002/08/23 06:17:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.203 2002/08/24 00:47:17 lukem Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -673,7 +673,7 @@ start_init(void *arg)
 #ifdef DEBUG
 		printf("init: copying out path `%s' %d\n", path, i);
 #else
-		if (boothowto & RB_ASKNAME || ipx > 0)
+		if (boothowto & RB_ASKNAME || path != initpaths[0])
 			printf("init: trying %s\n", path);
 #endif
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
