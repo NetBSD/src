@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.20 1996/06/10 12:51:21 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.21 1996/06/10 23:55:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -162,6 +162,9 @@ struct mbuf {
  *	MGETHDR(struct mbuf *m, int how, int type)
  * allocates an mbuf and initializes it to contain a packet header
  * and internal data.
+ *
+ * If 'how' is M_WAIT, these macros (and the corresponding functions)
+ * are guaranteed to return successfully.
  */
 #define	MGET(m, how, type) { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
@@ -192,8 +195,8 @@ struct mbuf {
 /*
  * Mbuf cluster macros.
  * MCLALLOC(caddr_t p, int how) allocates an mbuf cluster.
- * MCLGET adds such clusters to a normal mbuf;
- * the flag M_EXT is set upon success.
+ * MCLGET adds such clusters to a normal mbuf; the flag M_EXT is
+ * set upon success.  (Note that MCLGET with M_WAIT _MAY_ fail!)
  * MCLFREE releases a reference to a cluster allocated by MCLALLOC,
  * freeing the cluster if the reference count has reached 0.
  *
@@ -310,7 +313,8 @@ union mcluster {
  * Arrange to prepend space of size plen to mbuf m.
  * If a new mbuf must be allocated, how specifies whether to wait.
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
- * is freed and m is set to NULL.
+ * is freed and m is set to NULL.  If how is M_WAIT, this will never
+ * fail.
  */
 #define	M_PREPEND(m, plen, how) { \
 	if (M_LEADINGSPACE(m) >= (plen)) { \
