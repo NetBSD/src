@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.426 2003/09/14 06:13:26 lukem Exp $
+# $NetBSD: mi,v 1.427 2003/09/14 06:40:04 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -181,6 +181,7 @@
 ./usr/X11R6/include/X11/bitmaps			base-x11-root
 ./usr/X11R6/include/X11/extensions		base-x11-root
 ./usr/X11R6/include/X11/fonts			base-x11-root
+./usr/X11R6/include/X11/pixmaps			base-x11-root
 ./usr/X11R6/include/fontconfig			base-x11-root
 ./usr/X11R6/include/freetype2			base-x11-root
 ./usr/X11R6/include/freetype2/freetype		base-x11-root
