@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.220 2002/10/26 13:50:30 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.221 2002/11/13 19:20:25 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -365,6 +365,9 @@ file	arch/i386/i386/mach_machdep.c		compat_mach
 file	arch/i386/i386/mach_sigcode.s		compat_mach
 file	arch/i386/i386/mach_syscall.c		compat_mach
 file	arch/i386/i386/macho_machdep.c		exec_macho
+
+# DARWIN binary compatibility (COMPAT_DARWIN)
+include	"compat/darwin/files.darwin"
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
