@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.5 2002/04/17 00:06:30 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.6 2002/05/20 16:58:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -159,6 +159,10 @@ typedef struct {
 				 (s)->__bits[1] = 0x00000000, \
 				 (s)->__bits[2] = 0x00000000, \
 				 (s)->__bits[3] = 0x00000000)
+#define __sigsetequal(s1,s2)	((s1)->__bits[0] == (s2)->__bits[0] && \
+				 (s1)->__bits[1] == (s2)->__bits[1] && \
+				 (s1)->__bits[2] == (s2)->__bits[2] && \
+				 (s1)->__bits[3] == (s2)->__bits[3])
 #define	__sigfillset(s)		((s)->__bits[0] = 0xffffffff, \
 				 (s)->__bits[1] = 0xffffffff, \
 				 (s)->__bits[2] = 0xffffffff, \
