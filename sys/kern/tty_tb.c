@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.3 1993/05/20 02:55:15 cgd Exp $
+ *	$Id: tty_tb.c,v 1.3.4.1 1993/11/03 13:47:17 mycroft Exp $
  */
 
 #include "tb.h"
-#if NTB > 0
 
 /*
  * Line discipline for RS232 tablets;
@@ -46,6 +45,9 @@
 #include "ioctl.h"
 #include "tablet.h"
 #include "tty.h"
+
+/*XXX*/
+#define t_sc T_LINEP
 
 /*
  * Tablet configuration table.
@@ -69,7 +71,7 @@ static	int tblresdecode(), tbhresdecode();
 
 struct	tbconf tbconf[TBTYPE] = {
 { 0 },
-{ 5, sizeof (struct tbpos), 0200, tbdecode, "6", "4" },
+{ 5, sizeof (struct tbpos), 0200, tbdecode, "6", "4" },	
 { 5, sizeof (struct tbpos), 0200, tbdecode, "\1CN", "\1RT", "\2", "\4" },
 { 8, sizeof (struct gtcopos), 0200, gtcodecode },
 {17, sizeof (struct polpos), 0200, poldecode, 0, 0, "\21", "\5\22\2\23",
@@ -89,13 +91,14 @@ struct tb {
 	int	tbflags;		/* mode & type bits */
 #define	TBMAXREC	17	/* max input record size */
 	char	cbuf[TBMAXREC];		/* input buffer */
+        int     tbinbuf;
+        char   *tbcp;
 	union {
 		struct	tbpos tbpos;
 		struct	gtcopos gtcopos;
 		struct	polpos polpos;
 	} rets;				/* processed state */
-#define NTBS	16
-} tb[NTBS];
+} tb[NTB];
 
 /*
  * Open as tablet discipline; called on discipline change.
@@ -108,18 +111,18 @@ tbopen(dev, tp)
 	register struct tb *tbp;
 
 	if (tp->t_line == TABLDISC)
-		return (ENODEV);
+		return (0);
 	ttywflush(tp);
-	for (tbp = tb; tbp < &tb[NTBS]; tbp++)
+	for (tbp = tb; tbp < &tb[NTB]; tbp++)
 		if (tbp->tbflags == 0)
 			break;
-	if (tbp >= &tb[NTBS])
+	if (tbp >= &tb[NTB])
 		return (EBUSY);
 	tbp->tbflags = TBTIGER|TBPOINT;		/* default */
-	tp->t_cp = tbp->cbuf;
-	tp->t_inbuf = 0;
+	tbp->tbcp = tbp->cbuf;
+	tbp->tbinbuf = 0;
 	bzero((caddr_t)&tbp->rets, sizeof (tbp->rets));
-	tp->T_LINEP = (caddr_t)tbp;
+	tp->t_sc = (caddr_t)tbp;
 	tp->t_flags |= LITOUT;
 	return (0);
 }
@@ -133,15 +136,7 @@ tbclose(tp)
 	register int s;
 	int modebits = TBPOINT|TBSTOP;
 
-	tbioctl(tp, BIOSMODE, &modebits, 0);
-	s = spltty();
-	((struct tb *)tp->T_LINEP)->tbflags = 0;
-	tp->t_cp = 0;
-	tp->t_inbuf = 0;
-	tp->t_rawq.c_cc = 0;		/* clear queues -- paranoid */
-	tp->t_canq.c_cc = 0;
-	tp->t_line = 0;			/* paranoid: avoid races */
-	splx(s);
+	tbtioctl(tp, BIOSMODE, &modebits, 0);
 }
 
 /*
@@ -152,7 +147,7 @@ tbread(tp, uio)
 	register struct tty *tp;
 	struct uio *uio;
 {
-	register struct tb *tbp = (struct tb *)tp->T_LINEP;
+	register struct tb *tbp = (struct tb *)tp->t_sc;
 	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 	int ret;
 
@@ -176,7 +171,7 @@ tbinput(c, tp)
 	register int c;
 	register struct tty *tp;
 {
-	register struct tb *tbp = (struct tb *)tp->T_LINEP;
+	register struct tb *tbp = (struct tb *)tp->t_sc;
 	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 
 	if (tc->tbc_recsize == 0 || tc->tbc_decode == 0)	/* paranoid? */
@@ -184,15 +179,15 @@ tbinput(c, tp)
 	/*
 	 * Locate sync bit/byte or reset input buffer.
 	 */
-	if (c&tc->tbc_sync || tp->t_inbuf == tc->tbc_recsize) {
-		tp->t_cp = tbp->cbuf;
-		tp->t_inbuf = 0;
+	if (c&tc->tbc_sync || tbp->tbinbuf == tc->tbc_recsize) {
+		tbp->tbcp = tbp->cbuf;
+		tbp->tbinbuf = 0;
 	}
-	*tp->t_cp++ = c&0177;
+	*tbp->tbcp++ = c&0177;
 	/*
 	 * Call decode routine only if a full record has been collected.
 	 */
-	if (++tp->t_inbuf == tc->tbc_recsize)
+	if (++tbp->tbinbuf == tc->tbc_recsize)
 		(*tc->tbc_decode)(tc, tbp->cbuf, &tbp->rets);
 }
 
@@ -311,11 +306,11 @@ poldecode(tc, cp, polpos)
 }
 
 /*ARGSUSED*/
-tbioctl(tp, cmd, data, flag)
+tbtioctl(tp, cmd, data, flag)
 	struct tty *tp;
 	caddr_t data;
 {
-	register struct tb *tbp = (struct tb *)tp->T_LINEP;
+	register struct tb *tbp = (struct tb *)tp->t_sc;
 
 	switch (cmd) {
 
@@ -339,14 +334,14 @@ tbioctl(tp, cmd, data, flag)
 		tc = &tbconf[tbp->tbflags & TBTYPE];
 		if (tbp->tbflags&TBSTOP) {
 			if (tc->tbc_stop)
-				ttyout(tc->tbc_stop, tp);
+				ttyoutstr(tc->tbc_stop, tp);
 		} else if (tc->tbc_start)
-			ttyout(tc->tbc_start, tp);
+			ttyoutstr(tc->tbc_start, tp);
 		if (tbp->tbflags&TBPOINT) {
 			if (tc->tbc_point)
-				ttyout(tc->tbc_point, tp);
+				ttyoutstr(tc->tbc_point, tp);
 		} else if (tc->tbc_run)
-			ttyout(tc->tbc_run, tp);
+			ttyoutstr(tc->tbc_run, tp);
 		ttstart(tp);
 		break;
 	}
@@ -366,4 +361,9 @@ tbioctl(tp, cmd, data, flag)
 	}
 	return (0);
 }
-#endif
+
+void tbattach(dummy)
+       int dummy;
+{
+    /* stub to handle side effect of new config */
+}
