@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
+/*	$NetBSD: systm.h,v 1.51 1996/07/17 21:43:24 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -71,6 +71,9 @@ extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
 extern char version[];		/* system version */
 extern char copyright[];	/* system copyright */
+
+extern int autonicetime;        /* time (in seconds) before autoniceval */
+extern int autoniceval;         /* proc priority after autonicetime */
 
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */

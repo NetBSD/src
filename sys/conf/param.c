@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
+/*	$NetBSD: param.c,v 1.17 1996/07/17 21:52:18 explorer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -170,3 +170,20 @@ struct	buf *buf, *swbuf;
 char	*buffers;
 
 struct	utsname utsname;
+
+/*
+ * These control when and to what priority a process gets after a certain
+ * amount of CPU time expires.  AUTONICETIME is in seconds.
+ */
+#ifdef AUTONICETIME
+int autonicetime = AUTONICETIME;
+#else
+int autonicetime = (60 * 10);  /* 10 minutes */
+#endif
+
+#ifdef AUTONICEVAL
+int autoniceval = AUTONICEVAL;
+#else
+int autoniceval = NZERO + 4;   /* default + 4 (usually 0 + 4) */
+#endif
+
