@@ -1,32 +1,23 @@
 #!/bin/sh
-# $NetBSD: script1,v 1.4 2004/03/09 19:18:27 garbled Exp $
+# $NetBSD: script1,v 1.5 2004/03/09 21:36:37 garbled Exp $
 
-if [ "$1" = "inactive" ]; then
-	if [ -f "/etc/usermgmt.conf" ]; then
-		DATA=`grep $1 /etc/usermgmt.conf | sed -e "s@$1	*@@" | grep -v Null`
-	else
-		echo "0"
-		exit 0
-	fi
-	if [ "$?" = "0" ]; then
-		expr $DATA / 86400
-	else
-		echo "0"
-	fi
-	exit 0
-fi
 if [ -f "/etc/usermgmt.conf" ]; then
 	DATA=`grep $1 /etc/usermgmt.conf | sed -e "s@$1	*@@"`
 else
 	DATA="FILE_DOESNT_EXIST"
 	/usr/bin/false
 fi
-if [ "$?" = "0" -a "$DATA" != "" ]; then
+
+if [ $? -eq 0 -a -n "$DATA" ]; then
 	echo "$DATA"
 else
 	if [ "$1" = "preserve" ]; then
 		echo "false"
 		echo "true"
+		exit 0
+	fi
+	if [ "$1" = "inactive" ]; then
+		echo "Null (unset)"
 		exit 0
 	fi
 	if [ "$1" = "expire" ]; then
@@ -48,6 +39,15 @@ else
 	if [ "$1" = "range" ]; then
 		echo "1000..60000"
 		exit 0
+	fi
+	if [ "$1" = "group" ]; then
+		echo "users"
+		DATA="users"
+		# dont exit
+	fi
+	if [ "$1" = "class" ]; then
+		echo " "
+		# dont exit
 	fi
 fi
 

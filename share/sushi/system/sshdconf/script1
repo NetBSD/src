@@ -1,9 +1,10 @@
 #!/bin/sh
-# $NetBSD: script1,v 1.1 2001/08/02 05:41:19 garbled Exp $
+# $NetBSD: script1,v 1.2 2004/03/09 21:36:37 garbled Exp $
 
-VAR=`grep "^$1" /etc/sshd.conf | awk '{print $2}'`
+VAR=`grep "^$1" /etc/ssh/sshd_config | grep -v '^#' | awk '{print $2}'`
 if [ -z "$VAR" ]; then
-	VAR=`grep "^$1" /usr/share/sushi/system/sshdconf//defaults | awk '{print $2}'` fi
+	VAR=`grep "^$1" /usr/share/sushi/system/sshdconf/defaults | awk '{print $2}'`
+fi
 if [ -z "$VAR" ]; then
 	echo ""
 else

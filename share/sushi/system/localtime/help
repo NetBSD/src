@@ -7,5 +7,3 @@ You may choose to link or copy the file.  Linking provides you with an
 easy way to determine your current timezone (simply ls -l /etc/localtime),
 while copying the file, allows the timezone to be correct if /usr should
 fail to mount. 
-
-$NetBSD: help,v 1.1 2001/04/29 04:53:07 garbled Exp $
