@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.69 1998/06/15 19:35:31 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.70 1998/06/15 19:51:09 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.63 1998/06/15 19:31:46 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.64 1998/06/15 19:50:37 bouyer Exp 
  */
 
 /*
@@ -1025,7 +1025,7 @@
 # This may be a typo, the author meaning 0x0571, as the PCI-ISA brige is
 # an 0x0586.
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
-#define	PCI_PRODUCT_VIATECH_VT82C595	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 
