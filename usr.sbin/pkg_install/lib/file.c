@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.48.2.1 2002/06/28 12:42:06 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.48.2.1 2002/06/28 12:42:06 lukem Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $");
  * Quick check to see if a file (or dir ...) exists
  */
 Boolean
-fexists(char *fname)
+fexists(const char *fname)
 {
 	struct stat dummy;
 	if (!lstat(fname, &dummy))
@@ -57,7 +57,7 @@ fexists(char *fname)
  * Quick check to see if something is a directory
  */
 Boolean
-isdir(char *fname)
+isdir(const char *fname)
 {
 	struct stat sb;
 
@@ -71,7 +71,7 @@ isdir(char *fname)
  * Check if something is a link to a directory
  */
 Boolean
-islinktodir(char *fname)
+islinktodir(const char *fname)
 {
 	struct stat sb;
 
@@ -88,7 +88,7 @@ islinktodir(char *fname)
  * Check to see if file is a dir, and is empty
  */
 Boolean
-isemptydir(char *fname)
+isemptydir(const char *fname)
 {
 	if (isdir(fname) || islinktodir(fname)) {
 		DIR    *dirp;
@@ -113,7 +113,7 @@ isemptydir(char *fname)
  * Check if something is a regular file
  */
 Boolean
-isfile(char *fname)
+isfile(const char *fname)
 {
 	struct stat sb;
 	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode))
@@ -126,7 +126,7 @@ isfile(char *fname)
  * a file, say "it's empty", otherwise return TRUE if zero sized.
  */
 Boolean
-isemptyfile(char *fname)
+isemptyfile(const char *fname)
 {
 	struct stat sb;
 	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode)) {
@@ -143,7 +143,7 @@ typedef struct url_t {
 }       url_t;
 
 /* A table of valid leading strings for URLs */
-static url_t urls[] = {
+static const url_t urls[] = {
 	{"ftp://", 6},
 	{"http://", 7},
 	{NULL}
@@ -153,9 +153,9 @@ static url_t urls[] = {
  * Returns length of leading part of any URL from urls table, or -1
  */
 int
-URLlength(char *fname)
+URLlength(const char *fname)
 {
-	url_t  *up;
+	const url_t *up;
 	int     i;
 
 	if (fname != (char *) NULL) {
@@ -180,13 +180,15 @@ fileURLHost(char *fname, char *where, int max)
 	char   *ret;
 	int     i;
 
+	assert(max > 0);
+
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
 	if ((ret = where) != NULL) {
-		while (*fname && *fname != '/' && max--)
+		while (*fname && *fname != '/' && --max)
 			*where++ = *fname++;
 		*where = '\0';
 		return ret;
@@ -208,6 +210,8 @@ fileURLFilename(char *fname, char *where, int max)
 	char   *ret;
 	int     i;
 
+	assert(max > 0);
+
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLFilename called with a bad URL: `%s'", fname);
 	}
@@ -217,7 +221,7 @@ fileURLFilename(char *fname, char *where, int max)
 		while (*fname && *fname != '/')
 			++fname;
 		if (*fname == '/') {
-			while (*fname && max--)
+			while (*fname && --max)
 				*where++ = *fname++;
 		}
 		*where = '\0';
@@ -233,7 +237,7 @@ fileURLFilename(char *fname, char *where, int max)
  * Wrapper routine for fileGetURL to iterate over several "sfx"s
  */
 static char   *
-fileGet1URL(char *base, char *spec, char *sfx)
+fileGet1URL(const char *base, const char *spec, const char *sfx)
 {
 	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
 	char   *cp, *rp;
@@ -344,6 +348,7 @@ fileFindByPath(char *base, char *fname)
 	if (ispkgpattern(fname)) {
 		if ((cp = findbestmatchingname(".", fname)) != NULL) {
 			strcpy(tmp, cp);
+			free(cp);
 			return tmp;
 		}
 	} else {
@@ -388,14 +393,16 @@ fileFindByPath(char *base, char *fname)
 						printf("'%s' expanded to '%s'\n", url, tmp);
 					return tmp;    /* return expanded URL w/ corrent pkg */
 				} else {
-				cp = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
-				if (cp) {
-					char   *s;
-					s = strrchr(tmp, '/');
-					assert(s != NULL);
-					strcpy(s + 1, cp);
-					return tmp;
-				}
+					cp = findbestmatchingname(
+					    dirname_of(tmp), basename_of(tmp));
+					if (cp) {
+						char   *s;
+						s = strrchr(tmp, '/');
+						assert(s != NULL);
+						strcpy(s + 1, cp);
+						free(cp);
+						return tmp;
+					}
 				}
 			} else {
 				if (fexists(tmp)) {
@@ -484,6 +491,7 @@ fileFindByPath(char *base, char *fname)
 				char   *t;
 				t = strrchr(tmp, '/');
 				strcpy(t + 1, s);
+				free(s);
 				return tmp;
 			}
 		} else {
@@ -511,6 +519,7 @@ fileFindByPath(char *base, char *fname)
 						strcpy(tmp, buf2); /* now we can overwrite it */
 						t = strrchr(tmp, '/');
 						strcpy(t+1, s);
+						free(s);
 						return tmp;
 					}
 				}
