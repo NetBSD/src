@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.19 2000/09/04 00:31:59 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.20 2000/11/18 19:25:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.19 2000/09/04 00:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20 2000/11/18 19:25:36 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -83,6 +83,39 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_discard_fpu,
 	alpha_ipi_pause,
 };
+
+const char *ipinames[ALPHA_NIPIS] = {
+	"halt ipi",
+	"tbia ipi",
+	"tbiap ipi",
+	"shootdown ipi",
+	"imb ipi",
+	"ast ipi",
+	"synch fpu ipi",
+	"discard fpu ipi",
+	"pause ipi",
+};
+
+/*
+ * Initialize IPI state for a CPU.
+ *
+ * Note: the cpu_info softc pointer must be valid.
+ */
+void
+alpha_ipi_init(struct cpu_info *ci)
+{
+	struct cpu_softc *sc = ci->ci_softc;
+	int i;
+
+	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "ipi");
+
+	for (i = 0; i < ALPHA_NIPIS; i++) {
+		evcnt_attach_dynamic(&sc->sc_evcnt_which_ipi[i],
+		    EVCNT_TYPE_INTR, NULL, sc->sc_dev.dv_xname,
+		    ipinames[i]);
+	}
+}
 
 /*
  * Send an interprocessor interrupt.
