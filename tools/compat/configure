@@ -2867,6 +2867,60 @@ cat >>confdefs.h <<EOF
 EOF
 
 fi
+echo "$as_me:0: checking for u_long" >&5
+echo $ECHO_N "checking for u_long... $ECHO_C" >&6
+if test "${ac_cv_type_u_long+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line 0 "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+if ((u_long *) 0)
+  return 0;
+if (sizeof (u_long))
+  return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:0: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:0: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:0: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:0: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_type_u_long=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_type_u_long=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:0: result: $ac_cv_type_u_long" >&5
+echo "${ECHO_T}$ac_cv_type_u_long" >&6
+if test $ac_cv_type_u_long = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_U_LONG 1
+_ACEOF
+
+fi
 echo "$as_me:2870: checking for u_quad_t" >&5
 echo $ECHO_N "checking for u_quad_t... $ECHO_C" >&6
 if test "${ac_cv_type_u_quad_t+set}" = set; then
