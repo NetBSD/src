@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.28 2000/02/10 03:06:53 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.29 2000/02/15 18:55:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -743,7 +743,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	const char *servname;
 	struct addrinfo **res;
 {
-#ifndef SCOPE_DELIMITER
+#if !defined(SCOPE_DELIMITER) || !defined(INET6)
 	return explore_numeric(pai, hostname, servname, res);
 #else
 	const struct afd *afd;
