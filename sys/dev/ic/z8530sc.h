@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.14 2000/03/19 12:39:47 pk Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.15 2001/05/11 01:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -138,6 +138,7 @@ struct zsc_attach_args {
 #define ZS_HWFLAG_NO_CTS	8	/* Ignore the CTS bit */
 #define ZS_HWFLAG_RAW   	16	/* advise raw mode */
 #define ZS_HWFLAG_USE_CONSDEV  	32	/* Use console ops from `consdev' */
+#define	ZS_HWFLAG_NORESET	64	/* Don't reset at attach time */
 
 int 	zsc_intr_soft __P((void *));
 int 	zsc_intr_hard __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.75 2001/05/02 10:32:09 scw Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.76 2001/05/11 01:40:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -396,7 +396,7 @@ zstty_attach(parent, self, aux)
 		zs_modem(zst, 1);
 
 		splx(s);
-	} else {
+	} else if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_NORESET)) {
 		/* Not the console; may need reset. */
 		int reset;
 
