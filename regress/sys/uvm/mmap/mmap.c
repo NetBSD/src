@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.3 1999/07/14 21:10:13 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.4 1999/07/17 06:01:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <err.h>
 #include <errno.h>
@@ -70,7 +72,7 @@ main(argc, argv)
 {
 	struct stat st;
 	void *addr, *addr2;
-	int i, ch, ecode, fd, npgs;
+	int i, ch, ecode, fd, npgs, shmid;
 	const char *filename;
 	u_int8_t *cp;
 
@@ -289,6 +291,40 @@ main(argc, argv)
 			break;
 		}
 	}
+
+	printf(">>> CREATING SYSV SHM SEGMENT <<<\n");
+
+	if ((shmid = shmget(IPC_PRIVATE, npgs * pgsize, IPC_CREAT)) == -1)
+		err(1, "shmget");
+
+	if ((addr = shmat(shmid, NULL, 0)) == NULL)
+		err(1, "shmat");
+
+	printf("    ZEROING SEGMENT\n");
+	memset(addr, 0, npgs * pgsize);
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != npgs) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	printf("    MADV_FREE'ING SEGMENT\n");
+	if (madvise(addr, npgs * pgsize, MADV_FREE) == -1)
+		err(1, "madvise");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != 0) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
+
+	if (shmdt(addr) == -1)
+		warn("shmdt");
+	if (shmctl(shmid, IPC_RMID, NULL) == -1)
+		err(1, "shmctl");
 
 	exit(ecode);
 }
