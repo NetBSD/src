@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.23 1995/04/17 12:07:37 cgd Exp $	*/
+/*	$NetBSD: sb.c,v 1.24 1995/04/17 15:48:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.23 1995/04/17 12:07:37 cgd Exp $
+ *	$Id: sb.c,v 1.24 1995/04/17 15:48:32 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -51,10 +51,10 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
-#include <i386/isa/sbdspvar.h>
-#include <i386/isa/sbreg.h>
+#include <dev/isa/sbdspvar.h>
+#include <dev/isa/sbreg.h>
 
 #define DEBUG	/*XXX*/
 #ifdef DEBUG
