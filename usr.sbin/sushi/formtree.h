@@ -1,4 +1,4 @@
-/*      $NetBSD: formtree.h,v 1.3 2001/01/31 09:35:42 garbled Exp $       */
+/*      $NetBSD: formtree.h,v 1.4 2001/03/07 10:10:20 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@
 #define DATAT_ESCRIPT	12	/* script generated entry */
 #define DATAT_NESCRIPT	13	/* script generated uneditable field */
 #define DATAT_ISCRIPT	14	/* script generated integer field */
+#define DATAT_V4	15	/* static IPV4 entry field */
+#define DATAT_V4SCRIPT	16	/* script generated IPV4 entry field */
+#define DATAT_V6	17	/* static IPV6 entry field */
+#define DATAT_V6SCRIPT	18	/* script generated IPV6 entry field */
 
 CIRCLEQ_HEAD(cqForm, formentry);
 
