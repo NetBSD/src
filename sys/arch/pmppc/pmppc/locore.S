@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/07/31 07:50:04 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2003/11/07 17:00:19 augustss Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -98,17 +98,8 @@ __start:
 */
 
 /* compute end of kernel memory */
-#if NKSYMS || defined(DDB) || defined(LKM) || defined(KERNFS)
-	lis	7,_C_LABEL(startsym)@ha
-	addi	7,7,_C_LABEL(startsym)@l
-	stw	3,0(7)
-	lis	7,_C_LABEL(endsym)@ha
-	addi	7,7,_C_LABEL(endsym)@l
-	stw	4,0(7)
-#else
 	lis	4,_C_LABEL(end)@ha
 	addi	4,4,_C_LABEL(end)@l
-#endif
 
 	INIT_CPUINFO(4,1,9,0)
 
@@ -155,3 +146,8 @@ _C_LABEL(disable_intr):
  * Include common trap / execption code
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Include PIO routines
+ */
+#include <powerpc/powerpc/pio_subr.S>
