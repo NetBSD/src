@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.25 2000/12/30 16:27:33 martin Exp $	*/
+/*	$NetBSD: syslog.c,v 1.26 2001/02/19 22:22:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.25 2000/12/30 16:27:33 martin Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.26 2001/02/19 22:22:16 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: syslog.c,v 1.25 2000/12/30 16:27:33 martin Exp $");
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -79,7 +80,6 @@ static int	LogStat = 0;		/* status bits, set by openlog() */
 static const char *LogTag = NULL;	/* string to tag the entry with */
 static int	LogFacility = LOG_USER;	/* default facility code */
 static int	LogMask = 0xff;		/* mask of priorities to be logged */
-extern char	*__progname;		/* Program name, from crt0. */
 
 static void	openlog_unlocked __P((const char *, int, int));
 static void	closelog_unlocked __P((void));
@@ -187,7 +187,7 @@ vsyslog(pri, fmt, ap)
 	if (LogStat & LOG_PERROR)
 		stdp = p;
 	if (LogTag == NULL)
-		LogTag = __progname;
+		LogTag = getprogname();
 	if (LogTag != NULL) {
 		prlen = snprintf(p, tbuf_left, "%s", LogTag);
 		DEC();
