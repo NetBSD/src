@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.65 2003/05/06 05:35:09 itojun Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.66 2003/05/16 19:28:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,24 +41,7 @@
  *
  * Some menus may be called directly in the code rather than via the 
  * menu system.
- *
- *  This file must be first in the sed command line.
- *
  */
-
-{
-#include <stdio.h>
-#include <time.h>
-#include <curses.h>
-#include "defs.h"
-#include "md.h"
-#include "msg_defs.h"
-#include "menu_defs.h"
-}
-
-default y=12, no exit, scrollable;
-
-allow dynamic menus;
 
 menu netbsd, title "NetBSD-@@VERSION@@ Install System",
     exit, exitstring "Exit Install System";
