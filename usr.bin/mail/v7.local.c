@@ -1,4 +1,4 @@
-/*	$NetBSD: v7.local.c,v 1.12 2002/03/04 03:07:27 wiz Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.13 2002/03/12 01:17:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: v7.local.c,v 1.12 2002/03/04 03:07:27 wiz Exp $");
+__RCSID("$NetBSD: v7.local.c,v 1.13 2002/03/12 01:17:46 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,12 @@ void
 demail(void)
 {
 
-	if (value("keep") != NULL || rm(mailname) < 0)
+	/*
+	 * Do not remove the spool file, just truncate it to zero
+	 * bytes if possible, since we wouldn't preserve
+	 * owner/permissions otherwise.
+	 */
+	if (value("keep") != NULL || truncate(mailname, 0) < 0)
 		(void)close(creat(mailname, 0600));
 }
 
