@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2002/03/10 00:09:24 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22 2002/03/10 00:44:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpu.c,v 1.21 2002/03/10 00:09:24 bjh21 Exp $");
+__RCSID("$NetBSD: cpu.c,v 1.22 2002/03/10 00:44:09 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -209,11 +209,9 @@ identify_master_cpu(struct device *dv, int cpu_number)
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPU;
 			break;
 		}
-		cpus[cpu_number].fpu_flags = 0;
 		install_coproc_handler(FP_COPROC, fpa_handler);
 	} else {
 		cpus[cpu_number].fpu_class = FPU_CLASS_NONE;
-		cpus[cpu_number].fpu_flags = 0;
 
 		/*
 		 * Ok if ARMFPE is defined and the boot options request the 
@@ -581,11 +579,6 @@ identify_arm_fpu(struct device *dv, int cpu_number)
 			strcpy(cpu->fpu_model, "FPA");
 			printf("%s: FPA10 found\n", dv->dv_xname);
 		}
-		if ((cpu->fpu_flags & 4) == 0)
-			strcat(cpu->fpu_model, "");
-		else
-			strcat(cpu->fpu_model, " clk/2");
-		break;
 	case FPU_CLASS_FPU :
 		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n",
 		    cpu->fpu_type);
