@@ -1644,6 +1644,8 @@
 ./usr/share/man/cat3/group_from_gid.0
 ./usr/share/man/cat3/gtty.0
 ./usr/share/man/cat3/hash.0
+./usr/share/man/cat3/hcreate.0
+./usr/share/man/cat3/hdestroy.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
 ./usr/share/man/cat3/hesiod.0
@@ -1657,6 +1659,7 @@
 ./usr/share/man/cat3/history_init.0
 ./usr/share/man/cat3/hosts_access.0
 ./usr/share/man/cat3/hosts_ctl.0
+./usr/share/man/cat3/hsearch.0
 ./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htonl.0
 ./usr/share/man/cat3/htons.0
@@ -2680,6 +2683,8 @@
 ./usr/share/man/man3/group_from_gid.3
 ./usr/share/man/man3/gtty.3
 ./usr/share/man/man3/hash.3
+./usr/share/man/man3/hcreate.3
+./usr/share/man/man3/hdestroy.3
 ./usr/share/man/man3/heapsort.3
 ./usr/share/man/man3/herror.3
 ./usr/share/man/man3/hesiod.3
@@ -2693,6 +2698,7 @@
 ./usr/share/man/man3/history_init.3
 ./usr/share/man/man3/hosts_access.3
 ./usr/share/man/man3/hosts_ctl.3
+./usr/share/man/man3/hsearch.3
 ./usr/share/man/man3/hstrerror.3
 ./usr/share/man/man3/htonl.3
 ./usr/share/man/man3/htons.3
