@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tables.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)tables.h	8.1 (Berkeley) 5/31/93
+ *	$Id: tables.h,v 1.2 1994/06/13 16:34:26 jtc Exp $
  */
 
 /*

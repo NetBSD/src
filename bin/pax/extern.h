@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.2 (Berkeley) 4/18/94
+ *	from: @(#)extern.h	8.2 (Berkeley) 4/18/94
+ *	$Id: extern.h,v 1.2 1994/06/13 16:33:53 jtc Exp $
  */
 
 /*

@@ -1,4 +1,5 @@
-#       @(#)Makefile	8.1 (Berkeley) 5/31/93
+#       from: @(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.2 1994/06/13 16:33:34 jtc Exp $
 
 # To install on versions prior to BSD 4.4 the following may have to be
 # defined with CFLAGS +=

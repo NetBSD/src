@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sel_subs.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)sel_subs.h	8.1 (Berkeley) 5/31/93
+ *	$Id: sel_subs.h,v 1.2 1994/06/13 16:34:22 jtc Exp $
  */
 
 /*
