@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.16 1998/01/13 02:10:30 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.17 1998/03/22 18:30:04 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -89,7 +89,6 @@
 #include <machine/katelib.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
-#include <machine/bootconfig.h>
 
 #include <arm32/podulebus/if_ebreg.h>
 #include <arm32/podulebus/podulebus.h>
@@ -322,14 +321,8 @@ ebattach(parent, self, aux)
  * the ether address
  */
 
-	if (sum == 0 || sum == 0x10) {
-		myaddr[0] = 0x00;
-		myaddr[1] = 0x00;
-		myaddr[2] = 0xa4;
-		myaddr[3] = bootconfig.machine_id[2] + 0x10;
-		myaddr[4] = bootconfig.machine_id[1];
-		myaddr[5] = bootconfig.machine_id[0];
-	}
+	if (sum == 0 || sum == 0x10)
+		netslot_ea(myaddr);
 
 	/* Get the product ID */
 	
