@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.410 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: GENERIC,v 1.411 2001/07/14 02:00:39 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.410 $"
+#ident 		"GENERIC-$Revision: 1.411 $"
 
 maxusers	32		# estimated number of users
 
@@ -88,6 +88,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options	COMPAT_MACH	# binary compatibility with Mach binaries
+#options	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
