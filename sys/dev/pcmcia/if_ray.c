@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.1 2000/01/23 23:59:21 chopps Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.2 2000/01/24 01:32:00 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -549,7 +549,12 @@ ray_attach(parent, self, aux)
 	/*
 	 * attach the interface
 	 */
-	printf("%s: firmware version %d\n", sc->sc_xname,sc->sc_version);
+	/* The version isn't the most accurate way, but it's easy. */
+	if (sc->sc_version == SC_BUILD_4)
+		printf(": WebGear Aviator2.4\n");
+	else
+		printf(": Raytheon Raylink\n");
+	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,sc->sc_version);
 	printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
 	    sc->sc_xname, ep->e_rates[0], ep->e_rates[1], ep->e_rates[2],
 	    ep->e_rates[3], ep->e_rates[4], ep->e_rates[5], ep->e_rates[6],
