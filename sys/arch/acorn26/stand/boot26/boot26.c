@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.1 2002/03/24 15:47:25 bjh21 Exp $	*/
+/*	$NetBSD: boot26.c,v 1.2 2002/05/27 20:17:11 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
@@ -208,20 +208,39 @@ get_mem_map(struct os_mem_map_request *pginfo, enum pgstatus *pgstatus,
 	}
 }
 
+/*
+ * Return the address of a page that will end up corresponding to the
+ * target address when the kernel boots.  "target" is expected to be
+ * in the MEMC physical RAM area (0x02000000--0x02ffffff).  It need
+ * not be page-aligned.  The return value is in the logical RAM area,
+ * and either points to a mapping of the requested page or to a
+ * mapping of another page which will be copied to the requested page
+ * after RISC OS is shut down.
+ *
+ * At present, there's no relocation mechanism, so we panic if its use
+ * is required.
+ */
+static caddr_t
+get_page(caddr_t target)
+{
+	int ppn;
+
+	ppn = ((caddr_t)target - MEMC_PHYS_BASE) / nbpp;
+	if (pgstatus[ppn] != FREE)
+		panic("Page %d not free", ppn);
+	return pginfo[ppn].map;
+}
+
 ssize_t
 boot26_read(int f, void *addr, size_t size)
 {
-	int ppn;
 	caddr_t fragaddr;
 	size_t fragsize;
 	ssize_t retval, total;
 
 	total = 0;
 	while (size > 0) {
-		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
-		if (pgstatus[ppn] != FREE)
-			panic("Page %d not free", ppn);
-		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
+		fragaddr = get_page(addr) + ((u_int)addr % nbpp);
 		fragsize = nbpp - ((u_int)addr % nbpp);
 		if (fragsize > size)
 			fragsize = size;
@@ -240,16 +259,12 @@ boot26_read(int f, void *addr, size_t size)
 void *
 boot26_memcpy(void *dst, const void *src, size_t size)
 {
-	int ppn;
 	caddr_t fragaddr;
 	size_t fragsize;
 	void *addr = dst;
 
 	while (size > 0) {
-		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
-		if (pgstatus[ppn] != FREE)
-			panic("Page %d not free", ppn);
-		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
+		fragaddr = get_page(addr) + ((u_int)addr % nbpp);
 		fragsize = nbpp - ((u_int)addr % nbpp);
 		if (fragsize > size)
 			fragsize = size;
@@ -264,16 +279,12 @@ boot26_memcpy(void *dst, const void *src, size_t size)
 void *
 boot26_memset(void *dst, int c, size_t size)
 {
-	int ppn;
 	caddr_t fragaddr;
 	size_t fragsize;
 	void *addr = dst;
 
 	while (size > 0) {
-		ppn = ((caddr_t)addr - MEMC_PHYS_BASE) / nbpp;
-		if (pgstatus[ppn] != FREE)
-			panic("Page %d not free", ppn);
-		fragaddr = pginfo[ppn].map + ((u_int)addr % nbpp);
+		fragaddr = get_page(addr) + ((u_int)addr % nbpp);
 		fragsize = nbpp - ((u_int)addr % nbpp);
 		if (fragsize > size)
 			fragsize = size;
