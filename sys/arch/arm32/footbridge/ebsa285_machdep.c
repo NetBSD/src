@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.9 1999/12/03 22:48:23 thorpej Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.10 2000/01/10 07:43:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -214,6 +214,7 @@ extern void dumpsys		__P((void));
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
@@ -315,9 +316,9 @@ struct l1_sec_map {
 	/* Map 16MB of type 0 PCI config access */
 	{ DC21285_PCI_TYPE_0_CONFIG_VBASE,	DC21285_PCI_TYPE_0_CONFIG,
 	    DC21285_PCI_TYPE_0_CONFIG_VSIZE,	0 },
-	/* Map 128MB of 32 bit PCI address space for MEM accesses */
-	{ DC21285_PCI_MEM_VBASE,		DC21285_PCI_MEM_BASE,
-	    DC21285_PCI_MEM_VSIZE,		0 },
+	/* Map 1MB of 32 bit PCI address space for ISA MEM accesses via PCI */
+	{ DC21285_PCI_ISA_MEM_VBASE,		DC21285_PCI_MEM_BASE,
+	    DC21285_PCI_ISA_MEM_VSIZE,		0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -838,8 +839,7 @@ consinit(void)
 
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
-
-	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_MEM_VBASE);
+	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
 	footbridge_pci_bs_tag_init();
