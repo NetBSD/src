@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2.2.2 1997/10/31 21:37:18 mellon Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2.2.3 1997/11/02 20:49:42 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,7 @@ menu editfsparts, y=15, exit;
 	option "Change f", action { editpart = F;}, sub menu edfspart;
 	option "Change g", action { editpart = G;}, sub menu edfspart;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
+	option "Set new allocation size", action { reask_sizemult(); };
  
 menu md_distcustom, exit, title " Selection toggles inclusion";
 	display action { show_cur_distsets (); };
