@@ -1,4 +1,4 @@
-/* $Id: pthread_switch.S,v 1.1.2.1 2001/03/05 23:52:06 nathanw Exp $ */
+/* $Id: pthread_switch.S,v 1.1.2.2 2001/03/29 18:37:58 nathanw Exp $ */
 
 /* Copyright */
 
@@ -30,7 +30,6 @@ pthread__switch_no_save:
 
 	STACK_SWITCH
 
-	subl	%edx, PT_SPINLOCKS(%eax)
 	pushl	%esi
 	pushl	%edi
 	call	PIC_PLT(_C_LABEL(_swapcontext_u))
