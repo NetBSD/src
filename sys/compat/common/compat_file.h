@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.h,v 1.1 2002/12/08 00:50:25 manu Exp $ */
+/*	$NetBSD: compat_file.h,v 1.2 2003/01/22 17:48:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,48 +39,48 @@
 #ifndef	_COMPAT_FILE_H_
 #define	_COMPAT_FILE_H_
 
-int bsd_sys_open(struct proc *, void *, register_t *);
-int bsd_compat_43_sys_creat(struct proc *, void *, register_t *);
-int bsd_sys_link(struct proc *, void *, register_t *);
-int bsd_sys_unlink(struct proc *, void *, register_t *);
-int bsd_sys_chdir(struct proc *, void *, register_t *);
-int bsd_sys_mknod(struct proc *, void *, register_t *);
-int bsd_sys_chmod(struct proc *, void *, register_t *);
-int bsd_sys_chown(struct proc *, void *, register_t *);
-int bsd_sys_mount(struct proc *, void *, register_t *);
-int bsd_sys_unmount(struct proc *, void *, register_t *);
-int bsd_sys_access(struct proc *, void *, register_t *);
-int bsd_sys_chflags(struct proc *, void *, register_t *);
-int bsd_compat_43_sys_stat(struct proc *, void *, register_t *);
-int bsd_compat_43_sys_lstat(struct proc *, void *, register_t *);
-int bsd_sys_acct(struct proc *, void *, register_t *);
-int bsd_sys_revoke(struct proc *, void *, register_t *);
-int bsd_sys_symlink(struct proc *, void *, register_t *);
-int bsd_sys_readlink(struct proc *, void *, register_t *);
-int bsd_sys_execve(struct proc *, void *, register_t *);
-int bsd_sys_chroot(struct proc *, void *, register_t *);
-int bsd_compat_12_sys_swapon(struct proc *, void *, register_t *);
-int bsd_sys_rename(struct proc *, void *, register_t *);
-int bsd_compat_43_sys_truncate(struct proc *, void *, register_t *);
-int bsd_sys_mkfifo(struct proc *, void *, register_t *);
-int bsd_sys_mkdir(struct proc *, void *, register_t *);
-int bsd_sys_rmdir(struct proc *, void *, register_t *);
-int bsd_sys_utimes(struct proc *, void *, register_t *);
-int bsd_sys_quotactl(struct proc *, void *, register_t *);
-int bsd_sys_statfs(struct proc *, void *, register_t *);
-int bsd_sys_getfh(struct proc *, void *, register_t *);
-int bsd_compat_12_sys_stat(struct proc *, void *, register_t *);
-int bsd_compat_12_sys_lstat(struct proc *, void *, register_t *);
-int bsd_sys_pathconf(struct proc *, void *, register_t *);
-int bsd_sys_truncate(struct proc *, void *, register_t *);
-int bsd_sys_undelete(struct proc *, void *, register_t *);
-int bsd_sys_lchmod(struct proc *, void *, register_t *);
-int bsd_sys_lchown(struct proc *, void *, register_t *);
-int bsd_sys_lutimes(struct proc *, void *, register_t *);
-int bsd_sys___stat13(struct proc *, void *, register_t *);
-int bsd_sys___lstat13(struct proc *, void *, register_t *);
-int bsd_sys___posix_chown(struct proc *, void *, register_t *);
-int bsd_sys___posix_lchown(struct proc *, void *, register_t *);
-int bsd_sys_lchflags(struct proc *, void *, register_t *);
+int bsd_sys_open(struct lwp *, void *, register_t *);
+int bsd_compat_43_sys_creat(struct lwp *, void *, register_t *);
+int bsd_sys_link(struct lwp *, void *, register_t *);
+int bsd_sys_unlink(struct lwp *, void *, register_t *);
+int bsd_sys_chdir(struct lwp *, void *, register_t *);
+int bsd_sys_mknod(struct lwp *, void *, register_t *);
+int bsd_sys_chmod(struct lwp *, void *, register_t *);
+int bsd_sys_chown(struct lwp *, void *, register_t *);
+int bsd_sys_mount(struct lwp *, void *, register_t *);
+int bsd_sys_unmount(struct lwp *, void *, register_t *);
+int bsd_sys_access(struct lwp *, void *, register_t *);
+int bsd_sys_chflags(struct lwp *, void *, register_t *);
+int bsd_compat_43_sys_stat(struct lwp *, void *, register_t *);
+int bsd_compat_43_sys_lstat(struct lwp *, void *, register_t *);
+int bsd_sys_acct(struct lwp *, void *, register_t *);
+int bsd_sys_revoke(struct lwp *, void *, register_t *);
+int bsd_sys_symlink(struct lwp *, void *, register_t *);
+int bsd_sys_readlink(struct lwp *, void *, register_t *);
+int bsd_sys_execve(struct lwp *, void *, register_t *);
+int bsd_sys_chroot(struct lwp *, void *, register_t *);
+int bsd_compat_12_sys_swapon(struct lwp *, void *, register_t *);
+int bsd_sys_rename(struct lwp *, void *, register_t *);
+int bsd_compat_43_sys_truncate(struct lwp *, void *, register_t *);
+int bsd_sys_mkfifo(struct lwp *, void *, register_t *);
+int bsd_sys_mkdir(struct lwp *, void *, register_t *);
+int bsd_sys_rmdir(struct lwp *, void *, register_t *);
+int bsd_sys_utimes(struct lwp *, void *, register_t *);
+int bsd_sys_quotactl(struct lwp *, void *, register_t *);
+int bsd_sys_statfs(struct lwp *, void *, register_t *);
+int bsd_sys_getfh(struct lwp *, void *, register_t *);
+int bsd_compat_12_sys_stat(struct lwp *, void *, register_t *);
+int bsd_compat_12_sys_lstat(struct lwp *, void *, register_t *);
+int bsd_sys_pathconf(struct lwp *, void *, register_t *);
+int bsd_sys_truncate(struct lwp *, void *, register_t *);
+int bsd_sys_undelete(struct lwp *, void *, register_t *);
+int bsd_sys_lchmod(struct lwp *, void *, register_t *);
+int bsd_sys_lchown(struct lwp *, void *, register_t *);
+int bsd_sys_lutimes(struct lwp *, void *, register_t *);
+int bsd_sys___stat13(struct lwp *, void *, register_t *);
+int bsd_sys___lstat13(struct lwp *, void *, register_t *);
+int bsd_sys___posix_chown(struct lwp *, void *, register_t *);
+int bsd_sys___posix_lchown(struct lwp *, void *, register_t *);
+int bsd_sys_lchflags(struct lwp *, void *, register_t *);
 
 #endif /* _COMPAT_FILE_H_ */
