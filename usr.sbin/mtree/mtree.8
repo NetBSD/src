@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.6 1997/08/20 15:14:51 agc Exp $
+.\"	$NetBSD: mtree.8,v 1.7 1997/10/17 11:46:46 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm mtree
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
-.Nm mtree
+.Nm
 .Op Fl cderux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
@@ -49,7 +49,7 @@
 .Op Fl s Ar seed
 .Sh DESCRIPTION
 The utility
-.Nm mtree
+.Nm
 compares the file hierarchy rooted in the current directory against a
 specification read from the standard input.
 Messages are written to the standard output for any files whose
@@ -213,13 +213,13 @@ Empty lines and lines whose first non-whitespace character is a hash
 mark (``#'') are ignored.
 .Pp
 The
-.Nm mtree
+.Nm
 utility exits with a status of 0 on success, 1 if any error occurred,
 and 2 if the file hierarchy did not match the specification.
 .Sh EXAMPLES
 To detect system binaries that have been ``trojan horsed'', it is recommended
 that
-.Nm mtree
+.Nm
 be run on the file systems, and a copy of the results stored on a different
 machine, or, at least, in encrypted form.
 The seed for the
@@ -227,7 +227,7 @@ The seed for the
 option should not be an obvious value and the final checksum should not be
 stored on-line under any circumstances!
 Then, periodically,
-.Nm mtree
+.Nm
 should be run against the on-line specifications and the final checksum
 compared with the previous value.
 While it is possible for the bad guys to change the on-line specifications
@@ -256,6 +256,6 @@ system specification directory
 .Xr chown 8
 .Sh HISTORY
 The
-.Nm mtree
+.Nm
 utility appeared in
 .Bx 4.3 Reno .
