@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2003/08/07 09:05:39 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2003/08/26 18:13:25 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.29 2003/08/07 09:05:39 agc Exp $");
+__RCSID("$NetBSD: trap.c,v 1.30 2003/08/26 18:13:25 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,10 +152,10 @@ trapcmd(int argc, char **argv)
 			return 0;
 
 	if (signame_to_signum(*ap) == -1) {
-		if ((*ap)[0] =='-') {
-			if ((*ap)[1] == NULL)
+		if ((*ap)[0] == '-') {
+			if ((*ap)[1] == '\0')
 				ap++;
-			else if ((*ap)[1] == 'l' && (*ap)[2] == NULL) {
+			else if ((*ap)[1] == 'l' && (*ap)[2] == '\0') {
 				printsignals();
 				return 0;
 			}
