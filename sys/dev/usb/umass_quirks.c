@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.33 2003/01/21 21:00:56 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.34 2003/02/24 13:11:55 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,6 +128,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  PQUIRK_NOTUR,
 	  UMATCH_VENDOR_PRODUCT,
 	  umass_init_insystem, NULL
+	},
+
+	{ { USB_VENDOR_IODATA2, USB_PRODUCT_IODATA2_USB2SC },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
 	},
 
 	{ { USB_VENDOR_IOMEGA, USB_PRODUCT_IOMEGA_ZIP100 },
