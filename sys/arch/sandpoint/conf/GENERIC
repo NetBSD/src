@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2002/04/12 08:11:17 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.27 2002/04/15 01:43:35 briggs Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -136,7 +136,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 pckbc0		at isa?			# PS/2 keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 wsdisplay*	at vga? console ?
 wskbd* 		at pckbd? console ?
 wsmouse* 	at pms? mux 0
