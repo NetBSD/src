@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.1 1996/02/13 22:05:17 christos Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.2 1996/03/14 18:47:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -63,7 +63,7 @@ void pk_call_accepted __P((struct pklcd *, struct mbuf *));
 void pk_parse_facilities __P((octet *, struct sockaddr_x25 *));
 
 /* pk_llcsubr.c */
-int cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 struct rtentry *npaidb_enter __P((struct sockaddr_dl *, struct sockaddr *,
 				  struct rtentry *, struct llc_linkcb *));
 struct rtentry *npaidb_enrich __P((short, caddr_t, struct sockaddr_dl *));
