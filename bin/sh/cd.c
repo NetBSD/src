@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.23 1997/07/04 20:59:40 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.23.2.1 1998/05/08 06:01:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.23 1997/07/04 20:59:40 christos Exp $");
+__RCSID("$NetBSD: cd.c,v 1.23.2.1 1998/05/08 06:01:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ cdcmd(argc, argv)
 				/*
 				 * XXX - rethink
 				 */
-				if (p[0] == '.' && p[1] == '/')
+				if (p[0] == '.' && p[1] == '/' && p[2] != '\0')
 					p += 2;
 				print = strcmp(p, dest);
 			}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 1997/10/10 19:57:03 christos Exp $
+#	$NetBSD: Makefile,v 1.35.2.1 1998/05/08 06:01:02 mycroft Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -13,13 +13,9 @@ LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
+YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
-
-# XXX
-.if (${MACHINE_ARCH} == "powerpc")
-CFLAGS+= -w
-.endif
 
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 
@@ -28,19 +24,19 @@ CLEANFILES+= mkinit.o mknodes.o mksyntax.o
 CLEANFILES+= ${GENSRCS} y.tab.h
 
 token.h: mktokens
-	sh ${.CURDIR}/mktokens
+	sh ${.ALLSRC}
 
-builtins.c builtins.h: mkbuiltins builtins.def
-	cd ${.CURDIR}; sh mkbuiltins ${.OBJDIR}
+builtins.c builtins.h: mkbuiltins shell.h builtins.def
+	sh ${.ALLSRC} ${.OBJDIR}
 
 init.c: mkinit ${SHSRCS}
-	./mkinit ${.ALLSRC:S/^mkinit$//}
+	./${.ALLSRC}
 
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
+	./${.ALLSRC}
 
 syntax.c syntax.h: mksyntax
-	./mksyntax
+	./${.ALLSRC}
 
 .include <bsd.prog.mk>
 

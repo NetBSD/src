@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.19.2.1 1997/11/06 07:00:17 mellon Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.19.2.2 1998/05/08 06:01:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.19.2.1 1997/11/06 07:00:17 mellon Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.19.2.2 1998/05/08 06:01:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: miscbltin.c,v 1.19.2.1 1997/11/06 07:00:17 mellon Exp $");
  * Miscelaneous builtins.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
+#include <sys/types.h>		/* quad_t */
+#include <sys/param.h>		/* BSD4_4 */
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -154,6 +154,9 @@ readcmd(argc, argv)
 		}
 	}
 	STACKSTRNUL(p);
+	/* Remove trailing blanks */
+	while (stackblock() <= --p && strchr(ifs, *p) != NULL)
+		*p = '\0';
 	setvar(*ap, stackblock(), 0);
 	while (*++ap != NULL)
 		setvar(*ap, nullstr, 0);
@@ -363,7 +366,7 @@ ulimitcmd(argc, argv)
 			{
 				val /= l->factor;
 #ifdef BSD4_4
-				out1fmt("%qd\n", (quad_t) val);
+				out1fmt("%qd\n", (long long) val);
 #else
 				out1fmt("%ld\n", (long) val);
 #endif
@@ -392,7 +395,7 @@ ulimitcmd(argc, argv)
 		{
 			val /= l->factor;
 #ifdef BSD4_4
-			out1fmt("%qd\n", (quad_t) val);
+			out1fmt("%qd\n", (long long) val);
 #else
 			out1fmt("%ld\n", (long) val);
 #endif

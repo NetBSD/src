@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $	*/
+/*	$NetBSD: expand.c,v 1.31.2.1 1998/05/08 06:01:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.31 1997/07/07 20:41:10 phil Exp $");
+__RCSID("$NetBSD: expand.c,v 1.31.2.1 1998/05/08 06:01:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,15 +96,16 @@ struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
 struct ifsregion *ifslastp;	/* last struct in list */
 struct arglist exparg;		/* holds expanded arg list */
 
-STATIC void argstr __P((char *, int));
+STATIC int argstr __P((char *, int));
 STATIC char *exptilde __P((char *, int));
 STATIC void expbackq __P((union node *, int, int));
-STATIC int subevalvar __P((char *, char *, int, int, int, int));
+STATIC int subevalvar __P((char *, char *, int, int, int, int, int *));
 STATIC char *evalvar __P((char *, int));
 STATIC int varisset __P((char *, int));
 STATIC void varvalue __P((char *, int, int));
 STATIC void recordregion __P((int, int, int));
 STATIC void ifsbreakup __P((char *, struct arglist *));
+STATIC void ifsfree __P((void));
 STATIC void expandmeta __P((struct strlist *, int));
 STATIC void expmeta __P((char *, char *));
 STATIC void addfname __P((char *));
@@ -148,7 +149,7 @@ expandarg(arg, arglist, flag)
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
 	ifslastp = NULL;
-	argstr(arg->narg.text, flag);
+	(void)argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		return;			/* here document expanded */
 	}
@@ -171,14 +172,7 @@ expandarg(arg, arglist, flag)
 		*exparg.lastp = sp;
 		exparg.lastp = &sp->next;
 	}
-	while (ifsfirst.next != NULL) {
-		struct ifsregion *ifsp;
-		INTOFF;
-		ifsp = ifsfirst.next->next;
-		ckfree(ifsfirst.next);
-		ifsfirst.next = ifsp;
-		INTON;
-	}
+	ifsfree();
 	*exparg.lastp = NULL;
 	if (exparg.list) {
 		*arglist->lastp = exparg.list;
@@ -194,7 +188,7 @@ expandarg(arg, arglist, flag)
  * $@ like $* since no splitting will be performed.
  */
 
-STATIC void
+STATIC int
 argstr(p, flag)
 	char *p;
 	int flag;
@@ -202,6 +196,7 @@ argstr(p, flag)
 	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
+	int recorded = 0;
 
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
@@ -221,6 +216,7 @@ argstr(p, flag)
 			break;
 		case CTLBACKQ:
 		case CTLBACKQ|CTLQUOTE:
+			recorded |= (c & CTLQUOTE) == 0;
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
 			break;
@@ -249,6 +245,7 @@ argstr(p, flag)
 		}
 	}
 breakloop:;
+	return recorded;
 }
 
 STATIC char *
@@ -288,7 +285,7 @@ done:
 		goto lose;
 	*p = c;
 	while ((c = *home++) != '\0') {
-		if (quotes && SQSYNTAX[c] == CCTL)
+		if (quotes && SQSYNTAX[(int)c] == CCTL)
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 	}
@@ -311,18 +308,10 @@ expari(flag)
 	int result;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
-	while (ifsfirst.next != NULL) {
-		struct ifsregion *ifsp;
-		INTOFF;
-		ifsp = ifsfirst.next->next;
-		ckfree(ifsfirst.next);
-		ifsfirst.next = ifsp;
-		INTON;
-	}
-	ifslastp = NULL;
+	ifsfree();
 
 	/*
-	 * This routine is slightly over-compilcated for
+	 * This routine is slightly over-complicated for
 	 * efficiency.  First we make sure there is
 	 * enough space for the result, which may be bigger
 	 * than the expression if we add exponentation.  Next we
@@ -408,7 +397,7 @@ expbackq(cmd, quoted, flag)
 		}
 		lastc = *p++;
 		if (lastc != '\0') {
-			if (quotes && syntax[lastc] == CCTL)
+			if (quotes && syntax[(int)lastc] == CCTL)
 				STPUTC(CTLESC, dest);
 			STPUTC(lastc, dest);
 		}
@@ -437,13 +426,14 @@ expbackq(cmd, quoted, flag)
 
 
 STATIC int
-subevalvar(p, str, strloc, subtype, startloc, varflags)
+subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 	char *p;
 	char *str;
 	int strloc;
 	int subtype;
 	int startloc;
 	int varflags;
+	int *recorded;
 {
 	char *startp;
 	char *loc = NULL;
@@ -453,7 +443,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 	int amount;
 
 	herefd = -1;
-	argstr(p, 0);
+	*recorded = argstr(p, 0);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
 	argbackq = saveargbackq;
@@ -485,10 +475,8 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 		for (loc = startp; loc < str; loc++) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp)) {
-				*loc = c;
+			if (patmatch(str, startp))
 				goto recordleft;
-			}
 			*loc = c;
 		}
 		return 0;
@@ -497,44 +485,41 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 		for (loc = str - 1; loc >= startp; loc--) {
 			c = *loc;
 			*loc = '\0';
-			if (patmatch(str, startp)) {
-				*loc = c;
+			if (patmatch(str, startp))
 				goto recordleft;
-			}
 			*loc = c;
 		}
 		return 0;
 
 	case VSTRIMRIGHT:
-		for (loc = str - 1; loc >= startp; loc--) {
-			if (patmatch(str, loc)) {
-				amount = loc - expdest;
-				STADJUST(amount, expdest);
-				return 1;
-			}
-		}
+		for (loc = str - 1; loc >= startp; loc--)
+			if (patmatch(str, loc))
+				goto recordright;
 		return 0;
 
 	case VSTRIMRIGHTMAX:
-		for (loc = startp; loc < str - 1; loc++) {
-			if (patmatch(str, loc)) {
-				amount = loc - expdest;
-				STADJUST(amount, expdest);
-				return 1;
-			}
-		}
+		for (loc = startp; loc < str - 1; loc++)
+			if (patmatch(str, loc))
+				goto recordright;
 		return 0;
-
 
 	default:
 		abort();
 	}
 
 recordleft:
+	*loc = c;
 	amount = ((str - 1) - (loc - startp)) - expdest;
 	STADJUST(amount, expdest);
 	while (loc != str - 1)
 		*startp++ = *loc++;
+	return 1;
+
+recordright:
+	amount = loc - expdest;
+	STADJUST(amount, expdest);
+	STPUTC('\0', expdest);
+	STADJUST(-1, expdest);
 	return 1;
 }
 
@@ -560,6 +545,7 @@ evalvar(p, flag)
 	int startloc;
 	int varlen;
 	int easy;
+	int recorded;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
 	varflags = *p++;
@@ -582,7 +568,10 @@ again: /* jump here after setting a variable with ${var=text} */
 			set = 1;
 	}
 	varlen = 0;
-	startloc = expdest - stackblock();
+	if (flag & EXP_RECORD)
+		startloc = 0;
+	else
+		startloc = expdest - stackblock();
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
@@ -601,7 +590,7 @@ again: /* jump here after setting a variable with ${var=text} */
 			}
 			else {
 				while (*val) {
-					if (quotes && syntax[*val] == CCTL)
+					if (quotes && syntax[(int)*val] == CCTL)
 						STPUTC(CTLESC, expdest);
 					STPUTC(*val++, expdest);
 				}
@@ -633,7 +622,7 @@ record:
 	case VSPLUS:
 	case VSMINUS:
 		if (!set) {
-			argstr(p, flag);
+			(void)argstr(p, flag);
 			break;
 		}
 		if (easy)
@@ -653,7 +642,7 @@ record:
 		STPUTC('\0', expdest);
 		pat = expdest;
 		if (subevalvar(p, NULL, expdest - stackblock(), subtype,
-			       startloc, varflags))
+			       startloc, varflags, &recorded))
 			goto record;
 		else {
 			int amount = (expdest - pat) + 1;
@@ -664,13 +653,14 @@ record:
 	case VSASSIGN:
 	case VSQUESTION:
 		if (!set) {
-			if (subevalvar(p, var, 0, subtype, startloc, varflags)) {
+			if (subevalvar(p, var, 0, subtype, startloc, varflags,
+			    &recorded)) {
 				varflags &= ~VSNUL;
 				goto again;
 			}
 			break;
 		}
-		if (easy)
+		if (easy && !recorded)
 			goto record;
 		break;
 
@@ -766,7 +756,7 @@ varvalue(name, quoted, allow_split)
 	if (allow_split) { \
 		syntax = quoted? DQSYNTAX : BASESYNTAX; \
 		while (*p) { \
-			if (syntax[*p] == CCTL) \
+			if (syntax[(int)*p] == CCTL) \
 				STPUTC(CTLESC, expdest); \
 			STPUTC(*p++, expdest); \
 		} \
@@ -927,6 +917,21 @@ ifsbreakup(string, arglist)
 		*arglist->lastp = sp;
 		arglist->lastp = &sp->next;
 	}
+}
+
+STATIC void
+ifsfree()
+{
+	while (ifsfirst.next != NULL) {
+		struct ifsregion *ifsp;
+		INTOFF;
+		ifsp = ifsfirst.next->next;
+		ckfree(ifsfirst.next);
+		ifsfirst.next = ifsp;
+		INTON;
+	}
+	ifslastp = NULL;
+	ifsfirst.next = NULL;
 }
 
 
@@ -1349,7 +1354,7 @@ casematch(pattern, val)
 	argbackq = pattern->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifslastp = NULL;
-	argstr(pattern->narg.text, EXP_TILDE | EXP_CASE);
+	(void)argstr(pattern->narg.text, EXP_TILDE | EXP_CASE);
 	STPUTC('\0', expdest);
 	p = grabstackstr(expdest);
 	result = patmatch(p, val);

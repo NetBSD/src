@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.11 1997/07/04 21:02:06 christos Exp $	*/
+/*	$NetBSD: mail.c,v 1.11.2.1 1998/05/08 06:01:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,13 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mail.c,v 1.11 1997/07/04 21:02:06 christos Exp $");
+__RCSID("$NetBSD: mail.c,v 1.11.2.1 1998/05/08 06:01:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * Routines to check for mail.  (Perhaps make part of main.c?)
  */
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "shell.h"
 #include "exec.h"	/* defines padvance() */
@@ -56,8 +58,6 @@ __RCSID("$NetBSD: mail.c,v 1.11 1997/07/04 21:02:06 christos Exp $");
 #include "memalloc.h"
 #include "error.h"
 #include "mail.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 
 
 #define MAXMBOXES 10
