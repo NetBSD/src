@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.1 2002/02/10 01:58:07 thorpej Exp $        */
+/*      $NetBSD: opms.c,v 1.1 2002/04/19 01:43:50 wiz Exp $        */
 
 /*
  * Copyright 1997
@@ -161,7 +161,7 @@
 #define PMSUNIT(dev)    (minor(dev))
 
 /* Softc structure for the mouse */
-struct pms_softc 
+struct opms_softc 
 {               
     struct device      sc_dev;
     void               *sc_ih;
@@ -179,13 +179,13 @@ struct pms_softc
 /*
 ** Forward routine declarations
 */
-int                  pmsprobe       __P((struct device *, 
+int                  opmsprobe       __P((struct device *, 
                                          struct cfdata *, 
                                          void *));
-void                 pmsattach      __P((struct device *, 
+void                 opmsattach      __P((struct device *, 
                                          struct device *, 
                                          void *));
-int                  pmsintr         __P((void *));
+int                  opmsintr         __P((void *));
 
 /* 
 ** Global variables 
@@ -194,7 +194,7 @@ int                  pmsintr         __P((void *));
 /* Autoconfiguration data structures */
 struct cfattach opms_ca = 
 {
-        sizeof(struct pms_softc), pmsprobe, pmsattach,
+        sizeof(struct opms_softc), opmsprobe, opmsattach,
 };
 
 extern struct cfdriver opms_cd;
@@ -202,14 +202,14 @@ extern struct cfdriver opms_cd;
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 
 */
-int pmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR; 
+int opmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR; 
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **     
-**     pmsprobe
+**     opmsprobe
 **
 **     This is the probe routine for the mouse. It checks to see that 
 **     we are attaching to the pc or vt device.  It then resets mouse
@@ -241,7 +241,7 @@ int pmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR;
 **--
 */
 int
-pmsprobe(parent, match, aux)
+opmsprobe(parent, match, aux)
     struct device *parent;
     struct cfdata *match;
     void          *aux;
@@ -250,7 +250,7 @@ pmsprobe(parent, match, aux)
     int                       probeOk = 0;    /* assume failure */
     struct isa_attach_args    *ia = aux;                   
     
-    KERN_DEBUG(pmsdebug, KERN_DEBUG_INFO, ("pmsprobe: entered\n"));
+    KERN_DEBUG(opmsdebug, KERN_DEBUG_INFO, ("opmsprobe: entered\n"));
     /*
     ** We only attach to the keyboard controller via
     ** the console drivers. (We really wish we could be the
@@ -275,8 +275,8 @@ pmsprobe(parent, match, aux)
             if (!i8042_cmd(ia->ia_iot, (bus_space_handle_t)ia->ia_aux, I8042_AUX_CMD, 
                                I8042_CHECK_RESPONSE, KBR_ACK, PMS_RESET))
             {
-                KERN_DEBUG(pmsdebug, KERN_DEBUG_ERROR, 
-                           ("pms_reset: reset failed\n"));
+                KERN_DEBUG(opmsdebug, KERN_DEBUG_ERROR, 
+                           ("opms_reset: reset failed\n"));
             }
             else
             {
@@ -290,12 +290,12 @@ pmsprobe(parent, match, aux)
                 }
                 else
                 {
-                    KERN_DEBUG(pmsdebug, KERN_DEBUG_ERROR,
-                               ("pmsprobe: aux test failed\n"));
+                    KERN_DEBUG(opmsdebug, KERN_DEBUG_ERROR,
+                               ("opmsprobe: aux test failed\n"));
                 }
                 /* 
                 ** Disable the mouse.  It is enabled when 
-                ** the pms device is opened.
+                ** the opms device is opened.
                 */
                 (void) I8042_WRITECCB(ia->ia_iot, (bus_space_handle_t)ia->ia_aux, 
                                           NOAUX_CMDBYTE);
@@ -304,14 +304,14 @@ pmsprobe(parent, match, aux)
     } /* end-if supported console device */
     return (probeOk);
     
-} /* End pmsprobe */
+} /* End opmsprobe */
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      pmsattach
+**      opmsattach
 **
 **      Initialise mouse softc structure and set up our interrupt routine.
 **
@@ -342,19 +342,19 @@ pmsprobe(parent, match, aux)
 **--
 */
 void
-pmsattach(parent, self, aux)
+opmsattach(parent, self, aux)
     struct device *parent;
     struct device *self;
     void          *aux;
 {
-    struct pms_softc          *sc = (void *)self;
+    struct opms_softc          *sc = (void *)self;
     int                       irq = self->dv_cfdata->cf_loc[0];
     struct isa_attach_args    *ia = aux;                   
 
     printf(" irq %d\n", irq);
     /* 
     ** Initialise the mouse softc structure.
-    ** Other initialization was done by pmsprobe. 
+    ** Other initialization was done by opmsprobe. 
     */
     sc->sc_iot    = ia->ia_iot;
     sc->sc_ioh    = (bus_space_handle_t)ia->ia_aux;
@@ -362,12 +362,12 @@ pmsattach(parent, self, aux)
 
     
     sc->sc_ih     = isa_intr_establish(ia->ia_ic, irq, IST_LEVEL, 
-                                       IPL_TTY, pmsintr, sc);
-    KERN_DEBUG(pmsdebug, KERN_DEBUG_INFO,
-               ("pmsattach: IOT 0x%p: IOH 0x%lx\n", sc->sc_iot, sc->sc_ioh));
+                                       IPL_TTY, opmsintr, sc);
+    KERN_DEBUG(opmsdebug, KERN_DEBUG_INFO,
+               ("opmsattach: IOT 0x%p: IOH 0x%lx\n", sc->sc_iot, sc->sc_ioh));
 
     return;
-} /* End pmsattach */
+} /* End opmsattach */
 
 
 
@@ -375,7 +375,7 @@ pmsattach(parent, self, aux)
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**     pmsopen
+**     opmsopen
 **
 **     This routine is to open the mouse device.
 **     It first makes sure that the device unit specified is valid 
@@ -410,14 +410,14 @@ pmsattach(parent, self, aux)
 **--
 */
 int
-pmsopen(dev, flag, mode, p)
+opmsopen(dev, flag, mode, p)
     dev_t dev;
     int flag;
     int mode;
     struct proc *p;
 {
     int                 unit = PMSUNIT(dev);
-    struct pms_softc    *sc;
+    struct opms_softc    *sc;
     
     /* Sanity check the minor device number we have been instructed
     ** to open and set up our softc structure pointer. 
@@ -459,14 +459,14 @@ pmsopen(dev, flag, mode, p)
     */
     (void) I8042_WRITECCB(sc->sc_iot, sc->sc_ioh, CMDBYTE);
     return 0;
-} /* End pmsopen */
+} /* End opmsopen */
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**     pmsclose
+**     opmsclose
 **
 **     This function is called on the last close for a device unit.
 **     It flushes the queue of mouse events and disables the mouse.
@@ -496,13 +496,13 @@ pmsopen(dev, flag, mode, p)
 **--
 */
 int
-pmsclose(dev, flag, mode, p)
+opmsclose(dev, flag, mode, p)
     dev_t dev;
     int flag;
     int mode;
     struct proc *p;
 {
-    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
     /* Disable the mouse device and interrupts on it. Note that if we don't
     ** flush the device first it seems to generate LOTs of interrupts after
@@ -520,14 +520,14 @@ pmsclose(dev, flag, mode, p)
     clfree(&sc->sc_q);
 
     return 0;
-} /* End pmsclose */
+} /* End opmsclose */
 
 
 /*
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**      pmsread
+**      opmsread
 **
 **      This function handles a read on the mouse device.  If there isn't 
 **      data immdediatley available sleep until there is or return an error
@@ -558,12 +558,12 @@ pmsclose(dev, flag, mode, p)
 **--
 */
 int
-pmsread(dev, uio, flag)
+opmsread(dev, uio, flag)
     dev_t dev;
     struct uio *uio;
     int flag;
 {
-    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
     int s;
     int error = 0;
     size_t length;
@@ -585,7 +585,7 @@ pmsread(dev, uio, flag)
         else
         {
             sc->sc_state |= PMS_ASLP;
-            error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsread", 0);
+            error = tsleep((caddr_t)sc, PZERO | PCATCH, "opmsread", 0);
             if (error) 
             {
                 sc->sc_state &= ~PMS_ASLP;
@@ -625,7 +625,7 @@ pmsread(dev, uio, flag)
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**     pmsioctl
+**     opmsioctl
 **
 **     This routine is responsible for handling ioctls on the
 **     mouse device.  Only one ioctl is supported:
@@ -658,14 +658,14 @@ pmsread(dev, uio, flag)
 **--
 */
 int
-pmsioctl(dev, cmd, addr, flag, p)
+opmsioctl(dev, cmd, addr, flag, p)
     dev_t       dev;
     u_long      cmd;
     caddr_t     addr;
     int         flag;
     struct proc *p;
 {
-    struct pms_softc     *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct opms_softc     *sc = opms_cd.cd_devs[PMSUNIT(dev)];
     struct mouseinfo     info;
     int                  oldIpl;
     int                  error;
@@ -730,7 +730,7 @@ pmsioctl(dev, cmd, addr, flag, p)
     } /* end-switch cmd */
     
     return error;
-} /* End pmsioctl */
+} /* End opmsioctl */
 
 
 
@@ -738,7 +738,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**     pmsintr
+**     opmsintr
 **
 **     This is the interrupt handler routine for the mouse.  The mouse 
 **     protocol consists of 3 bytes.  The first byte indicates which
@@ -772,10 +772,10 @@ pmsioctl(dev, cmd, addr, flag, p)
 **--
 */
 int
-pmsintr(arg)
+opmsintr(arg)
         void *arg;
 {
-    struct pms_softc     *sc   = arg;
+    struct opms_softc     *sc   = arg;
     static u_char        buttons;
     u_char               changed;
     u_char               status;
@@ -829,8 +829,8 @@ pmsintr(arg)
                     }
                     else
                     {
-                        KERN_DEBUG( pmsdebug, KERN_DEBUG_WARNING, 
-                                   ("pmsintr: bad button byte received 0x%x\n",
+                        KERN_DEBUG( opmsdebug, KERN_DEBUG_WARNING, 
+                                   ("opmsintr: bad button byte received 0x%x\n",
                                     buttons));
                     }
                 break;
@@ -900,8 +900,8 @@ pmsintr(arg)
                     }
                 break;
                 default :
-                    KERN_DEBUG( pmsdebug, KERN_DEBUG_WARNING, 
-                               ("pmsintr: Invalid byte protocol state 0x%x\n",
+                    KERN_DEBUG( opmsdebug, KERN_DEBUG_WARNING, 
+                               ("opmsintr: Invalid byte protocol state 0x%x\n",
                                 sc->sc_protocol_byte));
                     sc->sc_protocol_byte = PMS_RD_BYTE1;
                 break;
@@ -910,7 +910,7 @@ pmsintr(arg)
     } /* End if in an open state */
 
     return (handledInt);
-} /* End pmsintr */
+} /* End opmsintr */
 
 
 
@@ -918,7 +918,7 @@ pmsintr(arg)
 **++
 **  FUNCTIONAL DESCRIPTION:
 **
-**     pmspoll
+**     opmspoll
 **
 **     This routine is used to poll the device for the presence of a set 
 **     of events (e.g. is there data to be read).  If any of the polled 
@@ -949,12 +949,12 @@ pmsintr(arg)
 **--
 */
 int
-pmspoll(dev, events, p)
+opmspoll(dev, events, p)
     dev_t dev;
     int events;
     struct proc *p;
 {
-    struct pms_softc     *sc     = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct opms_softc     *sc     = opms_cd.cd_devs[PMSUNIT(dev)];
     int                  revents = 0;
     int                  oldIpl; 
 
@@ -975,5 +975,5 @@ pmspoll(dev, events, p)
     }
     splx(oldIpl);
     return (revents);
-} /* End pmspoll */
+} /* End opmspoll */
 
