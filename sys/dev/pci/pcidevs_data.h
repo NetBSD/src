@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.643 2004/08/04 19:29:05 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.644 2004/08/05 16:26:41 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.643 2004/08/04 19:28:52 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.645 2004/08/05 16:26:05 cube Exp 
  */
 
 /*
@@ -7284,6 +7284,10 @@ const struct pci_product pci_products[] = {
 	    "GeForce FX 5900",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900XT,
+	    "GeForce FX 5900XT",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5950U,
 	    "GeForce FX 5950 Ultra",
 	},
@@ -9612,4 +9616,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1828;
+const int pci_nproducts = 1829;
