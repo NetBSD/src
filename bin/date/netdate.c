@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.15 1998/07/06 06:46:05 mrg Exp $	*/
+/*	$NetBSD: netdate.c,v 1.16 1998/07/28 03:47:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.15 1998/07/06 06:46:05 mrg Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.16 1998/07/28 03:47:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ netsettime(tval)
 	struct sockaddr_in sin, dest, from;
 	fd_set ready;
 	long waittime;
-	int s, length, timed_ack, found, err;
+	int s, length, timed_ack, found, error;
 #ifdef IP_PORTRANGE
 	int on;
 #endif
@@ -152,10 +152,10 @@ loop:
 	FD_SET(s, &ready);
 	found = select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0, &tout);
 
-	length = sizeof(err);
+	length = sizeof(error);
 	if (!getsockopt(s,
-	    SOL_SOCKET, SO_ERROR, (char *)&err, &length) && err) {
-		if (err != ECONNREFUSED)
+	    SOL_SOCKET, SO_ERROR, (char *)&error, &length) && error) {
+		if (error != ECONNREFUSED)
 			warn("send (delayed error)");
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.8 1998/07/27 15:25:06 mycroft Exp $	*/
+/*	$NetBSD: chio.c,v 1.9 1998/07/28 03:47:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -39,7 +39,7 @@
 #ifndef lint
 __COPYRIGHT(
     "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.8 1998/07/27 15:25:06 mycroft Exp $");
+__RCSID("$NetBSD: chio.c,v 1.9 1998/07/28 03:47:14 mycroft Exp $");
 #endif
 
 #include <sys/param.h>
@@ -657,9 +657,9 @@ do_cdlu(cname, argc, argv)
 	return (0);
 
  usage:
-	fprintf(stderr, "usage: %s %s load|unload <slot>\n",
+	(void) fprintf(stderr, "usage: %s %s load|unload <slot>\n",
 	    __progname, cname);
-	fprintf(stderr, "       %s %s abort\n", __progname, cname);
+	(void) fprintf(stderr, "       %s %s abort\n", __progname, cname);
 	return (1);
 }
 
@@ -739,7 +739,7 @@ bits_to_string(v, cp)
 			first = 0;
 		else
 			*bp++ = ',';
-		memcpy(bp, cp, np - cp);
+		(void) memcpy(bp, cp, np - cp);
 		bp += np - cp;
 	}
 	*bp++ = '>';

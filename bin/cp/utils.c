@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.12 1998/02/20 09:26:00 mycroft Exp $	*/
+/*	$NetBSD: utils.c,v 1.13 1998/07/28 03:47:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.12 1998/02/20 09:26:00 mycroft Exp $");
+__RCSID("$NetBSD: utils.c,v 1.13 1998/07/28 03:47:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,19 +185,19 @@ copy_link(p, exists)
 	int exists;
 {
 	int len;
-	char link[MAXPATHLEN];
+	char target[MAXPATHLEN];
 
-	if ((len = readlink(p->fts_path, link, sizeof(link))) == -1) {
+	if ((len = readlink(p->fts_path, target, sizeof(target))) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
 	}
-	link[len] = '\0';
+	target[len] = '\0';
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);
 	}
-	if (symlink(link, to.p_path)) {
-		warn("symlink: %s", link);
+	if (symlink(target, to.p_path)) {
+		warn("symlink: %s", target);
 		return (1);
 	}
 	return (pflag ? setfile(p->fts_statp, 0) : 0);

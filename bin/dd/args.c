@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.12 1998/07/09 18:06:17 msaitoh Exp $	*/
+/*	$NetBSD: args.c,v 1.13 1998/07/28 03:47:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.12 1998/07/09 18:06:17 msaitoh Exp $");
+__RCSID("$NetBSD: args.c,v 1.13 1998/07/28 03:47:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,8 @@ c_arg(a, b)
 	const void *a, *b;
 {
 
-	return (strcmp(((struct arg *)a)->name, ((struct arg *)b)->name));
+	return (strcmp(((const struct arg *)a)->name,
+	    ((const struct arg *)b)->name));
 }
 
 static void
@@ -333,7 +334,8 @@ c_conv(a, b)
 	const void *a, *b;
 {
 
-	return (strcmp(((struct conv *)a)->name, ((struct conv *)b)->name));
+	return (strcmp(((const struct conv *)a)->name,
+	    ((const struct conv *)b)->name));
 }
 
 #endif	/* NO_CONV */

@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.28 1998/07/27 16:33:31 mycroft Exp $	*/
+/*	$NetBSD: df.c,v 1.29 1998/07/28 03:47:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.28 1998/07/27 16:33:31 mycroft Exp $");
+__RCSID("$NetBSD: df.c,v 1.29 1998/07/28 03:47:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,7 @@ main(argc, argv)
 	for (i = 0; i < mntsize; i++)
 		prtstat(&mntbuf[i], maxwidth);
 	exit(0);
+	/* NOTREACHED */
 }
 
 char *
@@ -412,9 +413,9 @@ ufs_df(file, sfsp)
 	sfsp->f_fsid.val[1] = 0;
 	if ((mntpt = getmntpt(file)) == 0)
 		mntpt = "";
-	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
-	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
+	(void)memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
+	(void)memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
+	(void)strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
 	(void)close(rfd);
 	return (0);
 }
