@@ -1,8 +1,10 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 5/25/90
-#	$Id: Makefile,v 1.2 1993/07/30 22:12:00 mycroft Exp $
+#	from: @(#)Makefile	5.6 (Berkeley) 2/19/92
+#	$Id: Makefile,v 1.3 1993/11/02 07:51:06 cgd Exp $
 
 PROG=	mtree
-SRCS=	compare.c create.c mtree.c spec.c verify.c
-.PATH:	${.CURDIR}
+#CFLAGS+=-DDEBUG
+SRCS=	compare.c crc.c create.c misc.c mtree.c spec.c verify.c
+.PATH:	/usr/src/usr.bin/cksum
+#.PATH:	${.CURDIR}/../../usr.bin/cksum
 
 .include <bsd.prog.mk>
