@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.18 1997/01/13 00:54:23 mark Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -197,7 +197,7 @@ NOPROFILE	Do not build profiled versions of system libraries
 
 NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.  [set if ${MACHINE_ARCH}
-		is "mips", "vax", or "alpha", unset otherwise.]
+		is "mips", "vax", "alpha" or "arm32", unset otherwise.]
 
 NOLINT		Do not build lint libraries. [set, set unconditionally]
 
