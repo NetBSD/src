@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1995/05/12 18:24:53 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1995/08/04 08:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -398,9 +398,12 @@ copyfault:
 	case T_TRAP15:		/* SUN trace trap */
 #ifdef DDB
 		if (type == T_TRAP15 ||
-		    (frame.f_pc != trap0 && frame.f_pc != trap1 &&
-		     frame.f_pc != trap2 && frame.f_pc != trap12 &&
-		     frame.f_pc != trap15 && frame.f_pc != illinst)) {
+		    ((caddr_t)frame.f_pc != trap0 &&
+		     (caddr_t)frame.f_pc != trap1 &&
+		     (caddr_t)frame.f_pc != trap2 &&
+		     (caddr_t)frame.f_pc != trap12 &&
+		     (caddr_t)frame.f_pc != trap15 &&
+		     (caddr_t)frame.f_pc != illinst)) {
 			if (kdb_trap(type, &frame))
 				return;
 		}
