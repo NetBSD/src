@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.108.4.3 2003/08/27 08:01:48 tron Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.108.4.4 2003/10/02 08:59:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.3 2003/08/27 08:01:48 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.108.4.4 2003/10/02 08:59:10 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -657,7 +657,7 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* all sysctl names at this level are name and field */
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
-	if (name[0] >= CTL_DEBUG_MAXID)
+	if (name[0] < 0 || name[0] >= CTL_DEBUG_MAXID)
 		return (EOPNOTSUPP);
 	cdp = debugvars[name[0]];
 	if (cdp->debugname == 0)
