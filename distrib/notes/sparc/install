@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23.4.3 2000/11/01 03:48:32 tv Exp $
+.\"	$NetBSD: install,v 1.23.4.4 2000/11/02 23:54:36 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -425,9 +425,13 @@ below.
 .
 .Ss2 Installing NetBSD by using a bootable tape
 .
+Sun sets their tape drives to SCSI ID 4. We recommend you do the same.
+.Pp
 Get the tape images
 .Pq Pa installation/tape/tapefile1.gz No and Pa installation/tape/tapefile2
-and transfer them to a tape using the following commands:
+and transfer them to a tape.  Make sure you use the
+.Sq no rewind scsi tape
+device.  Run the following commands:
 .Pp
 .Dl # Ic "gunzip tapefile1.gz"
 .Dl # Ic "mt -f /dev/nrst0 rew"
@@ -446,12 +450,14 @@ Be sure to mark the location of these files on the tape; you'll need them
 during the installation procedure.
 .Pp
 Insert the tape into your Sparc's tapestation.
-From the OpenBoot prompt, boot the from the tape with the following command:
+Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
 .(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
-.It sun4 PROM
+.It sunmon
 .Li > Ic "b st()"
-.It OpenBoot PROM
+.It OpenBoot PROM 1
+.Li ok Ic "boot st()"
+.It OpenBoot PROM 2
 .Li ok Ic "boot tape"
 .tag)
 .Pp
