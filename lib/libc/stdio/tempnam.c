@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.13 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.14 2001/06/21 21:17:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tempnam.c,v 1.13 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: tempnam.c,v 1.14 2001/06/21 21:17:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,33 +62,33 @@ tempnam(dir, pfx)
 	int sverrno;
 	char *f, *name;
 
-	if (!(name = malloc(MAXPATHLEN)))
+	if (!(name = malloc((size_t)MAXPATHLEN)))
 		return(NULL);
 
 	if (!pfx)
 		pfx = "tmp.";
 
 	if ((f = getenv("TMPDIR")) != NULL) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXX", f,
+		(void)snprintf(name, (size_t)MAXPATHLEN, "%s%s%sXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if ((f = _mktemp(name)) != NULL)
 			return(f);
 	}
 
 	if ((/* LINTED */f = (char *)dir) != NULL) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXX", f,
+		(void)snprintf(name, (size_t)MAXPATHLEN, "%s%s%sXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if ((f = _mktemp(name)) != NULL)
 			return(f);
 	}
 
 	f = P_tmpdir;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
+	(void)snprintf(name, (size_t)MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
 	if ((f = _mktemp(name)) != NULL)
 		return(f);
 
 	f = _PATH_TMP;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
+	(void)snprintf(name, (size_t)MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
 	if ((f = _mktemp(name)) != NULL)
 		return(f);
 
