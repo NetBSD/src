@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.14 2002/08/26 11:26:09 scw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.15 2002/08/28 03:40:54 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.14 2002/08/26 11:26:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.15 2002/08/28 03:40:54 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -304,7 +304,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	if (ret)
 		return (ret);
-	
+
 	systrace_lock();
 	SYSTRACE_LOCK(fst, curproc);
 	systrace_unlock();
@@ -707,12 +707,10 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	callp = p->p_emul->e_sysent + code;
 	switch (policy) {
 	case SYSTR_POLICY_PERMIT:
-		DPRINTF(("policy permit, syscall %lu\n", (u_long)code));
 		break;
 	case SYSTR_POLICY_ASK:
 		/* Puts the current process to sleep, return unlocked */
 		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
-		DPRINTF(("policy permit, syscall %lu error %d\n", (u_long)code, error));
 
 		/* lock has been released in systrace_msg_ask() */
 		fst = NULL;
@@ -738,15 +736,12 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 				}
 			}
 		}
-		DPRINTF(("policy permit, strp %p error %d\n", strp, error));
 		break;
 	default:
 		if (policy > 0)
 			error = policy;
 		else
 			error = EPERM;
-		DPRINTF(("policy default, syscall %lu, error %d\n", (u_long)code,
-		    error));
 		break;
 	}
 
@@ -831,7 +826,7 @@ int
 systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 {
 	int error = 0;
-	
+
 	DPRINTF(("%s: %u: policy %d\n", __func__,
 	    ans->stra_pid, ans->stra_policy));
 
@@ -904,7 +899,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 			systrace_closepolicy(fst, strp->policy);
 		strp->policy = strpol;
 		strpol->refcount++;
-		
+
 		/* Record emulation for this policy */
 		if (strpol->emul == NULL)
 			strpol->emul = strp->proc->p_emul;
@@ -935,10 +930,10 @@ int
 systrace_processready(struct str_process *strp)
 {
 	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
-		return (EINVAL);
+		return (EBUSY);
 
 	if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
-		return (EINVAL);
+		return (EBUSY);
 
 	if (strp->proc->p_stat != SSLEEP)
 		return (EBUSY);
@@ -1004,7 +999,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
-	
+
 	DPRINTF(("%s: %u: %p(%lu)\n", __func__,
 	    io->strio_pid, io->strio_offs, (u_long)io->strio_len));
 
@@ -1088,7 +1083,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	(4) it's not owned by you, or the last exec
 	 *	    gave us setuid/setgid privs (unless
 	 *	    you're root), or...
-	 * 
+	 *
 	 *      [Note: once P_SUGID gets set in execve(), it stays
 	 *	set until the process does another execve(). Hence
 	 *	this prevents a setuid process which revokes it's
@@ -1237,7 +1232,7 @@ systrace_findpid(struct fsystrace *fst, pid_t pid)
 	TAILQ_FOREACH(strp, &fst->processes, next)
 	    if (strp->pid == pid)
 		    break;
-	
+
 	if (strp == NULL)
 		return (NULL);
 
@@ -1252,7 +1247,7 @@ systrace_detach(struct str_process *strp)
 	struct proc *proc;
 	struct fsystrace *fst = NULL;
 	int error = 0;
-	
+
 	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
@@ -1407,6 +1402,9 @@ systrace_make_msg(struct str_process *strp, int type)
 {
 	struct str_message *msg = &strp->msg;
 	struct fsystrace *fst = strp->parent;
+#ifndef __NetBSD__
+	struct proc *p = strp->proc;
+#endif
 	int st;
 
 	msg->msg_seqnr = ++strp->seqnr;
@@ -1428,7 +1426,11 @@ systrace_make_msg(struct str_process *strp, int type)
 	systrace_wakeup(fst);
 
 	/* Release the lock - XXX */
+#ifndef __NetBSD__
+	SYSTRACE_UNLOCK(fst, p);
+#else
 	SYSTRACE_UNLOCK(fst, strp->proc);
+#endif
 
 	while (1) {
 		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
@@ -1456,7 +1458,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    nstrp, strp->pid, npid));
-	
+
 	msg = &nstrp->msg;
 	msg_child = &msg->msg_data.msg_child;
 
