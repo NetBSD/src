@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 2002/07/05 13:32:01 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 2003/01/19 19:49:50 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -42,12 +42,15 @@
 /*
  * Machine-dependent part of the proc structure for sh5.
  */
-struct mdproc {
+struct mdlwp {
 	struct trapframe *md_regs;	/* user context */
 	struct pcb *md_pcb;		/* pcb access address */
-	void (*md_syscall)(struct proc *, struct trapframe *);
-	volatile u_int64_t md_astpending; /* AST pending for this process */
 	int md_flags;			/* machine-dependent flags */
+};
+
+struct mdproc {
+	volatile u_int64_t md_astpending; /* AST pending for this process */
+	void (*md_syscall)(struct lwp *, struct trapframe *);
 };
 
 /* md_flags */
