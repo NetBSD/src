@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.4 1996/05/09 21:35:27 cgd Exp 
+ *	NetBSD: tcdevs,v 1.5 1996/05/20 01:33:45 cgd Exp 
  */
 
 /*
@@ -43,7 +43,10 @@
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
 #define	TC_DEVICE_PMAF_AA	"fza"
-#define	TC_DESCRIPTION_PMAF_AA	"FZA FDDI"
+#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI Controller"
+
+#define	TC_DEVICE_PMAF_F	"fta"
+#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI Controller"
 
 #define	TC_DEVICE_PMAG_AA	"mfb"
 #define	TC_DESCRIPTION_PMAG_AA	"Monochrome Frame Buffer"
