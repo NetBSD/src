@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.33.22.3 2004/09/21 13:20:23 skrll Exp $ */
+/* $NetBSD: dec_5100.c,v 1.33.22.4 2005/01/17 19:30:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33.22.3 2004/09/21 13:20:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33.22.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
     do {								\
 	if ((icsr & (ibit)) && intrtab[vvv].ih_func) {			\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);		\
-		intrcnt[vvv]++;						\
+		intrtab[vvv].ih_count.ev_count++;			\
 	}								\
     } while (0)
 

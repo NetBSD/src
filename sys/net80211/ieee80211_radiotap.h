@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.9.2.4 2004/09/21 13:36:55 skrll Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.9.2.5 2005/01/17 19:32:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -123,7 +123,7 @@ struct ieee80211_radiotap_header {
  *      RF noise power at the antenna, decibel difference from an
  *      arbitrary, fixed reference point.
  *
- * IEEE80211_RADIOTAP_BARKER_CODE_LOCK  u_int16_t       unitless
+ * IEEE80211_RADIOTAP_LOCK_QUALITY      u_int16_t       unitless
  *
  *      Quality of Barker code lock. Unitless. Monotonically
  *      nondecreasing with "better" lock strength. Called "Signal

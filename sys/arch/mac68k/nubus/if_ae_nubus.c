@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.33.6.3 2004/09/21 13:18:09 skrll Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.33.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.33.6.3 2004/09/21 13:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.33.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,26 +64,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.33.6.3 2004/09/21 13:18:09 skrll E
 #include <mac68k/dev/if_aevar.h>
 #include <mac68k/dev/if_aereg.h>
 
-static int	ae_nubus_match __P((struct device *, struct cfdata *, void *));
-static void	ae_nubus_attach __P((struct device *, struct device *, void *));
-static int	ae_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
-		    struct nubus_attach_args *));
-static int	ae_nb_get_enaddr __P((bus_space_tag_t, bus_space_handle_t,
-		    struct nubus_attach_args *, u_int8_t *));
+static int	ae_nubus_match(struct device *, struct cfdata *, void *);
+static void	ae_nubus_attach(struct device *, struct device *, void *);
+static int	ae_nb_card_vendor(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *);
+static int	ae_nb_get_enaddr(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *, u_int8_t *);
 #ifdef DEBUG
-static void	ae_nb_watchdog __P((struct ifnet *));
+static void	ae_nb_watchdog(struct ifnet *);
 #endif
 
-void		ae_nubus_intr __P((void *));
+void		ae_nubus_intr(void *);
 
 CFATTACH_DECL(ae_nubus, sizeof(struct dp8390_softc),
     ae_nubus_match, ae_nubus_attach, NULL, NULL);
 
 static int
-ae_nubus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ae_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -123,9 +120,7 @@ ae_nubus_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-ae_nubus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+ae_nubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
@@ -387,8 +382,7 @@ ae_nubus_attach(parent, self, aux)
 }
 
 void
-ae_nubus_intr(arg)
-	void *arg;
+ae_nubus_intr(void *arg)
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	
@@ -396,10 +390,8 @@ ae_nubus_intr(arg)
 }
 
 static int
-ae_nb_card_vendor(bst, bsh, na)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
+ae_nb_card_vendor(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na)
 {
 	int vendor;
 
@@ -458,11 +450,8 @@ ae_nb_card_vendor(bst, bsh, na)
 }
 
 static int
-ae_nb_get_enaddr(bst, bsh, na, ep)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
-	u_int8_t *ep;
+ae_nb_get_enaddr(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na, u_int8_t *ep)
 {
 	nubus_dir dir;
 	nubus_dirent dirent;
@@ -500,8 +489,7 @@ ae_nb_get_enaddr(bst, bsh, na, ep)
 
 #ifdef DEBUG
 static void
-ae_nb_watchdog(ifp)
-	struct ifnet *ifp;
+ae_nb_watchdog(struct ifnet *ifp)
 {
 	struct dp8390_softc *sc = ifp->if_softc;
 

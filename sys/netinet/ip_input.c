@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.169.2.3 2004/12/18 09:33:05 skrll Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.169.2.4 2005/01/17 19:32:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169.2.3 2004/12/18 09:33:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169.2.4 2005/01/17 19:32:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -200,7 +200,7 @@ int	ipprintfs = 0;
 #endif
 
 int	ip_do_randomid = 0;
-int	ip_do_loopback_cksum = 1;
+int	ip_do_loopback_cksum = 0;
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of

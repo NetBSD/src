@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.16.6.4 2004/11/02 07:50:55 skrll Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.16.6.5 2005/01/17 19:30:19 skrll Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.16.6.4 2004/11/02 07:50:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.16.6.5 2005/01/17 19:30:19 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -65,18 +65,18 @@ __KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.16.6.4 2004/11/02 07:50:55 skrll Exp 
 
 
 /* interrupt interfaces */
-int	am7930hwintr __P((void *));
+int	am7930hwintr(void *);
 struct auio *auiop;
-void	am7930swintr __P((void *));
+void	am7930swintr(void *);
 
 /* from amd7930intr.s: */
 void	amd7930_trap(void);
 
 /*
- * interrupt-handler status 
+ * interrupt-handler status
  */
 struct am7930_intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 };
 
@@ -98,14 +98,13 @@ struct audioamd_softc {
 	void	*sc_sicookie;		/* softintr(9) cookie */
 };
 
-void	audioamd_mainbus_attach __P((struct device *,
-		struct device *, void *));
-int	audioamd_mainbus_match __P((struct device *, struct cfdata *, void *));
-void	audioamd_obio_attach __P((struct device *, struct device *, void *));
-int	audioamd_obio_match __P((struct device *, struct cfdata *, void *));
-void	audioamd_sbus_attach __P((struct device *, struct device *, void *));
-int	audioamd_sbus_match __P((struct device *, struct cfdata *, void *));
-void	audioamd_attach(struct audioamd_softc *sc, int);
+void	audioamd_mainbus_attach(struct device *, struct device *, void *);
+int	audioamd_mainbus_match(struct device *, struct cfdata *, void *);
+void	audioamd_obio_attach(struct device *, struct device *, void *);
+int	audioamd_obio_match(struct device *, struct cfdata *, void *);
+void	audioamd_sbus_attach(struct device *, struct device *, void *);
+int	audioamd_sbus_match(struct device *, struct cfdata *, void *);
+void	audioamd_attach(struct audioamd_softc *, int);
 
 CFATTACH_DECL(audioamd_mainbus, sizeof(struct audioamd_softc),
     audioamd_mainbus_match, audioamd_mainbus_attach, NULL, NULL);
@@ -120,14 +119,14 @@ CFATTACH_DECL(audioamd_sbus, sizeof(struct audioamd_softc),
  * Define our interface into the am7930 MI driver.
  */
 
-u_int8_t	audioamd_codec_iread __P((struct am7930_softc *, int));
-u_int16_t	audioamd_codec_iread16 __P((struct am7930_softc *, int));
-u_int8_t	audioamd_codec_dread __P((struct audioamd_softc *, int));
-void	audioamd_codec_iwrite __P((struct am7930_softc *, int, u_int8_t));
-void	audioamd_codec_iwrite16 __P((struct am7930_softc *, int, u_int16_t));
-void	audioamd_codec_dwrite __P((struct audioamd_softc *, int, u_int8_t));
-void	audioamd_onopen __P((struct am7930_softc *sc));
-void	audioamd_onclose __P((struct am7930_softc *sc));
+uint8_t	audioamd_codec_iread(struct am7930_softc *, int);
+uint16_t	audioamd_codec_iread16(struct am7930_softc *, int);
+uint8_t	audioamd_codec_dread(struct audioamd_softc *, int);
+void	audioamd_codec_iwrite(struct am7930_softc *, int, uint8_t);
+void	audioamd_codec_iwrite16(struct am7930_softc *, int, uint16_t);
+void	audioamd_codec_dwrite(struct audioamd_softc *, int, uint8_t);
+void	audioamd_onopen(struct am7930_softc *);
+void	audioamd_onclose(struct am7930_softc *);
 
 struct am7930_glue audioamd_glue = {
 	audioamd_codec_iread,
@@ -144,11 +143,9 @@ struct am7930_glue audioamd_glue = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int	audioamd_start_output __P((void *, void *, int, void (*)(void *),
-				  void *));
-int	audioamd_start_input __P((void *, void *, int, void (*)(void *),
-				 void *));
-int	audioamd_getdev __P((void *, struct audio_device *));
+int	audioamd_start_output(void *, void *, int, void (*)(void *), void *);
+int	audioamd_start_input(void *, void *, int, void (*)(void *), void *);
+int	audioamd_getdev(void *, struct audio_device *);
 
 const struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -173,11 +170,11 @@ const struct audio_hw_if sa_hw_if = {
 	0,
 	0,
 	0,
-        0,
+	0,
 	am7930_get_props,
 	0,
 	0,
-        0,
+	0,
 };
 
 struct audio_device audioamd_device = {
@@ -188,52 +185,46 @@ struct audio_device audioamd_device = {
 
 
 int
-audioamd_mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+audioamd_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
+	struct mainbus_attach_args *ma;
 
+	ma = aux;
 	if (CPU_ISSUN4)
-		return (0);
-	return (strcmp(AUDIO_ROM_NAME, ma->ma_name) == 0);
+		return 0;
+	return strcmp(AUDIO_ROM_NAME, ma->ma_name) == 0;
 }
 
 int
-audioamd_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+audioamd_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	union obio_attach_args *uoba = aux;
+	union obio_attach_args *uoba;
 
+	uoba = aux;
 	if (uoba->uoba_isobio4 != 0)
-		return (0);
+		return 0;
 
-	return (strcmp("audio", uoba->uoba_sbus.sa_name) == 0);
+	return strcmp("audio", uoba->uoba_sbus.sa_name) == 0;
 }
 
 int
-audioamd_sbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+audioamd_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct sbus_attach_args *sa = aux;
+	struct sbus_attach_args *sa;
 
-	return (strcmp(AUDIO_ROM_NAME, sa->sa_name) == 0);
+	sa = aux;
+	return strcmp(AUDIO_ROM_NAME, sa->sa_name) == 0;
 }
 
 void
-audioamd_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+audioamd_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
-	struct audioamd_softc *sc = (struct audioamd_softc *)self;
+	struct mainbus_attach_args *ma;
+	struct audioamd_softc *sc;
 	bus_space_handle_t bh;
 
+	ma = aux;
+	sc = (struct audioamd_softc *)self;
 	sc->sc_bt = ma->ma_bustag;
 
 	if (bus_space_map(
@@ -250,54 +241,53 @@ audioamd_mainbus_attach(parent, self, aux)
 }
 
 void
-audioamd_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+audioamd_obio_attach(struct device *parent, struct device *self, void *aux)
 {
-	union obio_attach_args *uoba = aux;
-	struct sbus_attach_args *sa = &uoba->uoba_sbus;
-	struct audioamd_softc *sc = (struct audioamd_softc *)self;
-	bus_space_handle_t bh;
-
-	sc->sc_bt = sa->sa_bustag;
-
-	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot, sa->sa_offset,
-			 AM7930_DREG_SIZE,
-			 0, &bh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_bh = bh;
-	audioamd_attach(sc, sa->sa_pri);
-}
-
-void
-audioamd_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct sbus_attach_args *sa = aux;
-	struct audioamd_softc *sc = (struct audioamd_softc *)self;
-	bus_space_handle_t bh;
-
-	sc->sc_bt = sa->sa_bustag;
-
-	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot, sa->sa_offset,
-			 AM7930_DREG_SIZE,
-			 0, &bh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_bh = bh;
-	audioamd_attach(sc, sa->sa_pri);
-}
-
-void
-audioamd_attach(sc, pri)
+	union obio_attach_args *uoba;
+	struct sbus_attach_args *sa;
 	struct audioamd_softc *sc;
-	int pri;
+	bus_space_handle_t bh;
+
+	uoba = aux;
+	sa = &uoba->uoba_sbus;
+	sc = (struct audioamd_softc *)self;
+	sc->sc_bt = sa->sa_bustag;
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset,
+			 AM7930_DREG_SIZE,
+			 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_bh = bh;
+	audioamd_attach(sc, sa->sa_pri);
+}
+
+void
+audioamd_sbus_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct sbus_attach_args *sa;
+	struct audioamd_softc *sc;
+	bus_space_handle_t bh;
+
+	sa = aux;
+	sc = (struct audioamd_softc *)self;
+	sc->sc_bt = sa->sa_bustag;
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot, sa->sa_offset,
+			 AM7930_DREG_SIZE,
+			 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_bh = bh;
+	audioamd_attach(sc, sa->sa_pri);
+}
+
+void
+audioamd_attach(struct audioamd_softc *sc, int pri)
 {
 
 	/*
@@ -333,11 +323,11 @@ audioamd_attach(sc, pri)
 
 
 void
-audioamd_onopen(sc)
-	struct am7930_softc *sc;
+audioamd_onopen(struct am7930_softc *sc)
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+	struct audioamd_softc *mdsc;
 
+	mdsc = (struct audioamd_softc *)sc;
 	/* reset pdma state */
 	mdsc->sc_rintr = 0;
 	mdsc->sc_rarg = 0;
@@ -350,8 +340,7 @@ audioamd_onopen(sc)
 
 
 void
-audioamd_onclose(sc)
-	struct am7930_softc *sc;
+audioamd_onclose(struct am7930_softc *sc)
 {
 	/* On sparc, just do the chipset-level halt. */
 	am7930_halt_input(sc);
@@ -359,19 +348,15 @@ audioamd_onclose(sc)
 }
 
 int
-audioamd_start_output(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
+audioamd_start_output(void *addr, void *p, int cc,
+		      void (*intr)(void *), void *arg)
 {
-	struct audioamd_softc *sc = addr;
+	struct audioamd_softc *sc;
 
 	DPRINTFN(1, ("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
-
+	sc = addr;
 	audioamd_codec_iwrite(&sc->sc_am7930,
-		AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
+	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
 	DPRINTF(("sa_start_output: started intrs.\n"));
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
@@ -381,19 +366,15 @@ audioamd_start_output(addr, p, cc, intr, arg)
 }
 
 int
-audioamd_start_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr) __P((void *));
-	void *arg;
+audioamd_start_input(void *addr, void *p, int cc,
+		     void (*intr)(void *), void *arg)
 {
-	struct audioamd_softc *sc = addr;
+	struct audioamd_softc *sc;
 
 	DPRINTFN(1, ("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg));
-
+	sc = addr;
 	audioamd_codec_iwrite(&sc->sc_am7930,
-		AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
+	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
 	DPRINTF(("sa_start_input: started intrs.\n"));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
@@ -408,19 +389,20 @@ audioamd_start_input(addr, p, cc, intr, arg)
  */
 
 int
-am7930hwintr(v)
-	void *v;
+am7930hwintr(void *v)
 {
-	struct audioamd_softc *sc = v;
-	struct auio *au = &sc->sc_au;
-	u_int8_t *d, *e;
+	struct audioamd_softc *sc;
+	struct auio *au;
+	uint8_t *d, *e;
 	int k;
 
+	sc = v;
+	au = &sc->sc_au;
 	/* clear interrupt */
 	k = audioamd_codec_dread(sc, AM7930_DREG_IR);
 	if ((k & (AM7930_IR_DTTHRSH|AM7930_IR_DRTHRSH|AM7930_IR_DSRI|
 		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0)
-		return (0);
+		return 0;
 
 	/* receive incoming data */
 	d = au->au_rdata;
@@ -447,17 +429,17 @@ am7930hwintr(v)
 	}
 
 	au->au_intrcnt.ev_count++;
-	return (1);
+	return 1;
 }
 
 void
-am7930swintr(sc0)
-	void *sc0;
+am7930swintr(void *sc0)
 {
-	struct audioamd_softc *sc = sc0;
+	struct audioamd_softc *sc;
 	struct auio *au;
 	int s;
 
+	sc = sc0;
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 
 	au = &sc->sc_au;
@@ -477,25 +459,21 @@ am7930swintr(sc0)
 
 /* indirect write */
 void
-audioamd_codec_iwrite(sc, reg, val)
-	struct am7930_softc *sc;
-	int reg;
-	u_int8_t val;
+audioamd_codec_iwrite(struct am7930_softc *sc, int reg, uint8_t val)
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+	struct audioamd_softc *mdsc;
 
+	mdsc = (struct audioamd_softc *)sc;
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
 }
 
 void
-audioamd_codec_iwrite16(sc, reg, val)
-	struct am7930_softc *sc;
-	int reg;
-	u_int16_t val;
+audioamd_codec_iwrite16(struct am7930_softc *sc, int reg, uint16_t val)
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+	struct audioamd_softc *mdsc;
 
+	mdsc = (struct audioamd_softc *)sc;
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val>>8);
@@ -503,58 +481,51 @@ audioamd_codec_iwrite16(sc, reg, val)
 
 
 /* indirect read */
-u_int8_t
-audioamd_codec_iread(sc, reg)
-	struct am7930_softc *sc;
-	int reg;
+uint8_t
+audioamd_codec_iread(struct am7930_softc *sc, int reg)
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
+	struct audioamd_softc *mdsc;
 
+	mdsc = (struct audioamd_softc *)sc;
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	return (audioamd_codec_dread(mdsc, AM7930_DREG_DR));
 }
 
-u_int16_t
-audioamd_codec_iread16(sc, reg)
-	struct am7930_softc *sc;
-	int reg;
+uint16_t
+audioamd_codec_iread16(struct am7930_softc *sc, int reg)
 {
-	struct audioamd_softc *mdsc = (struct audioamd_softc *)sc;
-	u_int8_t lo, hi;
+	struct audioamd_softc *mdsc;
+	uint8_t lo, hi;
 
+	mdsc = (struct audioamd_softc *)sc;
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	lo = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
 	hi = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
-	return ((hi << 8) | lo);
+	return (hi << 8) | lo;
 }
 
 /* direct read */
-u_int8_t
-audioamd_codec_dread(sc, reg)
-	struct audioamd_softc *sc;
-	int reg;
+uint8_t
+audioamd_codec_dread(struct audioamd_softc *sc, int reg)
 {
-	return (bus_space_read_1(sc->sc_bt, sc->sc_bh, reg));
+
+	return bus_space_read_1(sc->sc_bt, sc->sc_bh, reg);
 }
 
 /* direct write */
 void
-audioamd_codec_dwrite(sc, reg, val)
-	struct audioamd_softc *sc;
-	int reg;
-	u_int8_t val;
+audioamd_codec_dwrite(struct audioamd_softc *sc, int reg, uint8_t val)
 {
+
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, reg, val);
 }
 
 int
-audioamd_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+audioamd_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = audioamd_device;
-	return (0);
+	return 0;
 }
 
 #endif /* NAUDIO > 0 */

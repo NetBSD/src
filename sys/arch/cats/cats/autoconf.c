@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.4 2004/11/02 07:50:23 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.5 2005/01/17 19:29:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.4 2004/11/02 07:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.5 2005/01/17 19:29:13 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -93,7 +93,7 @@ get_device(name)
 	else if (*cp != '\0' && *cp != ' ')
 		return;
 	sprintf(buf, "%s%d", devname, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

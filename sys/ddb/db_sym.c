@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41.2.3 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.4 2005/01/17 19:30:38 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.3 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.4 2005/01/17 19:30:38 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -290,7 +290,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
  */
 extern char end[];
 unsigned long	db_lastsym = (unsigned long)end;
-unsigned int	db_maxoff = 0x10000000;
+unsigned int	db_maxoff = 0x100000;
 
 void
 db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)

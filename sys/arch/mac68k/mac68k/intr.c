@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18.6.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.18.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18.6.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18.6.3 2004/09/21 13:18:06 skrll Exp $");
 #define	NISR	8
 #define	ISRLOC	0x18
 
-static int intr_noint __P((void *));
-void netintr __P((void));
+static int intr_noint(void *);
+void netintr(void);
 
 static int ((*intr_func[NISR]) __P((void *))) = {
 	intr_noint,
@@ -98,7 +98,7 @@ u_short mac68k_ipls[MAC68K_NIPLS];
 
 extern	int intrcnt[];		/* from locore.s */
 
-void	intr_computeipl __P((void));
+void	intr_computeipl(void);
 
 #define MAX_INAME_LENGTH 53
 #define STD_INAMES \
@@ -109,7 +109,7 @@ void	intr_computeipl __P((void));
 	"spur\0via1\0via2\0ethernet\0scc\0dsp\0unused1\0nmi\0clock\0   "
 
 void
-intr_init()
+intr_init(void)
 {
 	extern long	intrnames;
 	char		*inames, *g_inames;
@@ -175,7 +175,7 @@ intr_init()
  * calls.  This doesn't have to be fast.
  */
 void
-intr_computeipl()
+intr_computeipl(void)
 {
 	/*
 	 * Enforce the following relationship, as defined in spl(9):
@@ -214,10 +214,7 @@ intr_computeipl()
  * ensue!  (sar 19980806)
  */
 void
-intr_establish(func, arg, ipl)
-	int (*func) __P((void *));
-	void *arg;
-	int ipl;
+intr_establish(int (*func)(void *), void *arg, int ipl)
 {
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("intr_establish: bad ipl %d", ipl);
@@ -235,8 +232,7 @@ intr_establish(func, arg, ipl)
  * Disestablish an interrupt handler.
  */
 void
-intr_disestablish(ipl)
-	int ipl;
+intr_disestablish(int ipl)
 {
 	if ((ipl < 0) || (ipl >= NISR))
 		panic("intr_disestablish: bad ipl %d", ipl);
@@ -252,8 +248,7 @@ intr_disestablish(ipl)
  * XXX Note: see the warning in intr_establish()
  */
 void
-intr_dispatch(evec)
-	int evec;		/* format | vector offset */
+intr_dispatch(int evec)		/* format | vector offset */
 {
 	int ipl, vec;
 
@@ -274,8 +269,7 @@ intr_dispatch(evec)
  * Default interrupt handler:  do nothing.
  */
 static int
-intr_noint(arg)
-	void *arg;
+intr_noint(void *arg)
 {
 #ifdef DEBUG
 	if (intr_debug)
@@ -285,7 +279,7 @@ intr_noint(arg)
 }
 
 void
-netintr()
+netintr(void)
 {
 	int s, isr;
 

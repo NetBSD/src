@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.37 2003/05/03 18:11:25 wiz Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.37.2.1 2005/01/17 19:31:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ struct ad1848_isa_softc {
 	bus_size_t sc_play_maxsize;	/* playback DMA size */
 	int	sc_recdrq;		/* record/capture DMA */
 	bus_size_t sc_rec_maxsize;	/* record/capture DMA size */
-	
+
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_pintr)(void *);	/* play DMA completion intr handler */
 	void	*sc_parg;		/* arg for sc_pintr() */
@@ -104,26 +104,26 @@ struct ad1848_isa_softc {
 };
 
 #ifdef _KERNEL
-int	ad1848_isa_mapprobe (struct ad1848_isa_softc *, int);
-int	ad1848_isa_probe (struct ad1848_isa_softc *);
-void	ad1848_isa_unmap (struct ad1848_isa_softc *);
-void	ad1848_isa_attach (struct ad1848_isa_softc *);
+int	ad1848_isa_mapprobe(struct ad1848_isa_softc *, int);
+int	ad1848_isa_probe(struct ad1848_isa_softc *);
+void	ad1848_isa_unmap(struct ad1848_isa_softc *);
+void	ad1848_isa_attach(struct ad1848_isa_softc *);
 
-int	ad1848_isa_open (void *, int);
-void	ad1848_isa_close (void *);
- 
-int	ad1848_isa_trigger_output (void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *);
-int	ad1848_isa_trigger_input (void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *);
-int	ad1848_isa_halt_output (void *);
-int	ad1848_isa_halt_input (void *);
+int	ad1848_isa_open(void *, int);
+void	ad1848_isa_close(void *);
 
-int	ad1848_isa_intr (void *);
+int	ad1848_isa_trigger_output(void *, void *, void *, int,
+	    void (*)(void *), void *, const audio_params_t *);
+int	ad1848_isa_trigger_input(void *, void *, void *, int,
+	    void (*)(void *), void *, const audio_params_t *);
+int	ad1848_isa_halt_output(void *);
+int	ad1848_isa_halt_input(void *);
 
-void   *ad1848_isa_malloc (void *, int, size_t, struct malloc_type *, int);
-void	ad1848_isa_free (void *, void *, struct malloc_type *);
-size_t	ad1848_isa_round_buffersize (void *, int, size_t);
-paddr_t	ad1848_isa_mappage (void *, void *, off_t, int);
-int	ad1848_isa_get_props (void *);
+int	ad1848_isa_intr(void *);
+
+void   *ad1848_isa_malloc(void *, int, size_t, struct malloc_type *, int);
+void	ad1848_isa_free(void *, void *, struct malloc_type *);
+size_t	ad1848_isa_round_buffersize(void *, int, size_t);
+paddr_t	ad1848_isa_mappage(void *, void *, off_t, int);
+int	ad1848_isa_get_props(void *);
 #endif

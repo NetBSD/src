@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.12.2.4 2004/11/02 07:51:31 skrll Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.12.2.5 2005/01/17 19:30:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12.2.4 2004/11/02 07:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12.2.5 2005/01/17 19:30:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,25 +60,25 @@ __KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12.2.4 2004/11/02 07:51:31 skrll E
 
 #include <machine/bus.h>
 
-int tav_open __P((void*, int));
-void tav_close __P((void *));
-int tav_drain __P((void *));
-int tav_query_encoding __P((void *, struct audio_encoding *));
-int tav_set_params __P((void *, int, int, struct audio_params *, 
-    struct audio_params *));
-int tav_round_blocksize __P((void *, int));
-int tav_init_output __P((void *, void *, int));
-int tav_start_output __P((void *, void *, int, void (*)(void *), void *));
-int tav_start_input __P((void *, void *, int, void (*)(void *), void *));
-int tav_halt_output __P((void *));
-int tav_halt_input __P((void *));
-int tav_speaker_ctl __P((void *, int));
-int tav_getdev __P((void *, struct audio_device *));
-int tav_setfd __P((void *, int));
-int tav_set_port __P((void *, mixer_ctrl_t *));
-int tav_get_port __P((void *, mixer_ctrl_t *));
-int tav_query_devinfo __P((void *, mixer_devinfo_t *));
-int tav_get_props __P((void *));
+int tav_open(void *, int);
+void tav_close(void *);
+int tav_drain(void *);
+int tav_query_encoding(void *, struct audio_encoding *);
+int tav_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+    stream_filter_list_t *, stream_filter_list_t *);
+int tav_round_blocksize(void *, int, int, const audio_params_t *);
+int tav_init_output(void *, void *, int);
+int tav_start_output(void *, void *, int, void (*)(void *), void *);
+int tav_start_input(void *, void *, int, void (*)(void *), void *);
+int tav_halt_output(void *);
+int tav_halt_input(void *);
+int tav_speaker_ctl(void *, int);
+int tav_getdev(void *, struct audio_device *);
+int tav_setfd(void *, int);
+int tav_set_port(void *, mixer_ctrl_t *);
+int tav_get_port(void *, mixer_ctrl_t *);
+int tav_query_devinfo(void *, mixer_devinfo_t *);
+int tav_get_props(void *);
 
 const struct audio_hw_if tav_audio_if = {
 	tav_open,
@@ -109,12 +109,13 @@ const struct audio_hw_if tav_audio_if = {
 };
 
 void
-tms320av110_attach_mi(sc)
-	struct tav_softc *sc;
+tms320av110_attach_mi(struct tav_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 	tav_write_byte(iot, ioh, TAV_RESET, 1);
 	while (tav_read_byte(iot, ioh, TAV_RESET))
 		delay(250);
@@ -146,12 +147,12 @@ tms320av110_attach_mi(sc)
 }
 
 int
-tms320av110_intr(p)
-	void *p;
+tms320av110_intr(void *p)
 {
-        struct tav_softc *sc = p;
-	u_int16_t intlist;
+	struct tav_softc *sc;
+	uint16_t intlist;
 
+	sc = p;
 	intlist = tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR)
 	    /* & tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR_EN)*/;
 
@@ -181,19 +182,17 @@ struct audio_encoding tav_encodings[] = {
 };
 
 int
-tav_open(hdl, flags)
-	void *hdl;
-	int flags;
+tav_open(void *hdl, int flags)
 {
+
 	/* dummy */
 	return 0;
 }
 
 void
-tav_close(hdl)
-        void *hdl;
+tav_close(void *hdl)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
@@ -208,15 +207,14 @@ tav_close(hdl)
 }
 
 int
-tav_drain(hdl)
-        void *hdl;
+tav_drain(void *hdl)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_int16_t mask;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -238,16 +236,14 @@ tav_drain(hdl)
 		tav_write_short(iot, ioh, TAV_INTR_EN,
 		    mask & ~TAV_INTR_PCM_OUTPUT_UNDERFLOW);
 	}
-	
+
 	return 0;
 }
 
 int
-tav_query_encoding(hdl, ae)
-        void *hdl;
-	struct audio_encoding *ae;
+tav_query_encoding(void *hdl, struct audio_encoding *ae)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 
 	sc = hdl;
 	if (ae->index >= sizeof(tav_encodings)/sizeof(*ae))
@@ -259,44 +255,36 @@ tav_query_encoding(hdl, ae)
 }
 
 int
-tav_start_input(hdl, block, bsize, intr, intrarg)
-	void *hdl;
-	void *block;
-	int bsize;
-	void (*intr) __P((void *));
-	void *intrarg;
+tav_start_input(void *hdl, void *block, int bsize,
+    void (*intr)(void *), void *intrarg)
 {
+
 	return ENOTTY;
 }
 
 int
-tav_halt_input(hdl)
-	void *hdl;
+tav_halt_input(void *hdl)
 {
+
 	return ENOTTY;
 }
 
 int
-tav_start_output(hdl, block, bsize, intr, intrarg)
-	void *hdl;
-	void *block;
-	int bsize;
-	void (*intr) __P((void *));
-	void *intrarg;
+tav_start_output(void *hdl, void *block, int bsize,
+    void (*intr)(void *), void *intrarg)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_int8_t *ptr;
+	uint8_t *ptr;
 	int count;
 
-
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	ptr = block;
 	count = bsize;
-	
+
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
 
@@ -307,16 +295,13 @@ tav_start_output(hdl, block, bsize, intr, intrarg)
 }
 
 int
-tav_init_output(hdl, buffer, size)
-	void *hdl;
-	void *buffer;
-	int size;
+tav_init_output(void *hdl, void *buffer, int size)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -327,14 +312,13 @@ tav_init_output(hdl, buffer, size)
 }
 
 int
-tav_halt_output(hdl)
-	void *hdl;
+tav_halt_output(void *hdl)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -344,15 +328,13 @@ tav_halt_output(hdl)
 }
 
 int
-tav_getdev(hdl, ret)
-	void *hdl;
-	struct audio_device *ret;
+tav_getdev(void *hdl, struct audio_device *ret)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -366,16 +348,14 @@ tav_getdev(hdl, ret)
 }
 
 int
-tav_round_blocksize(hdl, size)
-	void *hdl;
-	int size;
+tav_round_blocksize(void *hdl, int size, int mode, const audio_params_t *param)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int maxhalf;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -393,23 +373,20 @@ tav_round_blocksize(hdl, size)
 }
 
 int
-tav_get_props(hdl)
-        void *hdl;
+tav_get_props(void *hdl)
 {
 	return 0;
 }
 
 int
-tav_set_params(hdl, setmode, usemode, p, r)
-	void *hdl;
-        int setmode, usemode;
-        struct  audio_params *p, *r;
+tav_set_params(void *hdl, int setmode, int usemode, audio_params_t *p,
+    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-        sc = hdl;
+	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -425,16 +402,16 @@ tav_set_params(hdl, setmode, usemode, p, r)
 
 	case AUDIO_ENCODING_SLINEAR_BE:
 
-		/* XXX: todo: add 8bit and mono using software */ 
+		/* XXX: todo: add 8bit and mono using software */
 		p->precision = 16;
 		p->channels = 2;
 
-		/* XXX: this might depend on the specific board. 
+		/* XXX: this might depend on the specific board.
 		   should be handled by the backend */
 
 		p->sample_rate = 44100;
 
-		bus_space_write_1(iot, ioh, TAV_STR_SEL, 
+		bus_space_write_1(iot, ioh, TAV_STR_SEL,
 		    TAV_STR_SEL_AUDIO_BYPASS);
 		break;
 
@@ -476,11 +453,9 @@ tav_set_params(hdl, setmode, usemode, p, r)
 }
 
 int
-tav_set_port(hdl, mc)
-        void *hdl;
-	mixer_ctrl_t *mc;
+tav_set_port(void *hdl, mixer_ctrl_t *mc)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 
 	sc = hdl;
 	/* dummy */
@@ -488,11 +463,9 @@ tav_set_port(hdl, mc)
 }
 
 int
-tav_get_port(hdl, mc)
-        void *hdl;
-	mixer_ctrl_t *mc;
+tav_get_port(void *hdl, mixer_ctrl_t *mc)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 
 	sc = hdl;
 	/* dummy */
@@ -500,19 +473,15 @@ tav_get_port(hdl, mc)
 }
 
 int
-tav_query_devinfo(hdl, di)
-	void *hdl;
-	mixer_devinfo_t *di;
+tav_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
 	return ENXIO;
 }
 
 int
-tav_speaker_ctl(hdl, value)
-	void *hdl;
-	int value;
+tav_speaker_ctl(void *hdl, int value)
 {
-        struct tav_softc *sc;
+	struct tav_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 

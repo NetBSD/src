@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.10 2002/08/26 17:00:42 martin Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.10.6.1 2005/01/17 19:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #define MUTE_LEFT       1
 #define MUTE_RIGHT      2
-#define MUTE_ALL        (MUTE_LEFT | MUTE_RIGHT)
+#define MUTE_ALL	(MUTE_LEFT | MUTE_RIGHT)
 #define MUTE_MONO       MUTE_ALL
 
 #define WAVE_MUTE0	1		/* force mute (overrides UNMUTE1) */
@@ -106,8 +106,8 @@ struct ad1848_softc {
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 
-	int	(*sc_readreg)__P((struct ad1848_softc *, int));
-	void	(*sc_writereg)__P((struct ad1848_softc *, int, int));
+	int	(*sc_readreg)(struct ad1848_softc *, int);
+	void	(*sc_writereg)(struct ad1848_softc *, int, int);
 #define ADREAD(sc, index)		(*(sc)->sc_readreg)(sc, index)
 #define ADWRITE(sc, index, data)	(*(sc)->sc_writereg)(sc, index, data)
 
@@ -122,7 +122,7 @@ struct ad1848_softc {
 	/* ad1848 */
 	u_char	MCE_bit;
 	char	mic_gain_on;		/* CS4231 only */
-        char    mute[AD1848_NUM_CHANNELS];
+	char    mute[AD1848_NUM_CHANNELS];
 
 	char	*chip_name;
 	int	mode;
@@ -147,10 +147,10 @@ struct ad1848_softc {
 #define AUX1_IN_PORT	2
 #define DAC_IN_PORT	3
 
-#define AD1848_KIND_LVL   0
-#define AD1848_KIND_MUTE  1
-#define AD1848_KIND_RECORDGAIN 2
-#define AD1848_KIND_MICGAIN 3
+#define AD1848_KIND_LVL		0
+#define AD1848_KIND_MUTE	1
+#define AD1848_KIND_RECORDGAIN	2
+#define AD1848_KIND_MICGAIN	3
 #define AD1848_KIND_RECORDSOURCE 4
 
 typedef struct ad1848_devmap {
@@ -161,52 +161,49 @@ typedef struct ad1848_devmap {
 
 #ifdef _KERNEL
 
-int	ad_read __P((struct ad1848_softc *, int));
-int	ad_xread __P((struct ad1848_softc *, int));
-void	ad_write __P((struct ad1848_softc *, int, int));
-void	ad_xwrite __P((struct ad1848_softc *, int, int));
+int	ad_read(struct ad1848_softc *, int);
+int	ad_xread(struct ad1848_softc *, int);
+void	ad_write(struct ad1848_softc *, int, int);
+void	ad_xwrite(struct ad1848_softc *, int, int);
 
-void	ad1848_attach __P((struct ad1848_softc *));
-void	ad1848_reset __P((struct ad1848_softc *));
-int	ad1848_open __P((void *, int));
-void	ad1848_close __P((void *));
+void	ad1848_attach(struct ad1848_softc *);
+void	ad1848_reset(struct ad1848_softc *);
+int	ad1848_open(void *, int);
+void	ad1848_close(void *);
 
-int	ad1848_mixer_get_port __P((struct ad1848_softc *, ad1848_devmap_t *,
-				   int, mixer_ctrl_t *));
-int	ad1848_mixer_set_port __P((struct ad1848_softc *, ad1848_devmap_t *,
-				   int, mixer_ctrl_t *));
-int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
-void	ad1848_mute_wave_output __P((struct ad1848_softc *, int, int));
-int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_params __P((void *, int, int, struct audio_params *,
-			       struct audio_params *));
-int	ad1848_round_blocksize __P((void *, int));
-int	ad1848_commit_settings __P((void *));
-int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
-int	ad1848_get_rec_port __P((struct ad1848_softc *));
-int	ad1848_set_channel_gain __P((struct ad1848_softc *, int,
-				     struct ad1848_volume *));
-int	ad1848_get_device_gain __P((struct ad1848_softc *, int,
-				    struct ad1848_volume *));
-int	ad1848_set_rec_gain __P((struct ad1848_softc *,
-				 struct ad1848_volume *));
-int	ad1848_get_rec_gain __P((struct ad1848_softc *,
-				 struct ad1848_volume *));
+int	ad1848_mixer_get_port(struct ad1848_softc *, ad1848_devmap_t *,
+	    int, mixer_ctrl_t *);
+int	ad1848_mixer_set_port(struct ad1848_softc *, ad1848_devmap_t *,
+	    int, mixer_ctrl_t *);
+int	ad1848_set_speed(struct ad1848_softc *, u_int *);
+void	ad1848_mute_wave_output(struct ad1848_softc *, int, int);
+int	ad1848_query_encoding(void *, struct audio_encoding *);
+int	ad1848_set_params(void *, int, int, audio_params_t *,
+	    audio_params_t *, stream_filter_list_t *,
+	    stream_filter_list_t *);
+int	ad1848_round_blocksize(void *, int, int, const audio_params_t *);
+int	ad1848_commit_settings(void *);
+int	ad1848_set_rec_port(struct ad1848_softc *, int);
+int	ad1848_get_rec_port(struct ad1848_softc *);
+int	ad1848_set_channel_gain(struct ad1848_softc *, int,
+	    struct ad1848_volume *);
+int	ad1848_get_device_gain(struct ad1848_softc *, int,
+	    struct ad1848_volume *);
+int	ad1848_set_rec_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	ad1848_get_rec_gain(struct ad1848_softc *, struct ad1848_volume *);
 /* Note: The mic pre-MUX gain is not a variable gain, it's 20dB or 0dB */
-int	ad1848_set_mic_gain __P((struct ad1848_softc *,
-				 struct ad1848_volume *));
-int	ad1848_get_mic_gain __P((struct ad1848_softc *,
-				 struct ad1848_volume *));
-void	ad1848_mute_channel __P((struct ad1848_softc *, int device, int mute));
-int	ad1848_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
-int	ad1848_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+int	ad1848_set_mic_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	ad1848_get_mic_gain(struct ad1848_softc *, struct ad1848_volume *);
+void	ad1848_mute_channel(struct ad1848_softc *, int, int);
+int	ad1848_to_vol(mixer_ctrl_t *, struct ad1848_volume *);
+int	ad1848_from_vol(mixer_ctrl_t *, struct ad1848_volume *);
 
-int	ad1848_halt_output __P((void *));
-int	ad1848_halt_input __P((void *));
-paddr_t	ad1848_mappage __P((void *, void *, off_t, int));
+int	ad1848_halt_output(void *);
+int	ad1848_halt_input(void *);
+paddr_t	ad1848_mappage(void *, void *, off_t, int);
 
 #ifdef AUDIO_DEBUG
-void	ad1848_dump_regs __P((struct ad1848_softc *));
+void	ad1848_dump_regs(struct ad1848_softc *);
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.5.2.6 2004/11/29 07:24:50 skrll Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.5.2.7 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -123,6 +123,6 @@ extern int (**cd9660_specop_p) __P((void *));
 extern int (**cd9660_fifoop_p) __P((void *));
 
 int isochar __P((const u_char *, const u_char *, int, u_int16_t *));
-int isofncmp __P((const u_char *, int, const u_char *, int, int));
+int isofncmp __P((const u_char *, size_t, const u_char *, size_t, int));
 void isofntrans __P((u_char *, int, u_char *, u_short *, int, int, int, int));
 ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));

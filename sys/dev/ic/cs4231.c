@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.12.2.3 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.12.2.4 2005/01/17 19:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.12.2.3 2004/09/21 13:27:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.12.2.4 2005/01/17 19:30:39 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -98,18 +98,14 @@ static int	cs4231_read(struct ad1848_softc *, int);
 static void	cs4231_write(struct ad1848_softc *, int, int);
 
 int
-cs4231_read(sc, index)
-	struct ad1848_softc	*sc;
-	int			index;
+cs4231_read(struct ad1848_softc	*sc, int index)
 {
 
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, (index << 2));
 }
 
 void
-cs4231_write(sc, index, value)
-	struct ad1848_softc	*sc;
-	int			index, value;
+cs4231_write(struct ad1848_softc *sc, int index, int value)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, (index << 2), value);
@@ -117,9 +113,7 @@ cs4231_write(sc, index, value)
 
 
 void
-cs4231_common_attach(sc, ioh)
-	struct cs4231_softc *sc;
-	bus_space_handle_t ioh;
+cs4231_common_attach(struct cs4231_softc *sc, bus_space_handle_t ioh)
 {
 	char *buf;
 	int reg;
@@ -182,46 +176,44 @@ cs4231_common_attach(sc, ioh)
 }
 
 void *
-cs4231_malloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	struct malloc_type *pool;
-	int flags;
+cs4231_malloc(void *addr, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
-	struct cs4231_softc *sc = addr;
-	bus_dma_tag_t dmatag = sc->sc_dmatag;
+	struct cs4231_softc *sc;
+	bus_dma_tag_t dmatag;
 	struct cs_dma *p;
 
+	sc = addr;
+	dmatag = sc->sc_dmatag;
 	p = malloc(sizeof(*p), pool, flags);
 	if (p == NULL)
-		return (NULL);
+		return NULL;
 
 	/* Allocate a DMA map */
 	if (bus_dmamap_create(dmatag, size, 1, size, 0,
-				BUS_DMA_NOWAIT, &p->dmamap) != 0)
+	    BUS_DMA_NOWAIT, &p->dmamap) != 0)
 		goto fail1;
 
 	/* Allocate DMA memory */
 	p->size = size;
 	if (bus_dmamem_alloc(dmatag, size, 64*1024, 0,
-				p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				&p->nsegs, BUS_DMA_NOWAIT) != 0)
+	    p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+	    &p->nsegs, BUS_DMA_NOWAIT) != 0)
 		goto fail2;
 
 	/* Map DMA memory into kernel space */
-	if (bus_dmamem_map(dmatag, p->segs, p->nsegs, p->size, 
-			   &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0)
+	if (bus_dmamem_map(dmatag, p->segs, p->nsegs, p->size,
+	    &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0)
 		goto fail3;
 
 	/* Load the buffer */
 	if (bus_dmamap_load(dmatag, p->dmamap,
-			    p->addr, size, NULL, BUS_DMA_NOWAIT) != 0)
+	    p->addr, size, NULL, BUS_DMA_NOWAIT) != 0)
 		goto fail4;
 
 	p->next = sc->sc_dmas;
 	sc->sc_dmas = p;
-	return (p->addr);
+	return p->addr;
 
 fail4:
 	bus_dmamem_unmap(dmatag, p->addr, p->size);
@@ -231,19 +223,18 @@ fail2:
 	bus_dmamap_destroy(dmatag, p->dmamap);
 fail1:
 	free(p, pool);
-	return (NULL);
+	return NULL;
 }
 
 void
-cs4231_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	struct malloc_type *pool;
+cs4231_free(void *addr, void *ptr, struct malloc_type *pool)
 {
-	struct cs4231_softc *sc = addr;
-	bus_dma_tag_t dmatag = sc->sc_dmatag;
+	struct cs4231_softc *sc;
+	bus_dma_tag_t dmatag;
 	struct cs_dma *p, **pp;
 
+	sc = addr;
+	dmatag = sc->sc_dmatag;
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &(*pp)->next) {
 		if (p->addr != ptr)
 			continue;
@@ -264,15 +255,15 @@ cs4231_free(addr, ptr, pool)
  * for bus dependent trigger_{in,out}put to load into the DMA controller.
  */
 int
-cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
-	struct cs4231_softc *sc;
-	struct cs_transfer *t;
-	bus_addr_t *paddr;
-	bus_size_t *psize;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
+cs4231_transfer_init(
+	struct cs4231_softc *sc,
+	struct cs_transfer *t,
+	bus_addr_t *paddr,
+	bus_size_t *psize,
+	void *start, void *end,
+	int blksize,
+	void (*intr)(void *),
+	void *arg)
 {
 	struct cs_dma *p;
 	vsize_t n;
@@ -280,7 +271,7 @@ cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
 	if (t->t_active) {
 		printf("%s: %s already running\n",
 		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	t->t_intr = intr;
@@ -291,7 +282,7 @@ cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
 	if (p == NULL) {
 		printf("%s: bad %s addr %p\n",
 		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name, start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	n = (char *)end - (char *)start;
@@ -316,17 +307,15 @@ cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
 		 (u_long)*paddr, (u_long)*psize));
 
 	t->t_active = 1;
-	return (0);
+	return 0;
 }
 
 /*
  * Compute next DMA address/counter, update transfer status.
  */
 void
-cs4231_transfer_advance(t, paddr, psize)
-	struct cs_transfer *t;
-	bus_addr_t *paddr;
-	bus_size_t *psize;
+cs4231_transfer_advance(struct cs_transfer *t, bus_addr_t *paddr,
+    bus_size_t *psize)
 {
 	bus_addr_t dmabase, nextaddr;
 	bus_size_t togo;
@@ -351,12 +340,11 @@ cs4231_transfer_advance(t, paddr, psize)
 
 
 int
-cs4231_open(addr, flags)
-	void *addr;
-	int flags;
+cs4231_open(void *addr, int flags)
 {
-	struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc;
 
+	sc = addr;
 	DPRINTF(("sa_open: unit %p\n", sc));
 
 	sc->sc_playback.t_active = 0;
@@ -372,12 +360,11 @@ cs4231_open(addr, flags)
 	ad1848_reset(&sc->sc_ad1848);
 
 	DPRINTF(("sa_open: ok -> sc=%p\n", sc));
-	return (0);
+	return 0;
 }
 
 void
-cs4231_close(addr)
-	void *addr;
+cs4231_close(void *addr)
 {
 
 	DPRINTF(("sa_close: sc=%p\n", addr));
@@ -388,18 +375,16 @@ cs4231_close(addr)
 }
 
 int
-cs4231_getdev(addr, retp)
-        void *addr;
-        struct audio_device *retp;
+cs4231_getdev(void *addr, struct audio_device *retp)
 {
 
-        *retp = cs4231_device;
-        return (0);
+	*retp = cs4231_device;
+	return 0;
 }
 
 static ad1848_devmap_t csmapping[] = {
 	{ CSAUDIO_DAC_LVL, AD1848_KIND_LVL, AD1848_AUX1_CHANNEL },
-	{ CSAUDIO_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL }, 
+	{ CSAUDIO_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL },
 	{ CSAUDIO_MONO_LVL, AD1848_KIND_LVL, AD1848_MONO_CHANNEL },
 	{ CSAUDIO_CD_LVL, AD1848_KIND_LVL, AD1848_AUX2_CHANNEL },
 	{ CSAUDIO_OUTPUT_LVL, AD1848_KIND_LVL, AD1848_MONITOR_CHANNEL },
@@ -418,39 +403,34 @@ static int nummap = sizeof(csmapping) / sizeof(csmapping[0]);
 
 
 int
-cs4231_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4231_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_softc *ac = addr;
+	struct ad1848_softc *ac;
 
 	DPRINTF(("cs4231_set_port: port=%d", cp->dev));
-	return (ad1848_mixer_set_port(ac, csmapping, nummap, cp));
+	ac = addr;
+	return ad1848_mixer_set_port(ac, csmapping, nummap, cp);
 }
 
 int
-cs4231_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+cs4231_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_softc *ac = addr;
+	struct ad1848_softc *ac;
 
 	DPRINTF(("cs4231_get_port: port=%d", cp->dev));
-	return (ad1848_mixer_get_port(ac, csmapping, nummap, cp));
+	ac = addr;
+	return ad1848_mixer_get_port(ac, csmapping, nummap, cp);
 }
 
 int
-cs4231_get_props(addr)
-	void *addr;
+cs4231_get_props(void *addr)
 {
 
-	return (AUDIO_PROP_FULLDUPLEX);
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int
-cs4231_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+cs4231_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 
 	switch(dip->index) {
@@ -535,7 +515,7 @@ cs4231_query_devinfo(addr, dip)
 		dip->prev = CSAUDIO_LINE_IN_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-		
+
 	case CSAUDIO_DAC_MUTE:
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -549,7 +529,7 @@ cs4231_query_devinfo(addr, dip)
 		dip->prev = CSAUDIO_CD_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-		
+
 	case CSAUDIO_MONO_MUTE:
 		dip->mixer_class = CSAUDIO_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -570,7 +550,7 @@ cs4231_query_devinfo(addr, dip)
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
 		dip->un.e.member[1].ord = 1;
 		break;
-		
+
 	case CSAUDIO_REC_LVL:	/* record level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_RECORD_CLASS;
@@ -625,7 +605,7 @@ cs4231_query_devinfo(addr, dip)
 	}
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
 
-	return (0);
+	return 0;
 }
 
 #endif /* NAUDIO > 0 */

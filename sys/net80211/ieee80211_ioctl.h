@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.7.2.4 2004/09/21 13:36:55 skrll Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.7.2.5 2005/01/17 19:32:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -203,6 +203,7 @@ struct ieee80211_bssid {
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
+#define	SIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
 #endif
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

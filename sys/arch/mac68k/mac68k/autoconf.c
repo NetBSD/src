@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58.6.4 2004/11/02 07:50:36 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58.6.5 2005/01/17 19:29:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.4 2004/11/02 07:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.5 2005/01/17 19:29:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,15 +69,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.4 2004/11/02 07:50:36 skrll Exp 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-static void findbootdev __P((void));
-static int target_to_unit __P((u_long, u_long, u_long));
+static void findbootdev(void);
+static int target_to_unit(u_long, u_long, u_long);
 
 /*
  * cpu_configure:
  * called at boot time, configure all devices on the system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	mrg_init();		/* Init Mac ROM Glue */
@@ -90,7 +90,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	findbootdev();
@@ -108,7 +108,7 @@ cpu_rootconf()
 u_long	bootdev;
 
 static void
-findbootdev()
+findbootdev(void)
 {
 	struct device *dv;
 	int major, unit, controller;
@@ -156,8 +156,7 @@ findbootdev()
  * assumes DISK.  It would be nice to allow CD, too...
  */
 static int
-target_to_unit(bus, target, lun)
-	u_long bus, target, lun;
+target_to_unit(u_long bus, u_long target, u_long lun)
 {
 	struct scsibus_softc	*scsi;
 	struct scsipi_periph	*periph;

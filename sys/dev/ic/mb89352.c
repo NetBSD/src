@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.15.2.5 2004/10/19 15:56:55 skrll Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.15.2.6 2005/01/17 19:30:40 skrll Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15.2.5 2004/10/19 15:56:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15.2.6 2005/01/17 19:30:40 skrll Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -911,7 +911,7 @@ spc_msgin(struct spc_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int n;
-	u_int8_t msg;
+	uint8_t msg;
 
 	SPC_TRACE(("spc_msgin  "));
 
@@ -1552,7 +1552,7 @@ spc_datain_pio(struct spc_softc *sc, u_char *p, int n)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int in = 0;
-	u_int8_t intstat, sstat;
+	uint8_t intstat, sstat;
 #define DINAMOUNT 8		/* Full FIFO */
 
 	SPC_TRACE(("spc_datain_pio  "));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2003/02/03 17:10:02 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.2.1 2005/01/17 19:30:09 skrll Exp $	*/
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -6,6 +6,4 @@
 
 #ifdef PPC_OEA
 #include <powerpc/oea/pte.h>
-#elif defined(PPC_IBM4XX)
-#include <powerpc/ibm4xx/pte.h>
 #endif

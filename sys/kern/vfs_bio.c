@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.92.2.7 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.92.2.8 2005/01/17 19:32:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.7 2004/12/18 09:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92.2.8 2005/01/17 19:32:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ static int checkfreelist(struct buf *, struct bqueue *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-#ifndef SOFTDEP
+#if !defined(SOFTDEP) || !defined(FFS)
 struct bio_ops bioops;	/* I/O operation notification */
 #endif
 
@@ -486,6 +486,9 @@ buf_canrelease(void)
 
 	if (bufmem < bufmem_lowater)
 		return 0;
+
+	if (bufmem > bufmem_hiwater)
+		return bufmem - bufmem_hiwater;
 
 	ninvalid += bufqueues[BQ_AGE].bq_bytes;
 

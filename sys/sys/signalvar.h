@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.39.2.3 2004/09/21 13:38:50 skrll Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.39.2.4 2005/01/17 19:33:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -139,7 +139,7 @@ struct ucred;
 /*
  * Machine-independent functions:
  */
-int	coredump __P((struct lwp *));
+int	coredump __P((struct lwp *, const char *));
 int	coredump_netbsd __P((struct lwp *, struct vnode *, struct ucred *));
 void	execsigs __P((struct proc *));
 void	gsignal __P((int, int));

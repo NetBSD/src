@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.7.2.3 2004/09/21 13:18:04 skrll Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.7.2.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -73,8 +73,8 @@ struct mc_softc {
 	u_int8_t	sc_enaddr[6];
 	u_int8_t	sc_pad[2];
 	int		sc_havecarrier; /* carrier status */
-	void		(*sc_bus_init) __P((struct mc_softc *));
-	void		(*sc_putpacket) __P((struct mc_softc *, u_int));
+	void		(*sc_bus_init)(struct mc_softc *);
+	void		(*sc_putpacket)(struct mc_softc *, u_int);
 
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
@@ -86,8 +86,8 @@ struct mc_softc {
 	int		sc_txset, sc_txseti;
 };
 
-int	mcsetup __P((struct mc_softc *, u_int8_t *));
-void	mcintr __P((void *arg));
-void	mc_rint __P((struct mc_softc *sc));
-u_char	mc_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-	    bus_size_t o, u_char *dst));
+int	mcsetup(struct mc_softc *, u_int8_t *);
+void	mcintr(void *arg);
+void	mc_rint(struct mc_softc *);
+u_char	mc_get_enaddr(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+		      u_char *);

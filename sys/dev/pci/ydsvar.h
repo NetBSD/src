@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.2.16.2 2004/11/29 07:24:17 skrll Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.2.16.3 2005/01/17 19:31:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -92,7 +92,7 @@ struct yds_softc {
 	 */
 	struct yds_dma			sc_ctrldata;
 	/* KVA and offset in buffer of play ctrl data tbl */
-	u_int32_t			*ptbl;
+	uint32_t			*ptbl;
 	off_t				ptbloff;
 	/* KVA and offset in buffer of rec slot ctrl data */
 	struct rec_slot_ctrl_bank	*rbank;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dio.c,v 1.1.4.5 2004/09/21 13:15:13 skrll Exp $	*/
+/*	$NetBSD: com_dio.c,v 1.1.4.6 2005/01/17 19:29:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.1.4.5 2004/09/21 13:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.1.4.6 2005/01/17 19:29:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ com_dio_cnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
 	bus_space_tag_t iot = &comcntag;
 	bus_space_handle_t iohdca;
-	u_int8_t id;
+	uint8_t id;
 
 	memcpy(iot, bst, sizeof(struct bus_space_tag));
 	dio_set_bus_space_oddbyte(iot);

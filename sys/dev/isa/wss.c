@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.60.6.1 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: wss.c,v 1.60.6.2 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.60.6.1 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.60.6.2 2005/01/17 19:31:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +74,11 @@ struct audio_device wss_device = {
 	"WSS"
 };
 
-int	wss_getdev __P((void *, struct audio_device *));
+int	wss_getdev(void *, struct audio_device *);
 
-int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
+int	wss_mixer_set_port(void *, mixer_ctrl_t *);
+int	wss_mixer_get_port(void *, mixer_ctrl_t *);
+int	wss_query_devinfo(void *, mixer_devinfo_t *);
 
 /*
  * Define our interface to the higher level audio driver.
@@ -119,27 +119,24 @@ const struct audio_hw_if wss_hw_if = {
  * pseudo-device driver .
  */
 void
-wssattach(sc)
-	struct wss_softc *sc;
+wssattach(struct wss_softc *sc)
 {
-	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
-
+	struct ad1848_softc *ac;
 #if 0 /* loses on CS423X chips */
 	int version;
 #endif
-    
+
+	ac = &sc->sc_ad1848.sc_ad1848;
 	madattach(sc);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
-						 IST_EDGE, 
-						 IPL_AUDIO, ad1848_isa_intr,
-						 &sc->sc_ad1848);
+	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, &sc->sc_ad1848);
 
 	ad1848_isa_attach(&sc->sc_ad1848);
-    
+
 #if 0 /* loses on CS423X chips */
-	version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) 
-		  & WSS_VERSMASK;
+	version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS)
+	    & WSS_VERSMASK;
 	printf(" (vers %d)", version);
 #endif
 
@@ -175,10 +172,9 @@ wssattach(sc)
 }
 
 int
-wss_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+wss_getdev(void *addr, struct audio_device *retp)
 {
+
 	*retp = wss_device;
 	return 0;
 }
@@ -199,32 +195,28 @@ static ad1848_devmap_t mappings[] = {
 static int nummap = sizeof(mappings) / sizeof(mappings[0]);
 
 int
-wss_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+wss_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_softc *ac = addr;
+	struct ad1848_softc *ac;
 
-	return (ad1848_mixer_set_port(ac, mappings, nummap, cp));
+	ac = addr;
+	return ad1848_mixer_set_port(ac, mappings, nummap, cp);
 }
 
 int
-wss_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+wss_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_softc *ac = addr;
+	struct ad1848_softc *ac;
 
-	return (ad1848_mixer_get_port(ac, mappings, nummap, cp));
+	ac = addr;
+	return ad1848_mixer_get_port(ac, mappings, nummap, cp);
 }
 
 int
-wss_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+wss_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
+
 	DPRINTF(("wss_query_devinfo: index=%d\n", dip->index));
-
 	switch(dip->index) {
 	case WSS_MIC_IN_LVL:	/* Microphone */
 		dip->type = AUDIO_MIXER_VALUE;
@@ -235,7 +227,7 @@ wss_query_devinfo(addr, dip)
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
-		
+
 	case WSS_LINE_IN_LVL:	/* line/CD */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = WSS_INPUT_CLASS;
@@ -245,7 +237,7 @@ wss_query_devinfo(addr, dip)
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
-		
+
 	case WSS_DAC_LVL:		/*  dacout */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = WSS_INPUT_CLASS;
@@ -255,7 +247,7 @@ wss_query_devinfo(addr, dip)
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
-		
+
 	case WSS_REC_LVL:	/* record level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = WSS_RECORD_CLASS;
@@ -265,7 +257,7 @@ wss_query_devinfo(addr, dip)
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
-		
+
 	case WSS_MONITOR_LVL:	/* monitor level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = WSS_MONITOR_CLASS;
@@ -275,42 +267,42 @@ wss_query_devinfo(addr, dip)
 		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
-		
+
 	case WSS_INPUT_CLASS:			/* input class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = WSS_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCinputs);
 		break;
-		
+
 	case WSS_MONITOR_CLASS:			/* monitor class descriptor */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = WSS_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCmonitor);
 		break;
-		
+
 	case WSS_RECORD_CLASS:			/* record source class */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = WSS_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCrecord);
 		break;
-		
+
 	case WSS_MIC_IN_MUTE:
 		dip->mixer_class = WSS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = WSS_MIC_IN_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-		
+
 	case WSS_LINE_IN_MUTE:
 		dip->mixer_class = WSS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = WSS_LINE_IN_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-		
+
 	case WSS_DAC_MUTE:
 		dip->mixer_class = WSS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -331,7 +323,7 @@ wss_query_devinfo(addr, dip)
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
 		dip->un.e.member[1].ord = 1;
 		break;
-		
+
 	case WSS_RECORD_SOURCE:
 		dip->mixer_class = WSS_RECORD_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -352,7 +344,7 @@ wss_query_devinfo(addr, dip)
 		/*NOTREACHED*/
 	}
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
-	
+
 	return 0;
 }
 
@@ -391,14 +383,12 @@ wss_query_devinfo(addr, dip)
  */
 
 u_int
-mad_read(sc, port)
-	struct wss_softc *sc;
-	int port;
+mad_read(struct wss_softc *sc, int port)
 {
 	u_int tmp;
 	int pwd;
 	int s;
-	
+
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
 	case MAD_OTI601D:
@@ -421,14 +411,11 @@ mad_read(sc, port)
 }
 
 void
-mad_write(sc, port, value)
-	struct wss_softc *sc;
-	int port;
-	int value;
+mad_write(struct wss_softc *sc, int port, int value)
 {
 	int pwd;
 	int s;
-	
+
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
 	case MAD_OTI601D:
@@ -450,28 +437,28 @@ mad_write(sc, port, value)
 }
 
 void
-madattach(sc)
-	struct wss_softc *sc;
+madattach(struct wss_softc *sc)
 {
-	struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
+	struct ad1848_softc *ac;
 	unsigned char cs4231_mode;
 	int joy;
-	
+
+	ac = (struct ad1848_softc *)&sc->sc_ad1848;
 	if (sc->mad_chip_type == MAD_NONE)
 		return;
-	
+
 	/* Do we want the joystick disabled? */
 	joy = ac->sc_dev.dv_cfdata->cf_flags & 2 ? MC1_JOYDISABLE : 0;
-	
+
 	/* enable WSS emulation at the I/O port */
 	mad_write(sc, MC1_PORT, M_WSS_PORT_SELECT(sc->mad_ioindex) | joy);
 	mad_write(sc, MC2_PORT, MC2_NO_CD_DRQ); /* disable CD */
 	mad_write(sc, MC3_PORT, 0xf0); /* Disable SB */
-	
-	cs4231_mode = 
+
+	cs4231_mode =
 		strncmp(ac->chip_name, "CS4248", 6) == 0 ||
 		strncmp(ac->chip_name, "CS4231", 6) == 0 ? 0x02 : 0;
-	
+
 	if (sc->mad_chip_type == MAD_82C929) {
 		mad_write(sc, MC4_PORT, 0x92);
 		mad_write(sc, MC5_PORT, 0xA5 | cs4231_mode);
@@ -480,12 +467,12 @@ madattach(sc)
 		mad_write(sc, MC4_PORT, 0x02);
 		mad_write(sc, MC5_PORT, 0x30 | cs4231_mode);
 	}
-	
+
 #ifdef AUDIO_DEBUG
 	if (wssdebug) {
 		int i;
 		for (i = MC1_PORT; i <= MC7_PORT; i++)
-			DPRINTF(("port %03x after init = %02x\n", 
+			DPRINTF(("port %03x after init = %02x\n",
 				 i, mad_read(sc, i)));
 	}
 #endif

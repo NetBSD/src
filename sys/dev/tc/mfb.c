@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.37.2.4 2004/11/21 08:53:49 skrll Exp $ */
+/* $NetBSD: mfb.c,v 1.37.2.5 2005/01/17 19:31:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37.2.4 2004/11/21 08:53:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.37.2.5 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ mfbioctl(v, cmd, data, flag, l)
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
-		if ((sc->sc_blanked == 0) ^ turnoff) {
+		if (sc->sc_blanked != turnoff) {
 			sc->sc_blanked = turnoff;
 #if 0	/* XXX later XXX */
 	To turn off,

@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.h,v 1.43.2.5 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.43.2.6 2005/01/17 19:33:10 skrll Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.41 2004/09/21 03:10:35 thorpej Exp 
+ *	NetBSD: vnode_if.src,v 1.35.2.5 2004/09/24 10:53:43 skrll Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.35 2004/09/21 03:10:35 thorpej Exp 
+ *	NetBSD: vnode_if.sh,v 1.32.2.5 2004/09/24 10:53:43 skrll Exp 
  */
 
 /*
@@ -1194,7 +1194,6 @@ static __inline int VOP_INACTIVE(vp, l)
 #endif
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
-	a.a_l = l;
 #ifdef VNODE_LOCKDEBUG
 	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
 	if (islocked_vp != 1)
@@ -1960,6 +1959,277 @@ static __inline int VOP_PUTPAGES(vp, offlo, offhi, flags)
 }
 #endif
 
+struct vop_closeextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_commit;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_closeextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_CLOSEEXTATTR(struct vnode *, int, struct ucred *, struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_CLOSEEXTATTR(vp, commit, cred, l)
+	struct vnode *vp;
+	int commit;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_closeextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_closeextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_closeextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_commit = commit;
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_closeextattr), &a));
+}
+#endif
+
+struct vop_getextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	const char *a_name;
+	struct uio *a_uio;
+	size_t *a_size;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_getextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_GETEXTATTR(struct vnode *, int, const char *, struct uio *, 
+    size_t *, struct ucred *, struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_GETEXTATTR(vp, attrnamespace, name, uio, size, cred, l)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct uio *uio;
+	size_t *size;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_getextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_getextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_getextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_uio = uio;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_getextattr), &a));
+}
+#endif
+
+struct vop_listextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	struct uio *a_uio;
+	size_t *a_size;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_listextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_LISTEXTATTR(struct vnode *, int, struct uio *, size_t *, 
+    struct ucred *, struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_LISTEXTATTR(vp, attrnamespace, uio, size, cred, l)
+	struct vnode *vp;
+	int attrnamespace;
+	struct uio *uio;
+	size_t *size;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_listextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_listextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_listextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_uio = uio;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_listextattr), &a));
+}
+#endif
+
+struct vop_openextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_openextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_OPENEXTATTR(struct vnode *, struct ucred *, struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_OPENEXTATTR(vp, cred, l)
+	struct vnode *vp;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_openextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_openextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_openextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_openextattr), &a));
+}
+#endif
+
+struct vop_deleteextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	const char *a_name;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_deleteextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_DELETEEXTATTR(struct vnode *, int, const char *, struct ucred *, 
+    struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_DELETEEXTATTR(vp, attrnamespace, name, cred, l)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_deleteextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_deleteextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_deleteextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_deleteextattr), &a));
+}
+#endif
+
+struct vop_setextattr_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	const char *a_name;
+	struct uio *a_uio;
+	struct ucred *a_cred;
+	struct lwp *a_l;
+};
+extern const struct vnodeop_desc vop_setextattr_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_SETEXTATTR(struct vnode *, int, const char *, struct uio *, 
+    struct ucred *, struct lwp *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_SETEXTATTR(vp, attrnamespace, name, uio, cred, l)
+	struct vnode *vp;
+	int attrnamespace;
+	const char *name;
+	struct uio *uio;
+	struct ucred *cred;
+	struct lwp *l;
+{
+	struct vop_setextattr_args a;
+#ifdef VNODE_LOCKDEBUG
+	int islocked_vp;
+#endif
+	a.a_desc = VDESC(vop_setextattr);
+	a.a_vp = vp;
+#ifdef VNODE_LOCKDEBUG
+	islocked_vp = (vp->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) : 1;
+	if (islocked_vp != 1)
+		panic("vop_setextattr: vp: locked %d, expected %d", islocked_vp, 1);
+#endif
+	a.a_attrnamespace = attrnamespace;
+	a.a_name = name;
+	a.a_uio = uio;
+	a.a_cred = cred;
+	a.a_l = l;
+	return (VCALL(vp, VOFFSET(vop_setextattr), &a));
+}
+#endif
+
 /* Special cases: */
 #include <sys/buf.h>
 
@@ -1989,7 +2259,7 @@ static __inline int VOP_BWRITE(bp)
 }
 #endif
 
-#define VNODE_OPS_COUNT	50
+#define VNODE_OPS_COUNT	56
 
 /* End of special cases. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.5.2.3 2004/09/21 13:17:56 skrll Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.5.2.4 2005/01/17 19:29:29 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.3 2004/09/21 13:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.4 2005/01/17 19:29:29 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -247,7 +247,7 @@ vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
-struct vm_map	st_map_store, pt_map_store;
+struct vm_map_kernel st_map_store, pt_map_store;
 
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */

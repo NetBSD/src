@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.18.24.3 2004/09/21 13:29:43 skrll Exp $	*/
+/*	$NetBSD: essvar.h,v 1.18.24.4 2005/01/17 19:31:11 skrll Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.18.24.3 $ (SHARK) $Date: 2004/09/21 13:29:43 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.18.24.4 $ (SHARK) $Date: 2005/01/17 19:31:11 $
 **
 **++
 **
@@ -106,7 +106,7 @@ struct ess_audio_channel
 	int	ist;
 	void	*ih;			/* interrupt vectoring */
 	u_long	nintr;			/* number of interrupts taken */
-	void	(*intr)__P((void*));	/* ISR for DMA complete */
+	void	(*intr)(void*);		/* ISR for DMA complete */
 	void	*arg;			/* arg for intr() */
 
 	/* Status information */
@@ -135,17 +135,17 @@ struct ess_softc
 
 	u_short	sc_open;		/* reference count of open calls */
 
-	int ndevs; 
+	int ndevs;
 	u_char	gain[ESS_MAX_NDEVS][2];	/* kept in input levels */
 #define ESS_LEFT 0
 #define ESS_RIGHT 1
-	
+
 	u_int	out_port;		/* output port */
 	u_int	in_mask;		/* input ports */
 	u_int	in_port;		/* XXX needed for MI interface */
 
 	u_int	spkr_state;		/* non-null is on */
-	
+
 	struct ess_audio_channel sc_audio1; /* audio channel for record */
 	struct ess_audio_channel sc_audio2; /* audio channel for playback */
 
@@ -169,7 +169,7 @@ struct ess_softc
 	bus_space_handle_t sc_joy_ioh;
 };
 
-int	essmatch __P((struct ess_softc *));
-void	essattach __P((struct ess_softc *, int));
-int	ess_config_addr __P((struct ess_softc *));
+int	essmatch(struct ess_softc *);
+void	essattach(struct ess_softc *, int);
+int	ess_config_addr(struct ess_softc *);
 

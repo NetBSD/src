@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.6.2.3 2004/09/21 13:21:19 skrll Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.6.2.4 2005/01/17 19:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.6.2.3 2004/09/21 13:21:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.6.2.4 2005/01/17 19:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 	if (sc->hpc->revision == 3)
 	{
 		hva->hpc3_hdd_bufptr  = 0;
-		hva->hpc3_hdd_ctl     = HDD_CTL_EOCHAIN;
+		hva->hpc3_hdd_ctl     = HPC3_HDD_CTL_EOCHAIN;
 		hva->hdd_descptr = 0;
 		hva++;
 	} else {

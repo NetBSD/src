@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.52.2.3 2004/09/21 13:39:23 skrll Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.52.2.4 2005/01/17 19:33:11 skrll Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.52.2.3 2004/09/21 13:39:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.52.2.4 2005/01/17 19:33:11 skrll Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -741,10 +741,10 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 			UVMHIST_LOG(maphist, "  chunk amap ==> clip 0x%x->0x%x"
 			    "to 0x%x->0x%x", entry->start, entry->end, startva,
 			    endva);
-			UVM_MAP_CLIP_START(map, entry, startva);
+			UVM_MAP_CLIP_START(map, entry, startva, NULL);
 			/* watch out for endva wrap-around! */
 			if (endva >= startva)
-				UVM_MAP_CLIP_END(map, entry, endva);
+				UVM_MAP_CLIP_END(map, entry, endva, NULL);
 		}
 
 		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]",

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4.2.7 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.7 2005/01/17 19:32:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ filecore_read(v)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
+			int flags;
 			vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
 					      uio->uio_resid);
 
@@ -210,7 +211,8 @@ filecore_read(v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error) {
 				break;
 			}

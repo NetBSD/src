@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.6 2004/10/19 15:58:04 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.7 2005/01/17 19:32:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.6 2004/10/19 15:58:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.7 2005/01/17 19:32:25 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.6 2004/10/19 15:58:04 skrll Exp
 #include <uvm/uvm_extern.h>
 
 static void	child_psignal(struct proc *, int);
-static int	build_corename(struct proc *, char [MAXPATHLEN]);
+static int	build_corename(struct proc *, char *, const char *, size_t);
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
@@ -1390,9 +1390,12 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 			le = l;
 		else
 			li = l;
-
-		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
-			    sizeof(siginfo_t), si);
+		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
+		    sizeof(*si), si) != 0) {
+			pool_put(&siginfo_pool, si);
+			if (KSI_TRAP_P(ksi))
+				/* XXX What do we do here?? */;
+		}
 		l->l_flag |= f;
 		return;
 	}
@@ -2007,7 +2010,7 @@ sigexit(struct lwp *l, int signum)
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigctx.ps_signo = signum;
-		if ((error = coredump(l)) == 0)
+		if ((error = coredump(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {
@@ -2034,7 +2037,7 @@ sigexit(struct lwp *l, int signum)
  * value of shortcorename), unless the process was setuid/setgid.
  */
 int
-coredump(struct lwp *l)
+coredump(struct lwp *l, const char *pattern)
 {
 	struct vnode		*vp;
 	struct proc		*p;
@@ -2076,8 +2079,9 @@ restart:
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);
 
-	error = build_corename(p, name);
-	if (error)
+	if (pattern == NULL)
+		pattern = p->p_limit->pl_corename;
+	if ((error = build_corename(p, name, pattern, sizeof(name))) != 0)
 		return error;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
@@ -2135,14 +2139,13 @@ sys_nosys(struct lwp *l, void *v, register_t *retval)
 }
 
 static int
-build_corename(struct proc *p, char dst[MAXPATHLEN])
+build_corename(struct proc *p, char *dst, const char *src, size_t len)
 {
 	const char	*s;
 	char		*d, *end;
 	int		i;
 	
-	for (s = p->p_limit->pl_corename, d = dst, end = d + MAXPATHLEN;
-	    *s != '\0'; s++) {
+	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {
 			switch (*(s + 1)) {
 			case 'n':

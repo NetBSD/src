@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.4.2.3 2004/09/21 13:21:48 skrll Exp $
+#	$NetBSD: majors.shark,v 1.4.2.4 2005/01/17 19:30:19 skrll Exp $
 #
 # Device majors for shark
 #
@@ -8,7 +8,7 @@ device-major	swap		char 1   block 1
 device-major	cons		char 2
 device-major	ctty		char 3
 device-major	pc		char 4			pc
-device-major	ofcons		char 4			!pc & ofwgencfg
+device-major	ofcons		char 4			!pc & ofcons
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
@@ -47,8 +47,13 @@ device-major	joy		char 56			joy
 device-major	midi		char 57			midi
 device-major	sequencer	char 58			sequencer
 device-major	vcoda		char 59			vcoda
+device-major	wsdisplay	char 60			wsdisplay
+device-major	wskbd		char 61			wskbd
+device-major	wsmouse		char 62			wsmouse
 
 device-major	raid		char 71  block 71	raid
+
+device-major	wsmux		char 73			wsmux
 
 device-major	openfirm	char 77			ofwgencfg
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.4 2004/11/02 07:50:36 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.3.6.5 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.4 2004/11/02 07:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.3.6.5 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,32 +131,30 @@ typedef struct netdock_softc {
 
 /***********************/
 
-static int	netdock_nubus_match __P((struct device *, struct cfdata *,
-			void*));
-static void	netdock_nubus_attach __P((struct device *, struct device *,
-			void *));
-static int	netdock_nb_get_enaddr __P((bus_space_tag_t, bus_space_handle_t,
-			struct nubus_attach_args *, u_int8_t  *));
+static int	netdock_nubus_match(struct device *, struct cfdata *, void *);
+static void	netdock_nubus_attach(struct device *, struct device *, void *);
+static int	netdock_nb_get_enaddr(bus_space_tag_t, bus_space_handle_t,
+			struct nubus_attach_args *, u_int8_t *);
 #ifdef NETDOCK_DEBUG_DRIVER
-static void	netdock_print_driver __P((bus_space_tag_t, bus_space_handle_t,
-			struct nubus_attach_args *));
+static void	netdock_print_driver(bus_space_tag_t, bus_space_handle_t,
+			struct nubus_attach_args *);
 #endif
 
-int	netdock_setup __P((struct netdock_softc *, u_int8_t *));
-void	netdock_intr __P((void *));
+int	netdock_setup(struct netdock_softc *, u_int8_t *);
+void	netdock_intr(void *);
 
-static void	netdock_watchdog __P((struct ifnet *));
-static int	netdock_init __P((struct netdock_softc *));
-static int	netdock_stop __P((struct netdock_softc *));
-static int	netdock_ioctl __P((struct ifnet *, u_long, caddr_t));
-static void	netdock_start __P((struct ifnet *));
-static void	netdock_reset __P((struct netdock_softc *));
-static void	netdock_txint __P((struct netdock_softc *));
-static void	netdock_rxint __P((struct netdock_softc *));
+static void	netdock_watchdog(struct ifnet *);
+static int	netdock_init(struct netdock_softc *);
+static int	netdock_stop(struct netdock_softc *);
+static int	netdock_ioctl(struct ifnet *, u_long, caddr_t);
+static void	netdock_start(struct ifnet *);
+static void	netdock_reset(struct netdock_softc *);
+static void	netdock_txint(struct netdock_softc *);
+static void	netdock_rxint(struct netdock_softc *);
 
-static u_int	netdock_put __P((struct netdock_softc *, struct mbuf *));
-static int	netdock_read __P((struct netdock_softc *, int));
-static struct mbuf *netdock_get __P((struct netdock_softc *, int));
+static u_int	netdock_put(struct netdock_softc *, struct mbuf *);
+static int	netdock_read(struct netdock_softc *, int);
+static struct mbuf *netdock_get(struct netdock_softc *, int);
 
 /***********************/
 
@@ -195,10 +193,7 @@ CFATTACH_DECL(netdock_nubus, sizeof(struct netdock_softc),
 /***********************/
 
 static int
-netdock_nubus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+netdock_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -230,9 +225,7 @@ netdock_nubus_match(parent, cf, aux)
 }
 
 static void
-netdock_nubus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+netdock_nubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct netdock_softc *sc = (struct netdock_softc *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
@@ -279,11 +272,8 @@ netdock_nubus_attach(parent, self, aux)
 }
 
 static int
-netdock_nb_get_enaddr(bst, bsh, na, ep)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
-	u_int8_t *ep;
+netdock_nb_get_enaddr(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na, u_int8_t *ep)
 {
 	nubus_dir dir;
 	nubus_dirent dirent;
@@ -306,10 +296,8 @@ netdock_nb_get_enaddr(bst, bsh, na, ep)
 
 #ifdef NETDOCK_DEBUG_DRIVER
 static void
-netdock_print_driver(bst, bsh, na)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
+netdock_print_driver(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na)
 {
 #define HEADSIZE	(8+4)
 #define CODESIZE	(6759-4)
@@ -363,17 +351,15 @@ netdock_print_driver(bst, bsh, na)
 
 
 int
-netdock_setup(sc, lladdr)
-	struct netdock_softc *sc;
-	u_int8_t *lladdr;
+netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	bcopy(lladdr, sc->sc_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_enaddr, lladdr, ETHER_ADDR_LEN);
 	printf("%s: Ethernet address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(lladdr));
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = netdock_ioctl;
 	ifp->if_start = netdock_start;
@@ -388,10 +374,7 @@ netdock_setup(sc, lladdr)
 }
 
 static int
-netdock_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+netdock_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -459,8 +442,7 @@ netdock_ioctl(ifp, cmd, data)
 }
 
 static void
-netdock_start(ifp)
-	struct ifnet *ifp;
+netdock_start(struct ifnet *ifp)
 {
 	struct netdock_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -493,8 +475,7 @@ netdock_start(ifp)
 }
 
 static void
-netdock_reset(sc)
-	struct netdock_softc *sc;
+netdock_reset(struct netdock_softc *sc)
 {
 
 	netdock_stop(sc);
@@ -502,8 +483,7 @@ netdock_reset(sc)
 }
 
 static int
-netdock_init(sc)
-	struct netdock_softc *sc;
+netdock_init(struct netdock_softc *sc)
 {
 	int s;
 	int saveisr;
@@ -562,8 +542,7 @@ netdock_init(sc)
 }
 
 static int
-netdock_stop(sc)
-	struct netdock_softc *sc;
+netdock_stop(struct netdock_softc *sc)
 {
 	int s = splnet();
 
@@ -575,8 +554,7 @@ netdock_stop(sc)
 }
 
 static void
-netdock_watchdog(ifp)
-	struct ifnet *ifp;
+netdock_watchdog(struct ifnet *ifp)
 {
 	struct netdock_softc *sc = ifp->if_softc;
 	int tmp;
@@ -588,9 +566,7 @@ netdock_watchdog(ifp)
 }
 
 static u_int
-netdock_put(sc, m0)
-	struct netdock_softc *sc;
-	struct mbuf *m0;
+netdock_put(struct netdock_softc *sc, struct mbuf *m0)
 {
 	struct mbuf *m;
 	u_int totlen = 0;
@@ -653,8 +629,7 @@ netdock_put(sc, m0)
 }
 
 void
-netdock_intr(arg)
-	void *arg;
+netdock_intr(void *arg)
 {
 	struct netdock_softc *sc = (struct netdock_softc *)arg;
 	int isr;
@@ -691,8 +666,7 @@ netdock_intr(arg)
 }
 
 static void
-netdock_txint(sc)
-	struct netdock_softc *sc;
+netdock_txint(struct netdock_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	int savereg0002;
@@ -733,8 +707,7 @@ netdock_txint(sc)
 }
 
 static void
-netdock_rxint(sc)
-	struct netdock_softc *sc;
+netdock_rxint(struct netdock_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	int regdata1;
@@ -788,9 +761,7 @@ netdock_rxint(sc)
 }
 
 static int
-netdock_read(sc, len)
-	struct netdock_softc *sc;
-	int len;
+netdock_read(struct netdock_softc *sc, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
@@ -813,9 +784,7 @@ netdock_read(sc, len)
 }
 
 static struct mbuf *
-netdock_get(sc, datalen)
-	struct netdock_softc *sc;
-	int datalen;
+netdock_get(struct netdock_softc *sc, int datalen)
 {
 	struct mbuf *m, *top, **mp;
 	u_char *data;

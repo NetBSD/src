@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.22.2.5 2004/11/02 07:52:09 skrll Exp $      */
+/*      $NetBSD: esm.c,v 1.22.2.6 2005/01/17 19:31:24 skrll Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.22.2.5 2004/11/02 07:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.22.2.6 2005/01/17 19:31:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,29 +122,29 @@ int esm_debug = 0xfffc;
 
 #define inline __inline
 
-static inline void	 ringbus_setdest(struct esm_softc *, int, int);
+static inline void	ringbus_setdest(struct esm_softc *, int, int);
 
-static inline u_int16_t	wp_rdreg(struct esm_softc *, u_int16_t);
-static inline void	wp_wrreg(struct esm_softc *, u_int16_t, u_int16_t);
-static inline u_int16_t	wp_rdapu(struct esm_softc *, int, u_int16_t);
-static inline void	wp_wrapu(struct esm_softc *, int, u_int16_t,
-			    u_int16_t);
+static inline uint16_t	wp_rdreg(struct esm_softc *, uint16_t);
+static inline void	wp_wrreg(struct esm_softc *, uint16_t, uint16_t);
+static inline uint16_t	wp_rdapu(struct esm_softc *, int, uint16_t);
+static inline void	wp_wrapu(struct esm_softc *, int, uint16_t,
+			    uint16_t);
 static inline void	wp_settimer(struct esm_softc *, u_int);
 static inline void	wp_starttimer(struct esm_softc *);
 static inline void	wp_stoptimer(struct esm_softc *);
 
-static inline u_int16_t	wc_rdreg(struct esm_softc *, u_int16_t);
-static inline void	wc_wrreg(struct esm_softc *, u_int16_t, u_int16_t);
-static inline u_int16_t	wc_rdchctl(struct esm_softc *, int);
-static inline void	wc_wrchctl(struct esm_softc *, int, u_int16_t);
+static inline uint16_t	wc_rdreg(struct esm_softc *, uint16_t);
+static inline void	wc_wrreg(struct esm_softc *, uint16_t, uint16_t);
+static inline uint16_t	wc_rdchctl(struct esm_softc *, int);
+static inline void	wc_wrchctl(struct esm_softc *, int, uint16_t);
 
 static inline u_int	calc_timer_freq(struct esm_chinfo*);
 static void		set_timer(struct esm_softc *);
 
 static void		esmch_set_format(struct esm_chinfo *,
-			    struct audio_params *p);
+			    const audio_params_t *);
 static void		esmch_combine_input(struct esm_softc *,
-			    struct esm_chinfo *ch);
+			    struct esm_chinfo *);
 
 /* Power Management */
 void esm_powerhook(int, void *);
@@ -153,8 +153,8 @@ CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
 
 const struct audio_hw_if esm_hw_if = {
-	esm_open,
-	esm_close,
+	NULL,				/* open */
+	NULL,				/* close */
 	NULL,				/* drain */
 	esm_query_encoding,
 	esm_set_params,
@@ -188,24 +188,33 @@ struct audio_device esm_device = {
 	"esm"
 };
 
-
-static audio_encoding_t esm_encoding[] = {
-	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 0 }, 
+#define MAESTRO_NENCODINGS 8
+static audio_encoding_t esm_encoding[MAESTRO_NENCODINGS] = {
+	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 0 },
 	{ 1, AudioEmulaw, AUDIO_ENCODING_ULAW, 8,
-		AUDIO_ENCODINGFLAG_EMULATED }, 
-	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8, AUDIO_ENCODINGFLAG_EMULATED }, 
-	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 0 }, 
-	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 0 }, 
+		AUDIO_ENCODINGFLAG_EMULATED },
+	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8, AUDIO_ENCODINGFLAG_EMULATED },
+	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8, 0 },
+	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16, 0 },
 	{ 5, AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED }, 
+		AUDIO_ENCODINGFLAG_EMULATED },
 	{ 6, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED }, 
+		AUDIO_ENCODINGFLAG_EMULATED },
 	{ 7, AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE, 16,
-		AUDIO_ENCODINGFLAG_EMULATED }, 
+		AUDIO_ENCODINGFLAG_EMULATED },
 };
 
-#define MAESTRO_NENCODINGS 8
-
+#define ESM_NFORMATS	4
+static const struct audio_format esm_formats[ESM_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+};
 
 static const struct esm_quirks esm_quirks[] = {
 	/* COMPAL 38W2 OEM Notebook, e.g. Dell INSPIRON 5000e */
@@ -301,11 +310,12 @@ esm_dump_regs(struct esm_softc *ess)
 /* -------------------------------------------------------------------- */
 
 int
-esm_read_codec(void *sc, u_int8_t regno, u_int16_t *result)
+esm_read_codec(void *sc, uint8_t regno, uint16_t *result)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 	unsigned t;
 
+	ess = sc;
 	/* We have to wait for a SAFE time to write addr/data */
 	for (t = 0; t < 20; t++) {
 		if ((bus_space_read_1(ess->st, ess->sh, PORT_CODEC_STAT)
@@ -339,11 +349,12 @@ esm_read_codec(void *sc, u_int8_t regno, u_int16_t *result)
 }
 
 int
-esm_write_codec(void *sc, u_int8_t regno, u_int16_t data)
+esm_write_codec(void *sc, uint8_t regno, uint16_t data)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 	unsigned t;
 
+	ess = sc;
 	/* We have to wait for a SAFE time to write addr/data */
 	for (t = 0; t < 20; t++) {
 		if ((bus_space_read_1(ess->st, ess->sh, PORT_CODEC_STAT)
@@ -370,7 +381,7 @@ esm_write_codec(void *sc, u_int8_t regno, u_int16_t data)
 static inline void
 ringbus_setdest(struct esm_softc *ess, int src, int dest)
 {
-	u_int32_t data;
+	uint32_t data;
 
 	data = bus_space_read_4(ess->st, ess->sh, PORT_RINGBUS_CTRL);
 	data &= ~(0xfU << src);
@@ -380,22 +391,24 @@ ringbus_setdest(struct esm_softc *ess, int src, int dest)
 
 /* Wave Processor */
 
-static inline u_int16_t
-wp_rdreg(struct esm_softc *ess, u_int16_t reg)
+static inline uint16_t
+wp_rdreg(struct esm_softc *ess, uint16_t reg)
 {
+
 	bus_space_write_2(ess->st, ess->sh, PORT_DSP_INDEX, reg);
 	return bus_space_read_2(ess->st, ess->sh, PORT_DSP_DATA);
 }
 
 static inline void
-wp_wrreg(struct esm_softc *ess, u_int16_t reg, u_int16_t data)
+wp_wrreg(struct esm_softc *ess, uint16_t reg, uint16_t data)
 {
+
 	bus_space_write_2(ess->st, ess->sh, PORT_DSP_INDEX, reg);
 	bus_space_write_2(ess->st, ess->sh, PORT_DSP_DATA, data);
 }
 
 static inline void
-apu_setindex(struct esm_softc *ess, u_int16_t reg)
+apu_setindex(struct esm_softc *ess, uint16_t reg)
 {
 	int t;
 
@@ -410,10 +423,10 @@ apu_setindex(struct esm_softc *ess, u_int16_t reg)
 		printf("%s: apu_setindex() timed out.\n", ess->sc_dev.dv_xname);
 }
 
-static inline u_int16_t
-wp_rdapu(struct esm_softc *ess, int ch, u_int16_t reg)
+static inline uint16_t
+wp_rdapu(struct esm_softc *ess, int ch, uint16_t reg)
 {
-	u_int16_t ret;
+	uint16_t ret;
 
 	apu_setindex(ess, ((unsigned)ch << 4) + reg);
 	ret = wp_rdreg(ess, WPREG_DATA_PORT);
@@ -421,7 +434,7 @@ wp_rdapu(struct esm_softc *ess, int ch, u_int16_t reg)
 }
 
 static inline void
-wp_wrapu(struct esm_softc *ess, int ch, u_int16_t reg, u_int16_t data)
+wp_wrapu(struct esm_softc *ess, int ch, uint16_t reg, uint16_t data)
 {
 	int t;
 
@@ -443,9 +456,12 @@ wp_wrapu(struct esm_softc *ess, int ch, u_int16_t reg, u_int16_t data)
 static inline void
 wp_settimer(struct esm_softc *ess, u_int freq)
 {
-	u_int clock = 48000 << 2;
-	u_int prescale = 0, divide = (freq != 0) ? (clock / freq) : ~0;
+	u_int clock;
+	u_int prescale, divide;
 
+	clock = 48000 << 2;
+	prescale = 0;
+	divide = (freq != 0) ? (clock / freq) : ~0;
 	RANGE(divide, WPTIMER_MINDIV, WPTIMER_MAXDIV);
 
 	for (; divide > 32 << 1; divide >>= 1)
@@ -468,41 +484,47 @@ wp_settimer(struct esm_softc *ess, u_int freq)
 static inline void
 wp_starttimer(struct esm_softc *ess)
 {
+
 	wp_wrreg(ess, WPREG_TIMER_START, 1);
 }
 
 static inline void
 wp_stoptimer(struct esm_softc *ess)
 {
+
 	wp_wrreg(ess, WPREG_TIMER_START, 0);
 	bus_space_write_2(ess->st, ess->sh, PORT_INT_STAT, 1);
 }
 
 /* WaveCache */
 
-static inline u_int16_t
-wc_rdreg(struct esm_softc *ess, u_int16_t reg)
+static inline uint16_t
+wc_rdreg(struct esm_softc *ess, uint16_t reg)
 {
+
 	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_INDEX, reg);
 	return bus_space_read_2(ess->st, ess->sh, PORT_WAVCACHE_DATA);
 }
 
 static inline void
-wc_wrreg(struct esm_softc *ess, u_int16_t reg, u_int16_t data)
+wc_wrreg(struct esm_softc *ess, uint16_t reg, uint16_t data)
 {
+
 	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_INDEX, reg);
 	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_DATA, data);
 }
 
-static inline u_int16_t
+static inline uint16_t
 wc_rdchctl(struct esm_softc *ess, int ch)
 {
+
 	return wc_rdreg(ess, ch << 3);
 }
 
 static inline void
-wc_wrchctl(struct esm_softc *ess, int ch, u_int16_t data)
+wc_wrchctl(struct esm_softc *ess, int ch, uint16_t data)
 {
+
 	wc_wrreg(ess, ch << 3, data);
 }
 
@@ -531,8 +553,9 @@ esm_power(struct esm_softc *ess, int status)
 int
 esm_attach_codec(void *sc, struct ac97_codec_if *codec_if)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
+	ess = sc;
 	ess->codec_if = codec_if;
 
 	return 0;
@@ -541,6 +564,7 @@ esm_attach_codec(void *sc, struct ac97_codec_if *codec_if)
 int
 esm_reset_codec(void *sc)
 {
+
 	return 0;
 }
 
@@ -548,8 +572,9 @@ esm_reset_codec(void *sc)
 enum ac97_host_flags
 esm_flags_codec(void *sc)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
+	ess = sc;
 	return ess->codec_flags;
 }
 
@@ -557,7 +582,7 @@ esm_flags_codec(void *sc)
 void
 esm_initcodec(struct esm_softc *ess)
 {
-	u_int16_t data;
+	uint16_t data;
 
 	DPRINTF(ESM_DEBUG_CODEC, ("esm_initcodec(%p)\n", ess));
 
@@ -607,6 +632,7 @@ esm_initcodec(struct esm_softc *ess)
 void
 esm_init(struct esm_softc *ess)
 {
+
 	/* Reset direct sound. */
 	bus_space_write_2(ess->st, ess->sh, PORT_HOSTINT_CTRL,
 	    HOSTINT_CTRL_DSOUND_RESET);
@@ -666,15 +692,15 @@ esm_init(struct esm_softc *ess)
 	DUMPREG(ess);
 }
 
-
 /* Channel controller. */
 
 int
 esm_init_output (void *sc, void *start, int size)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 	struct esm_dma *p;
 
+	ess = sc;
 	p = &ess->sc_dma;
 	if ((caddr_t)start != p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_init_output: bad addr %p\n",
@@ -693,9 +719,10 @@ esm_init_output (void *sc, void *start, int size)
 int
 esm_init_input (void *sc, void *start, int size)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 	struct esm_dma *p;
 
+	ess = sc;
 	p = &ess->sc_dma;
 	if ((caddr_t)start != p->addr + MAESTRO_RECBUF_OFF) {
 		printf("%s: esm_init_input: bad addr %p\n",
@@ -720,20 +747,26 @@ esm_init_input (void *sc, void *start, int size)
 
 int
 esm_trigger_output(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
-	struct esm_softc *ess = sc;
-	struct esm_chinfo *ch = &ess->pch;
-	struct esm_dma *p;
-	int pan = 0, choffset;
-	int i, nch = 1;
-	unsigned speed = ch->sample_rate, offset, wpwa, dv;
 	size_t size;
-	u_int16_t apuch = ch->num << 1;
+	struct esm_softc *ess;
+	struct esm_chinfo *ch;
+	struct esm_dma *p;
+	int pan, choffset;
+	int i, nch;
+	unsigned speed, offset, wpwa, dv;
+	uint16_t apuch;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_trigger_output(%p, %p, %p, 0x%x, %p, %p, %p)\n",
 	    sc, start, end, blksize, intr, arg, param));
+	ess = sc;
+	ch = &ess->pch;
+	pan = 0;
+	nch = 1;
+	speed = ch->sample_rate;
+	apuch = ch->num << 1;
 
 #ifdef DIAGNOSTIC
 	if (ess->pactive) {
@@ -826,26 +859,30 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	return 0;
 }
 
-
 int
 esm_trigger_input(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
-	struct esm_softc *ess = sc;
-	struct esm_chinfo *ch = &ess->rch;
-	struct esm_dma *p;
-	u_int32_t chctl, choffset;
-	int i, nch = 1;
-	u_int32_t speed = ch->sample_rate, offset, wpwa, dv;
 	size_t size;
-	u_int16_t apuch = ch->num << 1;
-	u_int32_t mixoffset, mixdv;
 	size_t mixsize;
-	u_int16_t reg;
+	struct esm_softc *ess;
+	struct esm_chinfo *ch;
+	struct esm_dma *p;
+	uint32_t chctl, choffset;
+	uint32_t speed, offset, wpwa, dv;
+	uint32_t mixoffset, mixdv;
+	int i, nch;
+	uint16_t apuch;
+	uint16_t reg;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_trigger_input(%p, %p, %p, 0x%x, %p, %p, %p)\n",
 	    sc, start, end, blksize, intr, arg, param));
+	ess = sc;
+	ch = &ess->rch;
+	nch = 1;
+	speed = ch->sample_rate;
+	apuch = ch->num << 1;
 
 #ifdef DIAGNOSTIC
 	if (ess->ractive) {
@@ -952,7 +989,7 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 		wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
 		wp_wrapu(ess, apuch + 2 + i, APUREG_WAVESPACE, wpwa);
 		wp_wrapu(ess, apuch + 2 + i, APUREG_CURPTR, offset);
-		wp_wrapu(ess, apuch + 2 + i, APUREG_ENDPTR, 
+		wp_wrapu(ess, apuch + 2 + i, APUREG_ENDPTR,
 		    offset + mixsize);
 		wp_wrapu(ess, apuch + 2 + i, APUREG_LOOPLEN, mixsize);
 		wp_wrapu(ess, apuch + 2 + i, APUREG_EFFECTS_ENV, 0x00f0);
@@ -990,14 +1027,15 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 	return 0;
 }
 
-
 int
 esm_halt_output(void *sc)
 {
-	struct esm_softc *ess = sc;
-	struct esm_chinfo *ch = &ess->pch;
+	struct esm_softc *ess;
+	struct esm_chinfo *ch;
 
 	DPRINTF(ESM_DEBUG_PARAM, ("esm_halt_output(%p)\n", sc));
+	ess = sc;
+	ch = &ess->pch;
 
 	wp_wrapu(ess, (ch->num << 1), APUREG_APUTYPE,
 	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
@@ -1011,14 +1049,15 @@ esm_halt_output(void *sc)
 	return 0;
 }
 
-
 int
 esm_halt_input(void *sc)
 {
-	struct esm_softc *ess = sc;
-	struct esm_chinfo *ch = &ess->rch;
+	struct esm_softc *ess;
+	struct esm_chinfo *ch;
 
 	DPRINTF(ESM_DEBUG_PARAM, ("esm_halt_input(%p)\n", sc));
+	ess = sc;
+	ch = &ess->rch;
 
 	wp_wrapu(ess, (ch->num << 1), APUREG_APUTYPE,
 	    APUTYPE_INACTIVE << APU_APUTYPE_SHIFT);
@@ -1035,7 +1074,6 @@ esm_halt_input(void *sc)
 
 	return 0;
 }
-
 
 static inline u_int
 calc_timer_freq(struct esm_chinfo *ch)
@@ -1054,8 +1092,9 @@ calc_timer_freq(struct esm_chinfo *ch)
 static void
 set_timer(struct esm_softc *ess)
 {
-	unsigned freq = 0, freq2;
+	unsigned freq, freq2;
 
+	freq = 0;
 	if (ess->pactive)
 		freq = calc_timer_freq(&ess->pch);
 
@@ -1068,24 +1107,25 @@ set_timer(struct esm_softc *ess)
 	KASSERT(freq != 0);
 
 	for (; freq < MAESTRO_MINFREQ; freq <<= 1)
-		;
+		continue;
 
 	if (freq > 0)
 		wp_settimer(ess, freq);
 }
 
-
 static void
-esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
+esmch_set_format(struct esm_chinfo *ch, const audio_params_t *p)
 {
-	u_int16_t wcreg_tpl = (ch->base - 16) & WAVCACHE_CHCTL_ADDRTAG_MASK;
-	u_int16_t aputype = APUTYPE_16BITLINEAR;
+	uint16_t wcreg_tpl;
+	uint16_t aputype;
 
+	wcreg_tpl = (ch->base - 16) & WAVCACHE_CHCTL_ADDRTAG_MASK;
+	aputype = APUTYPE_16BITLINEAR;
 	if (p->channels == 2) {
 		wcreg_tpl |= WAVCACHE_CHCTL_STEREO;
 		aputype++;
 	}
-	if (p->precision * p->factor == 8) {
+	if (p->precision == 8) {
 		aputype += 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_ULINEAR:
@@ -1100,23 +1140,22 @@ esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
 	ch->sample_rate = p->sample_rate;
 
 	DPRINTF(ESM_DEBUG_PARAM, ("esmch_set_format: "
-	    "numch=%d, prec=%d*%d, tpl=0x%x, aputype=%d, rate=%ld\n",
-	    p->channels, p->precision, p->factor, wcreg_tpl, aputype,
-	    p->sample_rate));
+	    "numch=%u, prec=%u, tpl=0x%x, aputype=%d, rate=%u\n",
+	    p->channels, p->precision, wcreg_tpl, aputype, p->sample_rate));
 }
 
 /*
  * Since we can't record in true stereo, this function combines
- * the separately recorded left and right channels into the final 
+ * the separately recorded left and right channels into the final
  * buffer for the upper layer.
  */
 static void
 esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
 {
-	u_int32_t *dst32s;
 	size_t offset, resid, count;
-	const u_int32_t *left32s, *right32s;
-	u_int32_t left32, right32;
+	uint32_t *dst32s;
+	const uint32_t *left32s, *right32s;
+	uint32_t left32, right32;
 
 	/* The current offset into the upper layer buffer. */
 	offset = ch->offset;
@@ -1127,15 +1166,15 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
 	while (resid > 0) {
 
 		/* The 32-bit words for the left channel. */
-		left32s = (const u_int32_t *)(ess->sc_dma.addr +
+		left32s = (const uint32_t *)(ess->sc_dma.addr +
 		    MAESTRO_RECBUF_L_OFF + offset / 2);
 
 		/* The 32-bit words for the right channel. */
-		right32s = (const u_int32_t *)(ess->sc_dma.addr +
+		right32s = (const uint32_t *)(ess->sc_dma.addr +
 		    MAESTRO_RECBUF_R_OFF + offset / 2);
 
 		/* The pointer to the 32-bit words we will write. */
-		dst32s = (u_int32_t *)(ch->buffer + offset);
+		dst32s = (uint32_t *)(ch->buffer + offset);
 
 		/* Get the number of bytes we will combine now. */
 		count = ch->bufsize - offset;
@@ -1148,7 +1187,7 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
 
 		/* Combine, writing two 32-bit words at a time. */
 		KASSERT((count & (sizeof(uint32_t) * 2 - 1)) == 0);
-		count /= (sizeof(u_int32_t) * 2);
+		count /= (sizeof(uint32_t) * 2);
 		while (count > 0) {
 			left32 = *(left32s++);
 			right32 = *(right32s++);
@@ -1173,32 +1212,17 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
  */
 
 int
-esm_open(void *sc, int flags)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_open(%p, 0x%x)\n", sc, flags));
-
-	return 0;
-}
-
-
-void
-esm_close(void *sc)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_close(%p)\n", sc));
-}
-
-
-int
 esm_getdev (void *sc, struct audio_device *adp)
 {
+
 	*adp = esm_device;
 	return 0;
 }
 
-
 int
-esm_round_blocksize (void *sc, int blk)
+esm_round_blocksize(void *sc, int blk, int mode, const audio_params_t *param)
 {
+
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_round_blocksize(%p, 0x%x)", sc, blk));
 
@@ -1209,10 +1233,10 @@ esm_round_blocksize (void *sc, int blk)
 	return blk;
 }
 
-
 int
 esm_query_encoding(void *sc, struct audio_encoding *fp)
 {
+
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_query_encoding(%p, %d)\n", sc, fp->index));
 
@@ -1223,20 +1247,24 @@ esm_query_encoding(void *sc, struct audio_encoding *fp)
 	return 0;
 }
 
-
 int
 esm_set_params(void *sc, int setmode, int usemode,
-	struct audio_params *play, struct audio_params *rec)
+	audio_params_t *play, audio_params_t *rec,
+	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct esm_softc *ess = sc;
-	struct audio_params *p;
-	int mode;
+	struct esm_softc *ess;
+	audio_params_t *p;
+	const audio_params_t *hw_play, *hw_rec;
+	stream_filter_list_t *fil;
+	int mode, i;
 
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_set_params(%p, 0x%x, 0x%x, %p, %p)\n",
 	    sc, setmode, usemode, play, rec));
-
-	for (mode = AUMODE_RECORD; mode != -1; 
+	ess = sc;
+	hw_play = NULL;
+	hw_rec = NULL;
+	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
 			continue;
@@ -1248,98 +1276,66 @@ esm_set_params(void *sc, int setmode, int usemode,
 		    (p->channels != 1 && p->channels != 2))
 			return EINVAL;
 
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
+		i = auconv_set_converter(esm_formats, ESM_NFORMATS,
+					 mode, p, FALSE, fil);
+		if (i < 0)
 			return EINVAL;
-		}
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
+		if (mode == AUMODE_PLAY)
+			hw_play = p;
+		else
+			hw_rec = p;
 	}
 
 	if (setmode & AUMODE_PLAY)
-		esmch_set_format(&ess->pch, play);
+		esmch_set_format(&ess->pch, hw_play);
 
 	if (setmode & AUMODE_RECORD)
-		esmch_set_format(&ess->rch, rec);
+		esmch_set_format(&ess->rch, hw_rec);
 
 	return 0;
 }
 
-
 int
 esm_set_port(void *sc, mixer_ctrl_t *cp)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
-	return (ess->codec_if->vtbl->mixer_set_port(ess->codec_if, cp));
+	ess = sc;
+	return ess->codec_if->vtbl->mixer_set_port(ess->codec_if, cp);
 }
-
 
 int
 esm_get_port(void *sc, mixer_ctrl_t *cp)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
-	return (ess->codec_if->vtbl->mixer_get_port(ess->codec_if, cp));
+	ess = sc;
+	return ess->codec_if->vtbl->mixer_get_port(ess->codec_if, cp);
 }
-
 
 int
 esm_query_devinfo(void *sc, mixer_devinfo_t *dip)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
-	return (ess->codec_if->vtbl->query_devinfo(ess->codec_if, dip));
+	ess = sc;
+	return ess->codec_if->vtbl->query_devinfo(ess->codec_if, dip);
 }
-
 
 void *
 esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 	int off;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_malloc(%p, %d, 0x%lx, %p, 0x%x)",
 	    sc, direction, (unsigned long int)size, pool, flags));
-
+	ess = sc;
 	/*
 	 * Each buffer can only be allocated once.
 	 */
@@ -1358,29 +1354,28 @@ esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
 	DPRINTF(ESM_DEBUG_DMA, (" = %p (DMAADDR 0x%x)\n",
 				ess->sc_dma.addr + off,
 				(int)DMAADDR(&ess->sc_dma) + off));
-	return (ess->sc_dma.addr + off);
+	return ess->sc_dma.addr + off;
 }
-
 
 void
 esm_free(void *sc, void *ptr, struct malloc_type *pool)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_free(%p, %p, %p)\n",
 	    sc, ptr, pool));
-
+	ess = sc;
 	if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
 		ess->rings_alloced &= ~AUMODE_PLAY;
 	else if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
 		ess->rings_alloced &= ~AUMODE_RECORD;
 }
 
-
 size_t
 esm_round_buffersize(void *sc, int direction, size_t size)
 {
+
 	if (size > MAESTRO_PLAYBUF_SZ)
 		size = MAESTRO_PLAYBUF_SZ;
 	if (size > MAESTRO_RECBUF_SZ)
@@ -1388,18 +1383,17 @@ esm_round_buffersize(void *sc, int direction, size_t size)
 	return size;
 }
 
-
 paddr_t
 esm_mappage(void *sc, void *mem, off_t off, int prot)
 {
-	struct esm_softc *ess = sc;
+	struct esm_softc *ess;
 
 	DPRINTF(ESM_DEBUG_DMA,
 	    ("esm_mappage(%p, %p, 0x%lx, 0x%x)\n",
 	    sc, mem, (unsigned long)off, prot));
-
+	ess = sc;
 	if (off < 0)
-		return (-1);
+		return -1;
 
 	if ((caddr_t)mem == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
 		off += MAESTRO_PLAYBUF_OFF;
@@ -1411,10 +1405,10 @@ esm_mappage(void *sc, void *mem, off_t off, int prot)
 	    off, prot, BUS_DMA_WAITOK);
 }
 
-
 int
 esm_get_props(void *sc)
 {
+
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }
 
@@ -1426,11 +1420,13 @@ esm_get_props(void *sc)
 int
 esm_intr(void *sc)
 {
-	struct esm_softc *ess = sc;
-	u_int16_t status;
-	u_int16_t pos;
-	int ret = 0;
+	struct esm_softc *ess;
+	uint16_t status;
+	uint16_t pos;
+	int ret;
 
+	ess = sc;
+	ret = 0;
 	status = bus_space_read_1(ess->st, ess->sh, PORT_HOSTINT_STAT);
 	if (!status)
 		return 0;
@@ -1513,7 +1509,6 @@ esm_intr(void *sc)
 	return ret;
 }
 
-
 int
 esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
     struct esm_dma *p)
@@ -1554,12 +1549,12 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
 	return error;
 }
 
-
 int
 esm_match(struct device *dev, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa;
 
+	pa = (struct pci_attach_args *)aux;
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_ESSTECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -1581,18 +1576,22 @@ esm_match(struct device *dev, struct cfdata *match, void *aux)
 void
 esm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct esm_softc *ess = (struct esm_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
+	char devinfo[256];
+	struct esm_softc *ess;
+	struct pci_attach_args *pa;
+	const char *intrstr;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
 	pci_intr_handle_t ih;
 	pcireg_t csr, data;
-	u_int16_t codec_data;
-	u_int16_t pcmbar;
-	const char *intrstr;
 	int revision;
-	char devinfo[256];
+	uint16_t codec_data;
+	uint16_t pcmbar;
 
+	ess = (struct esm_softc *)self;
+	pa = (struct pci_attach_args *)aux;
+	pc = pa->pa_pc;
+	tag = pa->pa_tag;
 	aprint_naive(": Audio controller\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -1692,7 +1691,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	ess->host_if.reset = esm_reset_codec;
 	ess->host_if.flags = esm_flags_codec;
 
-	if (ac97_attach(&ess->host_if) != 0)
+	if (ac97_attach(&ess->host_if, self) != 0)
 		return;
 
 	/* allocate our DMA region */
@@ -1717,27 +1716,26 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 /* Power Hook */
 void
-esm_powerhook(why, v)
-	int why;
-	void *v;
+esm_powerhook(int why, void *v)
 {
-	struct esm_softc *ess = (struct esm_softc *)v;
+	struct esm_softc *ess;
 
+	ess = (struct esm_softc *)v;
 	DPRINTF(ESM_DEBUG_PARAM,
-	("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
+	    ("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
 	switch (why) {
-		case PWR_SUSPEND:
-		case PWR_STANDBY:
-			ess->esm_suspend = why;
-			esm_suspend(ess);
-			DPRINTF(ESM_DEBUG_RESUME, ("esm_suspend\n"));
-			break;
-			
-		case PWR_RESUME:
-			ess->esm_suspend = why;
-			esm_resume(ess);
-			DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
-			break;
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		ess->esm_suspend = why;
+		esm_suspend(ess);
+		DPRINTF(ESM_DEBUG_RESUME, ("esm_suspend\n"));
+		break;
+
+	case PWR_RESUME:
+		ess->esm_suspend = why;
+		esm_resume(ess);
+		DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
+		break;
 	}
 }
 
@@ -1773,7 +1771,7 @@ esm_resume(struct esm_softc *ess)
 	delay(100000);
 	esm_init(ess);
 
-	(*ess->codec_if->vtbl->restore_ports)(ess->codec_if);
+	ess->codec_if->vtbl->restore_ports(ess->codec_if);
 #if 0
 	if (mixer_reinit(dev)) {
 		printf("%s: unable to reinitialize the mixer\n",
@@ -1788,7 +1786,7 @@ esm_resume(struct esm_softc *ess)
 		esm_start_output(ess);
 	if (ess->ractive)
 		esm_start_input(ess);
-#endif 
+#endif
 	if (ess->pactive || ess->ractive) {
 		set_timer(ess);
 		wp_starttimer(ess);

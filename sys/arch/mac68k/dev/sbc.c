@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.43.2.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: sbc.c,v 1.43.2.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.4 2005/01/17 19:29:35 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,9 +96,9 @@ int	sbc_options = 0 /* | SBC_PDMA */;
 extern label_t	*nofault;
 extern caddr_t	m68k_fault_addr;
 
-static	int	sbc_wait_busy __P((struct ncr5380_softc *));
-static	int	sbc_ready __P((struct ncr5380_softc *));
-static	int	sbc_wait_dreq __P((struct ncr5380_softc *));
+static	int	sbc_wait_busy(struct ncr5380_softc *);
+static	int	sbc_ready(struct ncr5380_softc *);
+static	int	sbc_wait_dreq(struct ncr5380_softc *);
 
 
 /***
@@ -112,8 +112,7 @@ int sbc_wait_dreq_timo = 1000 * 5000;	/* X2 = 10 S. */
 
 /* Return zero on success. */
 static __inline__ int
-sbc_wait_busy(sc)
-	struct ncr5380_softc *sc;
+sbc_wait_busy(struct ncr5380_softc *sc)
 {
 	int timo = sbc_wait_busy_timo;
 	for (;;) {
@@ -129,8 +128,7 @@ sbc_wait_busy(sc)
 }
 
 static __inline__ int
-sbc_ready(sc)
-	struct ncr5380_softc *sc;
+sbc_ready(struct ncr5380_softc *sc)
 {
 	int timo = sbc_ready_timo;
 
@@ -153,8 +151,7 @@ sbc_ready(sc)
 }
 
 static __inline__ int
-sbc_wait_dreq(sc)
-	struct ncr5380_softc *sc;
+sbc_wait_dreq(struct ncr5380_softc *sc)
 {
 	int timo = sbc_wait_dreq_timo;
 
@@ -172,8 +169,7 @@ sbc_wait_dreq(sc)
 }
 
 void
-sbc_irq_intr(p)
-	void *p;
+sbc_irq_intr(void *p)
 {
 	struct ncr5380_softc *ncr_sc = p;
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
@@ -207,8 +203,7 @@ sbc_irq_intr(p)
 
 #ifdef SBC_DEBUG
 void
-decode_5380_intr(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+decode_5380_intr(struct ncr5380_softc *ncr_sc)
 {
 	u_int8_t csr = *ncr_sc->sci_csr;
 	u_int8_t bus_csr = *ncr_sc->sci_bus_csr;
@@ -246,11 +241,7 @@ decode_5380_intr(ncr_sc)
  ***/
 
 int
-sbc_pdma_in(ncr_sc, phase, datalen, data)
-	struct ncr5380_softc *ncr_sc;
-	int phase;
-	int datalen;
-	u_char *data;
+sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
@@ -298,11 +289,7 @@ interrupt:
 }
 
 int
-sbc_pdma_out(ncr_sc, phase, datalen, data)
-	struct ncr5380_softc *ncr_sc;
-	int phase;
-	int datalen;
-	u_char *data;
+sbc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	volatile u_int32_t *long_data = (u_int32_t *)sc->sc_drq_addr;
@@ -416,8 +403,7 @@ done:
  * This is usually caused by a disconnecting target.
  */
 void
-sbc_drq_intr(p)
-	void *p;
+sbc_drq_intr(void *p)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)p;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)p;
@@ -606,8 +592,7 @@ sbc_drq_intr(p)
 }
 
 void
-sbc_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -654,8 +639,7 @@ found:
 }
 
 void
-sbc_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
@@ -677,8 +661,7 @@ sbc_dma_free(ncr_sc)
 }
 
 void
-sbc_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 
@@ -696,15 +679,13 @@ sbc_dma_poll(ncr_sc)
 }
 
 void
-sbc_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 	/* Not needed; we don't have real DMA */
 }
 
 void
-sbc_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -741,15 +722,13 @@ sbc_dma_start(ncr_sc)
 }
 
 void
-sbc_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 	/* Not used; the EOP pin is wired high (GMFH, pp. 389-390) */
 }
 
 void
-sbc_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+sbc_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;

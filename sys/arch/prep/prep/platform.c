@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.8.6.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: platform.c,v 1.8.6.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.8.6.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.8.6.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ platform_generic_match(struct platform *p)
 
 /* ARGUSED */
 void
-pci_intr_nofixup(int busno, int device, int *intr)
+pci_intr_nofixup(int busno, int device, int swiz, int *intr)
 {
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.5.6.3 2004/09/21 13:21:48 skrll Exp $
+#	$NetBSD: files.shark,v 1.5.6.4 2005/01/17 19:30:19 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -30,6 +30,9 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
+# Include pckbport stuff
+include "dev/pckbport/files.pckbport"
+
 #
 # Machine-independent ATA drivers
 #
@@ -42,9 +45,8 @@ attach	ofbus at root with ofbus_root
 file	arch/shark/ofw/ofw.c
 file	arch/shark/ofw/oftodclock.c
 
-# OFW console initialization
-file	arch/shark/ofw/consinit.c
-file	dev/cninit.c
+# console initialization
+file	arch/shark/shark/consinit.c
 
 # ISA DMA glue
 file	arch/shark/isa/isadma_machdep.c		isadma
@@ -53,7 +55,6 @@ file	arch/shark/isa/isadma_machdep.c		isadma
 include "dev/ofisa/files.ofisa"
 file	arch/shark/ofw/ofisa_machdep.c		ofisa
 file	arch/shark/ofw/com_ofisa_machdep.c	com_ofisa
-file	arch/shark/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
 file	arch/shark/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/shark/ofw/lpt_ofisa_machdep.c	lpt_ofisa | atppc_ofisa
 file	arch/shark/ofw/wdc_ofisa_machdep.c	wdc_ofisa
@@ -61,7 +62,7 @@ file	arch/shark/ofw/wdc_ofisa_machdep.c	wdc_ofisa
 # Glue for OFW ISA device attachment
 device	ofisapc {}
 attach	ofisapc at ofbus
-file	arch/shark/ofw/ofisapc.c		pc
+file	arch/shark/ofw/ofisapc.c		ofisapc
 device	ofisascr {}
 attach	ofisascr at ofisa
 file	arch/shark/ofw/ofisascr.c		scr
@@ -95,7 +96,6 @@ include "dev/scsipi/files.scsipi"
 
 # Generic MD files
 file	arch/shark/shark/autoconf.c
-file	arch/shark/shark/conf.c
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
@@ -105,20 +105,20 @@ file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
 # Shark specific files
-file	arch/shark/shark/shark_machdep.c	shark
-file	arch/shark/shark/sequoia.c		shark
-file	arch/shark/shark/shark_fiq.S		shark
-file	arch/shark/shark/hat.c			shark
-file	arch/shark/isa/isa_irqhandler.c		shark
-file	arch/shark/isa/clock.c			shark
-file	arch/shark/isa/isa_irq.S		shark
-file	arch/shark/isa/isa_shark_machdep.c	shark
-file	arch/shark/isa/isa_io.c			shark | isa
-file	arch/shark/isa/isa_io_asm.S		shark | isa
+file	arch/shark/shark/shark_machdep.c
+file	arch/shark/shark/sequoia.c
+file	arch/shark/shark/shark_fiq.S
+file	arch/shark/shark/hat.c
+file	arch/shark/isa/isa_irqhandler.c
+file	arch/shark/isa/clock.c
+file	arch/shark/isa/isa_irq.S
+file	arch/shark/isa/isa_shark_machdep.c
+file	arch/shark/isa/isa_io.c
+file	arch/shark/isa/isa_io_asm.S
 
 # National Semiconductor PC97307VUL SuperIO chip configuration routines
 define	nsio
-file	arch/shark/shark/ns87307.c		nsio & shark
+file	arch/shark/shark/ns87307.c		nsio
 
 # 8042 microcontroller routines for keyboard and mouse
 define	i8042
@@ -131,6 +131,10 @@ file	arch/shark/shark/profile.c		profiler needs-flag
 device	pc: tty, spckbd, i8042
 attach	pc at ofisapc
 file	arch/shark/shark/pccons.c		pc needs-flag
+
+# ofbus VGA
+attach	vga at ofbus with vga_ofbus
+file	arch/shark/ofw/vga_ofbus.c		vga_ofbus	needs-flag
 
 # Smart Card Reader
 device	scr: tty

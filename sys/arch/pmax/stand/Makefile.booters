@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.40.6.3 2004/09/21 13:20:25 skrll Exp $
+# $NetBSD: Makefile.booters,v 1.40.6.4 2005/01/17 19:30:09 skrll Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -29,7 +29,6 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES \
 		-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
-OFORMAT=	--oformat elf32-littlemips
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
@@ -111,7 +110,7 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
 ${PROG}: machine mips pmax ${OBJS} ${LIBS}
-	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
+	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    ${LDBUG} -e start -o ${PROG} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(CHECKSIZE_CMD)

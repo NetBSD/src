@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.15 2002/10/20 02:37:28 chs Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.15.6.1 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -212,7 +212,7 @@ typedef struct sn_softc {
 #define	CDA_ENABLE	64	/* mask enabling CAM entries */
 #define	CDA_SIZE(sc)	((4*16 + 1) * ((sc->bitmode) ? 4 : 2))
 
-int	snsetup __P((struct sn_softc *sc, u_int8_t *));
-void	snintr __P((void *));
-void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-	    bus_size_t o, u_char *dst));
+int	snsetup(struct sn_softc *, u_int8_t *);
+void	snintr(void *);
+void	sn_get_enaddr(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+		      u_char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.94.2.3 2004/09/21 13:37:32 skrll Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.94.2.4 2005/01/17 19:32:54 skrll Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94.2.3 2004/09/21 13:37:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94.2.4 2005/01/17 19:32:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -514,8 +514,6 @@ icmp6_input(mp, offp, proto)
 
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
-		if (code != 0)
-			goto badcode;
 
 		code = PRC_MSGSIZE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r94.c,v 1.3.2.3 2004/09/21 13:12:48 skrll Exp $	*/
+/*	$NetBSD: p_nec_r94.c,v 1.3.2.4 2005/01/17 19:29:12 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.3.2.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_r94.c,v 1.3.2.4 2005/01/17 19:29:12 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -69,7 +69,7 @@ struct pica_dev nec_r94_cpu[] = {
 	{{ "pms",	7, 0, },	(void *)RD94_SYS_KBD, }, /* XXX */
 	{{ "COM1",	8, 0, },	(void *)RD94_SYS_COM1, },
 	{{ "COM2",	9, 0, },	(void *)RD94_SYS_COM2, },
-	{{ NULL,	-1, 0, },	(void *)NULL, },
+	{{ NULL,	-1, 0, },	NULL, },
 };
 
 /*

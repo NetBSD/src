@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.13.22.4 2004/09/21 13:15:47 skrll Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.13.22.5 2005/01/17 19:29:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -341,6 +341,12 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_COMPAQ_IPAQ_H3660,
 	 TEXT("Compaq iPAQ H3660") },
 #endif /* hpcarm */
+#ifdef hpcsh
+	{ &platid_mask_MACH_COMPAQ_AERO,
+	 TEXT("Compaq Aero") },
+	{ &platid_mask_MACH_COMPAQ_AERO_8000,
+	 TEXT("Compaq Aero 8000") },
+#endif /* hpcsh */
 #ifdef hpcmips
 	{ &platid_mask_MACH_VICTOR,
 	 TEXT("Victor") },
@@ -418,6 +424,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("HP Jornada 680 (Scandinavian)") },
 	{ &platid_mask_MACH_HP_JORNADA_690SV,
 	 TEXT("HP Jornada 690 (Scandinavian)") },
+	{ &platid_mask_MACH_HP_JORNADA_680ES,
+	 TEXT("HP Jornada 680 (Spanish)") },
+	{ &platid_mask_MACH_HP_JORNADA_690ES,
+	 TEXT("HP Jornada 690 (Spanish)") },
 #endif /* hpcsh */
 #ifdef hpcarm
 	{ &platid_mask_MACH_HP_JORNADA_7XX,

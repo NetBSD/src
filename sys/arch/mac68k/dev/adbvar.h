@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.21 2003/04/09 01:55:14 thorpej Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.21.2.1 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -61,15 +61,15 @@ extern int	adb_debug;
 #endif
 
 /* adb.c */
-void	adb_enqevent __P((adb_event_t *event));
+void	adb_enqevent(adb_event_t *);
 
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
-void	adb_op_comprout __P((void));
+int	adb_op_sync(Ptr, Ptr, Ptr, short);
+void	adb_op_comprout(void);
 
 /* adbsysasm.s */
-void	adb_kbd_asmcomplete __P((void));
-void	adb_ms_asmcomplete __P((void));
-void	extdms_complete __P((void));
+void	adb_kbd_asmcomplete(void);
+void	adb_ms_asmcomplete(void);
+void	extdms_complete(void);
 
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x0	/* don't know */
@@ -87,13 +87,13 @@ void	extdms_complete __P((void));
 
 #ifndef MRG_ADB
 /* adb_direct.c */
-int	adb_poweroff __P((void));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock * info, int index));
-int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *t));
-int	adb_set_date_time __P((unsigned long t));
+int	adb_poweroff(void);
+int	CountADBs(void);
+void	ADBReInit(void);
+int	GetIndADB(ADBDataBlock *, int);
+int	GetADBInfo(ADBDataBlock *, int);
+int	SetADBInfo(ADBSetInfoBlock *, int);
+int	ADBOp(Ptr, Ptr, Ptr, short);
+int	adb_read_date_time(unsigned long *);
+int	adb_set_date_time(unsigned long);
 #endif /* !MRG_ADB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.3.6.3 2004/09/21 13:21:48 skrll Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.3.6.4 2005/01/17 19:30:19 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.3.6.3 2004/09/21 13:21:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.3.6.4 2005/01/17 19:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ isa_intr_disestablish(ic, arg)
 
 /* isa_init() might eventually become the ISA attach routine */
 void
-isa_init(vm_offset_t isa_io_addr, vm_offset_t isa_mem_addr)
+isa_init(vaddr_t isa_io_addr, vaddr_t isa_mem_addr)
 {
   /* initialize the bus space functions */
   isa_io_init(isa_io_addr, isa_mem_addr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32.2.7 2004/10/19 15:56:53 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.32.2.8 2005/01/17 19:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.7 2004/10/19 15:56:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.8 2005/01/17 19:30:39 skrll Exp $");
 #endif
 
 /*
@@ -130,7 +130,7 @@ static int	ath_init(struct ifnet *);
 #endif
 static int	ath_init1(struct ath_softc *);
 static int	ath_intr1(struct ath_softc *);
-static void	ath_stop(struct ifnet *);
+static void	ath_stop(struct ifnet *, int);
 static void	ath_start(struct ifnet *);
 static void	ath_reset(struct ath_softc *);
 static int	ath_media_change(struct ifnet *);
@@ -643,7 +643,7 @@ ath_detach(struct ath_softc *sc)
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
 	ath_softc_critsect_begin(sc, s);
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -701,7 +701,7 @@ ath_suspend(struct ath_softc *sc, int why)
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 	if (sc->sc_power != NULL)
 		(*sc->sc_power)(sc, why);
 }
@@ -731,7 +731,7 @@ ath_shutdown(void *arg)
 {
 	struct ath_softc *sc = arg;
 
-	ath_stop(&sc->sc_ic.ic_if);
+	ath_stop(&sc->sc_ic.ic_if, 1);
 }
 #else
 void
@@ -744,7 +744,7 @@ ath_shutdown(struct ath_softc *sc)
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 
-	ath_stop(ifp);
+	ath_stop(ifp, 1);
 #endif
 }
 #endif
@@ -934,7 +934,7 @@ ath_init1(struct ath_softc *sc)
 	 * Stop anything previously setup.  This is safe
 	 * whether this is the first time through or not.
 	 */
-	ath_stop(ifp);
+	ath_stop(ifp, 0);
 
 	/*
 	 * The basic interface to setting the hardware in a good
@@ -997,7 +997,7 @@ done:
 }
 
 static void
-ath_stop(struct ifnet *ifp)
+ath_stop(struct ifnet *ifp, int disable)
 {
 	struct ieee80211com *ic = (struct ieee80211com *) ifp;
 	struct ath_softc *sc = ifp->if_softc;
@@ -1043,7 +1043,8 @@ ath_stop(struct ifnet *ifp)
 			ath_hal_setpower(ah, HAL_PM_FULL_SLEEP, 0);
 		}
 #ifdef __NetBSD__
-		ath_disable(sc);
+		if (disable)
+			ath_disable(sc);
 #endif
 	}
 	ath_softc_critsect_end(sc, s);
@@ -1294,7 +1295,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					ath_init(ifp);	/* XXX lose error */
 			}
 		} else
-			ath_stop(ifp);
+			ath_stop(ifp, 1);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -3312,6 +3313,23 @@ bad:
 	return error;
 }
 
+static uint64_t
+ath_tsf_extend(struct ath_hal *ah, uint32_t rstamp)
+{
+	uint64_t tsf;
+	
+	KASSERT((rstamp & 0xffff0000) == 0,
+	    ("rx timestamp > 16 bits wide, %" PRIu32, rstamp));
+
+	tsf = ath_hal_gettsf64(ah);
+
+	/* Compensate for rollover. */
+	if ((tsf & 0xffff) <= rstamp)
+		tsf -= 0x10000;
+
+	return (tsf & ~(uint64_t)0xffff) | rstamp;
+}
+
 static void
 ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
@@ -3327,9 +3345,19 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
-		if (ieee80211_ibss_merge(ic, ni, ath_hal_gettsf64(ah)) ==
-		    ENETRESET)
+		if (le64toh(ni->ni_tsf) >= ath_tsf_extend(ah, rstamp) &&
+		    ieee80211_ibss_merge(ic, ni)) {
+			/*
+			 * XXX rather than handle this here it's
+			 *     probably better to do it at the 802.11
+			 *     layer through the state machine so,
+			 *     we can switch channel, etc.
+			 */
+			/* XXX adopt beacon interval and ATIM window */
 			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
+			ath_hal_stoptxdma(ah, sc->sc_bhalq);
+			ath_beacon_config(sc);
+		}
 		break;
 	default:
 		break;
@@ -3506,7 +3534,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 	ni = ic->ic_bss;
 	an = (struct ath_node *) ni;
 	an->an_tx_ok = an->an_tx_err = an->an_tx_retr = an->an_tx_upper = 0;
-	if (state == IEEE80211_S_RUN) {
+	if (state == IEEE80211_S_RUN && ic->ic_opmode != IEEE80211_M_IBSS) {
 		/* start with highest negotiated rate */
 		KASSERT(ni->ni_rates.rs_nrates > 0,
 			("transition to RUN state w/ no rates!"));
