@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.29 1997/09/21 01:06:30 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.30 1997/09/26 15:22:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.29 1997/09/21 01:06:30 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.30 1997/09/26 15:22:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1998,7 +1998,7 @@ restart(argc, argv)
 		puts("restart: offset not specified.");
 	else {
 		restart_point = atol(argv[1]);
-		printf("Restarting at %qd. Execute get, put or append to"
+		printf("Restarting at %qd. Execute get, put or append to "
 			"initiate transfer\n", (long long)restart_point);
 	}
 }
