@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73 2001/01/22 12:17:36 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.74 2001/05/30 11:42:13 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -47,7 +47,7 @@
  * October 1992
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
