@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.28 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.29 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.28 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.29 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,6 @@ lca_init(lcp, mallocsafe)
 	 */
 	REGVAL64(LCA_IOC_CONF) = 0;
 
-	lca_dma_init(lcp);
-
 	lcp->lc_initted = 1;
 }
 
@@ -166,6 +164,8 @@ lcaattach(parent, self, aux)
 
 	/* XXX print chipset information */
 	printf("\n");
+
+	lca_dma_init(lcp);
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_AXPPCI_33

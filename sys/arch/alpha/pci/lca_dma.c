@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.10 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.10 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.11 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,36 +166,34 @@ lca_dma_init(lcp)
 	alpha_mb();
 
 	/*
-	 * Initialize the SGMAP if safe to do so.
+	 * Initialize the SGMAP.
 	 */
-	if (lcp->lc_mallocsafe) {
-		alpha_sgmap_init(t, &lcp->lc_sgmap, "lca_sgmap",
-		    LCA_SGMAP_MAPPED_BASE, 0, LCA_SGMAP_MAPPED_SIZE,
-		    sizeof(u_int64_t), NULL, 0);
+	alpha_sgmap_init(t, &lcp->lc_sgmap, "lca_sgmap",
+	    LCA_SGMAP_MAPPED_BASE, 0, LCA_SGMAP_MAPPED_SIZE,
+	    sizeof(u_int64_t), NULL, 0);
 
-		/*
-		 * Set up window 0 as an 8MB SGMAP-mapped window
-		 * starting at 8MB.
-		 */
-		REGVAL64(LCA_IOC_W_BASE0) = LCA_SGMAP_MAPPED_BASE |
-		    IOC_W_BASE_SG | IOC_W_BASE_WEN;
-		alpha_mb();
+	/*
+	 * Set up window 0 as an 8MB SGMAP-mapped window
+	 * starting at 8MB.
+	 */
+	REGVAL64(LCA_IOC_W_BASE0) = LCA_SGMAP_MAPPED_BASE |
+	    IOC_W_BASE_SG | IOC_W_BASE_WEN;
+	alpha_mb();
 
-		REGVAL64(LCA_IOC_W_MASK0) = IOC_W_MASK_8M;
-		alpha_mb();
+	REGVAL64(LCA_IOC_W_MASK0) = IOC_W_MASK_8M;
+	alpha_mb();
 
-		if ((lcp->lc_sgmap.aps_ptpa & IOC_W_T_BASE) !=
-		    lcp->lc_sgmap.aps_ptpa)
-			panic("lca_dma_init: bad page table address");
-		REGVAL64(LCA_IOC_W_T_BASE0) = lcp->lc_sgmap.aps_ptpa;
-		alpha_mb();
+	if ((lcp->lc_sgmap.aps_ptpa & IOC_W_T_BASE) !=
+	    lcp->lc_sgmap.aps_ptpa)
+		panic("lca_dma_init: bad page table address");
+	REGVAL64(LCA_IOC_W_T_BASE0) = lcp->lc_sgmap.aps_ptpa;
+	alpha_mb();
 
-		/* Enble the scatter/gather TLB. */
-		REGVAL64(LCA_IOC_TB_ENA) = IOC_TB_ENA_TEN;
-		alpha_mb();
+	/* Enble the scatter/gather TLB. */
+	REGVAL64(LCA_IOC_TB_ENA) = IOC_TB_ENA_TEN;
+	alpha_mb();
 
-		LCA_TLB_INVALIDATE();
-	}
+	LCA_TLB_INVALIDATE();
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.31 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.32 1998/06/06 01:33:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.31 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.32 1998/06/06 01:33:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,6 @@ apecs_init(acp, mallocsafe)
 
 	apecs_pci_init(&acp->ac_pc, acp);
 
-	apecs_dma_init(acp);
-
 	acp->ac_initted = 1;
 }
 
@@ -142,7 +140,7 @@ apecsattach(parent, self, aux)
 	acp = sc->sc_acp = &apecs_configuration;
 	apecs_init(acp, 1);
 
-	/* XXX SGMAP FOO */
+	apecs_dma_init(acp);
 
 	printf(": DECchip %s Core Logic chipset\n",
 	    acp->ac_memwidth == 128 ? "21072" : "21071");
