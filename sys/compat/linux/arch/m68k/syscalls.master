@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2002/02/15 16:48:01 christos Exp $
+	$NetBSD: syscalls.master,v 1.36 2002/02/17 19:35:30 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -150,15 +150,13 @@
 #if !defined(_KERNEL) || defined(COMPAT_43)
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
-75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
-			    struct orlimit *rlp); }
-76	NOARGS		{ int compat_43_sys_getrlimit(u_int which, \
-			    struct orlimit *rlp); }
 #else
 74	UNIMPL		compat_43_sys_sethostname
-75	UNIMPL		compat_43_sys_setrlimit
-76	UNIMPL		compat_43_sys_getrlimit
 #endif
+75	STD		{ int linux_sys_setrlimit(u_int which, \
+			    struct orlimit *rlp); }
+76	STD		{ int linux_sys_getrlimit(u_int which, \
+			    struct orlimit *rlp); }
 77	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 78	STD		{ int linux_sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
@@ -336,7 +334,7 @@
 189	UNIMPL		putpmsg
 190	NOARGS		{ int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
-			    struct rlimit *rlp); }
+			    struct orlimit *rlp); }
 192	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
 			    int prot, int flags, int fd, off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
