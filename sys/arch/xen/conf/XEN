@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.6 2004/04/24 20:58:59 cl Exp $
+# $NetBSD: XEN,v 1.7 2004/04/24 21:33:32 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -107,6 +107,15 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	PCDISPLAY_SOFTCURSOR
+
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
 #config		netbsd	root on xennet0 type nfs
@@ -127,7 +136,11 @@ wd*		at hypervisor?		# Xen vbd (wd identity)
 sd*		at hypervisor?		# Xen vbd (sd identity)
 cd*		at hypervisor?		# Xen vbd (cd identity)
 
+xenkbc* 	at hypervisor?		# Xen keyboard/mouse interface
+pckbd*		at xenkbc?		# Keyboard
 vga*		at hypervisor?		# Xen VGA display
+
+wskbd*		at pckbd? console ?
 wsdisplay*	at vga? console ?
 
 
@@ -154,4 +167,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
