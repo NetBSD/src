@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.14 2003/03/09 23:29:52 jdolecek Exp $
+.\" $NetBSD: tun.4,v 1.15 2004/11/22 17:17:24 peter Exp $
 .\"
 .\" Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,14 +34,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 1996
+.Dd November 22, 2004
 .Dt TUN 4
 .Os
 .Sh NAME
 .Nm tun
 .Nd tunnel software network interface
 .Sh SYNOPSIS
-.Cd pseudo-device tun Op Ar count
+.Cd pseudo-device tun
 .Sh DESCRIPTION
 The
 .Nm tun
@@ -86,14 +86,11 @@ will indicate that the device is not configured
 .Pq Er ENXIO
 unless the corresponding network interface has been created.
 .Pp
-The network interfaces are named
+The network interfaces should be named
 .Sy tun Ns Ar 0 ,
 .Sy tun Ns Ar 1 ,
-etc, as many in all as the
-.Ar count
-figure given on the
-.Sy pseudo-device
-line.  Each one supports the usual network-interface
+etc.
+Each interface supports the usual network-interface
 .Xr ioctl 2 Ns s ,
 such as
 .Dv SIOCSIFADDR
