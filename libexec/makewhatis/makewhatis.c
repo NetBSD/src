@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.26 2002/09/13 15:56:37 thorpej Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.27 2003/06/14 16:58:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.26 2002/09/13 15:56:37 thorpej Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.27 2003/06/14 16:58:00 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -102,7 +102,7 @@ char	*replacestring(char *, char *, char *);
 void	 catpreprocess(char *);
 char	*parsecatpage(gzFile *);
 int	 manpreprocess(char *);
-char	*nroff(gzFile *);
+char	*nroff(gzFile *, const char *);
 char	*parsemanpage(gzFile *, int);
 char	*getwhatisdata(char *);
 void	 processmanpages(manpage **,whatis **);
@@ -621,7 +621,7 @@ manpreprocess(char *line)
 }
 
 char *
-nroff(gzFile *in)
+nroff(gzFile *in, const char *inname)
 {
 	char tempname[MAXPATHLEN], buffer[65536], *data;
 	int tempfd, bytes, pipefd[2], status;
@@ -710,8 +710,8 @@ nroff(gzFile *in)
 	if ((data != NULL) &&
 	    !(WIFEXITED(status) && (WEXITSTATUS(status) == 0))) {
 		free(data);
-		errx(EXIT_FAILURE, "nroff exited with %d status",
-		    WEXITSTATUS(status));
+		errx(EXIT_FAILURE, "nroff on `%s' exited with %d status",
+		    inname, WEXITSTATUS(status));
 	}
 
 	(void)unlink(tempname);
@@ -952,7 +952,7 @@ getwhatisdata(char *name)
 	else {
 		data = parsemanpage(in, section);
 		if (data == NULL)
-			data = nroff(in);
+			data = nroff(in, name);
 	}
 
 	(void) gzclose(in);
