@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.2.5 1999/05/11 07:15:16 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.2.6 1999/05/12 05:46:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/sysconf.h>
 #include <machine/autoconf.h>
 #include <pmax/pmax/pmaxtype.h>
 

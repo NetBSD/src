@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2.4.1 1999/03/29 06:55:04 nisimura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.4.2 1999/05/12 05:46:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,7 +61,7 @@ struct platform {
 	/*
 	 * Platform Information.
 	 */
-	const char	*iobus;		/* Primary iobus name */
+	char	*iobus;		/* Primary iobus name */
 
 	/*
 	 * Platform Specific Function Hooks
@@ -71,7 +71,6 @@ struct platform {
 	 *	clockintr	-	Clock Interrupt Handler
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
 	 */
-	void	(*os_init) __P((void));
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
@@ -83,7 +82,7 @@ struct platform {
 #endif
 };
 
-extern struct platform platform, unimpl_platform;
+extern struct platform platform;
 
 /*
  * There is an array of functions to initialize the platform structure.
