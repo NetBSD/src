@@ -1,10 +1,10 @@
-#	$NetBSD: bfd-h.sed,v 1.4 1998/08/29 16:09:57 tv Exp $
+#	$NetBSD: bfd-h.sed,v 1.5 1999/01/23 20:51:57 eeh Exp $
 # Preparse bfd.h such that it can be used on multiple machines.
 
 s/@VERSION@/2.8.1/
 /@wordsize@/{
 	i\
-#if defined(__alpha__)\
+#if defined(__alpha__) || defined (__sparc_v9__)\
 #define BFD_ARCH_SIZE 64\
 #else\
 #define BFD_ARCH_SIZE 32\
@@ -13,7 +13,7 @@ s/@VERSION@/2.8.1/
 }
 /@BFD_HOST_64BIT_LONG@/ {
 	i\
-#if defined(__alpha__)\
+#if defined(__alpha__) || defined (__sparc_v9__)\
 #define BFD_HOST_64BIT_LONG 1\
 #else\
 #define BFD_HOST_64BIT_LONG 0\
