@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2001/08/30 02:08:43 briggs Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2002/07/05 18:45:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,13 +106,6 @@ struct intrhand {
 	int	ih_irq;
 };
 
-void	setsoftclock(void);
-void	clearsoftclock(void);
-int	splsoftclock(void);
-void	setsoftnet(void);
-void	clearsoftnet(void);
-int	splsoftnet(void);
-
 void	do_pending_int(void);
 void	*intr_establish(int, int, int, int (*)(void *), void *);
 void	intr_disestablish(void *);
@@ -121,8 +114,6 @@ static __inline int splraise(int);
 static __inline int spllower(int);
 static __inline void splx(int);
 static __inline void set_sint(int);
-
-void softnet __P((int));	/* Defined in machdep.c, used in extintr.c */
 
 extern volatile int cpl, ipending, astpending, tickspending;
 extern int imask[];

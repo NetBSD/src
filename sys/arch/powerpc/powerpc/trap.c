@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2002/06/27 21:15:35 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,22 +33,13 @@
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -62,20 +53,14 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <powerpc/altivec.h>
 #include <powerpc/spr.h>
-
-/* These definitions should probably be somewhere else			XXX */
-#define	FIRSTARG	3		/* first argument is in reg 3 */
-#define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
 
 #ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
 extern int intr_depth;
 #endif
-
-void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 static inline void setusr __P((int));
@@ -87,14 +72,14 @@ int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
 
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	struct proc *p = curproc;
+	struct cpu_info * const ci = curcpu();
 	int type = frame->exc;
 	int ftype, rv;
 
-	curcpu()->ci_ev_traps.ev_count++;
+	ci->ci_ev_traps.ev_count++;
 
 	if (frame->srr1 & PSL_PR)
 		type |= EXC_USER;
@@ -122,7 +107,7 @@ trap(frame)
 		 * Only query UVM if no interrupts are active (this applies
 		 * "on-fault" as well.
 		 */
-		curcpu()->ci_ev_kdsi.ev_count++;
+		ci->ci_ev_kdsi.ev_count++;
 		if (intr_depth < 0) {
 			struct vm_map *map;
 			vaddr_t va;
@@ -178,7 +163,7 @@ trap(frame)
 	}
 	case EXC_DSI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
-		curcpu()->ci_ev_udsi.ev_count++;
+		ci->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
 			ftype = VM_PROT_WRITE;
 		else
@@ -193,7 +178,7 @@ trap(frame)
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-		curcpu()->ci_ev_udsi_fatal.ev_count++;
+		ci->ci_ev_udsi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user %s DSI @ %#x "
 			    "by %#x (DSISR %#x, err=%d)\n",
@@ -219,7 +204,7 @@ trap(frame)
 		goto brain_damage2;
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
-		curcpu()->ci_ev_isi.ev_count++;
+		ci->ci_ev_isi.ev_count++;
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);
@@ -227,7 +212,7 @@ trap(frame)
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-		curcpu()->ci_ev_isi_fatal.ev_count++;
+		ci->ci_ev_isi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user ISI trap @ %#x "
 			    "(SSR1=%#x)\n",
@@ -237,105 +222,21 @@ trap(frame)
 		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_SC|EXC_USER:
-		curcpu()->ci_ev_scalls.ev_count++;
-		{
-			const struct sysent *callp;
-			size_t argsize;
-			register_t code, error;
-			register_t *params, rval[2];
-			int n;
-			register_t args[10];
-
-			KERNEL_PROC_LOCK(p);
-
-			uvmexp.syscalls++;
-
-			code = frame->fixreg[0];
-			callp = p->p_emul->e_sysent;
-			params = frame->fixreg + FIRSTARG;
-			n = NARGREG;
-
-			switch (code) {
-			case SYS_syscall:
-				/*
-				 * code is first argument,
-				 * followed by actual args.
-				 */
-				code = *params++;
-				n -= 1;
-				break;
-			case SYS___syscall:
-				params++;
-				code = *params++;
-				n -= 2;
-				break;
-			default:
-				break;
-			}
-
-			code &= (SYS_NSYSENT - 1);
-			callp += code;
-			argsize = callp->sy_argsize;
-
-			if (argsize > n * sizeof(register_t)) {
-				memcpy(args, params, n * sizeof(register_t));
-				error = copyin(MOREARGS(frame->fixreg[1]),
-					       args + n,
-					       argsize - n * sizeof(register_t));
-				if (error)
-					goto syscall_bad;
-				params = args;
-			}
-
-			if ((error = trace_enter(p, code, params, rval)) != 0)
-				goto syscall_bad;
-
-			rval[0] = 0;
-			rval[1] = 0;
-
-			error = (*callp->sy_call)(p, params, rval);
-			switch (error) {
-			case 0:
-				frame->fixreg[FIRSTARG] = rval[0];
-				frame->fixreg[FIRSTARG + 1] = rval[1];
-				frame->cr &= ~0x10000000;
-				break;
-			case ERESTART:
-				/*
-				 * Set user's pc back to redo the system call.
-				 */
-				frame->srr0 -= 4;
-				break;
-			case EJUSTRETURN:
-				/* nothing to do */
-				break;
-			default:
-syscall_bad:
-				if (p->p_emul->e_errno)
-					error = p->p_emul->e_errno[error];
-				frame->fixreg[FIRSTARG] = error;
-				frame->cr |= 0x10000000;
-				break;
-			}
-			KERNEL_PROC_UNLOCK(p);
-			trace_exit(p, code, params, rval, error);
-		}
-
-
+		(*p->p_md.md_syscall)(frame);
 		break;
 
 	case EXC_FPU|EXC_USER:
-		curcpu()->ci_ev_fpu.ev_count++;
-		if (fpuproc) {
-			curcpu()->ci_ev_fpusw.ev_count++;
-			save_fpu(fpuproc);
+		ci->ci_ev_fpu.ev_count++;
+		if (ci->ci_fpuproc) {
+			ci->ci_ev_fpusw.ev_count++;
+			save_fpu(ci->ci_fpuproc);
 		}
 #if defined(MULTIPROCESSOR)
 		if (p->p_addr->u_pcb.pcb_fpcpu)
 			save_fpu_proc(p);
 #endif
-		fpuproc = p;
-		p->p_addr->u_pcb.pcb_fpcpu = curcpu();
+		ci->ci_fpuproc = p;
+		p->p_addr->u_pcb.pcb_fpcpu = ci;
 		enable_fpu(p);
 		break;
 
@@ -355,9 +256,9 @@ syscall_bad:
 
 	case EXC_ALI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
-		curcpu()->ci_ev_ali.ev_count++;
+		ci->ci_ev_ali.ev_count++;
 		if (fix_unaligned(p, frame) != 0) {
-			curcpu()->ci_ev_ali_fatal.ev_count++;
+			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
 				printf("trap: pid %d (%s): user ALI trap @ %#x "
 				    "(SSR1=%#x)\n",
@@ -370,23 +271,47 @@ syscall_bad:
 		KERNEL_PROC_UNLOCK(p);
 		break;
 
+	case EXC_PERF|EXC_USER:
+		/* Not really, but needed due to how trap_subr.S works */
 	case EXC_VEC|EXC_USER:
+		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
-		curcpu()->ci_ev_vec.ev_count++;
-		if (vecproc) {
-			curcpu()->ci_ev_vecsw.ev_count++;
-			save_vec(vecproc);
+		if (ci->ci_vecproc) {
+			ci->ci_ev_vecsw.ev_count++;
+			save_vec(ci->ci_vecproc);
 		}
-		vecproc = p;
+#if defined(MULTIPROCESSOR)
+		if (p->p_addr->u_pcb.pcb_veccpu)
+			save_vec_proc(p);
+#endif
+		ci->ci_vecproc = p;
 		enable_vec(p);
+		p->p_addr->u_pcb.pcb_veccpu = ci;
 		break;
 #else
-		/* FALLTHROUGH */
+		KERNEL_PROC_LOCK(p);
+		if (cpu_printfataltraps) {
+			printf("trap: pid %d (%s): user VEC trap @ %#x "
+			    "(SSR1=%#x)\n",
+			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+		}
+		trapsignal(p, SIGILL, EXC_PGM);
+		KERNEL_PROC_UNLOCK(p);
+		break;
 #endif
+	case EXC_MCHK|EXC_USER:
+		ci->ci_ev_umchk.ev_count++;
+		KERNEL_PROC_LOCK(p);
+		if (cpu_printfataltraps) {
+			printf("trap: pid %d (%s): user MCHK trap @ %#x "
+			    "(SSR1=%#x)\n",
+			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+		}
+		trapsignal(p, SIGBUS, EXC_PGM);
+		KERNEL_PROC_UNLOCK(p);
 
 	case EXC_PGM|EXC_USER:
-/* XXX temporarily */
-		curcpu()->ci_ev_pgm.ev_count++;
+		ci->ci_ev_pgm.ev_count++;
 		KERNEL_PROC_LOCK(p);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user PGM trap @ %#x "
@@ -445,40 +370,14 @@ brain_damage2:
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
 	 */
-	if (p != fpuproc || p->p_addr->u_pcb.pcb_fpcpu != curcpu())
+	if (p != ci->ci_fpuproc || p->p_addr->u_pcb.pcb_fpcpu != ci)
 		frame->srr1 &= ~PSL_FP;
 #ifdef ALTIVEC
-	if (p != vecproc)
+	if (p != ci->ci_vecproc || p->p_addr->u_pcb.pcb_veccpu != ci)
 		frame->srr1 &= ~PSL_VEC;
 #endif
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-	struct trapframe *tf = trapframe(p);
-
-	KERNEL_PROC_UNLOCK(p);
-
-	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
-	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
-					   be them. */
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-#ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
-	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	ci->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 static inline void
@@ -677,14 +576,15 @@ fix_unaligned(p, frame)
 		{
 			int reg = EXC_ALI_RST(frame->dsisr);
 			double *fpr = &p->p_addr->u_pcb.pcb_fpu.fpr[reg];
+			struct cpu_info *ci = curcpu();
 
 			/* Juggle the FPU to ensure that we've initialized
 			 * the FPRs, and that their current state is in
 			 * the PCB.
 			 */
-			if (fpuproc != p) {
-				if (fpuproc)
-					save_fpu(fpuproc);
+			if (ci->ci_fpuproc != p) {
+				if (ci->ci_fpuproc)
+					save_fpu(ci->ci_fpuproc);
 				enable_fpu(p);
 			}
 			save_fpu(p);

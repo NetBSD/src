@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -39,8 +39,7 @@
 #include <machine/psl.h>
 
 void
-enable_fpu(p)
-	struct proc *p;
+enable_fpu(struct proc *p)
 {
 	int msr, scratch;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -90,8 +89,7 @@ enable_fpu(p)
 }
 
 void
-save_fpu(p)
-	struct proc *p;
+save_fpu(struct proc *p)
 {
 	int msr, scratch;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -133,5 +131,5 @@ save_fpu(p)
 	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm volatile ("mtmsr %0; isync" :: "r"(msr));
 	pcb->pcb_fpcpu = NULL;
-	fpuproc = NULL;
+	curcpu()->ci_fpuproc = NULL;
 }

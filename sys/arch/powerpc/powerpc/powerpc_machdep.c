@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.11 2002/03/18 04:50:32 briggs Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.12 2002/07/05 18:45:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,6 +87,9 @@ setregs(p, pack, stack)
 
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
+#ifdef ALTIVEC
+	tf->vrsave = 0;
+#endif
 	p->p_addr->u_pcb.pcb_flags = 0;
 }
 
@@ -121,6 +126,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 			&curcpu()->ci_ci, 
 			sizeof(curcpu()->ci_ci));
+#ifdef PPC_MPC6XX
+	case CPU_ALTIVEC:
+		return sysctl_rdint(oldp, oldlenp, newp, cpu_altivec);
+#else
+	case CPU_ALTIVEC:
+		return sysctl_rdint(oldp, oldlenp, newp, 0);
+#endif
+	case CPU_MODEL:
+		return sysctl_rdstring(oldp, oldlenp, newp, cpu_model);
 	default:
 		break;
 	}
