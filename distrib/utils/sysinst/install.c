@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.11 1998/05/15 15:12:30 fvdl Exp $	*/
+/*	$NetBSD: install.c,v 1.12 1998/06/20 13:05:48 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,65 +46,66 @@
 
 /* Do the system install. */
 
-void do_install(void)
+void
+do_install()
 {
-	doingwhat = msg_string (MSG_install);
+	doingwhat = msg_string(MSG_install);
 
-	msg_display (MSG_installusure);
-	process_menu (MENU_noyes);
+	msg_display(MSG_installusure);
+	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
 	
 	get_ramsize();
 
-	if (find_disks () < 0)
+	if (find_disks() < 0)
 		return;
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev);
-		process_menu (MENU_ok);
+		process_menu(MENU_ok);
 		return;
 	}
 
-	if (!md_get_info ()) {
-		msg_display (MSG_abort);
+	if (!md_get_info()) {
+		msg_display(MSG_abort);
 		return;
 	}
 
-	if (md_make_bsd_partitions () == 0) {
+	if (md_make_bsd_partitions() == 0) {
 		msg_display(MSG_abort);
 		return;
 	}
 
 	/* Last chance ... do you really want to do this? */
-	msg_display (MSG_lastchance);
-	process_menu (MENU_noyes);
+	msg_display(MSG_lastchance);
+	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
 
 	/* Leave curses so program output looks good. */
-	endwin ();
+	endwin();
 
-	md_pre_disklabel ();
+	md_pre_disklabel();
 
-	write_disklabel ();
+	write_disklabel();
 	
-	md_post_disklabel ();
+	md_post_disklabel();
 
-	make_filesystems ();
+	make_filesystems();
 
-	md_copy_filesystem ();
+	md_copy_filesystem();
 
 	make_fstab();
 
-	md_post_newfs ();
+	md_post_newfs();
 
 	/* Done to here. */
 	printf("%s", msg_string(MSG_disksetupdone));
 
 	getchar();
-	puts (CL); /* just to make sure */
+	puts(CL); /* just to make sure */
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */

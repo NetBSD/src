@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.6 1998/02/24 05:36:03 jonathan Exp $ */
+/*	$NetBSD: mbr.c,v 1.7 1998/06/20 13:05:49 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,8 @@ struct part_id {
 	{7, "NTFS"},
 	{131, "Linux native"},
 	{131, "Linux swap"},
-	{165, "NetBSD/FreeBSD/386bsd"},
-	{169, "new NetBSD"},
+	{165, "old NetBSD/FreeBSD/386BSD"},
+	{169, "NetBSD"},
 	{-1, "Unknown"},
 };
 
@@ -88,43 +88,45 @@ struct part_id {
 int dosptyp_nbsd = DOSPTYP_OURS;	
 
 /* prototypes */
-int otherpart(int id);
-int ourpart(int id);
+int otherpart __P((int id));
+int ourpart __P((int id));
 int edit_mbr __P((void));
-
-
 
 /*
  * First, geometry  stuff...
  */
-int check_geom (void)
+int
+check_geom()
 {
+
 	return bcyl <= 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
 }
-
 
 /*
  * get C/H/S geometry from user via menu interface and
  * store in globals.
  */
-void set_fdisk_geom (void)
+void
+set_fdisk_geom()
 {
 	char res[80];
+
 	msg_display_add(MSG_setbiosgeom);
 	disp_cur_geom();
-	msg_printf_add ("\n");
-	msg_prompt_add (MSG_cylinders, NULL, res, 80);
+	msg_printf_add("\n");
+	msg_prompt_add(MSG_cylinders, NULL, res, 80);
 	bcyl = atoi(res);
-	msg_prompt_add (MSG_heads, NULL, res, 80);
+	msg_prompt_add(MSG_heads, NULL, res, 80);
 	bhead = atoi(res);
-	msg_prompt_add (MSG_sectors, NULL, res, 80);
+	msg_prompt_add(MSG_sectors, NULL, res, 80);
 	bsec = atoi(res);
 	bstuffset = 1;
 }
 
-
-void disp_cur_geom (void)
+void
+disp_cur_geom()
 {
+
 	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
 	msg_display_add(MSG_biosgeom, bcyl, bhead, bsec);
 }
@@ -134,27 +136,32 @@ void disp_cur_geom (void)
  * Then,  the partition stuff...
  */
 int
-otherpart(int id)
+otherpart(id)
+	int id;
 {
+
 	return (id != 0 && id != DOSPTYP_386BSD && id != DOSPTYP_NETBSD);
 }
 
 int
-ourpart(int id)
+ourpart(id)
+	int id;
 {
+
 	return (id != 0 && (id == DOSPTYP_386BSD || id == DOSPTYP_NETBSD));
 }
 
 /*
  * Let user change incore Master Boot Record partitions via menu.
  */
-int edit_mbr()
+int
+edit_mbr()
 {
 	int i, j;
 
 	/* Ask full/part */
-	msg_display (MSG_fullpart, diskdev);
-	process_menu (MENU_fullpart);
+	msg_display(MSG_fullpart, diskdev);
+	process_menu(MENU_fullpart);
 
 	/* DOS fdisk label checking and value setting. */
 	if (usefull) {
@@ -166,13 +173,13 @@ int edit_mbr()
 		for (i = 0; i < 4; i++) {
 			otherparts += otherpart(part[0][ID]);
 			/* check for dualboot *bsd too */
-			ourparts   += ourpart(part[0][ID]);
+			ourparts += ourpart(part[0][ID]);
 		}					  
 
 		/* Ask if we really want to blow away non-NetBSD stuff */
 		if (otherparts != 0 || ourparts > 1) {
-			msg_display (MSG_ovrwrite);
-			process_menu (MENU_noyes);
+			msg_display(MSG_ovrwrite);
+			process_menu(MENU_noyes);
 			if (!yesno) {
 				endwin();
 				return 0;
@@ -206,7 +213,7 @@ int edit_mbr()
 		ask_sizemult();
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
-		for (i=0; i<4; i++)
+		for (i = 0; i<4; i++)
 			if (part[i][FLAG] != 0)
 				activepart = i;
 		do {
@@ -218,7 +225,7 @@ int edit_mbr()
 			overlap = 0;
 			yesno = 0;
 			for (i=0; i<4; i++) {
-				/* Count 386bsd/FreeBSD/NetBSD partitions */
+				/* Count 386bsd/FreeBSD/NetBSD(old) partitions */
 				if (part[i][ID] == DOSPTYP_386BSD) {
 					freebsdpart = i;
 					numfreebsd++;
@@ -242,20 +249,20 @@ int edit_mbr()
 
 			/* Check for overlap or multiple native partitions */
 			if (overlap || numbsd != 1) {
-				msg_display (MSG_reeditpart);
-				process_menu (MENU_yesno);
+				msg_display(MSG_reeditpart);
+				process_menu(MENU_yesno);
 			}
 		} while (yesno && (numbsd != 1 || overlap));
 
 		if (numbsd == 0) {
-			msg_display (MSG_nobsdpart);
-			process_menu (MENU_ok);
+			msg_display(MSG_nobsdpart);
+			process_menu(MENU_ok);
 			return 0;
 		}
 			
 		if (numbsd > 1) {
-			msg_display (MSG_multbsdpart, bsdpart);
-			process_menu (MENU_ok);
+			msg_display(MSG_multbsdpart, bsdpart);
+			process_menu(MENU_ok);
 		}
 			
 		ptstart = part[bsdpart][START];
@@ -279,8 +286,12 @@ int edit_mbr()
 	return 1;
 }
 
-int partsoverlap(int i, int j)
+int
+partsoverlap(i, j)
+	int i;
+	int j;
 {
+
 	if (part[i][SIZE] == 0 || part[j][SIZE] == 0)
 		return 0;
 
@@ -292,10 +303,12 @@ int partsoverlap(int i, int j)
 		 part[i][START] < part[j][START] + part[j][SIZE])
 		||
 		(part[i][START] == part[j][START]);
-
 }
 
-void disp_cur_part(int sel, int disp)
+void
+disp_cur_part(sel, disp)
+	int sel;
+	int disp;
 {
 	int i, j, start, stop, rsize, rend;
 
@@ -303,11 +316,12 @@ void disp_cur_part(int sel, int disp)
 		start = 0, stop = 4;
 	else
 		start = disp, stop = disp+1;
-	msg_display_add (MSG_part_head, multname, multname, multname);
-	for (i=start; i<stop; i++) {
-		if (sel == i) msg_standout();
+	msg_display_add(MSG_part_head, multname, multname, multname);
+	for (i = start; i < stop; i++) {
+		if (sel == i)
+			msg_standout();
 		if (part[i][SIZE] == 0 && part[i][START] == 0)
-			msg_printf_add ("%d %36s  ", i, "");
+			msg_printf_add("%d %36s  ", i, "");
 		else {
 			rsize = part[i][SIZE] / sizemult;
 			if (part[i][SIZE] % sizemult)
@@ -316,8 +330,7 @@ void disp_cur_part(int sel, int disp)
 			if ((part[i][SIZE] + part[i][SIZE]) % sizemult)
 				rend++;
 			msg_printf_add("%d %12d%12d%12d  ", i,
-					part[i][START] / sizemult,
-					rsize, rend);
+			    part[i][START] / sizemult, rsize, rend);
 		}
 		for (j = 0; part_ids[j].id != -1 &&
 			    part_ids[j].id != part[i][ID]; j++);

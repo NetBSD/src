@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.29 1998/02/09 07:34:16 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.30 1998/06/20 13:05:50 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,11 @@ int network_up = 0;
 
 /* Get the list of network interfaces. */
 
-static void get_ifconfig_info (void)
+static void get_ifconfig_info __P((void));
+static void get_ifinterface_info __P((void));
+
+static void
+get_ifconfig_info()
 {
 	char *textbuf;
 	int   textsize;
@@ -63,27 +67,26 @@ static void get_ifconfig_info (void)
 
 	/* Get ifconfig information */
 	
-	textsize = collect (T_OUTPUT, &textbuf,
-			    "/sbin/ifconfig -l 2>/dev/null");
+	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -l 2>/dev/null");
 	if (textsize < 0) {
 		endwin();
-		(void) fprintf (stderr, "Could not run ifconfig.");
-		exit (1);
+		(void)fprintf(stderr, "Could not run ifconfig.");
+		exit(1);
 	}
-	(void) strtok(textbuf,"\n");
-	strncpy (net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
+	(void)strtok(textbuf,"\n");
+	strncpy(net_devices, textbuf, textsize<STRSIZE ? textsize : STRSIZE);
 	net_devices[STRSIZE] = 0;
-	free (textbuf);
+	free(textbuf);
 
 	/* Remove lo0 and anything after ... */
-	t = strstr (net_devices, "lo0");
+	t = strstr(net_devices, "lo0");
 	if (t != NULL)
 		*t = 0;
 }
 
 /* Fill in defaults network values for the selected interface */
-
-static void get_ifinterface_info(void)
+static void
+get_ifinterface_info()
 {
 	char *textbuf;
 	int textsize;
@@ -92,7 +95,7 @@ static void get_ifinterface_info(void)
 
 	/* First look to see if the selected interface is already configured. */
 	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig %s 2>/dev/null",
-			   net_dev);
+	    net_dev);
 	if (textsize >= 0) {
 		(void)strtok(textbuf, " \t\n"); /* ignore interface name */
 		while ((t = strtok(NULL, " \t\n")) != NULL) {
@@ -100,13 +103,11 @@ static void get_ifinterface_info(void)
 				t = strtok(NULL, " \t\n");
 				if (strcmp(t, "0.0.0.0") != 0)
 					strcpy(net_ip, t);
-			}
-			else if (strcmp(t, "netmask") == 0) {
+			} else if (strcmp(t, "netmask") == 0) {
 				t = strtok(NULL, " \t\n");
 				if (strcmp(t, "0x0") != 0)
 					strcpy(net_mask, t);
-			}
-			else if (strcmp(t, "media:") == 0) {
+			} else if (strcmp(t, "media:") == 0) {
 				t = strtok(NULL, " \t\n");
 				if (strcmp(t, "none") != 0 &&
 				    strcmp(t, "manual") != 0)
@@ -120,10 +121,12 @@ static void get_ifinterface_info(void)
 		strncpy(net_host, hostname, sizeof(net_host));
 }
 
-/* Get the information to configure the network, configure it and
-   make sure both the gateway and the name server are up. */
-
-int config_network (void)
+/*
+ * Get the information to configure the network, configure it and
+ * make sure both the gateway and the name server are up.
+ */
+int
+config_network()
 {	char *tp;
 	char defname[255];
 	int  octet0;
@@ -133,29 +136,28 @@ int config_network (void)
 	time_t now;
 
 	if (network_up)
-		return 1;
+		return (1);
 
 	network_up = 1;
 	net_devices[0] = '\0';
-	get_ifconfig_info ();
+	get_ifconfig_info();
 	if (strlen(net_devices) == 0) {
 		/* No network interfaces found! */
-		msg_display (MSG_nonet);
-		process_menu (MENU_ok);
-		return -1;
+		msg_display(MSG_nonet);
+		process_menu(MENU_ok);
+		return (-1);
 	}
-	strncpy (defname, net_devices, 255);
+	strncpy(defname, net_devices, 255);
 	tp = defname;
 	strsep(&tp, " ");
-	msg_prompt (MSG_asknetdev, defname, net_dev, 255, net_devices);
+	msg_prompt(MSG_asknetdev, defname, net_dev, 255, net_devices);
 	tp = net_dev;
 	strsep(&tp, " ");
 	net_dev[strlen(net_dev)+1] = 0;
 	net_dev[strlen(net_dev)] = ' ';
 	while ((strlen(net_dev) != 4 && strlen(net_dev) != 5) ||
-		       strstr(net_devices, net_dev) == NULL) {
-		msg_prompt (MSG_badnet, defname,  net_dev, 10,
-			    net_devices);
+	    strstr(net_devices, net_dev) == NULL) {
+		msg_prompt(MSG_badnet, defname,  net_dev, 10, net_devices);
 		tp = net_dev;
 		strsep(&tp, " ");
 		net_dev[strlen(net_dev)+1] = 0;
@@ -163,54 +165,53 @@ int config_network (void)
 	}
 
 	/* Remove that space we added. */
-	net_dev[strlen(net_dev)-1] = 0;
+	net_dev[strlen(net_dev) - 1] = 0;
 
 	/* Preload any defaults we can find */
-	get_ifinterface_info ();
+	get_ifinterface_info();
 	pass = strlen(net_mask) == 0 ? 0 : 1;
 	needmedia = strlen(net_media) == 0 ? 0 : 1;
 	
 	/* Get other net information */
-	msg_display (MSG_netinfo);
+	msg_display(MSG_netinfo);
 	do {
-		msg_prompt_add (MSG_net_domain, net_domain, net_domain,
-				STRSIZE);
-		msg_prompt_add (MSG_net_host, net_host, net_host, STRSIZE);
-		msg_prompt_add (MSG_net_ip, net_ip, net_ip, STRSIZE);
+		msg_prompt_add(MSG_net_domain, net_domain, net_domain, STRSIZE);
+		msg_prompt_add(MSG_net_host, net_host, net_host, STRSIZE);
+		msg_prompt_add(MSG_net_ip, net_ip, net_ip, STRSIZE);
 		octet0 = atoi(net_ip);
 		if (!pass) {
 			if (0 <= octet0 && octet0 <= 127)
-				strcpy (net_mask, "0xff000000");
+				strcpy(net_mask, "0xff000000");
 			else if (127 <= octet0 && octet0 <= 191)
-				strcpy (net_mask, "0xffff0000");
+				strcpy(net_mask, "0xffff0000");
 			else if (192 <= octet0 && octet0 <= 223)
-				strcpy (net_mask, "0xffff0000");
+				strcpy(net_mask, "0xffff0000");
 		}
-		msg_prompt_add (MSG_net_mask, net_mask, net_mask, STRSIZE);
-		msg_prompt_add (MSG_net_defroute, net_defroute, net_defroute,
+		msg_prompt_add(MSG_net_mask, net_mask, net_mask, STRSIZE);
+		msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute,
 				STRSIZE);
-		msg_prompt_add (MSG_net_namesrv, net_namesvr, net_namesvr,
+		msg_prompt_add(MSG_net_namesrv, net_namesvr, net_namesvr,
 				STRSIZE);
 		if (needmedia)
 			msg_prompt_add(MSG_net_media, net_media, net_media,
 				       STRSIZE);
 
-		msg_display (MSG_netok, net_domain, net_host, net_ip, net_mask,
+		msg_display(MSG_netok, net_domain, net_host, net_ip, net_mask,
 			     *net_namesvr == '\0' ? "<none>" : net_namesvr,
 			     *net_defroute == '\0' ? "<none>" : net_defroute,
 			     *net_media == '\0' ? "<default>" : net_media);
-		process_menu (MENU_yesno);
+		process_menu(MENU_yesno);
 		if (!yesno)
-			msg_display (MSG_netagain);
+			msg_display(MSG_netagain);
 		pass++;
 	} while (!yesno);
 
 	/* Create /etc/resolv.conf if a nameserver was given */
 	if (strcmp(net_namesvr, "") != 0) {
 #ifdef DEBUG
-		f = fopen ("/tmp/resolv.conf", "w");
+		f = fopen("/tmp/resolv.conf", "w");
 #else
-		f = fopen ("/etc/resolv.conf", "w");
+		f = fopen("/etc/resolv.conf", "w");
 #endif
 		if (f == NULL) {
 			endwin();
@@ -219,15 +220,15 @@ int config_network (void)
 		}
 		time(&now);
 		/* NB: ctime() returns a string ending in  '\n' */
-		(void)fprintf (f, ";\n; BIND data file\n; %s %s;\n", 
-			       "Created by NetBSD sysinst on", ctime(&now)); 
+		(void)fprintf(f, ";\n; BIND data file\n; %s %s;\n", 
+		    "Created by NetBSD sysinst on", ctime(&now)); 
 		(void)fprintf (f,
-			       "nameserver %s\nlookup file bind\nsearch %s\n",
-			       net_namesvr, net_domain);
-		fclose (f);
+		    "nameserver %s\nlookup file bind\nsearch %s\n",
+		    net_namesvr, net_domain);
+		fclose(f);
 	}
 
-	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
+	run_prog("/sbin/ifconfig lo0 127.0.0.1");
 	if (*net_media != '\0')
 		run_prog("/sbin/ifconfig %s inet %s netmask %s media %s",
 			  net_dev, net_ip, net_mask, net_media);
@@ -236,50 +237,49 @@ int config_network (void)
 			  net_ip, net_mask);
 
 	/* Set host name */
-	if (strcmp(net_host, "") != 0) {
+	if (strcmp(net_host, "") != 0)
 	  	sethostname(net_host, strlen(net_host));
-	}
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
-		run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
-		run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
+		run_prog("/sbin/route -f > /dev/null 2> /dev/null");
+		run_prog("/sbin/route -n add default %s > /dev/null 2> /dev/null",
 			  net_defroute);
 	}
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
-		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
+		network_up = !run_prog("/sbin/ping -c 2 %s > /dev/null",
 					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
-		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
+		network_up = !run_prog("/sbin/ping -c 2 %s > /dev/null",
 					net_defroute);
 
 	return network_up;
 }
 
 int
-get_via_ftp (void)
+get_via_ftp()
 { 
 	distinfo *list;
 	char filename[SSTRSIZE];
 	int  ret;
 
-	while (!config_network ()) {
-		msg_display (MSG_netnotup);
-		process_menu (MENU_yesno);
+	while (!config_network()) {
+		msg_display(MSG_netnotup);
+		process_menu(MENU_yesno);
 		if (!yesno)
 			return 0;
 	}
 
-	cd_dist_dir ("ftp");
+	cd_dist_dir("ftp");
 
 	/* Fill in final values for ftp_dir. */
-	strncat (ftp_dir, rel, STRSIZE-strlen(ftp_dir));
-	strcat  (ftp_dir, "/");
-	strncat (ftp_dir, machine, STRSIZE-strlen(ftp_dir));
-	strncat (ftp_dir, ftp_prefix, STRSIZE-strlen(ftp_dir));
-	process_menu (MENU_ftpsource);
+	strncat(ftp_dir, rel, STRSIZE - strlen(ftp_dir));
+	strcat(ftp_dir, "/");
+	strncat(ftp_dir, machine, STRSIZE - strlen(ftp_dir));
+	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
+	process_menu(MENU_ftpsource);
 	
 	list = dist_list;
 	endwin();
@@ -288,25 +288,24 @@ get_via_ftp (void)
 			list++;
 			continue;
 		}
-		snprintf (filename, SSTRSIZE, "%s%s", list->name, dist_postfix);
+		(void)snprintf(filename, SSTRSIZE, "%s%s", list->name,
+		    dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
 			ret = run_prog("/usr/bin/ftp -a 'ftp://%s/%s/%s'",
-				       ftp_host, ftp_dir,
-				       filename);
+			    ftp_host, ftp_dir, filename);
 		else
 			ret = run_prog("/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
-				       ftp_user, ftp_pass, ftp_host, ftp_dir,
-				       filename);
+			    ftp_user, ftp_pass, ftp_host, ftp_dir, filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
-			msg_display (MSG_ftperror_cont);
+			msg_display(MSG_ftperror_cont);
 			getchar();
-			puts (CL);
-			wrefresh (stdscr);
-			msg_display (MSG_ftperror);
-			process_menu (MENU_yesno);
+			puts(CL);
+			wrefresh(stdscr);
+			msg_display(MSG_ftperror);
+			process_menu(MENU_yesno);
 			if (yesno)
-				process_menu (MENU_ftpsource);
+				process_menu(MENU_ftpsource);
 			else
 				return 0;
 			endwin();
@@ -314,36 +313,38 @@ get_via_ftp (void)
 			list++;
 
 	}
-	puts (CL); /* Just to make sure. */
-	wrefresh (stdscr);
+	puts(CL); /* Just to make sure. */
+	wrefresh(stdscr);
 #ifndef DEBUG
 	chdir("/");	/* back to current real root */
 #endif
-	return 1;
+	return (1);
 }
 
 int
-get_via_nfs(void)
+get_via_nfs()
 {
-        while (!config_network ()) {
-                msg_display (MSG_netnotup);
-                process_menu (MENU_yesno);
+
+        while (!config_network()) {
+                msg_display(MSG_netnotup);
+                process_menu(MENU_yesno);
                 if (!yesno)
-                        return 0;
+                        return (0);
         }
 
 	/* Get server and filepath */
-	process_menu (MENU_nfssource);
+	process_menu(MENU_nfssource);
 again:
 
-	run_prog("/sbin/umount /mnt2  2> /dev/null");
+	run_prog("/sbin/umount /mnt2 2> /dev/null");
 	
 	/* Mount it */
-	if (run_prog("/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
-		msg_display (MSG_nfsbadmount, nfs_host, nfs_dir);
-		process_menu (MENU_nfsbadmount);
+	if (run_prog("/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
+	    nfs_host, nfs_dir)) {
+		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
+		process_menu(MENU_nfsbadmount);
 		if (!yesno)
-			return 0;
+			return (0);
 		if (!ignorerror)
 			goto again;
 	}
@@ -359,7 +360,7 @@ again:
 	}
 
 	/* return location, don't clean... */
-	strcpy (ext_dir, "/mnt2");
+	strcpy(ext_dir, "/mnt2");
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
@@ -370,6 +371,8 @@ again:
  * config files in the target disk.  Be careful not to lose any
  * information we don't immediately add back, in case the install
  * target is the currently-active root. 
+ *
+ * XXXX rc.conf support is needed here!
  */
 void
 mnt_net_config(void)
@@ -379,14 +382,14 @@ mnt_net_config(void)
 	FILE *f;
 
 	if (network_up) {
-		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
+		msg_prompt(MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
 
 			/* Write hostname to /etc/myname */
 		        f = target_fopen("/etc/myname", "w");
 			if (f != 0) {
-			  	fprintf(f, "%s\n", net_host);
-				fclose(f);
+			  	(void)fprintf(f, "%s\n", net_host);
+				(void)fclose(f);
 			}
 
 			/* If not running in target, copy resolv.conf there. */
@@ -399,15 +402,14 @@ mnt_net_config(void)
 			 */
 			f = target_fopen("/etc/hosts", "a");
 			if (f != 0) {
-				fprintf(f, msg_string(MSG_etc_hosts),
-					net_ip, net_host, net_domain,
-					net_host);
-				fclose(f);
+				(void)fprintf(f, msg_string(MSG_etc_hosts),
+				    net_ip, net_host, net_domain, net_host);
+				(void)fclose(f);
 			}
 
 			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
-			snprintf (ifconfig_fn, STRSIZE,
-				  "/etc/ifconfig.%s", net_dev);
+			snprintf(ifconfig_fn, STRSIZE, "/etc/ifconfig.%s",
+			    net_dev);
 			f = target_fopen(ifconfig_fn, "w");
 			if (f != 0) {
 				if (*net_media != '\0')
