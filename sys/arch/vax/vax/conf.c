@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.55 2001/06/22 16:40:51 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.55.2.1 2001/07/10 14:03:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -217,20 +217,19 @@ struct	consdev constab[]={
 #define cdev_plotter_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev) }
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /* console mass storage */
 /* open, close, read, write */
-#define cdev_cnstore_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
+#define cdev_cnstore_init(c,n)	cdev__ocrw_init(c,n)
 
 /* open, close, write */
 #define cdev_lp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 /* graphic display adapters */
 /* open, close, read, write, ioctl, stop, poll */
@@ -241,7 +240,8 @@ struct	consdev constab[]={
 #define cdev_ingres_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,nullop), \
 	dev_noimpl(write,nullop), dev_init(c,n,ioctl), \
-	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), \
+	dev_noimpl(kqfilter,enodev), 0 }
 
 
 

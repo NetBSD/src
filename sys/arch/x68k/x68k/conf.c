@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.26.2.1 2001/07/10 14:03:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -85,11 +85,13 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, read, write, ioctl, tty, ttpoll */
+/* open, close, read, write, ioctl, tty, poll, kqfilter */
+/* XXXLUKEM: implement stop, and this can be cdev__tty_init */
 #define cdev_ite_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), D_TTY }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
+	dev_init(c,n,kqfilter), D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_par_init(c,n)	cdev__ocwi_init(c,n)
