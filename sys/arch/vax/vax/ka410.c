@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.6 1997/04/18 18:49:35 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.7 1997/07/26 10:12:45 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,6 +54,10 @@ static	void	ka410_memenable __P((struct sbi_attach_args*, struct device *));
 static	void	ka410_steal_pages __P((void));
 static	void	ka410_memerr __P((void));
 static	int	ka410_mchk __P((caddr_t));
+static	void	ka410_halt __P((void));
+static	void	ka410_reboot __P((int));
+
+extern  short *clk_page;
 
 static	struct uc_map ka410_map[] = {
 	{ KA410_CFGTST,		KA410_CFGTST+1023,	1024,	0 },
@@ -92,6 +96,8 @@ struct	cpu_dep ka410_calls = {
 	(void*)KA410_INTCLR,      /* Used by vaxstation */
 	(void*)KA410_INTMSK,      /* Used by vaxstation */
 	ka410_map,
+	ka410_halt,
+	ka410_reboot,
 };
 
 
@@ -139,7 +145,6 @@ void
 ka410_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
-        extern  short *clk_page;
         extern  int clk_adrshift, clk_tweak;
 	int	junk;
 
@@ -235,4 +240,19 @@ ka410_steal_pages()
 	KA410_CPU_BASE->ka410_mser = 1; 
 	/* (UVAXIIMSER_PEN | UVAXIIMSER_MERR | UVAXIIMSER_LEB); */
 
+}
+
+static void
+ka410_halt()
+{
+	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+	asm("halt");
+}
+
+static void
+ka410_reboot(arg)
+	int arg;
+{
+	asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
+	asm("halt");
 }
