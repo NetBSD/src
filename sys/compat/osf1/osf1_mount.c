@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.1 1995/02/13 21:39:07 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.2 1995/03/08 01:28:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -267,8 +267,9 @@ osf1_getfsstat(p, uap, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct osf1_statfs);
 	osf_sfsp = (caddr_t)SCARG(uap, buf);
-	for (count = 0, mp = mountlist.tqh_first; mp != NULL; mp = nmp) {
-		nmp = mp->mnt_list.tqe_next;
+	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	    mp = nmp) {
+		nmp = mp->mnt_list.cqe_next;
 		if (osf_sfsp && count < maxcount &&
 		    ((mp->mnt_flag & MNT_MLOCK) == 0)) {
 			sp = &mp->mnt_stat;
