@@ -1,0 +1,650 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(admin.c)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_LEX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+AC_CANONICAL_HOST
+
+AC_SUBST(OPTFLAG)
+OPTFLAG="-O -DYIPS_DEBUG"
+AC_MSG_CHECKING(if --enable-debug option is specified)
+AC_ARG_ENABLE(debug, [  --enable-debug          build a debug version],
+	[OPTFLAG="-g $OPTFLAG"; enable_debug=yes], [enable_debug=no])
+AC_MSG_RESULT($enable_debug)
+
+AC_MSG_CHECKING(if --enable-yydebug option is specified)
+AC_ARG_ENABLE(yydebug, [  --enable-yydebug        build a yydebug version],
+	[AC_DEFINE(YYDEBUG)
+	enable_yydebug=yes], [enable_yydebug=no])
+AC_MSG_RESULT($enable_yydebug)
+
+OPTFLAG="-Wall -Wmissing-prototypes -Wmissing-declarations $OPTFLAG"
+AC_MSG_CHECKING(if --enable-pedant option is specified)
+AC_ARG_ENABLE(pedant, [  --enable-pedant         pedantic compiler options],
+	[OPTFLAG="-Werror $OPTFLAG"; enable_pedant=yes],
+	[enable_pedant=no])
+AC_MSG_RESULT($enable_pedant)
+
+AC_MSG_CHECKING(if --enable-adminport option is specified)
+AC_ARG_ENABLE(adminport,
+	[  --enable-adminport      enable admin port (INSECURE!)],
+	[], [enable_adminport=no])
+if test $enable_adminport = "yes"; then
+	AC_DEFINE(ENABLE_ADMINPORT)
+fi
+AC_MSG_RESULT($enable_adminport)
+
+AC_MSG_CHECKING(if --enable-rc5 option is specified)
+AC_ARG_ENABLE(rc5,
+	[  --enable-rc5            enable RC5 encryption (patented)],
+	[], [enable_rc5=no])
+AC_MSG_RESULT($enable_rc5)
+
+AC_MSG_CHECKING(if --enable-idea option is specified)
+AC_ARG_ENABLE(idea,
+	[  --enable-idea           enable IDEA encryption (patented)],
+	[], [enable_idea=no])
+AC_MSG_RESULT($enable_idea)
+
+AC_MSG_CHECKING(if --enable-gssapi option is specified)
+AC_ARG_ENABLE(rc5,
+        [  --enable-gssapi            enable GSS-API authentication],
+        [], [enable_gssapi=no])
+if test $enable_gssapi = "yes"; then
+	AC_DEFINE(HAVE_GSSAPI)
+fi
+AC_MSG_RESULT($enable_gssapi)
+
+
+efence_dir=
+AC_MSG_CHECKING(if --with-efence option is specified)
+AC_ARG_WITH(efence, [  --with-efence=DIR       specify ElectricFence directory],
+	[efence_dir=$withval], [efence_dir=no])
+AC_MSG_RESULT(${efence_dir})
+if test "$efence_dir" != "no"; then
+	if test "x$efence_dir" = "x"; then
+		RACOON_PATH_LIBS(EF_Print, efence)
+	else
+		RACOON_PATH_LIBS(EF_Print, efence, $efence_dir)
+	fi
+fi
+
+gc_dir=
+AC_MSG_CHECKING(if --with-gc option is specified)
+AC_ARG_WITH(gc, [  --with-gc=DIR           specify Bohem GC directory (experimental)],
+	[gc_dir=$withval], [gc_dir=no])
+AC_MSG_RESULT(${gc_dir})
+if test "$gc_dir" != "no"; then
+	AC_DEFINE(GC)
+	if test "x$gc_dir" = "x"; then
+		RACOON_PATH_LIBS(GC_malloc, gc)
+	else
+		RACOON_PATH_LIBS(GC_malloc, gc, $gc_dir)
+	fi
+fi
+
+AC_MSG_CHECKING(if you have KAME tcpdump in $srcdir/../tcpdump)
+if test -f "$srcdir/../tcpdump/print-isakmp.c"; then
+	LIBOBJS="$LIBOBJS print-isakmp.o"
+	AC_DEFINE(HAVE_PRINT_ISAKMP_C)
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+
+AC_MSG_CHECKING(if __FUNCTION__ is available)
+AC_TRY_COMPILE(dnl
+[#include <stdio.h>
+], [char *x = __FUNCTION__;],
+	[AC_DEFINE(HAVE_FUNCTION_MACRO)
+	AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)])
+
+dnl Checks for libraries.
+AC_MSG_CHECKING(if --with-ssleay option is specified)
+AC_ARG_WITH(ssleay, [  --with-ssleay=DIR       specify SSLeay directory],
+	[crypto_dir=$withval])
+AC_MSG_RESULT(${crypto_dir-"default"})
+
+dnl if test "$crypto_dir" != "default"; then
+dnl 	LIBS="-L$crypto_dir/lib $LIBS"
+dnl 	if test -f $crypto_dir/include/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include $CFLAGS"
+dnl 	elif test -d $crypto_dir/include/ssleay -a -f $dir/include/ssleay/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include/ssleay -I$crypto_dir/include $CFLAGS"
+dnl 	elif test -d $crypto_dir/include/openssl -a -f $dir/include/openssl/md5.h; then
+dnl 		CFLAGS="-I$crypto_dir/include/openssl -I$crypto_dir/include $CFLAGS"
+dnl 	fi
+dnl fi
+
+if test "x$crypto_dir" = "x"; then
+	case $host_os in
+	netbsd*)	crypto_dir="/usr/pkg";;
+	freebsd*)
+		if test -d /usr/local/ssl; then
+			crypto_dir="/usr/local/ssl"
+		else
+			crypto_dir="/usr/local"
+		fi
+		;;
+	esac
+fi
+if test "x$krb5_incdir" = "x"; then
+	case $host_os in
+	netbsd*)	krb5_incdir="/usr/include/krb5";;
+	esac
+fi
+if test "x$krb5_libs" = "x"; then
+	case $host_os in
+	netbsd*)	krb5_libs="-lgssapi -lkrb5 -lcom_err -lroken -lasn1";;
+	esac
+fi
+if test "$enable_gssapi" = "yes"; then
+	LIBS="$LIBS $krb5_libs"
+	CPPFLAGS="-I$krb5_incdir $CPPFLAGS"
+fi
+dnl for some reason, past version of freebsd port requires us to set -I for
+dnl BOTH openssl/cast.h and cast.h.  who should I blame (or am I mistaken?)
+RACOON_PATH_LIBS(CAST_cfb64_encrypt, crypto, ${crypto_dir}/lib)
+RACOON_SEARCH_OPENSSL(${crypto_dir}/include)
+if test "x$include_path_openssl" = "x"; then
+	RACOON_SEARCH_HEADER(cast.h,
+		/usr/include/openssl /usr/include/ssleay ${crypto_dir}/include ${crypto_dir}/include/openssl ${crypto_dir}/include/ssleay)
+	RACOON_SEARCH_HEADER(openssl/cast.h,
+		/usr/include/openssl /usr/include/ssleay ${crypto_dir}/include ${crypto_dir}/include/openssl ${crypto_dir}/include/ssleay)
+	AC_TRY_COMPILE([#include <sys/types.h>
+#include <stdio.h>
+#include <bn.h>
+#include <dh.h>
+#include <md5.h>
+#include <sha.h>
+#include <des.h>], [], [], [openssl_compile_failed=yes])
+else
+	AC_TRY_COMPILE([#include <sys/types.h>
+#include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+#include <openssl/des.h>], [], [], [openssl_compile_failed=yes])
+fi
+
+if test "x$openssl_compile_failed" = "xyes"; then
+	echo
+	echo "Fatal: crypto library and headers not found."
+	echo Specify proper directory by using --with-ssleay.
+	if test `uname -s` = FreeBSD; then
+		echo Use ports/security/SSLeay to install SSLeay, or visit
+	elif test `uname -s` = NetBSD; then
+		echo Use pkgsrc/security/SSLeay to install SSLeay, or visit
+	else
+		echo -n "Visit "
+	fi
+	echo ftp://psych.psy.uq.oz.au/pub/Crypto/SSL/, or visit
+	echo http://www.openssl.org/
+	exit 1
+fi
+dnl AC_MSG_RESULT("$ssleay_lib and $ssleay_include")
+
+AC_MSG_CHECKING(openssl version)
+if test "x$include_path_openssl" = "x"; then
+	AC_EGREP_CPP(yes, [#include <opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x00090581L
+yes
+#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
+		echo
+		echo "FATAL: OpenSSL version must be 0.9.4 or higher."
+		exit 1])
+else
+	AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x00904100L
+yes
+#endif], [AC_MSG_RESULT(ok)], [AC_MSG_RESULT(too old)
+		echo
+		echo "FATAL: OpenSSL version must be 0.9.4 or higher."
+		exit 1])
+fi
+
+dnl AC_MSG_CHECKING(for libssl)
+AC_CHECK_LIB(ssl, ssl_ok, [], [], -lcrypto)
+
+AC_CHECK_LIB(crypto, des_cbc_encrypt)
+AC_CHECK_LIB(l, yywrap)
+AC_CHECK_LIB(y, yyerror)
+
+dnl PF_KEYv2 support check
+AC_MSG_CHECKING(for PF_KEYv2 support)
+AC_CACHE_VAL(ac_cv_pfkey, [dnl
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+        [int x = PF_KEY, y = PF_KEY_V2;],
+        [ac_cv_pfkey="yes"], [ac_cv_pfkey="no"])])
+AC_MSG_RESULT($ac_cv_pfkey)
+if test "$ac_cv_pfkey" = yes; then
+        OPTFLAG="-DHAVE_PFKEYV2 $OPTFLAG"
+fi
+
+dnl old KAME header check
+if test "$ac_cv_pfkey" = "yes"; then
+	AC_MSG_CHECKING(for old KAME PF_KEYv2 header file)
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_msg m; m.sadb_msg_reserved2 = 0;],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (non-PF_KEY sadb_msg)"
+		exit 1])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_x_policy m; m.sadb_x_policy_id = 0;], [],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_policy_id)"
+		exit 1])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/pfkeyv2.h>],
+		[struct sadb_x_sa2 m;], [],
+		[AC_MSG_RESULT(old)
+		echo "FATAL: obsolete KAME PF_KEYv2 declaration (no sadb_x_sa2)"
+		exit 1])
+	AC_MSG_RESULT(fine)
+fi
+
+ipsectype=unknown
+ipseclib=none
+ipseclibdir=none
+AC_MSG_CHECKING([ipsec library path])
+for i in inria kame; do
+	ipsectrylibc=no
+	case $i in
+	inria)
+		dnl http://www.kame.net/
+		AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef IPV6_INRIA_VERSION
+yes
+#endif],
+			[ipsectype=$i;
+			ipseclib=ipsec;
+			ipseclibdir=/usr/lib])
+		;;
+	kame)
+		dnl http://www.kame.net/
+		AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef __KAME__
+yes
+#endif],
+			[ipsectype=$i;
+			ipseclib=ipsec;
+			ipseclibdir=/usr/local/v6/lib])
+		;;
+	esac
+	if test "$ipsectype" != "unknown"; then
+		break
+	fi
+done
+AC_MSG_RESULT($ipseclibdir)
+
+dnl this is gross, but we need to invoke either AC_CHECK LIB or AC_CHECK_FUNCS.
+if test "$ipseclib" != "none"; then
+	if test "$ipseclibdir" != "none"; then
+		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib, $ipseclibdir)
+	else
+		RACOON_PATH_LIBS(ipsec_strerror, $ipseclib)
+	fi
+fi
+
+AC_MSG_CHECKING(if --with-libpfkey option is specified)
+AC_ARG_WITH(libpfkey, [  --with-libpfkey=DIR     specify libpfkey],
+	[libpfkey_dir=$withval], [libpfkey_dir=no])
+AC_MSG_RESULT(${libpfkey_dir})
+if test "$libpfkey_dir" != "no"; then
+	if test "x$libpfkey_dir" = "x"; then
+		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey)
+	else
+		RACOON_PATH_LIBS(pfkey_send_spdsetidx, pfkey, $libpfkey_dir)
+	fi
+fi
+
+AC_MSG_CHECKING([whether to enable ipv6])
+AC_ARG_ENABLE(ipv6,
+[  --enable-ipv6           Enable ipv6 (with ipv4) support
+  --disable-ipv6          Disable ipv6 support],
+[ case "$enableval" in
+  no)
+       AC_MSG_RESULT(no)
+       ipv6=no
+       ;;
+  *)   AC_MSG_RESULT(yes)
+       AC_DEFINE(INET6)
+       ipv6=yes
+       ;;
+  esac ],
+
+  AC_TRY_RUN([ /* AF_INET6 avalable check */
+#include <sys/types.h>
+#include <sys/socket.h>
+main()
+{
+  exit(0);
+ if (socket(AF_INET6, SOCK_STREAM, 0) < 0)
+   exit(1);
+ else
+   exit(0);
+}
+],
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(ENABLE_IPV6)
+  ipv6=yes,
+  AC_MSG_RESULT(no)
+  ipv6=no,
+  AC_MSG_RESULT(no)
+  ipv6=no
+))
+
+ipv6type=unknown
+ipv6lib=none
+ipv6libdir=none
+
+if test "$ipv6" = "yes"; then
+	AC_MSG_CHECKING([ipv6 stack type])
+	for i in inria kame linux toshiba v6d zeta; do
+		ipv6trylibc=no
+		case $i in
+		inria)
+			dnl http://www.kame.net/
+			AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef IPV6_INRIA_VERSION
+yes
+#endif],
+				[ipv6type=$i;
+				ipv6lib=inet6;
+				ipv6libdir=/usr/lib;
+				ipv6trylibc=yes
+				CPPFLAGS="-DINET6 $CPPFLAGS"])
+			;;
+		kame)
+			dnl http://www.kame.net/
+			AC_EGREP_CPP(yes, [dnl
+#include <netinet/in.h>
+#ifdef __KAME__
+yes
+#endif],
+				[ipv6type=$i;
+				ipv6lib=inet6;
+				ipv6libdir=/usr/local/v6/lib;
+				ipv6trylibc=yes
+				CPPFLAGS="-DINET6 $CPPFLAGS"])
+			;;
+		linux)
+			dnl http://www.v6.linux.or.jp/
+			if test -d /usr/inet6; then
+				ipv6type=$i
+				ipv6lib=inet6
+				ipv6libdir=/usr/inet6/lib
+				CPPFLAGS="-DINET6 -I/usr/inet6/include $CPPFLAGS"
+			fi
+			;;
+		toshiba)
+			AC_EGREP_CPP(yes, [dnl
+#include <sys/param.h>
+#ifdef _TOSHIBA_INET6
+yes
+#endif],
+				[ipv6type=$i;
+				ipv6lib=inet6;
+				ipv6libdir=/usr/local/v6/lib;
+				CPPFLAGS="-DINET6 $CPPFLAGS"])
+			;;
+		v6d)
+			AC_EGREP_CPP(yes, [dnl
+#include </usr/local/v6/include/sys/v6config.h>
+#ifdef __V6D__
+yes
+#endif],
+				[ipv6type=$i;
+				ipv6lib=v6;
+				ipv6libdir=/usr/local/v6/lib;
+				CPPFLAGS="-I/usr/local/v6/include $CPPFLAGS"])
+			;;
+		zeta)
+			AC_EGREP_CPP(yes, [dnl
+#include <sys/param.h>
+#ifdef _ZETA_MINAMI_INET6
+yes
+#endif],
+				[ipv6type=$i;
+				ipv6lib=inet6;
+				ipv6libdir=/usr/local/v6/lib;
+				CPPFLAGS="-DINET6 $CPPFLAGS"])
+			;;
+		esac
+		if test "$ipv6type" != "unknown"; then
+			break
+		fi
+	done
+	AC_MSG_RESULT($ipv6type)
+fi
+
+if test "$ipv6" = "yes" -a "$ipv6lib" != "none"; then
+	if test -d $ipv6libdir -a -f $ipv6libdir/lib$ipv6lib.a; then
+		echo "using lib$ipv6lib for getaddrinfo"
+		LIBS="$LIBS -L$ipv6libdir -l$ipv6lib"
+	else
+		if test "$ipv6trylibc" = "yes"; then
+			echo 'using libc for getaddrinfo'
+		else
+			echo "Fatal: no $ipv6lib library found.  "
+			echo "cannot continue.  You need to fetch lib$ipv6lib.a "
+			echo "from appropriate ipv6 kit and compile beforehand."
+			exit 1
+		fi
+	fi
+fi
+
+if test "$ipv6" = "yes"; then
+	AC_MSG_CHECKING(for advanced API support)
+	AC_CACHE_VAL(racoon_cv_advapi, [dnl
+	AC_TRY_COMPILE([#ifndef INET6
+#define INET6
+#endif
+#include <sys/types.h>
+#include <netinet/in.h>],
+		[struct in6_pktinfo a;],
+		[racoon_cv_advapi="yes"], [racoon_cv_advapi="no"])])
+	AC_MSG_RESULT($racoon_cv_advapi)
+	if test "$racoon_cv_advapi" = yes; then
+		AC_DEFINE(ADVAPI)
+	fi
+fi
+
+AC_MSG_CHECKING(getaddrinfo bug)
+AC_TRY_RUN([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+#include <netinet/in.h>
+
+main()
+{
+  int passive, gaierr, inet4 = 0, inet6 = 0;
+  struct addrinfo hints, *ai, *aitop;
+  char straddr[INET6_ADDRSTRLEN], strport[16];
+
+  for (passive = 0; passive <= 1; passive++) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_flags = passive ? AI_PASSIVE : 0;
+    hints.ai_socktype = SOCK_STREAM;
+    if ((gaierr = getaddrinfo(NULL, "54321", &hints, &aitop)) != 0) {
+      (void)gai_strerror(gaierr);
+      goto bad;
+    }
+    for (ai = aitop; ai; ai = ai->ai_next) {
+      if (ai->ai_addr == NULL ||
+          ai->ai_addrlen == 0 ||
+          getnameinfo(ai->ai_addr, ai->ai_addrlen,
+                      straddr, sizeof(straddr), strport, sizeof(strport),
+                      NI_NUMERICHOST|NI_NUMERICSERV) != 0) {
+        goto bad;
+      }
+      switch (ai->ai_family) {
+      case AF_INET:
+	if (strcmp(strport, "54321") != 0) {
+	  goto bad;
+	}
+        if (passive) {
+          if (strcmp(straddr, "0.0.0.0") != 0) {
+            goto bad;
+          }
+        } else {
+          if (strcmp(straddr, "127.0.0.1") != 0) {
+            goto bad;
+          }
+        }
+        inet4++;
+        break;
+      case AF_INET6:
+	if (strcmp(strport, "54321") != 0) {
+	  goto bad;
+	}
+        if (passive) {
+          if (strcmp(straddr, "::") != 0) {
+            goto bad;
+          }
+        } else {
+          if (strcmp(straddr, "::1") != 0) {
+            goto bad;
+          }
+        }
+        inet6++;
+        break;
+      case AF_UNSPEC:
+        goto bad;
+        break;
+      default:
+        /* another family support? */
+        break;
+      }
+    }
+  }
+
+  if (!(inet4 == 0 || inet4 == 2))
+    goto bad;
+  if (!(inet6 == 0 || inet6 == 2))
+    goto bad;
+
+  if (aitop)
+    freeaddrinfo(aitop);
+  exit(0);
+
+ bad:
+  if (aitop)
+    freeaddrinfo(aitop);
+  exit(1);
+}
+],
+AC_MSG_RESULT(good)
+buggygetaddrinfo=no,
+AC_MSG_RESULT(buggy)
+buggygetaddrinfo=yes,
+AC_MSG_RESULT(buggy)
+buggygetaddrinfo=yes)
+
+if test "$buggygetaddrinfo" = "yes"; then
+	if test "$ipv6" = "yes"; then
+		echo 'Fatal: You must get working getaddrinfo() function.'
+		echo '       or you can specify "--disable-ipv6"'.
+		exit 1
+	else
+		CPPFLAGS="$CPPFLAGS -I./missing"
+	fi
+fi
+AC_REPLACE_FUNCS(getaddrinfo getnameinfo)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(limits.h sys/time.h unistd.h stdarg.h varargs.h)
+signing=yes
+if test "x$include_path_openssl" = "x"; then
+	if test "$enable_rc5" = "yes"; then
+		rc5header=rc5.h
+	else
+		rc5header=
+	fi
+	if test "$enable_idea" = "yes"; then
+		ideaheader=idea.h
+	else
+		ideaheader=
+	fi
+	AC_CHECK_HEADERS($ideaheader $rc5header rsa.h pem.h evp.h x509.h,
+		[], [nosymbol=`echo $ac_hdr | sed -e 's/.h$//' -e 's/^/NO_/' | tr 'a-z' 'A-Z'`
+		CPPFLAGS="$CPPFLAGS -D$nosymbol=1"
+		signing=no])
+else
+	if test "$enable_rc5" = "yes"; then
+		rc5header=openssl/rc5.h
+	else
+		rc5header=
+	fi
+	if test "$enable_idea" = "yes"; then
+		ideaheader=openssl/idea.h
+	else
+		ideaheader=
+	fi
+	AC_CHECK_HEADERS($ideaheader $rc5header openssl/rsa.h openssl/pem.h openssl/evp.h openssl/x509.h,
+		[], [nosymbol=`echo $ac_hdr | sed -e 's/.h$//' -e 's/^openssl.//' -e 's/^/NO_/' | tr 'a-z' 'A-Z'`
+		CPPFLAGS="$CPPFLAGS -D$nosymbol=1"
+		signing=no])
+fi
+if test $signing = "yes"; then
+	AC_DEFINE(HAVE_SIGNING_C)
+fi
+if test "x$include_path_openssl" = "x"; then
+	AC_CHECK_HEADERS(cversion.h opensslv.h)
+else
+	AC_CHECK_HEADERS(openssl/cversion.h openssl/opensslv.h)
+fi
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(gettimeofday select socket strerror strtol strtoul)
+AC_REPLACE_FUNCS(strdup)
+
+dnl expand ${sysconfdir}, ugly...
+if test "x$prefix" = xNONE; then
+	sysconfdir_x=`echo $sysconfdir | sed -e 's,${prefix},'"$ac_default_prefix,"`
+else
+	sysconfdir_x=`echo $sysconfdir | sed -e 's,${prefix},'"$prefix,"`
+
+fi
+AC_SUBST(sysconfdir_x)
+
+dnl Checks for getifaddrs
+AC_CHECK_FUNCS(getifaddrs)
+
+AC_OUTPUT(Makefile samples/psk.txt samples/racoon.conf)
