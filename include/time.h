@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.12 1997/07/13 18:32:18 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.13 1997/10/04 15:00:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -123,14 +123,20 @@ time_t time2posix __P((time_t));
 time_t posix2time __P((time_t));
 #endif /* neither ANSI nor POSIX */
 
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
+     !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    ((_POSIX_C_SOURCE - 0) >= 199309L)
+#include <sys/time.h>		/* for struct timespec */
 struct sigevent;
 struct itimerspec;
+int nanosleep __P((const struct timespec *, struct timespec *));
 int timer_create __P((clockid_t, struct sigevent *, timer_t *));
 int timer_delete __P((timer_t));
 int timer_getoverrun __P((timer_t));
 int timer_gettime __P((timer_t, struct itimerspec *));
 int timer_settime __P((timer_t, int, const struct itimerspec *, 
     struct itimerspec *));
+#endif
 __END_DECLS
 
 #endif /* !_TIME_H_ */
