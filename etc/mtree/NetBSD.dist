@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.21 1996/05/12 23:30:23 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.22 1996/05/20 04:59:29 mrg Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1240,6 +1240,17 @@ mm
 ..
 
 # ./usr/share/tmac
+..
+
+# ./usr/share/vi
+vi
+
+# ./usr/share/vi/catalog
+catalog
+# ./usr/share/vi/catalog
+..
+
+# ./usr/share/vi
 ..
 
 # ./usr/share/zoneinfo
