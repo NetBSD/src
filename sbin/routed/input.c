@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.12 1995/05/24 15:22:55 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.13 1995/05/24 15:55:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.12 1995/05/24 15:22:55 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.13 1995/05/24 15:55:02 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ rip_input(from, rip, size)
 
 		if ((ifp->int_flags & IFF_PASSIVE) != 0) {
 			syslog(LOG_ERR,
-				"trace command from  %s on an active interface",
+				"trace command from  %s on a passive interface",
 			    (*afswitch[from->sa_family].af_format)(from, buf1,
 							       sizeof(buf1)));
 			return;
