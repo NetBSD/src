@@ -3,7 +3,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <arm32/footbridge/dc21285reg.h>
+#include <arm/footbridge/dc21285reg.h>
 
 void
 netwinder_pci_attach_hook (struct device *parent,
