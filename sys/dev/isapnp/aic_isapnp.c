@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.3 1998/07/23 19:30:44 christos Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.4 1999/03/22 09:44:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,9 @@ aic_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_aic_devinfo);
+	int variant;
+
+	return (isapnp_devmatch(aux, &isapnp_aic_devinfo, &variant));
 }
 
 void
