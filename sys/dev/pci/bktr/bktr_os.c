@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.33 2002/10/23 09:13:34 jdolecek Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.34 2003/01/10 01:38:53 mjl Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.33 2002/10/23 09:13:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.34 2003/01/10 01:38:53 mjl Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -307,7 +307,7 @@ bktr_probe( device_t dev )
 			device_set_desc(dev, "BrookTree 879");
 			return 0;
 		}
-	};
+	}
 
         return ENXIO;
 }
@@ -329,7 +329,7 @@ bktr_attach( device_t dev )
 	u_long		old_irq, new_irq;
 #endif 
 
-        struct bktr_softc *bktr = device_get_softc(dev);
+	struct bktr_softc *bktr = device_get_softc(dev);
 
 	unit = device_get_unit(dev);
 
@@ -1387,10 +1387,10 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 {
 	bktr_ptr_t	bktr;
 	u_long		latency;
-	u_long		fun;
-	unsigned int	rev;
 
 #if defined(__OpenBSD__)
+	u_long		fun;
+	unsigned int	rev;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
@@ -1448,6 +1448,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 #if defined(__NetBSD__) 
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
+	pcireg_t command;
 	const char *intrstr;
 	int retval;
 	int unit;
@@ -1458,6 +1459,13 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	/* Enable Bus Master
+	   XXX: check if all old DMA is stopped first (e.g. after warm
+	   boot) */
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+
 	/*
 	 * map memory
 	 */
@@ -1467,7 +1475,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 				&bktr->memt, &bktr->memh, NULL,
 				&bktr->obmemsz);
 	DPR(("pci_mapreg_map: memt %lx, memh %x, size %x\n",
-	     (long unsigned)bktr->memt, (u_int)bktr->memh,
+	     (unsigned long)bktr->memt, (u_int)bktr->memh,
 	     (u_int)bktr->obmemsz));
 	if (retval) {
 		printf("%s: couldn't map memory\n", bktr_name(bktr));
@@ -1509,7 +1517,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
  * you have more than four, then 16 would probably be a better value.
  */
 #ifndef BROOKTREE_DEF_LATENCY_VALUE
-#define BROOKTREE_DEF_LATENCY_VALUE	10
+#define BROOKTREE_DEF_LATENCY_VALUE	0x10
 #endif
 	latency = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_LATENCY_TIMER);
 	latency = (latency >> 8) & 0xff;
@@ -1524,19 +1532,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 			       PCI_LATENCY_TIMER, latency<<8);
 	}
 
-
-	/* Enabled Bus Master
-	   XXX: check if all old DMA is stopped first (e.g. after warm
-	   boot) */
-	fun = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       fun | PCI_COMMAND_MASTER_ENABLE);
-
-	/* read the pci id and determine the card type */
-	fun = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
-        rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0x000000ff;
-
-	common_bktr_attach(bktr, unit, fun, rev);
+	common_bktr_attach(bktr, unit, pa->pa_id, PCI_REVISION(pa->pa_class));
 
 #if NRADIO > 0
 	/* attach to radio(4) */
@@ -1856,4 +1852,61 @@ bktr_get_info(void *v, struct radio_info *ri)
 }
 #endif
 
+
+
 #endif /* __NetBSD__ || __OpenBSD__ */
+
+#if defined(__NetBSD__)
+
+u_int8_t
+bktr_INB(struct bktr_softc *bktr, int offset)
+	{
+	u_int8_t val = bus_space_read_1(bktr->memt, bktr->memh, offset);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 1,
+	    BUS_SPACE_BARRIER_READ);
+	return val;
+	}
+
+u_int16_t
+bktr_INW(struct bktr_softc *bktr, int offset)
+	{
+	u_int16_t val = bus_space_read_2(bktr->memt, bktr->memh, offset);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 2,
+	    BUS_SPACE_BARRIER_READ);
+	return val;
+	}
+
+u_int32_t
+bktr_INL(struct bktr_softc *bktr, int offset)
+	{
+	u_int32_t val = bus_space_read_4(bktr->memt, bktr->memh, offset);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 4,
+	    BUS_SPACE_BARRIER_READ);
+	return val;
+	}
+
+void
+bktr_OUTB(struct bktr_softc *bktr, int offset, u_int8_t value)
+	{
+	bus_space_write_1(bktr->memt, bktr->memh, offset, value);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 1,
+	    BUS_SPACE_BARRIER_WRITE);
+	}
+	
+void
+bktr_OUTW(struct bktr_softc *bktr, int offset, u_int16_t value)
+	{
+	bus_space_write_2(bktr->memt, bktr->memh, offset, value);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 2,
+	    BUS_SPACE_BARRIER_WRITE);
+	}
+
+void
+bktr_OUTL(struct bktr_softc *bktr, int offset, u_int32_t value)
+	{
+	bus_space_write_4(bktr->memt, bktr->memh, offset, value);
+	bus_space_barrier(bktr->memt, bktr->memh, offset, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+	}
+
+#endif /* __NetBSD__ */

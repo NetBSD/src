@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.12 2002/03/23 09:27:50 hamajima Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.13 2003/01/10 01:38:52 mjl Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.12 2002/03/23 09:27:50 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.13 2003/01/10 01:38:52 mjl Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -616,7 +616,9 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		bktr->card.eepromAddr = eeprom_i2c_address;
 		bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
 
-	        readEEProm(bktr, 0, 256, (u_char *) &eeprom );
+	        if(readEEProm(bktr, 0, 256, (u_char *) &eeprom))
+		    printf("%s: error reading EEPROM\n", bktr_name(bktr));
+
                 byte_252 = (unsigned int)eeprom[252];
                 byte_253 = (unsigned int)eeprom[253];
                 byte_254 = (unsigned int)eeprom[254];
@@ -679,6 +681,13 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
+
+    	    	if (subsystem_vendor_id == PCI_VENDOR_TERRATEC) {
+    	    	    bktr->card = cards[ (card = CARD_TERRATVPLUS) ];
+    	    	    bktr->card.eepromAddr = eeprom_i2c_address;
+    	    	    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+    	    	    goto checkTuner;
+    	    	}
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */

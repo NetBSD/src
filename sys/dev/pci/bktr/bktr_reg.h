@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.11 2002/10/23 02:32:36 christos Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.12 2003/01/10 01:38:53 mjl Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp
@@ -464,17 +464,41 @@ struct bktr_i2c_softc {
 /* Bt848/878 register access
  * The registers can either be access via a memory mapped structure
  * or accessed via bus_space.
- * bus_0pace access allows cross platform support, where as the
+ * bus_space access allows cross platform support, where as the
  * memory mapped structure method only works on 32 bit processors
  * with the right type of endianness.
  */
 #if defined(__NetBSD__) || ( defined(__FreeBSD__) && (__FreeBSD_version >=300000) )
+
+#if defined(__NetBSD__)
+
+struct bktr_softc;
+
+u_int8_t bktr_INB(struct bktr_softc *, int);
+u_int16_t bktr_INW(struct bktr_softc *, int);
+u_int32_t bktr_INL(struct bktr_softc *, int);
+void bktr_OUTB(struct bktr_softc *, int, u_int8_t);
+void bktr_OUTW(struct bktr_softc *, int, u_int16_t);
+void bktr_OUTL(struct bktr_softc *, int, u_int32_t);
+
+#define INB(bktr,offset)	bktr_INB(bktr,offset)
+#define INW(bktr,offset)	bktr_INW(bktr,offset)
+#define INL(bktr,offset)	bktr_INL(bktr,offset)
+#define OUTB(bktr,offset,value)	bktr_OUTB(bktr,offset,value)
+#define OUTW(bktr,offset,value)	bktr_OUTW(bktr,offset,value)
+#define OUTL(bktr,offset,value)	bktr_OUTL(bktr,offset,value)
+
+#else
+
 #define INB(bktr,offset)	bus_space_read_1((bktr)->memt,(bktr)->memh,(offset))
 #define INW(bktr,offset)	bus_space_read_2((bktr)->memt,(bktr)->memh,(offset))
 #define INL(bktr,offset)	bus_space_read_4((bktr)->memt,(bktr)->memh,(offset))
 #define OUTB(bktr,offset,value) bus_space_write_1((bktr)->memt,(bktr)->memh,(offset),(value))
 #define OUTW(bktr,offset,value) bus_space_write_2((bktr)->memt,(bktr)->memh,(offset),(value))
 #define OUTL(bktr,offset,value) bus_space_write_4((bktr)->memt,(bktr)->memh,(offset),(value))
+
+#endif /* __NetBSD__ */
+
 #else
 #define INB(bktr,offset)	*(volatile unsigned char*) ((int)((bktr)->memh)+(offset))
 #define INW(bktr,offset)	*(volatile unsigned short*)((int)((bktr)->memh)+(offset))
