@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: gvpbus.c,v 1.1 1994/05/08 05:53:15 chopps Exp $
+ *	$Id: gvpbus.c,v 1.2 1994/05/25 21:55:07 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ gvpbusmatch(pdp, cdp, auxp)
 	/*
 	 * Check manufacturer and product id.
 	 */
-	if (zap->manid == 2017 && zap->prodid == 11)
+	if (zap->manid == 2017 && (zap->prodid == 11 || zap->prodid == 2))
 		return(1);
 	return(0);
 }
@@ -75,9 +75,16 @@ gvpbusattach(pdp, dp, auxp)
 	ga.flags = 0;
 	
 	/*
-	 * grab secondary type
+	 * grab secondary type (or fake it if we have a series I)
 	 */
-	ga.prod = *((u_char *)zap->va + 0x8001) & 0xf8;
+	if (zap->prodid != 9)
+		ga.prod = *((u_char *)zap->va + 0x8001) & 0xf8;
+	else {
+		ga.prod = GVP_SERIESII;		/* really a series I */
+		ga.flags |= GVP_NOBANK;
+	}
+	
+
 	switch (ga.prod) {
 	/* no scsi */
 	case GVP_GFORCE_040:
@@ -102,7 +109,7 @@ gvpbusattach(pdp, dp, auxp)
 		ga.flags = GVP_SCSI | GVP_ACCEL | GVP_24BITDMA;
 		break;
 	case GVP_SERIESII:
-		ga.flags = GVP_SCSI | GVP_24BITDMA;
+		ga.flags |= GVP_SCSI | GVP_24BITDMA;
 		break;
 	/* misc */
 	case GVP_IOEXTEND:
