@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.436 2003/10/29 21:11:51 kleink Exp $
+# $NetBSD: mi,v 1.437 2003/10/30 08:17:49 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1784,6 +1784,7 @@
 ./usr/share/man/cat4/pmppc			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
+./usr/share/man/cat4/sparc64			base-man-share
 ./usr/share/man/cat4/sun2			base-man-share
 ./usr/share/man/cat4/sun3			base-man-share
 ./usr/share/man/cat4/vax			base-man-share
@@ -1884,6 +1885,7 @@
 ./usr/share/man/html4/pmppc		base-man-share
 ./usr/share/man/html4/sgimips		base-man-share
 ./usr/share/man/html4/sparc		base-man-share
+./usr/share/man/html4/sparc64		base-man-share
 ./usr/share/man/html4/sun2		base-man-share
 ./usr/share/man/html4/sun3		base-man-share
 ./usr/share/man/html4/vax		base-man-share
@@ -1985,6 +1987,7 @@
 ./usr/share/man/man4/pmppc		base-man-share
 ./usr/share/man/man4/sgimips		base-man-share
 ./usr/share/man/man4/sparc		base-man-share
+./usr/share/man/man4/sparc64		base-man-share
 ./usr/share/man/man4/sun2		base-man-share
 ./usr/share/man/man4/sun3		base-man-share
 ./usr/share/man/man4/vax		base-man-share
