@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.11 1998/11/16 01:07:16 simonb Exp $	
+	$NetBSD: install,v 1.12 1998/11/16 07:45:20 simonb Exp $	
 
 Reminder:
 	Always back up files before installing or upgrading.
@@ -95,6 +95,14 @@ exactly 32Mbytes.
 To install the diskimage onto disk rzX on a NetBSD/pmax system, do:
 	disklabel -W /dev/rrzXc
 	gunzip -c diskimage.gz | dd of=/dev/rrzXc bs=10240
+
+When installing on a disk with not NetBSD or Ultrix label, you may get a
+message like:
+	rzX: WARNING: trying Ultrix label, no disk label
+or when installing on an old Ultrix disk, you may get a message like:
+	rzX: WARNING: using ULTRIX partition information
+when issuing the "disklabel -W /dev/rrzXc" command.  This can safely be
+ignored.
 
 Most other NetBSD ports are similar, but use rsdXc instead of rrzXc.
 
