@@ -1,3 +1,5 @@
+/*	$NetBSD: ultrix_syscallargs.h,v 1.19 1998/01/09 06:27:33 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *

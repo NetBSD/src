@@ -1,3 +1,5 @@
+/*	$NetBSD: sunos_syscall.h,v 1.49 1998/01/09 06:25:53 thorpej Exp $	*/
+
 /*
  * System call numbers.
  *

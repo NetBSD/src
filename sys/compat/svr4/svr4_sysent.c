@@ -1,3 +1,5 @@
+/*	$NetBSD: svr4_sysent.c,v 1.41 1998/01/09 06:26:52 thorpej Exp $	*/
+
 /*
  * System call switch table.
  *
