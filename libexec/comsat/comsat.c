@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.16 2000/10/04 18:24:03 mjl Exp $	*/
+/*	$NetBSD: comsat.c,v 1.17 2000/10/04 18:52:50 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.16 2000/10/04 18:24:03 mjl Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.17 2000/10/04 18:52:50 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,17 +79,14 @@ struct	utmp *utmp = NULL;
 time_t	lastmsgtime;
 int	nutmp, uf;
 
-void jkfprintf __P((FILE *, char[], off_t));
-void mailfor __P((char *));
-void notify __P((struct utmp *, off_t));
-void onalrm __P((int));
-void reapchildren __P((int));
-int main __P((int, char *[]));
+void jkfprintf (FILE *, char[], off_t);
+void mailfor (char *);
+void notify (struct utmp *, off_t);
+void onalrm (int);
+void reapchildren (int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	int cc, ch;
@@ -155,16 +152,14 @@ main(argc, argv)
 }
 
 void
-reapchildren(signo)
-	int signo;
+reapchildren(int signo)
 {
 
 	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
 
 void
-onalrm(signo)
-	int signo;
+onalrm(int signo)
 {
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static u_int utmpmtime;		/* last modification time for utmp */
@@ -189,8 +184,7 @@ onalrm(signo)
 }
 
 void
-mailfor(name)
-	char *name;
+mailfor(char *name)
 {
 	struct utmp *utp = &utmp[nutmp];
 	char *cp;
@@ -208,9 +202,7 @@ mailfor(name)
 static char *cr;
 
 void
-notify(utp, offset)
-	struct utmp *utp;
-	off_t offset;
+notify(struct utmp *utp, off_t offset)
 {
 	FILE *tp;
 	struct passwd *p;
@@ -266,10 +258,7 @@ notify(utp, offset)
 }
 
 void
-jkfprintf(tp, name, offset)
-	FILE *tp;
-	char name[];
-	off_t offset;
+jkfprintf(FILE *tp, char name[], off_t offset)
 {
 	FILE *fi;
 	int linecnt, charcnt, inheader;
