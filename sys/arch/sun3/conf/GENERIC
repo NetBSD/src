@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.38.4.1 1997/08/23 07:12:17 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.38.4.2 1997/08/27 22:42:48 thorpej Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -23,7 +23,7 @@ options 	DDB
 #makeoptions DEBUG="-g"			# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDBDEV=0x0C01
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Filesystem options
 file-system	FFS		# ufs file system

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.45.2.1 1997/08/23 07:11:58 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.45.2.2 1997/08/27 22:39:20 thorpej Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -29,7 +29,7 @@ options 	LKM		# loadable kernel modules
 #options 	KGDB		# support for kernel gdb
 #options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
 #options 	KGDBRATE=38400	# baud rate
-#options	SCSIVERBOSE	# Verbose SCSI errors
+#options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Compatibility options
 options 	COMPAT_43	# 4.3BSD system interfaces
