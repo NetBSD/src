@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 1999/12/08 09:19:04 soren Exp $
+#	$NetBSD: Makefile,v 1.129 1999/12/20 09:50:20 jdc Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -18,7 +18,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank \
-	sliplogin slstats spray sup sysctl syslogd tcpdchk \
+	sliplogin slstats spray sup sysctl syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp unlink \
 	usbdevs user videomode vipw vnconfig wiconfig wsconscfg \
 	wsfontload xntp ypbind yppoll ypserv ypset zdump zic
