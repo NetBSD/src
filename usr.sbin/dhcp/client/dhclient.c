@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.11 1999/02/18 22:04:06 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.12 1999/02/18 22:14:36 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2239,7 +2239,7 @@ void client_reinit (state)
 		if (state == 0 && ip -> client -> active) {
 			/* Expire the lease. */
 			ip -> client -> active -> expiry = cur_time;
-			write_client_lease (ip, ip -> client -> active);
+			write_client_lease (ip, ip -> client -> active, 0);
 
 			/* Send the release message. */
 			make_release (ip, ip -> client -> active);
