@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.44 2000/03/30 13:24:59 augustss Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.45 2000/05/10 03:31:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -693,8 +693,11 @@ icmp_reflect(m)
 			    if (opt == IPOPT_NOP)
 				    len = 1;
 			    else {
+				    if (cnt < IPOPT_OLEN + sizeof(*cp))
+					    break;
 				    len = cp[IPOPT_OLEN];
-				    if (len <= 0 || len > cnt)
+				    if (len < IPOPT_OLEN + sizeof(*cp) ||
+				        len > cnt)
 					    break;
 			    }
 			    /*

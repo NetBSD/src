@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.113 2000/05/10 01:19:44 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.114 2000/05/10 03:31:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -972,7 +972,7 @@ ip_dooptions(m)
 				goto bad;
 			}
 			optlen = cp[IPOPT_OLEN];
-			if (optlen <= 0 || optlen > cnt) {
+			if (optlen < IPOPT_OLEN + sizeof(*cp) || optlen > cnt) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
 				goto bad;
 			}
@@ -996,6 +996,10 @@ ip_dooptions(m)
 			if (ip_allowsrcrt == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_NET_PROHIB;
+				goto bad;
+			}
+			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
+				code = &cp[IPOPT_OLEN] - (u_char *)ip;
 				goto bad;
 			}
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
@@ -1049,6 +1053,10 @@ ip_dooptions(m)
 			break;
 
 		case IPOPT_RR:
+			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
+				code = &cp[IPOPT_OLEN] - (u_char *)ip;
+				goto bad;
+			}
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
@@ -1080,11 +1088,20 @@ ip_dooptions(m)
 		case IPOPT_TS:
 			code = cp - (u_char *)ip;
 			ipt = (struct ip_timestamp *)cp;
-			if (ipt->ipt_len < 5)
+			if (ipt->ipt_len < 4 || ipt->ipt_len > 40) {
+				code = (u_char *)&ipt->ipt_len - (u_char *)ip;
 				goto bad;
+			}
+			if (ipt->ipt_ptr < 5) {
+				code = (u_char *)&ipt->ipt_ptr - (u_char *)ip;
+				goto bad;
+			}
 			if (ipt->ipt_ptr > ipt->ipt_len - sizeof (int32_t)) {
-				if (++ipt->ipt_oflw == 0)
+				if (++ipt->ipt_oflw == 0) {
+					code = (u_char *)&ipt->ipt_ptr -
+					    (u_char *)ip;
 					goto bad;
+				}
 				break;
 			}
 			cp0 = (cp + ipt->ipt_ptr - 1);
@@ -1095,8 +1112,11 @@ ip_dooptions(m)
 
 			case IPOPT_TS_TSANDADDR:
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
-				    sizeof(struct in_addr) > ipt->ipt_len)
+				    sizeof(struct in_addr) > ipt->ipt_len) {
+					code = (u_char *)&ipt->ipt_ptr -
+					    (u_char *)ip;
 					goto bad;
+				}
 				ipaddr.sin_addr = dst;
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
 				    m->m_pkthdr.rcvif));
@@ -1109,8 +1129,11 @@ ip_dooptions(m)
 
 			case IPOPT_TS_PRESPEC:
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
-				    sizeof(struct in_addr) > ipt->ipt_len)
+				    sizeof(struct in_addr) > ipt->ipt_len) {
+					code = (u_char *)&ipt->ipt_ptr -
+					    (u_char *)ip;
 					goto bad;
+				}
 				bcopy(cp0, &ipaddr.sin_addr,
 				    sizeof(struct in_addr));
 				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
@@ -1120,6 +1143,9 @@ ip_dooptions(m)
 				break;
 
 			default:
+				/* XXX can't take &ipt->ipt_flg */
+				code = (u_char *)&ipt->ipt_ptr -
+				    (u_char *)ip + 1;
 				goto bad;
 			}
 			ntime = iptime();
