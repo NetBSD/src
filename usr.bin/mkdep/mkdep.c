@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $ */
+/* $NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.11 2002/06/14 23:14:18 simonb Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -61,12 +61,12 @@ __RCSID("$NetBSD: mkdep.c,v 1.10 2002/01/31 22:43:55 tv Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#define DEFAULT_CC		"cc"
+#include "findcc.h"
+
 #define DEFAULT_PATH		_PATH_DEFPATH
 #define DEFAULT_FILENAME	".depend"
 
 static void	usage __P((void));
-static char    *findcc __P((const char *));
 int		main __P((int, char **));
 
 static void
@@ -76,43 +76,6 @@ usage()
 	    "usage: %s [-a] [-p] [-f file] flags file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
-}
-
-static char *
-findcc(progname)
-	const char	*progname;
-{
-	char   *path, *dir, *next;
-	char   buffer[MAXPATHLEN];
-
-	if ((next = strchr(progname, ' ')) != NULL) {
-		*next = '\0';
-	}
-
-	if (strchr(progname, '/') != NULL)
-		return access(progname, X_OK) ? NULL : strdup(progname);
-
-	if (((path = getenv("PATH")) == NULL) ||
-	    ((path = strdup(path)) == NULL))
-		return NULL;
-
-	dir = path;
-	while (dir != NULL) {
-		if ((next = strchr(dir, ':')) != NULL)
-			*next++ = '\0';
-
-		if (snprintf(buffer, sizeof(buffer),
-		    "%s/%s", dir, progname) < sizeof(buffer)) {
-			if (!access(buffer, X_OK)) {
-				free(path);
-				return strdup(buffer);
-			}
-		}
-		dir = next;
-	}
-
-	free(path);
-	return NULL;
 }
 
 int
