@@ -1,23 +1,14 @@
-#	$NetBSD: bsd.man.mk,v 1.63 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.man.mk,v 1.64 2001/11/02 05:21:51 tv Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
-.PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman html installhtml cleanhtml
-.if ${MKMAN} != "no"
+##### Basic targets
+.PHONY:		catinstall maninstall catpages manpages catlinks manlinks \
+		cleanman html installhtml cleanhtml
 realinstall:	${MANINSTALL}
-.endif
-cleandir:	cleanman
 
+##### Default values
 TMACDIR?=	${DESTDIR}/usr/share/tmac
 HTMLDIR?=	${DESTDIR}/usr/share/man
 CATDEPS?=	${TMACDIR}/tmac.andoc \
@@ -29,175 +20,167 @@ CATDEPS?=	${TMACDIR}/tmac.andoc \
 MANTARGET?=	cat
 NROFF?=		nroff -Tascii
 GROFF?=		groff -Tascii
+GROFF_HTML?=	groff -Tlatin1 -mdoc2html -P-b -P-o -P-u
 TBL?=		tbl
 
+MAN?=
+MLINKS?=
+_MNUMBERS=	1 2 3 4 5 6 7 8 9
+.SUFFIXES:	${_MNUMBERS:@N@.$N@}
 
-.SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
-	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9 \
-	   .html1 .html2 .html3 .html4 .html5 .html6 .html7 .html8 .html9
+MANCOMPRESS?=	${MANZ:Dgzip -cf}
+MANSUFFIX?=	${MANZ:D.gz}
 
-.9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1: \
-    ${CATDEPS}
-.if !defined(USETBL)
-	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
-	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || \
-	 (rm -f ${.TARGET}; false)
-.else
-	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
-	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
-	 (rm -f ${.TARGET}; false)
+# make MANCOMPRESS a filter, so it can be inserted on an as-needed basis
+.if !empty(MANCOMPRESS)
+MANCOMPRESS:=	| ${MANCOMPRESS}
 .endif
-
-.9.html9 .8.html8 .7.html7 .6.html6 .5.html5 .4.html4 .3.html3 .2.html2 .1.html1: \
-    ${CATDEPS}
-.if !defined(USETBL)
-	@echo "${GROFF} -mdoc2html -P-b -P-u -P-o ${.IMPSRC} > ${.TARGET}"
-	@${GROFF} -mdoc2html -P-b -P-u -P-o ${.IMPSRC} > ${.TARGET} || \
-	 (rm -f ${.TARGET}; false)
-.else
-	@echo "${TBL} ${.IMPSRC} | ${GROFF} -mdoc2html -P-b -P-u -P-o > ${.TARGET}"
-	@cat ${.IMPSRC} | ${GROFF} -mdoc2html -P-b -P-u -P-o > ${.TARGET} || \
-	 (rm -f ${.TARGET}; false)
-.endif
-
-.if defined(MAN) && !empty(MAN)
-MANPAGES=	${MAN}
-CATPAGES=	${MANPAGES:C/(.*).([1-9])/\1.cat\2/}
-.NOPATH:	${CATPAGES}
-.if !defined(NOHTML)
-HTMLPAGES=	${MANPAGES:C/(.*).([1-9])/\1.html\2/}
-.endif
-.endif
-
-MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-		    -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
-
-.if defined(MANZ)
-# chown and chmod are done afterward automatically
-MCOMPRESS=	gzip -cf
-MCOMPRESSSUFFIX= .gz
-.endif
-
-catinstall: catlinks
-maninstall: manlinks
 
 __installpage: .USE
-.if defined(MCOMPRESS) && !empty(MCOMPRESS)
-	@rm -f ${.TARGET}
-	${MCOMPRESS} ${.ALLSRC} > ${.TARGET}
-	@chown ${MANOWN}:${MANGRP} ${.TARGET}
-	@chmod ${MANMODE} ${.TARGET}
-.else
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${MINSTALL} ${.ALLSRC} ${.TARGET}" && \
-	     ${MINSTALL} ${.ALLSRC} ${.TARGET})
+	    (echo "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+		${.ALLSRC} ${.TARGET}" && \
+	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
+		${.ALLSRC} ${.TARGET})
+
+##### Build and install rules (source form pages)
+
+.if ${MKMAN} != "no"
+maninstall:	manlinks
+manpages::	# ensure target exists
+MANPAGES=	${MAN:C/$/${MANSUFFIX}/}
+
+.if !empty(MANSUFFIX)
+realall:	${MANPAGES}
+.NOPATH:	${MANPAGES}
+.SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
+
+${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
+	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}
+.endif # !empty(MANSUFFIX)
+
+.for F in ${MANPAGES:S/${MANSUFFIX}$//:O:u}
+_F:=		${DESTDIR}${MANDIR}/man${F:T:E}${MANSUBDIR}/${F}${MANSUFFIX}
+
+${_F}:		${F}${MANSUFFIX} __installpage		# install rule
+manpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
 .endif
-
-
-# Rules for cat'ed man page installation
-.if defined(CATPAGES) && !empty(CATPAGES) && ${MKCATPAGES} != "no"
-catpages:: ${CATPAGES:@P@${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}@}
-.PRECIOUS: ${CATPAGES:@P@${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}@}
-.if !defined(UPDATE)
-.PHONY: ${CATPAGES:@P@${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}@}
-.endif
-
-.   for P in ${CATPAGES:O:u}
-.	if !defined(BUILD) && !make(all) && !make(${P})
-${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: .MADE
-.	endif
-${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: ${P} __installpage
-.   endfor
-.else
-catpages::
-.endif
-
-# Rules for source page installation
-.if defined(MANPAGES) && !empty(MANPAGES)
-manpages:: ${MANPAGES:@P@${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}@}
-.PRECIOUS: ${MANPAGES:@P@${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}@}
-.if !defined(UPDATE)
-.PHONY: ${MANPAGES:@P@${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}@}
-.endif
-
-.   for P in ${MANPAGES:O:u}
-${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
-.   endfor
-.else
-manpages::
-.endif
-
-.if ${MKCATPAGES} != "no"
-catlinks: catpages
-.if defined(MLINKS) && !empty(MLINKS)
-	@set ${MLINKS}; \
-	while test $$# -ge 2; do \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
-		if test $$l -nt $$t -o ! -f $$t; then \
-			echo $$t -\> $$l; \
-			ln -f $$l $$t; \
-		fi; \
-	done
-.endif
-.else
-catlinks:
-.endif
-
-manlinks: manpages
-.if defined(MLINKS) && !empty(MLINKS)
-	@set ${MLINKS}; \
-	while test $$# -ge 2; do \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name}${MCOMPRESSSUFFIX}; \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name}${MCOMPRESSSUFFIX}; \
-		if test $$l -nt $$t -o ! -f $$t; then \
-			echo $$t -\> $$l; \
-			ln -f $$l $$t; \
-		fi; \
-	done
-.endif
-
-# Html rules
-html: ${HTMLPAGES}
-
-.if defined(HTMLPAGES) && !empty(HTMLPAGES)
-.for P in ${HTMLPAGES:O:u} 
-${HTMLDIR}/${P:T:E}/${P:T:R}.html: ${P}
-	${MINSTALL} ${.ALLSRC} ${.TARGET}
 .endfor
+
+manlinks: manpages					# symlink install
+.if !empty(MLINKS)
+	@set ${MLINKS}; \
+	while test $$# -ge 2; do \
+		name=$$1; shift; \
+		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
+		l=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
+		name=$$1; shift; \
+		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
+		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
+		if test $$l -nt $$t -o ! -f $$t; then \
+			echo $$t -\> $$l; \
+			ln -f $$l $$t; \
+		fi; \
+	done
 .endif
-installhtml: ${HTMLPAGES:@P@${HTMLDIR}/${P:T:E}/${P:T:R}.html@}
+.endif # ${MKMAN} != "no"
+
+##### Build and install rules (plaintext pages)
+
+.if (${MKCATPAGES} != "no") && (${MKMAN} != "no")
+catinstall:	catlinks
+catpages::	# ensure target exists
+CATPAGES=	${MAN:C/\.([1-9])$/.cat\1${MANSUFFIX}/}
+
+realall:	${CATPAGES}
+.NOPATH:	${CATPAGES}
+.SUFFIXES:	${_MNUMBERS:@N@.cat$N${MANSUFFIX}@}
+
+${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
+.if defined(USETBL)
+	${TBL} ${.IMPSRC} | ${NROFF} -mandoc ${MANCOMPRESS} > ${.TARGET}
+.else
+	${NROFF} -mandoc ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}
+.endif
+
+.for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
+_F:=		${DESTDIR}${MANDIR}/${F:T:E}${MANSUBDIR}/${F:R}.0${MANSUFFIX}
+${_F}:		${F}${MANSUFFIX} __installpage		# install rule
+catpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# noclobber install
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
+.endif
+.endfor
+
+catlinks: catpages					# symlink install
+.if !empty(MLINKS)
+	@set ${MLINKS}; \
+	while test $$# -ge 2; do \
+		name=$$1; shift; \
+		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
+		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
+		name=$$1; shift; \
+		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
+		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
+		if test $$l -nt $$t -o ! -f $$t; then \
+			echo $$t -\> $$l; \
+			ln -f $$l $$t; \
+		fi; \
+	done
+.endif
+.endif # (${MKCATPAGES} != "no") && (${MKMAN} != "no")
+
+##### Build and install rules (HTML pages)
+
+.if !defined(NOHTML)
+installhtml:	htmlpages
+htmlpages::	# ensure target exists
+HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
+
+html:		${HTMLPAGES}
+.NOPATH:	${HTMLPAGES}
+.SUFFIXES:	${_MNUMBERS:@N@.html$N@}
+
+${_MNUMBERS:@N@.$N.html$N@}: ${CATDEPS}			# build rule
+	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}
+
+.for F in ${HTMLPAGES:O:u}
+_F:=		${HTMLDIR}/${F:T:E}/${F:R}.html		# installed path
+${_F}:		${F} __installpage			# install rule
+htmlpages::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# noclobber install
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
+.endif
+.endfor
 
 cleanhtml:
-.if defined(HTMLPAGES) && !empty(HTMLPAGES)
 	rm -f ${HTMLPAGES}
-.endif
+.endif # !defined(NOHTML)
 
+##### Clean rules
+.undef _F
 
-.if defined(CATPAGES)
-.if ${MKCATPAGES} != "no" && ${MKMAN} != "no"
-realall: ${CATPAGES}
-.else
-realall:
-.endif
-
+cleandir: cleanman
 cleanman:
+.if !empty(MAN) && (${MKMAN} != "no")
+.if (${MKCATPAGES} != "no")
 	rm -f ${CATPAGES}
-.else
-cleanman:
 .endif
+.if !empty(MANSUFFIX)
+	rm -f ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
+.endif
+.endif
+# (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-clean depend includes lint regress tags:
+##### Pull in related .mk logic
+.include <bsd.obj.mk>
+
+${TARGETS} catinstall maninstall: # ensure existence

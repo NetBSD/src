@@ -1,13 +1,10 @@
-#	$NetBSD: bsd.own.mk,v 1.204 2001/10/31 17:46:08 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.205 2001/11/02 05:21:51 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
 
 MAKECONF?=	/etc/mk.conf
-
-.if exists(${MAKECONF})
-.include "${MAKECONF}"
-.endif
+.-include "${MAKECONF}"
 
 # Temporary; this will become default when all platforms have migrated.
 .if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
@@ -178,6 +175,9 @@ RENAME?=	-r
 INSTPRIV?=	${UNPRIVILEGED:D-U}
 STRIPFLAG?=	-s
 
+INSTALL_DIR?=	${INSTALL} ${INSTPRIV} -d
+INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME} ${INSTPRIV}
+
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
@@ -291,6 +291,9 @@ subdir-depend:	.NOTMAIN
 realdepend:	.NOTMAIN
 distclean:	.NOTMAIN cleandir
 cleandir:	.NOTMAIN clean
+
+dependall:	.NOTMAIN realdepend .MAKE
+	@cd ${.CURDIR}; ${MAKE} realall
 .endif
 
 # Define MKxxx variables (which are either yes or no) for users
@@ -303,8 +306,6 @@ MKCATPAGES?=yes
 
 .if defined(NODOC)
 MKDOC=no
-#.elif !defined(MKDOC)
-#MKDOC=yes
 .else
 MKDOC?=yes
 .endif

@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.57 2001/10/31 19:57:18 gmcgarry Exp $
+# $NetBSD: obsolete.mi,v 1.58 2001/11/02 05:21:48 tv Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -780,5 +780,6 @@
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
 /usr/share/mk/bsd.crypto.mk
+/usr/share/mk/bsd.depall.mk
 /usr/share/mk/bsd.port.mk
 /usr/share/mk/bsd.port.subdir.mk

@@ -1,40 +1,47 @@
-#	$NetBSD: bsd.files.mk,v 1.15 2001/05/08 03:19:52 sommerfeld Exp $
+#	$NetBSD: bsd.files.mk,v 1.16 2001/11/02 05:21:50 tv Exp $
 
+.if !target(__fileinstall)
 # This file can be included multiple times.  It clears the definition of
 # FILES at the end so that this is possible.
 
+##### Basic targets
 .PHONY:		filesinstall
 realinstall:	filesinstall
 
-.if defined(FILES) && !empty(FILES)
-FILESDIR?=${BINDIR}
-FILESOWN?=${BINOWN}
-FILESGRP?=${BINGRP}
-FILESMODE?=${NONBINMODE}
+##### Default values
+FILESDIR?=	${BINDIR}
+FILESOWN?=	${BINOWN}
+FILESGRP?=	${BINGRP}
+FILESMODE?=	${NONBINMODE}
 
-filesinstall:: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
-.PRECIOUS: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
-.if !defined(UPDATE)
-.PHONY: ${FILES:@F@${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}@}
-.endif
+##### Install rules
+filesinstall::	# ensure existence
 
 __fileinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
+	${INSTALL_FILE} \
 	    -o ${FILESOWN_${.ALLSRC:T}:U${FILESOWN}} \
 	    -g ${FILESGRP_${.ALLSRC:T}:U${FILESGRP}} \
 	    -m ${FILESMODE_${.ALLSRC:T}:U${FILESMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 
+.endif # !target(__fileinstall)
+
 .for F in ${FILES:O:u}
+_FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
+_FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
+_F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+
+${_F}:		${F} __fileinstall			# install rule
+filesinstall::	${_F}
+.PRECIOUS: 	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
-${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}: .MADE
+${_F}:		.MADE					# no build at install
 .endif
-${DESTDIR}${FILESDIR_${F}:U${FILESDIR}}/${FILESNAME_${F}:U${FILESNAME:U${F:T}}}: ${F} __fileinstall
 .endfor
-.endif
 
-.if !target(filesinstall)
-filesinstall::
-.endif
+.undef _FDIR
+.undef _FNAME
+.undef _F
 
-FILES:=
+FILES:=		# reset to empty
