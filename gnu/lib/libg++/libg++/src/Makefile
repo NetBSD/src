@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/12/20 01:04:21 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/07 07:15:36 mycroft Exp $
 
 LIB=		g++
 
@@ -25,7 +25,7 @@ DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 .endif
 NOMAN=		noman
 NOLINT=		nolint
-LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
-			$(MAKE) -r -s -f - xxx | grep curses
+LIBCURSES!=	printf "xxx: .MAKE\n\t@echo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
+			$(MAKE) -s -f-
 
 .include <bsd.lib.mk>
