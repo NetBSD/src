@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.7 1999/07/02 15:45:23 simonb Exp $	*/
+/*	$NetBSD: put.c,v 1.7.8.1 2000/07/17 19:55:52 mjl Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -15,12 +15,13 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include <sys/types.h>
 #include "skey.h"
 
-static unsigned int extract __ARGS ((char *s, int start, int length));
-static void standard __ARGS ((char *word));
-static void insert __ARGS ((char *s, int x, int start, int length));
-static int wsrch __ARGS ((char *w, int low, int high));
+static unsigned int extract __P ((char *s, int start, int length));
+static void standard __P ((char *word));
+static void insert __P ((char *s, int x, int start, int length));
+static int wsrch __P ((const char *w, int low, int high));
 
 /* Dictionary for integer-word translations */
 char Wp[2048][4] = {
@@ -2077,10 +2078,7 @@ char Wp[2048][4] = {
 /* Encode 8 bytes in 'c' as a string of English words.
  * Returns a pointer to a static buffer
  */
-char *
- btoe (engout, c)
-  char *engout;
-  const char *c;
+char *btoe(char *engout, const char *c)
 {
   char cp[9];			/* add in room for the parity 2 bits */
   int p, i;
@@ -2117,10 +2115,7 @@ char *
  *        -1 badly formed in put ie > 4 char word
  *        -2 words OK but parity is wrong
  */
-int
- etob (out, e)
-  char *out;
-  const char *e;
+int etob(char *out, const char *e)
 {
   char *word;
   int i, p, v, l, low, high;
@@ -2172,12 +2167,9 @@ int
 }
 
 /* Display 8 bytes as a series of 16-bit hex digits */
-char *
- put8 (out, s)
-  char *out;
-  const char *s;
+char *put8(char *out, const char *s)
 {
-  sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",	/* XXX: sprintf (put8()) appears to be unused */
+  sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",
 	   s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
 	   s[3] & 0xff, s[4] & 0xff, s[5] & 0xff,
 	   s[6] & 0xff, s[7] & 0xff);
@@ -2188,9 +2180,7 @@ char *
 /* Encode 8 bytes in 'cp' as stream of ascii letters.
  * Provided as a possible alternative to btoe()
  */
-char *
- btoc (cp)
-  char *cp;
+char *btoc(char *cp)
 {
   int i;
   static char out[31];
@@ -2210,10 +2200,7 @@ char *
 /* Internal subroutines for word encoding/decoding */
 
 /* Dictionary binary search */
-static int
- wsrch (w, low, high)
-  char *w;
-  int low, high;
+static int wsrch(const char *w, int low, int high)
 {
   int i, j;
 
@@ -2238,11 +2225,8 @@ static int
       low = i;			/* Search upper half */
   }
 }
-static void
- insert (s, x, start, length)
-  char *s;
-  int x;
-  int start, length;
+
+static void insert (char *s, int x, int start, int length)
 {
   unsigned char cl;
   unsigned char cc;
@@ -2277,9 +2261,7 @@ static void
   }
 }
 
-static void
- standard (word)
-  char *word;
+static void standard(char *word)
 {
   while (*word)
   {
@@ -2298,10 +2280,7 @@ static void
 }
 
 /* Extract 'length' bits from the char array 's' starting with bit 'start' */
-static unsigned int
- extract (s, start, length)
-  char *s;
-  int start, length;
+static unsigned int extract(char *s, int start, int length)
 {
   unsigned char cl;
   unsigned char cc;
