@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.3 1997/10/17 06:58:49 lukem Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.4 1999/06/22 20:00:47 is Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -157,7 +157,7 @@ operand reg_op(int reg);
 void reset_numeric_labels(void);
 void set_label(char *);
 void set_numeric_label(int);
-void start_at(int32_t);
+void start_at(u_int32_t);
 void statement(char *opcode, operand operands);
 operand string_op(char *);
 void ucasify(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_out.c,v 1.3 1997/10/17 06:59:04 lukem Exp $	*/
+/*	$NetBSD: gsp_out.c,v 1.4 1999/06/22 20:00:47 is Exp $	*/
 /*
  * GSP assembler - binary & listing output
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_out.c,v 1.3 1997/10/17 06:59:04 lukem Exp $");
+__RCSID("$NetBSD: gsp_out.c,v 1.4 1999/06/22 20:00:47 is Exp $");
 #endif
 
 #include <stdio.h>
@@ -103,7 +103,7 @@ put1code(u_int16_t v)
 }
 
 void
-start_at(int32_t val)
+start_at(u_int32_t val)
 {
 	if( objfile != NULL )
 		fprintf(objfile, ":%lX\n", (long)val);
