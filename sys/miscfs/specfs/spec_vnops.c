@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.37 1997/10/09 13:00:05 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.38 1997/10/16 23:57:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,7 +173,7 @@ spec_open(v)
 			 * currently mounted.
 			 */
 			if (securelevel >= 1) {
-				if ((bdev = chrtoblk(dev)) != NODEV &&
+				if ((bdev = chrtoblk(dev)) != (dev_t)NODEV &&
 				    vfinddev(bdev, VBLK, &bvp) &&
 				    bvp->v_usecount > 0 &&
 				    (error = vfs_mountedon(bvp)))
