@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/04/06 13:59:12 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.9 2002/04/06 15:27:55 bjh21 Exp $
 #
 
 PROG=	installboot
@@ -26,7 +26,7 @@ afterinstall:
 .for l in ${COMPATLINKS}
 .if (${MACHINE} == ${l})
 	${INSTALL_SYMLINK} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${BINDIR}/${PROG} /usr/mdec/${PROG}
+	    ${BINDIR}/${PROG} ${DESTDIR}/usr/mdec/${PROG}
 .endif
 .endfor
 
