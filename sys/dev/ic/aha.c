@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.11 1998/01/12 09:23:08 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.12 1998/01/30 01:26:51 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -159,9 +159,6 @@ struct scsipi_device aha_dev = {
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
-
-/* XXX Should put this in a better place. */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
