@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.112 2000/04/14 03:36:13 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.112.2.1 2000/06/22 16:17:57 minoura Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -32,33 +32,45 @@ LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
+LIBHDB?=	${DESTIDR}/usr/lib/libhdb.a
 LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
-LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
+LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
+LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
+LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+LIBKRB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
+LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
-LIBMP?=		${DESTDIR}/usr/lib/libmp.a
-LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
-LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
-LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
+LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBSS?=		${DESTDIR}/usr/lib/libss.a
+LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
+LIBUSB?=	${DESTDIR}/usr/lib/libusb.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
@@ -134,19 +146,22 @@ afterdepend: .depend
 .endif
 
 .if defined(PROG) && !target(proginstall)
-PROGNAME?= ${PROG}
+PROGNAME?=${PROG}
+
 proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
+.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
+
+__proginstall: .USE
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
+	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
-${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
-	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG} __proginstall
 .endif
 
 .if !target(proginstall)
@@ -158,30 +173,25 @@ SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
 SCRIPTSGRP?=${BINGRP}
 SCRIPTSMODE?=${BINMODE}
-.for S in ${SCRIPTS}
-SCRIPTSDIR_${S}?=${SCRIPTSDIR}
-SCRIPTSOWN_${S}?=${SCRIPTSOWN}
-SCRIPTSGRP_${S}?=${SCRIPTSGRP}
-SCRIPTSMODE_${S}?=${SCRIPTSMODE}
-.if defined(SCRIPTSNAME)
-SCRIPTSNAME_${S} ?= ${SCRIPTSNAME}
-.else
-SCRIPTSNAME_${S} ?= ${S:T:R}
-.endif
-SCRIPTSDIR_${S} ?= ${SCRIPTSDIR}
-scriptsinstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
+
+scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
+.PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
-.endif
-.if !defined(BUILD) && !make(all) && !make(${S})
-${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
+.PHONY: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 .endif
 
-.PRECIOUS: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
-${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
+__scriptinstall: .USE
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-	    -o ${SCRIPTSOWN_${S}} -g ${SCRIPTSGRP_${S}} -m ${SCRIPTSMODE_${S}} \
+	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
+	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
+	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
 	    ${.ALLSRC} ${.TARGET}
+
+.for S in ${SCRIPTS}
+.if !defined(BUILD) && !make(all) && !make(${S})
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: .MADE
+.endif
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: ${S} __scriptinstall
 .endfor
 .endif
 

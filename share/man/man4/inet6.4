@@ -1,5 +1,5 @@
-.\"	$NetBSD: inet6.4,v 1.9 2000/04/17 05:03:25 itojun Exp $
-.\"	$KAME: inet6.4,v 1.9 2000/04/14 09:30:11 itojun Exp $
+.\"	$NetBSD: inet6.4,v 1.9.2.1 2000/06/22 16:17:06 minoura Exp $
+.\"	$KAME: inet6.4,v 1.15 2000/06/15 14:21:50 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -140,7 +140,7 @@ and
 Some of normal userland programs, such as
 .Xr telnet 1
 or
-.Xr ftp 8 ,
+.Xr ftp 1 ,
 are able to use the notation.
 With special programs
 like
@@ -149,7 +149,7 @@ you can specify outgoing interface by extra command line option
 to disambiguate scoped addresses.
 .Pp
 Scoped addresses are handled specially in the kernel.
-In the kenrel structures like routing tables or interface structure,
+In the kernel structures like routing tables or interface structure,
 scoped addresses will have its interface index embedded into the address.
 Therefore,
 the address on some of the kernel structure is not the same as that on the wire.
@@ -277,6 +277,92 @@ message protocol is accessible from a raw socket.
 .\" will trigger the mechanism; whereas raw
 .\" .Tn IP
 .\" packets, whether locally-generated or forwarded, will not.
+.Ss Interaction between IPv4/v6 sockets
+The behavior of 
+.Dv AF_INET6
+TCP/UDP socket is documented in RFC2553.
+Basically, it says as follows:
+.Bl -bullet -compact
+.It
+Specific bind on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+with address specified
+.Pc
+should accept IPv6 traffic to that address only.
+.It
+If you perform wildcard bind
+on
+.Dv AF_INET6
+socket
+.Po
+.Xr bind 2
+to IPv6 address
+.Li ::
+.Pc ,
+and there is no wildcard bind
+.Dv AF_INET
+socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
+should be routed to that
+.Dv AF_INET6
+socket.
+IPv4 traffic should be seen as if it came from IPv6 address like
+.Li ::ffff:10.1.1.1 .
+This is called IPv4 mapped address.
+.It
+If there are both wildcard bind
+.Dv AF_INET
+socket and wildcard bind
+.Dv AF_INET6
+socket on one TCP/UDP port, they should behave separately.
+IPv4 traffic should be routed to
+.Dv AF_INET
+socket and IPv6 should be routed to
+.Dv AF_INET6
+socket.
+.El
+.Pp
+However, RFC2553 does not define the constraint between the order of
+.Xr bind 2 ,
+nor how IPv4 TCP/UDP port number and IPv6 TCP/UDP port number
+relate each other
+.Po
+should they be integrated or separated
+.Pc .
+Implemented behavior is very different across kernel to kernel.
+Therefore, it is unwise to rely too much upon the behavior of
+.Dv AF_INET6
+wildcard bind socket.
+It is recommended to listen to two sockets, one for
+.Dv AF_INET
+and another for
+.Dv AF_INET6 ,
+when you would like to accept both IPv4 and IPv6 traffic.
+.Pp
+It should also be noted that
+malicious parties can take advantage of the complexity presented above,
+and are able to bypass access control,
+if the target node routes IPv4 traffic to
+.Dv AF_INET6
+socket.
+Users are advised to take caution handling connections
+from IPv4 mapped address to
+.Dv AF_INET6
+sockets.
+.Pp
+Because of the above, by default,
+.Nx
+does not route IPv4 traffic to
+.Dv AF_INET6
+socket.
+Listen to two sockets if you want to accept both IPv4 and IPv6 traffic.
+IPv4 traffic may be routed with certain
+per-socket/per-node configuration, however, it is not recommended to do so.
+Consult
+.Xr ip6 4
+for details.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
@@ -285,19 +371,7 @@ message protocol is accessible from a raw socket.
 .Xr intro 4 ,
 .Xr ip6 4 ,
 .Xr tcp 4 ,
-.Xr ttcp 4 ,
 .Xr udp 4
-.Sh CAVEAT
-The IPv6 support is subject to change as the Internet protocols develop.
-Users should not depend on details of the current implementation,
-but rather the services exported.
-.Pp
-Users are suggested to implement
-.Dq version independent
-code as much as possible, as you will need to support both
-.Xr inet 4
-and
-.Nm inet6 .
 .Sh STANDARDS
 .Rs
 .%A Tatsuya Jinmei
@@ -313,3 +387,14 @@ The
 .Nm
 protocol interface are defined in RFC2553 and RFC2292.
 The implementation described herein appeared in WIDE/KAME project.
+.Sh BUGS
+The IPv6 support is subject to change as the Internet protocols develop.
+Users should not depend on details of the current implementation,
+but rather the services exported.
+.Pp
+Users are suggested to implement
+.Dq version independent
+code as much as possible, as you will need to support both
+.Xr inet 4
+and
+.Nm inet6 .

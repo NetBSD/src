@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts.5,v 1.6 1999/03/17 20:19:45 garbled Exp $
+.\"	$NetBSD: hosts.5,v 1.6.8.1 2000/06/22 16:17:31 minoura Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,12 +91,14 @@ sites on the
 .Tn DARPA
 Internet.
 .Pp
-Network addresses are specified in the conventional
+As network addresses, both IPv4 and IPv6 addresses are allowed.
+IPv4 addresses are specified in the conventional
 ``.'' (dot) notation using the
-.Xr inet_addr 3
+.Xr inet_pton 3
 routine
 from the Internet address manipulation library,
 .Xr inet 3 .
+IPv6 addresses are specified in the standard hex-and-colon notation.
 Host names may contain any printable
 character other than a field delimiter, newline,
 or comment character.
