@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.8 1997/11/19 08:24:09 mrg Exp $	*/
+/*	$NetBSD: dm.c,v 1.9 1998/07/04 20:06:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.8 1997/11/19 08:24:09 mrg Exp $");
+__RCSID("$NetBSD: dm.c,v 1.9 1998/07/04 20:06:55 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(argc, argv)
 #endif
 	play(argv);
 	/*NOTREACHED*/
-	return(0);
+	return (0);
 }
 
 /*
@@ -139,7 +139,7 @@ read_config()
 	if (!(cfp = fopen(_PATH_CONFIG, "r")))
 		return;
 	while (fgets(lbuf, sizeof(lbuf), cfp))
-		switch(*lbuf) {
+		switch (*lbuf) {
 		case 'b':		/* badtty */
 			if (sscanf(lbuf, "%s%s", f1, f2) != 2 ||
 			    strcasecmp(f1, "badtty"))
@@ -243,7 +243,7 @@ load()
 
 	if (getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0])) < 0)
 		err(1, "getloadavg() failed.");
-	return(avenrun[2]);
+	return (avenrun[2]);
 }
 
 /*
@@ -264,7 +264,7 @@ users()
 	for (nusers = 0; read(utmp, (char *)&buf, sizeof(struct utmp)) > 0;)
 		if (buf.ut_name[0] != '\0')
 			++nusers;
-	return(nusers);
+	return (nusers);
 }
 
 void
@@ -297,9 +297,9 @@ hour(h)
 	    "6pm", "7pm", "8pm", "9pm", "10pm", "11pm" };
 
 	if (h < 0 || h > 23)
-		return "BAD TIME";
+		return ("BAD TIME");
 	else
-		return hours[h];
+		return (hours[h]);
 }
 
 #ifdef LOG
