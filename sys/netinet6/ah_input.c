@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.12 2000/03/21 23:53:30 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.13 2000/03/26 18:55:37 mycroft Exp $	*/
 /*	$KAME: ah_input.c,v 1.22 2000/03/09 21:51:39 itojun Exp $	*/
 
 /*
@@ -492,15 +492,14 @@ ah4_input(m, va_alist)
 			}
 		}
 		ip = mtod(m, struct ip *);
-#if 1
-		/*ip_len is in host endian*/
+#ifdef IPLEN_FLIPPED
 		ip->ip_len = ip->ip_len - stripsiz;
 #else
-		/*ip_len is in net endian*/
 		ip->ip_len = htons(ntohs(ip->ip_len) - stripsiz);
 #endif
 		ip->ip_p = nxt;
-		/* forget about IP hdr checksum, the check has already been passed */
+
+		key_sa_recordxfer(sav, m);
 
 		if (nxt != IPPROTO_DONE)
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
