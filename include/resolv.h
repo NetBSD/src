@@ -55,7 +55,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.10 1997/04/13 09:26:22 mrg Exp $
+ *	$Id: resolv.h,v 1.10.2.1 1997/05/23 19:58:29 lukem Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -97,7 +97,6 @@
 #define	MAXDFLSRCH		3	/* # default domain levels to try */
 #define	MAXDNSRCH		6	/* max # domains in search path */
 #define	LOCALDOMAINPARTS	2	/* min levels in name that is "local" */
-#define	MAXDNSLUS		4	/* max # of host lookup types */
 
 #define	RES_TIMEOUT		5	/* min. seconds between retries */
 #define	MAXRESOLVSORT		10	/* number of net to sort on */
@@ -122,7 +121,6 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
-	char	lookups[MAXDNSLUS];
 };
 
 /*
