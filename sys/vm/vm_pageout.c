@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.26 1997/02/18 13:39:36 mrg Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.27 1997/09/07 20:41:59 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -326,8 +326,12 @@ vm_pageout_page(m, object)
 		 * shortage, so we put pause for awhile and try again.
 		 * XXX could get stuck here.
 		 */
+		vm_page_unlock_queues();
+		vm_object_unlock(object);
 		(void) tsleep((caddr_t)&vm_pages_needed, PZERO|PCATCH,
 		    "pageout", hz);
+		vm_object_lock(object);
+		vm_page_lock_queues();
 		break;
 	}
 	case VM_PAGER_FAIL:
