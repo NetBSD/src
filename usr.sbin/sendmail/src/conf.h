@@ -574,6 +574,7 @@ typedef int		pid_t;
 */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+# include <paths.h>
 # define HASUNSETENV	1	/* has unsetenv(3) call */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 # define USESETEUID	1	/* has useable seteuid(2) call */
