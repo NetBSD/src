@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.5 1998/11/04 15:06:13 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.6 1998/11/05 11:46:07 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -70,9 +70,14 @@
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/adb_direct.h>
 
 #define printf_intr printf
+
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -82,32 +87,25 @@
 #define vSR_INT		0x04
 #define vSR_OUT		0x10
 
-/* types of adb hardware that we (will eventually) support */
-#define ADB_HW_UNKNOWN		0x01	/* don't know */
-#define ADB_HW_II		0x02	/* Mac II series */
-#define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
-#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
-
 /* the type of ADB action that we are currently preforming */
-#define ADB_ACTION_NOTREADY	0x01	/* has not been initialized yet */
-#define ADB_ACTION_IDLE		0x02	/* the bus is currently idle */
-#define ADB_ACTION_OUT		0x03	/* sending out a command */
-#define ADB_ACTION_IN		0x04	/* receiving data */
-#define ADB_ACTION_POLLING	0x05	/* polling - II only */
+#define ADB_ACTION_NOTREADY	0x1	/* has not been initialized yet */
+#define ADB_ACTION_IDLE		0x2	/* the bus is currently idle */
+#define ADB_ACTION_OUT		0x3	/* sending out a command */
+#define ADB_ACTION_IN		0x4	/* receiving data */
+#define ADB_ACTION_POLLING	0x5	/* polling - II only */
 
 /*
  * These describe the state of the ADB bus itself, although they
  * don't necessarily correspond directly to ADB states.
  * Note: these are not really used in the IIsi code.
  */
-#define ADB_BUS_UNKNOWN		0x01	/* we don't know yet - all models */
-#define ADB_BUS_IDLE		0x02	/* bus is idle - all models */
-#define ADB_BUS_CMD		0x03	/* starting a command - II models */
-#define ADB_BUS_ODD		0x04	/* the "odd" state - II models */
-#define ADB_BUS_EVEN		0x05	/* the "even" state - II models */
-#define ADB_BUS_ACTIVE		0x06	/* active state - IIsi models */
-#define ADB_BUS_ACK		0x07	/* currently ACKing - IIsi models */
+#define ADB_BUS_UNKNOWN		0x1	/* we don't know yet - all models */
+#define ADB_BUS_IDLE		0x2	/* bus is idle - all models */
+#define ADB_BUS_CMD		0x3	/* starting a command - II models */
+#define ADB_BUS_ODD		0x4	/* the "odd" state - II models */
+#define ADB_BUS_EVEN		0x5	/* the "even" state - II models */
+#define ADB_BUS_ACTIVE		0x6	/* active state - IIsi models */
+#define ADB_BUS_ACK		0x7	/* currently ACKing - IIsi models */
 
 /*
  * Shortcuts for setting or testing the VIA bit states.
@@ -247,19 +245,20 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 volatile u_char *Via1Base;
-extern int adb_polling;
-
-int	zshard __P((int));
+extern int adb_polling;			/* Are we polling? */
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
+void	pm_intr __P((void));
 int	pm_adb_op __P((u_char *, void *, void *, int));
 void	pm_init_adb_device __P((void));
 
 /*
  * The following are private routines.
  */
+#ifdef ADB_DEBUG
 void	print_single __P((u_char *));
+#endif
 void	adb_intr __P((void));
 void	adb_intr_II __P((void));
 void	adb_intr_IIsi __P((void));
@@ -292,6 +291,7 @@ int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
 int	send_adb __P((u_char *, void *, void *));
 
+#ifdef ADB_DEBUG
 /*
  * print_single
  * Diagnostic display routine. Displays the hex values of the
@@ -321,6 +321,7 @@ print_single(thestring)
 		printf_intr("  0x%02x", thestring[x + 1]);
 	printf_intr("\n");
 }
+#endif
 
 void
 adb_cuda_tickle(void)
@@ -352,7 +353,8 @@ adb_cuda_tickle(void)
  * called when when an adb interrupt happens
  *
  * Cuda version of adb_intr
- * TO DO: do we want to add some zshard calls in here?
+ * TO DO: do we want to add some calls to intr_dispatch() here to
+ * grab serial interrupts?
  */
 void
 adb_intr_cuda(void)
@@ -559,11 +561,17 @@ switch_start:
 		break;
 
 	case ADB_ACTION_NOTREADY:
-		printf_intr("adb: not yet initialized\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: not yet initialized\n");
+#endif
 		break;
 
 	default:
-		printf_intr("intr: unknown ADB state\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("intr: unknown ADB state\n");
+#endif
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -834,7 +842,10 @@ adb_pass_up(struct adbCommand *in)
 	/*u_char *comprout = 0;*/
 
 	if (adbInCount >= ADB_QUEUE) {
-		printf_intr("adb: ring buffer overflow\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: ring buffer overflow\n");
+#endif
 		return;
 	}
 
@@ -1155,8 +1166,12 @@ adb_hw_setup(void)
 		for (i = 0; i < 30; i++) {
 			delay(ADB_DELAY);
 			adb_hw_setup_IIsi(send_string);
-			printf_intr("adb: cleanup: ");
-			print_single(send_string);
+#ifdef ADB_DEBUG
+			if (adb_debug) {
+				printf_intr("adb: cleanup: ");
+				print_single(send_string);
+			}
+#endif
 			delay(ADB_DELAY);
 			if (ADB_INTR_IS_OFF)
 				break;
@@ -1412,15 +1427,22 @@ adb_reinit(void)
 	}
 #endif
 
+#ifndef MRG_ADB
 	/* enable the programmer's switch, if we have one */
 	adb_prog_switch_enable();
+#endif
 
-	if (0 == ADBNumDevices)	/* tell user if no devices found */
-		printf_intr("adb: no devices found\n");
+#ifdef ADB_DEBUG
+	if (adb_debug) {
+		if (0 == ADBNumDevices)	/* tell user if no devices found */
+			printf_intr("adb: no devices found\n");
+	}
+#endif
 
 	adbStarting = 0;	/* not starting anymore */
 #ifdef ADB_DEBUG
-	printf_intr("adb: ADBReInit complete\n");
+	if (adb_debug)
+		printf_intr("adb: ADBReInit complete\n");
 #endif
 
 	if (adbHardware == ADB_HW_CUDA)
@@ -1595,92 +1617,119 @@ adb_op_comprout(buffer, compdata, cmd)
 void 
 adb_setup_hw_type(void)
 {
-	long response;
-
-	if (adbHardware == ADB_HW_CUDA)
+	switch (adbHardware) {
+	case ADB_HW_CUDA:
+		adbSoftPower = 1;
 		return;
 
-	if (adbHardware == ADB_HW_PB) {
+	case ADB_HW_PB:
 		pm_setup_adb();
 		return;
-	}
-	panic("unknown adb hardware");
 
+	default:
+		panic("unknown adb hardware");
+	}
+#if 0
 	response = 0; /*mac68k_machine.machineid;*/
 
 	/*
 	 * Determine what type of ADB hardware we are running on.
 	 */
 	switch (response) {
-	case 6:		/* II */
-	case 7:		/* IIx */
-	case 8:		/* IIcx */
-	case 9:		/* SE/30 */
-	case 11:	/* IIci */
-	case 22:	/* Quadra 700 */
-	case 30:	/* Centris 650 */
-	case 35:	/* Quadra 800 */
-	case 36:	/* Quadra 650 */
-	case 52:	/* Centris 610 */
-	case 53:	/* Quadra 610 */
+	case MACH_MACC610:		/* Centris 610 */
+	case MACH_MACC650:		/* Centris 650 */
+	case MACH_MACII:		/* II */
+	case MACH_MACIICI:		/* IIci */
+	case MACH_MACIICX:		/* IIcx */
+	case MACH_MACIIX:		/* IIx */
+	case MACH_MACQ610:		/* Quadra 610 */
+	case MACH_MACQ650:		/* Quadra 650 */
+	case MACH_MACQ700:		/* Quadra 700 */
+	case MACH_MACQ800:		/* Quadra 800 */
+	case MACH_MACSE30:		/* SE/30 */
 		adbHardware = ADB_HW_II;
-		printf_intr("adb: using II series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using II series hardware support\n");
+#endif
 		break;
-	case 18:	/* IIsi */
-	case 20:	/* Quadra 900 - not sure if IIsi or not */
-	case 23:	/* Classic II */
-	case 26:	/* Quadra 950 - not sure if IIsi or not */
-	case 27:	/* LC III, Performa 450 */
-	case 37:	/* LC II, Performa 400/405/430 */
-	case 44:	/* IIvi */
-	case 45:	/* Performa 600 */
-	case 48:	/* IIvx */
-	case 62:	/* Performa 460/465/467 */
+
+	case MACH_MACCLASSICII:		/* Classic II */
+	case MACH_MACLCII:		/* LC II, Performa 400/405/430 */
+	case MACH_MACLCIII:		/* LC III, Performa 450 */
+	case MACH_MACIISI:		/* IIsi */
+	case MACH_MACIIVI:		/* IIvi */
+	case MACH_MACIIVX:		/* IIvx */
+	case MACH_MACP460:		/* Performa 460/465/467 */
+	case MACH_MACP600:		/* Performa 600 */
+	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
+	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbHardware = ADB_HW_IISI;
-		printf_intr("adb: using IIsi series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using IIsi series hardware support\n");
+#endif
 		break;
-	case 21:	/* PowerBook 170 */
-	case 25:	/* PowerBook 140 */
-	case 54:	/* PowerBook 145 */
-	case 34:	/* PowerBook 160 */
-	case 84:	/* PowerBook 165 */
-	case 50:	/* PowerBook 165c */
-	case 33:	/* PowerBook 180 */
-	case 71:	/* PowerBook 180c */
-	case 115:	/* PowerBook 150 */
+
+	case MACH_MACPB140:		/* PowerBook 140 */
+	case MACH_MACPB145:		/* PowerBook 145 */
+	case MACH_MACPB150:		/* PowerBook 150 */
+	case MACH_MACPB160:		/* PowerBook 160 */
+	case MACH_MACPB165:		/* PowerBook 165 */
+	case MACH_MACPB165C:		/* PowerBook 165c */
+	case MACH_MACPB170:		/* PowerBook 170 */
+	case MACH_MACPB180:		/* PowerBook 180 */
+	case MACH_MACPB180C:		/* PowerBook 180c */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
-		printf_intr("adb: using PowerBook 100-series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using PowerBook 100-series hardware support\n");
+#endif
 		break;
-	case 29:	/* PowerBook Duo 210 */
-	case 32:	/* PowerBook Duo 230 */
-	case 38:	/* PowerBook Duo 250 */
-	case 72:	/* PowerBook 500 series */
-	case 77:	/* PowerBook Duo 270 */
-	case 102:	/* PowerBook Duo 280 */
-	case 103:	/* PowerBook Duo 280c */
+
+	case MACH_MACPB210:		/* PowerBook Duo 210 */
+	case MACH_MACPB230:		/* PowerBook Duo 230 */
+	case MACH_MACPB250:		/* PowerBook Duo 250 */
+	case MACH_MACPB270:		/* PowerBook Duo 270 */
+	case MACH_MACPB280:		/* PowerBook Duo 280 */
+	case MACH_MACPB280C:		/* PowerBook Duo 280c */
+	case MACH_MACPB500:		/* PowerBook 500 series */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
-		printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
+#endif
 		break;
-	case 49:	/* Color Classic */
-	case 56:	/* LC 520 */
-	case 60:	/* Centris 660AV */
-	case 78:	/* Quadra 840AV */
-	case 80:	/* LC 550, Performa 550 */
-	case 83:	/* Color Classic II */
-	case 89:	/* LC 475, Performa 475/476 */
-	case 92:	/* LC 575, Performa 575/577/578 */
-	case 94:	/* Quadra 605 */
-	case 98:	/* LC 630, Performa 630, Quadra 630 */
-	case 99:	/* Performa 580(?)/588 */
+
+	case MACH_MACC660AV:		/* Centris 660AV */
+	case MACH_MACCCLASSIC:		/* Color Classic */
+	case MACH_MACCCLASSICII:	/* Color Classic II */
+	case MACH_MACLC475:		/* LC 475, Performa 475/476 */
+	case MACH_MACLC475_33:		/* Clock-chipped 47x */
+	case MACH_MACLC520:		/* LC 520 */
+	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
+	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACP580:		/* Performa 580/588 */
+	case MACH_MACQ605:		/* Quadra 605 */
+	case MACH_MACQ605_33:		/* Clock-chipped Quadra 605 */
+	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACQ840AV:		/* Quadra 840AV */
 		adbHardware = ADB_HW_CUDA;
-		printf_intr("adb: using Cuda series hardware support\n");
+#ifdef ADB_DEBUG
+		if (adb_debug)
+			printf_intr("adb: using Cuda series hardware support\n");
+#endif
 		break;
 	default:
 		adbHardware = ADB_HW_UNKNOWN;
-		printf_intr("adb: hardware type unknown for this machine\n");
-		printf_intr("adb: ADB support is disabled\n");
+#ifdef ADB_DEBUG
+		if (adb_debug) {
+			printf_intr("adb: hardware type unknown for this machine\n");
+			printf_intr("adb: ADB support is disabled\n");
+		}
+#endif
 		break;
 	}
 
@@ -1688,22 +1737,23 @@ adb_setup_hw_type(void)
 	 * Determine whether this machine has ADB based soft power.
 	 */
 	switch (response) {
-	case 18:	/* IIsi */
-	case 20:	/* Quadra 900 - not sure if IIsi or not */
-	case 26:	/* Quadra 950 - not sure if IIsi or not */
-	case 44:	/* IIvi */
-	case 45:	/* Performa 600 */
-	case 48:	/* IIvx */
-	case 49:	/* Color Classic */
-	case 83:	/* Color Classic II */
-	case 56:	/* LC 520 */
-	case 78:	/* Quadra 840AV */
-	case 80:	/* LC 550, Performa 550 */
-	case 92:	/* LC 575, Performa 575/577/578 */
-	case 98:	/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACCCLASSIC:		/* Color Classic */
+	case MACH_MACCCLASSICII:	/* Color Classic II */
+	case MACH_MACIISI:		/* IIsi */
+	case MACH_MACIIVI:		/* IIvi */
+	case MACH_MACIIVX:		/* IIvx */
+	case MACH_MACLC520:		/* LC 520 */
+	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
+	case MACH_MACP550:		/* LC 550, Performa 550 */
+	case MACH_MACP600:		/* Performa 600 */
+	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
+	case MACH_MACQ840AV:		/* Quadra 840AV */
+	case MACH_MACQ900:		/* Quadra 900 -  XXX not sure */
+	case MACH_MACQ950:		/* Quadra 950 -  XXX not sure */
 		adbSoftPower = 1;
 		break;
 	}
+#endif
 }
 	
 int 
@@ -1783,6 +1833,8 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 
 }
 
+#ifndef MRG_ADB
+
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
@@ -1812,6 +1864,7 @@ adb_read_date_time(unsigned long *time)
 		return 0;
 
 	case ADB_HW_PB:
+		pm_read_date_time();
 		return -1;
 
 	case ADB_HW_CUDA:
@@ -1826,7 +1879,7 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
-		bcopy(output + 1, time, 4);
+		memcpy(time, output + 1, 4);
 		return 0;
 
 	case ADB_HW_UNKNOWN:
@@ -1988,8 +2041,6 @@ adb_prog_switch_disable(void)
 	}
 }
 
-#ifndef MRG_ADB
-
 int 
 CountADBs(void)
 {
@@ -2027,7 +2078,6 @@ ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
 }
 
 #endif
-
 
 int
 setsoftadb()
