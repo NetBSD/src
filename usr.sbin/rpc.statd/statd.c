@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.13 1999/06/06 02:52:16 thorpej Exp $	*/
+/*	$NetBSD: statd.c,v 1.14 1999/06/10 05:53:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.13 1999/06/06 02:52:16 thorpej Exp $");
+__RCSID("$NetBSD: statd.c,v 1.14 1999/06/10 05:53:51 scottr Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -106,7 +106,8 @@ main(argc, argv)
 			break;
 		default:
 		case '?':
-			(void) fprintf(stderr, "Usage: %s [-d]", __progname);
+			(void)fprintf(stderr, "usage: %s [-d]\n", __progname);
+			exit(1);
 			/* NOTREACHED */
 		}
 	}
