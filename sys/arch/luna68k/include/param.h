@@ -1,4 +1,4 @@
-/* $Id: param.h,v 1.5 2003/08/07 16:28:05 agc Exp $ */
+/* $NetBSD: param.h,v 1.6 2004/10/24 07:12:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

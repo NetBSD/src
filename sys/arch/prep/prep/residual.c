@@ -1,4 +1,4 @@
-/*	$Id: residual.c,v 1.2 2003/07/15 02:54:53 lukem Exp $	*/
+/*	$NetBSD: residual.c,v 1.3 2004/10/24 07:18:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.2 2003/07/15 02:54:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.3 2004/10/24 07:18:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
