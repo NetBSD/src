@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
+/*	$NetBSD: device.h,v 1.16 1996/07/10 17:52:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,6 +164,9 @@ struct device *config_found_sm __P((struct device *, void *, cfprint_t,
 struct device *config_rootfound __P((char *, void *));
 void config_scan __P((cfscan_t, struct device *));
 struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
+#ifdef __alpha__
+void device_register __P((struct device *, void *));
+#endif
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 /* compatibility definitions */
