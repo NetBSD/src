@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.8 2003/10/13 18:50:43 fvdl Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.9 2003/11/01 17:59:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -105,6 +105,13 @@ do {									\
 do {									\
 	KSI_INIT((ksi));						\
 	(ksi)->ksi_flags |= KSI_TRAP;					\
+} while (/*CONSTCOND*/0)
+
+/* Copy the part of ksiginfo_t without the queue pointers */
+#define	KSI_COPY(fksi, tksi)						\
+do {									\
+	tksi->ksi_info = fksi->ksi_info;				\
+	tksi->ksi_flags = fksi->ksi_flags;				\
 } while (/*CONSTCOND*/0)
 
 /*
