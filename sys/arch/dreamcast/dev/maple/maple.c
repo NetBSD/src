@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.9 2001/07/22 15:46:41 wiz Exp $	*/
+/*	$NetBSD: maple.c,v 1.10 2001/12/04 15:27:35 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -575,12 +575,13 @@ maple_get_function_data(devinfo, function_code)
 	int i, p = 0;
 
 	for (i = 31; i >= 0; --i)
-	  if (devinfo->di_func & (1U<<i))
+	  if (devinfo->di_func & (1U<<i)) {
 	    if (function_code & (1U<<i))
 	      return devinfo->di_function_data[p];
 	    else
 	      if (++p >= 3)
 		break;
+	  }
 	return (0);
 }
 

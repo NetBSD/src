@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.10 2001/09/06 20:04:49 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.11 2001/12/04 15:27:36 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -223,17 +223,19 @@ extern int maple_polling;
 #define SHIFT_KEYCODE_BASE 0xe0
 #define UP_KEYCODE_FLAG 0x1000
 
-#define KEY_UP(n) \
+#define KEY_UP(n) do { \
 	if (maple_polling) \
 		polledkey = (n)|UP_KEYCODE_FLAG; \
 	else \
-		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n))
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n)); \
+	} while (0)
 
-#define KEY_DOWN(n) \
+#define KEY_DOWN(n) do { \
 	if (maple_polling) \
 		polledkey = (n); \
 	else \
-		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, (n))
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, (n)); \
+	} while (0)
 
 #define SHIFT_UP(n) KEY_UP((n)|SHIFT_KEYCODE_BASE)
 #define SHIFT_DOWN(n) KEY_DOWN((n)|SHIFT_KEYCODE_BASE)

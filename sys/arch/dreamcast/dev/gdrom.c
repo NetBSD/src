@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.5 2001/07/22 15:46:42 wiz Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.6 2001/12/04 15:27:37 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -525,8 +525,8 @@ gdromstrategy(bp)
 	sc->is_busy = 1;
 	splx(s);
 
-	if (error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
-				       bp->b_bcount>>11)) {
+	if ((error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
+				       bp->b_bcount>>11))) {
 	  bp->b_error = error;
 	  bp->b_flags |= B_ERROR;
 	}
