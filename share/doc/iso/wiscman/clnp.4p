@@ -1,3 +1,5 @@
+.\"	$NetBSD: clnp.4p,v 1.2 1998/01/09 06:35:20 perry Exp $
+.\"
 .TH CLNP 4P "9 December 1988"
 .ds ]W Wisconsin ARGO 1.0
 .UC 4
