@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.11 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: parse.c,v 1.12 2001/11/03 13:35:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.11 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: parse.c,v 1.12 2001/11/03 13:35:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static int aleft;
 extern int hleft;
 
 void
-alias(struct wordent *lex)
+alias(struct wordent *lexp)
 {
     jmp_buf osetexit;
 
@@ -93,7 +93,7 @@ alias(struct wordent *lex)
     }
     if (--aleft == 0)
 	stderror(ERR_ALIASLOOP);
-    asyntax(lex->next, lex);
+    asyntax(lexp->next, lexp);
     resexit(osetexit);
 }
 

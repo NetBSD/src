@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.18 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: glob.c,v 1.19 2001/11/03 13:35:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.18 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: glob.c,v 1.19 2001/11/03 13:35:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -672,7 +672,7 @@ backeval(Char *cp, bool literal)
      */
     mypipe(pvec);
     if (pfork(&faket, -1) == 0) {
-	struct wordent paraml;
+	struct wordent fparaml;
 	struct command *t;
 
 	(void)close(pvec[0]);
@@ -698,11 +698,11 @@ backeval(Char *cp, bool literal)
 	evalvec = NULL;
 	alvecp = NULL;
 	evalp = NULL;
-	(void) lex(&paraml);
+	(void) lex(&fparaml);
 	if (seterr)
 	    stderror(ERR_OLD);
-	alias(&paraml);
-	t = syntax(paraml.next, &paraml, 0);
+	alias(&fparaml);
+	t = syntax(fparaml.next, &fparaml, 0);
 	if (seterr)
 	    stderror(ERR_OLD);
 	if (t)
