@@ -38,28 +38,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asm.h,v 1.1 1994/01/22 13:41:08 briggs Exp $
+ *	$Id: asm.h,v 1.2 1994/01/29 10:02:44 mycroft Exp $
  */
 
 #ifndef _ASM_H_
 #define _ASM_H_
 
 #ifdef __STDC__
-#define _C_LABEL(name)	_ ## name
+#define _C_LABEL(name)		_ ## name
 #else
-#define _C_LABEL(name)	_/**/name
+#define _C_LABEL(name)		_/**/name
 #endif
+#define	_ASM_LABEL(name)	name
+
+#define	_ENTRY(name) \
+	.globl name; .type x,@function; x:
 
 #ifdef GPROF
 #define ENTRY(name) \
-	.globl _C_LABEL(name); _C_LABEL(name): link a6,\#0; jbsr mcount; unlk a6
+	_ENTRY(_C_LABEL(name)); link a6,\#0; jbsr mcount; unlk a6
 #define ALTENTRY(name, rname) \
 	ENTRY(name); jra rname+12
 #else
-#define ENTRY(name) \
-	.globl _C_LABEL(name); _C_LABEL(name):
-#define ALTENTRY(name, rname) \
-	.globl _C_LABEL(name); _C_LABEL(name):
+#define ENTRY(name)		_ENTRY(_C_LABEL(name))
+#define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
+#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
 
 #endif /* _ASM_H_ */
