@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.13 1994/09/05 08:52:52 pk Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.14 1994/09/05 09:09:51 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -670,9 +670,8 @@ autobaud()
 	int rfds;
 	struct timeval timeout;
 	char c, *type = "9600-baud";
-	int null = 0;
 
-	ioctl(0, TIOCFLUSH, &null);
+	(void)tcflush(0, TCIOFLUSH);
 	rfds = 1 << 0;
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
@@ -685,7 +684,7 @@ autobaud()
 	timeout.tv_usec = 20;
 	(void) select(32, (fd_set *)NULL, (fd_set *)NULL,
 	    (fd_set *)NULL, &timeout);
-	ioctl(0, TIOCFLUSH, &null);
+	(void)tcflush(0, TCIOFLUSH);
 	switch (c & 0377) {
 
 	case 0200:		/* 300-baud */
