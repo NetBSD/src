@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.68 2004/05/25 10:54:22 wiz Exp $
+.\" $NetBSD: usb.4,v 1.69 2004/10/04 19:12:52 rumble Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -466,7 +466,7 @@ record contains information about the device in a device event event.
 .br
 The
 .Va ue_cookie
-is an opaque value that uniquely determines which which
+is an opaque value that uniquely determines which
 device a device driver has been attached to (i.e., it equals
 the cookie value in the device that the driver attached to).
 The
@@ -474,7 +474,7 @@ The
 contains the name of the device (driver) as seen in, e.g.,
 kernel messages.
 .Pp
-Note that that there is a separation between device and device
+Note that there is a separation between device and device
 driver events.  A device event is generated when a physical
 USB device is attached or detached.  A single USB device may
 have zero, one, or many device drivers associated with it.

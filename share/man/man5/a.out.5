@@ -1,4 +1,4 @@
-.\"	$NetBSD: a.out.5,v 1.18 2003/08/07 10:31:16 agc Exp $
+.\"	$NetBSD: a.out.5,v 1.19 2004/10/04 19:12:52 rumble Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,7 @@ The fields have the following functions:
 .Bl -tag -width a_trsize
 .It Fa a_midmag
 This field is stored in network byte-order so that binaries for
-for machines with alternative byte orders can be distinguished.
+machines with alternative byte orders can be distinguished.
 It has a number of sub-components accessed by the macros
 .Dv N_GETFLAG() ,
 .Dv N_GETMID() , and

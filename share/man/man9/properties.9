@@ -1,4 +1,4 @@
-.\" $NetBSD: properties.9,v 1.9 2003/06/30 12:10:40 wiz Exp $
+.\" $NetBSD: properties.9,v 1.10 2004/10/04 19:12:52 rumble Exp $
 .\"
 .\" Copyright (c) 2001 Eduardo Horvath
 .\" All rights reserved.
@@ -272,7 +272,7 @@ Returns
 on success or an error value.
 The state of properties is undefined if the operation fails.
 .It Fn "size_t prop_objs" "propdb_t db" "opaque_t *objects" "size_t len"
-Get a list of objects identifiers from a database.
+Get a list of object identifiers from a database.
 An array of object identifiers will be copied into the buffer pointed
 to by
 .Fa objects
@@ -286,7 +286,7 @@ It returns the amount of memory needed to store the entire list.
 Get a list of an object's properties from the database.
 It queries the database to locate all properties associated with
 .Pa object
-object identifier, and copies up to
+, and copies up to
 .Pa len
 bytes of
 .Li NUL
