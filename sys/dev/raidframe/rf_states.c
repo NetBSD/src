@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.6 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.6.2.1 1999/09/26 02:14:27 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -216,6 +216,16 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	         */
 		if (desc->async_flag == 0)
 			wakeup(desc->bp);
+
+		/* 
+		 * Wakeup any requests waiting to go.
+		 */
+
+		RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+		((RF_Raid_t *) desc->raidPtr)->openings++;
+		wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
+		RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+
 
 		/* printf("Calling biodone on 0x%x\n",desc->bp); */
 		biodone(desc->bp);	/* access came through ioctl */
