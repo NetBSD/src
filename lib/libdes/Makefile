@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2000/06/19 23:36:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2003/04/22 12:07:02 tron Exp $
+
+LIB=	libdes
 
 .BEGIN:
 .ifmake !print-shlib-major && !print-shlib-minor
