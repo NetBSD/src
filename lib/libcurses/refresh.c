@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.12 1999/06/23 03:27:34 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.13 1999/06/28 13:27:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.12 1999/06/23 03:27:34 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.13 1999/06/28 13:27:24 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -114,7 +114,6 @@ wrefresh(win)
 	__CTRACE("wrefresh: \tfirstch\tlastch\n");
 #endif
 
-#ifndef NOQCH
 	if ((win->flags & __FULLWIN) && !curwin) {
 		/*
 		 * Invoke quickch() only if more than a quarter of the lines
@@ -126,7 +125,6 @@ wrefresh(win)
 		if (!__noqch && dnum > (int) win->maxy / 4)
 			quickch(win);
 	}
-#endif
 
 #ifdef DEBUG
 	{
@@ -157,8 +155,9 @@ wrefresh(win)
 
 	for (wy = 0; wy < win->maxy; wy++) {
 #ifdef DEBUG
-		__CTRACE("%d\t%d\t%d\n",
-		    wy, *win->lines[wy]->firstchp, *win->lines[wy]->lastchp);
+		__CTRACE("wy %d\tf: %d\tl:%d\tflags %x\n",
+		    wy, *win->lines[wy]->firstchp, *win->lines[wy]->lastchp,
+		    win->lines[wy]->flags);
 #endif
 		if (!curwin)
 			curscr->lines[wy]->hash = win->lines[wy]->hash;
