@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.35 1995/11/05 18:47:59 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.36 1995/11/29 15:08:40 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -664,8 +664,9 @@ loop:
 		if (VOP_ISLOCKED(vp))
 			continue;
 		dep = VTODE(vp);
-		if ((dep->de_flag & DE_UPDATE) == 0 &&
-		    vp->v_dirtyblkhd.lh_first == NULL)
+		if (dep->de_flag
+		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED) == 0
+		    && vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
 		if (vget(vp, 1))
 			goto loop;

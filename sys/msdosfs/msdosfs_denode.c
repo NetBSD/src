@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.17 1995/11/05 18:47:51 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.18 1995/11/29 15:08:38 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -230,10 +230,14 @@ deget(pmp, dirclust, diroffset, depp)
 		 * spit up when called from msdosfs_getattr() with root
 		 * denode
 		 */
-		ldep->de_Time = 0x0000;	/* 00:00:00	 */
-		ldep->de_Date = (0 << DD_YEAR_SHIFT) | (1 << DD_MONTH_SHIFT)
+		ldep->de_CTime = 0x0000;	/* 00:00:00	 */
+		ldep->de_CDate = (0 << DD_YEAR_SHIFT) | (1 << DD_MONTH_SHIFT)
 		    | (1 << DD_DAY_SHIFT);
 		/* Jan 1, 1980	 */
+		ldep->de_ATime = ldep->de_CTime;
+		ldep->de_ADate = ldep->de_CDate;
+		ldep->de_MTime = ldep->de_CTime;
+		ldep->de_MDate = ldep->de_CDate;
 		/* leave the other fields as garbage */
 	} else {
 		if (error = readep(pmp, dirclust, diroffset, &bp, &direntptr))
@@ -501,13 +505,10 @@ deextend(dep, length, cred)
 		return (EINVAL);
 
 	/*
-	 * Directories can only be extended by the superuser.
-	 * Is this really important?
+	 * Directories cannot be extended.
 	 */
-	if (dep->de_Attributes & ATTR_DIRECTORY) {
-		if (error = suser(cred, (u_short *)0))
-			return (error);
-	}
+	if (dep->de_Attributes & ATTR_DIRECTORY)
+		return (EISDIR);
 
 	if (length <= dep->de_FileSize)
 		panic("deextend: file too large");
