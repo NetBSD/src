@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
- *	$Id: vectors.s,v 1.6 1994/07/06 04:33:33 chopps Exp $
+ *	$Id: vectors.s,v 1.7 1994/07/06 05:25:25 chopps Exp $
  */
 	.text
 	.globl	_buserr,_addrerr
@@ -42,7 +42,6 @@
 	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
 	.globl	_trap0,_trap1,_trap2,_trap15
 	.globl	_fpfline, _fpunsupp, _fpfault
-	.globl	_fpbsun, _fpinex, _fpdz, _fpunfl, _fpoperr, _fpovfl, _fpsnan
 	.globl	_trap12
 
 Lvectab:
