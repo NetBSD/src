@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.13 2003/01/10 01:38:52 mjl Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.14 2003/01/14 11:09:40 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.13 2003/01/10 01:38:52 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.14 2003/01/14 11:09:40 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -985,6 +985,7 @@ checkTuner:
 
                   case 0x12:
 	          case 0x17:
+	          case 0x21: /* Hauppauge WinTV-GO-FM (model 00191) */
 		    select_tuner( bktr, PHILIPS_FR1236_NTSC );
 		    goto checkDBX;
 
