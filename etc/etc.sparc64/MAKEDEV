@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.53 2003/07/27 14:18:13 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.54 2003/08/08 16:41:41 rafal Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -120,6 +120,7 @@
 #	wsmux*	wscons event multiplexor
 #	wsfont*	console font control
 #	dpt*	DPT/Adaptec EATA RAID management interface
+#	radio*	radio devices
 #	nsmb*	SMB requester
 #	kttcp	kernel ttcp helper device
 #	dmoverio hardware-assisted data movers
@@ -170,6 +171,7 @@ init|all)
 	makedev sysmon
 	makedev ipl pf lkm random local
 	makedev usbs
+	makedev radio
 	makedev isdns
 	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev clockctl
@@ -794,6 +796,21 @@ dpt*)
 	rm -f dpt$unit
 	mknod dpt$unit c 132 $unit
 	chmod 600 dpt$unit
+	;;
+
+radio)
+	makedev radio0 radio1
+	ln -fs radio0 radio
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=85
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chmod 666 $radio
 	;;
 
 nsmb)
