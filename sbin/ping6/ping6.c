@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.19 2000/10/07 06:36:50 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.20 2000/10/08 00:26:38 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.19 2000/10/07 06:36:50 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.20 2000/10/08 00:26:38 itojun Exp $");
 #endif
 #endif
 
@@ -1656,7 +1656,7 @@ pr_nodeaddr(ni, nilen)
 			(void)printf("unknown qtype");
 			break;
 		}
-		if (ni->ni_flags & NI_NODEADDR_FLAG_ALL)
+		if (ni->ni_flags & NI_NODEADDR_FLAG_TRUNCATE)
 			(void)printf(" truncated");
 	}
 	putchar('\n');
