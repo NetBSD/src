@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.1 1997/01/24 01:52:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -28,9 +28,9 @@
  */
 
 #include <sys/param.h>
-#include <machine/prom.h>
 
-#include "bbinfo.h"
+#include "include/prom.h"
+#include "stand/common/bbinfo.h"
 
 extern _end, start;
 

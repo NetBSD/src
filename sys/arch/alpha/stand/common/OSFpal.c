@@ -1,10 +1,10 @@
-/*	$NetBSD: bbinfo.h,v 1.3 1997/01/18 00:24:15 cgd Exp $	*/
+/*	$NetBSD: OSFpal.c,v 1.1 1997/01/24 01:52:52 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Chris G. Demetriou
+ * Author: Keith Bostic
  *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -27,28 +27,28 @@
  * rights to redistribute these changes.
  */
 
-struct bbinfoloc {
-        u_int64_t       magic1;
-        u_int64_t       start;
-        u_int64_t       end;
-	u_int64_t	pad1[4];
-        u_int64_t       magic2;
-};
+#include <sys/types.h>
 
-struct bbinfo {
-        int32_t         cksum;
-        int32_t         nblocks;
-        int32_t         bsize;
-	u_int32_t	pad1[8];
-        int32_t         blocks[1];
-};
+#include <machine/prom.h>
+#include <machine/rpb.h>
 
-struct netbbinfo {
-	u_int64_t	magic1;
-	u_int8_t	set;
-	u_int8_t	ether_addr[6];
-	u_int8_t	force;
-	u_int64_t	pad1[4];
-	u_int64_t	cksum;
-	u_int64_t	magic2;
-};
+void
+OSFpal()
+{
+	struct rpb *r;
+	struct ctb *t;
+	struct pcs *p;
+	long result;
+	int offset;
+
+	r = (struct rpb *)HWRPB_ADDR;
+	offset = r->rpb_pcs_size * cpu_number();
+	p = (struct pcs *)((u_int8_t *)r + r->rpb_pcs_off + offset);
+
+	printf("VMS PAL revision: 0x%lx\n",
+	    p->pcs_palrevisions[PALvar_OpenVMS]);
+	printf("OSF PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OSF1]);
+	(void)switch_palcode();
+	printf("Switch to OSF PAL code succeeded.\n");
+}
+

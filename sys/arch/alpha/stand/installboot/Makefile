@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/01/16 01:20:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/01/24 01:53:00 cgd Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -8,7 +8,7 @@ BINDIR=	/usr/mdec
 MAN=	installboot.8
 MANSUBDIR=/alpha
 
-CFLAGS+= -g
+CFLAGS+= -g -I${.CURDIR}/../..
 LDSTATIC=-static
 
 LDADD+=	-lutil
