@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 1998/02/20 01:39:38 mellon Exp $
+#	$NetBSD: Makefile,v 1.51 1998/04/15 13:44:55 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -59,10 +59,10 @@ build: beforeinstall
 	    ${MAKE} install)
 .endif
 .endif
-	${MAKE} includes
 .if !defined(UPDATE)
 	${MAKE} cleandir
 .endif
+	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
