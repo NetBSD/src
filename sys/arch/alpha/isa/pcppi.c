@@ -1,4 +1,4 @@
-/*	$NetBSD: pcppi.c,v 1.2 1996/11/25 03:30:43 cgd Exp $	*/
+/*	$NetBSD: pcppi.c,v 1.2.2.1 1996/12/07 02:09:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -45,8 +45,12 @@ struct pcppi_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_pit1_ioh, sc_ppi_ioh;
 };
-	
+
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcppi_match __P((struct device *, void *, void *));
+#else
+int	pcppi_match __P((struct device *, struct cfdata *, void *));
+#endif
 void	pcppi_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcppi_ca = {
@@ -62,7 +66,12 @@ int	pcppiprint __P((void *, const char *));
 int
 pcppi_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ppi_ioh, pit1_ioh;

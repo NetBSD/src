@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1996/11/13 21:13:18 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.2.1 1996/12/07 02:08:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -109,7 +109,8 @@ u_int64_t want_resched;		/* resched() was called */
 #define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
-#define	CPU_MAXID		6	/* 5 valid machdep IDs */
+#define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
+#define	CPU_MAXID		7	/* 6 valid machdep IDs */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -118,6 +119,7 @@ u_int64_t want_resched;		/* resched() was called */
 	{ "unaligned_print", CTLTYPE_INT }, \
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
 }
 
 #ifdef _KERNEL
