@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.6 2005/01/11 06:36:48 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.7 2005/01/11 06:39:31 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -119,3 +119,13 @@ sys/nfs/nfs_vnops.c				patch
 	nfs_lookup: check n_nctime for positive entries as well to improve
 	cache consistency.
 	[yamt, ticket #1077]
+
+sys/nfs/nfs.h					patch
+sys/nfs/nfs_socket.c				patch
+sys/nfs/nfs_var.h				patch
+sys/nfs/nfs_vnops.c				patch
+sys/nfs/nfsm_subs.h				patch
+
+	Don't do kludge for a reply to a retransmitted request
+	unless we actually retransmitted the request.
+	[yamy, ticket #1078]
