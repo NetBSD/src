@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98.2.7 2002/08/01 03:27:53 nathanw Exp $
+#	$NetBSD: Makefile,v 1.98.2.8 2002/08/02 21:32:14 nathanw Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -34,8 +34,6 @@ CPPFLAGS+=	-DNLS
 .if (${USE_YP} != "no")
 CPPFLAGS+=	-DYP
 .endif
-
-LDADD+=		 -lsyscall
 
 .if ${MACHINE_ARCH} == "i386"
 # Set lint to exit on warnings
