@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2 1998/07/27 06:05:55 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.3 1998/07/28 04:44:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,6 +378,19 @@ SPLHOLD(splhigh, 15)
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
+/* Keep gcc happy -- reduce warnings */
+#if 0
+static __inline void splx(newpil)
+	int newpil;
+{
+	int pil;
+
+	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
+	SPLPRINT(("{%d->%d}", pil, newpil)); \
+	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
+}
+#endif
+
 #define	spl0()	spl0X(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)
