@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.39 2001/01/14 23:50:29 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.40 2001/01/15 20:19:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -243,10 +243,8 @@ do {									\
 
 /* XXX For legacy software interrupts. */
 extern struct alpha_soft_intrhand *softnet_intrhand;
-extern struct alpha_soft_intrhand *softclock_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-#define	setsoftclock()	softintr_schedule(softclock_intrhand)
 
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,

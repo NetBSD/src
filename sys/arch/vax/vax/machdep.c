@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.110 2000/12/22 22:58:56 jdolecek Exp $	 */
+/* $NetBSD: machdep.c,v 1.111 2001/01/15 20:19:58 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -116,6 +116,7 @@ vm_map_t phys_map = NULL;
 int iospace_inited = 0;
 #endif
 
+struct softintr_head softclock_head = { IPL_SOFTCLOCK };
 struct softintr_head softnet_head = { IPL_SOFTNET };
 struct softintr_head softserial_head = { IPL_SOFTSERIAL };
 
@@ -736,6 +737,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct softintr_head *shd;
 
 	switch (ipl) {
+	case IPL_SOFTCLOCK: shd = &softclock_head; break;
 	case IPL_SOFTNET: shd = &softnet_head; break;
 	case IPL_SOFTSERIAL: shd = &softserial_head; break;
 	default: panic("softintr_establish: unsupported soft IPL");
