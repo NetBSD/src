@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.82 2001/07/31 00:57:45 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.83 2001/09/10 04:24:25 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -125,6 +125,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * Kernel variables for tcp.
  */
 
+#include <sys/callout.h>
+
 /*
  * Tcp control block, one per tcp; fields:
  */
@@ -160,7 +162,7 @@ struct tcpcb {
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
-	LIST_ENTRY(tcpcb) t_delack;	/* delayed ACK queue */
+	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC783, Dec. 1981, page 21.
@@ -298,25 +300,29 @@ do {									\
 /*
  * Queue for delayed ACK processing.
  */
-LIST_HEAD(tcp_delack_head, tcpcb);
 #ifdef _KERNEL
-extern struct tcp_delack_head tcp_delacks;
+extern int tcp_delack_ticks;
+void	tcp_delack(void *);
 
-#define	TCP_SET_DELACK(tp) \
-do { \
-	if (((tp)->t_flags & TF_DELACK) == 0) { \
-		(tp)->t_flags |= TF_DELACK; \
-		LIST_INSERT_HEAD(&tcp_delacks, (tp), t_delack); \
-	} \
-} while (0)
+#define TCP_RESTART_DELACK(tp)						\
+	callout_reset(&(tp)->t_delack_ch, tcp_delack_ticks,		\
+	    tcp_delack, tp)
 
-#define	TCP_CLEAR_DELACK(tp) \
-do { \
-	if ((tp)->t_flags & TF_DELACK) { \
-		(tp)->t_flags &= ~TF_DELACK; \
-		LIST_REMOVE((tp), t_delack); \
-	} \
-} while (0)
+#define	TCP_SET_DELACK(tp)						\
+do {									\
+	if (((tp)->t_flags & TF_DELACK) == 0) {				\
+		(tp)->t_flags |= TF_DELACK;				\
+		TCP_RESTART_DELACK(tp);					\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	TCP_CLEAR_DELACK(tp)						\
+do {									\
+	if ((tp)->t_flags & TF_DELACK) {				\
+		(tp)->t_flags &= ~TF_DELACK;				\
+		callout_stop(&(tp)->t_delack_ch);			\
+	}								\
+} while (/*CONSTCOND*/0)
 #endif /* _KERNEL */
 
 /*
@@ -551,7 +557,8 @@ struct	tcpstat {
 #define	TCPCTL_RSTRATELIMIT	23	/* RST rate limit */
 #endif
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
-#define	TCPCTL_MAXID		25
+#define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
+#define	TCPCTL_MAXID		26
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -579,6 +586,7 @@ struct	tcpstat {
 	{ "log_refused",CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
+	{ "delack_ticks", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -637,6 +645,7 @@ extern	u_long syn_cache_count;
 	{ 1, 0, &tcp_log_refused },		\
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
+	{ 1, 0, &tcp_delack_ticks },		\
 }
 
 int	 tcp_attach __P((struct socket *));
@@ -656,7 +665,6 @@ void	 tcp_dooptions __P((struct tcpcb *,
 	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
 void	 tcp_established __P((struct tcpcb *));
-void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 #ifdef INET6
 int	 tcp6_input __P((struct mbuf **, int *, int));
