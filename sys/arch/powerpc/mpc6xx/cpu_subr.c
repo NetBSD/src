@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.9 2002/03/03 06:56:09 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.10 2002/03/03 07:09:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -270,12 +270,13 @@ static const struct cputab models[] = {
 void
 cpu_identify(char *str, size_t len)
 {
-	u_int pvr, vers, rev;
+	u_int pvr, vers, maj, min;
 	const struct cputab *cp;
 
 	asm ("mfpvr %0" : "=r"(pvr));
 	vers = pvr >> 16;
-	rev = pvr & 0xffff;
+	maj = (pvr >>  8) & 0xff;
+	min = (pvr >>  0) & 0xff;
 
 	for (cp = models; cp->name != NULL; cp++) {
 		if (cp->version == vers)
@@ -289,9 +290,9 @@ cpu_identify(char *str, size_t len)
 	}
 
 	if (cp->name != NULL) {
-		snprintf(str, len, "%s (Revision %x)", cp->name, rev);
+		snprintf(str, len, "%s (Revision %u.%u)", cp->name, maj, min);
 	} else {
-		snprintf(str, len, "Version %x (Revision %x)", vers, rev);
+		snprintf(str, len, "Version %x (Revision %u.%u)", vers, maj, min);
 	}
 }
 
