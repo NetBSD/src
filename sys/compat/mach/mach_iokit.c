@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.10 2003/03/29 11:04:09 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.11 2003/04/29 22:16:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.10 2003/03/29 11:04:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.11 2003/04/29 22:16:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -725,6 +725,44 @@ mach_io_registry_entry_get_path(args)
 	rep->rep_path[plen + 7] = 8;	/* Trailer */
 
 	*msglen = sizeof(*rep) + (plen - 512);
+	return 0;
+}
+
+int
+mach_io_connect_map_memory(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_map_memory_request_t *req = args->smsg;
+	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	
+	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
+		mid = mr->mr_port->mp_data;
+		if (mid->mid_connect_map_memory == NULL)
+			printf("no connect_map_memory method "
+			    "for darwin_iokit_class %s\n", mid->mid_name);
+		else
+			return (mid->mid_connect_map_memory)(args);
+	}
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = native_to_mach_errno[EINVAL];
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
 	return 0;
 }
 
