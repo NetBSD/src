@@ -82,10 +82,14 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
+#ifndef	MSIZE
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
-#define	MCLSHIFT	10
-#define	MCLOFSET	(MCLBYTES - 1)
+#endif
+#ifndef	MCLSHIFT
+#define	MCLSHIFT	10		/* convert bytes to m_buf clusters */
+#endif
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+#define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
