@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.38 2002/05/15 06:43:37 kleink Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.38.2.1 2002/06/30 05:47:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.38 2002/05/15 06:43:37 kleink Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.38.2.1 2002/06/30 05:47:25 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -62,7 +62,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.38 2002/05/15 06:43:37 kleink Exp $");
 #include "dkstats.h"
 
 static struct Info {
-	u_int64_t time[CPUSTATES];
 	struct	uvmexp_sysctl uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
@@ -328,15 +327,11 @@ showvmstat(void)
 	int psiz, inttotal;
 	int i, l, c;
 	static int failcnt = 0;
-	
+
 	if (state == TIME)
 		dkswap();
-	etime = 0;
-	for(i = 0; i < CPUSTATES; i++) {
-		X(time);
-		etime += s.time[i];
-	}
-	if (etime < 1.0) {	/* < 5 ticks - ignore this trash */
+	etime = cur.cp_etime;
+	if ((etime * hertz) < 1.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
 			clear();
 			mvprintw(2, 10, "The alternate system clock has died!");
@@ -350,7 +345,6 @@ showvmstat(void)
 		return;
 	}
 	failcnt = 0;
-	etime /= hertz;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
 		if (s.intrcnt[i] == 0)
@@ -378,7 +372,7 @@ showvmstat(void)
 	psiz = 0;
 	f2 = 0.0;
 
-	/* 
+	/*
 	 * Last CPU state not calculated yet.
 	 */
 	for (c = 0; c < CPUSTATES; c++) {
@@ -523,10 +517,10 @@ cputime(int indx)
 
 	t = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		t += s.time[i];
+		t += cur.cp_time[i];
 	if (t == 0.0)
 		t = 1.0;
-	return (s.time[indx] * 100.0 / t);
+	return (cur.cp_time[indx] * 100.0 / t);
 }
 
 static void
@@ -572,7 +566,6 @@ getinfo(struct Info *s, enum state st)
 	size_t size;
 
 	dkreadstats();
-	(void) fetch_cptime(s->time);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
 	size = sizeof(s->uvmexp);
