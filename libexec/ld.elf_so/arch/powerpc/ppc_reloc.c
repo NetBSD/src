@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.33 2003/01/11 01:33:56 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.34 2003/02/21 01:12:56 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -83,7 +83,7 @@ _rtld_setup_pltgot(obj)
 	pltresolve[3] |= ha(obj);
 	pltresolve[4] |= l(obj);
 
-	__syncicache(pltcall, 72 + N * 12);
+	__syncicache(pltcall, 72 + N * 8);
 }
 
 void
