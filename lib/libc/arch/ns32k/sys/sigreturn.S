@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sigreturn.S,v 1.3 1994/05/03 20:40:39 phil Exp $
+ *	$Id: sigreturn.S,v 1.4 1994/08/01 19:37:14 phil Exp $
  */
 
 #include "SYS.h"
@@ -33,7 +33,7 @@
 	.align ALIGN; \
 	EX(x): save [r0,r1,r2]; \
 	.data; 1:; .long 0; \
-	.text; addr 1b(pc),tos; bsr mcount; \
+	.text; addr 1b(pc),r0; bsr mcount; \
 	restore [r0,r1,r2]
 #endif PROF
 
