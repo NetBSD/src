@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17 2003/09/10 07:14:25 martin Exp $
+# 	$NetBSD: INSTALL,v 1.18 2003/09/19 16:34:24 martin Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC32!
@@ -6,12 +6,14 @@
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.17 $"
+#ident 		"INSTALL-$Revision: 1.18 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
+
+makeoptions	COPTS="-Os"
 
 # DEBUG options
 
