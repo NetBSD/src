@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.122 2001/01/24 09:04:15 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.123 2001/03/20 20:07:51 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1257,7 +1257,7 @@ after_listen:
 		if (opti.ts_present &&
 		    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 		    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen)) {
-			tp->ts_recent_age = tcp_now;
+			tp->ts_recent_age = TCP_TIMESTAMP(tp);
 			tp->ts_recent = opti.ts_val;
 		}
 
@@ -1272,7 +1272,7 @@ after_listen:
 				++tcpstat.tcps_predack;
 				if (opti.ts_present && opti.ts_ecr)
 					tcp_xmit_timer(tp,
-					    tcp_now - opti.ts_ecr + 1);
+					  TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
 				else if (tp->t_rtt &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp, tp->t_rtt);
@@ -1476,7 +1476,8 @@ after_listen:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if ((int)(tcp_now - tp->ts_recent_age) > TCP_PAWS_IDLE) {
+		if ((int)(TCP_TIMESTAMP(tp) - tp->ts_recent_age) >
+		    TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
@@ -1570,8 +1571,7 @@ after_listen:
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
-				iss = tcp_new_iss(tp, sizeof(struct tcpcb),
-						  tp->snd_nxt);
+				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
 				goto findpcb;
 			}
@@ -1602,7 +1602,7 @@ after_listen:
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
 	    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen +
 		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
-		tp->ts_recent_age = tcp_now;
+		tp->ts_recent_age = TCP_TIMESTAMP(tp);
 		tp->ts_recent = opti.ts_val;
 	}
 
@@ -1815,7 +1815,7 @@ after_listen:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, tcp_now - opti.ts_ecr + 1);
+			tcp_xmit_timer(tp, TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
 		else if (tp->t_rtt && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp,tp->t_rtt);
 
@@ -2315,7 +2315,7 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 			if (th->th_flags & TH_SYN) {
 				tp->t_flags |= TF_RCVD_TSTMP;
 				tp->ts_recent = oi->ts_val;
-				tp->ts_recent_age = tcp_now;
+				tp->ts_recent_age = TCP_TIMESTAMP(tp);
 			}
 			break;
 		case TCPOPT_SACK_PERMITTED:
@@ -2581,6 +2581,8 @@ do {									\
 } while (0)
 
 TAILQ_HEAD(, syn_cache) tcp_syn_cache_timeq[TCP_MAXRXTSHIFT + 1];
+
+#define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
 
 void
 syn_cache_init()
@@ -3075,6 +3077,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	}
 	if (sc->sc_flags & SCF_TIMESTAMP)
 		tp->t_flags |= TF_RCVD_TSTMP;
+	tp->ts_timebase = sc->sc_timebase;
 
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
@@ -3315,12 +3318,38 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	sc->sc_flags = 0;
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;
-	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
+	switch (src->sa_family) {
+#ifdef INET
+	case AF_INET:
+	    {
+		struct sockaddr_in *srcin = (void *) src;
+		struct sockaddr_in *dstin = (void *) dst;
+
+		sc->sc_iss = tcp_new_iss1(&dstin->sin_addr,
+		    &srcin->sin_addr, dstin->sin_port,
+		    srcin->sin_port, sizeof(dstin->sin_addr), 0);
+		break;
+	    }
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *srcin6 = (void *) src;
+		struct sockaddr_in6 *dstin6 = (void *) dst;
+
+		sc->sc_iss = tcp_new_iss1(&dstin6->sin6_addr,
+		    &srcin6->sin6_addr, dstin6->sin6_port,
+		    srcin6->sin6_port, sizeof(dstin6->sin6_addr), 0);
+		break;
+	    }
+#endif /* INET6 */
+	}
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(m->m_flags & M_PKTHDR ?
 						m->m_pkthdr.rcvif : NULL,
 						sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
+	sc->sc_timebase = tcp_now;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
 	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
 		sc->sc_flags |= SCF_TIMESTAMP;
@@ -3486,7 +3515,7 @@ syn_cache_respond(sc, m)
 		u_int32_t *lp = (u_int32_t *)(optp);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(tcp_now);
+		*lp++ = htonl(SYN_CACHE_TIMESTAMP(sc));
 		*lp   = htonl(sc->sc_timestamp);
 		optp += TCPOLEN_TSTAMP_APPA;
 	}
