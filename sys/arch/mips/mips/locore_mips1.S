@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.56 2003/01/17 23:36:14 thorpej Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.57 2003/04/08 23:39:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1095,8 +1095,8 @@ entry0set:
 	nop
 	tlbwi					# set TLB entry #0
 
-	addu	s0, s0, NBPG
-	mtc0	s0, MIPS_COP_0_TLB_HI		# VPN = va+NBPG
+	addu	s0, s0, PAGE_SIZE
+	mtc0	s0, MIPS_COP_0_TLB_HI		# VPN = va+PAGE_SIZE
 	nop
 	tlbp					# probe 2nd VPN
 	mfc0	s1, MIPS_COP_0_TLB_INDEX
@@ -1106,7 +1106,7 @@ entry0set:
 	mtc0	s1, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
-	tlbwi					# TBIS(va+NBPG)
+	tlbwi					# TBIS(va+PAGE_SIZE)
 	nop
 	mtc0	s0, MIPS_COP_0_TLB_HI		# set 2nd VPN again
 entry1set:
