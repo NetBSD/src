@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.51 1999/07/03 15:09:51 kleink Exp $	*/
+/*	$NetBSD: ping.c,v 1.52 1999/07/04 13:27:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.51 1999/07/03 15:09:51 kleink Exp $");
+__RCSID("$NetBSD: ping.c,v 1.52 1999/07/04 13:27:03 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -555,8 +555,13 @@ main(int argc, char *argv[])
 		err(1, "malloc");
 	if ((len = ipsec_set_policy(buf, len, "bypass")) < 0)
 		errx(1, ipsec_strerror());
-	if (setsockopt(sloop, IPPROTO_IP, IP_IPSEC_POLICY, buf, len) < 0)
+	if (setsockopt(sloop, IPPROTO_IP, IP_IPSEC_POLICY, buf, len) < 0) {
+#if 0
 		warnx("ipsec is not configured");
+#else
+		/* ignore it, should be okay */
+#endif
+	}
 	free(buf);
     }
 #else
