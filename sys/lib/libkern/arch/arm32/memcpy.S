@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.1 1997/10/12 21:24:06 mark Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.1.4.1 1997/11/22 04:16:50 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,6 @@
 #include <machine/asm.h>
 
 ENTRY(memcpy)
-	stmfd	sp!, {r1, lr}
+	stmfd	sp!, {r0, lr}
 	bl	__memcpy
 	ldmfd	sp!, {r0, pc}
