@@ -1,4 +1,4 @@
-/*	$NetBSD: printsbuf.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printsbuf.c,v 1.1.1.1.4.1 2005/02/06 07:44:13 jmc Exp $	*/
 
 #ifdef	IPFILTER_SCAN
 
@@ -14,7 +14,7 @@ char *buf;
 	int i;
 
 	for (s = (u_char *)buf, i = ISC_TLEN; i; i--, s++) {
-		if (isprint(*s))
+		if (ISPRINT(*s))
 			putchar(*s);
 		else
 			printf("\\%o", *s);
