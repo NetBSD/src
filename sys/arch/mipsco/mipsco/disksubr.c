@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2003/05/10 23:12:35 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2003/05/24 05:11:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -354,7 +354,7 @@ disklabel_mips_to_bsd(vh, lp)
 	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 
 	lp->d_bbsize = BBSIZE;
-	lp->d_sbsize = SBSIZE;
+	lp->d_sbsize = SBLOCKSIZE;
 	lp->d_npartitions = MAXPARTITIONS;
 
 	for (i = 0; i < NPARTMAP; i++) {
