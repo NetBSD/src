@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.19 1999/03/15 16:46:13 is Exp $	*/
+/*	$NetBSD: syslog.h,v 1.20 1999/03/19 00:15:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -38,7 +38,7 @@
 #ifndef _SYS_SYSLOG_H_
 #define _SYS_SYSLOG_H_
 
-#define	_PATH_LOG	"/var/run/syslog.socket"
+#define	_PATH_LOG	"/var/run/log"
 
 /*
  * priorities/facilities are encoded into a single 32-bit quantity, where the
