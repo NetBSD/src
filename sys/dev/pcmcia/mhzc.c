@@ -1,12 +1,12 @@
-/*	$NetBSD: mhzc.c,v 1.23 2004/08/09 19:34:00 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.24 2004/08/10 08:56:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.23 2004/08/09 19:34:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.24 2004/08/10 08:56:08 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
