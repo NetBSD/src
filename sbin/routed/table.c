@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.2 1996/08/10 01:29:59 thorpej Exp $	*/
+/*	$NetBSD: table.c,v 1.3 1996/09/24 16:24:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,13 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi)
-#if 0
+#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
-#else
-static char rcsid[] = "$NetBSD: table.c,v 1.2 1996/08/10 01:29:59 thorpej Exp $";
+#elif defined(__NetBSD__)
+static char rcsid[] = "$NetBSD: table.c,v 1.3 1996/09/24 16:24:23 christos Exp $";
 #endif
-#endif /* not lint */
 
 #include "defs.h"
 
@@ -57,6 +55,8 @@ struct timeval need_kern = {		/* need to update kernel table */
 };
 
 int	stopint;
+
+int	total_routes;
 
 naddr	age_bad_gate;
 
@@ -691,6 +691,13 @@ again:
 		w.w_rtm.rtm_msglen -= (sizeof(w.w_mask) - w.w_mask.sin_len);
 #endif
 	}
+
+	if (TRACEKERNEL)
+		trace_kernel("write kernel %s %s->%s metric=%d flags=%#x\n",
+			     rtm_type_name(action),
+			     addrname(dst, mask, 0), naddr_ntoa(gate),
+			     metric, flags);
+
 #ifndef NO_INSTALL
 	cc = write(rt_sock, &w, w.w_rtm.rtm_msglen);
 	if (cc == w.w_rtm.rtm_msglen)
@@ -773,7 +780,6 @@ kern_add(naddr dst, naddr mask)
 	k->k_dst = dst;
 	k->k_mask = mask;
 	k->k_state = KS_NEW;
-	k->k_redirect_time = now.tv_sec;
 	k->k_keep = now.tv_sec;
 	*pk = k;
 
@@ -781,8 +787,8 @@ kern_add(naddr dst, naddr mask)
 }
 
 
-/* If it has a non-zero metric, check that it is still in the table, not
- *	having been deleted by interfaces coming and going.
+/* If a kernel route has a non-zero metric, check that it is still in the
+ *	daemon table, and not deleted by interfaces coming and going.
  */
 static void
 kern_check_static(struct khash *k,
@@ -852,22 +858,28 @@ rtm_add(struct rt_msghdr *rtm,
 		k->k_state |= KS_GATEWAY;
 	if (rtm->rtm_flags & RTF_STATIC)
 		k->k_state |= KS_STATIC;
-	if (rtm->rtm_flags & RTF_DYNAMIC) {
-		k->k_state |= KS_DYNAMIC;
-		k->k_redirect_time = now.tv_sec;
-		/* Routers are not supposed to listen to redirects,
-		 * so delete it.
-		 */
+
+	if (0 != (rtm->rtm_flags & (RTF_DYNAMIC | RTF_MODIFIED))) {
 		if (supplier) {
-			k->k_keep = now.tv_sec;
+			/* Routers are not supposed to listen to redirects,
+			 * so delete it.
+			 */
+			k->k_state &= ~KS_DYNAMIC;
+			k->k_state |= KS_DELETE;
+			LIM_SEC(need_kern, 0);
 			trace_act("mark redirected %s --> %s for deletion"
-				  "since this is a router\n",
+				  " since this is a router\n",
 				  addrname(k->k_dst, k->k_mask, 0),
 				  naddr_ntoa(k->k_gate));
+		} else {
+			k->k_state |= KS_DYNAMIC;
+			k->k_redirect_time = now.tv_sec;
 		}
+		return;
 	}
 
-	/* If it is not a static route, quite until it is time to delete it.
+	/* If it is not a static route, quit until the next comparison
+	 * between the kernel and daemon tables, when it will be deleted.
 	 */
 	if (!(k->k_state & KS_STATIC)) {
 		k->k_state |= KS_DELETE;
@@ -882,7 +894,8 @@ rtm_add(struct rt_msghdr *rtm,
 	 */
 	ifp = iflookup(k->k_gate);
 	if (ifp == 0) {
-		/* if there is no interface, maybe it is new
+		/* if there is no known interface,
+		 * maybe there is a new interface
 		 */
 		ifinit();
 		ifp = iflookup(k->k_gate);
@@ -1106,7 +1119,7 @@ read_rt(void)
 				addrname(S_ADDR(INFO_DST(&info)), mask, 0));
 
 		if (IN_MULTICAST(ntohl(S_ADDR(INFO_DST(&info))))) {
-			trace_act("ignore %s for multicast %s\n", str);
+			trace_act("ignore multicast %s\n", str);
 			continue;
 		}
 
@@ -1211,8 +1224,8 @@ kern_out(struct ag_info *ag)
 		k->k_state |= (KS_ADD | KS_DEL_ADD);
 	}
 
-	/* Just delete instead of deleting and then adding a bad route.
-	 * Deleting-and-adding is necessary to change aspects of a route.
+	/* Deleting-and-adding is necessary to change aspects of a route.
+	 * Just delete instead of deleting and then adding a bad route.
 	 * Otherwise, we want to keep the route in the kernel.
 	 */
 	if (k->k_metric == HOPCNT_INFINITY
@@ -1226,12 +1239,9 @@ kern_out(struct ag_info *ag)
 
 /* ARGSUSED */
 static int
-walk_kern(struct radix_node *rn, void *argp)
+walk_kern(struct radix_node *rn, struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
-#if 0
-	struct walkarg *w = argp;
-#endif
 	char metric, pref;
 	u_int ags = 0;
 
@@ -1315,31 +1325,40 @@ fix_kern(void)
 				continue;
 			}
 
-			if (k->k_state & KS_DELETE) {
+			if ((k->k_state & (KS_DELETE | KS_DYNAMIC))
+			    == KS_DELETE) {
 				if (!(k->k_state & KS_DELETED))
 					rtioctl(RTM_DELETE,
-						k->k_dst,k->k_gate,
-						k->k_mask, 0, 0);
+						k->k_dst, k->k_gate, k->k_mask,
+						0, 0);
 				*pk = k->k_next;
 				free(k);
 				continue;
 			}
 
-			if (k->k_state & KS_DEL_ADD)
-				rtioctl(RTM_DELETE,
-					k->k_dst,k->k_gate,k->k_mask, 0, 0);
+			if (0 != (k->k_state&(KS_ADD|KS_CHANGE|KS_DEL_ADD))) {
+				if (k->k_state & KS_DEL_ADD) {
+					rtioctl(RTM_DELETE,
+						k->k_dst,k->k_gate,k->k_mask,
+						0, 0);
+					k->k_state &= ~KS_DYNAMIC;
+				}
 
-			flags = (k->k_state & KS_GATEWAY) ? RTF_GATEWAY : 0;
-			if (k->k_state & KS_ADD) {
-				rtioctl(RTM_ADD,
-					k->k_dst, k->k_gate, k->k_mask,
-					k->k_metric, flags);
-			} else if (k->k_state & KS_CHANGE) {
-				rtioctl(RTM_CHANGE,
-					k->k_dst,k->k_gate,k->k_mask,
-					k->k_metric, flags);
+				flags = 0;
+				if (0 != (k->k_state&(KS_GATEWAY|KS_DYNAMIC)))
+					flags |= RTF_GATEWAY;
+
+				if (k->k_state & KS_ADD) {
+					rtioctl(RTM_ADD,
+						k->k_dst, k->k_gate, k->k_mask,
+						k->k_metric, flags);
+				} else if (k->k_state & KS_CHANGE) {
+					rtioctl(RTM_CHANGE,
+						k->k_dst,k->k_gate,k->k_mask,
+						k->k_metric, flags);
+				}
+				k->k_state &= ~(KS_ADD|KS_CHANGE|KS_DEL_ADD);
 			}
-			k->k_state &= ~(KS_ADD | KS_CHANGE | KS_DEL_ADD);
 
 			/* Mark this route to be deleted in the next cycle.
 			 * This deletes routes that disappear from the
@@ -1373,7 +1392,7 @@ del_static(naddr dst,
 	 */
 	k = kern_find(dst, mask, 0);
 	if (k != 0) {
-		k->k_state &= ~KS_STATIC;
+		k->k_state &= ~(KS_STATIC | KS_DYNAMIC);
 		k->k_state |= KS_DELETE;
 		if (gone) {
 			k->k_state |= KS_DELETED;
@@ -1387,8 +1406,8 @@ del_static(naddr dst,
 }
 
 
-/* Delete all routes generated from ICMP Redirects that use a given
- * gateway, as well as all old redirected routes.
+/* Delete all routes generated from ICMP Redirects that use a given gateway,
+ * as well as old redirected routes.
  */
 void
 del_redirects(naddr bad_gate,
@@ -1410,6 +1429,7 @@ del_redirects(naddr bad_gate,
 				continue;
 
 			k->k_state |= KS_DELETE;
+			k->k_state &= ~KS_DYNAMIC;
 			need_kern.tv_sec = now.tv_sec;
 			trace_act("mark redirected %s --> %s for deletion\n",
 				  addrname(k->k_dst, k->k_mask, 0),
@@ -1511,11 +1531,7 @@ rtadd(naddr	dst,
 	int i;
 	struct rt_spare *rts;
 
-	rt = (struct rt_entry *)malloc(sizeof (*rt));
-	if (rt == 0) {
-		BADERR(1,"rtadd malloc");
-		return;
-	}
+	rt = (struct rt_entry *)rtmalloc(sizeof (*rt), "rtadd");
 	bzero(rt, sizeof(*rt));
 	for (rts = rt->rt_spares, i = NUM_SPARES; i != 0; i--, rts++)
 		rts->rts_metric = HOPCNT_INFINITY;
@@ -1544,6 +1560,8 @@ rtadd(naddr	dst,
 	rt->rt_ifp = ifp;
 	rt->rt_seqno = update_seqno;
 
+	if (++total_routes == MAX_ROUTES)
+		msglog("have maximum (%d) routes", total_routes);
 	if (TRACEACTIONS)
 		trace_add_del("Add", rt);
 
@@ -1576,8 +1594,11 @@ rtchange(struct rt_entry *rt,
 		 * has gone bad, since there may be a working route that
 		 * aggregates this route.
 		 */
-		if (metric == HOPCNT_INFINITY)
+		if (metric == HOPCNT_INFINITY) {
 			need_kern.tv_sec = now.tv_sec;
+			if (new_time >= now.tv_sec - EXPIRE_TIME)
+				new_time = now.tv_sec - EXPIRE_TIME;
+		}
 		rt->rt_seqno = update_seqno;
 		set_need_flash();
 	}
@@ -1589,6 +1610,11 @@ rtchange(struct rt_entry *rt,
 	}
 
 	state |= (rt->rt_state & RS_SUBNET);
+
+	/* Keep various things from deciding ageless routes are stale.
+	 */
+	if (!AGE_RT(state, ifp))
+		new_time = now.tv_sec;
 
 	if (TRACEACTIONS)
 		trace_change(rt, state, gate, router, metric, tag, ifp,
@@ -1635,12 +1661,8 @@ rtswitch(struct rt_entry *rt,
 
 
 	/* Do not change permanent routes */
-	if (0 != (rt->rt_state & RS_PERMANENT))
-		return;
-
-	/* Do not discard synthetic routes until they go bad */
-	if ((rt->rt_state & RS_NET_SYN)
-	    && rt->rt_metric < HOPCNT_INFINITY)
+	if (0 != (rt->rt_state & (RS_MHOME | RS_STATIC | RS_RDISC
+				  | RS_NET_SYN | RS_IF)))
 		return;
 
 	/* find the best alternative among the spares */
@@ -1684,6 +1706,7 @@ rtdelete(struct rt_entry *rt)
 		msglog("rnh_deladdr() failed");
 	} else {
 		free(rt);
+		total_routes--;
 	}
 }
 
@@ -1777,12 +1800,9 @@ rtbad_sub(struct rt_entry *rt)
  */
 /* ARGSUSED */
 int
-walk_bad(struct radix_node *rn, void *argp)
+walk_bad(struct radix_node *rn, struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
-#if 0
-	struct walkarg *w = argp;	/* not used */
-#endif
 	struct rt_spare *rts;
 	int i;
 	time_t new_time;
@@ -1796,6 +1816,7 @@ walk_bad(struct radix_node *rn, void *argp)
 
 		if (rts->rts_ifp != 0
 		    && (rts->rts_ifp->int_state & IS_BROKE)) {
+			/* mark the spare route to be deleted immediately */
 			new_time = rts->rts_time;
 			if (new_time >= now_garbage)
 				new_time = now_garbage-1;
@@ -1833,12 +1854,9 @@ walk_bad(struct radix_node *rn, void *argp)
  */
 /* ARGSUSED */
 static int
-walk_age(struct radix_node *rn, void *argp)
+walk_age(struct radix_node *rn, struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
-#if 0
-	struct walkarg *w = argp;	/* not used */
-#endif
 	struct interface *ifp;
 	struct rt_spare *rts;
 	int i;
@@ -1852,9 +1870,10 @@ walk_age(struct radix_node *rn, void *argp)
 
 		ifp = rts->rts_ifp;
 		if (i == NUM_SPARES) {
-			if (!AGE_RT(RT, ifp)) {
+			if (!AGE_RT(RT->rt_state, ifp)) {
 				/* Keep various things from deciding ageless
-				 * routes are stale */
+				 * routes are stale
+				 */
 				rts->rts_time = now.tv_sec;
 				continue;
 			}
