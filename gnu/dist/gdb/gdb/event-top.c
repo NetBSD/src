@@ -191,7 +191,7 @@ cli_command_loop (void)
       strcpy (a_prompt, PREFIX (0));
       strcat (a_prompt, gdb_prompt);
       strcat (a_prompt, SUFFIX (0));
-      rl_callback_handler_install (a_prompt, input_handler);
+      rl_callback_handler_install (a_prompt, (VFunction *)input_handler);
     }
   else
     display_gdb_prompt (0);
@@ -296,7 +296,7 @@ display_gdb_prompt (char *new_prompt)
   if (async_command_editing_p)
     {
       rl_callback_handler_remove ();
-      rl_callback_handler_install (new_prompt, input_handler);
+      rl_callback_handler_install (new_prompt, (VFunction *)input_handler);
     }
   /* new_prompt at this point can be the top of the stack or the one passed in */
   else if (new_prompt)
