@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.132 2004/05/18 16:47:08 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.133 2004/06/01 05:06:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.132 2004/05/18 16:47:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.133 2004/06/01 05:06:56 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -585,8 +585,11 @@ sendit:
 		}
 	} else {
 		/* nobody uses ia beyond here */
-		if (state.encap)
+		if (state.encap) {
 			ifp = ro->ro_rt->rt_ifp;
+			if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+				mtu = ifp->if_mtu;
+		}
 	}
     }
 skip_ipsec:
