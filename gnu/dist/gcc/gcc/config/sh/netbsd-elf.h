@@ -96,6 +96,11 @@ Boston, MA 02111-1307, USA.  */
   (TARGET_CPU_DEFAULT | USERMODE_BIT | TARGET_ENDIAN_DEFAULT)
 
  
+/* Output assembler code to FILE to call the profiler.  */
+
+#undef NO_PROFILE_COUNTERS
+#define NO_PROFILE_COUNTERS
+
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(STREAM,LABELNO)				\
 do									\
