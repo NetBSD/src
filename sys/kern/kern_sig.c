@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.36 2003/01/03 21:42:50 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.37 2003/01/09 23:02:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.36 2003/01/03 21:42:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.37 2003/01/09 23:02:03 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1002,7 +1002,7 @@ psignal1(struct proc *p, int signum,
 				 * XXX see note in proc_unstop(). SIGKILL
 				 * XXX and SIGCONT have conflicting needs.
 				 */
-				if (l->l_stat == LSSLEEP)
+				if (l && (l->l_stat == LSSLEEP))
 					l = NULL;
 				if (l && (action == SIG_CATCH))
 					goto runfast;
