@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.263 2000/10/06 13:43:22 itojun Exp $
+#	$NetBSD: mi,v 1.264 2000/10/13 04:33:01 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2977,6 +2977,7 @@
 ./usr/share/man/cat9/m_copydata.0		comp-kern-catman
 ./usr/share/man/cat9/m_copym.0		comp-kern-catman
 ./usr/share/man/cat9/m_copypacket.0		comp-kern-catman
+./usr/share/man/cat9/m_dup.0		comp-kern-catman
 ./usr/share/man/cat9/m_devget.0		comp-kern-catman
 ./usr/share/man/cat9/m_free.0		comp-kern-catman
 ./usr/share/man/cat9/m_freem.0		comp-kern-catman
@@ -4726,6 +4727,7 @@
 ./usr/share/man/man9/m_copydata.9		comp-kern-man
 ./usr/share/man/man9/m_copym.9		comp-kern-man
 ./usr/share/man/man9/m_copypacket.9		comp-kern-man
+./usr/share/man/man9/m_dup.9		comp-kern-man
 ./usr/share/man/man9/m_devget.9		comp-kern-man
 ./usr/share/man/man9/m_free.9		comp-kern-man
 ./usr/share/man/man9/m_freem.9		comp-kern-man
