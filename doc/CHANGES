@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.399 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.400 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -165,3 +165,6 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	ixpide(4): Add driver for the IDE controller of the ATI IXP series of
 		chipsets. [cube 20041206]
 	file(1): update to 4.12.  [pooka 20041213]
+	kernel/libc: Add system calls and VFS infrastructure for file system
+		extended attributes.  Adapted from FreeBSD.
+		[thorpej 20050102]
