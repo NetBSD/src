@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.221 2000/05/07 17:00:06 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.222 2000/05/12 17:47:05 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.213 2000/04/30 18:34:53 dante Exp 
+ *	NetBSD: pcidevs,v 1.215 2000/05/12 17:46:47 thorpej Exp 
  */
 
 /*
@@ -578,6 +578,7 @@
 #define	PCI_PRODUCT_3COM_3C905BFX	0x905a		/* 3c905B-FX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C905CTX	0x9200		/* 3c905C-TX 10/100 Ethernet with mngmt */
 #define	PCI_PRODUCT_3COM_3C980SRV	0x9800		/* 3c980 Server Adapter 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C980CTXM	0x9805		/* 3c980C-TXM 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3CR990-TX-97 10/100 Ethernet */
 
 /* 3Dfx Interactive producs */
