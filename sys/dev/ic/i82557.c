@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.69 2002/11/15 03:30:26 enami Exp $	*/
+/*	$NetBSD: i82557.c,v 1.70 2003/01/06 13:10:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.69 2002/11/15 03:30:26 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.70 2003/01/06 13:10:28 wiz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1288,7 +1288,7 @@ fxp_tick(void *arg)
 	 * the condition by reprogramming the multicast filter (actually,
 	 * resetting the interface). This is a work-around for a bug in
 	 * the 82557 where the receiver locks up if it gets certain types
-	 * of garbage in the syncronization bits prior to the packet header.
+	 * of garbage in the synchronization bits prior to the packet header.
 	 * This bug is supposed to only occur in 10Mbps mode, but has been
 	 * seen to occur in 100Mbps mode as well (perhaps due to a 10/100
 	 * speed transition).
