@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.16 2002/03/30 13:29:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.16 2002/03/30 13:29:27 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,39 +52,25 @@ __RCSID("$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $");
 
 #include "hexdump.h"
 
+struct odformat {
+	char type;
+	int nbytes;
+	char const *format;
+	int minwidth;
+};
+
+struct odaddrformat {
+	char type;
+	char const *format1;
+	char const *format2;
+};
+
 int deprecated;
 
 static void odoffset __P((int, char ***));
-static void posixtypes __P((char *));
+static void posixtypes __P((char const *));
 static void odprecede __P((void));
 
-
-/*
- * formats used for -t
- */
-static const char *fmt[4][4] = {
-	{
-		"16/1 \"%3d \" \"\\n\"",
-		"8/2  \"  %05d \" \"\\n\"",
-		"4/4  \"     %010d \" \"\\n\"",
-		"2/8  \" %019d \" \"\\n\""
-	}, {
-		"16/1 \"%03o \" \"\\n\"",
-		"8/2  \" %06o \" \"\\n\"",
-		"4/4  \"    %011o\" \"\\n\"",
-		"2/8  \" %022o \" \"\\n\""
-	}, {
-		"16/1 \"%03u \" \"\\n\"",
-		"8/2  \"  %05u \" \"\\n\"",
-		"4/4  \"     %010u \" \"\\n\"",
-		"2/8  \" %020u \" \"\\n\""
-	}, {
-		"16/1 \" %02x \" \"\\n\"",
-		"8/2  \"   %04x \" \"\\n\"",
-		"4/4  \"       %08x \" \"\\n\"",
-		"2/8  \" %16x \" \"\\n\""
-	}
-};
 
 void
 oldsyntax(argc, argvp)
@@ -100,59 +86,46 @@ oldsyntax(argc, argvp)
 	    "aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
 		switch (ch) {
 		case 'a':
-			odprecede();
-			add("16/1 \"%3_u \" \"\\n\"");
+			posixtypes("a");
 			break;
 		case 'B':
 		case 'o':
-			odprecede();
-			add("8/2 \" %06o \" \"\\n\"");
+			posixtypes("o2");
 			break;
 		case 'b':
-			odprecede();
-			add("16/1 \"%03o \" \"\\n\"");
+			posixtypes("o1");
 			break;
 		case 'c':
-			odprecede();
-			add("16/1 \"%3_c \" \"\\n\"");
+			posixtypes("c");
 			break;
 		case 'd':
-			odprecede();
-			add("8/2 \"  %05u \" \"\\n\"");
+			posixtypes("u2");
 			break;
 		case 'D':
-			odprecede();
-			add("4/4 \"     %010u \" \"\\n\"");
+			posixtypes("u4");
 			break;
 		case 'e':		/* undocumented in od */
 		case 'F':
-			odprecede();
-			add("2/8 \"          %21.14e \" \"\\n\"");
+			posixtypes("f8");
 			break;
-			
 		case 'f':
-			odprecede();
-			add("4/4 \" %14.7e \" \"\\n\"");
+			posixtypes("f4");
 			break;
 		case 'H':
 		case 'X':
-			odprecede();
-			add("4/4 \"       %08x \" \"\\n\"");
+			posixtypes("x4");
 			break;
 		case 'h':
 		case 'x':
-			odprecede();
-			add("8/2 \"   %04x \" \"\\n\"");
+			posixtypes("x2");
 			break;
 		case 'I':
 		case 'L':
 		case 'l':
-			odprecede();
-			add("4/4 \"    %11d \" \"\\n\"");
+			posixtypes("d4");
 			break;
 		case 'i':
-			odprecede();
-			add("8/2 \" %6d \" \"\\n\"");
+			posixtypes("d2");
 			break;
 		case 'j':
 			if ((skip = strtol(optarg, &p, 0)) < 0)
@@ -174,8 +147,7 @@ oldsyntax(argc, argvp)
 				errx(1, "%s: bad length value", optarg);
 			break;
 		case 'O':
-			odprecede();
-			add("4/4 \"    %011o \" \"\\n\"");
+			posixtypes("o4");
 			break;
 		case 't':
 			posixtypes(optarg);
@@ -209,56 +181,78 @@ oldsyntax(argc, argvp)
 		odoffset(argc, argvp);
 }
 
+/* formats used for -t */
+
+static const struct odformat odftab[] = {
+	{ 'a', 1, "%3_u",  4 },
+	{ 'c', 1, "%3_c",  4 },
+	{ 'd', 1, "%4d",   5 },
+	{ 'd', 2, "%6d",   6 },
+	{ 'd', 4, "%11d", 11 },
+	{ 'd', 8, "%20d", 20 },
+	{ 'o', 1, "%03o",  4 },
+	{ 'o', 2, "%06o",  7 },
+	{ 'o', 4, "%011o", 12 },
+	{ 'o', 8, "%022o", 23 },
+	{ 'u', 1, "%03u" , 4 },
+	{ 'u', 2, "%05u" , 6 },
+	{ 'u', 4, "%010u", 11 },
+	{ 'u', 8, "%020u", 21 },
+	{ 'x', 1, "%02x",  3 },
+	{ 'x', 2, "%04x",  5 },
+	{ 'x', 4, "%08x",  9 },
+	{ 'x', 8, "%016x", 17 },
+	{ 'f', 4, "%14.7e",  15 },
+	{ 'f', 8, "%21.14e", 22 },
+	{ 0, 0, NULL, 0 }
+};
+
 /*
  * Interpret a POSIX-style -t argument.
  */
 static void
 posixtypes(type_string)
-	char *type_string;
+	char const *type_string;
 {
-	int x, y, nbytes;
+	int nbytes;
+	char *fmt, type, *tmp;
+	struct odformat const *odf;
 
 	while (*type_string) {
 		odprecede();
-		switch (*type_string) {
+		switch ((type = *type_string++)) {
 		case 'a':
-			type_string++;
-			add("16/1 \"%3_u \" \"\\n\"");
-			break;
 		case 'c':
-			type_string++;
-			add("16/1 \"%3_c \" \"\\n\"");
+			nbytes = 1;
 			break;
 		case 'f':
-			type_string++;
-			if        (*type_string == 'F' ||
-				   *type_string == '4') {
+			if (isupper(*type_string)) {
+				switch(*type_string) {
+				case 'F':
+					nbytes = sizeof(float);
+					break;
+				case 'D':
+					nbytes = sizeof(double);
+					break;
+				case 'L':
+					nbytes = sizeof(long double);
+					break;
+				default:
+					warnx("Bad type-size qualifier '%c'",
+					    *type_string);
+					usage();
+				}
 				type_string++;
-				add("4/4 \" %14.7e\" \"\\n\"");
-			} else if (*type_string == 'L' ||
-				   *type_string == '8') {
-				type_string++;
-				add("2/8 \" %16.14e\" \"\\n\"");
-			} else if (*type_string == 'D')
-				/* long doubles vary in size */
-				usage();
-			else
-				add("2/8 \" %16.14e\" \"\\n\"");
+			} else if (isdigit(*type_string)) {
+				nbytes = strtol(type_string, &tmp, 10);
+				type_string = tmp;
+			} else
+				nbytes = 8;
 			break;
 		case 'd':
-			x = 0;
-			goto extensions;
 		case 'o':
-			x = 1;
-			goto extensions;
 		case 'u':
-			x = 2;
-			goto extensions;
 		case 'x':
-			x = 3;
-		extensions:
-			type_string++;
-			y = 2;
 			if (isupper(*type_string)) {
 				switch(*type_string) {
 				case 'C':
@@ -279,32 +273,25 @@ posixtypes(type_string)
 					usage();
 				}
 				type_string++;
-			} else if (isdigit(*type_string))
-				nbytes = strtol(type_string, &type_string, 10);
-
-			switch (nbytes) {
-			case 1:
-				y = 0;
-				break;
-			case 2:
-				y = 1;
-				break;
-			case 4:
-				y = 2;
-				break;
-			case 8:
-				y = 3;
-				break;
-			default:
-				warnx("%d-byte integer formats are not "
-				    "supported", nbytes);
-				usage();
-			}
-			add(fmt[x][y]);
+			} else if (isdigit(*type_string)) {
+				nbytes = strtol(type_string, &tmp, 10);
+				type_string = tmp;
+			} else
+				nbytes = 4;
 			break;
 		default:
 			usage();
 		}
+		for (odf = odftab; odf->type != 0; odf++)
+			if (odf->type == type && odf->nbytes == nbytes)
+				break;
+		if (odf->type == 0)
+			errx(1, "%c%d: format not supported", type, nbytes);
+		asprintf(&fmt, "%d/%d  \"%*s%s \" \"\\n\"",
+		    16 / nbytes, nbytes,
+		    4 * nbytes - odf->minwidth, "", odf->format);
+		if (fmt == NULL) nomem();
+		add(fmt);
 	}
 }
 
