@@ -1,4 +1,11 @@
-#	$NetBSD: Makefile,v 1.21 2000/06/17 03:10:23 matt Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2000/10/19 14:24:20 tv Exp $
+#
+# boot.fs is the image for disk 1 of the two-set floppy based installation
+# method.
+#
+# It is constructed by injecting the microroot filesystem `ramdisk.fs'
+# into the md based kernel built from the INSTALL kernel configuration file.
+#
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -26,8 +33,6 @@ RAMDISK!=	cd ${TOP}/ramdisk/; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" |\
 		${MAKE} -s -f-
 
-DISKTYPE=	instfs
-
 # Some reasonable values for the -i parameter to newfs are:
 #
 #   6144	1147k, 189 inodes free
@@ -36,18 +41,18 @@ DISKTYPE=	instfs
 INO_BYTES=	204800
 
 BLOCKSIZE=512
-FSTSIZE=32
-FSSIZE!=if test -f ${RAMDISK}; then BLOCKSIZE=${BLOCKSIZE} du -s ${RAMDISK} | awk '{ print $$1 }'; else echo 32; fi
-FSSIZE!= expr ${FSTSIZE} \* \( \( ${FSSIZE} + ${FSTSIZE} - 1 \) / ${FSTSIZE} \)
-FSNC!=expr ${FSSIZE} / ${FSTSIZE}
+FSSIZE!= expr ${BLOCKSIZE} \* 18 \* 2 \* 80
+
+GEOM=${BLOCKSIZE}/18/2/80
 
 CLEANFILES+=	netbsd.ram.gz netbsd.tmp disktab.tmp
 
-all:	netbsd.ram.gz disktab.tmp
-	dd if=/dev/zero of=${IMAGE} bs=${BLOCKSIZE} count=${FSSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -f disktab.tmp -rw ${VND_CDEV} ${DISKTYPE}
-	disklabel -W ${VND_CDEV}
+.MAIN: all
+
+all:	netbsd.ram.gz
+	dd if=/dev/zero of=${IMAGE} bs=${FSSIZE} count=1
+	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
+	#newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
@@ -58,7 +63,7 @@ all:	netbsd.ram.gz disktab.tmp
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	${MDEC}/binstall -m ${MDEC} -v -b boot.700000 ffs ${MOUNT_POINT}
+	${MDEC}/binstall -m ${MDEC} -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
@@ -66,17 +71,10 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
 
-disktab.tmp:	netbsd.ram.gz 
-	@echo "instfs:ty=floppy:se#512:nt#2:rm#300:ns#16:nc#${FSNC}:pa#${FSSIZE}:oa#0:ba#4096:fa#512:ta=4.2BSD:pc#${FSSIZE}:oc#0:" > ${.TARGET}
-
-netbsd.ram: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
-	mv netbsd.tmp ${.TARGET}
-
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
+	strip netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 

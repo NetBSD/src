@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 2000/05/02 16:06:54 sjg Exp $
+#	$NetBSD: Makefile,v 1.18.4.1 2000/10/19 14:24:22 tv Exp $
+#
+# ramdisk.fs is the microroot filesystem intended for use with
+# the INSTALL kernel. It provides just enough tools to extract the
+# miniroot-based `instfs' filesystem into an MFS mount point
+# and start the installation scripts from there (see dot.profile).
+#
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -20,13 +26,14 @@ IMAGE?=		ramdisk.fs
 LISTS=		list
 MTREE=		mtree.conf
 
-SIZE=		1980k
-DISKTYPE=	instfs
-GEOM=		512/18/2/110
-INO_BYTES=	4096
+# image size in 512-byte blocks
+SIZE=		1360
+#DISKTYPE=	instfs
+GEOM=		512/1/${SIZE}/1
+INO_BYTES=	2048
 
 all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
+	dd if=/dev/zero of=${IMAGE} bs=${SIZE}b count=1
 	#vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
 	#disklabel -rw ${VND_CDEV} ${DISKTYPE}
