@@ -1,4 +1,4 @@
-.\"	$NetBSD: groff_mm.7,v 1.1.1.1 2001/04/19 12:48:36 wiz Exp $
+.\"	$NetBSD: groff_mm.7,v 1.2 2002/10/02 15:39:09 wiz Exp $
 .\"
 .\"
 .\" Id: groff_mm.man,v 1.3 2000/06/04 21:47:19 wlemb Exp
@@ -42,7 +42,7 @@ groff mm does not support cut marks
 .LP
 \fBmm\fP is intended to be international. Therefore it is 
 possible to write short national macrofiles which change all
-english text to the preferred language. Use \fBmmse\fP as an example.
+English text to the preferred language. Use \fBmmse\fP as an example.
 .\"########################################################################
 .LP
 A file called \fBlocale\fP or \fIlang\fP\fB_locale\fP is read
@@ -401,7 +401,7 @@ The string \fBLe\fP controls the title of the
 List of Equations, default is \fILIST OF EQUATIONS\fP.
 The List of Equations will only be printed if number register \fBLe\fP
 is 1, default 0.
-The string \fBLiec\fP contains the word \fIEquation\fP, wich
+The string \fBLiec\fP contains the word \fIEquation\fP, which
 is printed before the number.
 If \fIrefname\fP is used, then the equation number is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
@@ -472,7 +472,7 @@ affected by the format of \fBDS\fP.
 .TP
 .B "FC [closing]"
 Prints \fIYours\ very\ truly,\fP as a formal closing of a letter or
-memorandum. The argument replaces the defualt string.
+memorandum. The argument replaces the default string.
 The default is stored in string variable \fBLetfc\fP.
 .TP
 .B "FD [arg [1]]"
@@ -513,7 +513,7 @@ The string \fBLf\fP controls the title of the
 List of Figures, default is \fILIST OF FIGURES\fP.
 The List of Figures will only be printed if number register \fBLf\fP
 is 1, default 1.
-The string \fBLifg\fP contains the word \fIFigure\fP, wich
+The string \fBLifg\fP contains the word \fIFigure\fP, which
 is printed before the number.
 If \fIrefname\fP is used, then the figure number is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
@@ -617,7 +617,7 @@ The text will be lined up with the first word of the heading.
 .br
 All headings whose level is equal or below number register \fBHc\fP
 and also less than or equal to \fBHb\fP or \fBHs\fP
-is centerered.
+is centered.
 .sp
 \fBFont control of the heading\fP
 .br
@@ -641,7 +641,7 @@ That can be controlled by the user specified macro \fBHX\fP and/or
 .br
 Seven number registers, named \fBH1\fP thru \fBH7\fP contains
 the counter for each heading level.
-The values are printed using arabic numerals, this can be changed
+The values are printed using Arabic numerals, this can be changed
 with the macro \fBHM\fP (see below).
 All marks are concatenated before printing. To avoid this, set
 number register \fBHt\fP to 1. That will only print the current
@@ -732,7 +732,7 @@ Arabic numerals.
 .TP
 .B "HU heading-text"
 Unnumbered section header.
-\fBHU\fP behavies like \fBH\fP at the level in number register \fBHu\fP.
+\fBHU\fP behaves like \fBH\fP at the level in number register \fBHu\fP.
 See \fBH\fP.
 .TP
 .B "HX dlevel rlevel heading-text"
@@ -794,7 +794,7 @@ Both page numbers and header marks, tab separated
 .in
 .TP
 .B "INITR filename"
-Initialize the refencemacros. References will be written to
+Initialize the referencemacros. References will be written to
 \fIfilename.tmp\fP and \fIfilename.qrf\fP. Requires two passes with groff.
 The first looks for references and the second includes them.
 \fBINITR\fP can be used several times, but it is only the first
@@ -854,7 +854,7 @@ sets the number of spaces before this area. It is normally 0.
 The mark area ends where the text begins. The start of the text
 is still controlled by \fItext-indent\fP.
 .sp
-The mark is left justified whitin the mark area if \fIpad\fP is 0.
+The mark is left justified within the mark area if \fIpad\fP is 0.
 If \fIpad\fP is greater than 0, then \fImark-indent\fP is ignored, and
 the mark is placed \fIpad\fP spaces before the text.
 This will right justify the mark.
@@ -862,7 +862,7 @@ This will right justify the mark.
 If \fItype\fP is 0 the list will have either a hanging indent or, if
 argument \fImark\fP is given, the string \fImark\fP as mark.
 .sp
-If \fItype\fP is greater than 0 automatic numbering will occur, arabic
+If \fItype\fP is greater than 0 automatic numbering will occur, Arabic
 if \fImark\fP is empty. \fIMark\fP can then be any of \fB1\fP, \fBA\fP,
 \fBa\fP, \fBI\fP or \fBi\fP.
 .sp
@@ -892,7 +892,7 @@ before them. Default is 1.
 .B "LC [list-level]"
 List-status clear.
 Terminates all current active lists down to \fIlist-level\fP, or 0
-if no argmuent is given. This is used by \fBH\fP to clear any
+if no argument is given. This is used by \fBH\fP to clear any
 active list.
 .TP
 .B "LE [1]"
@@ -939,7 +939,7 @@ Dash List
 .T2 \fBRL\fP
 Reference List
 .T2 \fBBVL\fP
-Broken Varable List.
+Broken Variable List.
 .in
 These lists are described at other places in this manual. See also \fBLB\fP.
 .TP
@@ -985,7 +985,7 @@ See also string variable \fBLetSA\fP.
 .T2 SJ
 Subject line. Prints the argument as subject prefixed with \fBSUBJECT:\fP
 two lines below the inside address, except in letter type \fBSP\fP.
-Then the subject is printed in all-captial without any prefix.
+Then the subject is printed in all-capital without any prefix.
 See also string variable \fBLetSJ\fP.
 .in
 .TP
@@ -1270,7 +1270,7 @@ the current value will be done.
 .B "SA [arg]"
 Set right-margin justification.
 Justification is normally turned on.
-No argumenent or \fB0\fP turns off justification, a \fB1\fP turns on
+No argument or \fB0\fP turns off justification, a \fB1\fP turns on
 justification.
 .TP
 .B "SETR refname [string]"
@@ -1286,7 +1286,7 @@ at either the first or last author. The reference data is the location,
 department and initials specified with \fB.AU\fP.
 It will be printed at the first author if the second argument is given,
 otherwise at the last.
-No reference data will be printed if the author(s) is specifed
+No reference data will be printed if the author(s) is specified
 thru \fB.WA\fP/\fB.WE\fP.
 See \fBINTERNALS\fP.
 .TP
@@ -1319,7 +1319,7 @@ The string \fBLt\fP controls the title of the
 List of Tables, default is \fILIST OF TABLES\fP.
 The List of Tables will only be printed if number register \fBLt\fP
 is 1, default 1.
-The string \fBLitb\fP contains the word \fITABLE\fP, wich
+The string \fBLitb\fP contains the word \fITABLE\fP, which
 is printed before the number.
 .br
 Special handling of the title will occur if
