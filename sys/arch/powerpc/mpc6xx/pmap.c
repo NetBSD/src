@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2002/06/05 15:55:51 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2002/06/26 01:10:20 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -904,7 +904,7 @@ pmap_pinit(pmap_t pm)
 		}
 		pmap_vsid_bitmap[n] |= mask;
 		for (i = 0; i < 16; i++)
-			pm->pm_sr[i] = VSID_MAKE(i, hash);
+			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY;
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -2896,11 +2896,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 
-	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL_SR), "r"(KERNEL_SEGMENT));
 #ifdef KERNEL2_SR
-	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT;
+	pmap_kernel()->pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
