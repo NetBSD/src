@@ -1,7 +1,7 @@
 .\" @(#)rpcinfo.1m 1.23 93/03/29 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
-.\" $NetBSD: rpcinfo.8,v 1.9 2001/10/02 14:41:31 bjh21 Exp $
+.\" $NetBSD: rpcinfo.8,v 1.10 2001/10/02 14:45:43 bjh21 Exp $
 .Dd August 18, 1992
 .Dt RPCINFO 8
 .Sh NAME
@@ -12,7 +12,7 @@
 .Op Fl m Li \&| Fl s
 .Op Ar host
 .Nm ""
-.Op Ar host
+.Fl p Op Ar host
 .Nm ""
 .Fl T Ar transport
 .Ar host Ar prognum
@@ -199,7 +199,7 @@ Display a list of entries with a given
 and
 .Ar versnum
 on the specified
-.IR host .
+.Ar host .
 Entries are returned for all transports
 in the same protocol family as that used to contact the remote
 .Nm rpcbind .
