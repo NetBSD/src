@@ -1,3 +1,4 @@
+/*	$NetBSD: bzip2recover.c,v 1.2 1998/09/14 04:42:45 ross Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- Block recoverer program for bzip2                   ---*/
