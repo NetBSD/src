@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.78 1998/09/15 17:26:46 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.79 1998/09/22 04:23:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2294,11 +2294,13 @@ tulip_identify_accton_nic(
     switch (sc->tulip_chipid) {
 	case TULIP_21140A:
 	    strcat(sc->tulip_boardid, "EN1207 ");
-	    sc->tulip_boardsw = &tulip_21140_accton_boardsw;
+	    if (sc->tulip_boardsw != &tulip_2114x_isv_boardsw)
+		sc->tulip_boardsw = &tulip_21140_accton_boardsw;
 	    break;
 	case TULIP_21140:
 	    strcat(sc->tulip_boardid, "EN1207TX ");
-	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
+	    if (sc->tulip_boardsw != &tulip_2114x_isv_boardsw)
+		sc->tulip_boardsw = &tulip_21140_eb_boardsw;
             break;
         case TULIP_21040:
 	    strcat(sc->tulip_boardid, "EN1203 ");
