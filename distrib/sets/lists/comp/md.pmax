@@ -5,6 +5,7 @@
 ./usr/bin/objdump
 ./usr/include/machine
 ./usr/include/machine/ansi.h
+./usr/include/machine/aout_machdep.h
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bsd-aout.h
 ./usr/include/machine/cdefs.h
@@ -12,10 +13,10 @@
 ./usr/include/machine/cpu.h
 ./usr/include/machine/dc7085cons.h
 ./usr/include/machine/disklabel.h
-./usr/include/machine/ecoff.h
+./usr/include/machine/ecoff_machdep.h
 ./usr/include/machine/elf.h
+./usr/include/machine/elf_machdep.h
 ./usr/include/machine/endian.h
-./usr/include/machine/exec.h
 ./usr/include/machine/fbio.h
 ./usr/include/machine/fbvar.h
 ./usr/include/machine/float.h
@@ -27,10 +28,8 @@
 ./usr/include/machine/machConst.h
 ./usr/include/machine/mips_opcode.h
 ./usr/include/machine/param.h
-./usr/include/machine/param_common.h
 ./usr/include/machine/pcb.h
 ./usr/include/machine/pmap.h
-./usr/include/machine/pmax-machConst.h
 ./usr/include/machine/pmioctl.h
 ./usr/include/machine/proc.h
 ./usr/include/machine/profile.h
@@ -45,7 +44,6 @@
 ./usr/include/machine/signal.h
 ./usr/include/machine/stdarg.h
 ./usr/include/machine/tc_machdep.h
-./usr/include/machine/testme.h
 ./usr/include/machine/trap.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
@@ -53,14 +51,15 @@
 ./usr/include/mips
 ./usr/include/mips/ansi.h
 ./usr/include/mips/asm.h
+./usr/include/mips/aout_machdep.h
 ./usr/include/mips/bsd-aout.h
 ./usr/include/mips/cdefs.h
 ./usr/include/mips/cpu.h
 ./usr/include/mips/cpuregs.h
-./usr/include/mips/ecoff.h
+./usr/include/mips/ecoff_machdep.h
 ./usr/include/mips/elf.h
+./usr/include/mips/elf_machdep.h
 ./usr/include/mips/endian.h
-./usr/include/mips/exec.h
 ./usr/include/mips/float.h
 ./usr/include/mips/ieeefp.h
 ./usr/include/mips/kdbparam.h
