@@ -1,4 +1,4 @@
-/* $NetBSD: mach_services.c,v 1.9 2003/11/30 00:09:59 manu Exp $ */
+/* $NetBSD: mach_services.c,v 1.10 2003/11/30 20:42:03 manu Exp $ */
 
 /*
  * Mach services table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services.c,v 1.9 2003/11/30 00:09:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services.c,v 1.10 2003/11/30 20:42:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -217,7 +217,7 @@ struct mach_service mach_services_table[] = {
 	{3226, mach_port_insert_member, "port_insert_member", sizeof(mach_port_insert_member_request_t), sizeof(mach_port_insert_member_reply_t)},
 	{3227, NULL, "unimpl. port_extract_member", 0, 0},
 	{3400, NULL, "unimpl. task_create", 0, 0},
-	{3401, NULL, "unimpl. task_terminate", 0, 0},
+	{3401, mach_task_terminate, "task_terminate", sizeof(mach_task_terminate_request_t), sizeof(mach_task_terminate_reply_t)},
 	{3402, mach_task_threads, "task_threads", sizeof(mach_task_threads_request_t), sizeof(mach_task_threads_reply_t)},
 	{3403, NULL, "unimpl. ports_register", 0, 0},
 	{3404, mach_ports_lookup, "ports_lookup", sizeof(mach_ports_lookup_request_t), sizeof(mach_ports_lookup_reply_t)},
