@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1995/11/30 00:57:58 jtc Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1995/12/03 14:32:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -824,7 +824,7 @@ struct proc	*p;
 		if(userbits & TIOCFLAG_SOFTCAR && userbits & TIOCFLAG_CLOCAL)
 			return(EINVAL);
 		if(userbits & TIOCFLAG_MDMBUF)	/* don't support this (yet?) */
-			return(ENXIO);
+			return(ENODEV);
 
 		s = splzs();
 		if((userbits & TIOCFLAG_SOFTCAR)) {
