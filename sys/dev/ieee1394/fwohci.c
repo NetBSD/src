@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.30 2001/05/13 05:01:42 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.31 2001/05/15 06:52:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,9 +147,9 @@ static int  fwohci_if_output(struct device *, struct mbuf *,
     void (*)(struct device *, struct mbuf *));
 static int  fwohci_read(struct ieee1394_abuf *);
 static int  fwohci_write(struct ieee1394_abuf *);
-static int  fwohci_extract_resp(struct fwohci_softc *, void *,
-    struct fwohci_pkt *);
-static int  fwohci_multi_resp(struct fwohci_softc *, void *,
+static int  fwohci_read_resp(struct fwohci_softc *, void *, struct fwohci_pkt *);
+static int  fwohci_write_ack(struct fwohci_softc *, void *, struct fwohci_pkt *);
+static int  fwohci_read_multi_resp(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
 static int  fwohci_inreg(struct ieee1394_abuf *, int);
 static int  fwohci_parse_input(struct fwohci_softc *, void *,
@@ -1550,15 +1550,8 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 				break;
 			}
 		}
-#ifdef FW_DEBUG
-		if (fh == NULL) {
+		if (fh == NULL) 
 			DPRINTFN(1, ("fwohci_arrs_input: no listner\n"));
-			DPRINTFN(1, ("src: %d, rcode: %d, tlabel: %d, tcode: "
-			    "%d hdr[3]: 0x%08x, data: 0x%08lx\n", srcid, rcode,
-			    tlabel, pkt.fp_tcode, pkt.fp_hdr[3],
-			    (unsigned long)(*((int *)pkt.fp_iov[0].iov_base))));
-		}
-#endif
 	}
 	fwohci_buf_next(sc, fc);
 	OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
@@ -2771,6 +2764,52 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  * send/receive data.
  */
 
+/*
+ * These break down into 4 routines as follows:
+ *
+ * int fwohci_read(struct ieee1394_abuf *)
+ *
+ * This routine will attempt to read a region from the requested node.
+ * A callback must be provided which will be called when either the completed
+ * read is done or an unrecoverable error occurs. This is mainly a convenience
+ * routine since it will encapsulate retrying a region as quadlet vs. block reads
+ * and recombining all the returned data. This could also be done with a series
+ * of write/inreg's for each packet sent.
+ *
+ * int fwohci_write(struct ieee1394_abuf *)
+ *
+ * The work horse main entry point for putting packets on the bus. This is the
+ * generalized interface for fwnode/etc code to put packets out onto the bus.
+ * It accepts all standard ieee1394 tcodes (XXX: only a few today) and optionally
+ * will callback via a func pointer to the calling code with the resulting ACK
+ * code from the packet. If the ACK code is to be ignored (i.e. no cb) then the
+ * write routine will take care of free'ing the abuf since the fwnode/etc code
+ * won't have any knowledge of when to do this. This allows for simple one-off
+ * packets to be sent from the upper-level code without worrying about a callback
+ * for cleanup.
+ *
+ * int fwohci_inreg(struct ieee1394_abuf *, int)
+ *
+ * This is very simple. It evals the abuf passed in and registers an internal
+ * handler as the callback for packets received for that operation.
+ * The integer argument specifies whether on a block read/write operation to
+ * allow sub-regions to be read/written (in block form) as well.
+ *
+ * XXX: This whole structure needs to be redone as a list of regions and
+ * operations allowed on those regions.
+ *
+ * int fwohci_unreg(struct ieee1394_abuf *, int)
+ *
+ * XXX: TBD. For now passing in a NULL ab_cb to inreg will unregister. This
+ * routine will simply verify ab_cb is NULL and call inreg.
+ *
+ * This simply unregisters the respective callback done via inreg for items
+ * which only need to register an area for a one-time operation (like a status
+ * buffer a remote node will write to when the current operation is done). The
+ * int argument specifies the same behavior as inreg, except in reverse (i.e.
+ * it unregisters).
+ */
+ 
 static int
 fwohci_read(struct ieee1394_abuf *ab)
 {
@@ -2778,9 +2817,19 @@ fwohci_read(struct ieee1394_abuf *ab)
 	struct ieee1394_softc *sc = ab->ab_req;
 	struct fwohci_softc *psc =
 	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent;
+	struct fwohci_cb *fcb;
 	u_int32_t high, lo;
 	int rv, tcode;
 
+	/* Have to have a callback when reading. */
+	if (ab->ab_cb == NULL)
+		return -1;
+
+	fcb = malloc(sizeof(struct fwohci_cb), M_DEVBUF, M_WAITOK);
+	fcb->ab = ab;
+	fcb->count = 0;
+	fcb->abuf_valid = 1;
+	
 	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
 	lo = (ab->ab_csr & 0x00000000ffffffff);
 
@@ -2802,15 +2851,19 @@ fwohci_read(struct ieee1394_abuf *ab)
 	pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
 	    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
 
-	pkt.fp_statusarg = ab;
-	pkt.fp_statuscb = fwohci_extract_resp;
+	pkt.fp_statusarg = fcb;
+	pkt.fp_statuscb = fwohci_read_resp;
 
 	rv = fwohci_handler_set(psc, tcode, ab->ab_req->sc1394_node_id,
-	    psc->sc_tlabel, fwohci_extract_resp, ab);
+	    psc->sc_tlabel, fwohci_read_resp, fcb);
 	if (rv) 
 		return rv;
-	psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
 	rv = fwohci_at_output(psc, psc->sc_ctx_atrq, &pkt);
+	if (rv)
+		fwohci_handler_set(psc, tcode, ab->ab_req->sc1394_node_id,
+		    psc->sc_tlabel, NULL, NULL);
+	psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
+	fcb->count = 1;
 	return rv;
 }
 
@@ -2835,6 +2888,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 	pkt.fp_uio.uio_iov = pkt.fp_iov;
 	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
 	pkt.fp_uio.uio_rw = UIO_WRITE;
+
+	pkt.fp_statusarg = ab;
+	pkt.fp_statuscb = fwohci_write_ack;
 
 	switch (ab->ab_tcode) {
 	case IEEE1394_TCODE_WRITE_RESP:
@@ -2880,12 +2936,6 @@ fwohci_write(struct ieee1394_abuf *ab)
 		rv = fwohci_at_output(psc, psc->sc_ctx_atrs, &pkt);
 		break;
 	default:
-		rv = fwohci_handler_set(psc, IEEE1394_TCODE_WRITE_RESP,
-		    ab->ab_req->sc1394_node_id, psc->sc_tlabel,
-		    fwohci_extract_resp, ab);
-		if (rv) 
-			return rv;
-		psc->sc_tlabel = (psc->sc_tlabel + 1) & 0x3f;
 		rv = fwohci_at_output(psc, psc->sc_ctx_atrq, &pkt);
 		break;
 	}
@@ -2893,76 +2943,70 @@ fwohci_write(struct ieee1394_abuf *ab)
 }
 
 static int
-fwohci_extract_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
-	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
+	struct fwohci_cb *fcb = arg;
+	struct ieee1394_abuf *ab = fcb->ab;
 	struct fwohci_pkt newpkt;
-	u_int16_t status;
 	u_int32_t *cur, high, lo;
-	int i, rcode, rv;
-
-	status = 0;
+	int i, tcode, rcode, status, rv;
 
 	/*
-	 * No callback just means we want to have something clean up the abuf.
+	 * Both the ACK handling and normal response callbacks are handled here.
+	 * The main reason for this is the various error conditions that can
+	 * occur trying to block read some areas and the ways that gets reported
+	 * back to calling station. This is a variety of ACK codes, responses,
+	 * etc which makes it much more difficult to process if both aren't
+	 * handled here.
 	 */
-
-	if (ab->ab_cb == NULL) {
-		if (ab->ab_data)
-			free(ab->ab_data, M_1394DATA);
-		if (ab)
-			free(ab, M_1394DATA);
-		return 0;
-	}
-
+	
 	/* Check for status packet. */
 
 	if (pkt->fp_tcode == -1) {
 		status = pkt->fp_status & OHCI_DESC_STATUS_ACK_MASK;
-		pkt->fp_tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
+		rcode = -1;
+		tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
+		if ((status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+		    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))
+			DPRINTF(("Got status packet: 0x%02x\n",
+			    (unsigned int)status));
+		fcb->count--;
 
-		/* See below for this exception that's trapped internally. */
-		if (ab->ab_ackcb &&
-		    !((status == OHCI_CTXCTL_EVENT_ACK_TYPE_ERROR) &&
-		    (pkt->fp_tcode == IEEE1394_TCODE_READ_REQ_BLOCK))) {
-
-			/*
-			 * XXX: Deal with this better. Trap OHCI code and
-			 * translate/deal with the results.
-			 */
-			
-			if (status >= OHCI_CTXCTL_EVENT_RESERVED16)
-				status = status & 0xf;
-			else
-				status = 0;
-			ab->ab_ackcb(ab, status);
+		/*
+		 * Got all the ack's back and the buffer is invalid (i.e. the
+		 * callback has been called. Clean up.
+		 */
+		
+		if (fcb->abuf_valid == 0) {
+			if (fcb->count == 0)
+				free(fcb, M_DEVBUF);
 			return IEEE1394_RCODE_COMPLETE;
 		}
-		if (!((status == OHCI_CTXCTL_EVENT_ACK_TYPE_ERROR) &&
-		    (pkt->fp_tcode == IEEE1394_TCODE_READ_REQ_BLOCK)))
-			return IEEE1394_RCODE_COMPLETE;
-
-	} else 
+	} else {
+		status = -1;
+		tcode = pkt->fp_tcode;
 		rcode = (pkt->fp_hdr[1] & 0x0000f000) >> 12;
+	}
 
 	/*
 	 * Some area's (like the config rom want to be read as quadlets only.
 	 *
 	 * The current ideas to try are:
 	 *
-	 * Got an ACK_TYPE_ERROR on a block read
+	 * Got an ACK_TYPE_ERROR on a block read.
 	 *
-	 * Got either RCODE_TYPE or RCODE_ADDRESS errors in a read block response
+	 * Got either RCODE_TYPE or RCODE_ADDRESS errors in a block read
+	 * response.
 	 *
-	 * If all cases construct a new packet for a quadlet read and let
+	 * In all cases construct a new packet for a quadlet read and let
 	 * mutli_resp handle the iteration over the space.
 	 */
 
 	if (((status == OHCI_CTXCTL_EVENT_ACK_TYPE_ERROR) &&
-	    (pkt->fp_tcode == IEEE1394_TCODE_READ_REQ_BLOCK)) ||
+	     (tcode == IEEE1394_TCODE_READ_REQ_BLOCK)) ||
 	    (((rcode == IEEE1394_RCODE_TYPE_ERROR) ||
-		(rcode == IEEE1394_RCODE_ADDRESS_ERROR)) &&
-		(pkt->fp_tcode == IEEE1394_TCODE_READ_RESP_BLOCK))) {
+	     (rcode == IEEE1394_RCODE_ADDRESS_ERROR)) &&
+	      (tcode == IEEE1394_TCODE_READ_RESP_BLOCK))) {
 
 		/* Read the area in quadlet chunks (internally track this). */
 
@@ -2982,49 +3026,80 @@ fwohci_extract_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 		rv = fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
 		    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
-		    fwohci_multi_resp, ab);
-		if (rv) 
-			return rv;
-		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
-		if (ab->ab_ackcb) {
-			newpkt.fp_statusarg = ab;
-			newpkt.fp_statuscb = fwohci_extract_resp;
+		    fwohci_read_multi_resp, fcb);
+		if (rv) {
+			(*ab->ab_cb)(ab, -1);
+			goto cleanup;
 		}
-		fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
-	} else {
+		newpkt.fp_statusarg = fcb;
+		newpkt.fp_statuscb = fwohci_read_resp;
+		rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
+		if (rv) {
+			fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
+			    ab->ab_req->sc1394_node_id, sc->sc_tlabel, NULL,
+			    NULL);
+			(*ab->ab_cb)(ab, -1);
+			goto cleanup;
+		}
+		fcb->count++;
+		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
+		return IEEE1394_RCODE_COMPLETE;
+	} else if ((rcode != -1) || ((status != -1) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))) {
 
 		/*
 		 * Recombine all the iov data into 1 chunk for higher
 		 * level code.
 		 */
 
-		cur = ab->ab_data;
-		for (i = 0; i < pkt->fp_uio.uio_iovcnt; i++) {
-			/*
-			 * Make sure and don't exceed the buffer
-			 * allocated for return.
-			 */
-			if ((ab->ab_retlen + pkt->fp_iov[i].iov_len) >
-			    ab->ab_length) {
+		if (rcode != -1) {
+			cur = ab->ab_data;
+			for (i = 0; i < pkt->fp_uio.uio_iovcnt; i++) {
+				/*
+				 * Make sure and don't exceed the buffer
+				 * allocated for return.
+				 */
+				if ((ab->ab_retlen + pkt->fp_iov[i].iov_len) >
+				    ab->ab_length) {
+					memcpy(cur, pkt->fp_iov[i].iov_base,
+					    (ab->ab_length - ab->ab_retlen));
+					ab->ab_retlen = ab->ab_length;
+					break;
+				}
 				memcpy(cur, pkt->fp_iov[i].iov_base,
-				    (ab->ab_length - ab->ab_retlen));
-				ab->ab_retlen = ab->ab_length;
-				break;
+				    pkt->fp_iov[i].iov_len);
+				cur += pkt->fp_iov[i].iov_len;
+				ab->ab_retlen += pkt->fp_iov[i].iov_len;
 			}
-			memcpy(cur, pkt->fp_iov[i].iov_base,
-			    pkt->fp_iov[i].iov_len);
-			cur += pkt->fp_iov[i].iov_len;
-			ab->ab_retlen += pkt->fp_iov[i].iov_len;
 		}
+		if (status != -1) 
+			/* XXX: Need a complete tlabel interface. */
+			for (i = 0; i < 64; i++)
+				fwohci_handler_set(sc,
+				    IEEE1394_TCODE_READ_RESP_QUAD,
+				    ab->ab_req->sc1394_node_id, i, NULL, NULL);
 		(*ab->ab_cb)(ab, rcode);
-	}
+		goto cleanup;
+	} else
+		/* Good ack packet. */
+		return IEEE1394_RCODE_COMPLETE;
+
+	/* Can't get here unless ab->ab_cb has been called. */
+	
+ cleanup:
+	fcb->abuf_valid = 0;
+	if (fcb->count == 0)
+		free(fcb, M_DEVBUF);
 	return IEEE1394_RCODE_COMPLETE;
 }
 
 static int
-fwohci_multi_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
+    struct fwohci_pkt *pkt)
 {
-	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
+	struct fwohci_cb *fcb = arg;
+	struct ieee1394_abuf *ab = fcb->ab;
 	struct fwohci_pkt newpkt;
 	u_int32_t high, lo;
 	int rcode, rv;
@@ -3034,11 +3109,15 @@ fwohci_multi_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	 * buf.
 	 */
 
+	/* Make sure a response packet didn't arrive after a bad ACK. */
+	if (fcb->abuf_valid == 0)
+		return IEEE1394_RCODE_COMPLETE;
+
 	rcode = (pkt->fp_hdr[1] & 0x0000f000) >> 12;
 
 	if (rcode) {
 		(*ab->ab_cb)(ab, rcode);
-		return rcode;
+		goto cleanup;
 	}
 
 	if ((ab->ab_retlen + pkt->fp_iov[0].iov_len) > ab->ab_length) {
@@ -3066,25 +3145,64 @@ fwohci_multi_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		newpkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
 		    (newpkt.fp_tcode << 4);
 
+		newpkt.fp_statusarg = fcb;
+		newpkt.fp_statuscb = fwohci_read_resp;
+
 		/*
 		 * Bad return code.  Just give up and return what's
 		 * come in now.
 		 */
 		rv = fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
 		    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
-		    fwohci_multi_resp, ab);
-		if (rv) {
-			(*ab->ab_cb)(ab, rcode);
-			return IEEE1394_RCODE_DATA_ERROR;
+		    fwohci_read_multi_resp, fcb);
+		if (rv) 
+			(*ab->ab_cb)(ab, -1);
+		else {
+			rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
+			if (rv) {
+				fwohci_handler_set(sc,
+				    IEEE1394_TCODE_READ_RESP_QUAD,
+				    ab->ab_req->sc1394_node_id, sc->sc_tlabel,
+				    NULL, NULL);
+				(*ab->ab_cb)(ab, -1);
+			} else {
+				sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
+				fcb->count++;
+				return IEEE1394_RCODE_COMPLETE;
+			}
 		}
-		sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
-		rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
-		if (rv) {
-			(*ab->ab_cb)(ab, rcode);
-			return IEEE1394_RCODE_DATA_ERROR;
-		}
-	} else 
-		(*ab->ab_cb)(ab, rcode);
+	} else
+		(*ab->ab_cb)(ab, IEEE1394_RCODE_COMPLETE);
+
+ cleanup:
+	/* Can't get here unless ab_cb has been called. */
+	fcb->abuf_valid = 0;
+	if (fcb->count == 0)
+		free(fcb, M_DEVBUF);
+	return IEEE1394_RCODE_COMPLETE;
+}
+
+static int
+fwohci_write_ack(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
+{
+	struct ieee1394_abuf *ab = arg;
+	u_int16_t status;
+
+
+	status = pkt->fp_status & OHCI_DESC_STATUS_ACK_MASK;
+	if ((status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
+	    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))
+		DPRINTF(("Got status packet: 0x%02x\n",
+		    (unsigned int)status));
+
+	/* No callback means this level should free the buffers. */
+	if (ab->ab_cb)
+		(*ab->ab_cb)(ab, status);
+	else {
+		if (ab->ab_data)
+			free(ab->ab_data, M_1394DATA);
+		free(ab, M_1394DATA);
+	}
 	return IEEE1394_RCODE_COMPLETE;
 }
 
@@ -3095,31 +3213,51 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 	struct fwohci_softc *psc =
 	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent; 
 	u_int32_t high, lo;
-	int i, rv;
+	int i, j, rv;
 
 	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
 	lo = (ab->ab_csr & 0x00000000ffffffff);
 
+	rv = 0;
 	switch (ab->ab_tcode) {
 	case IEEE1394_TCODE_READ_REQ_QUAD:
 	case IEEE1394_TCODE_WRITE_REQ_QUAD:
-		rv = fwohci_handler_set(psc, ab->ab_tcode, high, lo,
-		    fwohci_parse_input, ab);
+		if (ab->ab_cb)
+			rv = fwohci_handler_set(psc, ab->ab_tcode, high, lo,
+			    fwohci_parse_input, ab);
+		else
+			fwohci_handler_set(psc, ab->ab_tcode, high, lo, NULL,
+			    NULL);
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 		if (allow) {
 			for (i = 0; i < (ab->ab_length / 4); i++) {
-				rv = fwohci_handler_set(psc, ab->ab_tcode,
-				    high, lo + (i * 4),
-				    fwohci_parse_input, ab);
-				if (rv) 
-					return rv;
+				if (ab->ab_cb) {
+					rv = fwohci_handler_set(psc,
+					    ab->ab_tcode, high, lo + (i * 4),
+					    fwohci_parse_input, ab);
+					if (rv)
+						break;
+				} else
+					fwohci_handler_set(psc, ab->ab_tcode,
+					    high, lo + (i * 4), NULL, NULL);
 			}
-			ab->ab_data = (void *)1;
-		} else 
-			rv = fwohci_handler_set(psc, ab->ab_tcode, high, lo,
-			    fwohci_parse_input, ab);
+			if (i != (ab->ab_length / 4)) {
+				j = i + 1;
+				for (i = 0; i < j; i++) 
+					fwohci_handler_set(psc, ab->ab_tcode,
+					    high, lo + (i * 4), NULL, NULL);
+			} else
+				ab->ab_data = (void *)1;
+		} else {
+			if (ab->ab_cb) 
+				rv = fwohci_handler_set(psc, ab->ab_tcode, high,
+				    lo, fwohci_parse_input, ab);
+			else
+				fwohci_handler_set(psc, ab->ab_tcode, high, lo,
+				    NULL, NULL);
+		}
 		break;
 	default:
 		DPRINTF(("Invalid registration tcode: %d\n", ab->ab_tcode));
