@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.18 1997/10/11 02:28:17 enami Exp $
+.\"	$NetBSD: disklabel.8,v 1.19 1997/10/14 06:30:13 fair Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -103,6 +103,7 @@ or to replace a damaged label.
 On some systems,
 .Nm
 can be used to install bootstrap code as well.
+.Pp
 There are several forms of the command that read (display), install or edit
 the label on a disk.
 Each form has an additional option,
@@ -393,3 +394,10 @@ will construct the full pathname of the disk and use
 the ``a'' partition on the tahoe,
 the ``d'' partition on the i386 or its successors, and the ``c''
 partition on all others.
+.Pp
+On the sun3 and sparc
+.Nx
+systems, the size of each partition must be a multiple of the number
+of sectors per cylinder (i.e. each partition must be an integer
+number of cylinders), or the boot ROMs will declare the label
+invalid and fail to boot the system.
