@@ -56,19 +56,19 @@ char *svr4_syscallnames[] = {
 	"getgid",			/* 47 = getgid */
 	"signal",			/* 48 = signal */
 #ifdef SYSVMSG
-	"#49 (unimplemented { int sys_msgsys ( int which , int a2 , int a3 , int a4 , int a5 , int a6 ) ; })",		/* 49 = unimplemented { int sys_msgsys ( int which , int a2 , int a3 , int a4 , int a5 , int a6 ) ; } */
+	"msgsys",			/* 49 = msgsys */
 #else
 	"#49 (unimplemented msgsys)",		/* 49 = unimplemented msgsys */
 #endif
 	"sysarch",			/* 50 = sysarch */
 	"#51 (unimplemented acct)",		/* 51 = unimplemented acct */
 #ifdef SYSVSHM
-	"#52 (unimplemented { int sys_shmsys ( int which , int a2 , int a3 , int a4 ) ; })",		/* 52 = unimplemented { int sys_shmsys ( int which , int a2 , int a3 , int a4 ) ; } */
+	"shmsys",			/* 52 = shmsys */
 #else
 	"#52 (unimplemented shmsys)",		/* 52 = unimplemented shmsys */
 #endif
 #ifdef SYSVSEM
-	"#53 (unimplemented { int sys_semsys ( int which , int a2 , int a3 , int a4 , int a5 ) ; })",		/* 53 = unimplemented { int sys_semsys ( int which , int a2 , int a3 , int a4 , int a5 ) ; } */
+	"semsys",			/* 53 = semsys */
 #else
 	"#53 (unimplemented semsys)",		/* 53 = unimplemented semsys */
 #endif
