@@ -491,6 +491,7 @@
 ./usr/sbin/eshconfig
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
+./usr/sbin/greconfig
 ./usr/sbin/hlfsd
 ./usr/sbin/host
 ./usr/sbin/inetd
