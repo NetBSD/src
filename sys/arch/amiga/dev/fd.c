@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48.4.7 2003/01/03 16:38:43 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.48.4.8 2003/01/07 20:56:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.7 2003/01/03 16:38:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.8 2003/01/07 20:56:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,7 +905,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	/*
-	 * copy disklabel to buf and write it out syncronous
+	 * copy disklabel to buf and write it out synchronous
 	 */
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.15 2002/11/11 21:56:08 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.16 2003/01/07 20:56:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.15 2002/11/11 21:56:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.16 2003/01/07 20:56:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,10 +1101,10 @@ softintr_disestablish(hook)
 	void *hook;
 {
 	/*
-	 * XXX currently, there is a memory leak here; we cant free the
+	 * XXX currently, there is a memory leak here; we can't free the
 	 * sicallback structure.
-	 * this will be automatically repaired once we rewirte the soft
-	 * interupt functions.
+	 * this will be automatically repaired once we rewrite the soft
+	 * interrupt functions.
 	 */
 
 	free(hook, M_TEMP);

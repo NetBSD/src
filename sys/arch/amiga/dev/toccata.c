@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.2.4.4 2002/10/18 02:35:05 nathanw Exp $ */
+/* $NetBSD: toccata.c,v 1.2.4.5 2003/01/07 20:56:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.2.4.4 2002/10/18 02:35:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.2.4.5 2003/01/07 20:56:22 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,7 +188,7 @@ struct audio_hw_if audiocs_hw_if = {
 	toccata_close,
 	0,	/*
 		 * XXX toccata_drain could be written:
-		 * sleep for play interupt. This loses less then 512 bytes of
+		 * sleep for play interrupt. This loses less then 512 bytes of
 		 * sample data, otherwise up to 1024.
 		 */
 	ad1848_query_encoding,
@@ -291,7 +291,7 @@ toccata_attach(struct device *parent, struct device *self, void *aux) {
 
 }
 
-/* interupt handler */
+/* interrupt handler */
 
 int
 toccata_intr(void *tag) {
@@ -331,13 +331,13 @@ toccata_intr(void *tag) {
 	}
 
 	/*
-	 * Something is wrong; switch interupts off to avoid wedging the
+	 * Something is wrong; switch interrupts off to avoid wedging the
 	 * machine, and notify the alpha tester.
 	 * Normally, the halt_* functions should have switched off the 
-	 * FIFO interupt.
+	 * FIFO interrupt.
 	 */
 #ifdef DEBUG
-	printf("%s: got unexpected interupt %x\n", sc->sc_ad.sc_dev.dv_xname,
+	printf("%s: got unexpected interrupt %x\n", sc->sc_ad.sc_dev.dv_xname,
 	    status);
 #endif
 	*sc->sc_boardp = TOCC_ACT;
@@ -362,7 +362,7 @@ toccata_writereg(struct ad1848_softc *asc, int offset, int value) {
 		offset * (TOCC_CODEC_REG - TOCC_CODEC_ADDR)) = value;
 }
 
-/* our own copy of open/close; we don't ever enable the ad1848 interupts */
+/* our own copy of open/close; we don't ever enable the ad1848 interrupts */
 int
 toccata_open(void *addr, int flags) {
 	struct toccata_softc *sc;

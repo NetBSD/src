@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.3.8.5 2003/01/03 16:38:46 thorpej Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.3.8.6 2003/01/07 20:56:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.5 2003/01/03 16:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.6 2003/01/07 20:56:21 thorpej Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -163,7 +163,7 @@ iobzprint(void *auxp, const char *pnp)
 }
 
 /*
- * Disable board interupts at shutdown time.
+ * Disable board interrupts at shutdown time.
  */
 
 void

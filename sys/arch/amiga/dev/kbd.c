@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35.8.5 2002/11/11 21:56:17 nathanw Exp $ */
+/*	$NetBSD: kbd.c,v 1.35.8.6 2003/01/07 20:56:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.8.5 2002/11/11 21:56:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.8.6 2003/01/07 20:56:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ kbdenable(void)
 
 #ifdef DRACO
 /*
- * call this with kbd interupt blocked
+ * call this with kbd interrupt blocked
  */
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.6.8.4 2003/01/03 16:38:46 thorpej Exp $ */
+/*	$NetBSD: gvpio.c,v 1.6.8.5 2003/01/07 20:56:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.4 2003/01/03 16:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.5 2003/01/07 20:56:20 thorpej Exp $");
 
 /*
  * GVP I/O Extender
@@ -140,7 +140,7 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 		++giosd;
 	}
 	if (giosc->sc_comhdls.lh_first) {
-		/* XXX this should be really in the interupt stuff */
+		/* XXX this should be really in the interrupt stuff */
 		needpsl = PSL_S|PSL_IPL6;
 		if (amiga_serialspl < needpsl) {
 			printf("%s: raising amiga_serialspl from 0x%x to 0x%x\n",
