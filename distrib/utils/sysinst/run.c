@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11.2.1 1999/04/19 15:19:28 perry Exp $	*/
+/*	$NetBSD: run.c,v 1.11.2.2 1999/06/24 23:01:37 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -91,8 +91,8 @@ do_logging(void)
 {
 	int menu_no;
 
-	menu_no = new_menu (" Logging Functions ", logmenu, 2, 13, 12,
-		0, 55, MC_SCROLL, NULL, NULL, "Pick an option to turn on or off.\n");
+	menu_no = new_menu ("Logging Functions", logmenu, 2, -1, 12,
+		0, 20, MC_SCROLL, NULL, NULL, "Pick an option to turn on or off.\n");
 
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");
@@ -287,8 +287,12 @@ launch_subwin(actionwin, args, win, display)
 	rtt.c_lflag &= ~ECHO; 
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
 
+	/* ignore tty signals until we're done with subprocess setup */
+	ttysig_ignore = 1;
+
 	switch(child=fork()) {
 	case -1:
+		ttysig_ignore = 0;
 		return -1;
 		break;
 	case 0:
@@ -325,7 +329,13 @@ launch_subwin(actionwin, args, win, display)
 		warn("execvp %s", argzero);
 		_exit(EXIT_FAILURE);
 		break; /* end of child */
-	default: break;
+	default:
+		/*
+		 * we've set up the subprocess.  forward tty signals to its			 * process group.
+		 */
+		ttysig_forward = child;
+		ttysig_ignore = 0;
+		break;
 	}
 	close(dataflow[1]);
 	FD_ZERO(&active_fd_set);
@@ -342,6 +352,8 @@ launch_subwin(actionwin, args, win, display)
 		}
 		read_fd_set = active_fd_set;
 		if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
+			if (errno == EINTR)
+				goto loop;
 			perror("select");
 			if (logging)
 				(void)fprintf(log, "select failure: %s\n", strerror(errno));
@@ -353,37 +365,30 @@ launch_subwin(actionwin, args, win, display)
 					(void)write(master, ibuf, n);
 				for (j=0; j < n; j++) {
 					if (display) {
-						if (ibuf[j] == '\n' || ibuf[j] == '\r') {
-							if (ibuf[j] == '\n') {
-								getyx(actionwin, ycor, xcor);
-								if (ycor + 1 >= actionwin->maxy) {
-									scroll(actionwin);
-									wmove(actionwin, actionwin->maxy - 1, 1);
-								} else
-									wmove(actionwin, ycor + 1, 1);
-								if (logging)
-									fprintf(log, "\n");
-							}
-						} else {
+						getyx(actionwin, ycor, xcor);
+						if (ibuf[j] == '\n') {
 							getyx(actionwin, ycor, xcor);
-							if (xcor == 0)
-							wmove(actionwin, ycor, xcor + 1);
+							if (ycor + 1 >= actionwin->maxy) {
+								scroll(actionwin);
+								wmove(actionwin, actionwin->maxy - 1, 0);
+							} else
+								wmove(actionwin, ycor + 1, 0);
+						} else if (ibuf[j] == '\r') {
+							getyx(actionwin, ycor, xcor);
+							wmove(actionwin, ycor, 0);
+						} else
 							waddch(actionwin, ibuf[j]);
-							wrefresh(actionwin);
-							if (logging) {
-								putc(ibuf[j], log);
-								fflush(log);
-							}
-						}
-					} else {  /* display is off */
-						if (logging) {
+						if (logging)
 							putc(ibuf[j], log);
-							fflush(log);
-						}
 					}
+					if (display)
+						wrefresh(actionwin);
+					if (logging)
+						fflush(log);
 				}
 			}
 		}
+loop:
 		pid = wait4(child, &status, WNOHANG, 0);
  		if (pid == child && (WIFEXITED(status) || WIFSIGNALED(status)))
 			break;
@@ -394,7 +399,11 @@ launch_subwin(actionwin, args, win, display)
 	if (logging)
 		fflush(log);
 
+	/* from here on out, we take tty signals ourselves */
+	ttysig_forward = 0;
+
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
+
 	if (WIFEXITED(status))
 		return(WEXITSTATUS(status));
 	else if (WIFSIGNALED(status))
@@ -440,12 +449,27 @@ run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 		wclear(stdscr); /* XXX shouldn't be needed */
 		wrefresh(stdscr);
 		statuswin = subwin(stdscr, win.ws_row, win.ws_col, 0, 0);
+		if (statuswin == NULL) {
+			fprintf(stderr, "sysinst: failed to allocate"
+			    " status window.\n");
+			exit(1);
+		}
 		boxwin = subwin(statuswin, win.ws_row - 3, win.ws_col, 3, 0);
-		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 3,
+		if (boxwin == NULL) {
+			fprintf(stderr, "sysinst: failed to allocate"
+			    " status box.\n");
+			exit(1);
+		}
+		actionwin = subwin(statuswin, win.ws_row - 5, win.ws_col - 2,
 		   4, 1);
+		if (actionwin == NULL) {
+			fprintf(stderr, "sysinst: failed to allocate"
+			    " output window.\n");
+			exit(1);
+		}
 		scrollok(actionwin, TRUE);
 
-		win.ws_col -= 3;
+		win.ws_col -= 2;
 		win.ws_row -= 5;
 
 		wclear(statuswin);
