@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2002/04/12 13:39:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/04/13 18:23:32 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
-MDSETTARGETS=	INSTALL ${RAMDISK} netbsd
+MDSETTARGETS=	INSTALL ${RAMDISK} -
 
 MDSETDIR=	binary/kernel
 
