@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2002/11/28 06:06:13 chs Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2003/10/18 23:45:30 itohy Exp $	*/
 
 /*	$OpenBSD: disklabel.h,v 1.5 2000/07/05 22:37:22 mickey Exp $	*/
 
@@ -50,8 +50,8 @@ enum disklabel_tag { DLT_ALPHA, DLT_I386, DLT_AMIGA, DLT_HPPA };
 #define	I386_LABELOFFSET	0		/* offset of label in sector */
 #define	AMIGA_LABELSECTOR	0		/* sector containing label */
 #define	AMIGA_LABELOFFSET	64		/* offset of label in sector */
-#define	HPPA_LABELSECTOR	0		/* sector containing label */
-#define	HPPA_LABELOFFSET	64		/* offset of label in sector */
+#define	HPPA_LABELSECTOR	1		/* sector containing label */
+#define	HPPA_LABELOFFSET	0		/* offset of label in sector */
 
 #define LABELSECTOR		HPPA_LABELSECTOR
 #define LABELOFFSET		HPPA_LABELOFFSET
