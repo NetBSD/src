@@ -1,0 +1,71 @@
+.\"	dhclient.conf.5
+.\"
+.\" Copyright (c) 1997 The Internet Software Consortium.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie
+.\" Enterprises.  To learn more about the Internet Software Consortium,
+.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
+.\" Enterprises, see ``http://www.vix.com''.
+.\"
+.\"
+.\" %FreeBSD: src/contrib/isc-dhcp/client/dhclient.leases.5,v 1.2.4.1 2002/04/11 10:16:46 murray Exp %
+.\"
+.\" $FreeBSD: doc/ja_JP.eucJP/man/man5/dhclient.leases.5,v 1.6 2002/05/05 20:40:23 horikawa Exp $
+.TH dhclient.leases 5
+.SH 名称
+dhclient.leases - DHCP クライアントのリースデータベース
+.SH 解説
+Internet Software Consortium の DHCP クライアントは、
+獲得したリースのうちまだ有効であるものを管理するための、
+永続的なデータベースを保持します。
+このデータベースは、自由形式の ASCII ファイルであり、
+リース 1 つにつき有効な宣言を 1 つ含みます。
+あるリースに対して複数の宣言が登場する場合、
+ファイル中の最後のものが使用されます。
+このファイルはログとして書き込まれますので、
+このような状態になることは異常ではありません。
+.PP
+リース宣言の書式は、
+.B dhclient.conf(5)
+に記述されています。
+.SH 関連ファイル
+.B DBDIR/dhclient.leases
+.SH 関連項目
+dhclient(8), dhcp-options(5), dhclient.conf(5),
+RFC2132, RFC2131
+.SH 作者
+.B dhclient(8)
+は、Vixie Labs との契約のもとで、Ted Lemon が記述しました。
+本プロジェクトの資金は、Internet Software Consortium が提供しました。
+Internet Software Consortium に関する情報は、
+.B http://www.isc.org
+にあります。
