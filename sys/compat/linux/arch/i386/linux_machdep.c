@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.c,v 1.50 2000/06/11 09:19:27 veego Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.50.2.1 2001/03/30 21:34:21 he Exp $	*/
 
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,11 +61,14 @@
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
+#include <sys/disklabel.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
 
@@ -87,6 +90,7 @@
 #include "wsdisplay.h"
 #if (NWSDISPLAY > 0)
 #include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #include "opt_xserver.h"
 #endif
@@ -98,6 +102,10 @@ int linux_read_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
 int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
     register_t *));
 #endif
+
+static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
+extern struct disklist *i386_alldisks;
+extern const char *findblkname __P((int));
 
 /*
  * Deal with some i386-specific things in the Linux emulation code.
@@ -532,6 +540,41 @@ u_short *linux_keytabs[] = {
 };
 #endif
 
+static struct biosdisk_info *
+fd2biosinfo(p, fp)
+	struct proc *p;
+	struct file *fp;
+{
+	struct vnode *vp;
+	const char *blkname;
+	char diskname[16];
+	int i;
+	struct nativedisk_info *nip;
+	struct disklist *dl = i386_alldisks;
+
+	if (fp->f_type != DTYPE_VNODE)
+		return NULL;
+	vp = (struct vnode *)fp->f_data;
+
+	if (vp->v_type != VBLK)
+		return NULL;
+
+	blkname = findblkname(major(vp->v_rdev));
+	snprintf(diskname, sizeof diskname, "%s%u", blkname,
+	    DISKUNIT(vp->v_rdev));
+
+	for (i = 0; i < dl->dl_nnativedisks; i++) {
+		nip = &dl->dl_nativedisks[i];
+		if (strcmp(diskname, nip->ni_devname))
+			continue;
+		if (nip->ni_nmatches != 0)
+			return &dl->dl_biosdisks[nip->ni_biosmatches[0]];
+	}
+
+	return NULL;
+}
+
+
 /*
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
@@ -548,16 +591,37 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
+	int error, error1;
 #if (NWSDISPLAY > 0)
-	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
 	struct kbentry kbe;
 #endif
+	struct linux_hd_geometry hdg;
+	struct linux_hd_big_geometry hdg_big;
+	struct biosdisk_info *bip;
+	struct filedesc *fdp;
+	struct file *fp;
+	int fd;
+	struct disklabel label, *labp;
+	struct partinfo partp;
+	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	u_long start, biostotal, realtotal;
+	u_char heads, sectors;
+	u_int cylinders;
+	struct ioctl_pt pt;
 
-	SCARG(&bia, fd) = SCARG(uap, fd);
+	fd = SCARG(uap, fd);
+	SCARG(&bia, fd) = fd;
 	SCARG(&bia, data) = SCARG(uap, data);
 	com = SCARG(uap, com);
+
+	fdp = p->p_fd;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+		return (EBADF);
 
 	switch (com) {
 #if (NWSDISPLAY > 0)
@@ -569,11 +633,19 @@ linux_machdepioctl(p, v, retval)
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
 			SCARG(&bia, data) = (caddr_t)K_RAW;
 		break;
+	case LINUX_KIOCSOUND:
+		SCARG(&bia, data) =
+		    (caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
+		/* fall through */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
 		break;
 	case LINUX_KDSETMODE:
 		com = KDSETMODE;
+		break;
+	case LINUX_KDGETMODE:
+		/* KD_* values are equal to the wscons numbers */
+		com = WSDISPLAYIO_GMODE;
 		break;
 	case LINUX_KDENABIO:
 		com = KDENABIO;
@@ -616,6 +688,9 @@ linux_machdepioctl(p, v, retval)
 			return error;
 		SCARG(&bia, data) = bvtp;
 		break;
+	case LINUX_VT_DISALLOCATE:
+		/* XXX should use WSDISPLAYIO_DELSCREEN */
+		return 0;
 	case LINUX_VT_RELDISP:
 		com = VT_RELDISP;
 		break;
@@ -648,9 +723,79 @@ linux_machdepioctl(p, v, retval)
 		return (copyout(&kbe, SCARG(uap, data),
 				sizeof(struct kbentry)));
 #endif
+	case LINUX_HDIO_GETGEO:
+	case LINUX_HDIO_GETGEO_BIG:
+		/*
+		 * Try to mimic Linux behaviour: return the BIOS geometry
+		 * if possible (extending its # of cylinders if it's beyond
+		 * the 1023 limit), fall back to the MI geometry (i.e.
+		 * the real geometry) if not found, by returning an
+		 * error. See common/linux_hdio.c
+		 */
+		FILE_USE(fp);
+		bip = fd2biosinfo(p, fp);
+		ioctlf = fp->f_ops->fo_ioctl;
+		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, p);
+		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, p);
+		FILE_UNUSE(fp, p);
+		if (error != 0 && error1 != 0)
+			return error1;
+		labp = error != 0 ? &label : partp.disklab;
+		start = error1 != 0 ? partp.part->p_offset : 0;
+		if (bip != NULL && bip->bi_head != 0 && bip->bi_sec != 0
+		    && bip->bi_cyl != 0) {
+			heads = bip->bi_head;
+			sectors = bip->bi_sec;
+			cylinders = bip->bi_cyl;
+			biostotal = heads * sectors * cylinders;
+			realtotal = labp->d_ntracks * labp->d_nsectors *
+			    labp->d_ncylinders;
+			if (realtotal > biostotal)
+				cylinders = realtotal / (heads * sectors);
+		} else {
+			heads = labp->d_ntracks;
+			cylinders = labp->d_ncylinders;
+			sectors = labp->d_nsectors;
+		}
+		if (com == LINUX_HDIO_GETGEO) {
+			hdg.start = start;
+			hdg.heads = heads;
+			hdg.cylinders = cylinders;
+			hdg.sectors = sectors;
+			return copyout(&hdg, SCARG(uap, data), sizeof hdg);
+		} else {
+			hdg_big.start = start;
+			hdg_big.heads = heads;
+			hdg_big.cylinders = cylinders;
+			hdg_big.sectors = sectors;
+			return copyout(&hdg_big, SCARG(uap, data),
+			    sizeof hdg_big);
+		}
+		return 0;
+
 	default:
-		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
-		return EINVAL;
+		/*
+		 * Unknown to us. If it's on a device, just pass it through
+		 * using PTIOCLINUX, the device itself might be able to
+		 * make some sense of it.
+		 * XXX hack: if the function returns EJUSTRETURN,
+		 * it has stuffed a sysctl return value in pt.data.
+		 */
+		FILE_USE(fp);
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = SCARG(uap, data);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		FILE_UNUSE(fp, p);
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
+		}
+
+		if (error == ENOTTY)
+			printf("linux_machdepioctl: invalid ioctl %08lx\n",
+			    com);
+		return error;
 	}
 	SCARG(&bia, com) = com;
 	return sys_ioctl(p, &bia, retval);
