@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppstats.8,v 1.8 1997/05/17 21:33:08 christos Exp $
+.\"	$NetBSD: pppstats.8,v 1.9 1997/07/22 15:19:30 perry Exp $
 .\"	@(#) Id: pppstats.8,v 1.3 1996/07/01 01:22:35 paulus Exp 
 .TH PPPSTATS 8 "26 June 1995"
 .SH NAME
@@ -100,7 +100,7 @@ this interface because of preceding errors.  Only reported when the
 option is specified.
 .TP
 .B NON-VJ
-The total number of non-TCP packets received by this interface. Only
+The total number of non-VJ packets received by this interface. Only
 reported when the
 .B -v
 option is specified.
@@ -139,7 +139,7 @@ Not reported when the
 option is specified.
 .TP
 .B NON-VJ
-The total number of non-TCP packets transmitted from this interface.
+The total number of non-VJ packets transmitted from this interface.
 Not reported when the
 .B -r
 option is specified.
@@ -173,7 +173,7 @@ option is specified.
 When the
 .B -z
 option is specified,
-.Nm pppstats
+.B pppstats
 instead displays the following fields, relating to the packet
 compression algorithm currently in use.  If packet compression is not
 in use, these fields will all display zeroes.  The fields displayed on
