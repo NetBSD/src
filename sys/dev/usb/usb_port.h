@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.4 1999/01/07 22:09:00 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.5 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,8 +116,12 @@ __CONCAT(dname,_attach)(parent, self, aux) \
  */
 
 #include "opt_usb.h"
-char *usb_devname(struct device *);
-#define USBDEVNAME(bdev) usb_devname(&bdev)
+/* 
+ * The following is not a type def to avoid error messages
+ * because of includes in the wrong order.
+ */
+#define bdevice device_t
+#define USBDEVNAME(bdev) usbd_devname(&bdev)
 
 /* XXX Change this when FreeBSD has memset
  */
@@ -129,15 +133,7 @@ char *usb_devname(struct device *);
 			panic("Non zero filler for memset, cannot handle!"); \
 		} while (0)
 
-typedef device_t bdevice;
-
-/* 
- * To avoid race conditions we first initialise the struct
- * before we use it. The timeout might happen between the
- * setting of the timeout and the setting of timo_handle
- */
-#define usb_timeout(f, d, t, h) \
-	(callout_handle_init(&(h)), (h) = timeout((f), (d), (t)))
+#define usb_timeout(f, d, t, h) ((h) = timeout((f), (d), (t)))
 #define usb_untimeout(f, d, h) untimeout((f), (d), (h))
 
 #define USB_DECLARE_DRIVER_NAME_INIT(name, dname, init) \
@@ -199,7 +195,7 @@ __CONCAT(dname,_attach)(device_t self)
 	(device_probe_and_attach((bdev)) == 0 ? ((dev)->softc = (bdev)) : 0)
 
 /* conversion from one type of queue to the other */
-#define SIMPLEQ_REMOVE_HEAD	STAILQ_REMOVE_HEAD_QUEUE
+#define SIMPLEQ_REMOVE_HEAD	STAILQ_REMOVE_HEAD_UNTIL
 #define SIMPLEQ_INSERT_HEAD	STAILQ_INSERT_HEAD
 #define SIMPLEQ_INSERT_TAIL	STAILQ_INSERT_TAIL
 #define SIMPLEQ_NEXT		STAILQ_NEXT
@@ -213,10 +209,10 @@ __CONCAT(dname,_attach)(device_t self)
 #define NONE {0,0}
 
 #define USB_DECLARE_DRIVER_NAME(name, dname) \
-	USB_DECLARE_DRIVER_NAME_INIT(name, dname, NONE )
+	USB_DECLARE_DRIVER_NAME_INIT(#name, dname, NONE )
 #define USB_DECLARE_DRIVER_INIT(dname, init) \
-	USB_DECLARE_DRIVER_NAME_INIT(##dname, dname, init)
+	USB_DECLARE_DRIVER_NAME_INIT(#dname, dname, init)
 #define USB_DECLARE_DRIVER(dname) \
-	USB_DECLARE_DRIVER_NAME_INIT(##dname, dname, NONE )
+	USB_DECLARE_DRIVER_NAME_INIT(#dname, dname, NONE )
 
 #undef NONE

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.26 1999/01/07 22:12:08 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.27 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,11 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
+#if defined(__FreeBSD__)
+#include <machine/clock.h>
+#define delay(d)         DELAY(d)
+#endif
+
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) printf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
@@ -70,14 +75,15 @@ extern int usbdebug;
 static usbd_status	usbd_set_config __P((usbd_device_handle, int));
 char *usbd_get_string __P((usbd_device_handle, int, char *));
 int usbd_getnewaddr __P((usbd_bus_handle bus));
-int usbd_print __P((void *aux, const char *pnp));
 #if defined(__NetBSD__)
-int usbd_submatch __P((struct device *, struct cfdata *cf, void *));
+int usbd_print __P((void *aux, const char *pnp));
+int usbd_submatch __P((bdevice *, struct cfdata *cf, void *));
 #endif
 void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
 void usbd_kill_pipe __P((usbd_pipe_handle));
 usbd_status usbd_probe_and_attach 
 	__P((bdevice *parent, usbd_device_handle dev, int port, int addr));
+
 
 #ifdef USBVERBOSE
 typedef u_int16_t usb_vendor_id_t;
@@ -759,7 +765,10 @@ usbd_probe_and_attach(parent, dev, port, addr)
 			printf("%s: port %d, set config at addr %d failed\n",
 			       USBDEVNAME(*parent), port, addr);
 #endif
-			return (r);
+#if defined(__FreeBSD__)
+			device_delete_child(*parent, bdev);
+#endif
+ 			return (r);
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = dev->cdesc->bConfigurationValue;
@@ -801,7 +810,14 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	 * fully operational and not harming anyone.
 	 */
 	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
-	return (USBD_NORMAL_COMPLETION);
+#if defined(__FreeBSD__)
+/*
+ * XXX should we delete the child again? Left for now to avoid dangling
+ * references.
+      device_delete_child(*parent, bdev);
+*/
+#endif
+ 	return (USBD_NORMAL_COMPLETION);
 }
 
 
@@ -953,19 +969,6 @@ usbd_remove_device(dev, up)
 	struct usbd_port *up;
 {
 	DPRINTF(("usbd_remove_device: %p\n", dev));
-  
-#if defined(__NetBSD__)
-	/* XXX bit of a hack, only for hubs the detach is called
-	 *
-	 * easiest solution, register a detach method in the softc, call that
-	 * one and pass the device struct to it, or the softc. Whatever.
-	 */
-	/*if (dev->bdev && dev->hub)
-	  uhub_detach(dev->hub->hubdata);*/
-#elif defined(__FreeBSD__)
-	if (dev->bdev)
-		device_delete_child(device_get_parent(dev->bdev), dev->bdev);
-#endif
   
 	if (dev->default_pipe)
 		usbd_kill_pipe(dev->default_pipe);
