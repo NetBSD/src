@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kinfo_proc.h	7.1 (Berkeley) 5/9/91
- *	$Id: kinfo_proc.h,v 1.3.4.1 1993/10/18 13:09:19 deraadt Exp $
+ *	$Id: kinfo_proc.h,v 1.3.4.2 1993/12/03 09:19:13 deraadt Exp $
  */
 
 #ifndef _SYS_KINFO_PROC_H_
@@ -54,16 +54,7 @@ struct kinfo_proc {
 		struct	session *e_sess;	/* session pointer */
 		struct	pcred e_pcred;		/* process credentials */
 		struct	ucred e_ucred;		/* current credentials */
-#ifdef sparc
-		struct {
-			segsz_t vm_rssize;      /* resident set size */
-			segsz_t vm_tsize;       /* text size */
-			segsz_t vm_dsize;       /* data size */
-			segsz_t vm_ssize;       /* stack size */
-		} e_vm;
-#else
 		struct	vmspace e_vm;		/* address space */
-#endif
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
 		short	e_jobc;			/* job control counter */
