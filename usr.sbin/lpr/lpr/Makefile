@@ -1,9 +1,8 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 6/19/90
-#	$Id: Makefile,v 1.2 1993/07/30 22:12:17 mycroft Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpr
 CFLAGS+=-I${.CURDIR}/../common_source
-SRCS=	lpr.c startdaemon.c printcap.c
+SRCS=	lpr.c startdaemon.c common.c
 BINOWN=	root
 BINGRP=	daemon
 BINMODE=6555
