@@ -571,6 +571,7 @@ static	wordtab_t	yywords[] = {
 	{ "sticky",	IPNY_STICKY },
 	{ "tag",	IPNY_TAG },
 	{ "tcp",	IPNY_TCP },
+	{ "tcpudp",	IPNY_TCPUDP },
 	{ "to",		IPNY_TO },
 	{ "udp",	IPNY_UDP },
 	{ "-",		'-' },
