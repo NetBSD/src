@@ -1,10 +1,11 @@
-#	$Id: Makefile,v 1.1.1.1 1997/03/16 22:23:38 cjs Exp $
+#	$Id: Makefile,v 1.2 1997/03/24 22:02:43 christos Exp $
 
 PROG=	mopchk
 SRCS=	mopchk.c device.c version.c pf.c loop-bsd.c file.c
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/.. -I${.CURDIR}/../common -DINFO
 CLEANFILES= version.c version.h
 LDADD=	-lkvm
+DPADD=	${LIBKVM}
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../common 
 
 version.c version.h: ${.CURDIR}/../common/VERSION

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/07/25 22:20:13 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/24 22:02:57 christos Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
@@ -8,7 +8,7 @@ CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
 SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 	pcnfsd_cache.c pcnfsd_print.c pcnfsd_svc.c pcnfsd_xdr.c
 
-DPADD=	${LIBRPCSVC}
+DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 LDADD=	-lrpcsvc -lcrypt
 
 pcnfsd_svc.c: pcnfsd.x

@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.14 1997/03/15 01:35:37 jonathan Exp $
+#	$NetBSD: gcc2netbsd,v 1.15 1997/03/24 22:06:16 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -588,12 +588,11 @@ CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
 
-afterinstall:
-	${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-		$(.CURDIR)/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
-	@/bin/rm -rf $(DESTDIR)/usr/bin/gcpp
-	@ln $(DESTDIR)/usr/bin/cpp $(DESTDIR)/usr/bin/gcpp
-	@echo $(DESTDIR)/usr/bin/gcpp -\> $(DESTDIR)/usr/bin/cpp
+LINKS=	${DESTDIR}/usr/bin/cpp ${DESTDIR}/usr/bin/gcpp
+FILES=usr.bin.cpp.sh
+FILESINSTALL=cpp
+FILESDIR=/usr/bin
+FILESMODE=${BINMODE}
 
 .include <bsd.prog.mk>
 %% file g++/Makefile

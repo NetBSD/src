@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1995/04/23 07:58:53 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/03/24 22:06:51 christos Exp $
 
 PROG=	sort
 LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+DPADD+=	${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>
