@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.33 2001/07/07 16:13:50 thorpej Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.34 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -209,15 +209,15 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 #define	PDQ_OS_DATABUF_FREE(pdq, b)	pdq_os_databuf_free((pdq)->pdq_os_ctx, (b))
 #define PDQ_OS_DATABUF_BUSPA(pdq, b)	(M_GETCTX((b), bus_dmamap_t)->dm_segs[0].ds_addr + 0)
 struct _pdq_os_ctx_t;
-extern void pdq_os_descriptor_block_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
-					 size_t length, int ops);
-extern void pdq_os_consumer_block_sync(struct _pdq_os_ctx_t *osctx, int ops);
-extern void pdq_os_unsolicited_event_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
-				 	  size_t length, int ops);
-extern struct mbuf *pdq_os_databuf_alloc(struct _pdq_os_ctx_t *osctx);
-extern void pdq_os_databuf_sync(struct _pdq_os_ctx_t *osctx, struct mbuf *b,
-				size_t offset, size_t length, int ops);
-extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
+extern void pdq_os_descriptor_block_sync(struct _pdq_os_ctx_t *, size_t,
+					 size_t, int);
+extern void pdq_os_consumer_block_sync(struct _pdq_os_ctx_t *, int);
+extern void pdq_os_unsolicited_event_sync(struct _pdq_os_ctx_t *, size_t,
+				 	  size_t, int);
+extern struct mbuf *pdq_os_databuf_alloc(struct _pdq_os_ctx_t *);
+extern void pdq_os_databuf_sync(struct _pdq_os_ctx_t *, struct mbuf *,
+				size_t, size_t, int);
+extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #define M_HASTXDMAMAP		M_LINK1
 #define M_HASRXDMAMAP		M_LINK2
 #endif
@@ -345,12 +345,12 @@ typedef struct _pdq_os_ctx_t {
 } pdq_softc_t;
 
 
-extern void pdq_ifreset(pdq_softc_t *sc);
-extern void pdq_ifinit(pdq_softc_t *sc);
-extern void pdq_ifwatchdog(struct ifnet *ifp);
-extern ifnet_ret_t pdq_ifstart(struct ifnet *ifp);
-extern int pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, caddr_t data);
-extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifwatchdog)(int unit));
+extern void pdq_ifreset(pdq_softc_t *);
+extern void pdq_ifinit(pdq_softc_t *);
+extern void pdq_ifwatchdog(struct ifnet *);
+extern ifnet_ret_t pdq_ifstart(struct ifnet *);
+extern int pdq_ifioctl(struct ifnet *, ioctl_cmd_t, caddr_t);
+extern void pdq_ifattach(pdq_softc_t *, ifnet_ret_t (*ifwatchdog)(int));
 #endif /* !PDQ_HWSUPPORT */
 
 
@@ -481,25 +481,24 @@ typedef mblk_t PDQ_OS_DATABUF_T;
 #define	PDQ_OS_HDR_OFFSET	PDQ_RX_FC_OFFSET
 #endif
 
-extern void pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addrs, size_t numaddrs);
-extern void pdq_os_receive_pdu(pdq_t *, PDQ_OS_DATABUF_T *pdu, size_t pdulen, int drop);
-extern void pdq_os_restart_transmitter(pdq_t *pdq);
-extern void pdq_os_transmit_done(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
+extern void pdq_os_addr_fill(pdq_t *, pdq_lanaddr_t *, size_t);
+extern void pdq_os_receive_pdu(pdq_t *, PDQ_OS_DATABUF_T *, size_t, int);
+extern void pdq_os_restart_transmitter(pdq_t *);
+extern void pdq_os_transmit_done(pdq_t *, PDQ_OS_DATABUF_T *);
 #if !defined(pdq_os_update_status)
-extern void pdq_os_update_status(pdq_t *pdq, const void *rsp);
+extern void pdq_os_update_status(pdq_t *, const void *);
 #endif
 #if !defined(PDQ_OS_MEMALLOC_CONTIG)
-extern int pdq_os_memalloc_contig(pdq_t *pdq);
+extern int pdq_os_memalloc_contig(pdq_t *);
 #endif
-extern pdq_boolean_t pdq_queue_transmit_data(pdq_t *pdq, PDQ_OS_DATABUF_T *pdu);
-extern void pdq_flush_transmitter(pdq_t *pdq);
+extern pdq_boolean_t pdq_queue_transmit_data(pdq_t *, PDQ_OS_DATABUF_T *);
+extern void pdq_flush_transmitter(pdq_t *);
 
-extern void pdq_run(pdq_t *pdq);
-extern pdq_state_t pdq_stop(pdq_t *pdq);
-extern void pdq_hwreset(pdq_t *pdq);
+extern void pdq_run(pdq_t *);
+extern pdq_state_t pdq_stop(pdq_t *);
+extern void pdq_hwreset(pdq_t *);
 
-extern int pdq_interrupt(pdq_t *pdq);
-extern pdq_t *pdq_initialize(pdq_bus_t bus, pdq_bus_memaddr_t csr_va,
-			     const char *name, int unit,
-			     void *ctx, pdq_type_t type);
+extern int pdq_interrupt(pdq_t *);
+extern pdq_t *pdq_initialize(pdq_bus_t, pdq_bus_memaddr_t, const char *, int,
+			     void *, pdq_type_t);
 #endif /* _PDQ_OS_H */

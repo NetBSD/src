@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcioctl.h,v 1.4 2001/08/27 17:47:36 eeh Exp $	*/
+/*	$NetBSD: if_lmcioctl.h,v 1.5 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -294,22 +294,19 @@ struct lmc___media {
 	void	(* watchdog)(lmc_softc_t * const);
 };
 
-u_int32_t lmc_mii_readreg(lmc_softc_t * const sc, u_int32_t devaddr,
-			  u_int32_t regno);
-void lmc_mii_writereg(lmc_softc_t * const sc, u_int32_t devaddr,
-		      u_int32_t regno, u_int32_t data);
-void lmc_initcsrs(lmc_softc_t * const sc, lmc_csrptr_t csr_base,
-		  size_t csr_size);
-void lmc_dec_reset(lmc_softc_t * const sc);
-void lmc_reset(lmc_softc_t * const sc);
-void lmc_led_on(lmc_softc_t * const sc, u_int32_t led);
-void lmc_led_off(lmc_softc_t * const sc, u_int32_t led);
-void lmc_gpio_mkinput(lmc_softc_t * const sc, u_int32_t bits);
-void lmc_gpio_mkoutput(lmc_softc_t * const sc, u_int32_t bits);
+u_int32_t lmc_mii_readreg(lmc_softc_t * const, u_int32_t, u_int32_t);
+void lmc_mii_writereg(lmc_softc_t * const, u_int32_t, u_int32_t, u_int32_t);
+void lmc_initcsrs(lmc_softc_t * const, lmc_csrptr_t, size_t);
+void lmc_dec_reset(lmc_softc_t * const);
+void lmc_reset(lmc_softc_t * const);
+void lmc_led_on(lmc_softc_t * const, u_int32_t);
+void lmc_led_off(lmc_softc_t * const, u_int32_t);
+void lmc_gpio_mkinput(lmc_softc_t * const, u_int32_t);
+void lmc_gpio_mkoutput(lmc_softc_t * const, u_int32_t);
 lmc_intrfunc_t lmc_intr_normal(void *);
-int lmc_read_macaddr(lmc_softc_t * const sc);
-void lmc_attach(lmc_softc_t * const sc);
-void lmc_initring(lmc_softc_t * const sc, lmc_ringinfo_t * const ri,
-		  lmc_desc_t *descs, int ndescs);
+int lmc_read_macaddr(lmc_softc_t * const);
+void lmc_attach(lmc_softc_t * const);
+void lmc_initring(lmc_softc_t * const, lmc_ringinfo_t * const,
+    lmc_desc_t *, int);
 
 #endif /* LMC_IS_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.6 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -167,34 +167,32 @@ struct agp_gatt {
  * Functions private to the AGP code.
  */
 void agp_flush_cache(void);
-int agp_find_caps(pci_chipset_tag_t pct, pcitag_t pt);
-int agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc);
-struct agp_gatt *agp_alloc_gatt(struct agp_softc *sc);
-void agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt);
-int agp_generic_attach(struct agp_softc *sc);
-int agp_generic_detach(struct agp_softc *sc);
-int agp_generic_enable(struct agp_softc *sc, u_int32_t mode);
-struct agp_memory *agp_generic_alloc_memory(struct agp_softc *sc, int type,
-						 vsize_t size);
-int agp_generic_free_memory(struct agp_softc *sc, struct agp_memory *mem);
-int agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
-						off_t offset);
-int agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem);
+int agp_find_caps(pci_chipset_tag_t, pcitag_t);
+int agp_map_aperture(struct pci_attach_args *, struct agp_softc *);
+struct agp_gatt *agp_alloc_gatt(struct agp_softc *);
+void agp_free_gatt(struct agp_softc *, struct agp_gatt *);
+int agp_generic_attach(struct agp_softc *);
+int agp_generic_detach(struct agp_softc *);
+int agp_generic_enable(struct agp_softc *, u_int32_t);
+struct agp_memory *agp_generic_alloc_memory(struct agp_softc *, int, vsize_t);
+int agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
+int agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
+int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 /* The vendor has already been matched when these functions are called */
 int agp_amd_match(const struct pci_attach_args *);
 
-int agp_ali_attach(struct device *parent, struct device *self, void *aux);
-int agp_amd_attach(struct device *parent, struct device *self, void *aux);
-int agp_i810_attach(struct device *parent, struct device *self, void *aux);
-int agp_intel_attach(struct device *parent, struct device *self, void *aux);
-int agp_via_attach(struct device *parent, struct device *self, void *aux);
-int agp_sis_attach(struct device *parent, struct device *self, void *aux);
+int agp_ali_attach(struct device *, struct device *, void *);
+int agp_amd_attach(struct device *, struct device *, void *);
+int agp_i810_attach(struct device *, struct device *, void *);
+int agp_intel_attach(struct device *, struct device *, void *);
+int agp_via_attach(struct device *, struct device *, void *);
+int agp_sis_attach(struct device *, struct device *, void *);
 
 int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, caddr_t *,
 		     bus_addr_t *, bus_dma_segment_t *, int, int *);
-void agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
-		     caddr_t vaddr, bus_dma_segment_t *seg, int nseg) ;
+void agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t, caddr_t,
+		     bus_dma_segment_t *, int) ;
 
 MALLOC_DECLARE(M_AGP);
 
@@ -209,59 +207,59 @@ void *agp_find_device(int);
 /*
  * Return the current owner of the AGP chipset.
  */
-enum agp_acquire_state agp_state(void *devcookie);
+enum agp_acquire_state agp_state(void *);
 
 /*
  * Query the state of the AGP system.
  */
-void agp_get_info(void *devhandle, struct agp_info *info);
+void agp_get_info(void *, struct agp_info *);
 
 /*
  * Acquire the AGP chipset for use by the kernel. Returns EBUSY if the
  * AGP chipset is already acquired by another user. 
  */
-int agp_acquire(void *devhandle);
+int agp_acquire(void *);
 
 /*
  * Release the AGP chipset.
  */
-int agp_release(void *devhandle);
+int agp_release(void *);
 
 /*
  * Enable the agp hardware with the relavent mode. The mode bits are
  * defined in <dev/pci/agpreg.h>
  */
-int agp_enable(void *devhandle, u_int32_t mode);
+int agp_enable(void *, u_int32_t);
 
 /*
  * Allocate physical memory suitable for mapping into the AGP
  * aperture.  The value returned is an opaque handle which can be
  * passed to agp_bind(), agp_unbind() or agp_deallocate().
  */
-void *agp_alloc_memory(void *devhandle, int type, vsize_t bytes);
+void *agp_alloc_memory(void *, int, vsize_t);
 
 /*
  * Free memory which was allocated with agp_allocate().
  */
-void agp_free_memory(void *devhandle, void *handle);
+void agp_free_memory(void *, void *);
 
 /*
  * Bind memory allocated with agp_allocate() at a given offset within
  * the AGP aperture. Returns EINVAL if the memory is already bound or
  * the offset is not at an AGP page boundary.
  */
-int agp_bind_memory(void *devhandle, void *handle, off_t offset);
+int agp_bind_memory(void *, void *, off_t);
 
 /*
  * Unbind memory from the AGP aperture. Returns EINVAL if the memory
  * is not bound.
  */
-int agp_unbind_memory(void *devhandle, void *handle);
+int agp_unbind_memory(void *, void *);
 
 /*
  * Retrieve information about a memory block allocated with
  * agp_alloc_memory().
  */
-void agp_memory_info(void *devhandle, void *handle, struct agp_memory_info *mi);
+void agp_memory_info(void *, void *, struct agp_memory_info *);
 
 #endif /* !_PCI_AGPPRIV_H_ */

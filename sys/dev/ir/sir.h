@@ -1,4 +1,4 @@
-/*	$NetBSD: sir.h,v 1.1 2001/12/05 14:50:14 augustss Exp $	*/
+/*	$NetBSD: sir.h,v 1.2 2003/07/08 10:06:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #define SIR_ESC_BIT              0x20
 
-int irda_sir_frame(u_int8_t *buf, u_int maxlen, struct uio *uio, u_int ebofs);
+int irda_sir_frame(u_int8_t *, u_int, struct uio *, u_int);
 
 /*
  * CRC computation

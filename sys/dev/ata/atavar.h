@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26 2002/08/05 23:29:30 soren Exp $	*/
+/*	$NetBSD: atavar.h,v 1.27 2003/07/08 10:06:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -87,7 +87,7 @@ struct ata_drive_datas {
 #define NXFER 4000
 
     struct device *drv_softc; /* ATA drives softc, if any */
-    void* chnl_softc; /* channel softc */
+    void *chnl_softc; /* channel softc */
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -140,7 +140,7 @@ struct wdc_command {
     int timeout;	 /* timeout (in ms) */
     void *data;          /* Data buffer address */
     int bcount;           /* number of bytes to transfer */
-    void (*callback) __P((void*)); /* command to call once command completed */
+    void (*callback) __P((void *)); /* command to call once command completed */
     void *callback_arg;  /* argument passed to *callback() */
 };
 
@@ -194,12 +194,12 @@ struct ata_smart_thresholds {
 	int8_t			checksum;
 } __attribute__((packed));
 
-int  wdc_downgrade_mode __P((struct ata_drive_datas*));
+int  wdc_downgrade_mode __P((struct ata_drive_datas *));
 
 struct ataparams;
-int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
+int ata_get_params __P((struct ata_drive_datas *, u_int8_t,
 	 struct ataparams *));
-int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
+int ata_set_mode __P((struct ata_drive_datas *, u_int8_t, u_int8_t));
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.5 2002/06/02 23:17:51 wiz Exp $	*/
+/*	$NetBSD: rbus.h,v 1.6 2003/07/08 10:06:30 itojun Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -90,14 +90,11 @@ struct rbustag {
   bus_addr_t rb_end;
   bus_addr_t rb_offset;
 #if notyet
-  int (*rb_space_alloc) __P((struct rbustag *,
-			     bus_addr_t start, bus_addr_t end,
-			     bus_addr_t addr, bus_size_t size,
-			     bus_addr_t mask, bus_addr_t align,
-			     int flags,
-			     bus_addr_t *addrp, bus_space_handle_t *bshp));
+  int (*rb_space_alloc) __P((struct rbustag *, bus_addr_t, bus_addr_t,
+			     bus_addr_t, bus_size_t, bus_addr_t, bus_addr_t,
+			     int, bus_addr_t *, bus_space_handle_t *));
   int (*rbus_space_free) __P((struct rbustag *, bus_space_handle_t,
-			      bus_size_t size, bus_addr_t *addrp));
+			      bus_size_t, bus_addr_t *));
 #endif
   int rb_flags;
 #define RBUS_SPACE_INVALID   0x00
@@ -119,20 +116,15 @@ typedef struct rbustag *rbus_tag_t;
  * easier.  These functions should be member functions of rbus
  * `class'.
  */
-int rbus_space_alloc __P((rbus_tag_t,
-			  bus_addr_t addr, bus_size_t size, bus_addr_t mask,
-			  bus_addr_t align, int flags,
-			  bus_addr_t *addrp, bus_space_handle_t *bshp));
+int rbus_space_alloc __P((rbus_tag_t, bus_addr_t, bus_size_t, bus_addr_t,
+    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
 
-int rbus_space_alloc_subregion __P((rbus_tag_t,
-				    bus_addr_t start, bus_addr_t end,
-				    bus_addr_t addr, bus_size_t size,
-				    bus_addr_t mask, bus_addr_t align,
-				    int flags,
-				    bus_addr_t *addrp, bus_space_handle_t *bshp));
+int rbus_space_alloc_subregion __P((rbus_tag_t, bus_addr_t, bus_addr_t,
+    bus_addr_t, bus_size_t, bus_addr_t, bus_addr_t, int,
+    bus_addr_t *, bus_space_handle_t *));
 
-int rbus_space_free __P((rbus_tag_t, bus_space_handle_t, bus_size_t size,
-			 bus_addr_t *addrp));
+int rbus_space_free __P((rbus_tag_t, bus_space_handle_t, bus_size_t,
+    bus_addr_t *));
 
 
 /*
@@ -142,13 +134,12 @@ int rbus_space_free __P((rbus_tag_t, bus_space_handle_t, bus_size_t size,
  * rbus_new is a constructor which make an rbus instance from a parent
  * rbus.
  */
-rbus_tag_t rbus_new __P((rbus_tag_t parent, bus_addr_t start, bus_size_t size,
-			 bus_addr_t offset, int flags));
+rbus_tag_t rbus_new __P((rbus_tag_t, bus_addr_t, bus_size_t, bus_addr_t, int));
 
 rbus_tag_t rbus_new_root_delegate __P((bus_space_tag_t, bus_addr_t, bus_size_t,
-				       bus_addr_t offset));
+    bus_addr_t));
 rbus_tag_t rbus_new_root_share __P((bus_space_tag_t, struct extent *,
-    bus_addr_t /* start */, bus_size_t /* size */, bus_addr_t /* offset */));
+    bus_addr_t, bus_size_t, bus_addr_t));
 
 /*
  * This function release bus-space used by the argument.  This

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.1 2003/04/16 22:03:00 thorpej Exp $	*/
+/*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -155,35 +155,35 @@ enum _MPT_DIAG_BITS {
 #define MPT_CONTEXT_MASK  (~0xE0000000)
 
 #ifdef _KERNEL
-int mpt_soft_reset(mpt_softc_t *mpt);
-void mpt_hard_reset(mpt_softc_t *mpt);
-int mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply);
+int mpt_soft_reset(mpt_softc_t *);
+void mpt_hard_reset(mpt_softc_t *);
+int mpt_recv_handshake_reply(mpt_softc_t *, size_t, void *);
 
-void mpt_send_cmd(mpt_softc_t *mpt, request_t *req);
-void mpt_free_reply(mpt_softc_t *mpt, u_int32_t ptr);
-void mpt_enable_ints(mpt_softc_t *mpt);
-void mpt_disable_ints(mpt_softc_t *mpt);
-u_int32_t mpt_pop_reply_queue(mpt_softc_t *mpt);
-int mpt_init(mpt_softc_t *mpt, u_int32_t who);
-int mpt_reset(mpt_softc_t *mpt);
-int mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd);
-request_t * mpt_get_request(mpt_softc_t *mpt);
-void mpt_free_request(mpt_softc_t *mpt, request_t *req);
-int mpt_intr(void *dummy);
-void mpt_check_doorbell(mpt_softc_t * mpt);
+void mpt_send_cmd(mpt_softc_t *, request_t *);
+void mpt_free_reply(mpt_softc_t *, u_int32_t);
+void mpt_enable_ints(mpt_softc_t *);
+void mpt_disable_ints(mpt_softc_t *);
+u_int32_t mpt_pop_reply_queue(mpt_softc_t *);
+int mpt_init(mpt_softc_t *, u_int32_t);
+int mpt_reset(mpt_softc_t *);
+int mpt_send_handshake_cmd(mpt_softc_t *, size_t, void *);
+request_t * mpt_get_request(mpt_softc_t *);
+void mpt_free_request(mpt_softc_t *, request_t *);
+int mpt_intr(void *);
+void mpt_check_doorbell(mpt_softc_t *);
 
 int mpt_read_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 int mpt_write_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 
 /* mpt_debug.c functions */
-void mpt_print_reply(void *vmsg);
-void mpt_print_db(u_int32_t mb);
-void mpt_print_config_reply(void *vmsg);
-char *mpt_ioc_diag(u_int32_t diag);
-char *mpt_req_state(enum mpt_req_state state);
-void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *msg);
-void mpt_print_config_request(void *vmsg);
-void mpt_print_request(void *vmsg);
+void mpt_print_reply(void *);
+void mpt_print_db(u_int32_t);
+void mpt_print_config_reply(void *);
+char *mpt_ioc_diag(u_int32_t);
+char *mpt_req_state(enum mpt_req_state);
+void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
+void mpt_print_config_request(void *);
+void mpt_print_request(void *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_MPT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.3 2003/01/11 06:12:09 dsainty Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.4 2003/07/08 10:06:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@ struct btframe_channel {
 	 * Allocate and transmit a buffer for transmission to
 	 * Bluetooth device
 	 */
-	u_int8_t* (*bt_alloc)(void*, size_t, struct btframe_buffer**);
-	int (*bt_send)(void*, struct btframe_buffer*, size_t);
+	u_int8_t* (*bt_alloc)(void*, size_t, struct btframe_buffer **);
+	int (*bt_send)(void*, struct btframe_buffer *, size_t);
 };
 
 struct btframe_methods {
@@ -74,15 +74,15 @@ struct btframe_methods {
 #define BT_CBBLOCK_EVENT        1
 #define BT_CBBLOCK_ACL_DATA     2
 #define BT_CBBLOCK_SCO_DATA     4
-        unsigned int (*bt_blockcb)(void *h, unsigned int cbblocks);
-        unsigned int (*bt_unblockcb)(void *h, unsigned int cbblocks);
+        unsigned int (*bt_blockcb)(void *, unsigned int);
+        unsigned int (*bt_unblockcb)(void *, unsigned int);
 };
 
 struct btframe_callback_methods {
 	/* Received data */
-	void (*bt_recveventdata)(void *h, u_int8_t *data, size_t len);
-	void (*bt_recvacldata)(void *h, u_int8_t *data, size_t len);
-	void (*bt_recvscodata)(void *h, u_int8_t *data, size_t len);
+	void (*bt_recveventdata)(void *, u_int8_t *, size_t);
+	void (*bt_recvacldata)(void *, u_int8_t *, size_t);
+	void (*bt_recvscodata)(void *, u_int8_t *, size_t);
 };
 
 struct bt_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.7 2002/10/14 08:48:15 kent Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.8 2003/07/08 10:06:30 itojun Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -41,35 +41,33 @@ enum ac97_host_flags {
 struct ac97_host_if {
 	void  *arg;
 
-	int (*attach)(void *arg, struct ac97_codec_if *codecif);
-	int (*read)(void *arg, u_int8_t reg, u_int16_t *val);
-	int (*write)(void *arg, u_int8_t reg, u_int16_t val);
-	void (*reset)(void *arg);
+	int (*attach)(void *, struct ac97_codec_if *);
+	int (*read)(void *, u_int8_t, u_int16_t *);
+	int (*write)(void *, u_int8_t, u_int16_t);
+	void (*reset)(void *);
 
-	enum ac97_host_flags (*flags)(void *arg);
+	enum ac97_host_flags (*flags)(void *);
 };
 
 /*
  * This is the interface exported by the AC97 compliant CODEC
  */
 struct ac97_codec_if_vtbl {
-	int (*mixer_get_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
-	int (*mixer_set_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
-	int (*query_devinfo)(struct ac97_codec_if *addr, mixer_devinfo_t *cp);
-	int (*get_portnum_by_name)(struct ac97_codec_if *addr,
-				   const char *class, const char *device,
-				   const char *qualifier);
+	int (*mixer_get_port)(struct ac97_codec_if *, mixer_ctrl_t *);
+	int (*mixer_set_port)(struct ac97_codec_if *, mixer_ctrl_t *);
+	int (*query_devinfo)(struct ac97_codec_if *, mixer_devinfo_t *);
+	int (*get_portnum_by_name)(struct ac97_codec_if *, const char *,
+	    const char *, const char *);
 	/*
 	 * The AC97 codec driver records the various port settings.  This
 	 * function can be used to restore the port settings, e.g. after
 	 * resume from a laptop suspend to disk.
 	 */
-	void (*restore_ports)(struct ac97_codec_if *addr);
+	void (*restore_ports)(struct ac97_codec_if *);
 
-	u_int16_t (*get_extcaps)(struct ac97_codec_if *codec_if);
-	int (*set_rate)(struct ac97_codec_if *codec_if,
-			int target, u_long *rate);
-	void (*set_clock)(struct ac97_codec_if *codec_if, unsigned int clock);
+	u_int16_t (*get_extcaps)(struct ac97_codec_if *);
+	int (*set_rate)(struct ac97_codec_if *, int, u_long *);
+	void (*set_clock)(struct ac97_codec_if *, unsigned int);
 };
 
 struct ac97_codec_if {

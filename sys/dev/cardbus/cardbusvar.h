@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.24 2001/11/06 03:18:18 augustss Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.25 2003/07/08 10:06:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -91,30 +91,40 @@ typedef struct cardbus_functions {
 	    bus_space_handle_t, bus_size_t));
 	void *(*cardbus_intr_establish) __P((cardbus_chipset_tag_t, int, int,
 	    int (*)(void *), void *));
-	void (*cardbus_intr_disestablish) __P((cardbus_chipset_tag_t ct, void *));
+	void (*cardbus_intr_disestablish) __P((cardbus_chipset_tag_t, void *));
 	int (*cardbus_ctrl) __P((cardbus_chipset_tag_t, int));
 	int (*cardbus_power) __P((cardbus_chipset_tag_t, int));
 
-	cardbustag_t (*cardbus_make_tag) __P((cardbus_chipset_tag_t, int, int, int));
+	cardbustag_t (*cardbus_make_tag) __P((cardbus_chipset_tag_t, int, int,
+	    int));
 	void (*cardbus_free_tag) __P((cardbus_chipset_tag_t, cardbustag_t));
-	cardbusreg_t (*cardbus_conf_read) __P((cardbus_chipset_tag_t, cardbustag_t, int));
-	void (*cardbus_conf_write) __P((cardbus_chipset_tag_t, cardbustag_t, int, cardbusreg_t));
+	cardbusreg_t (*cardbus_conf_read) __P((cardbus_chipset_tag_t,
+	    cardbustag_t, int));
+	void (*cardbus_conf_write) __P((cardbus_chipset_tag_t, cardbustag_t,
+	    int, cardbusreg_t));
 } cardbus_function_t, *cardbus_function_tag_t;
 
 #else
 
 typedef struct cardbus_functions {
-  int (*cardbus_ctrl) __P((cardbus_chipset_tag_t, int));
-  int (*cardbus_power) __P((cardbus_chipset_tag_t, int));
-  int (*cardbus_mem_open) __P((cardbus_chipset_tag_t, int, u_int32_t, u_int32_t));
-  int (*cardbus_mem_close) __P((cardbus_chipset_tag_t, int));
-  int (*cardbus_io_open) __P((cardbus_chipset_tag_t, int, u_int32_t, u_int32_t));
-  int (*cardbus_io_close) __P((cardbus_chipset_tag_t, int));
-  void *(*cardbus_intr_establish) __P((cardbus_chipset_tag_t, int irq, int level, int (*ih)(void *), void *sc));
-  void (*cardbus_intr_disestablish) __P((cardbus_chipset_tag_t ct, void *ih));
+	int (*cardbus_ctrl) __P((cardbus_chipset_tag_t, int));
+	int (*cardbus_power) __P((cardbus_chipset_tag_t, int));
+	int (*cardbus_mem_open) __P((cardbus_chipset_tag_t, int, u_int32_t,
+	    u_int32_t));
+	int (*cardbus_mem_close) __P((cardbus_chipset_tag_t, int));
+	int (*cardbus_io_open) __P((cardbus_chipset_tag_t, int, u_int32_t,
+	    u_int32_t));
+	int (*cardbus_io_close) __P((cardbus_chipset_tag_t, int));
+	void *(*cardbus_intr_establish) __P((cardbus_chipset_tag_t, int, int,
+	    int (*)(void *), void *));
+	void (*cardbus_intr_disestablish) __P((cardbus_chipset_tag_t, void *));
 
-  cardbustag_t (*cardbus_make_tag) __P((cardbus_chipset_tag_t, int, int, int));  cardbusreg_t (*cardbus_conf_read) __P((cardbus_chipset_tag_t, cardbustag_t, int));
-  void (*cardbus_conf_write) __P((cardbus_chipset_tag_t, cardbustag_t, int, cardbusreg_t));
+	cardbustag_t (*cardbus_make_tag) __P((cardbus_chipset_tag_t, int, int,
+	    int));
+	cardbusreg_t (*cardbus_conf_read) __P((cardbus_chipset_tag_t,
+	    cardbustag_t, int));
+	void (*cardbus_conf_write) __P((cardbus_chipset_tag_t, cardbustag_t,
+	    int, cardbusreg_t));
 } cardbus_function_t, *cardbus_function_tag_t;
 #endif /* rbus */
 
@@ -311,9 +321,9 @@ struct cardbus_attach_args {
 int cardbus_attach_card __P((struct cardbus_softc *));
 void cardbus_detach_card __P((struct cardbus_softc *));
 void *cardbus_intr_establish __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbus_intr_handle_t irq, int level, int (*func) (void *), void *arg));
+    cardbus_intr_handle_t, int, int (*) (void *), void *arg));
 void cardbus_intr_disestablish __P((cardbus_chipset_tag_t,
-    cardbus_function_tag_t, void *handler));
+    cardbus_function_tag_t, void *));
 
 int cardbus_mapreg_map __P((struct cardbus_softc *, int, int, cardbusreg_t,
     int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *, bus_size_t *));
@@ -323,8 +333,8 @@ int cardbus_mapreg_unmap __P((struct cardbus_softc *, int, int,
 int cardbus_save_bar __P((cardbus_devfunc_t));
 int cardbus_restore_bar __P((cardbus_devfunc_t));
 
-int cardbus_function_enable __P((struct cardbus_softc *, int function));
-int cardbus_function_disable __P((struct cardbus_softc *, int function));
+int cardbus_function_enable __P((struct cardbus_softc *, int));
+int cardbus_function_disable __P((struct cardbus_softc *, int));
 
 int cardbus_get_capability __P((cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbustag_t, int, int *, cardbusreg_t *));

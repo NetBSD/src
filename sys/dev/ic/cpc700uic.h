@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700uic.h,v 1.1 2002/05/21 02:58:25 augustss Exp $	*/
+/*	$NetBSD: cpc700uic.h,v 1.2 2003/07/08 10:06:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void cpc700_init_intr(bus_space_tag_t bt, bus_space_handle_t bh,
-		      u_int32_t active, u_int32_t level);
+void cpc700_init_intr(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t, u_int32_t);
 int cpc700_read_irq(void);
-void cpc700_eoi(int irq);
-void cpc700_disable_irq(int irq);
-void cpc700_enable_irq(int irq);
+void cpc700_eoi(int);
+void cpc700_disable_irq(int);
+void cpc700_enable_irq(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.6 2001/05/30 09:21:47 haya Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.7 2003/07/08 10:06:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -124,6 +124,6 @@ typedef struct cardslot_softc *cardslot_t;
 
 #include "locators.h"
 
-void cardslot_event_throw __P((cardslot_t cs, int ev));
+void cardslot_event_throw __P((cardslot_t, int));
 
 #endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */

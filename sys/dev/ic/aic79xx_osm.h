@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.2 2003/05/03 18:11:14 wiz Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.3 2003/07/08 10:06:30 itojun Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.8 2002/12/04 22:51:29 scottl Exp $
  */
@@ -246,18 +246,18 @@ ahd_flush_device_writes(struct ahd_softc *ahd)
 /**************************** Locking Primitives ******************************/
 /* Lock protecting internal data structures */
 static __inline void ahd_lockinit(struct ahd_softc *);
-static __inline void ahd_lock(struct ahd_softc *, int *flags);
-static __inline void ahd_unlock(struct ahd_softc *, int *flags);
+static __inline void ahd_lock(struct ahd_softc *, int *);
+static __inline void ahd_unlock(struct ahd_softc *, int *);
 
 /* Lock held during command compeletion to the upper layer */
 static __inline void ahd_done_lockinit(struct ahd_softc *);
-static __inline void ahd_done_lock(struct ahd_softc *, unsigned long *flags);
-static __inline void ahd_done_unlock(struct ahd_softc *, unsigned long *flags);
+static __inline void ahd_done_lock(struct ahd_softc *, unsigned long *);
+static __inline void ahd_done_unlock(struct ahd_softc *, unsigned long *);
 
 /* Lock held during ahd_list manipulation and ahd softc frees */
 static __inline void ahd_list_lockinit(void);
-static __inline void ahd_list_lock(unsigned long *flags);
-static __inline void ahd_list_unlock(unsigned long *flags);
+static __inline void ahd_list_lock(unsigned long *);
+static __inline void ahd_list_unlock(unsigned long *);
 
 static __inline void
 ahd_lockinit(struct ahd_softc *ahd)
@@ -326,11 +326,10 @@ static __inline int ahd_perform_autosense(struct scb *);
 static __inline uint32_t ahd_get_sense_bufsize(struct ahd_softc*, struct scb*);
 static __inline void ahd_freeze_simq(struct ahd_softc *);
 static __inline void ahd_release_simq(struct ahd_softc *);
-static __inline void ahd_freeze_scb(struct scb *scb);
+static __inline void ahd_freeze_scb(struct scb *);
 static __inline void ahd_platform_freeze_devq(struct ahd_softc *, struct scb *);
-static __inline int  ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
-					     char channel, int lun, u_int tag,
-					     role_t role, uint32_t status);
+static __inline int  ahd_platform_abort_scbs(struct ahd_softc *, int,
+    char, int, u_int, role_t, uint32_t);
 
 static __inline
 void ahd_set_transaction_status(struct scb *scb, uint32_t status)
@@ -467,17 +466,15 @@ ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 
 /********************************** PCI ***************************************/
 #if AHD_PCI_CONFIG > 0
-static __inline uint32_t ahd_pci_read_config(ahd_dev_softc_t pci,
-					     int reg, int width);
-static __inline void	 ahd_pci_write_config(ahd_dev_softc_t pci,
-					      int reg, uint32_t value,
-					      int width);
+static __inline uint32_t ahd_pci_read_config(ahd_dev_softc_t, int, int);
+static __inline void	 ahd_pci_write_config(ahd_dev_softc_t, int,
+    uint32_t, int);
 static __inline int	 ahd_get_pci_function(ahd_dev_softc_t);
 static __inline int	 ahd_get_pci_slot(ahd_dev_softc_t);
 static __inline int	 ahd_get_pci_bus(ahd_dev_softc_t);
 
-int			 ahd_pci_map_registers(struct ahd_softc *ahd);
-int			 ahd_pci_map_int(struct ahd_softc *ahd);
+int			 ahd_pci_map_registers(struct ahd_softc *);
+int			 ahd_pci_map_int(struct ahd_softc *);
 
 static __inline uint32_t
 ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
@@ -519,16 +516,15 @@ typedef enum
 	AHD_POWER_STATE_D3
 } ahd_power_state;
 
-void ahd_power_state_change(struct ahd_softc *ahd,
-			    ahd_power_state new_state);
+void ahd_power_state_change(struct ahd_softc *, ahd_power_state);
 
 /******************************** VL/EISA *************************************/
-int aic7770_map_registers(struct ahd_softc *ahd);
-int aic7770_map_int(struct ahd_softc *ahd, int irq);
+int aic7770_map_registers(struct ahd_softc *);
+int aic7770_map_int(struct ahd_softc *, int);
 
 /********************************* Debug **************************************/
 static __inline void	ahd_print_path(struct ahd_softc *, struct scb *);
-static __inline void	ahd_platform_dump_card_state(struct ahd_softc *ahd);
+static __inline void	ahd_platform_dump_card_state(struct ahd_softc *);
 static __inline void
 ahd_print_path(struct ahd_softc *ahd, struct scb *scb)
 {
@@ -547,18 +543,18 @@ void	  ahd_platform_set_tags(struct ahd_softc *, struct ahd_devinfo *,
 				ahd_queue_alg);
 
 /************************* Initialization/Teardown ****************************/
-int	  ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg);
-void	  ahd_platform_free(struct ahd_softc *ahd);
-int	  ahd_map_int(struct ahd_softc *ahd);
+int	  ahd_platform_alloc(struct ahd_softc *, void *);
+void	  ahd_platform_free(struct ahd_softc *);
+int	  ahd_map_int(struct ahd_softc *);
 int	  ahd_attach(struct ahd_softc *);
-int	  ahd_softc_comp(struct ahd_softc *lahd, struct ahd_softc *rahd);
-int 	  ahd_detach(struct device *device, int flags);
+int	  ahd_softc_comp(struct ahd_softc *, struct ahd_softc *);
+int 	  ahd_detach(struct device *, int);
 #define	ahd_platform_init(arg)
 
 
 /****************************** Interrupts ************************************/
 void			ahd_platform_intr(void *);
-static __inline void	ahd_platform_flushwork(struct ahd_softc *ahd);
+static __inline void	ahd_platform_flushwork(struct ahd_softc *);
 static __inline void
 ahd_platform_flushwork(struct ahd_softc *ahd)
 {
@@ -566,9 +562,7 @@ ahd_platform_flushwork(struct ahd_softc *ahd)
 }
 
 /************************ Misc Function Declarations **************************/
-void	ahd_done(struct ahd_softc *ahd, struct scb *scb);
-void	ahd_send_async(struct ahd_softc *, char /*channel*/,
-			 u_int /*target*/, u_int /*lun*/, u_int /*ac_code*/,
-			 void *arg);
+void	ahd_done(struct ahd_softc *, struct scb *);
+void	ahd_send_async(struct ahd_softc *, char , u_int, u_int, u_int, void *);
 
 #endif  /* _AIC79XX_NETBSD_H_ */

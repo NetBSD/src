@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.h,v 1.2 2000/12/09 06:54:27 imp Exp $ */
+/*	$NetBSD: puccn.h,v 1.3 2003/07/08 10:06:32 itojun Exp $ */
 
 /*
  * Derived from  pci.c
@@ -43,4 +43,4 @@
  * used before the normal PCI bus initialization.
  */
 
-int cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa);
+int cpu_comcnprobe(struct consdev *, struct pci_attach_args *);

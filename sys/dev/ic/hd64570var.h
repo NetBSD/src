@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.5 2003/05/03 18:11:18 wiz Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.6 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -151,8 +151,8 @@ struct sca_softc {
 	 * If the function pointer is NULL, no callback is specified.
 	 */
 	void *sc_aux;
-	void (*sc_dtr_callback)(void *aux, int port, int state);
-	void (*sc_clock_callback)(void *aux, int port, int state);
+	void (*sc_dtr_callback)(void *, int, int);
+	void (*sc_clock_callback)(void *, int, int);
 
 	/* used to read and write the device registers */
 	u_int8_t	(*sc_read_1)(struct sca_softc *, u_int);

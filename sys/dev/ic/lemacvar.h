@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.6 2001/06/13 10:46:03 wiz Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.7 2003/07/08 10:06:31 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -133,15 +133,11 @@ typedef struct {
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[2] == 0xFFFFU)
 
-extern void lemac_ifattach(lemac_softc_t *sc);
-extern void lemac_info_get(const bus_space_tag_t iot,
-			   const bus_space_handle_t ioh,
-			   bus_addr_t *maddr_p,
-			   bus_size_t *msize_p,
-			   int *irq_p);
-extern int lemac_port_check(const bus_space_tag_t iot,
-			    const bus_space_handle_t ioh);
-extern int lemac_intr(void *arg);
-extern void lemac_shutdown(void *arg);
+extern void lemac_ifattach(lemac_softc_t *);
+extern void lemac_info_get(const bus_space_tag_t, const bus_space_handle_t,
+    bus_addr_t *, bus_size_t *, int *);
+extern int lemac_port_check(const bus_space_tag_t, const bus_space_handle_t);
+extern int lemac_intr(void *);
+extern void lemac_shutdown(void *);
 
 #endif /* _LEMACVAR_H */
