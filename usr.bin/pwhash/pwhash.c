@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.9 2004/11/17 14:57:48 wiz Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.10 2005/01/11 22:56:19 christos Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.9 2004/11/17 14:57:48 wiz Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.10 2005/01/11 22:56:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,16 +82,15 @@ trim(char *line)
 	return(ptr);
 }
 
-/* these are pulled from usr.bin/passwd/pwd_gensalt.c */
-int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-
 static void
 print_passwd(char *string, int operation, void *extra)
 {
 	char msalt[3], *salt;
 	struct passwd pwd;
-	login_cap_t *lc;
-	char buffer[_PASSWORD_LEN];
+	char buf[_PASSWORD_LEN];
+	int error;
+
+	salt = buf;
 
 	switch(operation) {
 	case DO_MAKEKEY:
@@ -102,50 +101,37 @@ print_passwd(char *string, int operation, void *extra)
 			/* To be compatible... */
 			errx(1, "%s", strerror(EFTYPE));
 		}
-		strlcpy(msalt, &string[8], sizeof(msalt));
+		(void)strlcpy(msalt, &string[8], sizeof(msalt));
 		salt = msalt;
+		error = 0;
 		break;
 
 	case DO_MD5:
-		strlcpy(buffer, "$1$", sizeof(buffer));
-		__crypt_to64(&buffer[3], arc4random(), 4);
-		__crypt_to64(&buffer[7], arc4random(), 4);
-		strlcpy(buffer + 11, "$", sizeof(buffer) - 11);
-		salt = buffer;
+		error = __gensalt_md5(buf, sizeof(buf), *(int *)extra);
 		break;
 
 	case DO_SHA1:
-		{
-			int n;
-			
-			n = snprintf(buffer, sizeof(buffer),
-				     "%s%u$", SHA1_MAGIC,
-				     __crypt_sha1_iterations(*(int *)extra));
-			__crypt_to64(&buffer[n], arc4random(), 4);
-			__crypt_to64(&buffer[n + 4], arc4random(), 4);
-			buffer[n + 8] = '$';
-			buffer[n + 9] = '\0';
-			salt = buffer;
-		}
+		error = __gensalt_sha1(buf, sizeof(buf), *(int *)extra);
 		break;
+
 	case DO_BLF:
-		strlcpy(buffer, bcrypt_gensalt(*(int *)extra), _PASSWORD_LEN);
-		salt = buffer;
+		error = __gensalt_blowfish(buf, sizeof(buf), *(int *)extra);
 		break;
 
 	case DO_DES:
+		error = 0;
 		salt = extra;
 		break;
 
 	default:
 		pwd.pw_name = "default";
-		if ((lc = login_getclass(NULL)) == NULL)
-			errx(1, "unable to get default login class.");
-		if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, lc, 'l'))
-			errx(1, "can't generate salt");
-		salt = buffer;
+		error = pw_gensalt(buf, _PASSWORD_LEN, &pwd, 'l');
+		salt = buf;
 		break;
 	}
+
+	if (error)
+		err(1, "Cannot generate salt");
 
 	(void)fputs(crypt(string, salt), stdout);
 }
