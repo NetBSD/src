@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2000/08/13 16:22:54 itojun Exp $
+# $NetBSD: mi,v 1.43 2000/09/10 20:03:11 joda Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -356,6 +356,7 @@
 ./usr/share/examples/ipf/nat.eg
 ./usr/share/examples/ipf/server
 ./usr/share/examples/ipf/tcpstate
+./usr/share/examples/kerberos/krb5.conf
 ./usr/share/examples/mount_portal/advanced.1
 ./usr/share/examples/mount_portal/advanced.1.conf
 ./usr/share/examples/mount_portal/fing.c
