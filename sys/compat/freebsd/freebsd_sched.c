@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.1 2002/12/22 00:05:59 gmcgarry Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.2 2003/01/18 07:33:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.1 2002/12/22 00:05:59 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2 2003/01/18 07:33:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.1 2002/12/22 00:05:59 gmcgarry E
 #include <compat/freebsd/freebsd_sched.h>
 
 int
-freebsd_sys_yield(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_yield(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -67,8 +67,8 @@ freebsd_sys_yield(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_setparam(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_setparam(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -91,11 +91,11 @@ freebsd_sys_sched_setparam(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -108,8 +108,8 @@ freebsd_sys_sched_setparam(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_getparam(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_getparam(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -128,11 +128,11 @@ freebsd_sys_sched_getparam(cp, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -146,8 +146,8 @@ freebsd_sys_sched_getparam(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_setscheduler(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_setscheduler(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -171,11 +171,11 @@ freebsd_sys_sched_setscheduler(cp, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -194,8 +194,8 @@ freebsd_sys_sched_setscheduler(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_getscheduler(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_getscheduler(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -210,11 +210,11 @@ freebsd_sys_sched_getscheduler(cp, v, retval)
 	 * We only check for valid parameters and return afterwards.
 	 */
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(l->l_proc == p ||
 		      pc->pc_ucred->cr_uid == 0 ||
 		      pc->p_ruid == p->p_cred->p_ruid ||
 		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
@@ -231,8 +231,8 @@ freebsd_sys_sched_getscheduler(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_yield(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_yield(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -242,8 +242,8 @@ freebsd_sys_sched_yield(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_max(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_get_priority_max(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -264,8 +264,8 @@ freebsd_sys_sched_get_priority_max(cp, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_min(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_get_priority_min(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

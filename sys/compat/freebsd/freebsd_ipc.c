@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.10 2001/11/13 02:08:08 lukem Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.11 2003/01/18 07:33:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.10 2001/11/13 02:08:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11 2003/01/18 07:33:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -45,14 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.10 2001/11/13 02:08:08 lukem Exp $
 #include <sys/malloc.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 
 #ifdef SYSVSEM
 int
-freebsd_sys_semsys(p, v, retval)
-	struct proc *p;
+freebsd_sys_semsys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -89,23 +90,23 @@ freebsd_sys_semsys(p, v, retval)
 		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
 		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
 		SCARG(&__semctl_args, arg) = (union __semun *)SCARG(uap, a5);
-		return (compat_14_sys___semctl(p, &__semctl_args, retval));
+		return (compat_14_sys___semctl(l, &__semctl_args, retval));
 
 	case 1:						/* semget() */
 		SCARG(&semget_args, key) = SCARG(uap, a2);
 		SCARG(&semget_args, nsems) = SCARG(uap, a3);
 		SCARG(&semget_args, semflg) = SCARG(uap, a4);
-		return (sys_semget(p, &semget_args, retval));
+		return (sys_semget(l, &semget_args, retval));
 
 	case 2:						/* semop() */
 		SCARG(&semop_args, semid) = SCARG(uap, a2);
 		SCARG(&semop_args, sops) = (struct sembuf *)SCARG(uap, a3);
 		SCARG(&semop_args, nsops) = SCARG(uap, a4);
-		return (sys_semop(p, &semop_args, retval));
+		return (sys_semop(l, &semop_args, retval));
 
 	case 3:						/* semconfig() */
 		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
-		return (sys_semconfig(p, &semconfig_args, retval));
+		return (sys_semconfig(l, &semconfig_args, retval));
 
 	default:
 		return (EINVAL);
@@ -115,8 +116,8 @@ freebsd_sys_semsys(p, v, retval)
 
 #ifdef SYSVSHM
 int
-freebsd_sys_shmsys(p, v, retval)
-	struct proc *p;
+freebsd_sys_shmsys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -150,7 +151,7 @@ freebsd_sys_shmsys(p, v, retval)
 		SCARG(&shmat_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a3);
 		SCARG(&shmat_args, shmflg) = SCARG(uap, a4);
-		return (sys_shmat(p, &shmat_args, retval));
+		return (sys_shmat(l, &shmat_args, retval));
 
 	case 1:						/* oshmctl() */
 		/* XXX Need to translate shmid_ds format. */
@@ -158,19 +159,19 @@ freebsd_sys_shmsys(p, v, retval)
 
 	case 2:						/* shmdt() */
 		SCARG(&shmdt_args, shmaddr) = (void *)SCARG(uap, a2);
-		return (sys_shmdt(p, &shmdt_args, retval));
+		return (sys_shmdt(l, &shmdt_args, retval));
 
 	case 3:						/* shmget() */
 		SCARG(&shmget_args, key) = SCARG(uap, a2);
 		SCARG(&shmget_args, size) = SCARG(uap, a3);
 		SCARG(&shmget_args, shmflg) = SCARG(uap, a4);
-		return (sys_shmget(p, &shmget_args, retval));
+		return (sys_shmget(l, &shmget_args, retval));
 
 	case 4:						/* shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
-		return (compat_14_sys_shmctl(p, &shmctl_args, retval));
+		return (compat_14_sys_shmctl(l, &shmctl_args, retval));
 
 	default:
 		return (EINVAL);
@@ -180,8 +181,8 @@ freebsd_sys_shmsys(p, v, retval)
 
 #ifdef SYSVMSG
 int
-freebsd_sys_msgsys(p, v, retval)
-	struct proc *p;
+freebsd_sys_msgsys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -222,19 +223,19 @@ freebsd_sys_msgsys(p, v, retval)
 		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
 		SCARG(&msgctl_args, buf) =
 		    (struct msqid_ds14 *)SCARG(uap, a4);
-		return (compat_14_sys_msgctl(p, &msgctl_args, retval));
+		return (compat_14_sys_msgctl(l, &msgctl_args, retval));
 
 	case 1:					/* msgget() */
 		SCARG(&msgget_args, key) = SCARG(uap, a2);
 		SCARG(&msgget_args, msgflg) = SCARG(uap, a3);
-		return (sys_msgget(p, &msgget_args, retval));
+		return (sys_msgget(l, &msgget_args, retval));
 
 	case 2:					/* msgsnd() */
 		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
 		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
 		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
 		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a5);
-		return (sys_msgsnd(p, &msgsnd_args, retval));
+		return (sys_msgsnd(l, &msgsnd_args, retval));
 
 	case 3:					/* msgrcv() */
 		SCARG(&msgrcv_args, msqid) = SCARG(uap, a2);
@@ -242,7 +243,7 @@ freebsd_sys_msgsys(p, v, retval)
 		SCARG(&msgrcv_args, msgsz) = SCARG(uap, a4);
 		SCARG(&msgrcv_args, msgtyp) = SCARG(uap, a5);
 		SCARG(&msgrcv_args, msgflg) = SCARG(uap, a6);
-		return (sys_msgrcv(p, &msgrcv_args, retval));
+		return (sys_msgrcv(l, &msgrcv_args, retval));
 
 	default:
 		return (EINVAL);

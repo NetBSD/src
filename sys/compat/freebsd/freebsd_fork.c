@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_fork.c,v 1.1 2002/10/09 20:22:47 pooka Exp $	*/
+/*	$NetBSD: freebsd_fork.c,v 1.2 2003/01/18 07:33:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */   
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.1 2002/10/09 20:22:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.2 2003/01/18 07:33:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_fork.c,v 1.1 2002/10/09 20:22:47 pooka Exp $
  * rfork()
  */
 int
-freebsd_sys_rfork(struct proc *p, void *v, register_t *retval)
+freebsd_sys_rfork(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_rfork_args /* {
 		syscallargs(int) flags;
@@ -83,7 +83,7 @@ freebsd_sys_rfork(struct proc *p, void *v, register_t *retval)
 	else if ((SCARG(uap, flags) & FREEBSD_RFFDG) == 0)
 		flags |= FORK_SHAREFILES;
 
-	return (fork1(p, flags,
+	return (fork1(l, flags,
 	    SCARG(uap, flags) & FREEBSD_RFLINUXTHPN ? SIGUSR1 : SIGCHLD,
 	    NULL, 0, NULL, NULL, retval, NULL));
 }

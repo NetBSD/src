@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.3 2001/11/13 02:08:02 lukem Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.4 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.3 2001/11/13 02:08:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.4 2003/01/18 07:28:34 thorpej Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -46,18 +46,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.3 2001/11/13 02:08:02 lukem Exp $"
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */
 int
-compat_12_sys_reboot(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
