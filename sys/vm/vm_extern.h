@@ -31,8 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm_extern.h,v 1.2 1994/04/25 23:53:51 cgd Exp $
+ *	$Id: vm_extern.h,v 1.3 1994/04/28 03:51:58 cgd Exp $
  */
+
+struct buf;
+struct loadavg;
+struct proc;
+struct vmspace;
+struct vmtotal;
+struct mount;
+struct vnode;
 
 struct	vmspace *vmspace_alloc __P((vm_offset_t min, vm_offset_t max,
 			int pageable));
