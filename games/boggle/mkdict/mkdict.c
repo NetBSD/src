@@ -1,4 +1,4 @@
-/* $NetBSD: mkdict.c,v 1.7 2000/07/31 11:28:48 simonb Exp $ */
+/* $NetBSD: mkdict.c,v 1.8 2001/08/29 18:22:56 jsm Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
 static const char rcsid[] = 
-    "$NetBSD: mkdict.c,v 1.7 2000/07/31 11:28:48 simonb Exp $";
+    "$NetBSD: mkdict.c,v 1.8 2001/08/29 18:22:56 jsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
 		if ((p = strchr(buf[current], '\n')) == NULL) {
-			fprintf(stderr, "word too long: %s", buf[current]);
+			fprintf(stderr, "word too long: %s\n", buf[current]);
 			while ((ch = getc(stdin)) != EOF && ch != '\n')
 				;
 			if (ch == EOF)
