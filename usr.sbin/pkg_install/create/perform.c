@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.23 2000/10/09 19:06:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23 2000/10/09 19:06:08 hubertf Exp $");
 #endif
 #endif
 
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: perform.c,v 1.22 1999/12/20 03:25:58 hubertf Exp $");
 
 #include <err.h>
 #include <signal.h>
-#include <sys/syslimits.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
