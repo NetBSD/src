@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.173 2000/11/28 05:15:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.174 2000/12/14 03:03:58 onoe Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
-MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
+MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
 	awi.4 bba.4 bha.4 bktr.4 bpf.4 cac.4 cardbus.4 ccd.4 \
 	cd.4 ch.4 clcs.4 clnp.4 cltp.4 cmpci.4 cms.4 cnw.4 ddb.4 \
 	de.4 dpt.4 drum.4 eap.4 en.4 envsys.4 ep.4 esh.4 \
