@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.4 1997/05/20 15:25:39 lukem Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.5 1997/05/21 06:55:25 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_master.c,v 1.4 1997/05/20 15:25:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: yp_master.c,v 1.5 1997/05/21 06:55:25 lukem Exp $";
 #endif
 
 #include <string.h>
@@ -91,5 +91,11 @@ again:
 	}
 	xdr_free(xdr_ypresp_master, (char *) &yprm);
 	_yp_unbind(ysd);
+	if (r != 0) {
+		if (*outname) {
+			free(*outname);
+			*outname = NULL;
+		}
+	}
 	return r;
 }
