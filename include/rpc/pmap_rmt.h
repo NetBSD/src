@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.h,v 1.4 1994/10/26 00:57:01 cgd Exp $	*/
+/*	$NetBSD: pmap_rmt.h,v 1.5 1998/02/10 00:44:36 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,8 +39,8 @@
  * Copyright (C) 1986, Sun Microsystems, Inc.
  */
 
-#ifndef _RPC_PMAPRMT_H
-#define _RPC_PMAPRMT_H
+#ifndef _RPC_PMAP_RMT_H_
+#define _RPC_PMAP_RMT_H_
 #include <sys/cdefs.h>
 
 struct rmtcallargs {
@@ -61,4 +61,4 @@ extern bool_t xdr_rmtcall_args	__P((XDR *, struct rmtcallargs *));
 extern bool_t xdr_rmtcallres	__P((XDR *, struct rmtcallres *));
 __END_DECLS
 
-#endif /* !_RPC_PMAPRMT_H */
+#endif /* !_RPC_PMAP_RMT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.h,v 1.5 1994/12/04 01:12:42 cgd Exp $	*/
+/*	$NetBSD: pmap_clnt.h,v 1.6 1998/02/10 00:44:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -61,8 +61,8 @@
  *		address if the responder to the broadcast.
  */
 
-#ifndef _RPC_PMAPCLNT_H
-#define _RPC_PMAPCLNT_H
+#ifndef _RPC_PMAP_CLNT_H_
+#define _RPC_PMAP_CLNT_H_
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -83,4 +83,4 @@ extern u_short		pmap_getport	__P((struct sockaddr_in *,
 					     u_long, u_long, u_int));
 __END_DECLS
 
-#endif /* !_RPC_PMAPCLNT_H */
+#endif /* !_RPC_PMAP_CLNT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.8 1997/07/13 18:14:22 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.9 1998/02/10 00:44:23 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,8 +42,8 @@
  * "sessions".
  */
 
-#ifndef _RPC_AUTH_H
-#define _RPC_AUTH_H
+#ifndef _RPC_AUTH_H_
+#define _RPC_AUTH_H_
 #include <sys/cdefs.h>
 
 #define MAX_AUTH_BYTES	400
@@ -188,4 +188,4 @@ __END_DECLS
 #define	AUTH_SHORT	2		/* short hand unix style */
 #define AUTH_DES	3		/* des style (encrypted timestamps) */
 
-#endif /* !_RPC_AUTH_H */
+#endif /* !_RPC_AUTH_H_ */

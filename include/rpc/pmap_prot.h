@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.h,v 1.4 1994/10/26 00:57:00 cgd Exp $	*/
+/*	$NetBSD: pmap_prot.h,v 1.5 1998/02/10 00:44:34 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -69,8 +69,8 @@
  * The service supports remote procedure calls on udp/ip or tcp/ip socket 111.
  */
 
-#ifndef _RPC_PMAPPROT_H
-#define _RPC_PMAPPROT_H
+#ifndef _RPC_PMAP_PROT_H_
+#define _RPC_PMAP_PROT_H_
 #include <sys/cdefs.h>
 
 #define PMAPPORT		((u_short)111)
@@ -102,4 +102,4 @@ extern bool_t xdr_pmap		__P((XDR *, struct pmap *));
 extern bool_t xdr_pmaplist	__P((XDR *, struct pmaplist **));
 __END_DECLS
 
-#endif /* !_RPC_PMAPPROT_H */
+#endif /* !_RPC_PMAP_PROT_H_ */

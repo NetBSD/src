@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
+/*	$NetBSD: clnt.h,v 1.7 1998/02/10 00:44:29 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -369,4 +369,4 @@ extern struct rpc_createerr rpc_createerr;
 #define UDPMSGSIZE	8800	/* rpc imposed limit on udp msg size */
 #define RPCSMALLMSGSIZE	400	/* a more reasonable packet size */
 
-#endif /* !_RPC_CLNT_H */
+#endif /* !_RPC_CLNT_H_ */
