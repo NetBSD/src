@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.5.2.2 2002/12/12 22:07:48 he Exp $
+.\"     $NetBSD: named.conf.5,v 1.5.2.3 2003/10/27 04:40:23 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -174,7 +174,7 @@ through
 .Li 65535 ,
 with values below 1024 typically restricted to
 root-owned processes.  In some cases an asterisk (``*'') character
-can be used as a placeholder to select a random high-numbered port.
+can be used as a place holder to select a random high-numbered port.
 .It Va ip_prefix
 An IP network specified in
 .Va dotted-decimal
@@ -769,6 +769,7 @@ options {
   [ sortlist { \fIaddress_match_list\fR }; ]
   [ rrset-order { \fIorder_spec\fR ; [ \fIorder_spec\fR ; ... ] }; ]
   [ preferred-glue ( A | AAAA ); ]
+  [ edns-udp-size \fInumber\fR; ]
 };
 .Ed
 .Ss Definition and Usage
@@ -785,7 +786,7 @@ This defaults to the hostname of the machine hosting the nameserver as found by 
 Its prime purpose is to be able to identify which of a number of anycast
 servers is actually answering your queries by sending a txt query for
 .Pa hostname.bind
-in class chaos to the anycast server and geting back a unique name.
+in class chaos to the anycast server and getting back a unique name.
 Setting
 the hostname to a empty string ("") will disable processing of the queries. 
 .It Ic version
@@ -956,7 +957,7 @@ with
 .Ic maintain-ixfr-base ,
 and 
 .Ic rfc2308-type1 
-is order dependant. 
+is order dependent. 
 .It Ic host-statistics
 If
 .Li yes ,
@@ -970,7 +971,7 @@ can consume huge amounts of memory.
 .It Ic maintain-ixfr-base
 If
 .Li yes ,
-a IXFR database file is kept for all dynamicaly updated zones.
+a IXFR database file is kept for all dynamically updated zones.
 This enables the server to answer IXFR queries which can speed up
 zone transfers enormously.
 The default is
@@ -1287,7 +1288,7 @@ address must appear in the remote end's
 .Nm allow-transfer
 option for the zones being transferred, if one is specified.  This statement sets the
 .Nm transfer-source
-for all zones, but can be overriden on a per-zone basis by includinga 
+for all zones, but can be overridden on a per-zone basis by including a
 .Nm transfer-source
 statement within the zone block in the configuration file.
 .El
@@ -1474,7 +1475,7 @@ sortlist {
 };
 .Ed
 .Pp
-The following example will give reasonable behaviour for the local host and
+The following example will give reasonable behavior for the local host and
 hosts on directly connected networks. It is similar to the behavior of the
 address sort in BIND 4.9.x. Responses sent to queries from the local host will
 favor any of the directly connected networks. Responses sent to queries from
@@ -1554,6 +1555,16 @@ in the answer to a priming query.
 This can be achieved by setting
 .Ic preferred-glue A;
 which will add A records before other types in the additional section. 
+.Ss EDNS
+Some firewalls fail to pass EDNS/UDP messages that are larger than
+certain size, 512 or the UDP reassembly buffer.
+To allow EDNS to
+work across such firewalls it is necessary to advertise a EDNS
+buffer size that is small enough to not trigger failures.
+.Ic edns-udp-size
+can be use to adjust the advertised size.
+Values less than 512 will be increased to 512 and values greater than
+4096 will be truncated to 4096.
 .Ss Tuning
 .Bl -tag -width 0n
 .It Ic lame-ttl
@@ -1667,7 +1678,7 @@ If either no
 .Ic forwarders
 clause is present in the zone or an empty list for
 .Ic forwarders
-is given, then no forwarding will be done for the zone, cancelling the
+is given, then no forwarding will be done for the zone, canceling the
 effects of any
 .Ic forwarders
 in the
@@ -1676,7 +1687,7 @@ statement.
 Thus if you want to use this type of zone to change only the behavior of
 the global
 .Ic forward
-option, and not the servers used, then you also need to respecify the
+option, and not the servers used, then you also need to re-specify the
 global forwarders.
 .It Ic hint
 The initial set of root nameservers is specified using a
@@ -1931,7 +1942,7 @@ is
 .Li no .
 .Pp
 If the server supports IXFR you can tell named to attempt to
-perform a IXFR style zone transfer by specifing
+perform a IXFR style zone transfer by specifying
 .Ic support-ixfr
 .Li yes .
 The default value of
@@ -1973,7 +1984,7 @@ statement, to be used for transaction security when talking to the
 remote server.
 The
 .Ic key
-statememnt must come before the
+statement must come before the
 .Ic server
 statement that references it.
 .Pp
@@ -2037,7 +2048,7 @@ on the specified
 Modern
 .Nm telnet
 clients are capable of speaking directly to these
-sockets, and the control protocol is ARPAnet-style text.
+sockets, and the control protocol is ARPANET-style text.
 It is recommended that 127.0.0.1 be the only
 .Va ip_addr
 used, and this only if you trust all non-privileged users on the local

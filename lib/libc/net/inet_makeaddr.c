@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.10 2002/02/14 22:10:56 augustss Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.10.2.1 2003/10/27 04:40:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.10 2002/02/14 22:10:56 augustss Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.10.2.1 2003/10/27 04:40:20 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,21 +56,19 @@ __weak_alias(inet_makeaddr,_inet_makeaddr)
  * building addresses stored in the ifnet structure.
  */
 struct in_addr
-inet_makeaddr(net, host)
-	u_long net, host;
+inet_makeaddr(in_addr_t net, in_addr_t host)
 {
-	in_addr_t anet = (in_addr_t)net;
-	in_addr_t ahost = (in_addr_t)host;
 	in_addr_t addr;
+	struct in_addr ret;
 
 	if (net < 128)
-		addr = (anet << IN_CLASSA_NSHIFT) | (ahost & IN_CLASSA_HOST);
+		addr = (net << IN_CLASSA_NSHIFT) | (host & IN_CLASSA_HOST);
 	else if (net < 65536)
-		addr = (anet << IN_CLASSB_NSHIFT) | (ahost & IN_CLASSB_HOST);
+		addr = (net << IN_CLASSB_NSHIFT) | (host & IN_CLASSB_HOST);
 	else if (net < 16777216L)
-		addr = (anet << IN_CLASSC_NSHIFT) | (ahost & IN_CLASSC_HOST);
+		addr = (net << IN_CLASSC_NSHIFT) | (host & IN_CLASSC_HOST);
 	else
-		addr = anet | ahost;
-	addr = htonl((u_int32_t)addr);
-	return (*(struct in_addr *)(void *)&addr);
+		addr = net | host;
+	ret.s_addr = htonl(addr);
+	return ret;
 }

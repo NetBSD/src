@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.8,v 1.9.2.1 2002/06/28 11:59:51 lukem Exp $
+.\"     $NetBSD: named.8,v 1.9.2.2 2003/10/27 04:40:23 jmc Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -96,7 +96,7 @@ flags.
 .Pp
 .Sy NOTE :
 Several of 
-.Nm "" Ns 's
+.Nm Ns 's
 options, and much more of its behaviour, can be controlled in the configuration 
 file.  Please refer to the configuration file guide included with this 
 .Sy BIND
@@ -116,7 +116,7 @@ is set to
 .Sy NOTE :
 The new debugging framework is considerably more sophisticated than it
 was in older versions of 
-.Nm "" .
+.Nm .
 The configuration file's
 .Dq Li logging
 statement allows for multiple, distinct levels of debugging for each of
@@ -141,7 +141,7 @@ was supported; the first port was that used when contacting
 servers, and the second one was the service port bound by the 
 .Em local 
 instance of
-.Nm "" .
+.Nm .
 The current usage is equivalent to the old usage without the 
 .Ar localport#
 specified; this functionality can be specified with the 
@@ -207,7 +207,7 @@ specified may be either a groupname or a numeric group id.
 .Pp
 .It Fl t Ar directory
 Specifies the directory the server should chroot() into as soon as it is
-finshed processing command line arguments.
+finished processing command line arguments.
 .Pp
 .It Fl w Ar directory
 Sets the working directory of the server.  The
@@ -440,7 +440,7 @@ nameserver statistics data
 .Xr hostname 7 ,
 .Xr kill 1 ,
 .Xr resolver 3 , 
-.Xr resolver 5 , 
+.Xr resolv.conf 5 , 
 .Xr signal 3 ,
 RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, RFC 1123,
 RFC 2308

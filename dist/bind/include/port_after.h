@@ -1,4 +1,4 @@
-/*	$NetBSD: port_after.h,v 1.4.2.1 2002/06/28 11:39:52 lukem Exp $	*/
+/*	$NetBSD: port_after.h,v 1.4.2.2 2003/10/27 04:40:21 jmc Exp $	*/
 
 #ifndef	PORT_AFTER_H
 #define	PORT_AFTER_H
@@ -20,6 +20,7 @@
 #define HAVE_CHROOT
 #define CAN_CHANGE_ID
 #define __BIND_RES_TEXT
+#define USE_IFNAMELINKID
 
 #define _TIMEZONE timezone
 

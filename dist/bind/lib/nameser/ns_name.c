@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.3.2.3 2002/12/12 22:07:48 he Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.3.2.4 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_name.c,v 8.18.4.1 2002/11/14 13:32:08 marka Exp";
+static const char rcsid[] = "Id: ns_name.c,v 8.20 2003/04/03 06:00:07 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -794,7 +794,7 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 {
 	const char *cp = *cpp;
 	char *beg = dn, tc;
-	int b, blen, plen;
+	int b, blen, plen, i;
 
 	if ((blen = (*cp & 0xff)) == 0)
 		blen = 256;
@@ -804,18 +804,34 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 		return(-1);
 
 	cp++;
-	dn += SPRINTF((dn, "\\[x"));
-	for (b = blen; b > 7; b -= 8, cp++)
-		dn += SPRINTF((dn, "%02x", *cp & 0xff));
+	i = SPRINTF((dn, "\\[x"));
+	if (i < 0)
+		return (-1);
+	dn += i;
+	for (b = blen; b > 7; b -= 8, cp++) {
+		i = SPRINTF((dn, "%02x", *cp & 0xff));
+		if (i < 0)
+			return (-1);
+		dn += i;
+	}
 	if (b > 4) {
 		tc = *cp++;
-		dn += SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
+		i = SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
+		if (i < 0)
+			return (-1);
+		dn += i;
 	} else if (b > 0) {
 		tc = *cp++;
-		dn += SPRINTF((dn, "%1x",
+		i = SPRINTF((dn, "%1x",
 			       ((tc >> 4) & 0x0f) & (0x0f << (4 - b)))); 
+		if (i < 0)
+			return (-1);
+		dn += i;
 	}
-	dn += SPRINTF((dn, "/%d]", blen));
+	i = SPRINTF((dn, "/%d]", blen));
+	if (i < 0)
+		return (-1);
+	dn += i;
 
 	*cpp = cp;
 	return(dn - beg);

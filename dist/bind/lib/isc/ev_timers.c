@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.4.2.1 2002/06/28 11:55:26 lukem Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.4.2.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.32 2001/11/01 05:35:47 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.33 2002/07/08 05:50:09 marka Exp";
 #endif
 
 /* Import. */
@@ -154,10 +154,10 @@ evSetTimer(evContext opaqueCtx,
 	evTimer *id;
 
 	evPrintf(ctx, 1,
-"evSetTimer(ctx %p, func %p, uap %p, due %d.%09ld, inter %d.%09ld)\n",
+"evSetTimer(ctx %p, func %p, uap %p, due %ld.%09ld, inter %ld.%09ld)\n",
 		 ctx, func, uap,
-		 (int)due.tv_sec, due.tv_nsec,
-		 (int)inter.tv_sec, inter.tv_nsec);
+		 (long)due.tv_sec, due.tv_nsec,
+		 (long)inter.tv_sec, inter.tv_nsec);
 
 	/* due={0,0} is a magic cookie meaning "now." */
 	if (due.tv_sec == 0 && due.tv_nsec == 0L)
@@ -381,10 +381,10 @@ print_timer(void *what, void *uap) {
 
 	cur = what;
 	evPrintf(ctx, 7,
-	    "  func %p, uap %p, due %d.%09ld, inter %d.%09ld\n",
+	    "  func %p, uap %p, due %ld.%09ld, inter %ld.%09ld\n",
 		 cur->func, cur->uap,
-		 (int)cur->due.tv_sec, cur->due.tv_nsec,
-		 (int)cur->inter.tv_sec, cur->inter.tv_nsec);
+		 (long)cur->due.tv_sec, cur->due.tv_nsec,
+		 (long)cur->inter.tv_sec, cur->inter.tv_nsec);
 }
 
 static void
