@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.8 1998/11/25 20:30:47 hwr Exp $
+# 	$NetBSD: GENERIC,v 1.9 1999/01/20 17:24:36 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -61,7 +61,8 @@ options 	NFS_BOOT_BOOTPARAM
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
-#options 	DDB			# kernel dynamic debugger
+# we enable DDB in GENERIC for now.
+options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
 
@@ -124,8 +125,7 @@ options 	COMPAT_SPARC32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options		EXEC_ELF64	# Exec module for SunOS 5.x binaries.
-options		__ELF__
+options		EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -151,7 +151,7 @@ options 	QUOTA		# FFS quotas
 options 	INET		# IP (Internet Protocol) v4
 options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
-#options 	MROUTING	# packet forwarding of multicast packets
+options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
@@ -159,14 +159,13 @@ options 	ISO,TPIP	# OSI networking
 options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
-#options 	NTP		# Network Time Protocol in-kernel support
+options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	PPP_BSDCOMP	# Add BSD compression to ppp device
-#options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
-#options 	PPP_FILTER	# Add active filters for ppp (via bpf)
-
+options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
+options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+options 	PPP_BSDCOMP	# Add BSD compression to ppp device
+options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
+options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 
 
 #### Main bus and CPU .. all systems.
@@ -188,13 +187,14 @@ sbus0	at mainbus0				# sun4c and sun4u
 # bpp0 at sbus0					# parallel port
 
 ## Power status and control register on Sun4m systems
+# XXX is this on the ultrasparc?
 #power0 at sbus0
 
-## Mostek clock found on 4/300, sun4c, and sun4m systems.
+## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at sbus0 slot ? offset ?
 
-## Timer chip found on 4/300, sun4c, and sun4m systems.
+## Timer chip found on 4/300, sun4c, sun4m and sun4u systems.
 timer0	at mainbus0				# sun4c
 
 #### Serial port configuration
@@ -211,13 +211,11 @@ ms0	at zs1 channel 1	# mouse
 
 #### Disk controllers and disks
 
-#
-
 ## The following flags may be set for the NCR53c94 based esp driver:
 ##	bits 0-7:  disable disconnect/reselect for the corresponding target
 ##	bits 8-15: disable synchronous negotiation for target [bit-8]
 
-## sun4/300, sun4c, sun4m on-board SCSI, and FSBE/S SBus SCSI cards.
+## sun4/300, sun4c, sun4m and sun4u on-board SCSI, and FSBE/S SBus SCSI cards.
 ## Both `dma' and `esp' are needed in all cases.
 ## Two kinds of additional SBus SCSI interfaces are available.  One uses
 ## "esp at sbus" like the sun4c on-board; the other uses "esp at dma".
@@ -225,8 +223,8 @@ ms0	at zs1 channel 1	# mouse
 ## sun4/300 SCSI - an NCR53c94 or equivalent behind
 ## an LSI Logic DMA controller
 
-dma0	at sbus0 slot ? offset ?			# sun4c/sun4m
-esp0	at dma0 flags 0x0000				# sun4m
+dma0	at sbus0 slot ? offset ?			# sun4c/sun4m/sun4u
+esp0	at dma0 flags 0x0000				# sun4m/sun4u
 
 # FSBE/S SCSI
 dma*	at sbus? slot ? offset ?			# SBus
@@ -238,6 +236,10 @@ scsibus* at esp?
 isp*	at sbus? slot ? offset ?
 scsibus* at isp?
 
+## FAS support missing
+#fas*	at sbus? slot ? offset ?
+#scsibus* at fas?
+
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
 sd*	at scsibus? target ? lun ?		# SCSI disks
@@ -247,11 +249,11 @@ ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
-
 ## Floppy controller and drive found on SPARCstations.
 
+# need share with the sparc...uses auxreg.  what is this on sparc64?
 #fdc0	at sbus0 slot ? offset ?
-#fd*	at fdc0 slot ? offset ?			# the drive itself
+#fd*	at fdc0 	 			# the drive itself
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -265,12 +267,12 @@ pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
-#pseudo-device	raid	4
+pseudo-device	raid	4
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+pseudo-device	md	1
 
 
 #### Network interfaces
@@ -290,6 +292,10 @@ le0		at lebuffer?				# SBus
 lebuffer*	at sbus? slot ? offset ?		# SBus
 le*		at lebuffer?				# SBus
 
+## qec/be, qec/hme
+qec*		at sbus? slot ? offset ?
+be*		at qec?
+qe*		at qec?
 
 ## Loopback network interface; required
 pseudo-device	loop
@@ -301,7 +307,7 @@ pseudo-device	sl		2
 pseudo-device	ppp		2
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		1
+pseudo-device	strip		1
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
@@ -321,12 +327,10 @@ pseudo-device	ipfilter
 
 #### Audio and video devices
 
-## /dev/audio support (`audioamd' plus `audio')
+## /dev/audio support (`audiocs' plus `audio')
 ##
-#audioamd0	at mainbus0				# sun4c
-#audioamd0	at obio0				# sun4m
-#audioamd0	at sbus0 slot ? offset ?		# sun4m
-#audio*		at audioamd0
+audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
+audio*		at audiocs0
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
@@ -361,10 +365,10 @@ cgsix*		at sbus? slot ? offset ?
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		64	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 ## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
-#pseudo-device	rnd
+pseudo-device	rnd
