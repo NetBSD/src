@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.108 2001/09/15 20:36:40 chs Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.109 2001/09/20 08:22:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -688,8 +688,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	mp->mnt_fs_bshift = DEV_BSHIFT;
-	mp->mnt_dev_bshift = DEV_BSHIFT;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
@@ -701,6 +699,9 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_soproto = argp->proto;
 
 	nfs_decode_args(nmp, argp);
+
+	mp->mnt_fs_bshift = ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 
 	/*
 	 * For Connection based sockets (TCP,...) defer the connect until
