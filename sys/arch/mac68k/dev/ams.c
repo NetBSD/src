@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.4.2.3 1999/11/20 08:37:10 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.4.2.4 2000/02/13 21:40:26 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -553,7 +553,7 @@ ms_processevent(event, amsc)
 #endif
 #if NWSMOUSE > 0
 		wsmouse_input(amsc->sc_wsmousedev, new_event.u.m.buttons,
-		    new_event.u.m.dx, new_event.u.m.dy, 0);
+		    new_event.u.m.dx, new_event.u.m.dy, 0, 0);
 #else
 		/* do nothing */ ;
 #endif
