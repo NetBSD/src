@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1995/04/10 08:54:16 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1995/04/16 14:53:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -82,7 +82,9 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
 	bdev_rd_init(NRAMD,rd),		/* 1: ram disk - for install disk */
+#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
+#undef	fdopen
 	bdev_swap_init(),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -293,8 +295,6 @@ chrtoblk(dev)
  * the standalone boot.  I think it best that they both use the same
  * known algorithm unless we see a pressing need otherwise.
  */
-#include <dev/cons.h>
-
 cons_decl(ser);
 #define	itecnpollc	nullcnpollc
 cons_decl(ite);
