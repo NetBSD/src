@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2003/07/28 07:04:17 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.6 2003/07/28 08:54:39 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -86,7 +86,7 @@ CXXFLAGS+=	-fno-rtti -fno-exceptions
 
 # If we're using GCC3, we only need -lsupc++
 .if ${USE_TOOLS_TOOLCHAIN} == "no"
-MKCXXSUPCXX=	yes
+USE_LIBSTDCXX=	no
 .endif
 
 .y.o:
