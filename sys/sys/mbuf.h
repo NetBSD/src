@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.92 2004/06/06 04:35:53 dyoung Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.93 2004/06/22 14:04:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -894,6 +894,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 #define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
+
+#define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
