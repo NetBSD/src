@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.78 2004/05/08 20:52:59 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.79 2004/05/10 20:32:07 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.78 2004/05/08 20:52:59 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.79 2004/05/10 20:32:07 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1544,7 +1544,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 	if (sysid != 0) {
 		if (start < dos_sectors)
 			return "Track zero is reserved for the BIOS";
-		if (start + size > dos_disksectors) 
+		if (start + size > disksectors) 
 			return "Partition exceeds size of disk";
 		for (p = 0; p < MBR_PART_COUNT; p++) {
 			if (p == part || mboot.mbr_parts[p].mbrp_type == 0)
@@ -1809,7 +1809,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 					p = -1;
 				}
 			}
-			if (start >= dos_disksectors) {
+			if (start >= disksectors) {
 				printf("No free space\n");
 				return 0;
 			}
@@ -1829,7 +1829,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 #endif
 		} else {
 			daddr_t old = start;
-			daddr_t lim = extended ? ext.limit : dos_disksectors;
+			daddr_t lim = extended ? ext.limit : disksectors;
 			start = decimal("start", start,
 				DEC_SEC | DEC_RND_0 | (extended ? DEC_RND : 0),
 				extended ? ext.base : 0, lim);
