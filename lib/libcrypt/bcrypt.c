@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.4 2005/01/11 22:39:21 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.5 2005/01/11 23:02:16 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.4 2005/01/11 22:39:21 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.5 2005/01/11 23:02:16 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +85,8 @@ static char    error[] = ":";
 
 const static u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+char *bcrypt_gensalt(u_int8_t);
 
 const static u_int8_t index_64[128] =
 {
