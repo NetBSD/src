@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.10 1998/02/16 22:12:49 thorpej Exp $
+#	$NetBSD: files.isapnp,v 1.11 1998/03/29 08:13:43 enami Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -45,3 +45,11 @@ file	dev/isapnp/sb_isapnp.c			sb_isapnp
 device	guspnp: audio, isadma, interwave, mulaw
 attach	guspnp at isapnp
 file	dev/isapnp/gus_isapnp.c			guspnp needs-flag
+
+#
+# ISAPnP SCSI Controller
+#
+
+# Adaptec AHA-1520B
+attach	aic at isapnp with aic_isapnp
+file	dev/isapnp/aic_isapnp.c			aic_isapnp
