@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+# syspkgdeps [-a arch] [-m machine] [-s setsdir] [-p prefix] sets
+#
+# Compute naive package dependencies based on file & directory
+# nesting. E.g., if pkg P contains /foo/bar and Q contains /foo,
+# then Q is considered a dependency of P.
+#
+
+#set -u
+
+DB="db -q"
+
+#
+# set defaults and import setlist subroutines
+#
+. ./sets.subr
+setd=$(pwd)
+prefix=/
+
+usage() {
+exec 1>&2
+
+echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] sets"
+echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]"
+echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
+echo "	-s setsdir	directory to find sets			[$setd]"
+echo "	-p prefix	prefix for created plist		[$prefix]"
+echo "	sets		sets to find dependencies for"
+
+exit 1
+}
+
+# parse arguments
+while : ; do
+	case $1 in
+	-a*)
+		machine_arch=`MACHINE_ARCH=${2} ${make} print_machine_arch`
+		machine_cpu=`MACHINE_ARCH=${2} ${make} print_machine_cpu`
+		shift
+		;;
+	-m*)
+		machine=$2; shift
+		;;
+	-s*)
+		setd=$2; shift
+		;;
+	-p*)
+		prefix=$2; shift
+		;;
+	-*)
+		usage
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+if [ $# -lt 1 ]; then
+	usage
+fi
+
+sets=$@
+
+if [ "$object_fmt" = "ELF" ]; then
+	shlib=elf
+else
+	shlib=aout
+fi
+stlib=$shlib
+
+# Turn off shlibs for some ports.
+if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
+	shlib=no
+fi
+
+lkm=yes
+# Turn off LKMs for some ports.
+if [ "$machine" = "evbppc" ]; then
+	lkm=no
+fi
+
+# Turn off lintlibs for some ports.
+# Not needed anymore, leave the hook here for future use.
+lintlibs=
+
+# TBD clean up
+SCRATCH=$(mktemp -d /var/tmp/$(basename $0).XXXXXX)
+
+[ $? -ne 0 ] && { echo "Could not create scratch directory." 1>&2 ; exit 1 ; }
+
+PATH_MEMBERSHIP=$SCRATCH/path-membership
+PATH_TO_PKGNAME=$SCRATCH/pathpkg.db
+PARENT_PKGNAMES=$SCRATCH/parent-pkgnames
+PARENT_PATHNAMES=$SCRATCH/parent-pathnames
+
+echo "indexing packages by pathnames" 1>&2
+
+list_set_files $sets | sed 's/^\.\///' | \
+env PREFIX=$prefix awk '{
+	if ($1 == ".") {
+		print ENVIRON["PREFIX"] " " $2;
+	} else {
+		print ENVIRON["PREFIX"] $1 " " $2;
+	}
+}' | sort -k 1 -u > $PATH_MEMBERSHIP
+
+$DB -w -f - btree $PATH_TO_PKGNAME < $PATH_MEMBERSHIP || echo "shit" 1>&2
+
+echo "computing parent pathnames" 1>&2
+
+while read pathname pkgname; do
+	# print parent pathname
+	dirname $pathname
+done < $PATH_MEMBERSHIP > $PARENT_PATHNAMES
+
+echo "selecting parent packages using parent pathnames" 1>&2
+
+$DB -f - btree $PATH_TO_PKGNAME < $PARENT_PATHNAMES | \
+	paste $PATH_MEMBERSHIP - | \
+	awk '{ if ($2 != $4) print $2 " " $4; }' | sort -u | ./culldeps
+
+if [ $? -ne 0 ]; then
+	echo "error in parent-directory lookup, aborting" 1>&2
+	exit 1
+fi

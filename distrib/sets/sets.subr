@@ -1,0 +1,148 @@
+#
+# list_set_files setname
+# 
+# Produce a packing list for setname. Each record is a line
+# consisting of a path and a System Package name, separated by
+# whitespace. E.g.,
+#
+# ./bin/cp                base-util-root
+#
+# Environment
+#
+# 	setd
+# 	machine
+# 	machine_arch
+# 	machine_cpu
+# 	shlib
+# 	stlib
+# 	lkm
+# 	lintlibs
+# 	toolchain_missing
+#
+list_set_files () {
+	for setname; do
+		list_set_lists $setname
+	done | xargs cat | grep -v '^#'
+}
+
+#
+# list_set_lists setname
+# 
+# Print to stdout a list of files, one filename per line, which
+# concatenate to create the packing list for setname. E.g.,
+#
+# 	.../lists/base/mi
+# 	.../lists/base/rescue.mi
+# 	.../lists/base/md.i386
+# 	.
+# 	.
+# 	.
+#
+# In each file, a record consists of a path and a System Package name,
+# separated by whitespace. E.g.,
+#
+# 	# $NetBSD: sets.subr,v 1.1 2003/06/23 09:02:32 dyoung Exp $
+# 	.			base-sys-root
+# 	./altroot		base-sys-root
+# 	./bin			base-sys-root
+# 	./bin/[			base-util-root
+# 	./bin/cat		base-util-root
+# 	.
+# 	.
+# 	.
+#
+# A # in the first column marks a comment.
+#
+# Environment
+#
+# 	setd
+# 	machine
+# 	machine_arch
+# 	machine_cpu
+# 	shlib
+# 	stlib
+# 	lkm
+# 	lintlibs
+# 	toolchain_missing
+#
+list_set_lists () {
+	setname=$1
+
+	echo $setd/lists/$setname/mi
+	if [ "$machine" != "$machine_arch" ]; then
+		# Prefer an ad.${machine_arch} over an ad.${machine_cpu},
+		# since the arch-specific one will be more specific than
+		# the cpu-specific one.
+		if [ -f $setd/lists/$setname/ad.${machine_arch} ]; then
+			echo $setd/lists/$setname/ad.${machine_arch}
+		elif [ -f $setd/lists/$setname/ad.${machine_cpu} ]; then
+			echo $setd/lists/$setname/ad.${machine_cpu}
+		fi
+		if [ "$shlib" != "no" -a \
+		     -f $setd/lists/$setname/ad.${machine_cpu}.shl ]; then
+			echo $setd/lists/$setname/ad.${machine_cpu}.shl
+		fi
+	fi
+	if [ -f $setd/lists/$setname/md.${machine}.${machine_arch} ]; then
+		echo $setd/lists/$setname/md.${machine}.${machine_arch}
+	elif [ -f $setd/lists/$setname/md.${machine} ]; then
+		echo $setd/lists/$setname/md.${machine}
+	fi
+	if [ -f $setd/lists/$setname/stl.mi ]; then
+		echo $setd/lists/$setname/stl.mi
+	fi
+	if [ -f $setd/lists/$setname/stl.${stlib} ]; then
+		echo $setd/lists/$setname/stl.${stlib}
+	fi
+	if [ "$shlib" != "no" ]; then
+		if [ -f $setd/lists/$setname/shl.mi ]; then
+			echo $setd/lists/$setname/shl.mi
+		fi
+		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
+			echo $setd/lists/$setname/shl.${shlib}
+		fi
+	fi
+	if [ "$lkm" != "no" ]; then
+		if [ -f $setd/lists/$setname/lkm.mi ]; then
+			echo $setd/lists/$setname/lkm.mi
+		fi
+	fi
+	if [ "$lintlibs" != no ]; then
+		if [ -f $setd/lists/$setname/lint.mi ]; then
+			echo $setd/lists/$setname/lint.mi
+		fi
+	fi
+	if [ "$toolchain_missing" != "yes" ]; then
+		if [ -f $setd/lists/$setname/tc.mi ]; then
+			echo $setd/lists/$setname/tc.mi
+		fi
+		if [ "$shlib" != "no" ]; then
+			if [ -f $setd/lists/$setname/tc.shl ]; then
+				echo $setd/lists/$setname/tc.shl
+			fi
+		fi
+	fi
+
+	if [ -f $setd/lists/$setname/rescue.mi ]; then
+		echo $setd/lists/$setname/rescue.mi
+	fi
+	if [ -f $setd/lists/$setname/rescue.${machine} ]; then
+		echo $setd/lists/$setname/rescue.${machine}
+	fi
+	if [ "$machine" != "$machine_arch" ]; then
+		# Prefer a rescue.ad.${machine_arch} over a
+		# rescue.ad.${machine_cpu}, since the arch-
+		# specific one will be more specific than the
+		# cpu-specific one.
+		if [ -f $setd/lists/$setname/rescue.ad.${machine_arch} ]; then
+			echo $setd/lists/$setname/rescue.ad.${machine_arch}
+		elif [ -f $setd/lists/$setname/rescue.ad.${machine_cpu} ]; then
+			echo $setd/lists/$setname/rescue.ad.${machine_cpu}
+		fi
+		if [ "$shlib" != "no" -a -f \
+		     $setd/lists/$setname/rescue.ad.${machine_cpu}.shl ]; then
+			echo $setd/lists/$setname/rescue.ad.${machine_cpu}.shl
+		fi
+	fi
+}
+
