@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274.2.5 2004/08/11 19:44:02 jmc Exp $ */
+/*	$NetBSD: wd.c,v 1.274.2.6 2004/08/11 19:47:48 jmc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.5 2004/08/11 19:44:02 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.6 2004/08/11 19:47:48 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -415,16 +415,6 @@ wddetach(struct device *self, int flags)
 	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
-
-	/* Clean out the bad sector list */
-	while (!SLIST_EMPTY(&sc->sc_bslist)) {
-		void *head = SLIST_FIRST(&sc->sc_bslist);
-		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
-		free(head, M_TEMP);
-	}
-	sc->sc_bscount = 0;
-
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
@@ -453,6 +443,14 @@ wddetach(struct device *self, int flags)
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
 
+	/* Clean out the bad sector list */
+	while (!SLIST_EMPTY(&sc->sc_bslist)) {
+		void *head = SLIST_FIRST(&sc->sc_bslist);
+		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
+		free(head, M_TEMP);
+	}
+	sc->sc_bscount = 0;
+
 	/* Get rid of the shutdown hook. */
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
@@ -461,6 +459,8 @@ wddetach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
 	return (0);
 }
@@ -857,6 +857,9 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
+
+	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/*
 	 * If this is the first open of this device, add a reference
