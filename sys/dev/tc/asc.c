@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.19 1996/05/20 09:46:21 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.19.2.1 1996/05/30 04:14:54 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -469,7 +469,7 @@ struct cfattach asc_ca = {
 
 extern struct cfdriver asc_cd;
 struct cfdriver asc_cd = {
-	NULL, "as", DV_DULL
+	NULL, "asc", DV_DULL
 };
 
 
@@ -509,14 +509,15 @@ ascmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 	void *ascaddr;
 
 	/*if (parent->dv_cfdata->cf_driver == &ioasic_cd) */
-	if (!TC_BUS_MATCHNAME(ca, "asc") && !TC_BUS_MATCHNAME(ca, "PMAZ-AA "))
+	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) &&
+	    strncmp(d->iada_modname, "PMAZ-AA ", TC_ROM_LLEN))
 		return (0);
 
-	ascaddr = (void*)ca->ca_addr;
+	ascaddr = (void*)d->iada_addr;
 
 	if (badaddr(ascaddr + ASC_OFFSET_53C94, 4))
 		return (0);
@@ -532,7 +533,7 @@ ascattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	register struct ioasicdev_attach_args *d = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
 	register asc_regmap_t *regs;
 	int id, s, i;
@@ -541,7 +542,7 @@ ascattach(parent, self, aux)
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -648,7 +649,8 @@ ascattach(parent, self, aux)
 	(void) pmax_add_scsi(&ascdriver, unit);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, asc_intr, asc);
+	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,
+	    asc_intr, asc);
 
 	printf(": target %d\n", id);
 
