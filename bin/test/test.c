@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)test.c	5.4 (Berkeley) 2/12/93";*/
-static char *rcsid = "$Id: test.c,v 1.9 1993/10/26 01:11:28 cgd Exp $";
+static char *rcsid = "$Id: test.c,v 1.10 1994/02/19 06:29:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -391,6 +391,16 @@ filebit:	if (fs->stat.st_mode & i && fs->rcode >= 0)
 		sp->u.num = isatty(sp->u.num);
 		sp->type = BOOLEAN;
 		break;
+	case ISLNK:
+		{
+			struct stat sb;
+			int rv;
+
+			rv = lstat(fs->name, &sb);
+			if ((sb.st_mode & S_IFLNK) == S_IFLNK && rv >= 0)
+				goto true;
+			goto false;
+		}
 	case NULSTR:
 		if (sp->u.string[0] == '\0')
 			goto true;

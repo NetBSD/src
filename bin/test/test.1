@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)test.1	6.6 (Berkeley) 6/8/92
-.\"	$Id: test.1,v 1.2 1993/08/01 07:47:45 mycroft Exp $
+.\"	$Id: test.1,v 1.3 1994/02/19 06:29:02 cgd Exp $
 .\"
 .Dd June 8, 1992
 .Dt TEST 1
@@ -86,6 +86,10 @@ True if
 .Ar file
 exists and its set group ID flag
 is set.
+.It Fl h Ar file
+True if
+.Ar file
+exists and is a symbolic link.
 .It Fl n Ar string
 True if the length of
 .Ar string
