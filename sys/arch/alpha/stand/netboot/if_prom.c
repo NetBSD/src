@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.10 1997/09/06 14:08:33 drochner Exp $ */
+/* $NetBSD: if_prom.c,v 1.11 1999/03/27 09:01:28 ross Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -256,4 +256,11 @@ prom_end(nif)
 {
 
 	prom_close(netfd);
+}
+
+void
+close_primary_device(fd)
+	int fd;
+{
+	/* do nothing, there is no primary boot stage for us */
 }
