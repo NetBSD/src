@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_xchar.c	8.6 (Berkeley) 3/8/94";
+static char sccsid[] = "@(#)v_zexit.c	8.7 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)v_xchar.c	8.6 (Berkeley) 3/8/94";
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <termios.h>
 
 #include "compat.h"
@@ -50,87 +51,39 @@ static char sccsid[] = "@(#)v_xchar.c	8.6 (Berkeley) 3/8/94";
 #include <regex.h>
 
 #include "vi.h"
+#include "excmd.h"
 #include "vcmd.h"
 
 /*
- * v_xchar -- [count]x
- *	Deletes the character(s) on which the cursor sits.
+ * v_zexit -- ZZ
+ *	Save the file and exit.
  */
 int
-v_xchar(sp, ep, vp)
+v_zexit(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
 {
-	recno_t lno;
-	size_t len;
-
-	if (file_gline(sp, ep, vp->m_start.lno, &len) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
-			goto nodel;
-		GETLINE_ERR(sp, vp->m_start.lno);
+	if (F_ISSET(ep, F_MODIFIED) &&
+	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
 		return (1);
-	}
-	if (len == 0) {
-nodel:		msgq(sp, M_BERR, "No characters to delete.");
-		return (1);
-	}
 
 	/*
-	 * Delete from the cursor toward the end of line, w/o moving the
-	 * cursor.
-	 *
 	 * !!!
-	 * Note, "2x" at EOL isn't the same as "xx" because the left movement
-	 * of the cursor as part of the 'x' command isn't taken into account.
-	 * Historically correct.
+	 * Historic practice: quit! or two quit's done in succession
+	 * (where ZZ counts as a quit) didn't check for other files.
+	 *
+	 * Check for related screens; quit if they exist, the user will
+	 * get a message on the last screen.
 	 */
-	if (F_ISSET(vp, VC_C1SET))
-		vp->m_stop.cno += vp->count - 1;
-	if (vp->m_stop.cno >= len - 1) {
-		vp->m_stop.cno = len - 1;
-		vp->m_final.cno = vp->m_start.cno ? vp->m_start.cno - 1 : 0;
-	} else
-		vp->m_final.cno = vp->m_start.cno;
-
-	if (cut(sp, ep, NULL,
-	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_stop, 0))
-		return (1);
-	return (delete(sp, ep, &vp->m_start, &vp->m_stop, 0));
-}
-
-/*
- * v_Xchar -- [count]X
- *	Deletes the character(s) immediately before the current cursor
- *	position.
- */
-int
-v_Xchar(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	u_long cnt;
-
-	if (vp->m_start.cno == 0) {
-		v_sol(sp);
+	if (sp->ccnt != sp->q_ccnt + 1 &&
+	    ep->refcnt <= 1 && file_unedited(sp) != NULL) {
+		sp->q_ccnt = sp->ccnt;
+		msgq(sp, M_ERR,
+		    "More files to edit; use \":n\" to go to the next file");
 		return (1);
 	}
 
-	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-	if (cnt >= vp->m_start.cno)
-		vp->m_start.cno = 0;
-	else
-		vp->m_start.cno -= cnt;
-	--vp->m_stop.cno;
-	vp->m_final.cno = vp->m_start.cno;
-
-	if (cut(sp, ep, NULL,
-	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_stop, 0))
-		return (1);
-	return (delete(sp, ep, &vp->m_start, &vp->m_stop, 0));
+	F_SET(sp, S_EXIT);
+	return (0);
 }
