@@ -33,8 +33,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 
 #include <fcntl.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +44,8 @@
 #include <unistd.h>
 #include <utmp.h>
 #include <util.h>
+
+#include "extern.h"
 
 typedef struct utmp UTMP;
 
@@ -54,7 +58,7 @@ static int topslot = -1;
  */
 
 void
-login(const UTMP *ut)
+ftpd_login(const struct utmp *ut)
 {
 	UTMP ubuf;
 
@@ -94,7 +98,7 @@ login(const UTMP *ut)
 }
 
 int
-logout(const char *line)
+ftpd_logout(const char *line)
 {
 	UTMP ut;
 	int rval;
