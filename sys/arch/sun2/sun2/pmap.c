@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2001/04/06 14:52:19 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2001/04/10 12:39:56 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -326,7 +326,7 @@ typedef struct context_state *context_t;
 #define EMPTY_CONTEXT 0
 #define KERNEL_CONTEXT 0
 #define FIRST_CONTEXT 1
-#define	has_context(pmap)	((pmap)->pm_ctxnum != EMPTY_CONTEXT)
+#define	has_context(pmap)	(((pmap)->pm_ctxnum != EMPTY_CONTEXT) == ((pmap) != kernel_pmap))
 
 TAILQ_HEAD(context_tailq, context_state)
 	context_free_queue, context_active_queue;
