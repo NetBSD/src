@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 1998/05/15 10:15:49 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 1998/07/02 18:58:32 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -280,6 +280,15 @@ zsc_attach(parent, self, aux)
 	/* Make sure everything's inited ok. */
 	if (zsaddr[zsc_unit] == NULL)
 		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+
+	if (zsc_unit == 0) {
+		struct consdev cd;
+
+		cd.cn_pri = CN_DEAD;
+		zscnprobe(&cd);
+		if (cd.cn_pri != CN_DEAD)
+			zscninit(cn_tab);
+	}
 
 	if ((zs_hwflags[zsc_unit][0] | zs_hwflags[zsc_unit][1]) &
 		ZS_HWFLAG_CONSOLE) {
@@ -1065,8 +1074,8 @@ zs_abort(cs)
 #endif
 }
 
-static int ofccngetc __P((dev_t));
-static void ofccnputc __P((dev_t, int));
+extern int ofccngetc __P((dev_t));
+extern void ofccnputc __P((dev_t, int));
 
 struct consdev consdev_zs = {
 	zscnprobe,
@@ -1075,8 +1084,6 @@ struct consdev consdev_zs = {
 	ofccnputc,
 	zscnpollc,
 };
-
-struct consdev *cn_tab = &consdev_zs;
 
 void
 zscnprobe(struct consdev * cp)
@@ -1088,6 +1095,7 @@ zscnprobe(struct consdev * cp)
 	if (console_node == -1)
 		return;
 
+	bzero(type, sizeof(type));
 	l = OF_getprop(console_node, "device_type", type, sizeof(type));
 	if (l == -1 || l >= sizeof(type) - 1)
 		return;
@@ -1096,9 +1104,6 @@ zscnprobe(struct consdev * cp)
 		cp->cn_pri = CN_REMOTE;
 }
 
-
-static int stdin, stdout;
-
 void
 zscninit(cd)
 	struct consdev *cd;
@@ -1106,14 +1111,11 @@ zscninit(cd)
 	int chosen;
 	int sz;
 	int unit = 0;
+	int stdout;
 	char name[32];
 
 	chosen = OF_finddevice("/chosen");
 	if (chosen == -1)
-		return;
-
-	sz = OF_getprop(chosen, "stdin", &stdin, sizeof(stdin));
-	if (sz != sizeof(stdin))
 		return;
 
 	sz = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
@@ -1129,28 +1131,4 @@ zscninit(cd)
 	zs_hwflags[0][unit] = ZS_HWFLAG_CONSOLE;
 
 	cd->cn_dev = makedev(zs_major, unit);
-}
-
-static int
-ofccngetc(dev)
-	dev_t dev;
-{
-	u_char ch;
-	int sz;
-
-	sz = OF_read(stdin, &ch, 1);
-	if (sz <= 0)
-		return -1;
-
-	return ch;
-}
-
-static void
-ofccnputc(dev, c)
-	dev_t dev;
-	int c;
-{
-	u_char ch = c;
-
-	OF_write(stdout, &ch, 1);
 }
