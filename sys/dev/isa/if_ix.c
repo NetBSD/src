@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.10 2001/11/13 08:01:19 lukem Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.11 2001/11/26 23:31:00 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.10 2001/11/13 08:01:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.11 2001/11/26 23:31:00 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -924,10 +924,12 @@ ix_attach(parent, self, aux)
 		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 					          BUS_SPACE_BARRIER_WRITE);
 
-		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
+		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT,
+				  IE_SYSBUS_16BIT);
 	} else {
 		bus_space_write_1(sc->bt, sc->bh, 
-				  IE_SCP_BUS_USE((u_long)sc->scp), 0);
+				  IE_SCP_BUS_USE((u_long)sc->scp),
+				  IE_SYSBUS_16BIT);
 	}
 
 	/* set up pointers to key structures */
