@@ -27,6 +27,7 @@
 ./usr/share/man/cat4/amiga/console.0
 ./usr/share/man/cat4/amiga/ed.0
 ./usr/share/man/cat4/amiga/es.0
+./usr/share/man/cat4/amiga/fdc.0
 ./usr/share/man/cat4/amiga/grfcl.0
 ./usr/share/man/cat4/amiga/grfcv.0
 ./usr/share/man/cat4/amiga/grfcv3d.0
@@ -317,6 +318,7 @@
 ./usr/share/man/man4/amiga/console.4
 ./usr/share/man/man4/amiga/ed.4
 ./usr/share/man/man4/amiga/es.4
+./usr/share/man/man4/amiga/fdc.4
 ./usr/share/man/man4/amiga/grfcl.4
 ./usr/share/man/man4/amiga/grfcv.4
 ./usr/share/man/man4/amiga/grfcv3d.4
