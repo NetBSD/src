@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43 2000/04/16 23:12:13 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.44 2000/06/26 15:51:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -49,6 +49,8 @@
 #include <machine/ansi.h>
 #include <machine/endian.h>
 
+#include <sys/ansi.h>
+
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
@@ -82,7 +84,12 @@ typedef	u_int32_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 typedef	u_int32_t	mode_t;		/* permissions */
 typedef	u_int32_t	nlink_t;	/* link count */
-typedef	quad_t		off_t;		/* file offset */
+
+#ifndef	off_t
+typedef	__off_t		off_t;		/* file offset */
+#define	off_t		off_t
+#endif
+
 typedef	int32_t		pid_t;		/* process id */
 typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
