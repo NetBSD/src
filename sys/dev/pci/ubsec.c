@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.3 2003/08/27 22:07:57 thorpej Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.4 2003/08/28 19:00:52 thorpej Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -182,6 +182,107 @@ SYSCTL_INT(_kern, OID_AUTO, ubsec_maxaggr, CTLFLAG_RW, &ubsec_maxaggr,
 	    0, "Broadcom driver: max ops to aggregate under one interrupt");
 #endif
 
+static const struct ubsec_product {
+	pci_vendor_id_t		ubsec_vendor;
+	pci_product_id_t	ubsec_product;
+	int			ubsec_flags;
+	int			ubsec_statmask;
+	const char		*ubsec_name;
+} ubsec_products[] = {
+	{ PCI_VENDOR_BLUESTEEL,	PCI_PRODUCT_BLUESTEEL_5501,
+	  0,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Bluesteel 5501"
+	},
+	{ PCI_VENDOR_BLUESTEEL,	PCI_PRODUCT_BLUESTEEL_5601,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Bluesteel 5601"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5801,
+	  0,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Broadcom BCM5801"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5802,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Broadcom BCM5802"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5805,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Broadcom BCM5805"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5820,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR,
+	  "Broadcom BCM5820"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5821,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  "Broadcom BCM5821"
+	},
+	{ PCI_VENDOR_SUN,	PCI_PRODUCT_SUN_SCA1K,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  "Sun Crypto Accelerator 1000"
+	},
+	{ PCI_VENDOR_SUN,	PCI_PRODUCT_SUN_5821,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  "Broadcom BCM5821 (Sun)"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5822,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  "Broadcom BCM5822"
+	},
+
+	{ PCI_VENDOR_BROADCOM,	PCI_PRODUCT_BROADCOM_5823,
+	  UBS_FLAGS_KEY | UBS_FLAGS_RNG | UBS_FLAGS_LONGCTX |
+	      UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY,
+	  BS_STAT_MCR1_DONE | BS_STAT_DMAERR |
+	      BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY,
+	  "Broadcom BCM5823"
+	},
+
+	{ 0,			0,
+	  0,
+	  0,
+	  NULL
+	}
+};
+
+static const struct ubsec_product *
+ubsec_lookup(const struct pci_attach_args *pa)
+{
+	const struct ubsec_product *up;
+
+	for (up = ubsec_products; up->ubsec_name != NULL; up++) {
+		if (PCI_VENDOR(pa->pa_id) == up->ubsec_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == up->ubsec_product)
+			return (up);
+	}
+	return (NULL);
+}
+
 static int
 ubsec_probe(parent, match, aux)
 	struct device *parent;
@@ -190,23 +291,7 @@ ubsec_probe(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5501 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601))
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5801 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_SCA1K ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_5821))
+	if (ubsec_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -219,13 +304,22 @@ ubsec_attach(parent, self, aux)
 {
 	struct ubsec_softc *sc = (struct ubsec_softc *)self;
 	struct pci_attach_args *pa = aux;
+	const struct ubsec_product *up;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ubsec_dma *dmap;
-	bus_size_t iosize;
-	int mapreg;
 	u_int32_t cmd, i;
+
+	up = ubsec_lookup(pa);
+	if (up == NULL) {
+		printf("\n");
+		panic("ubsec_attach: impossible");
+	}
+
+	aprint_naive(": Crypto processor\n");
+	aprint_normal(": %s, rev. %d\n", up->ubsec_name,
+	    PCI_REVISION(pa->pa_class));
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
@@ -233,87 +327,44 @@ ubsec_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->sc_qchip2);
 	SIMPLEQ_INIT(&sc->sc_q2free);
 
-	sc->sc_statmask = BS_STAT_MCR1_DONE | BS_STAT_DMAERR;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
-		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5802 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
-		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
-		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
-		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
-
- 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
- 	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821 ||
-	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822 ||
-	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823)) ||
- 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
- 	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_SCA1K ||
- 	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_5821))) {
-		/* NB: the 5821/5822 defines some additional status bits */
-		sc->sc_statmask |= BS_STAT_MCR1_ALLEMPTY |
-		    BS_STAT_MCR2_ALLEMPTY;
-		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
-		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
-	}
+	sc->sc_flags = up->ubsec_flags;
+	sc->sc_statmask = up->ubsec_statmask;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+	cmd |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
-	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
+	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
+		aprint_error("%s: can't find mem space",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
-		return;
-	}
-
-#ifdef __OpenBSD__
-	mapreg= pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0);
-#else
-	mapreg= pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, &iosize, 0);
-#endif
-
-	if (mapreg) {
-		printf(": can't find mem space\n");
-		return;
-	}
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ubsec_intr, sc
-				       /*, self->dv_xname*/);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ubsec_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dv.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dv.dv_xname, intrstr);
 
 	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0) {
+		aprint_error("%s: couldn't get crypto driver id\n",
+		    sc->sc_dv.dv_xname);
 		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;
 	}
 
@@ -325,13 +376,15 @@ ubsec_attach(parent, self, aux)
 		q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
 		    M_DEVBUF, M_NOWAIT);
 		if (q == NULL) {
-			printf(": can't allocate queue buffers\n");
+			aprint_error("%s: can't allocate queue buffers\n",
+			    sc->sc_dv.dv_xname);
 			break;
 		}
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_dmachunk),
 		    &dmap->d_alloc, 0)) {
-			printf(": can't allocate dma buffers\n");
+			aprint_error("%s: can't allocate dma buffers\n",
+			    sc->sc_dv.dv_xname);
 			free(q, M_DEVBUF);
 			break;
 		}
@@ -367,8 +420,6 @@ ubsec_attach(parent, self, aux)
 	 */
 	ubsec_init_board(sc);
 
-	printf(": %s", intrstr);
-
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_RNG) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
@@ -401,9 +452,13 @@ ubsec_attach(parent, self, aux)
 		callout_init(&sc->sc_rngto);
 		callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
 #endif	
-		printf(", rng");
-skip_rng:
-	;
+ skip_rng:
+		if (sc->sc_rnghz)
+			aprint_normal("%s: random number generator enabled\n",
+			    sc->sc_dv.dv_xname);
+		else
+			aprint_error("%s: WARNING: random number generator "
+			    "disabled\n", sc->sc_dv.dv_xname);
 	}
 #endif /* UBSEC_NO_RNG */
 
@@ -417,8 +472,6 @@ skip_rng:
 				 ubsec_kprocess, sc);
 #endif
 	}
-
-	printf("\n");
 }
 
 /*
