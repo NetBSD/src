@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.6 2001/07/24 21:25:18 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.7 2001/07/26 19:57:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * chain, and we will continue here, having
 			 * returned from the switch.
 			 */
-			pthread__switch(self, intqueue, 0);
+			pthread__switch(self, intqueue);
 		}
 
 		if (self->pt_next) {
@@ -329,7 +329,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * will resume us here after a pass around its
 			 * interrupted queue.
 			 */
-			pthread__switch(self, self->pt_next, 0);
+			pthread__switch(self, self->pt_next);
 		}
 
 	}
