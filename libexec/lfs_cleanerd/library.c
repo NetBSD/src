@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.18 2001/01/04 17:29:04 lukem Exp $	*/
+/*	$NetBSD: library.c,v 1.19 2001/01/09 04:31:18 joff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.18 2001/01/04 17:29:04 lukem Exp $");
+__RCSID("$NetBSD: library.c,v 1.19 2001/01/09 04:31:18 joff Exp $");
 #endif
 #endif /* not lint */
 
@@ -749,8 +749,6 @@ bi_compare(a, b)
 		else
 			return (diff);
 	}
-	if ((diff = (int)(ba->bi_segcreate - bb->bi_segcreate)))
-		return (diff);
 	if ((diff = (int)(ba->bi_daddr - bb->bi_daddr)))
 		return (diff);
 	if(ba->bi_inode != LFS_IFILE_INUM)
