@@ -1,4 +1,4 @@
-# $NetBSD: std.x86_64,v 1.5 2003/03/05 23:56:00 fvdl Exp $
+# $NetBSD: std.x86_64,v 1.6 2003/03/08 00:08:46 fvdl Exp $
 #
 # standard, required NetBSD/x86_64 'options'
 
@@ -6,3 +6,4 @@ machine x86_64 x86
 
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
+options 	MTRR
