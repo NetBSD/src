@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.45 1997/05/09 22:16:30 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.46 1997/05/10 19:01:53 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -868,7 +868,7 @@ audio_fill_silence(params, p, n)
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (params->precision == 16) {
 			nfill = 2;
-			if (params->encoding == AUDIO_ENCODING_LINEAR_LE) {
+			if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
 				auzero[0] = 0;
 				auzero[1] = 0x80;
 			} else {
