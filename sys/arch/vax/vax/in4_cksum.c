@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.7 2003/08/07 16:30:18 agc Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.7 2003/08/07 16:30:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -125,14 +125,15 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: bad mbuf chain");
 #endif
 
-		__asm __volatile("
-			movzwl	16(%%ap),%0	# mov len to sum
-			addb2	8(%%ap),%0	# add proto to sum
-			rotl	$8,%0,%0	# htons, carry is preserved
-			adwc	12(%2),%0	# add src ip
-			adwc	16(%2),%0	# add dst ip
-			adwc	$0,%0		# clean up carry
-			" : "=r" (sum) : "0" (sum), "r" (mtod(m, void *)));
+		__asm __volatile(
+			"movzwl	16(%%ap),%0;"	/* mov len to sum */
+			"addb2	8(%%ap),%0;"	/* add proto to sum */
+			"rotl	$8,%0,%0;"	/* htons, carry is preserved */
+			"adwc	12(%2),%0;"	/* add src ip */
+			"adwc	16(%2),%0;"	/* add dst ip */
+			"adwc	$0,%0;"		/* clean up carry */
+			: "=r" (sum)
+			: "0" (sum), "r" (mtod(m, void *)));
 	}
 
 	/* skip unnecessary part */
