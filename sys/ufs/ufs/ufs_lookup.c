@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.36 2001/11/19 07:00:21 lukem Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.37 2001/11/19 11:56:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.36 2001/11/19 07:00:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.37 2001/11/19 11:56:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -940,7 +940,9 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	struct direct *ep;
 	struct buf *bp;
 	int error;
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
+#endif
 
 	dp = VTOI(dvp);
 
