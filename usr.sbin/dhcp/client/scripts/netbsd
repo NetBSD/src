@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.9 2000/04/22 08:18:13 mellon Exp $
+# $NetBSD: netbsd,v 1.10 2000/04/28 16:34:31 thorpej Exp $
 
 make_resolv_conf() {
   echo search $new_domain_name >/etc/resolv.conf
@@ -82,14 +82,18 @@ fi
   
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
    [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
-  if [ x$new_nis_domain != x ]; then
-    domainname $new_nis_domain
+  if type domainname > /dev/null 2>&1; then
+    if [ x$new_nis_domain != x ]; then
+      domainname $new_nis_domain
+    fi
   fi
-  current_hostname=`/bin/hostname`
-  if [ x$current_hostname = x ] || \
-     [ x$current_hostname = x$old_host_name ]; then
-    if [ x$new_host_name != x$old_host_name ]; then
-      hostname $new_host_name
+  if type hostname > /dev/null 2>&1; then
+    current_hostname=`hostname`
+    if [ x$current_hostname = x ] || \
+       [ x$current_hostname = x$old_host_name ]; then
+      if [ x$new_host_name != x$old_host_name ]; then
+        hostname $new_host_name
+      fi
     fi
   fi
     
