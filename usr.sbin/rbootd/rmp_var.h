@@ -1,3 +1,5 @@
+/*	$NetBSD: rmp_var.h,v 1.3 1995/08/21 17:05:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
  *	for Software Science (CSS).
@@ -39,7 +41,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rmp_var.h	8.1 (Berkeley) 6/4/93
- *	     $Id: rmp_var.h,v 1.2 1994/01/11 16:41:52 brezak Exp $
  *
  * from: Utah Hdr: rmp_var.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
