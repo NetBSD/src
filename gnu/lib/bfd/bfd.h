@@ -1,4 +1,4 @@
-/*	$NetBSD: bfd.h,v 1.1.1.1 1997/09/26 02:38:49 gwr Exp $	*/
+/*	$NetBSD: bfd.h,v 1.2 1997/10/17 18:45:54 gwr Exp $	*/
 
 /* Main header file for the bfd library -- portable access to object files.
    Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
@@ -53,18 +53,31 @@ extern "C" {
 
 #include "ansidecl.h"
 
-/* The substitutions below were done by hand. */
+/*
+ * The substitutions below were done by hand.
+ */
 #define BFD_VERSION  "2.8.1"
-/* Sorry about this... */
-#if defined(__alpha__)
+/*
+ * Which machines need 64-bit targets?
+ * We could make all 64-bit capable, but
+ * that kills performance on 32-bit CPUs.
+ */
+#if defined(__alpha__) || defined(__mips__)
 #define BFD_ARCH_SIZE 64
-#define BFD_HOST_64BIT_LONG 1
-#else	/* alpha */
+#else
 #define BFD_ARCH_SIZE 32
+#endif
+/*
+ * On which machines does long have 64 bits?
+ */
+#if defined(__alpha__)
+#define BFD_HOST_64BIT_LONG 1
+#else
 #define BFD_HOST_64BIT_LONG 0
 #endif
-
-/* The rest of this is the "stock" GNU bfd-in2.h */
+/*
+ * End of the "by hand" section.
+ */
 
 #if BFD_ARCH_SIZE >= 64
 #define BFD64
