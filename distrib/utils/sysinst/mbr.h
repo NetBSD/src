@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.8 1999/07/10 23:07:15 fvdl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.9 2000/12/22 10:12:13 mrg Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -67,22 +67,22 @@ extern char mbr[];
 
 
 /* from mbr.c */
-void	set_fdisk_geom __P((void));	/* edit incore BIOS geometry */
-void	disp_cur_geom __P((void));
-int	check_geom __P((void));		/* primitive geometry sanity-check */
+void	set_fdisk_geom (void);	/* edit incore BIOS geometry */
+void	disp_cur_geom (void);
+int	check_geom (void);		/* primitive geometry sanity-check */
 
-void	disp_cur_part __P((struct mbr_partition *, int, int));
-int	edit_mbr __P((struct mbr_partition *));		
-int 	partsoverlap __P((struct mbr_partition *, int, int));
+void	disp_cur_part (struct mbr_partition *, int, int);
+int	edit_mbr (struct mbr_partition *);
+int 	partsoverlap (struct mbr_partition *, int, int);
 
 /* from mbr.c */
  
-int     read_mbr __P((char *, char *, int));
-int     write_mbr __P((char *, char *, int, int));
-int     valid_mbr __P((char *));
-int	guess_biosgeom_from_mbr __P((char *, int *, int *, int *));
-int	md_bios_info __P((char *));
-void	set_bios_geom __P((int, int, int));
-int	otherpart __P((int));
-int	ourpart __P((int));
-char	*get_partname __P((int));
+int     read_mbr (char *, char *, int);
+int     write_mbr (char *, char *, int, int);
+int     valid_mbr (char *);
+int	guess_biosgeom_from_mbr (char *, int *, int *, int *);
+int	md_bios_info (char *);
+void	set_bios_geom (int, int, int);
+int	otherpart (int);
+int	ourpart (int);
+char	*get_partname (int);
