@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostid.3,v 1.5 1998/04/28 06:00:52 fair Exp $
+.\"	$NetBSD: gethostid.3,v 1.6 1998/08/29 08:32:32 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Ft int
 .Fn sethostid "long hostid"
 .Sh DESCRIPTION
-.Fn Sethostid
+.Fn sethostid
 establishes a 32-bit identifier for the current processor that is
 intended to be unique among all
 .Ux
@@ -58,7 +58,7 @@ This is normally a DARPA Internet address for the local machine.
 This call is allowed only to the super-user and is normally performed
 at boot time.
 .Pp
-.Fn Gethostid
+.Fn gethostid
 returns the 32-bit identifier for the current processor.
 .Pp
 This function has been deprecated.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmdir.2,v 1.9 1997/07/14 23:20:12 kleink Exp $
+.\"	$NetBSD: rmdir.2,v 1.10 1998/08/29 08:32:41 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Ft int
 .Fn rmdir "const char *path"
 .Sh DESCRIPTION
-.Fn Rmdir
+.Fn rmdir
 removes a directory file
 whose name is given by
 .Fa path .
@@ -96,7 +96,7 @@ or deallocating the inode.
 .It Bq Er EROFS
 The directory entry to be removed resides on a read-only file system.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .El
 .Sh SEE ALSO
