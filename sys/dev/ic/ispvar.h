@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.44 2001/05/16 03:58:34 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.45 2001/05/22 19:32:41 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -663,6 +663,8 @@ typedef enum {
 	ISPASYNC_BUS_RESET,		/* Bus Was Reset */
 	ISPASYNC_LOOP_DOWN,		/* FC Loop Down */
 	ISPASYNC_LOOP_UP,		/* FC Loop Up */
+	ISPASYNC_LIP,			/* LIP Received */
+	ISPASYNC_LOOP_RESET,		/* Loop Reset Received */
 	ISPASYNC_CHANGE_NOTIFY,		/* FC Change Notification */
 	ISPASYNC_FABRIC_DEV,		/* FC Fabric Device Arrival */
 	ISPASYNC_PROMENADE,		/* FC Objects coming && going */
