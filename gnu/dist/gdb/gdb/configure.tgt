@@ -201,8 +201,6 @@ mips*-sony-*)		gdb_target=bigmips ;;
 mips*-*-linux*)		gdb_target=linux
 			build_gdbserver=yes
 			;;
-mipseb-*-netbsd*)	gdb_target=nbsdeb ;;
-mipsel-*-netbsd*)	gdb_target=nbsdel ;;
 mips*-*-netbsd*)	gdb_target=nbsd ;;
 mips*-*-mach3*)		gdb_target=mipsm3 ;;
 mips*-*-sysv4*)		gdb_target=mipsv4 ;;
