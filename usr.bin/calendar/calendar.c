@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.21 1999/11/09 15:06:34 drochner Exp $	*/
+/*	$NetBSD: calendar.c,v 1.22 2000/04/14 06:07:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.21 1999/11/09 15:06:34 drochner Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.22 2000/04/14 06:07:14 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,7 +98,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch;
 	const char *caldir;
 
@@ -467,7 +466,6 @@ atodays(char ch, char *optarg, unsigned short *days)
 void
 getmmdd(struct tm *tp, char *ds)
 {
-	extern char *__progname;
 	int ok = FALSE;
 	struct tm ttm;
 
