@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.122 1999/05/07 15:40:58 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.123 1999/05/07 21:11:20 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.117 1999/05/07 15:38:40 drochner Exp 
+ *	NetBSD: pcidevs,v 1.118 1999/05/07 21:09:31 hwr Exp 
  */
 
 /*
@@ -2270,6 +2270,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI1250 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251,
+	    0,
+	    "Texas Instruments",
+	    "PCI1251 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220,
