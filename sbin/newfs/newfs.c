@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.22 1996/10/23 22:46:17 cgd Exp $	*/
+/*	$NetBSD: newfs.c,v 1.23 1997/01/30 09:56:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.22 1996/10/23 22:46:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.23 1997/01/30 09:56:41 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_ASYNC,
 	MOPT_UPDATE,
+	MOPT_NOATIME,
 	{ NULL },
 };
 
