@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1999/01/31 10:02:25 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1999/04/20 07:53:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1999/01/31 10:02:25 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1999/04/20 07:53:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
+#include <err.h>
 #include <errno.h>
 #include <pwd.h>
 
@@ -95,6 +96,7 @@ main(argc, argv)
 	char *arg;
 	int cmdargs = 0;
 	char *dhosts[NHOSTS], **hp = dhosts;
+	int fd;
 
 	pw = getpwuid(userid = getuid());
 	if (pw == NULL) {
@@ -203,7 +205,10 @@ main(argc, argv)
 	*hp = NULL;
 
 	seteuid(userid);
-	mktemp(tempfile);
+	fd = mkstemp(tempfile);
+	if (fd == -1)
+		err(1, "could not make a temporary file");
+	close (fd);
 
 	if (iamremote) {
 		server();
