@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.58 2003/01/29 11:32:46 simonb Exp $
+# $NetBSD: makeflist,v 1.59 2003/03/15 22:32:09 he Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -73,6 +73,11 @@ stlib=$shlib
 if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
 	shlib=no
 fi
+lkm=yes
+# Turn off LKMs for some ports.
+if [ "$machine" = "evbppc" ]; then
+	lkm=no
+fi
 
 # Turn off lintlibs for some ports.
 # Not needed anymore, leave the hook here for future use.
@@ -126,6 +131,11 @@ for setname in $lists; do
 		fi
 		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
 			cat $setd/lists/$setname/shl.${shlib}
+		fi
+	fi
+	if [ "$lkm" != "no" ]; then
+		if [ -f $setd/lists/$setname/lkm.mi ]; then
+			cat $setd/lists/$setname/lkm.mi
 		fi
 	fi
 	if [ "$lintlibs" != no ]; then
