@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.h	8.3 (Berkeley) 1/3/94
- *	$Id: in.h,v 1.10 1994/05/14 05:46:35 cgd Exp $
+ *	$Id: in.h,v 1.11 1994/05/14 06:25:32 cgd Exp $
  */
 
 /*
@@ -39,8 +39,8 @@
  * Per RFC 790, September 1981, and numerous additions.
  */
 
-#ifndef _NET_IN_H_
-#define	_NET_IN_H_
+#ifndef _NETINET_IN_H_
+#define	_NETINET_IN_H_
 
 /*
  * Protocols
@@ -241,4 +241,4 @@ int	 in_localaddr __P((struct in_addr));
 u_long	 in_netof __P((struct in_addr));
 void	 in_socktrim __P((struct sockaddr_in *));
 #endif
-#endif /* !_NET_IN_H_ */
+#endif /* !_NETINET_IN_H_ */
