@@ -1,4 +1,6 @@
-#	$Id: Makefile,v 1.13 1993/08/02 17:23:21 mycroft Exp $
+#	$Id: Makefile,v 1.14 1993/08/03 21:57:49 mycroft Exp $
+
+LIB=	g++
 
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
