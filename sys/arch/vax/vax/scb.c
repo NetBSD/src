@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.9 2000/01/24 02:40:34 matt Exp $ */
+/*	$NetBSD: scb.c,v 1.10 2000/04/22 17:05:08 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -104,7 +104,7 @@ scb_stray(arg)
 	ipl = mfpr(PR_IPL);
 	if (cold == 0)
 		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
-	else
+	else if (dep_call->cpu_flags & CPU_RAISEIPL)
 		a[8] = (a[8] & 0xffe0ffff) | ipl << 16;
 
 	mtpr(ipl + 1, PR_IPL);
