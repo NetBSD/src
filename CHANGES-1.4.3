@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.5 2000/04/30 13:24:28 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.6 2000/04/30 20:24:11 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -174,8 +174,6 @@ sys/kern/kern_ktrace.c				1.38-1.39 via patch
   Fix two bugs:
    o A malicious or erroneous program can hog the CPU in uiomove()
    o A ktrace of such a program can hog large amounts of kernel memory
-  This increses the size of struct proc, so kernel-grovellers need
-  rebuild after this.
 
 sys/conf/osrelease.sh				patch
 
@@ -183,7 +181,7 @@ sys/conf/osrelease.sh				patch
 
 distrib/notes/common/main			patch
 
-  Note the ``struct proc'' size bump as a caveat in 1.4.3.
+  Add a (for the time being empty) caveats section for 1.4.3.
 
 lib/libskey/skeylogin.c				1.13 via patch
 
