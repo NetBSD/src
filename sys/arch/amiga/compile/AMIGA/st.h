@@ -1,1 +1,0 @@
-#define NST	7
