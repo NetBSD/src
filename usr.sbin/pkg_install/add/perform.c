@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.66 2002/06/10 09:14:26 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.67 2002/07/09 04:35:30 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.66 2002/06/10 09:14:26 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.67 2002/07/09 04:35:30 yamt Exp $");
 #endif
 #endif
 
@@ -91,7 +91,7 @@ installprereq(char *pkg, char *name, int *errc)
 		}
 		if (cp == NULL) {
 			warnx("<%s> (1) add of dependency `%s' failed%s",
-			    pkg, name, Force ? " (proceeding anyway)" : "!");
+			    pkg ? pkg : "stdin", name, Force ? " (proceeding anyway)" : "!");
 			if (!Force)
 				++errc;
 		} else {
@@ -159,7 +159,7 @@ installprereq(char *pkg, char *name, int *errc)
 						Prefix ? Prefix : "",
 					Verbose ? "-v " : "")) {
 					warnx("<%s> (2) add of dependency `%s' failed%s",
-					      pkg, name, Force ? " (proceeding anyway)" : "!");
+					      pkg ? pkg : "stdin", name, Force ? " (proceeding anyway)" : "!");
 					if (!Force)
 						++errc;
 				} else {
