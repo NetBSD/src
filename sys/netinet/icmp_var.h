@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.16 2000/07/10 09:31:29 itojun Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.17 2000/07/28 04:06:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,9 @@ struct	icmpstat {
  * Names for ICMP sysctl objects
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
+#if 0	/*obsoleted*/
 #define ICMPCTL_ERRRATELIMIT	2	/* error rate limit */
+#endif
 #define ICMPCTL_RETURNDATABYTES	3	/* # of bytes to include in errors */
 #define ICMPCTL_ERRPPSLIMIT	4	/* ICMP error pps limitation */
 #define ICMPCTL_MAXID		5
@@ -69,7 +71,7 @@ struct	icmpstat {
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
-	{ "errratelimit", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "returndatabytes", CTLTYPE_INT }, \
 	{ "errppslimit", CTLTYPE_INT }, \
 }

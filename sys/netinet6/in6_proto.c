@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.18 2000/07/06 12:36:18 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.19 2000/07/28 04:06:59 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.64 2000/06/20 16:20:27 itojun Exp $	*/
 
 /*
@@ -335,7 +335,6 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 /* ICMPV6 parameters */
 int	icmp6_rediraccept = 1;		/* accept and process redirects */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
-struct timeval icmp6errratelim = { 0, 0 };	/* no ratelimit */
 int	icmp6errppslim = 100;		/* 100pps */
 int	icmp6_nodeinfo = 1;		/* enable/disable NI response */
 

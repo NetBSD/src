@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.116 2000/07/27 11:34:06 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.117 2000/07/28 04:06:53 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -190,7 +190,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
 
-struct timeval tcp_rst_ratelim_last;
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
 
@@ -2147,10 +2146,6 @@ dropwithreset_ratelim:
 	 */
 	if (ppsratecheck(&tcp_rst_ppslim_last, &tcp_rst_ppslim_count,
 	    tcp_rst_ppslim) == 0) {
-		/* XXX stat */
-		goto drop;
-	}
-	if (ratecheck(&tcp_rst_ratelim_last, &tcp_rst_ratelim) == 0) {
 		/* XXX stat */
 		goto drop;
 	}

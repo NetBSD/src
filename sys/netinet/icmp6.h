@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.10 2000/07/06 12:36:19 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.11 2000/07/28 04:06:52 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.18 2000/07/03 02:51:08 itojun Exp $	*/
 
 /*
@@ -542,7 +542,9 @@ struct icmp6stat {
 #define ICMPV6CTL_STATS		1
 #define ICMPV6CTL_REDIRACCEPT	2	/* accept/process redirects */
 #define ICMPV6CTL_REDIRTIMEOUT	3	/* redirect cache time */
+#if 0	/*obsoleted*/
 #define ICMPV6CTL_ERRRATELIMIT	5	/* ICMPv6 error rate limitation */
+#endif
 #define ICMPV6CTL_ND6_PRUNE	6
 #define ICMPV6CTL_ND6_DELAY	8
 #define ICMPV6CTL_ND6_UMAXTRIES	9
@@ -560,7 +562,7 @@ struct icmp6stat {
 	{ "rediraccept", CTLTYPE_INT }, \
 	{ "redirtimeout", CTLTYPE_INT }, \
 	{ 0, 0 }, \
-	{ "errratelimit", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "nd6_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "nd6_delay", CTLTYPE_INT }, \

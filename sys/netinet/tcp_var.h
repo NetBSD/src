@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.73 2000/07/27 11:34:07 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.74 2000/07/28 04:06:55 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -534,7 +534,9 @@ struct	tcpstat {
 #define	TCPCTL_SLOWHZ		20	/* PR_SLOWHZ (read-only) */
 #define	TCPCTL_NEWRENO		21	/* NewReno Congestion Control */
 #define TCPCTL_LOG_REFUSED	22	/* Log refused connections */
+#if 0	/*obsoleted*/
 #define	TCPCTL_RSTRATELIMIT	23	/* RST rate limit */
+#endif
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
 #define	TCPCTL_MAXID		25
 
@@ -562,7 +564,7 @@ struct	tcpstat {
 	{ "slowhz",	CTLTYPE_INT }, \
 	{ "newreno",	CTLTYPE_INT }, \
 	{ "log_refused",CTLTYPE_INT }, \
-	{ "rstratelimit", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
 }
 
@@ -590,7 +592,6 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
 extern	int tcp_log_refused;	/* log refused connections */
 
-extern	struct timeval tcp_rst_ratelim;
 extern	int tcp_rst_ppslim;
 
 extern	int tcp_syn_cache_size;
