@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.5 2002/09/27 20:29:04 thorpej Exp $ */
+/* $NetBSD: iobus.c,v 1.6 2002/10/02 02:21:20 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.5 2002/09/27 20:29:04 thorpej Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.6 2002/10/02 02:21:20 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -53,9 +53,8 @@ struct iobus_softc {
 	struct device	sc_dev;
 };
 
-const struct cfattach iobus_ca = {
-	sizeof(struct iobus_softc), iobus_match, iobus_attach
-};
+CFATTACH_DECL(iobus, sizeof(struct iobus_softc),
+	iobus_match, iobus_attach, NULL, NULL);
 
 struct iobus_softc *the_iobus;
 

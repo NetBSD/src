@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.8 2002/09/27 20:29:16 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.8 2002/09/27 20:29:16 thorpej Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -200,9 +200,8 @@ static void start_receiver(struct ie_softc *);
  * Our cfattach structure for the autoconfig system to chew on
  */
 
-const struct cfattach ie_ca = {
-	sizeof(struct ie_softc), ieprobe, ieattach
-};
+CFATTACH_DECL(ie, sizeof(struct ie_softc),
+	ieprobe, ieattach, NULL, NULL);
 
 /* Let's go! */
 

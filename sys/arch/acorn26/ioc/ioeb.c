@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.3 2002/09/27 20:29:06 thorpej Exp $ */
+/* $NetBSD: ioeb.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.3 2002/09/27 20:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -49,9 +49,8 @@ struct ioeb_softc {
 static int ioeb_match(struct device *, struct cfdata *, void *);
 static void ioeb_attach(struct device *, struct device *, void *);
 
-const struct cfattach ioeb_ca = {
-	sizeof(struct ioeb_softc), ioeb_match, ioeb_attach
-};
+CFATTACH_DECL(ioeb, sizeof(struct ioeb_softc),
+	ioeb_match, ioeb_attach, NULL, NULL);
 
 struct device *the_ioeb;
 

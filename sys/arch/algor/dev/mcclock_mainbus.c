@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.3 2002/09/27 20:29:20 thorpej Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.4 2002/10/02 02:26:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.3 2002/09/27 20:29:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.4 2002/10/02 02:26:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,9 +54,8 @@ struct mcclock_mainbus_softc {
 int	mcclock_mainbus_match(struct device *, struct cfdata *, void *);
 void	mcclock_mainbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach mcclock_mainbus_ca = {
-	sizeof (struct mcclock_mainbus_softc), mcclock_mainbus_match,
-	    mcclock_mainbus_attach, 
+CFATTACH_DECL(mcclock_mainbus, sizeof(struct mcclock_mainbus_softc),
+	mcclock_mainbus_match, mcclock_mainbus_attach, NULL, NULL);
 };
 
 void	mcclock_mainbus_write(struct mcclock_softc *, u_int, u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.3 2002/09/27 20:29:20 thorpej Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4 2002/10/02 02:26:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.3 2002/09/27 20:29:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4 2002/10/02 02:26:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,9 +57,8 @@ struct mcclock_isa_softc {
 int	mcclock_isa_match(struct device *, struct cfdata *, void *);
 void	mcclock_isa_attach(struct device *, struct device *, void *);
 
-const struct cfattach mcclock_isa_ca = {
-	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
-	    mcclock_isa_attach, 
+CFATTACH_DECL(mcclock_isa, sizeof(struct mcclock_isa_softc),
+	mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 };
 
 void	mcclock_isa_write(struct mcclock_softc *, u_int, u_int);

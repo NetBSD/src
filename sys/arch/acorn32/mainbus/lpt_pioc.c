@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.6 2002/09/27 20:29:12 thorpej Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.7 2002/10/02 02:23:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.6 2002/09/27 20:29:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.7 2002/10/02 02:23:51 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -59,9 +59,8 @@ static void lpt_pioc_attach __P((struct device *, struct device *, void *));
 
 /* device attach structure */
 
-const struct cfattach lpt_pioc_ca = {
-	sizeof(struct lpt_softc), lpt_pioc_probe, lpt_pioc_attach
-};
+CFATTACH_DECL(lpt_pioc, sizeof(struct lpt_pioc_softc),
+	lpt_pioc_probe, lpt_pioc_attach, NULL, NULL);
 
 /*
  * Internal routine to lptprobe to do port tests of one byte value.

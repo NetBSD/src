@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.3 2002/09/27 20:29:10 thorpej Exp $ */
+/* $NetBSD: unixbp.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.3 2002/09/27 20:29:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -50,9 +50,8 @@ struct unixbp_softc {
 static int unixbp_match(struct device *, struct cfdata *, void *);
 static void unixbp_attach(struct device *, struct device *, void *);
 
-const struct cfattach unixbp_ca = {
-	sizeof(struct unixbp_softc), unixbp_match, unixbp_attach
-};
+CFATTACH_DECL(unixbp, sizeof(struct unixbp_softc),
+	unixbp_match, unixbp_attach, NULL, NULL);
 
 struct device *the_unixbp;
 
