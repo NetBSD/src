@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.9 2001/01/18 20:59:43 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.9 2001/01/18 20:59:43 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->length  == prec->length) {
 				/*
-				 * Set pend & cend so that trailing '\0' and
+				 * Set pend and cend so that trailing NUL and
 				 * record separator is ignored.
 				 */
 				pend = (const u_char *) &prec->data + prec->length - 2;
@@ -133,11 +133,11 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		ppos = keylist;
 		prec = (const RECHEADER *) (*ppos - depth);
 		put(prec, fp);
-		for (cpos = keylist+1; cpos < lastkey; cpos++) {
+		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
 			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->offset == prec->offset) {
 				/*
-				 * Set pend & cend so that trailing '\0' and
+				 * Set pend and cend so that trailing NUL and
 				 * record separator is ignored.
 				 */
 				pend = (const u_char *) &prec->data + prec->offset - 2;
@@ -175,7 +175,8 @@ rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
 	FILE *outfp;
 	u_char *bufend;
 {
-	struct recheader *rec;
+	RECHEADER *rec;
+
 	rec = (RECHEADER *) buffer;
 	if (!getnext(binno, infl0, NULL, nfiles,
 			(RECHEADER *) buffer, bufend, 0)) {
