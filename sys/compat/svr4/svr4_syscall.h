@@ -40,7 +40,10 @@
 #define	SVR4_SYS_setgid	46
 #define	SVR4_SYS_getgid	47
 #define	SVR4_SYS_signal	48
+#define	SVR4_SYS_msgsys	49
 #define	SVR4_SYS_sysarch	50
+#define	SVR4_SYS_shmsys	52
+#define	SVR4_SYS_semsys	53
 #define	SVR4_SYS_ioctl	54
 #define	SVR4_SYS_utssys	57
 #define	SVR4_SYS_fsync	58

@@ -80,9 +80,32 @@ struct svr4_sys_signal_args {
 	syscallarg(svr4_sig_t) handler;
 };
 
+struct svr4_sys_msgsys_args {
+	syscallarg(int) what;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
+};
+
 struct svr4_sys_sysarch_args {
 	syscallarg(int) op;
 	syscallarg(void *) a1;
+};
+
+struct svr4_sys_shmsys_args {
+	syscallarg(int) what;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+};
+
+struct svr4_sys_semsys_args {
+	syscallarg(int) what;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
 };
 
 struct svr4_sys_ioctl_args {
@@ -302,13 +325,16 @@ int	sys_setgid	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
 int	svr4_sys_signal	__P((struct proc *, void *, register_t *));
 #ifdef SYSVMSG
+int	svr4_sys_msgsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	svr4_sys_sysarch	__P((struct proc *, void *, register_t *));
 #ifdef SYSVSHM
+int	svr4_sys_shmsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #ifdef SYSVSEM
+int	svr4_sys_semsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	svr4_sys_ioctl	__P((struct proc *, void *, register_t *));
