@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.32 2000/09/20 00:08:42 itojun Exp $	*/
-/*	$KAME: key.c,v 1.153 2000/09/19 23:55:05 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.33 2000/09/20 00:42:47 itojun Exp $	*/
+/*	$KAME: key.c,v 1.154 2000/09/20 00:33:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1167,9 +1167,7 @@ key_msg2sp(xpl0, len, error)
 			switch (xisr->sadb_x_ipsecrequest_proto) {
 			case IPPROTO_ESP:
 			case IPPROTO_AH:
-#if 1	/*nonstandard*/
 			case IPPROTO_IPCOMP:
-#endif
 				break;
 			default:
 #ifdef IPSEC_DEBUG
@@ -2731,11 +2729,26 @@ key_setsaval(sav, m, mhp)
 		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_ESP:
 			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
-			    sav->alg_enc != SADB_EALG_NULL)
+			    sav->alg_enc != SADB_EALG_NULL) {
 				error = EINVAL;
+				break;
+			}
+			sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
+			if (sav->key_enc == NULL) {
+#ifdef IPSEC_DEBUG
+				printf("key_setsaval: No more memory.\n");
+#endif
+				error = ENOBUFS;
+				goto fail;
+			}
+			break;
+		case SADB_X_SATYPE_IPCOMP:
+			if (len != PFKEY_ALIGN8(sizeof(struct sadb_key)))
+				error = EINVAL;
+			sav->key_enc = NULL;	/*just in case*/
 			break;
 		case SADB_SATYPE_AH:
-		case SADB_X_SATYPE_IPCOMP:
+		default:
 			error = EINVAL;
 			break;
 		}
@@ -2743,15 +2756,6 @@ key_setsaval(sav, m, mhp)
 #ifdef IPSEC_DEBUG
 			printf("key_setsatval: invalid key_enc value.\n");
 #endif
-			goto fail;
-		}
-
-		sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
-		if (sav->key_enc == NULL) {
-#ifdef IPSEC_DEBUG
-			printf("key_setsaval: No more memory.\n");
-#endif
-			error = ENOBUFS;
 			goto fail;
 		}
 	}
@@ -2788,9 +2792,7 @@ key_setsaval(sav, m, mhp)
 		break;
 #endif
 	case SADB_SATYPE_AH:
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
-#endif
 		break;
 	default:
 #ifdef IPSEC_DEBUG
@@ -2965,7 +2967,6 @@ key_mature(sav)
 		checkmask = 2;
 		mustmask = 2;
 		break;
-#if 1	/*nonstandard*/
 	case IPPROTO_IPCOMP:
 		if (sav->alg_auth != SADB_AALG_NONE) {
 #ifdef IPSEC_DEBUG
@@ -2984,7 +2985,6 @@ key_mature(sav)
 		checkmask = 4;
 		mustmask = 4;
 		break;
-#endif
 	default:
 #ifdef IPSEC_DEBUG
 		printf("key_mature: Invalid satype.\n");
@@ -4263,11 +4263,9 @@ key_satype2proto(satype)
 		return IPPROTO_AH;
 	case SADB_SATYPE_ESP:
 		return IPPROTO_ESP;
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
 		return IPPROTO_IPCOMP;
 		break;
-#endif
 	default:
 		return 0;
 	}
@@ -4288,11 +4286,9 @@ key_proto2satype(proto)
 		return SADB_SATYPE_AH;
 	case IPPROTO_ESP:
 		return SADB_SATYPE_ESP;
-#if 1	/*nonstandard*/
 	case IPPROTO_IPCOMP:
 		return SADB_X_SATYPE_IPCOMP;
 		break;
-#endif
 	default:
 		return 0;
 	}
@@ -6613,9 +6609,7 @@ key_parse(m, so)
 		break;
 	case SADB_SATYPE_AH:
 	case SADB_SATYPE_ESP:
-#if 1 /*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
-#endif
 		switch (msg->sadb_msg_type) {
 		case SADB_X_SPDADD:
 		case SADB_X_SPDDELETE:
