@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.8 1996/07/05 19:07:55 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.9 1996/10/15 01:20:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -60,11 +60,9 @@
 
 #include <arm32/dev/console/vt220.h>
 
-/* Temporary for debugging the vnode bug */
-
-int vnodeconsolebug = 0;
-u_int vnodeconsolebug1 = 0;
-u_int vnodeconsolebug2 = 0;
+#ifdef DIAGNOSTIC
+#include "quadmouse.h"
+#endif
 
 static char vt220_name[] = "vt100";
 
@@ -125,20 +123,21 @@ TERMTYPE_INIT(vc)
 	struct vt220_info *cdata;
 
 	if (vc->data==NULL) {
-		if ( vc==vconsole_master ) {
+		if (vc==vconsole_master) {
 			vc->data = (char *) master_termdata;
 		} else {
-			MALLOC ( vc->data, char *, sizeof(struct vt220_info),
-			    M_DEVBUF, M_NOWAIT );
+			MALLOC(vc->data, char *, sizeof(struct vt220_info),
+			    M_DEVBUF, M_NOWAIT);
+/*			printf("vc=%08x data=%08x\n", vc, vc->data);*/
 		}
 	}
 
 	cdata = (struct vt220_info *)vc->data;
 
-	bzero ( (char *)cdata, sizeof (cdata) );
+	bzero((char *)cdata, sizeof (cdata));
 
 #ifdef HARD_RESET_AT_INIT
-	vt_ris ( vc );
+	vt_ris(vc);
 #else
 	cdata->state = STATE_INIT;
 	cdata->disable_function = 1;
@@ -168,7 +167,7 @@ mapped_cls(vc)
 	int ptr;
 	if (vc->charmap == NULL)
 		return -1;
-	for ( ptr=0; ptr<(vc->xchars*vc->ychars); ptr++ )
+	for (ptr=0; ptr<(vc->xchars*vc->ychars); ptr++)
 		vc->charmap[ptr]=0x20;
 	return 0;
 }
@@ -197,52 +196,16 @@ do_scrolldown(vc)
 	else
 		vconsole_pending=vc->number;
 
-	if (vnodeconsolebug) {
-		if (ReadWord(0xf148a000) != vnodeconsolebug2) {
-			log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in do_scrolldown(1)\n",
-			    vnodeconsolebug2, ReadWord(0xf148a000));
-			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", (u_int)vc, (u_int)vconsole_current, (u_int)vc->charmap);
-		}
-	}
-
-/*
- * This version of the following code was responcible for the vnode bug
- * It can trash part of the word that follows the allocated block
- * e.g. charmap = 0xf1484000, size 0x6000
- *      vnode = 0xf148a000
- *	first word of vnode is trashed.
- * bug is an adjustment of -1 for counting backwards was not made.
- 
-	if ( ((vc->flags)&(LOSSY)) == 0 ) {
+	if (((vc->flags)&(LOSSY)) == 0) {
 		int counter;
-		for ( counter=((cdata->scrr_end+1)*(vc->xchars)); 
-			counter > (cdata->scrr_beg+1)*(vc->xchars) ; counter-- ) {
-			vc->charmap[counter] = vc->charmap[counter-vc->xchars];
-		}
-
-		for ( counter=(cdata->scrr_beg)*(vc->xchars);
-			counter < (cdata->scrr_beg+1)*(vc->xchars); counter++ ) {
-			vc->charmap[counter]=0x20;
-		}
-	}
-*/
-	if ( ((vc->flags)&(LOSSY)) == 0 ) {
-		int counter;
-		for ( counter=((cdata->scrr_end+1)*(vc->xchars)) - 1; 
+		for (counter=((cdata->scrr_end+1)*(vc->xchars)) - 1; 
 			counter >= (cdata->scrr_beg+1)*(vc->xchars) ; counter-- ) {
 			vc->charmap[counter] = vc->charmap[counter-vc->xchars];
 		}
 
-		for ( counter=(cdata->scrr_beg)*(vc->xchars);
+		for (counter=(cdata->scrr_beg)*(vc->xchars);
 			counter < (cdata->scrr_beg+1)*(vc->xchars); counter++ ) {
 			vc->charmap[counter]=0x20;
-		}
-	}
-	if (vnodeconsolebug) {
-		if (ReadWord(0xf148a000) != vnodeconsolebug2) {
-			log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in do_scrolldown(2)\n",
-			    vnodeconsolebug2, ReadWord(0xf148a000));
-			log(LOG_WARNING, "vc=%08x vcur=%08x charmap=%08x\n", (u_int)vc, (u_int)vconsole_current, (u_int)vc->charmap);
 		}
 	}
 }
@@ -472,19 +435,17 @@ vt_ind(vc)
 	struct vconsole *vc;
 {
 	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	char buf[80];
 
 #ifdef SELFTEST
-	strcpy ( console_proc, "vt_ind" );
+	strcpy(console_proc, "vt_ind");
 #endif
 
 	vc->ycur++;
 
-	{
-		char buf[80];
-		sprintf ( buf, "{vt_ind [%d,%d] [%d,%d] }",
-			vc->xcur, vc->ycur, cdata->scrr_beg, cdata->scrr_end);
-		dprintf ( buf );
-	}
+	sprintf ( buf, "{vt_ind [%d,%d] [%d,%d] }",
+		vc->xcur, vc->ycur, cdata->scrr_beg, cdata->scrr_end);
+	dprintf ( buf );
 
 	do_scrollcheck ( vc );
 }
@@ -494,7 +455,7 @@ vt_nel(vc)
 	struct vconsole *vc;
 {
 	vc->ycur++;
-	do_scrollcheck ( vc );
+	do_scrollcheck(vc);
 	vc->xcur=0;
 }
 
@@ -504,33 +465,13 @@ vt_ri(vc)
 {
         struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-	if (vnodeconsolebug & 1)
-		vnodeconsolebug2 = ReadWord(0xf148a000);
-
 	vc->ycur--;
 
-        if (vc->ycur<=cdata->scrr_beg)
+        if (vc->ycur <= cdata->scrr_beg)
 		vc->ycur = cdata->scrr_beg;
 
-
 	if (vc->ycur <= cdata->scrr_beg) {
-		if (vnodeconsolebug & 4) {
-			if (ReadWord(0xf148a000) != vnodeconsolebug2) {
-				log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in vt_ri(1)\n",
-				    vnodeconsolebug2, ReadWord(0xf148a000));
-				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d\n", (u_int)vc, vc->ycur, cdata->scrr_beg);
-				vnodeconsolebug2 = ReadWord(0xf148a000);
-			}
-		}
 		do_scrolldown ( vc );
-		if (vnodeconsolebug & 4) {
-			if (ReadWord(0xf148a000) != vnodeconsolebug2) {
-				log(LOG_WARNING, "vnode 0xf148a000 v_flag changed from %08x to %08x in vt_ri(2)\n",
-				    vnodeconsolebug2, ReadWord(0xf148a000));
-				log(LOG_WARNING, "vc=%08x ycur=%d scrr_beg=%d charmap=%08x\n", (u_int)vc, vc->ycur, cdata->scrr_beg, (u_int)vc->charmap);
-				vnodeconsolebug2 = ReadWord(0xf148a000);
-			}
-		}
 		vc->ycur = cdata->scrr_beg;
 	}
 }
@@ -671,105 +612,110 @@ vt_cud(vc)
 	do_scrollcheck ( vc );
 }
 
+/* What is this for ? --mark */
+
 void
 vt_tst(vc)
 	struct vconsole *vc;
 {
-    int counter, times;
+	int counter, times;
 
-    for ( times=0; times<100; times++ );
-	for ( counter=32; counter<127; counter++ )
-		do_render ( counter, vc );
+	for (times=0; times<100; times++);
+	for (counter=32; counter<127; counter++)
+		do_render(counter, vc);
 }
 
 void
 vt_il(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    register int beg, end;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	register int beg, end;
 
-    if ( vc->ycur >= (vc->ychars-2) )
-	return;
+	if (vc->ycur >= (vc->ychars-2))
+		return;
 
-    cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
+	cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
 
-    beg = cdata->scrr_beg;
-    end = cdata->scrr_end;
+	beg = cdata->scrr_beg;
+	end = cdata->scrr_end;
 
-    cdata->scrr_beg = vc->ycur;
-    cdata->scrr_end = vc->ychars-1;
+	cdata->scrr_beg = vc->ycur;
+	cdata->scrr_end = vc->ychars-1;
 
-    for ( ; cdata->param[0]>0; cdata->param[0]-- )
-        do_scrolldown( vc );
+	for (; cdata->param[0]>0; cdata->param[0]--)
+		do_scrolldown( vc );
 
-    cdata->scrr_beg = beg;
-    cdata->scrr_end = end;
+	cdata->scrr_beg = beg;
+	cdata->scrr_end = end;
 }
 
 void
 vt_ic(vc)
 	struct vconsole *vc;
 {
-    int counter;
-    int ox, oy;
-    int *ptr = vc->charmap + (vc->xcur + vc->ycur*vc->xchars);
-    for ( counter=vc->xchars-vc->xcur; counter>=0; counter-- )
-        ptr[counter+1] = ptr[counter];
-    ptr[0] =  ' ';
-    ox = vc->xcur; oy = vc->ycur;
+	int counter;
+	int ox, oy;
+	int *ptr = vc->charmap + (vc->xcur + vc->ycur*vc->xchars);
 
-    for ( ; vc->xcur < vc->xchars; )
-        do_render_noscroll ( vc->charmap[vc->xcur+vc->ycur*vc->xchars], vc );
-    vc->xcur = ox; vc->ycur = oy;
+	for (counter=vc->xchars-vc->xcur; counter>=0; counter--)
+		ptr[counter+1] = ptr[counter];
+
+	ptr[0] =  ' ';
+	ox = vc->xcur; oy = vc->ycur;
+
+	for (; vc->xcur < vc->xchars;)
+		do_render_noscroll(vc->charmap[vc->xcur+vc->ycur*vc->xchars], vc);
+
+	vc->xcur = ox;
+	vc->ycur = oy;
 }
 
 void
 vt_dch(vc)
 	struct vconsole *vc;
 {
-    int counter;
-    int ox, oy;
-    int *ptr = vc->charmap + (vc->ycur*vc->xchars);
+	int counter;
+	int ox, oy;
+	int *ptr = vc->charmap + (vc->ycur*vc->xchars);
 
-    for ( counter=vc->xcur; counter<(vc->xchars-1); counter++ )
-        ptr[counter] = ptr[counter+1];
+	for (counter=vc->xcur; counter<(vc->xchars-1); counter++)
+		ptr[counter] = ptr[counter+1];
 
-    ptr[vc->xchars] =  ' ';
+	ptr[vc->xchars] =  ' ';
 
-    ox = vc->xcur; oy = vc->ycur;
+	ox = vc->xcur; oy = vc->ycur;
 
-    for ( ; vc->xcur < vc->xchars; )
-        do_render_noscroll ( vc->charmap[vc->xcur+vc->ycur*vc->xchars], vc );
+	for (; vc->xcur < vc->xchars;)
+		do_render_noscroll(vc->charmap[vc->xcur+vc->ycur*vc->xchars], vc);
 
-    vc->xcur = ox; vc->ycur = oy;
+	vc->xcur = ox;
+	vc->ycur = oy;
 }
 
 void
 vt_dl(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    register int beg, end;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	register int beg, end;
 
-    cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
-    cdata->param[0] = cdata->param[0]>vc->xchars ? vc->xchars : cdata->param[0];
+	cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
+	cdata->param[0] = cdata->param[0]>vc->xchars ? vc->xchars : cdata->param[0];
 
-/*
-    vc->xcur=0;
-*/
+/* 	vc->xcur=0; */
 
-    beg = cdata->scrr_beg;
-    end = cdata->scrr_end;
+	beg = cdata->scrr_beg;
+	end = cdata->scrr_end;
 
-    cdata->scrr_beg = vc->ycur;
-    cdata->scrr_end = vc->ychars-1;
+	cdata->scrr_beg = vc->ycur;
+	cdata->scrr_end = vc->ychars-1;
 
-    for ( ; cdata->param[0]>0; cdata->param[0]-- )
-        do_scrollup( vc );
+	for (; cdata->param[0]>0; cdata->param[0]--)
+		do_scrollup( vc );
 
-    cdata->scrr_beg = beg;
-    cdata->scrr_end = end;
+	cdata->scrr_beg = beg;
+	cdata->scrr_end = end;
 }
 
 /* Set scrolling region */
@@ -882,12 +828,12 @@ void
 vt_su(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-    cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
-    cdata->param[0] = cdata->param[0]>(vc->xchars-1) ? vc->xchars-1 : cdata->param[0];
+	cdata->param[0] = cdata->param[0]<=0 ? 1 : cdata->param[0];
+	cdata->param[0] = cdata->param[0]>(vc->xchars-1) ? vc->xchars-1 : cdata->param[0];
 
-    do_scrollup ( vc );
+	do_scrollup(vc);
 }
 
 void
@@ -938,32 +884,16 @@ void
 vt_clrtab(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    int i;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	int i;
 
-    if(cdata->param[0] == 0)
-            cdata->tab_stops[vc->xcur] = 0;
-    else if(cdata->param[0] == 3)
-    {
-            for(i=0; i<MAXTABSTOPS; i++)
-                    cdata->tab_stops[i] = 0;
-    }
+	if(cdata->param[0] == 0)
+		cdata->tab_stops[vc->xcur] = 0;
+	else if (cdata->param[0] == 3) {
+		for(i=0; i<MAXTABSTOPS; i++)
+			cdata->tab_stops[i] = 0;
+	}
 }
-
-/*
-void
-vt_cuf(vc)
-	struct vconsole *vc;
-{
-        struct vt220_info *cdata = (struct vt220_info *)vc->data;
-
-	cdata->param[0] = (cdata->param[0] <= 0) ? 1 : cdata->param[0];
-
-	vc->xcur += cdata->param[0];
-
-	cdata->param[0] = (cdata->param[0] > vc->xchars ) ? vc->xchars : cdata->param[0];
-}
-*/
 
 void
 vt_cuf(vc)
@@ -1205,33 +1135,30 @@ void
 simple_cursor_on(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-    if (cdata->simple_cursor_on)
-	return 0;
-    if (vc!=vconsole_current)
-	return 0;
-    if (((vc->flags)&(LOSSY))==0)
-    {
-	cdata->simple_cursor_store = vc->charmap[ vc->xcur + vc->ycur*vc->xchars ];
-	vc->RENDER ( vc, SIMPLE_CURSOR_CHAR );
-    }
-    cdata->simple_cursor_on = 1;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	if (cdata->simple_cursor_on)
+		return 0;
+	if (vc!=vconsole_current)
+		return 0;
+	if (((vc->flags)&(LOSSY))==0) {
+		cdata->simple_cursor_store = vc->charmap[ vc->xcur + vc->ycur*vc->xchars ];
+		vc->RENDER ( vc, SIMPLE_CURSOR_CHAR );
+	}
+	cdata->simple_cursor_on = 1;
 }
 
 void
 simple_cursor_off(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
-     if (!cdata->simple_cursor_on)
-	return 0;
-   if (vc!=vconsole_current)
-	return 0;
-    if (((vc->flags)&(LOSSY))==0)
-    {
-	vc->RENDER ( vc, cdata->simple_cursor_store );
-    }
-    cdata->simple_cursor_on = 0;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	if (!cdata->simple_cursor_on)
+		return 0;
+	if (vc!=vconsole_current)
+		return 0;
+	if (((vc->flags)&(LOSSY))==0)
+		vc->RENDER ( vc, cdata->simple_cursor_store );
+	cdata->simple_cursor_on = 0;
 }
 #endif
 
@@ -1240,20 +1167,17 @@ void
 do_scrollcheck(vc)
 	struct vconsole *vc;
 {
-    struct vt220_info *cdata = (struct vt220_info *)vc->data;
+	struct vt220_info *cdata = (struct vt220_info *)vc->data;
 
-    /* BOUNDARY CHECK ************************************/
-    if ((vc->xcur >= (vc->xchars))&&((cdata->flags&F_AWM)!=0))
-    {
-	cdata->flags|=F_LASTCHAR;
-	cdata->lastpos = vc->ycur*vc->xchars+vc->xcur;
-    }
+	/* BOUNDARY CHECK ************************************/
+	if ((vc->xcur >= (vc->xchars))&&((cdata->flags&F_AWM)!=0)) {
+		cdata->flags|=F_LASTCHAR;
+		cdata->lastpos = vc->ycur*vc->xchars+vc->xcur;
+	}
 
-    /* SCROLL CHECK *************************************/
-    if ( vc->ycur >= cdata->scrr_end+1 )
-    {
-	do_scrollup ( vc );
-    }
+	/* SCROLL CHECK *************************************/
+	if (vc->ycur >= cdata->scrr_end+1)
+		do_scrollup ( vc );
 }
 
 /* DR */
@@ -1367,8 +1291,7 @@ TERMTYPE_PUTSTRING(string, length, vc)
     if ( ( c == 0x0a ) || ( c== 0x0d ) )
 	cdata->flags &= ~F_LASTCHAR;
 
-#ifndef RC7500
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && NQUADMOUSE > 0
 /* Middle mouse button freezes the display while active */
 
         while ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_MIDDLE) == 0);
@@ -1377,24 +1300,21 @@ TERMTYPE_PUTSTRING(string, length, vc)
 
         if ((ReadByte(IO_MOUSE_BUTTONS) & MOUSE_BUTTON_LEFT) == 0)
           delay(5000);
-#endif /* DIAGNOSTIC */
-#endif /* RC7500 */
+#endif /* DIAGNOSTIC && NQUADMOUSE*/
 
 /* Always process characters in the range of 0x00 to 0x1f */
 
 
 #ifdef DEBUGTERM
-*dc = c;
-switch (c)
-{
+	*dc = c;
+	switch (c) {
 	case 0x0a: 	dprintf ( "[0a]" ); break;
 	case 0x0d: 	dprintf ( "[0d]" ); break;
 	case 0x0c: 	dprintf ( "[0c]" ); break;
 	case 0x1b:	dprintf ( "[1b]" ); break;
-}
+	}
 #endif
-	if ( c <= 0x1f )
-      	{
+	if (c <= 0x1f) {
 		if ( cdata->disable_function ) 
 		{
 			if ( cdata->flags & F_LASTCHAR )
@@ -1430,7 +1350,7 @@ switch (c)
 					break;
 
 				case 0x08:	/* BS */
-	cdata->flags &= ~F_LASTCHAR;
+					cdata->flags &= ~F_LASTCHAR;
 					if ( vc->xcur>0 )
 						vc->xcur--;
 					break;
@@ -1445,13 +1365,13 @@ switch (c)
 					break;
 
 				case 0x0a:
-	cdata->flags &= ~F_LASTCHAR;
+					cdata->flags &= ~F_LASTCHAR;
 					vc->ycur++;
 						do_scrollcheck ( vc );
 					break;
 
 				case 0x0c:
-	cdata->flags &= ~F_LASTCHAR;
+					cdata->flags &= ~F_LASTCHAR;
 					if ((vc->flags&LOSSY)==0)
 						mapped_cls(vc);
 					if (vc==vconsole_current)
@@ -1461,7 +1381,7 @@ switch (c)
 
 					break;
 				case 0x0d:
-	cdata->flags &= ~F_LASTCHAR;
+					cdata->flags &= ~F_LASTCHAR;
 					vc->xcur=0;
 					break;
 		
@@ -1512,11 +1432,11 @@ switch (c)
 
 			case STATE_ESC:
 #ifdef DEBUGTERM
-{
-    char buf[]="x";
-    buf[0] = c;
-    dprintf ( buf );
-}
+			{
+				char buf[]="x";
+				buf[0] = c;
+				dprintf(buf);
+			}
 #endif
 			    switch (c)
 			    {
@@ -1537,7 +1457,7 @@ switch (c)
 
 				case '>':	/* Keypad numeric mode */
 #ifdef DEBUGTERM
-dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
+					dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 #endif
 				    cdata->state = STATE_INIT;
 				    break;
@@ -1632,11 +1552,11 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 
 			case STATE_CSIQM:
 #ifdef DEBUGTERM
-{
-    char buf[]="x";
-    buf[0] = c;
-    dprintf ( buf );
-}
+			{
+			    char buf[]="x";
+			    buf[0] = c;
+			    dprintf(buf);
+			}
 #endif
 			    switch (c)
 			    {
@@ -1684,6 +1604,7 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 				    do_render ( '[', vc );
 				    do_render ( c, vc );
 				    cdata->state = STATE_INIT;
+/* What is this ? --mark */
 	{
 		register int counter;
 		for ( counter=0; counter<=cdata->parami; counter++ )
@@ -1697,14 +1618,13 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 
 			case STATE_CSI:
 #ifdef DEBUGTERM
-{
-    char buf[]="x";
-    buf[0] = c;
-    dprintf ( buf );
-}
+			{
+			    char buf[]="x";
+			    buf[0] = c;
+			    dprintf(buf);
+			}
 #endif
-			    switch (c)
-			    {
+			switch (c) {
 				case '0':
 				case '1':
 				case '2':
@@ -1847,14 +1767,15 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
 				    do_render ( '[', vc );
 				    do_render ( c, vc );
 				    cdata->state = STATE_INIT;
+/* What is this ??? - mark */
 	{
 		register int counter;
 		for ( counter=0; counter<=cdata->parami; counter++ )
 		{
-			do_render ( '@', vc );
+			do_render('@', vc);
 		}
 	}
-				    do_render ( c, vc );
+				    do_render(c, vc);
 				    cdata->state = STATE_INIT;
 				    break;
 	   		     } 
@@ -1867,12 +1788,12 @@ dprintf ( "\r\nKEYPAD NUMERIC MODE\r\n ");
     	}
   }
 #ifdef SIMPLE_CURSOR
-	if ( vc==vconsole_current )
-		if ( vc->CURSORUPDATE(vc)==-1 )
-			simple_cursor_on ( vc );
+	if (vc==vconsole_current)
+		if (vc->CURSORUPDATE(vc)==-1)
+			simple_cursor_on(vc);
 #else
-	if ( vc==vconsole_current )
-		vc->CURSORUPDATE (vc);
+	if (vc==vconsole_current)
+		vc->CURSORUPDATE(vc);
 #endif
 	return 0;
 }
@@ -1887,11 +1808,11 @@ vt220_swapin(vc)
 	struct vconsole *vc;
 {
 #ifdef SIMPLE_CURSOR
-	if ( vc==vconsole_current )
-		if ( vc->CURSORUPDATE(vc)==-1 ) simple_cursor_on ( vc );
+	if (vc==vconsole_current)
+		if (vc->CURSORUPDATE(vc)==-1) simple_cursor_on(vc);
 #else
-	if ( vc==vconsole_current )
-		vc->CURSORUPDATE (vc);
+	if (vc==vconsole_current)
+		vc->CURSORUPDATE(vc);
 #endif
 	return 0;
 }
@@ -1909,14 +1830,14 @@ vt220_sleep(vc)
 	struct vconsole *vc;
 {
 #ifdef SIMPLE_CURSOR
-	if ( vc==vconsole_current )
-		if ( vc->CURSORUPDATE(vc)==-1 ) simple_cursor_off ( vc );
+	if (vc==vconsole_current)
+		if (vc->CURSORUPDATE(vc)==-1) simple_cursor_off(vc);
 #else
-	if ( vc==vconsole_current )
-		vc->CURSORUPDATE (vc);
+	if (vc==vconsole_current)
+		vc->CURSORUPDATE(vc);
 #endif
-	vc->FLASH        ( vc, 0 );
-	vc->CURSOR_FLASH ( vc, 0 );
+	vc->FLASH        (vc, 0);
+	vc->CURSOR_FLASH (vc, 0);
 	return 0;
 }
 
@@ -1924,16 +1845,16 @@ int
 vt220_wake(vc)
 	struct vconsole *vc;
 {
-	vc->FLASH        ( vc, 1 );
-	vc->CURSOR_FLASH ( vc, 1 );
+	vc->FLASH        (vc, 1);
+	vc->CURSOR_FLASH (vc, 1);
 
 #ifdef SIMPLE_CURSOR
-	if ( vc==vconsole_current )
-		if ( vc->CURSORUPDATE(vc)==-1 )
-			simple_cursor_on ( vc );
+	if (vc==vconsole_current)
+		if (vc->CURSORUPDATE(vc)==-1)
+			simple_cursor_on(vc);
 #else
-	if ( vc==vconsole_current )
-		vc->CURSORUPDATE (vc);
+	if (vc==vconsole_current)
+		vc->CURSORUPDATE(vc);
 #endif
 	return 0;
 }
@@ -1963,9 +1884,9 @@ int
 vt220_debugprint(vc)
 	struct vconsole *vc;
 {
-	printf ( "VT220 TERMINAL EMULATOR\n\n" );
-	printf ( "no information\n" );
-	printf ( "\n" );
+	printf("VT220 TERMINAL EMULATOR\n\n");
+	printf("no information\n");
+	printf("\n");
 	return 0;
 }
 
@@ -1976,21 +1897,21 @@ vt220_modechange(vc)
 	if (vc->number >= 64)
 		return(0);
 
-	if (vc == NULL) {
+	if (vc == NULL)
 		return(EINVAL);
-	}
-	vt_str ( vc );
-	if (vc->charmap)
-        {
-		free ( vc->charmap, M_DEVBUF );
 
-		MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)), M_DEVBUF, M_NOWAIT );
+	vt_str(vc);
+	if (vc->charmap) {
+		free(vc->charmap, M_DEVBUF);
+
+		MALLOC(vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)), M_DEVBUF, M_NOWAIT);
+/*		printf("vc=%08x charmap=%08x\n", vc, vc->charmap);*/
 		if ((vc->flags&LOSSY)==0)
 			mapped_cls(vc);
 		if (vc==vconsole_current)
 	     		vc->CLS(vc);
-	vc->xcur=0;
-	vc->ycur=0;
+		vc->xcur=0;
+		vc->ycur=0;
 	}
 
 	return 0;
