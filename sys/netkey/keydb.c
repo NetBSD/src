@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.8 2002/06/12 17:56:46 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.9 2003/02/01 06:23:47 thorpej Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.8 2002/06/12 17:56:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.9 2003/02/01 06:23:47 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.8 2002/06/12 17:56:46 itojun Exp $");
 extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
 
 static void keydb_delsecasvar __P((struct secasvar *));
+
+MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 
 /*
  * secpolicy management

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.51 2003/01/27 22:14:48 pk Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.52 2003/02/01 06:23:54 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.51 2003/01/27 22:14:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.52 2003/02/01 06:23:54 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.51 2003/01/27 22:14:48 pk Exp $");
  */
 
 struct pool uvm_amap_pool;
+
+MALLOC_DEFINE(M_UVMAMAP, "UVM amap", "UVM amap and related structures");
 
 /*
  * local functions

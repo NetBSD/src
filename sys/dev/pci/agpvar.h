@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -31,6 +31,7 @@
 #ifndef _PCI_AGPVAR_H_
 #define _PCI_AGPVAR_H_
 
+#include <sys/mallocvar.h>
 #include <sys/lock.h>
 
 struct agpbus_attach_args {
@@ -194,6 +195,8 @@ int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, caddr_t *,
 		     bus_addr_t *, bus_dma_segment_t *, int, int *);
 void agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 		     caddr_t vaddr, bus_dma_segment_t *seg, int nseg) ;
+
+MALLOC_DECLARE(M_AGP);
 
 /*
  * Kernel API

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.180 2003/01/21 00:00:10 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.181 2003/02/01 06:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.180 2003/01/21 00:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.181 2003/02/01 06:23:45 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.180 2003/01/21 00:00:10 christos 
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+
+MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_flags __P((struct vnode *, u_long, struct proc *));

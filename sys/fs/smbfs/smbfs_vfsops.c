@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.4 2002/09/21 18:11:56 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.5 2003/02/01 06:23:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -73,9 +73,9 @@ vm_zone_t smbfsmount_zone;
 SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
 SYSCTL_INT(_vfs_smbfs, OID_AUTO, version, CTLFLAG_RD, &smbfs_version, 0, "");
 SYSCTL_INT(_vfs_smbfs, OID_AUTO, debuglevel, CTLFLAG_RW, &smbfs_debuglevel, 0, "");
+#endif
 
 static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
-#endif
 
 int smbfs_mount(struct mount *, const char *, void *,
 		struct nameidata *, struct proc *);

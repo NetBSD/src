@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.98 2003/01/29 13:14:34 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.99 2003/02/01 06:23:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.98 2003/01/29 13:14:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.99 2003/02/01 06:23:53 thorpej Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.98 2003/01/29 13:14:34 yamt Exp $"
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+
+MALLOC_DEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */

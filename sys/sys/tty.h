@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.54 2002/12/01 22:57:17 matt Exp $	*/
+/*	$NetBSD: tty.h,v 1.55 2003/02/01 06:23:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -192,6 +192,9 @@ struct speedtab {
 TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_TTYS);
 
 extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.1 2002/12/23 17:38:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -290,7 +290,7 @@ struct ntfsmount {
 
 #define	ntfs_bpbl	(daddr_t)((ntmp)->ntm_bps)
 
-#if __FreeBSD_version >= 300000
+#if __FreeBSD_version >= 300000 || defined(__NetBSD__)
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
 MALLOC_DECLARE(M_NTFSFNODE);
@@ -299,16 +299,6 @@ MALLOC_DECLARE(M_NTFSNTHASH);
 #endif
 
 #ifdef __NetBSD__
-#define MALLOC_DEFINE(a, b, c)
-#define M_NTFSNTHASH	M_NTFS
-#define M_NTFSNTVATTR	M_NTFS
-#define M_NTFSRDATA	M_NTFS
-#define M_NTFSRUN	M_NTFS
-#define M_NTFSDECOMP	M_NTFS
-#define M_NTFSMNT	M_NTFS
-#define M_NTFSNTNODE	M_NTFS
-#define M_NTFSFNODE	M_NTFS
-#define M_NTFSDIR	M_NTFS
 typedef int (vop_t) __P((void *));
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.9 2002/10/23 09:14:47 jdolecek Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.10 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -91,9 +91,9 @@ static int smb_version = NSMB_VERSION;
 
 SYSCTL_DECL(_net_smb);
 SYSCTL_INT(_net_smb, OID_AUTO, version, CTLFLAG_RD, &smb_version, 0, "");
+#endif
 
 static MALLOC_DEFINE(M_NSMBDEV, "NETSMBDEV", "NET/SMB device");
-#endif
 
 
 /*
@@ -187,7 +187,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
 	if (sdp && (sdp->sd_flags & NSMBFL_OPEN))
 		return EBUSY;
 	if (sdp == NULL) {
-		sdp = malloc(sizeof(*sdp), M_SMBDATA, M_WAITOK);
+		sdp = malloc(sizeof(*sdp), M_NSMBDEV, M_WAITOK);
 		smb_devtbl[minor(dev)] = (void*)sdp;
 	}
 
@@ -241,7 +241,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
 	smb_flushq(&sdp->sd_rplist);
 */
 	smb_devtbl[minor(dev)] = NULL;
-	free(sdp, M_SMBDATA);
+	free(sdp, M_NSMBDEV);
 #ifndef __NetBSD__
 	destroy_dev(dev);
 #endif

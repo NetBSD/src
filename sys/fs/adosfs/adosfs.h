@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.1 2002/12/23 17:15:26 jdolecek Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.2 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,7 +43,10 @@ struct adosfs_args {
 };
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
 #include <miscfs/genfs/genfs_node.h>
+
+MALLOC_DECLARE(M_ANODE);
 
 /*
  * Amigados datestamp. (from 1/1/1978 00:00:00 local)

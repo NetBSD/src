@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.6 2003/01/18 10:06:25 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.7 2003/02/01 06:23:42 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -96,6 +96,8 @@ static const struct filterops file_filtops =
 
 struct pool	kqueue_pool;
 struct pool	knote_pool;
+
+MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 #define	KNOTE_ACTIVATE(kn)						\
 do {									\

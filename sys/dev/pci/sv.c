@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.18 2002/10/02 16:51:55 thorpej Exp $ */
+/*      $NetBSD: sv.c,v 1.19 2003/02/01 06:23:39 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.18 2002/10/02 16:51:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.19 2003/02/01 06:23:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ int	sv_getdev __P((void *, struct audio_device *));
 int	sv_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	sv_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	sv_query_devinfo __P((void *, mixer_devinfo_t *));
-void   *sv_malloc __P((void *, int, size_t, int, int));
-void	sv_free __P((void *, void *, int));
+void   *sv_malloc __P((void *, int, size_t, struct malloc_type *, int));
+void	sv_free __P((void *, void *, struct malloc_type *));
 size_t	sv_round_buffersize __P((void *, int, size_t));
 paddr_t	sv_mappage __P((void *, void *, off_t, int));
 int	sv_get_props __P((void *));
@@ -1437,7 +1437,8 @@ sv_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma *p;
@@ -1460,7 +1461,7 @@ void
 sv_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	struct sv_softc *sc = addr;
 	struct sv_dma **pp, *p;

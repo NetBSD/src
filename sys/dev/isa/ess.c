@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.55 2001/11/13 08:01:13 lukem Exp $	*/
+/*	$NetBSD: ess.c,v 1.56 2003/02/01 06:23:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.55 2001/11/13 08:01:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.56 2003/02/01 06:23:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ int	ess_getdev __P((void *, struct audio_device *));
 int	ess_set_port __P((void *, mixer_ctrl_t *));
 int	ess_get_port __P((void *, mixer_ctrl_t *));
 
-void   *ess_malloc __P((void *, int, size_t, int, int));
-void	ess_free __P((void *, void *, int));
+void   *ess_malloc __P((void *, int, size_t, struct malloc_type *, int));
+void	ess_free __P((void *, void *, struct malloc_type *));
 size_t	ess_round_buffersize __P((void *, int, size_t));
 paddr_t	ess_mappage __P((void *, void *, off_t, int));
 
@@ -2168,7 +2168,8 @@ ess_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct ess_softc *sc = addr;
 	int drq;
@@ -2184,7 +2185,7 @@ void
 ess_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	isa_free(ptr, pool);
 }

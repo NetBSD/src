@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.70 2003/01/18 10:06:29 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.71 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.70 2003/01/18 10:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.71 2003/02/01 06:23:43 thorpej Exp $");
 
 #include "opt_compat_43.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.70 2003/01/18 10:06:29 thorpej Exp $
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+MALLOC_DEFINE(M_CRED, "cred", "credentials");
 
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);

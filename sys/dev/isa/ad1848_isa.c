@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.21 2002/03/06 07:12:04 itohy Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.22 2003/02/01 06:23:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.21 2002/03/06 07:12:04 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.22 2003/02/01 06:23:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,8 @@ ad1848_isa_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct ad1848_isa_softc *isc = addr;
 	int drq;
@@ -745,7 +746,7 @@ void
 ad1848_isa_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	isa_free(ptr, pool);
 }

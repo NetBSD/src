@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.76 2003/01/18 09:42:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.77 2003/02/01 06:23:54 thorpej Exp $	*/
 
 /*
  *
@@ -526,6 +526,9 @@ struct vnode;
 struct core;
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_VMMAP);
+MALLOC_DECLARE(M_VMPMAP);
 
 /* vm_machdep.c */
 void		vmapbuf __P((struct buf *, vsize_t));

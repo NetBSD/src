@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.20 2002/12/26 12:40:01 jdolecek Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.21 2003/02/01 06:23:36 thorpej Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.20 2002/12/26 12:40:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.21 2003/02/01 06:23:36 thorpej Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.20 2002/12/26 12:40:01 jdolecek Ex
 #include <coda/coda_opstats.h>
 /* for VN_RDEV */
 #include <miscfs/specfs/specdev.h>
+
+MALLOC_DEFINE(M_CODA, "coda", "Coda file system structures and tables");
 
 int codadebug = 0;
 
