@@ -99,12 +99,11 @@ all: ${PROG} ${MANALL} _PROGSUBDIR
 .if !target(clean)
 clean: _PROGSUBDIR
 	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
-	rm -f .depend ${MANALL}
 .endif
 
 .if !target(cleandir)
 cleandir: _PROGSUBDIR
-	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES} ${MANALL}
+	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
 	rm -f .depend ${MANALL}
 .endif
 
@@ -120,7 +119,7 @@ depend: .depend _PROGSUBDIR
 .if !target(install)
 .if !target(beforeinstall)
 beforeinstall:
-	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
+	@if [ ! -d "${DESTDIR}${BINDIR}" ]; then \
                 /bin/rm -f ${DESTDIR}${BINDIR} ; \
                 mkdir -p ${DESTDIR}${BINDIR} ; \
                 chown root.wheel ${DESTDIR}${BINDIR} ; \
