@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.3 1993/10/13 02:36:39 deraadt Exp $
+ * $Id: cons.c,v 1.4 1993/10/13 03:27:52 deraadt Exp $
  */
 
 /*
@@ -91,7 +91,7 @@ consinit()
 {
 	register struct tty *tp = &cons;
 	register int in, out;
-	void zsconsole(), void bwtwoconsole();
+	void zsconsole(), bwtwoconsole();
 
 	tp->t_dev = makedev(0, 0);	/* /dev/console */
 	tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
@@ -143,7 +143,7 @@ consinit()
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		fcnstop = (void (*)(struct tty *, int))nullop;*/
+		fcnstop = (void (*)(struct tty *, int))nullop;
 		break;
 	}
 }
