@@ -1,4 +1,4 @@
-/*	$NetBSD: privs.h,v 1.4 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: privs.h,v 1.5 2002/07/10 23:16:34 wiz Exp $	*/
 
 /* 
  *  privs.h - header for privileged operations 
@@ -53,7 +53,7 @@
  * It is NOT safe to call exec(), system() or popen() with a user-
  * supplied program (i.e. without carefully checking PATH and any
  * library load paths) with relinquished privileges; the called program
- * can aquire them just as easily.  Set both effective and real userid
+ * can acquire them just as easily.  Set both effective and real userid
  * to the real userid before calling any of them.
  */
 
