@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,12 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_fork.c	7.29 (Berkeley) 5/15/91
- *	$Id: kern_fork.c,v 1.16 1994/05/17 04:21:54 cgd Exp $
+ *	from: @(#)kern_fork.c	8.6 (Berkeley) 4/8/94
+ *	$Id: kern_fork.c,v 1.17 1994/05/19 05:57:48 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/map.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -51,13 +52,7 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 
-#include <vm/vm.h>
-
-/* would be static, except for symbol-sharing considerations in ddb, etc */
-int fork1(struct proc *p1, int isvfork, int retval[]);
-
 /* ARGSUSED */
-int
 fork(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -68,7 +63,6 @@ fork(p, uap, retval)
 }
 
 /* ARGSUSED */
-int
 vfork(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -80,42 +74,45 @@ vfork(p, uap, retval)
 
 int	nprocs = 1;		/* process 0 */
 
-int
 fork1(p1, isvfork, retval)
 	register struct proc *p1;
 	int isvfork, retval[];
 {
 	register struct proc *p2;
-	register int count, uid;
+	register uid_t uid;
+	struct proc *newproc;
+	struct proc **hash;
+	int count;
 	static int nextpid, pidchecked = 0;
 
-	count = 0;
-	if ((uid = p1->p_ucred->cr_uid) != 0) {
-		for (p2 = (struct proc *)allproc; p2; p2 = p2->p_next)
-			if (p2->p_ucred->cr_uid == uid)
-				count++;
-		for (p2 = zombproc; p2; p2 = p2->p_next)
-			if (p2->p_ucred->cr_uid == uid)
-				count++;
-	}
 	/*
-	 * Although process entries are dynamically entries, we still keep
+	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create.  Don't allow
 	 * a nonprivileged user to use the last process; don't let root
-	 * exceed the limit.  The variable nprocs is the current number of
+	 * exceed the limit. The variable nprocs is the current number of
 	 * processes, maxproc is the limit.
 	 */
+	uid = p1->p_cred->p_ruid;
 	if ((nprocs >= maxproc - 1 && uid != 0) || nprocs >= maxproc) {
 		tablefull("proc");
 		return (EAGAIN);
 	}
-	if (count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)
+	/*
+	 * Increment the count of procs running with this uid. Don't allow
+	 * a nonprivileged user to exceed their current limit.
+	 */
+	count = chgproccnt(uid, 1);
+	if (uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+		(void)chgproccnt(uid, -1);
 		return (EAGAIN);
+	}
+
+	/* Allocate new proc. */
+	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
 
 	/*
-	 * Find an unused process ID.
-	 * We remember a range of unused IDs ready to use
-	 * (from nextpid+1 through pidchecked-1).
+	 * Find an unused process ID.  We remember a range of unused IDs
+	 * ready to use (from nextpid+1 through pidchecked-1).
 	 */
 	nextpid++;
 retry:
@@ -161,15 +158,16 @@ again:
 
 
 	/*
-	 * Allocate new proc.
 	 * Link onto allproc (this should probably be delayed).
+	 * Heavy use of volatile here to prevent the compiler from
+	 * rearranging code.  Yes, it *is* terribly ugly, but at least
+	 * it works.
 	 */
-	MALLOC(p2, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
 	nprocs++;
-#define Vp2 ((volatile struct proc *)p2)
-	Vp2->p_stat = SIDL;			/* protect from others */
+	p2 = newproc;
+#define	Vp2 ((volatile struct proc *)p2)
+	Vp2->p_stat = SIDL;			/* protect against others */
 	Vp2->p_pid = nextpid;
-
 	/*
 	 * This is really:
 	 *	p2->p_next = allproc;
@@ -183,10 +181,13 @@ again:
 	    (volatile struct proc **)&Vp2->p_next;
 	*(volatile struct proc ***)&Vp2->p_prev = &allproc;
 	allproc = Vp2;
-
-	Vp2->p_forw = NULL;			/* shouldn't be necessary */
-	Vp2->p_back = NULL;			/* shouldn't be necessary */
 #undef Vp2
+	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+
+	/* Insert on the hash chain. */
+	hash = &pidhash[PIDHASH(p2->p_pid)];
+	p2->p_hash = *hash;
+	*hash = p2;
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -203,16 +204,19 @@ again:
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
+	p2->p_flag = P_INMEM;
+	if (p1->p_flag & P_PROFIL)
+		startprofclock(p2);
 	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
 	    M_SUBPROC, M_WAITOK);
 	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
 
-	if (p1->p_textvp) {
-		p2->p_textvp = p1->p_textvp;
+	/* bump references to the text vnode (for procfs) */
+	p2->p_textvp = p1->p_textvp;
+	if (p2->p_textvp)
 		VREF(p2->p_textvp);
-	}
 
 	p2->p_fd = fdcopy(p1);
 	/*
@@ -228,17 +232,10 @@ again:
 		p2->p_limit->p_refcnt++;
 	}
 
-	p2->p_flag = P_INMEM;
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
 	if (isvfork)
 		p2->p_flag |= P_PPWAIT;
-	{
-	struct proc **hash = &pidhash[PIDHASH(p2->p_pid)];
-
-	p2->p_hash = *hash;
-	*hash = p2;
-	}
 	p2->p_pgrpnxt = p1->p_pgrpnxt;
 	p1->p_pgrpnxt = p2;
 	p2->p_pptr = p1;
@@ -256,10 +253,6 @@ again:
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			VREF(p2->p_tracep);
 	}
-#endif
-
-#if defined(tahoe)
-	p2->p_vmspace->p_ckey = p1->p_vmspace->p_ckey; /* XXX move this */
 #endif
 
 	/*
@@ -302,13 +295,13 @@ again:
 	p1->p_flag &= ~P_NOSWAP;
 
 	/*
-	 * Preserve synchronization semantics of vfork.
-	 * If waiting for child to exec or exit, set P_PPWAIT
-	 * on child, and sleep on our proc (in case of exit).
+	 * Preserve synchronization semantics of vfork.  If waiting for
+	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
+	 * proc (in case of exit).
 	 */
 	if (isvfork)
 		while (p2->p_flag & P_PPWAIT)
-			tsleep((caddr_t)p1, PWAIT, "ppwait", 0);
+			tsleep(p1, PWAIT, "ppwait", 0);
 
 	/*
 	 * Return child pid to parent process,
