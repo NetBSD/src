@@ -1,6 +1,6 @@
-.\" $NetBSD: wsmoused.8,v 1.3 2002/06/27 16:10:03 christos Exp $
+.\" $NetBSD: wsmoused.8,v 1.4 2002/06/27 22:53:12 wiz Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -35,40 +35,40 @@
 .Nd mouse console daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl n
-.Op Fl f Ar fifo
 .Op Fl d Ar device
+.Op Fl f Ar fifo
+.Op Fl n
 .Op Fl X Ar number
 .Sh DESCRIPTION
 The
 .Nm
 daemon provides mouse support in console, allowing copying and pasting
-text. The left mouse button is used to select text when hold and you
+text. The left mouse button is used to select text when held and you
 use the right button to paste it in the active console.
 .Pp
 Supported options are as follows:
-.Bl -tag -width Ds
-.It Fl n
-do not fork in the background (for debugging purposes).
-.It Fl f Ar fifo
-is used to specify an optional fifo where to redirect all mouse events
-(even if they have been processed). By default, no fifo is used.
+.Bl -tag -width XXXnumberX
 .It Fl d Ar device
 specifies which driver to use as the mouse device. It defaults to
 .Pa /dev/wsmouse .
+.It Fl f Ar fifo
+is used to specify an optional fifo where to redirect all mouse events
+(even if they have been processed). By default, no fifo is used.
+.It Fl n
+do not fork in the background (for debugging purposes).
 .It Fl X Ar number
 tells
 .Nm
 which virtual console holds the X server (if any). The argument
-specifies the console number (the same found in 
+specifies the console number (the same found in
 .Pa /dev/ttyE? ,
-where the ? apperes).
+where the ? appears).
 .Nm
 will stop processing events when entering this console and will
 continue its job when you return to any other terminal.
 .El
 .Sh FILES
-.Bl -tag -width /dev/wsmouse0
+.Bl -tag -width /dev/wsdisplayXXX -compact
 .It Pa /dev/ttyE[0-n]
 tty devices
 .It Pa /dev/wsmouse0
@@ -98,11 +98,12 @@ Be ABSOLUTELY sure that
 devices have restrictive permissions as the mouse uses some functions
 that could allow terminal snooping if improperly set.
 .Sh NOTES
-The mouse cursor is only visible for a few time. It will disappear
+The mouse cursor is only visible for a short time. It will disappear
 when you stop moving it to avoid console corruption if there is any
 output while it is visible.
 .Pp
-You need WSDISPLAY_CHARFUNCS in your kernel configuration file in
+.Cd options WSDISPLAY_CHARFUNCS
+is needed in your kernel configuration file in
 order to get mouse console support.
 .Pp
 When you return from the X screen to another terminal there is a small
