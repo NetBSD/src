@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.38.2.1 2002/03/11 18:58:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38.2.1 2002/03/11 18:58:30 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -340,9 +340,9 @@ mfs_start(mp, flags, p)
 			 * XXX Freeze syncer.  Must do this before locking
 			 * the mount point.  See dounmount() for details.
 			 */
-			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+			mutex_enter(&syncer_mutex);
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
-				lockmgr(&syncer_lock, LK_RELEASE, NULL);
+				mutex_exit(&syncer_mutex);
 			else if (dounmount(mp, 0, p) != 0)
 				CLRSIG(p, CURSIG(p));
 			sleepreturn = 0;
