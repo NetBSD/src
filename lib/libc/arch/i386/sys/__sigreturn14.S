@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.8 1998/09/26 23:49:34 christos Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/09/26 23:49:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,28 +35,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigsuspend.s	5.2 (Berkeley) 12/17/90
+ *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
  */
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigsuspend.S,v 1.8 1998/09/26 23:49:34 christos Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/09/26 23:49:34 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-ENTRY(sigsuspend)
-	movl	4(%esp),%eax		# fetch mask arg
-	movl	(%eax),%eax		# indirect to mask arg
-	movl	%eax,4(%esp)
-	movl	$(SYS_compat_13_sigsuspend13),%eax
-	int	$0x80
-	jc	err
-	xorl	%eax,%eax		# shouldn t happen
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
+#ifdef GPROF
+#undef ENTRY
+#define	ENTRY(x) \
+	.globl _/**/x; .align 2; _/**/x:  pusha ; \
+	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
+#endif /* GPROF */
+
+SYSCALL(__sigreturn14)
 	ret
-err:
-#ifdef PIC
-	jmp	PIC_PLT(cerror)
-#else
-	jmp	cerror
-#endif
