@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 1999/05/13 23:42:34 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.34 1999/05/14 18:43:01 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -260,15 +260,19 @@
 				struct timespec *rmtp); }
 163	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
-164	UNIMPL		setresuid
-165	UNIMPL		getresuid
+164	STD		{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
+			    uid_t suid); }
+165	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \
+			    uid_t *suid); }
 166	UNIMPL		vm86
 167	UNIMPL		query_module
 168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 169	UNIMPL		nfsservctl
-170	UNIMPL		setresgid
-171	UNIMPL		setresgid
+170	STD		{ int linux_sys_setresgid(gid_t rgid, gid_t egid, \
+			    gid_t sgid); }
+171	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
+			    gid_t *sgid); }
 172	UNIMPL		prctl
 173	STD		{ int linux_sys_rt_sigreturn( \
 			    struct linux_rt_sigframe *sfp); }
@@ -298,3 +302,8 @@
 183	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
+186	UNIMPL		sigaltstack
+187	UNIMPL		sendfile
+188	UNIMPL		getpmsg
+189	UNIMPL		putpmsg
+190	NOARGS		{ int sys___vfork14(void); }
