@@ -1,43 +1,9 @@
-/*	$NetBSD: am7990.c,v 1.51 1998/07/21 17:26:45 drochner Exp $	*/
+/*	$NetBSD: am79900.c,v 1.1 1998/07/21 17:26:46 drochner Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*-
+ * Copyright (c) 1998
+ *	Matthias Drochner.  All rights reserved.
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -104,11 +70,11 @@
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
-#include <dev/ic/am7990reg.h>
-#include <dev/ic/am7990var.h>
+#include <dev/ic/am79900reg.h>
+#include <dev/ic/am79900var.h>
 
-void am7990_meminit __P((struct lance_softc *));
-void am7990_start __P((struct ifnet *));
+void am79900_meminit __P((struct lance_softc *));
+void am79900_start __P((struct ifnet *));
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
@@ -122,24 +88,24 @@ void am7990_start __P((struct ifnet *));
 #define hide		static
 #endif
 
-integrate void am7990_rint __P((struct lance_softc *));
-integrate void am7990_tint __P((struct lance_softc *));
+integrate void am79900_rint __P((struct lance_softc *));
+integrate void am79900_tint __P((struct lance_softc *));
 
 #ifdef LEDEBUG
-void am7990_recv_print __P((struct lance_softc *, int));
-void am7990_xmit_print __P((struct lance_softc *, int));
+void am79900_recv_print __P((struct lance_softc *, int));
+void am79900_xmit_print __P((struct lance_softc *, int));
 #endif
 
 #define	ifp	(&sc->sc_ethercom.ec_if)
 
 void
-am7990_config(sc)
-	struct am7990_softc *sc;
+am79900_config(sc)
+	struct am79900_softc *sc;
 {
 	int mem, i;
 
-	sc->lsc.sc_meminit = am7990_meminit;
-	sc->lsc.sc_start = am7990_start;
+	sc->lsc.sc_meminit = am79900_meminit;
+	sc->lsc.sc_start = am79900_start;
 
 	lance_config(&sc->lsc);
 
@@ -154,17 +120,16 @@ am7990_config(sc)
 		sc->lsc.sc_rbufaddr[i] = mem;
 	for (i = 0; i < sc->lsc.sc_ntbuf; i++, mem += LEBLEN)
 		sc->lsc.sc_tbufaddr[i] = mem;
-#ifdef notyet
-	if (mem > ...)
-		panic(...);
-#endif
+
+	if (mem > sc->lsc.sc_memsize)
+		panic("%s: memsize", sc->lsc.sc_dev.dv_xname);
 }
 
 /*
  * Set up the initialization block and the descriptor rings.
  */
 void
-am7990_meminit(sc)
+am79900_meminit(sc)
 	register struct lance_softc *sc;
 {
 	u_long a;
@@ -183,6 +148,9 @@ am7990_meminit(sc)
 	if (sc->sc_initmodemedia == 1)
 		init.init_mode |= LE_MODE_PSEL0;
 
+	init.init_mode |= ((ffs(sc->sc_ntbuf) - 1) << 28)
+	  | ((ffs(sc->sc_nrbuf) - 1) << 20);
+
 	/*
 	 * Update our private copy of the Ethernet address.
 	 * We NEED the copy so we can ensure its alignment!
@@ -190,9 +158,9 @@ am7990_meminit(sc)
 	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, 6);
 	myaddr = sc->sc_enaddr;
 
-	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
-	init.init_padr[1] = (myaddr[3] << 8) | myaddr[2];
-	init.init_padr[2] = (myaddr[5] << 8) | myaddr[4];
+	init.init_padr[0] = myaddr[0] | (myaddr[1] << 8)
+	  | (myaddr[2] << 16) | (myaddr[3] << 24);
+	init.init_padr[1] = myaddr[4] | (myaddr[5] << 8);
 	lance_setladrf(&sc->sc_ethercom, init.init_ladrf);
 
 	sc->sc_last_rd = 0;
@@ -200,11 +168,9 @@ am7990_meminit(sc)
 
 	a = sc->sc_addr + LE_RMDADDR(sc, 0);
 	init.init_rdra = a;
-	init.init_rlen = (a >> 16) | ((ffs(sc->sc_nrbuf) - 1) << 13);
 
 	a = sc->sc_addr + LE_TMDADDR(sc, 0);
 	init.init_tdra = a;
-	init.init_tlen = (a >> 16) | ((ffs(sc->sc_ntbuf) - 1) << 13);
 
 	(*sc->sc_copytodesc)(sc, &init, LE_INITADDR(sc), sizeof(init));
 
@@ -214,9 +180,8 @@ am7990_meminit(sc)
 	for (bix = 0; bix < sc->sc_nrbuf; bix++) {
 		a = sc->sc_addr + LE_RBUFADDR(sc, bix);
 		rmd.rmd0 = a;
-		rmd.rmd1_hadr = a >> 16;
-		rmd.rmd1_bits = LE_R1_OWN;
-		rmd.rmd2 = -LEBLEN | LE_XMD2_ONES;
+		rmd.rmd1 = LE_R1_OWN | LE_R1_ONES | (-LEBLEN & 0xfff);
+		rmd.rmd2 = 0;
 		rmd.rmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &rmd, LE_RMDADDR(sc, bix),
 		    sizeof(rmd));
@@ -228,9 +193,8 @@ am7990_meminit(sc)
 	for (bix = 0; bix < sc->sc_ntbuf; bix++) {
 		a = sc->sc_addr + LE_TBUFADDR(sc, bix);
 		tmd.tmd0 = a;
-		tmd.tmd1_hadr = a >> 16;
-		tmd.tmd1_bits = 0;
-		tmd.tmd2 = 0 | LE_XMD2_ONES;
+		tmd.tmd1 = LE_T1_ONES;
+		tmd.tmd2 = 0;
 		tmd.tmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &tmd, LE_TMDADDR(sc, bix),
 		    sizeof(tmd));
@@ -238,7 +202,7 @@ am7990_meminit(sc)
 }
 
 integrate void
-am7990_rint(sc)
+am79900_rint(sc)
 	struct lance_softc *sc;
 {
 	register int bix;
@@ -252,31 +216,31 @@ am7990_rint(sc)
 		rp = LE_RMDADDR(sc, bix);
 		(*sc->sc_copyfromdesc)(sc, &rmd, rp, sizeof(rmd));
 
-		if (rmd.rmd1_bits & LE_R1_OWN)
+		if (rmd.rmd1 & LE_R1_OWN)
 			break;
 
-		if (rmd.rmd1_bits & LE_R1_ERR) {
-			if (rmd.rmd1_bits & LE_R1_ENP) {
+		if (rmd.rmd1 & LE_R1_ERR) {
+			if (rmd.rmd1 & LE_R1_ENP) {
 #ifdef LEDEBUG
-				if ((rmd.rmd1_bits & LE_R1_OFLO) == 0) {
-					if (rmd.rmd1_bits & LE_R1_FRAM)
+				if ((rmd.rmd1 & LE_R1_OFLO) == 0) {
+					if (rmd.rmd1 & LE_R1_FRAM)
 						printf("%s: framing error\n",
 						    sc->sc_dev.dv_xname);
-					if (rmd.rmd1_bits & LE_R1_CRC)
+					if (rmd.rmd1 & LE_R1_CRC)
 						printf("%s: crc mismatch\n",
 						    sc->sc_dev.dv_xname);
 				}
 #endif
 			} else {
-				if (rmd.rmd1_bits & LE_R1_OFLO)
+				if (rmd.rmd1 & LE_R1_OFLO)
 					printf("%s: overflow\n",
 					    sc->sc_dev.dv_xname);
 			}
-			if (rmd.rmd1_bits & LE_R1_BUFF)
+			if (rmd.rmd1 & LE_R1_BUFF)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
-		} else if ((rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
+		} else if ((rmd.rmd1 & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
@@ -284,25 +248,23 @@ am7990_rint(sc)
 		} else {
 #ifdef LEDEBUG
 			if (sc->sc_debug)
-				am7990_recv_print(sc, sc->sc_last_rd);
+				am79900_recv_print(sc, sc->sc_last_rd);
 #endif
 			lance_read(sc, LE_RBUFADDR(sc, bix),
-				   (int)rmd.rmd3 - 4);
+				   (rmd.rmd2  & 0xfff) - 4);
 		}
 
-		rmd.rmd1_bits = LE_R1_OWN;
-		rmd.rmd2 = -LEBLEN | LE_XMD2_ONES;
+		rmd.rmd1 = LE_R1_OWN | LE_R1_ONES | (-LEBLEN & 0xfff);
+		rmd.rmd2 = 0;
 		rmd.rmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &rmd, rp, sizeof(rmd));
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("sc->sc_last_rd = %x, rmd: "
-			       "ladr %04x, hadr %02x, flags %02x, "
-			       "bcnt %04x, mcnt %04x\n",
+			       "adr %08x, flags/blen %08x\n",
 				sc->sc_last_rd,
-				rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits,
-				rmd.rmd2, rmd.rmd3);
+				rmd.rmd0, rmd.rmd1);
 #endif
 
 		if (++bix == sc->sc_nrbuf)
@@ -313,7 +275,7 @@ am7990_rint(sc)
 }
 
 integrate void
-am7990_tint(sc)
+am79900_tint(sc)
 	register struct lance_softc *sc;
 {
 	register int bix;
@@ -331,28 +293,26 @@ am7990_tint(sc)
 #ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("trans tmd: "
-			    "ladr %04x, hadr %02x, flags %02x, "
-			    "bcnt %04x, mcnt %04x\n",
-			    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
-			    tmd.tmd2, tmd.tmd3);
+			    "adr %08x, flags/blen %08x\n",
+			    tmd.tmd0, tmd.tmd1);
 #endif
 
-		if (tmd.tmd1_bits & LE_T1_OWN)
+		if (tmd.tmd1 & LE_T1_OWN)
 			break;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-		if (tmd.tmd1_bits & LE_T1_ERR) {
-			if (tmd.tmd3 & LE_T3_BUFF)
+		if (tmd.tmd1 & LE_T1_ERR) {
+			if (tmd.tmd2 & LE_T2_BUFF)
 				printf("%s: transmit buffer error\n",
 				    sc->sc_dev.dv_xname);
-			else if (tmd.tmd3 & LE_T3_UFLO)
+			else if (tmd.tmd2 & LE_T2_UFLO)
 				printf("%s: underflow\n", sc->sc_dev.dv_xname);
-			if (tmd.tmd3 & (LE_T3_BUFF | LE_T3_UFLO)) {
-				lance_reset((struct lance_softc *)sc);
+			if (tmd.tmd2 & (LE_T2_BUFF | LE_T2_UFLO)) {
+				lance_reset(sc);
 				return;
 			}
-			if (tmd.tmd3 & LE_T3_LCAR) {
+			if (tmd.tmd2 & LE_T2_LCAR) {
 				sc->sc_havecarrier = 0;
 				if (sc->sc_nocarrier)
 					(*sc->sc_nocarrier)(sc);
@@ -360,19 +320,18 @@ am7990_tint(sc)
 					printf("%s: lost carrier\n",
 					    sc->sc_dev.dv_xname);
 			}
-			if (tmd.tmd3 & LE_T3_LCOL)
+			if (tmd.tmd2 & LE_T2_LCOL)
 				ifp->if_collisions++;
-			if (tmd.tmd3 & LE_T3_RTRY) {
-				printf("%s: excessive collisions, tdr %d\n",
-				    sc->sc_dev.dv_xname,
-				    tmd.tmd3 & LE_T3_TDR_MASK);
+			if (tmd.tmd2 & LE_T2_RTRY) {
+				printf("%s: excessive collisions\n",
+				    sc->sc_dev.dv_xname);
 				ifp->if_collisions += 16;
 			}
 			ifp->if_oerrors++;
 		} else {
-			if (tmd.tmd1_bits & LE_T1_ONE)
+			if (tmd.tmd1 & LE_T1_ONE)
 				ifp->if_collisions++;
-			else if (tmd.tmd1_bits & LE_T1_MORE)
+			else if (tmd.tmd1 & LE_T1_MORE)
 				/* Real number is unknown. */
 				ifp->if_collisions += 2;
 			ifp->if_opackets++;
@@ -386,7 +345,7 @@ am7990_tint(sc)
 
 	sc->sc_first_td = bix;
 
-	am7990_start(ifp);
+	am79900_start(ifp);
 
 	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;
@@ -396,7 +355,7 @@ am7990_tint(sc)
  * Controller interrupt.
  */
 int
-am7990_intr(arg)
+am79900_intr(arg)
 	register void *arg;
 {
 	register struct lance_softc *sc = arg;
@@ -406,7 +365,7 @@ am7990_intr(arg)
 	sc->sc_saved_csr0 = 0;
 #ifdef LEDEBUG
 	if (sc->sc_debug)
-		printf("%s: am7990_intr entering with isr=%04x\n",
+		printf("%s: am79900_intr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
 #endif
 	if ((isr & LE_C0_INTR) == 0)
@@ -461,18 +420,14 @@ am7990_intr(arg)
 	sc->sc_havecarrier = 1;
 
 	if (isr & LE_C0_RINT)
-		am7990_rint(sc);
+		am79900_rint(sc);
 	if (isr & LE_C0_TINT)
-		am7990_tint(sc);
-
-#if NRND > 0
-	rnd_add_uint32(&sc->rnd_source, isr);
-#endif
+		am79900_tint(sc);
 
 	return (1);
 }
 
-#undef ifp
+#undef	ifp
 
 /*
  * Setup output on interface.
@@ -481,7 +436,7 @@ am7990_intr(arg)
  * Called only at splimp or interrupt level.
  */
 void
-am7990_start(ifp)
+am79900_start(ifp)
 	register struct ifnet *ifp;
 {
 	register struct lance_softc *sc = ifp->if_softc;
@@ -500,7 +455,7 @@ am7990_start(ifp)
 		rp = LE_TMDADDR(sc, bix);
 		(*sc->sc_copyfromdesc)(sc, &tmd, rp, sizeof(tmd));
 
-		if (tmd.tmd1_bits & LE_T1_OWN) {
+		if (tmd.tmd1 & LE_T1_OWN) {
 			ifp->if_flags |= IFF_OACTIVE;
 			printf("missing buffer, no_td = %d, last_td = %d\n",
 			    sc->sc_no_td, sc->sc_last_td);
@@ -534,15 +489,15 @@ am7990_start(ifp)
 		/*
 		 * Init transmit registers, and set transmit start flag.
 		 */
-		tmd.tmd1_bits = LE_T1_OWN | LE_T1_STP | LE_T1_ENP;
-		tmd.tmd2 = -len | LE_XMD2_ONES;
+		tmd.tmd1 = LE_T1_OWN | LE_T1_STP | LE_T1_ENP | LE_T1_ONES | (-len & 0xfff);
+		tmd.tmd2 = 0;
 		tmd.tmd3 = 0;
 
 		(*sc->sc_copytodesc)(sc, &tmd, rp, sizeof(tmd));
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			am7990_xmit_print(sc, sc->sc_last_td);
+			am79900_xmit_print(sc, sc->sc_last_td);
 #endif
 
 		(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA | LE_C0_TDMD);
@@ -562,7 +517,7 @@ am7990_start(ifp)
 
 #ifdef LEDEBUG
 void
-am7990_recv_print(sc, no)
+am79900_recv_print(sc, no)
 	struct lance_softc *sc;
 	int no;
 {
@@ -571,14 +526,13 @@ am7990_recv_print(sc, no)
 	struct ether_header eh;
 
 	(*sc->sc_copyfromdesc)(sc, &rmd, LE_RMDADDR(sc, no), sizeof(rmd));
-	len = rmd.rmd3;
+	len = (rmd.rmd2  & 0xfff) - 4;
 	printf("%s: receive buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
 	    len);
 	printf("%s: status %04x\n", sc->sc_dev.dv_xname,
 	    (*sc->sc_rdcsr)(sc, LE_CSR0));
-	printf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
-	    sc->sc_dev.dv_xname,
-	    rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits, rmd.rmd2, rmd.rmd3);
+	printf("%s: adr %08x, flags/blen %08x\n",
+	    sc->sc_dev.dv_xname, rmd.rmd0, rmd.rmd1);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_RBUFADDR(sc, no), sizeof(eh));
 		printf("%s: dst %s", sc->sc_dev.dv_xname,
@@ -589,7 +543,7 @@ am7990_recv_print(sc, no)
 }
 
 void
-am7990_xmit_print(sc, no)
+am79900_xmit_print(sc, no)
 	struct lance_softc *sc;
 	int no;
 {
@@ -598,14 +552,13 @@ am7990_xmit_print(sc, no)
 	struct ether_header eh;
 
 	(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, no), sizeof(tmd));
-	len = -tmd.tmd2;
+	len = -(tmd.tmd1 & 0xfff);
 	printf("%s: transmit buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
 	    len);
 	printf("%s: status %04x\n", sc->sc_dev.dv_xname,
 	    (*sc->sc_rdcsr)(sc, LE_CSR0));
-	printf("%s: ladr %04x, hadr %02x, flags %02x, bcnt %04x, mcnt %04x\n",
-	    sc->sc_dev.dv_xname,
-	    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits, tmd.tmd2, tmd.tmd3);
+	printf("%s: adr %08x, flags/blen %08x\n",
+	    sc->sc_dev.dv_xname, tmd.tmd0, tmd.tmd1);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_TBUFADDR(sc, no), sizeof(eh));
 		printf("%s: dst %s", sc->sc_dev.dv_xname,
