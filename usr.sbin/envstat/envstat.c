@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.10 2003/01/05 22:16:22 christos Exp $ */
+/*	$NetBSD: envstat.c,v 1.11 2003/01/11 23:44:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.10 2003/01/05 22:16:22 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.11 2003/01/11 23:44:47 christos Exp $");
 #endif
 
 #include <fcntl.h>
@@ -344,7 +344,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-c] [-s s1,s2,...]", getprogname());
+	fprintf(stderr, "Usage: %s [-cr] [-s s1,s2,...]", getprogname());
 	fprintf(stderr, " [-i interval] [-n headrep] [-w width] [device]\n");
 	fprintf(stderr, "       envstat -l [device]\n");
 	exit(1);
