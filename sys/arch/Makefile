@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/08/03 09:23:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2003/10/14 12:46:44 tron Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -45,7 +45,6 @@ INCSYMLINKS= ${MACHINE} /usr/include/machine
 
 INCSYMLINKS+= machine/float.h /usr/include/float.h \
 	machine/frame.h /usr/include/frame.h \
-	machine/stdarg.h /usr/include/stdarg.h \
-	machine/varargs.h /usr/include/varargs.h
+	machine/stdarg.h /usr/include/stdarg.h
 
 .include <bsd.kinc.mk>
