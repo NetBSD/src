@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.40 2000/10/09 14:31:02 enami Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.41 2000/10/11 14:59:52 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -370,6 +370,7 @@ struct tulip_softc {
 	int		sc_flags;	/* misc flags. */
 	char		sc_name[16];	/* board name */
 	u_int32_t	sc_cacheline;	/* cache line size */
+	u_int32_t	sc_maxburst;	/* maximum burst length */
 	int		sc_devno;	/* PCI device # */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -470,6 +471,8 @@ struct tulip_softc {
 #define	TULIPF_DOINGAUTO	0x00000400	/* doing autoneg (non-MII) */
 #define	TULIPF_ATTACHED		0x00000800	/* attach has succeeded */
 #define	TULIPF_ENABLED		0x00001000	/* chip is enabled */
+#define	TULIPF_BLE		0x00002000	/* data is big endian */
+#define	TULIPF_DBO		0x00002000	/* descriptor is big endian */
 
 #define	TULIP_IS_ENABLED(sc)	((sc)->sc_flags & TULIPF_ENABLED)
 

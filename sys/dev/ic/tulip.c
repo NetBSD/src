@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.77 2000/10/09 14:31:01 enami Exp $	*/
+/*	$NetBSD: tulip.c,v 1.78 2000/10/11 14:59:52 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1708,6 +1708,14 @@ tlp_init(sc)
 		if (sc->sc_flags & TULIPF_MWI)
 			sc->sc_busmode |= BUSMODE_WLE;
 #endif
+		break;
+
+	case TULIP_CHIP_82C168:
+	case TULIP_CHIP_82C169:
+		sc->sc_busmode |= BUSMODE_PNIC_MBO;
+		if (sc->sc_maxburst == 0)
+			sc->sc_maxburst = 16;
+		break;
 
 	default:
 		/* Nothing. */
@@ -1728,10 +1736,24 @@ tlp_init(sc)
 		sc->sc_busmode |= BUSMODE_CAL_32LW;
 		break;
 	}
-	switch (sc->sc_chip) {
-	case TULIP_CHIP_82C168:
-	case TULIP_CHIP_82C169:
-		sc->sc_busmode |= BUSMODE_PBL_16LW | BUSMODE_PNIC_MBO;
+	switch (sc->sc_maxburst) {
+	case 1:
+		sc->sc_busmode |= BUSMODE_PBL_1LW;
+		break;
+	case 2:
+		sc->sc_busmode |= BUSMODE_PBL_2LW;
+		break;
+	case 4:
+		sc->sc_busmode |= BUSMODE_PBL_4LW;
+		break;
+	case 8:
+		sc->sc_busmode |= BUSMODE_PBL_8LW;
+		break;
+	case 16:
+		sc->sc_busmode |= BUSMODE_PBL_16LW;
+		break;
+	case 32:
+		sc->sc_busmode |= BUSMODE_PBL_32LW;
 		break;
 	default:
 		sc->sc_busmode |= BUSMODE_PBL_DEFAULT;
@@ -1741,9 +1763,19 @@ tlp_init(sc)
 	/*
 	 * Can't use BUSMODE_BLE or BUSMODE_DBO; not all chips
 	 * support them, and even on ones that do, it doesn't
-	 * always work.
+	 * always work.  So we always access descriptors with
+	 * little endian via htole32/le32toh.
 	 */
 #endif
+	/*
+	 * Big-endian bus requires BUSMODE_BLE anyway.
+	 * Also, BUSMODE_DBO is needed because we assume
+	 * descriptors are little endian.
+	 */
+	if (sc->sc_flags & TULIPF_BLE)
+		sc->sc_busmode |= BUSMODE_BLE;
+	if (sc->sc_flags & TULIPF_DBO)
+		sc->sc_busmode |= BUSMODE_DBO;
 
 	/*
 	 * Some chips have a broken bus interface.
