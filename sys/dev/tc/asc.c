@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.6 1994/10/26 21:08:50 cgd Exp $	*/
+/*	$NetBSD: asc.c,v 1.7 1994/11/15 18:59:40 dean Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1143,7 +1143,9 @@ asc_get_status(asc, status, ss, ir)
 	 */
 	if ((data = regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 2) {
 		printf("asc_get_status: fifo cnt %d\n", data); /* XXX */
+#ifdef DEBUG
 		asc_DumpLog("get_status"); /* XXX */
+#endif
 		if (data < 2) {
 			asc->regs->asc_cmd = ASC_CMD_MSG_ACPT;
 			readback(asc->regs->asc_cmd);
