@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.56 2002/07/21 20:29:48 rafal Exp $
+.\"	$NetBSD: sysinst,v 1.57 2002/07/22 14:38:11 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,6 +40,40 @@
 .de pcmcia)
 .	El
 ..
+.
+.
+.\" Define strings for partition references:
+.\"	\*[part_raw]	`raw' partition (usually `c' or `d')
+.\"	\*[part_free]	first "free" partition (usually part_raw+1)
+.\"	\*[part_usr]	default "/usr" partition (usually part_free)
+.\"	\*[part_max]	last partition (usually `h' or `p')
+.
+.ds part_raw c
+.ds part_free d
+.ds part_usr d
+.ds part_max h
+.if \n[arc]:\n[bebox]:\n[cobalt]:\n[hpcarm]:\n[hpcmips]:\n[i386]:\
+\n[sbmips]:\n[sh3]:\n[x86_64] \{\
+.  ds part_raw d
+.  ds part_free e
+.  ds part_usr e
+.\}
+.if \n[sgimips] \{\
+.  ds part_free e
+.  ds part_usr e
+.\}
+.if \n[amiga]:\n[amigappc]:\n[arc]:\n[atari]:\n[cobalt]:\n[evbmips]:\
+\n[hpcmips]:\n[i386]:\n[macppc]:\n[ofppc]:\n[playstation2]:\n[sandpoint]:\
+\n[sbmips]:\n[sgimips]:\n[walnut]:\n[x86_64] \{\
+.  ds part_max p
+.\}
+.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[pc532]:\n[sandpoint]:\
+\n[shark]:\n[walnut] \{\
+.  ds part_usr e
+.\}
+.if \n[macppc]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[sparc64] \{\
+.  ds part_usr g
+.\}
 .
 .
 .Ss2 Running the sysinst installation program
@@ -139,7 +173,7 @@ This problem will impact some, but not all, users of
 If this problem is affecting you, watch the
 .Dq Bq Tn PCMCIA
 notes that will appear in this document.
-.if r_i386 \{\
+.if \n[i386] \{\
 .Pp
 It can be difficult to distinguish an interrupt conflict from
 an I/O space conflict.
@@ -257,9 +291,9 @@ notes later in this document.
 We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
-.\} \" r_i386
+.\} \" \n[i386]
 .\} \" !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut]:\n[x68k]
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
 .Em Possible hardware-specific issues
@@ -300,7 +334,7 @@ release.
 Software emulation of floating point operations is
 not a problem on the 68020 and 68030 processors.
 .bullet)
-.\}
+.\} \" \n[mac68k]
 .It
 .To 2 General
 .Em General
@@ -341,17 +375,17 @@ What you need.
 The distribution sets (in this example, they are on CD).
 .if !\n[pmax]:\n[sgimips] \{\
 .It
-.ie r_alpha Two floppy disks.
+.ie \n[alpha] Two floppy disks.
 .el \{\
-.ie r_i386 Two 1.44 MB 3.5" floppy disks.
+.ie \n[i386] Two 1.44 MB 3.5" floppy disks.
 .el \{\
-.ie r_mac68k The Mac OS Booter application and an Installation Kernel
+.ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
 .ie \n[acorn26]:\n[cats]:\n[macppc]:\n[sparc]:\n[walnut] \{\
 Some form of bootable media, described above.
 .\}
 .el \{\
-.ie r_atari \{\
+.ie \n[atari] \{\
 A floppy disk containing a suitable boot.fs and a floppy with the
 sysinst.fs image.
 See the "prepare" section about obtaining those.
@@ -359,11 +393,11 @@ See the "prepare" section about obtaining those.
 .el One 1.44 MB 3.5" floppy.
 .\}\}\}\}
 .\} \" !\n[pmax]:\n[sgimips]
-.if r_i386 \{\
+.if \n[i386] \{\
 .It
 A PC with a 386 or newer processor.
-.\} \" r_i386
-.if r_mac68k \{\
+.\} \" \n[i386]
+.if \n[mac68k] \{\
 .It
 A Macintosh with a 68020 and MMU, 68030 or 68RC040 processor.
 An FPU is not required but will be used if present
@@ -374,35 +408,35 @@ A CD-ROM drive
 .ie \n[acorn26]:\n[atari]:\n[alpha]:\n[cats]:\n[i386]:\n[macppc]:\n[walnut] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
-.if r_acorn26 8 MB
-.if r_alpha 32 MB
-.if r_atari 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
-.if r_cats 8 MB
-.if r_i386 4 MB
-.if r_mac68k 8 MB
-.if r_macppc 8 MB
-.if r_mvme68k 4 MB
-.if r_news68k 4 MB
-.if r_newsmips 16 MB
-.if r_pmax 8 MB
-.if r_sparc 4 MB
-.if r_sgimips 16 MB
+.if \n[acorn26] 8 MB
+.if \n[alpha] 32 MB
+.if \n[atari] 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
+.if \n[cats] 8 MB
+.if \n[i386] 4 MB
+.if \n[mac68k] 8 MB
+.if \n[macppc] 8 MB
+.if \n[mvme68k] 4 MB
+.if \n[news68k] 4 MB
+.if \n[newsmips] 16 MB
+.if \n[pmax] 8 MB
+.if \n[sparc] 4 MB
+.if \n[sgimips] 16 MB
 of memory installed.
 .It
 The harddisk should have at least
-.if r_acorn26 200
-.if r_alpha 200
-.if r_atari 120
-.if r_cats 200
-.if r_i386 70
-.if r_mac68k 120
-.if r_macppc 200
-.if r_mvme68k 100
-.if r_news68k 100
-.if r_newsmips 200
-.if r_pmax 200
-.if r_sparc 200
-.if r_sgimips 200
+.if \n[acorn26] 200
+.if \n[alpha] 200
+.if \n[atari] 120
+.if \n[cats] 200
+.if \n[i386] 70
+.if \n[mac68k] 120
+.if \n[macppc] 200
+.if \n[mvme68k] 100
+.if \n[news68k] 100
+.if \n[newsmips] 200
+.if \n[pmax] 200
+.if \n[sparc] 200
+.if \n[sgimips] 200
 +
 .Em n
 megabytes of
@@ -432,15 +466,15 @@ command prompt:
 .Dl Ic "rawrite"
 .Pp
 When asked for a source filename, answer
-.if r_i386 \{\
+.if \n[i386] \{\
 .Dl Pa \&..\efloppy\eboot1.fs
 for the first diskette and
 .Dl Pa \&..\efloppy\eboot2.fs
 for the second diskette.
 .\}
-.if r_alpha .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
-.if r_news68k .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
-.if r_newsmips .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.if \n[alpha] .Dl Em \&(...alpha installation root) Ns Pa \efloppy\edisk1of2
+.if \n[news68k] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
+.if \n[newsmips] .Dl Pa \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 .Pp
 When asked for a destination drive answer
 .Sq Ic a .
@@ -454,7 +488,7 @@ system, you would type something like:
 .Dl # Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a"
 .Pp
 .\} \" \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips]
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .It
 The NetBSD Boot Tools folder.
 .(bullet
@@ -490,7 +524,7 @@ You should be at the
 main menu.
 .\}
 .el \{\
-.ie r_mac68k \{\
+.ie \n[mac68k] \{\
 Double-click on the Booter application icon to start executing it.
 From the
 .Ic Options
@@ -542,23 +576,23 @@ The main menu will be displayed.
 .\}
 .el \{\
 Insert the first boot floppy you just created.
-.ie r_i386 Restart
+.ie \n[i386] Restart
 .el Boot
 the computer.
-.if r_alpha \{\
+.if \n[alpha] \{\
 Type
 .Pp
 .Dl \&\*>\*>\*> Ic "B DVA0"
 .Pp
 .\}
-.if r_i386 When prompted, insert the second boot floppy.
-.if r_news68k \{\
+.if \n[i386] When prompted, insert the second boot floppy.
+.if \n[news68k] \{\
 Type
 .Pp
 .Dl \&NEWS\*> Ic "bo fh"
 .Pp
 .\}
-.if r_newsmips \{\
+.if \n[newsmips] \{\
 Type
 .Pp
 .Dl \&\*> Ic "bo fd" (in case of NWS-5000)
@@ -573,6 +607,7 @@ The main menu will be displayed.
 .(disp
 .ne 10
 . cs \n(.f 22
+.\" )   - appease vi showmatch
   .***********************************************.
   * NetBSD-1.6 Install System                     *
   *                                               *
@@ -584,6 +619,7 @@ The main menu will be displayed.
   * x: Exit Install System                        *
   .***********************************************.
 . cs \n(.f
+.\" )   - appease vi showmatch
 .disp)
 .It
 If you wish, you can configure some network settings
@@ -602,13 +638,13 @@ You will be guided through some steps regarding the
 setup of your disk, and the selection of distributed components
 to install.
 When in doubt, refer to the rest of this document for details.
-.if r_atari \{\
+.if \n[atari] \{\
 WARNING: If you want your disk to retain an AHDI compatible partitioning,
 make sure to use the 'existing' disk layout.
 .\}
 .It
 After your disk has been prepared, choose
-.ie r_sgimips \{\
+.ie \n[sgimips] \{\
 .Me Unmounted file system
 as the medium.
 The CD-ROM device is usually cd0 and the partition
@@ -631,15 +667,15 @@ the main menu and select
 after you have removed the bootfloppy from the drive.
 .\}
 .It
-.if r_macppc \{\
+.if \n[macppc] \{\
 Once the system reaches the Open Firmware prompt, you will need to type
 the correct command to boot from your hard drive.
 .\}
-.if r_sparc \{\
+.if \n[sparc] \{\
 Once the system reaches the PROM prompt, you will need to type the correct
 command to boot from your hard drive.
 .\}
-.if r_sgimips \{\
+.if \n[sgimips] \{\
 Once the system reaches the PROM prompt, you will need to modify your
 PROM environment settings for SystemPartition, OSLoadPartition, OSLoader
 and OSLoadFilename and then boot the hard drive.
@@ -798,7 +834,7 @@ the second, etc.
 .
 .
 .Pp
-.ie r_atari \{\
+.ie \n[atari] \{\
 Boot the system as described in the "Booting the installer" section above.
 .\}
 .el \{\
@@ -811,7 +847,7 @@ hardware problem.
 Try writing the install floppy image to
 a different disk, and using that.
 .\}
-.if r_i386 \{\
+.if \n[i386] \{\
 .Pp
 If that doesn't work, try booting after disabling your CPU's
 internal and external caches (if any).
@@ -824,7 +860,7 @@ configuration as you can.
 .\}
 .Pp
 It will take a while to load the kernel
-.ie !r_mac68k \{\
+.ie !\n[mac68k] \{\
 from the floppy,
 .\}
 .el ,
@@ -867,7 +903,7 @@ the second, etc.
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
 .\}
-.if r_i386 \{\
+.if \n[i386] \{\
 Earlier version of
 the
 .Nx
@@ -908,7 +944,7 @@ parameters later.
 If you are not using the Domain Name System (DNS),
 you can give an empty response in reply to answers relating to
 this.
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .It
 .To 2 "Preparing a disk for Mac OS and NetBSD"
 .Em "Preparing a disk for"
@@ -936,7 +972,7 @@ for a
 .Nx
 installation.
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 .It
 .To 2 "Preparing a disk which will be used for Mac OS and NetBSD"
 .Em "Preparing a disk which will be used for"
@@ -1079,21 +1115,21 @@ Clean up and return to
 .Em Installation drive selection and parameters
 .Pp
 To start the
-.if r_macppc \{\
+.if \n[macppc] \{\
 installation onto a dedicated
 .Nx
 drive,
 .\}
-.if !r_macppc installation,
+.if !\n[macppc] installation,
 select
 .Me Install NetBSD to hard disk
 from the main menu.
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 To start the installation, select the menu option in install
 .Nx
 from the main menu.
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 To start the installation onto a drive which will
 also be used with
 .Tn Mac OS ,
@@ -1110,7 +1146,7 @@ will report a list of disks it finds
 and ask you for your selection.
 Depending on how many disks are found, you may get a different message.
 You should see disk names like
-.ie r_pmax \{\
+.ie \n[pmax] \{\
 .Li rz0
 or
 .Li rz1
@@ -1123,7 +1159,7 @@ or
 .Li sd0
 or
 .Li sd1 .
-.if r_i386 \{\
+.if \n[i386] \{\
 .Pp
 .Ic sysinst
 next tries to figure out the real and BIOS geometry
@@ -1131,7 +1167,7 @@ of your disk.
 It will present you with the values it found,
 if any, and will give you a chance to change them.
 .\}
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .Pp
 .Ic sysinst
 next tries to figure out how the selected volume has been partitioned.
@@ -1144,7 +1180,7 @@ You will have the option of creating HFS partitions that may be
 subsequentially initialized and used under Mac OS though.
 .\}
 .Pp
-.if r_i386 \{\
+.if \n[i386] \{\
 Next, depending on whether you are using a
 .Li wd Ns Ar X
 or
@@ -1171,7 +1207,7 @@ that it does, reply affirmatively.
 Otherwise, the install program will automatically reserve space for
 bad144 tables.
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 If
 .Ic sysinst
 reports
@@ -1184,7 +1220,7 @@ the FAQ entry
 .It
 .To 2 "Partitioning the disk"
 .Em Partitioning the disk
-.if r_atari \{\
+.if \n[atari] \{\
 .(bullet
 Preparing a disk which will be used for
 .Tn GEM
@@ -1226,8 +1262,8 @@ the first SWP (or NBS) partition
 the rest of the partitions in AHDI order
 .tag)
 .bullet)
-.\} \" r_atari
-.if r_macppc \{\
+.\} \" \n[atari]
+.if \n[macppc] \{\
 .Pp
 You can skip a few steps, down to
 .Em Sq "Getting the distribution sets" ,
@@ -1248,7 +1284,7 @@ If you decide to use the entire disk for
 it will be checked if there are already other
 systems present on the disk, and you will be asked to confirm
 whether you want to overwrite these.
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .It
 Definition of the NetBSD disklabel.
 .Pp
@@ -1410,7 +1446,7 @@ However, it is best to be very specific about mount points and partition
 type and use.
 .\}
 .bullet)
-.if r_i386 \{\
+.if \n[i386] \{\
 .Pp
 If you want to use the entire disk for
 .Nx ,
@@ -1456,14 +1492,16 @@ disklabel.
 .Pp
 .\}
 .\} \" !\n[atari]:\n[macppc]:\n[sgimips]
-.if !r_mac68k \{\
+.
+.if !\n[mac68k] \{\
+.It
 .Em Editing the NetBSD disklabel
 .Pp
 The partition table of the
 .Nx
 part of a disk is called a
 .Em disklabel .
-.if r_macppc \{\
+.if \n[macppc] \{\
 In actuality,
 .Nx*M
 uses an Apple Partition Map.
@@ -1475,7 +1513,7 @@ a disk that can be used with
 .Tn Mac OS .
 .Pp
 .\}
-.if r_sparc \{\
+.if \n[sparc] \{\
 .Nx
 disklabels on \*M are compatible with the boot ROMs, and with
 .Tn SunOS
@@ -1495,7 +1533,7 @@ With the
 option you can specify everything yourself.
 The last option uses the partition info already present on the disk.
 .Pp
-.if r_atari \{\
+.if \n[atari] \{\
 If you want to use
 .Nx
 on an AHDI partitioned disk, you will have to use:
@@ -1514,9 +1552,7 @@ uses for normal file storage is called
 A swap partition has a special type called
 .Sy swap .
 .
-.
-.ie r_i386 \{\
-.
+.if \n[i386] \{\
 You can also specify a partition as type
 .Sy MSDOS .
 This is useful if you share the disk with
@@ -1533,64 +1569,41 @@ part of the disk to specify the partition of type
 the disklabel to add this once you have installed
 .Nx ).
 .Pp
-.ds usrpart e
 .\}
-.el \{\
-.ie r_macppc \{\
-.ds usrpart g
-.\}
-.el \{\
-.ie r_sgimips \{\
-.ds usrpart e
-.\}
-.el \{\
-.ds usrpart d
-.\}\}\}
-.\} \" !r_mac68k
+.
 Some partitions in the disklabel have a fixed purpose.
 .(tag 6n -offset indent
 .It Li a
-Root partition.
-.Pq Pa / ,
+Root partition
+.Pq Pa /
 .It Li b
 Swap partition.
 .It Li c
-.if r_i386 \{\
 The
 .Nx
 portion of the disk.
-.It Li d
+.if !'c'\*[part_raw]' \{\
+.It Li \*[part_raw]
+The entire disk.
 .\}
-.ie r_sgimips \{\
-The
-.Nx
-portion of the disk.
+.if \n[sgimips] \{\
 .It Li d
 The SGI volume header (boot partition)
 .\}
-.el \{\
-.ie r_macppc \{\
-.It Li d-h
-.\}
-.el \{\
-.ie r_atari \{\
-.It Li d-p
-.\}
-.el \{\
-.It Li \*[usrpart]-h
-.\}\}\}
+.It Li \*[part_free]-\*[part_max]
 Available for other use.
 Traditionally,
-.Li \*[usrpart]
+.Li \*[part_usr]
 is the partition mounted on
 .Pa /usr ,
 but this is historical practice and not a fixed value.
 .tag)
+.\} \" !\n[mac68k]
 .
 .Pp
 You will then be asked to name your disk's disklabel.
 The default response is
-.Sy mydisk .
+.Dq Sy mydisk .
 For most purposes this will be OK.
 If you choose to name it something different, make sure the name
 is a single word and contains no special characters.
@@ -1602,7 +1615,7 @@ You don't need to remember this name.
 .Em Preparing your hard disk
 .Pp
 .Em "You are now at the point of no return".
-.ie r_atari \{\
+.ie \n[atari] \{\
 Apart from the changes you made with
 .Ic ahdilabel
 nothing has been modified on your disk yet.
@@ -1635,7 +1648,7 @@ There should be no errors in this section of the installation.
 If there are, restart from the beginning of the installation process.
 Otherwise, you can continue the installation program
 after pressing the return key.
-.if r_i386 \{\
+.if \n[i386] \{\
 .Pp
 .(Note
 In previous versions of
@@ -1651,7 +1664,7 @@ be unloaded onto the drive.
 So, you can not boot from your hard drive yet at this point.
 .Note)
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 .Pp
 .(Note
 The bootstrapping code installed in this step will
@@ -1665,7 +1678,7 @@ on an HFS or HFS+ partition.
 .It
 .To 2 "Getting the distribution sets"
 .Em Getting the distribution sets
-.if r_i386 \{\
+.if \n[i386] \{\
 .(pcmcia
 .
 Load a kernel tar file (i.e. the
@@ -1780,7 +1793,7 @@ instead of a hostname for the NFS server.
 .To 2 "Installation from CD-ROM"
 .Em Installation from CD-ROM
 .Pp
-.ie r_sgimips \{\
+.ie \n[sgimips] \{\
 The bootable CD-ROM distribution for
 .Nx*M
 is not ISO-9660 formatted.
@@ -1799,7 +1812,7 @@ will then check if the files are indeed available
 in the specified location, and proceed to the actual
 extraction of the sets.
 .\}
-.if r_i386 \{\
+.if \n[i386] \{\
 .It
 .To 2 "Installation from a floppy set"
 .Em Installation from a floppy set
@@ -1814,7 +1827,7 @@ You will be asked for a directory where the sets should be reassembled.
 Then you will be prompted to insert the floppies containing the split sets.
 This process will continue until all the sets have been loaded from floppy.
 .\}
-.if r_mac68k \{\
+.if \n[mac68k] \{\
 .It
 .To 2 "Installation from Mac OS file systems"
 .Em Installation from Mac OS file systems
@@ -1833,20 +1846,20 @@ therefore can not access the file sets if they are on these filesystems.
 In order to install from a local file system, you will
 need to specify the device that the file system resides
 on
-.ie r_pmax .Pq for example Li rz1e
+.ie \n[pmax] .Pq for example Li rz1e
 .el .Pq for example Li sd1e
 the type of the file system,
 and the directory on the specified file system where the sets are located.
 .Ic sysinst
 will then check if it
 can indeed access the sets at that location.
-.if r_sgimips \{\
+.if \n[sgimips] \{\
 .Pp
 If this is a CD-ROM installation, the device used will be the name for your
 CD-ROM player with partition letter 'a'
 .Pq usually cd0a .
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 Remember,
 .Nx*M
 doesn't grok HFS or HFS+ partitions
@@ -1885,7 +1898,7 @@ extracted; the name of each file that is extracted will be shown.
 This can slow down the installation process considerably, especially
 on machines with slow graphics consoles or serial consoles.
 .Pp
-.ie r_macppc \{\
+.ie \n[macppc] \{\
 If you are installing using the
 .Me "Re-install sets or install additional sets"
 option, then you will need to create the device nodes in
@@ -1902,7 +1915,7 @@ to make sure your clock has the right offset from UTC.
 Finally you will be asked to select a password encryption algorithm
 and can than set a password for the "root" account, to prevent
 the machine coming up without access restrictions.
-.if r_macppc \{\
+.if \n[macppc] \{\
 .It
 .To 2 "Making the device nodes"
 .Em Making the device nodes
@@ -1940,7 +1953,7 @@ Now you need to mount your destination root partition:
 .Pp
 Congratulations, you have successfully installed
 .Nx \*V .
-.if r_cats \{\
+.if \n[cats] \{\
 .Pp
 To finalize the installation of
 .Nx*M
@@ -1963,9 +1976,9 @@ should be issued as the firmware prompt.
 .Dl boot> Ic "set boot wd0:/netbsd.aout"
 .Pp
 .\}
-.if !r_macppc \{\
+.if !\n[macppc] \{\
 You can now reboot the machine, and boot
 .Nx
 from harddisk.
-.\} \" !r_macppc
+.\} \" !\n[macppc]
 .enum)
