@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_m68k.c,v 1.4 1995/04/02 20:45:26 chopps Exp $";
+static char *rcsid = "$Id: kvm_m68k.c,v 1.5 1995/07/01 19:26:03 briggs Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -98,11 +98,7 @@ _kvm_initvtop(kd)
 	kd->vmst = vm;
 
 	nlist[0].n_name = "_lowram";
-#if defined(mac68k)
-	nlist[1].n_name = "_cpu040";
-#else
 	nlist[1].n_name = "_mmutype";
-#endif
 	nlist[2].n_name = "_Sysseg";
 	nlist[3].n_name = 0;
 
@@ -154,9 +150,6 @@ _kvm_vatop(kd, sta, va, pa)
 		return (NBPG - offset);
 	}
 	lowram = vm->lowram;
-#if defined(mac68k)
-	{ int cpu040 = vm->mmutype;
-#else
 	if (vm->mmutype == -2) {
 		st_entry_t *sta2;
 
@@ -193,7 +186,6 @@ _kvm_vatop(kd, sta, va, pa)
 		sta2 = (st_entry_t *)(ste & SG4_ADDR2);
 		addr = (u_long)&sta2[(va & SG4_MASK3) >> SG4_SHIFT3];
 	} else {
-#endif
 		addr = (u_long)&sta[va >> SEGSHIFT];
 		/*
 		 * Can't use KREAD to read kernel segment table entries.
