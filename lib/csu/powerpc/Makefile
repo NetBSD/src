@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/22 16:03:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/24 21:20:17 thorpej Exp $
 
 CPPFLAGS+=	-DLIBC_SCCS -DPIC # -DDYNAMIC
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
@@ -23,13 +23,13 @@ gcrt0.o: crt0.c
 
 crtbegin.o: crtbegin.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtend.o: crtend.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
