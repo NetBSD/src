@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.15 1994/06/29 06:32:59 cgd Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.16 1994/12/28 06:30:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -429,7 +429,8 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 			kprintf(p, flags, tp, va_arg(ap, va_list));
 			break;
 		case 's':
-			p = va_arg(ap, char *);
+			if ((p = va_arg(ap, char *)) == NULL)
+				p = "(null)";
 			while (ch = *p++)
 				putchar(ch, flags, tp);
 			break;
