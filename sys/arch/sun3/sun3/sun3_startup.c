@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.32 1995/02/07 04:39:42 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.33 1995/02/11 21:08:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,6 +53,12 @@
 #include "vector.h"
 #include "interreg.h"
 
+/* This is defined in locore.s */
+extern char kernel_text[];
+
+/* These are defined by the linker */
+extern char etext[], edata[], end[];
+
 /*
  * Globals shared with the pmap code.
  * XXX - should reexamine this...
@@ -67,10 +73,16 @@ vm_offset_t hole_start, hole_size;
  */
 unsigned int *old_vector_table;
 
-static struct idprom identity_prom;
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
+
+/* XXX - Need real code to do this at startup. */
+#ifdef	FPCOPROC
+int fpu_type = 1;	/* XXX */
+#else
+int fpu_type = 0;	/* XXX */
+#endif
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
@@ -184,23 +196,6 @@ void sun3_mon_reboot(bootstring)
 	/*NOTREACHED*/
 }
 
-/*
- * will this actually work or will it have problems because of this supposed
- * wierd thing with (word or short?) aligned addresses
- *
- * needs checksumming support as well
- */
-
-int idprom_fetch(idp, version)
-	struct idprom *idp;
-	int version;
-{
-	control_copy_byte(IDPROM_BASE, (caddr_t) idp, sizeof(idp->idp_format));
-	if (idp->idp_format != version) return 1;
-	control_copy_byte(IDPROM_BASE, (caddr_t) idp, sizeof(struct idprom));
-	return 0;
-}
-
 void sun3_context_equiv()
 {
 	unsigned int i, sme;
@@ -209,9 +204,13 @@ void sun3_context_equiv()
 
 #ifdef	DIAGNOSTIC
 	/* Near the beginning of locore.s we set context zero. */
-	if (get_context() != 0) {
-		mon_panic("sun3_context_equiv: not in context zero?");
-	}
+	if (get_context() != 0)
+		mon_panic("sun3_context_equiv: not in context zero?\n");
+	/* Note: PROM setcxsegmap function needs sfc=dfs=FC_CONTROL */
+	if (getsfc() != FC_CONTROL)
+		mon_panic("sun3_context_equiv: sfc != FC_CONTROL?\n");
+	if (getdfc() != FC_CONTROL)
+		mon_panic("sun3_context_equiv: dfc != FC_CONTROL?\n");
 #endif
 
 	for (x = 1; x < NCONTEXT; x++) {
@@ -274,7 +273,6 @@ void sun3_vm_init()
 {
 	vm_offset_t va, eva, sva, pte, temp_seg;
 	vm_offset_t u_area_va;
-	extern char start[], etext[], end[];
 	unsigned int sme;
 
 	/*
@@ -408,17 +406,11 @@ void sun3_vm_init()
 	}
 
 	/*
-	 * XXX - Record pmegs in use by DVMA segment.
-	 * I would have preferred to just nuke these, but that
-	 * made the kernel die before we even get to consinit.
-	 * Instead, there is a hack in pmap_enter_kernel (sigh)
-	 * XXX - Should figure out how to kill these...
+	 * Clear-out pmegs left in DVMA space by the PROM.
 	 */
 	va = sun3_trunc_seg(DVMA_SPACE_START);
 	while (va < DVMA_SPACE_END) {
-		sme = get_segmap(va);
-		if (sme != SEGINV)
-			sun3_reserve_pmeg(sme);
+		set_segmap(va, SEGINV);
 		va += NBSG;
 	}
 
@@ -492,7 +484,7 @@ void sun3_vm_init()
 	 */
 
 	/* text */
-	va = (vm_offset_t) start;
+	va = (vm_offset_t) kernel_text;
 	eva = sun3_trunc_page(etext);
 	while (va < eva) {
 		pte = get_pte(va);
@@ -528,31 +520,22 @@ void kstack_fall_off()
 	mon_printf("kstack: fell off\n");
 }
 
-void idprom_etheraddr(eaddrp)
-	u_char *eaddrp;
-{
-	eaddrp[0] = identity_prom.idp_etheraddr[0];
-	eaddrp[1] = identity_prom.idp_etheraddr[1];
-	eaddrp[2] = identity_prom.idp_etheraddr[2];
-	eaddrp[3] = identity_prom.idp_etheraddr[3];
-	eaddrp[4] = identity_prom.idp_etheraddr[4];
-	eaddrp[5] = identity_prom.idp_etheraddr[5];
-}
-
 void sun3_verify_hardware()
 {
-	unsigned char arch;
+	unsigned char machtype;
 	int cpu_match = 0;
 
 	/* XXX - Should just measure this instead... */
 	extern int cpuspeed;
-	
-	if (idprom_fetch(&identity_prom, IDPROM_VERSION))
-		mon_panic("idprom fetch failed\n");
-	arch = identity_prom.idp_machtype & CPU_ARCH_MASK;
-	if (!(arch & SUN3_ARCH))
+
+	if (idprom_init())
+		mon_panic("idprom_init failed\n");
+
+	machtype = identity_prom.idp_machtype;
+	if ((machtype & CPU_ARCH_MASK) != SUN3_ARCH)
 		mon_panic("not a sun3?\n");
-	cpu_machine_id = identity_prom.idp_machtype & SUN3_IMPL_MASK;
+
+	cpu_machine_id = machtype & SUN3_IMPL_MASK;
 	switch (cpu_machine_id) {
 
 	case SUN3_MACH_50 :
@@ -808,6 +791,18 @@ void internal_configure()
 	clock_init();
 }
 
+/* XXX - Move this into a real device driver. */
+void fpu_init()
+{
+	int enab_reg;
+
+	if (fpu_type) {
+		enab_reg = get_control_byte((char *) SYSTEM_ENAB);
+		enab_reg |= SYSTEM_ENAB_FPP;
+		set_control_byte((char *) SYSTEM_ENAB, enab_reg);
+	}
+}
+
 /*
  * This is called from locore.s just after the kernel is remapped
  * to its proper address, but before the call to main().
@@ -817,18 +812,16 @@ sun3_bootstrap()
 {
 	int i;
 	extern int cold;
-	
-	/*
-	 * would do bzero of bss here but our bzero only works <64k stuff
-	 * so we've bailed and done it in locore right before this routine :)
-	 */
-	
+
+	/* Clear BSS. */
+	bzero(edata, end - edata);
+
 	cold = 1;
-	
+
 	sun3_monitor_hooks();
-	
+
 	sun3_verify_hardware();
-	
+
 	sun3_vm_init();		/* handle kernel mapping problems, etc */
 
 	pmap_bootstrap();		/* bootstrap pmap module */
@@ -842,4 +835,7 @@ sun3_bootstrap()
 	 * it will not cause "spurrious level 7" complaints.
 	 */
 	initialize_vector_table();
+
+	/* XXX - Move this into a real device driver. */
+	fpu_init();
 }

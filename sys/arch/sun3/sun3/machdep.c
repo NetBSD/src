@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1995/02/07 04:39:41 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1995/02/11 21:08:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -98,6 +98,8 @@
 #include <setjmp.h>
 
 extern char *cpu_string;
+extern int fpu_type;
+
 int physmem;
 int cold;
 /*
@@ -461,18 +463,15 @@ setregs(p, entry, stack, retval)
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	if (fpu_type) {
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	}
 #endif
 #ifdef COMPAT_HPUX
 	if (p->p_flag & SHPUX) {
-
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
-#ifdef FPCOPROC
-		retval[1] = 1;		/* yes 68881 */
-#else
-		retval[1] = 0;		/* no 68881 */
-#endif
+		retval[1] = fpu_type;		/* 0: none, 1: 68881 */
 	}
 	/*
 	 * XXX This doesn't have much to do with setting registers but
@@ -728,8 +727,10 @@ sendsig(catcher, sig, mask, code)
 #endif
 	}
 #ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
+	if (fpu_type) {
+		kfp->sf_state.ss_flags |= SS_FPSTATE;
+		m68881_save(&kfp->sf_state.ss_fpstate);
+	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1995/01/24 06:01:55 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 1995/02/11 21:08:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,66 +65,46 @@ _kernel_text:
 	.globl tmpstk
 tmpstk:
 	.globl start
-	.globl _start
-start: _start:
-/*
- * First we need to set it up so we can access the sun MMU, and be otherwise
- * undisturbed.  Until otherwise noted, all code must be position independent
- * as the boot loader put us low in memory, but we are linked high.
- */
-	movw #PSL_HIGHIPL, sr		| no interrupts
-	moveq #FC_CONTROL, d0		| make movs get us to the control
-	movc d0, dfc			| space where the sun3 designers
-	movc d0, sfc			| put all the "useful" stuff
-	moveq #CONTEXT_0, d0
-	movsb d0, CONTEXT_REG		| now in context 0
+start:
+| First we need to set it up so we can access the sun MMU, and be otherwise
+| undisturbed.  Until otherwise noted, all code must be position independent
+| as the boot loader put us low in memory, but we are linked high.
+	movw	#PSL_HIGHIPL, sr	| no interrupts
+	moveq	#FC_CONTROL, d0		| make movs access "control"
+	movc	d0, sfc			| space where the sun3 designers
+	movc	d0, dfc			| put all the "useful" stuff
 
-/*
- * In order to "move" the kernel to high memory, we are going to copy the
- * first 4 Mb of pmegs such that we will be mapped at the linked address.
- * This is all done by playing with the segment map, and then propagating
- * it to the other contexts.
- * We will unscramble which pmegs we actually need later.
- *
- */
+| Set context zero and stay there until pmap_bootstrap.
+	moveq	#0, d0
+	movsb	d0, CONTEXT_REG
 
-percontext:					|loop among the contexts
-	clrl d1					
-	movl #(SEGMAP_BASE+KERNBASE), a0	| base index into seg map
+| In order to "move" the kernel to high memory, we are going to copy the
+| first 4 Mb of pmegs such that we will be mapped at the linked address.
+| This is all done by copying in the segment map (top-level MMU table).
+| We will unscramble which PMEGs we actually need later.
 
-perpmeg:
-	movsb d1, a0@				| establish mapping
-	addql #1, d1			
-	addl #NBSG, a0
-	cmpl #(0x400000 / NBSG), d1		| up to 4MB yet?
-	bne perpmeg
+	movl	#(SEGMAP_BASE+0), a0		| src
+	movl	#(SEGMAP_BASE+KERNBASE), a1	| dst
+	movl	#(0x400000/NBSG), d0		| count
 
-	addql #1, d0				| next context ....
-	cmpl #CONTEXT_NUM, d0
-	bne percontext
+L_per_pmeg:
+	movsb	a0@, d1			| copy segmap entry
+	movsb	d1, a1@
+	addl	#NBSG, a0		| increment pointers
+	addl	#NBSG, a1
+	subql	#1, d0			| decrement count
+	bgt	L_per_pmeg
 
-	clrl d0					
-	movsb d0, CONTEXT_REG			| back to context 0
-	
-	jmp mapped_right:l			| things are now mapped right:)
+| Kernel is now double mapped at zero and KERNBASE.
+| Force a long jump to the relocated code (high VA).
 
+	movl	#IC_CLEAR, d0		| Flush the I-cache
+	movc	d0, cacr
+	jmp L_high_code:l		| long jump
 
-
-mapped_right:
-
-	movl #_edata, a0
-	movl #_end, a1
-bsszero: clrl a0@
-	addql #4, a0
-	cmpl a0, a1
-	bne bsszero
-
-fpu_setup:
-	movsb SYSTEM_ENAB, d0			| read enable register
-	orb #SYSTEM_ENAB_FPP, d0		| set fpu bit
-	movsb d0, SYSTEM_ENAB
-
-final_before_main:
+L_high_code:
+| We are now running in the correctly relocated kernel, so
+| we are no longer restricted to position-independent code.
 
 	lea tmpstk, sp			| switch to tmpstack
 	jsr _sun3_bootstrap		| init everything but calling main()
@@ -136,13 +116,15 @@ final_before_main:
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
-#ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
-	movl	a1,sp@-
-	jbsr	_m68881_restore		| restore it (does not kill a1)
-	addql	#4,sp
-#endif
-/* Interrupts remain disabled until configure is nearly done. */
+| Will do fpu initialization during autoconfig (see fpu.c)
+
+/* Interrupts remain disabled until after autoconfig is done. */
+
+	moveq	#FC_USERD, d0		| make movs access "user data"
+	movc	d0, sfc			| space for copyin/copyout
+	movc	d0, dfc
+
 /*
  * Final preparation for calling main:
  *

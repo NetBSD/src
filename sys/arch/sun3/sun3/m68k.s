@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.s,v 1.14 1994/11/21 21:38:45 gwr Exp $	*/
+/*	$NetBSD: m68k.s,v 1.15 1995/02/11 21:08:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -75,84 +75,55 @@ ENTRY(ICIA)
 ENTRY(DCIU)
 	rts
 
-/* void control_copy_byte(caddr_t from, caddr_t to, int size)*/
-
-ENTRY(control_copy_byte)
-	movl sp@(4), a0			|a0 = from
-	movl sp@(8), a1			|a1 = to 
-	movl sp@(12), d1		|d1 = size	
-	movl d2, sp@-			| save reg so we can use it for temp
-	movc sfc, d0			| save sfc
-	movl #FC_CONTROL, d2
-	movc d2, sfc
-	subqw #1, d1
-
-loop:   movsb a0@+, d2
-	movb  d2, a1@+
-	dbra d1, loop
-
-	movc d0, sfc
-	movl sp@+, d2
-	rts
-
 /*	
- * unsigned char get_control_byte (char *)
+ * unsigned char get_control_byte (char *addr)
  */	
-
 ENTRY(get_control_byte)
-	movl sp@(4), a0
-	movc sfc, d1
-	moveq #FC_CONTROL, d0
+	movc sfc, d1			| save sfc
+	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
 	movec d0, sfc
-	moveq #0, d0
+	movl sp@(4), a0			| src addr
+	moveq #0, d0			| get byte
 	movsb a0@, d0
-	movc d1, sfc
+	movc d1, sfc			| restore sfc
 	rts
-	
-/*
- * unsigned int get_control_word (char *)
- */	
 
+/*
+ * unsigned int get_control_word (char *addr)
+ */	
 ENTRY(get_control_word)
-	movl sp@(4), a0
-	movc sfc, d1
-	moveq #FC_CONTROL, d0
+	movc sfc, d1			| save sfc
+	moveq #FC_CONTROL, d0		| sfc = FC_CONTROL
 	movec d0, sfc
-	movsl a0@, d0
-	movc d1, sfc
+	movl sp@(4), a0			| src addr
+	movsl a0@, d0			| get long
+	movc d1, sfc			| restore sfc
 	rts
 
 /*	
- * void set_control_byte (char *, unsigned char)
+ * void set_control_byte (char *addr, int value)
  */
-
 ENTRY(set_control_byte)
-	movl sp@(4), a0
-	movl sp@(8), d0
-	movc dfc, d1
-	movl d2, sp@-
-	moveq #FC_CONTROL, d2
-	movc d2, dfc	
-	movsb d0, a0@
-	movc d1, dfc
-	movl sp@+, d2
+	movc dfc, d1			| save dfc
+	moveq #FC_CONTROL, d0		| dfc = FC_CONTROL
+	movc d0, dfc
+	movl sp@(4), a0			| addr
+	movl sp@(8), d0			| value
+	movsb d0, a0@			| set byte
+	movc d1, dfc			| restore dfc
 	rts
 
 /*
- * void set_control_word (char *, unsigned int)
+ * void set_control_word (char *addr, int value)
  */
-
 ENTRY(set_control_word)
-	movl sp@(4), a0
-	movl sp@(8), d0
-	movc dfc, d1
-	movl d2, sp@-
-	moveq #FC_CONTROL, d2
-	movc d2, dfc	
-	movsl d0, a0@
-	movc d1, dfc
-	movc dfc, d1
-	movl sp@+, d2
+	movc dfc, d1			| save dfc
+	moveq #FC_CONTROL, d0		| dfc = FC_CONTROL
+	movc d0, dfc
+	movl sp@(4), a0			| addr
+	movl sp@(8), d0			| value
+	movsl d0, a0@			| set long
+	movc d1, dfc			| restore dfc
 	rts
 
 /*
@@ -163,18 +134,21 @@ ENTRY(set_control_word)
  *
  * [I don't think the ENTRY() macro will do the right thing with this -- glass]
  */
-	.globl	_getsp; .align 2
+	.globl	_getsp
+	.align 2
 _getsp:
 	movl	sp,d0			| get current SP
 	addql	#4,d0			| compensate for return address
 	rts
 
-	.globl	_getsfc, _getdfc
-.align 2
+	.globl	_getsfc
+	.align 2
 _getsfc:
 	movc	sfc,d0
 	rts
-.align 2
+
+	.globl	_getdfc
+	.align 2
 _getdfc:
 	movc	dfc,d0
 	rts
