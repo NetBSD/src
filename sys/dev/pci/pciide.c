@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.88 2000/10/04 09:34:09 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.89 2000/11/05 21:14:59 matt Exp $	*/
 
 
 /*
@@ -679,6 +679,7 @@ pciide_mapreg_dma(sc, pa)
 	struct pci_attach_args *pa;
 {
 	pcireg_t maptype;
+	bus_addr_t addr;
 
 	/*
 	 * Map DMA registers
@@ -700,6 +701,20 @@ pciide_mapreg_dma(sc, pa)
 
 	switch (maptype) {
 	case PCI_MAPREG_TYPE_IO:
+		sc->sc_dma_ok = (pci_mapreg_info(pa->pa_pc, pa->pa_tag,
+		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO,
+		    &addr, NULL, NULL) == 0);
+		if (sc->sc_dma_ok == 0) {
+			printf(", but unused (couldn't query registers)");
+			break;
+		}
+		if (addr >= 0x10000) {
+			sc->sc_dma_ok = 0;
+			printf(", but unused (registers at unsafe address %#lx)", addr);
+			break;
+		}
+		/* FALLTHROUGH */
+	
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
