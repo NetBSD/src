@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.16 2004/06/23 14:40:13 briggs Exp $	*/
+/*	$NetBSD: satalink.c,v 1.17 2004/07/19 17:04:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -280,6 +280,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_3512,
 	  0,
 	  "Silicon Image SATALink 3512",
+	  sii3112_chip_map,
+	},
+	{ PCI_PRODUCT_CMDTECH_AAR_1210SA,
+	  0,
+	  "Adaptec AAR-1210SA serial ATA RAID controller",
 	  sii3112_chip_map,
 	},
 	{ PCI_PRODUCT_CMDTECH_3114,
