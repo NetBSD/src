@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.11 1996/10/10 23:56:22 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.12 1996/10/11 21:12:53 mhitch Exp $	*/
 
 /*
  * based on:
@@ -424,14 +424,14 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-msselect(dev, rw, p)
+mspoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct ms_softc *ms;
 
 	ms = (struct ms_softc *)getsoftc(ms_cd, minor(dev));
 
-	return(ev_select(&ms->ms_events, rw, p));
+	return(ev_poll(&ms->ms_events, events, p));
 }
