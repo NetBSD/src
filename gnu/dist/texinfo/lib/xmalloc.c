@@ -1,3 +1,5 @@
+/*	$NetBSD: xmalloc.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
+
 /* xmalloc.c -- safe versions of malloc and realloc */
 
 /* This file is part of GNU Info, a program for reading online documentation

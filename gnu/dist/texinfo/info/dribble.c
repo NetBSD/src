@@ -1,3 +1,5 @@
+/*	$NetBSD: dribble.c,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
+
 /* dribble.c -- dribble files for Info.
 
    Copyright (C) 1993, 98 Free Software Foundation, Inc.
