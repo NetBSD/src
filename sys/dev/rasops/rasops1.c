@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.15 2001/11/15 09:48:14 lukem Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.16 2005/02/04 02:10:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.15 2001/11/15 09:48:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.16 2005/02/04 02:10:47 perry Exp $");
 
 #include "opt_rasops.h"
 
@@ -51,13 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.15 2001/11/15 09:48:14 lukem Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
-static void	rasops1_copycols __P((void *, int, int, int, int));
-static void	rasops1_erasecols __P((void *, int, int, int, long));
-static void	rasops1_do_cursor __P((struct rasops_info *));
-static void	rasops1_putchar __P((void *, int, int col, u_int, long));
+static void	rasops1_copycols(void *, int, int, int, int);
+static void	rasops1_erasecols(void *, int, int, int, long);
+static void	rasops1_do_cursor(struct rasops_info *);
+static void	rasops1_putchar(void *, int, int col, u_int, long);
 #ifndef RASOPS_SMALL
-static void	rasops1_putchar8 __P((void *, int, int col, u_int, long));
-static void	rasops1_putchar16 __P((void *, int, int col, u_int, long));
+static void	rasops1_putchar8(void *, int, int col, u_int, long);
+static void	rasops1_putchar16(void *, int, int col, u_int, long);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.12 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.13 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,9 +54,9 @@ struct uha_softc {
 
 	int sc_dmaflags;	/* bus-specific DMA map creation flags */
 
-	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
-	int (*poll) __P((struct uha_softc *, struct scsipi_xfer *, int));
-	void (*init) __P((struct uha_softc *));
+	void (*start_mbox)(struct uha_softc *, struct uha_mscp *);
+	int (*poll)(struct uha_softc *, struct scsipi_xfer *, int);
+	void (*init)(struct uha_softc *);
 
 	bus_dmamap_t sc_dmamap_mscp;	/* maps the mscps */
 	struct uha_mscp *sc_mscps;	/* all our mscps */
@@ -79,7 +79,7 @@ struct uha_probe_data {
 	int sc_scsi_dev;
 };
 
-void	uha_attach __P((struct uha_softc *, struct uha_probe_data *));
-void	uha_timeout __P((void *arg));
-struct	uha_mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
-void	uha_done __P((struct uha_softc *, struct uha_mscp *));
+void	uha_attach(struct uha_softc *, struct uha_probe_data *);
+void	uha_timeout(void *arg);
+struct	uha_mscp *uha_mscp_phys_kv(struct uha_softc *, u_long);
+void	uha_done(struct uha_softc *, struct uha_mscp *);

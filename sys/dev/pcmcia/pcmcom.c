@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.20 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.21 2005/02/04 02:10:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.20 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.21 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,11 +95,11 @@ struct pcmcom_attach_args {
 	int pca_slave;				/* slave # */
 };
 
-int	pcmcom_match __P((struct device *, struct cfdata *, void *));
-int	pcmcom_validate_config __P((struct pcmcia_config_entry *));
-void	pcmcom_attach __P((struct device *, struct device *, void *));
-int	pcmcom_detach __P((struct device *, int));
-int	pcmcom_activate __P((struct device *, enum devact));
+int	pcmcom_match(struct device *, struct cfdata *, void *);
+int	pcmcom_validate_config(struct pcmcia_config_entry *);
+void	pcmcom_attach(struct device *, struct device *, void *);
+int	pcmcom_detach(struct device *, int);
+int	pcmcom_activate(struct device *, enum devact);
 
 CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
     pcmcom_match, pcmcom_attach, pcmcom_detach, pcmcom_activate);
@@ -111,14 +111,14 @@ const struct pcmcia_product pcmcom_products[] = {
 const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
-int	pcmcom_print __P((void *, const char *));
-int	pcmcom_submatch __P((struct device *, struct cfdata *,
-			     const locdesc_t *, void *));
+int	pcmcom_print(void *, const char *);
+int	pcmcom_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 
-int	pcmcom_enable __P((struct pcmcom_softc *));
-void	pcmcom_disable __P((struct pcmcom_softc *));
+int	pcmcom_enable(struct pcmcom_softc *);
+void	pcmcom_disable(struct pcmcom_softc *);
 
-int	pcmcom_intr __P((void *));
+int	pcmcom_intr(void *);
 
 int
 pcmcom_match(parent, cf, aux)
@@ -351,15 +351,15 @@ pcmcom_disable(sc)
 /****** Here begins the com attachment code. ******/
 
 #if NCOM_PCMCOM > 0
-int	com_pcmcom_match __P((struct device *, struct cfdata *, void *));
-void	com_pcmcom_attach __P((struct device *, struct device *, void *));
+int	com_pcmcom_match(struct device *, struct cfdata *, void *);
+void	com_pcmcom_attach(struct device *, struct device *, void *);
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(com_pcmcom, sizeof(struct com_softc),
     com_pcmcom_match, com_pcmcom_attach, com_detach, com_activate);
 
-int	com_pcmcom_enable __P((struct com_softc *));
-void	com_pcmcom_disable __P((struct com_softc *));
+int	com_pcmcom_enable(struct com_softc *);
+void	com_pcmcom_disable(struct com_softc *);
 
 int
 com_pcmcom_match(parent, cf, aux)

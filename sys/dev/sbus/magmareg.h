@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.7 2003/02/22 05:11:16 tsutsui Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.8 2005/02/04 02:10:47 perry Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -203,28 +203,28 @@ struct mbpp_softc {
 
 /* internal function prototypes */
 
-int cd1400_compute_baud __P((speed_t, int, int *, int *));
-__inline void cd1400_write_ccr __P((struct cd1400 *, u_char));
-__inline u_char cd1400_read_reg __P((struct cd1400 *, int));
-__inline void cd1400_write_reg __P((struct cd1400 *, int, u_char));
-void cd1400_enable_transmitter __P((struct cd1400 *, int));
+int cd1400_compute_baud(speed_t, int, int *, int *);
+__inline void cd1400_write_ccr(struct cd1400 *, u_char);
+__inline u_char cd1400_read_reg(struct cd1400 *, int);
+__inline void cd1400_write_reg(struct cd1400 *, int, u_char);
+void cd1400_enable_transmitter(struct cd1400 *, int);
 
-int magma_match __P((struct device *, struct cfdata *, void *));
-void magma_attach __P((struct device *, struct device *, void *));
-int magma_hard __P((void *));
-void magma_soft __P((void *));
+int magma_match(struct device *, struct cfdata *, void *);
+void magma_attach(struct device *, struct device *, void *);
+int magma_hard(void *);
+void magma_soft(void *);
 
-int mtty_match __P((struct device *, struct cfdata *, void *));
-void mtty_attach __P((struct device *, struct device *, void *));
-int mtty_modem_control __P((struct mtty_port *, int, int));
-int mtty_param __P((struct tty *, struct termios *));
-void mtty_start __P((struct tty *));
+int mtty_match(struct device *, struct cfdata *, void *);
+void mtty_attach(struct device *, struct device *, void *);
+int mtty_modem_control(struct mtty_port *, int, int);
+int mtty_param(struct tty *, struct termios *);
+void mtty_start(struct tty *);
 
-int mbpp_match __P((struct device *, struct cfdata *, void *));
-void mbpp_attach __P((struct device *, struct device *, void *));
-void mbpp_timeout __P((void *));
-void mbpp_start __P((void *));
-int mbpp_send __P((struct mbpp_port *, caddr_t, int));
-int mbpp_recv __P((struct mbpp_port *, caddr_t, int));
-int mbpp_hztoms __P((int));
-int mbpp_mstohz __P((int));
+int mbpp_match(struct device *, struct cfdata *, void *);
+void mbpp_attach(struct device *, struct device *, void *);
+void mbpp_timeout(void *);
+void mbpp_start(void *);
+int mbpp_send(struct mbpp_port *, caddr_t, int);
+int mbpp_recv(struct mbpp_port *, caddr_t, int);
+int mbpp_hztoms(int);
+int mbpp_mstohz(int);

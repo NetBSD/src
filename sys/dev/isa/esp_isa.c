@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.28 2004/09/14 20:20:46 drochner Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.29 2005/02/04 02:10:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.28 2004/09/14 20:20:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.29 2005/02/04 02:10:40 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.28 2004/09/14 20:20:46 drochner Exp $"
 
 #include <dev/isa/esp_isavar.h>
 
-int	esp_isa_match __P((struct device *, struct cfdata *, void *)); 
-void	esp_isa_attach __P((struct device *, struct device *, void *));  
+int	esp_isa_match(struct device *, struct cfdata *, void *); 
+void	esp_isa_attach(struct device *, struct device *, void *);  
 
 CFATTACH_DECL(esp_isa, sizeof(struct esp_isa_softc),
     esp_isa_match, esp_isa_attach, NULL, NULL);
@@ -146,16 +146,16 @@ int esp_isa_debug = 0;	/* ESP_SHOWTRAC | ESP_SHOWREGS | ESP_SHOWMISC */
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_isa_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_isa_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_isa_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_isa_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_isa_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_isa_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_isa_dma_go __P((struct ncr53c9x_softc *));
-void	esp_isa_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_isa_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	esp_isa_read_reg(struct ncr53c9x_softc *, int);
+void	esp_isa_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	esp_isa_dma_isintr(struct ncr53c9x_softc *);
+void	esp_isa_dma_reset(struct ncr53c9x_softc *);
+int	esp_isa_dma_intr(struct ncr53c9x_softc *);
+int	esp_isa_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+void	esp_isa_dma_go(struct ncr53c9x_softc *);
+void	esp_isa_dma_stop(struct ncr53c9x_softc *);
+int	esp_isa_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue esp_isa_glue = {
 	esp_isa_read_reg,

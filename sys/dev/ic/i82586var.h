@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.18 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.19 2005/02/04 02:10:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -190,23 +190,22 @@ struct ie_softc {
 	struct	ifmedia sc_media;	/* supported media information */
 
 	/* Bus glue */
-	void	(*hwreset) __P((struct ie_softc *, int));
-	void	(*hwinit) __P((struct ie_softc *));
-	void	(*chan_attn) __P((struct ie_softc *, int));
-	int	(*intrhook) __P((struct ie_softc *, int));
+	void	(*hwreset)(struct ie_softc *, int);
+	void	(*hwinit)(struct ie_softc *);
+	void	(*chan_attn)(struct ie_softc *, int);
+	int	(*intrhook)(struct ie_softc *, int);
 
-	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
-	void	(*memcopyout) __P((struct ie_softc *, const void *,
-				   int, size_t));
-	u_int16_t (*ie_bus_read16) __P((struct ie_softc *, int));
-	void	(*ie_bus_write16) __P((struct ie_softc *, int, u_int16_t));
-	void	(*ie_bus_write24) __P((struct ie_softc *, int, int));
-	void	(*ie_bus_barrier) __P((struct ie_softc *, int, int, int));
+	void	(*memcopyin)(struct ie_softc *, void *, int, size_t);
+	void	(*memcopyout)(struct ie_softc *, const void *, int, size_t);
+	u_int16_t (*ie_bus_read16)(struct ie_softc *, int);
+	void	(*ie_bus_write16)(struct ie_softc *, int, u_int16_t);
+	void	(*ie_bus_write24)(struct ie_softc *, int, int);
+	void	(*ie_bus_barrier)(struct ie_softc *, int, int, int);
 
 	/* Media management */
-        int  (*sc_mediachange) __P((struct ie_softc *));
+        int  (*sc_mediachange)(struct ie_softc *);
 				/* card dependent media change */
-        void (*sc_mediastatus) __P((struct ie_softc *, struct ifmediareq *));
+        void (*sc_mediastatus)(struct ie_softc *, struct ifmediareq *);
 				/* card dependent media status */
 
 
@@ -263,10 +262,9 @@ struct ie_softc {
 };
 
 /* Exported functions */
-int 	i82586_intr	__P((void *));
-int 	i82586_proberam __P((struct ie_softc *));
-void 	i82586_attach 	__P((struct ie_softc *, char *, u_int8_t *, 
-			     int*, int, int));
+int 	i82586_intr(void *);
+int 	i82586_proberam(struct ie_softc *);
+void 	i82586_attach(struct ie_softc *, char *, u_int8_t *, int*, int, int);
 
 /* Shortcut macros to optional (driver uses default if unspecified) callbacks */
 #define IE_BUS_BARRIER(sc, offset, length, flags)			  \

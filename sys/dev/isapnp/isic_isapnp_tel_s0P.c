@@ -38,14 +38,14 @@
  *		EXPERIMENTAL !!!
  *		================
  *
- *	$Id: isic_isapnp_tel_s0P.c,v 1.4 2002/03/24 20:35:53 martin Exp $ 
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.5 2005/02/04 02:10:43 perry Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.4 2002/03/24 20:35:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.5 2005/02/04 02:10:43 perry Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_TEL_S0_16_3_P
@@ -95,11 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.4 2002/03/24 20:35:53 mart
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t tels0163P_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void tels0163P_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void tels0163P_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void tels0163P_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-void isic_attach_s0163P __P((struct isic_softc *sc));
+static u_int8_t tels0163P_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void tels0163P_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void tels0163P_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void tels0163P_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+void isic_attach_s0163P(struct isic_softc *sc);
 #endif
 
 

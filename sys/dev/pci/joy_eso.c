@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_eso.c,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.7 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.7 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
 
 #include <dev/ic/joyvar.h>
 
-static int	joy_eso_match __P((struct device *, struct cfdata *, void *));
-static void	joy_eso_attach __P((struct device *, struct device *, void *));
+static int	joy_eso_match(struct device *, struct cfdata *, void *);
+static void	joy_eso_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(joy_eso, sizeof (struct joy_softc),
     joy_eso_match, joy_eso_attach, NULL, NULL);

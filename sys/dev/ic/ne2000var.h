@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.15 2004/03/17 23:47:16 mycroft Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.16 2005/02/04 02:10:36 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,13 +58,13 @@ struct ne2000_softc {
 	int sc_useword;
 };
 
-int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *));
-int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t));
-int	ne2000_detach __P((struct ne2000_softc *, int));
+int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
+int	ne2000_detect(bus_space_tag_t, bus_space_handle_t,
+	    bus_space_tag_t, bus_space_handle_t);
+int	ne2000_detach(struct ne2000_softc *, int);
 
 #ifdef IPKDB_NE
-int	ne2000_ipkdb_attach __P((struct ipkdb_if *));
+int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
 
 #endif /* _DEV_IC_NE2000VAR_H_ */

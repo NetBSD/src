@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.39 2004/08/26 17:57:00 drochner Exp $	*/
+/*	$NetBSD: tc.c,v 1.40 2005/02/04 02:10:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.39 2004/08/26 17:57:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.40 2005/02/04 02:10:48 perry Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -43,17 +43,17 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.39 2004/08/26 17:57:00 drochner Exp $");
 #include "locators.h"
 
 /* Definition of the driver for autoconfig. */
-int	tcmatch __P((struct device *, struct cfdata *, void *));
+int	tcmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
 
 extern struct cfdriver tc_cd;
 
-int	tcprint __P((void *, const char *));
-int	tcsubmatch __P((struct device *, struct cfdata *,
-			const locdesc_t *, void *));
-void	tc_devinfo __P((const char *, char *, size_t));
+int	tcprint(void *, const char *);
+int	tcsubmatch(struct device *, struct cfdata *,
+			const locdesc_t *, void *);
+void	tc_devinfo(const char *, char *, size_t);
 
 int
 tcmatch(parent, cf, aux)
@@ -285,7 +285,7 @@ tc_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie, *arg;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 {
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 

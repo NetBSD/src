@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.17 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.18 2005/02/04 02:10:43 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,11 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.17 2003/12/04 13:57:30 keihan Exp 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int isic_isapnp_probe __P((struct device *, void *, void *));
+static int isic_isapnp_probe(struct device *, void *, void *);
 #else
-static int isic_isapnp_probe __P((struct device *, struct cfdata *, void *));
+static int isic_isapnp_probe(struct device *, struct cfdata *, void *);
 #endif
-static void isic_isapnp_attach __P((struct device *, struct device *, void *));
+static void isic_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
     isic_isapnp_probe, isic_isapnp_attach, NULL, NULL);
@@ -109,14 +109,14 @@ static void tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *
 #endif
 
 /* card attach functions */
-extern void isic_attach_Cs0P __P((struct isic_softc *sc));
-extern void isic_attach_Dyn __P((struct isic_softc *sc));
-extern void isic_attach_s0163P __P((struct isic_softc *sc));
-extern void isic_attach_drnngo __P((struct isic_softc *sc));
-extern void isic_attach_sws __P((struct isic_softc *sc));
-extern void isic_attach_Eqs1pi __P((struct isic_softc *sc));
-extern void isic_attach_siemens_isurf __P((struct isic_softc *sc));
-extern void isic_attach_isapnp_itkix1 __P((struct isic_softc *sc));
+extern void isic_attach_Cs0P(struct isic_softc *sc);
+extern void isic_attach_Dyn(struct isic_softc *sc);
+extern void isic_attach_s0163P(struct isic_softc *sc);
+extern void isic_attach_drnngo(struct isic_softc *sc);
+extern void isic_attach_sws(struct isic_softc *sc);
+extern void isic_attach_Eqs1pi(struct isic_softc *sc);
+extern void isic_attach_siemens_isurf(struct isic_softc *sc);
+extern void isic_attach_isapnp_itkix1(struct isic_softc *sc);
 
 struct isic_isapnp_card_desc {
 	char *devlogic;			/* ISAPNP logical device ID */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmavar.h,v 1.1 2003/03/05 22:08:21 matt Exp $	*/
+/*	$NetBSD: gtidmavar.h,v 1.2 2005/02/04 02:10:43 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -145,7 +145,7 @@ typedef struct idma_chan {
 	idma_chan_state_t idc_state;
 	struct idma_softc *idc_sc;
 	unsigned int idc_chan;			/* channel number */
-	int (*idc_callback) __P((void *, struct idma_desch *, u_int32_t));
+	int (*idc_callback)(void *, struct idma_desch *, u_int32_t);
 						/* completion callback */
 	void *idc_arg;				/* completion callback arg */
 	idma_q_t idc_q;				/* pending transactions */
@@ -185,24 +185,24 @@ typedef struct idma_softc {
 /*
  * IDMA external function prototypes
  */
-extern void idma_chan_free __P((idma_chan_t *));
-extern idma_chan_t *idma_chan_alloc
-	__P((unsigned int, int (*) __P((void *, struct idma_desch *, u_int32_t)), void *));
+extern void idma_chan_free(idma_chan_t *);
+extern idma_chan_t *idma_chan_alloc(unsigned int,
+    int (*)(void *, struct idma_desch *, u_int32_t), void *);
 
-extern void idma_desch_free __P((idma_desch_t *));
-extern idma_desch_t *idma_desch_alloc __P((idma_chan_t *));
-extern void idma_desch_list_free __P((idma_desch_t *));
+extern void idma_desch_free(idma_desch_t *);
+extern idma_desch_t *idma_desch_alloc(idma_chan_t *);
+extern void idma_desch_list_free(idma_desch_t *);
 
-extern void idma_desc_list_free __P((idma_desch_t *));
-extern idma_desch_t *idma_desch_list_alloc __P((idma_chan_t *, unsigned int));
+extern void idma_desc_list_free(idma_desch_t *);
+extern idma_desch_t *idma_desch_list_alloc(idma_chan_t *, unsigned int);
 
-extern void idma_intr_enb __P((idma_chan_t *));
-extern void idma_intr_dis __P((idma_chan_t *));
+extern void idma_intr_enb(idma_chan_t *);
+extern void idma_intr_dis(idma_chan_t *);
 
-extern int idma_start __P((idma_desch_t *));
-extern void idma_qflush __P((idma_chan_t *));
+extern int idma_start(idma_desch_t *);
+extern void idma_qflush(idma_chan_t *);
 
-extern void idma_abort __P((idma_desch_t *, unsigned int, const char *));
+extern void idma_abort(idma_desch_t *, unsigned int, const char *);
 
 /*
  * flags for idma_abort()

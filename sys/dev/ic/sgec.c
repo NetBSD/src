@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.24 2005/01/31 03:02:27 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.25 2005/02/04 02:10:37 perry Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.24 2005/01/31 03:02:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.25 2005/02/04 02:10:37 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -76,13 +76,13 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.24 2005/01/31 03:02:27 thorpej Exp $");
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
 
-static	void	zeinit __P((struct ze_softc *));
-static	void	zestart __P((struct ifnet *));
-static	int	zeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	ze_add_rxbuf __P((struct ze_softc *, int));
-static	void	ze_setup __P((struct ze_softc *));
-static	void	zetimeout __P((struct ifnet *));
-static	int	zereset __P((struct ze_softc *));
+static	void	zeinit(struct ze_softc *);
+static	void	zestart(struct ifnet *);
+static	int	zeioctl(struct ifnet *, u_long, caddr_t);
+static	int	ze_add_rxbuf(struct ze_softc *, int);
+static	void	ze_setup(struct ze_softc *);
+static	void	zetimeout(struct ifnet *);
+static	int	zereset(struct ze_softc *);
 
 #define	ZE_WCSR(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)
