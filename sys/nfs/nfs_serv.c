@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.69 2003/03/28 15:24:58 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.70 2003/04/02 15:14:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.69 2003/03/28 15:24:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.70 2003/04/02 15:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1025,10 +1025,10 @@ nfsmout:
 	     */
 	    s = splsoftclock();
 	    owp = NULL;
-	    wp = slp->ns_tq.lh_first;
+	    wp = LIST_FIRST(&slp->ns_tq);
 	    while (wp && wp->nd_time < nfsd->nd_time) {
 		owp = wp;
-		wp = wp->nd_tq.le_next;
+		wp = LIST_NEXT(wp, nd_tq);
 	    }
 	    if (owp) {
 		LIST_INSERT_AFTER(owp, nfsd, nd_tq);
@@ -1038,16 +1038,16 @@ nfsmout:
 	    if (nfsd->nd_mrep) {
 		wpp = NWDELAYHASH(slp, nfsd->nd_fh.fh_fid.fid_data);
 		owp = NULL;
-		wp = wpp->lh_first;
+		wp = LIST_FIRST(wpp);
 		while (wp &&
 		    memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
-		    wp = wp->nd_hash.le_next;
+		    wp = LIST_NEXT(wp, nd_hash);
 		}
 		while (wp && wp->nd_off < nfsd->nd_off &&
 		    !memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
-		    wp = wp->nd_hash.le_next;
+		    wp = LIST_NEXT(wp, nd_hash);
 		}
 		if (owp) {
 		    LIST_INSERT_AFTER(owp, nfsd, nd_hash);
@@ -1057,7 +1057,7 @@ nfsmout:
 		     * coalesce.
 		     */
 		    for(; nfsd && NFSW_CONTIG(owp, nfsd); nfsd = wp) {
-			wp = nfsd->nd_hash.le_next;
+			wp = LIST_NEXT(nfsd, nd_hash);
 			if (NFSW_SAMECRED(owp, nfsd))
 			    nfsrvw_coalesce(owp, nfsd);
 		    }
@@ -1075,8 +1075,8 @@ nfsmout:
 loop1:
 	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
 	s = splsoftclock();
-	for (nfsd = slp->ns_tq.lh_first; nfsd; nfsd = owp) {
-		owp = nfsd->nd_tq.le_next;
+	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd; nfsd = owp) {
+		owp = LIST_NEXT(nfsd, nd_tq);
 		if (nfsd->nd_time > cur_usec)
 		    break;
 		if (nfsd->nd_mreq)
@@ -1196,7 +1196,7 @@ loop1:
 			nfsd->nd_time = 0;
 			LIST_INSERT_HEAD(&slp->ns_tq, nfsd, nd_tq);
 		    }
-		    nfsd = swp->nd_coalesce.lh_first;
+		    nfsd = LIST_FIRST(&swp->nd_coalesce);
 		    if (nfsd) {
 			LIST_REMOVE(nfsd, nd_tq);
 		    }
@@ -1214,13 +1214,14 @@ loop1:
 	 * Search for a reply to return.
 	 */
 	s = splsoftclock();
-	for (nfsd = slp->ns_tq.lh_first; nfsd; nfsd = nfsd->nd_tq.le_next)
+	LIST_FOREACH(nfsd, &slp->ns_tq, nd_tq) {
 		if (nfsd->nd_mreq) {
 		    LIST_REMOVE(nfsd, nd_tq);
 		    *mrq = nfsd->nd_mreq;
 		    *ndp = nfsd;
 		    break;
 		}
+	}
 	splx(s);
 	return (0);
 }
@@ -1240,6 +1241,7 @@ nfsrvw_coalesce(owp, nfsd)
 {
         int overlap;
         struct mbuf *mp;
+	struct nfsrv_descript *m;
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);
@@ -1267,16 +1269,10 @@ nfsrvw_coalesce(owp, nfsd)
  	 * nfsd might hold coalesce elements! Move them to owp.
  	 * Otherwise, requests may be lost and clients will be stuck.
  	 */
- 	if (nfsd->nd_coalesce.lh_first)
- 	{
- 		struct nfsrv_descript *m;
- 
- 		while ((m = nfsd->nd_coalesce.lh_first))
- 		{
- 			LIST_REMOVE(m, nd_tq);
- 			LIST_INSERT_HEAD(&owp->nd_coalesce, m, nd_tq);
- 		}
- 	}
+	while ((m = LIST_FIRST(&nfsd->nd_coalesce)) != NULL) {
+		LIST_REMOVE(m, nd_tq);
+		LIST_INSERT_HEAD(&owp->nd_coalesce, m, nd_tq);
+	}
 }
 
 /*

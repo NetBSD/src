@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.79 2003/02/26 06:31:19 matt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.80 2003/04/02 15:14:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.79 2003/02/26 06:31:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.80 2003/04/02 15:14:21 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1259,8 +1259,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 		    struct nfsuid *nuidp;
 		    struct timeval ktvin, ktvout;
 
-		    for (nuidp = NUIDHASH(slp, nd->nd_cr.cr_uid)->lh_first;
-			nuidp != 0; nuidp = nuidp->nu_hash.le_next) {
+		    LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
+			nu_hash) {
 			if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
 			    (!nd->nd_nam2 || netaddr_match(NU_NETFAM(nuidp),
 			     &nuidp->nu_haddr, nd->nd_nam2)))
@@ -1482,7 +1482,8 @@ nfs_timer(arg)
 	 */
 	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
-	    if (slp->ns_tq.lh_first && slp->ns_tq.lh_first->nd_time<=cur_usec)
+	    if (LIST_FIRST(&slp->ns_tq) &&
+		LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
 		nfsrv_wakenfsd(slp);
 	}
 #endif /* NFSSERVER */
@@ -1827,8 +1828,8 @@ nfs_getreq(nd, nfsd, has_header)
 			tvin.tv_sec = *tl++;
 			tvin.tv_usec = *tl;
 
-			for (nuidp = NUIDHASH(nfsd->nfsd_slp,nickuid)->lh_first;
-			    nuidp != 0; nuidp = nuidp->nu_hash.le_next) {
+			LIST_FOREACH(nuidp, NUIDHASH(nfsd->nfsd_slp, nickuid),
+			    nu_hash) {
 				if (nuidp->nu_cr.cr_uid == nickuid &&
 				    (!nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
