@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.13 2000/07/04 20:27:41 matt Exp $	*/
+/*	$NetBSD: yppush.c,v 1.14 2000/09/13 21:40:15 thorpej Exp $	*/
 
 /*
  *
@@ -301,9 +301,6 @@ pushit(instatus, inkey, inkeylen, inval, invallen, indata)
 	char   *inkey, *inval, *indata;
 {
 	struct yppush_info *ypi = (struct yppush_info *) indata;
-
-	if (instatus != YP_TRUE)		/* failure? */
-		return (instatus);
 
 	push(inkey, inkeylen, ypi);		/* do it! */
 	return (0);
