@@ -1,4 +1,4 @@
-/*	$NetBSD: kstream.c,v 1.1.1.1 2000/06/17 06:24:28 thorpej Exp $	*/
+/*	$NetBSD: kstream.c,v 1.2 2000/06/17 06:39:32 thorpej Exp $	*/
 
 /* Encrypted-stream implementation for MIT Kerberos.
    Written by Ken Raeburn (Raeburn@Cygnus.COM).
@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Only use alloca if we've got gcc 2 or better */
 #ifdef __GNUC__
@@ -65,7 +66,6 @@ char *malloc ();
 char *realloc ();
 void free ();
 #endif
-extern int errno;
 
 #ifdef sun
 #ifndef solaris20
@@ -74,31 +74,24 @@ extern int errno;
 #endif
 #endif
 
-static void fifo__init (this)
-     fifo *this;
+static void fifo__init (fifo *this)
 {
   this->next_write = this->next_read = 0;
   memset (this->data, 0, sizeof (this->data));
 }
-static char *fifo__data_start (this)
-     fifo *this;
+static char *fifo__data_start (fifo *this)
 {
   return this->data + this->next_read;
 }
-static size_t fifo__bytes_available (this)
-     fifo *this;
+static size_t fifo__bytes_available (fifo *this)
 {
   return this->next_write - this->next_read;
 }
-static size_t fifo__space_available (this)
-     fifo *this;
+static size_t fifo__space_available (fifo *this)
 {
   return sizeof (this->data) - fifo__bytes_available (this);
 }
-static int fifo__append (this, ptr, len)
-     fifo *this;
-     const char *ptr;
-     size_t len;
+static int fifo__append (fifo *this, const char *ptr, size_t len)
 {
   if (len > fifo__space_available (this))
     len = fifo__space_available (this);
@@ -113,10 +106,7 @@ static int fifo__append (this, ptr, len)
   this->next_write += len;
   return len;
 }
-static int fifo__extract (this, ptr, len)
-     fifo *this;
-     char *ptr;
-     size_t len;
+static int fifo__extract (fifo *this, char *ptr, size_t len)
 {
   size_t n = fifo__bytes_available (this);
   if (len > n)
@@ -129,8 +119,7 @@ static int fifo__extract (this, ptr, len)
   return len;
 }
 
-static void kstream_rec__init (this)
-     kstream_rec *this;
+static void kstream_rec__init (kstream_rec *this)
 {
   fifo__init (&this->in_crypt);
   fifo__init (&this->in_clear);
@@ -138,10 +127,8 @@ static void kstream_rec__init (this)
 }
 
 kstream
-kstream_create_from_fd (fd, ctl, data)
-     int fd;
-     const struct kstream_crypt_ctl_block *ctl;
-     void *data;
+kstream_create_from_fd (int fd, const struct kstream_crypt_ctl_block *ctl,
+  void *data)
 {
   kstream k;
   k = (kstream) malloc (sizeof (kstream_rec));
@@ -161,8 +148,7 @@ kstream_create_from_fd (fd, ctl, data)
 }
 
 int
-kstream_destroy (k)
-     kstream k;
+kstream_destroy (kstream k)
 {
   int x = kstream_flush (k);
   if (k->ctl && k->ctl->destroy)
@@ -172,18 +158,13 @@ kstream_destroy (k)
 }
 
 void
-kstream_set_buffer_mode (k, mode)
-     kstream k;
-     int mode;
+kstream_set_buffer_mode (kstream k, int mode)
 {
   k->buffering = mode;
 }
 
 int
-kstream_write (k, p_data, p_len)
-     kstream k;
-     kstream_ptr p_data;
-     size_t p_len;
+kstream_write (kstream k, kstream_ptr p_data, size_t p_len)
 {
   size_t len = p_len;
   char *data = p_data;
@@ -208,8 +189,7 @@ kstream_write (k, p_data, p_len)
 }
 
 int
-kstream_flush (k)
-     kstream k;
+kstream_flush (kstream k)
 {
   int x, n;
   fifo *out = &k->out_clear;
@@ -253,10 +233,7 @@ kstream_flush (k)
 }
 
 int
-kstream_read (k, p_data, p_len)
-     kstream k;
-     kstream_ptr p_data;
-     size_t p_len;
+kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
 {
   char *data = p_data;
   size_t len = p_len;
