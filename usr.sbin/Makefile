@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.41 1994/12/04 18:40:21 christos Exp $
+#	$Id: Makefile,v 1.42 1995/03/10 07:17:05 jtc Exp $
 
 # not yet done: catman
 
@@ -11,7 +11,7 @@ SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rwhod \
 	sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update vipw vnconfig \
-	ypbind yppoll ypset
+	ypbind yppoll ypset zdump zic
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=bad144 hilinfo grfinfo
