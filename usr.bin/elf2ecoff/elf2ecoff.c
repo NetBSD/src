@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.12 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.13 1999/11/02 21:13:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -50,14 +50,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-
-
-/* Elf Program segment permissions, in program header flags field */
-
-#define PF_X            (1 << 0)/* Segment is executable */
-#define PF_W            (1 << 1)/* Segment is writable */
-#define PF_R            (1 << 2)/* Segment is readable */
-#define PF_MASKPROC     0xF0000000	/* Processor-specific reserved bits */
 
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
@@ -211,9 +203,9 @@ usage:
 
 	for (i = 0; i < ex.e_phnum; i++) {
 		/* Section types we can ignore... */
-		if (ph[i].p_type == Elf_pt_null || ph[i].p_type == Elf_pt_note ||
-		    ph[i].p_type == Elf_pt_phdr ||
-		    ph[i].p_type == Elf_pt_mips_reginfo) {
+		if (ph[i].p_type == PT_NULL || ph[i].p_type == PT_NOTE ||
+		    ph[i].p_type == PT_PHDR ||
+		    ph[i].p_type == PT_MIPS_REGINFO) {
 
 			if (debug) {
 				fprintf(stderr, "  skipping PH %d type %d flags 0x%x\n",
@@ -223,7 +215,7 @@ usage:
 		}
 		/* Section types we can't handle... */
 		else
-			if (ph[i].p_type != Elf_pt_load) {
+			if (ph[i].p_type != PT_LOAD) {
 				fprintf(stderr, "Program header %d type %d can't be converted.\n",
 				    i, ph[i].p_type);
 				exit(1);
@@ -350,7 +342,7 @@ usage:
 	for (i = 0; i < ex.e_phnum; i++) {
 		/* Unprocessable sections were handled above, so just verify
 		 * that the section can be loaded before copying. */
-		if (ph[i].p_type == Elf_pt_load && ph[i].p_filesz) {
+		if (ph[i].p_type == PT_LOAD && ph[i].p_filesz) {
 			if (cur_vma != ph[i].p_vaddr) {
 				unsigned long gap = ph[i].p_vaddr - cur_vma;
 				char    obuf[1024];
@@ -719,8 +711,8 @@ translate_syms(elfp, ecoffp)
 	for (i = 0; i < nsyms; i++) {
 		int     binding, type;
 
-		binding = ELF_SYM_BIND((elfp->elf_syms[i].st_info));
-		type = ELF_SYM_TYPE((elfp->elf_syms[i].st_info));
+		binding = ELF32_ST_BIND((elfp->elf_syms[i].st_info));
+		type = ELF32_ST_TYPE((elfp->elf_syms[i].st_info));
 
 		/* skip strange symbols */
 		if (binding == 0) {
