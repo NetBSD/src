@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.33 1995/07/30 13:38:04 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.34 1995/07/30 21:39:17 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -91,11 +91,8 @@ struct ae_softc {
 	u_long  mem_size;	/* total shared memory size */
 	caddr_t mem_ring;	/* start of RX ring-buffer (in smem) */
 
-	u_char  mem_wr_short;	/* card memory requires int16 writes */
-
-	u_char  xmit_busy;	/* transmitter is busy */
 	u_char  txb_cnt;	/* Number of transmit buffers */
-	u_char  txb_inuse;	/* number of TX buffers currently in-use */
+	u_char  txb_inuse;	/* number of transmit buffers active */
 
 	u_char  txb_new;	/* pointer to where new buffer will be added */
 	u_char  txb_next_tx;	/* pointer to next buffer ready to xmit */
@@ -108,19 +105,22 @@ struct ae_softc {
 
 int aeprobe __P((struct device *, void *, void *));
 void aeattach __P((struct device *, struct device *, void *));
-void aeintr __P((struct ae_softc *));
-int ae_ioctl __P((struct ifnet *, u_long, caddr_t));
-void ae_start __P((struct ifnet *));
-void ae_watchdog __P(( /* short */ ));
-void ae_reset __P((struct ae_softc *));
-void ae_init __P((struct ae_softc *));
-void ae_stop __P((struct ae_softc *));
-void ae_getmcaf __P((struct arpcom *, u_char *));
-u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
+void aeintr __P((void *));
+int aeioctl __P((struct ifnet *, u_long, caddr_t));
+void aestart __P((struct ifnet *));
+void aewatchdog __P(( /* short */ ));
+void aereset __P((struct ae_softc *));
+void aeinit __P((struct ae_softc *));
+void aestop __P((struct ae_softc *));
+
+void aeread __P((struct ae_softc *, caddr_t, int));
+struct mbuf *aeget __P((struct ae_softc *, caddr_t, int));
 
 #define inline			/* XXX for debugging porpoises */
 
-void ae_get_packet __P(( /* struct ae_softc *, caddr_t, u_short */ ));
+u_short ae_put __P((struct ae_softc *, struct mbuf *, caddr_t));
+void ae_getmcaf __P((struct arpcom *, u_char *));
+
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
 static inline caddr_t ae_ring_copy __P((
@@ -294,7 +294,6 @@ aeprobe(parent, match, aux)
 		return 0;
 
 	sc->regs_rev = 0;
-	sc->mem_wr_short = 0;
 
 	addr = (caddr_t) NUBUS_SLOT_TO_BASE(nu->slot);
 
@@ -314,11 +313,8 @@ aeprobe(parent, match, aux)
 			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 4);
 		break;
 
+		/* apple-compatible cards */
 	case AE_VENDOR_ASANTE:
-		/* memory writes require *(u_short *) */
-		sc->mem_wr_short = 1;
-		/* otherwise, pretend to be an apple card (fall through) */
-
 	case AE_VENDOR_APPLE:
 		sc->regs_rev = 1;
 		sc->nic_addr = addr + AE_NIC_OFFSET;
@@ -409,14 +405,14 @@ aeattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Set interface to stopped condition (reset). */
-	ae_stop(sc);
+	aestop(sc);
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = aecd.cd_name;
-	ifp->if_start = ae_start;
-	ifp->if_ioctl = ae_ioctl;
-	ifp->if_watchdog = ae_watchdog;
+	ifp->if_start = aestart;
+	ifp->if_ioctl = aeioctl;
+	ifp->if_watchdog = aewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -444,25 +440,27 @@ aeattach(parent, self, aux)
 	 */
 	enable_nubus_intr();
 }
+
 /*
  * Reset interface.
  */
 void
-ae_reset(sc)
+aereset(sc)
 	struct ae_softc *sc;
 {
 	int     s;
 
 	s = splimp();
-	ae_stop(sc);
-	ae_init(sc);
+	aestop(sc);
+	aeinit(sc);
 	splx(s);
 }
+
 /*
  * Take interface offline.
  */
 void
-ae_stop(sc)
+aestop(sc)
 	struct ae_softc *sc;
 {
 	int     n = 5000;
@@ -477,13 +475,14 @@ ae_stop(sc)
 	 */
 	while (((NIC_GET(sc, ED_P0_ISR) & ED_ISR_RST) == 0) && --n);
 }
+
 /*
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
 static int aeintr_ctr = 0;
 void
-ae_watchdog(unit)
+aewatchdog(unit)
 	int     unit;
 {
 	struct ae_softc *sc = aecd.cd_devs[unit];
@@ -509,17 +508,18 @@ ae_watchdog(unit)
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
 
-	ae_reset(sc);
+	aereset(sc);
 }
+
 /*
  * Initialize device.
  */
 void
-ae_init(sc)
+aeinit(sc)
 	struct ae_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int     i, s;
+	int     i;
 	u_char  command;
 	u_char  mcaf[8];
 
@@ -528,11 +528,9 @@ ae_init(sc)
 	 * This init procedure is "mandatory"...don't change what or when
 	 * things happen.
 	 */
-	s = splimp();
 
 	/* Reset transmitter flags. */
-	sc->xmit_busy = 0;
-	sc->sc_arpcom.ac_if.if_timer = 0;
+	ifp->if_timer = 0;
 
 	sc->txb_inuse = 0;
 	sc->txb_new = 0;
@@ -624,10 +622,9 @@ ae_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* ...and attempt to start output. */
-	ae_start(ifp);
-
-	splx(s);
+	aestart(ifp);
 }
+
 /*
  * This routine actually starts the transmission on the interface.
  */
@@ -653,7 +650,6 @@ ae_xmit(sc)
 
 	/* Set page 0, remote DMA complete, transmit packet, and *start*. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_TXP | ED_CR_STA);
-	sc->xmit_busy = 1;
 
 	/* Point to next transmit buffer slot and wrap if necessary. */
 	sc->txb_next_tx++;
@@ -663,6 +659,7 @@ ae_xmit(sc)
 	/* Set a timer just in case we never hear from the board again. */
 	ifp->if_timer = 2;
 }
+
 /*
  * Start output on interface.
  * We make two assumptions here:
@@ -673,71 +670,66 @@ ae_xmit(sc)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-ae_start(ifp)
+aestart(ifp)
 	struct ifnet *ifp;
 {
 	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
-	struct mbuf *m0, *m;
+	struct mbuf *m0;
 	caddr_t buffer;
 	int     len;
 
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
 outloop:
-	/*
-	 * First, see if there are buffered packets and an idle transmitter -
-	 * should never happen at this point.
-	 */
-	if (sc->txb_inuse && (sc->xmit_busy == 0)) {
-		printf("%s: packets buffered, but transmitter idle\n",
-		    sc->sc_dev.dv_xname);
-		ae_xmit(sc);
-	}
 	/* See if there is room to put another packet in the buffer. */
 	if (sc->txb_inuse == sc->txb_cnt) {
 		/* No room.  Indicate this to the outside world and exit. */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-	if (m == 0) {
-		/*
-		 * We are using the !OACTIVE flag to indicate to the outside
-		 * world that we can accept an additional packet rather than
-		 * that the transmitter is _actually_ active.  Indeed, the
-		 * transmitter may be active, but if we haven't filled all the
-		 * buffers with data then we still want to accept more.
-		 */
-		ifp->if_flags &= ~IFF_OACTIVE;
+	IF_DEQUEUE(&ifp->if_snd, m0);
+	if (m0 == 0)
 		return;
-	}
-	/* Copy the mbuf chain into the transmit buffer. */
-	m0 = m;
+
+	/* We need to use m->m_pkthdr.len, so require the header */
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("aestart: no header mbuf");
+
+#if NBPFILTER > 0
+	/* Tap off here if there is a BPF listener. */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
+#endif
 
 	/* txb_new points to next open buffer slot. */
 	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
-	len = ae_put(sc, m, buffer);
+	len = ae_put(sc, m0, buffer);
+#if DIAGNOSTIC
+	if (len != m0->m_pkthdr.len)
+		printf("aestart: len %d != m0->m_pkthdr.len %d.\n",
+			len, m0->m_pkthdr.len);
+#endif
+	len = m0->m_pkthdr.len;
 
+	m_freem(m0);
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
-	sc->txb_inuse++;
+
+	/* Start the first packet transmitting. */
+	if (sc->txb_inuse == 0)
+		ae_xmit(sc);
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
 		sc->txb_new = 0;
 
-	if (sc->xmit_busy == 0)
-		ae_xmit(sc);
-
-#if NBPFILTER > 0
-	/* Tap off here if there is a BPF listener. */
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
-#endif
-
-	m_freem(m0);
+	sc->txb_inuse++;
 
 	/* Loop back to the top to possibly buffer more packets. */
 	goto outloop;
 }
+
 /*
  * Ethernet interface receiver interrupt.
  */
@@ -747,9 +739,9 @@ ae_rint(sc)
 {
 	u_char  boundary, current;
 	u_short len;
-	u_char  nlen;
+	u_char  nlen, *lenp;
 	struct ae_ring packet_hdr;
-	caddr_t packet_ptr, lenp;
+	caddr_t packet_ptr;
 
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
@@ -780,9 +772,9 @@ loop:
 		 * the NIC.
 		 */
 		packet_hdr = *(struct ae_ring *) packet_ptr;
-		lenp = (caddr_t) &((struct ae_ring *) packet_ptr)->count;
-		packet_hdr.count = lenp[0] | ((u_short)lenp[1] << 8);
-		len = packet_hdr.count;
+		lenp = (u_char *) &((struct ae_ring *) packet_ptr)->count;
+		len = lenp[0] | (lenp[1] << 8);
+		packet_hdr.count = len;
 
 		/*
 		 * Try do deal with old, buggy chips that sometimes duplicate
@@ -824,7 +816,7 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			ae_get_packet(sc, packet_ptr + sizeof(struct ae_ring),
+			aeread(sc, packet_ptr + sizeof(struct ae_ring),
 			    len - sizeof(struct ae_ring));
 			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
@@ -833,7 +825,7 @@ loop:
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
 			++sc->sc_arpcom.ac_if.if_ierrors;
-			ae_reset(sc);
+			aereset(sc);
 			return;
 		}
 
@@ -852,11 +844,14 @@ loop:
 
 	goto loop;
 }
+
 /* Ethernet interface interrupt processor. */
 void
-aeintr(sc)
-	struct ae_softc *sc;
+aeintr(arg)
+	void *arg;
 {
+	struct ae_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_char  isr;
 
 	aeintr_ctr++;
@@ -908,27 +903,27 @@ aeintr(sc)
 					collisions = 16;
 				}
 				/* Update output errors counter. */
-				++sc->sc_arpcom.ac_if.if_oerrors;
+				++ifp->if_oerrors;
 			} else {
 				/*
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				++sc->sc_arpcom.ac_if.if_opackets;
+				ifp->if_opackets;
 			}
 
-			/* Reset TX busy and output active flags. */
-			sc->xmit_busy = 0;
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+			/* Done with the buffer. */
+			sc->txb_inuse--;
 
 			/* Clear watchdog timer. */
-			sc->sc_arpcom.ac_if.if_timer = 0;
+			ifp->if_timer = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/*
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			sc->sc_arpcom.ac_if.if_collisions += collisions;
+			ifp->if_collisions += collisions;
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
@@ -937,7 +932,7 @@ aeintr(sc)
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
-			if (sc->txb_inuse && --sc->txb_inuse)
+			if (sc->txb_inuse > 0)
 				ae_xmit(sc);
 		}
 		/* Handle receiver interrupts. */
@@ -952,14 +947,14 @@ aeintr(sc)
 			 * fixed in later revs.  -DG
 			 */
 			if (isr & ED_ISR_OVW) {
-				++sc->sc_arpcom.ac_if.if_ierrors;
+				++ifp->if_ierrors;
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING,
 				    "%s: warning - receiver ring buffer overrun\n",
 				    sc->sc_dev.dv_xname);
 #endif
 				/* Stop/reset/re-init NIC. */
-				ae_reset(sc);
+				aereset(sc);
 			} else {
 				/*
 				 * Receiver Error.  One or more of: CRC error,
@@ -967,7 +962,7 @@ aeintr(sc)
 				 * missed packet.
 				 */
 				if (isr & ED_ISR_RXE) {
-					++sc->sc_arpcom.ac_if.if_ierrors;
+					++ifp->if_ierrors;
 #ifdef AE_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
@@ -989,8 +984,7 @@ aeintr(sc)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) == 0)
-			ae_start(&sc->sc_arpcom.ac_if);
+		aestart(ifp);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA
@@ -1015,13 +1009,14 @@ aeintr(sc)
 			return;
 	}
 }
+
 /*
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-ae_ioctl(ifp, command, data)
+aeioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long  command;
+	u_long  cmd;
 	caddr_t data;
 {
 	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
@@ -1031,7 +1026,7 @@ ae_ioctl(ifp, command, data)
 
 	s = splimp();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1039,7 +1034,7 @@ ae_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ae_init(sc);
+			aeinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
@@ -1057,12 +1052,12 @@ ae_ioctl(ifp, command, data)
 					    sc->sc_arpcom.ac_enaddr,
 					    sizeof(sc->sc_arpcom.ac_enaddr));
 				/* Set new address. */
-				ae_init(sc);
+				aeinit(sc);
 				break;
 			}
 #endif
 		default:
-			ae_init(sc);
+			aeinit(sc);
 			break;
 		}
 		break;
@@ -1074,7 +1069,7 @@ ae_ioctl(ifp, command, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			ae_stop(sc);
+			aestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else
 			if ((ifp->if_flags & IFF_UP) != 0 &&
@@ -1083,21 +1078,21 @@ ae_ioctl(ifp, command, data)
 				 * If interface is marked up and it is stopped, then
 				 * start it.
 				 */
-				ae_init(sc);
+				aeinit(sc);
 			} else {
 				/*
 				 * Reset the interface to pick up changes in any other
 				 * flags that affect hardware registers.
 				 */
-				ae_stop(sc);
-				ae_init(sc);
+				aestop(sc);
+				aeinit(sc);
 			}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
+		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
@@ -1106,75 +1101,61 @@ ae_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ae_stop(sc);	/* XXX for ds_setmcaf? */
-			ae_init(sc);
+			aestop(sc);	/* XXX for ds_setmcaf? */
+			aeinit(sc);
 			error = 0;
 		}
 		break;
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
 	return (error);
 }
+
 /*
  * Retreive packet from shared memory and send to the next level up via
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
  */
 void
-ae_get_packet(sc, buf, len)
+aeread(sc, buf, len)
 	struct ae_softc *sc;
 	caddr_t buf;
-	u_short len;
+	int len;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *m;
 	struct ether_header *eh;
-	struct mbuf *m, *ae_ring_to_mbuf();
-
-	/* Allocate a header mbuf. */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return;
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-	m->m_pkthdr.len = len;
-	m->m_len = 0;
-
-	/* The following silliness is to make NFS happy. */
-#define EROUND	((sizeof(struct ether_header) + 3) & ~3)
-#define EOFF	(EROUND - sizeof(struct ether_header))
-
-	/*
-	 * The following assumes there is room for the ether header in the
-	 * header mbuf.
-	 */
-	m->m_data += EOFF;
-	eh = mtod(m, struct ether_header *);
-
-	word_copy(buf, mtod(m, caddr_t), sizeof(struct ether_header));
-	buf += sizeof(struct ether_header);
-	m->m_len += sizeof(struct ether_header);
-	len -= sizeof(struct ether_header);
 
 	/* Pull packet off interface. */
-	if (ae_ring_to_mbuf(sc, buf, m, len) == 0) {
-		m_freem(m);
+	m = aeget(sc, buf, len);
+	if (m == 0) {
+		ifp->if_ierrors++;
 		return;
 	}
+
+	ifp->if_ipackets++;
+
+	/* We assume that the header fits entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
+
 #if NBPFILTER > 0
 	/*
-	 * Check if there's a BPF listener on this interface.  If so, hand off
-	 * the raw packet to bpf.
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
 			sizeof(eh->ether_dhost)) != 0) {
@@ -1186,12 +1167,12 @@ ae_get_packet(sc, buf, len)
 
 	/* Fix up data start offset in mbuf to point past ether header. */
 	m_adj(m, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, m);
+	ether_input(ifp, eh, m);
 }
+
 /*
  * Supporting routines.
  */
-
 /*
  * Given a source and destination address, copy 'amount' of a packet from the
  * ring buffer into a linear destination buffer.  Takes into account ring-wrap.
@@ -1219,6 +1200,7 @@ ae_ring_copy(sc, src, dst, amount)
 
 	return (src + amount);
 }
+
 /*
  * Copy data from receive buffer to end of mbuf chain allocate additional mbufs
  * as needed.  Return pointer to last mbuf in chain.
@@ -1228,50 +1210,46 @@ ae_ring_copy(sc, src, dst, amount)
  * amount = amount of data to copy
  */
 struct mbuf *
-ae_ring_to_mbuf(sc, src, dst, total_len)
+aeget(sc, src, total_len)
 	struct ae_softc *sc;
 	caddr_t src;
-	struct mbuf *dst;
 	u_short total_len;
 {
-	register struct mbuf *m = dst;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *top, **mp, *m;
+	int len;
 
-	while (total_len) {
-		register u_short amount = min(total_len, M_TRAILINGSPACE(m));
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return 0;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = total_len;
+	len = MHLEN;
+	top = 0;
+	mp = &top;
 
-		if (amount == 0) {
-			/*
-			 * No more data in this mbuf; alloc another.
-			 *
-			 * If there is enough data for an mbuf cluster, attempt
-			 * to allocate one of those, otherwise, a regular mbuf
-			 * will do.
-			 * Note that a regular mbuf is always required, even if
-			 * we get a cluster - getting a cluster does not
-			 * allocate any mbufs, and one is needed to assign the
-			 * cluster to.  The mbuf that has a cluster extension
-			 * can not be used to contain data - only the cluster
-			 * can contain data.
-			 */
-			dst = m;
+	while (total_len > 0) {
+		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0)
-				return (0);
-
-			if (total_len >= MINCLSIZE)
-				MCLGET(m, M_DONTWAIT);
-
-			m->m_len = 0;
-			dst->m_next = m;
-			amount = min(total_len, M_TRAILINGSPACE(m));
+			if (m == 0) {
+				m_freem(top);
+				return 0;
+			}
+			len = MLEN;
 		}
-		src = ae_ring_copy(sc, src, mtod(m, caddr_t) + m->m_len,
-		    amount);
-
-		m->m_len += amount;
-		total_len -= amount;
+		if (total_len >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
+		}
+		m->m_len = len = min(total_len, len);
+		src = ae_ring_copy(sc, src, mtod(m, caddr_t), len);
+		total_len -= len;
+		*mp = m;
+		mp = &m->m_next;
 	}
-	return (m);
+
+	return top;
 }
 /*
  * Compute the multicast address filter from the list of multicast addresses we
@@ -1364,7 +1342,7 @@ ae_put(sc, m, buf)
 
 	wantbyte = 0;
 
-	for (; m != 0; m = m->m_next) {
+	for (; m ; m = m->m_next) {
 		data = mtod(m, u_char *);
 		len = m->m_len;
 		totlen += len;
