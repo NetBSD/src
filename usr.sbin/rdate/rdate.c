@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.13 2002/05/16 19:57:47 wiz Exp $	*/
+/*	$NetBSD: rdate.c,v 1.14 2002/07/14 01:01:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.13 2002/05/16 19:57:47 wiz Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.14 2002/07/14 01:01:10 wiz Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -58,17 +58,13 @@ __RCSID("$NetBSD: rdate.c,v 1.13 2002/05/16 19:57:47 wiz Exp $");
 #include <util.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
-#if __STDC__
 #define DIFFERENCE 2208988800UL
-#else
-#define DIFFERENCE 2208988800
-#endif
 
-	int	main __P((int, char **));
-static	void	usage __P((void));
+	int	main(int, char **);
+static	void	usage(void);
 
 static void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [-psa] host\n", getprogname());
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
@@ -77,9 +73,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int             argc;
-	char           *argv[];
+main(int argc, char *argv[])
 {
 	int             pr = 0, silent = 0, s;
 	int		slidetime = 0;
