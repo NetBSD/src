@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2004/11/18 22:56:32 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.106 2005/01/03 00:03:25 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2004/11/18 22:56:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2005/01/03 00:03:25 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -946,5 +946,6 @@ upcallret(struct lwp *l)
 {
 	struct trapframe *frame = trapframe(l);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l, frame);
 }
