@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.209 1999/06/17 00:12:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.210 1999/07/20 22:25:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2089,14 +2089,11 @@ ENTRY(switch_exit)
 	sti
 
 	/*
-	 * Nuke the TSS and schedule the dead process's
-	 * vmspace and stack to be freed.
+	 * Schedule the dead process's vmspace and stack to be freed.
 	 */
-	pushl	P_ADDR(%edi)		/* tss_free(p->p_addr) */
-	call	_C_LABEL(tss_free)
 	pushl	%edi			/* exit2(p) */
 	call	_C_LABEL(exit2)
-	addl	$8,%esp
+	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
