@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.96 1997/07/17 00:58:49 jtk Exp $	*/
+/*	$NetBSD: isa.c,v 1.97 1997/08/26 19:27:22 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -156,6 +156,8 @@ isaprint(aux, isa)
 		printf(" irq %d", ia->ia_irq);
 	if (ia->ia_drq != DRQUNK)
 		printf(" drq %d", ia->ia_drq);
+	if (ia->ia_drq2 != DRQUNK)
+		printf(" drq2 %d", ia->ia_drq2);
 	return (UNCONF);
 }
 
@@ -185,6 +187,7 @@ isascan(parent, match)
 	ia.ia_msize = cf->cf_msize;
 	ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 	ia.ia_drq = cf->cf_drq;
+	ia.ia_drq2 = cf->cf_drq2;
 	ia.ia_delaybah = sc->sc_delaybah;
 
 	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
@@ -214,6 +217,7 @@ isasearch(parent, cf, aux)
 		ia.ia_msize = cf->cf_msize;
 		ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 		ia.ia_drq = cf->cf_drq;
+		ia.ia_drq2 = cf->cf_drq2;
 		ia.ia_delaybah = sc->sc_delaybah;
 
 		tryagain = 0;

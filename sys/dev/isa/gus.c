@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.41 1997/08/24 22:31:33 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.42 1997/08/26 19:27:21 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -658,9 +658,8 @@ gusprobe(parent, match, aux)
 {
 	struct gus_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int iobase = ia->ia_iobase;
-	int recdrq = cf->cf_flags;
+	int recdrq = ia->ia_drq2;
 
 	sc->sc_iot = ia->ia_iot;
 	/*
@@ -668,19 +667,19 @@ gusprobe(parent, match, aux)
 	 * valid for this card.
 	 */
 
-	if (gus_irq_map[ia->ia_irq] == IRQUNK) {
+	if (ia->ia_irq == IRQUNK || gus_irq_map[ia->ia_irq] == IRQUNK) {
 		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
 		return(0);
 	}
 
-	if (gus_drq_map[ia->ia_drq] == DRQUNK) {
+	if (ia->ia_drq == DRQUNK || gus_drq_map[ia->ia_drq] == DRQUNK) {
 		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
 		return(0);
 	}
 
-	if (recdrq != 0x00) {
+	if (recdrq != DRQUNK) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
-		   printf("gus: invalid flag given for second DMA channel (0x%x), card not probed\n", recdrq);
+		   printf("gus: invalid second DMA channel (%d), card not probed\n", recdrq);
 		   return(0);
 	        }
 	} else
