@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.401 2002/02/02 11:30:05 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.402 2002/02/02 11:58:28 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.399 2002/02/02 11:56:43 tsutsui Exp 
  */
 
 /*
@@ -2800,6 +2800,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "INIC-920 SCSI",
 	},
 	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I850,
+	    0,
+	    "Initio",
+	    "INIC-850 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I1060,
+	    0,
+	    "Initio",
+	    "INIC-1060 SCSI",
+	},
+	{
 	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I940,
 	    0,
 	    "Initio",
@@ -4754,6 +4766,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Rainbow Technologies",
 	    "CryptoSwift 200 PKI Accelerator",
+	},
+	{
+	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
+	    0,
+	    "Ratoc Systems",
+	    "REX PCI-31/33 SCSI",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
@@ -9282,7 +9300,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_RATOC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Ratoc System",
+	    "Ratoc Systems",
 	    NULL,
 	},
 	{
