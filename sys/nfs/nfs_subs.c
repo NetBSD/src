@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.94 2001/04/21 21:35:53 bjh21 Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.95 2001/06/07 01:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -857,7 +857,8 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			uiop->uio_iovcnt--;
 			uiop->uio_iov++;
 		} else {
-			(caddr_t)uiop->uio_iov->iov_base += uiosiz;
+			uiop->uio_iov->iov_base =
+			    (caddr_t)uiop->uio_iov->iov_base + uiosiz;
 			uiop->uio_iov->iov_len -= uiosiz;
 		}
 		siz -= uiosiz;
@@ -936,7 +937,8 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			uiop->uio_offset += xfer;
 			uiop->uio_resid -= xfer;
 		}
-		(caddr_t)uiop->uio_iov->iov_base += uiosiz;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    uiosiz;
 		uiop->uio_iov->iov_len -= uiosiz;
 		siz -= uiosiz;
 	}
