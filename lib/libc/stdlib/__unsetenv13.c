@@ -1,4 +1,4 @@
-/*	$NetBSD: __unsetenv13.c,v 1.1 2003/04/07 13:41:14 kleink Exp $	*/
+/*	$NetBSD: __unsetenv13.c,v 1.2 2003/04/13 17:39:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: __unsetenv13.c,v 1.1 2003/04/07 13:41:14 kleink Exp $");
+__RCSID("$NetBSD: __unsetenv13.c,v 1.2 2003/04/13 17:39:13 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,12 @@ __weak_alias(unsetenv,_unsetenv)
 
 #ifdef _REENTRANT
 extern rwlock_t __environ_lock;
+#endif
+
+#ifdef __LIBC12_SOURCE__
+__warn_references(unsetenv,
+    "warning: reference to compatibility unsetenv();"
+    " include <stdlib.h> for correct reference")
 #endif
 
 extern char **environ;
