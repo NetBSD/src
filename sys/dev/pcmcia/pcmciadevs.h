@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.182 2003/03/29 16:48:02 perry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.183 2003/04/09 02:10:57 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.181 2003/03/29 16:47:27 perry Exp 
+ *	NetBSD: pcmciadevs,v 1.182 2003/04/09 02:09:55 christos Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -711,6 +711,9 @@
 #define	PCMCIA_CIS_AMD_AM79C930	{ "AMD", "Am79C930", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMD_AM79C930	-1
 #define	PCMCIA_STR_AMD_AM79C930	"AMD Am79C930"
+#define	PCMCIA_CIS_BILLIONTON_CFLT10N	{ "CF", "10Base-Ethernet", "1.0", NULL }
+#define	PCMCIA_PRODUCT_BILLIONTON_CFLT10N	-1
+#define	PCMCIA_STR_BILLIONTON_CFLT10N	"Billionton Systems Inc. CFLT10N Ethernet"
 #define	PCMCIA_CIS_BILLIONTON_LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL }
 #define	PCMCIA_PRODUCT_BILLIONTON_LNT10TN	-1
 #define	PCMCIA_STR_BILLIONTON_LNT10TN	"Billionton Systems Inc. LNT-10TN NE2000 Compatible Card"

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.182 2003/03/29 16:48:03 perry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.183 2003/04/09 02:10:58 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.181 2003/03/29 16:47:27 perry Exp 
+ *	NetBSD: pcmciadevs,v 1.182 2003/04/09 02:09:55 christos Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1098,6 +1098,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "AMD",
 	    "AMD Am79C930",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_BILLIONTON_CFLT10N,
+	    PCMCIA_CIS_BILLIONTON_CFLT10N,
+	    0,
+	    "Billionton Systems Inc.",
+	    "Billionton Systems Inc. CFLT10N Ethernet",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_BILLIONTON_LNT10TN,
