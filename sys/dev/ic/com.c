@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.47 1995/01/29 07:36:54 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.48 1995/04/10 01:05:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -784,7 +784,7 @@ comintr(sc)
 			tp = com_tty[sc->sc_dev.dv_unit];
 			/* XXXX put in FIFO and process later */
 			while (code = (inb(iobase + com_lsr) & LSR_RCV_MASK)) {
-				if (code == LSR_RXRDY) {
+				if (code & LSR_RXRDY) {
 					code = inb(iobase + com_data);
 					if (tp->t_state & TS_ISOPEN)
 						(*linesw[tp->t_line].l_rint)(code, tp);
@@ -795,7 +795,7 @@ comintr(sc)
 							kgdb_connect(0);
 					}
 #endif
-				} else if (code & LSR_RXRDY)
+				} else
 					comeint(sc, code);
 			}
 		} else if (code == IIR_TXRDY) {
@@ -825,6 +825,7 @@ comintr(sc)
  */
 #include <dev/cons.h>
 
+void
 comcnprobe(cp)
 	struct consdev *cp;
 {
@@ -848,6 +849,7 @@ comcnprobe(cp)
 #endif
 }
 
+void
 comcninit(cp)
 	struct consdev *cp;
 {
@@ -893,6 +895,7 @@ comcngetc(dev)
 /*
  * Console kernel output character routine.
  */
+void
 comcnputc(dev, c)
 	dev_t dev;
 	int c;
