@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.8 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.9 2001/01/04 02:43:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.8 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.9 2001/01/04 02:43:32 jwise Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 
 #define turnfirst(x) (*x == 'r' || *x == 'l')
+
+void	acceptmove(void);
+void	acceptboard(void);
+static void	parties(int *, struct ship *, int, int);
 
 void
 acceptmove(void)
@@ -200,7 +204,7 @@ acceptboard(void)
 	unblockalarm();
 }
 
-void
+static void
 parties(int *crew, struct ship *to, int isdefense, int buf)
 {
 	int k, j, men; 
