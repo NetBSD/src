@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.46 2000/09/22 02:34:58 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.47 2000/09/24 02:08:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -354,16 +354,17 @@ uhub_explore(usbd_device_handle dev)
 				       USBDEVNAME(sc->sc_dev), port);
 			} else {
 				/* Port error condition. */
-				if (up->restartcnt++ < USBD_RESTART_MAX) {
+				if (up->restartcnt) /* no message first time */
 					printf("%s: port error, restarting "
 					       "port %d\n",
 					       USBDEVNAME(sc->sc_dev), port);
+
+				if (up->restartcnt++ < USBD_RESTART_MAX)
 					goto disco;
-				} else {
+				else
 					printf("%s: port error, giving up "
 					       "port %d\n",
 					       USBDEVNAME(sc->sc_dev), port);
-				}
 			}
 		}
 		if (!(change & UPS_C_CONNECT_STATUS)) {
@@ -410,8 +411,6 @@ uhub_explore(usbd_device_handle dev)
 			printf("%s: strange, connected port %d has no power\n",
 			       USBDEVNAME(sc->sc_dev), port);
 
-		up->restartcnt = 0;
-
 		/* Wait for maximum device power up time. */
 		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
 
@@ -441,9 +440,10 @@ uhub_explore(usbd_device_handle dev)
 			printf("%s: device problem, disabling port %d\n",
 			       USBDEVNAME(sc->sc_dev), port);
 			usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
-			/* Make sure we don't try to restart it infinitely. */
-			up->restartcnt = USBD_RESTART_MAX;
 		} else {
+			/* The port set up succeeded, reset error count. */
+			up->restartcnt = 0;
+
 			if (up->device->hub)
 				up->device->hub->explore(up->device);
 		}
