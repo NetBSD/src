@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.25 1998/10/01 20:39:01 drochner Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.26 1998/10/02 00:20:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ le_pci_mediachange(sc)
 	u_int16_t reg;
 
 	if (IFM_SUBTYPE(newmedia) !=
-	    IFM_SUBTYPE(lesc->currentmedia)) {
+	    IFM_SUBTYPE(lesc->sc_currentmedia)) {
 		if (IFM_SUBTYPE(newmedia) == IFM_AUTO) {
 			/* switch to autoselect - BCR2 bit 1 */
 			bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
@@ -211,7 +211,7 @@ le_pci_mediachange(sc)
 				sc->sc_initmodemedia = 0; /* AUI */
 			lance_init(sc);
 
-			if (IFM_SUBTYPE(lesc->currentmedia) == IFM_AUTO) {
+			if (IFM_SUBTYPE(lesc->sc_currentmedia) == IFM_AUTO) {
 				/* take away autoselect - BCR2 bit 1 */
 				bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
 				reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
@@ -223,7 +223,7 @@ le_pci_mediachange(sc)
 		
 	}
 
-	if ((IFM_OPTIONS(newmedia) ^ IFM_OPTIONS(lesc->currentmedia))
+	if ((IFM_OPTIONS(newmedia) ^ IFM_OPTIONS(lesc->sc_currentmedia))
 	    & IFM_FDX) {
 		/* toggle full duplex - BCR9 */
 		bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 9);
@@ -242,7 +242,7 @@ le_pci_mediachange(sc)
 		bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
 	}
 
-	lesc->currentmedia = newmedia;
+	lesc->sc_currentmedia = newmedia;
 	return (0);
 }
 
@@ -365,7 +365,7 @@ le_pci_attach(parent, self, aux)
 	sc->sc_nsupmedia = sizeof(le_pci_supmedia) / sizeof(int);
 	sc->sc_defaultmedia = le_pci_supmedia[0];
 	sc->sc_mediachange = le_pci_mediachange;
-	lesc->currentmedia = le_pci_supmedia[0];
+	lesc->sc_currentmedia = le_pci_supmedia[0];
 
 	printf("%s", sc->sc_dev.dv_xname);
 	am79900_config(&lesc->sc_am79900);
