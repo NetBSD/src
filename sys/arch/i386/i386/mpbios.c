@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.6 2002/11/22 15:23:43 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.7 2002/11/28 16:37:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1107,19 +1107,19 @@ mpbios_cpu_start(struct cpu_info *ci)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = i386_ipi_init(ci->ci_cpuid)) != 0)
+		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
 			return error;
 
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_cpuid,
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_cpuid,
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
 			    LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
