@@ -1,3 +1,2 @@
-# $NetBSD: md.vax,v 1.5 2001/01/26 01:39:18 jwise Exp $
-./etc/fstab.ra		etc-sys-etc
+# $NetBSD: md.vax,v 1.6 2002/05/04 19:44:34 jdolecek Exp $
 ./etc/ld.so.conf	etc-sys-etc

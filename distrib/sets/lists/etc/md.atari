@@ -1,3 +1,2 @@
-# $NetBSD: md.atari,v 1.4 2001/01/26 01:39:17 jwise Exp $
-./etc/fstab.tmp		etc-sys-etc
+# $NetBSD: md.atari,v 1.5 2002/05/04 19:44:27 jdolecek Exp $
 ./etc/ld.so.conf	etc-sys-etc

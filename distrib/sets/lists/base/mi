@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.319 2002/05/02 17:03:57 wiz Exp $
+# $NetBSD: mi,v 1.320 2002/05/04 19:43:58 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -915,6 +915,20 @@
 ./usr/share/examples/emul/svr4/etc	base-sys-examples
 ./usr/share/examples/emul/ultrix	base-sys-examples
 ./usr/share/examples/emul/ultrix/etc	base-sys-examples
+./usr/share/examples/fstab/fstab.md		base-fstab-examples
+./usr/share/examples/fstab/fstab.nfs.1		base-fstab-examples
+./usr/share/examples/fstab/fstab.nfs.2		base-fstab-examples
+./usr/share/examples/fstab/fstab.nfs.3		base-fstab-examples
+./usr/share/examples/fstab/fstab.ra		base-fstab-examples
+./usr/share/examples/fstab/fstab.rd		base-fstab-examples
+./usr/share/examples/fstab/fstab.sd0.1		base-fstab-examples
+./usr/share/examples/fstab/fstab.sd0.2		base-fstab-examples
+./usr/share/examples/fstab/fstab.sd0.amiga	base-fstab-examples
+./usr/share/examples/fstab/fstab.sd0.atari	base-fstab-examples
+./usr/share/examples/fstab/fstab.wd0.1		base-fstab-examples
+./usr/share/examples/fstab/fstab.wd0.2		base-fstab-examples
+./usr/share/examples/fstab/fstab.wd0.3		base-fstab-examples
+./usr/share/examples/fstab/fstab.wd0.cobalt	base-fstab-examples
 ./usr/share/examples/ftpd		base-netutil-examples
 ./usr/share/examples/ipf		base-netutil-examples
 ./usr/share/examples/isdn		base-isdn-examples
