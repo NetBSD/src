@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.38 2001/01/11 06:33:51 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.39 2001/01/21 02:39:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _USB_PORT_H
+#define _USB_PORT_H
 
 /* 
  * Macro's to cope with the differences between operating systems.
@@ -50,6 +52,8 @@
  */
 
 #include "opt_usbverbose.h"
+
+/*#define USB_USE_SOFTINTR */
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
@@ -499,3 +503,6 @@ __CONCAT(dname,_detach)(device_t self)
 #define logprintf		printf
 
 #endif /* __FreeBSD__ */
+
+#endif /* _USB_PORT_H */
+
