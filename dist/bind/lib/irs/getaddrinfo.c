@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.3 2002/06/28 06:21:29 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.4 2002/07/04 23:30:40 itojun Exp $	*/
 
 /*	$KAME: getaddrinfo.c,v 1.14 2001/01/06 09:41:15 jinmei Exp $	*/
 
@@ -194,7 +194,7 @@ static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((const struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
 static int addrconfig __P((int));
-static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+static u_int32_t ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
 static struct net_data *init __P((void));
 
 struct addrinfo *hostent2addrinfo __P((struct hostent *,
@@ -299,8 +299,9 @@ str_isnumber(p)
 	if (*p == '\0')
 		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -856,7 +857,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
@@ -1001,9 +1002,10 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly) {
 	if (str_isnumber(servname)) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = htons(atoi(servname));
+		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
+		port = htons(port);
 	} else {
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
@@ -1076,12 +1078,13 @@ addrconfig(af)
 }
 
 /* convert a string to a scope identifier. XXX: IPv6 specific */
-static int
+static u_int32_t
 ip6_str2scopeid(scope, sin6)
 	char *scope;
 	struct sockaddr_in6 *sin6;
 {
-	int scopeid;
+	u_int32_t scopeid;
+	u_long lscopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
 	char *ep;
 
@@ -1113,8 +1116,10 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
 trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	scopeid = lscopeid & 0xffffffffUL;
+	if (errno == 0 && ep && *ep == '\0' && scopeid == lscopeid)
 		return scopeid;
 	else
 		return -1;
