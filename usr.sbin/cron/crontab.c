@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.8 1998/02/01 14:36:36 frueauf Exp $	*/
+/*	$NetBSD: crontab.c,v 1.9 1998/02/22 12:17:31 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.8 1998/02/01 14:36:36 frueauf Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.9 1998/02/22 12:17:31 christos Exp $");
 #endif
 #endif
 
@@ -73,8 +73,11 @@ static	void		list_cmd __P((void)),
 			edit_cmd __P((void)),
 			poke_daemon __P((void)),
 			check_error __P((const char *)),
-			parse_args __P((int c, char *v[]));
+			parse_args __P((int c, char *v[])),
+			usage __P((char *));
 static	int		replace_cmd __P((void));
+
+int main __P((int, char *[]));
 
 
 static void
@@ -130,6 +133,9 @@ main(argc, argv)
 				break;
 	case opt_replace:	if (replace_cmd() < 0)
 					exitstatus = ERROR_EXIT;
+				break;
+	case opt_unknown:
+				usage("unrecognized option");
 				break;
 	}
 	exit(0);
@@ -485,7 +491,8 @@ edit_cmd() {
 			ProgramName, Filename);
 		goto done;
 	default:
-		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n");
+		fprintf(stderr, "%s: panic: bad switch() in replace_cmd()\n",
+		    ProgramName);
 		goto fatal;
 	}
  remove:
