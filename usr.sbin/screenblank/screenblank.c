@@ -1,7 +1,7 @@
-/*	$NetBSD: screenblank.c,v 1.15 2001/11/06 22:56:02 augustss Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.16 2002/01/23 16:57:51 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,15 +37,15 @@
  */
 
 /*
- * Screensaver daemon for the Sun 3 and SPARC.
+ * Screensaver daemon for the Sun 3 and SPARC, and platforms using WSCONS.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1996, 1998 \
+"@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.15 2001/11/06 22:56:02 augustss Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.16 2002/01/23 16:57:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -224,9 +224,11 @@ main(int argc, char *argv[])
 		change = 0;
 		for (dsp = ds_list.lh_first; dsp != NULL;
 		    dsp = dsp->ds_link.le_next) {
+#if 0		/* XXXLUKEM - doesn't make sense for wscons framebuffers */
 			/* Don't check framebuffers. */
 			if (dsp->ds_isfb)
 				continue;
+#endif
 			if (stat(dsp->ds_path, &st) == -1) {
 				syslog(LOG_CRIT,
 				    "Can't stat `%s' (%m)", dsp->ds_path);
