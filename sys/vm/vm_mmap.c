@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.46 1996/02/28 22:39:13 gwr Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,7 +149,7 @@ sys_mmap(p, v, retval)
 
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mmap(%d): addr %x len %x pro %x flg %x fd %d pos %x\n",
+		printf("mmap(%d): addr %lx len %lx pro %x flg %x fd %d pos %lx\n",
 		       p->p_pid, addr, size, prot, flags, fd, pos);
 #endif
 
@@ -283,7 +283,7 @@ sys_msync(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & (MDB_FOLLOW|MDB_SYNC))
-		printf("msync(%d): addr %x len %x\n",
+		printf("msync(%d): addr %lx len %lx\n",
 		       p->p_pid, addr, size);
 #endif
 
@@ -322,7 +322,7 @@ sys_msync(p, v, retval)
 	}
 #ifdef DEBUG
 	if (mmapdebug & MDB_SYNC)
-		printf("msync: cleaning/flushing address range [%x-%x)\n",
+		printf("msync: cleaning/flushing address range [%lx-%lx)\n",
 		       addr, addr+size);
 #endif
 	/*
@@ -373,7 +373,7 @@ sys_munmap(p, v, retval)
 	size = (vm_size_t) SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("munmap(%d): addr %x len %x\n",
+		printf("munmap(%d): addr %lx len %lx\n",
 		       p->p_pid, addr, size);
 #endif
 
@@ -446,7 +446,7 @@ sys_mprotect(p, v, retval)
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mprotect(%d): addr %x len %x prot %d\n", p->p_pid,
+		printf("mprotect(%d): addr %lx len %lx prot %d\n", p->p_pid,
 		    addr, size, prot);
 #endif
 	/*
@@ -527,7 +527,7 @@ sys_mlock(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("mlock(%d): addr %x len %x\n",
+		printf("mlock(%d): addr %lx len %lx\n",
 		       p->p_pid, addr, size);
 #endif
 	/*
@@ -576,7 +576,7 @@ sys_munlock(p, v, retval)
 	size = (vm_size_t)SCARG(uap, len);
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("munlock(%d): addr %x len %x\n",
+		printf("munlock(%d): addr %lx len %lx\n",
 		       p->p_pid, addr, size);
 #endif
 	/*
@@ -695,7 +695,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		(void) pager_cache(object, FALSE);
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): ANON *addr %x size %x pager %p\n",
+			printf("vm_mmap(%d): ANON *addr %lx size %lx pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}
@@ -809,7 +809,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 					if (paddr != *addr)
 					    printf(
 					      "vm_mmap: pmap botch! "
-					      "[foff %x, addr %x, paddr %x]\n",
+					      "[foff %lx, addr %lx, paddr %lx]\n",
 					      foff, *addr, paddr);
 				}
 #endif
@@ -880,7 +880,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		}
 #ifdef DEBUG
 		if (mmapdebug & MDB_MAPIT)
-			printf("vm_mmap(%d): FILE *addr %x size %x pager %p\n",
+			printf("vm_mmap(%d): FILE *addr %lx size %lx pager %p\n",
 			       curproc->p_pid, *addr, size, pager);
 #endif
 	}
