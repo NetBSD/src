@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.14 2003/12/21 16:17:19 lukem Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.15 2003/12/21 17:37:26 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -273,12 +273,50 @@
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
 
+
+usage()
+{
+	cat 1>&2 << _USAGE_
+Usage: ${0##*/} [-f] [-m mknod] [-s]  special [...]
+	Create listed special devices.  Options:
+	-f		Force permissions to be updated on existing devices.
+	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
+	-s		Generate mtree(8) specfile instead of creating devices.
+
+_USAGE_
+	exit 1
+}
+
+do_force=false
+do_specfile=false
+while getopts fm:s ch; do
+	case ${ch} in
+	f)	do_force=true ;;
+	m)	TOOL_MKNOD=${OPTARG} ;;
+	s)	do_specfile=true ;;
+	*)	usage ;;
+	esac
+done
+shift $((${OPTIND} - 1))
+[ $# -gt 0 ] || usage
+
+
+MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
+if ! $do_force; then
+	MKNOD="${MKNOD} -r"
+fi
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
+
+u_root="%uid_root%"
+u_uucp="%uid_uucp%"
+g_kmem="%gid_kmem%"
+g_ntpd="%gid_ntpd%"
+g_operator="%gid_operator%"
+g_wheel="%gid_wheel%"
 dialin=0
 dialout=524288
 callunit=262144
-
-# Keep /usr/etc so SunOS can find chown
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue:/usr/etc
 
 # only allow read&write for owner by default
 umask 077
@@ -286,21 +324,69 @@ umask 077
 # Check if we have fdesc mounted
 if [ -d fd ]; then
         case "`df fd`" in
-        *fdesc*) nofdesc=false;;
-        *) nofdesc=true;;
+        *fdesc*)	nofdesc=false;;
+        *)		nofdesc=true;;
         esac
 else
         nofdesc=true
 fi
 
-# called from makedev, with params
-# mkdev name b/c major minor [mode] [group]
-mkdev() {
-	rm -f $1
-	mknod $1 $2 $3 $4
-	test -n "$5" && chmod $5 $1
-	test -n "$6" && chgrp $6 $1
+
+if $do_specfile; then
+	echo ". type=dir"
+fi
+
+
+#
+# functions available to create nodes:
+#
+# mkdev name [b|c] major minor [mode{=600} [gid{=0} [uid{=0}]]]
+#	create device node `name' with the appropriate permissions
+#
+# lndev src target
+#	create a symlink from src to target
+#
+# makedir dir mode
+#	create directory with appropriate mode
+#
+
+mkdev()
+{
+	if $do_specfile; then
+		case $2 in
+		b)	type=block ;;
+		c)	type=char ;;
+		esac
+		echo "./$1 type=${type} device=netbsd,$3,$4 mode=${5:-600} gid=${6:-$g_wheel} uid=${7:-$u_root}"
+	else
+		${MKNOD} -m ${5:-600} -g \#${6:-$g_wheel} -u \#${7:-$u_root} $1 $2 $3 $4
+	fi
 }
+
+lndev()
+{
+	if $do_specfile; then
+		echo "./$2 type=link link=$1 mode=0700 gid=$g_wheel uid=$u_root"
+	else
+		ln -f -s $1 $2
+	fi
+}
+
+makedir()
+{
+	if $do_specfile; then
+		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
+	else
+		mkdir $1 2>/dev/null
+		chmod $2 $1
+	fi
+}
+
+
+
+# makedev special [...]
+#	the main loop
+#
 
 makedev()
 {
@@ -336,15 +422,15 @@ init)
 %MI_DEVICES_BEGIN%
 audio)
 	makedev audio0 audio1 audio2 audio3
-	ln -fs sound0 sound
-	ln -fs audio0 audio
-	ln -fs mixer0 mixer
-	ln -fs audioctl0 audioctl
+	lndev sound0 sound
+	lndev audio0 audio
+	lndev mixer0 mixer
+	lndev audioctl0 audioctl
 	;;
 
 radio)
 	makedev radio0 radio1
-	ln -fs radio0 radio
+	lndev radio0 radio
 	;;
 
 ramdisk)
@@ -366,101 +452,67 @@ isdns)
 	;;
 
 std)
-	rm -f console constty drum mem kmem null zero io klog ksyms
-	mknod console		c %cons_chr% 0
-	mknod constty		c %cons_chr% 1
-	mknod drum		c %swap_chr% 0	; chmod 640 drum ; chgrp kmem drum
-	mknod kmem		c %mem_chr% 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c %mem_chr% 0	; chmod 640 mem	; chgrp kmem mem
-	mknod null		c %mem_chr% 2	; chmod 666 null
-	mknod zero		c %mem_chr% 12	; chmod 666 zero
-	mknod klog		c %log_chr% 0	; chmod 600 klog
-	mknod ksyms		c %ksyms_chr% 0	; chmod 444 ksyms
+	mkdev		console	c %cons_chr% 0	600
+	mkdev		constty	c %cons_chr% 1	600
+	mkdev		drum	c %swap_chr% 0	640 $g_kmem
+	mkdev		kmem	c %mem_chr% 1	640 $g_kmem
+	mkdev		mem	c %mem_chr% 0	640 $g_kmem
+	mkdev		null	c %mem_chr% 2	666
+	mkdev		zero	c %mem_chr% 12	666
+	mkdev		klog	c %log_chr% 0	600
+	mkdev		ksyms	c %ksyms_chr% 0	444
 	if $nofdesc; then
-		rm -f tty stdin stdout stderr
-		mknod tty	c %ctty_chr% 0	; chmod 666 tty
-		mknod stdin	c %filedesc_chr% 0	; chmod 666 stdin
-		mknod stdout	c %filedesc_chr% 1	; chmod 666 stdout
-		mknod stderr	c %filedesc_chr% 2	; chmod 666 stderr
+		mkdev	tty	c %ctty_chr% 0		666
+		mkdev	stdin	c %filedesc_chr% 0	666
+		mkdev	stdout	c %filedesc_chr% 1	666
+		mkdev	stderr	c %filedesc_chr% 2	666
 	fi
 	;;
 
 usb*)
 	unit=${i#usb}
 	if [ "$unit" = "" ]; then
-	    unit=255
-	    usb=usb
+		unit=255
+		usb=usb
 	else
-	    usb=usb$unit
+		usb=usb$unit
 	fi
-	major=%usb_chr%
-	rm -f $usb
-	mknod $usb c $major $unit
-	chmod 600 $usb
+	mkdev $usb c %usb_chr% $unit
 	;;
 
 uhid*)
 	unit=${i#uhid}
-	uhid=uhid$unit
-	major=%uhid_chr%
-	rm -f $uhid
-	mknod $uhid c $major $unit
-	chmod 666 $uhid
+	mkdev uhid$unit c %uhid_chr% $unit 666
 	;;
 
 ulpt*)
 	unit=${i#ulpt}
-	ulpt=ulpt$unit
-	ulpn=ulpn$unit
-	major=%ulpt_chr%
-	rm -f $ulpt $ulpn
-	mknod $ulpt c $major $unit
-	mknod $ulpn c $major $(($unit + 64))
-	chmod 600 $ulpt $ulpn
+	mkdev ulpt$unit c %ulpt_chr% $unit
+	mkdev ulpn$unit c %ulpt_chr% $(($unit + 64))
 	;;
 
 urio*)
 	unit=${i#urio}
-	urio=urio$unit
-	major=%urio_chr%
-	rm -f $urio
-	mknod $urio c $major $unit
-	chmod 666 $urio
+	mkdev urio$unit c %urio_chr% $unit 666
 	;;
 
 uscanner*)
 	unit=${i#uscanner}
-	uscanner=uscanner$unit
-	major=%uscanner_chr%
-	rm -f $uscanner
-	mknod $uscanner c $major $unit
-	chmod 600 $uscanner
+	mkdev uscanner$unit c %uscanner_chr% $unit
 	;;
 
 ttyU*)
 	unit=${i#ttyU}
-	ttyU=ttyU$unit
-	dtyU=dtyU$unit
-	ctyU=ctyU$unit
-	major=%ucom_chr%
-	rm -f $ttyU $dtyU $ctyU
-	mknod $ttyU c $major $(($unit + $dialin  ))
-	mknod $dtyU c $major $(($unit + $dialout ))
-	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp $ttyU $dtyU $ctyU
-	chmod 600 $ttyU $dtyU $ctyU
+	mkdev ttyU$unit c %ucom_chr% $(($unit + $dialin  )) "" "" $u_uucp
+	mkdev dtyU$unit c %ucom_chr% $(($unit + $dialout )) "" "" $u_uucp
+	mkdev ctyU$unit c %ucom_chr% $(($unit + $callunit)) "" "" $u_uucp
 	;;
 
 ugen*)
 	unit=${i#ugen}
-	ugen=ugen$unit
-	major=%ugen_chr%
 	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
 	do
-		ugenj=$ugen.$j
-		rm -f $ugenj
-		mknod $ugenj c $major $(($unit * 16 + ${j#0}))
-		chmod 600 $ugenj
+		mkdev ugen$unit.$j c %ugen_chr% $(($unit * 16 + ${j#0}))
 	done
 	;;
 
@@ -475,79 +527,51 @@ wscons)
 	;;
 
 wsmouse)
-	rm -f wsmouse
-	mknod wsmouse c %wsmux_chr% 0
-	chmod 600 wsmouse
+	mkdev wsmouse c %wsmux_chr% 0
 	;;
 
 wskbd)
-	rm -f wskbd
-	mknod wskbd c %wsmux_chr% 1
-	chmod 600 wskbd
+	mkdev wskbd c %wsmux_chr% 1
 	;;
 
 wsmux*)
 	unit=${i#wsmux}
-	unitctl=$(($unit + 128))
-	wsmux=wsmux$unit
-	wsmuxctl=wsmuxctl$unit
-	major=%wsmux_chr%
-	rm -f $wsmux $wsmuxctl
-	mknod $wsmux c $major $unit
-	chmod 600 $wsmux
-	mknod $wsmuxctl c $major $unitctl
-	chmod 200 $wsmuxctl
+	mkdev wsmux$unit    c %wsmux_chr% $unit
+	mkdev wsmuxctl$unit c %wsmux_chr% $(($unit + 128)) 200
 	;;
 
 ttyEstat)
-	chr=%wsdisplay_chr%
-	rm -f ttyEstat
-	mknod ttyEstat c $chr 254
-	chmod 600 ttyEstat
+	mkdev ttyEstat c %wsdisplay_chr% 254
 	;;
 
 ttyEcfg)
-	chr=%wsdisplay_chr%
-	rm -f ttyEcfg
-	mknod ttyEcfg c $chr 255
-	chmod 600 ttyEcfg
+	mkdev ttyEcfg c %wsdisplay_chr% 255
 	;;
 
 ttyE*)
-	chr=%wsdisplay_chr%; unit=${i#ttyE}
-	rm -f ttyE$unit
-	mknod ttyE$unit c $chr $unit
+	unit=${i#ttyE}
+	mkdev ttyE$unit c %wsdisplay_chr% $unit
 	;;
 
 wsmouse*)
 	unit=${i#wsmouse}
-	wsmouse=wsmouse$unit
-	major=%wsmouse_chr%
-	rm -f $wsmouse
-	mknod $wsmouse c $major $unit
-	chmod 600 $wsmouse
+	mkdev wsmouse$unit c %wsmouse_chr% $unit
 	;;
 
 wskbd*)
 	unit=${i#wskbd}
-	wskbd=wskbd$unit
-	major=%wskbd_chr%
-	rm -f $wskbd
-	mknod $wskbd c $major $unit
-	chmod 600 $wskbd
+	mkdev wskbd$unit c %wskbd_chr% $unit
 	;;
 
 fd)
 	if $nofdesc; then
-		rm -f fd/*
-		mkdir fd 2>/dev/null
+		makedir fd 755
 		n=0
-		while [ $n -lt 64 ]; do
-			mknod fd/$n c %filedesc_chr% $n
+		while [ $n -lt 64 ]
+		do
+			mkdev fd/$n c %filedesc_chr% $n 666
 			n=$(($n + 1))
 		done
-		chmod 755 fd
-		chmod 666 fd/*
 	fi
 	;;
 
@@ -557,13 +581,10 @@ wt*)
 	esac
 	for sub in $unit $(($unit+8)) $(($unit+16))
 	do
-	    rm -f $name$sub n$name$sub r$name$sub nr$name$sub
-	    mknod $name$sub	b $blk $(($sub + 0))
-	    mknod n$name$sub	b $blk $(($sub + 4))
-	    mknod r$name$sub	c $chr $(($sub + 0))
-	    mknod nr$name$sub	c $chr $(($sub + 4))
-	    chgrp operator $name$sub n$name$sub r$name$sub nr$name$sub
-	    chmod 660 $name$sub n$name$sub r$name$sub nr$name$sub
+		mkdev $name$sub		b $blk $(($sub + 0)) 660 $g_operator
+		mkdev n$name$sub	b $blk $(($sub + 4)) 660 $g_operator
+		mkdev r$name$sub	c $chr $(($sub + 0)) 660 $g_operator
+		mkdev nr$name$sub	c $chr $(($sub + 4)) 660 $g_operator
 	done
 	;;
 
@@ -572,32 +593,28 @@ md*)
 	;;
 
 fss*)
-	name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
-	rm -f $name$unit r$name$unit
-	mknod $name$unit	b $blk $unit
-	mknod r$name$unit	c $chr $unit
-	chgrp operator $name$unit r$name$unit
-	chmod 660 $name$unit r$name$unit
+	case $i in
+	fss*) name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
+	esac
+	mkdev $name$unit	b $blk $unit 660 $g_operator
+	mkdev r$name$unit	c $chr $unit 660 $g_operator
 	;;
 
 ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss};	chr=%ss_chr%;;
 	esac
-	rm -f $name$unit n$name$unit en$name$unit
-	mknod $name$unit	c $chr $(($unit * 16 + 0))
-	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	mknod en$name$unit	c $chr $(($unit * 16 + 3))
-	chgrp operator $name$unit n$name$unit en$name$unit
-	chmod 640 $name$unit n$name$unit en$name$unit
+	mkdev $name$unit	c $chr $(($unit * 16 + 0)) 640 $g_operator
+	mkdev n$name$unit	c $chr $(($unit * 16 + 1)) 640 $g_operator
+	mkdev en$name$unit	c $chr $(($unit * 16 + 3)) 640 $g_operator
 	;;
 
 ccd*|cgd*|raid*|vnd*)
 	case $i in
-	ccd*) name=ccd;	unit=${i#ccd};	blk=%ccd_blk%;	chr=%ccd_chr%;;
-	cgd*) name=cgd;	unit=${i#cgd};	blk=%cgd_blk%;	chr=%cgd_chr%;;
-	raid*) name=raid; unit=${i#raid}; blk=%raid_blk%; chr=%raid_chr%;;
-	vnd*) name=vnd;	unit=${i#vnd};	blk=%vnd_blk%;	chr=%vnd_chr%;;
+	ccd*)	name=ccd;	unit=${i#ccd};	blk=%ccd_blk%;	chr=%ccd_chr%;;
+	cgd*)	name=cgd;	unit=${i#cgd};	blk=%cgd_blk%;	chr=%cgd_chr%;;
+	raid*)	name=raid;	unit=${i#raid}; blk=%raid_blk%; chr=%raid_chr%;;
+	vnd*)	name=vnd;	unit=${i#vnd};	blk=%vnd_blk%;	chr=%vnd_chr%;;
 	esac
 	%MKDISK% $name $unit $blk $chr
 	;;
@@ -632,51 +649,34 @@ ofdisk*)
 	%MKDISK% $name $unit $blk $chr
 	;;
 
-ttyCZ*)
-	unit=${i#ttyCZ}
-	major=%cz_chr%
-	minor=$(($unit * 64))
-	eminor=$(($minor + 64))
-	while [ $minor -lt $eminor ]; do
-		if [ $minor -lt 10 ]; then
-			nminor=000$minor
-		elif [ $minor -lt 100 ]; then
-			nminor=00$minor
-		elif [ $minor -lt 1000 ]; then
-			nminor=0$minor
-		else
-			nminor=$minor
-		fi
-		rm -f ttyCZ$nminor dtyCZ$nminor
-		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
-		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
-		chown uucp ttyCZ$nminor dtyCZ$nminor
-		chmod 600 ttyCZ$nminor dtyCZ$nminor
+ttyCY*)
+	name=tyCY; chr=%cy_chr%; off=32; fmt="%03d"
+	unit=${i#t${name}}
+	minor=$(($unit * $off))
+	eminor=$(($minor + $off))
+	while [ $minor -lt $eminor ]
+	do
+		nminor=$(printf $fmt $minor)
+		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
+		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
 	done
 	;;
 
-ttyCY*)
-	unit=${i#ttyCY}
-	major=%cy_chr%
-	minor=$(($unit * 32))
-	eminor=$(($minor + 32))
-	while [ $minor -lt $eminor ]; do
-		if [ $minor -lt 10 ]; then
-			nminor=00$minor
-		elif [ $minor -lt 100 ]; then
-			nminor=0$minor
-		else
-			nminor=$minor
-		fi
-		rm -f ttyCY$nminor dtyCY$nminor
-		mknod ttyCY$nminor c $major $(($minor + $dialin  ))
-		mknod dtyCY$nminor c $major $(($minor + $dialout ))
-		chown uucp ttyCY$nminor dtyCY$nminor
-		chmod 600 ttyCY$nminor dtyCY$nminor
+ttyCZ*)
+	name=tyCZ; chr=%cz_chr%; off=64; fmt="%04d"
+	unit=${i#t${name}}
+	minor=$(($unit * $off))
+	eminor=$(($minor + $off))
+	while [ $minor -lt $eminor ]
+	do
+		nminor=$(printf $fmt $minor)
+		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
+		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
 	done
 	;;
+
 
 tty[0-9]|tty0[0-9])
 	# some archs have built-in zstty (major %zstty_chr%) instead
@@ -685,52 +685,43 @@ tty[0-9]|tty0[0-9])
 	unit=${i#tty}
 	unit=$(($unit + 0))
 	makedev ttyZ${unit}
-	rm -f tty0$unit dty0$unit
-	ln -fs ttyZ$unit tty0${unit}
-	ln -fs dtyZ$unit dty0${unit}
+	lndev ttyZ$unit tty0${unit}
+	lndev dtyZ$unit dty0${unit}
 	;;
 
 tty0*|tty1*|tty[0-9])
-	ounit=${i#tty}
-	ounit=$(($ounit + 0))
-	if [ $ounit -lt 10 ]; then
-		unit=0$ounit
-	else
-		unit=$ounit
-	fi
-	rm -f tty$unit dty$unit
-	mknod tty$unit c %com_chr% $(($ounit + $dialin ))
-	mknod dty$unit c %com_chr% $(($ounit + $dialout))
-	chown uucp tty$unit dty$unit
+	unit=${i#tty}
+	ounit=$(printf "%02d" $unit)
+	mkdev tty$ounit c %com_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dty$ounit c %com_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 ttyC*)
-	# some archs call it ttyC traditionally
-	unit=${i#ttyC}
-	rm -f ttyC$unit dtyC$unit
-	mknod ttyC$unit c %com_chr% $(($unit + $dialin))
-	mknod dtyC$unit c %com_chr% $(($unit + $dialout))
-	chown uucp ttyC$unit dtyC$unit
+		# some archs call com_chr ttyC traditionally
+	unit=${i#ttyC}; name=ttyC; dname=dtyC; chr=%com_chr%
+	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
+	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 ttyh*)
-	unit=${i#ttyh}
-	rm -f ttyh$unit dtyh$unit
-	mknod ttyh$unit c %sabtty_chr% $(($unit + $dialin ))
-	mknod dtyh$unit c %sabtty_chr% $(($unit + $dialout))
-	chown uucp ttyh$unit dtyh$unit
+	unit=${i#ttyh}; name=ttyh; dname=dtyh; chr=%sabtty_chr%
+	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
+	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
+	;;
+
+ttyTX*)
+	unit=${i#ttyTX}; name=ttyTX0; dname=dtyTX0; chr=%txcom_chr%
+	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
+	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 ttyZ*)
-	name=ttyZ; dname=dtyZ; unit=${i#ttyZ}; chr=%zstty_chr%
-	rm -f $name$unit $dname$unit
-	mknod  $name$unit c $chr $(($unit + $dialin ))
-	mknod $dname$unit c $chr $(($unit + $dialout))
-	chown uucp $name$unit $dname$unit
+	unit=${i#ttyZ}; name=ttyZ; dname=dtyZ; chr=%zstty_chr%
+	mkdev  $name$unit c $chr $(($unit + $dialin )) "" "" $u_uucp
+	mkdev $dname$unit c $chr $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 opty)
-	rm -f ttyp[0-9a-f] ptyp[0-9a-f]
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
@@ -742,10 +733,9 @@ opty)
 		e)	jn=14 ;;
 		f)	jn=15 ;;
 		esac
-		mknod ttyp$j c %pts_chr% $jn
-		mknod ptyp$j c %ptc_chr% $jn
+		mkdev ttyp$j c %pts_chr% $jn 666
+		mkdev ptyp$j c %ptc_chr% $jn 666
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 pty*)
@@ -761,10 +751,8 @@ pty*)
 		echo "$MAKEDEV: $i: pty unit conflicts with console ttyv0 device."
 		continue
 	fi
-	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	jn=0
 	unit=$(($class * 16))
-	names=
 	set -- - 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 	while
 		shift
@@ -774,52 +762,38 @@ pty*)
 		if [ $j = g ]; then
 			unit=$(($unit + $class * 30 + 256 - 16))
 		fi
-		mknod tty$name$j c %pts_chr% $unit
-		mknod pty$name$j c %ptc_chr% $unit
-		names="$names tty$name$j pty$name$j"
+		mkdev tty$name$j c %pts_chr% $unit 666
+		mkdev pty$name$j c %ptc_chr% $unit 666
 		unit=$(($unit + 1))
 	done
-	chmod 666 $names
-	unset names
 	;;
 
 stic*)
 	unit=${i#stic}
-	rm -f stic$unit
-	mknod stic$unit c %stic_chr% $unit
-	chmod 600 stic$unit
+	mkdev stic$unit c %stic_chr% $unit
 	;;
 
 st*)
 	case $i in
 	st*) name=st;	unit=${i#st};	chr=%st_chr%;	blk=%st_blk%;;
 	esac
-	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit
-	mknod $name$unit	b $blk $(($unit * 16 + 0))
-	mknod n$name$unit	b $blk $(($unit * 16 + 1))
-	mknod e$name$unit	b $blk $(($unit * 16 + 2))
-	mknod en$name$unit	b $blk $(($unit * 16 + 3))
-	mknod r$name$unit	c $chr $(($unit * 16 + 0))
-	mknod nr$name$unit	c $chr $(($unit * 16 + 1))
-	mknod er$name$unit	c $chr $(($unit * 16 + 2))
-	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
-	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit
-	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit
+	mkdev $name$unit	b $blk $(($unit * 16 + 0)) 660 $g_operator
+	mkdev n$name$unit	b $blk $(($unit * 16 + 1)) 660 $g_operator
+	mkdev e$name$unit	b $blk $(($unit * 16 + 2)) 660 $g_operator
+	mkdev en$name$unit	b $blk $(($unit * 16 + 3)) 660 $g_operator
+	mkdev r$name$unit	c $chr $(($unit * 16 + 0)) 660 $g_operator
+	mkdev nr$name$unit	c $chr $(($unit * 16 + 1)) 660 $g_operator
+	mkdev er$name$unit	c $chr $(($unit * 16 + 2)) 660 $g_operator
+	mkdev enr$name$unit	c $chr $(($unit * 16 + 3)) 660 $g_operator
 	;;
 
 ses*|ch*|uk*)
 	case $i in
-	ch*) name=ch;	unit=${i#ch};	chr=%ch_chr%;;
-	uk*) name=uk;	unit=${i#uk};	chr=%uk_chr%;;
-	ses*) name=ses;	unit=${i#ses};	chr=%ses_chr%;;
+	ch*)	name=ch;	unit=${i#ch};	chr=%ch_chr%;;
+	uk*)	name=uk;	unit=${i#uk};	chr=%uk_chr%;;
+	ses*)	name=ses;	unit=${i#ses};	chr=%ses_chr%;;
 	esac
-	rm -f $name$unit
-	mknod $name$unit	c $chr $unit
-	chgrp operator $name$unit
-	chmod 640 $name$unit
+	mkdev $name$unit c $chr $unit 640 $g_operator
 	;;
 
 cd*)
@@ -839,8 +813,7 @@ lpt*|lpa*)
 	lpt*) name=lpt;	unit=${i#lpt};	chr=%lpt_chr%;	flags=0;;
 	lpa*) name=lpa;	unit=${i#lpa};	chr=%lpt_chr%;	flags=128;;
 	esac
-	rm -f $name$unit
-	mknod $name$unit	c $chr $(($unit + $flags))
+	mkdev $name$unit c $chr $(($unit + $flags))
 	;;
 
 bpf*|tun*)
@@ -848,49 +821,37 @@ bpf*|tun*)
 	bpf*) name=bpf;	unit=${i#bpf};	chr=%bpf_chr%;;
 	tun*) name=tun;	unit=${i#tun};	chr=%tun_chr%;;
 	esac
-	rm -f $name$unit
-	mknod $name$unit	c $chr $unit
+	mkdev $name$unit c $chr $unit
 	;;
 
 joy*)
 	case $i in
 	joy*) name=joy;	unit=${i#joy};	chr=%joy_chr%;;
 	esac
-	rm -f $name$unit
-	mknod $name$unit	c $chr $unit
+	mkdev $name$unit c $chr $unit
 	;;
 
 ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c %ipl_chr% 0
-	mknod ipnat c %ipl_chr% 1
-	mknod ipstate c %ipl_chr% 2
-	mknod ipauth c %ipl_chr% 3
-	chmod 600 ipl ipnat ipstate ipauth
+	mkdev ipl	c %ipl_chr% 0
+	mkdev ipnat	c %ipl_chr% 1
+	mkdev ipstate	c %ipl_chr% 2
+	mkdev ipauth	c %ipl_chr% 3
 	;;
 
 pf)
-	rm -f pf
-	mknod pf c %pf_chr% 0
-	chmod 600 pf
+	mkdev pf c %pf_chr% 0
 	;;
 
 crypto)
-	rm -f crypto
-	mknod crypto c %crypto_chr% 0
-	chmod 666 crypto
+	mkdev crypto c %crypto_chr% 0 666
 	;;
 
 speaker)
-	rm -f speaker
-	mknod speaker c %spkr_chr% 0
+	mkdev speaker c %spkr_chr% 0
 	;;
 
 lkm)
-	rm -f lkm
-	mknod lkm c %lkm_chr% 0
-	chgrp kmem lkm
-	chmod 640 lkm
+	mkdev lkm c %lkm_chr% 0 640 $g_kmem
 	;;
 
 audio*)
@@ -898,240 +859,167 @@ audio*)
 	audio=audio$unit
 	sound=sound$unit
 	mixer=mixer$unit
-	major=%audio_chr%
 	audioctl=audioctl$unit
-	if [ "$unit" = "" ]; then unit=0; fi
-	rm -f $audio $sound $mixer $audioctl
-	mknod $sound    c $major $(($unit + 0))
-	mknod $audio    c $major $(($unit + 128))
-	mknod $mixer    c $major $(($unit + 16))
-	mknod $audioctl c $major $(($unit + 192))
-	chmod 666 $audio $sound $mixer $audioctl
+	: ${unit:-0}
+	mkdev $sound    c %audio_chr% $(($unit + 0))	666
+	mkdev $audio    c %audio_chr% $(($unit + 128))	666
+	mkdev $mixer    c %audio_chr% $(($unit + 16))	666
+	mkdev $audioctl c %audio_chr% $(($unit + 192))	666
 	;;
 
 rmidi*)
 	unit=${i#rmidi}
-	major=%midi_chr%
-	rmidi=rmidi$unit
-	rm -f $rmidi
-	mknod $rmidi c $major $unit
-	chmod 666 $rmidi
+	mkdev rmidi$unit c %midi_chr% $unit 666
 	;;
 
 music*)
 	unit=${i#music}
-	music=music$unit
-	sequencer=sequencer$unit
-	major=%sequencer_chr%
-	if [ "$unit" = "" ]; then unit=0; fi
-	rm -f $sequencer $music
-	mknod $music     c $major $(($unit + 0))
-	mknod $sequencer c $major $(($unit + 128))
-	chmod 666 $music $sequencer
+	: ${unit:-0}
+	mkdev music$unit     c %sequencer_chr% $(($unit + 0))	666
+	mkdev sequencer$unit c %sequencer_chr% $(($unit + 128))	666
 	;;
 
 radio*)
 	unit=${i#radio}
-	radio=radio$unit
-	major=%radio_chr%
-	if [ "$unit" = "" ]; then unit=0; fi
-	rm -f $radio
-	mknod $radio c $major $unit
-	chmod 666 $radio
+	: ${unit:-0}
+	mkdev radio$unit c %radio_chr% $unit 666
 	;;
 
-apm*)
-	rm -f apm apmctl
-	mknod apm c %apm_chr% 0
-	mknod apmctl c %apm_chr% 8
-	chmod 644 apm apmctl
+apm)
+	mkdev apm	c %apm_chr% 0 644
+	mkdev apmctl	c %apm_chr% 8 644
 	;;
 
-apm*)
-	rm -f apm apmctl
-	mknod apm c %apmdev_chr% 0
-	mknod apmctl c %apmdev_chr% 8
-	chmod 644 apm apmctl
+apm)
+		# hpcmips uses `apmdev_chr' instead of `apm_chr'
+	mkdev apm	c %apmdev_chr% 0 644
+	mkdev apmctl	c %apmdev_chr% 8 644
 	;;
 
 satlink*)
 	unit=${i#satlink}
-	rm -f satlink$unit
-	mknod satlink$unit c %satlink_chr% $unit
-	chmod 444 satlink$unit
+	mkdev satlink$unit c %satlink_chr% $unit 444
 	;;
 
 random)
-	rm -f random urandom
-	mknod random c %rnd_chr% 0
-	mknod urandom c %rnd_chr% 1
-	chmod 444 random
-	chmod 644 urandom
+	mkdev random	c %rnd_chr% 0 444
+	mkdev urandom	c %rnd_chr% 1 644
 	;;
 
 cfs*)
 	unit=${i#cfs}
-	cfs=cfs$unit
-	major=%vcoda_chr%
-	rm -f $cfs
-	mknod $cfs c $major $unit
-	chmod 600 $cfs
+	mkdev cfs$unit c %vcoda_chr% $unit
 	;;
 
 sysmon)
-	major=%sysmon_chr%
-	rm -f sysmon
-	mknod sysmon c $major 0
-	chmod 644 sysmon
-
-	rm -f watchdog
-	mknod watchdog c $major 1
-	chmod 644 watchdog
-
-	rm -f power
-	mknod power c $major 2
-	chmod 640 power
+	mkdev sysmon	c %sysmon_chr% 0 644
+	mkdev watchdog	c %sysmon_chr% 1 644
+	mkdev power	c %sysmon_chr% 2 640
 	;;
 
 scsibus*)
 	unit=${i#scsibus}
-	rm -f scsibus$unit
-	mknod scsibus$unit c %scsibus_chr% $unit
-	chmod 644 scsibus$unit
+	mkdev scsibus$unit c %scsibus_chr% $unit 644
 	;;
 
 bktr)
 	makedev bktr0 bktr1
-	ln -fs bktr0 bktr
-	ln -fs tuner0 tuner
-	ln -fs vbi0 vbi
+	lndev	bktr0	bktr
+	lndev	tuner0	tuner
+	lndev	vbi0	vbi
 	;;
 
 bktr*)
-	major=%bktr_chr%
 	unit=${i#bktr}
-	rm -f bktr$unit tuner$unit vbi$unit
-	mknod bktr$unit c $major $(($unit + 0))
-	mknod tuner$unit c $major $(($unit + 16))
-	mknod vbi$unit c $major $(($unit + 32))
-	chmod 444 bktr$unit tuner$unit vbi$unit
+	mkdev bktr$unit		c %bktr_chr% $(($unit + 0))	444
+	mkdev tuner$unit	c %bktr_chr% $(($unit + 16))	444
+	mkdev vbi$unit		c %bktr_chr% $(($unit + 32))	444
 	;;
 
 iop*)
 	unit=${i#iop}
-	rm -f iop$unit
-	mknod iop$unit c %iop_chr% $unit
-	chmod 600 iop$unit
+	mkdev iop$unit c %iop_chr% $unit
 	;;
 
 mlx*)
 	unit=${i#mlx}
-	rm -f mlx$unit
-	mknod mlx$unit c %mlx_chr% $unit
-	chmod 600 mlx$unit
+	mkdev mlx$unit c %mlx_chr% $unit
 	;;
 
 mly*)
 	unit=${i#mly}
-	rm -f mly$unit
-	mknod mly$unit c %mly_chr% $unit
-	chmod 600 mly$unit
+	mkdev mly$unit c %mly_chr% $unit
 	;;
 
 twe*)
 	unit=${i#twe}
-	rm -f twe$unit
-	mknod twe$unit c %twe_chr% $unit
-	chmod 600 twe$unit
+	mkdev twe$unit c %twe_chr% $unit
 	;;
 
 icp*)
 	unit=${i#icp}
-	rm -f icp$unit
-	mknod icp$unit c %icp_chr% $unit
-	chmod 600 icp$unit
+	mkdev icp$unit c %icp_chr% $unit
 	;;
 
 agp*)
 	unit=${i#agp}
-	rm -f agp$unit
-	mknod agp$unit c %agp_chr% $unit
-	if [ "$unit" = "0" ]; then ln -fs agp$unit agpgart; fi
-	chmod 644 agp$unit
+	mkdev agp$unit c %agp_chr% $unit 644
+	if [ "$unit" = "0" ]; then
+		lndev agp$unit agpgart
+	fi
 	;;
 
 pci*)
 	unit=${i#pci}
-	rm -f pci$unit
-	mknod pci$unit c %pci_chr% $unit
-	chmod 644 pci$unit
+	mkdev pci$unit c %pci_chr% $unit 644
 	;;
 
 dpti*)
 	unit=${i#dpti}
-	rm -f dpti$unit
-	mknod dpti$unit c %dpti_chr% $unit
-	chmod 600 dpti$unit
+	mkdev dpti$unit c %dpti_chr% $unit
 	;;
 
 dpt*)
 	unit=${i#dpt}
-	rm -f dpt$unit
-	mknod dpt$unit c %dpt_chr% $unit
-	chmod 600 dpt$unit
+	mkdev dpt$unit c %dpt_chr% $unit
 	;;
 
 altq)
-	mkdir altq 2>/dev/null
-	chmod 755 altq
+	makedir altq 755
 	unit=0
-	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
-	    cdnr blue priq; do
-		rm -f altq/$dev
-		mknod altq/$dev c %altq_chr% $unit
-		chmod 644 altq/$dev
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq
+	do
+		mkdev altq/$dev c %altq_chr% $unit 644
 		unit=$(($unit + 1))
 	done
 	;;
 
 isdn)
-	rm -f isdn
-	mknod isdn c %isdn_chr% 0
-	chmod 600 isdn
+	mkdev isdn c %isdn_chr% 0
 	;;
 
 isdnctl)
-	rm -f isdnctl
-	mknod isdnctl c %isdnctl_chr% 0
-	chmod 600 isdnctl
+	mkdev isdnctl c %isdnctl_chr% 0
 	;;
 
 isdnbchan*)
 	unit=${i#isdnbchan}
-	rm -f isdnbchan$unit
-	mknod isdnbchan$unit c %isdnbchan_chr% $unit
-	chmod 600 isdnbchan$unit
+	mkdev isdnbchan$unit c %isdnbchan_chr% $unit
 	;;
 
 isdnteld*)
 	unit=${i#isdnteld}
-	rm -f isdnteld$unit
-	mknod isdnteld$unit c %isdntel_chr% $(($unit + 64))
-	chmod 600 isdnteld$unit
+	mkdev isdnteld$unit c %isdntel_chr% $(($unit + 64))
 	;;
 
 isdntel*)
 	unit=${i#isdntel}
-	rm -f isdntel$unit
-	mknod isdntel$unit c %isdntel_chr% $unit
-	chmod 600 isdntel$unit
+	mkdev isdntel$unit c %isdntel_chr% $unit
 	;;
 
 isdntrc*)
 	unit=${i#isdntrc}
-	rm -f isdntrc$unit
-	mknod isdntrc$unit c %isdntrc_chr% $unit
-	chmod 600 isdntrc$unit
+	mkdev isdntrc$unit c %isdntrc_chr% $unit
 	;;
 
 vmegen)
@@ -1140,71 +1028,46 @@ vmegen)
 
 vmegen*)
 	unit=${i#vmegen}
-	rm -f vmegen$unit
-	mknod vmegen$unit c %vmegeneric_chr% $(($unit * 16 + 0))
-	chmod 600 vmegen$unit
+	mkdev vmegen$unit c %vmegeneric_chr% $(($unit * 16 + 0))
 	;;
 
 wsfont)
-	rm -f wsfont
-	mknod wsfont c %wsfont_chr% 0
-	chmod 600 wsfont
+	mkdev wsfont c %wsfont_chr% 0
 	;;
 
 cir*)
 	unit=${i#cir}
-	cir=cir$unit
-	major=%cir_chr%
-	rm -f $cir
-	mknod $cir c $major $unit
-	chmod 666 $cir
+	mkdev cir$unit c %cir_chr% $unit 666
 	;;
 
 irframe*)
 	unit=${i#irframe}
-	irframe=irframe$unit
-	major=%irframe_chr%
-	rm -f $irframe
-	mknod $irframe c $major $unit
-	chmod 600 $irframe
+	mkdev irframe$unit c %irframe_chr% $unit
 	;;
 
 fcom*)
 	unit=${i#fcom}
-	fcom=fcom$unit
-	rm -f $fcom
-	mknod $fcom c %fcom_chr% $unit
-	chown uucp $fcom
-	chmod 600 $fcom
+	mkdev fcom$unit c %fcom_chr% $unit "" "" $u_uucp
 	;;
 
 beep)
-	rm -f beep
-	mknod beep c %beep_chr% 0
+	mkdev beep c %beep_chr% 0
 	;;
 
 openfirm)
-	rm -f openfirm
-	mknod openfirm c %openfirm_chr% 0
-	chmod 444 openfirm
+	mkdev openfirm c %openfirm_chr% 0 444
 	;;
 
 nvram)
-	rm -f nvram
-	mknod nvram c %nvram_chr% 0
-	chmod 644 nvram
+	mkdev nvram c %nvram_chr% 0 644
 	;;
 
 rtc)
-	mknod rtc c %rtc_chr% 0
-	chmod 644 rtc
+	mkdev rtc c %rtc_chr% 0 644
 	;;
 
 clockctl)
-	rm -f clockctl
-	mknod clockctl c %clockctl_chr% 0
-	chgrp ntpd clockctl
-	chmod 660 clockctl
+	mkdev clockctl c %clockctl_chr% 0 660 $g_ntpd
 	;;
 
 nsmb)
@@ -1213,60 +1076,46 @@ nsmb)
 
 nsmb*)
 	unit=${i#nsmb}
-	nsmb=nsmb$unit
-	major=%nsmb_chr%
-	rm -f $nsmb
-	mknod $nsmb c $major $unit
-	chmod 644 $nsmb
+	mkdev nsmb$unit c %nsmb_chr% $unit 644
 	;;
 
 systrace)
-	rm -f systrace
-	mknod systrace c %systrace_chr% 0
-	chmod 644 systrace
+	mkdev systrace c %systrace_chr% 0 644
 	;;
 
 kttcp)
-	rm -f kttcp
-	mknod kttcp c %kttcp_chr% 0
-	chmod 600 kttcp
+	mkdev kttcp c %kttcp_chr% 0
 	;;
 
 dmoverio)
-	rm -f dmoverio
-	mknod dmoverio c %dmoverio_chr% 0
-	chmod 644 dmoverio
+	mkdev dmoverio c %dmoverio_chr% 0 644
 	;;
 
 veriexec)
-	rm -f veriexec
-	mknod veriexec c %veriexec_chr% 0
-	chmod 644 veriexec
+	mkdev veriexec c %veriexec_chr% 0 644
 	;;
 
 ttyv*)
-	chr=%pc_chr%; unit=${i#ttyv}
-	rm -f ttyv$unit
-	mknod ttyv$unit c $chr $unit
+	unit=${i#ttyv}
+	mkdev ttyv$unit c %pc_chr% $unit
 	;;
 
+# arm, acorn32
 ttyv*)
-	chr=%physcon_chr%; unit=${i#ttyv}
-	rm -f ttyv$unit
-	mknod ttyv$unit c $chr $unit
+	unit=${i#ttyv}
+	mkdev ttyv$unit c %physcon_chr% $unit
 	;;
 
 arcpp*)
-	chr=%arcpp_chr%; unit=${i#arcpp}
-	mkdev arcpp$unit c $chr $unit
+	unit=${i#arcpp}
+	mkdev arcpp$unit c %arcpp_chr% $unit
 	;;
 
 par*)
-	unit=${i#par};	chr=%par_chr%
-	rm -f par$unit
+	unit=${i#par}
 	case $unit in
 	0)
-		mknod par$unit	c $chr $unit
+		mkdev par$unit c %par_chr% $unit
 		;;
 	*)
 		echo bad unit for par in: $i
@@ -1279,83 +1128,62 @@ ite*|ttye*)
 	ite*)	unit=${i#ite};;
 	ttye*)	unit=${i#ttye};;
 	esac
-	chr=%ite_chr%
-	rm -f ttye$unit ite*
-	mknod ttye$unit	c $chr $unit
+	mkdev ttye$unit	c %ite_chr% $unit
 	;;
 
 pms*)
-	name=pms
-	major=%opms_chr%
 	unit=${i#pms}
-	rm -f $name$unit
-	mknod $name$unit c $major $unit
+	mkdev pms$unit c %opms_chr% $unit
 	;;
 
 qms*)
-	name=qms
-	major=%qms_chr%
 	unit=${i#qms}
-	rm -f $name$unit
-	mknod $name$unit c $major $unit
+	mkdev qms$unit c %qms_chr% $unit
 	;;
 
 lms*)
-	name=lms
-	major=%lms_chr%
 	unit=${i#lms}
-	rm -f $name$unit
-	mknod $name$unit c $major $unit
+	mkdev lms$unit c %lms_chr% $unit
 	;;
 
 mms*)
-	name=mms
-	major=%mms_chr%
 	unit=${i#mms}
-	rm -f $name$unit
-	mknod $name$unit c $major $unit
+	mkdev mms$unit c %mms_chr% $unit
 	;;
 
 mouse-*)
 	case $i in
-	mouse-pms*) name=pms;	unit=${i#mouse-pms};;
-	mouse-qms*) name=qms;	unit=${i#mouse-qms};;
+	mouse-pms*) name=pms ;;
+	mouse-qms*) name=qms ;;
 	esac
-	ln -fs $name$unit mouse
+	unit=${i#mouse-${name}}
+	lndev $name$unit mouse
 	;;
 
 kbd)
-	rm -f kbd
-	mknod kbd c %kbd_chr% 0
+	mkdev kbd c %kbd_chr% 0
 	;;
 
 kbdctl)
-	rm -f kbdctl
-	mknod kbdctl c %kbd_chr% 1
+	mkdev kbdctl c %kbd_chr% 1
 	;;
 
 vidcconsole0)
-	mknod vidcconsole0 c %vidcconsole_chr% 0
-	chmod 640 vidcconsole0
+	mkdev vidcconsole0 c %vidcconsole_chr% 0 640
 	;;
 
 view*)
-	unit=${i#view};	chr=%view_chr%
-	rm -f view$unit
-	mknod view$unit	c $chr $unit
-	chmod 666 view$unit
+	unit=${i#view}
+	mkdev view$unit	c %view_chr% $unit 666
 	;;
 
 mouse*)
-	unit=${i#mouse};	chr=%ms_chr%
-	rm -f mouse$unit
+	unit=${i#mouse}
 	case $unit in
 	0|1)
-		mknod mouse$unit c	$chr $unit
-		chmod 666 mouse$unit
-		if [ $unit = 0 ]
-		then
-			ln -fs mouse$unit mouse
+		mkdev mouse$unit c %ms_chr% $unit 666
+		if [ $unit = 0 ]; then
+			lndev mouse$unit mouse
 		fi
 		;;
 	*)
@@ -1365,59 +1193,41 @@ mouse*)
 	;;
 
 panel)
-	rm -f panel0
-	mknod panel0 c %panel_chr% 0
-	chmod 660 panel0
+	mkdev panel0 c %panel_chr% 0 660
 	;;
 
 ipty)
-	rm -f ttyp0 ttyp1 ptyp0 ptyp1
-	mknod ttyp0 c %pts_chr% 0
-	mknod ttyp1 c %pts_chr% 1
-	mknod ptyp0 c %ptc_chr% 0
-	mknod ptyp1 c %ptc_chr% 1
-	chmod 666 ttyp0 ttyp1 ptyp0 ptyp1
+	mkdev ttyp0 c %pts_chr% 0 666
+	mkdev ttyp1 c %pts_chr% 1 666
+	mkdev ptyp0 c %ptc_chr% 0 666
+	mkdev ptyp1 c %ptc_chr% 1 666
 	;;
 
 grf*)
-	major=%grf_chr%
 	unit=${i#grf}
-	rm -f grf${unit}
-	mknod grf${unit} c ${major} ${unit}
-	chmod 666 grf${unit}
+	mkdev grf$unit c %grf_chr% $unit 666
 	;;
 
 etvme)
-	rm -f etvme
-	mknod etvme c %et_chr% 0
-	chmod 600 etvme
+	mkdev etvme c %et_chr% 0
 	;;
 
 leo*)
 	unit=${i#leo}
-	rm -f leo$unit
-	mknod leo$unit c %leo_chr% $unit
-	chmod 600 leo$unit
+	mkdev leo$unit c %leo_chr% $unit
 	;;
 
 scif*)
-	chr=%scif_chr%; unit=${i#scif}
-	name=scif
-	rm -f $name$unit
-	mknod $name$unit c $chr $unit
-	chown uucp $name$unit
+	unit=${i#scif}
+	mkdev scif$unit c %scif_chr% $unit "" "" $u_uucp
 	;;
 
 sci*)
-	chr=%sci_chr%; unit=${i#sci}
-	name=sci
-	rm -f $name$unit
-	mknod $name$unit c $chr $unit
-	chown uucp $name$unit
+	unit=${i#sci}
+	mkdev sci$unit c %sci_chr% $unit "" "" $u_uucp
 	;;
 
 maple*)
-	chr=%maple_chr%
 	case $i in
 	mapleA*) name="mapleA"; unit=0;;
 	mapleB*) name="mapleB"; unit=1;;
@@ -1425,120 +1235,79 @@ maple*)
 	mapleD*) name="mapleD"; unit=3;;
 	esac
 	subunit=${i#$name}
-	rm -f $name$subunit
-	mknod $name$subunit c $chr $(($unit * 8 + 0$subunit))
-	chmod 600 $name$subunit
+	mkdev $name$subunit c %maple_chr% $(($unit * 8 + 0$subunit))
 	;;
 
 mmem*)
-	name=mmem;	unit=${i#mmem};	chr=%mmem_chr%;	blk=%mmem_blk%
-	rm -f $name$unit.* r$name$unit.*
+	unit=${i#mmem}
 	for pt in 0	# 1 2 3 4 ... 255
 	do
-	#mknod ${name}${unit}.${pt}a	b $blk $(($unit * 4096 + $pt * 16 + 0))
-	mknod ${name}${unit}.${pt}c	b $blk $(($unit * 4096 + $pt * 16 + 2))
-	#mknod r${name}${unit}.${pt}a	c $chr $(($unit * 4096 + $pt * 16 + 0))
-	mknod r${name}${unit}.${pt}c	c $chr $(($unit * 4096 + $pt * 16 + 2))
+#		mkdev mmem${unit}.${pt}a  b %mmem_blk% $(($unit * 4096 + $pt * 16 + 0)) 640 $g_operator
+		mkdev mmem${unit}.${pt}c  b %mmem_blk% $(($unit * 4096 + $pt * 16 + 2)) 640 $g_operator
+#		mkdev rmmem${unit}.${pt}a c %mmem_chr% $(($unit * 4096 + $pt * 16 + 0)) 640 $g_operator
+		mkdev rmmem${unit}.${pt}c c %mmem_chr% $(($unit * 4096 + $pt * 16 + 2)) 640 $g_operator
 	done
-	chgrp operator $name$unit.* r$name$unit.*
-	chmod 640 $name$unit.* r$name$unit.*
 	;;
 
 mlcd*)
-	name=mlcd;	unit=${i#mlcd};	chr=%mlcd_chr%
-	rm -f $name$unit.*
+	unit=${i#mlcd}
 	for pt in 0	# 1 2 3 4 ... 255
 	do
-	mknod ${name}${unit}.${pt}	c $chr $(($unit * 256 + $pt))
+		mkdev mlcd${unit}.${pt} c %mlcd_chr% $(($unit * 256 + $pt)) 640 $g_operator
 	done
-	chgrp operator $name$unit.*
-	chmod 640 $name$unit.*
 	;;
 
 ixpcom*)
 	unit=${i#ixpcom}
-	rm -f ixpcom$unit
-	mknod ixpcom$unit c %ixpcom_chr% $unit
-	chown uucp ixpcom$unit
+	mkdev ixpcom$unit c %ixpcom_chr% $unit "" "" $u_uucp
 	;;
 
 ucbsnd)
-	rm -f ucbsnd
-	mknod ucbsnd c %ucbsnd_chr% 0
-	chmod 666 ucbsnd
-	;;
-
-ttyTX*)
-	unit=${i#ttyTX}
-	name=ttyTX0
-	dname=dtyTX0
-
-	rm -f $name$unit $dname$unit
-	mknod $name$unit c %txcom_chr% $(($unit + $dialin ))
-	mknod $dname$unit c %txcom_chr% $(($unit + $dialout))
-	chown uucp $name$unit $dname$unit
+	mkdev ucbsnd c %ucbsnd_chr% 0 666
 	;;
 
 adb)
-	rm -f adb
-	mknod adb c %aed_chr% 0
-	chmod 666 adb
+	mkdev adb c %aed_chr% 0 666
 	;;
 
 asc*)
 	unit=${i#asc}
-	rm -f asc$unit
-	mknod asc$unit c %asc_chr% $unit
-	chmod 666 asc$unit
+	mkdev asc$unit c %asc_chr% $unit 666
 	;;
 
 bwtwo*)
 	unit=${i#bwtwo}
-	rm -f bwtwo$unit
-	mknod bwtwo$unit c %bwtwo_chr% $unit
-	chmod 666 bwtwo$unit
+	mkdev bwtwo$unit c %bwtwo_chr% $unit 666
 	;;
 
 cgtwo*)
 	unit=${i#cgtwo}
-	rm -f cgtwo$unit
-	mknod cgtwo$unit c %cgtwo_chr% $unit
-	chmod 666 cgtwo$unit
+	mkdev cgtwo$unit c %cgtwo_chr% $unit 666
 	;;
 
 cgthree*)
 	unit=${i#cgthree}
-	rm -f cgthree$unit
-	mknod cgthree$unit c %cgthree_chr% $unit
-	chmod 666 cgthree$unit
+	mkdev cgthree$unit c %cgthree_chr% $unit 666
 	;;
 
 cgfour*)
 	unit=${i#cgfour}
-	rm -f cgfour$unit
-	mknod cgfour$unit c %cgfour_chr% $unit
-	chmod 666 cgfour$unit
+	mkdev cgfour$unit c %cgfour_chr% $unit 666
 	;;
 
 cgsix*)
 	unit=${i#cgsix}
-	rm -f cgsix$unit
-	mknod cgsix$unit c %cgsix_chr% $unit
-	chmod 666 cgsix$unit
+	mkdev cgsix$unit c %cgsix_chr% $unit 666
 	;;
 
 cgeight*)
 	unit=${i#cgeight}
-	rm -f cgeight$unit
-	mknod cgeight$unit c %cgeight_chr% $unit
-	chmod 666 cgeight$unit
+	mkdev cgeight$unit c %cgeight_chr% $unit 666
 	;;
 
 tcx*)
 	unit=${i#tcx}
-	rm -f tcx$unit
-	mknod tcx$unit c %tcx_chr% $unit
-	chmod 666 tcx$unit
+	mkdev tcx$unit c %tcx_chr% $unit 666
 	;;
 
 xd*|xy*)
@@ -1551,13 +1320,10 @@ xd*|xy*)
 
 magma*)
 	unit=${i#magma}
-	if [ 0$unit -gt 3 ]
-	then
+	if [ 0$unit -gt 3 ]; then
 		echo "bad unit for $i: $unit"
 		break
 	fi
-
-	rm -f tty$unit[0-9a-f] bpp$unit[01]
 	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
 	do
 		case $j in
@@ -1569,72 +1335,54 @@ magma*)
 		e)	jn=14 ;;
 		f)	jn=15 ;;
 		esac
-		mknod tty$unit$j c %mtty_chr% $(($unit * 64 + $jn))
+		mkdev tty$unit$j c %mtty_chr% $(($unit * 64 + $jn))
 	done
-
-	mknod bpp${unit}0 c %mbpp_chr% $(($unit * 64 + 0))
-	mknod bpp${unit}1 c %mbpp_chr% $(($unit * 64 + 1))
+	mkdev bpp${unit}0 c %mbpp_chr% $(($unit * 64 + 0))
+	mkdev bpp${unit}1 c %mbpp_chr% $(($unit * 64 + 1))
 	;;
 
 clcd*)
 	unit=${i#clcd}
-	if [ 0$unit -gt 7 ]
-	then
+	if [ 0$unit -gt 7 ]; then
 		echo "bad unit for $i: $unit"
 		break
 	fi
-
-	rm -f ttyA$unit[0-7] dtyA$unit[0-7]
 	for j in 0 1 2 3 4 5 6 7
 	do
-		mknod ttyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialin))
-		mknod dtyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialout))
+		mkdev ttyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialin)) "" "" $u_uucp
+		mkdev dtyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialout)) "" "" $u_uucp
 	done
-	chown uucp ttyA$unit[0-9a-f] dtyA$unit[0-9a-f]
-
 	;;
 
 bpp*)
 	unit=${i#bpp}
-	rm -f bpp$unit
-	mknod bpp$unit c %bpp_chr% $(($unit + 0))
-	chmod 600 bpp$unit
+	mkdev bpp$unit c %bpp_chr% $(($unit + 0))
 	;;
 
 tctrl*)
 	unit=${i#tctrl}
-	rm -f tctrl$unit
-	mknod tctrl$unit c %tctrl_chr% $unit
-	chmod 666 tctrl$unit
+	mkdev tctrl$unit c %tctrl_chr% $unit 666
 	;;
 
 bmd*)
-	unit=${i#bmd}; blk=%bmd_blk%; chr=%bmd_chr%
-	rm -f bmd${unit}? rbmd${unit}?
-	mknod bmd${unit}a  b $blk $(($unit * 8 + 0))
-	mknod bmd${unit}c  b $blk $(($unit * 8 + 2))
-	mknod rbmd${unit}a c $chr $(($unit * 8 + 0))
-	mknod rbmd${unit}c c $chr $(($unit * 8 + 2))
-	chgrp operator bmd${unit}? rbmd${unit}?
-	chmod 640 bmd${unit}? rbmd${unit}?
+	unit=${i#bmd}
+	mkdev bmd${unit}a  b %bmd_blk% $(($unit * 8 + 0)) 640 $g_operator
+	mkdev bmd${unit}c  b %bmd_blk% $(($unit * 8 + 2)) 640 $g_operator
+	mkdev rbmd${unit}a c %bmd_chr% $(($unit * 8 + 0)) 640 $g_operator
+	mkdev rbmd${unit}c c %bmd_chr% $(($unit * 8 + 2)) 640 $g_operator
 	;;
 
 sram)
-	rm -f sram
-	mknod sram c %sram_chr% 0
-	chmod 644 sram
+	mkdev sram c %sram_chr% 0 644
 	;;
 
 pow*)
 	unit=${i#pow}
-	rm -f pow${unit}
 	case $unit in
 	0|1)
-		mknod pow${unit} c %pow_chr% ${unit}
-		chmod 644 pow${unit}
-		if [ $unit = 0 ]
-		then
-			ln -fs pow${unit} pow
+		mkdev pow${unit} c %pow_chr% ${unit} 644
+		if [ $unit = 0 ]; then
+			lndev pow${unit} pow
 		fi
 		;;
 	*)
@@ -1645,10 +1393,8 @@ pow*)
 
 ttyS*)
 	unit=${i#ttyS}
-	rm -f ttyS$unit dtyS$unit
-	mknod ttyS$unit c %sacom_chr% $(($unit + $dialin ))
-	mknod dtyS$unit c %sacom_chr% $(($unit + $dialout))
-	chown uucp ttyS$unit dtyS$unit
+	mkdev ttyS$unit c %sacom_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dtyS$unit c %sacom_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 midevend)
@@ -1670,127 +1416,123 @@ done
 
 }
 
+
 # three variants of disk partitions - max 8, max 16, max 16 with highpartoffset
 # hack; only the one used by port is retained in final MAKEDEV script
 # routine is called as:
 # makedisk name unit blk chr
-makedisk_p8() {
+makedisk_p8()
+{
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
 
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
-	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
-	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
-	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
-	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
-	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
-	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
-	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
-	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
+	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
+	mkdev ${name}${unit}c	b $blk $(($unit * 8 + 2))	640 $g_operator
+	mkdev ${name}${unit}d	b $blk $(($unit * 8 + 3))	640 $g_operator
+	mkdev ${name}${unit}e	b $blk $(($unit * 8 + 4))	640 $g_operator
+	mkdev ${name}${unit}f	b $blk $(($unit * 8 + 5))	640 $g_operator
+	mkdev ${name}${unit}g	b $blk $(($unit * 8 + 6))	640 $g_operator
+	mkdev ${name}${unit}h	b $blk $(($unit * 8 + 7))	640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * 8 + 0))	640 $g_operator
+	mkdev r${name}${unit}b	c $chr $(($unit * 8 + 1))	640 $g_operator
+	mkdev r${name}${unit}c	c $chr $(($unit * 8 + 2))	640 $g_operator
+	mkdev r${name}${unit}d	c $chr $(($unit * 8 + 3))	640 $g_operator
+	mkdev r${name}${unit}e	c $chr $(($unit * 8 + 4))	640 $g_operator
+	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
+	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
+	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
 }
-makedisk_p16() {
+
+makedisk_p16()
+{
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
 
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 16 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
-	mknod ${name}${unit}d	b $blk $(($unit * 16 + 3))
-	mknod ${name}${unit}e	b $blk $(($unit * 16 + 4))
-	mknod ${name}${unit}f	b $blk $(($unit * 16 + 5))
-	mknod ${name}${unit}g	b $blk $(($unit * 16 + 6))
-	mknod ${name}${unit}h	b $blk $(($unit * 16 + 7))
-	mknod ${name}${unit}i	b $blk $(($unit * 16 + 8))
-	mknod ${name}${unit}j	b $blk $(($unit * 16 + 9))
-	mknod ${name}${unit}k	b $blk $(($unit * 16 + 10))
-	mknod ${name}${unit}l	b $blk $(($unit * 16 + 11))
-	mknod ${name}${unit}m	b $blk $(($unit * 16 + 12))
-	mknod ${name}${unit}n	b $blk $(($unit * 16 + 13))
-	mknod ${name}${unit}o	b $blk $(($unit * 16 + 14))
-	mknod ${name}${unit}p	b $blk $(($unit * 16 + 15))
-	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 16 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
-	mknod r${name}${unit}d	c $chr $(($unit * 16 + 3))
-	mknod r${name}${unit}e	c $chr $(($unit * 16 + 4))
-	mknod r${name}${unit}f	c $chr $(($unit * 16 + 5))
-	mknod r${name}${unit}g	c $chr $(($unit * 16 + 6))
-	mknod r${name}${unit}h	c $chr $(($unit * 16 + 7))
-	mknod r${name}${unit}i	c $chr $(($unit * 16 + 8))
-	mknod r${name}${unit}j	c $chr $(($unit * 16 + 9))
-	mknod r${name}${unit}k	c $chr $(($unit * 16 + 10))
-	mknod r${name}${unit}l	c $chr $(($unit * 16 + 11))
-	mknod r${name}${unit}m	c $chr $(($unit * 16 + 12))
-	mknod r${name}${unit}n	c $chr $(($unit * 16 + 13))
-	mknod r${name}${unit}o	c $chr $(($unit * 16 + 14))
-	mknod r${name}${unit}p	c $chr $(($unit * 16 + 15))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	mkdev ${name}${unit}a	b $blk $(($unit * 16 + 0))	640 $g_operator
+	mkdev ${name}${unit}b	b $blk $(($unit * 16 + 1))	640 $g_operator
+	mkdev ${name}${unit}c	b $blk $(($unit * 16 + 2))	640 $g_operator
+	mkdev ${name}${unit}d	b $blk $(($unit * 16 + 3))	640 $g_operator
+	mkdev ${name}${unit}e	b $blk $(($unit * 16 + 4))	640 $g_operator
+	mkdev ${name}${unit}f	b $blk $(($unit * 16 + 5))	640 $g_operator
+	mkdev ${name}${unit}g	b $blk $(($unit * 16 + 6))	640 $g_operator
+	mkdev ${name}${unit}h	b $blk $(($unit * 16 + 7))	640 $g_operator
+	mkdev ${name}${unit}i	b $blk $(($unit * 16 + 8))	640 $g_operator
+	mkdev ${name}${unit}j	b $blk $(($unit * 16 + 9))	640 $g_operator
+	mkdev ${name}${unit}k	b $blk $(($unit * 16 + 10))	640 $g_operator
+	mkdev ${name}${unit}l	b $blk $(($unit * 16 + 11))	640 $g_operator
+	mkdev ${name}${unit}m	b $blk $(($unit * 16 + 12))	640 $g_operator
+	mkdev ${name}${unit}n	b $blk $(($unit * 16 + 13))	640 $g_operator
+	mkdev ${name}${unit}o	b $blk $(($unit * 16 + 14))	640 $g_operator
+	mkdev ${name}${unit}p	b $blk $(($unit * 16 + 15))	640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * 16 + 0))	640 $g_operator
+	mkdev r${name}${unit}b	c $chr $(($unit * 16 + 1))	640 $g_operator
+	mkdev r${name}${unit}c	c $chr $(($unit * 16 + 2))	640 $g_operator
+	mkdev r${name}${unit}d	c $chr $(($unit * 16 + 3))	640 $g_operator
+	mkdev r${name}${unit}e	c $chr $(($unit * 16 + 4))	640 $g_operator
+	mkdev r${name}${unit}f	c $chr $(($unit * 16 + 5))	640 $g_operator
+	mkdev r${name}${unit}g	c $chr $(($unit * 16 + 6))	640 $g_operator
+	mkdev r${name}${unit}h	c $chr $(($unit * 16 + 7))	640 $g_operator
+	mkdev r${name}${unit}i	c $chr $(($unit * 16 + 8))	640 $g_operator
+	mkdev r${name}${unit}j	c $chr $(($unit * 16 + 9))	640 $g_operator
+	mkdev r${name}${unit}k	c $chr $(($unit * 16 + 10))	640 $g_operator
+	mkdev r${name}${unit}l	c $chr $(($unit * 16 + 11))	640 $g_operator
+	mkdev r${name}${unit}m	c $chr $(($unit * 16 + 12))	640 $g_operator
+	mkdev r${name}${unit}n	c $chr $(($unit * 16 + 13))	640 $g_operator
+	mkdev r${name}${unit}o	c $chr $(($unit * 16 + 14))	640 $g_operator
+	mkdev r${name}${unit}p	c $chr $(($unit * 16 + 15))	640 $g_operator
 }
-makedisk_p16high() {
-	highpartoffset=524280	# offset for partition 9 to 16
+
+makedisk_p16high()
+{
+	ho=524280	# offset for partition 9 to 16
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
 
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
-	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
-	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
-	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
-	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
-	mknod ${name}${unit}i	b $blk $(($unit * 8 + $highpartoffset + 8))
-	mknod ${name}${unit}j	b $blk $(($unit * 8 + $highpartoffset + 9))
-	mknod ${name}${unit}k	b $blk $(($unit * 8 + $highpartoffset + 10))
-	mknod ${name}${unit}l	b $blk $(($unit * 8 + $highpartoffset + 11))
-	mknod ${name}${unit}m	b $blk $(($unit * 8 + $highpartoffset + 12))
-	mknod ${name}${unit}n	b $blk $(($unit * 8 + $highpartoffset + 13))
-	mknod ${name}${unit}o	b $blk $(($unit * 8 + $highpartoffset + 14))
-	mknod ${name}${unit}p	b $blk $(($unit * 8 + $highpartoffset + 15))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
-	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
-	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
-	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
-	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
-	mknod r${name}${unit}i	c $chr $(($unit * 8 + $highpartoffset + 8))
-	mknod r${name}${unit}j	c $chr $(($unit * 8 + $highpartoffset + 9))
-	mknod r${name}${unit}k	c $chr $(($unit * 8 + $highpartoffset + 10))
-	mknod r${name}${unit}l	c $chr $(($unit * 8 + $highpartoffset + 11))
-	mknod r${name}${unit}m	c $chr $(($unit * 8 + $highpartoffset + 12))
-	mknod r${name}${unit}n	c $chr $(($unit * 8 + $highpartoffset + 13))
-	mknod r${name}${unit}o	c $chr $(($unit * 8 + $highpartoffset + 14))
-	mknod r${name}${unit}p	c $chr $(($unit * 8 + $highpartoffset + 15))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
+	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
+	mkdev ${name}${unit}c	b $blk $(($unit * 8 + 2))	640 $g_operator
+	mkdev ${name}${unit}d	b $blk $(($unit * 8 + 3))	640 $g_operator
+	mkdev ${name}${unit}e	b $blk $(($unit * 8 + 4))	640 $g_operator
+	mkdev ${name}${unit}f	b $blk $(($unit * 8 + 5))	640 $g_operator
+	mkdev ${name}${unit}g	b $blk $(($unit * 8 + 6))	640 $g_operator
+	mkdev ${name}${unit}h	b $blk $(($unit * 8 + 7))	640 $g_operator
+	mkdev ${name}${unit}i	b $blk $(($unit * 8 + $ho + 8))	640 $g_operator
+	mkdev ${name}${unit}j	b $blk $(($unit * 8 + $ho + 9))	640 $g_operator
+	mkdev ${name}${unit}k	b $blk $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev ${name}${unit}l	b $blk $(($unit * 8 + $ho + 11)) 640 $g_operator
+	mkdev ${name}${unit}m	b $blk $(($unit * 8 + $ho + 12)) 640 $g_operator
+	mkdev ${name}${unit}n	b $blk $(($unit * 8 + $ho + 13)) 640 $g_operator
+	mkdev ${name}${unit}o	b $blk $(($unit * 8 + $ho + 14)) 640 $g_operator
+	mkdev ${name}${unit}p	b $blk $(($unit * 8 + $ho + 15)) 640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * 8 + 0))	640 $g_operator
+	mkdev r${name}${unit}b	c $chr $(($unit * 8 + 1))	640 $g_operator
+	mkdev r${name}${unit}c	c $chr $(($unit * 8 + 2))	640 $g_operator
+	mkdev r${name}${unit}d	c $chr $(($unit * 8 + 3))	640 $g_operator
+	mkdev r${name}${unit}e	c $chr $(($unit * 8 + 4))	640 $g_operator
+	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
+	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
+	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
+	mkdev r${name}${unit}i	c $chr $(($unit * 8 + $ho + 8))	640 $g_operator
+	mkdev r${name}${unit}j	c $chr $(($unit * 8 + $ho + 9))	640 $g_operator
+	mkdev r${name}${unit}k	c $chr $(($unit * 8 + $ho + 10)) 640 $g_operator
+	mkdev r${name}${unit}l	c $chr $(($unit * 8 + $ho + 11)) 640 $g_operator
+	mkdev r${name}${unit}m	c $chr $(($unit * 8 + $ho + 12)) 640 $g_operator
+	mkdev r${name}${unit}n	c $chr $(($unit * 8 + $ho + 13)) 640 $g_operator
+	mkdev r${name}${unit}o	c $chr $(($unit * 8 + $ho + 14)) 640 $g_operator
+	mkdev r${name}${unit}p	c $chr $(($unit * 8 + $ho + 15)) 640 $g_operator
 }
 
 # make only the very few basic disk device nodes - 'a' partition
 # and raw partition
-makedisk_minimal() {
+makedisk_minimal()
+{
 	name=$1; unit=$2; blk=$3; chr=$4
 	doff=%DISKMINOROFFSET%
-	ro=%RAWDISK_OFF%; rn=%RAWDISK_NAME%
+	ro=%RAWDISK_OFF%
+	rn=%RAWDISK_NAME%
 
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a		b $blk $(($unit * $doff + 0))
-	mknod ${name}${unit}$rn		b $blk $(($unit * $doff + $ro))
-	mknod r${name}${unit}a		c $chr $(($unit * $doff + 0))
-	mknod r${name}${unit}$rn	c $chr $(($unit * $doff + $ro))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
+	mkdev ${name}${unit}a	b $blk $(($unit * $doff + 0))	640 $g_operator
+	mkdev ${name}${unit}$rn	b $blk $(($unit * $doff + $ro))	640 $g_operator
+	mkdev r${name}${unit}a	c $chr $(($unit * $doff + 0))	640 $g_operator
+	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
 makedev $*
