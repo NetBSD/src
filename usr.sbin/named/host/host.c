@@ -1,3 +1,5 @@
+/*	$NetBSD: host.c,v 1.2 1997/04/13 10:50:27 mrg Exp $	*/
+
 /*
  * Copyright (c) 1985, 1989 Regents of the University of California.
  * All rights reserved.
@@ -275,6 +277,7 @@ Extended usage:  [-x [name ...]] [-X server [name ...]]\
 #include <netdb.h>
 #include <time.h>
 
+
 #include <sys/types.h>		/* not always automatically included */
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -282,6 +285,7 @@ Extended usage:  [-x [name ...]] [-X server [name ...]]\
 
 #undef NOERROR			/* in <sys/streams.h> on solaris 2.x */
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <resolv.h>
 
 #include "port.h"		/* various portability definitions */
@@ -1624,7 +1628,7 @@ input bool qualified;			/* assume fully qualified if set */
  * Check for aliases of single name.
  * Note that the alias is supposed to be fully qualified.
  */
-	if (dot == 0 && (cp = hostalias(name)) != NULL)
+	if (dot == 0 && (cp = (char *)hostalias(name)) != NULL)
 	{
 		if (verbose)
 			printf("Aliased %s to %s\n", name, cp);

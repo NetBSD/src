@@ -1,3 +1,5 @@
+.\"	$NetBSD: resolver.3,v 1.2 1997/04/13 10:51:00 mrg Exp $
+.\"
 .\" Copyright (c) 1985, 1995 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -16,9 +18,9 @@
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
-.\"	$Id: resolver.3,v 1.1.1.1 1997/04/13 09:07:35 mrg Exp $
+.\"	from: Id: resolver.3,v 8.4 1996/05/09 05:59:10 vixie Exp
 .\"
-.TH RESOLVER @LIB_NETWORK_EXT_U@ "December 11, 1995
+.TH RESOLVER 3 "December 11, 1995
 .UC 4
 .SH NAME
 res_query, res_search, res_mkquery, res_send, res_init, dn_comp, dn_expand \- resolver routines
@@ -157,9 +159,9 @@ This option is enabled by default.
 If this option is set,
 .I res_search
 will search for host names in the current domain and in parent domains; see
-.IR hostname (@DESC_EXT@).
+.IR hostname (7).
 This is used by the standard host lookup routine
-.IR gethostbyname (@LIB_NETWORK_EXT@).
+.IR gethostbyname (3).
 This option is enabled by default.
 .IP RES_NOALIASES
 This option turns off the user level aliasing feature controlled by
@@ -169,7 +171,7 @@ The
 .I res_init
 routine
 reads the configuration file (if any; see
-.IR resolver (@FORMAT_EXT@))
+.IR resolver (5))
 to get the default domain name,
 search list and
 the Internet address of the local name server(s).
@@ -192,7 +194,7 @@ structure or are inherited from the configuration file's
 .I options
 command.  The syntax of the ``RES_OPTIONS'' environment variable
 is explained in
-.IR resolver (@FORMAT_EXT@).
+.IR resolver (5).
 Initialization normally occurs on the first call
 to one of the other resolver routines.
 .PP
@@ -330,9 +332,9 @@ value of the
 .B err
 parameter.
 .SH FILES
-/etc/resolv.conf	see resolver(@FORMAT_EXT@)
+/etc/resolv.conf	see resolver(5)
 .SH "SEE ALSO"
-gethostbyname(@LIB_NETWORK_EXT@), @INDOT@named(@SYS_OPS_EXT@), resolver(@FORMAT_EXT@), hostname(@DESC_EXT@),
+gethostbyname(3), named(8), resolver(5), hostname(7),
 .br
 RFC1032, RFC1033, RFC1034, RFC1035, RFC974, 
 .br

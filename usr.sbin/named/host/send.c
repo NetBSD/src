@@ -1,3 +1,5 @@
+/*	$NetBSD: send.c,v 1.2 1997/04/13 10:50:37 mrg Exp $	*/
+
 /*
  * Copyright (c) 1985, 1989 Regents of the University of California.
  * All rights reserved.

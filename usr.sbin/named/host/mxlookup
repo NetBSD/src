@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$NetBSD: mxlookup,v 1.2 1997/04/13 10:50:32 mrg Exp $
 #
 #	@(#)mxlookup            e07@nikhef.nl (Eric Wassenaar) 950108
 #
