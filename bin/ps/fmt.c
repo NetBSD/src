@@ -72,7 +72,7 @@ shquote(argv)
 			dst++;
 		*dst++ = ' ';
 	}
-	*dst = '\0';
+	*--dst = '\0';
 	return (buf);
 }
 
