@@ -543,17 +543,18 @@ thread_wakeup(event)
 int indent = 0;
 
 /*ARGSUSED2*/
-iprintf(a, b, c, d, e, f, g, h)
+iprintf(pr, a, b, c, d, e, f, g, h)
+	void (*pr)();
 	char *a;
 {
 	register int i;
 
 	i = indent;
 	while (i >= 8) {
-		printf("\t");
+		(*pr)("\t");
 		i -= 8;
 	}
 	for (; i > 0; --i)
-		printf(" ");
-	printf(a, b, c, d, e, f, g, h);
+		(*pr)(" ");
+	(*pr)(a, b, c, d, e, f, g, h);
 }

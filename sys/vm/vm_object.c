@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.7 1993/08/07 06:03:02 cgd Exp $
+ *	$Id: vm_object.c,v 1.8 1993/09/13 14:10:37 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,6 +69,7 @@
 
 #include "param.h"
 #include "malloc.h"
+#include "systm.h"
 
 #include "vm.h"
 #include "vm_page.h"
@@ -1514,6 +1515,16 @@ void vm_object_print(object, full)
 	vm_object_t	object;
 	boolean_t	full;
 {
+        extern void _vm_object_print();
+        
+        _vm_object_print(object, full, printf);
+}
+
+void _vm_object_print(object, full, pr)
+	vm_object_t	object;
+	boolean_t	full;
+        int (*pr)();
+{
 	register vm_page_t	p;
 	extern indent;
 
@@ -1522,13 +1533,13 @@ void vm_object_print(object, full)
 	if (object == NULL)
 		return;
 
-	iprintf("Object 0x%x: size=0x%x, res=%d, ref=%d, ",
+	iprintf(pr, "Object 0x%x: size=0x%x, res=%d, ref=%d, ",
 		(int) object, (int) object->size,
 		object->resident_page_count, object->ref_count);
-	printf("pager=0x%x+0x%x, shadow=(0x%x)+0x%x\n",
+	(*pr)("pager=0x%x+0x%x, shadow=(0x%x)+0x%x\n",
 	       (int) object->pager, (int) object->paging_offset,
 	       (int) object->shadow, (int) object->shadow_offset);
-	printf("cache: next=0x%x, prev=0x%x\n",
+	(*pr)("cache: next=0x%x, prev=0x%x\n",
 	       object->cached_list.next, object->cached_list.prev);
 
 	if (!full)
@@ -1539,19 +1550,19 @@ void vm_object_print(object, full)
 	p = (vm_page_t) queue_first(&object->memq);
 	while (!queue_end(&object->memq, (queue_entry_t) p)) {
 		if (count == 0)
-			iprintf("memory:=");
+			iprintf(pr, "memory:=");
 		else if (count == 6) {
-			printf("\n");
-			iprintf(" ...");
+			(*pr)("\n");
+			iprintf(pr, " ...");
 			count = 0;
 		} else
-			printf(",");
+			(*pr)(",");
 		count++;
 
-		printf("(off=0x%x,page=0x%x)", p->offset, VM_PAGE_TO_PHYS(p));
+		(*pr)("(off=0x%x,page=0x%x)", p->offset, VM_PAGE_TO_PHYS(p));
 		p = (vm_page_t) queue_next(&p->listq);
 	}
 	if (count != 0)
-		printf("\n");
+		(*pr)("\n");
 	indent -= 2;
 }
