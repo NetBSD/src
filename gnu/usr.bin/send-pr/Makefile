@@ -33,7 +33,7 @@ SUBMITTER = net
 MAIL_AGENT = /usr/sbin/sendmail -oi -t
 
 # Command line to display the passwd database
-PASSWD = cat /bin/passwd
+PASSWD = cat /etc/passwd
 
 # Echo(1) style
 ECHON = bsd
