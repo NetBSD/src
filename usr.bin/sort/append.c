@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -51,7 +51,10 @@ __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 		for (; ppos < cpos; ++ppos)				\
 			*ppos -= odepth;				\
 		ppos -= n;						\
-		radixsort(ppos, n, wts1, REC_D);			\
+		if (stable_sort)					\
+			sradixsort(ppos, n, wts1, REC_D);		\
+		else							\
+			radixsort(ppos, n, wts1, REC_D);		\
 		for (; ppos < cpos; ppos++) {				\
 			prec = (const RECHEADER *) (*ppos - sizeof(TRECHEADER));\
 			put(prec, fp);					\
