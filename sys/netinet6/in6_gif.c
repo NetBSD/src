@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.18.2.3 2001/11/14 19:18:06 nathanw Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.18.2.4 2002/01/08 00:34:17 nathanw Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.3 2001/11/14 19:18:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.4 2002/01/08 00:34:17 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.3 2001/11/14 19:18:06 nathanw Exp
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.3 2001/11/14 19:18:06 nathanw Exp
 #include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #endif
+#include <netinet6/ip6protosw.h>
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
@@ -73,7 +75,17 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.18.2.3 2001/11/14 19:18:06 nathanw Exp
 static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
 	struct ifnet *));
 
-extern struct ip6protosw in6_gif_protosw;
+int	ip6_gif_hlim = GIF_HLIM;
+
+extern struct domain inet6domain;
+struct ip6protosw in6_gif_protosw =
+{ SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
+  rip6_usrreq,
+  0,            0,              0,              0,
+};
+
+extern LIST_HEAD(, gif_softc) gif_softc_list;
 
 int
 in6_gif_output(ifp, family, m)
@@ -86,7 +98,7 @@ in6_gif_output(ifp, family, m)
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct ip6_hdr *ip6;
-	int proto;
+	int proto, error;
 	u_int8_t itos, otos;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
@@ -205,10 +217,12 @@ in6_gif_output(ifp, family, m)
 	 * it is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
 	 */
-	return(ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL));
+	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL);
 #else
-	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
+	error = ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL);
 #endif
+
+	return(error);
 }
 
 int in6_gif_input(mp, offp, proto)
@@ -404,4 +418,72 @@ in6_gif_detach(sc)
 	if (error == 0)
 		sc->encap_cookie6 = NULL;
 	return error;
+}
+
+void
+in6_gif_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	struct gif_softc *sc;
+	struct ip6ctlparam *ip6cp = NULL;
+	struct mbuf *m;
+	struct ip6_hdr *ip6;
+	int off;
+	void *cmdarg;
+	const struct sockaddr_in6 *sa6_src = NULL;
+	struct sockaddr_in6 *dst6;
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+		cmdarg = ip6cp->ip6c_cmdarg;
+		sa6_src = ip6cp->ip6c_src;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+		cmdarg = NULL;
+		sa6_src = &sa6_any;
+	}
+
+	if (!ip6)
+		return;
+
+	/*
+	 * for now we don't care which type it was, just flush the route cache.
+	 * XXX slow.  sc (or sc->encap_cookie6) should be passed from
+	 * ip_encap.c.
+	 */
+	for (sc = LIST_FIRST(&gif_softc_list); sc;
+	     sc = LIST_NEXT(sc, gif_list)) {
+		if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
+			continue;
+		if (sc->gif_psrc->sa_family != AF_INET6)
+			continue;
+		if (!sc->gif_ro6.ro_rt)
+			continue;
+
+		dst6 = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+		/* XXX scope */
+		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr)) {
+			/* flush route cache */
+			RTFREE(sc->gif_ro6.ro_rt);
+			sc->gif_ro6.ro_rt = NULL;
+		}
+	}
 }

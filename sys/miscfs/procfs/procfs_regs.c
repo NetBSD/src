@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.12.2.2 2001/11/14 19:17:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.12.2.3 2002/01/08 00:33:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.2 2001/11/14 19:17:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.3 2002/01/08 00:33:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.12.2.2 2001/11/14 19:17:12 nathanw
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 

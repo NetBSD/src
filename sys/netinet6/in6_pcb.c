@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.35.2.4 2001/11/14 19:18:07 nathanw Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.35.2.5 2002/01/08 00:34:18 nathanw Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.35.2.4 2001/11/14 19:18:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.35.2.5 2002/01/08 00:34:18 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -222,8 +222,9 @@ in6_pcbbind(in6p, nam, p)
 				return(EADDRNOTAVAIL);
 
 			/*
-			 * XXX: bind to an anycast address might accidentally
-			 * cause sending a packet with anycast source address.
+			 * bind to an anycast address might accidentally
+			 * cause sending a packet with an anycast source
+			 * address, so we forbid it.
 			 */
 			if (ia &&
 			    ((struct in6_ifaddr *)ia)->ia6_flags &
@@ -664,8 +665,7 @@ in6_pcbpurgeif0(head, ifp)
 				nimm = imm->i6mm_chain.le_next;
 				if (imm->i6mm_maddr->in6m_ifp == ifp) {
 					LIST_REMOVE(imm, i6mm_chain);
-					in6_delmulti(imm->i6mm_maddr);
-					free(imm, M_IPMADDR);
+					in6_leavegroup(imm);
 				}
 			}
 		}

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:54:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.20.1 2002/01/08 00:33:28 nathanw Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/ufs/ext2fs ${.CURDIR}/../..
-
-MKMAN=	no
 
 KMOD=	ext2fs
 

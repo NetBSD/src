@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2001/04/09 01:58:07 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2002/01/08 00:33:00 nathanw Exp $
 
 .include "../Makefile.inc"
 
@@ -8,8 +8,6 @@ CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_OSF1
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}
-
-MKMAN=	no
 
 KMOD=	compat_osf1
 

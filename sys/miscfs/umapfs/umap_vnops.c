@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.18.2.1 2001/11/14 19:17:15 nathanw Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.18.2.2 2002/01/08 00:33:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,12 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.1 2001/11/14 19:17:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.2 2002/01/08 00:33:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -57,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.1 2001/11/14 19:17:15 nathanw 
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
-
 
 int	umap_lookup	__P((void *));
 int	umap_getattr	__P((void *));
@@ -94,8 +92,9 @@ const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_strategy_desc,	layer_strategy },
 	{ &vop_bwrite_desc,	layer_bwrite },
 	{ &vop_bmap_desc,	layer_bmap },
+	{ &vop_putpages_desc,	layer_putpages },
 
-	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.2.2.4 2001/11/14 19:18:17 nathanw Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.2.2.5 2002/01/08 00:34:27 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.2.2.4 2001/11/14 19:18:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.2.2.5 2002/01/08 00:34:27 nathanw Exp $");
 
 #include "i4b.h"
 #include "i4bipr.h"
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.2.2.4 2001/11/14 19:18:17 nathanw E
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <net/if.h>
-
-#ifdef __NetBSD__
-#include <sys/types.h>
-#endif
 
 #if defined(__FreeBSD__)
 #include "i4bing.h"

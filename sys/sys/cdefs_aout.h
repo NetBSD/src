@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.5.2.1 2001/11/14 19:18:50 nathanw Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.5.2.2 2002/01/08 00:34:40 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -39,14 +39,16 @@
 #define	__warn_references(sym,msg)
 #endif /* __GNUC__ */
 
-#if defined(__sh3__)		/* XXX SH COFF */
+#if defined(__sh__)		/* XXX SH COFF */
 #undef __indr_reference(sym,alias)
 #undef __warn_references(sym,msg)
 #define __warn_references(sym,msg)
 #endif
 
-#define __IDSTRING(name,string)						\
-	static const char name[] __attribute__((__unused__)) = string
+#define __IDSTRING(_n,_s)						\
+	__asm__(".data ; .asciz \"" _s "\" ; .text")
+
+#undef __KERNEL_RCSID
 
 #define __RCSID(_s)	__IDSTRING(rcsid,_s)
 #define __SCCSID(_s)
@@ -54,11 +56,11 @@
 #define __COPYRIGHT(_s)	__IDSTRING(copyright,_s)
 
 #if defined(USE_KERNEL_RCSIDS) || !defined(_KERNEL)
-#define	__KERNEL_RCSID(_n, _s) __IDSTRING(__CONCAT(rcsid,_n),_s)
+#define	__KERNEL_RCSID(_n,_s) __IDSTRING(__CONCAT(rcsid,_n),_s)
 #else
-#define	__KERNEL_RCSID(_n, _s)
+#define	__KERNEL_RCSID(_n,_s)
 #endif
-#define	__KERNEL_SCCSID(_n, _s)
+#define	__KERNEL_SCCSID(_n,_s)
 #define	__KERNEL_COPYRIGHT(_n, _s) __IDSTRING(__CONCAT(copyright,_n),_s)
 
 #endif /* !_SYS_CDEFS_AOUT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.76.2.6 2001/11/14 19:19:03 nathanw Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.76.2.7 2002/01/08 00:34:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.76.2.6 2001/11/14 19:19:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.76.2.7 2002/01/08 00:34:58 nathanw Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -1222,7 +1222,6 @@ ufs_mkdir(void *v)
 		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
-	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT|UPDATE_DIROP);
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.

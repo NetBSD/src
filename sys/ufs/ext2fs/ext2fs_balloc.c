@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.4 2001/11/14 19:18:53 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.5 2002/01/08 00:34:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.8.2.4 2001/11/14 19:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.8.2.5 2002/01/08 00:34:45 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -384,7 +384,6 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	int flags;
 {
 	off_t oldeof, eof, pagestart;
-	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
 	int bshift = vp->v_mount->mnt_fs_bshift;
@@ -396,9 +395,8 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 		    vp, off, len, vp->v_size);
 
 	error = 0;
-	uobj = &vp->v_uobj;
 	oldeof = vp->v_size;
-	eof = max(oldeof, off + len);
+	eof = MAX(oldeof, off + len);
 	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
 	pgs[0] = NULL;
 
@@ -410,9 +408,9 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 */
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
-	npages = min(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
+	npages = MIN(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
 	memset(pgs, 0, npages);
-	simple_lock(&uobj->vmobjlock);
+	simple_lock(&vp->v_interlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
 	if (error) {
@@ -450,18 +448,20 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 */
 
 errout:
-	simple_lock(&uobj->vmobjlock);
-	if (error) {
-		(void) (uobj->pgops->pgo_put)(uobj, oldeof, pagestart + ppb,
-		    PGO_FREE);
-		simple_lock(&uobj->vmobjlock);
-	}
-	if (pgs[0] != NULL) {
-		for (i = 0; i < npages; i++) {
-			pgs[i]->flags &= ~PG_RDONLY;
+	simple_lock(&vp->v_interlock);
+	for (i = 0; i < npages; i++) {
+		pgs[i]->flags &= ~PG_RDONLY;
+		if (error) {
+			pgs[i]->flags |= PG_RELEASED;
 		}
+	}
+	if (error) {
+		uvm_lock_pageq();
+		uvm_page_unbusy(pgs, npages);
+		uvm_unlock_pageq();
+	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	simple_unlock(&vp->v_interlock);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.20.2.2 2001/10/22 20:42:05 nathanw Exp $	*/
+/*	$NetBSD: nd6.h,v 1.20.2.3 2002/01/08 00:34:25 nathanw Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -134,8 +134,8 @@ struct	in6_ndifreq {
 
 
 /* protocol constants */
-#define MAX_RTR_SOLICITATION_DELAY	1	/*1sec*/
-#define RTR_SOLICITATION_INTERVAL	4	/*4sec*/
+#define MAX_RTR_SOLICITATION_DELAY	1	/* 1sec */
+#define RTR_SOLICITATION_INTERVAL	4	/* 4sec */
 #define MAX_RTR_SOLICITATIONS		3
 
 #define ND6_INFINITE_LIFETIME		0xffffffff
@@ -255,7 +255,7 @@ extern struct callout nd6_timer_ch;
 extern int nd6_defifindex;
 
 union nd_opts {
-	struct nd_opt_hdr *nd_opt_array[9];
+	struct nd_opt_hdr *nd_opt_array[8];
 	struct {
 		struct nd_opt_hdr *zero;
 		struct nd_opt_hdr *src_lladdr;
@@ -299,7 +299,6 @@ void nd6_p2p_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
-/* for test */
 int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
 		    struct sockaddr_in6 *, struct rtentry *));
 int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.40.2.1 2001/06/21 20:09:44 nathanw Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.40.2.2 2002/01/08 00:34:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -180,6 +180,20 @@
 #define	__restrict	/* delete __restrict when not supported */
 #endif
 #endif
+
+/*
+ * C99 defines __func__ predefined identifier, which was made available
+ * in GCC 2.95.
+ */
+#if !(__STDC_VERSION__ >= 199901L)
+#if __GNUC_PREREQ__(2, 6)
+#define	__func__	__PRETTY_FUNCTION__
+#elif __GNUC_PREREQ__(2, 4)
+#define	__func__	__FUNCTION__
+#else
+#define	__func__	""
+#endif
+#endif /* !(__STDC_VERSION__ >= 199901L) */
 
 #if defined(_KERNEL)
 #if defined(NO_KERNEL_RCSIDS)

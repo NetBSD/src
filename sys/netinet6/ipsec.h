@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.19.2.3 2001/10/22 20:42:04 nathanw Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.19.2.4 2002/01/08 00:34:23 nathanw Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ struct ipsec_output_state {
 	struct mbuf *m;
 	struct route *ro;
 	struct sockaddr *dst;
+	int encap;
 };
 
 struct ipsec_history {

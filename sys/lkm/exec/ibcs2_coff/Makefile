@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/08 23:05:37 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2002/01/08 00:33:06 nathanw Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/ibcs2
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_COFF 
-
-MKMAN=	no
 
 KMOD=	exec_ibcs2_coff
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.3 2001/11/14 19:18:53 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.16.2.4 2002/01/08 00:34:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.16.2.3 2001/11/14 19:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.16.2.4 2002/01/08 00:34:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,16 +296,16 @@ ext2fs_write(v)
 			 */
 
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				simple_lock(&vp->v_uobj.vmobjlock);
-				error = vp->v_uobj.pgops->pgo_put(
-				    &vp->v_uobj, (oldoff >> 16) << 16,
+				simple_lock(&vp->v_interlock);
+				error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			}
 		}
 		if (error == 0 && ioflag & IO_SYNC) {
-			simple_lock(&vp->v_uobj.vmobjlock);
-			error = vp->v_uobj.pgops->pgo_put(&vp->v_uobj, oldoff,
-			    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, trunc_page(oldoff),
+			    round_page(blkroundup(fs, uio->uio_offset)),
+			    PGO_CLEANIT | PGO_SYNCIO);
 		}
 
 		goto out;

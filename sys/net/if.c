@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.5 2001/11/14 19:17:19 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.6 2002/01/08 00:33:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.5 2001/11/14 19:17:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.6 2002/01/08 00:33:51 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -162,7 +162,10 @@ int if_clone_list __P((struct if_clonereq *));
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues __P((struct ifnet *, struct ifqueue *));
+#endif
 
 /*
  * Network interface utility routines.
@@ -611,6 +614,8 @@ do { \
 	splx(s);
 }
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void
 if_detach_queues(ifp, q)
 	struct ifnet *ifp;
@@ -645,6 +650,7 @@ if_detach_queues(ifp, q)
 		IF_DROP(q);
 	}
 }
+#endif /* defined(INET) || ... */
 
 /*
  * Callback for a radix tree walk to delete all references to an

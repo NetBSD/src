@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.3 2001/11/14 19:17:21 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.4 2002/01/08 00:33:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.3 2001/11/14 19:17:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.4 2002/01/08 00:33:51 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -119,7 +119,7 @@ void	gre_clone_destroy __P((struct ifnet *));
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
-void gre_compute_route(struct gre_softc *sc);
+int gre_compute_route(struct gre_softc *sc);
 
 void	greattach __P((int));
 
@@ -193,6 +193,9 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_char ttl, osrc;
 	u_short etype = 0;
 	struct mobile_h mob_h;
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return ENETDOWN;
 
 	gh = NULL;
 	inp = NULL;
@@ -371,8 +374,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    (sc->g_dst.s_addr != INADDR_ANY)) {
 				if (sc->route.ro_rt != 0) /* free old route */
 					RTFREE(sc->route.ro_rt);
-				gre_compute_route(sc);
-				ifp->if_flags |= IFF_UP;
+				if (gre_compute_route(sc) == 0)
+					ifp->if_flags |= IFF_UP;
 			}
 		}
 		break;
@@ -463,8 +466,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
 			if (sc->route.ro_rt != 0) /* free old route */
 				RTFREE(sc->route.ro_rt);
-			gre_compute_route(sc);
-			ifp->if_flags |= IFF_UP;
+			if (gre_compute_route(sc) == 0)
+				ifp->if_flags |= IFF_UP;
 		}
 		break;
 	case GREGADDRS:
@@ -496,7 +499,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * a-->b. We know that this one exists as in normal operation we have
  * at least a default route which matches.
  */
-void
+int
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
@@ -533,6 +536,20 @@ gre_compute_route(struct gre_softc *sc)
 	rtalloc(ro);
 
 	/*
+	 * check if this returned a route at all and this route is no
+	 * recursion to ourself
+	 */
+	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
+#ifdef DIAGNOSTIC
+		if (ro->ro_rt == NULL)
+			printf(" - no route found!\n");
+		else
+			printf(" - route loops back to ourself!\n");
+#endif
+		return EADDRNOTAVAIL;
+	}
+
+	/*
 	 * now change it back - else ip_output will just drop
 	 * the route and search one to this interface ...
 	 */
@@ -544,6 +561,8 @@ gre_compute_route(struct gre_softc *sc)
 	    inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr));
 	printf("\n");
 #endif
+
+	return 0;
 }
 
 /*

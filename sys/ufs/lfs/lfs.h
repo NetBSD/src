@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.2.1 2001/08/24 00:13:22 nathanw Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.2.2 2002/01/08 00:34:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #define BW_CLEAN	1
 #define MIN_FREE_SEGS	2
 #define LFS_MAX_ACTIVE	10
-#define LFS_MAXDIROP	(desiredvnodes>>2)
+#define LFS_MAXDIROP	(desiredvnodes >> 2)
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0
 #endif
@@ -107,7 +107,7 @@
 		locked_queue_bytes += bp->b_bufsize;			\
 	}								\
 	(bp)->b_flags |= B_LOCKED;					\
-} while(0)
+} while (0)
 
 #define LFS_UNLOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
@@ -118,7 +118,7 @@
 			wakeup(&locked_queue_count);			\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
-} while(0)
+} while (0)
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
@@ -131,7 +131,7 @@
         if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))   \
                 ++(ip)->i_lfs->lfs_uinodes;                             \
         (ip)->i_flag |= (flags);                                        \
-} while(0)
+} while (0)
 
 #define LFS_CLR_UINO(ip, flags) do {                                    \
         if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))    \
@@ -144,7 +144,7 @@
 	if ((ip)->i_lfs->lfs_uinodes < 0) {                             \
 		panic("lfs_uinodes < 0");                               \
 	}                                                               \
-} while(0)
+} while (0)
 
 #define LFS_ITIMES(ip, acc, mod, cre)  do {				\
        	if ((ip)->i_flag & IN_ACCESS) {                        		\
@@ -175,7 +175,7 @@
 		LFS_SET_UINO(ip, IN_MODIFIED);				\
 	}								\
 	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
-} while(0)
+} while (0)
 
 #define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & \
 				(IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
@@ -587,7 +587,7 @@ struct segsum {
 	(void) VOP_BWRITE(bp); /* Ifile */                       \
     } else                                                       \
 	brelse(bp);                                              \
-} while(0)
+} while (0)
 
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {                       \
 	if ((FS)->lfs_version > 1) {                                    \
@@ -631,7 +631,7 @@ struct segsum {
     	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
     	(F)->lfs_bsize, NOCRED, &(BP))) != 0)				\
 		panic("lfs: ifile read %d", _e);			\
-	if((F)->lfs_version == 1)					\
+	if ((F)->lfs_version == 1)					\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data + (IN) % (F)->lfs_ifpb); \
 	else								\
 		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\

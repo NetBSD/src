@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.9 2001/12/08 04:22:17 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.10 2002/01/08 00:34:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -204,6 +204,7 @@ struct proc {
 					/* Function to call at userret(). */ 
 	void		*p_userret_arg;
 	
+	const struct execsw *p_execsw;	/* Exec package information */
 
 /*
  * End area that is zeroed on creation

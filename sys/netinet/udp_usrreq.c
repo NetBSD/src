@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.75.2.5 2001/11/14 19:17:59 nathanw Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.75.2.6 2002/01/08 00:34:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.75.2.5 2001/11/14 19:17:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.75.2.6 2002/01/08 00:34:12 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -630,7 +630,7 @@ udp4_realinput(src, dst, m, off)
 		 */
 
 		/*
-		 * KAME note: usually we drop udpiphdr from mbuf here.
+		 * KAME note: traditionally we dropped udpiphdr from mbuf here.
 		 * we need udpiphdr for IPsec processing so we do that later.
 		 */
 		/*
@@ -736,7 +736,7 @@ udp6_realinput(af, src, dst, m, off)
 		 */
 
 		/*
-		 * KAME note: usually we drop udpiphdr from mbuf here.
+		 * KAME note: traditionally we dropped udpiphdr from mbuf here.
 		 * we need udpiphdr for IPsec processing so we do that later.
 		 */
 		/*
@@ -749,8 +749,7 @@ udp6_realinput(af, src, dst, m, off)
 			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
 				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &dst6))
 					continue;
-			}
-			else {
+			} else {
 				if (IN6_IS_ADDR_V4MAPPED(&dst6) &&
 				    (in6p->in6p_flags & IN6P_IPV6_V6ONLY))
 					continue;
@@ -759,8 +758,7 @@ udp6_realinput(af, src, dst, m, off)
 				if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,
 				    &src6) || in6p->in6p_fport != sport)
 					continue;
-			}
-			else {
+			} else {
 				if (IN6_IS_ADDR_V4MAPPED(&src6) &&
 				    (in6p->in6p_flags & IN6P_IPV6_V6ONLY))
 					continue;

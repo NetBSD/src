@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.13.2.2 2001/11/14 19:17:32 nathanw Exp $	*/
+/*	$NetBSD: zlib.c,v 1.13.2.3 2002/01/08 00:33:56 nathanw Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.13.2.2 2001/11/14 19:17:32 nathanw Exp $
+ * $Id: zlib.c,v 1.13.2.3 2002/01/08 00:33:56 nathanw Exp $
  */
 
 /* 
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.13.2.2 2001/11/14 19:17:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.13.2.3 2002/01/08 00:33:56 nathanw Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -57,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.13.2.2 2001/11/14 19:17:32 nathanw Exp $"
 #include <sys/time.h>
 #include <sys/systm.h>
 #  define HAVE_MEMCPY
-#  define memcpy(d, s, n)	bcopy((s), (d), (n))
-#  define memset(d, v, n)	bzero((d), (n))
-#  define memcmp		bcmp
-
 #else
 #if defined(__KERNEL__)
 /* Assume this is a Linux kernel */

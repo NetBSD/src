@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.23.2.2 2001/06/21 20:09:47 nathanw Exp $	*/
+/*	$NetBSD: file.h,v 1.23.2.3 2002/01/08 00:34:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -56,13 +56,14 @@ struct stat;
 struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
+	int		f_iflags;	/* internal flags */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
-	short		f_type;		/* descriptor type */
-	short		f_count;	/* reference count */
-	short		f_msgcount;	/* references from message queue */
-	short		f_pad0;		/* spare */
+	int		f_type;		/* descriptor type */
+	u_int		f_count;	/* reference count */
+	u_int		f_msgcount;	/* references from message queue */
+	int		f_usecount;	/* number active users */
 	struct ucred	*f_cred;	/* creds associated with descriptor */
 	struct fileops {
 		int	(*fo_read)	(struct file *fp, off_t *offset,
@@ -82,9 +83,7 @@ struct file {
 		int	(*fo_close)	(struct file *fp, struct proc *p);
 	} *f_ops;
 	off_t		f_offset;
-	caddr_t		f_data;		/* vnode or socket */
-	int		f_iflags;	/* internal flags */
-	int		f_usecount;	/* number active users */
+	caddr_t		f_data;		/* descriptor data, e.g. vnode/socket */
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */

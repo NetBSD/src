@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.2.20.1 2001/11/14 19:17:33 nathanw Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.2.20.2 2002/01/08 00:33:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.2.20.1 2001/11/14 19:17:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.2.20.2 2002/01/08 00:33:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.1.2.2 2001/09/21 22:37:00 nathanw Exp $ */
+/*      $NetBSD: clockctl.h,v 1.1.2.3 2002/01/08 00:34:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,31 +36,20 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/timex.h>
+#include <sys/mount.h> /* For fhandle_t */
+#include <sys/syscallargs.h>
 
 #ifndef SYS_CLOCKCTL_H
 #define SYS_CLOCKCTL_H
 
-struct clockctl_settimeofday_args {
-	struct timeval tv;
-	struct timezone tzp;
-};
-struct clockctl_adjtime_args {
-	struct timeval delta;
-	struct timeval olddelta;
-};
-struct clockctl_clock_settime_args {
-	clockid_t clock_id;
-	struct timespec tp;
-};
-
 struct clockctl_ntp_adjtime_args {
-	struct timex tp;
+	struct sys_ntp_adjtime_args uas;
+	register_t retval;
 };
 
-#define CLOCKCTL_SETTIMEOFDAY _IOW('C', 0x1, struct clockctl_settimeofday_args)
-#define CLOCKCTL_ADJTIME _IOWR('C', 0x2, struct clockctl_adjtime_args)
-#define CLOCKCTL_CLOCK_SETTIME \
-    _IOW('C', 0x3, struct clockctl_clock_settime_args)
+#define CLOCKCTL_SETTIMEOFDAY _IOW('C', 0x1, struct sys_settimeofday_args)
+#define CLOCKCTL_ADJTIME _IOWR('C', 0x2, struct sys_adjtime_args)
+#define CLOCKCTL_CLOCK_SETTIME _IOW('C', 0x3, struct sys_clock_settime_args)
 #define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
 
 #ifdef _KERNEL

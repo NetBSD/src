@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.16.2.3 2001/11/14 19:18:02 nathanw Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.16.2.4 2002/01/08 00:34:14 nathanw Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.3 2001/11/14 19:18:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.4 2002/01/08 00:34:14 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -375,14 +375,6 @@ noreplaycheck:
 			ipsecstat.in_inval++;
 			goto bad;
 		}
-
-#if 0 /* XXX should call ipfw rather than ipsec_in_reject, shouldn't it ? */
-		/* drop it if it does not match the default policy */
-		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
-			goto bad;
-		}
-#endif
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 ||
@@ -800,14 +792,6 @@ noreplaycheck:
 			ipsec6stat.in_inval++;
 			goto bad;
 		}
-
-#if 0 /* XXX should call ipfw rather than ipsec_in_reject, shouldn't it ? */
-		/* drop it if it does not match the default policy */
-		if (ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
-			goto bad;
-		}
-#endif
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_ESP, spi) != 0 || 

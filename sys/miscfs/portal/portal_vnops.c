@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.37.2.3 2001/11/14 19:17:11 nathanw Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.37.2.4 2002/01/08 00:33:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.37.2.3 2001/11/14 19:17:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.37.2.4 2002/01/08 00:33:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
@@ -115,6 +114,7 @@ int	portal_pathconf	__P((void *));
 #define	portal_truncate	genfs_eopnotsupp
 #define	portal_update	genfs_eopnotsupp
 #define	portal_bwrite	genfs_eopnotsupp
+#define	portal_putpages	genfs_null_putpages
 
 int (**portal_vnodeop_p) __P((void *));
 const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
@@ -160,6 +160,7 @@ const struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_truncate_desc, portal_truncate },	/* truncate */
 	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, portal_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc portal_vnodeop_opv_desc =

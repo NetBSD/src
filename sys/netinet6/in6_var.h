@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.18.2.2 2001/10/22 20:42:01 nathanw Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.18.2.3 2002/01/08 00:34:19 nathanw Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  * hour rule for hosts).  they should never be modified by nd6_timeout or
  * anywhere else.
  *	userland -> kernel: accept pltime/vltime
- *	kernel -> userland: throuw up everything
+ *	kernel -> userland: throw up everything
  *	in kernel: modify preferred/expire only
  */
 struct in6_addrlifetime {
@@ -555,11 +555,12 @@ do {						\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (0)
 
-int	in6_ifinit __P((struct ifnet *,
-			struct in6_ifaddr *, struct sockaddr_in6 *, int));
 struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
 				     int *));
 void	in6_delmulti __P((struct in6_multi *));
+struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
+	int *));
+int in6_leavegroup __P((struct in6_multi_mship *));
 void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
 extern int in6_ifindex2scopeid __P((int));
 extern int in6_mask2len __P((struct in6_addr *));

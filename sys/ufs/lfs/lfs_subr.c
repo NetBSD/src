@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.2.3 2001/11/14 19:18:59 nathanw Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.2.4 2002/01/08 00:34:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.3 2001/11/14 19:18:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.4 2002/01/08 00:34:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ lfs_segunlock(struct lfs *fs)
 		if (ckp) {
 			fs->lfs_nactive = 0;
 			/* If we *know* everything's on disk, write both sbs */
-			if(sync)
+			if (sync)
 				lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);

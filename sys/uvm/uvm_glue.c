@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.10 2001/12/16 01:54:30 gmcgarry Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.11 2002/01/08 00:35:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.10 2001/12/16 01:54:30 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.11 2002/01/08 00:35:01 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -228,7 +228,7 @@ uvm_vslock(p, addr, len, access_type)
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, access_type);
+	error = uvm_fault_wire(map, start, end, VM_FAULT_WIRE, access_type);
 	return error;
 }
 
@@ -305,8 +305,8 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault_wire(kernel_map, (vaddr_t)up, (vaddr_t)up + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
 
@@ -392,7 +392,7 @@ uvm_swapin(l)
 
 	addr = (vaddr_t)l->l_addr;
 	/* make L_INMEM true */
-	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE, VM_FAULT_WIRE,
 	    VM_PROT_READ | VM_PROT_WRITE);
 	if (error) {
 		panic("uvm_swapin: rewiring stack failed: %d", error);
@@ -632,3 +632,63 @@ uvm_swapout(l)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
+/*
+ * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
+ * a core file.
+ */
+
+int
+uvm_coredump_walkmap(p, vp, cred, func, cookie)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	int (*func)(struct proc *, struct vnode *, struct ucred *,
+	    struct uvm_coredump_state *);
+	void *cookie;
+{
+	struct uvm_coredump_state state;
+	struct vmspace *vm = p->p_vmspace;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
+	vaddr_t maxstack;
+	int error;
+
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+
+	for (entry = map->header.next; entry != &map->header;
+	     entry = entry->next) {  
+		/* Should never happen for a user process. */
+		if (UVM_ET_ISSUBMAP(entry))
+			panic("uvm_coredump_walkmap: user process with "
+			    "submap?");
+
+		state.cookie = cookie;
+		state.start = entry->start;
+		state.end = entry->end;
+		state.prot = entry->protection;
+		state.flags = 0;
+
+		if (state.start >= VM_MAXUSER_ADDRESS)  
+			continue;
+
+		if (state.end > VM_MAXUSER_ADDRESS)
+			state.end = VM_MAXUSER_ADDRESS;
+
+		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
+			if (state.end <= maxstack)
+				continue;
+			if (state.start < maxstack)
+				state.start = maxstack;
+			state.flags |= UVM_COREDUMP_STACK;
+		}
+
+		if ((entry->protection & VM_PROT_WRITE) == 0)
+			state.flags |= UVM_COREDUMP_NODUMP;
+
+		error = (*func)(p, vp, cred, &state);
+		if (error)
+			return (error);
+	}
+
+	return (0);
+}

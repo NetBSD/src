@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.2.2 2001/11/14 19:19:01 nathanw Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.2.3 2002/01/08 00:34:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.2 2001/11/14 19:19:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.3 2002/01/08 00:34:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,8 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, mfs_truncate },		/* truncate */
 	{ &vop_update_desc, mfs_update },		/* update */
 	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_putpages_desc, mfs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc mfs_vnodeop_opv_desc =
 	{ &mfs_vnodeop_p, mfs_vnodeop_entries };

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1.4.3 2001/11/14 19:16:58 nathanw Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.4.4 2002/01/08 00:33:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.4.3 2001/11/14 19:16:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.4.4 2002/01/08 00:33:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.4.3 2001/11/14 19:16:58 nathanw
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <machine/elf_machdep.h>
 #define ELFSIZE	32
@@ -55,11 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.4.3 2001/11/14 19:16:58 nathanw
 int exec_ibcs2_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_ibcs2_elf =
-	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,
+	/* SCO Elf32 */
+	{ sizeof (Elf32_Ehdr),
+	  exec_elf32_makecmds,
 	  { ELFNAME2(ibcs2,probe) },
-	  &emul_ibcs2, EXECSW_PRIO_ANY,
-	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs };
-				/* SCO 32bit ELF bins (not 64bit safe) */
+	  &emul_ibcs2,
+	  EXECSW_PRIO_ANY,
+	  IBCS2_ELF_AUX_ARGSIZ,
+	  elf32_copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

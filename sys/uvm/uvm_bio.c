@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.7.2.7 2001/11/14 19:19:04 nathanw Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7.2.8 2002/01/08 00:35:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.7.2.7 2001/11/14 19:19:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.7.2.8 2002/01/08 00:35:00 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -434,6 +434,7 @@ again:
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 		}
+		memset(pgs, 0, sizeof(pgs));
 		simple_lock(&uobj->vmobjlock);
 		error = VOP_GETPAGES(vp, trunc_page(offset), pgs, &npages, 0,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, gpflags);

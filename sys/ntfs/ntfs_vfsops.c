@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.6 2001/11/14 19:18:49 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.7 2002/01/08 00:34:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.6 2001/11/14 19:18:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.7 2002/01/08 00:34:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,12 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
 				 int *, struct ucred **));
 #endif
+
+struct genfs_ops ntfs_genfsops = {
+	NULL,
+	NULL,
+	genfs_compat_gop_write,
+};
 
 #ifdef __NetBSD__
 /*
@@ -1007,10 +1013,10 @@ ntfs_vgetex(
 		}
 	}
 
+	genfs_node_init(vp, &ntfs_genfsops);
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);
-	
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.13.2.2 2001/11/14 19:18:13 nathanw Exp $	*/
+/*	$NetBSD: mld6.c,v 1.13.2.3 2002/01/08 00:34:23 nathanw Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.13.2.2 2001/11/14 19:18:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.13.2.3 2002/01/08 00:34:23 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -232,7 +232,7 @@ mld6_input(m, off)
 	 * we have heard a report from another member, or MLD6_IREPORTEDLAST
 	 * if we sent the last report.
 	 */
-	switch(mldh->mld6_type) {
+	switch (mldh->mld6_type) {
 	case MLD6_LISTENER_QUERY:
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
@@ -457,7 +457,7 @@ mld6_sendpkt(in6m, type, dst)
 
 	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
-	switch(type) {
+	switch (type) {
 	case MLD6_LISTENER_QUERY:
 		icmp6_ifstat_inc(ifp, ifs6_out_mldquery);
 		break;

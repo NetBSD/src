@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.6 2001/11/14 19:18:10 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.7 2002/01/08 00:34:21 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.6 2001/11/14 19:18:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.7 2002/01/08 00:34:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -384,7 +384,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -508,7 +508,7 @@ skip_ipsec2:;
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -754,6 +754,11 @@ skip_ipsec2:;
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 	}
 
+	if (mtu > IPV6_MMTU &&
+	    (flags & IPV6_MINMTU)) {
+		mtu = IPV6_MMTU;
+	}
+
 	/* Fake scoped addresses */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		/*
@@ -866,6 +871,7 @@ skip_ipsec2:;
 		ip6 = mtod(m, struct ip6_hdr *);
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 		if (ia6) {
+			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				m->m_pkthdr.len;
 		}
@@ -931,7 +937,8 @@ skip_ipsec2:;
 
 		/*
 		 * Loop through length of segment after first fragment,
-		 * make new header and copy data of each part and link onto chain.
+		 * make new header and copy data of each part and link onto
+		 * chain.
 		 */
 		m0 = m;
 		for (off = hlen; off < tlen; off += len) {
@@ -948,8 +955,8 @@ skip_ipsec2:;
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
- 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
- 			if (error) {
+			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
+			if (error) {
 				ip6stat.ip6s_odropped++;
 				goto sendorfree;
 			}
@@ -995,6 +1002,10 @@ sendorfree:
 			ip6 = mtod(m, struct ip6_hdr *);
 			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 			if (ia6) {
+				/*
+				 * Record statistics for this interface
+				 * address.
+				 */
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 					m->m_pkthdr.len;
 			}
@@ -1783,16 +1794,9 @@ ip6_setmoptions(optname, im6op, m)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		imm = malloc(sizeof(*imm), M_IPMADDR, M_WAITOK);
-		if (imm == NULL) {
-			error = ENOBUFS;
+		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error);
+		if (!imm)
 			break;
-		}
-		if ((imm->i6mm_maddr =
-		     in6_addmulti(&mreq->ipv6mr_multiaddr, ifp, &error)) == NULL) {
-			free(imm, M_IPMADDR);
-			break;
-		}
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
 		break;
 
@@ -1855,8 +1859,7 @@ ip6_setmoptions(optname, im6op, m)
 		 * membership points.
 		 */
 		LIST_REMOVE(imm, i6mm_chain);
-		in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 		break;
 
 	default:
@@ -1939,9 +1942,7 @@ ip6_freemoptions(im6o)
 
 	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
-		if (imm->i6mm_maddr)
-			in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 	}
 	free(im6o, M_IPMOPTS);
 }

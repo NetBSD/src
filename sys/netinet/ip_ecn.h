@@ -1,9 +1,10 @@
+/*	$NetBSD: ip_ecn.h,v 1.7.6.2 2002/01/08 00:34:03 nathanw Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.6 2001/05/03 14:51:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,12 +29,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * KAME Id: ip_ecn.h,v 1.2 1999/08/19 12:57:44 itojun Exp
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
+
+#ifndef _NETINET_IP_ECN_H_
+#define _NETINET_IP_ECN_H_
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
@@ -51,5 +54,6 @@ extern void ip_ecn_egress __P((int, const u_int8_t *, u_int8_t *));
 #ifdef INET6
 extern void ip6_ecn_ingress __P((int, u_int32_t *, const u_int32_t *));
 extern void ip6_ecn_egress __P((int, const u_int32_t *, u_int32_t *));
+#endif
 #endif
 #endif

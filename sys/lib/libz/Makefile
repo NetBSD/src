@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10.14.1 2001/11/14 23:42:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10.14.2 2002/01/08 00:32:54 nathanw Exp $
 
 LIB=	z
-MKPIC=	no
-MKPROFILE=no
+NOPIC=	# defined
+NOPROFILE=# defined
 
 CPPFLAGS=	-I${ZDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
 

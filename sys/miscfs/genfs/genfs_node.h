@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.2.2.2 2001/09/21 22:36:37 nathanw Exp $ */
+/* $NetBSD: genfs_node.h,v 1.2.2.3 2002/01/08 00:33:34 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -58,5 +58,6 @@ struct genfs_node {
 void	genfs_size(struct vnode *, off_t, off_t *);
 void	genfs_node_init(struct vnode *, struct genfs_ops *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
+int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);
 
 #endif	/* _MISCFS_GENFS_GENFS_NODE_H_ */

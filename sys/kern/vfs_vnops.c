@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.45.2.4 2001/11/14 19:16:49 nathanw Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.45.2.5 2002/01/08 00:32:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.4 2001/11/14 19:16:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.45.2.5 2002/01/08 00:32:45 nathanw Exp $");
 
 #include "fs_union.h"
 
@@ -203,8 +203,8 @@ vn_markexec(vp)
 	struct vnode *vp;
 {
 	if ((vp->v_flag & VEXECMAP) == 0) {
-		uvmexp.vnodepages -= vp->v_uobj.uo_npages;
-		uvmexp.vtextpages += vp->v_uobj.uo_npages;
+		uvmexp.filepages -= vp->v_uobj.uo_npages;
+		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag |= VEXECMAP;
 }

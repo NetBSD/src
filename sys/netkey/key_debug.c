@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.14.2.3 2001/11/14 19:18:35 nathanw Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.14.2.4 2002/01/08 00:34:31 nathanw Exp $	*/
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
 /*
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.14.2.3 2001/11/14 19:18:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.14.2.4 2002/01/08 00:34:31 nathanw Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #ifdef _KERNEL
 #include <sys/systm.h>

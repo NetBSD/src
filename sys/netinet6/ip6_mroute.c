@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17.2.4 2001/11/14 19:18:10 nathanw Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.5 2002/01/08 00:34:20 nathanw Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.4 2001/11/14 19:18:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.17.2.5 2002/01/08 00:34:20 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -973,7 +973,8 @@ ip6_mforward(ip6, ifp, m)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif));
+			    m->m_pkthdr.rcvif ?
+			    if_name(m->m_pkthdr.rcvif) : "?");
 		}
 		return 0;
 	}

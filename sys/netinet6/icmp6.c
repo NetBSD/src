@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.59.2.5 2001/11/14 19:18:03 nathanw Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.59.2.6 2002/01/08 00:34:14 nathanw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.59.2.5 2001/11/14 19:18:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.59.2.6 2002/01/08 00:34:14 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -438,6 +438,8 @@ icmp6_input(mp, offp, proto)
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
 
+	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
+
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_hdr), IPPROTO_DONE);
 	/* m might change if M_LOOP.  So, call mtod after this */
@@ -451,6 +453,7 @@ icmp6_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (icmp6len < sizeof(struct icmp6_hdr)) {
 		icmp6stat.icp6s_tooshort++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -463,6 +466,7 @@ icmp6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		return IPPROTO_DONE;
 	}
 #endif
@@ -473,6 +477,7 @@ icmp6_input(mp, offp, proto)
 		    "ICMP6 checksum error(%d|%x) %s\n",
 		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src)));
 		icmp6stat.icp6s_checksum++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -495,9 +500,6 @@ icmp6_input(mp, offp, proto)
 #endif
 
 	icmp6stat.icp6s_inhist[icmp6->icmp6_type]++;
-	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
-	if (icmp6->icmp6_type < ICMP6_INFOMSG_MASK)
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 
 	switch (icmp6->icmp6_type) {
 	case ICMP6_DST_UNREACH:
@@ -695,7 +697,7 @@ icmp6_input(mp, offp, proto)
 
 	case MLD6_MTRACE_RESP:
 	case MLD6_MTRACE:
-		/* XXX: these two are experimental.  not officially defind. */
+		/* XXX: these two are experimental.  not officially defined. */
 		/* XXX: per-interface statistics? */
 		break;		/* just pass it to applications */
 
@@ -765,7 +767,7 @@ icmp6_input(mp, offp, proto)
 			bzero(p, 4);
 			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
 			noff = sizeof(struct ip6_hdr);
-			M_COPY_PKTHDR(n, m); /* just for recvif */
+			M_COPY_PKTHDR(n, m); /* just for rcvif */
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
@@ -1453,7 +1455,7 @@ ni6_input(m, off)
 		m_freem(m);
 		return(NULL);
 	}
-	M_COPY_PKTHDR(n, m); /* just for recvif */
+	M_COPY_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*
@@ -2204,7 +2206,14 @@ icmp6_reflect(m, off)
 	(void)ipsec_setsocket(m, NULL);
 #endif /* IPSEC */
 
-	ip6_output(m, NULL, NULL, 0, NULL, &outif);
+	/*
+	 * To avoid a "too big" situation at an intermediate router
+	 * and the path MTU discovery process, specify the IPV6_MINMTU flag.
+	 * Note that only echo and node information replies are affected,
+	 * since the length of ICMP6 errors is limited to the minimum MTU.
+	 */
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, &outif) != 0 && outif)
+		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
 		icmp6_ifoutstat_inc(outif, type, code);
@@ -2439,18 +2448,18 @@ icmp6_redirect_input(m, off)
 		}
 	}
 	/* finally update cached route in each socket via pfctlinput */
-    {
-	struct sockaddr_in6 sdst;
+	{
+		struct sockaddr_in6 sdst;
 
-	bzero(&sdst, sizeof(sdst));
-	sdst.sin6_family = AF_INET6;
-	sdst.sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
-	pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
+		bzero(&sdst, sizeof(sdst));
+		sdst.sin6_family = AF_INET6;
+		sdst.sin6_len = sizeof(struct sockaddr_in6);
+		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
+		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
 #ifdef IPSEC
-	key_sa_routechange((struct sockaddr *)&sdst);
+		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
-    }
+	}
 
  freeit:
 	m_freem(m);
@@ -2522,6 +2531,7 @@ icmp6_redirect_output(m0, rt)
 		MCLGET(m, M_DONTWAIT);
 	if (!m)
 		goto fail;
+	m->m_pkthdr.rcvif = NULL;
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);
@@ -2728,7 +2738,9 @@ noredhdropt:;
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif /* IPSEC */
-	ip6_output(m, NULL, NULL, 0, NULL, NULL);
+	if (ip6_output(m, NULL, NULL, 0, NULL, NULL) != 0)
+		icmp6_ifstat_inc(ifp, ifs6_out_error);
+
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_redirect);
 	icmp6stat.icp6s_outhist[ND_REDIRECT]++;

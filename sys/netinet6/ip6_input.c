@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.7 2001/11/14 19:18:09 nathanw Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.8 2002/01/08 00:34:19 nathanw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.7 2001/11/14 19:18:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.8 2002/01/08 00:34:19 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -123,6 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.7 2001/11/14 19:18:09 nathanw E
 #include "faith.h"
 #include "gif.h"
 #include "bpfilter.h"
+
+#if NGIF > 0
+#include <netinet6/in6_gif.h>
+#endif
 
 #include <net/net_osdep.h>
 
@@ -247,10 +251,8 @@ ip6_input(m)
 	 * should the inner packet be considered authentic?
 	 * see comment in ah4_input().
 	 */
-	if (m) {
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-	}
+	m->m_flags &= ~M_AUTHIPHDR;
+	m->m_flags &= ~M_AUTHIPDGM;
 #endif
 
 	/*
@@ -606,7 +608,7 @@ ip6_input(m)
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		/*
-		 * if the payload length field is 0 and the next header field  
+		 * if the payload length field is 0 and the next header field
 		 * indicates Hop-by-Hop Options header, then a Jumbo Payload
 		 * option MUST be included.
 		 */
@@ -1446,9 +1448,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPV6CTL_DEFMCASTHLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_defmcasthlim);
+#if NGIF > 0
 	case IPV6CTL_GIF_HLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_gif_hlim);
+#endif
 	case IPV6CTL_KAME_VERSION:
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_USE_DEPRECATED:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.37.2.4 2001/11/14 19:18:57 nathanw Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.37.2.5 2002/01/08 00:34:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.37.2.4 2001/11/14 19:18:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.37.2.5 2002/01/08 00:34:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,12 +332,15 @@ ffs_full_fsync(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
-	int s, error, passes, skipmeta;
+	int s, error, passes, skipmeta, inodedeps_only, waitfor;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
+
+	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
+	    && vp->v_uobj.uo_npages == 0 && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/*
 	 * Flush all dirty data associated with a vnode.
@@ -430,8 +433,12 @@ loop:
 		}
 	}
 	splx(s);
-	return (VOP_UPDATE(vp, NULL, NULL,
-	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+
+	if (inodedeps_only)
+		waitfor = 0;
+	else
+		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+	return (VOP_UPDATE(vp, NULL, NULL, waitfor));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.7 2001/11/14 19:19:07 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.8 2002/01/08 00:35:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.7 2001/11/14 19:19:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.8 2002/01/08 00:35:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,17 +160,16 @@ sys_mincore(l, v, retval)
 	if (end <= start)
 		return (EINVAL);
 
-	npgs = len >> PAGE_SHIFT;
-
-	if (uvm_useracc(vec, npgs, B_WRITE) == FALSE)
-		return (EFAULT);
-
 	/*
 	 * Lock down vec, so our returned status isn't outdated by
 	 * storing the status byte for a page.
 	 */
 
-	uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	npgs = len >> PAGE_SHIFT;
+	error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	if (error) {
+		return error;
+	}
 	vm_map_lock_read(map);
 
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
@@ -378,7 +377,10 @@ sys_mmap(l, v, retval)
 		    vp->v_type != VBLK)
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
 
-		if (vp->v_type == VREG && (pos + size) < pos)
+		if (vp->v_type != VCHR && pos < 0)
+			return (EINVAL);
+
+		if (vp->v_type != VCHR && (pos + size) < pos)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
