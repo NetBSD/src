@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.114.2.7 2001/02/11 19:16:19 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.114.2.8 2001/03/29 17:15:01 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2510,7 +2510,7 @@ st_interpret_sense(xs)
 				printf(", requested size: %d (decimal)", info);
 				break;
 			case SKEY_ABORTED_COMMAND:
-				if (xs->retries)
+				if (xs->xs_retries)
 					printf(", retrying");
 				printf(", cmd 0x%x, info 0x%x",
 				    xs->cmd->opcode, info);
