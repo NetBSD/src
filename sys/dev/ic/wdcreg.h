@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.17.2.1 1998/06/04 16:52:48 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.17.2.2 1998/09/20 13:16:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -95,6 +95,7 @@
 /*
  * Commands for Disk Controller.
  */
+#define WDCC_NOP	0x00	/* NOP - Always fail with "aborted command" */
 #define	WDCC_RECAL	0x10	/* disk restore code -- resets cntlr */
 
 #define	WDCC_READ	0x20	/* disk read code */

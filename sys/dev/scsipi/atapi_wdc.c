@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.6 1998/08/13 14:27:51 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.7 1998/09/20 13:16:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -82,7 +82,6 @@ int wdcdebug_atapi_mask = DEBUG_PROBE;
 
 #define ATAPI_DELAY 10	/* 10 ms, this is used only before sending a cmd */
 
-int   atapi_print	__P((void *, const char *));
 void  wdc_atapi_minphys  __P((struct buf *bp));
 void  wdc_atapi_start	__P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *));
@@ -99,17 +98,6 @@ static struct scsipi_adapter wdc_switch  = {
 	0,
 	0
 };
-
-int atapi_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_atapi_attach *aa_link = aux;
-	if (pnp)
-		printf("atapibus at %s", pnp);
-	printf(" channel %d", aa_link->aa_channel);
-	return (UNCONF);
-}
 
 void
 wdc_atapibus_attach(chp)
@@ -312,6 +300,7 @@ wdc_atapi_intr(chp, xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int len, phase, i, retries=0;
 	int ire, dma_err = 0;
+	int dma_flags = 0;
 
 	WDCDEBUG_PRINT(("wdc_atapi_intr\n"), DEBUG_INTR);
 
@@ -343,6 +332,12 @@ wdc_atapi_intr(chp, xfer)
 		return 1;
 	}
 
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    sc_xfer->datalen > 0) {
+		dma_flags = (sc_xfer->flags & SCSI_DATA_IN) ?
+		    WDC_DMA_READ : 0;
+		dma_flags |= sc_xfer->flags & SCSI_POLL ? WDC_DMA_POLL : 0;
+	}
 again:
 	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
 	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
@@ -360,8 +355,7 @@ again:
 		    sc_xfer->datalen > 0) {
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
-			    xfer->databuf, sc_xfer->datalen,
-			    sc_xfer->flags & SCSI_DATA_IN) != 0) {
+			    xfer->databuf, sc_xfer->datalen, dma_flags) != 0) {
 				sc_xfer->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -397,8 +391,7 @@ again:
 		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 		    sc_xfer->datalen > 0) {
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive,
-			    sc_xfer->flags & SCSI_DATA_IN);
+			    chp->channel, xfer->drive, dma_flags);
 		}
 
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
@@ -542,15 +535,14 @@ again:
 		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 		    sc_xfer->datalen > 0) {
 			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive,
-			    sc_xfer->flags & SCSI_DATA_IN);
+			    chp->channel, xfer->drive, dma_flags);
 			xfer->c_bcount -= sc_xfer->datalen;
 		}
 			
 		if (chp->ch_status & WDCS_ERR) {
 			sc_xfer->error = XS_SENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;
-		} else if (dma_err) {
+		} else if (dma_err < 0) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 		}
 #ifdef DIAGNOSTIC
