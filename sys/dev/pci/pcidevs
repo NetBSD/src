@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.487 2002/11/19 06:47:24 bsh Exp $
+$NetBSD: pcidevs,v 1.488 2002/11/26 18:09:27 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1348,6 +1348,7 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
 product INTEL 80312		0x030d	80312 I/O Companion Chip
+product INTEL 80321		0x0319	80321 I/O Processor
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
