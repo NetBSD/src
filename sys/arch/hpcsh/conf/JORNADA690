@@ -1,0 +1,80 @@
+#	$NetBSD: JORNADA690,v 1.1 2001/01/17 05:21:48 itojun Exp $
+#
+#	JORNADA690 uch's Jornada 690
+#
+
+# WindowsCE machine is little endian
+include "arch/hpcsh/conf/std.hpcsh.el"
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_DYNAMIC	# fs image don't exist in data section.
+
+maxusers	32			# estimated number of users
+
+options		SH7709A			# 133MHz
+options		SH7709A_BROKEN_IPR
+options		PCLOCK=22000000		# 22MHz
+
+options		IOM_ROM_BEGIN=0x00000000	# XXX dummy
+options		IOM_ROM_SIZE=0x00200000		# XXX dummy
+options		IOM_RAM_BEGIN=0x8c000000
+options		IOM_RAM_SIZE=0x01000000		# 16MB XXX first bank only
+options		LED_ADDR=0xa8000000		# XXX dummy
+
+options		DONT_INIT_BSC		# XXX use WindowsCE setting.
+
+# Standard system options
+
+options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+options 	HZ=50		# clock interrupt generates every 1/HZ sec 
+
+# Compatibility options
+options 	COMPAT_43	# and 4.3BSD
+
+# Executable format options
+options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	MFS		# memory file system
+file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	PROCFS		# /proc
+
+# File system options
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+#
+# Device configuration
+#
+mainbus0 at root
+
+shb* at mainbus?
+
+# Serial Devices
+options	SCIFCONSOLE, SCIFCN_SPEED=9600
+scif0 at shb? port 0xa4000008 irq 12
+
+# Miscellaneous mass storage devices
+
+# Network Interfaces
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+# network pseudo-devices
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
