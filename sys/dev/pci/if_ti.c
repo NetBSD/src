@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.35 2001/06/30 17:02:54 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.36 2001/06/30 17:53:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1826,9 +1826,9 @@ static void ti_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->ti_mc_listhead);
 
 	/*
-	 * We really need a better way to tell a 1000baseTX card
+	 * We really need a better way to tell a 1000baseT card
 	 * from a 1000baseSX one, since in theory there could be
-	 * OEMed 1000baseTX cards from lame vendors who aren't
+	 * OEMed 1000baseT cards from lame vendors who aren't
 	 * clever enough to change the PCI ID. For the moment
 	 * though, the AceNIC is the only copper card available.
 	 */
@@ -1885,7 +1885,7 @@ static void ti_attach(parent, self, aux)
 	if (sc->ti_copper) {
                 /*
                  * Copper cards allow manual 10/100 mode selection,
-                 * but not manual 1000baseTX mode selection. Why?
+                 * but not manual 1000baseT mode selection. Why?
                  * Becuase currently there's no way to specify the
                  * master/slave setting through the firmware interface,
                  * so Alteon decided to just bag it and handle it
@@ -1897,9 +1897,9 @@ static void ti_attach(parent, self, aux)
                 ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
                 ifmedia_add(&sc->ifmedia,
                     IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_TX, 0, NULL);
+                ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_T, 0, NULL);
                 ifmedia_add(&sc->ifmedia,
-                    IFM_ETHER|IFM_1000_TX|IFM_FDX, 0, NULL);
+                    IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
 	} else {
 		/* Fiber cards don't support 10/100 modes. */
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_1000_SX, 0, NULL);
@@ -2662,7 +2662,7 @@ static int ti_ifmedia_upd(ifp)
 		    TI_CMD_CODE_NEGOTIATE_BOTH, 0);
 		break;
 	case IFM_1000_SX:
-	case IFM_1000_TX:
+	case IFM_1000_T:
 		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
 			CSR_WRITE_4(sc, TI_GCR_GLINK,
 			    TI_GLNK_PREF|TI_GLNK_1000MB|TI_GLNK_FULL_DUPLEX|
@@ -2727,7 +2727,7 @@ static void ti_ifmedia_sts(ifp, ifmr)
 	if (sc->ti_linkstat == TI_EV_CODE_GIG_LINK_UP) {
 		media = CSR_READ_4(sc, TI_GCR_GLINK_STAT);
 		if (sc->ti_copper)
-			ifmr->ifm_active |= IFM_1000_TX;
+			ifmr->ifm_active |= IFM_1000_T;
 		else
 			ifmr->ifm_active |= IFM_1000_SX;
 		if (media & TI_GLNK_FULL_DUPLEX)

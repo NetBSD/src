@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.24 2001/06/02 21:39:40 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.25 2001/06/30 17:53:58 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ mii_phy_setmedia(sc)
 
 	if (mii->mii_media.ifm_media & IFM_ETH_MASTER) {
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_1000_TX:
+		case IFM_1000_T:
 			gtcr |= GTCR_MAN_MS|GTCR_ADV_MS;
 			break;
 
@@ -459,17 +459,17 @@ mii_phy_add_media(sc)
 			sc->mii_anegticks = 10;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
 			    sc->mii_inst), MII_MEDIA_1000_T);
-			PRINT("1000baseTX");
+			PRINT("1000baseT");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
 			sc->mii_anegticks = 10;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_T_FDX);
-			PRINT("1000baseTX-FDX");
+			PRINT("1000baseT-FDX");
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.10 2001/06/30 15:57:58 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.11 2001/06/30 17:53:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1088,7 +1088,7 @@ struct ti_softc {
 	struct ifmedia		ifmedia;	/* media info */
 
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
-	u_int8_t		ti_copper;	/* 1000baseTX card */
+	u_int8_t		ti_copper;	/* 1000baseT card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
