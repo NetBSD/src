@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.27 2000/03/13 18:56:40 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.28 2000/03/20 12:45:41 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -77,6 +77,7 @@ file	arch/hpcmips/dev/hpcfb.c	hpcfb needs-flag
 
 device	bivideo: hpcfbif
 file	arch/hpcmips/dev/bivideo.c	bivideo needs-flag
+file	arch/hpcmips/dev/hpccmap.c	bivideo
 attach	bivideo at mainbus
 
 device btnmgr: wskbddev
