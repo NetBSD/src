@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.1 2001/12/02 09:23:58 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.2 2001/12/02 18:06:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.1 2001/12/02 09:23:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.2 2001/12/02 18:06:59 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -65,8 +65,12 @@ irix_sys_prctl(p, v, retval)
 #endif
 
 	switch(option) {
-	case IRIX_PR_LASTSHEXIT: /* "Last sproc exit" */
+	case IRIX_PR_LASTSHEXIT:	/* "Last sproc exit" */
 		/* We do nothing */
+		break;
+	case IRIX_PR_GETNSHARE:		/* Number of sproc share group memb.*/
+		/* sproc needed here, we do nothing until we have it */
+		*retval = 1; /* one thread in the process */
 		break;
 
 	default:
