@@ -1,20 +1,22 @@
-.\"	$NetBSD: upgrade,v 1.20 2000/11/16 17:12:08 tv Exp $
+.\"	$NetBSD: upgrade,v 1.21 2002/06/29 22:45:30 lukem Exp $
 .
 .so ../common/upgrade
 .Pp
 .Nx*M
 has switched its executable format from the old a.out format
-to ELF, the now more commonly used and supported format. Your old
-binaries will continue to work just fine. The installation procedure
-will try to take the necessary steps to accomplish this. The most
-important step is to move the old a.out shared libraries in
+to ELF, the now more commonly used and supported format.
+Your old binaries will continue to work just fine.
+The installation procedure will try to take the necessary steps to
+accomplish this.
+The most important step is to move the old a.out shared libraries in
 .Pa /usr/lib
 and
 .Pa /usr/X11R6/lib
 (if X was installed) to
 .Pa /emul/aout ,
 where they will be automatically found if an older a.out binary
-is executed. Sysinst will use an existing
+is executed.
+Sysinst will use an existing
 .Pa /emul
 and / or
 .Pa /emul/aout
