@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.5 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.6 2003/03/11 00:18:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.5 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.6 2003/03/11 00:18:36 nathanw Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -89,7 +89,6 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 	    self, alarm, ts->tv_sec, ts->tv_nsec/1000));
 	prev = NULL;
 	pthread_spinlock(self, &pthread_alarmqlock);
-	iterator = PTQ_FIRST(&pthread_alarmqueue);
 	PTQ_FOREACH(iterator, &pthread_alarmqueue, pta_next) {
 		if (timespeccmp(ts, iterator->pta_time, <))
 			break;
@@ -167,8 +166,9 @@ pthread__alarm_process(pthread_t self, void *arg)
 	gettimeofday(&tv, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
 
-	SDPRINTF(("(pro %p) alarm time %d.%09ld\n",
-	    self, ts.tv_sec, ts.tv_nsec));
+	pthread_alarmqlast = ts;
+	SDPRINTF(("(pro %p) alarm time %d.%06ld\n",
+	    self, ts.tv_sec, ts.tv_nsec / 1000));
 
 	PTQ_INIT(&runq);
 	pthread_spinlock(self, &pthread_alarmqlock);
@@ -177,7 +177,7 @@ pthread__alarm_process(pthread_t self, void *arg)
 	for (iterator = next = PTQ_FIRST(&pthread_alarmqueue);
 	     iterator; 
 	     iterator = next) {
-		if (timespeccmp(&ts, iterator->pta_time, <))
+		if (timespeccmp(&ts, iterator->pta_time, <=))
 			break;
 		pthread_spinlock(self, &iterator->pta_lock);
 		next = PTQ_NEXT(iterator, pta_next);
