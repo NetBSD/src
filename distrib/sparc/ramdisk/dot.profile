@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.11 2000/10/20 11:56:58 pk Exp $
+# $NetBSD: dot.profile,v 1.12 2000/10/30 23:13:10 pk Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,39 +42,148 @@ export HOME
 
 umask 022
 
-if [ "${BOOTFS_DONEPROFILE}" = "YES" ]; then
-	exit
+INSTFS_MP=/instfs
+MINIROOT_FSSIZE=10000
+
+if [ "${BOOTFS_DONEPROFILE}" != "YES" ]; then
+
+	BOOTFS_DONEPROFILE=YES
+	export BOOTFS_DONEPROFILE
+
+	# mount root read-write
+	mount_ffs -o update /dev/md0a /
+
+	# mount /instfs
+	mount_mfs -s $MINIROOT_FSSIZE swap $INSTFS_MP
 fi
 
-BOOTFS_DONEPROFILE=YES
-export BOOTFS_DONEPROFILE
+# A cat simulator
+cat()
+{
+	local l
+	while read l; do
+		echo "$l"
+	done
+}
 
-# mount root read-write
-mount -u /dev/md0a /
-
-# mount /instfs
-MINIROOT_FSSIZE=10000
-mount -t mfs -o -s=$MINIROOT_FSSIZE swap /instfs
+_resp=""
+getresp() {
+	read _resp
+	if [ "$_resp" = "" ]; then
+		_resp=$1
+	fi
+}
 
 # Load instfs
-echo ""
-echo "If you booted the system from a floppy you can now remove the disk."
-echo ""
-echo "Next, insert the floppy disk labeled \`instfs' into the disk drive."
-echo "The question below allows you to specify the device name of the floppy"
-echo "drive.  Usually, the default answer \`floppy' will do just fine."
-echo ""
 
-_dev="floppy"
+floppy()
+{
+	local dev
+	cat <<EOF
+First, remove the boot disk from the floppy station.
+
+Next, insert the floppy disk labeled \`instfs' into the disk drive.
+The question below allows you to specify the device name of the floppy
+drive.  Usually, the default device will do just fine.
+EOF
+	dev="/dev/rfd0a"
+	echo -n "Floppy device to load the installation utilities from [$dev]: "
+	getresp "$dev"; dev="$_resp"
+
+	echo "Extracting installation utilities... "
+	(cd $INSTFS_MP && tar zxpf $dev) || return 1
+}
+
+tape()
+{
+	local dev fn bs
+	cat <<EOF
+By default, the installation utilities are located in the second tape file
+on the NetBSD/sparc installation tape. In case your tape layout is different,
+choose the appropriate tape file number below.
+If the installation tape was written with a different block size than
+the default suggested by this installation procedure, you have the
+opportunity to change that as well.
+
+EOF
+	dev="/dev/nrst0"
+	echo -n "Tape device to load the installation utilities from [$dev]: "
+	getresp "$dev"; dev="$_resp"
+
+	fn=2
+	echo -n "Tape file number [$fn]: "
+	getresp "$fn"; fn="$_resp"
+
+	bs=4k
+	echo -n "Tape block size [$bs]: "
+	getresp "$bs"; bs="$_resp"
+
+	echo "Positioning tape... "
+	mt -f $dev asf $(($fn - 1))
+	[ $? = 0 ] || return 1
+
+	echo "Extracting installation utilities... "
+	(cd $INSTFS_MP && tar zxpbf $bs $dev) || return 1
+}
+
+cdrom()
+{
+	local dev tf rval
+	cat <<EOF
+The installation utilities are located on the ISO CD9660 filesystem on the
+NetBSD/sparc CD-ROM. We need to mount the filesystem from the CD-ROM device
+which you can specify below. Note: after the installation utilities are
+extracted this filesystem will be unmounted again.
+
+EOF
+
+	rval=0
+	dev="/dev/cd0a"
+	echo -n "CD-ROM device to use [$dev]: "
+	getresp "$dev"; dev="$_resp"
+
+	mount_cd9660 -o rdonly $dev /cdrom || return 1
+
+	tf=/cdrom/installation/bootfs/instfs.tgz
+	(cd $INSTFS_MP && tar zxpf $tf) || rval=1
+	umount /cdrom
+	return $rval
+}
+
+cat <<EOF
+Welcome to the NetBSD/sparc microroot setup utility.
+
+We've just completed the first stage of a two-stage procedure to load a
+fully functional NetBSD installation environment on your machine.  In the
+second stage which is to follow now, a set of additional installation
+utilities must be load from your NetBSD/sparc installation medium.
+
+EOF
+
 while :; do
-	#if [ "$_dev" = "" ] ; then _dev=floppy; fi
-	echo -n "Device to load the \`instfs' filesystem from [$_dev]: "
-	read _answer
-	if [ "$_answer" != "" ]; then _dev=$_answer; fi
-	if [ "$_dev" = floppy ]; then _dev=/dev/rfd0a; fi
-	if [ "$_dev" = "none" ]; then continue; fi
-	(cd /instfs && tar zxvpf $_dev) && break
+	cat <<EOF
+This procedure supports one of the following media:
+
+	1) cdrom
+	2) tape
+	3) floppy
+
+EOF
+	echo -n "Installation medium to load the additional utilities from: "
+	read answer
+	echo ""
+	case "$answer" in
+		1|cdrom)	_func=cdrom;;
+		2|tape)		_func=tape;;
+		3|floppy)	_func=floppy;;
+		*)		echo "option not supported"; continue;;
+	esac
+	$_func && break
 done
 
 # switch to /instfs, and pretend we logged in there.
-exec chroot /instfs /bin/sh /.profile
+chroot $INSTFS_MP /bin/sh /.profile
+
+#
+echo "Back in microroot; halting machine..."
+halt
