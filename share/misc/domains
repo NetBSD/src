@@ -1,6 +1,6 @@
-# $NetBSD: domains,v 1.4 2002/10/15 18:07:27 kleink Exp $
+# $NetBSD: domains,v 1.5 2003/03/02 20:13:23 jhawk Exp $
 # ISO 3166 country codes, from http://www.iana.org/cctld/cctld-whois.htm
-# Latest change: 2001-11-26
+# Latest change: 26-Nov-2001
 #
 ac Ascension Island
 ad Andorra
