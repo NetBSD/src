@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.4 2001/09/26 15:28:22 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.5 2001/09/27 13:57:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1837,7 +1837,7 @@ loop:
 	}
 	if (vq != NULL) {
 		for (vx = vq; vx->v_specnext != NULL; vx = vx->v_specnext) {
-			vz = vq->v_specnext;
+			vz = vx->v_specnext;
 			if (vz->v_rdev != dev || vp->v_type != vz->v_type)
 				break;
 		}
