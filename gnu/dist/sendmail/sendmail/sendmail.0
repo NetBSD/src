@@ -83,103 +83,117 @@ DDEESSCCRRIIPPTTIIOONN
               enhanced  (set-user-ID  or set-group-ID) privileges if an alter-
               nate configuration file is specified.
 
+       --DD _l_o_g_f_i_l_e
+              Send debugging output to the indicated log file instead of  std-
+              out.
+
        --dd_c_a_t_e_g_o_r_y.._l_e_v_e_l_._._.
-              Set the debugging flag  for  _c_a_t_e_g_o_r_y  to  _l_e_v_e_l.   _C_a_t_e_g_o_r_y  is
-              either  an  integer or a name specifying the topic, and _l_e_v_e_l an
+              Set  the  debugging  flag  for  _c_a_t_e_g_o_r_y  to _l_e_v_e_l.  _C_a_t_e_g_o_r_y is
+              either an integer or a name specifying the topic, and  _l_e_v_e_l  an
               integer  specifying  the  level  of  debugging  output  desired.
-              Higher  levels  generally  mean more output.  More than one flag
-              can be specified by separating them  with  commas.   A  list  of
+              Higher levels generally mean more output.  More  than  one  flag
+              can  be  specified  by  separating  them with commas.  A list of
               numeric debugging categories can be found in the TRACEFLAGS file
               in the sendmail source distribution.
-              The option --dd00..11 prints the version of sseennddmmaaiill and the  options
+              The  option --dd00..11 prints the version of sseennddmmaaiill and the options
               it was compiled with.
-              Most  other  categories are only useful with, and documented in,
+              Most other categories are only useful with, and  documented  in,
               sseennddmmaaiill's source code.
 
        --FF_f_u_l_l_n_a_m_e
               Set the full name of the sender.
 
-       --ff_n_a_m_e Sets the name of the ``from'' person (i.e., the envelope  sender
+       --ff_n_a_m_e Sets  the name of the ``from'' person (i.e., the envelope sender
               of the mail).  This address may also be used in the From: header
-              if that header is missing during initial submission.  The  enve-
+              if  that header is missing during initial submission.  The enve-
               lope sender address is used as the recipient for delivery status
-              notifications and may also appear in a Return-Path: header.   --ff
+              notifications  and may also appear in a Return-Path: header.  --ff
               should only be used by ``trusted'' users (normally _r_o_o_t, _d_a_e_m_o_n,
-              and _n_e_t_w_o_r_k) or if the person you are trying to  become  is  the
-              same  as  the  person  you are.  Otherwise, an X-Authentication-
+              and  _n_e_t_w_o_r_k)  or  if the person you are trying to become is the
+              same as the person you  are.   Otherwise,  an  X-Authentication-
               Warning header will be added to the message.
 
-       --GG     Relay (gateway) submission of a message, e.g., when rrmmaaiill  calls
+       --GG     Relay  (gateway) submission of a message, e.g., when rrmmaaiill calls
               sseennddmmaaiill ..
 
        --hh_N    Set the hop count to _N.  The hop count is incremented every time
-              the mail is processed.  When it reaches a  limit,  the  mail  is
-              returned  with an error message, the victim of an aliasing loop.
+              the  mail  is  processed.   When it reaches a limit, the mail is
+              returned with an error message, the victim of an aliasing  loop.
               If  not  specified,  ``Received:''  lines  in  the  message  are
               counted.
 
-       --ii     Ignore  dots  alone on lines by themselves in incoming messages.
+       --ii     Ignore dots alone on lines by themselves in  incoming  messages.
               This should be set if you are reading data from a file.
 
-       --LL _t_a_g Set the identifier used in syslog messages to the supplied  _t_a_g.
+       --LL _t_a_g Set  the identifier used in syslog messages to the supplied _t_a_g.
 
        --NN _d_s_n Set delivery status notification conditions to _d_s_n, which can be
-              `never' for no notifications or a comma separated  list  of  the
-              values  `failure'  to be notified if delivery failed, `delay' to
+              `never'  for  no  notifications or a comma separated list of the
+              values `failure' to be notified if delivery failed,  `delay'  to
               be notified if delivery is delayed, and `success' to be notified
               when the message is successfully delivered.
 
        --nn     Don't do aliasing.
 
        --OO _o_p_t_i_o_n=_v_a_l_u_e
-              Set  option  _o_p_t_i_o_n to the specified _v_a_l_u_e.  This form uses long
+              Set option _o_p_t_i_o_n to the specified _v_a_l_u_e.  This form  uses  long
               names.  See below for more details.
 
        --oo_x _v_a_l_u_e
-              Set option _x to the specified  _v_a_l_u_e.   This  form  uses  single
+              Set  option  _x  to  the  specified _v_a_l_u_e.  This form uses single
               character names only.  The short names are not described in this
-              manual page; see the _S_e_n_d_m_a_i_l _I_n_s_t_a_l_l_a_t_i_o_n _a_n_d  _O_p_e_r_a_t_i_o_n  _G_u_i_d_e
+              manual  page;  see the _S_e_n_d_m_a_i_l _I_n_s_t_a_l_l_a_t_i_o_n _a_n_d _O_p_e_r_a_t_i_o_n _G_u_i_d_e
               for details.
 
        --pp_p_r_o_t_o_c_o_l
-              Set  the name of the protocol used to receive the message.  This
+              Set the name of the protocol used to receive the message.   This
               can be a simple protocol name such as ``UUCP'' or a protocol and
               hostname, such as ``UUCP:ucbvax''.
 
        --qq[_t_i_m_e]
               Process saved messages in the queue at given intervals.  If _t_i_m_e
-              is omitted, process the queue once.  _T_i_m_e is given as  a  tagged
+              is  omitted,  process the queue once.  _T_i_m_e is given as a tagged
               number, with `s' being seconds, `m' being minutes (default), `h'
-              being hours, `d' being days, and `w' being weeks.  For  example,
-              `-q1h30m'  or  `-q90m'  would  both  set the timeout to one hour
-              thirty minutes.  By default, sseennddmmaaiill  will  run  in  the  back-
+              being  hours, `d' being days, and `w' being weeks.  For example,
+              `-q1h30m' or `-q90m' would both set  the  timeout  to  one  hour
+              thirty  minutes.   By  default,  sseennddmmaaiill  will run in the back-
               ground.  This option can be used safely with --bbdd.
 
        --qqpp[_t_i_m_e]
               Similar to --qq_t_i_m_e, except that instead of periodically forking a
-              child to process the queue, sendmail forks a  single  persistent
-              child  for  each  queue  that  alternates between processing the
+              child  to  process the queue, sendmail forks a single persistent
+              child for each queue  that  alternates  between  processing  the
               queue and sleeping.  The sleep time is given as the argument; it
-              defaults  to 1 second.  The process will always sleep at least 5
+              defaults to 1 second.  The process will always sleep at least  5
               seconds if the queue was empty in the previous queue run.
 
-       --qqf    Process saved messages in the queue once and do not fork(),  but
+       --qqf    Process  saved messages in the queue once and do not fork(), but
               run in the foreground.
 
        --qqG name
               Process jobs in queue group called _n_a_m_e only.
 
        --qq[_!]I_s_u_b_s_t_r
-              Limit  processed  jobs to those containing _s_u_b_s_t_r as a substring
+              Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
               of the queue id or not when _!  is specified.
 
+       --qq[_!]Q_s_u_b_s_t_r
+              Limit  processed jobs to quarantined jobs containing _s_u_b_s_t_r as a
+              substring of the quarantine reason or not when _!  is  specified.
+
        --qq[_!]R_s_u_b_s_t_r
-              Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
+              Limit  processed  jobs to those containing _s_u_b_s_t_r as a substring
               of one of the recipients or not when _!  is specified.
 
        --qq[_!]S_s_u_b_s_t_r
-              Limit  processed  jobs to those containing _s_u_b_s_t_r as a substring
+              Limit processed jobs to those containing _s_u_b_s_t_r as  a  substring
               of the sender or not when _!  is specified.
+
+       --QQ[reason]
+              Quarantine a normal queue items with the given reason or unquar-
+              antine quarantined queue items if  no  reason  is  given.   This
+              should  only  be  used  with some sort of item matching using as
+              described above.
 
        --RR _r_e_t_u_r_n
               Set the amount of the message to  be  returned  if  the  message
@@ -448,4 +462,4 @@ HHIISSTTOORRYY
 
 
 
-                         Date: 2003/12/01 17:02:00              SENDMAIL(8)
+                         Date: 2003/12/01 17:02:41              SENDMAIL(8)

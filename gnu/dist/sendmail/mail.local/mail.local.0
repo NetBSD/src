@@ -38,6 +38,22 @@ DDEESSCCRRIIPPTTIIOONN
                  Store incoming mail in _f_i_l_e_n_a_m_e in the user's home  directory
                  instead of a system mail spool directory.
 
+       The  next  options  are  only available if mmaaiill..llooccaall has been compiled
+       with -DHASHSPOOL.
+
+       --HH _h_a_s_h_t_y_p_e_h_a_s_h_d_e_p_t_h
+              Select hashed mail directories.  Valid hash types are uu for user
+              name  and  mm for MD5 (requires compilation with -DHASHSPOOLMD5).
+              Example: --HH _u_2 selects user name hashing with a hash depth of 2.
+              Note:  there  must  be  no  space  between the hash type and the
+              depth.
+
+       --pp _p_a_t_h
+              Specify an alternate mail spool path.
+
+       --nn     Specify that the domain part of recipient addresses in LMTP mode
+              should not be stripped.
+
        Individual  mail messages in the mailbox are delimited by an empty line
        followed by a line beginning with the string ``From ''.   A  line  con-
        taining  the  string  ``From  '', the sender's name and a time stamp is
@@ -78,4 +94,4 @@ HHIISSTTOORRYY
 
 
 
-                         Date: 2001/04/05 23:27:35            MAIL.LOCAL(8)
+                         Date: 2003/10/20 20:26:51            MAIL.LOCAL(8)
