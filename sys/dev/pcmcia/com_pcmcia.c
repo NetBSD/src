@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.38 2004/08/07 04:55:25 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.39 2004/08/07 05:27:39 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.38 2004/08/07 04:55:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.39 2004/08/07 05:27:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,16 +258,14 @@ retry:
 		autoalloc = 1;
 		goto retry;
 	} else if (!cfe) {
-		aprint_error("%s: can't allocate i/o space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
 		return;
 	}
 found:
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (com_pcmcia_enable1(sc))
-		aprint_error("%s: function enable failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 
 	sc->enabled = 1;
 
@@ -276,7 +274,7 @@ found:
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 	sc->sc_iot = psc->sc_pcioh.iot;
@@ -288,7 +286,7 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 
-	aprint_normal("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", self->dv_xname);
 
 	com_attach_subr(sc);
 
