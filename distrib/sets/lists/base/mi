@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.390 2003/03/15 22:32:08 he Exp $
+# $NetBSD: mi,v 1.391 2003/03/24 15:24:46 atatat Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -601,6 +601,7 @@
 ./usr/sbin/dumpfs		base-sysutil-bin
 ./usr/sbin/dumplfs		base-sysutil-bin
 ./usr/sbin/edquota		base-sysutil-bin
+./usr/sbin/editmap		base-sendmail-bin
 ./usr/sbin/envstat		base-sysutil-bin
 ./usr/sbin/eshconfig		base-sysutil-bin
 ./usr/sbin/etcupdate		base-sysutil-bin
@@ -2463,6 +2464,7 @@
 ./var/run			base-sys-root
 ./var/rwho			base-netutil-root
 ./var/spool			base-sys-root
+./var/spool/clientmqueue	base-sendmail-root
 ./var/spool/ftp			base-netutil-root
 ./var/spool/ftp/bin		base-netutil-root
 ./var/spool/ftp/etc		base-netutil-root

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.117 2003/03/15 12:33:55 wiz Exp $
+# $NetBSD: mi,v 1.118 2003/03/24 15:24:47 atatat Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -34,6 +34,7 @@
 ./etc/mail/helpfile			etc-sendmail-etc
 ./etc/mail/local-host-names 		etc-sendmail-etc
 ./etc/mail/sendmail.cf			etc-sendmail-etc
+./etc/mail/submit.cf			etc-sendmail-etc
 ./etc/mailer.conf			etc-mailwrapper-etc
 ./etc/man.conf				etc-man-etc
 ./etc/master.passwd			etc-sys-etc
@@ -144,6 +145,7 @@
 ./etc/rc.d/screenblank			etc-sys-rc
 ./etc/rc.d/securelevel			etc-sys-rc
 ./etc/rc.d/sendmail			etc-sendmail-rc
+./etc/rc.d/smmsp			etc-sendmail-rc
 ./etc/rc.d/sshd				etc-secsh-rc
 ./etc/rc.d/staticroute			etc-sys-rc
 ./etc/rc.d/swap1			etc-sys-rc
