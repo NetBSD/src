@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.4 1997/03/17 04:57:56 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.5 1997/03/17 12:26:52 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -9,7 +9,7 @@
  * This driver has been substantially modified since Algorithmics donated
  * it.
  *
- *   Dennis Gentry <denny1@home.com>
+ *   Denton Gentry <denny1@home.com>
  * and also
  *   Takeshi Yanagisawa <yanagisw@aa.ap.titech.ac.jp>
  * did the work to get this running on the Macintosh.
