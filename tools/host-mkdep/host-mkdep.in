@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.12 2003/11/11 10:50:02 dsl Exp $
+#	$NetBSD: host-mkdep.in,v 1.13 2003/12/07 20:19:15 dsl Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,12 @@ CPPFLAGS=
 NEWEXT=.o
 OUTFILE=.depend
 SRCS=
-USAGE="Usage: $0 [-a] [-d] [-o] [-p] [-q] [-s suffix] [-f makefile] [flags] file ..."
+
+usage()
+{
+	echo "Usage: $0 [-adopq] [-s .suffixes] [-f .depend] -- [flags] file ..." >&2
+	exit 1
+}
 
 set_objlist()
 {
@@ -63,55 +68,51 @@ set_objlist()
 	fi
 }
 
+# A getopt compatible command line parser in shell comands.
+# (don't trust the shell builtin getopts to be in a known state on error)
 while [ $# -gt 0 ]; do
-	case "$1" in
-	-a)	APPEND=true
-		shift
-		;;
+	option="${1#-}"
+	[ "$option" = "$1" -o -z "$option" ] && break
+	while
+		optarg="${option#?}"
+		option="${option%$optarg}"
 
-	-d)	MERGE=true
-		shift
-		;;
+		case "-$option" in
+		-a)	APPEND=true;;
+		-d)	MERGE=true;;
+		-o)	OPTIONAL=true; AWK_OPTIONAL='print ".OPTIONAL:" $0';;
+		-p)	NEWEXT=;;
+		-q)	QUIET=true;;
 
-	-f)	OUTFILE=$2
-		shift 2
-		;;
+		-[fs])	# Options with arguments
+			[ -z "$optarg" ] && {
+				[ $# = 1 ] && usage
+				shift
+				optarg="$1"
+			}
+			case "-$option" in
+			-f)	OUTFILE="$optarg";;
+			-s)	NEWEXT="$optarg";;
+			esac
+			optarg=
+			;;
 
-	-o)	OPTIONAL=true
-		AWK_OPTIONAL='print ".OPTIONAL:" $0'
-		shift
-		;;
+		--)	[ -z "$optarg" ] && shift
+			break 2
+			;;
 
-	-p)	NEWEXT=
-		shift
-		;;
-
-	-q)	QUIET=true
-		shift
-		;;
-
-	-s)	NEWEXT="$2"
-		shift 2
-		;;
-
-	--)	shift
-		break
-		;;
-
-	-*)	$MERGE || break;
-		echo "$USAGE" >&2
-		exit 1
-		;;
-
-	*)	break
-		;;
-	esac
+		*)	$MERGE && usage
+			break 2;
+			;;
+		esac
+		[ -n "$optarg" ]
+	do
+		option="$optarg"
+	done
+	shift
 done
 
-if [ $# = 0 ]; then
-	echo "$USAGE" 1>&2
-	exit 1
-fi
+[ $# = 0 ] && usage
 
 if $MERGE; then
 	SRCS="$*"
@@ -163,10 +164,7 @@ else
 	done
 fi
 
-if [ -z "$SRCS" ]; then
-	echo "$USAGE" 1>&2
-	exit 1
-fi
+[ -z "$SRCS" ] && usage
 
 TMP=/tmp/mkdep$$
 rm -f $TMP
