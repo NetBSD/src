@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)infcmd.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: infcmd.c,v 1.2 1993/08/01 18:47:17 mycroft Exp $";
+static char rcsid[] = "$Id: infcmd.c,v 1.3 1993/12/07 19:58:30 mycroft Exp $";
 #endif /* not lint */
 
 /* Memory-access and commands for inferior process, for GDB.
@@ -41,8 +41,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <signal.h>
 #include <sys/param.h>
-
-extern char *sys_siglist[];
+#include <sys/errno.h>
+#include <unistd.h>
 
 #define ERROR_NO_INFERIOR \
    if (inferior_pid == 0) error ("The program is not being run.");
@@ -158,10 +158,6 @@ run_command (args, from_tty)
   register int i;
   char *exec_file;
   char *allargs;
-
-  extern int sys_nerr;
-  extern char *sys_errlist[];
-  extern int errno;
 
   dont_repeat ();
 
@@ -731,8 +727,6 @@ read_memory_integer (memaddr, len)
   int ibuf;
   long lbuf;
   int result_err;
-  extern int sys_nerr;
-  extern char *sys_errlist[];
 
   if (len == sizeof (char))
     {

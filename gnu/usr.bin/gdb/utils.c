@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utils.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: utils.c,v 1.2 1993/08/01 18:47:36 mycroft Exp $";
+static char rcsid[] = "$Id: utils.c,v 1.3 1993/12/07 19:58:35 mycroft Exp $";
 #endif /* not lint */
 
 /* General utility routines for GDB, the GNU debugger.
@@ -37,6 +37,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <pwd.h>
 #include "defs.h"
 #ifdef HAVE_TERMIO
@@ -189,10 +190,7 @@ void
 perror_with_name (string)
      char *string;
 {
-  extern int sys_nerr;
-  extern char *sys_errlist[];
-  extern int errno;
-  char *err;
+  const char *err;
   char *combined;
 
   if (errno < sys_nerr)
@@ -216,9 +214,7 @@ print_sys_errmsg (string, errcode)
      char *string;
      int errcode;
 {
-  extern int sys_nerr;
-  extern char *sys_errlist[];
-  char *err;
+  const char *err;
   char *combined;
 
   if (errcode < sys_nerr)
