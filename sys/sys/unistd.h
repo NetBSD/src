@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.18.14.2 2002/08/01 02:47:01 nathanw Exp $	*/
+/*	$NetBSD: unistd.h,v 1.18.14.3 2002/12/29 20:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -159,6 +159,7 @@
 #define	_SC_LOGIN_NAME_MAX	37
 #define	_SC_MONOTONIC_CLOCK	38
 #define	_SC_CLK_TCK		39 /* New, variable version */
+#define	_SC_ATEXIT_MAX		40
 
 /* configurable system strings */
 #define	_CS_PATH		 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.12 2002/12/11 06:51:46 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.13 2002/12/29 20:57:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.12 2002/12/11 06:51:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.13 2002/12/29 20:57:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,23 +357,30 @@ lfs_inactive(void *v)
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
  * is decremented during segment write, when VDIROP is taken off.
  */
-#define	SET_DIROP(vp) lfs_set_dirop(vp)
-static int lfs_set_dirop(struct vnode *);
+#define	SET_DIROP(vp)		SET_DIROP2((vp), NULL)
+#define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
+static int lfs_set_dirop(struct vnode *, struct vnode *);
 extern int lfs_dirvcount;
 
+#define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
+
 static int
-lfs_set_dirop(struct vnode *vp)
+lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 {
 	struct lfs *fs;
 	int error;
+
+	KASSERT(VOP_ISLOCKED(vp));
+	KASSERT(vp2 == NULL || VOP_ISLOCKED(vp2));
 
 	fs = VTOI(vp)->i_lfs;
 	/*
 	 * We might need one directory block plus supporting indirect blocks,
 	 * plus an inode block and ifile page for the new vnode.
 	 */
-	if ((error = lfs_reserve(fs, vp, btofsb(fs, (NIADDR + 3) << fs->lfs_bshift))) != 0)
+	if ((error = lfs_reserve(fs, vp, vp2, NRESERVE(fs))) != 0)
 		return (error);
+
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
 	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
@@ -394,8 +401,7 @@ lfs_set_dirop(struct vnode *vp)
 #endif
 			if ((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
 					   "lfs_maxdirop", 0)) != 0) {
-				lfs_reserve(fs, vp, -btofsb(fs, (NIADDR + 3) << fs->lfs_bshift));
-				return error;
+				goto unreserve;
 			}
 		}							
 	}								
@@ -404,11 +410,18 @@ lfs_set_dirop(struct vnode *vp)
 
 	/* Hold a reference so SET_ENDOP will be happy */
 	lfs_vref(vp);
+	if (vp2 != NULL)
+		lfs_vref(vp2);
 
 	return 0;
+
+unreserve:
+	lfs_reserve(fs, vp, vp2, -NRESERVE(fs));
+	return error;
 }
 
-#define	SET_ENDOP(fs,vp,str) {						\
+#define	SET_ENDOP(fs, vp, str)	SET_ENDOP2((fs), (vp), NULL, (str))
+#define	SET_ENDOP2(fs, vp, vp2, str) {					\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
 		if ((fs)->lfs_nadirop) {				\
@@ -418,8 +431,10 @@ lfs_set_dirop(struct vnode *vp)
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
-	lfs_reserve((fs), vp, -btofsb((fs), (NIADDR + 3) << (fs)->lfs_bshift)); /* XXX */	\
+	lfs_reserve((fs), vp, vp2, -NRESERVE(fs)); /* XXX */		\
 	lfs_vunref(vp);							\
+	if (vp2 != NULL)						\
+		lfs_vunref(vp2);					\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
@@ -634,7 +649,7 @@ lfs_remove(void *v)
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
-	if ((error = SET_DIROP(dvp)) != 0) {
+	if ((error = SET_DIROP2(dvp, vp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
 		else
@@ -659,7 +674,7 @@ lfs_remove(void *v)
 	wakeup(&lfs_dirvcount);
 	vrele(vp);
 
-	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
+	SET_ENDOP2(VTOI(dvp)->i_lfs, dvp, vp, "remove");
 	return (error);
 }
 
@@ -674,7 +689,7 @@ lfs_rmdir(void *v)
 	} */ *ap = v;
 	int error;
 
-	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
+	if ((error = SET_DIROP2(ap->a_dvp, ap->a_vp)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp != ap->a_dvp)
 			VOP_UNLOCK(ap->a_dvp, 0);
@@ -698,7 +713,7 @@ lfs_rmdir(void *v)
 	wakeup(&lfs_dirvcount);
 	vrele(ap->a_vp);
 
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
+	SET_ENDOP2(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
 }
 
@@ -757,14 +772,22 @@ lfs_rename(void *v)
 		error = EXDEV;
 		goto errout;
 	}
-	if ((error = SET_DIROP(fdvp)) != 0)
+	if ((error = SET_DIROP2(tdvp, tvp)) != 0)
 		goto errout;
 	MARK_VNODE(fdvp);
 	MARK_VNODE(tdvp);
+	MARK_VNODE(fvp);
+	if (tvp) {
+		MARK_VNODE(tvp);
+	}
 	error = ufs_rename(ap);
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(tdvp);
-	SET_ENDOP(fs,fdvp,"rename");
+	UNMARK_VNODE(fvp);
+	if (tvp) {
+		UNMARK_VNODE(tvp);
+	}
+	SET_ENDOP2(fs, tdvp, tvp, "rename");
 	return (error);
 
     errout:

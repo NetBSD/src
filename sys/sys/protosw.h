@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.25.2.1 2001/04/09 01:59:03 nathanw Exp $	*/
+/*	$NetBSD: protosw.h,v 1.25.2.2 2002/12/29 20:56:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -143,7 +143,7 @@ struct protosw {
 #define	PRU_SHUTDOWN		7	/* won't send any more data */
 #define	PRU_RCVD		8	/* have taken data; more room now */
 #define	PRU_SEND		9	/* send this data */
-#define	PRU_ABORT		10	/* abort (fast DISCONNECT, DETATCH) */
+#define	PRU_ABORT		10	/* abort (fast DISCONNECT, DETACH) */
 #define	PRU_CONTROL		11	/* control operations on protocol */
 #define	PRU_SENSE		12	/* return status into m */
 #define	PRU_RCVOOB		13	/* retrieve out of band data */

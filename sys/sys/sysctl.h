@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.17 2002/12/19 00:59:47 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.18 2002/12/29 20:56:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -557,7 +557,8 @@ struct kinfo_lwp {
 #define	USER_POSIX2_UPE		18	/* int: POSIX2_UPE */
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
 #define	USER_TZNAME_MAX		20	/* int: POSIX2_TZNAME_MAX */
-#define	USER_MAXID		21	/* number of valid user ids */
+#define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
+#define	USER_MAXID		22	/* number of valid user ids */
 
 #define	CTL_USER_NAMES { \
 	{ 0, 0 }, \
@@ -581,6 +582,7 @@ struct kinfo_lwp {
 	{ "posix2_upe", CTLTYPE_INT }, \
 	{ "stream_max", CTLTYPE_INT }, \
 	{ "tzname_max", CTLTYPE_INT }, \
+	{ "atexit_max", CTLTYPE_INT }, \
 }
 
 /*
@@ -683,12 +685,14 @@ struct kinfo_lwp {
  */
 #define	EMUL_LINUX	1
 #define	EMUL_IRIX	2
+#define	EMUL_DARWIN	3
 
-#define	EMUL_MAXID	3
+#define	EMUL_MAXID	4
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
 	{ "linux", CTLTYPE_NODE }, \
 	{ "irix", CTLTYPE_NODE }, \
+	{ "darwin", CTLTYPE_NODE }, \
 }
 
 #ifdef	_KERNEL
