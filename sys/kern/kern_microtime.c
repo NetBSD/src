@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.13 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.13 2004/09/22 11:32:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.14 2005/01/23 08:39:51 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -212,7 +212,7 @@ cc_microset(struct cpu_info *ci)
 		    ", denom %" PRId64 "\n", ci->ci_cpuid, delta, denom);
 #endif
 	} else {
-#ifdef DIAGNOSTIC
+#if 0
 		printf("cc_microset[%lu]: delta %" PRId64 ", resetting state\n",
 		       (u_long)ci->ci_cpuid, delta);
 #endif
