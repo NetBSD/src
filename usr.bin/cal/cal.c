@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.11 1998/11/06 22:52:18 christos Exp $	*/
+/*	$NetBSD: cal.c,v 1.12 2002/06/21 19:58:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.11 1998/11/06 22:52:18 christos Exp $");
+__RCSID("$NetBSD: cal.c,v 1.12 2002/06/21 19:58:48 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,30 +125,28 @@ char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 
 int julian;
 
-void	ascii_day __P((char *, int));
-void	center __P((char *, int, int));
-void	day_array __P((int, int, int *));
-int	day_in_week __P((int, int, int));
-int	day_in_year __P((int, int, int));
-void	j_yearly __P((int));
-void	monthly __P((int, int));
-int	main __P((int, char **));
-void	trim_trailing_spaces __P((char *));
-void	usage __P((void));
-void	yearly __P((int));
+void	ascii_day(char *, int);
+void	center(char *, int, int);
+void	day_array(int, int, int *);
+int	day_in_week(int, int, int);
+int	day_in_year(int, int, int);
+void	j_yearly(int);
+void	monthly(int, int);
+int	main(int, char **);
+void	trim_trailing_spaces(char *);
+void	usage(void);
+void	yearly(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct tm *local_time;
 	time_t now;
 	int ch, month, year, yflag;
 
 	yflag = year = 0;
-	while ((ch = getopt(argc, argv, "jy")) != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "jy")) != -1) {
+		switch (ch) {
 		case 'j':
 			julian = 1;
 			break;
@@ -158,12 +156,14 @@ main(argc, argv)
 		case '?':
 		default:
 			usage();
+			/* NOTREACHED */
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
 	month = 0;
-	switch(argc) {
+	switch (argc) {
 	case 2:
 		if ((month = atoi(*argv++)) < 1 || month > 12)
 			errx(1, "illegal month value: use 1-12");
@@ -200,8 +200,7 @@ main(argc, argv)
 #define	J_HEAD_SEP	2
 
 void
-monthly(month, year)
-	int month, year;
+monthly(int month, int year)
 {
 	int col, row, len, days[MAXDAYS];
 	char *p, lineout[30];
@@ -223,8 +222,7 @@ monthly(month, year)
 }
 
 void
-j_yearly(year)
-	int year;
+j_yearly(int year)
 {
 	int col, *dp, i, month, row, which_cal;
 	int days[12][MAXDAYS];
@@ -258,8 +256,7 @@ j_yearly(year)
 }
 
 void
-yearly(year)
-	int year;
+yearly(int year)
 {
 	int col, *dp, i, month, row, which_cal;
 	int days[12][MAXDAYS];
@@ -301,9 +298,7 @@ yearly(year)
  *	builds that array for any month from Jan. 1 through Dec. 9999.
  */
 void
-day_array(month, year, days)
-	int month, year;
-	int *days;
+day_array(int month, int year, int *days)
 {
 	int day, dw, dm;
 
@@ -325,8 +320,7 @@ day_array(month, year, days)
  *	return the 1 based day number within the year
  */
 int
-day_in_year(day, month, year)
-	int day, month, year;
+day_in_year(int day, int month, int year)
 {
 	int i, leap;
 
@@ -344,8 +338,7 @@ day_in_year(day, month, year)
  *	missing days.
  */
 int
-day_in_week(day, month, year)
-	int day, month, year;
+day_in_week(int day, int month, int year)
 {
 	long temp;
 
@@ -359,9 +352,7 @@ day_in_week(day, month, year)
 }
 
 void
-ascii_day(p, day)
-	char *p;
-	int day;
+ascii_day(char *p, int day)
 {
 	int display, val;
 	static char *aday[] = {
@@ -400,8 +391,7 @@ ascii_day(p, day)
 }
 
 void
-trim_trailing_spaces(s)
-	char *s;
+trim_trailing_spaces(char *s)
 {
 	char *p;
 
@@ -415,10 +405,7 @@ trim_trailing_spaces(s)
 }
 
 void
-center(str, len, separate)
-	char *str;
-	int len;
-	int separate;
+center(char *str, int len, int separate)
 {
 
 	len -= strlen(str);
@@ -428,7 +415,7 @@ center(str, len, separate)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: cal [-jy] [[month] year]\n");
