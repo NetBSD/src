@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172 2002/05/02 16:36:21 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.173 2002/05/02 22:13:30 sommerfeld Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -23,8 +23,6 @@
 #	an appropriate point in a build.
 #   MKSHARE, if set to `no', will prevent building and installing
 #	anything in /usr/share.
-#   NBUILDJOBS is the number of jobs to start in parallel during a
-#	`make build'. It defaults to 1.
 #   UPDATE, if defined, will avoid a `make cleandir' at the start of
 #     `make build', as well as having the effects listed in
 #     /usr/share/mk/bsd.README.
@@ -77,15 +75,6 @@ _SRC_TOP_OBJ_=
 	@false
 .endif
 .endfor
-.endif
-
-.if defined(NBUILDJOBS)
-.if !target(.BEGIN)
-.BEGIN:
-	@echo 'NBUILDJOBS is currently broken; see PR toolchain/14837.'
-	@false
-.endif
-#_J=		-j${NBUILDJOBS}
 .endif
 
 _SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin
@@ -158,7 +147,7 @@ build:
 .else
 	@printf "Build started at: " && date
 .for tgt in ${BUILDTARGETS}
-	@(cd ${.CURDIR} && ${MAKE} ${_J} ${tgt})
+	@(cd ${.CURDIR} && ${MAKE} ${tgt})
 .endfor
 	@printf "Build finished at: " && date
 .endif
@@ -182,6 +171,9 @@ check-tools:
 	@echo '*** This platform is not yet verified to work with the new toolchain,'
 	@echo '*** and may result in a failed build or corrupt binaries!'
 .endif
+.if defined(NBUILDJOBS)
+	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
+.endif
 
 do-distrib-dirs:
 .if !defined(DESTDIR) || ${DESTDIR} == ""
@@ -193,13 +185,13 @@ do-distrib-dirs:
 .for dir in tools lib/csu lib gnu/lib
 do-${dir:S/\//-/}:
 .for targ in dependall install
-	(cd ${.CURDIR}/${dir} && ${MAKE} ${_J} ${targ})
+	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
 .endfor
 .endfor
 
 do-build:
 .for targ in dependall install
-	(cd ${.CURDIR} && ${MAKE} ${_J} ${targ} BUILD_tools=no BUILD_lib=no)
+	(cd ${.CURDIR} && ${MAKE} ${targ} BUILD_tools=no BUILD_lib=no)
 .endfor
 
 # Speedup stubs for some subtrees that don't need to run these rules.
