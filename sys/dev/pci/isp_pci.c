@@ -1,4 +1,33 @@
-/* $NetBSD: isp_pci.c,v 1.55 2000/08/03 03:00:04 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.56 2000/08/14 06:58:45 mjacob Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -851,7 +880,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	segcnt = dmap->dm_nsegs;
 
 	for (seg = 0, rq->req_seg_count = 0;
-	    seg < segcnt && rq->req_seg_count < seglim;
+	    seglim && seg < segcnt && rq->req_seg_count < seglim;
 	    seg++, rq->req_seg_count++) {
 		if (IS_FC(isp)) {
 			ispreqt2_t *rq2 = (ispreqt2_t *)rq;
@@ -892,6 +921,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			    dmap->dm_segs[seg].ds_addr;
 		}
 	} while (seg < segcnt);
+
 
 dmasync:
 	bus_dmamap_sync(pcs->pci_dmat, dmap, 0, dmap->dm_mapsize,
