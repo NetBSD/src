@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.40 1999/11/20 00:38:00 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.41 2000/03/30 02:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -184,7 +184,6 @@ extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
 extern u_int16_t ip_id;			/* ip packet ctr, for ids */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
-extern int   ip_gif_ttl;		/* default TTL for gif encap packet */
 extern int   ip_mtudisc;		/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */
@@ -204,7 +203,6 @@ void	 ip_freef __P((struct ipq *));
 void	 ip_freemoptions __P((struct ip_moptions *));
 int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
 void	 ip_init __P((void));
-int	 ip_mforward __P((struct mbuf *, struct ifnet *));
 int	 ip_optcopy __P((struct ip *, struct ip *));
 u_int	 ip_optlen __P((struct inpcb *));
 int	 ip_output __P((struct mbuf *, ...));
