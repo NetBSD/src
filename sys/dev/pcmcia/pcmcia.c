@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.37 2004/07/07 06:08:25 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.38 2004/07/07 06:43:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.37 2004/07/07 06:08:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.38 2004/07/07 06:43:22 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -289,11 +289,12 @@ pcmcia_print(arg, pnp)
 	struct pcmcia_card *card = &sc->card;
 	char devinfo[256];
 
-	if (pnp) {
-		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
-		aprint_normal("%s at %s, ", devinfo, pnp);
-	}
-	aprint_normal(" function %d", pa->pf->number);
+	if (pnp)
+		aprint_normal("%s", pnp);
+
+	pcmcia_devinfo(card, !!pnp, devinfo, sizeof(devinfo));
+
+	aprint_normal(" function %d: %s", pa->pf->number, devinfo);
 
 	return (UNCONF);
 }
@@ -303,12 +304,13 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 	struct pcmcia_card *card;
 	int showhex;
 	char *cp;
-	int cplen;
+	size_t cplen;
 {
 	int i, n;
 
 	if (cplen > 1) {
 		*cp++ = '<';
+		*cp = '\0';
 		cplen--;
 	}
 
@@ -316,11 +318,14 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 		n = snprintf(cp, cplen, "%s%s", (i && i != 3) ? ", " : "",
 		        card->cis1_info[i]);
 		cp += n;
+		if (cplen < n)
+			return;
 		cplen -= n;
 	}
 
 	if (cplen > 1) {
 		*cp++ = '>';
+		*cp = '\0';
 		cplen--;
 	}
 

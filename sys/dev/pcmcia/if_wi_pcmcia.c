@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.42 2004/07/07 05:42:08 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.43 2004/07/07 06:43:22 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.42 2004/07/07 05:42:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.43 2004/07/07 06:43:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,11 +366,8 @@ wi_pcmcia_attach(parent, self, aux)
 	const struct wi_pcmcia_product *pp;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	char devinfo[256];
 
-	/* Print out what we are. */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
-	aprint_normal("\n%s: %s\n", self->dv_xname, devinfo);
+	aprint_normal("\n");
 
 	psc->sc_pf = pa->pf;
 

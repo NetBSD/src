@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.68 2004/05/25 20:42:41 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.69 2004/07/07 06:43:22 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.68 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.69 2004/07/07 06:43:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,25 +92,21 @@ const struct wdc_pcmcia_product {
 	int		wpp_quirk_flag;	/* Quirk flags */
 #define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
-	const char	*wpp_name;	/* product name */
 } wdc_pcmcia_products[] = {
 
 	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
-	  0, { NULL, "Digital Mobile Media CD-ROM", NULL, NULL },
-	  PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM },
+	  0, {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
 
 	{ PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
-	  PCMCIA_STR_IBM_PORTABLE_CDROM },
+	  0, {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
 	  PCMCIA_PRODUCT_TEAC_IDECARDII,
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
-	  PCMCIA_CIS_TEAC_IDECARDII,
-	  PCMCIA_STR_TEAC_IDECARDII },
+	  PCMCIA_CIS_TEAC_IDECARDII },
 
 	/*
 	 * A fujitsu rebranded panasonic drive that reports 
@@ -119,60 +115,42 @@ const struct wdc_pcmcia_product {
 	{ PCMCIA_VENDOR_PANASONIC,
 	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
 	  0,
-	  PCMCIA_CIS_PANASONIC_KXLC005,
-	  PCMCIA_STR_PANASONIC_KXLC005 },
+	  PCMCIA_CIS_PANASONIC_KXLC005 },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
 	 * Does not have a vendor ID or product ID.
 	 */
-	{ -1,
-	  -1,
-	  0,
-	  PCMCIA_CIS_EXP_EXPMULTIMEDIA,
-	  PCMCIA_STR_EXP_EXPMULTIMEDIA },
+	{ -1, -1, 0,
+	  PCMCIA_CIS_EXP_EXPMULTIMEDIA },
 
 	/* Mobile Dock 2, neither vendor ID nor product ID */
 	{ -1, -1, 0,
-	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
-	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
-	},
+	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} },
 
 	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
 	{ -1, -1, 0,
-	  { "FREECOM", "PCCARD-IDE", NULL, NULL},
-	  "FREECOM PCCARD-IDE"
-	},
+	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
 
 	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
 	{ -1, -1, 0,
-	  { "PCMCIA", "CD-ROM", NULL, NULL},
-	  "PCMCIA CD-ROM"
-	},
+	  {"PCMCIA", "CD-ROM", NULL, NULL} },
 
 	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
 	{ -1, -1, 0,
-	  PCMCIA_CIS_IODATA_CBIDE2,
-	  PCMCIA_STR_IODATA_CBIDE2
-	},
+	  PCMCIA_CIS_IODATA_CBIDE2 },
 
 	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
 	/*  with neither vendor ID nor product ID */
 	{ -1, -1, 0,
-	  PCMCIA_CIS_TOSHIBA_CBIDE2,
-	  PCMCIA_STR_TOSHIBA_CBIDE2
-	},
+	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
 
 	/* 
 	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
 	 * with neither vendor ID nor product ID
 	 */
 	{ -1, -1, 0,
-	  { "PCMCIA", "PnPIDE", NULL, NULL},
-	  "Novac PCCARD-IDE"
-	},
-
-	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
+	  {"PCMCIA", "PnPIDE", NULL, NULL} },
 };
 
 const struct wdc_pcmcia_product *
@@ -186,8 +164,11 @@ wdc_pcmcia_lookup(pa)
 {
 	const struct wdc_pcmcia_product *wpp;
 	int i, cis_match;
+	int n;
 
-	for (wpp = wdc_pcmcia_products; wpp->wpp_name != NULL; wpp++)
+	for (wpp = wdc_pcmcia_products,
+	    n = sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
+	    n; wpp++, n--) {
 		if ((wpp->wpp_vendor == -1 ||
 		     pa->manufacturer == wpp->wpp_vendor) &&
 		    (wpp->wpp_product == -1 ||
@@ -203,6 +184,7 @@ wdc_pcmcia_lookup(pa)
 			if (cis_match)
 				return (wpp);
 		}
+	}
 
 	return (NULL);
 }
@@ -238,6 +220,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	const struct wdc_pcmcia_product *wpp;
 	bus_size_t offset = 0;
 	int quirks, i;
+
+	aprint_normal("\n");
 
 	sc->sc_pf = pa->pf;
 
@@ -283,14 +267,14 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	if (cfe == NULL) {
-		printf(": can't handle card info\n");
+		aprint_error("%s: can't handle card info\n", self->dv_xname);
 		goto no_config_entry;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 
@@ -304,7 +288,8 @@ wdc_pcmcia_attach(parent, self, aux)
 		if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_COMMON, 0,
 		    sc->sc_pmembaseh.size, &sc->sc_pmembaseh, &offset,
 		    &sc->sc_memwindow)) {
-			printf(": can't map memory space\n");
+			aprint_error("%s: can't map memory space\n",
+			    self->dv_xname);
 			goto map_failed;
 		}
 
@@ -317,11 +302,12 @@ wdc_pcmcia_attach(parent, self, aux)
 		    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpmemh.memh))
 			goto mapaux_failed;
 		
-		printf(" memory mapped mode");
+		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
 	} else {
 		if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 		    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
-			printf(": can't map first I/O space\n");
+			aprint_error("%s: can't map first I/O space\n",
+			     self->dv_xname);
 			goto map_failed;
 		} 
 	}
@@ -330,14 +316,10 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_auxiowindow = -1;
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-		printf(": can't map second I/O space\n");
+		aprint_error("%s: can't map second I/O space\n",
+		    self->dv_xname);
 		goto mapaux_failed;
 	}
-
-	if ((wpp != NULL) && (wpp->wpp_name != NULL))
-		printf(": %s", wpp->wpp_name);
-	
-	printf("\n");
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
@@ -357,7 +339,8 @@ wdc_pcmcia_attach(parent, self, aux)
 		    sc->wdc_channel.cmd_baseioh,
 		    offset + i, i == 0 ? 4 : 1,
 		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
-			printf(": can't subregion I/O space\n");
+			aprint_error("%s: can't subregion I/O space\n",
+			    self->dv_xname);
 			goto mapaux_failed;
 		}
 	}
