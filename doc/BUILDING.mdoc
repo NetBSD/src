@@ -1,6 +1,6 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.33 2003/12/29 07:10:24 jmc Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.34 2004/02/06 23:22:44 lukem Exp $
 .\"
-.\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd December 19, 2003
+.Dd February 6, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -94,17 +94,6 @@ compilers in order to create the toolchain
 is not required); all other tools are created as part of the
 .Nx
 build process.
-.Pp
-.Bd -ragged -offset indent
-.Em Note :
-A couple of host toolchain components are not yet available in the tools
-directory.
-Also, some tools use non-POSIX, non-ANSI C extensions
-and need to be standardized.
-As a result, cross-compiling from systems other than
-.Nx
-is not currently supported.
-.Ed
 .
 .Sh FILES
 .
@@ -172,6 +161,10 @@ Sources to the
 .Nx
 userland (non-kernel) programs.
 If any of these directories are missing, they will be skipped during the build.
+.It Sy x11/
+.Dq Reachover
+build structure for X11R6; the source is in
+.Sy X11SRCDIR .
 .El
 .
 .Ss Build tree layout
@@ -489,6 +482,12 @@ phase if the destination files are up-to-date.
 This also has implications on full builds (see next subsection).
 .DFLTn
 .
+.It Sy MKX11
+.YorN
+Indicates whether X11R6 is built from
+.Sy X11SRCDIR .
+.DFLTn
+.
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
 This directory should be unique to a given host system and
@@ -545,6 +544,13 @@ otherwise (to preserve traditional semantics of the
 .Aq bsd.*.mk
 .Xr make 1
 include files).
+.
+.It Sy X11SRCDIR
+Directory containing the X11R6 source.
+The main X11R6 source is found in
+.Sy X11SRCDIR Ns Pa /xfree/xc .
+.DFLT
+.Dq /usr/xsrc
 .
 .El
 .
@@ -732,9 +738,6 @@ but also remove preformatted documentation, dependency files generated
 by
 .Dq make depend ,
 and any other files known to be created at build time.
-.Dq make distclean
-may be used as a synonym, for familiarity with a similar well-known
-convention.
 .
 .It Sy depend
 Create dependency files
@@ -750,6 +753,10 @@ immediately followed by a
 .Dq make all .
 This improves cache locality of the build since both passes read the source
 files in their entirety.
+.
+.It Sy distclean
+Synonym for
+.Sy cleandir .
 .
 .It Sy includes
 Build and install system header files.
@@ -1216,6 +1223,16 @@ automatically.
 Note that
 .Ar wrapper
 is the full name of the file, not just a directory name.
+.
+.It Fl X Ar x11src
+Set the value of
+.Sy X11SRCDIR
+to
+.Ar x11src .
+.
+.It Fl x
+Set
+.Sy MKX11=yes .
 .
 .It Fl Z Ar var
 Unset ("zap") the environment variable
