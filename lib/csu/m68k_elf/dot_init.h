@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/05/12 00:17:55 kleink Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2001/10/13 09:21:50 scw Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -51,7 +51,7 @@
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
 		#entry_pt":				\n"\
-		"	.align	4			\n"\
+		"	.align	2			\n"\
 		"	/* fall thru */			\n"\
 		".previous")
 
