@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.3 1997/11/02 20:42:51 mellon Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.4 1997/11/06 00:38:42 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -221,6 +221,18 @@ written yet.  This is your last chance to quit this process before anything
 gets changed.  Shall we continue?
 }
 
+message disksetupdone
+{Okay, the first part of the procedure is finished. sysinst has
+written a disklabel to the target disk, and newfs'ed and fsck'ed
+the new partitions you specified for the target disk.
+If you see error messages above that indicate problems with the
+target-disk filesystems -- espeically / and /usr --  abort now.
+
+If the target filesystems look good, the next step is to fetch and
+unpack the distribution filesets.  Press <return> to proceed.
+}
+
+
 message nomount
 {Partition %c's type is not 4.2BSD or msdos and therefore does not have
 a mount point.}
@@ -370,7 +382,7 @@ message resolv
 }
 
 message realdir
-{Could not change to directory %s.  Install aborted.
+{Could not change to directory %s: %s.  Install aborted.
 }
 
 message ftperror
@@ -418,7 +430,7 @@ message anonprogfailed
 The program "%s" failed unexpectedly with return code %s.
 
 This is probably due to choosing the incorrect top-level install
-option-- like trying to do an Upgrade on a bare disk, or doing a fresh
+option---like trying to do an Upgrade on a bare disk, or doing a fresh
 Install on an already-running system.  Or it might be due to a
 mispackaged miniroot.  Whatever the cause, sysinst did not expect any
 errors here and the installation has almost certainly failed.
@@ -434,6 +446,21 @@ Cannot recover, aborting.
 
 message createfstab
 {There is a big problem!  Can not create /mnt/etc/fstab.  Bailing out!
+}
+
+
+message noetcfstab
+{Help! No /etc/fstab in target disk %s.  Aborting upgrade.
+}
+
+message badetcfstab
+{Help! Can't parse /etc/fstab in target disk %s.  Aborting upgrade.
+}
+
+message etc_oldexists
+{I cannot save /etc as /etc.old. The target disk already has an /etc.old,
+perhaps from an earlier upgrade? Please fix this before continuing.
+Aborting upgrade. 
 }
 
 message netnotup
@@ -462,6 +489,15 @@ message upgrinode
 {Your file system, %s, is using an old inode format.  If you are
 using only NetBSD on these file systems, it is recommended that 
 they are upgraded.  Do you want this file system upgraded?
+}
+
+message rootmissing
+{ target root is missing %s.
+}
+
+message badroot
+{The completed new root fileystem failed a basic sanity check.
+ Are you sure you installed all the required sets?
 }
 
 message fddev
