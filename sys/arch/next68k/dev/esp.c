@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.3 1998/07/19 21:41:16 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.4 1998/07/21 06:17:35 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -142,6 +142,17 @@
 
 #include "espreg.h"
 #include "espvar.h"
+
+#if 1
+#define ESP_DEBUG
+#endif
+
+#ifdef ESP_DEBUG
+#define DPRINTF(x) printf x;
+#else
+#define DPRINTF(x)
+#endif
+
 
 void	espattach_intio	__P((struct device *, struct device *, void *));
 int	espmatch_intio	__P((struct device *, struct cfdata *, void *));
@@ -352,12 +363,6 @@ espattach_intio(parent, self, aux)
 		}
 	}
 
-	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
-
-	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
-
 #if 0
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
@@ -375,6 +380,12 @@ espattach_intio(parent, self, aux)
 	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
 			NEXT_I_IPL(NEXT_I_SCSI), 0);
 	INTR_ENABLE(NEXT_I_SCSI);
+
+	/* register interrupt stats */
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+
+	/* Do the common parts of attachment. */
+	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
 }
 
 /*
@@ -406,7 +417,23 @@ int
 esp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	return (INTR_OCCURRED(NEXT_I_SCSI));
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	int r = (INTR_OCCURRED(NEXT_I_SCSI));
+
+	if (r) {
+		DPRINTF(("esp_dma_isintr = %d\n",r));
+		
+		if (esc->sc_datain) { 
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+		} else {
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+		}
+	}
+
+	return (r);
 }
 
 void
@@ -415,11 +442,11 @@ esp_dma_reset(sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	nextdma_reset(&esc->sc_scsi_dma);
+
 	if (esc->sc_dmamap->dm_mapsize != 0) {
 		bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
 	}
-
-	nextdma_reset(&esc->sc_scsi_dma);
 
 	esc->sc_slop_bgn_addr = 0;
 	esc->sc_slop_bgn_size = 0;
@@ -432,10 +459,81 @@ int
 esp_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	/* Do nothing here, since the DMA has real interrupts
-	 * of its own.
+	int trans;
+	int resid;
+	int datain;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	datain = esc->sc_datain;
+
+	DPRINTF(("esp_dma_intr resetting dma\n"));
+
+	/* If the dma hasn't finished when we are in a scsi
+	 * interrupt. Then, "Houston, we have a problem."
+	 * Stop DMA and figure out how many bytes were transferred
 	 */
-	return (0);
+	esp_dma_reset(sc);
+
+	resid = 0;
+
+	/*
+	 * If a transfer onto the SCSI bus gets interrupted by the device
+	 * (e.g. for a SAVEPOINTER message), the data in the FIFO counts
+	 * as residual since the ESP counter registers get decremented as
+	 * bytes are clocked into the FIFO.
+	 */
+
+	if (! datain) {
+		resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
+		if (resid) {
+			NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
+			NCRCMD(sc, NCRCMD_FLUSH);
+			DELAY(1);
+		}
+	}
+
+	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
+		/*
+		 * `Terminal count' is off, so read the residue
+		 * out of the ESP counter registers.
+		 */
+		resid += (NCR_READ_REG(sc, NCR_TCL) |
+			  (NCR_READ_REG(sc, NCR_TCM) << 8) |
+			   ((sc->sc_cfg2 & NCRCFG2_FE)
+				? (NCR_READ_REG(sc, NCR_TCH) << 16)
+				: 0));
+
+		if (resid == 0 && esc->sc_dmasize == 65536 &&
+		    (sc->sc_cfg2 & NCRCFG2_FE) == 0)
+			/* A transfer of 64K is encoded as `TCL=TCM=0' */
+			resid = 65536;
+	}
+
+	trans = esc->sc_dmasize - resid;
+	if (trans < 0) {			/* transferred < 0 ? */
+#if 0
+		/*
+		 * This situation can happen in perfectly normal operation
+		 * if the ESP is reselected while using DMA to select
+		 * another target.  As such, don't print the warning.
+		 */
+		printf("%s: xfer (%d) > req (%d)\n",
+		    esc->sc_dev.dv_xname, trans, esc->sc_dmasize);
+#endif
+		trans = esc->sc_dmasize;
+	}
+
+	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		NCR_READ_REG(sc, NCR_TCL),
+		NCR_READ_REG(sc, NCR_TCM),
+		(sc->sc_cfg2 & NCRCFG2_FE)
+			? NCR_READ_REG(sc, NCR_TCH) : 0,
+		trans, resid));
+
+	*esc->sc_dmalen -= trans;
+	*esc->sc_dmaaddr += trans;
+
+	return 0;
 }
 
 int
@@ -447,6 +545,13 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	size_t *dmasize;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+
+	/* Save these in case we have to abort DMA */
+	esc->sc_dmaaddr = addr;
+	esc->sc_dmalen = len;
+	esc->sc_dmasize = *dmasize;
+
+	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx)\n",*addr,*dmasize));
 
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain != -1) ||
@@ -472,6 +577,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			u_long end = (u_long)(*addr+*dmasize);
 
 			slop_bgn_size = DMA_BEGINALIGNMENT-(bgn % DMA_BEGINALIGNMENT);
+			if (slop_bgn_size == DMA_BEGINALIGNMENT) slop_bgn_size = 0;
 			slop_end_size = end % DMA_ENDALIGNMENT;
 		}
 
@@ -481,8 +587,6 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #if defined(DIAGNOSTIC)
 			if ((slop_bgn_size != *dmasize) ||
 					(slop_end_size != *dmasize)) {
-				printf("slop_bgn_size %d",slop_bgn_size);
-				printf("slop_end_size %d",slop_bgn_size);
 				panic("%s: confused alignment calculation\n"
 						"\tslop_bgn_size %d\n\tslop_end_size %d\n\tdmasize %d",
 						sc->sc_dev.dv_xname,slop_bgn_size,slop_end_size,*dmasize);
@@ -499,7 +603,8 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 					*dmasize-(slop_bgn_size+slop_end_size),
 					NULL, BUS_DMA_NOWAIT);
 			if (error) {
-				panic("%s: can't load dma map. error = %d",error);
+				panic("%s: can't load dma map. error = %d",
+						sc->sc_dev.dv_xname, error);
 			}
 
 		} else {
@@ -525,21 +630,89 @@ esp_dma_go(sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	/* @@@ Stuff the bgn slop into fifo */
+	DPRINTF(("esp_dma_go(datain = %d)\n",esc->sc_datain));
+
+	DPRINTF(("\tbgn slop = %d\n\tend slop = %d\n\tmapsize = %d\n",
+			esc->sc_slop_bgn_size,esc->sc_slop_end_size,
+			esc->sc_dmamap->dm_mapsize));
+
+	DPRINTF(("esp fifo size = %d\n",
+			(NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)));
+
+	if (esc->sc_datain) { 
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+	} else {
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB);
+	}
+
+	if (esc->sc_datain) { 
+		int i;
+#ifdef DIAGNOSTIC
+#if 0  /* This is a fine thing to happen */
+		int n = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
+		if (n != esc->sc_slop_bgn_size) {
+			panic("%s: Unexpected data in fifo n = %d, expecting %d ",
+					sc->sc_dev.dv_xname, n, esc->sc_slop_bgn_size);
+		}
+#endif
+#endif
+		for(i=0;i<esc->sc_slop_bgn_size;i++) {
+			esc->sc_slop_bgn_addr[i]=NCR_READ_REG(sc, NCR_FIFO);
+		}
+		
+	} else {
+		int i;
+		for(i=0;i<esc->sc_slop_bgn_size;i++) {
+			NCR_WRITE_REG(sc, NCR_FIFO, esc->sc_slop_bgn_addr[i]);
+		}
+
+		DPRINTF(("esp fifo size = %d\n",
+				(NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)));
+	}
 	
 	if (esc->sc_dmamap->dm_mapsize != 0) {
+		if (esc->sc_datain) { 
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+		} else {
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+		}
+
+
 		nextdma_start(&esc->sc_scsi_dma, 
 				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
 	} else {
 #if defined(DIAGNOSTIC)
-		/* @@@ verify that end slop is 0, since the shutdown
+		/* verify that end slop is 0, since the shutdown
 		 * callback will not be called.
 		 */
+		if (esc->sc_slop_end_size != 0) {
+			panic("%s: Unexpected end slop with no DMA, slop = %d",
+					sc->sc_dev.dv_xname, esc->sc_slop_end_size);
+		}
 #endif
+#if 0
+		if (esc->sc_datain) { 
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD | ESPDCTL_FLUSH);
+		} else {
+			NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_20MHZ | ESPDCTL_INTENB);
+			NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_FLUSH);
+			NCR_WRITE_REG(sc, ESP_DCTL, ESPDCTL_20MHZ | ESPDCTL_INTENB);
+		}
+#endif
+
+		esc->sc_datain = -1;
 		esc->sc_slop_bgn_addr = 0;
 		esc->sc_slop_bgn_size = 0;
 		esc->sc_slop_end_addr = 0;
 		esc->sc_slop_end_size = 0;
+
+		DPRINTF(("esp fifo size = %d\n",
+				(NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)));
 	}
 }
 
@@ -568,6 +741,8 @@ esp_dmacb_continue(arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	DPRINTF(("esp dma continue\n"));
+
   bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
 			0, esc->sc_dmamap->dm_mapsize, 
 			(esc->sc_datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE));
@@ -590,6 +765,8 @@ esp_dmacb_completed(map, arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	DPRINTF(("esp dma completed\n"));
+
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
 		panic("%s: map not loaded in dma completed callback, datain = %d",
@@ -599,6 +776,8 @@ esp_dmacb_completed(map, arg)
 		panic("%s: unexpected tx completed map", sc->sc_dev.dv_xname);
 	}
 #endif
+
+	/* @@@ Flush the fifo? */
 
   bus_dmamap_sync(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap,
 			0, esc->sc_dmamap->dm_mapsize, 
@@ -612,6 +791,8 @@ esp_dmacb_shutdown(arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
+	DPRINTF(("esp dma shutdown\n"));
+
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
 		panic("%s: map not loaded in dma shutdown callback, datain = %d",
@@ -621,7 +802,38 @@ esp_dmacb_shutdown(arg)
 
 	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
 
-	/* @@@ Stuff the end slop into fifo */
+	/* Stuff the end slop into fifo */
+
+	{
+		if (esc->sc_datain) { 
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
+		} else {
+			NCR_WRITE_REG(sc, ESP_DCTL,
+					ESPDCTL_20MHZ | ESPDCTL_INTENB);
+		}
+
+		if (esc->sc_datain) { 
+			int i;
+#ifdef DIAGNOSTIC
+			int n = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
+			if (n != esc->sc_slop_end_size) {
+				panic("%s: Unexpected data in fifo n = %d, expecting %d at end",
+						sc->sc_dev.dv_xname, n, esc->sc_slop_end_size);
+			}
+#endif
+			for(i=0;i<esc->sc_slop_end_size;i++) {
+				esc->sc_slop_end_addr[i]=NCR_READ_REG(sc, NCR_FIFO);
+			}
+		
+		} else {
+			int i;
+			for(i=0;i<esc->sc_slop_end_size;i++) {
+				NCR_WRITE_REG(sc, NCR_FIFO, esc->sc_slop_end_addr[i]);
+			}
+		}
+	}
+
 
 	esc->sc_datain = -1;
 	esc->sc_slop_bgn_addr = 0;
