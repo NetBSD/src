@@ -1,4 +1,4 @@
-.\"	$NetBSD: fmt.1,v 1.4 1997/10/18 15:00:11 lukem Exp $
+.\"	$NetBSD: fmt.1,v 1.5 2000/09/15 11:23:17 abs Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd simple text formatter
 .Sh SYNOPSIS
 .Nm
+.Op Fl c
 .Oo
 .Ar goal
 .Op Ar maximum
@@ -59,6 +60,11 @@ length defaults
 to 65 and the maximum to 75.  The spacing at the beginning of the
 input lines is preserved in the output, as are blank lines and
 interword spacing.
+.Pp
+.Fl c
+instructs
+.Nm fmt
+to center the text.
 .Pp
 .Nm
 is meant to format mail messages prior to sending, but may also be useful
