@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.7 1997/05/10 10:55:19 mycroft Exp $
+#	$NetBSD: bsd.links.mk,v 1.8 1998/12/31 15:28:52 castor Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -18,7 +18,7 @@ linksinstall::
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
 		echo "	@ln -s $$l $$t"; \
-	done | make -f-
+	done | ${MAKE} -f-
 .endif
 .if defined(LINKS) && !empty(LINKS)
 linksinstall::
@@ -35,7 +35,7 @@ linksinstall::
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
 		echo "	@ln $$l $$t"; \
-	done | make -f-
+	done | ${MAKE} -f-
 .endif
 
 .if !target(linksinstall)
