@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 2002/09/24 07:06:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ zs_config(zsc, base)
 			cs = &zs_conschan_store;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-				    M_DEVBUF, M_NOWAIT);
+				    M_DEVBUF, M_NOWAIT | M_ZERO);
 			if(channel==0){
 				cs->cs_reg_csr  = base+7;
 				cs->cs_reg_data = base+15;
