@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.41 2003/11/24 21:44:37 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.41.2.1 2004/06/22 07:30:06 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)sem.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <ctype.h>
