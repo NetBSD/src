@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.14.8.1 2000/07/26 21:30:34 hubertf Exp $
+.\" $NetBSD: pkg_delete.1,v 1.14.8.2 2001/03/20 18:03:31 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl vDdnFfOrR
+.Op Fl DdFfnORrVv
 .Bk -words
 .Op Fl p Ar prefix
 .Ek
@@ -78,37 +78,8 @@ If the
 flag is given, one or more (absolute) filenames may be specified and
 the Package Database will be consulted for the package to which the
 given file belongs. These packages are then deinstalled.
-.It Fl v
-Turn on verbose output.
 .It Fl D
 If a deinstallation script exists for a given package, do not execute it.
-.It Fl n
-Don't actually deinstall a package, just report the steps that
-would be taken if it were.
-.It Fl O
-Only delete the package's entries from the package database, do not
-touch the package or it's files itself. 
-.It Fl p Ar prefix
-Set
-.Ar prefix
-as the directory in which to delete files from any installed packages
-which do not explicitly set theirs.  For most packages, the prefix will
-be set automatically to the installed location by
-.Xr pkg_add 1 .
-.It Fl r
-.Nm Pkg_delete
-first builds a list of all packages that require (directly and indirectly)
-the one being deleted.  It then deletes these packages using 
-.Nm pkg_delete
-with the given options before deleting the user specified package.
-.It Fl R
-Like the
-.Fl r
-option, this does a recursive delete. The
-.Fl R
-option deletes the given package and any packages required by
-it, unless some other package still needs them. This can be used
-to delete a package and all the packages it needs. 
 .It Fl d
 Remove empty directories created by file cleanup.  By default, only
 files/directories explicitly listed in a package's contents (either as
@@ -126,8 +97,38 @@ instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
+.It Fl n
+Don't actually deinstall a package, just report the steps that
+would be taken if it were.
+.It Fl O
+Only delete the package's entries from the package database, do not
+touch the package or it's files itself. 
+.It Fl p Ar prefix
+Set
+.Ar prefix
+as the directory in which to delete files from any installed packages
+which do not explicitly set theirs.  For most packages, the prefix will
+be set automatically to the installed location by
+.Xr pkg_add 1 .
+.It Fl R
+Like the
+.Fl r
+option, this does a recursive delete. The
+.Fl R
+option deletes the given package and any packages required by
+it, unless some other package still needs them. This can be used
+to delete a package and all the packages it needs. 
+.It Fl r
+.Nm
+first builds a list of all packages that require (directly and indirectly)
+the one being deleted.  It then deletes these packages using 
+.Nm
+with the given options before deleting the user specified package.
+.It Fl V
+Print version number and exit.
+.It Fl v
+Turn on verbose output.
 .El
-
 .Pp
 .Sh TECHNICAL DETAILS
 .Nm
@@ -179,7 +180,7 @@ around the package's installation, since all
 .Nm
 knows how to do is delete the files created in the original distribution.
 The
-.Nm deinstall
+.Ic deinstall
 script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
@@ -217,7 +218,7 @@ or
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
-.Xr mtree 8 .
+.Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"
