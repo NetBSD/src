@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -29,6 +28,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Written by:
+ *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
+ */
+
 #include <machine/asm.h>
 
 ENTRY(drem)
@@ -38,6 +42,5 @@ ENTRY(drem)
 	fstsw	%ax
 	sahf
 	jp	1b
+	fstpl	%st(1)				/* fixup stack */
 	ret
-
-
