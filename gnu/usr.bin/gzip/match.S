@@ -9,7 +9,7 @@
  * Kristoffer Eriksson <ske@pkmab.se>
  */
  
-/* $Id: match.S,v 1.8 2000/12/03 17:24:00 scw Exp $ */
+/* $Id: match.S,v 1.9 2002/05/30 05:53:38 thorpej Exp $ */
 
 /* Preprocess with -DNO_UNDERLINE if your C compiler does not prefix
  * external symbols with an underline character '_'.
@@ -218,7 +218,12 @@ maxmatch:
 #  define FILE(filename)	.even
 #  define invert_maybe(src,dst)	src,dst
 #  if defined(sun) || defined(mc68k) || defined(__NetBSD__)
-#    define imm(data)		#data
+#    if defined(__STDC__)
+#      define IMMEDIATE		#
+#      define imm(data)		IMMEDIATE data
+#    else
+#      define imm(data)		#data
+#    endif
 #  else
 #    define imm(data)		\#data
 #  endif
