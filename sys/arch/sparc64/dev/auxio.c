@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.5 2002/03/20 18:54:46 eeh Exp $	*/
+/*	$NetBSD: auxio.c,v 1.6 2002/03/21 01:18:42 eeh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -204,6 +204,7 @@ auxio_ebus_attach(parent, self, aux)
 	} else {
 		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			ea->ea_reg[0].size, 0, &sc->sc_led);
+	}
 	
 	auxio_attach_common(sc);
 }
