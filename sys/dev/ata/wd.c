@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.3 1998/06/05 16:17:47 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.4 1998/06/09 12:56:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -161,11 +161,7 @@ struct wd_softc {
 #define sc_multi sc_wdc_bio.multi
 #define sc_badsect sc_wdc_bio.badsect
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdprobe	__P((struct device *, void *, void *));
-#else
 int	wdprobe	__P((struct device *, struct cfdata *, void *));
-#endif
 void	wdattach	__P((struct device *, struct device *, void *));
 int	wdprint	__P((void *, char *));
 
@@ -197,23 +193,12 @@ void	wdunlock	__P((struct wd_softc *));
 void print_wderror __P((int, char*));
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-wdprobe(parent, matchv, aux)
-#else
 wdprobe(parent, match, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *matchv;
-#else
 	struct cfdata *match;
-#endif
 
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *match = matchv;
-#endif
 	struct ata_atapi_attach *aa_link = aux;
 
 	if (aa_link == NULL)
