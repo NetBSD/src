@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.87 2003/07/18 09:42:59 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.88 2003/07/19 22:07:37 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,7 @@ static int net_dhcpconf;
 #define DHCPCONF_DOMAIN         0x08
 #ifdef INET6
 static char net_ip6[STRSIZE];
-static char net_namesvr6[STRSIZE];
+char net_namesvr6[STRSIZE];
 static int net_ip6conf;
 #define IP6CONF_AUTOHOST        0x01    
 #endif
