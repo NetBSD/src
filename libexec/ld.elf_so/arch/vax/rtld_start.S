@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2000/07/17 02:55:54 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2000/08/07 01:47:07 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -55,7 +55,7 @@ ALTENTRY(_rtld_bind_start)
 	pushr	$0xff		/* save R0-R7 */
 	movq	32(sp),r0	/* get addresses of plt.got & reloc index */
 	pushl	(r1)		/* push relocation index */
-	pushl	12(r0)		/* push address of obj entry */
+	pushl	r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
 	movpsl	-(sp)		/* flush the instruction cache */
 	pushab	1f		/*   by issuing an */
