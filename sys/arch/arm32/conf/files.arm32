@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.47 1998/07/07 03:05:15 mark Exp $
+#	$NetBSD: files.arm32,v 1.48 1998/07/08 04:51:12 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -67,6 +67,20 @@ attach	ofbus at root with ofbus_root
 file	arch/arm32/ofw/ofw.c			ofw
 file	arch/arm32/ofw/openfirm.c		ofw
 file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
+
+# XXX ISA DMA controller (for SoundBlaster - should just pull in
+# XXX files.isa)
+define	isadma
+file	dev/isa/isadma.c			isadma needs-flag
+file	arch/arm32/isa/isadma_machdep.c		isadma
+
+# XXX SoundBlaster stuff (for files.ofisa - should just pull in
+# XXX files.isa)
+define	sbdsp
+file	dev/isa/sbdsp.c				sbdsp
+
+device	sb: audio, isadma, sbdsp, mulaw, auconv
+file	dev/isa/sb.c				sb needs-flag
 
 # OFW ISA bus driver.
 include "../../../dev/ofisa/files.ofisa"
@@ -340,6 +354,7 @@ file	arch/arm32/vidc/console/dumb.c 		vt
 # Generic MD files
 file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/blockio.S
+file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/disksubr.c		disk
@@ -445,18 +460,10 @@ device  pc: tty, pckbd, i8042
 attach  pc at ofisapc
 file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 
-# ISA DMA controller
-define	isadma
-file	arch/arm32/isa/isadma.c			isadma needs-flag
-
 # cs8900 Crystal Ethernet Controller
 device	cs: ether, ifnet, isadma, arp
 attach	cs at ofisacs
 file	arch/arm32/isa/if_cs_isa.c		cs
-
-# the SoundBlaster DSP, or close likenesses; used by other drivers
-define	sbdsp
-file	dev/isa/sbdsp.c                         sbdsp
 
 # ESS Technology ES1887/ES888, currently based on SoundBlaster code
 device	ess: audio, isadma, sbdsp, mulaw
