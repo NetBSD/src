@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.2 2002/07/05 14:02:31 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.3 2002/07/11 14:42:55 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -17,7 +17,6 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=sh5
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
