@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.19 2001/07/07 15:53:17 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.20 2001/07/18 02:06:44 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -653,24 +653,24 @@ static int
 an_set_nwkey_wep(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 {
 	int i, txkey, anysetkey, needreset, error;
-	struct an_wepkey keys[IEEE80211_WEP_NKID], *key;
+	struct an_wepkey keys[IEEE80211_WEP_NKID];
 
 	error = 0;
 	memset(keys, 0, sizeof(keys));
 	anysetkey = needreset = 0;
 
 	/* load argument and sanity check */
-	for (i = 0, key = keys; i < IEEE80211_WEP_NKID; i++, key++) {
-		key->an_wep_keylen = nwkey->i_key[i].i_keylen;
-		if (key->an_wep_keylen < 0)
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		keys[i].an_wep_keylen = nwkey->i_key[i].i_keylen;
+		if (keys[i].an_wep_keylen < 0)
 			continue;
-		if (key->an_wep_keylen != 0 &&
-		    key->an_wep_keylen < IEEE80211_WEP_KEYLEN)
+		if (keys[i].an_wep_keylen != 0 &&
+		    keys[i].an_wep_keylen < IEEE80211_WEP_KEYLEN)
 			return EINVAL;
-		if (key->an_wep_keylen > sizeof(key->an_wep_key))
+		if (keys[i].an_wep_keylen > sizeof(keys[i].an_wep_key))
 			return EINVAL;
 		if ((error = copyin(nwkey->i_key[i].i_keydat,
-		    key->an_wep_key, key->an_wep_keylen)) != 0)
+		    keys[i].an_wep_key, keys[i].an_wep_keylen)) != 0)
 			return error;
 		anysetkey++;
 	}
@@ -688,10 +688,10 @@ an_set_nwkey_wep(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 	if (!(nwkey->i_wepon & IEEE80211_NWKEY_PERSIST)) {
 		/* set temporary keys */
 		sc->an_tx_key = txkey;
-		for (i = 0, key = keys; i < IEEE80211_WEP_NKID; i++, key++) {
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			if (keys[i].an_wep_keylen < 0)
 				continue;
-			memcpy(&sc->an_wepkeys[i], keys, sizeof(*keys));
+			memcpy(&sc->an_wepkeys[i], &keys[i], sizeof(keys[i]));
 		}
 	} else {
 		/* set persist keys */
