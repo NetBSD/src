@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2000/06/08 17:45:29 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.34 2000/06/19 23:30:35 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -186,6 +186,7 @@ kdb_trap(type, tf)
 	default:
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
+			OF_enter();
 			db_error("Faulted in DDB; continuing...\n");
 			OF_enter();
 			/*NOTREACHED*/
@@ -278,11 +279,17 @@ db_write_bytes(addr, size, data)
 	register char	*data;
 {
 	register char	*dst;
+	extern vaddr_t ktext;
+	extern paddr_t ktextp;
 
 	dst = (char *)addr;
 	while (size-- > 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS))
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
 			*dst = *data;
+		else if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) &&
+			 (dst < (char *)VM_MIN_KERNEL_ADDRESS+0x400000))
+			/* Read Only mapping -- need to do a bypass access */
+			stba(dst - ktext + ktextp, ASI_PHYS_CACHED, *data);
 		else
 			subyte(dst, *data);
 		dst++, data++;

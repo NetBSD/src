@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.14 2000/06/18 07:17:40 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.15 2000/06/19 23:30:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -181,11 +181,8 @@ iommu_init(name, is, tsbsize)
 	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize) + NBPG;
 
 	/*
-	 * Allocate memory for I/O pagetables.
-	 * This takes 64K of contiguous physical memory to map 64M of
-	 * DVMA space (starting at IOMMU_DVMA_BASE).
-	 * The table must be aligned on a (-IOMMU_DVMA_BASE/pagesize)
-	 * boundary (i.e. 64K for 64M of DVMA space).
+	 * Allocate memory for I/O pagetables.  They need to be physically
+	 * contiguous.
 	 */
 
 	size = NBPG<<(is->is_tsbsize);
