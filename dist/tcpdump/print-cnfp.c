@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cnfp.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-cnfp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*	$OpenBSD: print-cnfp.c,v 1.2 1998/06/25 20:26:59 mickey Exp $	*/
 
@@ -34,9 +34,14 @@
 
 /* Cisco NetFlow protocol */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-cnfp.c,v 1.7 2001/02/21 09:05:39 guy Exp";
+#else
+__RCSID("$NetBSD: print-cnfp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

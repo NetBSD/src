@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cdp.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-cdp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,9 +26,14 @@
  *    http://www.cisco.com/univercd/cc/td/doc/product/lan/trsrb/frames.htm
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.8 2001/06/15 20:52:12 fenner Exp";
+#else
+__RCSID("$NetBSD: print-cdp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

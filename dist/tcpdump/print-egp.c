@@ -1,4 +1,4 @@
-/*	$NetBSD: print-egp.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-egp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,9 +20,14 @@
  * Initial contribution from Jeff Honig (jch@MITCHELL.CIT.CORNELL.EDU).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-egp.c,v 1.27 2001/06/15 22:17:31 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-egp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

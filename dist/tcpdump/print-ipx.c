@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipx.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
+/*	$NetBSD: print-ipx.c,v 1.3 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -24,9 +24,14 @@
  * Contributed by Brad Parker (brad@fcr.com).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.30 2001/01/15 03:23:59 guy Exp";
+#else
+__RCSID("$NetBSD: print-ipx.c,v 1.3 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-lwres.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-lwres.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.
@@ -29,9 +29,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.4 2001/02/09 05:16:48 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-lwres.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

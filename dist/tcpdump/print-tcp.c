@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.86 2001/05/09 01:16:57 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-tcp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

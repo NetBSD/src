@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bxxp.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-bxxp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000, Richard Sharpe
@@ -11,9 +11,14 @@
  *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
   "@(#) Header: /tcpdump/master/tcpdump/print-bxxp.c,v 1.4 2001/06/15 07:45:42 itojun Exp";
+#else
+__RCSID("$NetBSD: print-bxxp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tftp.c,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: print-tftp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,9 +23,14 @@
  * Format and print trivial file transfer protocol packets.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.31 1999/11/21 09:37:03 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-tftp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

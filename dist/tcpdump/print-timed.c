@@ -1,4 +1,4 @@
-/*	$NetBSD: print-timed.c,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: print-timed.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-timed.c,v 1.3 2001/05/17 18:33:23 fenner Exp";
+#else
+__RCSID("$NetBSD: print-timed.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

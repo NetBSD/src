@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf.c,v 1.1.1.1 2001/06/25 19:26:37 itojun Exp $	*/
+/*	$NetBSD: print-ospf.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,9 +23,14 @@
  * OSPF support contributed by Jeffrey Honig (jch@mitchell.cit.cornell.edu)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ospf.c,v 1.30 2001/06/15 22:17:34 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ospf.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

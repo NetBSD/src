@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.55 2001/06/15 22:17:32 fenner Exp";
+#else
+__RCSID("$NetBSD: print-icmp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

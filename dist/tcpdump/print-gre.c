@@ -1,4 +1,4 @@
-/*	$NetBSD: print-gre.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-gre.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -24,9 +24,14 @@
  * This code only supports the IP encapsulation thereof.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-gre.c,v 1.13 2001/06/15 22:17:31 fenner Exp";
+#else
+__RCSID("$NetBSD: print-gre.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

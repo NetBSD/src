@@ -1,4 +1,4 @@
-/*	$NetBSD: print-smb.c,v 1.1.1.1 2001/06/25 19:26:39 itojun Exp $	*/
+/*	$NetBSD: print-smb.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
 
 /* 
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -12,9 +12,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/print-smb.c,v 1.13 2001/06/25 18:58:07 itojun Exp";
+#else
+__RCSID("$NetBSD: print-smb.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+#endif
 #endif
 
 #include <stdio.h>

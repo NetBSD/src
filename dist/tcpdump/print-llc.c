@@ -1,4 +1,4 @@
-/*	$NetBSD: print-llc.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
+/*	$NetBSD: print-llc.c,v 1.3 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,9 +24,14 @@
  *	with an awful lot of hacking by Jeffrey Mogul, DECWRL
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.39 2001/06/15 07:59:14 itojun Exp";
+#else
+__RCSID("$NetBSD: print-llc.c,v 1.3 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

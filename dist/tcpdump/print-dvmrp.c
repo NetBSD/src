@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dvmrp.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-dvmrp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-dvmrp.c,v 1.21 2001/05/10 05:30:20 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-dvmrp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sunrpc.c,v 1.1.1.1 2001/06/25 19:26:39 itojun Exp $	*/
+/*	$NetBSD: print-sunrpc.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-sunrpc.c,v 1.39 2000/10/07 05:53:13 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-sunrpc.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

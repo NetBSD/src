@@ -1,4 +1,4 @@
-/*	$NetBSD: print-krb.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-krb.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -23,9 +23,14 @@
  * Initial contribution from John Hawkinson (jhawk@mit.edu).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.15 2000/09/29 04:58:42 guy Exp";
+#else
+__RCSID("$NetBSD: print-krb.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

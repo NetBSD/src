@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_dump.c,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: bpf_dump.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -20,9 +20,14 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/bpf_dump.c,v 1.13 2000/12/09 02:58:45 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: bpf_dump.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

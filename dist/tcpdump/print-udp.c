@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.2 2001/06/25 19:36:38 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-udp.c,v 1.94 2001/06/15 22:17:34 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-udp.c,v 1.3 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cip.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-cip.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Marko Kiiskila carnil@cs.tut.fi 
@@ -22,9 +22,14 @@
  * 
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-cip.c,v 1.13 2001/06/08 04:48:23 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-cip.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

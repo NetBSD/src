@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.1.1.1 2001/06/25 19:26:38 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
 
 /*
  * This code unmangles RX packets.  RX is the mutant form of RPC that AFS
@@ -13,9 +13,14 @@
  *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.20 2001/01/10 08:12:01 fenner Exp";
+#else
+__RCSID("$NetBSD: print-rx.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

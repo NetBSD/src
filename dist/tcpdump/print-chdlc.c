@@ -1,4 +1,4 @@
-/*	$NetBSD: print-chdlc.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-chdlc.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /* maybe it should be merged into print-ppp.c */
 /*
@@ -22,9 +22,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-chdlc.c,v 1.11 2000/10/09 01:53:19 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-chdlc.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

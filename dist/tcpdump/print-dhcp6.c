@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dhcp6.c,v 1.1.1.1 2001/06/25 19:26:34 itojun Exp $	*/
+/*	$NetBSD: print-dhcp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -29,9 +29,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.13 2001/01/28 09:49:49 itojun Exp";
+#else
+__RCSID("$NetBSD: print-dhcp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

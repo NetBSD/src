@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isakmp.c,v 1.1.1.1 2001/06/25 19:26:35 itojun Exp $	*/
+/*	$NetBSD: print-isakmp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,9 +30,14 @@
  *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.28 2001/02/20 18:55:14 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-isakmp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-snmp.c,v 1.1.1.1 2001/06/25 19:26:39 itojun Exp $	*/
+/*	$NetBSD: print-snmp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -45,9 +45,14 @@
  #	@(#)snmp.awk.x	1.1 (LANL) 1/15/90
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.49 2001/06/15 21:06:59 fenner Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-snmp.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

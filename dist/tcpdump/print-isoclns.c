@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isoclns.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-isoclns.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,9 +23,14 @@
  * Original code by Matt Thomas, Digital Equipment Corporation
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-isoclns.c,v 1.22 2000/10/11 04:04:33 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-isoclns.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

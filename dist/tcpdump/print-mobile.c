@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mobile.c,v 1.1.1.1 2001/06/25 19:26:36 itojun Exp $	*/
+/*	$NetBSD: print-mobile.c,v 1.2 2001/06/25 19:59:59 itojun Exp $	*/
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
      "@(#) Header: /tcpdump/master/tcpdump/print-mobile.c,v 1.6 2001/06/15 22:17:33 fenner Exp";
+#else
+__RCSID("$NetBSD: print-mobile.c,v 1.2 2001/06/25 19:59:59 itojun Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
