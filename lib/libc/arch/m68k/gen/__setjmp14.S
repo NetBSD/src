@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.3 1999/10/25 23:48:08 thorpej Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.4 2000/12/02 16:25:39 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.3 1999/10/25 23:48:08 thorpej Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.4 2000/12/02 16:25:39 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,6 +81,7 @@ ENTRY(__setjmp14)
 	jbsr	PIC_PLT(_C_LABEL(__sigprocmask14))
 	addl	#12,%sp
 
+	movl	%sp@(4),%a0	/* get jmp_buf pointer again */
 	lea	%sp@(4),%a1	/* adjust SP since we won't rts */
 	movl	%a1,%a0@(8)	/* save SP */
 	movl	%a6,%a0@(12)	/* save FP */
