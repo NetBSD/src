@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.13 1998/06/30 20:29:39 thorpej Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.14 1998/09/27 18:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.13 1998/06/30 20:29:39 thorpej Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.14 1998/09/27 18:16:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,6 +86,7 @@ _kvm_freevtop(kd)
 		free(kd->vmst);
 }
 
+/*ARGSUSED*/
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
@@ -104,7 +105,7 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	cpu_kcore_hdr_t *cpu_kh;
-	int page_off;
+	u_long page_off;
 	pd_entry_t pde;
 	pt_entry_t pte;
 	u_long pde_pa, pte_pa;
@@ -121,8 +122,8 @@ _kvm_kvatop(kd, va, pa)
 	 * Find and read the page directory entry.
 	 */
 	pde_pa = cpu_kh->ptdpaddr + (pdei(va) * sizeof(pd_entry_t));
-	if (pread(kd->pmfd, &pde, sizeof(pde), _kvm_pa2off(kd, pde_pa)) !=
-	    sizeof(pde)) {
+	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
+	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PDE");
 		goto lose;
 	}
@@ -135,8 +136,8 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 	pte_pa = (pde & PG_FRAME) + (ptei(va) * sizeof(pt_entry_t));
-	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_pa2off(kd, pte_pa)) !=
-	    sizeof(pte)) {
+	if (pread(kd->pmfd, (void *) &pte, sizeof(pte),
+	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
 		goto lose;
 	}
@@ -149,10 +150,10 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 	*pa = (pte & PG_FRAME) + page_off;
-	return (NBPG - page_off);
+	return (int)(NBPG - page_off);
 
  lose:
-	*pa = -1;
+	*pa = (u_long)~0L;
 	return (0);
 }
 
@@ -170,7 +171,7 @@ _kvm_pa2off(kd, pa)
 	int i;
 
 	cpu_kh = kd->cpu_data;
-	ramsegs = (phys_ram_seg_t *)((char *)cpu_kh + ALIGN(sizeof *cpu_kh));
+	ramsegs = (void *)((char *)(void *)cpu_kh + ALIGN(sizeof *cpu_kh));
 
 	off = 0;
 	for (i = 0; i < cpu_kh->nmemsegs; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.61 1998/08/10 02:46:06 perry Exp $	*/
+/*	$NetBSD: kvm.c,v 1.62 1998/09/27 18:15:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.61 1998/08/10 02:46:06 perry Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.62 1998/09/27 18:15:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -625,7 +625,7 @@ int	dumpsize;
 	if (clear_gap(kd, fp, gap) == -1)
 		return (-1);
 
-	return (offset);
+	return (int)offset;
 }
 
 kvm_t *
@@ -713,7 +713,7 @@ kvm_dbopen(kd)
 	kvm_t *kd;
 {
 	DBT rec;
-	int dbversionlen;
+	size_t dbversionlen;
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
@@ -744,7 +744,7 @@ kvm_dbopen(kd)
 		goto close;
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
-	memcpy((char *)&nitem, (char *)rec.data, sizeof(nitem));
+	memcpy(&nitem, rec.data, sizeof(nitem));
 	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) != 
 	    dbversionlen)
 		goto close;
@@ -810,11 +810,9 @@ kvm_nlist(kd, nl)
 		/*
 		 * Avoid alignment issues.
 		 */
-		memcpy((char *)&p->n_type,
-		      (char *)&((struct nlist *)rec.data)->n_type,
+		(void)memcpy(&p->n_type, &((struct nlist *)rec.data)->n_type,
 		      sizeof(p->n_type));
-		memcpy((char *)&p->n_value,
-		      (char *)&((struct nlist *)rec.data)->n_value,
+		(void)memcpy(&p->n_value, &((struct nlist *)rec.data)->n_value,
 		      sizeof(p->n_value));
 	}
 	/*
@@ -845,7 +843,8 @@ kvm_t	*kd;
 
 	errno = 0;
 	val = 0;
-	if (pwrite(kd->pmfd, &val, sizeof(val), _kvm_pa2off(kd, pa)) == -1) {
+	if (pwrite(kd->pmfd, (void *) &val, sizeof(val),
+	    _kvm_pa2off(kd, pa)) == -1) {
 		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
 	}
@@ -892,7 +891,7 @@ kvm_read(kd, kva, buf, len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
 			errno = 0;
-			cc = pread(kd->pmfd, cp, cc, foff);
+			cc = pread(kd->pmfd, cp, (size_t)cc, foff);
 			if (cc < 0) {
 				_kvm_syserr(kd, kd->program, "kvm_read");
 				break;

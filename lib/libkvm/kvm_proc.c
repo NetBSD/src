@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.27 1998/09/09 00:31:25 thorpej Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.28 1998/09/27 18:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.27 1998/09/09 00:31:25 thorpej Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.28 1998/09/27 18:16:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,7 +119,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.27 1998/09/09 00:31:25 thorpej Exp $");
 #include "kvm_private.h"
 
 #define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
+	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 
 char		*_kvm_uread __P((kvm_t *, const struct proc *, u_long, u_long *));
 #if !defined(UVM)
@@ -149,6 +149,7 @@ _kvm_uread(kd, p, va, cnt)
 	u_long va;
 	u_long *cnt;
 {
+	int true = 1;
 	u_long addr, head;
 	u_long offset;
 	struct vm_map_entry vme;
@@ -156,14 +157,14 @@ _kvm_uread(kd, p, va, cnt)
 	struct vm_amap amap;
 	struct vm_anon *anonp, anon;
 	struct vm_page pg;
-	int slot;
+	u_long slot;
 #else
 	struct vm_object vmo;
 	int rv;
 #endif
 
 	if (kd->swapspc == 0) {
-		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->swapspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->swapspc == 0)
 			return (0);
 	}
@@ -175,7 +176,7 @@ _kvm_uread(kd, p, va, cnt)
 	 */
 	head = (u_long)&p->p_vmspace->vm_map.header;
 	addr = head;
-	while (1) {
+	while (true) {
 		if (KREAD(kd, addr, &vme))
 			return (0);
 
@@ -226,12 +227,12 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &pg))
 			return NULL;
 
-		if (pread(kd->pmfd, kd->swapspc, kd->nbpg,
+		if (pread(kd->pmfd, (void *)kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)pg.phys_addr) != kd->nbpg)
 			return NULL;
 	}
 	else {
-		if (pread(kd->swfd, kd->swapspc, kd->nbpg,
+		if (pread(kd->swfd, (void *)kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return NULL;
 	}
@@ -269,7 +270,7 @@ _kvm_uread(kd, p, va, cnt)
 	/* Found the page. */
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
-	return (&kd->swapspc[offset]);
+	return (&kd->swapspc[(size_t)offset]);
 }
 
 #if !defined(UVM)
@@ -443,8 +444,12 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			return (-1);
 		}
 		if (KREAD(kd, (u_long)proc.p_cred, &eproc.e_pcred) == 0)
-			(void)KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
-			      &eproc.e_ucred);
+			if (KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
+			    &eproc.e_ucred)) {
+				_kvm_err(kd, kd->program,
+				    "can't read proc credentials at %x", p);
+				return -1;
+			}
 
 		switch(what) {
 			
@@ -517,7 +522,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			    eproc.e_wmesg, WMESGLEN);
 
 		(void)kvm_read(kd, (u_long)proc.p_vmspace,
-		    (char *)&eproc.e_vm, sizeof(eproc.e_vm));
+		    (void *)&eproc.e_vm, sizeof(eproc.e_vm));
 
 		eproc.e_xsize = eproc.e_xrssize = 0;
 		eproc.e_xccount = eproc.e_xswrss = 0;
@@ -710,8 +715,9 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	int maxcnt;
 {
 	char *np, *cp, *ep, *ap;
-	u_long oaddr = -1;
-	int len, cc;
+	u_long oaddr = (u_long)~0L;
+	u_long len;
+	size_t cc;
 	char **argv;
 
 	/*
@@ -738,18 +744,18 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 			return (0);
 	}
 	if (kd->argspc == 0) {
-		kd->argspc = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->argspc = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->argspc == 0)
 			return (0);
 		kd->arglen = kd->nbpg;
 	}
 	if (kd->argbuf == 0) {
-		kd->argbuf = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->argbuf = (char *)_kvm_malloc(kd, (size_t)kd->nbpg);
 		if (kd->argbuf == 0)
 			return (0);
 	}
 	cc = sizeof(char *) * narg;
-	if (kvm_uread(kd, p, addr, (char *)kd->argv, cc) != cc)
+	if (kvm_uread(kd, p, addr, (void *)kd->argv, cc) != cc)
 		return (0);
 	ap = np = kd->argspc;
 	argv = kd->argv;
@@ -760,16 +766,16 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 	while (argv < kd->argv + narg && *argv != 0) {
 		addr = (u_long)*argv & ~(kd->nbpg - 1);
 		if (addr != oaddr) {
-			if (kvm_uread(kd, p, addr, kd->argbuf, kd->nbpg) !=
-			    kd->nbpg)
+			if (kvm_uread(kd, p, addr, kd->argbuf,
+			    (size_t)kd->nbpg) != kd->nbpg)
 				return (0);
 			oaddr = addr;
 		}
 		addr = (u_long)*argv & (kd->nbpg - 1);
-		cp = kd->argbuf + addr;
-		cc = kd->nbpg - addr;
-		if (maxcnt > 0 && cc > maxcnt - len)
-			cc = maxcnt - len;;
+		cp = kd->argbuf + (size_t)addr;
+		cc = kd->nbpg - (size_t)addr;
+		if (maxcnt > 0 && cc > (size_t)(maxcnt - len))
+			cc = (size_t)(maxcnt - len);
 		ep = memchr(cp, '\0', cc);
 		if (ep != 0)
 			cc = ep - cp + 1;
@@ -780,7 +786,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 
 			kd->arglen *= 2;
 			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
-							  kd->arglen);
+			    (size_t)kd->arglen);
 			if (kd->argspc == 0)
 				return (0);
 			/*
@@ -855,7 +861,7 @@ proc_verify(kd, kernp, p)
 	 * Just read in the whole proc.  It's not that big relative
 	 * to the cost of the read system call.
 	 */
-	if (kvm_read(kd, kernp, (char *)&kernproc, sizeof(kernproc)) != 
+	if (kvm_read(kd, kernp, (void *)&kernproc, sizeof(kernproc)) != 
 	    sizeof(kernproc))
 		return (0);
 	return (p->p_pid == kernproc.p_pid &&
@@ -881,7 +887,7 @@ kvm_doargv(kd, kp, nchr, info)
 	if (p->p_stat == SZOMB)
 		return (0);
 	cnt = kvm_uread(kd, p, kd->usrstack - sizeof(arginfo),
-	    (char *)&arginfo, sizeof(arginfo));
+	    (void *)&arginfo, sizeof(arginfo));
 	if (cnt != sizeof(arginfo))
 		return (0);
 
@@ -934,7 +940,7 @@ kvm_uread(kd, p, uva, buf, len)
 
 	cp = buf;
 	while (len > 0) {
-		int cc;
+		size_t cc;
 		char *dp;
 		u_long cnt;
 
@@ -943,9 +949,8 @@ kvm_uread(kd, p, uva, buf, len)
 			_kvm_err(kd, 0, "invalid address (%x)", uva);
 			return (0);
 		}
-		cc = MIN(cnt, len);
+		cc = (size_t)MIN(cnt, len);
 		memcpy(cp, dp, cc);
-
 		cp += cc;
 		uva += cc;
 		len -= cc;
