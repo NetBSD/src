@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.160 2002/01/09 22:56:22 augustss Exp $
+#	$NetBSD: files.pci,v 1.161 2002/01/30 14:35:44 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -51,6 +51,14 @@ file	dev/pci/twe.c			twe
 
 attach	ld at twe with ld_twe
 file	dev/pci/ld_twe.c		ld_twe
+
+# AMI RAID controllers
+device	amr {unit = -1}
+attach	amr at pci
+file	dev/pci/amr.c			amr
+
+attach	ld at amr with ld_amr
+file	dev/pci/ld_amr.c		ld_amr
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
