@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.54 1999/07/03 17:31:15 sommerfeld Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.55 1999/07/26 11:56:55 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.54 1999/07/03 17:31:15 sommerfeld Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.55 1999/07/26 11:56:55 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,8 +478,12 @@ main(argc, argv)
 		for (p = cmds; p->c_name; p++)
 			if (strcmp(argv[0], p->c_name) == 0)
 				break;
-		if (p->c_name == 0 && setaddr)
+		if (p->c_name == 0 && setaddr) {
+			if (!(flags & IFF_POINTOPOINT)) {
+				errx(1, "Can't set destination address %s\n",
+				     "on non-point-to-point link");
 			p++;	/* got src, do dst */
+		}
 		if (p->c_func) {
 			if (p->c_parameter == NEXTARG) {
 				if (argc < 2)
