@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.5 2001/01/21 04:34:47 itojun Exp $	*/
+/*	$NetBSD: runetable.c,v 1.6 2001/03/26 19:55:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.5 2001/01/21 04:34:47 itojun Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.6 2001/03/26 19:55:42 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -270,7 +270,8 @@ _RuneLocale _DefaultRuneLocale = {
     NULL, 0, 
     (__rune_mbrtowc_t)_none_mbrtowc,
     (__rune_wcrtomb_t)_none_wcrtomb,
-    &_DefaultRuneState, 1
+    &_DefaultRuneState, 1,
+    NULL, "646"
 };
 
 _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
