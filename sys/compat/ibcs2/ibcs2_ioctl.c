@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.4 1994/10/26 02:52:57 cgd Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.5 1994/10/30 21:44:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Scott Bartram
@@ -292,7 +292,7 @@ stio2stios(t, ts)
 
 struct ibcs2_ioctl_args {
 	int	fd;
-	int	cmd;
+	u_long	cmd;
 	caddr_t	data;
 };
 
@@ -448,7 +448,7 @@ ibcs2_ioctl(p, uap, retval)
 		return ENOSYS;
 
 	default:
-		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%x ",
+		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%lx ",
 			 p->p_pid, uap->cmd));
 		return ENOSYS;
 	}

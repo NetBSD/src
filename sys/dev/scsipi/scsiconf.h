@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.12 1994/10/20 20:31:29 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.13 1994/10/30 21:49:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -263,7 +263,7 @@ int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 datalen, int retries,
 			int timeout, struct buf *bp,
 			int flags));
-int scsi_do_ioctl __P((struct scsi_link *, dev_t, int, caddr_t, int));
+int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t, int));
 
 void show_scsi_xs __P((struct scsi_xfer *));
 void show_scsi_cmd __P((struct scsi_xfer *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_sup.c,v 1.6 1994/10/27 04:18:58 cgd Exp $	*/
+/*	$NetBSD: pcvt_sup.c,v 1.7 1994/10/30 21:44:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -141,7 +141,7 @@ static u_short getrand ( void );
  *	execute vga ioctls
  *---------------------------------------------------------------------------*/
 int
-vgaioctl(Dev_t dev, int cmd, caddr_t data, int flag)
+vgaioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 {
 	if(minor(dev) >= PCVT_NSCREENS)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.39 1994/10/20 20:31:23 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.40 1994/10/30 21:49:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -523,7 +523,7 @@ cdstart(unit)
 int 
 cdioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

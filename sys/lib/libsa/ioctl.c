@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.c,v 1.3 1994/10/26 05:44:49 cgd Exp $	*/
+/*	$NetBSD: ioctl.c,v 1.4 1994/10/30 21:48:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -69,7 +69,7 @@
 int
 ioctl(fd, cmd, arg)
 	int fd;
-	int cmd;
+	u_long cmd;
 	char *arg;
 {
 	register struct open_file *f = &files[fd];

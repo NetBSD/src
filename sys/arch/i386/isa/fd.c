@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 1994/10/27 04:17:13 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.57 1994/10/30 21:43:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -1145,7 +1145,7 @@ fddump()
 int
 fdioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {

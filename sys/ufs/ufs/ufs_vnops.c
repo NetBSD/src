@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.4 1994/10/20 04:21:25 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.5 1994/10/30 21:50:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -552,7 +552,7 @@ int
 ufs_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.11 1994/06/29 06:45:30 cgd Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.12 1994/10/30 21:49:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -203,7 +203,8 @@ extern	char netio[], netcon[], netcls[];
  */
 int	soo_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	soo_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	soo_ioctl __P((struct file *fp, int com, caddr_t data, struct proc *p));
+int	soo_ioctl __P((struct file *fp, u_long com, caddr_t data,
+	    struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.4 1994/10/27 04:17:25 cgd Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.5 1994/10/30 21:43:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -120,7 +120,7 @@ struct cfdriver egcd = {
 
 int egintr __P((struct eg_softc *));
 static void eginit __P((struct eg_softc *));
-static int egioctl __P((struct ifnet *, int, caddr_t));
+static int egioctl __P((struct ifnet *, u_long, caddr_t));
 static int egrecv __P((struct eg_softc *));
 static int egstart __P((struct ifnet *));
 static int egwatchdog __P((int));
@@ -728,7 +728,7 @@ egget(buf, totlen, ifp)
 static int
 egioctl(ifp, command, data)
 	register struct ifnet *ifp;
-	int     command;
+	u_long command;
 	caddr_t data;
 {
 	struct eg_softc *sc = egcd.cd_devs[ifp->if_unit];

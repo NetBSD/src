@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.12 1994/08/24 16:49:16 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.13 1994/10/30 21:47:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -374,7 +374,7 @@ vnioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (vndebug & VDB_FOLLOW)
-		printf("vnioctl(%x, %x, %x, %x, %x): unit %d\n",
+		printf("vnioctl(%x, %lx, %x, %x, %x): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);

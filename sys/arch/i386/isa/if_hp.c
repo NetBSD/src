@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.17 1994/10/27 04:17:34 cgd Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.18 1994/10/30 21:43:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991 William F. Jolitz.
@@ -918,7 +918,7 @@ hpget(buf, totlen, off0, ifp)
  */
 hpioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int     cmd;
+	u_long	cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *) data;

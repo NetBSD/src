@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.16 1994/10/20 04:23:05 cgd Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.17 1994/10/30 21:47:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -365,14 +365,15 @@ ioctl(p, uap, retval)
 	struct proc *p;
 	register struct ioctl_args /* {
 		syscallarg(int) fd;
-		syscallarg(int) com;
+		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap;
 	register_t *retval;
 {
 	register struct file *fp;
 	register struct filedesc *fdp;
-	register int com, error;
+	register u_long com;
+	register int error;
 	register u_int size;
 	caddr_t data, memp;
 	int tmp;
@@ -473,7 +474,7 @@ ioctl(p, uap, retval)
 			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
 			break;
 		}
-		error = (*fp->f_ops->fo_ioctl)(fp, (int)TIOCGPGRP, data, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
 		*(int *)data = -*(int *)data;
 		break;
 

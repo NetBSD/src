@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.54 1994/10/24 09:09:06 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.55 1994/10/30 21:47:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -620,7 +620,8 @@ ttyoutput(c, tp)
 int
 ttioctl(tp, cmd, data, flag, p)
 	register struct tty *tp;
-	int cmd, flag;
+	u_long cmd;
+	int flag;
 	void *data;
 	struct proc *p;
 {

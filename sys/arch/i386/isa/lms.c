@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.14 1994/10/27 04:17:53 cgd Exp $	*/
+/*	$NetBSD: lms.c,v 1.15 1994/10/30 21:44:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -222,7 +222,7 @@ lmsread(dev, uio, flag)
 int
 lmsioctl(dev, cmd, addr, flag)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 {
