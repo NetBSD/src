@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1997/01/13 23:34:04 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1997/01/13 23:46:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,6 +137,8 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 dev_decl(filedesc,open);
+#include "ipfilter.h"
+cdev_decl(ipl);
 
 struct cdevsw	cdevsw[] =
 {
