@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1995/06/28 02:45:04 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1995/06/28 08:27:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -850,4 +850,553 @@ sw1:
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
 	 */
-	ldq	t2, P_VMSPACE(t4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
+	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
+	ldq	t3, Lev1map			/* and store pte into Lev1map */
+	stq	t2, USTP_OFFSET(t3)
+	mov	t5, a0				/* swap the context */
+	call_pal PAL_OSF1_swpctx
+	CONST(-1, a0)				/* & invalidate old TLB ents */
+	call_pal PAL_OSF1_tbi
+
+	/*
+	 * Now running on the new u struct.
+	 * Restore registers and return.
+	 */
+	ldq	t0, curproc
+	ldq	t0, P_ADDR(t0)
+	/* NOTE: ksp is restored by the swpctx */
+	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
+	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
+	ldq	s2, U_PCB_CONTEXT+(2 * 8)(t0)
+	ldq	s3, U_PCB_CONTEXT+(3 * 8)(t0)
+	ldq	s4, U_PCB_CONTEXT+(4 * 8)(t0)
+	ldq	s5, U_PCB_CONTEXT+(5 * 8)(t0)
+	ldq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
+	ldq	ra, U_PCB_CONTEXT+(7 * 8)(t0)		/* restore ra */
+	ldq	a0, U_PCB_CONTEXT+(8 * 8)(t0)		/* restore ipl */
+	and	a0, PSL_IPL, a0
+	call_pal PAL_OSF1_swpipl
+
+	CONST(1, v0)				/* possible ret to savectx() */
+	RET
+	END(cpu_switch)
+
+/*
+ * proc_trampoline()
+ *
+ * Arrange for a function to be invoked neatly, after a cpu_switch().
+ *
+ * Invokes the function specified by the s0 register with the return
+ * address specified by the s1 register and with one argument, a
+ * pointer to the executing process's proc structure.
+ */
+LEAF(proc_trampoline, 0)
+	mov	s0, pv
+	mov	s1, ra
+	ldq	a0, curproc
+	jmp	zero, (pv)
+	END(proc_trampoline)
+
+/*
+ * switch_exit(struct proc *p)
+ * Make a the named process exit.  Partially switch to proc0, unmap
+ * the old proc's user struct, and jump into the middle of cpu_switch
+ * to switch into a few process.  MUST BE CALLED AT SPLHIGH.
+ */
+LEAF(switch_exit, 1)
+	SETGP(pv)
+
+	/* save the exiting proc pointer */
+	mov	a0, s0
+	
+	/* Switch to proc0. */
+	lda	t4, proc0			/* t4 = &proc0 */
+	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
+	stq	t5, curpcb			/* and store it in curpcb */
+	
+	/*
+	 * Do the context swap, and invalidate old TLB entries (XXX).
+	 * XXX should do the ASN thing, and therefore not have to invalidate.
+	 */
+	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
+	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
+	ldq	t3, Lev1map			/* and store pte into Lev1map */
+	stq	t2, USTP_OFFSET(t3)
+	mov	t5, a0				/* swap the context */
+	call_pal PAL_OSF1_swpctx
+	CONST(-1, a0)				/* & invalidate old TLB ents */
+	call_pal PAL_OSF1_tbi
+
+	/*
+	 * Now running as proc0, except for the value of 'curproc' and
+	 * the saved regs.
+	 */
+
+	/* blow away the old user struct */
+	ldq	a0, kernel_map
+	ldq	a1, P_ADDR(s0)
+	CONST(UPAGES*NBPG, a2)
+	CALL(kmem_free)
+
+	/* and jump into the middle of cpu_switch. */
+	JMP(sw1)
+	END(switch_exit)
+
+/**************************************************************************/
+
+/*
+ * Copy a null-terminated string within the kernel's address space.
+ * If lenp is not NULL, store the number of chars copied in *lenp
+ *
+ * int copystr(char *from, char *to, size_t len, size_t *lenp);
+ */
+LEAF(copystr, 4)
+	SETGP(pv)
+	mov	a2, t0			/* t0 = i = len */
+	beq	a2, 2f			/* if (len == 0), bail out */
+
+1:
+	ldq_u	t1, 0(a0)		/* t1 = *from */
+	extbl	t1, a0, t1
+	ldq_u	t3, 0(a1)		/* set up t2 with quad around *to */
+	insbl	t1, a1, t2
+	mskbl	t3, a1, t3
+	or	t3, t2, t3		/* add *from to quad around *to */
+	stq_u	t3, 0(a1)		/* write out that quad */
+
+	subl	a2, 1, a2		/* len-- */
+	beq	t1, 2f			/* if (*from == 0), bail out */
+	addq	a1, 1, a1		/* to++ */
+	addq	a0, 1, a0		/* from++ */
+	bne	a2, 1b			/* if (len != 0) copy more */
+
+2:
+	beq	a3, 3f			/* if (lenp != NULL) */
+	subl	t0, a2, t0		/* *lenp = (i - len) */
+	stq	t0, 0(a3)
+3:
+	beq	t1, 4f			/* *from == '\0'; leave quietly */
+
+	CONST(ENAMETOOLONG, v0)		/* *from != '\0'; error. */
+	RET
+
+4:
+	mov	zero, v0		/* return 0. */
+	RET
+	END(copystr)
+
+NESTED(copyinstr, 4, 16, ra, 0, 0)
+	SETGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	v0, U_PCB_ONFAULT(at_reg)
+	.set at
+	CALL(copystr)				/* do the copy.		     */
+	.set noat
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+	END(copyinstr)
+
+NESTED(copyoutstr, 4, 16, ra, 0, 0)
+	SETGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
+	cmpult	a1, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	v0, U_PCB_ONFAULT(at_reg)
+	.set at
+	CALL(copystr)				/* do the copy.		     */
+	.set noat
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+	END(copyoutstr)
+
+/*
+ * Copy a bytes within the kernel's address space.
+ *
+ * int bcopy(char *from, char *to, u_int len);
+ */
+LEAF(bcopy, 3)
+	SETGP(pv)
+	mov	a2, t0			/* t0 = i = len */
+	beq	a2, 2f			/* if (len == 0), bail out */
+
+1:
+	ldq_u	t1, 0(a0)		/* t1 = *from */
+	extbl	t1, a0, t1
+	ldq_u	t3, 0(a1)		/* set up t2 with quad around *to */
+	insbl	t1, a1, t2
+	mskbl	t3, a1, t3
+	or	t3, t2, t3		/* add *from to quad around *to */
+	stq_u	t3, 0(a1)		/* write out that quad */
+
+	subl	a2, 1, a2		/* len-- */
+	addq	a1, 1, a1		/* to++ */
+	addq	a0, 1, a0		/* from++ */
+	bne	a2, 1b			/* if (len != 0) copy more */
+
+2:
+	mov	zero, v0		/* return 0. */
+	RET
+	END(bcopy)
+
+NESTED(copyin, 3, 16, ra, 0, 0)
+	SETGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	v0, U_PCB_ONFAULT(at_reg)
+	.set at
+	CALL(bcopy)				/* do the copy.		     */
+	.set noat
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+	END(copyin)
+
+NESTED(copyout, 3, 16, ra, 0, 0)
+	SETGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
+	cmpult	a1, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr			/* if it's not, error out.   */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	v0, U_PCB_ONFAULT(at_reg)
+	.set at
+	CALL(bcopy)				/* do the copy.		     */
+	.set noat
+	ldq	at_reg, curproc			/* kill the fault handler.   */
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+	END(copyout)
+
+LEAF(copyerr, 0)
+	SETGP(pv)
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	CONST(EFAULT, v0)			/* return EFAULT.	     */
+	RET
+END(copyerr)
+
+/**************************************************************************/
+
+/*
+ * {fu,su},{ibyte,isword,iword}, fetch or store a byte, short or word to
+ * user text space.
+ * {fu,su},{byte,sword,word}, fetch or store a byte, short or word to
+ * user data space.
+ */
+#ifdef notdef
+LEAF(fuword, 1)
+XLEAF(fuiword, 1)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	ldq	v0, 0(a0)
+	zap	v0, 0xf0, v0
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	RET
+	END(fuword)
+
+LEAF(fusword, 1)
+XLEAF(fuisword, 1)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX FETCH IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	RET
+	END(fusword)
+
+LEAF(fubyte, 1)
+XLEAF(fuibyte, 1)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX FETCH IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	RET
+	END(fubyte)
+#endif /* notdef */
+
+LEAF(suword, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	stq	a1, 0(a0)			/* do the wtore. */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	mov	zero, v0
+	RET
+	END(suword)
+
+#ifdef notdef
+LEAF(suiword, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX STORE IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	call_pal PAL_OSF1_imb			/* sync instruction stream */
+	mov	zero, v0
+	RET
+	END(suiword)
+
+LEAF(susword, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX STORE IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	mov	zero, v0
+	RET
+	END(susword)
+
+LEAF(suisword, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX STORE IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	call_pal PAL_OSF1_imb			/* sync instruction stream */
+	mov	zero, v0
+	RET
+	END(suisword)
+#endif /* notdef */
+
+LEAF(subyte, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	zap	a1, 0xfe, a1			/* kill arg's high bytes */
+	insbl	a1, a0, a1			/* move it to the right byte */
+	ldq_u	t0, 0(a0)			/* load quad around byte */
+	mskbl	t0, a0, t0			/* kill the target byte */
+	or	t0, a1, a1			/* put the result together */
+	stq_u	a1, 0(a0)			/* and store it. */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	mov	zero, v0
+	RET
+	END(subyte)
+
+LEAF(suibyte, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswberr			/* if it's not, error out. */
+	lda	t0, fswberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	zap	a1, 0xfe, a1			/* kill arg's high bytes */
+	insbl	a1, a0, a1			/* move it to the right byte */
+	ldq_u	t0, 0(a0)			/* load quad around byte */
+	mskbl	t0, a0, t0			/* kill the target byte */
+	or	t0, a1, a1			/* put the result together */
+	stq_u	a1, 0(a0)			/* and store it. */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	call_pal PAL_OSF1_imb			/* sync instruction stream */
+	mov	zero, v0
+	RET
+	END(suibyte)
+
+LEAF(fswberr, 0)
+	SETGP(pv)
+	CONST(-1, v0)
+	RET
+	END(fswberr)
+
+/**************************************************************************/
+
+#ifdef notdef
+/*
+ * fuswintr and suswintr are just like fusword and susword except that if
+ * the page is not in memory or would cause a trap, then we return an error.
+ * The important thing is to prevent sleep() and switch().
+ */
+
+LEAF(fuswintr, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswintrberr			/* if it's not, error out. */
+	lda	t0, fswintrberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX FETCH IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	RET
+	END(fuswintr)
+
+LEAF(suswintr, 2)
+	SETGP(pv)
+	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	cmpult	a0, t0, t1			/* is in user space. */
+	beq	t1, fswintrberr			/* if it's not, error out. */
+	lda	t0, fswintrberr
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	t0, U_PCB_ONFAULT(at_reg)
+	.set at
+	/* XXX STORE IT */
+	.set noat
+	ldq	at_reg, curproc
+	ldq	at_reg, P_ADDR(at_reg)
+	stq	zero, U_PCB_ONFAULT(at_reg)
+	.set at
+	mov	zero, v0
+	RET
+	END(suswintr)
+#endif
+
+LEAF(fswintrberr, 0)
+XLEAF(fuswintr, 2)				/* XXX what is a 'word'? */
+XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
+	SETGP(pv)
+	CONST(-1, v0)
+	RET
+	END(fswberr)
+
+/**************************************************************************/
