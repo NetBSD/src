@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: amq.c,v 1.1 1993/11/27 21:18:12 mycroft Exp $
+ * $Id: amq.c,v 1.2 1993/12/07 21:44:57 mycroft Exp $
  *
  */
 
@@ -54,7 +54,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.1 1993/11/27 21:18:12 mycroft Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.2 1993/12/07 21:44:57 mycroft Exp $";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #endif /* not lint */
 
@@ -211,8 +211,6 @@ int *twid;
 						mi->mi_up > 0 ? "up" :
 						mi->mi_up < 0 ? "starting" : "down");
 			if (mi->mi_error > 0) {
-				extern char *sys_errlist[];
-				extern int sys_nerr;
 				if (mi->mi_error < sys_nerr)
 					printf(" (%s)", sys_errlist[mi->mi_error]);
 				else
