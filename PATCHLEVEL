@@ -2,3 +2,24 @@ This file describes official patches for the NetBSD 1.2 release.
 
 Mondo patch 1:
 
+[ kernel/alpha ] Fix several SCSI protocol errors in the "esp" driver.
+
+[ kernel/sparc ] Fix several SCSI protocol errors in the "esp" driver.
+
+[ kernel/netinet ] Fix handling of long IP packets; no longer succeptible
+to the "Windows 95 death ping" bug.
+
+[ netstat(1) ] Display the `toolong' IP stat count, corresponding to
+netinet change above.
+
+[ kernel/scsi ] For ioctl commands which may change the device's state,
+ensure the caller has the device open for writing (security precaution).
+
+[ lpd(8) ] Fix some errors in the lpd(8) manual page.
+
+[ eeprom(1) ] Discard setgid privileges if we don't need them.
+
+[ kernel/hp300 ] Make sure clock interrupts are disabled at the
+end of the delay calibration routine.  Fixes a bug where the kernel
+would get a bad pointer reference and crash very early in kernels
+without DDB.
