@@ -1,9 +1,14 @@
 #
-#	$NetBSD: ttys,v 1.3 2000/08/12 13:43:49 mason Exp $
+#	$NetBSD: ttys,v 1.4 2001/05/01 08:56:31 shin Exp $
 #
 # name	getty				type	status		comments
-#
-console	"/usr/libexec/getty std.9600"	vt100	on secure
+
+# serial port
+console	"/usr/libexec/getty std.9600"	vt100	off secure
+
+# Workstation console (framebuffer) ttys
+ttyE0	"/usr/libexec/getty std.9600"	vt100	on secure
+
 #
 #  pseudo-terminals
 #
