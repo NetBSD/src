@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 1997/01/31 22:59:19 mhitch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 1997/04/09 19:34:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,8 +226,6 @@ int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
 void	bootsync __P((void));
 void	dumpconf __P((void));
-struct frame;
-void	regdump __P((struct frame *, int));
 
 /*
  * Prototypes from sys_machdep.c:
