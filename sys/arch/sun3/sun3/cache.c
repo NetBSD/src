@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.10 1998/02/05 04:57:27 gwr Exp $	*/
+/*	$NetBSD: cache.c,v 1.11 2000/06/26 14:21:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <sys/queue.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.1 2000/06/09 05:14:44 soda Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.2 2000/06/26 14:20:32 mrg Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -51,8 +51,7 @@
 #include <sys/extent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <mips/cpuregs.h>

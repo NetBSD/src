@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.10 2000/01/11 06:57:50 chs Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.11 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
@@ -40,6 +40,12 @@
 /*
  * uvm_fault_i.h: fault inline functions
  */
+static boolean_t uvmfault_check_intrsafe __P((struct uvm_faultinfo *));
+static boolean_t uvmfault_lookup __P((struct uvm_faultinfo *, boolean_t));
+static boolean_t uvmfault_relock __P((struct uvm_faultinfo *));
+static void uvmfault_unlockall __P((struct uvm_faultinfo *, struct vm_amap *,
+			            struct uvm_object *, struct vm_anon *));
+static void uvmfault_unlockmaps __P((struct uvm_faultinfo *, boolean_t));
 
 /*
  * uvmfault_unlockmaps: unlock the maps

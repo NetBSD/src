@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104 2000/06/05 20:38:25 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.105 2000/06/26 14:20:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,9 +59,7 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.27 2000/06/05 15:58:43 chs Exp $	*/
+/*	$NetBSD: xd.c,v 1.28 2000/06/26 14:21:13 mrg Exp $	*/
 
 /*
  *
@@ -74,7 +74,6 @@
 #include <sys/conf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2000/06/17 07:29:06 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2000/06/26 14:20:32 mrg Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <ufs/mfs/mfs_extern.h>
 #endif
 
-#include <vm/vm_kern.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.36 2000/04/24 17:12:02 thorpej Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.37 2000/06/26 14:21:20 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -108,7 +108,7 @@
  */
 
 #include <uvm/uvm_extern.h>
-#include <vm/pglist.h>
+#include <uvm/uvm_pglist.h>
 
 struct vm_page {
   TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.20 2000/03/30 12:45:28 augustss Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.21 2000/06/26 14:21:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -72,8 +72,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #if defined(__FreeBSD__)
 #include <netinet/if_ether.h>

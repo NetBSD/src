@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.26 1998/10/02 00:20:52 fvdl Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.27 2000/06/26 14:21:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36 2000/06/04 19:14:47 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.37 2000/06/26 14:20:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@
 #include <sys/lock.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>

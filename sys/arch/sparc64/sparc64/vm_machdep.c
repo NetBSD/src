@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2000/05/28 05:49:04 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.28 2000/06/26 14:21:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -60,7 +60,8 @@
 #include <sys/map.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.23 2000/06/26 04:55:32 simonb Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.24 2000/06/26 14:20:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -59,7 +59,6 @@
 #include <sys/syslog.h>
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

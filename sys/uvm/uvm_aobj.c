@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.31 2000/05/19 04:34:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.32 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -54,8 +54,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 

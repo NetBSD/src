@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.25 2000/06/25 13:26:21 mrg Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.26 2000/06/26 14:21:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,8 +53,7 @@
 #include <sys/dirent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_object.h>
-#include <vm/vm_pager.h>
+
 #if defined(__FreeBSD__)
 #include <vm/vnode_pager.h>
 #endif

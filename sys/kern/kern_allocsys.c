@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.10 2000/03/24 11:57:15 enami Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.11 2000/06/26 14:21:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 /*
  * Declare these as initialized data so we can patch them.
