@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.1 2003/03/20 17:25:12 drochner Exp $
+.\"	$NetBSD: pxeboot.8,v 1.2 2003/03/21 10:05:58 wiz Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -48,13 +48,14 @@ program using TFTP.
 The
 .Nx
 .Nm
-program takes control. An interactive mode is entered if the
+program takes control.
+An interactive mode is entered if the
 user presses a key within five seconds.
 After this time or after the user's
 .Ic boot
 command, another BOOTP/DHCP request is issued and the kernel
-is loaded as specified in the BOOTP/DHCP reply. To read the
-kernel file, the NFS (v2) or TFTP protocol can be used.
+is loaded as specified in the BOOTP/DHCP reply.
+To read the kernel file, the NFS (v2) or TFTP protocols can be used.
 .El
 .Pp
 The BOOTP/DHCP request issued by the
@@ -101,8 +102,8 @@ and
 .It Swap server
 can be used to override the
 .Dq server IP address
-if NFS is used to access the kernel. This matches the behaviour
-of the
+if NFS is used to access the kernel.
+This matches the behaviour of the
 .Nx
 kernel to access its root file system on NFS.
 This way, different TFTP and NFS servers can be communicated to
@@ -127,7 +128,8 @@ The commands accepted in interactive mode are:
 .Op Fl adqsv
 .Xc
 Boot
-.Nx . See
+.Nx .
+See
 .Cm boot
 in
 .Xr boot 8
