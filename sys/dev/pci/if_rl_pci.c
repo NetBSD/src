@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.1 2000/04/10 07:42:56 haya Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.2 2000/04/19 08:44:32 haya Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -174,7 +174,7 @@ const struct rl_type *rl_pci_lookup
 int rl_pci_match	__P((struct device *, struct cfdata *, void *));
 void rl_pci_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach rl_pci_ca = {
+struct cfattach rtk_pci_ca = {
 	sizeof(struct rl_pci_softc), rl_pci_match, rl_pci_attach,
 };
 

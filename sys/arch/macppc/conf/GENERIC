@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:32 itojun Exp $
+#	$NetBSD: GENERIC,v 1.62 2000/04/19 08:44:34 haya Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -194,6 +194,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
+rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.326 2000/04/19 06:50:31 itojun Exp $
+#	$NetBSD: GENERIC,v 1.327 2000/04/19 08:44:33 haya Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.326 $"
+#ident 		"GENERIC-$Revision: 1.327 $"
 
 maxusers	32		# estimated number of users
 
@@ -514,7 +514,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rl*	at pci? dev ? function ?	# Realtek 8129/8139
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -574,7 +574,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
-#rl*	at cardbus? dev ? function ?	# Realtek 8129/8139
+#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
