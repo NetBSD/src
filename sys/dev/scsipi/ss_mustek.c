@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.2 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.3 1996/03/30 21:47:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -101,19 +101,23 @@ mustek_attach(ss, sa)
 	struct ss_softc *ss;
 	struct scsibus_attach_args *sa;
 {
+#ifdef SCSIDEBUG
 	struct scsi_link *sc_link = sa->sa_sc_link;
+#endif
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
+	printf("\n%s: ", ss->sc_dev.dv_xname);
+
 	/* first, check the model which determines resolutions */
 	if (!bcmp(sa->sa_inqbuf->product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
-		printf(": Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
+		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
-		printf(": Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
+		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: scanner_type = %d\n",
@@ -252,7 +256,9 @@ mustek_minphys(ss, bp)
 	struct ss_softc *ss;
 	struct buf *bp;
 {
+#ifdef SCSIDEBUG
 	struct scsi_link *sc_link = ss->sc_link;
+#endif
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: before: %d\n",
 	    bp->b_bcount));
@@ -527,18 +533,18 @@ mustek_get_status(ss, timeout, update)
 		bytes_per_line = _2ltol(data.bytes_per_line);
 		lines = _3ltol(data.lines);
 		if (lines != ss->sio.scan_lines) {
-			printf("mustek: lines actual(%d) != computed(%d)\n",
+			printf("mustek: lines actual(%d) != computed(%ld)\n",
 			    lines, ss->sio.scan_lines);
 			return (EIO);
 		}
 		if (bytes_per_line * lines != ss->sio.scan_window_size) {
-			printf("mustek: win-size actual(%d) != computed(%d)\n",
+			printf("mustek: win-size actual(%d) != computed(%ld)\n",
 			    bytes_per_line * lines, ss->sio.scan_window_size);
 		    return (EIO);
 		}
 
 		SC_DEBUG(sc_link, SDEV_DB1,
-		    ("mustek_get_size: bpl=%d, lines=%d\n",
+		    ("mustek_get_size: bpl=%ld, lines=%ld\n",
 		    (ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8,
 		    ss->sio.scan_lines));
 		SC_DEBUG(sc_link, SDEV_DB1, ("window size = %d\n",
