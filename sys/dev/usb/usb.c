@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.3 1998/08/01 18:16:20 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.4 1998/09/21 20:47:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,11 +115,12 @@ usb_attach(parent, self, aux)
 	usbd_device_handle dev;
 	usbd_status r;
 	
+	printf("\n");
+
 	DPRINTF(("usbd_attach\n"));
+	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
-
-	printf("\n");
 	sc->sc_running = 1;
 	sc->sc_bus->use_polling = 1;
 	sc->sc_port.power = USB_MAX_POWER;
