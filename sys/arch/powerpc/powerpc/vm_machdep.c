@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1998/09/09 11:17:30 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 1998/11/11 06:43:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,8 +62,16 @@ cpu_fork(p1, p2)
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
 	extern void fork_trampoline __P((void));
-	extern void child_return __P((struct proc *));
+	extern void child_return __P((void *));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
+
+#ifdef DIAGNOSTIC
+	/*
+	 * if p1 != curproc && p1 == &proc, we're creating a kernel thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 
 	if (p1 == fpuproc)
 		save_fpu(p1);
@@ -110,14 +118,15 @@ cpu_fork(p1, p2)
  * Set initial pc of process forked by above.
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc)(struct proc *);
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
 	struct callframe *cf = (struct callframe *)sf->sp;
 	
-	cf->r30 = (int)p;
+	cf->r30 = (int)arg;
 	cf->r31 = (int)pc;
 	cf++->lr = (int)pc;
 }

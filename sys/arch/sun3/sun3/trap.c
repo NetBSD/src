@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 1998/10/01 02:53:55 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 1998/11/11 06:43:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -752,9 +752,10 @@ syscall(code, tf)
  * and do normal return-to-user-mode stuff.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	struct trapframe *tf;
 
 	tf = (struct trapframe *)p->p_md.md_regs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 1998/09/09 11:17:33 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.42 1998/11/11 06:43:52 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -101,6 +101,14 @@ cpu_fork(p1, p2)
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
 
+#ifdef DIAGNOSTIC
+	/*
+	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
 	opmap = p1->p_vmspace->vm_map.pmap;
@@ -142,9 +150,10 @@ cpu_fork(p1, p2)
  * user mode.
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *nyproc;
 	struct {
@@ -160,7 +169,7 @@ cpu_set_kpc(p, pc)
 	kc->cf.ca_maskpsw = 0x20000000;
 	kc->cf.ca_pc = (unsigned)&sret;
 	kc->cf.ca_argno = 1;
-	kc->cf.ca_arg1 = (unsigned)p;
+	kc->cf.ca_arg1 = (unsigned)arg;
 	kc->tf.r11 = boothowto; /* If we have old init */
 	kc->tf.psl = 0x3c00000;
 

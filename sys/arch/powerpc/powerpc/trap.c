@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1998/08/31 14:43:41 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 1998/11/11 06:43:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -363,9 +363,10 @@ brain_damage:
 }
 
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	struct trapframe *tf = trapframe(p);
 
 	tf->fixreg[FIRSTARG] = 0;
