@@ -2946,6 +2946,12 @@ start_objects (method_type)
 					NULL_TREE),
 		  NULL_TREE, 0);
 
+#if defined(ASM_OUTPUT_CONSTRUCTOR) && defined(ASM_OUTPUT_DESTRUCTOR)
+  /* It can be a static function as long as collect2 does not have
+     to scan the object file to find its ctor/dtor routine.  */
+  TREE_PUBLIC (current_function_decl) = 0;
+#endif
+
   store_parm_decls ();
   pushlevel (0);
   clear_last_expr ();
