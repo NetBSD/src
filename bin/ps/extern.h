@@ -82,5 +82,4 @@ void	 uname __P((KINFO *, VARENT *));
 void	 uvar __P((KINFO *, VARENT *));
 void	 vsize __P((KINFO *, VARENT *));
 void	 wchan __P((KINFO *, VARENT *));
-char	*devname __P((dev_t, int));
 __END_DECLS
