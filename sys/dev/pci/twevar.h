@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.11 2002/05/24 15:58:06 christos Exp $	*/
+/*	$NetBSD: twevar.h,v 1.12 2002/05/24 18:10:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -105,5 +105,18 @@ int	twe_ccb_map(struct twe_softc *, struct twe_ccb *);
 int	twe_ccb_poll(struct twe_softc *, struct twe_ccb *, int);
 int	twe_ccb_submit(struct twe_softc *, struct twe_ccb *);
 void	twe_ccb_unmap(struct twe_softc *, struct twe_ccb *);
+
+static __inline__ size_t twe_get_maxsegs(void) {
+	size_t max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
+#ifdef TWE_SG_SIZE
+	if (TWE_SG_SIZE < max_segs)
+	    max_segs = TWE_SG_SIZE;
+#endif
+	return max_segs;
+}
+
+static __inline__ size_t twe_get_maxxfer(size_t maxsegs) {
+	return (maxsegs - 1) * PAGE_SIZE;
+}
 
 #endif	/* !_PCI_TWEVAR_H_ */
