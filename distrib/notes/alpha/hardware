@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.12 2002/04/23 19:48:41 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.13 2002/06/29 09:33:10 lukem Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -13,7 +13,8 @@ console can be distinguished from the ARC console (which is used to
 boot
 .Tn "Windows NT" )
 by the fact that it has a command line interface,
-rather than a menu-driven interface. The SRM prompt is
+rather than a menu-driven interface.
+The SRM prompt is
 .Sq Li \*>\*>\*> .
 .Pp
 Some platforms have both the SRM console and
@@ -44,20 +45,22 @@ Because
 .Nx
 has an extremely machine-independent device driver
 system, many device drivers are the same as used in other ports that
-use the same bus. For example, the
+use the same bus.
+For example, the
 .Em de
 network card driver is shared
-by the i386 and \*M ports. Some drivers on inspection appear as if
-they will work on the \*M but have not been tested because that
-hardware was not available to
+by the i386 and \*M ports.
+Some drivers on inspection appear as if they will work on the
+\*M but have not been tested because that hardware was not available to
 .Nx
 testers; these are marked as
 .Em UNTESTED
-below. If you have one of these devices, and it does work,
+below.
+If you have one of these devices, and it does work,
 please get in touch with
 .Mt port-\*M-maintainer@netbsd.org
-and let us know that it works. If it doesn't work, do the same thing and we
-can probably fix it pretty easily.
+and let us know that it works.
+If it doesn't work, do the same thing and we can probably fix it pretty easily.
 .
 .Ss2 Supported PCI bus devices
 .(bullet -offset indent
@@ -258,8 +261,9 @@ SCSI tapes      st0, st1, ...
 SCSI and ATAPI CD-ROMs cd0, cd1, ...
         For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
         present on the bus are probed in increasing ID order for SCSI and
-        master/slave order for ATA(PI). So the first SCSI drive found will
-        be called sd0, the second sd1, and so on ...
+        master/slave order for ATA(PI).
+	So the first SCSI drive found will be called sd0, the second sd1,
+	and so on ...
 
 3COM 3x59X or 3COM 3x90X PCI Ethernet boards
                 ep0     any     any     [you must assign an interrupt in your
