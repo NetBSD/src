@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.33 2000/07/13 09:56:20 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.34 2000/08/02 15:03:04 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.99 2000/07/11 17:00:58 jinmei Exp $	*/
 
 /*
@@ -1264,6 +1264,9 @@ in6_ifinit(ifp, ia, sin6, scrub)
 	}
 	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, flags)) == 0)
 		ia->ia_flags |= IFA_ROUTE;
+	/* XXX check if the subnet route points to the same interface */
+	if (error == EEXIST)
+		error = 0;
 
 	/* Add ownaddr as loopback rtentry, if necessary(ex. on p2p link). */
 	in6_ifaddloop(&(ia->ia_ifa));
