@@ -1,8 +1,8 @@
-/*	$NetBSD: if_fddisubr.c,v 1.11 1997/03/19 16:17:04 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.12 1997/03/24 00:35:04 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995
- *	Matt Thomas.  All rights reserved.
+ * Copyright (c) 1995, 1996
+ *	Matt Thomas <matt@3am-software.com>.  All rights reserved.
  * Copyright (c) 1982, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,6 +35,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_fddisubr.c	8.1 (Berkeley) 6/10/93
+ *
+ * Id: if_fddisubr.c,v 1.15 1997/03/21 22:35:50 thomas Exp
  */
 
 #include <sys/param.h>
@@ -60,19 +62,21 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#endif
-
 #if defined(__NetBSD__)
-#include <net/if_ether.h>
 #include <netinet/if_inarp.h>
 #else
 #include <netinet/if_ether.h>
 #endif
-
+#endif
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
 #else
 #include <net/if_fddi.h>
+#endif
+
+#ifdef IPX
+#include <netipx/ipx.h> 
+#include <netipx/ipx_if.h>
 #endif
 
 #ifdef NS
@@ -91,16 +95,28 @@
 #include <netiso/iso_snpac.h>
 #endif
 
-#include "bpfilter.h"
-
 #ifdef LLC
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
 #endif
 
+#ifdef NETATALK
+#include <netatalk/at.h>
+#include <netatalk/at_var.h>
+#include <netatalk/at_extern.h>
+
+#define llc_snap_org_code llc_un.type_snap.org_code
+#define llc_snap_ether_type llc_un.type_snap.ether_type
+
+extern u_char	at_org_code[ 3 ];
+extern u_char	aarp_org_code[ 3 ];
+#endif /* NETATALK */
+
 #if defined(LLC) && defined(CCITT)
 extern struct ifqueue pkintrq;
 #endif
+
+#include "bpfilter.h"
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -114,16 +130,24 @@ extern struct ifqueue pkintrq;
 #if defined(__bsdi__) || defined(__NetBSD__)
 #define	RTALLOC1(a, b)			rtalloc1(a, b)
 #define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e)
-#define	TYPEHTONS(t)			(t)
+#define	ETYPEHTONS(t)			(t)
 #elif defined(__FreeBSD__)
 #define	RTALLOC1(a, b)			rtalloc1(a, b, 0UL)
 #define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e, f)
-#define	TYPEHTONS(t)			(htons(t))
+#define	ETYPEHTONS(t)			(t)
 #endif
+
+#if defined(__NetBSD__)
+#define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
+#else
+#define	FDDICOM(ifp)		((struct arpcom *)(ifp))
+#define	FDDIADDR(ifp)		(FDDICOM(ifp)->ac_enaddr)
+#endif
+
 /*
  * FDDI output routine.
  * Encapsulate a packet of type family for the local net.
- * Assumes that ifp is actually pointer to arpcom structure.
+ * Assumes that ifp is actually pointer to ethercom structure.
  */
 int
 fddi_output(ifp, m0, dst, rt0)
@@ -132,22 +156,18 @@ fddi_output(ifp, m0, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
-	u_int16_t type;
+	u_int16_t etype;
 	int s, error = 0;
  	u_char edst[6];
 	register struct mbuf *m = m0;
 	register struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct fddi_header *fh;
-#ifdef __NetBSD__
-	struct arphdr *ah;
-#else
-	struct arpcom *ac = (struct arpcom *)ifp;
-#endif
+	struct mbuf *mcopy = (struct mbuf *)0;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
+#if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = RTALLOC1(dst, 1)) != NULL)
@@ -170,10 +190,12 @@ fddi_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+#endif
 	switch (dst->sa_family) {
 
 #ifdef INET
-	case AF_INET:
+	case AF_INET: {
+#if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 #if defined(__NetBSD__)
 #define SIN(x) ((struct sockaddr_in *)(x))
 		if (m->m_flags & M_BCAST)
@@ -185,49 +207,104 @@ fddi_output(ifp, m0, dst, rt0)
 			    (caddr_t)edst)
 		} else if (!arpresolve(ifp, rt, m, dst, edst))
 #else
-		if (!ARPRESOLVE(ac, rt, m, dst, edst, rt0))
-#endif /* __NetBSD__ */
+		if (!ARPRESOLVE(FDDICOM(ifp), rt, m, dst, edst, rt0))
+#endif
 			return (0);	/* if not yet resolved */
+#else
+		int usetrailers;
+		if (!arpresolve(FDDICOM(ifp), m, &((struct sockaddr_in *)dst)->sin_addr, edst, &usetrailers))
+			return (0);	/* if not yet resolved */
+#endif
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		type = htons(ETHERTYPE_IP);
+		etype = htons(ETHERTYPE_IP);
 		break;
-#if defined(__NetBSD__)
-	case AF_ARP:
-		ah = mtod(m, struct arphdr *);
-		if (m->m_flags & M_BCAST) {
-                	bcopy((caddr_t)fddibroadcastaddr, (caddr_t)edst,
-				sizeof(edst));
-#if 0 /* XXX do we need this? */
-                	bcopy((caddr_t)fddibroadcastaddr,
-			      (caddr_t)ar_tha(ah), sizeof(edst));
+	}
 #endif
-		} else
+#ifdef AF_ARP
+	case AF_ARP: {
+		struct arphdr *ah = mtod(m, struct arphdr *);
+		if (m->m_flags & M_BCAST)
+                	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+				sizeof(edst));
+		else
 			bcopy((caddr_t)ar_tha(ah),
 				(caddr_t)edst, sizeof(edst));
 		
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
-		switch(ntohs(ah->ar_op)) {
+		switch (ntohs(ah->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
-			type = htons(ETHERTYPE_REVARP);
+			etype = htons(ETHERTYPE_REVARP);
 			break;
 
 		case ARPOP_REQUEST:
 		case ARPOP_REPLY:
 		default:
-			type = htons(ETHERTYPE_ARP);
+			etype = htons(ETHERTYPE_ARP);
 		}
 
 		break;
+	}
+#endif /* AF_ARP */
+#ifdef IPX
+	case AF_IPX:
+		etype = htons(ETHERTYPE_IPX);
+ 		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
+		    (caddr_t)edst, sizeof (edst));
+		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
+			return (looutput(ifp, m, dst, rt));
+		/* If broadcasting on a simplex interface, loopback a copy */
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		break;
+#endif
+#ifdef NETATALK
+	case AF_APPLETALK: {
+	    struct at_ifaddr *aa;
+            if (!aarpresolve(ac, m, (struct sockaddr_at *)dst, edst)) {
+#ifdef NETATALKDEBUG
+                extern char *prsockaddr(struct sockaddr *);
+                printf("aarpresolv: failed for %s\n", prsockaddr(dst));
+#endif
+                return (0);
+            }
+	    /*
+	     * ifaddr is the first thing in at_ifaddr
+	     */
+	    if ((aa = (struct at_ifaddr *)at_ifawithnet(
+			(struct sockaddr_at *)dst, ifp->if_addrlist))
+		== 0)
+		goto bad;
+	    
+	    /*
+	     * In the phase 2 case, we need to prepend an mbuf for the llc header.
+	     * Since we must preserve the value of m, which is passed to us by
+	     * value, we m_copy() the first mbuf, and use it for our llc header.
+	     */
+	    if (aa->aa_flags & AFA_PHASE2) {
+		struct llc llc;
 
-#endif /* __NetBSD */
-#endif /* INET */
+		M_PREPEND(m, sizeof(struct llc), M_WAIT);
+		if (m == 0)
+			senderr(ENOBUFS);
+		llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
+		llc.llc_control = LLC_UI;
+		bcopy(at_org_code, llc.llc_snap_org_code, sizeof(at_org_code));
+		llc.llc_snap_ether_type = htons(ETHERTYPE_AT);
+		bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
+		etype = 0;
+	    } else {
+		etype = htons(ETHERTYPE_AT);
+	    }
+	    break;
+	}
+#endif /* NETATALK */
 #ifdef NS
 	case AF_NS:
-		type = htons(ETHERTYPE_NS);
+		etype = htons(ETHERTYPE_NS);
  		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
@@ -260,19 +337,14 @@ fddi_output(ifp, m0, dst, rt0)
 				fh = mtod(mcopy, struct fddi_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)fh->fddi_dhost, sizeof (edst));
-#ifdef __NetBSD__
-				bcopy(LLADDR(ifp->if_sadl),
+				bcopy((caddr_t)FDDIADDR(ifp),
 				      (caddr_t)fh->fddi_shost, sizeof (edst));
-#else
-				bcopy((caddr_t)ac->ac_enaddr,
-				      (caddr_t)fh->fddi_shost, sizeof (edst));
-#endif
 			}
 		}
 		M_PREPEND(m, 3, M_DONTWAIT);
 		if (m == NULL)
 			return (0);
-		type = 0;
+		etype = 0;
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
@@ -295,9 +367,9 @@ fddi_output(ifp, m0, dst, rt0)
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst,
-				sizeof(edst));
+			bcopy(LLADDR(sdl), (char *)edst, sizeof(edst));
 		} else goto bad; /* Not a link interface ? Funny ... */
+
 		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
 		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
 			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
@@ -305,17 +377,12 @@ fddi_output(ifp, m0, dst, rt0)
 				fh = mtod(mcopy, struct fddi_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)fh->fddi_dhost, sizeof (edst));
-#ifdef __NetBSD__
-				bcopy(LLADDR(ifp->if_sadl),
+				bcopy((caddr_t)FDDIADDR(ifp),
 				      (caddr_t)fh->fddi_shost, sizeof (edst));
-#else
-				bcopy((caddr_t)ac->ac_enaddr,
-				      (caddr_t)fh->fddi_shost, sizeof (edst));
-#endif
 				fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
 			}
 		}
-		type = 0;
+		etype = 0;
 #ifdef LLC_DEBUG
 		{
 			int i;
@@ -325,8 +392,8 @@ fddi_output(ifp, m0, dst, rt0)
 			for (i=0; i<6; i++)
 				printf("%x ", edst[i] & 0xff);
 			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
-			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			    l->llc_control & 0xff);
+			       m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
+			       l->llc_control & 0xff);
 
 		}
 #endif /* LLC_DEBUG */
@@ -340,7 +407,7 @@ fddi_output(ifp, m0, dst, rt0)
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
-		type = TYPEHTONS(eh->ether_type);
+		etype = ETYPEHTONS(eh->ether_type);
 		break;
 	}
 
@@ -380,15 +447,20 @@ fddi_output(ifp, m0, dst, rt0)
 	}
 #endif
 	default:
+#if defined(__NetBSD__)
 		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		       dst->sa_family);
+#else
+		printf("%s%d: can't handle af%d\n", ifp->if_name, ifp->if_unit,
+		       dst->sa_family);
+#endif
 		senderr(EAFNOSUPPORT);
 	}
 
+
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
-
-	if (type != 0) {
+	if (etype != 0) {
 		register struct llc *l;
 		M_PREPEND(m, sizeof (struct llc), M_DONTWAIT);
 		if (m == 0)
@@ -397,8 +469,8 @@ fddi_output(ifp, m0, dst, rt0)
 		l->llc_control = LLC_UI;
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] = l->llc_snap.org_code[2] = 0;
-		bcopy((caddr_t) &type, (caddr_t) &l->llc_snap.ether_type,
-			sizeof(u_short));
+		bcopy((caddr_t) &etype, (caddr_t) &l->llc_snap.ether_type,
+			sizeof(u_int16_t));
 	}
 	/*
 	 * Add local net header.  If no space in first mbuf,
@@ -413,13 +485,8 @@ fddi_output(ifp, m0, dst, rt0)
 #if NBPFILTER > 0
   queue_it:
 #endif
-#ifdef __NetBSD__
- 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)fh->fddi_shost,
+ 	bcopy((caddr_t)FDDIADDR(ifp), (caddr_t)fh->fddi_shost,
 	    sizeof(fh->fddi_shost));
-#else
- 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
-	    sizeof(fh->fddi_shost));
-#endif
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
@@ -458,9 +525,6 @@ fddi_input(ifp, fh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
-#if defined(ISO) && !defined(__NetBSD__)
-	struct arpcom *ac = (struct arpcom *)ifp;
-#endif
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -469,22 +533,56 @@ fddi_input(ifp, fh, m)
 	}
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*fh);
-	if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,
-	    sizeof(fddibroadcastaddr)) == 0)
-		m->m_flags |= M_BCAST;
-	else if (fh->fddi_dhost[0] & 1)
-		m->m_flags |= M_MCAST;
-	if (m->m_flags & (M_BCAST|M_MCAST))
+	if (fh->fddi_dhost[0] & 1) {
+		if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,
+		    sizeof(fddibroadcastaddr)) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
+	} else if ((ifp->if_flags & IFF_PROMISC)
+	    && bcmp(FDDIADDR(ifp), (caddr_t)fh->fddi_dhost,
+		    sizeof(fh->fddi_dhost)) != 0) {
+		m_freem(m);
+		return;
+	}
+
+#ifdef M_LINK0
+	/*
+	 * If this has a LLC priority of 0, then mark it so upper
+	 * layers have a hint that it really came via a FDDI/Ethernet
+	 * bridge.
+	 */
+	if ((fh->fddi_fc & FDDIFC_LLC_PRIO7) == FDDIFC_LLC_PRIO0)
+		m->m_flags |= M_LINK0;
+#endif
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
+#ifdef NETATALK
+		if (Bcmp(&(l->llc_snap_org_code)[0], at_org_code,
+			 sizeof(at_org_code)) == 0 &&
+		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_AT) {
+		    inq = &atintrq2;
+		    m_adj( m, sizeof( struct llc ));
+		    schednetisr(NETISR_ATALK);
+		    break;
+		}
+
+		if (Bcmp(&(l->llc_snap_org_code)[0], aarp_org_code,
+			 sizeof(aarp_org_code)) == 0 &&
+			ntohs(l->llc_snap_ether_type) == ETHERTYPE_AARP) {
+		    m_adj( m, sizeof( struct llc ));
+		    aarpinput((struct arpcom *)ifp, m); /* XXX */
+		    return;
+		}
+#endif /* NETATALK */
 		if (l->llc_snap.org_code[0] != 0 || l->llc_snap.org_code[1] != 0|| l->llc_snap.org_code[2] != 0)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
@@ -497,10 +595,21 @@ fddi_input(ifp, fh, m)
 			break;
 
 		case ETHERTYPE_ARP:
+#if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 			schednetisr(NETISR_ARP);
 			inq = &arpintrq;
 			break;
+#else
+			arpinput((struct arpcom *)ifp, m);
+			return;
 #endif
+#endif
+#ifdef IPX      
+		case ETHERTYPE_IPX: 
+			schednetisr(NETISR_IPX);
+			inq = &ipxintrq;
+			break;  
+#endif   
 #ifdef NS
 		case ETHERTYPE_NS:
 			schednetisr(NETISR_NS);
@@ -508,15 +617,22 @@ fddi_input(ifp, fh, m)
 			break;
 #endif
 #ifdef DECNET
-		case ETHERTYPE_DECENT:
+		case ETHERTYPE_DECNET:
 			schednetisr(NETISR_DECNET);
 			inq = &decnetintrq;
 			break;
 #endif
+#ifdef NETATALK 
+		case ETHERTYPE_AT:
+	                schednetisr(NETISR_ATALK);
+			inq = &atintrq1;
+			break;
+	        case ETHERTYPE_AARP:
+			/* probably this should be done with a NETISR as well */
+			aarpinput((struct arpcom *)ifp, m); /* XXX */
+			return;
+#endif /* NETATALK */
 		default:
-#if 0
-			printf("fddi_input: unknown protocol 0x%x\n", etype);
-#endif
 			ifp->if_noproto++;
 			goto dropanyway;
 		}
@@ -568,22 +684,15 @@ fddi_input(ifp, fh, m)
 
 			l->llc_dsap = l->llc_ssap;
 			l->llc_ssap = c;
+			eh = (struct ether_header *)sa.sa_data;
 			if (m->m_flags & (M_BCAST | M_MCAST))
-#ifdef __NetBSD__
-				bcopy(LLADDR(ifp->if_sadl),
-				      (caddr_t)fh->fddi_dhost, 6);
-#else
-				bcopy((caddr_t)ac->ac_enaddr,
-				      (caddr_t)fh->fddi_dhost, 6);
-#endif
+				bcopy((caddr_t)FDDIADDR(ifp),
+				      (caddr_t)eh->ether_dhost, 6);
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
-			eh = (struct ether_header *)sa.sa_data;
 			for (i = 0; i < 6; i++) {
-				eh->ether_shost[i] = c = fh->fddi_dhost[i];
-				eh->ether_dhost[i] = 
-					eh->ether_dhost[i] = fh->fddi_shost[i];
-				eh->ether_shost[i] = c;
+				eh->ether_shost[i] = fh->fddi_dhost[i];
+				eh->ether_dhost[i] = fh->fddi_shost[i];
 			}
 			eh->ether_type = 0;
 			ifp->if_output(ifp, m, &sa, NULL);
@@ -616,9 +725,6 @@ fddi_input(ifp, fh, m)
 #endif /* LLC */
 		
 	default:
-#if 0
-		printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap);
-#endif
 		ifp->if_noproto++;
 	dropanyway:
 		m_freem(m);
@@ -636,16 +742,18 @@ fddi_input(ifp, fh, m)
 /*
  * Perform common duties while attaching to interface list
  */
+#if defined(__NetBSD__)
 void
-#ifdef __NetBSD__
 fddi_ifattach(ifp, lla)
 	register struct ifnet *ifp;
 	caddr_t lla;
-{
 #else
+void
 fddi_ifattach(ifp)
 	register struct ifnet *ifp;
+#endif
 {
+#if !defined(__NetBSD__)
 	register struct ifaddr *ifa;
 #endif
 	register struct sockaddr_dl *sdl;
@@ -654,22 +762,23 @@ fddi_ifattach(ifp)
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
 	ifp->if_mtu = FDDIMTU;
-	ifp->if_output = fddi_output;
-#ifdef __NetBSD__
-	if ((sdl = ifp->if_sadl) &&
-	    sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_FDDI;
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
+	ifp->if_baudrate = 100000000;
+#ifdef IFF_NOTRAILERS
+	ifp->if_flags |= IFF_NOTRAILERS;
+#endif
+#if defined(__NetBSD__)
+	if ((sdl = ifp->if_sadl) != NULL && sdl->sdl_family == AF_LINK) {
+	    sdl->sdl_type = IFT_FDDI;
+	    sdl->sdl_alen = ifp->if_addrlen;
+	    bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
 #else
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist; ifa != NULL; ifa = ifa->ifa_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_FDDI;
 			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
-			      LLADDR(sdl), ifp->if_addrlen);
+			bcopy(FDDIADDR(ifp), LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
 #endif

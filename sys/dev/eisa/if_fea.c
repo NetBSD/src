@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.13 1997/03/15 18:11:20 is Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.14 1997/03/24 00:35:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fea.c,v 1.6 1996/06/07 20:02:25 thomas Exp
+ * Id: if_fea.c,v 1.8 1997/03/21 13:45:45 thomas Exp
  */
 
 /*
@@ -51,10 +51,6 @@
 #include <net/if_types.h>
 #include <net/if_dl.h>
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
-
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -66,11 +62,6 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#if defined(__NetBSD__)
-#include <netinet/if_inarp.h>
-#else
-#include <netinet/if_ether.h>
-#endif
 #endif
 
 #if defined(__FreeBSD__)
@@ -84,18 +75,20 @@
 #include <vm/vm_param.h>
 
 #if defined(__FreeBSD__)
+#include <netinet/if_ether.h>
 #include <i386/eisa/eisaconf.h>
 #include <i386/isa/icu.h>
-#include <pci/pdqvar.h>
-#include <pci/pdqreg.h>
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
 #elif defined(__bsdi__)
+#include <netinet/if_ether.h>
 #include <i386/isa/isa.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/dma.h>
 #include <i386/isa/isavar.h>
 #include <i386/eisa/eisa.h>
-#include <i386/eisa/pdqvar.h>
-#include <i386/eisa/pdqreg.h>
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
 #elif defined(__NetBSD__)
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -112,23 +105,26 @@
  *
  */
 
+#define	DEFEA_IRQS		0x0000FBA9U
+
 #if defined(__FreeBSD__)
 static pdq_softc_t *pdqs_eisa[16];
 #define	PDQ_EISA_UNIT_TO_SOFTC(unit)	(pdqs_eisa[unit])
 #define	DEFEA_INTRENABLE		0x8	/* level interrupt */
 #define	pdq_eisa_ifwatchdog		NULL
-static const int pdq_eisa_irqs[4] = { 9, 10, 11, 15 };
+#define	DEFEA_DECODE_IRQ(n)		((DEFEA_IRQS >> ((n) << 2)) & 0x0f)
 
 #elif defined(__bsdi__)
 extern struct cfdriver feacd;
 #define	PDQ_EISA_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)feacd.cd_devs[unit])
 #define	DEFEA_INTRENABLE		0x28	/* edge interrupt */
 static const int pdq_eisa_irqs[4] = { IRQ9, IRQ10, IRQ11, IRQ15 };
+#define	DEFEA_DECODE_IRQ(n)		(pdq_eisa_irqs[(n)])
 
 #elif defined(__NetBSD__)
 #define	DEFEA_INTRENABLE		0x8	/* level interrupt */
 #define	pdq_eisa_ifwatchdog		NULL
-static const int pdq_eisa_irqs[4] = { 9, 10, 11, 15 };
+#define	DEFEA_DECODE_IRQ(n)		((DEFEA_IRQS >> ((n) << 2)) & 0x0f)
 
 #else
 #error unknown system
@@ -152,7 +148,7 @@ pdq_eisa_subprobe(
     pdq_uint32_t *irq)
 {
     if (irq != NULL)
-	*irq = pdq_eisa_irqs[PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_IO_CONFIG_STAT_0) & 3];
+	*irq = DEFEA_DECODE_IRQ(PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_IO_CONFIG_STAT_0) & 3);
     *maddr = (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_CMP_0) << 8)
 	| (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_CMP_1) << 16);
     *msize = (PDQ_OS_IORD_8(bc, iobase, PDQ_EISA_MEM_ADD_MASK_0) + 4) << 8;
@@ -160,33 +156,28 @@ pdq_eisa_subprobe(
 
 static void
 pdq_eisa_devinit(
-    pdq_softc_t *sc,
-    pdq_uint16_t ioaddr)
+    pdq_softc_t *sc)
 {
     pdq_uint8_t data;
-    pdq_bus_t tag;
-
-#if defined(__NetBSD__)
-    tag = sc->sc_iotag;
-#else
-    tag = sc->sc_bc;
-#endif
 
     /*
      * Do the standard initialization for the DEFEA registers.
      */
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_FUNCTION_CTRL, 0x23);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (ioaddr >> 8) & 0xF0);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (ioaddr >> 8) & 0xF0);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_SLOT_CTRL, 0x01);
-    data = PDQ_OS_IORD_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
-#if defined(PDQ_IOMAPPED)
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data & ~1);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_FUNCTION_CTRL, 0x23);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_IO_CMP_1_1, (sc->sc_iobase >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_IO_CMP_0_1, (sc->sc_iobase >> 8) & 0xF0);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_SLOT_CTRL, 0x01);
+    data = PDQ_OS_IORD_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
+#if defined(__NetBSD__)
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF,
+		  sc->sc_iotag == sc->sc_csrtag ? data & ~1 : data | 1);
+#elif defined(PDQ_IOMAPPED)
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data & ~1);
 #else
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data | 1);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data | 1);
 #endif
-    data = PDQ_OS_IORD_8(tag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0);
-    PDQ_OS_IOWR_8(tag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0, data | DEFEA_INTRENABLE);
+    data = PDQ_OS_IORD_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0);
+    PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_IO_CONFIG_STAT_0, data | DEFEA_INTRENABLE);
 }
 
 #if defined(__FreeBSD__)
@@ -283,19 +274,19 @@ pdq_eisa_attach(
     sc->sc_membase = (pdq_bus_memaddr_t) pmap_mapdev(mspace->addr, mspace->size);
     if (sc->sc_membase == NULL) {
 	printf("fea%d: failed to map memory 0x%x-0x%x!\n",
-	    sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
+	       sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
 	return -1;
     }
 
     eisa_reg_start(ed);
     if (eisa_reg_iospace(ed, iospace)) {
 	printf("fea%d: failed to register iospace 0x%x-0x%x!\n",
-	    sc->sc_if.if_unit, iospace->addr, iospace->addr + iospace->size - 1);
+	       sc->sc_if.if_unit, iospace->addr, iospace->addr + iospace->size - 1);
 	return -1;
     }
     if (eisa_reg_mspace(ed, mspace)) {
 	printf("fea%d: failed to register memory 0x%x-0x%x!\n",
-	    sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
+	       sc->sc_if.if_unit, mspace->addr, mspace->addr + mspace->size - 1);
 	return -1;
     }
 
@@ -306,7 +297,7 @@ pdq_eisa_attach(
 
     eisa_reg_end(ed);
 
-    pdq_eisa_devinit(sc, iospace->addr);
+    pdq_eisa_devinit(sc);
     sc->sc_pdq = pdq_initialize(PDQ_BUS_EISA, sc->sc_membase,
 				sc->sc_if.if_name, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFEA);
@@ -362,14 +353,15 @@ pdq_eisa_probe(
     pdq_eisa_subprobe(PDQ_BUS_EISA, ia->ia_iobase, &maddr, &msize, &irq);
     if (ia->ia_irq != IRQUNK && irq != ia->ia_irq) {
 	printf("fea%d: error: desired IRQ of %d does not match device's actual IRQ (%d),\n",
-	    cf->cf_unit, ffs(ia->ia_irq) - 1, ffs(irq) - 1);
+	       cf->cf_unit,
+	       ffs(ia->ia_irq) - 1, ffs(irq) - 1);
 	return 0;
     }
     if (ia->ia_irq == IRQUNK) {
 	if ((ia->ia_irq = isa_irqalloc(irq)) == 0) {
 	    if ((ia->ia_irq = isa_irqalloc(IRQ9|IRQ10|IRQ11|IRQ15)) == 0) {
 		printf("fea%d: error: IRQ %d is already in use\n", cf->cf_unit,
-		    ffs(irq) - 1);
+		       ffs(irq) - 1);
 		return 0;
 	    }
 	    irq = PDQ_OS_IORD_8(PDQ_BUS_EISA, ia->ia_iobase, PDQ_EISA_IO_CONFIG_STAT_0) & ~3;
@@ -384,7 +376,7 @@ pdq_eisa_probe(
     }
     if (maddr == 0) {
 	printf("fea%d: error: memory not enabled! ECU reconfiguration required\n",
-	    cf->cf_unit);
+	       cf->cf_unit);
 	return 0;
     }
 
@@ -412,7 +404,7 @@ pdq_eisa_attach(
 
     sc->sc_iobase = ia->ia_iobase;
 
-    pdq_eisa_devinit(sc, ia->ia_iobase);
+    pdq_eisa_devinit(sc);
     sc->sc_pdq = pdq_initialize(PDQ_BUS_EISA,
 				(pdq_bus_memaddr_t) ISA_HOLE_VADDR(ia->ia_maddr),
 				sc->sc_if.if_name, sc->sc_if.if_unit,
@@ -486,41 +478,28 @@ pdq_eisa_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    /*
-     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is
-     * an alias for sc_csrhandle.  sc_iobase is used here to
-     * check the card's configuration.
-     */
-
-    if (bus_space_map(sc->sc_iotag, EISA_SLOT_ADDR(ea->ea_slot),
-      EISA_SLOT_SIZE, 0, &sc->sc_iobase)) {
+    if (bus_space_map(sc->sc_iotag, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0, &sc->sc_iobase)) {
 	printf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
     pdq_eisa_subprobe(sc->sc_iotag, sc->sc_iobase, &maddr, &msize, &irq);
 
-#if defined(PDQ_IOMAPPED)
-    sc->sc_csrtag = sc->sc_iotag;
-    sc->sc_csrhandle = sc->sc_iobase;
-#else
-    sc->sc_csrtag = ea->ea_memt;
-
-    if (maddr == 0 || msize == 0) {
-	printf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
-	    sc->sc_dev.dv_xname);
-	return;
+    if (maddr != 0 && msize != 0) {
+	sc->sc_csrtag = ea->ea_memt;
+	if (bus_space_map(sc->sc_csrtag, maddr, msize, 0, &sc->sc_membase)) {
+	    bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
+	    printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
+		   sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
+	    return;
+	}
+    } else {
+	sc->sc_csrtag = sc->sc_iotag;
+	sc->sc_membase = sc->sc_iobase;
     }
 
-    if (bus_space_map(sc->sc_csrtag, maddr, msize, 0, &sc->sc_csrhandle)) {
-	bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
-	printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
-	    sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
-	return;
-    }
-#endif
-    pdq_eisa_devinit(sc, EISA_SLOT_ADDR(ea->ea_slot));
-    sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
+    pdq_eisa_devinit(sc);
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFEA);
     if (sc->sc_pdq == NULL) {
@@ -547,10 +526,8 @@ pdq_eisa_attach(
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
-#if !defined(PDQ_IOMAPPED)
-    printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
-	maddr + msize - 1);
-#endif
+    if (sc->sc_csrtag != sc->sc_iotag)
+	printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
     if (intrstr != NULL)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }

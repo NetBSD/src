@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.8 1997/03/15 18:11:34 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.9 1997/03/24 00:35:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdq_ifsubr.c,v 1.6 1996/05/16 14:25:26 thomas Exp
+ * Id: pdq_ifsubr.c,v 1.10 1997/03/21 21:16:04 thomas Exp thomas
  *
  */
 
@@ -52,15 +52,9 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-
 #if !defined(__NetBSD__)
 #include <net/route.h>
 #endif
-
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#endif
-
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -75,17 +69,17 @@
 #include <netinet/ip.h>
 #if defined(__NetBSD__)
 #include <netinet/if_inarp.h>
-#else
-#include <netinet/if_ether.h>
 #endif
 #endif
 #if defined(__FreeBSD__)
+#include <netinet/if_ether.h>
 #include <netinet/if_fddi.h>
 #else
 #include <net/if_fddi.h>
 #endif
 
-#if defined(__bsdi__) && _BSDI_VERSION < 199401
+#if defined(__bsdi__)
+#include <netinet/if_ether.h>
 #include <i386/isa/isavar.h>
 #endif
 
@@ -170,7 +164,7 @@ ifnet_ret_t
 pdq_ifstart(
     struct ifnet *ifp)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
+    pdq_softc_t *sc = PDQ_OS_IFP_TO_SOFTC(ifp);
     struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
@@ -213,15 +207,7 @@ pdq_os_receive_pdu(
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
-    if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC ||
-	((sc->sc_if.if_flags & IFF_PROMISC) &&
-	 (fh->fddi_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-#ifdef __NetBSD__
-	 bcmp(fh->fddi_dhost, LLADDR(sc->sc_ec.ec_if.if_sadl),
-#else
-	 bcmp(fh->fddi_dhost, sc->sc_ac.ac_enaddr,
-#endif
-	     sizeof(fh->fddi_dhost)) != 0)) {
+    if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	m_freem(m);
 	return;
     }
@@ -272,7 +258,7 @@ pdq_os_addr_fill(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+    ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
     while (enm != NULL && num_addrs > 0) {
 	((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
@@ -283,13 +269,75 @@ pdq_os_addr_fill(
     }
 }
 
+#if defined(IFM_FDDI)
+static int
+pdq_ifmedia_change(
+    struct ifnet *ifp)
+{
+    pdq_softc_t * const sc = PDQ_OS_IFP_TO_SOFTC(ifp);
+
+    if (sc->sc_ifmedia.ifm_media & IFM_FDX) {
+	if ((sc->sc_pdq->pdq_flags & PDQ_WANT_FDX) == 0) {
+	    sc->sc_pdq->pdq_flags |= PDQ_WANT_FDX;
+	    if (sc->sc_pdq->pdq_flags & PDQ_RUNNING)
+		pdq_run(sc->sc_pdq);
+	}
+    } else if (sc->sc_pdq->pdq_flags & PDQ_WANT_FDX) {
+	sc->sc_pdq->pdq_flags &= ~PDQ_WANT_FDX;
+	if (sc->sc_pdq->pdq_flags & PDQ_RUNNING)
+	    pdq_run(sc->sc_pdq);
+    }
+
+    return 0;
+}
+
+static void
+pdq_ifmedia_status(
+    struct ifnet *ifp,
+    struct ifmediareq *ifmr)
+{
+    pdq_softc_t * const sc = PDQ_OS_IFP_TO_SOFTC(ifp);
+
+    ifmr->ifm_status = IFM_AVALID;
+    if (sc->sc_pdq->pdq_flags & PDQ_IS_ONRING)
+	ifmr->ifm_status |= IFM_ACTIVE;
+
+    ifmr->ifm_active = (ifmr->ifm_current & ~IFM_FDX);
+    if (sc->sc_pdq->pdq_flags & PDQ_IS_FDX)
+	ifmr->ifm_active |= IFM_FDX;
+}
+
+void
+pdq_os_update_status(
+    pdq_t *pdq,
+    const void *arg)
+{
+    pdq_softc_t * const sc = (pdq_softc_t *) pdq->pdq_os_ctx;
+    const pdq_response_status_chars_get_t *rsp = arg;
+    int media = 0;
+
+    switch (rsp->status_chars_get.pmd_type[0]) {
+	case PDQ_PMD_TYPE_ANSI_MUTLI_MODE:         media = IFM_FDDI_MMF; break;
+	case PDQ_PMD_TYPE_ANSI_SINGLE_MODE_TYPE_1: media = IFM_FDDI_SMF; break;
+	case PDQ_PMD_TYPE_ANSI_SIGNLE_MODE_TYPE_2: media = IFM_FDDI_SMF; break;
+	case PDQ_PMD_TYPE_UNSHIELDED_TWISTED_PAIR: media = IFM_FDDI_UTP; break;
+	default: media |= IFM_MANUAL;
+    }
+
+    if (rsp->status_chars_get.station_type == PDQ_STATION_TYPE_DAS)
+	media |= IFM_FDDI_DA;
+
+    sc->sc_ifmedia.ifm_media = media | IFM_FDDI;
+}
+#endif /* defined(IFM_FDDI) */
+
 int
 pdq_ifioctl(
     struct ifnet *ifp,
     ioctl_cmd_t cmd,
     caddr_t data)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
+    pdq_softc_t *sc = PDQ_OS_IFP_TO_SOFTC(ifp);
     int s, error = 0;
 
     s = splimp();
@@ -303,7 +351,7 @@ pdq_ifioctl(
 #if defined(INET)
 		case AF_INET: {
 		    pdq_ifinit(sc);
-		    arp_ifinit(ifp, ifa);
+		    PDQ_ARP_IFINIT(sc, ifa);
 		    break;
 		}
 #endif /* INET */
@@ -316,11 +364,12 @@ pdq_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
+			ina->x_host = *(union ns_host *)PDQ_LANADDR(sc);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
 			bcopy((caddr_t)ina->x_host.c_host,
-			      LLADDR(ifp->if_sadl), ifp->if_data.ifi_addrlen);
+			      (caddr_t)PDQ_LANADDR(sc),
+			      PDQ_LANADDR_SIZE(sc));
 		    }
 
 		    pdq_ifinit(sc);
@@ -335,6 +384,13 @@ pdq_ifioctl(
 	    }
 	    break;
 	}
+	case SIOCGIFADDR: {
+	    struct ifreq *ifr = (struct ifreq *)data;
+	    bcopy((caddr_t) PDQ_LANADDR(sc),
+		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		  6);
+	    break;
+	}
 
 	case SIOCSIFFLAGS: {
 	    pdq_ifinit(sc);
@@ -347,9 +403,9 @@ pdq_ifioctl(
 	     * Update multicast listeners
 	     */
 	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ec);
+		error = ether_addmulti((struct ifreq *)data, PDQ_FDDICOM(sc));
 	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
+		error = ether_delmulti((struct ifreq *)data, PDQ_FDDICOM(sc));
 
 	    if (error == ENETRESET) {
 		if (sc->sc_if.if_flags & IFF_RUNNING)
@@ -358,6 +414,33 @@ pdq_ifioctl(
 	    }
 	    break;
 	}
+
+#if defined(SIOCSIFMTU)
+#if !defined(ifr_mtu)
+#define ifr_mtu ifr_metric
+#endif
+	case SIOCSIFMTU: {
+	    struct ifreq *ifr = (struct ifreq *)data;
+	    /*
+	     * Set the interface MTU.
+	     */
+	    if (ifr->ifr_mtu > FDDIMTU) {
+		error = EINVAL;
+		break;
+	    }
+	    ifp->if_mtu = ifr->ifr_mtu;
+	    break;
+	}
+#endif /* SIOCSIFMTU */
+
+#if defined(IFM_FDDI) && defined(SIOCSIFMEDIA)
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA: {
+	    struct ifreq *ifr = (struct ifreq *)data;
+	    error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
+	    break;
+	}
+#endif
 
 	default: {
 	    error = EINVAL;
@@ -391,9 +474,23 @@ pdq_ifattach(
     ifp->if_ioctl = pdq_ifioctl;
     ifp->if_output = fddi_output;
     ifp->if_start = pdq_ifstart;
+
+#if defined(IFM_FDDI)
+    {
+	const int media = sc->sc_ifmedia.ifm_media;
+	ifmedia_init(&sc->sc_ifmedia, IFM_FDX,
+		     pdq_ifmedia_change, pdq_ifmedia_status);
+	ifmedia_add(&sc->sc_ifmedia, media, 0, 0);
+	ifmedia_set(&sc->sc_ifmedia, media);
+    }
+#endif
   
     if_attach(ifp);
-    fddi_ifattach(ifp, (caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes);
+#if defined(__NetBSD__)
+    fddi_ifattach(ifp, (caddr_t)&sc->sc_pdq->pdq_hwaddr);
+#else
+    fddi_ifattach(ifp);
+#endif
 #if NBPFILTER > 0
     PDQ_BPFATTACH(sc, DLT_FDDI, sizeof(struct fddi_header));
 #endif
