@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/06/03 00:29:05 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/06/03 00:56:55 fredette Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -42,18 +42,14 @@ proginstall: ${SA_PROG}.bin
 
 .endif	# defined(SA_PROG)
 
-CLEANFILES+= m68k sun68k
+CLEANFILES+= machine m68k sun68k
 .BEGIN: machine m68k sun68k
 .NOPATH: machine m68k sun68k
 realall realdepend: machine m68k sun68k
 
 machine :
-	-rm -rf $@
-	mkdir $@
-	ln -s ${S}/arch/sun3/include/mc68851.h $@
-	ln -s ${S}/arch/sun3/include/param3.h $@
-	ln -s ${S}/arch/sun3/include/param3x.h $@
-	ln -s ${S}/arch/sun68k/include/loadfile_machdep.h $@
+	-rm -f $@
+	ln -s ${S}/arch/sun68k/include $@
 
 m68k :
 	-rm -f $@
@@ -62,8 +58,3 @@ m68k :
 sun68k :
 	-rm -f $@
 	ln -s ${S}/arch/sun68k $@
-
-clean : machineclean
-
-machineclean :
-	-rm -rf machine
