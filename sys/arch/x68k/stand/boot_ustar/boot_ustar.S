@@ -3,7 +3,7 @@
 |         Yasha(itohy@netbsd.org)
 |	  minoura@netbsd.org
 |
-| $NetBSD: boot_ustar.S,v 1.1 2001/09/28 15:22:22 minoura Exp $
+| $NetBSD: boot_ustar.S,v 1.2 2001/10/01 16:58:01 minoura Exp $
 
 | supports floppy only
 
@@ -13,7 +13,7 @@
 #include "iocscall.h"
 
 #define BOOT_ERROR(s)	jbsr boot_error; .asciz s; .even
-#define READ_BUFFER	0x000e0000
+#define SRAM_MEMSIZE	(0x00ed0008)
 
 	.text
 ASENTRY_NOPROFILE(start)
@@ -54,7 +54,7 @@ ASENTRY_NOPROFILE(entry)
 		|
 		| SASI or Floppy
 		|
-		movel	%d0,%d4
+		movel	%d0,%d6
 		andib	#0xFC,%d0
 		cmpib	#0x90,%d0
 		jne	boot_dev_unsupported	| boot from SASI?
@@ -64,7 +64,7 @@ ASENTRY_NOPROFILE(entry)
 		|
 		andib	#0x03,%d0	| drive # (head=0)
 		jbsr	check_fd_format
-		moveb	%d4,%d2
+		moveb	%d6,%d2
 		lslw	#8,%d2
 		moveq	#0x70,%d1
 		orw	%d2,%d1		| PDA*256 + MODE
@@ -103,10 +103,8 @@ ASENTRY_NOPROFILE(boot_error)
 
 boot_read_done:
 		lea	%a4@(8192),%a1		| USTAR header
-#if 0	/* too big to fit */
 		cmpl	#0x55535441,%a1@	| filename `USTA
 		bne	error_invalidname
-#endif
 		cmpl	#0x522e766f,%a1@(4)	|           R.vo...'
 		bne	error_invalidname
 		cmpl	#0x00757374,%a1@(256)	| magic `\0ust'
@@ -118,10 +116,8 @@ boot_read_done:
 		movml	%a2@+,%d0-%d4/%a5
 		addal	#8,%a2			| start of text
 
-#if 0
 		cmpal	#BOOT_TEXTADDR,%a5
 		bne	error_invalidboot
-#endif
 
 		cmpl	#0x00870107,%d0		| a.out magic
 		bne	error_invalidmagic
@@ -136,41 +132,34 @@ boot_read_done:
 		subl	#1,%d4
 		bne	1b
 
-		andil	#3,%d4
-		swap	%d4
-		addil	#(B_DEVMAGIC+X68K_MAJOR_FD),%d4
-		movl	#RB_SINGLE,%sp@-	| boothowto
-		movl	%d4,%sp@-		| bootdev
-		movl	%d3,%sp@-		| size
-		pea	%a5@			| entry
-		pea	%a5@			| executed
-		pea	%a5@			| loaded
+	/* set args for /boot */
+		pea	%a2@(%d3)		| esym (unused)
+		movel	SRAM_MEMSIZE,%sp@-	| lastpa (unused)
+		pea	%a2@			| firstpa (unused)
 
-		jbsr	_C_LABEL(exec_image)
+		movq	#0,%d0			| unused
+		movq	#0,%d1			| unused
+		movq	#0,%d2			| unused
+		movq	#0,%d3			| unused
+		movq	#0,%d4			| unused
+		movq	#0,%d5			| unused
+		andil	#3,%d6			| bootdev
+		swap	%d6
+		addil	#(B_DEVMAGIC+X68K_MAJOR_FD),%d6
+		movl	#RB_SINGLE,%d7		| boothowto (unused)
+		moval	%a2,%a0			| entry
+		moval	%d0,%a1			| unused
+		moval	%d0,%a2			| unused
+		moval	%d0,%a3			| unused
+		moval	%d0,%a4			| unused
+		moval	%d0,%a5			| unused
+		moval	%d0,%a6			| unused
 
-error_invalidname:
-error_invalidfs:
-error_invalidmagic:	BOOT_ERROR("Invalid boot disk")
+		jmp	%a0@			| here we go
 
-|
-| void memcpy(void *dst, const void *src, size_t count);
-|
-|	small and slow memcpy...
-|	THIS FUNCTION DOES NOT CONFORM THE ANSI STANDARD
-|
-ENTRY_NOPROFILE(memcpy)
-	lea	%sp@(12),%a1
-	movel	%a1@,%d1	| count
-|	jeq	Lmcpret
-	moveal	%a1@-,%a0	| src
-	moveal	%a1@-,%a1	| dest
-1:	moveb	%a0@+,%a1@+
-	subql	#1,%d1
-	jne	1b
-Lmcpret:
-|	movel	%sp@(8),%d0	| uncomment this to conform ANSI
-	rts
-
-#include "exec_image.S"
+error_invalidboot:	BOOT_ERROR("Illegal secondary boot");
+error_invalidname:	BOOT_ERROR("Invalid filename");
+error_invalidfs:	BOOT_ERROR("Not a ustarfs");
+error_invalidmagic:	BOOT_ERROR("Not an OMAGIC a.out")
 
 ASGLOBAL(first_kbyte)
