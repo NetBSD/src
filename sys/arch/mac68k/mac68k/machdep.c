@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.22 1994/07/21 00:55:07 briggs Exp $
+ *	$Id: machdep.c,v 1.23 1994/07/25 00:34:30 briggs Exp $
  */
 
 #include <param.h>
@@ -177,8 +177,16 @@ static void	identifycpu(void);
 void
 consinit(void)
 {
-	cninit();	/* this is the dumb console; no NuBus intelligence. */
-#if DDB
+	/*
+	 * Generic console: sys/dev/cons.c
+	 *	Initializes either ite or ser as console.
+	 */
+	cninit();
+
+#ifdef  DDB
+	/*
+	 * Initialize kernel debugger, if compiled in.
+	 */
 	ddb_init();
 #endif
 }
