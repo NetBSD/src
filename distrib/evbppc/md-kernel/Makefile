@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/30 16:21:45 eeh Exp $
+#	$NetBSD: Makefile,v 1.1 2002/12/09 14:20:54 scw Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-MKIMG?=	${NETBSDSRCDIR}/sys/arch/walnut/compile/mkimg.sh
+MKIMG?=	${NETBSDSRCDIR}/sys/arch/evbppc/compile/walnut-mkimg.sh
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		INSTALL ${RAMDISK} -
+MDSETTARGETS=		INSTALL_WALNUT ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
 MDSET_SUFFIXES.-=	img create-img
 
