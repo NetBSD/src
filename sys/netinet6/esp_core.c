@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.26 2003/07/20 03:24:03 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.27 2003/07/20 17:17:20 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.26 2003/07/20 03:24:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.27 2003/07/20 17:17:20 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -229,8 +229,6 @@ esp_schedule(algo, sav)
 		return 0;
 
 	sav->schedlen = (*algo->schedlen)(algo);
-	if (sav->schedlen < 0)
-		return EINVAL;
 	sav->sched = malloc(sav->schedlen, M_SECA, M_DONTWAIT);
 	if (!sav->sched) {
 		sav->schedlen = 0;
