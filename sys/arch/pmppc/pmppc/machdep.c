@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2003/01/01 16:18:49 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2003/01/10 16:18:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
@@ -184,7 +185,7 @@ print_intr_regs(void)
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-#ifdef DDB
+#if defined(DDB) && !defined(SYMTAB_SPACE)
 	extern void *startsym, *endsym;
 #endif
 	extern void consinit(void);
