@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.1 2002/02/10 01:58:04 thorpej Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.2 2003/10/22 09:03:40 agc Exp $     */
 
 /*
  * Copyright 1997
@@ -234,7 +234,7 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_WRITECCB(iot, ioh, value)  \
    ( i8042_cmd((iot), (ioh), I8042_WRITE_CCB, I8042_NO_RESPONSE, \
-                   NULL, (value)) )
+                   0, (value)) )
 
 /* Macro to read the 8042 Controller Command Byte
 */
@@ -254,7 +254,7 @@ extern int  i8042_wait_input  __P((bus_space_tag_t,
 */
 #define I8042_AUXDISABLE(iot, ioh)  \
    ( i8042_cmd((iot), (ioh), I8042_CMD, I8042_NO_RESPONSE, \
-                   NULL, KBC_AUXDISABLE) )
+                   0, KBC_AUXDISABLE) )
 
 /* Macro to enable the Auxiliary device clock line.
 */
