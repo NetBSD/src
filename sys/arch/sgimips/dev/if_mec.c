@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.2 2000/06/29 07:44:10 mrg Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.3 2000/07/03 12:50:09 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,8 +53,6 @@
 
 #include <machine/endian.h>
 
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
- 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -141,27 +139,41 @@ mec_attach(parent, self, aux)
 	struct mec_softc *sc = (void *)self;
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
-	u_int64_t command;
+	u_int64_t address, command;
+	int i;
 
 	sc->sc_st = maa->maa_st;
 	sc->sc_sh = maa->maa_sh;
+
+	printf(": MAC-110 Ethernet, ");
+	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
+	printf("rev %lld\n", (command & MAC_REVISION) >> MAC_REVISION_SHIFT);
+
+	/*
+	 * The firmware has left us the station address.
+	 */
+	address = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_STATION);
+	for (i = 0; i < 6; i++) {
+		sc->sc_enaddr[5 - i] = address & 0xff;
+		address >>= 8;
+	}
+
+	printf("%s: station address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	/*
 	 * Reset device.
 	 */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL, 0);
-
-	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
-
-	printf(": rev %lld\n", (command & MAC_REVISION) >> MAC_REVISION_SHIFT);
+	delay(1000);
 
 	printf("%s: sorry, this is not a real driver\n", sc->sc_dev.dv_xname);
 
+#if 0
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#if 0
 	ifp->if_ioctl = mec_ioctl;
 	ifp->if_start = mec_start;
 	ifp->if_watchdog = mec_watchdog;
@@ -182,7 +194,7 @@ mec_attach(parent, self, aux)
         } else
                 ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-return;
+return; /* XXX */
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -202,6 +214,7 @@ mec_mii_readreg(self, phy, reg)
 {
 	struct mec_softc *sc = (struct mec_softc *)self;
 	u_int64_t val;
+	int i;
 
 	if (mec_mii_wait(sc) != 0)
 		return 0;
@@ -211,15 +224,16 @@ mec_mii_readreg(self, phy, reg)
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_PHY_READ_INITATE, 1);
 
-	if (mec_mii_wait(sc) != 0)
-		return 0;
+	for (i = 0; i < 20; i++) {
+		delay(30);
 
-	val = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
+		val = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
 
-	if (val == 0xffff)
-		val = 0;
+		if ((val & PHY_DATA_BUSY) == 0)
+			return (int)val & PHY_DATA_VALUE;
+	}
 
-	return (int)val & PHY_DATA_VALUE;
+	return 0;
 }
 
 void
@@ -249,21 +263,21 @@ mec_mii_wait(sc)
 {
 	int i;
 
-	delay(1000);			/* XXX */
-	return 0;
-
 	for (i = 0; i < 100; i++) {
-		delay(10);
-		if ((bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA) &
-		    PHY_DATA_BUSY) == 0)
-			break;
-	}
-	if (i == 100) {
-		printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
-		return 1;
+		u_int64_t busy;
+
+		delay(30);
+
+		busy = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
+
+		if ((busy & PHY_DATA_BUSY) == 0)
+			return 0;
+		if (busy == 0xffff)
+			return 0;
 	}
 
-	return 0;
+	printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
+	return 1;
 }
 
 void
