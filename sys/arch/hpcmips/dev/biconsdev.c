@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.2 2000/03/23 06:38:02 thorpej Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.3 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -185,7 +185,7 @@ biconsdevopen(dev, flag, mode, p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	status = (*linesw[tp->t_line].l_open)(dev, tp);
+	status = (*tp->t_linesw->l_open)(dev, tp);
 	return status;
 }
 
@@ -198,7 +198,7 @@ biconsdevclose(dev, flag, mode, p)
 {
 	register struct tty *tp = &biconsdev_tty [0];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	return (0);
@@ -213,7 +213,7 @@ biconsdevread(dev, uio, flag)
 {
 	register struct tty *tp = &biconsdev_tty [0];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 
@@ -225,7 +225,7 @@ biconsdevwrite(dev, uio, flag)
 {
 	register struct tty *tp = &biconsdev_tty [0];
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 
@@ -249,7 +249,7 @@ biconsdevioctl(dev, cmd, data, flag, p)
 	register struct tty *tp = &biconsdev_tty [0];
 	int error;
 
-	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.44 1998/03/28 23:49:06 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.45 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -551,7 +551,7 @@ dcmopen(dev, flag, mode, p)
 		printf("%s port %d: dcmopen: st %x fl %x\n",
 			sc->sc_dev.dv_xname, port, tp->t_state, tp->t_flags);
 #endif
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 
  bad:
 	return (error);
@@ -575,7 +575,7 @@ dcmclose(dev, flag, mode, p)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	s = spltty();
 
@@ -614,7 +614,7 @@ dcmread(dev, uio, flag)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
  
 int
@@ -634,7 +634,7 @@ dcmwrite(dev, uio, flag)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -866,7 +866,7 @@ dcmreadbuf(sc, port)
 				    "%s port %d: uart overflow\n",
 				    sc->sc_dev.dv_xname, port);
 		}
-		(*linesw[tp->t_line].l_rint)(c, tp);
+		(*tp->t_linesw->l_rint)(c, tp);
 	}
 	sc->sc_scheme.dis_char += nch;
 
@@ -893,7 +893,7 @@ dcmxint(sc, port)
 	tp->t_state &= ~TS_BUSY;
 	if (tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 void
@@ -926,9 +926,9 @@ dcmmint(sc, port, mcnd)
 	}
 	if (delta & MI_CD) {
 		if (mcnd & MI_CD)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+			(void)(*tp->t_linesw->l_modem)(tp, 1);
 		else if ((sc->sc_softCAR & (1 << port)) == 0 &&
-		    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+		    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
 			sc->sc_modem[port]->mdmout = MO_OFF;
 			SEM_LOCK(dcm);
 			dcm->dcm_modemchng |= (1 << port);
@@ -965,7 +965,7 @@ dcmioctl(dev, cmd, data, flag, p)
 		printf("%s port %d: dcmioctl: cmd %lx data %x flag %x\n",
 		       sc->sc_dev.dv_xname, port, cmd, *data, flag);
 #endif
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
