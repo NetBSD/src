@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.1 2000/12/08 20:15:16 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2 2000/12/17 16:00:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int compat_ibcs2_lkmentry __P((struct lkm_table *, int, int));
 /*
  * declare the emulation
  */
-MOD_COMPAT("ibcs2", -1, &emul_ibcs2);
+MOD_COMPAT("compat_ibcs2", -1, &emul_ibcs2);
 
 /*
  * entry point
