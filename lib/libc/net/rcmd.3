@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.21 2001/09/16 02:54:17 wiz Exp $
+.\"	$NetBSD: rcmd.3,v 1.22 2002/02/07 07:00:21 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.Fd #include \*[Lt]unistd.h\*[Gt]
 .Ft int
 .Fn rcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
 .Ft int
@@ -327,7 +327,7 @@ struct passwd *pw;
 
 pw = getpwuid(getuid());
 ...
-if (rcmd(host, port, pw->pw_name, pw->pw_name, cmd, fd2p) < 0)
+if (rcmd(host, port, pw-\*[Gt]pw_name, pw-\*[Gt]pw_name, cmd, fd2p) \*[Lt] 0)
 	err(1, "rcmd");
 
 .Ed

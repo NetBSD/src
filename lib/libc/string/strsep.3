@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.8 2000/09/28 03:18:35 hubertf Exp $
+.\"	$NetBSD: strsep.3,v 1.9 2002/02/07 07:00:33 ross Exp $
 .\"
 .Dd June 9, 1993
 .Dt STRSEP 3
@@ -44,7 +44,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <string.h>
+.Fd #include \*[Lt]string.h\*[Gt]
 .Ft char *
 .Fn strsep "char **stringp" "const char *delim"
 .Sh DESCRIPTION
@@ -87,7 +87,7 @@ argument vector:
 .Bd -literal -offset indent
 char **ap, *argv[10], *inputstring;
 
-for (ap = argv; (*ap = strsep(&inputstring, " \et")) != NULL;)
+for (ap = argv; (*ap = strsep(&amp;inputstring, " \et")) != NULL;)
 	if (**ap != '\e0')
 		++ap;
 .Ed

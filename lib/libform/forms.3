@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.3 2002/01/15 02:50:19 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.4 2002/02/07 07:00:47 ross Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -38,7 +38,7 @@
 .Sh LIBRARY
 .Lb libform
 .Sh SYNOPSIS
-.Fd #include <form.h>
+.Fd #include \*[Lt]form.h\*[Gt]
 .Sh DESCRIPTION
 The
 .Xr form 3
@@ -187,28 +187,28 @@ E_CURRENT		The field is the active one on the form.
 .Xr curses 3
 .Sh NOTES
 This implementation of the forms library does depart in behaviour
-subtly from the original AT & T implementation.  Some of the more
+subtly from the original AT &amp; T implementation.  Some of the more
 notable departures are:
 .Pp
 .Bl -tag -width "circular fields" -compact
 .It field wrapping
 For multiline fields the data will be wrapped as it is entered, this
-does not happen in the AT&T implementation.
+does not happen in the AT&amp;T implementation.
 .It buffer 0
 In this implementation, the contents of buffer 0 are always current
 regardless of whether the field has been validated or not.
 .It circular fields
-In the AT&T implementation fields are circular on a page, that is, a
+In the AT&amp;T implementation fields are circular on a page, that is, a
 next field from the last field will go to the first field on the
 curent page.  In this implementation a next field request on the last
 field of a page will result in the forms library positioning the
 cursor on the first field of the next page.  If the field is the last
 field in the form then going to the next field will be denied, in the
-AT&T it would result in the cursor being placed on the first field of
+AT&amp;T it would result in the cursor being placed on the first field of
 the first page.
 .It buffer returns
 In this implementation only the data entered by the user in the form
-field will be returned, unlike the AT&T library which would return the
+field will be returned, unlike the AT&amp;T library which would return the
 contents of the field padded to the size of the field with the pad
 character.
 .El

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee_test.3,v 1.6 1999/08/15 22:23:54 kleink Exp $
+.\"	$NetBSD: ieee_test.3,v 1.7 2002/02/07 07:00:49 ross Exp $
 .\"
 .Dd March 10, 1994
 .Dt IEEE_TEST 3
@@ -46,7 +46,7 @@
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
-.Fd #include <math.h>
+.Fd #include \*[Lt]math.h\*[Gt]
 .Ft double
 .Fn logb "double x"
 .Ft float
@@ -88,7 +88,7 @@ where
 .Fa sig No \(** 2** Ns Fa n
 with 1 \(<=
 .Fa sig
-< 2.
+\*[Lt] 2.
 .Fn significand x
 is not defined when
 .Fa x

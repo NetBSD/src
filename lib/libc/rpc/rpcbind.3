@@ -1,7 +1,7 @@
 .\" @(#)rpcbind.3n 1.25 93/05/07 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright (c) 1988 Sun Microsystem's, Inc. - All Right's Reserved.
-.\"	$NetBSD: rpcbind.3,v 1.4 2001/09/16 18:51:10 wiz Exp $
+.\"	$NetBSD: rpcbind.3,v 1.5 2002/02/07 07:00:24 ross Exp $
 .Dd May 7, 1993
 .Dt RPCBIND 3
 .Os
@@ -16,7 +16,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
 .Ft "struct rpcblist *"
 .Fn rpcb_getmaps "const struct netconfig *netconf" "const char *host"
 .Ft bool_t
@@ -140,7 +140,7 @@ service, which establishes a mapping between the triple
 [
 .Fa prognum ,
 .Fa versnum ,
-.Fa netconf->nc_netid ]
+.Fa netconf-\*[Gt]nc_netid ]
 and
 .Fa svcaddr
 on the machine's rpcbind
@@ -168,7 +168,7 @@ service, which destroys the mapping between the triple
 [
 .Fa prognum ,
 .Fa versnum ,
-.Fa netconf->nc_netid ]
+.Fa netconf-\*[Gt]nc_netid ]
 and the address on the machine's rpcbind
 service.
 If

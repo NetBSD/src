@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.2 2001/09/15 11:16:14 wiz Exp $
+.\"	$NetBSD: pci.3,v 1.3 2002/02/07 07:00:51 ross Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libpci
 .Sh SYNOPSIS
-.Fd #include <pci.h>
+.Fd #include \*[Lt]pci.h\*[Gt]
 .Ft int
 .Fn pcibus_conf_read "int pcifd" "u_int bus" "u_int dev" "u_int func" \
 "u_int reg" "pcireg_t *valp"

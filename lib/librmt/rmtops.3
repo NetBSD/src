@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.5 2001/10/16 09:26:20 wiz Exp $
+.\"	$NetBSD: rmtops.3,v 1.6 2002/02/07 07:00:51 ross Exp $
 .\"
 .Dd October 16, 2001
 .Os
@@ -9,8 +9,8 @@
 .Sh LIBRARY
 Remote Magnetic Tape Library (librmt, -lrmt)
 .Sh SYNOPSIS
-.Fd #include <rmt.h>
-.Fd #include <sys/stat.h>
+.Fd #include \*[Lt]rmt.h\*[Gt]
+.Fd #include \*[Lt]sys/stat.h\*[Gt]
 .Ft int
 .Fn isrmt "int fd"
 .Ft int
@@ -79,7 +79,7 @@ the current user's login name.
 .\" is recognized.
 .Pp
 For transparency, the user should include the file
-.Pa <rmt.h> ,
+.Pa \*[Lt]rmt.h\*[Gt] ,
 which has the following defines in it:
 .Pp
 .Bd -literal
@@ -110,7 +110,7 @@ routines taking care of differentiating between local and remote
 files.  This file should be included
 .Em before
 including the file
-.Pa <sys/stat.h> ,
+.Pa \*[Lt]sys/stat.h\*[Gt] ,
 since it redefines the identifier ``stat'' which is used to declare
 objects of type
 .Em "struct stat" .
@@ -164,7 +164,7 @@ Fred Fish redid them into a general purpose library.
 .Pp
 Arnold Robbins added the ability to specify a user name on the remote
 system, the
-.Pa <rmt.h>
+.Pa \*[Lt]rmt.h\*[Gt]
 include file, this man page, cleaned up the library a little, and made
 the appropriate changes for
 .Bx 4.3 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: btree.3,v 1.7 2001/09/16 02:59:43 wiz Exp $
+.\"	$NetBSD: btree.3,v 1.8 2002/02/07 07:00:10 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@ btree \- btree database access method
 .SH SYNOPSIS
 .nf
 .ft B
-#include <sys/types.h>
-#include <db.h>
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]db.h\*[Gt]
 .ft R
 .fi
 .SH DESCRIPTION
@@ -58,7 +58,7 @@ associated key/data pairs.
 .PP
 The btree access method specific data structure provided to
 .I dbopen
-is defined in the <db.h> include file as follows:
+is defined in the \*[Lt]db.h\*[Gt] include file as follows:
 .PP
 typedef struct {
 .RS

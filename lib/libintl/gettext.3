@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettext.3,v 1.5 2002/01/15 02:50:54 wiz Exp $
+.\"	$NetBSD: gettext.3,v 1.6 2002/02/07 07:00:47 ross Exp $
 .\"
 .\" Copyright (c) 2000 Citrus Project,
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Sh LIBRARY
 .Lb libintl
 .Sh SYNOPSIS
-.Fd #include <libintl.h>
+.Fd #include \*[Lt]libintl.h\*[Gt]
 .Ft char *
 .Fn gettext "const char *msgid"
 .Ft char *
@@ -56,8 +56,8 @@
 .Fn bindtextdomain "const char *domainname" "const char *dirname"
 .Ft char *
 .Fn bind_textdomain_codeset "const char *domainname" "const char *codeset"
-.Fd #include <libintl.h>
-.Fd #include <locale.h>
+.Fd #include \*[Lt]libintl.h\*[Gt]
+.Fd #include \*[Lt]locale.h\*[Gt]
 .Ft char *
 .Fn dcgettext "const char *domainname" "const char *msgid" "int category"
 .Ft char *

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
-.\"	$NetBSD: exp.3,v 1.16 1999/08/15 22:23:54 kleink Exp $
+.\"	$NetBSD: exp.3,v 1.17 2002/02/07 07:00:49 ross Exp $
 .\"
 .Dd July 31, 1991
 .Dt EXP 3
@@ -52,7 +52,7 @@
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
-.Fd #include <math.h>
+.Fd #include \*[Lt]math.h\*[Gt]
 .Ft double
 .Fn exp "double x"
 .Ft float
@@ -178,7 +178,7 @@ The function
 .Fn pow x y
 checks to see if
 .Fa x
-< 0 and
+\*[Lt] 0 and
 .Fa y
 is not an integer, in the event this is true,
 the global variable
@@ -200,11 +200,11 @@ is set to
 and the reserved operand is returned
 by log unless
 .Fa x
-> 0, by
+\*[Gt] 0, by
 .Fn log1p
 unless
 .Fa x
-> \-1.
+\*[Gt] \-1.
 .Sh NOTES
 The functions exp(x)\-1 and log(1+x) are called
 expm1 and logp1 in
@@ -269,7 +269,7 @@ If x(z) and y(z) are
 .Em any
 functions analytic (expandable
 in power series) in z around z = 0, and if there
-x(0) = y(0) = 0, then x(z)**y(z) \(-> 1 as z \(-> 0.
+x(0) = y(0) = 0, then x(z)**y(z) \(-\*[Gt] 1 as z \(-\*[Gt] 0.
 .Ed
 .It
 If 0**0 = 1, then

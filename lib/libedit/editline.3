@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.25 2002/01/15 02:46:22 wiz Exp $
+.\"	$NetBSD: editline.3,v 1.26 2002/02/07 07:00:44 ross Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .Sh LIBRARY
 .Lb libedit
 .Sh SYNOPSIS
-.Fd #include <histedit.h>
+.Fd #include \*[Lt]histedit.h\*[Gt]
 .Ft EditLine *
 .Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
 .Ft void
@@ -624,7 +624,7 @@ and
 Jaromir Dolecek implemented the readline emulation.
 .Sh BUGS
 The tokenization functions are not publicly defined in
-.Fd <histedit.h> .
+.Fd \*[Lt]histedit.h\*[Gt] .
 .Pp
 At this time, it is the responsibility of the caller to
 check the result of the

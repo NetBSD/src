@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.2 2001/11/10 08:05:51 wiz Exp $
+.\"     $NetBSD: skey.3,v 1.3 2002/02/07 07:00:51 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .Sh LIBRARY
 S/key One-Time Password Library (libskey, -lskey)
 .Sh SYNOPSIS
-.Fd #include <skey.h>
+.Fd #include \*[Lt]skey.h\*[Gt]
 .Ft int
 .Fn skeychallenge "struct skey *mp" "const char *name" "char *ss" \
 "size_t sslen"
@@ -228,7 +228,7 @@ as a string of English words.  Returns a pointer to a static buffer in
 .It Fn etob "out" "e"
 Convert English to binary.  Returns 0 if the word is not in the
 database, 1 if all good words and parity is valid, -1 if badly formed
-input (i.e. > 4 char word) and -2 if words are valid but parity is
+input (i.e. \*[Gt] 4 char word) and -2 if words are valid but parity is
 wrong.
 .It Fn put8 "out" "s"
 Display 8 bytes

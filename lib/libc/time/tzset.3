@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.17 2002/01/02 03:25:08 wiz Exp $
+.\"	$NetBSD: tzset.3,v 1.18 2002/02/07 07:00:34 ross Exp $
 .Dd April 1, 2001
 .Dt TZSET 3
 .Os
@@ -8,7 +8,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <time.h>
+.Fd #include \*[Lt]time.h\*[Gt]
 .Ft void
 .Fn tzset "void"
 .Sh DESCRIPTION
@@ -149,9 +149,9 @@ is one of the following:
 .It Cm J Ns Ar n
 The Julian day
 .Ar n
-(1 \*(<=
+(1 \*(\*[Le]
 .Ar n
-\*(<= 365).
+\*(\*[Le] 365).
 Leap days are not counted; that is, in all years \(em including leap
 years \(em February 28 is day 59 and March 1 is day 60.  It is
 impossible to explicitly refer to the occasional February 29.

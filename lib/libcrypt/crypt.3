@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.10 2002/01/15 02:40:05 wiz Exp $
+.\"	$NetBSD: crypt.3,v 1.11 2002/02/07 07:00:36 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Sh LIBRARY
 .Lb libcrypt
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
+.Fd #include \*[Lt]unistd.h\*[Gt]
 .Ft char
 .Fn *crypt "const char *key" "const char *setting"
 .Ft int
@@ -55,7 +55,7 @@
 .Fn des_setkey "const char *key"
 .Ft int
 .Fn des_cipher "const char *in" "char *out" "long salt" "int count"
-.Fd #include <stdlib.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
 .Ft int
 .Fn setkey "const char *key"
 .Sh DESCRIPTION

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.17 1999/08/16 12:35:18 kleink Exp $
+.\"	$NetBSD: lgamma.3,v 1.18 2002/02/07 07:00:49 ross Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
@@ -48,7 +48,7 @@
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
-.Fd #include <math.h>
+.Fd #include \*[Lt]math.h\*[Gt]
 .Ft extern int
 .Fa signgam ;
 .sp
@@ -73,9 +73,9 @@
 .if t \{\
 returns ln\||\(*G(x)| where
 .Bd -unfilled -offset indent
-\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
+\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x \*[Gt] 0 and
 .br
-\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x \*[Lt] 1.
 .Ed
 .\}
 .if n \

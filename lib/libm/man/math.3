@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.9 2001/11/10 06:29:57 gmcgarry Exp $
+.\"	$NetBSD: math.3,v 1.10 2002/02/07 07:00:49 ross Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -50,7 +50,7 @@ These functions constitute the C math library,
 .I libm.
 The link editor searches this library under the \*(lq\-lm\*(rq option.
 Declarations for these functions may be obtained from the include file
-.RI < math.h >.
+.RI \*[Lt] math.h \*[Gt].
 .\" The Fortran math library is described in ``man 3f intro''.
 .SH "LIST OF FUNCTIONS"
 .sp 2
@@ -123,7 +123,7 @@ the following had been reported:
 .RS
 sqrt(\-1.0) = 0.0 and log(\-1.0) = \-1.7e38.
 .br
-cos(1.0e\-11) > cos(0.0) > 1.0.
+cos(1.0e\-11) \*[Gt] cos(0.0) \*[Gt] 1.0.
 .br
 pow(x,1.0)
 .if n \
@@ -191,7 +191,7 @@ It is possible to have x
 \(!=
 y and yet
 x\-y = 0 because of underflow.  Similarly
-x > y > 0 cannot prevent either x\(**y = 0
+x \*[Gt] y \*[Gt] 0 cannot prevent either x\(**y = 0
 or  y/x = 0 from happening without warning.
 .RE
 .RE
@@ -280,7 +280,7 @@ produced by a host of manufacturers, among them ...
 .ta 0.5i +\w'Intel i8070, i80287'u+6n
 	Intel i8087, i80287	National Semiconductor  32081
 	Motorola 68881	Weitek WTL-1032, ... , -1165
-	Zilog Z8070	Western Electric (AT&T) WE32106.
+	Zilog Z8070	Western Electric (AT&amp;T) WE32106.
 .ta
 .fi
 Other implementations range from software, done thoroughly
@@ -407,7 +407,7 @@ If x
 .if t \
 \(!=
 x then x is \*(nn; every other predicate
-(x > y, x = y, x < y, ...) is FALSE if \*(nn is involved.
+(x \*[Gt] y, x = y, x \*[Lt] y, ...) is FALSE if \*(nn is involved.
 .br
 NOTE: Trichotomy is violated by \*(nn.
 .RS

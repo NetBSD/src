@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.12 2001/09/16 02:57:03 wiz Exp $
+.\"	$NetBSD: directory.3,v 1.13 2002/02/07 07:00:11 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <dirent.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]dirent.h\*[Gt]
 .Ft DIR *
 .Fn opendir "const char *filename"
 .Ft struct dirent *
@@ -160,7 +160,7 @@ Sample code which searchs a directory for entry ``name'' is:
 len = strlen(name);
 dirp = opendir(".");
 while ((dp = readdir(dirp)) != NULL)
-	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
+	if (dp-\*[Gt]d_namlen == len &amp;&amp; !strcmp(dp-\*[Gt]d_name, name)) {
 		(void)closedir(dirp);
 		return FOUND;
 	}

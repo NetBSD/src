@@ -1,4 +1,4 @@
-.\" $NetBSD: tsearch.3,v 1.2 2001/09/16 01:31:54 wiz Exp $
+.\" $NetBSD: tsearch.3,v 1.3 2002/02/07 07:00:30 ross Exp $
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Nm tsearch, tfind, tdelete, twalk
 .Nd manipulate binary search trees
 .Sh SYNOPSIS
-.Fd #include <search.h>
+.Fd #include \*[Lt]search.h\*[Gt]
 .Ft void *
 .Fn tdelete "const void *key" "void **rootp", "int (*compar) (const void *, const void *)"
 .Ft void *

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acos.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: acos.3,v 1.12 1999/08/15 22:23:53 kleink Exp $
+.\"	$NetBSD: acos.3,v 1.13 2002/02/07 07:00:48 ross Exp $
 .\"
 .Dd May 2, 1991
 .Dt ACOS 3
@@ -42,7 +42,7 @@
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
-.Fd #include <math.h>
+.Fd #include \*[Lt]math.h\*[Gt]
 .Ft double
 .Fn acos "double x"
 .Ft float
@@ -57,7 +57,7 @@ functions compute the principal value of the arc cosine of
 in the range
 .Bq 0 , \*(Pi .
 .Sh RETURN VALUES
-If |x|>1,
+If |x|\*[Gt]1,
 .Fn acos "x"
 and
 .Fn acosf "x"

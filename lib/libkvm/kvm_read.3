@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_read.3,v 1.4 1999/07/02 15:28:50 simonb Exp $
+.\"	$NetBSD: kvm_read.3,v 1.5 2002/02/07 07:00:48 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Sh LIBRARY
 .Lb libkvm
 .Sh SYNOPSIS
-.Fd #include <kvm.h>
+.Fd #include \*[Lt]kvm.h\*[Gt]
 .Ft ssize_t
 .Fn kvm_read "kvm_t *kd" "u_long addr" "void *buf" "size_t nbytes"
 .Ft ssize_t

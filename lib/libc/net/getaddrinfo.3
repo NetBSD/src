@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.22 2001/09/16 02:54:17 wiz Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.23 2002/02/07 07:00:20 ross Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -48,9 +48,9 @@
 .Lb libc
 .\"
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]netdb.h\*[Gt]
 .Ft int
 .Fn getaddrinfo "const char *nodename" "const char *servname" \
 "const struct addrinfo *hints" "struct addrinfo **res"
@@ -421,24 +421,24 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(&hints, 0, sizeof(hints));
+memset(&amp;hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-error = getaddrinfo("www.kame.net", "http", &hints, &res0);
+error = getaddrinfo("www.kame.net", "http", &amp;hints, &amp;res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 s = -1;
-for (res = res0; res; res = res->ai_next) {
-	s = socket(res->ai_family, res->ai_socktype,
-	    res->ai_protocol);
-	if (s < 0) {
+for (res = res0; res; res = res-\*[Gt]ai_next) {
+	s = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
+	    res-\*[Gt]ai_protocol);
+	if (s \*[Lt] 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+	if (connect(s, res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
 		cause = "connect";
 		close(s);
 		s = -1;
@@ -447,7 +447,7 @@ for (res = res0; res; res = res->ai_next) {
 
 	break;	/* okay we got one */
 }
-if (s < 0) {
+if (s \*[Lt] 0) {
 	err(1, cause);
 	/*NOTREACHED*/
 }
@@ -464,25 +464,25 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(&hints, 0, sizeof(hints));
+memset(&amp;hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
-error = getaddrinfo(NULL, "http", &hints, &res0);
+error = getaddrinfo(NULL, "http", &amp;hints, &amp;res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 nsock = 0;
-for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
-	s[nsock] = socket(res->ai_family, res->ai_socktype,
-	    res->ai_protocol);
-	if (s[nsock] < 0) {
+for (res = res0; res &amp;&amp; nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next) {
+	s[nsock] = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
+	    res-\*[Gt]ai_protocol);
+	if (s[nsock] \*[Lt] 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) < 0) {
+	if (bind(s[nsock], res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
 		cause = "bind";
 		close(s[nsock]);
 		continue;

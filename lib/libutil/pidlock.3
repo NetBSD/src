@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.3 1998/06/08 10:58:45 lukem Exp $
+.\"	$NetBSD: pidlock.3,v 1.4 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>
 .\"
@@ -31,7 +31,7 @@
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
-.Fd #include <util.h>
+.Fd #include \*[Lt]util.h\*[Gt]
 .Ft int
 .Fn pidlock "const char *lockfile" "int flags" "pid_t *locker" "const char *info"
 .Ft int
@@ -160,7 +160,7 @@ and
 functions appeared in
 .Nx 1.3 .
 .Sh AUTHORS
-Curt Sampson <cjs@netbsd.org>
+Curt Sampson \*[Lt]cjs@netbsd.org\*[Gt]
 .Sh BUGS
 The lockfile format breaks if a pid is longer than ten digits when
 printed in decimal form.

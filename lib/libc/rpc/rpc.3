@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.12 2002/01/15 02:37:09 wiz Exp $
+.\"	$NetBSD: rpc.3,v 1.13 2002/02/07 07:00:23 ross Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -10,8 +10,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <rpc/rpc.h>
-.Fd #include <netconfig.h>
+.Fd #include \*[Lt]rpc/rpc.h\*[Gt]
+.Fd #include \*[Lt]netconfig.h\*[Gt]
 .Sh DESCRIPTION
 These
 routines allow C language programs to make procedure
@@ -22,11 +22,11 @@ to perform the requested service, and then sends back a reply.
 .Pp
 All
 RPC routines require the header
-.Fd <rpc/rpc.h> .
+.Fd \*[Lt]rpc/rpc.h\*[Gt] .
 Routines that take a
 .Fa netconfig
 structure also require that
-.Fd <netconfig.h>
+.Fd \*[Lt]netconfig.h\*[Gt]
 be included.
 .Ss Nettype
 Some of the high-level
@@ -146,7 +146,7 @@ typedef struct {
     struct    opaque_auth    ah_verf;
     struct auth_ops {
         void    (*ah_nextverf)(\|);
-        int    (*ah_marshal)(\|);    /* nextverf & serialize */
+        int    (*ah_marshal)(\|);    /* nextverf &amp; serialize */
         int    (*ah_validate)(\|);    /* validate verifier */
         int    (*ah_refresh)(\|);    /* refresh credentials */
         void    (*ah_destroy)(\|);    /* destroy this structure */
@@ -282,7 +282,7 @@ typedef struct {
 } XDR;
 
 /*
- * The netbuf structure. This structure is defined in <xti.h> on SysV
+ * The netbuf structure. This structure is defined in \*[Lt]xti.h\*[Gt] on SysV
  * systems, but NetBSD does not use XTI.
  *
  * Usually, buf will point to a struct sockaddr, and len and maxlen

@@ -1,4 +1,4 @@
-.\" $NetBSD: bm.3,v 1.4 2001/04/09 12:07:57 wiz Exp $
+.\" $NetBSD: bm.3,v 1.5 2002/02/07 07:00:31 ross Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <bm.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]bm.h\*[Gt]
 .Ft bm_pat *
 .Fn bm_comp "u_char *pattern" "size_t patlen" "u_char freq[256]"
 .Ft u_char *
