@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752 2005/01/11 18:59:34 skrll Exp $
+# $NetBSD: mi,v 1.753 2005/01/11 22:07:02 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1466,7 +1466,7 @@
 ./usr/share/man/cat5/lkm.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/locale.alias.0		man-sys-catman		.cat
 ./usr/share/man/cat5/locate.conf.0		man-sys-catman		.cat
-./usr/share/man/cat5/login.access.0		man-sys-catman		.cat
+./usr/share/man/cat5/login.access.0		man-sys-catman		pam,.cat
 ./usr/share/man/cat5/login.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
@@ -1941,25 +1941,25 @@
 ./usr/share/man/cat8/ofppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/oqmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/pac.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/pam_chroot.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_deny.0			man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_echo.0			man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_exec.0			man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_ftpusers.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_group.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_guest.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_krb5.0			man-sysutil-catman	kerberos,.cat,pam
-./usr/share/man/cat8/pam_ksu.0			man-sysutil-catman	kerberos,.cat,pam
-./usr/share/man/cat8/pam_lastlog.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_login_access.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_nologin.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_permit.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_rhosts.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_rootok.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_securetty.0		man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_self.0			man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_ssh.0			man-sysutil-catman	.cat,pam
-./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	.cat,pam
+./usr/share/man/cat8/pam_chroot.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_deny.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_echo.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_exec.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_ftpusers.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_group.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_guest.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_krb5.0			man-sysutil-catman	kerberos,pam,.cat
+./usr/share/man/cat8/pam_ksu.0			man-sysutil-catman	kerberos,pam,.cat
+./usr/share/man/cat8/pam_lastlog.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_login_access.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_nologin.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_permit.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_rhosts.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_rootok.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_securetty.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_self.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_ssh.0			man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_unix.0			man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pc532/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pc532/bim.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/pc532/makedev.0		man-obsolete		obsolete
@@ -3653,7 +3653,7 @@
 ./usr/share/man/man5/lkm.conf.5			man-sys-man		.man
 ./usr/share/man/man5/locale.alias.5		man-sys-man		.man
 ./usr/share/man/man5/locate.conf.5		man-sys-man		.man
-./usr/share/man/man5/login.access.5		man-sys-man		.man
+./usr/share/man/man5/login.access.5		man-sys-man		.man,pam
 ./usr/share/man/man5/login.conf.5		man-sys-man		.man
 ./usr/share/man/man5/magic.5			man-util-man		.man
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
