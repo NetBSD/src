@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.5 2002/12/04 22:55:11 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.6 2002/12/09 21:29:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.5 2002/12/04 22:55:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.6 2002/12/09 21:29:23 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -138,7 +138,8 @@ int native_to_mach_errno[] = {
 };
 
 int
-mach_msg_error(msgh, req, rep, error, maxlen, dst)
+mach_msg_error(p, msgh, req, rep, error, maxlen, dst)
+	struct proc *p;
 	mach_msg_header_t *msgh;
 	mach_msg_header_t *req;
 	mach_error_reply_t *rep;
@@ -158,10 +159,5 @@ mach_msg_error(msgh, req, rep, error, maxlen, dst)
 
 	DPRINTF(("mach_msg_error: error = %d\n", error));
 
-	if (sizeof(*rep) > maxlen)
-		return EMSGSIZE;
-	if (dst != NULL)
-		msgh = dst;
-
-	return copyout(rep, msgh, sizeof(*rep));
+	return MACH_MSG_RETURN(p, rep, msgh, sizeof(*rep), maxlen, dst);
 }
