@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.47.4.2 2000/09/05 01:08:26 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.47.4.3 2000/09/05 01:43:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram

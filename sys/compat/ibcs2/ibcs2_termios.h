@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_termios.h,v 1.3 1994/10/26 02:53:07 cgd Exp $	*/
+/*	$NetBSD: ibcs2_termios.h,v 1.3.42.1 2000/09/05 01:43:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Scott Bartram
@@ -231,5 +231,28 @@ struct ibcs2_winsize {
         u_short ws_ypixel;
 };
 
-#endif /* _IBCS2_H_ */
+#define	IBCS2_GHUPCL		0x0001
+#define	IBCS2_GXTABS		0x0002
+#define	IBCS2_GLCASE		0x0004
+#define	IBCS2_GECHO		0x0008
+#define	IBCS2_GCRMOD		0x0010
+#define	IBCS2_GRAW		0x0020
+#define	IBCS2_GODDP		0x0040
+#define	IBCS2_GEVENP		0x0080
+#define	IBCS2_GANYP		0x00C0
+#define	IBCS2_GNLDELAY		0x0300
+#define	IBCS2_GTBDELAY		0x0400
+#define	IBCS2_GCRDELAY		0x3000
+#define	IBCS2_GVTDELAY		0x4000
+#define	IBCS2_GBSDELAY		0x8000
+#define	IBCS2_GALLDELAY		0xFF00
 
+struct ibcs2_sgttyb {
+	char sg_ispeed;
+	char sg_ospeed;
+	char sg_erase;
+	char sg_kill;
+	int sg_flags;
+};
+
+#endif /* _IBCS2_H_ */
