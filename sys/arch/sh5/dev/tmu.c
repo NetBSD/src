@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.2 2002/08/26 10:48:17 scw Exp $	*/
+/*	$NetBSD: tmu.c,v 1.3 2002/09/04 15:18:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -152,7 +152,7 @@ tmuattach(struct device *parent, struct device *self, void *args)
 	 * Attach to the common clock back-end
 	 */
 	sc->sc_ca.ca_rate = cprc_clocks.cc_peripheral / 4;
-	sc->sc_ca.ca_has_stat_clock = 1;
+	sc->sc_ca.ca_has_stat_clock = 0;
 	sc->sc_ca.ca_arg = sc;
 	sc->sc_ca.ca_start = tmu_start;
 	sc->sc_ca.ca_microtime = tmu_microtime;
