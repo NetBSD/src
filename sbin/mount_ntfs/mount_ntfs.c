@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.10 2003/08/02 10:11:47 jdolecek Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.11 2005/01/31 05:19:19 erh Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.10 2003/08/02 10:11:47 jdolecek Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.11 2005/01/31 05:19:19 erh Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -85,7 +85,7 @@ mount_ntfs(argc, argv)
 	struct ntfs_args args;
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, *dir, ndir[MAXPATHLEN+1];
+	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -125,14 +125,21 @@ mount_ntfs(argc, argv)
 
 	dev = argv[optind];
 	dir = argv[optind + 1];
-	if (dir[0] != '/') {
-		warnx("\"%s\" is a relative path", dir);
-		if (getcwd(ndir, sizeof(ndir)) == NULL)
-			err(EX_OSERR, "getcwd");
-		strncat(ndir, "/", sizeof(ndir) - strlen(ndir) - 1);
-		strncat(ndir, dir, sizeof(ndir) - strlen(ndir) - 1);
-		dir = ndir;
-		warnx("using \"%s\" instead", dir);
+
+	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
+		err(1, "realpath %s", dev);
+	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dev);
+		dev = canon_dev;
+		warnx("using \"%s\" instead.", dev);
+	}
+
+	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
+		err(1, "realpath %s", dir);
+	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", dir);
+		dir = canon_dir;
+		warnx("using \"%s\" instead.", dir);
 	}
 
 	args.fspec = dev;

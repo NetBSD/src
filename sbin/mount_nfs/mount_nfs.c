@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.45 2003/08/07 10:04:29 agc Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.46 2005/01/31 05:19:19 erh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.45 2003/08/07 10:04:29 agc Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.46 2005/01/31 05:19:19 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ mount_nfs(argc, argv)
 	struct nfsd_cargs ncd;
 	struct sockaddr_storage sa;
 	int mntflags, altflags, i, nfssvc_flag, num;
-	char *name, *p, *spec, *ospec;
+	char name[MAXPATHLEN], *p, *spec, *ospec;
 	mntoptparse_t mp;
 #ifdef NFSKERB
 	uid_t last_ruid;
@@ -513,7 +513,13 @@ mount_nfs(argc, argv)
 		usage();
 
 	spec = *argv++;
-	name = *argv;
+	if (realpath(*argv, name) == NULL)           /* Check mounton path */
+		err(1, "realpath %s", *argv);
+	if (strncmp(*argv, name, MAXPATHLEN)) {
+		warnx("\"%s\" is a relative path.", *argv);
+		warnx("using \"%s\" instead.", name);
+	}
+
 	if ((ospec = strdup(spec)) == NULL) {
 		err(1, "strdup");
 	}

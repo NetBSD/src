@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.16 2004/04/23 02:58:27 simonb Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.17 2005/01/31 05:19:19 erh Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -54,6 +54,11 @@ command attaches the NTFS filesystem residing on the device
 to the global filesystem namespace at the location
 indicated by
 .Pa node .
+Both
+.Ar special
+and
+.Ar node
+are converted to absolute paths before use.
 This command is normally executed by
 .Xr mount 8
 at boot time, but can be used by any user to mount an
