@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.9 2003/09/30 21:04:54 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.10 2003/10/08 00:40:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.9 2003/09/30 21:04:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.10 2003/10/08 00:40:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ darwin_sendsig(ksi, mask)
 
 	tf = trapframe(l);
 
-	sig = ksi->_signo;
-	code = ksi->_code;
+	sig = ksi->ksi_signo;
+	code = ksi->ksi_code;
 	catcher = SIGACTION(p, sig).sa_handler;
 
 	/* Use an alternate signal stack? */
