@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.5 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.6 2004/05/07 15:20:29 cl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.5 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6 2004/05/07 15:20:29 cl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -225,44 +225,11 @@ again:
 	kfs->kfs_fileno = KERNFS_FILENO(kt, kfs_type, kfs->kfs_cookie);
 	kfs->kfs_value = value;
 	kfs->kfs_kt = kt;
+	kfs->kfs_mode = kt->kt_mode;
+	vp->v_type = kt->kt_vtype;
 
-	switch (kfs_type) {
-	case KFSkern:	/* /kern = dr-xr-xr-x */
-		kfs->kfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-		vp->v_type = VDIR;
+	if (kfs_type == KFSkern)
 		vp->v_flag = VROOT;
-		break;
-
-	case KFSnull:	/* /kern/?? = -r--r--r-- */
-	case KFStime:	/* /kern/time = -r--r--r-- */
-	case KFSint:	/* /kern/?? = -r--r--r-- */
-	case KFSstring:	/* /kern/?? = -r--r--r-- */
-	case KFSavenrun:	/* /kern/loadavg = -r--r--r-- */
-	case KFSmsgbuf:	/* /kern/msgbuf = -r--r--r-- */
-		kfs->kfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
-		vp->v_type = VREG;
-		break;
-
-	case KFSipsecsadir:	/* /kern/ipsecsa = dr-x------ */
-	case KFSipsecspdir:	/* /kern/ipsecsp = dr-x------ */
-		kfs->kfs_mode = S_IRUSR|S_IXUSR;
-		vp->v_type = VDIR;
-		break;
-
-	case KFSipsecsa:	/* /kern/ipsecsa/N = -r-------- */
-	case KFSipsecsp:	/* /kern/ipsecsp/N = -r-------- */
-		kfs->kfs_mode = S_IRUSR;
-		vp->v_type = VREG;
-		break;
-
-	case KFShostname: /* /kern/hostname = -rw-r-r--- */
-		kfs->kfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
-		vp->v_type = VREG;
-		break;
-
-	default:
-		panic("kernfs_allocvp");
-	}
 
 	kernfs_hashins(kfs);
 	uvm_vnp_setsize(vp, 0);
