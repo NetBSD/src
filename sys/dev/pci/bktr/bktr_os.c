@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_os.c,v 1.1.1.3 2000/10/28 14:17:51 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.1.1.4 2000/12/30 16:44:11 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.18 2000/10/15 14:18:06 phk Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)

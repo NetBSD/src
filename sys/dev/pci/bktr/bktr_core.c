@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_core.c,v 1.1.1.3 2000/10/28 14:17:38 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.1.1.4 2000/12/30 16:44:04 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.112 2000/10/15 14:18:06 phk Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -606,6 +606,9 @@ bktr_store_address(unit, BKTR_MEM_BUF,          buf);
 	bktr->bt848_tuner = -1;
 	bktr->reverse_mute = -1;
 	bktr->slow_msp_audio = 0;
+	bktr->msp_use_mono_source = 0;
+        bktr->msp_source_selected = -1;
+	bktr->audio_mux_present = 1;
 
 	probeCard( bktr, TRUE, unit );
 
@@ -2254,6 +2257,31 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		*(u_long *)arg = (par & 0xffffff00) | ( data & 0xff );
 		break;
 
+
+#ifdef BT848_MSP_READ
+	/* I2C ioctls to allow userland access to the MSP chip */
+	case BT848_MSP_READ:
+		{
+		struct bktr_msp_control *msp;
+		msp = (struct bktr_msp_control *) arg;
+		msp->data = msp_dpl_read(bktr, bktr->msp_addr,
+		                         msp->function, msp->address);
+		break;
+		}
+
+	case BT848_MSP_WRITE:
+		{
+		struct bktr_msp_control *msp;
+		msp = (struct bktr_msp_control *) arg;
+		msp_dpl_write(bktr, bktr->msp_addr, msp->function,
+		             msp->address, msp->data );
+		break;
+		}
+
+	case BT848_MSP_RESET:
+		msp_dpl_reset(bktr, bktr->msp_addr);
+		break;
+#endif
 
 	default:
 		return common_ioctl( bktr, cmd, arg );

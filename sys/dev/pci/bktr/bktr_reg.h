@@ -1,7 +1,7 @@
-/*	$NetBSD: bktr_reg.h,v 1.1.1.3 2000/10/28 14:17:54 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.1.1.4 2000/12/30 16:44:15 wiz Exp $	*/
 
 /*
- * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.40 2000/09/10 14:34:08 roger Exp
+ * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp
  *
  * Copyright (c) 1999 Roger Hardiman
  * Copyright (c) 1998 Amancio Hasty
@@ -701,6 +701,10 @@ struct bktr_softc {
     int			dpl_addr;	       /* DPL i2c address */
     int                 slow_msp_audio;	       /* 0 = use fast MSP3410/3415 programming sequence */
 					       /* 1 = use slow MSP3410/3415 programming sequence */
+					       /* 2 = use Tuner's Mono audio output via the MSP chip */
+    int                 msp_use_mono_source;   /* use Tuner's Mono audio output via the MSP chip */
+    int                 audio_mux_present;     /* 1 = has audio mux on GPIO lines, 0 = no audio mux */
+    int                 msp_source_selected;   /* 0 = TV source, 1 = Line In source, 2 = FM Radio Source */
 
 };
 
