@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.50 1997/06/24 02:26:04 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.51 1997/08/29 16:02:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -293,6 +293,13 @@ next:
 			    ip->ip_dst.s_addr == ia->ia_net)
 				goto ours;
 		}
+		/*
+		 * An interface with IP address zero accepts
+		 * all packets that arrive on that interface.
+		 */
+		if ((ia->ia_ifp == m->m_pkthdr.rcvif) &&
+		    in_nullhost(ia->ia_addr.sin_addr))
+			goto ours;
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
