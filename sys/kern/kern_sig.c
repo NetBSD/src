@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.29 1994/06/29 06:32:41 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.30 1994/08/23 22:07:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1170,7 +1170,7 @@ coredump(p)
 
 	if (pcred->p_svuid != pcred->p_ruid || pcred->p_svgid != pcred->p_rgid)
 		return (EFAULT);
-	if (ctob(UPAGES + vm->vm_dsize + vm->vm_ssize) >=
+	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFAULT);
 	sprintf(name, "%s.core", p->p_comm);
@@ -1214,7 +1214,7 @@ coredump(p)
 		 * the core header.
 		 */
 		if (core.c_cpusize == 0)
-			core.c_cpusize = NBPG * UPAGES; /* Just in case */
+			core.c_cpusize = USPACE; /* Just in case */
 		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
 		    (int)core.c_dsize,
 		    (off_t)core.c_cpusize, UIO_USERSPACE,
