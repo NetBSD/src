@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.21 1994/05/23 06:15:35 mycroft Exp $
+ *	$Id: trap.c,v 1.22 1994/05/23 09:21:16 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -895,7 +895,7 @@ syscall(code, frame)
 	u_quad_t sticks;
 #ifdef COMPAT_HPUX
 	extern struct sysent hpux_sysent[];
-	extern int nhpux_sysent, notimp();
+	extern int hpux_nsysent, notimp();
 #endif
 
 	cnt.v_syscall++;
