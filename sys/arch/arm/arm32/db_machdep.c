@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5 2001/09/05 17:08:41 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -48,8 +48,9 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
+#ifndef NEWINTR
 	int loop;
-	irqhandler_t *ptr;
+	struct irqhandler *ptr;
 	char *name;
 	db_expr_t offset;
 
@@ -72,6 +73,7 @@ db_show_intrchain_cmd(addr, have_addr, count, modif)
 			}
 		}
 	}
+#endif	/* NEWINTR */
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.3 2001/09/05 16:17:35 matt Exp $	*/
+/*	$NetBSD: stubs.c,v 1.4 2001/09/05 17:08:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -198,6 +198,7 @@ dumpsys()
 	delay(1000000);
 }
 
+#ifndef NEWINTR
 /* This is interrupt / SPL related */
 
 int current_spl_level = _SPL_HIGH;
@@ -247,5 +248,7 @@ dump_spl_masks()
 	}
 }
 #endif
+
+#endif /* !NEWINTR */
 
 /* End of stubs.c */
