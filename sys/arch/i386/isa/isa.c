@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.24 1993/07/06 06:06:31 deraadt Exp $
+ *	$Id: isa.c,v 1.25 1993/07/07 06:52:39 cgd Exp $
  */
 
 /*
@@ -55,7 +55,6 @@
 #include "uio.h"
 #include "syslog.h"
 #include "malloc.h"
-#include "rlist.h"
 #include "machine/segments.h"
 #include "machine/cpufunc.h"
 #include "vm/vm.h"
