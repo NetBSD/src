@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1999/03/14 14:19:05 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1999/03/26 03:02:45 mark Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,49 +54,78 @@
 #include "menu_defs.h"
 void backtowin(void);
 
-static u_int
+static int
 filecore_checksum(u_char *bootblock);
 
 /*
- * static u_int filecore_checksum(u_char *bootblock)
+ * static int filecore_checksum(u_char *bootblock)
  *
  * Calculates the filecore boot block checksum. This is used to validate
- * a filecore boot block on the disc. If a boot block is validated then
+ * a filecore boot block on the disk.  If a boot block is validated then
  * it is used to locate the partition table. If the boot block is not
- * validated, it is assumed that the whole disc is NetBSD.
+ * validated, it is assumed that the whole disk is NetBSD.
+ *
+ * The basic algorithm is:
+ *
+ *	for (each byte in block, excluding checksum) {
+ *		sum += byte;
+ *		if (sum > 255)
+ *			sum -= 255;
+ *	}
+ *
+ * That's equivalent to summing all of the bytes in the block
+ * (excluding the checksum byte, of course), then calculating the
+ * checksum as "cksum = sum - ((sum - 1) / 255) * 255)".  That
+ * expression may or may not yield a faster checksum function,
+ * but it's easier to reason about.
+ *
+ * Note that if you have a block filled with bytes of a single
+ * value "X" (regardless of that value!) and calculate the cksum
+ * of the block (excluding the checksum byte), you will _always_
+ * end up with a checksum of X.  (Do the math; that can be derived
+ * from the checksum calculation function!)  That means that
+ * blocks which contain bytes which all have the same value will
+ * always checksum properly.  That's a _very_ unlikely occurence
+ * (probably impossible, actually) for a valid filecore boot block,
+ * so we treat such blocks as invalid.
  */
 
-/*
- * This can be coded better using add with carry but as it is used rarely
- * there is not much point writing it in assembly.
- */
- 
- /* NEEDS THE LASTEST CODE IMPORTING */
-static u_int
+static int
 filecore_checksum(bootblock)
 	u_char *bootblock;
-{
+{  
+	u_char byte0, accum_diff;
 	u_int sum;
-	u_int loop;
-    
+	int i;
+ 
 	sum = 0;
-
-	for (loop = 0; loop < 512; ++loop)
-		sum += bootblock[loop];
-
-	if (sum == 0) return(0xffff);
-
-	sum = 0;
-    
-	for (loop = 0; loop < 511; ++loop) {
-		sum += bootblock[loop];
-		if (sum > 255)
-			sum -= 255;
+	accum_diff = 0;
+	byte0 = bootblock[0];
+ 
+	/*
+	 * Sum the contents of the block, keeping track of whether
+	 * or not all bytes are the same.  If 'accum_diff' ends up
+	 * being zero, all of the bytes are, in fact, the same.
+	 */
+	for (i = 0; i < 511; ++i) {
+		sum += bootblock[i];
+		accum_diff |= bootblock[i] ^ byte0;
 	}
 
-	return(sum);
-}
+	/*
+	 * Check to see if the checksum byte is the same as the
+	 * rest of the bytes, too.  (Note that if all of the bytes
+	 * are the same except the checksum, a checksum compare
+	 * won't succeed, but that's not our problem.)
+	 */
+	accum_diff |= bootblock[i] ^ byte0;
 
+	/* All bytes in block are the same; call it invalid. */
+	if (accum_diff == 0)
+		return (-1);
+
+	return (sum - ((sum - 1) / 255) * 255);
+}
 
 int	md_get_info (void)
 {	struct disklabel disklabel;
@@ -233,6 +262,7 @@ int	md_get_info (void)
 	printf("dlsz=%d\n", dlsize);
 	printf("pstart=%d\n", ptstart);
 	printf("pstart=%d\n", partsize);
+	printf("secpun=%d\n", disklabel.d_secperunit);
 	backtowin();*/
 
 	return 1;
