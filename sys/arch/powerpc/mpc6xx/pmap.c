@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2002/08/23 11:59:40 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2002/10/10 22:37:51 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,7 +144,7 @@ struct pmap_physseg pmap_physseg;
  */
 struct pvo_entry {
 	LIST_ENTRY(pvo_entry) pvo_vlink;	/* Link to common virt page */
-	LIST_ENTRY(pvo_entry) pvo_olink;	/* Link to overflow entry */
+	TAILQ_ENTRY(pvo_entry) pvo_olink;	/* Link to overflow entry */
 	struct pte pvo_pte;			/* Prebuilt PTE */
 	pmap_t pvo_pmap;			/* ptr to owning pmap */
 	vaddr_t pvo_vaddr;			/* VA of entry */
@@ -163,7 +163,8 @@ struct pvo_entry {
 #define	PVO_PTEGIDX_SET(pvo,i)	\
 	((void)((pvo)->pvo_vaddr |= (i)|PVO_PTEGIDX_VALID))
 
-struct pvo_head *pmap_pvo_table;	/* pvo entries by ptegroup index */
+TAILQ_HEAD(pvo_tqhead, pvo_entry);
+struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
 struct pvo_head pmap_pvo_kunmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_kunmanaged);	/* list of unmanaged pages */
 struct pvo_head pmap_pvo_unmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_unmanaged);	/* list of unmanaged pages */
 
@@ -743,16 +744,17 @@ pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
  * disabled.
  */
 int
-pmap_pte_spill(vaddr_t addr)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 {
 	struct pvo_entry *source_pvo, *victim_pvo;
 	struct pvo_entry *pvo;
+	struct pvo_tqhead *pvoh;
 	int ptegidx, i, j;
 	sr_t sr;
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
 
-	sr = MFSRIN(addr);
+	sr = va_to_sr(pm->pm_sr, addr);
 	ptegidx = va_to_pteg(sr, addr);
 
 	/*
@@ -766,25 +768,52 @@ pmap_pte_spill(vaddr_t addr)
 
 	source_pvo = NULL;
 	victim_pvo = NULL;
-	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
+	pvoh = &pmap_pvo_table[ptegidx];
+	TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
 		/*
 		 * We need to find pvo entry for this address...
 		 */
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
+		/*
+		 * If we haven't found the source and we come to a PVO with
+		 * a valid PTE, then we know we can't find it because all
+		 * evicted PVOs always are first in the list.
+		 */
+		if (source_pvo == NULL && (pvo->pvo_pte.pte_hi & PTE_VALID))
+			break;
 		if (source_pvo == NULL &&
 		    pmap_pte_match(&pvo->pvo_pte, sr, addr, pvo->pvo_pte.pte_hi & PTE_HID)) {
 			/*
-			 * Now found an entry to be spilled into the pteg.
-			 * The PTE is now be valid, so we know it's active;
+			 * Now we have found the entry to be spilled into the
+			 * pteg.  Attempt to insert it into the page table.
 			 */
 			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				pvo->pvo_pmap->pm_evictions--;
 				PMAPCOUNT(ptes_spilled);
 				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 				    ? pmap_evcnt_ptes_secondary
 				    : pmap_evcnt_ptes_primary)[j]);
+				/*
+				 * Since we keep the evicted entries at the
+				 * from of the PVO list, we need move this
+				 * (now resident) PVO after the evicted
+				 * entries.
+				 */
+				victim_pvo = TAILQ_NEXT(pvo, pvo_olink);
+				/*
+				 * If we don't have to move (either we were
+				 * the last entry or the next entry was valid,
+				 * don't change our position.  Otherwise 
+				 * move ourselves to the tail of the queue.
+				 */
+				if (victim_pvo != NULL &&
+				    !(victim_pvo->pvo_pte.pte_hi & PTE_VALID)) {
+					TAILQ_REMOVE(pvoh, pvo, pvo_olink);
+					TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
+				}
 				return 1;
 			}
 			source_pvo = pvo;
@@ -816,7 +845,7 @@ pmap_pte_spill(vaddr_t addr)
 		 * If this is a secondary PTE, we need to search
 		 * its primary pvo bucket for the matching PVO.
 		 */
-		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx ^ pmap_pteg_mask],
+		TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx ^ pmap_pteg_mask],
 		    pvo_olink) {
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 			/*
@@ -841,8 +870,19 @@ pmap_pte_spill(vaddr_t addr)
 	 */
 	source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
 
+	/* Move the source PVO from list of evicted PVO's to
+	 * after the current position of the victim PVO.  Then
+	 * move the victim PVO to the head of the list so
+	 * the evicted PVOs are all at the front of the list.
+	 */
+	TAILQ_REMOVE(pvoh, source_pvo, pvo_olink);
+	TAILQ_REMOVE(pvoh, victim_pvo, pvo_olink);
+	TAILQ_INSERT_TAIL(pvoh, source_pvo, pvo_olink);
+	TAILQ_INSERT_HEAD(pvoh, victim_pvo, pvo_olink);
 	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
+	victim_pvo->pvo_pmap->pm_evictions++;
+	source_pvo->pvo_pmap->pm_evictions--;
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
@@ -888,7 +928,7 @@ pmap_init(void)
 {
 	int s;
 #ifdef __HAVE_PMAP_PHYSSEG
-	struct pvo_head *pvoh;
+	struct pvo_tqhead *pvoh;
 	int bank;
 	long sz;
 	char *attr;
@@ -901,7 +941,7 @@ pmap_init(void)
 		vm_physmem[bank].pmseg.pvoh = pvoh;
 		vm_physmem[bank].pmseg.attrs = attr;
 		for (; sz > 0; sz--, pvoh++, attr++) {
-			LIST_INIT(pvoh);
+			TAILQ_INIT(pvoh);
 			*attr = 0;
 		}
 	}
@@ -1223,7 +1263,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	sr = va_to_sr(pm->pm_sr, va);
 	ptegidx = va_to_pteg(sr, va);
 
-	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
+	TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
 			panic("pmap_pvo_find_va: invalid pvo %p on "
@@ -1243,7 +1283,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 void
 pmap_pvo_check(const struct pvo_entry *pvo)
 {
-	struct pvo_head *pvo_head;
+	struct pvo_tqhead *pvo_head;
 	struct pvo_entry *pvo0;
 	volatile pte_t *pt;
 	int failed = 0;
@@ -1347,6 +1387,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	vaddr_t va, paddr_t pa, u_int pte_lo, int flags)
 {
 	struct pvo_entry *pvo;
+	struct pvo_tqhead *pvoh;
 	u_int32_t msr;
 	sr_t sr;
 	int ptegidx;
@@ -1372,7 +1413,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	 * Remove any existing mapping for this page.  Reuse the
 	 * pvo entry if there a mapping.
 	 */
-	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
+	TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 		if (pvo->pvo_pmap == pm && PVO_VADDR(pvo) == va) {
 #ifdef DEBUG
 			if ((pmapdebug & PMAPDEBUG_PVOENTER) &&
@@ -1420,7 +1461,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
-	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
 	if (flags & VM_PROT_EXECUTE) {
 		PMAPCOUNT(exec_mappings);
@@ -1449,13 +1489,21 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * We hope this succeeds but it isn't required.
 	 */
+	pvoh = &pmap_pvo_table[ptegidx];
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
 		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
+		TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 	} else {
+		/*
+		 * Since we didn't have room for this entry (which makes it
+		 * and evicted entry), place it at the head of the list.
+		 */
+		TAILQ_INSERT_HEAD(pvoh, pvo, pvo_olink);
 		PMAPCOUNT(ptes_evicted);
+		pm->pm_evictions++;
 #if 0
 		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
 			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
@@ -1473,11 +1521,23 @@ void
 pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
+	int ptegidx;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if (++pmap_pvo_remove_depth > 1)
 		panic("pmap_pvo_remove: called recursively!");
 #endif
+
+	/*
+	 * If we haven't been supplied the ptegidx, calculate it.
+	 */
+	if (pteidx == -1) {
+		sr_t sr = va_to_sr(pvo->pvo_pmap->pm_sr, pvo->pvo_vaddr);
+		ptegidx = va_to_pteg(sr, pvo->pvo_vaddr);
+		pteidx = pmap_pvo_pte_index(pvo, ptegidx);
+	} else {
+		ptegidx = pteidx >> 3;
+	}
 
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 	/* 
@@ -1489,6 +1549,9 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PVO_PTEGIDX_CLR(pvo);
 		PMAPCOUNT(ptes_removed);
+	} else {
+		KASSERT(pvo->pvo_pmap->pm_evictions > 0);
+		pvo->pvo_pmap->pm_evictions--;
 	}
 
 	/*
@@ -1506,6 +1569,9 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 		if (pg != NULL) {
 			pmap_attr_save(pg, pvo->pvo_pte.pte_lo & (PTE_REF|PTE_CHG));
 		}
+		PMAPCOUNT(unmappings);
+	} else {
+		PMAPCOUNT(kernel_unmappings);
 	}
 
 	/*
@@ -1517,11 +1583,8 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * Remove this from the Overflow list and return it to the pool...
 	 * ... if we aren't going to reuse it.
 	 */
-	LIST_REMOVE(pvo, pvo_olink);
-	if (pvo->pvo_vaddr & PVO_MANAGED)
-		PMAPCOUNT(unmappings);
-	else
-		PMAPCOUNT(kernel_unmappings);
+	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
+
 	pool_put(pvo->pvo_vaddr & PVO_MANAGED
 	    ? &pmap_mpvo_pool
 	    : &pmap_upvo_pool,
@@ -2325,7 +2388,7 @@ pmap_pteg_dist(void)
 	memset(depths, 0, sizeof(depths));
 	for (ptegidx = 0; ptegidx < pmap_pteg_cnt; ptegidx++) {
 		depth = 0;
-		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
+		TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 			depth++;
 		}
 		if (depth > max_depth)
@@ -2358,7 +2421,7 @@ pmap_pvo_verify(void)
 	s = splvm();
 	for (ptegidx = 0; ptegidx < pmap_pteg_cnt; ptegidx++) {
 		struct pvo_entry *pvo;
-		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
+		TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 			if ((uintptr_t) pvo >= SEGMENT_LENGTH)
 				panic("pmap_pvo_verify: invalid pvo %p "
 				    "on list %#x", pvo, ptegidx);
@@ -2823,7 +2886,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	 * We cannot do pmap_steal_memory here since UVM hasn't been loaded
 	 * with pages.  So we just steal them before giving them to UVM.
 	 */
-	size = sizeof(struct pvo_head) * pmap_pteg_cnt;
+	size = sizeof(pmap_pvo_table[0]) * pmap_pteg_cnt;
 	pmap_pvo_table = pmap_boot_find_memory(size, NBPG, 0);
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	if ( (uintptr_t) pmap_pvo_table + size > SEGMENT_LENGTH)
@@ -2832,7 +2895,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 #endif
 
 	for (i = 0; i < pmap_pteg_cnt; i++)
-		LIST_INIT(&pmap_pvo_table[i]);
+		TAILQ_INIT(&pmap_pvo_table[i]);
 
 #ifndef MSGBUFADDR
 	/*

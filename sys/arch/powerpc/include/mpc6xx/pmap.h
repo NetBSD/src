@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2002/09/22 07:53:48 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2002/10/10 22:37:50 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,6 +55,7 @@ struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
 	int pm_refs;		/* ref count */
 	struct pmap_statistics pm_stats;	/* pmap statistics */
+	unsigned int pm_evictions;	/* pvo's not in page table */
 };
 
 typedef	struct pmap *pmap_t;
@@ -101,7 +102,7 @@ void pmap_syncicache (paddr_t, psize_t);
 #define PMAP_NEED_PROCWR
 void pmap_procwr (struct proc *, vaddr_t, size_t);
 
-int pmap_pte_spill(vaddr_t va);
+int pmap_pte_spill(struct pmap *, vaddr_t);
 
 #define	PMAP_NC			0x1000
 
