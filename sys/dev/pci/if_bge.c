@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.36 2003/03/07 18:40:18 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.37 2003/03/07 18:57:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -202,6 +202,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_5700_SMALLDMA		0x00000008
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
+#define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -741,7 +742,8 @@ bge_newbuf_std(sc, i, m, dmamap)
 			return(ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_adj(m_new, ETHER_ALIGN);
+		if (!sc->bge_rx_alignment_bug)
+		    m_adj(m_new, ETHER_ALIGN);
 
 		if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
 		    BUS_DMA_READ|BUS_DMA_NOWAIT))
@@ -750,7 +752,8 @@ bge_newbuf_std(sc, i, m, dmamap)
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_adj(m_new, ETHER_ALIGN);
+		if (!sc->bge_rx_alignment_bug)
+		    m_adj(m_new, ETHER_ALIGN);
 	}
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
@@ -811,7 +814,8 @@ bge_newbuf_jumbo(sc, i, m)
 		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
 	}
 
-	m_adj(m_new, ETHER_ALIGN);
+	if (!sc->bge_rx_alignment_bug)
+	    m_adj(m_new, ETHER_ALIGN);
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
@@ -1652,19 +1656,19 @@ static const struct bge_revision {
 	  "BCM5700 C0" },
 
 	{ BGE_ASICREV_BCM5701_A0,
-	  0,
+	  0, /*XXX really, just not known */
 	  "BCM5701 A0" },
 
 	{ BGE_ASICREV_BCM5701_B0,
-	  0,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B0" },
 
 	{ BGE_ASICREV_BCM5701_B2,
-	  0,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_ASICREV_BCM5701_B5,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B5" },
 
 	{ BGE_ASICREV_BCM5703_A0,
@@ -2145,6 +2149,22 @@ bge_attach(parent, self, aux)
 	}
 
 	/*
+	 * When using the BCM5701 in PCI-X mode, data corruption has
+	 * been observed in the first few bytes of some received packets.
+	 * Aligning the packet buffer in memory eliminates the corruption.
+	 * Unfortunately, this misaligns the packet payloads.  On platforms
+	 * which do not support unaligned accesses, we will realign the
+	 * payloads by copying the received packets.
+	 */
+	if (sc->bge_quirks & BGE_QUIRK_PCIX_DMA_ALIGN_BUG) {
+		/* If in PCI-X mode, work around the alignment bug. */
+		if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
+                    (BGE_PCISTATE_PCI_BUSMODE | BGE_PCISTATE_PCI_BUSSPEED)) ==
+                         BGE_PCISTATE_PCI_BUSSPEED)
+		sc->bge_rx_alignment_bug = 1;
+        }
+
+	/*
 	 * Call MI attach routine.
 	 */
 	DPRINTFN(5, ("if_attach\n"));
@@ -2352,6 +2372,19 @@ bge_rxeof(sc)
 		}
 
 		ifp->if_ipackets++;
+#ifndef __NO_STRICT_ALIGNMENT
+                /*
+                 * XXX: if the 5701 PCIX-Rx-DMA workaround is in effect,
+                 * the Rx buffer has the layer-2 header unaligned.
+                 * If our CPU requires alignment, re-align by copying.
+                 */
+		if (sc->bge_rx_alignment_bug) {
+			memmove(mtod(m, caddr_t) + ETHER_ALIGN, m->m_data,
+                                cur_rx->bge_len);
+			m->m_data += ETHER_ALIGN;
+		}
+#endif
+                
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len;
 		m->m_pkthdr.rcvif = ifp;
 
