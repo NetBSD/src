@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 1996/04/12 06:07:42 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 1996/04/23 15:26:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -246,14 +246,14 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_int64_t pc;
+	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
 	extern void proc_trampoline();
 	extern void rei();
 
 	pcbp = &p->p_addr->u_pcb;
-	pcbp->pcb_context[0] = pc;		/* s0 - pc to invoke */
+	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
 	pcbp->pcb_context[1] = (u_int64_t)rei;	/* s1 - return address */
 	pcbp->pcb_context[7] =
 	    (u_int64_t)proc_trampoline;		/* ra - assembly magic */
@@ -318,22 +318,25 @@ cpu_swapout(p)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
+	ssize_t todo;
 
 	if (size % CLBYTES)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
+	todo = size;			/* if testing > 0, need sign... */
+	while (todo > 0) {
 		TBIS(from);
 		*tpte++ = *fpte;
 		*fpte = 0;
 		fpte++;
-		size -= NBPG;
+		todo -= NBPG;
 		from += NBPG;
 		to += NBPG;
 	}

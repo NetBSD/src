@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1996/04/17 22:01:16 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1996/04/23 15:26:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,6 +100,7 @@ clockattach(dev, fns)
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
+void
 cpu_initclocks()
 {
 	extern int tickadj;

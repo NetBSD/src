@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1996/04/18 00:59:11 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1996/04/23 15:26:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -627,6 +627,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	return (0);
 }
 
+void
 consinit()
 {
 
@@ -634,6 +635,7 @@ consinit()
 	pmap_unmap_prom();
 }
 
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -763,6 +765,7 @@ identifycpu()
 int	waittime = -1;
 struct pcb dumppcb;
 
+void
 boot(howto)
 	int howto;
 {
