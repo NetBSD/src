@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.83 2004/04/27 01:12:44 kleink Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.84 2004/04/27 05:25:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.83 2004/04/27 01:12:44 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.84 2004/04/27 05:25:33 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -327,7 +327,7 @@ sys_gettimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
-		syscallarg(void *) tzp;		/* struct timezone * */
+		syscallarg(void *) tzp;		really "struct timezone *"
 	} */ *uap = v;
 	struct timeval atv;
 	int error = 0;
@@ -357,7 +357,7 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_settimeofday_args /* {
 		syscallarg(const struct timeval *) tv;
-		syscallarg(const void *) tzp;	/* const struct timezone * */
+		syscallarg(const void *) tzp;	really "const struct timezone *"
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
