@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_pbus.c,v 1.2 2002/08/13 05:43:25 simonb Exp $ */
+/* $NetBSD: pckbc_pbus.c,v 1.3 2002/08/13 06:15:16 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,15 +38,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/malloc.h> 
-#include <sys/errno.h>
-#include <sys/queue.h>
 
-#include <arch/walnut/dev/pbusvar.h>
 #include <machine/intr.h>
 #include <machine/walnut.h>
+
+#include <arch/walnut/dev/pbusvar.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
@@ -92,7 +91,7 @@ pckbc_pbus_attach(struct device *parent, struct device *self, void *aux)
 	struct pbus_attach_args *paa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
-	bus_space_tag_t iot = ibm4xx_make_bus_space_tag(0, 0);
+	bus_space_tag_t iot = paa->pb_bt;
 	u_long addr = paa->pb_addr;
 	
 	/*

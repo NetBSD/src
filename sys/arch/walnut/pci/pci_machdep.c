@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2002/08/13 05:43:26 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2002/08/13 06:15:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,11 +52,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _IBM4XX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-
-#include <machine/bus.h>
-#include <machine/pio.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
@@ -64,7 +60,6 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-#include <machine/walnut.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
 
