@@ -1,10 +1,13 @@
-/*	$NetBSD: clock.c,v 1.35 1996/03/17 02:01:39 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.36 1996/03/31 23:07:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
+ * Copyright (c) 1996 Paul Kranenburg
+ * Copyright (c) 1996
+ * 	The President and Fellows of Harvard University. All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -12,12 +15,14 @@
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
+ *	This product includes software developed by Harvard University.
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -27,6 +32,8 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
+ *	This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Harvard University.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -44,6 +51,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
+ *
  */
 
 /*
@@ -69,6 +77,7 @@
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
 
+#include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
@@ -87,12 +96,8 @@ int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
-#if defined(SUN4)
 #include <sparc/sparc/intersil7170.h>
 extern struct idprom idprom;
-
-static int oldclk = 0;
-volatile struct intersil7170 *i7;
 
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
@@ -108,15 +113,20 @@ volatile struct intersil7170 *i7;
 
 #define intersil_clear(CLOCK) CLOCK->clk_intr_reg
 
+#if defined(SUN4)
 /*
- * OCLOCK support: 4/100's and 4/200's have the old clock.  
+ * OCLOCK support: 4/100's and 4/200's have the old clock.
  */
+static int oldclk = 0;
+volatile struct intersil7170 *i7;
+
 static long oclk_get_secs __P((void));
 static void oclk_get_dt __P((struct date_time *));
 static void dt_to_gmt __P((struct date_time *, long *));
 static void oclk_set_dt __P((struct date_time *));
 static void oclk_set_secs __P((long));
 static void gmt_to_dt __P((long *, struct date_time *));
+#endif
 
 static int oclockmatch __P((struct device *, void *, void *));
 static void oclockattach __P((struct device *, struct device *, void *));
@@ -128,8 +138,6 @@ struct cfattach oclock_ca = {
 struct cfdriver oclock_cd = {
 	NULL, "oclock", DV_DULL
 };
-
-#endif /* SUN4 */
 
 /*
  * Sun 4 machines use the old-style (a'la Sun 3) EEPROM.  On the
@@ -175,6 +183,10 @@ struct cfdriver clock_cd = {
 static int	timermatch __P((struct device *, void *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
 
+volatile struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
+volatile struct counter_4m	*counterreg_4m;
+#define	timerreg4		((volatile struct timerreg_4 *)TIMERREG_VA)
+
 struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
 };
@@ -192,8 +204,6 @@ void timetochip __P((struct chiptime *));
 /*
  * old clock match routine
  */
-
-#if defined(SUN4)
 static int
 oclockmatch(parent, vcf, aux)
 	struct device *parent;
@@ -201,7 +211,7 @@ oclockmatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		if (cpumod == SUN4_100 || cpumod == SUN4_200)
 			return (strcmp(oclock_cd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
@@ -215,6 +225,7 @@ oclockattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+#if defined(SUN4)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 	struct idprom *idp;
@@ -232,8 +243,8 @@ oclockattach(parent, self, aux)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
-}
 #endif /* SUN4 */
+}
 
 /*
  * Sun 4/100, 4/200 EEPROM match routine.
@@ -243,11 +254,10 @@ eeprom_match(parent, vcf, aux)
 	struct device *parent;
 	void *aux, *vcf;
 {
-#if defined(SUN4)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		if (cf->cf_unit != 0)
 			return (0);
 
@@ -263,7 +273,6 @@ eeprom_match(parent, vcf, aux)
 				return (1);
 		}
 	}
-#endif /* SUN4 */
 	return (0);
 }
 
@@ -295,14 +304,12 @@ clockmatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp(clock_cd.cd_name,
 				       ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
-#endif /* SUN4 */
 	return (strcmp("eeprom", ca->ca_ra.ra_name) == 0);
 }
 
@@ -319,19 +326,18 @@ clockattach(parent, self, aux)
 	struct romaux *ra = &ca->ca_ra;
 	char *prop = NULL;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4)
+	if (CPU_ISSUN4)
 		prop = "mk48t02";
-#endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+
+	if (CPU_ISSUN4COR4M)
 		prop = getpropstring(ra->ra_node, "model");
-#endif
+
 #ifdef DIAGNOSTIC
 	if (prop == NULL)
 		panic("no prop");
 #endif
 	printf(": %s (eeprom)\n", prop);
+
 	/*
 	 * We ignore any existing virtual address as we need to map
 	 * this read-only and make it read-write only temporarily,
@@ -362,7 +368,7 @@ clockattach(parent, self, aux)
 	idp = &cl->cl_idprom;
 
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		idp = &idprom;
 
 		if (cpumod == SUN4_300 || cpumod == SUN4_400) {
@@ -371,6 +377,7 @@ clockattach(parent, self, aux)
 		}
 	}
 #endif
+
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
 	h |= idp->id_hostid[1] << 8;
@@ -389,23 +396,20 @@ timermatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp("timer", ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
-#endif /* SUN4 */
-#if defined(SUN4C)
-	if (cputyp == CPU_SUN4C) { 
+
+	if (CPU_ISSUN4C) {
 		return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
 	}
-#endif /* SUN4C */
-#if defined(SUN4M)
-	if (cputyp == CPU_SUN4M) {
+
+	if (CPU_ISSUN4M) {
 		return (strcmp("counter", ca->ca_ra.ra_name) == 0);
 	}
-#endif /* SUN4M */
+
 	return (0);
 }
 
@@ -419,13 +423,28 @@ timerattach(parent, self, aux)
 	register struct romaux *ra = &ca->ca_ra;
 
 	printf("\n");
-	/*
-	 * This time, we ignore any existing virtual address because
-	 * we have a fixed virtual address for the timer, to make
-	 * microtime() faster.
-	 */
-	(void)mapdev(ra->ra_reg, TIMERREG_VA, 0, sizeof(struct timerreg),
-		     ca->ca_bustype);
+
+	if (CPU_ISSUN4M) {
+		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
+			     sizeof(struct timer_4m), ca->ca_bustype);
+		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
+			     sizeof(struct counter_4m), ca->ca_bustype);
+		timerreg_4m = (volatile struct timer_4m *)TIMERREG_VA;
+		counterreg_4m = (volatile struct counter_4m *)COUNTERREG_VA;
+
+		/* Put processor counter in "timer" mode */
+		timerreg_4m->t_cfg = 0;
+	}
+
+	if (CPU_ISSUN4OR4C)
+		/*
+		 * This time, we ignore any existing virtual address because
+		 * we have a fixed virtual address for the timer, to make
+		 * microtime() faster (in SUN4/SUN4C kernel only).
+		 */
+		(void)mapdev(ra->ra_reg, TIMERREG_VA, 0,
+			     sizeof(struct timerreg_4), ca->ca_bustype);
+
 	timerok = 1;
 	/* should link interrupt handlers here, rather than compiled-in? */
 }
@@ -465,9 +484,10 @@ myetheraddr(cp)
 	register struct idprom *idp = &cl->cl_idprom;
 
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4)
+	if (CPU_ISSUN4)
 		idp = &idprom;
 #endif
+
 	cp[0] = idp->id_ether[0];
 	cp[1] = idp->id_ether[1];
 	cp[2] = idp->id_ether[2];
@@ -515,11 +535,24 @@ delay(n)
 
 	if (timer_cd.cd_ndevs == 0)
 		panic("delay");
-	c = TIMERREG->t_c10.t_counter;
-	while (n-- > 0) {
-		while ((t = TIMERREG->t_c10.t_counter) == c)
-			continue;
-		c = t;
+
+	if (CPU_ISSUN4M) {
+		n <<= 1;	/* Clock ticks with 500ns period */
+		c = timerreg_4m->t_counter;
+		while (n-- > 0) {
+			while ((t = timerreg_4m->t_counter) == c)
+				continue;
+			c = t;
+		}
+	}
+
+	if (CPU_ISSUN4OR4C) {
+		c = timerreg4->t_c10.t_counter;
+		while (n-- > 0) {
+			while ((t = timerreg4->t_c10.t_counter) == c)
+				continue;
+			c = t;
+		}
 	}
 }
 
@@ -537,20 +570,17 @@ cpu_initclocks()
 #if defined(SUN4)
 	if (oldclk) {
 		int dummy;
+
 		profhz = hz = 100;
 		tick = 1000000 / hz;
 
 		i7->clk_intr_reg = INTERSIL_INTER_CSECONDS; /* 1/100 sec */
 
-		ienab_bic(IE_L14 | IE_L10); /* disable all clock intrs */
-
-		intersil_disable(i7);  /* disable clock */
-
-		dummy = intersil_clear(i7);  /* clear interrupts */
-
-		ienab_bis(IE_L10);  /* enable l10 interrupt */
-
-		intersil_enable(i7);  /* enable clock */
+		ienab_bic(IE_L14 | IE_L10);	/* disable all clock intrs */
+		intersil_disable(i7);		/* disable clock */
+		dummy = intersil_clear(i7);	/* clear interrupts */
+		ienab_bis(IE_L10);		/* enable l10 interrupt */
+		intersil_enable(i7);		/* enable clock */
 
 		return;
 	}
@@ -573,10 +603,27 @@ cpu_initclocks()
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
-	TIMERREG->t_c10.t_limit = tmr_ustolim(tick);
-	TIMERREG->t_c14.t_limit = tmr_ustolim(statint);
+
+	if (CPU_ISSUN4M) {
+		timerreg_4m->t_limit = tmr_ustolim(tick);
+		counterreg_4m->t_limit = tmr_ustolim(statint);
+	}
+
+	if (CPU_ISSUN4OR4C) {
+		timerreg4->t_c10.t_limit = tmr_ustolim(tick);
+		timerreg4->t_c14.t_limit = tmr_ustolim(statint);
+	}
+
 	statmin = statint - (statvar >> 1);
-	ienab_bis(IE_L14 | IE_L10);
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		ienab_bic(SINTR_T);
+#endif
+
+	if (CPU_ISSUN4OR4C)
+		ienab_bis(IE_L14 | IE_L10);
+
 }
 
 /*
@@ -620,7 +667,13 @@ clockintr(cap)
 	}
 #endif
 	/* read the limit register to clear the interrupt */
-	discard = TIMERREG->t_c10.t_limit;
+	if (CPU_ISSUN4M) {
+		discard = timerreg_4m->t_limit;
+	}
+
+	if (CPU_ISSUN4OR4C) {
+		discard = timerreg4->t_c10.t_limit;
+	}
 #if defined(SUN4)
 forward:
 #endif
@@ -651,7 +704,20 @@ statintr(cap)
 #endif
 
 	/* read the limit register to clear the interrupt */
-	discard = TIMERREG->t_c14.t_limit;
+	if (CPU_ISSUN4M) {
+		discard = counterreg_4m->t_limit;
+		if (timerok == 0) {
+			/* Stop the clock */
+			counterreg_4m->t_limit = 0;
+			counterreg_4m->t_ss = 0;
+			timerreg_4m->t_cfg = TMR_CFG_USER;
+			return 1;
+		}
+	}
+
+	if (CPU_ISSUN4OR4C) {
+		discard = timerreg4->t_c14.t_limit;
+	}
 	statclock((struct clockframe *)cap);
 
 	/*
@@ -665,7 +731,13 @@ statintr(cap)
 	} while (r == 0);
 	newint = statmin + r;
 
-	TIMERREG->t_c14.t_limit = tmr_ustolim(newint);
+	if (CPU_ISSUN4M) {
+		counterreg_4m->t_limit = tmr_ustolim(newint);
+	}
+
+	if (CPU_ISSUN4OR4C) {
+		timerreg4->t_c14.t_limit = tmr_ustolim(newint);
+	}
 	return (1);
 }
 
@@ -1116,7 +1188,7 @@ eeprom_uio(uio)
 	u_int cnt, bcnt;
 	caddr_t buf = NULL;
 
-	if (cputyp != CPU_SUN4)
+	if (!CPU_ISSUN4)
 		return (ENODEV);
 
 	off = uio->uio_offset;
