@@ -552,7 +552,7 @@ edit(char *name, int ask_logical_size)
 	    printf("  P    (print ordered by base address)\n");
 	    printf("  i    initialize partition map\n");
 	    printf("  s    change size of partition map\n");
-	    printf("  c    create new partition (standard linux type)\n");
+	    printf("  c    create new partition (standard unix root)\n");
 	    printf("  C    (create with type also specified)\n");
 	    printf("  n    (re)name a partition\n");
 	    printf("  d    delete a partition\n");
