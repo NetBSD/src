@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94"; */
-static char *rcsid = "$Id: rcmd.c,v 1.9 1994/06/01 19:32:43 pk Exp $";
+static char *rcsid = "$Id: rcmd.c,v 1.10 1994/12/04 18:13:11 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ static char *rcsid = "$Id: rcmd.c,v 1.9 1994/06/01 19:32:43 pk Exp $";
 #include <string.h>
 
 int	__ivaliduser __P((FILE *, u_long, const char *, const char *));
-static int __icheckhost __P((u_long, char *));
+static int __icheckhost __P((u_long, const char *));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -353,6 +353,13 @@ __ivaliduser(hostf, raddr, luser, ruser)
 	register char *user, *p;
 	int ch;
 	char buf[MAXHOSTNAMELEN + 128];		/* host + login */
+	const char *auser, *ahost;
+	int hostok, userok;
+	char rhost[MAXHOSTNAMELEN];
+	struct hostent *hp;
+	char domain[MAXHOSTNAMELEN];
+
+	getdomainname(domain, sizeof(domain));
 
 	while (fgets(buf, sizeof(buf), hostf)) {
 		p = buf;
@@ -376,14 +383,101 @@ __ivaliduser(hostf, raddr, luser, ruser)
 		} else
 			user = p;
 		*p = '\0';
+
 		if (p == buf)
 			continue;
-		if (__icheckhost(raddr, buf) &&
-		    strcmp(ruser, *user ? user : luser) == 0) {
-			return (0);
+
+		auser = *user ? user : luser;
+		ahost = buf;
+
+		if ((hp = gethostbyaddr((char *) &raddr,
+					sizeof(raddr), AF_INET)) == NULL) {
+			abort();
+			return -1;
 		}
+		(void) strncpy(rhost, hp->h_name, sizeof(rhost));
+		rhost[sizeof(rhost) - 1] = '\0';
+
+		if (ahost[0] == '+')
+			switch (ahost[1]) {
+			case '\0':
+				hostok = 1;
+				break;
+
+			case '@':
+				hostok = innetgr(&ahost[2], rhost, NULL,
+						 domain);
+				break;
+
+			default:
+				hostok = __icheckhost(raddr, &ahost[1]);
+				break;
+			}
+		else if (ahost[0] == '-')
+			switch (ahost[1]) {
+			case '\0':
+				hostok = -1;
+				break;
+
+			case '@':
+				hostok = -innetgr(&ahost[2], rhost, NULL,
+						  domain);
+				break;
+
+			default:
+				hostok = -__icheckhost(raddr, &ahost[1]);
+				break;
+			}
+		else
+			hostok = __icheckhost(raddr, ahost);
+
+
+		if (auser[0] == '+')
+			switch (auser[1]) {
+			case '\0':
+				userok = 1;
+				break;
+
+			case '@':
+				userok = innetgr(&auser[2], NULL, ruser,
+						 domain);
+				break;
+
+			default:
+				userok = strcmp(ruser, &auser[1]) == 0;
+				break;
+			}
+		else if (auser[0] == '-')
+			switch (auser[1]) {
+			case '\0':
+				userok = -1;
+				break;
+
+			case '@':
+				userok = -innetgr(&auser[2], NULL, ruser,
+						  domain);
+				break;
+
+			default:
+				userok = -(strcmp(ruser, &auser[1]) == 0);
+				break;
+			}
+		else
+			userok = strcmp(ruser, auser) == 0;
+
+		/* Check if one component did not match */
+		if (hostok == 0 || userok == 0)
+			continue;
+
+		/* Check if we got a forbidden pair */
+		if (userok == -1 || hostok == -1)
+			return -1;
+
+		/* Check if we got a valid pair */
+		if (hostok == 1 && userok == 1)
+			return 0;
 	}
-	return (-1);
+	return -1;
 }
 
 /*
@@ -392,7 +486,7 @@ __ivaliduser(hostf, raddr, luser, ruser)
 static int
 __icheckhost(raddr, lhost)
 	u_long raddr;
-	register char *lhost;
+	const char *lhost;
 {
 	register struct hostent *hp;
 	register u_long laddr;
