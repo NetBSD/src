@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.38 2003/12/07 05:44:49 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.39 2003/12/25 17:34:09 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.38 2003/12/07 05:44:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.39 2003/12/25 17:34:09 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCL_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCL_11,
 	  PCMCIA_STR_COREGA_WIRELESS_LAN_PCCL_11 },
+
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_WLCFL_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_WLCFL_11,
+	  PCMCIA_STR_COREGA_WIRELESS_LAN_WLCFL_11 },
 
 	{ PCMCIA_VENDOR_INTEL,
 	  PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
