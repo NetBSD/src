@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2003/10/21 00:49:34 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 2003/10/31 03:28:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2003/10/21 00:49:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58 2003/10/31 03:28:13 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -589,7 +589,7 @@ syscall(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;

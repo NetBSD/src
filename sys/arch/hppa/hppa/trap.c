@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2003/10/21 00:49:34 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2003/10/31 03:28:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2003/10/21 00:49:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2003/10/31 03:28:13 simonb Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1086,7 +1086,7 @@ syscall(frame, args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;
