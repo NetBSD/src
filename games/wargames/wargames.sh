@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: wargames.sh,v 1.3 1999/11/16 17:27:14 abs Exp $
+#	$NetBSD: wargames.sh,v 1.4 2001/09/19 04:54:06 lukem Exp $
 #
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,10 @@ if [ -f /usr/games/$x ] ; then
 	tput cl
 	exec /usr/games/$x
 else
-	# Original quote "Strange game, the only winning move is not to play."
-	echo "Strange, the only winning move is not to play."
+	exec cat <<QUOTE
+A strange game.
+The only winning move is
+not to play.
+QUOTE
 fi
 exit 0
