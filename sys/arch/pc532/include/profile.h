@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.1 1994/05/17 17:31:10 phil Exp $
+ *	$Id: profile.h,v 1.2 1994/08/01 19:32:59 phil Exp $
  */
 
 /*	pc532 version, 5/15/94.
@@ -51,11 +51,11 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("addr 0(pc),%0" : "=r" (selfpc));			\
+	asm("movd 4(fp),%0" : "=r" (selfpc));			\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("movd 0(fp),%0" : "=r" (frompcindex));	\
+	asm("movd 4(0(fp)),%0" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
 

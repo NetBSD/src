@@ -1445,4 +1445,10 @@ no_net1:
 _PDRPDROFF:
 	.long PDRPDROFF
 
-
+/* Some bogus data, to keep vmstat happy, for now. */
+	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
+_intrnames:
+_eintrnames:
+_intrcnt:
+_eintrcnt:
+	.long	0
