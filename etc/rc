@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.59 1996/08/09 16:07:42 thorpej Exp $
+#	$NetBSD: rc,v 1.60 1996/08/26 06:02:21 tls Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -85,45 +85,6 @@ rm -f /etc/nologin
 rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
-
-echo -n 'starting rpc daemons:'
-echo -n ' portmap';		portmap
-
-if [ "X${ypserv_flags}" != X"NO" ]; then
-	echo -n ' ypserv';		ypserv ${ypserv_flags}
-fi
-
-if [ "X${yppasswdd_flags}" != X"NO" ]; then
-	echo -n ' rpc.yppasswdd';	rpc.yppasswdd ${yppasswdd_flags}
-fi
-
-if [ "X${ypbind_flags}" != X"NO" ]; then
-	echo -n ' ypbind';		ypbind ${ypbind_flags}
-fi
-
-# $nfs_server is imported from /etc/netstart;
-# if $nfs_server == YES, the machine is setup for being an nfs server
-if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
-	rm -f /var/db/mountdtab	
-	echo -n > /var/db/mountdtab
-	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd -tun 4
-fi
-
-# $nfs_client is imported from /etc/netstart;
-# if $nfs_client == YES, the machine is setup for being an nfs client
-if [ X${nfs_client} = X"YES" ]; then
-	echo -n ' nfsiod';		nfsiod -n 4
-fi
-
-if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
-	echo -n ' amd'
-	amd -l syslog -x error,noinfo,nostats -p \
-	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
-fi
-
-echo '.'
-mount -a -t nfs
 
 echo -n 'starting system logger'
 rm -f /dev/log
@@ -235,13 +196,6 @@ if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
 	echo -n ' rarpd';		rarpd ${rarpd_flags}
 fi
 
-# $bootparamd_flags is imported from /etc/netstart;
-# If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
-# bootparamd isn't run.
-if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
-	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
-fi
-
 # $rbootd_flags is imported from /etc/netstart;
 # If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
 # rbootd isn't run.
@@ -250,6 +204,52 @@ if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
 fi
 
 echo '.'
+
+echo -n 'starting rpc daemons:'
+echo -n ' portmap';             portmap
+
+# $bootparamd_flags is imported from /etc/netstart;
+# If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
+# bootparamd isn't run.
+if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
+        echo -n ' rpc.bootparamd';      rpc.bootparamd ${bootparamd_flags}
+fi
+
+if [ "X${ypserv_flags}" != X"NO" ]; then
+        echo -n ' ypserv';              ypserv ${ypserv_flags}
+fi
+
+if [ "X${yppasswdd_flags}" != X"NO" ]; then
+        echo -n ' rpc.yppasswdd';       rpc.yppasswdd ${yppasswdd_flags}
+fi
+
+if [ "X${ypbind_flags}" != X"NO" ]; then
+        echo -n ' ypbind';              ypbind ${ypbind_flags}
+fi
+
+# $nfs_server is imported from /etc/netstart;
+# if $nfs_server == YES, the machine is setup for being an nfs server
+if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
+        rm -f /var/db/mountdtab
+        echo -n > /var/db/mountdtab
+        echo -n ' mountd';              mountd
+        echo -n ' nfsd';                nfsd -tun 4
+fi
+
+# $nfs_client is imported from /etc/netstart;
+# if $nfs_client == YES, the machine is setup for being an nfs client
+if [ X${nfs_client} = X"YES" ]; then
+        echo -n ' nfsiod';              nfsiod -n 4
+fi
+
+if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
+        echo -n ' amd'
+        amd -l syslog -x error,noinfo,nostats -p \
+            -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
+fi
+
+echo '.'
+mount -a -t nfs
 
 . /etc/rc.local
 
