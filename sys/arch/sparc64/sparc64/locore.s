@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.88 2000/07/24 16:08:18 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.89 2000/07/24 16:21:02 mycroft Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8582,14 +8582,6 @@ ENTRY(pmap_zero_page)
 	fzero	%f10
 	fzero	%f12
 	fzero	%f14
-	fzero	%f16				! And second bank
-	fzero	%f18
-	fzero	%f20
-	fzero	%f22
-	fzero	%f24
-	fzero	%f26
-	fzero	%f28
-	fzero	%f30
 
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Do the demap
 	membar	#Sync				! No real reason for this XXXX
@@ -8610,7 +8602,7 @@ ENTRY(pmap_zero_page)
 	stda	%f0, [%o2] ASI_BLK_COMMIT_P		! Store 64 bytes
 	add	%o2, 64, %o2
 	dec	128, %o4
-	stda	%f16, [%o2] ASI_BLK_COMMIT_P		! Store 64 bytes
+	stda	%f0, [%o2] ASI_BLK_COMMIT_P		! Store 64 bytes
 	brgz,pt %o4, 1b
 	 add	%o2, 64, %o2
 
