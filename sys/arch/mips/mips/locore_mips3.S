@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.54 2000/09/26 18:22:13 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.55 2000/10/02 22:13:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2516,6 +2516,73 @@ LEAF(mips3_FetchDcache)
 	j	ra
 	nop
 END(mips3_FetchDcache)
+
+
+#if defined(_MIPS_BSD_API) && \
+    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
+#error mips3_ld and mips3_sd should be adjusted for N32 or LP64
+#endif
+
+LEAF(mips3_ld)
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	mfc0	t0, MIPS_COP_0_STATUS		# turn of interrupts
+	and	t1, t0, ~(MIPS_SR_INT_IE)
+	mtc0	t1, MIPS_COP_0_STATUS
+	nop
+	nop
+	nop
+#endif
+
+	ld	v0, 0(a0)
+#if _BYTE_ORDER == _BIG_ENDIAN
+	addu	v1, v0, 0			# low word in v1
+	dsra	v0, v0, 32			# high word in v0
+#else
+	dsra	v1, v0, 32			# high word in v1
+	addu	v0, v0, 0			# low word in v0
+#endif
+
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
+	nop
+#endif
+
+	jr	ra
+	nop
+END(mips3_ld)
+
+LEAF(mips3_sd)
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	mfc0	t0, MIPS_COP_0_STATUS		# turn of interrupts
+	and	t1, t0, ~(MIPS_SR_INT_IE)
+	mtc0	t1, MIPS_COP_0_STATUS
+	nop
+	nop
+	nop
+#endif
+
+	# NOTE: a1 is padding!
+
+#if _BYTE_ORDER == _BIG_ENDIAN
+	dsll	a2, a2, 32			# high word in a2
+	dsll	a3, a3, 32			# low word in a3
+	dsrl	a3, a3, 32
+#else
+	dsll	a2, a2, 32			# low word in a2
+	dsrl	a2, a2, 32
+	dsll	a3, a3, 32			# high word in a3
+#endif
+	or	a1, a2, a3
+	sd	a1, 0(a0)
+
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
+	nop
+#endif
+
+	jr	ra
+	nop
+END(mips3_sd)
 
 
 /*
