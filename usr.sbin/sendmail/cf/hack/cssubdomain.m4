@@ -32,8 +32,13 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)cssubdomain.m4	8.1 (Berkeley) 6/7/93')
+
+divert(2)
+# find possible (old & new) versions of our name via short circuit hack
+# (this code should exist ONLY during the transition from .Berkeley.EDU
+#  names to .CS.Berkeley.EDU names -- probably not more than a few months)
+R$* < @ $=w .CS.Berkeley.EDU > $*	$: $1 < @ $j > $3
+R$* < @ $=w .Berkeley.EDU> $*		$: $1 < @ $j > $3
+divert(0)

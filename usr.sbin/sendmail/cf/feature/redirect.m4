@@ -32,8 +32,17 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
+
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)redirect.m4	8.1 (Berkeley) 6/7/93')
+divert(-1)
+
+
+PUSHDIVERT(3)
+# addresses sent to foo@host.REDIRECT will give a 551 error code
+R$* < @ $+ .REDIRECT >	$# error $@ NOUSER $: "551 User not local; please try " <$1@$2>
+POPDIVERT
+
+PUSHDIVERT(6)
+CPREDIRECT
+POPDIVERT

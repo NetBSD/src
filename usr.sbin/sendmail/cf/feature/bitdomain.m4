@@ -32,8 +32,18 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
+
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)bitdomain.m4	8.1 (Berkeley) 6/7/93')
+divert(-1)
+
+
+PUSHDIVERT(6)
+Kbitdomain ifelse(_ARG_, `', `hash /etc/bitdomain -o', `_ARG_')
+POPDIVERT
+
+
+PUSHDIVERT(8)
+# handle BITNET mapping
+R$* < @ $+ .BITNET > $*		$: $1 < @ $(bitdomain $2 $: $2.BITNET $) > $3
+POPDIVERT
