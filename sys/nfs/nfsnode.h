@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.22 1997/10/12 23:13:38 fvdl Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.23 1997/10/16 23:59:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,7 +95,7 @@ struct nfsdircache {
  * If this structure exceeds 256 bytes (it is currently 256 using 4.4BSD-Lite
  * type definitions), file handles of > 32 bytes should probably be split out
  * into a separate MALLOC()'d data structure. (Reduce the size of nfsfh_t by
- * changing the definition in sys/mount.h of NFS_SMALLFH.)
+ * changing the definition in nfsproto.h of NFS_SMALLFH.)
  * NB: Hopefully the current order of the fields is such that everything will
  *     be well aligned and, therefore, tightly packed.
  */
