@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.36 1998/07/31 22:50:52 perry Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.37 1998/08/02 04:53:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -50,6 +50,17 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/pool.h>
+
+struct pool socket_pool;
+
+void
+soinit()
+{
+
+	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
+	    "sockpl", 0, NULL, NULL, M_SOCKET);
+}
 
 /*
  * Socket operation routines.
@@ -79,7 +90,7 @@ socreate(dom, aso, type, proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_WAIT);
+	so = pool_get(&socket_pool, PR_WAITOK);
 	bzero((caddr_t)so, sizeof(*so));
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
@@ -156,7 +167,7 @@ sofree(so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
-	FREE(so, M_SOCKET);
+	pool_put(&socket_pool, so);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.24 1998/04/25 17:35:18 matt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.25 1998/08/02 04:53:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -161,9 +161,9 @@ sonewconn1(head, connstatus)
 
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return ((struct socket *)0);
-	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_DONTWAIT);
+	so = pool_get(&socket_pool, PR_NOWAIT);
 	if (so == NULL) 
-		return ((struct socket *)0);
+		return (NULL);
 	bzero((caddr_t)so, sizeof(*so));
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
@@ -180,8 +180,8 @@ sonewconn1(head, connstatus)
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
 	    (struct proc *)0)) {
 		(void) soqremque(so, soqueue);
-		(void) free((caddr_t)so, M_SOCKET);
-		return ((struct socket *)0);
+		pool_put(&socket_pool, so);
+		return (NULL);
 	}
 	if (connstatus) {
 		sorwakeup(head);
