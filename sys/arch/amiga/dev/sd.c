@@ -42,10 +42,21 @@
 #include "sd.h"
 #if NSD > 0
 
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.5 1994/01/26 21:06:17 mw Exp $";
+/*
+ * Current driver can only handle 8 disk devices, so if more were
+ * configured, redefine NSD to reduce unusable data space.
+ */
+
+#if NSD > 8
+#undef NSD
+#define NSD	8	/* Can't handle more than 8 devices */
 #endif
 
+#ifndef lint
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.6 1994/02/01 11:52:32 chopps Exp $";
+#endif
+
+#include "sys/types.h"
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/buf.h"
@@ -57,7 +68,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.5
 #include "sys/file.h"
 
 #include "device.h"
-#include "scsireg.h"
+#include "scsidefs.h"
 #include "vm/vm_param.h"
 #include "vm/lock.h"
 #include "vm/vm_statistics.h"
@@ -89,7 +100,8 @@ extern int physio();
 extern void TBIS();
 
 struct	driver sddriver = {
-	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr, 0,
+	(int (*)(void *))sdinit, "sd", (int (*)(int)) sdstart, (int (*)(int,...))sdgo,
+	(int (*)(int,int)) sdintr, 0,
 };
 
 #if 0
@@ -152,11 +164,12 @@ int sddebug = 0;
 #define SDB_ERROR	0x01
 #define SDB_PARTIAL	0x02
 #define SDB_BOOTDEV	0x04
-/*#define QUASEL*/
+#define SDB_QUASEL	0x10
+#define QUASEL
 #endif
 
 #ifdef QUASEL
-#define QPRINTF(a) printf a
+#define QPRINTF(a) if (sddebug & SDB_QUASEL) printf a
 #else
 #define QPRINTF(a)
 #endif
@@ -232,12 +245,12 @@ sdident(sc, ad)
 	ctlr = ad->amiga_ctlr;
 	slave = ad->amiga_slave;
 	unit = sc->sc_punit;
-	scsi_delay(-1);
+	(ad->amiga_cdriver->d_delay)(-1);
 
 	/*
 	 * See if unit exists and is a disk then read block size & nblocks.
 	 */
-	while ((i = scsi_test_unit_rdy(ctlr, slave, unit)) != 0) {
+	while ((i = (ad->amiga_cdriver->d_tur)(ctlr, slave, unit)) != 0) {
 retry_TUR:
 		if (i == -1 || --tries < 0) {
 			if (ismo)
@@ -249,7 +262,7 @@ retry_TUR:
 			u_char sensebuf[128];
 			struct scsi_xsense *sp = (struct scsi_xsense *)sensebuf;
 
-			i = scsi_request_sense(ctlr, slave, unit, sensebuf, 
+			i = (ad->amiga_cdriver->d_rqs)(ctlr, slave, unit, sensebuf, 
 					       sizeof(sensebuf));
 			if (sp->class == 7)
 				switch (sp->key) {
@@ -272,7 +285,7 @@ retry_TUR:
 	/*
 	 * Find out about device
 	 */
-	if (i = scsi_immed_command(ctlr, slave, unit, &inq, 
+	if (i = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &inq, 
 				   (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
 	  {
 	    if (i == STS_CHECKCOND)
@@ -315,9 +328,9 @@ retry_TUR:
 	}
 
 	/* for those that have drives they only turn on for use under BSD... */
-	scsi_start_stop_unit (ctlr, slave, unit, 1);
+	(ad->amiga_cdriver->d_ssu)(ctlr, slave, unit, 1);
 
-	i = scsi_immed_command(ctlr, slave, unit, &cap, 
+	i = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &cap, 
 			       (u_char *)&capbuf, sizeof(capbuf), B_READ);
 	if (i) {
 		if (i != STS_CHECKCOND ||
@@ -352,10 +365,10 @@ retry_TUR:
 		sc->sc_blks <<= sc->sc_bshift;
 	}
 	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
-	scsi_delay(0);
+	(ad->amiga_cdriver->d_delay)(0);
 	return(inqbuf.type);
 failed:
-	scsi_delay(0);
+	(ad->amiga_cdriver->d_delay)(0);
 	return(-1);
 }
 
@@ -371,6 +384,8 @@ sdinit(ad)
 	struct disklabel *dl;
 	int s;
 
+	if (sc->sc_flags & SDF_ALIVE)
+		return (0);		/* this unit already configured */
 	/* I seem to be interrupted every leap year while in here..
 	   
 	   Note: do this *only* if you don't need interrupt driven
@@ -422,7 +437,7 @@ no_rdb:
 
 	for (bnum = 0; bnum < RDB_LOCATION_LIMIT; bnum++)
 	  {
-	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+	    if ((ad->amiga_cdriver->d_ttread) (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
 			      (char *) block, DEV_BSIZE, bnum, sc->sc_bshift))
 	      /* read error on block */
 	      goto no_rdb;
@@ -456,7 +471,7 @@ no_rdb:
 	    u_int reserved;
 	    int part, bsd_part;
 
-	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+	    if ((ad->amiga_cdriver->d_ttread) (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
 			      (char *) block, DEV_BSIZE, npbnum, sc->sc_bshift))
 	      break;
 	  
@@ -797,7 +812,7 @@ void
 sdustart(unit)
 	register int unit;
 {
-	if (scsireq(&sd_softc[unit].sc_dq))
+	if ((sd_softc[unit].sc_ad->amiga_cdriver->d_req)(&sd_softc[unit].sc_dq))
 		sdstart(unit);
 }
 
@@ -819,7 +834,7 @@ sderror(unit, sc, am, stat)
 	if (stat & STS_CHECKCOND) {
 		struct scsi_xsense *sp;
 
-		scsi_request_sense(am->amiga_ctlr, am->amiga_slave,
+		(am->amiga_cdriver->d_rqs)(am->amiga_ctlr, am->amiga_slave,
 				   sc->sc_punit,
 				   sdsense[unit].sense,
 				   sizeof(sdsense[unit].sense));
@@ -856,7 +871,7 @@ sdfinish(unit, sc, bp)
 	sdtab[unit].b_actf = bp->b_actf;
 	bp->b_resid = 0;
 	biodone(bp);
-	scsifree(&sc->sc_dq);
+	(sc->sc_ad->amiga_cdriver->d_free)(&sc->sc_dq);
 	if (sdtab[unit].b_actf)
 		sdustart(unit);
 	else
@@ -878,7 +893,7 @@ sdstart(unit)
 		register struct buf *bp = sdtab[unit].b_actf;
 		register int sts;
 
-		sts = scsi_immed_command(am->amiga_ctlr, am->amiga_slave,
+		sts = (am->amiga_cdriver->d_immcmd)(am->amiga_ctlr, am->amiga_slave,
 					 sc->sc_punit,
 					 &sdcmd[unit],
 					 bp->b_un.b_addr, bp->b_bcount,
@@ -891,7 +906,7 @@ sdstart(unit)
 		}
 		sdfinish(unit, sc, bp);
 
-	} else if (scsiustart(am->amiga_ctlr))
+	} else if ((am->amiga_cdriver->d_ustart)(am->amiga_ctlr))
 		sdgo(unit);
 }
 
@@ -916,7 +931,12 @@ sdgo(unit)
 		cmd = bp->b_flags & B_READ? &sd_read_cmd : &sd_write_cmd;
 		*(int *)(&cmd->cdb[2]) = bp->b_cylin;
 		pad = howmany(bp->b_bcount, sc->sc_blksize);
+#if 0
 		*(u_short *)(&cmd->cdb[7]) = pad;
+#else /* Kludge for GVP 3001 bug */
+		cmd->cdb[7] = pad >> 8;
+		cmd->cdb[8] = pad;
+#endif
 		QPRINTF(("sdgo[%d, %d]: %s @%d >%d\n",
 			 am->amiga_ctlr, am->amiga_slave,
 			 bp->b_flags & B_READ ? "R" : "W",
@@ -929,7 +949,7 @@ sdgo(unit)
 #endif
 		sdstats[unit].sdtransfers++;
 	}
-	if (scsigo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit, bp, cmd, pad) == 0) {
+	if ((am->amiga_cdriver->d_go)(am->amiga_ctlr, am->amiga_slave, sc->sc_punit, bp, cmd, pad) == 0) {
 		if (am->amiga_dk >= 0) {
 			dk_busy |= 1 << am->amiga_dk;
 			++dk_seek[am->amiga_dk];
@@ -1213,8 +1233,8 @@ sddump(dev)
 	maddr = ctob(lowram);
 	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
 	/* scsi bus idle? */
-	if (!scsireq(&sc->sc_dq)) {
-		scsireset(am->amiga_ctlr);
+	if (!(am->amiga_cdriver->d_req)(&sc->sc_dq)) {
+		(am->amiga_cdriver->d_reset)(am->amiga_ctlr);
 		sdreset(sc, sc->sc_ad);
 		printf("[ drive %d reset ] ", unit);
 	}
@@ -1225,7 +1245,7 @@ sddump(dev)
 			printf("%d ", i / NPGMB);
 #undef NPBMG
 		pmap_enter(pmap_kernel(), vmmap, maddr, VM_PROT_READ, TRUE);
-		stat = scsi_tt_write(am->amiga_ctlr, am->amiga_slave,
+		stat = (am->amiga_cdriver->d_ttwrite)(am->amiga_ctlr, am->amiga_slave,
 				     sc->sc_punit,
 				     vmmap, NBPG, baddr, sc->sc_bshift);
 		if (stat) {

@@ -561,7 +561,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		/* first set the whole font memory to a test-pattern, so we 
 		   can see if something that shouldn't be drawn IS drawn.. */
 		{
-			unsigned char * c = fb;
+			volatile unsigned char * c = fb;
 			long x;
 			Map(2);
 			
@@ -571,7 +571,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		}
 		
 		{
-			unsigned char * c = fb;
+			volatile unsigned char * c = fb;
 			long x;
 			Map(3);
 			
@@ -583,7 +583,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		{
 		  /* ok, now position at first defined character, and
 		     copy over the images */
-		  unsigned char * c = fb + md->FLo * 32;
+		  volatile unsigned char * c = fb + md->FLo * 32;
 		  const unsigned char * f = md->FData;
 		  unsigned short z;
 		
@@ -676,10 +676,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	}
 
 	gp->g_data	= (caddr_t) md;
-	gi->gd_regaddr  = (long)ba - (long)ZORRO2ADDR + (long)ZORRO2BASE;;
+	gi->gd_regaddr  = (caddr_t) ((long)ba - (long)ZORRO2ADDR + (long)ZORRO2BASE);
 	gi->gd_regsize  = 64*1024;
 
-	gi->gd_fbaddr   = (long)fb - (long)ZORRO2ADDR + (long)ZORRO2BASE;
+	gi->gd_fbaddr   = (caddr_t) ((long)fb - (long)ZORRO2ADDR + (long)ZORRO2BASE);
 #ifdef BANKEDDEVPAGER
 	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
 	gi->gd_bank_size = 64*1024;

@@ -50,21 +50,33 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.5 1994/01/26 21:06:13 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.6 1994/02/01 11:52:27 chopps Exp $";
 #endif
+
+/* need to know if any tapes have been configured */
+#include "st.h"
 
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/buf.h"
+#include "vm/vm.h"
+#include "vm/vm_kern.h"
+#include "vm/vm_page.h"
+#include "vm/vm_statistics.h"
+#include "machine/pmap.h"
+
 #include "device.h"
 
 #include "dmavar.h"
+#include "scsidefs.h"
 #include "scsivar.h"
 #include "scsireg.h"
 
 #include "../amiga/custom.h"
 
 #include "machine/cpu.h"
+
+extern u_int kvtop();
 
 static int sbic_wait (volatile sbic_padded_regmap_t *regs, char until, int timeo, int line);
 static void scsiabort (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, char *where);
@@ -76,7 +88,7 @@ static int ixfer_out (register volatile sbic_padded_regmap_t *regs, int len, reg
 static void ixfer_in (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf);
 static int scsiicmd (struct scsi_softc *dev, int target, u_char *cbuf, int clen, u_char *buf, int len, u_char xferphase);
 static void finishxfer (struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, int target);
-static int check_dma_buf (char *buffer, u_long len);
+static int check_dma_buf (char *buffer, u_long len, u_long mask);
 
 
 /*
@@ -95,44 +107,96 @@ int	scsiinit(), scsigo(), scsiintr(), scsixfer();
 void	scsistart(), scsidone(), scsifree(), scsireset();
 struct	driver scsidriver = {
 	scsiinit, "scsi", (int (*)())scsistart, scsigo, scsiintr,
-	(int (*)())scsidone,
+	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
+	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
+	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+#if NST > 0
+	scsi_tt_oddio
+#else
+	NULL
+#endif
 };
+#endif
+
+void scsistart (int unit);
+int scsigo (int ctlr, int slave, int unit, struct buf *bp, struct scsi_fmt_cdb *cdb, int pad);
+int scsiintr (int unit);
+void scsidone (int unit);
+int scsiustart (int unit);
+int scsireq (register struct devqueue *dq);
+void scsifree (register struct devqueue *dq);
+void scsireset (int unit);
+void scsi_delay (int delay);
+int scsi_test_unit_rdy (int ctlr, int slave, int unit);
+int scsi_start_stop_unit (int ctlr, int slave, int unit, int start);
+int scsi_request_sense (int ctlr, int slave, int unit, u_char *buf, unsigned int len);
+int scsi_immed_command (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
+int scsi_tt_read (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+int scsi_tt_write (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+#if NST > 0
+int scsi_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_flags, int freedma);
 #endif
 
 
 #if NA3000SCSI > 0
-int a3000scsiinit();
+int a3000scsiinit ();
 
 struct driver a3000scsidriver = {
-        a3000scsiinit, "a3000scsi", (int (*)())scsistart, scsigo, scsiintr,
-	(int (*)())scsidone,
+        (int (*)(void *)) a3000scsiinit, "a3000scsi", (int (*)(int)) scsistart,
+	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
+	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
+	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
+	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+#if NST > 0
+	scsi_tt_oddio
+#else
+	NULL
+#endif
 };
 #endif
 
 #if NA2091SCSI > 0
-int a2091scsiinit();
+int a2091scsiinit ();
 
 struct driver a2091scsidriver = {
-        a2091scsiinit, "a2091scsi", (int (*)())scsistart, scsigo, scsiintr,
-	(int (*)())scsidone,
+        (int (*)(void *)) a2091scsiinit, "a2091scsi", (int (*)(int)) scsistart,
+	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
+	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
+	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
+	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+#if NST > 0
+	scsi_tt_oddio
+#else
+	NULL
+#endif
 };
 
 int a2091_dmabounce = 0;
 #endif
 
 #if NGVP11SCSI > 0
-int gvp11scsiinit();
+int gvp11scsiinit ();
 
 struct driver gvp11scsidriver = {
-        gvp11scsiinit, "GVPIIscsi", (int (*)())scsistart, scsigo, scsiintr,
-	(int (*)())scsidone,
+        (int (*)(void *)) gvp11scsiinit, "GVPIIscsi", (int (*)(int)) scsistart,
+	(int (*)(int,...)) scsigo, (int (*)(int,int)) scsiintr,
+	(int (*)())scsidone, scsiustart, scsireq, scsifree, scsireset,
+	scsi_delay, scsi_test_unit_rdy, scsi_start_stop_unit,
+	scsi_request_sense, scsi_immed_command, scsi_tt_read, scsi_tt_write,
+#if NST > 0
+	scsi_tt_oddio
+#else
+	NULL
+#endif
 };
 
 int gvp11_dmabounce = 0;
+u_long gvp11_dma_mask = 0x00ffffff;
 #endif
 
 
 struct	scsi_softc scsi_softc[NSCSI];
+int	scsi_nscsi = NSCSI;		/* DMA routines need table size */
 
 int scsi_cmd_wait = SCSI_CMD_WAIT;
 int scsi_data_wait = SCSI_DATA_WAIT;
@@ -192,8 +256,12 @@ int scsi_no_dma = 0;
 #ifdef DEBUG
 int	scsi_debug = 0;
 int	sync_debug = 0;
+int	scsi_dma_debug = 0;
 #define WAITHIST
 #define QUASEL
+
+static long	dmahits[NSCSI];
+static long	dmamisses[NSCSI];
 #endif
 
 #ifdef QUASEL
@@ -345,8 +413,8 @@ a3000scsiinit(ac)
   initialized[ac->amiga_unit] = 1;
   
   /* initialize dma */
-  a3000dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
-		&dev->dmanext, &dev->dmastop);
+  a3000dmainit (ac, dev);
+  dev->dmamask = 0;		/* A3000 can DMA to all memory */
 
   /* advance ac->amiga_addr to point to the real sbic-registers */
   ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x41);
@@ -357,7 +425,6 @@ a3000scsiinit(ac)
   /* hardwired IPL */
   ac->amiga_ipl = 2;
   dev->sc_ac = ac;
-  dev->sc_dq.dq_driver = &a3000scsidriver;
   dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
   scsireset (ac->amiga_unit);
 
@@ -392,9 +459,9 @@ a2091scsiinit(ac)
   initialized[ac->amiga_unit] = 1;
   
   /* initialize dma */
-  a2091dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
-		&dev->dmanext, &dev->dmastop);
+  a2091dmainit (ac, dev);
   dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
+  dev->dmamask = 0xff000000;	/* set DMA mask */
   if (a2091_dmabounce) {
     /* XXX should do this dynamically when needed? */
     dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
@@ -410,7 +477,6 @@ a2091scsiinit(ac)
   /* hardwired IPL */
   ac->amiga_ipl = 2;
   dev->sc_ac = ac;
-  dev->sc_dq.dq_driver = &a2091scsidriver;
   dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
   scsireset (ac->amiga_unit);
 
@@ -445,9 +511,9 @@ gvp11scsiinit(ac)
   initialized[ac->amiga_unit] = 1;
   
   /* initialize dma */
-  gvp11dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
-		&dev->dmanext, &dev->dmastop);
+  gvp11dmainit (ac, dev);
   dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
+  dev->dmamask = ~gvp11_dma_mask;	/* XXX should validate mask? */
   if (gvp11_dmabounce) {
     /* XXX should do this dynamically when needed? */
     dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
@@ -463,7 +529,6 @@ gvp11scsiinit(ac)
   /* hardwired IPL */
   ac->amiga_ipl = 2;
   dev->sc_ac = ac;
-  dev->sc_dq.dq_driver = &gvp11scsidriver;
   dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
   scsireset (ac->amiga_unit);
 
@@ -658,7 +723,7 @@ wait_for_select(dev, regs)
       QPRINTF (("%02x ", csr));
     }
   while (csr != (SBIC_CSR_MIS_2|MESG_OUT_PHASE)
-         && csr != (SBIC_CSR_MIS_2|CMD_PHASE)
+	 && csr != (SBIC_CSR_MIS_2|CMD_PHASE)
 	 && csr != SBIC_CSR_SEL_TIMEO);
 
   /* Send identify message (SCSI-2 requires an identify msg (?)) */
@@ -724,9 +789,9 @@ wait_for_select(dev, regs)
 
       if (csr != SBIC_CSR_SEL_TIMEO)
 	dev->sc_flags |= SCSI_SELECTED;
-      else if (csr == (SBIC_CSR_MIS_2|CMD_PHASE))
-        dev->sc_flags |= SCSI_SELECTED;   /* device ignored ATN */
     }
+  else if (csr == (SBIC_CSR_MIS_2|CMD_PHASE))
+    dev->sc_flags |= SCSI_SELECTED;	/* device ignored ATN */
   
   QPRINTF(("\n"));
 
@@ -800,8 +865,9 @@ ixfer_out(regs, len, buf, phase)
   register int wait = scsi_data_wait;
   u_char orig_csr, csr, asr;
 
-  QPRINTF(("ixfer_out {%d} %02x %02x %02x %02x %02x %02x\n", 
-  	   len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]));
+  QPRINTF(("ixfer_out {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+  	   len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],
+	   buf[6], buf[7], buf[8], buf[9]));
 
   GET_SBIC_csr (regs, orig_csr);
 
@@ -925,8 +991,9 @@ ixfer_in(regs, len, buf)
       buf++;
     }
 
-  QPRINTF(("ixfer_in {%d} %02x %02x %02x %02x %02x %02x\n", 
-  	   len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5]));
+  QPRINTF(("ixfer_in {%d} %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", 
+  	   len, obp[0], obp[1], obp[2], obp[3], obp[4], obp[5],
+	   obp[6], obp[7], obp[8], obp[9]));
 
   /* this leaves with one csr to be read */
   HIST(ixin_wait, wait)
@@ -1201,6 +1268,7 @@ retry_selection:
 abort:
   scsiabort(dev, regs, "icmd");
 out:
+  QPRINTF(("=STS:%02x=", dev->sc_stat[0]));
   return (dev->sc_stat[0]);
 }
 
@@ -1237,12 +1305,13 @@ finishxfer(dev, regs, target)
 
   dev->sc_flags &= ~SCSI_SELECTED;
   GET_SBIC_cmd_phase (regs, phase);
-  QPRINTF(("}%02x\n", phase));
+  QPRINTF(("}%02x", phase));
   if (phase == 0x60)
     GET_SBIC_tlun (regs, dev->sc_stat[0]);
   else
     scsierror (dev, regs, csr);
 
+  QPRINTF(("=STS:%02x=\n", dev->sc_stat[0]));
   splx (s);
 }
 
@@ -1387,9 +1456,12 @@ scsiustart (int unit)
 {
 	register struct scsi_softc *dev = &scsi_softc[unit];
 
-	if (dev->dmareq(&dev->sc_dq))
-		return(1);
-	return(0);
+	/* If we got here, this controller is not busy
+	   Since each controller has it's own DMA, we don't
+	   need to queue up DMA requests, so we are ready to
+	   accept a comment
+	 */
+	return(1);
 }
 
 void
@@ -1414,8 +1486,15 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
   int i, dmaflags;
   u_char phase, csr, asr, cmd;
   char *addr;
+  int count;
+  register struct dma_chain *dcp;
+  register char *dmaend = NULL;
+  register int tcount;
 
   cdb->cdb[1] |= unit << 5;
+
+  addr = bp->b_un.b_addr;
+  count = bp->b_bcount;
 
   /* this should only happen on character devices, and there only if user
      programs have not been written taking care of not passing odd aligned
@@ -1423,19 +1502,19 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 
 /* XXXX do all with polled I/O */
 
-  if (scsi_no_dma || (((int)bp->b_un.b_addr & 3) || (bp->b_bcount & 1))
-    || (dev->sc_flags & SCSI_DMA24 && check_dma_buf (bp->b_un.b_addr,
-        bp->b_bcount) && dev->dmabuffer == NULL))
+  if (scsi_no_dma || (((int)addr & 3) || (count & 1))
+    || (dev->sc_flags & SCSI_DMA24 && check_dma_buf (addr, count, dev->dmamask)
+        && dev->dmabuffer == NULL))
     {
       register struct devqueue *dq;
 
-      dev->dmafree(&dev->sc_dq);
+      dev->dmafree(dev);
 
       /* in this case do the transfer with programmed I/O :-( This is
          probably still faster than doing the transfer with DMA into a
          buffer and copying it later to its final destination, comments? */
       scsiicmd (dev, slave, (u_char *) cdb->cdb, cdb->len, 
-		bp->b_un.b_addr, bp->b_bcount,
+		addr, count,
 		bp->b_flags & B_READ ? DATA_IN_PHASE : DATA_OUT_PHASE);
 
       dq = dev->sc_sq.dq_forw;
@@ -1451,7 +1530,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
   /* select the SCSI bus (it's an error if bus isn't free) */
   if (issue_select(dev, regs, slave, dev->sc_scsi_addr) || wait_for_select(dev, regs)) 
     {
-      dev->dmafree(&dev->sc_dq);
+      dev->dmafree(dev);
       return (1);
     }
   /*
@@ -1506,7 +1585,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 	   doesn't even go to data in/out phase. So handle this here
 	   normally, instead of going thru abort-handling. */
 	case STATUS_PHASE:
-          dev->dmafree(&dev->sc_dq);
+          dev->dmafree(dev);
 	  finishxfer (dev, regs, slave);
           dq = dev->sc_sq.dq_forw;
 	  dev->sc_flags &=~ (SCSI_IO | SCSI_READ24);
@@ -1552,30 +1631,83 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
     }
 
 out:
-  dmaflags = DMAGO_NOINT;
+  dmaflags = 0;
   if (bp->b_flags & B_READ)
     dmaflags |= DMAGO_READ;
-  if ((int)bp->b_un.b_addr & 3)
+  if ((int)addr & 3)
     panic ("not long-aligned buffer address in scsi_go");
-  if (bp->b_bcount & 1)
+  if (count & 1)
     panic ("odd transfer count in scsi_go");
-  addr = bp->b_un.b_addr;
-  if (dev->sc_flags & SCSI_DMA24 && check_dma_buf (addr, bp->b_bcount)) {
-    if (bp->b_bcount > MAXPHYS)
-      printf ("dmago: bp->b_bcount > MAXPHYS %08x\n", bp->b_bcount);
+  if (count > MAXPHYS)
+    printf ("scsigo: bp->b_bcount > MAXPHYS %08x\n", count);
+  if (dev->sc_flags & SCSI_DMA24 && check_dma_buf (addr, count, dev->dmamask)) {
     if (dmaflags & DMAGO_READ) {
       dev->sc_flags |= SCSI_READ24;	/* need to copy after read */
       dev->dmausrbuf = addr;		/* save address */
-      dev->dmausrlen = bp->b_bcount;	/* and length */
+      dev->dmausrlen = count;		/* and length */
     }
     else {				/* write: copy to dma buffer */
-      bcopy (addr, dev->dmabuffer, bp->b_bcount);
+      bcopy (addr, dev->dmabuffer, count);
     }
     addr = dev->dmabuffer;		/* and use dma buffer */
   }
 
+#ifdef DEBUG
+  if (scsi_dma_debug & DDB_FOLLOW)
+     printf("dmago(%d, %x, %x, %x)\n", ctlr, addr, count, dmaflags);
+#endif
+  /*
+   * Build the DMA chain
+   */
+  for (dcp = dev->sc_chain; count > 0; dcp++) 
+    {
+#ifdef DEBUG
+      if (! pmap_extract(pmap_kernel(), (vm_offset_t)addr))
+        panic ("dmago: no physical page for address!");
+#endif
+
+      dcp->dc_addr = (char *) kvtop(addr);
+      if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
+	tcount = count;
+      dcp->dc_count = tcount;
+      addr += tcount;
+      count -= tcount;
+      tcount >>= 1;	/* number of words (the sdmac wants 16bit values here) */
+      if (dcp->dc_addr == dmaend) 
+	{
+#ifdef DEBUG
+	  dmahits[ctlr]++;
+#endif
+	  dmaend += dcp->dc_count;
+	  (--dcp)->dc_count += tcount;
+	} 
+      else 
+        {
+#ifdef DEBUG
+	  dmamisses[ctlr]++;
+#endif
+	  dmaend = dcp->dc_addr + dcp->dc_count;
+	  dcp->dc_count = tcount;
+	}
+    }
+
+  dev->sc_cur = dev->sc_chain;
+  dev->sc_last = --dcp;
+  dev->sc_tc = dev->sc_cur->dc_count << 1;
+
+#ifdef DEBUG
+  if (scsi_dma_debug & DDB_IO)
+    {
+      for (dcp = dev->sc_chain; dcp <= dev->sc_last; dcp++)
+	printf("  %d: %d@%x\n", dcp-dev->sc_chain,
+	       dcp->dc_count, dcp->dc_addr);
+    }
+#endif
+
+  DCIS();				/* push data cache */
+
   /* dmago() also enables interrupts for the sbic */
-  i = dev->dmago(ctlr, addr, bp->b_bcount, dmaflags);
+  i = dev->dmago(dev, addr, bp->b_bcount, dmaflags);
 
   SBIC_TC_PUT (regs, (unsigned)i);
   SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
@@ -1584,7 +1716,7 @@ out:
 
 abort:
   scsiabort(dev, regs, "go");
-  dev->dmafree(&dev->sc_dq);
+  dev->dmafree(dev);
   return (1);
 }
 
@@ -1632,7 +1764,7 @@ QPRINTF(("[0x%x]", csr));
       if (dev->sc_flags & SCSI_READ24)
         bcopy (dev->dmabuffer, dev->dmausrbuf, dev->dmausrlen);
       dev->sc_flags &=~ (SCSI_IO | SCSI_READ24);
-      dev->dmafree (&dev->sc_dq);
+      dev->dmafree (dev);
       (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
     } 
   else if (csr == (SBIC_CSR_XFERRED|DATA_OUT_PHASE) || csr == (SBIC_CSR_XFERRED|DATA_IN_PHASE)
@@ -1641,20 +1773,30 @@ QPRINTF(("[0x%x]", csr));
   	   || csr == (SBIC_CSR_MIS_2|DATA_OUT_PHASE) || csr == (SBIC_CSR_MIS_2|DATA_IN_PHASE))
     {
       /* do scatter-gather dma hacking the controller chip, ouch.. */
-      i = dev->dmanext (unit);
+#ifdef DEBUG
+      if (scsi_dma_debug & DDB_IO) 
+	{
+	  printf("dmanext(%d): next %d\n", unit, (dev->sc_cur-dev->sc_chain)+1);
+	}
+#endif
+      dev->sc_cur->dc_addr += dev->sc_tc;	/* next dma address */
+      dev->sc_cur->dc_count -= (dev->sc_tc >> 1);	/* decrement count */
+      if (dev->sc_cur->dc_count == 0)
+	++dev->sc_cur;			/* advance to next segment */
+      i = dev->dmanext (dev);
       SBIC_TC_PUT (regs, (unsigned)i);
       SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
     }
   else 
     {
       /* Something unexpected happened -- deal with it. */
-      dev->dmastop (unit);
+      dev->dmastop (dev);
       scsierror(dev, regs, csr);
       scsiabort(dev, regs, "intr");
       if (dev->sc_flags & SCSI_IO) 
 	{
 	  dev->sc_flags &=~ (SCSI_IO| SCSI_READ24);
-	  dev->dmafree (&dev->sc_dq);
+	  dev->dmafree (dev);
 	  dq = dev->sc_sq.dq_forw;
 	  (dq->dq_driver->d_intr)(dq->dq_unit, -1);
 	}
@@ -1680,7 +1822,7 @@ scsifree(dq)
  */
 
 static int
-check_dma_buf (char *buffer, u_long len)
+check_dma_buf (char *buffer, u_long len, u_long mask)
 {
 	u_long phy_buf;
 	u_long phy_len;
@@ -1691,7 +1833,7 @@ check_dma_buf (char *buffer, u_long len)
 		phy_buf = kvtop(buffer);
 		if (len < (phy_len = NBPG - ((int) buffer & PGOFSET)))
 			phy_len = len;
-		if (phy_buf & 0xff000000)
+		if (phy_buf & mask)
 			return (1);	/* can't use DMA here */
 		buffer += phy_len;
 		len -= phy_len;
@@ -1704,7 +1846,6 @@ check_dma_buf (char *buffer, u_long len)
  * to read odd-size records.
  */
 
-#include "st.h"
 #if NST > 0
 int
 scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
@@ -1722,7 +1863,7 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	 * We can't use DMA to do this transfer.
 	 */
 	if (freedma)
-		dev->dmafree(&dev->sc_dq);
+		dev->dmafree(dev);
 	/*
 	 * Initialize command block
 	 */

@@ -141,12 +141,12 @@ struct PartitionBlock {
    C:	whole disk	(the traditional way to nuke your whole harddisk...)
    D-H:	user		(DOSTYPE_BSD_D TO DOSTYPE_BSD_H) */
 
-#define DOSTYPE_BSD_ROOT   'BSDR'
-#define DOSTYPE_BSD_SWAP   'BSDS'
-#define DOSTYPE_BSD_D	   'BSDD'
-#define DOSTYPE_BSD_E	   'BSDE'
-#define DOSTYPE_BSD_F	   'BSDF'
-#define DOSTYPE_BSD_G	   'BSDG'
-#define DOSTYPE_BSD_H	   'BSDH'
+#define DOSTYPE_BSD_ROOT   0x42534452 /* 'BSDR' */
+#define DOSTYPE_BSD_SWAP   0x42534453 /* 'BSDS' */
+#define DOSTYPE_BSD_D	   0x42534444 /* 'BSDD' */
+#define DOSTYPE_BSD_E	   0x42534445 /* 'BSDE' */
+#define DOSTYPE_BSD_F	   0x42534446 /* 'BSDF' */
+#define DOSTYPE_BSD_G	   0x42534447 /* 'BSDG' */
+#define DOSTYPE_BSD_H	   0x42534448 /* 'BSDH' */
 
 #endif _amiga_rdb_h

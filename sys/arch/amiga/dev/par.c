@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: par.c,v 1.3 1994/01/26 21:06:07 mw Exp $
+ *	$Id: par.c,v 1.4 1994/02/01 11:52:22 chopps Exp $
  */
 
 /*
@@ -161,7 +161,7 @@ parstart(unit)
     printf("parstart(%x)\n", unit);
 #endif
   par_softc[unit].sc_flags &= ~PARF_DELAY;
-  wakeup(&par_softc[unit]);
+  wakeup((caddr_t) &par_softc[unit]);
 }
 
 partimo(unit)
@@ -172,7 +172,7 @@ partimo(unit)
     printf("partimo(%x)\n", unit);
 #endif
   par_softc[unit].sc_flags &= ~(PARF_UIO|PARF_TIMO);
-  wakeup(&par_softc[unit]);
+  wakeup((caddr_t) &par_softc[unit]);
 }
 
 parread(dev, uio)
@@ -229,7 +229,7 @@ parrw(dev, uio)
   if (sc->sc_timo > 0) 
     {
       sc->sc_flags |= PARF_TIMO;
-      timeout(partimo, unit, sc->sc_timo);
+      timeout((timeout_t) partimo, (caddr_t) unit, sc->sc_timo);
     }
   while (uio->uio_resid > 0) 
     {
@@ -260,7 +260,7 @@ again:
 #endif
 	  if (sc->sc_flags & PARF_TIMO) 
 	    {
-	      untimeout(partimo, unit);
+	      untimeout((timeout_t) partimo, (caddr_t) unit);
 	      sc->sc_flags &= ~PARF_TIMO;
 	    }
 	  splx(s);
@@ -326,8 +326,8 @@ again:
       if (sc->sc_delay > 0) 
 	{
 	  sc->sc_flags |= PARF_DELAY;
-	  timeout(parstart, unit, sc->sc_delay);
-	  error = tsleep(sc, PCATCH|PZERO-1, "par-cdelay", 0);
+	  timeout((timeout_t) parstart, (caddr_t) unit, sc->sc_delay);
+	  error = tsleep((caddr_t) sc, PCATCH|PZERO-1, "par-cdelay", 0);
 	  if (error) 
 	    {
 	      splx(s);
@@ -350,12 +350,12 @@ again:
   s = splsoftclock();
   if (sc->sc_flags & PARF_TIMO) 
     {
-      untimeout(partimo, unit);
+      untimeout((timeout_t) partimo, (caddr_t) unit);
       sc->sc_flags &= ~PARF_TIMO;
     }
   if (sc->sc_flags & PARF_DELAY) 
     {
-      untimeout(parstart, unit);
+      untimeout((timeout_t) parstart, (caddr_t) unit);
       sc->sc_flags &= ~PARF_DELAY;
     }
   splx(s);
@@ -472,7 +472,7 @@ parintr (mask)
   /* either way, there won't be a timeout pending any longer */
   partimeout_pending = 0;
   
-  wakeup (parintr);
+  wakeup ((caddr_t) parintr);
   splx (s);
 }
 
@@ -509,7 +509,7 @@ parsendch (ch)
       /* it's quite important that a parallel putc can be
 	 interrupted, given the possibility to lock a printer
 	 in an offline condition.. */
-      if (error = tsleep (parintr, PCATCH|PZERO-1, "parsendch", 0))
+      if (error = tsleep ((caddr_t) parintr, PCATCH|PZERO-1, "parsendch", 0))
 	{
 #ifdef DEBUG
 	  if (pardebug & PDB_INTERRUPT)

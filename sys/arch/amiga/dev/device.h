@@ -40,6 +40,18 @@ struct driver {
 	int	(*d_go)		(int unit, ...);
 	int	(*d_intr)	(int unit, int stat);
 	int	(*d_done)	(int unit);
+	int	(*d_ustart)	(int unit);
+	int	(*d_req)	();
+	void	(*d_free)	();
+	void	(*d_reset)	(int unit);
+	void	(*d_delay)	(int delay);
+	int	(*d_tur)	(int ctlr, int slave, int unit);
+	int	(*d_ssu)	(int ctlr, int slave, int unit, int start);
+	int	(*d_rqs)	();
+	int	(*d_immcmd)	();
+	int	(*d_ttread)	();
+	int	(*d_ttwrite)	();
+	int	(*d_ttoddio)	();
 };
 
 struct amiga_ctlr {
