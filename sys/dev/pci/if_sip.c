@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.88 2004/04/11 16:57:44 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.89 2004/04/11 21:16:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.88 2004/04/11 16:57:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.89 2004/04/11 21:16:00 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -293,7 +293,12 @@ struct sip_softc {
 
 	u_int32_t sc_rx_drain_thresh;	/* receive drain threshold */
 
-	int	sc_flags;		/* misc. flags; see below */
+	int	sc_flowflags;		/* 802.3x flow control flags */
+#ifdef DP83820
+	int	sc_rx_flow_thresh;	/* Rx FIFO threshold for flow control */
+#else
+	int	sc_paused;		/* paused indication */
+#endif
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
@@ -315,9 +320,6 @@ struct sip_softc {
 	rndsource_element_t rnd_source;	/* random source */
 #endif
 };
-
-/* sc_flags */
-#define	SIPF_PAUSED	0x00000001	/* paused (802.3x flow control) */
 
 #ifdef DP83820
 #define	SIP_RXCHAIN_RESET(sc)						\
@@ -844,6 +846,12 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	if (SIP_SIS900_REV(sc,SIS_REV_635) ||
 	    SIP_SIS900_REV(sc,SIS_REV_900B))
 		sc->sc_cfg |= (CFG_PESEL | CFG_RNDCNT);
+
+	if (SIP_SIS900_REV(sc,SIS_REV_635) ||
+	    SIP_SIS900_REV(sc,SIS_REV_960) ||
+	    SIP_SIS900_REV(sc,SIS_REV_900B))
+		sc->sc_cfg |= (bus_space_read_4(sc->sc_st, sc->sc_sh,
+						SIP_CFG) & CFG_EDBMASTEN);
 #endif
 
 	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
@@ -949,8 +957,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, SIP_DECL(mediachange),
 	    SIP_DECL(mediastatus));
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	/*
+	 * XXX We cannot handle flow control on the DP83815.
+	 */
+	if (SIP_CHIP_MODEL(sc, PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815))
+		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+			   MII_OFFSET_ANY, 0);
+	else
+		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+			   MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -1145,7 +1160,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 	/*
 	 * If we've been told to pause, don't transmit any more packets.
 	 */
-	if (sc->sc_flags & SIPF_PAUSED)
+	if (sc->sc_paused)
 		ifp->if_flags |= IFF_OACTIVE;
 #endif
 
@@ -1488,6 +1503,40 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+		    	ifr->ifr_media &= ~IFM_ETH_FMASK;
+#ifdef DP83820
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+#else
+		/* XXX */
+		if (SIP_CHIP_MODEL(sc, PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815))
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if (ifr->ifr_media & IFM_FLOW) {
+				/*
+				 * Both TXPAUSE and RXPAUSE must be set.
+				 * (SiS900 and DP83815 don't have PAUSE_ASYM
+				 * feature.)
+				 *
+				 * XXX Can SiS900 and DP83815 send PAUSE?
+				 */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+#endif
+		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
@@ -1602,11 +1651,11 @@ SIP_DECL(intr)(void *arg)
 #if !defined(DP83820)
 		if (sc->sc_imr & (ISR_PAUSE_END|ISR_PAUSE_ST)) {
 			if (isr & ISR_PAUSE_ST) {
-				sc->sc_flags |= SIPF_PAUSED;
+				sc->sc_paused = 1;
 				ifp->if_flags |= IFF_OACTIVE;
 			}
 			if (isr & ISR_PAUSE_END) {
-				sc->sc_flags &= ~SIPF_PAUSED;
+				sc->sc_paused = 0;
 				ifp->if_flags &= ~IFF_OACTIVE;
 			}
 		}
@@ -1665,7 +1714,7 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 	u_int32_t cmdsts;
 
 #ifndef DP83820
-	if ((sc->sc_flags & SIPF_PAUSED) == 0)
+	if (sc->sc_paused == 0)
 		ifp->if_flags &= ~IFF_OACTIVE;
 #endif
 
@@ -2310,7 +2359,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	if ((SIP_SIS900_REV(sc, SIS_REV_635) ||
 	     SIP_SIS900_REV(sc, SIS_REV_960) ||
 	     SIP_SIS900_REV(sc, SIS_REV_900B)) &&
-	    (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG) & CFG_EDBMASTEN)) {
+	    (sc->sc_cfg & CFG_EDBMASTEN)) {
 		sc->sc_txcfg = TXCFG_MXDMA_64;
 		sc->sc_rxcfg = RXCFG_MXDMA_64;
 	} else {
@@ -2429,6 +2478,17 @@ SIP_DECL(init)(struct ifnet *ifp)
 
 	/* Set up the receive filter. */
 	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
+
+#ifdef DP83820
+	/*
+	 * Tune sc_rx_flow_thresh.
+	 * XXX "More than 8KB" is too short for jumbo frames.
+	 * XXX TODO: Threshold value should be user-settable.
+	 */
+	sc->sc_rx_flow_thresh = (PCR_PS_STHI_8 | PCR_PS_STLO_4 |
+				 PCR_PS_FFHI_8 | PCR_PS_FFLO_4 |
+				 (PCR_PAUSE_CNT & PCR_PAUSE_CNT_MASK));
+#endif
 
 	/*
 	 * Set the current media.  Do this after initializing the prototype
@@ -3051,12 +3111,22 @@ void
 SIP_DECL(dp83820_mii_statchg)(struct device *self)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
-	u_int32_t cfg;
+	struct mii_data *mii = &sc->sc_mii;
+	u_int32_t cfg, pcr;
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags) {
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
 
 	/*
 	 * Update TXCFG for full-duplex operation.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		sc->sc_txcfg |= (TXCFG_CSI | TXCFG_HBI);
 	else
 		sc->sc_txcfg &= ~(TXCFG_CSI | TXCFG_HBI);
@@ -3064,8 +3134,8 @@ SIP_DECL(dp83820_mii_statchg)(struct device *self)
 	/*
 	 * Update RXCFG for full-duplex or loopback.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0 ||
-	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_LOOP)
+	if ((mii->mii_media_active & IFM_FDX) != 0 ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_LOOP)
 		sc->sc_rxcfg |= RXCFG_ATX;
 	else
 		sc->sc_rxcfg &= ~RXCFG_ATX;
@@ -3079,12 +3149,20 @@ SIP_DECL(dp83820_mii_statchg)(struct device *self)
 		cfg = sc->sc_cfg;
 
 	/*
-	 * XXX 802.3x flow control.
+	 * 802.3x flow control.
 	 */
+	pcr = 0;
+	if (sc->sc_flowflags & IFM_FLOW) {
+		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
+			pcr |= sc->sc_rx_flow_thresh;
+		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
+			pcr |= PCR_PSEN | PCR_PS_MCAST | PCR_PS_DA;
+	}
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CFG, cfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_PCR, pcr);
 }
 #endif /* ! DP83820 */
 
@@ -3193,12 +3271,22 @@ void
 SIP_DECL(sis900_mii_statchg)(struct device *self)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
+	struct mii_data *mii = &sc->sc_mii;
 	u_int32_t flowctl;
+
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags) {
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
 
 	/*
 	 * Update TXCFG for full-duplex operation.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+	if ((mii->mii_media_active & IFM_FDX) != 0)
 		sc->sc_txcfg |= (TXCFG_CSI | TXCFG_HBI);
 	else
 		sc->sc_txcfg &= ~(TXCFG_CSI | TXCFG_HBI);
@@ -3206,8 +3294,8 @@ SIP_DECL(sis900_mii_statchg)(struct device *self)
 	/*
 	 * Update RXCFG for full-duplex or loopback.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0 ||
-	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_LOOP)
+	if ((mii->mii_media_active & IFM_FDX) != 0 ||
+	    IFM_SUBTYPE(mii->mii_media_active) == IFM_LOOP)
 		sc->sc_rxcfg |= RXCFG_ATX;
 	else
 		sc->sc_rxcfg &= ~RXCFG_ATX;
@@ -3215,7 +3303,7 @@ SIP_DECL(sis900_mii_statchg)(struct device *self)
 	/*
 	 * Update IMR for use of 802.3x flow control.
 	 */
-	if ((sc->sc_mii.mii_media_active & IFM_FLOW) != 0) {
+	if (sc->sc_flowflags & IFM_FLOW) {
 		sc->sc_imr |= (ISR_PAUSE_END|ISR_PAUSE_ST);
 		flowctl = FLOWCTL_FLOWEN;
 	} else {
@@ -3570,7 +3658,8 @@ SIP_DECL(mediastatus)(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+			   sc->sc_flowflags;
 }
 
 /*
