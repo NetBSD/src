@@ -1,9 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.13 1999/03/24 03:52:41 cgd Exp $	*/
-
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
+/*	$NetBSD: uvm_device.c,v 1.14 1999/03/25 18:48:50 mrg Exp $	*/
 
 /*
  *
