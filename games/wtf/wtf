@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.9 2003/04/10 09:18:24 jmmv Exp $
+#	$NetBSD: wtf,v 1.10 2003/04/10 09:21:19 jmmv Exp $
 #
 # Public domain
 #
@@ -38,7 +38,7 @@ if [ $# -lt 1 ] ; then
 fi
 
 if [ ! -f $acronyms ]; then
-	echo "wtf: cannot open acronyms database file \`$acronyms'"
+	echo "`basename $0`: cannot open acronyms database file \`$acronyms'"
 	exit 1
 fi
 
