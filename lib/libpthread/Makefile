@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.11 2002/04/04 00:39:41 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.12 2002/04/11 02:53:09 nathanw Exp $
 #
 
 WARNS=	2
@@ -41,6 +41,7 @@ SRCS+=	pthread_sig.c
 SRCS+=	pthread_specific.c
 SRCS+=  pthread_stack.c
 SRCS+=  pthread_debug.c
+SRCS+=	pthread_libcstubs.c
 SRCS+=	sched.c
 # Architecture-dependent files
 SRCS+=	pthread_switch.S _context_u.S
