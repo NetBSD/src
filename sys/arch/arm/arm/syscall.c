@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2002/03/24 15:49:39 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9.4.1 2004/03/15 04:09:39 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2002/03/24 15:49:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.4.1 2004/03/15 04:09:39 jmc Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -238,11 +238,11 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 	else {
 		KASSERT(nargs <= MAXARGS);
 		memcpy(copyargs, ap, nap * sizeof(register_t));
+		args = copyargs;
 		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
 		    (nargs - nap) * sizeof(register_t));
 		if (error)
 			goto bad;
-		args = copyargs;
 	}
 
 #ifdef SYSCALL_DEBUG
