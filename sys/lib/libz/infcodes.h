@@ -1,4 +1,4 @@
-/*	$NetBSD: infcodes.h,v 1.1 1997/01/16 00:21:46 cgd Exp $	*/
+/*	$NetBSD: infcodes.h,v 1.2 1997/05/20 14:41:58 gwr Exp $	*/
 
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-1996 Mark Adler

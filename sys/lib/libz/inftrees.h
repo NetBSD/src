@@ -1,4 +1,4 @@
-/*	$NetBSD: inftrees.h,v 1.1 1997/01/16 00:21:50 cgd Exp $	*/
+/*	$NetBSD: inftrees.h,v 1.2 1997/05/20 14:42:03 gwr Exp $	*/
 
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-1996 Mark Adler

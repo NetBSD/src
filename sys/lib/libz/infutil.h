@@ -1,4 +1,4 @@
-/*	$NetBSD: infutil.h,v 1.1 1997/01/16 00:21:51 cgd Exp $	*/
+/*	$NetBSD: infutil.h,v 1.2 1997/05/20 14:42:04 gwr Exp $	*/
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1996 Mark Adler
