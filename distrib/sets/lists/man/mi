@@ -958,6 +958,7 @@
 ./usr/share/man/cat9/gsignal.0
 ./usr/share/man/cat9/inittodr.0
 ./usr/share/man/cat9/intro.0
+./usr/share/man/cat9/ioctl.0
 ./usr/share/man/cat9/kernacc.0
 ./usr/share/man/cat9/kprintf.0
 ./usr/share/man/cat9/log.0
@@ -2042,6 +2043,7 @@
 ./usr/share/man/man9/gsignal.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intro.9
+./usr/share/man/man9/ioctl.9
 ./usr/share/man/man9/kernacc.9
 ./usr/share/man/man9/kprintf.9
 ./usr/share/man/man9/log.9
