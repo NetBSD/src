@@ -363,6 +363,7 @@
 ./usr/include/dev
 ./usr/include/dev/microcode
 ./usr/include/dev/ofw
+./usr/include/dev/usb
 ./usr/include/g++
 ./usr/include/g++/gen
 ./usr/include/kerberosIV
@@ -580,6 +581,8 @@
 ./usr/sbin/trpt
 ./usr/sbin/trsp
 ./usr/sbin/update
+./usr/sbin/usbd
+./usr/sbin/usbdevs
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/wire-test
