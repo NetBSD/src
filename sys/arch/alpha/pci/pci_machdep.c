@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7.2.1 1996/12/07 02:05:02 cgd Exp $	*/
+/* $NetBSD: pci_machdep.c,v 1.7.2.2 1997/06/01 04:13:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,6 +30,11 @@
 /*
  * Machine-specific functions for PCI autoconfiguration.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.2.2 1997/06/01 04:13:37 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +78,7 @@ pci_display_console(iot, memt, pc, bus, device, function)
 		    bus, device, function);
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
-	match = nmatch = 0;
+	nmatch = match = 0; /* XXX really only if we've got FBs configured */
 	fn = NULL;
 
 #if NVGA_PCI

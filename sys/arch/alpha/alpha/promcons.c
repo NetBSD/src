@@ -1,4 +1,4 @@
-/*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
+/* $NetBSD: promcons.c,v 1.5.2.1 1997/06/01 04:11:39 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.5.2.1 1997/06/01 04:11:39 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -34,7 +39,6 @@
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -42,6 +46,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <machine/conf.h>
 #include <machine/prom.h>
 
 static struct  tty *prom_tty[1];

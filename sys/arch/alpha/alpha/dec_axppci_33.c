@@ -1,7 +1,7 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.16.2.2 1997/02/01 02:40:19 cgd Exp $	*/
+/* $NetBSD: dec_axppci_33.c,v 1.16.2.3 1997/06/01 04:11:15 cgd Exp $ */
 
 /*
- * Copyright (c) 1995, 1996 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.16.2.3 1997/06/01 04:11:15 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -35,7 +40,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <alpha/isa/pcppivar.h>
@@ -87,7 +92,7 @@ dec_axppci_33_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate;			/*XXX*/
+			extern int comconsrate;				/*XXX*/
 			extern int comcngetc __P((dev_t));		/*XXX*/
 			extern void comcnputc __P((dev_t, int));	/*XXX*/
 			extern void comcnpollc __P((dev_t, int));	/*XXX*/
@@ -99,15 +104,15 @@ dec_axppci_33_cons_init()
 			 * FIFO depth * character time,
 			 * character time = (1000000 / (defaultrate / 10))
 			 */
-			DELAY(160000000 / comdefaultrate);
+			DELAY(160000000 / comconsrate);
 
 			comconsaddr = 0x3f8;
 			comconstag = lcp->lc_iot;
 			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
-			    0, &comconsbah))
+			    0, &comconsioh))
 				panic("can't map serial console I/O ports");
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-			cominit(comconstag, comconsbah, comdefaultrate);
+			cominit(comconstag, comconsioh, comconsrate);
 
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
 			cn_tab = &comcons;
@@ -124,7 +129,7 @@ dec_axppci_33_cons_init()
 
 			pcppi_attach_console(lcp->lc_iot);
 
-			if (ctb->ctb_turboslot == 0)
+			if ((ctb->ctb_turboslot & 0xffff) == 0)
 				isa_display_console(lcp->lc_iot, lcp->lc_memt);
 			else
 				pci_display_console(lcp->lc_iot, lcp->lc_memt,
@@ -183,7 +188,7 @@ dec_axppci_33_device_register(dev, aux)
 		else {
 			struct pcibus_attach_args *pba = aux;
 
-			if (b->bus != pba->pba_bus)
+			if ((b->slot / 1000) != pba->pba_bus)
 				return;
 	
 			pcidev = dev;
@@ -200,7 +205,7 @@ dec_axppci_33_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */
@@ -255,7 +260,7 @@ dec_axppci_33_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */

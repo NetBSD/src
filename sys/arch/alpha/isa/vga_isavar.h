@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_isavar.h,v 1.2 1996/11/23 06:06:45 cgd Exp $	*/
+/* $NetBSD: vga_isavar.h,v 1.2.2.1 1997/06/01 04:12:57 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.21.2.1 1997/06/01 04:11:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21.2.1 1997/06/01 04:11:43 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_axppci_33.h,v 1.3 1996/04/12 06:08:47 cgd Exp $	*/
+/* $NetBSD: pci_axppci_33.h,v 1.3.2.1 1997/06/01 04:13:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

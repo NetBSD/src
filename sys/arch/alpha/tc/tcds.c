@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.15.2.2 1996/12/08 00:31:45 cgd Exp $	*/
+/* $NetBSD: tcds.c,v 1.15.2.3 1997/06/01 04:14:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.15.2.3 1997/06/01 04:14:53 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,7 +140,7 @@ tcdsattach(parent, self, aux)
 
 		slotc->sc_slot = i;
 		slotc->sc_tcds = sc;
-		slotc->sc_esp = NULL;
+		slotc->sc_asc = NULL;
 		slotc->sc_intrhand = tcds_intrnull;
 		slotc->sc_intrarg = (void *)(long)i;
 	}

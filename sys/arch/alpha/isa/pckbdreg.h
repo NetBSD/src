@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbdreg.h,v 1.1 1995/08/03 00:48:30 cgd Exp $	*/
+/* $NetBSD: pckbdreg.h,v 1.1.4.1 1997/06/01 04:12:51 cgd Exp $ */
 
 /*
  * Keyboard definitions

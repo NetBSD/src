@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.c,v 1.10 1996/11/12 05:14:30 cgd Exp $	*/
+/* $NetBSD: dec_3000_300.c,v 1.10.2.1 1997/06/01 04:11:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,13 +27,18 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.10.2.1 1997/06/01 04:11:13 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/rpb.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 
@@ -105,7 +110,7 @@ dec_3000_300_device_register(dev, aux)
 		initted =1;
 	}
 
-	if (scsiboot && (strcmp(cd->cd_name, "esp") == 0)) {
+	if (scsiboot && (strcmp(cd->cd_name, "asc") == 0)) {
 		if (b->slot == 4 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
 		      == 0) {

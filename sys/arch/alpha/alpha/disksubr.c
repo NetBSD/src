@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1996/11/13 21:13:05 cgd Exp $	*/
+/* $NetBSD: disksubr.c,v 1.9.2.1 1997/06/01 04:11:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.9.2.1 1997/06/01 04:11:20 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/ioccom.h>
@@ -42,27 +47,14 @@
 
 extern struct device *bootdv;
 
+#define	b_cylin	b_resid				/* XXX */
+
 /* was this the boot device ? */
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-#ifdef NOTDEF
-	/* XXX: sd -> scsibus -> esp */
-	struct bootpath *bp = ((struct esp_softc *)dev->dv_parent->dv_parent)->sc_bp;
-	char name[10];
-
-#define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
-
-	if (bp == NULL) {
-		printf("no boot path\n");
-	}
-	sprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
-	if (strcmp(name, dev->dv_xname) == 0) {
-		bootdv = dev;
-	}
-#endif
 }
 
 /*
@@ -82,7 +74,9 @@ readdisklabel(dev, strat, lp, clp)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
+	struct dkbad *bdp;
 	char *msg = NULL;
+	int i;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
@@ -98,7 +92,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_resid = 0;			/* was b_cylin */
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);  
@@ -111,14 +105,50 @@ readdisklabel(dev, strat, lp, clp)
 
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp)) {
+		if (dkcksum(dlp))
 			msg = "NetBSD disk label corrupted";
-			goto done;
-		}
-		*lp = *dlp;
+		else
+			*lp = *dlp;
+	} else
+		msg = "no disk label";
+	if (msg)
 		goto done;
+
+	/* obtain bad sector table if requested and present */
+	if (clp && (bdp = &clp->bad) != NULL && (lp->d_flags & D_BADSECT)) {
+		struct dkbad *db;
+
+		i = 0;
+		do {
+			/* read a bad sector table */
+			bp->b_flags = B_BUSY | B_READ;
+			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
+			if (lp->d_secsize > DEV_BSIZE)
+				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
+			else
+				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
+			bp->b_bcount = lp->d_secsize;
+			bp->b_cylin = lp->d_ncylinders - 1;
+			(*strat)(bp);
+
+			/* if successful, validate, otherwise try another */
+			if (biowait(bp)) {
+				msg = "bad sector table I/O error";
+			} else {
+				db = (struct dkbad *)(bp->b_data);
+#define DKBAD_MAGIC 0x4321
+				if (db->bt_mbz == 0
+					&& db->bt_flag == DKBAD_MAGIC) {
+					msg = NULL;
+					*bdp = *db;
+					break;
+				} else
+					msg = "bad sector table corrupted";
+			}
+		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+			i < lp->d_nsectors);
 	}
-	msg = "no disk label";
+
 done:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
@@ -200,7 +230,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_resid = 0;			/* was b_cylin */
+	bp->b_cylin = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;           /* get current label */
 	(*strat)(bp);

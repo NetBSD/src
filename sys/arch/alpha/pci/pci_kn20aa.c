@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
+/* $NetBSD: pci_kn20aa.c,v 1.21.2.1 1997/06/01 04:13:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.21.2.1 1997/06/01 04:13:33 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

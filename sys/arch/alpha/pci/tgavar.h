@@ -1,4 +1,4 @@
-/*	$NetBSD: tgavar.h,v 1.6.2.1 1997/01/25 01:33:54 cgd Exp $	*/
+/* $NetBSD: tgavar.h,v 1.6.2.2 1997/06/01 04:13:55 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

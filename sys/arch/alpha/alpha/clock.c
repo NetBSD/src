@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1996/11/23 06:31:57 cgd Exp $	*/
+/* $NetBSD: clock.c,v 1.14.2.1 1997/06/01 04:11:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,11 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.2.1 1997/06/01 04:11:07 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

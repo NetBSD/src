@@ -1,4 +1,4 @@
-/*	$NetBSD: apecsreg.h,v 1.4 1996/07/09 00:54:34 cgd Exp $	*/
+/* $NetBSD: apecsreg.h,v 1.4.2.1 1997/06/01 04:13:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

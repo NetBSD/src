@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14.2.2 1996/12/08 00:31:24 cgd Exp $	*/
+/* $NetBSD: mainbus.c,v 1.14.2.3 1997/06/01 04:11:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.3 1997/06/01 04:11:27 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -34,7 +39,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -112,7 +117,7 @@ mbattach(parent, self, aux)
 			continue;
 
 		nca.ca_name = "cpu";
-		nca.ca_slot = 0;
+		nca.ca_slot = i;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		if (config_found(self, &nca, mbprint) != NULL)

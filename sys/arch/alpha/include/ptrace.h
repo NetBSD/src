@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.1 1995/02/13 23:07:51 cgd Exp $	*/
+/* $NetBSD: ptrace.h,v 1.1.4.1 1997/06/01 04:12:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou

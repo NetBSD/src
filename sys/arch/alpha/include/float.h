@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.4 1995/06/20 20:45:22 jtc Exp $	*/
+/* $NetBSD: float.h,v 1.4.4.1 1997/06/01 04:12:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1989, 1993

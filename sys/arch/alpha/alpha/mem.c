@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
+/* $NetBSD: mem.c,v 1.10.2.1 1997/06/01 04:11:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,14 +44,20 @@
  * Memory special file
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.2.1 1997/06/01 04:11:31 cgd Exp $");
+
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/msgbuf.h>
 
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <vm/vm.h>
 
@@ -61,6 +67,7 @@ cdev_decl(mm);
 
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
+extern struct msgbuf *msgbufp;
 
 /*ARGSUSED*/
 int
@@ -96,7 +103,7 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 
-	while (uio->uio_resid > 0 && error == 0) {
+	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -111,17 +118,27 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 kmemphys:
+			if (v == ALPHA_K0SEG_TO_PHYS((vm_offset_t)msgbufp)) {
+				extern int msgbufmapped;
+				if (msgbufmapped == 0) {
+					printf("Message Buf not Mapped\n");
+					error = EFAULT;
+					break;
+				}
+			}
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v < ctob(firstusablepage) ||
-			    v >= ctob(lastusablepage + 1))
-				return (EFAULT);
+			else if ((v < ctob(firstusablepage) ||
+			     v >= ctob(lastusablepage + 1))) {
+				error = EFAULT;
+				break;
+			}
 #endif
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error =
 			    uiomove((caddr_t)ALPHA_PHYS_TO_K0SEG(v), c, uio);
-			continue;
+			break;
 
 /* minor device 1 is kernel memory */
 		case 1:
@@ -137,9 +154,9 @@ kmemphys:
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
-/* minor device 2 is EOF/RATHOLE */
+/* minor device 2 is EOF/rathole */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
@@ -148,8 +165,8 @@ kmemphys:
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -170,17 +187,11 @@ kmemphys:
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
 
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_bus_mem.c,v 1.7 1996/11/25 03:46:09 cgd Exp $	*/
+/* $NetBSD: cia_bus_mem.c,v 1.7.2.1 1997/06/01 04:13:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(1, "$NetBSD: cia_bus_mem.c,v 1.7.2.1 1997/06/01 04:13:07 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,4 +86,4 @@
 #define	CHIP_S_MEM_W3_SYS_END(v)					\
 	    (CIA_PCI_SMEM3 + ((HAE_MEM_REG3_MASK + 1) << 5) - 1)
 
-#include "pcs_bus_mem_common.c"
+#include "pci_swiz_mem_chipdep.c"

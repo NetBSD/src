@@ -1,4 +1,4 @@
-#	$NetBSD: BUNNY,v 1.12.2.4 1997/02/01 02:26:56 cgd Exp $
+# $NetBSD: BUNNY,v 1.12.2.5 1997/06/01 04:11:51 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -16,8 +16,11 @@ options		BUFPAGES=2048	# 16M of buffer cache
 options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 
 # Standard system options
-options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
+
+# Diagnostic/debugging support options
+options		DIAGNOSTIC		# Cheap kernel consistency checks
+options		DEBUG			# Expensive debugging checks/support
 
 # File systems
 file-system 	FFS		# Fast file system

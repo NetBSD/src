@@ -1,4 +1,4 @@
-/*	$NetBSD: lca_pci.c,v 1.7 1996/11/13 21:13:28 cgd Exp $	*/
+/* $NetBSD: lca_pci.c,v 1.7.2.1 1997/06/01 04:13:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.7.2.1 1997/06/01 04:13:20 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +120,7 @@ lca_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, device, ba;
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
@@ -171,9 +174,7 @@ lca_conf_write(cpv, tag, offset, data)
 	pcireg_t *datap;
 	int s, secondary, device;
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);

@@ -1,31 +1,16 @@
-/*	$NetBSD: pcimd.c,v 1.1.2.2 1996/12/08 00:31:34 cgd Exp $	*/
+/* $NetBSD: pcimd.c,v 1.1.2.3 1997/06/01 04:13:45 cgd Exp $ */
 
 /*
- * Copyright (c) 1996 Carnegie-Mellon University.
- * All rights reserved.
+ * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  *
- * Author: Chris G. Demetriou
- * 
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
+ * THIS SOURCE CODE AND ANY OBJECT CODE DERIVED FROM IT MAY NOT BE
+ * MODIFIED OR DISTRIBUTED TO ANYONE, FOR ANY REASON, WITHOUT EXPRESS 
+ * WRITTEN PERMISSION OF CHRISTOPHER G. DEMETRIOU.
  *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ * (XXX COPYRIGHT NOTICE)
  */
+
+/* XXX ID AND COPYRIGHT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +116,7 @@ pcimd_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
-		/* NONE of these operations are by the generic VGA driver. */
+		/* NONE of these operations are supported by this driver. */
 		return ENOTTY;
 	}
 	return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_bt463.c,v 1.2.2.1 1997/01/25 01:33:53 cgd Exp $	*/
+/* $NetBSD: tga_bt463.c,v 1.2.2.2 1997/06/01 04:13:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: tga_bt463.c,v 1.2.2.2 1997/06/01 04:13:52 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
+/* $NetBSD: mcclock.c,v 1.4.2.1 1997/06/01 04:11:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.4.2.1 1997/06/01 04:11:28 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +82,7 @@ mcclock_init(dev)
 
 	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	mc146818_write(sc, MC_REGB,
-	    MC_REGB_PIE | MC_REGB_BINARY | MC_REGB_24HR);
+	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
 }
 
 /*

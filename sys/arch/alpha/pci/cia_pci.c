@@ -1,4 +1,71 @@
-/*	$NetBSD: cia_pci.c,v 1.7 1996/11/23 06:46:50 cgd Exp $	*/
+/* $NetBSD: cia_pci.c,v 1.7.2.1 1997/06/01 04:13:08 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +94,13 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.7.2.1 1997/06/01 04:13:08 cgd Exp $");
+__KERNEL_COPYRIGHT(0,
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -39,7 +113,6 @@
 #include <alpha/pci/ciavar.h>
 
 #include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
-#include "dec_eb164.h"		/* XXX for eb164 CIA firmware workarounds. */
 
 void		cia_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -115,34 +188,24 @@ cia_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
-#if NDEC_EB164
-	extern int cputype;					/* XXX */
-#endif
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
-#if NDEC_EB164
 	/*
-	 * Some (apparently-common) revisions of EB164 firmware do the
-	 * Wrong thing with PCI master aborts, which are caused by
-	 * accesing the configuration space of devices that don't
-	 * exist (for example).
+	 * Some (apparently-common) revisions of 21164-based system
+	 * firmware do the Wrong thing with PCI master aborts, which
+	 * are caused by accesing the configuration space of devices
+	 * that don't exist (for example).
 	 *
-	 * On EB164's we clear the CIA error register's PCI master
-	 * abort bit before touching PCI configuration space and
-	 * check it afterwards.  If it indicates a master abort,
-	 * the device wasn't there so we return 0xffffffff.
+	 * We clear the CIA error register's PCI master abort bit
+	 * before touching PCI configuration space and check it
+	 * afterwards.  If it indicates a master abort, the device
+	 * wasn't there so we return 0xffffffff.
 	 */
-	if (cputype == ST_EB164) {
-		/* clear the PCI master abort bit in CIA error register */
-		REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;		/* XXX */
-		alpha_mb();
-		alpha_pal_draina();	
-	}
-#endif
+	REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;			/* XXX */
+	alpha_mb();
+	alpha_pal_draina();	
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
@@ -170,16 +233,14 @@ cia_conf_read(cpv, tag, offset)
 		splx(s);
 	}
 
-#if NDEC_EB164
-	if (cputype == ST_EB164) {
-		alpha_pal_draina();	
-		/* check CIA error register for PCI master abort */
-		if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
-			ba = 1;
-			data = 0xffffffff;
-		}
+	/*
+	 * Finish PCI master abort checking: see if one actually happened.
+	 */
+	alpha_pal_draina();	
+	if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
+		ba = 1;
+		data = 0xffffffff;
 	}
-#endif
 
 #if 0
 	printf("cia_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
@@ -201,10 +262,8 @@ cia_conf_write(cpv, tag, offset, data)
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);

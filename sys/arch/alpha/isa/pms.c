@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.6.2.3 1996/12/08 00:31:28 cgd Exp $	*/
+/* $NetBSD: pms.c,v 1.6.2.4 1997/06/01 04:12:54 cgd Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -30,6 +30,11 @@
  * same I/O ports.  Frobbing the mouse and keyboard at the same time
  * may result in dropped characters and/or corrupted mouse events.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.2.4 1997/06/01 04:12:54 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

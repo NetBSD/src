@@ -1,4 +1,4 @@
-/*	$NetBSD: isafcns_jensen.c,v 1.4 1996/10/13 02:59:54 christos Exp $	*/
+/* $NetBSD: isafcns_jensen.c,v 1.4.2.1 1997/06/01 04:12:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: isafcns_jensen.c,v 1.4.2.1 1997/06/01 04:12:48 cgd Exp $");
 
 #include <sys/types.h>
 #include <machine/pio.h>

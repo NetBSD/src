@@ -1,4 +1,4 @@
-/*	$NetBSD: cfbvar.h,v 1.1 1996/05/01 23:25:04 cgd Exp $	*/
+/* $NetBSD: cfbvar.h,v 1.1.2.1 1997/06/01 04:14:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

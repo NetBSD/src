@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_isa.c,v 1.3.2.3 1996/12/08 00:31:29 cgd Exp $	*/
+/* $NetBSD: vga_isa.c,v 1.3.2.4 1997/06/01 04:12:56 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.3.2.4 1997/06/01 04:12:56 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

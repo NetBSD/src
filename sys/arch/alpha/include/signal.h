@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
+/* $NetBSD: signal.h,v 1.2.4.1 1997/06/01 04:12:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
+/* $NetBSD: trap.c,v 1.19.2.1 1997/06/01 04:11:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.19.2.1 1997/06/01 04:11:42 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +65,8 @@ unsigned long	Gfloat_reg_cvt __P((unsigned long));
 int		unaligned_fixup __P((unsigned long, unsigned long,
 		    unsigned long, struct proc *));
 
+static void printtrap __P((const unsigned long, const unsigned long,
+      const unsigned long, const unsigned long, struct trapframe *, int, int));
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
@@ -106,6 +113,57 @@ userret(p, pc, oticks)
 	curpriority = p->p_priority;
 }
 
+static void
+printtrap(a0, a1, a2, entry, framep, isfatal, user)
+	const unsigned long a0, a1, a2, entry;
+	struct trapframe *framep;
+	int isfatal, user;
+{
+	char ubuf[64];
+	const char *entryname;
+
+	switch (entry) {
+	case ALPHA_KENTRY_INT:
+		entryname = "interrupt";
+		break;
+	case ALPHA_KENTRY_ARITH:
+		entryname = "arithmetic trap";
+		break;
+	case ALPHA_KENTRY_MM:
+		entryname = "memory management fault";
+		break;
+	case ALPHA_KENTRY_IF:
+		entryname = "instruction fault";
+		break;
+	case ALPHA_KENTRY_UNA:
+		entryname = "unaligned access fault";
+		break;
+	case ALPHA_KENTRY_SYS:
+		entryname = "system call";
+		break;
+	default:
+		sprintf(ubuf, "type %lx", entry);
+		entryname = (const char *) ubuf;
+		break;
+	}
+
+	printf("\n");
+	printf("%s %s trap:\n", isfatal? "fatal" : "handled",
+	       user ? "user" : "kernel");
+	printf("\n");
+	printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
+	printf("    a0         = 0x%lx\n", a0);
+	printf("    a1         = 0x%lx\n", a1);
+	printf("    a2         = 0x%lx\n", a2);
+	printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	printf("    curproc    = %p\n", curproc);
+	if (curproc != NULL)
+		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		       curproc->p_comm);
+	printf("\n");
+}
+
 /*
  * Trap is called from locore to handle most types of processor traps.
  * System calls are broken out for efficiency and ASTs are broken out
@@ -131,10 +189,16 @@ trap(a0, a1, a2, entry, framep)
 	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
-	} else {
-#ifdef DIAGNOSTIC
-		sticks = 0xdeadbeef;		/* XXX for -Wuninitialized */
+#if	0
+/* This is to catch some wierd stuff on the UDB (mj) */
+		if (framep->tf_regs[FRAME_PC] > 0 && 
+		    framep->tf_regs[FRAME_PC] < 0x120000000) {
+			printf("PC Out of Whack\n");
+			printtrap(a0, a1, a2, entry, framep, 1, user);
+		}
 #endif
+	} else {
+		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 	}
 
 	switch (entry) {
@@ -172,7 +236,7 @@ trap(a0, a1, a2, entry, framep)
 		 * user has requested that.
 		 */
 		if (user) {
-sigfpe:			i = SIGFPE;
+			i = SIGFPE;
 			ucode =  a0;		/* exception summary */
 			break;
 		}
@@ -187,11 +251,15 @@ sigfpe:			i = SIGFPE;
 		 */
 		if (!user)
 			goto dopanic;
-
+		i = 0;
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
-			if (framep->tf_regs[FRAME_A0] == -2) /* weird! */
-				goto sigfpe;
+			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
+				i = SIGFPE;
+				ucode =  a0;	/* exception summary */
+				break;
+			}
+			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
 			ucode = a0;		/* trap type */
@@ -201,13 +269,17 @@ sigfpe:			i = SIGFPE;
 		case ALPHA_IF_CODE_OPDEC:
 			ucode = a0;		/* trap type */
 #ifdef NEW_PMAP
-{
-int instr;
-printf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
-printf("INSTRUCTION (%d) = 0x%lx\n", copyin((void*)framep->tf_regs[FRAME_PC] - 4, &instr, 4), instr);
-regdump(framep);
-panic("foo");
-}
+		{
+			int instr;
+			printf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n",
+			       framep->tf_regs[FRAME_PC],
+			       framep->tf_regs[FRAME_RA]);
+			printf("INSTRUCTION (%d) = 0x%lx\n",
+			       copyin((void*)framep->tf_regs[FRAME_PC] - 4,
+				      &instr, 4), instr);
+			regdump(framep);
+			panic("foo");
+		}
 #endif
 			i = SIGILL;
 			break;
@@ -269,7 +341,7 @@ panic("foo");
 		case ALPHA_MMCSR_ACCESS:
 	    	{
 			register vm_offset_t va;
-			register struct vmspace *vm;
+			register struct vmspace *vm = NULL;
 			register vm_map_t map;
 			vm_prot_t ftype;
 			int rv;
@@ -382,6 +454,9 @@ panic("foo");
 			}
 			ucode = a0;
 			i = SIGSEGV;
+#ifdef	DIAGNOSTIC
+			printtrap(a0, a1, a2, entry, framep, 1, user);
+#endif
 			break;
 		    }
 
@@ -395,6 +470,9 @@ panic("foo");
 		goto dopanic;
 	}
 
+#ifdef	DEBUG
+	printtrap(a0, a1, a2, entry, framep, 1, user);
+#endif
 	trapsignal(p, i, ucode);
 out:
 	if (user)
@@ -402,48 +480,7 @@ out:
 	return;
 
 dopanic:
-	{
-		const char *entryname;
-
-		switch (entry) {
-		case ALPHA_KENTRY_INT:
-			entryname = "interrupt";
-			break;
-		case ALPHA_KENTRY_ARITH:
-			entryname = "arithmetic trap";
-			break;
-		case ALPHA_KENTRY_MM:
-			entryname = "memory management fault";
-			break;
-		case ALPHA_KENTRY_IF:
-			entryname = "instruction fault";
-			break;
-		case ALPHA_KENTRY_UNA:
-			entryname = "unaligned access fault";
-			break;
-		case ALPHA_KENTRY_SYS:
-			entryname = "system call";
-			break;
-		default:
-			entryname = "???";
-			break;
-		}
-
-		printf("\n");
-		printf("fatal %s trap:\n", user ? "user" : "kernel");
-		printf("\n");
-		printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
-		printf("    a0         = 0x%lx\n", a0);
-		printf("    a1         = 0x%lx\n", a1);
-		printf("    a2         = 0x%lx\n", a2);
-		printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-		printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-		printf("    curproc    = %p\n", curproc);
-		if (curproc != NULL)
-			printf("        pid = %d, comm = %s\n", curproc->p_pid,
-			    curproc->p_comm);
-		printf("\n");
-	}
+	printtrap(a0, a1, a2, entry, framep, 1, user);
 
 	/* XXX dump registers */
 	/* XXX kernel debugger */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.h,v 1.2 1995/12/20 00:43:28 cgd Exp $	*/
+/* $NetBSD: tc_3000_300.h,v 1.2.2.1 1997/06/01 04:14:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

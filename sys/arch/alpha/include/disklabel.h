@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
+/* $NetBSD: disklabel.h,v 1.1.4.1 1997/06/01 04:12:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -38,9 +38,11 @@
 #define	MAXPARTITIONS	8			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 
+#include <sys/dkbad.h>
+
 /* Just a dummy */
 struct cpu_disklabel {
-	int	cd_dummy;			/* must have one element. */
+	struct dkbad bad;			/* bad-sector information */
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

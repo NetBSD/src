@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.PROF,v 1.10.2.1 1997/01/24 07:05:50 cgd Exp $
+# $NetBSD: GENERIC.PROF,v 1.10.2.2 1997/06/01 04:11:53 cgd Exp $
 #
 # Generic Alpha kernel hard-wired with profiling support.
 

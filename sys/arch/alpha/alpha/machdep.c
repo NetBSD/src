@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.4 1997/02/01 02:05:16 cgd Exp $	*/
+/* $NetBSD: machdep.c,v 1.60.2.5 1997/06/01 04:11:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.5 1997/06/01 04:11:26 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -36,7 +41,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #ifdef REAL_CLISTS
 #include <sys/clist.h>
@@ -75,15 +79,18 @@
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <net/netisr.h>
 #include <net/if.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
+#include "arp.h"
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -99,6 +106,9 @@
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"
 #if NPPP > 0
@@ -224,10 +234,11 @@ alpha_init(pfn, ptb)
 	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
 
 	/*
-	 * Disable System and Processor Correctable Error reporting.
-	 * Clear pending machine checks and error reports, etc.
+	 * Clear pending machine checks and error reports, and enable
+	 * system- and processor-correctable error reporting.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() | ALPHA_MCES_DSC | ALPHA_MCES_DPC);
+	alpha_pal_wrmces(alpha_pal_rdmces() &
+	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -393,6 +404,13 @@ unknown_cputype:
 		strcat(cpu_model, " family");		/* XXX */
 	}
 	cpu_model[sizeof cpu_model - 1] = '\0';
+
+	/* XXX SANITY CHECKING.  SHOULD GO AWAY */
+	/* XXX We should always be running on the the primary. */
+	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());		/*XXX*/
+	/* XXX On single-CPU boxes, the primary should always be CPU 0. */
+	if (cputype != ST_DEC_21000)					/*XXX*/
+		assert(hwrpb->rpb_primary_cpu_id == 0);			/*XXX*/
 
 #if NLE_IOASIC > 0
 	/*
@@ -565,6 +583,15 @@ unknown_cputype:
 		case 'N':
 			boothowto |= RB_ASKNAME;
 			break;
+
+		case 's': /* single-user (default, supported for sanity) */
+		case 'S':
+			boothowto |= RB_SINGLE;
+			break;
+
+		default:
+			printf("Unrecognized boot flag '%c'.\n", *p);
+			break;
 		}
 	}
 
@@ -661,12 +688,8 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-	    M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 	/*
@@ -727,7 +750,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -841,14 +864,14 @@ cpu_dump()
 }
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks, dumpblks;	/* size of dump area */
 	int maj;
@@ -911,7 +934,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0) {
 		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;
@@ -1420,8 +1443,13 @@ netintr()
 	} while (0)
 
 #ifdef INET
+#if NARP > 0
 	DONETISR(NETISR_ARP, arpintr());
+#endif
 	DONETISR(NETISR_IP, ipintr());
+#endif
+#ifdef NETATALK
+	DONETISR(NETISR_ATALK, atintr());
 #endif
 #ifdef NS
 	DONETISR(NETISR_NS, nsintr());
