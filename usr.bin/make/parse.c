@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $	*/
+/*	$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.54 2000/12/05 17:07:01 sommerfeld Exp $");
+__RCSID("$NetBSD: parse.c,v 1.55 2001/01/07 06:08:33 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -337,7 +337,21 @@ ParseVErrorInternal(va_alist)
 	va_dcl
 #endif
 {
-	(void)fprintf(stderr, "\"%s\", line %d: ", cfname, (int) clineno);
+	if (*cfname != '/') {
+		char *cp, *dir;
+
+		/*
+		 * Nothing is more anoying than not knowing which Makefile
+		 * is the culprit.
+		 */
+		dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
+		if (*dir == '\0' ||
+		    (*dir == '.' && dir[1] == '\0'))
+			dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
+		
+		(void)fprintf(stderr, "\"%s/%s\", line %d: ", dir, cfname, (int) clineno);
+	} else
+		(void)fprintf(stderr, "\"%s\", line %d: ", cfname, (int) clineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(stderr, "warning: ");
 	(void)vfprintf(stderr, fmt, ap);
