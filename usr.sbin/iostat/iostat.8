@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,15 +29,17 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)iostat.8	6.8 (Berkeley) 4/24/91
-.\"	$Id: iostat.8,v 1.5 1993/10/06 19:34:59 jtc Exp $
+.\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
+.\"	$Id: iostat.8,v 1.6 1994/05/14 21:52:21 cgd Exp $
 .\"
-.Dd April 24, 1991
+.Dd June 6, 1993
 .Dt IOSTAT 8
-.Os
+.Os BSD 4
 .Sh NAME
-.Nm iostat 
-.Nd report I/O statistics
+.Nm iostat
+.Nd report
+.Tn I/O
+statistics
 .Sh SYNOPSIS
 .Nm iostat
 .Op Fl c Ar count
@@ -47,11 +49,13 @@
 .Op Ar drives
 .Sh DESCRIPTION
 .Nm Iostat
-reports certain kernel statistics kept about terminal, disk and cpu
-activity.
+displays kernel
+.Tn I/O
+statistics on terminal, disk and cpu
+operations.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width flag
 .It Fl c
 Repeat the display
 .Ar count
@@ -63,8 +67,8 @@ If no
 interval is specified, the default is 1 second.
 .It Fl M
 Extract values associated with the name list from the specified core
-instead of the default 
-.Dq Pa /dev/kmem  .
+instead of the default
+.Dq Pa /dev/kmem .
 .It Fl N
 Extract the name list from the specified system instead of the default
 .Dq Pa /netbsd .
@@ -79,7 +83,7 @@ is specified, the default is infinity.
 .Pp
 .Nm Iostat
 displays its information in the following format:
-.Bl -tag -width indent
+.Bl -tag -width flag
 .It tty
 .Bl -tag -width indent -compact
 .It tin
@@ -104,34 +108,36 @@ sectors transferred per second
 .It tps
 transfers per second
 .It msps
-milliseconds per average seek (including implied seeks and rotational latency)
+milliseconds per average seek (including implied
+seeks and rotational latency)
 .El
 .It cpu
 .Bl -tag -width indent -compact
-.It us
+.It \&us
 % of cpu time in user mode
-.It ni
+.It \&ni
 % of cpu time in user mode running niced processes
-.It sy
+.It \&sy
 % of cpu time in system mode
-.It id
+.It \&id
 % of cpu time in idle mode
-.El 
+.El
+.El
 .Sh FILES
-.Bl -tag -width 24n -compact
-.It Pa /dev/kmem
-default memory file
+.Bl -tag -width /dev/kmem -compact
 .It Pa /netbsd
-default kernel namelist
+Default kernel namelist.
+.It Pa /dev/kmem
+Default memory file.
 .El
 .Sh SEE ALSO
 .Xr fstat 1 ,
 .Xr netstat 1 ,
 .Xr nfsstat 1 ,
-.Xr ps 1 ,
+.Xr \&ps 1 ,
 .Xr systat 1 ,
 .Xr vmstat 1 ,
 .Xr pstat 8
-.sp
+.Pp
 The sections starting with ``Interpreting system activity'' in
-.Em "Installing and Operating 4.3BSD" .
+.%T "Installing and Operating 4.3BSD" .
