@@ -1,5 +1,6 @@
 /* Build expressions with type checking for C compiler.
-   Copyright (C) 1987, 88, 91-97, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1988, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -5846,7 +5847,7 @@ add_pending_init (purpose, value)
 	  p = *q;
 	  if (tree_int_cst_lt (purpose, p->purpose))
 	    q = &p->left;
-	  else if (tree_int_cst_lt (p->purpose, purpose))
+	  else if (p->purpose != purpose)
 	    q = &p->right;
 	  else
 	    abort ();
@@ -5860,8 +5861,7 @@ add_pending_init (purpose, value)
 	  if (tree_int_cst_lt (DECL_FIELD_BITPOS (purpose),
 			       DECL_FIELD_BITPOS (p->purpose)))
 	    q = &p->left;
-	  else if (tree_int_cst_lt (DECL_FIELD_BITPOS (p->purpose),
-				    DECL_FIELD_BITPOS (purpose)))
+	  else if (p->purpose != purpose)
 	    q = &p->right;
 	  else
 	    abort ();
@@ -6046,7 +6046,7 @@ pending_init_member (field)
     {
       while (p)
 	{
-	  if (tree_int_cst_equal (field, p->purpose))
+	  if (field == p->purpose)
 	    return 1;
 	  else if (tree_int_cst_lt (field, p->purpose))
 	    p = p->left;

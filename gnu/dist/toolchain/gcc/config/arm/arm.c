@@ -1,5 +1,6 @@
 /* Output routines for GCC for ARM.
-   Copyright (C) 1991, 93, 94, 95, 96, 97, 98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rearnsha@arm.com).
@@ -68,7 +69,7 @@ static int function_really_clobbers_lr PROTO ((rtx));
 static void emit_multi_reg_push PROTO ((int));
 static void emit_sfm PROTO ((int, int));
 static enum arm_cond_code get_arm_condition_code PROTO ((rtx));
-static int const_ok_for_op RTX_CODE_PROTO ((Hint, Rcode));
+static int const_ok_for_op RTX_CODE_PROTO ((HOST_WIDE_INT, Rcode));
 
 /* True if we are currently building a constant table. */
 int making_const_table;
@@ -490,14 +491,14 @@ arm_override_options ()
     warning ("Passing floating point arguments in fp regs not yet supported");
   
   /* Initialise boolean versions of the flags, for use in the arm.md file.  */
-  arm_fast_multiply = insn_flags & FL_FAST_MULT;
-  arm_arch4         = insn_flags & FL_ARCH4;
+  arm_fast_multiply = (insn_flags & FL_FAST_MULT) != 0;
+  arm_arch4         = (insn_flags & FL_ARCH4) != 0;
   
-  arm_ld_sched      = tune_flags & FL_LDSCHED;
-  arm_is_strong     = tune_flags & FL_STRONG;
+  arm_ld_sched      = (tune_flags & FL_LDSCHED) != 0;
+  arm_is_strong     = (tune_flags & FL_STRONG) != 0;
   arm_is_6_or_7     = ((tune_flags & (FL_MODE26 | FL_MODE32))
 		       && !(tune_flags & FL_ARCH4));
-  
+
   /* Default value for floating point code... if no co-processor
      bus, then schedule for emulated floating point.  Otherwise,
      assume the user has an FPA.

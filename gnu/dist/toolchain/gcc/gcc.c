@@ -1,5 +1,6 @@
 /* Compiler driver program that can handle many languages.
-   Copyright (C) 1987, 89, 92-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -594,7 +595,7 @@ static struct compiler default_compilers[] =
   {"@c",
    {
 #if USE_CPPLIB
-     "%{E|M|MM:cpp -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
+     "%{E|M|MM:cpp0 -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
 	%{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
@@ -630,7 +631,7 @@ static struct compiler default_compilers[] =
 		     %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}\
                      %{!pipe:%g.s} %A\n }}}}"
 #else /* ! USE_CPPLIB */
-    "cpp -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
+    "cpp0 -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
 	%{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
@@ -658,7 +659,7 @@ static struct compiler default_compilers[] =
 #endif /* ! USE_CPPLIB */
   }},
   {"-",
-   {"%{E:cpp -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
+   {"%{E:cpp0 -lang-c %{ansi:-std=c89} %{std*} %{nostdinc*}\
 	%{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
@@ -676,7 +677,7 @@ static struct compiler default_compilers[] =
   {".h", {"@c-header"}},
   {"@c-header",
    {"%{!E:%eCompilation of header file requested} \
-    cpp %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
+    cpp0 %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG}\
         %{!no-gcc:-D__GNUC__=%v1 -D__GNUC_MINOR__=%v2}\
@@ -707,7 +708,7 @@ static struct compiler default_compilers[] =
 			    %i %A\n }}}}"}},
   {".S", {"@assembler-with-cpp"}},
   {"@assembler-with-cpp",
-   {"cpp -lang-asm %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
+   {"cpp0 -lang-asm %{nostdinc*} %{C} %{v} %{A*} %{I*} %{P} %{$} %I\
 	%{C:%{!E:%eGNU C does not support -C without using -E}}\
 	%{M} %{MM} %{MD:-MD %b.d} %{MMD:-MMD %b.d} %{MG} %{trigraphs}\
         -$ %{!undef:%p %P} -D__ASSEMBLER__ \
@@ -4963,7 +4964,7 @@ main (argc, argv)
       if (! verbose_flag)
 	{
 	  printf ("\nFor bug reporting instructions, please see:\n");
-	  printf ("<URL:http://www.gnu.org/software/gcc/faq.html#bugreport>.\n");
+	  printf ("%s.\n", GCCBUGURL);
 	  
 	  exit (0);
 	}
@@ -5156,7 +5157,7 @@ main (argc, argv)
   if (print_help_list)
     {
       printf ("\nFor bug reporting instructions, please see:\n");
-      printf ("<URL:http://www.gnu.org/software/gcc/faq.html#bugreport>\n");
+      printf ("%s\n", GCCBUGURL);
     }
   
   exit (error_count > 0 ? (signal_count ? 2 : 1) : 0);
