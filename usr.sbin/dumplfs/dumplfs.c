@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.22 2003/02/17 23:48:25 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.23 2003/02/21 04:01:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.22 2003/02/17 23:48:25 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.23 2003/02/21 04:01:07 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -664,7 +664,8 @@ dump_super(struct lfs *lfsp)
  		     "roll_id  ", lfsp->lfs_ident,
  		     "interleave ", lfsp->lfs_interleave,
  		     "sumsize  ", lfsp->lfs_sumsize);
- 	(void)printf("    %s0x%-8qx\n",
+ 	(void)printf("    %s%-10d  %s0x%-8qx\n",
+		     "seg0addr ", lfsp->lfs_start,
  		     "maxfilesize  ", (long long)lfsp->lfs_maxfilesize);
  	
  	
