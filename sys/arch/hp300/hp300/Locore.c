@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.10 1995/08/13 00:05:09 mycroft Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11 1995/09/10 19:42:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -307,6 +307,8 @@ bzero(base, count) caddr_t base; unsigned count; { }
 blkclr(base, count) caddr_t base; unsigned count; { }
 /*ARGSUSED*/
 bcmp(str1, str2, count) caddr_t str1, str2; unsigned count; { return (0); }
+/*ARGSUSED*/
+memcpy(to, from, len) caddr_t to, from; unsigned int len; { }
 
 /*ARGSUSED*/
 strlen(str) caddr_t str; { return (0); }
