@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_ksu.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +26,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
+#else
+__RCSID("$NetBSD: pam_ksu.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <errno.h>
@@ -33,7 +39,7 @@ __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10
 #include <string.h>
 #include <unistd.h>
 
-#include <krb5.h>
+#include <krb5/krb5.h>
 
 #define PAM_SM_AUTH
 #define PAM_SM_CRED

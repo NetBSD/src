@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:43 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -35,11 +36,19 @@
 #
 # $FreeBSD: src/lib/libpam/libpam/Makefile,v 1.51 2004/10/24 15:32:32 ru Exp $
 
-OPENPAM=	${.CURDIR}/../../../contrib/openpam
-.PATH: ${OPENPAM}/include ${OPENPAM}/lib ${OPENPAM}/doc/man
+NOPROFILE=	# Don't build a profiling library
 
+.include <bsd.own.mk>
+
+DIST=   ${NETBSDSRCDIR}/dist/openpam
 LIB=	pam
 NOPROFILE=
+
+WARNS=	3
+# 233: Struct/union never defined
+LINTFLAGS+= -Sw -X 233
+
+CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR}
 
 SRCS=	openpam_borrow_cred.c \
 	openpam_configure.c \
@@ -127,36 +136,37 @@ MAN=	openpam.3 \
 	pam_vinfo.3 \
 	pam_vprompt.3
 
-CSTD?= c99
-WARNS?=	3
-CFLAGS+= -I${.CURDIR} -I${OPENPAM}/include
-CFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR}
-
-HEADERS=	security/openpam.h \
+INCS=		security/openpam.h \
 		security/openpam_version.h \
 		security/pam_appl.h \
 		security/pam_constants.h \
 		security/pam_modules.h \
 		security/pam_types.h \
 
-ADD_HEADERS=	security/pam_mod_misc.h
+INCS+=		security/pam_mod_misc.h
+INCSDIR=/usr/include
 
-# Static modules
-MODULE_DIR=	../modules
-.include "${.CURDIR}/${MODULE_DIR}/modules.inc"
-STATIC_MODULES=	${MODULES:C/.*/${MODULE_DIR}\/&\/lib&.a/}
-STATICOBJS+=	openpam_static_modules.o
-CLEANFILES+=	openpam_static.o \
-		openpam_static_modules.o
+CLEANFILES+= openpam_static.o openpam_static_modules.o
+STOBJS+= openpam_static_modules.o
 
-openpam_static_modules.o: openpam_static.o ${STATIC_MODULES}
-	${LD} -o ${.TARGET} -r --whole-archive ${.ALLSRC}
+# Static module support.  These go ONLY in the static libpam.a
+STATIC_MODULES=	pam_chroot pam_deny pam_echo pam_exec pam_group pam_guest \
+		pam_lastlog pam_nologin pam_permit pam_rhosts pam_rootok \
+		pam_securetty pam_self pam_unix
+ 
+MODULE_DIR=../modules
+.for MOD in ${STATIC_MODULES}
+MODOBJDIR!=	cd ${.CURDIR}/${MODULE_DIR}/${MOD} && ${PRINTOBJDIR}
+STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
+.endfor
 
-# Can't put openpam_static.c in SRCS but want .o in .depend.
-DPSRCS=		openpam_static.c
-
-# Headers
-INCS=		${HEADERS} ${ADD_HEADERS}
-INCSDIR=	${INCLUDEDIR}/security
+# XXX Using ${.ALLSRC} in the ld command causes openpam_static.c to be
+# XXX used.  Why??!!  --thorpej
+openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
+	${LD} -o ${.TARGET} -r --whole-archive openpam_static.o \
+	    ${STATIC_MODULE_LIBS}
 
 .include <bsd.lib.mk>
+.PATH.h: ${DIST}/include
+.PATH.c: ${DIST}/lib
+.PATH.3: ${DIST}/doc/man

@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_securetty.c,v 1.2 2004/12/12 08:18:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001 Mark R V Murray
  * All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_securetty/pam_securetty.c,v 1.13 2004/02/10 10:13:21 des Exp $");
+#else
+__RCSID("$NetBSD: pam_securetty.c,v 1.2 2004/12/12 08:18:47 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
