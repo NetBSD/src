@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.h,v 1.1 1997/03/10 06:28:32 scottr Exp $	*/
+/*	$NetBSD: statd.h,v 1.2 1997/10/21 20:38:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -52,7 +52,7 @@
  *
  * We handle this by keeping the list of monitored hosts in a file
  * (/var/statd.state) which is mmap()ed and whose format is described
- * by the typedef FileLayout.  The lists of client callbacks are chained
+ * by the typedef Header.  The lists of client callbacks are chained
  * off this structure, but are held in normal memory and so will be
  * lost after a re-boot.  Hence the actual values of MonList * pointers
  * in the copy on disc have no significance, but their NULL/non-NULL
@@ -70,9 +70,9 @@ typedef struct MonList_s {
 }       MonList;
 
 typedef struct {
-	char    hostname[SM_MAXSTRLEN + 1]; /* Name of monitored host */
-	int     notifyReqd;	/* TRUE if we've crashed and not yet
+	int     notifyReqd;	/* Time of our next attempt or 0
 				   informed the monitored host */
+	int	attempts;	/* Number of attempts we tried so far */
 	MonList *monList;	/* List of clients to inform if we
 				   hear that the monitored host has
 				   crashed, NULL if no longer monitored	 */
@@ -82,23 +82,39 @@ typedef struct {
 /* Overall file layout. */
 
 typedef struct {
+	int	magic;		/* Zero magic */
 	int	ourState;	/* State number as defined in statd protocol */
-	int	noOfHosts;	/* Number of elements in hosts[] */
-	char	reserved[248];	/* Reserved for future use */
-	HostInfo hosts[1];	/* vector of monitored hosts */
-}       FileLayout;
-#define	HEADER_LEN (sizeof(FileLayout) - sizeof(HostInfo))
+}       Header;
 
 /* ------------------------------------------------------------------------- */
 
 /* Global variables */
 
-extern FileLayout *status_info;	/* The mmap()ed status file */
 extern int	debug;		/* = 1 to enable diagnostics to syslog */
+extern struct sigaction sa;
+extern Header status_info;
 
 /* Function prototypes */
 
-extern HostInfo	*find_host __P((char *hostname, int create));
-extern void	init_file __P((char *filename));
-extern void	notify_hosts __P((void));
-extern void	sync_file __P((void));
+/* stat_proc.c */
+struct sm_stat_res *sm_stat_1_svc __P((sm_name *, struct svc_req *));
+struct sm_stat_res *sm_mon_1_svc __P((mon *, struct svc_req *));
+struct sm_stat *sm_unmon_1_svc __P((mon_id *, struct svc_req *));
+struct sm_stat *sm_unmon_all_1_svc __P((my_id *, struct svc_req *));
+void *sm_simu_crash_1_svc __P((void *, struct svc_req *));
+void *sm_notify_1_svc __P((stat_chge *, struct svc_req *));
+int	do_unmon __P((char *, HostInfo *, void *));
+
+/* statd.c */
+void notify_handler __P((int));
+void sync_file __P((void));
+void unmon_hosts __P((void));
+void change_host __P((char *, HostInfo *));
+HostInfo *find_host __P((char *, HostInfo *));
+void reset_database __P((void));
+
+void sm_prog_1 __P((struct svc_req *, SVCXPRT *));
+
+#define NO_ALARM sa.sa_handler == SIG_DFL ? 0 : (sa.sa_handler = SIG_IGN, sigaction(SIGALRM, &sa, NULL))
+#define ALARM sa.sa_handler == SIG_DFL ? 0 : (sa.sa_handler = notify_handler, sigaction(SIGALRM, &sa, NULL))
+#define CLR_ALARM sa.sa_handler == SIG_DFL ? 0 : (sa.sa_handler = SIG_DFL, sigaction(SIGALRM, &sa, NULL))

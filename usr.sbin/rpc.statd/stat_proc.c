@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.3 1997/10/17 16:12:48 lukem Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.4 1997/10/21 20:38:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.3 1997/10/17 16:12:48 lukem Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.4 1997/10/21 20:38:03 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -44,13 +44,12 @@ __RCSID("$NetBSD: stat_proc.c,v 1.3 1997/10/17 16:12:48 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>
 
 #include "statd.h"
-
-static	int	do_unmon __P((HostInfo *, my_id *));
 
 /* sm_stat_1 --------------------------------------------------------------- */
 /*
@@ -65,6 +64,7 @@ sm_stat_1_svc(arg, req)
 {
 	static sm_stat_res res;
 
+	NO_ALARM;
 	if (debug)
 		syslog(LOG_DEBUG, "stat called for host %s", arg->mon_name);
 
@@ -76,7 +76,8 @@ sm_stat_1_svc(arg, req)
 		res.res_stat = stat_fail;
 	}
 
-	res.state = status_info->ourState;
+	res.state = status_info.ourState;
+	ALARM;
 	return (&res);
 }
 
@@ -94,9 +95,10 @@ sm_mon_1_svc(arg, req)
 	struct svc_req *req;
 {
 	static sm_stat_res res;
-	HostInfo *hp;
+	HostInfo *hp, h;
 	MonList *lp;
 
+	NO_ALARM;
 	if (debug) {
 		syslog(LOG_DEBUG, "monitor request for host %s",
 		    arg->mon_id.mon_name);
@@ -105,35 +107,40 @@ sm_mon_1_svc(arg, req)
 		    arg->mon_id.my_id.my_vers, arg->mon_id.my_id.my_proc);
 	}
 	res.res_stat = stat_fail;	/* Assume fail until set otherwise */
-	res.state = status_info->ourState;
+	res.state = status_info.ourState;
 
 	/*
 	 * Find existing host entry, or create one if not found.  If
 	 * find_host() fails, it will have logged the error already.
 	 */
-	if (!gethostbyname(arg->mon_id.mon_name))
+	if (!gethostbyname(arg->mon_id.mon_name)) {
 		syslog(LOG_ERR, "Invalid hostname to sm_mon: %s",
 		    arg->mon_id.mon_name);
-	else if ((hp = find_host(arg->mon_id.mon_name, TRUE)) != NULL) {
-		lp = (MonList *)malloc(sizeof(MonList));
-		if (!lp)
-			syslog(LOG_ERR, "Out of memory");
-		else {
-			strncpy(lp->notifyHost, arg->mon_id.my_id.my_name,
-			    SM_MAXSTRLEN);
-			lp->notifyProg = arg->mon_id.my_id.my_prog;
-			lp->notifyVers = arg->mon_id.my_id.my_vers;
-			lp->notifyProc = arg->mon_id.my_id.my_proc;
-			memcpy(lp->notifyData, arg->priv,
-			    sizeof(lp->notifyData));
-
-			lp->next = hp->monList;
-			hp->monList = lp;
-			sync_file();
-
-			res.res_stat = stat_succ;	/* Report success */
-		}
+		return &res;
 	}
+
+	if ((hp = find_host(arg->mon_id.mon_name, &h)) == NULL)
+		memset(hp = &h, 0, sizeof(h));
+
+	lp = (MonList *)malloc(sizeof(MonList));
+	if (!lp)
+		syslog(LOG_ERR, "Out of memory");
+	else {
+		strncpy(lp->notifyHost, arg->mon_id.my_id.my_name,
+		    SM_MAXSTRLEN);
+		lp->notifyProg = arg->mon_id.my_id.my_prog;
+		lp->notifyVers = arg->mon_id.my_id.my_vers;
+		lp->notifyProc = arg->mon_id.my_id.my_proc;
+		memcpy(lp->notifyData, arg->priv,
+		    sizeof(lp->notifyData));
+
+		lp->next = hp->monList;
+		hp->monList = lp;
+		change_host(arg->mon_id.mon_name, hp);
+		sync_file();
+		res.res_stat = stat_succ;	/* Report success */
+	}
+	ALARM;
 	return (&res);
 }
 
@@ -145,11 +152,13 @@ sm_mon_1_svc(arg, req)
  *		In the unlikely event of more than one identical monitor
  *		request, all are removed.
  */
-static int 
-do_unmon(hp, idp)
+int 
+do_unmon(name, hp, ptr)
+	char *name;
 	HostInfo *hp;
-	my_id *idp;
+	void *ptr;
 {
+	my_id *idp = ptr;
 	MonList *lp, *next;
 	MonList *last = NULL;
 	int result = FALSE;
@@ -190,8 +199,9 @@ sm_unmon_1_svc(arg, req)
 	struct svc_req *req;
 {
 	static sm_stat res;
-	HostInfo *hp;
+	HostInfo *hp, h;
 
+	NO_ALARM;
 	if (debug) {
 		syslog(LOG_DEBUG, "un-monitor request for host %s",
 		    arg->mon_name);
@@ -199,9 +209,11 @@ sm_unmon_1_svc(arg, req)
 		    arg->my_id.my_name, arg->my_id.my_prog,
 		    arg->my_id.my_vers, arg->my_id.my_proc);
 	}
-	if ((hp = find_host(arg->mon_name, FALSE)) != NULL) {
-		if (do_unmon(hp, &arg->my_id))
+	if ((hp = find_host(arg->mon_name, &h)) != NULL) {
+		if (do_unmon(arg->mon_name, hp, &arg->my_id)) {
+			change_host(arg->mon_name, hp);
 			sync_file();
+		}
 		else
 			syslog(LOG_ERR,
 			    "unmon request from %s, no matching monitor",
@@ -210,7 +222,8 @@ sm_unmon_1_svc(arg, req)
 		syslog(LOG_ERR, "unmon request from %s for unknown host %s",
 		    arg->my_id.my_name, arg->mon_name);
 
-	res.state = status_info->ourState;
+	res.state = status_info.ourState;
+	ALARM;
 
 	return (&res);
 }
@@ -228,21 +241,19 @@ sm_unmon_all_1_svc(arg, req)
 	struct svc_req *req;
 {
 	static sm_stat res;
-	HostInfo *hp;
-	int     i;
 
+	NO_ALARM;
 	if (debug) {
 		syslog(LOG_DEBUG,
 		    "unmon_all for host: %s prog: %d ver: %d proc: %d",
 		    arg->my_name, arg->my_prog, arg->my_vers, arg->my_proc);
 	}
 
-	for (i = status_info->noOfHosts, hp = status_info->hosts; i; i--, hp++)
-		do_unmon(hp, arg);
-
+	unmon_hosts();
 	sync_file();
 
-	res.state = status_info->ourState;
+	res.state = status_info.ourState;
+	ALARM;
 
 	return (&res);
 }
@@ -266,30 +277,14 @@ sm_simu_crash_1_svc(v, req)
 	struct svc_req *req;
 {
 	static char dummy;
-	int     work_to_do;
-	HostInfo *hp;
-	int     i;
 
-	work_to_do = 0;
+	NO_ALARM;
 	if (debug)
 		syslog(LOG_DEBUG, "simu_crash called!!");
 
-	/*
-	 * Simulate crash by setting notify-required flag on all monitored
-	 * hosts, and incrementing our status number.  notify_hosts() is
-	 * then called to fork a process to do the notifications.
-	 */
-	for (i = status_info->noOfHosts, hp = status_info->hosts; i > 0;
-	    i--, hp++) {
-		if (hp->monList) {
-			work_to_do = TRUE;
-			hp->notifyReqd = TRUE;
-		}
-	}
-	status_info->ourState += 2;	/* always even numbers if not crashed */
-
-	if (work_to_do)
-		notify_hosts();
+	reset_database();
+	ALARM;
+	notify_handler(0);
 
 	return (&dummy);
 }
@@ -319,14 +314,14 @@ sm_notify_1_svc(arg, req)
 	static char dummy;
 	status tx_arg;		/* arg sent to callback procedure */
 	MonList *lp;
-	HostInfo *hp;
+	HostInfo *hp, h;
 	pid_t pid;
 
 	if (debug)
 		syslog(LOG_DEBUG, "notify from host %s, new state %d",
 		    arg->mon_name, arg->state);
 
-	hp = find_host(arg->mon_name, FALSE);
+	hp = find_host(arg->mon_name, &h);
 	if (!hp) {
 		/* Never heard of this host - why is it notifying us? */
 		syslog(LOG_ERR, "Unsolicited notification from host %s",
