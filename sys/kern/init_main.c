@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.64 1994/09/10 04:44:23 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.65 1994/09/22 02:17:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -259,6 +259,7 @@ main(framep)
 	/* Mount the root file system. */
 	if ((*mountroot)())
 		panic("cannot mount root");
+	mountlist.tqh_first->mnt_op->vfs_refcount++;
 
 	/* Get the vnode for '/'.  Set fdp->fd_fd.fd_cdir to reference it. */
 	if (VFS_ROOT(mountlist.tqh_first, &rootvnode))
