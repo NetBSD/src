@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.183 2004/04/15 08:11:20 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.184 2004/04/17 10:01:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.183 2004/04/15 08:11:20 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.184 2004/04/17 10:01:11 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -654,13 +654,15 @@ extern void cpu_hatch __P((void));	/* in locore.s */
  * to call every CPU, or `1 << cpi->ci_cpuid' for each CPU to call.
  */
 void
-xcall(func, arg0, arg1, arg2, arg3, cpuset)
-	int	(*func)(int, int, int, int);
-	int	arg0, arg1, arg2, arg3;
+xcall(func, trap, arg0, arg1, arg2, cpuset)
+	xcall_func_t func;
+	xcall_trap_t trap;
+	int	arg0, arg1, arg2;
 	u_int	cpuset;
 {
 	int s, n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
+	int fasttrap;
 
 	/* XXX - note p->retval is probably no longer useful */
 
@@ -674,7 +676,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
 		if (callself)
-			p->retval = (*func)(arg0, arg1, arg2, arg3); 
+			p->retval = (*func)(arg0, arg1, arg2); 
 		return;
 	}
 
@@ -699,6 +701,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * Firstly, call each CPU.  We do this so that they might have
 	 * finished by the time we start looking.
 	 */
+	fasttrap = trap != NULL ? 1 : 0;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
@@ -710,11 +713,12 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		cpi->msg.complete = 0;
 		p = &cpi->msg.u.xpmsg_func;
 		p->func = func;
+		p->trap = trap;
 		p->arg0 = arg0;
 		p->arg1 = arg1;
 		p->arg2 = arg2;
-		p->arg3 = arg3;
-		raise_ipi(cpi,13);/*xcall_cookie->pil*/
+		/* Fast cross calls use interrupt level 14 */
+		raise_ipi(cpi,13+fasttrap);/*xcall_cookie->pil*/
 	}
 
 	/*
@@ -722,7 +726,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
 	if (callself)
-		p->retval = (*func)(arg0, arg1, arg2, arg3); 
+		p->retval = (*func)(arg0, arg1, arg2); 
 
 	/*
 	 * Lastly, start looping, waiting for all CPUs to register that they
@@ -1053,10 +1057,10 @@ struct module_info module_sun4 = {
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
-	sun4_vcache_flush_page,
-	sun4_vcache_flush_segment,
-	sun4_vcache_flush_region,
-	sun4_vcache_flush_context,
+	sun4_vcache_flush_page, NULL,
+	sun4_vcache_flush_segment, NULL,
+	sun4_vcache_flush_region, NULL,
+	sun4_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1178,10 +1182,10 @@ struct module_info module_sun4c = {
 	0,			/* get_syncflt(); unused in sun4c */
 	0,			/* get_asyncflt(); unused in sun4c */
 	sun4_cache_flush,
-	sun4_vcache_flush_page,
-	sun4_vcache_flush_segment,
-	sun4_vcache_flush_region,
-	sun4_vcache_flush_context,
+	sun4_vcache_flush_page, NULL,
+	sun4_vcache_flush_segment, NULL,
+	sun4_vcache_flush_region, NULL,
+	sun4_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1385,10 +1389,10 @@ struct module_info module_ms1 = {
 	ms1_get_syncflt,
 	no_asyncflt_regs,
 	ms1_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
@@ -1430,10 +1434,10 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_get_syncflt,
 	srmmu_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1456,10 +1460,10 @@ struct module_info module_swift = {
 	swift_get_syncflt,
 	no_asyncflt_regs,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1499,10 +1503,10 @@ struct module_info module_hypersparc = {
 	hypersparc_get_syncflt,
 	hypersparc_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, ft_srmmu_vcache_flush_page,
+	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
+	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
+	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
 	noop_pcache_flush_page,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
@@ -1565,10 +1569,10 @@ struct module_info module_cypress = {
 	cypress_get_syncflt,
 	cypress_get_asyncflt,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, ft_srmmu_vcache_flush_page,
+	srmmu_vcache_flush_segment, ft_srmmu_vcache_flush_segment,
+	srmmu_vcache_flush_region, ft_srmmu_vcache_flush_region,
+	srmmu_vcache_flush_context, ft_srmmu_vcache_flush_context,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
@@ -1592,10 +1596,10 @@ struct module_info module_turbosparc = {
 	turbosparc_get_syncflt,
 	no_asyncflt_regs,
 	srmmu_cache_flush,
-	srmmu_vcache_flush_page,
-	srmmu_vcache_flush_segment,
-	srmmu_vcache_flush_region,
-	srmmu_vcache_flush_context,
+	srmmu_vcache_flush_page, NULL,
+	srmmu_vcache_flush_segment, NULL,
+	srmmu_vcache_flush_region, NULL,
+	srmmu_vcache_flush_context, NULL,
 	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
@@ -1669,10 +1673,10 @@ struct module_info module_viking = {
 	no_asyncflt_regs,
 	/* supersparcs use cached DVMA, no need to flush */
 	noop_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -1864,10 +1868,10 @@ struct module_info module_viking_sun4d = {
 	no_asyncflt_regs,
 	/* supersparcs use cached DVMA, no need to flush */
 	noop_cache_flush,
-	noop_vcache_flush_page,
-	noop_vcache_flush_segment,
-	noop_vcache_flush_region,
-	noop_vcache_flush_context,
+	noop_vcache_flush_page, NULL,
+	noop_vcache_flush_segment, NULL,
+	noop_vcache_flush_region, NULL,
+	noop_vcache_flush_context, NULL,
 	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
@@ -2049,6 +2053,10 @@ getcpuinfo(sc, node)
 		MPCOPY(sp_vcache_flush_segment);
 		MPCOPY(sp_vcache_flush_region);
 		MPCOPY(sp_vcache_flush_context);
+		MPCOPY(ft_vcache_flush_page);
+		MPCOPY(ft_vcache_flush_segment);
+		MPCOPY(ft_vcache_flush_region);
+		MPCOPY(ft_vcache_flush_context);
 		MPCOPY(pcache_flush_page);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
