@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.3 1998/11/19 15:38:24 mrg Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.4 1999/05/23 02:45:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -272,7 +272,7 @@ cgfourteenattach(parent, self, args)
 		sc->sc_cmap.cm_chip[i] = lut[i];
 
 	/* See if we're the console */
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = (node == fbnode);
 
 	/*
 	 * We don't use the raster console since the cg14 is fast enough
