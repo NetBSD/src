@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4.2.9 2002/01/08 00:32:40 nathanw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4.2.10 2002/02/28 23:48:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.9 2002/01/08 00:32:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.4.2.10 2002/02/28 23:48:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,8 @@ pipe(p, uap)
 	} */ *uap;
 #elif defined(__NetBSD__)
 int
-sys_pipe(p, v, retval)
-	struct proc *p;
+sys_pipe(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 #endif
@@ -240,6 +240,9 @@ sys_pipe(p, v, retval)
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
+#ifdef __NetBSD__
+	struct proc *p;
+#endif
 
 #ifdef __FreeBSD__
 	if (pipe_zone == NULL)
@@ -296,6 +299,7 @@ sys_pipe(p, v, retval)
 #endif /* FreeBSD */
 
 #ifdef __NetBSD__
+	p = l->l_proc;
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
 		pipeclose(rpipe);
