@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.55 2000/02/26 17:35:38 oster Exp $
+#	$NetBSD: GENERIC,v 1.56 2000/02/27 18:06:43 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	32
 
@@ -150,6 +150,7 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
+#gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
