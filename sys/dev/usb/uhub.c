@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.4 1998/08/01 20:11:38 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.5 1998/08/02 22:30:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ uhub_attach(parent, self, aux)
 	usbd_devinfo(dev, 1, devinfo);
 	printf(": %s\n", devinfo);
 
-	r = usbd_set_config_no(dev, 0);
+	r = usbd_set_config_no(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: configuration failed, error=%d\n",
 		       sc->sc_dev.dv_xname, r);

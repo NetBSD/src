@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.8 1998/08/01 18:16:20 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.9 1998/08/02 22:30:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,36 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 	usbd_close_pipe(ipipe);
  bad1:
 	usbd_free_request(reqh);
+	return r;
+}
+
+usbd_status 
+usbd_open_pipe_iso(iface, address, flags, pipe, priv, bufsize, nbuf, cb)
+	usbd_interface_handle iface;
+	u_int8_t address;
+	u_int8_t flags;
+	usbd_pipe_handle *pipe;
+	usbd_private_handle priv;
+	u_int32_t bufsize;
+	u_int32_t nbuf;
+	usbd_callback cb;
+{
+	usbd_status r;
+	usbd_pipe_handle p;
+
+	r = usbd_open_pipe(iface, address, USBD_EXCLUSIVE_USE, &p);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	if (!p->methods->isobuf) {
+		usbd_close_pipe(p);
+		return (USBD_INVAL);
+	}
+	r = p->methods->isobuf(p, bufsize, nbuf);
+	if (r != USBD_NORMAL_COMPLETION) {
+		usbd_close_pipe(p);
+		return (r);
+	}	
+	*pipe = p;
 	return r;
 }
 
@@ -389,7 +419,7 @@ usbd_status usbd_set_configuration(dev, conf)
 	usbd_device_handle dev;
 	u_int16_t conf;
 {
-	return usbd_set_config_no(dev, conf);
+	return usbd_set_config_no(dev, conf, 0);
 }
 
 usbd_status 

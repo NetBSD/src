@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.6 1998/08/01 18:16:20 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.7 1998/08/02 22:30:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@ typedef void (*usbd_xfercb)__P((usbd_request_handle req));
 struct usbd_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
-	void		      (*close)__P((usbd_pipe_handle pipe));
+	void		      (*close)__P((usbd_pipe_handle pipe));	
+	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
+					    u_int32_t bufsize,u_int32_t nbuf));
 };
 
 struct usbd_port {
@@ -165,7 +167,7 @@ void usbd_init __P((void));
 int		usbctlprint __P((void *, const char *));
 void		usbd_delay_ms __P((usbd_bus_handle, int));
 void		usbd_devinfo_vp __P((usbd_device_handle, char *, char *));
-usbd_status	usbd_set_config_no __P((usbd_device_handle, int));
+usbd_status	usbd_set_config_no __P((usbd_device_handle, int, int));
 usbd_status	usbd_reset_port __P((usbd_device_handle dev,
 				     int port, usb_port_status_t *ps));
 usbd_status	usbd_setup_pipe __P((usbd_device_handle dev,

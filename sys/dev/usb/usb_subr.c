@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.6 1998/08/01 20:11:39 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.7 1998/08/02 22:30:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
+static usbd_status	usbd_set_config __P((usbd_device_handle, int));
 char *usbd_get_string __P((usbd_device_handle, int, char *));
 usbd_status usbd_get_desc __P((usbd_device_handle dev, int type, 
 			       int index, int len, void *desc));
@@ -357,10 +358,26 @@ usbd_free_iface_data(dev, ifcno)
 		free(ifc->endpoints, M_USB);
 }
 
+static usbd_status
+usbd_set_config(dev, conf)
+	usbd_device_handle dev;
+	int conf;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_CONFIG;
+	USETW(req.wValue, conf);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	return (usbd_do_request(dev, &req, 0));
+}
+
 usbd_status
-usbd_set_config_no(dev, no)
+usbd_set_config_no(dev, no, msg)
 	usbd_device_handle dev;
 	int no;
+	int msg;
 {
 	usb_status_t ds;
 	usb_hub_status_t hs;
@@ -431,10 +448,11 @@ usbd_set_config_no(dev, no)
 	power = cdp->bMaxPower * 2;
 	if (power > dev->powersrc->power) {
 		/* XXX print nicer message. */
-		printf("%s: device addr %d (config %d) exceeds power budget, %d mA > %d mA\n",
-		       dev->bus->bdev.dv_xname, dev->address, 
-		       cdp->bConfigurationValue, 
-		       power, dev->powersrc->power);
+		if (msg)
+			printf("%s: device addr %d (config %d) exceeds power budget, %d mA > %d mA\n",
+			       dev->bus->bdev.dv_xname, dev->address, 
+			       cdp->bConfigurationValue, 
+			       power, dev->powersrc->power);
 		r = USBD_NO_POWER;
 		goto bad;
 	}
@@ -662,7 +680,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 
 	/* Next try with interface drivers. */
 	for (confi = 0; confi < d->bNumConfigurations; confi++) {
-		r = usbd_set_config_no(dev, confi);
+		r = usbd_set_config_no(dev, confi, 1);
 		if (r != USBD_NORMAL_COMPLETION) {
 			printf("%s: set config at addr %d failed, error=%d\n",
 			       parent->dv_xname, addr, r);
@@ -679,7 +697,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	}
 	/* No interfaces were attach in any of the configurations. */
 	if (d->bNumConfigurations > 0)
-		usbd_set_config_no(dev, 0);
+		usbd_set_config_no(dev, 0, 0);
 
 	DPRINTF(("usbd_new_device: no interface drivers found\n"));
 
