@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.6 1995/05/28 19:10:17 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.7 1995/06/09 19:42:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -71,17 +71,6 @@ pv_entry_t	pv_table;
 u_long	boot_ttphystart, boot_ttphysize, boot_stphysize;
 
 extern char	*esym;
-
-/*
- * The following vars become valid just before pmap_bootstrap is called.
- * They give info about free memory with the kernel and the tables allocated
- * in 'start_c' excluded.
- */
-extern vm_offset_t st_ramstart;	/* First available ST RAM address	*/
-extern vm_offset_t st_ramend;	/* First ST RAM address	not available	*/
-extern vm_offset_t tt_ramstart;	/* First available TT RAM address	*/
-extern vm_offset_t tt_ramend;	/* First TT RAM address	not available	*/
-
 
 /*
  * This is the virtual address of physical page 0. Used by 'do_boot()'.
@@ -346,18 +335,22 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	lowram  = 0 >> PGSHIFT; /* XXX */
 
 	/*
-	 * Initialize memory sizes
+	 * Fill in segments. The page indexes will be initialized
+	 * later when all reservations are made.
 	 */
-	st_ramstart    = 0;
-	st_ramend      = stphysize;
-	tt_ramstart    = ttphystart;
-	tt_ramend      = ttphystart + ttphysize;
+	phys_segs[0].start       = 0;
+	phys_segs[0].end         = stphysize;
+	phys_segs[1].start       = ttphystart;
+	phys_segs[1].end         = ttphystart + ttphysize;
+	phys_segs[2].start       = 0; /* End of segments! */
+
 	if(kbase) {
 		/*
-		 * First page of ST-ram is unusable.
+		 * First page of ST-ram is unusable, reserve the space
+		 * for the kernel in the TT-ram segment.
 		 */
-		st_ramstart  = NBPG;
-		tt_ramstart += pstart;
+		phys_segs[0].start  = NBPG;
+		phys_segs[1].start += pstart;
 	}
 	else {
 		/*
@@ -387,14 +380,26 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 
 
 		/*
-		 * Reserve space for page 0
+		 * Reserve space for page 0, and allocate the kernel
+		 * space from the ST-ram segment.
 		 */
 		pstart += NBPG;
-
-		st_ramstart += pstart;
+		phys_segs[0].start += pstart;
 	}
 
-	physmem = ((st_ramend-st_ramstart)+(tt_ramend-tt_ramstart)) >> PGSHIFT;
+	/*
+	 * As all segment sizes are now valid, calculate page indexes and
+	 * available physical memory.
+	 */
+	phys_segs[0].first_page = 0;
+	for (i = 1; phys_segs[i].start; i++) {
+		phys_segs[i].first_page  = phys_segs[i-1].first_page;
+		phys_segs[i].first_page +=
+			(phys_segs[i-1].end - phys_segs[i-1].start) / NBPG;
+	}
+	for (i = 0, physmem = 0; phys_segs[i].start; i++)
+		physmem += phys_segs[i].end - phys_segs[i].start;
+	physmem >>= PGSHIFT;
   
 	/*
 	 * get the pmap module in sync with reality.
