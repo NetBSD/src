@@ -31,18 +31,18 @@ loaded using the BIOS, within the limitations of the BIOS
 geometry. The install program will check this for you, and
 will give you a chance to correct this if this is not the case.
 
-If you have not yet installed any other systems on the harddisk
+If you have not yet installed any other systems on the hard disk
 that you plan to install NetBSD on, or if you plan to use the
 disk entirely for NetBSD, you may wish to check your BIOS
 settings for the 'Large' or 'LBA' modes, and activate
-them for the harddisk in question. While they are not needed
+them for the hard disk in question. While they are not needed
 by NetBSD as such, doing so will remove the limitations mentioned
 above, and will avoid hassle should you wish to share the disk with
 other systems. Do NOT change these settings if you already have
 data on the disk that you want to preserve!
 
 In any case, it is wise to check your the BIOS settings for the
-harddisk geometry before beginning the installation, and write
+hard disk geometry before beginning the installation, and write
 them down. While this should usually not be needed, it enables
 you to verify that the install program determines these values
 correctly.

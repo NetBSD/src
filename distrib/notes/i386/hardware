@@ -27,7 +27,7 @@ Supported devices include:
 		Adaptec AHA-2x4x[U][W] cards and some onboard PCI designs
 			using the AIC78X0 chip.
 		Adaptec AHA-3940[U][W] cards [b]
-		Buslogic 54x (Adaptec AHA-154x clones)
+		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
 		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
@@ -113,7 +113,7 @@ Supported devices include:
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		SMC91C9x-based boards (ISA and PCMCIA)
-		Texas Intruments ThunderLAN based ethernet boards:
+		Texas Instruments ThunderLAN based ethernet boards:
 			Compaq Netelligent 10/100 TX
 			Compaq ProLiant Integrated Netelligent 10/100 TX
 			Compaq Netelligent 10 T (untested)
@@ -214,7 +214,7 @@ AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
 AHA-2X4X or AIC-7XXX-based SCSI host adapters
 		ahc0	any  	any any
 
-Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
+BusLogic BT445, BT74x, or BT9xx SCSI host adapters
 		bha0 	0x330	any	any
 		bha1 	0x334	any	any
 
