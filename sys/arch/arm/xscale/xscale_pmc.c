@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.4 2002/08/09 05:27:09 thorpej Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.5 2002/10/08 23:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.4 2002/08/09 05:27:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.5 2002/10/08 23:59:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -46,7 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.4 2002/08/09 05:27:09 thorpej Exp $
 #include <sys/types.h>
 
 #include <machine/pmc.h>
-#include <arch/arm/xscale/xscalereg.h>
+
+#include <arm/xscale/xscalereg.h>
+#include <arm/xscale/xscalevar.h>
 
 extern int	profsrc;
 
@@ -96,8 +98,9 @@ xscale_pmnc_write(uint32_t val)
 }
 
 int
-xscale_pmc_dispatch(struct clockframe *frame)
+xscale_pmc_dispatch(void *arg)
 {
+	struct clockframe *frame = arg;
 	struct xscale_pmc_state *pmcs;
 	uint32_t pmnc;
 	int s;
