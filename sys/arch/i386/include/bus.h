@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1997/07/10 02:36:46 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1997/08/12 23:53:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -416,7 +416,7 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*
