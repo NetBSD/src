@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.45.2.3 2000/04/30 20:12:42 he Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.45.2.4 2000/05/05 13:03:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,9 @@ uiomove(buf, n, uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
+#ifdef DIAGNOSTIC
 	struct proc *p = uio->uio_procp;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
