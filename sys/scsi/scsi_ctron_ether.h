@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ctron_ether.h,v 1.1 1997/03/18 01:31:15 thorpej Exp $	*/
+/*	$NetBSD: scsi_ctron_ether.h,v 1.2 1997/03/24 00:04:55 thorpej Exp $	*/
 
 /*
  * SCSI interface description
@@ -14,7 +14,7 @@
 
 #define CTRON_ETHERCMD2(OP, SUB) {OP, SUB}
 #define CTRON_ETHER_SEND CTRON_ETHERCMD2(0xc, 0x1)
-#define CTRON_ETHER_RECV {0xe1, 0}
+#define CTRON_ETHER_RECV 0xe1
 #define CTRON_ETHER_GET_ADDR CTRON_ETHERCMD2(0xc, 0x4)
 #define CTRON_ETHER_ADD_PROTO CTRON_ETHERCMD2(0xd, 0x1)
 #define CTRON_ETHER_REM_PROTO CTRON_ETHERCMD2(0xd, 0x2)
