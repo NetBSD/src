@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1996/10/16 17:26:19 ws Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1997/04/16 22:11:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,6 +67,8 @@ cdev_decl(ofc);
 cdev_decl(ofd);
 #include "ofrtc.h"
 cdev_decl(ofrtc);
+#include "bpfilter.h"
+cdev_decl(bpf);
 
 #define	cdev_rtc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
@@ -85,6 +87,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NOFCONS,ofc),	/* 7: Openfirmware console */
 	cdev_disk_init(NOFDISK,ofd),	/* 8: Openfirmware disk */
 	cdev_rtc_init(NOFRTC,ofrtc),	/* 9: Openfirmware RTC */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -128,6 +131,7 @@ static int chrtoblktbl[] = {
 	/*  7 */	NODEV,
 	/*  8 */	0,
 	/*  9 */	NODEV,
+	/* 10 */	NODEV,
 };
 
 /*
