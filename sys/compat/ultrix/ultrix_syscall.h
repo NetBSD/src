@@ -363,6 +363,12 @@
 /* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
 #define	ULTRIX_SYS_getsockname	150
 
+/* syscall: "cacheflush" ret: "int" args: "char *" "int" "int" */
+#define	ULTRIX_SYS_cacheflush	152
+
+/* syscall: "cachectl" ret: "int" args: "char *" "int" "int" */
+#define	ULTRIX_SYS_cachectl	153
+
 /* syscall: "nfssvc" ret: "int" args: "int" */
 #define	ULTRIX_SYS_nfssvc	158
 
