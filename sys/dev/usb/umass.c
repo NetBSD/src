@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.111 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: umass.c,v 1.112 2004/06/22 12:21:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.111 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.112 2004/06/22 12:21:04 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1797,7 +1797,7 @@ Static void
 umass_bbb_dump_csw(struct umass_softc *sc, umass_bbb_csw_t *csw)
 {
 	int sig = UGETDW(csw->dCSWSignature);
-	int tag = UGETW(csw->dCSWTag);
+	int tag = UGETDW(csw->dCSWTag);
 	int res = UGETDW(csw->dCSWDataResidue);
 	int status = csw->bCSWStatus;
 
