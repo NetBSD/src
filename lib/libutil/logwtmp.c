@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.7 1998/03/30 15:22:30 kleink Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.8 1998/12/09 14:35:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.7 1998/03/30 15:22:30 kleink Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.8 1998/12/09 14:35:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,8 +68,7 @@ logwtmp(line, name, host)
 		(void) strncpy(ut.ut_name, name, sizeof(ut.ut_name));
 		(void) strncpy(ut.ut_host, host, sizeof(ut.ut_host));
 		(void) time(&ut.ut_time);
-		if (write(fd, (char *)&ut, sizeof(struct utmp)) !=
-		    sizeof(struct utmp))
+		if (write(fd, &ut, sizeof(struct utmp)) != sizeof(struct utmp))
 			(void) ftruncate(fd, buf.st_size);
 	}
 	(void) close(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.9 1998/07/26 22:02:38 mycroft Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.10 1998/12/09 14:35:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ ttyaction(tty, act, user)
 	char env_tty[64];
 	char env_act[64];
 	char env_user[256];
-	int err, linenum, pid, status;
+	int error, linenum, pid, status;
 
 	fp = fopen(actfile, "r");
 	if (fp == NULL)
@@ -132,15 +132,15 @@ ttyaction(tty, act, user)
 		}
 		if (pid == 0) {
 			/* This is the child. */
-			err = execve(argv[0], argv, envp);
+			error = execve(argv[0], argv, envp);
 			/* If we get here, it is an error. */
 			warnx("%s: line %d: exec failed: %s",
 				  actfile, linenum, strerror(errno));
 			_exit(1);
 		}
 		/* This is the parent. */
-		err = waitpid(pid, &status, 0);
-		if (err == -1) {
+		error = waitpid(pid, &status, 0);
+		if (error == -1) {
 			warnx("%s: line %d: wait failed: %s",
 				  actfile, linenum, strerror(errno));
 			continue;

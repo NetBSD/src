@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.14 1998/09/26 23:59:40 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.15 1998/12/09 14:35:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.14 1998/09/26 23:59:40 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.15 1998/12/09 14:35:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ pw_edit(notsetuid, filename)
 		editor = strdup(_PATH_VI);
 	else
 		editor = strdup(editor);
-	if ((p = strrchr(editor, '/')))
+	if ((p = strrchr(editor, '/')) != NULL)
 		++p;
 	else
 		p = editor;
@@ -200,6 +200,7 @@ pw_edit(notsetuid, filename)
 		}
 	}
 
+	/*LINTED*/
 	xargv[i++] = (char *)filename;
 	xargv[i] = NULL;
 

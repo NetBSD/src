@@ -1,4 +1,4 @@
-/*  $NetBSD: bswap.c,v 1.1 1998/03/18 16:40:45 bouyer Exp $    */
+/*  $NetBSD: bswap.c,v 1.2 1998/12/09 14:35:02 christos Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap.c,v 1.1 1998/03/18 16:40:45 bouyer Exp $");
+__RCSID("$NetBSD: bswap.c,v 1.2 1998/12/09 14:35:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -19,7 +19,7 @@ u_int16_t
 bswap16(x)
 	u_int16_t x;
 {
-	return ((x << 8) & 0xff00) | ((x >> 8) & 0x00ff);
+	return (((u_int32_t)x << 8) & 0xff00) | (((u_int32_t)x >> 8) & 0x00ff);
 }
 #endif
 
@@ -39,7 +39,7 @@ u_int64_t
 bswap64(x)
 	u_int64_t x;
 {
-	u_int32_t *p = (u_int32_t*)&x;
+	u_int32_t *p = (u_int32_t*)(void *)&x;
 	u_int32_t t;
 	t = bswap32(p[0]);
 	p[0] = bswap32(p[1]);
