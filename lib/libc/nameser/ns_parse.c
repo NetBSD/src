@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.1.1.1 2004/05/20 20:01:31 christos Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#ifdef notdef
 static const char rcsid[] = "Id: ns_parse.c,v 1.3.2.1.4.1 2004/03/09 08:33:44 marka Exp";
+#else
+__RCSID("$NetBSD: ns_parse.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+#endif
 #endif
 
 /* Import. */
@@ -42,7 +47,7 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 /* Macros. */
 
-#define RETERR(err) do { errno = (err); return (-1); } while (0)
+#define RETERR(err) do { errno = (err); return (-1); } while (/*NOTREACHED*//*CONSTCOND*/0)
 
 /* Public. */
 
@@ -67,14 +72,14 @@ struct _ns_flagdata _ns_flagdata[16] = {
 };
 
 int ns_msg_getflag(ns_msg handle, int flag) {
-	return(((handle)._flags & _ns_flagdata[flag].mask) >> _ns_flagdata[flag].shift);
+	return((u_int32_t)((handle)._flags & _ns_flagdata[flag].mask) >> _ns_flagdata[flag].shift);
 }
 
 int
 ns_skiprr(const u_char *ptr, const u_char *eom, ns_sect section, int count) {
 	const u_char *optr = ptr;
 
-	for ((void)NULL; count > 0; count--) {
+	for (; count > 0; count--) {
 		int b, rdlength;
 
 		b = dn_skipname(ptr, eom);
@@ -134,10 +139,9 @@ ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 int
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
-	int tmp;
 
 	/* Make section right. */
-	if ((tmp = section) < 0 || section >= ns_s_max)
+	if (section < 0 || section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);
