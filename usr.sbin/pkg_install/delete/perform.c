@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.8 2003/08/17 22:02:20 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.9 2003/08/20 01:52:40 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.8 2003/08/17 22:02:20 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.9 2003/08/20 01:52:40 jlam Exp $");
 #endif
 #endif
 
@@ -114,12 +114,10 @@ undepend(const char *deppkgname, void *vp)
 	char    fname[FILENAME_MAX], ftmp[FILENAME_MAX];
 	char    fbuf[FILENAME_MAX];
 	FILE   *fp, *fpwr;
-	char   *tmp;
 	int     s;
 
 	(void) snprintf(fname, sizeof(fname), "%s/%s/%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	    deppkgname, REQUIRED_BY_FNAME);
+	    _pkgdb_getPKGDB_DIR(), deppkgname, REQUIRED_BY_FNAME);
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
 		warnx("couldn't open dependency file `%s'", fname);
@@ -166,7 +164,7 @@ undepend(const char *deppkgname, void *vp)
 }
 
 /*
- * Remove the current view's PKG_DBDIR from the +VIEWS file of the
+ * Remove the current view's package dbdir from the +VIEWS file of the
  * depoted package named by pkgname.
  */
 static int
@@ -176,12 +174,10 @@ unview(const char *pkgname)
 	char  fbuf[FILENAME_MAX];
 	char  dbdir[FILENAME_MAX];
 	FILE *fp, *fpwr;
-	char *tmp;
 	int  s;
 	int  cc;
 
-	(void) snprintf(dbdir, sizeof(dbdir), "%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+	(void) snprintf(dbdir, sizeof(dbdir), "%s", _pkgdb_getPKGDB_DIR());
 
 	/* Get the depot directory. */
 	(void) snprintf(fname, sizeof(fname), "%s/%s/%s",
@@ -202,7 +198,7 @@ unview(const char *pkgname)
 
 	/*
 	 * Copy the contents of the +VIEWS file into a temp file, but
-	 * skip copying the name of the current view's PKG_DBDIR.
+	 * skip copying the name of the current view's package dbdir.
 	 */
 	(void) snprintf(fname, sizeof(fname), "%s/%s", fbuf, VIEWS_FNAME);
 	if ((fp = fopen(fname, "r")) == NULL) {
@@ -262,7 +258,6 @@ require_delete(char *home, int tryall)
 {
 	lpkg_t *lpp;
 	int     rv, fail;
-	char   *tmp;
 	int     oldcwd;
 
 	/* save cwd */
@@ -270,8 +265,7 @@ require_delete(char *home, int tryall)
 	if (oldcwd == -1)
 		err(EXIT_FAILURE, "cannot open \".\"");
 
-	(void) snprintf(pkgdir, sizeof(pkgdir), "%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+	(void) snprintf(pkgdir, sizeof(pkgdir), "%s", _pkgdb_getPKGDB_DIR());
 
 	/* walk list of things to delete */
 	fail = 0;
@@ -363,7 +357,7 @@ require_find_recursive_up(lpkg_t *thislpp)
 	lpkg_head_t reqq;
 	lpkg_t *lpp = NULL;
 	FILE   *cfile;
-	char   *nl, *tmp;
+	char   *nl;
 
 	/* see if we are on the find queue -- circular dependency */
 	if ((lpp = find_on_queue(&lpfindq, thislpp->lp_name))) {
@@ -374,7 +368,7 @@ require_find_recursive_up(lpkg_t *thislpp)
 	TAILQ_INIT(&reqq);
 
 	(void) snprintf(pkgdir, sizeof(pkgdir), "%s/%s",
-	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, thislpp->lp_name);
+	    _pkgdb_getPKGDB_DIR(), thislpp->lp_name);
 
 	/* change to package's dir */
 	if (chdir(pkgdir) == FAIL) {
@@ -478,7 +472,6 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 	while ((lpp = TAILQ_FIRST(&reqq))) {
 		FILE   *cfile;
 		package_t rPlist;
-		char   *tmp;
 
 		/* remove a direct req from our queue */
 		TAILQ_REMOVE(&reqq, lpp, lp_link);
@@ -488,7 +481,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		rPlist.tail = NULL;
 
 		/* prepare for recursion */
-		chdir ((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+		chdir(_pkgdb_getPKGDB_DIR());
 		if (ispkgpattern(lpp->lp_name)) {
 			char installed[FILENAME_MAX];
 			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
@@ -605,7 +598,6 @@ pkg_do(char *pkg)
 	FILE	       *fp;
 	char    	home[FILENAME_MAX];
 	char    	view[FILENAME_MAX];
-	char	       *tmp;
 	int		cc;
 	Boolean		is_depoted_pkg = FALSE;
 
@@ -613,8 +605,8 @@ pkg_do(char *pkg)
 	if (Plist.head)
 		free_plist(&Plist);
 
-	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	    pkg);
+	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s",
+	    _pkgdb_getPKGDB_DIR(), pkg);
 	if (!fexists(LogDir) || !isdir(LogDir)) {
 		{
 			/* Check if the given package name matches something
@@ -774,7 +766,7 @@ pkg_do(char *pkg)
 			if (Verbose)
 				printf("Attempting to remove dependency on package `%s'\n", p->name);
 			if (!Fake)
-				findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+				findmatchingname(_pkgdb_getPKGDB_DIR(),
 				    p->name, undepend, pkg);
 		}
 	}

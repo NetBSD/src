@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.5 2003/08/18 04:58:07 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.6 2003/08/20 01:52:38 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.5 2003/08/18 04:58:07 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.6 2003/08/20 01:52:38 jlam Exp $");
 #endif
 #endif
 
@@ -67,7 +67,6 @@ sanity_check(const char *pkg)
 static int
 installprereq(const char *name, int *errc)
 {
-	char	*tmp;
 	int	ret;
 	ret = 0;
 
@@ -111,7 +110,7 @@ pkg_do(const char *pkg)
 	char    replace_via[FILENAME_MAX];
 	char    replace_to[FILENAME_MAX];
 	int	replacing = 0;
-	char   *where_to, *tmp, *extract;
+	char   *where_to, *extract;
 	char   *dbdir;
 	const char *exact;
 	FILE   *cfile;
@@ -127,7 +126,7 @@ pkg_do(const char *pkg)
 	LogDir[0] = '\0';
 	strlcpy(playpen, FirstPen, sizeof(playpen));
 	inPlace = 0;
-	dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+	dbdir = _pkgdb_getPKGDB_DIR();
 
 	/* make sure dbdir actually exists! */
 	if (!(isdir(dbdir) || islinktodir(dbdir))) {
