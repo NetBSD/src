@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.12 2003/03/29 00:12:12 thorpej Exp $	*/
+/*	$NetBSD: walk.c,v 1.13 2003/05/09 00:48:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.12 2003/03/29 00:12:12 thorpej Exp $");
+__RCSID("$NetBSD: walk.c,v 1.13 2003/05/09 00:48:59 itojun Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -172,7 +172,7 @@ walk_dir(const char *dir, fsnode *parent)
 			char	slink[PATH_MAX+1];
 			int	llen;
 
-			llen = readlink(path, slink, PATH_MAX - 1);
+			llen = readlink(path, slink, sizeof(slink) - 1);
 			if (llen == -1)
 				err(1, "Readlink `%s'", path);
 			slink[llen] = '\0';
