@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.29 2004/09/06 09:45:27 yamt Exp $
+.\"	$NetBSD: mbuf.9,v 1.30 2004/09/06 16:25:29 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -334,12 +334,11 @@ back into the mbuf chain
 starting
 .Fa off
 bytes from the beginning, extending the mbuf chain if necessary.
-Unless attempting to extend the chain,
 .Fn m_copyback
-never fail.
-As extending the chain can fail, caller should check the failure
-by checking the resulted length of the chain in that case.
-It's an error to use
+can only fail when extending the chain.
+The caller should check for this kind of failure
+by checking the resulting length of the chain in that case.
+It is an error to use
 .Fn m_copyback
 on read-only mbufs.
 .It Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "caddr_t cp" \
@@ -355,14 +354,15 @@ as
 does.
 Unlike
 .Fn m_copyback ,
-It's safe to use
+it is safe to use
 .Fn m_copyback_cow
 on read-only mbufs.
 If needed,
 .Fn m_copyback_cow
-automatically allocate new mbufs and adjust chain.
-It returns a pointer to resulted mbuf chain on success.
-Otherwise, it returns NULL.
+automatically allocates new mbufs and adjusts the chain.
+It returns a pointer to the resulting mbuf chain on success.
+Otherwise, it returns
+.Dv NULL .
 In that case, the original mbuf
 .Fa m0
 will be freed.
@@ -370,11 +370,11 @@ The
 .Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
-from caller.
+from the caller.
 Unlike
 .Fn m_copyback ,
 extending the mbuf chain isn't supported.
-It's an error to attempt to extend the mbuf chain using
+It is an error to attempt to extend the mbuf chain using
 .Fn m_copyback_cow .
 .It Fn m_makewritable "struct mbuf **mp" "int off" "int len" "int how"
 Rearranges an mbuf chain so that
@@ -382,21 +382,21 @@ Rearranges an mbuf chain so that
 bytes from offset
 .Fa off
 are writable.
-When it meets read-only mbufs, it allocates new mbufs, adjusts chain as
+When it meets read-only mbufs, it allocates new mbufs, adjusts the chain as
 .Fn m_copyback_cow
-does, and copies original contents into them.
+does, and copies the original content into them.
 The
 .Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
-from caller.
+from the caller.
 .Fn m_makewritable
 preserves the contents of the mbuf chain even in the case of failure.
-It updates a pointer to the mbuf chain pointed by
+It updates a pointer to the mbuf chain pointed to by
 .Fa mp .
 It returns 0 on success.
 Otherwise, it returns an error code, typically
-.Dv ENOBUFS .
+.Er ENOBUFS .
 .It Fn m_cat "struct mbuf *m" "struct mbuf *n"
 Concatenates mbuf chain
 .Fa n
