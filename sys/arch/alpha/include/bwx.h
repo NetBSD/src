@@ -1,7 +1,7 @@
-/* $NetBSD: bwx.s,v 1.3 1997/11/03 04:22:00 ross Exp $ */
+/* $NetBSD: bwx.h,v 1.1 1999/12/02 19:41:40 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,55 +37,102 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.3 1997/11/03 04:22:00 ross Exp $")
+#ifndef _ALPHA_BWX_H_
+#define	_ALPHA_BWX_H_
 
 /*
- * Alpha Byte/Word Extension instructions.  These are functions because
- * gas(1) cannot currently switch targets on the fly.  Eventually, these
- * might be replaced by inline __asm() functions.
+ * Alpha Byte/Word Extension instructions.
  *
  * These instructions are available on EV56 (21164A) and later processors.
  *
  * See "Alpha Architecture Handbook, Version 3", DEC order number EC-QD2KB-TE.
  */
 
-/*
- * XXX These are .long'd because we pull this into locore.s, which
- * XXX is assembled with only gas(1)'s "base alpha" target.
- */
-	.text
-inc1:	.stabs	__FILE__,132,0,0,inc1; .loc	1 __LINE__
-LEAF(alpha_ldbu,1)
-	.long	0x28100000	/* ldbu v0, 0(a0) */
-	RET
-	END(alpha_ldbu)
+static __inline u_int8_t alpha_ldbu __P((__volatile u_int8_t *))
+	__attribute__((__unused__));
+static __inline u_int16_t alpha_ldwu __P((__volatile u_int16_t *))
+	__attribute__((__unused__));
+static __inline void alpha_stb __P((__volatile u_int8_t *, u_int8_t))
+	__attribute__((__unused__));
+static __inline void alpha_stw __P((__volatile u_int16_t *, u_int16_t))
+	__attribute__((__unused__));
+static __inline u_int8_t alpha_sextb __P((u_int8_t))
+	__attribute__((__unused__));
+static __inline u_int16_t alpha_sextw __P((u_int16_t))
+	__attribute__((__unused__));
 
-	.text
-LEAF(alpha_ldwu,1)
-	.long	0x30100000	/* ldwu v0, 0(a0)  */
-	RET
-	END(alpha_ldwu)
+static __inline u_int8_t
+alpha_ldbu(a0)
+	__volatile u_int8_t *a0;
+{
+	u_int8_t v0;
 
-	.text
-LEAF(alpha_stb,1)
-	.long	0x3a300000	/* stb a1, 0(a0) */
-	RET
-	END(alpha_stb)
+	__asm __volatile("ldbu %0, %1"
+		: "=r" (v0)
+		: "m" (*a0));
 
-	.text
-LEAF(alpha_stw,1)
-	.long	0x36300000	/* stw a1, 0(a0) */
-	RET
-	END(alpha_stw)
+	return (v0);
+}
 
-	.text
-LEAF(alpha_sextb,1)
-	.long	0x73f00000	/* sextb a0, v0 */
-	RET
-	END(alpha_sextb)
+static __inline u_int16_t
+alpha_ldwu(a0)
+	__volatile u_int16_t *a0;
+{
+	u_int16_t v0;
 
-	.text
-LEAF(alpha_sextw,1)
-	.long	0x73f00020	/* sextw a0, v0 */
-	RET
-	END(alpha_sextw)
+	__asm __volatile("ldwu %0, %1"
+		: "=r" (v0)
+		: "m" (*a0));
+
+	return (v0);
+}
+
+static __inline void
+alpha_stb(a0, a1)
+	__volatile u_int8_t *a0;
+	u_int8_t a1;
+{
+
+	__asm __volatile("stb %1, %0"
+		: "=m" (*a0)
+		: "r" (a1));
+}
+
+static __inline void
+alpha_stw(a0, a1)
+	__volatile u_int16_t *a0;
+	u_int16_t a1;
+{
+
+	__asm __volatile("stw %1, %0"
+		: "=m" (*a0)
+		: "r" (a1));
+}
+
+static __inline u_int8_t
+alpha_sextb(a0)
+	u_int8_t a0;
+{
+	u_int8_t v0;
+
+	__asm __volatile("sextb %1, %0"
+		: "=r" (v0)
+		: "r" (a0));
+
+	return (v0);
+}
+
+static __inline u_int16_t
+alpha_sextw(a0)
+	u_int16_t a0;
+{
+	u_int16_t v0;
+
+	__asm __volatile("sextw %1, %0"
+		: "=r" (v0)
+		: "r" (a0));
+
+	return (v0);
+}
+
+#endif /* _ALPHA_BWX_H_ */
