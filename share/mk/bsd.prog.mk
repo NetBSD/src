@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.150 2002/02/02 16:54:26 veego Exp $
+#	$NetBSD: bsd.prog.mk,v 1.151 2002/02/03 21:40:14 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -16,7 +16,9 @@ CFLAGS+=	${COPTS}
 # ELF platforms depend on crtbegin.o and crtend.o
 .if ${OBJECT_FMT} == "ELF"
 LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
+.NOSUFF: ${LIBCRTBEGIN}
 LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
+.NOSUFF: ${LIBCRTEND}
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
 .else
 LIBCRTBEGIN?=
@@ -25,60 +27,114 @@ _SHLINKER=	${SHLINKDIR}/ld.so
 .endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+.NOSUFF: ${LIBCRT0}
 
 LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
+.NOSUFF: ${LIBBZ2}
 LIBC?=		${DESTDIR}/usr/lib/libc.a
+.NOSUFF: ${LIBC}
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+.NOSUFF: ${LIBC_PIC}
 LIBCDK?=	${DESTDIR}/usr/lib/libcdk.a
+.NOSUFF: ${LIBCDK}
 LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
+.NOSUFF: ${LIBCOM_ERR}
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+.NOSUFF: ${LIBCOMPAT}
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+.NOSUFF: ${LIBCRYPT}
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
+.NOSUFF: ${LIBCRYPTO}
 LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
+.NOSUFF: ${LIBCRYPTO_RC5}
 LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
+.NOSUFF: ${LIBCRYPTO_IDEA}
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+.NOSUFF: ${LIBCURSES}
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+.NOSUFF: ${LIBDBM}
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+.NOSUFF: ${LIBDES}
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+.NOSUFF: ${LIBEDIT}
 LIBFORM?=	${DESTDIR}/usr/lib/libform.a
+.NOSUFF: ${LIBFORM}
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+.NOSUFF: ${LIBGCC}
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+.NOSUFF: ${LIBGNUMALLOC}
 LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
+.NOSUFF: ${LIBGSSAPI}
 LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
+.NOSUFF: ${LIBHDB}
 LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
+.NOSUFF: ${LIBINTL}
 LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
+.NOSUFF: ${LIBIPSEC}
 LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
+.NOSUFF: ${LIBKADM}
 LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
+.NOSUFF: ${LIBKADM5CLNT}
 LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
+.NOSUFF: ${LIBKADM5SRV}
 LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+.NOSUFF: ${LIBKAFS}
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+.NOSUFF: ${LIBKDB}
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+.NOSUFF: ${LIBKRB}
 LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
+.NOSUFF: ${LIBKRB5}
 LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
+.NOSUFF: ${LIBKSTREAM}
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
+.NOSUFF: ${LIBKVM}
 LIBL?=		${DESTDIR}/usr/lib/libl.a
+.NOSUFF: ${LIBL}
 LIBM?=		${DESTDIR}/usr/lib/libm.a
+.NOSUFF: ${LIBM}
 LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
+.NOSUFF: ${LIBMENU}
 LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
+.NOSUFF: ${LIBOBJC}
 LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
+.NOSUFF: ${LIBOSSAUDIO}
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
+.NOSUFF: ${LIBPCAP}
 LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
+.NOSUFF: ${LIBPCI}
 LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
+.NOSUFF: ${LIBPOSIX}
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+.NOSUFF: ${LIBRESOLV}
 LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
+.NOSUFF: ${LIBRMT}
 LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
+.NOSUFF: ${LIBROKEN}
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+.NOSUFF: ${LIBRPCSVC}
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+.NOSUFF: ${LIBSKEY}
 LIBSS?=		${DESTDIR}/usr/lib/libss.a
+.NOSUFF: ${LIBSS}
 LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
+.NOSUFF: ${LIBSSL}
 LIBSL?=		${DESTDIR}/usr/lib/libsl.a
+.NOSUFF: ${LIBSL}
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+.NOSUFF: ${LIBTERMCAP}
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
+.NOSUFF: ${LIBTELNET}
 LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
+.NOSUFF: ${LIBUSBHID}
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+.NOSUFF: ${LIBUTIL}
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
+.NOSUFF: ${LIBWRAP}
 LIBY?=		${DESTDIR}/usr/lib/liby.a
+.NOSUFF: ${LIBY}
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
+.NOSUFF: ${LIBZ}
 
 ##### Build and install rules
 .if defined(SHAREDSTRINGS)
